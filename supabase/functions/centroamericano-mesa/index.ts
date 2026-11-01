@@ -31,11 +31,17 @@
 // NO ES UN PROXY ABIERTO: solo habla con chess-results.com (Results.aspx), solo de
 // los torneos de la tabla centroamericano_torneos y solo con un token válido.
 //
-// Cuatro acciones (body.action), todas con { token }:
-//   "leer"    {}                          -> las mesas de su rango, sus marcas y su registro
+// Las acciones (body.action), todas con { token }:
+//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
 //   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro
 //   "anular"  { id }                      -> deshace una ilegal o irregularidad
+// y las que NO hablan con chess-results (ni necesitan la clave), para que el árbitro
+// reciba lo que le manda la organización aunque chess-results esté caído:
+//   "avisos"  {}                          -> mensajes sin leer de la organización y el estado de su pedido de ayuda
+//   "ayuda"   { mesa?, texto? }           -> pide al árbitro principal (le llega un aviso a la cuenta principal)
+//   "leido"   { id }                      -> marca un mensaje de la organización como leído («Entendido»)
+//   "nombre"  { nombre }                  -> el árbitro «por definir» pone su nombre (una sola vez)
 //
 // verify_jwt en false.
 
@@ -95,7 +101,7 @@ Deno.serve(async (req) => {
   // La asignación: de quién es el token, qué torneo y qué mesas.
   const { data: a } = await servicio
     .from("centroamericano_asignaciones")
-    .select("id, tnr, arbitro, mesa_desde, mesa_hasta, vence, revocada, centroamericano_torneos(nombre, categoria, rama)")
+    .select("id, tnr, arbitro, nombrado, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, centroamericano_torneos(nombre, categoria, rama)")
     .eq("token", token)
     .maybeSingle();
   if (!a) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
@@ -105,10 +111,31 @@ Deno.serve(async (req) => {
   const enRango = (mesa: number) => Number.isInteger(mesa) && mesa >= a.mesa_desde && mesa <= a.mesa_hasta;
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string } | null;
 
-  // Con qué código y qué clave se entra: el del torneo, o el del GRUPO si están ligados.
-  const { data: acc } = await servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr });
+  // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre"];
+  const { data: acc } = DE_AVISOS.includes(String(cuerpo.action)) ? { data: null } : await servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr });
   const acceso = (Array.isArray(acc) ? acc[0] : acc) as { acceso: string; sid: string } | null;
-  if (!acceso) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
+  if (!acceso && !DE_AVISOS.includes(String(cuerpo.action))) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
+
+  // Lo que la organización le mandó (sin leer) y cómo va su último pedido de ayuda.
+  const avisosDe = async () => {
+    const { data } = await servicio.from("centroamericano_avisos").select("id, creado, de, mesa, texto, estado, atendido_en, leido_en").eq("asignacion_id", a.id).order("creado", { ascending: true }).range(0, 199);
+    const filas = (data ?? []) as { id: string; creado: string; de: string; mesa: number | null; texto: string; estado: string; atendido_en: string | null; leido_en: string | null }[];
+    const pedidos = filas.filter((f) => f.de === "arbitro");
+    const reciente = [...pedidos].reverse().find((f) => f.estado === "abierto" || (f.atendido_en && Date.now() - new Date(f.atendido_en).getTime() < 15 * 60_000)) ?? null;
+    return {
+      nombrado: a.nombrado, arbitro: a.arbitro,
+      mensajes: filas.filter((f) => f.de === "organizacion" && !f.leido_en).map((f) => ({ id: f.id, creado: f.creado, texto: f.texto })),
+      ayuda: reciente ? { id: reciente.id, creado: reciente.creado, mesa: reciente.mesa, texto: reciente.texto, estado: reciente.estado, atendido_en: reciente.atendido_en } : null,
+      abiertas: pedidos.filter((f) => f.estado === "abierto").map((f) => f.mesa),
+    };
+  };
+  // Cuándo se usó por última vez (para que la organización vea quién está conectado).
+  const visto = () => {
+    if (!a.ultimo_uso || Date.now() - new Date(a.ultimo_uso).getTime() > 20_000) {
+      servicio.from("centroamericano_asignaciones").update({ ultimo_uso: new Date().toISOString() }).eq("id", a.id).then(() => {});
+    }
+  };
 
   // Las líneas del registro de una partida o de toda la ronda dentro del rango.
   const registroDe = async (ronda: number, mesa?: number): Promise<Fila[]> => {
@@ -120,12 +147,13 @@ Deno.serve(async (req) => {
 
   try {
     if (cuerpo.action === "leer") {
-      const leida = await leerRonda(acceso.acceso, acceso.sid, a.tnr);
+      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
       if ("error" in leida) return json({ error: leida.error }, leida.estado);
       const p = leida.pantalla;
       const filas = await registroDe(p.ronda);
-      servicio.from("centroamericano_asignaciones").update({ ultimo_uso: new Date().toISOString() }).eq("id", a.id).then(() => {});
+      visto();
       return json({
+        ...(await avisosDe()),
         arbitro: a.arbitro, tnr: a.tnr, torneo: torneoInfo?.nombre ?? p.torneo, categoria: torneoInfo?.categoria ?? "", rama: torneoInfo?.rama ?? "",
         ronda: p.ronda, desde: a.mesa_desde, hasta: a.mesa_hasta, vence: a.vence,
         mesas: p.mesas.filter((m) => enRango(m.mesa)).map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor })),
@@ -147,7 +175,7 @@ Deno.serve(async (req) => {
       const fuera = cambios.find((c) => !enRango(c.mesa));
       if (fuera) return json({ error: "La mesa " + fuera.mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + "). No se guardó nada." }, 403);
 
-      const res = await guardarYComprobar(acceso.acceso, acceso.sid, a.tnr, ronda, cambios);
+      const res = await guardarYComprobar(acceso!.acceso, acceso!.sid, a.tnr, ronda, cambios);
       if (res.estado !== 200 || !("cuerpo" in res)) return json({ error: (res as { error: string }).error }, res.estado);
 
       // Al registro entra solo lo que chess-results confirmó al volver a leerlo.
@@ -182,7 +210,7 @@ Deno.serve(async (req) => {
       if ((tipo === "incidencia" || tipo === "nota") && !texto) return json({ error: "Cuenta qué pasó." }, 400);
 
       // La ronda y el jugador salen de chess-results, no de lo que mande la pantalla.
-      const leida = await leerRonda(acceso.acceso, acceso.sid, a.tnr);
+      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
       if ("error" in leida) return json({ error: leida.error }, leida.estado);
       const p = leida.pantalla;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
@@ -215,6 +243,43 @@ Deno.serve(async (req) => {
       if (error) { console.error("centroamericano-mesa: anular", a.tnr, error.code); return json({ error: "No se pudo anular. Intenta de nuevo." }, 500); }
       const marca = marcasDe(await registroDe(f.ronda, f.mesa))[f.mesa + "|" + f.color] ?? { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
+    }
+
+    if (cuerpo.action === "avisos") {
+      visto();
+      return json({ ok: true, ...(await avisosDe()) });
+    }
+
+    if (cuerpo.action === "ayuda") {
+      const mesa = cuerpo.mesa == null || cuerpo.mesa === "" ? null : Number(cuerpo.mesa);
+      const texto = String(cuerpo.texto ?? "").trim().slice(0, 500);
+      if (mesa != null && !enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
+      // Un pedido por mesa a la vez: si ya hay uno abierto para esa mesa, no se repite (ni se llena de avisos la cuenta principal).
+      const { data: abiertos } = await servicio.from("centroamericano_avisos").select("id, mesa, creado").eq("asignacion_id", a.id).eq("de", "arbitro").eq("estado", "abierto");
+      const igual = (abiertos ?? []).find((f) => (f.mesa ?? null) === mesa);
+      if (igual) return json({ ok: true, ya: true, id: igual.id, creado: igual.creado });
+      if ((abiertos ?? []).length >= 5) return json({ error: "Ya tienes 5 pedidos abiertos: la organización los está atendiendo." }, 429);
+      const { data: nuevo, error } = await servicio.from("centroamericano_avisos").insert({ de: "arbitro", asignacion_id: a.id, mesa, texto }).select("id, creado").single();
+      if (error || !nuevo) { console.error("centroamericano-mesa: ayuda", a.tnr, error?.code); return json({ error: "No se pudo avisar. Intenta de nuevo." }, 500); }
+      return json({ ok: true, id: nuevo.id, creado: nuevo.creado });
+    }
+
+    if (cuerpo.action === "leido") {
+      const id = String(cuerpo.id ?? "");
+      if (!/^[0-9a-f-]{36}$/.test(id)) return json({ error: "Aviso no válido." }, 400);
+      const { data, error } = await servicio.from("centroamericano_avisos").update({ leido_en: new Date().toISOString() }).eq("id", id).eq("asignacion_id", a.id).eq("de", "organizacion").is("leido_en", null).select("id");
+      if (error) { console.error("centroamericano-mesa: leido", a.tnr, error.code); return json({ error: "No se pudo marcar. Intenta de nuevo." }, 500); }
+      return json({ ok: true, marcados: (data ?? []).length });
+    }
+
+    if (cuerpo.action === "nombre") {
+      const nombre = String(cuerpo.nombre ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+      if (!nombre) return json({ error: "Escribe tu nombre." }, 400);
+      // Solo se pone una vez: después, cambiarlo es cosa de la organización (el nombre sale en el registro).
+      if (a.nombrado) return json({ error: "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización." }, 409);
+      const { error } = await servicio.from("centroamericano_asignaciones").update({ arbitro: nombre, nombrado: true }).eq("id", a.id).eq("nombrado", false);
+      if (error) { console.error("centroamericano-mesa: nombre", a.tnr, error.code); return json({ error: "No se pudo guardar tu nombre. Intenta de nuevo." }, 500); }
+      return json({ ok: true, arbitro: nombre });
     }
 
     return json({ error: "Acción desconocida." }, 400);

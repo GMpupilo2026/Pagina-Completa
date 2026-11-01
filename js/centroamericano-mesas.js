@@ -72,7 +72,7 @@
 
   // El mensaje que se manda por WhatsApp junto con el enlace.
   function textoWhatsapp(a, torneo, enlace) {
-    return "Hola " + a.arbitro + ": tus mesas del Centroamericano (" + torneo + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta + "). " +
+    return (a.nombrado === false ? "Hola: " : "Hola " + a.arbitro + ": ") + "tus mesas del Centroamericano (" + torneo + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta + "). " +
       "Abre este enlace para anotar los resultados: " + enlace;
   }
 
@@ -114,7 +114,73 @@
     return [...por.values()].sort((a, b) => b.ilegales - a.ilegales || b.irregularidades - a.irregularidades || a.mesa - b.mesa);
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados };
+  // Repartir `total` mesas entre `n` árbitros por definir: rangos seguidos y parejos; si
+  // sobran, las primeras reciben una más. Con más árbitros que mesas, los que sobran no
+  // reciben nada (no se les crea enlace). Devuelve [{desde, hasta}].
+  function repartirMesas(total, n, desde1 = 1) {
+    total = Math.floor(total); n = Math.floor(n);
+    if (!(total >= 1) || !(n >= 1)) return [];
+    const quienes = Math.min(n, total), base = Math.floor(total / quienes), extra = total % quienes;
+    const rangos = [];
+    let sigue = desde1;
+    for (let i = 0; i < quienes; i++) {
+      const largo = base + (i < extra ? 1 : 0);
+      rangos.push({ desde: sigue, hasta: sigue + largo - 1 });
+      sigue += largo;
+    }
+    return rangos;
+  }
+
+  // «1-15», «1 a 15», «7» -> {desde, hasta}; null si no se entiende o va al revés.
+  function leerRango(texto) {
+    const m = String(texto || "").trim().match(/^(\d{1,4})\s*(?:-|–|a|al|hasta)?\s*(\d{1,4})?$/i);
+    if (!m) return null;
+    const desde = parseInt(m[1], 10), hasta = m[2] ? parseInt(m[2], 10) : desde;
+    if (desde < 1 || hasta < desde || hasta > 9999) return null;
+    return { desde, hasta };
+  }
+
+  // «Árbitro 3»: el nombre de un enlace creado sin saber quién lo va a usar. El número sigue
+  // al más alto que ya haya en el torneo (los enlaces apagados también cuentan, para no repetir).
+  function nombrePorDefinir(existentes) {
+    let mayor = 0;
+    for (const a of existentes || []) {
+      const m = /^Árbitro (\d+)$/.exec(String(a.arbitro || ""));
+      if (m) mayor = Math.max(mayor, parseInt(m[1], 10));
+    }
+    return "Árbitro " + (mayor + 1);
+  }
+
+  // Si un enlace se abrió hace poco: «en línea» (el árbitro tiene la página abierta; la función
+  // anota el uso cada 20 s como mucho).
+  const enLinea = (a, ahora) => !!a.ultimo_uso && (ahora.getTime() - new Date(a.ultimo_uso).getTime()) < 2 * 60 * 1000;
+
+  // «hace 3 min», para los pedidos de ayuda.
+  function hace(desde, ahora) {
+    const s = Math.max(0, Math.round((ahora.getTime() - new Date(desde).getTime()) / 1000));
+    if (s < 45) return "hace un momento";
+    const min = Math.round(s / 60);
+    if (min < 60) return "hace " + min + " min";
+    const h = Math.floor(min / 60);
+    return "hace " + h + " h" + (min % 60 ? " " + (min % 60) + " min" : "");
+  }
+
+  // Los avisos de la organización son una fila por enlace con el mismo texto y la misma hora:
+  // para la lista se juntan en un solo envío, con quién ya lo leyó y quién no.
+  function enviosAgrupados(filas, nombreDe) {
+    const por = new Map();
+    for (const f of filas) {
+      if (f.de !== "organizacion") continue;
+      const k = f.creado + "|" + f.texto;
+      const e = por.get(k) || { creado: f.creado, texto: f.texto, total: 0, leidos: 0, sinLeer: [] };
+      e.total++;
+      if (f.leido_en) e.leidos++; else e.sinLeer.push(nombreDe(f.asignacion_id));
+      por.set(k, e);
+    }
+    return [...por.values()].sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
+  }
+
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

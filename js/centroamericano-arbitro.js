@@ -1,5 +1,5 @@
 /* El código de centroamericano-arbitro.html: «Mis mesas» de un árbitro del
-   Centroamericano 2026.
+   Centroamericano 2026, hecho para una TABLET (también sirve en el celular).
 
    El árbitro entra con el enlace (QR) que le dio la organización, SIN CUENTA: el
    token va en lo que sigue al «#» de la dirección (así no viaja en las visitas ni
@@ -14,15 +14,24 @@
    pierde (art. 7.5.5), y la página solo avisa: el árbitro decide y guarda el
    resultado. Un toque por error se deshace con «Anular».
 
+   Hablar con la organización: «Pedir al árbitro principal» (general o en una mesa)
+   le llega como aviso a la cuenta principal; lo que la organización le manda sale
+   arriba, pegado, con sonido y vibración, hasta que toca «Entendido». Los avisos
+   van por la base, no por chess-results: llegan cada pocos segundos aunque
+   chess-results esté caído. Un enlace «por definir» pide el nombre una sola vez. La
+   pantalla de la tablet se mantiene encendida (Wake Lock, si el aparato lo tiene).
+
    Todo texto que viene de chess-results o de la gente va por textContent.
-   Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md. */
+   Ver «Mesas de los árbitros del Centroamericano» y «Avisos y árbitros por
+   definir» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     const C = window.CentroamericanoMesas;
     const M = window.MesaArbitro;
     const $ = (id) => document.getElementById(id);
     const avisar = (texto, error) => Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
-    const REFRESCO_MS = 45000;
+    const REFRESCO_MS = 45000; // las mesas (hablan con chess-results)
+    const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
 
     let estado = null; // lo que contestó «leer»
     let elegido = {}; // mesa → resultado elegido, todavía sin guardar
@@ -30,6 +39,14 @@
     let mensajes = {}; // mesa → { ok, texto } de lo último que pasó ahí
     let anuladas = new Set();
     let leyendo = false;
+    let avisosVivo = true; // se apaga si el enlace ya no sirve
+    let nombrado = true;
+    let pendientes = []; // mensajes de la organización sin leer
+    let vistosMensajes = new Set(); // los que ya sonaron
+    let ayuda = null; // el último pedido de ayuda (abierto o recién atendido)
+    let abiertas = []; // mesas (o null = general) con un pedido abierto
+    let audio = null;
+    let bloqueo = null;
 
     const token = () => (location.hash || "").replace(/^#(t=)?/, "").trim();
 
@@ -65,6 +82,34 @@
     const marcaDe = (mesa, color) => (estado.marcas || {})[clave(mesa, color)] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
     const hora = (x) => window.HoraCR.hora(x);
+
+    // ------------------------------------------------------------- sonido, vibración y pantalla encendida
+
+    // El navegador solo deja sonar después de un toque: se prepara en el primero.
+    function prepararAudio() {
+        if (audio) return;
+        try { const A = window.AudioContext || window.webkitAudioContext; if (A) audio = new A(); } catch (e) { audio = null; }
+    }
+    function pitar() {
+        try {
+            if (!audio) return;
+            if (audio.state === "suspended") audio.resume();
+            [0, 0.28].forEach((t) => {
+                const o = audio.createOscillator(), g = audio.createGain();
+                o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.25;
+                o.connect(g); g.connect(audio.destination);
+                o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.2);
+            });
+        } catch (e) { /* sin sonido */ }
+        try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ }
+    }
+    async function mantenerEncendida() {
+        try {
+            if (!("wakeLock" in navigator) || document.hidden) return;
+            bloqueo = await navigator.wakeLock.request("screen");
+            bloqueo.addEventListener("release", () => { bloqueo = null; });
+        } catch (e) { bloqueo = null; /* sin pantalla encendida: no pasa nada */ }
+    }
 
     // ------------------------------------------------------------- pintar
 
@@ -116,6 +161,7 @@
         const est = C.estadoMesa(m, estado.marcas, elegido[m.mesa]);
         const ocupada = ocupadas.has(m.mesa);
         const msg = mensajes[m.mesa];
+        const pedida = abiertas.includes(m.mesa);
         const sel = el("select", {
             id: "res-" + m.mesa, class: "cam-select", "data-mesa": String(m.mesa), "aria-label": "Resultado de la mesa " + m.mesa, disabled: ocupada,
             onchange: (e) => { elegido[m.mesa] = e.target.value; delete mensajes[m.mesa]; pintar(); const n = $("res-" + m.mesa); if (n) n.focus(); },
@@ -123,8 +169,12 @@
             M.RESULTADOS.filter((r) => r.valor !== "0" && !(r.valor === "D" && m.valor === "0")).map((r) => el("option", { value: r.valor, texto: r.texto })));
         sel.value = elegido[m.mesa] || "";
         const pendiente = elegido[m.mesa] != null && elegido[m.mesa] !== "" && elegido[m.mesa] !== m.valor;
-        return el("article", { class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "aria-label": "Mesa " + m.mesa },
-            el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }), el("span", { class: "cam-estado", texto: textoEstado(m, est) })),
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, tabindex: "-1", "aria-label": "Mesa " + m.mesa },
+            el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
+                el("div", { class: "cam-mesa-cabeza-acciones" },
+                    el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste ayuda en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa, onclick: () => pedirAyuda(m.mesa) },
+                        el("span", { "aria-hidden": "true", texto: "🆘 " }), pedida ? "Ayuda pedida" : "Ayuda"),
+                    el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
             bandas(m),
             bloqueJugador(m, "blancas"),
             bloqueJugador(m, "negras"),
@@ -153,11 +203,24 @@
         }
     }
 
+    // Las mesas van en orden de número; «Solo las que faltan» esconde las que ya tienen resultado.
+    function mesasVisibles() {
+        const faltan = $("solo-faltan").checked;
+        return estado.mesas.slice().sort((a, b) => a.mesa - b.mesa).filter((m) => !faltan || m.valor === "0" || elegido[m.mesa]);
+    }
+
+    function pintarProgreso() {
+        const con = estado.mesas.filter((m) => m.valor !== "0").length;
+        const total = estado.mesas.length;
+        $("progreso").textContent = total ? "Con resultado: " + con + " de " + total + (con === total ? " — ¡todas!" : " · faltan " + (total - con)) : "Todavía no hay mesas en esta ronda.";
+    }
+
     function pintar() {
         if (!estado) return;
-        const lista = $("lista");
-        lista.replaceChildren(...estado.mesas.map(tarjeta));
+        const visibles = mesasVisibles();
+        $("lista").replaceChildren(...visibles.map(tarjeta));
         $("sin-mesas").hidden = estado.mesas.length > 0;
+        pintarProgreso();
         pintarAnotado();
     }
 
@@ -178,6 +241,107 @@
         $("problema").hidden = false;
     }
 
+    // ------------------------------------------------------------- avisos de la organización y pedidos de ayuda
+
+    function pintarMensajes() {
+        const caja = $("mensajes");
+        caja.hidden = pendientes.length === 0;
+        caja.replaceChildren(...pendientes.map((m) => el("article", { class: "cam-mensaje", "data-id": m.id, role: "alert" },
+            el("p", { class: "cam-mensaje-de", texto: "El árbitro principal te avisa · " + hora(m.creado) }),
+            el("p", { class: "cam-mensaje-texto", texto: m.texto }),
+            el("button", { type: "button", class: "cam-btn", "data-accion": "entendido", onclick: () => entendido(m.id) }, "Entendido"))));
+    }
+
+    function pintarAyuda() {
+        const caja = $("estado-ayuda");
+        if (!ayuda) { caja.hidden = true; caja.dataset.estado = ""; return; }
+        const donde = ayuda.mesa != null ? " en la mesa " + ayuda.mesa : "";
+        caja.hidden = false;
+        caja.dataset.estado = ayuda.estado;
+        caja.textContent = ayuda.estado === "abierto"
+            ? "🆘 Pediste al árbitro principal" + donde + " a las " + hora(ayuda.creado) + ". Ya le llegó el aviso; espera, va para allá."
+            : "✓ El árbitro principal ya atendió tu pedido" + donde + " (" + hora(ayuda.atendido_en || ayuda.creado) + ").";
+    }
+
+    function pintarNombre() {
+        $("nombre-caja").hidden = nombrado;
+    }
+
+    // Lo que contesta «leer» o «avisos»: el nombre, los mensajes sin leer y el pedido de ayuda.
+    function aplicarAvisos(d) {
+        nombrado = d.nombrado !== false;
+        if (d.arbitro && estado) { estado.arbitro = d.arbitro; $("d-arbitro").textContent = d.arbitro; }
+        pendientes = d.mensajes || [];
+        const nuevos = pendientes.filter((m) => !vistosMensajes.has(m.id));
+        nuevos.forEach((m) => vistosMensajes.add(m.id));
+        if (nuevos.length) pitar();
+        const estabaAbierta = ayuda && ayuda.estado === "abierto";
+        ayuda = d.ayuda || null;
+        if (estabaAbierta && ayuda && ayuda.estado === "atendido") pitar();
+        abiertas = d.abiertas || (ayuda && ayuda.estado === "abierto" ? [ayuda.mesa] : []);
+        pintarMensajes();
+        pintarAyuda();
+        pintarNombre();
+        if (estado) pintar();
+    }
+
+    async function consultarAvisos() {
+        if (!avisosVivo) return;
+        try { aplicarAvisos(await invocar("avisos")); }
+        catch (e) { if (e.http === 404 || e.http === 410) avisosVivo = false; /* sin red: se vuelve a intentar */ }
+    }
+
+    async function entendido(id) {
+        const antes = pendientes;
+        pendientes = pendientes.filter((m) => m.id !== id);
+        pintarMensajes();
+        try { await invocar("leido", { id }); }
+        catch (e) { pendientes = antes; pintarMensajes(); avisar(e.message, true); }
+    }
+
+    async function pedirAyuda(mesa) {
+        prepararAudio();
+        let texto = "";
+        if (mesa == null) {
+            const nota = await Avisos.pedir("Se le avisa al árbitro principal ahora mismo. Si quieres, dile qué pasa.", { titulo: "Pedir al árbitro principal", etiqueta: "Qué pasa (opcional)", aceptar: "Pedir ayuda" });
+            if (nota === null) return;
+            texto = String(nota).trim();
+        }
+        try {
+            const d = await invocar("ayuda", { mesa, texto });
+            ayuda = { id: d.id, creado: d.creado, mesa, texto, estado: "abierto", atendido_en: null };
+            if (!abiertas.includes(mesa)) abiertas = abiertas.concat([mesa]);
+            pintarAyuda();
+            if (estado) pintar();
+            avisar(d.ya ? "Ya habías pedido ayuda" + (mesa != null ? " en la mesa " + mesa : "") + ": el árbitro principal ya lo sabe." : "Aviso enviado al árbitro principal.");
+        } catch (e) { avisar(e.message, true); }
+    }
+
+    async function guardarNombre() {
+        const nombre = $("nombre-campo").value.trim();
+        if (!nombre) { avisar("Escribe tu nombre.", true); return; }
+        $("nombre-guardar").disabled = true;
+        try {
+            const d = await invocar("nombre", { nombre });
+            nombrado = true;
+            if (estado) estado.arbitro = d.arbitro;
+            $("d-arbitro").textContent = d.arbitro;
+            pintarNombre();
+            avisar("Listo, " + d.arbitro + ".");
+        } catch (e) { avisar(e.message, true); }
+        finally { $("nombre-guardar").disabled = false; }
+    }
+
+    function irAMesa() {
+        const n = parseInt($("ir-mesa").value, 10);
+        if (!Number.isFinite(n)) return;
+        const m = estado && estado.mesas.find((x) => x.mesa === n);
+        if (!m) { avisar("La mesa " + n + " no es de tus mesas (" + (estado ? estado.desde + " a " + estado.hasta : "") + ").", true); return; }
+        if ($("solo-faltan").checked && m.valor !== "0") { $("solo-faltan").checked = false; pintar(); }
+        const t = $("mesa-" + n);
+        if (t) { t.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); t.focus({ preventScroll: true }); }
+    }
+
     // ------------------------------------------------------------- leer
 
     async function leer(silencioso) {
@@ -195,9 +359,11 @@
             $("cargando").hidden = true;
             $("app").hidden = false;
             pintarCabecera();
+            aplicarAvisos(d);
             pintar();
             $("actualizado").textContent = "Actualizado a las " + hora(d.leido_en);
         } catch (e) {
+            if (e.http === 404 || e.http === 410) avisosVivo = false;
             if (!estado) problema(e.http === 404 || e.http === 410 ? "Este enlace ya no sirve" : "No se pudo abrir tus mesas", e.message, !(e.http === 404 || e.http === 410));
             else if (!silencioso) avisar(e.message, true);
             else $("actualizado").textContent = "No se pudo actualizar (se muestra lo último que se leyó)";
@@ -330,10 +496,25 @@
             problema("Falta tu enlace", "Esta página se abre con el enlace o el QR que te dio la organización. Pídelo de nuevo o escanéalo otra vez.", false);
             return;
         }
-        $("actualizar").addEventListener("click", () => leer(false));
+        // El primer toque prepara el sonido de los avisos.
+        document.addEventListener("pointerdown", prepararAudio, { once: true });
+        $("actualizar").addEventListener("click", () => { prepararAudio(); leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
+        $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
+        $("nombre-guardar").addEventListener("click", guardarNombre);
+        $("nombre-campo").addEventListener("keydown", (e) => { if (e.key === "Enter") guardarNombre(); });
+        $("ir-mesa").addEventListener("change", irAMesa);
+        $("ir-mesa").addEventListener("keydown", (e) => { if (e.key === "Enter") irAMesa(); });
+        $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
-        document.addEventListener("visibilitychange", () => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); });
+        setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) return;
+            mantenerEncendida();
+            consultarAvisos();
+            if (estado && sinNadaPendiente()) leer(true);
+        });
+        mantenerEncendida();
         leer(false);
     }
 

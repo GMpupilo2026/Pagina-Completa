@@ -51,7 +51,11 @@
         </div>
     </section>
 
-    <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main id="main-content" class="cam-principal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Lo que manda la organización: arriba de todo y pegado, para que no se pase por alto.
+             Llega aunque chess-results esté caído (va por la base). -->
+        <section id="mensajes" class="cam-mensajes" aria-label="Avisos de la organización" aria-live="assertive" hidden></section>
+
         <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Entrando a tus mesas…</p></div>
 
         <div id="problema" class="cam-tarjeta max-w-2xl mx-auto my-10 text-center" hidden>
@@ -62,12 +66,32 @@
         </div>
 
         <div id="app" hidden>
+            <!-- El árbitro «por definir» pone su nombre una vez: sale en lo que se anota. -->
+            <section id="nombre-caja" class="cam-tarjeta mb-4" hidden aria-labelledby="nombre-titulo">
+                <h2 id="nombre-titulo" class="font-bold text-lg">¿Cómo te llamas?</h2>
+                <p class="text-sm mt-1">La organización te dio este enlace sin nombre. Ponlo aquí una sola vez: sale en lo que anotes.</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <label for="nombre-campo" class="sr-only">Tu nombre</label>
+                    <input id="nombre-campo" type="text" maxlength="80" autocomplete="name" class="cam-campo flex-1 min-w-[12rem]" placeholder="Nombre y apellido">
+                    <button type="button" id="nombre-guardar" class="cam-btn">Guardar mi nombre</button>
+                </div>
+            </section>
+
+            <!-- La barra de la tablet: cuántas llevas, a dónde ir, qué falta y pedir ayuda. -->
+            <section class="cam-barra" aria-label="Tus mesas de un vistazo">
+                <p id="progreso" class="cam-progreso" role="status"></p>
+                <div class="cam-barra-controles">
+                    <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
+                    <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
+                    <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Pedir al árbitro principal</button>
+                </div>
+                <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
+            </section>
+
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="cac-seccion text-xl">Las mesas de la ronda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <div class="flex flex-wrap items-center gap-3">
-                    <p id="actualizado" class="text-sm" role="status"></p>
-                    <button type="button" id="actualizar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar</button>
-                </div>
+                <p id="actualizado" class="text-sm" role="status"></p>
             </div>
             <p id="sin-mesas" class="cam-tarjeta" hidden>Todavía no hay mesas tuyas en esta ronda. Cuando la organización empareje y suba la ronda a chess-results, toca «Actualizar».</p>
             <div id="lista" class="cam-lista"></div>
@@ -92,6 +116,7 @@
     <footer class="cac-academia">
         <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm text-brand-200">
             <p>Un servicio de la Academia Ajedrez Integral para la organización del Centroamericano. Guarda este enlace: es tuyo y vence solo.</p>
+            <p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin -->
         </div>
     </footer>
 

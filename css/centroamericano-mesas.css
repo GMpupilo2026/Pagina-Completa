@@ -195,3 +195,102 @@
   body.cam-imprime-qr .cam-asignacion { break-inside: avoid; border: 2px solid #000; background: #fff; color: #000; }
   body.cam-imprime-qr .cam-qr { border-color: #000; }
 }
+
+/* ===== La tablet: la usan los árbitros en la mesa, con las manos ocupadas ===== */
+/* Botones y campos más grandes donde se toca con el dedo (tablet y celular). */
+@media (pointer: coarse) {
+  .cam-btn { min-height: 48px; }
+  .cam-select, .cam-campo { min-height: 48px; }
+  .cam-anular { min-height: 44px; }
+}
+/* De 768 px para arriba (tablet vertical): letra más grande y dos columnas. */
+@media (min-width: 768px) {
+  .cam-principal { font-size: 1.0625rem; }
+  .cam-nombre { font-size: 1.2rem; }
+  .cam-mesa-numero { font-size: 1.35rem; }
+  .cam-btn { font-size: 1.02rem; padding-left: 1.1rem; padding-right: 1.1rem; }
+  .cam-mesa-cabeza { padding: 0.65rem 1.1rem; }
+  .cam-jugador, .cam-resultado { padding-left: 1.1rem; padding-right: 1.1rem; }
+}
+/* La tablet de lado (1100 px o más): tres tarjetas por fila ya lo hace .cam-lista. */
+
+/* ===== La barra de un vistazo (se queda arriba al bajar) ===== */
+.cam-barra {
+  position: sticky; top: 0; z-index: 30;
+  background: #fff; color: var(--cac-morado-hondo);
+  border: 2px solid #dfe0f7; border-radius: 1rem;
+  padding: 0.7rem 0.9rem; margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgb(30 36 83 / 0.12);
+}
+.dark .cam-barra { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-progreso { font-weight: 800; font-size: 1.05rem; }
+.cam-barra-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.5rem; }
+.cam-ir .cam-campo { width: 10.5rem; }
+.cam-check { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; min-height: 44px; }
+.cam-estado-ayuda { margin-top: 0.6rem; padding: 0.5rem 0.8rem; border-radius: 0.7rem; font-weight: 700; }
+.cam-estado-ayuda[data-estado="abierto"] { background: var(--cac-naranja); color: var(--cac-morado-hondo); }
+.cam-estado-ayuda[data-estado="atendido"] { background: var(--cac-verde); color: #fff; }
+
+/* ===== Lo que manda la organización: arriba, pegado y con «Entendido» ===== */
+.cam-mensajes { position: sticky; top: 0; z-index: 40; display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cam-mensaje {
+  background: var(--cac-morado-hondo); color: #fff;
+  border-left: 0.5rem solid var(--cac-rojo); border-radius: 0.9rem;
+  padding: 0.8rem 1rem; box-shadow: 0 6px 18px rgb(30 36 83 / 0.35);
+}
+.cam-mensaje-de { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #dfe0f7; }
+.cam-mensaje-texto { font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin-top: 0.2rem; overflow-wrap: anywhere; }
+.cam-mensaje .cam-btn { margin-top: 0.6rem; background: #fff; color: var(--cac-morado-hondo); border-color: #fff; }
+.cam-mensaje .cam-btn:hover:not(:disabled) { background: #dfe0f7; border-color: #dfe0f7; }
+
+/* El pedido de ayuda de una mesa, en su tarjeta. */
+.cam-ayuda-mesa { background: rgb(255 255 255 / 0.18); color: #fff; border: 2px solid rgb(255 255 255 / 0.7); min-height: 40px; padding: 0.15rem 0.7rem; font-size: 0.85rem; }
+.cam-ayuda-mesa:hover:not(:disabled) { background: #fff; color: var(--cac-morado); border-color: #fff; }
+.cam-ayuda-mesa[data-pedida="si"] { background: var(--cac-naranja); color: var(--cac-morado-hondo); border-color: var(--cac-naranja); }
+.cam-mesa-cabeza-acciones { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ===== La organización: pestañas, contador de pedidos y listas ordenadas ===== */
+.cam-estado-general {
+  position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;
+  background: #fff; color: var(--cac-morado-hondo); border: 2px solid #dfe0f7; border-radius: 1rem;
+  padding: 0.6rem 0.9rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgb(30 36 83 / 0.12);
+}
+.dark .cam-estado-general { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-estado-general strong { font-weight: 800; }
+.cam-pestanas { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.cam-pestana {
+  display: inline-flex; align-items: center; gap: 0.45rem; min-height: 48px; padding: 0.4rem 1rem; border-radius: 0.9rem;
+  border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado); font-weight: 800; cursor: pointer;
+}
+.cam-pestana[aria-selected="true"] { background: var(--cac-morado); color: #fff; }
+.cam-pestana:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.dark .cam-pestana { background: transparent; color: #b8bbf2; border-color: #b8bbf2; }
+.dark .cam-pestana[aria-selected="true"] { background: var(--cac-morado); color: #fff; border-color: var(--cac-morado); }
+.cam-contador { display: inline-block; min-width: 1.6rem; text-align: center; font-size: 0.85rem; font-weight: 800; background: var(--cac-rojo); color: #fff; border-radius: 9999px; padding: 0 0.45rem; }
+.cam-contador[hidden] { display: none; }
+
+.cam-pedido { border: 2px solid var(--cac-rojo); border-radius: 1rem; padding: 0.8rem 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-pedido { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-pedido[data-estado="atendido"] { border-color: var(--cac-verde); opacity: 0.8; }
+.cam-grupo-torneo { margin-top: 1.1rem; }
+.cam-grupo-torneo > h3 { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 800; font-size: 1.1rem; color: var(--cac-morado); border-bottom: 3px solid var(--cac-morado); padding-bottom: 0.25rem; margin-bottom: 0.6rem; }
+.dark .cam-grupo-torneo > h3 { color: #b8bbf2; border-bottom-color: #b8bbf2; }
+.cam-asignaciones-lista { display: grid; gap: 0.7rem; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .cam-asignaciones-lista { grid-template-columns: repeat(2, 1fr); } }
+.cam-conectado { font-size: 0.85rem; font-weight: 700; }
+.cam-conectado[data-en-linea="si"] { color: var(--cac-verde); }
+.dark .cam-conectado[data-en-linea="si"] { color: #9be0bb; }
+
+.cam-clave-grupo { border: 3px solid var(--cac-morado); border-radius: 1.25rem; padding: 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-clave-grupo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-estado-torneos { display: grid; gap: 0.5rem; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .cam-estado-torneos { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) { .cam-estado-torneos { grid-template-columns: repeat(4, 1fr); } }
+.cam-estado-torneo { border: 2px solid #dfe0f7; border-radius: 0.9rem; padding: 0.55rem 0.75rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-estado-torneo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-estado-torneo[data-clave="si"] { border-color: var(--cac-verde); }
+.dark .cam-estado-torneo[data-clave="si"] { border-color: #9be0bb; }
+.cam-estado-torneo[data-clave="no"] { border-color: var(--cac-rojo); }
+
+.cam-acciones-sin-margen { margin-top: 0; }
+.cam-chip-al-lado { margin-left: 0.5rem; }

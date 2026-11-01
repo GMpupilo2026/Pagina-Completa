@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101050251
+# al-dia-con: 20261101055014
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -44,6 +44,7 @@ tabla  bromas_bloqueos  rls=true
 tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  centroamericano_asignaciones  rls=true
+tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_registro  rls=true
 tabla  centroamericano_torneos  rls=true
 tabla  certificados  rls=true
@@ -537,11 +538,23 @@ columna  centroamericano_asignaciones.creada_por  uuid
 columna  centroamericano_asignaciones.id  uuid
 columna  centroamericano_asignaciones.mesa_desde  integer
 columna  centroamericano_asignaciones.mesa_hasta  integer
+columna  centroamericano_asignaciones.nombrado  boolean
 columna  centroamericano_asignaciones.revocada  boolean
 columna  centroamericano_asignaciones.tnr  text
 columna  centroamericano_asignaciones.token  text
 columna  centroamericano_asignaciones.ultimo_uso  timestamp with time zone
 columna  centroamericano_asignaciones.vence  timestamp with time zone
+columna  centroamericano_avisos.asignacion_id  uuid
+columna  centroamericano_avisos.atendido_en  timestamp with time zone
+columna  centroamericano_avisos.atendido_por  uuid
+columna  centroamericano_avisos.creado  timestamp with time zone
+columna  centroamericano_avisos.creado_por  uuid
+columna  centroamericano_avisos.de  text
+columna  centroamericano_avisos.estado  text
+columna  centroamericano_avisos.id  uuid
+columna  centroamericano_avisos.leido_en  timestamp with time zone
+columna  centroamericano_avisos.mesa  integer
+columna  centroamericano_avisos.texto  text
 columna  centroamericano_registro.anterior  text
 columna  centroamericano_registro.anula  uuid
 columna  centroamericano_registro.arbitro  text
@@ -2219,6 +2232,7 @@ funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
+funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true
@@ -2788,6 +2802,9 @@ politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  centroamericano_asignaciones  centroamericano_asignaciones_apagar  UPDATE
 politica  centroamericano_asignaciones  centroamericano_asignaciones_crear  INSERT
 politica  centroamericano_asignaciones  centroamericano_asignaciones_ver  SELECT
+politica  centroamericano_avisos  centroamericano_avisos_atender  UPDATE
+politica  centroamericano_avisos  centroamericano_avisos_enviar  INSERT
+politica  centroamericano_avisos  centroamericano_avisos_ver  SELECT
 politica  centroamericano_registro  centroamericano_registro_ver  SELECT
 politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
 politica  certificados  certificados_lee  SELECT
@@ -3248,6 +3265,7 @@ trigger  arbitros_cr_normas_revision  consentimiento_fijo
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
+trigger  centroamericano_avisos  atendido
 trigger  centroamericano_torneos  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
@@ -3424,6 +3442,9 @@ indice  bromas_preferencias  bromas_preferencias_pkey
 indice  centroamericano_asignaciones  centroamericano_asignaciones_pkey
 indice  centroamericano_asignaciones  centroamericano_asignaciones_tnr_idx
 indice  centroamericano_asignaciones  centroamericano_asignaciones_token_key
+indice  centroamericano_avisos  centroamericano_avisos_abiertos_idx
+indice  centroamericano_avisos  centroamericano_avisos_asignacion_idx
+indice  centroamericano_avisos  centroamericano_avisos_pkey
 indice  centroamericano_registro  centroamericano_registro_anula_idx
 indice  centroamericano_registro  centroamericano_registro_partida_idx
 indice  centroamericano_registro  centroamericano_registro_pkey
@@ -4126,6 +4147,7 @@ grant  bromas_bloqueos  authenticated  SELECT
 grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
 grant  centroamericano_asignaciones  authenticated  SELECT
+grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_registro  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE

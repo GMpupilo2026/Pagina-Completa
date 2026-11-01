@@ -13,8 +13,14 @@
      roja y propone el resultado SIN guardarlo; «Anular» deshace un toque por error;
    - la irregularidad lleva su nota; el token no se guarda en el navegador;
    - a 390 px no se desplaza a lo ancho, en claro y en oscuro los colores dan 4,5 o más.
-   De la organización: el candado, las 12 claves, una clave de grupo que abre varios
-   torneos, las claves pegadas en bloque, el enlace con su QR, apagarlo y el PDF.
+   Y los avisos: pedir ayuda (por mesa y en general), el aviso de la organización que se
+   cierra con «Entendido», el nombre de un árbitro «por definir», el progreso y «Solo las
+   que faltan», y la tablet (820 px) sin desplazarse a lo ancho.
+   De la organización: el candado, UNA sola clave para el grupo de torneos ligados (sin
+   una casilla por torneo), los pedidos de ayuda que llegan solos con su contador y
+   «Atendido», los avisos a un árbitro, a un torneo o a todos con quién ya los leyó, los
+   enlaces agrupados por torneo y ordenados por mesa, un árbitro por definir (crearlo,
+   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF.
 
    Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md.
 
@@ -52,10 +58,23 @@ const SERVIDOR_ARBITRO = `
       if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; } else { m.irregularidades++; m.ultima_irregularidad = f.id; } }
     return out; };
   const NOMBRE = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "D": "borrado" };
+  // Lo que la organización le mandó y lo que él pidió: la prueba lo cambia desde afuera.
+  window.__avisos = { nombrado: true, arbitro: "Ana Árbitra", mensajes: [], ayuda: null, abiertas: [] };
   window.__servidor = (b) => {
     if (b.token !== TOKEN) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
-    if (b.action === "leer") return { data: { arbitro: "Ana Árbitra", tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
-      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), leido_en: "2026-11-02T15:30:00Z" }, error: null };
+    if (b.action === "avisos") return { data: Object.assign({ ok: true }, window.__avisos), error: null };
+    if (b.action === "ayuda") {
+      if (b.mesa != null && (b.mesa < 1 || b.mesa > 3)) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
+      if (window.__avisos.abiertas.includes(b.mesa == null ? null : b.mesa)) return { data: { ok: true, ya: true, id: "ay0", creado: "2026-11-02T15:40:00Z" }, error: null };
+      window.__avisos.abiertas.push(b.mesa == null ? null : b.mesa);
+      window.__avisos.ayuda = { id: "ay" + (++n), creado: "2026-11-02T15:40:00Z", mesa: b.mesa == null ? null : b.mesa, texto: b.texto || "", estado: "abierto", atendido_en: null };
+      return { data: { ok: true, id: window.__avisos.ayuda.id, creado: "2026-11-02T15:40:00Z" }, error: null }; }
+    if (b.action === "leido") { window.__avisos.mensajes = window.__avisos.mensajes.filter((m) => m.id !== b.id); return { data: { ok: true, marcados: 1 }, error: null }; }
+    if (b.action === "nombre") {
+      if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
+      window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
+    if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
+      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {
       const r = b.cambios.map((c) => { const m = MESAS.find((x) => x.mesa === c.mesa); const malo = window.__falla === true; const esperado = c.valor === "D" ? "0" : c.valor;
         if (!malo) { filas.push({ id: "f" + (++n), ocurrio: "2026-11-02T15:31:00Z", mesa: c.mesa, color: null, jugador: c.blancas + " – " + c.negras, tipo: m.valor !== "0" ? "correccion" : "resultado", resultado: NOMBRE[c.valor], anterior: m.valor !== "0" ? NOMBRE[m.valor] : null, texto: "", articulo: "", enviado: true }); m.valor = esperado; }
@@ -87,22 +106,31 @@ function dobleArbitro() {
 })();`;
 }
 
-// El panel de la organización: los 12 torneos (3 de muestra), sus enlaces y el registro.
+// El panel de la organización: los 12 torneos (3 de muestra), sus enlaces, los avisos y el registro.
 function dobleOrganizacion(licencia) {
     return `(function(){
   window.__llamadas = [];
   const R = (data, error) => Promise.resolve({ data, error: error || null });
+  const hace = (seg) => new Date(Date.now() - seg * 1000).toISOString();
   const TORNEOS = [
     { tnr: "1529719", nombre: "Sub-8 Absoluto", categoria: "Sub-8", rama: "Absoluto", orden: 1, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
     { tnr: "1529729", nombre: "Sub-8 Femenino", categoria: "Sub-8", rama: "Femenino", orden: 2, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
     { tnr: "1529733", nombre: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", orden: 3, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" }];
-  const ASIG = [];
+  // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no.
+  const ASIG = [
+    { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
+    { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null }];
+  const AVISOS = [{ id: "av-p1", creado: hace(180), de: "arbitro", asignacion_id: "asig-ana", mesa: 4, texto: "Prueba: ven a la mesa", estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null }];
   const REGISTRO = [
     { id: "r1", ocurrio: "2026-11-02T15:00:00Z", asignacion_id: null, arbitro: "Ana", tnr: "1529733", ronda: 1, mesa: 4, color: "blancas", jugador: "Cleo Tres", tipo: "ilegal", resultado: null, anterior: null, articulo: "7.5.5", texto: "", enviado: false, anula: null },
     { id: "r2", ocurrio: "2026-11-02T15:05:00Z", asignacion_id: null, arbitro: "Ana", tnr: "1529733", ronda: 1, mesa: 4, color: "blancas", jugador: "Cleo Tres", tipo: "ilegal", resultado: null, anterior: null, articulo: "7.5.5", texto: "", enviado: false, anula: null },
     { id: "r3", ocurrio: "2026-11-02T15:10:00Z", asignacion_id: null, arbitro: "Beto", tnr: "1529733", ronda: 1, mesa: 9, color: null, jugador: "Eli – Fran", tipo: "resultado", resultado: "1-0", anterior: null, articulo: "", texto: "", enviado: true, anula: null }];
   let n = 0;
-  const filtrar = (tabla, f) => ({ torneos: TORNEOS, asignaciones: ASIG, registro: REGISTRO }[tabla]).filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
+  // Lo que pasaría «afuera» mientras la página está abierta: un árbitro pide ayuda y otro lee un aviso.
+  window.__nuevoPedido = (asig, mesa, texto) => AVISOS.push({ id: "av-p" + (++n + 1), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null });
+  window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS };
+  const filtrar = (tabla, f) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
   window.sb = {
     auth: { getSession: () => R({ session: { user: { id: "yo" }, access_token: "x" } }), getUser: () => R({ user: { id: "yo" } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) } },
@@ -117,14 +145,21 @@ function dobleOrganizacion(licencia) {
         return Promise.resolve({ data: { ok: true, acceso: b.tnr, torneos: mios.map((t) => ({ tnr: t.tnr, nombre: t.nombre })), ronda: 1, mesas: 21, otros: [] }, error: null }); }
       if (b.action === "probar") return Promise.resolve({ data: { ok: true, torneo: "Sub-10 Absoluto", ronda: 2, mesas: 30 }, error: null });
       return Promise.resolve(err(400, "Acción desconocida.")); } },
-    from: (tabla) => { const t = { centroamericano_torneos: "torneos", centroamericano_asignaciones: "asignaciones", centroamericano_registro: "registro" }[tabla]; const f = {}; let accion = "select", valores = null;
+    from: (tabla) => { const f = {}; let accion = "select", valores = null;
       let orden = null;
       const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
-          if (accion === "insert") { const fila = Object.assign({ id: "a" + (++n), token: "ab12".repeat(16).replace(/ab12/, "cd34").slice(0, 60) + String(1000 + n), revocada: false, creada: "2026-11-02T16:30:00Z", ultimo_uso: null }, valores); ASIG.unshift(fila); window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
-          else if (accion === "update") { filtrar(t, f).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f }); r = { data: null, error: null }; }
-          else { const datos = filtrar(t, f).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
+          if (accion === "insert") {
+            const lista = Array.isArray(valores) ? valores : [valores];
+            for (const v of lista) {
+              const base = tabla === "centroamericano_avisos"
+                ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null }
+                : { id: "a" + (++n), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
+              (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
+            window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
+          else if (accion === "update") { filtrar(tabla, f).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f }); r = { data: null, error: null }; }
+          else { const datos = filtrar(tabla, f).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
           return Promise.resolve(r).then(ok, ko); } };
       return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},
@@ -246,6 +281,51 @@ const CONTRASTE = `(sel) => {
     igual("lo anotado dice cada cosa, con su hora de Costa Rica, y tacha lo anulado", await p.$$eval("#anotado-filas tr", (l) => l.map((tr) => [tr.children[2].textContent, tr.dataset.anulada || ""])).then((x) => x.filter((f) => /Ilegal|Irregularidad/.test(f[0]))),
         [["Irregularidad", ""], ["Ilegal (anulada)", "si"], ["Ilegal", ""]]);
 
+    console.log("\n=== Ayuda, avisos y nombre ===");
+    igual("el progreso dice cuántas mesas tienen resultado y cuántas faltan", await p.textContent("#progreso"), "Con resultado: 2 de 3 · faltan 1");
+    await p.check("#solo-faltan");
+    igual("«Solo las que faltan» deja únicamente las mesas sin resultado", await p.$$eval(".cam-mesa", (l) => l.map((m) => m.dataset.mesa)), ["2"]);
+    await p.uncheck("#solo-faltan");
+    igual("las mesas salen ordenadas por número", await p.$$eval(".cam-mesa", (l) => l.map((m) => m.dataset.mesa)), ["1", "2", "3"]);
+    await p.fill("#ir-mesa", "9");
+    await p.press("#ir-mesa", "Enter");
+    await p.waitForSelector("[data-avisos-aceptar], .avisos-toast, [role=alert]");
+    igual("«Ir a la mesa» una mesa que no es suya lo dice y no se mueve", await p.evaluate(() => (document.body.textContent.includes("no es de tus mesas"))), true);
+    await p.evaluate(() => { const b = document.querySelector("[data-avisos-aceptar]"); if (b) b.click(); });
+    await p.click('.cam-mesa[data-mesa="3"] [data-accion="ayuda"]');
+    await p.waitForSelector("#estado-ayuda:not([hidden])");
+    igual("pedir ayuda en una mesa manda SOLO esa mesa y lo dice con su hora; el botón de esa mesa queda marcado", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "ayuda").map((l) => l.body.mesa),
+        document.getElementById("estado-ayuda").dataset.estado, document.getElementById("estado-ayuda").textContent.includes("en la mesa 3"),
+        document.querySelector('.cam-mesa[data-mesa="3"] [data-accion="ayuda"]').dataset.pedida, document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="ayuda"]').disabled]), [[3], "abierto", true, "si", false]);
+    await p.click('.cam-mesa[data-mesa="1"] [data-accion="ayuda"]');
+    await p.waitForFunction(() => window.__llamadas.filter((l) => l.body.action === "ayuda").length === 2);
+    await p.click("#pedir-ayuda");
+    await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    await p.fill("dialog[open] input, dialog[open] textarea", "Un padre reclama");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => window.__llamadas.filter((l) => l.body.action === "ayuda").length === 3);
+    igual("el botón general de ayuda manda el texto opcional y sin mesa", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "ayuda").map((l) => [l.body.mesa, l.body.texto || ""]).pop()), [null, "Un padre reclama"]);
+    await p.evaluate(() => { window.__avisos.ayuda.estado = "atendido"; window.__avisos.ayuda.atendido_en = "2026-11-02T15:45:00Z"; window.__avisos.abiertas = []; });
+    await p.click("#actualizar");
+    await p.waitForFunction(() => document.getElementById("estado-ayuda").dataset.estado === "atendido");
+    igual("cuando la organización atiende, el árbitro lo ve (verde y escrito, no solo el color)", await p.textContent("#estado-ayuda"), "✓ El árbitro principal ya atendió tu pedido (9:45 a. m.).");
+    await p.evaluate(() => { window.__avisos.mensajes = [{ id: "m1", creado: "2026-11-02T15:46:00Z", texto: "Pasen por el escritorio" }]; });
+    await p.click("#actualizar");
+    await p.waitForSelector("#mensajes:not([hidden]) .cam-mensaje");
+    igual("un aviso de la organización sale arriba, como alerta, con su hora y su texto", await p.evaluate(() => { const m = document.querySelector("#mensajes .cam-mensaje"); return [document.getElementById("mensajes").getAttribute("aria-live"), m.getAttribute("role"), m.textContent.includes("Pasen por el escritorio"), m.textContent.includes("9:46")]; }), ["assertive", "alert", true, true]);
+    await p.click('#mensajes [data-accion="entendido"]');
+    await p.waitForFunction(() => document.getElementById("mensajes").hidden);
+    igual("«Entendido» le avisa a la función cuál aviso fue y lo quita", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "leido").map((l) => l.body.id)), ["m1"]);
+    igual("a una tablet vertical (820 px) la página no se desplaza a lo ancho y las mesas van en dos columnas", await (async () => {
+        await p.setViewportSize({ width: 820, height: 1180 });
+        return p.evaluate(() => [document.documentElement.scrollWidth, getComputedStyle(document.querySelector(".cam-lista")).gridTemplateColumns.split(" ").length]);
+    })(), [820, 2]);
+    igual("y de lado (1180 px) van en tres, sin desplazarse", await (async () => {
+        await p.setViewportSize({ width: 1180, height: 820 });
+        return p.evaluate(() => [document.documentElement.scrollWidth, getComputedStyle(document.querySelector(".cam-lista")).gridTemplateColumns.split(" ").length]);
+    })(), [1180, 3]);
+    await p.setViewportSize({ width: 390, height: 800 });
+
     console.log("\n=== En el celular (390 px), en claro y en oscuro ===");
     igual("la página no se desplaza a lo ancho", await p.evaluate(() => document.documentElement.scrollWidth), 390);
     igual("cada botón se toca bien (44 px de alto o más) y el foco se ve", await p.evaluate(() => [...document.querySelectorAll(".cam-mesa .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
@@ -266,61 +346,164 @@ const CONTRASTE = `(sel) => {
     if (process.env.CAPTURA) await o.p.screenshot({ path: process.env.CAPTURA + "-arbitro-oscuro.png", fullPage: true });
     await o.ctx.close();
 
+    console.log("\n=== Un árbitro «por definir» pone su nombre ===");
+    let d = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro().replace('nombrado: true, arbitro: "Ana Árbitra"', 'nombrado: false, arbitro: "Árbitro 1"'), { hash: TOKEN });
+    await d.p.waitForSelector(".cam-mesa");
+    igual("sin nombre, la página se lo pide arriba y muestra «Árbitro 1» mientras tanto", [await d.p.$eval("#nombre-caja", (c) => c.checkVisibility()), await d.p.textContent("#d-arbitro")], [true, "Árbitro 1"]);
+    await d.p.fill("#nombre-campo", "  Carla   Mora ");
+    await d.p.click("#nombre-guardar");
+    await d.p.waitForFunction(() => document.getElementById("nombre-caja").hidden);
+    igual("al guardarlo manda el nombre, la caja se va y el nombre sale en la cabecera", [await d.p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "nombre").map((l) => l.body.nombre)), await d.p.textContent("#d-arbitro")], [["Carla   Mora"], "Carla Mora"]);
+    await d.ctx.close();
+
     console.log("\n=== La organización: el candado ===");
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(false), { ancho: 1100 });
     await o.p.waitForSelector("#denegado:not([hidden])");
     igual("sin licencia, el candado y nada más", [await o.p.$eval("#app", (a) => a.checkVisibility()), await o.p.evaluate(() => window.__llamadas.some((l) => l.rpc === "tengo_herramienta" && l.a === "mesa-arbitro"))], [false, true]);
     await o.ctx.close();
 
-    console.log("\n=== La organización: las claves ===");
+    console.log("\n=== La organización: de un vistazo y los pedidos de ayuda ===");
     ({ ctx: o.ctx, p: o.p, errores } = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100 }));
     const q = o.p;
-    await q.waitForSelector(".cam-torneo");
-    igual("los torneos con su estado, y cuántos tienen clave", [await q.$$eval(".cam-torneo", (l) => l.map((t) => [t.querySelector("p.font-bold").textContent, t.dataset.clave])), await q.textContent("#resumen-claves")],
-        [[["Sub-8 Absoluto", "no"], ["Sub-8 Femenino", "no"], ["Sub-10 Absoluto", "si"]], "1 de 3 torneos con clave cargada."]);
-    await q.fill("#sid-1529719", "MALAMALAMALA1234");
-    await q.click('.cam-torneo[data-tnr="1529719"] [data-accion="poner"]');
-    await q.waitForSelector("#est-1529719.cam-fallo");
-    igual("una clave que chess-results no acepta se dice y no se guarda", [(await q.textContent("#est-1529719")).includes("no aceptó el código o la clave"), await q.$eval('.cam-torneo[data-tnr="1529719"]', (t) => t.dataset.clave)], [true, "no"]);
-    await q.evaluate(() => { document.getElementById("pegar").open = true; });
-    await q.fill("#claves-bloque", "1529700 " + SID + "\n1529733 corta\nabc " + SID);
-    await q.click("#claves-bloque-guardar");
-    await q.waitForFunction(() => document.querySelectorAll("#claves-bloque-resultado li").length >= 3 && [...document.querySelectorAll("#claves-bloque-resultado li")].some((l) => l.textContent.startsWith("✓")));
-    igual("las claves pegadas: la del grupo abre dos torneos ligados y las malas se reportan con su línea", await q.$$eval("#claves-bloque-resultado li", (l) => l.map((x) => x.textContent)),
-        ["Línea 2: La clave son entre 8 y 32 letras y números.", "Línea 3: El código del torneo son hasta 7 números.", "✓ Código 1529700: Guardada: esta clave abre 2 torneos ligados (Sub-8 Absoluto, Sub-8 Femenino). Ronda 1 con 21 mesas en el primero."]);
-    igual("quedan los dos torneos con clave y dicen que entran por el grupo", [await q.textContent("#resumen-claves"), await q.$$eval(".cam-torneo", (l) => l.map((t) => t.querySelector("p.text-sm.mt-1") ? t.querySelector("p.text-sm.mt-1").textContent : ""))],
-        ["3 de 3 torneos con clave cargada. ¡Todos listos!", ["Entra por el grupo 1529700", "Entra por el grupo 1529700", ""]]);
-    igual("la clave llegó a la función con su código y la línea guardada ya NO está escrita en la página (solo las que hay que corregir)", await q.evaluate((s) => [window.__llamadas.some((l) => l.body && l.body.action === "poner" && l.body.tnr === "1529700" && l.body.sid === s), document.getElementById("claves-bloque").value, JSON.stringify(localStorage).includes(s), document.getElementById("sid-1529719").value], SID), [true, "1529733 corta\nabc " + SID, false, "MALAMALAMALA1234"]);
-    await q.fill("#sid-1529733", SID);
-    await q.click('.cam-torneo[data-tnr="1529733"] [data-accion="poner"]');
-    await q.waitForSelector("#est-1529733.cam-guardado");
-    igual("la clave de la tarjeta de un torneo se vacía en cuanto se guarda", await q.$eval("#sid-1529733", (i) => i.value), "");
+    await q.waitForSelector(".cam-pedido");
+    igual("abre en «Ayuda y avisos» porque ya hay una clave, con las cuatro pestañas", await q.$$eval(".cam-pestana", (l) => l.map((b) => [b.dataset.panel, b.getAttribute("aria-selected")])), [["avisos", "true"], ["arbitros", "false"], ["claves", "false"], ["registro", "false"]]);
+    igual("arriba siempre a la vista: los pedidos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()), "1 pedido de ayuda abierto 1 de 2 árbitros conectados Clave en 1 de 3 torneos 🔔 Activar el sonido de los pedidos");
+    igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.getElementById("contador-pedidos").checkVisibility(), document.title.startsWith("(1) ")]), ["1", true, true]);
+    igual("el pedido dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió, y se puede atender o escribirle", await q.$eval(".cam-pedido", (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace 3 min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»"), [...e.querySelectorAll("button")].map((b) => b.textContent)]), ["🆘 Mesa 4 — Ana Árbitra", true, true, ["Atendido", "Escribirle"]]);
+    await q.click("#sonido");
+    igual("el sonido se activa con un toque (el navegador no deja sonar sin él) y el botón lo dice", [await q.getAttribute("#sonido", "aria-pressed"), (await q.textContent("#sonido")).trim()], ["true", "🔔 Sonido activado"]);
+    await q.click('.cam-pedido [data-accion="escribir"]');
+    igual("«Escribirle» deja el aviso dirigido a ese árbitro", await q.$eval("#av-para", (s) => s.value), "a:asig-ana");
+    // Un pedido nuevo llega SOLO, sin recargar: el sondeo de la página.
+    await q.evaluate(() => window.__nuevoPedido("asig-arb1", 20, "Dos jugadores discuten"));
+    await q.waitForFunction(() => document.querySelectorAll(".cam-pedido").length === 2, null, { timeout: 15000 });
+    igual("un pedido nuevo aparece solo, el contador sube y el más viejo va primero", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, [...document.querySelectorAll(".cam-pedido")].map((e) => e.querySelector("p.font-bold").textContent)]), ["2", ["🆘 Mesa 4 — Ana Árbitra", "🆘 Mesa 20 — Árbitro 1"]]);
+    await q.click('.cam-pedido[data-id="av-p1"] [data-accion="atender"]');
+    await q.waitForFunction(() => document.querySelectorAll(".cam-pedido[data-estado=abierto]").length === 1);
+    igual("«Atendido» lo marca en la base y lo pasa a la lista de atendidos", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_avisos").map((l) => [l.valores.estado, l.f.id]), document.getElementById("atendidos-n").textContent, document.getElementById("contador-pedidos").textContent]), [[["atendido", "av-p1"]], "1", "1"]);
 
-    console.log("\n=== La organización: el enlace de cada árbitro ===");
-    await q.fill("#a-arbitro", "Ana Árbitra");
+    console.log("\n=== La organización: avisar a los árbitros ===");
+    igual("se puede avisar a todos, a un torneo o a un árbitro", await q.$$eval("#av-para option", (l) => l.map((o) => o.textContent)), [
+        "Todos los árbitros (2)", "Todo el torneo: Sub-10 Absoluto (2)", "Ana Árbitra — Sub-10 Absoluto, mesas 1 a 15", "Árbitro 1 — Sub-10 Absoluto, mesas 16 a 30"]);
+    await q.click('#frases [data-accion="frase"]');
+    igual("las frases rápidas llenan el mensaje", await q.inputValue("#av-texto"), "Ya empieza la ronda: a sus mesas.");
+    await q.selectOption("#av-para", "todos");
+    await q.click("#av-enviar");
+    await q.waitForFunction(() => document.querySelectorAll("#enviados tr").length === 1);
+    igual("a todos: una fila por árbitro (el aviso lleva su enlace), de la organización y con el texto", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").map((l) => l.valores.map((v) => [v.de, v.asignacion_id, v.texto]))),
+        [[["organizacion", "asig-ana", "Ya empieza la ronda: a sus mesas."], ["organizacion", "asig-arb1", "Ya empieza la ronda: a sus mesas."]]]);
+    igual("la lista de enviados dice cuántos lo leyeron y a quién le falta", await q.$eval("#enviados tr", (tr) => [tr.children[1].textContent, tr.children[2].textContent.startsWith("0 de 2 · falta: ")]), ["Ya empieza la ronda: a sus mesas.", true]);
+    await q.evaluate(() => window.__leerAviso());
+    await q.waitForFunction(() => document.querySelector("#enviados tr").children[2].textContent.startsWith("1 de 2"), null, { timeout: 15000 });
+    igual("cuando uno lo lee, la lista se actualiza sola", await q.$eval("#enviados tr", (tr) => tr.children[2].textContent), "1 de 2 · falta: Árbitro 1");
+    await q.selectOption("#av-para", "t:1529733");
+    await q.fill("#av-texto", "Pausa de 10 minutos.");
+    await q.click("#av-enviar");
+    await q.waitForFunction(() => document.querySelectorAll("#enviados tr").length === 2);
+    igual("a un torneo les llega a los dos de ese torneo", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores.length), 2);
+    await q.click("#av-enviar");
+    igual("sin mensaje no se manda nada", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").length), 2);
+
+    console.log("\n=== La organización: los árbitros y sus mesas ===");
+    await q.click("#pest-arbitros");
+    igual("el panel de los árbitros se ve y los demás no (y la pestaña lo dice)", await q.evaluate(() => ["avisos", "arbitros", "claves", "registro"].map((n) => [document.getElementById("panel-" + n).checkVisibility(), document.getElementById("pest-" + n).getAttribute("aria-selected")])), [[false, "false"], [true, "true"], [false, "false"], [false, "false"]]);
+    await q.focus("#pest-arbitros");
+    await q.keyboard.press("ArrowRight");
+    igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-claves", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-claves"]);
+    await q.keyboard.press("ArrowLeft");
+    igual("los enlaces salen agrupados por torneo y ordenados por mesa, y el que no tiene nombre lo dice", await q.$$eval(".cam-grupo-torneo", (g) => g.map((x) => [x.querySelector("h3").textContent, [...x.querySelectorAll(".cam-asignacion")].map((a) => [a.querySelector("p.font-bold").textContent, a.dataset.nombrado])])),
+        [["Sub-10 Absoluto2 enlaces", [["Ana Árbitra", "si"], ["Árbitro 1Por definir", "no"]]]]);
+    igual("cada uno dice si está conectado ahora, cuándo lo vieron o que no lo ha abierto", await q.$$eval(".cam-asignacion .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
+    igual("y el que tiene un pedido abierto lo avisa", await q.$$eval(".cam-asignacion", (l) => l.map((a) => a.textContent.includes("pedido de ayuda abierto"))), [false, true]);
+    // crear sin nombre
     await q.selectOption("#a-torneo", "1529733");
-    await q.fill("#a-desde", "1");
-    await q.fill("#a-hasta", "15");
+    await q.fill("#a-desde", "31");
+    await q.fill("#a-hasta", "40");
     await q.click("#a-crear");
-    await q.waitForSelector(".cam-asignacion");
-    const enlace = await q.$eval('.cam-asignacion [data-accion="abrir"]', (a) => a.href);
-    igual("se crea con el torneo, el rango y el vencimiento (el 9 de noviembre, hora de Costa Rica)", await q.evaluate(() => window.__llamadas.filter((l) => l.insert).map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])), [["1529733", "Ana Árbitra", 1, 15, "2026-11-10T05:59:59.000Z"]]);
-    igual("el enlace lleva el token DESPUÉS del «#», y tiene su QR y su WhatsApp", [/\/centroamericano-arbitro\.html#[0-9a-z]{64}$/.test(enlace), await q.$eval(".cam-qr svg", (s) => s.getAttribute("aria-label")), (await q.$eval('.cam-asignacion [data-accion="whatsapp"]', (a) => decodeURIComponent(a.href))).includes("tus mesas del Centroamericano (Sub-10 Absoluto, mesas 1 a 15)")], [true, "QR del enlace de Ana Árbitra", true]);
-    await q.fill("#a-arbitro", "Beto");
-    await q.selectOption("#a-torneo", "1529733");
+    await q.waitForFunction(() => document.querySelectorAll(".cam-asignacion").length === 3);
+    igual("sin nombre se crea «Árbitro 2», marcado por definir, con su torneo, sus mesas y el vencimiento (9 de noviembre, hora de Costa Rica)", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.nombrado, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])), [["1529733", "Árbitro 2", false, 31, 40, "2026-11-10T05:59:59.000Z"]]);
+    const enlace = await q.$eval('.cam-asignacion[data-nombrado="no"] [data-accion="abrir"]', (a) => a.href);
+    igual("el enlace lleva el token DESPUÉS del «#», y tiene su QR y su WhatsApp (sin saludar al «Árbitro 2»)", [/\/centroamericano-arbitro\.html#[0-9a-z]{64}$/.test(enlace), await q.$eval(".cam-qr svg", (s) => s.getAttribute("aria-label").startsWith("QR del enlace de ")), (await q.$eval('.cam-asignacion[data-nombrado="no"] [data-accion="whatsapp"]', (a) => decodeURIComponent(a.href))).includes("Hola: tus mesas del Centroamericano (Sub-10 Absoluto, mesas")], [true, true, true]);
+    // crear con nombre y mesas ya tomadas
+    await q.fill("#a-arbitro", "Beto Mora");
     await q.fill("#a-desde", "10");
     await q.fill("#a-hasta", "20");
     await q.click("#a-crear");
     await q.waitForSelector("[data-avisos-aceptar]");
-    igual("unas mesas que ya tiene otro árbitro se avisan antes de crear", (await q.textContent("dialog")).includes("Esas mesas ya las tiene Ana Árbitra (1 a 15)"), true);
+    igual("unas mesas que ya tiene otro árbitro se avisan antes de crear", (await q.textContent("dialog")).includes("Esas mesas ya las tiene Ana Árbitra (1 a 15), Árbitro 1 (16 a 30)"), true);
     await q.click("dialog [data-avisos-cancelar]");
-    await q.click('.cam-asignacion [data-accion="apagar"]');
+    await q.fill("#a-arbitro", "");
+    // ponerle nombre
+    const tarjeta = (nombre) => q.locator(".cam-asignacion", { hasText: nombre });
+    await tarjeta("Árbitro 1").locator('[data-accion="nombre"]').click();
+    await q.waitForSelector("dialog[open] input");
+    await q.fill("dialog[open] input", "Carla Mora");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => [...document.querySelectorAll(".cam-asignacion p.font-bold")].some((p) => p.textContent === "Carla Mora"));
+    igual("«Ponerle nombre» guarda el nombre, lo marca como puesto y quita «Por definir»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.nombrado).map((l) => [l.valores.arbitro, l.valores.nombrado, l.f.id]), document.querySelectorAll('.cam-asignacion[data-id="asig-arb1"] .cam-chip').length]), [[["Carla Mora", true, "asig-arb1"]], 0]);
+    // cambiar las mesas
+    await tarjeta("Ana Árbitra").locator('[data-accion="mesas"]').click();
+    await q.waitForSelector("dialog[open] input");
+    await q.fill("dialog[open] input", "9-3");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.body.textContent.includes("No entendí las mesas"));
+    igual("unas mesas al revés se rechazan sin tocar nada", await q.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.mesa_desde).length), 0);
+    await tarjeta("Ana Árbitra").locator('[data-accion="mesas"]').click();
+    await q.waitForSelector("dialog[open] input");
+    await q.fill("dialog[open] input", "1 a 12");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.body.textContent.includes("1 a 12"));
+    igual("«Cambiar las mesas» entiende «1 a 12» y lo guarda", await q.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.mesa_desde).map((l) => [l.valores.mesa_desde, l.valores.mesa_hasta, l.f.id])), [[1, 12, "asig-ana"]]);
+    // repartir
+    await q.evaluate(() => { document.getElementById("reparto").open = true; });
+    await q.selectOption("#rp-torneo", "1529733");
+    await q.click("#rp-leer");
+    await q.waitForFunction(() => document.getElementById("rp-mesas").value === "30");
+    await q.fill("#rp-arbitros", "3");
+    igual("«Leer las mesas» trae cuántas hay, y la vista previa reparte parejo con los números que siguen (hay un «Árbitro 2»)", [await q.textContent("#rp-estado"), await q.textContent("#rp-vista")], ["La ronda 2 tiene 30 mesas.", "Árbitro 3: mesas 1 a 10 · Árbitro 4: mesas 11 a 20 · Árbitro 5: mesas 21 a 30"]);
+    await q.click("#rp-crear");
+    await q.waitForSelector("[data-avisos-aceptar]");
+    igual("avisa que el torneo ya tiene enlaces activos antes de sumar más", (await q.textContent("dialog")).includes("ya tiene 3 enlaces activos"), true);
+    await q.click("dialog [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.querySelectorAll(".cam-asignacion").length === 6);
+    igual("se crean los tres por definir, con mesas seguidas y sin hueco", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").pop().valores.map((v) => [v.arbitro, v.nombrado, v.mesa_desde, v.mesa_hasta])), [["Árbitro 3", false, 1, 10], ["Árbitro 4", false, 11, 20], ["Árbitro 5", false, 21, 30]]);
+    // apagar
+    await tarjeta("Ana Árbitra").locator('[data-accion="apagar"]').click();
     await q.waitForSelector("[data-avisos-aceptar]");
     await q.click("[data-avisos-aceptar]");
     await q.waitForSelector('.cam-asignacion[data-estado="apagado"]');
-    igual("apagar un enlace pide confirmar y lo deja apagado (se puede volver a encender)", [await q.$eval(".cam-asignacion", (a) => a.dataset.estado), await q.$eval('.cam-asignacion [data-accion="reactivar"]', (b) => b.textContent)], ["apagado", "Volver a encender"]);
+    igual("apagar un enlace pide confirmar y lo deja apagado (se puede volver a encender)", [await q.$$eval('.cam-asignacion[data-estado="apagado"]', (l) => l.length), await tarjeta("Ana Árbitra").locator('[data-accion="reactivar"]').textContent()], [1, "Volver a encender"]);
+    igual("un enlace apagado ya no es destino de los avisos", await q.$$eval("#av-para option", (l) => l.map((o) => o.textContent)).then((l) => l.some((t) => t.startsWith("Ana Árbitra"))), false);
+
+    console.log("\n=== La organización: UNA clave para todo el grupo ===");
+    await q.click("#pest-claves");
+    igual("no hay una casilla de clave por torneo: solo la del grupo (y la del bloque de otras claves)", await q.evaluate(() => [document.querySelectorAll("#torneos input, #torneos textarea").length, [...document.querySelectorAll("#panel-claves input")].filter((i) => i.type === "password").map((i) => i.id)]), [0, ["g-sid"]]);
+    igual("el código del grupo ya viene puesto (no es secreto) y las tarjetas solo dicen el estado de cada torneo", [await q.inputValue("#g-codigo"), await q.$$eval(".cam-estado-torneo", (l) => l.map((t) => [t.querySelector("p.font-bold").textContent, t.dataset.clave])), await q.textContent("#resumen-claves")],
+        ["1529733", [["Sub-8 Absoluto", "no"], ["Sub-8 Femenino", "no"], ["Sub-10 Absoluto", "si"]], "1 de 3 torneos tienen la clave. Faltan: Sub-8 Absoluto, Sub-8 Femenino."]);
+    await q.fill("#g-codigo", "1529700");
+    await q.fill("#g-sid", "MALAMALAMALA1234");
+    await q.click("#g-guardar");
+    await q.waitForSelector("#g-estado.cam-fallo");
+    igual("una clave que chess-results no acepta se dice y no se guarda", [(await q.textContent("#g-estado")).includes("no aceptó el código o la clave"), await q.evaluate(() => document.querySelectorAll('.cam-estado-torneo[data-clave="si"]').length)], [true, 1]);
+    await q.fill("#g-sid", SID);
+    await q.click("#g-guardar");
+    await q.waitForSelector("#g-estado.cam-guardado");
+    igual("la clave del grupo abre los torneos ligados de una vez, y dice si falta alguno", [await q.textContent("#g-estado"), await q.textContent("#resumen-claves"), await q.$$eval(".cam-estado-torneo", (l) => l.map((t) => t.dataset.clave))],
+        ["✓ Guardada: esta clave abre 2 torneos ligados (Sub-8 Absoluto, Sub-8 Femenino). Ronda 1 con 21 mesas en el primero.", "✓ Los 3 torneos tienen la clave cargada.", ["si", "si", "si"]]);
+    igual("la clave llegó a la función con el código del grupo, y la casilla se vació y no quedó en el navegador", await q.evaluate((s) => [window.__llamadas.some((l) => l.body && l.body.action === "poner" && l.body.tnr === "1529700" && l.body.sid === s), document.getElementById("g-sid").value, JSON.stringify(localStorage).includes(s) || JSON.stringify(sessionStorage).includes(s)], SID), [true, "", false]);
+    igual("arriba, el estado general ya dice que están los tres", await q.textContent("#eg-claves"), "Clave cargada en los 3 torneos");
+    await q.click('.cam-estado-torneo[data-tnr="1529733"] [data-accion="probar"]');
+    await q.waitForSelector("#est-1529733.cam-guardado");
+    igual("«Probar» dice que sirve y cuántas mesas tiene la ronda", await q.textContent("#est-1529733"), "✓ Sirve. Ronda 2, 30 mesas.");
+    await q.evaluate(() => { document.getElementById("pegar").open = true; });
+    await q.fill("#claves-bloque", "1529700 " + SID + "\n1529733 corta\nabc " + SID);
+    await q.click("#claves-bloque-guardar");
+    await q.waitForFunction(() => document.querySelectorAll("#claves-bloque-resultado li").length >= 3 && [...document.querySelectorAll("#claves-bloque-resultado li")].some((l) => l.textContent.startsWith("✓")));
+    igual("otras claves en bloque: las malas se reportan con su línea y la buena ya no queda escrita", [await q.$$eval("#claves-bloque-resultado li", (l) => [l[0].textContent.startsWith("Línea 2: La clave son entre 8 y 32"), l[1].textContent.startsWith("Línea 3: El código del torneo son hasta 7"), l[2].textContent.startsWith("✓ Código 1529700: Guardada: esta clave abre 2 torneos")]), await q.inputValue("#claves-bloque")],
+        [[true, true, true], "1529733 corta\nabc " + SID]);
 
     console.log("\n=== La organización: lo que anotan ===");
+    await q.click("#pest-registro");
     igual("los jugadores con ilegales, primero quien más lleva, y la segunda dice que pierde", await q.$$eval("#marcados tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent))),
         [["Sub-10 Absoluto", "1", "4", "Cleo Tres (blancas)", "ii 2 — pierde la partida (art. 7.5.5)", "—"]]);
     igual("todo lo anotado, lo más reciente primero, con su detalle", await q.$$eval("#registro tr", (l) => l.map((tr) => [tr.children[4].textContent, tr.children[5].textContent, tr.children[6].textContent])),
@@ -328,10 +511,32 @@ const CONTRASTE = `(sel) => {
     const [descarga] = await Promise.all([q.waitForEvent("download"), q.click("#r-pdf")]);
     const pdf = fs.readFileSync(await descarga.path());
     igual("el PDF del registro, con su nombre y la marca de agua", [descarga.suggestedFilename(), pdf.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdf.toString("latin1"))], ["registro-arbitros-centroamericano-2026.pdf", true, true]);
-    if (process.env.CAPTURA) await q.screenshot({ path: process.env.CAPTURA + "-organizacion.png", fullPage: true });
     igual("sin errores en la página", errores, []);
+
+    console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
+    const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-estado-general, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion, .cam-conectado, .cam-clave-grupo, .cam-tarjeta, .cam-guardado, .cam-fallo, .cam-tabla td, .cam-tabla th, .cam-grupo-torneo h3";
+    const contrastePorPanel = async (pg) => {
+        const peores = [];
+        for (const nombre of ["avisos", "arbitros", "claves", "registro"]) {
+            await pg.click("#pest-" + nombre);
+            const l = await pg.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(coloresOrg) + ")");
+            peores.push(Math.min(...l, 99));
+        }
+        return Math.min(...peores);
+    };
+    await q.setViewportSize({ width: 820, height: 1180 });
+    igual("en la tablet vertical (820 px) la página no se desplaza a lo ancho, en ninguna pestaña", await (async () => { const w = []; for (const n of ["avisos", "arbitros", "claves", "registro"]) { await q.click("#pest-" + n); w.push(await q.evaluate(() => document.documentElement.scrollWidth)); } return w; })(), [820, 820, 820, 820]);
+    igual("cada botón y pestaña se toca bien (40 px de alto o más)", await q.evaluate(() => [...document.querySelectorAll(".cam-pestana, .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
+    igual("en claro, todo el texto de la organización da 4,5:1 o más, en las cuatro pestañas", (await contrastePorPanel(q)) >= 4.5, true);
+    await q.click("#pest-arbitros");
+    if (process.env.CAPTURA) await q.screenshot({ path: process.env.CAPTURA + "-organizacion.png", fullPage: true });
     await q.setViewportSize({ width: 390, height: 800 });
     igual("en el celular la página de la organización tampoco se desplaza a lo ancho", await q.evaluate(() => document.documentElement.scrollWidth), 390);
+    await o.ctx.close();
+    o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100, esquema: "dark" });
+    await o.p.waitForSelector(".cam-pedido");
+    igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las cuatro pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
+    if (process.env.CAPTURA) { await o.p.click("#pest-avisos"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
     await o.ctx.close();
 
     await browser.close();

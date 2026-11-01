@@ -8523,6 +8523,74 @@ resultados, ilegales e irregularidades desde el celular, sin cuenta.
   registro, el «Search/Reload», la comprobación del torneo abierto, la confirmación de la
   segunda ilegal o que «Poner el resultado» lo guarde solo, saltan.
 
+### Avisos, árbitros por definir, una sola clave y la tablet (Centroamericano)
+
+Lo que pidió el dueño después de ver la primera versión (1 de noviembre): que **al estar los
+torneos ligados no se pida una clave por torneo**, poder **crear árbitros sin nombre**, que
+todo esté **ordenado**, que se use en **tablet**, que cada árbitro pueda **pedir al árbitro
+principal** (le llega un aviso a la cuenta principal) y que la cuenta principal le pueda
+**mandar avisos** al árbitro.
+
+- **Una sola clave, la del grupo.** La pestaña «Clave de chess-results» pide el código del
+  GRUPO y su SID una vez; la Edge Function `centroamericano-clave` entra, lee qué torneos abre
+  (el desplegable «Selección de torneo»), los cruza con los 12 y deja la clave cifrada para
+  todos los que sean del Centroamericano. Las 12 tarjetas ya NO llevan casilla: solo dicen si
+  tienen clave, por qué grupo entran y un «Probar». El bloque «Otras claves» queda para un
+  torneo que no esté ligado. El verificador comprueba que no haya ningún campo de clave
+  dentro de las tarjetas de los torneos. El código del grupo no es secreto: se propone el
+  último usado.
+- **Árbitros por definir.** `centroamericano_asignaciones.nombrado` (false = «Árbitro 3»).
+  Nombre vacío al crear → «Árbitro N», con N siguiendo al más alto del torneo (nunca se repite,
+  aunque haya enlaces apagados). «Repartir las mesas»: se dice cuántas mesas hay (o se leen de
+  chess-results con `probar`) y cuántos árbitros, y se crean todos los enlaces con rangos
+  seguidos y parejos (`repartirMesas`, probado de 1 a 200 mesas y de 1 a 12 árbitros: ni
+  huecos ni mesas repetidas). El árbitro pone su nombre al abrir (acción `nombre`, **una sola
+  vez**: después solo la organización, porque el nombre sale en el registro) o se lo pone la
+  organización; las mesas también se pueden cambiar después («1-15», «1 a 15», «7»). Para
+  eso la base dejó a quien organiza `insert (nombrado)` y `update (arbitro, nombrado,
+  mesa_desde, mesa_hasta)`: ni el token, ni `ultimo_uso`, ni `creada_por`.
+- **Avisos.** Tabla `centroamericano_avisos`, una sola para las dos direcciones. El PEDIDO DE
+  AYUDA del árbitro (`de = 'arbitro'`; lo escribe la función `centroamericano-mesa`, acción
+  `ayuda`, con la mesa que dice el enlace: una de otro rango da 403; un solo pedido abierto
+  por mesa, tope de 5 abiertos) queda `abierto` hasta que la organización lo marca
+  `atendido` (la base pone quién y cuándo con el trigger `atendido`, no el navegador). El
+  MENSAJE de la organización (`de = 'organizacion'`) se manda a todos, a un torneo o a un
+  árbitro: **una fila por enlace**, así `leido_en` dice quién ya lo vio; el árbitro lo cierra
+  con «Entendido» (acción `leido`, solo mensajes de SU enlace). Nadie edita ni borra el texto.
+  Las acciones `avisos`, `ayuda`, `leido` y `nombre` **no hablan con chess-results ni piden la
+  clave**: el árbitro recibe lo de la organización aunque chess-results esté caído.
+- **Cómo se enteran, sin servidor de empujes.** Las dos páginas consultan: el árbitro cada 8 s
+  y la organización cada 6 s mientras la pestaña esté abierta (el celular del árbitro, con
+  Wake Lock para que no se apague la pantalla). Suena (WebAudio, tras un primer toque: el
+  navegador no deja sonar antes), vibra y pone el contador en la pestaña y en el título.
+  **No hay notificación push**: con la pestaña de la organización cerrada, el pedido espera.
+  La organización ve quién está conectado (`ultimo_uso`, que la función anota a lo sumo cada
+  20 s; «conectado» = menos de 2 minutos).
+- **Ordenado.** La organización son cuatro pestañas (Ayuda y avisos, Árbitros y mesas, Clave de
+  chess-results, Lo que anotan; con flechas, Inicio y Fin) y arriba, siempre a la vista, el
+  estado general. Los enlaces salen agrupados por torneo y ordenados por mesa. La página del
+  árbitro ordena las mesas por número, dice «Con resultado: 2 de 3 · faltan 1», tiene «Ir a la
+  mesa» y «Solo las que faltan».
+- **Lo que se aprendió: no repintar bajo el dedo.** Con un sondeo cada 6 s, volver a dibujar
+  las tarjetas cada vez se traga el toque que cae justo en un botón recién reemplazado, y
+  cierra un desplegable abierto. Por eso cada lista se vuelve a dibujar solo si su firma
+  cambió (el «hace 3 min» y los pedidos de cada tarjeta se corrigen en el lugar).
+- **Tablet.** De 768 px: letra mayor y dos columnas; de 1100 px, tres; con `pointer: coarse`,
+  botones y campos de 48 px. Se comprobó a 820 px (vertical) y 1180 px (de lado) sin
+  desplazamiento a lo ancho, y en claro y en oscuro con el contraste medido en las cuatro
+  pestañas. Los colores nuevos son los del evento; el color nunca va solo (el pedido atendido
+  dice «✓ … atendió tu pedido»).
+- Lo prueban las mismas dos pruebas de arriba, ampliadas: las promesas de las funciones
+  (rango en `ayuda`, un solo nombre, `leido` solo de su enlace, avisos sin clave), las
+  migraciones (la organización solo inserta mensajes suyos y solo actualiza `estado`), el
+  repartir y los números, y en el navegador los pedidos que llegan solos, «Atendido», el aviso
+  con quién lo leyó, crear/poner nombre/cambiar mesas/repartir/apagar y la clave única.
+  Rompiendo a propósito el rango de `ayuda`, la condición «una sola vez» del nombre, el envío
+  a todos o la numeración del reparto, saltan.
+- **Probado con el grupo de prueba real** (tnr 1532448 y 1532486, sin tocar resultados en el
+  segundo): `ayuda` (repetida, general, fuera de rango), `nombre` (y su segundo intento),
+  `leer` con un mensaje pendiente y `leido` (una vez, y desde otro enlace).
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

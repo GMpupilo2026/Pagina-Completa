@@ -69,6 +69,34 @@ igual("el enlace lleva el token DESPUÉS del «#» (no viaja en las visitas ni e
 igual("el mensaje de WhatsApp dice quién, qué torneo, qué mesas y el enlace", C.textoWhatsapp({ arbitro: "Ana", mesa_desde: 1, mesa_hasta: 15 }, "Sub-10 Femenino", "https://x/y#t"),
   "Hola Ana: tus mesas del Centroamericano (Sub-10 Femenino, mesas 1 a 15). Abre este enlace para anotar los resultados: https://x/y#t");
 
+igual("un enlace por definir no saluda con «Árbitro 3»", C.textoWhatsapp({ arbitro: "Árbitro 3", nombrado: false, mesa_desde: 20, mesa_hasta: 30 }, "Sub-12", "https://x/y#t").startsWith("Hola: tus mesas del Centroamericano (Sub-12, mesas 20 a 30)."), true);
+
+console.log("\n=== Árbitros por definir: repartir las mesas, leer un rango, nombres y avisos ===");
+igual("50 mesas entre 3: seguidas, parejas y las que sobran van a los primeros", C.repartirMesas(50, 3), [{ desde: 1, hasta: 17 }, { desde: 18, hasta: 34 }, { desde: 35, hasta: 50 }]);
+igual("cada mesa queda con UN árbitro, sin huecos ni repetidas (de 1 a 200 mesas, de 1 a 12 árbitros)", (() => {
+  for (let t = 1; t <= 200; t++) for (let n = 1; n <= 12; n++) {
+    const r = C.repartirMesas(t, n);
+    const seguidas = r.every((x, i) => x.desde === (i ? r[i - 1].hasta + 1 : 1) && x.hasta >= x.desde);
+    const largos = r.map((x) => x.hasta - x.desde + 1);
+    if (!seguidas || r[r.length - 1].hasta !== t || Math.max(...largos) - Math.min(...largos) > 1 || r.length !== Math.min(n, t)) return [t, n];
+  }
+  return null;
+})(), null);
+igual("con más árbitros que mesas no se crean enlaces vacíos; con datos malos, nada", [C.repartirMesas(2, 5).length, C.repartirMesas(0, 3), C.repartirMesas(10, 0), C.repartirMesas(NaN, 3)], [2, [], [], []]);
+igual("el rango se lee como lo escribe la gente: «1-15», «1 a 15», «7»", [C.leerRango("1-15"), C.leerRango(" 1 a 15 "), C.leerRango("7"), C.leerRango("3 – 9")], [{ desde: 1, hasta: 15 }, { desde: 1, hasta: 15 }, { desde: 7, hasta: 7 }, { desde: 3, hasta: 9 }]);
+igual("un rango al revés, vacío, con letras o fuera de tope no se acepta", [C.leerRango("9-3"), C.leerRango(""), C.leerRango("a-b"), C.leerRango("0-4"), C.leerRango("1-10000")], [null, null, null, null, null]);
+igual("«Árbitro N» sigue al más alto del torneo, aunque haya huecos o enlaces con nombre", [C.nombrePorDefinir([]), C.nombrePorDefinir([{ arbitro: "Árbitro 2" }, { arbitro: "Ana" }, { arbitro: "Árbitro 7" }, { arbitro: "Árbitro 3x" }])], ["Árbitro 1", "Árbitro 8"]);
+const t0 = new Date("2026-11-02T15:00:00Z");
+igual("conectado: abrió el enlace hace menos de 2 minutos", [C.enLinea({ ultimo_uso: "2026-11-02T14:59:00Z" }, t0), C.enLinea({ ultimo_uso: "2026-11-02T14:57:00Z" }, t0), C.enLinea({ ultimo_uso: null }, t0)], [true, false, false]);
+igual("«hace…» de un pedido de ayuda", [C.hace("2026-11-02T14:59:50Z", t0), C.hace("2026-11-02T14:57:00Z", t0), C.hace("2026-11-02T13:30:00Z", t0)], ["hace un momento", "hace 3 min", "hace 1 h 30 min"]);
+const env = C.enviosAgrupados([
+  { de: "organizacion", creado: "2026-11-02T14:00:00Z", texto: "A sus mesas", asignacion_id: "a", leido_en: "2026-11-02T14:01:00Z" },
+  { de: "organizacion", creado: "2026-11-02T14:00:00Z", texto: "A sus mesas", asignacion_id: "b", leido_en: null },
+  { de: "organizacion", creado: "2026-11-02T14:00:00Z", texto: "A sus mesas", asignacion_id: "c", leido_en: null },
+  { de: "organizacion", creado: "2026-11-02T14:10:00Z", texto: "Pausa", asignacion_id: "a", leido_en: null },
+  { de: "arbitro", creado: "2026-11-02T14:20:00Z", texto: "Ayuda", asignacion_id: "a", leido_en: null }], (id) => "Árb " + id);
+igual("los avisos de una misma hora y texto se juntan en un envío: cuántos lo leyeron y a quién le falta (el pedido de un árbitro no cuenta)", env.map((e) => [e.texto, e.total, e.leidos, e.sinLeer]), [["Pausa", 1, 0, ["Árb a"]], ["A sus mesas", 3, 1, ["Árb b", "Árb c"]]]);
+
 console.log("\n=== Las claves pegadas en bloque ===");
 const SID = "AAAA1111BBBB2222CCCC3333DDDD4444";
 const b = C.leerClaves("1529719 " + SID + "\n\n1529729\t" + SID + "\n1529733,ABCDEFGH12345678\n  1529740;" + SID + "  \n1529700 " + SID + "\n1529719 " + SID + "\nabc " + SID + "\n1529742 corta\n1529756\n1529766 " + SID + " sobra");
@@ -95,14 +123,19 @@ igual("se cuenta por ronda, mesa y color, sin lo anulado, y primero quien más l
 console.log("\n=== El árbitro entra sin cuenta: la función decide sola ===");
 const mesaTs = leer("supabase", "functions", "centroamericano-mesa", "index.ts");
 const mesa = sinComentarios(mesaTs);
+const cuerpoDe = (nombre) => { const i = mesa.indexOf('cuerpo.action === "' + nombre + '"'); const sig = mesa.indexOf("cuerpo.action ===", i + 10); return mesa.slice(i, sig > 0 ? sig : mesa.length); };
 igual("va con verify_jwt en false, dicho en su cabecera, y su README lo explica", [/verify_jwt en false/.test(mesaTs), /centroamericano-mesa` va con `verify_jwt` en \*\*false\*\*/.test(leer("supabase", "functions", "README.md"))], [true, true]);
 igual("lo primero que hace es exigir un token de 64 caracteres, ANTES de tocar la base", mesa.indexOf("[0-9a-f]{64}") > 0 && mesa.indexOf("[0-9a-f]{64}") < mesa.indexOf("createClient(SUPABASE_URL"), true);
 igual("rechaza el enlace apagado y el vencido", [/a\.revocada\) return json\([^)]*410/.test(mesa), /a\.vence\)\.getTime\(\) <= Date\.now\(\)\) return json\([^)]*410/.test(mesa)], [true, true]);
 igual("la clave sale de la bóveda con la función del servicio, no de una tabla", [/rpc\("centroamericano_acceso"/.test(mesa), /from\("centroamericano_torneos"\)[^;]*sid/.test(mesa)], [true, false]);
 const acciones = mesa.match(/cuerpo\.action === "(\w+)"/g).map((x) => x.match(/"(\w+)"/)[1]);
-igual("las cuatro acciones, y ninguna más", acciones, ["leer", "guardar", "anotar", "anular"]);
+igual("las ocho acciones, y ninguna más", acciones, ["leer", "guardar", "anotar", "anular", "avisos", "ayuda", "leido", "nombre"]);
+igual("los avisos y el nombre no hablan con chess-results ni piden la clave (no se caen con ella)", [/const DE_AVISOS = \["avisos", "ayuda", "leido", "nombre"\]/.test(mesa), /DE_AVISOS\.includes\(String\(cuerpo\.action\)\) \? \{ data: null \} : await servicio\.rpc\("centroamericano_acceso"/.test(mesa), /leerRonda|guardarYComprobar/.test(cuerpoDe("avisos") + cuerpoDe("ayuda") + cuerpoDe("leido") + cuerpoDe("nombre"))], [true, true, false]);
+igual("«ayuda»: la mesa tiene que ser de su rango (403), no repite un pedido abierto de la misma mesa y tiene tope de 5 abiertos (429)", [/enRango\(mesa\)/.test(cuerpoDe("ayuda")) && /403/.test(cuerpoDe("ayuda")), /if \(igual\) return json\(\{ ok: true, ya: true/.test(cuerpoDe("ayuda")), /\.length >= 5\) return json\([^)]*429/.test(cuerpoDe("ayuda"))], [true, true, true]);
+igual("«ayuda» escribe de = 'arbitro' y con SU asignación: no puede escribir como la organización ni en otro enlace", [/insert\(\{ de: "arbitro", asignacion_id: a\.id,/.test(cuerpoDe("ayuda")), /de: "organizacion"/.test(cuerpoDe("ayuda"))], [true, false]);
+igual("«leido» solo marca mensajes de la organización de SU enlace, y una sola vez", [/\.eq\("asignacion_id", a\.id\)\.eq\("de", "organizacion"\)\.is\("leido_en", null\)/.test(cuerpoDe("leido"))], [true]);
+igual("«nombre» solo se pone una vez (409 si ya tiene nombre) y la escritura repite la condición", [/if \(a\.nombrado\) return json\([^)]*409/.test(cuerpoDe("nombre")), /\.eq\("nombrado", false\)/.test(cuerpoDe("nombre"))], [true, true]);
 // Cada acción que toca una mesa pregunta por el rango: guardar, anotar y anular.
-const cuerpoDe = (nombre) => { const i = mesa.indexOf('cuerpo.action === "' + nombre + '"'); const sig = mesa.indexOf("cuerpo.action ===", i + 10); return mesa.slice(i, sig > 0 ? sig : mesa.length); };
 igual("guardar, anotar y anular hacen cumplir el rango de mesas (403)", ["guardar", "anotar", "anular"].map((n) => /enRango\(/.test(cuerpoDe(n)) && /403/.test(cuerpoDe(n))), [true, true, true]);
 igual("leer solo devuelve las mesas del rango", /p\.mesas\.filter\(\(m\) => enRango\(m\.mesa\)\)/.test(cuerpoDe("leer")), true);
 igual("el registro de un resultado solo entra si chess-results lo confirmó al volver a leer", /resultados\.filter\(\(r\) => r\.ok\)/.test(cuerpoDe("guardar")) && /enviado: true/.test(cuerpoDe("guardar")), true);
@@ -134,13 +167,17 @@ igual("ver y armar piden la licencia «mesa-arbitro» (y auth.uid() va envuelto)
 igual("el token son 64 caracteres al azar y no lo elige quien crea el enlace", [/token text not null unique default replace\(gen_random_uuid\(\)::text, '-', ''\) \|\| replace\(gen_random_uuid\(\)::text, '-', ''\)/.test(sql), /grant insert \([^)]*token/.test(sql)], [true, false]);
 igual("la auditoría anota los enlaces SIN copiar el token", [/execute function interno\.auditar\('arbitro', 'tnr', 'mesa_desde', 'mesa_hasta', 'vence', 'revocada'\)/.test(sql), /auditar\([^)]*token/.test(sql)], [true, false]);
 igual("el registro solo admite los tipos que las funciones escriben", /tipo in \('resultado', 'correccion', 'ilegal', 'irregularidad', 'incidencia', 'nota', 'anulacion'\)/.test(sql), true);
+const sqlAvisos = ["avisos", "nombrado_insert"].map((n) => sinComentarios(leer("supabase", "migraciones", fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).find((f) => f.endsWith("centroamericano_" + n + ".sql"))))).join("\n");
+igual("los avisos: RLS encendida, sin delete, la organización solo INSERTA mensajes suyos y solo ACTUALIZA el estado de un pedido", [/alter table public\.centroamericano_avisos enable row level security/.test(sqlAvisos), /for delete/i.test(sqlAvisos) || /grant[^;]*delete[^;]*centroamericano_avisos/i.test(sqlAvisos), /with check \(de = 'organizacion' and creado_por = \(select auth\.uid\(\)\)/.test(sqlAvisos), /grant insert \(de, asignacion_id, mesa, texto\) on public\.centroamericano_avisos/.test(sqlAvisos), /grant update \(estado\) on public\.centroamericano_avisos/.test(sqlAvisos), /using \(de = 'arbitro'[^;]*with check \(de = 'arbitro'/.test(sqlAvisos.replace(/\n/g, " "))], [true, false, true, true, true, true]);
+igual("quién atendió un pedido y cuándo lo pone la base (un trigger), no el navegador: ni atendido_por ni atendido_en se pueden escribir", [/create trigger atendido before update on public\.centroamericano_avisos/.test(sqlAvisos), /grant (insert|update) \([^)]*(atendido|leido_en|creado_por)/.test(sqlAvisos)], [true, false]);
+igual("un enlace puede crearse «por definir»: la columna nombrado se inserta y se cambia, y nada más de lo que ya había", [/grant insert \(nombrado\) on public\.centroamericano_asignaciones/.test(sqlAvisos), /grant update \(arbitro, nombrado, mesa_desde, mesa_hasta\) on public\.centroamericano_asignaciones/.test(sqlAvisos), /grant[^;]*\b(token|ultimo_uso|creada_por)\b[^;]*on public\.centroamericano_asignaciones/.test(sqlAvisos)], [true, true, false]);
 igual("las dos tablas de acceso están en la lista de las vigiladas por la auditoría", /"centroamericano_asignaciones", "centroamericano_torneos"/.test(leer("herramientas", "verificar-auditoria.js")), true);
 
 console.log("\n=== Las páginas: el token y la clave no se guardan ===");
 const paginaArb = sinComentarios(leer("js", "centroamericano-arbitro.js"));
 const paginaOrg = sinComentarios(leer("js", "centroamericano-mesas-pagina.js"));
 igual("el árbitro no guarda su token en el navegador ni lo manda a otra parte", [/(localStorage|sessionStorage|indexedDB|document\.cookie)/.test(paginaArb), /console\./.test(paginaArb), /fetch\(/.test(paginaArb)], [false, false, false]);
-igual("la organización no guarda ninguna clave: la casilla se vacía en cuanto se manda", [/(localStorage|sessionStorage|indexedDB)/.test(paginaOrg), /input\.value = ""/.test(paginaOrg)], [false, true]);
+igual("la organización no guarda ninguna clave: la casilla se vacía en cuanto se manda", [/(localStorage|sessionStorage|indexedDB)/.test(paginaOrg), /\$\("g-sid"\)\.value = ""/.test(paginaOrg)], [false, true]);
 igual("las dos páginas son noindex y no entran a los buscadores", ["centroamericano-arbitro.html", "centroamericano-mesas.html"].map((f) => /<meta name="robots" content="noindex">/.test(leer(f))), [true, true]);
 
 console.log("\n=== El contraste de los colores nuevos (WCAG AA, medido) ===");
@@ -163,12 +200,15 @@ const PARES = [
   ["#9be0bb", "#0a1f33", "en oscuro: «✓ Guardado» (brand-900)"],
   ["#ff9aa5", "#0a1f33", "en oscuro: «✗ No quedó guardado» (brand-900)"],
   ["#b8bbf2", "#0a1f33", "en oscuro: «Anular», títulos y botones claros (brand-900)"],
+  ["#ffffff", "#1f774c", "«Con clave» y «Pedido atendido» (blanco sobre verde)"],
+  ["#ffffff", "#6268a3", "botón «Ayuda» sobre la cabecera morada de la mesa (blanco al 18 % sobre morado)"],
+  ["#b8bbf2", "#071527", "en oscuro: pestañas y títulos sobre el fondo de la página (brand-950)"],
   ["#ff9aa5", "#162b3f", "en oscuro: «✗» sobre el recuadro del resultado (blanco al 5 % sobre brand-900)"],
   ["#9be0bb", "#162b3f", "en oscuro: «✓» sobre el recuadro del resultado (blanco al 5 % sobre brand-900)"],
 ];
 for (const [t, f, donde] of PARES) {
   const r = ratio(t, f);
-  igual(donde + ": " + r.toFixed(2) + ":1" + (/#(?:ffffff|fff)/i.test(t) ? "" : ""), [r >= 4.5, css.toLowerCase().includes(t.slice(1)) || ["#ffffff", "#1f774c", "#ce1328", "#40478f", "#1e2453", "#e0ab5b", "#f4f4fb", "#0a1f33", "#162b3f"].includes(t) || ["#0a1f33", "#162b3f"].includes(f)], [true, true]);
+  igual(donde + ": " + r.toFixed(2) + ":1" + (/#(?:ffffff|fff)/i.test(t) ? "" : ""), [r >= 4.5, css.toLowerCase().includes(t.slice(1)) || ["#ffffff", "#1f774c", "#ce1328", "#40478f", "#1e2453", "#e0ab5b", "#f4f4fb", "#0a1f33", "#162b3f", "#b8bbf2"].includes(t) || ["#0a1f33", "#162b3f", "#071527", "#6268a3"].includes(f)], [true, true]);
 }
 igual("los colores de las marcas y las bandas son los del evento, no otros", ["--cac-rojo", "--cac-morado", "--cac-verde", "--cac-naranja"].every((v) => css.includes("var(" + v + ")")), true);
 igual("el color nunca va solo: cada marca lleva su palabra en la página", ["\"Ilegal\"", "\"Irregularidad\"", "\"Blancas\"", "\"Negras\""].every((p) => paginaArb.includes(p)), true);

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Mesas de los árbitros — Centroamericano 2026 | Ajedrez Integral</title>
-    <meta name="description" content="La organización del Centroamericano y del Caribe de la Juventud 2026 carga las claves de chess-results, les asigna mesas a los árbitros con un QR y ve lo que anotan.">
+    <meta name="description" content="La organización del Centroamericano y del Caribe de la Juventud 2026 carga la clave de chess-results, les asigna mesas a los árbitros con un QR, recibe sus pedidos de ayuda, les manda avisos y ve lo que anotan.">
     <meta name="robots" content="noindex">
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -19,7 +19,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
 
     <header class="bg-brand-800 shadow-lg cam-no-qr">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[3.5rem] py-2 flex items-center justify-between gap-3">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[3.5rem] py-2 flex items-center justify-between gap-3">
             <a href="index.html" class="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 <img src="img/logo-marca.png" width="155" height="96" alt="" class="h-10 w-auto shrink-0">
                 <span class="font-serif text-lg font-bold text-white">Ajedrez <span class="text-accent-400">Integral</span></span>
@@ -31,7 +31,7 @@
     <section class="cac-portada cam-portada cam-no-qr" aria-labelledby="titulo-pagina">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
-        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
             <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
                     <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
@@ -42,7 +42,7 @@
         </div>
     </section>
 
-    <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Cargando…</p></div>
 
         <div id="denegado" class="cam-tarjeta max-w-2xl mx-auto my-10 text-center" hidden>
@@ -54,31 +54,61 @@
 
         <div id="app" hidden>
 
-            <!-- 1. Las claves -->
-            <section class="cam-no-qr" aria-labelledby="t-claves">
-                <h2 id="t-claves" class="cac-seccion text-xl">1. Las claves de los torneos<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <p class="mt-3">Cada torneo de chess-results tiene su clave (el <strong>SID</strong>), la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros. Puedes ir cargándolas conforme las tengas.</p>
-                <p class="mt-2"><strong>Si los torneos están ligados en un grupo</strong> de chess-results, una sola clave abre todos: pégala una vez con el <strong>código del grupo</strong> (en «Pegar varias claves de una vez», abajo) y quedan cargados todos los torneos del grupo que son del Centroamericano.</p>
-                <p id="resumen-claves" class="font-bold mt-3" role="status"></p>
-                <div id="torneos" class="cam-torneos mt-3"></div>
+            <!-- Estado general: siempre a la vista -->
+            <div id="estado-general" class="cam-estado-general cam-no-qr" role="status" aria-live="polite">
+                <span id="eg-pedidos"></span>
+                <span id="eg-enlinea"></span>
+                <span id="eg-claves"></span>
+                <button type="button" id="sonido" class="cam-btn cam-btn-claro cam-btn-chico" aria-pressed="false"><span aria-hidden="true">🔔</span> Activar el sonido de los pedidos</button>
+            </div>
 
-                <details class="cam-tarjeta mt-4" id="pegar">
-                    <summary class="font-bold cursor-pointer">Pegar varias claves de una vez</summary>
-                    <p class="text-sm mt-2">Una línea por clave: el <strong>código de la base de datos</strong> (el del torneo, o el del <strong>grupo</strong> si están ligados) y la clave, separados por un espacio. Por ejemplo: <code>1529719 AAAA1111BBBB2222CCCC3333DDDD4444</code>.</p>
-                    <label for="claves-bloque" class="block text-sm font-bold mt-3">Códigos y claves</label>
-                    <textarea id="claves-bloque" rows="5" class="cam-campo mt-1" autocomplete="off" spellcheck="false"></textarea>
-                    <div class="cam-acciones"><button type="button" id="claves-bloque-guardar" class="cam-btn">Probar y guardar las claves pegadas</button></div>
-                    <ul id="claves-bloque-resultado" class="mt-3 space-y-1 text-sm"></ul>
+            <div class="cam-pestanas cam-no-qr" role="tablist" aria-label="Secciones de la página">
+                <button type="button" role="tab" class="cam-pestana" id="pest-avisos" data-panel="avisos" aria-controls="panel-avisos" aria-selected="true">Ayuda y avisos <span id="contador-pedidos" class="cam-contador" hidden>0</span></button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-arbitros" data-panel="arbitros" aria-controls="panel-arbitros" aria-selected="false" tabindex="-1">Árbitros y mesas</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
+            </div>
+
+            <!-- 1. Ayuda y avisos -->
+            <section id="panel-avisos" role="tabpanel" aria-labelledby="pest-avisos" class="cam-no-qr">
+                <h2 id="t-pedidos" class="cac-seccion text-xl">Pedidos de ayuda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <p class="mt-3 text-sm">Cuando un árbitro toca «Ayuda» en su tablet, el pedido aparece aquí con su mesa. Esta página se actualiza sola cada pocos segundos; deja la pestaña abierta durante la ronda.</p>
+                <div id="pedidos" class="grid gap-3 mt-3"></div>
+                <p id="sin-pedidos" class="cam-tarjeta mt-3">Nadie ha pedido ayuda. Cuando alguien lo haga, sonará aquí si activaste el sonido.</p>
+                <details class="cam-tarjeta mt-3" id="atendidos-caja" hidden>
+                    <summary class="font-bold cursor-pointer">Pedidos ya atendidos (<span id="atendidos-n">0</span>)</summary>
+                    <div id="atendidos" class="grid gap-2 mt-3"></div>
                 </details>
+
+                <h2 id="t-aviso" class="cac-seccion text-xl mt-10">Enviar un aviso a los árbitros<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <form id="form-aviso" class="cam-tarjeta mt-3" novalidate>
+                    <p class="text-sm">El árbitro lo ve arriba de su pantalla, con un sonido y una vibración, y lo cierra con «Entendido»: aquí sabes quién ya lo leyó.</p>
+                    <div class="grid sm:grid-cols-3 gap-3 mt-3">
+                        <div><label for="av-para" class="block text-sm font-bold">Para</label><select id="av-para" class="cam-select"></select></div>
+                        <div class="sm:col-span-2"><label for="av-texto" class="block text-sm font-bold">Mensaje</label><textarea id="av-texto" rows="2" maxlength="500" class="cam-campo" autocomplete="off"></textarea></div>
+                    </div>
+                    <div class="cam-acciones" id="frases" aria-label="Frases rápidas"></div>
+                    <div class="cam-acciones"><button type="submit" id="av-enviar" class="cam-btn">Enviar el aviso</button></div>
+                </form>
+
+                <h3 class="font-bold text-lg mt-6">Avisos enviados</h3>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla">
+                        <caption class="sr-only">Avisos que la organización mandó a los árbitros, lo más reciente primero</caption>
+                        <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Mensaje</th><th scope="col">Lo leyeron</th></tr></thead>
+                        <tbody id="enviados"></tbody>
+                    </table>
+                </div>
+                <p id="enviados-vacio" class="text-sm mt-2">Todavía no has mandado ningún aviso.</p>
             </section>
 
             <!-- 2. Árbitros y mesas -->
-            <section class="mt-10" aria-labelledby="t-asignar">
-                <h2 id="t-asignar" class="cac-seccion text-xl cam-no-qr">2. Árbitros y sus mesas<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+            <section id="panel-arbitros" role="tabpanel" aria-labelledby="pest-arbitros" hidden>
+                <h2 id="t-asignar" class="cac-seccion text-xl cam-no-qr">Árbitros y sus mesas<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
                 <form id="form-asignar" class="cam-tarjeta mt-3 cam-no-qr" novalidate>
-                    <p class="text-sm">A cada árbitro le toca un torneo y un rango de mesas. Se crea un enlace con su QR: lo abre en el celular y anota resultados, ilegales e irregularidades <strong>solo de sus mesas</strong>, sin cuenta ni clave.</p>
+                    <p class="text-sm">A cada árbitro le toca un torneo y un rango de mesas. Se crea un enlace con su QR: lo abre en su tablet y anota resultados, ilegales e irregularidades <strong>solo de sus mesas</strong>, sin cuenta ni clave. <strong>Si todavía no sabes quién es</strong>, deja el nombre vacío: queda como «Árbitro 1», «Árbitro 2»… y quien abra el enlace pone su nombre (o se lo pones tú después).</p>
                     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-                        <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido"></div>
+                        <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro (opcional)</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido, o vacío si está por definir"></div>
                         <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select></div>
                         <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                         <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
@@ -89,17 +119,59 @@
                     <div class="cam-acciones"><button type="submit" id="a-crear" class="cam-btn">Crear el enlace y el QR</button></div>
                 </form>
 
+                <details class="cam-tarjeta mt-3 cam-no-qr" id="reparto">
+                    <summary class="font-bold cursor-pointer">Repartir las mesas de un torneo entre varios árbitros por definir</summary>
+                    <p class="text-sm mt-2">Dices cuántas mesas hay y cuántos árbitros serán: se crean todos los enlaces de una vez, con mesas seguidas y parejas, y cada uno queda como «Árbitro N» hasta que alguien le ponga nombre. Puedes cambiar después las mesas de cada uno.</p>
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                        <div class="lg:col-span-2"><label for="rp-torneo" class="block text-sm font-bold">Torneo</label><select id="rp-torneo" class="cam-select"></select></div>
+                        <div><label for="rp-mesas" class="block text-sm font-bold">Mesas en total</label><input id="rp-mesas" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
+                        <div><label for="rp-arbitros" class="block text-sm font-bold">Árbitros</label><input id="rp-arbitros" type="number" min="1" max="60" inputmode="numeric" class="cam-campo"></div>
+                    </div>
+                    <div class="cam-acciones">
+                        <button type="button" id="rp-leer" class="cam-btn cam-btn-claro cam-btn-chico">Leer las mesas de chess-results</button>
+                    </div>
+                    <p id="rp-estado" class="text-sm mt-2" role="status"></p>
+                    <p id="rp-vista" class="font-bold mt-2"></p>
+                    <div class="cam-acciones"><button type="button" id="rp-crear" class="cam-btn" disabled>Crear los enlaces</button></div>
+                </details>
+
                 <div class="flex flex-wrap items-center justify-between gap-2 mt-6 cam-no-qr">
                     <h3 class="font-bold text-lg">Los enlaces creados</h3>
                     <button type="button" id="imprimir-qr" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Imprimir los QR</button>
                 </div>
-                <div id="asignaciones" class="grid gap-3 mt-3"></div>
+                <div id="asignaciones" class="mt-3"></div>
                 <p id="sin-asignaciones" class="cam-tarjeta mt-3 cam-no-qr">Todavía no has creado ningún enlace.</p>
             </section>
 
-            <!-- 3. Lo que anotan -->
-            <section class="mt-10 cam-no-qr" aria-labelledby="t-registro">
-                <h2 id="t-registro" class="cac-seccion text-xl">3. Lo que están anotando<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+            <!-- 3. La clave -->
+            <section id="panel-claves" role="tabpanel" aria-labelledby="pest-claves" class="cam-no-qr" hidden>
+                <h2 id="t-claves" class="cac-seccion text-xl">Una sola clave para todo el torneo<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <div class="cam-clave-grupo mt-3" id="clave-grupo">
+                    <p>Los torneos del Centroamericano están <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
+                    <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                        <div><label for="g-codigo" class="block text-sm font-bold">Código del grupo</label><input id="g-codigo" type="text" inputmode="numeric" maxlength="7" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                        <div><label for="g-sid" class="block text-sm font-bold">Clave (SID)</label><input id="g-sid" type="password" maxlength="32" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="cam-acciones"><button type="button" id="g-guardar" class="cam-btn">Probar y guardar la clave</button></div>
+                    <p id="g-estado" class="text-sm mt-2" role="status"></p>
+                </div>
+
+                <p id="resumen-claves" class="font-bold mt-5" role="status"></p>
+                <div id="torneos" class="cam-estado-torneos mt-3"></div>
+
+                <details class="cam-tarjeta mt-4" id="pegar">
+                    <summary class="font-bold cursor-pointer">Otras claves: un torneo que no esté en el grupo</summary>
+                    <p class="text-sm mt-2">Solo si algún torneo no está ligado y tiene su propia clave. Una línea por clave: el <strong>código de la base de datos</strong> del torneo y la clave, separados por un espacio. Por ejemplo: <code>1529719 AAAA1111BBBB2222CCCC3333DDDD4444</code>.</p>
+                    <label for="claves-bloque" class="block text-sm font-bold mt-3">Códigos y claves</label>
+                    <textarea id="claves-bloque" rows="4" class="cam-campo mt-1" autocomplete="off" spellcheck="false"></textarea>
+                    <div class="cam-acciones"><button type="button" id="claves-bloque-guardar" class="cam-btn">Probar y guardar las claves pegadas</button></div>
+                    <ul id="claves-bloque-resultado" class="mt-3 space-y-1 text-sm"></ul>
+                </details>
+            </section>
+
+            <!-- 4. Lo que anotan -->
+            <section id="panel-registro" role="tabpanel" aria-labelledby="pest-registro" class="cam-no-qr" hidden>
+                <h2 id="t-registro" class="cac-seccion text-xl">Lo que están anotando<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
                 <div class="flex flex-wrap items-end gap-3 mt-3">
                     <div><label for="r-torneo" class="block text-sm font-bold">Torneo</label><select id="r-torneo" class="cam-select"></select></div>
                     <div><label for="r-tipo" class="block text-sm font-bold">Qué</label><select id="r-tipo" class="cam-select">
@@ -133,8 +205,9 @@
     </main>
 
     <footer class="cac-academia cam-no-qr">
-        <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm text-brand-200">
+        <div class="max-w-6xl mx-auto px-4 py-4 text-center text-sm text-brand-200">
             <p>Un servicio de la Academia Ajedrez Integral para la organización del Centroamericano.</p>
+            <p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin -->
         </div>
     </footer>
 
