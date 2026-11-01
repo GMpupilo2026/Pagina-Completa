@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Mesa del árbitro — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta de arbitraje: lee las mesas de la ronda abierta de un torneo suizo de chess-results, anota los resultados, mándalos con la clave del torneo y lleva la bitácora del árbitro en PDF o Word.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Mesa del árbitro</span></li></ol></nav></div><!-- migas: fin -->
+
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto my-16">
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esta herramienta se usa con licencia</h1>
+                <p class="text-brand-500 dark:text-brand-300">Tu cuenta no tiene una licencia vigente de «Mesa del árbitro». Si ya tienes un código, actívalo; si no, pídelo.</p>
+                <a href="herramientas-arbitraje.html#activar" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">Activar o pedir una licencia</a>
+            </div>
+        </div>
+
+        <div id="app" class="hidden">
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️ </span>Mesa del árbitro</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados y mándalos a chess-results con la clave del torneo. Cada cosa que haces queda en tu bitácora, con su hora, para entregarla en PDF o Word.</p>
+
+            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-torneo">
+                <h2 id="t-torneo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">El torneo</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Son los dos datos de la pantalla «Enter Results Online» de chess-results: el código de la base de datos y el SID. Los da quien organiza, en Swiss-Manager, «Internet / Customize lists on chess-results.com».</p>
+                <div class="grid sm:grid-cols-3 gap-4 mt-3">
+                    <div><label for="m-tnr" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Clave de la base de datos</label><input id="m-tnr" type="text" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="1532448" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <div class="sm:col-span-2"><label for="m-sid" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">SID (security ID)</label><input id="m-sid" type="password" maxlength="32" autocomplete="off" spellcheck="false" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                </div>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-2"><strong>La clave no se guarda.</strong> Se usa para entrar a chess-results y se olvida; no queda en la bitácora ni en ningún archivo. Si cierras o recargas la página, hay que volver a escribirla.</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button type="button" id="m-leer" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer la ronda</button>
+                    <button type="button" id="m-ver-bitacora" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver solo la bitácora</button>
+                </div>
+                <p id="m-estado" class="text-sm mt-2" role="status"></p>
+            </section>
+
+            <section id="zona-mesas" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-mesas">
+                <h2 id="t-mesas" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Mesas</h2>
+                <p id="m-torneo" class="text-sm font-semibold mt-1"></p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">chess-results solo deja ingresar la ronda que Swiss-Manager tiene abierta. Elige el resultado de cada mesa; lo que no toques queda como está.</p>
+                <div class="flex flex-wrap items-end gap-x-6 gap-y-3 mt-3">
+                    <div><label for="m-buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar un jugador</label><input id="m-buscar" type="search" autocomplete="off" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <label class="inline-flex items-center gap-2 text-sm"><input id="m-faltan" type="checkbox" class="w-4 h-4"> Solo las mesas sin resultado</label>
+                    <p id="m-cuenta" class="text-sm text-brand-500 dark:text-brand-300" role="status"></p>
+                </div>
+                <div class="overflow-x-auto mt-3">
+                    <table class="w-full text-sm" id="m-tabla">
+                        <caption class="sr-only">Mesas de la ronda abierta</caption>
+                        <thead><tr class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><th scope="col" class="py-2 pr-3">Mesa</th><th scope="col" class="py-2 pr-3">Blancas</th><th scope="col" class="py-2 pr-3">Negras</th><th scope="col" class="py-2 pr-3">En chess-results</th><th scope="col" class="py-2">Anotar</th></tr></thead>
+                        <tbody id="m-mesas"></tbody>
+                    </table>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button type="button" id="m-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Guardar en chess-results</button>
+                    <button type="button" id="m-anotar" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Solo anotar en la bitácora</button>
+                    <button type="button" id="m-copiar" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Copiar la lista para teclear</button>
+                </div>
+                <p id="m-guardar-estado" class="text-sm mt-2" role="status"></p>
+                <ul id="m-informe" class="mt-2 space-y-1 text-sm"></ul>
+            </section>
+
+            <section id="zona-bitacora" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-bitacora">
+                <h2 id="t-bitacora" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Bitácora</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Solo se agrega: una corrección es otra línea, no un cambio de la anterior. La hora la pone el sistema, en hora de Costa Rica.</p>
+                <div class="grid sm:grid-cols-4 gap-4 mt-3">
+                    <div><label for="b-ronda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ronda</label><input id="b-ronda" type="number" min="1" max="99" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <div><label for="b-mesa" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Mesa (si aplica)</label><input id="b-mesa" type="number" min="1" max="9999" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <div><label for="b-tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tipo</label><select id="b-tipo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="incidencia">Incidencia</option><option value="nota">Nota</option></select></div>
+                    <div><label for="b-articulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Artículo (si aplica)</label><input id="b-articulo" type="text" maxlength="60" placeholder="art. 11.3.2" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                </div>
+                <label for="b-texto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1 mt-3">Qué pasó</label>
+                <textarea id="b-texto" rows="3" maxlength="2000" placeholder="Sonó un celular; el jugador perdió la partida." class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea>
+                <button type="button" id="b-agregar" class="mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar a la bitácora</button>
+                <p id="b-estado" class="text-sm mt-2" role="status"></p>
+
+                <div class="overflow-x-auto mt-4">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">Bitácora de este torneo</caption>
+                        <thead><tr class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><th scope="col" class="py-2 pr-3">Hora (Costa Rica)</th><th scope="col" class="py-2 pr-3">Ronda</th><th scope="col" class="py-2 pr-3">Mesa</th><th scope="col" class="py-2 pr-3">Tipo</th><th scope="col" class="py-2 pr-3">Detalle</th><th scope="col" class="py-2">Art.</th></tr></thead>
+                        <tbody id="b-lineas"></tbody>
+                    </table>
+                </div>
+                <p id="b-vacia" class="text-sm text-brand-500 dark:text-brand-300 mt-2">Escribe el código del torneo y toca «Ver solo la bitácora» o «Leer la ronda».</p>
+
+                <div class="flex flex-wrap items-end gap-3 mt-4">
+                    <div><label for="b-arbitro" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Árbitro (sale en la firma)</label><input id="b-arbitro" type="text" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <button type="button" id="b-pdf" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Bajar en PDF</button>
+                    <button type="button" id="b-docx" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Bajar en Word</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/marca-agua.js"></script>
+    <script src="js/reporte-pdf.js"></script>
+    <script src="js/reporte-docx.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/mesa-arbitro.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/mesa-arbitro-pagina.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>

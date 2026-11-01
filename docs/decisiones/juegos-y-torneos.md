@@ -8335,6 +8335,93 @@ clasificados a la etapa siguiente en el Excel que se sube en Pareo Integral.
   se va quedando sin ninguna «Próximamente». Rompiendo a propósito el bye
   del pareo o el orden oficial, salta.
 
+## Mesa del árbitro: resultados y bitácora
+
+`mesa-arbitro.html` (con licencia, `mesa-arbitro`; la pidió el dueño): para un
+torneo **suizo individual** dirigido con Swiss-Manager y publicado en
+chess-results. Lee las mesas de la ronda abierta, deja anotar el resultado de
+cada una, los manda a chess-results con la clave del torneo y lleva la
+bitácora del árbitro, que se baja en PDF o en Word.
+
+- **Se usó la puerta que chess-results ya da a los adjuntos**, «Enter Results
+  Online» (`https://chess-results.com/Results.aspx`; el documento de Heinz
+  Herzog es `chess-results.com/download/OnlineResultInput.pdf`, de 2020): dos
+  datos, el código de la base de datos (`tnr`, hasta 7 números) y el SID (hasta
+  32 caracteres), que quien organiza ve en Swiss-Manager, «Internet / Customize
+  lists on chess-results.com». Después el árbitro principal baja lo ingresado
+  con «Download from chess-results» en Swiss-Manager. **Solo sirve para suizos
+  individuales**: ni equipos ni todos contra todos.
+- **La pantalla** (comprobada con un torneo de prueba que chess-results marca
+  como «no se jugó en la vida real», tnr 1532448): **solo trabaja con la ronda
+  que Swiss-Manager tiene abierta** (el campo «Ronda» es de solo lectura); cada
+  mesa es una fila con un desplegable `GridErg$ctlNN$combo_erg` de valores
+  `0` sin resultado, `1` 1-0, `2` tablas, `3` 0-1, `4` 1f-0f, `5` 0f-1f,
+  `6` 0f-0f y `D` borrar. **El desplegable se llama por la POSICIÓN de la fila,
+  no por la mesa**: por eso al guardar se vuelve a leer la pantalla y se mandan
+  los valores de TODAS las filas (las que no cambian, con el valor que tenían).
+  Mandar solo la fila cambiada, o poner «0» en las demás, borraría resultados.
+- **Una Edge Function y no el navegador** (`supabase/functions/mesa-arbitro`):
+  chess-results no manda CORS, y es un formulario ASP.NET WebForms que arrastra
+  `__VIEWSTATE` y `__EVENTVALIDATION` y una cookie de sesión, así que entrar,
+  leer y guardar pasan juntos en un solo pedido. No es un proxy abierto: solo
+  `Results.aspx` de chess-results.com (o `s1…s99`), y con licencia (se pregunta
+  `tengo_herramienta('mesa-arbitro')` con el token de quien llama, como
+  `desempates-chess-results`). Dos acciones, `leer` y `guardar`.
+- **La clave (SID) no se guarda en ningún lado**: llega en el pedido, se usa
+  para entrar y se olvida. No va a la base (la tabla ni siquiera tiene dónde),
+  ni a una caché, ni a `localStorage`, ni al registro (la función nunca
+  imprime el pedido), ni a la respuesta. Si se recarga la página hay que
+  volver a escribirla; es a propósito. **Dato del torneo de prueba**: la clave
+  de ese torneo se mostró en una conversación; como el torneo es de prueba no
+  importa, pero con uno real se cambia en Swiss-Manager.
+- **Antes de guardar, la función comprueba y no manda nada si algo no cuadra**:
+  que la ronda abierta sea la que la página mostró, que cada mesa a cambiar
+  tenga los mismos jugadores de blancas y negras que vio el árbitro (si la
+  lista se corrió, no se escribe en otra mesa), que el valor sea de los ocho,
+  que ninguna mesa venga dos veces y que la pantalla tenga su botón de guardar
+  (si chess-results la cambia, no se manda a ciegas).
+- **Después de guardar vuelve a LEER, con otra sesión**, y contesta qué quedó
+  de verdad en chess-results, mesa por mesa, y si algo que no se pidió cambió
+  (`diferencias`). Nunca dice «guardado» por haber mandado el envío (la misma
+  regla de «una función que lo arregla todo vuelve a leer la fila»). La página
+  solo escribe la línea de bitácora como «enviado» si esa lectura de vuelta la
+  confirmó; la que no quedó se avisa en rojo y no queda como enviada.
+- **La bitácora** (`arbitro_bitacora`, migración
+  `20261101035107_mesa_arbitro_bitacora.sql`): una línea por hecho, con tipo
+  (`resultado`, `correccion`, `incidencia`, `nota`), ronda, mesa, artículo de
+  las Leyes y texto; un resultado trae el suyo y, si corrige otro, el anterior
+  (`anterior`); `enviado` dice si se mandó a chess-results. **Solo se agrega**:
+  no hay política de update ni de delete, una corrección es otra línea. **La
+  hora y el autor los pone la base** (el permiso de insert es por columna y no
+  incluye `ocurrio` ni `creada_por`), y la hora se muestra en hora de Costa
+  Rica (`HoraCR.fechaHora`). La ve quien la escribió con la licencia vigente, y
+  quien administra. No necesita migración la licencia: `tengo_herramienta()`
+  acepta cualquier id.
+- **«Solo anotar en la bitácora»** escribe sin mandar nada a chess-results, y
+  **«Copiar la lista para teclear»** da «Mesa 3: 1-0» ordenado, para quien
+  prefiera teclear en la página de chess-results.
+- **El documento** (`js/mesa-arbitro.js`, `MesaArbitro.documento`): resumen,
+  tabla de líneas en orden de hora y firma; PDF con `ReportePDF` y Word con
+  `ReporteDOCX`, los dos con la marca de agua de Ajedrez Integral.
+- **Comprobado con chess-results de verdad** (el torneo de prueba 1532448,
+  el 1/11/2026, con el mismo código de la función corrido en Node, que tiene el
+  mismo `fetch`): entrar, seguir la cookie de sesión (`ASP.NET_SessionId`) y
+  la redirección, leer las 30 mesas, detectar una clave mala, **guardar un
+  resultado** (la mesa 1 pasó de «0» a «1» al volver a leer), **borrarlo con
+  `D`** (volvió a «0», como la función lo espera) y que las otras 29 mesas
+  quedaran iguales; el estado final fue idéntico al inicial. **No se comprobó**:
+  que el resultado guardado se vea en la página pública del torneo (el
+  documento de chess-results dice que sí, al instante, pero no se verificó), ni
+  la función desplegada con la sesión de una persona con licencia (solo que sin
+  sesión da 401), ni correrla en Deno (la red se probó en Node).
+- Lo prueban `verificar-mesa-arbitro.js` (sin navegador: el lector con la
+  forma de la pantalla, el armado del envío, el módulo, la migración y que la
+  clave no se imprima ni se guarde) y `verificar-mesa-arbitro-pagina.js` (con
+  un doble: la licencia, la función y una bitácora que guarda y filtra de
+  verdad). Rompiendo a propósito la comprobación de la ronda, el «0» en las
+  mesas que no se tocan, la clave en un `console` o el «enviado» de lo que
+  chess-results no confirmó, saltan.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
