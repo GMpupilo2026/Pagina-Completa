@@ -160,3 +160,7 @@ mirar las fechas, exige la aceptación legal y una cuenta de alumno recién
 creada. La cuenta nace bloqueada y solo se abre después de guardar su
 vencimiento, como la prueba gratis. Ver «Las cuentas de invitado del
 Centroamericano» en `docs/decisiones/cobros-acceso-y-tienda.md`.
+
+## `centroamericano-mesa` va con `verify_jwt` en **false**
+
+La usa el árbitro del Centroamericano 2026 desde el enlace (QR) que le dio la organización, sin cuenta: no trae un JWT de persona. A cambio decide sola, y todo lo valida acá: el token de 64 caracteres (de una asignación que no se apagó ni venció), el **rango de mesas** (pedir o guardar una mesa ajena da 403) y la clave del torneo, que sale de la bóveda con `centroamericano_acceso()` (solo `service_role`) y nunca viaja al navegador. El registro lo escribe ella, con lo que comprobó al volver a leer chess-results. Con `verify_jwt` en true el árbitro recibiría un 401 y la página no abriría. Su hermana `centroamericano-clave` (la de la organización) sí exige sesión y licencia. Ver «Mesas de los árbitros del Centroamericano» en `docs/decisiones/juegos-y-torneos.md`.

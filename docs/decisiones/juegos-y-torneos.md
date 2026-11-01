@@ -8422,6 +8422,335 @@ bitácora del árbitro, que se baja en PDF o en Word.
   mesas que no se tocan, la clave en un `console` o el «enviado» de lo que
   chess-results no confirmó, saltan.
 
+## Mesas de los árbitros del Centroamericano
+
+El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
+chess-results: Sub-8, 10, 12, 14, 16 y 18, cada uno Absoluto y Femenino) tiene su versión de
+la «Mesa del árbitro» (ver su sección arriba), con la cara de las bases del torneo. Dos
+páginas, dos Edge Functions y tres tablas. La pidió el dueño: que quien organiza cargue las
+claves de todos los torneos, le dé a cada árbitro SUS mesas con un QR, y el árbitro anote
+resultados, ilegales e irregularidades desde el celular, sin cuenta.
+
+- **`centroamericano-mesas.html`** (la organización; sesión y licencia `mesa-arbitro`,
+  administración también; `noindex`; tile en `js/paginas-admin.js`): 1) las claves de los 12
+  torneos, una por una o pegadas en bloque; 2) árbitro + torneo + rango de mesas → un enlace
+  con su QR (`js/qr-svg.js`), «Copiar», WhatsApp, apagar, imprimir los QR; avisa si las
+  mesas ya las tiene otro árbitro o si el torneo no tiene clave; 3) lo que anotan: ilegales
+  por jugador, todo lo anotado, PDF con la marca de agua.
+- **`centroamericano-arbitro.html`** (el árbitro; SIN CUENTA; `noindex`): entra con
+  `…/centroamericano-arbitro.html#<token>`. **El token va después del «#»** para que no viaje
+  en las visitas ni quede en los registros del servidor; la página no lo guarda en ningún
+  lado del navegador. Una tarjeta por mesa: los dos jugadores (con «Blancas»/«Negras»
+  escrito: el color nunca va solo), su `Ilegal` e `Irregularidad`, y el resultado con su
+  **«Guardar» en la misma fila** (pedido del dueño: no al final de la página). Se vuelve a
+  leer sola cada 45 s si no hay nada a medio hacer. Pensada para el celular: botones de 44 px,
+  claro y oscuro, sin desplazamiento a lo ancho a 390 px. Los colores son los medidos de
+  `css/centroamericano.css`; los nuevos pares los mide `verificar-centroamericano-mesas.js`.
+- **Las ilegales se cuentan por partida** (ronda + mesa + color), como las marcas de Pareo
+  Integral (`marcasIncidencias`): la **primera** avisa «dale 2 minutos más a su rival», la
+  **segunda** pide confirmar antes, avisa que **pierde la partida (art. 7.5.5)** —salvo que
+  el rival no pueda dar mate con ninguna serie de jugadas legales: tablas—, deja una banda
+  roja en la mesa y **propone** el resultado sin guardarlo (el árbitro lo decide). La regla es
+  la de partida clásica y rápida con árbitro; el blitz del Apéndice B es otra y no se
+  distingue acá. Un toque por error se deshace con **«Anular»**: el registro no se edita ni
+  se borra, la anulación es otra línea que apunta a la anulada.
+- **`centroamericano-clave`** (`verify_jwt` en true, licencia con el token de quien llama):
+  «poner» entra a chess-results con el código y la clave, **mira qué torneos abre** y solo si
+  abre alguno de los 12 la guarda; «probar» comprueba la guardada. **`centroamericano-mesa`**
+  (`verify_jwt` en **false**, ver `supabase/functions/README.md`): el árbitro no trae JWT, así
+  que la función decide sola: token de 64 caracteres de una asignación que no se apagó ni
+  venció, **el rango de mesas se hace cumplir en el servidor** (403 si piden o guardan una
+  mesa ajena), la clave sale de la bóveda y nunca llega al navegador, y el **registro lo
+  escribe la función con lo que comprobó**: un resultado solo queda «enviado» si volvió a
+  leer chess-results y estaba ahí; el jugador de una ilegal sale de chess-results, no de lo
+  que mande la pantalla.
+- **Las claves van en la bóveda (Vault), cifradas**, no en una tabla: `centroamericano_torneos`
+  solo sabe SI hay clave (`sid_en_boveda`) y con qué código se entra (`acceso_tnr`). Escribirla
+  y leerla son dos funciones `SECURITY DEFINER` solo de `service_role`
+  (`centroamericano_guardar_acceso`, `centroamericano_acceso`): ni quien organiza puede leer
+  una clave, ni la que puso. **Esto cambia la regla de «la clave no se guarda» de la Mesa del
+  árbitro genérica, y solo para estos 12 torneos**; fue decisión del dueño («guardada cifrada
+  en el servidor») para poder darle a cada árbitro un QR sin darle la clave.
+- **Torneos ligados en un grupo** (pedido del dueño: «cuando los torneos están ligados, debería
+  poder leer todos»). En chess-results, los torneos ligados se entran con el código del
+  **GRUPO** y una sola clave, y un desplegable «Selección de torneo» cambia de uno a otro.
+  Comprobado con un grupo de prueba (1532448 y 1532486): (1) con el código del segundo torneo
+  la misma clave NO entra; (2) **elegir el torneo en el desplegable solo cambia el
+  encabezado: la tabla de mesas sigue siendo la del torneo anterior hasta apretar «Search/Reload»**,
+  así que un «Save» en ese estado habría escrito los resultados de un torneo en el otro. Por
+  eso `entrar(acceso, sid, destino)` (`_compartido/chess-results-ingreso.ts`) elige el torneo
+  Y recarga, y `leerRonda`/`guardarYComprobar` comprueban que el torneo abierto sea el pedido
+  antes de leer o escribir. Una clave de grupo se carga **una vez** (en «Pegar varias claves»,
+  con el código del grupo) y queda para todos los torneos del grupo que son del
+  Centroamericano.
+- **Una sola copia de lo que habla con chess-results**: `_compartido/chess-results-ingreso.ts`
+  (leer la pantalla, entrar, armar el «Save», guardar comprobando, grupos) lo comparten
+  `mesa-arbitro`, `centroamericano-clave` y `centroamericano-mesa`; `funciones-armar.js` lo
+  copia a cada una.
+- **Tablas** (migraciones `…_centroamericano_mesas.sql` y `…_centroamericano_grupos.sql`):
+  `centroamericano_torneos` (los 12, con su número de chess-results; la lista NO está en el
+  repositorio como dato aparte: está en la migración y en la sala `centroamericano-2026` de
+  `salas_torneo`), `centroamericano_asignaciones` (el enlace: token al azar que no elige quien
+  lo crea, torneo, rango, vencimiento, apagado) y `centroamericano_registro` (solo se
+  agrega; ningún permiso de escritura para el navegador; la hora y el autor los pone la base).
+  Las dos primeras llevan el trigger `auditar` **sin copiar el token** y están en `VIGILADAS`.
+  Quien organiza solo puede crear un enlace y apagarlo (permiso por columna).
+- **Comprobado con chess-results de verdad** (grupo de prueba 1532448/1532486, el 1/11/2026,
+  con las funciones ya desplegadas): leer el torneo del grupo entrando por su código, el rango
+  de mesas, un token falso (404) y un enlace de otro rango (403), la primera y la segunda
+  ilegal, anular, anular dos veces (rechazado), una irregularidad con nota, una ronda
+  equivocada (409), y guardar y borrar un resultado en el primer torneo. **NO se ha comprobado
+  guardar un resultado en el SEGUNDO torneo del grupo** (la ruta «elegir y recargar»): se
+  probó con un chess-results de mentira que reproduce su conducta
+  (`verificar-mesa-arbitro.js`) y la lectura real del segundo torneo sí funciona, pero falta
+  el «Save» real ahí (es un torneo de prueba que el dueño no ha autorizado a escribir). Tampoco
+  se probó con la sesión de una persona con licencia (solo el candado) ni en Deno.
+- **Para el día del torneo**: (1) cargar las claves, que la pantalla lo prueba contra
+  chess-results; (2) crear los enlaces y mandarlos por WhatsApp o imprimir los QR; (3) **las
+  filas de PRUEBA** (`tnr` 1532448 y 1532486, `orden` 901 y 902) se borran antes del lunes:
+  `delete from centroamericano_registro where tnr in ('1532448','1532486'); delete from
+  centroamericano_asignaciones where tnr in ('1532448','1532486'); delete from
+  centroamericano_torneos where tnr in ('1532448','1532486');` y su clave en la bóveda
+  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` NO tiene todavía el
+  «Guardar» por mesa, las ilegales ni los grupos: son solo de la versión del Centroamericano.
+  La página del árbitro no está en francés ni en inglés.
+- Lo prueban `verificar-centroamericano-mesas.js` (sin navegador: las reglas, las promesas de
+  seguridad leídas del código de las funciones y las migraciones, y el contraste de cada par
+  de colores), `verificar-centroamericano-mesas-pagina.js` (las dos páginas con un doble que
+  se porta como las funciones) y, para los grupos, `verificar-mesa-arbitro.js` (un
+  chess-results de mentira con la conducta comprobada). Rompiendo a propósito el rango de
+  mesas de «anular», un `console` con el token, un permiso de escritura de más en el
+  registro, el «Search/Reload», la comprobación del torneo abierto, la confirmación de la
+  segunda ilegal o que «Poner el resultado» lo guarde solo, saltan.
+
+### Avisos, árbitros por definir, una sola clave y la tablet (Centroamericano)
+
+Lo que pidió el dueño después de ver la primera versión (1 de noviembre): que **al estar los
+torneos ligados no se pida una clave por torneo**, poder **crear árbitros sin nombre**, que
+todo esté **ordenado**, que se use en **tablet**, que cada árbitro pueda **pedir al árbitro
+principal** (le llega un aviso a la cuenta principal) y que la cuenta principal le pueda
+**mandar avisos** al árbitro.
+
+- **Una sola clave, la del grupo.** La pestaña «Clave de chess-results» pide el código del
+  GRUPO y su SID una vez; la Edge Function `centroamericano-clave` entra, lee qué torneos abre
+  (el desplegable «Selección de torneo»), los cruza con los 12 y deja la clave cifrada para
+  todos los que sean del Centroamericano. Las 12 tarjetas ya NO llevan casilla: solo dicen si
+  tienen clave, por qué grupo entran y un «Probar». El bloque «Otras claves» queda para un
+  torneo que no esté ligado. El verificador comprueba que no haya ningún campo de clave
+  dentro de las tarjetas de los torneos. El código del grupo no es secreto: se propone el
+  último usado.
+- **Árbitros por definir.** `centroamericano_asignaciones.nombrado` (false = «Árbitro 3»).
+  Nombre vacío al crear → «Árbitro N», con N siguiendo al más alto del torneo (nunca se repite,
+  aunque haya enlaces apagados). «Repartir las mesas»: se dice cuántas mesas hay (o se leen de
+  chess-results con `probar`) y cuántos árbitros, y se crean todos los enlaces con rangos
+  seguidos y parejos (`repartirMesas`, probado de 1 a 200 mesas y de 1 a 12 árbitros: ni
+  huecos ni mesas repetidas). El árbitro pone su nombre al abrir (acción `nombre`, **una sola
+  vez**: después solo la organización, porque el nombre sale en el registro) o se lo pone la
+  organización; las mesas también se pueden cambiar después («1-15», «1 a 15», «7»). Para
+  eso la base dejó a quien organiza `insert (nombrado)` y `update (arbitro, nombrado,
+  mesa_desde, mesa_hasta)`: ni el token, ni `ultimo_uso`, ni `creada_por`.
+- **Avisos.** Tabla `centroamericano_avisos`, una sola para las dos direcciones. El PEDIDO DE
+  AYUDA del árbitro (`de = 'arbitro'`; lo escribe la función `centroamericano-mesa`, acción
+  `ayuda`, con la mesa que dice el enlace: una de otro rango da 403; un solo pedido abierto
+  por mesa, tope de 5 abiertos) queda `abierto` hasta que la organización lo marca
+  `atendido` (la base pone quién y cuándo con el trigger `atendido`, no el navegador). El
+  MENSAJE de la organización (`de = 'organizacion'`) se manda a todos, a un torneo o a un
+  árbitro: **una fila por enlace**, así `leido_en` dice quién ya lo vio; el árbitro lo cierra
+  con «Entendido» (acción `leido`, solo mensajes de SU enlace). Nadie edita ni borra el texto.
+  Las acciones `avisos`, `ayuda`, `leido` y `nombre` **no hablan con chess-results ni piden la
+  clave**: el árbitro recibe lo de la organización aunque chess-results esté caído.
+- **Cómo se enteran, sin servidor de empujes.** Las dos páginas consultan: el árbitro cada 8 s
+  y la organización cada 6 s mientras la pestaña esté abierta (el celular del árbitro, con
+  Wake Lock para que no se apague la pantalla). Suena (WebAudio, tras un primer toque: el
+  navegador no deja sonar antes), vibra y pone el contador en la pestaña y en el título.
+  **No hay notificación push**: con la pestaña de la organización cerrada, el pedido espera.
+  La organización ve quién está conectado (`ultimo_uso`, que la función anota a lo sumo cada
+  20 s; «conectado» = menos de 2 minutos).
+- **Ordenado.** La organización son cuatro pestañas (Ayuda y avisos, Árbitros y mesas, Clave de
+  chess-results, Lo que anotan; con flechas, Inicio y Fin) y arriba, siempre a la vista, el
+  estado general. Los enlaces salen agrupados por torneo y ordenados por mesa. La página del
+  árbitro ordena las mesas por número, dice «Con resultado: 2 de 3 · faltan 1», tiene «Ir a la
+  mesa» y «Solo las que faltan».
+- **Lo que se aprendió: no repintar bajo el dedo.** Con un sondeo cada 6 s, volver a dibujar
+  las tarjetas cada vez se traga el toque que cae justo en un botón recién reemplazado, y
+  cierra un desplegable abierto. Por eso cada lista se vuelve a dibujar solo si su firma
+  cambió (el «hace 3 min» y los pedidos de cada tarjeta se corrigen en el lugar).
+- **Tablet.** De 768 px: letra mayor y dos columnas; de 1100 px, tres; con `pointer: coarse`,
+  botones y campos de 48 px. Se comprobó a 820 px (vertical) y 1180 px (de lado) sin
+  desplazamiento a lo ancho, y en claro y en oscuro con el contraste medido en las cuatro
+  pestañas. Los colores nuevos son los del evento; el color nunca va solo (el pedido atendido
+  dice «✓ … atendió tu pedido»).
+- Lo prueban las mismas dos pruebas de arriba, ampliadas: las promesas de las funciones
+  (rango en `ayuda`, un solo nombre, `leido` solo de su enlace, avisos sin clave), las
+  migraciones (la organización solo inserta mensajes suyos y solo actualiza `estado`), el
+  repartir y los números, y en el navegador los pedidos que llegan solos, «Atendido», el aviso
+  con quién lo leyó, crear/poner nombre/cambiar mesas/repartir/apagar y la clave única.
+  Rompiendo a propósito el rango de `ayuda`, la condición «una sola vez» del nombre, el envío
+  a todos o la numeración del reparto, saltan.
+- **Probado con el grupo de prueba real** (tnr 1532448 y 1532486, sin tocar resultados en el
+  segundo): `ayuda` (repetida, general, fuera de rango), `nombre` (y su segundo intento),
+  `leer` con un mensaje pendiente y `leido` (una vez, y desde otro enlace).
+
+### Terminar la ronda, planillas y respaldo (Centroamericano)
+
+Lo que pidió el dueño la víspera del torneo (1 de noviembre): que la cuenta principal se entere
+cuando un árbitro **terminó sus mesas** y reciba una **sugerencia de a dónde ir a ayudar**; ver
+**cuántas mesas le quedan a cada árbitro**; que cada árbitro, al terminar, **revise y finalice la
+ronda** con un botón que le recuerde revisar, ordenar y firmar las planillas; una **copia de
+seguridad constante** con la que se pueda volver a subir todo; un botón con los **horarios y el
+tiempo de espera**; elegir de una **lista el tipo de ilegal** (con el recordatorio de los 2
+minutos) y **de irregularidad**; subir la **foto de las dos planillas** de cada partida al Drive
+«Planillas Centroamericano», por torneo y ronda y con el nombre del enfrentamiento; los **QR con
+la marca de la academia**; que la organización se vea **como un programa de computadora**; y,
+antes de cada ronda, una **lista previa** aprobada paso a paso (relojes y tableros). Y permiso
+para probar con escritura en el «Torneo de Prueba 2» (se probó y se dejó con las mesas sin
+resultado).
+
+- **El avance de cada árbitro** (`centroamericano_progreso`: mesas con resultado y cuáles faltan).
+  Lo escribe la función cada vez que el árbitro lee o guarda (`avance-ronda.ts`, copia
+  compartida) y «Actualizar desde chess-results» lo lee de todos los torneos con enlaces activos
+  (acción `resumen` de `centroamericano-clave`, de a 4 torneos en paralelo). La organización lo
+  ve en «Ronda en curso»: barra de avance, cuántas quedan (con cuáles), estado (sin datos / en
+  curso / terminó / ronda finalizada) y cuántos pasos de la lista previa lleva. Si un árbitro no
+  abrió su tablet, su fila dice «Sin datos» en vez de inventar un número.
+- **«Terminó sus mesas»**: al llegar a todas, la función le avisa a la cuenta principal una sola
+  vez por ronda (`centroamericano_avisos`, `tipo = 'termino'`; el índice único lo garantiza). La
+  **sugerencia** la arma la página con el avance de todos (`sugerirAyuda`, probada sin navegador):
+  primero los de su mismo torneo (suelen compartir sala; **no sabemos dónde queda cada sala**),
+  luego los que más mesas tienen; le propone **la mitad de lo que le queda al otro, desde el
+  final de su lista**, para que no se pisen. «Mandarle esta sugerencia» le escribe al que
+  terminó y da el aviso por atendido. Nada se reasigna solo: lo decide la cuenta principal.
+- **Finalizar la ronda** (`centroamericano_finales`): con todas sus mesas con resultado (lo
+  comprueba la función leyendo chess-results, 409 si faltan), el árbitro ve la tabla de sus
+  resultados con las fotos subidas, confirma tres cosas —revisó los resultados contra las
+  planillas, las tiene ordenadas por mesa, están firmadas— y toca «Finalizar la ronda» (que
+  pregunta una vez más). Lo marcado no se pierde al volver a leer. A la cuenta principal le llega
+  «finalizó la ronda» y la ronda queda anotada; la organización puede reabrirla
+  (`finales.reabierta`, auditado) y el árbitro la vuelve a finalizar.
+- **La lista previa** (`centroamericano_listas`, pasos `relojes` y `tableros`, en ese orden): un
+  cuadro paso a paso al abrir la tablet con la ronda lista; sin los dos aprobados la función
+  responde 409 a «guardar» (no a «anotar» una ilegal: una sanción no puede esperar). El ritmo
+  escrito en el paso de los relojes es el de las bases: **90 minutos con 30 segundos de
+  incremento por jugada desde el inicio**. La lista son dos pasos porque eso fue lo pedido;
+  agregar otro es una línea en `PASOS` (función) y en `PASOS_LISTA` (página) más el `check` de la
+  tabla. No va en la copia de seguridad (son dos toques si hubiera que repetirla).
+- **Horarios y tiempo de espera**: `js/centroamericano-horario.js` repite el calendario de
+  `centroamericano-2026.html` (**el verificador exige que sean idénticos**) y dice cuánto queda de
+  la tolerancia de 30 minutos desde el inicio de la ronda; se ve siempre en una línea de la
+  barra y el botón «Horarios» abre todo el calendario.
+- **Ilegales e irregularidades de una lista** (`TIPOS_ILEGAL`, `TIPOS_IRREGULARIDAD` en
+  `js/centroamericano-mesas.js`): ocho tipos de ilegal y diez de irregularidad, cada uno con
+  «Otra» que pide explicar. Lo elegido va a la bitácora como texto (y el artículo cuando el
+  reglamento lo dice sin duda: 4.2, 4.3, 8.1, 9.2, 11.3.2; la ilegal es siempre 7.5.5). Tras anotar
+  una ilegal sale un cuadro que no se pasa por alto: la primera recuerda dar **2 minutos al
+  rival**; la segunda, que pierde la partida (la página solo avisa; el resultado lo decide el
+  árbitro). **Las listas son una propuesta: si el árbitro principal quiere otros tipos, se
+  cambian en esas dos constantes.**
+- **Planillas a un Drive ordenado.** El árbitro toca «Planilla de blancas» o «de negras» de cada
+  mesa, toma la foto (se achica a ≤1800 px y JPG en el aparato) y sube. La función la guarda
+  **primero** en el bucket privado `centroamericano-planillas` y después la manda al Drive; si
+  el Drive falla o no está conectado, la foto ya está a salvo y se reintenta desde la
+  organización («Mandar al Drive las que faltan»). El nombre del enfrentamiento sale de
+  chess-results, no de la pantalla. En el Drive: `Planillas Centroamericano / <torneo> / Ronda N /
+  Mesa 07 - <blancas> vs <negras> - Planilla de blancas (<jugador>).jpg`; una foto nueva de la
+  misma planilla manda la vieja a la papelera. **El Drive lo toca un Apps Script de la dueña del
+  Drive** (`documentos/centroamericano/puente-drive.gs`, mismo patrón del de los JDN): se instala
+  una vez, se pega su dirección y su secreto en «Planillas y Drive» y se prueban antes de
+  guardarse (la dirección y el secreto van a la bóveda, `centroamericano_drive_*`, solo
+  `service_role`). Sin eso las fotos se guardan igual.
+- **Respaldo constante** (`centroamericano_copias`, anillos con ranuras que se sobrescriben: no hay
+  nada que borrar). Cada 5 minutos **si algo cambió** (36 ranuras: las últimas 3 horas), cada
+  hora (72: tres días), a pedido (20), y cada 10 minutos al Drive si está conectado (`pg_net` al
+  Apps Script, carpeta `_Copias de seguridad`). Trae lo que **solo vive en nuestra base**: los
+  enlaces con su mismo token (los QR impresos siguen sirviendo), el registro, los avisos, el
+  avance, las rondas finalizadas y el índice de planillas. **No trae la clave de chess-results**
+  (cifrada en la bóveda: se vuelve a poner una vez) **ni los resultados**, que viven en
+  chess-results y Swiss-Manager. «Restaurar» (`centroamericano_restaurar`, desde la lista o desde
+  un archivo que se bajó) **solo agrega lo que falta y nunca pisa nada**; exige la licencia con
+  `coalesce(…, false)`. Todo se apaga solo el 13 de noviembre. **Probado**: la copia y su
+  restauración (dos veces: la segunda no agrega nada) y los anillos corriendo solos.
+- **Los QR llevan la marca de Ajedrez Integral** (`QrSvg.dibujar(texto, etiqueta, { marca: true })`:
+  corrección de errores H y el caballo al centro, 22 % del lado). La hoja «Imprimir los QR» arma
+  una tarjeta por árbitro con su nombre, torneo, mesas y el pie «Ajedrez Integral · Centroamericano
+  2026». Los PDF (el registro y el nuevo «Reporte de la ronda») llevan la marca de agua de
+  siempre.
+- **Como un programa de computadora**: una ventana con barra de título, menú de siete pestañas
+  pegadas al panel (Ronda en curso, Avisos, Árbitros y mesas, Planillas y Drive, Clave, Respaldo,
+  Lo que anotan), barras de herramientas, tablas en cuadrícula (encabezado fijo, filas
+  alternadas) y una barra de estado abajo que siempre dice cuántos avisos hay abiertos, quién está
+  conectado, la clave, el Drive y la última copia. Los enlaces dejaron de ser tarjetas: son filas
+  de una tabla con sus botones, y el QR se abre en una ventana propia.
+- Lo prueban `verificar-centroamericano-mesas.js` (reglas puras, horario contra la página del
+  torneo, promesas de seguridad leídas de las funciones y las migraciones) y
+  `verificar-centroamericano-mesas-pagina.js` (las dos páginas en el navegador, a 390, 820 y 1180
+  px, en claro y en oscuro). Rompiendo a propósito el rango de «ayuda», el «una sola vez» del
+  nombre o el envío a todos, saltan.
+- **Probado con el grupo de prueba real, escribiendo en el «Torneo de Prueba 2»**: «guardar» sin la
+  lista da 409; «tableros» antes que «relojes» da 409; con la lista, cinco resultados guardados y
+  comprobados leyendo chess-results; el aviso «terminó» salió solo; «finalizar» sin las tres
+  confirmaciones da 400 y con ellas guarda (y la segunda vez dice «ya»); una foto JPG real quedó en
+  el bucket y en `centroamericano_planillas`, una PNG o de una mesa ajena se rechaza; después se
+  borraron los cinco resultados y el torneo quedó como estaba. **Sin probar de verdad**: el paso
+  al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
+  sesión (lo prueba el navegador con un doble, no la función desplegada).
+
+### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
+
+Lo que pidió el dueño después: que **un árbitro pueda tener mesas de torneos distintos**; que
+cada árbitro **revise mesa por mesa si el jugador llegó**, para que la principal tenga la lista de
+los que faltan; que la principal pueda **mandar a los árbitros a hacer un control de tiempos** (una
+ventana emergente que se puede minimizar para meter un resultado, donde se elige la mesa sin
+terminar y se anotan jugada y tiempos, por si un reloj falla) y que **el árbitro también pueda
+activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayuda para el
+árbitro); y que **los avisos no hagan ruido: en un torneo no se puede**.
+
+- **Sin ruido, en las dos páginas, pero con vibración.** Se quitó todo el audio (WebAudio), también el
+  botón «Activar el sonido» de la organización; **la vibración se queda** (lo pidió el dueño: no hace
+  ruido en la sala): la tablet vibra cuando llega un aviso nuevo o cuando atienden una ayuda, y la de
+  la organización cuando llega un aviso de un árbitro (la primera lectura no vibra). Los avisos se ven: arriba y pegados en la tablet
+  del árbitro (con un parpadeo suave que se apaga con `prefers-reduced-motion`), y en la
+  organización el número de la pestaña, el título del navegador y la barra de estado, que parpadea
+  mientras haya algo abierto. El verificador falla si en las dos páginas aparece `AudioContext`,
+  `createOscillator` o `new Audio(`, y exige que sí estén `navigator.vibrate`.
+- **Un árbitro, varios torneos** (`centroamericano_asignaciones.persona`, un uuid que junta
+  enlaces). Cada enlace sigue siendo UN torneo y UN rango, con su avance, su lista previa y su
+  «finalizar»: es la unidad que ya funcionaba. `persona` solo los junta: el árbitro abre un QR y
+  `leer` le devuelve sus otros enlaces (`hermanas`, con su token: los puso la organización a
+  propósito) para pasar de uno a otro sin salir de la página. Los avisos de la organización y
+  «Entendido» valen desde cualquiera de sus enlaces; el pedido de ayuda es del enlace en que está
+  (una ayuda en una mesa es de ese torneo); el nombre que ponga vale para todos. En la
+  organización, «Otro torneo» en la fila de un árbitro (o «¿Ya tiene mesas en otro torneo?» en el
+  formulario) crea el nuevo enlace con su mismo nombre y su misma `persona`; un aviso a «todos» o a
+  «todo el torneo» le llega **una vez** al árbitro aunque tenga dos enlaces.
+- **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
+  marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
+  Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).
+  La organización ve en «Ronda en curso» cuántos jugadores revisó cada árbitro y la lista «Jugadores
+  que no han llegado» con torneo, mesa, jugador, color, árbitro y hora. No frena nada (no es parte
+  de la lista previa): es información.
+- **Control de tiempos** (`centroamericano_tiempos`, solo se agrega). Lo pide la organización (a
+  todos, a un torneo o a un árbitro: un mensaje con `control_tiempos = true`, una columna nueva
+  que solo escribe la organización en sus mensajes) o lo abre el propio árbitro con «Control de
+  tiempos». Es una ventana flotante que no tapa la página y se **minimiza** («Abrir» la devuelve,
+  sin perder lo escrito). Lista solo las partidas SIN terminar (la función lo comprueba: si la mesa
+  ya tiene resultado, 409), pide la jugada en que va, a quién le toca y lo que marca cada reloj
+  (`1:23:45`, `45:10` o segundos) y una nota. Cada lectura queda con su hora; la organización las ve
+  en la pestaña «Control de tiempos» (la última de cada partida o todo el historial) y en PDF con la
+  marca de agua. Si un reloj falla, la última lectura sirve para corregirlo.
+- **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
+  esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
+  (no es de una mesa; le llega «X necesita ayuda»).
+- La copia de seguridad y «Restaurar» incluyen la presencia, los tiempos y `persona`.
+- **Migración**: `centroamericano_varios_torneos_presencia_tiempos`. Se escribió SIN ningún `drop`
+  (ni de restricción ni de política): la herramienta de migraciones de Supabase pregunta a la
+  persona antes de aplicar cualquier `drop` y, sin respuesta, vence sin aplicar nada (como pasó con
+  el `delete` de otra vez). Por eso `control_tiempos` es una columna nueva en vez de un valor nuevo
+  de `tipo`. Aplicada el 1 de noviembre (`20261101142607`) con `centroamericano-mesa` v4 desplegada;
+  probada con los dos torneos de prueba ligados: los enlaces con la misma `persona` se ven entre sí
+  (`hermanas`), el aviso de control de tiempos de un enlace le llega al otro, la presencia se
+  corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
+  copia actual no agrega nada de más.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

@@ -1,0 +1,421 @@
+/* Las mesas de los árbitros del Centroamericano 2026 (centroamericano-arbitro.html
+ * y centroamericano-mesas.html), con la cara de las bases del torneo: la misma de
+ * css/centroamericano.css (el morado, el rojo, el verde y las hojas de monstera).
+ * Se cargan juntas, y todo cuelga de `.cac` (el <body>): de ahí salen las
+ * variables --cac-*. Las clases propias llevan «cam-».
+ *
+ * Solo hay pares de color que ya se midieron en css/centroamericano.css (WCAG AA):
+ * blanco sobre #40478F 8,35; blanco sobre #CE1328 5,6; #40478F y #1E2453 sobre
+ * blanco 8,35 y 15; #1F774C sobre blanco 5,52; en oscuro #B8BBF2 y #9BE0BB sobre
+ * brand-900. Y el color nunca va solo: cada marca lleva su palabra («Ilegal»,
+ * «Irregularidad», «Blancas», «Negras»). Lo comprueba verificar-centroamericano-mesas.js.
+ * Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md.
+ */
+
+/* La franja de arriba de la página del árbitro: más baja que la portada del evento,
+ * porque en el celular lo que importa son las mesas. */
+.cam-portada { padding-bottom: 0.25rem; }
+.cam-portada .cac-titulo { text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
+.cam-mascota {
+  width: clamp(88px, 22vw, 150px);
+  height: auto;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+}
+
+/* Las tres cosas que el árbitro tiene que saber siempre: quién es, qué torneo y qué ronda. */
+.cam-datos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+.cam-dato {
+  background: rgb(30 36 83 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 0.9rem;
+  padding: 0.45rem 0.8rem;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.cam-dato small { display: block; color: #dfe0f7; font-weight: 400; font-size: 0.75rem; }
+
+/* Cada tarjeta es una MESA: arriba su número, y adentro los dos jugadores y su resultado. */
+.cam-lista { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .cam-lista { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .cam-lista { grid-template-columns: repeat(3, 1fr); } }
+
+.cam-mesa {
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border: 2px solid #dfe0f7;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 2px 0 rgb(30 36 83 / 0.06);
+}
+.dark .cam-mesa { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.cam-mesa[data-estado="con-resultado"] { border-color: var(--cac-verde); }
+.cam-mesa[data-estado="sin-guardar"] { border-color: var(--cac-morado); border-style: dashed; }
+.cam-mesa[data-estado="pierde"] { border-color: var(--cac-rojo); }
+.dark .cam-mesa[data-estado="con-resultado"] { border-color: #9be0bb; }
+.dark .cam-mesa[data-estado="sin-guardar"] { border-color: #b8bbf2; }
+
+.cam-mesa-cabeza {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  background: var(--cac-morado);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  font-weight: 800;
+}
+.cam-mesa-numero { font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.cam-estado { font-size: 0.8rem; font-weight: 700; background: rgb(255 255 255 / 0.18); border-radius: 9999px; padding: 0.15rem 0.6rem; }
+
+.cam-jugador { padding: 0.7rem 0.9rem; border-bottom: 1px dashed #c9cbee; }
+.dark .cam-jugador { border-bottom-color: rgb(255 255 255 / 0.18); }
+.cam-jugador-fila { display: flex; align-items: center; gap: 0.5rem; }
+.cam-color {
+  flex: none;
+  min-width: 4.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 0.5rem;
+  padding: 0.15rem 0.4rem;
+  border: 2px solid var(--cac-morado-hondo);
+}
+.cam-color[data-color="blancas"] { background: #fff; color: var(--cac-morado-hondo); }
+.cam-color[data-color="negras"] { background: var(--cac-morado-hondo); color: #fff; }
+.dark .cam-color { border-color: #fff; }
+.cam-nombre { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Las marcas: «i» por cada ilegal y «!» por cada irregularidad, como en Pareo Integral,
+ * pero con su palabra al lado. */
+.cam-marcas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.5rem; }
+.cam-marca {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.8rem; font-weight: 800; border-radius: 9999px; padding: 0.1rem 0.6rem;
+  color: #fff;
+}
+.cam-marca[data-tipo="ilegal"] { background: var(--cac-rojo); }
+.cam-marca[data-tipo="irregularidad"] { background: var(--cac-morado); }
+
+/* Los botones, grandes: se tocan con el dedo y a veces con prisa. */
+.cam-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+  min-height: 44px; padding: 0.4rem 0.9rem;
+  border-radius: 0.8rem; border: 2px solid var(--cac-morado);
+  background: var(--cac-morado); color: #fff;
+  font-weight: 800; font-size: 0.95rem; cursor: pointer;
+  transition: background-color 0.15s, transform 0.05s;
+}
+.cam-btn:hover:not(:disabled) { background: var(--cac-morado-hondo); border-color: var(--cac-morado-hondo); }
+.cam-btn:active:not(:disabled) { transform: translateY(1px); }
+.cam-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.cam-btn:focus-visible, .cam-select:focus-visible, .cam-campo:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-btn-rojo { background: var(--cac-rojo); border-color: var(--cac-rojo); }
+.cam-btn-rojo:hover:not(:disabled) { background: #9f0e1e; border-color: #9f0e1e; }
+.cam-btn-claro { background: #fff; color: var(--cac-morado); }
+.cam-btn-claro:hover:not(:disabled) { background: #f4f4fb; color: var(--cac-morado-hondo); border-color: var(--cac-morado-hondo); }
+.dark .cam-btn-claro { background: transparent; color: #b8bbf2; border-color: #b8bbf2; }
+.dark .cam-btn-claro:hover:not(:disabled) { background: rgb(255 255 255 / 0.08); color: #fff; border-color: #fff; }
+.cam-btn-chico { min-height: 40px; font-size: 0.85rem; padding: 0.25rem 0.7rem; }
+
+.cam-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.cam-anular {
+  background: none; border: 0; padding: 0.4rem 0.2rem; min-height: 40px;
+  color: var(--cac-morado); font-weight: 700; text-decoration: underline; cursor: pointer; font-size: 0.85rem;
+}
+.dark .cam-anular { color: #b8bbf2; }
+
+/* El resultado y su «Guardar» van JUNTOS, al lado de la mesa que se cambia. */
+.cam-resultado { padding: 0.8rem 0.9rem; background: #f4f4fb; }
+.dark .cam-resultado { background: rgb(255 255 255 / 0.05); }
+.cam-resultado-actual { font-size: 0.85rem; margin-bottom: 0.4rem; }
+.cam-resultado-fila { display: flex; gap: 0.5rem; align-items: stretch; }
+.cam-select, .cam-campo {
+  min-height: 44px; border-radius: 0.8rem; border: 2px solid #c9cbee;
+  background: #fff; color: var(--cac-morado-hondo); padding: 0.35rem 0.6rem; font-size: 1rem; width: 100%;
+}
+.cam-resultado-fila .cam-select { flex: 1; min-width: 0; }
+.dark .cam-select, .dark .cam-campo { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.cam-guardado { color: var(--cac-verde); font-weight: 800; font-size: 0.9rem; margin-top: 0.4rem; }
+.dark .cam-guardado { color: #9be0bb; }
+.cam-fallo { color: var(--cac-rojo); font-weight: 800; font-size: 0.9rem; margin-top: 0.4rem; }
+.dark .cam-fallo { color: #ff9aa5; }
+
+/* La segunda ilegal: pierde la partida. Una banda roja que no se puede pasar por alto. */
+.cam-alerta {
+  background: var(--cac-rojo); color: #fff;
+  padding: 0.7rem 0.9rem; font-weight: 700; line-height: 1.3;
+}
+.cam-alerta strong { text-transform: uppercase; letter-spacing: 0.02em; }
+.cam-aviso-suave {
+  background: var(--cac-naranja); color: var(--cac-morado-hondo);
+  padding: 0.5rem 0.9rem; font-weight: 700; font-size: 0.9rem;
+}
+
+/* Secciones de la página de la organización. */
+.cam-tarjeta {
+  background: #fff; color: var(--cac-morado-hondo);
+  border: 2px solid #dfe0f7; border-radius: 1.25rem; padding: 1.1rem;
+}
+.dark .cam-tarjeta { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.cam-torneos { display: grid; gap: 0.75rem; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .cam-torneos { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .cam-torneos { grid-template-columns: repeat(3, 1fr); } }
+.cam-torneo { border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.8rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-torneo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.cam-torneo[data-clave="si"] { border-color: var(--cac-verde); }
+.dark .cam-torneo[data-clave="si"] { border-color: #9be0bb; }
+.cam-chip { display: inline-block; font-size: 0.78rem; font-weight: 800; border-radius: 9999px; padding: 0.1rem 0.6rem; color: #fff; }
+.cam-chip[data-clave="si"] { background: var(--cac-verde); }
+.cam-chip[data-clave="no"] { background: var(--cac-rojo); }
+.cam-chip[data-clave="neutro"] { background: var(--cac-morado); }
+
+.cam-asignacion { display: grid; grid-template-columns: 1fr; gap: 0.8rem; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.9rem; background: #fff; color: var(--cac-morado-hondo); }
+@media (min-width: 640px) { .cam-asignacion { grid-template-columns: 1fr 150px; } }
+.dark .cam-asignacion { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.cam-asignacion[data-estado="apagado"], .cam-asignacion[data-estado="vencido"] { opacity: 0.7; border-style: dashed; }
+.cam-qr { width: 150px; height: 150px; background: #fff; border: 2px solid #dfe0f7; border-radius: 0.6rem; padding: 2px; justify-self: center; }
+
+.cam-tabla-envoltura { overflow-x: auto; }
+.cam-tabla { width: 100%; font-size: 0.9rem; border-collapse: collapse; }
+.cam-tabla th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cac-morado); padding: 0.4rem 0.6rem; }
+.dark .cam-tabla th { color: #b8bbf2; }
+.cam-tabla td { padding: 0.45rem 0.6rem; border-top: 1px solid #dfe0f7; vertical-align: top; }
+.dark .cam-tabla td { border-top-color: rgb(255 255 255 / 0.14); }
+.cam-tabla tr[data-anulada="si"] td { text-decoration: line-through; opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cam-btn { transition: none; }
+  .cam-mascota { animation: none; }
+}
+
+/* ===== La tablet: la usan los árbitros en la mesa, con las manos ocupadas ===== */
+/* Botones y campos más grandes donde se toca con el dedo (tablet y celular). */
+@media (pointer: coarse) {
+  .cam-btn { min-height: 48px; }
+  .cam-select, .cam-campo { min-height: 48px; }
+  .cam-anular { min-height: 44px; }
+}
+/* De 768 px para arriba (tablet vertical): letra más grande y dos columnas. */
+@media (min-width: 768px) {
+  .cam-principal { font-size: 1.0625rem; }
+  .cam-nombre { font-size: 1.2rem; }
+  .cam-mesa-numero { font-size: 1.35rem; }
+  .cam-btn { font-size: 1.02rem; padding-left: 1.1rem; padding-right: 1.1rem; }
+  .cam-mesa-cabeza { padding: 0.65rem 1.1rem; }
+  .cam-jugador, .cam-resultado { padding-left: 1.1rem; padding-right: 1.1rem; }
+}
+/* La tablet de lado (1100 px o más): tres tarjetas por fila ya lo hace .cam-lista. */
+
+/* ===== La barra de un vistazo (se queda arriba al bajar) ===== */
+.cam-barra {
+  position: sticky; top: 0; z-index: 30;
+  background: #fff; color: var(--cac-morado-hondo);
+  border: 2px solid #dfe0f7; border-radius: 1rem;
+  padding: 0.7rem 0.9rem; margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgb(30 36 83 / 0.12);
+}
+.dark .cam-barra { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-progreso { font-weight: 800; font-size: 1.05rem; }
+.cam-barra-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.5rem; }
+.cam-ir .cam-campo { width: 10.5rem; }
+.cam-check { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; min-height: 44px; }
+.cam-estado-ayuda { margin-top: 0.6rem; padding: 0.5rem 0.8rem; border-radius: 0.7rem; font-weight: 700; }
+.cam-estado-ayuda[data-estado="abierto"] { background: var(--cac-naranja); color: var(--cac-morado-hondo); }
+.cam-estado-ayuda[data-estado="atendido"] { background: var(--cac-verde); color: #fff; }
+
+/* ===== Lo que manda la organización: arriba, pegado y con «Entendido» ===== */
+.cam-mensajes { position: sticky; top: 0; z-index: 40; display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cam-mensaje {
+  background: var(--cac-morado-hondo); color: #fff;
+  border-left: 0.5rem solid var(--cac-rojo); border-radius: 0.9rem;
+  padding: 0.8rem 1rem; box-shadow: 0 6px 18px rgb(30 36 83 / 0.35);
+}
+.cam-mensaje-de { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #dfe0f7; }
+.cam-mensaje-texto { font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin-top: 0.2rem; overflow-wrap: anywhere; }
+.cam-mensaje .cam-btn { margin-top: 0.6rem; background: #fff; color: var(--cac-morado-hondo); border-color: #fff; }
+.cam-mensaje .cam-btn:hover:not(:disabled) { background: #dfe0f7; border-color: #dfe0f7; }
+
+/* El pedido de ayuda de una mesa, en su tarjeta. */
+.cam-ayuda-mesa { background: rgb(255 255 255 / 0.18); color: #fff; border: 2px solid rgb(255 255 255 / 0.7); min-height: 40px; padding: 0.15rem 0.7rem; font-size: 0.85rem; }
+.cam-ayuda-mesa:hover:not(:disabled) { background: #fff; color: var(--cac-morado); border-color: #fff; }
+.cam-ayuda-mesa[data-pedida="si"] { background: var(--cac-naranja); color: var(--cac-morado-hondo); border-color: var(--cac-naranja); }
+.cam-mesa-cabeza-acciones { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ===== La organización: pestañas, contador de pedidos y listas ordenadas ===== */
+.cam-estado-general {
+  position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;
+  background: #fff; color: var(--cac-morado-hondo); border: 2px solid #dfe0f7; border-radius: 1rem;
+  padding: 0.6rem 0.9rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgb(30 36 83 / 0.12);
+}
+.dark .cam-estado-general { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-estado-general strong { font-weight: 800; }
+.cam-pestanas { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.cam-pestana {
+  display: inline-flex; align-items: center; gap: 0.45rem; min-height: 48px; padding: 0.4rem 1rem; border-radius: 0.9rem;
+  border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado); font-weight: 800; cursor: pointer;
+}
+.cam-pestana[aria-selected="true"] { background: var(--cac-morado); color: #fff; }
+.cam-pestana:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.dark .cam-pestana { background: transparent; color: #b8bbf2; border-color: #b8bbf2; }
+.dark .cam-pestana[aria-selected="true"] { background: var(--cac-morado); color: #fff; border-color: var(--cac-morado); }
+.cam-contador { display: inline-block; min-width: 1.6rem; text-align: center; font-size: 0.85rem; font-weight: 800; background: var(--cac-rojo); color: #fff; border-radius: 9999px; padding: 0 0.45rem; }
+.cam-contador[hidden] { display: none; }
+
+.cam-pedido { border: 2px solid var(--cac-rojo); border-radius: 1rem; padding: 0.8rem 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-pedido { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-pedido[data-estado="atendido"] { border-color: var(--cac-verde); opacity: 0.8; }
+.cam-grupo-torneo { margin-top: 1.1rem; }
+.cam-grupo-torneo > h3 { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 800; font-size: 1.1rem; color: var(--cac-morado); border-bottom: 3px solid var(--cac-morado); padding-bottom: 0.25rem; margin-bottom: 0.6rem; }
+.dark .cam-grupo-torneo > h3 { color: #b8bbf2; border-bottom-color: #b8bbf2; }
+.cam-asignaciones-lista { display: grid; gap: 0.7rem; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .cam-asignaciones-lista { grid-template-columns: repeat(2, 1fr); } }
+.cam-conectado { font-size: 0.85rem; font-weight: 700; }
+.cam-conectado[data-en-linea="si"] { color: var(--cac-verde); }
+.dark .cam-conectado[data-en-linea="si"] { color: #9be0bb; }
+
+.cam-clave-grupo { border: 3px solid var(--cac-morado); border-radius: 1.25rem; padding: 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-clave-grupo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-estado-torneos { display: grid; gap: 0.5rem; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .cam-estado-torneos { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) { .cam-estado-torneos { grid-template-columns: repeat(4, 1fr); } }
+.cam-estado-torneo { border: 2px solid #dfe0f7; border-radius: 0.9rem; padding: 0.55rem 0.75rem; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-estado-torneo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.18); }
+.cam-estado-torneo[data-clave="si"] { border-color: var(--cac-verde); }
+.dark .cam-estado-torneo[data-clave="si"] { border-color: #9be0bb; }
+.cam-estado-torneo[data-clave="no"] { border-color: var(--cac-rojo); }
+
+
+/* ===== El programa de la organización: ventana, menú, cuadrícula y barra de estado ===== */
+.cam-ventana { border: 2px solid var(--cac-morado-hondo); border-radius: 0.7rem; overflow: hidden; background: #fff; color: var(--cac-morado-hondo); box-shadow: 0 8px 24px rgb(30 36 83 / 0.25); }
+.dark .cam-ventana { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-titulo-ventana { display: flex; align-items: center; gap: 0.6rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.8rem; font-weight: 800; }
+.cam-titulo-ventana img { border-radius: 0.3rem; }
+.cam-titulo-texto { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cam-titulo-reloj { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cam-menu { display: flex; flex-wrap: wrap; gap: 0.15rem; background: #dfe0f7; padding: 0.4rem 0.5rem 0; border-bottom: 2px solid var(--cac-morado-hondo); }
+.dark .cam-menu { background: rgb(var(--c-brand-800, 16 42 67)); border-bottom-color: #b8bbf2; }
+.cam-menu .cam-pestana { min-height: 44px; border-radius: 0.6rem 0.6rem 0 0; border: 2px solid transparent; border-bottom: 0; background: transparent; color: var(--cac-morado-hondo); margin-bottom: -2px; padding: 0.3rem 0.85rem; font-size: 0.95rem; }
+.cam-menu .cam-pestana:hover { background: rgb(255 255 255 / 0.6); }
+.cam-menu .cam-pestana[aria-selected="true"] { background: #fff; color: var(--cac-morado-hondo); border-color: var(--cac-morado-hondo); border-bottom: 2px solid #fff; }
+.dark .cam-menu .cam-pestana { color: #dfe0f7; background: transparent; }
+.dark .cam-menu .cam-pestana:hover { background: rgb(255 255 255 / 0.08); }
+.dark .cam-menu .cam-pestana[aria-selected="true"] { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; border-color: #b8bbf2; border-bottom-color: rgb(var(--c-brand-900, 10 31 51)); }
+.cam-contenido { padding: 0.9rem 1rem 1.2rem; min-height: 22rem; }
+.cam-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; background: #f4f4fb; border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.45rem 0.6rem; }
+.dark .cam-herramientas { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.18); }
+.cam-herramientas-nota { font-size: 0.85rem; }
+.cam-herramientas-campo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.9rem; }
+.cam-subtitulo { font-weight: 800; font-size: 1.05rem; margin-top: 0.9rem; margin-bottom: 0.4rem; padding-bottom: 0.2rem; border-bottom: 2px solid #c9cbee; }
+.dark .cam-subtitulo { border-bottom-color: rgb(255 255 255 / 0.2); }
+.cam-subtitulo-nota { font-weight: 600; font-size: 0.9rem; }
+.cam-nota-vacia { font-size: 0.9rem; padding: 0.6rem 0.2rem; }
+.cam-detalle { border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.5rem 0.8rem; background: #fff; }
+.dark .cam-detalle { background: transparent; border-color: rgb(255 255 255 / 0.2); }
+.cam-detalle > summary { font-weight: 800; cursor: pointer; min-height: 32px; }
+.cam-formulario { padding: 0.2rem 0; }
+.cam-lista-simple { list-style: disc; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+/* La cuadrícula: bordes en todas las celdas, encabezado fijo, filas alternas y al pasar el mouse. */
+.cam-rejilla { border: 1px solid #aeb1e0; }
+.cam-rejilla th, .cam-rejilla td { border: 1px solid #c9cbee; }
+.cam-rejilla thead th { position: sticky; top: 0; background: #dfe0f7; color: var(--cac-morado-hondo); z-index: 1; }
+.cam-rejilla tbody tr:nth-child(even) td { background: #f4f4fb; }
+.cam-rejilla tbody tr:hover td { background: #e6e8fb; }
+.dark .cam-rejilla, .dark .cam-rejilla th, .dark .cam-rejilla td { border-color: rgb(255 255 255 / 0.2); }
+.dark .cam-rejilla thead th { background: rgb(var(--c-brand-800, 16 42 67)); color: #dfe0f7; }
+.dark .cam-rejilla tbody tr:nth-child(even) td { background: rgb(255 255 255 / 0.04); }
+.dark .cam-rejilla tbody tr:hover td { background: rgb(255 255 255 / 0.09); }
+.cam-rejilla tr.cam-grupo-torneo th { background: var(--cac-morado); color: #fff; text-align: left; font-size: 0.9rem; position: static; }
+.cam-asignacion[data-estado="apagado"] td, .cam-asignacion[data-estado="vencido"] td { opacity: 0.65; }
+.cam-avance { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.cam-avance progress { width: 6.5rem; height: 0.8rem; accent-color: var(--cac-verde); }
+.cam-quedan { font-weight: 700; }
+.cam-chip[data-estado="finalizada"] { background: var(--cac-verde); }
+.cam-chip[data-estado="termino"] { background: var(--cac-azul); }
+.cam-chip[data-estado="en-curso"] { background: var(--cac-morado); }
+.cam-chip[data-estado="sin-datos"] { background: #4d5266; }
+.cam-lista-previa-estado { font-size: 0.8rem; }
+.cam-pedidos-abiertos { display: block; font-weight: 800; }
+.cam-sugerencia { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.4rem; padding: 0.4rem 0.6rem; border: 1px dashed var(--cac-morado); border-radius: 0.5rem; }
+.cam-pedido[data-tipo="termino"] { border-color: var(--cac-azul); }
+.cam-pedido[data-tipo="finalizo"] { border-color: var(--cac-verde); }
+.cam-estado-drive { margin-top: 0.7rem; padding: 0.5rem 0.8rem; border-radius: 0.6rem; font-weight: 700; background: #f4f4fb; border: 2px solid #c9cbee; }
+.cam-estado-drive[data-estado="si"] { border-color: var(--cac-verde); }
+.cam-estado-drive[data-estado="no"] { border-color: var(--cac-naranja); }
+.dark .cam-estado-drive { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.25); }
+
+/* La barra de estado: siempre abajo de la ventana. */
+.cam-barra-estado { position: sticky; bottom: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0; background: #dfe0f7; color: var(--cac-morado-hondo); border-top: 2px solid var(--cac-morado-hondo); padding: 0.25rem 0.5rem; font-size: 0.88rem; }
+.dark .cam-barra-estado { background: rgb(var(--c-brand-800, 16 42 67)); color: rgb(var(--c-brand-100, 217 226 236)); border-top-color: #b8bbf2; }
+.cam-celda-estado { padding: 0.2rem 0.7rem; border-right: 1px solid #aeb1e0; }
+.cam-celda-estado:empty { display: none; }
+.cam-barra-estado .cam-btn { margin-left: auto; }
+
+.cam-dialogo { width: min(34rem, calc(100% - 2rem)); border: 2px solid var(--cac-morado-hondo); border-radius: 0.7rem; padding: 0; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-dialogo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-dialogo::backdrop { background: rgb(0 0 0 / 0.5); }
+.cam-dialogo-titulo { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.8rem; font-weight: 800; }
+.cam-dialogo-cuerpo { padding: 1rem; display: grid; gap: 0.6rem; justify-items: center; text-align: center; }
+.cam-foto-planilla { max-width: 100%; max-height: 70vh; border: 2px solid #c9cbee; border-radius: 0.4rem; }
+.cam-qr-grande { width: 260px; height: 260px; }
+
+/* La hoja de QR: solo se ve al imprimir; cada QR lleva la marca de Ajedrez Integral. */
+.cam-hoja-qr { display: none; }
+@media print {
+  body.cam-imprime-qr header, body.cam-imprime-qr footer, body.cam-imprime-qr .cac-portada, body.cam-imprime-qr .cam-ventana, body.cam-imprime-qr .cam-barra-estado { display: none !important; }
+  body.cam-imprime-qr main { padding: 0 !important; max-width: none !important; }
+  body.cam-imprime-qr #app, body.cam-imprime-qr .cam-ventana { display: block !important; }
+  body.cam-imprime-qr .cam-hoja-qr { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0.5rem; }
+  .cam-hoja-tarjeta { break-inside: avoid; border: 2px solid #000; border-radius: 0.6rem; padding: 0.8rem; text-align: center; color: #000; background: #fff; }
+  .cam-hoja-tarjeta h3 { font-size: 1.3rem; font-weight: 800; }
+  .cam-hoja-tarjeta .cam-qr { margin: 0.5rem auto; border-color: #000; }
+  .cam-hoja-pie { font-weight: 800; }
+  .cam-hoja-pie img { display: inline; vertical-align: middle; }
+  .cam-hoja-nota { font-size: 0.8rem; }
+}
+
+/* ===== La página del árbitro: horarios, planillas, lista previa y revisión final ===== */
+.cam-espera { margin-top: 0.5rem; font-weight: 700; }
+.cam-planillas { padding: 0.6rem 0.9rem; border-top: 1px dashed #c9cbee; }
+.cam-planillas-estado { font-size: 0.85rem; }
+.cam-lista-previa, .cam-revision { margin-bottom: 1rem; padding: 1rem 1.1rem; border: 3px solid var(--cac-morado); border-radius: 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.cam-lista-previa { border-color: var(--cac-naranja); }
+.cam-revision[data-estado="finalizada"] { border-color: var(--cac-verde); }
+.dark .cam-lista-previa, .dark .cam-revision { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-pasos { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.5rem; font-weight: 700; }
+.cam-pasos li[data-estado="hecho"] { color: var(--cac-verde); }
+.dark .cam-pasos li[data-estado="hecho"] { color: #9be0bb; }
+.cam-check-revision { display: flex; align-items: flex-start; gap: 0.6rem; min-height: 48px; padding: 0.3rem 0; }
+.cam-acciones-sin-margen { margin-top: 0; }
+.cam-chip-al-lado { margin-left: 0.5rem; }
+
+/* ===== Varios torneos, presencia, control de tiempos y avisos sin ruido ===== */
+.cam-mis-torneos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; }
+.cam-mis-torneos-titulo { font-weight: 800; }
+.cam-mis-torneos .cam-pestana[aria-current="true"] { background: var(--cac-morado); color: #fff; opacity: 1; }
+.cam-presencia { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; margin-top: 0.5rem; }
+.cam-presencia-estado { font-weight: 800; font-size: 0.9rem; }
+.cam-presencia[data-presente="si"] .cam-presencia-estado { color: var(--cac-verde); }
+.cam-presencia[data-presente="no"] .cam-presencia-estado { color: var(--cac-rojo); }
+.dark .cam-presencia[data-presente="si"] .cam-presencia-estado { color: #9be0bb; }
+.dark .cam-presencia[data-presente="no"] .cam-presencia-estado { color: #ff9aa5; }
+.cam-presencia .cam-btn[aria-pressed="true"] { background: var(--cac-morado); color: #fff; border-color: var(--cac-morado); }
+
+/* La ventana flotante del control de tiempos: no tapa la página, se minimiza. */
+.cam-flotante { position: fixed; right: 0.6rem; bottom: 0.6rem; z-index: 60; width: min(27rem, calc(100% - 1.2rem)); max-height: 82vh; overflow: auto; background: #fff; color: var(--cac-morado-hondo); border: 3px solid var(--cac-morado-hondo); border-radius: 0.8rem; box-shadow: 0 10px 30px rgb(30 36 83 / 0.4); }
+.cam-flotante[hidden] { display: none; }
+.dark .cam-flotante { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-flotante-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.7rem; position: sticky; top: 0; }
+.cam-flotante-botones { display: inline-flex; gap: 0.4rem; }
+.cam-flotante-cuerpo { padding: 0.7rem 0.8rem 0.9rem; }
+.cam-flotante[data-minimizada="si"] { width: auto; max-width: calc(100% - 1.2rem); }
+
+/* Los avisos se ven, no suenan: un parpadeo suave (apagado si la persona pidió menos movimiento). */
+@keyframes cam-latido { 0%, 100% { box-shadow: 0 6px 18px rgb(30 36 83 / 0.35); } 50% { box-shadow: 0 0 0 6px rgb(206 19 40 / 0.55); } }
+@media (prefers-reduced-motion: no-preference) { .cam-mensaje, .cam-estado-ayuda[data-estado="abierto"] { animation: cam-latido 1.6s ease-in-out infinite; } }
+.cam-tabla td.cam-tiempo { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.cam-tambien { display: block; font-size: 0.8rem; font-weight: 600; }
+.cam-sin-ruido { font-style: italic; }
+@media (prefers-reduced-motion: no-preference) { .cam-barra-estado[data-alerta="si"] { animation: cam-latido 1.6s ease-in-out infinite; } }
+.cam-barra-estado[data-alerta="si"] { border-top-color: var(--cac-rojo); }

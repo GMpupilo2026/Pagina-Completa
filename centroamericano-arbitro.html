@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Mis mesas — Centroamericano 2026 | Ajedrez Integral</title>
+    <meta name="description" content="Las mesas de un árbitro del Centroamericano y del Caribe de la Juventud 2026: anota los resultados, las jugadas ilegales y las irregularidades.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/centroamericano.css">
+    <link rel="stylesheet" href="css/centroamericano-mesas.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin -->
+<!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="cac font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+
+    <header class="bg-brand-800 shadow-lg">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[3.5rem] py-2 flex items-center justify-between gap-3">
+            <a href="index.html" class="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <img src="img/logo-marca.png" width="155" height="96" alt="" class="h-10 w-auto shrink-0">
+                <span class="font-serif text-lg font-bold text-white">Ajedrez <span class="text-accent-400">Integral</span></span>
+            </a>
+            <button type="button" id="theme-toggle" class="cam-btn cam-btn-claro cam-btn-chico" aria-label="Cambiar entre tema claro y oscuro"><span aria-hidden="true">🌓</span> Tema</button>
+        </div>
+    </header>
+
+    <!-- La portada es la de las bases (morado, hojas de monstera, pildora roja),
+         más baja: en el celular lo que importa son las mesas. La mascota es una de
+         las dos imágenes de las bases, sin tocar. Lo que dice cada dato lo pone
+         js/centroamericano-arbitro.js al leer el enlace. -->
+    <section class="cac-portada cam-portada" aria-labelledby="titulo-pagina">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
+            <div class="flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                    <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
+                    <h1 id="titulo-pagina" class="cac-titulo text-2xl sm:text-3xl md:text-4xl mt-3">Mis mesas<span id="titulo-torneo" class="block text-lg sm:text-xl md:text-2xl mt-1"></span></h1>
+                </div>
+                <img src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota shrink-0">
+            </div>
+            <div class="cam-datos" id="datos" hidden>
+                <div class="cam-dato"><small>Árbitro</small><span id="d-arbitro"></span></div>
+                <div class="cam-dato"><small>Ronda abierta</small><span id="d-ronda"></span></div>
+                <div class="cam-dato"><small>Tus mesas</small><span id="d-mesas"></span></div>
+            </div>
+        </div>
+    </section>
+
+    <main id="main-content" class="cam-principal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Lo que manda la organización: arriba de todo y pegado, para que no se pase por alto.
+             Llega aunque chess-results esté caído (va por la base). -->
+        <section id="mensajes" class="cam-mensajes" aria-label="Avisos de la organización" aria-live="assertive" hidden></section>
+
+        <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Entrando a tus mesas…</p></div>
+
+        <div id="problema" class="cam-tarjeta max-w-2xl mx-auto my-10 text-center" hidden>
+            <p class="text-4xl mb-2" aria-hidden="true">🔒</p>
+            <h2 class="font-serif text-xl font-bold mb-2" id="problema-titulo">No se pudo abrir</h2>
+            <p id="problema-texto"></p>
+            <button type="button" id="problema-reintentar" class="cam-btn mt-4" hidden>Intentar de nuevo</button>
+        </div>
+
+        <div id="app" hidden>
+            <!-- El árbitro «por definir» pone su nombre una vez: sale en lo que se anota. -->
+            <section id="nombre-caja" class="cam-tarjeta mb-4" hidden aria-labelledby="nombre-titulo">
+                <h2 id="nombre-titulo" class="font-bold text-lg">¿Cómo te llamas?</h2>
+                <p class="text-sm mt-1">La organización te dio este enlace sin nombre. Ponlo aquí una sola vez: sale en lo que anotes.</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <label for="nombre-campo" class="sr-only">Tu nombre</label>
+                    <input id="nombre-campo" type="text" maxlength="80" autocomplete="name" class="cam-campo flex-1 min-w-[12rem]" placeholder="Nombre y apellido">
+                    <button type="button" id="nombre-guardar" class="cam-btn">Guardar mi nombre</button>
+                </div>
+            </section>
+
+            <!-- Si la organización le dio mesas de varios torneos: pasar de uno a otro. -->
+            <nav id="mis-torneos" class="cam-mis-torneos" aria-label="Tus torneos" hidden></nav>
+
+            <!-- La barra de la tablet: cuántas llevas, a dónde ir, qué falta y pedir ayuda. -->
+            <section class="cam-barra" aria-label="Tus mesas de un vistazo">
+                <p id="progreso" class="cam-progreso" role="status"></p>
+                <div class="cam-barra-controles">
+                    <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
+                    <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
+                    <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏱</span> Control de tiempos</button>
+                    <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
+                </div>
+                <p id="espera" class="cam-espera" role="status"></p>
+                <p id="presencia-resumen" class="cam-espera" role="status"></p>
+                <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
+            </section>
+
+            <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
+            <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
+
+            <!-- Al terminar tus mesas: revisar y finalizar la ronda (lo arma la página). -->
+            <section id="revision" class="cam-revision" aria-labelledby="revision-titulo" hidden></section>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 class="cac-seccion text-xl">Las mesas de la ronda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <p id="actualizado" class="text-sm" role="status"></p>
+            </div>
+            <p id="sin-mesas" class="cam-tarjeta" hidden>Todavía no hay mesas tuyas en esta ronda. Cuando la organización empareje y suba la ronda a chess-results, toca «Actualizar».</p>
+            <div id="lista" class="cam-lista"></div>
+
+            <details class="cam-tarjeta mt-8" id="anotado">
+                <summary class="cac-seccion text-lg cursor-pointer">Lo que se ha anotado en tus mesas</summary>
+                <p class="text-sm mt-2">Es el registro del torneo: no se edita ni se borra. Si te equivocaste con una ilegal o una irregularidad, usa «Anular» en la mesa y queda constancia de las dos cosas.</p>
+                <div class="cam-tabla-envoltura mt-3">
+                    <table class="cam-tabla">
+                        <caption class="sr-only">Lo anotado en tus mesas de esta ronda</caption>
+                        <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Mesa</th><th scope="col">Qué</th><th scope="col">Detalle</th></tr></thead>
+                        <tbody id="anotado-filas"></tbody>
+                    </table>
+                </div>
+                <p id="anotado-vacio" class="text-sm mt-2">Todavía no hay nada anotado.</p>
+            </details>
+
+            <p class="text-sm mt-6">Reglas que usa esta página (art. 7.5.5): la <strong>primera</strong> jugada ilegal de un jugador en una partida le da 2 minutos más a su rival; la <strong>segunda</strong> hace perder la partida, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales (tablas). La página solo avisa: el resultado lo decides tú.</p>
+        </div>
+        <!-- El control de tiempos: una ventana flotante que se puede minimizar (la arma la página). -->
+        <aside id="control-tiempos" class="cam-flotante" role="dialog" aria-label="Control de tiempos" hidden></aside>
+    </main>
+
+    <footer class="cac-academia">
+        <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm text-brand-200">
+            <p>Un servicio de la Academia Ajedrez Integral para la organización del Centroamericano. Guarda este enlace: es tuyo y vence solo.</p>
+            <p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin -->
+        </div>
+    </footer>
+
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/mesa-arbitro.js"></script>
+    <script src="js/centroamericano-mesas.js"></script>
+    <script src="js/centroamericano-horario.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/centroamericano-arbitro.js"></script>
+</body>
+</html>
