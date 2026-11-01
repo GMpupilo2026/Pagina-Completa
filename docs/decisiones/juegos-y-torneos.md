@@ -8422,6 +8422,107 @@ bitácora del árbitro, que se baja en PDF o en Word.
   mesas que no se tocan, la clave en un `console` o el «enviado» de lo que
   chess-results no confirmó, saltan.
 
+## Mesas de los árbitros del Centroamericano
+
+El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
+chess-results: Sub-8, 10, 12, 14, 16 y 18, cada uno Absoluto y Femenino) tiene su versión de
+la «Mesa del árbitro» (ver su sección arriba), con la cara de las bases del torneo. Dos
+páginas, dos Edge Functions y tres tablas. La pidió el dueño: que quien organiza cargue las
+claves de todos los torneos, le dé a cada árbitro SUS mesas con un QR, y el árbitro anote
+resultados, ilegales e irregularidades desde el celular, sin cuenta.
+
+- **`centroamericano-mesas.html`** (la organización; sesión y licencia `mesa-arbitro`,
+  administración también; `noindex`; tile en `js/paginas-admin.js`): 1) las claves de los 12
+  torneos, una por una o pegadas en bloque; 2) árbitro + torneo + rango de mesas → un enlace
+  con su QR (`js/qr-svg.js`), «Copiar», WhatsApp, apagar, imprimir los QR; avisa si las
+  mesas ya las tiene otro árbitro o si el torneo no tiene clave; 3) lo que anotan: ilegales
+  por jugador, todo lo anotado, PDF con la marca de agua.
+- **`centroamericano-arbitro.html`** (el árbitro; SIN CUENTA; `noindex`): entra con
+  `…/centroamericano-arbitro.html#<token>`. **El token va después del «#»** para que no viaje
+  en las visitas ni quede en los registros del servidor; la página no lo guarda en ningún
+  lado del navegador. Una tarjeta por mesa: los dos jugadores (con «Blancas»/«Negras»
+  escrito: el color nunca va solo), su `Ilegal` e `Irregularidad`, y el resultado con su
+  **«Guardar» en la misma fila** (pedido del dueño: no al final de la página). Se vuelve a
+  leer sola cada 45 s si no hay nada a medio hacer. Pensada para el celular: botones de 44 px,
+  claro y oscuro, sin desplazamiento a lo ancho a 390 px. Los colores son los medidos de
+  `css/centroamericano.css`; los nuevos pares los mide `verificar-centroamericano-mesas.js`.
+- **Las ilegales se cuentan por partida** (ronda + mesa + color), como las marcas de Pareo
+  Integral (`marcasIncidencias`): la **primera** avisa «dale 2 minutos más a su rival», la
+  **segunda** pide confirmar antes, avisa que **pierde la partida (art. 7.5.5)** —salvo que
+  el rival no pueda dar mate con ninguna serie de jugadas legales: tablas—, deja una banda
+  roja en la mesa y **propone** el resultado sin guardarlo (el árbitro lo decide). La regla es
+  la de partida clásica y rápida con árbitro; el blitz del Apéndice B es otra y no se
+  distingue acá. Un toque por error se deshace con **«Anular»**: el registro no se edita ni
+  se borra, la anulación es otra línea que apunta a la anulada.
+- **`centroamericano-clave`** (`verify_jwt` en true, licencia con el token de quien llama):
+  «poner» entra a chess-results con el código y la clave, **mira qué torneos abre** y solo si
+  abre alguno de los 12 la guarda; «probar» comprueba la guardada. **`centroamericano-mesa`**
+  (`verify_jwt` en **false**, ver `supabase/functions/README.md`): el árbitro no trae JWT, así
+  que la función decide sola: token de 64 caracteres de una asignación que no se apagó ni
+  venció, **el rango de mesas se hace cumplir en el servidor** (403 si piden o guardan una
+  mesa ajena), la clave sale de la bóveda y nunca llega al navegador, y el **registro lo
+  escribe la función con lo que comprobó**: un resultado solo queda «enviado» si volvió a
+  leer chess-results y estaba ahí; el jugador de una ilegal sale de chess-results, no de lo
+  que mande la pantalla.
+- **Las claves van en la bóveda (Vault), cifradas**, no en una tabla: `centroamericano_torneos`
+  solo sabe SI hay clave (`sid_en_boveda`) y con qué código se entra (`acceso_tnr`). Escribirla
+  y leerla son dos funciones `SECURITY DEFINER` solo de `service_role`
+  (`centroamericano_guardar_acceso`, `centroamericano_acceso`): ni quien organiza puede leer
+  una clave, ni la que puso. **Esto cambia la regla de «la clave no se guarda» de la Mesa del
+  árbitro genérica, y solo para estos 12 torneos**; fue decisión del dueño («guardada cifrada
+  en el servidor») para poder darle a cada árbitro un QR sin darle la clave.
+- **Torneos ligados en un grupo** (pedido del dueño: «cuando los torneos están ligados, debería
+  poder leer todos»). En chess-results, los torneos ligados se entran con el código del
+  **GRUPO** y una sola clave, y un desplegable «Selección de torneo» cambia de uno a otro.
+  Comprobado con un grupo de prueba (1532448 y 1532486): (1) con el código del segundo torneo
+  la misma clave NO entra; (2) **elegir el torneo en el desplegable solo cambia el
+  encabezado: la tabla de mesas sigue siendo la del torneo anterior hasta apretar «Search/Reload»**,
+  así que un «Save» en ese estado habría escrito los resultados de un torneo en el otro. Por
+  eso `entrar(acceso, sid, destino)` (`_compartido/chess-results-ingreso.ts`) elige el torneo
+  Y recarga, y `leerRonda`/`guardarYComprobar` comprueban que el torneo abierto sea el pedido
+  antes de leer o escribir. Una clave de grupo se carga **una vez** (en «Pegar varias claves»,
+  con el código del grupo) y queda para todos los torneos del grupo que son del
+  Centroamericano.
+- **Una sola copia de lo que habla con chess-results**: `_compartido/chess-results-ingreso.ts`
+  (leer la pantalla, entrar, armar el «Save», guardar comprobando, grupos) lo comparten
+  `mesa-arbitro`, `centroamericano-clave` y `centroamericano-mesa`; `funciones-armar.js` lo
+  copia a cada una.
+- **Tablas** (migraciones `…_centroamericano_mesas.sql` y `…_centroamericano_grupos.sql`):
+  `centroamericano_torneos` (los 12, con su número de chess-results; la lista NO está en el
+  repositorio como dato aparte: está en la migración y en la sala `centroamericano-2026` de
+  `salas_torneo`), `centroamericano_asignaciones` (el enlace: token al azar que no elige quien
+  lo crea, torneo, rango, vencimiento, apagado) y `centroamericano_registro` (solo se
+  agrega; ningún permiso de escritura para el navegador; la hora y el autor los pone la base).
+  Las dos primeras llevan el trigger `auditar` **sin copiar el token** y están en `VIGILADAS`.
+  Quien organiza solo puede crear un enlace y apagarlo (permiso por columna).
+- **Comprobado con chess-results de verdad** (grupo de prueba 1532448/1532486, el 1/11/2026,
+  con las funciones ya desplegadas): leer el torneo del grupo entrando por su código, el rango
+  de mesas, un token falso (404) y un enlace de otro rango (403), la primera y la segunda
+  ilegal, anular, anular dos veces (rechazado), una irregularidad con nota, una ronda
+  equivocada (409), y guardar y borrar un resultado en el primer torneo. **NO se ha comprobado
+  guardar un resultado en el SEGUNDO torneo del grupo** (la ruta «elegir y recargar»): se
+  probó con un chess-results de mentira que reproduce su conducta
+  (`verificar-mesa-arbitro.js`) y la lectura real del segundo torneo sí funciona, pero falta
+  el «Save» real ahí (es un torneo de prueba que el dueño no ha autorizado a escribir). Tampoco
+  se probó con la sesión de una persona con licencia (solo el candado) ni en Deno.
+- **Para el día del torneo**: (1) cargar las claves, que la pantalla lo prueba contra
+  chess-results; (2) crear los enlaces y mandarlos por WhatsApp o imprimir los QR; (3) **las
+  filas de PRUEBA** (`tnr` 1532448 y 1532486, `orden` 901 y 902) se borran antes del lunes:
+  `delete from centroamericano_registro where tnr in ('1532448','1532486'); delete from
+  centroamericano_asignaciones where tnr in ('1532448','1532486'); delete from
+  centroamericano_torneos where tnr in ('1532448','1532486');` y su clave en la bóveda
+  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` NO tiene todavía el
+  «Guardar» por mesa, las ilegales ni los grupos: son solo de la versión del Centroamericano.
+  La página del árbitro no está en francés ni en inglés.
+- Lo prueban `verificar-centroamericano-mesas.js` (sin navegador: las reglas, las promesas de
+  seguridad leídas del código de las funciones y las migraciones, y el contraste de cada par
+  de colores), `verificar-centroamericano-mesas-pagina.js` (las dos páginas con un doble que
+  se porta como las funciones) y, para los grupos, `verificar-mesa-arbitro.js` (un
+  chess-results de mentira con la conducta comprobada). Rompiendo a propósito el rango de
+  mesas de «anular», un `console` con el token, un permiso de escritura de más en el
+  registro, el «Search/Reload», la comprobación del torneo abierto, la confirmación de la
+  segunda ilegal o que «Poner el resultado» lo guarde solo, saltan.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

@@ -29,11 +29,17 @@ const path = require("path");
 const { stripTypeScriptTypes } = require("module");
 
 const RAIZ = path.join(__dirname, "..");
+// Lo que habla con chess-results vive en UNA copia compartida (la usan mesa-arbitro y las
+// dos funciones del Centroamericano): se saca de ahí, con los tipos quitados por Node.
 const fuente = fs.readFileSync(path.join(RAIZ, "supabase", "functions", "mesa-arbitro", "index.ts"), "utf8");
-const desde = fuente.indexOf("function texto(");
-const hasta = fuente.indexOf("// ------------------------------------------------------------- la red");
-const js = stripTypeScriptTypes(fuente.slice(desde, hasta).replace(/export function/g, "function"));
-const L = new Function("VALORES", js + "\nreturn { leerPantalla, camposDelFormulario, armarGuardado, mismoNombre, nombreDeBoton };")(["0", "1", "2", "3", "4", "5", "6", "D"]);
+const compartido = fs.readFileSync(path.join(RAIZ, "supabase", "functions", "_compartido", "chess-results-ingreso.ts"), "utf8");
+const desde = compartido.indexOf("function texto(");
+const js = stripTypeScriptTypes(compartido.slice(desde).replace(/^export /gm, ""));
+const VALORES = ["0", "1", "2", "3", "4", "5", "6", "D"];
+const CR_UA = "Mozilla/5.0 (verificador)";
+const construir = (fetchFalso) => new Function("VALORES", "MAX_CAMBIOS", "CR_USER_AGENT", "URL_INGRESO", "fetch", js +
+  "\nreturn { leerPantalla, camposDelFormulario, armarGuardado, mismoNombre, nombreDeBoton, entrar, leerRonda, guardarYComprobar };")(VALORES, 400, CR_UA, "https://chess-results.com/Results.aspx", fetchFalso);
+const L = construir(() => { throw new Error("sin red"); });
 const M = require(path.join(RAIZ, "js", "mesa-arbitro.js"));
 
 let fallos = 0;
@@ -46,7 +52,8 @@ function igual(nombre, hallado, esperado) {
 // La pantalla de ingreso, con la forma de la real. `valores` es el valor
 // elegido de cada fila (por posición).
 const OPCIONES = [["0", "No"], ["1", "1 - 0"], ["2", "Draw"], ["3", "0 - 1"], ["4", "1f-0f"], ["5", "0f-1f"], ["6", "0f-0f"], ["D", "Delete"]];
-function pantalla(filas, { ronda = 3, tnr = "1532448", valores = [] } = {}) {
+function pantalla(filas, { ronda = 3, tnr = "1532448", valores = [], opciones = null, torneo = "Torneo de Prueba ", grupo = null } = {}) {
+  const combo = (opciones || [[tnr, torneo]]).map(([v, n]) => `<option ${v === tnr ? 'selected="selected" ' : ""}value="${v}">${n}</option>`).join("");
   const fila = (f, i) => {
     const nn = String(i + 2).padStart(2, "0");
     const sel = valores[i] == null ? "0" : valores[i];
@@ -60,11 +67,12 @@ function pantalla(filas, { ronda = 3, tnr = "1532448", valores = [] } = {}) {
 <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAP0B" />
 <input type="submit" name="ctl00$P1$cb_save" value="Save" id="P1_cb_save" class="CRButton" />
 <input type="submit" name="ctl00$P1$cb_search" value="Search/Reload" id="P1_cb_search" class="CRButton" />
-<select name="ctl00$P1$combo_Tournament" onchange="javascript:setTimeout(&#39;__doPostBack(\\&#39;ctl00$P1$combo_Tournament\\&#39;,\\&#39;\\&#39;)&#39;, 0)" id="P1_combo_Tournament"><option selected="selected" value="${tnr}">Torneo de Prueba </option></select>
+<select name="ctl00$P1$combo_Tournament" onchange="javascript:setTimeout(&#39;__doPostBack(\\&#39;ctl00$P1$combo_Tournament\\&#39;,\\&#39;\\&#39;)&#39;, 0)" id="P1_combo_Tournament">${combo}</select>
 <input id="P1_cbox_fehlende_erg" type="checkbox" name="ctl00$P1$cbox_fehlende_erg" onclick="x" />
 <input id="P1_cbox_show_names" type="checkbox" name="ctl00$P1$cbox_show_names" checked="checked" />
 <input name="ctl00$P1$txt_rd" type="text" value="${ronda}" readonly="readonly" id="P1_txt_rd" disabled="disabled" class="aspNetDisabled" />
 <input name="ctl00$P1$txt_tnr" type="text" value="${tnr}" readonly="readonly" id="P1_txt_tnr" disabled="disabled" class="aspNetDisabled" />
+${grupo ? `<input name="ctl00$P1$txt_groupID" type="text" value="${grupo}" readonly="readonly" id="P1_txt_groupID" disabled="disabled" class="aspNetDisabled" />` : ""}
 <input name="ctl00$P1$txt_board_from" type="text" value="1" id="P1_txt_board_from" />
 <input name="ctl00$P1$txt_board_to" type="text" value="9999" id="P1_txt_board_to" />
 <input name="ctl00$P1$txt_name" type="text" id="P1_txt_name" />
@@ -156,14 +164,101 @@ igual("ver y anotar piden la licencia «mesa-arbitro» (y ver, también quien ad
 igual("auth.uid() siempre envuelto en (select …)", (sinComentarios.match(/auth\.uid\(\)/g) || []).length, (sinComentarios.match(/\(select auth\.uid\(\)\)/g) || []).length + 1 /* el default de la columna */);
 igual("la tabla no tiene dónde guardar la clave", /\b(sid|clave|password|secret)/i.test(sinComentarios.replace(/comment on table[^;]*;/i, "")), false);
 
+
+(async () => {
+console.log("\n=== Torneos ligados en un grupo: una clave abre todos ===");
+const grp = L.leerPantalla(pantalla(FILAS, { tnr: "100", torneo: "Grupo A", grupo: "100", opciones: [["100", "Grupo A"], ["200", "Grupo B"]] }));
+igual("el desplegable trae los torneos del grupo y cuál está elegido", [grp.grupo, grp.torneos], ["100", [{ tnr: "100", nombre: "Grupo A", elegido: true }, { tnr: "200", nombre: "Grupo B", elegido: false }]]);
+igual("un torneo suelto trae solo el suyo y ningún grupo", [p.grupo, p.torneos.length], ["", 1]);
+
+// Un chess-results de mentira con la conducta que se COMPROBÓ con un grupo real:
+//   - elegir un torneo en el desplegable solo cambia el encabezado: la tabla de mesas sigue
+//     siendo la del torneo anterior, hasta apretar «Search/Reload»;
+//   - un «Save» escribe en la tabla que se está mostrando;
+//   - al grupo se entra con el código del GRUPO.
+//
+// Con `ignorar` el desplegable NO cambia de torneo (una falla en silencio de chess-results o
+// un cambio en su pantalla) y los dos torneos tienen los MISMOS jugadores: lo único que
+// frena un «Save» en el torneo equivocado es comprobar cuál quedó abierto.
+function chessResultsFalso(ignorar = false) {
+  const filasA = [[1, "Ana Uno", "Beto Dos"], [2, "Cleo Tres", "Dani Cuatro"]];
+  const T = {
+    "100": { nombre: "Grupo A", filas: filasA },
+    "200": { nombre: "Grupo B", filas: ignorar ? filasA : [[1, "Eli Cinco", "Fran Seis"], [2, "Gus Siete", "Hana Ocho"], [3, "Ivo Nueve", "Jana Diez"]] },
+  };
+  const guardados = { "100": {}, "200": {} };
+  const sesion = { elegido: "100", mostrado: "100" };
+  const pagina = () => pantalla(T[sesion.mostrado].filas, {
+    tnr: sesion.elegido, torneo: T[sesion.elegido].nombre, grupo: "100", ronda: 1, opciones: [["100", "Grupo A"], ["200", "Grupo B"]],
+    valores: T[sesion.mostrado].filas.map((f) => guardados[sesion.mostrado][f[0]] || "0"),
+  });
+  const respuesta = (html) => Promise.resolve({ status: 200, ok: true, headers: { getSetCookie: () => [], get: () => null }, text: () => Promise.resolve(html) });
+  const falso = (url, init) => {
+    if (!init || init.method !== "POST") return respuesta(LOGIN);
+    const f = new URLSearchParams(init.body);
+    if (f.has("ctl00$P1$cb_login")) {
+      if (f.get("ctl00$P1$txt_tnr_login") !== "100" || f.get("ctl00$P1$txt_SID") !== "GRUPOGRUPO1234") return respuesta(LOGIN);
+      sesion.elegido = sesion.mostrado = "100";
+      return respuesta(pagina());
+    }
+    if (f.get("__EVENTTARGET") === "ctl00$P1$combo_Tournament") { if (!ignorar) sesion.elegido = f.get("ctl00$P1$combo_Tournament"); return respuesta(pagina()); }
+    if (f.has("ctl00$P1$cb_search")) { if (!ignorar) sesion.mostrado = sesion.elegido = f.get("ctl00$P1$combo_Tournament"); return respuesta(pagina()); }
+    if (f.has("ctl00$P1$cb_save")) {
+      T[sesion.mostrado].filas.forEach((fila, i) => {
+        const v = f.get("ctl00$P1$GridErg$ctl" + String(i + 2).padStart(2, "0") + "$combo_erg");
+        if (v === "D") delete guardados[sesion.mostrado][fila[0]];
+        else if (v && v !== "0") guardados[sesion.mostrado][fila[0]] = v;
+      });
+      return respuesta(pagina());
+    }
+    return respuesta(LOGIN);
+  };
+  return { falso, guardados };
+}
+{
+  const cr = chessResultsFalso();
+  const G = construir(cr.falso);
+  const leido = async (...a) => { const r = await G.leerRonda(...a); return "error" in r ? [r.estado, r.error.slice(0, 31)] : [r.pantalla.tnr, r.pantalla.mesas.length, r.pantalla.mesas[0].blancas]; };
+  igual("sin decir torneo, se lee el que abre el código", await leido("100", "GRUPOGRUPO1234"), ["100", 2, "Ana Uno"]);
+  igual("el segundo torneo del grupo se lee con SUS mesas (no las del primero)", await leido("100", "GRUPOGRUPO1234", "200"), ["200", 3, "Eli Cinco"]);
+  igual("un torneo que no es del grupo se rechaza y dice cuáles abre la clave", await leido("100", "GRUPOGRUPO1234", "300"), [409, "Esa clave no abre el torneo 300"]);
+  igual("una clave mala se rechaza", await leido("100", "MALAMALAMALA1234", "200"), [401, "chess-results no aceptó el códi"]);
+  igual("el código del segundo torneo no entra: se entra por el del grupo", await leido("200", "GRUPOGRUPO1234", "200"), [401, "chess-results no aceptó el códi"]);
+
+  const pide = (mesa, bl, ne, valor) => ({ mesa, blancas: bl, negras: ne, valor });
+  let res = await G.guardarYComprobar("100", "GRUPOGRUPO1234", "200", 1, [pide(2, "Gus Siete", "Hana Ocho", "3")]);
+  igual("guardar en el 2.º torneo del grupo: queda ahí, comprobado al volver a leer", [res.estado, res.cuerpo.ok, res.cuerpo.resultados.map((r) => [r.mesa, r.quedo, r.ok])], [200, true, [[2, "3", true]]]);
+  igual("…y NO se escribió nada en el primer torneo", [cr.guardados["200"], cr.guardados["100"]], [{ 2: "3" }, {}]);
+  res = await G.guardarYComprobar("100", "GRUPOGRUPO1234", "200", 1, [pide(1, "Ana Uno", "Beto Dos", "1")]);
+  igual("una mesa con los jugadores del OTRO torneo se rechaza sin escribir", [res.estado, /ahora juegan otros/.test(res.error), cr.guardados["100"], cr.guardados["200"]], [409, true, {}, { 2: "3" }]);
+  res = await G.guardarYComprobar("100", "GRUPOGRUPO1234", "100", 1, [pide(1, "Ana Uno", "Beto Dos", "2")]);
+  igual("guardar en el 1.er torneo sigue funcionando y no toca el 2.º", [res.estado, res.cuerpo.ok, cr.guardados["100"], cr.guardados["200"]], [200, true, { 1: "2" }, { 2: "3" }]);
+  res = await G.guardarYComprobar("100", "GRUPOGRUPO1234", "200", 1, [pide(2, "Gus Siete", "Hana Ocho", "D")]);
+  igual("borrar un resultado deja la mesa en «0» (sin resultado)", [res.estado, res.cuerpo.ok, cr.guardados["200"]], [200, true, {}]);
+
+  // El caso peligroso: el desplegable no cambia y los jugadores son los mismos.
+  const mal = chessResultsFalso(true);
+  const GM = construir(mal.falso);
+  res = await GM.guardarYComprobar("100", "GRUPOGRUPO1234", "200", 1, [pide(1, "Ana Uno", "Beto Dos", "1")]);
+  igual("si chess-results NO cambia de torneo, no se guarda (aunque los jugadores coincidan)", [res.estado, /abrió el torneo 100 y no el 200/.test(res.error), mal.guardados["100"], mal.guardados["200"]], [409, true, {}, {}]);
+  const leida = await GM.leerRonda("100", "GRUPOGRUPO1234", "200");
+  igual("y leer tampoco da por bueno el torneo equivocado", [leida.estado, /No se pudo abrir el torneo 200 dentro del grupo/.test(leida.error)], [502, true]);
+}
+
 console.log("\n=== La clave (SID) nunca se imprime ni se guarda ===");
 const fn = fuente.replace(/\/\/[^\n]*/g, "");
+const fnCompartida = compartido.replace(/\/\/[^\n]*/g, "");
 const consolas = fn.match(/console\.[a-z]+\([^;]*;/g) || [];
 igual("ningún console menciona la clave ni el pedido entero", consolas.filter((c) => /\bsid\b|cuerpo|req\b/i.test(c)), []);
+igual("el módulo compartido no imprime nada ni habla con la base", [/console\./.test(fnCompartida), /\.from\(|createClient|SERVICE_ROLE/i.test(fnCompartida)], [false, false]);
 igual("la clave no va a la base ni a la caché desde la función", [/\.from\(/.test(fn), /service_role|SERVICE_ROLE/i.test(fn)], [false, false]);
+igual("mesa-arbitro usa el módulo compartido y no lleva su propio lector de chess-results", [/from "\.\/chess-results-ingreso\.ts"/.test(fn), /function leerPantalla|class Sesion|__VIEWSTATE/.test(fn)], [true, false]);
 igual("la función pide la licencia con el token de quien llama", /rpc\("tengo_herramienta", \{ p_herramienta: HERRAMIENTA \}/.test(fn) && /global: \{ headers: \{ Authorization: autorizacion \} \}/.test(fn), true);
 const pagina = fs.readFileSync(path.join(RAIZ, "js", "mesa-arbitro-pagina.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 igual("la página no guarda la clave en el navegador", /(localStorage|sessionStorage|indexedDB|cookie)[^;\n]*sid/i.test(pagina) || /\bsid\b[^;\n]*(localStorage|sessionStorage|indexedDB)/i.test(pagina), false);
 
+
+
 console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

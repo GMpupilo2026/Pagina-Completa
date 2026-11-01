@@ -75,6 +75,7 @@
             { emoji: "🎖️", label: "Normas de título", desc: "Quién hizo norma de GM, IM, WGM o WIM en un torneo de chess-results, artículo por artículo del reglamento de FIDE", href: "normas-titulo.html", zona: "contenido" },
             { emoji: "📝", label: "Acta e informe arbitral JDE", desc: "El informe oficial de una etapa de los JDE dirigida con Swiss-Manager, desde chess-results, con los clasificados en Excel", href: "acta-jde.html", zona: "contenido" },
             { emoji: "♟️", label: "Mesa del árbitro", desc: "Las mesas de la ronda abierta de un torneo de chess-results: anota y manda los resultados con la clave del torneo, y lleva la bitácora del árbitro", href: "mesa-arbitro.html", zona: "contenido" },
+            { emoji: "🦝", label: "Centroamericano: mesas de los árbitros", desc: "Carga las claves de los 12 torneos, asigna a cada árbitro sus mesas con un QR y mira lo que anotan: resultados, ilegales e irregularidades", href: "centroamericano-mesas.html", zona: "contenido" },
             { emoji: "🧰", label: "Todas las herramientas", desc: "La vitrina pública: lo que se vende con licencia y lo que viene", href: "herramientas-arbitraje.html", zona: "contenido" },
         ] },
         { title: "Revisar el contenido", tiles: [

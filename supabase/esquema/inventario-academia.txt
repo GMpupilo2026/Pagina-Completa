@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101035107
+# al-dia-con: 20261101050251
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -43,6 +43,9 @@ tabla  bromas_apagadas  rls=true
 tabla  bromas_bloqueos  rls=true
 tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
+tabla  centroamericano_asignaciones  rls=true
+tabla  centroamericano_registro  rls=true
+tabla  centroamericano_torneos  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
@@ -528,6 +531,42 @@ columna  bromas_clase.updated_at  timestamp with time zone
 columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
+columna  centroamericano_asignaciones.arbitro  text
+columna  centroamericano_asignaciones.creada  timestamp with time zone
+columna  centroamericano_asignaciones.creada_por  uuid
+columna  centroamericano_asignaciones.id  uuid
+columna  centroamericano_asignaciones.mesa_desde  integer
+columna  centroamericano_asignaciones.mesa_hasta  integer
+columna  centroamericano_asignaciones.revocada  boolean
+columna  centroamericano_asignaciones.tnr  text
+columna  centroamericano_asignaciones.token  text
+columna  centroamericano_asignaciones.ultimo_uso  timestamp with time zone
+columna  centroamericano_asignaciones.vence  timestamp with time zone
+columna  centroamericano_registro.anterior  text
+columna  centroamericano_registro.anula  uuid
+columna  centroamericano_registro.arbitro  text
+columna  centroamericano_registro.articulo  text
+columna  centroamericano_registro.asignacion_id  uuid
+columna  centroamericano_registro.color  text
+columna  centroamericano_registro.enviado  boolean
+columna  centroamericano_registro.id  uuid
+columna  centroamericano_registro.jugador  text
+columna  centroamericano_registro.mesa  integer
+columna  centroamericano_registro.ocurrio  timestamp with time zone
+columna  centroamericano_registro.resultado  text
+columna  centroamericano_registro.ronda  integer
+columna  centroamericano_registro.texto  text
+columna  centroamericano_registro.tipo  text
+columna  centroamericano_registro.tnr  text
+columna  centroamericano_torneos.acceso_tnr  text
+columna  centroamericano_torneos.categoria  text
+columna  centroamericano_torneos.clave_puesta  timestamp with time zone
+columna  centroamericano_torneos.clave_puesta_por  uuid
+columna  centroamericano_torneos.nombre  text
+columna  centroamericano_torneos.orden  integer
+columna  centroamericano_torneos.rama  text
+columna  centroamericano_torneos.sid_en_boveda  boolean
+columna  centroamericano_torneos.tnr  text
 columna  certificados.academia_id  uuid
 columna  certificados.academia_logo_path  text
 columna  certificados.academia_nombre  text
@@ -2179,6 +2218,8 @@ funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
+funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
+funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true
 funcion  cifras_academia()  definer  anon=true  auth=true
@@ -2744,6 +2785,11 @@ politica  bromas_apagadas  bromas_apagadas_ver  SELECT
 politica  bromas_bloqueos  bromas_bloqueos_ver  SELECT
 politica  bromas_clase  bromas_clase_ver  SELECT
 politica  bromas_preferencias  bromas_preferencias_ver  SELECT
+politica  centroamericano_asignaciones  centroamericano_asignaciones_apagar  UPDATE
+politica  centroamericano_asignaciones  centroamericano_asignaciones_crear  INSERT
+politica  centroamericano_asignaciones  centroamericano_asignaciones_ver  SELECT
+politica  centroamericano_registro  centroamericano_registro_ver  SELECT
+politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
@@ -3201,6 +3247,8 @@ trigger  arbitros_cr_normas_revision  consentimiento
 trigger  arbitros_cr_normas_revision  consentimiento_fijo
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
+trigger  centroamericano_asignaciones  auditar
+trigger  centroamericano_torneos  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
@@ -3373,6 +3421,13 @@ indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
 indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
+indice  centroamericano_asignaciones  centroamericano_asignaciones_pkey
+indice  centroamericano_asignaciones  centroamericano_asignaciones_tnr_idx
+indice  centroamericano_asignaciones  centroamericano_asignaciones_token_key
+indice  centroamericano_registro  centroamericano_registro_anula_idx
+indice  centroamericano_registro  centroamericano_registro_partida_idx
+indice  centroamericano_registro  centroamericano_registro_pkey
+indice  centroamericano_torneos  centroamericano_torneos_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
 indice  certificados  certificados_codigo_key
@@ -4070,6 +4125,8 @@ grant  bromas_apagadas  authenticated  SELECT
 grant  bromas_bloqueos  authenticated  SELECT
 grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
+grant  centroamericano_asignaciones  authenticated  SELECT
+grant  centroamericano_registro  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT

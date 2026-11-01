@@ -112,6 +112,13 @@ const FUNCIONES = {
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
   "torneos-externos": [],
+  // Todo lo que habla con la pantalla «Enter Results Online» de chess-results (leer
+  // las mesas, entrar, guardar comprobando, torneos ligados en un grupo) es UNA copia
+  // compartida. «mesa-arbitro» y «centroamericano-clave» exigen sesión y licencia;
+  // «centroamericano-mesa» es pública (verify_jwt en false): ver su cabecera.
+  "mesa-arbitro": ["chess-results-ingreso.ts"],
+  "centroamericano-clave": ["chess-results-ingreso.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts"],
 };
 
 function armar(nombre) {

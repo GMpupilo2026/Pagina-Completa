@@ -28,7 +28,7 @@
     { valor: "D", bitacora: "borrado", texto: "Borrar el resultado" },
   ];
   const POR_VALOR = new Map(RESULTADOS.map((r) => [r.valor, r]));
-  const TIPOS = { resultado: "Resultado", correccion: "Corrección", incidencia: "Incidencia", nota: "Nota" };
+  const TIPOS = { resultado: "Resultado", correccion: "Corrección", ilegal: "Ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota" };
 
   const textoResultado = (valor) => (POR_VALOR.get(String(valor)) || { texto: "—" }).texto;
   const nombreBitacora = (valor) => (POR_VALOR.get(String(valor)) || {}).bitacora || null;
@@ -101,6 +101,7 @@
         "Resultados anotados: " + cuenta("resultado") + " (" + enviados + " enviados a chess-results, contando las correcciones).",
         "Correcciones de un resultado: " + cuenta("correccion") + ".",
         "Incidencias: " + cuenta("incidencia") + ". Notas: " + cuenta("nota") + ".",
+        "Jugadas ilegales: " + cuenta("ilegal") + ". Irregularidades: " + cuenta("irregularidad") + ".",
       ],
     });
     b.push({ tipo: "titulo", texto: "Bitácora" });
