@@ -8799,6 +8799,65 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
   copia actual no agrega nada de más.
 
+## La lectura de chess-results se comparte y la tablet no pierde nada (Centroamericano)
+
+El torneo más importante del año (2–9 de noviembre, 15 a 20 árbitros, unos 15 con tablet, iPad o Android) no
+puede fallar por la conexión. Dos decisiones, una en el servidor y una en la tablet.
+
+- **Una sola lectura de chess-results por torneo para todos** (`_compartido/lecturas-cache.ts`, tabla
+  `centroamericano_lecturas`). Cada lectura son ~4 visitas a chess-results; con 15 tablets pidiéndola cada 45 s
+  eran varias por segundo durante horas. Ahora la lectura es una copia en la base: si tiene menos de 40 s
+  (`leer`) o 120 s (presencia, tiempo, anotar, planilla, que solo comprueban ronda, mesa y jugadores) se usa;
+  si no, UNA función toma el «turno» (`leyendo_hasta`, un compare-and-set) y lee; las demás esperan hasta 9 s lo
+  que esa deje. Con 20 pedidos a la vez, 1 lectura. **Si chess-results no contesta** (caído, lento, clave
+  rechazada) y hay una copia de menos de 30 min, se sirve ESA con `datos.viejo` y `datos.motivo`, y la tablet
+  dice «chess-results no está contestando: estas mesas son de las HH:MM». Sin copia, el error sale tal cual.
+  **Guardar un resultado nunca decide con la copia**: `guardarYComprobar` lee en fresco y, al terminar, deja la
+  copia al día con lo que leyó de vuelta (`ponerLectura`), para que la tablet no vea «sin resultado» un rato.
+  `finalizar` y el resumen de la organización piden lectura fresca (`fresca: true`) y también caen a la copia.
+  La tabla no tiene política ni permisos: solo la función con la clave de servicio.
+- **Lo que se reintenta no se duplica.** `anotar` y `tiempo` aceptan un `id` (uuid) que pone la tablet: si la
+  respuesta se perdió y la tablet reenvía, la base responde 23505 y la función devuelve la anotación ya hecha
+  (una ilegal de más cambiaría el resultado de una partida). `guardar` no deja una «corrección» si la mesa ya
+  tenía el valor pedido; `presencia`, `lista`, `planilla` y `finalizar` ya eran idempotentes por su forma.
+- **`leer` hace sus consultas a la base en paralelo** (`Promise.all`): son ~10 idas y vueltas y, en serie,
+  una lectura «en caché» tardaba ~3 s.
+- **En la tablet, tres capas** (`js/centroamericano-cola.js` + `js/centroamericano-arbitro.js`):
+  1. **Reintentos**: cada pedido se intenta 3 veces (ahora, a 1,5 s y a 4 s) si fue la señal o el servidor
+     (sin respuesta, 408, 425, 429, 500, 502, 503, 504, 546…) y con un tope de 25 s (90 s la foto). Un «no» de
+     verdad (404/410 enlace, 403 rango, 409 ronda, 400) NO se reintenta. **Un 503 de arranque del servidor nunca
+     se toma por una respuesta buena**: antes `invocar` devolvía `{ code: "BOOT_ERROR" }` como si fuera la
+     lectura y la pantalla se rompía (con 20 pedidos a la vez, 3 dieron BOOT_ERROR en la prueba contra producción).
+  2. **La cola** (IndexedDB, `centroamericano-cola`): si los 3 intentos fallan por la red, el resultado, la
+     ilegal/irregularidad, el control de tiempos, la presencia y la foto de las planillas quedan **guardados en
+     la tablet**, se ven en el aviso fijo de arriba («Pendiente de enviar (n): …», rojo si no hay conexión, ámbar
+     si solo falta enviar; el color nunca va solo), sobreviven a recargar la página y se mandan SOLOS, en orden,
+     cada 10 s, al volver la señal y al volver a la página («Mandar ahora» a mano). Una ilegal sin señal ya
+     cuenta en la tablet y avisa igual (la primera: 2 minutos al rival; la segunda: pierde, 7.5.5). Si la
+     función contesta con un «no» al enviarlo, se quita de la cola y se avisa por qué.
+     **El token nunca se guarda**: cada pendiente lleva una huella corta (SHA-256 truncado) del enlace, para no
+     mandarse con el enlace de otro torneo. Sin IndexedDB (navegación privada) usa la memoria y la página avisa
+     antes de cerrarse con algo sin enviar.
+  3. **Abrir sin señal**: la última lectura buena se guarda (localStorage, con la huella) y, si al abrir no hay
+     conexión, se muestran esas mesas, con la hora, y sin avisos viejos.
+  Lo prueba `verificar-centroamericano-cola.js` con fallas de red simuladas (503, falla corta, respuesta
+  perdida, sin señal, recarga sin señal, foto, «no» de verdad); `verificar-lecturas-cache.js` prueba la lectura
+  compartida con 15 pedidos concurrentes (1 sola visita) y el respaldo.
+- **iPad y Android.** El iPad no tiene `navigator.vibrate`: los avisos de la organización no pueden depender de
+  vibrar. Se ven (aviso fijo arriba, grande, con número en el título de la pestaña) y la tablet vibra donde se
+  puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y
+  `AbortSignal.timeout` tienen alternativa); la pantalla encendida (`wakeLock`) funciona desde iOS 16.4.
+
+## Mesa del árbitro: los torneos ligados de un grupo
+
+`mesa-arbitro.html` (la Mesa del árbitro general) leía solo el torneo con el que abre la clave: si los torneos
+estaban ligados en un grupo de chess-results («Selección de torneo»), los otros no se podían abrir. Ahora
+`leer` devuelve `torneos[]` (los del grupo, con el abierto marcado) y la página muestra el desplegable «Torneo
+del grupo»: al elegir otro se lee ESE (`destino`: se entra con el mismo código y clave, se elige el torneo y se
+aprieta «Search/Reload», ver `entrar()`), y `guardar` manda el `destino` para no escribir en el otro torneo.
+Sin `destino`, `leer` acepta el torneo con el que abre la clave aunque el código sea el del grupo. La
+bitácora sigue por torneo (`tnr` del abierto). Lo prueba `verificar-mesa-arbitro-pagina.js`.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

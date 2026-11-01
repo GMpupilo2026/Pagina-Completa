@@ -496,3 +496,15 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-guia-boton { min-height: 3.4rem; padding: 0.7rem 1.8rem; border-radius: 14px; border: 3px solid #fff; font-size: 1.15rem; font-weight: 800; cursor: pointer; }
 .cam-guia-boton-claro { background: #fff; color: #1e2453; }
 .cam-guia-boton-verde { background: #1f6e41; color: #fff; }
+
+/* El aviso fijo de la conexión: sin señal, chess-results sin contestar y lo pendiente de enviar. El color nunca va solo: lleva su texto. */
+.cam-conexion { position: sticky; top: 0; z-index: 39; margin-bottom: 0.75rem; padding: 0.6rem 0.9rem; border-radius: 0.75rem; border: 2px solid var(--cac-morado-hondo); background: #fff; color: #1a1033; font-weight: 700; display: grid; gap: 0.5rem; }
+.cam-conexion[data-nivel="mal"] { background: #7a1020; border-color: #7a1020; color: #fff; }
+.cam-conexion[data-nivel="ojo"] { background: #fff4d6; border-color: #8a5a00; color: #3b2600; }
+.cam-conexion .cam-btn { justify-self: start; }
+
+/* El tiempo de espera de los que no han llegado: cumplido = rojo hondo con su palabra y su ⏰ (el color nunca va solo). */
+.cam-espera-alerta { margin-top: 0.5rem; padding: 0.7rem 0.9rem; border-radius: 0.75rem; font-weight: 800; font-size: 1.05rem; line-height: 1.3; border: 2px solid #8a5a00; background: #fff4d6; color: #3b2600; }
+.cam-espera-alerta[data-nivel="cumplido"] { background: #7a1020; border-color: #7a1020; color: #fff; }
+.cam-espera-cumplida { font-weight: 800; color: #7a1020; }
+.dark .cam-espera-cumplida { color: #ffb3bd; }

@@ -48,6 +48,9 @@
     let ayuda = null; // el último pedido de ayuda (abierto o recién atendido)
     let abiertas = []; // mesas (o null = general) con un pedido abierto
     let bloqueo = null;
+    let cola = null; // lo que no pudo salir de la tablet (js/centroamericano-cola.js)
+    let dueno = ""; // la huella del enlace (nunca el token)
+    let sinSenal = false; // el último pedido no pudo salir por la red
 
     const token = () => (location.hash || "").replace(/^#(t=)?/, "").trim();
 
@@ -64,19 +67,83 @@
         return n;
     }
 
-    // La función contesta con un error legible aun en 4xx/5xx: se lee el cuerpo.
-    async function invocar(accion, cuerpo) {
-        let { data, error } = await sb.functions.invoke("centroamericano-mesa", { body: Object.assign({ action: accion, token: token() }, cuerpo || {}) });
-        let estadoHttp = error && error.context && error.context.status;
+    const Cola = window.CentroamericanoCola;
+    const TIEMPO_MS = 25000, TIEMPO_FOTO_MS = 90000;
+
+    // UN pedido a la función, sin reintentos. Siempre lanza un Error cuando no salió bien, con `http` (el
+    // estado) y `red` (si fue la señal). Un error del servidor SIN mensaje nuestro (la función no arrancó,
+    // un 503…) nunca se toma por una respuesta buena. La función contesta con un error legible aun en
+    // 4xx/5xx: se lee el cuerpo.
+    async function llamar(accion, cuerpo, ms) {
+        let reloj;
+        const espera = new Promise((_, no) => { reloj = setTimeout(() => no(Object.assign(new Error("La señal tardó demasiado en contestar."), { red: true })), ms); });
+        let r;
+        try { r = await Promise.race([sb.functions.invoke("centroamericano-mesa", { body: Object.assign({ action: accion, token: token() }, cuerpo || {}) }), espera]); }
+        finally { clearTimeout(reloj); }
+        let { data, error } = r;
+        const estadoHttp = error && error.context && error.context.status;
         if (error && error.context && typeof error.context.json === "function") {
             try { data = await error.context.json(); } catch (e) { /* sin cuerpo */ }
         }
-        if (!data || data.error) {
-            const e = new Error((data && data.error) || (error && error.message) || "No hubo respuesta. Revisa tu conexión.");
+        if (error || !data || data.error) {
+            const propio = data && typeof data.error === "string" ? data.error : "";
+            const e = new Error(propio || (estadoHttp >= 500 ? "El servidor tardó en arrancar. Se vuelve a intentar." : (error && error.message) || "No hubo respuesta. Revisa tu conexión."));
             e.http = estadoHttp;
+            if (!estadoHttp && !propio) e.red = true;
             throw e;
         }
         return data;
+    }
+
+    // Con reintentos: 3 intentos (ahora, a los 1,5 s y a los 4 s) si fue la señal o el servidor; un «no» de
+    // verdad (enlace vencido, mesa fuera de rango…) se devuelve de una vez.
+    async function invocar(accion, cuerpo, { intentos = 3, ms } = {}) {
+        const tiempo = ms || (accion === "planilla" ? TIEMPO_FOTO_MS : TIEMPO_MS);
+        try {
+            const d = await Cola.conReintentos(() => llamar(accion, cuerpo, tiempo), { esperas: Cola.ESPERAS_MS.slice(0, intentos) });
+            ponerSenal(true);
+            return d;
+        } catch (e) {
+            ponerSenal(!Cola.esDeRed(e));
+            throw e;
+        }
+    }
+
+    function ponerSenal(hay) {
+        const volvio = sinSenal && hay;
+        sinSenal = !hay;
+        pintarConexion();
+        if (volvio && cola && cola.lista().length) cola.vaciar();
+    }
+
+    // Lo que NO puede perderse (resultado, ilegal, tiempos, presencia, foto): si no salió por la señal, queda
+    // en la cola de la tablet y se manda solo. Cada anotación lleva su `id`: reenviarla no la duplica.
+    const CON_ID = { anotar: true, tiempo: true };
+    async function escribir(accion, cuerpo, etiqueta, meta) {
+        const id = Cola.uuid();
+        const c = CON_ID[accion] ? Object.assign({ id }, cuerpo) : cuerpo;
+        try { return { d: await invocar(accion, c) }; }
+        catch (e) {
+            if (!Cola.esDeRed(e) || !cola) throw e;
+            await cola.agregar({ id, accion, cuerpo: c, etiqueta, meta });
+            return { encolado: true, id };
+        }
+    }
+
+    // El aviso fijo de arriba: sin conexión, chess-results sin contestar (se ven las últimas mesas) y lo pendiente.
+    function pintarConexion() {
+        const caja = $("conexion");
+        if (!caja) return;
+        const pend = cola ? cola.lista() : [];
+        const partes = [];
+        let nivel = "";
+        if (sinSenal) { nivel = "mal"; partes.push(estado ? "Sin conexión con el servidor. Ves tus mesas como estaban a las " + hora(estado.leido_en) + "." : "Sin conexión con el servidor."); }
+        else if (estado && estado.datos && estado.datos.viejo) { nivel = "ojo"; partes.push("chess-results no está contestando: estas mesas son de las " + hora(estado.datos.desde) + ". Lo que anotes aquí se guarda igual."); }
+        if (pend.length) { nivel = nivel || "ojo"; partes.push("Pendiente de enviar (" + pend.length + "): " + pend.map((x) => x.etiqueta).join(", ") + ". Se manda solo cuando haya señal; no cierres esta página."); }
+        caja.hidden = !partes.length;
+        caja.dataset.nivel = nivel;
+        const botones = pend.length ? [el("button", { type: "button", class: "cam-btn", "data-accion": "reintentar-cola", onclick: () => { cola.vaciar(); } }, "Mandar ahora")] : [];
+        caja.replaceChildren(el("p", { texto: (nivel === "mal" ? "⚠ " : "") + partes.join(" ") }), ...botones);
     }
 
     const clave = (mesa, color) => mesa + "|" + color;
@@ -260,7 +327,9 @@
         subiendo.add(m.mesa);
         pintar();
         try {
-            const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, imagen });
+            const r = await escribir("planilla", { ronda: estado.ronda, mesa: m.mesa, imagen }, "Foto de las planillas de la mesa " + m.mesa, { mesa: m.mesa });
+            if (r.encolado) { avisar("Sin señal: la foto de la mesa " + m.mesa + " quedó guardada en la tablet y se manda sola cuando vuelva la conexión. No cierres la página."); return; }
+            const d = r.d;
             estado.planillas = subidas().filter((x) => x.mesa !== m.mesa).concat([{ mesa: m.mesa, lado: "blancas", subida: d.subida, drive_ok: d.drive === "enviada" }]);
             avisar("Foto de las planillas de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
         } catch (e) {
@@ -406,7 +475,7 @@
         // Se ve al instante; si la función dice que no, se deshace.
         estado.presencia = presencias().filter((x) => !(x.mesa === m.mesa && x.color === color)).concat([{ mesa: m.mesa, color, presente, marcada: new Date().toISOString() }]);
         pintar();
-        try { await invocar("presencia", { ronda: estado.ronda, mesa: m.mesa, color, presente }); }
+        try { await escribir("presencia", { ronda: estado.ronda, mesa: m.mesa, color, presente }, "Presencia de " + (color === "blancas" ? "blancas" : "negras") + " en la mesa " + m.mesa, { mesa: m.mesa }); }
         catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
 
@@ -515,9 +584,10 @@
         const mesa = lecturaMesa;
         $("lt-guardar").disabled = true;
         try {
-            const d = await invocar("tiempo", { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN });
+            const r = await escribir("tiempo", { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN }, "Control de tiempos de la mesa " + mesa, { mesa });
+            const d = r.encolado ? { id: r.id, ocurrio: new Date().toISOString(), jugada: Math.max(1, jB, jN) } : r.d;
             estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: jB, j_negras: jN, turno: null, t_blancas: tB, t_negras: tN, nota: "" }].concat(estado.tiempos || []);
-            avisar("Control de tiempos de la mesa " + mesa + " guardado: queda en la bitácora.");
+            avisar(r.encolado ? "Sin señal: el control de tiempos de la mesa " + mesa + " quedó en la tablet y se manda solo cuando vuelva la conexión." : "Control de tiempos de la mesa " + mesa + " guardado: queda en la bitácora.");
             borrador = {};
             borradorMesa = null;
             // Desde el reloj de una mesa se cierra; si lo pidió la organización, queda abierta para la siguiente mesa.
@@ -658,7 +728,7 @@
 
     async function consultarAvisos() {
         if (!avisosVivo) return;
-        try { aplicarAvisos(await invocar("avisos")); }
+        try { aplicarAvisos(await invocar("avisos", null, { intentos: 1 })); }
         catch (e) { if (e.http === 404 || e.http === 410) avisosVivo = false; /* sin red: se vuelve a intentar */ }
     }
 
@@ -714,6 +784,21 @@
 
     // ------------------------------------------------------------- leer
 
+    // Pone en pantalla lo que contestó «leer» (o la última lectura guardada en la tablet).
+    function mostrar(d) {
+        const cambioRonda = estado && estado.ronda !== d.ronda;
+        estado = d;
+        anuladas = new Set(d.anuladas || []);
+        if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
+        $("problema").hidden = true;
+        $("cargando").hidden = true;
+        $("app").hidden = false;
+        pintarCabecera();
+        aplicarAvisos(d);
+        pintar();
+        pintarConexion();
+    }
+
     async function leer(silencioso) {
         if (leyendo) return;
         leyendo = true;
@@ -721,26 +806,54 @@
         boton.disabled = true;
         try {
             const d = await invocar("leer");
-            const cambioRonda = estado && estado.ronda !== d.ronda;
-            estado = d;
-            anuladas = new Set(d.anuladas || []);
-            if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
-            $("problema").hidden = true;
-            $("cargando").hidden = true;
-            $("app").hidden = false;
-            pintarCabecera();
-            aplicarAvisos(d);
-            pintar();
+            mostrar(d);
+            if (dueno) Cola.guardarEstado(dueno, d);
             $("actualizado").textContent = "Actualizado a las " + hora(d.leido_en);
         } catch (e) {
             if (e.http === 404 || e.http === 410) avisosVivo = false;
-            if (!estado) problema(e.http === 404 || e.http === 410 ? "Este enlace ya no sirve" : "No se pudo abrir tus mesas", e.message, !(e.http === 404 || e.http === 410));
+            const definitivo = e.http === 404 || e.http === 410;
+            if (!estado && !definitivo && dueno && Cola.esDeRed(e)) {
+                // Sin señal al abrir: se muestran las últimas mesas que esta tablet leyó, sin avisos viejos.
+                const ultima = Cola.leerEstado(dueno);
+                if (ultima) {
+                    mostrar(Object.assign({}, ultima.estado, { mensajes: [], ayuda: null }));
+                    $("actualizado").textContent = "Sin conexión: se muestra lo último que leyó esta tablet (" + hora(ultima.guardado) + ")";
+                    return;
+                }
+            }
+            if (!estado) problema(definitivo ? "Este enlace ya no sirve" : "No se pudo abrir tus mesas", e.message, !definitivo);
             else if (!silencioso) avisar(e.message, true);
             else $("actualizado").textContent = "No se pudo actualizar (se muestra lo último que se leyó)";
         } finally {
             leyendo = false;
             boton.disabled = false;
         }
+    }
+
+    // Lo que sale de la cola cuando vuelve la señal.
+    function alEnviado(x, d) {
+        if (estado && x.accion === "guardar") {
+            const m = estado.mesas.find((y) => y.mesa === x.meta.mesa);
+            if (m) resultadoGuardado(m, d, x.meta.antes, x.meta.valor);
+        }
+        if (estado && x.accion === "planilla") estado.planillas = subidas().filter((y) => y.mesa !== x.meta.mesa).concat([{ mesa: x.meta.mesa, lado: "blancas", subida: d.subida, drive_ok: d.drive === "enviada" }]);
+        avisar("Ya se mandó: " + x.etiqueta + ".");
+        if (estado) pintar();
+        if (cola && !cola.lista().length && sinNadaPendiente()) leer(true);
+    }
+    function alRechazado(x, e) {
+        if (estado && x.accion === "guardar") { mensajes[x.meta.mesa] = { ok: false, texto: "✗ No quedó guardado: " + e.message }; delete elegido[x.meta.mesa]; pintar(); }
+        avisar("No se pudo enviar «" + x.etiqueta + "»: " + e.message + " Anótalo de nuevo si hace falta.", true);
+    }
+    async function prepararCola() {
+        try {
+            dueno = await Cola.huella(token());
+            cola = await Cola.crear({ dueno, enviar: (a, c) => invocar(a, c, { intentos: 1 }), alCambiar: pintarConexion, alEnviado, alRechazado });
+            await cola.cargar();
+            cola.iniciar();
+            // Cerrar la página con algo sin enviar lo pierde si el aparato no deja guardar en el navegador: se avisa.
+            window.addEventListener("beforeunload", (ev) => { if (cola && cola.lista().length && cola.usaMemoria) { ev.preventDefault(); ev.returnValue = ""; } });
+        } catch (e) { cola = null; /* sin cola: todo sigue funcionando, solo que sin red de seguridad */ }
     }
 
     // ------------------------------------------------------------- guardar
@@ -751,6 +864,22 @@
         pintar();
         const s = $("res-" + m.mesa);
         if (s) s.focus();
+    }
+
+    // Lo que contestó «guardar»: lo que chess-results tiene de verdad (también cuando sale de la cola).
+    function resultadoGuardado(m, d, antes, valor) {
+        const r = d.resultados[0];
+        if (r && r.quedo != null) m.valor = r.quedo;
+        if (r && r.ok) {
+            delete elegido[m.mesa];
+            mensajes[m.mesa] = { ok: true, texto: "✓ Guardado en chess-results a las " + hora(d.leido_en) + (d.registro_error ? " Ojo: no quedó en el registro; avisa a la organización." : "") };
+            const nombreDe = (v) => (M.RESULTADOS.find((x) => x.valor === v) || {}).bitacora || null;
+            (estado.anotaciones = estado.anotaciones || []).push({ id: "local-" + Date.now(), ocurrio: d.leido_en, mesa: m.mesa, color: null, jugador: m.blancas + " – " + m.negras, tipo: antes !== "0" ? "correccion" : "resultado", resultado: nombreDe(valor), anterior: antes !== "0" ? nombreDe(antes) : null, texto: "", articulo: "", enviado: true });
+        } else {
+            mensajes[m.mesa] = { ok: false, texto: "✗ No quedó guardado: chess-results tiene «" + (r && r.quedo != null ? M.textoResultado(r.quedo) : "nada") + "». Intenta de nuevo." };
+        }
+        for (const x of d.diferencias || []) { const o = estado.mesas.find((y) => y.mesa === x.mesa); if (o) o.valor = x.ahora; }
+        if ((d.diferencias || []).length) avisar("Otra mesa cambió sin que la tocaras (" + d.diferencias.map((x) => x.mesa).join(", ") + "). Revisa chess-results.", true);
     }
 
     async function guardar(m) {
@@ -765,19 +894,9 @@
         delete mensajes[m.mesa];
         pintar();
         try {
-            const d = await invocar("guardar", { ronda: estado.ronda, cambios: [{ mesa: m.mesa, blancas: m.blancas, negras: m.negras, valor }] });
-            const r = d.resultados[0];
-            if (r && r.quedo != null) m.valor = r.quedo;
-            if (r && r.ok) {
-                delete elegido[m.mesa];
-                mensajes[m.mesa] = { ok: true, texto: "✓ Guardado en chess-results a las " + hora(d.leido_en) + (d.registro_error ? " Ojo: no quedó en el registro; avisa a la organización." : "") };
-                const nombreDe = (v) => (M.RESULTADOS.find((x) => x.valor === v) || {}).bitacora || null;
-                (estado.anotaciones = estado.anotaciones || []).push({ id: "local-" + Date.now(), ocurrio: d.leido_en, mesa: m.mesa, color: null, jugador: m.blancas + " – " + m.negras, tipo: antes !== "0" ? "correccion" : "resultado", resultado: nombreDe(valor), anterior: antes !== "0" ? nombreDe(antes) : null, texto: "", articulo: "", enviado: true });
-            } else {
-                mensajes[m.mesa] = { ok: false, texto: "✗ No quedó guardado: chess-results tiene «" + (r && r.quedo != null ? M.textoResultado(r.quedo) : "nada") + "». Intenta de nuevo." };
-            }
-            for (const x of d.diferencias || []) { const o = estado.mesas.find((y) => y.mesa === x.mesa); if (o) o.valor = x.ahora; }
-            if ((d.diferencias || []).length) avisar("Otra mesa cambió sin que la tocaras (" + d.diferencias.map((x) => x.mesa).join(", ") + "). Revisa chess-results.", true);
+            const r = await escribir("guardar", { ronda: estado.ronda, cambios: [{ mesa: m.mesa, blancas: m.blancas, negras: m.negras, valor }] }, "Resultado de la mesa " + m.mesa, { mesa: m.mesa, antes, valor });
+            if (r.encolado) { mensajes[m.mesa] = { ok: true, texto: "⏳ Sin señal: el resultado quedó guardado en la tablet y se manda solo cuando vuelva la conexión. No lo repitas." }; return; }
+            resultadoGuardado(m, r.d, antes, valor);
         } catch (e) {
             mensajes[m.mesa] = { ok: false, texto: "✗ " + e.message };
         } finally {
@@ -822,7 +941,18 @@
         ocupadas.add(m.mesa);
         pintar();
         try {
-            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "ilegal", texto: t.texto });
+            const r = await escribir("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "ilegal", texto: t.texto }, "Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")", { mesa: m.mesa });
+            if (r.encolado) {
+                // Sin señal: ya cuenta en la tablet (y se manda sola); el árbitro la ve y recibe el mismo aviso.
+                const marca = Object.assign({}, k, { ilegales: k.ilegales + 1, ultima_ilegal: r.id });
+                estado.marcas[clave(m.mesa, color)] = marca;
+                sumarAnotacion(m, color, "ilegal", r.id, nombre, t.texto);
+                pintar();
+                const a = C.avisoIlegal(marca.ilegales, nombre, color);
+                await Avisos.alerta("Sin señal: quedó anotada en la tablet y se manda sola cuando vuelva la conexión. " + a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale 2 minutos al rival", aceptar: "Entendido" });
+                return;
+            }
+            const d = r.d;
             estado.marcas[clave(m.mesa, color)] = d.marca;
             sumarAnotacion(m, color, "ilegal", d.id, d.jugador || nombre, t.texto);
             const a = C.avisoIlegal(d.marca.ilegales, d.jugador || nombre, color);
@@ -844,7 +974,15 @@
         ocupadas.add(m.mesa);
         pintar();
         try {
-            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "irregularidad", texto: t.texto, articulo: t.articulo });
+            const r = await escribir("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "irregularidad", texto: t.texto, articulo: t.articulo }, "Irregularidad de " + nombre + " (mesa " + m.mesa + ")", { mesa: m.mesa });
+            if (r.encolado) {
+                const k = marcaDe(m.mesa, color);
+                estado.marcas[clave(m.mesa, color)] = Object.assign({}, k, { irregularidades: k.irregularidades + 1, ultima_irregularidad: r.id });
+                sumarAnotacion(m, color, "irregularidad", r.id, nombre, t.texto);
+                avisar("Sin señal: la irregularidad de " + nombre + " quedó en la tablet y se manda sola cuando vuelva la conexión.");
+                return;
+            }
+            const d = r.d;
             estado.marcas[clave(m.mesa, color)] = d.marca;
             sumarAnotacion(m, color, "irregularidad", d.id, d.jugador || nombre, t.texto);
             avisar("Irregularidad anotada: " + (d.jugador || nombre) + ".");
@@ -904,10 +1042,11 @@
             if (document.hidden) return;
             mantenerEncendida();
             consultarAvisos();
+            if (cola && cola.lista().length) cola.vaciar();
             if (estado && sinNadaPendiente()) leer(true);
         });
         mantenerEncendida();
-        leer(false);
+        prepararCola().then(() => { leer(false); if (cola && cola.lista().length) cola.vaciar(); });
     }
 
     init();
