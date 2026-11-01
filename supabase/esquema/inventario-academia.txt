@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101061850
+# al-dia-con: 20261101142607
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -49,8 +49,10 @@ tabla  centroamericano_copias  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_listas  rls=true
 tabla  centroamericano_planillas  rls=true
+tabla  centroamericano_presencia  rls=true
 tabla  centroamericano_progreso  rls=true
 tabla  centroamericano_registro  rls=true
+tabla  centroamericano_tiempos  rls=true
 tabla  centroamericano_torneos  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
@@ -544,6 +546,7 @@ columna  centroamericano_asignaciones.id  uuid
 columna  centroamericano_asignaciones.mesa_desde  integer
 columna  centroamericano_asignaciones.mesa_hasta  integer
 columna  centroamericano_asignaciones.nombrado  boolean
+columna  centroamericano_asignaciones.persona  uuid
 columna  centroamericano_asignaciones.revocada  boolean
 columna  centroamericano_asignaciones.tnr  text
 columna  centroamericano_asignaciones.token  text
@@ -552,6 +555,7 @@ columna  centroamericano_asignaciones.vence  timestamp with time zone
 columna  centroamericano_avisos.asignacion_id  uuid
 columna  centroamericano_avisos.atendido_en  timestamp with time zone
 columna  centroamericano_avisos.atendido_por  uuid
+columna  centroamericano_avisos.control_tiempos  boolean
 columna  centroamericano_avisos.creado  timestamp with time zone
 columna  centroamericano_avisos.creado_por  uuid
 columna  centroamericano_avisos.de  text
@@ -593,6 +597,16 @@ columna  centroamericano_planillas.ronda  integer
 columna  centroamericano_planillas.ruta  text
 columna  centroamericano_planillas.subida  timestamp with time zone
 columna  centroamericano_planillas.tnr  text
+columna  centroamericano_presencia.arbitro  text
+columna  centroamericano_presencia.asignacion_id  uuid
+columna  centroamericano_presencia.color  text
+columna  centroamericano_presencia.id  uuid
+columna  centroamericano_presencia.jugador  text
+columna  centroamericano_presencia.marcada  timestamp with time zone
+columna  centroamericano_presencia.mesa  integer
+columna  centroamericano_presencia.presente  boolean
+columna  centroamericano_presencia.ronda  integer
+columna  centroamericano_presencia.tnr  text
 columna  centroamericano_progreso.actualizado  timestamp with time zone
 columna  centroamericano_progreso.asignacion_id  uuid
 columna  centroamericano_progreso.con_resultado  integer
@@ -615,6 +629,20 @@ columna  centroamericano_registro.ronda  integer
 columna  centroamericano_registro.texto  text
 columna  centroamericano_registro.tipo  text
 columna  centroamericano_registro.tnr  text
+columna  centroamericano_tiempos.arbitro  text
+columna  centroamericano_tiempos.asignacion_id  uuid
+columna  centroamericano_tiempos.blancas  text
+columna  centroamericano_tiempos.id  uuid
+columna  centroamericano_tiempos.jugada  integer
+columna  centroamericano_tiempos.mesa  integer
+columna  centroamericano_tiempos.negras  text
+columna  centroamericano_tiempos.nota  text
+columna  centroamericano_tiempos.ocurrio  timestamp with time zone
+columna  centroamericano_tiempos.ronda  integer
+columna  centroamericano_tiempos.t_blancas  integer
+columna  centroamericano_tiempos.t_negras  integer
+columna  centroamericano_tiempos.tnr  text
+columna  centroamericano_tiempos.turno  text
 columna  centroamericano_torneos.acceso_tnr  text
 columna  centroamericano_torneos.categoria  text
 columna  centroamericano_torneos.clave_puesta  timestamp with time zone
@@ -2861,8 +2889,10 @@ politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
 politica  centroamericano_listas  centroamericano_listas_ver  SELECT
 politica  centroamericano_planillas  centroamericano_planillas_ver  SELECT
+politica  centroamericano_presencia  centroamericano_presencia_ver  SELECT
 politica  centroamericano_progreso  centroamericano_progreso_ver  SELECT
 politica  centroamericano_registro  centroamericano_registro_ver  SELECT
+politica  centroamericano_tiempos  centroamericano_tiempos_ver  SELECT
 politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
@@ -3497,6 +3527,7 @@ indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
 indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
+indice  centroamericano_asignaciones  centroamericano_asignaciones_persona_idx
 indice  centroamericano_asignaciones  centroamericano_asignaciones_pkey
 indice  centroamericano_asignaciones  centroamericano_asignaciones_tnr_idx
 indice  centroamericano_asignaciones  centroamericano_asignaciones_token_key
@@ -3510,10 +3541,14 @@ indice  centroamericano_finales  centroamericano_finales_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_tnr_ronda_mesa_lado_key
+indice  centroamericano_presencia  centroamericano_presencia_pkey
+indice  centroamericano_presencia  centroamericano_presencia_tnr_ronda_mesa_color_key
 indice  centroamericano_progreso  centroamericano_progreso_pkey
 indice  centroamericano_registro  centroamericano_registro_anula_idx
 indice  centroamericano_registro  centroamericano_registro_partida_idx
 indice  centroamericano_registro  centroamericano_registro_pkey
+indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
+indice  centroamericano_tiempos  centroamericano_tiempos_pkey
 indice  centroamericano_torneos  centroamericano_torneos_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
@@ -4221,8 +4256,10 @@ grant  centroamericano_copias  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
 grant  centroamericano_listas  authenticated  SELECT
 grant  centroamericano_planillas  authenticated  SELECT
+grant  centroamericano_presencia  authenticated  SELECT
 grant  centroamericano_progreso  authenticated  SELECT
 grant  centroamericano_registro  authenticated  SELECT
+grant  centroamericano_tiempos  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT
