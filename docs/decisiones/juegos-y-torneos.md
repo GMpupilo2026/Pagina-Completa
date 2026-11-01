@@ -8869,6 +8869,26 @@ aprieta «Search/Reload», ver `entrar()`), y `guardar` manda el `destino` para 
 Sin `destino`, `leer` acepta el torneo con el que abre la clave aunque el código sea el del grupo. La
 bitácora sigue por torneo (`tnr` del abierto). Lo prueba `verificar-mesa-arbitro-pagina.js`.
 
+## Mesa del árbitro: «Mis torneos»
+
+Quien usa la Mesa del árbitro con su propia cuenta (un entrenador que dirige varios torneos) necesita volver a uno
+anterior a corregir o agregar una nota. La bitácora (`arbitro_bitacora`) ya guardaba cada línea con su autor
+(`creada_por`) y el código del torneo; faltaba la lista. «Mis torneos» (arriba en `mesa-arbitro.html`) la arma:
+- **De dónde sale**: `public.arbitro_torneos_mis()` junta los torneos con bitácora y los que se abrieron sin anotar
+  nada (tabla `arbitro_torneos`: nombre propio, archivado, primera y última vez), con las cuentas hechas en la base
+  (PostgREST corta a ~1000 filas: no se baja la bitácora entera). Lo más reciente primero.
+- **Se llena solo**: al leer una ronda, `arbitro_torneo_visto()` deja el torneo en la lista con el nombre que trae
+  chess-results. Los torneos de antes de esta lista aparecen igual, por su bitácora.
+- **Abrir** pone el código arriba, carga su bitácora y deja el cursor en la clave (SID), que **nunca se guarda**:
+  para corregir en chess-results hay que escribirla otra vez. **Ponerle nombre** (`arbitro_torneo_ajustar`; vacío
+  vuelve al de chess-results; el de chess-results se sigue viendo al lado) y **Archivar / Restaurar** (no se borra
+  nada; «Mostrar los archivados»). El archivado lleva la palabra «(archivado)»: el estado no va solo en el color.
+- **Permisos**: `arbitro_torneos` no tiene permisos directos ni política; solo las tres funciones (`security definer`,
+  piden la licencia `mesa-arbitro` y trabajan con `auth.uid()`), así que nadie toca los torneos de otra persona.
+  La bitácora es **personal**: dos árbitros del mismo torneo llevan cada uno la suya (una bitácora compartida por
+  torneo sería otro diseño). Al borrar una cuenta, sus torneos se borran con ella (`on delete cascade`).
+- Lo prueba `verificar-mesa-arbitro-pagina.js` (sección «Mis torneos»).
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

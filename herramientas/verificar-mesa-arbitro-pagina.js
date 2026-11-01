@@ -56,7 +56,17 @@ function doble(licencia) {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) },
     },
-    rpc: (f, a) => { window.__pedidos.push(f + " " + (a && a.p_herramienta || "")); return R(f === "tengo_herramienta" ? ${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"} : null); },
+    rpc: (f, a) => { window.__pedidos.push(f + " " + (a && a.p_herramienta || ""));
+      // «Mis torneos»: la lista de la persona (la base la arma con la bitácora y arbitro_torneos).
+      window.__torneos = window.__torneos || [
+        { tnr: "1532448", nombre: "Torneo de Prueba", nombre_propio: "", torneo: "Torneo de Prueba", archivado: false, primera: "2026-11-01T04:37:00Z", ultima: "2026-11-01T20:00:00Z", lineas: 3, resultados: 2, incidencias: 1 },
+        { tnr: "1500001", nombre: "Open de Navidad", nombre_propio: "Open de Navidad", torneo: "Open Navidad 2025", archivado: false, primera: "2025-12-20T15:00:00Z", ultima: "2025-12-21T22:00:00Z", lineas: 10, resultados: 9, incidencias: 0 },
+        { tnr: "1400002", nombre: "Torneo viejo", nombre_propio: "", torneo: "Torneo viejo", archivado: true, primera: "2025-03-01T15:00:00Z", ultima: "2025-03-02T22:00:00Z", lineas: 4, resultados: 4, incidencias: 0 }];
+      if (f === "arbitro_torneos_mis") return R(JSON.parse(JSON.stringify(window.__torneos)));
+      if (f === "arbitro_torneo_visto") { window.__vistos = (window.__vistos || []).concat([[a.p_tnr, a.p_torneo]]); return R(null); }
+      if (f === "arbitro_torneo_ajustar") { window.__ajustes = (window.__ajustes || []).concat([[a.p_tnr, a.p_nombre, a.p_archivado]]);
+        const t = window.__torneos.find((x) => x.tnr === a.p_tnr); if (t) { if (a.p_nombre !== null) { t.nombre_propio = a.p_nombre.trim(); t.nombre = t.nombre_propio || t.torneo; } if (a.p_archivado !== null) t.archivado = a.p_archivado; } return R(null); }
+      return R(f === "tengo_herramienta" ? ${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"} : null); },
     functions: { invoke: (f, o) => {
       window.__pedidos.push("invoke " + f);
       window.__ultimo = o.body;
@@ -117,6 +127,36 @@ async function abrir(browser, licencia) {
     ({ ctx, p, errores } = await abrir(browser, true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("sin leer, las mesas no se ven", await p.$eval("#zona-mesas", (a) => a.checkVisibility()), false);
+
+    console.log("\n=== Mis torneos ===");
+    await p.waitForSelector("#mt-lista li");
+    igual("la lista trae los torneos que no están archivados, el más reciente primero, con su código, su último uso y lo que se anotó",
+        await p.$$eval("#mt-lista li", (l) => l.map((li) => [li.dataset.tnr, li.querySelector("p.font-semibold").textContent, li.querySelectorAll("p")[1].textContent])),
+        [["1532448", "Torneo de Prueba", "chess-results 1532448 · último uso: " + (await p.$eval("#mt-lista li p.text-xs", (x) => x.textContent.split(" · ")[1].replace("último uso: ", ""))) + " · 2 resultados · 1 incidencia"],
+         ["1500001", "Open de Navidad", (await p.$$eval("#mt-lista li", (l) => l[1].querySelectorAll("p")[1].textContent))]]);
+    igual("el archivado no sale, y «Mostrar los archivados» lo trae marcado con su palabra (el estado no va solo en el color)",
+        [await p.$$eval("#mt-lista li", (l) => l.length), await (async () => { await p.check("#mt-archivados"); return p.$$eval("#mt-lista li", (l) => l.map((li) => [li.dataset.archivado, li.querySelector("p.font-semibold").textContent])); })()],
+        [2, [["no", "Torneo de Prueba"], ["no", "Open de Navidad"], ["si", "Torneo viejo (archivado)"]]]);
+    await p.uncheck("#mt-archivados");
+    await p.click('#mt-lista li[data-tnr="1500001"] [data-accion="abrir"]');
+    await p.waitForFunction(() => document.getElementById("m-tnr").value === "1500001");
+    igual("«Abrir» pone su código arriba, deja la clave para escribirla y dice qué hacer (la clave nunca se guarda)",
+        await p.evaluate(() => [document.getElementById("m-tnr").value, document.activeElement.id, document.getElementById("m-estado").textContent.includes("escribe la clave (SID)"), document.getElementById("m-sid").value]), ["1500001", "m-sid", true, ""]);
+    await p.click('#mt-lista li[data-tnr="1532448"] [data-accion="renombrar"]');
+    await p.waitForSelector("dialog[open] input");
+    await p.fill("dialog[open] input", "  Mi torneo de los sábados  ");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => document.querySelector('#mt-lista li[data-tnr="1532448"] p.font-semibold').textContent.startsWith("Mi torneo"));
+    igual("«Ponerle nombre» lo guarda y la lista lo muestra, sin perder el nombre que trae chess-results",
+        await p.evaluate(() => [window.__ajustes[0], document.querySelector('#mt-lista li[data-tnr="1532448"] p.font-semibold').textContent, document.querySelector('#mt-lista li[data-tnr="1532448"] p.text-xs').textContent.endsWith("en chess-results: Torneo de Prueba")]),
+        [["1532448", "  Mi torneo de los sábados  ", null], "Mi torneo de los sábados", true]);
+    await p.click('#mt-lista li[data-tnr="1500001"] [data-accion="archivar"]');
+    await p.waitForFunction(() => !document.querySelector('#mt-lista li[data-tnr="1500001"]'));
+    igual("«Archivar» lo saca de la lista (no se borra) y «Restaurar» lo devuelve",
+        await (async () => { const a = await p.evaluate(() => window.__ajustes[1]); await p.check("#mt-archivados"); await p.click('#mt-lista li[data-tnr="1500001"] [data-accion="restaurar"]'); await p.uncheck("#mt-archivados"); await p.waitForSelector('#mt-lista li[data-tnr="1500001"]'); return [a, await p.evaluate(() => window.__ajustes[2])]; })(),
+        [["1500001", null, true], ["1500001", null, false]]);
+    await p.fill("#m-tnr", "");
+    await p.evaluate(() => document.querySelectorAll(".avisos-mensaje").forEach((n) => n.remove())); // los avisos de arriba no tapan los de abajo
     await p.evaluate(() => { window.__modo = "clave"; });
     await p.fill("#m-tnr", "1532448");
     await p.fill("#m-sid", SID);
@@ -129,6 +169,7 @@ async function abrir(browser, licencia) {
     igual("le manda a la función la acción, el código y la clave", await p.evaluate(() => { const b = window.__ultimo; return [b.action, b.tnr, b.sid]; }), ["leer", "1532448", SID]);
     igual("las tres mesas, con lo que ya tienen en chess-results", await p.$$eval("#m-mesas tr", (l) => l.map((tr) => [...tr.children].slice(0, 4).map((td) => td.textContent))),
         [["1", "Muñoz Feliz Alejandro", "Gramajo Tovar Marco", "Sin resultado"], ["2", "Harvey Ian", "Acuña Porras Fabio", "Sin resultado"], ["3", "Hopkins John", "Baquero Graterol", "½-½ (tablas)"]]);
+    igual("al leer una ronda, el torneo queda en «Mis torneos» (con el nombre de chess-results)", await p.evaluate(() => window.__vistos), [["1532448", "Torneo de Prueba"]]);
     igual("dice el torneo y la ronda abierta", [await p.textContent("#m-torneo"), await p.textContent("#t-mesas")], ["Torneo de Prueba · ronda 3", "Mesas de la ronda 3"]);
     igual("sin elegir nada, no se puede guardar", await p.evaluate(() => ["m-guardar", "m-anotar", "m-copiar"].map((b) => document.getElementById(b).disabled)), [true, true, true]);
     igual("la ronda de la bitácora ya viene puesta", await p.inputValue("#b-ronda"), "3");

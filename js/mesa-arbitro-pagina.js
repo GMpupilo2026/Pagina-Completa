@@ -139,6 +139,8 @@
             $("b-ronda").value = d.ronda;
             pintarMesas();
             await cargarBitacora(d.tnr);
+            // Queda en «Mis torneos» (con el nombre que trae chess-results).
+            sb.rpc("arbitro_torneo_visto", { p_tnr: d.tnr, p_torneo: d.torneo || "" }).then(cargarMisTorneos, () => {});
         } catch (e) {
             $("m-estado").textContent = "";
             avisar(e.message || String(e), true);
@@ -148,6 +150,67 @@
             $("m-leer").disabled = false;
             $("m-ligados").disabled = false;
         }
+    }
+
+    // ------------------------------------------------------------- mis torneos
+
+    let misTorneos = [];
+
+    async function cargarMisTorneos() {
+        const { data, error } = await sb.rpc("arbitro_torneos_mis");
+        if (error) { $("mt-vacio").hidden = false; $("mt-vacio").textContent = "No se pudo leer tu lista de torneos: " + error.message; return; }
+        misTorneos = data || [];
+        pintarMisTorneos();
+    }
+
+    // Abrir un torneo de la lista: se ve su bitácora y queda listo para corregir (hace falta la clave, que nunca se guarda).
+    async function abrirDeLaLista(t) {
+        $("m-tnr").value = t.tnr;
+        $("m-estado").textContent = "Abierto «" + t.nombre + "». Estás viendo su bitácora; para leer la ronda y corregir en chess-results, escribe la clave (SID) y toca «Leer la ronda».";
+        await cargarBitacora(t.tnr);
+        $("t-torneo").scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+        $("m-sid").focus({ preventScroll: true });
+    }
+
+    async function renombrarTorneo(t) {
+        const n = await Avisos.pedir("Ponle un nombre a este torneo para reconocerlo en tu lista. Déjalo vacío para usar el de chess-results.", { titulo: "Nombre del torneo", etiqueta: "Nombre", valor: t.nombre_propio || "", aceptar: "Guardar el nombre" });
+        if (n === null) return;
+        const { error } = await sb.rpc("arbitro_torneo_ajustar", { p_tnr: t.tnr, p_nombre: n, p_archivado: null });
+        if (error) { avisar("No se pudo guardar el nombre: " + error.message, true); return; }
+        await cargarMisTorneos();
+        avisar("Nombre guardado.");
+    }
+
+    async function archivarTorneo(t, archivar) {
+        const { error } = await sb.rpc("arbitro_torneo_ajustar", { p_tnr: t.tnr, p_nombre: null, p_archivado: archivar });
+        if (error) { avisar("No se pudo " + (archivar ? "archivar" : "restaurar") + ": " + error.message, true); return; }
+        await cargarMisTorneos();
+        avisar(archivar ? "«" + t.nombre + "» quedó archivado. Lo ves con «Mostrar los archivados»." : "«" + t.nombre + "» volvió a tu lista.");
+    }
+
+    function pintarMisTorneos() {
+        const verArchivados = $("mt-archivados").checked;
+        const lista = misTorneos.filter((t) => verArchivados || !t.archivado);
+        const archivados = misTorneos.filter((t) => t.archivado).length;
+        $("mt-vacio").hidden = lista.length > 0;
+        if (!lista.length) $("mt-vacio").textContent = misTorneos.length
+            ? "No hay torneos sin archivar. Tienes " + archivados + " archivado" + (archivados === 1 ? "" : "s") + ": márcalos con «Mostrar los archivados»."
+            : "Todavía no has abierto ningún torneo. Escribe abajo su código y la clave (SID) y toca «Leer la ronda»: quedará aquí.";
+        $("mt-lista").replaceChildren(...lista.map((t) => {
+            const partes = ["chess-results " + t.tnr, "último uso: " + window.HoraCR.fechaHora(new Date(t.ultima))];
+            if (t.resultados) partes.push(t.resultados + (t.resultados === 1 ? " resultado" : " resultados"));
+            if (t.incidencias) partes.push(t.incidencias + (t.incidencias === 1 ? " incidencia" : " incidencias"));
+            if (!t.lineas) partes.push("sin anotaciones todavía");
+            const boton = (accion, texto, fn, clase) => el("button", { type: "button", "data-accion": accion, class: clase || "bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", onclick: fn }, texto);
+            return el("li", { "data-tnr": t.tnr, "data-archivado": t.archivado ? "si" : "no", class: "flex flex-wrap items-center justify-between gap-2 rounded-xl border border-brand-100 dark:border-brand-800 px-3 py-2" },
+                el("div", { class: "min-w-0" },
+                    el("p", { class: "font-semibold break-words", texto: t.nombre + (t.archivado ? " (archivado)" : "") }),
+                    el("p", { class: "text-xs text-brand-500 dark:text-brand-300", texto: partes.join(" · ") + (t.nombre_propio && t.torneo ? " · en chess-results: " + t.torneo : "") })),
+                el("div", { class: "flex flex-wrap gap-2" },
+                    boton("abrir", "Abrir", () => abrirDeLaLista(t), "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"),
+                    boton("renombrar", "Ponerle nombre", () => renombrarTorneo(t)),
+                    boton(t.archivado ? "restaurar" : "archivar", t.archivado ? "Restaurar" : "Archivar", () => archivarTorneo(t, !t.archivado))));
+        }));
     }
 
     // ------------------------------------------------------------- guardar
@@ -337,6 +400,8 @@
             if (!tnr) { avisar("El código de la base de datos son hasta 7 números.", true); return; }
             await cargarBitacora(tnr);
         });
+        $("mt-archivados").addEventListener("change", pintarMisTorneos);
+        cargarMisTorneos();
         $("m-buscar").addEventListener("input", pintarMesas);
         $("m-faltan").addEventListener("change", pintarMesas);
         $("m-guardar").addEventListener("click", guardar);

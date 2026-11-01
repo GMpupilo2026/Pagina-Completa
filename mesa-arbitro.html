@@ -32,6 +32,16 @@
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️ </span>Mesa del árbitro</h1>
             <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados y mándalos a chess-results con la clave del torneo. Cada cosa que haces queda en tu bitácora, con su hora, para entregarla en PDF o Word.</p>
 
+            <section id="zona-mis-torneos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-mis-torneos">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 id="t-mis-torneos" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Mis torneos</h2>
+                    <label class="inline-flex items-center gap-2 text-sm"><input id="mt-archivados" type="checkbox" class="w-4 h-4"> Mostrar los archivados</label>
+                </div>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Los torneos que has abierto en esta herramienta quedan aquí, con su bitácora. Toca «Abrir» para volver a uno y corregir, agregar una nota o bajar la bitácora. Ponle el nombre que quieras y archiva los que ya no uses (no se borra nada).</p>
+                <ul id="mt-lista" class="mt-3 space-y-2"></ul>
+                <p id="mt-vacio" class="text-sm text-brand-500 dark:text-brand-300 mt-3" hidden>Todavía no has abierto ningún torneo. Escribe abajo su código y la clave (SID) y toca «Leer la ronda»: quedará aquí.</p>
+            </section>
+
             <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-torneo">
                 <h2 id="t-torneo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">El torneo</h2>
                 <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Son los dos datos de la pantalla «Enter Results Online» de chess-results: el código de la base de datos y el SID. Los da quien organiza, en Swiss-Manager, «Internet / Customize lists on chess-results.com».</p>
