@@ -8646,14 +8646,19 @@ resultado).
   rival**; la segunda, que pierde la partida (la página solo avisa; el resultado lo decide el
   árbitro). **Las listas son una propuesta: si el árbitro principal quiere otros tipos, se
   cambian en esas dos constantes.**
-- **Planillas a un Drive ordenado.** El árbitro toca «Planilla de blancas» o «de negras» de cada
-  mesa, toma la foto (se achica a ≤1800 px y JPG en el aparato) y sube. La función la guarda
+- **Planillas a un Drive ordenado: UN botón, una camarita.** Cada mesa tiene un solo botón con una
+  cámara (icono, sin texto; su nombre está en `aria-label` y `title`) y el árbitro cuida que en la
+  foto salgan **las dos planillas juntas**. Se achica a ≤1800 px y JPG en el aparato y sube. La
+  base solo admite `lado` blancas o negras (cambiarlo exigiría un `drop` de la restricción, que la
+  herramienta de migraciones pregunta antes de aplicar), así que la foto de la mesa se guarda con
+  `lado = 'blancas'` y la ruta `…/mesa-N-planillas.jpg`; al Drive va como `lado: "ambas"`. Las
+  fotos viejas por lado (solo de prueba) se siguen leyendo y reintentando como eran. La función la guarda
   **primero** en el bucket privado `centroamericano-planillas` y después la manda al Drive; si
   el Drive falla o no está conectado, la foto ya está a salvo y se reintenta desde la
   organización («Mandar al Drive las que faltan»). El nombre del enfrentamiento sale de
   chess-results, no de la pantalla. En el Drive: `Planillas Centroamericano / <torneo> / Ronda N /
-  Mesa 07 - <blancas> vs <negras> - Planilla de blancas (<jugador>).jpg`; una foto nueva de la
-  misma planilla manda la vieja a la papelera. **El Drive lo toca un Apps Script de la dueña del
+  Mesa 07 - <blancas> vs <negras> - Planillas (las dos).jpg`; una foto nueva de la misma mesa
+  manda la vieja a la papelera. **El Drive lo toca un Apps Script de la dueña del
   Drive** (`documentos/centroamericano/puente-drive.gs`, mismo patrón del de los JDN): se instala
   una vez, se pega su dirección y su secreto en «Planillas y Drive» y se prueban antes de
   guardarse (la dirección y el secreto van a la bóveda, `centroamericano_drive_*`, solo
@@ -8722,6 +8727,19 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   organización, «Otro torneo» en la fila de un árbitro (o «¿Ya tiene mesas en otro torneo?» en el
   formulario) crea el nuevo enlace con su mismo nombre y su misma `persona`; un aviso a «todos» o a
   «todo el torneo» le llega **una vez** al árbitro aunque tenga dos enlaces.
+- **El reloj de cada mesa** (control de tiempos). Cada mesa SIN terminar tiene un relojito (SVG, sin
+  texto) junto a la camarita; al tocarlo se abre la ventanita de ESA mesa con **Blancas** (su
+  nombre, el tiempo del reloj y las jugadas que lleva) y **Negras** (lo mismo) y «Guardar». Se
+  cierra sola al guardar. La función (`tiempo`) guarda la lectura (`centroamericano_tiempos`, con
+  `j_blancas` y `j_negras`; `jugada` queda como la mayor de las dos para lo que ya la leía) **y**
+  anota en la bitácora de la mesa una «nota» con artículo «Control de tiempos» y el texto «Control
+  de tiempos de la mesa N · Blancas (X): 45:10, 23 jugadas · Negras (Y): …»: así queda constancia
+  de que se hizo ese control sin cambiar las restricciones de `tipo` del registro. El botón de
+  arriba y el aviso de la organización siguen abriendo la ventana para elegir cualquier mesa sin
+  terminar; **la que pide la organización sale minimizada en un celular** (si no, tapa el aviso
+  que hay que leer primero) y abierta en una tablet. La migración
+  `centroamericano_tiempos_jugadas_por_color` solo agrega las dos columnas (nulas en las lecturas
+  viejas, que traían una sola jugada) y deja a «restaurar» al día.
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

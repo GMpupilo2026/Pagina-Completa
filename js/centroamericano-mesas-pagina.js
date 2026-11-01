@@ -797,13 +797,18 @@
         return $("ct-ultimas").checked ? C.ultimasLecturas(lista) : lista.slice().sort((a, b) => a.tnr.localeCompare(b.tnr) || a.mesa - b.mesa || String(b.ocurrio).localeCompare(String(a.ocurrio)));
     }
 
+    // «45:10 · 23 jugadas»; en las lecturas viejas (una sola «jugada») va en las blancas.
+    function textoLado(f, color) {
+        const seg = color === "blancas" ? f.t_blancas : f.t_negras, j = color === "blancas" ? f.j_blancas : f.j_negras;
+        return C.formatoTiempo(seg) + (j != null ? " · " + j + (j === 1 ? " jugada" : " jugadas") : color === "blancas" && f.j_negras == null ? " · jugada " + f.jugada : "");
+    }
+
     function pintarTiempos() {
         const lista = lecturasVisibles();
         $("tiempos").replaceChildren(...lista.map((f) => el("tr", { "data-mesa": String(f.mesa) },
             el("td", { texto: nombreTorneo(f.tnr) }), el("td", { texto: String(f.ronda) }), el("td", { texto: String(f.mesa) }), el("td", { texto: f.blancas + " vs " + f.negras }),
-            el("td", { texto: String(f.jugada) }), el("td", { texto: f.turno ? (f.turno === "negras" ? "Negras" : "Blancas") : "—" }),
-            el("td", { class: "cam-tiempo", texto: C.formatoTiempo(f.t_blancas) }), el("td", { class: "cam-tiempo", texto: C.formatoTiempo(f.t_negras) }),
-            el("td", { texto: f.arbitro }), el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }), el("td", { texto: f.nota }))));
+            el("td", { class: "cam-tiempo", texto: textoLado(f, "blancas") }), el("td", { class: "cam-tiempo", texto: textoLado(f, "negras") }),
+            el("td", { texto: f.arbitro }), el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }))));
         $("tiempos-vacio").hidden = lista.length > 0;
         $("ct-pdf").disabled = lista.length === 0;
     }
@@ -828,8 +833,8 @@
             titulo: "Control de tiempos del Centroamericano 2026",
             subtitulo: window.HoraCR.fechaHora(new Date()),
             pie: "Centroamericano 2026 · ajedrez-integral.com",
-            bloques: [{ tipo: "tabla", encabezados: ["Torneo", "Mesa", "Partida", "Jugada", "Le toca", "Blancas", "Negras", "Árbitro", "Hora"], anchos: [1.6, 0.6, 3, 0.7, 0.9, 1, 1, 1.5, 1.5],
-                filas: lista.map((f) => [nombreTorneo(f.tnr), String(f.mesa), f.blancas + " vs " + f.negras, String(f.jugada), f.turno || "—", C.formatoTiempo(f.t_blancas), C.formatoTiempo(f.t_negras), f.arbitro, window.HoraCR.fechaHora(f.ocurrio)]) }],
+            bloques: [{ tipo: "tabla", encabezados: ["Torneo", "Mesa", "Partida", "Blancas (tiempo · jugadas)", "Negras (tiempo · jugadas)", "Árbitro", "Hora"], anchos: [1.6, 0.6, 3, 1.7, 1.7, 1.5, 1.5],
+                filas: lista.map((f) => [nombreTorneo(f.tnr), String(f.mesa), f.blancas + " vs " + f.negras, textoLado(f, "blancas"), textoLado(f, "negras"), f.arbitro, window.HoraCR.fechaHora(f.ocurrio)]) }],
             fotos: [],
         };
         await descargarPdf(doc, "control-de-tiempos-centroamericano-2026.pdf");
@@ -903,7 +908,7 @@
         $("planillas").replaceChildren(...lista.map((p) => el("tr", { "data-drive": p.drive_ok ? "si" : "no" },
             el("td", { texto: nombreTorneo(p.tnr) }), el("td", { texto: String(p.ronda) }), el("td", { texto: String(p.mesa) }),
             el("td", { texto: (p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador) }),
-            el("td", { texto: p.lado === "blancas" ? "Blancas" : "Negras" }), el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
+            el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
             el("td", { texto: p.drive_ok ? "✓ En el Drive" : p.drive_error ? "✗ " + p.drive_error : "Pendiente" }),
             el("td", {}, el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver")))));
         $("planillas-vacio").hidden = lista.length > 0;
@@ -912,8 +917,9 @@
     async function verFoto(p) {
         const { data, error } = await sb.storage.from("centroamericano-planillas").createSignedUrl(p.ruta, 120);
         if (error || !data) { avisar("No se pudo abrir la foto: " + (error ? error.message : ""), true); return; }
-        ventanita("Mesa " + p.mesa + " · " + (p.lado === "blancas" ? "blancas" : "negras") + " · " + p.jugador,
-            el("img", { src: data.signedUrl, alt: "Foto de la planilla de " + p.jugador + ", mesa " + p.mesa, class: "cam-foto-planilla" }));
+        const enfrentamiento = p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador;
+        ventanita("Mesa " + p.mesa + " · " + enfrentamiento,
+            el("img", { src: data.signedUrl, alt: "Foto de las dos planillas de la mesa " + p.mesa + ": " + enfrentamiento, class: "cam-foto-planilla" }));
     }
 
     // ------------------------------------------------------------- 6. respaldo

@@ -169,10 +169,15 @@
 .cam-chip[data-clave="no"] { background: var(--cac-rojo); }
 .cam-chip[data-clave="neutro"] { background: var(--cac-morado); }
 
-.cam-asignacion { display: grid; grid-template-columns: 1fr; gap: 0.8rem; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.9rem; background: #fff; color: var(--cac-morado-hondo); }
-@media (min-width: 640px) { .cam-asignacion { grid-template-columns: 1fr 150px; } }
-.dark .cam-asignacion { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
-.cam-asignacion[data-estado="apagado"], .cam-asignacion[data-estado="vencido"] { opacity: 0.7; border-style: dashed; }
+/* Un enlace es una FILA de la tabla «Los enlaces creados»: sus celdas tienen que quedar bajo los
+   encabezados Árbitro, Mesas, Estado, Conexión y Acciones. (Antes era una tarjeta con display:grid
+   y, al ponerse en un <tr>, se salía de la tabla y los encabezados no coincidían.) */
+.cam-asignacion { color: var(--cac-morado-hondo); }
+.dark .cam-asignacion { color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-asignacion td:nth-child(1) { min-width: 11rem; }
+.cam-asignacion td:nth-child(2) { white-space: nowrap; }
+.cam-asignacion td:nth-child(5) { min-width: 15rem; }
+.cam-asignacion[data-estado="apagado"] td:first-child, .cam-asignacion[data-estado="vencido"] td:first-child { border-left: 4px dashed var(--cac-morado); }
 .cam-qr { width: 150px; height: 150px; background: #fff; border: 2px solid #dfe0f7; border-radius: 0.6rem; padding: 2px; justify-self: center; }
 
 .cam-tabla-envoltura { overflow-x: auto; }
@@ -377,7 +382,28 @@
 /* ===== La página del árbitro: horarios, planillas, lista previa y revisión final ===== */
 .cam-espera { margin-top: 0.5rem; font-weight: 700; }
 .cam-planillas { padding: 0.6rem 0.9rem; border-top: 1px dashed #c9cbee; }
-.cam-planillas-estado { font-size: 0.85rem; }
+/* Los dos iconos de cada mesa: la cámara (foto de las dos planillas juntas) y el reloj (control de tiempos). */
+.cam-iconos { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.cam-btn-icono { position: relative; display: inline-grid; place-items: center; width: 3.6rem; height: 3.6rem; border-radius: 1rem; border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado); cursor: pointer; }
+.cam-btn-icono:hover:not(:disabled) { background: var(--cac-morado); color: #fff; }
+.cam-btn-icono:disabled { opacity: 0.55; cursor: default; }
+.cam-btn-icono[data-ocupado="si"] { animation: cam-latido 1.2s ease-in-out infinite; }
+.cam-btn-icono[data-hecho="si"] { border-color: var(--cac-verde); }
+.dark .cam-btn-icono { background: transparent; color: #dfe0f7; border-color: #b8bbf2; }
+.dark .cam-btn-icono:hover:not(:disabled) { background: #b8bbf2; color: var(--cac-morado-hondo); }
+.dark .cam-btn-icono[data-hecho="si"] { border-color: #8fd9a8; }
+.cam-icono { width: 2rem; height: 2rem; }
+.cam-icono-boton { width: 1.3rem; height: 1.3rem; vertical-align: -0.25rem; }
+.cam-icono-marca { position: absolute; top: -0.45rem; right: -0.45rem; width: 1.4rem; height: 1.4rem; display: grid; place-items: center; border-radius: 999px; background: var(--cac-verde); color: #fff; font-size: 0.85rem; font-weight: 800; line-height: 1; }
+.cam-iconos-estado { font-size: 0.85rem; font-weight: 700; }
+.cam-leyenda { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 1rem; font-size: 0.85rem; margin: 0.4rem 0 0.8rem; }
+.cam-leyenda svg { width: 1.2rem; height: 1.2rem; vertical-align: -0.2rem; }
+.cam-flotante-titulo { display: inline-flex; align-items: center; gap: 0.45rem; }
+.cam-flotante-titulo .cam-icono { width: 1.4rem; height: 1.4rem; }
+.cam-tiempo-lado { border: 2px solid #c9cbee; border-radius: 0.8rem; padding: 0.2rem 0.6rem 0.5rem; margin-top: 0.4rem; }
+.cam-tiempo-lado legend { padding: 0 0.3rem; font-weight: 700; }
+.cam-tiempo-nombre { font-size: 0.85rem; font-weight: 600; }
+.dark .cam-tiempo-lado { border-color: rgb(255 255 255 / 0.25); }
 .cam-lista-previa, .cam-revision { margin-bottom: 1rem; padding: 1rem 1.1rem; border: 3px solid var(--cac-morado); border-radius: 1rem; background: #fff; color: var(--cac-morado-hondo); }
 .cam-lista-previa { border-color: var(--cac-naranja); }
 .cam-revision[data-estado="finalizada"] { border-color: var(--cac-verde); }

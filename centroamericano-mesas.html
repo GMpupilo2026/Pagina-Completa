@@ -198,7 +198,7 @@
                     <button type="button" id="ct-pedir" class="cam-btn cam-btn-chico"><span aria-hidden="true">⏱</span> Pedir un control de tiempos</button>
                     <button type="button" id="ct-pdf" class="cam-btn cam-btn-claro cam-btn-chico" disabled>Bajar en PDF</button>
                 </div>
-                <p class="cam-herramientas-nota mt-2">A cada árbitro se le abre una ventana (que puede minimizar si necesita meter un resultado) para elegir una partida SIN terminar y anotar en qué jugada va y lo que marca cada reloj. El árbitro también puede abrirla por su cuenta con «Control de tiempos». Cada lectura queda anotada con su hora y no se borra: si un reloj falla, la última lectura sirve para corregirlo.</p>
+                <p class="cam-herramientas-nota mt-2">A cada árbitro se le abre una ventana (que puede minimizar si necesita meter un resultado) para elegir una partida SIN terminar y anotar, de las blancas y de las negras, lo que marca su reloj y las jugadas que lleva. El árbitro también puede abrirla por su cuenta, con el reloj de cada mesa. Cada lectura queda anotada con su hora (y como una línea en «Lo que anotan»); no se borra: si un reloj falla, la última lectura sirve para corregirlo.</p>
                 <div class="cam-herramientas mt-2">
                     <label class="cam-herramientas-campo"><span>Torneo</span><select id="ct-torneo" class="cam-select"></select></label>
                     <label class="cam-herramientas-campo"><span>Solo la última de cada mesa</span><input type="checkbox" id="ct-ultimas" class="w-5 h-5" checked></label>
@@ -206,7 +206,7 @@
                 <div class="cam-tabla-envoltura mt-2">
                     <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Lecturas del control de tiempos, la más reciente primero</caption>
-                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Jugada</th><th scope="col">Le toca a</th><th scope="col">Blancas</th><th scope="col">Negras</th><th scope="col">Árbitro</th><th scope="col">Hora (Costa Rica)</th><th scope="col">Nota</th></tr></thead>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Blancas (tiempo · jugadas)</th><th scope="col">Negras (tiempo · jugadas)</th><th scope="col">Árbitro</th><th scope="col">Hora (Costa Rica)</th></tr></thead>
                         <tbody id="tiempos"></tbody>
                     </table>
                 </div>
@@ -235,7 +235,7 @@
                 <div class="cam-tabla-envoltura mt-3">
                     <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Fotos de las planillas subidas por los árbitros</caption>
-                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Planilla de</th><th scope="col">Árbitro</th><th scope="col">Subida</th><th scope="col">Drive</th><th scope="col">Foto</th></tr></thead>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Árbitro</th><th scope="col">Subida</th><th scope="col">Drive</th><th scope="col">Foto</th></tr></thead>
                         <tbody id="planillas"></tbody>
                     </table>
                 </div>
