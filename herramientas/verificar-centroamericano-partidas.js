@@ -199,6 +199,21 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
     await p.waitForFunction(() => { const f = document.getElementById("ficha-partidas"); return f && f.tagName === "A"; }, null, { timeout: 8000 }).catch(() => {});
     const ficha = await p.evaluate(() => { const f = document.getElementById("ficha-partidas"); return { tag: f.tagName, href: f.getAttribute("href"), texto: f.innerText.replace(/\s+/g, " ").trim(), dis: f.getAttribute("aria-disabled") }; });
     ok("con la transmisión en la sala, la ficha se enciende y abre la ventana", ficha.tag === "A" && ficha.href === "#partidas" && /Ver las partidas/.test(ficha.texto) && !ficha.dis, JSON.stringify(ficha));
+    // La ficha se enciende después de cargar (cuando llega la sala): su pie
+    // cambia con el idioma y vuelve al español (el 2/11/2026 se quedaba en inglés).
+    const pieEn = async (idioma) => {
+      await p.click("#cac-idioma");
+      await p.click('#cac-idiomas [data-idioma="' + idioma + '"]');
+      return p.evaluate(() => document.querySelector("#ficha-partidas .cac-accion").textContent);
+    };
+    // Lo que falló: la página carga ya en francés (el idioma se recuerda) y la
+    // ficha se enciende después, en francés; al pasar al español se quedaba así.
+    await pieEn("fr");
+    await p.reload({ waitUntil: "load" });
+    await p.waitForFunction(() => { const f = document.getElementById("ficha-partidas"); return f && f.tagName === "A"; }, null, { timeout: 8000 }).catch(() => {});
+    const pies = [await p.evaluate(() => document.querySelector("#ficha-partidas .cac-accion").textContent), await pieEn("es"), await pieEn("en"), await pieEn("es")];
+    ok("la ficha que se enciende con la página en francés cambia con el idioma y vuelve al español",
+       JSON.stringify(pies) === JSON.stringify(["Voir les parties →", "Ver las partidas →", "Watch the games →", "Ver las partidas →"]), JSON.stringify(pies));
     if (deTs) {
       const deJs = await p.evaluate((t) => [t.map(window.CentroamericanoPartidas.codigoCategoria), t.map(window.CentroamericanoPartidas.modalidadDe)], TEXTOS);
       ok("la categoría y la modalidad del nombre de un torneo salen igual que en la función", JSON.stringify(deJs) === JSON.stringify(deTs), JSON.stringify([deJs, deTs]));
