@@ -163,6 +163,60 @@ igual("«guardar» exige la lista previa completa de ESA ronda (los dos pasos) y
 igual("la lista es paso a paso: el siguiente no se aprueba sin el anterior, y el paso tiene que ser uno de la lista", [/PASOS\.slice\(0, i\)\.some\(\(x\) => !ok\.includes\(x\)\)\) return json\([^)]*409/.test(cuerpoDe("lista")), /PASOS\.indexOf\(paso\)/.test(cuerpoDe("lista")) && /i < 0\) return json\([^)]*400/.test(cuerpoDe("lista"))], [true, true]);
 igual("«planilla»: la mesa tiene que ser de su rango (403), solo JPG con tope de tamaño, y el enfrentamiento sale de chess-results", [/enRango\(mesa\)/.test(cuerpoDe("planilla")) && /403/.test(cuerpoDe("planilla")), /image\\\/jpeg;base64/.test(cuerpoDe("planilla")) && /MAX_IMAGEN/.test(cuerpoDe("planilla")), cuerpoDe("planilla").indexOf("leerCompartida") > 0 && /const jugador = m\.blancas, rival = m\.negras/.test(cuerpoDe("planilla"))], [true, true, true]);
 igual("«planilla» es UNA foto por mesa con las dos planillas juntas: no pide el lado, guarda con lado «blancas», la ruta termina en «-planillas.jpg» y al Drive va como «ambas»", [/cuerpo\.lado/.test(cuerpoDe("planilla")), /lado: "blancas"/.test(cuerpoDe("planilla")), /mesa-" \+ mesa \+ "-planillas\.jpg"/.test(cuerpoDe("planilla")), /lado: "ambas"/.test(cuerpoDe("planilla"))], [false, true, true, true]);
+// El script del Drive, con un Drive de mentira: carpetas y archivos en memoria.
+{
+  const vm = require("vm");
+  const iter = (l) => { let i = 0; return { hasNext: () => i < l.length, next: () => l[i++] }; };
+  const fabricar = () => {
+    const quitar = (l, x) => { const i = l.indexOf(x); if (i >= 0) l.splice(i, 1); };
+    const carpeta = (nombre, padre) => {
+      const c = { nombre, padre, hijas: [], archivos: [], basura: false };
+      c.getName = () => c.nombre;
+      c.createFolder = (n) => { const h = carpeta(n, c); c.hijas.push(h); return h; };
+      c.getFolders = () => iter(c.hijas.filter((h) => !h.basura));
+      c.getFiles = () => iter(c.archivos.filter((f) => !f.basura));
+      c.createFile = (b) => { const f = archivo(b.name, c); c.archivos.push(f); return f; };
+      c.moveTo = (d) => { quitar(c.padre.hijas, c); c.padre = d; d.hijas.push(c); return c; };
+      c.setTrashed = (v) => { c.basura = v; };
+      c.getUrl = () => "https://drive/" + nombre;
+      return c;
+    };
+    const archivo = (nombre, padre) => {
+      const f = { nombre, padre, basura: false };
+      f.getName = () => f.nombre; f.setTrashed = (v) => { f.basura = v; }; f.getUrl = () => "https://drive/f/" + nombre;
+      f.moveTo = (d) => { quitar(f.padre.archivos, f); f.padre = d; d.archivos.push(f); return f; };
+      return f;
+    };
+    const raiz = carpeta("Mi unidad", null);
+    const ctx = { DriveApp: { getRootFolder: () => raiz }, Utilities: { base64Decode: (b) => Buffer.from(b, "base64"), newBlob: (bytes, tipo, nombre) => ({ name: nombre }) }, Logger: { log() {} }, PropertiesService: {}, ContentService: {} };
+    vm.runInNewContext(leer("documentos", "centroamericano", "puente-drive.gs"), ctx);
+    // Todo lo que hay, como líneas «carpeta / carpeta / archivo» (lo que está en la papelera no cuenta).
+    const lineas = (c, ruta = []) => [...c.hijas.filter((h) => !h.basura).flatMap((h) => lineas(h, ruta.concat(h.nombre))), ...c.archivos.filter((f) => !f.basura).map((f) => ruta.concat(f.nombre).join(" / "))];
+    return { raiz, ctx, lineas: () => lineas(raiz).sort(), carpeta, archivo };
+  };
+  const IMG = Buffer.alloc(3000, 1).toString("base64");
+  const foto = (torneo, ronda, mesa) => ({ accion: "planilla", torneo, ronda, mesa, lado: "ambas", blancas: "Ana", negras: "Beto", imagen: IMG });
+  const d1 = fabricar();
+  d1.ctx.guardarPlanilla(foto("Sub-18 Femenino", 1, 3));
+  d1.ctx.guardarPlanilla(foto("PRUEBA grupo A", 2, 7));
+  d1.ctx.guardarPlanilla(foto("Sub-18 Femenino", 1, 3));   // la misma mesa otra vez: la anterior a la papelera
+  igual("el Drive: Planillas Centroamericano / Centroamericano 2026 / <torneo y categoría> / Ronda N / foto; los torneos de ensayo van en «Ensayo (pruebas)»; la misma mesa no queda dos veces",
+    d1.lineas(), ["Planillas Centroamericano / Centroamericano 2026 / Sub-18 Femenino / Ronda 1 / Mesa 03 - Ana vs Beto - Planillas (las dos).jpg", "Planillas Centroamericano / Ensayo (pruebas) / PRUEBA grupo A / Ronda 2 / Mesa 07 - Ana vs Beto - Planillas (las dos).jpg"]);
+  // `reorganizar`: lo que ya estaba con el orden de antes entra en su lugar, sin perder ninguna foto y juntando lo repetido.
+  const d2 = fabricar();
+  const base = d2.raiz.createFolder("Planillas Centroamericano");
+  const viejo = base.createFolder("Sub-18 Femenino").createFolder("Ronda 1"); viejo.createFile({ name: "Mesa 01 - viejo.jpg" });
+  base.createFolder("Sub-18 Femenino").createFolder("Ronda 2").createFile({ name: "Mesa 02 - viejo.jpg" });
+  base.createFolder("PRUEBA grupo B").createFolder("Ronda 1").createFile({ name: "Mesa 05 - prueba.jpg" });
+  base.createFolder("_Copias de seguridad").createFile({ name: "copia.json" });
+  d2.ctx.guardarPlanilla(foto("Sub-18 Femenino", 1, 9));   // ya con el orden nuevo: la carpeta repetida se junta
+  d2.ctx.reorganizar();
+  igual("«reorganizar» mete las carpetas viejas en «Centroamericano 2026» o «Ensayo (pruebas)», junta las repetidas, deja las copias de seguridad donde están y no pierde ninguna foto",
+    d2.lineas(), ["Planillas Centroamericano / Centroamericano 2026 / Sub-18 Femenino / Ronda 1 / Mesa 01 - viejo.jpg", "Planillas Centroamericano / Centroamericano 2026 / Sub-18 Femenino / Ronda 1 / Mesa 09 - Ana vs Beto - Planillas (las dos).jpg", "Planillas Centroamericano / Centroamericano 2026 / Sub-18 Femenino / Ronda 2 / Mesa 02 - viejo.jpg", "Planillas Centroamericano / Ensayo (pruebas) / PRUEBA grupo B / Ronda 1 / Mesa 05 - prueba.jpg", "Planillas Centroamericano / _Copias de seguridad / copia.json"]);
+  const dosVeces = d2.lineas().length;
+  d2.ctx.reorganizar();
+  igual("y correrla otra vez no cambia nada", d2.lineas().length, dosVeces);
+}
 igual("el reintento al Drive manda las fotos nuevas como «ambas» y las viejas como eran, y el script del Drive las entiende", [/-planillas\\\.jpg\$\/\.test\(f\.ruta\)/.test(leer("supabase", "functions", "centroamericano-clave", "index.ts")), /lado: ambas \? "ambas" : f\.lado/.test(leer("supabase", "functions", "centroamericano-clave", "index.ts")), /d\.lado !== "ambas" && d\.lado !== "blancas" && d\.lado !== "negras"/.test(leer("documentos", "centroamericano", "puente-drive.gs")), /Planillas \(las dos\)/.test(leer("documentos", "centroamericano", "puente-drive.gs"))], [true, true, true, true]);
 igual("«planilla» guarda PRIMERO la foto a salvo en el bucket privado y después intenta el Drive (si el Drive falla, la foto no se pierde)", [cuerpoDe("planilla").indexOf("storage.from(BUCKET).upload") > 0 && cuerpoDe("planilla").indexOf("storage.from(BUCKET).upload") < cuerpoDe("planilla").indexOf("llamarPuente"), /drive_ok: false/.test(cuerpoDe("planilla")), /drive = r\.ok \? "enviada" : "pendiente"/.test(cuerpoDe("planilla"))], [true, true, true]);
 igual("«finalizar» exige las tres confirmaciones, la ronda abierta y TODAS las mesas con resultado (409), y avisa a la cuenta principal", [/revision\.resultados \|\| !revision\.planillas \|\| !revision\.firmadas\) return json\([^)]*400/.test(cuerpoDe("finalizar")), /av\.pendientes\.length\) return json\(.*409/.test(cuerpoDe("finalizar")), /tipo: "finalizo"/.test(cuerpoDe("finalizar"))], [true, true, true]);
