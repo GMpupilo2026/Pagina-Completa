@@ -614,7 +614,7 @@
         if (tiemposMin) { caja.replaceChildren(cabeza); return; }
         if (!mesas.length) { caja.replaceChildren(cabeza, el("p", { class: "cam-flotante-cuerpo", texto: "Todas tus mesas ya tienen resultado: no hay partidas sin terminar." })); return; }
         const m = mesas.find((x) => x.mesa === lecturaMesa);
-        if (modoApagado) { caja.replaceChildren(cabeza, formApagado(m, mesas)); pintarResultadoApagado(lecturaMesa); return; }
+        if (modoApagado) { caja.replaceChildren(cabeza, formApagado(m, mesas)); return; }
         const ult = lecturas(lecturaMesa).slice(0, 1);
         const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
             el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
@@ -680,148 +680,37 @@
 
     // ------------------------------------------------------------- el reloj que se apagó
 
-    // La hora en que empezó la ronda: la que marcó la organización o, si no la marcó, la del horario.
-    function inicioDeLaRonda() {
-        const marcada = estado.inicio_ronda && estado.inicio_ronda.inicio && Number(estado.inicio_ronda.ronda) === Number(estado.ronda);
-        if (marcada) return { ms: new Date(estado.inicio_ronda.inicio).getTime(), deDonde: "marcada por la organización" };
-        const H = window.CentroamericanoHorario;
-        const ev = H && H.EVENTOS.find((e) => e.ronda === estado.ronda);
-        return ev ? { ms: new Date(ev.inicio + ":00-06:00").getTime(), deDonde: "según el horario (la organización no la marcó)" } : null;
-    }
-
-    function leerApagado() {
-        if ($("ra-jb")) apagado = Object.assign(apagado, { jb: $("ra-jb").value, jn: $("ra-jn").value, reparto: ($("form-apagado").querySelector('input[name="ra-reparto"]:checked') || {}).value || "ritmo" });
-    }
-
-    function calcularApagado(mesa) {
-        const jb = apagado.jb === "" || apagado.jb == null ? NaN : Number(apagado.jb), jn = apagado.jn === "" || apagado.jn == null ? NaN : Number(apagado.jn);
-        const ahora = horaMarcada ? new Date(horaMarcada).getTime() : Date.now();
-        const ini = inicioDeLaRonda();
-        return { ahora, r: C.relojApagado({ control: C.ultimoControl(lecturas(mesa)), inicio: ini ? ini.ms : null, ahora, jBlancas: jb, jNegras: jn, reparto: apagado.reparto || "ritmo", bonos: C.bonosIlegales(estado.anotaciones, mesa, anuladas) }) };
-    }
-
+    // La calculadora es de js/centroamericano-reloj-apagado.js (la misma de la organización); acá solo se le da la
+    // partida y se guarda lo que el árbitro pone en el reloj nuevo como un control más (acción `tiempo`).
     function formApagado(m, mesas) {
         const mesa = lecturaMesa;
-        const ctl = C.ultimoControl(lecturas(mesa));
-        const ini = inicioDeLaRonda();
-        const T = C.formatoTiempo;
-        const dato = (titulo, texto) => el("li", {}, el("strong", { texto: titulo + ": " }), el("span", { texto }));
-        const datos = el("ul", { class: "cam-apagado-datos", "aria-label": "Lo que ya se sabe de esta partida" },
-            dato("Ritmo", "90 min + 30 s por jugada"),
-            dato("Inicio de la ronda", ini ? textoHoraExacta(new Date(ini.ms).toISOString()) + " (" + ini.deDonde + ")" : "no se sabe"),
-            dato("Ilegales y sanciones de tiempo", (() => { const b = C.bonosIlegales(estado.anotaciones, mesa, anuladas);
-                return b.length ? b.map((x) => (x.motivo === "ilegal" ? "Ilegal" : "Irregularidad") + " de las " + x.de + " a las " + textoHoraExacta(new Date(x.ms).toISOString())
-                    + " (" + (x.segundos > 0 ? "+" : "−") + C.formatoTiempo(Math.abs(x.segundos)) + " a las " + x.color + (ctl && x.ms <= new Date(ctl.ocurrio).getTime() ? ", ya en el control" : ", se cuenta") + ")").join(" · ") : "ninguna"; })()),
-            dato("Último control", ctl ? textoHoraExacta(ctl.ocurrio) + " · Blancas " + T(ctl.t_blancas) + " (" + ctl.j_blancas + " jug.) · Negras " + T(ctl.t_negras) + " (" + ctl.j_negras + " jug.)" : "ninguno en esta mesa"));
-        const jug = (color, id, nombre) => el("div", {}, el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
-            el("input", { id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: apagado[id === "ra-jb" ? "jb" : "jn"] || "", oninput: () => { leerApagado(); pintarResultadoApagado(mesa); } }));
-        const opcion = (valor, texto) => el("label", { class: "cam-apagado-opcion" }, el("input", { type: "radio", name: "ra-reparto", value: valor, checked: (apagado.reparto || "ritmo") === valor, onchange: () => { leerApagado(); pintarResultadoApagado(mesa); } }), el("span", { texto }));
-        const horaDeCalculo = el("div", { class: "cam-hora-control" },
-            el("span", { class: "text-sm font-bold", id: "ra-hora-etiqueta", texto: "Hora del cálculo" }),
-            el("output", { id: "ra-hora", class: "cam-hora-valor", "aria-labelledby": "ra-hora-etiqueta", "data-marcada": horaMarcada ? "si" : "no", texto: horaMarcada ? textoHoraExacta(horaMarcada) : "Ahora (márcala al poner el reloj nuevo)" }),
-            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "ra-marcar-hora", onclick: () => { leerApagado(); horaMarcada = new Date().toISOString(); pintarTiempos(); } }, icono("reloj"), el("span", { texto: horaMarcada ? "Marcar de nuevo" : "Marcar la hora ahora" })));
-        return el("form", { class: "cam-flotante-cuerpo", id: "form-apagado", novalidate: true, onsubmit: (ev) => guardarApagado(ev, mesa) },
-            mesas.length > 1 ? el("div", {}, el("label", { for: "ra-mesa", class: "sr-only", texto: "Mesa" }),
-                el("select", { id: "ra-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); apagado = {}; pintarTiempos(); } },
-                    ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null,
-            el("p", { class: "text-sm", texto: "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decides tú (art. 6.10)." }),
-            datos,
-            el("fieldset", { class: "cam-tiempo-lado" }, el("legend", { texto: "Jugadas que lleva cada uno ahora" }),
-                el("div", { class: "grid grid-cols-2 gap-2" }, jug("blancas", "ra-jb", m ? m.blancas : ""), jug("negras", "ra-jn", m ? m.negras : ""))),
-            el("fieldset", { class: "cam-apagado-reparto" }, el("legend", { class: "text-sm font-bold", texto: "Lo que pasó desde el control, ¿cómo se reparte?" }),
-                opcion("ritmo", "Como venía gastando cada uno"), opcion("iguales", "Mitad y mitad")),
-            horaDeCalculo,
-            el("div", { id: "ra-resultado", "aria-live": "polite" }),
-            el("div", { class: "cam-acciones" },
-                el("button", { type: "submit", id: "ra-guardar", class: "cam-btn" }, "Anotar en la bitácora"),
-                el("button", { type: "button", class: "cam-btn cam-btn-claro", onclick: () => { modoApagado = false; pintarTiempos(); } }, "Volver")));
-    }
-
-    // Un reloj de ajedrez dibujado (SVG propio): las dos pantallas con los tiempos propuestos y la palanca levantada
-    // del lado de quien tiene el turno, como se ve en la mesa. Es un dibujo: el dato va escrito en las casillas de
-    // abajo y en «le toca», así que el lector de pantalla lo salta (aria-hidden).
-    function relojDibujo(tB, tN, turno) {
-        const svg = (tag, at, ...hijos) => { const n = document.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(at)) n.setAttribute(k, v); n.append(...hijos); return n; };
-        const pantalla = (x, texto, id) => [
-            svg("rect", { x, y: 62, width: 124, height: 52, rx: 6, fill: "#0e1222" }),
-            svg("rect", { x: x + 5, y: 67, width: 114, height: 42, rx: 3, fill: "#c9d8b6" }),
-            svg("text", { x: x + 62, y: 98, "text-anchor": "middle", "font-family": "ui-monospace, 'Courier New', monospace", "font-weight": "700", "font-size": "27", fill: "#18240f", id }, texto)];
-        const palanca = (x, arriba) => svg("rect", { x, y: arriba ? 18 : 31, width: 70, height: arriba ? 26 : 13, rx: 5, fill: arriba ? "#e8a33d" : "#7d82a8" });
-        const etiqueta = (x, texto) => svg("text", { x, y: 133, "text-anchor": "middle", "font-family": "inherit", "font-weight": "700", "font-size": "12", fill: "#ffffff", "letter-spacing": "1.5" }, texto);
-        return svg("svg", { viewBox: "0 0 320 150", class: "cam-reloj-dibujo", "aria-hidden": "true", focusable: "false" },
-            palanca(57, turno === "blancas"), palanca(193, turno === "negras"),
-            svg("rect", { x: 8, y: 42, width: 304, height: 104, rx: 16, fill: "#2a2f55" }),
-            svg("rect", { x: 8, y: 42, width: 304, height: 10, rx: 5, fill: "#3b4173" }),
-            svg("circle", { cx: 160, cy: 88, r: 4, fill: "#8d92c4" }),
-            ...pantalla(24, C.formatoTiempo(Math.max(0, tB)), "ra-dibujo-b"), ...pantalla(172, C.formatoTiempo(Math.max(0, tN)), "ra-dibujo-n"),
-            etiqueta(86, "BLANCAS"), etiqueta(234, "NEGRAS"),
-            svg("path", { d: turno === "blancas" ? "M146 132l-8-5v10z" : "M174 132l8-5v10z", fill: "#e8a33d" }));
-    }
-
-    // Solo el resultado se vuelve a dibujar al escribir: así el cursor no salta de la casilla.
-    function pintarResultadoApagado(mesa) {
-        const caja = $("ra-resultado");
-        if (!caja) return;
-        const T = C.formatoTiempo;
-        const { r } = calcularApagado(mesa);
-        if (apagado.jb === undefined || apagado.jb === "" || apagado.jn === undefined || apagado.jn === "") { caja.replaceChildren(el("p", { class: "text-sm cam-apagado-falta", texto: "Escribe las jugadas de cada uno para ver el cálculo." })); return; }
-        if (r.error) { caja.replaceChildren(el("p", { class: "cam-aviso-suave", texto: r.error })); return; }
-        const pct = (x) => Math.round(x * 100) + " %";
-        const reloj = (color, id, valor) => el("div", { class: "cam-apagado-reloj", "data-color": color },
-            el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), r.turno === color ? el("span", { class: "cam-apagado-turno", texto: " · le toca" }) : null),
-            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { const v = C.ponerDosPuntos(e.target.value); if (e.target.value !== v) e.target.value = v; apagado[id] = e.target.value; apagado.para = r.total; const t = C.leerTiempo(e.target.value), d = $(id === "ra-tb" ? "ra-dibujo-b" : "ra-dibujo-n"); if (d && t !== null) d.textContent = C.formatoTiempo(t); } }));
-        const lineas = [
-            "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento).",
-            r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
-                : r.reparto === "ritmo" ? "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
-                : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno.",
-        ];
-        for (const a of r.ajustes || []) lineas.push("Incluye " + (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + " por " + (a.motivo === "ilegal" ? "la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + ")" : a.color === a.de ? "la sanción de su irregularidad (art. " + C.ARTICULO_SANCION + ")" : "la sanción a su rival por una irregularidad (art. " + C.ARTICULO_SANCION + ")") + ", anotada a las " + textoHoraExacta(new Date(a.ms).toISOString()));
-        if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) lineas.push("Lo que se dio o quitó antes del control ya estaba en esos relojes: no se cuenta de nuevo, pero sí al ver cómo venía gastando cada uno y en la comprobación con el inicio.");
-        const items = lineas.map((t) => el("li", { texto: t }));
-        if (r.comprobacion) {
-            const d = r.comprobacion.diferencia, cuadra = Math.abs(d) <= 120;
-            items.push(el("li", { class: cuadra ? "" : "cam-apagado-ojo", texto: cuadra
-                ? "✓ El control cuadra con la hora de inicio (diferencia de " + T(Math.abs(d)) + ")."
-                : "⚠ El control no cuadra con la hora de inicio por " + T(Math.abs(d)) + (d > 0 ? " de más" : " de menos") + ": ¿la partida empezó tarde, hubo una pausa o el control se anotó mal? Revísalo antes de poner el reloj." }));
-        }
-        if (r.blancas < 0 || r.negras < 0) items.push(el("li", { class: "cam-apagado-ojo", texto: "⚠ Con este cálculo a " + (r.blancas < 0 ? "las blancas" : "las negras") + " ya se les habría acabado el tiempo: decide tú." }));
-        const valor = (id, calc) => { const t = apagado[id] != null && apagado.para === r.total ? C.leerTiempo(apagado[id]) : null; return t === null ? calc : t; };
-        caja.replaceChildren(
-            relojDibujo(valor("ra-tb", r.blancas), valor("ra-tn", r.negras), r.turno),
-            el("div", { class: "grid grid-cols-2 gap-2 cam-apagado-relojes" }, reloj("blancas", "ra-tb", r.blancas), reloj("negras", "ra-tn", r.negras)),
-            el("p", { class: "text-sm", texto: "Pon esto en el reloj nuevo. Si decides otro tiempo, cámbialo en las casillas y el dibujo se actualiza." }),
-            el("ul", { class: "text-sm cam-apagado-cuentas", "aria-label": "Las cuentas" }, ...items));
-    }
-
-    async function guardarApagado(ev, mesa) {
-        ev.preventDefault();
-        leerApagado();
-        const { ahora, r } = calcularApagado(mesa);
-        if (r.error) { avisar(r.error, true); return; }
-        const tB = C.leerTiempo($("ra-tb").value), tN = C.leerTiempo($("ra-tn").value);
-        if (tB === null || tN === null) { avisar("Escribe el tiempo de cada reloj así: 1:23:45 o 45:10.", true); return; }
-        const ctl = C.ultimoControl(lecturas(mesa));
-        const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
-        const nota = ("Reloj apagado (art. 6.10): " + (ctl ? "calculado desde el control de las " + textoHoraExacta(ctl.ocurrio) : "calculado desde el inicio de la ronda")
-            + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
-            + (r.ajustes && r.ajustes.length ? "; incluye " + r.ajustes.map((a) => (a.segundos > 0 ? "+" : "−") + C.formatoTiempo(Math.abs(a.segundos)) + " a las " + a.color + (a.motivo === "ilegal" ? " (ilegal)" : " (sanción)")).join(", ") : "")
-            + (propuesto ? "" : "; propuesto " + C.formatoTiempo(Math.max(0, r.blancas)) + " / " + C.formatoTiempo(Math.max(0, r.negras)) + ", el árbitro lo ajustó")).slice(0, 500);
-        $("ra-guardar").disabled = true;
-        try {
-            const cuerpo = { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: Number(apagado.jb), t_negras: tN, j_negras: Number(apagado.jn), turno: r.turno, nota, ocurrio: new Date(ahora).toISOString() };
-            const res = await escribir("tiempo", cuerpo, "Reloj apagado en la mesa " + mesa, { mesa });
-            const d = res.encolado ? { id: res.id, ocurrio: cuerpo.ocurrio, jugada: Math.max(1, cuerpo.j_blancas, cuerpo.j_negras) } : res.d;
-            estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: cuerpo.j_blancas, j_negras: cuerpo.j_negras, turno: r.turno, t_blancas: tB, t_negras: tN, nota }].concat(estado.tiempos || []);
-            avisar(res.encolado ? "Sin señal: los tiempos de la mesa " + mesa + " quedaron en la tablet y se mandan solos cuando vuelva la conexión." : "Tiempos de la mesa " + mesa + " anotados en la bitácora: Blancas " + C.formatoTiempo(tB) + ", Negras " + C.formatoTiempo(tN) + ".");
-            modoApagado = false; apagado = {}; horaMarcada = null;
-            if (tiemposPorMesa) tiemposAbierto = false;
-            pintarTiempos();
-            pintar();
-        } catch (e) {
-            avisar(e.message, true);
-            if ($("ra-guardar")) $("ra-guardar").disabled = false;
-        }
+        const R = window.CentroamericanoRelojApagado;
+        const marcada = estado.inicio_ronda && estado.inicio_ronda.inicio && Number(estado.inicio_ronda.ronda) === Number(estado.ronda) ? estado.inicio_ronda.inicio : null;
+        const antes = mesas.length > 1 ? el("div", {}, el("label", { for: "ra-mesa", class: "sr-only", texto: "Mesa" }),
+            el("select", { id: "ra-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); apagado = {}; pintarTiempos(); } },
+                ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null;
+        // La tablet trae solo las últimas anotaciones del árbitro; las marcas (ilegales e irregularidades de cada
+        // jugador) las cuenta la función con TODA la bitácora: si dicen más de las que hay a mano, falta alguna.
+        const aMano = (color, tipo) => (estado.anotaciones || []).filter((f) => f.mesa === mesa && f.color === color && f.tipo === tipo && !anuladas.has(f.id)).length;
+        const incompleta = ["blancas", "negras"].some((color) => { const k = marcaDe(mesa, color); return k.ilegales > aMano(color, "ilegal") || k.irregularidades > aMano(color, "irregularidad"); });
+        return R.armar({
+            estado: apagado, mesa, incompleta, blancas: m ? m.blancas : "", negras: m ? m.negras : "",
+            lecturas: lecturas(mesa), anotaciones: estado.anotaciones, anuladas, inicio: R.inicioDeLaRonda(estado.ronda, marcada),
+            antes, intro: "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decides tú (art. 6.10).",
+            boton: "Anotar en la bitácora", clase: "cam-flotante-cuerpo", avisar,
+            alVolver: () => { modoApagado = false; pintarTiempos(); },
+            alGuardar: async (d) => {
+                const cuerpo = { ronda: estado.ronda, mesa, t_blancas: d.tB, j_blancas: d.jB, t_negras: d.tN, j_negras: d.jN, turno: d.turno, nota: d.nota, ocurrio: d.ocurrio };
+                const res = await escribir("tiempo", cuerpo, "Reloj apagado en la mesa " + mesa, { mesa });
+                const g = res.encolado ? { id: res.id, ocurrio: cuerpo.ocurrio, jugada: Math.max(1, d.jB, d.jN) } : res.d;
+                estado.tiempos = [{ id: g.id, ocurrio: g.ocurrio, mesa, jugada: g.jugada, j_blancas: d.jB, j_negras: d.jN, turno: d.turno, t_blancas: d.tB, t_negras: d.tN, nota: d.nota }].concat(estado.tiempos || []);
+                avisar(res.encolado ? "Sin señal: los tiempos de la mesa " + mesa + " quedaron en la tablet y se mandan solos cuando vuelva la conexión." : "Tiempos de la mesa " + mesa + " anotados en la bitácora: Blancas " + C.formatoTiempo(d.tB) + ", Negras " + C.formatoTiempo(d.tN) + ".");
+                modoApagado = false; apagado = {};
+                if (tiemposPorMesa) tiemposAbierto = false;
+                pintarTiempos();
+                pintar();
+            },
+        });
     }
 
     // ------------------------------------------------------------- horarios y tiempo de espera

@@ -27,6 +27,7 @@ const SERVIDOR_ARBITRO = `
       if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; } else if (lev) { m.levantadas++; m.ultima_levantada = f.id; } else { m.irregularidades++; m.ultima_irregularidad = f.id; } }
     return out; };
   const NOMBRE = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "D": "borrado" };
+  // «window.__recortar»: como la función, que manda solo las últimas 60 anotaciones (la prueba lo baja para ver el aviso).
   // Lo que la organización le mandó y lo que él pidió: la prueba lo cambia desde afuera.
   window.__avisos = { nombrado: true, arbitro: "Ana Árbitra", mensajes: [], ayuda: null, abiertas: [] };
   window.__filas = filas;
@@ -87,7 +88,7 @@ const SERVIDOR_ARBITRO = `
       if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
       window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
     if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { concluyo: window.__concluyo || null, arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
-      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
+      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: ((an) => window.__recortar == null ? an : window.__recortar === 0 ? [] : an.slice(-window.__recortar))(filas.filter((f) => f.tipo !== "anulacion")), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {
       if (window.__lista.length < 2) return falla(409, "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda 3 (relojes y tableros). No se guardó nada.");
       const r = b.cambios.map((c) => { const m = MESAS.find((x) => x.mesa === c.mesa); const malo = window.__falla === true; const esperado = c.valor === "D" ? "0" : c.valor;

@@ -353,6 +353,7 @@
   // Todo en segundos y en milisegundos de reloj (Date.getTime()). Devuelve { error } si algo no cuadra.
   const RITMO = { inicial: 90 * 60, incremento: 30 };
   const BONO_ILEGAL = 120;
+  const RITMO_CONFIABLE = 10;   // medias jugadas antes del control desde las que el ritmo cuenta entero
   function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [] }) {
     const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
     if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
@@ -378,11 +379,15 @@
       base = { blancas: control.t_blancas, negras: control.t_negras };
       // Lo que cada uno gastó hasta el control: la proporción para repartir.
       const gB = Math.max(0, quedaba(control.t_blancas, cB) + bonosAntes.blancas), gN = Math.max(0, quedaba(control.t_negras, cN) + bonosAntes.negras);
-      let pB = 0.5;
-      if (reparto === "ritmo" && gB + gN > 0) pB = gB / (gB + gN);
+      // Con un control de muy temprano, «cómo venía gastando» todavía no dice nada (dos o tres jugadas al azar): el
+      // ritmo pesa de a poco y entero desde las 10 medias jugadas (5 de cada uno); antes, se acerca a mitad y mitad.
+      // Probado con partidas simuladas: así erra menos que el ritmo solo y que mitad y mitad, con jugadores parejos
+      // y disparejos (ver «El reloj que se apaga» en docs/decisiones/juegos-y-torneos.md).
+      let pB = 0.5, peso = 0;
+      if (reparto === "ritmo" && gB + gN > 0) { peso = Math.min(1, (cB + cN) / RITMO_CONFIABLE); pB = 0.5 + (gB / (gB + gN) - 0.5) * peso; }
       const usadoB = Math.round(pasaron * pB), usadoN = pasaron - usadoB;
       const res = {
-        turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB },
+        turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
         gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
         blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
         negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
