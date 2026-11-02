@@ -977,9 +977,57 @@
         $("tiempos").replaceChildren(...lista.map((f) => el("tr", { "data-mesa": String(f.mesa) },
             el("td", { texto: nombreTorneo(f.tnr) }), el("td", { texto: String(f.ronda) }), el("td", { texto: String(f.mesa) }), el("td", { texto: f.blancas + " vs " + f.negras }),
             el("td", { class: "cam-tiempo", texto: textoLado(f, "blancas") }), el("td", { class: "cam-tiempo", texto: textoLado(f, "negras") }),
-            el("td", { texto: f.arbitro }), el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }))));
+            el("td", { texto: f.arbitro }), el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }),
+            el("td", {}, esUltima(f) ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "reloj-apagado", "aria-label": "El reloj se apagó en la mesa " + f.mesa + " (" + nombreTorneo(f.tnr) + ", ronda " + f.ronda + ")", onclick: () => abrirApagado(f) }, "Reloj apagado") : null))));
         $("tiempos-vacio").hidden = lista.length > 0;
         $("ct-pdf").disabled = lista.length === 0;
+    }
+
+    // ------------------------------------------------------------- el reloj que se apagó
+
+    // La misma calculadora de la tablet (js/centroamericano-reloj-apagado.js), para la partida de una fila: el último
+    // control de esa partida, su bitácora (ilegales y sanciones) y la hora de inicio de la ronda. La organización no
+    // anota en los controles del árbitro: «Mandárselo al árbitro» le llega como aviso a la tablet de esa mesa.
+    const mismaPartida = (a, b) => a.tnr === b.tnr && a.ronda === b.ronda && a.mesa === b.mesa;
+    const esUltima = (f) => !tiempos.some((x) => mismaPartida(x, f) && String(x.ocurrio) > String(f.ocurrio));
+    let apagadoDe = null;      // la fila elegida
+    let apagadoEstado = {};    // lo escrito en la calculadora
+
+    async function abrirApagado(f) {
+        apagadoDe = f;
+        apagadoEstado = {};
+        const caja = $("ct-apagado");
+        $("ct-apagado-titulo").textContent = "El reloj se apagó · Mesa " + f.mesa + " (" + nombreTorneo(f.tnr) + ", ronda " + f.ronda + "): " + f.blancas + " vs " + f.negras;
+        $("ct-apagado-cuerpo").replaceChildren(el("p", { class: "text-sm", texto: "Leyendo la bitácora de la mesa…" }));
+        caja.hidden = false;
+        caja.scrollIntoView({ block: "start", behavior: "smooth" });
+        // La bitácora de ESA partida: las ilegales y las sanciones de tiempo, y lo anulado.
+        const { data, error } = await sb.from("centroamericano_registro").select("id, ocurrio, mesa, color, tipo, texto, anula")
+            .eq("tnr", f.tnr).eq("ronda", f.ronda).eq("mesa", f.mesa).order("ocurrio", { ascending: true }).range(0, 999);
+        if (apagadoDe !== f) return;
+        if (error) { $("ct-apagado-cuerpo").replaceChildren(el("p", { class: "cam-aviso-suave", texto: "No se pudo leer la bitácora de la mesa: " + error.message })); return; }
+        const filas = data || [];
+        const R = window.CentroamericanoRelojApagado;
+        const asig = asignaciones.filter(activa).find((a) => a.tnr === f.tnr && f.mesa >= a.mesa_desde && f.mesa <= a.mesa_hasta);
+        $("ct-apagado-cuerpo").replaceChildren(R.armar({
+            estado: apagadoEstado, mesa: f.mesa, blancas: f.blancas, negras: f.negras,
+            lecturas: tiempos.filter((x) => mismaPartida(x, f)),
+            anotaciones: filas.filter((x) => x.tipo !== "anulacion"), anuladas: new Set(filas.filter((x) => x.tipo === "anulacion").map((x) => x.anula)),
+            inicio: R.inicioDeLaRonda(f.ronda, inicios[f.ronda] || null),
+            intro: "Con el último control de esta partida se calcula cuánto le queda a cada uno. Es una propuesta para el árbitro de la mesa: el tiempo lo decide él (art. 6.10)."
+                + (asig ? "" : " Esta mesa no tiene un árbitro con enlace activo: no se le puede mandar."),
+            boton: "Mandárselo al árbitro", clase: "cam-apagado-form", avisar,
+            alVolver: () => { apagadoDe = null; $("ct-apagado").hidden = true; $("ct-apagado-cuerpo").replaceChildren(); },
+            alGuardar: async (d) => {
+                if (!asig) { avisar("Esta mesa no tiene un árbitro con enlace activo.", true); return; }
+                const T = C.formatoTiempo;
+                const texto = ("Mesa " + f.mesa + " · El reloj se apagó: pon Blancas " + T(d.tB) + " y Negras " + T(d.tN) + " (le toca a las " + d.turno + "; van " + d.jB + " y " + d.jN + " jugadas). " + d.nota).slice(0, 500);
+                const { error: e } = await sb.from("centroamericano_avisos").insert({ de: "organizacion", asignacion_id: asig.id, texto });
+                if (e) { avisar("No se pudo mandar: " + e.message, true); return; }
+                avisar("Mandado a " + (asig.arbitro || "el árbitro") + ": Blancas " + T(d.tB) + ", Negras " + T(d.tN) + ". Lo anota él al poner el reloj.");
+                await cargarAvisos();
+            },
+        }));
     }
 
     async function pedirTiempos() {

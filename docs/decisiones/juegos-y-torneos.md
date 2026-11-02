@@ -8902,8 +8902,18 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     hay de dónde partir.
   - El reloj de ajedrez dibujado (SVG propio, `aria-hidden`) muestra los dos tiempos y la palanca
     levantada del lado de quien tiene el turno; el dato va también escrito («le toca» y las
-    casillas). Lo revisa `verificar-centroamericano-mesas.js` (las cuentas) y
-    `verificar-centroamericano-mesas-pagina.js` (la ventana de la irregularidad).
+    casillas).
+  - **También en la página de la organización** (pestaña «Control de tiempos»): cada partida trae
+    «Reloj apagado» en su última lectura y abre la MISMA calculadora debajo de la tabla, con la
+    bitácora de esa partida leída de `centroamericano_registro` (ilegales, sanciones y anulaciones).
+    Una sola copia de la pantalla: `js/centroamericano-reloj-apagado.js` (`armar()`), que usan las
+    dos páginas; cada una solo dice qué hace el botón. La organización **no escribe en los controles
+    del árbitro** (esos los guarda la Edge Function con el enlace de la mesa): «Mandárselo al
+    árbitro» le manda un aviso a la tablet de esa mesa con los dos tiempos, a quién le toca y la
+    nota, y el árbitro lo anota al poner el reloj nuevo.
+  - Lo revisan `verificar-centroamericano-mesas.js` (las cuentas) y
+    `verificar-centroamericano-mesas-pagina.js` (la ventana del árbitro, la de la organización y la
+    de la irregularidad).
 - **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
   esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
   (no es de una mesa; le llega «X necesita ayuda»).

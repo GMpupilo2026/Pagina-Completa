@@ -577,3 +577,9 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-apagado-reloj { border-color: #b8bbf2; }
 .dark .cam-apagado-ojo { color: #ffb59e; }
 .cam-reloj-dibujo { display: block; width: 100%; max-width: 22rem; margin: 0.6rem auto 0; height: auto; }
+/* La organización: la calculadora del reloj apagado debajo de la tabla del control de tiempos. */
+.cam-apagado-org { border: 3px solid var(--cac-morado-hondo); border-radius: 0.8rem; padding: 0.8rem 1rem 1rem; background: #fff; }
+.cam-apagado-org[hidden] { display: none; }
+.cam-apagado-titulo { font-weight: 800; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.cam-apagado-form { max-width: 34rem; }
+.dark .cam-apagado-org { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }
