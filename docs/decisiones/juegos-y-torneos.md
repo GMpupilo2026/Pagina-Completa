@@ -8656,9 +8656,16 @@ resultado).
   **primero** en el bucket privado `centroamericano-planillas` y después la manda al Drive; si
   el Drive falla o no está conectado, la foto ya está a salvo y se reintenta desde la
   organización («Mandar al Drive las que faltan»). El nombre del enfrentamiento sale de
-  chess-results, no de la pantalla. En el Drive: `Planillas Centroamericano / <torneo> / Ronda N /
-  Mesa 07 - <blancas> vs <negras> - Planillas (las dos).jpg`; una foto nueva de la misma mesa
-  manda la vieja a la papelera. **El Drive lo toca un Apps Script de la dueña del
+  chess-results, no de la pantalla. En el Drive: `Planillas Centroamericano / Centroamericano 2026 /
+  <torneo y categoría> / Ronda N / Mesa 07 - <blancas> vs <negras> - Planillas (las dos).jpg`
+  (por ejemplo `… / Centroamericano 2026 / Sub-18 Femenino / Ronda 1 / …`); los torneos de ensayo (los que
+  se llaman «PRUEBA …») van en `Planillas Centroamericano / Ensayo (pruebas) / …` para no mezclarse con
+  las de verdad; una foto nueva de la misma mesa manda la vieja a la papelera. Antes faltaba el nivel
+  del evento (quedaba `Planillas Centroamericano / Sub-18 Femenino / Ronda 1`) y las pruebas se mezclaban con
+  las reales. Cambiar el orden es solo cosa del Apps Script (las Edge Functions mandan el mismo nombre de
+  torneo): pegar el código nuevo, «Nueva versión» y ejecutar UNA vez `reorganizar`, que mete las carpetas viejas
+  en su lugar, junta las repetidas y no borra ninguna foto (lo prueba `verificar-centroamericano-mesas.js` con
+  un Drive de mentira; roto a propósito, salta). **El Drive lo toca un Apps Script de la dueña del
   Drive** (`documentos/centroamericano/puente-drive.gs`, mismo patrón del de los JDN): se instala
   una vez, se pega su dirección y su secreto en «Planillas y Drive» y se prueban antes de
   guardarse (la dirección y el secreto van a la bóveda, `centroamericano_drive_*`, solo

@@ -10,9 +10,12 @@
  *
  * Todo va ordenado así:
  *
- *   Planillas Centroamericano / <torneo> / Ronda <n> /
+ *   Planillas Centroamericano / Centroamericano 2026 / <torneo y categoría> / Ronda <n> /
  *       Mesa 07 - <blancas> vs <negras> - Planillas (las dos).jpg
+ *   Planillas Centroamericano / Ensayo (pruebas) / PRUEBA grupo A / Ronda <n> / …   (los torneos de ensayo, aparte)
  *   Planillas Centroamericano / _Copias de seguridad / copia-AAAA-MM-DD-HHMM.json
+ *
+ * «<torneo y categoría>» es el nombre del torneo de chess-results: «Sub-18 Femenino», «Sub-8 Absoluto»…
  *
  * Si se vuelve a subir la foto de la misma mesa, la anterior va a la papelera: nunca
  * quedan dos fotos de las planillas de la misma mesa. Las copias de seguridad no se pisan:
@@ -30,12 +33,17 @@
  *      pegar la URL y el secreto. Se prueba antes de guardarse.
  *   (Si ya estaba instalado y hay código nuevo: pegarlo, «Implementar» → «Gestionar
  *   implementaciones» → editar → Versión: «Nueva versión». La URL no cambia.)
+ *   (Si las carpetas ya estaban creadas con el orden de antes —Planillas Centroamericano / Sub-18 Femenino / …—:
+ *   ejecutar UNA vez la función `reorganizar`: las mete dentro de «Centroamericano 2026» (o «Ensayo (pruebas)») y junta
+ *   las que hayan quedado repetidas. No borra ninguna foto.)
  *
  * «Cualquier persona» puede LLAMAR la URL, pero sin el secreto no hace nada: lo compara
  * antes de tocar el Drive.
  */
 
 var NOMBRE_RAIZ = "Planillas Centroamericano";
+var NOMBRE_EVENTO = "Centroamericano 2026";
+var NOMBRE_ENSAYO = "Ensayo (pruebas)";
 
 function configurar() {
   var props = PropertiesService.getScriptProperties();
@@ -82,6 +90,14 @@ function subcarpeta(madre, nombre) {
   return madre.createFolder(nombre);
 }
 
+// Los torneos de ensayo (PRUEBA grupo A y B) van en su propia carpeta, para no mezclarse con las planillas de verdad.
+function esEnsayo(nombre) { return /^prueba\b/i.test(String(nombre || "").trim()); }
+
+// La carpeta del evento (o la de ensayos) dentro de «Planillas Centroamericano».
+function carpetaEvento(torneo) {
+  return subcarpeta(carpetaRaiz(), esEnsayo(torneo) ? NOMBRE_ENSAYO : NOMBRE_EVENTO);
+}
+
 // «Planillas Centroamericano» en «Mi unidad»: si ya existe se usa, si no se crea.
 function carpetaRaiz() {
   var raiz = DriveApp.getRootFolder();
@@ -97,7 +113,7 @@ function guardarPlanilla(d) {
   if (d.lado !== "ambas" && d.lado !== "blancas" && d.lado !== "negras") throw new Error("lado no válido");
   var bytes = Utilities.base64Decode(String(d.imagen || ""));
   if (bytes.length < 2000 || bytes.length > 8 * 1024 * 1024) throw new Error("imagen no válida");
-  var torneo = subcarpeta(carpetaRaiz(), limpio(d.torneo || "Sin torneo", 60));
+  var torneo = subcarpeta(carpetaEvento(d.torneo), limpio(d.torneo || "Sin torneo", 60));
   var rondaCarpeta = subcarpeta(torneo, "Ronda " + ronda);
   var ambas = d.lado === "ambas";
   var nombre = "Mesa " + dosCifras(mesa) + " - " + limpio(d.blancas, 45) + " vs " + limpio(d.negras, 45) +
@@ -113,6 +129,42 @@ function guardarPlanilla(d) {
   }
   var archivo = rondaCarpeta.createFile(Utilities.newBlob(bytes, "image/jpeg", nombre));
   return { ok: true, enlace: archivo.getUrl(), carpeta: rondaCarpeta.getName() };
+}
+
+// Pasa lo de `origen` a `destino` sin pisar nada: una carpeta que ya existe en el destino se junta con la de
+// origen (se vuelve a llamar con sus cosas) y las demás se mueven enteras. Las fotos no se borran nunca.
+function fusionar(origen, destino) {
+  var archivos = origen.getFiles(), pasar = [];
+  while (archivos.hasNext()) pasar.push(archivos.next());
+  pasar.forEach(function (f) { f.moveTo(destino); });
+  var hijas = origen.getFolders(), carpetas = [];
+  while (hijas.hasNext()) carpetas.push(hijas.next());
+  carpetas.forEach(function (h) {
+    var igual = null, existentes = destino.getFolders();
+    while (existentes.hasNext()) { var e = existentes.next(); if (clave(e.getName()) === clave(h.getName())) { igual = e; break; } }
+    if (igual) { fusionar(h, igual); } else { h.moveTo(destino); }
+  });
+  // Solo se manda a la papelera la carpeta que quedó vacía.
+  if (!origen.getFiles().hasNext() && !origen.getFolders().hasNext()) origen.setTrashed(true);
+}
+
+// UNA sola vez, si las carpetas ya estaban creadas con el orden de antes (Planillas Centroamericano / Sub-18 Femenino /
+// Ronda 1): las mete dentro de «Centroamericano 2026» (o de «Ensayo (pruebas)») y junta las repetidas.
+function reorganizar() {
+  var raiz = carpetaRaiz();
+  var evento = subcarpeta(raiz, NOMBRE_EVENTO), ensayo = subcarpeta(raiz, NOMBRE_ENSAYO);
+  var hijas = raiz.getFolders(), mover = [];
+  while (hijas.hasNext()) {
+    var h = hijas.next(), n = h.getName();
+    if (n.charAt(0) === "_" || clave(n) === clave(NOMBRE_EVENTO) || clave(n) === clave(NOMBRE_ENSAYO)) continue;
+    mover.push(h);
+  }
+  mover.forEach(function (h) {
+    var destino = esEnsayo(h.getName()) ? ensayo : evento, existente = null, existentes = destino.getFolders();
+    while (existentes.hasNext()) { var e = existentes.next(); if (clave(e.getName()) === clave(h.getName())) { existente = e; break; } }
+    if (existente) { fusionar(h, existente); } else { h.moveTo(destino); }
+  });
+  Logger.log("Carpetas puestas en orden: " + mover.length);
 }
 
 function guardarCopia(d) {
