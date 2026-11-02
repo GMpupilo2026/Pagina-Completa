@@ -689,8 +689,12 @@
         const antes = mesas.length > 1 ? el("div", {}, el("label", { for: "ra-mesa", class: "sr-only", texto: "Mesa" }),
             el("select", { id: "ra-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); apagado = {}; pintarTiempos(); } },
                 ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null;
+        // La tablet trae solo las últimas anotaciones del árbitro; las marcas (ilegales e irregularidades de cada
+        // jugador) las cuenta la función con TODA la bitácora: si dicen más de las que hay a mano, falta alguna.
+        const aMano = (color, tipo) => (estado.anotaciones || []).filter((f) => f.mesa === mesa && f.color === color && f.tipo === tipo && !anuladas.has(f.id)).length;
+        const incompleta = ["blancas", "negras"].some((color) => { const k = marcaDe(mesa, color); return k.ilegales > aMano(color, "ilegal") || k.irregularidades > aMano(color, "irregularidad"); });
         return R.armar({
-            estado: apagado, mesa, blancas: m ? m.blancas : "", negras: m ? m.negras : "",
+            estado: apagado, mesa, incompleta, blancas: m ? m.blancas : "", negras: m ? m.negras : "",
             lecturas: lecturas(mesa), anotaciones: estado.anotaciones, anuladas, inicio: R.inicioDeLaRonda(estado.ronda, marcada),
             antes, intro: "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decides tú (art. 6.10).",
             boton: "Anotar en la bitácora", clase: "cam-flotante-cuerpo", avisar,

@@ -17,6 +17,7 @@
      alGuardar    async (datos) => …, con { tB, tN, jB, jN, turno, nota, ocurrio, r }
      alVolver     () => … o null (sin botón «Volver»)
      avisar       (texto, error) => …
+     incompleta   true si la página sabe que le faltan anotaciones de la mesa (la tablet trae solo las últimas)
      clase        la clase del <form>
 
    Ver «El reloj que se apaga» en docs/decisiones/juegos-y-torneos.md. */
@@ -69,7 +70,8 @@
     const out = [
       { texto: "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento)." },
       { texto: r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
-        : r.reparto === "ritmo" ? "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
+        : r.reparto === "ritmo" ? (r.pesoRitmo < 1 ? "El control es de muy temprano (pocas jugadas): el ritmo pesa poco y el reparto queda cerca de mitad y mitad. " : "")
+          + "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
         : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno." },
     ];
     for (const a of r.ajustes || []) out.push({ texto: "Incluye " + (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + " por " + (a.motivo === "ilegal" ? "la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + ")" : a.color === a.de ? "la sanción de su irregularidad (art. " + C.ARTICULO_SANCION + ")" : "la sanción a su rival por una irregularidad (art. " + C.ARTICULO_SANCION + ")") + ", anotada a las " + hora(new Date(a.ms).toISOString()) });
@@ -139,6 +141,7 @@
         dato("Inicio de la ronda", o.inicio ? hora(new Date(o.inicio.ms).toISOString()) + " (" + o.inicio.deDonde + ")" : "no se sabe"),
         dato("Ilegales y sanciones de tiempo", b.length ? b.map((x) => (x.motivo === "ilegal" ? "Ilegal" : "Irregularidad") + " de las " + x.de + " a las " + hora(new Date(x.ms).toISOString())
           + " (" + (x.segundos > 0 ? "+" : "−") + T(Math.abs(x.segundos)) + " a las " + x.color + (c && x.ms <= new Date(c.ocurrio).getTime() ? ", ya en el control" : ", se cuenta") + ")").join(" · ") : "ninguna"),
+        o.incompleta ? el("li", { class: "cam-apagado-ojo", texto: "⚠ La tablet no tiene a mano todas las anotaciones de esta mesa (trae las últimas 60 del árbitro): alguna ilegal o sanción vieja podría faltar en la cuenta. La organización lo puede calcular con la bitácora completa." }) : null,
         dato("Último control", c ? hora(c.ocurrio) + " · Blancas " + T(c.t_blancas) + " (" + c.j_blancas + " jug.) · Negras " + T(c.t_negras) + " (" + c.j_negras + " jug.)" : "ninguno en esta mesa"));
       const jug = (color, k, nombre) => el("label", { class: "block" },
         el("span", { class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre || "" })),

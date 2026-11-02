@@ -8911,9 +8911,28 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     del árbitro** (esos los guarda la Edge Function con el enlace de la mesa): «Mandárselo al
     árbitro» le manda un aviso a la tablet de esa mesa con los dos tiempos, a quién le toca y la
     nota, y el árbitro lo anota al poner el reloj nuevo.
-  - Lo revisan `verificar-centroamericano-mesas.js` (las cuentas) y
-    `verificar-centroamericano-mesas-pagina.js` (la ventana del árbitro, la de la organización y la
-    de la irregularidad).
+  - **Las cuentas, comprobadas con partidas simuladas** (un reloj de verdad que corre jugada a
+    jugada, con 30 s de incremento, ilegales, sanciones, controles a mitad de una jugada, el reloj
+    que se apaga en cualquier momento y «ahora» un rato después; unas 17 000 partidas por corrida,
+    con jugadores que piensan parejo y disparejo): **el total coincide al segundo en todas** y la
+    comprobación con el inicio da 0 en todas. El reparto es una estimación: con el ritmo erra en
+    promedio unos 6 minutos en las simuladas (mitad y mitad, unos 7-8), y con jugadores de ritmo
+    parejo, poco más de un minuto.
+  - **Un control de muy temprano no dice el ritmo**: con dos o tres jugadas al azar, «cómo venía
+    gastando» erraba más que mitad y mitad (en promedio 15 min contra 7 en la simulación). Por eso el
+    ritmo pesa de a poco, según las medias jugadas antes del control, y entero desde 10 (5 de cada
+    uno; `RITMO_CONFIABLE`): se probaron 10, 20 y 30, y 10 fue la que menos erró en todos los casos.
+    Cuando pesa menos que entero, las cuentas lo dicen.
+  - **La tablet no tiene toda la bitácora**: la función `leer` le manda solo las últimas 60
+    anotaciones del árbitro (resultados, notas de controles de tiempos…), así que en una ronda
+    larga una ilegal o una sanción vieja puede no estar a mano. Las marcas de cada jugador sí se
+    cuentan con toda la bitácora: si dicen más ilegales o irregularidades de las que hay a mano, la
+    calculadora de la tablet lo avisa y manda a la organización, que lee la bitácora completa de la
+    mesa. (Arreglarlo del todo es que `leer` mande siempre las ilegales e irregularidades: un cambio
+    de la Edge Function, pendiente de que el dueño lo apruebe.)
+  - Lo revisan `verificar-centroamericano-mesas.js` (las cuentas y el peso del ritmo) y
+    `verificar-centroamericano-mesas-pagina.js` (la ventana del árbitro con su aviso de anotaciones
+    que faltan, la de la organización y la de la irregularidad).
 - **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
   esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
   (no es de una mesa; le llega «X necesita ayuda»).

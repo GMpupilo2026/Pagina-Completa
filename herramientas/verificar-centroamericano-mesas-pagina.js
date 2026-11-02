@@ -458,6 +458,20 @@ const CONTRASTE = `(sel) => {
     igual("«Anotar en la bitácora» lo guarda como un control más: el tiempo puesto, las jugadas, a quién le toca y la nota de cómo se calculó",
         await p.evaluate(() => { const b = window.__llamadas.filter((l) => l.body.action === "tiempo").pop().body; return [b.mesa, b.t_blancas, b.j_blancas, b.j_negras, b.turno, /^Reloj apagado \(art\. 6\.10\): calculado desde el control/.test(b.nota), /ajustado a mano/.test(b.nota), typeof b.ocurrio]; }),
         [2, 900, 33, 32, "negras", true, true, "string"]);
+    // La función manda solo las últimas anotaciones: si las marcas dicen que hay una ilegal que no llegó, se avisa.
+    igual("con toda la bitácora a mano no sale el aviso de anotaciones que faltan", await p.evaluate(() => /no tiene a mano todas/.test(document.body.textContent)), false);
+    await p.evaluate(() => { window.__recortar = 0; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => window.__llamadas.filter((l) => l.body.action === "leer").length > 0 && !document.querySelector(".cam-mesa[data-ocupada]"));
+    await p.waitForTimeout(500);
+    await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
+    await p.waitForSelector("#lt-apagado");
+    await p.click("#lt-apagado");
+    await p.waitForSelector("#control-tiempos .cam-apagado-datos");
+    igual("si a la tablet le faltan anotaciones viejas de la mesa (trae las últimas 60), lo avisa: alguna ilegal o sanción podría faltar", await p.evaluate(() => /no tiene a mano todas las anotaciones de esta mesa/.test(document.querySelector("#control-tiempos .cam-apagado-datos").textContent)), true);
+    await p.evaluate(() => { window.__recortar = null; document.getElementById("actualizar").click(); });
+    await p.waitForTimeout(500);
+    await p.click("#control-tiempos .ra-volver");
+    await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
     await p.waitForSelector("#form-tiempos");
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
