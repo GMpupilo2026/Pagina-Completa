@@ -8854,6 +8854,24 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   firma— por si falla la señal de toda la sala. Sale de la última lectura de chess-results (la copia compartida) por
   `public.centroamericano_hojas()` (solo con la licencia; las tablas siguen cerradas); si no hay lectura, dice que
   primero se toque «Actualizar desde chess-results». `js/reporte-pdf.js` admite `altoFila` para tablas que se llenan a mano.
+- **Las tarjetas de mesa con iconos** (la tablet del árbitro). Con 15 mesas, los botones con palabras («Llegó», «No ha
+  llegado», «Ilegal», «Irregularidad», «Principal en esta mesa»…) se partían en varias filas y la tarjeta se veía
+  desordenada. Ahora cada jugador es UNA fila: un punto de su color (○ blancas, ● negras), su nombre, y a la derecha
+  cuatro iconos de 46 px: ✓ llegó, ✗ no ha llegado, ⚠ jugada ilegal y 🚩 irregularidad (más ↩ anular cuando hay algo que
+  anular y 🆘 «Principal en esta mesa» en la cabecera de la mesa). El estado de presencia es un icono (? sin revisar,
+  ✓, ✗). **Las palabras no se pierden**: cada botón lleva su `aria-label` y `title`, y su texto va en `sr-only`
+  (lector de pantalla); y una **leyenda** arriba de las mesas explica cada icono con su palabra. Sin hover en la tablet,
+  la leyenda es lo que enseña qué es cada uno. «Guardar» y los botones de arriba (Actualizar, Control de tiempos, Horarios,
+  Necesito ayuda) siguen con palabra: son pocos y de uso crítico. Los iconos son SVG propios (`ICONOS` en
+  `js/centroamericano-arbitro.js`, hereda `currentColor`); el color nunca va solo (icono + forma + texto accesible).
+- **Supervisar: «Actividad de los árbitros»** (arriba en la pestaña «Registro» de la organización). La bitácora solo
+  tenía resultados, ilegales, irregularidades, incidencias y controles de tiempos; lo demás quedaba repartido en otras
+  tablas. `public.centroamericano_actividad(p_tnr, p_desde, p_limite)` lo junta todo en UNA línea de tiempo (las cuentas
+  se hacen en la base): resultados y correcciones, ilegales, irregularidades, incidencias y notas, anulaciones, quién
+  llegó o no (presencia), fotos de planillas, revisión previa aprobada, mesas terminadas y ronda finalizada, pedidos de
+  ayuda y avisos leídos. La pantalla trae un resumen por árbitro (cuántas acciones, la última, resultados, marcas y
+  pedidos de ayuda) y la lista filtrable por árbitro y por tipo; se actualiza con el Registro. Solo lee y pide la
+  licencia; respeta «Modo ensayo». Los controles de tiempos ya salen como notas de la bitácora (no se repiten).
 - **Quitar a un árbitro por completo (la «✕ Quitar»).** «Apagar» deja la fila (se puede volver a encender); cuando se
   metió a alguien que no correspondía, la «✕ Quitar» de cada enlace lo borra del torneo y ya no aparece. Va por
   `public.centroamericano_quitar_enlace(p_id, p_borrar)`: con `p_borrar = false` solo **cuenta** lo que ya anotó (la

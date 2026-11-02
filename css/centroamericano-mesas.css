@@ -512,3 +512,38 @@ body.cam-guia-abierta { overflow: hidden; }
 /* «Modo ensayo»: una franja bien visible mientras se miran los torneos de prueba (con su texto: el color no va solo). */
 .cam-aviso-ensayo { margin: 0 0 0.5rem; padding: 0.6rem 0.9rem; border-radius: 0.75rem; background: #3b2600; color: #fff4d6; border: 2px solid #8a5a00; font-weight: 800; position: sticky; top: 0; z-index: 38; }
 .cam-modo-ensayo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; }
+
+/* Las tarjetas de mesa con iconos (la Mesa del árbitro en la tablet): cada jugador en UNA fila — su color, su nombre y a la
+   derecha los iconos para marcar si llegó (✓ ✗) y anotar una ilegal o una irregularidad. Las palabras quedan para el lector
+   de pantalla (sr-only) y como pista (title); la leyenda de arriba explica cada icono. */
+.cam-color { min-width: 0; width: 1.7rem; height: 1.7rem; padding: 0; border-radius: 9999px; border-width: 2px; flex: none; }
+.cam-color-punto { display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: 9999px; border: 2px solid var(--cac-morado-hondo); vertical-align: -0.2rem; }
+.cam-color-punto[data-color="blancas"] { background: #fff; }
+.cam-color-punto[data-color="negras"] { background: var(--cac-morado-hondo); }
+.dark .cam-color-punto { border-color: #fff; }
+.cam-jugador-fila { flex-wrap: wrap; row-gap: 0.4rem; }
+.cam-jugador-fila .cam-nombre { flex: 1 1 8rem; min-width: 0; font-size: 1.05rem; }
+.cam-jugador-botones { display: flex; align-items: center; gap: 0.35rem 0.9rem; flex-wrap: wrap; margin-left: auto; }
+.cam-jugador-botones .cam-presencia, .cam-jugador-botones .cam-acciones { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; flex-wrap: nowrap; }
+.cam-presencia-estado { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; }
+.cam-presencia-estado .cam-icono { width: 1.5rem; height: 1.5rem; }
+.cam-presencia[data-presente="sin-revisar"] .cam-presencia-estado { color: #5b5f8a; }
+.dark .cam-presencia[data-presente="sin-revisar"] .cam-presencia-estado { color: #b8bbf2; }
+.cam-btn-icono-chico { width: 2.9rem; height: 2.9rem; border-radius: 0.85rem; }
+.cam-btn-icono-chico .cam-icono { width: 1.45rem; height: 1.45rem; }
+.cam-btn-icono-verde[aria-pressed="true"] { background: var(--cac-verde); border-color: var(--cac-verde); color: #fff; }
+.cam-btn-icono-rojo { border-color: var(--cac-rojo); color: var(--cac-rojo); }
+.cam-btn-icono-rojo:hover:not(:disabled), .cam-btn-icono-rojo[aria-pressed="true"] { background: var(--cac-rojo); color: #fff; }
+.cam-btn-icono-rojo[data-accion="ilegal"] { background: var(--cac-rojo); color: #fff; }
+.dark .cam-btn-icono-rojo { border-color: #ff9aa5; color: #ff9aa5; }
+.dark .cam-btn-icono-rojo[data-accion="ilegal"], .dark .cam-btn-icono-rojo[aria-pressed="true"] { background: #ff9aa5; color: var(--cac-morado-hondo); }
+.dark .cam-btn-icono-verde[aria-pressed="true"] { background: #9be0bb; border-color: #9be0bb; color: var(--cac-morado-hondo); }
+.cam-anulares { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.cam-btn-icono-anular { border-style: dashed; }
+.cam-marca-glifo { display: none; }
+.cam-marca .cam-icono { width: 1rem; height: 1rem; }
+.cam-ayuda-icono, .cam-ayuda-mesa:has(.cam-icono) { width: 2.9rem; min-height: 2.9rem; height: 2.9rem; padding: 0; display: inline-grid; place-items: center; border-radius: 0.85rem; }
+.cam-ayuda-mesa .cam-icono { width: 1.5rem; height: 1.5rem; }
+
+/* La actividad de los árbitros: un icono antes de «qué hizo» para que se lea de un vistazo (la palabra sigue ahí). */
+.cam-celda-icono::before { content: attr(data-icono) / ""; display: inline-block; width: 1.6rem; }

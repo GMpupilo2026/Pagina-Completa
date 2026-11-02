@@ -308,7 +308,30 @@
                 </div>
                 <p id="r-estado" class="text-sm mt-2" role="status"></p>
 
-                <h3 class="cam-subtitulo mt-3">Jugadores con ilegales o irregularidades</h3>
+                <h3 id="t-actividad" class="cam-subtitulo mt-3">Actividad de los árbitros<span id="act-nota" class="cam-subtitulo-nota"></span></h3>
+                <p class="cam-herramientas-nota">Todo lo que hace cada árbitro, en orden y sin que tengas que ir a buscarlo: resultados, ilegales, controles de tiempos, quién llegó, fotos de planillas, revisión previa, ronda finalizada, pedidos de ayuda y avisos leídos.</p>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Cuántas acciones lleva cada árbitro y cuándo hizo la última</caption>
+                        <thead><tr><th scope="col">Árbitro</th><th scope="col">Acciones</th><th scope="col">Última acción</th><th scope="col">Resultados</th><th scope="col">Ilegales e irregularidades</th><th scope="col">Pidió ayuda</th></tr></thead>
+                        <tbody id="act-resumen"></tbody>
+                    </table>
+                </div>
+                <div class="cam-herramientas mt-3" role="toolbar" aria-label="Filtrar la actividad">
+                    <label class="cam-herramientas-campo"><span>Árbitro</span><select id="act-arbitro" class="cam-select"><option value="">Todos los árbitros</option></select></label>
+                    <label class="cam-herramientas-campo"><span>Qué hizo</span><select id="act-tipo" class="cam-select">
+                        <option value="">Todo</option><option value="resultado">Resultados y correcciones</option><option value="ilegal">Ilegales e irregularidades</option><option value="incidencia">Incidencias y notas</option><option value="presencia">Quién llegó</option><option value="planilla">Fotos de planillas</option><option value="lista">Revisión previa</option><option value="finalizo">Ronda finalizada o mesas terminadas</option><option value="ayuda">Pedidos de ayuda</option><option value="leyo">Avisos leídos</option></select></label>
+                </div>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Toda la actividad de los árbitros, lo más reciente primero</caption>
+                        <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Árbitro</th><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Qué hizo</th><th scope="col">Detalle</th></tr></thead>
+                        <tbody id="actividad"></tbody>
+                    </table>
+                </div>
+                <p id="actividad-vacio" class="cam-nota-vacia">Todavía no hay actividad.</p>
+
+                <h3 class="cam-subtitulo mt-6">Jugadores con ilegales o irregularidades</h3>
                 <div class="cam-tabla-envoltura">
                     <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Jugadores con jugadas ilegales o irregularidades, por ronda y mesa</caption>
