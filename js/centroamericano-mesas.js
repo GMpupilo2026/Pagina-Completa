@@ -214,11 +214,8 @@
     { id: "", texto: "Sin sanción de tiempo" },
     { id: "rival+60", texto: "+1 minuto a su rival", segundos: 60, a: "rival" },
     { id: "rival+120", texto: "+2 minutos a su rival", segundos: 120, a: "rival" },
-    { id: "rival+300", texto: "+5 minutos a su rival", segundos: 300, a: "rival" },
     { id: "suyo-60", texto: "−1 minuto a quien la cometió", segundos: -60, a: "suyo" },
     { id: "suyo-120", texto: "−2 minutos a quien la cometió", segundos: -120, a: "suyo" },
-    { id: "suyo-300", texto: "−5 minutos a quien la cometió", segundos: -300, a: "suyo" },
-    { id: "suyo-600", texto: "−10 minutos a quien la cometió", segundos: -600, a: "suyo" },
   ];
   const ARTICULO_SANCION = "12.9";
   function sancionTexto(id) {

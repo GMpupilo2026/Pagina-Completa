@@ -8811,6 +8811,40 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   (`1:23:45`, `45:10` o segundos) y una nota. Cada lectura queda con su hora; la organización las ve
   en la pestaña «Control de tiempos» (la última de cada partida o todo el historial) y en PDF con la
   marca de agua. Si un reloj falla, la última lectura sirve para corregirlo.
+- **El reloj que se apaga** («El reloj se apagó», en la ventana del control de tiempos de la mesa).
+  Las Leyes (art. 6.10) dejan los tiempos del reloj nuevo al «mejor criterio» del árbitro; la página
+  le da un número defendible con las cuentas a la vista (`relojApagado()` en
+  `js/centroamericano-mesas.js`). Parte del **control más reciente** de esa partida, sea en la
+  jugada que sea: los controles los pide la organización cuando quiere, nunca en una jugada fija.
+  - **Lo exacto es el total.** Mientras la partida corre siempre anda un reloj, así que desde el
+    control los dos juntos gastaron justo el tiempo real que pasó, y cada jugada hecha les sumó 30 s.
+    El árbitro solo escribe las jugadas que lleva cada uno; el turno sale de ahí (iguales: blancas).
+  - **El reparto es una propuesta**: «como venía gastando cada uno» hasta el control (lo gastado lo
+    dice el mismo control: 90 min + incrementos − lo que quedaba) o «mitad y mitad». Sin ningún
+    control, desde la hora de inicio y mitad y mitad, avisado. El árbitro puede cambiar los dos
+    tiempos antes de anotarlos.
+  - **La hora de inicio comprueba el control** (la marcada por la organización o, si no, la del
+    horario): si los relojes del control no suman lo que debían por más de 2 minutos, se avisa
+    («¿empezó tarde, hubo una pausa, se anotó mal?»). No se corrige solo.
+  - **Las ilegales y las sanciones de tiempo** salen de la bitácora de la mesa, sin las anuladas: la
+    primera ilegal de cada jugador da 2 min al rival (la segunda pierde: no da tiempo), y la
+    irregularidad puede llevar una sanción de tiempo (art. 12.9), **solo ±1 o ±2 minutos** (lo
+    decidió el dueño). Lo anotado **después** del control se suma o se resta; lo de **antes** ya
+    estaba en esos relojes: no se cuenta otra vez, pero sí al calcular lo gastado (si no, quien
+    recibió 2 min parecería haber pensado 2 min menos) y en la comprobación con el inicio. La hora
+    que vale es la de la anotación: si se anotó mucho después y en medio hubo un control, puede caer
+    del lado equivocado; por eso la ventana lista cada una con su hora.
+  - **La sanción de tiempo va escrita en el texto de la irregularidad** («· Sanción de tiempo: −2:00
+    a quien la cometió (art. 12.9)»), no en una columna: así no se tocó la base ni la Edge Function
+    en pleno torneo. La escribe `sancionTexto()` y la lee `leerSancion()`, una sola copia del
+    formato; al anotarla, un aviso le recuerda al árbitro ajustar el reloj en ese momento.
+  - **Lo que se pone en el reloj nuevo se anota como un control más** (acción `tiempo`, con su
+    turno y una nota de cómo se calculó y si el árbitro lo ajustó): si el reloj vuelve a fallar, ya
+    hay de dónde partir.
+  - El reloj de ajedrez dibujado (SVG propio, `aria-hidden`) muestra los dos tiempos y la palanca
+    levantada del lado de quien tiene el turno; el dato va también escrito («le toca» y las
+    casillas). Lo revisa `verificar-centroamericano-mesas.js` (las cuentas) y
+    `verificar-centroamericano-mesas-pagina.js` (la ventana de la irregularidad).
 - **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
   esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
   (no es de una mesa; le llega «X necesita ayuda»).
