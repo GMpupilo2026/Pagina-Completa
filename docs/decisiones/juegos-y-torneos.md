@@ -13595,6 +13595,14 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conserva la palabra de antes: «sub-08», no «08»), y si aún es largo guarda
   el final, que es la categoría. Vale para el PGN para LiveChess y para
   «PGN de la ronda N».
+- **Volver a bajar los PGN** (lo pidió el dueño). Cada ronda de cada torneo
+  ya tenía un botón, pero no decía que bajaba nada («Ronda 3 (1 partida)») y
+  usaba el nombre guardado al leerla, de antes de que cada categoría llevara
+  el suyo. Ahora dice «⬇ Bajar ronda 3 (…)» y el nombre se arma al bajar
+  (`archivoDe`), y arriba de la lista, «Bajar otra vez el PGN de la última
+  ronda de cada torneo» baja la última de todas las categorías de un clic, a
+  Descargas, y dice cuáles bajó. Chrome puede preguntar una vez si deja bajar
+  varios archivos.
 - **El rey en e4 dice qué tablero es, y ahí mismo se le da su categoría**
   (lo pidió el dueño: «que cuando se coloque el rey en la casilla e4, salte a
   la vista qué tablero es, con sonido y una luz… en la pantalla, para saber

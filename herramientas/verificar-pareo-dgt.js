@@ -406,8 +406,17 @@ async function pruebaPagina(browser) {
   await page.waitForFunction(() => /nada nuevo \(ronda 3\)/.test(document.getElementById("bitacora").textContent));
   igual("ni leerla otra vez ni recargar la página la crean de nuevo en Lichess",
     lichess.slice(antes).map((l) => l.ruta).filter((r) => r !== "/api/account"), []);
-  cierto("el torneo recuerda su ronda y su transmisión", /Ronda 3 \(1 partida\) · en Lichess/.test(await page.textContent("#torneos")) &&
+  cierto("el torneo recuerda su ronda y su transmisión", /Bajar ronda 3 \(1 partida\) · en Lichess/.test(await page.textContent("#torneos")) &&
     await page.$eval("#torneos", (u) => [...u.querySelectorAll("a")].some((a) => a.href === "https://lichess.org/broadcast/blitz/TOUR0001")));
+
+  // Volver a bajar el PGN: el de una ronda, y el de la última de cada torneo.
+  const [deNuevo] = await Promise.all([page.waitForEvent("download"), page.click("#torneos button:has-text('Bajar ronda 3')")]);
+  igual("«Bajar ronda 3» lo baja otra vez, con el mismo PGN y su nombre", [deNuevo.suggestedFilename(), /\[Round "3"\]/.test(fs.readFileSync(await deNuevo.path(), "utf8"))],
+    ["blitz-de-prueba-ronda-3.pgn", true]);
+  igual("«Bajar otra vez el PGN de la última ronda de cada torneo» se ve cuando hay alguna", await vis(page, "#btn-bajar-todos"), true);
+  const [todos] = await Promise.all([page.waitForEvent("download"), page.click("#btn-bajar-todos")]);
+  igual("y baja la última de cada uno, y dice cuáles", [todos.suggestedFilename(), (await page.textContent("#bajar-todos-estado")).trim()],
+    ["blitz-de-prueba-ronda-3.pgn", "En Descargas: blitz-de-prueba-ronda-3.pgn."]);
 
   // chess-results corrige el pareo de la ronda 3.
   const corregida = JSON.parse(JSON.stringify(DATOS.mesas));

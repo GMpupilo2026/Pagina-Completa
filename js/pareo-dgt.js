@@ -127,6 +127,23 @@
         }
     }
 
+    // El nombre del archivo de una ronda, con el nombre de hoy: el guardado
+    // (r.archivo) puede ser de antes de que cada categoría llevara el suyo.
+    const archivoDe = (t, n) => PareoDGT.nombreArchivo(t.nombre, n, estado.torneos.map((x) => x.nombre));
+
+    // Otra vez el PGN de la última ronda de cada torneo, uno detrás del otro.
+    function bajarTodos() {
+        const hechos = [];
+        for (const t of estado.torneos) {
+            const n = Math.max(0, ...Object.keys(t.rondas || {}).filter((k) => t.rondas[k].pgn).map(Number));
+            if (!n) continue;
+            bajar(archivoDe(t, n), t.rondas[String(n)].pgn);
+            hechos.push(archivoDe(t, n));
+        }
+        $("bajar-todos-estado").textContent = hechos.length ? "En Descargas: " + hechos.join(", ") + "." : "Todavía no hay ninguna ronda para bajar.";
+        if (hechos.length) anotar("Bajados otra vez: " + hechos.join(", ") + ".");
+    }
+
     function bajar(nombre, textoPgn) {
         const url = URL.createObjectURL(new Blob([textoPgn], { type: "application/x-chess-pgn" }));
         const a = document.createElement("a");
@@ -687,9 +704,9 @@
                     const b = document.createElement("button");
                     b.type = "button";
                     b.className = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                    b.textContent = "Ronda " + n + " (" + r.mesas + " partida" + (r.mesas === 1 ? "" : "s") + ")" + (r.lichess ? " · en Lichess" : "");
-                    b.setAttribute("aria-label", "Bajar el archivo de la ronda " + n);
-                    b.addEventListener("click", () => bajar(r.archivo, r.pgn));
+                    b.textContent = "⬇ Bajar ronda " + n + " (" + r.mesas + " partida" + (r.mesas === 1 ? "" : "s") + ")" + (r.lichess ? " · en Lichess" : "");
+                    b.setAttribute("aria-label", "Bajar otra vez el PGN de la ronda " + n + " de " + t.nombre);
+                    b.addEventListener("click", () => { bajar(archivoDe(t, n), r.pgn); anotar("«" + t.nombre + "», ronda " + n + ": bajado otra vez (" + archivoDe(t, n) + ")."); });
                     item.append(b);
                     lista.append(item);
                 }
@@ -698,6 +715,7 @@
             ul.append(li);
         }
         $("btn-crear-torneos").disabled = !(token && usuarioLichess) || !estado.torneos.length;
+        $("bajar-todos-caja").hidden = !estado.torneos.some((t) => Object.values(t.rondas || {}).some((r) => r.pgn));
         // La lista se rehace en cada revisión: quien estaba en un botón lo sigue estando.
         if (foco) { const otra = [...ul.querySelectorAll("[data-foco]")].find((e) => e.dataset.foco === foco); if (otra) otra.focus(); }
         document.dispatchEvent(new CustomEvent("pareo-dgt:cambio"));
@@ -776,6 +794,7 @@
         });
         $("btn-desconectar").addEventListener("click", desconectar);
         $("btn-crear-torneos").addEventListener("click", crearTorneos);
+        $("btn-bajar-todos").addEventListener("click", bajarTodos);
         $("btn-ver-lichess").addEventListener("click", verMisTorneos);
         $("btn-borrar-marcados").addEventListener("click", borrarMarcados);
         $("btn-marcar-todos").addEventListener("click", () => {
