@@ -70,6 +70,16 @@
   // mensajes enteros. Un mensaje empieza con un byte con el bit 0x80 y trae su
   // largo total; lo que no empieza así (ruido, un choque en el bus) se tira
   // byte a byte hasta encontrar un comienzo creíble.
+  //
+  // «Creíble» es: un código que un tablero manda (0x83–0x89), con el largo
+  // que ese código puede tener, y la suma bien. Sin eso, el eco de un pedido
+  // (algunos adaptadores del bus devuelven lo que manda la computadora: 83 23
+  // 36 3c al tablero 4534) se leía como un mensaje de 4534 bytes y la página
+  // se quedaba esperándolo, tragándose todas las respuestas de verdad: los
+  // tableros se encontraban (el ping general va a la dirección 0, un largo
+  // imposible) y después ninguno contestaba (pasó con la primera cadena de
+  // verdad, el 2/11).
+  const LARGO_MAXIMO = { 0x83: 70, 0x84: 13, 0x85: 0x2000, 0x86: 0x2000, 0x87: 6, 0x88: 6, 0x89: 16 };
   function crearFlujo() {
     let buf = [];
     return {
@@ -77,12 +87,14 @@
         for (const b of bytes) buf.push(b);
         const out = [];
         for (;;) {
-          while (buf.length && !(buf[0] & 0x80)) buf.shift();
+          while (buf.length && !LARGO_MAXIMO[buf[0]]) buf.shift();
           if (buf.length < 3) break;
           const largo = (buf[1] << 7) | buf[2];
-          if ((buf[1] & 0x80) || (buf[2] & 0x80) || largo < 3 || largo > 0x2000) { buf.shift(); continue; }
+          if ((buf[1] & 0x80) || (buf[2] & 0x80) || largo < 6 || largo > LARGO_MAXIMO[buf[0]]) { buf.shift(); continue; }
           if (buf.length < largo) break;
-          out.push(buf.slice(0, largo));
+          const m = buf.slice(0, largo);
+          if (suma(m.slice(0, -1)) !== m[m.length - 1]) { buf.shift(); continue; }
+          out.push(m);
           buf = buf.slice(largo);
         }
         return out;
@@ -244,6 +256,7 @@
         if (colocacion(casillas) === INICIAL) rotado = false;
         else if (colocacion(girar(casillas)) === INICIAL) rotado = true;
         else return { nuevas: [], atras: 0 };   // todavía no está armado: se espera la posición inicial
+        p.cambios += 1;   // «Lista para empezar»: sin esto, la fila seguía en «Esperando la posición inicial»
       }
       const ahora = colocacion(fisico());
       if (ahora === piezasDe(chess.fen())) return { nuevas: [], atras: 0 };
@@ -420,6 +433,9 @@
 
     // Manda un pedido y espera la respuesta de ese tablero con ese código.
     async function preguntar(cmd, dir, codigo) {
+      // Cada pregunta empieza limpia: lo que quedó a medias de la anterior
+      // (una respuesta tardía, un eco) no se mezcla con esta.
+      if (puerto.vaciar) puerto.vaciar();
       await puerto.escribir(pedido(cmd, dir));
       const hasta = Date.now() + espera;
       for (;;) {
@@ -486,7 +502,7 @@
     return { encontrar, cambios, tablero, reloj: relojDe, preguntar };
   }
 
-  const api = { CMD, MSG, INICIAL, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, textoPgn, crearCadena };
+  const api = { CMD, MSG, INICIAL, LETRA, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, textoPgn, crearCadena };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.DgtLector = api;
 })(typeof self !== "undefined" ? self : this);

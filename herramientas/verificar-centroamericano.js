@@ -465,10 +465,12 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
 
     // El inglés: todo texto de la página tiene el suyo, y al volver queda igual que antes.
     const ctx4 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
-    // Sin la base ni Lichess de verdad: con la sala real, la ficha «Partidas en
-    // vivo» se encendía a mitad de la prueba (el 2/11/2026, al agregarle la
-    // transmisión) y el texto ya no era el mismo. La ficha encendida con el
-    // idioma la prueba verificar-centroamericano-partidas.js.
+    // Con la hora fija: en pleno torneo, «Hoy en el torneo» dice también en
+    // palabras cuánto falta («Faltan 5 horas, 14 minutos…»), y con el reloj de
+    // verdad el minuto podía cambiar entre una foto y la otra (pasó el 2/11).
+    await ctx4.clock.setFixedTime(new Date("2026-11-02T10:15:00-06:00"));
+    // Y sin la base de verdad: lo de «Partidas» y «Hoy» llegaba de la sala REAL, y en pleno torneo traía partidas y la página
+    // cambiaba sola después de tomar la foto del texto: la prueba comparaba contra algo que se movía.
     await ctx4.route(/supabase\.co|lichess\.org/, (r) => r.abort());
     const p4 = await ctx4.newPage();
     // El aviso de «quedó guardada» llega un rato después de cargar: se espera, para comparar lo mismo.

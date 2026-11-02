@@ -41,8 +41,10 @@
                 if (a && typeof a === "object" && a.tnr && a.mesa) asignadas[d] = { tnr: String(a.tnr), mesa: Number(a.mesa) };
                 else if (Number(a) && e.torneo) asignadas[d] = { tnr: String(e.torneo), mesa: Number(a) };
             }
-            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {}, sonido: !!e.sonido };
-        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {}, sonido: false }; }
+            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {}, sonido: !!e.sonido,
+                rey: e.rey !== false, casillaRey: /^[a-h][1-8]$/.test(e.casillaRey || "") ? e.casillaRey : "e4",
+                ultimaCategoria: typeof e.ultimaCategoria === "string" ? e.ultimaCategoria : "" };
+        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {}, sonido: false, rey: true, casillaRey: "e4" }; }
     }
     const estado = leer();
     function guardar() {
@@ -67,9 +69,18 @@
         const cola = [];
         let avisar = null;
         const writer = serial.writable.getWriter();
+        // Lo último que fue y vino por el cable, en hexadecimal, para ver qué
+        // contesta un tablero de verdad («Bajar el registro» de cada puerto).
+        const registro = [];
+        const anotarBytes = (flecha, bytes) => {
+            registro.push(HoraCR.hora(new Date()) + " " + String(Math.round(performance.now() % 100000)).padStart(5, "0") + " " + flecha + " " + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" "));
+            if (registro.length > 2000) registro.splice(0, registro.length - 2000);
+        };
         const p = {
             writer,
-            async escribir(bytes) { await writer.write(Uint8Array.from(bytes)); },
+            registro,
+            async escribir(bytes) { anotarBytes("→", bytes); await writer.write(Uint8Array.from(bytes)); },
+            vaciar() { flujo.vaciar(); cola.length = 0; },
             esperar(ms) {
                 if (cola.length) return Promise.resolve(cola.shift());
                 return new Promise((resolver) => {
@@ -84,6 +95,7 @@
                         for (;;) {
                             const { value, done } = await p.reader.read();
                             if (done) return;
+                            anotarBytes("←", value);
                             for (const m of flujo.empujar(value)) cola.push(m);
                             if (cola.length && avisar) avisar();
                         }
@@ -237,6 +249,7 @@
         if (identificar && c.eventos.some((e) => e.tipo === "pieza")) marcarFila(t);
         const partida = t.juego.partida;
         partida.memoria(c.eventos);
+        if (estado.rey) reyEnLaCasilla(t, c.eventos);
         if (n % RELOJ_CADA === 0) {
             const r = await p.cadena.reloj(t.dir);
             if (!r.error) partida.reloj(r.reloj);
@@ -460,7 +473,7 @@
     function bajarPgn(tnr, n) {
         const r = API().ronda(tnr, n);
         if (!r) return;
-        API().bajar(PareoDGT.nombreArchivo(r.nombre || nombreDe(tnr), n).replace(/\.pgn$/, "-partidas.pgn"), pgnDe(clave(tnr, n), r));
+        API().bajar(PareoDGT.nombreArchivo(r.nombre || nombreDe(tnr), n, API().torneos().map((x) => x.nombre)).replace(/\.pgn$/, "-partidas.pgn"), pgnDe(clave(tnr, n), r));
     }
 
     // ------------------------------------------------------------ los avisos de la sala
@@ -480,7 +493,8 @@
             const p = t.juego && t.juego.partida;
             if (!p) continue;
             const desde = p.trabadaDesde();
-            if (desde !== null && Date.now() - desde >= TRABADA_MS) {
+            // El rey puesto para ver qué tablero es no es una partida trabada.
+            if (desde !== null && !t.reyMostrado && Date.now() - desde >= TRABADA_MS) {
                 const d = p.diferencias() || [];
                 out.push({ clave: "trabada-" + t.dir + "-" + p.jugadas().length, tipo: "aviso",
                     texto: "Tablero " + t.dir + " (" + dondeEsta(t) + "): hace " + Math.round((Date.now() - desde) / 1000) + " s que no coincide con ninguna jugada. " +
@@ -670,6 +684,95 @@
 
     // ------------------------------------------------------------ ¿cuál es este tablero?
 
+    // Un rey en la casilla elegida (e4 por omisión) dice qué tablero es, sin
+    // tocar la computadora: el árbitro lo pone en la mesa y en la pantalla
+    // destella el número, la categoría y la mesa, con sonido, y su fila se
+    // marca. Una vez por cada vez que se pone. Si en la PARTIDA hay un rey en
+    // esa casilla (un final), no es un aviso: es una jugada.
+    function piezaEnFen(fen, j) {
+        const fila = String(fen).split(" ")[0].split("/")[Math.floor(j / 8)] || "";
+        let col = 0;
+        for (const ch of fila) {
+            if (/\d/.test(ch)) { col += Number(ch); continue; }
+            if (col === j % 8) return ch;
+            col += 1;
+        }
+        return ".";
+    }
+    function reyEnLaCasilla(t, eventos) {
+        // El tablero de verdad (t.fisico): el de la partida empieza de cero
+        // cuando el tablero cambia de categoría o de mesa.
+        const p = t.juego && t.juego.partida;
+        const cas = t.fisico || (p ? p.casillas() : null);
+        if (!cas || cas.length !== 64) return;
+        const i = (8 - Number(estado.casillaRey[1])) * 8 + (estado.casillaRey.charCodeAt(0) - 97);
+        // Levantado y vuelto a poner entre dos lecturas: cuenta como otra vez.
+        if ((eventos || []).some((e) => e.tipo === "pieza" && e.casilla === i && !e.pieza)) t.reyMostrado = false;
+        const hayRey = "Kk".includes(DgtLector.LETRA[cas[i]] || ".");
+        const enLaPartida = !!p && "Kk".includes(piezaEnFen(p.fen(), p.rotado() ? 63 - i : i));
+        if (!hayRey || enLaPartida) { t.reyMostrado = false; return; }
+        if (t.reyMostrado) return;
+        t.reyMostrado = true;
+        mostrarTablero(t);
+    }
+    // El panel del rey: qué tablero es y, ahí mismo, su categoría y su mesa.
+    // Para armar la sala recorriéndola: la categoría queda elegida de un
+    // tablero al otro y la mesa sugerida es la siguiente libre.
+    let tableroDelPanel = null;
+    function mesaLibre(tnr, dir) {
+        const usadas = new Set(Object.entries(estado.asignadas).filter(([d, a]) => Number(d) !== dir && a.tnr === tnr).map(([, a]) => a.mesa));
+        let m = 1;
+        while (usadas.has(m)) m += 1;
+        return m;
+    }
+    function sugerirMesa() {
+        const t = tableroDelPanel, tnr = $("directo-rey-cat").value;
+        if (!t) return;
+        const a = asignacion(t.dir);
+        $("directo-rey-mesa").value = !tnr ? "" : a && a.tnr === tnr ? String(a.mesa) : String(mesaLibre(tnr, t.dir));
+    }
+    function mostrarTablero(t) {
+        tableroDelPanel = t;
+        const a = asignacion(t.dir);
+        const panel = $("directo-rey-panel");
+        $("directo-rey-titulo").textContent = "Tablero " + t.dir;
+        $("directo-rey-ahora").textContent = a ? "Ahora: " + nombreDe(a.tnr) + ", mesa " + a.mesa + "." : "Todavía sin categoría ni mesa.";
+        $("directo-rey-listo").textContent = "";
+        const sel = $("directo-rey-cat");
+        sel.textContent = "";
+        opcionesCategoria(sel);
+        const lista = API() ? API().torneos() : [];
+        sel.value = a ? a.tnr : lista.some((c) => c.tnr === estado.ultimaCategoria) ? estado.ultimaCategoria : lista.length === 1 ? lista[0].tnr : "";
+        sugerirMesa();
+        clearTimeout(mostrarTablero.t);
+        panel.hidden = false;
+        panel.classList.remove("dgt-destello");
+        void panel.offsetWidth;   // para que el destello vuelva a empezar
+        panel.classList.add("dgt-destello");
+        marcarFila(t);
+        sel.focus();
+        sonar();
+        setTimeout(sonar, 300);
+    }
+    function cerrarPanel() {
+        clearTimeout(mostrarTablero.t);
+        $("directo-rey-panel").hidden = true;
+        tableroDelPanel = null;
+    }
+    function guardarPanel(ev) {
+        ev.preventDefault();
+        const t = tableroDelPanel;
+        if (!t) return;
+        const tnr = $("directo-rey-cat").value;
+        const mesa = Math.floor(Number($("directo-rey-mesa").value));
+        if (tnr && !(mesa >= 1)) { $("directo-rey-listo").textContent = "Falta la mesa."; $("directo-rey-mesa").focus(); return; }
+        asignar(t.dir, tnr, tnr ? mesa : 0);
+        despuesDeAsignar();
+        $("directo-rey-ahora").textContent = tnr ? "Ahora: " + nombreDe(tnr) + ", mesa " + mesa + "." : "Sin categoría ni mesa: no se transmite.";
+        $("directo-rey-listo").textContent = "Guardado. Pon el rey en el siguiente tablero.";
+        mostrarTablero.t = setTimeout(cerrarPanel, 2500);
+    }
+
     let identificar = false;
     function marcarFila(t) {
         if (!t.fila) return;
@@ -702,7 +805,13 @@
             quitar.className = otra.className;
             quitar.textContent = "Desconectar";
             quitar.addEventListener("click", () => desconectar(p));
-            li.append(txt, otra, quitar);
+            const reg = document.createElement("button");
+            reg.type = "button";
+            reg.className = otra.className;
+            reg.textContent = "Bajar el registro";
+            reg.addEventListener("click", () => API().bajar("registro-" + p.nombre.replace(/\W+/g, "-").replace(/-+$/, "").toLowerCase() + ".txt",
+                "Pareo para DGT, " + p.nombre + ": lo que fue (→) y vino (←) por el cable, en hexadecimal.\n" + p.io.registro.join("\n") + "\n"));
+            li.append(txt, otra, quitar, reg);
             ul.append(li);
         }
         pintarEstado();
@@ -751,6 +860,7 @@
         if (tnr && mesa) {
             for (const [d, a] of Object.entries(estado.asignadas)) if (Number(d) !== dir && a.tnr === tnr && a.mesa === mesa) delete estado.asignadas[d];
             estado.asignadas[dir] = { tnr, mesa };
+            estado.ultimaCategoria = tnr;
         } else delete estado.asignadas[dir];
     }
 
@@ -870,6 +980,18 @@
         });
         $("btn-directo-sala").addEventListener("click", abrirSala);
         window.addEventListener("pagehide", () => { if (sala && !sala.closed) sala.close(); });
+        $("directo-rey").checked = estado.rey;
+        $("directo-casilla-rey").value = estado.casillaRey;
+        $("directo-rey").addEventListener("change", () => { estado.rey = $("directo-rey").checked; guardar(); });
+        $("directo-casilla-rey").addEventListener("change", () => {
+            const v = $("directo-casilla-rey").value.trim().toLowerCase();
+            if (/^[a-h][1-8]$/.test(v)) { estado.casillaRey = v; guardar(); for (const x of tableros.values()) x.reyMostrado = false; }
+            $("directo-casilla-rey").value = estado.casillaRey;
+        });
+        $("directo-rey-form").addEventListener("submit", guardarPanel);
+        $("directo-rey-cat").addEventListener("change", sugerirMesa);
+        $("directo-rey-cerrar").addEventListener("click", cerrarPanel);
+        $("directo-rey-panel").addEventListener("keydown", (ev) => { if (ev.key === "Escape") cerrarPanel(); });
         $("directo-sonido").checked = estado.sonido;
         $("directo-sonido").addEventListener("change", () => { estado.sonido = $("directo-sonido").checked; guardar(); if (estado.sonido) sonar(); });
         $("btn-directo-cual").addEventListener("click", () => {

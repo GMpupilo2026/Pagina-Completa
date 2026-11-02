@@ -24,7 +24,7 @@
  *   PareoDGT.firma(datos)                    → quién juega con quién en cada mesa (para ver si cambió)
  *   PareoDGT.resultadoCR("½ - ½")            → "1/2-1/2" (el resultado de chess-results, para el PGN) | null
  *   PareoDGT.decidir(guardado, datos, mesas) → "esperar" | "nueva" | "cambio" | "igual"
- *   PareoDGT.nombreArchivo(nombre, ronda)    → "torneo-blitz-ronda-3.pgn"
+ *   PareoDGT.nombreArchivo(nombre, ronda, otros) → "torneo-blitz-ronda-3.pgn" (sin lo que comparte con otros)
  *   PareoDGT.formTorneo({...}) / formRonda({...}) → [[campo, valor]] para URLSearchParams
  *   PareoDGT.inicioRonda("2026.09.27", "3:00pm") → la hora de la ronda (ms), en hora de Costa Rica
  *   PareoDGT.datosLiveChess(nombre, ficha)   → [{ campo, etiqueta, valor }] de la pestaña «Tournament» de LiveChess
@@ -151,12 +151,29 @@
     return ya.firma === firma(datos) && (ya.mesasElegidas || "") === elegidas ? "igual" : "cambio";
   }
 
+  const palabras = (s) => quitarTildes(s).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   function slug(s) {
-    return quitarTildes(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "torneo";
+    return palabras(s).join("-").slice(0, 60).replace(/-+$/, "") || "torneo";
   }
 
-  function nombreArchivo(nombre, ronda) {
-    return slug(nombre) + "-ronda-" + (Number(ronda) || 0) + ".pgn";
+  // El nombre del archivo de una ronda. Con `otros` (los nombres de los demás
+  // torneos de la lista) se le quita lo que tienen todos en común: los del
+  // Centroamericano empiezan todos con «XXI Festival de Ajedrez…» y, cortados
+  // a 60 letras, todos los archivos se llamaban igual (lo vio el dueño). Si
+  // aún queda largo, se guarda el final, que es la categoría.
+  function nombreArchivo(nombre, ronda, otros) {
+    let p = palabras(nombre);
+    const demas = (otros || []).map(palabras).filter((o) => o.join("-") !== p.join("-"));
+    if (demas.length) {
+      let comun = 0;
+      while (comun < p.length - 1 && demas.every((o) => o[comun] === p[comun])) comun += 1;
+      // «Sub 08 Absoluto» y «Sub 10 Absoluto» comparten «sub»: sin él, «08» solo se lee mal.
+      if (comun > 0 && /^\d/.test(p[comun])) comun -= 1;
+      p = p.slice(comun);
+    }
+    let base = p.join("-");
+    if (base.length > 60) base = base.slice(-60).replace(/^[^-]*-/, "");
+    return (base || "torneo") + "-ronda-" + (Number(ronda) || 0) + ".pgn";
   }
 
   // El torneo de la transmisión. ritmo: "blitz" | "rapid" | "standard".

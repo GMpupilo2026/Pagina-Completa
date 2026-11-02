@@ -127,6 +127,23 @@
         }
     }
 
+    // El nombre del archivo de una ronda, con el nombre de hoy: el guardado
+    // (r.archivo) puede ser de antes de que cada categoría llevara el suyo.
+    const archivoDe = (t, n) => PareoDGT.nombreArchivo(t.nombre, n, estado.torneos.map((x) => x.nombre));
+
+    // Otra vez el PGN de la última ronda de cada torneo, uno detrás del otro.
+    function bajarTodos() {
+        const hechos = [];
+        for (const t of estado.torneos) {
+            const n = Math.max(0, ...Object.keys(t.rondas || {}).filter((k) => t.rondas[k].pgn).map(Number));
+            if (!n) continue;
+            bajar(archivoDe(t, n), t.rondas[String(n)].pgn);
+            hechos.push(archivoDe(t, n));
+        }
+        $("bajar-todos-estado").textContent = hechos.length ? "En Descargas: " + hechos.join(", ") + "." : "Todavía no hay ninguna ronda para bajar.";
+        if (hechos.length) anotar("Bajados otra vez: " + hechos.join(", ") + ".");
+    }
+
     function bajar(nombre, textoPgn) {
         const url = URL.createObjectURL(new Blob([textoPgn], { type: "application/x-chess-pgn" }));
         const a = document.createElement("a");
@@ -257,6 +274,120 @@
         pintarLichess();
     }
 
+    // ------------------------------------------------------------ borrar en Lichess
+
+    // Los torneos de transmisión de la cuenta, de Lichess mismo (no solo los
+    // que esta página anotó: un intento que falló a medias pudo dejar uno).
+    let deLichess = [];
+    async function verMisTorneos() {
+        const estadoTxt = $("borrar-estado");
+        if (!token || !usuarioLichess) { estadoTxt.textContent = "Primero conecta Lichess (arriba)."; return; }
+        $("btn-ver-lichess").disabled = true;
+        estadoTxt.textContent = "Buscando tus torneos en Lichess…";
+        try {
+            deLichess = [];
+            for (let pag = 1; pag <= 10; pag++) {
+                const d = await lichess("/api/broadcast/by/" + encodeURIComponent(usuarioLichess) + "?page=" + pag);
+                for (const x of d.currentPageResults || []) {
+                    const t = x.tour || x;
+                    if (t && t.id) deLichess.push({ id: t.id, nombre: t.name || t.id, url: t.url || "", creado: t.createdAt || null });
+                }
+                if (!d.nextPage) break;
+            }
+            pintarBorrar();
+            estadoTxt.textContent = deLichess.length ? deLichess.length + " torneo" + (deLichess.length === 1 ? "" : "s") + " en tu cuenta de Lichess." : "No tienes torneos de transmisión en Lichess.";
+        } catch (e) {
+            estadoTxt.textContent = "No se pudo leer la lista de Lichess. " + e.message + ".";
+        }
+        $("btn-ver-lichess").disabled = false;
+    }
+
+    function pintarBorrar() {
+        const ul = $("borrar-items");
+        ul.textContent = "";
+        const deAqui = new Set(estado.torneos.filter((t) => t.lichess && t.lichess.id).map((t) => t.lichess.id));
+        for (const t of deLichess) {
+            const li = document.createElement("li");
+            const label = document.createElement("label");
+            label.className = "inline-flex items-start gap-2 cursor-pointer";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.className = "w-4 h-4 mt-0.5 accent-brand-700";
+            cb.value = t.id;
+            cb.addEventListener("change", contarMarcados);
+            const txt = document.createElement("span");
+            txt.textContent = t.nombre + (t.creado ? " · creado el " + HoraCR.fecha(new Date(t.creado)) : "") + (deAqui.has(t.id) ? " · de esta lista" : "");
+            label.append(cb, txt);
+            li.append(label);
+            if (t.url) {
+                const a = document.createElement("a");
+                a.href = t.url;
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "ml-2 underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                a.textContent = "Verlo";
+                li.append(a);
+            }
+            ul.append(li);
+        }
+        $("borrar-lista").hidden = !deLichess.length;
+        contarMarcados();
+    }
+
+    const marcados = () => [...document.querySelectorAll("#borrar-items input:checked")].map((c) => c.value);
+    function contarMarcados() {
+        const n = marcados().length;
+        $("btn-borrar-marcados").disabled = !n;
+        $("btn-borrar-marcados").textContent = n ? "Borrar los marcados (" + n + ")" : "Borrar los marcados";
+        const todos = document.querySelectorAll("#borrar-items input");
+        $("btn-marcar-todos").textContent = todos.length && n === todos.length ? "Desmarcar todos" : "Marcar todos";
+    }
+
+    async function borrarMarcados() {
+        const ids = marcados();
+        if (!ids.length) return;
+        const nombres = ids.map((id) => (deLichess.find((t) => t.id === id) || {}).nombre || id);
+        const ok = await Avisos.confirmar("Se borran en Lichess, con todas sus rondas y partidas: " + nombres.map((n) => "«" + n + "»").join(", ") + ". No se puede deshacer.",
+            { titulo: ids.length === 1 ? "Borrar 1 torneo en Lichess" : "Borrar " + ids.length + " torneos en Lichess", aceptar: ids.length === 1 ? "Borrar el torneo" : "Borrar los " + ids.length, peligro: true });
+        if (!ok) return;
+        $("btn-borrar-marcados").disabled = true;
+        let borrados = 0;
+        const fallidos = [];
+        for (const [i, id] of ids.entries()) {
+            $("borrar-estado").textContent = "Borrando " + (i + 1) + " de " + ids.length + "…";
+            try {
+                await lichess("/broadcast/" + id + "/delete");
+                // Lichess contesta igual aunque no lo borre (si no es tuyo): se comprueba.
+                let sigue = true;
+                try { await lichess("/api/broadcast/" + id); } catch (_) { sigue = false; }
+                if (sigue) throw new Error("Lichess no lo borró (¿es de otra cuenta?)");
+                borrados += 1;
+                olvidarEnLichess(id);
+                anotar("«" + nombres[i] + "»: borrado en Lichess.");
+            } catch (e) {
+                fallidos.push(nombres[i]);
+                anotar("«" + nombres[i] + "»: no se pudo borrar en Lichess. " + e.message + ".", { error: true });
+            }
+        }
+        deLichess = deLichess.filter((t) => !ids.includes(t.id) || fallidos.includes(t.nombre));
+        pintarBorrar();
+        $("borrar-estado").textContent = (borrados ? "Borrado" + (borrados === 1 ? "" : "s") + " en Lichess: " + borrados + "." : "") +
+            (fallidos.length ? " No se pudo borrar: " + fallidos.join(", ") + "." : "");
+    }
+
+    // Un torneo borrado en Lichess deja de estar «en Lichess» aquí: «Crear los
+    // torneos en Lichess» lo vuelve a crear, con sus rondas.
+    function olvidarEnLichess(id) {
+        for (const t of estado.torneos) {
+            if (!t.lichess || t.lichess.id !== id) continue;
+            t.lichess = null;
+            for (const r of Object.values(t.rondas || {})) { delete r.lichess; delete r.empujada; }
+        }
+        guardar();
+        pintarTorneos();
+        pintarLichess();
+    }
+
     // La ronda en Lichess, con el pareo empujado. Una sola vez por ronda.
     async function rondaLichess(t, datos, pgn) {
         const r = t.rondas[String(datos.ronda)];
@@ -351,7 +482,7 @@
         }
         const pgn = PareoDGT.pgn(datos, { mesas: t.mesas, sinTildes: estado.sinTildes, sitio: estado.lugar || undefined });
         const n = PareoDGT.partidas(datos, { mesas: t.mesas }).length;
-        const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda);
+        const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda, estado.torneos.map((x) => x.nombre));
         const anterior = t.rondas[String(datos.ronda)];
         const otrasMesas = !!anterior && anterior.firma === PareoDGT.firma(datos);
         t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), mesasElegidas: t.mesas || "", pgn, archivo: nombre, mesas: n, pareo: pareoDe(datos) });
@@ -573,9 +704,9 @@
                     const b = document.createElement("button");
                     b.type = "button";
                     b.className = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                    b.textContent = "Ronda " + n + " (" + r.mesas + " partida" + (r.mesas === 1 ? "" : "s") + ")" + (r.lichess ? " · en Lichess" : "");
-                    b.setAttribute("aria-label", "Bajar el archivo de la ronda " + n);
-                    b.addEventListener("click", () => bajar(r.archivo, r.pgn));
+                    b.textContent = "⬇ Bajar ronda " + n + " (" + r.mesas + " partida" + (r.mesas === 1 ? "" : "s") + ")" + (r.lichess ? " · en Lichess" : "");
+                    b.setAttribute("aria-label", "Bajar otra vez el PGN de la ronda " + n + " de " + t.nombre);
+                    b.addEventListener("click", () => { bajar(archivoDe(t, n), r.pgn); anotar("«" + t.nombre + "», ronda " + n + ": bajado otra vez (" + archivoDe(t, n) + ")."); });
                     item.append(b);
                     lista.append(item);
                 }
@@ -584,6 +715,7 @@
             ul.append(li);
         }
         $("btn-crear-torneos").disabled = !(token && usuarioLichess) || !estado.torneos.length;
+        $("bajar-todos-caja").hidden = !estado.torneos.some((t) => Object.values(t.rondas || {}).some((r) => r.pgn));
         // La lista se rehace en cada revisión: quien estaba en un botón lo sigue estando.
         if (foco) { const otra = [...ul.querySelectorAll("[data-foco]")].find((e) => e.dataset.foco === foco); if (otra) otra.focus(); }
         document.dispatchEvent(new CustomEvent("pareo-dgt:cambio"));
@@ -662,6 +794,15 @@
         });
         $("btn-desconectar").addEventListener("click", desconectar);
         $("btn-crear-torneos").addEventListener("click", crearTorneos);
+        $("btn-bajar-todos").addEventListener("click", bajarTodos);
+        $("btn-ver-lichess").addEventListener("click", verMisTorneos);
+        $("btn-borrar-marcados").addEventListener("click", borrarMarcados);
+        $("btn-marcar-todos").addEventListener("click", () => {
+            const todos = [...document.querySelectorAll("#borrar-items input")];
+            const marcar = !todos.every((c) => c.checked);
+            for (const c of todos) c.checked = marcar;
+            contarMarcados();
+        });
         $("btn-vigilar").addEventListener("click", () => vigilar(!vigilando));
         $("btn-revisar").addEventListener("click", () => revisar({ contar: true }));
         if (!window.showDirectoryPicker) $("carpeta-texto").textContent = "Este navegador baja cada archivo a Descargas. Con Chrome o Edge en la computadora se puede elegir una carpeta.";

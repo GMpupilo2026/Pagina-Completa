@@ -63,6 +63,9 @@ function cadenaVirtual(tabs, opciones) {
     escritos: [],
     async escribir(b) {
       puerto.escritos.push(b.slice());
+      // Con `eco`, el adaptador devuelve lo que manda la computadora (pasó con
+      // la primera cadena de verdad).
+      if (o.eco) cola.push(...flujo.empujar(b.slice()));
       let resp = [];
       for (const t of tabs) resp.push(...t.recibir(b));
       if (b[0] === 0x87 && b[1] === 0 && b[2] === 0 && resp.length > 1) resp = [resp[Math.floor(r() * resp.length)]];
@@ -109,6 +112,22 @@ async function pruebaCadena() {
   igual("los que ya conocía se preguntan uno por uno, sin esperar al ping general",
     (await L.crearCadena(cadenaVirtual(tabs.slice(0, 3)), rapida).encontrar([10001, 10002, 10003])), [10001, 10002, 10003]);
   igual("un número que no contesta no se agrega", await L.crearCadena(cadenaVirtual(tabs.slice(0, 2)), rapida).encontrar([10001, 15000]), [10001, 10002]);
+
+  // La primera cadena de verdad (2/11): los cuatro se encontraban y después
+  // ninguno contestaba. El eco de «83 23 36 3c» (al 4534) parecía un mensaje
+  // de 4534 bytes y se tragaba las respuestas.
+  const reales = [4534, 4875, 7362, 15712].map((n) => T.crear({ serie: String(n), reloj: { izquierda: 300, derecha: 300, turno: null } }));
+  const conEco = L.crearCadena(cadenaVirtual(reales, { semilla: 5, eco: true }), rapida);
+  const dirsEco = await conEco.encontrar();
+  igual("con un adaptador que devuelve el eco de cada pedido, los encuentra", dirsEco, [4534, 4875, 7362, 15712]);
+  const leidos = [];
+  for (const d of dirsEco) leidos.push([(await conEco.tablero(d)).casillas, await conEco.cambios(d), (await conEco.reloj(d)).reloj]);
+  cierto("y después cada uno contesta: el tablero entero, los cambios y el reloj",
+    leidos.every(([c, cb, rl]) => c && c.length === 64 && cb && Array.isArray(cb.eventos) && rl && rl.izquierda.segundos === 300), JSON.stringify(leidos.map(([c, cb, rl]) => [c && c.length, cb && cb.error, rl && rl.izquierda])));
+  const f = L.crearFlujo();
+  const respuesta = T.mensajeBus(0x03, [0x23, 0x36], Array(64).fill(0));
+  igual("el eco de un pedido no se toma por el comienzo de un mensaje", f.empujar(L.pedido(0x82, 4534).concat(respuesta)), [respuesta]);
+  igual("ni un mensaje con la suma mal: se busca el siguiente", L.crearFlujo().empujar([0x83, 0x00, 0x06, 0x01, 0x02, 0x7f].concat(respuesta)), [respuesta]);
 }
 
 // Las 64 partidas en tableros virtuales de una cadena, leídas por el lector
@@ -513,6 +532,10 @@ async function pruebaSala(browser) {
   await p.click("#btn-directo-puerto");
   await p.waitForFunction(() => document.getElementById("directo-error").textContent !== "");
   igual("y el mismo puerto otra vez: ya está conectado", await p.textContent("#directo-error"), "Ese puerto ya está conectado aquí.");
+  const [reg] = await Promise.all([p.waitForEvent("download"), p.click("#directo-puertos button:has-text('Bajar el registro')")]);
+  const textoReg = fs.readFileSync(await reg.path(), "utf8");
+  cierto("«Bajar el registro» baja lo que fue y vino por el cable (el ping general y la respuesta del 10001)",
+    reg.suggestedFilename() === "registro-puerto-1-usb.txt" && /→ 87 00 00 07/.test(textoReg) && /← 87 00 06 4e 11/.test(textoReg), reg.suggestedFilename() + " " + textoReg.slice(0, 400));
   await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Categoría']", "111");
   const avisos = () => p.$$eval("#directo-alertas li", (l) => l.map((x) => x.textContent));
   const esperarAviso = (re) => p.waitForFunction((re) => [...document.querySelectorAll("#directo-alertas li")].some((x) => new RegExp(re).test(x.textContent)), re, { timeout: 20000 });
@@ -586,6 +609,60 @@ async function pruebaSala(browser) {
   await ventana.close();
   await p.waitForFunction(() => document.getElementById("directo-sala-texto").textContent === "", null, { timeout: 10000 });
   cierto("al cerrar la ventana, la página lo nota", true);
+
+  // El rey en e4: el árbitro lo pone en la mesa, la pantalla dice qué tablero
+  // es y ahí mismo se le da la categoría y la mesa.
+  // Suena aunque «Avisar con un sonido» esté apagado: es lo que se pidió.
+  await p.uncheck("#directo-sonido");
+  const panelVisible = () => p.evaluate(() => document.getElementById("directo-rey-panel").checkVisibility());
+  const sonidosAntes = await p.evaluate(() => window.__sonidosDirecto);
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
+  await p.waitForTimeout(500);
+  igual("un rey en e4: en grande, qué tablero es y cómo está, su fila marcada y dos pitidos",
+    [await p.textContent("#directo-rey-titulo"), await p.textContent("#directo-rey-ahora"), await p.evaluate(() => document.querySelector("#directo-tableros tr:nth-child(3)").dataset.marcada), (await p.evaluate(() => window.__sonidosDirecto)) - sonidosAntes],
+    ["Tablero 10003", "Todavía sin categoría ni mesa.", "si", 2]);
+  await p.waitForTimeout(1500);
+  igual("mientras el rey sigue ahí, no vuelve a sonar", (await p.evaluate(() => window.__sonidosDirecto)) - sonidosAntes, 2);
+  cierto("y no es un aviso de «partida trabada» (PAREO_DGT_TRABADA_MS es 1,5 s en la prueba)", !(await avisos()).some((x) => /10003/.test(x) && /no coincide/.test(x)), (await avisos()).join(" | "));
+  igual("el foco va a la categoría, y la sugiere: la última que se usó (Sub-12)", [await p.evaluate(() => document.activeElement.id), await p.inputValue("#directo-rey-cat")], ["directo-rey-cat", "111"]);
+  igual("y la mesa, la siguiente libre de esa categoría (la 1 y la 2 ya tienen tablero)", await p.inputValue("#directo-rey-mesa"), "3");
+  await p.selectOption("#directo-rey-cat", "222");
+  igual("al cambiar de categoría, la mesa libre de esa (el Abierto no tiene ninguna)", await p.inputValue("#directo-rey-mesa"), "1");
+  await p.selectOption("#directo-rey-cat", "111");
+  await p.click("#directo-rey-form button[type=submit]");
+  await p.waitForFunction(() => /Guardado/.test(document.getElementById("directo-rey-listo").textContent));
+  igual("«Guardar»: el tablero queda en Sub-12, mesa 3, también en su fila",
+    [await p.textContent("#directo-rey-ahora"), await p.inputValue("#directo-tableros tr:nth-child(3) select[aria-label^='Categoría']"), await p.inputValue("#directo-tableros tr:nth-child(3) input[aria-label^='Mesa']")],
+    ["Ahora: Sub-12, mesa 3.", "111", "3"]);
+  await p.waitForFunction(() => !document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 6000 });
+  cierto("y el panel se cierra solo, listo para el siguiente tablero", true);
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/8/8/8/8 w - - 0 1"));
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
+  igual("quitar el rey y volver a ponerlo lo muestra otra vez, con lo que ya tiene", [await p.textContent("#directo-rey-ahora"), await p.inputValue("#directo-rey-mesa")], ["Ahora: Sub-12, mesa 3.", "3"]);
+  await p.keyboard.press("Escape");
+  cierto("Escape lo cierra", !(await panelVisible()));
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/8/8/8/8 w - - 0 1"));
+  await p.uncheck("#directo-rey");
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
+  await p.waitForTimeout(2000);
+  cierto("con la opción apagada, el rey en e4 no avisa", !(await panelVisible()));
+  await p.check("#directo-rey");
+  await p.fill("#directo-casilla-rey", "d5");
+  await p.press("#directo-casilla-rey", "Tab");
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/3k4/8/8/8/8 w - - 0 1"));
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
+  igual("se puede elegir otra casilla (d5), y también vale el rey negro", await p.textContent("#directo-rey-titulo"), "Tablero 10003");
+  await p.click("#directo-rey-cerrar");
+  await p.fill("#directo-casilla-rey", "e4");
+  await p.press("#directo-casilla-rey", "Tab");
+  await p.evaluate(() => window.__armar(2));
+  await p.waitForFunction(() => /Lista para empezar/.test(document.querySelector("#directo-tableros tr:nth-child(3) td:nth-child(5)").textContent), null, { timeout: 15000 });
+  await p.evaluate(() => { for (const [san, s] of [["d3", 2], ["a6", 2], ["Kd2", 2], ["a5", 2], ["Ke3", 2], ["a4", 2], ["Ke4", 2]]) window.__jugar(2, san, s); });
+  await p.waitForFunction(() => /Re4/.test(document.querySelector("#directo-tableros tr:nth-child(3) td:nth-child(5)").textContent), null, { timeout: 15000 });
+  await p.waitForTimeout(1500);
+  cierto("un rey que llega a e4 jugando (un final) no avisa: es una jugada", !(await panelVisible()));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }

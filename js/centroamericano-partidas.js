@@ -357,18 +357,11 @@
     a.className = "cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]";
     [...f.childNodes].forEach((n) => a.appendChild(n));
     const pie = a.querySelector("span:last-child");
-    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.dataset.pieFicha = ""; }
+    // En español siempre: la página (js/centroamericano.js) lo traduce al
+    // aparecer y lo devuelve al cambiar de idioma. Escrito ya traducido, el
+    // traductor no lo conocía y en francés quedaba «Watch the games →».
+    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = "Ver las partidas →"; }
     f.replaceWith(a);
-    pieDeFicha();
-  }
-  // El texto del pie va en el idioma de ahora, y se vuelve a escribir al
-  // cambiarlo: la ficha se enciende cuando llega la sala, que puede ser con la
-  // página en inglés o en francés, y el traductor de la página no conoce un
-  // texto que no estaba al cargar (pasó el 2/11/2026: «Watch the games →» se
-  // quedaba en inglés al pasar al francés o volver al español).
-  function pieDeFicha() {
-    const pie = document.querySelector("#ficha-partidas [data-pie-ficha]");
-    if (pie) pie.textContent = ({ en: "Watch the games", fr: "Voir les parties" }[V.idioma()] || "Ver las partidas") + " →";
   }
 
   /* ---------------- la ventana ---------------- */
@@ -972,8 +965,8 @@
   }
   document.addEventListener("cac-datos", alLlegarDatos);
   document.addEventListener("cac-idioma", () => {
-    pieDeFicha();
-    // «En vivo ahora» también va armado en el idioma de cuando se pintó.
+    // «En vivo ahora» va armado con los textos del idioma de cuando se pintó
+    // (el traductor de la página no los conoce): se vuelve a pintar.
     if (evento && evento.torneos.length) pintarEnVivo();
     if (!dialogo || !dialogo.open) return;
     if (visor) { armarVisor(); pintarVisor(); } else { contenido.replaceChildren(); pintarLista(); }
