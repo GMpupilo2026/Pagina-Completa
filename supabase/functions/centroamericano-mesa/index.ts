@@ -43,7 +43,7 @@
 //   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
 //                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
 //   "presencia" { ronda, mesa, color, presente } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan)
-//   "tiempo"  { ronda, mesa, t_blancas, j_blancas, t_negras, j_negras, nota? } -> una lectura del control de tiempos de una partida
+//   "tiempo"  { ronda, mesa, t_blancas, j_blancas, t_negras, j_negras, nota?, ocurrio? } -> una lectura del control de tiempos de una partida
 //                                             sin terminar: lo que marca el reloj de cada color y las jugadas que lleva. Queda en la
 //                                             tabla de tiempos Y como una línea («nota») en la bitácora de la mesa. (Aún acepta la
 //                                             forma vieja { jugada, turno?, t_blancas, t_negras } para una página que no se recargó.)
@@ -393,8 +393,14 @@ Deno.serve(async (req) => {
       // Es para una partida SIN terminar: si ya tiene resultado, no hay nada que corregir.
       if (m.valor !== "0") return json({ error: "La mesa " + mesa + " ya tiene resultado en chess-results." }, 409);
       const idCliente = typeof cuerpo.id === "string" && /^[0-9a-f-]{36}$/.test(cuerpo.id) ? cuerpo.id : null;
+      // La hora que el árbitro marcó al leer los relojes (botón «Marcar la hora ahora»): se acepta si es de hace poco
+      // (hasta 6 h: una tablet sin señal la manda cuando vuelve) y no es del futuro (con 1 min de margen por el reloj
+      // del aparato). Si no cuadra, se anota la hora de la base, como siempre.
+      const marcada = typeof cuerpo.ocurrio === "string" ? Date.parse(cuerpo.ocurrio) : NaN;
+      const ocurrioMarcada = Number.isFinite(marcada) && marcada <= Date.now() + 60_000 && marcada >= Date.now() - 6 * 3600_000 ? new Date(Math.min(marcada, Date.now())).toISOString() : null;
       let { data: nueva, error } = await servicio.from("centroamericano_tiempos").insert({
         ...(idCliente ? { id: idCliente } : {}),
+        ...(ocurrioMarcada ? { ocurrio: ocurrioMarcada } : {}),
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, blancas: m.blancas.slice(0, 120), negras: m.negras.slice(0, 120),
         jugada, j_blancas: jB, j_negras: jN, turno, t_blancas: tB, t_negras: tN, nota,
       }).select("id, ocurrio").single();
