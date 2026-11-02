@@ -55,6 +55,9 @@
 //   "ayuda"   { mesa?, texto? }           -> pide al árbitro principal (le llega un aviso a la cuenta principal)
 //   "leido"   { id }                      -> marca un mensaje de la organización como leído («Entendido»)
 //   "nombre"  { nombre }                  -> el árbitro «por definir» pone su nombre (una sola vez)
+//   "concluir" {}                         -> «Ya terminé mis labores»: cierra su enlace (y los otros del mismo árbitro): ya no puede
+//                                             escribir nada (409), solo leer y bajar su bitácora; la organización puede reabrirlas
+//   "bitacora" {}                         -> toda su bitácora (todas las rondas y los torneos que atendió) para el PDF; solo después de concluir
 //   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
 // EL MISMO ÁRBITRO EN VARIOS TORNEOS: la organización junta sus enlaces con `persona`. El árbitro
@@ -152,18 +155,25 @@ Deno.serve(async (req) => {
   // La asignación: de quién es el token, qué torneo y qué mesas.
   const { data: a } = await servicio
     .from("centroamericano_asignaciones")
-    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, centroamericano_torneos(nombre, categoria, rama, prueba)")
+    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, concluyo_en, centroamericano_torneos(nombre, categoria, rama, prueba)")
     .eq("token", token)
     .maybeSingle();
   if (!a) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
   if (a.revocada) return json({ error: "La organización apagó este enlace. Pídele uno nuevo." }, 410);
   if (new Date(a.vence).getTime() <= Date.now()) return json({ error: "Este enlace venció. Pídele uno nuevo a la organización." }, 410);
 
+  // «Ya terminé mis labores»: con el enlace concluido el árbitro solo lee y baja su bitácora. Escribir (resultados, anotaciones,
+  // presencia, tiempos, fotos, la lista previa, finalizar, pedir ayuda, el nombre) se rechaza AQUÍ, no en la pantalla.
+  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"];
+  if (a.concluyo_en && ESCRIBE.includes(String(cuerpo.action))) {
+    return json({ error: "Ya concluiste tus labores: ya no puedes anotar ni guardar. Puedes bajar tu bitácora. Si necesitas seguir, pide a la organización que las reabra.", concluido: true }, 409);
+  }
+
   const enRango = (mesa: number) => Number.isInteger(mesa) && mesa >= a.mesa_desde && mesa <= a.mesa_hasta;
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
-  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista"];
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora"];
   type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
   // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
   // con 15 tablets pidiendo `leer` cada pocos segundos).
@@ -242,6 +252,7 @@ Deno.serve(async (req) => {
       return json({
         ...avisos,
         hermanas,
+        concluyo: a.concluyo_en ?? null,
         inicio_ronda: inicioRonda ?? null,
         presencia: pres ?? [],
         tiempos: tiem ?? [],
@@ -524,7 +535,55 @@ Deno.serve(async (req) => {
 
     if (cuerpo.action === "avisos") {
       visto();
-      return json({ ok: true, ...(await avisosDe()) });
+      return json({ ok: true, concluyo: a.concluyo_en ?? null, ...(await avisosDe()) });
+    }
+
+    // «Ya terminé mis labores»: cierra el enlace (y los otros del mismo árbitro). Es idempotente: tocarlo otra vez no cambia la hora.
+    if (cuerpo.action === "concluir") {
+      if (a.concluyo_en) return json({ ok: true, ya: true, concluyo: a.concluyo_en });
+      const ahora = new Date().toISOString();
+      let q = servicio.from("centroamericano_asignaciones").update({ concluyo_en: ahora }).is("concluyo_en", null);
+      q = a.persona ? q.eq("persona", a.persona) : q.eq("id", a.id);
+      const { error } = await q;
+      if (error) { console.error("centroamericano-mesa: concluir", a.tnr, error.code); return json({ error: "No se pudo concluir. Intenta de nuevo." }, 500); }
+      return json({ ok: true, concluyo: ahora });
+    }
+
+    // Toda su bitácora, para el PDF (solo después de concluir): lo de SUS enlaces, de todas las rondas y de todos los torneos que atendió.
+    if (cuerpo.action === "bitacora") {
+      if (!a.concluyo_en) return json({ error: "La bitácora se baja cuando concluyes tus labores («Ya terminé mis labores»)." }, 409);
+      let qa = servicio.from("centroamericano_asignaciones").select("id, tnr, arbitro, mesa_desde, mesa_hasta, creada, vence, concluyo_en");
+      qa = a.persona ? qa.eq("persona", a.persona) : qa.eq("id", a.id);
+      const { data: asigs } = await qa;
+      const ids = (asigs ?? []).map((x: { id: string }) => x.id);
+      // PostgREST corta a ~1000 filas: se pide de mil en mil.
+      // deno-lint-ignore no-explicit-any
+      const todo = async (tabla: string, columnas: string, orden: string): Promise<any[]> => {
+        // deno-lint-ignore no-explicit-any
+        const out: any[] = [];
+        for (let i = 0; i < 5000; i += 1000) {
+          const { data } = await servicio.from(tabla).select(columnas).in("asignacion_id", ids).order(orden, { ascending: true }).range(i, i + 999);
+          out.push(...(data ?? []));
+          if (!data || data.length < 1000) break;
+        }
+        return out;
+      };
+      const [registro, tiempos, presencia, planillas, finales, listas, avisos] = await Promise.all([
+        todo("centroamericano_registro", COLUMNAS + ", tnr, ronda, asignacion_id", "ocurrio"),
+        todo("centroamericano_tiempos", "id, ocurrio, tnr, ronda, mesa, blancas, negras, j_blancas, j_negras, t_blancas, t_negras, asignacion_id", "ocurrio"),
+        todo("centroamericano_presencia", "tnr, ronda, mesa, color, jugador, presente, marcada, asignacion_id", "marcada"),
+        todo("centroamericano_planillas", "tnr, ronda, mesa, jugador, rival, subida, drive_ok, asignacion_id", "subida"),
+        todo("centroamericano_finales", "ronda, finalizada_en, reabierta, asignacion_id", "finalizada_en"),
+        todo("centroamericano_listas", "ronda, paso, aprobada_en, asignacion_id", "aprobada_en"),
+        todo("centroamericano_avisos", "de, tipo, mesa, texto, estado, creado, atendido_en, leido_en, ronda, asignacion_id", "creado"),
+      ]);
+      const tnrs = [...new Set((asigs ?? []).map((x: { tnr: string }) => x.tnr))];
+      const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs);
+      return json({
+        ok: true, arbitro: a.arbitro, concluyo: a.concluyo_en, generado: new Date().toISOString(),
+        asignaciones: asigs ?? [], torneos: torneos ?? [], registro, tiempos, presencia, planillas, finales, listas,
+        avisos: avisos.filter((x) => x.tipo === "ayuda" || x.tipo === "termino" || x.tipo === "finalizo" || x.leido_en),
+      });
     }
 
     if (cuerpo.action === "ayuda") {

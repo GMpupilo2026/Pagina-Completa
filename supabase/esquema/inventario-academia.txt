@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102175644
+# al-dia-con: 20261102210057
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -550,6 +550,7 @@ columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
 columna  centroamericano_asignaciones.arbitro  text
+columna  centroamericano_asignaciones.concluyo_en  timestamp with time zone
 columna  centroamericano_asignaciones.creada  timestamp with time zone
 columna  centroamericano_asignaciones.creada_por  uuid
 columna  centroamericano_asignaciones.id  uuid
@@ -2339,6 +2340,7 @@ funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[]
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
+funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true

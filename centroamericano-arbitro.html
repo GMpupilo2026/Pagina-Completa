@@ -90,6 +90,7 @@
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
                     <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <button type="button" id="concluir" class="cam-btn cam-btn-claro"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
                 <p id="espera" class="cam-espera" role="status"></p>
@@ -99,6 +100,14 @@
 
             <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
             <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
+
+            <!-- Cuando el árbitro toca «Ya terminé mis labores»: se le cierran los resultados y puede bajar su bitácora en PDF. -->
+            <section id="concluido" class="cam-concluido" aria-labelledby="concluido-titulo" hidden>
+                <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Concluiste tus labores</h2>
+                <p id="concluido-texto" class="text-sm mt-1"></p>
+                <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button></div>
+                <p id="concluido-estado" class="text-sm mt-2" role="status"></p>
+            </section>
 
             <!-- Al terminar tus mesas: revisar y finalizar la ronda (lo arma la página). -->
             <section id="revision" class="cam-revision" aria-labelledby="revision-titulo" hidden></section>
@@ -141,9 +150,12 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/hora-cr.js"></script>
+    <script src="js/marca-agua.js"></script>
+    <script src="js/reporte-pdf.js"></script>
     <script src="js/mesa-arbitro.js"></script>
     <script src="js/centroamericano-mesas.js"></script>
     <script src="js/centroamericano-horario.js"></script>
+    <script src="js/centroamericano-bitacora.js"></script>
     <script src="js/main.js"></script>
     <script src="js/guia-planillas.js"></script>
     <script src="js/centroamericano-cola.js"></script>

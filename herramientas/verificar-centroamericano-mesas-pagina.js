@@ -93,6 +93,8 @@ function dobleOrganizacion(licencia) {
   window.__driveOk = false;
   // Lo que pasaría «afuera» mientras la página está abierta: un árbitro pide ayuda y otro lee un aviso.
   window.__nuevoAviso = (asig, mesa, texto, tipo, ronda) => AVISOS.push({ id: "av-n" + (++n), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: tipo || "ayuda", ronda: ronda || null });
+  // Un árbitro toca «Ya terminé mis labores» en su tablet (lo que la organización ve en su lista).
+  window.__concluir = (id) => { const x = ASIG.find((y) => y.id === id); if (x) x.concluyo_en = new Date(Date.now() - 600000).toISOString(); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
   const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_ronda: INICIOS };
   const filtrar = (tabla, f) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
@@ -112,6 +114,10 @@ function dobleOrganizacion(licencia) {
         { cuando: hace(360), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 3, tipo: "resultado", detalle: "Eli – Fran → 1-0" },
         { cuando: hace(420), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "lista", detalle: "Aprobó el paso «relojes» de la revisión previa" },
         { cuando: hace(100), tnr: "1532448", torneo: "PRUEBA grupo A", arbitro: "Árbitro de ensayo 1", ronda: 1, mesa: 2, tipo: "presencia", detalle: "Jugador de Prueba (blancas): no ha llegado" }]); }
+      if (f === "centroamericano_reabrir_labores") { window.__reabrirArgs = (window.__reabrirArgs || []).concat([a.p_id]);
+        const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
+        ASIG.filter((y) => y.id === x.id || (x.persona && y.persona === x.persona)).forEach((y) => { y.concluyo_en = null; });
+        return R({ arbitro: x.arbitro, reabiertos: 1 }); }
       if (f === "centroamericano_inicio_ronda") { window.__inicioArgs = (window.__inicioArgs || []).concat([{ r: a.p_ronda, prueba: a.p_prueba, inicio: a.p_inicio }]);
         const i = INICIOS.findIndex((x) => x.ronda === a.p_ronda && x.prueba === a.p_prueba); if (i >= 0) INICIOS.splice(i, 1);
         if (a.p_inicio) INICIOS.push({ ronda: a.p_ronda, prueba: a.p_prueba, inicio: a.p_inicio, puesto_en: new Date().toISOString() });
@@ -561,6 +567,28 @@ const CONTRASTE = `(sel) => {
     igual("al guardarlo manda el nombre, la caja se va y el nombre sale en la cabecera", [await d.p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "nombre").map((l) => l.body.nombre)), await d.p.textContent("#d-arbitro")], [["Carla   Mora"], "Carla Mora"]);
     await d.ctx.close();
 
+    console.log("\n=== «Ya terminé mis labores»: se cierran los resultados y se baja la bitácora ===");
+    let cc = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN });
+    await cc.p.waitForSelector(".cam-mesa");
+    const pc = cc.p;
+    igual("antes de concluir: está el botón «Ya terminé mis labores», no hay aviso de concluidas y no se puede bajar la bitácora (la función lo rechaza)", await pc.evaluate(async () => [document.getElementById("concluir").textContent.trim(), document.getElementById("concluido").hidden, (await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action: "bitacora" } })).error ? "rechazada" : "entregada"]), ["🏁 Ya terminé mis labores", true, "rechazada"]);
+    await pc.click("#concluir");
+    await pc.waitForSelector("dialog[open]");
+    igual("pregunta antes (con lo que falta) y dice qué pasa: se cierran los resultados y se baja la bitácora", await pc.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Ya terminé mis labores"), /Todavía hay \d+ mesas? sin resultado/.test(t), t.includes("No has finalizado la ronda"), t.includes("ya no podrás anotar ni guardar"), t.includes("bitácora")]; }), [true, true, true, true, true]);
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForFunction(() => !document.getElementById("concluido").hidden);
+    igual("al aceptar: la función recibe «concluir», sale el aviso de concluidas con la hora y el botón de la bitácora, y el botón de arriba se esconde", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "concluir").length, document.getElementById("concluido-titulo").textContent.trim(), /^A las \d{1,2}:\d{2} [ap]\. m\./.test(document.getElementById("concluido-texto").textContent), document.getElementById("bajar-bitacora").textContent.trim(), document.getElementById("concluir").hidden]), [1, "✓ Concluiste tus labores", true, "📄 Descargar mi bitácora (PDF)", true]);
+    igual("todo lo que escribe queda apagado de verdad (botones de las mesas, resultado, guardar, control de tiempos, pedir ayuda), no solo apagado a la vista", await pc.evaluate(() => { const sin = [...document.querySelectorAll("#lista button, #lista select, #abrir-tiempos, #pedir-ayuda")]; return [sin.length > 5, sin.every((n) => n.disabled)]; }), [true, true]);
+    igual("la función rechaza escribir (409) aunque se manipule la pantalla: guardar, anotar, presencia, tiempo, planilla, lista, finalizar, ayuda y nombre", await pc.evaluate(async () => { const out = []; for (const action of ["guardar", "anotar", "anular", "presencia", "tiempo", "planilla", "lista", "finalizar", "ayuda", "nombre"]) { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action, ronda: 3, mesa: 1 } }); out.push(!!r.error); } return out.every(Boolean); }), true);
+    const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
+    const bytesB = fs.readFileSync(await bitacora.path());
+    igual("«Descargar mi bitácora» baja un PDF con el nombre del árbitro y la MARCA DE AGUA de Ajedrez Integral", [bitacora.suggestedFilename(), bytesB.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesB.toString("latin1"))], ["bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf", true, true]);
+    igual("la función entregó la bitácora (solo después de concluir) y la página dice que se descargó", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "bitacora").length >= 1, /Listo: se descargó/.test(document.getElementById("concluido-estado").textContent)]), [true, true]);
+    await pc.click("#actualizar");
+    await pc.waitForFunction(() => document.getElementById("actualizado").textContent.includes("Actualizado"));
+    igual("al volver a leer sigue concluido (lo dice la base, no la pantalla) y lo apagado sigue apagado", await pc.evaluate(() => [document.getElementById("concluido").hidden, document.getElementById("concluir").hidden, [...document.querySelectorAll("#lista button")].every((n) => n.disabled)]), [false, true, true]);
+    await cc.ctx.close();
+
     console.log("\n=== La organización: el candado ===");
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(false), { ancho: 1100 });
     await o.p.waitForSelector("#denegado:not([hidden])");
@@ -768,6 +796,17 @@ const CONTRASTE = `(sel) => {
     igual("se crea con SU nombre y el mismo «persona» que el enlace que ya tenía (los dos quedan juntos), sin pedir nombre", await q.evaluate(() => [window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").pop().valores, window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.persona).map((l) => l.f.id)]).then(([v, u]) => [v.arbitro, v.nombrado, v.tnr, v.mesa_desde, v.mesa_hasta, !!v.persona, u]), ["Ana Árbitra", true, "1529719", 3, 8, true, ["asig-ana"]]);
     igual("cada fila de ese árbitro dice en qué otro torneo está", await q.$$eval("#asignaciones .cam-tambien", (l) => l.map((x) => x.textContent)), ["También en: Sub-10 Absoluto (mesas 1 a 12)", "También en: Sub-8 Absoluto (mesas 3 a 8)"]);
     igual("un aviso a «todos» le llega UNA vez al árbitro con dos enlaces (no una por enlace)", await q.$$eval("#av-para option", (l) => l[0].textContent), "Todos los árbitros (6)");
+
+    console.log("\n=== La organización: árbitros que concluyeron sus labores ===");
+    await q.evaluate(() => window.__concluir("asig-arb1"));
+    await q.waitForSelector('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]', { timeout: 30000 });
+    igual("un árbitro que concluyó sale así en la lista: «Concluyó sus labores el …», con «Reabrir sus labores» y solo él (a los demás no se les ofrece)", await q.evaluate(() => [document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("Concluyó sus labores el"), document.querySelectorAll('[data-accion="reabrir-labores"]').length, document.querySelectorAll('.cam-asignacion[data-id="asig-ana"] [data-accion="reabrir-labores"]').length]), [true, 1, 0]);
+    await q.click('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]');
+    await q.waitForSelector("dialog[open]");
+    igual("reabrir pregunta antes y dice qué pasa", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Reabrir sus labores"), t.includes("ya no puede anotar ni guardar")]; }), [true, true]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => !document.querySelector('[data-accion="reabrir-labores"]'));
+    igual("al confirmar llama a la base (con la licencia, centroamericano_reabrir_labores) y el árbitro vuelve a verse activo", await q.evaluate(() => [window.__reabrirArgs, document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("Activo hasta el")]), [["asig-arb1"], true]);
 
     console.log("\n=== La organización: control de tiempos ===");
     await q.click("#pest-tiempos");

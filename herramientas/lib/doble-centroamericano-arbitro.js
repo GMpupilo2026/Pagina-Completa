@@ -34,6 +34,19 @@ const SERVIDOR_ARBITRO = `
   const PASOS = ["relojes", "tableros"];
   window.__servidor = (b) => {
     if (b.token !== TOKEN && b.token !== TOKEN_B) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
+    // «Ya terminé mis labores»: con el enlace concluido la función rechaza todo lo que escribe.
+    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    if (b.action === "concluir") { if (!window.__concluyo) window.__concluyo = "2026-11-02T16:30:00Z"; return { data: { ok: true, concluyo: window.__concluyo }, error: null }; }
+    if (b.action === "bitacora") {
+      if (!window.__concluyo) return falla(409, "La bitácora se baja cuando concluyes tus labores.");
+      return { data: { ok: true, arbitro: window.__avisos.arbitro, concluyo: window.__concluyo, generado: "2026-11-02T16:31:00Z",
+        asignaciones: [{ id: "a1", tnr: "1529737", arbitro: "Ana Árbitra", mesa_desde: 1, mesa_hasta: 3 }, { id: "a2", tnr: "1529740", arbitro: "Ana Árbitra", mesa_desde: 4, mesa_hasta: 6 }],
+        torneos: [{ tnr: "1529737", nombre: "Sub-10 Femenino" }, { tnr: "1529740", nombre: "Sub-12 Absoluto" }],
+        registro: filas.map((f) => Object.assign({ tnr: "1529737", ronda: 3, asignacion_id: "a1" }, f)),
+        tiempos: window.__tiempos.map((t) => Object.assign({ tnr: "1529737", ronda: 3, blancas: "A", negras: "B", asignacion_id: "a1" }, t)),
+        presencia: window.__presencia.map((x) => Object.assign({ tnr: "1529737", ronda: 3, jugador: "Jugador", asignacion_id: "a1" }, x)),
+        planillas: [{ tnr: "1529740", ronda: 2, mesa: 5, jugador: "C", rival: "D", subida: "2026-11-02T15:00:00Z", drive_ok: true, asignacion_id: "a2" }],
+        finales: [{ ronda: 2, finalizada_en: "2026-11-02T15:40:00Z", reabierta: false, asignacion_id: "a2" }], listas: [], avisos: [] }, error: null }; }
     if (b.action === "presencia") {
       if (b.mesa < 1 || b.mesa > 3) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
       window.__presencia = window.__presencia.filter((x) => !(x.mesa === b.mesa && x.color === b.color)).concat([{ mesa: b.mesa, color: b.color, presente: b.presente, marcada: "2026-11-02T15:51:00Z" }]);
@@ -73,7 +86,7 @@ const SERVIDOR_ARBITRO = `
     if (b.action === "nombre") {
       if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
       window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
-    if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
+    if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { concluyo: window.__concluyo || null, arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
       mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {
       if (window.__lista.length < 2) return falla(409, "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda 3 (relojes y tableros). No se guardó nada.");

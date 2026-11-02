@@ -683,6 +683,7 @@
         const e = C.estadoAsignacion(a, new Date());
         if (e === "apagado") return "Apagado";
         if (e === "vencido") return "Venció";
+        if (a.concluyo_en) return "Concluyó sus labores el " + window.HoraCR.fechaHora(a.concluyo_en);
         return "Activo hasta el " + window.HoraCR.fechaHora(a.vence);
     }
 
@@ -726,6 +727,7 @@
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
                 est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
+                a.concluyo_en ? boton("reabrir-labores", "Reabrir sus labores", () => reabrirLabores(a)) : null,
                 boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"),
                 // La «✕»: para cuando se metió a alguien que no correspondía. Lo borra por completo del torneo.
                 el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-rojo", "data-accion": "quitar", "aria-label": "Quitar a " + a.arbitro + " de este torneo por completo", title: "Quitar por completo (si se metió por error)", onclick: () => quitarEnlace(a) }, "✕ Quitar"))));
@@ -745,7 +747,7 @@
     function pintarAsignaciones() {
         $("sin-asignaciones").hidden = asignaciones.length > 0;
         const ahora = new Date();
-        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
+        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
         if (firma === firmaAsignaciones) return;
         firmaAsignaciones = firma;
         const grupos = new Map();
@@ -768,6 +770,16 @@
         $("a-persona").value = a.persona ? "p:" + a.persona : "a:" + a.id;
         $("a-torneo").focus();
         $("nuevo").scrollIntoView({ block: "center" });
+    }
+
+    // Un árbitro tocó «Ya terminé mis labores» (por error, o hay que corregir una ronda): se le vuelve a dejar anotar y guardar.
+    async function reabrirLabores(a) {
+        const sigue = await Avisos.confirmar(a.arbitro + " concluyó sus labores el " + window.HoraCR.fechaHora(a.concluyo_en) + " y ya no puede anotar ni guardar. Si las reabres, vuelve a poder (también en sus otros torneos, si los tiene juntos).", { titulo: "Reabrir sus labores", aceptar: "Sí, reabrirlas" });
+        if (!sigue) return;
+        const { error } = await sb.rpc("centroamericano_reabrir_labores", { p_id: a.id });
+        if (error) { avisar("No se pudieron reabrir: " + error.message, true); return; }
+        avisar("Labores de " + a.arbitro + " reabiertas.");
+        await cargarAsignaciones();
     }
 
     async function cambiar(a, apagar) {
@@ -1193,10 +1205,10 @@
     // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
 
     let actividad = [];
-    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", anulacion: "Anuló una anotación",
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
     // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
-    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
