@@ -465,6 +465,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
 
     // El inglés: todo texto de la página tiene el suyo, y al volver queda igual que antes.
     const ctx4 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    // Sin la base de verdad: lo de «Partidas» y «Hoy» llegaba de la sala REAL, y desde que empezó el torneo (2 de noviembre) traía
+    // torneos y la página cambiaba sola después de tomar la foto del texto: la prueba comparaba contra algo que se movía.
+    await ctx4.route(/supabase\.co/, (r) => r.abort());
     const p4 = await ctx4.newPage();
     // El aviso de «quedó guardada» llega un rato después de cargar: se espera, para comparar lo mismo.
     const guardada = (pg) => pg.waitForFunction(() => !document.getElementById("hoy-sin-red").hidden, null, { timeout: 15000 }).catch(() => {});

@@ -357,7 +357,7 @@
     a.className = "cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]";
     [...f.childNodes].forEach((n) => a.appendChild(n));
     const pie = a.querySelector("span:last-child");
-    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = ({ en: "Watch the games", fr: "Voir les parties" }[V.idioma()] || "Ver las partidas") + " →"; }
+    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = "Ver las partidas →"; } // siempre en español: el traductor de la página (js/centroamericano.js) lo pone en inglés o francés, y al volver al español lo restaura. Escribirlo ya traducido lo dejaba pegado en inglés.
     f.replaceWith(a);
   }
 
