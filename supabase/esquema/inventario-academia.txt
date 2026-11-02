@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102033011
+# al-dia-con: 20261102094240
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -4118,7 +4118,7 @@ cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *
-cron  sala-avisos  */5 * 1-8 11 *
+cron  sala-avisos  * * 1-8 11 *
 cron  sala-avisos-limpiar  17 9 * * *
 cron  torneos-externos  13 11 * * *
 cron  vigilar-base  */5 * * * *
