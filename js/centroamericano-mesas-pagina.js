@@ -156,7 +156,16 @@
 
     // El título de la pestaña lleva los avisos abiertos «(2)» y, si se cumplió el tiempo de espera de alguien, un ⏰.
     let avisosEnTitulo = 0, esperaCumplida = false;
-    function ponerTitulo() { document.title = (esperaCumplida ? "⏰ " : "") + (avisosEnTitulo ? "(" + avisosEnTitulo + ") " : "") + TITULO; }
+    function ponerTitulo() { document.title = (ensayo ? "ENSAYO · " : "") + (esperaCumplida ? "⏰ " : "") + (avisosEnTitulo ? "(" + avisosEnTitulo + ") " : "") + TITULO; }
+
+    // ------------------------------------------------------------- «Modo ensayo»
+    // Los torneos de PRUEBA (centroamericano_torneos.prueba) no se mezclan con los reales: por omisión la organización ve
+    // solo los reales (el resumen, los que no han llegado, las hojas en papel, el informe final…); con «Modo ensayo» ve
+    // solo los de prueba, para ensayar con las tablets sin ensuciar lo del torneo.
+    let ensayo = false;
+    let pruebas = new Set();
+    const dentro = (tnr) => pruebas.has(tnr) === ensayo;
+    const idsDentro = () => new Set(asignaciones.map((a) => a.id));
 
     // ------------------------------------------------------------- 1. ronda en curso
 
@@ -167,10 +176,11 @@
             sb.from("centroamericano_listas").select("*").range(0, 999),
             sb.from("centroamericano_presencia").select("*").range(0, 999),
         ]);
-        if (!pr.error) presencia = pr.data || [];
-        if (!p.error) progreso = p.data || [];
-        if (!f.error) finales = f.data || [];
-        if (!l.error) listas = l.data || [];
+        const ids = idsDentro();
+        if (!pr.error) presencia = (pr.data || []).filter((x) => dentro(x.tnr));
+        if (!p.error) progreso = (p.data || []).filter((x) => ids.has(x.asignacion_id));
+        if (!f.error) finales = (f.data || []).filter((x) => ids.has(x.asignacion_id));
+        if (!l.error) listas = (l.data || []).filter((x) => ids.has(x.asignacion_id));
     }
 
     const filasRonda = () => C.resumenRonda(asignaciones, progreso, finales, new Date(), listas)
@@ -301,8 +311,9 @@
     async function cargarAvisos() {
         const { data, error } = await sb.from("centroamericano_avisos").select("*").order("creado", { ascending: false }).range(0, 499);
         if (error) { if (pedidosVistos === null) avisar("No se pudieron leer los avisos: " + error.message, true); return; }
-        avisos = data || [];
         await cargarAvance();
+        const idsDeAqui = idsDentro();
+        avisos = (data || []).filter((x) => idsDeAqui.has(x.asignacion_id));
         const ids = new Set(abiertosDeArbitros().map((f) => f.id));
         // Un aviso nuevo hace vibrar la tablet (no hace ruido); la primera lectura no vibra.
         if (pedidosVistos !== null && [...ids].some((id) => !pedidosVistos.has(id))) { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ } }
@@ -374,7 +385,7 @@
         try {
             const { data, error } = await sb.rpc("centroamericano_hojas");
             if (error) throw new Error(error.message);
-            const hojas = (data || []).filter((h) => h.mesas && h.mesas.length);
+            const hojas = (data || []).filter((h) => h.mesas && h.mesas.length && dentro(h.tnr));
             if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde chess-results» y vuelve a intentar.", true); return; }
             const bloques = [];
             hojas.forEach((h, i) => {
@@ -486,9 +497,10 @@
     // ------------------------------------------------------------- 5. la clave del grupo
 
     async function cargarTorneos() {
-        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr").order("orden");
+        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba").order("orden");
         if (error) { avisar("No se pudieron leer los torneos: " + error.message, true); return; }
-        torneos = data || [];
+        pruebas = new Set((data || []).filter((t) => t.prueba).map((t) => t.tnr));
+        torneos = (data || []).filter((t) => dentro(t.tnr));
         pintarTorneos();
         const opciones = () => torneos.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }));
         for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo", "ct-torneo"]) {
@@ -601,7 +613,7 @@
     async function cargarAsignaciones() {
         const { data, error } = await sb.from("centroamericano_asignaciones").select("*").range(0, 499);
         if (error) { avisar("No se pudieron leer los enlaces: " + error.message, true); return; }
-        asignaciones = data || [];
+        asignaciones = (data || []).filter((a) => dentro(a.tnr));
         pintarAsignaciones();
         pintarDestinos();
         firmaRonda = "";
@@ -853,7 +865,7 @@
     async function cargarTiempos() {
         const { data, error } = await sb.from("centroamericano_tiempos").select("*").order("ocurrio", { ascending: false }).range(0, 999);
         if (error) { avisar("No se pudieron leer las lecturas: " + error.message, true); return; }
-        tiempos = data || [];
+        tiempos = (data || []).filter((x) => dentro(x.tnr));
         pintarTiempos();
     }
 
@@ -959,7 +971,7 @@
     async function cargarPlanillas() {
         const { data, error } = await sb.from("centroamericano_planillas").select("*").order("subida", { ascending: false }).range(0, 999);
         if (error) { avisar("No se pudieron leer las planillas: " + error.message, true); return; }
-        planillas = data || [];
+        planillas = (data || []).filter((x) => dentro(x.tnr));
         pintarPlanillas();
     }
 
@@ -1093,7 +1105,7 @@
             todas.push(...(data || []));
             if (!data || data.length < 1000) break;
         }
-        registro = todas;
+        registro = todas.filter((x) => dentro(x.tnr));
         pintarRegistro();
         $("r-estado").textContent = "Actualizado a las " + ahoraTxt();
     }
@@ -1185,6 +1197,17 @@
 
     // Cada 6 s se miran los avisos y el avance (es lo urgente); los enlaces cada 18 s (quién está
     // conectado), el Drive y las copias cada minuto, y el registro cada 30 s si está a la vista.
+    // El interruptor «Modo ensayo»: cambia lo que se ve (reales o de prueba) y vuelve a leer todo.
+    async function cambiarModo() {
+        ensayo = $("modo-ensayo").checked;
+        $("aviso-ensayo").hidden = !ensayo;
+        ponerTitulo();
+        await cargarTorneos();
+        await cargarAsignaciones();
+        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro()]);
+        avisar(ensayo ? "Modo ensayo: ves solo los torneos de prueba." : "Volviste a los torneos reales.");
+    }
+
     async function pulso() {
         if (document.hidden) return;
         tic++;
@@ -1213,6 +1236,7 @@
         $("resumen-actualizar").addEventListener("click", actualizarResumen);
         $("resumen-pdf").addEventListener("click", reportePdf);
         $("resumen-hojas").addEventListener("click", hojasPapelPdf);
+        $("modo-ensayo").addEventListener("change", cambiarModo);
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);
         $("form-asignar").addEventListener("submit", crear);
