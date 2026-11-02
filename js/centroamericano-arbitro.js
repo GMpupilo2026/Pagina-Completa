@@ -669,7 +669,7 @@
         const jb = apagado.jb === "" || apagado.jb == null ? NaN : Number(apagado.jb), jn = apagado.jn === "" || apagado.jn == null ? NaN : Number(apagado.jn);
         const ahora = horaMarcada ? new Date(horaMarcada).getTime() : Date.now();
         const ini = inicioDeLaRonda();
-        return { ahora, r: C.relojApagado({ control: C.ultimoControl(lecturas(mesa)), inicio: ini ? ini.ms : null, ahora, jBlancas: jb, jNegras: jn, reparto: apagado.reparto || "ritmo" }) };
+        return { ahora, r: C.relojApagado({ control: C.ultimoControl(lecturas(mesa)), inicio: ini ? ini.ms : null, ahora, jBlancas: jb, jNegras: jn, reparto: apagado.reparto || "ritmo", bonos: C.bonosIlegales(estado.anotaciones, mesa, anuladas) }) };
     }
 
     function formApagado(m, mesas) {
@@ -681,6 +681,8 @@
         const datos = el("ul", { class: "cam-apagado-datos", "aria-label": "Lo que ya se sabe de esta partida" },
             dato("Ritmo", "90 min + 30 s por jugada"),
             dato("Inicio de la ronda", ini ? textoHoraExacta(new Date(ini.ms).toISOString()) + " (" + ini.deDonde + ")" : "no se sabe"),
+            dato("Jugadas ilegales", (() => { const b = C.bonosIlegales(estado.anotaciones, mesa, anuladas);
+                return b.length ? b.sort((p, q) => p.ms - q.ms).map((x) => (x.de === "blancas" ? "de las blancas" : "de las negras") + " a las " + textoHoraExacta(new Date(x.ms).toISOString()) + " (+2:00 a las " + x.color + (ctl && x.ms <= new Date(ctl.ocurrio).getTime() ? ", ya en el control" : ", se suman") + ")").join(" · ") : "ninguna"; })()),
             dato("Último control", ctl ? textoHoraExacta(ctl.ocurrio) + " · Blancas " + T(ctl.t_blancas) + " (" + ctl.j_blancas + " jug.) · Negras " + T(ctl.t_negras) + " (" + ctl.j_negras + " jug.)" : "ninguno en esta mesa"));
         const jug = (color, id, nombre) => el("div", {}, el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
             el("input", { id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: apagado[id === "ra-jb" ? "jb" : "jn"] || "", oninput: () => { leerApagado(); pintarResultadoApagado(mesa); } }));
@@ -724,6 +726,8 @@
                 : r.reparto === "ritmo" ? "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
                 : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno.",
         ];
+        for (const c of ["blancas", "negras"]) if (r.bonos && r.bonos[c]) lineas.push("Incluye +" + T(r.bonos[c]) + " a las " + c + " por la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + "), anotada después del " + (r.sinControl ? "inicio" : "control") + ".");
+        if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) lineas.push("Los 2 minutos de la ilegal anotada antes del control ya estaban en esos relojes: no se suman de nuevo, y se tienen en cuenta al ver cómo venía gastando cada uno y en la comprobación con el inicio.");
         const items = lineas.map((t) => el("li", { texto: t }));
         if (r.comprobacion) {
             const d = r.comprobacion.diferencia, cuadra = Math.abs(d) <= 120;
@@ -749,6 +753,7 @@
         const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
         const nota = ("Reloj apagado (art. 6.10): " + (ctl ? "calculado desde el control de las " + textoHoraExacta(ctl.ocurrio) : "calculado desde el inicio de la ronda")
             + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
+            + (r.bonos && (r.bonos.blancas || r.bonos.negras) ? "; incluye los 2 min de la ilegal" : "")
             + (propuesto ? "" : "; propuesto " + C.formatoTiempo(Math.max(0, r.blancas)) + " / " + C.formatoTiempo(Math.max(0, r.negras)) + ", el árbitro lo ajustó")).slice(0, 500);
         $("ra-guardar").disabled = true;
         try {

@@ -308,14 +308,24 @@
   //   · La comprobación con la hora de inicio: lo que debían sumar los relojes en el control según el inicio. Si no
   //     cuadra, la partida empezó tarde, hubo una pausa o el control se anotó mal: se avisa, no se corrige solo.
   // Sin ningún control, el total sale del inicio y se reparte por partes iguales (no hay de dónde sacar el ritmo).
+  //   · Las ilegales: la primera de cada jugador le da 2 minutos a su rival (art. 7.5.5). `bonos` son esos minutos,
+  //     cada uno con el color que los RECIBIÓ y su hora. Los de antes del control ya están en lo que marcaban los
+  //     relojes: no se suman otra vez, pero sí se descuentan de lo «gastado» (si no, quien los recibió parecería
+  //     haber pensado 2 minutos menos) y entran en la comprobación con el inicio. Los de después se le suman.
   // Todo en segundos y en milisegundos de reloj (Date.getTime()). Devuelve { error } si algo no cuadra.
   const RITMO = { inicial: 90 * 60, incremento: 30 };
-  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO }) {
+  const BONO_ILEGAL = 120;
+  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [] }) {
     const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
     if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
     if (jBlancas !== jNegras && jBlancas !== jNegras + 1) return { error: "Las blancas llevan las mismas jugadas que las negras o una más: revisa las jugadas." };
     const turno = jBlancas === jNegras ? "blancas" : "negras";
-    const quedaba = (t, j) => R.inicial + R.incremento * j - t;   // lo gastado hasta ese momento
+    const quedaba = (t, j) => R.inicial + R.incremento * j - t;   // lo gastado hasta ese momento (sin los bonos)
+    const desdeCtl = control ? new Date(control.ocurrio).getTime() : -Infinity;
+    const suma = (lista, color) => lista.filter((b) => b.color === color).reduce((a, b) => a + (b.segundos || BONO_ILEGAL), 0);
+    const antes = bonos.filter((b) => b.ms <= desdeCtl), despues = bonos.filter((b) => b.ms > desdeCtl);
+    const bonosAntes = { blancas: suma(antes, "blancas"), negras: suma(antes, "negras") };
+    const bonosDespues = { blancas: suma(despues, "blancas"), negras: suma(despues, "negras") };
     let base, total, pasaron, jugadas;
     if (control) {
       const cj = (x) => (x == null ? null : Number(x));
@@ -326,22 +336,22 @@
       pasaron = Math.round((ahora - desde) / 1000);
       if (pasaron < 0) return { error: "La hora de ahora es anterior a la del último control." };
       jugadas = (jBlancas - cB) + (jNegras - cN);
-      total = control.t_blancas + control.t_negras - pasaron + R.incremento * jugadas;
+      total = control.t_blancas + control.t_negras - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
       base = { blancas: control.t_blancas, negras: control.t_negras };
       // Lo que cada uno gastó hasta el control: la proporción para repartir.
-      const gB = Math.max(0, quedaba(control.t_blancas, cB)), gN = Math.max(0, quedaba(control.t_negras, cN));
+      const gB = Math.max(0, quedaba(control.t_blancas, cB) + bonosAntes.blancas), gN = Math.max(0, quedaba(control.t_negras, cN) + bonosAntes.negras);
       let pB = 0.5;
       if (reparto === "ritmo" && gB + gN > 0) pB = gB / (gB + gN);
       const usadoB = Math.round(pasaron * pB), usadoN = pasaron - usadoB;
       const res = {
         turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB },
-        gastado: { blancas: usadoB, negras: usadoN },
-        blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB),
-        negras: base.negras - usadoN + R.incremento * (jNegras - cN),
+        gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes,
+        blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
+        negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
       };
       // La comprobación con el inicio: en el control, los relojes debían sumar esto.
       if (inicio != null) {
-        const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN);
+        const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN) + bonosAntes.blancas + bonosAntes.negras;
         res.comprobacion = { esperado, anotado: control.t_blancas + control.t_negras, diferencia: control.t_blancas + control.t_negras - esperado };
       }
       return res;
@@ -350,11 +360,23 @@
     pasaron = Math.round((ahora - inicio) / 1000);
     if (pasaron < 0) return { error: "La hora de ahora es anterior al inicio de la ronda." };
     jugadas = jBlancas + jNegras;
-    total = 2 * R.inicial - pasaron + R.incremento * jugadas;
+    total = 2 * R.inicial - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
     const usadoB = Math.round(pasaron / 2), usadoN = pasaron - usadoB;
     return { turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
-      gastado: { blancas: usadoB, negras: usadoN },
-      blancas: R.inicial - usadoB + R.incremento * jBlancas, negras: R.inicial - usadoN + R.incremento * jNegras };
+      gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes,
+      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras };
+  }
+  // Los 2 minutos de cada ilegal de una mesa, sacados de la bitácora: solo la PRIMERA (sin anular) de cada jugador
+  // da tiempo; con la segunda pierde la partida. Cada bono es del RIVAL de quien la hizo, con la hora en que se anotó.
+  function bonosIlegales(anotaciones, mesa, anuladas) {
+    const fuera = anuladas instanceof Set ? anuladas : new Set(anuladas || []);
+    const out = [];
+    for (const color of ["blancas", "negras"]) {
+      const primera = (anotaciones || []).filter((f) => f.tipo === "ilegal" && f.mesa === mesa && f.color === color && !fuera.has(f.id))
+        .sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)))[0];
+      if (primera) out.push({ color: color === "blancas" ? "negras" : "blancas", de: color, ms: new Date(primera.ocurrio).getTime(), segundos: BONO_ILEGAL });
+    }
+    return out;
   }
   // El control más reciente de una mesa que tenga las jugadas de cada color (los viejos traían una sola «jugada»).
   const ultimoControl = (lecturas) => lecturas.filter((x) => x.j_blancas != null && x.j_negras != null)
@@ -372,7 +394,7 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, RITMO, relojApagado, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);
