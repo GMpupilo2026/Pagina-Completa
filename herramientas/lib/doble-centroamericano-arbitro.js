@@ -45,7 +45,7 @@ const SERVIDOR_ARBITRO = `
       if (m.valor !== "0") return falla(409, "La mesa " + b.mesa + " ya tiene resultado en chess-results.");
       if (![b.j_blancas, b.j_negras].every((j) => Number.isInteger(j) && j >= 0 && j <= 400)) return falla(400, "Las jugadas de cada color van de 0 a 400.");
       const jugada = Math.max(1, b.j_blancas, b.j_negras);
-      window.__tiempos.unshift({ id: b.id || "t" + (++n), ocurrio: "2026-11-02T15:55:00Z", mesa: b.mesa, jugada, j_blancas: b.j_blancas, j_negras: b.j_negras, turno: null, t_blancas: b.t_blancas, t_negras: b.t_negras, nota: "" });
+      window.__tiempos.unshift({ id: b.id || "t" + (++n), ocurrio: b.ocurrio || "2026-11-02T15:55:00Z", mesa: b.mesa, jugada, j_blancas: b.j_blancas, j_negras: b.j_negras, turno: null, t_blancas: b.t_blancas, t_negras: b.t_negras, nota: "" });
       return { data: { ok: true, id: window.__tiempos[0].id, ocurrio: "2026-11-02T15:55:00Z", jugada }, error: null }; }
     if (b.action === "lista") {
       const i = PASOS.indexOf(b.paso); if (i < 0) return falla(400, "Paso no válido.");

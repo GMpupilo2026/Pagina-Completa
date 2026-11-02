@@ -149,7 +149,7 @@
     const clave = (mesa, color) => mesa + "|" + color;
     const marcaDe = (mesa, color) => (estado.marcas || {})[clave(mesa, color)] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
-    const hora = (x) => window.HoraCR.hora(x);
+    const hora = (x, opciones) => window.HoraCR.hora(x, opciones);
 
     // ------------------------------------------------------------- avisos sin ruido, y pantalla encendida
 
@@ -544,6 +544,9 @@
     let tiemposPorMesa = false;   // se abrió con el reloj de una mesa: al guardar se cierra
     let borrador = {};            // lo escrito sobrevive a minimizar y a que la página se vuelva a dibujar
     let borradorMesa = null;
+    // La hora exacta que el árbitro marcó con el botón (un momento, en ISO): la de su lectura de los relojes. Si no marca
+    // ninguna, la función anota la hora en que llega el guardado. Nunca se teclea: así no hay horas inventadas.
+    let horaMarcada = null;
 
     const sinTerminar = () => estado.mesas.filter((m) => m.valor === "0").sort((a, b) => a.mesa - b.mesa);
     const lecturas = (mesa) => ((estado && estado.tiempos) || []).filter((x) => x.mesa === mesa);
@@ -571,7 +574,7 @@
         const mesas = sinTerminar();
         if (!lecturaMesa || !mesas.some((m) => m.mesa === lecturaMesa)) lecturaMesa = mesas.length ? mesas[0].mesa : null;
         // Otra mesa: lo escrito era de la anterior.
-        if (borradorMesa !== lecturaMesa) { borrador = {}; borradorMesa = lecturaMesa; }
+        if (borradorMesa !== lecturaMesa) { borrador = {}; horaMarcada = null; borradorMesa = lecturaMesa; }
         caja.dataset.minimizada = tiemposMin ? "si" : "no";
         const cabeza = el("div", { class: "cam-flotante-cabeza" },
             el("strong", { class: "cam-flotante-titulo" }, icono("reloj"), el("span", { texto: lecturaMesa ? "Mesa " + lecturaMesa : "Control de tiempos" })),
@@ -587,15 +590,29 @@
             el("div", { class: "grid grid-cols-2 gap-2" },
                 el("div", {}, el("label", { for: "lt-t" + id, class: "block text-sm font-bold", texto: "Tiempo" }), el("input", { id: "lt-t" + id, type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss", class: "cam-campo", value: borrador["t" + id] || "" })),
                 el("div", {}, el("label", { for: "lt-j" + id, class: "block text-sm font-bold", texto: "Jugadas" }), el("input", { id: "lt-j" + id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: borrador["j" + id] || "" }))));
+        const horaDeLectura = el("div", { class: "cam-hora-control" },
+            el("span", { class: "text-sm font-bold", id: "lt-hora-etiqueta", texto: "Hora del control" }),
+            el("output", { id: "lt-hora", class: "cam-hora-valor", "aria-labelledby": "lt-hora-etiqueta", "data-marcada": horaMarcada ? "si" : "no", texto: horaMarcada ? textoHoraExacta(horaMarcada) : "Sin marcar: se anota al guardar" }),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "lt-marcar-hora", "data-accion": "marcar-hora", title: "Anota la hora de este momento, al segundo", onclick: marcarHora }, icono("reloj"), el("span", { texto: horaMarcada ? "Marcar de nuevo" : "Marcar la hora ahora" })));
         caja.replaceChildren(cabeza, el("form", { class: "cam-flotante-cuerpo", id: "form-tiempos", novalidate: true, onsubmit: guardarLectura },
             mesas.length > 1 ? el("div", {}, el("label", { for: "lt-mesa", class: "sr-only", texto: "Mesa" }),
                 el("select", { id: "lt-mesa", class: "cam-select", onchange: (e) => { leerBorrador(); lecturaMesa = Number(e.target.value); tiemposPorMesa = false; pintarTiempos(); } },
                     ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null,
+            horaDeLectura,
             lado("blancas", m ? m.blancas : "", "b"),
             lado("negras", m ? m.negras : "", "n"),
             el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar")),
             ult.length ? el("ul", { class: "text-sm mt-2", id: "lt-ultimas", "aria-label": "Lo último anotado en la mesa " + lecturaMesa },
                 ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") }))) : null));
+    }
+
+    const textoHoraExacta = (iso) => hora(iso, { hour: "numeric", minute: "2-digit", second: "2-digit" });
+    // Toca el botón y queda anotada la hora de ESE momento (la del aparato, en hora de Costa Rica al mostrarla).
+    function marcarHora() {
+        leerBorrador();
+        horaMarcada = new Date().toISOString();
+        pintarTiempos();
+        if ($("lt-hora")) avisar("Hora del control marcada: " + textoHoraExacta(horaMarcada));
     }
 
     async function guardarLectura(ev) {
@@ -607,11 +624,14 @@
         const mesa = lecturaMesa;
         $("lt-guardar").disabled = true;
         try {
-            const r = await escribir("tiempo", { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN }, "Control de tiempos de la mesa " + mesa, { mesa });
-            const d = r.encolado ? { id: r.id, ocurrio: new Date().toISOString(), jugada: Math.max(1, jB, jN) } : r.d;
+            const cuerpo = { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN };
+            if (horaMarcada) cuerpo.ocurrio = horaMarcada;   // la función la acepta si es de hace poco; si no, anota la suya
+            const r = await escribir("tiempo", cuerpo, "Control de tiempos de la mesa " + mesa, { mesa });
+            const d = r.encolado ? { id: r.id, ocurrio: horaMarcada || new Date().toISOString(), jugada: Math.max(1, jB, jN) } : r.d;
             estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: jB, j_negras: jN, turno: null, t_blancas: tB, t_negras: tN, nota: "" }].concat(estado.tiempos || []);
             avisar(r.encolado ? "Sin señal: el control de tiempos de la mesa " + mesa + " quedó en la tablet y se manda solo cuando vuelva la conexión." : "Control de tiempos de la mesa " + mesa + " guardado: queda en la bitácora.");
             borrador = {};
+            horaMarcada = null;
             borradorMesa = null;
             // Desde el reloj de una mesa se cierra; si lo pidió la organización, queda abierta para la siguiente mesa.
             if (tiemposPorMesa) tiemposAbierto = false;

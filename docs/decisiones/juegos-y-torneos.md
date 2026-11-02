@@ -8770,6 +8770,17 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   que hay que leer primero) y abierta en una tablet. La migración
   `centroamericano_tiempos_jugadas_por_color` solo agrega las dos columnas (nulas en las lecturas
   viejas, que traían una sola jugada) y deja a «restaurar» al día.
+- **La hora del control se marca, no se teclea.** Arriba de Blancas y Negras, «Hora del control» muestra
+  «Sin marcar: se anota al guardar» y un botón **«Marcar la hora ahora»**: al tocarlo queda la hora de ESE
+  momento, al segundo (la del aparato, mostrada en hora de Costa Rica), para tocarlo justo cuando el
+  árbitro mira los relojes y no cuando termina de escribir. Es un `<output>`, no un campo: no hay forma
+  de teclear una hora inventada. Se manda como `ocurrio` en `tiempo` y la función solo la acepta si es de
+  las últimas 6 h y no del futuro (1 min de margen por el reloj del aparato; una tablet sin señal la manda
+  cuando vuelve y la lectura conserva su hora de verdad, no la de la llegada); si no cuadra, anota la
+  hora de la base como siempre. Sin marcar, no se manda y vale la de la base. La marca se pierde al
+  guardar o cambiar de mesa, y sobrevive a minimizar la ventana. `hora()` de la página pasa sus opciones
+  a `HoraCR.hora` (sin eso no salían los segundos). Lo revisan `verificar-centroamericano-mesas-pagina.js`
+  y `verificar-centroamericano-mesas.js` (roto a propósito, saltan).
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

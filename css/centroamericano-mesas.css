@@ -404,6 +404,9 @@
 .cam-tiempo-lado legend { padding: 0 0.3rem; font-weight: 700; }
 .cam-tiempo-nombre { font-size: 0.85rem; font-weight: 600; }
 .dark .cam-tiempo-lado { border-color: rgb(255 255 255 / 0.25); }
+.cam-hora-control { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.cam-hora-valor { flex: 1 1 8rem; min-width: 0; font-variant-numeric: tabular-nums; font-weight: 700; }
+.cam-hora-valor[data-marcada="no"] { font-weight: 400; opacity: 0.85; }
 .cam-lista-previa, .cam-revision { margin-bottom: 1rem; padding: 1rem 1.1rem; border: 3px solid var(--cac-morado); border-radius: 1rem; background: #fff; color: var(--cac-morado-hondo); }
 .cam-lista-previa { border-color: var(--cac-naranja); }
 .cam-revision[data-estado="finalizada"] { border-color: var(--cac-verde); }
