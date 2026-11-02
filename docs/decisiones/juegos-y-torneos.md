@@ -8833,6 +8833,28 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   y amarilla, pieza y mano, icono con palabra) y se eligió el de la pieza y la mano; el peón va sólido y sin círculo porque con
   círculo, a 46 px, se perdía. Siguen con su palabra para el lector de pantalla, su `title` y la leyenda de arriba, que usa
   los mismos dibujos; `verificar-centroamericano-mesas-pagina.js` comprueba los dibujos de los botones y de la leyenda.
+- **«Ya terminé mis labores» y la bitácora del árbitro en PDF.** Al acabar su trabajo, el árbitro toca el botón (con
+  confirmación: no se deshace desde la tablet) y su enlace **se cierra**: la columna `centroamericano_asignaciones.concluyo_en`
+  guarda la hora (la pone la base) y la Edge Function `centroamericano-mesa` (v13) responde **409** a todo lo que escribe
+  (`guardar`, `anotar`, `anular`, `lista`, `planilla`, `finalizar`, `presencia`, `tiempo`, `ayuda`, `nombre`): cerrar la
+  pantalla no basta, lo hace cumplir el servidor, y la tablet también oculta los controles. Concluir cierra **todos los
+  enlaces del mismo árbitro** (la misma `persona`: uno con mesas de varios torneos) y es idempotente (la segunda vez no
+  cambia la hora). Leer y los avisos de la organización siguen funcionando.
+  Al concluir se habilita **«Bajar mi bitácora (PDF)»**: la acción `bitacora` solo contesta después de concluir (409 antes) y
+  trae SOLO lo de sus enlaces —por `asignacion_id`, de mil en mil por el tope de PostgREST—: resultados y correcciones,
+  ilegales, irregularidades, veces que se levantó un jugador, controles de tiempos (con su hora), quién llegó y quién no,
+  fotos de planillas, revisión previa, rondas finalizadas, pedidos de ayuda y avisos que leyó. `js/centroamericano-bitacora.js`
+  (puro, se prueba en Node) arma el documento: una tabla resumen «Torneos que atendió» y, por torneo y por ronda, las líneas en
+  orden de hora; lo anulado queda marcado «(anulada)», no se quita. Sale por `ReportePDF.generar` con la **marca de agua de
+  Ajedrez Integral** en cada página (`MarcaAgua`; el verificador busca el `/SMask` en el PDF) y el nombre
+  `bitacora-arbitro-<nombre>-centroamericano-2026.pdf`.
+  La organización ve «Concluyó sus labores» en la tarjeta del árbitro y en la «Actividad» (tipo `concluyo`, que arma
+  `centroamericano_actividad()`), y puede **«Reabrir sus labores»** (`centroamericano_reabrir_labores(p_id)`, exige la
+  licencia `mesa-arbitro`, revocada de `public` y `anon`; deja `concluyo_en = null` en ese enlace y en los de la misma persona)
+  si concluyó por error. Migración `20261102210057_centroamericano_labores_concluidas`. Lo prueban
+  `verificar-centroamericano-mesas.js` (migración, 409 en cada acción, la bitácora y el orden del documento) y
+  `verificar-centroamericano-mesas-pagina.js` (las dos páginas: concluir, el 409, el PDF con marca de agua y reabrir);
+  rotos a propósito, saltan.
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

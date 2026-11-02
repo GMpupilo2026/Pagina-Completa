@@ -119,7 +119,10 @@
     // Lo que NO puede perderse (resultado, ilegal, tiempos, presencia, foto): si no salió por la señal, queda
     // en la cola de la tablet y se manda solo. Cada anotación lleva su `id`: reenviarla no la duplica.
     const CON_ID = { anotar: true, tiempo: true };
+    // Con las labores concluidas ya no se escribe nada (la función también lo rechaza): solo se lee y se baja la bitácora.
+    const concluida = () => !!(estado && estado.concluyo);
     async function escribir(accion, cuerpo, etiqueta, meta) {
+        if (concluida()) throw new Error("Ya concluiste tus labores: ya no puedes anotar ni guardar. Si necesitas seguir, pide a la organización que las reabra.");
         const id = Cola.uuid();
         const c = CON_ID[accion] ? Object.assign({ id }, cuerpo) : cuerpo;
         try { return { d: await invocar(accion, c) }; }
@@ -559,6 +562,7 @@
     const lecturas = (mesa) => ((estado && estado.tiempos) || []).filter((x) => x.mesa === mesa);
 
     function abrirTiempos(porLaOrganizacion, mesa) {
+        if (concluida()) return;   // con las labores concluidas ya no se anota nada
         tiemposAbierto = true;
         // Si la pide la organización en una pantalla angosta (un celular), sale minimizada: abierta taparía el aviso
         // que hay que leer primero. En una tablet sale abierta, como una ventanita en la esquina.
@@ -729,8 +733,71 @@
         pintarLista();
         pintarRevision();
         pintarEspera();
+        pintarConcluido();
         if (tiemposAbierto && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#control-tiempos'))) pintarTiempos();
         pintarAnotado();
+    }
+
+    // ------------------------------------------------------------- «Ya terminé mis labores» y la bitácora en PDF
+
+    // Concluidas las labores: se avisa arriba, se ofrece la bitácora y todo lo que escribe queda apagado.
+    function pintarConcluido() {
+        const cerrada = concluida();
+        const caja = $("concluido");
+        caja.hidden = !cerrada;
+        $("concluir").hidden = cerrada;
+        if (!cerrada) return;
+        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que ya terminaste. Ya no puedes anotar ni guardar resultados en tus mesas. Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste. Si necesitas seguir, pide a la organización que reabra tus labores.";
+        tiemposAbierto = false;
+        pintarTiempos();
+        $("lista-previa").hidden = true; $("revision").hidden = true;   // ya no hay nada que revisar ni finalizar
+        // Lo que escribe queda apagado de verdad (no solo en apariencia): ni con el teclado se puede tocar.
+        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #abrir-tiempos, #pedir-ayuda, #nombre-guardar, #nombre-campo")) n.disabled = true;
+    }
+
+    async function concluirLabores() {
+        if (concluida()) return;
+        const pend = cola ? cola.lista() : [];
+        if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Ya terminé mis labores».", true); return; }
+        const sinResultado = estado.mesas.filter((m) => m.valor === "0").length;
+        const avisos = [];
+        if (sinResultado) avisos.push("Todavía hay " + sinResultado + (sinResultado === 1 ? " mesa" : " mesas") + " sin resultado en la ronda " + estado.ronda + ".");
+        if (!estado.finalizada) avisos.push("No has finalizado la ronda " + estado.ronda + ".");
+        const sigue = await Avisos.confirmar((avisos.length ? avisos.join(" ") + " " : "") + "Se te cerrarán los resultados: ya no podrás anotar ni guardar nada, y podrás descargar tu bitácora en PDF. Si te equivocas, la organización puede reabrir tus labores.", { titulo: "Ya terminé mis labores", aceptar: "Sí, ya terminé", peligro: !!avisos.length });
+        if (!sigue) return;
+        $("concluir").disabled = true;
+        try {
+            const d = await invocar("concluir", {});
+            estado.concluyo = d.concluyo;
+            avisar("Concluiste tus labores. Ya puedes descargar tu bitácora.");
+            pintar();
+            const b = $("bajar-bitacora"); if (b) b.focus();
+        } catch (e) {
+            avisar(e.message, true);
+        } finally { $("concluir").disabled = false; }
+    }
+
+    // La bitácora en PDF, con la marca de agua de Ajedrez Integral: la función la arma con todo lo que anotó con sus enlaces.
+    async function bajarBitacora() {
+        const boton = $("bajar-bitacora"), estadoEl = $("concluido-estado");
+        boton.disabled = true;
+        estadoEl.textContent = "Armando tu bitácora…";
+        try {
+            const d = await invocar("bitacora", {}, { ms: 60000 });
+            const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x) };
+            const blob = await window.ReportePDF.generar(window.CentroamericanoBitacora.armar(d, F));
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = window.CentroamericanoBitacora.nombreArchivo(d);
+            document.body.append(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+            estadoEl.textContent = "Listo: se descargó «" + a.download + "».";
+        } catch (e) {
+            estadoEl.textContent = "";
+            avisar("No se pudo bajar la bitácora: " + (e.message || e), true);
+        } finally { boton.disabled = false; }
     }
 
     function pintarCabecera() {
@@ -1128,6 +1195,8 @@
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        $("concluir").addEventListener("click", concluirLabores);
+        $("bajar-bitacora").addEventListener("click", bajarBitacora);
         $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         $("nombre-guardar").addEventListener("click", guardarNombre);

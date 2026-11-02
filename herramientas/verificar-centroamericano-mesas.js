@@ -129,8 +129,8 @@ igual("lo primero que hace es exigir un token de 64 caracteres, ANTES de tocar l
 igual("rechaza el enlace apagado y el vencido", [/a\.revocada\) return json\([^)]*410/.test(mesa), /a\.vence\)\.getTime\(\) <= Date\.now\(\)\) return json\([^)]*410/.test(mesa)], [true, true]);
 igual("la clave sale de la bóveda con la función del servicio, no de una tabla", [/rpc\("centroamericano_acceso"/.test(mesa), /from\("centroamericano_torneos"\)[^;]*sid/.test(mesa)], [true, false]);
 const acciones = mesa.match(/cuerpo\.action === "(\w+)"/g).map((x) => x.match(/"(\w+)"/)[1]);
-igual("las catorce acciones, y ninguna más (la de calentar no pide token)", acciones, ["calentar", "leer", "guardar", "anotar", "anular", "presencia", "tiempo", "lista", "planilla", "finalizar", "avisos", "ayuda", "leido", "nombre"]);
-igual("los avisos y el nombre no hablan con chess-results ni piden la clave (no se caen con ella)", [/const DE_AVISOS = \["avisos", "ayuda", "leido", "nombre", "lista"\]/.test(mesa), /DE_AVISOS\.includes\(String\(cuerpo\.action\)\) \? Promise\.resolve\(\{ data: null \}\) : servicio\.rpc\("centroamericano_acceso"/.test(mesa), /leerRonda|guardarYComprobar/.test(cuerpoDe("avisos") + cuerpoDe("ayuda") + cuerpoDe("leido") + cuerpoDe("nombre") + cuerpoDe("lista"))], [true, true, false]);
+igual("las dieciséis acciones, y ninguna más (la de calentar no pide token)", acciones, ["calentar", "leer", "guardar", "anotar", "anular", "presencia", "tiempo", "lista", "planilla", "finalizar", "avisos", "concluir", "bitacora", "ayuda", "leido", "nombre"]);
+igual("los avisos y el nombre no hablan con chess-results ni piden la clave (no se caen con ella)", [/const DE_AVISOS = \["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora"\]/.test(mesa), /DE_AVISOS\.includes\(String\(cuerpo\.action\)\) \? Promise\.resolve\(\{ data: null \}\) : servicio\.rpc\("centroamericano_acceso"/.test(mesa), /leerRonda|guardarYComprobar/.test(cuerpoDe("avisos") + cuerpoDe("ayuda") + cuerpoDe("leido") + cuerpoDe("nombre") + cuerpoDe("lista"))], [true, true, false]);
 igual("«ayuda»: la mesa tiene que ser de su rango (403), no repite un pedido abierto de la misma mesa y tiene tope de 5 abiertos (429)", [/enRango\(mesa\)/.test(cuerpoDe("ayuda")) && /403/.test(cuerpoDe("ayuda")), /if \(igual\) return json\(\{ ok: true, ya: true/.test(cuerpoDe("ayuda")), /\.length >= 5\) return json\([^)]*429/.test(cuerpoDe("ayuda"))], [true, true, true]);
 igual("«ayuda» escribe de = 'arbitro' y con SU asignación: no puede escribir como la organización ni en otro enlace", [/insert\(\{ de: "arbitro", asignacion_id: a\.id,/.test(cuerpoDe("ayuda")), /de: "organizacion"/.test(cuerpoDe("ayuda"))], [true, false]);
 igual("«leido» solo marca mensajes de la organización de SUS enlaces (los suyos y los de sus otros torneos), y una sola vez", [/\.in\("asignacion_id", idsDe\)\.eq\("de", "organizacion"\)\.is\("leido_en", null\)/.test(cuerpoDe("leido"))], [true]);
@@ -216,6 +216,53 @@ igual("«planilla» es UNA foto por mesa con las dos planillas juntas: no pide e
   const dosVeces = d2.lineas().length;
   d2.ctx.reorganizar();
   igual("y correrla otra vez no cambia nada", d2.lineas().length, dosVeces);
+}
+
+// «Ya terminé mis labores»: la base, la función y la bitácora en PDF.
+{
+  const sqlC = leer("supabase", "migraciones", "20261102210057_centroamericano_labores_concluidas.sql");
+  igual("la base: la columna concluyo_en, y reabrir las labores pide la licencia de la Mesa del árbitro, se revoca de public y anon, y la actividad trae la línea «Concluyó sus labores»", [/add column concluyo_en timestamptz/.test(sqlC), /centroamericano_reabrir_labores\(p_id uuid\)/.test(sqlC), /tengo_herramienta\('mesa-arbitro'\)/.test(sqlC), /revoke all on function public\.centroamericano_reabrir_labores\(uuid\) from public, anon/.test(sqlC), /'concluyo', 'Concluyó sus labores/.test(sqlC)], [true, true, true, true, true]);
+  const fxC = sinComentarios(leer("supabase", "functions", "centroamericano-mesa", "index.ts"));
+  const rechaza = fxC.slice(fxC.indexOf("const ESCRIBE"), fxC.indexOf("const enRango"));
+  igual("la función rechaza escribir con las labores concluidas (409): guardar, anotar, anular, lista, planilla, finalizar, presencia, tiempo, ayuda y nombre", [["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"].every((x) => rechaza.includes('"' + x + '"')), /a\.concluyo_en && ESCRIBE\.includes\(String\(cuerpo\.action\)\)/.test(rechaza), /409/.test(rechaza), /concluyo_en, centroamericano_torneos/.test(fxC)], [true, true, true, true]);
+  const conc = fxC.slice(fxC.indexOf('cuerpo.action === "concluir"'), fxC.indexOf('cuerpo.action === "bitacora"'));
+  igual("«concluir» cierra su enlace y los otros del mismo árbitro, no cambia la hora si ya estaba concluido y no pide chess-results; «leer» devuelve cuándo concluyó", [/if \(a\.concluyo_en\) return json\(\{ ok: true, ya: true/.test(conc), /\.is\("concluyo_en", null\)/.test(conc), /a\.persona \? q\.eq\("persona", a\.persona\) : q\.eq\("id", a\.id\)/.test(conc), /"concluir", "bitacora"\]/.test(fxC), /concluyo: a\.concluyo_en \?\? null/.test(fxC)], [true, true, true, true, true]);
+  const bit = fxC.slice(fxC.indexOf('cuerpo.action === "bitacora"'), fxC.indexOf('cuerpo.action === "ayuda"'));
+  igual("«bitacora» solo se entrega después de concluir (409) y trae SOLO lo de sus enlaces (por asignacion_id), de mil en mil", [/if \(!a\.concluyo_en\) return json\(\{ error: [^}]*\}, 409\)/.test(bit), /\.in\("asignacion_id", ids\)/.test(bit), /range\(i, i \+ 999\)/.test(bit), ["centroamericano_registro", "centroamericano_tiempos", "centroamericano_presencia", "centroamericano_planillas", "centroamericano_finales", "centroamericano_listas", "centroamericano_avisos"].every((t) => bit.includes('"' + t + '"'))], [true, true, true, true]);
+
+  // El PDF: qué trae y en qué orden.
+  const B = require(path.join(RAIZ, "js", "centroamericano-bitacora.js"));
+  const F = { hora: (x) => x.slice(11, 16), fechaHora: (x) => x.slice(0, 16).replace("T", " ") };
+  const datos = {
+    arbitro: "Ana Árbitra", concluyo: "2026-11-02T20:00:00Z", generado: "2026-11-02T20:05:00Z",
+    asignaciones: [{ id: "a1", tnr: "1", mesa_desde: 1, mesa_hasta: 5 }, { id: "a2", tnr: "2", mesa_desde: 6, mesa_hasta: 9 }],
+    torneos: [{ tnr: "1", nombre: "Sub-10 Femenino" }, { tnr: "2", nombre: "Sub-12 Absoluto" }],
+    registro: [
+      { id: "r1", ocurrio: "2026-11-02T16:10:00Z", tnr: "1", ronda: 1, mesa: 2, tipo: "resultado", resultado: "1-0", jugador: "Eli – Fran", enviado: true, articulo: "", texto: "" },
+      { id: "r2", ocurrio: "2026-11-02T16:20:00Z", tnr: "1", ronda: 1, mesa: 3, color: "negras", tipo: "ilegal", jugador: "Gus", articulo: "7.5.5", texto: "Enroque ilegal" },
+      { id: "r3", ocurrio: "2026-11-02T16:25:00Z", tnr: "1", ronda: 1, mesa: 3, color: "negras", tipo: "anulacion", anula: "r2", jugador: "Gus" },
+      { id: "r4", ocurrio: "2026-11-02T16:30:00Z", tnr: "1", ronda: 1, mesa: 4, color: "blancas", tipo: "nota", articulo: "Levantó", jugador: "Hana", texto: "Hana (blancas) se levantó de la mesa" },
+      { id: "r5", ocurrio: "2026-11-02T16:31:00Z", tnr: "1", ronda: 1, mesa: 4, tipo: "nota", articulo: "Control de tiempos", texto: "Control de tiempos de la mesa 4 …" },
+      { id: "r6", ocurrio: "2026-11-02T19:00:00Z", tnr: "2", ronda: 2, mesa: 7, tipo: "correccion", anterior: "1-0", resultado: "0-1", jugador: "Ivo – Jana", enviado: true, articulo: "", texto: "" }],
+    tiempos: [{ id: "t1", ocurrio: "2026-11-02T16:32:00Z", tnr: "1", ronda: 1, mesa: 4, blancas: "Hana", negras: "Ivo", j_blancas: 31, j_negras: 30, t_blancas: 600, t_negras: 5025, asignacion_id: "a1" }],
+    presencia: [{ tnr: "1", ronda: 1, mesa: 5, color: "negras", jugador: "Cleo", presente: false, marcada: "2026-11-02T15:50:00Z", asignacion_id: "a1" }],
+    planillas: [{ tnr: "2", ronda: 2, mesa: 7, jugador: "Ivo", rival: "Jana", subida: "2026-11-02T19:10:00Z", drive_ok: true, asignacion_id: "a2" }],
+    finales: [{ ronda: 2, finalizada_en: "2026-11-02T19:40:00Z", reabierta: false, asignacion_id: "a2" }],
+    listas: [{ ronda: 1, paso: "relojes", aprobada_en: "2026-11-02T15:45:00Z", asignacion_id: "a1" }],
+    avisos: [{ de: "arbitro", tipo: "ayuda", mesa: null, texto: "Necesito un reloj", estado: "atendido", atendido_en: "2026-11-02T16:02:00Z", creado: "2026-11-02T16:01:00Z", ronda: null, leido_en: null, asignacion_id: "a1" }],
+  };
+  const doc = B.armar(datos, F);
+  const tablas = doc.bloques.filter((x) => x.tipo === "tabla");
+  const resumen = tablas[0].filas;
+  igual("la bitácora trae cada torneo que atendió con sus cuentas (resultados, ilegales sin lo anulado, irregularidades, se levantó, controles, fotos)", resumen, [["Sub-10 Femenino", "1 a 5", "1", "1", "0", "0", "1", "1", "0"], ["Sub-12 Absoluto", "6 a 9", "2", "1", "0", "0", "0", "0", "1"]]);
+  const r1 = tablas[1].filas.map((f) => [f[0], f[1], f[2]]);
+  igual("la ronda 1 del primer torneo va en orden de hora con todo lo que pasó (revisión previa, quién no llegó, resultado, ilegal anulada, se levantó, control de tiempos con su hora)", r1,
+    [["15:45", "", "Revisión previa"], ["15:50", "5", "Presencia"], ["16:10", "2", "Resultado"], ["16:20", "3", "Jugada ilegal (anulada)"], ["16:30", "4", "Se levantó"], ["16:32", "4", "Control de tiempos"]]);
+  igual("el detalle dice quién fue y qué pasó (jugador y color, el reloj de cada color, que no llegó)", [tablas[1].filas[3][3], tablas[1].filas[4][3], tablas[1].filas[5][3], tablas[1].filas[1][3]],
+    ["Gus (negras): Enroque ilegal (art. 7.5.5)", "Hana (blancas) se levantó de la mesa", "Blancas (Hana): 10:00, 31 jugadas · Negras (Ivo): 1:23:45, 30 jugadas", "Cleo (negras): no ha llegado"]);
+  igual("lo que no es de una ronda (un pedido de ayuda) va aparte, en «Sin ronda», y la bitácora no repite el control de tiempos de la bitácora y de la tabla de tiempos", [doc.bloques.filter((x) => x.tipo === "subtitulo").map((x) => x.texto), tablas.reduce((n, t) => n + t.filas.filter((f) => f[2] === "Control de tiempos").length, 0)],
+    [["Ronda 1", "Sin ronda", "Ronda 2"], 1]);
+  igual("el documento lleva título, quién y cuándo, la hora a la que concluyó, y el nombre del archivo sale del árbitro", [doc.titulo, doc.subtitulo, doc.bloques[0].texto.startsWith("Concluyó sus labores (2026-11-02 20:00)"), B.nombreArchivo(datos)], ["Bitácora del árbitro", "Ana Árbitra · Centroamericano 2026 · generada el 2026-11-02 20:05", true, "bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf"]);
 }
 igual("el reintento al Drive manda las fotos nuevas como «ambas» y las viejas como eran, y el script del Drive las entiende", [/-planillas\\\.jpg\$\/\.test\(f\.ruta\)/.test(leer("supabase", "functions", "centroamericano-clave", "index.ts")), /lado: ambas \? "ambas" : f\.lado/.test(leer("supabase", "functions", "centroamericano-clave", "index.ts")), /d\.lado !== "ambas" && d\.lado !== "blancas" && d\.lado !== "negras"/.test(leer("documentos", "centroamericano", "puente-drive.gs")), /Planillas \(las dos\)/.test(leer("documentos", "centroamericano", "puente-drive.gs"))], [true, true, true, true]);
 igual("«planilla» guarda PRIMERO la foto a salvo en el bucket privado y después intenta el Drive (si el Drive falla, la foto no se pierde)", [cuerpoDe("planilla").indexOf("storage.from(BUCKET).upload") > 0 && cuerpoDe("planilla").indexOf("storage.from(BUCKET).upload") < cuerpoDe("planilla").indexOf("llamarPuente"), /drive_ok: false/.test(cuerpoDe("planilla")), /drive = r\.ok \? "enviada" : "pendiente"/.test(cuerpoDe("planilla"))], [true, true, true]);
