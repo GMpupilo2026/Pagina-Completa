@@ -256,6 +256,7 @@
         if (colocacion(casillas) === INICIAL) rotado = false;
         else if (colocacion(girar(casillas)) === INICIAL) rotado = true;
         else return { nuevas: [], atras: 0 };   // todavía no está armado: se espera la posición inicial
+        p.cambios += 1;   // «Lista para empezar»: sin esto, la fila seguía en «Esperando la posición inicial»
       }
       const ahora = colocacion(fisico());
       if (ahora === piezasDe(chess.fen())) return { nuevas: [], atras: 0 };

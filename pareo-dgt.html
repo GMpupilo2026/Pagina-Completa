@@ -128,7 +128,7 @@
                         <li>Toca «Conectar un puerto»: uno por cada cadena de tableros o por cada tablero USB. La página encuentra todos los tableros de esa cadena y empieza a vigilar chess-results.</li>
                         <li>Dile a cada tablero su categoría y su mesa: de a muchos con «Asignar», o en su fila. Se recuerda para todas las rondas.</li>
                         <li>Listo. Cuando sale una ronda, cada partida empieza sola al armar las piezas en la posición inicial, con los nombres de esa mesa, y va llegando a Lichess. Un tablero que todavía está en la ronda anterior la termina primero.</li>
-                        <li>Para saber cuál tablero es cuál: «¿Cuál es este tablero?» y levanta una pieza del tablero; su fila se marca. O, sin tocar la computadora, pon un rey en e4 (o en la casilla que elijas): la pantalla muestra en grande qué tablero es, con su categoría y su mesa, con un destello y un sonido. Si en la partida hay un rey en esa casilla, no avisa.</li>
+                        <li>Para saber cuál tablero es cuál: «¿Cuál es este tablero?» y levanta una pieza del tablero; su fila se marca. O, sin tocar la computadora, pon un rey en e4 (o en la casilla que elijas): la pantalla muestra en grande qué tablero es, con un destello y un sonido, y ahí mismo le eliges la categoría y la mesa. Para armar la sala, recórrela poniendo el rey en cada tablero: la categoría queda elegida y la mesa sugerida es la siguiente libre. Si en la partida hay un rey en esa casilla, no avisa.</li>
                         <li>«Avisos de la sala» dice qué tablero no contesta, qué partida lleva un rato sin coincidir con ninguna jugada (una pieza mal puesta, una jugada ilegal) y en qué mesa cayó una bandera; si se marca, con un sonido.</li>
                         <li>«Proyectar la sala» abre una ventana con todos los tableros —nombres, reloj y última jugada—: llévala a la pantalla del proyector y ponla en pantalla completa (F11). Funciona sin internet.</li>
                         <li>El resultado llega solo: el que anota el árbitro en chess-results (para emparejar la ronda siguiente) pasa a Lichess. También se puede marcar a mano en la fila del tablero.</li>
@@ -145,7 +145,23 @@
                     <label class="inline-flex items-center gap-2 text-brand-700 dark:text-brand-200 cursor-pointer"><input id="directo-sonido" type="checkbox" class="w-4 h-4 accent-brand-700"> Avisar con un sonido</label>
                     <span class="inline-flex items-center gap-2 text-brand-700 dark:text-brand-200"><label class="inline-flex items-center gap-2 cursor-pointer"><input id="directo-rey" type="checkbox" class="w-4 h-4 accent-brand-700"> Al poner un rey en</label> <input id="directo-casilla-rey" type="text" maxlength="2" autocomplete="off" aria-label="Casilla del rey que muestra qué tablero es" class="w-12 text-center bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> mostrar qué tablero es</span>
                 </div>
-                <p id="directo-rey-aviso" role="alert" hidden class="fixed top-4 inset-x-4 z-50 mx-auto max-w-3xl text-center text-3xl sm:text-5xl font-bold bg-accent-500 text-brand-900 rounded-2xl px-6 py-6 shadow-2xl cursor-pointer"></p>
+                <div id="directo-rey-panel" hidden role="dialog" aria-labelledby="directo-rey-titulo" class="fixed top-4 inset-x-4 z-50 mx-auto max-w-3xl bg-accent-500 text-brand-900 rounded-2xl px-6 py-5 shadow-2xl">
+                    <p id="directo-rey-titulo" class="text-center text-4xl sm:text-6xl font-bold"></p>
+                    <p id="directo-rey-ahora" class="text-center text-lg sm:text-xl font-semibold mt-1"></p>
+                    <form id="directo-rey-form" novalidate class="mt-4 flex flex-wrap items-end justify-center gap-3 text-lg">
+                        <div>
+                            <label for="directo-rey-cat" class="block font-semibold mb-1">Categoría</label>
+                            <select id="directo-rey-cat" class="bg-white text-brand-900 border-2 border-brand-900 rounded-lg px-3 py-2 max-w-[16rem] focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-900"></select>
+                        </div>
+                        <div>
+                            <label for="directo-rey-mesa" class="block font-semibold mb-1">Mesa</label>
+                            <input id="directo-rey-mesa" type="number" min="1" max="999" inputmode="numeric" class="w-24 bg-white text-brand-900 border-2 border-brand-900 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-900">
+                        </div>
+                        <button type="submit" class="bg-brand-900 text-white font-bold px-5 py-2 rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-white">Guardar</button>
+                        <button id="directo-rey-cerrar" type="button" class="bg-white text-brand-900 border-2 border-brand-900 font-semibold px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-900">Cerrar</button>
+                    </form>
+                    <p id="directo-rey-listo" role="status" class="text-center text-lg font-semibold mt-3"></p>
+                </div>
                 <p id="directo-sala-texto" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
                 <p id="directo-cual-texto" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
                 <h3 class="font-semibold text-brand-800 dark:text-white mt-4">Avisos de la sala</h3>

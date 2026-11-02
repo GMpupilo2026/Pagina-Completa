@@ -610,32 +610,51 @@ async function pruebaSala(browser) {
   await p.waitForFunction(() => document.getElementById("directo-sala-texto").textContent === "", null, { timeout: 10000 });
   cierto("al cerrar la ventana, la página lo nota", true);
 
-  // El rey en e4: el árbitro lo pone en la mesa y la pantalla dice qué tablero es.
+  // El rey en e4: el árbitro lo pone en la mesa, la pantalla dice qué tablero
+  // es y ahí mismo se le da la categoría y la mesa.
   // Suena aunque «Avisar con un sonido» esté apagado: es lo que se pidió.
   await p.uncheck("#directo-sonido");
+  const panelVisible = () => p.evaluate(() => document.getElementById("directo-rey-panel").checkVisibility());
   const sonidosAntes = await p.evaluate(() => window.__sonidosDirecto);
   await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
-  await p.waitForFunction(() => document.getElementById("directo-rey-aviso").checkVisibility(), null, { timeout: 15000 });
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
   await p.waitForTimeout(500);
-  igual("un rey en e4: en grande, qué tablero es, su fila marcada y dos pitidos",
-    [await p.textContent("#directo-rey-aviso"), await p.evaluate(() => document.querySelector("#directo-tableros tr:nth-child(3)").dataset.marcada), (await p.evaluate(() => window.__sonidosDirecto)) - sonidosAntes],
-    ["Tablero 10003 · sin categoría ni mesa", "si", 2]);
+  igual("un rey en e4: en grande, qué tablero es y cómo está, su fila marcada y dos pitidos",
+    [await p.textContent("#directo-rey-titulo"), await p.textContent("#directo-rey-ahora"), await p.evaluate(() => document.querySelector("#directo-tableros tr:nth-child(3)").dataset.marcada), (await p.evaluate(() => window.__sonidosDirecto)) - sonidosAntes],
+    ["Tablero 10003", "Todavía sin categoría ni mesa.", "si", 2]);
   await p.waitForTimeout(1500);
   igual("mientras el rey sigue ahí, no vuelve a sonar", (await p.evaluate(() => window.__sonidosDirecto)) - sonidosAntes, 2);
-  await p.click("#directo-rey-aviso");
-  cierto("tocar el aviso lo quita", !(await p.evaluate(() => document.getElementById("directo-rey-aviso").checkVisibility())));
+  cierto("y no es un aviso de «partida trabada» (PAREO_DGT_TRABADA_MS es 1,5 s en la prueba)", !(await avisos()).some((x) => /10003/.test(x) && /no coincide/.test(x)), (await avisos()).join(" | "));
+  igual("el foco va a la categoría, y la sugiere: la última que se usó (Sub-12)", [await p.evaluate(() => document.activeElement.id), await p.inputValue("#directo-rey-cat")], ["directo-rey-cat", "111"]);
+  igual("y la mesa, la siguiente libre de esa categoría (la 1 y la 2 ya tienen tablero)", await p.inputValue("#directo-rey-mesa"), "3");
+  await p.selectOption("#directo-rey-cat", "222");
+  igual("al cambiar de categoría, la mesa libre de esa (el Abierto no tiene ninguna)", await p.inputValue("#directo-rey-mesa"), "1");
+  await p.selectOption("#directo-rey-cat", "111");
+  await p.click("#directo-rey-form button[type=submit]");
+  await p.waitForFunction(() => /Guardado/.test(document.getElementById("directo-rey-listo").textContent));
+  igual("«Guardar»: el tablero queda en Sub-12, mesa 3, también en su fila",
+    [await p.textContent("#directo-rey-ahora"), await p.inputValue("#directo-tableros tr:nth-child(3) select[aria-label^='Categoría']"), await p.inputValue("#directo-tableros tr:nth-child(3) input[aria-label^='Mesa']")],
+    ["Ahora: Sub-12, mesa 3.", "111", "3"]);
+  await p.waitForFunction(() => !document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 6000 });
+  cierto("y el panel se cierra solo, listo para el siguiente tablero", true);
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/8/8/8/8 w - - 0 1"));
+  await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
+  igual("quitar el rey y volver a ponerlo lo muestra otra vez, con lo que ya tiene", [await p.textContent("#directo-rey-ahora"), await p.inputValue("#directo-rey-mesa")], ["Ahora: Sub-12, mesa 3.", "3"]);
+  await p.keyboard.press("Escape");
+  cierto("Escape lo cierra", !(await panelVisible()));
   await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/8/8/8/8 w - - 0 1"));
   await p.uncheck("#directo-rey");
   await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/8/4K3/8/8/8 w - - 0 1"));
   await p.waitForTimeout(2000);
-  cierto("con la opción apagada, el rey en e4 no avisa", !(await p.evaluate(() => document.getElementById("directo-rey-aviso").checkVisibility())));
+  cierto("con la opción apagada, el rey en e4 no avisa", !(await panelVisible()));
   await p.check("#directo-rey");
   await p.fill("#directo-casilla-rey", "d5");
   await p.press("#directo-casilla-rey", "Tab");
   await p.evaluate(() => window.__tabs[2].ponerFen("8/8/8/3k4/8/8/8/8 w - - 0 1"));
-  await p.waitForFunction(() => document.getElementById("directo-rey-aviso").checkVisibility(), null, { timeout: 15000 });
-  cierto("se puede elegir otra casilla (d5), y también vale el rey negro", /^Tablero 10003/.test(await p.textContent("#directo-rey-aviso")));
-  await p.click("#directo-rey-aviso");
+  await p.waitForFunction(() => document.getElementById("directo-rey-panel").checkVisibility(), null, { timeout: 15000 });
+  igual("se puede elegir otra casilla (d5), y también vale el rey negro", await p.textContent("#directo-rey-titulo"), "Tablero 10003");
+  await p.click("#directo-rey-cerrar");
   await p.fill("#directo-casilla-rey", "e4");
   await p.press("#directo-casilla-rey", "Tab");
   await p.evaluate(() => window.__armar(2));
@@ -643,7 +662,7 @@ async function pruebaSala(browser) {
   await p.evaluate(() => { for (const [san, s] of [["d3", 2], ["a6", 2], ["Kd2", 2], ["a5", 2], ["Ke3", 2], ["a4", 2], ["Ke4", 2]]) window.__jugar(2, san, s); });
   await p.waitForFunction(() => /Re4/.test(document.querySelector("#directo-tableros tr:nth-child(3) td:nth-child(5)").textContent), null, { timeout: 15000 });
   await p.waitForTimeout(1500);
-  cierto("un rey que llega a e4 jugando (un final) no avisa: es una jugada", !(await p.evaluate(() => document.getElementById("directo-rey-aviso").checkVisibility())));
+  cierto("un rey que llega a e4 jugando (un final) no avisa: es una jugada", !(await panelVisible()));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }
