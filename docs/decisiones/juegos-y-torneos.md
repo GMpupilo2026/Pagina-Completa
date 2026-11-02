@@ -11066,6 +11066,14 @@ jugadas y con una barra que diga cómo va la partida.
   las dos con los mismos textos). La sala se lee con la clave pública: la
   política deja leer las visibles (y quien administra, en el modo de prueba,
   también la oculta). No hizo falta ni migración ni tocar la función.
+- **El enlace del GRUPO no sirve; el de una categoría sí.** Chess-results
+  pone en cada torneo el enlace a la página del grupo de Lichess
+  (`lichess.org/broadcast/<nombre>/g5IJuqYT` en el Centroamericano, comprobado
+  el 2/11/2026). Ese id no es de un torneo: `/api/broadcast/<id>` contesta
+  404, Lichess no tiene API de grupos y su página HTML no manda CORS, así que
+  ni la página ni la función pueden leerlo. En la sala va el de **cualquiera
+  de las categorías** (la página del grupo las lista, `…-o18/C0AiAflG`), que
+  trae el grupo entero con sus 12 torneos.
 - **Mientras la sala no tenga ese botón, nada cambia**: la ficha «Partidas en
   vivo» sigue en «Pronto» y no se le pide nada a Lichess. Con el botón, la
   ficha se enciende sola y abre la ventana `#partidas`.
