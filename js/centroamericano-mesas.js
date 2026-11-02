@@ -298,6 +298,68 @@
     return [...por.values()].sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa);
   }
 
+  // ---- El reloj que se apagó (art. 6.10 de las Leyes: el árbitro pone los tiempos «según su mejor criterio»).
+  // Esto le da un número defendible, con las cuentas a la vista. Parte del control de tiempos MÁS RECIENTE de esa
+  // partida (los controles caen en cualquier jugada: no hace falta que sea la 20) y de lo que se sabe del ritmo.
+  //   · Lo exacto: mientras la partida corre siempre anda un reloj, así que entre el control y «ahora» los dos juntos
+  //     gastaron justo el tiempo real que pasó, y cada jugada hecha les sumó su incremento.
+  //   · Lo que se propone: cómo se reparte eso. «ritmo»: como cada uno venía gastando hasta el control (lo gastado lo
+  //     dice el mismo control: inicial + incrementos − lo que le quedaba). «iguales»: mitad y mitad.
+  //   · La comprobación con la hora de inicio: lo que debían sumar los relojes en el control según el inicio. Si no
+  //     cuadra, la partida empezó tarde, hubo una pausa o el control se anotó mal: se avisa, no se corrige solo.
+  // Sin ningún control, el total sale del inicio y se reparte por partes iguales (no hay de dónde sacar el ritmo).
+  // Todo en segundos y en milisegundos de reloj (Date.getTime()). Devuelve { error } si algo no cuadra.
+  const RITMO = { inicial: 90 * 60, incremento: 30 };
+  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO }) {
+    const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
+    if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
+    if (jBlancas !== jNegras && jBlancas !== jNegras + 1) return { error: "Las blancas llevan las mismas jugadas que las negras o una más: revisa las jugadas." };
+    const turno = jBlancas === jNegras ? "blancas" : "negras";
+    const quedaba = (t, j) => R.inicial + R.incremento * j - t;   // lo gastado hasta ese momento
+    let base, total, pasaron, jugadas;
+    if (control) {
+      const cj = (x) => (x == null ? null : Number(x));
+      const cB = cj(control.j_blancas), cN = cj(control.j_negras);
+      if (cB == null || cN == null) return { error: "El último control de esta mesa no tiene las jugadas de cada color." };
+      if (jBlancas < cB || jNegras < cN) return { error: "En el último control ya iban " + cB + " jugadas de las blancas y " + cN + " de las negras: ahora no pueden ser menos." };
+      const desde = new Date(control.ocurrio).getTime();
+      pasaron = Math.round((ahora - desde) / 1000);
+      if (pasaron < 0) return { error: "La hora de ahora es anterior a la del último control." };
+      jugadas = (jBlancas - cB) + (jNegras - cN);
+      total = control.t_blancas + control.t_negras - pasaron + R.incremento * jugadas;
+      base = { blancas: control.t_blancas, negras: control.t_negras };
+      // Lo que cada uno gastó hasta el control: la proporción para repartir.
+      const gB = Math.max(0, quedaba(control.t_blancas, cB)), gN = Math.max(0, quedaba(control.t_negras, cN));
+      let pB = 0.5;
+      if (reparto === "ritmo" && gB + gN > 0) pB = gB / (gB + gN);
+      const usadoB = Math.round(pasaron * pB), usadoN = pasaron - usadoB;
+      const res = {
+        turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB },
+        gastado: { blancas: usadoB, negras: usadoN },
+        blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB),
+        negras: base.negras - usadoN + R.incremento * (jNegras - cN),
+      };
+      // La comprobación con el inicio: en el control, los relojes debían sumar esto.
+      if (inicio != null) {
+        const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN);
+        res.comprobacion = { esperado, anotado: control.t_blancas + control.t_negras, diferencia: control.t_blancas + control.t_negras - esperado };
+      }
+      return res;
+    }
+    if (inicio == null) return { error: "Esta mesa no tiene ningún control de tiempos y no se sabe a qué hora empezó la ronda: no hay de dónde calcular." };
+    pasaron = Math.round((ahora - inicio) / 1000);
+    if (pasaron < 0) return { error: "La hora de ahora es anterior al inicio de la ronda." };
+    jugadas = jBlancas + jNegras;
+    total = 2 * R.inicial - pasaron + R.incremento * jugadas;
+    const usadoB = Math.round(pasaron / 2), usadoN = pasaron - usadoB;
+    return { turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
+      gastado: { blancas: usadoB, negras: usadoN },
+      blancas: R.inicial - usadoB + R.incremento * jBlancas, negras: R.inicial - usadoN + R.incremento * jNegras };
+  }
+  // El control más reciente de una mesa que tenga las jugadas de cada color (los viejos traían una sola «jugada»).
+  const ultimoControl = (lecturas) => lecturas.filter((x) => x.j_blancas != null && x.j_negras != null)
+    .sort((a, b) => String(b.ocurrio).localeCompare(String(a.ocurrio)))[0] || null;
+
   // ---- La presencia: quiénes no han llegado. `mesas` son las de la ronda (de cada árbitro) y
   // `presencia` las filas de centroamericano_presencia. Un jugador «falta» si el árbitro lo marcó
   // ausente; «sin revisar» si todavía no lo marcó.
@@ -310,7 +372,7 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, RITMO, relojApagado, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

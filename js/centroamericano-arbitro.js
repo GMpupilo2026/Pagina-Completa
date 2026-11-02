@@ -547,6 +547,10 @@
     // La hora exacta que el árbitro marcó con el botón (un momento, en ISO): la de su lectura de los relojes. Si no marca
     // ninguna, la función anota la hora en que llega el guardado. Nunca se teclea: así no hay horas inventadas.
     let horaMarcada = null;
+    // «El reloj se apagó»: la misma ventanita pasa a calcular los tiempos de esa mesa (ver relojApagado en
+    // js/centroamericano-mesas.js). Lo escrito queda en `apagado` mientras la ventana se vuelve a dibujar.
+    let modoApagado = false;
+    let apagado = {};
 
     const sinTerminar = () => estado.mesas.filter((m) => m.valor === "0").sort((a, b) => a.mesa - b.mesa);
     const lecturas = (mesa) => ((estado && estado.tiempos) || []).filter((x) => x.mesa === mesa);
@@ -557,6 +561,7 @@
         // que hay que leer primero. En una tablet sale abierta, como una ventanita en la esquina.
         tiemposMin = !!porLaOrganizacion && window.innerWidth < 700;
         tiemposPorMesa = !!mesa;
+        modoApagado = false;
         if (mesa) lecturaMesa = mesa;
         if (estado) pintarTiempos();
         if (porLaOrganizacion) avisar("El árbitro principal pide un control de tiempos: anota el tiempo y las jugadas de las blancas y de las negras en las mesas sin terminar.");
@@ -577,13 +582,14 @@
         if (borradorMesa !== lecturaMesa) { borrador = {}; horaMarcada = null; borradorMesa = lecturaMesa; }
         caja.dataset.minimizada = tiemposMin ? "si" : "no";
         const cabeza = el("div", { class: "cam-flotante-cabeza" },
-            el("strong", { class: "cam-flotante-titulo" }, icono("reloj"), el("span", { texto: lecturaMesa ? "Mesa " + lecturaMesa : "Control de tiempos" })),
+            el("strong", { class: "cam-flotante-titulo" }, icono("reloj"), el("span", { texto: lecturaMesa ? "Mesa " + lecturaMesa + (modoApagado ? " · Reloj apagado" : "") : "Control de tiempos" })),
             el("span", { class: "cam-flotante-botones" },
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "minimizar-tiempos", "aria-expanded": tiemposMin ? "false" : "true", "aria-label": tiemposMin ? "Abrir el control de tiempos" : "Minimizar el control de tiempos", title: tiemposMin ? "Abrir" : "Minimizar", onclick: () => { tiemposMin = !tiemposMin; pintarTiempos(); } }, tiemposMin ? "▢" : "–"),
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "cerrar-tiempos", "aria-label": "Cerrar el control de tiempos", title: "Cerrar", onclick: () => { tiemposAbierto = false; pintarTiempos(); } }, "✕")));
         if (tiemposMin) { caja.replaceChildren(cabeza); return; }
         if (!mesas.length) { caja.replaceChildren(cabeza, el("p", { class: "cam-flotante-cuerpo", texto: "Todas tus mesas ya tienen resultado: no hay partidas sin terminar." })); return; }
         const m = mesas.find((x) => x.mesa === lecturaMesa);
+        if (modoApagado) { caja.replaceChildren(cabeza, formApagado(m, mesas)); pintarResultadoApagado(lecturaMesa); return; }
         const ult = lecturas(lecturaMesa).slice(0, 1);
         const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
             el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
@@ -601,7 +607,8 @@
             horaDeLectura,
             lado("blancas", m ? m.blancas : "", "b"),
             lado("negras", m ? m.negras : "", "n"),
-            el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar")),
+            el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar"),
+                el("button", { type: "button", id: "lt-apagado", class: "cam-btn cam-btn-claro", "data-accion": "reloj-apagado", title: "Calcula cuánto le toca a cada uno con el último control de esta mesa", onclick: () => { leerBorrador(); modoApagado = true; apagado = {}; pintarTiempos(); } }, "El reloj se apagó")),
             ult.length ? el("ul", { class: "text-sm mt-2", id: "lt-ultimas", "aria-label": "Lo último anotado en la mesa " + lecturaMesa },
                 ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") }))) : null));
     }
@@ -640,6 +647,123 @@
         } catch (e) {
             avisar(e.message, true);
             if ($("lt-guardar")) $("lt-guardar").disabled = false;
+        }
+    }
+
+    // ------------------------------------------------------------- el reloj que se apagó
+
+    // La hora en que empezó la ronda: la que marcó la organización o, si no la marcó, la del horario.
+    function inicioDeLaRonda() {
+        const marcada = estado.inicio_ronda && estado.inicio_ronda.inicio && Number(estado.inicio_ronda.ronda) === Number(estado.ronda);
+        if (marcada) return { ms: new Date(estado.inicio_ronda.inicio).getTime(), deDonde: "marcada por la organización" };
+        const H = window.CentroamericanoHorario;
+        const ev = H && H.EVENTOS.find((e) => e.ronda === estado.ronda);
+        return ev ? { ms: new Date(ev.inicio + ":00-06:00").getTime(), deDonde: "según el horario (la organización no la marcó)" } : null;
+    }
+
+    function leerApagado() {
+        if ($("ra-jb")) apagado = Object.assign(apagado, { jb: $("ra-jb").value, jn: $("ra-jn").value, reparto: ($("form-apagado").querySelector('input[name="ra-reparto"]:checked') || {}).value || "ritmo" });
+    }
+
+    function calcularApagado(mesa) {
+        const jb = apagado.jb === "" || apagado.jb == null ? NaN : Number(apagado.jb), jn = apagado.jn === "" || apagado.jn == null ? NaN : Number(apagado.jn);
+        const ahora = horaMarcada ? new Date(horaMarcada).getTime() : Date.now();
+        const ini = inicioDeLaRonda();
+        return { ahora, r: C.relojApagado({ control: C.ultimoControl(lecturas(mesa)), inicio: ini ? ini.ms : null, ahora, jBlancas: jb, jNegras: jn, reparto: apagado.reparto || "ritmo" }) };
+    }
+
+    function formApagado(m, mesas) {
+        const mesa = lecturaMesa;
+        const ctl = C.ultimoControl(lecturas(mesa));
+        const ini = inicioDeLaRonda();
+        const T = C.formatoTiempo;
+        const dato = (titulo, texto) => el("li", {}, el("strong", { texto: titulo + ": " }), el("span", { texto }));
+        const datos = el("ul", { class: "cam-apagado-datos", "aria-label": "Lo que ya se sabe de esta partida" },
+            dato("Ritmo", "90 min + 30 s por jugada"),
+            dato("Inicio de la ronda", ini ? textoHoraExacta(new Date(ini.ms).toISOString()) + " (" + ini.deDonde + ")" : "no se sabe"),
+            dato("Último control", ctl ? textoHoraExacta(ctl.ocurrio) + " · Blancas " + T(ctl.t_blancas) + " (" + ctl.j_blancas + " jug.) · Negras " + T(ctl.t_negras) + " (" + ctl.j_negras + " jug.)" : "ninguno en esta mesa"));
+        const jug = (color, id, nombre) => el("div", {}, el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
+            el("input", { id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: apagado[id === "ra-jb" ? "jb" : "jn"] || "", oninput: () => { leerApagado(); pintarResultadoApagado(mesa); } }));
+        const opcion = (valor, texto) => el("label", { class: "cam-apagado-opcion" }, el("input", { type: "radio", name: "ra-reparto", value: valor, checked: (apagado.reparto || "ritmo") === valor, onchange: () => { leerApagado(); pintarResultadoApagado(mesa); } }), el("span", { texto }));
+        const horaDeCalculo = el("div", { class: "cam-hora-control" },
+            el("span", { class: "text-sm font-bold", id: "ra-hora-etiqueta", texto: "Hora del cálculo" }),
+            el("output", { id: "ra-hora", class: "cam-hora-valor", "aria-labelledby": "ra-hora-etiqueta", "data-marcada": horaMarcada ? "si" : "no", texto: horaMarcada ? textoHoraExacta(horaMarcada) : "Ahora (márcala al poner el reloj nuevo)" }),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "ra-marcar-hora", onclick: () => { leerApagado(); horaMarcada = new Date().toISOString(); pintarTiempos(); } }, icono("reloj"), el("span", { texto: horaMarcada ? "Marcar de nuevo" : "Marcar la hora ahora" })));
+        return el("form", { class: "cam-flotante-cuerpo", id: "form-apagado", novalidate: true, onsubmit: (ev) => guardarApagado(ev, mesa) },
+            mesas.length > 1 ? el("div", {}, el("label", { for: "ra-mesa", class: "sr-only", texto: "Mesa" }),
+                el("select", { id: "ra-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); apagado = {}; pintarTiempos(); } },
+                    ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null,
+            el("p", { class: "text-sm", texto: "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decides tú (art. 6.10)." }),
+            datos,
+            el("fieldset", { class: "cam-tiempo-lado" }, el("legend", { texto: "Jugadas que lleva cada uno ahora" }),
+                el("div", { class: "grid grid-cols-2 gap-2" }, jug("blancas", "ra-jb", m ? m.blancas : ""), jug("negras", "ra-jn", m ? m.negras : ""))),
+            el("fieldset", { class: "cam-apagado-reparto" }, el("legend", { class: "text-sm font-bold", texto: "Lo que pasó desde el control, ¿cómo se reparte?" }),
+                opcion("ritmo", "Como venía gastando cada uno"), opcion("iguales", "Mitad y mitad")),
+            horaDeCalculo,
+            el("div", { id: "ra-resultado", "aria-live": "polite" }),
+            el("div", { class: "cam-acciones" },
+                el("button", { type: "submit", id: "ra-guardar", class: "cam-btn" }, "Anotar en la bitácora"),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro", onclick: () => { modoApagado = false; pintarTiempos(); } }, "Volver")));
+    }
+
+    // Solo el resultado se vuelve a dibujar al escribir: así el cursor no salta de la casilla.
+    function pintarResultadoApagado(mesa) {
+        const caja = $("ra-resultado");
+        if (!caja) return;
+        const T = C.formatoTiempo;
+        const { r } = calcularApagado(mesa);
+        if (apagado.jb === undefined || apagado.jb === "" || apagado.jn === undefined || apagado.jn === "") { caja.replaceChildren(el("p", { class: "text-sm cam-apagado-falta", texto: "Escribe las jugadas de cada uno para ver el cálculo." })); return; }
+        if (r.error) { caja.replaceChildren(el("p", { class: "cam-aviso-suave", texto: r.error })); return; }
+        const pct = (x) => Math.round(x * 100) + " %";
+        const reloj = (color, id, valor) => el("div", { class: "cam-apagado-reloj", "data-color": color },
+            el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), r.turno === color ? el("span", { class: "cam-apagado-turno", texto: " · le toca" }) : null),
+            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { apagado[id] = e.target.value; apagado.para = r.total; } }));
+        const lineas = [
+            "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento).",
+            r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
+                : r.reparto === "ritmo" ? "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
+                : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno.",
+        ];
+        const items = lineas.map((t) => el("li", { texto: t }));
+        if (r.comprobacion) {
+            const d = r.comprobacion.diferencia, cuadra = Math.abs(d) <= 120;
+            items.push(el("li", { class: cuadra ? "" : "cam-apagado-ojo", texto: cuadra
+                ? "✓ El control cuadra con la hora de inicio (diferencia de " + T(Math.abs(d)) + ")."
+                : "⚠ El control no cuadra con la hora de inicio por " + T(Math.abs(d)) + (d > 0 ? " de más" : " de menos") + ": ¿la partida empezó tarde, hubo una pausa o el control se anotó mal? Revísalo antes de poner el reloj." }));
+        }
+        if (r.blancas < 0 || r.negras < 0) items.push(el("li", { class: "cam-apagado-ojo", texto: "⚠ Con este cálculo a " + (r.blancas < 0 ? "las blancas" : "las negras") + " ya se les habría acabado el tiempo: decide tú." }));
+        caja.replaceChildren(
+            el("div", { class: "grid grid-cols-2 gap-2 cam-apagado-relojes" }, reloj("blancas", "ra-tb", r.blancas), reloj("negras", "ra-tn", r.negras)),
+            el("p", { class: "text-sm", texto: "Pon esto en el reloj nuevo (puedes cambiarlo antes de anotarlo)." }),
+            el("ul", { class: "text-sm cam-apagado-cuentas", "aria-label": "Las cuentas" }, ...items));
+    }
+
+    async function guardarApagado(ev, mesa) {
+        ev.preventDefault();
+        leerApagado();
+        const { ahora, r } = calcularApagado(mesa);
+        if (r.error) { avisar(r.error, true); return; }
+        const tB = C.leerTiempo($("ra-tb").value), tN = C.leerTiempo($("ra-tn").value);
+        if (tB === null || tN === null) { avisar("Escribe el tiempo de cada reloj así: 1:23:45 o 45:10.", true); return; }
+        const ctl = C.ultimoControl(lecturas(mesa));
+        const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
+        const nota = ("Reloj apagado (art. 6.10): " + (ctl ? "calculado desde el control de las " + textoHoraExacta(ctl.ocurrio) : "calculado desde el inicio de la ronda")
+            + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
+            + (propuesto ? "" : "; propuesto " + C.formatoTiempo(Math.max(0, r.blancas)) + " / " + C.formatoTiempo(Math.max(0, r.negras)) + ", el árbitro lo ajustó")).slice(0, 500);
+        $("ra-guardar").disabled = true;
+        try {
+            const cuerpo = { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: Number(apagado.jb), t_negras: tN, j_negras: Number(apagado.jn), turno: r.turno, nota, ocurrio: new Date(ahora).toISOString() };
+            const res = await escribir("tiempo", cuerpo, "Reloj apagado en la mesa " + mesa, { mesa });
+            const d = res.encolado ? { id: res.id, ocurrio: cuerpo.ocurrio, jugada: Math.max(1, cuerpo.j_blancas, cuerpo.j_negras) } : res.d;
+            estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: cuerpo.j_blancas, j_negras: cuerpo.j_negras, turno: r.turno, t_blancas: tB, t_negras: tN, nota }].concat(estado.tiempos || []);
+            avisar(res.encolado ? "Sin señal: los tiempos de la mesa " + mesa + " quedaron en la tablet y se mandan solos cuando vuelva la conexión." : "Tiempos de la mesa " + mesa + " anotados en la bitácora: Blancas " + C.formatoTiempo(tB) + ", Negras " + C.formatoTiempo(tN) + ".");
+            modoApagado = false; apagado = {}; horaMarcada = null;
+            if (tiemposPorMesa) tiemposAbierto = false;
+            pintarTiempos();
+            pintar();
+        } catch (e) {
+            avisar(e.message, true);
+            if ($("ra-guardar")) $("ra-guardar").disabled = false;
         }
     }
 
