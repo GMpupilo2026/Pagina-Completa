@@ -237,7 +237,7 @@
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
-                        icono("sos"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
+                        icono("salvavidas"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
             bandas(m),
             bloqueJugador(m, "blancas"),
@@ -263,7 +263,7 @@
       ilegal: [["path", { d: "M12 3.5l9.5 16.5h-19L12 3.5z" }], ["path", { d: "M12 10v4.5" }], ["path", { d: "M12 17.3v.01" }]],
       irregularidad: [["path", { d: "M5 21V4" }], ["path", { d: "M5 4h12l-2.5 4L17 12H5" }]],
       anular: [["path", { d: "M9 14L4 9l5-5" }], ["path", { d: "M4 9h10.5a5.5 5.5 0 0 1 0 11H11" }]],
-      sos: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
+      salvavidas: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
     };
     function icono(nombre) {
       const s = document.createElementNS(SVG_NS, "svg");
