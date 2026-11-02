@@ -95,6 +95,7 @@
 }
 .cam-marca[data-tipo="ilegal"] { background: var(--cac-rojo); }
 .cam-marca[data-tipo="irregularidad"] { background: var(--cac-morado); }
+.cam-marca[data-tipo="levanto"] { background: #1f774c; }
 
 /* Los botones, grandes: se tocan con el dedo y a veces con prisa. */
 .cam-btn {
@@ -404,6 +405,8 @@
 .cam-tiempo-lado legend { padding: 0 0.3rem; font-weight: 700; }
 .cam-tiempo-nombre { font-size: 0.85rem; font-weight: 600; }
 .dark .cam-tiempo-lado { border-color: rgb(255 255 255 / 0.25); }
+.cam-tiempo-ayuda { display: block; min-height: 1.2em; margin-top: 0.15rem; font-size: 0.8rem; line-height: 1.25; }
+.cam-campo[aria-invalid="true"] { border-color: var(--cac-rojo); outline: 2px solid var(--cac-rojo); }
 .cam-hora-control { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .cam-hora-valor { flex: 1 1 8rem; min-width: 0; font-variant-numeric: tabular-nums; font-weight: 700; }
 .cam-hora-valor[data-marcada="no"] { font-weight: 400; opacity: 0.85; }
@@ -545,6 +548,10 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-btn-icono-rojo { border-color: var(--cac-rojo); color: var(--cac-rojo); }
 .cam-btn-icono-rojo:hover:not(:disabled), .cam-btn-icono-rojo[aria-pressed="true"] { background: var(--cac-rojo); color: #fff; }
 .cam-btn-icono-rojo[data-accion="ilegal"] { background: var(--cac-rojo); color: #fff; }
+.cam-btn-icono-levanto { border-color: #1f774c; color: #1f774c; }
+.cam-btn-icono-levanto:hover:not(:disabled) { background: #1f774c; color: #fff; }
+.dark .cam-btn-icono-levanto { border-color: #9be0bb; color: #9be0bb; }
+.dark .cam-btn-icono-levanto:hover:not(:disabled) { background: #9be0bb; color: #0a1f33; }
 .dark .cam-btn-icono-rojo { border-color: #ff9aa5; color: #ff9aa5; }
 .dark .cam-btn-icono-rojo[data-accion="ilegal"], .dark .cam-btn-icono-rojo[aria-pressed="true"] { background: #ff9aa5; color: var(--cac-morado-hondo); }
 .dark .cam-btn-icono-verde[aria-pressed="true"] { background: #9be0bb; border-color: #9be0bb; color: var(--cac-morado-hondo); }
