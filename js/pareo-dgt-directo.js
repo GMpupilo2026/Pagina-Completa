@@ -41,8 +41,9 @@
                 if (a && typeof a === "object" && a.tnr && a.mesa) asignadas[d] = { tnr: String(a.tnr), mesa: Number(a.mesa) };
                 else if (Number(a) && e.torneo) asignadas[d] = { tnr: String(e.torneo), mesa: Number(a) };
             }
-            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {}, sonido: !!e.sonido };
-        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {}, sonido: false }; }
+            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {}, sonido: !!e.sonido,
+                rey: e.rey !== false, casillaRey: /^[a-h][1-8]$/.test(e.casillaRey || "") ? e.casillaRey : "e4" };
+        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {}, sonido: false, rey: true, casillaRey: "e4" }; }
     }
     const estado = leer();
     function guardar() {
@@ -247,6 +248,7 @@
         if (identificar && c.eventos.some((e) => e.tipo === "pieza")) marcarFila(t);
         const partida = t.juego.partida;
         partida.memoria(c.eventos);
+        if (estado.rey) reyEnLaCasilla(t);
         if (n % RELOJ_CADA === 0) {
             const r = await p.cadena.reloj(t.dir);
             if (!r.error) partida.reloj(r.reloj);
@@ -680,6 +682,48 @@
 
     // ------------------------------------------------------------ ¿cuál es este tablero?
 
+    // Un rey en la casilla elegida (e4 por omisión) dice qué tablero es, sin
+    // tocar la computadora: el árbitro lo pone en la mesa y en la pantalla
+    // destella el número, la categoría y la mesa, con sonido, y su fila se
+    // marca. Una vez por cada vez que se pone. Si en la PARTIDA hay un rey en
+    // esa casilla (un final), no es un aviso: es una jugada.
+    function piezaEnFen(fen, j) {
+        const fila = String(fen).split(" ")[0].split("/")[Math.floor(j / 8)] || "";
+        let col = 0;
+        for (const ch of fila) {
+            if (/\d/.test(ch)) { col += Number(ch); continue; }
+            if (col === j % 8) return ch;
+            col += 1;
+        }
+        return ".";
+    }
+    function reyEnLaCasilla(t) {
+        const p = t.juego && t.juego.partida;
+        const cas = p ? p.casillas() : null;
+        if (!cas || cas.length !== 64) return;
+        const i = (8 - Number(estado.casillaRey[1])) * 8 + (estado.casillaRey.charCodeAt(0) - 97);
+        const hayRey = "Kk".includes(DgtLector.LETRA[cas[i]] || ".");
+        const enLaPartida = "Kk".includes(piezaEnFen(p.fen(), p.rotado() ? 63 - i : i));
+        if (!hayRey || enLaPartida) { t.reyMostrado = false; return; }
+        if (t.reyMostrado) return;
+        t.reyMostrado = true;
+        mostrarTablero(t);
+    }
+    function mostrarTablero(t) {
+        const a = asignacion(t.dir);
+        const aviso = $("directo-rey-aviso");
+        aviso.textContent = "Tablero " + t.dir + (a ? " · " + nombreDe(a.tnr) + " · Mesa " + a.mesa : " · sin categoría ni mesa");
+        aviso.hidden = false;
+        aviso.classList.remove("dgt-destello");
+        void aviso.offsetWidth;   // para que el destello vuelva a empezar
+        aviso.classList.add("dgt-destello");
+        clearTimeout(mostrarTablero.t);
+        mostrarTablero.t = setTimeout(() => { aviso.hidden = true; }, 8000);
+        marcarFila(t);
+        sonar();
+        setTimeout(sonar, 300);
+    }
+
     let identificar = false;
     function marcarFila(t) {
         if (!t.fila) return;
@@ -886,6 +930,15 @@
         });
         $("btn-directo-sala").addEventListener("click", abrirSala);
         window.addEventListener("pagehide", () => { if (sala && !sala.closed) sala.close(); });
+        $("directo-rey").checked = estado.rey;
+        $("directo-casilla-rey").value = estado.casillaRey;
+        $("directo-rey").addEventListener("change", () => { estado.rey = $("directo-rey").checked; guardar(); });
+        $("directo-casilla-rey").addEventListener("change", () => {
+            const v = $("directo-casilla-rey").value.trim().toLowerCase();
+            if (/^[a-h][1-8]$/.test(v)) { estado.casillaRey = v; guardar(); for (const x of tableros.values()) x.reyMostrado = false; }
+            $("directo-casilla-rey").value = estado.casillaRey;
+        });
+        $("directo-rey-aviso").addEventListener("click", () => { $("directo-rey-aviso").hidden = true; });
         $("directo-sonido").checked = estado.sonido;
         $("directo-sonido").addEventListener("change", () => { estado.sonido = $("directo-sonido").checked; guardar(); if (estado.sonido) sonar(); });
         $("btn-directo-cual").addEventListener("click", () => {

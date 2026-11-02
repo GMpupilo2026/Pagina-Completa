@@ -13566,6 +13566,22 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conectar el cable. Si el puerto elegido es el del tablero virtual de esta
   misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
   lo dice sin intentar abrirlo.
+- **El rey en e4 dice qué tablero es** (lo pidió el dueño: «que cuando se
+  coloque el rey en la casilla e4, salte a la vista qué tablero es, con
+  sonido y una luz»). Sin tocar la computadora: el árbitro pone un rey
+  (blanco o negro) en esa casilla y la pantalla muestra arriba, en grande,
+  «Tablero 4534 · Sub-12 · Mesa 3», con un destello (anillo que late; sin
+  animación con «reducir movimiento») y dos pitidos, y su fila se marca. La
+  casilla se elige (e4 por omisión) y se apaga; se guarda en la computadora.
+  Suena aunque «Avisar con un sonido» esté apagado: es para eso.
+  - **La luz es la de la pantalla**: estos tableros no tienen luces, y al
+    DGT 3000 no se le puede escribir por el bus (ver abajo, los relojes).
+  - **Un rey que llega a e4 jugando no avisa**: si en la PARTIDA hay un rey
+    en esa casilla (un final), es una jugada. Se mira la casilla del tablero
+    de verdad (`p.casillas()`, impresa en el tablero) y la misma casilla en la
+    partida, dada vuelta si las blancas juegan del otro lado.
+  - Avisa una vez cada vez que se pone; quitar el rey y volver a ponerlo
+    avisa otra vez. Texto oscuro sobre el naranja de los botones: 6,5:1.
 - **La primera cadena de verdad (2/11): se encontraban y no contestaban.**
   Cuatro tableros (4534, 4875, 7362 y 15712) aparecieron en la búsqueda y
   después los cuatro decían «no contesta». Lo que encaja: el adaptador

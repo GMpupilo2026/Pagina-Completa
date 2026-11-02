@@ -501,7 +501,7 @@
     return { encontrar, cambios, tablero, reloj: relojDe, preguntar };
   }
 
-  const api = { CMD, MSG, INICIAL, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, textoPgn, crearCadena };
+  const api = { CMD, MSG, INICIAL, LETRA, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, textoPgn, crearCadena };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.DgtLector = api;
 })(typeof self !== "undefined" ? self : this);
