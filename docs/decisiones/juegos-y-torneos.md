@@ -13566,6 +13566,16 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conectar el cable. Si el puerto elegido es el del tablero virtual de esta
   misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
   lo dice sin intentar abrirlo.
+- **Cada PGN con su categoría y su ronda en el nombre** (lo pidió el dueño:
+  «todos se llaman igual»). El nombre salía del nombre del torneo de
+  chess-results cortado a 60 letras, y los del Centroamericano empiezan todos
+  con «XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - …»: el
+  corte se comía la categoría. Ahora `PareoDGT.nombreArchivo(nombre, ronda,
+  otros)` le quita lo que comparte con los demás torneos de la lista
+  («sub-08-absoluto-ronda-3.pgn»; si lo que queda empieza con un número,
+  conserva la palabra de antes: «sub-08», no «08»), y si aún es largo guarda
+  el final, que es la categoría. Vale para el PGN para LiveChess y para
+  «PGN de la ronda N».
 - **El rey en e4 dice qué tablero es, y ahí mismo se le da su categoría**
   (lo pidió el dueño: «que cuando se coloque el rey en la casilla e4, salte a
   la vista qué tablero es, con sonido y una luz… en la pantalla, para saber

@@ -473,7 +473,7 @@
     function bajarPgn(tnr, n) {
         const r = API().ronda(tnr, n);
         if (!r) return;
-        API().bajar(PareoDGT.nombreArchivo(r.nombre || nombreDe(tnr), n).replace(/\.pgn$/, "-partidas.pgn"), pgnDe(clave(tnr, n), r));
+        API().bajar(PareoDGT.nombreArchivo(r.nombre || nombreDe(tnr), n, API().torneos().map((x) => x.nombre)).replace(/\.pgn$/, "-partidas.pgn"), pgnDe(clave(tnr, n), r));
     }
 
     // ------------------------------------------------------------ los avisos de la sala

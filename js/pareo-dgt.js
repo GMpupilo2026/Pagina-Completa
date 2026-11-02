@@ -351,7 +351,7 @@
         }
         const pgn = PareoDGT.pgn(datos, { mesas: t.mesas, sinTildes: estado.sinTildes, sitio: estado.lugar || undefined });
         const n = PareoDGT.partidas(datos, { mesas: t.mesas }).length;
-        const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda);
+        const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda, estado.torneos.map((x) => x.nombre));
         const anterior = t.rondas[String(datos.ronda)];
         const otrasMesas = !!anterior && anterior.firma === PareoDGT.firma(datos);
         t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), mesasElegidas: t.mesas || "", pgn, archivo: nombre, mesas: n, pareo: pareoDe(datos) });

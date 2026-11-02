@@ -205,6 +205,18 @@ function pruebaModulo() {
   igual("si se eligen otras mesas, hay que volver a armarla", [DGT.decidir(hecho, DATOS, "1-2"), DGT.decidir({ rondas: { 3: { firma: DGT.firma(DATOS), mesasElegidas: "1-2" } } }, DATOS, "2, 1")], ["cambio", "igual"]);
 
   igual("el nombre del archivo", DGT.nombreArchivo("Torneo Blitz Sub-12 — Peñas", 3), "torneo-blitz-sub-12-penas-ronda-3.pgn");
+  // Los del Centroamericano empiezan todos igual: cortados a 60 letras, todos
+  // los archivos se llamaban igual. Con los demás torneos de la lista, queda
+  // lo que distingue a cada uno: la categoría.
+  const festival = ["XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 08 Absoluto",
+    "XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 08 Femenino",
+    "XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 10 Absoluto"];
+  igual("con varias categorías, cada archivo lleva la suya y la ronda",
+    festival.map((n) => DGT.nombreArchivo(n, 3, festival)),
+    ["sub-08-absoluto-ronda-3.pgn", "sub-08-femenino-ronda-3.pgn", "sub-10-absoluto-ronda-3.pgn"]);
+  igual("y nunca dos iguales, aunque se baje la misma ronda de todas", new Set(festival.map((n) => DGT.nombreArchivo(n, 1, festival))).size, 3);
+  igual("con un solo torneo y un nombre largo, se guarda el final: la categoría", DGT.nombreArchivo(festival[0], 2, [festival[0]]),
+    "ajedrez-centroamericano-y-del-caribe-2026-sub-08-absoluto-ronda-2.pgn");
   igual("la hora de la ronda, en hora de Costa Rica (UTC−6)",
     [DGT.inicioRonda("2026.11.07", "3:00pm"), DGT.inicioRonda("2026.11.07", "12:30am"), DGT.inicioRonda("2026.11.07", "12:05pm"), DGT.inicioRonda("", "3:00pm")],
     [Date.UTC(2026, 10, 7, 21, 0), Date.UTC(2026, 10, 7, 6, 30), Date.UTC(2026, 10, 7, 18, 5), null]);
