@@ -21,7 +21,7 @@
 
        window.GuiaPlanillas.disponible()                  -> ¿este aparato puede abrir la cámara aquí?
        window.GuiaPlanillas.abrir({ titulo, rotulos })    -> Promise<{ imagen } | { cancelado } | { sin_camara, motivo }>
-       (puras, para probarlas sin navegador) marcosGuia, otsu, analizar, textoGuia */
+       (puras, para probarlas sin navegador) marcosGuia, recorteGuia, otsu, analizar, textoGuia */
 (function (raiz) {
   "use strict";
   const enNode = typeof module !== "undefined" && module.exports;
@@ -45,6 +45,20 @@
     const x0 = (1 - (2 * w + hueco)) / 2;
     const y = (1 - h) / 2;
     return [{ x: x0, y, w, h }, { x: x0 + w + hueco, y, w, h }];
+  }
+
+  // Lo que se GUARDA de la foto: solo lo que queda dentro de los dos marcos (con un margen chico por si una hoja
+  // se sale un poco), no todo lo que ve la cámara. Sin esto, la foto traía la mesa, el piso y lo de alrededor y
+  // la planilla se veía chica en medio. Es el rectángulo que cubre los dos marcos, como fracciones del cuadro
+  // (0 a 1), con `MARGEN_RECORTE` de ancho del cuadro de cada lado.
+  const MARGEN_RECORTE = 0.02;
+  function recorteGuia(aspecto) {
+    const a = aspecto > 0.2 ? aspecto : 16 / 9;
+    const m = marcosGuia(a);
+    const px = MARGEN_RECORTE, py = MARGEN_RECORTE * a;   // el mismo margen en píxeles a lo ancho y a lo alto
+    const x0 = Math.max(0, m[0].x - px), x1 = Math.min(1, m[1].x + m[1].w + px);
+    const y0 = Math.max(0, m[0].y - py), y1 = Math.min(1, m[0].y + m[0].h + py);
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
 
   // El umbral de brillo (0 a 255) que mejor separa lo oscuro de lo claro (método de Otsu).
@@ -175,7 +189,7 @@
     return { verde, buenas, malas };
   }
 
-  const puras = { marcosGuia, otsu, medirHoja, analizar, textoGuia, siguiente, HOJA, LADO_FOTO, TOLERA };
+  const puras = { marcosGuia, recorteGuia, otsu, medirHoja, analizar, textoGuia, siguiente, HOJA, LADO_FOTO, TOLERA };
   if (enNode) { module.exports = puras; return; }
 
   // ------------------------------------------------------------- la ventana de la cámara (navegador)
@@ -318,10 +332,13 @@
       function tomar() {
         const vw = video.videoWidth, vh = video.videoHeight;
         if (!vw || !vh || termino) return;
-        const esc = Math.min(1, LADO_FOTO / Math.max(vw, vh));
+        // Solo lo que está dentro de los marcos (las dos planillas), no todo lo que ve la cámara.
+        const r = recorteGuia(vw / vh);
+        const sx = Math.round(r.x * vw), sy = Math.round(r.y * vh), sw = Math.max(1, Math.round(r.w * vw)), sh = Math.max(1, Math.round(r.h * vh));
+        const esc = Math.min(1, LADO_FOTO / Math.max(sw, sh));
         const c = document.createElement("canvas");
-        c.width = Math.round(vw * esc); c.height = Math.round(vh * esc);
-        c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
+        c.width = Math.max(1, Math.round(sw * esc)); c.height = Math.max(1, Math.round(sh * esc));
+        c.getContext("2d").drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
         foto = c.toDataURL("image/jpeg", 0.85);
         imagenEl.src = foto;
         revisando = true;

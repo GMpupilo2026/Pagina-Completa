@@ -8747,6 +8747,12 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     aparato», «Centra la planilla…»); el verde además cambia el borde de discontinuo a continuo.
   - **Celular parado**: pide «Gira el aparato a lo ancho» (no caben dos hojas verticales de lado), esconde
     los marcos y no deja disparar; al girar se quita sola.
+  - **Lo que se guarda es solo lo que queda dentro de los marcos.** La foto se recorta (`recorteGuia(aspecto)`) al rectángulo que
+    cubre las dos planillas, con un margen chico (2 % del ancho) por si una hoja se sale un poco, y eso es lo que se ve para
+    revisar, lo que sube a la base y lo que llega al Drive. Antes se guardaba todo lo que veía la cámara (la mesa, el piso, lo de
+    los lados) y las planillas salían chicas en el centro. Si el aparato no deja abrir la cámara dentro de la página y se usa la
+    cámara de siempre, esa foto no se puede recortar (ahí no hay marcos). Lo comprueba `verificar-guia-planillas.js` (el
+    recorte cubre los dos marcos, las medidas de la foto son las del recorte y tiene tanto papel como debe; roto a propósito, salta).
   - La foto sale con el lado largo de hasta **2600 px** (antes 1800: con dos planillas en una foto, cada una
     quedaba en ~600 px, poco para leer letra a mano). Pide la mejor resolución que dé la cámara (`ideal`
     3840×2160) y la linterna solo si el aparato la ofrece. Al cerrar —o con Escape— la cámara se apaga.
