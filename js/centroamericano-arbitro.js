@@ -681,8 +681,9 @@
         const datos = el("ul", { class: "cam-apagado-datos", "aria-label": "Lo que ya se sabe de esta partida" },
             dato("Ritmo", "90 min + 30 s por jugada"),
             dato("Inicio de la ronda", ini ? textoHoraExacta(new Date(ini.ms).toISOString()) + " (" + ini.deDonde + ")" : "no se sabe"),
-            dato("Jugadas ilegales", (() => { const b = C.bonosIlegales(estado.anotaciones, mesa, anuladas);
-                return b.length ? b.sort((p, q) => p.ms - q.ms).map((x) => (x.de === "blancas" ? "de las blancas" : "de las negras") + " a las " + textoHoraExacta(new Date(x.ms).toISOString()) + " (+2:00 a las " + x.color + (ctl && x.ms <= new Date(ctl.ocurrio).getTime() ? ", ya en el control" : ", se suman") + ")").join(" · ") : "ninguna"; })()),
+            dato("Ilegales y sanciones de tiempo", (() => { const b = C.bonosIlegales(estado.anotaciones, mesa, anuladas);
+                return b.length ? b.map((x) => (x.motivo === "ilegal" ? "Ilegal" : "Irregularidad") + " de las " + x.de + " a las " + textoHoraExacta(new Date(x.ms).toISOString())
+                    + " (" + (x.segundos > 0 ? "+" : "−") + C.formatoTiempo(Math.abs(x.segundos)) + " a las " + x.color + (ctl && x.ms <= new Date(ctl.ocurrio).getTime() ? ", ya en el control" : ", se cuenta") + ")").join(" · ") : "ninguna"; })()),
             dato("Último control", ctl ? textoHoraExacta(ctl.ocurrio) + " · Blancas " + T(ctl.t_blancas) + " (" + ctl.j_blancas + " jug.) · Negras " + T(ctl.t_negras) + " (" + ctl.j_negras + " jug.)" : "ninguno en esta mesa"));
         const jug = (color, id, nombre) => el("div", {}, el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
             el("input", { id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: apagado[id === "ra-jb" ? "jb" : "jn"] || "", oninput: () => { leerApagado(); pintarResultadoApagado(mesa); } }));
@@ -708,6 +709,27 @@
                 el("button", { type: "button", class: "cam-btn cam-btn-claro", onclick: () => { modoApagado = false; pintarTiempos(); } }, "Volver")));
     }
 
+    // Un reloj de ajedrez dibujado (SVG propio): las dos pantallas con los tiempos propuestos y la palanca levantada
+    // del lado de quien tiene el turno, como se ve en la mesa. Es un dibujo: el dato va escrito en las casillas de
+    // abajo y en «le toca», así que el lector de pantalla lo salta (aria-hidden).
+    function relojDibujo(tB, tN, turno) {
+        const svg = (tag, at, ...hijos) => { const n = document.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(at)) n.setAttribute(k, v); n.append(...hijos); return n; };
+        const pantalla = (x, texto, id) => [
+            svg("rect", { x, y: 62, width: 124, height: 52, rx: 6, fill: "#0e1222" }),
+            svg("rect", { x: x + 5, y: 67, width: 114, height: 42, rx: 3, fill: "#c9d8b6" }),
+            svg("text", { x: x + 62, y: 98, "text-anchor": "middle", "font-family": "ui-monospace, 'Courier New', monospace", "font-weight": "700", "font-size": "27", fill: "#18240f", id }, texto)];
+        const palanca = (x, arriba) => svg("rect", { x, y: arriba ? 18 : 31, width: 70, height: arriba ? 26 : 13, rx: 5, fill: arriba ? "#e8a33d" : "#7d82a8" });
+        const etiqueta = (x, texto) => svg("text", { x, y: 133, "text-anchor": "middle", "font-family": "inherit", "font-weight": "700", "font-size": "12", fill: "#ffffff", "letter-spacing": "1.5" }, texto);
+        return svg("svg", { viewBox: "0 0 320 150", class: "cam-reloj-dibujo", "aria-hidden": "true", focusable: "false" },
+            palanca(57, turno === "blancas"), palanca(193, turno === "negras"),
+            svg("rect", { x: 8, y: 42, width: 304, height: 104, rx: 16, fill: "#2a2f55" }),
+            svg("rect", { x: 8, y: 42, width: 304, height: 10, rx: 5, fill: "#3b4173" }),
+            svg("circle", { cx: 160, cy: 88, r: 4, fill: "#8d92c4" }),
+            ...pantalla(24, C.formatoTiempo(Math.max(0, tB)), "ra-dibujo-b"), ...pantalla(172, C.formatoTiempo(Math.max(0, tN)), "ra-dibujo-n"),
+            etiqueta(86, "BLANCAS"), etiqueta(234, "NEGRAS"),
+            svg("path", { d: turno === "blancas" ? "M146 132l-8-5v10z" : "M174 132l8-5v10z", fill: "#e8a33d" }));
+    }
+
     // Solo el resultado se vuelve a dibujar al escribir: así el cursor no salta de la casilla.
     function pintarResultadoApagado(mesa) {
         const caja = $("ra-resultado");
@@ -719,15 +741,15 @@
         const pct = (x) => Math.round(x * 100) + " %";
         const reloj = (color, id, valor) => el("div", { class: "cam-apagado-reloj", "data-color": color },
             el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), r.turno === color ? el("span", { class: "cam-apagado-turno", texto: " · le toca" }) : null),
-            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { apagado[id] = e.target.value; apagado.para = r.total; } }));
+            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { apagado[id] = e.target.value; apagado.para = r.total; const t = C.leerTiempo(e.target.value), d = $(id === "ra-tb" ? "ra-dibujo-b" : "ra-dibujo-n"); if (d && t !== null) d.textContent = C.formatoTiempo(t); } }));
         const lineas = [
             "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento).",
             r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
                 : r.reparto === "ritmo" ? "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
                 : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno.",
         ];
-        for (const c of ["blancas", "negras"]) if (r.bonos && r.bonos[c]) lineas.push("Incluye +" + T(r.bonos[c]) + " a las " + c + " por la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + "), anotada después del " + (r.sinControl ? "inicio" : "control") + ".");
-        if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) lineas.push("Los 2 minutos de la ilegal anotada antes del control ya estaban en esos relojes: no se suman de nuevo, y se tienen en cuenta al ver cómo venía gastando cada uno y en la comprobación con el inicio.");
+        for (const a of r.ajustes || []) lineas.push("Incluye " + (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + " por " + (a.motivo === "ilegal" ? "la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + ")" : a.color === a.de ? "la sanción de su irregularidad (art. " + C.ARTICULO_SANCION + ")" : "la sanción a su rival por una irregularidad (art. " + C.ARTICULO_SANCION + ")") + ", anotada a las " + textoHoraExacta(new Date(a.ms).toISOString()));
+        if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) lineas.push("Lo que se dio o quitó antes del control ya estaba en esos relojes: no se cuenta de nuevo, pero sí al ver cómo venía gastando cada uno y en la comprobación con el inicio.");
         const items = lineas.map((t) => el("li", { texto: t }));
         if (r.comprobacion) {
             const d = r.comprobacion.diferencia, cuadra = Math.abs(d) <= 120;
@@ -736,9 +758,11 @@
                 : "⚠ El control no cuadra con la hora de inicio por " + T(Math.abs(d)) + (d > 0 ? " de más" : " de menos") + ": ¿la partida empezó tarde, hubo una pausa o el control se anotó mal? Revísalo antes de poner el reloj." }));
         }
         if (r.blancas < 0 || r.negras < 0) items.push(el("li", { class: "cam-apagado-ojo", texto: "⚠ Con este cálculo a " + (r.blancas < 0 ? "las blancas" : "las negras") + " ya se les habría acabado el tiempo: decide tú." }));
+        const valor = (id, calc) => { const t = apagado[id] != null && apagado.para === r.total ? C.leerTiempo(apagado[id]) : null; return t === null ? calc : t; };
         caja.replaceChildren(
+            relojDibujo(valor("ra-tb", r.blancas), valor("ra-tn", r.negras), r.turno),
             el("div", { class: "grid grid-cols-2 gap-2 cam-apagado-relojes" }, reloj("blancas", "ra-tb", r.blancas), reloj("negras", "ra-tn", r.negras)),
-            el("p", { class: "text-sm", texto: "Pon esto en el reloj nuevo (puedes cambiarlo antes de anotarlo)." }),
+            el("p", { class: "text-sm", texto: "Pon esto en el reloj nuevo. Si decides otro tiempo, cámbialo en las casillas y el dibujo se actualiza." }),
             el("ul", { class: "text-sm cam-apagado-cuentas", "aria-label": "Las cuentas" }, ...items));
     }
 
@@ -753,7 +777,7 @@
         const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
         const nota = ("Reloj apagado (art. 6.10): " + (ctl ? "calculado desde el control de las " + textoHoraExacta(ctl.ocurrio) : "calculado desde el inicio de la ronda")
             + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
-            + (r.bonos && (r.bonos.blancas || r.bonos.negras) ? "; incluye los 2 min de la ilegal" : "")
+            + (r.ajustes && r.ajustes.length ? "; incluye " + r.ajustes.map((a) => (a.segundos > 0 ? "+" : "−") + C.formatoTiempo(Math.abs(a.segundos)) + " a las " + a.color + (a.motivo === "ilegal" ? " (ilegal)" : " (sanción)")).join(", ") : "")
             + (propuesto ? "" : "; propuesto " + C.formatoTiempo(Math.max(0, r.blancas)) + " / " + C.formatoTiempo(Math.max(0, r.negras)) + ", el árbitro lo ajustó")).slice(0, 500);
         $("ra-guardar").disabled = true;
         try {
@@ -1088,17 +1112,22 @@
 
     // Las dos de la lista: ilegal e irregularidad se eligen de una lista y la bitácora queda sola
     // (tipo de jugada, el artículo cuando lo hay y lo que quiera agregar el árbitro).
-    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro) {
+    // `conSancion`: la irregularidad pregunta además si hubo sanción de tiempo (art. 12.9). Va escrita al final del
+    // texto con la forma de C.sancionTexto, y de ahí la lee el cálculo del reloj que se apaga.
+    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro, conSancion) {
         const r = await Avisos.formulario({
             titulo, texto, aceptar, peligro,
             campos: [
                 { nombre: "tipo", etiqueta, tipo: "select", opciones: lista.map((t) => [t.id, t.texto]) },
+                conSancion ? { nombre: "sancion", etiqueta: "Sanción de tiempo (art. " + C.ARTICULO_SANCION + ")", tipo: "select", valor: "", opciones: C.SANCIONES_TIEMPO.map((x) => [x.id, x.texto]) } : null,
                 { nombre: "nota", etiqueta: "Detalle (opcional; obligatorio si eliges «Otra»)", tipo: "textarea", max: 500 },
-            ],
+            ].filter(Boolean),
         });
         if (r === null) return null;
         const t = C.textoTipo(lista, r.tipo, r.nota);
         if (!t) { avisar("Cuenta qué pasó para anotar «Otra».", true); return null; }
+        const sancion = conSancion ? C.SANCIONES_TIEMPO.find((x) => x.id === r.sancion && x.segundos) : null;
+        if (sancion) { t.texto += C.sancionTexto(sancion.id); t.sancion = sancion; }
         return t;
     }
 
@@ -1144,7 +1173,7 @@
 
     async function irregularidad(m, color) {
         const nombre = nombreDe(m, color);
-        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora y tu nombre.", C.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false);
+        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora y tu nombre.", C.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false, true);
         if (!t) return;
         ocupadas.add(m.mesa);
         pintar();
@@ -1154,13 +1183,17 @@
                 const k = marcaDe(m.mesa, color);
                 estado.marcas[clave(m.mesa, color)] = Object.assign({}, k, { irregularidades: k.irregularidades + 1, ultima_irregularidad: r.id });
                 sumarAnotacion(m, color, "irregularidad", r.id, nombre, t.texto);
-                avisar("Sin señal: la irregularidad de " + nombre + " quedó en la tablet y se manda sola cuando vuelva la conexión.");
+                avisar("Sin señal: la irregularidad de " + nombre + " quedó en la tablet y se manda sola cuando vuelva la conexión." + (t.sancion ? " No olvides ajustar el reloj por la sanción." : ""));
                 return;
             }
             const d = r.d;
             estado.marcas[clave(m.mesa, color)] = d.marca;
             sumarAnotacion(m, color, "irregularidad", d.id, d.jugador || nombre, t.texto);
             avisar("Irregularidad anotada: " + (d.jugador || nombre) + ".");
+            if (t.sancion) {
+                const quien = t.sancion.a === "rival" ? nombreDe(m, color === "blancas" ? "negras" : "blancas") + " (" + (color === "blancas" ? "negras" : "blancas") + ")" : (d.jugador || nombre) + " (" + color + ")";
+                await Avisos.alerta("Ajusta el reloj ahora: " + (t.sancion.segundos > 0 ? "súmale " : "réstale ") + C.formatoTiempo(Math.abs(t.sancion.segundos)) + " a " + quien + ". Quedó anotado en la bitácora y cuenta si después el reloj se apaga.", { titulo: "Sanción de tiempo", aceptar: "Entendido" });
+            }
         } catch (e) {
             avisar(e.message, true);
         } finally {

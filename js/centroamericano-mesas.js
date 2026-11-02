@@ -207,6 +207,32 @@
     { id: "reloj", texto: "Usó mal el reloj (con la otra mano, golpeándolo, sin soltar la pieza)" },
     { id: "otra", texto: "Otra (escribir qué pasó)" },
   ];
+  // La sanción de tiempo de una irregularidad (art. 12.9: quitarle tiempo a quien la cometió o dárselo a su rival).
+  // Va escrita al final del texto de la irregularidad, siempre con esta forma, y se vuelve a leer de ahí para el reloj
+  // que se apaga: una sola copia del formato (sancionTexto escribe, leerSancion lee).
+  const SANCIONES_TIEMPO = [
+    { id: "", texto: "Sin sanción de tiempo" },
+    { id: "rival+60", texto: "+1 minuto a su rival", segundos: 60, a: "rival" },
+    { id: "rival+120", texto: "+2 minutos a su rival", segundos: 120, a: "rival" },
+    { id: "rival+300", texto: "+5 minutos a su rival", segundos: 300, a: "rival" },
+    { id: "suyo-60", texto: "−1 minuto a quien la cometió", segundos: -60, a: "suyo" },
+    { id: "suyo-120", texto: "−2 minutos a quien la cometió", segundos: -120, a: "suyo" },
+    { id: "suyo-300", texto: "−5 minutos a quien la cometió", segundos: -300, a: "suyo" },
+    { id: "suyo-600", texto: "−10 minutos a quien la cometió", segundos: -600, a: "suyo" },
+  ];
+  const ARTICULO_SANCION = "12.9";
+  function sancionTexto(id) {
+    const x = SANCIONES_TIEMPO.find((y) => y.id === id && y.segundos);
+    if (!x) return "";
+    return " · Sanción de tiempo: " + (x.segundos > 0 ? "+" : "−") + formatoTiempo(Math.abs(x.segundos)) + (x.a === "rival" ? " a su rival" : " a quien la cometió") + " (art. " + ARTICULO_SANCION + ")";
+  }
+  function leerSancion(texto) {
+    const m = /Sanción de tiempo: ([+−-])(\d+):(\d\d) a (su rival|quien la cometió)/.exec(String(texto || ""));
+    if (!m) return null;
+    const seg = Number(m[2]) * 60 + Number(m[3]);
+    return { segundos: m[1] === "+" ? seg : -seg, a: m[4] === "su rival" ? "rival" : "suyo" };
+  }
+
   // Lo que se anota en el registro de una ilegal o irregularidad elegida de la lista.
   function textoTipo(lista, id, nota) {
     const t = lista.find((x) => x.id === id);
@@ -322,7 +348,7 @@
     const turno = jBlancas === jNegras ? "blancas" : "negras";
     const quedaba = (t, j) => R.inicial + R.incremento * j - t;   // lo gastado hasta ese momento (sin los bonos)
     const desdeCtl = control ? new Date(control.ocurrio).getTime() : -Infinity;
-    const suma = (lista, color) => lista.filter((b) => b.color === color).reduce((a, b) => a + (b.segundos || BONO_ILEGAL), 0);
+    const suma = (lista, color) => lista.filter((b) => b.color === color).reduce((a, b) => a + (b.segundos == null ? BONO_ILEGAL : b.segundos), 0);
     const antes = bonos.filter((b) => b.ms <= desdeCtl), despues = bonos.filter((b) => b.ms > desdeCtl);
     const bonosAntes = { blancas: suma(antes, "blancas"), negras: suma(antes, "negras") };
     const bonosDespues = { blancas: suma(despues, "blancas"), negras: suma(despues, "negras") };
@@ -345,7 +371,7 @@
       const usadoB = Math.round(pasaron * pB), usadoN = pasaron - usadoB;
       const res = {
         turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB },
-        gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes,
+        gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
         blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
         negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
       };
@@ -363,20 +389,29 @@
     total = 2 * R.inicial - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
     const usadoB = Math.round(pasaron / 2), usadoN = pasaron - usadoB;
     return { turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
-      gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes,
+      gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
       blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras };
   }
   // Los 2 minutos de cada ilegal de una mesa, sacados de la bitácora: solo la PRIMERA (sin anular) de cada jugador
   // da tiempo; con la segunda pierde la partida. Cada bono es del RIVAL de quien la hizo, con la hora en que se anotó.
+  // Y las sanciones de tiempo de las irregularidades (leerSancion), cada una con el color al que se le da o se le
+  // quita y su signo: «ajustes» del reloj, todos con la misma forma { color, de, ms, segundos, motivo }.
   function bonosIlegales(anotaciones, mesa, anuladas) {
     const fuera = anuladas instanceof Set ? anuladas : new Set(anuladas || []);
     const out = [];
+    for (const f of anotaciones || []) {
+      if (f.tipo !== "irregularidad" || f.mesa !== mesa || fuera.has(f.id) || (f.color !== "blancas" && f.color !== "negras")) continue;
+      const s = leerSancion(f.texto);
+      if (!s) continue;
+      const rival = f.color === "blancas" ? "negras" : "blancas";
+      out.push({ color: s.a === "rival" ? rival : f.color, de: f.color, ms: new Date(f.ocurrio).getTime(), segundos: s.segundos, motivo: "irregularidad" });
+    }
     for (const color of ["blancas", "negras"]) {
       const primera = (anotaciones || []).filter((f) => f.tipo === "ilegal" && f.mesa === mesa && f.color === color && !fuera.has(f.id))
         .sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)))[0];
-      if (primera) out.push({ color: color === "blancas" ? "negras" : "blancas", de: color, ms: new Date(primera.ocurrio).getTime(), segundos: BONO_ILEGAL });
+      if (primera) out.push({ color: color === "blancas" ? "negras" : "blancas", de: color, ms: new Date(primera.ocurrio).getTime(), segundos: BONO_ILEGAL, motivo: "ilegal" });
     }
-    return out;
+    return out.sort((a, b) => a.ms - b.ms);
   }
   // El control más reciente de una mesa que tenga las jugadas de cada color (los viejos traían una sola «jugada»).
   const ultimoControl = (lecturas) => lecturas.filter((x) => x.j_blancas != null && x.j_negras != null)
@@ -394,7 +429,7 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);
