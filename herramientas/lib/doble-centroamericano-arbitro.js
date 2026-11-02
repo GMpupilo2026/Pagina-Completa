@@ -22,9 +22,9 @@ const SERVIDOR_ARBITRO = `
   const falla = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
   const marcasDe = () => {
     const anul = new Set(filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula)); const out = {};
-    for (const f of filas) { if (!["ilegal", "irregularidad"].includes(f.tipo) || anul.has(f.id)) continue;
-      const k = f.mesa + "|" + f.color; const m = out[k] || (out[k] = { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null });
-      if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; } else { m.irregularidades++; m.ultima_irregularidad = f.id; } }
+    for (const f of filas) { const lev = f.tipo === "nota" && f.articulo === "Levantó"; if (!(["ilegal", "irregularidad"].includes(f.tipo) || lev) || anul.has(f.id)) continue;
+      const k = f.mesa + "|" + f.color; const m = out[k] || (out[k] = { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null, levantadas: 0, ultima_levantada: null });
+      if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; } else if (lev) { m.levantadas++; m.ultima_levantada = f.id; } else { m.irregularidades++; m.ultima_irregularidad = f.id; } }
     return out; };
   const NOMBRE = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "D": "borrado" };
   // Lo que la organización le mandó y lo que él pidió: la prueba lo cambia desde afuera.
@@ -86,13 +86,13 @@ const SERVIDOR_ARBITRO = `
       // Un reenvío con el mismo id (la tablet no supo si llegó): la base lo reconoce y no lo cuenta dos veces.
       const yaA = b.id && filas.find((x) => x.id === b.id);
       if (yaA) { const marcaA = marcasDe()[b.mesa + "|" + b.color]; return { data: { ok: true, id: yaA.id, jugador, color: b.color, marca: marcaA, aviso: b.tipo === "ilegal" ? (marcaA.ilegales >= 2 ? "segunda" : "primera") : null }, error: null }; }
-      const f = { id: b.id || "f" + (++n), ocurrio: "2026-11-02T15:32:00Z", mesa: b.mesa, color: b.color, jugador, tipo: b.tipo, resultado: null, anterior: null, texto: b.texto || "", articulo: b.tipo === "ilegal" ? "7.5.5" : "", enviado: false };
+      const f = { id: b.id || "f" + (++n), ocurrio: "2026-11-02T15:32:00Z", mesa: b.mesa, color: b.color, jugador, tipo: b.tipo, resultado: null, anterior: null, texto: b.tipo === "nota" && b.articulo === "Levantó" ? jugador + " (" + b.color + ") se levantó de la mesa" : (b.texto || ""), articulo: b.tipo === "ilegal" ? "7.5.5" : (b.articulo || ""), enviado: false };
       filas.push(f); const marca = marcasDe()[b.mesa + "|" + b.color];
       return { data: { ok: true, id: f.id, jugador, color: b.color, marca, aviso: b.tipo === "ilegal" ? (marca.ilegales >= 2 ? "segunda" : "primera") : null }, error: null }; }
     if (b.action === "anular") {
       const f = filas.find((x) => x.id === b.id); if (filas.some((x) => x.anula === b.id)) return falla(409, "Esa anotación ya estaba anulada.");
       filas.push({ id: "f" + (++n), ocurrio: "2026-11-02T15:33:00Z", mesa: f.mesa, color: f.color, jugador: f.jugador, tipo: "anulacion", anula: b.id });
-      return { data: { ok: true, color: f.color, mesa: f.mesa, marca: marcasDe()[f.mesa + "|" + f.color] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null } }, error: null }; }
+      return { data: { ok: true, color: f.color, mesa: f.mesa, marca: marcasDe()[f.mesa + "|" + f.color] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null, levantadas: 0, ultima_levantada: null } }, error: null }; }
     return falla(400, "Acción desconocida.");
   };`;
 

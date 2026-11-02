@@ -105,13 +105,14 @@
     const anuladas = new Set(filas.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula));
     const por = new Map();
     for (const f of filas) {
-      if ((f.tipo !== "ilegal" && f.tipo !== "irregularidad") || anuladas.has(f.id)) continue;
+      const levanto = f.tipo === "nota" && f.articulo === "Levantó";
+      if ((f.tipo !== "ilegal" && f.tipo !== "irregularidad" && !levanto) || anuladas.has(f.id)) continue;
       const k = [f.tnr, f.ronda, f.mesa, f.color].join("|");
-      const x = por.get(k) || { tnr: f.tnr, ronda: f.ronda, mesa: f.mesa, color: f.color, jugador: f.jugador, ilegales: 0, irregularidades: 0 };
-      if (f.tipo === "ilegal") x.ilegales++; else x.irregularidades++;
+      const x = por.get(k) || { tnr: f.tnr, ronda: f.ronda, mesa: f.mesa, color: f.color, jugador: f.jugador, ilegales: 0, irregularidades: 0, levantadas: 0 };
+      if (f.tipo === "ilegal") x.ilegales++; else if (levanto) x.levantadas++; else x.irregularidades++;
       por.set(k, x);
     }
-    return [...por.values()].sort((a, b) => b.ilegales - a.ilegales || b.irregularidades - a.irregularidades || a.mesa - b.mesa);
+    return [...por.values()].sort((a, b) => b.ilegales - a.ilegales || b.irregularidades - a.irregularidades || b.levantadas - a.levantadas || a.mesa - b.mesa);
   }
 
   // Repartir `total` mesas entre `n` árbitros por definir: rangos seguidos y parejos; si
@@ -280,6 +281,20 @@
     const seg = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0];
     return seg >= 0 && seg <= 36000 ? seg : null;
   }
+  // Los dos puntos se ponen solos: se escriben solo números (el teclado numérico de una tablet no trae «:») y se leen de
+  // derecha a izquierda, como un reloj: «45» -> «45», «4510» -> «45:10», «12345» -> «1:23:45». Hasta 6 cifras (10:00:00).
+  function ponerDosPuntos(texto) {
+    const d = String(texto == null ? "" : texto).replace(/\D/g, "").slice(0, 6);
+    if (d.length <= 2) return d;
+    if (d.length <= 4) return d.slice(0, -2) + ":" + d.slice(-2);
+    return d.slice(0, -4) + ":" + d.slice(-4, -2) + ":" + d.slice(-2);
+  }
+  // «1 h 23 min 45 s»: lo que se entendió, para que quien lo escribió lo confirme de un vistazo.
+  function tiempoEnPalabras(seg) {
+    seg = Math.max(0, Math.round(Number(seg) || 0));
+    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+    return [h ? h + " h" : "", m ? m + " min" : "", s || (!h && !m) ? s + " s" : ""].filter(Boolean).join(" ");
+  }
   // segundos -> «1:23:45» o «45:10»
   function formatoTiempo(seg) {
     seg = Math.max(0, Math.round(Number(seg) || 0));
@@ -310,7 +325,7 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

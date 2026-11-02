@@ -1193,10 +1193,10 @@
     // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
 
     let actividad = [];
-    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", anulacion: "Anuló una anotación",
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
     // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
-    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
@@ -1249,14 +1249,15 @@
         const lista = registro.filter((f) => !tipo || f.tipo === tipo);
         $("registro").replaceChildren(...lista.slice(0, 400).map((f) => el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
             el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }), el("td", { texto: nombreTorneo(f.tnr) }), el("td", { texto: String(f.ronda) }), el("td", { texto: String(f.mesa) }),
-            el("td", { texto: f.arbitro }), el("td", { texto: (NOMBRE_TIPO[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle(f) }))));
+            el("td", { texto: f.arbitro }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : NOMBRE_TIPO[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle(f) }))));
         $("registro-vacio").hidden = lista.length > 0;
         const marcados = C.jugadoresMarcados(registro);
         $("marcados").replaceChildren(...marcados.map((j) => el("tr", { "data-ilegales": String(j.ilegales) },
             el("td", { texto: nombreTorneo(j.tnr) }), el("td", { texto: String(j.ronda) }), el("td", { texto: String(j.mesa) }),
             el("td", { texto: j.jugador + " (" + (j.color === "negras" ? "negras" : "blancas") + ")" }),
             el("td", { texto: j.ilegales ? C.marcasTexto({ ilegales: j.ilegales }) + " " + j.ilegales + (j.ilegales >= 2 ? " — pierde la partida (art. 7.5.5)" : "") : "—" }),
-            el("td", { texto: j.irregularidades ? C.marcasTexto({ irregularidades: j.irregularidades }) + " " + j.irregularidades : "—" }))));
+            el("td", { texto: j.irregularidades ? C.marcasTexto({ irregularidades: j.irregularidades }) + " " + j.irregularidades : "—" }),
+            el("td", { texto: j.levantadas ? j.levantadas + (j.levantadas === 1 ? " vez" : " veces") : "—" }))));
         $("marcados-vacio").hidden = marcados.length > 0;
         $("r-pdf").disabled = registro.length === 0;
     }
