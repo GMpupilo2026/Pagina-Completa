@@ -235,6 +235,31 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("ni mientras una categoría vaya atrás (todavía sin emparejar esa ronda)", o.atras === null, JSON.stringify(o.atras));
     ok("salvo que esa ya haya terminado (un Round Robin de pocos)", !!o.rr && o.rr.cuerpo === "1 ganada: 1 de 1 puntos en sus partidas.", JSON.stringify(o.rr));
   }
+  // El pareo (art=2) de chess-results trae TODAS las rondas armadas, de la
+  // última a la primera, y las que vienen pueden tener solo «sin emparejar»; el
+  // título dice «1. Ronda el …». La función se queda con la última ronda que
+  // tiene partidas de verdad, sin las filas «sin emparejar». Una página armada
+  // como la de chess-results (los nombres, inventados).
+  {
+    const fuente = fs.readFileSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts"), "utf8");
+    const modulo = "type Mesa = { mesa: number; blancas: { no: number; titulo: string; nombre: string }; negras: { no: number; titulo: string; nombre: string } | null; resultado: string };\nconst MAX_JUGADORES = 1500;\n"
+      + fuente.slice(fuente.indexOf("function texto("), fuente.indexOf("// El torneo (su número) a partir de un enlace")).replace(/export function /g, "function ") + "\nexport { leerRonda };\n";
+    const tmp = path.join(require("os").tmpdir(), "sala-leer-ronda-" + process.pid + ".mts");
+    fs.writeFileSync(tmp, modulo);
+    const cab = '<tr class="CRg1b"><th class="CRc">M.</th><th class="CRc">No.</th><th class="CRc"></th><th class="CR"></th><td class="CR">White</td><th class="CRc">Elo</th><th class="CRc">Pts.</th><th class="CRc">Resultado</th><th class="CRc">Pts.</th><th class="CR"></th><td class="CR">Black</td><th class="CRc">Elo</th><th class="CRc">&nbsp;</th><th class="CRc">No.</th></tr>';
+    const sinEmp = (m, no, n) => '<tr class="CRng2"><td class="CRc">' + m + '</td><td class="CRc">' + no + '</td><td class="CR"><div class="tn_CRC"></div></td><td class="CR"></td><td class="CRC"><a href="x">' + n + '</a></td><td class="CRc">1800</td><td class="CRc">0</td> <td class="CRc">0</td><td class="CRc"></td> <td class="CR"></td><td class="CR">sin emparejar</td><td class="CRc">&nbsp;</td><td class="CRc">&nbsp;</td><td></td></tr>';
+    const mesa = (m, b, nb, n, nn, res) => '<tr class="CRg1"><td class="CRc">' + m + '</td><td class="CRc">' + b + '</td><td class="CR"></td><td class="CR"></td><td class="CR"><a href="x">' + nb + '</a></td><td class="CRc">1900</td><td class="CRc">0</td><td class="CRc">' + res + '</td><td class="CRc">0</td><td class="CR"></td><td class="CR"><a href="x">' + nn + '</a></td><td class="CRc">1800</td><td class="CR"></td><td class="CRc">' + n + '</td></tr>';
+    const tabla = (filas) => '<table class="CRs1" cellpadding="2">' + cab + filas + '</table>';
+    const html = '<h2>Emparejamientos/Resultados</h2><h3>3. Ronda el 2026/11/03 a las 9:00am</h3>' + tabla(sinEmp(2, 25, "Uno, Ana"))
+      + '<h3>2. Ronda el 2026/11/02 a las 3:30pm</h3>' + tabla(sinEmp(1, 15, "Dos, Beto"))
+      + '<h3>1. Ronda el 2026/11/02 a las 9:30am</h3>' + tabla(mesa(1, 1, "Tres, Carla", 21, "Cuatro, Dani", "") + mesa(2, 22, "Cinco, Eva", 2, "Seis, Fito", "") + sinEmp(3, 9, "Siete, Gabi"));
+    const r = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+      `const { leerRonda } = await import(${JSON.stringify(tmp)}); process.stdout.write(JSON.stringify(leerRonda(process.argv[1])));`, html], { encoding: "utf8" });
+    fs.rmSync(tmp, { force: true });
+    const pr = r.status === 0 ? JSON.parse(r.stdout) : null;
+    ok("el pareo de chess-results: la ronda «1. Ronda el …», la última con partidas de verdad, sin las filas «sin emparejar»",
+       !!pr && pr.ronda === 1 && pr.mesas.length === 2 && pr.mesas[1].negras && pr.mesas[1].negras.nombre === "Seis, Fito" && pr.mesas[1].mesa === 2, r.stderr || JSON.stringify(pr));
+  }
   const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts"), "utf8");
   ok("la función manda un solo resumen por país y ronda (tnr «0»), no uno por torneo",
      /avisar\(s, "delegacion", "0", 0, r\.ronda/.test(fn) && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
@@ -1240,6 +1265,24 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       await pe.selectOption("#proyector-categoria", "");
       await ctx12.close();
     }
+
+    // Antes de la ronda 1 (pasó el 2/11/2026): la clasificación dice «ronda 0»,
+    // el cuadro cruzado trae el emparejamiento SIN resultado («1w») y el pareo
+    // es el de la ronda 1. No es un torneo terminado: la tarjeta dice la mesa.
+    const ANTES = JSON.parse(JSON.stringify(DATOS));
+    ANTES.torneos[0].ronda = 0;
+    ANTES.torneos[0].jugadores.forEach((j) => { j.puntos = "0"; j.r = j.no === 2 ? ["1w"] : j.no === 1 ? ["2b"] : []; });
+    ANTES.torneos[0].pareo = { ronda: 1, mesas: [DATOS.torneos[0].pareo.mesas[0]] };
+    const ctxAntes = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    await ctxAntes.addInitScript((d) => { window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } }; }, ANTES);
+    const pAntes = await ctxAntes.newPage();
+    await pAntes.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await pAntes.fill("#buscador-nombre", "mayorga");
+    await pAntes.waitForSelector("#buscador-resultados li", { timeout: 10000 }).catch(() => {});
+    const tAntes = await pAntes.evaluate(() => { const li = document.querySelector("#buscador-resultados li"); return li ? li.innerText.replace(/\s+/g, " ") : ""; });
+    ok("antes de jugar la ronda 1, con el emparejamiento sin resultado en el cuadro, la tarjeta dice la mesa y el rival, no que el torneo terminó",
+       /Ronda 1 · Mesa 1 · Juega con blancas contra FM Guevara Ruiz/.test(tAntes) && !/terminó/.test(tAntes) && !/Certificado/.test(tAntes), tAntes);
+    await ctxAntes.close();
 
     // El diploma: con la clasificación final (chess-results ya no dice la ronda
     // ni trae pareo, y normalizar() lo marca terminado), en imagen y en PDF.

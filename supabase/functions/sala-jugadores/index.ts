@@ -144,12 +144,14 @@ function tablaCRs1(html: string) {
 }
 
 // La ronda que dice el último título antes de la tabla: «Clasificación después
-// de la ronda 3» (un <h2>) o «Ronda 4 el 2026/11/04 a las 9:00» (un <h3>). Los
-// enlaces a las demás rondas van antes y no cuentan.
+// de la ronda 3» (un <h2>) o, en el pareo, «1. Ronda el 2026/11/02 a las
+// 9:30am» (un <h3>: el número va ANTES de la palabra; «Ronda 4» también se
+// acepta). Los enlaces a las demás rondas van antes y no cuentan.
 function rondaDelTitulo(antes: string, etiqueta: string): number {
   const titulos = [...antes.matchAll(new RegExp("<" + etiqueta + "[^>]*>([\\s\\S]*?)</" + etiqueta + ">", "gi"))];
   const ultimo = titulos.length ? texto(titulos[titulos.length - 1][1]) : "";
-  return Number((ultimo.match(/(?:ronda|round|rd\.)\s*(\d+)/i) || [])[1] || 0);
+  const m = ultimo.match(/(?:ronda|round|rd\.)\s*(\d+)/i) || ultimo.match(/(\d+)\s*\.\s*(?:ronda|round|rd\.?)/i);
+  return Number((m || [])[1] || 0);
 }
 
 export function leerClasificacion(html: string) {
@@ -183,18 +185,43 @@ export function leerClasificacion(html: string) {
   return { ronda, rondas, jugadores };
 }
 
+// El pareo de la ronda en juego. La página trae TODAS las rondas ya armadas,
+// de la última a la primera: chess-results publica temprano las siguientes
+// con solo los que pidieron no jugar («sin emparejar», sin rival). Se queda
+// con la de número más alto que tiene al menos una partida de verdad (o un
+// bye), y de ella saca las filas «sin emparejar». Pasó el 2/11/2026: la ronda 3
+// ya estaba con un solo «sin emparejar», y el título «1. Ronda el …» (el
+// número antes de la palabra) no se leía: la página creyó que no había pareo.
 export function leerRonda(html: string) {
+  let mejor: { ronda: number; mesas: Mesa[] } | null = null;
+  let resto = html, corrido = 0;
+  for (let i = 0; i < 40; i++) {
+    const r = leerUnaRonda(resto, html.slice(0, corrido));
+    if (!r) break;
+    if (r.mesas.some((m) => m.negras || m.resultado === "bye") && (!mejor || r.ronda > mejor.ronda)) mejor = { ronda: r.ronda, mesas: r.mesas };
+    corrido += r.fin;
+    resto = html.slice(corrido);
+  }
+  return mejor || { ronda: leerUnaRonda(html, "")?.ronda || 0, mesas: [] as Mesa[] };
+}
+
+function leerUnaRonda(html: string, previo: string) {
   const t = tablaCRs1(html);
-  const ronda = rondaDelTitulo(t ? t.antes : "", "h3");
-  if (!t || !t.encabezado) return { ronda, mesas: [] };
+  if (!t) return null;
+  const fin = html.indexOf("</table>", t.antes.length) + 8;
+  const ronda = rondaDelTitulo(previo + t.antes, "h3");
+  const vacia = { ronda, mesas: [] as Mesa[] };
+  if (!t.encabezado) return { ...vacia, fin, vacia };
   const cab = t.encabezado;
   const iB = cab.findIndex((c) => /^(White|Blancas)$/i.test(c));
   const iN = cab.findIndex((c) => /^(Black|Negras)$/i.test(c));
   const iMesa = cab.findIndex((c) => /^(M\.|Mesa|Bo\.)$/i.test(c));
   const iRes = cab.findIndex((c) => /^(Resultado|Result)$/i.test(c));
-  if (iB < 0 || iN < 0 || iRes < 0) return { ronda, mesas: [] };
+  if (iB < 0 || iN < 0 || iRes < 0) return { ...vacia, fin, vacia };
   const mesas = t.datos.map((c) => {
     const v = c.map(texto);
+    // «sin emparejar» / «not paired»: pidió no jugar esa ronda; no es una mesa.
+    if (v.some((x) => /^(sin emparejar|not paired)$/i.test(x || ""))) return null;
     const bye = /^bye$/i.test(v[iN] || "") || /^bye$/i.test(v[iN - 1] || "");
     // Una fila con bye tiene una celda de menos (el resultado ocupa dos): las
     // negras se buscan por el texto «bye», no por la posición.
@@ -204,8 +231,8 @@ export function leerRonda(html: string) {
       negras: bye ? null : { no: Number(v[v.length - 1]) || 0, titulo: v[iN - 1] || "", nombre: v[iN] || "" },
       resultado: bye ? "bye" : (v[iRes] || "").replace(/\s+/g, " "),
     };
-  }).filter((m) => m.blancas.nombre);
-  return { ronda, mesas };
+  }).filter((m): m is Mesa => !!m && !!m.blancas.nombre);
+  return { ronda, mesas, fin, vacia };
 }
 
 // El cuadro cruzado por número inicial (art=5): de cada jugador, lo de cada
