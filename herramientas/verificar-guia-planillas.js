@@ -67,6 +67,7 @@ function escribirY4M(ruta, W, H, lum) {
   const dos = (o = {}) => [hoja(M[0], o), hoja(M[1], o)];
 
   igual("los dos marcos caben en el cuadro, con margen, y son hojas verticales (A4)", [16 / 9, 4 / 3, 1.2].map((a) => { const m = G.marcosGuia(a); const ancho = (m[1].x + m[1].w) - m[0].x; return [m[0].x > 0.01 && m[1].x + m[1].w < 0.99 && ancho <= 0.93, Math.abs((m[0].w * a) / m[0].h - G.HOJA) < 0.01, m[0].y > 0.02]; }), [[true, true, true], [true, true, true], [true, true, true]]);
+  igual("el recorte de la foto cubre los dos marcos con un margen chico y no se sale del cuadro; es mucho menor que el cuadro entero", [16 / 9, 4 / 3, 1.2].map((a) => { const m = G.marcosGuia(a), r = G.recorteGuia(a); return [r.x <= m[0].x && r.x + r.w >= m[1].x + m[1].w, r.y <= m[0].y && r.y + r.h >= m[0].y + m[0].h, r.x >= 0 && r.y >= 0 && r.x + r.w <= 1.0000001 && r.y + r.h <= 1.0000001, r.w * r.h < 0.9]; }), [[true, true, true, true], [true, true, true, true], [true, true, true, true]]);
   igual("bien puestas: todo en orden", mira(dos()).motivo, "ok");
   igual("bien puestas, un poco más chicas que el marco (como las pone una persona)", mira(dos({ e: 0.9 })).motivo, "ok");
   igual("hasta 4° de giro todavía vale", [0, 2, 4].map((g) => mira([hoja(M[0], { rot: g }), hoja(M[1], { rot: -g })]).motivo), ["ok", "ok", "ok"]);
@@ -129,6 +130,18 @@ function escribirY4M(ruta, W, H, lum) {
   await p.waitForSelector(".cam-guia-revision:not([hidden])");
   igual("al tomar la foto se REVISA antes de mandarla: la foto, «Repetir la foto» y «Usar esta foto»", await p.evaluate(() => [document.querySelector(".cam-guia-foto").src.startsWith("data:image/jpeg;base64,"), document.querySelector(".cam-guia-foto").naturalWidth > 100, [...document.querySelectorAll(".cam-guia-revision button")].map((b) => b.textContent), document.querySelector(".cam-guia-revision strong").textContent]),
     [true, true, ["Repetir la foto", "Usar esta foto"], "¿Se ven bien las dos planillas?"]);
+  // La foto guardada es SOLO lo que está dentro de los marcos (las dos planillas), no todo lo que ve la cámara.
+  const R = G.recorteGuia(VW / VH);
+  igual("la foto se recorta a los marcos: sus medidas son las del recorte (no las del cuadro entero) y es mucho menor que el cuadro", await p.evaluate(() => { const i = document.querySelector(".cam-guia-foto"); return [i.naturalWidth, i.naturalHeight]; }),
+    [Math.round(R.w * VW), Math.round(R.h * VH)]);
+  // Cuánto papel debería haber en la foto recortada: las dos hojas llenan sus marcos, y el recorte es poco más que los dos marcos.
+  const papelEsperado = (2 * MV[0].w * MV[0].h) / (R.w * R.h);
+  const papelFoto = await p.evaluate(async () => {
+    const i = document.querySelector(".cam-guia-foto"); await i.decode();
+    const c = document.createElement("canvas"); c.width = i.naturalWidth; c.height = i.naturalHeight; const x = c.getContext("2d"); x.drawImage(i, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data; let claros = 0; for (let k = 0; k < d.length; k += 4) if ((d[k] + d[k + 1] + d[k + 2]) / 3 > 150) claros++;
+    return claros / (d.length / 4); });
+  igual("y en la foto recortada hay tanto papel como debe haber (lo de los marcos): si se guardara todo el cuadro, la mesa de alrededor bajaría mucho esa cifra", Math.abs(papelFoto - papelEsperado) < 0.08, true);
   igual("todavía no se mandó nada", (await llamadasPlanilla(p)).length, 0);
   await p.click('.cam-guia-revision [data-accion="repetir"]');
   await p.waitForSelector(".cam-guia-vivo:not([hidden])");
