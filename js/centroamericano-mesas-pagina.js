@@ -1195,10 +1195,10 @@
     // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
 
     let actividad = [];
-    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", anulacion: "Anuló una anotación",
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", inicio: "Inició la ronda", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
     // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
-    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", inicio: "▶️", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);

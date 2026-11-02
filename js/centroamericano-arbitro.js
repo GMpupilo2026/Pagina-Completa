@@ -499,6 +499,30 @@
         const revisados = estado.mesas.reduce((n, m) => n + (presenciaDe(m.mesa, "blancas") !== null ? 1 : 0) + (presenciaDe(m.mesa, "negras") !== null ? 1 : 0), 0);
         const faltan = presencias().filter((x) => !x.presente).length;
         $("presencia-resumen").textContent = total ? "Presencia revisada: " + revisados + " de " + total + " jugadores" + (faltan ? " · no han llegado: " + faltan : "") + "." : "";
+        const b = $("presencia-todos");
+        if (b) b.hidden = concluida() || total === 0 || revisados >= total;
+    }
+
+    // «Marcar que llegaron todos los que no he revisado»: un toque para arrancar la ronda. Solo toca a los que están «sin revisar»: a
+    // quien ya marcó «No ha llegado» no lo pisa (la función tampoco: ignora lo que ya tiene marca).
+    function sinRevisar() {
+        const out = [];
+        for (const m of estado.mesas) for (const color of ["blancas", "negras"]) if (presenciaDe(m.mesa, color) === null) out.push({ mesa: m.mesa, color });
+        return out;
+    }
+    async function marcarTodosLlegaron() {
+        const falta = sinRevisar();
+        if (!falta.length) return;
+        const sigue = await Avisos.confirmar("¿Marcar que llegaron los " + falta.length + " jugadores que todavía no has revisado? Los que ya marcaste (llegó o no ha llegado) se quedan como están.", { titulo: "Llegaron todos", aceptar: "Sí, llegaron todos" });
+        if (!sigue) return;
+        const antes = presencias().slice();
+        const ahora = new Date().toISOString();
+        estado.presencia = presencias().concat(falta.map((x) => ({ mesa: x.mesa, color: x.color, presente: true, marcada: ahora })));
+        pintar();
+        try {
+            await escribir("presencia_todos", { ronda: estado.ronda }, "Presencia de todos los jugadores sin revisar");
+            avisar("Listo: " + falta.length + " jugadores marcados como llegados.");
+        } catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
 
     async function marcarPresencia(m, color, presente) {
@@ -829,6 +853,45 @@
     // La hora real en que empezó la ronda, si la organización la marcó (viene en `leer`): desde ahí corre la tolerancia.
     const iniciosMarcados = () => (estado && estado.inicio_ronda && estado.inicio_ronda.inicio ? { [estado.inicio_ronda.ronda]: estado.inicio_ronda.inicio } : null);
 
+    // Cuando se cumple el tiempo de espera de TU categoría y alguien de tus mesas sigue sin llegar, sale este aviso (vibra una vez, sin sonido:
+    // en un torneo no hay ruido) con cada mesa y un botón que deja el resultado por incomparecencia YA ELEGIDO en la mesa. Enviarlo es cosa
+    // tuya: se toca «Guardar» (que pide la revisión previa y comprueba contra chess-results), nunca se manda solo.
+    let alertaClave = "";
+    function incomparecenciaDe(m) {
+        const sin = (color) => presenciaDe(m.mesa, color) === false;
+        if (sin("blancas") && sin("negras")) return { valor: "6", texto: "0f-0f: ninguno llegó" };
+        if (sin("negras")) return { valor: "4", texto: "1-0 por incomparecencia de las negras" };
+        if (sin("blancas")) return { valor: "5", texto: "0-1 por incomparecencia de las blancas" };
+        return null;
+    }
+    function pintarEsperaAlerta(e) {
+        const caja = $("espera-alerta");
+        if (!caja) return;
+        const H = window.CentroamericanoHorario;
+        const vencida = !!(estado && e && e.enCurso && e.ronda === estado.ronda && e.quedan <= 0 && !concluida());
+        const ausentes = vencida ? estado.mesas.filter((m) => m.valor === "0" && incomparecenciaDe(m)).sort((a, b) => a.mesa - b.mesa) : [];
+        caja.hidden = !ausentes.length;
+        if (!ausentes.length) { alertaClave = ""; return; }
+        const clave = estado.ronda + "|" + ausentes.map((m) => m.mesa + incomparecenciaDe(m).valor).join(",");
+        const nueva = clave !== alertaClave;
+        alertaClave = clave;
+        $("ea-titulo").textContent = "⏰ Se cumplió el tiempo de espera (" + (H ? H.TOLERANCIA_MIN : 30) + " min) en tu categoría: " + ausentes.length + (ausentes.length === 1 ? " mesa tiene" : " mesas tienen") + " jugadores sin llegar";
+        // El lector de pantalla lo anuncia cuando aparece o cambia de verdad; los repintados iguales (cada 30 s) no lo repiten.
+        if (nueva) caja.setAttribute("role", "alert");
+        else if (!caja.getAttribute("role")) caja.setAttribute("role", "status");
+        $("ea-lista").replaceChildren(...ausentes.map((m) => {
+            const inc = incomparecenciaDe(m);
+            const quien = ["blancas", "negras"].filter((c) => presenciaDe(m.mesa, c) === false).map((c) => nombreDe(m, c) + " (" + c + ")").join(" y ");
+            const elegidaYa = elegido[m.mesa] === inc.valor;
+            return el("li", { "data-mesa": String(m.mesa) },
+                el("span", { texto: "Mesa " + m.mesa + " — " + quien + " no llegó" }),
+                el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "incomparecencia", disabled: elegidaYa || null,
+                    onclick: () => { ponerResultado(m, inc.valor); avisar("Mesa " + m.mesa + ": quedó elegido «" + inc.texto + "». Toca «Guardar» para enviarlo."); } },
+                    elegidaYa ? "Resultado elegido: toca «Guardar»" : "Pasar a incomparecencia (" + inc.texto + ")"));
+        }));
+        if (nueva) vibrar();
+    }
+
     function pintarEspera() {
         const H = window.CentroamericanoHorario;
         if (!H) return;
@@ -837,6 +900,7 @@
         if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
         else if (e.siguiente) t = "⏰ Sigue: " + e.siguiente.nombre + " a las " + hora(new Date(e.siguiente.inicio + ":00-06:00")) + ".";
         $("espera").textContent = t;
+        pintarEsperaAlerta(e);
     }
 
     // «Inició la ronda»: cada categoría puede empezar a una hora distinta, y quien lo sabe es el árbitro de la sala. Toca el botón en el
@@ -982,25 +1046,52 @@
     }
 
     // La bitácora en PDF, con la marca de agua de Ajedrez Integral: la función la arma con todo lo que anotó con sus enlaces.
+    // La bitácora ya armada (los datos de la función + el PDF con la marca de agua), para descargarla o mandarla por correo.
+    async function armarBitacora() {
+        const d = await invocar("bitacora", {}, { ms: 60000 });
+        const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x) };
+        const blob = await window.ReportePDF.generar(window.CentroamericanoBitacora.armar(d, F));
+        return { blob, nombre: window.CentroamericanoBitacora.nombreArchivo(d) };
+    }
+
     async function bajarBitacora() {
         const boton = $("bajar-bitacora"), estadoEl = $("concluido-estado");
         boton.disabled = true;
         estadoEl.textContent = "Armando tu bitácora…";
         try {
-            const d = await invocar("bitacora", {}, { ms: 60000 });
-            const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x) };
-            const blob = await window.ReportePDF.generar(window.CentroamericanoBitacora.armar(d, F));
+            const { blob, nombre } = await armarBitacora();
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = window.CentroamericanoBitacora.nombreArchivo(d);
+            a.download = nombre;
             document.body.append(a);
             a.click();
             a.remove();
             setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-            estadoEl.textContent = "Listo: se descargó «" + a.download + "».";
+            estadoEl.textContent = "Listo: se descargó «" + nombre + "».";
         } catch (e) {
             estadoEl.textContent = "";
             avisar("No se pudo bajar la bitácora: " + (e.message || e), true);
+        } finally { boton.disabled = false; }
+    }
+
+    // «Mandarme la bitácora por correo»: el mismo PDF, a la dirección que el árbitro escribe (con su consentimiento; no se guarda).
+    async function mandarBitacoraPorCorreo() {
+        const boton = $("bit-enviar"), estadoEl = $("concluido-estado");
+        const correo = $("bit-correo").value.trim();
+        if (!/^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/.test(correo)) { avisar("Escribe un correo válido.", true); $("bit-correo").focus(); return; }
+        if (!$("bit-consiento").checked) { avisar("Marca que aceptas que te la mandemos a ese correo.", true); $("bit-consiento").focus(); return; }
+        boton.disabled = true;
+        estadoEl.textContent = "Armando tu bitácora y mandándola…";
+        try {
+            const { blob } = await armarBitacora();
+            const bytes = new Uint8Array(await blob.arrayBuffer());
+            let bin = "";
+            for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            await invocar("bitacora_correo", { correo, pdf: btoa(bin) }, { ms: 60000, intentos: 1 });
+            estadoEl.textContent = "Listo: te la mandamos a " + correo + ". Si no la ves, revisa el correo no deseado.";
+        } catch (e) {
+            estadoEl.textContent = "";
+            avisar(e.message || String(e), true);
         } finally { boton.disabled = false; }
     }
 
@@ -1408,6 +1499,8 @@
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
+        $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));
         $("ir-guardar").addEventListener("click", () => {
             const campo = $("ir-hora").value;

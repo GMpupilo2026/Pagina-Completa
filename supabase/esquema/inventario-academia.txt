@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102222731
+# al-dia-con: 20261102230136
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -47,6 +47,7 @@ tabla  bromas_preferencias  rls=true
 tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
+tabla  centroamericano_correos_bitacora  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_inicios_torneo  rls=true
@@ -584,6 +585,9 @@ columna  centroamericano_copias.creada  timestamp with time zone
 columna  centroamericano_copias.huella  text
 columna  centroamericano_copias.ranura  integer
 columna  centroamericano_copias.resumen  jsonb
+columna  centroamericano_correos_bitacora.asignacion_id  uuid
+columna  centroamericano_correos_bitacora.enviado_en  timestamp with time zone
+columna  centroamericano_correos_bitacora.id  uuid
 columna  centroamericano_finales.asignacion_id  uuid
 columna  centroamericano_finales.finalizada_en  timestamp with time zone
 columna  centroamericano_finales.id  uuid
@@ -3579,6 +3583,8 @@ indice  centroamericano_avisos  centroamericano_avisos_asignacion_idx
 indice  centroamericano_avisos  centroamericano_avisos_pkey
 indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
+indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_asignacion_idx
+indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_pkey
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey

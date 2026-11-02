@@ -8816,6 +8816,28 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   nada las usa). Migraciones `centroamericano_inicio_por_torneo` y `…_indice`. Lo revisan `verificar-centroamericano-mesas.js`
   (el cálculo, las migraciones y la función) y `verificar-centroamericano-mesas-pagina.js` (el botón de la tablet, la hora que
   llega a la función, la lista de la organización y la alerta de «tiempo cumplido» por categoría); rotos a propósito, saltan.
+- **Cinco mejoras de la ronda para el árbitro (tablet) y la organización.**
+  1. **«Marcar que llegaron todos los que no he revisado»** (`presencia_todos`): un toque, con confirmación que dice cuántos son,
+     marca como «llegó» a todos los jugadores de SUS mesas que no tienen marca. A quien ya marcó «llegó» o «no ha llegado» **no lo
+     pisa** (`ignoreDuplicates` en la función); los nombres salen de chess-results. Con las labores concluidas se rechaza (409).
+  2. **Aviso de tiempo de espera cumplido en la tablet** (`#espera-alerta`): cuando el tiempo de SU categoría (30 min desde la hora
+     que marcó, o desde el calendario) se cumple y hay mesas sin resultado con jugadores marcados «no ha llegado», sale arriba de la
+     lista con cada mesa y quién no llegó, vibra una vez (sin sonido: en un torneo no hay ruido) y el lector de pantalla lo anuncia
+     solo cuando aparece o cambia (los repintados cada 30 s no lo repiten).
+  3. **La organización ve cuándo cada categoría inició la ronda**: la actividad (`centroamericano_actividad()`, migración
+     `centroamericano_actividad_inicio`, mismos permisos) trae el tipo `inicio` («Inició la ronda»), con su filtro.
+  4. **«Pasar a incomparecencia»**: en ese aviso, un botón por mesa deja elegido el resultado por incomparecencia (blancas ausentes →
+     `0f-1f`, negras ausentes → `1f-0f`, ninguna → `0f-0f`). **No manda nada**: el árbitro lo envía con «Guardar», que pide la
+     revisión previa y comprueba contra chess-results como siempre.
+  5. **«Mandarme la bitácora por correo»** (`bitacora_correo`): en el aviso de «Concluiste tus labores», el árbitro escribe su correo,
+     marca que acepta (con el enlace a la privacidad) y la página manda el mismo PDF (con la marca de agua) a la función, que lo manda
+     por Resend con un texto fijo. La función exige haber concluido (409), un correo válido, un PDF de verdad de hasta 3 MB y pone
+     tope: **2 envíos por enlace y 1 por minuto** (429; `centroamericano_correos_bitacora` solo cuenta, **no guarda el correo ni el
+     documento**; ni la tabla ni la función dejan nada más). Riesgo conocido y aceptado: el PDF lo arma la página, no la función, así
+     que un árbitro con enlace concluido podría mandar otro PDF a un correo ajeno; por eso el tope tan bajo, el texto fijo y que haga
+     falta un enlace concluido. «Resend» ya figura en la lista de proveedores de `privacidad.html` (se le sumó este uso).
+  La función es `centroamericano-mesa` (v15). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
+  saltan).
 - **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir
   «1:23:45», y el teclado numérico de una tablet no trae «:». Ahora se escriben solo números y se leen como un reloj, de
   derecha a izquierda (`C.ponerDosPuntos`): `45` → 45, `4510` → 45:10, `12345` → 1:23:45, hasta 6 cifras; las letras se
