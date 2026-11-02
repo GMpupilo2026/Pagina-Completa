@@ -180,17 +180,25 @@
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
         const ocupada = ocupadas.has(m.mesa);
+        // Las marcas: el icono y, si hay más de una, «×2». La palabra queda para el lector de pantalla.
         const marcas = el("div", { class: "cam-marcas" });
-        if (k.ilegales) marcas.append(el("span", { class: "cam-marca", "data-tipo": "ilegal" }, el("span", { "aria-hidden": "true", texto: C.marcasTexto({ ilegales: k.ilegales }) }), "Ilegal" + (k.ilegales > 1 ? " ×" + k.ilegales : "")));
-        if (k.irregularidades) marcas.append(el("span", { class: "cam-marca", "data-tipo": "irregularidad" }, el("span", { "aria-hidden": "true", texto: C.marcasTexto({ irregularidades: k.irregularidades }) }), "Irregularidad" + (k.irregularidades > 1 ? " ×" + k.irregularidades : "")));
+        if (k.ilegales) marcas.append(el("span", { class: "cam-marca", "data-tipo": "ilegal", title: "Jugada ilegal" + (k.ilegales > 1 ? " ×" + k.ilegales : "") },
+            el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ ilegales: k.ilegales }) }), icono("ilegal"), el("span", { class: "sr-only", texto: "Ilegal" }), k.ilegales > 1 ? el("span", { texto: " ×" + k.ilegales }) : null));
+        if (k.irregularidades) marcas.append(el("span", { class: "cam-marca", "data-tipo": "irregularidad", title: "Irregularidad" + (k.irregularidades > 1 ? " ×" + k.irregularidades : "") },
+            el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ irregularidades: k.irregularidades }) }), icono("irregularidad"), el("span", { class: "sr-only", texto: "Irregularidad" }), k.irregularidades > 1 ? el("span", { texto: " ×" + k.irregularidades }) : null));
         const acciones = el("div", { class: "cam-acciones" },
-            el("button", { type: "button", class: "cam-btn cam-btn-rojo cam-btn-chico", "data-accion": "ilegal", disabled: ocupada, onclick: () => ilegal(m, color) }, "Ilegal"),
-            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "irregularidad", disabled: ocupada, onclick: () => irregularidad(m, color) }, "Irregularidad"));
-        if (k.ultima_ilegal) acciones.append(el("button", { type: "button", class: "cam-anular", "data-accion": "anular-ilegal", disabled: ocupada, onclick: () => anular(m, color, "ilegal", k.ultima_ilegal) }, "Anular la última ilegal"));
-        if (k.ultima_irregularidad) acciones.append(el("button", { type: "button", class: "cam-anular", "data-accion": "anular-irregularidad", disabled: ocupada, onclick: () => anular(m, color, "irregularidad", k.ultima_irregularidad) }, "Anular la última irregularidad"));
+            botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada }),
+            botonJugador("irregularidad", "irregularidad", "Irregularidad de " + nombre, "Irregularidad", () => irregularidad(m, color), { deshabilitado: ocupada }));
+        // «Anular»: solo aparece cuando hay algo que anular.
+        const anulares = el("div", { class: "cam-anulares" });
+        if (k.ultima_ilegal) anulares.append(botonJugador("anular-ilegal", "anular", "Anular la última ilegal de " + nombre, "Anular la última ilegal", () => anular(m, color, "ilegal", k.ultima_ilegal), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
+        if (k.ultima_irregularidad) anulares.append(botonJugador("anular-irregularidad", "anular", "Anular la última irregularidad de " + nombre, "Anular la última irregularidad", () => anular(m, color, "irregularidad", k.ultima_irregularidad), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         return el("div", { class: "cam-jugador", "data-color": color },
-            el("div", { class: "cam-jugador-fila" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), el("span", { class: "cam-nombre", texto: nombre })),
-            marcas, bloquePresencia(m, color), acciones);
+            el("div", { class: "cam-jugador-fila" },
+                el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
+                el("span", { class: "cam-nombre", texto: nombre }),
+                el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
+            marcas, anulares.children.length ? anulares : null);
     }
 
     // La banda de las ilegales de una mesa, sacada de las marcas (no de un recuerdo de la
@@ -229,7 +237,7 @@
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
-                        el("span", { "aria-hidden": "true", texto: "🆘 " }), pedida ? "Principal pedido" : "Principal en esta mesa"),
+                        icono("sos"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
             bandas(m),
             bloqueJugador(m, "blancas"),
@@ -249,6 +257,13 @@
     const ICONOS = {
       camara: [["path", { d: "M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" }], ["circle", { cx: "12", cy: "13", r: "3.5" }]],
       reloj: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M12 7v5l3 2" }]],
+      llego: [["path", { d: "M5 13l4 4L19 7" }]],
+      ausente: [["path", { d: "M6 6l12 12M18 6L6 18" }]],
+      dudoso: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M9.6 9.2a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8" }], ["path", { d: "M12 17.2v.01" }]],
+      ilegal: [["path", { d: "M12 3.5l9.5 16.5h-19L12 3.5z" }], ["path", { d: "M12 10v4.5" }], ["path", { d: "M12 17.3v.01" }]],
+      irregularidad: [["path", { d: "M5 21V4" }], ["path", { d: "M5 4h12l-2.5 4L17 12H5" }]],
+      anular: [["path", { d: "M9 14L4 9l5-5" }], ["path", { d: "M4 9h10.5a5.5 5.5 0 0 1 0 11H11" }]],
+      sos: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
     };
     function icono(nombre) {
       const s = document.createElementNS(SVG_NS, "svg");
@@ -272,6 +287,12 @@
     // Una foto por mesa. (Las fotos de prueba de antes eran una por lado: cualquiera cuenta.)
     const tienePlanilla = (mesa) => subidas().some((x) => x.mesa === mesa);
 
+    // Un botón de icono de una fila de jugador. El texto va solo para lectores de pantalla y como pista (title): lo que se ve es
+    // el icono (la leyenda de arriba los explica). 46 px: se toca con el dedo y con prisa.
+    function botonJugador(accion, nombreIcono, etiqueta, texto, fn, { variante = "", pulsado = null, deshabilitado = false } = {}) {
+        return el("button", { type: "button", class: "cam-btn-icono cam-btn-icono-chico " + variante, "data-accion": accion, "aria-pressed": pulsado === null ? null : String(pulsado), "aria-label": etiqueta, title: etiqueta, disabled: deshabilitado, onclick: fn },
+            icono(nombreIcono), el("span", { class: "sr-only", texto }));
+    }
     function bloqueIconos(m, ocupada) {
         const hecha = tienePlanilla(m.mesa), sube = subiendo.has(m.mesa);
         const pendiente = m.valor === "0";
@@ -482,10 +503,12 @@
     function bloquePresencia(m, color) {
         const v = presenciaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
+        const texto = v === null ? "Presencia: sin revisar" : v ? "✓ Llegó" : "✗ No ha llegado";
         return el("div", { class: "cam-presencia", "data-presente": v === null ? "sin-revisar" : v ? "si" : "no" },
-            el("span", { class: "cam-presencia-estado", texto: v === null ? "Presencia: sin revisar" : v ? "✓ Llegó" : "✗ No ha llegado" }),
-            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "presente", "aria-pressed": v === true ? "true" : "false", "aria-label": nombre + " llegó", onclick: () => marcarPresencia(m, color, true) }, "Llegó"),
-            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ausente", "aria-pressed": v === false ? "true" : "false", "aria-label": nombre + " no ha llegado", onclick: () => marcarPresencia(m, color, false) }, "No ha llegado"));
+            // El estado: un icono (? sin revisar, ✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
+            el("span", { class: "cam-presencia-estado", title: texto }, icono(v === null ? "dudoso" : v ? "llego" : "ausente"), el("span", { class: "sr-only", texto })),
+            botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: v === true }),
+            botonJugador("ausente", "ausente", nombre + " no ha llegado", "No ha llegado", () => marcarPresencia(m, color, false), { variante: "cam-btn-icono-rojo", pulsado: v === false }));
     }
 
     // ------------------------------------------------------------- varios torneos para el mismo árbitro

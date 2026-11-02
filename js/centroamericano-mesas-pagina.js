@@ -1137,6 +1137,8 @@
     let actividad = [];
     const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
+    // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
@@ -1177,7 +1179,7 @@
         $("actividad").replaceChildren(...lista.slice(0, 400).map((x) => el("tr", { "data-tipo": x.tipo },
             el("td", { texto: window.HoraCR.fechaHora(x.cuando) }), el("td", { texto: x.arbitro }), el("td", { texto: x.torneo }),
             el("td", { texto: x.ronda == null ? "" : String(x.ronda) }), el("td", { texto: x.mesa == null ? "" : String(x.mesa) }),
-            el("td", { texto: ETIQUETA_ACTIVIDAD[x.tipo] || x.tipo }), el("td", { texto: x.detalle || "" }))));
+            el("td", { class: "cam-celda-icono", "data-icono": ICONO_ACTIVIDAD[x.tipo] || "•", texto: ETIQUETA_ACTIVIDAD[x.tipo] || x.tipo }), el("td", { texto: x.detalle || "" }))));
         $("actividad-vacio").hidden = lista.length > 0;
         if (!lista.length) $("actividad-vacio").textContent = actividad.length ? "Nada con ese filtro." : "Todavía no hay actividad.";
         $("act-nota").textContent = actividad.length ? " — " + actividad.length + (actividad.length === 1 ? " acción" : " acciones") + " de " + nombres.length + (nombres.length === 1 ? " árbitro" : " árbitros") : "";
