@@ -63,6 +63,9 @@ function cadenaVirtual(tabs, opciones) {
     escritos: [],
     async escribir(b) {
       puerto.escritos.push(b.slice());
+      // Con `eco`, el adaptador devuelve lo que manda la computadora (pasó con
+      // la primera cadena de verdad).
+      if (o.eco) cola.push(...flujo.empujar(b.slice()));
       let resp = [];
       for (const t of tabs) resp.push(...t.recibir(b));
       if (b[0] === 0x87 && b[1] === 0 && b[2] === 0 && resp.length > 1) resp = [resp[Math.floor(r() * resp.length)]];
@@ -109,6 +112,22 @@ async function pruebaCadena() {
   igual("los que ya conocía se preguntan uno por uno, sin esperar al ping general",
     (await L.crearCadena(cadenaVirtual(tabs.slice(0, 3)), rapida).encontrar([10001, 10002, 10003])), [10001, 10002, 10003]);
   igual("un número que no contesta no se agrega", await L.crearCadena(cadenaVirtual(tabs.slice(0, 2)), rapida).encontrar([10001, 15000]), [10001, 10002]);
+
+  // La primera cadena de verdad (2/11): los cuatro se encontraban y después
+  // ninguno contestaba. El eco de «83 23 36 3c» (al 4534) parecía un mensaje
+  // de 4534 bytes y se tragaba las respuestas.
+  const reales = [4534, 4875, 7362, 15712].map((n) => T.crear({ serie: String(n), reloj: { izquierda: 300, derecha: 300, turno: null } }));
+  const conEco = L.crearCadena(cadenaVirtual(reales, { semilla: 5, eco: true }), rapida);
+  const dirsEco = await conEco.encontrar();
+  igual("con un adaptador que devuelve el eco de cada pedido, los encuentra", dirsEco, [4534, 4875, 7362, 15712]);
+  const leidos = [];
+  for (const d of dirsEco) leidos.push([(await conEco.tablero(d)).casillas, await conEco.cambios(d), (await conEco.reloj(d)).reloj]);
+  cierto("y después cada uno contesta: el tablero entero, los cambios y el reloj",
+    leidos.every(([c, cb, rl]) => c && c.length === 64 && cb && Array.isArray(cb.eventos) && rl && rl.izquierda.segundos === 300), JSON.stringify(leidos.map(([c, cb, rl]) => [c && c.length, cb && cb.error, rl && rl.izquierda])));
+  const f = L.crearFlujo();
+  const respuesta = T.mensajeBus(0x03, [0x23, 0x36], Array(64).fill(0));
+  igual("el eco de un pedido no se toma por el comienzo de un mensaje", f.empujar(L.pedido(0x82, 4534).concat(respuesta)), [respuesta]);
+  igual("ni un mensaje con la suma mal: se busca el siguiente", L.crearFlujo().empujar([0x83, 0x00, 0x06, 0x01, 0x02, 0x7f].concat(respuesta)), [respuesta]);
 }
 
 // Las 64 partidas en tableros virtuales de una cadena, leídas por el lector
@@ -513,6 +532,10 @@ async function pruebaSala(browser) {
   await p.click("#btn-directo-puerto");
   await p.waitForFunction(() => document.getElementById("directo-error").textContent !== "");
   igual("y el mismo puerto otra vez: ya está conectado", await p.textContent("#directo-error"), "Ese puerto ya está conectado aquí.");
+  const [reg] = await Promise.all([p.waitForEvent("download"), p.click("#directo-puertos button:has-text('Bajar el registro')")]);
+  const textoReg = fs.readFileSync(await reg.path(), "utf8");
+  cierto("«Bajar el registro» baja lo que fue y vino por el cable (el ping general y la respuesta del 10001)",
+    reg.suggestedFilename() === "registro-puerto-1-usb.txt" && /→ 87 00 00 07/.test(textoReg) && /← 87 00 06 4e 11/.test(textoReg), reg.suggestedFilename() + " " + textoReg.slice(0, 400));
   await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Categoría']", "111");
   const avisos = () => p.$$eval("#directo-alertas li", (l) => l.map((x) => x.textContent));
   const esperarAviso = (re) => p.waitForFunction((re) => [...document.querySelectorAll("#directo-alertas li")].some((x) => new RegExp(re).test(x.textContent)), re, { timeout: 20000 });

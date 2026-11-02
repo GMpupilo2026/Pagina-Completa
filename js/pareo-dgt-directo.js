@@ -67,9 +67,18 @@
         const cola = [];
         let avisar = null;
         const writer = serial.writable.getWriter();
+        // Lo último que fue y vino por el cable, en hexadecimal, para ver qué
+        // contesta un tablero de verdad («Bajar el registro» de cada puerto).
+        const registro = [];
+        const anotarBytes = (flecha, bytes) => {
+            registro.push(HoraCR.hora(new Date()) + " " + String(Math.round(performance.now() % 100000)).padStart(5, "0") + " " + flecha + " " + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" "));
+            if (registro.length > 2000) registro.splice(0, registro.length - 2000);
+        };
         const p = {
             writer,
-            async escribir(bytes) { await writer.write(Uint8Array.from(bytes)); },
+            registro,
+            async escribir(bytes) { anotarBytes("→", bytes); await writer.write(Uint8Array.from(bytes)); },
+            vaciar() { flujo.vaciar(); cola.length = 0; },
             esperar(ms) {
                 if (cola.length) return Promise.resolve(cola.shift());
                 return new Promise((resolver) => {
@@ -84,6 +93,7 @@
                         for (;;) {
                             const { value, done } = await p.reader.read();
                             if (done) return;
+                            anotarBytes("←", value);
                             for (const m of flujo.empujar(value)) cola.push(m);
                             if (cola.length && avisar) avisar();
                         }
@@ -702,7 +712,13 @@
             quitar.className = otra.className;
             quitar.textContent = "Desconectar";
             quitar.addEventListener("click", () => desconectar(p));
-            li.append(txt, otra, quitar);
+            const reg = document.createElement("button");
+            reg.type = "button";
+            reg.className = otra.className;
+            reg.textContent = "Bajar el registro";
+            reg.addEventListener("click", () => API().bajar("registro-" + p.nombre.replace(/\W+/g, "-").replace(/-+$/, "").toLowerCase() + ".txt",
+                "Pareo para DGT, " + p.nombre + ": lo que fue (→) y vino (←) por el cable, en hexadecimal.\n" + p.io.registro.join("\n") + "\n"));
+            li.append(txt, otra, quitar, reg);
             ul.append(li);
         }
         pintarEstado();

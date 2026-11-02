@@ -13566,6 +13566,19 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conectar el cable. Si el puerto elegido es el del tablero virtual de esta
   misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
   lo dice sin intentar abrirlo.
+- **La primera cadena de verdad (2/11): se encontraban y no contestaban.**
+  Cuatro tableros (4534, 4875, 7362 y 15712) aparecieron en la búsqueda y
+  después los cuatro decían «no contesta». Lo que encaja: el adaptador
+  devuelve el eco de cada pedido, y «83 23 36 3c» (al 4534) se leía como el
+  comienzo de un mensaje de 4534 bytes; la página se quedaba esperándolo y
+  se tragaba todas las respuestas. La búsqueda no lo sufre: el ping general
+  va a la dirección 0, un largo imposible. Ahora `crearFlujo()` solo acepta
+  los códigos que manda un tablero (0x83–0x89) con el largo que cada uno
+  puede tener y la suma bien, y cada pregunta empieza con lo pendiente
+  vaciado (`puerto.vaciar()`). **Sin confirmar con esa cadena**: por eso cada
+  puerto tiene «Bajar el registro», lo que fue y vino por el cable en
+  hexadecimal (las últimas 2000 lecturas y escrituras), para ver qué
+  contesta un tablero de verdad sin estar en la sala.
 - **Poner los relojes DGT 3000 desde la computadora: no, por ahora.** En modo
   bus, lo comprobado (Picochess, DGTCentaurMods, el registro de LiveChess)
   solo trae los comandos 0x81–0x8b y 0x92, y ninguno escribe en el reloj; el
