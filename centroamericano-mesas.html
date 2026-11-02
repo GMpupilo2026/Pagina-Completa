@@ -75,6 +75,18 @@
 
             <!-- 1. La ronda en curso: cuánto le queda a cada árbitro y lo que piden -->
             <section id="panel-ronda" role="tabpanel" aria-labelledby="pest-ronda" class="cam-no-qr">
+                <!-- La hora REAL en que empezó la ronda: desde ahí corre el tiempo de espera, en esta página y en la tablet de cada árbitro. -->
+                <div class="cam-inicio-ronda" id="inicio-ronda" role="group" aria-labelledby="ir-titulo">
+                    <strong id="ir-titulo" class="cam-inicio-titulo"><span aria-hidden="true">⏱</span> Inicio de la ronda</strong>
+                    <label class="cam-herramientas-campo"><span>Ronda</span>
+                        <select id="ir-ronda" class="cam-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label>
+                    <button type="button" id="ir-ahora" class="cam-btn cam-btn-chico"><span aria-hidden="true">▶</span> Inició la ronda ahora</button>
+                    <label class="cam-herramientas-campo"><span>o a las</span>
+                        <input type="time" id="ir-hora" class="cam-campo" step="60" aria-describedby="ir-estado"></label>
+                    <button type="button" id="ir-guardar" class="cam-btn cam-btn-claro cam-btn-chico">Guardar esa hora</button>
+                    <button type="button" id="ir-quitar" class="cam-btn cam-btn-claro cam-btn-chico" hidden>Volver al calendario</button>
+                    <p id="ir-estado" class="cam-inicio-estado" role="status"></p>
+                </div>
                 <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
                     <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
                     <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>

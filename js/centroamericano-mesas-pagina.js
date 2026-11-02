@@ -170,12 +170,15 @@
     // ------------------------------------------------------------- 1. ronda en curso
 
     async function cargarAvance() {
-        const [p, f, l, pr] = await Promise.all([
+        const [p, f, l, pr, ir] = await Promise.all([
             sb.from("centroamericano_progreso").select("*").range(0, 999),
             sb.from("centroamericano_finales").select("*").range(0, 999),
             sb.from("centroamericano_listas").select("*").range(0, 999),
             sb.from("centroamericano_presencia").select("*").range(0, 999),
+            sb.from("centroamericano_inicios_ronda").select("*").range(0, 99),
         ]);
+        // La hora real en que empezó cada ronda (reales o de ensayo, según el modo): desde ahí corre el tiempo de espera.
+        if (!ir.error) { inicios = {}; for (const x of ir.data || []) if (x.prueba === ensayo) inicios[x.ronda] = x.inicio; pintarInicio(); }
         const ids = idsDentro();
         if (!pr.error) presencia = (pr.data || []).filter((x) => dentro(x.tnr));
         if (!p.error) progreso = (p.data || []).filter((x) => ids.has(x.asignacion_id));
@@ -219,15 +222,70 @@
         const H = window.CentroamericanoHorario;
         const ev = H && ronda ? H.EVENTOS.find((e) => e.ronda === ronda) : null;
         if (!ev) return null;
-        const pasados = Math.floor((Date.now() - new Date(ev.inicio + ":00-06:00").getTime()) / 60000);
+        // Desde la hora que marcó la organización («Inició la ronda») o, si no marcó ninguna, desde la del calendario.
+        const pasados = Math.floor((Date.now() - H.inicioDe(ev, inicios)) / 60000);
         if (pasados < 0 || pasados >= ev.minutos) return null;
         return { cumplido: pasados >= H.TOLERANCIA_MIN, quedan: H.TOLERANCIA_MIN - pasados, pasaron: pasados - H.TOLERANCIA_MIN, minutos: H.TOLERANCIA_MIN };
+    }
+
+    // ------------------------------------------------------------- «Inició la ronda»
+    // El calendario dice a qué hora DEBE empezar cada ronda, pero a veces empieza después (la ronda 1 del Centroamericano
+    // empezó a las 10:48). La organización marca la hora real —con el botón, en ese momento, o escribiéndola— y desde ahí
+    // cuenta el tiempo de espera (30 min) acá y en la tablet de cada árbitro. Se guarda en la base con
+    // centroamericano_inicio_ronda() (pide la licencia); «Volver al calendario» la quita.
+    let inicios = {};         // { ronda: "2026-11-02T16:48:00Z" } del modo actual
+    let irTocada = false;     // si la organización ya eligió la ronda, no se la cambia sola
+    const rondaDelInicio = () => Number($("ir-ronda").value) || 0;
+    const horaCampo = (iso) => window.HoraCR.paraCampo(iso).slice(11, 16);
+
+    function pintarInicio() {
+        const H = window.CentroamericanoHorario;
+        if (!H || !$("ir-ronda")) return;
+        // Por omisión, la ronda que está abierta (la del resumen) o, si no hay, la que el calendario tiene en juego.
+        if (!irTocada) {
+            const ev = H.estado(new Date(), inicios).enCurso;
+            const r = rondaDeFaltan || (ev && ev.ronda) || 0;
+            if (r && $("ir-ronda").querySelector('option[value="' + r + '"]')) $("ir-ronda").value = String(r);
+        }
+        const r = rondaDelInicio(), ev = H.EVENTOS.find((e) => e.ronda === r), marcada = inicios[r];
+        const caja = $("inicio-ronda");
+        caja.dataset.marcada = marcada ? "si" : "no";
+        $("ir-quitar").hidden = !marcada;
+        if (document.activeElement !== $("ir-hora")) $("ir-hora").value = marcada ? horaCampo(marcada) : "";
+        if (!ev) { $("ir-estado").textContent = ""; return; }
+        const hora = (x) => window.HoraCR.hora(x, { hour: "numeric", minute: "2-digit" });
+        const fin = (t) => hora(new Date(t + H.TOLERANCIA_MIN * 60000));
+        $("ir-estado").textContent = marcada
+            ? "✓ La ronda " + r + " empezó a las " + hora(marcada) + " (la hora que marcaste). El tiempo de espera de " + H.TOLERANCIA_MIN + " min termina a las " + fin(Date.parse(marcada))
+            : "La ronda " + r + " no tiene hora marcada: el tiempo de espera cuenta desde las " + hora(new Date(H.inicioDe(ev))) + " del calendario (termina a las " + fin(H.inicioDe(ev)) + ").";
+    }
+
+    async function marcarInicio(iso) {
+        const r = rondaDelInicio();
+        if (!r) return;
+        if (iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) { avisar("Elige la hora a la que empezó la ronda.", true); return; }
+            if (d.getTime() > Date.now() + 60000) { avisar("Esa hora todavía no llega: elige la hora en que empezó la ronda (hoy, hasta ahora).", true); return; }
+        }
+        const hora = (x) => window.HoraCR.hora(x, { hour: "numeric", minute: "2-digit" });
+        if (iso && inicios[r] && Math.abs(Date.parse(inicios[r]) - Date.parse(iso)) > 60000) {
+            const sigue = await Avisos.confirmar("La ronda " + r + " ya tenía las " + hora(inicios[r]) + " marcadas. ¿Cambiarlas a las " + hora(iso) + "?", { titulo: "Cambiar la hora de inicio", aceptar: "Sí, cambiarla" });
+            if (!sigue) return;
+        }
+        const { error } = await sb.rpc("centroamericano_inicio_ronda", { p_ronda: r, p_prueba: ensayo, p_inicio: iso });
+        if (error) { avisar("No se pudo guardar la hora: " + error.message, true); return; }
+        if (iso) inicios[r] = new Date(iso).toISOString(); else delete inicios[r];
+        pintarInicio();
+        if (rondaDeFaltan) pintarFaltan(rondaDeFaltan);
+        avisar(iso ? "Ronda " + r + ": empezó a las " + hora(iso) + " El tiempo de espera corre desde ahí, también en las tablets." : "Ronda " + r + ": vuelve a valer la hora del calendario.");
     }
 
     // Los que no han llegado, según el árbitro de cada mesa. Cuando se cumple el tiempo de espera, la alerta
     // sale arriba de la lista, bien visible (sin sonido: en un torneo no hay ruido) y en el título de la pestaña.
     function pintarFaltan(ronda) {
         rondaDeFaltan = ronda;
+        pintarInicio();   // sigue a la ronda abierta mientras la organización no haya elegido otra
         const lista = C.jugadoresQueFaltan(presencia, ronda);
         const espera = esperaDeRonda(ronda);
         $("faltan-nota").textContent = ronda ? " — ronda " + ronda + ": " + lista.length : "";
@@ -1322,6 +1380,14 @@
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
+        $("ir-ronda").addEventListener("change", () => { irTocada = true; pintarInicio(); });
+        $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString()));
+        $("ir-guardar").addEventListener("click", () => {
+            const v = $("ir-hora").value;
+            if (!v) { avisar("Escribe la hora a la que empezó la ronda (por ejemplo 10:48).", true); return; }
+            marcarInicio(window.HoraCR.desdeCampo(window.HoraCR.hoy() + "T" + v).toISOString());
+        });
+        $("ir-quitar").addEventListener("click", () => marcarInicio(null));
         $("ct-pedir").addEventListener("click", pedirTiempos);
         $("ct-pdf").addEventListener("click", tiemposPdf);
         $("ct-torneo").addEventListener("change", pintarTiempos);
