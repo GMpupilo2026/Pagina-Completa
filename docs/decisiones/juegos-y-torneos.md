@@ -13566,6 +13566,25 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conectar el cable. Si el puerto elegido es el del tablero virtual de esta
   misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
   lo dice sin intentar abrirlo.
+- **Borrar torneos en Lichess** (lo pidió el dueño el 2/11: «por si los hice
+  por error»). En el paso 3, «Borrar torneos en Lichess» (cerrado) trae
+  «Ver mis torneos en Lichess»: la lista sale de Lichess mismo
+  (`/api/broadcast/by/<usuario>`, de 20 en 20, hasta 10 páginas), no solo de
+  los que anotó la página, porque un intento que falló a medias pudo dejar
+  uno creado. Cada uno con su casilla, su fecha y «de esta lista» si es de
+  los de aquí; «Marcar todos» y «Borrar los marcados (N)», con una
+  confirmación que nombra cada torneo y dice que no se puede deshacer.
+  - Lichess borra con `POST /broadcast/<8>/delete` (`RelayTour.delete`,
+    `AuthOrScoped(_.Study.Write)`: el mismo token, comprobado en el código de
+    lila el 2/11), que no está bajo `/api/`: pasa por la Edge Function
+    `pareo-dgt` como crear (versión 5, desplegada el 2/11). Borra solo si el
+    torneo es de quien llama (`deleteTourIfOwner`) y **contesta 303 también
+    si no lo borró**: la función no sigue la redirección, y la página
+    comprueba con `GET /api/broadcast/<8>` que dé 404. El que sigue ahí se
+    dice («¿es de otra cuenta?») y queda en la lista.
+  - Un torneo de la lista que se borra deja de estar «en Lichess» (su id y
+    las rondas empujadas se olvidan): «Crear los torneos en Lichess» lo
+    vuelve a crear.
 - **Cada PGN con su categoría y su ronda en el nombre** (lo pidió el dueño:
   «todos se llaman igual»). El nombre salía del nombre del torneo de
   chess-results cortado a 60 letras, y los del Centroamericano empiezan todos
