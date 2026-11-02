@@ -101,6 +101,10 @@ function dobleOrganizacion(licencia) {
     rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
       if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
+      if (f === "centroamericano_quitar_enlace") { const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
+        const hay = REGISTRO.filter((r) => r.asignacion_id === x.id).length;
+        if (a.p_borrar) ASIG.splice(ASIG.indexOf(x), 1);
+        return R({ arbitro: x.arbitro, tnr: x.tnr, borrado: !!a.p_borrar, anotaciones: hay, tiempos: 0, presencia: 0, planillas: 0 }); }
       if (f === "centroamericano_hojas") return R([
         { asignacion: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 1, mesa_hasta: 2, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 1, blancas: "Eli", negras: "Fran", valor: "1" }, { mesa: 2, blancas: "Gus", negras: "Hana", valor: "0" }] },
         { asignacion: "asig-b", arbitro: "Beto Árbitro", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 3, mesa_hasta: 3, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 3, blancas: "Ivo", negras: "Jana", valor: "0" }] }]);
@@ -757,6 +761,20 @@ const CONTRASTE = `(sel) => {
     igual("con «Modo ensayo» se ve SOLO lo de prueba, y una franja lo dice con palabras",
         await q.evaluate(() => [[...document.querySelectorAll("#a-torneo option")].map((o) => o.textContent), [...document.querySelectorAll("#resumen tr")].map((tr) => tr.children[0].textContent), [...document.querySelectorAll("#faltan tr")].map((tr) => tr.children[2].textContent), document.getElementById("aviso-ensayo").checkVisibility(), document.getElementById("aviso-ensayo").textContent.startsWith("MODO ENSAYO"), document.title.startsWith("ENSAYO · ")]),
         [["PRUEBA grupo A"], ["Árbitro de ensayo 1"], ["Jugador de Prueba"], true, true, true]);
+    // Quitar a un árbitro por error: la «✕» lo borra por completo (se prueba con el enlace de ensayo, que no tiene nada anotado).
+    await q.click("#pest-arbitros");
+    await q.waitForSelector('.cam-asignacion[data-id="asig-ensayo"] [data-accion="quitar"]');
+    igual("cada enlace trae su «✕ Quitar», con un nombre accesible que dice a quién quita",
+        await q.$eval('.cam-asignacion[data-id="asig-ensayo"] [data-accion="quitar"]', (b) => [b.textContent, b.getAttribute("aria-label")]), ["✕ Quitar", "Quitar a Árbitro de ensayo 1 de este torneo por completo"]);
+    await q.click('.cam-asignacion[data-id="asig-ensayo"] [data-accion="quitar"]');
+    await q.waitForSelector("[data-avisos-aceptar]");
+    igual("antes de borrar pide confirmar, dice a quién, que no se puede deshacer y que lo anotado se conserva; todavía no se borró nada",
+        await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Árbitro de ensayo 1"), t.includes("Todavía no anotó nada"), t.includes("No se puede deshacer"), t.includes("Apagar"), window.__llamadas.filter((l) => l.rpc === "centroamericano_quitar_enlace").length, !!document.querySelector('.cam-asignacion[data-id="asig-ensayo"]')]; }),
+        [true, true, true, true, 1, true]);
+    await q.click("[data-avisos-aceptar]");
+    await q.waitForFunction(() => !document.querySelector('.cam-asignacion[data-id="asig-ensayo"]'));
+    igual("al confirmar se borra y ya no aparece más (primero contó, después borró)", await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_quitar_enlace").length), 2);
+    await q.click("#pest-ronda");
     await q.uncheck("#modo-ensayo");
     await q.waitForFunction(() => document.getElementById("aviso-ensayo").hidden && [...document.querySelectorAll("#a-torneo option")].length === 3);
     igual("al volver, otra vez solo los reales (y el título sin «ENSAYO»)", await q.evaluate(() => [![...document.querySelectorAll("#resumen tr")].some((tr) => tr.children[0].textContent.includes("ensayo")), document.title.startsWith("ENSAYO")]), [true, false]);

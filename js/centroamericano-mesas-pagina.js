@@ -668,7 +668,9 @@
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
                 est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
-                boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"))));
+                boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"),
+                // La «✕»: para cuando se metió a alguien que no correspondía. Lo borra por completo del torneo.
+                el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-rojo", "data-accion": "quitar", "aria-label": "Quitar a " + a.arbitro + " de este torneo por completo", title: "Quitar por completo (si se metió por error)", onclick: () => quitarEnlace(a) }, "✕ Quitar"))));
     }
 
     const textoPedidos = (n) => "🆘 " + n + (n === 1 ? " aviso abierto" : " avisos abiertos");
@@ -718,6 +720,25 @@
         const { error } = await sb.from("centroamericano_asignaciones").update({ revocada: apagar }).eq("id", a.id);
         if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
         await cargarAsignaciones();
+    }
+
+    // Quitar a un árbitro del torneo POR COMPLETO (se metió por error): su enlace se borra y desaparece de la lista. Lo que ya
+    // anotó no se pierde: queda en el registro con su nombre. Primero se cuenta lo que ya anotó, para avisar antes de borrar.
+    async function quitarEnlace(a) {
+        const { data: previo, error: e0 } = await sb.rpc("centroamericano_quitar_enlace", { p_id: a.id, p_borrar: false });
+        if (e0) { avisar("No se pudo revisar el enlace: " + e0.message, true); return; }
+        const hay = (previo.anotaciones || 0) + (previo.tiempos || 0) + (previo.presencia || 0) + (previo.planillas || 0);
+        const sigue = await Avisos.confirmar(
+            "Vas a quitar a " + a.arbitro + " (mesas " + a.mesa_desde + " a " + a.mesa_hasta + ", " + nombreTorneo(a.tnr) + ") por completo: su enlace se borra y ya no aparece aquí. "
+            + (hay ? "Ya anotó " + (previo.anotaciones || 0) + " cosas en el registro, " + (previo.tiempos || 0) + " controles de tiempos, " + (previo.presencia || 0) + " marcas de presencia y " + (previo.planillas || 0) + " fotos de planillas: eso se queda guardado con su nombre, pero se pierde su avance y sus avisos. "
+                   : "Todavía no anotó nada. ")
+            + "No se puede deshacer. Si solo quieres que no pueda entrar, mejor «Apagar».",
+            { titulo: "Quitar a un árbitro del torneo", aceptar: "Sí, quitarlo", peligro: true });
+        if (!sigue) return;
+        const { error } = await sb.rpc("centroamericano_quitar_enlace", { p_id: a.id, p_borrar: true });
+        if (error) { avisar("No se pudo quitar: " + error.message, true); return; }
+        await cargarAsignaciones();
+        avisar("Quitaste a " + a.arbitro + " del torneo.");
     }
 
     async function cambiarNombre(a) {
