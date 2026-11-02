@@ -680,7 +680,7 @@
 
     // ------------------------------------------------------------- el reloj que se apagó
 
-    // La hora en que empezó la ronda: la que marcó la organización o, si no la marcó, la del horario.
+    // La hora en que empezó la ronda: la que marcó el árbitro de la categoría (viene en `leer`) o, si no la marcó, la del horario.
     function inicioDeLaRonda() {
         const marcada = estado.inicio_ronda && estado.inicio_ronda.inicio && Number(estado.inicio_ronda.ronda) === Number(estado.ronda);
         if (marcada) return { ms: new Date(estado.inicio_ronda.inicio).getTime(), deDonde: "marcada por la organización" };
@@ -839,6 +839,56 @@
         $("espera").textContent = t;
     }
 
+    // «Inició la ronda»: cada categoría puede empezar a una hora distinta, y quien lo sabe es el árbitro de la sala. Toca el botón en el
+    // momento en que empieza (o escribe la hora si avisa tarde) y desde ahí corre el tiempo de espera de SU categoría, acá y en la
+    // página de la organización. La hora sale de esta tablet (así vale también sin señal, desde la cola); la función la valida.
+    const horaCampo = (iso) => window.HoraCR.paraCampo(iso).slice(11, 16);
+    function pintarInicio() {
+        const caja = $("inicio-ronda");
+        if (!caja) return;
+        const H = window.CentroamericanoHorario;
+        const r = estado && estado.ronda, ev = H && r ? H.EVENTOS.find((e) => e.ronda === r) : null;
+        caja.hidden = !estado || !r || concluida();
+        if (caja.hidden) return;
+        const m = estado.inicio_ronda && estado.inicio_ronda.inicio ? estado.inicio_ronda : null;
+        caja.dataset.marcada = m ? "si" : "no";
+        $("ir-ronda").textContent = "— ronda " + r + (estado.torneo ? " de " + estado.torneo : "");
+        $("ir-quitar").hidden = !m;
+        if (document.activeElement !== $("ir-hora")) $("ir-hora").value = m ? horaCampo(m.inicio) : "";
+        const h = (x) => hora(x, { hour: "numeric", minute: "2-digit" });
+        const fin = (t) => h(new Date(t + (H ? H.TOLERANCIA_MIN : 30) * 60000));
+        $("ir-estado").textContent = m
+            ? "✓ La ronda " + r + " empezó a las " + h(m.inicio) + (m.arbitro && m.arbitro !== estado.arbitro ? " (la hora que marcó " + m.arbitro + ")" : " (la hora que marcaste)") + ". El tiempo de espera de " + (H ? H.TOLERANCIA_MIN : 30) + " min termina a las " + fin(Date.parse(m.inicio)) + "."
+            : ev ? "Todavía no marcaste cuándo empezó la ronda " + r + ": el tiempo de espera cuenta desde las " + h(new Date(H.inicioDe(ev))) + " del calendario. Toca «Inició la ronda ahora» cuando empiece en tu categoría."
+                : "Toca «Inició la ronda ahora» cuando empiece en tu categoría.";
+    }
+
+    async function marcarInicio(iso, quitar) {
+        const r = estado && estado.ronda;
+        if (!r) return;
+        const h = (x) => hora(x, { hour: "numeric", minute: "2-digit" });
+        const previa = estado.inicio_ronda && estado.inicio_ronda.inicio;
+        if (!quitar) {
+            const d = new Date(iso);
+            if (isNaN(d)) { avisar("Elige la hora a la que empezó la ronda.", true); return; }
+            if (d.getTime() > Date.now() + 60000) { avisar("Esa hora todavía no llega: elige la hora en que empezó la ronda (hoy, hasta ahora).", true); return; }
+            if (previa && Math.abs(Date.parse(previa) - d.getTime()) > 60000) {
+                const sigue = await Avisos.confirmar("La ronda " + r + " ya tenía las " + h(previa) + " marcadas. ¿Cambiarlas a las " + h(iso) + "?", { titulo: "Cambiar la hora de inicio", aceptar: "Sí, cambiarla" });
+                if (!sigue) return;
+            }
+        }
+        try {
+            const res = await escribir("inicio", quitar ? { ronda: r, quitar: true } : { ronda: r, inicio: iso }, "Hora de inicio de la ronda " + r);
+            const guardada = quitar ? null : (res.d && res.d.inicio) || iso;
+            estado.inicio_ronda = guardada ? { ronda: r, inicio: guardada, arbitro: estado.arbitro } : null;
+            pintarInicio();
+            pintarEspera();
+            avisar(res.encolado ? "Sin señal: la hora de inicio quedó en la tablet y se manda sola cuando vuelva la conexión."
+                : quitar ? "Ronda " + r + ": vuelve a valer la hora del calendario."
+                    : "Ronda " + r + ": empezó a las " + h(guardada) + ". El tiempo de espera corre desde ahí.");
+        } catch (e) { avisar(e.message, true); }
+    }
+
     function verHorarios() {
         const H = window.CentroamericanoHorario;
         const dia = (d) => new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long", day: "numeric", month: "long" }).format(d);
@@ -886,6 +936,7 @@
         pintarLista();
         pintarRevision();
         pintarEspera();
+        pintarInicio();
         pintarConcluido();
         if (tiemposAbierto && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#control-tiempos'))) pintarTiempos();
         pintarAnotado();
@@ -1357,6 +1408,14 @@
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));
+        $("ir-guardar").addEventListener("click", () => {
+            const campo = $("ir-hora").value;
+            if (!campo) { avisar("Escribe la hora a la que empezó la ronda.", true); return; }
+            // La hora escrita es de HOY en Costa Rica (el día de la ronda).
+            marcarInicio(window.HoraCR.desdeCampo(window.HoraCR.hoy() + "T" + campo).toISOString(), false);
+        });
+        $("ir-quitar").addEventListener("click", () => marcarInicio(null, true));
         $("concluir").addEventListener("click", concluirLabores);
         $("bajar-bitacora").addEventListener("click", bajarBitacora);
         $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));

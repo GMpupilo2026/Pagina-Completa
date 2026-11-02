@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102210057
+# al-dia-con: 20261102222731
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -49,6 +49,7 @@ tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
+tabla  centroamericano_inicios_torneo  rls=true
 tabla  centroamericano_lecturas  rls=true
 tabla  centroamericano_listas  rls=true
 tabla  centroamericano_planillas  rls=true
@@ -593,6 +594,12 @@ columna  centroamericano_inicios_ronda.inicio  timestamp with time zone
 columna  centroamericano_inicios_ronda.prueba  boolean
 columna  centroamericano_inicios_ronda.puesto_en  timestamp with time zone
 columna  centroamericano_inicios_ronda.ronda  integer
+columna  centroamericano_inicios_torneo.arbitro  text
+columna  centroamericano_inicios_torneo.asignacion_id  uuid
+columna  centroamericano_inicios_torneo.inicio  timestamp with time zone
+columna  centroamericano_inicios_torneo.puesto_en  timestamp with time zone
+columna  centroamericano_inicios_torneo.ronda  integer
+columna  centroamericano_inicios_torneo.tnr  text
 columna  centroamericano_lecturas.leida  timestamp with time zone
 columna  centroamericano_lecturas.leyendo_hasta  timestamp with time zone
 columna  centroamericano_lecturas.mesas  jsonb
@@ -2921,6 +2928,7 @@ politica  centroamericano_copias  centroamericano_copias_ver  SELECT
 politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
 politica  centroamericano_inicios_ronda  centroamericano_inicios_ronda_ver  SELECT
+politica  centroamericano_inicios_torneo  centroamericano_inicios_torneo_ver  SELECT
 politica  centroamericano_listas  centroamericano_listas_ver  SELECT
 politica  centroamericano_planillas  centroamericano_planillas_ver  SELECT
 politica  centroamericano_presencia  centroamericano_presencia_ver  SELECT
@@ -3574,6 +3582,8 @@ indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
+indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_asignacion_idx
+indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_pkey
 indice  centroamericano_lecturas  centroamericano_lecturas_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_pkey
@@ -4293,6 +4303,7 @@ grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_copias  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
 grant  centroamericano_inicios_ronda  authenticated  SELECT
+grant  centroamericano_inicios_torneo  authenticated  SELECT
 grant  centroamericano_listas  authenticated  SELECT
 grant  centroamericano_planillas  authenticated  SELECT
 grant  centroamericano_presencia  authenticated  SELECT

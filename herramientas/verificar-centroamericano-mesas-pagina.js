@@ -95,8 +95,11 @@ function dobleOrganizacion(licencia) {
   window.__nuevoAviso = (asig, mesa, texto, tipo, ronda) => AVISOS.push({ id: "av-n" + (++n), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: tipo || "ayuda", ronda: ronda || null });
   // Un árbitro toca «Ya terminé mis labores» en su tablet (lo que la organización ve en su lista).
   window.__concluir = (id) => { const x = ASIG.find((y) => y.id === id); if (x) x.concluyo_en = new Date(Date.now() - 600000).toISOString(); };
+  // Un árbitro toca «Inició la ronda» en su tablet (la función guarda la fila de su categoría y ronda); con minutos = null la quita.
+  window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
+    if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_ronda: INICIOS };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS };
   const filtrar = (tabla, f) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
   window.sb = {
     auth: { getSession: () => R({ session: { user: { id: "yo" }, access_token: "x" } }), getUser: () => R({ user: { id: "yo" } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
@@ -118,10 +121,6 @@ function dobleOrganizacion(licencia) {
         const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
         ASIG.filter((y) => y.id === x.id || (x.persona && y.persona === x.persona)).forEach((y) => { y.concluyo_en = null; });
         return R({ arbitro: x.arbitro, reabiertos: 1 }); }
-      if (f === "centroamericano_inicio_ronda") { window.__inicioArgs = (window.__inicioArgs || []).concat([{ r: a.p_ronda, prueba: a.p_prueba, inicio: a.p_inicio }]);
-        const i = INICIOS.findIndex((x) => x.ronda === a.p_ronda && x.prueba === a.p_prueba); if (i >= 0) INICIOS.splice(i, 1);
-        if (a.p_inicio) INICIOS.push({ ronda: a.p_ronda, prueba: a.p_prueba, inicio: a.p_inicio, puesto_en: new Date().toISOString() });
-        return R({ ronda: a.p_ronda, inicio: a.p_inicio }); }
       if (f === "centroamericano_quitar_enlace") { const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
         const hay = REGISTRO.filter((r) => r.asignacion_id === x.id).length;
         if (a.p_borrar) ASIG.splice(ASIG.indexOf(x), 1);
@@ -477,14 +476,46 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== Horarios, planillas y finalizar la ronda ===");
     igual("la barra dice el tiempo de espera o lo que sigue", (await p.textContent("#espera")).startsWith("⏰"), true);
-    // La organización marcó que la ronda 3 empezó hace 10 minutos: la tolerancia corre desde ahí, sea cual sea la hora del calendario.
+    // «Inició la ronda» en la tablet: el árbitro toca el botón (o escribe la hora) y la hora de SU categoría la guarda la función.
+    console.log("\n=== La tablet: Inició la ronda ===");
+    igual("la tablet del árbitro trae el bloque «Inicio de la ronda» de su categoría: el botón, la hora, y dice que todavía no la marcó", await p.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-ronda").textContent, document.getElementById("ir-ahora").textContent.trim(), document.getElementById("ir-hora").type, document.getElementById("ir-quitar").hidden, document.getElementById("inicio-ronda").dataset.marcada, /Todavía no marcaste/.test(document.getElementById("ir-estado").textContent)]),
+      [true, "— ronda 3 de Sub-10 Femenino", "▶ Inició la ronda ahora", "time", true, "no", true]);
+    await p.click("#ir-ahora");
+    await p.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "si");
+    igual("«Inició la ronda ahora» manda la hora de ESE momento a la función (ronda 3), lo dice escrito y la tolerancia corre desde ahí", await p.evaluate(() => [window.__inicioArgs.length, window.__inicioArgs[0].ronda, window.__inicioArgs[0].quitar, Math.abs(Date.parse(window.__inicioArgs[0].inicio) - Date.now()) < 15000, /^✓ La ronda 3 empezó a las .* \(la hora que marcaste\)\. El tiempo de espera de 30 min termina a las /.test(document.getElementById("ir-estado").textContent), /quedan (29|30) min de tolerancia/.test(document.getElementById("espera").textContent)]), [1, 3, false, true, true, true]);
+    const campoHoraT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(11, 16));
+    const mismoDiaT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(0, 10) === window.HoraCR.hoy());
+    if (mismoDiaT) {
+      await p.fill("#ir-hora", campoHoraT);
+      await p.click("#ir-guardar");
+      await p.waitForSelector("dialog[open]");
+      igual("si ya había una hora marcada, pregunta antes de cambiarla", await p.evaluate(() => [document.querySelector("dialog[open]").textContent.includes("Cambiar la hora de inicio"), window.__inicioArgs.length]), [true, 1]);
+      await p.click("dialog[open] [data-avisos-aceptar]");
+      await p.waitForFunction(() => window.__inicioArgs.length === 2);
+      igual("la hora escrita (la de hace unos minutos, al minuto) se manda y queda a la vista", await p.evaluate(([campo]) => [Math.abs(Date.parse(window.__inicioArgs[1].inicio) - (Date.now() - 180000)) < 120000, document.getElementById("ir-hora").value], [campoHoraT]), [true, campoHoraT]);
+      const futuraT = await p.evaluate(() => { const f = window.HoraCR.paraCampo(new Date(Date.now() + 3600000)); return f.slice(0, 10) === window.HoraCR.hoy() ? f.slice(11, 16) : null; });
+      if (futuraT) {
+        await p.fill("#ir-hora", futuraT);
+        await p.click("#ir-guardar");
+        await p.waitForTimeout(200);
+        igual("una hora que todavía no llega no se manda", await p.evaluate(() => window.__inicioArgs.length), 2);
+      }
+    }
+    await p.fill("#ir-hora", "");
+    await p.click("#ir-guardar");
+    await p.waitForTimeout(200);
+    igual("sin escribir la hora no se manda nada", await p.evaluate(() => window.__inicioArgs.length), mismoDiaT ? 2 : 1);
+    await p.click("#ir-quitar");
+    await p.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "no");
+    igual("«Volver al calendario» le dice a la función que la quite y todo vuelve a como estaba", await p.evaluate(() => [window.__inicioArgs[window.__inicioArgs.length - 1].quitar, window.__inicioRonda, document.getElementById("ir-quitar").hidden, document.getElementById("ir-hora").value]), [true, null, true, ""]);
+    // El árbitro de la categoría marcó que la ronda 3 empezó hace 10 minutos: la tolerancia corre desde ahí, sea cual sea la hora del calendario.
     await p.evaluate(() => { window.__inicioRonda = { ronda: 3, inicio: new Date(Date.now() - 10 * 60000).toISOString() }; });
     await p.click("#actualizar");
     await p.waitForFunction(() => /quedan (19|20) min de tolerancia/.test(document.getElementById("espera").textContent), null, { timeout: 15000 });
-    igual("con la hora de inicio que marcó la organización, la barra cuenta la tolerancia desde ahí (quedan unos 20 min de 30)", await p.textContent("#espera"), (await p.textContent("#espera")).startsWith("⏰ Ronda 3: quedan") ? await p.textContent("#espera") : "FALTA");
+    igual("con la hora de inicio que marcó el árbitro de la categoría, la barra cuenta la tolerancia desde ahí (quedan unos 20 min de 30)", await p.textContent("#espera"), (await p.textContent("#espera")).startsWith("⏰ Ronda 3: quedan") ? await p.textContent("#espera") : "FALTA");
     await p.click("#horarios");
     await p.waitForSelector("dialog[open]");
-    igual("«Horarios» dice que esa es la hora que marcó la organización", await p.evaluate(() => /la hora que marcó la organización/.test(document.querySelector("dialog[open]").textContent)), true);
+    igual("«Horarios» dice que esa es la hora que marcó el árbitro de la categoría", await p.evaluate(() => /la hora que marcó el árbitro de la categoría/.test(document.querySelector("dialog[open]").textContent)), true);
     await p.click("dialog[open] [data-avisos-aceptar]");
     await p.evaluate(() => { window.__inicioRonda = null; });
     await p.click("#actualizar");
@@ -607,40 +638,27 @@ const CONTRASTE = `(sel) => {
         [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
     igual("el resumen dice cuántos jugadores revisó cada árbitro y cuántos no han llegado", await q.$$eval("#resumen tr", (l) => l.map((tr) => tr.children[6].textContent)), ["2 de 30 · faltan 1", "Sin revisar"]);
     igual("«Jugadores que no han llegado» lista a los que el árbitro marcó ausentes, con mesa, color, árbitro y hora", await q.$$eval("#faltan tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[4].textContent])), [["Sub-10 Absoluto", "5", "Cleo Tres", "Negras", "Ana Árbitra"]]);
-    // «Inició la ronda»: la hora REAL de inicio (con el reloj de verdad, antes de cambiar la hora de la página).
-    console.log("\n=== Inició la ronda ===");
-    igual("arriba de la ronda en curso hay un bloque «Inicio de la ronda» con la ronda abierta elegida, el botón, la hora y su estado", await q.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-ronda").value, document.getElementById("ir-ahora").textContent.trim(), document.getElementById("ir-hora").type, document.getElementById("ir-quitar").hidden, document.getElementById("inicio-ronda").dataset.marcada, /no tiene hora marcada/.test(document.getElementById("ir-estado").textContent) && /calendario/.test(document.getElementById("ir-estado").textContent)]), [true, "3", "▶ Inició la ronda ahora", "time", true, "no", true]);
-    await q.click("#ir-ahora");
+    // «Inició la ronda»: la hora REAL de inicio de cada categoría. La marca el ÁRBITRO en su tablet; la organización solo la ve.
+    console.log("\n=== Inició la ronda (la marca el árbitro de cada categoría) ===");
+    const filasInicio = () => q.evaluate(() => [document.getElementById("inicio-ronda").dataset.marcada, [...document.querySelectorAll("#ir-lista li")].map((li) => li.dataset.marcada + "|" + li.textContent.replace(/\s+/g, " "))]);
+    igual("la organización ve un bloque «Cuándo inició la ronda cada categoría» que solo se mira: no hay botones, campo de hora ni lista de rondas", await q.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), /Cuándo inició la ronda cada categoría/.test(document.getElementById("ir-titulo").textContent), ["ir-ahora", "ir-hora", "ir-guardar", "ir-quitar", "ir-ronda"].map((id) => !!document.getElementById(id)), document.getElementById("inicio-ronda").querySelectorAll("button, input, select").length]), [true, true, [false, false, false, false, false], 0]);
+    const sin = await filasInicio();
+    igual("sin marca, la categoría dice que su árbitro todavía no la marcó y desde cuándo cuenta el calendario (y solo salen las categorías del modo real)", [sin[0], sin[1].length, /^no\|Sub-10 Absoluto — Ronda 3: su árbitro todavía no marcó cuándo empezó \(cuenta desde las \d{1,2}:\d\d [ap]\. ?m\. del calendario\)$/.test(sin[1][0])], ["no", 1, true]);
+    // El árbitro de Sub-10 toca «Inició la ronda ahora» en su tablet: acá se ve con su nombre y desde ahí corre el tiempo de espera de ESA categoría.
+    await q.evaluate(() => window.__marcarInicio("1529733", 3, 0, "Ana Árbitra"));
     await q.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "si");
-    igual("«Inició la ronda ahora» manda la hora de ESE momento a la base (ronda 3, torneos reales) y lo dice escrito", await q.evaluate(() => [window.__inicioArgs.length, window.__inicioArgs[0].r, window.__inicioArgs[0].prueba, Math.abs(Date.parse(window.__inicioArgs[0].inicio) - Date.now()) < 15000, /^✓ La ronda 3 empezó a las /.test(document.getElementById("ir-estado").textContent), /termina a las /.test(document.getElementById("ir-estado").textContent), document.getElementById("ir-quitar").hidden]), [1, 3, false, true, true, true, false]);
+    const con = await filasInicio();
+    igual("con la hora que marcó su árbitro, la categoría dice a qué hora empezó y quién la marcó", [con[0], /^si\|Sub-10 Absoluto — Ronda 3: empezó a las \d{1,2}:\d\d [ap]\. ?m\. \(la marcó Ana Árbitra\)$/.test(con[1][0])], ["si", true]);
     igual("desde esa hora corre el tiempo de espera de los que no han llegado: «Quedan N min» (con el calendario aún no había empezado la ronda)", await q.$$eval("#faltan tr", (l) => l.map((tr) => /^Quedan (29|30) min$/.test(tr.children[6].textContent))), [true]);
-    // Una hora escrita (la que de verdad fue): 3 minutos atrás. Ya había una marcada: pregunta antes de cambiarla.
-    const campoHora = await q.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(11, 16));
-    const mismoDia = await q.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(0, 10) === window.HoraCR.hoy());
-    if (mismoDia) {
-      await q.fill("#ir-hora", campoHora);
-      await q.click("#ir-guardar");
-      await q.waitForSelector("dialog[open]");
-      igual("si ya había una hora marcada, pregunta antes de cambiarla", await q.evaluate(() => [document.querySelector("dialog[open]").textContent.includes("Cambiar la hora de inicio"), window.__inicioArgs.length]), [true, 1]);
-      await q.click("dialog[open] [data-avisos-aceptar]");
-      await q.waitForFunction(() => window.__inicioArgs.length === 2);
-      igual("la hora escrita queda guardada (la de hace unos minutos, al minuto) y el campo la muestra", await q.evaluate(([campo]) => [Math.abs(Date.parse(window.__inicioArgs[1].inicio) - (Date.now() - 180000)) < 120000, document.getElementById("ir-hora").value, /^✓ La ronda 3 empezó a las /.test(document.getElementById("ir-estado").textContent)], [campoHora]), [true, campoHora, true]);
-      // Una hora de dentro de una hora (si no cruza la medianoche, en que «hoy» ya no sería futuro).
-      const futura = await q.evaluate(() => { const f = window.HoraCR.paraCampo(new Date(Date.now() + 3600000)); return f.slice(0, 10) === window.HoraCR.hoy() ? f.slice(11, 16) : null; });
-      if (futura) {
-        await q.fill("#ir-hora", futura);
-        await q.click("#ir-guardar");
-        await q.waitForTimeout(200);
-        igual("una hora que todavía no llega no se manda", await q.evaluate(() => window.__inicioArgs.length), 2);
-      }
-    }
-    await q.fill("#ir-hora", "");
-    await q.click("#ir-guardar");
-    await q.waitForTimeout(200);
-    igual("sin escribir la hora no se manda nada", await q.evaluate(() => window.__inicioArgs.length), mismoDia ? 2 : 1);
-    await q.click("#ir-quitar");
-    await q.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "no");
-    igual("«Volver al calendario» quita la hora marcada (se manda null) y todo vuelve a como estaba", await q.evaluate(() => [window.__inicioArgs[window.__inicioArgs.length - 1].inicio, document.getElementById("ir-quitar").hidden, document.getElementById("ir-hora").value, document.querySelector("#faltan tr").children[6].textContent]), [null, true, "", ""]);
+    // La categoría empezó hace 40 min: el tiempo de espera (30) se cumplió AUNQUE el calendario diga otra cosa.
+    await q.evaluate(() => window.__marcarInicio("1529733", 3, 40, "Ana Árbitra"));
+    await q.waitForFunction(() => !document.getElementById("espera-alerta").hidden, null, { timeout: 15000 });
+    igual("si la categoría empezó hace 40 minutos, sale la alerta de tiempo cumplido con SU mesa, aunque el calendario diga otra hora", await q.evaluate(() => [document.getElementById("espera-alerta").dataset.nivel, document.getElementById("espera-alerta").textContent.startsWith("⏰ Se cumplió el tiempo de espera (30 min) de la ronda 3: 1 jugador sigue sin llegar (mesas 5)."), document.querySelector("#faltan tr").children[6].textContent]), ["cumplido", true, "Tiempo cumplido (hace 10 min)"]);
+    // La marca de otra categoría (la de ensayo) no mueve ésta: cada categoría cuenta desde SU hora.
+    await q.evaluate(() => { window.__marcarInicio("1529733", 3, null); window.__marcarInicio("1532448", 1, 40, "Árbitro de ensayo 1"); });
+    await q.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "no" && document.getElementById("espera-alerta").hidden, null, { timeout: 15000 });
+    igual("la hora de otra categoría (o del modo ensayo) no cuenta en ésta: vuelve a valer el calendario y no hay alerta", await q.evaluate(() => [document.getElementById("espera-alerta").hidden, document.querySelector("#faltan tr").children[6].textContent, document.querySelectorAll("#ir-lista li").length]), [true, "", 1]);
+    await q.evaluate(() => window.__marcarInicio("1532448", 1, null));
     // El tiempo de espera de las bases (30 min desde el inicio de la ronda): se cambia la hora de la página (sin tocar la real).
     igual("fuera de una ronda en juego no hay alerta de tiempo de espera", await q.evaluate(() => [document.getElementById("espera-alerta").hidden, document.querySelector("#faltan tr").children[6].textContent]), [true, ""]);
     await q.evaluate(() => {
@@ -653,9 +671,9 @@ const CONTRASTE = `(sel) => {
     igual("cada jugador de la lista dice «Tiempo cumplido (hace 10 min)»", await q.$$eval("#faltan tr", (l) => l.map((tr) => [tr.dataset.espera, tr.children[6].textContent])), [["cumplido", "Tiempo cumplido (hace 10 min)"]]);
     igual("la alerta no hace ruido: ni audio ni vibración (en un torneo no hay ruido)", await q.evaluate(() => [window.__audio, window.__vib]), [0, 0]);
     igual("el total de la ronda y la revisión previa que lleva cada uno", [await q.textContent("#resumen-total"), await q.$eval('#resumen tr[data-id="asig-ana"] td:nth-child(6)', (t) => t.textContent.replace(/\s+/g, " ").trim()), await q.textContent("#resumen-ronda")], ["Con resultado: 22 de 30 mesas (73 %)", "En curso Revisión previa 1/2", " — ronda 3"]);
-    igual("arriba siempre a la vista: los avisos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()).then((t) => [t.startsWith("2 avisos de árbitros abiertos"), t.includes("1 de 2 árbitros conectados"), t.includes("Clave en 1 de 3 torneos"), t.includes("Drive"), t.includes("Última copia: hace 2 min")]), [true, true, true, true, true]);
+    igual("arriba siempre a la vista: los avisos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()).then((t) => [t.startsWith("2 avisos de árbitros abiertos"), t.includes("1 de 2 árbitros conectados"), t.includes("Clave en 1 de 3 torneos"), t.includes("Drive"), /Última copia: hace [23] min/.test(t)]), [true, true, true, true, true]);
     igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.title.includes("(2) ")]), ["2", true]);
-    igual("el pedido de ayuda dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"]', (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace 3 min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»")]), ["🆘 Ana Árbitra pide al principal EN LA MESA 4", true, true]);
+    igual("el pedido de ayuda dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"]', (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace [34] min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»")]), ["🆘 Ana Árbitra pide al principal EN LA MESA 4", true, true]);
     igual("quien TERMINÓ sus mesas llega como aviso con una sugerencia de a dónde ir a ayudar (primero su mismo torneo)", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="termino"]', (e) => [e.querySelector("p.font-bold").textContent, [...e.querySelectorAll(".cam-sugerencia span")].map((x) => x.textContent)]),
         ["✅ Árbitro 1 terminó sus mesas de la ronda 3", ["Ana Árbitra (Sub-10 Absoluto, su mismo torneo): le quedan 8 mesas; podría tomar las mesas 12 a 15."]]);
     await q.click('.cam-pedido[data-estado="abierto"][data-tipo="termino"] [data-accion="sugerir"]');

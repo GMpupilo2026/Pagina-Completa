@@ -514,6 +514,10 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-inicio-ronda { border-color: rgb(255 255 255 / 0.25); background: rgb(255 255 255 / 0.05); }
 .cam-inicio-titulo { font-size: 1rem; }
 .cam-inicio-ronda .cam-campo { width: auto; min-width: 7.5rem; }
+.cam-inicio-lista { flex: 1 1 100%; margin: 0; padding: 0; list-style: none; display: grid; gap: 0.25rem; }
+.cam-inicio-lista li { font-size: 0.95rem; line-height: 1.35; }
+.cam-inicio-lista li[data-marcada="si"] { color: #1f774c; font-weight: 700; }
+.dark .cam-inicio-lista li[data-marcada="si"] { color: #9be0bb; }
 .cam-inicio-estado { flex: 1 1 100%; margin: 0; font-weight: 700; font-size: 0.95rem; line-height: 1.35; }
 .cam-inicio-ronda[data-marcada="si"] .cam-inicio-estado { color: #1f774c; }
 .dark .cam-inicio-ronda[data-marcada="si"] .cam-inicio-estado { color: #9be0bb; }

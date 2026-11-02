@@ -32,8 +32,10 @@
 // los torneos de la tabla centroamericano_torneos y solo con un token válido.
 //
 // Las acciones (body.action), todas con { token }:
-//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que la
-//                                             organización marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
+//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que el árbitro de
+//                                             su categoría marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
+//   "inicio"  { ronda, inicio? | quitar? } -> «Inició la ronda»: la hora real en que empezó la ronda en SU categoría (la organización ya
+//                                             no la marca; cada categoría puede empezar a una hora distinta). Con `quitar`, vuelve el calendario
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
 //   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro (con tipo «nota» y artículo «Levantó»:
 //                                             el jugador se levantó de la mesa; las marcas llevan la cuenta por jugador y partida)
@@ -164,7 +166,7 @@ Deno.serve(async (req) => {
 
   // «Ya terminé mis labores»: con el enlace concluido el árbitro solo lee y baja su bitácora. Escribir (resultados, anotaciones,
   // presencia, tiempos, fotos, la lista previa, finalizar, pedir ayuda, el nombre) se rechaza AQUÍ, no en la pantalla.
-  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"];
+  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio"];
   if (a.concluyo_en && ESCRIBE.includes(String(cuerpo.action))) {
     return json({ error: "Ya concluiste tus labores: ya no puedes anotar ni guardar. Puedes bajar tu bitácora. Si necesitas seguir, pide a la organización que las reabra.", concluido: true }, 409);
   }
@@ -246,8 +248,8 @@ Deno.serve(async (req) => {
         })(),
         // El avance de la ronda (lo ve la organización) no espera a nadie ni retrasa la respuesta.
         guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
-        // La hora real en que la organización marcó que empezó esta ronda (la tolerancia corre desde ahí); sin marca, null.
-        servicio.from("centroamericano_inicios_ronda").select("ronda, inicio").eq("ronda", p.ronda).eq("prueba", torneoInfo?.prueba === true).maybeSingle(),
+        // La hora real en que el árbitro de esta categoría marcó que empezó la ronda (la tolerancia corre desde ahí); sin marca, null.
+        servicio.from("centroamericano_inicios_torneo").select("ronda, inicio, arbitro").eq("tnr", a.tnr).eq("ronda", p.ronda).maybeSingle(),
       ]);
       return json({
         ...avisos,
@@ -372,6 +374,36 @@ Deno.serve(async (req) => {
       if (error) { console.error("centroamericano-mesa: anular", a.tnr, error.code); return json({ error: "No se pudo anular. Intenta de nuevo." }, 500); }
       const marca = marcasDe(await registroDe(f.ronda, f.mesa))[f.mesa + "|" + f.color] ?? marcaVacia();
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
+    }
+
+    // «Inició la ronda»: el árbitro dice a qué hora empezó la ronda en SU categoría (cada categoría puede empezar a una hora
+    // distinta). Desde esa hora corre el tiempo de espera de los que no han llegado, en su tablet y en la página de la
+    // organización. La hora la manda la tablet (así vale también sin señal, desde la cola): no puede ser del futuro ni de hace
+    // más de un día; si el reloj de la tablet va un poco adelantado (hasta 5 min) se toma «ahora». Con `quitar: true` vuelve
+    // a valer la hora del calendario. Una fila por categoría y ronda: la última marca es la que vale.
+    if (cuerpo.action === "inicio") {
+      const ronda = Number(cuerpo.ronda);
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (cuerpo.quitar === true) {
+        const { error } = await servicio.from("centroamericano_inicios_torneo").delete().eq("tnr", a.tnr).eq("ronda", ronda);
+        if (error) { console.error("centroamericano-mesa: inicio (quitar)", a.tnr, error.code); return json({ error: "No se pudo quitar la hora. Intenta de nuevo." }, 500); }
+        return json({ ok: true, ronda, inicio: null });
+      }
+      const ahora = Date.now();
+      let cuando = Date.parse(String(cuerpo.inicio ?? ""));
+      if (!Number.isFinite(cuando)) return json({ error: "Falta la hora a la que empezó la ronda." }, 400);
+      if (cuando > ahora + 5 * 60_000) return json({ error: "Esa hora todavía no llega: pon la hora a la que empezó la ronda." }, 400);
+      if (cuando > ahora) cuando = ahora;
+      if (cuando < ahora - 24 * 3_600_000) return json({ error: "La hora de inicio tiene que ser de las últimas 24 horas." }, 400);
+      const inicio = new Date(cuando).toISOString();
+      const { error } = await servicio.from("centroamericano_inicios_torneo").upsert(
+        { tnr: a.tnr, ronda, inicio, asignacion_id: a.id, arbitro: a.arbitro, puesto_en: new Date().toISOString() },
+        { onConflict: "tnr,ronda" });
+      if (error) { console.error("centroamericano-mesa: inicio", a.tnr, error.code); return json({ error: "No se pudo guardar la hora. Intenta de nuevo." }, 500); }
+      return json({ ok: true, ronda, inicio, arbitro: a.arbitro });
     }
 
     if (cuerpo.action === "presencia") {
@@ -579,9 +611,11 @@ Deno.serve(async (req) => {
       ]);
       const tnrs = [...new Set((asigs ?? []).map((x: { tnr: string }) => x.tnr))];
       const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs);
+      // La hora a la que empezó cada ronda en sus categorías (la marcó el árbitro de la categoría, que puede ser otro).
+      const { data: inicios } = await servicio.from("centroamericano_inicios_torneo").select("tnr, ronda, inicio, arbitro").in("tnr", tnrs).order("inicio", { ascending: true });
       return json({
         ok: true, arbitro: a.arbitro, concluyo: a.concluyo_en, generado: new Date().toISOString(),
-        asignaciones: asigs ?? [], torneos: torneos ?? [], registro, tiempos, presencia, planillas, finales, listas,
+        asignaciones: asigs ?? [], torneos: torneos ?? [], inicios: inicios ?? [], registro, tiempos, presencia, planillas, finales, listas,
         avisos: avisos.filter((x) => x.tipo === "ayuda" || x.tipo === "termino" || x.tipo === "finalizo" || x.leido_en),
       });
     }

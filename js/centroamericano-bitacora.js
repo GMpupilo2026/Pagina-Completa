@@ -62,6 +62,11 @@
     for (const x of d.planillas || []) {
       lineas.push({ cuando: x.subida, tnr: x.tnr, ronda: x.ronda, mesa: x.mesa, que: "Foto de las planillas", clase: "planilla", detalle: "Foto de las dos planillas" + (x.drive_ok ? " (ya está en el Drive)" : " (todavía sin pasar al Drive)") });
     }
+    // La hora a la que empezó la ronda en la categoría (la marcó su árbitro: cada categoría puede empezar a una hora distinta).
+    for (const i of d.inicios || []) {
+      lineas.push({ cuando: i.inicio, tnr: i.tnr, ronda: i.ronda, mesa: null, que: "Inició la ronda", clase: "inicio",
+        detalle: "La ronda empezó a las " + F.hora(i.inicio) + (i.arbitro ? " (la marcó " + i.arbitro + ")" : "") });
+    }
     for (const l of d.listas || []) {
       lineas.push({ cuando: l.aprobada_en, tnr: tnrDe(l.asignacion_id), ronda: l.ronda, mesa: null, que: "Revisión previa", clase: "lista", detalle: "Aprobó el paso «" + l.paso + "»" });
     }

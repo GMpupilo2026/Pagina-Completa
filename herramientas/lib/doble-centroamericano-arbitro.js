@@ -35,7 +35,16 @@ const SERVIDOR_ARBITRO = `
   window.__servidor = (b) => {
     if (b.token !== TOKEN && b.token !== TOKEN_B) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
     // «Ya terminé mis labores»: con el enlace concluido la función rechaza todo lo que escribe.
-    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    // «Inició la ronda» (la categoría del árbitro): como la función, guarda la hora que manda la tablet (no del futuro) o la quita.
+    if (b.action === "inicio") {
+      window.__inicioArgs = (window.__inicioArgs || []).concat([{ ronda: b.ronda, inicio: b.inicio === undefined ? undefined : b.inicio, quitar: b.quitar === true }]);
+      if (b.ronda !== 3) return falla(409, "La ronda abierta en chess-results es la 3, no la " + b.ronda + ". Actualiza la página.");
+      if (b.quitar === true) { window.__inicioRonda = null; return { data: { ok: true, ronda: 3, inicio: null }, error: null }; }
+      const cuando = Math.min(Date.parse(b.inicio), Date.now());
+      if (!Number.isFinite(cuando)) return falla(400, "Falta la hora a la que empezó la ronda.");
+      window.__inicioRonda = { ronda: 3, inicio: new Date(cuando).toISOString(), arbitro: window.__avisos.arbitro };
+      return { data: { ok: true, ronda: 3, inicio: window.__inicioRonda.inicio, arbitro: window.__avisos.arbitro }, error: null }; }
     if (b.action === "concluir") { if (!window.__concluyo) window.__concluyo = "2026-11-02T16:30:00Z"; return { data: { ok: true, concluyo: window.__concluyo }, error: null }; }
     if (b.action === "bitacora") {
       if (!window.__concluyo) return falla(409, "La bitácora se baja cuando concluyes tus labores.");

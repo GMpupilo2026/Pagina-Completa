@@ -98,6 +98,16 @@
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
             </section>
 
+            <!-- La hora REAL en que empezó la ronda en tu categoría (cada categoría puede empezar a una hora distinta): desde ahí corre el tiempo de espera. -->
+            <div class="cam-inicio-ronda" id="inicio-ronda" role="group" aria-labelledby="ir-titulo" hidden>
+                <strong id="ir-titulo" class="cam-inicio-titulo"><span aria-hidden="true">⏱</span> Inicio de la ronda <span id="ir-ronda"></span></strong>
+                <button type="button" id="ir-ahora" class="cam-btn cam-btn-chico"><span aria-hidden="true">▶</span> Inició la ronda ahora</button>
+                <label class="cam-herramientas-campo"><span>o a las</span>
+                    <input type="time" id="ir-hora" class="cam-campo" step="60" aria-describedby="ir-estado"></label>
+                <button type="button" id="ir-guardar" class="cam-btn cam-btn-claro cam-btn-chico">Guardar esa hora</button>
+                <button type="button" id="ir-quitar" class="cam-btn cam-btn-claro cam-btn-chico" hidden>Volver al calendario</button>
+                <p id="ir-estado" class="cam-inicio-estado" role="status"></p>
+            </div>
             <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
             <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
 
