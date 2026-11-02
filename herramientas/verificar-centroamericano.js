@@ -471,7 +471,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await ctx4.clock.setFixedTime(new Date("2026-11-02T10:15:00-06:00"));
     // Y sin la base de verdad: lo de «Partidas» y «Hoy» llegaba de la sala REAL, y en pleno torneo traía partidas y la página
     // cambiaba sola después de tomar la foto del texto: la prueba comparaba contra algo que se movía.
-    await ctx4.route(/supabase\.co/, (r) => r.abort());
+    await ctx4.route(/supabase\.co|lichess\.org/, (r) => r.abort());
     const p4 = await ctx4.newPage();
     // El aviso de «quedó guardada» llega un rato después de cargar: se espera, para comparar lo mismo.
     const guardada = (pg) => pg.waitForFunction(() => !document.getElementById("hoy-sin-red").hidden, null, { timeout: 15000 }).catch(() => {});

@@ -10565,10 +10565,20 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
     prueba: si no, cada estrella mandaba una notificación. El tope por
     conexión empezó en 10 y se subió a 40 antes de usarse: una delegación
     entera sale a internet por el wifi del mismo hotel.
-  - Quién revisa: pg_cron `sala-avisos`, cada 5 minutos y solo del 1 al 8 de
+  - Quién revisa: pg_cron `sala-avisos`, **cada minuto** y solo del 1 al 8 de
     noviembre (UTC), llama a «revisar» con el secreto `sala_avisos_secreto`
     de la bóveda, como `torneos-externos`; sin suscripciones ni se llama. Por
     eso la función va con `verify_jwt` en false.
+  - **El aviso sale en el momento en que sale la ronda** (lo pidió el dueño
+    el 2/11/2026, con el torneo ya empezado). Hasta entonces pg_cron pasaba
+    cada 5 minutos y lo leído de chess-results se guardaba 90 s en
+    `pizarras_cache`: el aviso del pareo llegaba hasta unos 6 minutos tarde.
+    Ahora pasa cada minuto y `FRESCO_MS` es 50 s, menos que esa vuelta: cada
+    «revisar» lee chess-results de nuevo y el aviso sale a más tardar un
+    minuto después de publicado (migración `sala_avisos_cada_minuto`). Son
+    tres páginas por categoría por minuto, solo del Clásico y solo con
+    alguien suscrito. Dos vueltas que se pisen no mandan nada dos veces: la
+    clave primaria de `sala_avisos_push_enviados` lo impide.
   - Se borran solas 30 días después del último cambio (pg_cron
     `sala-avisos-limpiar`), como dice `privacidad.html#torneos`.
   - El verificador no tiene un servicio de push: el doble concede el
@@ -10587,8 +10597,8 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
     `.ics` del calendario de la página (`CALENDARIOS` en
     `sala-jugadores/index.ts`), que genera `herramientas/centroamericano-imagenes.js`
     a partir de la tabla de `#calendario`; toma los eventos «Ronda N» y lo
-    guarda una hora. Como pg_cron pasa cada 5 minutos, el aviso sale entre
-    35 y 30 minutos antes.
+    guarda una hora. Como pg_cron pasa cada minuto, el aviso sale entre
+    31 y 30 minutos antes (`ANTES_MS`).
 - **Las rondas de cada jugador, su rendimiento y compartirlo**: la función
   lee también el cuadro cruzado por número inicial (`art=5`) y le pone a cada
   jugador sus rondas en `r`, tal cual las escribe chess-results («5w1» = con el
@@ -10938,7 +10948,7 @@ bajar todos los certificados de una delegación en un solo PDF.
     5 minutos, y al volver a la pestaña si pasó más de un minuto.
   - **A los celulares** los manda la misma Edge Function de siempre,
     `sala-jugadores`, antes de leer chess-results. Al publicar, la función de
-    la base llama a `disparar_sala_avisos()` para que no espere los 5 minutos
+    la base llama a `disparar_sala_avisos()` para que no espere la vuelta
     del cron. Cada aparato lo recibe una vez (`sala_avisos_push_enviados`
     con tipo `anuncio`, el id del aviso en `ronda` y `no = 0`), en su idioma,
     y solo si se suscribió ANTES del aviso: quien se suscribe a las 3 no tiene
@@ -11074,6 +11084,14 @@ jugadas y con una barra que diga cómo va la partida.
   las dos con los mismos textos). La sala se lee con la clave pública: la
   política deja leer las visibles (y quien administra, en el modo de prueba,
   también la oculta). No hizo falta ni migración ni tocar la función.
+- **El enlace del GRUPO no sirve; el de una categoría sí.** Chess-results
+  pone en cada torneo el enlace a la página del grupo de Lichess
+  (`lichess.org/broadcast/<nombre>/g5IJuqYT` en el Centroamericano, comprobado
+  el 2/11/2026). Ese id no es de un torneo: `/api/broadcast/<id>` contesta
+  404, Lichess no tiene API de grupos y su página HTML no manda CORS, así que
+  ni la página ni la función pueden leerlo. En la sala va el de **cualquiera
+  de las categorías** (la página del grupo las lista, `…-o18/C0AiAflG`), que
+  trae el grupo entero con sus 12 torneos.
 - **Mientras la sala no tenga ese botón, nada cambia**: la ficha «Partidas en
   vivo» sigue en «Pronto» y no se le pide nada a Lichess. Con el botón, la
   ficha se enciende sola y abre la ventana `#partidas`.
@@ -11248,7 +11266,7 @@ lo logró Mayorga».
 ### Su partida está en vivo: el aviso al celular
 
 A quien sigue a un jugador con «Avisarme en este celular», `sala-jugadores`
-(`revisar`, cada 5 minutos con pg_cron) le avisa cuando la partida de ese
+(`revisar`, cada minuto con pg_cron) le avisa cuando la partida de ese
 jugador **empieza en un tablero que Lichess transmite**: «📺 Ronda N: Nombre
 juega en vivo», con la mesa, el color y el rival. Tocar el aviso abre la
 página en `#partida=<id de Lichess>`, que abre esa partida en el visor (y si

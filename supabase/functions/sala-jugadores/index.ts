@@ -76,7 +76,7 @@ import { codigoCategoria, deCategorias, idDeEnlaceLichess, MODALIDADES, type Mod
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FRESCO_MS = 90_000;
+const FRESCO_MS = 50_000;   // menos que el minuto de pg_cron: cada vuelta de «revisar» lee chess-results de nuevo
 const MAX_JUGADORES = 1500;
 const CR_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -381,7 +381,7 @@ export function textoResultado(idioma: string, ronda: number, no: number, mesas:
 const CALENDARIOS: Record<string, string> = {
   "centroamericano-2026": "https://ajedrez-integral.com/documentos/centroamericano-2026/calendario-centroamericano-2026.ics",
 };
-const ANTES_MS = 35 * 60_000;   // pg_cron pasa cada 5 minutos: sale entre 35 y 30 antes
+const ANTES_MS = 31 * 60_000;   // pg_cron pasa cada minuto: sale entre 31 y 30 antes
 const calendarios = new Map<string, { leido: number; rondas: { ronda: number; inicio: number }[] }>();
 
 export function leerCalendario(ics: string) {
@@ -479,7 +479,7 @@ async function revisar(admin: Admin) {
       return mismos.length === 1 ? { t, lista, no: mismos[0].no } : null;
     };
 
-    // 1) El recordatorio: la ronda que empieza en los próximos 35 minutos.
+    // 1) El recordatorio: la ronda que empieza en los próximos 31 minutos.
     const ahora = Date.now();
     const proxima = (await rondasDelCalendario(sala)).find((e) => e.inicio > ahora && e.inicio - ahora <= ANTES_MS);
     if (proxima) {

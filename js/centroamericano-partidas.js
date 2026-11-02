@@ -965,6 +965,9 @@
   }
   document.addEventListener("cac-datos", alLlegarDatos);
   document.addEventListener("cac-idioma", () => {
+    // «En vivo ahora» va armado con los textos del idioma de cuando se pintó
+    // (el traductor de la página no los conoce): se vuelve a pintar.
+    if (evento && evento.torneos.length) pintarEnVivo();
     if (!dialogo || !dialogo.open) return;
     if (visor) { armarVisor(); pintarVisor(); } else { contenido.replaceChildren(); pintarLista(); }
   });
