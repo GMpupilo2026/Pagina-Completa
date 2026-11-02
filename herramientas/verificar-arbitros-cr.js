@@ -967,10 +967,12 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     FORMACION.length = 0;
 
     console.log("\n=== El arbitraje del país en números y las novedades ===");
-    // El AF de Ana hace 11 meses (sale) y el AI de Óscar hace 13 (ya no).
+    // El AF de Ana hace 11 meses (sale) y el AI de Óscar hace 13 (ya no),
+    // con el reloj fijo: con el de verdad, el 2/11/2026 el AF de Ana ya tenía
+    // más de 12 meses y la prueba falló sin que nada cambiara.
     const anaF = ARBITROS_FIDE.find((f) => f.fide_id === 6500002), oscarF = ARBITROS_FIDE.find((f) => f.fide_id === 6500001);
     anaF.af_perfil = "2025-11-01"; oscarF.ia_fecha = "2025-09-01";
-    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, "2026-10-15T12:00:00-06:00"));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("año por año: quién arbitró en Costa Rica, por primera vez, su último año, torneos, carga, concentración y títulos (2026: solo el AI de Óscar)",
         await filas(p, "#tabla-numeros-anios"),

@@ -147,9 +147,10 @@ function pruebaFuncion() {
   // Crear el torneo y la ronda en Lichess pasa por la función (esas dos
   // direcciones no aceptan pedidos de otra página): solo esas dos, con licencia.
   const rutaLichess = new RegExp((ts.match(/const RUTA_LICHESS = \/(.+)\/;/) || [])[1] || "^$");
-  igual("a Lichess, la función solo crea torneos y rondas",
-    ["/broadcast/new", "/broadcast/AbCd1234/new", "/api/broadcast/round/x/push", "/api/account", "/broadcast/new/../../api/token", "/broadcast/AbCd1234/edit", "/team/x/kick"].map((r) => rutaLichess.test(r)),
-    [true, true, false, false, false, false, false]);
+  igual("a Lichess, la función solo crea torneos y rondas, y borra torneos",
+    ["/broadcast/new", "/broadcast/AbCd1234/new", "/broadcast/AbCd1234/delete", "/api/broadcast/round/x/push", "/api/account", "/broadcast/new/../../api/token", "/broadcast/AbCd1234/edit", "/team/x/kick", "/broadcast/round/AbCd1234/delete", "/broadcast/AbCd12345/delete"].map((r) => rutaLichess.test(r)),
+    [true, true, true, false, false, false, false, false, false, false]);
+  cierto("al borrar no sigue la redirección de Lichess (contesta 303 también si no lo borró)", /redirect: borrar \? "manual"/.test(ts));
   cierto("y solo después de comprobar la licencia", licencia >= 0 && licencia < pos(/if \(body\.accion === "lichess"\) return await aLichess\(body\)/));
   cierto("sin escribir el token en ningún registro", !/console\.\w+\([^)]*token/.test(ts));
 }
@@ -205,6 +206,18 @@ function pruebaModulo() {
   igual("si se eligen otras mesas, hay que volver a armarla", [DGT.decidir(hecho, DATOS, "1-2"), DGT.decidir({ rondas: { 3: { firma: DGT.firma(DATOS), mesasElegidas: "1-2" } } }, DATOS, "2, 1")], ["cambio", "igual"]);
 
   igual("el nombre del archivo", DGT.nombreArchivo("Torneo Blitz Sub-12 — Peñas", 3), "torneo-blitz-sub-12-penas-ronda-3.pgn");
+  // Los del Centroamericano empiezan todos igual: cortados a 60 letras, todos
+  // los archivos se llamaban igual. Con los demás torneos de la lista, queda
+  // lo que distingue a cada uno: la categoría.
+  const festival = ["XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 08 Absoluto",
+    "XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 08 Femenino",
+    "XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - Sub 10 Absoluto"];
+  igual("con varias categorías, cada archivo lleva la suya y la ronda",
+    festival.map((n) => DGT.nombreArchivo(n, 3, festival)),
+    ["sub-08-absoluto-ronda-3.pgn", "sub-08-femenino-ronda-3.pgn", "sub-10-absoluto-ronda-3.pgn"]);
+  igual("y nunca dos iguales, aunque se baje la misma ronda de todas", new Set(festival.map((n) => DGT.nombreArchivo(n, 1, festival))).size, 3);
+  igual("con un solo torneo y un nombre largo, se guarda el final: la categoría", DGT.nombreArchivo(festival[0], 2, [festival[0]]),
+    "ajedrez-centroamericano-y-del-caribe-2026-sub-08-absoluto-ronda-2.pgn");
   igual("la hora de la ronda, en hora de Costa Rica (UTC−6)",
     [DGT.inicioRonda("2026.11.07", "3:00pm"), DGT.inicioRonda("2026.11.07", "12:30am"), DGT.inicioRonda("2026.11.07", "12:05pm"), DGT.inicioRonda("", "3:00pm")],
     [Date.UTC(2026, 10, 7, 21, 0), Date.UTC(2026, 10, 7, 6, 30), Date.UTC(2026, 10, 7, 18, 5), null]);
@@ -284,7 +297,10 @@ async function pruebaPagina(browser) {
   await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
   const pedidosFuncion = [];
   const lichess = [];
-  const estado = { leer: respuesta(0, []), lichessFalla: false, rondas: 0 };
+  const estado = { leer: respuesta(0, []), lichessFalla: false, rondas: 0, borrados: new Set() };
+  // Los torneos de la cuenta en Lichess: el de la lista, una copia hecha por
+  // error y uno que Lichess no deja borrar (de otra cuenta).
+  const MIOS = [["TOUR0001", "Blitz de Prueba"], ["OTRO0099", "Blitz de Prueba (repetido)"], ["AJENO001", "Torneo de otra cuenta"]];
   // Lichess de mentira, como contesta el de verdad. Lo anota todo en `lichess`
   // (desde dónde llegó cada pedido: el navegador o la función).
   const bloqueados = [];
@@ -295,6 +311,13 @@ async function pruebaPagina(browser) {
     if (ruta === "/broadcast/new") return [200, { tour: { id: "TOUR0001", url: "https://lichess.org/broadcast/blitz/TOUR0001" }, rounds: [] }];
     if (/^\/broadcast\/TOUR0001\/new$/.test(ruta)) { estado.rondas += 1; return [200, { round: { id: "RND" + String(estado.rondas).padStart(5, "0"), url: "https://lichess.org/broadcast/blitz/ronda/RND" } }]; }
     if (/^\/api\/broadcast\/round\/[^/]+\/push$/.test(ruta)) return [200, { games: [] }];
+    if (ruta === "/api/broadcast/by/Organiza") return [200, { currentPage: 1, nextPage: null,
+      currentPageResults: MIOS.filter(([id]) => !estado.borrados.has(id)).map(([id, name]) => ({ tour: { id, name, url: "https://lichess.org/broadcast/x/" + id, createdAt: Date.UTC(2026, 10, 1, 18) } })) }];
+    // Lichess contesta lo mismo aunque no lo borre (el de otra cuenta): la función lo pasa como 200.
+    const borrar = /^\/broadcast\/([A-Za-z0-9]{8})\/delete$/.exec(ruta);
+    if (borrar) { if (borrar[1] !== "AJENO001") estado.borrados.add(borrar[1]); return [200, { redirigido: true }]; }
+    const uno = /^\/api\/broadcast\/([A-Za-z0-9]{8})$/.exec(ruta);
+    if (uno) return estado.borrados.has(uno[1]) || !MIOS.some(([id]) => id === uno[1]) ? [404, { error: "Not found" }] : [200, { tour: { id: uno[1] } }];
     return [404, { error: "no" }];
   }
   await ctx.route("https://falso.supabase.co/functions/v1/pareo-dgt", (r) => {
@@ -383,8 +406,17 @@ async function pruebaPagina(browser) {
   await page.waitForFunction(() => /nada nuevo \(ronda 3\)/.test(document.getElementById("bitacora").textContent));
   igual("ni leerla otra vez ni recargar la página la crean de nuevo en Lichess",
     lichess.slice(antes).map((l) => l.ruta).filter((r) => r !== "/api/account"), []);
-  cierto("el torneo recuerda su ronda y su transmisión", /Ronda 3 \(1 partida\) · en Lichess/.test(await page.textContent("#torneos")) &&
+  cierto("el torneo recuerda su ronda y su transmisión", /Bajar ronda 3 \(1 partida\) · en Lichess/.test(await page.textContent("#torneos")) &&
     await page.$eval("#torneos", (u) => [...u.querySelectorAll("a")].some((a) => a.href === "https://lichess.org/broadcast/blitz/TOUR0001")));
+
+  // Volver a bajar el PGN: el de una ronda, y el de la última de cada torneo.
+  const [deNuevo] = await Promise.all([page.waitForEvent("download"), page.click("#torneos button:has-text('Bajar ronda 3')")]);
+  igual("«Bajar ronda 3» lo baja otra vez, con el mismo PGN y su nombre", [deNuevo.suggestedFilename(), /\[Round "3"\]/.test(fs.readFileSync(await deNuevo.path(), "utf8"))],
+    ["blitz-de-prueba-ronda-3.pgn", true]);
+  igual("«Bajar otra vez el PGN de la última ronda de cada torneo» se ve cuando hay alguna", await vis(page, "#btn-bajar-todos"), true);
+  const [todos] = await Promise.all([page.waitForEvent("download"), page.click("#btn-bajar-todos")]);
+  igual("y baja la última de cada uno, y dice cuáles", [todos.suggestedFilename(), (await page.textContent("#bajar-todos-estado")).trim()],
+    ["blitz-de-prueba-ronda-3.pgn", "En Descargas: blitz-de-prueba-ronda-3.pgn."]);
 
   // chess-results corrige el pareo de la ronda 3.
   const corregida = JSON.parse(JSON.stringify(DATOS.mesas));
@@ -456,6 +488,33 @@ async function pruebaPagina(browser) {
   cierto("un dato que falta se dice (el lugar y el control de tiempo)", /chess-results no lo dice/.test(textosLC[2]) && /chess-results no lo dice/.test(textosLC[4]) && !/chess-results no lo dice/.test(textosLC[3]), textosLC.join(" | "));
   igual("y ese dato no tiene botón de copiar", await page.$$eval("#torneos details button", (bs) => bs.map((b) => b.dataset.foco)),
     ["777777:Short title", "777777:Name", "777777:Country", "777777:Number of rounds", "777777:todo"]);
+
+  // Borrar torneos en Lichess, por si se crearon por error.
+  await page.click("#borrar-lichess summary");
+  await page.click("#btn-ver-lichess");
+  await page.waitForFunction(() => document.querySelectorAll("#borrar-items li").length === 3);
+  const itemsBorrar = await page.$$eval("#borrar-items li", (l) => l.map((x) => x.querySelector("span").textContent));
+  cierto("«Ver mis torneos en Lichess» trae todos los de la cuenta, con su fecha, y dice cuál es de la lista",
+    /^Blitz de Prueba · creado el .+ · de esta lista$/.test(itemsBorrar[0]) && /repetido/.test(itemsBorrar[1]) && !/de esta lista/.test(itemsBorrar[1]), itemsBorrar.join(" | "));
+  igual("sin marcar nada no se puede borrar", await page.isDisabled("#btn-borrar-marcados"), true);
+  await page.click("#btn-marcar-todos");
+  igual("«Marcar todos» los marca y el botón dice cuántos", [(await page.textContent("#btn-borrar-marcados")).trim(), (await page.textContent("#btn-marcar-todos")).trim()], ["Borrar los marcados (3)", "Desmarcar todos"]);
+  const antesBorrar = lichess.length;
+  await page.click("#btn-borrar-marcados");
+  await page.click("button:text-is('Cancelar')");
+  igual("pide confirmar, y «Cancelar» no borra nada", lichess.slice(antesBorrar).filter((l) => /delete/.test(l.ruta)).length, 0);
+  await page.click("#btn-borrar-marcados");
+  await page.click("button:text-is('Borrar los 3')");
+  await page.waitForFunction(() => /No se pudo borrar/.test(document.getElementById("borrar-estado").textContent), null, { timeout: 15000 });
+  igual("borra los suyos y dice cuál no pudo (el de otra cuenta: Lichess contestó igual, pero sigue ahí)", (await page.textContent("#borrar-estado")).trim(),
+    "Borrados en Lichess: 2. No se pudo borrar: Torneo de otra cuenta.");
+  igual("borrar pasa por la función (no es /api/), y se comprueba en Lichess si de verdad se borró",
+    lichess.slice(antesBorrar).filter((l) => !/\/api\/account/.test(l.ruta)).map((l) => l.desde + " " + l.ruta),
+    ["funcion /broadcast/TOUR0001/delete", "navegador /api/broadcast/TOUR0001", "funcion /broadcast/OTRO0099/delete", "navegador /api/broadcast/OTRO0099", "funcion /broadcast/AJENO001/delete", "navegador /api/broadcast/AJENO001"]);
+  igual("en la lista queda solo el que no se borró", await page.$$eval("#borrar-items li span", (l) => l.map((x) => x.textContent)), ["Torneo de otra cuenta · creado el 1 de noviembre de 2026"]);
+  cierto("y el torneo de la lista ya no está «en Lichess»: se puede volver a crear",
+    !/en Lichess/.test(await page.textContent("#torneos")) && !(await page.$eval("#torneos", (u) => [...u.querySelectorAll("a")].some((a) => /TOUR0001/.test(a.href)))));
+  cierto("la bitácora dice qué se borró", /«Blitz de Prueba»: borrado en Lichess/.test((await bitacora(page)).join(" ")));
 
   // Vigilar.
   await page.click("#btn-vigilar");

@@ -13566,6 +13566,86 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   conectar el cable. Si el puerto elegido es el del tablero virtual de esta
   misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
   lo dice sin intentar abrirlo.
+- **Borrar torneos en Lichess** (lo pidió el dueño el 2/11: «por si los hice
+  por error»). En el paso 3, «Borrar torneos en Lichess» (cerrado) trae
+  «Ver mis torneos en Lichess»: la lista sale de Lichess mismo
+  (`/api/broadcast/by/<usuario>`, de 20 en 20, hasta 10 páginas), no solo de
+  los que anotó la página, porque un intento que falló a medias pudo dejar
+  uno creado. Cada uno con su casilla, su fecha y «de esta lista» si es de
+  los de aquí; «Marcar todos» y «Borrar los marcados (N)», con una
+  confirmación que nombra cada torneo y dice que no se puede deshacer.
+  - Lichess borra con `POST /broadcast/<8>/delete` (`RelayTour.delete`,
+    `AuthOrScoped(_.Study.Write)`: el mismo token, comprobado en el código de
+    lila el 2/11), que no está bajo `/api/`: pasa por la Edge Function
+    `pareo-dgt` como crear (versión 5, desplegada el 2/11). Borra solo si el
+    torneo es de quien llama (`deleteTourIfOwner`) y **contesta 303 también
+    si no lo borró**: la función no sigue la redirección, y la página
+    comprueba con `GET /api/broadcast/<8>` que dé 404. El que sigue ahí se
+    dice («¿es de otra cuenta?») y queda en la lista.
+  - Un torneo de la lista que se borra deja de estar «en Lichess» (su id y
+    las rondas empujadas se olvidan): «Crear los torneos en Lichess» lo
+    vuelve a crear.
+- **Cada PGN con su categoría y su ronda en el nombre** (lo pidió el dueño:
+  «todos se llaman igual»). El nombre salía del nombre del torneo de
+  chess-results cortado a 60 letras, y los del Centroamericano empiezan todos
+  con «XXI Festival de Ajedrez Centroamericano y del Caribe 2026 - …»: el
+  corte se comía la categoría. Ahora `PareoDGT.nombreArchivo(nombre, ronda,
+  otros)` le quita lo que comparte con los demás torneos de la lista
+  («sub-08-absoluto-ronda-3.pgn»; si lo que queda empieza con un número,
+  conserva la palabra de antes: «sub-08», no «08»), y si aún es largo guarda
+  el final, que es la categoría. Vale para el PGN para LiveChess y para
+  «PGN de la ronda N».
+- **Volver a bajar los PGN** (lo pidió el dueño). Cada ronda de cada torneo
+  ya tenía un botón, pero no decía que bajaba nada («Ronda 3 (1 partida)») y
+  usaba el nombre guardado al leerla, de antes de que cada categoría llevara
+  el suyo. Ahora dice «⬇ Bajar ronda 3 (…)» y el nombre se arma al bajar
+  (`archivoDe`), y arriba de la lista, «Bajar otra vez el PGN de la última
+  ronda de cada torneo» baja la última de todas las categorías de un clic, a
+  Descargas, y dice cuáles bajó. Chrome puede preguntar una vez si deja bajar
+  varios archivos.
+- **El rey en e4 dice qué tablero es, y ahí mismo se le da su categoría**
+  (lo pidió el dueño: «que cuando se coloque el rey en la casilla e4, salte a
+  la vista qué tablero es, con sonido y una luz… en la pantalla, para saber
+  cuál tablero es y poderlo configurar con su categoría»). Sin buscar en la
+  tabla: el árbitro pone un rey (blanco o negro) en esa casilla y arriba de
+  la pantalla sale un panel con «Tablero 4534» en grande, cómo está ahora,
+  «Categoría», «Mesa», «Guardar» y «Cerrar», con un destello (anillo que
+  late; sin animación con «reducir movimiento») y dos pitidos; su fila se
+  marca y el foco va a la categoría.
+  - **Para armar la sala recorriéndola**: la categoría sugerida es la última
+    que se usó (en el panel o en la tabla) y la mesa, la siguiente libre de
+    esa categoría; al cambiar de categoría, la mesa se vuelve a sugerir.
+    «Guardar» asigna como la fila y el panel se cierra solo a los 2,5 s.
+    Escape o «Cerrar» lo cierran sin cambiar nada.
+  - La casilla se elige (e4 por omisión) y se apaga; se guarda en la
+    computadora. Suena aunque «Avisar con un sonido» esté apagado: es para eso.
+  - **La luz es la de la pantalla**: estos tableros no tienen luces, y al
+    DGT 3000 no se le puede escribir por el bus (ver abajo, los relojes).
+  - **Un rey que llega a e4 jugando no avisa**: si en la PARTIDA hay un rey
+    en esa casilla (un final), es una jugada. Se mira el tablero de verdad
+    (`t.fisico`, que no se reinicia cuando el tablero cambia de mesa) y la
+    misma casilla en la partida, dada vuelta si las blancas juegan del otro
+    lado. Tampoco es una «partida trabada» en los avisos de la sala mientras
+    el rey está puesto.
+  - Avisa una vez cada vez que se pone: quitarlo y volver a ponerlo avisa
+    otra vez, también si pasa entre dos lecturas (el rey levantado de esa
+    casilla en los cambios). Texto oscuro sobre el naranja: 6,5:1.
+  - De paso: al reconocer la posición inicial, el lector no avisaba que
+    cambió algo, y la fila seguía en «Esperando la posición inicial» hasta la
+    primera jugada (`p.cambios` en `revisar()`).
+- **La primera cadena de verdad (2/11): se encontraban y no contestaban.**
+  Cuatro tableros (4534, 4875, 7362 y 15712) aparecieron en la búsqueda y
+  después los cuatro decían «no contesta». Lo que encaja: el adaptador
+  devuelve el eco de cada pedido, y «83 23 36 3c» (al 4534) se leía como el
+  comienzo de un mensaje de 4534 bytes; la página se quedaba esperándolo y
+  se tragaba todas las respuestas. La búsqueda no lo sufre: el ping general
+  va a la dirección 0, un largo imposible. Ahora `crearFlujo()` solo acepta
+  los códigos que manda un tablero (0x83–0x89) con el largo que cada uno
+  puede tener y la suma bien, y cada pregunta empieza con lo pendiente
+  vaciado (`puerto.vaciar()`). **Sin confirmar con esa cadena**: por eso cada
+  puerto tiene «Bajar el registro», lo que fue y vino por el cable en
+  hexadecimal (las últimas 2000 lecturas y escrituras), para ver qué
+  contesta un tablero de verdad sin estar en la sala.
 - **Poner los relojes DGT 3000 desde la computadora: no, por ahora.** En modo
   bus, lo comprobado (Picochess, DGTCentaurMods, el registro de LiveChess)
   solo trae los comandos 0x81–0x8b y 0x92, y ninguno escribe en el reloj; el

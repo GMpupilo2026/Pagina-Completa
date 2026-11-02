@@ -2850,3 +2850,8 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .camara-compacta .nt-lado { position: static; max-height: none; }
 .camara-compacta .nt-estado { display: none; }
 @media print { .nt-barra, .nt-pasos, .nt-pestanas, .nt-estado { display: none !important; } }
+
+/* Pareo para DGT: el rey en e4 muestra qué tablero es, con un destello que se ve desde la sala. */
+@keyframes dgt-destello { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9); } 50% { box-shadow: 0 0 0 28px rgba(245, 158, 11, 0); } }
+.dgt-destello { animation: dgt-destello 0.8s ease-out 8; }
+@media (prefers-reduced-motion: reduce) { .dgt-destello { animation: none; } }
