@@ -311,9 +311,23 @@
         for (const s of usb) await abrir(s);
     }
 
+    // «Failed to open serial port» es lo único que dice Windows cuando el
+    // puerto ya lo tiene otro: se dice qué revisar, de lo más común a lo menos.
+    const OCUPADO = "Revisa, en este orden: que LiveChess esté cerrado del todo (también su ícono junto al reloj de Windows: cerrar la ventana no siempre lo cierra); " +
+        "que no haya otra pestaña con Pareo para DGT abierta (al abrirse conecta sola los puertos USB que ya conoce); " +
+        "si es un puerto de com0com, que no sea la punta del tablero virtual (elige la otra del par); " +
+        "y, si nada de eso, desconecta el cable USB, vuelve a conectarlo y toca otra vez «Conectar un puerto».";
+
     async function abrir(serial) {
+        if (puertos.some((p) => p.serial === serial)) { $("directo-error").textContent = "Ese puerto ya está conectado aquí."; return; }
+        const virtuales = window.PareoDGTVirtual ? window.PareoDGTVirtual.puertos() : [];
+        if (virtuales.includes(serial)) { $("directo-error").textContent = "Ese es el puerto del tablero virtual (sección 6): aquí va la otra punta del par de com0com."; return; }
         try { await serial.open({ baudRate: 9600 }); }
-        catch (e) { $("directo-error").textContent = "No se pudo abrir ese puerto (" + e.message + "). ¿Lo tiene abierto LiveChess u otra pestaña?"; return; }
+        catch (e) {
+            $("directo-error").textContent = e && e.name === "InvalidStateError" ? "Ese puerto ya está abierto en esta página." :
+                "No se pudo abrir ese puerto: otro programa lo tiene abierto. " + OCUPADO + " (Detalle: " + (e && e.message) + ")";
+            return;
+        }
         try { if (serial.setSignals) await serial.setSignals({ dataTerminalReady: true, requestToSend: true }); } catch (_) { /* no todos */ }
         const info = serial.getInfo ? serial.getInfo() : {};
         const p = { serial, dirs: [], activo: true, ocupado: Promise.resolve(), nombre: "Puerto " + (puertos.length + 1) + (info.usbProductId ? " (USB)" : "") };

@@ -306,7 +306,9 @@ function preparar() {
         if (chunk[0] === 0x87 && chunk[1] === 0 && chunk[2] === 0 && resp.length > 1) resp = [resp[0]];   // chocan: llega uno
         for (const m of resp) setTimeout(() => ctl.enqueue(Uint8Array.from(m)), 2);
       } }),
-      open: () => Promise.resolve(), close: () => Promise.resolve(), setSignals: () => Promise.resolve(), getInfo: () => ({ usbProductId: 1 }),
+      // Con __abrirFalla, lo que dice Windows cuando otro programa lo tiene.
+      open: () => window.__abrirFalla ? (window.__abrirFalla = false, Promise.reject(Object.assign(new Error("Failed to execute 'open' on 'SerialPort': Failed to open serial port."), { name: "NetworkError" }))) : Promise.resolve(),
+      close: () => Promise.resolve(), setSignals: () => Promise.resolve(), getInfo: () => ({ usbProductId: 1 }),
     };
     // Con permiso ya dado (después del primer «Conectar un puerto»), Chrome lo
     // devuelve en getPorts() al recargar. Es USB: trae usbVendorId.
@@ -499,8 +501,18 @@ async function pruebaSala(browser) {
   await p.addInitScript(preparar);
   await p.goto(BASE + "/pareo-dgt.html", { waitUntil: "networkidle" });
   await p.waitForFunction(() => /Conectado a Lichess/.test(document.getElementById("lichess-estado").textContent));
+  await p.evaluate(() => { window.__abrirFalla = true; });
+  await p.click("#btn-directo-puerto");
+  await p.waitForFunction(() => document.getElementById("directo-error").textContent !== "");
+  const ocupado = await p.textContent("#directo-error");
+  cierto("un puerto que tiene otro programa: dice qué revisar (LiveChess, otra pestaña, el tablero virtual, el cable)",
+    /^No se pudo abrir ese puerto: otro programa lo tiene abierto\. Revisa, en este orden: que LiveChess esté cerrado del todo .*otra pestaña.*tablero virtual.*cable USB.*\(Detalle: Failed to execute 'open' on 'SerialPort': Failed to open serial port\.\)$/.test(ocupado), ocupado);
   await p.click("#btn-directo-puerto");
   await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 30000 });
+  igual("al volver a intentar, se conecta y el error se borra", await p.textContent("#directo-error"), "");
+  await p.click("#btn-directo-puerto");
+  await p.waitForFunction(() => document.getElementById("directo-error").textContent !== "");
+  igual("y el mismo puerto otra vez: ya está conectado", await p.textContent("#directo-error"), "Ese puerto ya está conectado aquí.");
   await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Categoría']", "111");
   const avisos = () => p.$$eval("#directo-alertas li", (l) => l.map((x) => x.textContent));
   const esperarAviso = (re) => p.waitForFunction((re) => [...document.querySelectorAll("#directo-alertas li")].some((x) => new RegExp(re).test(x.textContent)), re, { timeout: 20000 });
