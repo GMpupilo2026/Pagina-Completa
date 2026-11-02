@@ -563,3 +563,17 @@ body.cam-guia-abierta { overflow: hidden; }
 
 /* La actividad de los árbitros: un icono antes de «qué hizo» para que se lea de un vistazo (la palabra sigue ahí). */
 .cam-celda-icono::before { content: attr(data-icono) / ""; display: inline-block; width: 1.6rem; }
+/* El reloj que se apagó: lo que ya se sabe, el reparto y la propuesta (ventana del control de tiempos). */
+.cam-apagado-datos { font-size: 0.9rem; margin: 0.5rem 0; padding-left: 1.1rem; list-style: disc; }
+.cam-apagado-reparto { margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
+.cam-apagado-reparto legend { width: 100%; margin-bottom: 0.2rem; }
+.cam-apagado-opcion { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.5rem; }
+.cam-apagado-relojes { margin-top: 0.6rem; }
+.cam-apagado-reloj { border: 2px solid var(--cac-morado-hondo); border-radius: 0.8rem; padding: 0.4rem 0.6rem 0.6rem; }
+.cam-apagado-valor { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; }
+.cam-apagado-turno { font-weight: 700; }
+.cam-apagado-cuentas { margin-top: 0.4rem; padding-left: 1.1rem; list-style: disc; display: grid; gap: 0.25rem; }
+.cam-apagado-ojo { font-weight: 700; color: #8a1c00; }
+.dark .cam-apagado-reloj { border-color: #b8bbf2; }
+.dark .cam-apagado-ojo { color: #ffb59e; }
+.cam-reloj-dibujo { display: block; width: 100%; max-width: 22rem; margin: 0.6rem auto 0; height: auto; }

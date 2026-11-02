@@ -287,7 +287,8 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las irregularidades ===");
     await p.click(acc(1, "negras", "irregularidad"));
     await p.waitForSelector("dialog[open] select");
-    igual("«Irregularidad» ofrece una lista para elegir, con «Otra»", await p.$$eval("dialog[open] option", (l) => [l.length, l[0].textContent, l[l.length - 1].textContent]), [10, "Tocó una pieza y no la movió (pieza tocada)", "Otra (escribir qué pasó)"]);
+    igual("«Irregularidad» ofrece una lista para elegir, con «Otra»", await p.$eval("dialog[open] select", (s) => { const l = [...s.options]; return [l.length, l[0].textContent, l[l.length - 1].textContent]; }), [10, "Tocó una pieza y no la movió (pieza tocada)", "Otra (escribir qué pasó)"]);
+    igual("y pregunta la sanción de tiempo (art. 12.9), que sale «Sin sanción» si no se toca", await p.$$eval("dialog[open] select", (l) => l.length === 2 ? [l[1].value, l[1].options.length, l[1].options[0].textContent] : null), ["", 5, "Sin sanción de tiempo"]);
     await p.selectOption("dialog[open] select", "toque");
     await p.fill("dialog[open] textarea", "Tocó una pieza sin avisar");
     await p.click("dialog[open] [data-avisos-aceptar]");

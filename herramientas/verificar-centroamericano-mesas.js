@@ -396,5 +396,50 @@ for (const [t, f, donde] of PARES) {
 igual("los colores de las marcas y las bandas son los del evento, no otros", ["--cac-rojo", "--cac-morado", "--cac-verde", "--cac-naranja"].every((v) => css.includes("var(" + v + ")")), true);
 igual("el color nunca va solo: cada marca lleva su palabra en la página", ["\"Ilegal\"", "\"Irregularidad\"", "\"Blancas\"", "\"Negras\""].every((p) => paginaArb.includes(p)), true);
 
+console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el incremento, las ilegales y las sanciones ===");
+{
+  const ini = Date.parse("2026-11-02T15:00:00-06:00");
+  const ctl = { ocurrio: "2026-11-02T16:10:00-06:00", j_blancas: 20, j_negras: 20, t_blancas: 66 * 60, t_negras: 64 * 60 };
+  const ahora = Date.parse("2026-11-02T16:25:00-06:00");
+  const r = C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
+  igual("el total es exacto: lo que había, menos lo que pasó, más 30 s por cada jugada (130:00 − 15:00 + 3:00)", [r.total, r.pasaron, r.jugadas], [118 * 60, 900, 6]);
+  igual("se reparte como venía gastando cada uno (34 y 36 min hasta el control): 60:13 y 57:47", [C.formatoTiempo(r.blancas), C.formatoTiempo(r.negras), r.blancas + r.negras === r.total], ["1:00:13", "57:47", true]);
+  igual("el turno sale de las jugadas: iguales, blancas; una más las blancas, negras", [r.turno, C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 23, jNegras: 22 }).turno], ["blancas", "negras"]);
+  igual("la comprobación con la hora de inicio: el control cuadra (180 − 70 + 40 × 0,5)", r.comprobacion, { esperado: 130 * 60, anotado: 130 * 60, diferencia: 0 });
+  const mal = C.relojApagado({ control: Object.assign({}, ctl, { t_blancas: 60 * 60 }), inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
+  igual("un control que no cuadra con el inicio se avisa con la diferencia (no se corrige solo)", mal.comprobacion.diferencia, -360);
+  const igualesR = C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 23, jNegras: 23, reparto: "iguales" });
+  igual("«Mitad y mitad»: 7:30 cada uno", [igualesR.gastado, igualesR.reparto], [{ blancas: 450, negras: 450 }, "iguales"]);
+  igual("jugadas imposibles se rechazan: menos que en el control, o las negras por delante",
+    [!!C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 19, jNegras: 19 }).error, !!C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 22, jNegras: 23 }).error, !!C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 25, jNegras: 23 }).error], [true, true, true]);
+  const sinCtl = C.relojApagado({ control: null, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
+  igual("sin ningún control: desde el inicio, mitad y mitad (180 − 85 + 23), y lo dice", [sinCtl.total, sinCtl.reparto, sinCtl.sinControl], [(180 - 85 + 23) * 60, "iguales", true]);
+  igual("sin control y sin hora de inicio no inventa nada", !!C.relojApagado({ control: null, inicio: null, ahora, jBlancas: 3, jNegras: 3 }).error, true);
+  igual("el último control es el más reciente con las jugadas de cada color (los viejos de una sola «jugada» no sirven)",
+    C.ultimoControl([{ id: "a", ocurrio: "2026-11-02T16:00:00Z", j_blancas: 10, j_negras: 10 }, { id: "b", ocurrio: "2026-11-02T16:30:00Z", j_blancas: null, j_negras: null }, { id: "c", ocurrio: "2026-11-02T16:20:00Z", j_blancas: 15, j_negras: 14 }]).id, "c");
+
+  // Las ilegales: solo la primera de cada jugador da 2 minutos al rival; las anuladas no cuentan.
+  const anot = [
+    { id: "i1", tipo: "ilegal", mesa: 2, color: "negras", ocurrio: "2026-11-02T16:00:00-06:00" },
+    { id: "i2", tipo: "ilegal", mesa: 2, color: "blancas", ocurrio: "2026-11-02T16:15:00-06:00" },
+    { id: "i3", tipo: "ilegal", mesa: 2, color: "blancas", ocurrio: "2026-11-02T16:18:00-06:00" },
+    { id: "i4", tipo: "ilegal", mesa: 3, color: "blancas", ocurrio: "2026-11-02T16:15:00-06:00" },
+    { id: "s1", tipo: "irregularidad", mesa: 2, color: "negras", texto: "Celular" + C.sancionTexto("suyo-60"), ocurrio: "2026-11-02T16:20:00-06:00" },
+    { id: "s2", tipo: "irregularidad", mesa: 2, color: "blancas", texto: "Ruido" + C.sancionTexto("rival+120"), ocurrio: "2026-11-02T16:21:00-06:00" },
+    { id: "s3", tipo: "irregularidad", mesa: 2, color: "blancas", texto: "Ruido sin sanción", ocurrio: "2026-11-02T16:22:00-06:00" },
+  ];
+  const b = C.bonosIlegales(anot, 2, new Set(["s2"]));
+  igual("de la bitácora: la primera ilegal de cada uno (al rival), la sanción leída del texto, sin la anulada ni las de otra mesa",
+    b.map((x) => [x.motivo, x.de, x.color, x.segundos]), [["ilegal", "negras", "blancas", 120], ["ilegal", "blancas", "negras", 120], ["irregularidad", "negras", "negras", -60]]);
+  const rb = C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 23, jNegras: 23, bonos: b });
+  igual("la ilegal de ANTES del control ya está en el reloj: no se suma; las de DESPUÉS sí (+2:00 y −1:00 a las negras)",
+    [rb.blancas - r.blancas !== 120, rb.ajustes.length, rb.bonos], [true, 2, { blancas: 0, negras: 60 }]);
+  igual("y la de antes sí cuenta en la comprobación con el inicio (los relojes debían sumar 2 min más)", rb.comprobacion.esperado, 130 * 60 + 120);
+  igual("las sanciones de tiempo son solo ±1 y ±2 minutos", C.SANCIONES_TIEMPO.filter((x) => x.segundos).map((x) => x.segundos), [60, 120, -60, -120]);
+  igual("la sanción se escribe y se vuelve a leer igual (una sola copia del formato)",
+    C.SANCIONES_TIEMPO.filter((x) => x.segundos).every((x) => { const l = C.leerSancion("X" + C.sancionTexto(x.id)); return l && l.segundos === x.segundos && l.a === x.a; }), true);
+  igual("un texto sin sanción no se lee como sanción", [C.leerSancion("Ruido"), C.sancionTexto("")], [null, ""]);
+}
+
 console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
