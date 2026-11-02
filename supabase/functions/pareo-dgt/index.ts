@@ -60,6 +60,14 @@
 //   { accion: "lichess", token: "lip_…", ruta: "/broadcast/new" | "/broadcast/<8>/new",
 //     form: [[campo, valor], …] } → { status, datos } (lo que contestó Lichess)
 //
+// BORRAR un torneo de la transmisión (POST /broadcast/<8>/delete, lo pidió el
+// dueño el 2/11: «por si los hice por error»). Tampoco está bajo /api/ y pasa
+// por acá igual. Lichess lo acepta con el mismo token (study:write) y borra
+// solo si el torneo es de quien llama; contesta 303 hacia su lista, también
+// cuando NO lo borró (no es suyo): por eso no se sigue la redirección y la
+// página comprueba después con GET /api/broadcast/<8> (404 = borrado).
+//   { accion: "lichess", token, ruta: "/broadcast/<8>/delete" } → { status: 200, datos: { redirigido: true } }
+//
 // Body: { tnr: "1498221" | "https://…chess-results.com/tnr1498221.aspx…", rd?: 1..99 }
 // Respuesta: { tnr, url, torneo, ficha: { control, lugar, pais, rondas }, ronda, fecha, hora, mesas: [{ mesa,
 //   blancas: { no, titulo, nombre, elo, club, fide, fed }, negras: … | null,
@@ -272,7 +280,7 @@ async function leer(admin: Admin, url: string, frescoMs: number, leerHtml: (h: s
 // Crear el torneo o la ronda en Lichess con el token de quien organiza. Ver
 // «LICHESS» arriba. El token no se guarda ni se escribe en ningún registro:
 // los errores se anotan sin él.
-const RUTA_LICHESS = /^\/broadcast\/(new|[A-Za-z0-9]{8}\/new)$/;
+const RUTA_LICHESS = /^\/broadcast\/(new|[A-Za-z0-9]{8}\/(new|delete))$/;
 async function aLichess(body: Record<string, unknown>) {
   const token = typeof body.token === "string" ? body.token.trim() : "";
   const ruta = typeof body.ruta === "string" ? body.ruta : "";
@@ -283,12 +291,15 @@ async function aLichess(body: Record<string, unknown>) {
     return json({ error: "Los datos para Lichess no tienen la forma esperada." }, 400);
   }
   try {
+    const borrar = ruta.endsWith("/delete");
     const res = await fetch("https://lichess.org" + ruta, {
       method: "POST",
       headers: { "Authorization": "Bearer " + token, "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" },
       body: new URLSearchParams(form as [string, string][]),
+      redirect: borrar ? "manual" : "follow",
       signal: AbortSignal.timeout(15_000),
     });
+    if (borrar && (res.status === 303 || res.status === 302 || res.status === 200)) return json({ status: 200, datos: { redirigido: true } });
     const datos = await res.json().catch(() => ({}));
     return json({ status: res.status, datos });
   } catch (e) {

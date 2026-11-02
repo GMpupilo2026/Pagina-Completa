@@ -967,14 +967,12 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     FORMACION.length = 0;
 
     console.log("\n=== El arbitraje del país en números y las novedades ===");
-    // El AF de Ana hace 11 meses (sale) y el AI de Óscar hace 13 (ya no).
+    // El AF de Ana hace 11 meses (sale) y el AI de Óscar hace 13 (ya no),
+    // con el reloj fijo: con el de verdad, el 2/11/2026 el AF de Ana ya tenía
+    // más de 12 meses y la prueba falló sin que nada cambiara.
     const anaF = ARBITROS_FIDE.find((f) => f.fide_id === 6500002), oscarF = ARBITROS_FIDE.find((f) => f.fide_id === 6500001);
-    // Las fechas se cuentan desde HOY (hora de Costa Rica): con una fecha fija, el AF de «hace 11 meses» se salía de la ventana de 12
-    // meses un día y la prueba fallaba sola (pasó el 2 de noviembre de 2026).
-    const hoyNovedades = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Costa_Rica" }).format(new Date());
-    const haceMeses = (n) => { const d = new Date(hoyNovedades + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() - n); return d.toISOString().slice(0, 10); };
-    anaF.af_perfil = haceMeses(11); oscarF.ia_fecha = haceMeses(13);
-    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    anaF.af_perfil = "2025-11-01"; oscarF.ia_fecha = "2025-09-01";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, "2026-10-15T12:00:00-06:00"));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("año por año: quién arbitró en Costa Rica, por primera vez, su último año, torneos, carga, concentración y títulos (2026: solo el AI de Óscar)",
         await filas(p, "#tabla-numeros-anios"),
@@ -982,7 +980,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
          ["2023", "2", "2", "1", "1", "1", "50 %", "0", "0"], ["2019", "1", "1", "0", "1", "1", "100 %", "0", "0"], ["2015", "1", "1", "1", "1", "1", "100 %", "0", "0"]]);
     igual("hoy, los de la lista de la Federación por categoría y cuántos activos (art. 19)", await filas(p, "#tabla-numeros-hoy"), [["AN-B", "1", "0"], ["AN-C", "1", "0"]]);
     igual("las novedades: el AF de Ana de hace 11 meses sí, el AI de Óscar de hace 13 no", await filas(p, "#tabla-novedades"),
-        [[anaF.af_perfil.split("-").reverse().join("/"), "Soto Prueba, Ana", "Título de Árbitro FIDE"]]);
+        [["01/11/2025", "Soto Prueba, Ana", "Título de Árbitro FIDE"]]);
     await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
     await p.click("#numeros-excel");
     const exNum = await p.evaluate(() => window.__excel);

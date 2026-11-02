@@ -357,7 +357,10 @@
     a.className = "cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]";
     [...f.childNodes].forEach((n) => a.appendChild(n));
     const pie = a.querySelector("span:last-child");
-    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = "Ver las partidas →"; } // siempre en español: el traductor de la página (js/centroamericano.js) lo pone en inglés o francés, y al volver al español lo restaura. Escribirlo ya traducido lo dejaba pegado en inglés.
+    // En español siempre: la página (js/centroamericano.js) lo traduce al
+    // aparecer y lo devuelve al cambiar de idioma. Escrito ya traducido, el
+    // traductor no lo conocía y en francés quedaba «Watch the games →».
+    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = "Ver las partidas →"; }
     f.replaceWith(a);
   }
 
