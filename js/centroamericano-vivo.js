@@ -383,8 +383,13 @@
       const grupo = CONFIG.grupos && CONFIG.grupos[tor.tnr];
       if (grupo) tor.jugadores.forEach((j) => { if (!j.grupo) j.grupo = grupo; });
       if (tor.ronda) return;
-      const jugadas = Math.max(0, ...tor.jugadores.map((j) => (Array.isArray(j.r) ? j.r.filter(Boolean).length : 0)));
-      if (!jugadas) return;
+      // Solo cuentan las casillas JUGADAS («12w1»). Una con rival y sin
+      // resultado («12w») es la ronda que se está jugando: el torneo no
+      // terminó. Pasó el 2/11/2026 antes de la ronda 1: con «12w» en el cuadro,
+      // la página decía «El torneo terminó, a 1 rondas» y borraba el pareo.
+      const jugadas = Math.max(0, ...tor.jugadores.map((j) => (Array.isArray(j.r) ? j.r.filter((c) => casilla(c)).length : 0)));
+      const pendiente = tor.jugadores.some((j) => Array.isArray(j.r) && j.r.some((c) => c && !casilla(c)));
+      if (!jugadas || pendiente) return;
       tor.ronda = jugadas;
       tor.rondas = Math.max(tor.rondas || 0, jugadas);
       tor.terminado = true;
