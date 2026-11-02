@@ -8814,6 +8814,12 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   tablet («Lo que se ha anotado») y en la organización («Lo que anotan») el tipo sale como «Se levantó», no «Nota». En la
   «Actividad de los árbitros», `centroamericano_actividad()` (migración `centroamericano_actividad_se_levanto`, mismos
   permisos) le da su propio tipo (`levanto`, con su filtro «Se levantó de la mesa») y arma el mismo texto con el jugador.
+- **Los iconos de ilegal e irregularidad dibujan lo que pasó** (antes eran un triángulo de advertencia y una bandera, que los dos
+  decían «cuidado» y no se entendían). **Ilegal** es un **peón tachado** (una jugada que no se puede hacer; sólido, con una raya
+  diagonal, en rojo) e **irregularidad** es una **mano** (tocó una pieza, lo más común). Se probaron tres juegos (tarjetas roja
+  y amarilla, pieza y mano, icono con palabra) y se eligió el de la pieza y la mano; el peón va sólido y sin círculo porque con
+  círculo, a 46 px, se perdía. Siguen con su palabra para el lector de pantalla, su `title` y la leyenda de arriba, que usa
+  los mismos dibujos; `verificar-centroamericano-mesas-pagina.js` comprueba los dibujos de los botones y de la leyenda.
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

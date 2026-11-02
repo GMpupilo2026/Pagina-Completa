@@ -519,7 +519,13 @@ const CONTRASTE = `(sel) => {
         await p.evaluate(() => { const bs = [...document.querySelectorAll(".cam-jugador .cam-btn-icono")].filter((b) => b.checkVisibility()); return [bs.length > 0, bs.every((b) => b.getBoundingClientRect().height >= 44 && b.getBoundingClientRect().width >= 44), bs.every((b) => b.getAttribute("aria-label") && b.title && b.querySelector("svg") && b.querySelector(".sr-only")), [...new Set(bs.map((b) => b.dataset.accion))].sort()]; }),
         [true, true, true, ["anular-ilegal", "anular-irregularidad", "ausente", "ilegal", "irregularidad", "levanto", "presente"]]);
     igual("la leyenda de arriba explica todos los iconos con su palabra", await p.evaluate(() => [...document.querySelectorAll(".cam-leyenda span:not(.cam-color-punto)")].map((x) => x.textContent)),
-        ["Blancas", "Negras", "Llegó", "No ha llegado", "Jugada ilegal", "Irregularidad", "Se levantó de la mesa (cada toque cuenta una vez)", "Anular", "Principal en esta mesa", "Foto de las dos planillas, juntas", "Control de tiempos de la mesa"]);
+        ["Blancas", "Negras", "Llegó", "No ha llegado", "Jugada ilegal", "Irregularidad (tocó una pieza u otra falta)", "Se levantó de la mesa (cada toque cuenta una vez)", "Anular", "Principal en esta mesa", "Foto de las dos planillas, juntas", "Control de tiempos de la mesa"]);
+    igual("ilegal es un peón tachado (rojo, con relleno y una raya diagonal) e irregularidad es una mano (cuatro trazos): no el triángulo ni la bandera de antes, y la leyenda usa los mismos dibujos", await p.evaluate(() => {
+        const il = document.querySelector('.cam-mesa [data-accion="ilegal"] svg'), ir = document.querySelector('.cam-mesa [data-accion="irregularidad"] svg');
+        const leyenda = [...document.querySelectorAll(".cam-leyenda svg")];
+        const pinta = (s) => [...s.children].map((n) => n.tagName + (n.getAttribute("d") || "").slice(0, 8)).join("|");
+        return [pinta(il), pinta(ir), leyenda.some((s) => pinta(s) === pinta(il)), leyenda.some((s) => pinta(s) === pinta(ir)), getComputedStyle(document.querySelector('.cam-mesa [data-accion="ilegal"]')).backgroundColor !== "rgb(206, 19, 40)"]; }),
+        ["circle|pathM9.2 10.|rect|pathM3.5 3.5", "pathM18 11V6|pathM14 10V4|pathM10 10.5|pathM18 8a2 ", true, true, true]);
     igual("cada botón se toca bien (44 px de alto o más) y el foco se ve", await p.evaluate(() => [...document.querySelectorAll(".cam-mesa .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
     const colores = ".cam-mesa-cabeza, .cam-nombre, .cam-color, .cam-marca, .cam-btn, .cam-select, .cam-resultado-actual, .cam-aviso-suave, .cam-guardado, .cam-fallo, .cam-estado";
     igual("en claro, todo el texto de las mesas da 4,5:1 o más", (await p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(colores) + ")")).every((x) => x >= 4.5), true);

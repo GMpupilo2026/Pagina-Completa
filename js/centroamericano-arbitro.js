@@ -265,8 +265,9 @@
       llego: [["path", { d: "M5 13l4 4L19 7" }]],
       ausente: [["path", { d: "M6 6l12 12M18 6L6 18" }]],
       dudoso: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M9.6 9.2a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8" }], ["path", { d: "M12 17.2v.01" }]],
-      ilegal: [["path", { d: "M12 3.5l9.5 16.5h-19L12 3.5z" }], ["path", { d: "M12 10v4.5" }], ["path", { d: "M12 17.3v.01" }]],
-      irregularidad: [["path", { d: "M5 21V4" }], ["path", { d: "M5 4h12l-2.5 4L17 12H5" }]],
+      // Ilegal: un peón tachado (una jugada que no se puede hacer). Irregularidad: una mano (tocó una pieza, lo más común).
+      ilegal: [["circle", { cx: "12", cy: "6.6", r: "3", fill: "currentColor", stroke: "none" }], ["path", { d: "M9.2 10.6h5.6l1.2 6.6H8z", fill: "currentColor", stroke: "none" }], ["rect", { x: "6.5", y: "18", width: "11", height: "2.6", rx: "1", fill: "currentColor", stroke: "none" }], ["path", { d: "M3.5 3.5l17 17", "stroke-width": "2.4" }]],
+      irregularidad: [["path", { d: "M18 11V6a2 2 0 0 0-4 0" }], ["path", { d: "M14 10V4a2 2 0 0 0-4 0v2" }], ["path", { d: "M10 10.5V6a2 2 0 0 0-4 0v8" }], ["path", { d: "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15" }]],
       levantado: [["circle", { cx: "12", cy: "4.5", r: "2" }], ["path", { d: "M12 7.5V15" }], ["path", { d: "M8.5 11l3.5-2.5 3.5 2.5" }], ["path", { d: "M9.5 21l2.5-6 2.5 6" }]],
       anular: [["path", { d: "M9 14L4 9l5-5" }], ["path", { d: "M4 9h10.5a5.5 5.5 0 0 1 0 11H11" }]],
       salvavidas: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
