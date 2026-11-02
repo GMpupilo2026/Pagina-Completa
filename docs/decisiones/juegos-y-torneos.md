@@ -8854,6 +8854,13 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   firma— por si falla la señal de toda la sala. Sale de la última lectura de chess-results (la copia compartida) por
   `public.centroamericano_hojas()` (solo con la licencia; las tablas siguen cerradas); si no hay lectura, dice que
   primero se toque «Actualizar desde chess-results». `js/reporte-pdf.js` admite `altoFila` para tablas que se llenan a mano.
+- **Quitar a un árbitro por completo (la «✕ Quitar»).** «Apagar» deja la fila (se puede volver a encender); cuando se
+  metió a alguien que no correspondía, la «✕ Quitar» de cada enlace lo borra del torneo y ya no aparece. Va por
+  `public.centroamericano_quitar_enlace(p_id, p_borrar)`: con `p_borrar = false` solo **cuenta** lo que ya anotó (la
+  pantalla lo dice antes de pedir confirmar); con `true` borra. El avance, la lista previa, los avisos y la ronda
+  finalizada se van con el enlace (`on delete cascade`); las anotaciones, tiempos, presencia y fotos **no se pierden**
+  (`on delete set null`: quedan en el registro con el nombre del árbitro). El borrado queda en la auditoría (trigger
+  `auditar` de la tabla). Pide la licencia `mesa-arbitro`.
 - **«Modo ensayo»** (columna `centroamericano_torneos.prueba`, interruptor en la barra de abajo de la organización).
   Probar con las tablets no puede ensuciar el torneo real. Los torneos de prueba (PRUEBA grupo A y B, que son torneos
   de chess-results aparte de los 12 reales: ahí un resultado de ensayo nunca llega a un torneo real) están marcados
