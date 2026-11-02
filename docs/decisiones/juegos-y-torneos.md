@@ -8854,6 +8854,14 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   firma— por si falla la señal de toda la sala. Sale de la última lectura de chess-results (la copia compartida) por
   `public.centroamericano_hojas()` (solo con la licencia; las tablas siguen cerradas); si no hay lectura, dice que
   primero se toque «Actualizar desde chess-results». `js/reporte-pdf.js` admite `altoFila` para tablas que se llenan a mano.
+- **Supervisar: «Actividad de los árbitros»** (arriba en la pestaña «Registro» de la organización). La bitácora solo
+  tenía resultados, ilegales, irregularidades, incidencias y controles de tiempos; lo demás quedaba repartido en otras
+  tablas. `public.centroamericano_actividad(p_tnr, p_desde, p_limite)` lo junta todo en UNA línea de tiempo (las cuentas
+  se hacen en la base): resultados y correcciones, ilegales, irregularidades, incidencias y notas, anulaciones, quién
+  llegó o no (presencia), fotos de planillas, revisión previa aprobada, mesas terminadas y ronda finalizada, pedidos de
+  ayuda y avisos leídos. La pantalla trae un resumen por árbitro (cuántas acciones, la última, resultados, marcas y
+  pedidos de ayuda) y la lista filtrable por árbitro y por tipo; se actualiza con el Registro. Solo lee y pide la
+  licencia; respeta «Modo ensayo». Los controles de tiempos ya salen como notas de la bitácora (no se repiten).
 - **Quitar a un árbitro por completo (la «✕ Quitar»).** «Apagar» deja la fila (se puede volver a encender); cuando se
   metió a alguien que no correspondía, la «✕ Quitar» de cada enlace lo borra del torneo y ya no aparece. Va por
   `public.centroamericano_quitar_enlace(p_id, p_borrar)`: con `p_borrar = false` solo **cuenta** lo que ya anotó (la

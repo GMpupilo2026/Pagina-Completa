@@ -1128,7 +1128,59 @@
         }
         registro = todas.filter((x) => dentro(x.tnr));
         pintarRegistro();
+        cargarActividad();
         $("r-estado").textContent = "Actualizado a las " + ahoraTxt();
+    }
+
+    // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
+
+    let actividad = [];
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", anulacion: "Anuló una anotación",
+        presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
+    // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
+    const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
+    const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
+
+    async function cargarActividad() {
+        const tnr = $("r-torneo").value;
+        const { data, error } = await sb.rpc("centroamericano_actividad", { p_tnr: tnr || null, p_desde: null, p_limite: 600 });
+        if (error) { $("actividad-vacio").hidden = false; $("actividad-vacio").textContent = "No se pudo leer la actividad: " + error.message; return; }
+        actividad = (data || []).filter((x) => dentro(x.tnr));
+        pintarActividad();
+    }
+
+    function pintarActividad() {
+        // El resumen por árbitro (de toda la actividad cargada).
+        const por = new Map();
+        for (const x of actividad) {
+            const k = x.arbitro + "|" + x.tnr;
+            const f = por.get(k) || { arbitro: x.arbitro, tnr: x.tnr, n: 0, ultima: x.cuando, resultados: 0, marcas: 0, ayuda: 0 };
+            f.n++;
+            if (x.cuando > f.ultima) f.ultima = x.cuando;
+            if (x.tipo === "resultado" || x.tipo === "correccion") f.resultados++;
+            if (x.tipo === "ilegal" || x.tipo === "irregularidad") f.marcas++;
+            if (x.tipo === "ayuda") f.ayuda++;
+            por.set(k, f);
+        }
+        const filas = [...por.values()].sort((a, b) => String(b.ultima).localeCompare(String(a.ultima)));
+        $("act-resumen").replaceChildren(...filas.map((f) => el("tr", { "data-arbitro": f.arbitro },
+            el("td", {}, el("strong", { texto: f.arbitro }), el("span", { class: "cam-tambien", texto: nombreTorneo(f.tnr) })),
+            el("td", { texto: String(f.n) }), el("td", { texto: window.HoraCR.fechaHora(f.ultima) + " · " + C.hace(f.ultima, new Date()) }),
+            el("td", { texto: String(f.resultados) }), el("td", { texto: String(f.marcas) }), el("td", { texto: String(f.ayuda) }))));
+        // El filtro por árbitro (conserva lo elegido).
+        const sel = $("act-arbitro"), antes = sel.value;
+        const nombres = [...new Set(actividad.map((x) => x.arbitro))].sort((a, b) => a.localeCompare(b, "es"));
+        sel.replaceChildren(el("option", { value: "", texto: "Todos los árbitros" }), ...nombres.map((n) => el("option", { value: n, texto: n })));
+        if (antes && nombres.includes(antes)) sel.value = antes;
+        const quien = sel.value, que = $("act-tipo").value;
+        const lista = actividad.filter((x) => (!quien || x.arbitro === quien) && enGrupo(x.tipo, que));
+        $("actividad").replaceChildren(...lista.slice(0, 400).map((x) => el("tr", { "data-tipo": x.tipo },
+            el("td", { texto: window.HoraCR.fechaHora(x.cuando) }), el("td", { texto: x.arbitro }), el("td", { texto: x.torneo }),
+            el("td", { texto: x.ronda == null ? "" : String(x.ronda) }), el("td", { texto: x.mesa == null ? "" : String(x.mesa) }),
+            el("td", { texto: ETIQUETA_ACTIVIDAD[x.tipo] || x.tipo }), el("td", { texto: x.detalle || "" }))));
+        $("actividad-vacio").hidden = lista.length > 0;
+        if (!lista.length) $("actividad-vacio").textContent = actividad.length ? "Nada con ese filtro." : "Todavía no hay actividad.";
+        $("act-nota").textContent = actividad.length ? " — " + actividad.length + (actividad.length === 1 ? " acción" : " acciones") + " de " + nombres.length + (nombres.length === 1 ? " árbitro" : " árbitros") : "";
     }
 
     function pintarRegistro() {
@@ -1283,6 +1335,8 @@
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);
+        $("act-arbitro").addEventListener("change", pintarActividad);
+        $("act-tipo").addEventListener("change", pintarActividad);
         $("r-pdf").addEventListener("click", bajarPdf);
         $("r-informe").addEventListener("click", informeFinalPdf);
         await cargarTorneos();

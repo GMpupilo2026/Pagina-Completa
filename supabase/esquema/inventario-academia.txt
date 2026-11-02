@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102033011
+# al-dia-con: 20261102095104
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2325,6 +2325,7 @@ funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
+funcion  centroamericano_actividad(p_tnr text, p_desde timestamp with time zone, p_limite integer)  definer  anon=false  auth=true
 funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false

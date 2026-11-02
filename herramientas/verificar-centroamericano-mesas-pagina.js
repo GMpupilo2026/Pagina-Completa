@@ -101,6 +101,15 @@ function dobleOrganizacion(licencia) {
     rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
       if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
+      if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
+        { cuando: hace(60), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "finalizo", detalle: "Finalizó la ronda 1" },
+        { cuando: hace(120), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 7, tipo: "ayuda", detalle: "Pidió ayuda: Necesito al principal" },
+        { cuando: hace(180), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 4, tipo: "ilegal", detalle: "Cleo Tres (blancas): Enroque ilegal" },
+        { cuando: hace(240), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 3, tipo: "planilla", detalle: "Foto de las planillas (ya está en el Drive)" },
+        { cuando: hace(300), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 5, tipo: "presencia", detalle: "Dani Cuatro (negras): no ha llegado" },
+        { cuando: hace(360), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 3, tipo: "resultado", detalle: "Eli – Fran → 1-0" },
+        { cuando: hace(420), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "lista", detalle: "Aprobó el paso «relojes» de la revisión previa" },
+        { cuando: hace(100), tnr: "1532448", torneo: "PRUEBA grupo A", arbitro: "Árbitro de ensayo 1", ronda: 1, mesa: 2, tipo: "presencia", detalle: "Jugador de Prueba (blancas): no ha llegado" }]); }
       if (f === "centroamericano_quitar_enlace") { const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
         const hay = REGISTRO.filter((r) => r.asignacion_id === x.id).length;
         if (a.p_borrar) ASIG.splice(ASIG.indexOf(x), 1);
@@ -743,6 +752,22 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== La organización: lo que anotan ===");
     await q.click("#pest-registro");
+    // La actividad de los árbitros: TODO lo que hacen, en una sola lista, para supervisar.
+    igual("«Actividad de los árbitros» junta todo en orden (resultados, ilegales, llegadas, planillas, revisión previa, ayuda, ronda finalizada) y NO trae lo de los torneos de prueba",
+        await q.$$eval("#actividad tr", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[5].textContent, tr.children[6].textContent])),
+        [["Beto", "Finalizó la ronda", "Finalizó la ronda 1"], ["Ana", "Pidió ayuda", "Pidió ayuda: Necesito al principal"], ["Ana", "Jugada ilegal", "Cleo Tres (blancas): Enroque ilegal"], ["Ana", "Foto de planillas", "Foto de las planillas (ya está en el Drive)"],
+         ["Ana", "Presencia", "Dani Cuatro (negras): no ha llegado"], ["Ana", "Resultado", "Eli – Fran → 1-0"], ["Beto", "Revisión previa", "Aprobó el paso «relojes» de la revisión previa"]]);
+    igual("el resumen por árbitro dice cuántas acciones lleva cada uno, cuándo hizo la última y cuántos resultados, marcas y pedidos de ayuda",
+        await q.$$eval("#act-resumen tr", (l) => l.map((tr) => [tr.children[0].querySelector("strong").textContent, tr.children[1].textContent, tr.children[3].textContent, tr.children[4].textContent, tr.children[5].textContent])),
+        [["Beto", "2", "0", "0", "0"], ["Ana", "5", "1", "1", "1"]]);
+    await q.selectOption("#act-arbitro", "Ana");
+    igual("filtrar por árbitro deja solo lo suyo", await q.$$eval("#actividad tr", (l) => l.map((tr) => tr.children[1].textContent)), ["Ana", "Ana", "Ana", "Ana", "Ana"]);
+    await q.selectOption("#act-tipo", "ilegal");
+    igual("y por tipo de acción", await q.$$eval("#actividad tr", (l) => l.map((tr) => tr.children[6].textContent)), ["Cleo Tres (blancas): Enroque ilegal"]);
+    await q.selectOption("#act-arbitro", "");
+    await q.selectOption("#act-tipo", "");
+    igual("la actividad se pide a la base (con las cuentas hechas allá) y dice cuántas acciones y de cuántos árbitros",
+        await q.evaluate(() => [window.__actividadPedida, document.getElementById("act-nota").textContent]), [[null, 600], " — 7 acciones de 2 árbitros"]);
     igual("los jugadores con ilegales, primero quien más lleva, y la segunda dice que pierde", await q.$$eval("#marcados tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent))),
         [["Sub-10 Absoluto", "1", "4", "Cleo Tres (blancas)", "ii 2 — pierde la partida (art. 7.5.5)", "—"]]);
     igual("todo lo anotado, lo más reciente primero, con su detalle", await q.$$eval("#registro tr", (l) => l.map((tr) => [tr.children[4].textContent, tr.children[5].textContent, tr.children[6].textContent])),
