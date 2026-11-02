@@ -105,6 +105,7 @@ function dobleOrganizacion(licencia) {
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
         { cuando: hace(60), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "finalizo", detalle: "Finalizó la ronda 1" },
         { cuando: hace(120), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 7, tipo: "ayuda", detalle: "Pidió ayuda: Necesito al principal" },
+        { cuando: hace(150), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 6, tipo: "levanto", detalle: "Eli Uno (negras) se levantó de la mesa" },
         { cuando: hace(180), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 4, tipo: "ilegal", detalle: "Cleo Tres (blancas): Enroque ilegal" },
         { cuando: hace(240), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 3, tipo: "planilla", detalle: "Foto de las planillas (ya está en el Drive)" },
         { cuando: hace(300), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Ana", ronda: 1, mesa: 5, tipo: "presencia", detalle: "Dani Cuatro (negras): no ha llegado" },
@@ -300,6 +301,28 @@ const CONTRASTE = `(sel) => {
     igual("lo anotado dice cada cosa, con su hora de Costa Rica, y tacha lo anulado", await p.$$eval("#anotado-filas tr", (l) => l.map((tr) => [tr.children[2].textContent, tr.dataset.anulada || ""])).then((x) => x.filter((f) => /Ilegal|Irregularidad/.test(f[0]))),
         [["Irregularidad", ""], ["Ilegal (anulada)", "si"], ["Ilegal", ""]]);
 
+    console.log("\n=== Se levantó de la mesa ===");
+    igual("cada jugador tiene su botón «Se levantó»: icono, nombre accesible y la palabra solo para el lector; sin marca todavía", await p.evaluate(() => { const b = [...document.querySelectorAll('.cam-mesa[data-mesa="2"] [data-accion="levanto"]')]; return [b.length, b.every((x) => x.querySelector("svg") && x.getAttribute("aria-label").startsWith("Anotar que ") && x.title && x.querySelector(".sr-only").textContent === "Se levantó"), document.querySelectorAll('.cam-marca[data-tipo="levanto"]').length]; }), [2, true, 0]);
+    await p.click(acc(2, "negras", "levanto"));
+    await p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]');
+    igual("un toque anota SIN preguntar que se levantó (una nota «Levantó», con la hora del servidor), y marca solo a ese jugador", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Levantó").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent.trim(), document.querySelectorAll('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-marca[data-tipo="levanto"]').length, !!document.querySelector("dialog[open]")]),
+        [[[2, "negras", "nota", "Se levantó de la mesa"]], "Se levantó 1 vez", 0, false]);
+    await p.click(acc(2, "negras", "levanto"));
+    await p.waitForFunction(() => /×2/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent));
+    igual("cada toque es una vez: la segunda marca «×2» y el botón dice cuántas van", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent.replace(/\s+/g, " ").trim(), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"]').getAttribute("aria-label")]), ["Se levantó 2 veces ×2", "Anotar que Acuña Porras Fabio se levantó de la mesa (van 2)"]);
+    await p.click("#anotado summary");
+    igual("queda en la bitácora de la mesa con su hora, dos veces, y dice QUIÉN se levantó (nombre y color) y que fue «Se levantó», no una nota cualquiera", await p.$$eval("#anotado-filas tr", (l) => l.filter((tr) => /se levantó de la mesa/.test(tr.textContent)).map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent])), [["2", "Se levantó", "Acuña Porras Fabio (negras) se levantó de la mesa"], ["2", "Se levantó", "Acuña Porras Fabio (negras) se levantó de la mesa"]]);
+    await p.click(acc(2, "negras", "anular-levanto"));
+    await p.waitForSelector("dialog[open]");
+    igual("se puede anular la última (por un toque de más): pregunta primero", await p.evaluate(() => /la última vez que se levantó/.test(document.querySelector("dialog[open]").textContent)), true);
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => !/×2/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]')?.textContent || ""));
+    await p.click(acc(2, "negras", "anular-levanto"));
+    await p.waitForSelector("dialog[open]");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="levanto"]'));
+    igual("anuladas las dos, vuelve a cero y el botón de anular desaparece", await p.evaluate(() => [document.querySelectorAll('.cam-marca[data-tipo="levanto"]').length, document.querySelectorAll('[data-accion="anular-levanto"]').length]), [0, 0]);
+
     console.log("\n=== Ayuda, avisos y nombre ===");
     igual("el progreso dice cuántas mesas tienen resultado y cuántas faltan", await p.textContent("#progreso"), "Con resultado: 2 de 3 · faltan 1");
     await p.check("#solo-faltan");
@@ -361,6 +384,17 @@ const CONTRASTE = `(sel) => {
     await p.waitForSelector("#control-tiempos:not([hidden]) #form-tiempos");
     igual("el relojito abre la ventanita de ESA mesa, flotando, con Blancas y Negras (su nombre, el tiempo y las jugadas) y Guardar", await p.evaluate(() => [document.querySelector("#control-tiempos .cam-flotante-titulo").textContent, getComputedStyle(document.getElementById("control-tiempos")).position, [...document.querySelectorAll("#form-tiempos .cam-tiempo-lado")].map((f) => [f.dataset.color, f.querySelector(".cam-tiempo-nombre").textContent, !!f.querySelector("input#lt-t" + (f.dataset.color === "blancas" ? "b" : "n")), !!f.querySelector("input#lt-j" + (f.dataset.color === "blancas" ? "b" : "n"))]), document.getElementById("lt-guardar").textContent, !!document.getElementById("lt-mesa")]),
         ["Mesa 2", "fixed", [["blancas", "Harvey Ian", true, true], ["negras", "Acuña Porras Fabio", true, true]], "Guardar", false]);
+    // Los dos puntos se ponen solos: se escriben solo números.
+    await p.type("#lt-tb", "4510");
+    igual("al escribir solo números, los dos puntos se ponen solos (4510 → 45:10) y debajo dice lo que se entendió", await p.evaluate(() => [document.getElementById("lt-tb").value, document.getElementById("lt-ab").textContent]), ["45:10", "= 45 min 10 s"]);
+    await p.fill("#lt-tb", "");
+    await p.type("#lt-tb", "12345");
+    igual("con cinco cifras salen horas (12345 → 1:23:45)", await p.evaluate(() => [document.getElementById("lt-tb").value, document.getElementById("lt-ab").textContent, document.getElementById("lt-tb").getAttribute("aria-invalid")]), ["1:23:45", "= 1 h 23 min 45 s", "false"]);
+    await p.fill("#lt-tb", "");
+    await p.type("#lt-tb", "4570");
+    igual("si los segundos pasan de 59, se dice con palabras y el campo queda marcado como inválido", await p.evaluate(() => [document.getElementById("lt-tb").value, /No se entiende/.test(document.getElementById("lt-ab").textContent), document.getElementById("lt-tb").getAttribute("aria-invalid")]), ["45:70", true, "true"]);
+    await p.fill("#lt-tb", "abc1x0:0y0");
+    igual("lo que no es número se descarta (también al pegar)", await p.evaluate(() => document.getElementById("lt-tb").value), "10:00");
     await p.fill("#lt-tb", "10:00");
     await p.fill("#lt-jb", "31");
     await p.fill("#lt-tn", "1:23:45");
@@ -484,9 +518,15 @@ const CONTRASTE = `(sel) => {
     igual("la página no se desplaza a lo ancho", await p.evaluate(() => document.documentElement.scrollWidth), 390);
     igual("las tarjetas usan ICONOS: cada botón de jugador es un icono de 44 px o más, con su nombre accesible (aria-label y title) y la palabra solo para el lector de pantalla",
         await p.evaluate(() => { const bs = [...document.querySelectorAll(".cam-jugador .cam-btn-icono")].filter((b) => b.checkVisibility()); return [bs.length > 0, bs.every((b) => b.getBoundingClientRect().height >= 44 && b.getBoundingClientRect().width >= 44), bs.every((b) => b.getAttribute("aria-label") && b.title && b.querySelector("svg") && b.querySelector(".sr-only")), [...new Set(bs.map((b) => b.dataset.accion))].sort()]; }),
-        [true, true, true, ["anular-ilegal", "anular-irregularidad", "ausente", "ilegal", "irregularidad", "presente"]]);
+        [true, true, true, ["anular-ilegal", "anular-irregularidad", "ausente", "ilegal", "irregularidad", "levanto", "presente"]]);
     igual("la leyenda de arriba explica todos los iconos con su palabra", await p.evaluate(() => [...document.querySelectorAll(".cam-leyenda span:not(.cam-color-punto)")].map((x) => x.textContent)),
-        ["Blancas", "Negras", "Llegó", "No ha llegado", "Jugada ilegal", "Irregularidad", "Anular", "Principal en esta mesa", "Foto de las dos planillas, juntas", "Control de tiempos de la mesa"]);
+        ["Blancas", "Negras", "Llegó", "No ha llegado", "Jugada ilegal", "Irregularidad (tocó una pieza u otra falta)", "Se levantó de la mesa (cada toque cuenta una vez)", "Anular", "Principal en esta mesa", "Foto de las dos planillas, juntas", "Control de tiempos de la mesa"]);
+    igual("ilegal es un peón tachado (rojo, con relleno y una raya diagonal) e irregularidad es una mano (cuatro trazos): no el triángulo ni la bandera de antes, y la leyenda usa los mismos dibujos", await p.evaluate(() => {
+        const il = document.querySelector('.cam-mesa [data-accion="ilegal"] svg'), ir = document.querySelector('.cam-mesa [data-accion="irregularidad"] svg');
+        const leyenda = [...document.querySelectorAll(".cam-leyenda svg")];
+        const pinta = (s) => [...s.children].map((n) => n.tagName + (n.getAttribute("d") || "").slice(0, 8)).join("|");
+        return [pinta(il), pinta(ir), leyenda.some((s) => pinta(s) === pinta(il)), leyenda.some((s) => pinta(s) === pinta(ir)), getComputedStyle(document.querySelector('.cam-mesa [data-accion="ilegal"]')).backgroundColor !== "rgb(206, 19, 40)"]; }),
+        ["circle|pathM9.2 10.|rect|pathM3.5 3.5", "pathM18 11V6|pathM14 10V4|pathM10 10.5|pathM18 8a2 ", true, true, true]);
     igual("cada botón se toca bien (44 px de alto o más) y el foco se ve", await p.evaluate(() => [...document.querySelectorAll(".cam-mesa .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
     const colores = ".cam-mesa-cabeza, .cam-nombre, .cam-color, .cam-marca, .cam-btn, .cam-select, .cam-resultado-actual, .cam-aviso-suave, .cam-guardado, .cam-fallo, .cam-estado";
     igual("en claro, todo el texto de las mesas da 4,5:1 o más", (await p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(colores) + ")")).every((x) => x >= 4.5), true);
@@ -824,21 +864,23 @@ const CONTRASTE = `(sel) => {
     // La actividad de los árbitros: TODO lo que hacen, en una sola lista, para supervisar.
     igual("«Actividad de los árbitros» junta todo en orden (resultados, ilegales, llegadas, planillas, revisión previa, ayuda, ronda finalizada) y NO trae lo de los torneos de prueba",
         await q.$$eval("#actividad tr", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[5].textContent, tr.children[6].textContent])),
-        [["Beto", "Finalizó la ronda", "Finalizó la ronda 1"], ["Ana", "Pidió ayuda", "Pidió ayuda: Necesito al principal"], ["Ana", "Jugada ilegal", "Cleo Tres (blancas): Enroque ilegal"], ["Ana", "Foto de planillas", "Foto de las planillas (ya está en el Drive)"],
+        [["Beto", "Finalizó la ronda", "Finalizó la ronda 1"], ["Ana", "Pidió ayuda", "Pidió ayuda: Necesito al principal"], ["Ana", "Se levantó de la mesa", "Eli Uno (negras) se levantó de la mesa"], ["Ana", "Jugada ilegal", "Cleo Tres (blancas): Enroque ilegal"], ["Ana", "Foto de planillas", "Foto de las planillas (ya está en el Drive)"],
          ["Ana", "Presencia", "Dani Cuatro (negras): no ha llegado"], ["Ana", "Resultado", "Eli – Fran → 1-0"], ["Beto", "Revisión previa", "Aprobó el paso «relojes» de la revisión previa"]]);
     igual("el resumen por árbitro dice cuántas acciones lleva cada uno, cuándo hizo la última y cuántos resultados, marcas y pedidos de ayuda",
         await q.$$eval("#act-resumen tr", (l) => l.map((tr) => [tr.children[0].querySelector("strong").textContent, tr.children[1].textContent, tr.children[3].textContent, tr.children[4].textContent, tr.children[5].textContent])),
-        [["Beto", "2", "0", "0", "0"], ["Ana", "5", "1", "1", "1"]]);
+        [["Beto", "2", "0", "0", "0"], ["Ana", "6", "1", "1", "1"]]);
     await q.selectOption("#act-arbitro", "Ana");
-    igual("filtrar por árbitro deja solo lo suyo", await q.$$eval("#actividad tr", (l) => l.map((tr) => tr.children[1].textContent)), ["Ana", "Ana", "Ana", "Ana", "Ana"]);
+    igual("filtrar por árbitro deja solo lo suyo", await q.$$eval("#actividad tr", (l) => l.map((tr) => tr.children[1].textContent)), ["Ana", "Ana", "Ana", "Ana", "Ana", "Ana"]);
+    await q.selectOption("#act-tipo", "levanto");
+    igual("y «Se levantó de la mesa» se puede filtrar solo y dice QUIÉN fue (nombre y color)", await q.$$eval("#actividad tr", (l) => l.map((tr) => [tr.children[5].textContent, tr.children[6].textContent])), [["Se levantó de la mesa", "Eli Uno (negras) se levantó de la mesa"]]);
     await q.selectOption("#act-tipo", "ilegal");
     igual("y por tipo de acción", await q.$$eval("#actividad tr", (l) => l.map((tr) => tr.children[6].textContent)), ["Cleo Tres (blancas): Enroque ilegal"]);
     await q.selectOption("#act-arbitro", "");
     await q.selectOption("#act-tipo", "");
     igual("la actividad se pide a la base (con las cuentas hechas allá) y dice cuántas acciones y de cuántos árbitros",
-        await q.evaluate(() => [window.__actividadPedida, document.getElementById("act-nota").textContent]), [[null, 600], " — 7 acciones de 2 árbitros"]);
+        await q.evaluate(() => [window.__actividadPedida, document.getElementById("act-nota").textContent]), [[null, 600], " — 8 acciones de 2 árbitros"]);
     igual("los jugadores con ilegales, primero quien más lleva, y la segunda dice que pierde", await q.$$eval("#marcados tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent))),
-        [["Sub-10 Absoluto", "1", "4", "Cleo Tres (blancas)", "ii 2 — pierde la partida (art. 7.5.5)", "—"]]);
+        [["Sub-10 Absoluto", "1", "4", "Cleo Tres (blancas)", "ii 2 — pierde la partida (art. 7.5.5)", "—", "—"]]);
     igual("todo lo anotado, lo más reciente primero, con su detalle", await q.$$eval("#registro tr", (l) => l.map((tr) => [tr.children[4].textContent, tr.children[5].textContent, tr.children[6].textContent])),
         [["Beto", "Resultado", "1-0 (ganan blancas) — Eli – Fran · enviado a chess-results"], ["Ana", "Ilegal", "Cleo Tres (blancas)"], ["Ana", "Ilegal", "Cleo Tres (blancas)"]]);
     const [descarga] = await Promise.all([q.waitForEvent("download"), q.click("#r-pdf")]);

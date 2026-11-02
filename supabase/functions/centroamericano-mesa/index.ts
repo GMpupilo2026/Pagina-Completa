@@ -35,7 +35,8 @@
 //   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que la
 //                                             organización marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
-//   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro
+//   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro (con tipo «nota» y artículo «Levantó»:
+//                                             el jugador se levantó de la mesa; las marcas llevan la cuenta por jugador y partida)
 //   "anular"  { id }                      -> deshace una ilegal o irregularidad
 //   "lista"   { ronda, paso }             -> aprueba un paso de la lista previa de la ronda (relojes, tableros; en ese orden).
 //                                             Sin los dos aprobados, "guardar" responde 409.
@@ -109,7 +110,11 @@ type Fila = {
   id: string; ocurrio: string; arbitro: string; mesa: number; color: string | null; jugador: string; tipo: string;
   resultado: string | null; anterior: string | null; articulo: string; texto: string; enviado: boolean; anula: string | null;
 };
-type Marca = { ilegales: number; irregularidades: number; ultima_ilegal: string | null; ultima_irregularidad: string | null };
+type Marca = { ilegales: number; irregularidades: number; ultima_ilegal: string | null; ultima_irregularidad: string | null; levantadas: number; ultima_levantada: string | null };
+const marcaVacia = (): Marca => ({ ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null, levantadas: 0, ultima_levantada: null });
+// «Se levantó de la mesa»: una nota de la bitácora con este artículo (la restricción de `tipo` del registro no cambia). Cada vez que
+// el jugador se levanta durante la partida el árbitro toca el botón y queda una línea con la hora; las marcas las cuentan.
+const ARTICULO_LEVANTO = "Levantó";
 
 // Las marcas de cada jugador en una partida, sin lo que se anuló. Una anulación
 // solo deshace la línea a la que apunta.
@@ -117,10 +122,13 @@ function marcasDe(filas: Fila[]): Record<string, Marca> {
   const anuladas = new Set(filas.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula as string));
   const out: Record<string, Marca> = {};
   for (const f of filas) {
-    if ((f.tipo !== "ilegal" && f.tipo !== "irregularidad") || !f.color || anuladas.has(f.id)) continue;
+    const levanto = f.tipo === "nota" && f.articulo === ARTICULO_LEVANTO;
+    if ((f.tipo !== "ilegal" && f.tipo !== "irregularidad" && !levanto) || !f.color || anuladas.has(f.id)) continue;
     const k = f.mesa + "|" + f.color;
-    const m = out[k] ?? (out[k] = { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null });
-    if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; } else { m.irregularidades++; m.ultima_irregularidad = f.id; }
+    const m = out[k] ?? (out[k] = marcaVacia());
+    if (f.tipo === "ilegal") { m.ilegales++; m.ultima_ilegal = f.id; }
+    else if (levanto) { m.levantadas++; m.ultima_levantada = f.id; }
+    else { m.irregularidades++; m.ultima_irregularidad = f.id; }
   }
   return out;
 }
@@ -316,6 +324,9 @@ Deno.serve(async (req) => {
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = color === "blancas" ? m.blancas : color === "negras" ? m.negras : "";
+      // «Se levantó»: la bitácora dice QUIÉN fue (el nombre sale de chess-results, no de lo que mande la pantalla).
+      const levanto = tipo === "nota" && articulo === ARTICULO_LEVANTO;
+      const textoFinal = levanto ? (jugador + " (" + color + ") se levantó de la mesa").slice(0, 2000) : texto;
 
       // `id` lo pone la tablet: si reenvía la misma anotación (no supo si llegó), la base la reconoce y
       // NO la cuenta dos veces (una ilegal de más cambiaría el resultado de la partida).
@@ -323,7 +334,7 @@ Deno.serve(async (req) => {
       let { data: nueva, error } = await servicio.from("centroamericano_registro").insert({
         ...(idCliente ? { id: idCliente } : {}),
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), tipo,
-        articulo: articulo || (tipo === "ilegal" ? "7.5.5" : ""), texto,
+        articulo: articulo || (tipo === "ilegal" ? "7.5.5" : ""), texto: textoFinal,
       }).select("id").single();
       if (error && error.code === "23505" && idCliente) {
         const { data: ya } = await servicio.from("centroamericano_registro").select("id").eq("id", idCliente).eq("asignacion_id", a.id).maybeSingle();
@@ -331,7 +342,7 @@ Deno.serve(async (req) => {
       }
       if (error || !nueva) { console.error("centroamericano-mesa: anotar", a.tnr, error?.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
 
-      const marca = marcasDe(await registroDe(p.ronda, mesa))[mesa + "|" + color] ?? { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
+      const marca = marcasDe(await registroDe(p.ronda, mesa))[mesa + "|" + color] ?? marcaVacia();
       const aviso = tipo === "ilegal" ? (marca.ilegales >= 2 ? "segunda" : "primera") : null;
       return json({ ok: true, id: nueva.id, jugador, color, marca, aviso });
     }
@@ -339,16 +350,16 @@ Deno.serve(async (req) => {
     if (cuerpo.action === "anular") {
       const id = String(cuerpo.id ?? "");
       if (!/^[0-9a-f-]{36}$/.test(id)) return json({ error: "Anotación no válida." }, 400);
-      const { data: f } = await servicio.from("centroamericano_registro").select("id, tnr, ronda, mesa, color, jugador, tipo").eq("id", id).maybeSingle();
+      const { data: f } = await servicio.from("centroamericano_registro").select("id, tnr, ronda, mesa, color, jugador, tipo, articulo").eq("id", id).maybeSingle();
       if (!f || f.tnr !== a.tnr || !enRango(f.mesa)) return json({ error: "Esa anotación no es de tus mesas." }, 403);
-      if (f.tipo !== "ilegal" && f.tipo !== "irregularidad") return json({ error: "Solo se anulan jugadas ilegales e irregularidades." }, 400);
+      if (f.tipo !== "ilegal" && f.tipo !== "irregularidad" && !(f.tipo === "nota" && f.articulo === ARTICULO_LEVANTO)) return json({ error: "Solo se anulan jugadas ilegales, irregularidades y las veces que se levantó un jugador." }, 400);
       const { data: ya } = await servicio.from("centroamericano_registro").select("id").eq("anula", id).limit(1);
       if (ya && ya.length) return json({ error: "Esa anotación ya estaba anulada." }, 409);
       const { error } = await servicio.from("centroamericano_registro").insert({
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: f.ronda, mesa: f.mesa, color: f.color, jugador: f.jugador, tipo: "anulacion", anula: id,
       });
       if (error) { console.error("centroamericano-mesa: anular", a.tnr, error.code); return json({ error: "No se pudo anular. Intenta de nuevo." }, 500); }
-      const marca = marcasDe(await registroDe(f.ronda, f.mesa))[f.mesa + "|" + f.color] ?? { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
+      const marca = marcasDe(await registroDe(f.ronda, f.mesa))[f.mesa + "|" + f.color] ?? marcaVacia();
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
     }
 

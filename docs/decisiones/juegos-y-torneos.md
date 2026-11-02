@@ -8747,6 +8747,12 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     aparato», «Centra la planilla…»); el verde además cambia el borde de discontinuo a continuo.
   - **Celular parado**: pide «Gira el aparato a lo ancho» (no caben dos hojas verticales de lado), esconde
     los marcos y no deja disparar; al girar se quita sola.
+  - **Lo que se guarda es solo lo que queda dentro de los marcos.** La foto se recorta (`recorteGuia(aspecto)`) al rectángulo que
+    cubre las dos planillas, con un margen chico (2 % del ancho) por si una hoja se sale un poco, y eso es lo que se ve para
+    revisar, lo que sube a la base y lo que llega al Drive. Antes se guardaba todo lo que veía la cámara (la mesa, el piso, lo de
+    los lados) y las planillas salían chicas en el centro. Si el aparato no deja abrir la cámara dentro de la página y se usa la
+    cámara de siempre, esa foto no se puede recortar (ahí no hay marcos). Lo comprueba `verificar-guia-planillas.js` (el
+    recorte cubre los dos marcos, las medidas de la foto son las del recorte y tiene tanto papel como debe; roto a propósito, salta).
   - La foto sale con el lado largo de hasta **2600 px** (antes 1800: con dos planillas en una foto, cada una
     quedaba en ~600 px, poco para leer letra a mano). Pide la mejor resolución que dé la cámara (`ideal`
     3840×2160) y la linterna solo si el aparato la ofrece. Al cerrar —o con Escape— la cámara se apaga.
@@ -8796,6 +8802,30 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   (`estado(ahora, inicios)`, `inicioDe()`). Lo revisan `verificar-centroamericano-mesas.js` (el cálculo, la migración y la
   función) y `verificar-centroamericano-mesas-pagina.js` (el bloque, la hora que llega a la base y la barra de la tablet);
   rotos a propósito, saltan.
+- **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir
+  «1:23:45», y el teclado numérico de una tablet no trae «:». Ahora se escriben solo números y se leen como un reloj, de
+  derecha a izquierda (`C.ponerDosPuntos`): `45` → 45, `4510` → 45:10, `12345` → 1:23:45, hasta 6 cifras; las letras se
+  descartan (también al pegar). Debajo del campo sale lo que se entendió («= 45 min 10 s») o «No se entiende: los minutos y
+  segundos llegan hasta 59» (con `aria-invalid`, no solo el borde rojo). `leerTiempo` sigue siendo quien valida al guardar.
+- **«Se levantó de la mesa»** (tablet del árbitro). Cada jugador tiene un icono de persona de pie: un toque, sin preguntar, y
+  queda en la bitácora de la mesa —con la hora y el nombre del árbitro— que ese jugador se levantó. Es una **nota** con
+  artículo «Levantó» (la restricción de `tipo` del registro no cambia). Las marcas de la partida
+  (`levantadas`, `ultima_levantada`) cuentan las veces por jugador sin lo anulado y la tarjeta lo muestra como un chip verde
+  «×N»; el botón dice cuántas van. Se puede **anular la última** (por un toque de más) igual que una ilegal. Sin señal, queda
+  en la cola de la tablet como todo lo demás. La organización lo ve en «Lo que anotan» y en la tabla «Jugadores con ilegales,
+  irregularidades o que se levantaron» (columna «Se levantó», `jugadoresMarcados`). La función `centroamericano-mesa` (v11)
+  cuenta y deja anular `Levantó`; lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito, saltan).
+  **La bitácora dice quién fue:** la función escribe el texto de la nota ella misma, con el nombre que leyó de chess-results y
+  el color («Acuña Porras Fabio (negras) se levantó de la mesa»), no el que mande la pantalla; la hora la pone la base. En la
+  tablet («Lo que se ha anotado») y en la organización («Lo que anotan») el tipo sale como «Se levantó», no «Nota». En la
+  «Actividad de los árbitros», `centroamericano_actividad()` (migración `centroamericano_actividad_se_levanto`, mismos
+  permisos) le da su propio tipo (`levanto`, con su filtro «Se levantó de la mesa») y arma el mismo texto con el jugador.
+- **Los iconos de ilegal e irregularidad dibujan lo que pasó** (antes eran un triángulo de advertencia y una bandera, que los dos
+  decían «cuidado» y no se entendían). **Ilegal** es un **peón tachado** (una jugada que no se puede hacer; sólido, con una raya
+  diagonal, en rojo) e **irregularidad** es una **mano** (tocó una pieza, lo más común). Se probaron tres juegos (tarjetas roja
+  y amarilla, pieza y mano, icono con palabra) y se eligió el de la pieza y la mano; el peón va sólido y sin círculo porque con
+  círculo, a 46 px, se perdía. Siguen con su palabra para el lector de pantalla, su `title` y la leyenda de arriba, que usa
+  los mismos dibujos; `verificar-centroamericano-mesas-pagina.js` comprueba los dibujos de los botones y de la leyenda.
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

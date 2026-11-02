@@ -147,7 +147,7 @@
     }
 
     const clave = (mesa, color) => mesa + "|" + color;
-    const marcaDe = (mesa, color) => (estado.marcas || {})[clave(mesa, color)] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
+    const marcaDe = (mesa, color) => (estado.marcas || {})[clave(mesa, color)] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null, levantadas: 0, ultima_levantada: null };
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
     const hora = (x, opciones) => window.HoraCR.hora(x, opciones);
 
@@ -186,13 +186,18 @@
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ ilegales: k.ilegales }) }), icono("ilegal"), el("span", { class: "sr-only", texto: "Ilegal" }), k.ilegales > 1 ? el("span", { texto: " ×" + k.ilegales }) : null));
         if (k.irregularidades) marcas.append(el("span", { class: "cam-marca", "data-tipo": "irregularidad", title: "Irregularidad" + (k.irregularidades > 1 ? " ×" + k.irregularidades : "") },
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ irregularidades: k.irregularidades }) }), icono("irregularidad"), el("span", { class: "sr-only", texto: "Irregularidad" }), k.irregularidades > 1 ? el("span", { texto: " ×" + k.irregularidades }) : null));
+        // Las veces que se levantó de la mesa (cada toque queda en la bitácora con la hora): «×3».
+        if (k.levantadas) marcas.append(el("span", { class: "cam-marca", "data-tipo": "levanto", title: "Se levantó de la mesa " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") },
+            icono("levantado"), el("span", { class: "sr-only", texto: "Se levantó " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") }), k.levantadas > 1 ? el("span", { "aria-hidden": "true", texto: " ×" + k.levantadas }) : null));
         const acciones = el("div", { class: "cam-acciones" },
+            botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada }),
             botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada }),
             botonJugador("irregularidad", "irregularidad", "Irregularidad de " + nombre, "Irregularidad", () => irregularidad(m, color), { deshabilitado: ocupada }));
         // «Anular»: solo aparece cuando hay algo que anular.
         const anulares = el("div", { class: "cam-anulares" });
         if (k.ultima_ilegal) anulares.append(botonJugador("anular-ilegal", "anular", "Anular la última ilegal de " + nombre, "Anular la última ilegal", () => anular(m, color, "ilegal", k.ultima_ilegal), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         if (k.ultima_irregularidad) anulares.append(botonJugador("anular-irregularidad", "anular", "Anular la última irregularidad de " + nombre, "Anular la última irregularidad", () => anular(m, color, "irregularidad", k.ultima_irregularidad), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
+        if (k.ultima_levantada) anulares.append(botonJugador("anular-levanto", "anular", "Anular la última vez que se levantó " + nombre, "Anular la última vez que se levantó", () => anular(m, color, "levanto", k.ultima_levantada), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         return el("div", { class: "cam-jugador", "data-color": color },
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
@@ -260,8 +265,10 @@
       llego: [["path", { d: "M5 13l4 4L19 7" }]],
       ausente: [["path", { d: "M6 6l12 12M18 6L6 18" }]],
       dudoso: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M9.6 9.2a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8" }], ["path", { d: "M12 17.2v.01" }]],
-      ilegal: [["path", { d: "M12 3.5l9.5 16.5h-19L12 3.5z" }], ["path", { d: "M12 10v4.5" }], ["path", { d: "M12 17.3v.01" }]],
-      irregularidad: [["path", { d: "M5 21V4" }], ["path", { d: "M5 4h12l-2.5 4L17 12H5" }]],
+      // Ilegal: un peón tachado (una jugada que no se puede hacer). Irregularidad: una mano (tocó una pieza, lo más común).
+      ilegal: [["circle", { cx: "12", cy: "6.6", r: "3", fill: "currentColor", stroke: "none" }], ["path", { d: "M9.2 10.6h5.6l1.2 6.6H8z", fill: "currentColor", stroke: "none" }], ["rect", { x: "6.5", y: "18", width: "11", height: "2.6", rx: "1", fill: "currentColor", stroke: "none" }], ["path", { d: "M3.5 3.5l17 17", "stroke-width": "2.4" }]],
+      irregularidad: [["path", { d: "M18 11V6a2 2 0 0 0-4 0" }], ["path", { d: "M14 10V4a2 2 0 0 0-4 0v2" }], ["path", { d: "M10 10.5V6a2 2 0 0 0-4 0v8" }], ["path", { d: "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15" }]],
+      levantado: [["circle", { cx: "12", cy: "4.5", r: "2" }], ["path", { d: "M12 7.5V15" }], ["path", { d: "M8.5 11l3.5-2.5 3.5 2.5" }], ["path", { d: "M9.5 21l2.5-6 2.5 6" }]],
       anular: [["path", { d: "M9 14L4 9l5-5" }], ["path", { d: "M4 9h10.5a5.5 5.5 0 0 1 0 11H11" }]],
       salvavidas: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
     };
@@ -571,6 +578,20 @@
         if ($("lt-tb")) borrador = { tb: $("lt-tb").value, jb: $("lt-jb").value, tn: $("lt-tn").value, jn: $("lt-jn").value };
     }
 
+    // Mientras se escribe: los dos puntos solos y, debajo, lo que se entendió («45 min 10 s») o por qué no.
+    const textoReloj = (v) => {
+        if (!v) return "Solo números: 4510 → 45:10";
+        const seg = C.leerTiempo(v);
+        return seg === null ? "No se entiende: los minutos y segundos llegan hasta 59" : "= " + C.tiempoEnPalabras(seg);
+    };
+    function reloj(campo, id) {
+        const v = C.ponerDosPuntos(campo.value);
+        if (campo.value !== v) campo.value = v;
+        const ayuda = $("lt-a" + id);
+        if (ayuda) ayuda.textContent = textoReloj(v);
+        campo.setAttribute("aria-invalid", v && C.leerTiempo(v) === null ? "true" : "false");
+    }
+
     function pintarTiempos() {
         const caja = $("control-tiempos");
         caja.hidden = !tiemposAbierto;
@@ -594,7 +615,10 @@
         const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
             el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
             el("div", { class: "grid grid-cols-2 gap-2" },
-                el("div", {}, el("label", { for: "lt-t" + id, class: "block text-sm font-bold", texto: "Tiempo" }), el("input", { id: "lt-t" + id, type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss", class: "cam-campo", value: borrador["t" + id] || "" })),
+                el("div", {}, el("label", { for: "lt-t" + id, class: "block text-sm font-bold", texto: "Tiempo" }),
+                    // Se escriben solo los números y los dos puntos se ponen solos (el teclado numérico no los trae).
+                    el("input", { id: "lt-t" + id, type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss", class: "cam-campo", "aria-describedby": "lt-a" + id, value: borrador["t" + id] || "", oninput: (e) => reloj(e.target, id) }),
+                    el("span", { id: "lt-a" + id, class: "cam-tiempo-ayuda", "aria-live": "polite", texto: textoReloj(borrador["t" + id] || "") })),
                 el("div", {}, el("label", { for: "lt-j" + id, class: "block text-sm font-bold", texto: "Jugadas" }), el("input", { id: "lt-j" + id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: borrador["j" + id] || "" }))));
         const horaDeLectura = el("div", { class: "cam-hora-control" },
             el("span", { class: "text-sm font-bold", id: "lt-hora-etiqueta", texto: "Hora del control" }),
@@ -741,7 +765,7 @@
         const pct = (x) => Math.round(x * 100) + " %";
         const reloj = (color, id, valor) => el("div", { class: "cam-apagado-reloj", "data-color": color },
             el("label", { for: id, class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), r.turno === color ? el("span", { class: "cam-apagado-turno", texto: " · le toca" }) : null),
-            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { apagado[id] = e.target.value; apagado.para = r.total; const t = C.leerTiempo(e.target.value), d = $(id === "ra-tb" ? "ra-dibujo-b" : "ra-dibujo-n"); if (d && t !== null) d.textContent = C.formatoTiempo(t); } }));
+            el("input", { id, type: "text", inputmode: "numeric", autocomplete: "off", class: "cam-campo cam-apagado-valor", value: apagado[id] != null && apagado.para === r.total ? apagado[id] : T(Math.max(0, valor)), oninput: (e) => { const v = C.ponerDosPuntos(e.target.value); if (e.target.value !== v) e.target.value = v; apagado[id] = e.target.value; apagado.para = r.total; const t = C.leerTiempo(e.target.value), d = $(id === "ra-tb" ? "ra-dibujo-b" : "ra-dibujo-n"); if (d && t !== null) d.textContent = C.formatoTiempo(t); } }));
         const lineas = [
             "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento).",
             r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
@@ -831,7 +855,7 @@
             else if (f.tipo === "ilegal" || f.tipo === "irregularidad") detalle = f.jugador + " (" + (f.color === "negras" ? "negras" : "blancas") + ")" + (f.texto ? ": " + f.texto : "");
             else detalle = f.texto;
             filas.append(el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
-                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
+                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
         }
     }
 
@@ -1107,7 +1131,7 @@
     // ------------------------------------------------------------- ilegales e irregularidades
 
     function sumarAnotacion(m, color, tipo, id, jugador, texto) {
-        (estado.anotaciones = estado.anotaciones || []).push({ id, ocurrio: new Date().toISOString(), mesa: m.mesa, color, jugador, tipo, resultado: null, anterior: null, texto: texto || "", articulo: "", enviado: false });
+        (estado.anotaciones = estado.anotaciones || []).push({ id, ocurrio: new Date().toISOString(), mesa: m.mesa, color, jugador, tipo, resultado: null, anterior: null, texto: texto || "", articulo: tipo === "nota" && /se levantó/.test(texto || "") ? "Levantó" : "", enviado: false });
     }
 
     // Las dos de la lista: ilegal e irregularidad se eligen de una lista y la bitácora queda sola
@@ -1171,6 +1195,35 @@
         }
     }
 
+    // «Se levantó»: un toque y queda en la bitácora (con la hora y tu nombre) que este jugador se levantó de la mesa. Cada toque es una
+    // vez; la cuenta por jugador sale de ahí. Sin confirmar (con prisa), pero se puede anular la última.
+    async function levanto(m, color) {
+        const nombre = nombreDe(m, color);
+        ocupadas.add(m.mesa);
+        pintar();
+        try {
+            const r = await escribir("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "nota", texto: "Se levantó de la mesa", articulo: "Levantó" }, nombre + " se levantó (mesa " + m.mesa + ")", { mesa: m.mesa });
+            const ahora = new Date().toISOString();
+            if (r.encolado) {
+                const k = marcaDe(m.mesa, color);
+                estado.marcas[clave(m.mesa, color)] = Object.assign({}, k, { levantadas: (k.levantadas || 0) + 1, ultima_levantada: r.id });
+                sumarAnotacion(m, color, "nota", r.id, nombre, nombre + " (" + color + ") se levantó de la mesa");
+                avisar("Sin señal: quedó anotado en la tablet que " + nombre + " se levantó y se manda solo cuando vuelva la conexión.");
+                return;
+            }
+            const d = r.d;
+            estado.marcas[clave(m.mesa, color)] = d.marca;
+            sumarAnotacion(m, color, "nota", d.id, d.jugador || nombre, (d.jugador || nombre) + " (" + color + ") se levantó de la mesa");
+            const n = d.marca && d.marca.levantadas ? d.marca.levantadas : 1;
+            avisar((d.jugador || nombre) + " se levantó a las " + hora(ahora, { hour: "numeric", minute: "2-digit" }) + " (" + (n === 1 ? "primera vez" : "van " + n) + ").");
+        } catch (e) {
+            avisar(e.message, true);
+        } finally {
+            ocupadas.delete(m.mesa);
+            pintar();
+        }
+    }
+
     async function irregularidad(m, color) {
         const nombre = nombreDe(m, color);
         const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora y tu nombre.", C.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false, true);
@@ -1204,7 +1257,7 @@
 
     async function anular(m, color, tipo, id) {
         const nombre = nombreDe(m, color);
-        const sigue = await Avisos.confirmar("¿Anular la última " + (tipo === "ilegal" ? "jugada ilegal" : "irregularidad") + " de " + nombre + "? Queda constancia de las dos anotaciones.", { titulo: "Anular una anotación", aceptar: "Sí, anularla" });
+        const sigue = await Avisos.confirmar("¿Anular " + (tipo === "levanto" ? "la última vez que se levantó " : "la última " + (tipo === "ilegal" ? "jugada ilegal" : "irregularidad") + " de ") + nombre + "? Queda constancia de las dos anotaciones.", { titulo: "Anular una anotación", aceptar: "Sí, anularla" });
         if (!sigue) return;
         ocupadas.add(m.mesa);
         pintar();
