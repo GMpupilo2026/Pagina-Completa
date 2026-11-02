@@ -255,6 +255,10 @@
         leer(v);
     }
 
+    // Los puertos que tiene abiertos el tablero virtual: «Transmitir sin
+    // LiveChess» (js/pareo-dgt-directo.js) los reconoce si se eligen ahí.
+    window.PareoDGTVirtual = { puertos: () => tableros.map((v) => v.puerto) };
+
     document.addEventListener("DOMContentLoaded", () => {
         if (!$("btn-virtual")) return;
         $("btn-virtual").addEventListener("click", agregar);

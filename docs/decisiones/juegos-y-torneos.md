@@ -13550,6 +13550,15 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   `.piece-*` de las hojas que ya cargó la página: siguen saliendo de
   `css/styles.css`. Colores fijos, medidos: blanco sobre #0b1a2b 17,5:1 y sobre #12263f 15,3:1,
   #fcd34d sobre #12263f 10,6:1, #cbd5e1 sobre #12263f 10,3:1.
+- **El puerto que no se abre.** Windows solo dice «Failed to open serial
+  port» cuando otro programa ya tiene el puerto (pasó en la primera prueba
+  del dueño). La página dice qué revisar, de lo más común a lo menos: LiveChess
+  cerrado del todo (también su ícono junto al reloj de Windows), otra pestaña
+  con Pareo para DGT (al abrirse conecta sola los USB que conoce), la punta
+  del par de com0com que usa el tablero virtual, y desconectar y volver a
+  conectar el cable. Si el puerto elegido es el del tablero virtual de esta
+  misma página (`window.PareoDGTVirtual.puertos()`), o uno ya conectado aquí,
+  lo dice sin intentar abrirlo.
 - **Poner los relojes DGT 3000 desde la computadora: no, por ahora.** En modo
   bus, lo comprobado (Picochess, DGTCentaurMods, el registro de LiveChess)
   solo trae los comandos 0x81–0x8b y 0x92, y ninguno escribe en el reloj; el
