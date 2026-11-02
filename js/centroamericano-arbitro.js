@@ -645,10 +645,13 @@
 
     // ------------------------------------------------------------- horarios y tiempo de espera
 
+    // La hora real en que empezó la ronda, si la organización la marcó (viene en `leer`): desde ahí corre la tolerancia.
+    const iniciosMarcados = () => (estado && estado.inicio_ronda && estado.inicio_ronda.inicio ? { [estado.inicio_ronda.ronda]: estado.inicio_ronda.inicio } : null);
+
     function pintarEspera() {
         const H = window.CentroamericanoHorario;
         if (!H) return;
-        const e = H.estado(new Date());
+        const e = H.estado(new Date(), iniciosMarcados());
         let t = "";
         if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
         else if (e.siguiente) t = "⏰ Sigue: " + e.siguiente.nombre + " a las " + hora(new Date(e.siguiente.inicio + ":00-06:00")) + ".";
@@ -658,7 +661,7 @@
     function verHorarios() {
         const H = window.CentroamericanoHorario;
         const dia = (d) => new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long", day: "numeric", month: "long" }).format(d);
-        Avisos.alerta(H.lineas(new Date(), (d) => hora(d), dia), { titulo: "Horarios y tiempo de espera", aceptar: "Cerrar" });
+        Avisos.alerta(H.lineas(new Date(), (d) => hora(d), dia, iniciosMarcados()), { titulo: "Horarios y tiempo de espera", aceptar: "Cerrar" });
     }
 
     function pintarAnotado() {

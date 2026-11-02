@@ -32,7 +32,8 @@
 // los torneos de la tabla centroamericano_torneos y solo con un token válido.
 //
 // Las acciones (body.action), todas con { token }:
-//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos
+//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que la
+//                                             organización marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
 //   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro
 //   "anular"  { id }                      -> deshace una ilegal o irregularidad
@@ -143,7 +144,7 @@ Deno.serve(async (req) => {
   // La asignación: de quién es el token, qué torneo y qué mesas.
   const { data: a } = await servicio
     .from("centroamericano_asignaciones")
-    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, centroamericano_torneos(nombre, categoria, rama)")
+    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, centroamericano_torneos(nombre, categoria, rama, prueba)")
     .eq("token", token)
     .maybeSingle();
   if (!a) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
   if (new Date(a.vence).getTime() <= Date.now()) return json({ error: "Este enlace venció. Pídele uno nuevo a la organización." }, 410);
 
   const enRango = (mesa: number) => Number.isInteger(mesa) && mesa >= a.mesa_desde && mesa <= a.mesa_hasta;
-  const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string } | null;
+  const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
   const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista"];
@@ -212,7 +213,7 @@ Deno.serve(async (req) => {
       const p = lectura.lectura;
       visto();
       // Todo lo que sigue es independiente entre sí: una sola tanda en paralelo.
-      const [filas, { data: fin }, { data: pasosOk }, { data: plan }, { data: pres }, { data: tiem }, avisos, hermanas] = await Promise.all([
+      const [filas, { data: fin }, { data: pasosOk }, { data: plan }, { data: pres }, { data: tiem }, avisos, hermanas, { data: inicioRonda }] = await Promise.all([
         registroDe(p.ronda),
         servicio.from("centroamericano_finales").select("finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).eq("reabierta", false).maybeSingle(),
         servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda),
@@ -227,10 +228,13 @@ Deno.serve(async (req) => {
         })(),
         // El avance de la ronda (lo ve la organización) no espera a nadie ni retrasa la respuesta.
         guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
+        // La hora real en que la organización marcó que empezó esta ronda (la tolerancia corre desde ahí); sin marca, null.
+        servicio.from("centroamericano_inicios_ronda").select("ronda, inicio").eq("ronda", p.ronda).eq("prueba", torneoInfo?.prueba === true).maybeSingle(),
       ]);
       return json({
         ...avisos,
         hermanas,
+        inicio_ronda: inicioRonda ?? null,
         presencia: pres ?? [],
         tiempos: tiem ?? [],
         finalizada: fin ? fin.finalizada_en : null,

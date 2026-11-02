@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102095104
+# al-dia-con: 20261102162823
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -48,6 +48,7 @@ tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_finales  rls=true
+tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_lecturas  rls=true
 tabla  centroamericano_listas  rls=true
 tabla  centroamericano_planillas  rls=true
@@ -587,6 +588,10 @@ columna  centroamericano_finales.id  uuid
 columna  centroamericano_finales.reabierta  boolean
 columna  centroamericano_finales.revision  jsonb
 columna  centroamericano_finales.ronda  integer
+columna  centroamericano_inicios_ronda.inicio  timestamp with time zone
+columna  centroamericano_inicios_ronda.prueba  boolean
+columna  centroamericano_inicios_ronda.puesto_en  timestamp with time zone
+columna  centroamericano_inicios_ronda.ronda  integer
 columna  centroamericano_lecturas.leida  timestamp with time zone
 columna  centroamericano_lecturas.leyendo_hasta  timestamp with time zone
 columna  centroamericano_lecturas.mesas  jsonb
@@ -2332,6 +2337,7 @@ funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  ano
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
+funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
@@ -2912,6 +2918,7 @@ politica  centroamericano_avisos  centroamericano_avisos_ver  SELECT
 politica  centroamericano_copias  centroamericano_copias_ver  SELECT
 politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
+politica  centroamericano_inicios_ronda  centroamericano_inicios_ronda_ver  SELECT
 politica  centroamericano_listas  centroamericano_listas_ver  SELECT
 politica  centroamericano_planillas  centroamericano_planillas_ver  SELECT
 politica  centroamericano_presencia  centroamericano_presencia_ver  SELECT
@@ -3564,6 +3571,7 @@ indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
+indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
 indice  centroamericano_lecturas  centroamericano_lecturas_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_pkey
@@ -4282,6 +4290,7 @@ grant  centroamericano_asignaciones  authenticated  SELECT
 grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_copias  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
+grant  centroamericano_inicios_ronda  authenticated  SELECT
 grant  centroamericano_listas  authenticated  SELECT
 grant  centroamericano_planillas  authenticated  SELECT
 grant  centroamericano_presencia  authenticated  SELECT

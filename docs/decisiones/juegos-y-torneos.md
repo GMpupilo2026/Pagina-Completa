@@ -8781,6 +8781,21 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   guardar o cambiar de mesa, y sobrevive a minimizar la ventana. `hora()` de la página pasa sus opciones
   a `HoraCR.hora` (sin eso no salían los segundos). Lo revisan `verificar-centroamericano-mesas-pagina.js`
   y `verificar-centroamericano-mesas.js` (roto a propósito, saltan).
+- **«Inició la ronda»: la hora real de inicio, no la del calendario.** El calendario dice que la ronda 1 empieza a las
+  9:30, pero el 2 de noviembre empezó a las 10:48 y la organización no tenía cómo decirlo: el tiempo de espera (30 min
+  desde el inicio, según las bases) siguió contando desde las 9:30. Arriba de «Ronda en curso» hay un bloque «Inicio de la
+  ronda»: la ronda (la abierta por omisión), **«▶ Inició la ronda ahora»** (marca la hora de ese momento) o una hora
+  escrita («o a las 10:48» + «Guardar esa hora», para cuando se avisa tarde), y «Volver al calendario» para quitarla.
+  Si ya había una hora marcada, pregunta antes de cambiarla; una hora que todavía no llega no se manda. Se guarda con
+  `centroamericano_inicio_ronda(p_ronda, p_prueba, p_inicio)` (pide la licencia; la hora tiene que ser de las últimas 24 h y
+  no del futuro, 1 min de margen) en `centroamericano_inicios_ronda` (una fila por ronda y por «prueba»: el Modo ensayo tiene
+  la suya y no ensucia la de los torneos reales; la tabla no tiene permisos de escritura). **Desde esa hora corre todo:** el
+  «Quedan N min» y la alerta de los que no han llegado en la página de la organización, y la barra de tolerancia y
+  «Horarios» en la tablet de cada árbitro, que recibe `inicio_ronda` en `leer` (la función centroamericano-mesa v10, de su
+  ronda y su modo). Las otras rondas siguen con el calendario. `js/centroamericano-horario.js` recibe las horas marcadas
+  (`estado(ahora, inicios)`, `inicioDe()`). Lo revisan `verificar-centroamericano-mesas.js` (el cálculo, la migración y la
+  función) y `verificar-centroamericano-mesas-pagina.js` (el bloque, la hora que llega a la base y la barra de la tablet);
+  rotos a propósito, saltan.
 - **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
   marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
   Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).

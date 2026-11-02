@@ -6,8 +6,13 @@
    torneo, en esa misma página.
 
        CentroamericanoHorario.EVENTOS            → [{ inicio, minutos, nombre, ronda? }]
-       CentroamericanoHorario.estado(ahora)      → { ronda, empezo, quedan, hasta, siguiente, enCurso }
-       CentroamericanoHorario.lineas(ahora, fmt) → texto para mostrar
+       CentroamericanoHorario.estado(ahora, inicios)      → { ronda, empezo, quedan, hasta, siguiente, enCurso, marcada }
+       CentroamericanoHorario.lineas(ahora, fmt, fmtDia, inicios) → texto para mostrar
+       CentroamericanoHorario.inicioDe(evento, inicios)   → el momento (ms) en que empezó esa ronda
+
+   `inicios` (opcional) = { [ronda]: "2026-11-02T16:48:00Z" }: la hora REAL en que la organización marcó que empezó la
+   ronda («Inició la ronda»). Si una ronda no está ahí, vale la del calendario. Desde esa hora se cuentan la ronda en
+   juego y el tiempo de espera.
 
    Costa Rica no tiene horario de verano: -06:00 todo el año. */
 (function (raiz) {
@@ -32,20 +37,27 @@
     { inicio: "2026-11-08T11:00", minutos: 60, nombre: "Salida" },
   ];
   const ms = (e) => new Date(e.inicio + ":00-06:00").getTime();
+  // Cuándo empezó de verdad la ronda: la hora que marcó la organización o, si no marcó ninguna, la del calendario.
+  function inicioDe(e, inicios) {
+    const marcada = e.ronda && inicios ? Date.parse(inicios[e.ronda]) : NaN;
+    return Number.isFinite(marcada) ? marcada : ms(e);
+  }
+  const esMarcada = (e, inicios) => !!(e.ronda && inicios && Number.isFinite(Date.parse(inicios[e.ronda])));
 
   // Dónde estamos: la ronda que está en juego (con cuánto le queda a la tolerancia) y la
   // próxima actividad.
-  function estado(ahora) {
+  function estado(ahora, inicios) {
     const t = (ahora instanceof Date ? ahora : new Date(ahora)).getTime();
     const rondas = EVENTOS.filter((e) => e.ronda);
     let enCurso = null;
-    for (const e of rondas) if (t >= ms(e) && t < ms(e) + e.minutos * 60000) enCurso = e;
-    const siguiente = EVENTOS.find((e) => ms(e) > t) || null;
-    if (!enCurso) return { enCurso: null, ronda: null, empezo: null, quedan: null, hasta: null, siguiente };
-    const empezo = Math.floor((t - ms(enCurso)) / 60000);
-    const hasta = new Date(ms(enCurso) + TOLERANCIA_MIN * 60000);
+    for (const e of rondas) if (t >= inicioDe(e, inicios) && t < inicioDe(e, inicios) + e.minutos * 60000) enCurso = e;
+    const siguiente = EVENTOS.find((e) => inicioDe(e, inicios) > t) || null;
+    if (!enCurso) return { enCurso: null, ronda: null, empezo: null, quedan: null, hasta: null, siguiente, marcada: false };
+    const inicio = inicioDe(enCurso, inicios);
+    const empezo = Math.floor((t - inicio) / 60000);
+    const hasta = new Date(inicio + TOLERANCIA_MIN * 60000);
     // Negativo = la tolerancia ya pasó (quedan < 0: «pasaron N min»).
-    return { enCurso, ronda: enCurso.ronda, empezo, quedan: TOLERANCIA_MIN - empezo, hasta, siguiente };
+    return { enCurso, ronda: enCurso.ronda, empezo, quedan: TOLERANCIA_MIN - empezo, hasta, siguiente, inicio: new Date(inicio), marcada: esMarcada(enCurso, inicios) };
   }
 
   function minutosTexto(min) {
@@ -56,12 +68,12 @@
   }
 
   // El texto del botón «Horarios». `fmt(fecha)` da la hora de Costa Rica (HoraCR.hora).
-  function lineas(ahora, fmt, fmtDia) {
+  function lineas(ahora, fmt, fmtDia, inicios) {
     const t = (ahora instanceof Date ? ahora : new Date(ahora)).getTime();
-    const e = estado(ahora);
+    const e = estado(ahora, inicios);
     const out = [];
     if (e.enCurso) {
-      out.push("Ahora: " + e.enCurso.nombre + " (empezó a las " + fmt(new Date(ms(e.enCurso))) + ", hace " + minutosTexto(e.empezo) + ").");
+      out.push("Ahora: " + e.enCurso.nombre + " (empezó a las " + fmt(e.inicio) + (e.marcada ? ", la hora que marcó la organización" : "") + ", hace " + minutosTexto(e.empezo) + ").");
       out.push(e.quedan > 0
         ? "Tiempo de espera: quedan " + minutosTexto(e.quedan) + " de tolerancia (hasta las " + fmt(e.hasta) + ", " + TOLERANCIA_MIN + " minutos desde el inicio)."
         : "Tiempo de espera: la tolerancia de " + TOLERANCIA_MIN + " minutos ya pasó (terminó a las " + fmt(e.hasta) + ").");
@@ -74,7 +86,7 @@
     return out.join("\n");
   }
 
-  const api = { TOLERANCIA_MIN, EVENTOS, estado, lineas, minutosTexto };
+  const api = { TOLERANCIA_MIN, EVENTOS, estado, lineas, minutosTexto, inicioDe };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.CentroamericanoHorario = api;
 })(typeof self !== "undefined" ? self : this);
