@@ -216,11 +216,12 @@
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
                 el("span", { class: "cam-nombre", texto: nombre }),
-                gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null,
-                cuentaDe(m, color),
+                el("span", { class: "cam-jugador-estado" }, gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null, cuentaDe(m, color)),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
-            cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
-            marcas, anulares.children.length ? anulares : null);
+            // Lo que cambia (las marcas, «Anular», la guía del tiempo de espera) va en UNA franja de altura reservada: la tarjeta no se mueve.
+            el("div", { class: "cam-jugador-extra" },
+                cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
+                marcas, anulares.children.length ? anulares : null));
     }
 
     // La banda de las ilegales de una mesa, sacada de las marcas (no de un recuerdo de la
@@ -261,14 +262,16 @@
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
                         icono("salvavidas"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
-            bandas(m),
+            // Los avisos de las ilegales van en una zona de altura reservada (vacía casi siempre): la tarjeta no cambia de forma al anotar.
+            el("div", { class: "cam-mesa-avisos" }, bandas(m)),
             bloqueJugador(m, "blancas"),
             bloqueJugador(m, "negras"),
             el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
                 el("div", { class: "cam-resultado-fila" }, sel,
                     el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar")),
-                msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null),
+                // El «✓ Guardado» o el error ocupa siempre su renglón (reservado): al guardar no se mueve nada.
+                msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto }) : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" })),
             bloqueIconos(m, ocupada));
     }
 
