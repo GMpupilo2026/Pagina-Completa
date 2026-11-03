@@ -8,6 +8,9 @@
      un resultado ya guardado sí pregunta, y si se cancela no queda nada a medias; «Otro
      resultado» a mano con el desplegable; la ilegal en un toque, sin elegir el tipo, con su
      minuto; sin control de tiempos ni fotos de planillas; cerrar la ronda con una confirmación;
+   - la presencia: antes de iniciar la ronda no se marca nada; al tocar «Inició la ronda ahora» todos
+     quedan presentes (también en la base, una vez) y el árbitro marca solo «No está», que arranca la
+     cuenta de ese jugador; «Llegó» la quita; nunca se anota «no ha llegado» a todos;
    - a 390 px no se desplaza a lo ancho y los botones dan 4,5:1 en claro y en oscuro.
 
    Ver «El Rápido y el Blitz: la mesa en un toque» en docs/decisiones/juegos-y-torneos.md.
@@ -91,6 +94,28 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
     await p.waitForFunction(() => document.getElementById("lista-previa").hidden);
     igual("un toque aprueba los dos pasos en la base, en orden", (await llamadas(p, "lista")).map((b) => b.paso), ["relojes", "tableros"]);
     igual("y los botones se encienden", (await rapidos(p, 1)).map((x) => x[2]), [false, false, false]);
+
+    console.log("\n=== La presencia: iniciada la ronda, todos están ===");
+    const pres = () => p.evaluate(() => [...document.querySelectorAll(".cam-mesa")].map((m) => [m.dataset.mesa, [...m.querySelectorAll(".cam-presencia")].map((x) => x.dataset.presente + ":" + [...x.querySelectorAll("button")].map((b) => b.dataset.accion).join(",")).join(" ")]));
+    igual("antes de iniciar la ronda no hay nada que marcar, ni cuenta, y lo explica", [await pres(), await p.evaluate(() => [document.querySelectorAll(".cam-cuenta").length, document.getElementById("presencia-resumen").textContent.includes("todos cuentan como presentes"), document.getElementById("presencia-todos").checkVisibility()])],
+        [[["1", ""], ["2", ""], ["3", ""]], [0, true, false]]);
+    await p.click("#ir-ahora");
+    await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="1"] .cam-presencia'));
+    igual("al iniciar, todos presentes también en la base (una vez) y nunca «no ha llegado» a todos", await p.evaluate(() => [(window.__todosArgs || []).length, (window.__ausentesArgs || []).length]), [1, 0]);
+    igual("cada jugador sin resultado lleva «No está»; la mesa con resultado, nada", await pres(), [["1", "si:ausente si:ausente"], ["2", "si:ausente si:ausente"], ["3", ""]]);
+    igual("sin ausentes no corre ninguna cuenta", await p.evaluate(() => [document.querySelectorAll(".cam-cuenta").length, document.getElementById("presencia-resumen").textContent]), [0, "Todos presentes. Si alguien no está, toca su «No está»."]);
+    await p.click('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="ausente"]');
+    await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-cuenta'));
+    igual("«No está» lo anota y arranca SU cuenta (30 min desde el inicio), solo la suya", await p.evaluate(() => [
+        window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]),
+        [...document.querySelectorAll(".cam-cuenta")].map((c) => c.closest(".cam-mesa").dataset.mesa + "|" + c.closest(".cam-jugador").dataset.color),
+        /^⏱ (29:\d\d|30:00)$/.test(document.querySelector(".cam-cuenta").textContent), document.getElementById("presencia-resumen").textContent]),
+        [[[2, "negras", false]], ["2|negras"], true, "No están: 1 de 6 jugadores (corre su tiempo de espera)."]);
+    await p.click('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="presente"]');
+    await p.waitForFunction(() => !document.querySelector(".cam-cuenta"));
+    igual("si llega, «Llegó» lo vuelve a poner presente y su cuenta se va", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => l.body.presente)), [false, true]);
+    await p.click('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="ausente"]');
+    await p.waitForFunction(() => document.querySelector(".cam-cuenta"));
 
     await p.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="1"]');
     await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="1"]').dataset.estado === "con-resultado");

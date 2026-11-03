@@ -9103,6 +9103,18 @@ MISMA página (`centroamericano-arbitro.html`) y la misma función: solo cambia 
   deshace con «Anular la última ilegal». **En el blitz, el minuto**: la primera le da 1 minuto al rival, no 2
   (Leyes del Ajedrez, apéndice B.3: en el blitz las penalizaciones de los arts. 7 y 9 son de un minuto);
   `minutosIlegal()`. La irregularidad sigue con su lista: es rara y necesita el detalle.
+- **La presencia, al revés que en el clásico** (lo pidió el dueño el mismo día): iniciada la ronda, todos están, y
+  el árbitro marca solo a los que no. Antes de «Inició la ronda ahora» no hay nada que marcar. Al tocarlo, la
+  página anota a todos presentes en la base (`presencia_todos`, una sola vez: solo si la ronda no tiene ninguna
+  marca, porque esa acción pondría «llegó» a quien ya se marcó «No está», y se espera a que termine antes de
+  pintar los botones para que un toque rápido no llegue primero y quede pisado). Cada jugador lleva «No está»: un
+  toque lo anota ausente y arranca SU cuenta del tiempo de espera; «Llegó» la quita. Nunca se manda
+  `presencia_ausentes` (el «no ha llegado» a todos del clásico). Sin marca, el jugador cuenta como presente.
+- **El tiempo de espera corre solo desde la hora que marca el árbitro**: el Rápido y el Blitz no están en el
+  calendario del clásico, y sus rondas se numeran igual (1, 2, 3…), así que leerlas con
+  `CentroamericanoHorario.estado()` las confundiría con las del clásico (`esperaRapida()`). La tolerancia es la de
+  las bases (30 min, `TOLERANCIA_MIN`): las bases no dan otra para el Rápido y el Blitz. Al vencerse, el mismo aviso
+  del clásico propone la incomparecencia, sin guardarla.
 - **Lo que no se hace en el Rápido y el Blitz, no se ve**: el botón «Control de tiempos» y el reloj y la
   cámara de cada mesa (no se anotan controles ni se fotografían planillas).
 - **La revisión previa es UN botón** («Relojes y tableros listos», sin el «90 minutos» del clásico). La función
