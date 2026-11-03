@@ -36,18 +36,45 @@ const SERVIDOR_ARBITRO = `
   window.__servidor = (b) => {
     if (b.token !== TOKEN && b.token !== TOKEN_B) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
     // «Ya terminé mis labores»: con el enlace concluido la función rechaza todo lo que escribe.
-    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    // «Inició la ronda» (la categoría del árbitro): como la función, guarda la hora que manda la tablet (no del futuro) o la quita.
+    if (b.action === "inicio") {
+      window.__inicioArgs = (window.__inicioArgs || []).concat([{ ronda: b.ronda, inicio: b.inicio === undefined ? undefined : b.inicio, quitar: b.quitar === true }]);
+      if (b.ronda !== 3) return falla(409, "La ronda abierta en chess-results es la 3, no la " + b.ronda + ". Actualiza la página.");
+      if (b.quitar === true) { window.__inicioRonda = null; return { data: { ok: true, ronda: 3, inicio: null }, error: null }; }
+      const cuando = Math.min(Date.parse(b.inicio), Date.now());
+      if (!Number.isFinite(cuando)) return falla(400, "Falta la hora a la que empezó la ronda.");
+      window.__inicioRonda = { ronda: 3, inicio: new Date(cuando).toISOString(), arbitro: window.__avisos.arbitro };
+      return { data: { ok: true, ronda: 3, inicio: window.__inicioRonda.inicio, arbitro: window.__avisos.arbitro }, error: null }; }
+    // «Mandarme la bitácora por correo»: como la función, solo después de concluir, con un PDF de verdad y tope de dos envíos.
+    if (b.action === "bitacora_correo") {
+      window.__correoArgs = (window.__correoArgs || []).concat([{ correo: b.correo, pdf: String(b.pdf || "").slice(0, 8), largo: String(b.pdf || "").length }]);
+      if (!window.__concluyo) return falla(409, "La bitácora se manda cuando concluyes tus labores.");
+      if (!/^[^\\s@<>"',;]+@[^\\s@<>"',;]+\\.[^\\s@<>"',;]+$/.test(String(b.correo || ""))) return falla(400, "Escribe un correo válido.");
+      if (window.__correoArgs.length > 2) return falla(429, "Ya mandaste tu bitácora dos veces.");
+      return { data: { ok: true }, error: null }; }
     if (b.action === "concluir") { if (!window.__concluyo) window.__concluyo = "2026-11-02T16:30:00Z"; return { data: { ok: true, concluyo: window.__concluyo }, error: null }; }
     if (b.action === "bitacora") {
       if (!window.__concluyo) return falla(409, "La bitácora se baja cuando concluyes tus labores.");
       return { data: { ok: true, arbitro: window.__avisos.arbitro, concluyo: window.__concluyo, generado: "2026-11-02T16:31:00Z",
         asignaciones: [{ id: "a1", tnr: "1529737", arbitro: "Ana Árbitra", mesa_desde: 1, mesa_hasta: 3 }, { id: "a2", tnr: "1529740", arbitro: "Ana Árbitra", mesa_desde: 4, mesa_hasta: 6 }],
         torneos: [{ tnr: "1529737", nombre: "Sub-10 Femenino" }, { tnr: "1529740", nombre: "Sub-12 Absoluto" }],
+        inicios: [{ tnr: "1529737", ronda: 3, inicio: "2026-11-02T16:48:00Z", arbitro: "Ana Árbitra" }],
         registro: filas.map((f) => Object.assign({ tnr: "1529737", ronda: 3, asignacion_id: "a1" }, f)),
         tiempos: window.__tiempos.map((t) => Object.assign({ tnr: "1529737", ronda: 3, blancas: "A", negras: "B", asignacion_id: "a1" }, t)),
         presencia: window.__presencia.map((x) => Object.assign({ tnr: "1529737", ronda: 3, jugador: "Jugador", asignacion_id: "a1" }, x)),
         planillas: [{ tnr: "1529740", ronda: 2, mesa: 5, jugador: "C", rival: "D", subida: "2026-11-02T15:00:00Z", drive_ok: true, asignacion_id: "a2" }],
         finales: [{ ronda: 2, finalizada_en: "2026-11-02T15:40:00Z", reabierta: false, asignacion_id: "a2" }], listas: [], avisos: [] }, error: null }; }
+    // «Llegaron todos»: marca a los que no tienen marca (como la función: no pisa a quien ya está marcado).
+    if (b.action === "presencia_todos") {
+      window.__todosArgs = (window.__todosArgs || []).concat([{ ronda: b.ronda }]);
+      if (b.ronda !== 3) return falla(409, "La ronda abierta en chess-results es la 3, no la " + b.ronda + ". Actualiza la página.");
+      let n = 0;
+      for (const m of MESAS) for (const color of ["blancas", "negras"]) {
+        if (window.__presencia.some((x) => x.mesa === m.mesa && x.color === color)) continue;
+        window.__presencia.push({ mesa: m.mesa, color, presente: true, marcada: "2026-11-02T15:40:00Z" }); n++;
+      }
+      return { data: { ok: true, marcados: n }, error: null }; }
     if (b.action === "presencia") {
       if (b.mesa < 1 || b.mesa > 3) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
       window.__presencia = window.__presencia.filter((x) => !(x.mesa === b.mesa && x.color === b.color)).concat([{ mesa: b.mesa, color: b.color, presente: b.presente, marcada: "2026-11-02T15:51:00Z" }]);
