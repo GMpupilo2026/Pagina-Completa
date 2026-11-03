@@ -60,7 +60,9 @@ function dobleOrganizacion(licencia) {
     { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
     { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
     { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+  // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
+    { asignacion_id: "asig-arb1", ronda: 2, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(400) },
     { asignacion_id: "asig-ana", ronda: 3, total: 15, con_resultado: 7, pendientes: [8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) },
     { asignacion_id: "asig-arb1", ronda: 3, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(20) },
     { asignacion_id: "asig-ensayo", ronda: 1, total: 15, con_resultado: 0, pendientes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) }];
@@ -141,7 +143,7 @@ function dobleOrganizacion(licencia) {
         mios.forEach((t) => { t.sid_en_boveda = true; t.acceso_tnr = b.tnr; t.clave_puesta = "2026-11-02T16:00:00Z"; });
         return Promise.resolve({ data: { ok: true, acceso: b.tnr, torneos: mios.map((t) => ({ tnr: t.tnr, nombre: t.nombre })), ronda: 1, mesas: 21, otros: [] }, error: null }); }
       if (b.action === "probar") return Promise.resolve({ data: { ok: true, torneo: "Sub-10 Absoluto", ronda: 2, mesas: 30 }, error: null });
-      if (b.action === "resumen") { PROGRESO[0].con_resultado = 9; PROGRESO[0].pendientes = [10, 11, 12, 13, 14, 15]; return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
+      if (b.action === "resumen") { { const pa = PROGRESO.find((x) => x.asignacion_id === "asig-ana" && x.ronda === 3); pa.con_resultado = 9; pa.pendientes = [10, 11, 12, 13, 14, 15]; } return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
       if (b.action === "drive_estado") return Promise.resolve({ data: { ok: true, conectado: window.__driveOk, pendientes: PLANILLAS.filter((x) => !x.drive_ok).length, ultima_copia: window.__driveOk ? hace(300) : null }, error: null });
       if (b.action === "drive_conectar") {
         if (b.secreto === "MALOMALOMALOMALOMALOMALOMALOMALOMALO") return Promise.resolve(err(400, "No se pudo conectar: secreto. No se guardó nada."));
@@ -176,6 +178,19 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
+    // El calendario de las rondas (js/centroamericano-horario.js) es de verdad, y la prueba no puede depender del día en que corre:
+    // durante el torneo una ronda real está en juego y el árbitro ve cronómetros, brillos y vibraciones que la prueba no espera
+    // (falló así la mañana del 3/11). Se corre el calendario para que «ahora» caiga donde caía cuando se escribió la prueba: la
+    // noche del 2/11, entre la ronda 2 y la 3.
+    await ctx.addInitScript(() => {
+        const corrimiento = Date.now() - Date.parse("2026-11-02T21:30:00-06:00");
+        const iso = (ms) => new Date(ms - 6 * 3600000).toISOString().slice(0, 16);
+        let h;
+        Object.defineProperty(window, "CentroamericanoHorario", { configurable: true, get: () => h, set: (v) => {
+            for (const e of (v && v.EVENTOS) || []) e.inicio = iso(Date.parse(e.inicio + ":00-06:00") + corrimiento);
+            h = v;
+        } });
+    });
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));

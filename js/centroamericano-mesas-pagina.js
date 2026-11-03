@@ -241,12 +241,15 @@
         const H = window.CentroamericanoHorario;
         const lista = $("ir-lista");
         if (!H || !lista) return;
-        // La ronda de cada categoría es la de su avance (la que tiene abierta); sin avance, la que el resumen tiene abierta.
+        // La ronda de cada categoría es la MÁS ALTA que se sabe de ella: la de su avance, la que marcó su árbitro, la que el resumen
+        // tiene abierta. El avance guarda TODAS las rondas jugadas: tomar la primera fila que
+        // aparece daba una ronda vieja («Ronda 2: no marcó…» mientras el árbitro ya había marcado la 3; pasó el 3/11).
         const tnrs = [...new Set(asignaciones.map((x) => x.tnr))].filter(dentro)
             .sort((x, y) => torneos.findIndex((q) => q.tnr === x) - torneos.findIndex((q) => q.tnr === y));
         const filas = tnrs.map((tnr) => {
-            const f = progreso.map((x) => asig(x.asignacion_id)).find((x) => x && x.tnr === tnr);
-            const r = (progreso.find((x) => f && x.asignacion_id === f.id) || {}).ronda || rondaDeFaltan || 0;
+            const r = Math.max(rondaDeFaltan || 0,
+                ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
+                ...Object.values(inicios).filter((x) => x.tnr === tnr && x.inicio).map((x) => Number(x.ronda) || 0));
             const ev = H.EVENTOS.find((e) => e.ronda === r), marca = inicios[tnr + "|" + r];
             const texto = !r ? "sin ronda abierta"
                 : marca ? "Ronda " + r + ": empezó a las " + horaDe(marca.inicio) + (marca.arbitro ? " (la marcó " + marca.arbitro + ")" : "")
