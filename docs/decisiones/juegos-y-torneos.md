@@ -9060,6 +9060,60 @@ Aplicada el 3 de noviembre (`20261103162537`) y probada en la base con un rol de
 una transacción que se deshizo: sorteó 3 mesas «de 30», el aviso le llegó al árbitro de esa mesa,
 aprobar dos veces, «Se negó» sin nota y descartar sin motivo se rechazaron, y un segundo sorteo de 10
 no repitió ninguna. Lo comprueba `verificar-centroamericano-fair-play.js`.
+
+#### Los encargados de Fair Play, el sorteo con peso, el acoso y los tableros electrónicos
+
+Lo pidió el dueño la misma tarde (`20261103180000`, pegada a mano en el editor SQL; la propia migración se anota en
+`supabase_migrations.schema_migrations`):
+
+- **Los encargados entran con su propio QR**, como los árbitros: el principal los crea y los apaga en la pestaña
+  «Fair Play» (`centroamericano_fp_enlaces`, con auditoría). El encargado abre `centroamericano-fair-play.html#<token>`
+  sin cuenta y tiene la MISMA pantalla que el principal (`js/centroamericano-fair-play.js`, que se arma sola en las dos
+  páginas), sin la sección de los QR. Todo pasa por la Edge Function **`centroamericano-fair-play`** (`verify_jwt` en
+  false): con el token del encargado, o con la sesión del principal y `tengo_herramienta`; llama a las funciones de la
+  base con la clave de servicio diciendo quién es (`p_quien`), y el acta lleva su nombre. Lo ve solo el principal y los
+  encargados; los árbitros de mesa, únicamente sus mesas elegidas.
+- **El sorteo con peso** (`centroamericano_fp_candidatas`): toda mesa entra con peso 1 y algunas salen más seguido por
+  señales que no deciden nada solas, cada una con su tope y el total hasta 4 — la diferencia de Elo (+0,5 desde 200, +1
+  desde 400), «se levantó» en la ronda (+0,5 cada vez, hasta 1,5), una ilegal o irregularidad (+0,5), haberle ganado a
+  alguien con 200 o más de Elo en rondas anteriores (+0,5 cada vez, hasta 1), levantarse seguido (+0,5) y una alerta de
+  los tableros (+1). El azar es Efraimidis-Spirakis (clave `ln(u)/peso`, con `u` de `gen_random_uuid()`): en 20 000
+  sorteos de ensayo cada mesa salió en la proporción de su peso (16,3 % contra 16,7 %, 22,0 % contra 22,2 %). Cada mesa
+  sorteada guarda su peso y sus motivos para el acta. El Elo y los resultados de cada ronda los lee la función de los
+  emparejamientos públicos de chess-results (`centroamericano_fp_partidas`, con el número de cada jugador en el torneo).
+- **Contra el acoso**: quien se revisó (o tiene una revisión aprobada pendiente) no aplica en las 2 rondas siguientes y
+  nadie pasa de 3 revisiones. Que uno de los dos no aplique **no saca a la mesa del sorteo** (lo pidió el dueño): si
+  gana quien no aplica, la mesa queda **sin efecto**; si gana el otro, se revisa; en tablas, el color sorteado entre los
+  que aplican. Fuera del sorteo solo queda la mesa donde ninguno aplica.
+- **El resultado decide**: el trigger `fair_play_resultado` en `centroamericano_registro` (`interno.fp_tras_resultado`)
+  anota a quién se revisa o que la mesa quedó sin efecto, y le manda el aviso a su árbitro; si se corrige, avisa de
+  nuevo; si se borra, la mesa vuelve a esperar. Solo avisa cuando cambia lo que hay que hacer.
+- **El borde dorado**: la tablet del árbitro pide sus mesas elegidas a `centroamericano-fair-play` («mesas_arbitro», con
+  SU token) — no a `centroamericano-mesa`, para no volver a desplegarla en pleno torneo — y las marca con un borde dorado
+  que brilla poquito y una banda que lo dice escrito (`CentroamericanoMesas.fairPlayDeMesa`): retener al ganador y, al
+  elegir el resultado, a quién retener o que esa persona no aplica.
+- **Los tableros electrónicos**: la función baja el PGN de cada ronda de la transmisión de Lichess de la sala (trae la
+  evaluación de cada jugada) y saca la precisión de cada jugador con la fórmula pública de Lichess, sin las 8 primeras
+  jugadas ni las posiciones ya decididas (6 peones), con 15 jugadas o más (`analisis.ts`, probado con node).
+  `centroamericano_fp_calibrar()` la compara con la esperable para su Elo **en este mismo torneo** (una recta por
+  mínimos cuadrados; con las 130 partidas de las rondas 1 a 3, 71,8 + 0,0099 × Elo y unos 5 puntos de desviación): «a
+  mirar» desde 2 desviaciones, «alta» desde 2,5, y «a mirar» quien sale alto (1,4) en dos partidas. Es una alerta para
+  el encargado, nunca una acusación: «Ya la miré» o «Seguirlo en los sorteos» (que suma +1 a sus mesas). Lichess corta
+  (429) si se le pide seguido: una pausa de 0,7 s y las rondas viejas ya analizadas no se vuelven a pedir. Solo se
+  analizan las mesas que se transmiten (las primeras de cada categoría).
+
+- **Las revisiones anotadas a mano** (`20261103182045`): el sorteo empezó en la ronda 3, pero en las rondas 1 y 2 ya se
+  había revisado a gente. «✍ Anotar una revisión hecha a mano» pide la categoría, la ronda y la mesa, muestra los dos
+  jugadores de esa mesa con su Elo (de los emparejamientos leídos, acción «pareo») o, si no están, pide escribir el
+  nombre, y guarda a quién se revisó, cómo terminó y la nota (`centroamericano_fair_play_manual`: una mesa «revisada»
+  de origen `manual`, con quién la anotó). Cuenta igual que una sorteada para el descanso y el tope, y un **hallazgo**
+  —anotado a mano o de un sorteo— suma +1 al peso de las mesas de ese jugador en los sorteos siguientes. Una mesa no se
+  anota dos veces en la ronda (el mismo índice único).
+
+Probado en un Postgres de ensayo con el esquema del Centroamericano (los pesos y sus motivos, el que no aplica sin sacar
+la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no aplica, la corrección y el borrado, el
+rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
+jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroamericano-fair-play.js`.
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.

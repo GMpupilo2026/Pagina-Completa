@@ -464,7 +464,36 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  // Fair Play en la tablet del árbitro: qué dice la banda dorada de una mesa elegida (fp: lo que manda centroamericano-mesa
+  // en «fair_play»; m: la mesa, con sus nombres y el valor de chess-results; elegido: el resultado que el árbitro está por
+  // guardar, si hay). Mientras no hay resultado: retener al ganador. Con resultado (el elegido o el de chess-results): a
+  // quién retener o que esa persona no aplica y la mesa queda sin efecto. Lo mismo que decide la base al guardar
+  // (interno.fp_tras_resultado): esto solo lo adelanta en la pantalla.
+  const GANA = { "1": "blancas", "4": "blancas", "3": "negras", "5": "negras" };
+  // «Seis, Fio no aplica: se revisó en la ronda 2; …» → «se revisó en la ronda 2» (el de esa persona).
+  const motivoNoAplica = (texto, nombre) => {
+    const parte = String(texto || "").split("; ").find((x) => x.startsWith(nombre + " no aplica: "));
+    return parte ? parte.slice(nombre.length + " no aplica: ".length) : "ya se revisó";
+  };
+  function fairPlayDeMesa(fp, m, elegido) {
+    if (!fp) return null;
+    if (fp.estado === "revisada") return { tipo: "revisada", texto: "🛡 Fair Play: la revisión de esta mesa ya se hizo." };
+    const pendiente = elegido != null && elegido !== "" && elegido !== "0" && elegido !== "D" && elegido !== m.valor;
+    const valor = pendiente ? elegido : m.valor;
+    const antes = pendiente ? "con este resultado, " : "";
+    if (valor && valor !== "0" && valor !== "D") {
+      if (valor === "6") return { tipo: "no-aplica", texto: "🛡 Fair Play: " + antes + "no se jugó; la mesa queda sin efecto, no hay que retener a nadie." };
+      const color = valor === "2" ? fp.color_si_tablas : GANA[valor];
+      const nombre = (color === "blancas" ? m.blancas : m.negras) || (color === "blancas" ? "quien jugó con blancas" : "quien jugó con negras");
+      const aplica = color === "blancas" ? fp.aplica_blancas !== false : fp.aplica_negras !== false;
+      return aplica
+        ? { tipo: "retener", texto: "🛡 FAIR PLAY: " + antes + "retén a " + nombre + " (" + color + ") y no lo dejes salir del local: el árbitro de Fair Play pasa a revisarlo." }
+        : { tipo: "no-aplica", texto: "🛡 Fair Play: " + antes + nombre + " NO APLICA (" + motivoNoAplica(fp.no_aplica, nombre) + "). La mesa queda sin efecto: no hace falta retenerlo." };
+    }
+    return { tipo: "esperando", texto: "🛡 FAIR PLAY: cuando termine la partida, retén al GANADOR (si es tablas, a quien juega con " + fp.color_si_tablas + ") y no lo dejes salir del local. No se lo digas a nadie antes." + (fp.no_aplica ? " Ojo: " + fp.no_aplica + "; si gana esa persona, la mesa queda sin efecto." : "") };
+  }
+
+  const api = { fairPlayDeMesa, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

@@ -34,6 +34,7 @@
     const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
 
     let estado = null; // lo que contestó «leer»
+    let fairPlay = []; // sus mesas elegidas para Fair Play en la ronda (borde dorado), de centroamericano-fair-play
     let elegido = {}; // mesa → resultado elegido, todavía sin guardar
     let subiendo = new Set();
     let revisadas = {};
@@ -263,12 +264,16 @@
             M.RESULTADOS.filter((r) => r.valor !== "0" && !(r.valor === "D" && m.valor === "0")).map((r) => el("option", { value: r.valor, texto: r.texto })));
         sel.value = elegido[m.mesa] || "";
         const pendiente = elegido[m.mesa] != null && elegido[m.mesa] !== "" && elegido[m.mesa] !== m.valor;
-        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, tabindex: "-1", "aria-label": "Mesa " + m.mesa },
+        // Fair Play: la mesa elegida lleva un borde dorado que brilla y una banda que dice a quién retener (o que no aplica).
+        const fp = ((estado && estado.fair_play) || []).find((x) => x.mesa === m.mesa);
+        const fpTexto = C.fairPlayDeMesa(fp, m, elegido[m.mesa]);
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" : "") },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
                         icono("salvavidas"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
+            fpTexto ? el("p", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo, role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }) : null,
             bandas(m),
             bloqueJugador(m, "blancas"),
             bloqueJugador(m, "negras"),
@@ -1289,12 +1294,30 @@
         if (t) { t.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); t.focus({ preventScroll: true }); }
     }
 
+    // ------------------------------------------------------------- Fair Play: sus mesas elegidas
+    // Las pide a centroamericano-fair-play con SU token (no a centroamericano-mesa, para no volver a desplegarla en pleno
+    // torneo). Solo trae las suyas ya aprobadas; si no contesta, la tablet sigue igual. Ver «El sorteo de Fair Play» en
+    // docs/decisiones/juegos-y-torneos.md.
+    async function cargarFairPlay() {
+        if (!estado) return;
+        try {
+            const { data } = await sb.functions.invoke("centroamericano-fair-play", { body: { action: "mesas_arbitro", arbitro_token: token(), ronda: estado.ronda } });
+            if (!data || !data.ok) return;
+            if (JSON.stringify(data.mesas) === JSON.stringify(fairPlay)) return;
+            fairPlay = data.mesas || [];
+            if (estado) { estado.fair_play = fairPlay; pintar(); }
+        } catch (e) { /* sin red: se vuelve a intentar */ }
+    }
+
     // ------------------------------------------------------------- leer
 
     // Pone en pantalla lo que contestó «leer» (o la última lectura guardada en la tablet).
     function mostrar(d) {
         const cambioRonda = estado && estado.ronda !== d.ronda;
+        if (cambioRonda) fairPlay = [];
+        d.fair_play = fairPlay;
         estado = d;
+        cargarFairPlay();
         anuladas = new Set(d.anuladas || []);
         if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
         $("problema").hidden = true;
@@ -1600,6 +1623,7 @@
         $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
+        setInterval(() => { if (!document.hidden) cargarFairPlay(); }, 20000);
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) return;
             mantenerEncendida();

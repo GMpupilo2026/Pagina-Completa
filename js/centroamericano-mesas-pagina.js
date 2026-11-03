@@ -241,7 +241,7 @@
     let inicios = {};         // { "tnr|ronda": { inicio, arbitro } } del modo actual
     const horaDe = (iso) => window.HoraCR.hora(iso, { hour: "numeric", minute: "2-digit" });
 
-    // La ronda abierta de una categoría (también la usa el sorteo de Fair Play).
+    // La ronda abierta de una categoría.
     function rondaDeCategoria(tnr) {
         return Math.max(rondaDeFaltan || 0,
             ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
@@ -1476,7 +1476,6 @@
         if (tic % 10 === 0) tareas.push(cargarCopias(), cargarDrive());
         if (tic % 5 === 0 && !$("panel-planillas").hidden) tareas.push(cargarPlanillas());
         if (tic % 3 === 0 && !$("panel-tiempos").hidden) tareas.push(cargarTiempos());
-        if (tic % 3 === 0 && !$("panel-fairplay").hidden) tareas.push(window.CentroamericanoFairPlay.cargar());
         await Promise.all(tareas);
     }
 
@@ -1523,8 +1522,7 @@
         $("copia-ahora").addEventListener("click", copiaAhora);
         $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
         $("copia-archivo").addEventListener("change", restaurarArchivo);
-        window.CentroamericanoFairPlay.iniciar({ el, avisar, dentro, nombreTorneo, descargarPdf, rondaDe: rondaDeCategoria,
-            torneos: () => torneos, asignaciones: () => asignaciones });
+        window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);
