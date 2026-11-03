@@ -103,7 +103,7 @@
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
@@ -119,6 +119,7 @@
         if (nombre === "tiempos") cargarTiempos();
         if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
         if (nombre === "registro") cargarRegistro();
+        if (nombre === "fairplay") window.CentroamericanoFairPlay.cargar();
     }
     function teclaPestana(ev) {
         const i = PANELES.indexOf(ev.currentTarget.dataset.panel);
@@ -240,16 +241,24 @@
     let inicios = {};         // { "tnr|ronda": { inicio, arbitro } } del modo actual
     const horaDe = (iso) => window.HoraCR.hora(iso, { hour: "numeric", minute: "2-digit" });
 
+    // La ronda abierta de una categoría.
+    function rondaDeCategoria(tnr) {
+        return Math.max(rondaDeFaltan || 0,
+            ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
+            ...Object.values(inicios).filter((x) => x.tnr === tnr && x.inicio).map((x) => Number(x.ronda) || 0));
+    }
+
     function pintarInicio() {
         const H = window.CentroamericanoHorario;
         const lista = $("ir-lista");
         if (!H || !lista) return;
-        // La ronda de cada categoría es la de su avance (la que tiene abierta); sin avance, la que el resumen tiene abierta.
+        // La ronda de cada categoría es la MÁS ALTA que se sabe de ella: la de su avance, la que marcó su árbitro, la que el resumen
+        // tiene abierta. El avance guarda TODAS las rondas jugadas: tomar la primera fila que
+        // aparece daba una ronda vieja («Ronda 2: no marcó…» mientras el árbitro ya había marcado la 3; pasó el 3/11).
         const tnrs = [...new Set(asignaciones.map((x) => x.tnr))].filter(dentro)
             .sort((x, y) => torneos.findIndex((q) => q.tnr === x) - torneos.findIndex((q) => q.tnr === y));
         const filas = tnrs.map((tnr) => {
-            const f = progreso.map((x) => asig(x.asignacion_id)).find((x) => x && x.tnr === tnr);
-            const r = (progreso.find((x) => f && x.asignacion_id === f.id) || {}).ronda || rondaDeFaltan || 0;
+            const r = rondaDeCategoria(tnr);
             const ev = H.EVENTOS.find((e) => e.ronda === r), marca = inicios[tnr + "|" + r];
             const texto = !r ? "sin ronda abierta"
                 : marca ? "Ronda " + r + ": empezó a las " + horaDe(marca.inicio) + (marca.arbitro ? " (la marcó " + marca.arbitro + ")" : "")
@@ -1454,7 +1463,7 @@
         ponerTitulo();
         await cargarTorneos();
         await cargarAsignaciones();
-        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro()]);
+        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro(), window.CentroamericanoFairPlay.cargar()]);
         avisar(ensayo ? "Modo ensayo: ves solo los torneos de prueba." : "Volviste a los torneos reales.");
     }
 
@@ -1513,6 +1522,7 @@
         $("copia-ahora").addEventListener("click", copiaAhora);
         $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
         $("copia-archivo").addEventListener("change", restaurarArchivo);
+        window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);

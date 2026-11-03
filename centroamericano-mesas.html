@@ -32,11 +32,12 @@
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
         <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
-            <div class="flex items-center justify-between gap-4">
+            <div class="cam-cabeza-fila">
                 <div class="min-w-0">
                     <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
                     <h1 id="titulo-pagina" class="cac-titulo text-2xl sm:text-3xl md:text-4xl mt-3">Mesas de los árbitros<span class="block text-lg sm:text-xl md:text-2xl mt-1">Organización</span></h1>
                 </div>
+                <div class="cam-logo-centro" role="img" aria-label="Ajedrez Integral"><img src="img/logo-marca.png" width="155" height="96" alt=""><span aria-hidden="true">Ajedrez <span>Integral</span></span></div>
                 <img src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota shrink-0">
             </div>
         </div>
@@ -69,6 +70,7 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-fairplay" data-panel="fairplay" aria-controls="panel-fairplay" aria-selected="false" tabindex="-1"><span aria-hidden="true">🛡</span> Fair Play</button>
             </div>
 
             <div class="cam-contenido">
@@ -376,6 +378,12 @@
                 </div>
                 <p id="registro-vacio" class="cam-nota-vacia">Todavía no hay nada anotado.</p>
             </section>
+
+            <section id="panel-fairplay" role="tabpanel" aria-labelledby="pest-fairplay" class="cam-no-qr" hidden>
+                <h3 class="cam-subtitulo"><span aria-hidden="true">🛡</span> Fair Play</h3>
+                <!-- La arma js/centroamericano-fair-play.js: es la misma pantalla del encargado de Fair Play (centroamericano-fair-play.html). -->
+                <div id="fp-app" class="cam-fp-app"></div>
+            </section>
             </div>
 
             <!-- La barra de estado: siempre a la vista, como en un programa -->
@@ -413,6 +421,7 @@
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>
+    <script src="js/centroamericano-fair-play.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
 </body>
 </html>

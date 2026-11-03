@@ -60,7 +60,9 @@ function dobleOrganizacion(licencia) {
     { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
     { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
     { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+  // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
+    { asignacion_id: "asig-arb1", ronda: 2, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(400) },
     { asignacion_id: "asig-ana", ronda: 3, total: 15, con_resultado: 7, pendientes: [8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) },
     { asignacion_id: "asig-arb1", ronda: 3, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(20) },
     { asignacion_id: "asig-ensayo", ronda: 1, total: 15, con_resultado: 0, pendientes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) }];
@@ -100,7 +102,7 @@ function dobleOrganizacion(licencia) {
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_salidas: SALIDAS };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS };
   // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
   window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
   const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
@@ -144,7 +146,7 @@ function dobleOrganizacion(licencia) {
         mios.forEach((t) => { t.sid_en_boveda = true; t.acceso_tnr = b.tnr; t.clave_puesta = "2026-11-02T16:00:00Z"; });
         return Promise.resolve({ data: { ok: true, acceso: b.tnr, torneos: mios.map((t) => ({ tnr: t.tnr, nombre: t.nombre })), ronda: 1, mesas: 21, otros: [] }, error: null }); }
       if (b.action === "probar") return Promise.resolve({ data: { ok: true, torneo: "Sub-10 Absoluto", ronda: 2, mesas: 30 }, error: null });
-      if (b.action === "resumen") { PROGRESO[0].con_resultado = 9; PROGRESO[0].pendientes = [10, 11, 12, 13, 14, 15]; return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
+      if (b.action === "resumen") { { const pa = PROGRESO.find((x) => x.asignacion_id === "asig-ana" && x.ronda === 3); pa.con_resultado = 9; pa.pendientes = [10, 11, 12, 13, 14, 15]; } return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
       if (b.action === "drive_estado") return Promise.resolve({ data: { ok: true, conectado: window.__driveOk, pendientes: PLANILLAS.filter((x) => !x.drive_ok).length, ultima_copia: window.__driveOk ? hace(300) : null }, error: null });
       if (b.action === "drive_conectar") {
         if (b.secreto === "MALOMALOMALOMALOMALOMALOMALOMALOMALO") return Promise.resolve(err(400, "No se pudo conectar: secreto. No se guardó nada."));
@@ -930,9 +932,9 @@ const CONTRASTE = `(sel) => {
     const q = o.p;
     await q.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     await q.waitForSelector(".cam-pedido");
-    igual("se ve como un programa: barra de título, menú con ocho pestañas, contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
-        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro"], true, true, true]);
-    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false"]);
+    igual("se ve como un programa: barra de título, menú con nueve pestañas (la última, Fair Play), contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
+        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"], true, true, true]);
+    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false", "false"]);
     igual("el resumen dice cuánto le queda a cada árbitro, con las mesas que faltan", await q.$$eval("#resumen tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[2].textContent, tr.children[3].textContent.replace(/\s+/g, " ").trim(), tr.children[4].textContent, tr.dataset.estado])),
         [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
     igual("el resumen dice cuántos jugadores revisó cada árbitro y cuántos no han llegado", await q.$$eval("#resumen tr", (l) => l.map((tr) => tr.children[6].textContent)), ["2 de 30 · faltan 1", "Sin revisar"]);

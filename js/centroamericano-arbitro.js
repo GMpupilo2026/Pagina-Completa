@@ -34,6 +34,7 @@
     const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
 
     let estado = null; // lo que contestó «leer»
+    let fairPlay = []; // sus mesas elegidas para Fair Play en la ronda (borde dorado), de centroamericano-fair-play
     let elegido = {}; // mesa → resultado elegido, todavía sin guardar
     let subiendo = new Set();
     let revisadas = {};
@@ -53,6 +54,14 @@
     let sinSenal = false; // el último pedido no pudo salir por la red
 
     const token = () => (location.hash || "").replace(/^#(t=)?/, "").trim();
+
+    // El Rápido y el Blitz: «modo rápido» (null en el clásico). Ver ritmoRapido en js/centroamericano-mesas.js y «El Rápido
+    // y el Blitz: la mesa en un toque» en docs/decisiones/juegos-y-torneos.md.
+    const rapido = () => (estado ? C.ritmoRapido(estado.torneo, estado.ritmo) : null);
+    const minutosIlegal = () => C.minutosIlegal(rapido());
+    const textoMinutos = () => (minutosIlegal() === 1 ? "1 minuto" : "2 minutos");
+    // Los tres resultados de siempre, en botones grandes: un toque y se guarda.
+    const RAPIDOS = [{ valor: "1", texto: "1-0", ayuda: "ganan blancas" }, { valor: "2", texto: "½-½", ayuda: "tablas" }, { valor: "3", texto: "0-1", ayuda: "ganan negras" }];
 
     function el(tag, attrs, ...hijos) {
         const n = document.createElement(tag);
@@ -231,16 +240,16 @@
         for (const color of ["blancas", "negras"]) {
             const k = marcaDe(m.mesa, color);
             if (k.ilegales >= 2) {
-                const a = C.avisoIlegal(k.ilegales, nombreDe(m, color), color);
+                const a = C.avisoIlegal(k.ilegales, nombreDe(m, color), color, minutosIlegal());
                 const caja = el("div", { class: "cam-alerta", role: "alert", "data-nivel": "pierde" }, el("strong", { texto: a.titulo + ". " }), a.texto);
                 if (m.valor === "0") caja.append(el("div", { class: "cam-acciones" }, el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "poner-pierde", onclick: () => ponerResultado(m, a.resultado) },
                     "Poner el resultado: pierde " + (color === "blancas" ? "las blancas" : "las negras") + " (" + M.textoResultado(a.resultado) + ")")));
                 out.push(caja);
             } else if (k.ilegales === 1) {
-                const a = C.avisoIlegal(1, nombreDe(m, color), color);
+                const a = C.avisoIlegal(1, nombreDe(m, color), color, minutosIlegal());
                 // Una sola línea visible (el aviso completo lo oyen el lector de pantalla y el cuadro que salió al anotar): así la tarjeta no crece.
                 out.push(el("div", { class: "cam-aviso-suave", "data-nivel": "primera" },
-                    el("span", { class: "cam-aviso-corto", "aria-hidden": "true" }, el("strong", { texto: "Primera ilegal. " }), nombreDe(m, color) + ": 2 min más al rival; con otra, pierde."),
+                    el("span", { class: "cam-aviso-corto", "aria-hidden": "true" }, el("strong", { texto: "Primera ilegal. " }), nombreDe(m, color) + ": " + minutosIlegal() + " min más al rival; con otra, pierde."),
                     el("span", { class: "sr-only", texto: a.titulo + ". " + a.texto })));
             }
         }
@@ -259,23 +268,54 @@
             M.RESULTADOS.filter((r) => r.valor !== "0" && !(r.valor === "D" && m.valor === "0")).map((r) => el("option", { value: r.valor, texto: r.texto })));
         sel.value = elegido[m.mesa] || "";
         const pendiente = elegido[m.mesa] != null && elegido[m.mesa] !== "" && elegido[m.mesa] !== m.valor;
-        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, tabindex: "-1", "aria-label": "Mesa " + m.mesa },
+        // Fair Play: la mesa elegida lleva un borde dorado que brilla y una banda que dice a quién retener (o que no aplica).
+        const fp = ((estado && estado.fair_play) || []).find((x) => x.mesa === m.mesa);
+        const fpTexto = C.fairPlayDeMesa(fp, m, elegido[m.mesa]);
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" : "") },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
                         icono("salvavidas"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
-            // Los avisos de las ilegales van en una zona de altura reservada (vacía casi siempre): la tarjeta no cambia de forma al anotar.
-            el("div", { class: "cam-mesa-avisos" }, bandas(m)),
+            // Los avisos van en una zona de altura reservada (vacía casi siempre): la tarjeta no cambia de forma al anotar. Dentro: lo de Fair Play y las ilegales.
+            el("div", { class: "cam-mesa-avisos" },
+                fpTexto ? el("p", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo, role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }) : null,
+                bandas(m)),
             bloqueJugador(m, "blancas"),
             bloqueJugador(m, "negras"),
-            el("div", { class: "cam-resultado" },
+            rapido() ? resultadoRapido(m, sel, pendiente, ocupada, msg) : el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
-                el("div", { class: "cam-resultado-fila" }, sel,
-                    el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar")),
+                el("div", { class: "cam-resultado-fila" }, sel, botonGuardar(m, pendiente, ocupada)),
                 // El «✓ Guardado» o el error ocupa siempre su renglón (reservado): al guardar no se mueve nada.
                 msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto }) : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" })),
-            bloqueIconos(m, ocupada));
+            rapido() ? null : bloqueIconos(m, ocupada));
+    }
+
+    function botonGuardar(m, pendiente, ocupada) {
+        return el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar");
+    }
+
+    // En el Rápido y el Blitz: 1-0, ½-½ y 0-1 en botones grandes. Un toque GUARDA (sin «Guardar»): no hay tiempo para más.
+    // Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace guardar()). Cualquier otro
+    // (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
+    function resultadoRapido(m, sel, pendiente, ocupada, msg) {
+        const bloqueado = ocupada || !listaCompleta();
+        const botones = RAPIDOS.map((r) => el("button", {
+            type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(m.valor === r.valor),
+            disabled: bloqueado, title: listaCompleta() ? null : "Primero la revisión previa de la ronda",
+            "aria-label": (m.valor === r.valor ? "Guardado: " : "Guardar ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa,
+            onclick: () => { elegido[m.mesa] = r.valor; guardar(m); },
+        }, el("span", { class: "cam-rapido-valor", texto: r.texto }), el("span", { class: "cam-rapido-ayuda", texto: r.ayuda })));
+        const otroAbierto = pendiente && !RAPIDOS.some((r) => r.valor === elegido[m.mesa]);
+        return el("div", { class: "cam-resultado cam-resultado-rapido" },
+            el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
+            el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + ": un toque y se guarda" }, ...botones),
+            el("details", { class: "cam-rapido-otro", open: otroAbierto },
+                el("summary", { texto: "Otro resultado (a mano)" }),
+                el("div", { class: "cam-resultado-fila mt-2" }, sel, botonGuardar(m, pendiente, ocupada))),
+            ocupada ? el("p", { class: "cam-guardado cam-resultado-msg", role: "status", texto: "Guardando…" })
+                : msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto })
+                : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" }));
     }
 
     // ------------------------------------------------------------- los dos iconos de cada mesa: la cámara y el reloj
@@ -434,6 +474,7 @@
         const hay = estado.mesas.length > 0 && !estado.finalizada;
         caja.hidden = !hay || listaCompleta();
         if (caja.hidden) { caja.replaceChildren(); return; }
+        if (rapido()) { pintarListaRapida(caja); return; }
         const i = PASOS_LISTA.findIndex((x) => !listaOk().includes(x.id));
         const paso = PASOS_LISTA[i];
         caja.replaceChildren(
@@ -443,6 +484,32 @@
             el("p", { class: "mt-1", texto: paso.texto }),
             el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "aprobar-paso", class: "cam-btn", "data-paso": paso.id, onclick: () => aprobarPaso(paso) }, paso.boton)),
             el("p", { class: "cam-herramientas-nota mt-2", texto: "Hasta aprobar los dos pasos no se pueden guardar resultados de esta ronda." }));
+    }
+
+    // En el Rápido y el Blitz, la revisión previa es UN botón: relojes (con el ritmo de este torneo) y tableros. La función
+    // sigue pidiendo los dos pasos en orden: se aprueban uno detrás del otro.
+    function pintarListaRapida(caja) {
+        const ritmo = rapido() === "blitz" ? "el Blitz" : "el Rápido";
+        caja.replaceChildren(
+            el("h2", { id: "lista-titulo", class: "font-bold text-xl", texto: "Antes de la ronda " + estado.ronda + " de " + ritmo }),
+            el("p", { class: "mt-1", texto: "Relojes con el ritmo de " + ritmo + " y listos para las blancas; tableros bien orientados y con las 32 piezas en su lugar." }),
+            el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "aprobar-paso", class: "cam-btn", "data-paso": "todos", onclick: aprobarTodo }, "Relojes y tableros listos")),
+            el("p", { class: "cam-herramientas-nota mt-2", texto: "Hasta tocarlo no se pueden guardar resultados de esta ronda." }));
+    }
+    async function aprobarTodo() {
+        $("aprobar-paso").disabled = true;
+        try {
+            for (const paso of PASOS_LISTA) {
+                if (listaOk().includes(paso.id)) continue;
+                const d = await invocar("lista", { ronda: estado.ronda, paso: paso.id });
+                estado.lista = d.lista;
+            }
+            pintar();
+            avisar("Listo: ya puedes guardar resultados.");
+        } catch (e) {
+            avisar(e.message, true);
+            pintar();
+        }
     }
 
     async function aprobarPaso(paso) {
@@ -471,10 +538,11 @@
             caja.dataset.estado = "finalizada";
             caja.replaceChildren(
                 el("h2", { id: "revision-titulo", class: "font-bold text-xl", texto: "✓ Finalizaste la ronda " + estado.ronda }),
-                el("p", { class: "mt-2", texto: "A las " + hora(estado.finalizada) + ". Entrega las planillas ordenadas por mesa y firmadas. Si algún resultado cambia, avísale a la organización: ella puede reabrir tu ronda." }));
+                el("p", { class: "mt-2", texto: "A las " + hora(estado.finalizada) + ". " + (rapido() ? "" : "Entrega las planillas ordenadas por mesa y firmadas. ") + "Si algún resultado cambia, avísale a la organización: ella puede reabrir tu ronda." }));
             return;
         }
         caja.dataset.estado = "pendiente";
+        if (rapido()) { pintarRevisionRapida(caja); return; }
         const completas = () => ["rev-resultados", "rev-planillas", "rev-firmadas"].every((i) => revisadas[i]);
         // Lo marcado se recuerda: la página se vuelve a dibujar con cada lectura y no debe desmarcar nada.
         const casilla = (id, texto) => el("label", { class: "cam-check cam-check-revision" }, el("input", { type: "checkbox", id, class: "w-6 h-6", checked: !!revisadas[id], onchange: (e) => { revisadas[id] = e.target.checked; $("finalizar").disabled = !completas(); } }), el("span", { texto }));
@@ -496,7 +564,38 @@
             el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "finalizar", class: "cam-btn", disabled: !completas(), onclick: finalizarRonda }, "Finalizar la ronda " + estado.ronda)));
     }
 
+    // En el Rápido y el Blitz no hay planillas que juntar ni fotos: una sola confirmación, la de los resultados.
+    // La función pide las tres revisiones; esta confirmación las cubre (ver «El Rápido y el Blitz: la mesa en un toque»).
+    function pintarRevisionRapida(caja) {
+        const filas = estado.mesas.slice().sort((a, b) => a.mesa - b.mesa).map((m) => el("tr", {},
+            el("td", { texto: String(m.mesa) }), el("td", { texto: m.blancas + " – " + m.negras }), el("td", { texto: M.textoResultado(m.valor) })));
+        caja.replaceChildren(
+            el("h2", { id: "revision-titulo", class: "font-bold text-xl", texto: "Terminaste tus mesas: revisa y cierra la ronda" }),
+            el("div", { class: "cam-tabla-envoltura mt-3" }, el("table", { class: "cam-tabla" },
+                el("caption", { class: "sr-only", texto: "Resultados de tus mesas para revisar" }),
+                el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Partida" }), el("th", { scope: "col", texto: "Resultado" }))),
+                el("tbody", {}, ...filas))),
+            el("div", { class: "mt-3" }, el("label", { class: "cam-check cam-check-revision" },
+                el("input", { type: "checkbox", id: "rev-resultados", class: "w-6 h-6", checked: !!revisadas["rev-resultados"], onchange: (e) => { revisadas["rev-resultados"] = e.target.checked; $("finalizar").disabled = !e.target.checked; } }),
+                el("span", { texto: "Revisé que cada resultado es el que quedó en la mesa." }))),
+            el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "finalizar", class: "cam-btn", disabled: !revisadas["rev-resultados"], onclick: finalizarRonda }, "Finalizar la ronda " + estado.ronda)));
+    }
+
     async function finalizarRonda() {
+        if (rapido()) {
+            $("finalizar").disabled = true;
+            try {
+                const ok = $("rev-resultados").checked;
+                const d = await invocar("finalizar", { ronda: estado.ronda, revision: { resultados: ok, planillas: ok, firmadas: ok } });
+                estado.finalizada = d.finalizada_en;
+                pintar();
+                avisar("Ronda " + estado.ronda + " finalizada: la organización ya lo sabe.");
+            } catch (e) {
+                avisar(e.message, true);
+                $("finalizar").disabled = false;
+            }
+            return;
+        }
         const sigue = await Avisos.confirmar("Vas a finalizar la ronda " + estado.ronda + ". Antes de seguir: ¿revisaste todas las planillas, las ordenaste por mesa y están firmadas?", { titulo: "Finalizar la ronda", aceptar: "Sí, finalizar la ronda" });
         if (!sigue) return;
         $("finalizar").disabled = true;
@@ -522,6 +621,8 @@
     // Quien no está marcado «llegó» no ha llegado: no hay un botón de «no llegó» (se entiende por omisión).
     const llego = (mesa, color) => presenciaDe(mesa, color) === true;
     function pintarPresenciaResumen() {
+        // Rápido y Blitz: no se marca quién llegó (ver bloquePresencia).
+        if (rapido()) { $("presencia-resumen").textContent = ""; $("presencia-todos").hidden = true; return; }
         const total = estado.mesas.length * 2;
         const llegaron = estado.mesas.reduce((n, m) => n + (llego(m.mesa, "blancas") ? 1 : 0) + (llego(m.mesa, "negras") ? 1 : 0), 0);
         $("presencia-resumen").textContent = total ? "Han llegado " + llegaron + " de " + total + " jugadores" + (llegaron < total ? " · faltan " + (total - llegaron) : "") + "." : "";
@@ -562,6 +663,9 @@
     // Solo hay un botón: «Llegó». Sin marcar se entiende que no ha llegado. Al marcarlo, el botón desaparece y queda su estado con un
     // «Corregir» chico (por si fue un toque equivocado: lo vuelve a poner como que no ha llegado).
     function bloquePresencia(m, color) {
+        // En el Rápido y el Blitz no se marca quién llegó: la tolerancia es su propio reloj (pierde cuando le cae la bandera), así que
+        // no hay presencia, ni cuenta de espera, ni «Inició la ronda». Una incomparecencia se pone a mano en «Otro resultado».
+        if (rapido()) return null;
         const v = llego(m.mesa, color);
         const nombre = nombreDe(m, color);
         const texto = v ? "✓ Llegó" : "✗ No ha llegado";
@@ -582,6 +686,7 @@
         return e.enCurso && e.ronda === estado.ronda ? e.hasta.getTime() : null;
     }
     function cuentaDe(m, color) {
+        if (rapido()) return null;
         const fin = finDeLaEspera();
         if (fin == null || llego(m.mesa, color) || m.valor !== "0" || concluida()) return null;
         return el("span", { class: "cam-cuenta", role: "timer", "data-fin": String(fin), "aria-label": "Tiempo de espera de " + nombreDe(m, color) }, "");
@@ -842,6 +947,7 @@
     function pintarEspera() {
         const H = window.CentroamericanoHorario;
         if (!H) return;
+        if (rapido()) { $("espera").textContent = ""; $("espera-alerta").hidden = true; return; }
         const e = H.estado(new Date(), iniciosMarcados());
         let t = "";
         if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
@@ -871,7 +977,7 @@
         if (!caja) return;
         const H = window.CentroamericanoHorario;
         const r = estado && estado.ronda, ev = H && r ? H.EVENTOS.find((e) => e.ronda === r) : null;
-        caja.hidden = !estado || !r || concluida();
+        caja.hidden = !estado || !r || concluida() || !!rapido();
         if (caja.hidden) return;
         const m = estado.inicio_ronda && estado.inicio_ronda.inicio ? estado.inicio_ronda : null;
         caja.dataset.marcada = m ? "si" : "no";
@@ -1056,7 +1162,14 @@
     }
 
     function pintarCabecera() {
-        $("titulo-torneo").textContent = estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo;
+        const r = rapido();
+        $("titulo-torneo").textContent = (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) + (r && estado.categoria ? (r === "blitz" ? " · Blitz" : " · Rápido") : "");
+        // Modo rápido: sin control de tiempos (no se anotan en el Rápido ni en el Blitz) y la regla con sus minutos.
+        document.body.dataset.ritmo = r || "clasico";
+        $("abrir-tiempos").hidden = !!r;
+        $("regla-minutos").textContent = textoMinutos();
+        $("modo-rapido").hidden = !r;
+        if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
         $("d-arbitro").textContent = estado.arbitro;
         $("d-ronda").textContent = "Ronda " + estado.ronda;
         $("d-mesas").textContent = "Mesas " + estado.desde + " a " + estado.hasta;
@@ -1199,12 +1312,30 @@
         if (t) { t.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); t.focus({ preventScroll: true }); }
     }
 
+    // ------------------------------------------------------------- Fair Play: sus mesas elegidas
+    // Las pide a centroamericano-fair-play con SU token (no a centroamericano-mesa, para no volver a desplegarla en pleno
+    // torneo). Solo trae las suyas ya aprobadas; si no contesta, la tablet sigue igual. Ver «El sorteo de Fair Play» en
+    // docs/decisiones/juegos-y-torneos.md.
+    async function cargarFairPlay() {
+        if (!estado) return;
+        try {
+            const { data } = await sb.functions.invoke("centroamericano-fair-play", { body: { action: "mesas_arbitro", arbitro_token: token(), ronda: estado.ronda } });
+            if (!data || !data.ok) return;
+            if (JSON.stringify(data.mesas) === JSON.stringify(fairPlay)) return;
+            fairPlay = data.mesas || [];
+            if (estado) { estado.fair_play = fairPlay; pintar(); }
+        } catch (e) { /* sin red: se vuelve a intentar */ }
+    }
+
     // ------------------------------------------------------------- leer
 
     // Pone en pantalla lo que contestó «leer» (o la última lectura guardada en la tablet).
     function mostrar(d) {
         const cambioRonda = estado && estado.ronda !== d.ronda;
+        if (cambioRonda) fairPlay = [];
+        d.fair_play = fairPlay;
         estado = d;
+        cargarFairPlay();
         anuladas = new Set(d.anuladas || []);
         if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
         $("problema").hidden = true;
@@ -1305,7 +1436,7 @@
         if (!valor || valor === m.valor) return;
         if (m.valor !== "0") {
             const sigue = await Avisos.confirmar("La mesa " + m.mesa + " ya tiene «" + M.textoResultado(m.valor) + "» en chess-results. ¿Cambiarlo a «" + M.textoResultado(valor) + "»?", { titulo: "Cambiar un resultado", aceptar: "Sí, cambiarlo" });
-            if (!sigue) return;
+            if (!sigue) { if (rapido()) { delete elegido[m.mesa]; pintar(); } return; }
         }
         const antes = m.valor;
         ocupadas.add(m.mesa);
@@ -1354,11 +1485,13 @@
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
         const segunda = k.ilegales >= 1;
-        const t = await elegirTipo(
+        // En el Rápido y el Blitz no hay tiempo para elegir cuál fue: un toque la anota (y cuenta igual para el art. 7.5.5).
+        // Un toque por error se deshace con «Anular la última ilegal».
+        const t = rapido() ? { texto: "Jugada ilegal (" + (rapido() === "blitz" ? "Blitz" : "Rápido") + ": sin elegir el tipo)" } : await elegirTipo(
             "Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")",
             segunda
                 ? "Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. 7.5.5)."
-                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan 2 minutos más a su rival (art. 7.5.5).",
+                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan " + textoMinutos() + " más a su rival (art. 7.5.5).",
             C.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda);
         if (!t) return;
         ocupadas.add(m.mesa);
@@ -1371,17 +1504,17 @@
                 estado.marcas[clave(m.mesa, color)] = marca;
                 sumarAnotacion(m, color, "ilegal", r.id, nombre, t.texto);
                 pintar();
-                const a = C.avisoIlegal(marca.ilegales, nombre, color);
-                await Avisos.alerta("Sin señal: quedó anotada en la tablet y se manda sola cuando vuelva la conexión. " + a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale 2 minutos al rival", aceptar: "Entendido" });
+                const a = C.avisoIlegal(marca.ilegales, nombre, color, minutosIlegal());
+                await Avisos.alerta("Sin señal: quedó anotada en la tablet y se manda sola cuando vuelva la conexión. " + a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale " + textoMinutos() + " al rival", aceptar: "Entendido" });
                 return;
             }
             const d = r.d;
             estado.marcas[clave(m.mesa, color)] = d.marca;
             sumarAnotacion(m, color, "ilegal", d.id, d.jugador || nombre, t.texto);
-            const a = C.avisoIlegal(d.marca.ilegales, d.jugador || nombre, color);
+            const a = C.avisoIlegal(d.marca.ilegales, d.jugador || nombre, color, minutosIlegal());
             pintar();
-            // Las dos se avisan con un cuadro que no se pasa por alto: la primera recuerda los 2 minutos.
-            await Avisos.alerta(a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale 2 minutos al rival", aceptar: "Entendido" });
+            // Las dos se avisan con un cuadro que no se pasa por alto: la primera recuerda los minutos (1 en el blitz).
+            await Avisos.alerta(a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale " + textoMinutos() + " al rival", aceptar: "Entendido" });
         } catch (e) {
             avisar(e.message, true);
         } finally {
@@ -1510,6 +1643,7 @@
         $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
+        setInterval(() => { if (!document.hidden) cargarFairPlay(); }, 20000);
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) return;
             mantenerEncendida();
