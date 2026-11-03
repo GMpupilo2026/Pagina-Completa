@@ -475,6 +475,29 @@ seguridad de Supabase o de Sentry, nadie se entera.
   (`@huggingface/transformers@3.3.3`, desde jsDelivr): va con la versión
   exacta, que en npm no se puede volver a publicar, pero sin `integrity`.
 
+## Cuántas personas entran: Cloudflare Web Analytics, sin cookies
+
+El dueño preguntó el 3/11/2026, con el Centroamericano empezado, cuántas
+personas entraban a la página, y el sitio no lo podía decir: no había ningún
+contador, a propósito (nada de Google Analytics). Lo que sí estaba en la base
+(celulares con avisos, cuentas gratis abiertas) no cuenta visitas.
+
+- **Cloudflare Web Analytics, en modo automático**: Cloudflare ya sirve el
+  sitio y mete él mismo, en cada página HTML, su `beacon.min.js` (un script
+  externo de `static.cloudflareinsights.com` que manda a
+  `cloudflareinsights.com`). No va escrito en ninguna página ni en ningún
+  generador, y no hace falta su token en el repositorio. **Se enciende y se
+  apaga en el panel de Cloudflare** (Analytics & Logs → Web Analytics, el
+  sitio `ajedrez-integral.com`, «Enable» con la instalación automática).
+- La CSP de `_headers` le abre solo esas dos direcciones: el script en
+  `script-src` y el envío en `connect-src`. Sin ellas el navegador bloquea el
+  script sin avisar a nadie y el panel se queda en cero.
+- **No usa cookies ni guarda nada en el aparato** y no sigue a nadie de un
+  sitio a otro: cuenta visitas, páginas, país, aparato y navegador. Por eso
+  no hace falta ningún aviso de cookies; sí va en la lista de proveedores de
+  `privacidad.html` (en Cloudflare), y la frase «no hay rastreadores … de
+  estadísticas» se cambió por lo que de verdad pasa.
+
 ## Los errores de la gente llegan a Sentry
 
 Hasta acá, cuando algo se caía en la computadora o el celular de alguien —un
