@@ -47,8 +47,10 @@
 //   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
 //                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
 //   "presencia" { ronda, mesa, color, presente } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan)
-//   "presencia_todos" { ronda }          -> marca que llegaron TODOS los jugadores de sus mesas que todavía no tienen marca (a quien ya marcó
-//                                             «llegó» o «no ha llegado» no lo pisa): el atajo para arrancar la ronda
+//   "presencia_todos" { ronda }          -> marca que llegaron TODOS los jugadores de sus mesas que todavía no están marcados «llegó» (incluye a los que
+//                                             estaban «no ha llegado»): el atajo para arrancar la ronda cuando llegaron juntos
+//   "presencia_ausentes" { ronda }       -> anota «no ha llegado» a los jugadores de sus mesas que no tienen ninguna marca (la tablet lo manda una vez
+//                                             cuando empieza la ronda de su categoría; así la organización los ve). Nunca pisa una marca
 //   "tiempo"  { ronda, mesa, t_blancas, j_blancas, t_negras, j_negras, nota?, ocurrio? } -> una lectura del control de tiempos de una partida
 //                                             sin terminar: lo que marca el reloj de cada color y las jugadas que lleva. Queda en la
 //                                             tabla de tiempos Y como una línea («nota») en la bitácora de la mesa. (Aún acepta la
@@ -176,7 +178,7 @@ Deno.serve(async (req) => {
 
   // «Ya terminé mis labores»: con el enlace concluido el árbitro solo lee y baja su bitácora. Escribir (resultados, anotaciones,
   // presencia, tiempos, fotos, la lista previa, finalizar, pedir ayuda, el nombre) se rechaza AQUÍ, no en la pantalla.
-  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos"];
+  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos", "presencia_ausentes"];
   if (a.concluyo_en && ESCRIBE.includes(String(cuerpo.action))) {
     return json({ error: "Ya concluiste tus labores: ya no puedes anotar ni guardar. Puedes bajar tu bitácora. Si necesitas seguir, pide a la organización que las reabra.", concluido: true }, 409);
   }
@@ -438,22 +440,29 @@ Deno.serve(async (req) => {
       return json({ ok: true, mesa, color, presente: cuerpo.presente, jugador });
     }
 
-    if (cuerpo.action === "presencia_todos") {
+    // Las dos acciones de abajo marcan a TODOS los de sus mesas de una vez. Los nombres salen de chess-results y solo se toca SU rango.
+    //   presencia_todos    -> «llegó» a todos los que no estén ya marcados «llegó» (los «no ha llegado» pasan a «llegó»).
+    //   presencia_ausentes -> «no ha llegado» a los que no tienen ninguna marca (no pisa ni «llegó» ni «no ha llegado»).
+    if (cuerpo.action === "presencia_todos" || cuerpo.action === "presencia_ausentes") {
+      const todos = cuerpo.action !== "presencia_ausentes";
       const ronda = Number(cuerpo.ronda);
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
-      // Los nombres salen de chess-results; solo SUS mesas. `ignoreDuplicates`: lo que ya tiene marca (llegó o no) no se toca.
       const ahora = new Date().toISOString();
-      const filas = p.mesas.filter((m) => enRango(m.mesa)).flatMap((m) => [
-        { asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa: m.mesa, color: "blancas", jugador: m.blancas.slice(0, 120), presente: true, marcada: ahora },
-        { asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa: m.mesa, color: "negras", jugador: m.negras.slice(0, 120), presente: true, marcada: ahora },
-      ]);
-      if (!filas.length) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
-      const { data: nuevas, error } = await servicio.from("centroamericano_presencia").upsert(filas, { onConflict: "tnr,ronda,mesa,color", ignoreDuplicates: true }).select("mesa, color");
-      if (error) { console.error("centroamericano-mesa: presencia_todos", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
-      return json({ ok: true, marcados: (nuevas ?? []).length });
+      const mesasMias = p.mesas.filter((m) => enRango(m.mesa));
+      if (!mesasMias.length) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
+      const { data: previas } = await servicio.from("centroamericano_presencia").select("mesa, color, presente").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
+      const marcada = new Map((previas ?? []).map((x: { mesa: number; color: string; presente: boolean }) => [x.mesa + "|" + x.color, x.presente]));
+      const filas = mesasMias.flatMap((m) => (["blancas", "negras"] as const).map((color) => ({ m, color })))
+        .filter(({ m, color }) => (todos ? marcada.get(m.mesa + "|" + color) !== true : !marcada.has(m.mesa + "|" + color)))
+        .map(({ m, color }) => ({ asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa: m.mesa, color, jugador: (color === "blancas" ? m.blancas : m.negras).slice(0, 120), presente: todos, marcada: ahora }));
+      if (filas.length) {
+        const { error } = await servicio.from("centroamericano_presencia").upsert(filas, { onConflict: "tnr,ronda,mesa,color", ignoreDuplicates: !todos });   // «ausentes» nunca pisa una marca (ni la que llegue mientras tanto)
+        if (error) { console.error("centroamericano-mesa: presencia (varios jugadores)", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+      }
+      return json({ ok: true, marcados: filas.length });
     }
 
     if (cuerpo.action === "tiempo") {

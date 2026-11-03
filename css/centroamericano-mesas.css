@@ -594,3 +594,22 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-apagado-titulo { font-weight: 800; font-size: 1.1rem; margin-bottom: 0.4rem; }
 .cam-apagado-form { max-width: 34rem; }
 .dark .cam-apagado-org { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }
+
+/* El cronómetro de espera junto al nombre del jugador que no ha llegado y, al llegar a cero, el nombre resaltado (solo una guía). */
+.cam-cuenta { font-weight: 800; font-size: 0.9rem; font-variant-numeric: tabular-nums; padding: 0.1rem 0.45rem; border-radius: 999px; background: #eef0fb; color: var(--cac-morado-hondo); white-space: nowrap; }
+.dark .cam-cuenta { background: rgb(255 255 255 / 0.12); color: #fff; }
+.cam-jugador[data-vencido="si"] .cam-nombre { background: #fff1bf; box-shadow: 0 0 0 3px #ffd66b; border-radius: 0.4rem; padding: 0.1rem 0.35rem; }
+.dark .cam-jugador[data-vencido="si"] .cam-nombre { background: rgb(255 193 7 / 0.22); box-shadow: 0 0 0 3px rgb(255 193 7 / 0.55); }
+.cam-jugador[data-vencido="si"] .cam-cuenta { background: #ffd66b; color: #3a2a00; }
+.cam-cuenta-guia { margin: 0.3rem 0 0; font-weight: 700; font-size: 0.9rem; color: #7a3d00; }
+.dark .cam-cuenta-guia { color: #ffd9a0; }
+@media (prefers-reduced-motion: no-preference) { .cam-jugador[data-vencido="si"] .cam-nombre { animation: cam-brillo 2.4s ease-in-out infinite; } }
+@keyframes cam-brillo { 0%, 100% { box-shadow: 0 0 0 3px #ffd66b; } 50% { box-shadow: 0 0 0 6px rgb(255 214 107 / 0.45); } }
+
+/* El resultado elegido (todavía sin guardar): el jugador que gana se ilumina y parpadea, y los dos en tablas, para confirmar que se eligió bien. */
+.cam-gana { font-weight: 800; font-size: 0.85rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: #1f774c; color: #fff; white-space: nowrap; }
+.dark .cam-gana { background: #9be0bb; color: #0a3d22; }
+.cam-jugador[data-elegido] .cam-nombre { background: #d8f5e3; box-shadow: 0 0 0 3px #2fa46a; border-radius: 0.4rem; padding: 0.1rem 0.35rem; }
+.dark .cam-jugador[data-elegido] .cam-nombre { background: rgb(47 164 106 / 0.28); box-shadow: 0 0 0 3px #4fd18b; }
+@media (prefers-reduced-motion: no-preference) { .cam-jugador[data-elegido] .cam-nombre { animation: cam-elegido 0.9s ease-in-out infinite; } }
+@keyframes cam-elegido { 0%, 100% { box-shadow: 0 0 0 3px #2fa46a; } 50% { box-shadow: 0 0 0 8px rgb(47 164 106 / 0.3); } }

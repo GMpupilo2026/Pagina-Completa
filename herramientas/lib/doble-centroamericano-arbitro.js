@@ -36,7 +36,7 @@ const SERVIDOR_ARBITRO = `
   window.__servidor = (b) => {
     if (b.token !== TOKEN && b.token !== TOKEN_B) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
     // «Ya terminé mis labores»: con el enlace concluido la función rechaza todo lo que escribe.
-    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
+    if (window.__concluyo && ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos", "presencia_ausentes"].includes(b.action)) return falla(409, "Ya concluiste tus labores: ya no puedes anotar ni guardar.");
     // «Inició la ronda» (la categoría del árbitro): como la función, guarda la hora que manda la tablet (no del futuro) o la quita.
     if (b.action === "inicio") {
       window.__inicioArgs = (window.__inicioArgs || []).concat([{ ronda: b.ronda, inicio: b.inicio === undefined ? undefined : b.inicio, quitar: b.quitar === true }]);
@@ -65,14 +65,17 @@ const SERVIDOR_ARBITRO = `
         presencia: window.__presencia.map((x) => Object.assign({ tnr: "1529737", ronda: 3, jugador: "Jugador", asignacion_id: "a1" }, x)),
         planillas: [{ tnr: "1529740", ronda: 2, mesa: 5, jugador: "C", rival: "D", subida: "2026-11-02T15:00:00Z", drive_ok: true, asignacion_id: "a2" }],
         finales: [{ ronda: 2, finalizada_en: "2026-11-02T15:40:00Z", reabierta: false, asignacion_id: "a2" }], listas: [], avisos: [] }, error: null }; }
-    // «Llegaron todos»: marca a los que no tienen marca (como la función: no pisa a quien ya está marcado).
-    if (b.action === "presencia_todos") {
-      window.__todosArgs = (window.__todosArgs || []).concat([{ ronda: b.ronda }]);
+    // «Llegaron todos» / «los ausentes»: como la función. presencia_todos pone «llegó» a todos los que no lo estén; presencia_ausentes pone
+    // «no ha llegado» solo a los que no tienen marca (no pisa ninguna).
+    if (b.action === "presencia_todos" || b.action === "presencia_ausentes") {
+      const todos = b.action === "presencia_todos";
+      window[todos ? "__todosArgs" : "__ausentesArgs"] = (window[todos ? "__todosArgs" : "__ausentesArgs"] || []).concat([{ ronda: b.ronda }]);
       if (b.ronda !== 3) return falla(409, "La ronda abierta en chess-results es la 3, no la " + b.ronda + ". Actualiza la página.");
       let n = 0;
       for (const m of MESAS) for (const color of ["blancas", "negras"]) {
-        if (window.__presencia.some((x) => x.mesa === m.mesa && x.color === color)) continue;
-        window.__presencia.push({ mesa: m.mesa, color, presente: true, marcada: "2026-11-02T15:40:00Z" }); n++;
+        const f = window.__presencia.find((x) => x.mesa === m.mesa && x.color === color);
+        if (todos) { if (f && f.presente) continue; if (f) f.presente = true; else window.__presencia.push({ mesa: m.mesa, color, presente: true, marcada: "2026-11-02T15:40:00Z" }); n++; }
+        else if (!f) { window.__presencia.push({ mesa: m.mesa, color, presente: false, marcada: "2026-11-02T15:40:00Z" }); n++; }
       }
       return { data: { ok: true, marcados: n }, error: null }; }
     if (b.action === "presencia") {
