@@ -182,6 +182,9 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     // El reloj de la página arranca a las 8:00 a. m. del 3 de noviembre (antes de la ronda 3) y sigue corriendo: la página compara con el
     // calendario REAL del torneo (rondas, tolerancia de 30 min), así que sin esto la prueba fallaba solo si se corría DURANTE una ronda.
     await ctx.addInitScript((base) => { const R = Date; const off = base - R.now(); class F extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + off); } static now() { return R.now() + off; } } window.Date = F; }, Date.parse("2026-11-03T14:00:00Z"));
+    // El botón fijo «¿Dónde juega?» queda encima de lo que haya abajo a la derecha: para que no estorbe a las demás pruebas (que hacen clic en
+    // cualquier parte de la página) arranca sin recibir clics; las pruebas de la lupa se lo devuelven (`conFab`).
+    await ctx.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab { pointer-events: none !important; }"; document.head.append(e); }); });
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
@@ -618,51 +621,84 @@ const CONTRASTE = `(sel) => {
     await p.waitForFunction(() => document.getElementById("revision").dataset.estado === "finalizada");
     igual("finalizada: la función recibió las tres confirmaciones y la página lo dice", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "finalizar").map((l) => l.body.revision), document.querySelector("#revision h2").textContent]), [[{ resultados: true, planillas: true, firmadas: true }], "✓ Finalizaste la ronda 3"]);
 
-    // El pizote es un botón: abre los emparejamientos de TODAS las categorías para ayudar a un atleta a encontrar su mesa.
-    console.log("\n=== «Todas las mesas»: el pizote abre los emparejamientos de todas las categorías ===");
-    igual("el pizote es un botón con nombre accesible y una pista escrita", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [b.tagName, b.getAttribute("aria-label"), b.querySelector(".cam-mascota-pista").textContent, b.getBoundingClientRect().height >= 44]; }),
-        ["BUTTON", "Ver los emparejamientos de todas las categorías", "Todas las mesas", true]);
+    // «¿Dónde juega?»: la lupa. Un botón fijo que abre un buscador de TODAS las categorías a la vez (una sola respuesta de la función, ya en
+    // memoria al abrir), con tarjetas grandes y «Mostrar al atleta» a pantalla completa. El pizote de la portada abre lo mismo.
+    console.log("\n=== «¿Dónde juega?»: la lupa busca en todas las categorías a la vez ===");
+    await p.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); });
+    igual("hay un botón fijo «🔎 ¿Dónde juega?»: visible, abajo a la derecha, de 56 px o más; y el pizote es otro botón con nombre accesible", await p.evaluate(() => { const f = document.getElementById("donde-juega"), r = f.getBoundingClientRect(), z = document.getElementById("ver-todas-mesas"); return [f.checkVisibility(), getComputedStyle(f).position, r.height >= 56, r.right > innerWidth / 2, r.bottom > innerHeight / 2, f.textContent.trim(), z.tagName, z.getAttribute("aria-label")]; }),
+        [true, "fixed", true, true, true, "🔎 ¿Dónde juega?", "BUTTON", "Buscar dónde juega un atleta, en todas las categorías"]);
+    igual("la página ya trajo todas las categorías al cargar (una sola vez): al abrir la lupa no hay que esperar", await p.evaluate(() => [window.CentroamericanoEmparejamientos.estado() !== null, window.__llamadas.filter((l) => l.body.action === "todas_mesas").length]), [true, 1]);
+    await p.click("#donde-juega");
+    await p.waitForSelector("#donde-juega-hoja[open]");
+    igual("abre una ventana modal con el cursor en el buscador (listo para escribir), las categorías y lo que falta: la que no tiene pareo y los datos de hace unos minutos", await p.evaluate(() => [document.getElementById("donde-juega-hoja").matches(":modal"), document.activeElement.id, [...document.querySelectorAll("#donde-juega-hoja .cam-dj-chips button")].map((b) => b.textContent + "|" + b.getAttribute("aria-pressed")), /todavía sin pareo: Sub-14 Femenino/.test(document.getElementById("dj-estado").textContent), /datos de hace unos minutos/.test(document.getElementById("dj-estado").textContent), document.querySelector('label[for="dj-buscar"]').textContent]),
+        [true, "dj-buscar", ["Todas|true", "Sub-10 Femenino|false", "Sub-12 Absoluto|false", "Sub-14 Femenino|false"], true, true, "Apellido o nombre del atleta, o número de mesa"]);
+    const tarj = () => p.$$eval("#dj-res .cam-dj-tarj", (l) => l.map((t) => [t.dataset.mesa, t.querySelector(".cam-dj-nombre").textContent, t.querySelector(".cam-dj-cat").textContent]));
+    await p.fill("#dj-buscar", "maria jose");
+    igual("«maria jose» (sin tildes ni comas) encuentra a «Árias Núñez, María José» en su categoría, sin elegir categoría", await tarj(), [["1", "Árias Núñez, María José", "Sub-12 Absoluto"]]);
+    igual("la tarjeta dice la mesa, el color, el rival, la ronda y la hora, con el color de su categoría", await p.evaluate(() => { const t = document.querySelector("#dj-res .cam-dj-tarj"); return [t.querySelector(".cam-dj-num").textContent, /^Blancas · contra Zúñiga Rojas, Pedro · Ronda 3 · 9:00/.test(t.querySelector(".cam-dj-sub").textContent), t.style.getPropertyValue("--c"), parseFloat(getComputedStyle(t.querySelector(".cam-dj-num")).fontSize) >= 40, t.querySelector(".cam-dj-mostrar").textContent]; }),
+        ["MESA1", true, "#8f5200", true, "Mostrar al atleta"]);
+    await p.fill("#dj-buscar", "hopkins");
+    igual("un atleta de OTRA categoría sale igual: no hay que saber en cuál juega", await tarj(), [["3", "Hopkins John", "Sub-10 Femenino"]]);
+    await p.fill("#dj-buscar", "mora");
+    igual("«mora» encuentra a todos los Mora de todas las categorías", (await tarj()).map((x) => x[0] + ":" + x[1].split(",")[0]), ["2:Jiménez Mora", "15:Mora Ugalde"]);
+    await p.fill("#dj-buscar", "mroa");
+    igual("perdona un error de tecleo (letras cambiadas de lugar): «mroa» encuentra a «Mora»", (await tarj()).map((x) => x[0]), ["2", "15"]);
+    await p.fill("#dj-buscar", "castro luis");
+    igual("las palabras van en cualquier orden", (await tarj()).map((x) => x[1]), ["Castro Vega, Luis"]);
+    await p.fill("#dj-buscar", "1");
+    igual("un número es una mesa: «1» sale de cada categoría, no la 15", (await tarj()).map((x) => x[0] + "|" + x[2]), ["1|Sub-10 Femenino", "1|Sub-10 Femenino", "1|Sub-12 Absoluto", "1|Sub-12 Absoluto"]);
+    await p.fill("#dj-buscar", "nadie asi");
+    igual("sin coincidencias lo dice con palabras", await p.textContent("#dj-res"), "Nadie coincide con «nadie asi». Prueba con solo el apellido.");
+    await p.fill("#dj-buscar", "");
+    await p.click('#donde-juega-hoja [data-tnr="1529738"]');
+    igual("sin escribir y con una categoría elegida: todas sus mesas en una lista corta", await p.$$eval("#dj-res tbody tr", (t) => t.map((x) => x.dataset.mesa)), ["1", "2", "15"]);
+    await p.click('#donde-juega-hoja [data-tnr="1529739"]');
+    igual("una categoría sin pareo lo dice", await p.textContent("#dj-res"), "Esta categoría todavía no tiene pareo.");
+    await p.click('#donde-juega-hoja [data-tnr=""]');
+    await p.fill("#dj-buscar", "camila");
+    await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
+    await p.waitForSelector("#donde-juega-grande[open]");
+    igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
+        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, g.querySelector(".cam-dj-ginfo").firstChild.textContent, g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
+        [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
+    await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
+    await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
+    igual("cerrar la quita del todo y devuelve el foco al botón", await p.evaluate(() => [!!document.getElementById("donde-juega-hoja"), document.activeElement && document.activeElement.id]), [false, "donde-juega"]);
+    await p.click("#donde-juega");
+    await p.waitForSelector("#donde-juega-hoja[open]");
+    igual("al abrirla otra vez ofrece volver a la última búsqueda (la que se mostró al atleta)", await p.evaluate(() => [document.querySelector('[data-accion="dj-ultima"]').textContent, document.querySelector('[data-accion="dj-ultima"]').hidden]), ["Volver a buscar «camila»", false]);
+    await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
+    // Sin señal: la lupa sigue buscando con lo último que se leyó y lo dice (con palabras y en rojo).
+    await p.evaluate(() => { window.__todasFalla = true; });
+    await p.click("#donde-juega");
+    await p.waitForSelector("#donde-juega-hoja[open]");
+    await p.waitForFunction(() => /^Sin señal: son las mesas de hace/.test(document.getElementById("dj-estado").textContent), null, { timeout: 20000 });
+    await p.fill("#dj-buscar", "hopkins");
+    igual("sin señal sigue buscando con lo último que se leyó y lo dice en rojo, con palabras", await p.evaluate(() => [document.querySelectorAll("#dj-res .cam-dj-tarj").length, /^Sin señal: son las mesas de hace/.test(document.getElementById("dj-estado").textContent), document.getElementById("dj-estado").classList.contains("cam-fallo")]), [1, true, true]);
+    await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
+    await p.evaluate(() => { window.__todasFalla = false; });
     await p.click("#ver-todas-mesas");
-    await p.waitForSelector("#todas-las-mesas[open] .cam-todas-tabla tbody tr[data-mesa]");
-    igual("abre una ventana con las tres categorías (la suya marcada) y las mesas de la suya", await p.evaluate(() => [[...document.querySelectorAll("#todas-las-mesas .cam-todas-chips button")].map((b) => b.textContent + "|" + b.getAttribute("aria-pressed")), [...document.querySelectorAll("#tlm-filas tr")].map((t) => t.dataset.mesa)]),
-        [["Sub-10 Femenino (la tuya)|true", "Sub-12 Absoluto|false", "Sub-14 Femenino|false"], ["1", "2", "3"]]);
-    igual("la ventana es modal y trae el buscador con su etiqueta", await p.evaluate(() => [document.getElementById("todas-las-mesas").matches(":modal"), document.querySelector('label[for="tlm-buscar"]').textContent]), [true, "Buscar atleta o mesa"]);
-    await p.click('#todas-las-mesas [data-tnr="1529738"]');
-    await p.waitForFunction(() => [...document.querySelectorAll("#tlm-filas tr")].some((t) => t.dataset.mesa === "15"));
-    igual("al elegir otra categoría salen SUS mesas, con la ronda escrita", await p.evaluate(() => [[...document.querySelectorAll("#tlm-filas tr")].map((t) => t.dataset.mesa), /^Ronda 3 · 3 mesas/.test(document.getElementById("tlm-estado").textContent), document.querySelector('#todas-las-mesas [data-tnr="1529738"]').getAttribute("aria-pressed")]), [["1", "2", "15"], true, "true"]);
-    await p.fill("#tlm-buscar", "maria jose");
-    igual("buscar por nombre ignora tildes, mayúsculas y comas: «maria jose» encuentra «Árias Núñez, María José»", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["1"]);
-    await p.fill("#tlm-buscar", "ana sofia");
-    igual("las palabras van en cualquier orden y en cualquiera de los dos jugadores", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["2"]);
-    await p.fill("#tlm-buscar", "1");
-    igual("un número es una mesa: «1» es la 1, no la 15", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["1"]);
-    await p.fill("#tlm-buscar", "nadie asi");
-    igual("sin coincidencias lo dice con palabras", await p.textContent("#tlm-filas"), "Nadie coincide con lo que escribiste.");
-    await p.fill("#tlm-buscar", "hopkins");
-    await p.click('#todas-las-mesas [data-accion="buscar-todas"]');
-    await p.waitForFunction(() => /resultado/.test(document.getElementById("tlm-estado").textContent) && !/Buscando/.test(document.getElementById("tlm-estado").textContent));
-    igual("«Buscar en todas» recorre las categorías, muestra en cuál está cada uno y avisa de la que no se pudo leer", await p.evaluate(() => [[...document.querySelectorAll("#tlm-filas tr")].map((t) => [t.dataset.mesa, t.lastElementChild.textContent]), document.getElementById("tlm-estado").textContent, document.getElementById("tlm-estado").classList.contains("cam-fallo")]),
-        [[["3", "Sub-10 Femenino"]], "1 resultado en 2 de 3 categorías (1 no se pudieron leer: toca «Buscar en todas» otra vez).", true]);
-    await p.click('#todas-las-mesas [data-tnr="1529739"]');
-    await p.waitForFunction(() => /clave de Sub-14 Femenino/.test(document.getElementById("tlm-estado").textContent));
-    igual("una categoría sin clave dice por qué y deja reintentar, sin romper la ventana", await p.evaluate(() => [document.getElementById("tlm-estado").classList.contains("cam-fallo"), !document.querySelector("#todas-las-mesas .cam-btn-chico[hidden]:not([data-accion])"), document.getElementById("todas-las-mesas").open]), [true, true, true]);
-    igual("todo salió por la función con el token, solo leyendo (sin escribir nada)", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "emparejamientos").length > 0, window.__llamadas.filter((l) => l.body.action === "emparejamientos").every((l) => /^[0-9a-f]{64}$/.test(l.body.token)), window.__emparejamientosArgs[0]]), [true, true, null]);
-    await p.click('#todas-las-mesas [data-accion="cerrar-todas"]');
-    await p.waitForFunction(() => !document.getElementById("todas-las-mesas"));
-    igual("«Cerrar» la quita del todo y devuelve el foco a la página", await p.evaluate(() => [!!document.getElementById("todas-las-mesas"), document.activeElement && document.activeElement.id]), [false, "ver-todas-mesas"]);
-    igual("la búsqueda de nombres con chess.js de verdad: filtrar y normalizar son una sola copia", await p.evaluate(() => [window.CentroamericanoEmparejamientos.normalizar("  María   JOSÉ "), window.CentroamericanoEmparejamientos.filtrar([{ mesa: 5, blancas: "A", negras: "B" }, { mesa: 15, blancas: "C", negras: "D" }], "5").map((m) => m.mesa)]), ["maria jose", [5]]);
+    await p.waitForSelector("#donde-juega-hoja[open]");
+    igual("el pizote de la portada abre la MISMA lupa; todo salió por la función, con el token y solo leyendo", await p.evaluate(() => [document.getElementById("donde-juega-hoja").open, window.__llamadas.filter((l) => l.body.action === "todas_mesas").every((l) => /^[0-9a-f]{64}$/.test(l.body.token))]), [true, true]);
+    await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
 
-    // «Todas las mesas» lo habilita o deshabilita la organización: deshabilitado, el pizote queda apagado y el servidor lo rechaza.
-    console.log("\n=== «Todas las mesas» deshabilitado por la organización ===");
+    await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab { pointer-events: none !important; }"; document.head.append(e); });
+    // «¿Dónde juega?» lo habilita o deshabilita la organización: deshabilitado, el botón fijo se esconde, el pizote queda apagado y el servidor lo rechaza.
+    console.log("\n=== «¿Dónde juega?» deshabilitado por la organización ===");
     await p.evaluate(() => { window.__avisos.todas_las_mesas = false; document.getElementById("actualizar").click(); });
     await p.waitForFunction(() => document.getElementById("ver-todas-mesas").disabled);
-    igual("deshabilitado: el pizote queda apagado, sin la pista, y dice por qué (nombre accesible y título)", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [b.disabled, b.querySelector(".cam-mascota-pista").checkVisibility(), b.getAttribute("aria-label"), b.title]; }),
-        [true, false, "«Todas las mesas» no está habilitado en tu enlace", "La organización no habilitó «Todas las mesas» en tu enlace."]);
-    igual("y aunque se manipule la pantalla, la función lo rechaza (403) con el motivo", await p.evaluate(async () => { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { action: "emparejamientos", token: window.__llamadas[0].body.token } }); return [r.error.context.status, (await r.error.context.json()).error]; }),
-        [403, "La organización no habilitó «Todas las mesas» en tu enlace."]);
+    igual("deshabilitado: el botón fijo se esconde, el pizote queda apagado, sin la pista, y dice por qué (nombre accesible y título)", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [document.getElementById("donde-juega").checkVisibility(), b.disabled, b.querySelector(".cam-mascota-pista").checkVisibility(), b.getAttribute("aria-label"), b.title]; }),
+        [false, true, false, "«¿Dónde juega?» no está habilitado en tu enlace", "La organización no habilitó «¿Dónde juega?» en tu enlace."]);
+    igual("y aunque se manipule la pantalla, la función lo rechaza (403) con el motivo", await p.evaluate(async () => { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { action: "todas_mesas", token: window.__llamadas[0].body.token } }); return [r.error.context.status, (await r.error.context.json()).error]; }),
+        [403, "La organización no habilitó «¿Dónde juega?» en tu enlace."]);
     await p.evaluate(() => { window.__avisos.todas_las_mesas = true; document.getElementById("actualizar").click(); });
     await p.waitForFunction(() => !document.getElementById("ver-todas-mesas").disabled);
-    igual("habilitado otra vez: el pizote vuelve con su pista", await p.evaluate(() => [document.getElementById("ver-todas-mesas").disabled, document.querySelector("#ver-todas-mesas .cam-mascota-pista").checkVisibility()]), [false, true]);
+    igual("habilitado otra vez: vuelven el botón fijo y el pizote con su pista", await p.evaluate(() => [document.getElementById("donde-juega").checkVisibility(), document.getElementById("ver-todas-mesas").disabled, document.querySelector("#ver-todas-mesas .cam-mascota-pista").checkVisibility()]), [true, false, true]);
 
     // El modo concentración en la tablet: la organización lo enciende; si el árbitro se sale, se le tapa la pantalla y queda anotado.
     console.log("\n=== La tablet: el modo concentración tapa la pantalla si el árbitro se sale ===");

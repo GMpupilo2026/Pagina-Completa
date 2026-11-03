@@ -1097,10 +1097,20 @@
     function pintarTodasMesas(si) {
         const b = $("ver-todas-mesas");
         b.disabled = !si;
-        b.setAttribute("aria-label", si ? "Ver los emparejamientos de todas las categorías" : "«Todas las mesas» no está habilitado en tu enlace");
-        b.title = si ? "" : "La organización no habilitó «Todas las mesas» en tu enlace.";
+        b.setAttribute("aria-label", si ? "Buscar dónde juega un atleta, en todas las categorías" : "«¿Dónde juega?» no está habilitado en tu enlace");
+        b.title = si ? "" : "La organización no habilitó «¿Dónde juega?» en tu enlace.";
         b.querySelector(".cam-mascota-pista").hidden = !si;
+        $("donde-juega").hidden = !si;
     }
+
+    // «¿Dónde juega?»: la lupa. Se pide TODO al cargar la página (una sola respuesta) para que al abrirla ya esté; la hora de cada ronda sale del calendario.
+    const horaDeRonda = (ronda) => {
+        const H = window.CentroamericanoHorario;
+        const e = H && H.EVENTOS.find((x) => x.ronda === ronda);
+        return e ? hora(new Date(H.inicioDe(e, null)), { hour: "numeric", minute: "2-digit" }) : "";
+    };
+    const dondeJuega = () => ({ pedir: (c) => invocar("todas_mesas", c, { intentos: 2 }), horaDe: horaDeRonda });
+    let precargado = false;
 
     // «Modo concentración»: lo enciende la organización (llega en «leer» y en «avisos»); la tablet se tapa si el árbitro se sale.
     const Conc = window.CentroamericanoConcentracion.crear({ pedir: (c) => invocar("salida", c, { intentos: 1 }) });
@@ -1196,6 +1206,7 @@
         $("app").hidden = false;
         pintarCabecera();
         aplicarAvisos(d);
+        if (!precargado) { precargado = true; setTimeout(() => window.CentroamericanoEmparejamientos.precargar(dondeJuega()), 1500); }
         pintar();
         pintarConexion();
     }
@@ -1469,7 +1480,8 @@
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
         // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
-        $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir({ pedir: (c) => invocar("emparejamientos", c, { intentos: 2 }) }));
+        $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
+        $("donde-juega").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
         $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
         $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));

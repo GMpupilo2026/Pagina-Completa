@@ -23,20 +23,55 @@
 .cam-mascota-boton:active .cam-mascota { transform: scale(0.97); }
 .cam-mascota-pista { background: var(--cac-rojo); color: #fff; font-weight: 800; font-size: 0.8rem; line-height: 1.1; border-radius: 9999px; padding: 0.3rem 0.75rem; border: 2px solid rgb(255 255 255 / 0.85); }
 
-/* «Todas las mesas»: una ventana (dialog) con las categorías, el buscador y los emparejamientos. */
-.cam-todas { width: min(60rem, 96vw); max-height: 92vh; overflow: auto; margin: auto; padding: 1rem; border: 3px solid var(--cac-morado-hondo); border-radius: 1.25rem; background: #fff; color: var(--cac-morado-hondo); }
-.cam-todas::backdrop { background: rgb(15 18 48 / 0.7); }
-.dark .cam-todas { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
-.cam-todas-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.4rem; }
-.cam-todas-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.7rem 0; }
-.cam-todas-buscar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.cam-todas-buscar .cam-campo { flex: 1; min-width: 14rem; width: auto; }
-.cam-todas-estado { margin: 0.6rem 0; font-weight: 700; font-size: 0.9rem; }
-.cam-todas-tabla { font-size: 1.05rem; }
-.cam-todas-mesa { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
-.cam-todas-tabla tbody th { text-align: left; border-top: 1px solid #dfe0f7; padding: 0.45rem 0.6rem; text-transform: none; letter-spacing: 0; font-size: 1.25rem; }
-.cam-todas-vacio { text-align: center; padding: 1rem; font-weight: 700; }
-.cam-todas-tabla tr[hidden], .cam-todas-col-cat[hidden] { display: none; }
+/* «¿Dónde juega?»: el botón fijo (siempre a la mano; con el control de tiempos abierto pasa a la izquierda para no taparse) y la ventana de búsqueda. */
+/* Con el botón fijo abajo, lo que se enfoca con el teclado o con «Ir a la mesa» no queda escondido debajo de él. */
+:root:has(.cam-fab) { scroll-padding-bottom: 6rem; }
+.cam-fab { position: fixed; right: 1rem; bottom: 1rem; z-index: 55; display: flex; align-items: center; gap: 0.5rem; background: var(--cac-rojo); color: #fff; border: 3px solid #fff; border-radius: 9999px; padding: 0.85rem 1.35rem; font-size: 1.15rem; font-weight: 800; box-shadow: 0 8px 24px rgb(0 0 0 / 0.35); cursor: pointer; min-height: 56px; }
+.cam-fab span { font-size: 1.5rem; line-height: 1; }
+.cam-fab:hover { background: #9f0e1e; }
+.cam-fab:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 3px; }
+.cam-fab[hidden] { display: none; }
+body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
+.cam-dj { width: min(56rem, 98vw); height: min(92vh, 60rem); max-height: 92vh; margin: auto; padding: 1rem 1.1rem; border: 3px solid var(--cac-morado-hondo); border-radius: 1.4rem; background: #fff; color: var(--cac-morado-hondo); overflow: hidden; }
+.cam-dj[open] { display: flex; flex-direction: column; gap: 0.6rem; }
+.cam-dj::backdrop { background: rgb(15 18 48 / 0.72); }
+.dark .cam-dj { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-dj-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.cam-dj-campo { font-size: 1.6rem; min-height: 60px; border: 3px solid var(--cac-morado); }
+.cam-dj-chips { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.2rem; flex-shrink: 0; }
+.cam-dj-chips .cam-pestana { white-space: nowrap; }
+.cam-dj-estado { font-size: 0.85rem; font-weight: 700; margin: 0; }
+.cam-dj-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cam-dj-acciones [hidden] { display: none; }
+.cam-dj-res { overflow: auto; display: grid; gap: 0.7rem; align-content: start; padding: 0.1rem 0.1rem 0.8rem; }
+.cam-dj-vacio { text-align: center; padding: 1.5rem 1rem; font-size: 1.15rem; font-weight: 700; }
+.cam-dj-tarj { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; text-align: left; width: 100%; font: inherit; color: inherit; background: #fff; border: 3px solid #dfe0f7; border-left: 12px solid var(--c); border-radius: 1.1rem; padding: 0.6rem 0.9rem; cursor: pointer; }
+.dark .cam-dj-tarj { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(255 255 255 / 0.2); border-left-color: var(--c); }
+.cam-dj-tarj:hover { border-color: var(--c); }
+.cam-dj-tarj:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-dj-num { display: grid; justify-items: center; min-width: 5.5rem; font-size: 3.4rem; font-weight: 900; line-height: 1; color: var(--c); }
+.dark .cam-dj-num { color: #fff; }
+.cam-dj-num small { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; color: inherit; opacity: 0.85; }
+.cam-dj-datos { display: grid; gap: 0.15rem; min-width: 0; }
+.cam-dj-nombre { font-size: 1.5rem; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.cam-dj-sub { font-size: 1rem; }
+.cam-dj-cat { justify-self: start; background: var(--c); color: #fff; border-radius: 9999px; padding: 0.1rem 0.75rem; font-size: 0.85rem; font-weight: 800; }
+.cam-dj-mostrar { border: 2px solid var(--cac-morado); color: var(--cac-morado); border-radius: 0.8rem; padding: 0.55rem 0.8rem; font-weight: 800; font-size: 0.95rem; white-space: nowrap; }
+.dark .cam-dj-mostrar { border-color: #b8bbf2; color: #b8bbf2; }
+@media (max-width: 640px) { .cam-dj-tarj { grid-template-columns: auto 1fr; } .cam-dj-mostrar { grid-column: 1 / -1; justify-self: start; } .cam-dj-num { font-size: 2.6rem; min-width: 4rem; } .cam-dj-nombre { font-size: 1.25rem; } }
+.cam-dj-tabla th[scope="row"] { font-size: 1.1rem; font-weight: 800; text-align: left; text-transform: none; letter-spacing: 0; }
+/* «Mostrar al atleta»: la pantalla completa para darle vuelta a la tablet. */
+.cam-dj-grande { width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; margin: 0; padding: 1.5rem; border: 0; background: var(--c); color: #fff; text-align: center; }
+.cam-dj-grande[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; }
+.cam-dj-grande::backdrop { background: var(--c); }
+.cam-dj-gcat { background: #fff; color: var(--cac-morado-hondo); border-radius: 9999px; padding: 0.4rem 1.4rem; font-size: 1.6rem; font-weight: 900; }
+.cam-dj-gmesa-t { font-size: 2rem; font-weight: 800; letter-spacing: 0.3em; margin-top: 0.6rem; }
+.cam-dj-gmesa { font-size: min(38vw, 17rem); font-weight: 900; line-height: 0.95; }
+.cam-dj-ginfo { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+.cam-dj-ginfo small { display: block; font-size: 1.4rem; font-weight: 500; }
+.cam-dj-listo { margin-top: 1.2rem; border: 3px solid #fff; background: transparent; color: #fff; font-size: 1.4rem; font-weight: 800; border-radius: 1rem; padding: 0.7rem 2rem; cursor: pointer; min-height: 56px; }
+.cam-dj-listo:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
 .cam-mascota {
   width: clamp(88px, 22vw, 150px);
   height: auto;

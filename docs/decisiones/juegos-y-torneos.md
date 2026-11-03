@@ -9052,31 +9052,47 @@ iPad, «Acceso guiado»), y la ventana de la organización y el aviso de la tabl
   `verificar-centroamericano-mesas-pagina.js` (el aviso, el tapar al salirse, volver, la pantalla completa, la
   cámara con su pausa, y en la organización los botones, las salidas y «Encender en todas»).
 
-## Todas las mesas desde el pizote (Centroamericano)
+## «¿Dónde juega?»: la lupa y el pizote (Centroamericano)
 
-El pizote de la portada de `centroamericano-arbitro.html` es un botón («Todas las mesas»). Un atleta le
-pregunta al árbitro dónde se sienta —a veces de otra categoría— y el árbitro toca el animalito: se abre una
-ventana (`<dialog>` modal, `js/centroamericano-emparejamientos.js`) con las categorías del torneo, un
-buscador por nombre o por número de mesa y la tabla Mesa / Blancas / Negras. «Buscar en todas las
-categorías» recorre una por una cuando el atleta no sabe en cuál juega.
+Un atleta le pregunta al árbitro dónde se sienta —a veces de otra categoría— y el árbitro tiene que
+contestar rápido, con el torneo en juego. Dos botones abren la MISMA ventana
+(`js/centroamericano-emparejamientos.js`): la **lupa fija «🔎 ¿Dónde juega?»** (abajo a la derecha, siempre
+a la mano; con el control de tiempos abierto pasa a la izquierda para no taparse) y el **pizote** de la
+portada. La primera versión del pizote (categoría por categoría, con «Buscar en todas» leyendo de a una) se
+reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la mesa a un niño.
 
-- **Solo lee, y por la función.** La acción `emparejamientos` de `centroamericano-mesa` (sin `tnr`:
-  la lista de categorías; con `tnr`: sus mesas) usa la MISMA lectura compartida de los árbitros
-  (`leerConCache`), así que tocar el pizote no hace una visita más a chess-results si la copia es
-  reciente (40 s). Va en `DE_AVISOS` (no pide la clave del torneo del árbitro: pide la de la categoría
-  elegida, `centroamericano_acceso(p_tnr)`) y NO está en `ESCRIBE`: un árbitro que concluyó sus labores
-  también puede consultar.
-- **Solo las categorías del mismo tipo**: un enlace de los torneos de prueba solo ve los de prueba, y
-  uno real, los reales (`prueba`). No trae resultados: solo la mesa y los dos nombres, lo mismo que
-  publica chess-results.
-- **Es la ronda ABIERTA de cada categoría**: chess-results solo entrega esa por la entrada del
-  árbitro. Si preguntan por otra ronda, no está; lo dice la ventana («Ronda N» arriba de la tabla).
-- **Buscar**: sin tildes ni mayúsculas ni comas; las palabras van en cualquier orden y en cualquiera de
-  los dos jugadores; un número es una mesa (la 1, no la 15). Una categoría ya leída se reutiliza 30 s.
-- Lo revisan `verificar-centroamericano-mesas.js` (la acción solo lee, no escribe, filtra por `prueba`,
-  pide la clave de la categoría y no manda resultados) y `verificar-centroamericano-mesas-pagina.js`
-  (la ventana, el cambio de categoría, la búsqueda sin tildes, «Buscar en todas» con una categoría sin
-  clave, y que cerrar la quita y devuelve el foco). Roto a propósito (sin quitar tildes), salta.
+- **Una sola respuesta, en memoria.** La acción `todas_mesas` de `centroamericano-mesa` manda TODAS las
+  categorías (mesas, ronda, de cuándo son los datos) sacadas de la copia compartida
+  (`centroamericano_lecturas`, que las propias tablets mantienen al día) con UNA consulta a la base. Solo las
+  categorías con la copia de más de 2 minutos se releen de chess-results (hasta 6 a la vez, esperando a lo más
+  12 s); si una no contesta, va la última copia con `viejo: true`, y sin nada, con su `error`. La página la
+  pide al cargar (`precargar`, a los 1,5 s de la primera lectura), al abrir la lupa y cada 30 s mientras está
+  abierta: al abrirla, ya está todo. Sin señal sigue buscando con lo último y lo dice en rojo y con palabras.
+- **Se busca por jugador, no por categoría.** Se escribe el apellido o el nombre y salen tarjetas de todas las
+  categorías: la mesa en grande, el nombre, el color, el rival, la ronda y la hora (la del calendario) y la
+  categoría con su color (`colorDe()`, el mismo en la tarjeta y en la pantalla completa; blanco encima da 4,5:1
+  o más con todos). Sin tildes ni mayúsculas ni comas, en cualquier orden, por el comienzo o el interior de la
+  palabra, un número es una mesa (la 1, no la 15) y se perdona un error de tecleo (una letra de más, de menos,
+  distinta o dos cambiadas de lugar). Hasta 40 tarjetas («escribe más letras»). Con una categoría elegida y sin
+  escribir, la lista corta de sus mesas. Se acuerda de la última búsqueda («Volver a buscar «…»»).
+- **«Mostrar al atleta».** Una tarjeta se abre a pantalla completa (`<dialog>` modal): la categoría, MESA y el
+  número gigante en el color de su categoría, el nombre, el color y el rival. Se le da vuelta a la tablet y el
+  niño no tiene que leer nada más.
+- **Solo lee, y solo las categorías del mismo tipo** (un enlace de prueba solo ve las de prueba). No trae
+  resultados.
+- **La administración la habilita o deshabilita** por enlace o en todas las tablets (columna
+  `todas_las_mesas`, que viene encendida; el nombre de la columna es el de la primera versión). Apagada, la
+  lupa se esconde, el pizote queda apagado y el servidor contesta 403 (no solo se esconde el botón). El enlace
+  concluido también puede consultar: no está en `ESCRIBE`.
+- **Es la ronda ABIERTA de cada categoría**: chess-results solo entrega esa por la entrada del árbitro; si
+  preguntan por otra, no está (la tarjeta dice «Ronda N»). Lo mismo con las categorías aún sin pareo: la
+  ventana dice cuáles («todavía sin pareo: …»).
+- La acción vieja `emparejamientos` (una categoría a la vez) sigue en la función por si una tablet no recargó
+  la página; la página nueva ya no la usa.
+- Lo revisan `verificar-centroamericano-mesas.js` (la acción solo lee, usa la copia compartida, relee solo las
+  viejas, filtra por `prueba`, 403 apagada y sin resultados) y `verificar-centroamericano-mesas-pagina.js`
+  (el botón fijo, la ventana, buscar sin elegir categoría, el error de tecleo, el número de mesa, la pantalla
+  completa, sin señal y apagada por la organización). Roto a propósito (sin quitar tildes), salta.
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
