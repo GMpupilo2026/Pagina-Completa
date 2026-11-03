@@ -461,7 +461,7 @@ const CONTRASTE = `(sel) => {
     await p.waitForSelector("#form-tiempos");
     igual("al abrirla de nuevo siguen lo escrito", await p.evaluate(() => [document.getElementById("lt-tb").value, document.getElementById("lt-jb").value, document.getElementById("lt-tn").value, document.getElementById("lt-jn").value]), ["4:00", "32", "5:00", "32"]);
     igual("minimizada y vuelta a abrir, la hora marcada sigue", await p.evaluate(() => document.getElementById("lt-hora").dataset.marcada), "si");
-    const antesDeGuardar = Date.now();
+    const antesDeGuardar = await p.evaluate(() => Date.now()); // la hora de LA PÁGINA (su reloj está fijo)
     await p.click("#lt-guardar");
     await p.waitForFunction(() => document.getElementById("control-tiempos").hidden);
     igual("al guardar se manda la hora marcada (un momento de hace unos segundos, no inventado), y solo cuando se marcó", await p.evaluate(([desde]) => window.__llamadas.filter((l) => l.body.action === "tiempo").map((l) => "ocurrio" in l.body ? (Date.parse(l.body.ocurrio) <= Date.now() && Date.parse(l.body.ocurrio) >= desde - 120000) : null), [antesDeGuardar]), [null, true]);
@@ -651,6 +651,18 @@ const CONTRASTE = `(sel) => {
     await p.waitForFunction(() => !document.getElementById("todas-las-mesas"));
     igual("«Cerrar» la quita del todo y devuelve el foco a la página", await p.evaluate(() => [!!document.getElementById("todas-las-mesas"), document.activeElement && document.activeElement.id]), [false, "ver-todas-mesas"]);
     igual("la búsqueda de nombres con chess.js de verdad: filtrar y normalizar son una sola copia", await p.evaluate(() => [window.CentroamericanoEmparejamientos.normalizar("  María   JOSÉ "), window.CentroamericanoEmparejamientos.filtrar([{ mesa: 5, blancas: "A", negras: "B" }, { mesa: 15, blancas: "C", negras: "D" }], "5").map((m) => m.mesa)]), ["maria jose", [5]]);
+
+    // «Todas las mesas» lo habilita o deshabilita la organización: deshabilitado, el pizote queda apagado y el servidor lo rechaza.
+    console.log("\n=== «Todas las mesas» deshabilitado por la organización ===");
+    await p.evaluate(() => { window.__avisos.todas_las_mesas = false; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => document.getElementById("ver-todas-mesas").disabled);
+    igual("deshabilitado: el pizote queda apagado, sin la pista, y dice por qué (nombre accesible y título)", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [b.disabled, b.querySelector(".cam-mascota-pista").checkVisibility(), b.getAttribute("aria-label"), b.title]; }),
+        [true, false, "«Todas las mesas» no está habilitado en tu enlace", "La organización no habilitó «Todas las mesas» en tu enlace."]);
+    igual("y aunque se manipule la pantalla, la función lo rechaza (403) con el motivo", await p.evaluate(async () => { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { action: "emparejamientos", token: window.__llamadas[0].body.token } }); return [r.error.context.status, (await r.error.context.json()).error]; }),
+        [403, "La organización no habilitó «Todas las mesas» en tu enlace."]);
+    await p.evaluate(() => { window.__avisos.todas_las_mesas = true; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => !document.getElementById("ver-todas-mesas").disabled);
+    igual("habilitado otra vez: el pizote vuelve con su pista", await p.evaluate(() => [document.getElementById("ver-todas-mesas").disabled, document.querySelector("#ver-todas-mesas .cam-mascota-pista").checkVisibility()]), [false, true]);
 
     // El modo concentración en la tablet: la organización lo enciende; si el árbitro se sale, se le tapa la pantalla y queda anotado.
     console.log("\n=== La tablet: el modo concentración tapa la pantalla si el árbitro se sale ===");
@@ -1077,6 +1089,22 @@ const CONTRASTE = `(sel) => {
     await q.click("dialog[open] [data-avisos-aceptar]");
     await q.waitForFunction(() => document.querySelectorAll('[data-concentracion="si"]').length === 0);
     igual("apagarlo en todas deja a ninguna con la concentración", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-concentracion="si"]').length]), [{ concentracion: false }, 0]);
+
+    console.log("\n=== La organización: habilitar o deshabilitar «Todas las mesas» ===");
+    igual("arriba de la tabla están «Habilitarlo en todas las tablets» y «Deshabilitarlo en todas»", await q.evaluate(() => [document.getElementById("tm-todas-si").textContent, document.getElementById("tm-todas-no").textContent]), ["Habilitarlo en todas las tablets", "Deshabilitarlo en todas"]);
+    await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]');
+    await q.waitForSelector('.cam-asignacion[data-id="asig-ana"] [data-sin-todas="si"]');
+    igual("quitarlo en una fila guarda SOLO esa columna en SU enlace; la fila dice «Sin «Todas las mesas»» y el botón pasa a «Habilitar»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "todas_las_mesas" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]').textContent]), [[[{ todas_las_mesas: false }, "asig-ana"]], "Habilitar «Todas las mesas»"]);
+    await q.click("#tm-todas-no");
+    await q.waitForSelector("dialog[open]");
+    igual("deshabilitarlo en todas pregunta antes y dice que el árbitro ya no verá las demás categorías", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Deshabilitar «Todas las mesas»"), t.includes("ya no podrá ver los emparejamientos")]; }), [true, true]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__llamadas.some((l) => l.update === "centroamericano_asignaciones" && l.en && l.en.id && l.valores && l.valores.todas_las_mesas === false));
+    await q.click("#tm-todas-si");
+    await q.waitForSelector("dialog[open]");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.querySelectorAll('[data-sin-todas="si"]').length === 0);
+    igual("habilitarlo en todas deja a ninguna sin «Todas las mesas»", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-sin-todas="si"]').length]), [{ todas_las_mesas: true }, 0]);
 
     console.log("\n=== La organización: árbitros que concluyeron sus labores ===");
     await q.evaluate(() => window.__concluir("asig-arb1"));

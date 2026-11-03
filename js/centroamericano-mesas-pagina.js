@@ -710,6 +710,7 @@
         return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
             el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
                 a.concentracion ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "si", "data-concentracion": "si", texto: "🔒 Concentración" }) : null,
+                a.todas_las_mesas === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "no", "data-sin-todas": "si", texto: "Sin «Todas las mesas»" }) : null,
                 otrosEnlaces(a).length ? el("span", { class: "cam-tambien", texto: "También en: " + otrosEnlaces(a).map((x) => nombreTorneo(x.tnr) + " (mesas " + x.mesa_desde + " a " + x.mesa_hasta + ")").join("; ") }) : null),
             el("td", { texto: a.mesa_desde + " a " + a.mesa_hasta }),
             el("td", { texto: textoEstado(a) }),
@@ -722,6 +723,7 @@
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
                 est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
+                est === "activo" ? boton("todas-mesas", a.todas_las_mesas === false ? "Habilitar «Todas las mesas»" : "Quitar «Todas las mesas»", () => ponerTodasLasMesas(a, a.todas_las_mesas === false)) : null,
                 est === "activo" ? boton("concentracion", a.concentracion ? "Quitar concentración" : "Concentración", () => ponerConcentracion(a, !a.concentracion)) : null,
                 a.concluyo_en ? boton("reabrir-labores", "Reabrir sus labores", () => reabrirLabores(a)) : null,
                 boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"),
@@ -734,6 +736,25 @@
         const { error } = await sb.from("centroamericano_asignaciones").update({ concentracion: si }).eq("id", a.id);
         if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
         avisar(si ? "Concentración encendida para " + a.arbitro + ": en unos segundos su tablet pide la pantalla completa." : "Concentración apagada para " + a.arbitro + ".");
+        await cargarAsignaciones();
+    }
+
+    // «Todas las mesas» (el pizote): se habilita o deshabilita por enlace, o en todos. El servidor lo hace cumplir (403); la tablet esconde el botón.
+    async function ponerTodasLasMesas(a, si) {
+        const { error } = await sb.from("centroamericano_asignaciones").update({ todas_las_mesas: si }).eq("id", a.id);
+        if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
+        avisar(si ? "«Todas las mesas» habilitado para " + a.arbitro + "." : "«Todas las mesas» deshabilitado para " + a.arbitro + ".");
+        await cargarAsignaciones();
+    }
+
+    async function todasLasMesasEnTodas(si) {
+        const ids = asignaciones.filter((a) => !a.revocada && (si ? a.todas_las_mesas === false : a.todas_las_mesas !== false)).map((a) => a.id);
+        if (!ids.length) { avisar(si ? "«Todas las mesas» ya está habilitado en todas las tablets." : "«Todas las mesas» ya está deshabilitado en todas las tablets."); return; }
+        const sigue = await Avisos.confirmar(si ? "Se habilita «Todas las mesas» en " + ids.length + (ids.length === 1 ? " tablet." : " tablets.") : "Se deshabilita «Todas las mesas» en " + ids.length + (ids.length === 1 ? " tablet" : " tablets") + ": el árbitro ya no podrá ver los emparejamientos de las demás categorías.", { titulo: si ? "Habilitar «Todas las mesas»" : "Deshabilitar «Todas las mesas»", aceptar: si ? "Sí, habilitarlo" : "Sí, deshabilitarlo" });
+        if (!sigue) return;
+        const { error } = await sb.from("centroamericano_asignaciones").update({ todas_las_mesas: si }).in("id", ids);
+        if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
+        avisar(si ? "«Todas las mesas» habilitado en " + ids.length + " tablets." : "«Todas las mesas» deshabilitado en " + ids.length + " tablets.");
         await cargarAsignaciones();
     }
 
@@ -781,7 +802,7 @@
     function pintarAsignaciones() {
         $("sin-asignaciones").hidden = asignaciones.length > 0;
         const ahora = new Date();
-        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, a.concentracion, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
+        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, a.concentracion, a.todas_las_mesas, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
         if (firma === firmaAsignaciones) return;
         firmaAsignaciones = firma;
         const grupos = new Map();
@@ -1476,6 +1497,8 @@
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
+        $("tm-todas-si").addEventListener("click", () => todasLasMesasEnTodas(true));
+        $("tm-todas-no").addEventListener("click", () => todasLasMesasEnTodas(false));
         $("conc-todas-si").addEventListener("click", () => concentracionTodas(true));
         $("conc-todas-no").addEventListener("click", () => concentracionTodas(false));
         $("ct-pedir").addEventListener("click", pedirTiempos);

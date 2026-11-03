@@ -1092,12 +1092,23 @@
         $("nombre-caja").hidden = nombrado;
     }
 
+    // «Todas las mesas» (el pizote): la organización lo habilita o deshabilita por enlace. Deshabilitado, el botón queda apagado y sin la pista
+    // (la función también lo rechaza: esto solo lo esconde).
+    function pintarTodasMesas(si) {
+        const b = $("ver-todas-mesas");
+        b.disabled = !si;
+        b.setAttribute("aria-label", si ? "Ver los emparejamientos de todas las categorías" : "«Todas las mesas» no está habilitado en tu enlace");
+        b.title = si ? "" : "La organización no habilitó «Todas las mesas» en tu enlace.";
+        b.querySelector(".cam-mascota-pista").hidden = !si;
+    }
+
     // «Modo concentración»: lo enciende la organización (llega en «leer» y en «avisos»); la tablet se tapa si el árbitro se sale.
     const Conc = window.CentroamericanoConcentracion.crear({ pedir: (c) => invocar("salida", c, { intentos: 1 }) });
 
     // Lo que contesta «leer» o «avisos»: el nombre, los mensajes sin leer y el pedido de ayuda.
     function aplicarAvisos(d) {
         if (d.concentracion !== undefined) Conc.ponerActivo(d.concentracion === true);
+        if (d.todas_las_mesas !== undefined) pintarTodasMesas(d.todas_las_mesas !== false);
         nombrado = d.nombrado !== false;
         if (d.arbitro && estado) { estado.arbitro = d.arbitro; $("d-arbitro").textContent = d.arbitro; }
         pendientes = d.mensajes || [];
