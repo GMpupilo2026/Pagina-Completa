@@ -9014,6 +9014,72 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
   copia actual no agrega nada de más.
 
+## El modo concentración de las tablets (Centroamericano)
+
+La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.
+**Una página no puede bloquear un aparato**: ningún navegador deja que una página impida cambiar de
+pestaña, abrir otra aplicación o usar los botones del sistema. Lo que sí se puede es **tapar y dejar
+constancia**, y eso es lo que hace; el bloqueo de verdad es del sistema (en Android, «Fijar pantalla»; en
+iPad, «Acceso guiado»), y la ventana de la organización y el aviso de la tablet lo dicen.
+
+- **Lo enciende la organización**, por árbitro (botón «Concentración» en su fila) o en todas las tablets
+  vigentes («Encender en todas las tablets», con confirmación: en medio de una ronda se les atraviesa un
+  aviso). Es la columna `centroamericano_asignaciones.concentracion` (update solo de esa columna, como
+  `revocada`). La tablet la lee en cada `leer` y en cada `avisos` (cada 8 s), así que un cambio le llega
+  en segundos. Con las labores concluidas la función contesta `false`: no se le tapa a quien ya terminó.
+- **En la tablet** (`js/centroamericano-concentracion.js`): un aviso a pantalla completa («Entrar a la
+  mesa») que pide la pantalla completa con un toque (un navegador no la da sin un gesto). Si después el
+  árbitro cambia de pestaña o de aplicación, apaga la pantalla o sale de la pantalla completa, **se le tapa
+  todo** («Saliste de tus mesas», el motivo y cuánto lleva fuera) hasta que toca «Volver a la mesa»; volver
+  a la pestaña NO destapa. Lo demás de la página queda `inert` (ni Tab ni el lector de pantalla lo alcanzan),
+  es un `alertdialog` modal, y hay confirmación antes de cerrar o recargar. **Sin sonido**: en un torneo no
+  suena nada.
+- **La cámara del aparato no cuenta.** La foto de las planillas saca al navegador de la página a propósito
+  (la cámara nativa); `pausa(5 min)` en `subirPlanilla()` hace que esa salida no se anote ni tape nada. Al
+  volver, si se perdió la pantalla completa, se pide otro toque. No se vigila el `blur` de la ventana: el
+  desplegable del resultado (un `<select>`) y las ventanas del sistema lo disparan sin que nadie se salga,
+  y tapar la pantalla cada vez que se elige un resultado sería peor que el problema.
+- **Constancia.** La acción `salida` de `centroamericano-mesa` (fases `sale` y `vuelve`) escribe en
+  `centroamericano_salidas`: la hora y la duración las pone la FUNCIÓN con su reloj, no la tablet (que solo
+  manda el motivo; si el aviso de «sale» no llegó por falta de señal, «vuelve» anota la salida con los
+  segundos que midió la tablet). Una salida abierta a la vez (6 h de vigencia), tope de 400 al día, y no
+  anota con las labores concluidas. La tabla no tiene permisos de escritura: solo la función.
+- **La organización lo ve** en la fila del árbitro («🔓 Fuera de la pantalla ahora (desde hace 2 min)» o
+  «Se salió 3 veces (4 min en total)»: siempre con palabras, no solo el color), en la actividad («Salió de la
+  pantalla») y en la bitácora en PDF del árbitro (en «Sin ronda»).
+- **Migración** `centroamericano_concentracion` (aplicada el 3 de noviembre, `20261103150433`): sin ningún
+  `drop`. Lo revisan `verificar-centroamericano-mesas.js` (la base y la función) y
+  `verificar-centroamericano-mesas-pagina.js` (el aviso, el tapar al salirse, volver, la pantalla completa, la
+  cámara con su pausa, y en la organización los botones, las salidas y «Encender en todas»).
+
+## Todas las mesas desde el pizote (Centroamericano)
+
+El pizote de la portada de `centroamericano-arbitro.html` es un botón («Todas las mesas»). Un atleta le
+pregunta al árbitro dónde se sienta —a veces de otra categoría— y el árbitro toca el animalito: se abre una
+ventana (`<dialog>` modal, `js/centroamericano-emparejamientos.js`) con las categorías del torneo, un
+buscador por nombre o por número de mesa y la tabla Mesa / Blancas / Negras. «Buscar en todas las
+categorías» recorre una por una cuando el atleta no sabe en cuál juega.
+
+- **Solo lee, y por la función.** La acción `emparejamientos` de `centroamericano-mesa` (sin `tnr`:
+  la lista de categorías; con `tnr`: sus mesas) usa la MISMA lectura compartida de los árbitros
+  (`leerConCache`), así que tocar el pizote no hace una visita más a chess-results si la copia es
+  reciente (40 s). Va en `DE_AVISOS` (no pide la clave del torneo del árbitro: pide la de la categoría
+  elegida, `centroamericano_acceso(p_tnr)`) y NO está en `ESCRIBE`: un árbitro que concluyó sus labores
+  también puede consultar.
+- **Solo las categorías del mismo tipo**: un enlace de los torneos de prueba solo ve los de prueba, y
+  uno real, los reales (`prueba`). No trae resultados: solo la mesa y los dos nombres, lo mismo que
+  publica chess-results.
+- **Es la ronda ABIERTA de cada categoría**: chess-results solo entrega esa por la entrada del
+  árbitro. Si preguntan por otra ronda, no está; lo dice la ventana («Ronda N» arriba de la tabla).
+- **Buscar**: sin tildes ni mayúsculas ni comas; las palabras van en cualquier orden y en cualquiera de
+  los dos jugadores; un número es una mesa (la 1, no la 15). Una categoría ya leída se reutiliza 30 s.
+- Lo revisan `verificar-centroamericano-mesas.js` (la acción solo lee, no escribe, filtra por `prueba`,
+  pide la clave de la categoría y no manda resultados) y `verificar-centroamericano-mesas-pagina.js`
+  (la ventana, el cambio de categoría, la búsqueda sin tildes, «Buscar en todas» con una categoría sin
+  clave, y que cerrar la quita y devuelve el foco). Roto a propósito (sin quitar tildes), salta.
+- **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
+  despliegue»): otras sesiones también la tocan.
+
 ## La lectura de chess-results se comparte y la tablet no pierde nada (Centroamericano)
 
 El torneo más importante del año (2–9 de noviembre, 15 a 20 árbitros, unos 15 con tablet, iPad o Android) no

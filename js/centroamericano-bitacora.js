@@ -19,6 +19,9 @@
   const nota = (f, art) => f.tipo === "nota" && f.articulo === art;
   const cant = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
 
+  // Una duración dicha con palabras: «45 s» o «2 min 10 s».
+  const dur = (seg) => { seg = Math.max(0, Math.round(Number(seg) || 0)); return seg < 60 ? seg + " s" : Math.floor(seg / 60) + " min" + (seg % 60 ? " " + (seg % 60) + " s" : ""); };
+
   // Los segundos de un reloj: «1:23:45» o «45:10».
   function reloj(seg) {
     seg = Math.max(0, Math.round(Number(seg) || 0));
@@ -77,6 +80,12 @@
     for (const i of d.inicios || []) {
       lineas.push({ cuando: i.inicio, tnr: i.tnr, ronda: i.ronda, mesa: null, que: "Inició la ronda", clase: "inicio",
         detalle: "La ronda empezó a las " + F.hora(i.inicio) + (i.arbitro ? " (la marcó " + i.arbitro + ")." : ".") });
+    }
+    // Las veces que se salió de la pantalla con el modo concentración (no son de una ronda: van en «Sin ronda»).
+    const MOTIVO_SALIDA = { oculta: "cambió de pestaña o de aplicación", pantalla_completa: "salió de la pantalla completa", sin_foco: "perdió el foco" };
+    for (const x of d.salidas || []) {
+      lineas.push({ cuando: x.salio, tnr: x.tnr, ronda: null, mesa: null, que: "Salió de la pantalla", clase: "salida",
+        detalle: "Se salió (" + (MOTIVO_SALIDA[x.motivo] || x.motivo) + ")" + (x.volvio ? " y volvió a los " + dur(x.segundos) + "." : " y no volvió a avisar.") });
     }
     for (const l of d.listas || []) {
       lineas.push({ cuando: l.aprobada_en, tnr: tnrDe(l.asignacion_id), ronda: l.ronda, mesa: null, que: "Revisión previa", clase: "lista", detalle: "Aprobó el paso «" + l.paso + "»." });

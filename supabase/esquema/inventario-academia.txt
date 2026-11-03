@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261102230136
+# al-dia-con: 20261103151643
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -57,6 +57,7 @@ tabla  centroamericano_planillas  rls=true
 tabla  centroamericano_presencia  rls=true
 tabla  centroamericano_progreso  rls=true
 tabla  centroamericano_registro  rls=true
+tabla  centroamericano_salidas  rls=true
 tabla  centroamericano_tiempos  rls=true
 tabla  centroamericano_torneos  rls=true
 tabla  certificados  rls=true
@@ -552,6 +553,7 @@ columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
 columna  centroamericano_asignaciones.arbitro  text
+columna  centroamericano_asignaciones.concentracion  boolean
 columna  centroamericano_asignaciones.concluyo_en  timestamp with time zone
 columna  centroamericano_asignaciones.creada  timestamp with time zone
 columna  centroamericano_asignaciones.creada_por  uuid
@@ -562,6 +564,7 @@ columna  centroamericano_asignaciones.nombrado  boolean
 columna  centroamericano_asignaciones.persona  uuid
 columna  centroamericano_asignaciones.revocada  boolean
 columna  centroamericano_asignaciones.tnr  text
+columna  centroamericano_asignaciones.todas_las_mesas  boolean
 columna  centroamericano_asignaciones.token  text
 columna  centroamericano_asignaciones.ultimo_uso  timestamp with time zone
 columna  centroamericano_asignaciones.vence  timestamp with time zone
@@ -661,6 +664,15 @@ columna  centroamericano_registro.ronda  integer
 columna  centroamericano_registro.texto  text
 columna  centroamericano_registro.tipo  text
 columna  centroamericano_registro.tnr  text
+columna  centroamericano_salidas.arbitro  text
+columna  centroamericano_salidas.asignacion_id  uuid
+columna  centroamericano_salidas.id  uuid
+columna  centroamericano_salidas.motivo  text
+columna  centroamericano_salidas.registrada  timestamp with time zone
+columna  centroamericano_salidas.salio  timestamp with time zone
+columna  centroamericano_salidas.segundos  integer
+columna  centroamericano_salidas.tnr  text
+columna  centroamericano_salidas.volvio  timestamp with time zone
 columna  centroamericano_tiempos.arbitro  text
 columna  centroamericano_tiempos.asignacion_id  uuid
 columna  centroamericano_tiempos.blancas  text
@@ -2938,6 +2950,7 @@ politica  centroamericano_planillas  centroamericano_planillas_ver  SELECT
 politica  centroamericano_presencia  centroamericano_presencia_ver  SELECT
 politica  centroamericano_progreso  centroamericano_progreso_ver  SELECT
 politica  centroamericano_registro  centroamericano_registro_ver  SELECT
+politica  centroamericano_salidas  centroamericano_salidas_ver  SELECT
 politica  centroamericano_tiempos  centroamericano_tiempos_ver  SELECT
 politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
 politica  certificados  certificados_lee  SELECT
@@ -3600,6 +3613,8 @@ indice  centroamericano_progreso  centroamericano_progreso_pkey
 indice  centroamericano_registro  centroamericano_registro_anula_idx
 indice  centroamericano_registro  centroamericano_registro_partida_idx
 indice  centroamericano_registro  centroamericano_registro_pkey
+indice  centroamericano_salidas  centroamericano_salidas_asignacion_idx
+indice  centroamericano_salidas  centroamericano_salidas_pkey
 indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
 indice  centroamericano_tiempos  centroamericano_tiempos_pkey
 indice  centroamericano_torneos  centroamericano_torneos_pkey
@@ -4315,6 +4330,7 @@ grant  centroamericano_planillas  authenticated  SELECT
 grant  centroamericano_presencia  authenticated  SELECT
 grant  centroamericano_progreso  authenticated  SELECT
 grant  centroamericano_registro  authenticated  SELECT
+grant  centroamericano_salidas  authenticated  SELECT
 grant  centroamericano_tiempos  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE

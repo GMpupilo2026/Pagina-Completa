@@ -46,6 +46,7 @@
     let listas = [];
     let planillas = [];
     let presencia = [];
+    let salidas = [];          // cada vez que un árbitro con el modo concentración se salió de la pantalla
     let tiempos = [];
     let copias = [];
     let registro = [];
@@ -170,12 +171,13 @@
     // ------------------------------------------------------------- 1. ronda en curso
 
     async function cargarAvance() {
-        const [p, f, l, pr, ir] = await Promise.all([
+        const [p, f, l, pr, ir, sa] = await Promise.all([
             sb.from("centroamericano_progreso").select("*").range(0, 999),
             sb.from("centroamericano_finales").select("*").range(0, 999),
             sb.from("centroamericano_listas").select("*").range(0, 999),
             sb.from("centroamericano_presencia").select("*").range(0, 999),
             sb.from("centroamericano_inicios_torneo").select("*").range(0, 999),
+            sb.from("centroamericano_salidas").select("*").order("salio", { ascending: false }).range(0, 999),
         ]);
         // La hora real en que empezó cada ronda en cada categoría (la marcó su árbitro; reales o de ensayo, según el modo): desde ahí
         // corre el tiempo de espera de esa categoría.
@@ -185,6 +187,7 @@
         if (!p.error) progreso = (p.data || []).filter((x) => ids.has(x.asignacion_id));
         if (!f.error) finales = (f.data || []).filter((x) => ids.has(x.asignacion_id));
         if (!l.error) listas = (l.data || []).filter((x) => ids.has(x.asignacion_id));
+        if (!sa.error) { salidas = (sa.data || []).filter((x) => ids.has(x.asignacion_id)); marcarSalidas(); }
     }
 
     const filasRonda = () => C.resumenRonda(asignaciones, progreso, finales, new Date(), listas)
@@ -706,21 +709,62 @@
         const boton = (accion, texto, fn, extra) => el("button", { type: "button", class: "cam-btn cam-btn-chico " + (extra || "cam-btn-claro"), "data-accion": accion, onclick: fn }, texto);
         return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
             el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
+                a.concentracion ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "si", "data-concentracion": "si", texto: "🔒 Concentración" }) : null,
                 otrosEnlaces(a).length ? el("span", { class: "cam-tambien", texto: "También en: " + otrosEnlaces(a).map((x) => nombreTorneo(x.tnr) + " (mesas " + x.mesa_desde + " a " + x.mesa_hasta + ")").join("; ") }) : null),
             el("td", { texto: a.mesa_desde + " a " + a.mesa_hasta }),
             el("td", { texto: textoEstado(a) }),
             el("td", { class: "cam-conectado", "data-en-linea": linea ? "si" : "no" }, linea ? "● Conectado ahora" : a.ultimo_uso ? "Visto: " + window.HoraCR.fechaHora(a.ultimo_uso) : "Todavía no ha abierto el enlace",
-                el("span", { class: "cam-fallo cam-pedidos-abiertos", "data-pedidos": a.id, hidden: true })),
+                el("span", { class: "cam-fallo cam-pedidos-abiertos", "data-pedidos": a.id, hidden: true }),
+                el("span", { class: "cam-salidas cam-fallo", "data-salidas": a.id, "data-fuera": "no", hidden: true })),
             el("td", {}, el("div", { class: "cam-acciones cam-acciones-sin-margen" },
                 boton("qr", "QR y enlace", () => verQr(a), ""),
                 boton("nombre", a.nombrado === false ? "Ponerle nombre" : "Nombre", () => cambiarNombre(a)),
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
                 est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
+                est === "activo" ? boton("concentracion", a.concentracion ? "Quitar concentración" : "Concentración", () => ponerConcentracion(a, !a.concentracion)) : null,
                 a.concluyo_en ? boton("reabrir-labores", "Reabrir sus labores", () => reabrirLabores(a)) : null,
                 boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"),
                 // La «✕»: para cuando se metió a alguien que no correspondía. Lo borra por completo del torneo.
                 el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-rojo", "data-accion": "quitar", "aria-label": "Quitar a " + a.arbitro + " de este torneo por completo", title: "Quitar por completo (si se metió por error)", onclick: () => quitarEnlace(a) }, "✕ Quitar"))));
+    }
+
+    // «Modo concentración»: se enciende o apaga por enlace, o en todos de una vez. La tablet lo lee en segundos.
+    async function ponerConcentracion(a, si) {
+        const { error } = await sb.from("centroamericano_asignaciones").update({ concentracion: si }).eq("id", a.id);
+        if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
+        avisar(si ? "Concentración encendida para " + a.arbitro + ": en unos segundos su tablet pide la pantalla completa." : "Concentración apagada para " + a.arbitro + ".");
+        await cargarAsignaciones();
+    }
+
+    async function concentracionTodas(si) {
+        const vigentes = asignaciones.filter((a) => !a.revocada && !a.concluyo_en && new Date(a.vence).getTime() > Date.now());
+        const ids = (si ? vigentes : asignaciones.filter((a) => a.concentracion)).map((a) => a.id);
+        if (!ids.length) { avisar(si ? "No hay enlaces activos." : "Ninguna tablet tiene la concentración encendida."); return; }
+        const sigue = await Avisos.confirmar(si
+            ? "En " + ids.length + (ids.length === 1 ? " tablet" : " tablets") + " se pide la pantalla completa y, si el árbitro se sale, se le tapa la pantalla hasta que vuelva. En medio de una ronda se les atraviesa un aviso. ¿Encenderlo?"
+            : "Se apaga la concentración en " + ids.length + (ids.length === 1 ? " tablet" : " tablets") + ".", { titulo: si ? "Encender la concentración" : "Apagar la concentración", aceptar: si ? "Sí, encenderla" : "Sí, apagarla" });
+        if (!sigue) return;
+        const { error } = await sb.from("centroamericano_asignaciones").update({ concentracion: si }).in("id", ids);
+        if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
+        avisar(si ? "Concentración encendida en " + ids.length + " tablets." : "Concentración apagada en " + ids.length + " tablets.");
+        await cargarAsignaciones();
+    }
+
+    // Lo que se salió de la pantalla cada árbitro (se pone al día sin repintar la tabla).
+    const duracion = (seg) => seg < 60 ? seg + " s" : Math.floor(seg / 60) + " min" + (seg % 60 ? " " + (seg % 60) + " s" : "");
+    function marcarSalidas() {
+        const ahora = Date.now();
+        document.querySelectorAll("[data-salidas]").forEach((s) => {
+            const propias = salidas.filter((x) => x.asignacion_id === s.dataset.salidas);
+            const fuera = propias.find((x) => !x.volvio && ahora - new Date(x.salio).getTime() < 6 * 3600000);
+            const total = propias.reduce((t, x) => t + (x.segundos || 0), 0);
+            s.hidden = propias.length === 0;
+            s.dataset.fuera = fuera ? "si" : "no";
+            s.textContent = fuera
+                ? "🔓 Fuera de la pantalla ahora (desde hace " + duracion(Math.max(0, Math.round((ahora - new Date(fuera.salio).getTime()) / 1000))) + ")"
+                : propias.length ? "Se salió " + propias.length + (propias.length === 1 ? " vez" : " veces") + " (" + duracion(total) + " en total)" : "";
+        });
     }
 
     const textoPedidos = (n) => "🆘 " + n + (n === 1 ? " aviso abierto" : " avisos abiertos");
@@ -737,7 +781,7 @@
     function pintarAsignaciones() {
         $("sin-asignaciones").hidden = asignaciones.length > 0;
         const ahora = new Date();
-        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
+        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, a.concentracion, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
         if (firma === firmaAsignaciones) return;
         firmaAsignaciones = firma;
         const grupos = new Map();
@@ -752,6 +796,7 @@
         }
         $("asignaciones").replaceChildren(...filas);
         marcarPedidos();
+        marcarSalidas();
     }
 
     // «Otro torneo» de un árbitro que ya tiene enlace: abre el formulario ya con él elegido.
@@ -1243,10 +1288,10 @@
     // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
 
     let actividad = [];
-    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", inicio: "Inició la ronda", anulacion: "Anuló una anotación",
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", inicio: "Inició la ronda", salida: "Salió de la pantalla", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
     // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
-    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", inicio: "▶️", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", inicio: "▶️", salida: "🔓", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
@@ -1431,6 +1476,8 @@
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
+        $("conc-todas-si").addEventListener("click", () => concentracionTodas(true));
+        $("conc-todas-no").addEventListener("click", () => concentracionTodas(false));
         $("ct-pedir").addEventListener("click", pedirTiempos);
         $("ct-pdf").addEventListener("click", tiemposPdf);
         $("ct-torneo").addEventListener("change", pintarTiempos);

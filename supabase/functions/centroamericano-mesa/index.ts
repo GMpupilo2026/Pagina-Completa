@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
   // La asignación: de quién es el token, qué torneo y qué mesas.
   const { data: a } = await servicio
     .from("centroamericano_asignaciones")
-    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, concluyo_en, centroamericano_torneos(nombre, categoria, rama, prueba)")
+    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, concluyo_en, concentracion, todas_las_mesas, centroamericano_torneos(nombre, categoria, rama, prueba)")
     .eq("token", token)
     .maybeSingle();
   if (!a) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
-  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo"];
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo", "emparejamientos", "salida"];
   type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
   // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
   // con 15 tablets pidiendo `leer` cada pocos segundos).
@@ -212,6 +212,10 @@ Deno.serve(async (req) => {
     const reciente = [...pedidos].reverse().find((f) => f.estado === "abierto" || (f.atendido_en && Date.now() - new Date(f.atendido_en).getTime() < 15 * 60_000)) ?? null;
     return {
       nombrado: a.nombrado, arbitro: a.arbitro,
+      // «Modo concentración»: lo enciende la organización; la tablet lo lee aquí (cada pocos segundos) para taparse o destaparse.
+      concentracion: a.concentracion === true && !a.concluyo_en,
+      // «Todas las mesas» (el pizote): la organización lo habilita o deshabilita por enlace; la tablet esconde el botón, y la acción lo hace cumplir.
+      todas_las_mesas: a.todas_las_mesas !== false,
       mensajes: filas.filter((f) => f.de === "organizacion" && !f.leido_en).map((f) => ({ id: f.id, creado: f.creado, texto: f.texto, control_tiempos: f.control_tiempos === true })),
       ayuda: reciente ? { id: reciente.id, creado: reciente.creado, mesa: reciente.mesa, texto: reciente.texto, estado: reciente.estado, atendido_en: reciente.atendido_en } : null,
       abiertas: pedidos.filter((f) => f.estado === "abierto").map((f) => f.mesa),
@@ -606,6 +610,68 @@ Deno.serve(async (req) => {
       return json({ ok: true, finalizada_en: ahora });
     }
 
+    // «Todas las mesas»: el árbitro toca el pizote y ve los emparejamientos de la ronda abierta de CADA categoría del torneo
+    // (los de prueba solo ven los de prueba), para decirle a un atleta dónde sentarse. Solo lee: es lo mismo que publica
+    // chess-results, no trae resultados y no deja escribir nada. Sin `tnr` contesta la lista de categorías; con `tnr`, las mesas
+    // de esa categoría, por la misma lectura compartida (no hace una visita más a chess-results si la copia es reciente).
+    if (cuerpo.action === "emparejamientos") {
+      visto();
+      if (a.todas_las_mesas === false) return json({ error: "La organización no habilitó «Todas las mesas» en tu enlace." }, 403);
+      const { data: ts } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden")
+        .eq("prueba", torneoInfo?.prueba === true).order("orden", { ascending: true }).range(0, 99);
+      const categorias = (ts ?? []).map((t: { tnr: string; nombre: string; categoria: string; rama: string }) => ({ tnr: t.tnr, nombre: t.nombre, categoria: t.categoria, rama: t.rama }));
+      const pedido = cuerpo.tnr == null || cuerpo.tnr === "" ? "" : String(cuerpo.tnr);
+      if (!pedido) return json({ ok: true, actual: a.tnr, categorias });
+      const cat = categorias.find((c) => c.tnr === pedido);
+      if (!cat) return json({ error: "Esa categoría no es de este torneo." }, 404);
+      const { data: acc2 } = await servicio.rpc("centroamericano_acceso", { p_tnr: pedido });
+      const acceso2 = (Array.isArray(acc2) ? acc2[0] : acc2) as { acceso: string; sid: string } | null;
+      if (!acceso2) return json({ error: "La organización todavía no cargó la clave de " + cat.nombre + ". Avísale." }, 409);
+      const lect = await leerConCache(servicio, acceso2, pedido, { maxEdadMs: MAX_LEER_MS });
+      if (!lect.ok) return json({ error: lect.error }, lect.estado);
+      return json({
+        ok: true, tnr: pedido, nombre: cat.nombre, categoria: cat.categoria, rama: cat.rama, ronda: lect.lectura.ronda,
+        mesas: lect.lectura.mesas.map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras })),
+        datos: { desde: lect.desde, viejo: lect.viejo },
+      });
+    }
+
+    // «Modo concentración»: la tablet avisa cuándo el árbitro se sale de la pantalla (fase «sale») y cuándo vuelve (fase «vuelve»). Solo
+    // se anota (la organización lo ve): lo que tapa la pantalla es la página. La hora y la duración las pone ESTA función con su reloj, no
+    // la tablet. Si el aviso de «sale» no llegó (sin señal), «vuelve» anota la salida con los segundos que midió la tablet.
+    if (cuerpo.action === "salida") {
+      visto();
+      if (a.concluyo_en) return json({ ok: true });
+      const fase = String(cuerpo.fase ?? "");
+      const motivo = ["oculta", "pantalla_completa", "sin_foco"].includes(String(cuerpo.motivo)) ? String(cuerpo.motivo) : "oculta";
+      const ahora = Date.now();
+      const { data: abierta } = await servicio.from("centroamericano_salidas").select("id, salio").eq("asignacion_id", a.id).is("volvio", null)
+        .gt("salio", new Date(ahora - 6 * 3600_000).toISOString()).order("salio", { ascending: false }).limit(1);
+      if (fase === "sale") {
+        if (abierta && abierta.length) return json({ ok: true, ya: true });
+        // Un tope por si una tablet se sale sin parar: pasadas 400 en el día, ya no se anotan más.
+        const { count } = await servicio.from("centroamericano_salidas").select("id", { count: "exact", head: true }).eq("asignacion_id", a.id).gt("salio", new Date(ahora - 24 * 3600_000).toISOString());
+        if ((count ?? 0) >= 400) return json({ ok: true, tope: true });
+        const { error } = await servicio.from("centroamericano_salidas").insert({ asignacion_id: a.id, tnr: a.tnr, arbitro: a.arbitro, motivo });
+        if (error) { console.error("centroamericano-mesa: salida", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+        return json({ ok: true });
+      }
+      if (fase === "vuelve") {
+        if (abierta && abierta.length) {
+          const seg = Math.min(86400, Math.max(0, Math.round((ahora - new Date(abierta[0].salio).getTime()) / 1000)));
+          const { error } = await servicio.from("centroamericano_salidas").update({ volvio: new Date(ahora).toISOString(), segundos: seg }).eq("id", abierta[0].id).is("volvio", null);
+          if (error) { console.error("centroamericano-mesa: salida vuelve", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+          return json({ ok: true, segundos: seg });
+        }
+        const seg = Math.min(86400, Math.max(0, Math.round(Number(cuerpo.segundos) || 0)));
+        if (seg < 1) return json({ ok: true });
+        const { error } = await servicio.from("centroamericano_salidas").insert({ asignacion_id: a.id, tnr: a.tnr, arbitro: a.arbitro, motivo, salio: new Date(ahora - seg * 1000).toISOString(), volvio: new Date(ahora).toISOString(), segundos: seg });
+        if (error) { console.error("centroamericano-mesa: salida tarde", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+        return json({ ok: true, segundos: seg });
+      }
+      return json({ error: "Fase no válida." }, 400);
+    }
+
     if (cuerpo.action === "avisos") {
       visto();
       return json({ ok: true, concluyo: a.concluyo_en ?? null, ...(await avisosDe()) });
@@ -641,7 +707,7 @@ Deno.serve(async (req) => {
         }
         return out;
       };
-      const [registro, tiempos, presencia, planillas, finales, listas, avisos] = await Promise.all([
+      const [registro, tiempos, presencia, planillas, finales, listas, avisos, salidas] = await Promise.all([
         todo("centroamericano_registro", COLUMNAS + ", tnr, ronda, asignacion_id", "ocurrio"),
         todo("centroamericano_tiempos", "id, ocurrio, tnr, ronda, mesa, blancas, negras, j_blancas, j_negras, t_blancas, t_negras, asignacion_id", "ocurrio"),
         todo("centroamericano_presencia", "tnr, ronda, mesa, color, jugador, presente, marcada, asignacion_id", "marcada"),
@@ -649,6 +715,7 @@ Deno.serve(async (req) => {
         todo("centroamericano_finales", "ronda, finalizada_en, reabierta, asignacion_id", "finalizada_en"),
         todo("centroamericano_listas", "ronda, paso, aprobada_en, asignacion_id", "aprobada_en"),
         todo("centroamericano_avisos", "de, tipo, mesa, texto, estado, creado, atendido_en, leido_en, ronda, asignacion_id", "creado"),
+        todo("centroamericano_salidas", "tnr, salio, volvio, segundos, motivo, asignacion_id", "salio"),
       ]);
       const tnrs = [...new Set((asigs ?? []).map((x: { tnr: string }) => x.tnr))];
       const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs);
@@ -656,7 +723,7 @@ Deno.serve(async (req) => {
       const { data: inicios } = await servicio.from("centroamericano_inicios_torneo").select("tnr, ronda, inicio, arbitro").in("tnr", tnrs).order("inicio", { ascending: true });
       return json({
         ok: true, arbitro: a.arbitro, concluyo: a.concluyo_en, generado: new Date().toISOString(),
-        asignaciones: asigs ?? [], torneos: torneos ?? [], inicios: inicios ?? [], registro, tiempos, presencia, planillas, finales, listas,
+        asignaciones: asigs ?? [], torneos: torneos ?? [], inicios: inicios ?? [], registro, tiempos, presencia, planillas, finales, listas, salidas,
         avisos: avisos.filter((x) => x.tipo === "ayuda" || x.tipo === "termino" || x.tipo === "finalizo" || x.leido_en),
       });
     }

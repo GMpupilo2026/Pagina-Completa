@@ -53,6 +53,19 @@ const SERVIDOR_ARBITRO = `
       if (!/^[^\\s@<>"',;]+@[^\\s@<>"',;]+\\.[^\\s@<>"',;]+$/.test(String(b.correo || ""))) return falla(400, "Escribe un correo válido.");
       if (window.__correoArgs.length > 2) return falla(429, "Ya mandaste tu bitácora dos veces.");
       return { data: { ok: true }, error: null }; }
+    // «Modo concentración»: la tablet avisa cuándo se sale y cuándo vuelve (la función pone la hora con su reloj).
+    if (b.action === "salida") { window.__salidasArgs = (window.__salidasArgs || []).concat([{ fase: b.fase, motivo: b.motivo, segundos: b.segundos }]); return { data: { ok: true }, error: null }; }
+    // «Todas las mesas» (el pizote): la lista de categorías y, con tnr, los emparejamientos de esa categoría. La 1529739 «no tiene clave».
+    if (b.action === "emparejamientos") {
+      window.__emparejamientosArgs = (window.__emparejamientosArgs || []).concat([b.tnr === undefined ? null : b.tnr]);
+      const CATS = [{ tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino" }, { tnr: "1529738", nombre: "Sub-12 Absoluto", categoria: "Sub-12", rama: "Absoluto" }, { tnr: "1529739", nombre: "Sub-14 Femenino", categoria: "Sub-14", rama: "Femenino" }];
+      if (!b.tnr) return { data: { ok: true, actual: "1529737", categorias: CATS }, error: null };
+      const c = CATS.find((x) => x.tnr === b.tnr);
+      if (!c) return falla(404, "Esa categoría no es de este torneo.");
+      if (c.tnr === "1529739") return falla(409, "La organización todavía no cargó la clave de " + c.nombre + ". Avísale.");
+      const mesas = c.tnr === "1529737" ? MESAS.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras }))
+        : [{ mesa: 1, blancas: "Árias Núñez, María José", negras: "Zúñiga Rojas, Pedro" }, { mesa: 2, blancas: "Castro Vega, Luis", negras: "Jiménez Mora, Ana Sofía" }, { mesa: 15, blancas: "Solano Brenes, Diego", negras: "Mora Ugalde, Camila" }];
+      return { data: { ok: true, tnr: c.tnr, nombre: c.nombre, categoria: c.categoria, rama: c.rama, ronda: 3, mesas, datos: { desde: new Date().toISOString(), viejo: false } }, error: null }; }
     if (b.action === "concluir") { if (!window.__concluyo) window.__concluyo = "2026-11-02T16:30:00Z"; return { data: { ok: true, concluyo: window.__concluyo }, error: null }; }
     if (b.action === "bitacora") {
       if (!window.__concluyo) return falla(409, "La bitácora se baja cuando concluyes tus labores.");

@@ -349,12 +349,15 @@
     // js/guia-planillas.js); si el aparato no la da (sin permiso, sin cámara, o el árbitro prefiere la suya),
     // la cámara del aparato de siempre. Nunca se queda sin poder subir la foto.
     async function subirPlanilla(m) {
+        // La cámara saca al navegador de la página a propósito: no cuenta como salirse del modo concentración.
+        Conc.pausa(90000);
         const G = window.GuiaPlanillas;
         if (G && G.disponible()) {
             const r = await G.abrir({
                 titulo: "Foto de las planillas · Mesa " + m.mesa,
                 rotulos: ["Blancas · " + m.blancas, "Negras · " + m.negras],
             });
+            Conc.pausa(0);
             if (r.imagen) { await enviarPlanilla(m, r.imagen); enfocarCamarita(m.mesa); return; }
             if (r.cancelado) { enfocarCamarita(m.mesa); return; }
             if (!r.elegida && r.motivo) avisar(r.motivo + " Se usa la cámara del aparato.", true);
@@ -391,6 +394,7 @@
         entrada.accept = "image/*";
         entrada.setAttribute("capture", "environment");
         entrada.addEventListener("change", async () => {
+            Conc.pausa(0);
             const archivo = entrada.files && entrada.files[0];
             if (!archivo) return;
             subiendo.add(m.mesa);
@@ -403,6 +407,7 @@
                 pintar();
             }
         });
+        Conc.pausa(90000); // la cámara del aparato saca al navegador de la página
         entrada.click();
     }
 
@@ -1087,8 +1092,12 @@
         $("nombre-caja").hidden = nombrado;
     }
 
+    // «Modo concentración»: lo enciende la organización (llega en «leer» y en «avisos»); la tablet se tapa si el árbitro se sale.
+    const Conc = window.CentroamericanoConcentracion.crear({ pedir: (c) => invocar("salida", c, { intentos: 1 }) });
+
     // Lo que contesta «leer» o «avisos»: el nombre, los mensajes sin leer y el pedido de ayuda.
     function aplicarAvisos(d) {
+        if (d.concentracion !== undefined) Conc.ponerActivo(d.concentracion === true);
         nombrado = d.nombrado !== false;
         if (d.arbitro && estado) { estado.arbitro = d.arbitro; $("d-arbitro").textContent = d.arbitro; }
         pendientes = d.mensajes || [];
@@ -1448,6 +1457,8 @@
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
+        $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir({ pedir: (c) => invocar("emparejamientos", c, { intentos: 2 }) }));
         $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
         $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));

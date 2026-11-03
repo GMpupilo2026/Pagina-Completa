@@ -16,6 +16,26 @@
  * porque en el celular lo que importa son las mesas. */
 .cam-portada { padding-bottom: 0.25rem; }
 .cam-portada .cac-titulo { text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
+/* El pizote es un botón (abre «Todas las mesas»): sin borde de botón, con su foco y una pista debajo. */
+.cam-mascota-boton { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; background: none; border: 0; padding: 0.2rem; border-radius: 1rem; cursor: pointer; color: #fff; }
+.cam-mascota-boton:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-mascota-boton:active .cam-mascota { transform: scale(0.97); }
+.cam-mascota-pista { background: var(--cac-rojo); color: #fff; font-weight: 800; font-size: 0.8rem; line-height: 1.1; border-radius: 9999px; padding: 0.3rem 0.75rem; border: 2px solid rgb(255 255 255 / 0.85); }
+
+/* «Todas las mesas»: una ventana (dialog) con las categorías, el buscador y los emparejamientos. */
+.cam-todas { width: min(60rem, 96vw); max-height: 92vh; overflow: auto; margin: auto; padding: 1rem; border: 3px solid var(--cac-morado-hondo); border-radius: 1.25rem; background: #fff; color: var(--cac-morado-hondo); }
+.cam-todas::backdrop { background: rgb(15 18 48 / 0.7); }
+.dark .cam-todas { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-todas-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.4rem; }
+.cam-todas-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.7rem 0; }
+.cam-todas-buscar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cam-todas-buscar .cam-campo { flex: 1; min-width: 14rem; width: auto; }
+.cam-todas-estado { margin: 0.6rem 0; font-weight: 700; font-size: 0.9rem; }
+.cam-todas-tabla { font-size: 1.05rem; }
+.cam-todas-mesa { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
+.cam-todas-tabla tbody th { text-align: left; border-top: 1px solid #dfe0f7; padding: 0.45rem 0.6rem; text-transform: none; letter-spacing: 0; font-size: 1.25rem; }
+.cam-todas-vacio { text-align: center; padding: 1rem; font-weight: 700; }
+.cam-todas-tabla tr[hidden], .cam-todas-col-cat[hidden] { display: none; }
 .cam-mascota {
   width: clamp(88px, 22vw, 150px);
   height: auto;
@@ -613,3 +633,20 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-jugador[data-elegido] .cam-nombre { background: rgb(47 164 106 / 0.28); box-shadow: 0 0 0 3px #4fd18b; }
 @media (prefers-reduced-motion: no-preference) { .cam-jugador[data-elegido] .cam-nombre { animation: cam-elegido 0.9s ease-in-out infinite; } }
 @keyframes cam-elegido { 0%, 100% { box-shadow: 0 0 0 3px #2fa46a; } 50% { box-shadow: 0 0 0 8px rgb(47 164 106 / 0.3); } }
+
+/* «Modo concentración»: cuando el árbitro se sale (o antes de entrar), una pantalla que lo tapa todo. */
+.cam-conc { position: fixed; inset: 0; z-index: 100000; display: grid; place-items: center; padding: 1rem; background: #1e2453; color: #fff; overflow: auto; }
+.cam-conc-tarjeta { max-width: 34rem; text-align: center; display: grid; gap: 0.8rem; }
+.cam-conc-icono { font-size: 3rem; line-height: 1; }
+.cam-conc-titulo { font-family: var(--font-serif, Georgia, serif); font-size: 1.9rem; font-weight: 800; line-height: 1.15; }
+.cam-conc-tarjeta p { font-size: 1.1rem; line-height: 1.4; }
+.cam-conc-tarjeta p + p { margin-top: 0.5rem; }
+.cam-conc-tiempo { font-weight: 800; color: #ffd166; }
+.cam-conc-boton { min-height: 56px; font-size: 1.2rem; justify-self: center; padding: 0.5rem 1.6rem; }
+
+/* El modo concentración en la organización: la barra de arriba de la tabla y el aviso de «fuera de la pantalla» de cada fila. */
+.cam-concentracion { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; margin: 0.4rem 0 0.8rem; }
+.cam-concentracion .cam-herramientas-nota { flex-basis: 100%; margin: 0; }
+.cam-salidas[data-fuera="si"] { font-weight: 800; }
+.cam-salidas[data-fuera="no"] { color: #7a4a00; font-weight: 700; }
+.dark .cam-salidas[data-fuera="no"] { color: #ffd166; }
