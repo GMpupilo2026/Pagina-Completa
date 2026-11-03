@@ -506,6 +506,15 @@ console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el in
   const rt = C.relojApagado({ control: temprano, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
   igual("con un control de 4 medias jugadas el ritmo (90 % – 10 %) pesa 4/10: queda en 66 % – 34 %, y lo dice", [Math.round(rt.proporcion.blancas * 100), rt.pesoRitmo, rt.blancas + rt.negras === rt.total], [66, 0.4, true]);
   igual("desde 10 medias jugadas el ritmo cuenta entero", C.relojApagado({ control: Object.assign({}, temprano, { j_blancas: 5, j_negras: 5, t_blancas: 5400 + 150 - 540, t_negras: 5400 + 150 - 60 }), inicio: ini, ahora, jBlancas: 23, jNegras: 23 }).pesoRitmo, 1);
+  // La función le manda a la tablet las últimas 60 anotaciones MÁS todas las ilegales e irregularidades de la ronda: una
+  // vieja que quedara fuera faltaría en la cuenta del reloj apagado sin que nada lo diga.
+  const fnMesa = leer("supabase", "functions", "centroamericano-mesa", "index.ts");
+  const mAnot = fnMesa.match(/anotaciones: (\(\(sin\) => \{[\s\S]*?\}\))\(filas\.filter\(\(f\) => f\.tipo !== "anulacion"\)\)/);
+  const filasPrueba = [{ id: "il0", tipo: "ilegal" }, { id: "ir0", tipo: "irregularidad" }, { id: "r0", tipo: "resultado" }].concat(Array.from({ length: 70 }, (_, i) => ({ id: "n" + i, tipo: "nota" })));
+  const anotPrueba = mAnot ? eval(mAnot[1])(filasPrueba) : [];
+  igual("«leer» manda las últimas 60 anotaciones y además las ilegales e irregularidades más viejas, en orden y sin repetir",
+    [!!mAnot, anotPrueba.length, anotPrueba.slice(0, 3).map((f) => f.id), anotPrueba[anotPrueba.length - 1] && anotPrueba[anotPrueba.length - 1].id, new Set(anotPrueba.map((f) => f.id)).size === anotPrueba.length],
+    [true, 62, ["il0", "ir0", "n10"], "n69", true]);
   igual("las sanciones de tiempo son solo ±1 y ±2 minutos", C.SANCIONES_TIEMPO.filter((x) => x.segundos).map((x) => x.segundos), [60, 120, -60, -120]);
   igual("la sanción se escribe y se vuelve a leer igual (una sola copia del formato)",
     C.SANCIONES_TIEMPO.filter((x) => x.segundos).every((x) => { const l = C.leerSancion("X" + C.sancionTexto(x.id)); return l && l.segundos === x.segundos && l.a === x.a; }), true);
