@@ -681,7 +681,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
     await p.evaluate(() => { window.__todasFalla = false; });
-    await p.click("#ver-todas-mesas", { force: true });   // un aviso de error de más arriba (la cámara de las planillas) puede seguir encima
+    await p.evaluate(() => document.getElementById("ver-todas-mesas").click());   // un aviso de error de más arriba (la cámara de las planillas) puede seguir encima del pizote
     await p.waitForSelector("#donde-juega-hoja[open]");
     igual("el pizote de la portada abre la MISMA lupa; todo salió por la función, con el token y solo leyendo", await p.evaluate(() => [document.getElementById("donde-juega-hoja").open, window.__llamadas.filter((l) => l.body.action === "todas_mesas").every((l) => /^[0-9a-f]{64}$/.test(l.body.token))]), [true, true]);
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
