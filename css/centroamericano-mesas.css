@@ -678,3 +678,35 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-fp-acciones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .cam-fp-reglas summary { cursor: pointer; font-weight: 700; }
 .cam-fp-reglas ul { list-style: disc; padding-left: 1.4rem; margin-top: 0.5rem; display: grid; gap: 0.4rem; font-size: 0.92rem; }
+
+/* Fair Play (js/centroamericano-fair-play.js): la misma pantalla en la del encargado y en la pestaña del principal. */
+.cam-fp-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+.cam-fp-seccion { margin-top: 1.4rem; }
+.cam-fp-alertas { display: grid; gap: 0.6rem; margin-top: 0.6rem; }
+.cam-fp-alerta { border: 2px solid var(--cac-morado); border-radius: 0.9rem; padding: 0.7rem 0.9rem; display: grid; gap: 0.3rem; }
+.cam-fp-alerta[data-nivel="alta"] { border-color: var(--cac-rojo); }
+.cam-fp-alerta[data-estado="vista"] { border-style: dashed; }
+.cam-fp-alerta-titulo { font-size: 1.02rem; }
+.cam-chip[data-estado="fp-nivel-a_mirar"] { background: var(--cac-morado); }
+.cam-chip[data-estado="fp-nivel-alta"] { background: var(--cac-rojo); }
+.cam-chip[data-estado="fp-nivel-normal"] { background: #4d5266; }
+.cam-chip[data-estado="fp-sin_efecto"] { background: #4d5266; }
+.cam-fp-no-aplica { font-weight: 700; }
+.cam-fp-enlaces { display: grid; gap: 0.8rem; margin-top: 0.6rem; }
+.cam-fp-enlace { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; border: 1px solid rgb(127 127 127 / 0.35); border-radius: 0.9rem; padding: 0.7rem 0.9rem; }
+.cam-fp-enlace svg { width: 150px; height: 150px; background: #fff; border-radius: 0.5rem; padding: 0.3rem; }
+#fp-mesas tr[data-excluida="si"] td { font-style: italic; }
+
+/* La mesa elegida para Fair Play en la tablet del árbitro: un borde dorado que brilla poquito (y lo dice escrito,
+ * en la banda de arriba). Sin efecto o ya revisada, el borde queda quieto. */
+.cam-mesa[data-fair-play] { border: 3px solid #b8860b; }
+.cam-mesa[data-fair-play="aprobada"] { animation: cam-fp-brillo 2.6s ease-in-out infinite; }
+@keyframes cam-fp-brillo {
+  0%, 100% { box-shadow: 0 0 0 2px rgb(212 160 23 / 0.25), 0 0 8px rgb(212 160 23 / 0.35); }
+  50% { box-shadow: 0 0 0 3px rgb(212 160 23 / 0.45), 0 0 18px rgb(212 160 23 / 0.7); }
+}
+@media (prefers-reduced-motion: reduce) { .cam-mesa[data-fair-play="aprobada"] { animation: none; box-shadow: 0 0 0 3px rgb(212 160 23 / 0.45); } }
+.cam-fp-banda { background: #fdf3d7; color: #4a3500; border: 1px solid #b8860b; border-radius: 0.6rem; padding: 0.45rem 0.7rem; font-weight: 700; font-size: 0.92rem; margin: 0.4rem 0; }
+.cam-fp-banda[data-tipo="no-aplica"] { background: #f1f1f4; color: #33343d; border-color: #6b6e7d; }
+.dark .cam-fp-banda { background: #3a2c05; color: #ffe8a3; }
+.dark .cam-fp-banda[data-tipo="no-aplica"] { background: #2b2d38; color: #e4e5ec; }

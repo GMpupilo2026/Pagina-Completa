@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261103162537
+# al-dia-con: 20261103180000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -50,6 +50,9 @@ tabla  centroamericano_copias  rls=true
 tabla  centroamericano_correos_bitacora  rls=true
 tabla  centroamericano_fair_play  rls=true
 tabla  centroamericano_finales  rls=true
+tabla  centroamericano_fp_analisis  rls=true
+tabla  centroamericano_fp_enlaces  rls=true
+tabla  centroamericano_fp_partidas  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_inicios_torneo  rls=true
 tabla  centroamericano_lecturas  rls=true
@@ -592,25 +595,44 @@ columna  centroamericano_copias.resumen  jsonb
 columna  centroamericano_correos_bitacora.asignacion_id  uuid
 columna  centroamericano_correos_bitacora.enviado_en  timestamp with time zone
 columna  centroamericano_correos_bitacora.id  uuid
+columna  centroamericano_fair_play.aplica_blancas  boolean
+columna  centroamericano_fair_play.aplica_negras  boolean
 columna  centroamericano_fair_play.arbitro  text
 columna  centroamericano_fair_play.asignacion_id  uuid
 columna  centroamericano_fair_play.aviso_id  uuid
+columna  centroamericano_fair_play.blancas  text
 columna  centroamericano_fair_play.color_si_tablas  text
 columna  centroamericano_fair_play.creado  timestamp with time zone
 columna  centroamericano_fair_play.creado_por  uuid
 columna  centroamericano_fair_play.decidida_en  timestamp with time zone
 columna  centroamericano_fair_play.decidida_por  uuid
+columna  centroamericano_fair_play.decidida_por_nombre  text
+columna  centroamericano_fair_play.elo_b  integer
+columna  centroamericano_fair_play.elo_n  integer
+columna  centroamericano_fair_play.enlace_id  uuid
 columna  centroamericano_fair_play.estado  text
 columna  centroamericano_fair_play.id  uuid
 columna  centroamericano_fair_play.jugador  text
+columna  centroamericano_fair_play.jugador_color  text
+columna  centroamericano_fair_play.jugador_snr  integer
 columna  centroamericano_fair_play.mesa  integer
 columna  centroamericano_fair_play.mesas_en_sorteo  integer
 columna  centroamericano_fair_play.motivo  text
+columna  centroamericano_fair_play.motivos  text[]
+columna  centroamericano_fair_play.negras  text
+columna  centroamericano_fair_play.no_aplica  text
 columna  centroamericano_fair_play.nota  text
+columna  centroamericano_fair_play.peso  numeric(4,2)
 columna  centroamericano_fair_play.resultado  text
+columna  centroamericano_fair_play.resultado_mesa  text
 columna  centroamericano_fair_play.revisada_en  timestamp with time zone
 columna  centroamericano_fair_play.revisada_por  uuid
+columna  centroamericano_fair_play.revisada_por_nombre  text
+columna  centroamericano_fair_play.revisar_color  text
 columna  centroamericano_fair_play.ronda  integer
+columna  centroamericano_fair_play.snr_b  integer
+columna  centroamericano_fair_play.snr_n  integer
+columna  centroamericano_fair_play.sorteada_por  text
 columna  centroamericano_fair_play.tnr  text
 columna  centroamericano_finales.asignacion_id  uuid
 columna  centroamericano_finales.finalizada_en  timestamp with time zone
@@ -618,6 +640,46 @@ columna  centroamericano_finales.id  uuid
 columna  centroamericano_finales.reabierta  boolean
 columna  centroamericano_finales.revision  jsonb
 columna  centroamericano_finales.ronda  integer
+columna  centroamericano_fp_analisis.acpl  numeric(7,1)
+columna  centroamericano_fp_analisis.analizada  timestamp with time zone
+columna  centroamericano_fp_analisis.color  text
+columna  centroamericano_fp_analisis.elo  integer
+columna  centroamericano_fp_analisis.esperada  numeric(5,2)
+columna  centroamericano_fp_analisis.estado  text
+columna  centroamericano_fp_analisis.jugadas  integer
+columna  centroamericano_fp_analisis.jugador  text
+columna  centroamericano_fp_analisis.mesa  integer
+columna  centroamericano_fp_analisis.nivel  text
+columna  centroamericano_fp_analisis.nota  text
+columna  centroamericano_fp_analisis.partida_url  text
+columna  centroamericano_fp_analisis.precision  numeric(5,2)
+columna  centroamericano_fp_analisis.resultado  text
+columna  centroamericano_fp_analisis.rival  text
+columna  centroamericano_fp_analisis.rival_elo  integer
+columna  centroamericano_fp_analisis.ronda  integer
+columna  centroamericano_fp_analisis.tnr  text
+columna  centroamericano_fp_analisis.vista_en  timestamp with time zone
+columna  centroamericano_fp_analisis.vista_por_nombre  text
+columna  centroamericano_fp_analisis.z  numeric(5,2)
+columna  centroamericano_fp_enlaces.creada  timestamp with time zone
+columna  centroamericano_fp_enlaces.creada_por  uuid
+columna  centroamericano_fp_enlaces.id  uuid
+columna  centroamericano_fp_enlaces.nombre  text
+columna  centroamericano_fp_enlaces.revocada  boolean
+columna  centroamericano_fp_enlaces.token  text
+columna  centroamericano_fp_enlaces.ultimo_uso  timestamp with time zone
+columna  centroamericano_fp_enlaces.vence  timestamp with time zone
+columna  centroamericano_fp_partidas.blancas  text
+columna  centroamericano_fp_partidas.elo_b  integer
+columna  centroamericano_fp_partidas.elo_n  integer
+columna  centroamericano_fp_partidas.leida  timestamp with time zone
+columna  centroamericano_fp_partidas.mesa  integer
+columna  centroamericano_fp_partidas.negras  text
+columna  centroamericano_fp_partidas.resultado  text
+columna  centroamericano_fp_partidas.ronda  integer
+columna  centroamericano_fp_partidas.snr_b  integer
+columna  centroamericano_fp_partidas.snr_n  integer
+columna  centroamericano_fp_partidas.tnr  text
 columna  centroamericano_inicios_ronda.inicio  timestamp with time zone
 columna  centroamericano_inicios_ronda.prueba  boolean
 columna  centroamericano_inicios_ronda.puesto_en  timestamp with time zone
@@ -2380,10 +2442,14 @@ funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
-funcion  centroamericano_fair_play_aprobar(p_id uuid)  definer  anon=false  auth=true
-funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text)  definer  anon=false  auth=true
-funcion  centroamericano_fair_play_revisar(p_id uuid, p_resultado text, p_jugador text, p_nota text)  definer  anon=false  auth=true
-funcion  centroamericano_fair_play_sortear(p_ronda integer, p_tnrs text[], p_cantidad integer)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_aprobar(p_id uuid, p_quien text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text, p_quien text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_revisar(p_id uuid, p_resultado text, p_color text, p_jugador text, p_nota text, p_quien text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_sortear(p_ronda integer, p_tnrs text[], p_cantidad integer, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
+funcion  centroamericano_fp_alerta(p_tnr text, p_ronda integer, p_mesa integer, p_color text, p_estado text, p_nota text, p_quien text)  definer  anon=false  auth=true
+funcion  centroamericano_fp_calibrar()  definer  anon=false  auth=true
+funcion  centroamericano_fp_candidatas(p_tnr text, p_ronda integer)  definer  anon=false  auth=true
+funcion  centroamericano_fp_rondas()  definer  anon=false  auth=true
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
@@ -2576,6 +2642,10 @@ funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=fals
 funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.fin_de_puntos_dobles(p_alumno uuid, p_horas integer)  definer  anon=false  auth=false
+funcion  interno.fp_clave(p text)  invoker  anon=false  auth=false
+funcion  interno.fp_puede()  definer  anon=false  auth=false
+funcion  interno.fp_quien(p_quien text)  definer  anon=false  auth=false
+funcion  interno.fp_tras_resultado()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
@@ -2969,6 +3039,11 @@ politica  centroamericano_copias  centroamericano_copias_ver  SELECT
 politica  centroamericano_fair_play  centroamericano_fair_play_ver  SELECT
 politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
+politica  centroamericano_fp_analisis  centroamericano_fp_analisis_ver  SELECT
+politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_cambiar  UPDATE
+politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_crear  INSERT
+politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_ver  SELECT
+politica  centroamericano_fp_partidas  centroamericano_fp_partidas_ver  SELECT
 politica  centroamericano_inicios_ronda  centroamericano_inicios_ronda_ver  SELECT
 politica  centroamericano_inicios_torneo  centroamericano_inicios_torneo_ver  SELECT
 politica  centroamericano_listas  centroamericano_listas_ver  SELECT
@@ -3439,6 +3514,8 @@ trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
 trigger  centroamericano_avisos  atendido
 trigger  centroamericano_finales  auditar
+trigger  centroamericano_fp_enlaces  auditar
+trigger  centroamericano_registro  fair_play_resultado
 trigger  centroamericano_torneos  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
@@ -3624,10 +3701,16 @@ indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_asignacion_idx
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_pkey
+indice  centroamericano_fair_play  centroamericano_fair_play_enlace_idx
 indice  centroamericano_fair_play  centroamericano_fair_play_pkey
 indice  centroamericano_fair_play  centroamericano_fair_play_una_vez
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
+indice  centroamericano_fp_analisis  centroamericano_fp_analisis_pkey
+indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_creada_por_idx
+indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_pkey
+indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_token_key
+indice  centroamericano_fp_partidas  centroamericano_fp_partidas_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
 indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_asignacion_idx
 indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_pkey
@@ -4352,6 +4435,9 @@ grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_copias  authenticated  SELECT
 grant  centroamericano_fair_play  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
+grant  centroamericano_fp_analisis  authenticated  SELECT
+grant  centroamericano_fp_enlaces  authenticated  SELECT
+grant  centroamericano_fp_partidas  authenticated  SELECT
 grant  centroamericano_inicios_ronda  authenticated  SELECT
 grant  centroamericano_inicios_torneo  authenticated  SELECT
 grant  centroamericano_listas  authenticated  SELECT
