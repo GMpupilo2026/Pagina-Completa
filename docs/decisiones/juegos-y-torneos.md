@@ -8856,6 +8856,15 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
      «Tablas». Blancas: `1-0` y `1f-0f`; negras: `0-1` y `0f-1f`; `0f-0f` no ilumina a nadie. Es solo para estar seguro de haber elegido
      bien: una vez guardado (o al quitar la elección) deja de brillar. Con movimiento reducido no parpadea (queda el halo fijo) y el color
      nunca va solo: lo dice la palabra.
+  10. **La bitácora en PDF, ordenada y legible.** Antes salía plana: el detalle se cortaba con «...», cada jugador tenía su línea de
+     presencia (páginas de líneas repetidas) y las flechas «→» salían como «->» (Helvetica solo trae las letras de WinAnsi). Ahora:
+     la **llegada es UNA línea por ronda** («Llegaron 5 de 6 jugadores. No llegaron: …»), cada ronda trae **su resumen en una frase**
+     («Empezó a las 9:02 a. m. y terminó a las 12:20 p. m. · 6 resultados · 1 jugada ilegal…», sin las cuentas en cero), los resultados
+     van como «Jugador – Rival: 1-0 · enviado», la columna «Qué» va en negrita y **las celdas largas se parten en renglones**: la
+     librería `js/reporte-pdf.js` ganó dos opciones de la tabla, `envolver` y `negritas` (sin ellas, la tabla recorta como siempre y los
+     demás informes no cambian). Las fechas salen largas («3 de noviembre de 2026 a las 4:10 p. m.»). Para mirarla de verdad se genera
+     un PDF de ejemplo y se convierte a imagen (`pdftoppm`); el verificador comprueba la línea de llegadas, el resumen, las opciones de la
+     tabla, que no haya símbolos fuera de Helvetica y, en el navegador, que `envolver` no pierde texto y que sin él se recorta igual.
   La función es `centroamericano-mesa` (v16). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
   saltan).
 - **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir

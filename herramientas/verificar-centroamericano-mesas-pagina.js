@@ -675,6 +675,14 @@ const CONTRASTE = `(sel) => {
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
     const bytesB = fs.readFileSync(await bitacora.path());
     igual("«Descargar mi bitácora» baja un PDF con el nombre del árbitro y la MARCA DE AGUA de Ajedrez Integral", [bitacora.suggestedFilename(), bytesB.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesB.toString("latin1"))], ["bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf", true, true]);
+    // La tabla del PDF: sin `envolver` recorta con «...» (como siempre, para los demás informes); con `envolver` parte el texto y no pierde nada.
+    const tablaLarga = await pc.evaluate(async () => {
+      const largo = "palabra ".repeat(40) + "FINAL";
+      const bytes = async (op) => { const b = await window.ReportePDF.generar({ titulo: "T", bloques: [Object.assign({ tipo: "tabla", encabezados: ["A", "B"], anchos: [1, 3], filas: [["x", largo]] }, op)], fotos: [] }); let s = ""; for (const x of new Uint8Array(await b.arrayBuffer())) s += String.fromCharCode(x); return s; };
+      const con = await bytes({ envolver: true }), sin = await bytes({});
+      return [con.includes("FINAL"), con.includes("..."), sin.includes("FINAL"), sin.includes("...")];
+    });
+    igual("la tabla del PDF: con «envolver» parte las celdas largas y no pierde nada; sin él recorta con «...» como siempre", tablaLarga, [true, false, false, true]);
     igual("la función entregó la bitácora (solo después de concluir) y la página dice que se descargó", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "bitacora").length >= 1, /Listo: se descargó/.test(document.getElementById("concluido-estado").textContent)]), [true, true]);
     await pc.click("#actualizar");
     await pc.waitForFunction(() => document.getElementById("actualizado").textContent.includes("Actualizado"));

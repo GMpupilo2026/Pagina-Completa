@@ -998,7 +998,7 @@
     // La bitácora ya armada (los datos de la función + el PDF con la marca de agua), para descargarla o mandarla por correo.
     async function armarBitacora() {
         const d = await invocar("bitacora", {}, { ms: 60000 });
-        const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x) };
+        const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x, { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" }) };
         const blob = await window.ReportePDF.generar(window.CentroamericanoBitacora.armar(d, F));
         return { blob, nombre: window.CentroamericanoBitacora.nombreArchivo(d) };
     }
