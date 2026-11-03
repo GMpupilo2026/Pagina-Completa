@@ -9219,6 +9219,13 @@ MISMA página (`centroamericano-arbitro.html`) y la misma función: solo cambia 
   deshace con «Anular la última ilegal». **En el blitz, el minuto**: la primera le da 1 minuto al rival, no 2
   (Leyes del Ajedrez, apéndice B.3: en el blitz las penalizaciones de los arts. 7 y 9 son de un minuto);
   `minutosIlegal()`. La irregularidad sigue con su lista: es rara y necesita el detalle.
+- **Los torneos del Rápido, cargados el 3/11** (migración `centroamericano_torneos_rapido`): seis en chess-results,
+  uno por edad (1533950 Sub-8, 1533951 Sub-10, 1533953 Sub-12, 1533958 Sub-14, 1533957 Sub-16, 1533956 Sub-18), a
+  10 min + 2 s y 9 rondas. Cada uno junta varones y mujeres, así que van con la rama nueva **«Mixto»** (se amplió el
+  `check` de `rama`), no «Absoluto»: la función de Fair Play busca el torneo por categoría y rama sin orden, y un
+  segundo «Sub-10 Absoluto» podía quedarse con el del Rápido en vez del clásico. El nombre «Rápido Sub-X» enciende
+  el modo rápido; `orden` desde 101 los deja después de los del clásico. La clave la pone la organización como
+  siempre. El Blitz se carga igual cuando salga (nombre «Blitz Sub-X», rama «Mixto»).
 - **Sin presencia ni tiempo de espera**: en el Rápido y el Blitz la tolerancia es el tiempo del reloj de cada
   jugador (pierde cuando le cae la bandera), así que marcar quién llegó no sirve de nada. No hay «Llegó», ni
   cuenta de espera, ni «Inició la ronda», ni «Marcar que llegaron todos», y no se manda `presencia_ausentes` (el
