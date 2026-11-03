@@ -9126,6 +9126,47 @@ categorías» recorre una por una cuando el atleta no sabe en cuál juega.
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+## El Rápido y el Blitz: la mesa en un toque (Centroamericano)
+
+Lo pidió el dueño el 3/11, antes del Rápido: «para el rápido y el blitz los árbitros tienen menos tiempo y hay
+muchas cosas que ya no se hacen: anotar los controles de tiempo, elegir cuál fue la ilegal. En vez de desplegar
+los resultados, que aparezcan 1-0, 0-1, tablas y el árbitro solo toque ese botón; otro resultado, a mano». Es la
+MISMA página (`centroamericano-arbitro.html`) y la misma función: solo cambia lo que se pinta.
+
+- **Se enciende sola por el nombre del torneo**, como la modalidad de la sala (ver «Rápidas y Blitz: una
+  modalidad a la vez»): «Rápido…», «Rápidas…», «Rapid…» o «Blitz…» en `centroamericano_torneos.nombre`
+  (`ritmoRapido()` en `js/centroamericano-mesas.js`). Si algún día `leer` manda `ritmo` (`rapido`/`blitz`),
+  manda ese. Sin ninguna de esas palabras, clásico: la página de siempre, sin tocar nada. Por eso los torneos
+  del Rápido y del Blitz se cargan con el nombre así: «Rápido Sub-10 Absoluto», «Blitz Sub-8 Femenino».
+- **1-0, ½-½ y 0-1 en tres botones grandes que GUARDAN con un toque**, sin «Guardar» ni confirmar. Cambiar un
+  resultado que ya está en chess-results sí pregunta (lo hace `guardar()`, igual que en el clásico) y, si se
+  cancela, no queda nada elegido a medias. El guardado se ve en verde y con `aria-pressed`, pero lo que dice
+  qué resultado hay es el texto «En chess-results: …» de arriba. Cualquier otro (incomparecencia, 0-0, borrar)
+  va a mano en «Otro resultado», el desplegable de siempre con su «Guardar»; el atajo de la incomparecencia y
+  el de la segunda ilegal lo dejan ahí elegido, sin guardarlo, como siempre.
+- **La ilegal, en un toque**: no se elige el tipo (la bitácora dice «Jugada ilegal (Blitz: sin elegir el
+  tipo)»), pero cuenta igual para el art. 7.5.5: la segunda sigue avisando que pierde. Un toque por error se
+  deshace con «Anular la última ilegal». **En el blitz, el minuto**: la primera le da 1 minuto al rival, no 2
+  (Leyes del Ajedrez, apéndice B.3: en el blitz las penalizaciones de los arts. 7 y 9 son de un minuto);
+  `minutosIlegal()`. La irregularidad sigue con su lista: es rara y necesita el detalle.
+- **Sin presencia ni tiempo de espera**: en el Rápido y el Blitz la tolerancia es el tiempo del reloj de cada
+  jugador (pierde cuando le cae la bandera), así que marcar quién llegó no sirve de nada. No hay «Llegó», ni
+  cuenta de espera, ni «Inició la ronda», ni «Marcar que llegaron todos», y no se manda `presencia_ausentes` (el
+  «no ha llegado» a todos que el clásico anota al empezar la ronda). Una incomparecencia se pone a mano en «Otro
+  resultado». Primero se probó lo contrario (todos presentes al iniciar y un «No está» que arrancaba una cuenta
+  de 30 min); el dueño lo descartó el mismo día: la tolerancia no es de 30 min, es el reloj.
+- **Lo que no se hace en el Rápido y el Blitz, no se ve**: el botón «Control de tiempos» y el reloj y la
+  cámara de cada mesa (no se anotan controles ni se fotografían planillas).
+- **La revisión previa es UN botón** («Relojes y tableros listos», sin el «90 minutos» del clásico). La función
+  sigue exigiendo los dos pasos en orden: la página los aprueba uno detrás del otro.
+- **Cerrar la ronda: una casilla** («Revisé que cada resultado es el que quedó en la mesa»). La función pide
+  las tres revisiones del clásico (resultados, planillas, firmadas); en el Rápido y el Blitz no hay planillas
+  que juntar, así que esa única confirmación manda las tres. No se cambió la función para no desplegarla el
+  mismo día del torneo.
+- Lo revisa `verificar-centroamericano-modo-rapido.js` (quién es rápido, el clásico intacto, el toque que
+  guarda, la corrección que pregunta, «Otro resultado», la ilegal sin lista con su minuto, el cierre, 390 px y
+  el contraste en claro y oscuro). Roto a propósito (sin el «blitz» del nombre), salta.
+
 ## La lectura de chess-results se comparte y la tablet no pierde nada (Centroamericano)
 
 El torneo más importante del año (2–9 de noviembre, 15 a 20 árbitros, unos 15 con tablet, iPad o Android) no

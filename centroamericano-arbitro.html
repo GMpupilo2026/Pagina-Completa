@@ -83,6 +83,9 @@
                 </div>
             </section>
 
+            <!-- El Rápido y el Blitz: la misma página en «modo rápido» (lo enciende js/centroamericano-arbitro.js por el nombre del torneo). -->
+            <p id="modo-rapido" class="cam-modo-rapido" role="note" hidden><strong><span aria-hidden="true">⚡</span> Modo <span id="modo-rapido-ritmo">Rápido</span>:</strong> toca 1-0, ½-½ o 0-1 y queda guardado. La ilegal se anota con un toque, sin elegir cuál fue. Otro resultado, a mano en «Otro resultado».</p>
+
             <!-- Si la organización le dio mesas de varios torneos: pasar de uno a otro. -->
             <nav id="mis-torneos" class="cam-mis-torneos" aria-label="Tus torneos" hidden></nav>
 
@@ -163,7 +166,7 @@
                 <p id="anotado-vacio" class="text-sm mt-2">Todavía no hay nada anotado.</p>
             </details>
 
-            <p class="text-sm mt-6">Reglas que usa esta página (art. 7.5.5): la <strong>primera</strong> jugada ilegal de un jugador en una partida le da 2 minutos más a su rival; la <strong>segunda</strong> hace perder la partida, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales (tablas). La página solo avisa: el resultado lo decides tú.</p>
+            <p class="text-sm mt-6">Reglas que usa esta página (art. 7.5.5): la <strong>primera</strong> jugada ilegal de un jugador en una partida le da <span id="regla-minutos">2 minutos</span> más a su rival; la <strong>segunda</strong> hace perder la partida, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales (tablas). La página solo avisa: el resultado lo decides tú.</p>
         </div>
         <!-- El control de tiempos: una ventana flotante que se puede minimizar (la arma la página). -->
         <aside id="control-tiempos" class="cam-flotante" role="dialog" aria-label="Control de tiempos" hidden></aside>
