@@ -296,8 +296,10 @@ const CONTRASTE = `(sel) => {
     igual("la primera: se anota por ronda, mesa y color, y avisa los 2 minutos del rival (art. 7.5.5)", await p.evaluate(() => ({
         llamada: window.__llamadas.filter((l) => l.body.action === "anotar").map((l) => [l.body.ronda, l.body.mesa, l.body.color, l.body.tipo]),
         marca: document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="ilegal"]').textContent,
-        aviso: document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave').textContent })),
-        { llamada: [[3, 2, "blancas", "ilegal"]], marca: "iIlegal", aviso: "Primera jugada ilegal. Harvey Ian hizo una jugada ilegal: dale 2 minutos más a su rival (art. 7.5.5). Con otra, pierde la partida." });
+        aviso: document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave .sr-only').textContent,
+        corto: document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave .cam-aviso-corto').textContent,
+        lineas: Math.round(document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave').getBoundingClientRect().height / parseFloat(getComputedStyle(document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave')).lineHeight)) <= 3 })),
+        { llamada: [[3, 2, "blancas", "ilegal"]], marca: "iIlegal", aviso: "Primera jugada ilegal. Harvey Ian hizo una jugada ilegal: dale 2 minutos más a su rival (art. 7.5.5). Con otra, pierde la partida.", corto: "Primera ilegal. Harvey Ian: 2 min más al rival; con otra, pierde.", lineas: true });
     igual("la ilegal de las BLANCAS no marca a las negras", await p.$$eval('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca', (l) => l.length), 0);
     await p.click(acc(2, "blancas", "ilegal"));
     await p.waitForSelector("dialog[open] select");

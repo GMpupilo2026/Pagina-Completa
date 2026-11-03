@@ -215,7 +215,7 @@
         return el("div", { class: "cam-jugador", "data-color": color, "data-elegido": gana },
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
-                el("span", { class: "cam-nombre", texto: nombre }),
+                el("span", { class: "cam-nombre" }, el("span", { class: "cam-nombre-texto", texto: nombre })),
                 el("span", { class: "cam-jugador-estado" }, gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null, cuentaDe(m, color)),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
             // Lo que cambia (las marcas, «Anular», la guía del tiempo de espera) va en UNA franja de altura reservada: la tarjeta no se mueve.
@@ -238,7 +238,10 @@
                 out.push(caja);
             } else if (k.ilegales === 1) {
                 const a = C.avisoIlegal(1, nombreDe(m, color), color);
-                out.push(el("div", { class: "cam-aviso-suave", "data-nivel": "primera" }, el("strong", { texto: a.titulo + ". " }), a.texto));
+                // Una sola línea visible (el aviso completo lo oyen el lector de pantalla y el cuadro que salió al anotar): así la tarjeta no crece.
+                out.push(el("div", { class: "cam-aviso-suave", "data-nivel": "primera" },
+                    el("span", { class: "cam-aviso-corto", "aria-hidden": "true" }, el("strong", { texto: "Primera ilegal. " }), nombreDe(m, color) + ": 2 min más al rival; con otra, pierde."),
+                    el("span", { class: "sr-only", texto: a.titulo + ". " + a.texto })));
             }
         }
         return out;
