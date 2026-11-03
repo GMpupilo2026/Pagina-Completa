@@ -8914,7 +8914,7 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     dice el mismo control: 90 min + incrementos − lo que quedaba) o «mitad y mitad». Sin ningún
     control, desde la hora de inicio y mitad y mitad, avisado. El árbitro puede cambiar los dos
     tiempos antes de anotarlos.
-  - **La hora de inicio comprueba el control** (la marcada por la organización o, si no, la del
+  - **La hora de inicio comprueba el control** (la que marcó el árbitro de la categoría o, si no, la del
     horario): si los relojes del control no suman lo que debían por más de 2 minutos, se avisa
     («¿empezó tarde, hubo una pausa, se anotó mal?»). No se corrige solo.
   - **Las ilegales y las sanciones de tiempo** salen de la bitácora de la mesa, sin las anuladas: la
@@ -8934,8 +8934,37 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     hay de dónde partir.
   - El reloj de ajedrez dibujado (SVG propio, `aria-hidden`) muestra los dos tiempos y la palanca
     levantada del lado de quien tiene el turno; el dato va también escrito («le toca» y las
-    casillas). Lo revisa `verificar-centroamericano-mesas.js` (las cuentas) y
-    `verificar-centroamericano-mesas-pagina.js` (la ventana de la irregularidad).
+    casillas).
+  - **También en la página de la organización** (pestaña «Control de tiempos»): cada partida trae
+    «Reloj apagado» en su última lectura y abre la MISMA calculadora debajo de la tabla, con la
+    bitácora de esa partida leída de `centroamericano_registro` (ilegales, sanciones y anulaciones).
+    Una sola copia de la pantalla: `js/centroamericano-reloj-apagado.js` (`armar()`), que usan las
+    dos páginas; cada una solo dice qué hace el botón. La organización **no escribe en los controles
+    del árbitro** (esos los guarda la Edge Function con el enlace de la mesa): «Mandárselo al
+    árbitro» le manda un aviso a la tablet de esa mesa con los dos tiempos, a quién le toca y la
+    nota, y el árbitro lo anota al poner el reloj nuevo.
+  - **Las cuentas, comprobadas con partidas simuladas** (un reloj de verdad que corre jugada a
+    jugada, con 30 s de incremento, ilegales, sanciones, controles a mitad de una jugada, el reloj
+    que se apaga en cualquier momento y «ahora» un rato después; unas 17 000 partidas por corrida,
+    con jugadores que piensan parejo y disparejo): **el total coincide al segundo en todas** y la
+    comprobación con el inicio da 0 en todas. El reparto es una estimación: con el ritmo erra en
+    promedio unos 6 minutos en las simuladas (mitad y mitad, unos 7-8), y con jugadores de ritmo
+    parejo, poco más de un minuto.
+  - **Un control de muy temprano no dice el ritmo**: con dos o tres jugadas al azar, «cómo venía
+    gastando» erraba más que mitad y mitad (en promedio 15 min contra 7 en la simulación). Por eso el
+    ritmo pesa de a poco, según las medias jugadas antes del control, y entero desde 10 (5 de cada
+    uno; `RITMO_CONFIABLE`): se probaron 10, 20 y 30, y 10 fue la que menos erró en todos los casos.
+    Cuando pesa menos que entero, las cuentas lo dicen.
+  - **La tablet no tiene toda la bitácora**: la función `leer` le manda solo las últimas 60
+    anotaciones del árbitro (resultados, notas de controles de tiempos…), así que en una ronda
+    larga una ilegal o una sanción vieja puede no estar a mano. Las marcas de cada jugador sí se
+    cuentan con toda la bitácora: si dicen más ilegales o irregularidades de las que hay a mano, la
+    calculadora de la tablet lo avisa y manda a la organización, que lee la bitácora completa de la
+    mesa. (Arreglarlo del todo es que `leer` mande siempre las ilegales e irregularidades: un cambio
+    de la Edge Function, pendiente de que el dueño lo apruebe.)
+  - Lo revisan `verificar-centroamericano-mesas.js` (las cuentas y el peso del ritmo) y
+    `verificar-centroamericano-mesas-pagina.js` (la ventana del árbitro con su aviso de anotaciones
+    que faltan, la de la organización y la de la irregularidad).
 - **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
   esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
   (no es de una mesa; le llega «X necesita ayuda»).

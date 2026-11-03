@@ -587,3 +587,10 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-espera-alerta { background: rgb(179 38 30 / 0.18); color: #ffdad6; border-color: #ff8a80; }
 .cam-ea-lista { list-style: none; margin: 0.5rem 0; padding: 0; display: grid; gap: 0.5rem; }
 .cam-ea-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; font-weight: 700; }
+
+/* La organización: la calculadora del reloj apagado debajo de la tabla del control de tiempos. */
+.cam-apagado-org { border: 3px solid var(--cac-morado-hondo); border-radius: 0.8rem; padding: 0.8rem 1rem 1rem; background: #fff; }
+.cam-apagado-org[hidden] { display: none; }
+.cam-apagado-titulo { font-weight: 800; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.cam-apagado-form { max-width: 34rem; }
+.dark .cam-apagado-org { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }

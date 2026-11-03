@@ -214,11 +214,16 @@
                 <div class="cam-tabla-envoltura mt-2">
                     <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Lecturas del control de tiempos, la más reciente primero</caption>
-                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Blancas (tiempo · jugadas)</th><th scope="col">Negras (tiempo · jugadas)</th><th scope="col">Árbitro</th><th scope="col">Hora (Costa Rica)</th></tr></thead>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Blancas (tiempo · jugadas)</th><th scope="col">Negras (tiempo · jugadas)</th><th scope="col">Árbitro</th><th scope="col">Hora (Costa Rica)</th><th scope="col">Si el reloj se apaga</th></tr></thead>
                         <tbody id="tiempos"></tbody>
                     </table>
                 </div>
                 <p id="tiempos-vacio" class="cam-nota-vacia">Todavía no hay lecturas. Pídele un control de tiempos a un árbitro.</p>
+                <!-- El reloj que se apagó: la misma calculadora de la tablet del árbitro (js/centroamericano-reloj-apagado.js). -->
+                <section id="ct-apagado" class="cam-apagado-org mt-3" aria-labelledby="ct-apagado-titulo" hidden>
+                    <h3 id="ct-apagado-titulo" class="cam-apagado-titulo"></h3>
+                    <div id="ct-apagado-cuerpo"></div>
+                </section>
             </section>
 
             <!-- 4. Planillas y Drive -->
@@ -393,6 +398,7 @@
     <script src="js/centroamericano-mesas.js"></script>
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/centroamericano-reloj-apagado.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
 </body>
 </html>

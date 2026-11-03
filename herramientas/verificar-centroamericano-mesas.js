@@ -501,6 +501,11 @@ console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el in
   igual("la ilegal de ANTES del control ya está en el reloj: no se suma; las de DESPUÉS sí (+2:00 y −1:00 a las negras)",
     [rb.blancas - r.blancas !== 120, rb.ajustes.length, rb.bonos], [true, 2, { blancas: 0, negras: 60 }]);
   igual("y la de antes sí cuenta en la comprobación con el inicio (los relojes debían sumar 2 min más)", rb.comprobacion.esperado, 130 * 60 + 120);
+  // Un control de muy temprano: el ritmo de dos o tres jugadas no dice nada, así que pesa de a poco.
+  const temprano = { ocurrio: "2026-11-02T15:10:00-06:00", j_blancas: 2, j_negras: 2, t_blancas: 5400 + 60 - 540, t_negras: 5400 + 60 - 60 };
+  const rt = C.relojApagado({ control: temprano, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
+  igual("con un control de 4 medias jugadas el ritmo (90 % – 10 %) pesa 4/10: queda en 66 % – 34 %, y lo dice", [Math.round(rt.proporcion.blancas * 100), rt.pesoRitmo, rt.blancas + rt.negras === rt.total], [66, 0.4, true]);
+  igual("desde 10 medias jugadas el ritmo cuenta entero", C.relojApagado({ control: Object.assign({}, temprano, { j_blancas: 5, j_negras: 5, t_blancas: 5400 + 150 - 540, t_negras: 5400 + 150 - 60 }), inicio: ini, ahora, jBlancas: 23, jNegras: 23 }).pesoRitmo, 1);
   igual("las sanciones de tiempo son solo ±1 y ±2 minutos", C.SANCIONES_TIEMPO.filter((x) => x.segundos).map((x) => x.segundos), [60, 120, -60, -120]);
   igual("la sanción se escribe y se vuelve a leer igual (una sola copia del formato)",
     C.SANCIONES_TIEMPO.filter((x) => x.segundos).every((x) => { const l = C.leerSancion("X" + C.sancionTexto(x.id)); return l && l.segundos === x.segundos && l.a === x.a; }), true);

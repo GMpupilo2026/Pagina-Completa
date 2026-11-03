@@ -443,13 +443,49 @@ const CONTRASTE = `(sel) => {
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
     await p.waitForSelector("#form-tiempos");
     igual("la siguiente lectura empieza otra vez sin marcar", await p.evaluate(() => document.getElementById("lt-hora").dataset.marcada), "no");
+    // «El reloj se apagó»: la calculadora compartida (js/centroamericano-reloj-apagado.js) en la ventana de la mesa.
+    const tiemposAntesApagado = await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "tiempo").length);
+    await p.click("#lt-apagado");
+    await p.waitForSelector("#control-tiempos .ra-jb");
+    igual("«El reloj se apagó» muestra lo que ya se sabe (ritmo, inicio, ilegales y sanciones, último control) y pide solo las jugadas", await p.evaluate(() => [document.querySelector("#control-tiempos .cam-flotante-titulo").textContent, [...document.querySelectorAll("#control-tiempos .cam-apagado-datos strong")].map((x) => x.textContent), document.querySelector("#control-tiempos .cam-apagado-falta").textContent]),
+        ["Mesa 2 · Reloj apagado", ["Ritmo: ", "Inicio de la ronda: ", "Ilegales y sanciones de tiempo: ", "Último control: "], "Escribe las jugadas de cada uno para ver el cálculo."]);
+    await p.fill("#control-tiempos .ra-jb", "33");
+    await p.fill("#control-tiempos .ra-jn", "32");
+    await p.waitForSelector("#control-tiempos .cam-reloj-dibujo");
+    igual("con las jugadas sale el cálculo: el reloj dibujado, a quién le toca (una más las blancas: negras) y las cuentas con el total exacto", await p.evaluate(() => [!!document.querySelector("#control-tiempos .cam-reloj-dibujo[aria-hidden='true']"), [...document.querySelectorAll("#control-tiempos .cam-apagado-turno")].map((x) => x.closest(".cam-apagado-reloj").dataset.color), /^Entre los dos les quedan .* \(exacto\)/.test(document.querySelector("#control-tiempos .cam-apagado-cuentas li").textContent)]),
+        [true, ["negras"], true]);
+    await p.fill("#control-tiempos .ra-tb", "");
+    await p.type("#control-tiempos .ra-tb", "1500");
+    igual("el árbitro puede cambiar el tiempo (los «:» solos) y el dibujo se actualiza", await p.evaluate(() => [document.querySelector("#control-tiempos .ra-tb").value, document.querySelector("#control-tiempos .ra-dibujo-b").textContent]), ["15:00", "15:00"]);
+    await p.click("#control-tiempos .ra-guardar");
+    await p.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "tiempo").length > n, tiemposAntesApagado);
+    igual("«Anotar en la bitácora» lo guarda como un control más: el tiempo puesto, las jugadas, a quién le toca y la nota de cómo se calculó",
+        await p.evaluate(() => { const b = window.__llamadas.filter((l) => l.body.action === "tiempo").pop().body; return [b.mesa, b.t_blancas, b.j_blancas, b.j_negras, b.turno, /^Reloj apagado \(art\. 6\.10\): calculado desde el control/.test(b.nota), /ajustado a mano/.test(b.nota), typeof b.ocurrio]; }),
+        [2, 900, 33, 32, "negras", true, true, "string"]);
+    // La función manda solo las últimas anotaciones: si las marcas dicen que hay una ilegal que no llegó, se avisa.
+    igual("con toda la bitácora a mano no sale el aviso de anotaciones que faltan", await p.evaluate(() => /no tiene a mano todas/.test(document.body.textContent)), false);
+    await p.evaluate(() => { window.__recortar = 0; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => window.__llamadas.filter((l) => l.body.action === "leer").length > 0 && !document.querySelector(".cam-mesa[data-ocupada]"));
+    await p.waitForTimeout(500);
+    await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
+    await p.waitForSelector("#lt-apagado");
+    await p.click("#lt-apagado");
+    await p.waitForSelector("#control-tiempos .cam-apagado-datos");
+    igual("si a la tablet le faltan anotaciones viejas de la mesa (trae las últimas 60), lo avisa: alguna ilegal o sanción podría faltar", await p.evaluate(() => /no tiene a mano todas las anotaciones de esta mesa/.test(document.querySelector("#control-tiempos .cam-apagado-datos").textContent)), true);
+    await p.evaluate(() => { window.__recortar = null; document.getElementById("actualizar").click(); });
+    await p.waitForTimeout(500);
+    await p.click("#control-tiempos .ra-volver");
+    await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
+    await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
+    await p.waitForSelector("#form-tiempos");
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     await p.click("#abrir-tiempos");
     await p.waitForSelector("#control-tiempos:not([hidden]) #form-tiempos");
     igual("el botón de arriba también abre el control de tiempos (para elegir cualquier mesa sin terminar)", await p.evaluate(() => [document.querySelector("#control-tiempos .cam-flotante-titulo").textContent, !!document.querySelector("#abrir-tiempos svg")]), ["Mesa 2", true]);
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     await p.evaluate(() => { window.__avisos.mensajes = [{ id: "m-ct", creado: "2026-11-02T15:58:00Z", texto: "Control de tiempos: anota la jugada y los relojes de las mesas que no han terminado.", control_tiempos: true }]; });
-    await p.click("#actualizar");
+    // La tablet también consulta sola los avisos cada pocos segundos: si llegó antes, el aviso y la ventana tapan el botón.
+    await p.evaluate(() => document.getElementById("actualizar").click());
     await p.waitForSelector("#control-tiempos:not([hidden])");
     igual("cuando la organización pide un control de tiempos, la ventana se abre sola; en un celular sale MINIMIZADA para no tapar el aviso que se ve arriba", await p.evaluate(() => [document.querySelector("#mensajes .cam-mensaje").textContent.includes("Control de tiempos"), document.title.startsWith("(1) "), document.getElementById("control-tiempos").dataset.minimizada]), [true, true, "si"]);
     await p.click('#mensajes [data-accion="entendido"]');
@@ -460,7 +496,8 @@ const CONTRASTE = `(sel) => {
     // En una tablet (820 px) la que pide la organización sale ABIERTA, como una ventanita en la esquina.
     await p.setViewportSize({ width: 820, height: 1000 });
     await p.evaluate(() => { window.__avisos.mensajes = [{ id: "m-ct2", creado: "2026-11-02T16:00:00Z", texto: "Control de tiempos otra vez.", control_tiempos: true }]; });
-    await p.click("#actualizar");
+    // La tablet también consulta sola los avisos cada pocos segundos: si llegó antes, el aviso y la ventana tapan el botón.
+    await p.evaluate(() => document.getElementById("actualizar").click());
     await p.waitForSelector("#control-tiempos:not([hidden]) #form-tiempos");
     igual("en una tablet la ventana que pide la organización sale abierta", await p.evaluate(() => document.getElementById("control-tiempos").dataset.minimizada), "no");
     await p.click('#mensajes [data-accion="entendido"]');
@@ -909,6 +946,21 @@ const CONTRASTE = `(sel) => {
     const [pdfT] = await Promise.all([q.waitForEvent("download"), q.click("#ct-pdf")]);
     const bytesT = fs.readFileSync(await pdfT.path());
     igual("el control de tiempos sale en PDF con la marca de agua", [pdfT.suggestedFilename(), bytesT.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesT.toString("latin1"))], ["control-de-tiempos-centroamericano-2026.pdf", true, true]);
+    // «Reloj apagado» en la organización: la misma calculadora, con «Mandárselo al árbitro» (un aviso a su tablet).
+    igual("cada partida trae su botón «Reloj apagado» (solo en su última lectura)", await q.$$eval('#tiempos [data-accion="reloj-apagado"]', (l) => l.length), 2);
+    await q.click('#tiempos tr:first-child [data-accion="reloj-apagado"]');
+    await q.waitForSelector("#ct-apagado:not([hidden]) .ra-jb");
+    igual("abre la calculadora de esa partida debajo de la tabla, con su último control", await q.evaluate(() => [document.getElementById("ct-apagado-titulo").textContent.startsWith("El reloj se apagó · Mesa 9"), /Blancas 10:00 \(31 jug\.\) · Negras 1:23:45 \(30 jug\.\)/.test(document.querySelector("#ct-apagado .cam-apagado-datos").textContent)]), [true, true]);
+    await q.fill("#ct-apagado .ra-jb", "32");
+    await q.fill("#ct-apagado .ra-jn", "31");
+    await q.waitForSelector("#ct-apagado .cam-reloj-dibujo");
+    await q.click("#ct-apagado .ra-guardar");
+    await q.waitForFunction(() => window.__llamadas.some((l) => l.insert === "centroamericano_avisos" && [].concat(l.valores).some((v) => /^Mesa 9 · El reloj se apagó/.test(v.texto || ""))));
+    igual("«Mandárselo al árbitro» le manda un aviso a la tablet de ESA mesa con los dos tiempos, a quién le toca y la nota (no escribe en sus controles)",
+        await q.evaluate(() => { const v = [].concat(window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores)[0]; return [v.de, v.asignacion_id, /pon Blancas .* y Negras .* \(le toca a las negras; van 32 y 31 jugadas\)\. Reloj apagado \(art\. 6\.10\)/.test(v.texto), v.texto.length <= 500, window.__llamadas.some((l) => l.insert === "centroamericano_tiempos")]; }),
+        ["organizacion", "asig-ana", true, true, false]);
+    await q.click("#ct-apagado .ra-volver");
+    igual("«Volver» la cierra", await q.$eval("#ct-apagado", (e) => e.checkVisibility()), false);
 
     console.log("\n=== La organización: planillas y Drive ===");
     await q.click("#pest-planillas");
