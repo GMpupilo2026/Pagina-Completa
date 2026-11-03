@@ -43,6 +43,21 @@
   filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
 }
 
+/* (El nombre va a 1.25rem en negrita, texto grande: el dorado da 4,1:1 contra el morado más claro de la franja, y pide 3:1.)
+ * La fila de la franja: el título a la izquierda, el logo de Ajedrez Integral en el medio y la mascota a la derecha.
+ * Con tres columnas (1fr auto 1fr) el logo queda en el centro de verdad, sea cual sea el largo del título. */
+.cam-cabeza-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 1rem; }
+.cam-cabeza-fila > .cam-mascota, .cam-cabeza-fila > .cam-mascota-boton { justify-self: end; }
+.cam-logo-centro { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.cam-logo-centro img { width: clamp(84px, 13vw, 130px); height: auto; filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.3)); }
+.cam-logo-centro > span { font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 1.25rem; color: #fff; white-space: nowrap; text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
+.cam-logo-centro > span > span { color: #fbd38d; }
+/* En un celular angosto no caben las tres cosas: el título manda y el logo sigue arriba, en el encabezado del sitio. */
+@media (max-width: 639px) {
+  .cam-cabeza-fila { grid-template-columns: minmax(0, 1fr) auto; }
+  .cam-logo-centro { display: none; }
+}
+
 /* Las tres cosas que el árbitro tiene que saber siempre: quién es, qué torneo y qué ronda. */
 .cam-datos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
 .cam-dato {
@@ -677,3 +692,15 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-salidas[data-fuera="si"] { font-weight: 800; }
 .cam-salidas[data-fuera="no"] { color: #7a4a00; font-weight: 700; }
 .dark .cam-salidas[data-fuera="no"] { color: #ffd166; }
+
+/* El sorteo de Fair Play: los mismos colores de chip que el avance de la ronda (ya medidos con texto blanco),
+ * y el estado va también escrito. */
+.cam-chip[data-estado="fp-sorteada"] { background: var(--cac-morado); }
+.cam-chip[data-estado="fp-aprobada"] { background: var(--cac-azul); }
+.cam-chip[data-estado="fp-revisada"] { background: var(--cac-verde); }
+.cam-chip[data-estado="fp-descartada"] { background: #4d5266; }
+.cam-fp-detalle { display: block; font-size: 0.85rem; margin-top: 0.2rem; }
+.cam-fp-de { font-size: 0.85rem; }
+.cam-fp-acciones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cam-fp-reglas summary { cursor: pointer; font-weight: 700; }
+.cam-fp-reglas ul { list-style: disc; padding-left: 1.4rem; margin-top: 0.5rem; display: grid; gap: 0.4rem; font-size: 0.92rem; }

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261103151643
+# al-dia-con: 20261103162537
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -48,6 +48,7 @@ tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_correos_bitacora  rls=true
+tabla  centroamericano_fair_play  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_inicios_torneo  rls=true
@@ -591,6 +592,26 @@ columna  centroamericano_copias.resumen  jsonb
 columna  centroamericano_correos_bitacora.asignacion_id  uuid
 columna  centroamericano_correos_bitacora.enviado_en  timestamp with time zone
 columna  centroamericano_correos_bitacora.id  uuid
+columna  centroamericano_fair_play.arbitro  text
+columna  centroamericano_fair_play.asignacion_id  uuid
+columna  centroamericano_fair_play.aviso_id  uuid
+columna  centroamericano_fair_play.color_si_tablas  text
+columna  centroamericano_fair_play.creado  timestamp with time zone
+columna  centroamericano_fair_play.creado_por  uuid
+columna  centroamericano_fair_play.decidida_en  timestamp with time zone
+columna  centroamericano_fair_play.decidida_por  uuid
+columna  centroamericano_fair_play.estado  text
+columna  centroamericano_fair_play.id  uuid
+columna  centroamericano_fair_play.jugador  text
+columna  centroamericano_fair_play.mesa  integer
+columna  centroamericano_fair_play.mesas_en_sorteo  integer
+columna  centroamericano_fair_play.motivo  text
+columna  centroamericano_fair_play.nota  text
+columna  centroamericano_fair_play.resultado  text
+columna  centroamericano_fair_play.revisada_en  timestamp with time zone
+columna  centroamericano_fair_play.revisada_por  uuid
+columna  centroamericano_fair_play.ronda  integer
+columna  centroamericano_fair_play.tnr  text
 columna  centroamericano_finales.asignacion_id  uuid
 columna  centroamericano_finales.finalizada_en  timestamp with time zone
 columna  centroamericano_finales.id  uuid
@@ -2359,6 +2380,10 @@ funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
+funcion  centroamericano_fair_play_aprobar(p_id uuid)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_revisar(p_id uuid, p_resultado text, p_jugador text, p_nota text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_sortear(p_ronda integer, p_tnrs text[], p_cantidad integer)  definer  anon=false  auth=true
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
@@ -2941,6 +2966,7 @@ politica  centroamericano_avisos  centroamericano_avisos_atender  UPDATE
 politica  centroamericano_avisos  centroamericano_avisos_enviar  INSERT
 politica  centroamericano_avisos  centroamericano_avisos_ver  SELECT
 politica  centroamericano_copias  centroamericano_copias_ver  SELECT
+politica  centroamericano_fair_play  centroamericano_fair_play_ver  SELECT
 politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
 politica  centroamericano_inicios_ronda  centroamericano_inicios_ronda_ver  SELECT
@@ -3598,6 +3624,8 @@ indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_asignacion_idx
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_pkey
+indice  centroamericano_fair_play  centroamericano_fair_play_pkey
+indice  centroamericano_fair_play  centroamericano_fair_play_una_vez
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
@@ -4322,6 +4350,7 @@ grant  bromas_preferencias  authenticated  SELECT
 grant  centroamericano_asignaciones  authenticated  SELECT
 grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_copias  authenticated  SELECT
+grant  centroamericano_fair_play  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
 grant  centroamericano_inicios_ronda  authenticated  SELECT
 grant  centroamericano_inicios_torneo  authenticated  SELECT
