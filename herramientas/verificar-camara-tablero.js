@@ -229,7 +229,13 @@ function dibujarFoto(opc) {
 async function foto(page, fen, esq, fondo, luz) {
   const opc = Array.isArray(fen) ? Object.assign({ tableros: fen }, esq) : Object.assign({ fen, esq, fondo }, luz);
   const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
+  // Hasta que la página termine de cargarla: una foto que llega después de
+  // tocar las esquinas las borra, y «Calibrar» se quedaba apagado (pasó en el
+  // CI el 2/11/2026, varias veces). El aviso no sirve de señal: ya decía
+  // «esquinas» antes, y otra foto del mismo tamaño no lo cambia.
+  const antes = await page.evaluate(() => Number(document.getElementById("lienzo").dataset.fotos || 0));
   await page.setInputFiles("#foto", { name: "tablero.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
+  await page.waitForFunction((n) => Number(document.getElementById("lienzo").dataset.fotos || 0) > n, antes, { timeout: 15000 });
 }
 // La foto de 800 se trabaja a 640 de ancho.
 const aLienzo = (esq) => esq.map(([x, y]) => [x * 0.8, y * 0.8]);
