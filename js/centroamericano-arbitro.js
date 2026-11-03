@@ -606,29 +606,11 @@
     }
 
     // Quien no está marcado «llegó» no ha llegado: no hay un botón de «no llegó» (se entiende por omisión).
-    // En el Rápido y el Blitz es al revés: iniciada la ronda, TODOS están, y el árbitro marca solo a los que no (ver esperaRapida).
-    const llego = (mesa, color) => (rapido() ? presenciaDe(mesa, color) !== false : presenciaDe(mesa, color) === true);
-    // El Rápido y el Blitz no están en el calendario del clásico (sus rondas se llaman igual: 1, 2, 3…): el tiempo de espera corre
-    // SOLO desde la hora que marcó el árbitro con «Inició la ronda», con la tolerancia de las bases. Sin marcarla, no hay espera.
-    function esperaRapida() {
-        const H = window.CentroamericanoHorario;
-        const ir = estado && estado.inicio_ronda;
-        const i = ir && ir.inicio && (ir.ronda == null || ir.ronda === estado.ronda) ? Date.parse(ir.inicio) : NaN;
-        if (!H || !Number.isFinite(i)) return { enCurso: null, ronda: null, quedan: null, hasta: null, siguiente: null };
-        const empezo = Math.floor((Date.now() - i) / 60000);
-        return { enCurso: { nombre: "Ronda " + estado.ronda }, ronda: estado.ronda, empezo, quedan: H.TOLERANCIA_MIN - empezo, hasta: new Date(i + H.TOLERANCIA_MIN * 60000), inicio: new Date(i), marcada: true, siguiente: null };
-    }
-    const esperaActual = () => (rapido() ? esperaRapida() : window.CentroamericanoHorario.estado(new Date(), iniciosMarcados()));
-    const rondaIniciada = () => !!esperaRapida().enCurso;
+    const llego = (mesa, color) => presenciaDe(mesa, color) === true;
     function pintarPresenciaResumen() {
+        // Rápido y Blitz: no se marca quién llegó (ver bloquePresencia).
+        if (rapido()) { $("presencia-resumen").textContent = ""; $("presencia-todos").hidden = true; return; }
         const total = estado.mesas.length * 2;
-        if (rapido()) {
-            const no = total - estado.mesas.reduce((n, m) => n + (llego(m.mesa, "blancas") ? 1 : 0) + (llego(m.mesa, "negras") ? 1 : 0), 0);
-            $("presencia-resumen").textContent = !total ? "" : !rondaIniciada() ? "Al tocar «Inició la ronda ahora», todos cuentan como presentes: luego marcas solo a los que no están."
-                : no ? "No están: " + no + " de " + total + " jugadores (corre su tiempo de espera)." : "Todos presentes. Si alguien no está, toca su «No está».";
-            $("presencia-todos").hidden = true;
-            return;
-        }
         const llegaron = estado.mesas.reduce((n, m) => n + (llego(m.mesa, "blancas") ? 1 : 0) + (llego(m.mesa, "negras") ? 1 : 0), 0);
         $("presencia-resumen").textContent = total ? "Han llegado " + llegaron + " de " + total + " jugadores" + (llegaron < total ? " · faltan " + (total - llegaron) : "") + "." : "";
         const b = $("presencia-todos");
@@ -668,19 +650,11 @@
     // Solo hay un botón: «Llegó». Sin marcar se entiende que no ha llegado. Al marcarlo, el botón desaparece y queda su estado con un
     // «Corregir» chico (por si fue un toque equivocado: lo vuelve a poner como que no ha llegado).
     function bloquePresencia(m, color) {
+        // En el Rápido y el Blitz no se marca quién llegó: la tolerancia es su propio reloj (pierde cuando le cae la bandera), así que
+        // no hay presencia, ni cuenta de espera, ni «Inició la ronda». Una incomparecencia se pone a mano en «Otro resultado».
+        if (rapido()) return null;
         const v = llego(m.mesa, color);
         const nombre = nombreDe(m, color);
-        // Rápido y Blitz: antes de iniciar la ronda no hay nada que marcar; después, todos están y el botón es «No está» (un toque, y
-        // empieza a correr su tiempo de espera). Si llega, «Llegó» lo vuelve a poner presente.
-        if (rapido()) {
-            if (!rondaIniciada() || m.valor !== "0") return null;
-            const textoR = v ? "✓ Está" : "✗ No está";
-            return el("div", { class: "cam-presencia", "data-presente": v ? "si" : "no" },
-                el("span", { class: "cam-presencia-estado", title: textoR }, icono(v ? "llego" : "ausente"), el("span", { class: "sr-only", texto: textoR })),
-                concluida() ? null : v
-                    ? botonJugador("ausente", "ausente", nombre + " no está: empieza a correr su tiempo de espera", "No está", () => marcarPresencia(m, color, false), { variante: "cam-btn-icono-rojo", pulsado: false })
-                    : botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: false }));
-        }
         const texto = v ? "✓ Llegó" : "✗ No ha llegado";
         return el("div", { class: "cam-presencia", "data-presente": v ? "si" : "no" },
             // El estado: un icono (✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
@@ -695,10 +669,11 @@
     function finDeLaEspera() {
         const H = window.CentroamericanoHorario;
         if (!H || !estado) return null;
-        const e = esperaActual();
+        const e = H.estado(new Date(), iniciosMarcados());
         return e.enCurso && e.ronda === estado.ronda ? e.hasta.getTime() : null;
     }
     function cuentaDe(m, color) {
+        if (rapido()) return null;
         const fin = finDeLaEspera();
         if (fin == null || llego(m.mesa, color) || m.valor !== "0" || concluida()) return null;
         return el("span", { class: "cam-cuenta", role: "timer", "data-fin": String(fin), "aria-label": "Tiempo de espera de " + nombreDe(m, color) }, "");
@@ -959,10 +934,10 @@
     function pintarEspera() {
         const H = window.CentroamericanoHorario;
         if (!H) return;
-        const e = esperaActual();
+        if (rapido()) { $("espera").textContent = ""; $("espera-alerta").hidden = true; return; }
+        const e = H.estado(new Date(), iniciosMarcados());
         let t = "";
-        if (rapido() && !e.enCurso) t = "⏰ Toca «Inició la ronda ahora» cuando empiece: desde ahí corre el tiempo de espera de los que marques «No está».";
-        else if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
+        if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
         else if (e.siguiente) t = "⏰ Sigue: " + e.siguiente.nombre + " a las " + hora(new Date(e.siguiente.inicio + ":00-06:00")) + ".";
         $("espera").textContent = t;
         pintarEsperaAlerta(e);
@@ -973,8 +948,7 @@
     // organización los ve en su lista de los que faltan. Quien después llegue se marca con «Llegó» y eso lo cambia. Nunca pisa una marca.
     let ausentesSincronizados = 0;
     async function sincronizarAusentes(e) {
-        // En el Rápido y el Blitz no: ahí, sin marca, el jugador está (se anotan todos presentes al iniciar la ronda).
-        if (!estado || rapido() || concluida() || !e || !e.enCurso || e.ronda !== estado.ronda || ausentesSincronizados === estado.ronda) return;
+        if (!estado || concluida() || !e || !e.enCurso || e.ronda !== estado.ronda || ausentesSincronizados === estado.ronda) return;
         if (!estado.mesas.some((m) => m.valor === "0" && (presenciaDe(m.mesa, "blancas") === null || presenciaDe(m.mesa, "negras") === null))) return;
         ausentesSincronizados = estado.ronda;
         try { await escribir("presencia_ausentes", { ronda: estado.ronda }, "Los jugadores que no han llegado"); }
@@ -990,7 +964,7 @@
         if (!caja) return;
         const H = window.CentroamericanoHorario;
         const r = estado && estado.ronda, ev = H && r ? H.EVENTOS.find((e) => e.ronda === r) : null;
-        caja.hidden = !estado || !r || concluida();
+        caja.hidden = !estado || !r || concluida() || !!rapido();
         if (caja.hidden) return;
         const m = estado.inicio_ronda && estado.inicio_ronda.inicio ? estado.inicio_ronda : null;
         caja.dataset.marcada = m ? "si" : "no";
@@ -999,12 +973,6 @@
         if (document.activeElement !== $("ir-hora")) $("ir-hora").value = m ? horaCampo(m.inicio) : "";
         const h = (x) => hora(x, { hour: "numeric", minute: "2-digit" });
         const fin = (t) => h(new Date(t + (H ? H.TOLERANCIA_MIN : 30) * 60000));
-        if (rapido()) {
-            $("ir-estado").textContent = m
-                ? "✓ La ronda " + r + " empezó a las " + h(m.inicio) + ". Todos cuentan como presentes: toca «No está» en quien falte. El tiempo de espera de " + (H ? H.TOLERANCIA_MIN : 30) + " min termina a las " + fin(Date.parse(m.inicio)) + "."
-                : "Toca «Inició la ronda ahora» cuando empiece: todos quedan presentes y solo marcas a los que no están.";
-            return;
-        }
         $("ir-estado").textContent = m
             ? "✓ La ronda " + r + " empezó a las " + h(m.inicio) + (m.arbitro && m.arbitro !== estado.arbitro ? " (la hora que marcó " + m.arbitro + ")" : " (la hora que marcaste)") + ". El tiempo de espera de " + (H ? H.TOLERANCIA_MIN : 30) + " min termina a las " + fin(Date.parse(m.inicio)) + "."
             : ev ? "Todavía no marcaste cuándo empezó la ronda " + r + ": el tiempo de espera cuenta desde las " + h(new Date(H.inicioDe(ev))) + " del calendario. Toca «Inició la ronda ahora» cuando empiece en tu categoría."
@@ -1029,16 +997,6 @@
             const res = await escribir("inicio", quitar ? { ronda: r, quitar: true } : { ronda: r, inicio: iso }, "Hora de inicio de la ronda " + r);
             const guardada = quitar ? null : (res.d && res.d.inicio) || iso;
             estado.inicio_ronda = guardada ? { ronda: r, inicio: guardada, arbitro: estado.arbitro } : null;
-            // Rápido y Blitz: al iniciar, todos presentes también para la organización (una vez: si ya hay marcas no se pisan,
-            // porque «presencia_todos» pondría «llegó» a quien el árbitro ya marcó «No está»).
-            if (rapido() && guardada && !presencias().length) {
-                const ahora = new Date().toISOString();
-                estado.presencia = [];
-                for (const x of estado.mesas) if (x.valor === "0") for (const color of ["blancas", "negras"]) estado.presencia.push({ mesa: x.mesa, color, presente: true, marcada: ahora });
-                // Se espera antes de pintar los «No está»: si no, un toque rápido podría llegar antes y «presencia_todos» lo pisaría.
-                try { await escribir("presencia_todos", { ronda: r }, "Todos presentes al iniciar la ronda " + r); } catch (err) { /* sin marca, igual cuentan como presentes */ }
-            }
-            pintar();
             pintarInicio();
             pintarEspera();
             avisar(res.encolado ? "Sin señal: la hora de inicio quedó en la tablet y se manda sola cuando vuelva la conexión."
