@@ -81,6 +81,7 @@ function dobleOrganizacion(licencia) {
     { id: "pr2", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 5, color: "blancas", jugador: "Dani Cuatro", presente: true, marcada: hace(600) },
     { id: "pr3", asignacion_id: "asig-ensayo", arbitro: "Árbitro de ensayo 1", tnr: "1532448", ronda: 1, mesa: 2, color: "blancas", jugador: "Jugador de Prueba", presente: false, marcada: hace(300) }];
   const INICIOS = [];
+  const SALIDAS = [];
   const TIEMPOS = [
     { id: "ti1", ocurrio: hace(900), asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 9, blancas: "Eli Uno", negras: "Fran Dos", jugada: 22, j_blancas: null, j_negras: null, turno: "blancas", t_blancas: 1500, t_negras: 1710, nota: "" },
     { id: "ti2", ocurrio: hace(300), asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 9, blancas: "Eli Uno", negras: "Fran Dos", jugada: 31, j_blancas: 31, j_negras: 30, turno: null, t_blancas: 600, t_negras: 5025, nota: "" },
@@ -99,8 +100,10 @@ function dobleOrganizacion(licencia) {
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS };
-  const filtrar = (tabla, f) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_salidas: SALIDAS };
+  // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
+  window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
+  const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
   window.sb = {
     auth: { getSession: () => R({ session: { user: { id: "yo" }, access_token: "x" } }), getUser: () => R({ user: { id: "yo" } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) } },
@@ -148,9 +151,9 @@ function dobleOrganizacion(licencia) {
         window.__driveOk = true; return Promise.resolve({ data: { ok: true, carpeta: "Planillas Centroamericano" }, error: null }); }
       if (b.action === "drive_reintentar") { PLANILLAS.forEach((x) => { x.drive_ok = true; }); return Promise.resolve({ data: { ok: true, enviadas: 1, fallaron: 0, quedan: 0 }, error: null }); }
       return Promise.resolve(err(400, "Acción desconocida.")); } },
-    from: (tabla) => { const f = {}; let accion = "select", valores = null;
+    from: (tabla) => { const f = {}; const fin = {}; let accion = "select", valores = null;
       let orden = null;
-      const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; },
+      const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; }, in: (c, vs) => { fin[c] = vs; return q; },
         maybeSingle: () => { const x = filtrar(tabla, f)[0]; return Promise.resolve({ data: x ? Object.assign({}, x) : null, error: null }); },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
@@ -162,8 +165,8 @@ function dobleOrganizacion(licencia) {
                 : { id: "a" + (++n), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
-          else if (accion === "update") { filtrar(tabla, f).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f }); r = { data: null, error: null }; }
-          else { const datos = filtrar(tabla, f).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
+          else if (accion === "update") { filtrar(tabla, f, fin).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
+          else { const datos = filtrar(tabla, f, fin).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
           return Promise.resolve(r).then(ok, ko); } };
       return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},
@@ -176,6 +179,9 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
+    // El reloj de la página arranca a las 8:00 a. m. del 3 de noviembre (antes de la ronda 3) y sigue corriendo: la página compara con el
+    // calendario REAL del torneo (rondas, tolerancia de 30 min), así que sin esto la prueba fallaba solo si se corría DURANTE una ronda.
+    await ctx.addInitScript((base) => { const R = Date; const off = base - R.now(); class F extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + off); } static now() { return R.now() + off; } } window.Date = F; }, Date.parse("2026-11-03T14:00:00Z"));
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
@@ -455,7 +461,7 @@ const CONTRASTE = `(sel) => {
     await p.waitForSelector("#form-tiempos");
     igual("al abrirla de nuevo siguen lo escrito", await p.evaluate(() => [document.getElementById("lt-tb").value, document.getElementById("lt-jb").value, document.getElementById("lt-tn").value, document.getElementById("lt-jn").value]), ["4:00", "32", "5:00", "32"]);
     igual("minimizada y vuelta a abrir, la hora marcada sigue", await p.evaluate(() => document.getElementById("lt-hora").dataset.marcada), "si");
-    const antesDeGuardar = Date.now();
+    const antesDeGuardar = await p.evaluate(() => Date.now()); // la hora de LA PÁGINA (su reloj está fijo)
     await p.click("#lt-guardar");
     await p.waitForFunction(() => document.getElementById("control-tiempos").hidden);
     igual("al guardar se manda la hora marcada (un momento de hace unos segundos, no inventado), y solo cuando se marcó", await p.evaluate(([desde]) => window.__llamadas.filter((l) => l.body.action === "tiempo").map((l) => "ocurrio" in l.body ? (Date.parse(l.body.ocurrio) <= Date.now() && Date.parse(l.body.ocurrio) >= desde - 120000) : null), [antesDeGuardar]), [null, true]);
@@ -612,6 +618,102 @@ const CONTRASTE = `(sel) => {
     await p.waitForFunction(() => document.getElementById("revision").dataset.estado === "finalizada");
     igual("finalizada: la función recibió las tres confirmaciones y la página lo dice", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "finalizar").map((l) => l.body.revision), document.querySelector("#revision h2").textContent]), [[{ resultados: true, planillas: true, firmadas: true }], "✓ Finalizaste la ronda 3"]);
 
+    // El pizote es un botón: abre los emparejamientos de TODAS las categorías para ayudar a un atleta a encontrar su mesa.
+    console.log("\n=== «Todas las mesas»: el pizote abre los emparejamientos de todas las categorías ===");
+    igual("el pizote es un botón con nombre accesible y una pista escrita", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [b.tagName, b.getAttribute("aria-label"), b.querySelector(".cam-mascota-pista").textContent, b.getBoundingClientRect().height >= 44]; }),
+        ["BUTTON", "Ver los emparejamientos de todas las categorías", "Todas las mesas", true]);
+    await p.click("#ver-todas-mesas");
+    await p.waitForSelector("#todas-las-mesas[open] .cam-todas-tabla tbody tr[data-mesa]");
+    igual("abre una ventana con las tres categorías (la suya marcada) y las mesas de la suya", await p.evaluate(() => [[...document.querySelectorAll("#todas-las-mesas .cam-todas-chips button")].map((b) => b.textContent + "|" + b.getAttribute("aria-pressed")), [...document.querySelectorAll("#tlm-filas tr")].map((t) => t.dataset.mesa)]),
+        [["Sub-10 Femenino (la tuya)|true", "Sub-12 Absoluto|false", "Sub-14 Femenino|false"], ["1", "2", "3"]]);
+    igual("la ventana es modal y trae el buscador con su etiqueta", await p.evaluate(() => [document.getElementById("todas-las-mesas").matches(":modal"), document.querySelector('label[for="tlm-buscar"]').textContent]), [true, "Buscar atleta o mesa"]);
+    await p.click('#todas-las-mesas [data-tnr="1529738"]');
+    await p.waitForFunction(() => [...document.querySelectorAll("#tlm-filas tr")].some((t) => t.dataset.mesa === "15"));
+    igual("al elegir otra categoría salen SUS mesas, con la ronda escrita", await p.evaluate(() => [[...document.querySelectorAll("#tlm-filas tr")].map((t) => t.dataset.mesa), /^Ronda 3 · 3 mesas/.test(document.getElementById("tlm-estado").textContent), document.querySelector('#todas-las-mesas [data-tnr="1529738"]').getAttribute("aria-pressed")]), [["1", "2", "15"], true, "true"]);
+    await p.fill("#tlm-buscar", "maria jose");
+    igual("buscar por nombre ignora tildes, mayúsculas y comas: «maria jose» encuentra «Árias Núñez, María José»", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["1"]);
+    await p.fill("#tlm-buscar", "ana sofia");
+    igual("las palabras van en cualquier orden y en cualquiera de los dos jugadores", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["2"]);
+    await p.fill("#tlm-buscar", "1");
+    igual("un número es una mesa: «1» es la 1, no la 15", await p.$$eval("#tlm-filas tr", (t) => t.map((x) => x.dataset.mesa)), ["1"]);
+    await p.fill("#tlm-buscar", "nadie asi");
+    igual("sin coincidencias lo dice con palabras", await p.textContent("#tlm-filas"), "Nadie coincide con lo que escribiste.");
+    await p.fill("#tlm-buscar", "hopkins");
+    await p.click('#todas-las-mesas [data-accion="buscar-todas"]');
+    await p.waitForFunction(() => /resultado/.test(document.getElementById("tlm-estado").textContent) && !/Buscando/.test(document.getElementById("tlm-estado").textContent));
+    igual("«Buscar en todas» recorre las categorías, muestra en cuál está cada uno y avisa de la que no se pudo leer", await p.evaluate(() => [[...document.querySelectorAll("#tlm-filas tr")].map((t) => [t.dataset.mesa, t.lastElementChild.textContent]), document.getElementById("tlm-estado").textContent, document.getElementById("tlm-estado").classList.contains("cam-fallo")]),
+        [[["3", "Sub-10 Femenino"]], "1 resultado en 2 de 3 categorías (1 no se pudieron leer: toca «Buscar en todas» otra vez).", true]);
+    await p.click('#todas-las-mesas [data-tnr="1529739"]');
+    await p.waitForFunction(() => /clave de Sub-14 Femenino/.test(document.getElementById("tlm-estado").textContent));
+    igual("una categoría sin clave dice por qué y deja reintentar, sin romper la ventana", await p.evaluate(() => [document.getElementById("tlm-estado").classList.contains("cam-fallo"), !document.querySelector("#todas-las-mesas .cam-btn-chico[hidden]:not([data-accion])"), document.getElementById("todas-las-mesas").open]), [true, true, true]);
+    igual("todo salió por la función con el token, solo leyendo (sin escribir nada)", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "emparejamientos").length > 0, window.__llamadas.filter((l) => l.body.action === "emparejamientos").every((l) => /^[0-9a-f]{64}$/.test(l.body.token)), window.__emparejamientosArgs[0]]), [true, true, null]);
+    await p.click('#todas-las-mesas [data-accion="cerrar-todas"]');
+    await p.waitForFunction(() => !document.getElementById("todas-las-mesas"));
+    igual("«Cerrar» la quita del todo y devuelve el foco a la página", await p.evaluate(() => [!!document.getElementById("todas-las-mesas"), document.activeElement && document.activeElement.id]), [false, "ver-todas-mesas"]);
+    igual("la búsqueda de nombres con chess.js de verdad: filtrar y normalizar son una sola copia", await p.evaluate(() => [window.CentroamericanoEmparejamientos.normalizar("  María   JOSÉ "), window.CentroamericanoEmparejamientos.filtrar([{ mesa: 5, blancas: "A", negras: "B" }, { mesa: 15, blancas: "C", negras: "D" }], "5").map((m) => m.mesa)]), ["maria jose", [5]]);
+
+    // «Todas las mesas» lo habilita o deshabilita la organización: deshabilitado, el pizote queda apagado y el servidor lo rechaza.
+    console.log("\n=== «Todas las mesas» deshabilitado por la organización ===");
+    await p.evaluate(() => { window.__avisos.todas_las_mesas = false; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => document.getElementById("ver-todas-mesas").disabled);
+    igual("deshabilitado: el pizote queda apagado, sin la pista, y dice por qué (nombre accesible y título)", await p.evaluate(() => { const b = document.getElementById("ver-todas-mesas"); return [b.disabled, b.querySelector(".cam-mascota-pista").checkVisibility(), b.getAttribute("aria-label"), b.title]; }),
+        [true, false, "«Todas las mesas» no está habilitado en tu enlace", "La organización no habilitó «Todas las mesas» en tu enlace."]);
+    igual("y aunque se manipule la pantalla, la función lo rechaza (403) con el motivo", await p.evaluate(async () => { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { action: "emparejamientos", token: window.__llamadas[0].body.token } }); return [r.error.context.status, (await r.error.context.json()).error]; }),
+        [403, "La organización no habilitó «Todas las mesas» en tu enlace."]);
+    await p.evaluate(() => { window.__avisos.todas_las_mesas = true; document.getElementById("actualizar").click(); });
+    await p.waitForFunction(() => !document.getElementById("ver-todas-mesas").disabled);
+    igual("habilitado otra vez: el pizote vuelve con su pista", await p.evaluate(() => [document.getElementById("ver-todas-mesas").disabled, document.querySelector("#ver-todas-mesas .cam-mascota-pista").checkVisibility()]), [false, true]);
+
+    // El modo concentración en la tablet: la organización lo enciende; si el árbitro se sale, se le tapa la pantalla y queda anotado.
+    console.log("\n=== La tablet: el modo concentración tapa la pantalla si el árbitro se sale ===");
+    igual("sin el modo encendido no hay ninguna pantalla encima", await p.evaluate(() => [!!document.getElementById("concentracion"), (window.__salidasArgs || []).length]), [false, 0]);
+    await p.evaluate(() => { window.__avisos.concentracion = true; document.getElementById("actualizar").click(); });
+    await p.waitForSelector('#concentracion[data-estado="entrar"]');
+    igual("la organización lo enciende: antes de entrar sale un aviso que lo explica, con foco en su botón, y lo demás queda inerte (ni Tab ni lector de pantalla lo alcanzan)",
+        await p.evaluate(() => { const c = document.getElementById("concentracion"); return [c.getAttribute("role"), c.getAttribute("aria-modal"), document.activeElement.dataset.accion, document.activeElement.textContent, /pantalla completa/.test(c.textContent), /Fijar pantalla/.test(c.textContent), [...document.body.children].filter((n) => n !== c).every((n) => n.hasAttribute("inert")), getComputedStyle(c).position, c.getBoundingClientRect().width === innerWidth]; }),
+        ["alertdialog", "true", "conc-boton", "Entrar a la mesa", true, true, true, "fixed", true]);
+    await p.click('[data-accion="conc-boton"]');
+    await p.waitForFunction(() => !document.getElementById("concentracion"));
+    igual("al tocar «Entrar a la mesa» se destapa y la página vuelve a funcionar", await p.evaluate(() => [[...document.body.children].some((n) => n.hasAttribute("inert")), (window.__salidasArgs || []).length]), [false, 0]);
+    // Se sale (cambia de pestaña o de aplicación): la página se tapa y la función se entera.
+    await p.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => true }); document.dispatchEvent(new Event("visibilitychange")); });
+    await p.waitForSelector('#concentracion[data-estado="fuera"]');
+    igual("al salirse se le tapa la pantalla con «Saliste de tus mesas», dice el motivo y cuánto lleva fuera (sin ruido), y avisa a la función con la fase «sale»",
+        await p.evaluate(() => { const c = document.getElementById("concentracion"); return [c.querySelector("h2").textContent, /Cambiaste de pestaña o de aplicación/.test(c.textContent), /Llevas \d+:\d\d fuera de tus mesas/.test(c.querySelector('[role="timer"]').textContent), c.querySelector("button").textContent, window.__salidasArgs]; }),
+        ["Saliste de tus mesas", true, true, "Volver a la mesa", [{ fase: "sale", motivo: "oculta" }]]);
+    await p.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => false }); document.dispatchEvent(new Event("visibilitychange")); });
+    igual("volver a la pestaña NO destapa: hay que tocar el botón", await p.evaluate(() => !!document.getElementById("concentracion")), true);
+    await p.waitForTimeout(1100);
+    await p.click('[data-accion="conc-boton"]');
+    await p.waitForFunction(() => !document.getElementById("concentracion"));
+    igual("«Volver a la mesa» destapa y le dice a la función cuánto estuvo fuera (en segundos)", await p.evaluate(() => { const a = window.__salidasArgs; return [a.length, a[1].fase, a[1].motivo, a[1].segundos >= 1 && a[1].segundos < 30]; }), [2, "vuelve", "oculta", true]);
+    // La pantalla completa y la cámara del aparato, con un controlador aparte (la pantalla completa no se puede simular entera en un navegador sin cabeza).
+    const aparte = await p.evaluate(async () => {
+        await new Promise((ok) => { window.__avisos.concentracion = false; document.getElementById("actualizar").click(); setTimeout(ok, 400); });
+        const llamadas = []; let tiempo = 1000;
+        Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => (window.__fs ? document.documentElement : null) });
+        window.__fs = true;
+        const c = window.CentroamericanoConcentracion.crear({ pedir: async (x) => { llamadas.push(x); }, ahora: () => tiempo });
+        c.ponerActivo(true);
+        const dentro = c.estado();
+        window.__fs = false; document.dispatchEvent(new Event("fullscreenchange"));
+        await new Promise((ok) => setTimeout(ok, 30));
+        const tras = c.estado(), motivo = llamadas[0];
+        const texto = document.getElementById("conc-texto").textContent;
+        tiempo = 8000; c.ponerActivo(false);
+        await new Promise((ok) => setTimeout(ok, 30));
+        const apagado = [c.estado(), !!document.getElementById("concentracion"), llamadas.map((x) => x.fase), llamadas[1] && llamadas[1].segundos];
+        // La cámara del aparato: con la pausa, salirse no cuenta y no tapa nada.
+        window.__fs = true; const llamadas2 = []; const d = window.CentroamericanoConcentracion.crear({ pedir: async (x) => { llamadas2.push(x); }, ahora: () => tiempo });
+        d.ponerActivo(true); d.pausa(60000);
+        window.__fs = false; document.dispatchEvent(new Event("fullscreenchange"));
+        const pausa = [d.estado(), llamadas2.length, !!document.getElementById("concentracion")];
+        d.ponerActivo(false);
+        return { dentro, tras, motivo, texto, apagado, pausa };
+    });
+    igual("sale de la pantalla completa: se tapa con ESE motivo, y si la organización lo apaga mientras está fuera, se destapa y se anota cuánto duró", [aparte.dentro, aparte.tras, aparte.motivo, aparte.texto.includes("Saliste de la pantalla completa"), aparte.apagado], ["dentro", "fuera", { fase: "sale", motivo: "pantalla_completa" }, true, ["libre", false, ["sale", "vuelve"], 7]]);
+    igual("durante la cámara del aparato (la foto de las planillas), salirse no cuenta ni tapa nada: pide otro toque para la pantalla completa", aparte.pausa, ["entrar", 0, true]);
+
     console.log("\n=== En el celular (390 px), en claro y en oscuro ===");
     igual("la página no se desplaza a lo ancho", await p.evaluate(() => document.documentElement.scrollWidth), 390);
     igual("las tarjetas usan ICONOS: cada botón de jugador es un icono de 44 px o más, con su nombre accesible (aria-label y title) y la palabra solo para el lector de pantalla",
@@ -675,6 +777,14 @@ const CONTRASTE = `(sel) => {
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
     const bytesB = fs.readFileSync(await bitacora.path());
     igual("«Descargar mi bitácora» baja un PDF con el nombre del árbitro y la MARCA DE AGUA de Ajedrez Integral", [bitacora.suggestedFilename(), bytesB.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesB.toString("latin1"))], ["bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf", true, true]);
+    // La tabla del PDF: sin `envolver` recorta con «...» (como siempre, para los demás informes); con `envolver` parte el texto y no pierde nada.
+    const tablaLarga = await pc.evaluate(async () => {
+      const largo = "palabra ".repeat(40) + "FINAL";
+      const bytes = async (op) => { const b = await window.ReportePDF.generar({ titulo: "T", bloques: [Object.assign({ tipo: "tabla", encabezados: ["A", "B"], anchos: [1, 3], filas: [["x", largo]] }, op)], fotos: [] }); let s = ""; for (const x of new Uint8Array(await b.arrayBuffer())) s += String.fromCharCode(x); return s; };
+      const con = await bytes({ envolver: true }), sin = await bytes({});
+      return [con.includes("FINAL"), con.includes("..."), sin.includes("FINAL"), sin.includes("...")];
+    });
+    igual("la tabla del PDF: con «envolver» parte las celdas largas y no pierde nada; sin él recorta con «...» como siempre", tablaLarga, [true, false, false, true]);
     igual("la función entregó la bitácora (solo después de concluir) y la página dice que se descargó", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "bitacora").length >= 1, /Listo: se descargó/.test(document.getElementById("concluido-estado").textContent)]), [true, true]);
     await pc.click("#actualizar");
     await pc.waitForFunction(() => document.getElementById("actualizado").textContent.includes("Actualizado"));
@@ -686,8 +796,12 @@ const CONTRASTE = `(sel) => {
     await ce.p.waitForSelector(".cam-mesa");
     const pe = ce.p;
     const jugE = (m, c) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + c + '"]';
+    // Si la ronda está en curso según el calendario REAL de hoy, la tablet anota sola a los que no han llegado (presencia_ausentes) al abrir:
+    // se espera ese momento para que la prueba no dependa de la hora del día en que corre.
+    await pe.waitForFunction(() => window.__llamadas.some((l) => l.body && l.body.action === "presencia_ausentes"), null, { timeout: 3000 }).catch(() => {});
     await pe.evaluate(() => { window.__vib = 0; navigator.vibrate = () => { window.__vib++; return true; };
-      window.__presencia.push({ mesa: 2, color: "blancas", presente: true, marcada: "2026-11-02T15:00:00Z" }); });
+      const f = window.__presencia.find((x) => x.mesa === 2 && x.color === "blancas");
+      if (f) f.presente = true; else window.__presencia.push({ mesa: 2, color: "blancas", presente: true, marcada: "2026-11-02T15:00:00Z" }); });
     await pe.click("#actualizar");
     await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
     igual("antes de que empiece la ronda no hay cronómetro (nadie está corriendo) y el botón «Marcar que llegaron todos» está a la vista", await pe.evaluate(() => [document.querySelectorAll(".cam-cuenta").length, document.getElementById("presencia-todos").checkVisibility(), document.getElementById("presencia-todos").textContent.trim()]), [0, true, "✓ Marcar que llegaron todos"]);
@@ -955,6 +1069,42 @@ const CONTRASTE = `(sel) => {
     igual("se crea con SU nombre y el mismo «persona» que el enlace que ya tenía (los dos quedan juntos), sin pedir nombre", await q.evaluate(() => [window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").pop().valores, window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.persona).map((l) => l.f.id)]).then(([v, u]) => [v.arbitro, v.nombrado, v.tnr, v.mesa_desde, v.mesa_hasta, !!v.persona, u]), ["Ana Árbitra", true, "1529719", 3, 8, true, ["asig-ana"]]);
     igual("cada fila de ese árbitro dice en qué otro torneo está", await q.$$eval("#asignaciones .cam-tambien", (l) => l.map((x) => x.textContent)), ["También en: Sub-10 Absoluto (mesas 1 a 12)", "También en: Sub-8 Absoluto (mesas 3 a 8)"]);
     igual("un aviso a «todos» le llega UNA vez al árbitro con dos enlaces (no una por enlace)", await q.$$eval("#av-para option", (l) => l[0].textContent), "Todos los árbitros (6)");
+
+    console.log("\n=== La organización: el modo concentración ===");
+    igual("arriba de la tabla están «Encender en todas» y «Apagarlo en todas», con la nota de que una página no bloquea el aparato", await q.evaluate(() => [document.getElementById("conc-todas-si").textContent, document.getElementById("conc-todas-no").textContent, /Fijar pantalla/.test(document.getElementById("concentracion-todas").textContent), /Acceso guiado/.test(document.getElementById("concentracion-todas").textContent)]), ["Encender en todas las tablets", "Apagarlo en todas", true, true]);
+    await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="concentracion"]');
+    await q.waitForSelector('.cam-asignacion[data-id="asig-ana"] [data-concentracion="si"]');
+    igual("encenderlo en una fila guarda SOLO esa columna en SU enlace; la fila muestra «🔒 Concentración» y el botón pasa a «Quitar concentración»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "concentracion" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="concentracion"]').textContent, document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-concentracion="si"]').textContent]), [[[{ concentracion: true }, "asig-ana"]], "Quitar concentración", "🔒 Concentración"]);
+    await q.evaluate(() => { window.__salida("asig-ana", 3, 130); window.__salida("asig-ana", 1, null, "pantalla_completa"); window.__salida("asig-arb1", 5, 40); });
+    await q.waitForFunction(() => { const s = document.querySelector('[data-salidas="asig-ana"]'); return s && !s.hidden && s.dataset.fuera === "si"; }, null, { timeout: 30000 });
+    igual("quien está fuera AHORA se ve en su fila (con las palabras, no solo el color) y quien ya volvió dice cuántas veces y cuánto", await q.evaluate(() => [document.querySelector('[data-salidas="asig-ana"]').textContent.replace(/( \d+ s)?\)$/, ")"), document.querySelector('[data-salidas="asig-arb1"]').textContent, document.querySelector('[data-salidas="asig-arb1"]').dataset.fuera]), ["🔓 Fuera de la pantalla ahora (desde hace 1 min)", "Se salió 1 vez (40 s en total)", "no"]);
+    await q.click("#conc-todas-si");
+    await q.waitForSelector("dialog[open]");
+    igual("encenderlo en todas pregunta antes y dice cuántas tablets y que se les atraviesa un aviso", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/En \d+ tablets/.test(t), t.includes("se le tapa la pantalla"), t.includes("se les atraviesa un aviso")]; }), [true, true, true]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__llamadas.some((l) => l.update === "centroamericano_asignaciones" && l.en && l.en.id));
+    igual("al confirmar enciende SOLO los enlaces vigentes (ni apagados ni vencidos ni concluidos), de una sola vez", await q.evaluate(() => { const l = window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop(); return [l.valores, l.en.id.includes("asig-ana"), l.en.id.includes("asig-arb1"), l.en.id.length >= 2]; }), [{ concentracion: true }, true, true, true]);
+    await q.click("#conc-todas-no");
+    await q.waitForSelector("dialog[open]");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.querySelectorAll('[data-concentracion="si"]').length === 0);
+    igual("apagarlo en todas deja a ninguna con la concentración", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-concentracion="si"]').length]), [{ concentracion: false }, 0]);
+
+    console.log("\n=== La organización: habilitar o deshabilitar «Todas las mesas» ===");
+    igual("arriba de la tabla están «Habilitarlo en todas las tablets» y «Deshabilitarlo en todas»", await q.evaluate(() => [document.getElementById("tm-todas-si").textContent, document.getElementById("tm-todas-no").textContent]), ["Habilitarlo en todas las tablets", "Deshabilitarlo en todas"]);
+    await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]');
+    await q.waitForSelector('.cam-asignacion[data-id="asig-ana"] [data-sin-todas="si"]');
+    igual("quitarlo en una fila guarda SOLO esa columna en SU enlace; la fila dice «Sin «Todas las mesas»» y el botón pasa a «Habilitar»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "todas_las_mesas" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]').textContent]), [[[{ todas_las_mesas: false }, "asig-ana"]], "Habilitar «Todas las mesas»"]);
+    await q.click("#tm-todas-no");
+    await q.waitForSelector("dialog[open]");
+    igual("deshabilitarlo en todas pregunta antes y dice que el árbitro ya no verá las demás categorías", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Deshabilitar «Todas las mesas»"), t.includes("ya no podrá ver los emparejamientos")]; }), [true, true]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__llamadas.some((l) => l.update === "centroamericano_asignaciones" && l.en && l.en.id && l.valores && l.valores.todas_las_mesas === false));
+    await q.click("#tm-todas-si");
+    await q.waitForSelector("dialog[open]");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => document.querySelectorAll('[data-sin-todas="si"]').length === 0);
+    igual("habilitarlo en todas deja a ninguna sin «Todas las mesas»", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-sin-todas="si"]').length]), [{ todas_las_mesas: true }, 0]);
 
     console.log("\n=== La organización: árbitros que concluyeron sus labores ===");
     await q.evaluate(() => window.__concluir("asig-arb1"));

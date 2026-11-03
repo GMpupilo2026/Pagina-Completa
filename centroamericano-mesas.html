@@ -187,6 +187,20 @@
                 </details>
 
                 <h2 class="cam-subtitulo mt-5 cam-no-qr">Los enlaces creados</h2>
+                <!-- Modo concentración: la tablet pide pantalla completa y se tapa si el árbitro se sale; cada salida queda anotada. -->
+                <div class="cam-concentracion cam-no-qr" id="concentracion-todas" role="group" aria-labelledby="ct-conc-titulo">
+                    <strong id="ct-conc-titulo"><span aria-hidden="true">🔒</span> Modo concentración</strong>
+                    <button type="button" id="conc-todas-si" class="cam-btn cam-btn-chico">Encender en todas las tablets</button>
+                    <button type="button" id="conc-todas-no" class="cam-btn cam-btn-claro cam-btn-chico">Apagarlo en todas</button>
+                    <p class="cam-herramientas-nota">La tablet pasa a pantalla completa y, si el árbitro cambia de pestaña o de aplicación, o sale de la pantalla completa, se le tapa la pantalla hasta que toque «Volver a la mesa». Cada salida queda anotada con su hora y su duración. Una página no puede bloquear el aparato: para eso, en la tablet, «Fijar pantalla» (Android) o «Acceso guiado» (iPad). También se enciende o apaga en cada fila.</p>
+                </div>
+                <!-- «Todas las mesas»: el pizote de la tablet abre los emparejamientos de todas las categorías; la organización lo habilita o deshabilita. -->
+                <div class="cam-concentracion cam-no-qr" id="todas-mesas-admin" role="group" aria-labelledby="ct-tm-titulo">
+                    <strong id="ct-tm-titulo"><span aria-hidden="true">🐾</span> «Todas las mesas» (el pizote)</strong>
+                    <button type="button" id="tm-todas-si" class="cam-btn cam-btn-chico">Habilitarlo en todas las tablets</button>
+                    <button type="button" id="tm-todas-no" class="cam-btn cam-btn-claro cam-btn-chico">Deshabilitarlo en todas</button>
+                    <p class="cam-herramientas-nota">Con el pizote, el árbitro ve los emparejamientos de la ronda abierta de todas las categorías para ayudar a un atleta a encontrar su mesa. Viene habilitado; aquí lo apagas en todas las tablets o, en cada fila, en la de un árbitro. Lo hace cumplir el servidor, no solo la pantalla.</p>
+                </div>
                 <div class="cam-tabla-envoltura cam-no-qr">
                     <table class="cam-tabla cam-rejilla" id="asignaciones-tabla">
                         <caption class="sr-only">Enlaces de los árbitros, agrupados por torneo y ordenados por mesa</caption>
@@ -331,7 +345,7 @@
                 <div class="cam-herramientas mt-3" role="toolbar" aria-label="Filtrar la actividad">
                     <label class="cam-herramientas-campo"><span>Árbitro</span><select id="act-arbitro" class="cam-select"><option value="">Todos los árbitros</option></select></label>
                     <label class="cam-herramientas-campo"><span>Qué hizo</span><select id="act-tipo" class="cam-select">
-                        <option value="">Todo</option><option value="resultado">Resultados y correcciones</option><option value="ilegal">Ilegales e irregularidades</option><option value="incidencia">Incidencias y notas</option><option value="levanto">Se levantó de la mesa</option><option value="concluyo">Concluyó sus labores</option><option value="inicio">Inició la ronda</option><option value="presencia">Quién llegó</option><option value="planilla">Fotos de planillas</option><option value="lista">Revisión previa</option><option value="finalizo">Ronda finalizada o mesas terminadas</option><option value="ayuda">Pedidos de ayuda</option><option value="leyo">Avisos leídos</option></select></label>
+                        <option value="">Todo</option><option value="resultado">Resultados y correcciones</option><option value="ilegal">Ilegales e irregularidades</option><option value="incidencia">Incidencias y notas</option><option value="levanto">Se levantó de la mesa</option><option value="concluyo">Concluyó sus labores</option><option value="inicio">Inició la ronda</option><option value="salida">Salió de la pantalla</option><option value="presencia">Quién llegó</option><option value="planilla">Fotos de planillas</option><option value="lista">Revisión previa</option><option value="finalizo">Ronda finalizada o mesas terminadas</option><option value="ayuda">Pedidos de ayuda</option><option value="leyo">Avisos leídos</option></select></label>
                 </div>
                 <div class="cam-tabla-envoltura mt-2">
                     <table class="cam-tabla cam-rejilla">
