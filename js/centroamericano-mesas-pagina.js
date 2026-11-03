@@ -102,7 +102,7 @@
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
@@ -118,6 +118,7 @@
         if (nombre === "tiempos") cargarTiempos();
         if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
         if (nombre === "registro") cargarRegistro();
+        if (nombre === "fairplay") window.CentroamericanoFairPlay.cargar();
     }
     function teclaPestana(ev) {
         const i = PANELES.indexOf(ev.currentTarget.dataset.panel);
@@ -237,6 +238,13 @@
     let inicios = {};         // { "tnr|ronda": { inicio, arbitro } } del modo actual
     const horaDe = (iso) => window.HoraCR.hora(iso, { hour: "numeric", minute: "2-digit" });
 
+    // La ronda abierta de una categoría (también la usa el sorteo de Fair Play).
+    function rondaDeCategoria(tnr) {
+        return Math.max(rondaDeFaltan || 0,
+            ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
+            ...Object.values(inicios).filter((x) => x.tnr === tnr && x.inicio).map((x) => Number(x.ronda) || 0));
+    }
+
     function pintarInicio() {
         const H = window.CentroamericanoHorario;
         const lista = $("ir-lista");
@@ -247,9 +255,7 @@
         const tnrs = [...new Set(asignaciones.map((x) => x.tnr))].filter(dentro)
             .sort((x, y) => torneos.findIndex((q) => q.tnr === x) - torneos.findIndex((q) => q.tnr === y));
         const filas = tnrs.map((tnr) => {
-            const r = Math.max(rondaDeFaltan || 0,
-                ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
-                ...Object.values(inicios).filter((x) => x.tnr === tnr && x.inicio).map((x) => Number(x.ronda) || 0));
+            const r = rondaDeCategoria(tnr);
             const ev = H.EVENTOS.find((e) => e.ronda === r), marca = inicios[tnr + "|" + r];
             const texto = !r ? "sin ronda abierta"
                 : marca ? "Ronda " + r + ": empezó a las " + horaDe(marca.inicio) + (marca.arbitro ? " (la marcó " + marca.arbitro + ")" : "")
@@ -1391,7 +1397,7 @@
         ponerTitulo();
         await cargarTorneos();
         await cargarAsignaciones();
-        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro()]);
+        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro(), window.CentroamericanoFairPlay.cargar()]);
         avisar(ensayo ? "Modo ensayo: ves solo los torneos de prueba." : "Volviste a los torneos reales.");
     }
 
@@ -1404,6 +1410,7 @@
         if (tic % 10 === 0) tareas.push(cargarCopias(), cargarDrive());
         if (tic % 5 === 0 && !$("panel-planillas").hidden) tareas.push(cargarPlanillas());
         if (tic % 3 === 0 && !$("panel-tiempos").hidden) tareas.push(cargarTiempos());
+        if (tic % 3 === 0 && !$("panel-fairplay").hidden) tareas.push(window.CentroamericanoFairPlay.cargar());
         await Promise.all(tareas);
     }
 
@@ -1446,6 +1453,8 @@
         $("copia-ahora").addEventListener("click", copiaAhora);
         $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
         $("copia-archivo").addEventListener("change", restaurarArchivo);
+        window.CentroamericanoFairPlay.iniciar({ el, avisar, dentro, nombreTorneo, descargarPdf, rondaDe: rondaDeCategoria,
+            torneos: () => torneos, asignaciones: () => asignaciones });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);

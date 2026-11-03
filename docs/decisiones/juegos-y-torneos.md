@@ -9005,6 +9005,53 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
   copia actual no agrega nada de más.
 
+### El sorteo de Fair Play (Centroamericano)
+
+La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para
+el árbitro de Fair Play: sortea **mesas** al azar en cada categoría, y de la mesa que sale se revisa
+al **ganador** cuando termina la partida; si es tablas, al color que salió en el mismo sorteo
+(`color_si_tablas`). Al aprobar una mesa, la base le manda al árbitro que la tiene un aviso de la
+organización (los mismos que ya le llegan a la tablet, con «Entendido»): que retenga al jugador y no
+lo deje salir del local. Después se anota cómo terminó la revisión (sin novedad, hallazgo, se negó o
+se fue sin revisarse), y todo baja en PDF para el informe.
+
+**El azar lo pone la base, no el navegador.** Un control al azar solo vale si nadie puede elegir a
+quién le toca: si el navegador sorteara, se podría sortear hasta que salga la mesa que uno quiere.
+`centroamericano_fair_play_sortear()` elige con `gen_random_uuid()` entre las mesas que tienen un
+árbitro con enlace vigente, anota cada mesa con la hora, quién sorteó y de cuántas salió, y **una
+mesa que salió no vuelve a salir en esa ronda, ni descartada** (índice único `(tnr, ronda, mesa)`).
+Descartar pide un motivo, que queda. La tabla `centroamericano_fair_play` no tiene permisos de
+escritura: la escriben solo sus cuatro funciones (`sortear`, `aprobar`, `descartar`, `revisar`), con
+la herramienta «mesa-arbitro». Aprobar no se puede dos veces, y «Se negó», «Hallazgo» o «Se fue»
+sin decir qué pasó los rechaza la base.
+
+**La ronda de cada categoría** es la de «Cuándo inició la ronda» (`rondaDeCategoria()`): la más alta
+que se sabe de ella. Si una categoría todavía no abrió la ronda que ya abrieron otras, se sortea igual
+en esa, porque todas siguen el mismo calendario.
+
+**Lo que pide FIDE** (está escrito en la pestaña, «Lo que pide FIDE para la revisión»), leído el
+3 de noviembre de 2026 en las Leyes del Ajedrez 2023, el Manual del Árbitro 2025 (cap. A09 y las
+«Fair Play Protection Measures») y las Guías antitrampas:
+- la revisión es en privado y por alguien del mismo sexo (Leyes, art. 11.3.3); solo están quien
+  revisa, el jugador y un testigo del mismo sexo, y el jugador puede pedir un segundo testigo (con un
+  menor, su madre, su padre o su entrenador: FIDE no dice nada de menores, es lo razonable);
+- se hace antes o apenas termina la partida; durante la partida, solo con una sospecha muy fuerte;
+- no hace falta darle un motivo al jugador, pero **las revisiones al azar se anuncian antes en las
+  bases**. Que se revise al ganador, y que nadie pueda irse sin revisarse, también va en las bases:
+  FIDE no habla de ganadores, primeros tableros ni de cuántas mesas por ronda;
+- negarse se sanciona con el art. 12.9 (de la advertencia a perder la partida o la expulsión);
+- cada revisión va al informe del torneo con su resultado, y lo de Fair Play es confidencial.
+
+Para un campeonato juvenil centroamericano el nivel de protección más probable es el 2 («minor
+continental events»), donde las revisiones al azar después de la partida se recomiendan
+(«Where reasonable, devise and implement random and post-game check plans»), sin número fijo; hay
+que confirmarlo con la Comisión de Fair Play de FIDE.
+
+Aplicada el 3 de noviembre (`20261103162537`) y probada en la base con un rol de administración, en
+una transacción que se deshizo: sorteó 3 mesas «de 30», el aviso le llegó al árbitro de esa mesa,
+aprobar dos veces, «Se negó» sin nota y descartar sin motivo se rechazaron, y un segundo sorteo de 10
+no repitió ninguna. Lo comprueba `verificar-centroamericano-fair-play.js`.
+
 ## La lectura de chess-results se comparte y la tablet no pierde nada (Centroamericano)
 
 El torneo más importante del año (2–9 de noviembre, 15 a 20 árbitros, unos 15 con tablet, iPad o Android) no

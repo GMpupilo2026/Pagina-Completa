@@ -628,3 +628,15 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-jugador[data-elegido] .cam-nombre { background: rgb(47 164 106 / 0.28); box-shadow: 0 0 0 3px #4fd18b; }
 @media (prefers-reduced-motion: no-preference) { .cam-jugador[data-elegido] .cam-nombre { animation: cam-elegido 0.9s ease-in-out infinite; } }
 @keyframes cam-elegido { 0%, 100% { box-shadow: 0 0 0 3px #2fa46a; } 50% { box-shadow: 0 0 0 8px rgb(47 164 106 / 0.3); } }
+
+/* El sorteo de Fair Play: los mismos colores de chip que el avance de la ronda (ya medidos con texto blanco),
+ * y el estado va también escrito. */
+.cam-chip[data-estado="fp-sorteada"] { background: var(--cac-morado); }
+.cam-chip[data-estado="fp-aprobada"] { background: var(--cac-azul); }
+.cam-chip[data-estado="fp-revisada"] { background: var(--cac-verde); }
+.cam-chip[data-estado="fp-descartada"] { background: #4d5266; }
+.cam-fp-detalle { display: block; font-size: 0.85rem; margin-top: 0.2rem; }
+.cam-fp-de { font-size: 0.85rem; }
+.cam-fp-acciones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cam-fp-reglas summary { cursor: pointer; font-weight: 700; }
+.cam-fp-reglas ul { list-style: disc; padding-left: 1.4rem; margin-top: 0.5rem; display: grid; gap: 0.4rem; font-size: 0.92rem; }
