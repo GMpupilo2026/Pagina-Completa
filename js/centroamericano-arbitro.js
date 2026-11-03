@@ -179,6 +179,16 @@
         return "Sin resultado";
     }
 
+    // El resultado que el árbitro ELIGIÓ en el desplegable y todavía no guardó: ilumina y hace parpadear al jugador que gana (a los dos en
+    // tablas) para que se asegure de haber elegido bien ANTES de tocar «Guardar». Guardado, deja de brillar. 1/4 → blancas, 3/5 → negras, 2 → tablas.
+    function gananElegido(m, color) {
+        const v = elegido[m.mesa];
+        if (v == null || v === "" || v === m.valor) return null;
+        if (v === "2") return "tablas";
+        if (color === "blancas" && (v === "1" || v === "4")) return "gana";
+        if (color === "negras" && (v === "3" || v === "5")) return "gana";
+        return null;
+    }
     function bloqueJugador(m, color) {
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
@@ -201,10 +211,12 @@
         if (k.ultima_ilegal) anulares.append(botonJugador("anular-ilegal", "anular", "Anular la última ilegal de " + nombre, "Anular la última ilegal", () => anular(m, color, "ilegal", k.ultima_ilegal), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         if (k.ultima_irregularidad) anulares.append(botonJugador("anular-irregularidad", "anular", "Anular la última irregularidad de " + nombre, "Anular la última irregularidad", () => anular(m, color, "irregularidad", k.ultima_irregularidad), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         if (k.ultima_levantada) anulares.append(botonJugador("anular-levanto", "anular", "Anular la última vez que se levantó " + nombre, "Anular la última vez que se levantó", () => anular(m, color, "levanto", k.ultima_levantada), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
-        return el("div", { class: "cam-jugador", "data-color": color },
+        const gana = gananElegido(m, color);
+        return el("div", { class: "cam-jugador", "data-color": color, "data-elegido": gana },
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
                 el("span", { class: "cam-nombre", texto: nombre }),
+                gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null,
                 cuentaDe(m, color),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
             cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,

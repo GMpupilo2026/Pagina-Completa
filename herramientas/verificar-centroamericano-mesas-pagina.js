@@ -230,8 +230,23 @@ const CONTRASTE = `(sel) => {
     await p.selectOption("#res-1", "1");
     igual("al elegir un resultado, la mesa queda «sin guardar» y su botón se enciende (y las otras no)", [await p.$eval('.cam-mesa[data-mesa="1"]', (m) => m.dataset.estado), await p.$eval(boton(1), (b) => b.disabled), await p.$eval(boton(2), (b) => b.disabled)], ["sin-guardar", false, true]);
     igual("el botón está en la MISMA fila que el desplegable", await p.evaluate(() => { const s = document.getElementById("res-1"), b = document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="guardar"]'); return s.parentElement === b.parentElement; }), true);
+    // El resultado ELEGIDO (sin guardar) ilumina y hace parpadear al jugador que gana, para estar seguro antes de «Guardar».
+    const brillo = () => p.evaluate(() => ["blancas", "negras"].map((c) => { const j = document.querySelector('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="' + c + '"]'); const cs = getComputedStyle(j.querySelector(".cam-nombre")); const g = j.querySelector(".cam-gana"); return [j.dataset.elegido || null, g ? g.textContent : null, cs.boxShadow !== "none" ? cs.animationName : false]; }));
+    igual("elegir «1-0» ilumina y hace parpadear SOLO al jugador de blancas, con la palabra «Gana»", await brillo(), [["gana", "Gana", "cam-elegido"], [null, null, false]]);
+    await p.selectOption("#res-1", "3");
+    igual("elegir «0-1» ilumina solo al de negras", await brillo(), [[null, null, false], ["gana", "Gana", "cam-elegido"]]);
+    await p.selectOption("#res-1", "2");
+    igual("en tablas se iluminan los DOS, con la palabra «Tablas»", await brillo(), [["tablas", "Tablas", "cam-elegido"], ["tablas", "Tablas", "cam-elegido"]]);
+    await p.selectOption("#res-1", "4");
+    igual("«1-0 por incomparecencia» también ilumina al de blancas", await brillo(), [["gana", "Gana", "cam-elegido"], [null, null, false]]);
+    await p.selectOption("#res-1", "5");
+    igual("«0-1 por incomparecencia» ilumina al de negras", await brillo(), [[null, null, false], ["gana", "Gana", "cam-elegido"]]);
+    await p.selectOption("#res-1", "6");
+    igual("«0-0 por incomparecencia» no gana nadie: no se ilumina ninguno", await brillo(), [[null, null, false], [null, null, false]]);
+    await p.selectOption("#res-1", "1");
     await p.click(boton(1));
     await p.waitForSelector('.cam-mesa[data-mesa="1"] .cam-guardado');
+    igual("una vez guardado, el jugador deja de brillar (todo bien, ahí ya quedó)", await brillo(), [[null, null, false], [null, null, false]]);
     igual("guardó SOLO esa mesa, con los jugadores y la ronda que se ven, sin pedir confirmar", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").map((l) => [l.body.ronda, l.body.cambios])),
         [[3, [{ mesa: 1, blancas: "Muñoz Feliz Alejandro", negras: "Gramajo Tovar Marco", valor: "1" }]]]);
     igual("la mesa dice que está guardada y qué tiene chess-results", [await p.$eval('.cam-mesa[data-mesa="1"]', (m) => m.dataset.estado), (await p.textContent('.cam-mesa[data-mesa="1"] .cam-guardado')).startsWith("✓ Guardado en chess-results"), await p.textContent('.cam-mesa[data-mesa="1"] .cam-resultado-actual')], ["con-resultado", true, "En chess-results: 1-0 (ganan blancas)"]);

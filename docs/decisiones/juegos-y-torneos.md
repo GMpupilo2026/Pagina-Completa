@@ -8851,6 +8851,11 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
      cuando la ronda de su categoría está en marcha y quedan jugadores sin marca; la función anota «no ha llegado» solo a quien no
      tiene ninguna marca y **nunca pisa una** (`ignoreDuplicates`, ni la que llegue mientras tanto). Así la lista «Jugadores que no
      han llegado» de la organización —que lee filas explícitas— sigue funcionando aunque la tablet ya no tenga ese botón.
+  9. **El resultado elegido ilumina al que gana, antes de «Guardar».** Al elegir un resultado en el desplegable de una mesa (todavía sin
+     guardar), el jugador que gana se ilumina y parpadea (halo verde que late) con la palabra «Gana»; en tablas se iluminan los dos con
+     «Tablas». Blancas: `1-0` y `1f-0f`; negras: `0-1` y `0f-1f`; `0f-0f` no ilumina a nadie. Es solo para estar seguro de haber elegido
+     bien: una vez guardado (o al quitar la elección) deja de brillar. Con movimiento reducido no parpadea (queda el halo fijo) y el color
+     nunca va solo: lo dice la palabra.
   La función es `centroamericano-mesa` (v16). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
   saltan).
 - **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir
