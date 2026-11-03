@@ -224,12 +224,13 @@
         return el("div", { class: "cam-jugador", "data-color": color, "data-elegido": gana },
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
-                el("span", { class: "cam-nombre", texto: nombre }),
-                gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null,
-                cuentaDe(m, color),
+                el("span", { class: "cam-nombre" }, el("span", { class: "cam-nombre-texto", texto: nombre })),
+                el("span", { class: "cam-jugador-estado" }, gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null, cuentaDe(m, color)),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
-            cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
-            marcas, anulares.children.length ? anulares : null);
+            // Lo que cambia (las marcas, «Anular», la guía del tiempo de espera) va en UNA franja de altura reservada: la tarjeta no se mueve.
+            el("div", { class: "cam-jugador-extra" },
+                cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
+                marcas, anulares.children.length ? anulares : null));
     }
 
     // La banda de las ilegales de una mesa, sacada de las marcas (no de un recuerdo de la
@@ -246,7 +247,10 @@
                 out.push(caja);
             } else if (k.ilegales === 1) {
                 const a = C.avisoIlegal(1, nombreDe(m, color), color, minutosIlegal());
-                out.push(el("div", { class: "cam-aviso-suave", "data-nivel": "primera" }, el("strong", { texto: a.titulo + ". " }), a.texto));
+                // Una sola línea visible (el aviso completo lo oyen el lector de pantalla y el cuadro que salió al anotar): así la tarjeta no crece.
+                out.push(el("div", { class: "cam-aviso-suave", "data-nivel": "primera" },
+                    el("span", { class: "cam-aviso-corto", "aria-hidden": "true" }, el("strong", { texto: "Primera ilegal. " }), nombreDe(m, color) + ": " + minutosIlegal() + " min más al rival; con otra, pierde."),
+                    el("span", { class: "sr-only", texto: a.titulo + ". " + a.texto })));
             }
         }
         return out;
@@ -273,14 +277,17 @@
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
                         icono("salvavidas"), el("span", { class: "sr-only", texto: pedida ? "Principal pedido" : "Principal en esta mesa" })),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
-            fpTexto ? el("p", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo, role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }) : null,
-            bandas(m),
+            // Los avisos van en una zona de altura reservada (vacía casi siempre): la tarjeta no cambia de forma al anotar. Dentro: lo de Fair Play y las ilegales.
+            el("div", { class: "cam-mesa-avisos" },
+                fpTexto ? el("p", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo, role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }) : null,
+                bandas(m)),
             bloqueJugador(m, "blancas"),
             bloqueJugador(m, "negras"),
             rapido() ? resultadoRapido(m, sel, pendiente, ocupada, msg) : el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
                 el("div", { class: "cam-resultado-fila" }, sel, botonGuardar(m, pendiente, ocupada)),
-                msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null),
+                // El «✓ Guardado» o el error ocupa siempre su renglón (reservado): al guardar no se mueve nada.
+                msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto }) : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" })),
             rapido() ? null : bloqueIconos(m, ocupada));
     }
 
@@ -306,8 +313,9 @@
             el("details", { class: "cam-rapido-otro", open: otroAbierto },
                 el("summary", { texto: "Otro resultado (a mano)" }),
                 el("div", { class: "cam-resultado-fila mt-2" }, sel, botonGuardar(m, pendiente, ocupada))),
-            ocupada ? el("p", { class: "cam-guardado", role: "status", texto: "Guardando…" }) : null,
-            msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null);
+            ocupada ? el("p", { class: "cam-guardado cam-resultado-msg", role: "status", texto: "Guardando…" })
+                : msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto })
+                : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" }));
     }
 
     // ------------------------------------------------------------- los dos iconos de cada mesa: la cámara y el reloj
@@ -1208,10 +1216,20 @@
     function pintarTodasMesas(si) {
         const b = $("ver-todas-mesas");
         b.disabled = !si;
-        b.setAttribute("aria-label", si ? "Ver los emparejamientos de todas las categorías" : "«Todas las mesas» no está habilitado en tu enlace");
-        b.title = si ? "" : "La organización no habilitó «Todas las mesas» en tu enlace.";
+        b.setAttribute("aria-label", si ? "Buscar dónde juega un atleta, en todas las categorías" : "«¿Dónde juega?» no está habilitado en tu enlace");
+        b.title = si ? "" : "La organización no habilitó «¿Dónde juega?» en tu enlace.";
         b.querySelector(".cam-mascota-pista").hidden = !si;
+        $("donde-juega").hidden = !si;
     }
+
+    // «¿Dónde juega?»: la lupa. Se pide TODO al cargar la página (una sola respuesta) para que al abrirla ya esté; la hora de cada ronda sale del calendario.
+    const horaDeRonda = (ronda) => {
+        const H = window.CentroamericanoHorario;
+        const e = H && H.EVENTOS.find((x) => x.ronda === ronda);
+        return e ? hora(new Date(H.inicioDe(e, null)), { hour: "numeric", minute: "2-digit" }) : "";
+    };
+    const dondeJuega = () => ({ pedir: (c) => invocar("todas_mesas", c, { intentos: 2 }), horaDe: horaDeRonda });
+    let precargado = false;
 
     // «Modo concentración»: lo enciende la organización (llega en «leer» y en «avisos»); la tablet se tapa si el árbitro se sale.
     const Conc = window.CentroamericanoConcentracion.crear({ pedir: (c) => invocar("salida", c, { intentos: 1 }) });
@@ -1325,6 +1343,7 @@
         $("app").hidden = false;
         pintarCabecera();
         aplicarAvisos(d);
+        if (!precargado) { precargado = true; setTimeout(() => window.CentroamericanoEmparejamientos.precargar(dondeJuega()), 1500); }
         pintar();
         pintarConexion();
     }
@@ -1600,7 +1619,8 @@
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
         // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
-        $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir({ pedir: (c) => invocar("emparejamientos", c, { intentos: 2 }) }));
+        $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
+        $("donde-juega").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
         $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
         $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));

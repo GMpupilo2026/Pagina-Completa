@@ -68,6 +68,9 @@
 //                                             con tope (2 por enlace, 1 por minuto). El correo no se guarda: solo se cuenta el envío
 //   "emparejamientos" { tnr? }           -> «Todas las mesas» (el pizote de la página): sin `tnr`, las categorías del torneo; con `tnr`, los emparejamientos de la
 //                                             ronda abierta de esa categoría (solo lee, con la lectura compartida). La organización lo habilita por enlace (403 si no)
+//   "todas_mesas" {}                     -> «¿Dónde juega?» (la lupa de la página): los emparejamientos de la ronda abierta de TODAS las categorías en UNA sola respuesta, para
+//                                             buscar a un atleta por su nombre sin elegir categoría. Sale de la copia compartida de chess-results (centroamericano_lecturas):
+//                                             solo se vuelven a leer las categorías cuya copia tiene más de 2 minutos, hasta 6 a la vez y esperando a lo más 12 s
 //   "salida"  { fase: "sale"|"vuelve", motivo?, segundos? } -> «Modo concentración»: anota que el árbitro se salió de la pantalla de su tablet y cuándo volvió
 //   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
@@ -190,7 +193,7 @@ Deno.serve(async (req) => {
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
-  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo", "emparejamientos", "salida"];
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo", "emparejamientos", "todas_mesas", "salida"];
   type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
   // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
   // con 15 tablets pidiendo `leer` cada pocos segundos).
@@ -636,6 +639,47 @@ Deno.serve(async (req) => {
         ok: true, tnr: pedido, nombre: cat.nombre, categoria: cat.categoria, rama: cat.rama, ronda: lect.lectura.ronda,
         mesas: lect.lectura.mesas.map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras })),
         datos: { desde: lect.desde, viejo: lect.viejo },
+      });
+    }
+
+    // «¿Dónde juega?» (la lupa de la página del árbitro): TODAS las categorías del torneo en una sola respuesta, para que el árbitro busque a
+    // un atleta por el nombre sin elegir categoría y le diga dónde sentarse. Solo lee y no trae resultados. Es rápido porque sale de la copia
+    // compartida (centroamericano_lecturas, que las propias tablets mantienen al día): una sola consulta a la base. Solo las categorías cuya copia
+    // tiene más de 2 minutos (o no tienen) se vuelven a leer de chess-results, hasta 6 a la vez y esperando a lo más 12 s; si una no contesta
+    // se manda la última copia con `viejo: true`, y si no hay nada, con su `error`. Los de prueba solo ven los de prueba.
+    if (cuerpo.action === "todas_mesas") {
+      visto();
+      if (a.todas_las_mesas === false) return json({ error: "La organización no habilitó «¿Dónde juega?» en tu enlace." }, 403);
+      const MAX_TODAS_MS = 120_000;
+      const { data: ts } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden")
+        .eq("prueba", torneoInfo?.prueba === true).order("orden", { ascending: true }).range(0, 99);
+      const cats = (ts ?? []) as { tnr: string; nombre: string; categoria: string; rama: string }[];
+      const { data: filasCopia } = await servicio.from("centroamericano_lecturas").select("tnr, ronda, torneo, mesas, leida").in("tnr", cats.map((c) => c.tnr));
+      type Copia = { ronda: number; mesas: { mesa: number; blancas: string; negras: string }[]; desde: string; viejo: boolean; error?: string };
+      const copias = new Map<string, Copia>();
+      for (const f of (filasCopia ?? []) as { tnr: string; ronda: number; mesas: { mesa: number; blancas: string; negras: string }[]; leida: string }[]) {
+        if (f.ronda > 0 && new Date(f.leida).getTime() > 86_400_000) copias.set(f.tnr, { ronda: f.ronda, mesas: f.mesas, desde: f.leida, viejo: Date.now() - new Date(f.leida).getTime() > MAX_TODAS_MS });
+      }
+      const porLeer = cats.filter((c) => !copias.has(c.tnr) || copias.get(c.tnr)!.viejo);
+      const leer1 = async (c: { tnr: string; nombre: string }) => {
+        const { data: acc2 } = await servicio.rpc("centroamericano_acceso", { p_tnr: c.tnr });
+        const acceso2 = (Array.isArray(acc2) ? acc2[0] : acc2) as { acceso: string; sid: string } | null;
+        if (!acceso2) { if (!copias.has(c.tnr)) copias.set(c.tnr, { ronda: 0, mesas: [], desde: "", viejo: true, error: "Todavía no tiene la clave cargada." }); return; }
+        const r = await leerConCache(servicio, acceso2, c.tnr, { maxEdadMs: MAX_TODAS_MS });
+        if (r.ok) copias.set(c.tnr, { ronda: r.lectura.ronda, mesas: r.lectura.mesas, desde: r.desde, viejo: r.viejo });
+        else if (!copias.has(c.tnr)) copias.set(c.tnr, { ronda: 0, mesas: [], desde: "", viejo: true, error: "chess-results no contestó." });
+      };
+      const refrescar = (async () => {
+        for (let i = 0; i < porLeer.length; i += 6) await Promise.all(porLeer.slice(i, i + 6).map((c) => leer1(c).catch(() => {})));
+      })();
+      await Promise.race([refrescar, new Promise((ok) => setTimeout(ok, 12_000))]);
+      return json({
+        ok: true, actual: a.tnr, generado: new Date().toISOString(),
+        categorias: cats.map((c) => {
+          const k = copias.get(c.tnr);
+          return { tnr: c.tnr, nombre: c.nombre, categoria: c.categoria, rama: c.rama, ronda: k?.ronda ?? 0, desde: k?.desde || null, viejo: k?.viejo ?? true, error: k?.error ?? (k ? null : "Todavía sin lectura."),
+            mesas: (k?.mesas ?? []).map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras })) };
+        }),
       });
     }
 

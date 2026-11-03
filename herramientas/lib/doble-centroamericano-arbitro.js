@@ -55,7 +55,20 @@ const SERVIDOR_ARBITRO = `
       return { data: { ok: true }, error: null }; }
     // «Modo concentración»: la tablet avisa cuándo se sale y cuándo vuelve (la función pone la hora con su reloj).
     if (b.action === "salida") { window.__salidasArgs = (window.__salidasArgs || []).concat([{ fase: b.fase, motivo: b.motivo, segundos: b.segundos }]); return { data: { ok: true }, error: null }; }
-    // «Todas las mesas» (el pizote): la lista de categorías y, con tnr, los emparejamientos de esa categoría. La 1529739 «no tiene clave».
+    // «¿Dónde juega?» (la lupa): TODAS las categorías en una sola respuesta. La 1529739 no tiene pareo todavía; la 1529738 trae datos viejos.
+    if (b.action === "todas_mesas") {
+      window.__todasArgs = (window.__todasArgs || 0) + 1;
+      if (window.__avisos.todas_las_mesas === false) return falla(403, "La organización no habilitó «¿Dónde juega?» en tu enlace.");
+      if (window.__todasFalla) return falla(502, "chess-results no contestó.");
+      const mesas1 = MESAS.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras }));
+      const otras = [{ mesa: 1, blancas: "Árias Núñez, María José", negras: "Zúñiga Rojas, Pedro" }, { mesa: 2, blancas: "Castro Vega, Luis", negras: "Jiménez Mora, Ana Sofía" }, { mesa: 15, blancas: "Solano Brenes, Diego", negras: "Mora Ugalde, Camila" }];
+      const ahora = new Date().toISOString();
+      return { data: { ok: true, actual: "1529737", generado: ahora, categorias: [
+        { tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: ahora, viejo: false, error: null, mesas: mesas1 },
+        { tnr: "1529738", nombre: "Sub-12 Absoluto", categoria: "Sub-12", rama: "Absoluto", ronda: 3, desde: ahora, viejo: true, error: null, mesas: otras },
+        { tnr: "1529739", nombre: "Sub-14 Femenino", categoria: "Sub-14", rama: "Femenino", ronda: 0, desde: null, viejo: true, error: "Todavía no tiene la clave cargada.", mesas: [] },
+      ] }, error: null }; }
+    // «Todas las mesas» (el pizote, la acción vieja): la lista de categorías y, con tnr, los emparejamientos de esa categoría. La 1529739 «no tiene clave».
     if (b.action === "emparejamientos") {
       window.__emparejamientosArgs = (window.__emparejamientosArgs || []).concat([b.tnr === undefined ? null : b.tnr]);
       if (window.__avisos.todas_las_mesas === false) return falla(403, "La organización no habilitó «Todas las mesas» en tu enlace.");
