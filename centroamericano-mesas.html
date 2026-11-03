@@ -32,11 +32,12 @@
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
         <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
-            <div class="flex items-center justify-between gap-4">
+            <div class="cam-cabeza-fila">
                 <div class="min-w-0">
                     <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
                     <h1 id="titulo-pagina" class="cac-titulo text-2xl sm:text-3xl md:text-4xl mt-3">Mesas de los árbitros<span class="block text-lg sm:text-xl md:text-2xl mt-1">Organización</span></h1>
                 </div>
+                <div class="cam-logo-centro" role="img" aria-label="Ajedrez Integral"><img src="img/logo-marca.png" width="155" height="96" alt=""><span aria-hidden="true">Ajedrez <span>Integral</span></span></div>
                 <img src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota shrink-0">
             </div>
         </div>
@@ -69,6 +70,7 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-fairplay" data-panel="fairplay" aria-controls="panel-fairplay" aria-selected="false" tabindex="-1"><span aria-hidden="true">🛡</span> Fair Play</button>
             </div>
 
             <div class="cam-contenido">
@@ -376,6 +378,38 @@
                 </div>
                 <p id="registro-vacio" class="cam-nota-vacia">Todavía no hay nada anotado.</p>
             </section>
+
+            <section id="panel-fairplay" role="tabpanel" aria-labelledby="pest-fairplay" class="cam-no-qr" hidden>
+                <h3 class="cam-subtitulo"><span aria-hidden="true">🛡</span> Sorteo de Fair Play</h3>
+                <p class="cam-herramientas-nota">Sortea mesas al azar en cada categoría. De la mesa que sale se revisa al <strong>ganador</strong> cuando termina la partida; si es tablas, al color que salió en el mismo sorteo. El sorteo lo hace la base y queda anotado: una mesa que sale no vuelve a salir en la ronda, y descartarla pide un motivo. Al aprobarla, al árbitro de esa mesa le llega el aviso en su tablet para que retenga al jugador y no lo deje salir del local.</p>
+                <div class="cam-herramientas mt-2" role="toolbar" aria-label="Sortear mesas">
+                    <label class="cam-herramientas-campo"><span>Categoría</span><select id="fp-categoria" class="cam-select"></select></label>
+                    <label class="cam-herramientas-campo"><span>Mesas por categoría</span><select id="fp-cantidad" class="cam-select"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+                    <button type="button" id="fp-sortear" class="cam-btn cam-btn-chico"><span aria-hidden="true">🎲</span> Sortear</button>
+                    <button type="button" id="fp-actualizar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="fp-pdf" class="cam-btn cam-btn-chico" disabled>Bajar el registro en PDF</button>
+                </div>
+                <p id="fp-estado" class="text-sm mt-2" role="status"></p>
+                <h3 class="cam-subtitulo mt-3">Mesas sorteadas<span id="fp-resumen" class="cam-subtitulo-nota"></span></h3>
+                <p id="fp-vacio" class="cam-herramientas-nota">Todavía no se ha sorteado ninguna mesa.</p>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Las mesas sorteadas para Fair Play, con su estado</caption>
+                        <thead><tr><th scope="col">Categoría</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">A quién se revisa</th><th scope="col">Estado</th><th scope="col">Sorteada</th><th scope="col">Qué hacer</th></tr></thead>
+                        <tbody id="fp-lista"></tbody>
+                    </table>
+                </div>
+                <details class="cam-fp-reglas mt-3">
+                    <summary>Lo que pide FIDE para la revisión</summary>
+                    <ul>
+                        <li><strong>En privado y por alguien del mismo sexo</strong> (Leyes del Ajedrez, art. 11.3.3): la ropa, el bolso y lo que lleve el jugador. Solo entran quien revisa, el jugador y un testigo del mismo sexo; el jugador puede elegir un segundo testigo (con un menor, su mamá, su papá o su entrenador). El equipo de Fair Play de un abierto lleva al menos un hombre y una mujer.</li>
+                        <li><strong>Antes o apenas termina la partida</strong>; durante la partida, solo si la sospecha es muy fuerte o se pueden perder las pruebas (Manual del Árbitro de FIDE).</li>
+                        <li><strong>No hace falta darle un motivo al jugador</strong>, pero las revisiones al azar tienen que estar <strong>anunciadas antes en las bases</strong> (Guías antitrampas de FIDE). Que se revisa al ganador y que nadie se puede ir sin revisarse también va en las bases: FIDE no lo fija.</li>
+                        <li><strong>Si se niega</strong>, o se va sin revisarse, el árbitro aplica el art. 12.9 (de la advertencia a perder la partida o la expulsión). Anótalo como «Se negó» o «Se fue sin revisarse», con lo que pasó.</li>
+                        <li><strong>Cada revisión va al informe del torneo</strong> con su resultado: por eso queda anotada aquí y sale en el PDF. Lo de Fair Play es confidencial: no se comenta con nadie.</li>
+                    </ul>
+                </details>
+            </section>
             </div>
 
             <!-- La barra de estado: siempre a la vista, como en un programa -->
@@ -413,6 +447,7 @@
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>
+    <script src="js/centroamericano-fair-play.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
 </body>
 </html>
