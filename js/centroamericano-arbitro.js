@@ -534,15 +534,22 @@
         catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
 
+    // Quien ya llegó no necesita sus botones: se ven solo si «no ha llegado» o sin revisar. Un toque por error se corrige con «Corregir»
+    // (solo en esta pantalla: vuelve a mostrar los dos botones de ese jugador).
+    const corrigiendo = new Set();
     function bloquePresencia(m, color) {
         const v = presenciaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
         const texto = v === null ? "Presencia: sin revisar" : v ? "✓ Llegó" : "✗ No ha llegado";
+        const clave = m.mesa + "|" + color;
+        const oculto = v === true && !corrigiendo.has(clave) && !concluida();
         return el("div", { class: "cam-presencia", "data-presente": v === null ? "sin-revisar" : v ? "si" : "no" },
             // El estado: un icono (? sin revisar, ✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
             el("span", { class: "cam-presencia-estado", title: texto }, icono(v === null ? "dudoso" : v ? "llego" : "ausente"), el("span", { class: "sr-only", texto })),
-            botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: v === true }),
-            botonJugador("ausente", "ausente", nombre + " no ha llegado", "No ha llegado", () => marcarPresencia(m, color, false), { variante: "cam-btn-icono-rojo", pulsado: v === false }));
+            ...(oculto
+                ? [el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-claro", "data-accion": "corregir-presencia", "aria-label": "Corregir la presencia de " + nombre, onclick: () => { corrigiendo.add(clave); pintar(); } }, "Corregir")]
+                : [botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => { corrigiendo.delete(clave); marcarPresencia(m, color, true); }, { variante: "cam-btn-icono-verde", pulsado: v === true }),
+                    botonJugador("ausente", "ausente", nombre + " no ha llegado", "No ha llegado", () => { corrigiendo.delete(clave); marcarPresencia(m, color, false); }, { variante: "cam-btn-icono-rojo", pulsado: v === false })]));
     }
 
     // ------------------------------------------------------------- varios torneos para el mismo árbitro

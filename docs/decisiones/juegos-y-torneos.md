@@ -8836,6 +8836,9 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
      documento**; ni la tabla ni la función dejan nada más). Riesgo conocido y aceptado: el PDF lo arma la página, no la función, así
      que un árbitro con enlace concluido podría mandar otro PDF a un correo ajeno; por eso el tope tan bajo, el texto fijo y que haga
      falta un enlace concluido. «Resend» ya figura en la lista de proveedores de `privacidad.html` (se le sumó este uso).
+  6. **Quien ya llegó no muestra sus botones.** Al marcar «Llegó», los botones «Llegó» y «No ha llegado» de ese jugador desaparecen y
+     queda su estado («✓ Llegó»); un «Corregir» chico los vuelve a mostrar si fue un toque por error (solo en la pantalla: no manda
+     nada). Los jugadores «sin revisar» o «no ha llegado» siguen con sus botones.
   La función es `centroamericano-mesa` (v15). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
   saltan).
 - **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir
