@@ -1126,21 +1126,21 @@ const CONTRASTE = `(sel) => {
     await q.waitForFunction(() => document.querySelectorAll('[data-concentracion="si"]').length === 0);
     igual("apagarlo en todas deja a ninguna con la concentración", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-concentracion="si"]').length]), [{ concentracion: false }, 0]);
 
-    console.log("\n=== La organización: habilitar o deshabilitar «Todas las mesas» ===");
+    console.log("\n=== La organización: habilitar o deshabilitar «¿Dónde juega?» ===");
     igual("arriba de la tabla están «Habilitarlo en todas las tablets» y «Deshabilitarlo en todas»", await q.evaluate(() => [document.getElementById("tm-todas-si").textContent, document.getElementById("tm-todas-no").textContent]), ["Habilitarlo en todas las tablets", "Deshabilitarlo en todas"]);
     await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]');
     await q.waitForSelector('.cam-asignacion[data-id="asig-ana"] [data-sin-todas="si"]');
-    igual("quitarlo en una fila guarda SOLO esa columna en SU enlace; la fila dice «Sin «Todas las mesas»» y el botón pasa a «Habilitar»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "todas_las_mesas" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]').textContent]), [[[{ todas_las_mesas: false }, "asig-ana"]], "Habilitar «Todas las mesas»"]);
+    igual("quitarlo en una fila guarda SOLO esa columna en SU enlace; la fila dice «Sin «¿Dónde juega?»» y el botón pasa a «Habilitar»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "todas_las_mesas" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="todas-mesas"]').textContent]), [[[{ todas_las_mesas: false }, "asig-ana"]], "Habilitar «¿Dónde juega?»"]);
     await q.click("#tm-todas-no");
     await q.waitForSelector("dialog[open]");
-    igual("deshabilitarlo en todas pregunta antes y dice que el árbitro ya no verá las demás categorías", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Deshabilitar «Todas las mesas»"), t.includes("ya no podrá ver los emparejamientos")]; }), [true, true]);
+    igual("deshabilitarlo en todas pregunta antes y dice que el árbitro ya no verá las demás categorías", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Deshabilitar «¿Dónde juega?»"), t.includes("ya no podrá ver los emparejamientos")]; }), [true, true]);
     await q.click("dialog[open] [data-avisos-aceptar]");
     await q.waitForFunction(() => window.__llamadas.some((l) => l.update === "centroamericano_asignaciones" && l.en && l.en.id && l.valores && l.valores.todas_las_mesas === false));
     await q.click("#tm-todas-si");
     await q.waitForSelector("dialog[open]");
     await q.click("dialog[open] [data-avisos-aceptar]");
     await q.waitForFunction(() => document.querySelectorAll('[data-sin-todas="si"]').length === 0);
-    igual("habilitarlo en todas deja a ninguna sin «Todas las mesas»", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-sin-todas="si"]').length]), [{ todas_las_mesas: true }, 0]);
+    igual("habilitarlo en todas deja a ninguna sin «¿Dónde juega?»", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-sin-todas="si"]').length]), [{ todas_las_mesas: true }, 0]);
 
     console.log("\n=== La organización: árbitros que concluyeron sus labores ===");
     await q.evaluate(() => window.__concluir("asig-arb1"));
