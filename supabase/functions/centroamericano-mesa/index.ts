@@ -277,7 +277,11 @@ Deno.serve(async (req) => {
         ronda: p.ronda, desde: a.mesa_desde, hasta: a.mesa_hasta, vence: a.vence,
         mesas: p.mesas.filter((m) => enRango(m.mesa)).map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor })),
         marcas: marcasDe(filas),
-        anotaciones: filas.filter((f) => f.tipo !== "anulacion").slice(-60),
+        // Las últimas 60 (lo que se ve en «Lo anotado») MÁS todas las ilegales e irregularidades de la ronda: el reloj que se
+        // apaga cuenta los 2 min de cada ilegal y las sanciones de tiempo, y una vieja que quedara fuera de las 60 faltaría
+        // en la cuenta sin que nada lo diga. Van en el orden en que pasaron.
+        anotaciones: ((sin) => { const ult = sin.slice(-60), ya = new Set(ult.map((f) => f.id));
+          return sin.filter((f) => !ya.has(f.id) && (f.tipo === "ilegal" || f.tipo === "irregularidad")).concat(ult); })(filas.filter((f) => f.tipo !== "anulacion")),
         anuladas: filas.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula),
         leido_en: new Date().toISOString(),
         // De cuándo son las mesas: si chess-results no contestó, son las últimas que se leyeron (`viejo`).

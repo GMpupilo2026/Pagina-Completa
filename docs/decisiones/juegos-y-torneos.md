@@ -8977,8 +8977,17 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
     larga una ilegal o una sanción vieja puede no estar a mano. Las marcas de cada jugador sí se
     cuentan con toda la bitácora: si dicen más ilegales o irregularidades de las que hay a mano, la
     calculadora de la tablet lo avisa y manda a la organización, que lee la bitácora completa de la
-    mesa. (Arreglarlo del todo es que `leer` mande siempre las ilegales e irregularidades: un cambio
-    de la Edge Function, pendiente de que el dueño lo apruebe.)
+    mesa. Desde el 3/11, además, `leer` manda siempre las ilegales e irregularidades de la ronda
+    junto con las últimas 60 (desplegado con el visto bueno del dueño, en pleno torneo, después de
+    comprobar que lo desplegado era igual a `main`: otra sesión estaba desplegando cambios sin subir
+    en la misma función, y desplegar encima los habría borrado). El aviso queda para lo que todavía
+    no llegó, como una anotación que espera en la cola sin señal.
+  - **Lección del despliegue (3/11):** aun así, entre comprobar y desplegar se mergeó #1151, que
+    también cambiaba esta función, y la versión desplegada (17) quedó sin su «presencia_ausentes»
+    unos 7 minutos, hasta desplegar `main` al día con el cambio (versión 18, comparada archivo por
+    archivo con el repositorio). Los registros no mostraron ningún pedido rechazado. Antes de
+    desplegar una función que otras sesiones tocan: `git fetch` de `main` JUSTO antes, y después de
+    desplegar, bajarla y compararla con el repositorio.
   - Lo revisan `verificar-centroamericano-mesas.js` (las cuentas y el peso del ritmo) y
     `verificar-centroamericano-mesas-pagina.js` (la ventana del árbitro con su aviso de anotaciones
     que faltan, la de la organización y la de la irregularidad).
