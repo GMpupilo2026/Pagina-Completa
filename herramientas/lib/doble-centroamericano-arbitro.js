@@ -58,6 +58,7 @@ const SERVIDOR_ARBITRO = `
     // «Todas las mesas» (el pizote): la lista de categorías y, con tnr, los emparejamientos de esa categoría. La 1529739 «no tiene clave».
     if (b.action === "emparejamientos") {
       window.__emparejamientosArgs = (window.__emparejamientosArgs || []).concat([b.tnr === undefined ? null : b.tnr]);
+      if (window.__avisos.todas_las_mesas === false) return falla(403, "La organización no habilitó «Todas las mesas» en tu enlace.");
       const CATS = [{ tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino" }, { tnr: "1529738", nombre: "Sub-12 Absoluto", categoria: "Sub-12", rama: "Absoluto" }, { tnr: "1529739", nombre: "Sub-14 Femenino", categoria: "Sub-14", rama: "Femenino" }];
       if (!b.tnr) return { data: { ok: true, actual: "1529737", categorias: CATS }, error: null };
       const c = CATS.find((x) => x.tnr === b.tnr);

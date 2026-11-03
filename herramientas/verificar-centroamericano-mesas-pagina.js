@@ -179,6 +179,9 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
+    // El reloj de la página arranca a las 8:00 a. m. del 3 de noviembre (antes de la ronda 3) y sigue corriendo: la página compara con el
+    // calendario REAL del torneo (rondas, tolerancia de 30 min), así que sin esto la prueba fallaba solo si se corría DURANTE una ronda.
+    await ctx.addInitScript((base) => { const R = Date; const off = base - R.now(); class F extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + off); } static now() { return R.now() + off; } } window.Date = F; }, Date.parse("2026-11-03T14:00:00Z"));
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
@@ -1062,7 +1065,7 @@ const CONTRASTE = `(sel) => {
     igual("encenderlo en una fila guarda SOLO esa columna en SU enlace; la fila muestra «🔒 Concentración» y el botón pasa a «Quitar concentración»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores && "concentracion" in l.valores).map((l) => [l.valores, l.f.id]), document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-accion="concentracion"]').textContent, document.querySelector('.cam-asignacion[data-id="asig-ana"] [data-concentracion="si"]').textContent]), [[[{ concentracion: true }, "asig-ana"]], "Quitar concentración", "🔒 Concentración"]);
     await q.evaluate(() => { window.__salida("asig-ana", 3, 130); window.__salida("asig-ana", 1, null, "pantalla_completa"); window.__salida("asig-arb1", 5, 40); });
     await q.waitForFunction(() => { const s = document.querySelector('[data-salidas="asig-ana"]'); return s && !s.hidden && s.dataset.fuera === "si"; }, null, { timeout: 30000 });
-    igual("quien está fuera AHORA se ve en su fila (con las palabras, no solo el color) y quien ya volvió dice cuántas veces y cuánto", await q.evaluate(() => [document.querySelector('[data-salidas="asig-ana"]').textContent.replace(/\d+ s\)/, "N s)"), document.querySelector('[data-salidas="asig-arb1"]').textContent, document.querySelector('[data-salidas="asig-arb1"]').dataset.fuera]), ["🔓 Fuera de la pantalla ahora (desde hace 1 min N s)", "Se salió 1 vez (40 s en total)", "no"]);
+    igual("quien está fuera AHORA se ve en su fila (con las palabras, no solo el color) y quien ya volvió dice cuántas veces y cuánto", await q.evaluate(() => [document.querySelector('[data-salidas="asig-ana"]').textContent.replace(/( \d+ s)?\)$/, ")"), document.querySelector('[data-salidas="asig-arb1"]').textContent, document.querySelector('[data-salidas="asig-arb1"]').dataset.fuera]), ["🔓 Fuera de la pantalla ahora (desde hace 1 min)", "Se salió 1 vez (40 s en total)", "no"]);
     await q.click("#conc-todas-si");
     await q.waitForSelector("dialog[open]");
     igual("encenderlo en todas pregunta antes y dice cuántas tablets y que se les atraviesa un aviso", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/En \d+ tablets/.test(t), t.includes("se le tapa la pantalla"), t.includes("se les atraviesa un aviso")]; }), [true, true, true]);
