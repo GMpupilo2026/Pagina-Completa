@@ -66,6 +66,9 @@
 //   "bitacora" {}                         -> toda su bitácora (todas las rondas y los torneos que atendió) para el PDF; solo después de concluir
 //   "bitacora_correo" { correo, pdf }    -> manda la bitácora en PDF (la que armó la página) al correo que el árbitro puso; solo después de concluir,
 //                                             con tope (2 por enlace, 1 por minuto). El correo no se guarda: solo se cuenta el envío
+//   "emparejamientos" { tnr? }           -> «Todas las mesas» (el pizote de la página): sin `tnr`, las categorías del torneo; con `tnr`, los emparejamientos de la
+//                                             ronda abierta de esa categoría (solo lee, con la lectura compartida). La organización lo habilita por enlace (403 si no)
+//   "salida"  { fase: "sale"|"vuelve", motivo?, segundos? } -> «Modo concentración»: anota que el árbitro se salió de la pantalla de su tablet y cuándo volvió
 //   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
 // EL MISMO ÁRBITRO EN VARIOS TORNEOS: la organización junta sus enlaces con `persona`. El árbitro
