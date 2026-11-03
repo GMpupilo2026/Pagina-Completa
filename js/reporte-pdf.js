@@ -208,8 +208,12 @@ window.ReportePDF = (function () {
      celdas no parten en varios renglones a propósito — se recortan. Una tabla
      de informe con celdas de tres líneas se vuelve ilegible, y lo largo va en
      los párrafos. */
-  Lienzo.prototype.tabla = function (encabezados, filas, anchos, altoFila) {
+  Lienzo.prototype.tabla = function (encabezados, filas, anchos, altoFila, opciones) {
     const tam = 9;
+    // `opciones` (todas opcionales; sin ellas la tabla es la de siempre): `envolver` parte las celdas largas en varios renglones en vez de
+    // recortarlas (la fila crece), y `negritas` es la lista de columnas que van en negrita (la que dice «qué» es cada línea).
+    const op = opciones || {};
+    const LINEA = 11;
     // `altoFila`: una tabla para llenar a mano (una hoja de resultados en papel) pide filas más altas.
     const alto = altoFila || 16;
     const total = anchos.reduce((a, b) => a + b, 0);
@@ -232,14 +236,24 @@ window.ReportePDF = (function () {
 
     pintarEncabezado();
     for (const fila of filas) {
-      if (this.y - alto < MARGEN + 30) { this.cerrarPagina(); pintarEncabezado(); }
+      // Los renglones de cada celda: uno solo (recortado) o, con `envolver`, los que haga falta.
+      const celdas = fila.map((celda, i) => {
+        const neg = !!(op.negritas && op.negritas.indexOf(i) >= 0);
+        const lineas = op.envolver ? renglones(String(celda == null ? "" : celda), cols[i] - 8, tam, neg).filter((l) => l !== "") : [recortar(celda, cols[i] - 8, tam, neg)];
+        return { neg, lineas: lineas.length ? lineas : [""] };
+      });
+      const extra = (Math.max.apply(null, celdas.map((c) => c.lineas.length)) - 1) * LINEA;
+      if (this.y - alto - extra < MARGEN + 30) { this.cerrarPagina(); pintarEncabezado(); }
       this.y -= alto;
       let x = MARGEN + 4;
-      fila.forEach((celda, i) => {
-        this.ops.push("BT /FN " + tam + " Tf 0.20 0.25 0.32 rg 1 0 0 1 " + x.toFixed(2) + " " +
-          this.y.toFixed(2) + " Tm (" + escapar(recortar(celda, cols[i] - 8, tam, false)) + ") Tj ET");
+      celdas.forEach((c, i) => {
+        c.lineas.forEach((l, k) => {
+          this.ops.push("BT /" + (c.neg ? "FB" : "FN") + " " + tam + " Tf " + (c.neg ? "0.10 0.16 0.24" : "0.20 0.25 0.32") + " rg 1 0 0 1 " + x.toFixed(2) + " " +
+            (this.y - k * LINEA).toFixed(2) + " Tm (" + escapar(l) + ") Tj ET");
+        });
         x += cols[i];
       });
+      this.y -= extra;
       this.ops.push("0.90 0.92 0.95 RG 0.5 w " + MARGEN + " " + (this.y - 5).toFixed(2) + " m " +
         (A4.ancho - MARGEN).toFixed(2) + " " + (this.y - 5).toFixed(2) + " l S");
     }
@@ -471,7 +485,7 @@ window.ReportePDF = (function () {
         for (const item of bloque.items) lienzo.parrafo("- " + item, 10, false, 12);
       } else if (bloque.tipo === "tabla") {
         lienzo.tabla(bloque.encabezados, bloque.filas, bloque.anchos ||
-          bloque.encabezados.map(() => 1), bloque.altoFila);
+          bloque.encabezados.map(() => 1), bloque.altoFila, { envolver: bloque.envolver, negritas: bloque.negritas });
       } else if (bloque.tipo === "foto") {
         const nombre = idPorFoto.get(bloque.foto);
         if (nombre) {
