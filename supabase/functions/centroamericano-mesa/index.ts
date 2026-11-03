@@ -32,8 +32,10 @@
 // los torneos de la tabla centroamericano_torneos y solo con un token válido.
 //
 // Las acciones (body.action), todas con { token }:
-//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que la
-//                                             organización marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
+//   "leer"    {}                          -> las mesas de su rango, sus marcas, su registro y sus avisos, y la hora en que el árbitro de
+//                                             su categoría marcó que empezó la ronda (`inicio_ronda`; el tiempo de espera corre desde ahí)
+//   "inicio"  { ronda, inicio? | quitar? } -> «Inició la ronda»: la hora real en que empezó la ronda en SU categoría (la organización ya
+//                                             no la marca; cada categoría puede empezar a una hora distinta). Con `quitar`, vuelve el calendario
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
 //   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro (con tipo «nota» y artículo «Levantó»:
 //                                             el jugador se levantó de la mesa; las marcas llevan la cuenta por jugador y partida)
@@ -45,6 +47,8 @@
 //   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
 //                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
 //   "presencia" { ronda, mesa, color, presente } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan)
+//   "presencia_todos" { ronda }          -> marca que llegaron TODOS los jugadores de sus mesas que todavía no tienen marca (a quien ya marcó
+//                                             «llegó» o «no ha llegado» no lo pisa): el atajo para arrancar la ronda
 //   "tiempo"  { ronda, mesa, t_blancas, j_blancas, t_negras, j_negras, nota?, ocurrio? } -> una lectura del control de tiempos de una partida
 //                                             sin terminar: lo que marca el reloj de cada color y las jugadas que lleva. Queda en la
 //                                             tabla de tiempos Y como una línea («nota») en la bitácora de la mesa. (Aún acepta la
@@ -58,6 +62,8 @@
 //   "concluir" {}                         -> «Ya terminé mis labores»: cierra su enlace (y los otros del mismo árbitro): ya no puede
 //                                             escribir nada (409), solo leer y bajar su bitácora; la organización puede reabrirlas
 //   "bitacora" {}                         -> toda su bitácora (todas las rondas y los torneos que atendió) para el PDF; solo después de concluir
+//   "bitacora_correo" { correo, pdf }    -> manda la bitácora en PDF (la que armó la página) al correo que el árbitro puso; solo después de concluir,
+//                                             con tope (2 por enlace, 1 por minuto). El correo no se guarda: solo se cuenta el envío
 //   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
 // EL MISMO ÁRBITRO EN VARIOS TORNEOS: la organización junta sus enlaces con `persona`. El árbitro
@@ -100,6 +106,12 @@ const BUCKET = "centroamericano-planillas";
 // La lista previa de cada ronda, en este orden (paso a paso): ver la migración centroamericano_lista_previa.
 const PASOS = ["relojes", "tableros"];
 const MAX_IMAGEN = 6 * 1024 * 1024; // lo mismo que el bucket
+// El correo con la bitácora del árbitro (acción «bitacora_correo»).
+const DE_CORREO = "Ajedrez Integral <informes@ajedrez-integral.com>";
+const RESPONDER_A = "info@ajedrez-integral.com";
+const CORREO_VALIDO = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+const MAX_PDF_BYTES = 3 * 1024 * 1024;   // la bitácora es solo texto y la marca de agua: sobra
+const MAX_CORREOS_POR_ENLACE = 2;
 
 // segundos -> «1:23:45» o «45:10» (igual que formatoTiempo de js/centroamericano-mesas.js)
 function formatoTiempo(seg: number): string {
@@ -164,7 +176,7 @@ Deno.serve(async (req) => {
 
   // «Ya terminé mis labores»: con el enlace concluido el árbitro solo lee y baja su bitácora. Escribir (resultados, anotaciones,
   // presencia, tiempos, fotos, la lista previa, finalizar, pedir ayuda, el nombre) se rechaza AQUÍ, no en la pantalla.
-  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre"];
+  const ESCRIBE = ["guardar", "anotar", "anular", "lista", "planilla", "finalizar", "presencia", "tiempo", "ayuda", "nombre", "inicio", "presencia_todos"];
   if (a.concluyo_en && ESCRIBE.includes(String(cuerpo.action))) {
     return json({ error: "Ya concluiste tus labores: ya no puedes anotar ni guardar. Puedes bajar tu bitácora. Si necesitas seguir, pide a la organización que las reabra.", concluido: true }, 409);
   }
@@ -173,7 +185,7 @@ Deno.serve(async (req) => {
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
-  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora"];
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo"];
   type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
   // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
   // con 15 tablets pidiendo `leer` cada pocos segundos).
@@ -246,8 +258,8 @@ Deno.serve(async (req) => {
         })(),
         // El avance de la ronda (lo ve la organización) no espera a nadie ni retrasa la respuesta.
         guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
-        // La hora real en que la organización marcó que empezó esta ronda (la tolerancia corre desde ahí); sin marca, null.
-        servicio.from("centroamericano_inicios_ronda").select("ronda, inicio").eq("ronda", p.ronda).eq("prueba", torneoInfo?.prueba === true).maybeSingle(),
+        // La hora real en que el árbitro de esta categoría marcó que empezó la ronda (la tolerancia corre desde ahí); sin marca, null.
+        servicio.from("centroamericano_inicios_torneo").select("ronda, inicio, arbitro").eq("tnr", a.tnr).eq("ronda", p.ronda).maybeSingle(),
       ]);
       return json({
         ...avisos,
@@ -374,6 +386,36 @@ Deno.serve(async (req) => {
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
     }
 
+    // «Inició la ronda»: el árbitro dice a qué hora empezó la ronda en SU categoría (cada categoría puede empezar a una hora
+    // distinta). Desde esa hora corre el tiempo de espera de los que no han llegado, en su tablet y en la página de la
+    // organización. La hora la manda la tablet (así vale también sin señal, desde la cola): no puede ser del futuro ni de hace
+    // más de un día; si el reloj de la tablet va un poco adelantado (hasta 5 min) se toma «ahora». Con `quitar: true` vuelve
+    // a valer la hora del calendario. Una fila por categoría y ronda: la última marca es la que vale.
+    if (cuerpo.action === "inicio") {
+      const ronda = Number(cuerpo.ronda);
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (cuerpo.quitar === true) {
+        const { error } = await servicio.from("centroamericano_inicios_torneo").delete().eq("tnr", a.tnr).eq("ronda", ronda);
+        if (error) { console.error("centroamericano-mesa: inicio (quitar)", a.tnr, error.code); return json({ error: "No se pudo quitar la hora. Intenta de nuevo." }, 500); }
+        return json({ ok: true, ronda, inicio: null });
+      }
+      const ahora = Date.now();
+      let cuando = Date.parse(String(cuerpo.inicio ?? ""));
+      if (!Number.isFinite(cuando)) return json({ error: "Falta la hora a la que empezó la ronda." }, 400);
+      if (cuando > ahora + 5 * 60_000) return json({ error: "Esa hora todavía no llega: pon la hora a la que empezó la ronda." }, 400);
+      if (cuando > ahora) cuando = ahora;
+      if (cuando < ahora - 24 * 3_600_000) return json({ error: "La hora de inicio tiene que ser de las últimas 24 horas." }, 400);
+      const inicio = new Date(cuando).toISOString();
+      const { error } = await servicio.from("centroamericano_inicios_torneo").upsert(
+        { tnr: a.tnr, ronda, inicio, asignacion_id: a.id, arbitro: a.arbitro, puesto_en: new Date().toISOString() },
+        { onConflict: "tnr,ronda" });
+      if (error) { console.error("centroamericano-mesa: inicio", a.tnr, error.code); return json({ error: "No se pudo guardar la hora. Intenta de nuevo." }, 500); }
+      return json({ ok: true, ronda, inicio, arbitro: a.arbitro });
+    }
+
     if (cuerpo.action === "presencia") {
       const ronda = Number(cuerpo.ronda);
       const mesa = Number(cuerpo.mesa);
@@ -394,6 +436,24 @@ Deno.serve(async (req) => {
       }, { onConflict: "tnr,ronda,mesa,color" });
       if (error) { console.error("centroamericano-mesa: presencia", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
       return json({ ok: true, mesa, color, presente: cuerpo.presente, jugador });
+    }
+
+    if (cuerpo.action === "presencia_todos") {
+      const ronda = Number(cuerpo.ronda);
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      // Los nombres salen de chess-results; solo SUS mesas. `ignoreDuplicates`: lo que ya tiene marca (llegó o no) no se toca.
+      const ahora = new Date().toISOString();
+      const filas = p.mesas.filter((m) => enRango(m.mesa)).flatMap((m) => [
+        { asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa: m.mesa, color: "blancas", jugador: m.blancas.slice(0, 120), presente: true, marcada: ahora },
+        { asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa: m.mesa, color: "negras", jugador: m.negras.slice(0, 120), presente: true, marcada: ahora },
+      ]);
+      if (!filas.length) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
+      const { data: nuevas, error } = await servicio.from("centroamericano_presencia").upsert(filas, { onConflict: "tnr,ronda,mesa,color", ignoreDuplicates: true }).select("mesa, color");
+      if (error) { console.error("centroamericano-mesa: presencia_todos", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+      return json({ ok: true, marcados: (nuevas ?? []).length });
     }
 
     if (cuerpo.action === "tiempo") {
@@ -579,11 +639,48 @@ Deno.serve(async (req) => {
       ]);
       const tnrs = [...new Set((asigs ?? []).map((x: { tnr: string }) => x.tnr))];
       const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs);
+      // La hora a la que empezó cada ronda en sus categorías (la marcó el árbitro de la categoría, que puede ser otro).
+      const { data: inicios } = await servicio.from("centroamericano_inicios_torneo").select("tnr, ronda, inicio, arbitro").in("tnr", tnrs).order("inicio", { ascending: true });
       return json({
         ok: true, arbitro: a.arbitro, concluyo: a.concluyo_en, generado: new Date().toISOString(),
-        asignaciones: asigs ?? [], torneos: torneos ?? [], registro, tiempos, presencia, planillas, finales, listas,
+        asignaciones: asigs ?? [], torneos: torneos ?? [], inicios: inicios ?? [], registro, tiempos, presencia, planillas, finales, listas,
         avisos: avisos.filter((x) => x.tipo === "ayuda" || x.tipo === "termino" || x.tipo === "finalizo" || x.leido_en),
       });
+    }
+
+    // «Mandarme la bitácora por correo»: solo después de concluir. El PDF lo armó la página (con la marca de agua); acá se comprueba que
+    // sea un PDF de tamaño razonable y se manda con un texto fijo A LA DIRECCIÓN QUE EL ÁRBITRO PUSO (no se guarda). Tope por enlace.
+    if (cuerpo.action === "bitacora_correo") {
+      if (!a.concluyo_en) return json({ error: "La bitácora se manda cuando concluyes tus labores («Ya terminé mis labores»)." }, 409);
+      const correo = String(cuerpo.correo ?? "").trim().toLowerCase();
+      if (correo.length > 120 || !CORREO_VALIDO.test(correo)) return json({ error: "Escribe un correo válido." }, 400);
+      const b64 = String(cuerpo.pdf ?? "");
+      if (!/^[A-Za-z0-9+/=]+$/.test(b64) || b64.length > MAX_PDF_BYTES * 1.4) return json({ error: "El documento no es válido o es demasiado grande." }, 413);
+      const bytes = deBase64(b64);
+      const cabeza = String.fromCharCode(...bytes.subarray(0, 5));
+      if (bytes.length < 500 || bytes.length > MAX_PDF_BYTES || cabeza !== "%PDF-") return json({ error: "El documento no es un PDF válido." }, 400);
+      // Topes: 2 envíos por enlace y uno por minuto (contados en la base; el correo no se guarda).
+      const { data: previos } = await servicio.from("centroamericano_correos_bitacora").select("enviado_en").eq("asignacion_id", a.id).order("enviado_en", { ascending: false }).limit(10);
+      if ((previos ?? []).length >= MAX_CORREOS_POR_ENLACE) return json({ error: "Ya mandaste tu bitácora dos veces. Si necesitas otra copia, descárgala desde aquí o pídesela a la organización." }, 429);
+      if (previos && previos[0] && Date.now() - new Date(previos[0].enviado_en).getTime() < 60_000) return json({ error: "Espera un minuto antes de pedirla otra vez." }, 429);
+      const apiKey = Deno.env.get("RESEND_API_KEY");
+      if (!apiKey) { console.error("centroamericano-mesa: falta RESEND_API_KEY"); return json({ error: "El correo no está configurado. Descarga tu bitácora desde aquí." }, 503); }
+      const nombre = String(a.arbitro).replace(/[<>&"]/g, "").slice(0, 80);
+      const nombreArchivo = "bitacora-arbitro-centroamericano-2026.pdf";
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: DE_CORREO, to: [correo], reply_to: RESPONDER_A,
+          subject: "Tu bitácora del Centroamericano 2026",
+          html: "<p>Hola, " + nombre + ".</p><p>Te mandamos adjunta tu bitácora como árbitro del Centroamericano 2026: los torneos que atendiste, ronda por ronda, con todo lo que anotaste. Es el mismo documento que puedes descargar desde tu enlace.</p><p>Si no la pediste, puedes ignorar este correo.</p><p>Ajedrez Integral</p>",
+          attachments: [{ filename: nombreArchivo, content: b64 }],
+        }),
+      });
+      if (!res.ok) { console.error("centroamericano-mesa: correo", a.tnr, res.status); return json({ error: "No se pudo mandar el correo. Descarga tu bitácora desde aquí." }, 502); }
+      // Solo se cuenta el envío (sin el correo ni el documento).
+      await servicio.from("centroamericano_correos_bitacora").insert({ asignacion_id: a.id });
+      return json({ ok: true });
     }
 
     if (cuerpo.action === "ayuda") {

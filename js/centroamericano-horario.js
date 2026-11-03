@@ -37,7 +37,7 @@
     { inicio: "2026-11-08T11:00", minutos: 60, nombre: "Salida" },
   ];
   const ms = (e) => new Date(e.inicio + ":00-06:00").getTime();
-  // Cuándo empezó de verdad la ronda: la hora que marcó la organización o, si no marcó ninguna, la del calendario.
+  // Cuándo empezó de verdad la ronda: la hora que marcó el árbitro de la categoría o, si no marcó ninguna, la del calendario.
   function inicioDe(e, inicios) {
     const marcada = e.ronda && inicios ? Date.parse(inicios[e.ronda]) : NaN;
     return Number.isFinite(marcada) ? marcada : ms(e);
@@ -73,7 +73,7 @@
     const e = estado(ahora, inicios);
     const out = [];
     if (e.enCurso) {
-      out.push("Ahora: " + e.enCurso.nombre + " (empezó a las " + fmt(e.inicio) + (e.marcada ? ", la hora que marcó la organización" : "") + ", hace " + minutosTexto(e.empezo) + ").");
+      out.push("Ahora: " + e.enCurso.nombre + " (empezó a las " + fmt(e.inicio) + (e.marcada ? ", la hora que marcó el árbitro de la categoría" : "") + ", hace " + minutosTexto(e.empezo) + ").");
       out.push(e.quedan > 0
         ? "Tiempo de espera: quedan " + minutosTexto(e.quedan) + " de tolerancia (hasta las " + fmt(e.hasta) + ", " + TOLERANCIA_MIN + " minutos desde el inicio)."
         : "Tiempo de espera: la tolerancia de " + TOLERANCIA_MIN + " minutos ya pasó (terminó a las " + fmt(e.hasta) + ").");

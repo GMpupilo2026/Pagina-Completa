@@ -175,10 +175,11 @@
             sb.from("centroamericano_finales").select("*").range(0, 999),
             sb.from("centroamericano_listas").select("*").range(0, 999),
             sb.from("centroamericano_presencia").select("*").range(0, 999),
-            sb.from("centroamericano_inicios_ronda").select("*").range(0, 99),
+            sb.from("centroamericano_inicios_torneo").select("*").range(0, 999),
         ]);
-        // La hora real en que empezó cada ronda (reales o de ensayo, según el modo): desde ahí corre el tiempo de espera.
-        if (!ir.error) { inicios = {}; for (const x of ir.data || []) if (x.prueba === ensayo) inicios[x.ronda] = x.inicio; pintarInicio(); }
+        // La hora real en que empezó cada ronda en cada categoría (la marcó su árbitro; reales o de ensayo, según el modo): desde ahí
+        // corre el tiempo de espera de esa categoría.
+        if (!ir.error) { inicios = {}; for (const x of ir.data || []) if (dentro(x.tnr)) inicios[x.tnr + "|" + x.ronda] = x; if (rondaDeFaltan) pintarFaltan(rondaDeFaltan); else pintarInicio(); }
         const ids = idsDentro();
         if (!pr.error) presencia = (pr.data || []).filter((x) => dentro(x.tnr));
         if (!p.error) progreso = (p.data || []).filter((x) => ids.has(x.asignacion_id));
@@ -217,93 +218,82 @@
 
     // El tiempo de espera de las bases (30 min desde el inicio de la ronda, js/centroamericano-horario.js): mientras
     // la ronda está en juego, cuánto falta o cuánto pasó. Sin ronda en juego, null (no hay nada que avisar).
+    // Cada categoría cuenta desde SU hora de inicio (la que marcó su árbitro) o, si no marcó ninguna, desde la del calendario.
     let rondaDeFaltan = 0;
-    function esperaDeRonda(ronda) {
+    function esperaDeRonda(ronda, tnr) {
         const H = window.CentroamericanoHorario;
         const ev = H && ronda ? H.EVENTOS.find((e) => e.ronda === ronda) : null;
         if (!ev) return null;
-        // Desde la hora que marcó la organización («Inició la ronda») o, si no marcó ninguna, desde la del calendario.
-        const pasados = Math.floor((Date.now() - H.inicioDe(ev, inicios)) / 60000);
+        const marca = inicios[tnr + "|" + ronda];
+        const pasados = Math.floor((Date.now() - H.inicioDe(ev, marca ? { [ronda]: marca.inicio } : undefined)) / 60000);
         if (pasados < 0 || pasados >= ev.minutos) return null;
         return { cumplido: pasados >= H.TOLERANCIA_MIN, quedan: H.TOLERANCIA_MIN - pasados, pasaron: pasados - H.TOLERANCIA_MIN, minutos: H.TOLERANCIA_MIN };
     }
 
-    // ------------------------------------------------------------- «Inició la ronda»
-    // El calendario dice a qué hora DEBE empezar cada ronda, pero a veces empieza después (la ronda 1 del Centroamericano
-    // empezó a las 10:48). La organización marca la hora real —con el botón, en ese momento, o escribiéndola— y desde ahí
-    // cuenta el tiempo de espera (30 min) acá y en la tablet de cada árbitro. Se guarda en la base con
-    // centroamericano_inicio_ronda() (pide la licencia); «Volver al calendario» la quita.
-    let inicios = {};         // { ronda: "2026-11-02T16:48:00Z" } del modo actual
-    let irTocada = false;     // si la organización ya eligió la ronda, no se la cambia sola
-    const rondaDelInicio = () => Number($("ir-ronda").value) || 0;
-    const horaCampo = (iso) => window.HoraCR.paraCampo(iso).slice(11, 16);
+    // ------------------------------------------------------------- «Inició la ronda» (solo se ve)
+    // El calendario dice a qué hora DEBE empezar cada ronda, pero cada categoría puede empezar a una hora distinta. Quien lo sabe
+    // es el árbitro de la sala: él toca «Inició la ronda» en su tablet (centroamericano-mesa, acción «inicio») y la organización
+    // lo ve acá, categoría por categoría. Desde esa hora corre el tiempo de espera de cada una.
+    let inicios = {};         // { "tnr|ronda": { inicio, arbitro } } del modo actual
+    const horaDe = (iso) => window.HoraCR.hora(iso, { hour: "numeric", minute: "2-digit" });
 
     function pintarInicio() {
         const H = window.CentroamericanoHorario;
-        if (!H || !$("ir-ronda")) return;
-        // Por omisión, la ronda que está abierta (la del resumen) o, si no hay, la que el calendario tiene en juego.
-        if (!irTocada) {
-            const ev = H.estado(new Date(), inicios).enCurso;
-            const r = rondaDeFaltan || (ev && ev.ronda) || 0;
-            if (r && $("ir-ronda").querySelector('option[value="' + r + '"]')) $("ir-ronda").value = String(r);
-        }
-        const r = rondaDelInicio(), ev = H.EVENTOS.find((e) => e.ronda === r), marcada = inicios[r];
-        const caja = $("inicio-ronda");
-        caja.dataset.marcada = marcada ? "si" : "no";
-        $("ir-quitar").hidden = !marcada;
-        if (document.activeElement !== $("ir-hora")) $("ir-hora").value = marcada ? horaCampo(marcada) : "";
-        if (!ev) { $("ir-estado").textContent = ""; return; }
-        const hora = (x) => window.HoraCR.hora(x, { hour: "numeric", minute: "2-digit" });
-        const fin = (t) => hora(new Date(t + H.TOLERANCIA_MIN * 60000));
-        $("ir-estado").textContent = marcada
-            ? "✓ La ronda " + r + " empezó a las " + hora(marcada) + " (la hora que marcaste). El tiempo de espera de " + H.TOLERANCIA_MIN + " min termina a las " + fin(Date.parse(marcada))
-            : "La ronda " + r + " no tiene hora marcada: el tiempo de espera cuenta desde las " + hora(new Date(H.inicioDe(ev))) + " del calendario (termina a las " + fin(H.inicioDe(ev)) + ").";
-    }
-
-    async function marcarInicio(iso) {
-        const r = rondaDelInicio();
-        if (!r) return;
-        if (iso) {
-            const d = new Date(iso);
-            if (isNaN(d)) { avisar("Elige la hora a la que empezó la ronda.", true); return; }
-            if (d.getTime() > Date.now() + 60000) { avisar("Esa hora todavía no llega: elige la hora en que empezó la ronda (hoy, hasta ahora).", true); return; }
-        }
-        const hora = (x) => window.HoraCR.hora(x, { hour: "numeric", minute: "2-digit" });
-        if (iso && inicios[r] && Math.abs(Date.parse(inicios[r]) - Date.parse(iso)) > 60000) {
-            const sigue = await Avisos.confirmar("La ronda " + r + " ya tenía las " + hora(inicios[r]) + " marcadas. ¿Cambiarlas a las " + hora(iso) + "?", { titulo: "Cambiar la hora de inicio", aceptar: "Sí, cambiarla" });
-            if (!sigue) return;
-        }
-        const { error } = await sb.rpc("centroamericano_inicio_ronda", { p_ronda: r, p_prueba: ensayo, p_inicio: iso });
-        if (error) { avisar("No se pudo guardar la hora: " + error.message, true); return; }
-        if (iso) inicios[r] = new Date(iso).toISOString(); else delete inicios[r];
-        pintarInicio();
-        if (rondaDeFaltan) pintarFaltan(rondaDeFaltan);
-        avisar(iso ? "Ronda " + r + ": empezó a las " + hora(iso) + " El tiempo de espera corre desde ahí, también en las tablets." : "Ronda " + r + ": vuelve a valer la hora del calendario.");
+        const lista = $("ir-lista");
+        if (!H || !lista) return;
+        // La ronda de cada categoría es la de su avance (la que tiene abierta); sin avance, la que el resumen tiene abierta.
+        const tnrs = [...new Set(asignaciones.map((x) => x.tnr))].filter(dentro)
+            .sort((x, y) => torneos.findIndex((q) => q.tnr === x) - torneos.findIndex((q) => q.tnr === y));
+        const filas = tnrs.map((tnr) => {
+            const f = progreso.map((x) => asig(x.asignacion_id)).find((x) => x && x.tnr === tnr);
+            const r = (progreso.find((x) => f && x.asignacion_id === f.id) || {}).ronda || rondaDeFaltan || 0;
+            const ev = H.EVENTOS.find((e) => e.ronda === r), marca = inicios[tnr + "|" + r];
+            const texto = !r ? "sin ronda abierta"
+                : marca ? "Ronda " + r + ": empezó a las " + horaDe(marca.inicio) + (marca.arbitro ? " (la marcó " + marca.arbitro + ")" : "")
+                    : "Ronda " + r + ": su árbitro todavía no marcó cuándo empezó" + (ev ? " (cuenta desde las " + horaDe(new Date(H.inicioDe(ev))) + " del calendario)" : "");
+            return el("li", { "data-tnr": tnr, "data-marcada": marca ? "si" : "no", texto: nombreTorneo(tnr) + " — " + texto });
+        });
+        const marcadas = filas.filter((x) => x.dataset.marcada === "si").length;
+        $("inicio-ronda").dataset.marcada = marcadas ? "si" : "no";
+        $("ir-estado").textContent = filas.length
+            ? "Lo marca el árbitro de cada categoría en su tablet, a la hora en que empieza la ronda. " + marcadas + " de " + filas.length + (filas.length === 1 ? " categoría ya la marcó." : " categorías ya la marcaron.")
+            : "Cuando haya árbitros con mesas, acá se ve a qué hora empezó la ronda en cada categoría.";
+        lista.replaceChildren(...filas);
     }
 
     // Los que no han llegado, según el árbitro de cada mesa. Cuando se cumple el tiempo de espera, la alerta
     // sale arriba de la lista, bien visible (sin sonido: en un torneo no hay ruido) y en el título de la pestaña.
     function pintarFaltan(ronda) {
         rondaDeFaltan = ronda;
-        pintarInicio();   // sigue a la ronda abierta mientras la organización no haya elegido otra
+        pintarInicio();
         const lista = C.jugadoresQueFaltan(presencia, ronda);
-        const espera = esperaDeRonda(ronda);
+        // Cada categoría tiene su propia hora de inicio y, por eso, su propio tiempo de espera.
+        const esperas = new Map([...new Set(lista.map((x) => x.tnr))].map((tnr) => [tnr, esperaDeRonda(ronda, tnr)]));
         $("faltan-nota").textContent = ronda ? " — ronda " + ronda + ": " + lista.length : "";
         $("faltan-vacio").hidden = lista.length > 0;
-        const textoEspera = !espera ? "" : espera.cumplido ? "Tiempo cumplido" + (espera.pasaron > 0 ? " (hace " + espera.pasaron + " min)" : "") : "Quedan " + espera.quedan + " min";
-        $("faltan").replaceChildren(...lista.map((x) => el("tr", { "data-mesa": String(x.mesa), "data-espera": espera ? (espera.cumplido ? "cumplido" : "corre") : null },
+        const textoEspera = (e) => !e ? "" : e.cumplido ? "Tiempo cumplido" + (e.pasaron > 0 ? " (hace " + e.pasaron + " min)" : "") : "Quedan " + e.quedan + " min";
+        $("faltan").replaceChildren(...lista.map((x) => { const e = esperas.get(x.tnr); return el("tr", { "data-mesa": String(x.mesa), "data-espera": e ? (e.cumplido ? "cumplido" : "corre") : null },
             el("td", { texto: nombreTorneo(x.tnr) }), el("td", { texto: String(x.mesa) }), el("td", { texto: x.jugador }), el("td", { texto: x.color === "negras" ? "Negras" : "Blancas" }),
-            el("td", { texto: x.arbitro }), el("td", { texto: window.HoraCR.hora(new Date(x.marcada)) }), el("td", { class: espera && espera.cumplido ? "cam-espera-cumplida" : "", texto: textoEspera }))));
+            el("td", { texto: x.arbitro }), el("td", { texto: window.HoraCR.hora(new Date(x.marcada)) }), el("td", { class: e && e.cumplido ? "cam-espera-cumplida" : "", texto: textoEspera(e) })); }));
         const alerta = $("espera-alerta");
-        const mesas = [...new Set(lista.map((x) => x.mesa))].sort((a, b) => a - b);
-        if (espera && lista.length && (espera.cumplido || espera.quedan <= 10)) {
+        // La alerta junta las categorías que ya cumplieron (o, si ninguna, las que están por cumplir); con varias, nombra cada una.
+        const de = (tnrs) => lista.filter((x) => tnrs.includes(x.tnr));
+        const mesasDe = (l) => [...new Set(l.map((x) => x.mesa))].sort((a, b) => a - b);
+        const cumplidas = [...esperas].filter(([, e]) => e && e.cumplido).map(([tnr]) => tnr);
+        const pronto = [...esperas].filter(([, e]) => e && !e.cumplido && e.quedan <= 10).map(([tnr]) => tnr);
+        const grupo = cumplidas.length ? cumplidas : pronto;
+        if (grupo.length) {
+            const l = de(grupo), nivelCumplido = cumplidas.length > 0;
+            const donde = grupo.length === 1 ? "mesas " + mesasDe(l).join(", ") : grupo.map((tnr) => nombreTorneo(tnr) + ": mesas " + mesasDe(de([tnr])).join(", ")).join("; ");
+            const minutos = esperas.get(grupo[0]).minutos;
+            const quedan = Math.min(...grupo.map((tnr) => esperas.get(tnr).quedan));
             alerta.hidden = false;
-            alerta.dataset.nivel = espera.cumplido ? "cumplido" : "pronto";
-            alerta.setAttribute("role", espera.cumplido ? "alert" : "status");
-            alerta.textContent = espera.cumplido
-                ? "⏰ Se cumplió el tiempo de espera (" + espera.minutos + " min) de la ronda " + ronda + ": " + lista.length + (lista.length === 1 ? " jugador sigue sin llegar" : " jugadores siguen sin llegar") + " (mesas " + mesas.join(", ") + "). Avisa a los árbitros de esas mesas."
-                : "⏳ Quedan " + espera.quedan + " min del tiempo de espera de la ronda " + ronda + " y " + lista.length + (lista.length === 1 ? " jugador no ha llegado" : " jugadores no han llegado") + " (mesas " + mesas.join(", ") + ").";
-            esperaCumplida = espera.cumplido;
+            alerta.dataset.nivel = nivelCumplido ? "cumplido" : "pronto";
+            alerta.setAttribute("role", nivelCumplido ? "alert" : "status");
+            alerta.textContent = nivelCumplido
+                ? "⏰ Se cumplió el tiempo de espera (" + minutos + " min) de la ronda " + ronda + ": " + l.length + (l.length === 1 ? " jugador sigue sin llegar" : " jugadores siguen sin llegar") + " (" + donde + "). Avisa a los árbitros de esas mesas."
+                : "⏳ Quedan " + quedan + " min del tiempo de espera de la ronda " + ronda + " y " + l.length + (l.length === 1 ? " jugador no ha llegado" : " jugadores no han llegado") + " (" + donde + ").";
+            esperaCumplida = nivelCumplido;
         } else { alerta.hidden = true; alerta.textContent = ""; esperaCumplida = false; }
         ponerTitulo();
     }
@@ -1013,7 +1003,7 @@
             estado: apagadoEstado, mesa: f.mesa, blancas: f.blancas, negras: f.negras,
             lecturas: tiempos.filter((x) => mismaPartida(x, f)),
             anotaciones: filas.filter((x) => x.tipo !== "anulacion"), anuladas: new Set(filas.filter((x) => x.tipo === "anulacion").map((x) => x.anula)),
-            inicio: R.inicioDeLaRonda(f.ronda, inicios[f.ronda] || null),
+            inicio: R.inicioDeLaRonda(f.ronda, (inicios[f.tnr + "|" + f.ronda] || {}).inicio || null),
             intro: "Con el último control de esta partida se calcula cuánto le queda a cada uno. Es una propuesta para el árbitro de la mesa: el tiempo lo decide él (art. 6.10)."
                 + (asig ? "" : " Esta mesa no tiene un árbitro con enlace activo: no se le puede mandar."),
             boton: "Mandárselo al árbitro", clase: "cam-apagado-form", avisar,
@@ -1253,10 +1243,10 @@
     // ------------------------------------------------------------- actividad de los árbitros (para supervisar)
 
     let actividad = [];
-    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", anulacion: "Anuló una anotación",
+    const ETIQUETA_ACTIVIDAD = { resultado: "Resultado", correccion: "Corrección de un resultado", ilegal: "Jugada ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota / control de tiempos", levanto: "Se levantó de la mesa", concluyo: "Concluyó sus labores", inicio: "Inició la ronda", anulacion: "Anuló una anotación",
         presencia: "Presencia", planilla: "Foto de planillas", lista: "Revisión previa", finalizo: "Finalizó la ronda", termino: "Terminó sus mesas", ayuda: "Pidió ayuda", leyo: "Leyó un aviso" };
     // El icono de cada tipo (va por CSS, antes del texto, sin cambiar el texto: el lector de pantalla lee la palabra).
-    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
+    const ICONO_ACTIVIDAD = { resultado: "✅", correccion: "✏️", ilegal: "⚠️", irregularidad: "🚩", incidencia: "📝", nota: "⏱️", levanto: "🚶", concluyo: "🏁", inicio: "▶️", anulacion: "↩️", presencia: "👤", planilla: "📷", lista: "📋", finalizo: "🏁", termino: "🏁", ayuda: "🆘", leyo: "👁️" };
     // Los grupos del filtro «Qué hizo» (un grupo puede ser varios tipos).
     const GRUPOS_ACTIVIDAD = { resultado: ["resultado", "correccion"], ilegal: ["ilegal", "irregularidad", "anulacion"], incidencia: ["incidencia", "nota"], finalizo: ["finalizo", "termino"] };
     const enGrupo = (tipo, grupo) => !grupo || (GRUPOS_ACTIVIDAD[grupo] || [grupo]).includes(tipo);
@@ -1441,14 +1431,6 @@
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
-        $("ir-ronda").addEventListener("change", () => { irTocada = true; pintarInicio(); });
-        $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString()));
-        $("ir-guardar").addEventListener("click", () => {
-            const v = $("ir-hora").value;
-            if (!v) { avisar("Escribe la hora a la que empezó la ronda (por ejemplo 10:48).", true); return; }
-            marcarInicio(window.HoraCR.desdeCampo(window.HoraCR.hoy() + "T" + v).toISOString());
-        });
-        $("ir-quitar").addEventListener("click", () => marcarInicio(null));
         $("ct-pedir").addEventListener("click", pedirTiempos);
         $("ct-pdf").addEventListener("click", tiemposPdf);
         $("ct-torneo").addEventListener("change", pintarTiempos);

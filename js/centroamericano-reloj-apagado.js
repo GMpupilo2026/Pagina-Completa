@@ -94,12 +94,12 @@
       + (propuesto ? "" : "; propuesto " + T(Math.max(0, r.blancas)) + " / " + T(Math.max(0, r.negras)) + ", ajustado a mano")).slice(0, 500);
   }
 
-  // La hora en que empezó la ronda: la marcada por la organización o, si no, la del horario.
+  // La hora en que empezó la ronda: la que marcó el árbitro de la categoría o, si no, la del horario.
   function inicioDeLaRonda(ronda, marcadaIso) {
-    if (marcadaIso) return { ms: new Date(marcadaIso).getTime(), deDonde: "marcada por la organización" };
+    if (marcadaIso) return { ms: new Date(marcadaIso).getTime(), deDonde: "marcada por el árbitro de la categoría" };
     const H = window.CentroamericanoHorario;
     const ev = H && H.EVENTOS.find((e) => e.ronda === Number(ronda));
-    return ev ? { ms: new Date(ev.inicio + ":00-06:00").getTime(), deDonde: "según el horario (la organización no la marcó)" } : null;
+    return ev ? { ms: new Date(ev.inicio + ":00-06:00").getTime(), deDonde: "según el horario (el árbitro de la categoría no la marcó)" } : null;
   }
 
   function armar(o) {

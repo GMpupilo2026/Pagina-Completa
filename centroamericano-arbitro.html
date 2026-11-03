@@ -95,7 +95,25 @@
                 </div>
                 <p id="espera" class="cam-espera" role="status"></p>
                 <p id="presencia-resumen" class="cam-espera" role="status"></p>
+                <button type="button" id="presencia-todos" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✓</span> Marcar que llegaron todos los que no he revisado</button>
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
+            </section>
+
+            <!-- La hora REAL en que empezó la ronda en tu categoría (cada categoría puede empezar a una hora distinta): desde ahí corre el tiempo de espera. -->
+            <div class="cam-inicio-ronda" id="inicio-ronda" role="group" aria-labelledby="ir-titulo" hidden>
+                <strong id="ir-titulo" class="cam-inicio-titulo"><span aria-hidden="true">⏱</span> Inicio de la ronda <span id="ir-ronda"></span></strong>
+                <button type="button" id="ir-ahora" class="cam-btn cam-btn-chico"><span aria-hidden="true">▶</span> Inició la ronda ahora</button>
+                <label class="cam-herramientas-campo"><span>o a las</span>
+                    <input type="time" id="ir-hora" class="cam-campo" step="60" aria-describedby="ir-estado"></label>
+                <button type="button" id="ir-guardar" class="cam-btn cam-btn-claro cam-btn-chico">Guardar esa hora</button>
+                <button type="button" id="ir-quitar" class="cam-btn cam-btn-claro cam-btn-chico" hidden>Volver al calendario</button>
+                <p id="ir-estado" class="cam-inicio-estado" role="status"></p>
+            </div>
+            <!-- Cuando se cumple el tiempo de espera de tu categoría: quién sigue sin llegar y, con un toque, el resultado por incomparecencia listo para guardar. -->
+            <section id="espera-alerta" class="cam-espera-alerta" aria-labelledby="ea-titulo" hidden>
+                <h2 id="ea-titulo" class="font-bold text-lg"></h2>
+                <ul id="ea-lista" class="cam-ea-lista"></ul>
+                <p class="cam-herramientas-nota">El botón solo deja el resultado elegido en la mesa: lo envías tú con «Guardar».</p>
             </section>
 
             <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
@@ -106,6 +124,13 @@
                 <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Concluiste tus labores</h2>
                 <p id="concluido-texto" class="text-sm mt-1"></p>
                 <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button></div>
+                <div class="cam-bit-correo mt-3">
+                    <label class="cam-herramientas-campo"><span>¿Te la mandamos también a tu correo?</span>
+                        <input type="email" id="bit-correo" class="cam-campo" autocomplete="email" inputmode="email" maxlength="120" placeholder="tucorreo@ejemplo.com" aria-describedby="bit-correo-ayuda"></label>
+                    <label class="cam-check"><input id="bit-consiento" type="checkbox" class="w-5 h-5"> <span>Acepto que me manden mi bitácora a este correo. El correo no se guarda (<a href="privacidad.html" target="_blank" rel="noopener">privacidad</a>).</span></label>
+                    <button type="button" id="bit-enviar" class="cam-btn cam-btn-claro"><span aria-hidden="true">✉️</span> Mandarme la bitácora por correo</button>
+                    <p id="bit-correo-ayuda" class="cam-herramientas-nota">Puedes pedirla hasta dos veces. Si no te llega, revisa el correo no deseado.</p>
+                </div>
                 <p id="concluido-estado" class="text-sm mt-2" role="status"></p>
             </section>
 
