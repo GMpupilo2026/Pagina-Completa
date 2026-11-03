@@ -172,6 +172,32 @@
 }
 .cam-resultado-fila .cam-select { flex: 1; min-width: 0; }
 .dark .cam-select, .dark .cam-campo { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(255 255 255 / 0.3); }
+/* El Rápido y el Blitz: 1-0, ½-½ y 0-1 en tres botones grandes que guardan con un toque. El guardado se ve en verde
+   y dice «Guardado» al lector de pantalla (aria-pressed); el color nunca va solo: el resultado va escrito arriba. */
+.cam-modo-rapido { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 2px solid var(--cac-morado); background: #f4f4fb; color: var(--cac-morado-hondo); font-size: 0.95rem; }
+.dark .cam-modo-rapido { background: rgb(255 255 255 / 0.05); color: #fff; border-color: #b8bbf2; }
+.cam-rapido-fila { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.cam-rapido-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem;
+  min-height: 72px; padding: 0.4rem; border-radius: 0.9rem;
+  border: 3px solid var(--cac-morado); background: #fff; color: var(--cac-morado-hondo); cursor: pointer;
+  transition: background-color 0.15s, transform 0.05s;
+}
+.cam-rapido-valor { font-size: 1.7rem; font-weight: 900; line-height: 1.1; }
+.cam-rapido-ayuda { font-size: 0.8rem; font-weight: 700; }
+.cam-rapido-btn:hover:not(:disabled) { background: #e8e9f7; }
+.cam-rapido-btn:active:not(:disabled) { transform: translateY(1px); }
+.cam-rapido-btn:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-rapido-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.cam-rapido-btn[aria-pressed="true"] { background: var(--cac-verde); border-color: var(--cac-verde); color: #fff; opacity: 1; }
+.dark .cam-rapido-btn { background: transparent; color: #fff; border-color: #b8bbf2; }
+.dark .cam-rapido-btn:hover:not(:disabled) { background: rgb(255 255 255 / 0.08); }
+.dark .cam-rapido-btn[aria-pressed="true"] { background: #9be0bb; border-color: #9be0bb; color: #1e2453; }
+.cam-rapido-otro { margin-top: 0.6rem; }
+.cam-rapido-otro > summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; min-height: 40px; display: flex; align-items: center; color: var(--cac-morado); }
+.dark .cam-rapido-otro > summary { color: #b8bbf2; }
+.cam-rapido-otro > summary:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; border-radius: 0.4rem; }
+
 .cam-guardado { color: var(--cac-verde); font-weight: 800; font-size: 0.9rem; margin-top: 0.4rem; }
 .dark .cam-guardado { color: #9be0bb; }
 .cam-fallo { color: var(--cac-rojo); font-weight: 800; font-size: 0.9rem; margin-top: 0.4rem; }
