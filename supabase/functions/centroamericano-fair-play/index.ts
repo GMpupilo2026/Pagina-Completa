@@ -17,6 +17,8 @@
 //   "aprobar"     {id}            "descartar" {id, motivo}
 //   "revisar"     {id, resultado, color?, jugador?, nota?}
 //   "alerta"      {tnr, ronda, mesa, color, estado: vista|seguir, nota?}
+//   "pareo"       {tnr, ronda, mesa}                   → los dos jugadores de esa mesa (para anotar a mano)
+//   "manual"      {tnr, ronda, mesa, color, resultado, jugador?, nota?} → una revisión ya hecha, anotada a mano
 //   "mesas_arbitro" {arbitro_token, ronda} → para la tablet de un árbitro de mesa: sus mesas elegidas (borde dorado)
 //   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos) y las partidas transmitidas a
 //                       Lichess, saca la precisión de cada jugador y calibra las alertas (a lo sumo cada 90 s).
@@ -133,6 +135,16 @@ Deno.serve(async (req) => {
     }
     if (accion === "alerta") {
       return json({ ok: true, alerta: await rpc("centroamericano_fp_alerta", conQuien({ p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda), p_mesa: Number(cuerpo.mesa), p_color: String(cuerpo.color), p_estado: String(cuerpo.estado), p_nota: cuerpo.nota ?? null })) });
+    }
+    if (accion === "pareo") {
+      // Los dos jugadores de una mesa en una ronda (para anotar a mano una revisión ya hecha): de los emparejamientos leídos.
+      const { data } = await servicio.from("centroamericano_fp_partidas").select("blancas, negras, elo_b, elo_n, resultado")
+        .eq("tnr", String(cuerpo.tnr)).eq("ronda", Number(cuerpo.ronda)).eq("mesa", Number(cuerpo.mesa)).maybeSingle();
+      return json({ ok: true, pareo: data ?? null });
+    }
+    if (accion === "manual") {
+      return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_manual", conQuien({ p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda), p_mesa: Number(cuerpo.mesa),
+        p_color: cuerpo.color ?? null, p_resultado: String(cuerpo.resultado), p_jugador: cuerpo.jugador ?? null, p_nota: cuerpo.nota ?? null, p_enlace: enlace })) });
     }
     if (accion === "actualizar") return json(await actualizar(servicio, rpc));
     return json({ error: "Acción desconocida." }, 400);

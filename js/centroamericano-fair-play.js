@@ -89,7 +89,9 @@
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-sorteadas" },
                 el("h3", { id: "fp-t-sorteadas", class: "cam-subtitulo" }, "Mesas sorteadas", el("span", { id: "fp-resumen", class: "cam-subtitulo-nota" })),
+                el("p", { class: "cam-herramientas-nota", texto: "¿Ya se revisó a alguien sin el sorteo (por ejemplo, en las rondas 1 y 2)? Anótalo a mano: cuenta para que esa persona descanse las 2 rondas siguientes y para el tope de 3 revisiones, y un hallazgo hace que sus mesas salgan más seguido." }),
                 el("div", { class: "cam-herramientas mt-1", role: "toolbar", "aria-label": "Registro de Fair Play" },
+                    el("button", { type: "button", id: "fp-manual", class: "cam-btn cam-btn-chico", onclick: anotarAMano }, el("span", { "aria-hidden": "true", texto: "✍ " }), "Anotar una revisión hecha a mano"),
                     el("button", { type: "button", id: "fp-pdf", class: "cam-btn cam-btn-chico", disabled: true, onclick: pdf }, "Bajar el registro en PDF")),
                 el("p", { id: "fp-vacio", class: "cam-herramientas-nota", texto: "Todavía no se ha sorteado ninguna mesa." }),
                 el("div", { class: "cam-tabla-envoltura mt-2" },
@@ -197,8 +199,10 @@
             return el("tr", { "data-id": f.id, "data-estado": f.estado },
                 el("td", { texto: nombreDe(f.tnr) }),
                 el("td", { texto: String(f.ronda) }),
-                el("td", {}, el("strong", { texto: "Mesa " + f.mesa }), el("span", { class: "cam-fp-de", texto: " (de " + f.mesas_en_sorteo + ", peso " + Number(f.peso || 1).toLocaleString("es-CR") + ")" }),
-                    f.motivos && f.motivos.length ? el("span", { class: "cam-fp-detalle", texto: f.motivos.join(" · ") }) : null),
+                el("td", {}, el("strong", { texto: "Mesa " + f.mesa }),
+                    f.origen === "manual" ? el("span", { class: "cam-fp-detalle", texto: "Anotada a mano por " + (f.sorteada_por || "—") })
+                        : [el("span", { class: "cam-fp-de", texto: " (de " + f.mesas_en_sorteo + ", peso " + Number(f.peso || 1).toLocaleString("es-CR") + ")" }),
+                            f.motivos && f.motivos.length ? el("span", { class: "cam-fp-detalle", texto: f.motivos.join(" · ") }) : null]),
                 el("td", {}, el("span", { class: "cam-fp-detalle", texto: "Blancas: " + conElo(f.blancas, f.elo_b) }), el("span", { class: "cam-fp-detalle", texto: "Negras: " + conElo(f.negras, f.elo_n) }),
                     f.no_aplica ? el("span", { class: "cam-fp-detalle cam-fp-no-aplica", texto: "⚠ " + f.no_aplica }) : null),
                 el("td", { texto: aQuien }),
@@ -286,6 +290,49 @@
         if (!r) return;
         try { await llamar("revisar", { id: f.id, resultado: r.resultado, color: r.color || null, jugador: r.jugador || null, nota: r.nota }); avisar("Revisión de la mesa " + f.mesa + " guardada."); }
         catch (e) { avisar("No se pudo guardar: " + (e.message || e), true); }
+        await cargar();
+    }
+
+    // Una revisión ya hecha sin sorteo (las de las rondas 1 y 2): primero la categoría, la ronda y la mesa; después, con
+    // los dos jugadores de esa mesa leídos de chess-results, a quién se revisó, cómo terminó y qué pasó.
+    async function anotarAMano() {
+        if (!datos || !datos.rondas.length) { avisar("No hay categorías con árbitros.", true); return; }
+        const tope = Math.max(...datos.rondas.map((r) => r.ronda));
+        const a = await Avisos.formulario({
+            titulo: "Anotar una revisión hecha a mano",
+            texto: "¿En qué categoría, ronda y mesa fue?",
+            campos: [
+                { nombre: "tnr", etiqueta: "Categoría", tipo: "select", valor: $("fp-categoria").value || datos.rondas[0].tnr, opciones: datos.rondas.map((r) => [r.tnr, r.nombre]) },
+                { nombre: "ronda", etiqueta: "Ronda", tipo: "select", valor: String(Math.max(1, tope - 1)), opciones: Array.from({ length: tope }, (_, i) => [String(i + 1), "Ronda " + (i + 1)]) },
+                { nombre: "mesa", etiqueta: "Mesa", tipo: "text", inputmode: "numeric", valor: "", max: 4 },
+            ],
+            aceptar: "Buscar la mesa",
+        });
+        if (!a) return;
+        const mesa = parseInt(a.mesa, 10), ronda = Number(a.ronda);
+        if (!Number.isInteger(mesa) || mesa < 1) { avisar("Escribe el número de la mesa.", true); return; }
+        let pareo = null;
+        try { pareo = (await llamar("pareo", { tnr: a.tnr, ronda, mesa })).pareo; } catch (e) { /* sin pareo leído: se escribe el nombre */ }
+        const campos = [];
+        if (pareo && pareo.blancas) {
+            campos.push({ nombre: "color", etiqueta: "A quién se revisó", tipo: "select", valor: "blancas",
+                opciones: [["blancas", conElo(pareo.blancas, pareo.elo_b) + " (blancas)"]].concat(pareo.negras ? [["negras", conElo(pareo.negras, pareo.elo_n) + " (negras)"]] : []) });
+        } else {
+            campos.push({ nombre: "jugador", etiqueta: "Nombre del jugador revisado", tipo: "text", valor: "", max: 120 },
+                { nombre: "color", etiqueta: "Jugaba con", tipo: "select", valor: "blancas", opciones: [["blancas", "Blancas"], ["negras", "Negras"]] });
+        }
+        campos.push({ nombre: "resultado", etiqueta: "Cómo terminó", tipo: "select", valor: "sin_novedad", opciones: Object.entries(RESULTADOS) },
+            { nombre: "nota", etiqueta: "Qué pasó (obligatorio si no fue «Sin novedad»)", tipo: "textarea", valor: "", max: 500 });
+        const b = await Avisos.formulario({
+            titulo: nombreDe(a.tnr) + ", ronda " + ronda + ", mesa " + mesa,
+            texto: pareo ? "Los jugadores salen de los emparejamientos de chess-results." : "No se encontraron los emparejamientos de esa mesa: escribe el nombre como aparece en chess-results.",
+            campos, aceptar: "Guardar la revisión",
+        });
+        if (!b) return;
+        try {
+            await llamar("manual", { tnr: a.tnr, ronda, mesa, color: b.color, resultado: b.resultado, jugador: b.jugador || null, nota: b.nota || null });
+            avisar("Revisión de la mesa " + mesa + " (ronda " + ronda + ") anotada: ya cuenta para los sorteos.");
+        } catch (e) { avisar("No se pudo anotar: " + (e.message || e), true); }
         await cargar();
     }
 

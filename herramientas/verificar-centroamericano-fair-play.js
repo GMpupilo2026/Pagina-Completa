@@ -138,6 +138,15 @@ const SERVIDOR_FP = `
     }
     if (b.action === "alerta") { const a = S.alertas.find((x) => x.tnr === b.tnr && x.ronda === b.ronda && x.mesa === b.mesa && x.color === b.color); Object.assign(a, { estado: b.estado, nota: b.nota, vista_por_nombre: quien, vista_en: new Date().toISOString() }); return ok({ alerta: a }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
+    if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
+    if (b.action === "manual") {
+      if (b.resultado !== "sin_novedad" && !String(b.nota || "").trim()) return err(400, "Con ese resultado hace falta anotar qué pasó");
+      if (S.sorteos.some((f) => f.tnr === b.tnr && f.ronda === b.ronda && f.mesa === b.mesa)) return err(400, "La mesa " + b.mesa + " de la ronda " + b.ronda + " ya tiene un registro de Fair Play: corrígelo desde la lista");
+      const jug = b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? (b.color === "negras" ? "Once, Kai" : "Tres, Caro") : b.jugador;
+      if (!jug) return err(400, "No sé quién jugó en esa mesa: escribe el nombre del jugador");
+      const f = { id: "fp-" + (++n), tnr: b.tnr, ronda: b.ronda, mesa: b.mesa, mesas_en_sorteo: 1, color_si_tablas: b.color, estado: "revisada", origen: "manual", resultado: b.resultado, jugador: jug, jugador_color: b.color, nota: b.nota || null, sorteada_por: quien, revisada_por_nombre: quien, motivos: ["Anotada a mano"], peso: 1, creado: new Date().toISOString() };
+      S.sorteos.push(f); return ok({ sorteo: f });
+    }
     return err(400, "Acción desconocida.");
   };`;
 
@@ -279,6 +288,48 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction((s) => document.querySelector(s).dataset.estado === "revisada", fila(2));
         igual("«Sin novedad» con Cinco, Eva: queda revisada con su nombre y quién la revisó", await p.$eval(fila(2), (tr) => [tr.children[4].textContent, tr.children[5].textContent]), ["Cinco, Eva", "RevisadaSin novedad · Laura Mora (Fair Play)"]);
+        console.log("\n=== Anotar a mano una revisión de una ronda anterior ===");
+        await p.click("#fp-manual");
+        await p.waitForSelector("dialog[open] select");
+        igual("primero pregunta la categoría, la ronda (de la 1 a la abierta, y empieza en la anterior) y la mesa", await p.$$eval("dialog[open] select", (l) => [[...l[0].options].map((o) => o.textContent), [...l[1].options].map((o) => o.textContent), l[1].value]), [["Sub-12 Absoluto", "Sub-14 Femenino"], ["Ronda 1", "Ronda 2", "Ronda 3"], "2"]);
+        await p.selectOption("dialog[open] select >> nth=0", "100");
+        await p.fill('dialog[open] input:not([type="hidden"])', "7");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /ronda 2, mesa 7/.test(d.textContent); });
+        igual("después, los dos jugadores de esa mesa con su Elo (de chess-results) para elegir a quién se revisó", await p.$$eval("dialog[open] select", (l) => [...l[0].options].map((o) => o.textContent)), ["Tres, Caro (1600) (blancas)", "Once, Kai (1500) (negras)"]);
+        await p.selectOption("dialog[open] select >> nth=0", "negras");
+        await p.selectOption("dialog[open] select >> nth=1", "hallazgo");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => /hace falta anotar qué pasó/.test(document.body.textContent));
+        igual("un hallazgo sin decir qué pasó no se guarda (lo rechaza la base)", await p.evaluate(() => window.__fp.sorteos.filter((f) => f.origen === "manual").length), 0);
+        await p.click("#fp-manual");
+        await p.waitForSelector("dialog[open] select");
+        await p.selectOption("dialog[open] select >> nth=0", "100");
+        await p.fill('dialog[open] input:not([type="hidden"])', "7");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /ronda 2, mesa 7/.test(d.textContent); });
+        await p.selectOption("dialog[open] select >> nth=0", "negras");
+        await p.selectOption("dialog[open] select >> nth=1", "hallazgo");
+        await p.fill("dialog[open] textarea", "Tenía un papel con jugadas");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => document.querySelectorAll("#fp-lista tr").length === 3);
+        igual("anotada: llega a la función con la categoría, la ronda, la mesa, a quién, el hallazgo y la nota, y el token del encargado", await p.evaluate(() => window.__fp.llamadas.filter((l) => l.action === "manual").map((l) => [l.tnr, l.ronda, l.mesa, l.color, l.resultado, l.nota, l.token.length]).pop()), ["100", 2, 7, "negras", "hallazgo", "Tenía un papel con jugadas", 64]);
+        igual("en la lista: ronda 2, «Anotada a mano por» el encargado, a quién y el hallazgo", await p.$$eval("#fp-lista tr", (l) => l.filter((tr) => tr.children[1].textContent === "2").map((tr) => [tr.children[2].textContent, tr.children[4].textContent, tr.children[5].textContent])),
+            [["Mesa 7Anotada a mano por Laura Mora (Fair Play)", "Once, Kai", "RevisadaHallazgo (se informa al principal) · Tenía un papel con jugadas · Laura Mora (Fair Play)"]]);
+        // Una mesa sin emparejamientos leídos: pide escribir el nombre.
+        await p.click("#fp-manual");
+        await p.waitForSelector("dialog[open] select");
+        await p.selectOption("dialog[open] select >> nth=0", "200");
+        await p.selectOption("dialog[open] select >> nth=1", "1");
+        await p.fill('dialog[open] input:not([type="hidden"])', "3");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /ronda 1, mesa 3/.test(d.textContent); });
+        igual("sin los emparejamientos de esa mesa, pide escribir el nombre (y con qué color jugaba)", await p.evaluate(() => [/escribe el nombre como aparece en chess-results/.test(document.querySelector("dialog[open]").textContent), !!document.querySelector('dialog[open] input:not([type="hidden"])')]), [true, true]);
+        await p.fill('dialog[open] input:not([type="hidden"])', "Ana Pérez");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => document.querySelectorAll("#fp-lista tr").length === 4);
+        igual("y queda con ese nombre", await p.evaluate(() => window.__fp.sorteos.filter((f) => f.origen === "manual").map((f) => [f.tnr, f.ronda, f.mesa, f.jugador, f.resultado])), [["100", 2, 7, "Once, Kai", "hallazgo"], ["200", 1, 3, "Ana Pérez", "sin_novedad"]]);
+
         const [bajada] = await Promise.all([p.waitForEvent("download"), p.click("#fp-pdf")]);
         const bytes = fs.readFileSync(await bajada.path()).toString("latin1");
         igual("el registro en PDF, con la marca de agua", [bajada.suggestedFilename(), bytes.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytes)], ["fair-play-centroamericano-2026.pdf", true, true]);

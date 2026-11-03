@@ -9102,6 +9102,14 @@ Lo pidió el dueño la misma tarde (`20261103180000`, pegada a mano en el editor
   (429) si se le pide seguido: una pausa de 0,7 s y las rondas viejas ya analizadas no se vuelven a pedir. Solo se
   analizan las mesas que se transmiten (las primeras de cada categoría).
 
+- **Las revisiones anotadas a mano** (`20261103182045`): el sorteo empezó en la ronda 3, pero en las rondas 1 y 2 ya se
+  había revisado a gente. «✍ Anotar una revisión hecha a mano» pide la categoría, la ronda y la mesa, muestra los dos
+  jugadores de esa mesa con su Elo (de los emparejamientos leídos, acción «pareo») o, si no están, pide escribir el
+  nombre, y guarda a quién se revisó, cómo terminó y la nota (`centroamericano_fair_play_manual`: una mesa «revisada»
+  de origen `manual`, con quién la anotó). Cuenta igual que una sorteada para el descanso y el tope, y un **hallazgo**
+  —anotado a mano o de un sorteo— suma +1 al peso de las mesas de ese jugador en los sorteos siguientes. Una mesa no se
+  anota dos veces en la ronda (el mismo índice único).
+
 Probado en un Postgres de ensayo con el esquema del Centroamericano (los pesos y sus motivos, el que no aplica sin sacar
 la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no aplica, la corrección y el borrado, el
 rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
