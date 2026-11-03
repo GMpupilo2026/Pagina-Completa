@@ -23,7 +23,9 @@
 
   // Lo que se le dice al árbitro al anotar una ilegal. `n` es la cuenta de ESA
   // partida y ESE jugador, ya con la que acaba de anotar.
-  function avisoIlegal(n, nombre, color) {
+  // `minutos`: los que se le dan al rival por la primera (2; 1 en el blitz, Leyes del Ajedrez, apéndice B.3).
+  function avisoIlegal(n, nombre, color, minutos) {
+    const min = minutos === 1 ? "1 minuto" : "2 minutos";
     const quien = nombre || (color === "negras" ? "Las negras" : "Las blancas");
     if (n >= 2) {
       return {
@@ -39,10 +41,26 @@
     return {
       nivel: "primera",
       titulo: "Primera jugada ilegal",
-      texto: quien + " hizo una jugada ilegal: dale 2 minutos más a su rival (art. " + ARTICULO_ILEGAL + "). Con otra, pierde la partida.",
+      texto: quien + " hizo una jugada ilegal: dale " + min + " más a su rival (art. " + ARTICULO_ILEGAL + "). Con otra, pierde la partida.",
       resultado: null,
     };
   }
+
+  // El Rápido y el Blitz se juegan con la misma página, pero en «modo rápido» (ver «El Rápido y el Blitz: la
+  // mesa en un toque» en docs/decisiones/juegos-y-torneos.md). El ritmo lo dice la base si lo trae (`ritmo`) y,
+  // si no, el nombre del torneo, como en la sala: «Rápido Sub-10 Absoluto», «Rapid…», «Blitz…». Sin ninguna de
+  // esas palabras, clásico (null): la página de siempre, sin cambiar nada.
+  function ritmoRapido(nombre, ritmo) {
+    const r = String(ritmo || "").toLowerCase();
+    if (r === "blitz") return "blitz";
+    if (r === "rapido" || r === "rápido" || r === "rapid") return "rapido";
+    const n = String(nombre || "");
+    if (/\bblitz\b/i.test(n)) return "blitz";
+    if (/\br[aá]pid[oa]s?\b|\brapid\b/i.test(n)) return "rapido";
+    return null;
+  }
+  // La primera ilegal: 2 minutos para el rival; en el blitz, 1 (apéndice B.3).
+  const minutosIlegal = (ritmo) => (ritmo === "blitz" ? 1 : 2);
 
   // Cómo se pinta una mesa: pierde (segunda ilegal sin resultado todavía), con
   // resultado en chess-results, con algo sin guardar o sin nada.
@@ -446,7 +464,7 @@
     return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);
