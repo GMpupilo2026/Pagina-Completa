@@ -339,6 +339,12 @@
         $("camara-elegir-caja").hidden = todas.length < 2;
     }
 
+    /* Cuántas fotos ya terminaron de cargar: la foto se lee aparte (onload) y
+     * una que llega después de tocar las esquinas las borra. Quien la sube
+     * desde afuera (verificar-camara-tablero.js) espera este número. */
+    let fotosListas = 0;
+    const fotoLista = () => { lienzo.dataset.fotos = String(++fotosListas); };
+
     function usarFoto(archivo) {
         if (!archivo) return;
         const img = new Image();
@@ -350,9 +356,11 @@
             if (fuente instanceof HTMLImageElement && fuente.naturalWidth === img.naturalWidth && fuente.naturalHeight === img.naturalHeight) {
                 fuente = img; fuenteVer++;
                 for (const t of tableros) t.recientes = [];
+                fotoLista();
                 return;
             }
             nuevaFuente(img, img.naturalWidth, img.naturalHeight);
+            fotoLista();
         };
         img.onerror = () => avisar("No se pudo abrir esa foto. Prueba con otra en JPG o PNG.", "error");
         img.src = URL.createObjectURL(archivo);
