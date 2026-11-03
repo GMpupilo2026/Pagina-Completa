@@ -205,7 +205,9 @@
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
                 el("span", { class: "cam-nombre", texto: nombre }),
+                cuentaDe(m, color),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
+            cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
             marcas, anulares.children.length ? anulares : null);
     }
 
@@ -494,33 +496,33 @@
         return f ? f.presente : null;
     }
 
+    // Quien no está marcado «llegó» no ha llegado: no hay un botón de «no llegó» (se entiende por omisión).
+    const llego = (mesa, color) => presenciaDe(mesa, color) === true;
     function pintarPresenciaResumen() {
         const total = estado.mesas.length * 2;
-        const revisados = estado.mesas.reduce((n, m) => n + (presenciaDe(m.mesa, "blancas") !== null ? 1 : 0) + (presenciaDe(m.mesa, "negras") !== null ? 1 : 0), 0);
-        const faltan = presencias().filter((x) => !x.presente).length;
-        $("presencia-resumen").textContent = total ? "Presencia revisada: " + revisados + " de " + total + " jugadores" + (faltan ? " · no han llegado: " + faltan : "") + "." : "";
+        const llegaron = estado.mesas.reduce((n, m) => n + (llego(m.mesa, "blancas") ? 1 : 0) + (llego(m.mesa, "negras") ? 1 : 0), 0);
+        $("presencia-resumen").textContent = total ? "Han llegado " + llegaron + " de " + total + " jugadores" + (llegaron < total ? " · faltan " + (total - llegaron) : "") + "." : "";
         const b = $("presencia-todos");
-        if (b) b.hidden = concluida() || total === 0 || revisados >= total;
+        if (b) b.hidden = concluida() || total === 0 || llegaron >= total;
     }
 
-    // «Marcar que llegaron todos los que no he revisado»: un toque para arrancar la ronda. Solo toca a los que están «sin revisar»: a
-    // quien ya marcó «No ha llegado» no lo pisa (la función tampoco: ignora lo que ya tiene marca).
-    function sinRevisar() {
+    // «Marcar que llegaron todos»: un toque para arrancar la ronda, para quien llegó junto. A quien ya está marcado no le cambia nada.
+    function sinLlegar() {
         const out = [];
-        for (const m of estado.mesas) for (const color of ["blancas", "negras"]) if (presenciaDe(m.mesa, color) === null) out.push({ mesa: m.mesa, color });
+        for (const m of estado.mesas) for (const color of ["blancas", "negras"]) if (!llego(m.mesa, color)) out.push({ mesa: m.mesa, color });
         return out;
     }
     async function marcarTodosLlegaron() {
-        const falta = sinRevisar();
+        const falta = sinLlegar();
         if (!falta.length) return;
-        const sigue = await Avisos.confirmar("¿Marcar que llegaron los " + falta.length + " jugadores que todavía no has revisado? Los que ya marcaste (llegó o no ha llegado) se quedan como están.", { titulo: "Llegaron todos", aceptar: "Sí, llegaron todos" });
+        const sigue = await Avisos.confirmar("¿Marcar que llegaron los " + falta.length + " jugadores que todavía no están marcados como llegados?", { titulo: "Llegaron todos", aceptar: "Sí, llegaron todos" });
         if (!sigue) return;
         const antes = presencias().slice();
         const ahora = new Date().toISOString();
-        estado.presencia = presencias().concat(falta.map((x) => ({ mesa: x.mesa, color: x.color, presente: true, marcada: ahora })));
+        estado.presencia = presencias().filter((x) => x.presente).concat(falta.map((x) => ({ mesa: x.mesa, color: x.color, presente: true, marcada: ahora })));
         pintar();
         try {
-            await escribir("presencia_todos", { ronda: estado.ronda }, "Presencia de todos los jugadores sin revisar");
+            await escribir("presencia_todos", { ronda: estado.ronda }, "Presencia de todos los jugadores");
             avisar("Listo: " + falta.length + " jugadores marcados como llegados.");
         } catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
@@ -534,22 +536,48 @@
         catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
 
-    // Quien ya llegó no necesita sus botones: se ven solo si «no ha llegado» o sin revisar. Un toque por error se corrige con «Corregir»
-    // (solo en esta pantalla: vuelve a mostrar los dos botones de ese jugador).
-    const corrigiendo = new Set();
+    // Solo hay un botón: «Llegó». Sin marcar se entiende que no ha llegado. Al marcarlo, el botón desaparece y queda su estado con un
+    // «Corregir» chico (por si fue un toque equivocado: lo vuelve a poner como que no ha llegado).
     function bloquePresencia(m, color) {
-        const v = presenciaDe(m.mesa, color);
+        const v = llego(m.mesa, color);
         const nombre = nombreDe(m, color);
-        const texto = v === null ? "Presencia: sin revisar" : v ? "✓ Llegó" : "✗ No ha llegado";
-        const clave = m.mesa + "|" + color;
-        const oculto = v === true && !corrigiendo.has(clave) && !concluida();
-        return el("div", { class: "cam-presencia", "data-presente": v === null ? "sin-revisar" : v ? "si" : "no" },
-            // El estado: un icono (? sin revisar, ✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
-            el("span", { class: "cam-presencia-estado", title: texto }, icono(v === null ? "dudoso" : v ? "llego" : "ausente"), el("span", { class: "sr-only", texto })),
-            ...(oculto
-                ? [el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-claro", "data-accion": "corregir-presencia", "aria-label": "Corregir la presencia de " + nombre, onclick: () => { corrigiendo.add(clave); pintar(); } }, "Corregir")]
-                : [botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => { corrigiendo.delete(clave); marcarPresencia(m, color, true); }, { variante: "cam-btn-icono-verde", pulsado: v === true }),
-                    botonJugador("ausente", "ausente", nombre + " no ha llegado", "No ha llegado", () => { corrigiendo.delete(clave); marcarPresencia(m, color, false); }, { variante: "cam-btn-icono-rojo", pulsado: v === false })]));
+        const texto = v ? "✓ Llegó" : "✗ No ha llegado";
+        return el("div", { class: "cam-presencia", "data-presente": v ? "si" : "no" },
+            // El estado: un icono (✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
+            el("span", { class: "cam-presencia-estado", title: texto }, icono(v ? "llego" : "ausente"), el("span", { class: "sr-only", texto })),
+            v && !concluida()
+                ? el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-claro", "data-accion": "corregir-presencia", "aria-label": "Corregir: " + nombre + " no ha llegado", onclick: () => marcarPresencia(m, color, false) }, "Corregir")
+                : botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: false }));
+    }
+
+    // El cronómetro de cada jugador que no ha llegado: cuenta el tiempo de espera (30 min desde que empezó la ronda de su categoría) y,
+    // al llegar a cero, el nombre se resalta como GUÍA de que ya perdería por incomparecencia. El árbitro decide: no se hace nada solo.
+    function finDeLaEspera() {
+        const H = window.CentroamericanoHorario;
+        if (!H || !estado) return null;
+        const e = H.estado(new Date(), iniciosMarcados());
+        return e.enCurso && e.ronda === estado.ronda ? e.hasta.getTime() : null;
+    }
+    function cuentaDe(m, color) {
+        const fin = finDeLaEspera();
+        if (fin == null || llego(m.mesa, color) || m.valor !== "0" || concluida()) return null;
+        return el("span", { class: "cam-cuenta", role: "timer", "data-fin": String(fin), "aria-label": "Tiempo de espera de " + nombreDe(m, color) }, "");
+    }
+    const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    function latirCuentas() {
+        const ahora = Date.now();
+        for (const c of document.querySelectorAll(".cam-cuenta")) {
+            const resta = Number(c.dataset.fin) - ahora;
+            c.textContent = "⏱ " + mmss(resta);
+            const jug = c.closest(".cam-jugador");
+            if (!jug) continue;
+            const vencido = resta <= 0;
+            if (vencido !== (jug.dataset.vencido === "si")) {
+                jug.dataset.vencido = vencido ? "si" : "no";
+                const guia = jug.querySelector(".cam-cuenta-guia");
+                if (guia) guia.hidden = !vencido;
+            }
+        }
     }
 
     // ------------------------------------------------------------- varios torneos para el mismo árbitro
@@ -754,7 +782,7 @@
     // tuya: se toca «Guardar» (que pide la revisión previa y comprueba contra chess-results), nunca se manda solo.
     let alertaClave = "";
     function incomparecenciaDe(m) {
-        const sin = (color) => presenciaDe(m.mesa, color) === false;
+        const sin = (color) => !llego(m.mesa, color);
         if (sin("blancas") && sin("negras")) return { valor: "6", texto: "0f-0f: ninguno llegó" };
         if (sin("negras")) return { valor: "4", texto: "1-0 por incomparecencia de las negras" };
         if (sin("blancas")) return { valor: "5", texto: "0-1 por incomparecencia de las blancas" };
@@ -797,6 +825,18 @@
         else if (e.siguiente) t = "⏰ Sigue: " + e.siguiente.nombre + " a las " + hora(new Date(e.siguiente.inicio + ":00-06:00")) + ".";
         $("espera").textContent = t;
         pintarEsperaAlerta(e);
+        sincronizarAusentes(e);
+    }
+
+    // Cuando la ronda de su categoría empieza, los que no han llegado quedan anotados como «no ha llegado» (una sola vez por ronda): así la
+    // organización los ve en su lista de los que faltan. Quien después llegue se marca con «Llegó» y eso lo cambia. Nunca pisa una marca.
+    let ausentesSincronizados = 0;
+    async function sincronizarAusentes(e) {
+        if (!estado || concluida() || !e || !e.enCurso || e.ronda !== estado.ronda || ausentesSincronizados === estado.ronda) return;
+        if (!estado.mesas.some((m) => m.valor === "0" && (presenciaDe(m.mesa, "blancas") === null || presenciaDe(m.mesa, "negras") === null))) return;
+        ausentesSincronizados = estado.ronda;
+        try { await escribir("presencia_ausentes", { ronda: estado.ronda }, "Los jugadores que no han llegado"); }
+        catch (err) { ausentesSincronizados = 0; /* se vuelve a intentar en el próximo repintado */ }
     }
 
     // «Inició la ronda»: cada categoría puede empezar a una hora distinta, y quien lo sabe es el árbitro de la sala. Toca el botón en el
@@ -898,6 +938,7 @@
         pintarEspera();
         pintarInicio();
         pintarConcluido();
+        latirCuentas();
         if (tiemposAbierto && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#control-tiempos'))) pintarTiempos();
         pintarAnotado();
     }
@@ -1409,6 +1450,7 @@
         $("bajar-bitacora").addEventListener("click", bajarBitacora);
         $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
+        setInterval(() => { if (!document.hidden) latirCuentas(); }, 1000);
         $("nombre-guardar").addEventListener("click", guardarNombre);
         $("nombre-campo").addEventListener("keydown", (e) => { if (e.key === "Enter") guardarNombre(); });
         $("ir-mesa").addEventListener("change", irAMesa);

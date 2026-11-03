@@ -8836,10 +8836,22 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
      documento**; ni la tabla ni la función dejan nada más). Riesgo conocido y aceptado: el PDF lo arma la página, no la función, así
      que un árbitro con enlace concluido podría mandar otro PDF a un correo ajeno; por eso el tope tan bajo, el texto fijo y que haga
      falta un enlace concluido. «Resend» ya figura en la lista de proveedores de `privacidad.html` (se le sumó este uso).
-  6. **Quien ya llegó no muestra sus botones.** Al marcar «Llegó», los botones «Llegó» y «No ha llegado» de ese jugador desaparecen y
-     queda su estado («✓ Llegó»); un «Corregir» chico los vuelve a mostrar si fue un toque por error (solo en la pantalla: no manda
-     nada). Los jugadores «sin revisar» o «no ha llegado» siguen con sus botones.
-  La función es `centroamericano-mesa` (v15). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
+  6. **Sin marcar es «no ha llegado»; solo existe el botón «Llegó».** No hay botón de «no llegó»: quien no está marcado se entiende
+     ausente. Al marcar «Llegó» el botón desaparece y queda «✓ Llegó» con un «Corregir» chico, que lo vuelve a poner como que no ha
+     llegado. La barra dice «Han llegado N de M jugadores · faltan K». Por eso «Marcar que llegaron todos» (`presencia_todos`) ahora
+     pone «llegó» a **todos los que no lo estén** (también a los anotados «no ha llegado»), y el aviso de incomparecencia mira
+     «no marcado como llegó».
+  7. **El cronómetro de espera junto al nombre.** Cuando la ronda de su categoría está en marcha (con la hora que marcó el árbitro o,
+     si no, la del calendario), cada jugador que no ha llegado —de una mesa sin resultado— lleva un cronómetro chico («⏱ 19:42», un
+     `role="timer"` que cuenta los 30 min de las bases hasta `hasta`, sin anunciar cada segundo). **Al llegar a cero, el nombre se
+     resalta** (fondo y halo ámbar, que late suave salvo con movimiento reducido) y sale la guía escrita «Se acabó el tiempo de
+     espera: por reglas pierde por incomparecencia. Tú decides.»: el color nunca va solo. Es solo una guía: no se hace nada solo; el
+     árbitro puede decidir lo contrario, y el botón «Pasar a incomparecencia» sigue dejando el resultado elegido (sin enviarlo).
+  8. **Los que no han llegado quedan anotados al empezar la ronda** (`presencia_ausentes`): la tablet lo manda **una vez por ronda**
+     cuando la ronda de su categoría está en marcha y quedan jugadores sin marca; la función anota «no ha llegado» solo a quien no
+     tiene ninguna marca y **nunca pisa una** (`ignoreDuplicates`, ni la que llegue mientras tanto). Así la lista «Jugadores que no
+     han llegado» de la organización —que lee filas explícitas— sigue funcionando aunque la tablet ya no tenga ese botón.
+  La función es `centroamericano-mesa` (v16). Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js` (rotos a propósito,
   saltan).
 - **Los dos puntos del tiempo se ponen solos** (control de tiempos). El campo «Tiempo» de cada reloj pedía escribir
   «1:23:45», y el teclado numérico de una tablet no trae «:». Ahora se escriben solo números y se leen como un reloj, de

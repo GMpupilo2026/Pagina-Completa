@@ -376,18 +376,22 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== Presencia, control de tiempos y avisos sin ruido ===");
     await p.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
-    igual("cada jugador dice «sin revisar» y la barra cuenta cuántos faltan por revisar", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-presencia-estado').textContent, document.getElementById("presencia-resumen").textContent]), ["Presencia: sin revisar", "Presencia revisada: 0 de 6 jugadores."]);
-    await p.click(acc(2, "blancas", "ausente"));
-    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent.includes("no han llegado: 1"));
-    igual("«No ha llegado» se anota con la mesa y el color, se ve al instante y la barra lo cuenta", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-presencia-estado').textContent, document.getElementById("presencia-resumen").textContent]),
-        [[[2, "blancas", false]], "✗ No ha llegado", "Presencia revisada: 1 de 6 jugadores · no han llegado: 1."]);
+    const jug = (c) => '.cam-mesa[data-mesa="2"] .cam-jugador[data-color="' + c + '"]';
+    igual("sin marcar se entiende que NO ha llegado: dice «No ha llegado», solo hay un botón «Llegó» (no existe un botón de «no llegó») y la barra cuenta cuántos han llegado",
+      await p.evaluate((q) => [document.querySelector(q + " .cam-presencia-estado").textContent, document.querySelectorAll('[data-accion="ausente"]').length, document.querySelectorAll('.cam-jugador [data-accion="presente"]').length, document.getElementById("presencia-resumen").textContent], jug("blancas")),
+      ["✗ No ha llegado", 0, 6, "Han llegado 0 de 6 jugadores · faltan 6."]);
     await p.click(acc(2, "blancas", "presente"));
-    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Presencia revisada: 1 de 6 jugadores.");
-    igual("si llega, el árbitro lo cambia a «Llegó» y ya no cuenta como ausente", await p.textContent('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-presencia-estado'), "✓ Llegó");
-    igual("quien ya llegó NO muestra sus botones «Llegó» ni «No ha llegado» (queda su estado y un «Corregir»); los demás jugadores sí los muestran", await p.evaluate(() => { const j = (c) => document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="' + c + '"]'); const vis = (n) => !!n && n.checkVisibility(); return [vis(j("blancas").querySelector('[data-accion="presente"]')), vis(j("blancas").querySelector('[data-accion="ausente"]')), vis(j("blancas").querySelector('[data-accion="corregir-presencia"]')), vis(j("negras").querySelector('[data-accion="presente"]')), vis(j("negras").querySelector('[data-accion="ausente"]'))]; }), [false, false, true, true, true]);
-    await p.click('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] [data-accion="corregir-presencia"]');
+    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
+    igual("«Llegó» se anota con la mesa y el color y se ve al instante; ese jugador queda «✓ Llegó» SIN su botón (con un «Corregir»), y los demás conservan el suyo",
+      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), j.querySelector(".cam-presencia-estado").textContent, vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), document.querySelectorAll('.cam-jugador [data-accion="presente"]').length]; }, jug("blancas")),
+      [[[2, "blancas", true]], "✓ Llegó", false, true, 5]);
+    await p.click(jug("blancas") + ' [data-accion="corregir-presencia"]');
     await p.waitForSelector(acc(2, "blancas", "presente"));
-    igual("«Corregir» vuelve a mostrar los dos botones de ese jugador (sin mandar nada a la función)", await p.evaluate(() => [!!document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] [data-accion="ausente"]'), !document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] [data-accion="corregir-presencia"]'), window.__llamadas.filter((l) => l.body.action === "presencia").length]), [true, true, 2]);
+    igual("«Corregir» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»",
+      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => l.body.presente), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("blancas")),
+      [[true, false], "✗ No ha llegado", "Han llegado 0 de 6 jugadores · faltan 6."]);
+    await p.click(acc(2, "blancas", "presente"));
+    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
     igual("cada mesa SIN terminar tiene su relojito (icono, sin texto y con su nombre accesible); las que ya tienen resultado, no", await p.evaluate(() => [[...document.querySelectorAll('.cam-mesa [data-accion="tiempo"]')].map((b) => [b.closest(".cam-mesa").dataset.mesa, b.textContent.trim(), !!b.querySelector("svg"), b.getAttribute("aria-label")]), document.querySelector('.cam-mesa[data-mesa="3"] [data-accion="tiempo"]')]),
         [[["2", "", true, "Control de tiempos de la mesa 2"]], null]);
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
@@ -597,7 +601,7 @@ const CONTRASTE = `(sel) => {
     igual("la página no se desplaza a lo ancho", await p.evaluate(() => document.documentElement.scrollWidth), 390);
     igual("las tarjetas usan ICONOS: cada botón de jugador es un icono de 44 px o más, con su nombre accesible (aria-label y title) y la palabra solo para el lector de pantalla",
         await p.evaluate(() => { const bs = [...document.querySelectorAll(".cam-jugador .cam-btn-icono")].filter((b) => b.checkVisibility()); return [bs.length > 0, bs.every((b) => b.getBoundingClientRect().height >= 44 && b.getBoundingClientRect().width >= 44), bs.every((b) => b.getAttribute("aria-label") && b.title && b.querySelector("svg") && b.querySelector(".sr-only")), [...new Set(bs.map((b) => b.dataset.accion))].sort()]; }),
-        [true, true, true, ["anular-ilegal", "anular-irregularidad", "ausente", "ilegal", "irregularidad", "levanto", "presente"]]);
+        [true, true, true, ["anular-ilegal", "anular-irregularidad", "ilegal", "irregularidad", "levanto", "presente"]]);
     igual("la leyenda de arriba explica todos los iconos con su palabra", await p.evaluate(() => [...document.querySelectorAll(".cam-leyenda span:not(.cam-color-punto)")].map((x) => x.textContent)),
         ["Blancas", "Negras", "Llegó", "No ha llegado", "Jugada ilegal", "Irregularidad (tocó una pieza u otra falta)", "Se levantó de la mesa (cada toque cuenta una vez)", "Anular", "Principal en esta mesa", "Foto de las dos planillas, juntas", "Control de tiempos de la mesa"]);
     igual("ilegal es un peón tachado (rojo, con relleno y una raya diagonal) e irregularidad es una mano (cuatro trazos): no el triángulo ni la bandera de antes, y la leyenda usa los mismos dibujos", await p.evaluate(() => {
@@ -662,29 +666,47 @@ const CONTRASTE = `(sel) => {
     igual("al volver a leer sigue concluido (lo dice la base, no la pantalla) y lo apagado sigue apagado", await pc.evaluate(() => [document.getElementById("concluido").hidden, document.getElementById("concluir").hidden, [...document.querySelectorAll("#lista button")].every((n) => n.disabled)]), [false, true, true]);
     await cc.ctx.close();
 
-    console.log("\n=== Llegaron todos, el tiempo de espera cumplido y la incomparecencia ===");
+    console.log("\n=== El cronómetro de espera, llegaron todos y la incomparecencia ===");
     const ce = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN });
     await ce.p.waitForSelector(".cam-mesa");
     const pe = ce.p;
+    const jugE = (m, c) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + c + '"]';
     await pe.evaluate(() => { window.__vib = 0; navigator.vibrate = () => { window.__vib++; return true; };
-      window.__presencia.push({ mesa: 2, color: "negras", presente: false, marcada: "2026-11-02T15:00:00Z" }); });
+      window.__presencia.push({ mesa: 2, color: "blancas", presente: true, marcada: "2026-11-02T15:00:00Z" }); });
     await pe.click("#actualizar");
-    await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent.includes("no han llegado: 1"));
-    igual("el botón «Marcar que llegaron todos los que no he revisado» está a la vista mientras haya jugadores sin revisar", await pe.evaluate(() => [document.getElementById("presencia-todos").checkVisibility(), document.getElementById("presencia-resumen").textContent]), [true, "Presencia revisada: 1 de 6 jugadores · no han llegado: 1."]);
+    await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
+    igual("antes de que empiece la ronda no hay cronómetro (nadie está corriendo) y el botón «Marcar que llegaron todos» está a la vista", await pe.evaluate(() => [document.querySelectorAll(".cam-cuenta").length, document.getElementById("presencia-todos").checkVisibility(), document.getElementById("presencia-todos").textContent.trim()]), [0, true, "✓ Marcar que llegaron todos"]);
+    // La ronda de su categoría empezó hace 10 minutos: corre el cronómetro de los que no han llegado (y solo de mesas sin resultado).
+    await pe.evaluate(() => { window.__inicioRonda = { ronda: 3, inicio: new Date(Date.now() - 10 * 60000).toISOString(), arbitro: "Ana Árbitra" }; });
+    await pe.click("#actualizar");
+    await pe.waitForSelector(".cam-cuenta");
+    igual("con la ronda en marcha los cronómetros son «timer» (roles para el lector de pantalla) y ninguno se ha vencido todavía",
+      await pe.evaluate(() => [[...document.querySelectorAll(".cam-cuenta")].every((c) => c.getAttribute("role") === "timer"), document.querySelectorAll('.cam-jugador[data-vencido="si"]').length]), [true, 0]);
+    const cuentas = await pe.evaluate(() => [...document.querySelectorAll(".cam-cuenta")].map((c) => [c.closest(".cam-mesa").dataset.mesa + c.closest(".cam-jugador").dataset.color[0], /^⏱ (19|20):\d\d$/.test(c.textContent)]));
+    igual("los cronómetros son de la mesa 1 (los dos) y de las negras de la mesa 2, y marcan unos 20 min", cuentas, [["1b", true], ["1n", true], ["2n", true]]);
+    igual("al empezar la ronda, los que no han llegado quedan anotados «no ha llegado» UNA sola vez (la organización los ve), sin pisar a quien ya estaba marcado", await pe.evaluate(() => [window.__ausentesArgs.map((x) => x.ronda), window.__presencia.filter((x) => x.mesa === 2 && x.color === "blancas")[0].presente, window.__presencia.filter((x) => x.mesa === 1).map((x) => x.presente)]), [[3], true, [false, false]]);
+    await pe.click("#actualizar");
+    await pe.waitForTimeout(400);
+    igual("y no se vuelve a mandar al repintar", await pe.evaluate(() => window.__ausentesArgs.length), 1);
+    igual("antes de que se acabe el tiempo ningún nombre está resaltado ni sale la guía", await pe.evaluate(() => [document.querySelectorAll('.cam-jugador[data-vencido="si"]').length, [...document.querySelectorAll(".cam-cuenta-guia")].filter((g) => g.checkVisibility()).length, document.getElementById("espera-alerta").hidden]), [0, 0, true]);
+    // «Marcar que llegaron todos»
     await pe.click("#presencia-todos");
     await pe.waitForSelector("dialog[open]");
-    igual("pregunta antes y dice cuántos son (5) y que a quien ya marcó no lo toca", await pe.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/5 jugadores/.test(t), /ya marcaste/.test(t)]; }), [true, true]);
+    igual("pregunta antes y dice cuántos son (5)", await pe.evaluate(() => /5 jugadores/.test(document.querySelector("dialog[open]").textContent)), true);
     await pe.click("dialog[open] [data-avisos-aceptar]");
-    await pe.waitForFunction(() => window.__todosArgs && window.__todosArgs.length === 1);
-    await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent.includes("6 de 6"));
-    igual("al aceptar la función recibe «presencia_todos» de la ronda 3; los 5 sin revisar quedan «llegó» y el que ya estaba «no ha llegado» se queda así", await pe.evaluate(() => [window.__todosArgs[0].ronda, document.getElementById("presencia-resumen").textContent, document.getElementById("presencia-todos").hidden,
-      [...document.querySelectorAll(".cam-mesa .cam-presencia-estado")].map((e) => e.textContent.replace(/\s+/g, " ").trim()).filter((x) => x.includes("No ha llegado")).length]), [3, "Presencia revisada: 6 de 6 jugadores · no han llegado: 1.", true, 1]);
-    // El tiempo de espera de SU categoría se cumplió (la ronda empezó hace 40 min) y sigue sin llegar el de las negras de la mesa 2.
-    igual("antes de cumplirse el tiempo de espera no sale el aviso de incomparecencia", await pe.evaluate(() => document.getElementById("espera-alerta").hidden), true);
+    await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 6 de 6 jugadores.");
+    igual("al aceptar la función recibe «presencia_todos» de la ronda 3, los 6 quedan «llegó», el botón se va y los cronómetros también", await pe.evaluate(() => [window.__todosArgs[0].ronda, document.getElementById("presencia-todos").hidden, document.querySelectorAll(".cam-cuenta").length, window.__presencia.every((x) => x.presente)]), [3, true, 0, true]);
+    // Se equivocó con la mesa 2 de las negras: «Corregir» la deja como que no ha llegado (y vuelve su cronómetro).
+    await pe.click(jugE(2, "negras") + ' [data-accion="corregir-presencia"]');
+    await pe.waitForSelector(jugE(2, "negras") + " .cam-cuenta");
+    // La ronda empezó hace 40 min: el tiempo de espera (30) se cumplió.
     await pe.evaluate(() => { window.__inicioRonda = { ronda: 3, inicio: new Date(Date.now() - 40 * 60000).toISOString(), arbitro: "Ana Árbitra" }; });
     await pe.click("#actualizar");
-    await pe.waitForFunction(() => !document.getElementById("espera-alerta").hidden, null, { timeout: 15000 });
-    igual("a los 40 minutos sale el aviso con la mesa 2 y quién no llegó, con su botón, y la tablet vibra una vez (sin sonido)", await pe.evaluate(() => { const a = document.getElementById("espera-alerta"); return [a.checkVisibility(), a.getAttribute("role"), /Se cumplió el tiempo de espera \(30 min\)/.test(document.getElementById("ea-titulo").textContent), [...a.querySelectorAll("li")].map((l) => l.dataset.mesa + "|" + l.querySelector("span").textContent), a.querySelector("button").textContent, window.__vib]; }),
+    await pe.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"]').dataset.vencido === "si", null, { timeout: 15000 });
+    igual("al llegar a cero el cronómetro marca 0:00, el nombre del que no llegó SE RESALTA y aparece la guía escrita (pierde por incomparecencia; el árbitro decide); quien sí llegó no se resalta",
+      await pe.evaluate(() => { const n = document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"]'), b = document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"]'); const g = n.querySelector(".cam-cuenta-guia"); return [n.querySelector(".cam-cuenta").textContent, getComputedStyle(n.querySelector(".cam-nombre")).boxShadow !== "none", g.checkVisibility(), /por reglas pierde por incomparecencia\. Tú decides/.test(g.textContent), b.dataset.vencido === "si"]; }),
+      ["⏱ 0:00", true, true, true, false]);
+    igual("y sale el aviso de la categoría con la mesa 2 y quién no llegó, con su botón; la tablet vibra una vez (sin sonido)", await pe.evaluate(() => { const a = document.getElementById("espera-alerta"); return [a.checkVisibility(), a.getAttribute("role"), /Se cumplió el tiempo de espera \(30 min\)/.test(document.getElementById("ea-titulo").textContent), [...a.querySelectorAll("li")].map((l) => l.dataset.mesa + "|" + l.querySelector("span").textContent), a.querySelector("button").textContent, window.__vib]; }),
       [true, "alert", true, ["2|Mesa 2 — Acuña Porras Fabio (negras) no llegó"], "Pasar a incomparecencia (1-0 por incomparecencia de las negras)", 1]);
     const antesGuardar = await pe.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
     await pe.click('#ea-lista [data-accion="incomparecencia"]');
