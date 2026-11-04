@@ -118,7 +118,7 @@ const FUNCIONES = {
   // «centroamericano-mesa» es pública (verify_jwt en false): ver su cabecera.
   "mesa-arbitro": ["chess-results-ingreso.ts"],
   "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts"],
-  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts"],
 };
 
 function armar(nombre) {

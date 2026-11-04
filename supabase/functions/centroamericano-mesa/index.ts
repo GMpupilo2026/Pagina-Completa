@@ -73,7 +73,8 @@
 //                                             solo se vuelven a leer las categorías cuya copia tiene más de 2 minutos, hasta 6 a la vez y esperando a lo más 12 s
 //   "mis_pareos" {}                      -> «Mis pareos» (el logo y la «Ronda abierta» de la página): los pareos de SUS mesas (las de este enlace y las de sus otros enlaces, nada más) de
 //                                             TODAS las rondas, con el resultado. La ronda abierta sale de la copia compartida (centroamericano_lecturas); las anteriores, de lo que
-//                                             guarda el sorteo de Fair Play (centroamericano_fp_partidas). Solo lee
+//                                             guarda el sorteo de Fair Play (centroamericano_fp_partidas); lo que falta o está incompleto se completa con la
+//                                             página pública de pareos de chess-results (con topes) y se deja guardado en esa tabla
 //   "salida"  { fase: "sale"|"vuelve", motivo?, segundos? } -> «Modo concentración»: anota que el árbitro se salió de la pantalla de su tablet y cuándo volvió
 //   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
@@ -96,6 +97,7 @@ import { guardarYComprobar, MAX_CAMBIOS } from "./chess-results-ingreso.ts";
 import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, deBase64, llamarPuente } from "./drive-puente.ts";
 import { aLectura, leerConCache, ponerLectura } from "./lecturas-cache.ts";
+import { pareosPublicos } from "./pareos-publicos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -687,19 +689,65 @@ Deno.serve(async (req) => {
     }
 
     // «Mis pareos» (el logo y la «Ronda abierta» de la página del árbitro): los pareos de SUS mesas —las de este enlace y las de sus otros
-    // enlaces, dentro del rango de cada uno; nada de las demás mesas ni categorías— de todas las rondas, con el resultado. La ronda
-    // abierta sale de la copia compartida de chess-results (centroamericano_lecturas: la que sus propios guardados ponen al día); las rondas
-    // anteriores, de lo que ya guarda el sorteo de Fair Play (centroamericano_fp_partidas, leído de chess-results ronda por ronda). Una ronda
-    // que todavía no se guardó sale vacía. Solo lee: no escribe nada y no habla con chess-results. El enlace concluido también puede verlo.
+    // enlaces, dentro del rango de cada uno; nada de las demás mesas ni categorías— de todas las rondas, con el resultado COMPLETO.
+    // La ronda abierta sale de la copia compartida de chess-results (centroamericano_lecturas: la que sus propios guardados ponen al día);
+    // las anteriores, de lo que guarda el sorteo de Fair Play (centroamericano_fp_partidas). Esa copia solo se pone al día cuando alguien
+    // abre Fair Play, así que se queda corta (resultados en blanco, rondas que faltan): lo que falta o está incompleto se pide a la página
+    // PÚBLICA de pareos de chess-results (sin clave, solo de los torneos de este árbitro) y se deja guardado en fp_partidas para el
+    // próximo pedido. Hay topes: a lo más 12 páginas por pedido (4 a la vez, esperando 11 s) y una ronda no se vuelve a pedir antes de 2 min.
+    // Una ronda que no se pudo leer sale con lo último que había. No escribe nada más. El enlace concluido también puede verlo.
     if (cuerpo.action === "mis_pareos") {
       visto();
+      const MAX_PAGINAS = 12, REVISAR_MS = 120_000, COPIA_VIEJA_MS = 180_000;
       const enlaces = [{ tnr: a.tnr, desde: a.mesa_desde, hasta: a.mesa_hasta }, ...hermanasFilas.map((x) => ({ tnr: x.tnr, desde: x.mesa_desde, hasta: x.mesa_hasta }))];
       const tnrs = [...new Set(enlaces.map((e) => e.tnr))];
       const [{ data: ts }, { data: copias }, { data: guardados }] = await Promise.all([
         servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs),
         servicio.from("centroamericano_lecturas").select("tnr, ronda, mesas, leida").in("tnr", tnrs),
-        servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, blancas, negras, resultado").in("tnr", tnrs).range(0, 4999),
+        servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, snr_b, snr_n, blancas, negras, elo_b, elo_n, resultado, leida").in("tnr", tnrs).range(0, 4999),
       ]);
+      type Guardada = { tnr: string; ronda: number; mesa: number; snr_b?: number | null; snr_n?: number | null; blancas: string; negras: string; elo_b?: number | null; elo_n?: number | null; resultado: string; leida?: string };
+      type Copia = { tnr: string; ronda: number; mesas: { mesa: number; blancas: string; negras: string; valor: string }[]; leida: string };
+      const filas = new Map<string, Guardada>();
+      for (const g of (guardados ?? []) as Guardada[]) filas.set(g.tnr + "|" + g.ronda + "|" + g.mesa, g);
+      const copiaDe = (tnr: string) => ((copias ?? []) as Copia[]).find((x) => x.tnr === tnr && x.ronda > 0);
+      const enMisMesas = (tnr: string, mesa: number) => enlaces.some((e) => e.tnr === tnr && mesa >= e.desde && mesa <= e.hasta);
+      const ahora = Date.now();
+
+      // Qué rondas hay que pedirle a chess-results: las que no están, las que tienen una partida sin resultado y la abierta si su copia es vieja.
+      const pedidos: { tnr: string; ronda: number; abierta: boolean }[] = [];
+      for (const tnr of tnrs) {
+        const copia = copiaDe(tnr);
+        const deTnr = [...filas.values()].filter((f) => f.tnr === tnr);
+        const abierta = copia?.ronda ?? Math.max(0, ...deTnr.map((f) => f.ronda));
+        for (let n = 1; n <= abierta; n++) {
+          const deEsa = deTnr.filter((f) => f.ronda === n);
+          const hace = deEsa.length ? ahora - Math.max(...deEsa.map((f) => Date.parse(f.leida ?? "") || 0)) : Infinity;
+          const esAbierta = n === abierta && !!copia;
+          const falta = esAbierta ? ahora - Date.parse(copia!.leida) > COPIA_VIEJA_MS : !deEsa.length || deEsa.some((f) => enMisMesas(tnr, f.mesa) && f.negras && !f.resultado);
+          if (falta && hace > REVISAR_MS) pedidos.push({ tnr, ronda: n, abierta: esAbierta });
+        }
+      }
+      pedidos.sort((x, y) => Number(y.abierta) - Number(x.abierta) || y.ronda - x.ronda);
+      const cola = pedidos.slice(0, MAX_PAGINAS);
+      const frescas = new Set<string>();   // «tnr|ronda» leídas ahora de chess-results
+      let sig = 0;
+      const traer = async () => {
+        while (sig < cola.length) {
+          const p = cola[sig++];
+          try {
+            const leida = new Date().toISOString();
+            const nuevas = (await pareosPublicos(p.tnr, p.ronda, 8000)).map((x) => ({ tnr: p.tnr, ronda: p.ronda, mesa: x.mesa, snr_b: x.snr_b, snr_n: x.snr_n, blancas: x.blancas, negras: x.negras, elo_b: x.elo_b, elo_n: x.elo_n, resultado: x.resultado, leida }));
+            if (!nuevas.length) continue;
+            const { error } = await servicio.from("centroamericano_fp_partidas").upsert(nuevas, { onConflict: "tnr,ronda,mesa" });
+            if (error) { console.error("centroamericano-mesa: mis_pareos guardar", p.tnr, p.ronda, error.code); continue; }
+            for (const f of nuevas) filas.set(f.tnr + "|" + f.ronda + "|" + f.mesa, f);
+            frescas.add(p.tnr + "|" + p.ronda);
+          } catch (e) { console.error("centroamericano-mesa: mis_pareos leer", p.tnr, p.ronda, e instanceof Error ? e.message : String(e)); }
+        }
+      };
+      if (cola.length) await Promise.race([Promise.all([traer(), traer(), traer(), traer()]), new Promise((ok) => setTimeout(ok, 11_000))]);
+
       // El valor del desplegable de chess-results, dicho como en el pareo publicado.
       const RESULTADO_VIVO: Record<string, string> = { "0": "", "1": "1-0", "2": "½-½", "3": "0-1", "4": "1-0 (inc.)", "5": "0-1 (inc.)", "6": "0-0 (inc.)" };
       const limpio = (r: string) => String(r ?? "").replace(/\s*-\s*/g, "-").trim();
@@ -707,20 +755,23 @@ Deno.serve(async (req) => {
         ok: true, generado: new Date().toISOString(),
         torneos: enlaces.map((e) => {
           const t = ((ts ?? []) as { tnr: string; nombre: string; categoria: string; rama: string }[]).find((x) => x.tnr === e.tnr);
-          const copia = ((copias ?? []) as { tnr: string; ronda: number; mesas: { mesa: number; blancas: string; negras: string; valor: string }[]; leida: string }[]).find((x) => x.tnr === e.tnr && x.ronda > 0);
+          const copia = copiaDe(e.tnr);
           const dentro = (m: number) => m >= e.desde && m <= e.hasta;
           const porRonda = new Map<number, { mesa: number; blancas: string; negras: string; resultado: string }[]>();
-          for (const g of (guardados ?? []) as { tnr: string; ronda: number; mesa: number; blancas: string; negras: string; resultado: string }[]) {
+          for (const g of filas.values()) {
             if (g.tnr !== e.tnr || !dentro(g.mesa)) continue;
             if (!porRonda.has(g.ronda)) porRonda.set(g.ronda, []);
             porRonda.get(g.ronda)!.push({ mesa: g.mesa, blancas: g.blancas, negras: g.negras, resultado: limpio(g.resultado) });
           }
-          // La ronda abierta, de la copia compartida (más fresca que lo guardado por Fair Play).
-          if (copia) porRonda.set(copia.ronda, copia.mesas.filter((m) => dentro(m.mesa)).map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: RESULTADO_VIVO[m.valor] ?? "" })));
+          // La ronda abierta, de la copia compartida (más fresca que lo guardado por Fair Play), salvo que ya se haya leído de chess-results ahora.
+          // Una ronda ya terminada (la última) no trae mesas en la copia compartida: ahí manda lo leído de chess-results.
+          const delCopia = copia ? copia.mesas.filter((m) => dentro(m.mesa)) : [];
+          if (copia && delCopia.length && !frescas.has(e.tnr + "|" + copia.ronda)) porRonda.set(copia.ronda, delCopia.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: RESULTADO_VIVO[m.valor] ?? "" })));
+          const abierta = copia?.ronda ?? Math.max(0, ...porRonda.keys());
           return {
             tnr: e.tnr, nombre: t?.nombre ?? e.tnr, categoria: t?.categoria ?? "", rama: t?.rama ?? "", desde: e.desde, hasta: e.hasta,
-            abierta: copia?.ronda ?? Math.max(0, ...porRonda.keys()), leida: copia?.leida ?? null,
-            rondas: [...porRonda.entries()].sort((x, y) => x[0] - y[0]).map(([ronda, mesas]) => ({ ronda, vivo: copia?.ronda === ronda, mesas: mesas.sort((x, y) => x.mesa - y.mesa) })),
+            abierta, leida: copia?.leida ?? null,
+            rondas: [...porRonda.entries()].sort((x, y) => x[0] - y[0]).map(([ronda, mesas]) => ({ ronda, vivo: ronda === abierta, mesas: mesas.sort((x, y) => x.mesa - y.mesa) })),
           };
         }),
       });
