@@ -315,7 +315,7 @@ function ipDe(req: Request): string | null {
 const corto = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
 // Sin tildes ni mayúsculas, para comparar nombres: «Muñoz, José» → «munoz jose».
-const plano = (s: string) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const plano = (s: string) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
 // Lo que dice el aviso de la ronda de un jugador, en su idioma.
 function textoRonda(idioma: string, ronda: number, no: number, mesas: Mesa[], porNo: Map<number, Jug>) {
@@ -382,38 +382,64 @@ const CALENDARIOS: Record<string, string> = {
   "centroamericano-2026": "https://ajedrez-integral.com/documentos/centroamericano-2026/calendario-centroamericano-2026.ics",
 };
 const ANTES_MS = 31 * 60_000;   // pg_cron pasa cada minuto: sale entre 31 y 30 antes
-const calendarios = new Map<string, { leido: number; rondas: { ronda: number; inicio: number }[] }>();
+type Calendario = { rondas: { ronda: number; inicio: number }[]; torneos: { modalidad: Modalidad; inicio: number }[] };
+const calendarios = new Map<string, { leido: number } & Calendario>();
 
 export function leerCalendario(ics: string) {
+  return leerEventos(ics).rondas;
+}
+
+// Las rondas del clásico («Ronda N») y cuándo empieza cada torneo de otra
+// modalidad («Torneo Rapid», «Torneo Blitz»): un día cada uno, con todas sus
+// rondas seguidas.
+export function leerEventos(ics: string): Calendario {
   const texto = ics.replace(/\r?\n[ \t]/g, "");
   const rondas: { ronda: number; inicio: number }[] = [];
+  const torneos: { modalidad: Modalidad; inicio: number }[] = [];
   for (const ev of texto.split("BEGIN:VEVENT").slice(1)) {
     const resumen = (ev.match(/^SUMMARY:(.*)$/m) || [])[1] || "";
     const inicio = (ev.match(/^DTSTART:(\d{8}T\d{6}Z)$/m) || [])[1];
+    if (!inicio) continue;
+    const cuando = Date.parse(inicio.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z"));
     const r = resumen.match(/^Ronda (\d+)\b/);
-    if (!r || !inicio) continue;
-    const iso = inicio.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z");
-    rondas.push({ ronda: Number(r[1]), inicio: Date.parse(iso) });
+    if (r) { rondas.push({ ronda: Number(r[1]), inicio: cuando }); continue; }
+    const t = resumen.match(/^Torneo (Rapid|R[áa]pidas|Blitz)\b/i);
+    if (t) torneos.push({ modalidad: /blitz/i.test(t[1]) ? "blitz" : "rapidas", inicio: cuando });
   }
-  return rondas;
+  return { rondas, torneos };
 }
 
-async function rondasDelCalendario(sala: string) {
+async function calendarioDe(sala: string): Promise<Calendario> {
   const url = CALENDARIOS[sala];
-  if (!url) return [];
+  if (!url) return { rondas: [], torneos: [] };
   const guardado = calendarios.get(sala);
-  if (guardado && Date.now() - guardado.leido < 3600_000) return guardado.rondas;
+  if (guardado && Date.now() - guardado.leido < 3600_000) return guardado;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) throw new Error("calendario " + res.status);
-    const rondas = leerCalendario(await res.text());
-    calendarios.set(sala, { leido: Date.now(), rondas });
-    return rondas;
+    const cal = leerEventos(await res.text());
+    calendarios.set(sala, { leido: Date.now(), ...cal });
+    return cal;
   } catch (e) {
     console.error("sala-jugadores: calendario", sala, e);
-    return guardado ? guardado.rondas : [];
+    return guardado || { rondas: [], torneos: [] };
   }
 }
+const rondasDelCalendario = async (sala: string) => (await calendarioDe(sala)).rondas;
+
+// Las otras modalidades (Rápidas, Blitz) se revisan solo el día de su torneo:
+// desde una hora antes de la hora del calendario hasta 12 horas después. Leer
+// sus seis torneos de chess-results cada minuto toda la semana no le sirve a
+// nadie. Ver «Los avisos también en Rápidas y Blitz» en
+// docs/decisiones/juegos-y-torneos.md.
+export function modalidadesDeAhora(cal: Calendario, ahora: number): Modalidad[] {
+  return [...new Set(cal.torneos.filter((t) => ahora >= t.inicio - 3600_000 && ahora <= t.inicio + 12 * 3600_000).map((t) => t.modalidad))];
+}
+const ENCABEZADO: Record<Modalidad, { es: string; en: string; tnr: string }> = {
+  clasico: { es: "", en: "", tnr: "0" },
+  rapidas: { es: "Rápidas · ", en: "Rapid · ", tnr: "1" },
+  blitz: { es: "Blitz · ", en: "Blitz · ", tnr: "2" },
+};
 
 type Suscrito = { id: string; sala: string; endpoint: string; p256dh: string; auth: string; idioma: string; jugadores: { tnr: string; no: number; nombre: string }[]; delegacion: string | null; creada: string };
 
@@ -466,7 +492,8 @@ async function revisar(admin: Admin) {
     // el mismo, no se avisa).
     // Si su torneo ya no está en la sala (el Centroamericano se partió en un
     // torneo por categoría), se lo busca por su nombre en todos.
-    const enTorneo = (j: { tnr: string; no: number; nombre: string }) => {
+    type Leido = Record<string, unknown> & { tnr: string };
+    const enTorneoDe = (torneos: Leido[]) => (j: { tnr: string; no: number; nombre: string }) => {
       const t = torneos.find((x) => x.tnr === String(j.tnr));
       if (!t) {
         const en = torneos.flatMap((x) => ((x.jugadores || []) as Jug[]).filter((y) => plano(y.nombre) === plano(j.nombre)).map((y) => ({ t: x, lista: (x.jugadores || []) as Jug[], no: y.no })));
@@ -478,6 +505,7 @@ async function revisar(admin: Admin) {
       const mismos = lista.filter((x) => plano(x.nombre) === plano(j.nombre));
       return mismos.length === 1 ? { t, lista, no: mismos[0].no } : null;
     };
+    const enTorneo = enTorneoDe(torneos);
 
     // 1) El recordatorio: la ronda que empieza en los próximos 31 minutos.
     const ahora = Date.now();
@@ -518,8 +546,17 @@ async function revisar(admin: Admin) {
       }
     }
 
-    // 2) El pareo, 2b) su partida en vivo y 3) el resultado de cada seguido.
-    // Lo de Lichess se pide una sola vez por sala y solo si hace falta.
+    // 2) El pareo, 2b) su partida en vivo, 3) el resultado de cada seguido y
+    // 4) el resumen de su país: del clásico siempre, y de Rápidas o Blitz el
+    // día de su torneo, con la modalidad adelante en el título. Cada torneo de
+    // chess-results es otro número (tnr), así que el aviso de la ronda 3 del
+    // Rápido no choca con el de la ronda 3 del clásico; el resumen del país
+    // va con tnr «0», «1» o «2» según la modalidad.
+    // Lo de Lichess se pide una sola vez por modalidad y solo si hace falta.
+    const porModalidad = async (torneos: Leido[], modalidad: Modalidad) => {
+    const enTorneo = enTorneoDe(torneos);
+    const enc = ENCABEZADO[modalidad];
+    const pre = (en: boolean) => (en ? enc.en : enc.es);
     let enLichess: Promise<PartidaLichess[]> | null = null;
     for (const s of deSala) {
       for (const j of s.jugadores) {
@@ -533,7 +570,7 @@ async function revisar(admin: Admin) {
         const resultado = textoResultado(s.idioma, pareo.ronda, e.no, pareo.mesas, porNo, e.lista, Number(e.t.ronda) || 0);
         if (resultado) {
           // Ya jugó: el pareo de esa ronda ya no sirve, va solo el resultado.
-          await avisar(s, "resultado", e.t.tnr, e.no, pareo.ronda, { ...resultado, etiqueta: "sala-" + e.t.tnr + "-" + e.no });
+          await avisar(s, "resultado", e.t.tnr, e.no, pareo.ronda, { ...resultado, titulo: pre(s.idioma === "en") + resultado.titulo, etiqueta: "sala-" + e.t.tnr + "-" + e.no });
           continue;
         }
         const cuerpo = textoRonda(s.idioma, pareo.ronda, e.no, pareo.mesas, porNo);
@@ -541,13 +578,13 @@ async function revisar(admin: Admin) {
         // Si su partida ya empezó en un tablero transmitido, va ese aviso, que
         // dice lo mismo que el del pareo y además abre la partida: el del pareo
         // ya no hace falta.
-        if (!enLichess) enLichess = partidasDeLichess(admin, sala);
+        if (!enLichess) enLichess = partidasDeLichess(admin, sala, modalidad);
         const yo = porNo.get(e.no);
         const vivo = partidaEnVivo(await enLichess, nombre, (yo && yo.grupo) || String(e.t.categoria || ""), pareo.ronda);
         if (vivo) {
           const en = s.idioma === "en";
           await avisar(s, "envivo", e.t.tnr, e.no, pareo.ronda, {
-            titulo: "📺 " + (en ? "Round " + pareo.ronda + ": " + nombre + " is playing live" : "Ronda " + pareo.ronda + ": " + nombre + " juega en vivo"),
+            titulo: "📺 " + pre(en) + (en ? "Round " + pareo.ronda + ": " + nombre + " is playing live" : "Ronda " + pareo.ronda + ": " + nombre + " juega en vivo"),
             cuerpo: cuerpo + (en ? " The game has started and is being broadcast: tap to watch it." : " La partida ya empezó y se transmite: tócala para verla."),
             etiqueta: "sala-" + e.t.tnr + "-" + e.no,
             url: "/centroamericano-2026.html#partida=" + vivo.p.id,
@@ -555,7 +592,7 @@ async function revisar(admin: Admin) {
           continue;
         }
         await avisar(s, "pareo", e.t.tnr, e.no, pareo.ronda, {
-          titulo: (s.idioma === "en" ? "Round " : "Ronda ") + pareo.ronda + ": " + nombre,
+          titulo: pre(s.idioma === "en") + (s.idioma === "en" ? "Round " : "Ronda ") + pareo.ronda + ": " + nombre,
           cuerpo,
           // Una por jugador: la ronda nueva (o su resultado) reemplaza a la anterior.
           etiqueta: "sala-" + e.t.tnr + "-" + e.no,
@@ -564,23 +601,39 @@ async function revisar(admin: Admin) {
     }
 
     // 4) El resumen de un país, cuando ya terminaron TODAS sus partidas de la
-    // ronda, en todos los torneos de la sala juntos: uno por ronda (tnr «0»).
+    // ronda, en todos los torneos de la modalidad juntos: uno por ronda (tnr
+    // «0» el clásico, «1» Rápidas, «2» Blitz).
     for (const s of deSala.filter((x) => x.delegacion)) {
       if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
       const r = resumenDelegacion(s.idioma, s.delegacion!, deCategorias(torneos) as Parameters<typeof resumenDelegacion>[2]);
-      if (r) await avisar(s, "delegacion", "0", 0, r.ronda, { titulo: r.titulo, cuerpo: r.cuerpo, etiqueta: "sala-delegacion" });
+      if (r) await avisar(s, "delegacion", enc.tnr, 0, r.ronda, {
+        titulo: r.titulo.replace(/^([A-Z]{3}) · /, "$1 · " + pre(s.idioma === "en")), cuerpo: r.cuerpo,
+        etiqueta: "sala-delegacion" + (modalidad === "clasico" ? "" : "-" + modalidad),
+      });
+    }
+    return null;
+    };
+
+    const corte = await porModalidad(torneos, "clasico");
+    if (corte) return corte;
+    for (const m of modalidadesDeAhora(await calendarioDe(sala), Date.now())) {
+      const deM = await datosDeSala(admin, sala, false, m);
+      if (!deM || !deM.length) continue;
+      const corteM = await porModalidad(deM, m);
+      if (corteM) return corteM;
     }
   }
   return { ok: true, mandados };
 }
 
 // Las partidas de la ronda que se está jugando en cada categoría que Lichess
-// transmite, del Clásico (el de los demás avisos). Sale de los botones de la
+// transmite, de una modalidad (la de los avisos que se están revisando; el
+// Clásico si no se dice otra). Sale de los botones de la
 // sala con la dirección de la transmisión (lichess.org/broadcast/…), los
 // mismos que usa la página; con uno, se llega al grupo entero. La API de
 // Lichess es pública y sin cuenta. Si Lichess no contesta, ninguna: el aviso
 // del pareo sale igual.
-async function partidasDeLichess(admin: Admin, sala: string): Promise<PartidaLichess[]> {
+async function partidasDeLichess(admin: Admin, sala: string, modalidad: Modalidad = "clasico"): Promise<PartidaLichess[]> {
   const pedir = async (ruta: string) => {
     const r = await fetch("https://lichess.org" + ruta, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
     if (!r.ok) throw new Error("Lichess " + r.status + " " + ruta);
@@ -602,7 +655,7 @@ async function partidasDeLichess(admin: Admin, sala: string): Promise<PartidaLic
     }
     const out: PartidaLichess[] = [];
     await Promise.all([...torneos].map(async ([id, t]) => {
-      if (modalidadDe(t.nombre + " " + t.texto) !== "clasico") return;
+      if (modalidadDe(t.nombre + " " + t.texto) !== modalidad) return;
       try {
         const d = await pedir("/api/broadcast/" + id);
         const r = (d.rounds || []).find((x: { ongoing?: boolean }) => x.ongoing);

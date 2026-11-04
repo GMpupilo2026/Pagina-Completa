@@ -9014,6 +9014,98 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
   copia actual no agrega nada de más.
 
+### El control de tiempos desde la transmisión (Centroamericano)
+
+Lo pidió el dueño al revisar la herramienta de mesas («me gusta; el detalle es que en Lichess la transmisión va con
+15 min de atraso»). En las mesas que se transmiten (tableros electrónicos con reloj DGT), Lichess sabe la posición y lo
+que marca cada reloj: eso es un control de tiempos que nadie tuvo que anotar. La calculadora del reloj apagado
+(`js/centroamericano-reloj-apagado.js`, la misma en la tablet y en la organización) trae el bloque «Desde la
+transmisión de Lichess» con **«Buscar esta mesa en la transmisión»**; las cuentas y la lectura son de
+`js/centroamericano-transmision-reloj.js`.
+
+- **El atraso no estorba.** Un control de hace 15 minutos sigue siendo un control: lo exacto del reloj apagado es el
+  total desde el control (lo que pasó de verdad más los incrementos), y el reparto mejora con un control reciente.
+  Lo único que hace falta es la HORA en que de verdad marcaban eso los relojes, y sale de la misma transmisión: la ronda
+  dice su atraso (`round.delay`, 900 s en el Centroamericano; si no lo dice, 900) y la partida en curso cuánto lleva
+  pensando quien tiene el turno (`thinkTime`). **La transmisión no se adelanta para nadie**: se sigue leyendo con su
+  atraso; el atraso es por juego limpio y se queda.
+- **Lo que no dice Lichess se comprueba.** No está escrito si `thinkTime` cuenta desde lo que se ve (ya con el atraso)
+  o desde ahora. Se calculan las dos horas posibles y se elige la que cuadra con la hora de inicio de la ronda (la que
+  marcó el árbitro o la del horario): con 90 min + 30 s, lo gastado por los dos juntos es justo el tiempo que pasó desde
+  el inicio, más los ajustes del árbitro (ilegales y sanciones de la bitácora). Si la elegida no cuadra por más de
+  3 min, se avisa («¿empezó a otra hora, hubo una pausa o el reloj electrónico se puso mal?»). Sin `thinkTime`, la hora
+  es «ahora − atraso», avisada como aproximada; sin hora de inicio, se avisa que no se pudo comprobar.
+- **De dónde sale cada número.** Del JSON de la ronda (`/api/broadcast/-/-/<ronda>`), no del PGN: la posición (FEN) da
+  las jugadas de cada color y el turno, y `players[].clock` los relojes **en centésimas** (comprobado el 4/11/2026 con
+  una transmisión real de 90 + 30 y `delay` 900: el `[%clk]` del PGN marca lo mismo, con el incremento ya sumado). El PGN
+  de una ronda en curso puede venir cortado y pide más a Lichess.
+- **Qué mesa es**: la de la misma ronda en cualquier torneo clásico de la sala (`salas_torneo.enlaces`, la que lee la
+  página del torneo; el Rápido y el Blitz se saltan con `ritmoRapido`), por los **dos** nombres
+  (`mismoJugador`: sin tildes, mayúsculas ni comas, con dos palabras en común) y con los colores como en chess-results;
+  con los colores al revés no se usa y se dice. Sin reloj electrónico, sin jugadas, o ya terminada en la transmisión:
+  se dice por qué y no se usa.
+- **El árbitro decide.** Si la lectura de la transmisión es más reciente que el último control anotado, la calculadora
+  parte de ella (con una casilla para no usarla); si no, sigue con el del árbitro. A Lichess se le pide solo al tocar
+  el botón, con copias de 10 min (torneos y rondas) y de 30 s (las partidas de la ronda): quince tablets no lo saturan.
+  No escribe nada en la base: lo que el árbitro pone en el reloj nuevo se anota como siempre (acción `tiempo`), y la
+  nota dice «calculado desde los relojes de la transmisión de Lichess de las HH:MM (con 15 min de atraso)».
+- Lo prueban `verificar-centroamericano-transmision-reloj.js` (300 partidas simuladas con un reloj de verdad, la
+  transmisión con atraso y los dos significados de `thinkTime`: la hora del control sale al segundo y el reloj apagado
+  da el total exacto; la pausa sin anotar y la ilegal con sus 2 min) y `verificar-centroamericano-mesas-pagina.js` (en la
+  organización, con Lichess simulado: nada se pide antes del botón, la partida se encuentra por los nombres, se calcula
+  desde ella y la nota lo dice). Rotos a propósito (una sola hora posible, los relojes sin pasar de centésimas), saltan.
+
+### La transmisión sin atraso para los árbitros (Centroamericano)
+
+Lo pidió el dueño («arma la transmisión privada sin atraso para los árbitros»): en Lichess, cada jugada tarda 15 min en
+salir. **La transmisión pública se queda con su atraso** (juego limpio: nadie de afuera ayuda con la partida en vivo).
+Lo que se agregó es una segunda vía, solo para los árbitros, que ven SUS mesas en vivo en su tablet. El atraso de la
+pública no lo pone nuestro código: es el «Retraso» de cada ronda en Lichess, que fija quien es dueño de la transmisión.
+
+- **La fuente.** Hay tableros de las dos vías («ambas opciones», dijo el dueño): con **LiveChess**, quien organiza crea
+  en Lichess una transmisión con **Visibilidad: Privada**, cada ronda con **Retraso 0** y la misma fuente que la pública
+  (la dirección de LiveChess); con **Pareo para DGT** («Transmitir sin LiveChess»), la casilla **«También una copia
+  privada sin atraso para los árbitros»** crea cada torneo otra vez, privado (`visibility=private`, «· árbitros» en el
+  nombre), con sus rondas sin atraso (sin `delay`, que en Lichess es 0), y **cada jugada se empuja a las dos**
+  (`r.privada` en `js/pareo-dgt.js` y `js/pareo-dgt-directo.js`). Si la copia privada falla, la pública no se frena: se
+  anota y se reintenta en la próxima revisión. La página muestra los enlaces de la copia privada para pegarlos en la
+  Mesa de árbitros.
+- **Quién la lee.** Una transmisión privada de Lichess solo la ve su dueño. La Edge Function nueva
+  **`centroamericano-mesas-vivo`** (`verify_jwt` en false; aparte de `centroamericano-mesa` para no volver a desplegar esa
+  en pleno torneo, como Fair Play) la lee con una clave de Lichess de quien organiza, **guardada en la bóveda**
+  (`centroamericano_vivo_token` y `centroamericano_vivo_enlace`, por `centroamericano_vivo_guardar/leer/quitar()`, solo
+  `service_role`; migraciones `centroamericano_vivo_arbitros` y `…_varios_torneos`). La clave basta con el permiso
+  **«Leer estudios y transmisiones privados»** (`study:read`): «Probar y conectar» lo comprueba con `/api/token/test` y
+  que esa clave abra la transmisión antes de guardar nada. **Nunca se devuelve** (ni la clave ni los enlaces privados).
+  El enlace guardado son hasta 30 torneos (Pareo para DGT crea uno por categoría; un grupo de LiveChess es uno solo).
+- **A cada tablet, SOLO sus mesas.** La acción `mesas` valida el token del enlace (apagado o vencido: 404), toma los
+  jugadores de sus mesas de la **lectura compartida de chess-results** (`centroamericano_lecturas`, la ronda abierta), no
+  de lo que mande la tablet, y busca esas partidas por los dos nombres (la misma regla de
+  `js/centroamericano-transmision-reloj.js`, letra por letra: lo comprueba el verificador). Devuelve la posición, la
+  última jugada, los relojes y lo que lleva pensando quien tiene el turno. Las partidas de una ronda se le piden a
+  Lichess a lo sumo cada 4 s y la lista de torneos cada minuto: quince tablets no lo saturan.
+- **En la tablet**: el botón **«📡 Mis mesas en vivo»** aparece solo si está conectada (`js/centroamericano-arbitro-vivo.js`,
+  que pregunta al abrir y cada 5 min si no lo está). La ventana muestra cada mesa con su tablero (`js/tablero-fen.js`,
+  la última jugada marcada; para el lector de pantalla, la posición en palabras) y sus relojes en palabras, con el de
+  quien tiene el turno corriendo cada segundo; se vuelve a leer cada 10 s **solo mientras está abierta**. Dice «Solo
+  para ti: no lo muestres a jugadores ni a entrenadores». Si la ronda privada tuviera atraso, lo avisa.
+- **El reloj apagado** la usa primero: «Buscar esta mesa en la transmisión» toma la lectura sin atraso (la hora del
+  control es la de la lectura menos lo que llevaba pensando) y, si la mesa no está ahí, la pública con su atraso. La nota
+  dice «en vivo, sin atraso».
+- **En la organización** (pestaña «Clave de chess-results», `js/centroamericano-vivo-conectar.js`): los pasos, el enlace
+  (uno por renglón), la clave en un campo de contraseña que se vacía al conectar, el estado (torneos y rondas que ve, y
+  cuáles tienen atraso: deben ir en 0) y «Desconectar» (la clave se pisa con un texto vacío; sin borrar filas de la
+  bóveda).
+- **Privacidad**: la clave guardada cifrada se agregó a `privacidad.html` (junto a lo de Lichess). Las partidas son las
+  mismas que publica la transmisión pública, solo que antes.
+- **Riesgo aceptado**: una tablet perdida muestra las mesas de ese árbitro en vivo mientras su enlace esté encendido; la
+  organización lo apaga como siempre («Apagar»). Lo comprueban `verificar-centroamericano-mesas-vivo.js` (los relojes, la
+  regla de los nombres igual en las dos copias, que nunca devuelve la clave, los permisos de la bóveda, las páginas y
+  Pareo para DGT) y `verificar-centroamericano-mesas-pagina.js` (en la tablet: sin conectar no hay botón; conectada, la
+  ventana con el tablero y los relojes, el foco al cerrar, y el reloj apagado «en vivo, sin atraso»). Rotos a propósito
+  (devolver la clave, cambiar la regla en una sola copia), saltan. Desplegada y probada contra la base con pg_net (sin
+  conectar: `conectada: false`; enlace falso: 404; sin sesión: 401); falta probarla con la transmisión privada de verdad.
+
 ### El sorteo de Fair Play (Centroamericano)
 
 La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para
@@ -11055,6 +11147,33 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
     tres páginas por categoría por minuto, solo del Clásico y solo con
     alguien suscrito. Dos vueltas que se pisen no mandan nada dos veces: la
     clave primaria de `sala_avisos_push_enviados` lo impide.
+  - **Los avisos también en Rápidas y Blitz** (lo pidió el dueño el
+    3/11/2026, con el Rápido jugándose). Pareo, «juega en vivo», resultado y
+    resumen del país salen también de las otras modalidades, con la
+    modalidad adelante en el título («Rápidas · Ronda 6: …»). A quien se
+    sigue se lo busca por su nombre en los torneos de esa modalidad (son otro
+    torneo de chess-results, otro `tnr`), así que seguirlo en el clásico
+    alcanza. La clave del aviso ya lleva el `tnr`, y el de la ronda 3 del
+    Rápido no choca con el de la ronda 3 del clásico; el resumen del país,
+    que va con `tnr` «0», pasa a «1» en Rápidas y «2» en Blitz
+    (`ENCABEZADO` en `sala-jugadores`). No hizo falta migración.
+    - **Solo el día de su torneo**: desde una hora antes hasta 12 horas
+      después de la hora de «Torneo Rapid» o «Torneo Blitz» en el `.ics` de
+      la página (`leerEventos()`, `modalidadesDeAhora()`). Leer seis torneos
+      más de chess-results cada minuto toda la semana no le sirve a nadie.
+    - Las partidas de Lichess de cada modalidad salen del mismo grupo de la
+      transmisión (el Rápido está en el grupo del clásico, «Rapid | Open
+      U18»): `partidasDeLichess()` recibe la modalidad.
+    - El recordatorio de 30 minutos antes sigue siendo solo del clásico: el
+      Rápido y el Blitz juegan sus rondas seguidas, sin hora de cada una.
+    - Los torneos de Rápidas están en la sala como «Rápidas Sub-8» a
+      «Rápidas Sub-18» (mixtos, `tnr1533950` a `tnr1533958`, de la lista de
+      la federación CCA en chess-results).
+    - Al subir la función, `deploy_edge_function` dejó el rango
+      `[\u0300-\u036f]` de `plano()` y `sinTildes()` con los caracteres en
+      lugar del escape. Es la misma expresión, y el archivo del repositorio
+      se guardó tal cual quedó publicado (comprobado con
+      `get_edge_function`).
   - Se borran solas 30 días después del último cambio (pg_cron
     `sala-avisos-limpiar`), como dice `privacidad.html#torneos`.
   - El verificador no tiene un servicio de push: el doble concede el
