@@ -92,6 +92,34 @@
     BLITZ: [["Blitz", "30/12", "16:00"]],
   };
 
+  /* Los premios, como los dicen las bases (en dólares). No se acumulan: a
+     quien gana dos se le da el más alto. Para dar el de una categoría tiene
+     que haber al menos 4 inscritos en ella, que hayan jugado al menos 6
+     partidas. Los de atleta sordo y ciego piden la validación previa de su
+     asociación. */
+  const PREMIOS = {
+    A: [["1.er lugar", 700], ["2.º lugar", 600], ["3.er lugar", 400], ["Mejor femenina", 250], ["Mejor senior +50", 250]],
+    B: [["1.er lugar", 400], ["2.º lugar", 250], ["3.er lugar", 150], ["Mejor femenina", 200], ["Mejor senior +50", 200],
+      ["Mejor atleta sordo", 75], ["Mejor atleta ciego o de baja visión", 75]],
+    U14: [["1.er lugar", 200], ["2.º lugar", 150], ["3.er lugar", 100], ["Mejor U10", 60], ["Mejor femenina U10", 50], ["2.º mejor U10", 50]],
+    BLITZ: [["1.er lugar", 200], ["2.º lugar", 100], ["3.er lugar", 75], ["Mejor U2200", 75], ["Mejor U2000", 75], ["Mejor U1600", 75],
+      ["Mejor U14", 75], ["Mejor U10", 75], ["Mejor femenina", 75], ["Mejor senior +50", 75]],
+  };
+
+  /* Las rondas con su día y su hora de verdad (hora de Costa Rica, UTC−6 todo
+     el año): para la cuenta regresiva y «Agregar a mi calendario». Cuánto
+     dura cada una es lo que se le aparta en el calendario, no una regla. */
+  const DURACION_HORAS = { A: 5, B: 4, U14: 2, BLITZ: 3 };
+  function rondas(torneo) {
+    return (HORARIOS[torneo] || []).map(([nombre, dm, hora], i) => {
+      const [d, m] = dm.split("/");
+      const [h, mi] = hora.split(":");
+      const inicio = "2026-" + m + "-" + d + "T" + h.padStart(2, "0") + ":" + mi + ":00-06:00";
+      const fin = new Date(new Date(inicio).getTime() + DURACION_HORAS[torneo] * 3600000).toISOString();
+      return { torneo, numero: i + 1, nombre, inicio, fin };
+    });
+  }
+
   const anio = (diaISO) => (diaISO && /^\d{4}-\d{2}-\d{2}$/.test(diaISO) ? Number(diaISO.slice(0, 4)) : null);
 
   // Años cumplidos el día `al` (los dos, «AAAA-MM-DD»).
@@ -168,7 +196,7 @@
   const colones = (crc) => "₡" + crc.toLocaleString("es-CR");
 
   const api = {
-    TORNEOS, METODOS, HORARIOS, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
+    TORNEOS, METODOS, HORARIOS, PREMIOS, rondas, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
     RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO, IVA, FACTURA_TIPOS,
     edad, elegibles, abierto, precio, dinero, colones,
   };
