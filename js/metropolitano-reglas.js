@@ -181,6 +181,15 @@
       lineas.push({ torneo: t, texto: T.nombre + (notas.length ? " (" + notas.join(", ") + ")" : ""), usd: monto });
     }
     total = redondear(total);
+    // El código de descuento que genera administración (una sola vez): baja
+    // lo de esta persona en su porcentaje, antes del IVA. Las mismas cuentas
+    // que metropolitano_inscribir() en la base.
+    const descuento = Number(o.descuento) || 0;
+    if (descuento > 0 && total > 0) {
+      const menos = redondear(total * descuento / 100);
+      lineas.push({ torneo: "CODIGO", texto: "Código de descuento (−" + descuento + " %)", usd: -menos });
+      total = redondear(total - menos);
+    }
     // Con factura electrónica, el IVA lo asume quien se inscribe (lo decidió
     // la FCA): el 13 % sobre lo de esta persona, redondeado a céntimos.
     const subtotal = total;

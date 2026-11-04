@@ -1657,6 +1657,31 @@ entra. El título lo trae la búsqueda en FIDE; la lista de inscritos lo
 muestra con el enlace a su perfil para confirmarlo, y el tiquete y el
 pasaporte junto a la foto.
 
+#### Los códigos de descuento
+
+Pedido del dueño: la FCA dona inscripciones (en una rifa, en un evento) o da
+descuentos del 10 o del 20 %; quien lo ganó recibe un código y lo canjea en la
+inscripción.
+
+- **Solo administración los genera**, en `metropolitano-inscritos.html`
+  («Códigos de descuento»): el porcentaje (100 % es gratis), cuántos (de 1 a
+  100) y para qué o para quién, que queda anotado. Los arma la base
+  (`metropolitano_codigos_crear()`, `MET-XXXX-XXXX` al azar, sin letras que se
+  confunden) y la tabla `metropolitano_codigos` solo la lee quien administra:
+  nadie la escribe desde afuera (sin permisos de escritura ni `TRUNCATE`, que
+  se salta la RLS; migración 20261104180724). Se pueden anular mientras no se
+  usen. Está en `VIGILADAS` de la auditoría.
+- **Vale una sola vez**: lo garantiza el índice único de
+  `metropolitano_inscripciones.codigo_descuento` y la función lo deja gastado
+  con la inscripción que lo usó (`usado_por`); si dos envíos lo usan a la vez,
+  el segundo se deshace entero. La lista dice quién usó cada código.
+- **En el formulario**, la tarjeta de cada jugador trae «¿Tiene un código de
+  descuento?»: `metropolitano_codigo_ver()` dice si sirve y de cuánto (nada
+  más), y el total baja. La cuenta es la misma en la página
+  (`MetropolitanoReglas.precio`, `descuento`) y en la base: el porcentaje
+  sobre lo de esa persona, antes del IVA. Con 100 % no se pide pago. No
+  aparece para los GM, IM y WGM (ya no pagan) ni para quien no juega.
+
 #### Si vienes de otro país
 
 Pedido del dueño: una ficha con recomendaciones para entrar a Costa Rica, que

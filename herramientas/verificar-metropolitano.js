@@ -56,6 +56,9 @@ igual("senior: 10 % en el clásico, no en el blitz (PayPal)", pr({ torneos: ["B"
 igual("senior por año: nacido el 31/12/1961 ya cuenta", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1961-12-31" }).usd, 40.5);
 igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1962-01-01" }).usd, 45);
 igual("GM: gratis", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", titulo: "GM" }).usd, 0);
+igual("código del 100 %: sin costo", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 100 }).usd, 0);
+igual("código del 20 % sobre A + blitz: 87 − 17,40", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 20 }).usd, 69.6);
+igual("código del 10 % y factura: el IVA va sobre lo que queda", pr({ torneos: ["B"], metodo: "dolares", descuento: 10, factura: true }).usd, 45.77);
 igual("con factura, el 13 % de IVA lo paga quien se inscribe", [pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).iva, pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).usd], [11.31, 98.31]);
 igual("sin costo, la factura no suma IVA", pr({ torneos: ["A"], metodo: "dolares", titulo: "GM", factura: true }).usd, 0);
 cierto("la cédula física son 9 dígitos y la jurídica 10", R.FACTURA_TIPOS.fisica.patron.test("105430678") && !R.FACTURA_TIPOS.fisica.patron.test("1-0543-0678") && R.FACTURA_TIPOS.juridica.patron.test("3002291916"));
@@ -265,6 +268,21 @@ const FILAS_FIDE = [
     await u.locator("[data-federacion]").selectOption("PAN");
     await u.locator("[data-federacion]").dispatchEvent("change");
     cierto("si es de otro país, le dice que lo tramita su federación", await u.locator("[data-fed-fuera]").isVisible() && !(await u.locator("[data-fed-cr]").isVisible()));
+    // El código de descuento: la base dice si sirve y de cuánto es; el total baja.
+    let codigoVisto = null;
+    await s2.p.route("**/rest/v1/rpc/metropolitano_codigo_ver", (r) => { codigoVisto = JSON.parse(r.request().postData()).p_codigo;
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(codigoVisto === "MET-ABCD-EFGH" ? { ok: true, codigo: "MET-ABCD-EFGH", porcentaje: 100 } : { ok: false, error: "Ese código no existe, ya se usó o fue anulado." }) }); });
+    await u.locator('input[name="p1-clasico"][value="B"]').check();
+    cierto("el B sin código cuesta $45", /\$45\.00/.test(await s2.p.textContent("#total")));
+    await u.locator("[data-codigo-entrada]").fill("met-zzzz-zzzz");
+    await u.locator("[data-codigo-aplicar]").click();
+    await u.locator("[data-codigo-estado]").filter({ hasText: "no existe" }).waitFor({ timeout: 5000 });
+    cierto("un código que no sirve se dice", true);
+    await u.locator("[data-codigo-entrada]").fill("met-abcd-efgh");
+    await u.locator("[data-codigo-aplicar]").click();
+    await u.locator("[data-codigo-estado]").filter({ hasText: "no tiene costo" }).waitFor({ timeout: 5000 });
+    cierto("con un código del 100 % la inscripción queda sin costo y no pide pago", codigoVisto === "MET-ABCD-EFGH" && /sin costo/.test(await s2.p.textContent("#total"))
+      && !(await s2.p.locator("#con-pago").isVisible()) && /Código de descuento \(−100 %\)/.test(await s2.p.textContent("#total")), await s2.p.textContent("#total"));
     await u.locator("[data-rol]").selectOption("acompanante");
     await u.locator("[data-rol]").dispatchEvent("change");
     cierto("un acompañante no ve ID FIDE ni torneos", !(await u.locator("[data-bloque-fide]").isVisible()) && !(await u.locator("[data-bloque-torneos]").isVisible()));
@@ -551,9 +569,25 @@ const FILAS_FIDE = [
     await a.route("**/rest/v1/metropolitano_inscripciones**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify([fila]) }));
     await a.route("**/rest/v1/rpc/metropolitano_revisar", (r) => { revisado = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign({}, fila, { pago_estado: revisado.p_pago_estado })) }); });
     await a.route("**/storage/v1/object/**", (r) => r.fulfill({ contentType: "image/png", body: fs.readFileSync(path.join(RAIZ, "img", "fca-logo.png")) }));
+    let codigosLista = [{ codigo: "MET-AAAA-BBBB", porcentaje: 100, nota: "Rifa de diciembre", creado: "2026-11-04T15:00:00Z", anulado: false, usado_por: fila.id, usado_en: "2026-11-04T16:00:00Z" }];
+    let creados = null;
+    await a.route("**/rest/v1/metropolitano_codigos**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(codigosLista) }));
+    await a.route("**/rest/v1/rpc/metropolitano_codigos_crear", (r) => { creados = JSON.parse(r.request().postData());
+      const nuevos = [{ codigo: "MET-CCCC-DDDD", porcentaje: creados.p_porcentaje, nota: creados.p_nota, creado: "2026-11-04T17:00:00Z", anulado: false, usado_por: null, usado_en: null }];
+      codigosLista = nuevos.concat(codigosLista);
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(nuevos) }); });
     await a.goto(BASE + "/metropolitano-inscritos.html");
     await a.waitForSelector("#filas tr", { timeout: 15000 });
     cierto("el club se escribe como texto, no como HTML", (await a.locator("#filas").innerHTML()).includes("&lt;b&gt;Club&lt;/b&gt;"));
+    await a.waitForSelector("#codigos-filas tr");
+    cierto("los códigos dicen quién usó cada uno", /Usado por MET-0012 — Ana Mora Solis/.test(await a.textContent("#codigos-filas")), await a.textContent("#codigos-filas"));
+    await a.selectOption("#cod-pct", "20");
+    await a.fill("#cod-cantidad", "3");
+    await a.fill("#cod-nota", "Torneo de navidad");
+    await a.click("#cod-generar");
+    await a.waitForFunction(() => /MET-CCCC-DDDD/.test(document.getElementById("codigos-filas").textContent));
+    igual("generar códigos llama a la base con el porcentaje, cuántos y la nota", creados, { p_porcentaje: 20, p_cantidad: 3, p_nota: "Torneo de navidad" });
+    cierto("y el nuevo sale libre, con su botón de anular", /Libre: sin usar/.test(await a.textContent("#codigos-filas")) && (await a.locator("#codigos-filas button:has-text('Anular')").count()) === 1);
     await a.selectOption("#filas select", "verificado");
     await a.click("#filas button:has-text('Guardar')");
     await a.waitForFunction(() => /Verificado/.test(document.querySelector("#filas td:last-child span").textContent));

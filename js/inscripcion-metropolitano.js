@@ -160,6 +160,12 @@
           <p class="text-sm text-brand-600 dark:text-brand-300">Se habilitan los que puede jugar según su Elo FIDE estándar y su fecha de nacimiento. A, B y U14 se juegan a la vez: se elige uno. El blitz se suma aparte.</p>
           <div data-clasicos class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Torneo clásico"></div>
           <label class="metro-opcion"><input type="checkbox" data-blitz class="mt-1 h-5 w-5"><span><span class="font-semibold block">Sumar el Metropolitano Blitz</span><span class="text-sm text-brand-600 dark:text-brand-300">3 min + 2 s · 30 de diciembre, 16:00 · abierto a todos</span></span></label>
+          <!-- El código de descuento que da la organización (rifas, inscripciones donadas): vale una vez. -->
+          <div data-caja-codigo class="space-y-1">
+            <label for="${id("cod")}" class="block text-sm font-semibold">¿Tiene un código de descuento?</label>
+            <div class="flex flex-wrap gap-2"><input id="${id("cod")}" data-campo data-codigo-entrada maxlength="13" placeholder="MET-XXXX-XXXX" autocomplete="off" autocapitalize="characters" class="max-w-[14rem]"><button type="button" data-codigo-aplicar class="metro-boton">Aplicar el código</button></div>
+            <p data-codigo-estado class="text-sm" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="space-y-4">
@@ -545,6 +551,7 @@
       q("[data-fed-cr]").classList.toggle("hidden", selFed.value !== "CRC");
       q("[data-fed-fuera]").classList.toggle("hidden", selFed.value === "CRC");
       q("[data-bloque-torneos]").classList.toggle("hidden", !juega);
+      q("[data-caja-codigo]").classList.toggle("hidden", !juega || esTitulado());
       const contactoOpcional = esGrupo() && !yo.esDelegado;
       el.querySelectorAll("[data-ast-contacto]").forEach((x) => x.classList.toggle("hidden", contactoOpcional));
       q("[data-nota-contacto]").classList.toggle("hidden", !contactoOpcional);
@@ -614,6 +621,30 @@
       const img = document.createElement("img"); img.src = yo.foto.url; img.alt = "Vista previa de la foto"; img.className = "w-24 h-32 object-cover rounded-lg border border-brand-200 dark:border-brand-700";
       li.append(img); lista.append(li);
       estado.textContent = "Elegida: " + a.name;
+    });
+
+    /* ---------- el código de descuento ---------- */
+    yo.codigo = null;   // { codigo, porcentaje } ya comprobado con la base
+    const entradaCodigo = q("[data-codigo-entrada]"), estadoCodigo = q("[data-codigo-estado]");
+    function pintarCodigo() {
+      estadoCodigo.textContent = "";
+      if (!yo.codigo) return;
+      const t = document.createElement("span"); t.className = "font-semibold";
+      t.textContent = "✓ Código " + yo.codigo.codigo + ": " + (yo.codigo.porcentaje === 100 ? "la inscripción no tiene costo." : yo.codigo.porcentaje + " % de descuento.");
+      const b = document.createElement("button"); b.type = "button"; b.className = "ml-2 underline text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"; b.textContent = "Quitar el código";
+      b.addEventListener("click", () => { yo.codigo = null; entradaCodigo.value = ""; entradaCodigo.disabled = false; pintarCodigo(); recalcular(); entradaCodigo.focus(); });
+      estadoCodigo.append(t, b);
+    }
+    q("[data-codigo-aplicar]").addEventListener("click", async () => {
+      const cod = entradaCodigo.value.trim().toUpperCase();
+      if (!/^MET-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cod)) { estadoCodigo.textContent = "El código tiene la forma MET-XXXX-XXXX."; return; }
+      if (personas.some((p) => p !== yo && p.codigo && p.codigo.codigo === cod)) { estadoCodigo.textContent = "Ese código ya está en otra persona de esta inscripción: vale una sola vez."; return; }
+      estadoCodigo.textContent = "Revisando el código…";
+      const { data, error } = await window.sb.rpc("metropolitano_codigo_ver", { p_codigo: cod });
+      if (error || !data || !data.ok) { estadoCodigo.textContent = (data && data.error) || "No se pudo revisar el código. Intenta de nuevo."; return; }
+      yo.codigo = { codigo: data.codigo, porcentaje: data.porcentaje };
+      entradaCodigo.value = data.codigo; entradaCodigo.disabled = true;
+      pintarCodigo(); recalcular();
     });
 
     /* ---------- el tiquete y el pasaporte (titulados de afuera) ---------- */
@@ -704,7 +735,11 @@
         dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
         acepta_publicidad: c("acepta_publicidad").checked,
       };
-      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura() });
+      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura(),
+        descuento: yo.codigo && !esTitulado() ? yo.codigo.porcentaje : 0 });
+      const conCodigo = !!yo.codigo && rol === "jugador" && datos.torneos.length > 0 && !esTitulado();
+      datos.codigo = conCodigo ? yo.codigo.codigo : null;
+      datos.codigo_pct = conCodigo ? yo.codigo.porcentaje : null;
       return { errores, datos, precio };
     };
 
@@ -933,6 +968,7 @@
     if (d.rol === "jugador") {
       if (!d.sin_fide) filas.push(["Elo FIDE", "Estándar " + (d.elo_estandar || "sin Elo") + " · Rápido " + (d.elo_rapido || "—") + " · Blitz " + (d.elo_blitz || "—")]);
       filas.push(["Torneos", d.torneos.map((t) => R.TORNEOS[t].nombre + " (" + R.TORNEOS[t].ritmo + ")").join(" y ")]);
+      if (d.codigo) filas.push(["Código de descuento", d.codigo + (d.codigo_pct === 100 ? ": inscripción sin costo" : ": " + d.codigo_pct + " % de descuento")]);
     }
     filas.push(
       ["Nacimiento", fechaLarga(d.nacimiento) + " (" + R.edad(d.nacimiento, R.INICIO) + " años al 26 de diciembre)"],

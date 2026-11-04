@@ -104,6 +104,7 @@
       ["Publicidad", x.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"],
       ["Seguro y exoneración", x.acepta_seguro ? "Declaró su póliza y eximió a la FCA (texto " + (x.exoneracion_version || "—") + ")" : ""],
       ["Nombre en FIDE", x.nombre_fide],
+      ["Código de descuento", x.codigo_descuento && x.codigo_descuento + " (" + x.descuento_pct + " %)"],
       ["Viene de", x.provincia && [x.canton, x.provincia].filter(Boolean).join(", ")],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
@@ -232,7 +233,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -240,7 +241,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 
@@ -254,6 +255,71 @@
 
   ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad"].forEach((id) => $(id).addEventListener("input", pintar));
 
+  /* ===================== Los códigos de descuento ===================== */
+  // Los genera la base (metropolitano_codigos_crear, solo administración) y
+  // cada uno vale una vez: la inscripción que lo usa queda atada a él.
+  let codigos = [];
+  async function cargarCodigos() {
+    codigos = [];
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await window.sb.from("metropolitano_codigos").select("*").order("creado", { ascending: false }).range(desde, desde + 999);
+      if (error) { $("cod-msg").textContent = "No se pudieron leer los códigos."; return; }
+      codigos = codigos.concat(data || []);
+      if (!data || data.length < 1000) break;
+    }
+    pintarCodigos();
+  }
+  function pintarCodigos() {
+    const tb = $("codigos-filas"); tb.textContent = "";
+    if (!codigos.length) {
+      const tr = document.createElement("tr"); const td = document.createElement("td"); td.colSpan = 5; td.className = "p-4 text-brand-500 dark:text-brand-300";
+      td.textContent = "Todavía no hay códigos. Genera el primero arriba."; tr.append(td); tb.append(tr); return;
+    }
+    const porId = new Map(filas.map((x) => [x.id, x]));
+    codigos.forEach((c) => {
+      const tr = document.createElement("tr"); tr.className = "border-b border-brand-100 dark:border-brand-800";
+      const usado = c.usado_por && porId.get(c.usado_por);
+      const estado = c.anulado ? "Anulado" : c.usado_por ? "Usado" + (usado ? " por " + codigo(usado) + " — " + usado.nombre + " " + usado.apellidos : "") + (c.usado_en ? " (" + window.HoraCR.fechaHora(c.usado_en) + ")" : "") : "Libre: sin usar";
+      celda(tr, [texto(c.codigo, "font-mono font-semibold")]);
+      celda(tr, [texto(c.porcentaje === 100 ? "100 % (gratis)" : c.porcentaje + " %")]);
+      celda(tr, [texto(c.nota || "—", "text-xs")]);
+      celda(tr, [texto(estado, "text-xs font-semibold")]);
+      const acc = document.createElement("div"); acc.className = "flex gap-2";
+      const copiar = document.createElement("button"); copiar.type = "button"; copiar.className = "text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+      copiar.textContent = "Copiar"; copiar.setAttribute("aria-label", "Copiar el código " + c.codigo);
+      copiar.addEventListener("click", async () => { try { await navigator.clipboard.writeText(c.codigo); copiar.textContent = "Copiado"; } catch (e) { copiar.textContent = "No se pudo copiar"; } });
+      acc.append(copiar);
+      if (!c.anulado && !c.usado_por) {
+        const anular = document.createElement("button"); anular.type = "button"; anular.className = "text-xs underline text-red-700 dark:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        anular.textContent = "Anular"; anular.setAttribute("aria-label", "Anular el código " + c.codigo);
+        anular.addEventListener("click", async () => {
+          if (!(await window.Avisos.confirmar("El código " + c.codigo + " deja de servir y no se puede volver a activar.", { titulo: "¿Anular el código?", aceptar: "Anular el código", peligro: true }))) return;
+          const { error } = await window.sb.rpc("metropolitano_codigo_anular", { p_codigo: c.codigo });
+          if (error) { $("cod-msg").textContent = "No se pudo anular: " + error.message; return; }
+          await cargarCodigos();
+        });
+        acc.append(anular);
+      }
+      celda(tr, [acc]);
+      tb.append(tr);
+    });
+  }
+  $("cod-pct").addEventListener("change", () => $("cod-otro-caja").classList.toggle("hidden", $("cod-pct").value !== "otro"));
+  $("codigos-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const pct = $("cod-pct").value === "otro" ? Number($("cod-otro").value) : Number($("cod-pct").value);
+    const cantidad = Number($("cod-cantidad").value);
+    if (!(pct >= 1 && pct <= 100)) { $("cod-msg").textContent = "El descuento va de 1 a 100 %."; return; }
+    if (!(cantidad >= 1 && cantidad <= 100)) { $("cod-msg").textContent = "Se generan de 1 a 100 códigos de una vez."; return; }
+    $("cod-generar").disabled = true; $("cod-msg").textContent = "Generando…";
+    const { data, error } = await window.sb.rpc("metropolitano_codigos_crear", { p_porcentaje: pct, p_cantidad: cantidad, p_nota: $("cod-nota").value.trim() });
+    $("cod-generar").disabled = false;
+    if (error) { $("cod-msg").textContent = "No se pudieron generar: " + error.message; return; }
+    $("cod-msg").textContent = (data.length === 1 ? "Listo: 1 código nuevo, " : "Listo: " + data.length + " códigos nuevos, ") + "arriba de la lista. Entrégalo a quien lo ganó: vale una sola vez.";
+    $("cod-nota").value = "";
+    await cargarCodigos();
+  });
+
   async function iniciar() {
     const { data } = await window.sb.auth.getSession();
     const session = data.session;
@@ -263,6 +329,7 @@
     if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
     $("app").classList.remove("hidden");
     await cargar();
+    await cargarCodigos();
   }
   iniciar();
 })();
