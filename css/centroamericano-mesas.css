@@ -309,9 +309,8 @@ body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
 }
 /* La tablet de lado (1100 px o más): tres tarjetas por fila ya lo hace .cam-lista. */
 
-/* ===== La barra de un vistazo (se queda arriba al bajar) ===== */
+/* ===== La barra de un vistazo (NO es fija: se va con la página al bajar; lo que sí se queda arriba son los mensajes de la organización) ===== */
 .cam-barra {
-  position: sticky; top: 0; z-index: 30;
   background: #fff; color: var(--cac-morado-hondo);
   border: 2px solid #dfe0f7; border-radius: 1rem;
   padding: 0.7rem 0.9rem; margin-bottom: 1rem;

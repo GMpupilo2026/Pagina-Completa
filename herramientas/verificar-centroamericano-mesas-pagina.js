@@ -556,6 +556,7 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== Horarios, planillas y finalizar la ronda ===");
     igual("la barra dice el tiempo de espera o lo que sigue", (await p.textContent("#espera")).startsWith("⏰"), true);
+    igual("la barra de arriba (progreso, botones, tiempo de espera) NO es fija: se va con la página al bajar", await p.evaluate(() => getComputedStyle(document.querySelector(".cam-barra")).position), "static");
     // «Inició la ronda» en la tablet: el árbitro toca el botón (o escribe la hora) y la hora de SU categoría la guarda la función.
     console.log("\n=== La tablet: Inició la ronda ===");
     igual("la tablet del árbitro trae el bloque «Inicio de la ronda» de su categoría: el botón, la hora, y dice que todavía no la marcó", await p.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-ronda").textContent, document.getElementById("ir-ahora").textContent.trim(), document.getElementById("ir-hora").type, document.getElementById("ir-quitar").hidden, document.getElementById("inicio-ronda").dataset.marcada, /Todavía no marcaste/.test(document.getElementById("ir-estado").textContent)]),
@@ -563,6 +564,18 @@ const CONTRASTE = `(sel) => {
     await p.click("#ir-ahora");
     await p.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "si");
     igual("«Inició la ronda ahora» manda la hora de ESE momento a la función (ronda 3), lo dice escrito y la tolerancia corre desde ahí", await p.evaluate(() => [window.__inicioArgs.length, window.__inicioArgs[0].ronda, window.__inicioArgs[0].quitar, Math.abs(Date.parse(window.__inicioArgs[0].inicio) - Date.now()) < 15000, /^✓ La ronda 3 empezó a las .* \(la hora que marcaste\)\. El tiempo de espera de 30 min termina a las /.test(document.getElementById("ir-estado").textContent), /quedan (29|30) min de tolerancia/.test(document.getElementById("espera").textContent)]), [1, 3, false, true, true, true]);
+    igual("al marcar el inicio el bloque se esconde (ya no hace falta) y queda solo el botón chico «Corregir»; el cronómetro de cada jugador que no llegó corre desde esa hora YA, sin esperar otra lectura", await p.evaluate(() => { const c = document.querySelector(".cam-cuenta"); return [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-corregir").checkVisibility(), !!c && Math.abs(Number(c.dataset.fin) - (Date.parse(window.__inicioArgs[0].inicio) + 30 * 60000)) < 1000]; }), [false, true, true]);
+    // Una lectura que salió ANTES de marcar y llega DESPUÉS (sin la hora) no la borra: antes los cronómetros volvían al calendario.
+    const inicioMarcado = await p.evaluate(() => window.__inicioArgs[0].inicio);
+    await p.evaluate(() => { window.__inicioRonda = null; });
+    await p.click("#actualizar");
+    await p.waitForFunction(() => !document.getElementById("actualizar").disabled);
+    igual("una lectura vieja, sin la hora marcada, no la borra: sigue marcada y los cronómetros siguen contando desde ella", await p.evaluate((i) => { const c = document.querySelector(".cam-cuenta"); return [document.getElementById("inicio-ronda").dataset.marcada, !!c && Math.abs(Number(c.dataset.fin) - (Date.parse(i) + 30 * 60000)) < 1000, document.getElementById("inicio-ronda").checkVisibility()]; }, inicioMarcado), ["si", true, false]);
+    await p.evaluate((i) => { window.__inicioRonda = { ronda: 3, inicio: i }; }, inicioMarcado);
+    await p.click("#actualizar");
+    await p.waitForFunction(() => !document.getElementById("actualizar").disabled);
+    await p.click("#ir-corregir");
+    igual("«Corregir la hora de inicio» vuelve a abrir el bloque (con «Cerrar» y «Volver al calendario»), y «Cerrar» lo esconde otra vez", await p.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-cerrar").checkVisibility(), document.getElementById("ir-quitar").checkVisibility(), document.getElementById("ir-corregir").checkVisibility()]), [true, true, true, false]);
     const campoHoraT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(11, 16));
     const mismoDiaT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(0, 10) === window.HoraCR.hoy());
     if (mismoDiaT) {
