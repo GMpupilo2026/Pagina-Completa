@@ -365,6 +365,24 @@ const PROG = [
   { asignacion_id: "e", ronda: 2, total: 10, con_resultado: 0, pendientes: [31, 32], actualizado: "viejo" }];
 const filasR = C.resumenRonda(ASIG, PROG, [{ asignacion_id: "e", ronda: 3, reabierta: false, finalizada_en: "z" }], new Date("2026-11-02T12:00:00Z"), [{ asignacion_id: "b", ronda: 3 }]);
 igual("el resumen cuenta solo enlaces activos y solo la ronda más alta, con su estado y la revisión previa", filasR.map((f) => [f.id, f.estado, f.quedan, f.lista]), [["a", "termino", 0, 0], ["b", "en-curso", 5, 1], ["c", "en-curso", 10, 0], ["e", "finalizada", null, 0]]);
+// El 4/11: el Rápido y el Blitz (enlaces ya revocados) en la ronda 9 y la mañana en la 4. Con «la ronda más alta» para todos,
+// los doce torneos de la mañana salían «Sin datos» aunque chess-results se leía bien.
+{
+  const A2 = [
+    { id: "m1", arbitro: "Luis", tnr: "100", mesa_desde: 1, mesa_hasta: 30, revocada: false, vence: "2026-11-10T00:00:00Z" },
+    { id: "m2", arbitro: "Ariana", tnr: "200", mesa_desde: 1, mesa_hasta: 30, revocada: false, vence: "2026-11-10T00:00:00Z" },
+    { id: "r1", arbitro: "Rápido", tnr: "900", mesa_desde: 1, mesa_hasta: 20, revocada: true, vence: "2026-11-10T00:00:00Z" }];
+  const P2 = [
+    { asignacion_id: "m1", ronda: 3, total: 30, con_resultado: 30, pendientes: [], actualizado: "x" },
+    { asignacion_id: "m1", ronda: 4, total: 30, con_resultado: 12, pendientes: [1, 2], actualizado: "x" },
+    { asignacion_id: "m2", ronda: 4, total: 30, con_resultado: 30, pendientes: [], actualizado: "x" },
+    { asignacion_id: "r1", ronda: 9, total: 20, con_resultado: 20, pendientes: [], actualizado: "x" }];
+  const f2 = C.resumenRonda(A2, P2, [], new Date("2026-11-04T16:00:00Z"), []);
+  igual("cada torneo va en SU ronda: otro torneo en la ronda 9 (aunque su enlace esté revocado) no deja a la mañana «Sin datos»", f2.map((f) => [f.id, f.ronda, f.estado, f.con_resultado]), [["m1", 4, "en-curso", 12], ["m2", 4, "termino", 30]]);
+  igual("la ronda de cada torneo y cómo se escribe al lado del título", [C.rondasPorTorneo(A2, P2), C.textoRondas({ 100: 4, 200: 4 }), C.textoRondas({ 100: 4, 900: 9, 300: 5 }), C.textoRondas({})], [{ 100: 4, 200: 4, 900: 9 }, "ronda 4", "rondas 4, 5 y 9", ""]);
+  const PR2 = [{ tnr: "100", ronda: 4, mesa: 3, color: "blancas", presente: false }, { tnr: "900", ronda: 4, mesa: 1, color: "negras", presente: false }, { tnr: "900", ronda: 9, mesa: 2, color: "blancas", presente: false }];
+  igual("los que no han llegado: cada torneo en su ronda", C.jugadoresQueFaltan(PR2, { 100: 4, 900: 9 }).map((x) => [x.tnr, x.ronda, x.mesa]), [["100", 4, 3], ["900", 9, 2]]);
+}
 igual("quien terminó: primero los de su mismo torneo, y después el que más mesas tiene; nunca él mismo ni quien ya terminó", C.sugerirAyuda(filasR[0], filasR).map((s) => [s.id, s.quedan, s.mismoTorneo]), [["b", 5, true], ["c", 10, false]]);
 igual("le toca la mitad de lo que le queda al otro, desde el final de su lista (así no se pisan)", [C.sugerirAyuda(filasR[0], filasR)[0].mesas, C.sugerirAyuda(filasR[0], filasR)[1].mesas], [[16, 17, 20], [8, 9, 10, 11, 12]]);
 igual("el texto de la sugerencia dice a quién, cuántas le quedan y cuáles mesas tomar", C.textoSugerencia(C.sugerirAyuda(filasR[0], filasR)[1], "Sub-12"), "Terminaste tus mesas, gracias. Ve a ayudar a Carla (Sub-12): le quedan 10 mesas. Toma las mesas 8 a 12.");
