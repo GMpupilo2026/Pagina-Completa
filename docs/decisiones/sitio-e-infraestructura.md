@@ -482,13 +482,16 @@ personas entraban a la página, y el sitio no lo podía decir: no había ningún
 contador, a propósito (nada de Google Analytics). Lo que sí estaba en la base
 (celulares con avisos, cuentas gratis abiertas) no cuenta visitas.
 
-- **Cloudflare Web Analytics, en modo automático**: Cloudflare ya sirve el
-  sitio y mete él mismo, en cada página HTML, su `beacon.min.js` (un script
-  externo de `static.cloudflareinsights.com` que manda a
-  `cloudflareinsights.com`). No va escrito en ninguna página ni en ningún
-  generador, y no hace falta su token en el repositorio. **Se enciende y se
-  apaga en el panel de Cloudflare** (Analytics & Logs → Web Analytics, el
-  sitio `ajedrez-integral.com`, «Enable» con la instalación automática).
+- **Cloudflare Web Analytics, con su script en cada página**: el modo
+  automático (que Cloudflare lo meta solo) no se pudo, porque
+  `ajedrez-integral.com` no es un dominio de esta cuenta de Cloudflare: el
+  panel dice «Este nombre de host no pertenece a ningún sitio web de tu
+  cuenta» y pide el script. Así que lo pone `herramientas/pwa-cabecera.py` en
+  el bloque de app de cada página (`TOKEN_VISITAS`, el mismo bloque y las
+  mismas páginas que `js/errores.js`): un `<script type="module">` externo de
+  `static.cloudflareinsights.com` que manda a `cloudflareinsights.com`. El
+  token no es una clave: va en cada página que se publica. Se ve en el panel
+  de Cloudflare, Observabilidad → Web Analytics.
 - La CSP de `_headers` le abre solo esas dos direcciones: el script en
   `script-src` y el envío en `connect-src`. Sin ellas el navegador bloquea el
   script sin avisar a nadie y el panel se queda en cero.
