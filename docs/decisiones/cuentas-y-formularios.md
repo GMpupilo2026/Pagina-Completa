@@ -1466,6 +1466,61 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   lleva el logo del Metropolitano y el de la FCA arriba, la foto en un marco de
   pasaporte de 3,3 × 4,2 cm, y las hojas en la tira de abajo del frente
   (`imagenes.cintaFrente` del dibujo, que el del Centroamericano no usa).
+- **Escribir el nombre carga el ID FIDE** (lo pidió el dueño del sitio): con
+  el nombre y los apellidos llenos, se busca solo en FIDE como «Apellidos,
+  Nombre», sin tildes (lo que mejor encuentra su buscador: «Angulo Cubero,
+  Oscar» da uno; «Oscar Angulo», 2696). Si hay una sola persona se carga sola
+  y se dice debajo de los nombres; si hay varias, salen ahí para tocar la
+  correcta. El nombre queda como lo escribió la persona: FIDE no lleva tildes.
+  El buscador de arriba sigue para buscar por el ID o por un solo apellido.
+  Antes de esto la búsqueda no encontraba a nadie desde Costa Rica: ver «El
+  buscador de FIDE se fija en us-west-1» en `juegos-y-torneos.md`.
+- **La factura electrónica pide los datos del receptor de Hacienda**: tipo de
+  identificación (física de 9 dígitos, jurídica de 10, DIMEX de 11 o 12, NITE
+  de 10 o extranjero no domiciliado), el número sin guiones, nombre o razón
+  social, nombre comercial, el correo para recibirla y uno de copia, teléfono,
+  el código de actividad económica si lo tiene, y provincia, cantón, distrito
+  (la división del TSE de `js/division-territorial.js`, en cascada) y otras
+  señas, que no se piden al extranjero. Los valida también la base,
+  `interno.metropolitano_factura()`, y el error dice «Factura electrónica: …».
+- **Con factura, el IVA del 13 % lo asume quien se inscribe** (lo decidió la
+  FCA): se suma persona por persona, redondeado a céntimos, en la página
+  (`IVA` de `js/metropolitano-reglas.js`) y en la base, y el verificador
+  compara las dos. `monto_usd` es el total con IVA y `iva_usd` cuánto de eso es
+  IVA. Sin nada que cobrar (un titulado, un grupo sin jugadores) no se ofrece
+  la factura.
 - **Las descargas de administración**: el CSV entero (punto y coma y BOM) y
   una «lista para gafetes y Pareo» con las columnas que entienden
   `gafetes.html` y la carga de jugadores de Pareo Integral.
+
+### La página del Metropolitano 2026
+
+`metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la
+del Centroamericano: la portada con el diseño de las bases, «Hoy en el torneo»
+con la cuenta regresiva a la próxima ronda (los números cambian cada segundo y
+no se leen; la frase del lector de pantalla cambia cada minuto) y las fichas:
+inscripción, bases, categorías y ritmos, calendario, costos y pago, premios,
+lo esencial del reglamento, resultados en vivo, partidas en vivo, la sede, el
+grupo de WhatsApp y el contacto. Cada ventana es un `<dialog>` que se abre
+también con su dirección (`#calendario`, `#premios`…). Verificador:
+`node herramientas/verificar-todo.js metropolitano`.
+
+- **Todo lo del torneo sale de `js/metropolitano-reglas.js`**, la misma copia
+  que usa la inscripción: categorías, ritmos, horarios, costos, métodos de
+  pago y premios (`PREMIOS`). `rondas()` da el día y la hora de verdad de cada
+  ronda (UTC−6), para la cuenta regresiva y para «Agregar a mi calendario»
+  (`js/calendario-ics.js`, `armarHoras`, con un aviso 30 minutos antes; todo
+  el torneo o una categoría).
+- **Los resultados y las partidas en vivo salen de su tarjeta en «Torneos»**
+  (`salas_torneo`, clave `metropolitano-2026`, tipo «enlaces»): cuando
+  administración le agrega en `admin.html#torneos` los enlaces de chess-results
+  y la transmisión de Lichess, sus fichas se encienden solas; mientras tanto
+  dicen «Pronto». Con varias categorías en chess-results, la ficha abre una
+  ventana para elegir. La misma tarjeta es la que sale en
+  `torneos-en-vivo.html`, con la información, la inscripción y las bases.
+- **Lo que las bases no traen no se inventa**: no hay hoteles (los del
+  Centroamericano eran los oficiales de ese torneo, con sus precios) ni
+  horarios de la sede. La imagen para compartir es la del logo y las hojas de
+  las bases (`img/metropolitano-2026/compartir.jpg`, en `IMAGEN_PROPIA` de
+  `verificar-metadatos.py`).
+

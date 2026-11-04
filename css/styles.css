@@ -2875,3 +2875,40 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .metro-persona { border: 2px solid #1d134d; border-radius: 1rem; overflow: hidden; }
 .dark .metro-persona { border-color: #486581; }
 .metro-persona > header { background: #1d134d; color: #fff; }
+
+/* La página del Metropolitano 2026: las fichas (con la franja de color de
+   las hojas de las bases a la izquierda; el texto va siempre en el azul
+   marino del logo) y las ventanas. */
+.metro-ficha { display: flex; flex-direction: column; gap: .35rem; height: 100%; padding: 1.1rem 1.2rem 1.1rem 1.4rem; border-radius: 1rem; background: #fff; color: #1d134d;
+  border: 1px solid #d9dbea; border-left: .5rem solid var(--metro-tono, #043576); box-shadow: 0 1px 3px rgba(29, 19, 77, .08); text-decoration: none; }
+.metro-ficha:hover { box-shadow: 0 6px 18px rgba(29, 19, 77, .14); transform: translateY(-1px); }
+.metro-ficha:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .metro-ficha:hover { transform: none; } }
+.metro-ficha[aria-disabled="true"] { border-left-style: dashed; opacity: .85; }
+.metro-ficha[aria-disabled="true"]:hover { transform: none; box-shadow: 0 1px 3px rgba(29, 19, 77, .08); }
+.metro-ficha[data-tono="0"] { --metro-tono: #043576; }
+.metro-ficha[data-tono="1"] { --metro-tono: #377746; }
+.metro-ficha[data-tono="2"] { --metro-tono: #d01c58; }
+.metro-ficha[data-tono="3"] { --metro-tono: #085ba4; }
+.metro-ficha[data-tono="4"] { --metro-tono: #0e7c86; }
+.metro-ficha[data-tono="5"] { --metro-tono: #5f6604; }
+.metro-ficha-emoji { font-size: 1.8rem; line-height: 1; }
+.metro-ficha-titulo { font-weight: 700; font-size: 1.1rem; }
+.metro-ficha-texto { font-size: .9rem; color: #3d3a5c; flex: 1; }
+.metro-ficha-accion { font-weight: 700; font-size: .9rem; color: var(--metro-tono, #043576); }
+.dark .metro-ficha { background: #102a43; color: #fff; border-color: #334e68; }
+.dark .metro-ficha-texto { color: #d9e2ec; }
+.dark .metro-ficha-accion { color: #fff; }
+.metro-ventana { width: min(56rem, calc(100vw - 1.5rem)); max-height: calc(100vh - 2rem); padding: 0; border-radius: 1rem; border: 0; color: #1d134d; background: #fff; }
+.metro-ventana::backdrop { background: rgba(16, 12, 40, .6); }
+.dark .metro-ventana { background: #102a43; color: #fff; }
+.metro-ventana-cabeza { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem; background: #1d134d; color: #fff; }
+.metro-ventana-cabeza h2 { flex: 1; min-width: 0; font-size: 1.25rem; font-weight: 700; }
+.metro-ventana-cabeza .metro-boton { background: #fff; }
+.metro-ventana-cuerpo { padding: 1.25rem; }
+.metro-caja { border: 1px solid #d9dbea; border-radius: .75rem; padding: 1rem; }
+.metro-caja h3 { font-weight: 700; margin-bottom: .35rem; }
+.dark .metro-caja { border-color: #334e68; }
+.metro-cifra { min-width: 3.6rem; padding: .5rem .4rem; border-radius: .6rem; background: rgba(255, 255, 255, .12); }
+.metro-cifra b { display: block; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.metro-cifra span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }

@@ -65,7 +65,7 @@
       ["Acompañantes", n((x) => x.rol === "acompanante")], ["Delegaciones", new Set(act.filter((x) => x.grupo).map((x) => x.grupo)).size],
       ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
-      ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)],
+      ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
       ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)],
       ["De otro país", n((x) => !/^costa rica$/i.test(x.pais_residencia))], ["Menores de edad", n((x) => R.edad(x.nacimiento, R.INICIO) < 18)],
     ];
@@ -97,7 +97,9 @@
       ["Comidas", x.comidas.length ? x.comidas.join(", ") + " del " + x.comidas_desde + " al " + x.comidas_hasta : "No"], ["Dieta", x.dieta],
       ["Viaje", x.viaje && [x.viaje.llegada && "llega " + x.viaje.llegada, x.viaje.salida && "sale " + x.viaje.salida, x.viaje.vuelo, x.viaje.traslado && "traslado"].filter(Boolean).join(" · ")],
       ["Condición", x.condicion.join(", ")], ["Accesibilidad", x.accesibilidad],
-      ["Factura", x.factura && [x.factura.nombre, x.factura.identificacion, x.factura.correo].filter(Boolean).join(" · ")],
+      ["Factura electrónica", x.factura && [x.factura.nombre, x.factura.comercial, (R.FACTURA_TIPOS[x.factura.tipo] || {}).nombre + " " + x.factura.identificacion,
+        x.factura.correo, x.factura.correo_copia, x.factura.telefono, x.factura.actividad && "actividad " + x.factura.actividad,
+        [x.factura.distrito, x.factura.canton, x.factura.provincia].filter(Boolean).join(", "), x.factura.senas].filter(Boolean).join(" · ")],
       ["Referencia del pago", [x.pago_referencia, x.pago_fecha].filter(Boolean).join(" · ")],
       ["Se inscribió", window.HoraCR.fechaHora(x.creado)],
     ];
@@ -122,7 +124,9 @@
       const queEs = x.es_delegado ? "Delegado" + (x.rol === "delegado" ? "" : " y " + R.rolDe(x.rol, x.sexo).toLowerCase()) : R.rolDe(x.rol, x.sexo);
       celda(tr, [texto(queEs, "font-semibold"), texto(x.torneos.map((t) => R.TORNEOS[t].corto).join(" + "), "text-xs"),
         texto(x.delegacion || "", "text-xs text-brand-500 dark:text-brand-300"), texto(x.acepta_publicidad ? "📣 Autoriza publicidad" : "", "text-xs")]);
-      celda(tr, [texto(Number(x.monto_usd) ? R.dinero(Number(x.monto_usd)) : "Sin costo", "font-semibold"), texto(x.pago_metodo ? R.METODOS[x.pago_metodo].nombre : "", "text-xs")]);
+      celda(tr, [texto(Number(x.monto_usd) ? R.dinero(Number(x.monto_usd)) : "Sin costo", "font-semibold"),
+        texto(Number(x.iva_usd) ? "incluye IVA " + R.dinero(Number(x.iva_usd)) + " · factura" : "", "text-xs"),
+        texto(x.pago_metodo ? R.METODOS[x.pago_metodo].nombre : "", "text-xs")]);
       const archivos = document.createElement("div"); archivos.className = "flex gap-2";
       archivos.append(window.Adjuntos.celda([x.foto], bajar, x.nombre + " " + x.apellidos, "foto"));
       if (x.comprobante) archivos.append(window.Adjuntos.celda([x.comprobante], bajar, x.nombre + " " + x.apellidos, "comprobante"));
@@ -183,6 +187,12 @@
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   }
 
+  // Los datos de la factura electrónica, una columna por cada uno (los del receptor de Hacienda).
+  const FACTURA_CSV = ["Factura: tipo de identificación", "Factura: identificación", "Factura: nombre o razón social", "Factura: nombre comercial",
+    "Factura: correo", "Factura: correo de copia", "Factura: teléfono", "Factura: actividad económica", "Factura: provincia", "Factura: cantón", "Factura: distrito", "Factura: otras señas"];
+  const facturaCsv = (f) => (!f ? FACTURA_CSV.map(() => "")
+    : [(R.FACTURA_TIPOS[f.tipo] || {}).nombre || f.tipo, f.identificacion, f.nombre, f.comercial, f.correo, f.correo_copia, f.telefono, f.actividad, f.provincia, f.canton, f.distrito, f.senas]);
+
   // CSV con punto y coma y BOM: lo que Excel en español abre de un doble clic.
   function csv(cabeza, cuerpo, nombre) {
     const c = (v) => { const t = v == null ? "" : String(v); return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
@@ -197,7 +207,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "Factura a nombre de", "Identificación factura", "Correo factura", "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -205,7 +215,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.factura && x.factura.nombre, x.factura && x.factura.identificacion, x.factura && x.factura.correo, x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 

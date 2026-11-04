@@ -56,6 +56,17 @@
   const DESCUENTO_SENIOR = 0.10;
   const TITULOS_GRATIS = ["GM", "IM", "WGM"];
   const TIPO_CAMBIO = 460;                // colones por dólar, según las bases
+  const IVA = 0.13;                       // con factura electrónica: lo paga quien se inscribe
+
+  /* La factura electrónica de Costa Rica (Hacienda): los datos del receptor.
+     El número va sin guiones; cada tipo tiene su largo. */
+  const FACTURA_TIPOS = {
+    fisica: { nombre: "Cédula física", patron: /^\d{9}$/, ayuda: "9 dígitos, sin guiones: 105430678" },
+    juridica: { nombre: "Cédula jurídica", patron: /^\d{10}$/, ayuda: "10 dígitos, sin guiones: 3002291916" },
+    dimex: { nombre: "DIMEX", patron: /^\d{11,12}$/, ayuda: "11 o 12 dígitos" },
+    nite: { nombre: "NITE", patron: /^\d{10}$/, ayuda: "10 dígitos" },
+    extranjero: { nombre: "Extranjero no domiciliado", patron: /^[A-Za-z0-9]{4,20}$/, ayuda: "pasaporte o identificación de su país, sin espacios" },
+  };
 
   const METODOS = {
     colones: { nombre: "Transferencia en colones (BCR)", moneda: "CRC",
@@ -80,6 +91,34 @@
       ["Ronda 9", "30/12", "9:00"]],
     BLITZ: [["Blitz", "30/12", "16:00"]],
   };
+
+  /* Los premios, como los dicen las bases (en dólares). No se acumulan: a
+     quien gana dos se le da el más alto. Para dar el de una categoría tiene
+     que haber al menos 4 inscritos en ella, que hayan jugado al menos 6
+     partidas. Los de atleta sordo y ciego piden la validación previa de su
+     asociación. */
+  const PREMIOS = {
+    A: [["1.er lugar", 700], ["2.º lugar", 600], ["3.er lugar", 400], ["Mejor femenina", 250], ["Mejor senior +50", 250]],
+    B: [["1.er lugar", 400], ["2.º lugar", 250], ["3.er lugar", 150], ["Mejor femenina", 200], ["Mejor senior +50", 200],
+      ["Mejor atleta sordo", 75], ["Mejor atleta ciego o de baja visión", 75]],
+    U14: [["1.er lugar", 200], ["2.º lugar", 150], ["3.er lugar", 100], ["Mejor U10", 60], ["Mejor femenina U10", 50], ["2.º mejor U10", 50]],
+    BLITZ: [["1.er lugar", 200], ["2.º lugar", 100], ["3.er lugar", 75], ["Mejor U2200", 75], ["Mejor U2000", 75], ["Mejor U1600", 75],
+      ["Mejor U14", 75], ["Mejor U10", 75], ["Mejor femenina", 75], ["Mejor senior +50", 75]],
+  };
+
+  /* Las rondas con su día y su hora de verdad (hora de Costa Rica, UTC−6 todo
+     el año): para la cuenta regresiva y «Agregar a mi calendario». Cuánto
+     dura cada una es lo que se le aparta en el calendario, no una regla. */
+  const DURACION_HORAS = { A: 5, B: 4, U14: 2, BLITZ: 3 };
+  function rondas(torneo) {
+    return (HORARIOS[torneo] || []).map(([nombre, dm, hora], i) => {
+      const [d, m] = dm.split("/");
+      const [h, mi] = hora.split(":");
+      const inicio = "2026-" + m + "-" + d + "T" + h.padStart(2, "0") + ":" + mi + ":00-06:00";
+      const fin = new Date(new Date(inicio).getTime() + DURACION_HORAS[torneo] * 3600000).toISOString();
+      return { torneo, numero: i + 1, nombre, inicio, fin };
+    });
+  }
 
   const anio = (diaISO) => (diaISO && /^\d{4}-\d{2}-\d{2}$/.test(diaISO) ? Number(diaISO.slice(0, 4)) : null);
 
@@ -142,18 +181,23 @@
       lineas.push({ torneo: t, texto: T.nombre + (notas.length ? " (" + notas.join(", ") + ")" : ""), usd: monto });
     }
     total = redondear(total);
+    // Con factura electrónica, el IVA lo asume quien se inscribe (lo decidió
+    // la FCA): el 13 % sobre lo de esta persona, redondeado a céntimos.
+    const subtotal = total;
+    const iva = o.factura && subtotal > 0 ? redondear(subtotal * IVA) : 0;
+    total = redondear(subtotal + iva);
     const M = METODOS[metodo] || METODOS.dolares;
     if (metodo === "paypal") avisos.push("El monto de PayPal ya trae su comisión, como dicen las bases.");
     else avisos.push("La comisión de la transferencia la cubre quien se inscribe.");
-    return { lineas, usd: total, crc: Math.round(total * TIPO_CAMBIO), moneda: M.moneda, gratis: titulado, senior, recargo: est.recargo, avisos };
+    return { lineas, subtotal, iva, usd: total, crc: Math.round(total * TIPO_CAMBIO), moneda: M.moneda, gratis: titulado, senior, recargo: est.recargo, avisos };
   }
 
   const dinero = (usd) => "$" + usd.toFixed(2);
   const colones = (crc) => "₡" + crc.toLocaleString("es-CR");
 
   const api = {
-    TORNEOS, METODOS, HORARIOS, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
-    RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO,
+    TORNEOS, METODOS, HORARIOS, PREMIOS, rondas, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
+    RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO, IVA, FACTURA_TIPOS,
     edad, elegibles, abierto, precio, dinero, colones,
   };
   raiz.MetropolitanoReglas = api;
