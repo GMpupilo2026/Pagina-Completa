@@ -985,7 +985,7 @@
         caja.dataset.marcada = m ? "si" : "no";
         $("ir-corregir").hidden = sinBloque || !m || corrigiendoInicio;
         caja.hidden = sinBloque || (!!m && !corrigiendoInicio);
-        if (caja.hidden) return;
+        if (sinBloque) return;
         $("ir-ronda").textContent = "— ronda " + r + (estado.torneo ? " de " + estado.torneo : "");
         $("ir-quitar").hidden = !m;
         $("ir-cerrar").hidden = !(m && corrigiendoInicio);
