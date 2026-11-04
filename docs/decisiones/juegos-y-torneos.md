@@ -9314,6 +9314,41 @@ Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplic
 Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
 resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
 desplegada.
+#### Las partidas para Fair Play, directo de LiveChess
+
+El 4/11, en la ronda 5, el dueño pidió que las partidas para analizar no salieran de Lichess sino del enlace directo de
+los tableros (LiveChess Cloud, el mismo de «Los tableros por LiveChess, sin atraso»). La transmisión de Lichess va con
+15 minutos de atraso; LiveChess, no (`20261104212407`, función en su versión 8).
+
+- **LiveChess no trae la evaluación del motor** (Lichess sí la ponía en su PGN), y la precisión sale de ella. Una Edge
+  Function no puede correr Stockfish en serio (tiene un tope de tiempo de procesador), y un flujo de GitHub pedía una
+  clave de servicio guardada como secreto. Por eso **la evaluación la hace la pantalla de Fair Play** —la del encargado
+  o la pestaña del principal—, con el Stockfish 16 del sitio (`js/vendor/stockfish/`), en un Worker propio:
+  «vivo_pendientes» da hasta 3 partidas **terminadas** que faltan, con las posiciones ya armadas con chess.js (el
+  enlace de LiveChess nunca sale de la función); la pantalla evalúa cada posición desde la 15 (antes, la apertura no
+  cuenta: van en null) con `go nodes 120000` y manda la evaluación con «vivo_guardar»; la función **vuelve a leer la
+  partida de LiveChess**, comprueba que haya una evaluación por posición (si no, la rechaza entera), mide con la MISMA
+  fórmula de siempre (`analisis.ts`) y calibra. La mesa de chess-results es el tablero de LiveChess y los dos nombres
+  tienen que coincidir (`mismoJugador`, la misma regla de las tablets, comprobada letra por letra por el verificador).
+- **Que no se repita ni se pise**: `centroamericano_fp_partidas.analizada_en` (ya medida, no se vuelve a dar) y
+  `en_analisis` (dada a una pantalla: otra no la recibe en 3 minutos; dos pantallas abiertas se reparten el trabajo).
+  `centroamericano_fp_analisis.fuente` dice de dónde salió cada medición: las de las rondas 1 a 3 venían de Lichess y
+  se vuelven a medir desde LiveChess en la misma fila (lo que decidió el encargado no se pisa), para que la calibración
+  compare a todos con el mismo motor. Primero va la ronda de hoy y después lo de atrás.
+- **El tablero sin limpiar**: en la prueba con los datos reales, LiveChess traía en la ronda 5 del Sub-8 Absoluto
+  (tablero 4) y del Sub-10 Absoluto (tablero 5) **la misma partida** de la ronda 4, jugada por jugada, con los nombres
+  nuevos en el pareo. `copiaDeOtra()` la detecta (la partida entera, o la vieja y lo que siguió, desde 40 jugadas
+  iguales; 20 jugadas iguales de apertura no cuentan) y esa partida no se mide, ni al darla ni al guardarla.
+- **Cuánto tarda**: en el servidor de pruebas, una partida de 40 jugadas en ~45 s; en una computadora común, menos.
+  Mientras la pantalla está abierta (y a la vista) analiza sola y dice qué está analizando y cuántas faltan;
+  «Analizar las partidas en esta computadora» la apaga en un aparato que no conviene cansar (se recuerda en ese
+  aparato). Con la pantalla cerrada no se analiza nada: lo pendiente espera a la próxima que se abra.
+- **Riesgo aceptado**: la evaluación la hace un aparato del equipo de Fair Play, no el servidor; quien tiene el QR
+  podría mandar otra. Es su propia herramienta y la función al menos comprueba que la evaluación sea de esa partida.
+
+Probado contra la base y LiveChess de verdad (con un enlace de prueba de 2 horas): 220 partidas terminadas pendientes de
+las rondas 1 a 5, las primeras analizadas y guardadas en la pantalla real, y las dos copias encontradas así.
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.

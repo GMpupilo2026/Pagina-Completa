@@ -4,8 +4,10 @@
 
    Sin navegador:
    - supabase/functions/centroamericano-fair-play/analisis.ts: los emparejamientos de chess-results (con el número de
-     cada jugador, su Elo y el bye), el PGN de Lichess con sus evaluaciones, la precisión con la fórmula de Lichess
-     (sin la apertura ni lo ya decidido), la categoría de cada torneo de Lichess y la mesa de cada partida;
+     cada jugador, su Elo y el bye), la precisión con la fórmula de Lichess (sin la apertura ni lo ya decidido), lo de
+     LiveChess (los tableros, la regla de los nombres IGUAL a la de centroamericano-mesas-vivo, la partida terminada, la
+     jugada sin el reloj) y la evaluación que manda la pantalla (una por posición, o se rechaza);
+   - el puntaje de Stockfish pasado a las blancas (también los mates);
    - CentroamericanoMesas.fairPlayDeMesa(): lo que dice la banda dorada antes del resultado, con un resultado elegido,
      cuando gana quien no aplica, en tablas y si nadie jugó.
    Con un doble de la Edge Function centroamericano-fair-play que se porta como la base:
@@ -51,25 +53,27 @@ function pruebasDelCalculo() {
         + '<tr><td class="CRc">2</td><td>20</td><td></td><td></td><td><a href="x.aspx?snr=20">Ordonez Ch., Dylan</a></td><td>1609</td><td>1</td> <td></td><td>1</td><td>AIM</td><td><a href="x.aspx?snr=3">Farley, Jeremiah</a></td><td>1874</td><td></td><td>3</td></tr>'
         + '<tr><td class="CRc">3</td><td>45</td><td></td><td></td><td><a href="x.aspx?snr=45">Barrantes, Matias</a></td><td>0</td><td>1</td> <td>1 - -</td><td></td><td></td><td>bye</td><td></td><td></td><td></td></tr>'
         + '<tr><td class="CRc">4</td><td>5</td><td></td><td></td><td><a href="x.aspx?snr=5">Valle, Moises</a></td><td>2094</td><td>0</td> <td>&frac12; - &frac12;</td><td>0</td><td></td><td><a href="x.aspx?snr=25">Esquivel, Jeremy</a></td><td>1842</td><td></td><td>25</td></tr></table>';
-    // Una partida de 40 jugadas: las blancas siempre dejan la evaluación igual (precisión ~100), las negras pierden 50
-    // centipeones cada vez desde la jugada 9, hasta pasar los 6 peones (desde ahí ya no cuenta).
-    let movs = "", ev = 20;
-    for (let i = 1; i <= 40; i++) {
-        movs += i + ". Nf3 { [%eval " + (ev / 100).toFixed(2) + "] } ";
-        if (i >= 9) ev += 50;
-        movs += i + "... Nf6 { [%eval " + (ev / 100).toFixed(2) + "] } ";
-    }
-    const pgn = '[Event "Round 2: A - B"]\n[Round "2.5"]\n[White "A"]\n[Black "B"]\n[Result "1-0"]\n[WhiteElo "1500"]\n[BlackElo "1600"]\n\n' + movs + "1-0\n\n"
-        + '[Event "Round 2: C - D"]\n[Round "2.6"]\n[White "C"]\n[Black "D"]\n[Result "*"]\n\n1. e4 { [%eval #3] } *\n';
+    // Una partida de 40 jugadas (la evaluación después de cada una): las blancas siempre dejan la evaluación igual
+    // (precisión ~100), las negras pierden 50 centipeones cada vez desde la jugada 9, hasta pasar los 6 peones (desde
+    // ahí ya no cuenta).
+    const evals = [];
+    let ev = 20;
+    for (let i = 1; i <= 40; i++) { evals.push(ev); if (i >= 9) ev += 50; evals.push(ev); }
     const codigo = `
       const A = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/centroamericano-fair-play/analisis.ts"))});
       const p = A.leerPareos(${JSON.stringify(html)});
       const P = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/pareos-publicos.ts"))});
       const copia = P.leerPareos(${JSON.stringify(html)});
-      const g = A.leerPgn(${JSON.stringify(pgn)});
-      const m = A.medir(g[0].evals);
-      console.log(JSON.stringify({ p, copia, n: g.length, tags: [g[0].tags.Round, g[1].tags.Result], mate: g[1].evals[0], m,
-        rm: A.rondaYMesa(g[0].tags), cats: ["Open U18", "Girls U08", "Open U10", "Girls U12", "Final"].map(A.categoriaDeLichess) }));`;
+      const m = A.medir(${JSON.stringify(evals)});
+      const conNull = ${JSON.stringify(evals)}.map((e, i) => (i < A.DESDE_POSICION ? null : e));
+      console.log(JSON.stringify({ p, copia, m, mSinApertura: A.medir(conNull),
+        tabs: [A.tablerosDe("1-5"), A.tablerosDe("1-3, 7"), A.tablerosDe("")],
+        nombres: [A.mismoJugador("Guevara Ruiz, Santiago", A.nombreLc({ lname: "Guevara Ruiz", fname: "Santiago", mname: null })), A.mismoJugador("Guevara Ruiz, Santiago", "Clarke Raef")],
+        terminadas: [{ result: "0-1", live: false }, { result: "1/2-1/2", live: false }, { result: "*", live: true }, { result: "1-0", live: true }, null].map(A.terminadaLc),
+        san: [A.sanDe("Nf3 5482+5"), A.sanDe("O-O 5358+48"), A.sanDe("e8=Q+ 10+2")], desde: A.DESDE_POSICION,
+        copias: (() => { const largo = Array.from({ length: 60 }, (_, i) => (i % 2 ? "Nf6 5400+3" : "Nf3 5400+3")), otra = largo.slice(0, 50).concat(["e4"]);
+          return [A.copiaDeOtra(largo, largo.map((x) => x.split(" ")[0] + " 1+1")), A.copiaDeOtra(largo, largo.slice(0, 45)), A.copiaDeOtra(largo.slice(0, 20), largo.slice(0, 30)), A.copiaDeOtra(otra, largo), A.copiaDeOtra(["e4", "e5"], ["d4"]), A.copiaDeOtra([], largo)]; })(),
+        validas: [A.evalsValidas([null, 30, -10000], 3), A.evalsValidas([null, 30], 3), A.evalsValidas([null, "30", 1], 3), A.evalsValidas([null, 99999, 1], 3), A.evalsValidas("x", 1)] }));`;
     const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", codigo], { encoding: "utf8" });
     if (r.status !== 0) { console.log("  ✗ no se pudo correr analisis.ts: " + r.stderr); fallos++; return; }
     const d = JSON.parse(r.stdout);
@@ -78,10 +82,35 @@ function pruebasDelCalculo() {
     igual("una mesa sin resultado todavía queda con el resultado vacío", [d.p[1].mesa, d.p[1].negras, d.p[1].resultado], [2, "Farley, Jeremiah", ""]);
     igual("chess-results escribe las tablas como «&frac12; - &frac12;»: se decodifica y la partida NO queda sin resultado (en los dos lectores)", [d.p[3].resultado, d.copia[3].resultado], ["½ - ½", "½ - ½"]);
     igual("el bye: un solo jugador, negras vacío y sin Elo inventado (un 0 no es un Elo)", [d.p[2].mesa, d.p[2].negras, d.p[2].snr_n, d.p[2].elo_b], [3, "", null, null]);
-    igual("Lichess: cada partida con sus etiquetas, y un mate vale ±10000", [d.n, d.tags, d.mate], [2, ["2.5", "*"], 10000]);
-    igual("«Round 2.5» es la ronda 2, mesa 5", d.rm, { ronda: 2, mesa: 5 });
     igual("la precisión sale sin la apertura (desde la jugada 9) y sin lo ya decidido (6 peones): blancas perfectas y negras bajas, con el mismo número de jugadas medidas", [d.m.blancas.precision > 99, d.m.negras.precision < 90, d.m.blancas.jugadas, d.m.negras.jugadas, d.m.negras.acpl], [true, true, 12, 12, 50]);
-    igual("la categoría de cada torneo de Lichess, como la escribe centroamericano_torneos", d.cats, [{ categoria: "Sub-18", rama: "Absoluto" }, { categoria: "Sub-8", rama: "Femenino" }, { categoria: "Sub-10", rama: "Absoluto" }, { categoria: "Sub-12", rama: "Femenino" }, null]);
+    igual("la pantalla manda null antes de la posición 15 (la apertura): la medida es la misma", d.mSinApertura, d.m);
+    igual("LiveChess: los tableros de cada categoría («1-5», «1-3, 7»)", d.tabs, [[1, 2, 3, 4, 5], [1, 2, 3, 7], []]);
+    igual("LiveChess: el jugador de chess-results contra el de LiveChess (y otro no)", d.nombres, [true, false]);
+    igual("LiveChess: solo las partidas terminadas (con resultado y fuera de vivo)", d.terminadas, [true, true, false, false, false]);
+    igual("LiveChess: la jugada sin el reloj ni lo pensado, y desde qué posición hace falta evaluar", [d.san, d.desde], [["Nf3", "O-O", "e8=Q+"], 15]);
+    igual("el tablero sin limpiar: la partida de la ronda anterior (entera, o con lo que siguió, desde 40 jugadas) es copia; 20 jugadas iguales de apertura o una que se aparta, no", d.copias, [true, true, false, false, false, false]);
+    igual("la evaluación de la pantalla: una por posición, números de ±10000 o null; si no, se rechaza entera", d.validas, [[null, 30, -10000], null, null, null, null]);
+    const regla = (t) => {
+        const p = (t.match(/const palabras = [^;]*;/) || [""])[0];
+        const f = (t.match(/function mismoJugador\([^)]*\) \{[\s\S]*?\n\s*\}\n/) || [""])[0];
+        return (p + "\n" + f).replace(/: unknown/g, "").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n");
+    };
+    const leerArchivo = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
+    const reglaFp = regla(leerArchivo("supabase/functions/centroamericano-fair-play/analisis.ts"));
+    igual("la regla de los nombres es la misma que la de las mesas en vivo (las tablets) letra por letra", !!reglaFp && reglaFp === regla(leerArchivo("supabase/functions/centroamericano-mesas-vivo/index.ts")), true);
+    const fn = leerArchivo("supabase/functions/centroamericano-fair-play/index.ts");
+    igual("la función no mide la copia de la ronda anterior (ni al darla ni al guardarla)", (fn.match(/copiaDeOtra\(g\.moves/g) || []).length, 2);
+    igual("la función ya no lee Lichess, y nunca devuelve el enlace de LiveChess (torneo_id) a la pantalla", [/lichess\.org/.test(fn), (fn.match(/return \{[^;]*\}/g) || []).some((x) => /torneo_id/.test(x)) || /partidas\.push\(\{[^}]*torneo_id/.test(fn)], [false, false]);
+    igual("la función compara los DOS nombres con LiveChess antes de tomar una partida", /mismoJugador\(f\.blancas, nombreLc\(p\.white\)\) && mismoJugador\(f\.negras, nombreLc\(p\.black\)\)/.test(fn), true);
+
+    console.log("\n=== El puntaje de Stockfish, para las blancas ===");
+    global.window = {}; global.document = { getElementById: () => null };
+    require(path.join(RAIZ, "js/centroamericano-fair-play.js"));
+    const P = window.CentroamericanoFairPlay.puntaje;
+    igual("con blancas al turno, igual; con negras, dado vuelta; un mate vale ±10000; «mate 0» es que quien mueve ya está en mate; sin puntaje, null",
+        [P("info depth 12 score cp 35 nodes 9", "8/8/8/8/8/8/8/8 w - - 0 1"), P("info depth 12 score cp 35", "8/8/8/8/8/8/8/8 b - - 0 1"), P("info depth 9 score mate 3", "x w"), P("info depth 9 score mate -2", "x w"), P("info depth 0 score mate 0", "x b - -"), P(null, "x w")],
+        [35, -35, 10000, -10000, 10000, null]);
+    delete global.window; delete global.document;
 
     console.log("\n=== La banda dorada de la tablet (fairPlayDeMesa) ===");
     const C = require(path.join(RAIZ, "js/centroamericano-mesas.js"));
@@ -102,6 +131,13 @@ function pruebasDelCalculo() {
     igual("sorteada, revisada o sin efecto: no se mueve; sin Fair Play, nada", [al({ estado: "sorteada" }), al({ estado: "revisada" }), al({ estado: "sin_efecto", revisar_color: "blancas" }), C.fairPlayAlcance(null)], [null, null, null, null]);
 }
 
+// Una partida de verdad (24 jugadas de una italiana, legales para chess.js) como la da «vivo_pendientes»: sus posiciones.
+const POSICIONES = (() => {
+    const { Chess } = require("chess.js");
+    const j = new Chess();
+    return "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5 exd5 Nxd5 Qb3 Nce7 O-O O-O Rfe1 c6".split(" ").map((m) => { j.move(m); return j.fen(); });
+})();
+
 // ---------------------------------------------------------------- 2. el doble de la Edge Function
 // Lo mismo que hacen la función y la base: el QR, la ronda de cada categoría, las candidatas con su peso y quién no
 // aplica, el sorteo sin repetir, aprobar, descartar con motivo, revisar (con nota si no fue «Sin novedad») y las alertas.
@@ -118,6 +154,7 @@ const SERVIDOR_FP = `
     sorteos: [],
     alertas: [{ tnr: "100", ronda: 2, mesa: 4, color: "negras", jugador: "Castro, Alana", elo: 1588, rival: "Ruiz, Mia", rival_elo: 1810, resultado: "0-1", jugadas: 36, precision: 97.13, acpl: 7.7, esperada: 87.5, z: 2.6, nivel: "alta", partida_url: "https://lichess.org/broadcast/x/y/z", estado: "nueva", nota: null, vista_por_nombre: null, vista_en: null }],
     avisos: [],
+    vivo: [{ tnr: "100", ronda: 3, mesa: 1, blancas: "Clark, Arty", negras: "Garcia, Alberto", resultado: "1-0", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15 }], guardados: [],
     acumulado: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, partidas: 3, rondas: "1, 2, 3", precision_media: 91.2, esperada_media: 84, z: 2.31, nivel: "a_mirar", sin_mirar: 2, seguir: false }] };
   let n = 0;
   window.__fpServidor = (b, conSesion) => {
@@ -154,6 +191,8 @@ const SERVIDOR_FP = `
       Object.assign(f, { estado: "revisada", resultado: b.resultado, jugador_color: b.color, jugador: b.color === "negras" ? f.negras : f.blancas, nota: b.nota || null, revisada_por_nombre: quien }); return ok({ sorteo: f });
     }
     if (b.action === "alerta") { const a = S.alertas.find((x) => x.tnr === b.tnr && x.ronda === b.ronda && x.mesa === b.mesa && x.color === b.color); Object.assign(a, { estado: b.estado, nota: b.nota, vista_por_nombre: quien, vista_en: new Date().toISOString() }); return ok({ alerta: a }); }
+    if (b.action === "vivo_pendientes") return ok({ conectada: true, partidas: S.vivo.splice(0, 3), quedan: 0, nodos: 3000 });
+    if (b.action === "vivo_guardar") { S.guardados.push(b); return ok({ medidas: [] }); }
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
     if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
@@ -246,14 +285,25 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         e = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64) });
         const p = e.p;
         await p.waitForFunction(() => document.getElementById("fp-categoria") && document.getElementById("fp-categoria").options.length > 1);
-        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results y Lichess leídos a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
+        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results leído a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
         igual("las categorías con su ronda, sin las de ensayo", await p.$$eval("#fp-categoria option", (l) => l.map((o) => o.textContent)), ["Todas las categorías (2)", "Sub-12 Absoluto — ronda 3", "Sub-14 Femenino — ronda 3"]);
         igual("el encargado NO ve la sección de los QR de los encargados y no lee ninguna tabla directo: todo pasa por la función", await p.evaluate(() => [!!document.getElementById("fp-t-encargados"), window.__directo]), [false, []]);
         igual("la pantalla no tiene texto suelto («null») de una sección que no va", await p.evaluate(() => [...document.getElementById("fp-app").childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).length), 0);
-        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, la partida en Lichess y sus dos botones", await p.$eval("#fp-alertas .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), /Precisión 97,1 % en 36 jugadas · la esperable para su Elo: 87,5 % · 2,6 desviaciones arriba/.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
+        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, el enlace a la partida y sus dos botones", await p.$eval("#fp-alertas .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), /Precisión 97,1 % en 36 jugadas · la esperable para su Elo: 87,5 % · 2,6 desviaciones arriba/.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
             ["alta", "Muy alta", true, true, true, ["Ya la miré", "Seguirlo en los sorteos"]]);
         igual("el contador de alertas sin mirar (la de la partida y el acumulado)", await p.evaluate(() => [document.getElementById("fp-alertas-n").checkVisibility(), document.getElementById("fp-alertas-n").textContent]), [true, "2"]);
         igual("al abrir no hay novedades: solo lo que pasa después", await p.evaluate(() => document.getElementById("fp-novedades-caja").checkVisibility()), false);
+        // Stockfish en esta computadora: la partida terminada que da la función (directo de LiveChess) se analiza AQUÍ.
+        await p.waitForFunction(() => window.__fp.guardados.length === 1, null, { timeout: 90000 });
+        igual("la partida terminada se analiza con Stockfish en la pantalla: una evaluación por posición (null antes de la 15, números desde ahí) y vuelve a la función con su categoría, ronda y mesa y el token",
+            await p.evaluate(() => { const g = window.__fp.guardados[0]; return [g.tnr, g.ronda, g.mesa, g.token.length, g.evals.length, g.evals.slice(0, 15).every((x) => x === null), g.evals.slice(15).every((x) => typeof x === "number" && Math.abs(x) < 10000)]; }),
+            ["100", 3, 1, 64, 24, true, true]);
+        await p.waitForFunction(() => /Al día/.test(document.getElementById("fp-motor-estado").textContent));
+        igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
+            ["Al día: ninguna partida terminada por analizar · 1 analizadas en esta computadora. Se vuelve a mirar cada 45 s.", true]);
+        await p.click("#fp-motor-si");
+        igual("apagado en esta computadora: lo dice y se recuerda", await p.evaluate(() => [/Apagado en esta computadora/.test(document.getElementById("fp-motor-estado").textContent), localStorage.getItem("fp_motor_v1")]), [true, "no"]);
+        await p.click("#fp-motor-si");
         await p.click('#fp-alertas .cam-fp-alerta [data-accion="seguir"]');
         await p.waitForSelector("dialog[open] input, dialog[open] textarea");
         await p.fill("dialog[open] input, dialog[open] textarea", "Muy rápida en el medio juego");

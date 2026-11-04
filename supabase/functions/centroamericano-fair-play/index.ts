@@ -22,18 +22,24 @@
 //   "acumulado"   {tnr, clave, estado: vista|seguir, nota?} → todas las partidas medidas de ese jugador en la categoría
 //   "mesas_arbitro" {arbitro_token, ronda} → para la tablet de un árbitro de mesa: sus mesas elegidas (borde dorado)
 //   "retener"     {arbitro_token, ronda, mesa} → el árbitro de mesa confirma que retuvo a quien se revisa
-//   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos) y las partidas transmitidas a
-//                       Lichess, saca la precisión de cada jugador y calibra las alertas (a lo sumo cada 90 s).
+//   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos), a lo sumo cada 90 s.
+//   "vivo_pendientes" {} → hasta 3 partidas TERMINADAS de los tableros electrónicos que faltan por analizar, directo
+//                       de LiveChess (sin atraso; el enlace nunca sale de acá), con sus posiciones ya armadas
+//   "vivo_guardar" {tnr, ronda, mesa, evals} → la evaluación de Stockfish de cada posición, hecha en la pantalla de
+//                       Fair Play: se vuelve a leer la partida, se mide la precisión y se calibran las alertas
+// Ver «Las partidas para Fair Play, directo de LiveChess» en docs/decisiones/juegos-y-torneos.md.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { categoriaDeLichess, leerPareos, leerPgn, medir, MIN_JUGADAS, rondaYMesa } from "./analisis.ts";
+import { Chess } from "npm:chess.js@0.10.3";
+import { copiaDeOtra, DESDE_POSICION, evalsValidas, leerPareos, medir, MIN_JUGADAS, mismoJugador, nombreLc, RESULTADO_LC, sanDe, tablerosDe, terminadaLc } from "./analisis.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SALA = "centroamericano-2026";
-const LICHESS = "https://lichess.org";
 const CADA_MS = 90_000;
+const LIVECHESS = "https://1.pool.livechesscloud.com/get/";
+const POR_VEZ = 3;                 // partidas por pedido: la pantalla las analiza y vuelve por más
+const RESERVA_MS = 3 * 60_000;     // una partida dada a una pantalla no se le da a otra en ese tiempo
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -44,15 +50,31 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 
 let ultimaActualizacion = 0;   // en esta instancia; la base guarda la de verdad en fp_partidas.leida
 
-// Lichess corta (429) si se le pide muy seguido: una pausa antes de cada pedido. Si igual corta, lo que ya se
-// analizó queda guardado y el resto entra en la próxima actualización.
-const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 async function pedir(url: string, texto = true): Promise<string | unknown> {
-  if (url.startsWith(LICHESS)) await pausa(700);
   const r = await fetch(url, { headers: { "User-Agent": "AjedrezIntegral-FairPlay/1.0" }, signal: AbortSignal.timeout(20_000) });
   if (!r.ok) throw new Error(url + " contestó " + r.status);
   return texto ? await r.text() : await r.json();
+}
+
+// LiveChess: un índice o una partida que no existe (todavía) es un 404.
+// deno-lint-ignore no-explicit-any
+async function livechess(ruta: string): Promise<any> {
+  const r = await fetch(LIVECHESS + ruta, { headers: { "User-Agent": "AjedrezIntegral-FairPlay/1.0" }, signal: AbortSignal.timeout(10_000) });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error("LiveChess contestó " + r.status);
+  return r.json();
+}
+
+// Las posiciones (FEN) después de cada jugada de una partida de LiveChess, armadas con chess.js. Una jugada que no
+// entiende corta la partida ahí: lo de después no se mide.
+function posicionesDe(jugadas: unknown[]): string[] {
+  const juego = new Chess();
+  const out: string[] = [];
+  for (const j of jugadas.slice(0, 600)) {
+    if (!juego.move(sanDe(j), { sloppy: true })) break;
+    out.push(juego.fen());
+  }
+  return out;
 }
 
 Deno.serve(async (req) => {
@@ -162,13 +184,15 @@ Deno.serve(async (req) => {
         p_color: cuerpo.color ?? null, p_resultado: String(cuerpo.resultado), p_jugador: cuerpo.jugador ?? null, p_nota: cuerpo.nota ?? null, p_enlace: enlace })) });
     }
     if (accion === "actualizar") return json(await actualizar(servicio, rpc));
+    if (accion === "vivo_pendientes") return json(await vivoPendientes(servicio, rpc));
+    if (accion === "vivo_guardar") return json(await vivoGuardar(servicio, rpc, cuerpo));
     return json({ error: "Acción desconocida." }, 400);
   } catch (e) {
     return json({ error: (e as Error).message || String(e) }, 400);
   }
 });
 
-// ---------------------------------------------------------------- chess-results y Lichess
+// ---------------------------------------------------------------- chess-results
 type Rpc = (f: string, args: Record<string, unknown>) => Promise<unknown>;
 // deno-lint-ignore no-explicit-any
 async function actualizar(servicio: any, rpc: Rpc) {
@@ -178,7 +202,7 @@ async function actualizar(servicio: any, rpc: Rpc) {
   ultimaActualizacion = Date.now();
   const rondas = await rpc("centroamericano_fp_rondas", {}) as { tnr: string; ronda: number; prueba: boolean }[];
   const errores: string[] = [];
-  let pareos = 0, analizadas = 0;
+  let pareos = 0;
 
   // 1. Los emparejamientos de chess-results, ronda por ronda. Una ronda pasada que ya tiene todos sus resultados
   //    no se vuelve a pedir.
@@ -198,54 +222,104 @@ async function actualizar(servicio: any, rpc: Rpc) {
     }
   }
 
-  // 2. Las partidas de los tableros electrónicos: la transmisión de Lichess que dice la sala del Centroamericano.
-  try {
-    const { data: sala } = await servicio.from("salas_torneo").select("enlaces").eq("clave", SALA).maybeSingle();
-    const url = ((sala?.enlaces ?? []) as { url: string }[]).map((x) => x.url).find((u) => /lichess\.org\/broadcast\//.test(u));
-    const id = url ? (url.match(/\/([A-Za-z0-9]{8})(?:[/?#]|$)/) || [])[1] : null;
-    if (id) {
-      // deno-lint-ignore no-explicit-any
-      const evento = await pedir(LICHESS + "/api/broadcast/" + id, false) as any;
-      const tours = evento.group?.tours ?? [{ id: evento.tour.id, name: evento.tour.name }];
-      const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, categoria, rama, prueba");
-      const ronda = Math.max(0, ...rondas.filter((r) => !r.prueba).map((r) => r.ronda));
-      for (const t of tours) {
-        const cat = categoriaDeLichess(t.name);
-        const tnr = cat && (torneos ?? []).find((x: { categoria: string; rama: string; prueba: boolean }) => !x.prueba && x.categoria === cat.categoria && x.rama === cat.rama)?.tnr;
-        if (!tnr) continue;
-        // deno-lint-ignore no-explicit-any
-        const det = await pedir(LICHESS + "/api/broadcast/" + t.id, false) as any;
-        for (const rd of det.rounds ?? []) {
-          const n = Number(String(rd.name).match(/\d+/)?.[0]);
-          if (!n || n > ronda || !(rd.finished || rd.ongoing)) continue;
-          const { count } = await servicio.from("centroamericano_fp_analisis").select("mesa", { count: "exact", head: true }).eq("tnr", tnr).eq("ronda", n);
-          if (rd.finished && n < ronda && (count ?? 0) > 0) continue;   // ronda vieja ya analizada
-          const pgn = await pedir(LICHESS + "/api/broadcast/round/" + rd.id + ".pgn") as string;
-          const filas = [];
-          for (const g of leerPgn(pgn)) {
-            const rm = rondaYMesa(g.tags);
-            if (!rm || !g.tags.Result || g.tags.Result === "*") continue;   // solo partidas terminadas
-            const m = medir(g.evals);
-            for (const [color, med, yo, rival, eloYo, eloRival] of [
-              ["blancas", m.blancas, g.tags.White, g.tags.Black, g.tags.WhiteElo, g.tags.BlackElo],
-              ["negras", m.negras, g.tags.Black, g.tags.White, g.tags.BlackElo, g.tags.WhiteElo]] as const) {
-              if (med.jugadas < MIN_JUGADAS) continue;
-              filas.push({ tnr, ronda: rm.ronda, mesa: rm.mesa, color, jugador: (yo ?? "").slice(0, 120), elo: Number(eloYo) || null,
-                rival: (rival ?? "").slice(0, 120), rival_elo: Number(eloRival) || null, resultado: g.tags.Result.slice(0, 10),
-                jugadas: med.jugadas, precision: med.precision, acpl: med.acpl, partida_url: (g.tags.GameURL ?? "").slice(0, 300) || null,
-                analizada: new Date().toISOString() });
-            }
-          }
-          if (filas.length) {
-            // Sin «estado» ni «nota»: lo que decidió el encargado no se pisa al volver a analizar.
-            const { error } = await servicio.from("centroamericano_fp_analisis").upsert(filas, { onConflict: "tnr,ronda,mesa,color" });
-            if (error) errores.push("análisis " + tnr + " ronda " + n + ": " + error.message); else analizadas += filas.length;
-          }
-        }
-      }
-    }
-  } catch (e) { errores.push("Lichess: " + (e as Error).message); }
+  return { ok: true, pareos, errores, actualizado: new Date().toISOString() };
+}
 
+// ---------------------------------------------------------------- las partidas de los tableros, directo de LiveChess
+type Lc = { tnr: string; torneo_id: string; tableros: string };
+type Fila = { tnr: string; ronda: number; mesa: number; blancas: string; negras: string; elo_b: number | null; elo_n: number | null; analizada_en: string | null; en_analisis: string | null };
+
+// Las partidas terminadas que faltan: de cada categoría con tableros, cada ronda hasta la de ahora; la mesa de
+// chess-results es el tablero de LiveChess y los DOS nombres tienen que coincidir (si no, esa mesa no se toma: mejor
+// nada que medir la partida de otro). Se leen solo los índices (uno por ronda) y las partidas que se van a dar.
+// deno-lint-ignore no-explicit-any
+async function vivoPendientes(servicio: any, rpc: Rpc) {
+  const rondas = (await rpc("centroamericano_fp_rondas", {}) as { tnr: string; ronda: number; prueba: boolean }[]).filter((r) => !r.prueba);
+  const { data: lcs } = await servicio.from("centroamericano_livechess").select("tnr, torneo_id, tableros");
+  const conTableros = ((lcs ?? []) as Lc[]).filter((l) => rondas.some((r) => r.tnr === l.tnr));
+  if (!conTableros.length) return { ok: true, partidas: [], quedan: 0, conectada: false };
+  const { data: filas } = await servicio.from("centroamericano_fp_partidas")
+    .select("tnr, ronda, mesa, blancas, negras, elo_b, elo_n, analizada_en, en_analisis")
+    .in("tnr", conTableros.map((l) => l.tnr)).is("analizada_en", null).range(0, 4999);
+  const reservada = (f: Fila) => f.en_analisis && Date.now() - new Date(f.en_analisis).getTime() < RESERVA_MS;
+  const candidatas: { lc: Lc; f: Fila }[] = [];
+  const errores: string[] = [];
+  await Promise.all(conTableros.map(async (lc) => {
+    const ronda = rondas.find((r) => r.tnr === lc.tnr)!.ronda;
+    const tabs = tablerosDe(lc.tableros);
+    for (let n = 1; n <= ronda; n++) {
+      const faltan = ((filas ?? []) as Fila[]).filter((f) => f.tnr === lc.tnr && f.ronda === n && tabs.includes(f.mesa) && !reservada(f));
+      if (!faltan.length) continue;
+      try {
+        const indice = await livechess(lc.torneo_id + "/round-" + n + "/index.json");
+        const pareos = (indice && indice.pairings) || [];
+        for (const f of faltan) {
+          const p = pareos[f.mesa - 1];
+          if (terminadaLc(p) && mismoJugador(f.blancas, nombreLc(p.white)) && mismoJugador(f.negras, nombreLc(p.black))) candidatas.push({ lc, f });
+        }
+      } catch (e) { errores.push(lc.tnr + " ronda " + n + ": " + (e as Error).message); }
+    }
+  }));
+  // Primero lo más nuevo (la ronda de hoy), después lo de atrás.
+  candidatas.sort((a, b) => (b.f.ronda - a.f.ronda) || a.f.tnr.localeCompare(b.f.tnr) || (a.f.mesa - b.f.mesa));
+  const partidas = [];
+  for (const { lc, f } of candidatas.slice(0, POR_VEZ)) {
+    try {
+      const g = await livechess(lc.torneo_id + "/round-" + f.ronda + "/game-" + f.mesa + ".json");
+      const posiciones = posicionesDe(Array.isArray(g?.moves) ? g.moves : []);
+      // El tablero sin limpiar: la partida de la ronda anterior en el mismo tablero no es de estos jugadores.
+      const antes = f.ronda > 1 && g ? await livechess(lc.torneo_id + "/round-" + (f.ronda - 1) + "/game-" + f.mesa + ".json") : null;
+      const copia = !!antes && copiaDeOtra(g.moves || [], antes.moves || []);
+      if (copia) errores.push(f.tnr + " ronda " + f.ronda + " mesa " + f.mesa + ": LiveChess trae la partida de la ronda anterior en ese tablero; no se mide.");
+      if (!g || g.live || copia || !RESULTADO_LC[String(g.result)] || posiciones.length < (DESDE_POSICION + 2)) {
+        // Sin jugadas que medir (muy corta, la partida no está o es la de la ronda anterior): queda como vista para no
+        // volver a pedirla.
+        if (g && !g.live) await servicio.from("centroamericano_fp_partidas").update({ analizada_en: new Date().toISOString(), en_analisis: null }).eq("tnr", f.tnr).eq("ronda", f.ronda).eq("mesa", f.mesa);
+        continue;
+      }
+      await servicio.from("centroamericano_fp_partidas").update({ en_analisis: new Date().toISOString() }).eq("tnr", f.tnr).eq("ronda", f.ronda).eq("mesa", f.mesa);
+      partidas.push({ tnr: f.tnr, ronda: f.ronda, mesa: f.mesa, blancas: f.blancas, negras: f.negras, resultado: RESULTADO_LC[String(g.result)], posiciones, desde: DESDE_POSICION });
+    } catch (e) { errores.push(f.tnr + " ronda " + f.ronda + " mesa " + f.mesa + ": " + (e as Error).message); }
+  }
+  return { ok: true, conectada: true, partidas, quedan: Math.max(0, candidatas.length - partidas.length), errores };
+}
+
+// La evaluación que hizo la pantalla: se vuelve a leer la partida de LiveChess (la evaluación tiene que ser de ESA
+// partida, una por posición), se mide con la misma fórmula de siempre y se guarda con los nombres y el Elo de
+// chess-results. Lo que decidió el encargado sobre una alerta (estado, nota) no se pisa.
+// deno-lint-ignore no-explicit-any
+async function vivoGuardar(servicio: any, rpc: Rpc, cuerpo: Record<string, unknown>) {
+  const tnr = String(cuerpo.tnr ?? ""), ronda = Number(cuerpo.ronda), mesa = Number(cuerpo.mesa);
+  const [{ data: lc }, { data: f }] = await Promise.all([
+    servicio.from("centroamericano_livechess").select("tnr, torneo_id, tableros").eq("tnr", tnr).maybeSingle(),
+    servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, blancas, negras, elo_b, elo_n").eq("tnr", tnr).eq("ronda", ronda).eq("mesa", mesa).maybeSingle(),
+  ]);
+  if (!lc || !f) throw new Error("Esa partida no está entre las de los tableros electrónicos.");
+  const g = await livechess(lc.torneo_id + "/round-" + ronda + "/game-" + mesa + ".json");
+  const posiciones = posicionesDe(Array.isArray(g?.moves) ? g.moves : []);
+  const evals = evalsValidas(cuerpo.evals, posiciones.length);
+  if (!g || !evals) throw new Error("La evaluación no corresponde a esa partida (¿cambió mientras se analizaba?). Se vuelve a pedir.");
+  const antes = ronda > 1 ? await livechess(lc.torneo_id + "/round-" + (ronda - 1) + "/game-" + mesa + ".json") : null;
+  if (antes && copiaDeOtra(g.moves || [], antes.moves || [])) {
+    await servicio.from("centroamericano_fp_partidas").update({ analizada_en: new Date().toISOString(), en_analisis: null }).eq("tnr", tnr).eq("ronda", ronda).eq("mesa", mesa);
+    return { ok: true, medidas: [], copia: true };
+  }
+  const m = medir(evals);
+  const resultado = RESULTADO_LC[String(g.result)] ?? "";
+  const filas = [];
+  for (const [color, med, yo, rival, eloYo, eloRival] of [
+    ["blancas", m.blancas, f.blancas, f.negras, f.elo_b, f.elo_n],
+    ["negras", m.negras, f.negras, f.blancas, f.elo_n, f.elo_b]] as const) {
+    if (med.jugadas < MIN_JUGADAS) continue;
+    filas.push({ tnr, ronda, mesa, color, jugador: String(yo ?? "").slice(0, 120), elo: eloYo || null, rival: String(rival ?? "").slice(0, 120),
+      rival_elo: eloRival || null, resultado, jugadas: med.jugadas, precision: med.precision, acpl: med.acpl, partida_url: null,
+      fuente: "livechess", analizada: new Date().toISOString() });
+  }
+  if (filas.length) {
+    const { error } = await servicio.from("centroamericano_fp_analisis").upsert(filas, { onConflict: "tnr,ronda,mesa,color" });
+    if (error) throw new Error(error.message);
+  }
+  await servicio.from("centroamericano_fp_partidas").update({ analizada_en: new Date().toISOString(), en_analisis: null }).eq("tnr", tnr).eq("ronda", ronda).eq("mesa", mesa);
   await rpc("centroamericano_fp_calibrar", {});
-  return { ok: true, pareos, analizadas, errores, actualizado: new Date().toISOString() };
+  return { ok: true, medidas: filas.map((x) => ({ color: x.color, jugadas: x.jugadas, precision: x.precision })) };
 }

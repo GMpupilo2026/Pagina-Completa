@@ -12,6 +12,12 @@
  *     principal  true: también la sección «Encargados de Fair Play»
  *     dentro     (tnr) → si la categoría es del modo que se está mirando (real o ensayo)
  *     visible    () → si la pantalla está a la vista (para no leer de más)
+ *     nodos      cuánto piensa Stockfish en cada posición (por omisión NODOS)
+ *
+ * Las partidas de los tableros electrónicos salen directo de LiveChess (sin atraso), y LiveChess no trae la evaluación:
+ * mientras esta pantalla esté abierta, Stockfish las analiza AQUÍ, en esta computadora, una por una apenas terminan
+ * («vivo_pendientes» → evaluar cada posición → «vivo_guardar»). La precisión la calcula la función con la fórmula de
+ * siempre. Ver «Las partidas para Fair Play, directo de LiveChess» en docs/decisiones/juegos-y-torneos.md.
  *   CentroamericanoFairPlay.cargar()   vuelve a leer
  */
 (function () {
@@ -23,10 +29,15 @@
     const COLOR = { blancas: "Blancas", negras: "Negras" };
     const LEER_MS = 20000, ACTUALIZAR_MS = 120000;
     const VENCE_DEFECTO = "2026-11-10T05:59:59Z";   // el final del torneo, como los enlaces de los árbitros
+    const MOTOR_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";   // las dos pantallas están en la raíz del sitio
+    const NODOS = 120000;              // ~0,2 s por posición en una computadora común: una partida en unos 15 s
+    const MOTOR_CADA_MS = 45000;       // sin nada pendiente, se vuelve a preguntar cada 45 s
+    const MOTOR_GUARDADO = "fp_motor_v1";
 
     let ctx = null, datos = null, primera = true, ultimaActualizacion = 0;
     const vistasAlertas = new Set();
     let novedades = [];                 // lo que pasó desde que se abrió la pantalla (lo más nuevo arriba)
+    let motor = null, motorArranque = null, analizando = false, ultimoMotor = 0, analizadasAqui = 0;
     const $ = (id) => document.getElementById(id);
 
     function el(tag, attrs, ...hijos) {
@@ -64,7 +75,7 @@
         ctx.raiz.replaceChildren(...[ // sin la sección de los QR (solo del principal): un null suelto se pintaría como texto
             el("div", { class: "cam-fp-barra" },
                 el("p", { id: "fp-estado", class: "text-sm", role: "status" }),
-                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results y Lichess ahora")),
+                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results ahora")),
 
             el("section", { id: "fp-novedades-caja", class: "cam-fp-novedades", "aria-labelledby": "fp-t-novedades", hidden: true },
                 el("div", { class: "cam-fp-barra" },
@@ -74,7 +85,12 @@
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-alertas" },
                 el("h3", { id: "fp-t-alertas", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📈 " }), "Alertas de los tableros electrónicos ", el("span", { id: "fp-alertas-n", class: "cam-contador", hidden: true })),
-                el("p", { class: "cam-herramientas-nota", texto: "Las partidas que se transmiten a Lichess, jugada por jugada: la precisión de cada jugador (la fórmula de Lichess, sin la apertura ni las posiciones ya decididas) contra la esperable para su Elo en este mismo torneo. Es una alerta para mirar, nunca una acusación: «Ya la miré» la cierra; «Seguirlo en los sorteos» hace que sus mesas salgan más seguido." }),
+                el("p", { class: "cam-herramientas-nota", texto: "Las partidas de los tableros electrónicos, directo de LiveChess y sin atraso: apenas termina una, Stockfish la analiza en esta computadora y sale la precisión de cada jugador (la fórmula de Lichess, sin la apertura ni las posiciones ya decididas), comparada con la esperable para su Elo en este mismo torneo. Es una alerta para mirar, nunca una acusación: «Ya la miré» la cierra; «Seguirlo en los sorteos» hace que sus mesas salgan más seguido." }),
+                el("div", { class: "cam-fp-motor" },
+                    el("label", { class: "cam-fp-motor-casilla" },
+                        el("input", { type: "checkbox", id: "fp-motor-si", onchange: (e) => { try { localStorage.setItem(MOTOR_GUARDADO, e.target.checked ? "si" : "no"); } catch (x) { /* sin almacenamiento */ } if (e.target.checked) { ultimoMotor = 0; analizar(); } else estadoMotor("Apagado en esta computadora: las partidas las analiza otra pantalla de Fair Play que lo tenga encendido."); } }),
+                        " Analizar las partidas en esta computadora (Stockfish)"),
+                    el("p", { id: "fp-motor-estado", class: "cam-fp-detalle", role: "status", texto: "Preparando Stockfish…" })),
                 el("p", { id: "fp-alertas-vacio", class: "cam-herramientas-nota", texto: "Ninguna partida se sale de lo esperable para el Elo de su jugador." }),
                 el("h4", { id: "fp-t-acumulado", class: "cam-fp-subtitulo", hidden: true }, "Sumadas todas sus partidas del torneo"),
                 el("p", { id: "fp-acumulado-nota", class: "cam-herramientas-nota", hidden: true, texto: "Quien juega un poco por encima de su nivel en cada ronda no salta en ninguna partida sola, pero sí en el conjunto: se suman sus partidas medidas en la categoría (dos partidas a 1,5 desviaciones dan 2,1)." }),
@@ -202,7 +218,7 @@
 
     function pintar() {
         const d = datos;
-        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results y Lichess leídos a las " + hora(d.actualizado) : "Todavía no se leyeron chess-results ni Lichess");
+        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results leído a las " + hora(d.actualizado) : "Todavía no se leyó chess-results");
         const sel = $("fp-categoria"), antes = sel.value;
         sel.replaceChildren(el("option", { value: "", texto: "Todas las categorías (" + d.rondas.length + ")" }),
             ...d.rondas.map((r) => el("option", { value: r.tnr, texto: r.nombre + " — ronda " + r.ronda })));
@@ -239,7 +255,7 @@
             el("p", { texto: "Precisión " + uno(a.precision) + " % en " + a.jugadas + " jugadas" + (a.esperada != null ? " · la esperable para su Elo: " + uno(a.esperada) + " %" : "") + (a.z != null ? " · " + uno(a.z) + " desviaciones arriba" : "") + " · pérdida media " + Math.round(Number(a.acpl)) + " centipeones" }),
             a.nota || a.vista_por_nombre ? el("p", { class: "cam-fp-detalle", texto: (a.estado === "seguir" ? "En seguimiento" : "Mirada") + (a.vista_por_nombre ? " por " + a.vista_por_nombre : "") + (a.vista_en ? " a las " + hora(a.vista_en) : "") + (a.nota ? ": " + a.nota : "") }) : null,
             el("div", { class: "cam-fp-acciones" },
-                a.partida_url ? el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: a.partida_url, target: "_blank", rel: "noopener" }, "Ver la partida en Lichess") : null,
+                a.partida_url ? el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: a.partida_url, target: "_blank", rel: "noopener" }, "Ver la partida") : null,
                 a.estado !== "vista" ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "vista", onclick: () => decidirAlerta(a, "vista") }, "Ya la miré") : null,
                 a.estado !== "seguir" ? el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "seguir", onclick: () => decidirAlerta(a, "seguir") }, "Seguirlo en los sorteos") : null))));
     }
@@ -429,7 +445,7 @@
         if (aMano) $("fp-actualizar").disabled = true;
         try {
             const r = await llamar("actualizar");
-            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídos: " + r.pareos + " mesas de chess-results y " + r.analizadas + " jugadores de Lichess." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.analizadas));
+            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de chess-results." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
         } catch (e) { if (aMano) avisar("No se pudo leer: " + (e.message || e), true); }
         finally { if (aMano) $("fp-actualizar").disabled = false; await cargar(); }
     }
@@ -550,16 +566,106 @@
         await cargarEnlaces();
     }
 
+    // ---------------------------------------------------------------- Stockfish en esta computadora
+    const motorEncendido = () => { try { return localStorage.getItem(MOTOR_GUARDADO) !== "no"; } catch (e) { return true; } };
+    const estadoMotor = (t) => { const n = $("fp-motor-estado"); if (n) n.textContent = t; };
+
+    function arrancarMotor() {
+        if (motor) return Promise.resolve(motor);
+        if (motorArranque) return motorArranque;
+        motorArranque = new Promise((listo) => {
+            let w;
+            try { w = new Worker(MOTOR_URL); } catch (e) { motorArranque = null; listo(null); return; }
+            const tope = setTimeout(() => { w.terminate(); motorArranque = null; listo(null); }, 30000);
+            w.onerror = () => { clearTimeout(tope); w.terminate(); motor = null; motorArranque = null; listo(null); };
+            w.onmessage = (e) => {
+                if (String(e.data).indexOf("uciok") === -1) return;
+                clearTimeout(tope);
+                motor = w;
+                listo(w);
+            };
+            w.postMessage("uci");
+        });
+        return motorArranque;
+    }
+
+    // La evaluación de una posición en centipeones PARA LAS BLANCAS (un mate, ±10000), de la última línea «info … score»
+    // que dio Stockfish: él la da desde el lado que mueve. «mate 0» es que quien mueve ya está en mate.
+    function puntaje(linea, fen) {
+        const m = String(linea || "").match(/\bscore (cp|mate) (-?\d+)/);
+        if (!m) return null;
+        const n = Number(m[2]);
+        const v = m[1] === "mate" ? (n > 0 ? 10000 : -10000) : Math.max(-10000, Math.min(10000, n));
+        return String(fen).split(" ")[1] === "b" ? -v : v;
+    }
+
+    function evaluar(fen, nodos) {
+        return new Promise((listo) => {
+            let ultima = null;
+            const tope = setTimeout(() => { motor.onmessage = null; listo(null); }, 30000);
+            motor.onmessage = (e) => {
+                const l = String(e.data);
+                if (/^info .*\bscore /.test(l)) ultima = l;
+                else if (l.startsWith("bestmove")) { clearTimeout(tope); listo(puntaje(ultima, fen)); }
+            };
+            motor.postMessage("position fen " + fen);
+            motor.postMessage("go nodes " + (nodos || ctx.nodos || NODOS));
+        });
+    }
+
+    // Pide las partidas terminadas que faltan y las analiza una por una, hasta que no quede ninguna (o se apague, o se
+    // esconda la pantalla). La función reserva cada partida 3 minutos: dos pantallas abiertas se reparten el trabajo.
+    async function analizar() {
+        if (analizando || !ctx) return;
+        const casilla = $("fp-motor-si");
+        if (casilla) casilla.checked = motorEncendido();
+        if (!motorEncendido()) { estadoMotor("Apagado en esta computadora: las partidas las analiza otra pantalla de Fair Play que lo tenga encendido."); return; }
+        if (ctx.visible && !ctx.visible()) return;
+        if (Date.now() - ultimoMotor < MOTOR_CADA_MS) return;
+        analizando = true;
+        ultimoMotor = Date.now();
+        let hechas = 0;
+        try {
+            if (!(await arrancarMotor())) { estadoMotor("Esta computadora no pudo arrancar Stockfish: las partidas las analiza otra pantalla de Fair Play."); return; }
+            for (let vuelta = 0; vuelta < 40; vuelta++) {
+                const r = await llamar("vivo_pendientes");
+                if (!r.partidas || !r.partidas.length) {
+                    estadoMotor(r.conectada === false ? "No hay tableros electrónicos de LiveChess cargados en «Árbitros y mesas»." : "Al día: ninguna partida terminada por analizar" + (analizadasAqui ? " · " + analizadasAqui + " analizadas en esta computadora" : "") + ". Se vuelve a mirar cada 45 s.");
+                    break;
+                }
+                for (const p of r.partidas) {
+                    const evals = p.posiciones.map(() => null);
+                    const total = Math.ceil(p.posiciones.length / 2);
+                    for (let i = p.desde; i < p.posiciones.length; i++) {
+                        if (!motorEncendido() || (ctx.visible && !ctx.visible())) { estadoMotor("En pausa: se sigue cuando vuelvas a esta pantalla."); return; }
+                        if (i % 6 === p.desde % 6) estadoMotor("🤖 Analizando " + nombreDe(p.tnr) + ", ronda " + p.ronda + ", mesa " + p.mesa + " (" + p.blancas + " – " + p.negras + "): jugada " + (Math.floor(i / 2) + 1) + " de " + total + (r.quedan ? " · faltan " + r.quedan + " partidas más" : "") + ".");
+                        evals[i] = await evaluar(p.posiciones[i], r.nodos);   // la función puede decir cuánto pensar
+                    }
+                    await llamar("vivo_guardar", { tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, evals });
+                    hechas++;
+                    analizadasAqui++;
+                }
+            }
+        } catch (e) {
+            estadoMotor("No se pudo analizar: " + (e.message || e) + ". Se vuelve a intentar en un momento.");
+        } finally {
+            analizando = false;
+            if (hechas) await cargar();
+        }
+    }
+
     // ---------------------------------------------------------------- arranque
     function iniciar(c) {
         ctx = c;
         armar();
         cargar();
+        analizar();
         setInterval(() => {
             if (ctx.visible && !ctx.visible()) return;
             if (Date.now() - ultimaActualizacion > ACTUALIZAR_MS) actualizar(false); else cargar();
+            analizar();
         }, LEER_MS);
     }
 
-    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS };
+    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje };
 })();

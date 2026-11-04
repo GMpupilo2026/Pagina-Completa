@@ -1,7 +1,8 @@
 // Lo que la Edge Function centroamericano-fair-play calcula sin red ni Deno: leer los emparejamientos de una
-// ronda de chess-results, leer el PGN de una ronda de Lichess y sacar la precisión de cada jugador. Sin nada de
-// Deno, para que herramientas/verificar-centroamericano-fair-play.js lo pruebe con node.
-// Ver «El sorteo de Fair Play» en docs/decisiones/juegos-y-torneos.md.
+// ronda de chess-results, reconocer las partidas de LiveChess (el tablero, los nombres, el resultado) y sacar la
+// precisión de cada jugador de la evaluación de cada posición. Sin nada de Deno, para que
+// herramientas/verificar-centroamericano-fair-play.js lo pruebe con node.
+// Ver «El sorteo de Fair Play» y «Las partidas para Fair Play, directo de LiveChess» en docs/decisiones/juegos-y-torneos.md.
 
 export type Pareo = { mesa: number; snr_b: number | null; snr_n: number | null; blancas: string; negras: string; elo_b: number | null; elo_n: number | null; resultado: string };
 
@@ -39,30 +40,6 @@ export function leerPareos(html: string): Pareo[] {
   return out;
 }
 
-export type Partida = { tags: Record<string, string>; evals: (number | null)[] };
-
-// El PGN de una ronda de Lichess: cada partida con sus etiquetas y la evaluación (en centipeones, para las blancas)
-// después de cada jugada; un mate vale ±10000. Sin evaluación, null.
-export function leerPgn(texto: string): Partida[] {
-  const out: Partida[] = [];
-  for (const bloque of texto.split(/\n\s*\n(?=\[Event )/)) {
-    const tags: Record<string, string> = {};
-    for (const m of bloque.matchAll(/^\[(\w+) "([^"]*)"\]$/gm)) tags[m[1]] = m[2];
-    if (!tags.Event) continue;
-    const cuerpo = bloque.replace(/^\[.*\]$/gm, "");
-    const evals: (number | null)[] = [];
-    for (const m of cuerpo.matchAll(/\{([^}]*)\}|(\d+\.(?:\.\.)?)|([^\s{}]+)/g)) {
-      if (m[3] && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(m[3])) evals.push(null);
-      else if (m[1] != null && evals.length && evals[evals.length - 1] == null) {
-        const e = m[1].match(/\[%eval\s+(#?)(-?\d+(?:\.\d+)?)/);
-        if (e) evals[evals.length - 1] = e[1] ? (Number(e[2]) > 0 ? 10000 : -10000) : Number(e[2]) * 100;
-      }
-    }
-    out.push({ tags, evals });
-  }
-  return out;
-}
-
 // La fórmula pública de Lichess: la probabilidad de ganar de una evaluación, y la precisión de una jugada según
 // cuánto bajó esa probabilidad para quien movió.
 const ganar = (cp: number) => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
@@ -93,17 +70,66 @@ export function medir(evals: (number | null)[]): { blancas: Medida; negras: Medi
   return { blancas: m("w"), negras: m("b") };
 }
 
-// La categoría de un torneo de Lichess del grupo («Open U12», «Girls U08») como la escribe centroamericano_torneos
-// («Sub-12» y «Absoluto» o «Femenino»).
-export function categoriaDeLichess(nombre: string): { categoria: string; rama: string } | null {
-  const m = String(nombre || "").match(/\b(Open|Girls?|Women|Boys?)\b[^U]*U\s*0?(\d{1,2})\b/i) || String(nombre || "").match(/U\s*0?(\d{1,2})\b.*\b(Open|Girls?)\b/i);
-  if (!m) return null;
-  const tipo = /^\d/.test(m[1]) ? m[2] : m[1], edad = /^\d/.test(m[1]) ? m[1] : m[2];
-  return { categoria: "Sub-" + Number(edad), rama: /^girl|^women/i.test(tipo) ? "Femenino" : "Absoluto" };
+// ---- LiveChess Cloud (los tableros electrónicos, sin atraso)
+// Los nombres: la MISMA regla que supabase/functions/centroamericano-mesas-vivo/index.ts y
+// js/centroamericano-transmision-reloj.js (verificar-centroamericano-fair-play.js comprueba que dice lo mismo).
+const palabras = (s: unknown) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  .replace(/[^a-zñ0-9\s]/g, " ").split(/\s+/).filter((x) => x.length > 1);
+export function mismoJugador(a: unknown, b: unknown) {
+  const pa = new Set(palabras(a)), pb = palabras(b);
+  if (!pa.size || !pb.length) return false;
+  const comunes = pb.filter((x) => pa.has(x)).length;
+  return comunes >= 2 || (comunes >= 1 && Math.min(pa.size, pb.length) === 1);
 }
 
-// La mesa de una partida de Lichess: «Round "2.5"» es la ronda 2, mesa 5.
-export function rondaYMesa(tags: Record<string, string>): { ronda: number; mesa: number } | null {
-  const m = String(tags.Round || "").match(/^(\d+)\.(\d+)$/);
-  return m ? { ronda: Number(m[1]), mesa: Number(m[2]) } : null;
+// «Guevara Ruiz, Santiago» de chess-results contra { fname, mname, lname } de LiveChess.
+// deno-lint-ignore no-explicit-any
+export const nombreLc = (p: any) => [p?.lname, p?.fname, p?.mname].filter(Boolean).join(" ");
+export const RESULTADO_LC: Record<string, string> = { WHITEWIN: "1-0", BLACKWIN: "0-1", DRAW: "1/2-1/2" };
+
+// Los tableros que transmite una categoría: «1-5», «1-3, 7».
+export function tablerosDe(t: string): number[] {
+  const out = new Set<number>();
+  for (const parte of String(t || "").split(",")) {
+    const m = parte.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (!m) continue;
+    for (let i = Number(m[1]); i <= Number(m[2] || m[1]) && i <= 200; i++) out.add(i);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
+// Una partida de LiveChess que ya terminó en el índice de su ronda: su resultado y que no siga en vivo.
+// deno-lint-ignore no-explicit-any
+export const terminadaLc = (p: any) => !!p && !p.live && /^(1-0|0-1|1\/2-1\/2|½-½)$/.test(String(p.result || ""));
+
+// Las jugadas de LiveChess traen el reloj y lo pensado: «Nf3 5482+5». Solo la jugada.
+export const sanDe = (jugada: unknown) => String(jugada || "").trim().split(/\s+/)[0];
+
+// ¿Es la partida de la ronda anterior en el mismo tablero? Pasó de verdad (Sub-8, tablero 4, rondas 4 y 5): LiveChess
+// trae los nombres nuevos en el pareo, pero las jugadas de la ronda anterior porque el tablero no se limpió. Dos
+// partidas distintas no repiten 40 jugadas seguidas desde el principio; una copia, sí (entera, o la vieja y lo que siguió).
+export function copiaDeOtra(a: unknown[], b: unknown[]): boolean {
+  const x = (a || []).map(sanDe), y = (b || []).map(sanDe);
+  const corta = Math.min(x.length, y.length);
+  if (!corta) return false;
+  for (let i = 0; i < corta; i++) if (x[i] !== y[i]) return false;
+  return x.length === y.length || corta >= 40;
+}
+
+// Desde qué posición hace falta la evaluación: medir() mira cada jugada desde la DESDE_JUGADA de cada uno, y la
+// evaluación de la posición de antes; las anteriores no se usan (se mandan en null).
+export const DESDE_POSICION = (DESDE_JUGADA - 1) * 2 - 1;
+
+// La evaluación que manda la pantalla: una por posición (en centipeones, para las blancas; un mate ±10000), null
+// antes de DESDE_POSICION. Lo que no sea eso se rechaza entero.
+export function evalsValidas(evals: unknown, posiciones: number): (number | null)[] | null {
+  if (!Array.isArray(evals) || evals.length !== posiciones) return null;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < evals.length; i++) {
+    const e = evals[i];
+    if (e == null) { out.push(null); continue; }
+    if (typeof e !== "number" || !Number.isFinite(e) || Math.abs(e) > 10000) return null;
+    out.push(Math.round(e));
+  }
+  return out;
 }

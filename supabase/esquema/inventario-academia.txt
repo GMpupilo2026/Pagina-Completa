@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104185542
+# al-dia-con: 20261104212407
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -652,6 +652,7 @@ columna  centroamericano_fp_analisis.color  text
 columna  centroamericano_fp_analisis.elo  integer
 columna  centroamericano_fp_analisis.esperada  numeric(5,2)
 columna  centroamericano_fp_analisis.estado  text
+columna  centroamericano_fp_analisis.fuente  text
 columna  centroamericano_fp_analisis.jugadas  integer
 columna  centroamericano_fp_analisis.jugador  text
 columna  centroamericano_fp_analisis.mesa  integer
@@ -675,9 +676,11 @@ columna  centroamericano_fp_enlaces.revocada  boolean
 columna  centroamericano_fp_enlaces.token  text
 columna  centroamericano_fp_enlaces.ultimo_uso  timestamp with time zone
 columna  centroamericano_fp_enlaces.vence  timestamp with time zone
+columna  centroamericano_fp_partidas.analizada_en  timestamp with time zone
 columna  centroamericano_fp_partidas.blancas  text
 columna  centroamericano_fp_partidas.elo_b  integer
 columna  centroamericano_fp_partidas.elo_n  integer
+columna  centroamericano_fp_partidas.en_analisis  timestamp with time zone
 columna  centroamericano_fp_partidas.leida  timestamp with time zone
 columna  centroamericano_fp_partidas.mesa  integer
 columna  centroamericano_fp_partidas.negras  text
