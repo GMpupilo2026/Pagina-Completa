@@ -175,15 +175,16 @@
             <div><label for="${id("prov")}" class="block text-sm font-semibold mb-1">Provincia donde vive${AST}</label><select id="${id("prov")}" data-campo data-c="provincia"></select></div>
             <div><label for="${id("cant")}" class="block text-sm font-semibold mb-1">Cantón${AST}</label><select id="${id("cant")}" data-campo data-c="canton"></select></div>
           </div>
-          <!-- GM, IM y WGM: la organización les da hospedaje y alimentación; de afuera, se pide solo el viaje. -->
+          <!-- GM, IM y WGM: la organización les da hospedaje y alimentación; de afuera, se pide solo el viaje;
+               de Costa Rica, los días en que llega al Estadio Nacional y en que sale. -->
           <div data-caja-titulado class="hidden rounded-xl border-l-4 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4 text-sm space-y-1"><p class="font-semibold"><span aria-hidden="true">🏆 </span>Invitado titulado</p><p data-titulado-texto></p></div>
           <div data-caja-viaje class="space-y-4">
           <div class="grid sm:grid-cols-3 gap-4">
-            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1">Día de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1">Día de salida<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
+            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1"><span data-lbl-llegada>Día de llegada</span><span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1"><span data-lbl-salida>Día de salida</span><span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div data-viaje-vuelo><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
           </div>
-          <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita transporte del aeropuerto al Estadio Nacional</label>
+          <label data-viaje-traslado class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita transporte del aeropuerto al Estadio Nacional</label>
           <div data-caja-docs class="hidden grid sm:grid-cols-2 gap-4">
             <div><p class="text-sm font-semibold mb-1">Foto del tiquete aéreo${AST}</p><label for="${id("tiq")}" class="metro-boton inline-block cursor-pointer">🎫 Elegir el tiquete<input id="${id("tiq")}" data-doc="tiquete" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="tiquete" class="text-xs mt-1" aria-live="polite"></p></div>
             <div><p class="text-sm font-semibold mb-1">Foto del pasaporte${AST}</p><label for="${id("pas")}" class="metro-boton inline-block cursor-pointer">🛂 Elegir el pasaporte<input id="${id("pas")}" data-doc="pasaporte" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="pasaporte" class="text-xs mt-1" aria-live="polite"></p></div>
@@ -527,15 +528,21 @@
       const afuera = deAfuera();
       const tit = esTitulado();
       q("[data-caja-procedencia]").classList.toggle("hidden", afuera);
-      q("[data-caja-viaje]").classList.toggle("hidden", !afuera);
+      q("[data-caja-viaje]").classList.toggle("hidden", !afuera && !tit);
+      // El titulado de Costa Rica: solo los días en el Estadio Nacional, sin vuelo ni traslado.
+      const titCR = tit && !afuera;
+      q("[data-viaje-vuelo]").classList.toggle("hidden", titCR);
+      q("[data-viaje-traslado]").classList.toggle("hidden", titCR);
+      q("[data-lbl-llegada]").textContent = titCR ? "Día de llegada al Estadio Nacional" : "Día de llegada";
+      q("[data-lbl-salida]").textContent = titCR ? "Día de salida del Estadio Nacional" : "Día de salida";
       q("[data-caja-hosp-alim]").classList.toggle("hidden", tit);
       q("[data-caja-titulado]").classList.toggle("hidden", !tit);
       q("[data-caja-docs]").classList.toggle("hidden", !(tit && afuera));
-      el.querySelectorAll("[data-ast-viaje]").forEach((x) => x.classList.toggle("hidden", !(tit && afuera)));
+      el.querySelectorAll("[data-ast-viaje]").forEach((x) => x.classList.toggle("hidden", !tit));
       if (tit) q("[data-titulado-texto]").textContent = "Como " + yo.elegido.titulo + ", no paga la inscripción y la organización le da el hospedaje y la alimentación"
         + (afuera ? " según las fechas de su vuelo. Solo necesitamos su viaje: los días de llegada y de salida como en el tiquete, el número de vuelo, la foto del tiquete aéreo y la del pasaporte, y si necesita transporte del aeropuerto al Estadio Nacional."
-          : ". La organización lo coordina con usted por correo.");
-      q("[data-titulo-viaje]").textContent = tit ? (afuera ? "Su viaje" : "De dónde viene")
+          : " según los días en que esté en el Estadio Nacional. Solo necesitamos el día en que llega y el día en que sale.");
+      q("[data-titulo-viaje]").textContent = tit ? (afuera ? "Su viaje" : "De dónde viene y sus días en el torneo")
         : afuera ? "Viaje, hospedaje y alimentación" : "De dónde viene, hospedaje y alimentación";
       q("[data-origen-ayuda]").textContent = sinFide() ? "" : afuera
         ? "Escribe primero el ID FIDE (el número): el nombre se llena solo, tal como aparece en FIDE, y no se puede cambiar."
@@ -708,6 +715,9 @@
       });
       if (comidas().length && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
+      if (esTitulado() && !deAfuera() && (!v("llegada") || !v("salida") || v("salida") <= v("llegada"))) {
+        falta(c("llegada"), "Faltan el día en que llega al Estadio Nacional y el día en que sale (después del de llegada).");
+      }
       if (esTitulado() && deAfuera()) {
         if (!v("llegada") || !v("salida") || v("salida") <= v("llegada") || v("vuelo").length < 3) falta(c("llegada"), "Faltan los datos del vuelo: el día de llegada, el de salida y el número de vuelo.");
         if (!yo.docs.tiquete) falta(q('[data-doc="tiquete"]'), "Falta la foto del tiquete aéreo.");
@@ -724,8 +734,10 @@
         torneos: yo.torneos(),
         responsable: e !== null && e < 18 ? { nombre: v("resp_nombre"), parentesco: v("resp_parentesco"), documento: v("resp_documento"), telefono: v("resp_telefono") } : null,
         emergencia: { nombre: v("emer_nombre"), parentesco: v("emer_parentesco"), telefono: v("emer_telefono") },
-        // El viaje, solo de quien viene de otro país; de Costa Rica, la provincia y el cantón.
-        viaje: deAfuera() && (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
+        // El viaje, solo de quien viene de otro país; de Costa Rica, la provincia y el cantón
+        // (y el titulado de Costa Rica, sus días en el Estadio Nacional).
+        viaje: esTitulado() && !deAfuera() ? { llegada: v("llegada"), salida: v("salida"), vuelo: "", traslado: false }
+          : deAfuera() && (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
         provincia: deAfuera() ? null : v("provincia"), canton: deAfuera() ? null : v("canton"),
         hospedaje: hospeda(), hospedaje_desde: hospeda() ? v("hospedaje_desde") : null, hospedaje_hasta: hospeda() ? v("hospedaje_hasta") : null,
         habitacion: hospeda() ? v("habitacion") : null, acompanantes: hospeda() ? Number(v("acompanantes")) || 0 : 0,
@@ -978,7 +990,7 @@
     );
     if (d.responsable) filas.push(["Responsable", d.responsable.nombre + " · " + d.responsable.telefono]);
     filas.push(["Emergencias", d.emergencia.nombre + (d.emergencia.parentesco ? " (" + d.emergencia.parentesco + ")" : "") + " · " + d.emergencia.telefono]);
-    if (p.titulado()) filas.push(["Hospedaje y alimentación", "Los da la organización" + (d.viaje && d.viaje.llegada ? ", del " + fechaLarga(d.viaje.llegada) + " al " + fechaLarga(d.viaje.salida) + ", según su vuelo" : "")]);
+    if (p.titulado()) filas.push(["Hospedaje y alimentación", "Los da la organización" + (d.viaje && d.viaje.llegada ? ", del " + fechaLarga(d.viaje.llegada) + " al " + fechaLarga(d.viaje.salida) + (p.deAfuera() ? ", según su vuelo" : "") : "")]);
     else filas.push(
       ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", en habitación compartida "
         + (d.habitacion === "compartida" ? "con su familia, su delegación o sus acompañantes" : "con quien asigne la organización")
@@ -986,7 +998,7 @@
       ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
     );
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
-    if (d.viaje) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
+    if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
     const dl = document.createElement("dl"); dl.className = "grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm";

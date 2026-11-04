@@ -138,6 +138,7 @@ function pngLiso(w, h, [r, g, b]) {
 const FILAS_FIDE = [
   { fideId: "6400000", nombre: "Mora Solis, Ana", titulo: "WCM", fed: "CRC", sexo: "w", nacimiento: 2013, estandar: 1950, rapido: 1900, blitz: 1880 },
   { fideId: "6400099", nombre: "Mora Solis, Andrea", titulo: "", fed: "CRC", sexo: "w", nacimiento: 1990, estandar: null, rapido: null, blitz: null },
+  { fideId: "6400555", nombre: "Brenes Arias, Luis", titulo: "IM", fed: "CRC", sexo: "m", nacimiento: 1985, estandar: 2400, rapido: 2390, blitz: 2380 },
   { fideId: "3500123", nombre: "Gonzalez Perez, Mario", titulo: "GM", fed: "GUA", sexo: "m", nacimiento: 1990, estandar: 2510, rapido: 2480, blitz: 2470 },
 ];
 
@@ -343,6 +344,37 @@ const FILAS_FIDE = [
       xg.hospedaje === false && xg.comidas.length === 0 && xg.viaje && xg.viaje.vuelo === "TA 391" && xg.viaje.traslado === true
       && /^documento\//.test(xg.tiquete) && /^documento\//.test(xg.pasaporte) && xg.titulo === "GM", xg);
     igual("se subieron la foto, el tiquete y el pasaporte", s3.anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "documento", "documento"]);
+
+    /* ----- Un IM de Costa Rica: sin vuelo, pero con sus días en el Estadio Nacional ----- */
+    const s4 = await abrir();
+    const im = tarjeta(s4.p, 0);
+    await llenar(im, { nombre: "Luis", apellidos: "Brenes Arias" });
+    await im.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
+    cierto("un IM de Costa Rica ve los días de llegada y de salida del Estadio Nacional, sin vuelo, traslado ni documentos",
+      await im.locator("[data-caja-titulado]").isVisible() && await im.locator('[data-c="llegada"]').isVisible() && await im.locator('[data-c="salida"]').isVisible()
+      && /llegada al Estadio Nacional/.test(await im.locator("[data-caja-viaje]").textContent())
+      && !(await im.locator('[data-c="vuelo"]').isVisible()) && !(await im.locator('[data-c="traslado"]').isVisible()) && !(await im.locator("[data-caja-docs]").isVisible())
+      && !(await im.locator('input[name="p1-hosp"][value="si"]').isVisible()) && await im.locator('[data-c="provincia"]').isVisible());
+    await im.locator('[data-c="provincia"]').selectOption("Cartago");
+    await im.locator('[data-c="canton"]').selectOption("Cartago");
+    await llenar(im, { nacimiento: "1985-05-05", sexo: "m", documento: "3-0333-0333", correo: "im@ejemplo.com", telefono: "+506 7111 1111", emer_nombre: "Rosa Arias", emer_telefono: "88880000" });
+    await im.locator('input[name="p1-clasico"][value="A"]').check();
+    await im.locator("[data-foto]").setInputFiles(FOTO);
+    await s4.p.check("#acepta-reglamento"); await s4.p.check("#acepta-imagen"); await s4.p.check("#acepta-seguro"); await s4.p.check("#acepta-datos");
+    await s4.p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
+    await s4.p.click("#revisar");
+    cierto("sin los días en el Estadio Nacional no avanza", /llega al Estadio Nacional/.test(await s4.p.textContent("#msg")), await s4.p.textContent("#msg"));
+    await llenar(im, { llegada: "2026-12-25", salida: "2026-12-30" });
+    await s4.p.click("#revisar");
+    await s4.p.waitForSelector("#resumen:not(.hidden)", { timeout: 15000 });
+    cierto("el resumen dice del 25 al 30 de diciembre, sin «según su vuelo»", /Los da la organización, del .*25 de diciembre.* al .*30 de diciembre/.test(await s4.p.textContent("#resumen-personas"))
+      && !/según su vuelo/.test(await s4.p.textContent("#resumen-personas")));
+    await s4.p.check("#confirmo");
+    await s4.p.click("#enviar");
+    await s4.p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
+    const xi = s4.anotado.enviado.personas[0];
+    cierto("se manda con sus días, sin vuelo, y con su foto para el gafete", xi.origen === "cr" && xi.viaje && xi.viaje.llegada === "2026-12-25" && xi.viaje.salida === "2026-12-30"
+      && xi.viaje.vuelo === "" && xi.viaje.traslado === false && xi.hospedaje === false && !!xi.foto, xi);
 
     /* ----- Un grupo: el delegado, una jugadora y un entrenador ----- */
     console.log("   La inscripción de grupo");

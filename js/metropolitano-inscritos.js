@@ -110,7 +110,7 @@
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
-      ["Invitado titulado", x.rol === "jugador" && R.TITULOS_GRATIS.includes(x.titulo || "") ? "Hospedaje y alimentación de la organización" + (x.viaje && x.viaje.llegada ? ", del " + x.viaje.llegada + " al " + x.viaje.salida + " según su vuelo" : "") + (x.viaje && x.viaje.traslado ? "; pide transporte del aeropuerto" : "") : ""],
+      ["Invitado titulado", x.rol === "jugador" && R.TITULOS_GRATIS.includes(x.titulo || "") ? "Hospedaje y alimentación de la organización" + (x.viaje && x.viaje.llegada ? ", del " + x.viaje.llegada + " al " + x.viaje.salida + (x.origen === "fuera" ? " según su vuelo" : " en el Estadio Nacional") : "") + (x.viaje && x.viaje.traslado ? "; pide transporte del aeropuerto" : "") : ""],
       ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", compartida " + (HABITACION[x.habitacion] || x.habitacion)
         + (x.acepta_compartir ? " (aceptó compartir)" : "") + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
       ["Acompañantes", (x.acompanantes_detalle || []).map(acompananteTexto).join(" · ")],

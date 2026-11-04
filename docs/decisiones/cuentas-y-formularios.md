@@ -1649,11 +1649,19 @@ juega), la tarjeta:
   aeropuerto al Estadio Nacional, la foto del tiquete aéreo y la del
   pasaporte (carpeta `documento/` del bucket privado), y su correo y
   teléfono aunque venga en un grupo;
-- de Costa Rica, nada de eso: la organización lo coordina por correo.
+- **si es de Costa Rica, pide el día en que llega al Estadio Nacional y el día
+  en que sale** (con eso la organización le reserva el hospedaje y la
+  alimentación), sin vuelo, traslado, tiquete ni pasaporte; la provincia y el
+  cantón, como a todo el que viene de Costa Rica.
+
+La foto tamaño pasaporte se le pide a todos, titulados o no, de afuera o de
+Costa Rica: toda inscripción lleva gafete con su foto, y la base no acepta una
+persona sin ella.
 
 La base lo exige a los titulados de afuera (migración
 `metropolitano_titulados`): sin vuelo, tiquete, pasaporte o contacto, no
-entra. El título lo trae la búsqueda en FIDE; la lista de inscritos lo
+entra. Al de Costa Rica, sin los dos días (diciembre de 2026 o enero de 2027,
+la salida después de la llegada), tampoco (`metropolitano_titulados_nacionales`). El título lo trae la búsqueda en FIDE; la lista de inscritos lo
 muestra con el enlace a su perfil para confirmarlo, y el tiquete y el
 pasaporte junto a la foto.
 
