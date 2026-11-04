@@ -124,7 +124,7 @@ export function idDeEnlaceLichess(url: string): { id: string; es: "torneo" | "ro
 // «Apellidos, Nombre» de FIDE): igual sin tildes ni mayúsculas, o con los
 // mismos apellidos y el mismo primer nombre. La regla de partidaDe() en
 // js/centroamericano-partidas.js.
-const sinTildes = (s: string) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const sinTildes = (s: string) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 const apellidosYNombre = (n: string) => { const [a, b] = String(n || "").split(","); return sinTildes(a) + "|" + sinTildes(b || "").split(" ")[0]; };
 export const mismoNombre = (a: string, b: string) => !!a && !!b && (sinTildes(a) === sinTildes(b) || apellidosYNombre(a) === apellidosYNombre(b));
 

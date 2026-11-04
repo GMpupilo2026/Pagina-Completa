@@ -11024,6 +11024,33 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
     tres páginas por categoría por minuto, solo del Clásico y solo con
     alguien suscrito. Dos vueltas que se pisen no mandan nada dos veces: la
     clave primaria de `sala_avisos_push_enviados` lo impide.
+  - **Los avisos también en Rápidas y Blitz** (lo pidió el dueño el
+    3/11/2026, con el Rápido jugándose). Pareo, «juega en vivo», resultado y
+    resumen del país salen también de las otras modalidades, con la
+    modalidad adelante en el título («Rápidas · Ronda 6: …»). A quien se
+    sigue se lo busca por su nombre en los torneos de esa modalidad (son otro
+    torneo de chess-results, otro `tnr`), así que seguirlo en el clásico
+    alcanza. La clave del aviso ya lleva el `tnr`, y el de la ronda 3 del
+    Rápido no choca con el de la ronda 3 del clásico; el resumen del país,
+    que va con `tnr` «0», pasa a «1» en Rápidas y «2» en Blitz
+    (`ENCABEZADO` en `sala-jugadores`). No hizo falta migración.
+    - **Solo el día de su torneo**: desde una hora antes hasta 12 horas
+      después de la hora de «Torneo Rapid» o «Torneo Blitz» en el `.ics` de
+      la página (`leerEventos()`, `modalidadesDeAhora()`). Leer seis torneos
+      más de chess-results cada minuto toda la semana no le sirve a nadie.
+    - Las partidas de Lichess de cada modalidad salen del mismo grupo de la
+      transmisión (el Rápido está en el grupo del clásico, «Rapid | Open
+      U18»): `partidasDeLichess()` recibe la modalidad.
+    - El recordatorio de 30 minutos antes sigue siendo solo del clásico: el
+      Rápido y el Blitz juegan sus rondas seguidas, sin hora de cada una.
+    - Los torneos de Rápidas están en la sala como «Rápidas Sub-8» a
+      «Rápidas Sub-18» (mixtos, `tnr1533950` a `tnr1533958`, de la lista de
+      la federación CCA en chess-results).
+    - Al subir la función, `deploy_edge_function` dejó el rango
+      `[\u0300-\u036f]` de `plano()` y `sinTildes()` con los caracteres en
+      lugar del escape. Es la misma expresión, y el archivo del repositorio
+      se guardó tal cual quedó publicado (comprobado con
+      `get_edge_function`).
   - Se borran solas 30 días después del último cambio (pg_cron
     `sala-avisos-limpiar`), como dice `privacidad.html#torneos`.
   - El verificador no tiene un servicio de push: el doble concede el
