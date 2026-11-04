@@ -1523,6 +1523,15 @@ Pedido del dueño (4/11):
   FIDE para comprobarlo. Por eso guarda `nombre_fide` (el nombre que trajo la
   búsqueda), y la lista de inscritos avisa con «⚠ En FIDE se llama …» cuando
   el inscrito no coincide, con el enlace a su perfil de FIDE para confirmarlo.
+- **«¿De dónde viene?» va arriba de cada tarjeta, para todos los roles**
+  (también acompañantes y delegados, que no tienen ID FIDE). De Costa Rica no
+  se pide el viaje (llegada, salida, vuelo, traslado): se pide la **provincia
+  y el cantón** donde vive, de la División Territorial del TSE
+  (`js/division-territorial.js`), para las estadísticas; la base los guarda
+  en `provincia` y `canton` (migración 20261104172333) y no guarda viaje de
+  quien vive aquí. La lista de inscritos los cuenta por provincia y los saca
+  en el CSV. A las personas que agrega el delegado se les copia de dónde
+  viene, como el hospedaje.
 
 ### La página del Metropolitano 2026
 

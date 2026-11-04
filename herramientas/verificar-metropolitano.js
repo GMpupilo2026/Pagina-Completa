@@ -161,6 +161,7 @@ const FILAS_FIDE = [
     cierto("de Costa Rica, el buscador de FIDE no se ve: se escribe el nombre", !(await t1.locator("[data-caja-buscar]").isVisible()));
     await t1.locator('input[name="p1-origen"][value="fuera"]').check();
     cierto("de otro país se pide primero el ID FIDE", await t1.locator("[data-caja-buscar]").isVisible() && /ID FIDE \(el número\)/.test(await t1.locator("[data-buscar-etiqueta]").textContent()));
+    cierto("y ve el viaje (llegada, salida y vuelo), no la provincia", await t1.locator('[data-c="llegada"]').isVisible() && await t1.locator('[data-c="vuelo"]').isVisible() && !(await t1.locator('[data-c="provincia"]').isVisible()));
     await t1.locator("[data-buscar]").fill("64ab00000");
     igual("y solo acepta el número", await t1.locator("[data-buscar]").inputValue(), "6400000");
     await t1.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
@@ -261,7 +262,12 @@ const FILAS_FIDE = [
     cierto("en grupo, la primera tarjeta es la del delegado y aparece «Agregar»", await g.p.isVisible("#caja-grupo") && await g.p.isVisible("#agregar"));
     await g.p.fill("#delegacion", "Club Ajedrez Heredia");
     const d = tarjeta(g.p, 0);
-    await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777", llegada: "2026-12-25", salida: "2026-12-31" });
+    cierto("de Costa Rica no se pide el viaje, sino la provincia y el cantón", !(await d.locator('[data-c="llegada"]').isVisible()) && !(await d.locator('[data-c="vuelo"]').isVisible())
+      && await d.locator('[data-c="provincia"]').isVisible() && await d.locator('[data-c="canton"]').isVisible());
+    await d.locator('[data-c="provincia"]').selectOption("Heredia");
+    igual("el cantón se elige de los de su provincia", (await d.locator('[data-c="canton"] option').allTextContents()).slice(0, 3), ["Elige el cantón…", "Heredia", "Barva"]);
+    await d.locator('[data-c="canton"]').selectOption("Barva");
+    await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777" });
     await d.locator('input[name="p2-hosp"][value="si"]').check();
     await d.locator('[data-comida][value="almuerzo"]').check();
     await d.locator("[data-foto]").setInputFiles(FOTO);
@@ -269,8 +275,8 @@ const FILAS_FIDE = [
     await g.p.click('[data-agregar="entrenador"]');
     igual("se agregaron dos personas", await g.p.locator("#personas > section").count(), 3);
     const j = tarjeta(g.p, 1), en = tarjeta(g.p, 2);
-    cierto("a cada persona nueva se le copia el viaje, el hospedaje y las comidas del delegado",
-      (await j.locator('[data-c="llegada"]').inputValue()) === "2026-12-25" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
+    cierto("a cada persona nueva se le copia de dónde viene, el hospedaje y las comidas del delegado",
+      (await j.locator('[data-c="provincia"]').inputValue()) === "Heredia" && (await j.locator('[data-c="canton"]').inputValue()) === "Barva" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
       && await j.locator('[data-comida][value="almuerzo"]').isChecked());
     igual("y la emergencia la atiende el delegado", await j.locator('[data-c="emer_nombre"]').inputValue(), "Carlos Rojas Vega");
     cierto("el correo de un integrante es opcional", await j.locator("[data-nota-contacto]").isVisible());
@@ -306,7 +312,7 @@ const FILAS_FIDE = [
     await g.p.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
     const ge = g.anotado.enviado;
     cierto("se manda el grupo entero en un envío, con su delegado primero", ge && ge.modo === "grupo" && ge.delegacion === "Club Ajedrez Heredia" && ge.personas.length === 3
-      && ge.personas[0].es_delegado === true && ge.personas[0].rol === "delegado" && ge.personas[1].rol === "jugador" && ge.personas[1].fide_id === "6400099"
+      && ge.personas[0].es_delegado === true && ge.personas[0].rol === "delegado" && ge.personas[0].provincia === "Heredia" && ge.personas[0].canton === "Barva" && ge.personas[0].viaje === null && ge.personas[1].rol === "jugador" && ge.personas[1].fide_id === "6400099"
       && JSON.stringify(ge.personas[1].torneos) === '["B"]' && ge.personas[2].rol === "entrenador" && ge.personas[2].sin_fide === true && ge.personas[2].federacion === null
       && ge.personas.every((x) => /^foto\//.test(x.foto)) && ge.pago_metodo === "dolares", ge);
     cierto("y la factura va con los datos de Hacienda, la cédula sin guiones", ge && ge.factura && ge.factura.tipo === "juridica" && ge.factura.identificacion === "3002291916"

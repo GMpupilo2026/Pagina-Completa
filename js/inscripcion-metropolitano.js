@@ -95,10 +95,10 @@
       </header>
       <div class="p-4 sm:p-5 space-y-6">
         <div><label for="${id("rol")}" class="block text-sm font-semibold mb-1">Se inscribe como${AST}</label><select id="${id("rol")}" data-campo data-rol></select></div>
+        <div class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?${AST}</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
 
         <div data-bloque-fide class="space-y-3">
           <p class="font-semibold" data-fide-pregunta>ID FIDE</p>
-          <div class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
           <div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="si" checked> Tiene ID FIDE</label><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="no"> No tiene ID FIDE</label></div>
           <p data-origen-ayuda class="text-sm rounded-xl bg-brand-50 dark:bg-brand-950 p-3"></p>
           <div data-caja-fide class="space-y-3">
@@ -163,13 +163,20 @@
         </div>
 
         <div class="space-y-4">
-          <p class="font-semibold">Viaje, hospedaje y alimentación</p>
+          <p class="font-semibold" data-titulo-viaje>Viaje, hospedaje y alimentación</p>
+          <!-- De Costa Rica no se pide el viaje: la provincia y el cantón, para las estadísticas. -->
+          <div data-caja-procedencia class="grid sm:grid-cols-2 gap-4">
+            <div><label for="${id("prov")}" class="block text-sm font-semibold mb-1">Provincia donde vive${AST}</label><select id="${id("prov")}" data-campo data-c="provincia"></select></div>
+            <div><label for="${id("cant")}" class="block text-sm font-semibold mb-1">Cantón${AST}</label><select id="${id("cant")}" data-campo data-c="canton"></select></div>
+          </div>
+          <div data-caja-viaje class="space-y-4">
           <div class="grid sm:grid-cols-3 gap-4">
             <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1">Día de llegada</label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
             <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1">Día de salida</label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
             <div><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada</label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
           </div>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita traslado del aeropuerto</label>
+          </div>
           <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">¿Necesita hospedaje?</span><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="si"> Sí</label></div>
           <div data-caja-hosp class="hidden grid sm:grid-cols-2 gap-4">
             <div><label for="${id("hdes")}" class="block text-sm font-semibold mb-1">Desde (noche de llegada)${AST}</label><input id="${id("hdes")}" data-campo data-c="hospedaje_desde" type="date" min="2026-12-20" max="2027-01-02" value="2026-12-25"></div>
@@ -251,6 +258,19 @@
        aparece). De otro país: primero el ID FIDE, y el nombre se llena con el
        de FIDE y queda bloqueado, para que salga el nombre real del jugador. */
     const deAfuera = () => el.querySelector('input[name="' + k + '-origen"]:checked').value === "fuera";
+    // La provincia y el cantón de quien viene de Costa Rica (TSE, js/division-territorial.js).
+    const DIV = window.DivisionTerritorial || [];
+    const lista = (sel, xs, primera) => {
+      const antes = sel.value; sel.textContent = "";
+      const o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; sel.append(o0);
+      xs.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; sel.append(o); });
+      if (xs.includes(antes)) sel.value = antes;
+    };
+    const cantones = () => { const pr = DIV.find((x) => x.provincia === c("provincia").value); lista(c("canton"), pr ? pr.cantones.map((x) => x.canton) : [], pr ? "Elige el cantón…" : "Primero la provincia"); };
+    lista(c("provincia"), DIV.map((x) => x.provincia), "Elige la provincia…");
+    cantones();
+    c("provincia").addEventListener("change", cantones);
+    yo.ponerProcedencia = (prov, cant) => { c("provincia").value = prov || ""; cantones(); c("canton").value = cant || ""; };
     yo.deAfuera = deAfuera;
     let sinResultadoPorNombre = false;
     function bloquearNombre(si) {
@@ -453,6 +473,9 @@
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
       q("[data-caja-fide]").classList.toggle("hidden", sinFide());
       const afuera = deAfuera();
+      q("[data-caja-procedencia]").classList.toggle("hidden", afuera);
+      q("[data-caja-viaje]").classList.toggle("hidden", !afuera);
+      q("[data-titulo-viaje]").textContent = afuera ? "Viaje, hospedaje y alimentación" : "De dónde viene, hospedaje y alimentación";
       q("[data-origen-ayuda]").textContent = sinFide() ? "" : afuera
         ? "Escribe primero el ID FIDE (el número): el nombre se llena solo, tal como aparece en FIDE, y no se puede cambiar."
         : "Escribe el nombre y los apellidos abajo, como en la cédula: el ID FIDE se busca y se carga solo.";
@@ -542,6 +565,8 @@
       ["nacionalidad", "pais_residencia", "club", "llegada", "salida", "vuelo", "hospedaje_desde", "hospedaje_hasta", "habitacion", "comidas_desde", "comidas_hasta", "documento_tipo"]
         .forEach((n) => { if (c(n) && otra.el.querySelector('[data-c="' + n + '"]')) c(n).value = otra.el.querySelector('[data-c="' + n + '"]').value; });
       c("traslado").checked = otra.el.querySelector('[data-c="traslado"]').checked;
+      el.querySelector('input[name="' + k + '-origen"][value="' + (otra.deAfuera() ? "fuera" : "cr") + '"]').checked = true;
+      yo.ponerProcedencia(otra.v("provincia"), otra.v("canton"));
       el.querySelector('input[name="' + k + '-hosp"][value="' + (otra.hospeda() ? "si" : "no") + '"]').checked = true;
       const suyas = otra.comidas();
       el.querySelectorAll("[data-comida]").forEach((x) => { x.checked = suyas.includes(x.value); });
@@ -569,6 +594,7 @@
       if (!v("sexo")) falta(c("sexo"), "Falta el sexo.");
       if (v("nacionalidad").length < 2 || v("pais_residencia").length < 2) falta(c("nacionalidad"), "Falta la nacionalidad o el país donde vive.");
       if (v("documento").length < 4) falta(c("documento"), "Falta el número de documento.");
+      if (!deAfuera() && (!v("provincia") || !v("canton"))) falta(c(!v("provincia") ? "provincia" : "canton"), "Falta la provincia o el cantón donde vive.");
       if ((contactoObligatorio || v("correo")) && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v("correo"))) falta(c("correo"), "Revisa el correo electrónico.");
       if ((contactoObligatorio || v("telefono")) && v("telefono").replace(/\D/g, "").length < 7) falta(c("telefono"), "Revisa el teléfono.");
       if (e !== null && e < 18 && (!v("resp_nombre") || !v("resp_telefono"))) falta(c("resp_nombre"), "Es menor de edad: faltan el nombre y el teléfono de la persona responsable.");
@@ -587,7 +613,9 @@
         torneos: yo.torneos(),
         responsable: e !== null && e < 18 ? { nombre: v("resp_nombre"), parentesco: v("resp_parentesco"), documento: v("resp_documento"), telefono: v("resp_telefono") } : null,
         emergencia: { nombre: v("emer_nombre"), parentesco: v("emer_parentesco"), telefono: v("emer_telefono") },
-        viaje: (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
+        // El viaje, solo de quien viene de otro país; de Costa Rica, la provincia y el cantón.
+        viaje: deAfuera() && (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
+        provincia: deAfuera() ? null : v("provincia"), canton: deAfuera() ? null : v("canton"),
         hospedaje: hospeda(), hospedaje_desde: hospeda() ? v("hospedaje_desde") : null, hospedaje_hasta: hospeda() ? v("hospedaje_hasta") : null,
         habitacion: hospeda() ? v("habitacion") : null, acompanantes: hospeda() ? Number(v("acompanantes")) || 0 : 0,
         comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
@@ -817,6 +845,7 @@
       ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", habitación " + d.habitacion + (d.acompanantes ? ", con " + d.acompanantes + " acompañante" + (d.acompanantes > 1 ? "s" : "") : "") : "No requiere"],
       ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
     );
+    if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
     if (d.viaje) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con traslado del aeropuerto"].filter(Boolean).join(", ")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
