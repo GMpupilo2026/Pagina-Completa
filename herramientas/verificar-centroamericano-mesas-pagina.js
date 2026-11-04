@@ -411,6 +411,7 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Presencia, control de tiempos y avisos sin ruido ===");
     await p.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     const jug = (c) => '.cam-mesa[data-mesa="2"] .cam-jugador[data-color="' + c + '"]';
+    const jug_ = (m, c) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + c + '"]';
     igual("sin marcar se entiende que NO ha llegado: dice «No ha llegado», solo hay un botón «Llegó» (no existe un botón de «no llegó») y la barra cuenta cuántos han llegado",
       await p.evaluate((q) => [document.querySelector(q + " .cam-presencia-estado").textContent, document.querySelectorAll('[data-accion="ausente"]').length, document.querySelectorAll('.cam-jugador [data-accion="presente"]').length, document.getElementById("presencia-resumen").textContent], jug("blancas")),
       ["✗ No ha llegado", 0, 6, "Han llegado 0 de 6 jugadores · faltan 6."]);
@@ -634,6 +635,29 @@ const CONTRASTE = `(sel) => {
     await p.click("#actualizar");
     await p.waitForFunction(() => /quedan (19|20) min de tolerancia/.test(document.getElementById("espera").textContent), null, { timeout: 15000 });
     igual("con la hora de inicio que marcó el árbitro de la categoría, la barra cuenta la tolerancia desde ahí (quedan unos 20 min de 30)", await p.textContent("#espera"), (await p.textContent("#espera")).startsWith("⏰ Ronda 3: quedan") ? await p.textContent("#espera") : "FALTA");
+    // «Llegó tarde»: el jugador que llega con la ronda ya empezada deja una nota en la bitácora (cuánto se tardó y cuánto le faltaba para la
+    // incomparecencia); la tablet manda la hora del toque y la del inicio que usa su cuenta; corregir el toque anula la nota.
+    console.log("\n=== La tablet: «Llegó tarde» en la bitácora ===");
+    await p.evaluate(() => { window.__inicioRonda = { ronda: 3, inicio: new Date(Date.now() - 25 * 60000).toISOString() }; });
+    await p.click("#actualizar");
+    await p.waitForFunction(() => !document.getElementById("actualizar").disabled);
+    const tardes = () => p.evaluate(() => [...document.querySelectorAll("#anotado-filas tr")].filter((tr) => tr.children[2].textContent.startsWith("Llegó tarde")).map((tr) => [tr.children[2].textContent, tr.children[3].textContent, tr.dataset.anulada || ""]));
+    igual("antes de marcar llegada, no hay ninguna nota de «Llegó tarde»", await tardes(), []);
+    await p.click(acc(1, "negras", "presente"));
+    await p.waitForFunction(() => [...document.querySelectorAll("#anotado-filas tr")].some((tr) => tr.children[2].textContent.startsWith("Llegó tarde")));
+    igual("«Llegó» con la ronda empezada hace 25 min: la tablet manda la hora del toque y la del inicio, y queda UNA nota «Llegó tarde» con cuánto se tardó y cuánto le faltaba",
+      await p.evaluate(() => { const b = window.__llamadas.filter((l) => l.body.action === "presencia").pop().body; return [typeof b.ocurrio, typeof b.inicio, Math.abs(Date.parse(b.ocurrio) - Date.now()) < 20000, Math.abs(Date.parse(b.inicio) - Date.parse(window.__inicioRonda.inicio)) < 2000]; }), ["string", "string", true, true]);
+    const t1 = (await tardes())[0];
+    igual("la nota dice el jugador, su color, cuánto se tardó (25 min y unos segundos) y cuánto le faltaba para la incomparecencia (menos de 5 min)", [t1[0], /\(negras\) llegó tarde: 25 min \d+ s después del inicio de la ronda/.test(t1[1]), /le faltaban 4 min \d+ s para la incomparecencia/.test(t1[1]), t1[2]], ["Llegó tarde", true, true, ""]);
+    igual("y la tablet avisa que quedó anotado en la bitácora", await p.evaluate(() => /llegó 25 min .* tarde: quedó anotado en la bitácora/.test(document.getElementById("avisos-zona").textContent)), true);
+    await p.click(jug_(1, "negras") + ' [data-accion="corregir-presencia"]');
+    await p.waitForFunction(() => [...document.querySelectorAll("#anotado-filas tr")].some((tr) => tr.children[2].textContent.startsWith("Llegó tarde") && tr.dataset.anulada === "si"));
+    igual("corregir el toque («no ha llegado») anula la nota: se ve como anulada y no queda ninguna viva", (await tardes()).map((x) => x[2]), ["si"]);
+    await p.click(acc(1, "negras", "presente"));
+    await p.waitForFunction(() => [...document.querySelectorAll("#anotado-filas tr")].filter((tr) => tr.children[2].textContent.startsWith("Llegó tarde")).length === 2);
+    igual("al volver a marcar «Llegó» queda una nota nueva (la vieja sigue anulada): una sola viva", (await tardes()).map((x) => x[2]).sort(), ["", "si"]);
+    await p.click(jug_(1, "negras") + ' [data-accion="corregir-presencia"]');
+    await p.waitForSelector(acc(1, "negras", "presente"));
     await p.click("#horarios");
     await p.waitForSelector("dialog[open]");
     igual("«Horarios» dice que esa es la hora que marcó el árbitro de la categoría", await p.evaluate(() => /la hora que marcó el árbitro de la categoría/.test(document.querySelector("dialog[open]").textContent)), true);

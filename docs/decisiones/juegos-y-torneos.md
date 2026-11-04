@@ -9396,6 +9396,45 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+## «Llegó tarde»: la llegada de quien se tarda queda en la bitácora y cuenta en el reloj que se apaga (Centroamericano)
+
+Pedido (3/11, ronda 4): cuando un jugador llega con el tiempo de espera corriendo y el árbitro marca «Llegó», que quede la hora
+de llegada y cuánto se tardó (Ramos llegó faltándole 8 min para la incomparecencia = 22 min tarde) en la bitácora del árbitro, y que
+el reloj que se apaga lo tenga en cuenta al reconstruir los tiempos.
+
+- **Lo que ya había**: `centroamericano_presencia.marcada` guarda la hora del toque, pero nada decía cuánto se tardó y no iba a la
+  bitácora ni al cálculo.
+- **La nota** (acción `presencia` de `centroamericano-mesa`, v24): si `presente: true` y el jugador llega **más de un minuto
+  después del inicio de la ronda**, la función inserta en `centroamericano_registro` una nota (`tipo` «nota», `articulo`
+  «Llegó tarde», sin migración: la restricción de `tipo` no cambia, como «Levantó») con la hora de la llegada en `ocurrio` y un
+  texto fijo: «Ramos, Daniel (negras) llegó tarde: 22 min 8 s después del inicio de la ronda (a las 9:22 a. m.; le faltaban 7 min 52 s
+  para la incomparecencia).» El nombre sale de chess-results, no de la pantalla. Pasada la tolerancia (30 min) dice «ya había pasado
+  el tiempo de espera de 30 min». Más de 6 h se toma por dato malo y no se anota.
+- **El inicio**: manda el que marcó el árbitro de la categoría (`centroamericano_inicios_torneo`); si no hay, el que mandó la tablet
+  (`inicio`, el mismo de su cuenta del tiempo de espera, validado: no posterior a la llegada ni de hace más de 12 h). La hora de
+  la llegada la manda la tablet (`ocurrio`, de las últimas 6 h y no del futuro: vale también el toque que salió de la cola sin
+  señal); si no, la de la base. Esa hora es ahora también la de `marcada`.
+- **Una sola nota viva por jugador y partida**: marcar «Llegó» otra vez no la duplica. **Corregir** («no ha llegado», por un toque
+  equivocado) la **anula** (una línea `anulacion` que apunta a ella, como siempre) y el siguiente «Llegó» deja una nueva.
+- **«Marcar que llegaron todos» no deja notas** (`presencia_todos`): es el atajo de arrancar la ronda cuando llegan juntos, y
+  tocarlo unos minutos después de empezar dejaría una tardanza que no fue.
+- **En la tablet**: sale el aviso «X llegó 22 min 8 s tarde: quedó anotado en la bitácora», la nota aparece en «Lo anotado» (con la
+  etiqueta «Llegó tarde») y el reloj que se apaga ya la cuenta, sin esperar la lectura siguiente. En la organización y en el
+  PDF de la bitácora sale como «Llegó tarde».
+- **El reloj que se apaga** (`relojApagado`, parámetro `llegadas`, de `llegadasTarde(anotaciones, mesa, anuladas)`): mientras el
+  jugador no estaba **su reloj corría** (art. 6.7), así que esos minutos no se reparten como el resto: se le cobran enteros a quien
+  llegó tarde y lo demás sí se reparte. Con las dos tarde corre primero el reloj de las blancas hasta que llegan y después el de las
+  negras hasta que llegan ellas. Lo que cae antes del control ya está en lo que marcaban los relojes: solo cuenta lo que cae después
+  del control o, sin control, desde el inicio. El total no cambia (siempre anda un reloj); cambia el reparto, y la ventana lo dice
+  con palabras («Las blancas llegaron tarde (quedó anotado en la bitácora): …»). Sin control, el ejemplo: blancas 22 min tarde, 40 min
+  después del inicio → 31 min gastados por ellas y 9 por las negras (sin la llegada tarde serían 20 y 20).
+- **Lo que no se hace**: la nota no cambia el resultado ni sanciona; la incomparecencia la sigue decidiendo el árbitro. Y
+  para quien llegó tarde y ya no tiene control de tiempos el reparto es una propuesta, como todo lo del reloj que se apaga (art. 6.10).
+- Lo revisan `verificar-centroamericano-mesas.js` (el parser, el reparto con las blancas, las negras o las dos tarde, la llegada anterior y
+  posterior al control, y la acción: tope de hora, inicio, una sola viva, anulación, y que «todos» no deja nota) y
+  `verificar-centroamericano-mesas-pagina.js` (el toque manda `ocurrio` e `inicio`, queda la nota, el aviso, corregir la anula y volver
+  a marcar deja una nueva).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien

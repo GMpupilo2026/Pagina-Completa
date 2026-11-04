@@ -660,8 +660,28 @@
         // Se ve al instante; si la función dice que no, se deshace.
         estado.presencia = presencias().filter((x) => !(x.mesa === m.mesa && x.color === color)).concat([{ mesa: m.mesa, color, presente, marcada: new Date().toISOString() }]);
         pintar();
-        try { await escribir("presencia", { ronda: estado.ronda, mesa: m.mesa, color, presente }, "Presencia de " + (color === "blancas" ? "blancas" : "negras") + " en la mesa " + m.mesa, { mesa: m.mesa }); }
+        // Con la hora del toque y la del inicio que usa la cuenta de la tablet: si llega tarde, la función deja la nota en la bitácora.
+        const cuerpo = { ronda: estado.ronda, mesa: m.mesa, color, presente, ocurrio: new Date().toISOString() };
+        const ini = inicioEfectivo();
+        if (ini) cuerpo.inicio = ini;
+        try {
+            const res = await escribir("presencia", cuerpo, "Presencia de " + (color === "blancas" ? "blancas" : "negras") + " en la mesa " + m.mesa, { mesa: m.mesa });
+            const d = res.d;
+            if (d && d.anuladas && d.anuladas.length) for (const id of d.anuladas) anuladas.add(id);
+            if (d && d.tarde) {
+                // Queda a la vista en «Lo anotado» y el reloj que se apaga ya la cuenta, sin esperar la próxima lectura.
+                estado.anotaciones = (estado.anotaciones || []).concat([d.tarde]);
+                avisar(nombreDe(m, color) + " llegó " + C.tiempoEnPalabras(C.leerTarde(d.tarde.texto)) + " tarde: quedó anotado en la bitácora.");
+            }
+            if (d && ((d.anuladas && d.anuladas.length) || d.tarde)) pintar();
+        }
         catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
+    }
+    // La hora en que empezó la ronda, la que usa la cuenta del tiempo de espera (la marcada por el árbitro de la categoría o, si no, la del horario).
+    function inicioEfectivo() {
+        const H = window.CentroamericanoHorario;
+        const ev = H && estado && estado.ronda ? H.EVENTOS.find((e) => e.ronda === estado.ronda) : null;
+        return ev ? new Date(H.inicioDe(ev, iniciosMarcados())).toISOString() : null;
     }
 
     // Solo hay un botón: «Llegó». Sin marcar se entiende que no ha llegado. Al marcarlo, el botón desaparece y queda su estado con un
@@ -1165,7 +1185,7 @@
             else if (f.tipo === "ilegal" || f.tipo === "irregularidad") detalle = f.jugador + " (" + (f.color === "negras" ? "negras" : "blancas") + ")" + (f.texto ? ": " + f.texto : "");
             else detalle = f.texto;
             filas.append(el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
-                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
+                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
         }
     }
 

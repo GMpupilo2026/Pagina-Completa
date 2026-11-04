@@ -76,6 +76,9 @@
           + "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
         : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno." },
     ];
+    for (const color of ["blancas", "negras"]) {
+      if (r.tarde && r.tarde[color] > 0) out.push({ texto: "Las " + color + " llegaron tarde (quedó anotado en la bitácora): " + T(r.tarde[color]) + " de lo que pasó corrió en su reloj mientras no estaba, y se le cobra entero a ese reloj; el resto se reparte como se dijo." });
+    }
     for (const a of r.ajustes || []) out.push({ texto: "Incluye " + (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + " por " + (a.motivo === "ilegal" ? "la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + ")" : a.color === a.de ? "la sanción de su irregularidad (art. " + C.ARTICULO_SANCION + ")" : "la sanción a su rival por una irregularidad (art. " + C.ARTICULO_SANCION + ")") + ", anotada a las " + hora(new Date(a.ms).toISOString()) });
     if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) out.push({ texto: "Lo que se dio o quitó antes del control ya estaba en esos relojes: no se cuenta de nuevo, pero sí al ver cómo venía gastando cada uno y en la comprobación con el inicio." });
     if (r.comprobacion) {
@@ -152,7 +155,7 @@
     const num = (v) => (v === "" || v == null ? NaN : Number(v));
     const calcular = () => {
       const ahora = st.horaMarcada ? new Date(st.horaMarcada).getTime() : Date.now();
-      return { ahora, r: C.relojApagado({ control: ctl(), inicio: o.inicio ? o.inicio.ms : null, ahora, jBlancas: num(st.jb), jNegras: num(st.jn), reparto: st.reparto || "ritmo", bonos: bonos() }) };
+      return { ahora, r: C.relojApagado({ control: ctl(), inicio: o.inicio ? o.inicio.ms : null, ahora, jBlancas: num(st.jb), jNegras: num(st.jn), reparto: st.reparto || "ritmo", bonos: bonos(), llegadas: C.llegadasTarde(o.anotaciones, o.mesa, o.anuladas) }) };
     };
     const resultado = el("div", { class: "ra-resultado", "aria-live": "polite" });
 

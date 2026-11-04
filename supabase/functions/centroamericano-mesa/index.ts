@@ -46,7 +46,9 @@
 //                                             se guarda en el bucket privado y pasa al Drive («Planillas Centroamericano»)
 //   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
 //                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
-//   "presencia" { ronda, mesa, color, presente } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan)
+//   "presencia" { ronda, mesa, color, presente, ocurrio?, inicio? } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan).
+//                                             Si llega más de un minuto después de empezar la ronda, deja en la bitácora la nota «Llegó tarde» con cuánto se
+//                                             tardó y cuánto le faltaba para la incomparecencia (el reloj que se apaga la usa); «no ha llegado» la anula
 //   "presencia_todos" { ronda }          -> marca que llegaron TODOS los jugadores de sus mesas que todavía no están marcados «llegó» (incluye a los que
 //                                             estaban «no ha llegado»): el atajo para arrancar la ronda cuando llegaron juntos
 //   "presencia_ausentes" { ronda }       -> anota «no ha llegado» a los jugadores de sus mesas que no tienen ninguna marca (la tablet lo manda una vez
@@ -143,6 +145,10 @@ const marcaVacia = (): Marca => ({ ilegales: 0, irregularidades: 0, ultima_ilega
 // «Se levantó de la mesa»: una nota de la bitácora con este artículo (la restricción de `tipo` del registro no cambia). Cada vez que
 // el jugador se levanta durante la partida el árbitro toca el botón y queda una línea con la hora; las marcas las cuentan.
 const ARTICULO_LEVANTO = "Levantó";
+// «Llegó tarde»: la nota que deja `presencia` cuando un jugador llega después de empezar la ronda (la cuenta el reloj que se apaga).
+const ARTICULO_TARDE = "Llegó tarde";
+const TOLERANCIA_S = 30 * 60;      // el tiempo de espera de las bases
+const MAX_TARDE_S = 6 * 3600;      // más que eso no es una llegada tarde: es un dato malo
 
 // Las marcas de cada jugador en una partida, sin lo que se anuló. Una anulación
 // solo deshace la línea a la que apunta.
@@ -452,11 +458,50 @@ Deno.serve(async (req) => {
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = color === "blancas" ? m.blancas : m.negras;
+      // La hora de la llegada: la que manda la tablet (vale también si el toque salió de la cola, ya con señal), si es de hace poco
+      // y no del futuro; si no, la de ahora.
+      const ahoraMs = Date.now(), delCliente = typeof cuerpo.ocurrio === "string" ? Date.parse(cuerpo.ocurrio) : NaN;
+      const llegoMs = Number.isFinite(delCliente) && delCliente <= ahoraMs + 60_000 && delCliente >= ahoraMs - 6 * 3600_000 ? Math.min(delCliente, ahoraMs) : ahoraMs;
       const { error } = await servicio.from("centroamericano_presencia").upsert({
-        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), presente: cuerpo.presente, marcada: new Date().toISOString(),
+        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), presente: cuerpo.presente, marcada: new Date(llegoMs).toISOString(),
       }, { onConflict: "tnr,ronda,mesa,color" });
       if (error) { console.error("centroamericano-mesa: presencia", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
-      return json({ ok: true, mesa, color, presente: cuerpo.presente, jugador });
+
+      // «Llegó tarde»: si el jugador llega DESPUÉS de empezar la ronda (más de un minuto), queda una nota en la bitácora con cuánto se
+      // tardó y cuánto le faltaba para la incomparecencia (el reloj apagado la usa: su reloj corría mientras no estaba). Si el toque
+      // era equivocado y el árbitro lo corrige («no ha llegado»), la nota se anula. Una sola nota viva por jugador y partida.
+      const filas = await registroDe(p.ronda, mesa);
+      const anuladas = new Set(filas.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula as string));
+      const vivas = filas.filter((f) => f.tipo === "nota" && f.articulo === ARTICULO_TARDE && f.color === color && !anuladas.has(f.id));
+      let tarde: Fila | null = null;
+      const anuladasAhora: string[] = [];
+      if (cuerpo.presente === false) {
+        for (const v of vivas) {
+          const { error: eAn } = await servicio.from("centroamericano_registro").insert({ asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), tipo: "anulacion", anula: v.id });
+          if (eAn) console.error("centroamericano-mesa: presencia (anular llegada tarde)", a.tnr, eAn.code); else anuladasAhora.push(v.id);
+        }
+      } else if (!vivas.length) {
+        // El inicio de la ronda: el que marcó el árbitro de la categoría (manda); si no hay, el que usó la tablet para su cuenta (el del horario).
+        const { data: ini } = await servicio.from("centroamericano_inicios_torneo").select("inicio").eq("tnr", a.tnr).eq("ronda", p.ronda).maybeSingle();
+        let inicioMs = ini ? Date.parse(ini.inicio) : NaN;
+        if (!Number.isFinite(inicioMs)) {
+          const c = typeof cuerpo.inicio === "string" ? Date.parse(cuerpo.inicio) : NaN;
+          if (Number.isFinite(c) && c <= llegoMs && c >= llegoMs - 12 * 3600_000) inicioMs = c;
+        }
+        const segundos = Number.isFinite(inicioMs) ? Math.round((llegoMs - inicioMs) / 1000) : 0;
+        if (segundos >= 60 && segundos <= MAX_TARDE_S) {
+          const mmss = (x: number) => Math.floor(x / 60) + " min " + (x % 60) + " s";
+          const falta = TOLERANCIA_S - segundos;
+          const cuando = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", hour: "numeric", minute: "2-digit" }).format(new Date(llegoMs));
+          const texto = (jugador + " (" + color + ") llegó tarde: " + mmss(segundos) + " después del inicio de la ronda (a las " + cuando + "; "
+            + (falta > 0 ? "le faltaban " + mmss(falta) + " para la incomparecencia" : "ya había pasado el tiempo de espera de " + TOLERANCIA_S / 60 + " min") + ").").slice(0, 2000);
+          const { data: nueva, error: eNota } = await servicio.from("centroamericano_registro").insert({
+            asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), tipo: "nota", articulo: ARTICULO_TARDE, texto, ocurrio: new Date(llegoMs).toISOString(),
+          }).select(COLUMNAS).single();
+          if (eNota || !nueva) console.error("centroamericano-mesa: presencia (llegó tarde)", a.tnr, eNota?.code); else tarde = nueva as Fila;
+        }
+      }
+      return json({ ok: true, mesa, color, presente: cuerpo.presente, jugador, tarde, anuladas: anuladasAhora });
     }
 
     // Las dos acciones de abajo marcan a TODOS los de sus mesas de una vez. Los nombres salen de chess-results y solo se toca SU rango.
