@@ -449,6 +449,13 @@ igual("el modo concentración en la base: la columna la enciende la organizació
 igual("«¿Dónde juega?» (todas_mesas) solo LEE: una sola consulta a la copia compartida de todas las categorías, relee solo las viejas (más de 2 min), hasta 6 a la vez y esperando a lo más 12 s, no manda resultados, solo muestra las categorías del mismo tipo y lo hace cumplir el servidor (403)",
   [!/\.(insert|update|upsert|delete)\(/.test(cuerpoDe("todas_mesas")), /from\("centroamericano_lecturas"\)\.select\("tnr, ronda, torneo, mesas, leida"\)\.in\("tnr"/.test(cuerpoDe("todas_mesas")), /MAX_TODAS_MS = 120_000/.test(cuerpoDe("todas_mesas")), /i \+= 6/.test(cuerpoDe("todas_mesas")), /12_000/.test(cuerpoDe("todas_mesas")), /\.eq\("prueba", torneoInfo\?\.prueba === true\)/.test(cuerpoDe("todas_mesas")), /a\.todas_las_mesas === false\) return json\([^;]*403/.test(cuerpoDe("todas_mesas")), !/valor/.test(cuerpoDe("todas_mesas").split("mesas: (k?.mesas")[1] || "valor"), !/ESCRIBE = \[[^\]]*"todas_mesas"/.test(mesa)],
   [true, true, true, true, true, true, true, true, true]);
+igual("«presencia» deja en la bitácora la nota «Llegó tarde» cuando el jugador llega más de un minuto después de empezar la ronda: con la hora de la tablet (acotada), el inicio marcado por el árbitro de la categoría (si no, el de la tablet), cuánto se tardó y cuánto le faltaba; una sola viva; y «no ha llegado» la anula",
+  [/const TOLERANCIA_S = 30 \* 60/.test(mesa), /delCliente <= ahoraMs \+ 60_000 && delCliente >= ahoraMs - 6 \* 3600_000/.test(cuerpoDe("presencia")), /marcada: new Date\(llegoMs\)\.toISOString\(\)/.test(cuerpoDe("presencia")),
+   /from\("centroamericano_inicios_torneo"\)\.select\("inicio"\)\.eq\("tnr", a\.tnr\)\.eq\("ronda", p\.ronda\)/.test(cuerpoDe("presencia")), /c >= llegoMs - 12 \* 3600_000/.test(cuerpoDe("presencia")),
+   /segundos >= 60 && segundos <= MAX_TARDE_S/.test(cuerpoDe("presencia")), /llegó tarde: " \+ mmss\(segundos\)/.test(cuerpoDe("presencia")), /le faltaban " \+ mmss\(falta\)/.test(cuerpoDe("presencia")),
+   /else if \(!vivas\.length\)/.test(cuerpoDe("presencia")), /cuerpo\.presente === false\) \{\s*for \(const v of vivas\)/.test(cuerpoDe("presencia")), /tipo: "anulacion", anula: v\.id/.test(cuerpoDe("presencia")),
+   !/Llegó tarde|ARTICULO_TARDE/.test(cuerpoDe("presencia_todos")), /ARTICULO_TARDE = "Llegó tarde"/.test(mesa)],
+  [true, true, true, true, true, true, true, true, true, true, true, true, true]);
 igual("«Mis pareos» (mis_pareos) solo da lo de SUS mesas: las de este enlace y las de sus otros enlaces (hermanas), cada una dentro de su rango; la ronda abierta sale de la copia compartida y las anteriores de lo guardado por Fair Play; no pide la clave de chess-results y no es de las que se rechazan al concluir",
   [/\.\.\.hermanasFilas\.map\(\(x\) => \(\{ tnr: x\.tnr, desde: x\.mesa_desde, hasta: x\.mesa_hasta \}\)\)/.test(cuerpoDe("mis_pareos")), /m >= e\.desde && m <= e\.hasta/.test(cuerpoDe("mis_pareos")), /for \(const g of filas\.values\(\)\) \{\s*if \(g\.tnr !== e\.tnr \|\| !dentro\(g\.mesa\)\) continue;/.test(cuerpoDe("mis_pareos")), /centroamericano_fp_partidas/.test(cuerpoDe("mis_pareos")), /centroamericano_lecturas/.test(cuerpoDe("mis_pareos")), !/leerRonda|leerConCache|leerCompartida|guardarYComprobar|centroamericano_acceso/.test(cuerpoDe("mis_pareos")), !/ESCRIBE = \[[^\]]*"mis_pareos"/.test(mesa), /DE_AVISOS = \[[^\]]*"mis_pareos"/.test(mesa)],
   [true, true, true, true, true, true, true, true]);
@@ -532,6 +539,47 @@ console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el in
   const sinCtl = C.relojApagado({ control: null, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
   igual("sin ningún control: desde el inicio, mitad y mitad (180 − 85 + 23), y lo dice", [sinCtl.total, sinCtl.reparto, sinCtl.sinControl], [(180 - 85 + 23) * 60, "iguales", true]);
   igual("sin control y sin hora de inicio no inventa nada", !!C.relojApagado({ control: null, inicio: null, ahora, jBlancas: 3, jNegras: 3 }).error, true);
+  // Nadie ha movido desde el control: el que tenía el turno venía pensando, y el reloj del otro NO corrió.
+  {
+    const c2 = { ocurrio: "2026-11-02T16:10:00-06:00", j_blancas: 20, j_negras: 20, t_blancas: 30 * 60, t_negras: 50 * 60 };
+    const a10 = Date.parse("2026-11-02T16:20:00-06:00");
+    const pensando = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20 });
+    igual("blancas con 30:00 y 10 min pensando sin mover: les quedan 20:00 y a las negras NADA les baja (50:00)", [C.formatoTiempo(pensando.blancas), C.formatoTiempo(pensando.negras), pensando.reparto, pensando.turno], ["20:00", "50:00", "turno", "blancas"]);
+    const negrasPiensan = C.relojApagado({ control: Object.assign({}, c2, { j_blancas: 21 }), inicio: ini, ahora: a10, jBlancas: 21, jNegras: 20 });
+    igual("si le tocaba a las negras (las blancas llevan una más), el que gasta es el de las negras", [C.formatoTiempo(negrasPiensan.blancas), C.formatoTiempo(negrasPiensan.negras)], ["30:00", "40:00"]);
+    igual("«Mitad y mitad» sigue valiendo aunque nadie haya movido", C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, reparto: "iguales" }).gastado, { blancas: 300, negras: 300 });
+    igual("pedir «solo el del turno» cuando ya se jugaron jugadas se rechaza (no se sabe cuánto gastó cada uno)", !!C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 21, jNegras: 21, reparto: "turno" }).error, true);
+    igual("con jugadas desde el control el reparto sigue siendo por el ritmo (no se inventa quién gastó)", C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 21, jNegras: 21 }).reparto, "ritmo");
+    // Lo que marca un reloj que todavía se lee manda: el otro es lo que sobra (el total entre los dos es exacto).
+    const vb = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 22, jNegras: 21, visto: { blancas: 25 * 60 } });
+    const sinV = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 22, jNegras: 21 });
+    igual("si lee el reloj de las blancas (25:00), las negras son el total menos eso, y la suma no cambia", [C.formatoTiempo(vb.blancas), vb.blancas + vb.negras === sinV.total, vb.negras === sinV.total - 25 * 60, vb.reparto], ["25:00", true, true, "lectura"]);
+    const vn = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { negras: 50 * 60 } });
+    igual("si lee el reloj de las negras (50:00 quieto), las blancas son lo que sobra: 20:00", [C.formatoTiempo(vn.blancas), C.formatoTiempo(vn.negras)], ["20:00", "50:00"]);
+    igual("leer más de lo que queda entre los dos se rechaza", !!C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { blancas: 80 * 60 } }).error, true);
+    const lasDosV = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { blancas: 21 * 60, negras: 50 * 60 } });
+    igual("si lee los dos valen los dos, y se dice cuánto se aleja la suma del total (+1:00)", [lasDosV.blancas, lasDosV.negras, lasDosV.visto.diferencia], [21 * 60, 50 * 60, 60]);
+    igual("sin control también vale lo leído", C.relojApagado({ control: null, inicio: ini, ahora: a10, jBlancas: 5, jNegras: 5, visto: { blancas: 60 * 60 } }).reparto, "lectura");
+  }
+  // Las llegadas tarde: el reloj de quien llegó tarde corría mientras no estaba (se le cobra entero a él; lo demás se reparte).
+  const nota = (extra) => Object.assign({ id: "n1", tipo: "nota", articulo: "Llegó tarde", mesa: 6, color: "negras", ocurrio: "2026-11-02T15:22:08-06:00", texto: "Ramos, Daniel (negras) llegó tarde: 22 min 8 s después del inicio de la ronda (a las 3:22 p. m.; le faltaban 7 min 52 s para la incomparecencia)." }, extra || {});
+  igual("«Llegó tarde» se lee de la bitácora: el color, la hora de la llegada y cuánto se tardó (22 min 8 s = 1328 s); lo anulado, de otra mesa o de otra clase de nota no cuenta",
+    [C.llegadasTarde([nota()], 6, []), C.llegadasTarde([nota()], 6, new Set(["n1"])).length, C.llegadasTarde([nota()], 5, []).length, C.llegadasTarde([nota({ articulo: "Levantó" })], 6, []).length, C.llegadasTarde([nota({ tipo: "incidencia" })], 6, []).length],
+    [[{ color: "negras", ms: Date.parse("2026-11-02T15:22:08-06:00"), segundos: 1328 }], 0, 0, 0, 0]);
+  const tardeN = [{ color: "negras", ms: ini + 22 * 60000 + 8000, segundos: 1328 }];
+  const sT = C.relojApagado({ control: null, inicio: ini, ahora, jBlancas: 23, jNegras: 23, llegadas: tardeN });
+  igual("sin control y con las negras 22 min 8 s tarde: ese tiempo (1328 s) corre en el reloj de las negras y el resto (900 s − …) se reparte; el total no cambia",
+    [sT.tarde, sT.gastado.blancas + sT.gastado.negras, sT.total === sinCtl.total, sT.gastado.negras > sT.gastado.blancas], [{ blancas: 0, negras: 1328 }, 85 * 60, true, true]);
+  const blancasTarde = C.relojApagado({ control: null, inicio: ini, ahora: ini + 40 * 60000, jBlancas: 5, jNegras: 5, llegadas: [{ color: "blancas", ms: ini + 22 * 60000, segundos: 22 * 60 }] });
+  igual("sin control y con las BLANCAS 22 min tarde: gastaron 22 min enteros + la mitad de lo demás (18 min): 31 min y 9 min; sin llegada tarde serían 20 y 20",
+    [blancasTarde.gastado, C.relojApagado({ control: null, inicio: ini, ahora: ini + 40 * 60000, jBlancas: 5, jNegras: 5 }).gastado], [{ blancas: 1860, negras: 540 }, { blancas: 1200, negras: 1200 }]);
+  const lasDos = C.relojApagado({ control: null, inicio: ini, ahora: ini + 40 * 60000, jBlancas: 5, jNegras: 5, llegadas: [{ color: "blancas", ms: ini + 5 * 60000, segundos: 300 }, { color: "negras", ms: ini + 22 * 60000, segundos: 1320 }] });
+  igual("las dos tarde: corre el reloj de las blancas hasta que llegan (5 min) y el de las negras hasta que llegan ellas (17 min más); lo demás (18 min) se reparte", lasDos.tarde, { blancas: 300, negras: 1020 });
+  const conAntes = C.relojApagado({ control: ctl, inicio: ini, ahora, jBlancas: 23, jNegras: 23, llegadas: [{ color: "negras", ms: ini + 22 * 60000, segundos: 1320 }] });
+  igual("con control, una llegada tarde ANTERIOR al control ya está en lo que marcaban los relojes: no cambia el reparto", [conAntes.tarde, conAntes.gastado, conAntes.total], [{ blancas: 0, negras: 0 }, r.gastado, r.total]);
+  const ctlTemprano = { ocurrio: "2026-11-02T15:10:00-06:00", j_blancas: 4, j_negras: 4, t_blancas: 88 * 60, t_negras: 85 * 60 };
+  const despuesCtl = C.relojApagado({ control: ctlTemprano, inicio: ini, ahora: Date.parse("2026-11-02T15:30:00-06:00"), jBlancas: 8, jNegras: 8, llegadas: [{ color: "negras", ms: Date.parse("2026-11-02T15:18:00-06:00"), segundos: 18 * 60 }] });
+  igual("con control, la llegada que cae DESPUÉS del control (la espera cubre 15:00 a 15:18; el control es de las 15:10) cuenta solo desde el control: 8 min al reloj de las negras", [despuesCtl.tarde, despuesCtl.gastado.negras >= 8 * 60], [{ blancas: 0, negras: 480 }, true]);
   igual("el último control es el más reciente con las jugadas de cada color (los viejos de una sola «jugada» no sirven)",
     C.ultimoControl([{ id: "a", ocurrio: "2026-11-02T16:00:00Z", j_blancas: 10, j_negras: 10 }, { id: "b", ocurrio: "2026-11-02T16:30:00Z", j_blancas: null, j_negras: null }, { id: "c", ocurrio: "2026-11-02T16:20:00Z", j_blancas: 15, j_negras: 14 }]).id, "c");
 

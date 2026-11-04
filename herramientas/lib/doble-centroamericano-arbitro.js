@@ -122,8 +122,24 @@ const SERVIDOR_ARBITRO = `
       return { data: { ok: true, marcados: n }, error: null }; }
     if (b.action === "presencia") {
       if (b.mesa < 1 || b.mesa > 3) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
-      window.__presencia = window.__presencia.filter((x) => !(x.mesa === b.mesa && x.color === b.color)).concat([{ mesa: b.mesa, color: b.color, presente: b.presente, marcada: "2026-11-02T15:51:00Z" }]);
-      return { data: { ok: true, mesa: b.mesa, color: b.color, presente: b.presente }, error: null }; }
+      const llegoMs = b.ocurrio ? Date.parse(b.ocurrio) : Date.now();
+      window.__presencia = window.__presencia.filter((x) => !(x.mesa === b.mesa && x.color === b.color)).concat([{ mesa: b.mesa, color: b.color, presente: b.presente, marcada: b.ocurrio ? new Date(llegoMs).toISOString() : "2026-11-02T15:51:00Z" }]);
+      // «Llegó tarde»: como la función (la nota si llega más de un minuto después del inicio; «no ha llegado» la anula; una sola nota viva).
+      const mP = MESAS.find((x) => x.mesa === b.mesa), jugP = b.color === "blancas" ? mP.blancas : mP.negras;
+      const vivas = filas.filter((x) => x.tipo === "nota" && x.articulo === "Llegó tarde" && x.mesa === b.mesa && x.color === b.color && !filas.some((y) => y.anula === x.id));
+      let tarde = null; const anuladas = [];
+      if (b.presente === false) { for (const v of vivas) { filas.push({ id: "f" + (++n), ocurrio: new Date(llegoMs).toISOString(), mesa: b.mesa, color: b.color, jugador: jugP, tipo: "anulacion", anula: v.id }); anuladas.push(v.id); } }
+      else if (!vivas.length && b.ocurrio) {
+        const ini = window.__inicioRonda ? Date.parse(window.__inicioRonda.inicio) : Date.parse(b.inicio);
+        const seg = Math.round((llegoMs - ini) / 1000);
+        if (seg >= 60 && seg <= 21600) {
+          const mmss = (x) => Math.floor(x / 60) + " min " + (x % 60) + " s", falta = 1800 - seg;
+          tarde = { id: "f" + (++n), ocurrio: new Date(llegoMs).toISOString(), arbitro: window.__avisos.arbitro, mesa: b.mesa, color: b.color, jugador: jugP, tipo: "nota", resultado: null, anterior: null, articulo: "Llegó tarde", enviado: false, anula: null,
+            texto: jugP + " (" + b.color + ") llegó tarde: " + mmss(seg) + " después del inicio de la ronda (a las 9:22 a. m.; " + (falta > 0 ? "le faltaban " + mmss(falta) + " para la incomparecencia" : "ya había pasado el tiempo de espera de 30 min") + ")." };
+          filas.push(tarde);
+        }
+      }
+      return { data: { ok: true, mesa: b.mesa, color: b.color, presente: b.presente, jugador: jugP, tarde, anuladas }, error: null }; }
     if (b.action === "tiempo") {
       const yaT = b.id && window.__tiempos.find((x) => x.id === b.id);
       if (yaT) return { data: { ok: true, id: yaT.id, ocurrio: yaT.ocurrio, jugada: yaT.jugada, repetido: true }, error: null };
