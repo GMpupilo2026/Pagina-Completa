@@ -985,17 +985,23 @@
     // momento en que empieza (o escribe la hora si avisa tarde) y desde ahí corre el tiempo de espera de SU categoría, acá y en la
     // página de la organización. La hora sale de esta tablet (así vale también sin señal, desde la cola); la función la valida.
     const horaCampo = (iso) => window.HoraCR.paraCampo(iso).slice(11, 16);
+    // Una vez marcada la hora, el bloque se esconde (ya no hace falta): queda solo el botón chico «Corregir la hora de inicio de la
+    // ronda» junto a la línea del tiempo de espera, por si el toque fue equivocado. Sin marcar, el bloque está a la vista.
+    let corrigiendoInicio = false;
     function pintarInicio() {
         const caja = $("inicio-ronda");
         if (!caja) return;
         const H = window.CentroamericanoHorario;
         const r = estado && estado.ronda, ev = H && r ? H.EVENTOS.find((e) => e.ronda === r) : null;
-        caja.hidden = !estado || !r || concluida() || !!rapido();
-        if (caja.hidden) return;
-        const m = estado.inicio_ronda && estado.inicio_ronda.inicio ? estado.inicio_ronda : null;
+        const m = estado && estado.inicio_ronda && estado.inicio_ronda.inicio ? estado.inicio_ronda : null;
+        const sinBloque = !estado || !r || concluida() || !!rapido();
         caja.dataset.marcada = m ? "si" : "no";
+        $("ir-corregir").hidden = sinBloque || !m || corrigiendoInicio;
+        caja.hidden = sinBloque || (!!m && !corrigiendoInicio);
+        if (sinBloque) return;
         $("ir-ronda").textContent = "— ronda " + r + (estado.torneo ? " de " + estado.torneo : "");
         $("ir-quitar").hidden = !m;
+        $("ir-cerrar").hidden = !(m && corrigiendoInicio);
         if (document.activeElement !== $("ir-hora")) $("ir-hora").value = m ? horaCampo(m.inicio) : "";
         const h = (x) => hora(x, { hour: "numeric", minute: "2-digit" });
         const fin = (t) => h(new Date(t + (H ? H.TOLERANCIA_MIN : 30) * 60000));
@@ -1003,6 +1009,19 @@
             ? "✓ La ronda " + r + " empezó a las " + h(m.inicio) + (m.arbitro && m.arbitro !== estado.arbitro ? " (la hora que marcó " + m.arbitro + ")" : " (la hora que marcaste)") + ". El tiempo de espera de " + (H ? H.TOLERANCIA_MIN : 30) + " min termina a las " + fin(Date.parse(m.inicio)) + "."
             : ev ? "Todavía no marcaste cuándo empezó la ronda " + r + ": el tiempo de espera cuenta desde las " + h(new Date(H.inicioDe(ev))) + " del calendario. Toca «Inició la ronda ahora» cuando empiece en tu categoría."
                 : "Toca «Inició la ronda ahora» cuando empiece en tu categoría.";
+    }
+
+    // Lo que esta tablet acaba de marcar vale hasta que «leer» lo confirme: una lectura que salió ANTES de marcarla y llega DESPUÉS no la
+    // pisa (antes borraba la hora y los cronómetros de los jugadores volvían al calendario hasta la lectura siguiente). A los 2 minutos
+    // se suelta, por si otro enlace de la misma categoría la cambió.
+    let inicioPendiente = null;
+    function conservarInicio(d) {
+        if (!inicioPendiente) return;
+        if (Date.now() > inicioPendiente.hasta || d.ronda !== inicioPendiente.ronda) { inicioPendiente = null; return; }
+        const srv = d.inicio_ronda && d.inicio_ronda.inicio;
+        const confirmada = !!srv && Math.abs(Date.parse(srv) - Date.parse(inicioPendiente.inicio)) < 1000;
+        if (confirmada) { inicioPendiente = null; return; }
+        d.inicio_ronda = { ronda: d.ronda, inicio: inicioPendiente.inicio, arbitro: d.arbitro };
     }
 
     async function marcarInicio(iso, quitar) {
@@ -1023,8 +1042,9 @@
             const res = await escribir("inicio", quitar ? { ronda: r, quitar: true } : { ronda: r, inicio: iso }, "Hora de inicio de la ronda " + r);
             const guardada = quitar ? null : (res.d && res.d.inicio) || iso;
             estado.inicio_ronda = guardada ? { ronda: r, inicio: guardada, arbitro: estado.arbitro } : null;
-            pintarInicio();
-            pintarEspera();
+            inicioPendiente = guardada ? { ronda: r, inicio: guardada, hasta: Date.now() + 120000 } : null;
+            corrigiendoInicio = false;
+            pintar();   // las tarjetas también: el cronómetro de cada jugador cuenta desde la hora nueva
             avisar(res.encolado ? "Sin señal: la hora de inicio quedó en la tablet y se manda sola cuando vuelva la conexión."
                 : quitar ? "Ronda " + r + ": vuelve a valer la hora del calendario."
                     : "Ronda " + r + ": empezó a las " + h(guardada) + ". El tiempo de espera corre desde ahí.");
@@ -1347,6 +1367,8 @@
         const cambioRonda = estado && estado.ronda !== d.ronda;
         if (cambioRonda) fairPlay = [];
         d.fair_play = fairPlay;
+        if (cambioRonda) corrigiendoInicio = false;
+        conservarInicio(d);
         estado = d;
         cargarFairPlay();
         anuladas = new Set(d.anuladas || []);
@@ -1634,6 +1656,10 @@
         // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
         $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
         $("donde-juega").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
+        // El logo y la «Ronda abierta» abren «Mis pareos»: los pareos de SUS mesas, de todas las rondas (la abierta al abrir).
+        const misPareos = () => window.CentroamericanoMisPareos.abrir({ pedir: (c) => invocar("mis_pareos", c, { intentos: 2 }), ronda: estado && estado.ronda });
+        $("logo-pareos").addEventListener("click", misPareos);
+        $("ver-rondas").addEventListener("click", misPareos);
         $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
         $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));
@@ -1644,6 +1670,8 @@
             marcarInicio(window.HoraCR.desdeCampo(window.HoraCR.hoy() + "T" + campo).toISOString(), false);
         });
         $("ir-quitar").addEventListener("click", () => marcarInicio(null, true));
+        $("ir-corregir").addEventListener("click", () => { corrigiendoInicio = true; pintarInicio(); $("ir-hora").focus(); });
+        $("ir-cerrar").addEventListener("click", () => { corrigiendoInicio = false; pintarInicio(); $("ir-corregir").focus(); });
         $("concluir").addEventListener("click", concluirLabores);
         $("bajar-bitacora").addEventListener("click", bajarBitacora);
         $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
