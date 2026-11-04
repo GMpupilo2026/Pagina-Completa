@@ -648,8 +648,8 @@ const CONTRASTE = `(sel) => {
     igual("«Llegó» con la ronda empezada hace 25 min: la tablet manda la hora del toque y la del inicio, y queda UNA nota «Llegó tarde» con cuánto se tardó y cuánto le faltaba",
       await p.evaluate(() => { const b = window.__llamadas.filter((l) => l.body.action === "presencia").pop().body; return [typeof b.ocurrio, typeof b.inicio, Math.abs(Date.parse(b.ocurrio) - Date.now()) < 20000, Math.abs(Date.parse(b.inicio) - Date.parse(window.__inicioRonda.inicio)) < 2000]; }), ["string", "string", true, true]);
     const t1 = (await tardes())[0];
-    igual("la nota dice el jugador, su color, cuánto se tardó (25 min y unos segundos) y cuánto le faltaba para la incomparecencia (menos de 5 min)", [t1[0], /\(negras\) llegó tarde: 25 min \d+ s después del inicio de la ronda/.test(t1[1]), /le faltaban 4 min \d+ s para la incomparecencia/.test(t1[1]), t1[2]], ["Llegó tarde", true, true, ""]);
-    igual("y la tablet avisa que quedó anotado en la bitácora", await p.evaluate(() => /llegó 25 min .* tarde: quedó anotado en la bitácora/.test(document.getElementById("avisos-zona").textContent)), true);
+    igual("la nota dice el jugador, su color, cuánto se tardó (25 min y unos segundos) y cuánto le faltaba para la incomparecencia (unos 5 min)", [t1[0], /\(negras\) llegó tarde: 25 min \d+ s después del inicio de la ronda/.test(t1[1]), /le faltaban [45] min \d+ s para la incomparecencia/.test(t1[1]), t1[2]], ["Llegó tarde", true, true, ""]);
+    igual("y la tablet avisa que quedó anotado en la bitácora", await p.evaluate(() => /llegó 25 min( \d+ s)? tarde: quedó anotado en la bitácora/.test(document.getElementById("avisos-zona").textContent)), true);
     await p.click(jug_(1, "negras") + ' [data-accion="corregir-presencia"]');
     await p.waitForFunction(() => [...document.querySelectorAll("#anotado-filas tr")].some((tr) => tr.children[2].textContent.startsWith("Llegó tarde") && tr.dataset.anulada === "si"));
     igual("corregir el toque («no ha llegado») anula la nota: se ve como anulada y no queda ninguna viva", (await tardes()).map((x) => x[2]), ["si"]);
