@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1139,
+  "total": 1140,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26046,6 +26046,12 @@
     "titulo": "Metropolitano 2026",
     "grupo": "Carpetas",
     "archivos": [
+     {
+      "ruta": "img/metropolitano-2026/compartir.jpg",
+      "titulo": "Compartir",
+      "tipo": "otro",
+      "kb": 144
+     },
      {
       "ruta": "img/metropolitano-2026/hojas-abajo.jpg",
       "titulo": "Hojas abajo",
