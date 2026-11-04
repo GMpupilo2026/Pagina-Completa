@@ -227,6 +227,12 @@ const FILAS_FIDE = [
     await p.click("#revisar");
     cierto("sin aceptar que la habitación es compartida no avanza", /habitación es compartida/.test(await p.textContent("#msg")), await p.textContent("#msg"));
     await t1.locator('[data-c="acepta_compartir"]').check();
+    cierto("con hospedaje se ven sus condiciones: la puerta a las 10:30 p.m., la cancha y la ropa de cama", await t1.locator("[data-caja-condiciones]").isVisible()
+      && /10:30 p\.m\./.test(await t1.locator("[data-condiciones-texto]").textContent()) && /cancha/.test(await t1.locator("[data-condiciones-texto]").textContent())
+      && /no hay ropa de cama ni cortinas/.test(await t1.locator("[data-condiciones-texto]").textContent()));
+    await p.click("#revisar");
+    cierto("sin aceptar las condiciones del hospedaje no avanza", /condiciones del hospedaje/.test(await p.textContent("#msg")), await p.textContent("#msg"));
+    await t1.locator('[data-c="acepta_hospedaje"]').check();
     await p.click("#revisar");
     cierto("sin foto no avanza, y lo dice", /foto/.test(await p.textContent("#msg")));
     await t1.locator("[data-foto]").setInputFiles(FOTO);
@@ -261,7 +267,7 @@ const FILAS_FIDE = [
       && JSON.stringify(x1.torneos) === '["A","BLITZ"]' && JSON.stringify(x1.comidas) === '["desayuno","cena"]' && x1.hospedaje === true && x1.acepta_publicidad === true
       && e1.pago_metodo === "sinpe" && e1.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(x1.foto)
       && x1.responsable && x1.responsable.nombre === "Luis Mora" && x1.nombre_fide === "Mora Solis, Ana" && e1.acepta_seguro === true
-      && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion"
+      && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion" && x1.acepta_hospedaje === true
       && JSON.stringify(x1.acompanantes_detalle) === JSON.stringify([{ nombre: "Luis Mora Rojas", documento: "PA123456", nacimiento: "1975-02-02", parentesco: "Padre" }]), e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
@@ -326,6 +332,7 @@ const FILAS_FIDE = [
     await llenar(gm, { nacimiento: "1990-04-04", sexo: "m", nacionalidad: "Guatemala", pais_residencia: "Guatemala", documento_tipo: "pasaporte", documento: "G1234567",
       correo: "gm@ejemplo.com", telefono: "+502 5555 1234", emer_nombre: "Ana Pérez", emer_telefono: "+502 5555 0000" });
     await gm.locator('input[name="p1-clasico"][value="A"]').check();
+    await gm.locator('[data-c="acepta_hospedaje"]').check();
     await gm.locator("[data-foto]").setInputFiles(FOTO);
     await s3.p.check("#acepta-reglamento"); await s3.p.check("#acepta-imagen"); await s3.p.check("#acepta-seguro"); await s3.p.check("#acepta-datos");
     await s3.p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
@@ -360,6 +367,9 @@ const FILAS_FIDE = [
       && /llegada al Estadio Nacional/.test(await im.locator("[data-caja-viaje]").textContent())
       && !(await im.locator('[data-c="vuelo"]').isVisible()) && !(await im.locator('[data-c="traslado"]').isVisible()) && !(await im.locator("[data-caja-docs]").isVisible())
       && !(await im.locator('input[name="p1-hosp"][value="si"]').isVisible()) && await im.locator('[data-c="provincia"]').isVisible());
+    cierto("el titulado también ve y acepta las condiciones del hospedaje, con la ropa de cama de la organización", await im.locator("[data-caja-condiciones]").isVisible()
+      && /la organización les da la ropa de cama/.test(await im.locator("[data-condiciones-texto]").textContent()) && !/Trae sábanas/.test(await im.locator("[data-condiciones-texto]").textContent()));
+    await im.locator('[data-c="acepta_hospedaje"]').check();
     await im.locator('[data-c="provincia"]').selectOption("Cartago");
     await im.locator('[data-c="canton"]').selectOption("Cartago");
     await llenar(im, { nacimiento: "1985-05-05", sexo: "m", documento: "3-0333-0333", correo: "im@ejemplo.com", telefono: "+506 7111 1111", emer_nombre: "Rosa Arias", emer_telefono: "88880000" });
@@ -379,7 +389,7 @@ const FILAS_FIDE = [
     await s4.p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
     const xi = s4.anotado.enviado.personas[0];
     cierto("se manda con sus días, sin vuelo, y con su foto para el gafete", xi.origen === "cr" && xi.viaje && xi.viaje.llegada === "2026-12-25" && xi.viaje.salida === "2026-12-30"
-      && xi.viaje.vuelo === "" && xi.viaje.traslado === false && xi.hospedaje === false && !!xi.foto, xi);
+      && xi.viaje.vuelo === "" && xi.viaje.traslado === false && xi.hospedaje === false && !!xi.foto && xi.acepta_hospedaje === true, xi);
 
     /* ----- El parqueo: se pide con la placa y se paga con la inscripción ----- */
     // (en una página recién abierta, cuando ya contestó la base: lleno, no se ofrece)
@@ -403,6 +413,7 @@ const FILAS_FIDE = [
     await pq.locator('input[name="p1-clasico"][value="A"]').check();
     await pq.locator("[data-foto]").setInputFiles(FOTO);
     await pq.locator('[data-c="parqueo"]').check();
+    await pq.locator('[data-c="acepta_hospedaje"]').check();
     cierto("al marcarlo pide la placa y el total suma el parqueo (el IM no paga la inscripción)", await pq.locator('[data-c="placa"]').isVisible()
       && /Parqueo: \$10\.00/.test(await s5.p.textContent("#total")) && /Total: \$10\.00/.test(await s5.p.textContent("#total")), await s5.p.textContent("#total"));
     await s5.p.check('input[name="metodo"][value="dolares"]');
@@ -467,6 +478,7 @@ const FILAS_FIDE = [
     await g.p.selectOption("#fac_provincia", "Heredia"); await g.p.selectOption("#fac_canton", "Heredia"); await g.p.selectOption("#fac_distrito", "Heredia");
     await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
     for (const t of [d, j, en]) if (await t.locator('[data-c="acepta_compartir"]').isVisible()) await t.locator('[data-c="acepta_compartir"]').check();
+    for (const t of [d, j, en]) if (await t.locator('[data-c="acepta_hospedaje"]').isVisible()) await t.locator('[data-c="acepta_hospedaje"]').check();
     cierto("si todos son de Costa Rica, no se les pide seguro de viaje: la póliza del evento", !/seguro de viaje/.test(await g.p.textContent("#acepta-seguro-texto")) && /póliza de seguro/.test(await g.p.textContent("#acepta-seguro-texto")));
     await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-seguro"); await g.p.check("#acepta-datos");
     await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
@@ -575,6 +587,12 @@ const FILAS_FIDE = [
     igual("«Si vienes de otro país» dice que son recomendaciones y enlaza solo a fuentes oficiales", ingreso,
       { abierta: true, aviso: true, enlaces: true, correos: ["mailto:metropolitano@fcacostarica.com", "mailto:visascr@migracion.go.cr"] });
     await i1.pg.keyboard.press("Escape");
+    await i1.pg.click("#ficha-hospedaje a");
+    await i1.pg.waitForFunction(() => { const d = document.getElementById("hospedaje"); return d && d.open; });
+    cierto("la ficha «Hospedaje en el Estadio Nacional» abre sus condiciones: la puerta a las 10:30 p.m., la cancha y la ropa de cama",
+      /La puerta se cierra a las 10:30 p\.m\./.test(await i1.pg.textContent("#hospedaje")) && /No se entra a la cancha/.test(await i1.pg.textContent("#hospedaje"))
+      && /no hay ropa de cama ni cortinas/.test(await i1.pg.textContent("#hospedaje")) && /GM, IM y WGM/.test(await i1.pg.textContent("#hospedaje")));
+    await i1.pg.keyboard.press("Escape");
     // Los idiomas: cada texto de la página tiene su inglés y su francés, y lo
     // que se arma con datos se vuelve a pintar en el idioma.
     for (const [lang, boton, ronda, mes] of [["en", "English", "Round 1", /December/], ["fr", "Français", "Ronde 1", /décembre/]]) {
@@ -597,6 +615,8 @@ const FILAS_FIDE = [
           fecha: document.querySelector("#calendario-tablas tbody td").textContent, titulo: document.title };
       });
       igual(boton + ": ningún texto de la página queda en español", r.sin, []);
+      cierto(boton + ": las condiciones del hospedaje, en " + boton, (lang === "en" ? /The door closes at 10:30 p\.m\./ : /La porte ferme à 22 h 30/).test(await i1.pg.textContent("#hospedaje"))
+        && (lang === "en" ? /Lodging at the Estadio Nacional/ : /Hébergement au Stade national/).test(await i1.pg.textContent("#ficha-hospedaje")));
       cierto(boton + ": el calendario y sus fechas, en " + boton, r.lang === lang && r.calendario === ronda && mes.test(r.fecha), r);
     }
     await i1.pg.click("#metro-idioma");

@@ -225,6 +225,16 @@
           </div>
         </div>
 
+        <!-- Las condiciones del hospedaje (js/metropolitano-hospedaje.js): a quien
+             lo pide y a los titulados invitados, que duermen ahí. Se aceptan
+             persona por persona y la base lo exige. -->
+        <div data-caja-condiciones class="hidden space-y-2 rounded-xl border-2 border-accent-500 p-4">
+          <p class="font-semibold"><span aria-hidden="true">🛏️ </span>Condiciones del hospedaje en el Estadio Nacional</p>
+          <div data-condiciones-texto class="text-sm max-h-72 overflow-y-auto pr-2" tabindex="0" role="region" aria-label="Condiciones del hospedaje en el Estadio Nacional"></div>
+          <p class="text-xs text-brand-600 dark:text-brand-300">Desliza dentro del cuadro para leerlas todas: también dicen qué hay que traer.</p>
+          <label class="flex items-start gap-3 text-sm font-semibold"><input type="checkbox" data-c="acepta_hospedaje" class="mt-1 h-4 w-4 shrink-0"> <span><span data-acepto-hospedaje></span>${AST}</span></label>
+        </div>
+
         <!-- El parqueo: solo si administración lo ofrece y quedan espacios
              (metropolitano_parqueo_ver); lleno, no se muestra. -->
         <div data-caja-parqueo class="hidden space-y-2">
@@ -609,6 +619,15 @@
       q("[data-parqueo-precio]").textContent = PARQUEO.disponible
         ? "(" + (Number(PARQUEO.precio_usd) > 0 ? R.dinero(Number(PARQUEO.precio_usd)) : "sin costo") + (PARQUEO.quedan != null && PARQUEO.quedan <= 20 ? "; quedan " + PARQUEO.quedan : "") + ")" : "";
       q("[data-caja-placa]").classList.toggle("hidden", !parquea());
+      // Las condiciones del hospedaje: a quien lo pide y al titulado invitado
+      // (a él la ropa de cama se la da la organización).
+      const conCondiciones = hospeda() || tit;
+      q("[data-caja-condiciones]").classList.toggle("hidden", !conCondiciones);
+      if (conCondiciones && q("[data-caja-condiciones]").dataset.titulado !== String(tit)) {
+        q("[data-caja-condiciones]").dataset.titulado = String(tit);
+        window.MetropolitanoHospedaje.pintar(q("[data-condiciones-texto]"), "es", { titulado: tit, soloUno: true });
+        q("[data-acepto-hospedaje]").textContent = tit ? window.MetropolitanoHospedaje.TX.es.aceptoTitulado : window.MetropolitanoHospedaje.TX.es.acepto;
+      }
       q("[data-texto-publicidad]").textContent = esGrupo() && !yo.esDelegado
         ? "esta persona (o su madre o padre, si es menor) autoriza que la FCA y Ajedrez Integral usen su nombre y su foto en la publicidad del torneo: redes sociales, afiches, la página y la prensa."
         : "autorizo que la FCA y Ajedrez Integral usen el nombre y la foto de esta persona en la publicidad del torneo: redes sociales, afiches, la página y la prensa.";
@@ -741,6 +760,7 @@
       if (rol === "jugador" && !yo.torneos().length) falta(q("[data-blitz]"), "Elige al menos un torneo.");
       if (hospeda() && (!v("hospedaje_desde") || !v("hospedaje_hasta") || v("hospedaje_desde") >= v("hospedaje_hasta"))) falta(c("hospedaje_desde"), "Revisa las fechas del hospedaje.");
       if (hospeda() && !c("acepta_compartir").checked) falta(c("acepta_compartir"), "Falta aceptar que la habitación es compartida.");
+      if ((hospeda() || esTitulado()) && !c("acepta_hospedaje").checked) falta(c("acepta_hospedaje"), "Falta aceptar las condiciones del hospedaje en el Estadio Nacional (la puerta se cierra a las 10:30 p.m.).");
       if (hospeda()) yo.acompanantes().forEach((a, i) => {
         if (a.nombre.length < 5 || a.documento.length < 4 || !/^\d{4}-\d{2}-\d{2}$/.test(a.nacimiento || "")) {
           falta(q('[data-acomp="' + i + '"] input'), "Faltan los datos del acompañante " + (i + 1) + ": nombre completo, documento y fecha de nacimiento.");
@@ -775,7 +795,8 @@
         provincia: deAfuera() ? null : v("provincia"), canton: deAfuera() ? null : v("canton"),
         hospedaje: hospeda(), hospedaje_desde: hospeda() ? v("hospedaje_desde") : null, hospedaje_hasta: hospeda() ? v("hospedaje_hasta") : null,
         habitacion: hospeda() ? v("habitacion") : null, acompanantes: hospeda() ? Number(v("acompanantes")) || 0 : 0,
-        acepta_compartir: hospeda() && c("acepta_compartir").checked, acompanantes_detalle: hospeda() ? yo.acompanantes() : [],
+        acepta_compartir: hospeda() && c("acepta_compartir").checked,
+        acepta_hospedaje: (hospeda() || esTitulado()) && c("acepta_hospedaje").checked, acompanantes_detalle: hospeda() ? yo.acompanantes() : [],
         origen: deAfuera() ? "fuera" : "cr",
         comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
         dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
@@ -1043,6 +1064,7 @@
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
     if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
     if (d.parqueo) filas.push(["Parqueo", "Para el vehículo de placa " + d.placa]);
+    if (d.acepta_hospedaje) filas.push(["Condiciones del hospedaje", "Aceptadas: la puerta se cierra a las 10:30 p.m. y después no se entra ni se sale" + (p.titulado() ? "" : "; trae la ropa de cama (no hay sábanas ni cortinas)")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
     const dl = document.createElement("dl"); dl.className = "grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm";

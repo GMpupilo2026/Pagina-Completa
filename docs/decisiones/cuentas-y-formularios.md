@@ -1703,6 +1703,46 @@ un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
 - La forma de las carpetas la decide la función (`carpetasDe`), y
   `verificar-metropolitano.js` la prueba con el mismo código.
 
+#### Las condiciones del hospedaje
+
+Pedido del dueño: el hospedaje es dentro del Estadio Nacional, una
+instalación pública, y tiene condiciones estrictas que la persona tiene que
+saber antes, para que después no diga que no sabía (si llega después de las
+10:30 p.m., no entra a dormir).
+
+- **El texto vive en un solo lugar**, `js/metropolitano-hospedaje.js`, en
+  español, inglés y francés: lo usan la inscripción y la página del torneo.
+  Cambiar una condición sube `VERSION`.
+- **Las condiciones del dueño**: la puerta se cierra a las 10:30 p.m. y
+  después nadie entra ni sale; silencio; no se camina alrededor del estadio;
+  no se entra a la cancha; se da solo el espacio y la cama, sin ropa de cama
+  ni cortinas (hay que traer sábanas, almohada, cobija o saco de dormir y
+  toalla). A los invitados especiales (GM, IM y WGM) la organización les da
+  la ropa de cama; todas las demás condiciones les aplican igual.
+- **Las que se agregaron para la convivencia**, propuestas y a confirmar con
+  la organización:
+  - no se fuma ni se vapea en el estadio (Ley 9028), ni alcohol ni drogas;
+  - no se cocina ni se usan aparatos de calor en los dormitorios, y nada se
+    pega en las paredes;
+  - la basura va a los basureros, y lo dañado lo paga quien lo dañó;
+  - no hay visitas ni mascotas;
+  - los menores van siempre con su responsable o con su delegado;
+  - las pertenencias son de cada quien;
+  - se siguen las indicaciones de la organización y de la seguridad;
+  - quien no cumpla puede perder el hospedaje sin devolución.
+- **En la inscripción** se muestran, en un cuadro que se desliza, a quien pide
+  hospedaje y al titulado invitado (que duerme ahí aunque no lo pida), con la
+  casilla obligatoria «Leí y acepto…», persona por persona. El resumen lo
+  repite.
+- **La base lo exige** (migración `metropolitano_condiciones_hospedaje`):
+  sin `acepta_hospedaje`, a quien pide hospedaje o al GM, IM o WGM no los
+  deja pasar, y guarda `acepta_hospedaje` y `hospedaje_version`. Probado con
+  un pedido anónimo: un IM sin aceptar se rechaza y aceptando entra con la
+  versión.
+- **En la página del torneo**, la ficha «Hospedaje en el Estadio Nacional»
+  abre las mismas condiciones encima, para leerlas antes de decidir.
+- La lista de inscritos dice en cada uno si las aceptó (y en el CSV).
+
 #### El parqueo
 
 Pedido del dueño: en la inscripción, «¿Necesita parqueo?», con el precio que

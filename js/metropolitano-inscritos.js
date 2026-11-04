@@ -106,6 +106,7 @@
       ["Nombre en FIDE", x.nombre_fide],
       ["En el Drive", x.drive_en ? "Sí, desde " + window.HoraCR.fechaHora(x.drive_en) : x.drive_error ? "Todavía no: " + x.drive_error : "Todavía no (se manda sola)"],
       ["Código de descuento", x.codigo_descuento && x.codigo_descuento + " (" + x.descuento_pct + " %)"],
+      ["Condiciones del hospedaje", x.acepta_hospedaje ? "Aceptadas (" + (x.hospedaje_version || "") + "): puerta a las 10:30 p.m." + (R.TITULOS_GRATIS.includes(x.titulo || "") && x.rol === "jugador" ? "; la ropa de cama la da la organización" : "; trae su ropa de cama") : (x.hospedaje ? "No las aceptó" : "")],
       ["Parqueo", x.parqueo ? "Placa " + x.placa + " (" + R.dinero(Number(x.parqueo_usd || 0)) + ")" : ""],
       ["Viene de", x.provincia && [x.canton, x.provincia].filter(Boolean).join(", ")],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
@@ -235,7 +236,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Parqueo (placa)", "Parqueo USD", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Parqueo (placa)", "Parqueo USD", "Condiciones del hospedaje", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -243,7 +244,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.parqueo ? x.placa : "", x.parqueo ? x.parqueo_usd : "", x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.parqueo ? x.placa : "", x.parqueo ? x.parqueo_usd : "", x.acepta_hospedaje ? "Aceptó (" + (x.hospedaje_version || "") + ")" : "", x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 
