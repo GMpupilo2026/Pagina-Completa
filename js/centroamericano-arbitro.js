@@ -31,6 +31,9 @@
     const $ = (id) => document.getElementById(id);
     const avisar = (texto, error) => Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
     const REFRESCO_MS = 45000; // las mesas (hablan con chess-results)
+    // La tablet vieja o lenta (js/modo-liviano.js): algunas consultas van menos seguido. Los avisos de la organización
+    // y lo que se anota NO: eso no se demora nunca.
+    const liviano = () => !!(window.ModoLiviano && window.ModoLiviano.activo());
     const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
 
     let estado = null; // lo que contestó «leer»
@@ -1409,8 +1412,15 @@
     // «Modo concentración»: lo enciende la organización (llega en «leer» y en «avisos»); la tablet se tapa si el árbitro se sale.
     const Conc = window.CentroamericanoConcentracion.crear({ pedir: (c) => invocar("salida", c, { intentos: 1 }) });
 
-    // Lo que contesta «leer» o «avisos»: el nombre, los mensajes sin leer y el pedido de ayuda.
-    function aplicarAvisos(d) {
+    // Lo que de los avisos se ve en las tarjetas de las mesas: si nada de esto cambió, las tarjetas no se vuelven a
+    // armar. Antes se armaban TODAS cada 8 s (cada consulta de avisos), aunque llegara lo mismo: en una tablet vieja
+    // la página se trababa justo cuando el árbitro iba a tocar un botón. Ver «Las tablets viejas: el modo liviano».
+    const firmaAvisos = () => JSON.stringify([abiertas, ayuda, nombrado, estado && estado.arbitro]);
+
+    // Lo que contesta «leer» o «avisos»: el nombre, los mensajes sin leer y el pedido de ayuda. Con `sinPintar`
+    // (lo llama mostrar(), que pinta enseguida) devuelve si cambió algo de las tarjetas en vez de pintar.
+    function aplicarAvisos(d, sinPintar) {
+        const antes = firmaAvisos();
         if (d.concentracion !== undefined) Conc.ponerActivo(d.concentracion === true);
         if (d.todas_las_mesas !== undefined) pintarTodasMesas(d.todas_las_mesas !== false);
         nombrado = d.nombrado !== false;
@@ -1428,7 +1438,10 @@
         marcarTitulo();
         pintarAyuda();
         pintarNombre();
-        if (estado) pintar();
+        const cambio = firmaAvisos() !== antes;
+        if (sinPintar) return cambio;
+        if (estado && cambio) pintar();
+        return cambio;
     }
 
     async function consultarAvisos() {
@@ -1534,6 +1547,11 @@
         d.fair_play = fairPlay;
         if (cambioRonda) corrigiendoInicio = false;
         conservarInicio(d);
+        // Si llegó lo mismo que ya está pintado (lo de siempre al actualizar cada 45 s con la ronda quieta), las
+        // tarjetas no se vuelven a armar. `leido_en` cambia siempre y no se ve en ellas.
+        const firma = (x) => JSON.stringify(Object.assign({}, x, { leido_en: null }));
+        const firmaAnuladas = (a) => JSON.stringify(Array.from(a).sort());
+        const igual = !!estado && !cambioRonda && firma(estado) === firma(d) && firmaAnuladas(anuladas) === firmaAnuladas(d.anuladas || []);
         estado = d;
         cargarFairPlay();
         anuladas = new Set(d.anuladas || []);
@@ -1542,9 +1560,10 @@
         $("cargando").hidden = true;
         $("app").hidden = false;
         pintarCabecera();
-        aplicarAvisos(d);
-        if (!precargado) { precargado = true; setTimeout(() => window.CentroamericanoEmparejamientos.precargar(dondeJuega()), 1500); }
-        pintar();
+        const cambioAvisos = aplicarAvisos(d, true);
+        // «Todas las mesas» se adelanta a bajar en una tablet nueva; en el modo liviano, solo cuando se abre.
+        if (!precargado && !liviano()) { precargado = true; setTimeout(() => window.CentroamericanoEmparejamientos.precargar(dondeJuega()), 1500); }
+        if (!igual || cambioAvisos) pintar();
         pintarConexion();
     }
 
@@ -1849,7 +1868,9 @@
         $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
-        setInterval(() => { if (!document.hidden) cargarFairPlay(); }, 20000);
+        // Fair Play: cada 20 s; en el modo liviano, cada 40 s (una vuelta sí y otra no).
+        let vueltaFp = 0;
+        setInterval(() => { if (document.hidden) return; if (liviano() && (vueltaFp++ % 2)) return; cargarFairPlay(); }, 20000);
         // «Mis mesas en vivo»: solo aparece si la organización conectó la transmisión privada sin atraso.
         if (window.CentroamericanoArbitroVivo) window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo"), alAlertar: alertaDeTablas });
         document.addEventListener("visibilitychange", () => {

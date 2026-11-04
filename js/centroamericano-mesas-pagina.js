@@ -32,6 +32,9 @@
     const C = window.CentroamericanoMesas;
     const M = window.MesaArbitro;
     const $ = (id) => document.getElementById(id);
+    // `x ?? ""` sin el `??`: una tablet vieja (Chrome 80, Safari 13.1) no lo sabe leer y se cae el archivo entero
+    // (ver «Las tablets viejas: el modo liviano» en docs/decisiones/juegos-y-torneos.md).
+    const conVacio = (x) => (x === null || x === undefined ? "" : x);
     const avisar = (texto, error) => Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
     const TIC_MS = 6000; // cada cuánto se miran los avisos y el avance
     const TITULO = document.title;
@@ -1240,8 +1243,8 @@
         $("copias-vacio").hidden = lista.length > 0;
         $("copias").replaceChildren(...lista.map((c) => el("tr", { "data-anillo": c.anillo },
             el("td", { texto: window.HoraCR.fechaHora(c.creada) }), el("td", { texto: NOMBRE_ANILLO[c.anillo] || c.anillo }),
-            el("td", { texto: String((c.resumen || {}).asignaciones ?? "") }), el("td", { texto: String((c.resumen || {}).registro ?? "") }),
-            el("td", { texto: String((c.resumen || {}).avisos ?? "") }), el("td", { texto: String((c.resumen || {}).planillas ?? "") }),
+            el("td", { texto: String(conVacio((c.resumen || {}).asignaciones)) }), el("td", { texto: String(conVacio((c.resumen || {}).registro)) }),
+            el("td", { texto: String(conVacio((c.resumen || {}).avisos)) }), el("td", { texto: String(conVacio((c.resumen || {}).planillas)) }),
             el("td", {}, el("div", { class: "cam-acciones cam-acciones-sin-margen" },
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "bajar-copia", onclick: () => bajarCopia(c) }, "Bajar"),
                 el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "restaurar-copia", onclick: () => restaurarCopia(c) }, "Restaurar"))))));
