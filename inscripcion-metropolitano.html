@@ -89,7 +89,7 @@
             <div class="px-6 sm:px-8 pb-8 space-y-8">
                 <div class="text-sm text-brand-700 dark:text-brand-200 space-y-2">
                     <p>Se inscriben <strong>jugadores, entrenadores y acompañantes</strong>. Al final ves el <strong>gafete</strong> de cada persona, con su foto y el resumen de sus datos, los revisas y confirmas.</p>
-                    <p>Ten a mano: el <strong>ID FIDE</strong> de cada jugador (si tiene), una <strong>foto tamaño pasaporte</strong> de cada persona y el <strong>comprobante de pago</strong>. Lee las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a> o <a class="underline font-semibold" href="metropolitano-2026.html">toda la información del torneo</a>: calendario, premios y costos.</p>
+                    <p>Ten a mano: el <strong>ID FIDE</strong> de cada jugador (si tiene), una <strong>foto tamaño pasaporte</strong> de cada persona y el <strong>comprobante de pago</strong>. Lee las <a class="underline font-semibold" href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026">bases del torneo</a> o <a class="underline font-semibold" href="metropolitano-2026.html" data-visor="Toda la información del torneo">toda la información del torneo</a>: calendario, premios y costos.</p>
                     <p id="aviso-plazo" class="font-semibold text-accent-700 dark:text-accent-400"></p>
                     <p class="text-xs text-brand-500 dark:text-brand-300">Los campos con <span class="text-red-700 dark:text-red-400">*</span> son obligatorios.</p>
                 </div>
@@ -162,9 +162,16 @@
 
                 <fieldset class="space-y-3">
                     <legend class="metro-titulo">Para terminar</legend>
-                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-reglamento" class="mt-1 h-4 w-4 shrink-0"> <span>Leí las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a> y las acepto. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-reglamento" class="mt-1 h-4 w-4 shrink-0"> <span>Leí las <a class="underline font-semibold" href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026">bases del torneo</a> y las acepto. <span class="text-red-700 dark:text-red-400">*</span></span></label>
                     <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-imagen" class="mt-1 h-4 w-4 shrink-0"> <span>Sé que la FCA toma fotos y videos en el torneo y los publica en sus canales oficiales, como dicen las bases. <span class="text-red-700 dark:text-red-400">*</span></span></label>
-                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-datos" class="mt-1 h-4 w-4 shrink-0"> <span id="acepta-datos-texto">Acepto que estos datos se usen para organizar el torneo y tramitar el ID FIDE de quien no lo tiene, según la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold">Política de privacidad</a>. Si inscribo a otra persona o a un grupo, cuento con la autorización de cada una, y si es menor de edad, con la de su madre, padre o persona encargada. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-datos" class="mt-1 h-4 w-4 shrink-0"> <span id="acepta-datos-texto">Acepto que estos datos se usen para organizar el torneo y tramitar el ID FIDE de quien no lo tiene, según la <a href="privacidad.html" data-visor="Política de privacidad" class="underline font-semibold">Política de privacidad</a>. Si inscribo a otra persona o a un grupo, cuento con la autorización de cada una, y si es menor de edad, con la de su madre, padre o persona encargada. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <!-- La póliza y la exoneración de responsabilidad: la base la exige
+                         (acepta_seguro) y guarda la versión del texto aceptado
+                         (exoneracion_version: v2-nacionales o v2-con-extranjeros,
+                         según si viene alguien de otro país). El texto lo arma
+                         js/inscripcion-metropolitano.js (pintarSeguro); si cambia,
+                         se sube la versión en la función. -->
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-seguro" class="mt-1 h-4 w-4 shrink-0"> <span id="acepta-seguro-texto"><strong>Seguro y responsabilidad.</strong> Declaro que cada persona de esta inscripción cuenta con una póliza de seguro vigente que la cubre durante todo el torneo —de gastos médicos y de accidentes— y, si viene de otro país, con un seguro de viaje que la cubre durante toda su estadía en Costa Rica, y que el costo de esa póliza no corre por cuenta de la organización. Cada persona participa por su propia voluntad y asume los riesgos propios de la competencia, del viaje y de la estadía. Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización. <span class="text-red-700 dark:text-red-400">*</span></span></label>
                     <p class="text-xs text-brand-500 dark:text-brand-300">El permiso para usar el nombre y la foto de cada persona en la publicidad del torneo se marca en su tarjeta: es aparte y no es obligatorio.</p>
                 </fieldset>
 
@@ -240,6 +247,7 @@
     <script src="js/division-territorial.js"></script>
     <script src="js/metropolitano-reglas.js"></script>
     <script src="js/metropolitano-gafete.js"></script>
+    <script src="js/visor-documento.js"></script>
     <script src="js/inscripcion-metropolitano.js"></script>
 </body>
 </html>

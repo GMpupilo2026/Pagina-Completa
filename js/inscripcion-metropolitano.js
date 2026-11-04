@@ -95,14 +95,16 @@
       </header>
       <div class="p-4 sm:p-5 space-y-6">
         <div><label for="${id("rol")}" class="block text-sm font-semibold mb-1">Se inscribe como${AST}</label><select id="${id("rol")}" data-campo data-rol></select></div>
+        <div class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?${AST}</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
 
         <div data-bloque-fide class="space-y-3">
           <p class="font-semibold" data-fide-pregunta>ID FIDE</p>
           <div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="si" checked> Tiene ID FIDE</label><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="no"> No tiene ID FIDE</label></div>
+          <p data-origen-ayuda class="text-sm rounded-xl bg-brand-50 dark:bg-brand-950 p-3"></p>
           <div data-caja-fide class="space-y-3">
-            <div><label for="${id("buscar")}" class="block text-sm font-semibold mb-1">Escribe el nombre (apellido primero) o el ID FIDE${AST}</label>
+            <div data-caja-buscar><label for="${id("buscar")}" class="block text-sm font-semibold mb-1"><span data-buscar-etiqueta>Escribe el nombre (apellido primero) o el ID FIDE</span>${AST}</label>
               <input id="${id("buscar")}" data-campo data-buscar type="search" autocomplete="off" placeholder="Ejemplo: Mora, Ana  —  o  6400000" aria-describedby="${id("buscar-ayuda")}">
-              <p id="${id("buscar-ayuda")}" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.</p></div>
+              <p id="${id("buscar-ayuda")}" class="text-xs text-brand-500 dark:text-brand-300 mt-1" data-buscar-ayuda>Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.</p></div>
             <p data-estado-fide class="text-sm" role="status" aria-live="polite"></p>
             <ul data-resultados class="space-y-2" aria-label="Jugadores encontrados en la lista de FIDE"></ul>
             <div data-elegido class="hidden rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4" tabindex="-1" aria-live="polite"></div>
@@ -115,8 +117,9 @@
         </div>
 
         <div class="grid sm:grid-cols-2 gap-4">
-          <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off"></div>
-          <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off"></div>
+          <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
+          <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
+          <p id="${id("nombre-fide")}" data-nombre-bloqueado class="hidden sm:col-span-2 text-sm font-semibold">🔒 El nombre y los apellidos son los de FIDE para el ID elegido, y no se pueden cambiar: así salen en el torneo. Si no es esta persona, busque otro ID arriba.</p>
           <div data-caja-nombre-fide class="sm:col-span-2 hidden space-y-2">
             <p data-estado-nombre class="text-sm" role="status" aria-live="polite"></p>
             <ul data-resultados-nombre class="space-y-2" aria-label="Jugadores de FIDE con ese nombre"></ul>
@@ -157,22 +160,46 @@
           <p class="text-sm text-brand-600 dark:text-brand-300">Se habilitan los que puede jugar según su Elo FIDE estándar y su fecha de nacimiento. A, B y U14 se juegan a la vez: se elige uno. El blitz se suma aparte.</p>
           <div data-clasicos class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Torneo clásico"></div>
           <label class="metro-opcion"><input type="checkbox" data-blitz class="mt-1 h-5 w-5"><span><span class="font-semibold block">Sumar el Metropolitano Blitz</span><span class="text-sm text-brand-600 dark:text-brand-300">3 min + 2 s · 30 de diciembre, 16:00 · abierto a todos</span></span></label>
+          <!-- El código de descuento que da la organización (rifas, inscripciones donadas): vale una vez. -->
+          <div data-caja-codigo class="space-y-1">
+            <label for="${id("cod")}" class="block text-sm font-semibold">¿Tiene un código de descuento?</label>
+            <div class="flex flex-wrap gap-2"><input id="${id("cod")}" data-campo data-codigo-entrada maxlength="13" placeholder="MET-XXXX-XXXX" autocomplete="off" autocapitalize="characters" class="max-w-[14rem]"><button type="button" data-codigo-aplicar class="metro-boton">Aplicar el código</button></div>
+            <p data-codigo-estado class="text-sm" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="space-y-4">
-          <p class="font-semibold">Viaje, hospedaje y alimentación</p>
-          <div class="grid sm:grid-cols-3 gap-4">
-            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1">Día de llegada</label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1">Día de salida</label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada</label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
+          <p class="font-semibold" data-titulo-viaje>Viaje, hospedaje y alimentación</p>
+          <!-- De Costa Rica no se pide el viaje: la provincia y el cantón, para las estadísticas. -->
+          <div data-caja-procedencia class="grid sm:grid-cols-2 gap-4">
+            <div><label for="${id("prov")}" class="block text-sm font-semibold mb-1">Provincia donde vive${AST}</label><select id="${id("prov")}" data-campo data-c="provincia"></select></div>
+            <div><label for="${id("cant")}" class="block text-sm font-semibold mb-1">Cantón${AST}</label><select id="${id("cant")}" data-campo data-c="canton"></select></div>
           </div>
-          <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita traslado del aeropuerto</label>
+          <!-- GM, IM y WGM: la organización les da hospedaje y alimentación; de afuera, se pide solo el viaje;
+               de Costa Rica, los días en que llega al Estadio Nacional y en que sale. -->
+          <div data-caja-titulado class="hidden rounded-xl border-l-4 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4 text-sm space-y-1"><p class="font-semibold"><span aria-hidden="true">🏆 </span>Invitado titulado</p><p data-titulado-texto></p></div>
+          <div data-caja-viaje class="space-y-4">
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1"><span data-lbl-llegada>Día de llegada</span><span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1"><span data-lbl-salida>Día de salida</span><span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div data-viaje-vuelo><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
+          </div>
+          <label data-viaje-traslado class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita transporte del aeropuerto al Estadio Nacional</label>
+          <div data-caja-docs class="hidden grid sm:grid-cols-2 gap-4">
+            <div><p class="text-sm font-semibold mb-1">Foto del tiquete aéreo${AST}</p><label for="${id("tiq")}" class="metro-boton inline-block cursor-pointer">🎫 Elegir el tiquete<input id="${id("tiq")}" data-doc="tiquete" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="tiquete" class="text-xs mt-1" aria-live="polite"></p></div>
+            <div><p class="text-sm font-semibold mb-1">Foto del pasaporte${AST}</p><label for="${id("pas")}" class="metro-boton inline-block cursor-pointer">🛂 Elegir el pasaporte<input id="${id("pas")}" data-doc="pasaporte" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="pasaporte" class="text-xs mt-1" aria-live="polite"></p></div>
+          </div>
+          </div>
+          <div data-caja-hosp-alim class="space-y-4">
           <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">¿Necesita hospedaje?</span><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="si"> Sí</label></div>
           <div data-caja-hosp class="hidden grid sm:grid-cols-2 gap-4">
             <div><label for="${id("hdes")}" class="block text-sm font-semibold mb-1">Desde (noche de llegada)${AST}</label><input id="${id("hdes")}" data-campo data-c="hospedaje_desde" type="date" min="2026-12-20" max="2027-01-02" value="2026-12-25"></div>
             <div><label for="${id("hhas")}" class="block text-sm font-semibold mb-1">Hasta (día de salida)${AST}</label><input id="${id("hhas")}" data-campo data-c="hospedaje_hasta" type="date" min="2026-12-21" max="2027-01-03" value="2026-12-31"></div>
-            <div><label for="${id("hab")}" class="block text-sm font-semibold mb-1">Habitación</label><select id="${id("hab")}" data-campo data-c="habitacion"><option value="individual">Individual</option><option value="doble">Doble</option><option value="compartida">Compartida con su grupo</option></select></div>
-            <div><label for="${id("acomp")}" class="block text-sm font-semibold mb-1">Acompañantes que no se inscriben aparte</label><input id="${id("acomp")}" data-campo data-c="acompanantes" type="number" min="0" max="6" value="0"></div>
+            <div class="sm:col-span-2 rounded-xl border-l-4 border-accent-500 bg-accent-50 dark:bg-brand-950 p-3 text-sm"><p class="font-semibold">Las habitaciones no son individuales: son compartidas.</p><p class="mt-1">La organización asigna con quién se comparte, y procura ubicar juntas a las familias y a las delegaciones.</p></div>
+            <div><label for="${id("hab")}" class="block text-sm font-semibold mb-1">¿Con quién prefiere compartir?</label><select id="${id("hab")}" data-campo data-c="habitacion"><option value="organizacion">Con quien asigne la organización</option><option value="compartida">Con su familia, su delegación o sus acompañantes</option></select></div>
+            <div><label for="${id("acomp")}" class="block text-sm font-semibold mb-1">Acompañantes que vienen con esta persona y no se inscriben aparte</label><input id="${id("acomp")}" data-campo data-c="acompanantes" type="number" min="0" max="6" value="0"></div>
+            <div data-acomp-lista class="sm:col-span-2 space-y-3"></div>
+            <label class="sm:col-span-2 flex items-start gap-3 text-sm"><input type="checkbox" data-c="acepta_compartir" class="mt-1 h-4 w-4 shrink-0"> <span>Acepto que la habitación es compartida y que puede tocarme compartirla con otras personas que asigne la organización.${AST}</span></label>
           </div>
           <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">Alimentación:</span>
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="desayuno"> Desayuno</label>
@@ -183,6 +210,7 @@
             <div><label for="${id("cdes")}" class="block text-sm font-semibold mb-1">Desde${AST}</label><input id="${id("cdes")}" data-campo data-c="comidas_desde" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-26"></div>
             <div><label for="${id("chas")}" class="block text-sm font-semibold mb-1">Hasta${AST}</label><input id="${id("chas")}" data-campo data-c="comidas_hasta" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-30"></div>
             <div class="sm:col-span-2"><label for="${id("dieta")}" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="${id("dieta")}" data-campo data-c="dieta" maxlength="300" placeholder="Vegetariana, sin gluten, alergia a los mariscos…"></div>
+          </div>
           </div>
         </div>
 
@@ -230,22 +258,108 @@
 
     const sinFide = () => el.querySelector('input[name="' + k + '-fide"]:checked').value === "no";
     yo.sinFide = sinFide;
-    const hospeda = () => el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
-    const comidas = () => [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
+    // GM, IM y WGM que juegan: la organización les da hospedaje y alimentación (las bases).
+    function esTitulado() { return yo.rol() === "jugador" && !sinFide() && !!yo.elegido && R.TITULOS_GRATIS.includes(String(yo.elegido.titulo || "").toUpperCase()); }
+    yo.titulado = esTitulado;
+    const hospeda = () => !esTitulado() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
+    const comidas = () => (esTitulado() ? [] : [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value));
     const condicion = () => [...el.querySelectorAll("[data-condicion]:checked")].map((x) => x.value);
     const v = (n) => { const x = c(n); return x ? String(x.value || "").trim() : ""; };
     yo.v = v;
 
     /* ---------- la federación de quien no tiene ID FIDE ---------- */
     const selFed = q("[data-federacion]");
+    { const o = document.createElement("option"); o.value = ""; o.textContent = "Elige el país…"; selFed.append(o); }
     FEDERACIONES.forEach(([cod, nombre]) => { const o = document.createElement("option"); o.value = cod; o.textContent = nombre + " (" + cod + ")"; selFed.append(o); });
     selFed.value = "CRC";
+
+    /* ---------- de dónde viene: cómo se busca en FIDE ----------
+       De Costa Rica: casi nadie sabe su ID FIDE, así que se escribe el nombre
+       y el ID se busca y se carga solo (el buscador queda de respaldo si no
+       aparece). De otro país: primero el ID FIDE, y el nombre se llena con el
+       de FIDE y queda bloqueado, para que salga el nombre real del jugador. */
+    const deAfuera = () => el.querySelector('input[name="' + k + '-origen"]:checked').value === "fuera";
+    // La provincia y el cantón de quien viene de Costa Rica (TSE, js/division-territorial.js).
+    const DIV = window.DivisionTerritorial || [];
+    const lista = (sel, xs, primera) => {
+      const antes = sel.value; sel.textContent = "";
+      const o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; sel.append(o0);
+      xs.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; sel.append(o); });
+      if (xs.includes(antes)) sel.value = antes;
+    };
+    const cantones = () => { const pr = DIV.find((x) => x.provincia === c("provincia").value); lista(c("canton"), pr ? pr.cantones.map((x) => x.canton) : [], pr ? "Elige el cantón…" : "Primero la provincia"); };
+    lista(c("provincia"), DIV.map((x) => x.provincia), "Elige la provincia…");
+    cantones();
+    c("provincia").addEventListener("change", cantones);
+    c("acompanantes").addEventListener("input", () => pintarAcompanantes());
+    /* Los acompañantes que vienen con la persona: los datos de cada uno, para
+       el registro completo (y la exoneración los cubre también). */
+    const ACOMP = [["nombre", "Nombre completo", "text", 100], ["documento", "Cédula o pasaporte", "text", 30], ["nacimiento", "Fecha de nacimiento", "date", 10], ["parentesco", "Parentesco", "text", 40]];
+    function pintarAcompanantes() {
+      const caja = q("[data-acomp-lista]");
+      const n = hospeda() ? Math.max(0, Math.min(6, Number(v("acompanantes")) || 0)) : 0;
+      const ya = [...caja.querySelectorAll("[data-acomp]")];
+      ya.slice(n).forEach((x) => x.remove());
+      for (let i = ya.length; i < n; i++) {
+        const fs = document.createElement("fieldset");
+        fs.dataset.acomp = String(i);
+        fs.className = "rounded-xl border border-brand-200 dark:border-brand-700 p-3 grid sm:grid-cols-2 gap-3";
+        const lg = document.createElement("legend"); lg.className = "px-1 text-sm font-semibold"; lg.textContent = "Acompañante " + (i + 1);
+        fs.append(lg);
+        ACOMP.forEach(([campo, etiqueta, tipo, max]) => {
+          const d = document.createElement("div");
+          const l = document.createElement("label"); l.className = "block text-sm font-semibold mb-1"; l.htmlFor = k + "-ac" + i + "-" + campo;
+          l.textContent = etiqueta;
+          if (campo !== "parentesco") { const ast = document.createElement("span"); ast.className = "text-red-700 dark:text-red-400"; ast.textContent = " *"; l.append(ast); }
+          const inp = document.createElement("input"); inp.id = l.htmlFor; inp.type = tipo; inp.maxLength = max; inp.dataset.acompCampo = campo; inp.dataset.campo = "";
+          if (tipo === "date") { inp.min = "1920-01-01"; inp.max = "2026-12-31"; }
+          if (campo === "parentesco") inp.placeholder = "Madre, padre, hermano…";
+          d.append(l, inp); fs.append(d);
+        });
+        estilar(fs);
+        caja.append(fs);
+      }
+    }
+    yo.acompanantes = () => [...q("[data-acomp-lista]").querySelectorAll("[data-acomp]")].map((fs) => {
+      const o = {}; fs.querySelectorAll("[data-acomp-campo]").forEach((x) => { o[x.dataset.acompCampo] = x.value.trim(); }); return o;
+    });
+    yo.ponerProcedencia = (prov, cant) => { c("provincia").value = prov || ""; cantones(); c("canton").value = cant || ""; };
+    yo.deAfuera = deAfuera;
+    let sinResultadoPorNombre = false;
+    function bloquearNombre(si) {
+      [c("nombre"), c("apellidos")].forEach((x) => { x.readOnly = si; x.classList.toggle("metro-bloqueado", si); });
+      q("[data-nombre-bloqueado]").classList.toggle("hidden", !si);
+    }
+    el.querySelectorAll('input[name="' + k + '-origen"]').forEach((r) => r.addEventListener("change", () => {
+      const afuera = deAfuera();
+      yo.elegido = null; pintarElegido(); bloquearNombre(false);
+      buscarEl.value = ""; q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = "";
+      q("[data-caja-nombre-fide]").classList.add("hidden"); sinResultadoPorNombre = false;
+      if (afuera) {
+        ["nacionalidad", "pais_residencia"].forEach((n) => { if (/^costa rica$/i.test(v(n))) c(n).value = ""; });
+        if (c("documento_tipo").value === "cedula") c("documento_tipo").value = "pasaporte";
+        if (selFed.value === "CRC") selFed.value = "";
+      } else {
+        ["nacionalidad", "pais_residencia"].forEach((n) => { if (!v(n)) c(n).value = "Costa Rica"; });
+        if (!selFed.value) selFed.value = "CRC";
+      }
+      recalcular();
+    }));
 
     /* ---------- el ID FIDE ---------- */
     let espera = null, turno = 0;
     const buscarEl = q("[data-buscar]");
     buscarEl.addEventListener("input", () => {
       clearTimeout(espera);
+      if (deAfuera()) {
+        // De otro país: solo el número del ID FIDE.
+        const id = buscarEl.value.replace(/\D+/g, "").slice(0, 12);
+        if (buscarEl.value !== id) buscarEl.value = id;
+        if (id.length < 4) { q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = id ? "Escribe el número completo del ID FIDE." : ""; return; }
+        q("[data-estado-fide]").textContent = "Buscando el ID FIDE " + id + "…";
+        espera = setTimeout(() => buscar(id), 650);
+        return;
+      }
       const t = buscarEl.value.replace(/\s+/g, " ").trim();
       if (t.length < 3) { q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = t ? "Escribe al menos 3 letras." : ""; return; }
       q("[data-estado-fide]").textContent = "Buscando en la lista de FIDE…";
@@ -268,9 +382,17 @@
       if (desdeNombre) q("[data-caja-nombre-fide]").classList.remove("hidden");
       if (!r || !r.ok) { est.textContent = (r && r.error) || "No se pudo buscar en FIDE. Revisa la conexión e intenta de nuevo."; return; }
       if (desdeNombre && r.filas.length === 1) { elegir(r.filas[0], true); return; }
+      if (!desdeNombre && deAfuera()) {
+        // Un ID es una persona: la del número exacto, o nadie.
+        const exacto = r.filas.find((f) => String(f.fideId) === t);
+        if (exacto) { elegir(exacto, false); return; }
+        est.textContent = "No hay ningún jugador con el ID FIDE " + t + ". Revisa el número en ratings.fide.com; si no tiene ID FIDE, marca «No tiene ID FIDE».";
+        return;
+      }
+      if (desdeNombre && !r.filas.length) { sinResultadoPorNombre = true; recalcular(); }
       if (!r.filas.length) {
         est.textContent = desdeNombre
-          ? "No aparece en FIDE con ese nombre y apellidos. Si tiene ID FIDE, búsquelo arriba por el primer apellido o por el número; si no tiene, marque «No tiene ID FIDE»."
+          ? "No aparece en FIDE con ese nombre y apellidos. Si tiene ID FIDE, búsquelo en el buscador de arriba por el primer apellido o por el número; si no tiene, marque «No tiene ID FIDE»."
           : "No aparece con ese nombre. Prueba solo con el primer apellido, o con el ID FIDE. Si no tiene, marca «No tiene ID FIDE».";
         return;
       }
@@ -304,12 +426,17 @@
       // Si lo escribió la persona, su nombre se queda como lo escribió (FIDE
       // no lleva tildes: «Jimenez» por «Jiménez»). Desde el buscador, se llena.
       const [ap, no] = String(f.nombre).split(",").map((x) => (x || "").trim());
-      if (!desdeNombre) {
+      if (deAfuera()) {
+        // De otro país: el nombre es el de FIDE, y no se cambia.
+        c("nombre").value = no || ""; c("apellidos").value = ap || "";
+        bloquearNombre(true);
+      } else if (!desdeNombre) {
         if (no) { c("nombre").value = no; c("apellidos").value = ap; } else if (!c("apellidos").value) c("apellidos").value = ap;
       }
       const est = q("[data-estado-nombre]");
       est.textContent = "✓ ID FIDE " + f.fideId + " cargado: " + (f.titulo ? f.titulo + " " : "") + f.nombre + " · " + f.fed
         + (f.nacimiento ? " · nacido en " + f.nacimiento : "") + " · Elo estándar " + (f.estandar || "sin Elo") + ". Si no es esta persona, búsquela arriba.";
+      pintarTitulo();
       q("[data-caja-nombre-fide]").classList.remove("hidden");
       pintarElegido(); recalcular();
       if (!desdeNombre) q("[data-elegido]").focus();
@@ -321,7 +448,8 @@
     const buscarPorNombre = () => {
       clearTimeout(esperaNombre);
       const rol = yo.rol();
-      if (yo.elegido || sinFide() || (rol !== "jugador" && rol !== "entrenador")) return;
+      if (yo.elegido || sinFide() || deAfuera() || (rol !== "jugador" && rol !== "entrenador")) return;
+      sinResultadoPorNombre = false;
       const limpio = (x) => v(x).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z ,.'-]+/g, " ").replace(/\s+/g, " ").trim();
       const nom = limpio("nombre"), ape = limpio("apellidos");
       if (nom.length < 2 || ape.length < 2) { q("[data-caja-nombre-fide]").classList.add("hidden"); return; }
@@ -343,11 +471,16 @@
       const b = document.createElement("button"); b.type = "button";
       b.className = "mt-2 text-sm underline font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
       b.textContent = "No es esta persona: buscar otra vez";
-      b.addEventListener("click", () => { yo.elegido = null; pintarElegido(); q("[data-caja-nombre-fide]").classList.add("hidden"); recalcular(); buscarEl.value = ""; buscarEl.focus(); });
+      b.addEventListener("click", () => {
+        yo.elegido = null; pintarElegido(); q("[data-caja-nombre-fide]").classList.add("hidden");
+        if (deAfuera()) { bloquearNombre(false); c("nombre").value = ""; c("apellidos").value = ""; }
+        else sinResultadoPorNombre = true;
+        recalcular(); buscarEl.value = ""; buscarEl.focus();
+      });
       caja.append(t, d, b);
     }
     el.querySelectorAll('input[name="' + k + '-fide"]').forEach((r) => r.addEventListener("change", () => {
-      if (sinFide()) { yo.elegido = null; pintarElegido(); }
+      if (sinFide()) { yo.elegido = null; pintarElegido(); bloquearNombre(false); }
       recalcular();
     }));
 
@@ -392,10 +525,40 @@
       q("[data-fide-pregunta]").textContent = juega ? "ID FIDE" : "ID FIDE (si tiene)";
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
       q("[data-caja-fide]").classList.toggle("hidden", sinFide());
+      const afuera = deAfuera();
+      const tit = esTitulado();
+      q("[data-caja-procedencia]").classList.toggle("hidden", afuera);
+      q("[data-caja-viaje]").classList.toggle("hidden", !afuera && !tit);
+      // El titulado de Costa Rica: solo los días en el Estadio Nacional, sin vuelo ni traslado.
+      const titCR = tit && !afuera;
+      q("[data-viaje-vuelo]").classList.toggle("hidden", titCR);
+      q("[data-viaje-traslado]").classList.toggle("hidden", titCR);
+      q("[data-lbl-llegada]").textContent = titCR ? "Día de llegada al Estadio Nacional" : "Día de llegada";
+      q("[data-lbl-salida]").textContent = titCR ? "Día de salida del Estadio Nacional" : "Día de salida";
+      q("[data-caja-hosp-alim]").classList.toggle("hidden", tit);
+      q("[data-caja-titulado]").classList.toggle("hidden", !tit);
+      q("[data-caja-docs]").classList.toggle("hidden", !(tit && afuera));
+      el.querySelectorAll("[data-ast-viaje]").forEach((x) => x.classList.toggle("hidden", !tit));
+      if (tit) q("[data-titulado-texto]").textContent = "Como " + yo.elegido.titulo + ", no paga la inscripción y la organización le da el hospedaje y la alimentación"
+        + (afuera ? " según las fechas de su vuelo. Solo necesitamos su viaje: los días de llegada y de salida como en el tiquete, el número de vuelo, la foto del tiquete aéreo y la del pasaporte, y si necesita transporte del aeropuerto al Estadio Nacional."
+          : " según los días en que esté en el Estadio Nacional. Solo necesitamos el día en que llega y el día en que sale.");
+      q("[data-titulo-viaje]").textContent = tit ? (afuera ? "Su viaje" : "De dónde viene y sus días en el torneo")
+        : afuera ? "Viaje, hospedaje y alimentación" : "De dónde viene, hospedaje y alimentación";
+      q("[data-origen-ayuda]").textContent = sinFide() ? "" : afuera
+        ? "Escribe primero el ID FIDE (el número): el nombre se llena solo, tal como aparece en FIDE, y no se puede cambiar."
+        : "Escribe el nombre y los apellidos abajo, como en la cédula: el ID FIDE se busca y se carga solo.";
+      q("[data-origen-ayuda]").classList.toggle("hidden", sinFide());
+      // De Costa Rica, el buscador es solo el respaldo: aparece si por el nombre no se encontró.
+      q("[data-caja-buscar]").classList.toggle("hidden", !afuera && !sinResultadoPorNombre);
+      q("[data-buscar-etiqueta]").textContent = afuera ? "ID FIDE (el número)" : "¿No aparece? Búsquelo por el primer apellido o por el ID FIDE";
+      buscarEl.inputMode = afuera ? "numeric" : "text";
+      buscarEl.placeholder = afuera ? "Ejemplo: 3500000" : "Ejemplo: Mora, Ana  —  o  6400000";
+      q("[data-buscar-ayuda]").textContent = afuera ? "Está en el perfil del jugador en ratings.fide.com." : "Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.";
       q("[data-sin-fide]").classList.toggle("hidden", !(sinFide() && juega));
       q("[data-fed-cr]").classList.toggle("hidden", selFed.value !== "CRC");
       q("[data-fed-fuera]").classList.toggle("hidden", selFed.value === "CRC");
       q("[data-bloque-torneos]").classList.toggle("hidden", !juega);
+      q("[data-caja-codigo]").classList.toggle("hidden", !juega || esTitulado());
       const contactoOpcional = esGrupo() && !yo.esDelegado;
       el.querySelectorAll("[data-ast-contacto]").forEach((x) => x.classList.toggle("hidden", contactoOpcional));
       q("[data-nota-contacto]").classList.toggle("hidden", !contactoOpcional);
@@ -410,6 +573,7 @@
         if (!plazo.clasicos) q("[data-blitz]").checked = true;
       }
       q("[data-caja-hosp]").classList.toggle("hidden", !hospeda());
+      pintarAcompanantes();
       q("[data-caja-comidas]").classList.toggle("hidden", !comidas().length);
       q("[data-aviso-condicion]").classList.toggle("hidden", !condicion().some((x) => x === "sordo" || x === "ciego"));
       q("[data-texto-publicidad]").textContent = esGrupo() && !yo.esDelegado
@@ -466,11 +630,49 @@
       estado.textContent = "Elegida: " + a.name;
     });
 
+    /* ---------- el código de descuento ---------- */
+    yo.codigo = null;   // { codigo, porcentaje } ya comprobado con la base
+    const entradaCodigo = q("[data-codigo-entrada]"), estadoCodigo = q("[data-codigo-estado]");
+    function pintarCodigo() {
+      estadoCodigo.textContent = "";
+      if (!yo.codigo) return;
+      const t = document.createElement("span"); t.className = "font-semibold";
+      t.textContent = "✓ Código " + yo.codigo.codigo + ": " + (yo.codigo.porcentaje === 100 ? "la inscripción no tiene costo." : yo.codigo.porcentaje + " % de descuento.");
+      const b = document.createElement("button"); b.type = "button"; b.className = "ml-2 underline text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"; b.textContent = "Quitar el código";
+      b.addEventListener("click", () => { yo.codigo = null; entradaCodigo.value = ""; entradaCodigo.disabled = false; pintarCodigo(); recalcular(); entradaCodigo.focus(); });
+      estadoCodigo.append(t, b);
+    }
+    q("[data-codigo-aplicar]").addEventListener("click", async () => {
+      const cod = entradaCodigo.value.trim().toUpperCase();
+      if (!/^MET-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cod)) { estadoCodigo.textContent = "El código tiene la forma MET-XXXX-XXXX."; return; }
+      if (personas.some((p) => p !== yo && p.codigo && p.codigo.codigo === cod)) { estadoCodigo.textContent = "Ese código ya está en otra persona de esta inscripción: vale una sola vez."; return; }
+      estadoCodigo.textContent = "Revisando el código…";
+      const { data, error } = await window.sb.rpc("metropolitano_codigo_ver", { p_codigo: cod });
+      if (error || !data || !data.ok) { estadoCodigo.textContent = (data && data.error) || "No se pudo revisar el código. Intenta de nuevo."; return; }
+      yo.codigo = { codigo: data.codigo, porcentaje: data.porcentaje };
+      entradaCodigo.value = data.codigo; entradaCodigo.disabled = true;
+      pintarCodigo(); recalcular();
+    });
+
+    /* ---------- el tiquete y el pasaporte (titulados de afuera) ---------- */
+    yo.docs = { tiquete: null, pasaporte: null };
+    el.querySelectorAll("[data-doc]").forEach((inp) => inp.addEventListener("change", () => {
+      const a = inp.files[0], cual = inp.dataset.doc;
+      inp.value = "";
+      if (!a) return;
+      const est = q('[data-doc-estado="' + cual + '"]');
+      if (!/^image\//.test(a.type) && !/\.pdf$/i.test(a.name)) { est.textContent = "«" + a.name + "» no sirve: sube una foto o un PDF."; return; }
+      yo.docs[cual] = { archivo: a, ruta: null };
+      est.textContent = "Elegido: " + a.name;
+    }));
+
     /* ---------- copiar lo del delegado a una persona nueva ---------- */
     yo.copiarDe = (otra) => {
       ["nacionalidad", "pais_residencia", "club", "llegada", "salida", "vuelo", "hospedaje_desde", "hospedaje_hasta", "habitacion", "comidas_desde", "comidas_hasta", "documento_tipo"]
         .forEach((n) => { if (c(n) && otra.el.querySelector('[data-c="' + n + '"]')) c(n).value = otra.el.querySelector('[data-c="' + n + '"]').value; });
       c("traslado").checked = otra.el.querySelector('[data-c="traslado"]').checked;
+      el.querySelector('input[name="' + k + '-origen"][value="' + (otra.deAfuera() ? "fuera" : "cr") + '"]').checked = true;
+      yo.ponerProcedencia(otra.v("provincia"), otra.v("canton"));
       el.querySelector('input[name="' + k + '-hosp"][value="' + (otra.hospeda() ? "si" : "no") + '"]').checked = true;
       const suyas = otra.comidas();
       el.querySelectorAll("[data-comida]").forEach((x) => { x.checked = suyas.includes(x.value); });
@@ -478,7 +680,7 @@
       c("emer_nombre").value = [otra.v("nombre"), otra.v("apellidos")].filter(Boolean).join(" ");
       c("emer_parentesco").value = "Delegado";
       c("emer_telefono").value = otra.v("telefono");
-      if (c("habitacion").value === "individual") c("habitacion").value = "compartida";
+      if (c("habitacion").value === "organizacion") c("habitacion").value = "compartida";
     };
     yo.hospeda = hospeda; yo.comidas = comidas;
 
@@ -489,23 +691,42 @@
       const errores = [];
       const contactoObligatorio = !esGrupo() || yo.esDelegado;
       const falta = (campo, texto) => errores.push([campo, texto]);
-      if ((rol === "jugador" || rol === "entrenador") && !sinFide() && !f) falta(buscarEl, "Busca y elige el nombre en la lista de FIDE, o marca «No tiene ID FIDE».");
+      if ((rol === "jugador" || rol === "entrenador") && !sinFide() && !f) falta(deAfuera() ? buscarEl : c("apellidos"), deAfuera()
+        ? "Escribe el ID FIDE para cargar el nombre, o marca «No tiene ID FIDE»."
+        : "Escribe el nombre y los apellidos para cargar el ID FIDE y elige a la persona, o marca «No tiene ID FIDE».");
+      if (rol === "jugador" && sinFide() && !selFed.value) falta(selFed, "Elige el país de su federación.");
       if (!v("nombre") || !v("apellidos")) falta(c(!v("nombre") ? "nombre" : "apellidos"), "Falta el nombre completo.");
       if (!nac) falta(c("nacimiento"), "Falta la fecha de nacimiento.");
       if (!v("sexo")) falta(c("sexo"), "Falta el sexo.");
       if (v("nacionalidad").length < 2 || v("pais_residencia").length < 2) falta(c("nacionalidad"), "Falta la nacionalidad o el país donde vive.");
       if (v("documento").length < 4) falta(c("documento"), "Falta el número de documento.");
+      if (!deAfuera() && (!v("provincia") || !v("canton"))) falta(c(!v("provincia") ? "provincia" : "canton"), "Falta la provincia o el cantón donde vive.");
       if ((contactoObligatorio || v("correo")) && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v("correo"))) falta(c("correo"), "Revisa el correo electrónico.");
       if ((contactoObligatorio || v("telefono")) && v("telefono").replace(/\D/g, "").length < 7) falta(c("telefono"), "Revisa el teléfono.");
       if (e !== null && e < 18 && (!v("resp_nombre") || !v("resp_telefono"))) falta(c("resp_nombre"), "Es menor de edad: faltan el nombre y el teléfono de la persona responsable.");
       if (!v("emer_nombre") || !v("emer_telefono")) falta(c("emer_nombre"), "Falta el contacto para una emergencia.");
       if (rol === "jugador" && !yo.torneos().length) falta(q("[data-blitz]"), "Elige al menos un torneo.");
       if (hospeda() && (!v("hospedaje_desde") || !v("hospedaje_hasta") || v("hospedaje_desde") >= v("hospedaje_hasta"))) falta(c("hospedaje_desde"), "Revisa las fechas del hospedaje.");
+      if (hospeda() && !c("acepta_compartir").checked) falta(c("acepta_compartir"), "Falta aceptar que la habitación es compartida.");
+      if (hospeda()) yo.acompanantes().forEach((a, i) => {
+        if (a.nombre.length < 5 || a.documento.length < 4 || !/^\d{4}-\d{2}-\d{2}$/.test(a.nacimiento || "")) {
+          falta(q('[data-acomp="' + i + '"] input'), "Faltan los datos del acompañante " + (i + 1) + ": nombre completo, documento y fecha de nacimiento.");
+        }
+      });
       if (comidas().length && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
+      if (esTitulado() && !deAfuera() && (!v("llegada") || !v("salida") || v("salida") <= v("llegada"))) {
+        falta(c("llegada"), "Faltan el día en que llega al Estadio Nacional y el día en que sale (después del de llegada).");
+      }
+      if (esTitulado() && deAfuera()) {
+        if (!v("llegada") || !v("salida") || v("salida") <= v("llegada") || v("vuelo").length < 3) falta(c("llegada"), "Faltan los datos del vuelo: el día de llegada, el de salida y el número de vuelo.");
+        if (!yo.docs.tiquete) falta(q('[data-doc="tiquete"]'), "Falta la foto del tiquete aéreo.");
+        if (!yo.docs.pasaporte) falta(q('[data-doc="pasaporte"]'), "Falta la foto del pasaporte.");
+        if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v("correo")) || v("telefono").replace(/\D/g, "").length < 7) falta(c("correo"), "Faltan su correo y su teléfono, para coordinar el viaje.");
+      }
       const datos = {
         rol, es_delegado: yo.esDelegado,
-        sin_fide: !f, fide_id: f ? f.fideId : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
+        sin_fide: !f, fide_id: f ? f.fideId : null, nombre_fide: f ? f.nombre : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
         elo_estandar: f ? f.estandar : null, elo_rapido: f ? f.rapido : null, elo_blitz: f ? f.blitz : null,
         nombre: v("nombre"), apellidos: v("apellidos"), sexo: v("sexo"), nacimiento: nac,
         nacionalidad: v("nacionalidad"), pais_residencia: v("pais_residencia"),
@@ -513,14 +734,24 @@
         torneos: yo.torneos(),
         responsable: e !== null && e < 18 ? { nombre: v("resp_nombre"), parentesco: v("resp_parentesco"), documento: v("resp_documento"), telefono: v("resp_telefono") } : null,
         emergencia: { nombre: v("emer_nombre"), parentesco: v("emer_parentesco"), telefono: v("emer_telefono") },
-        viaje: (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
+        // El viaje, solo de quien viene de otro país; de Costa Rica, la provincia y el cantón
+        // (y el titulado de Costa Rica, sus días en el Estadio Nacional).
+        viaje: esTitulado() && !deAfuera() ? { llegada: v("llegada"), salida: v("salida"), vuelo: "", traslado: false }
+          : deAfuera() && (v("llegada") || v("salida") || v("vuelo") || c("traslado").checked) ? { llegada: v("llegada"), salida: v("salida"), vuelo: v("vuelo"), traslado: c("traslado").checked } : null,
+        provincia: deAfuera() ? null : v("provincia"), canton: deAfuera() ? null : v("canton"),
         hospedaje: hospeda(), hospedaje_desde: hospeda() ? v("hospedaje_desde") : null, hospedaje_hasta: hospeda() ? v("hospedaje_hasta") : null,
         habitacion: hospeda() ? v("habitacion") : null, acompanantes: hospeda() ? Number(v("acompanantes")) || 0 : 0,
+        acepta_compartir: hospeda() && c("acepta_compartir").checked, acompanantes_detalle: hospeda() ? yo.acompanantes() : [],
+        origen: deAfuera() ? "fuera" : "cr",
         comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
         dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
         acepta_publicidad: c("acepta_publicidad").checked,
       };
-      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura() });
+      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura(),
+        descuento: yo.codigo && !esTitulado() ? yo.codigo.porcentaje : 0 });
+      const conCodigo = !!yo.codigo && rol === "jugador" && datos.torneos.length > 0 && !esTitulado();
+      datos.codigo = conCodigo ? yo.codigo.codigo : null;
+      datos.codigo_pct = conCodigo ? yo.codigo.porcentaje : null;
       return { errores, datos, precio };
     };
 
@@ -566,7 +797,26 @@
 
   /* ===================== El total y el pago ===================== */
   let metodo = null;
+  /* «Seguro y responsabilidad»: a los nacionales se les pide la póliza que
+     cubre el evento; el seguro de viaje, solo si en la inscripción viene
+     alguien de otro país. La base guarda cuál de los dos textos se aceptó
+     (exoneracion_version). */
+  function pintarSeguro() {
+    const caja = $("acepta-seguro-texto");
+    if (!caja) return;
+    const afuera = personas.some((p) => p.deAfuera());
+    const fuerte = document.createElement("strong"); fuerte.textContent = "Seguro y responsabilidad.";
+    const ast = document.createElement("span"); ast.className = "text-red-700 dark:text-red-400"; ast.textContent = "*";
+    caja.textContent = "";
+    caja.append(fuerte, " Declaro que cada persona de esta inscripción, y cada acompañante que se anota con ella, cuenta con una póliza de seguro vigente que la cubre durante todo el evento —de gastos médicos y de accidentes—"
+      + (afuera ? " y, quien viene de otro país, además con un seguro de viaje que la cubre durante toda su estadía en Costa Rica," : "")
+      + " y que el costo de esa póliza no corre por cuenta de la organización. Cada persona participa por su propia voluntad y asume los riesgos propios de la competencia, "
+      + (afuera ? "del viaje, del hospedaje y de la estadía" : "de los traslados y del hospedaje")
+      + ". Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, también en el hospedaje, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización. ", ast);
+  }
+
   function totales() {
+    pintarSeguro();
     if (!personas.length) return null;
     const lineas = [], avisos = new Set();
     let usd = 0, iva = 0, gratisTodo = true;
@@ -711,7 +961,7 @@
     if (t.usd > 0 && !metodo) errores.push([$("metodos"), "Elige cómo pagaste."]);
     if (t.usd > 0 && !comprobante) errores.push([$("comprobante"), "Falta el comprobante de pago."]);
     if (t.usd > 0 && quiereFactura()) errores.push(...erroresFactura());
-    if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las tres casillas del final."]);
+    if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-seguro").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las cuatro casillas del final."]);
     if (errores.length) {
       $("msg").textContent = errores[0][1] + (errores.length > 1 ? " (y " + (errores.length - 1) + " cosa" + (errores.length > 2 ? "s" : "") + " más)" : "");
       const el = errores[0][0];
@@ -730,6 +980,7 @@
     if (d.rol === "jugador") {
       if (!d.sin_fide) filas.push(["Elo FIDE", "Estándar " + (d.elo_estandar || "sin Elo") + " · Rápido " + (d.elo_rapido || "—") + " · Blitz " + (d.elo_blitz || "—")]);
       filas.push(["Torneos", d.torneos.map((t) => R.TORNEOS[t].nombre + " (" + R.TORNEOS[t].ritmo + ")").join(" y ")]);
+      if (d.codigo) filas.push(["Código de descuento", d.codigo + (d.codigo_pct === 100 ? ": inscripción sin costo" : ": " + d.codigo_pct + " % de descuento")]);
     }
     filas.push(
       ["Nacimiento", fechaLarga(d.nacimiento) + " (" + R.edad(d.nacimiento, R.INICIO) + " años al 26 de diciembre)"],
@@ -738,12 +989,16 @@
       ["Contacto", [d.correo, d.telefono].filter(Boolean).join(" · ") || "Por medio del delegado"],
     );
     if (d.responsable) filas.push(["Responsable", d.responsable.nombre + " · " + d.responsable.telefono]);
-    filas.push(
-      ["Emergencias", d.emergencia.nombre + (d.emergencia.parentesco ? " (" + d.emergencia.parentesco + ")" : "") + " · " + d.emergencia.telefono],
-      ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", habitación " + d.habitacion + (d.acompanantes ? ", con " + d.acompanantes + " acompañante" + (d.acompanantes > 1 ? "s" : "") : "") : "No requiere"],
+    filas.push(["Emergencias", d.emergencia.nombre + (d.emergencia.parentesco ? " (" + d.emergencia.parentesco + ")" : "") + " · " + d.emergencia.telefono]);
+    if (p.titulado()) filas.push(["Hospedaje y alimentación", "Los da la organización" + (d.viaje && d.viaje.llegada ? ", del " + fechaLarga(d.viaje.llegada) + " al " + fechaLarga(d.viaje.salida) + (p.deAfuera() ? ", según su vuelo" : "") : "")]);
+    else filas.push(
+      ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", en habitación compartida "
+        + (d.habitacion === "compartida" ? "con su familia, su delegación o sus acompañantes" : "con quien asigne la organización")
+        + (d.acompanantes_detalle.length ? ". Acompañantes: " + d.acompanantes_detalle.map((a) => a.nombre + (a.parentesco ? " (" + a.parentesco + ")" : "")).join(", ") : "") : "No requiere"],
       ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
     );
-    if (d.viaje) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con traslado del aeropuerto"].filter(Boolean).join(", ")]);
+    if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
+    if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
     const dl = document.createElement("dl"); dl.className = "grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm";
@@ -849,7 +1104,13 @@
       const lista = [];
       for (const [i, x] of envio.personas.entries()) {
         msg.textContent = "Subiendo la foto " + (envio.personas.length > 1 ? (i + 1) + " de " + envio.personas.length : "") + "…";
-        lista.push(Object.assign({}, x.datos, { foto: await subir(x.p.foto, "foto") }));
+        const extra = { foto: await subir(x.p.foto, "foto") };
+        if (x.p.titulado() && x.p.deAfuera()) {
+          msg.textContent = "Subiendo el tiquete y el pasaporte…";
+          extra.tiquete = await subir(x.p.docs.tiquete, "documento");
+          extra.pasaporte = await subir(x.p.docs.pasaporte, "documento");
+        }
+        lista.push(Object.assign({}, x.datos, extra));
       }
       let rutaComp = null;
       if (envio.total.usd > 0) { msg.textContent = "Subiendo el comprobante…"; rutaComp = await subir(comprobante, "comprobante"); }
@@ -859,7 +1120,7 @@
         personas: lista, pago_metodo: envio.total.usd > 0 ? metodo : null, comprobante: rutaComp,
         pago_referencia: $("referencia").value.trim(), pago_fecha: $("pago_fecha").value || null,
         factura: quiereFactura() && envio.total.usd > 0 ? datosFactura() : null,
-        acepta_reglamento: $("acepta-reglamento").checked, acepta_imagen: $("acepta-imagen").checked, acepta_datos: $("acepta-datos").checked,
+        acepta_reglamento: $("acepta-reglamento").checked, acepta_imagen: $("acepta-imagen").checked, acepta_seguro: $("acepta-seguro").checked, acepta_datos: $("acepta-datos").checked,
         validado: true,
       };
       const { data, error } = await window.sb.rpc("metropolitano_inscribir", { p });
