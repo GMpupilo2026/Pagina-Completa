@@ -420,6 +420,30 @@ const FILAS_FIDE = [
     await i2.pg.waitForFunction(() => !document.querySelector("dialog.visor-doc").open && document.getElementById("resultados").open);
     cierto("«Cerrar» vuelve a la lista de categorías", true);
     cierto("las partidas de Lichess también se abren encima", await i2.pg.getAttribute("#ficha-partidas a", "data-visor") === "Partidas en vivo");
+    // La tarjeta de «Torneos», con el diseño de las bases, y lo que abre.
+    const tv = await ctx.newPage();
+    const salaMetro = { clave: "metropolitano-2026", nombre: "XLVII Torneo Internacional Metropolitano 2026", tipo: "enlaces", visible: true, orden: 1, descripcion: "Del 26 al 30 de diciembre.",
+      enlaces: [{ url: "https://ajedrez-integral.com/metropolitano-2026.html", texto: "Toda la información" }, { url: "https://ajedrez-integral.com/inscripcion-metropolitano.html", texto: "Inscripción" },
+        { url: "https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf", texto: "Bases del torneo" }] };
+    await tv.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify([salaMetro]) }));
+    await tv.goto(BASE + "/torneos-en-vivo.html");
+    await tv.waitForSelector('li[data-sala="metropolitano-2026"]');
+    const fichaSala = await tv.evaluate(() => {
+      const li = document.querySelector('li[data-sala="metropolitano-2026"]');
+      const img = li.querySelector(".metro-sala-imagen");
+      return { tema: li.classList.contains("metro-sala"), hojas: getComputedStyle(li, "::before").backgroundImage.includes("hojas-arriba"),
+        logo: !!img && img.complete && img.naturalWidth > 0 && img.checkVisibility(), enlaces: [...li.querySelectorAll("a")].map((a) => a.getAttribute("href")),
+        afuera: li.querySelectorAll("a[target]").length };
+    });
+    igual("la tarjeta de «Torneos» lleva el diseño del Metropolitano y no saca a nadie del sitio", fichaSala,
+      { tema: true, hojas: true, logo: true, enlaces: ["/metropolitano-2026.html", "/inscripcion-metropolitano.html", "/metropolitano-2026.html#bases"], afuera: 0 });
+    await tv.close();
+    const pb = await ctx.newPage();
+    await pb.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
+    await pb.goto(BASE + "/metropolitano-2026.html#bases");
+    await pb.waitForFunction(() => { const d = document.querySelector("dialog.visor-doc"); return d && d.open && /Bases/.test(d.querySelector("h2").textContent); }, null, { timeout: 15000 });
+    cierto("y su «Bases del torneo» abre las bases encima de la página del torneo", true);
+    await pb.close();
     // La inscripción: la privacidad y las bases encima, sin perder lo escrito.
     const ins = await ctx.newPage();
     await ins.goto(BASE + "/inscripcion-metropolitano.html");

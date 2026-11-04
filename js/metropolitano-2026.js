@@ -337,6 +337,14 @@
       const sala = await window.SalasTorneo.porClave(CLAVE_SALA);
       if (sala && Array.isArray(sala.enlaces)) { enlaces = sala.enlaces.filter((e) => e && typeof e.url === "string"); pintarEnVivo(); }
     } catch (e) { /* sin la base, quedan en «Pronto» */ }
-    if (location.hash) abrir(location.hash.slice(1));
+    if (location.hash) abrirPorDireccion(location.hash.slice(1));
   })();
+
+  // Desde la tarjeta de «Torneos» (js/salas-torneo.js, PORTADAS) se llega con
+  // #bases o #resultados: se abren encima, como con su ficha.
+  function abrirPorDireccion(id) {
+    if (abrir(id)) return;
+    if (id === "bases") { const a = document.querySelector("#fichas a[data-visor][href$='.pdf']"); if (a) a.click(); }
+    else if (id === "resultados") { const a = document.querySelector("#ficha-resultados a"); if (a) a.click(); }
+  }
 })();

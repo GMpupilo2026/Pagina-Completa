@@ -2978,3 +2978,24 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 /* Lo que va a existir pero todavía no: la ficha con su candado y «Pendiente». */
 .metro-ficha-pendiente { align-self: flex-start; display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .6rem; border-radius: 999px; background: #1d134d; color: #fff; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .dark .metro-ficha-pendiente { background: #fff; color: #1d134d; }
+
+/* La ficha del Metropolitano en Torneos (torneos-en-vivo.html y la vista
+ * previa de admin.html#torneos), con el diseño de las bases: las hojas arriba
+ * y abajo, el logo con el Estadio Nacional y el azul de su letra. La arma
+ * js/salas-torneo.js (PORTADAS). Siempre blanca, también en el modo oscuro,
+ * como las bases. Contrastes: #1d134d sobre blanco 16,4; blanco sobre
+ * #1d134d 16,4. */
+.metro-sala { position: relative; overflow: hidden; background: #fff; color: #1d134d; padding-top: 4.75rem; padding-bottom: 4rem; }
+.metro-sala::before, .metro-sala::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; background-repeat: no-repeat; background-size: cover; }
+.metro-sala::before { top: 0; height: 4rem; background-image: url("/img/metropolitano-2026/hojas-arriba.jpg"); background-position: center top; }
+.metro-sala::after { bottom: 0; height: 3.25rem; background-image: url("/img/metropolitano-2026/hojas-abajo.jpg"); background-position: center bottom; }
+.metro-sala-imagen { display: block; width: min(13rem, 80%); height: auto; margin: 0 auto 1rem; pointer-events: none; }
+.metro-sala-marca { position: absolute; left: 50%; top: 58%; width: min(55%, 14rem); height: auto; transform: translate(-50%, -50%); opacity: 0.08; pointer-events: none; z-index: 0; }
+.metro-sala > :not(.metro-sala-marca) { position: relative; z-index: 1; }
+.metro-sala h2, .dark .metro-sala h2 { color: #1d134d; text-align: center; }
+.metro-sala h2 + p, .dark .metro-sala h2 + p { color: #1d134d; text-align: center; }
+.metro-sala a.metro-sala-boton { background: #fff; color: #1d134d; font-weight: 700; border: 2px solid #1d134d; }
+.metro-sala a.metro-sala-boton:hover { background: #f3f2fa; }
+.metro-sala a.metro-sala-principal { background: #1d134d; color: #fff; }
+.metro-sala a.metro-sala-principal:hover { background: #2c2170; }
+.metro-sala a.metro-sala-boton:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }

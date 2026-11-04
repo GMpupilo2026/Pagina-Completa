@@ -1564,6 +1564,18 @@ Centroamericano, y lo que todavía no existe a la vista pero bloqueado.
   francés y falla si queda un solo texto en español fuera de lo que se pinta
   con datos (se rompió a propósito quitando una traducción: salta).
 
+#### La tarjeta en «Torneos», con el diseño de las bases
+
+Pedido del dueño: que la tarjeta del Metropolitano en `torneos-en-vivo.html`
+(y en la vista previa de `admin.html#torneos`) lleve el diseño del torneo,
+como la del Centroamericano. Es una portada más en `PORTADAS` de
+`js/salas-torneo.js` (`metro-sala` en `css/styles.css`, que cargan las dos
+páginas): las hojas de las bases arriba y abajo, el logo con el Estadio
+Nacional, el azul de su letra y la marca de agua suave. Siempre blanca, también
+en el modo oscuro, como las bases. Sus botones no sacan a nadie del sitio: las
+bases llevan a `metropolitano-2026.html#bases` y chess-results a
+`#resultados`, que la página abre encima.
+
 #### Los documentos se abren encima
 
 Pedido del dueño: **ningún jugador sale nunca de la página para leer un
