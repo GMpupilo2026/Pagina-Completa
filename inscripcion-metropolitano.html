@@ -135,11 +135,27 @@
                             <ul id="comprobante-lista" class="flex flex-wrap gap-3"></ul>
                             <p id="comprobante-estado" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
                         </div>
-                        <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="quiere-factura"> Necesito factura electrónica a otro nombre (empresa, club, colegio)</label>
-                        <div id="caja-factura" class="hidden grid sm:grid-cols-3 gap-4">
-                            <div><label for="fac_nombre" class="block text-sm font-semibold mb-1">A nombre de</label><input id="fac_nombre" data-campo maxlength="100"></div>
-                            <div><label for="fac_id" class="block text-sm font-semibold mb-1">Cédula física o jurídica</label><input id="fac_id" data-campo maxlength="30"></div>
-                            <div><label for="fac_correo" class="block text-sm font-semibold mb-1">Correo para la factura</label><input id="fac_correo" data-campo type="email" maxlength="120"></div>
+                        <div id="caja-factura-todo" class="space-y-4">
+                        <label class="flex items-start gap-2 text-sm"><input type="checkbox" id="quiere-factura" class="mt-1"> <span><strong>Necesito factura electrónica</strong> (de Hacienda, Costa Rica). <span class="block text-brand-600 dark:text-brand-300">Con factura se suma el 13 % de IVA al total: lo asume quien se inscribe.</span></span></label>
+                        <fieldset id="caja-factura" class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-4">
+                            <legend class="px-1 font-semibold">Datos para la factura electrónica</legend>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div><label for="fac_tipo" class="block text-sm font-semibold mb-1">Tipo de identificación <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="fac_tipo" data-campo></select></div>
+                                <div><label for="fac_id" class="block text-sm font-semibold mb-1">Número de identificación <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="fac_id" data-campo maxlength="20" inputmode="numeric" aria-describedby="fac_id_ayuda"><p id="fac_id_ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1"></p></div>
+                                <div><label for="fac_nombre" class="block text-sm font-semibold mb-1">Nombre o razón social <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="fac_nombre" data-campo maxlength="100"></div>
+                                <div><label for="fac_comercial" class="block text-sm font-semibold mb-1">Nombre comercial</label><input id="fac_comercial" data-campo maxlength="100"></div>
+                                <div><label for="fac_correo" class="block text-sm font-semibold mb-1">Correo para recibir la factura <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="fac_correo" data-campo type="email" maxlength="120"></div>
+                                <div><label for="fac_copia" class="block text-sm font-semibold mb-1">Correo de copia</label><input id="fac_copia" data-campo type="email" maxlength="120"></div>
+                                <div><label for="fac_tel" class="block text-sm font-semibold mb-1">Teléfono</label><input id="fac_tel" data-campo type="tel" maxlength="20"></div>
+                                <div><label for="fac_actividad" class="block text-sm font-semibold mb-1">Código de actividad económica</label><input id="fac_actividad" data-campo maxlength="10" inputmode="decimal" aria-describedby="fac_act_ayuda"><p id="fac_act_ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si tiene, el que aparece en su inscripción en Hacienda (ATV).</p></div>
+                            </div>
+                            <div id="fac_direccion" class="grid sm:grid-cols-3 gap-4">
+                                <div><label for="fac_provincia" class="block text-sm font-semibold mb-1">Provincia <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="fac_provincia" data-campo></select></div>
+                                <div><label for="fac_canton" class="block text-sm font-semibold mb-1">Cantón <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="fac_canton" data-campo></select></div>
+                                <div><label for="fac_distrito" class="block text-sm font-semibold mb-1">Distrito <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="fac_distrito" data-campo></select></div>
+                                <div class="sm:col-span-3"><label for="fac_senas" class="block text-sm font-semibold mb-1">Otras señas <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="fac_senas" data-campo maxlength="160" placeholder="200 m norte de la iglesia, casa esquinera"></div>
+                            </div>
+                        </fieldset>
                         </div>
                     </div>
                 </fieldset>
@@ -221,6 +237,7 @@
     <script src="js/gafetes-banderas.js"></script>
     <script src="js/gafetes-dibujo.js"></script>
     <script src="js/gafetes-pdf.js"></script>
+    <script src="js/division-territorial.js"></script>
     <script src="js/metropolitano-reglas.js"></script>
     <script src="js/metropolitano-gafete.js"></script>
     <script src="js/inscripcion-metropolitano.js"></script>

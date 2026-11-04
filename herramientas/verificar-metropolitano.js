@@ -56,6 +56,9 @@ igual("senior: 10 % en el clásico, no en el blitz (PayPal)", pr({ torneos: ["B"
 igual("senior por año: nacido el 31/12/1961 ya cuenta", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1961-12-31" }).usd, 40.5);
 igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1962-01-01" }).usd, 45);
 igual("GM: gratis", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", titulo: "GM" }).usd, 0);
+igual("con factura, el 13 % de IVA lo paga quien se inscribe", [pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).iva, pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).usd], [11.31, 98.31]);
+igual("sin costo, la factura no suma IVA", pr({ torneos: ["A"], metodo: "dolares", titulo: "GM", factura: true }).usd, 0);
+cierto("la cédula física son 9 dígitos y la jurídica 10", R.FACTURA_TIPOS.fisica.patron.test("105430678") && !R.FACTURA_TIPOS.fisica.patron.test("1-0543-0678") && R.FACTURA_TIPOS.juridica.patron.test("3002291916"));
 igual("FM paga", pr({ torneos: ["A"], metodo: "dolares", titulo: "FM" }).usd, 75);
 igual("plazos el 21/12: clásicos cerrados, blitz abierto", R.abierto("2026-12-21"), { clasicos: false, blitz: true, recargo: false });
 igual("plazos el 27/12: todo cerrado", R.abierto("2026-12-27").blitz, false);
@@ -92,6 +95,10 @@ if (ultimaPersona && ultimaInscribir) {
   tiene("los mismos roles", new RegExp(`v_rol not in \\(${Object.keys(R.ROLES).map((t) => `'${t}'`).join(", ")}\\)`));
   tiene("solo el jugador juega (y paga)", /if v_rol = 'jugador' then[\s\S]*?else\s+v_torneos := '\{\}';/);
   tiene(`un grupo lleva hasta ${R.MAX_GRUPO}`, new RegExp(`n > ${R.MAX_GRUPO}`), inscribir);
+  tiene(`el IVA de la factura es del ${R.IVA * 100} %, persona por persona`, new RegExp(`round\\(v_base \\* ${R.IVA}, 2\\)`), inscribir);
+  const ultimaFactura = definida(/create or replace function interno\.metropolitano_factura/);
+  const sqlF = ultimaFactura ? fs.readFileSync(path.join(MIG, ultimaFactura), "utf8") : "";
+  cierto("la base conoce los mismos tipos de identificación de la factura", Object.keys(R.FACTURA_TIPOS).every((t) => sqlF.includes(`v_tipo = '${t}'`)), ultimaFactura);
   cierto("llama al freno antes del insert",
     /frenar_envio_publico\('formulario', 'metropolitano-2026'/.test(inscribir) && inscribir.indexOf("frenar_envio_publico") < inscribir.indexOf("insert into public.metropolitano_inscripciones"));
 }
@@ -125,7 +132,9 @@ const FILAS_FIDE = [
       const p = await ctx.newPage();
       const anotado = { errores: [], buscado: [], subidos: [], enviado: null };
       p.on("pageerror", (e) => anotado.errores.push(e.message));
-      await p.route("**/functions/v1/pareo-listas-elo", (r) => { anotado.buscado.push(JSON.parse(r.request().postData())); r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, filas: FILAS_FIDE, total: 2, hayMas: false }) }); });
+      await p.route("**/functions/v1/pareo-listas-elo**", (r) => { anotado.buscado.push(JSON.parse(r.request().postData())); anotado.urls = (anotado.urls || []).concat(r.request().url());
+        const q = JSON.parse(r.request().postData()).q, filas = /,/.test(q) ? FILAS_FIDE.filter((f) => f.nombre.startsWith(q.split(",")[0].trim() + ", " + q.split(",")[1].trim())) : FILAS_FIDE;
+        r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, filas, total: filas.length, hayMas: false }) }); });
       await p.route("**/storage/v1/object/**", (r) => { anotado.subidos.push(decodeURIComponent(new URL(r.request().url()).pathname)); r.fulfill({ contentType: "application/json", body: '{"Key":"x"}' }); });
       await p.route("**/rest/v1/rpc/metropolitano_inscribir", (r) => {
         anotado.enviado = JSON.parse(r.request().postData()).p;
@@ -151,6 +160,7 @@ const FILAS_FIDE = [
     await t1.locator("[data-buscar]").fill("Mora Sol");
     await t1.locator("[data-resultados] button").first().waitFor({ timeout: 8000 });
     igual("se busca en la lista de FIDE con lo escrito", anotado.buscado[0], { lista: "fide", q: "Mora Sol" });
+    cierto("y en la región donde FIDE contesta (us-west-1)", anotado.urls.every((u) => /[?&]forceFunctionRegion=us-west-1(&|$)/.test(u)), anotado.urls);
     igual("aparecen los dos", await t1.locator("[data-resultados] button").count(), 2);
     await t1.locator("[data-resultados] button").first().click();
     igual("elegirse llena nombre y apellidos", [await t1.locator('[data-c="nombre"]').inputValue(), await t1.locator('[data-c="apellidos"]').inputValue()], ["Ana", "Mora Solis"]);
@@ -212,6 +222,12 @@ const FILAS_FIDE = [
     /* ----- Sin ID FIDE: el A no se puede elegir ----- */
     const s2 = await abrir();
     const u = tarjeta(s2.p, 0);
+    await u.locator('[data-c="nombre"]').fill("Ana");
+    await u.locator('[data-c="apellidos"]').fill("Mora Solís");
+    await u.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
+    igual("al escribir nombre y apellidos se busca en FIDE como «Apellidos, Nombre», sin tildes", s2.anotado.buscado.slice(-1)[0], { lista: "fide", q: "Mora Solis, Ana" });
+    cierto("y con una sola persona se carga sola su ID FIDE", /ID FIDE 6400000 cargado/.test(await u.locator("[data-estado-nombre]").textContent()) && /Elegido: WCM Mora Solis, Ana/.test(await u.locator("[data-elegido]").textContent()));
+    igual("su nombre se queda como lo escribió (con tilde)", await u.locator('[data-c="apellidos"]').inputValue(), "Mora Solís");
     await u.locator('input[name="p1-fide"][value="no"]').check();
     await llenar(u, { nacimiento: "1990-01-01" });
     igual("sin ID FIDE, adulto: B o ninguno", await u.locator('input[name="p1-clasico"]').evaluateAll((xs) => xs.filter((x) => !x.disabled).map((x) => x.value)), ["B", ""]);
@@ -256,9 +272,17 @@ const FILAS_FIDE = [
     await en.locator("[data-foto]").setInputFiles(FOTO);
     cierto("el total del grupo suma solo a la jugadora", /\$45\.00/.test(await g.p.textContent("#total")) && /entrenador: sin costo/.test(await g.p.textContent("#total")));
     await g.p.check('input[name="metodo"][value="dolares"]');
+    await g.p.check("#quiere-factura");
+    cierto("con factura se suma el IVA del 13 %", /IVA del 13 %.*\$5\.85/.test(await g.p.textContent("#total")) && /Total: \$50\.85/.test(await g.p.textContent("#total")), await g.p.textContent("#total"));
+    await g.p.selectOption("#fac_tipo", "juridica");
+    await g.p.fill("#fac_id", "3-002-291916"); await g.p.fill("#fac_nombre", "Club Ajedrez Heredia"); await g.p.fill("#fac_correo", "facturas@club.cr");
+    await g.p.selectOption("#fac_provincia", "Heredia"); await g.p.selectOption("#fac_canton", "Heredia"); await g.p.selectOption("#fac_distrito", "Heredia");
     await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
     await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-datos");
     await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
+    await g.p.click("#revisar");
+    cierto("sin las otras señas, la factura no deja seguir y lo dice", /Factura: falta la dirección/.test(await g.p.textContent("#msg")), await g.p.textContent("#msg"));
+    await g.p.fill("#fac_senas", "100 m norte del parque");
     await g.p.click("#revisar");
     await g.p.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
     if (!(await g.p.isVisible("#resumen"))) cierto("el grupo pasa a la revisión", false, await g.p.textContent("#msg"));
@@ -272,6 +296,8 @@ const FILAS_FIDE = [
       && ge.personas[0].es_delegado === true && ge.personas[0].rol === "delegado" && ge.personas[1].rol === "jugador" && ge.personas[1].fide_id === "6400099"
       && JSON.stringify(ge.personas[1].torneos) === '["B"]' && ge.personas[2].rol === "entrenador" && ge.personas[2].sin_fide === true && ge.personas[2].federacion === null
       && ge.personas.every((x) => /^foto\//.test(x.foto)) && ge.pago_metodo === "dolares", ge);
+    cierto("y la factura va con los datos de Hacienda, la cédula sin guiones", ge && ge.factura && ge.factura.tipo === "juridica" && ge.factura.identificacion === "3002291916"
+      && ge.factura.provincia === "Heredia" && ge.factura.distrito === "Heredia" && ge.factura.senas === "100 m norte del parque", ge && ge.factura);
     igual("se subieron tres fotos y un comprobante", g.anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "foto", "foto", "comprobante"]);
     cierto("dice el código de cada uno", /MET-0012 — Carlos Rojas Vega/.test(await g.p.textContent("#listo-codigos")) && /MET-0014 — Pedro Solano/.test(await g.p.textContent("#listo-codigos")));
     const [dg] = await Promise.all([g.p.waitForEvent("download"), g.p.click("#bajar-gafete")]);

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104065440
+# al-dia-con: 20261104133304
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1547,6 +1547,7 @@ columna  metropolitano_inscripciones.hospedaje  boolean
 columna  metropolitano_inscripciones.hospedaje_desde  date
 columna  metropolitano_inscripciones.hospedaje_hasta  date
 columna  metropolitano_inscripciones.id  uuid
+columna  metropolitano_inscripciones.iva_usd  numeric(8,2)
 columna  metropolitano_inscripciones.monto_crc  integer
 columna  metropolitano_inscripciones.monto_usd  numeric(8,2)
 columna  metropolitano_inscripciones.nacimiento  date
@@ -2735,6 +2736,7 @@ funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=fal
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
+funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_persona(x jsonb, hoy date, v_metodo text, p_correo_obligatorio boolean)  invoker  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true

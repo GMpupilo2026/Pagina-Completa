@@ -56,6 +56,17 @@
   const DESCUENTO_SENIOR = 0.10;
   const TITULOS_GRATIS = ["GM", "IM", "WGM"];
   const TIPO_CAMBIO = 460;                // colones por dólar, según las bases
+  const IVA = 0.13;                       // con factura electrónica: lo paga quien se inscribe
+
+  /* La factura electrónica de Costa Rica (Hacienda): los datos del receptor.
+     El número va sin guiones; cada tipo tiene su largo. */
+  const FACTURA_TIPOS = {
+    fisica: { nombre: "Cédula física", patron: /^\d{9}$/, ayuda: "9 dígitos, sin guiones: 105430678" },
+    juridica: { nombre: "Cédula jurídica", patron: /^\d{10}$/, ayuda: "10 dígitos, sin guiones: 3002291916" },
+    dimex: { nombre: "DIMEX", patron: /^\d{11,12}$/, ayuda: "11 o 12 dígitos" },
+    nite: { nombre: "NITE", patron: /^\d{10}$/, ayuda: "10 dígitos" },
+    extranjero: { nombre: "Extranjero no domiciliado", patron: /^[A-Za-z0-9]{4,20}$/, ayuda: "pasaporte o identificación de su país, sin espacios" },
+  };
 
   const METODOS = {
     colones: { nombre: "Transferencia en colones (BCR)", moneda: "CRC",
@@ -142,10 +153,15 @@
       lineas.push({ torneo: t, texto: T.nombre + (notas.length ? " (" + notas.join(", ") + ")" : ""), usd: monto });
     }
     total = redondear(total);
+    // Con factura electrónica, el IVA lo asume quien se inscribe (lo decidió
+    // la FCA): el 13 % sobre lo de esta persona, redondeado a céntimos.
+    const subtotal = total;
+    const iva = o.factura && subtotal > 0 ? redondear(subtotal * IVA) : 0;
+    total = redondear(subtotal + iva);
     const M = METODOS[metodo] || METODOS.dolares;
     if (metodo === "paypal") avisos.push("El monto de PayPal ya trae su comisión, como dicen las bases.");
     else avisos.push("La comisión de la transferencia la cubre quien se inscribe.");
-    return { lineas, usd: total, crc: Math.round(total * TIPO_CAMBIO), moneda: M.moneda, gratis: titulado, senior, recargo: est.recargo, avisos };
+    return { lineas, subtotal, iva, usd: total, crc: Math.round(total * TIPO_CAMBIO), moneda: M.moneda, gratis: titulado, senior, recargo: est.recargo, avisos };
   }
 
   const dinero = (usd) => "$" + usd.toFixed(2);
@@ -153,7 +169,7 @@
 
   const api = {
     TORNEOS, METODOS, HORARIOS, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
-    RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO,
+    RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO, IVA, FACTURA_TIPOS,
     edad, elegibles, abierto, precio, dinero, colones,
   };
   raiz.MetropolitanoReglas = api;

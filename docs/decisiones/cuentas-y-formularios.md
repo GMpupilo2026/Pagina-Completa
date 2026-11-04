@@ -1466,6 +1466,29 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   lleva el logo del Metropolitano y el de la FCA arriba, la foto en un marco de
   pasaporte de 3,3 × 4,2 cm, y las hojas en la tira de abajo del frente
   (`imagenes.cintaFrente` del dibujo, que el del Centroamericano no usa).
+- **Escribir el nombre carga el ID FIDE** (lo pidió el dueño del sitio): con
+  el nombre y los apellidos llenos, se busca solo en FIDE como «Apellidos,
+  Nombre», sin tildes (lo que mejor encuentra su buscador: «Angulo Cubero,
+  Oscar» da uno; «Oscar Angulo», 2696). Si hay una sola persona se carga sola
+  y se dice debajo de los nombres; si hay varias, salen ahí para tocar la
+  correcta. El nombre queda como lo escribió la persona: FIDE no lleva tildes.
+  El buscador de arriba sigue para buscar por el ID o por un solo apellido.
+  Antes de esto la búsqueda no encontraba a nadie desde Costa Rica: ver «El
+  buscador de FIDE se fija en us-west-1» en `juegos-y-torneos.md`.
+- **La factura electrónica pide los datos del receptor de Hacienda**: tipo de
+  identificación (física de 9 dígitos, jurídica de 10, DIMEX de 11 o 12, NITE
+  de 10 o extranjero no domiciliado), el número sin guiones, nombre o razón
+  social, nombre comercial, el correo para recibirla y uno de copia, teléfono,
+  el código de actividad económica si lo tiene, y provincia, cantón, distrito
+  (la división del TSE de `js/division-territorial.js`, en cascada) y otras
+  señas, que no se piden al extranjero. Los valida también la base,
+  `interno.metropolitano_factura()`, y el error dice «Factura electrónica: …».
+- **Con factura, el IVA del 13 % lo asume quien se inscribe** (lo decidió la
+  FCA): se suma persona por persona, redondeado a céntimos, en la página
+  (`IVA` de `js/metropolitano-reglas.js`) y en la base, y el verificador
+  compara las dos. `monto_usd` es el total con IVA y `iva_usd` cuánto de eso es
+  IVA. Sin nada que cobrar (un titulado, un grupo sin jugadores) no se ofrece
+  la factura.
 - **Las descargas de administración**: el CSV entero (punto y coma y BOM) y
   una «lista para gafetes y Pareo» con las columnas que entienden
   `gafetes.html` y la carga de jugadores de Pareo Integral.

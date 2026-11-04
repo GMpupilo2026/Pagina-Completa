@@ -3986,6 +3986,26 @@ el sexo.
   Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
   saltó.
 
+
+#### El buscador de FIDE se fija en us-west-1
+
+El 4/11/2026, la inscripción del Metropolitano no encontraba a nadie en FIDE:
+la Edge Function contestaba «FIDE no contestó» a los 15 s. ratings.fide.com
+**no le contesta a la función cuando corre en us-east-1**, que es la región que
+Supabase elige para quien entra desde Costa Rica. Medido llamándola con cada
+región: us-east-1, sa-east-1, eu-central-1 y eu-west-2 fallaban siempre;
+us-west-1 contestaba en 1-3 s (y ap-northeast-1 en 6 s), y desde la base, con
+pg_net, también. No daba ningún error en la página: solo el aviso de que FIDE
+no contestó, que parece un problema de FIDE.
+
+- `js/pareo/elo-nacional.js` (`buscarEnLista`, la única copia de la llamada,
+  que usan Pareo Integral y la inscripción del Metropolitano) la manda con
+  **`?forceFunctionRegion=us-west-1`** en la dirección. No con la cabecera
+  `x-region`: el CORS de la función no la deja pasar.
+- `verificar-metropolitano.js` comprueba que cada búsqueda lleve ese
+  parámetro; quitarlo lo hace saltar. Si FIDE cambia de opinión, se vuelve a
+  medir región por región antes de moverlo.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
