@@ -13,7 +13,7 @@
     "@supabase/supabase-js": "2.117.2",
     "acorn": "8.19.0",
     "chess.js": "0.10.3",
-    "docx": "9.7.1",
+    "docx": "9.15.1",
     "esbuild": "0.28.2",
     "flag-icons": "7.6.0",
     "jsqr": "1.4.0",
