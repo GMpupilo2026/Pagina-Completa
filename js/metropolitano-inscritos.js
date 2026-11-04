@@ -66,7 +66,7 @@
       ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
       ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
-      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)],
+      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)], ["Con parqueo", n((x) => x.parqueo)],
       ["De otro país", n((x) => !/^costa rica$/i.test(x.pais_residencia))], ["Menores de edad", n((x) => R.edad(x.nacimiento, R.INICIO) < 18)],
     ];
     const caja = $("cifras"); caja.textContent = "";
@@ -106,6 +106,8 @@
       ["Nombre en FIDE", x.nombre_fide],
       ["En el Drive", x.drive_en ? "Sí, desde " + window.HoraCR.fechaHora(x.drive_en) : x.drive_error ? "Todavía no: " + x.drive_error : "Todavía no (se manda sola)"],
       ["Código de descuento", x.codigo_descuento && x.codigo_descuento + " (" + x.descuento_pct + " %)"],
+      ["Condiciones del hospedaje", x.acepta_hospedaje ? "Aceptadas (" + (x.hospedaje_version || "") + "): puerta a las 10:30 p.m." + (R.TITULOS_GRATIS.includes(x.titulo || "") && x.rol === "jugador" ? "; la ropa de cama la da la organización" : "; trae su ropa de cama") : (x.hospedaje ? "No las aceptó" : "")],
+      ["Parqueo", x.parqueo ? "Placa " + x.placa + " (" + R.dinero(Number(x.parqueo_usd || 0)) + ")" : ""],
       ["Viene de", x.provincia && [x.canton, x.provincia].filter(Boolean).join(", ")],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
@@ -234,7 +236,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Parqueo (placa)", "Parqueo USD", "Condiciones del hospedaje", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -242,7 +244,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.parqueo ? x.placa : "", x.parqueo ? x.parqueo_usd : "", x.acepta_hospedaje ? "Aceptó (" + (x.hospedaje_version || "") + ")" : "", x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 
@@ -367,6 +369,44 @@
     await cargarCodigos();
   });
 
+  /* ===================== El parqueo ===================== */
+  // Lo configura la base (metropolitano_parqueo_configurar, solo
+  // administración): el precio, los espacios y si se ofrece; cuenta los ya
+  // tomados (inscripciones activas con el pago no rechazado).
+  function pintarParqueo(d) {
+    $("parq-precio").value = Number(d.precio_usd || 0).toFixed(2);
+    $("parq-cupos").value = d.cupos || 0;
+    $("parq-activo").checked = !!d.activo;
+    const quedan = Math.max((d.cupos || 0) - (d.usados || 0), 0);
+    $("parq-estado").textContent = !d.activo ? "No se ofrece en la inscripción. " + d.usados + " espacios tomados."
+      : quedan === 0 ? "Lleno: " + d.usados + " de " + d.cupos + " espacios tomados. La inscripción ya no lo ofrece."
+      : d.usados + " de " + d.cupos + " espacios tomados; quedan " + quedan + ". Se ofrece a " + R.dinero(Number(d.precio_usd)) + " por vehículo.";
+  }
+  async function cargarParqueo() {
+    const { data, error } = await window.sb.rpc("metropolitano_parqueo_estado");
+    if (error || !data || typeof data.cupos !== "number") { $("parq-estado").textContent = "No se pudo leer el parqueo."; return; }
+    pintarParqueo(data);
+  }
+  $("parqueo-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const precio = Number($("parq-precio").value), cupos = Number($("parq-cupos").value);
+    if (!(precio >= 0 && precio <= 500)) { $("parq-msg").textContent = "El precio va de $0 a $500."; return; }
+    if (!(Number.isInteger(cupos) && cupos >= 0 && cupos <= 5000)) { $("parq-msg").textContent = "Los espacios van de 0 a 5000, en número entero."; return; }
+    $("parq-guardar").disabled = true; $("parq-msg").textContent = "Guardando…";
+    const { data, error } = await window.sb.rpc("metropolitano_parqueo_configurar", { p_precio: precio, p_cupos: cupos, p_activo: $("parq-activo").checked });
+    $("parq-guardar").disabled = false;
+    if (error) { $("parq-msg").textContent = "No se pudo guardar: " + error.message; return; }
+    $("parq-msg").textContent = "Listo: guardado.";
+    pintarParqueo(data);
+  });
+  // Para quien cuida la entrada: las placas de las inscripciones activas.
+  $("parq-placas").addEventListener("click", () => {
+    const l = filas.filter((x) => x.parqueo && x.estado === "activa").sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
+    csv(["Placa", "Código", "Apellidos", "Nombre", "Rol", "Delegación", "Teléfono", "Estado del pago"],
+      l.map((x) => [x.placa, codigo(x), x.apellidos, x.nombre, R.rolDe(x.rol, x.sexo), x.delegacion, x.telefono, PAGO[x.pago_estado].texto]),
+      "Metropolitano 2026 - placas del parqueo.csv");
+  });
+
   async function iniciar() {
     const { data } = await window.sb.auth.getSession();
     const session = data.session;
@@ -377,6 +417,7 @@
     $("app").classList.remove("hidden");
     await cargar();
     await cargarCodigos();
+    cargarParqueo();
     estadoDrive();
   }
   iniciar();

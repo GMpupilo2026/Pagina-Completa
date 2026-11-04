@@ -76,6 +76,8 @@ igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimient
 igual("GM: gratis", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", titulo: "GM" }).usd, 0);
 igual("código del 100 %: sin costo", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 100 }).usd, 0);
 igual("código del 20 % sobre A + blitz: 87 − 17,40", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 20 }).usd, 69.6);
+igual("el parqueo se suma después del código y antes del IVA: (87 − 100 %) + 10, con IVA", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 100, parqueo: 10, placa: "BCD123", factura: true }).usd, 11.3);
+cierto("y sale en su línea con la placa", pr({ rol: "acompanante", metodo: "dolares", parqueo: 10, placa: "BCD123" }).lineas.some((l) => l.torneo === "PARQUEO" && l.usd === 10 && /placa BCD123/.test(l.texto)));
 igual("código del 10 % y factura: el IVA va sobre lo que queda", pr({ torneos: ["B"], metodo: "dolares", descuento: 10, factura: true }).usd, 45.77);
 igual("con factura, el 13 % de IVA lo paga quien se inscribe", [pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).iva, pr({ torneos: ["A", "BLITZ"], metodo: "dolares", factura: true }).usd], [11.31, 98.31]);
 igual("sin costo, la factura no suma IVA", pr({ torneos: ["A"], metodo: "dolares", titulo: "GM", factura: true }).usd, 0);
@@ -151,8 +153,11 @@ const FILAS_FIDE = [
     const FOTO = path.join(require("os").tmpdir(), "metropolitano-foto-prueba.png");
     fs.writeFileSync(FOTO, pngLiso(60, 80, [200, 120, 40]));
     // Una página con el doble de Supabase: lo que busca, sube y manda queda anotado.
-    async function abrir() {
+    // El parqueo, como lo contesta metropolitano_parqueo_ver (fijo: nunca la base real).
+    async function abrir(parqueo) {
       const p = await ctx.newPage();
+      await p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json",
+        body: JSON.stringify(parqueo || { disponible: false, precio_usd: null, quedan: 0 }) }));
       const anotado = { errores: [], buscado: [], subidos: [], enviado: null };
       p.on("pageerror", (e) => anotado.errores.push(e.message));
       await p.route("**/functions/v1/pareo-listas-elo**", (r) => { anotado.buscado.push(JSON.parse(r.request().postData())); anotado.urls = (anotado.urls || []).concat(r.request().url());
@@ -222,6 +227,12 @@ const FILAS_FIDE = [
     await p.click("#revisar");
     cierto("sin aceptar que la habitación es compartida no avanza", /habitación es compartida/.test(await p.textContent("#msg")), await p.textContent("#msg"));
     await t1.locator('[data-c="acepta_compartir"]').check();
+    cierto("con hospedaje se ven sus condiciones: la puerta a las 10:30 p.m., la cancha y la ropa de cama", await t1.locator("[data-caja-condiciones]").isVisible()
+      && /10:30 p\.m\./.test(await t1.locator("[data-condiciones-texto]").textContent()) && /cancha/.test(await t1.locator("[data-condiciones-texto]").textContent())
+      && /no hay ropa de cama ni cortinas/.test(await t1.locator("[data-condiciones-texto]").textContent()));
+    await p.click("#revisar");
+    cierto("sin aceptar las condiciones del hospedaje no avanza", /condiciones del hospedaje/.test(await p.textContent("#msg")), await p.textContent("#msg"));
+    await t1.locator('[data-c="acepta_hospedaje"]').check();
     await p.click("#revisar");
     cierto("sin foto no avanza, y lo dice", /foto/.test(await p.textContent("#msg")));
     await t1.locator("[data-foto]").setInputFiles(FOTO);
@@ -256,7 +267,7 @@ const FILAS_FIDE = [
       && JSON.stringify(x1.torneos) === '["A","BLITZ"]' && JSON.stringify(x1.comidas) === '["desayuno","cena"]' && x1.hospedaje === true && x1.acepta_publicidad === true
       && e1.pago_metodo === "sinpe" && e1.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(x1.foto)
       && x1.responsable && x1.responsable.nombre === "Luis Mora" && x1.nombre_fide === "Mora Solis, Ana" && e1.acepta_seguro === true
-      && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion"
+      && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion" && x1.acepta_hospedaje === true
       && JSON.stringify(x1.acompanantes_detalle) === JSON.stringify([{ nombre: "Luis Mora Rojas", documento: "PA123456", nacimiento: "1975-02-02", parentesco: "Padre" }]), e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
@@ -321,6 +332,7 @@ const FILAS_FIDE = [
     await llenar(gm, { nacimiento: "1990-04-04", sexo: "m", nacionalidad: "Guatemala", pais_residencia: "Guatemala", documento_tipo: "pasaporte", documento: "G1234567",
       correo: "gm@ejemplo.com", telefono: "+502 5555 1234", emer_nombre: "Ana Pérez", emer_telefono: "+502 5555 0000" });
     await gm.locator('input[name="p1-clasico"][value="A"]').check();
+    await gm.locator('[data-c="acepta_hospedaje"]').check();
     await gm.locator("[data-foto]").setInputFiles(FOTO);
     await s3.p.check("#acepta-reglamento"); await s3.p.check("#acepta-imagen"); await s3.p.check("#acepta-seguro"); await s3.p.check("#acepta-datos");
     await s3.p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
@@ -355,6 +367,9 @@ const FILAS_FIDE = [
       && /llegada al Estadio Nacional/.test(await im.locator("[data-caja-viaje]").textContent())
       && !(await im.locator('[data-c="vuelo"]').isVisible()) && !(await im.locator('[data-c="traslado"]').isVisible()) && !(await im.locator("[data-caja-docs]").isVisible())
       && !(await im.locator('input[name="p1-hosp"][value="si"]').isVisible()) && await im.locator('[data-c="provincia"]').isVisible());
+    cierto("el titulado también ve y acepta las condiciones del hospedaje, con la ropa de cama de la organización", await im.locator("[data-caja-condiciones]").isVisible()
+      && /la organización les da la ropa de cama/.test(await im.locator("[data-condiciones-texto]").textContent()) && !/Trae sábanas/.test(await im.locator("[data-condiciones-texto]").textContent()));
+    await im.locator('[data-c="acepta_hospedaje"]').check();
     await im.locator('[data-c="provincia"]').selectOption("Cartago");
     await im.locator('[data-c="canton"]').selectOption("Cartago");
     await llenar(im, { nacimiento: "1985-05-05", sexo: "m", documento: "3-0333-0333", correo: "im@ejemplo.com", telefono: "+506 7111 1111", emer_nombre: "Rosa Arias", emer_telefono: "88880000" });
@@ -374,7 +389,50 @@ const FILAS_FIDE = [
     await s4.p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
     const xi = s4.anotado.enviado.personas[0];
     cierto("se manda con sus días, sin vuelo, y con su foto para el gafete", xi.origen === "cr" && xi.viaje && xi.viaje.llegada === "2026-12-25" && xi.viaje.salida === "2026-12-30"
-      && xi.viaje.vuelo === "" && xi.viaje.traslado === false && xi.hospedaje === false && !!xi.foto, xi);
+      && xi.viaje.vuelo === "" && xi.viaje.traslado === false && xi.hospedaje === false && !!xi.foto && xi.acepta_hospedaje === true, xi);
+
+    /* ----- El parqueo: se pide con la placa y se paga con la inscripción ----- */
+    // (en una página recién abierta, cuando ya contestó la base: lleno, no se ofrece)
+    const s0p = await ctx.newPage();
+    await s0p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ disponible: false, precio_usd: null, quedan: 0 }) }));
+    const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html")]);
+    await s0r.finished(); await s0p.waitForTimeout(300);
+    cierto("sin espacios de parqueo, la inscripción no lo ofrece", await s0p.locator("#personas > section [data-c='nombre']").first().isVisible()
+      && !(await s0p.locator("#personas > section [data-caja-parqueo]").first().evaluate((x) => x.checkVisibility())));
+    await s0p.close();
+    const s5 = await abrir({ disponible: true, precio_usd: 10, quedan: 3 });
+    const pq = tarjeta(s5.p, 0);
+    await pq.locator("[data-caja-parqueo]").waitFor({ state: "visible", timeout: 8000 });
+    cierto("con espacios, ofrece el parqueo con su precio y cuántos quedan, y la placa aparece al marcarlo",
+      /\$10\.00; quedan 3/.test(await pq.locator("[data-caja-parqueo]").textContent()) && !(await pq.locator('[data-c="placa"]').isVisible()));
+    await llenar(pq, { nombre: "Luis", apellidos: "Brenes Arias" });
+    await pq.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
+    await pq.locator('[data-c="provincia"]').selectOption("Cartago");
+    await pq.locator('[data-c="canton"]').selectOption("Cartago");
+    await llenar(pq, { nacimiento: "1985-05-05", sexo: "m", documento: "3-0333-0333", correo: "im@ejemplo.com", telefono: "+506 7111 1111", emer_nombre: "Rosa Arias", emer_telefono: "88880000", llegada: "2026-12-25", salida: "2026-12-30" });
+    await pq.locator('input[name="p1-clasico"][value="A"]').check();
+    await pq.locator("[data-foto]").setInputFiles(FOTO);
+    await pq.locator('[data-c="parqueo"]').check();
+    await pq.locator('[data-c="acepta_hospedaje"]').check();
+    cierto("al marcarlo pide la placa y el total suma el parqueo (el IM no paga la inscripción)", await pq.locator('[data-c="placa"]').isVisible()
+      && /Parqueo: \$10\.00/.test(await s5.p.textContent("#total")) && /Total: \$10\.00/.test(await s5.p.textContent("#total")), await s5.p.textContent("#total"));
+    await s5.p.check('input[name="metodo"][value="dolares"]');
+    await s5.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await s5.p.check("#acepta-reglamento"); await s5.p.check("#acepta-imagen"); await s5.p.check("#acepta-seguro"); await s5.p.check("#acepta-datos");
+    await s5.p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
+    await s5.p.click("#revisar");
+    cierto("sin la placa no avanza", /placa del vehículo/.test(await s5.p.textContent("#msg")), await s5.p.textContent("#msg"));
+    await llenar(pq, { placa: "bcd-123" });
+    await s5.p.click("#revisar");
+    await s5.p.waitForSelector("#resumen:not(.hidden)", { timeout: 15000 });
+    cierto("el resumen dice la placa del parqueo", /Para el vehículo de placa BCD123/.test(await s5.p.textContent("#resumen-personas")));
+    await s5.p.check("#confirmo");
+    await s5.p.click("#enviar");
+    await s5.p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
+    const xp = s5.anotado.enviado.personas[0];
+    cierto("se manda con el parqueo y la placa como la guarda la base", xp.parqueo === true && xp.placa === "BCD123" && s5.anotado.enviado.pago_metodo === "dolares", xp);
+    igual("sin errores en la inscripción con parqueo", s5.anotado.errores, []);
+    await s5.p.close();
 
     /* ----- Un grupo: el delegado, una jugadora y un entrenador ----- */
     console.log("   La inscripción de grupo");
@@ -420,6 +478,7 @@ const FILAS_FIDE = [
     await g.p.selectOption("#fac_provincia", "Heredia"); await g.p.selectOption("#fac_canton", "Heredia"); await g.p.selectOption("#fac_distrito", "Heredia");
     await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
     for (const t of [d, j, en]) if (await t.locator('[data-c="acepta_compartir"]').isVisible()) await t.locator('[data-c="acepta_compartir"]').check();
+    for (const t of [d, j, en]) if (await t.locator('[data-c="acepta_hospedaje"]').isVisible()) await t.locator('[data-c="acepta_hospedaje"]').check();
     cierto("si todos son de Costa Rica, no se les pide seguro de viaje: la póliza del evento", !/seguro de viaje/.test(await g.p.textContent("#acepta-seguro-texto")) && /póliza de seguro/.test(await g.p.textContent("#acepta-seguro-texto")));
     await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-seguro"); await g.p.check("#acepta-datos");
     await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
@@ -528,6 +587,12 @@ const FILAS_FIDE = [
     igual("«Si vienes de otro país» dice que son recomendaciones y enlaza solo a fuentes oficiales", ingreso,
       { abierta: true, aviso: true, enlaces: true, correos: ["mailto:metropolitano@fcacostarica.com", "mailto:visascr@migracion.go.cr"] });
     await i1.pg.keyboard.press("Escape");
+    await i1.pg.click("#ficha-hospedaje a");
+    await i1.pg.waitForFunction(() => { const d = document.getElementById("hospedaje"); return d && d.open; });
+    cierto("la ficha «Hospedaje en el Estadio Nacional» abre sus condiciones: la puerta a las 10:30 p.m., la cancha y la ropa de cama",
+      /La puerta se cierra a las 10:30 p\.m\./.test(await i1.pg.textContent("#hospedaje")) && /No se entra a la cancha/.test(await i1.pg.textContent("#hospedaje"))
+      && /no hay ropa de cama ni cortinas/.test(await i1.pg.textContent("#hospedaje")) && /GM, IM y WGM/.test(await i1.pg.textContent("#hospedaje")));
+    await i1.pg.keyboard.press("Escape");
     // Los idiomas: cada texto de la página tiene su inglés y su francés, y lo
     // que se arma con datos se vuelve a pintar en el idioma.
     for (const [lang, boton, ronda, mes] of [["en", "English", "Round 1", /December/], ["fr", "Français", "Ronde 1", /décembre/]]) {
@@ -550,6 +615,8 @@ const FILAS_FIDE = [
           fecha: document.querySelector("#calendario-tablas tbody td").textContent, titulo: document.title };
       });
       igual(boton + ": ningún texto de la página queda en español", r.sin, []);
+      cierto(boton + ": las condiciones del hospedaje, en " + boton, (lang === "en" ? /The door closes at 10:30 p\.m\./ : /La porte ferme à 22 h 30/).test(await i1.pg.textContent("#hospedaje"))
+        && (lang === "en" ? /Lodging at the Estadio Nacional/ : /Hébergement au Stade national/).test(await i1.pg.textContent("#ficha-hospedaje")));
       cierto(boton + ": el calendario y sus fechas, en " + boton, r.lang === lang && r.calendario === ronda && mes.test(r.fecha), r);
     }
     await i1.pg.click("#metro-idioma");
@@ -677,13 +744,19 @@ const FILAS_FIDE = [
     const a = await ctx.newPage();
     void s2;
     const fila = Object.assign({}, enviado, { id: "11111111-1111-1111-1111-111111111111", numero: 12, creado: "2026-11-04T15:00:00Z", clasico: "A", monto_usd: 87, monto_crc: 40020,
-      comprobante: "comprobante/abcdef12/sinpe.png", foto: "foto/abcdef12/foto.png", pago_estado: "por_revisar", estado: "activa", club: "<b>Club</b>" });
+      comprobante: "comprobante/abcdef12/sinpe.png", foto: "foto/abcdef12/foto.png", pago_estado: "por_revisar", estado: "activa", club: "<b>Club</b>",
+      parqueo: true, placa: "BCD123", parqueo_usd: 10 });
     let revisado = null;
     await a.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
     await a.route("**/rest/v1/profiles**", (r) => r.fulfill({ contentType: "application/json", body: '{"is_admin":true}' }));
     await a.route("**/rest/v1/metropolitano_inscripciones**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify([fila]) }));
     await a.route("**/rest/v1/rpc/metropolitano_revisar", (r) => { revisado = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign({}, fila, { pago_estado: revisado.p_pago_estado })) }); });
     await a.route("**/storage/v1/object/**", (r) => r.fulfill({ contentType: "image/png", body: fs.readFileSync(path.join(RAIZ, "img", "fca-logo.png")) }));
+    // (después de la ruta general de rest/v1: en Playwright manda la última que se registró)
+    let parqueoGuardado = null;
+    await a.route("**/rest/v1/rpc/metropolitano_parqueo_estado", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ precio_usd: 10, cupos: 1, activo: true, usados: 1 }) }));
+    await a.route("**/rest/v1/rpc/metropolitano_parqueo_configurar", (r) => { parqueoGuardado = JSON.parse(r.request().postData());
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ precio_usd: parqueoGuardado.p_precio, cupos: parqueoGuardado.p_cupos, activo: parqueoGuardado.p_activo, usados: 1 }) }); });
     let codigosLista = [{ codigo: "MET-AAAA-BBBB", porcentaje: 100, nota: "Rifa de diciembre", creado: "2026-11-04T15:00:00Z", anulado: false, usado_por: fila.id, usado_en: "2026-11-04T16:00:00Z" }];
     let creados = null;
     await a.route("**/rest/v1/metropolitano_codigos**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(codigosLista) }));
@@ -707,6 +780,15 @@ const FILAS_FIDE = [
     await a.waitForFunction(() => /No falta ninguna/.test(document.getElementById("drive-estado").textContent), null, { timeout: 5000 }).catch(() => {});
     cierto("«Mandar al Drive las que faltan» las manda y lo dice", driveEnviado && /No falta ninguna/.test(await a.textContent("#drive-estado")));
     await a.waitForSelector("#codigos-filas tr");
+    await a.waitForFunction(() => /Lleno/.test(document.getElementById("parq-estado").textContent));
+    cierto("el parqueo dice cuántos espacios se tomaron y que ya está lleno", /Lleno: 1 de 1 espacios tomados/.test(await a.textContent("#parq-estado")), await a.textContent("#parq-estado"));
+    await a.fill("#parq-precio", "12.5"); await a.fill("#parq-cupos", "40");
+    await a.click("#parq-guardar");
+    await a.waitForFunction(() => /quedan 39/.test(document.getElementById("parq-estado").textContent));
+    igual("guardar el parqueo manda el precio, los espacios y si se ofrece", parqueoGuardado, { p_precio: 12.5, p_cupos: 40, p_activo: true });
+    const [dpl] = await Promise.all([a.waitForEvent("download"), a.click("#parq-placas")]);
+    const placasCsv = fs.readFileSync(await dpl.path(), "utf8");
+    cierto("la lista de placas para la entrada trae la placa con su inscripción", /^\uFEFF?Placa;Código;Apellidos/.test(placasCsv) && /BCD123;MET-0012;/.test(placasCsv), placasCsv.slice(0, 200));
     cierto("los códigos dicen quién usó cada uno", /Usado por MET-0012 — Ana Mora Solis/.test(await a.textContent("#codigos-filas")), await a.textContent("#codigos-filas"));
     await a.selectOption("#cod-pct", "20");
     await a.fill("#cod-cantidad", "3");

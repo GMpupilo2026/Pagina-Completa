@@ -1703,6 +1703,92 @@ un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
 - La forma de las carpetas la decide la función (`carpetasDe`), y
   `verificar-metropolitano.js` la prueba con el mismo código.
 
+#### Las condiciones del hospedaje
+
+Pedido del dueño: el hospedaje es dentro del Estadio Nacional, una
+instalación pública, y tiene condiciones estrictas que la persona tiene que
+saber antes, para que después no diga que no sabía (si llega después de las
+10:30 p.m., no entra a dormir).
+
+- **El texto vive en un solo lugar**, `js/metropolitano-hospedaje.js`, en
+  español, inglés y francés: lo usan la inscripción y la página del torneo.
+  Cambiar una condición sube `VERSION`.
+- **Las condiciones del dueño**: la puerta se cierra a las 10:30 p.m. y
+  después nadie entra ni sale; silencio; no se camina alrededor del estadio;
+  no se entra a la cancha; se da solo el espacio y la cama, sin ropa de cama
+  ni cortinas (hay que traer sábanas, almohada, cobija o saco de dormir y
+  toalla). A los invitados especiales (GM, IM y WGM) la organización les da
+  la ropa de cama; todas las demás condiciones les aplican igual.
+- **Las que se agregaron para la convivencia**, propuestas y a confirmar con
+  la organización:
+  - no se fuma ni se vapea en el estadio (Ley 9028), ni alcohol ni drogas;
+  - no se cocina ni se usan aparatos de calor en los dormitorios, y nada se
+    pega en las paredes;
+  - la basura va a los basureros, y lo dañado lo paga quien lo dañó;
+  - no hay visitas ni mascotas;
+  - los menores van siempre con su responsable o con su delegado;
+  - las pertenencias son de cada quien;
+  - se siguen las indicaciones de la organización y de la seguridad;
+  - quien no cumpla puede perder el hospedaje sin devolución.
+- **En la inscripción** se muestran, en un cuadro que se desliza, a quien pide
+  hospedaje y al titulado invitado (que duerme ahí aunque no lo pida), con la
+  casilla obligatoria «Leí y acepto…», persona por persona. El resumen lo
+  repite.
+- **La base lo exige** (migración `metropolitano_condiciones_hospedaje`):
+  sin `acepta_hospedaje`, a quien pide hospedaje o al GM, IM o WGM no los
+  deja pasar, y guarda `acepta_hospedaje` y `hospedaje_version`. Probado con
+  un pedido anónimo: un IM sin aceptar se rechaza y aceptando entra con la
+  versión.
+- **En la página del torneo**, la ficha «Hospedaje en el Estadio Nacional»
+  abre las mismas condiciones encima, para leerlas antes de decidir.
+- La lista de inscritos dice en cada uno si las aceptó (y en el CSV).
+
+#### El parqueo
+
+Pedido del dueño: en la inscripción, «¿Necesita parqueo?», con el precio que
+pone administración y la placa del vehículo, que es la que entra; y que
+administración decida cuántos espacios hay, y que al llenarse la oferta
+desaparezca.
+
+- **Lo configura administración** en `metropolitano-inscritos.html`, sección
+  «🚗 Parqueo»: el precio por vehículo (en dólares), los espacios y si se
+  ofrece. Va en `metropolitano_parqueo`, una sola fila que nadie escribe desde
+  afuera: la escribe `metropolitano_parqueo_configurar()` (solo
+  administración), con su bitácora (`interno.auditar`, en `VIGILADAS`). Los
+  espacios no pueden quedar por debajo de los ya tomados.
+- **La página de inscripción** pregunta al cargar a
+  `metropolitano_parqueo_ver()` (sin cuenta): si se ofrece, su precio y
+  cuántos quedan. Si no se ofrece, se llenó o la base no contesta, la casilla
+  no aparece. Con 20 espacios o menos, dice cuántos quedan. La placa se pide
+  al marcarla y se guarda como la guarda la base: sin espacios ni guiones, en
+  mayúscula (`bcd-123` → `BCD123`).
+- **Se paga con la inscripción**: el precio se suma a lo de esa persona
+  después del código de descuento (el código es de la inscripción, no del
+  parqueo) y antes del IVA, en `MetropolitanoReglas.precio()` (`parqueo`,
+  `placa`) y en `metropolitano_inscribir()` con las mismas cuentas. Lo puede
+  pedir cualquiera: jugador, entrenador, acompañante o delegado; a un titulado
+  que no paga la inscripción, el parqueo sí se le cobra.
+- **Una placa es un espacio**: no puede ir dos veces en un envío (la página
+  y la base lo dicen) ni en dos inscripciones activas
+  (`metropolitano_una_placa`, índice único; anular la inscripción libera la
+  placa). Si vienen juntos, lo pide una sola persona.
+- **El cupo lo hace cumplir la base**: los espacios tomados son los de las
+  inscripciones activas con el pago no rechazado
+  (`interno.metropolitano_parqueo_usados()`), y `metropolitano_inscribir()`
+  bloquea la fila del parqueo (`for update`) antes de contar, así que dos
+  envíos a la vez no se pasan. Lleno, la base rechaza el envío con «Ya no
+  quedan espacios de parqueo» y la página deja de ofrecerlo.
+- **Para la entrada**: «Lista de placas para la entrada (CSV)» baja las
+  placas de las inscripciones activas, ordenadas, con su código, su nombre,
+  su teléfono y el estado del pago. La placa sale también en el detalle de
+  cada inscripción, en el CSV completo y en las cifras («Con parqueo»).
+- Probado en la base con un pedido anónimo y como administración, en una
+  transacción que se deshace: sin placa no entra; con 1 espacio, la primera
+  entra con los $5 sumados y la segunda recibe «Ya no quedan espacios»; lleno,
+  `metropolitano_parqueo_ver()` da `disponible: false`; sin cuenta no se
+  puede ver el estado ni configurarlo. La política de privacidad dice para
+  qué se guarda la placa.
+
 #### Mi ronda y mi mesa: el QR del gafete
 
 Pedido del dueño: el QR del gafete lleva a la ronda y la mesa del jugador, que
