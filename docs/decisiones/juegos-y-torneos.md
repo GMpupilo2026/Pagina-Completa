@@ -9505,6 +9505,50 @@ el sistema las mesas que no traen un rival sino un nombre raro**.
   cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
   pareos» y «¿Dónde juega?»).
 
+## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
+
+Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
+diálogo en cada mesa (`centroamericano-arbitro.html`, junto a la cámara y el reloj) abre `js/centroamericano-hablar.js`, con tres cosas:
+
+- **Frases fijas** (pestaña «Frases», `js/centroamericano-frases.js`). Unas 40 frases del arbitraje (al empezar, el reloj, las piezas, la
+  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, respuestas rápidas), cada una **escrita una vez en español,
+  inglés y francés** con la regla de las Leyes que la respalda (`art`). El árbitro toca la frase en español y la tablet le muestra al
+  jugador la suya, **en grande y a pantalla completa**, con el original en español debajo «para el árbitro» y «Leer en voz alta»
+  (`speechSynthesis`, con el idioma de la frase). **No pasan por el traductor**: no pueden decir algo distinto de la regla y funcionan sin
+  internet. Nuevas frases: agregar un `f(...)` con los tres idiomas; `verificar-centroamericano-idioma.js` falla si falta un idioma, si se
+  repite un id o si los números (minutos, resultados) no cuadran. **Las revisa una persona que domine inglés y francés antes del torneo**:
+  la terminología sigue la de las Leyes de FIDE, pero no hay un revisor humano todavía.
+- **El idioma se sugiere por el país del jugador**: la federación (la banderita, ver «Banderas y mesas sin rival») decide inglés o francés
+  (`idiomaDeFed`; países de habla francesa, de habla inglesa y el Caribe anglófono). Lo desconocido, la región hispana y Surinam, Aruba y
+  Curazao empiezan en inglés pero el árbitro cambia con un toque. Se cambia siempre a mano también: la sugerencia nunca es la última palabra.
+- **Conversar** (traductor). Dos mitades frente a frente: la del jugador va girada 180° para leerla del otro lado de la mesa, cada uno
+  escribe en su idioma y lee lo del otro en el suyo. El jugador tiene además **nueve botones de respuesta rápida** en su idioma («Quiero
+  reclamar tablas», «Mi rival hizo una jugada ilegal», «Necesito ir al baño»…) que el árbitro lee en español **sin traductor**. La
+  traducción la hace la Edge Function **`centroamericano-traducir`** (sin cuenta, con el token del enlace, `verify_jwt` en false) con Claude
+  (`claude-haiku-4-5`, el secreto `ANTHROPIC_API_KEY`). Se defiende sola: enlace vigente, solo es/en/fr, mensaje de hasta 500 caracteres,
+  **20 por minuto y 500 al día por enlace y 4000 al día en total** (la tabla `centroamericano_traducciones` cuenta cada intento y lo que
+  costó, **sin guardar nunca el texto ni la traducción**; sin permisos ni políticas, solo la escribe la función). Al modelo le llega
+  **solo el mensaje** (entre etiquetas, que el modelo toma como texto por traducir y nunca como instrucciones; no el nombre, la mesa ni el
+  torneo) y nunca se imprime en los registros. Dice en los dos idiomas que es una **traducción automática de ayuda, no oficial**; si falla
+  (sin señal, sin saldo, tope) lo dice, conserva lo escrito y manda a las frases, que siguen sirviendo.
+- **Nada se anota solo.** Lo que se le dijo al jugador queda en la bitácora **solo si el árbitro toca «Anotar en la bitácora»** (o
+  «Anotar la conversación»): una nota de artículo `Comunicado` («Se le comunicó a X (blancas) en inglés: «…» (en español: «…»)»; la
+  conversación con las dos versiones de cada mensaje), con el mismo `anotar` de siempre (misma cola sin señal, mismo rango de mesas). Se ve
+  como «Comunicado» en la tablet, en la bitácora del árbitro (PDF y correo) y en la actividad de la organización.
+- **«Necesito un árbitro que hable inglés / francés»** en la misma ventana: es el pedido de ayuda de siempre a esa mesa (`ayuda`) con el
+  texto «Necesito un árbitro que hable francés en esta mesa.», que le llega a la organización con sonido y «Atendido».
+- **Privacidad.** `privacidad.html` nombra a Anthropic como proveedor del traductor, qué se le manda (solo el mensaje, sin nombres ni
+  mesa) y que no se guarda. Las frases fijas no salen del aparato.
+- **Pendiente de quien tiene la cuenta de Anthropic.** El 4/11 la función respondía `invalid_request_error` («credit balance is too low»):
+  la clave es válida pero la cuenta no tenía saldo. Hay que agregar crédito en la consola de Anthropic (Plans & Billing); hasta entonces
+  «Conversar» dice que no está disponible y las frases y las respuestas rápidas funcionan igual.
+- **Para desplegar**: `centroamericano-traducir` (sin archivos compartidos) y la migración `centroamericano_traducciones`; la página es
+  estática.
+- Lo revisan `verificar-centroamericano-idioma.js` (las frases en los tres idiomas, el idioma por país, el texto de la bitácora, que la
+  función se defienda sola y no mande ni guarde nada de más, la política de privacidad) y `verificar-centroamericano-mesas-pagina.js`
+  («Hablar con el jugador»: el idioma sugerido, la frase en grande y en voz, que nada se anota ni se traduce solo, el traductor de ida y
+  vuelta, la falla del traductor, el pedido por idioma y «Comunicado» en la bitácora).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien

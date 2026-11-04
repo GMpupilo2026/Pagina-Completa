@@ -20,7 +20,7 @@ const SERVIDOR_ARBITRO = `
   const MESAS = ${JSON.stringify(MESAS)};
   const filas = []; let n = 0;
   // Las banderitas (la federación de cada jugador): solo cuando la prueba enciende window.__feds, para no tocar las demás pruebas.
-  const FEDS = { "Muñoz Feliz Alejandro": "CRC", "Gramajo Tovar Marco": "ESA", "Harvey Ian": "JAM", "Acuña Porras Fabio": "GUA", "Hopkins John": "TTO", "Baquero Graterol": "VEN", "Pérez Mora, Ana": "CRC", "Rojas Vega, Lía": "PAN" };
+  const FEDS = { "Muñoz Feliz Alejandro": "CRC", "Gramajo Tovar Marco": "ESA", "Harvey Ian": "JAM", "Acuña Porras Fabio": "GUA", "Hopkins John": "TTO", "Baquero Graterol": "FRA", "Pérez Mora, Ana": "CRC", "Rojas Vega, Lía": "PAN" };
   const conFed = (m) => (window.__feds ? Object.assign({}, m, { fed_b: FEDS[m.blancas] || null, fed_n: FEDS[m.negras] || null }) : m);
   const falla = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
   const marcasDe = () => {
@@ -211,6 +211,11 @@ function dobleArbitro() {
     auth: { getSession: () => R({ session: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
     functions: { invoke: (f, o) => {
       window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) });
+      // El traductor (otra función): «[EN] texto». window.__traducirFalla = N hace que falle esa cantidad de veces, como una cuenta sin saldo.
+      if (f === "centroamericano-traducir") {
+        if (window.__traducirFalla > 0) { window.__traducirFalla--; return Promise.resolve({ data: null, error: { context: { status: 502, json: () => Promise.resolve({ error: "No se pudo traducir ahora. Usa las frases o intenta de nuevo.", codigo: "api_400" }) } } }); }
+        return Promise.resolve({ data: { ok: true, traduccion: "[" + o.body.a.toUpperCase() + "] " + o.body.texto }, error: null });
+      }
       // Fallas de la señal para las pruebas: window.__red = { fallar: N | siempre: true, tipo: "red" | "boot" | "h404", accion?, perderRespuesta? }
       // («perderRespuesta»: la función SÍ procesa el pedido pero la respuesta no llega, como un wifi que se cae a medias).
       const m = window.__red;

@@ -1108,6 +1108,93 @@ const CONTRASTE = `(sel) => {
         await fb.ctx.close();
     }
 
+    console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
+    {
+        const fh = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const ph = fh.p;
+        await ph.waitForSelector(".cam-mesa");
+        await ph.evaluate(() => { window.__feds = true; document.getElementById("actualizar").click(); });
+        await ph.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        await ph.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); window.__voz = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { cancel() {}, speak(u) { window.__voz.push([u.text, u.lang]); } } }); Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: function (t) { this.text = t; } }); });
+        const llamadasTraducir = () => ph.evaluate(() => window.__llamadas.filter((l) => l.f === "centroamericano-traducir").length);
+        const filasAnotar = () => ph.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Comunicado").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]));
+        igual("cada mesa tiene su botón «Hablar con el jugador» con nombre accesible", await ph.$$eval('.cam-mesa [data-accion="hablar"]', (l) => l.map((b) => b.getAttribute("aria-label").startsWith("Hablar con el jugador de la mesa "))), [true, true, true]);
+
+        // Mesa 3: Hopkins (TTO, habla inglés) vs Baquero (FRA, francés).
+        await ph.click('.cam-mesa[data-mesa="3"] [data-accion="hablar"]');
+        await ph.waitForSelector("#hablar[open]");
+        igual("se abre sin hablar con nadie todavía y no anota nada solo", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        igual("el idioma se sugiere por el país del primer jugador (TTO → inglés) y al elegir al segundo (FRA) pasa a francés",
+            await (async () => {
+                const a = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (b) => b.dataset.idioma);
+                await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+                const b = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (x) => x.dataset.idioma);
+                return [a, b];
+            })(), ["en", "fr"]);
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="blancas"]');
+        igual("las banderitas están en los botones de los jugadores", await ph.$$eval("#hablar .cam-hb-jug .cam-bandera", (l) => l.map((b) => b.dataset.fed)), ["TTO", "FRA"]);
+
+        // Una frase: pantalla grande en SU idioma.
+        const frase = await ph.$eval('#hablar [data-frase]', (b) => b.dataset.frase);
+        await ph.click('#hablar [data-frase="' + frase + '"]');
+        await ph.waitForSelector("#hablar-jugador[open]");
+        const pant = await ph.evaluate(() => { const g = document.querySelector("#hablar-jugador .cam-hb-grande"); const r = g.getBoundingClientRect(); return [g.lang, g.textContent.length > 5, parseFloat(getComputedStyle(g).fontSize) >= 32, document.querySelector("#hablar-jugador .cam-hb-original").textContent.startsWith("Para el árbitro: "), r.width > 0]; });
+        igual("la frase sale en grande, en inglés, y el original en español va aparte, para el árbitro", pant, ["en", true, true, true, true]);
+        igual("la frase en pantalla es la misma del módulo de frases (texto fijo, sin pasar por el traductor)", await ph.evaluate((id) => document.querySelector("#hablar-jugador .cam-hb-grande").textContent === window.CentroamericanoFrases.FRASE.get(id).en, frase), true);
+        await ph.click('#hablar-jugador [data-accion="voz"]');
+        igual("«Leer en voz alta» habla en el idioma de la frase", await ph.evaluate(() => window.__voz.map((v) => v[1])), ["en-US"]);
+        igual("nada se anotó solo ni se llamó al traductor", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        await ph.click('#hablar-jugador [data-accion="anotar-frase"]');
+        await ph.waitForFunction(() => /Quedó anotado/.test(document.querySelector("#hablar-jugador .cam-hb-estado").textContent));
+        const anot = await filasAnotar();
+        igual("«Anotar en la bitácora» anota UNA nota «Comunicado» con quién, en qué idioma y lo dicho en español", [anot.length, anot[0][0], anot[0][1], anot[0][2], /^Se le comunicó a Hopkins John \(blancas\) en inglés: «/.test(anot[0][3]), /\(en español: «/.test(anot[0][3])], [1, 3, "blancas", "nota", true, true]);
+        await ph.click('#hablar-jugador [data-accion="listo"]');
+        igual("«Listo» cierra la pantalla del jugador y deja la ventana del árbitro", await ph.evaluate(() => [!document.getElementById("hablar-jugador"), !!document.querySelector("#hablar[open]")]), [true, true]);
+
+        // Conversar.
+        await ph.click('#hablar [data-pestana="conversar"]');
+        await ph.fill("#hb-arbitro", "Debe anotar la partida.");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForSelector('#hablar .cam-hb-jugador .cam-hb-mensaje');
+        igual("el árbitro escribe en español y el jugador lo lee en su idioma (la traducción viene del servidor)", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador .cam-hb-mensaje span").textContent, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje span").textContent]), ["[EN] Debe anotar la partida.", "Debe anotar la partida."]);
+        igual("al servidor solo viaja el mensaje y los idiomas con el enlace (ni el nombre del jugador ni la mesa)", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return Object.keys(l.body).sort(); }), ["a", "de", "texto", "token"]);
+        igual("la mitad del jugador está girada para leerse del otro lado y dice que es una traducción de ayuda", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador").classList.contains("cam-hb-girado"), /Automatic translation/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent) || /Traduction automatique/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent)]), [true, true]);
+        await ph.click('#hablar .cam-hb-rapida >> nth=0');
+        igual("la respuesta rápida del jugador le llega al árbitro en español, sin traductor", await ph.evaluate(() => [window.__llamadas.filter((x) => x.f === "centroamericano-traducir").length, document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length]), [1, 2]);
+        await ph.fill("#hb-jugador", "I need the toilet please");
+        await ph.click('#hablar [data-accion="enviar-jugador"]');
+        await ph.waitForFunction(() => document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length === 3);
+        igual("el jugador escribe en su idioma y el árbitro lo lee en español", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return [l.body.de, l.body.a, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje:last-child span").textContent]; }), ["en", "es", "[ES] I need the toilet please"]);
+        igual("la conversación no se anotó sola", (await filasAnotar()).length, 1);
+        await ph.click('#hablar [data-accion="anotar-conversacion"]');
+        await ph.waitForFunction(() => /conversación quedó anotada/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        const conv = (await filasAnotar())[1];
+        igual("al marcarlo, la conversación se anota con las dos versiones de cada mensaje", [conv[0], /^Conversación con Hopkins John \(blancas\) en inglés/.test(conv[3]), /Árbitro: «Debe anotar la partida\.» \(EN: «\[EN\] Debe anotar la partida\.»\)/.test(conv[3]), /Jugador: «I need the toilet please» \(ES: «\[ES\] I need the toilet please»\)/.test(conv[3]), conv[3].length <= 2000], [3, true, true, true, true]);
+
+        // Sin traductor (cuenta sin saldo, sin señal…): lo dice y manda a las frases; las frases siguen.
+        await ph.evaluate(() => { window.__traducirFalla = 1; });
+        await ph.fill("#hb-arbitro", "Otra cosa");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForFunction(() => !document.querySelector(".cam-hb-error").hidden);
+        igual("si el traductor falla lo dice, manda a las frases y NO pierde lo escrito ni se anota nada", await ph.evaluate(() => [/Usa las frases/.test(document.querySelector(".cam-hb-error").textContent), document.querySelector(".cam-hb-error").getAttribute("role"), document.getElementById("hb-arbitro").value]), [true, "alert", "Otra cosa"]);
+        await ph.click('#hablar [data-pestana="frases"]');
+        igual("las frases siguen sirviendo", await ph.$$eval("#hablar [data-frase]", (l) => l.length > 30), true);
+
+        // «Necesito un árbitro que hable francés».
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+        await ph.click('#hablar [data-accion="pedir-idioma"]');
+        await ph.waitForFunction(() => /ya sabe que necesitas/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        igual("el pedido va al árbitro principal, a esa mesa, con el idioma escrito", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.body.action === "ayuda").pop(); return [l.body.mesa, l.body.texto]; }), [3, "Necesito un árbitro que hable francés en esta mesa."]);
+        await ph.click('#hablar [data-accion="cerrar-hablar"]');
+        igual("la bitácora de la tablet muestra «Comunicado» (y no «Nota») en las dos anotaciones", await (async () => {
+            await ph.evaluate(() => { document.getElementById("anotado").open = true; });
+            return ph.$$eval("#anotado-filas tr", (l) => l.map((r) => r.children[2].textContent));
+        })(), ["Comunicado", "Comunicado"]);
+        igual("las tres tarjetas siguen iguales de alto entre sí (el botón nuevo no deforma ninguna)", new Set(await ph.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)))).size <= 2, true);
+        igual("sin errores en la página", fh.errores, []);
+        await fh.ctx.close();
+    }
+
     console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
     const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
     const pv = vv.p;

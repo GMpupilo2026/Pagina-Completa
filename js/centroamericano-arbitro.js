@@ -339,6 +339,8 @@
       irregularidad: [["path", { d: "M18 11V6a2 2 0 0 0-4 0" }], ["path", { d: "M14 10V4a2 2 0 0 0-4 0v2" }], ["path", { d: "M10 10.5V6a2 2 0 0 0-4 0v8" }], ["path", { d: "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-6-2.3l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15" }]],
       levantado: [["circle", { cx: "12", cy: "4.5", r: "2" }], ["path", { d: "M12 7.5V15" }], ["path", { d: "M8.5 11l3.5-2.5 3.5 2.5" }], ["path", { d: "M9.5 21l2.5-6 2.5 6" }]],
       anular: [["path", { d: "M9 14L4 9l5-5" }], ["path", { d: "M4 9h10.5a5.5 5.5 0 0 1 0 11H11" }]],
+      // Hablar: un globo de diálogo con tres rayitas (la conversación con el jugador).
+      hablar: [["path", { d: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" }], ["path", { d: "M7.5 9.5h9M7.5 13h5.5" }]],
       salvavidas: [["circle", { cx: "12", cy: "12", r: "9" }], ["circle", { cx: "12", cy: "12", r: "3.5" }], ["path", { d: "M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" }]],
     };
     function icono(nombre) {
@@ -378,6 +380,7 @@
                 sube ? "Subiendo la foto de las planillas de la mesa " + m.mesa
                     : (hecha ? "Cambiar la foto de las planillas de la mesa " + m.mesa + ": tiene que salir las dos planillas juntas" : "Tomar la foto de las dos planillas de la mesa " + m.mesa + " (las dos juntas)"),
                 () => subirPlanilla(m), { hecho: hecha, ocupado: sube, deshabilitado: ocupada || sube }),
+            botonIcono("hablar", "hablar", "Hablar con el jugador de la mesa " + m.mesa + " (frases en inglés y francés, y traductor)", () => abrirHablar(m), { deshabilitado: ocupada }),
             pendiente ? botonIcono("tiempo", "reloj", "Control de tiempos de la mesa " + m.mesa + (hayLectura ? " (ya hay una lectura)" : ""), () => abrirTiempos(false, m.mesa), { hecho: hayLectura }) : null,
             sube ? el("span", { class: "cam-iconos-estado", role: "status", texto: "Subiendo…" }) : null);
     }
@@ -1215,7 +1218,7 @@
             else if (f.tipo === "ilegal" || f.tipo === "irregularidad") detalle = f.jugador + " (" + (f.color === "negras" ? "negras" : "blancas") + ")" + (f.texto ? ": " + f.texto : "");
             else detalle = f.texto;
             filas.append(el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
-                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
+                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : f.tipo === "nota" && f.articulo === "Comunicado" ? "Comunicado" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
         }
     }
 
@@ -1447,11 +1450,11 @@
         catch (e) { pendientes = antes; pintarMensajes(); avisar(e.message, true); }
     }
 
-    async function pedirAyuda(mesa) {
-        let texto = "";
+    async function pedirAyuda(mesa, textoFijo) {
+        let texto = textoFijo || "";
         if (mesa == null) {
             const nota = await Avisos.pedir("Pides ayuda PARA TI, no para una mesa en especial. Si lo que necesitas es que el principal vaya a una mesa, usa «Principal en esta mesa» en esa mesa. Si quieres, dile qué pasa.", { titulo: "Necesito ayuda", etiqueta: "Qué pasa (opcional)", aceptar: "Pedir ayuda" });
-            if (nota === null) return;
+            if (nota === null) return false;
             texto = String(nota).trim();
         }
         try {
@@ -1461,7 +1464,8 @@
             pintarAyuda();
             if (estado) pintar();
             avisar(d.ya ? "Ya habías pedido ayuda" + (mesa != null ? " en la mesa " + mesa : "") + ": el árbitro principal ya lo sabe." : mesa != null ? "Aviso enviado: el árbitro principal irá directo a la mesa " + mesa + "." : "Aviso enviado: el árbitro principal sabe que necesitas ayuda.");
-        } catch (e) { avisar(e.message, true); }
+            return true;
+        } catch (e) { avisar(e.message, true); return false; }
     }
 
     async function guardarNombre() {
@@ -1658,8 +1662,8 @@
 
     // ------------------------------------------------------------- ilegales e irregularidades
 
-    function sumarAnotacion(m, color, tipo, id, jugador, texto) {
-        (estado.anotaciones = estado.anotaciones || []).push({ id, ocurrio: new Date().toISOString(), mesa: m.mesa, color, jugador, tipo, resultado: null, anterior: null, texto: texto || "", articulo: tipo === "nota" && /se levantó/.test(texto || "") ? "Levantó" : "", enviado: false });
+    function sumarAnotacion(m, color, tipo, id, jugador, texto, articulo) {
+        (estado.anotaciones = estado.anotaciones || []).push({ id, ocurrio: new Date().toISOString(), mesa: m.mesa, color, jugador, tipo, resultado: null, anterior: null, texto: texto || "", articulo: articulo || (tipo === "nota" && /se levantó/.test(texto || "") ? "Levantó" : ""), enviado: false });
     }
 
     // Las dos de la lista: ilegal e irregularidad se eligen de una lista y la bitácora queda sola
@@ -1723,6 +1727,43 @@
             ocupadas.delete(m.mesa);
             pintar();
         }
+    }
+
+    // ------------------------------------------------------------- hablar con el jugador (frases en inglés y francés + traductor)
+
+    // La traducción de «Conversar»: una función aparte (centroamericano-traducir), con el mismo enlace del árbitro. Sin reintentos: si
+    // no hay señal o el servicio no está, el árbitro sigue con las frases fijas. Lanza un Error con un mensaje legible.
+    async function traducirTexto(de, a, texto) {
+        let reloj;
+        const espera = new Promise((_, no) => { reloj = setTimeout(() => no(new Error("La traducción tardó demasiado.")), 20000); });
+        let r;
+        try { r = await Promise.race([sb.functions.invoke("centroamericano-traducir", { body: { token: token(), texto, de, a } }), espera]); }
+        catch (e) { throw new Error(e && e.message ? e.message : "No se pudo traducir."); }
+        finally { clearTimeout(reloj); }
+        let { data, error } = r;
+        if (error && error.context && typeof error.context.json === "function") { try { data = await error.context.json(); } catch (e) { /* sin cuerpo */ } }
+        if (error || !data || data.error || !data.traduccion) throw new Error((data && typeof data.error === "string" && data.error) || "No hubo respuesta. Revisa tu conexión.");
+        return String(data.traduccion);
+    }
+
+    // Lo que se le dijo al jugador queda en la bitácora SOLO cuando el árbitro lo marca («Anotar en la bitácora»).
+    async function anotarComunicado(m, texto, color) {
+        const nombre = nombreDe(m, color);
+        const r = await escribir("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "nota", texto, articulo: "Comunicado" }, "Comunicado a " + nombre + " (mesa " + m.mesa + ")", { mesa: m.mesa });
+        if (r.encolado) { sumarAnotacion(m, color, "nota", r.id, nombre, texto, "Comunicado"); return; }
+        sumarAnotacion(m, color, "nota", r.d.id, r.d.jugador || nombre, texto, "Comunicado");
+    }
+
+    function abrirHablar(m) {
+        const H = window.CentroamericanoHablar;
+        if (!H || !window.CentroamericanoFrases) { avisar("No se pudo abrir «Hablar con el jugador». Recarga la página.", true); return; }
+        H.abrir({
+            mesa: m.mesa,
+            jugadores: [{ color: "blancas", nombre: m.blancas, fed: m.fed_b || "" }, { color: "negras", nombre: m.negras, fed: m.fed_n || "" }],
+            traducir: traducirTexto,
+            anotar: (texto, color) => anotarComunicado(m, texto, color),
+            pedirIdioma: async (id, nombreIdioma) => { if (!(await pedirAyuda(m.mesa, "Necesito un árbitro que hable " + (id === "fr" ? "francés" : "inglés") + " en esta mesa."))) throw new Error("No se pudo avisar. Intenta de nuevo."); },
+        });
     }
 
     // «Se levantó»: un toque y queda en la bitácora (con la hora y tu nombre) que este jugador se levantó de la mesa. Cada toque es una

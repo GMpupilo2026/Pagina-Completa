@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104150000
+# al-dia-con: 20261104221704
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -65,6 +65,7 @@ tabla  centroamericano_registro  rls=true
 tabla  centroamericano_salidas  rls=true
 tabla  centroamericano_tiempos  rls=true
 tabla  centroamericano_torneos  rls=true
+tabla  centroamericano_traducciones  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
@@ -792,6 +793,14 @@ columna  centroamericano_torneos.prueba  boolean
 columna  centroamericano_torneos.rama  text
 columna  centroamericano_torneos.sid_en_boveda  boolean
 columna  centroamericano_torneos.tnr  text
+columna  centroamericano_traducciones.asignacion_id  uuid
+columna  centroamericano_traducciones.caracteres  integer
+columna  centroamericano_traducciones.costo_usd  numeric(10,6)
+columna  centroamericano_traducciones.creada  timestamp with time zone
+columna  centroamericano_traducciones.id  uuid
+columna  centroamericano_traducciones.ok  boolean
+columna  centroamericano_traducciones.tokens_entrada  integer
+columna  centroamericano_traducciones.tokens_salida  integer
 columna  certificados.academia_id  uuid
 columna  certificados.academia_logo_path  text
 columna  certificados.academia_nombre  text
@@ -3814,6 +3823,9 @@ indice  centroamericano_salidas  centroamericano_salidas_pkey
 indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
 indice  centroamericano_tiempos  centroamericano_tiempos_pkey
 indice  centroamericano_torneos  centroamericano_torneos_pkey
+indice  centroamericano_traducciones  centroamericano_traducciones_asignacion_idx
+indice  centroamericano_traducciones  centroamericano_traducciones_creada_idx
+indice  centroamericano_traducciones  centroamericano_traducciones_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
 indice  certificados  certificados_codigo_key
