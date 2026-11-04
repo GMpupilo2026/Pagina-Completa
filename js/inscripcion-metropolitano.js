@@ -117,6 +117,10 @@
         <div class="grid sm:grid-cols-2 gap-4">
           <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off"></div>
           <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off"></div>
+          <div data-caja-nombre-fide class="sm:col-span-2 hidden space-y-2">
+            <p data-estado-nombre class="text-sm" role="status" aria-live="polite"></p>
+            <ul data-resultados-nombre class="space-y-2" aria-label="Jugadores de FIDE con ese nombre"></ul>
+          </div>
           <div><label for="${id("nacimiento")}" class="block text-sm font-semibold mb-1">Fecha de nacimiento${AST}</label><input id="${id("nacimiento")}" data-campo data-c="nacimiento" type="date" min="1920-01-01" max="2022-12-31"><p data-aviso-nac class="text-xs mt-1 ${ROJO}" aria-live="polite"></p></div>
           <div><label for="${id("sexo")}" class="block text-sm font-semibold mb-1">Sexo${AST}</label><select id="${id("sexo")}" data-campo data-c="sexo"><option value="">Elige…</option><option value="f">Femenino</option><option value="m">Masculino</option></select></div>
           <div><label for="${id("nacionalidad")}" class="block text-sm font-semibold mb-1">Nacionalidad${AST}</label><input id="${id("nacionalidad")}" data-campo data-c="nacionalidad" list="paises" maxlength="60" value="Costa Rica"></div>
@@ -251,17 +255,28 @@
       if (e.key === "ArrowDown") { const b = q("[data-resultados] button"); if (b) { e.preventDefault(); b.focus(); } }
       if (e.key === "Enter") e.preventDefault();
     });
-    async function buscar(t) {
+    /* Busca en FIDE. `desdeNombre`: la buscó escribir el nombre y los
+       apellidos (no el buscador); si hay UNA sola persona se carga sola, y lo
+       encontrado se enseña debajo de los nombres. */
+    async function buscar(t, desdeNombre) {
       const mio = ++turno;
       let r = cacheFide.get(t.toLowerCase());
       if (!r) { r = await window.PareoEloNacional.buscarEnLista("fide", t); if (r && r.ok) cacheFide.set(t.toLowerCase(), r); }
       if (mio !== turno) return;
-      const lista = q("[data-resultados]"), est = q("[data-estado-fide]");
+      const lista = q(desdeNombre ? "[data-resultados-nombre]" : "[data-resultados]"), est = q(desdeNombre ? "[data-estado-nombre]" : "[data-estado-fide]");
       lista.textContent = "";
+      if (desdeNombre) q("[data-caja-nombre-fide]").classList.remove("hidden");
       if (!r || !r.ok) { est.textContent = (r && r.error) || "No se pudo buscar en FIDE. Revisa la conexión e intenta de nuevo."; return; }
-      if (!r.filas.length) { est.textContent = "No aparece con ese nombre. Prueba solo con el primer apellido, o con el ID FIDE. Si no tiene, marca «No tiene ID FIDE»."; return; }
+      if (desdeNombre && r.filas.length === 1) { elegir(r.filas[0], true); return; }
+      if (!r.filas.length) {
+        est.textContent = desdeNombre
+          ? "No aparece en FIDE con ese nombre y apellidos. Si tiene ID FIDE, búsquelo arriba por el primer apellido o por el número; si no tiene, marque «No tiene ID FIDE»."
+          : "No aparece con ese nombre. Prueba solo con el primer apellido, o con el ID FIDE. Si no tiene, marca «No tiene ID FIDE».";
+        return;
+      }
       est.textContent = r.filas.length === 1 ? "1 jugador encontrado. Tócalo para elegirlo."
-        : r.filas.length + " jugadores encontrados" + (r.hayMas ? " (hay más: escribe más del nombre)" : "") + ". Toca el que es.";
+        : (desdeNombre ? "En FIDE hay " + r.filas.length + " personas con ese nombre" : r.filas.length + " jugadores encontrados")
+          + (r.hayMas ? " (hay más: escribe más del nombre)" : "") + ". Toca el que es.";
       r.filas.forEach((f) => {
         const li = document.createElement("li");
         const b = document.createElement("button");
@@ -272,24 +287,50 @@
         d.textContent = [f.fed, "ID " + f.fideId, f.nacimiento ? "nacido en " + f.nacimiento : null,
           "Estándar " + (f.estandar || "sin Elo"), "Rápido " + (f.rapido || "—"), "Blitz " + (f.blitz || "—")].filter(Boolean).join(" · ");
         b.append(n, d);
-        b.addEventListener("click", () => elegir(f));
+        b.addEventListener("click", () => elegir(f, desdeNombre));
         b.addEventListener("keydown", (e) => {
           const todos = [...lista.querySelectorAll("button")], i = todos.indexOf(b);
           if (e.key === "ArrowDown" && todos[i + 1]) { e.preventDefault(); todos[i + 1].focus(); }
-          if (e.key === "ArrowUp") { e.preventDefault(); (todos[i - 1] || buscarEl).focus(); }
+          if (e.key === "ArrowUp") { e.preventDefault(); (todos[i - 1] || (desdeNombre ? c("apellidos") : buscarEl)).focus(); }
         });
         li.append(b); lista.append(li);
       });
     }
-    function elegir(f) {
+    function elegir(f, desdeNombre) {
       yo.elegido = f;
       q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = "";
+      q("[data-resultados-nombre]").textContent = "";
       buscarEl.value = f.fideId;
+      // Si lo escribió la persona, su nombre se queda como lo escribió (FIDE
+      // no lleva tildes: «Jimenez» por «Jiménez»). Desde el buscador, se llena.
       const [ap, no] = String(f.nombre).split(",").map((x) => (x || "").trim());
-      if (no) { c("nombre").value = no; c("apellidos").value = ap; } else if (!c("apellidos").value) c("apellidos").value = ap;
+      if (!desdeNombre) {
+        if (no) { c("nombre").value = no; c("apellidos").value = ap; } else if (!c("apellidos").value) c("apellidos").value = ap;
+      }
+      const est = q("[data-estado-nombre]");
+      est.textContent = "✓ ID FIDE " + f.fideId + " cargado: " + (f.titulo ? f.titulo + " " : "") + f.nombre + " · " + f.fed
+        + (f.nacimiento ? " · nacido en " + f.nacimiento : "") + " · Elo estándar " + (f.estandar || "sin Elo") + ". Si no es esta persona, búsquela arriba.";
+      q("[data-caja-nombre-fide]").classList.remove("hidden");
       pintarElegido(); recalcular();
-      q("[data-elegido]").focus();
+      if (!desdeNombre) q("[data-elegido]").focus();
     }
+
+    // Al escribir el nombre y los apellidos se busca solo en FIDE, como
+    // «Apellidos, Nombre» (lo que mejor encuentra su buscador) y sin tildes.
+    let esperaNombre = null;
+    const buscarPorNombre = () => {
+      clearTimeout(esperaNombre);
+      const rol = yo.rol();
+      if (yo.elegido || sinFide() || (rol !== "jugador" && rol !== "entrenador")) return;
+      const limpio = (x) => v(x).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z ,.'-]+/g, " ").replace(/\s+/g, " ").trim();
+      const nom = limpio("nombre"), ape = limpio("apellidos");
+      if (nom.length < 2 || ape.length < 2) { q("[data-caja-nombre-fide]").classList.add("hidden"); return; }
+      q("[data-caja-nombre-fide]").classList.remove("hidden");
+      q("[data-estado-nombre]").textContent = "Buscando su ID FIDE…";
+      esperaNombre = setTimeout(() => buscar(ape + ", " + nom, true), 800);
+    };
+    c("nombre").addEventListener("input", buscarPorNombre);
+    c("apellidos").addEventListener("input", buscarPorNombre);
     function pintarElegido() {
       const caja = q("[data-elegido]"), f = yo.elegido;
       caja.textContent = ""; caja.classList.toggle("hidden", !f);
@@ -302,7 +343,7 @@
       const b = document.createElement("button"); b.type = "button";
       b.className = "mt-2 text-sm underline font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
       b.textContent = "No es esta persona: buscar otra vez";
-      b.addEventListener("click", () => { yo.elegido = null; pintarElegido(); recalcular(); buscarEl.value = ""; buscarEl.focus(); });
+      b.addEventListener("click", () => { yo.elegido = null; pintarElegido(); q("[data-caja-nombre-fide]").classList.add("hidden"); recalcular(); buscarEl.value = ""; buscarEl.focus(); });
       caja.append(t, d, b);
     }
     el.querySelectorAll('input[name="' + k + '-fide"]').forEach((r) => r.addEventListener("change", () => {
@@ -479,7 +520,7 @@
         dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
         acepta_publicidad: c("acepta_publicidad").checked,
       };
-      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo });
+      const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura() });
       return { errores, datos, precio };
     };
 
@@ -528,7 +569,7 @@
   function totales() {
     if (!personas.length) return null;
     const lineas = [], avisos = new Set();
-    let usd = 0, gratisTodo = true;
+    let usd = 0, iva = 0, gratisTodo = true;
     personas.forEach((p, i) => {
       const { datos, precio } = p.armar(metodo);
       const quien = [datos.nombre, datos.apellidos].filter(Boolean).join(" ") || "Persona " + (i + 1);
@@ -537,9 +578,12 @@
         precio.avisos.forEach((a) => avisos.add(a));
       } else if (datos.rol !== "jugador") lineas.push(quien + " — " + (p.esDelegado ? "delegado" : R.rolDe(datos.rol, datos.sexo).toLowerCase()) + ": sin costo de inscripción");
       usd += precio.usd;
+      iva += precio.iva;
       if (datos.rol === "jugador" && !precio.gratis) gratisTodo = false;
     });
     usd = Math.round(usd * 100) / 100;
+    iva = Math.round(iva * 100) / 100;
+    if (iva > 0) lineas.push("IVA del 13 % (factura electrónica): " + R.dinero(iva));
     const crc = Math.round(usd * R.TIPO_CAMBIO);
     const caja = $("total"); caja.textContent = "";
     const ul = document.createElement("ul"); ul.className = "text-sm space-y-1";
@@ -552,7 +596,9 @@
     $("con-pago").classList.toggle("hidden", usd === 0);
     pintarMetodos(usd, crc);
     $("cuenta-personas").textContent = "(" + (personas.length === 1 ? "1 persona" : personas.length + " personas") + " hasta ahora)";
-    return { usd, crc, lineas, gratisTodo };
+    // Sin nada que cobrar no hay factura que pedir.
+    $("caja-factura-todo").classList.toggle("hidden", usd === 0 && iva === 0);
+    return { usd, crc, iva, lineas, gratisTodo };
   }
 
   function pintarMetodos(usd, crc) {
@@ -576,7 +622,57 @@
     d.append(t, ul);
   }
 
-  $("quiere-factura").addEventListener("change", () => $("caja-factura").classList.toggle("hidden", !$("quiere-factura").checked));
+  /* ---------- la factura electrónica (Hacienda) ---------- */
+  const quiereFactura = () => $("quiere-factura").checked;
+  Object.entries(R.FACTURA_TIPOS).forEach(([k, T]) => { const o = document.createElement("option"); o.value = k; o.textContent = T.nombre; $("fac_tipo").append(o); });
+  const opciones = (sel, lista, primera) => {
+    sel.textContent = "";
+    const o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; sel.append(o0);
+    lista.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; sel.append(o); });
+  };
+  const DT = window.DivisionTerritorial || [];
+  opciones($("fac_provincia"), DT.map((x) => x.provincia), "Elige la provincia…");
+  opciones($("fac_canton"), [], "Primero la provincia");
+  opciones($("fac_distrito"), [], "Primero el cantón");
+  const provinciaDe = () => DT.find((x) => x.provincia === $("fac_provincia").value);
+  $("fac_provincia").addEventListener("change", () => {
+    const pr = provinciaDe();
+    opciones($("fac_canton"), pr ? pr.cantones.map((c) => c.canton) : [], pr ? "Elige el cantón…" : "Primero la provincia");
+    opciones($("fac_distrito"), [], "Primero el cantón");
+  });
+  $("fac_canton").addEventListener("change", () => {
+    const pr = provinciaDe(), ca = pr && pr.cantones.find((c) => c.canton === $("fac_canton").value);
+    opciones($("fac_distrito"), ca ? ca.distritos : [], ca ? "Elige el distrito…" : "Primero el cantón");
+  });
+  function tipoFactura() {
+    const T = R.FACTURA_TIPOS[$("fac_tipo").value];
+    $("fac_id_ayuda").textContent = T ? T.ayuda : "";
+    $("fac_direccion").classList.toggle("hidden", $("fac_tipo").value === "extranjero");
+  }
+  $("fac_tipo").addEventListener("change", tipoFactura);
+  tipoFactura();
+  $("quiere-factura").addEventListener("change", () => { $("caja-factura").classList.toggle("hidden", !quiereFactura()); totales(); });
+  const datosFactura = () => ({
+    tipo: $("fac_tipo").value, identificacion: $("fac_id").value.replace(/[\s-]/g, ""), nombre: $("fac_nombre").value.trim(),
+    comercial: $("fac_comercial").value.trim(), correo: $("fac_correo").value.trim(), correo_copia: $("fac_copia").value.trim(),
+    telefono: $("fac_tel").value.trim(), actividad: $("fac_actividad").value.trim(),
+    provincia: $("fac_tipo").value === "extranjero" ? "" : $("fac_provincia").value, canton: $("fac_tipo").value === "extranjero" ? "" : $("fac_canton").value,
+    distrito: $("fac_tipo").value === "extranjero" ? "" : $("fac_distrito").value, senas: $("fac_tipo").value === "extranjero" ? "" : $("fac_senas").value.trim(),
+  });
+  // Lo mismo que revisa interno.metropolitano_factura(), dicho antes de mandar.
+  function erroresFactura() {
+    const f = datosFactura(), T = R.FACTURA_TIPOS[f.tipo], e = [];
+    const correoBueno = (x) => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(x);
+    if (!T) e.push([$("fac_tipo"), "Factura: elige el tipo de identificación."]);
+    else if (!T.patron.test(f.identificacion)) e.push([$("fac_id"), "Factura: revisa el número de identificación (" + T.ayuda + ")."]);
+    if (f.nombre.length < 2) e.push([$("fac_nombre"), "Factura: falta el nombre o la razón social."]);
+    if (!correoBueno(f.correo)) e.push([$("fac_correo"), "Factura: revisa el correo para recibirla."]);
+    if (f.correo_copia && !correoBueno(f.correo_copia)) e.push([$("fac_copia"), "Factura: revisa el correo de copia."]);
+    if (f.telefono && !/^\d{8,15}$/.test(f.telefono.replace(/\D/g, ""))) e.push([$("fac_tel"), "Factura: revisa el teléfono."]);
+    if (f.actividad && !/^[0-9.]{4,10}$/.test(f.actividad)) e.push([$("fac_actividad"), "Factura: revisa el código de actividad económica."]);
+    if (f.tipo !== "extranjero" && (!f.provincia || !f.canton || !f.distrito || !f.senas)) e.push([$("fac_provincia"), "Factura: falta la dirección (provincia, cantón, distrito y otras señas)."]);
+    return e;
+  }
 
   let comprobante = null;
   $("comprobante").addEventListener("change", () => {
@@ -614,6 +710,7 @@
     const t = totales();
     if (t.usd > 0 && !metodo) errores.push([$("metodos"), "Elige cómo pagaste."]);
     if (t.usd > 0 && !comprobante) errores.push([$("comprobante"), "Falta el comprobante de pago."]);
+    if (t.usd > 0 && quiereFactura()) errores.push(...erroresFactura());
     if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las tres casillas del final."]);
     if (errores.length) {
       $("msg").textContent = errores[0][1] + (errores.length > 1 ? " (y " + (errores.length - 1) + " cosa" + (errores.length > 2 ? "s" : "") + " más)" : "");
@@ -697,6 +794,13 @@
     const t = document.createElement("p"); t.className = "font-bold mt-2";
     t.textContent = envio.total.usd === 0 ? "Total: sin costo" : "Total: " + R.dinero(envio.total.usd) + (R.METODOS[metodo].moneda === "CRC" ? " = " + R.colones(envio.total.crc) : "") + " por " + R.METODOS[metodo].nombre;
     tot.append(t);
+    if (envio.total.iva > 0) {
+      const f = datosFactura(), T = R.FACTURA_TIPOS[f.tipo];
+      const fp = document.createElement("p"); fp.className = "mt-2";
+      fp.textContent = "Factura electrónica a nombre de " + f.nombre + " (" + T.nombre + " " + f.identificacion + "), a " + f.correo
+        + (f.tipo !== "extranjero" ? ". Dirección: " + [f.distrito, f.canton, f.provincia].join(", ") + ", " + f.senas : "") + ".";
+      tot.append(fp);
+    }
     $("resumen").focus();
     window.scrollTo({ top: 0, behavior: "smooth" });
     await pintarGafetes();
@@ -754,7 +858,7 @@
         modo: esGrupo() ? "grupo" : "individual", delegacion: esGrupo() ? $("delegacion").value.trim() : null,
         personas: lista, pago_metodo: envio.total.usd > 0 ? metodo : null, comprobante: rutaComp,
         pago_referencia: $("referencia").value.trim(), pago_fecha: $("pago_fecha").value || null,
-        factura: $("quiere-factura").checked && envio.total.usd > 0 ? { nombre: $("fac_nombre").value.trim(), identificacion: $("fac_id").value.trim(), correo: $("fac_correo").value.trim() } : null,
+        factura: quiereFactura() && envio.total.usd > 0 ? datosFactura() : null,
         acepta_reglamento: $("acepta-reglamento").checked, acepta_imagen: $("acepta-imagen").checked, acepta_datos: $("acepta-datos").checked,
         validado: true,
       };
