@@ -933,3 +933,28 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-hb-error[hidden] { display: none; }
 .cam-hb-acciones-chicas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 @media (prefers-reduced-motion: no-preference) { .cam-hb-girado { transition: transform 0.2s; } }
+/* ===== Modo liviano: la tablet vieja o lenta (js/modo-liviano.js pone <html data-liviano="si">) =====
+ * Lo que cuesta dibujar en una tablet vieja y no dice nada: las animaciones que no paran (cada cuadro se vuelve a
+ * pintar), las sombras difuminadas, los filtros y las hojas de la portada (dos PNG grandes con transparencia encima
+ * de un degradado). Lo que SÍ dice algo se queda, quieto: el borde dorado de Fair Play, el anillo del tiempo de
+ * espera cumplido, el del jugador elegido y el de los avisos son anillos sólidos (box-shadow sin difuminar o borde),
+ * igual que con «reducir movimiento». Ver «Las tablets viejas: el modo liviano» en docs/decisiones/juegos-y-torneos.md. */
+html[data-liviano="si"] *, html[data-liviano="si"] *::before, html[data-liviano="si"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+html[data-liviano="si"] .cac-hojas { display: none; }
+html[data-liviano="si"] .cam-mascota, html[data-liviano="si"] .cam-logo-centro img, html[data-liviano="si"] .cac-mascota { filter: none; }
+html[data-liviano="si"] .cam-logo-centro > span { text-shadow: none; }
+html[data-liviano="si"] .cam-fab, html[data-liviano="si"] .cam-ventana, html[data-liviano="si"] .cam-flotante,
+html[data-liviano="si"] .cam-tarjeta, html[data-liviano="si"] .cam-mesa, html[data-liviano="si"] header { box-shadow: none; }
+html[data-liviano="si"] .cam-fab { border-width: 3px; }
+html[data-liviano="si"] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* Fair Play: sin el giro del degradado (se repinta en cada cuadro), un borde dorado fijo y bien visible. */
+html[data-liviano="si"] .cam-mesa[data-fp-alcance="mesa"]::before, html[data-liviano="si"] .cam-jugador[data-fair-play="si"]::before { display: none; }
+html[data-liviano="si"] .cam-mesa[data-fp-alcance="mesa"], html[data-liviano="si"] .cam-jugador[data-fair-play="si"] { box-shadow: 0 0 0 4px #b8860b; }
+/* Los avisos que antes latían: el mismo anillo rojo, quieto. */
+html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[data-estado="abierto"], html[data-liviano="si"] .cam-barra-estado[data-alerta="si"] { box-shadow: 0 0 0 4px rgb(206 19 40 / 0.55); }
+/* El botón «Liviano» encendido se distingue también por el texto («Liviano: sí»), no solo por esto. */
+#modo-liviano[aria-pressed="true"] { outline: 2px solid #fbd38d; outline-offset: 1px; }

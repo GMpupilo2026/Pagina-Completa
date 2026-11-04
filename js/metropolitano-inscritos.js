@@ -66,7 +66,7 @@
       ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
       ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
-      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)],
+      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)], ["Con parqueo", n((x) => x.parqueo)],
       ["De otro país", n((x) => !/^costa rica$/i.test(x.pais_residencia))], ["Menores de edad", n((x) => R.edad(x.nacimiento, R.INICIO) < 18)],
     ];
     const caja = $("cifras"); caja.textContent = "";
@@ -76,9 +76,21 @@
       const b = document.createElement("p"); b.className = "text-xl font-bold text-brand-800 dark:text-white"; b.textContent = v;
       d.append(a, b); caja.append(d);
     });
+    // De dónde vienen los de Costa Rica, por provincia (para las estadísticas).
+    const porProv = {};
+    act.forEach((x) => { if (x.provincia) porProv[x.provincia] = (porProv[x.provincia] || 0) + 1; });
+    const prov = Object.entries(porProv).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    if (prov.length) {
+      const d = document.createElement("div"); d.className = "bg-white dark:bg-brand-900 rounded-xl shadow p-3 col-span-full";
+      const a = document.createElement("p"); a.className = "text-xs text-brand-500 dark:text-brand-300"; a.textContent = "De Costa Rica, por provincia";
+      const b = document.createElement("p"); b.className = "text-sm font-semibold text-brand-800 dark:text-white"; b.textContent = prov.map(([p, k]) => p + " " + k).join(" · ");
+      d.append(a, b); caja.append(d);
+    }
   }
 
   function celda(tr, hijos, clase) { const td = document.createElement("td"); td.className = "p-3 align-top " + (clase || ""); hijos.forEach((h) => td.append(h)); tr.append(td); return td; }
+  const HABITACION = { organizacion: "con quien asigne la organización", compartida: "con su familia, delegación o acompañantes", doble: "doble", individual: "individual" };
+  const acompananteTexto = (a) => [a.nombre, a.parentesco, a.documento, a.nacimiento && "nació el " + a.nacimiento].filter(Boolean).join(", ");
   function texto(t, clase) { const s = document.createElement("span"); s.className = "block " + (clase || ""); s.textContent = t; return s; }
 
   function detalles(x) {
@@ -90,10 +102,20 @@
       [doc, x.documento], ["Nacimiento", x.nacimiento + " (" + R.edad(x.nacimiento, R.INICIO) + " años)"], ["Sexo", x.sexo === "f" ? "Femenino" : "Masculino"],
       ["Delegación", x.delegacion && x.delegacion + (x.es_delegado ? " (es el delegado)" : "")],
       ["Publicidad", x.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"],
+      ["Seguro y exoneración", x.acepta_seguro ? "Declaró su póliza y eximió a la FCA (texto " + (x.exoneracion_version || "—") + ")" : ""],
+      ["Nombre en FIDE", x.nombre_fide],
+      ["En el Drive", x.drive_en ? "Sí, desde " + window.HoraCR.fechaHora(x.drive_en) : x.drive_error ? "Todavía no: " + x.drive_error : "Todavía no (se manda sola)"],
+      ["Código de descuento", x.codigo_descuento && x.codigo_descuento + " (" + x.descuento_pct + " %)"],
+      ["Condiciones del hospedaje", x.acepta_hospedaje ? "Aceptadas (" + (x.hospedaje_version || "") + "): puerta a las 10:30 p.m." + (R.TITULOS_GRATIS.includes(x.titulo || "") && x.rol === "jugador" ? "; la ropa de cama la da la organización" : "; trae su ropa de cama") : (x.hospedaje ? "No las aceptó" : "")],
+      ["Parqueo", x.parqueo ? "Placa " + x.placa + " (" + R.dinero(Number(x.parqueo_usd || 0)) + ")" : ""],
+      ["Viene de", x.provincia && [x.canton, x.provincia].filter(Boolean).join(", ")],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
-      ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", " + x.habitacion + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
+      ["Invitado titulado", x.rol === "jugador" && R.TITULOS_GRATIS.includes(x.titulo || "") ? "Hospedaje y alimentación de la organización" + (x.viaje && x.viaje.llegada ? ", del " + x.viaje.llegada + " al " + x.viaje.salida + (x.origen === "fuera" ? " según su vuelo" : " en el Estadio Nacional") : "") + (x.viaje && x.viaje.traslado ? "; pide transporte del aeropuerto" : "") : ""],
+      ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", compartida " + (HABITACION[x.habitacion] || x.habitacion)
+        + (x.acepta_compartir ? " (aceptó compartir)" : "") + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
+      ["Acompañantes", (x.acompanantes_detalle || []).map(acompananteTexto).join(" · ")],
       ["Comidas", x.comidas.length ? x.comidas.join(", ") + " del " + x.comidas_desde + " al " + x.comidas_hasta : "No"], ["Dieta", x.dieta],
       ["Viaje", x.viaje && [x.viaje.llegada && "llega " + x.viaje.llegada, x.viaje.salida && "sale " + x.viaje.salida, x.viaje.vuelo, x.viaje.traslado && "traslado"].filter(Boolean).join(" · ")],
       ["Condición", x.condicion.join(", ")], ["Accesibilidad", x.accesibilidad],
@@ -120,7 +142,11 @@
       celda(tr, [texto(codigo(x), "font-mono font-semibold"), texto(x.estado === "anulada" ? "Anulada" : "", "text-xs text-red-700 dark:text-red-400")]);
       const fide = document.createElement("a");
       if (x.fide_id) { fide.href = "https://ratings.fide.com/profile/" + encodeURIComponent(x.fide_id); fide.target = "_blank"; fide.rel = "noopener"; fide.className = "text-xs underline"; fide.textContent = "FIDE " + x.fide_id + (x.federacion ? " · " + x.federacion : "") + " · Std " + (x.elo_estandar || "—"); }
-      celda(tr, [texto((x.titulo ? x.titulo + " " : "") + x.apellidos + ", " + x.nombre, "font-semibold"), x.fide_id ? fide : texto("Sin ID FIDE: tramitarlo", "text-xs text-amber-800 dark:text-amber-300"), detalles(x)], "min-w-[14rem]");
+      // El nombre que trajo FIDE: si no es el inscrito, se avisa (el perfil, en el enlace, dice el real).
+      const sinTildes = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]+/gi, " ").trim().toLowerCase();
+      const distinto = x.fide_id && x.nombre_fide && sinTildes(x.nombre_fide.replace(",", " ")).split(" ").sort().join(" ") !== sinTildes(x.apellidos + " " + x.nombre).split(" ").sort().join(" ");
+      celda(tr, [texto((x.titulo ? x.titulo + " " : "") + x.apellidos + ", " + x.nombre, "font-semibold"), x.fide_id ? fide : texto("Sin ID FIDE: tramitarlo", "text-xs text-amber-800 dark:text-amber-300"),
+        distinto ? texto("⚠ En FIDE se llama «" + x.nombre_fide + "»: revisa el perfil.", "text-xs font-semibold text-amber-800 dark:text-amber-300") : texto(""), detalles(x)], "min-w-[14rem]");
       const queEs = x.es_delegado ? "Delegado" + (x.rol === "delegado" ? "" : " y " + R.rolDe(x.rol, x.sexo).toLowerCase()) : R.rolDe(x.rol, x.sexo);
       celda(tr, [texto(queEs, "font-semibold"), texto(x.torneos.map((t) => R.TORNEOS[t].corto).join(" + "), "text-xs"),
         texto(x.delegacion || "", "text-xs text-brand-500 dark:text-brand-300"), texto(x.acepta_publicidad ? "📣 Autoriza publicidad" : "", "text-xs")]);
@@ -130,6 +156,9 @@
       const archivos = document.createElement("div"); archivos.className = "flex gap-2";
       archivos.append(window.Adjuntos.celda([x.foto], bajar, x.nombre + " " + x.apellidos, "foto"));
       if (x.comprobante) archivos.append(window.Adjuntos.celda([x.comprobante], bajar, x.nombre + " " + x.apellidos, "comprobante"));
+      // Los titulados de afuera: la foto del tiquete aéreo y la del pasaporte.
+      if (x.tiquete) archivos.append(window.Adjuntos.celda([x.tiquete], bajar, x.nombre + " " + x.apellidos, "tiquete"));
+      if (x.pasaporte) archivos.append(window.Adjuntos.celda([x.pasaporte], bajar, x.nombre + " " + x.apellidos, "pasaporte"));
       const gaf = document.createElement("button"); gaf.type = "button"; gaf.className = "text-xs underline mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
       gaf.textContent = "⬇ Gafete (PDF)"; gaf.addEventListener("click", () => gafete(x, gaf));
       celda(tr, [archivos, gaf]);
@@ -207,7 +236,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Código de descuento", "Descuento %", "Parqueo (placa)", "Parqueo USD", "Condiciones del hospedaje", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -215,7 +244,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.codigo_descuento, x.descuento_pct, x.parqueo ? x.placa : "", x.parqueo ? x.parqueo_usd : "", x.acepta_hospedaje ? "Aceptó (" + (x.hospedaje_version || "") + ")" : "", x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 
@@ -229,6 +258,155 @@
 
   ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad"].forEach((id) => $(id).addEventListener("input", pintar));
 
+  /* ===================== El Drive ===================== */
+  // La Edge Function metropolitano-drive: estado, conectar y mandar lo que falta.
+  async function alDrive(cuerpo) {
+    const { data, error } = await window.sb.functions.invoke("metropolitano-drive", { body: cuerpo });
+    if (error) {
+      let msg = "No se pudo hablar con el Drive.";
+      try { const d = await error.context.json(); if (d && d.error) msg = d.error; } catch (e) { /* sin cuerpo */ }
+      return { error: msg };
+    }
+    return data || {};
+  }
+  function pintarDrive(d) {
+    const faltan = d.pendientes || 0;
+    $("drive-estado").textContent = d.error && d.conectado === undefined ? d.error
+      : (d.conectado ? "✓ Conectado a «" + (d.carpeta || "Inscripciones Metropolitano 2026") + "»." : "Todavía no está conectado: usa «Conectar con Drive».")
+        + " " + (faltan === 0 ? "No falta ninguna inscripción por mandar." : (faltan === 1 ? "Falta 1 inscripción" : "Faltan " + faltan + " inscripciones") + " por mandar"
+        + (d.con_error ? " (" + d.con_error + " con error: se reintentan)" : "") + ".");
+    $("drive-enviar").disabled = !d.conectado || faltan === 0;
+  }
+  async function estadoDrive() { pintarDrive(await alDrive({ accion: "estado" })); }
+  $("drive-abrir-conectar").addEventListener("click", () => {
+    const abierto = $("drive-conectar").classList.toggle("hidden") === false;
+    $("drive-abrir-conectar").setAttribute("aria-expanded", abierto ? "true" : "false");
+    if (abierto) $("drive-url").focus();
+  });
+  $("drive-conectar").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("drive-guardar").disabled = true; $("drive-msg").textContent = "Probando la conexión…";
+    const d = await alDrive({ accion: "conectar", url: $("drive-url").value.trim(), secreto: $("drive-secreto").value.trim() });
+    $("drive-guardar").disabled = false;
+    if (d.error) { $("drive-msg").textContent = d.error; return; }
+    $("drive-msg").textContent = "Listo: el Drive quedó conectado.";
+    $("drive-secreto").value = "";
+    $("drive-conectar").classList.add("hidden"); $("drive-abrir-conectar").setAttribute("aria-expanded", "false");
+    pintarDrive(d);
+  });
+  $("drive-enviar").addEventListener("click", async () => {
+    $("drive-enviar").disabled = true; $("drive-msg").textContent = "Mandando al Drive…";
+    const d = await alDrive({ accion: "enviar" });
+    if (d.error) { $("drive-msg").textContent = d.error; $("drive-enviar").disabled = false; return; }
+    $("drive-msg").textContent = (d.enviados === 1 ? "1 inscripción mandada" : d.enviados + " inscripciones mandadas") + (d.errores ? ", " + d.errores + " con error" : "")
+      + (d.quedan ? ". Quedan " + d.quedan + ": vuelve a tocar el botón o espera, que se mandan solas cada 10 minutos." : ".");
+    await cargar();
+    await estadoDrive();
+  });
+
+  /* ===================== Los códigos de descuento ===================== */
+  // Los genera la base (metropolitano_codigos_crear, solo administración) y
+  // cada uno vale una vez: la inscripción que lo usa queda atada a él.
+  let codigos = [];
+  async function cargarCodigos() {
+    codigos = [];
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await window.sb.from("metropolitano_codigos").select("*").order("creado", { ascending: false }).range(desde, desde + 999);
+      if (error) { $("cod-msg").textContent = "No se pudieron leer los códigos."; return; }
+      codigos = codigos.concat(data || []);
+      if (!data || data.length < 1000) break;
+    }
+    pintarCodigos();
+  }
+  function pintarCodigos() {
+    const tb = $("codigos-filas"); tb.textContent = "";
+    if (!codigos.length) {
+      const tr = document.createElement("tr"); const td = document.createElement("td"); td.colSpan = 5; td.className = "p-4 text-brand-500 dark:text-brand-300";
+      td.textContent = "Todavía no hay códigos. Genera el primero arriba."; tr.append(td); tb.append(tr); return;
+    }
+    const porId = new Map(filas.map((x) => [x.id, x]));
+    codigos.forEach((c) => {
+      const tr = document.createElement("tr"); tr.className = "border-b border-brand-100 dark:border-brand-800";
+      const usado = c.usado_por && porId.get(c.usado_por);
+      const estado = c.anulado ? "Anulado" : c.usado_por ? "Usado" + (usado ? " por " + codigo(usado) + " — " + usado.nombre + " " + usado.apellidos : "") + (c.usado_en ? " (" + window.HoraCR.fechaHora(c.usado_en) + ")" : "") : "Libre: sin usar";
+      celda(tr, [texto(c.codigo, "font-mono font-semibold")]);
+      celda(tr, [texto(c.porcentaje === 100 ? "100 % (gratis)" : c.porcentaje + " %")]);
+      celda(tr, [texto(c.nota || "—", "text-xs")]);
+      celda(tr, [texto(estado, "text-xs font-semibold")]);
+      const acc = document.createElement("div"); acc.className = "flex gap-2";
+      const copiar = document.createElement("button"); copiar.type = "button"; copiar.className = "text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+      copiar.textContent = "Copiar"; copiar.setAttribute("aria-label", "Copiar el código " + c.codigo);
+      copiar.addEventListener("click", async () => { try { await navigator.clipboard.writeText(c.codigo); copiar.textContent = "Copiado"; } catch (e) { copiar.textContent = "No se pudo copiar"; } });
+      acc.append(copiar);
+      if (!c.anulado && !c.usado_por) {
+        const anular = document.createElement("button"); anular.type = "button"; anular.className = "text-xs underline text-red-700 dark:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        anular.textContent = "Anular"; anular.setAttribute("aria-label", "Anular el código " + c.codigo);
+        anular.addEventListener("click", async () => {
+          if (!(await window.Avisos.confirmar("El código " + c.codigo + " deja de servir y no se puede volver a activar.", { titulo: "¿Anular el código?", aceptar: "Anular el código", peligro: true }))) return;
+          const { error } = await window.sb.rpc("metropolitano_codigo_anular", { p_codigo: c.codigo });
+          if (error) { $("cod-msg").textContent = "No se pudo anular: " + error.message; return; }
+          await cargarCodigos();
+        });
+        acc.append(anular);
+      }
+      celda(tr, [acc]);
+      tb.append(tr);
+    });
+  }
+  $("cod-pct").addEventListener("change", () => $("cod-otro-caja").classList.toggle("hidden", $("cod-pct").value !== "otro"));
+  $("codigos-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const pct = $("cod-pct").value === "otro" ? Number($("cod-otro").value) : Number($("cod-pct").value);
+    const cantidad = Number($("cod-cantidad").value);
+    if (!(pct >= 1 && pct <= 100)) { $("cod-msg").textContent = "El descuento va de 1 a 100 %."; return; }
+    if (!(cantidad >= 1 && cantidad <= 100)) { $("cod-msg").textContent = "Se generan de 1 a 100 códigos de una vez."; return; }
+    $("cod-generar").disabled = true; $("cod-msg").textContent = "Generando…";
+    const { data, error } = await window.sb.rpc("metropolitano_codigos_crear", { p_porcentaje: pct, p_cantidad: cantidad, p_nota: $("cod-nota").value.trim() });
+    $("cod-generar").disabled = false;
+    if (error) { $("cod-msg").textContent = "No se pudieron generar: " + error.message; return; }
+    $("cod-msg").textContent = (data.length === 1 ? "Listo: 1 código nuevo, " : "Listo: " + data.length + " códigos nuevos, ") + "arriba de la lista. Entrégalo a quien lo ganó: vale una sola vez.";
+    $("cod-nota").value = "";
+    await cargarCodigos();
+  });
+
+  /* ===================== El parqueo ===================== */
+  // Lo configura la base (metropolitano_parqueo_configurar, solo
+  // administración): el precio, los espacios y si se ofrece; cuenta los ya
+  // tomados (inscripciones activas con el pago no rechazado).
+  function pintarParqueo(d) {
+    $("parq-precio").value = Number(d.precio_usd || 0).toFixed(2);
+    $("parq-cupos").value = d.cupos || 0;
+    $("parq-activo").checked = !!d.activo;
+    const quedan = Math.max((d.cupos || 0) - (d.usados || 0), 0);
+    $("parq-estado").textContent = !d.activo ? "No se ofrece en la inscripción. " + d.usados + " espacios tomados."
+      : quedan === 0 ? "Lleno: " + d.usados + " de " + d.cupos + " espacios tomados. La inscripción ya no lo ofrece."
+      : d.usados + " de " + d.cupos + " espacios tomados; quedan " + quedan + ". Se ofrece a " + R.dinero(Number(d.precio_usd)) + " por vehículo.";
+  }
+  async function cargarParqueo() {
+    const { data, error } = await window.sb.rpc("metropolitano_parqueo_estado");
+    if (error || !data || typeof data.cupos !== "number") { $("parq-estado").textContent = "No se pudo leer el parqueo."; return; }
+    pintarParqueo(data);
+  }
+  $("parqueo-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const precio = Number($("parq-precio").value), cupos = Number($("parq-cupos").value);
+    if (!(precio >= 0 && precio <= 500)) { $("parq-msg").textContent = "El precio va de $0 a $500."; return; }
+    if (!(Number.isInteger(cupos) && cupos >= 0 && cupos <= 5000)) { $("parq-msg").textContent = "Los espacios van de 0 a 5000, en número entero."; return; }
+    $("parq-guardar").disabled = true; $("parq-msg").textContent = "Guardando…";
+    const { data, error } = await window.sb.rpc("metropolitano_parqueo_configurar", { p_precio: precio, p_cupos: cupos, p_activo: $("parq-activo").checked });
+    $("parq-guardar").disabled = false;
+    if (error) { $("parq-msg").textContent = "No se pudo guardar: " + error.message; return; }
+    $("parq-msg").textContent = "Listo: guardado.";
+    pintarParqueo(data);
+  });
+  // Para quien cuida la entrada: las placas de las inscripciones activas.
+  $("parq-placas").addEventListener("click", () => {
+    const l = filas.filter((x) => x.parqueo && x.estado === "activa").sort((a, b) => String(a.placa).localeCompare(String(b.placa)));
+    csv(["Placa", "Código", "Apellidos", "Nombre", "Rol", "Delegación", "Teléfono", "Estado del pago"],
+      l.map((x) => [x.placa, codigo(x), x.apellidos, x.nombre, R.rolDe(x.rol, x.sexo), x.delegacion, x.telefono, PAGO[x.pago_estado].texto]),
+      "Metropolitano 2026 - placas del parqueo.csv");
+  });
+
   async function iniciar() {
     const { data } = await window.sb.auth.getSession();
     const session = data.session;
@@ -238,6 +416,9 @@
     if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
     $("app").classList.remove("hidden");
     await cargar();
+    await cargarCodigos();
+    cargarParqueo();
+    estadoDrive();
   }
   iniciar();
 })();

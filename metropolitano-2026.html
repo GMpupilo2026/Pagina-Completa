@@ -52,6 +52,16 @@
                     <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="relative shrink-0" data-no-traducir>
+                        <!-- El idioma de la página (js/idioma-pagina.js): el botón dice el
+                             de ahora y abre la lista de los tres, cada uno en su idioma. -->
+                        <button id="metro-idioma" type="button" lang="es" aria-haspopup="true" aria-expanded="false" aria-controls="metro-idiomas" aria-label="Idioma · Language · Langue : Español" class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden">ES</span><span class="hidden sm:inline">Español</span><span class="hidden sm:inline" aria-hidden="true"> ▾</span></button>
+                        <ul id="metro-idiomas" class="idiomas-menu" hidden>
+                            <li><button type="button" data-idioma="es" lang="es">Español</button></li>
+                            <li><button type="button" data-idioma="en" lang="en">English</button></li>
+                            <li><button type="button" data-idioma="fr" lang="fr">Français</button></li>
+                        </ul>
+                    </div>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -88,7 +98,7 @@
                 <p class="mt-2 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide"><img src="img/fca-logo.png" alt="" class="h-8 w-8 object-contain"> Federación Costarricense de Ajedrez</p>
                 <div class="mt-6 flex flex-wrap justify-center gap-3">
                     <a id="boton-inscribirme" href="inscripcion-metropolitano.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝 </span>Inscribirme</a>
-                    <a href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener" class="metro-boton py-3"><span aria-hidden="true">📄 </span>Bases (PDF)<span class="sr-only"> (se abre en otra pestaña)</span></a>
+                    <a href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026" class="metro-boton py-3"><span aria-hidden="true">📄 </span>Bases (PDF)</a>
                 </div>
                 <p id="plazo" class="mt-3 text-sm font-semibold"></p>
             </div>
@@ -115,17 +125,32 @@
             <h2 id="fichas-titulo" class="metro-titulo text-center mb-6">Todo el torneo</h2>
             <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <li><a href="inscripcion-metropolitano.html" class="metro-ficha" data-tono="0"><span class="metro-ficha-emoji" aria-hidden="true">📝</span><span class="metro-ficha-titulo">Inscripción</span><span class="metro-ficha-texto">Jugadores, entrenadores y acompañantes, de a uno o la delegación entera con su delegado. Con el ID FIDE, el pago y el gafete.</span><span class="metro-ficha-accion">Inscribirme →</span></a></li>
-                <li><a href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener" class="metro-ficha" data-tono="1"><span class="metro-ficha-emoji" aria-hidden="true">📄</span><span class="metro-ficha-titulo">Bases del torneo</span><span class="metro-ficha-texto">Las bases oficiales de la FCA: categorías, ritmos, desempates, horario, premios, costos y apelaciones.</span><span class="metro-ficha-accion">Abrir el PDF →<span class="sr-only"> (se abre en otra pestaña)</span></span></a></li>
+                <li><a href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026" class="metro-ficha" data-tono="1"><span class="metro-ficha-emoji" aria-hidden="true">📄</span><span class="metro-ficha-titulo">Bases del torneo</span><span class="metro-ficha-texto">Las bases oficiales de la FCA: categorías, ritmos, desempates, horario, premios, costos y apelaciones.</span><span class="metro-ficha-accion">Abrir el PDF →</span></a></li>
                 <li><a href="#categorias" class="metro-ficha" data-tono="2"><span class="metro-ficha-emoji" aria-hidden="true">♟️</span><span class="metro-ficha-titulo">Categorías y ritmos</span><span class="metro-ficha-texto">A, B, U14 y el blitz: quién puede jugar cada uno y a qué ritmo.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li><a href="#calendario" class="metro-ficha" data-tono="3"><span class="metro-ficha-emoji" aria-hidden="true">🗓️</span><span class="metro-ficha-titulo">Calendario</span><span class="metro-ficha-texto">Las nueve rondas de cada categoría y el blitz, día por día, en hora de Costa Rica.</span><span class="metro-ficha-accion">Ver el calendario →</span></a></li>
                 <li><a href="#costos" class="metro-ficha" data-tono="4"><span class="metro-ficha-emoji" aria-hidden="true">💵</span><span class="metro-ficha-titulo">Costos y pago</span><span class="metro-ficha-texto">Cuánto cuesta cada torneo, el recargo, los descuentos y cómo pagar.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li><a href="#premios" class="metro-ficha" data-tono="5"><span class="metro-ficha-emoji" aria-hidden="true">🏆</span><span class="metro-ficha-titulo">Premios</span><span class="metro-ficha-texto">Los premios en dólares de cada categoría y del blitz.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li><a href="#reglamento" class="metro-ficha" data-tono="0"><span class="metro-ficha-emoji" aria-hidden="true">📋</span><span class="metro-ficha-titulo">Lo esencial del reglamento</span><span class="metro-ficha-texto">Sistema, desempates, tiempo de espera y apelaciones.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li id="ficha-resultados"></li>
-                <li id="ficha-partidas"></li>
+                <!-- Mi ronda y mi mesa: a donde lleva el QR del gafete (js/metropolitano-mi-ronda.js). -->
+                <li id="ficha-mi-ronda"></li>
                 <li><a href="https://www.google.com/maps/search/?api=1&amp;query=Estadio+Nacional+de+Costa+Rica+La+Sabana" target="_blank" rel="noopener" class="metro-ficha" data-tono="4"><span class="metro-ficha-emoji" aria-hidden="true">📍</span><span class="metro-ficha-titulo">La sede</span><span class="metro-ficha-texto">Estadio Nacional de Costa Rica, Parque Metropolitano La Sabana, San José. Hay zonas de acceso restringido: se respetan las señales.</span><span class="metro-ficha-accion">Abrir en el mapa →<span class="sr-only"> (se abre en otra pestaña)</span></span></a></li>
                 <li><a href="https://chat.whatsapp.com/HMN8sTyhZ8sAayt39m7XIV" target="_blank" rel="noopener" class="metro-ficha" data-tono="1"><span class="metro-ficha-emoji" aria-hidden="true">💬</span><span class="metro-ficha-titulo">Grupo de WhatsApp</span><span class="metro-ficha-texto">El grupo oficial del torneo, para los avisos de la organización.</span><span class="metro-ficha-accion">Entrar al grupo →<span class="sr-only"> (se abre en otra pestaña)</span></span></a></li>
                 <li><a href="#contacto" class="metro-ficha" data-tono="2"><span class="metro-ficha-emoji" aria-hidden="true">📞</span><span class="metro-ficha-titulo">Contacto</span><span class="metro-ficha-texto">Los correos de la organización y de tesorería.</span><span class="metro-ficha-accion">Ver →</span></a></li>
+                <!-- Las condiciones del hospedaje en el Estadio (js/metropolitano-hospedaje.js). -->
+                <li id="ficha-hospedaje"></li>
+                <li><a href="#ingreso" class="metro-ficha" data-tono="0"><span class="metro-ficha-emoji" aria-hidden="true">🛂</span><span class="metro-ficha-titulo">Si vienes de otro país</span><span class="metro-ficha-texto">Recomendaciones para entrar a Costa Rica: pasaporte, visa, boleto de salida, vacunas y a dónde llamar para confirmar.</span><span class="metro-ficha-accion">Ver las recomendaciones →</span></a></li>
+                <li><a href="#paseos" class="metro-ficha" data-tono="3"><span class="metro-ficha-emoji" aria-hidden="true">🌴</span><span class="metro-ficha-titulo">Qué hacer en el tiempo libre</span><span class="metro-ficha-texto">Paseos cerca del Estadio Nacional y en San José: parques, museos y excursiones, con filtros para niños y para días de lluvia.</span><span class="metro-ficha-accion">Ver los paseos →</span></a></li>
+                <li><a href="#esperas" class="metro-ficha" data-tono="5"><span class="metro-ficha-emoji" aria-hidden="true">🎈</span><span class="metro-ficha-titulo">Mientras esperas</span><span class="metro-ficha-texto">Juegos de ajedrez gratis y sin cuenta para los que esperan entre rondas: hermanos, amigos y quien ya terminó su partida.</span><span class="metro-ficha-accion">Ver los juegos →</span></a></li>
+            </ul>
+            <!-- Lo que va a existir pero todavía no: se ve, con su candado, para
+                 que la gente sepa que viene. «Partidas en vivo» se enciende sola
+                 cuando administración agrega la transmisión en «Torneos». -->
+            <h2 id="pendientes-titulo" class="metro-titulo text-center mt-10 mb-2">Pronto en esta página</h2>
+            <p class="text-center text-sm mb-6">Se habilitan durante el torneo.</p>
+            <ul class="grid sm:grid-cols-2 gap-4" aria-labelledby="pendientes-titulo">
+                <li id="ficha-partidas"></li>
+                <li><div class="metro-ficha" data-tono="2" tabindex="0" aria-disabled="true"><span class="metro-ficha-pendiente"><span aria-hidden="true">🔒</span> Pendiente</span><span class="metro-ficha-emoji" aria-hidden="true">🧩</span><span class="metro-ficha-titulo">Ejercicios de la ronda</span><span class="metro-ficha-texto">Los mejores momentos de cada ronda: posiciones de las partidas del torneo con una sola jugada que gana, para resolver.</span><span class="metro-ficha-accion">Todavía no está habilitado</span></div></li>
             </ul>
             <p class="text-center text-xs text-brand-500 dark:text-brand-300 mt-8">Organiza la Federación Costarricense de Ajedrez. La información sale de las bases oficiales; si algo cambia, manda lo que diga la organización.</p>
         </section>
@@ -185,7 +210,73 @@
                 <div class="metro-caja"><h3>Desempates, en orden</h3><ol class="list-decimal pl-5"><li>Resultado particular</li><li>Mayor número de victorias</li><li>Buchholz</li><li>Buchholz −1</li><li>Sonneborn-Berger</li></ol></div>
                 <div class="metro-caja"><h3>Tiempo de espera</h3><p>30 minutos en los torneos clásicos y 3 minutos en el blitz. Quien llega al tablero después pierde la partida, salvo que el árbitro decida otra cosa.</p></div>
                 <div class="metro-caja"><h3>Apelaciones</h3><p>Por escrito al árbitro, a más tardar una hora después de terminar la partida, con un costo de $100. Las resuelve el comité de apelaciones de la FCA (comisionados de competición, de arbitraje y de asuntos jurídicos).</p></div>
+                <div class="metro-caja sm:col-span-2"><h3>Seguro y responsabilidad</h3><p>Cada participante viene con su propia póliza de seguro de gastos médicos y de accidentes y, si viene de otro país, con un seguro de viaje para toda su estadía. Al inscribirse, exime a la FCA y a la organización de toda responsabilidad por accidentes, lesiones, pérdidas o daños durante el torneo.</p></div>
                 <div class="metro-caja sm:col-span-2"><h3>Fotos y videos</h3><p>La FCA puede usar fotos y videos del torneo, de participantes y acompañantes, en sus canales oficiales. El estadio tiene zonas de acceso restringido, señalizadas: se respetan.</p></div>
+            </div>
+        </dialog>
+
+        <!-- Entrar a Costa Rica: solo recomendaciones, de las fuentes oficiales
+             (Visit Costa Rica del ICT, la Dirección General de Migración y
+             Extranjería y el Ministerio de Salud), sin listar qué países piden
+             visa: esa lista cambia y la manda el decreto vigente. Ver «Si
+             vienes de otro país» en docs/decisiones/cuentas-y-formularios.md. -->
+        <dialog id="ingreso" class="metro-ventana" aria-labelledby="ingreso-titulo">
+            <div class="metro-ventana-cabeza"><h2 id="ingreso-titulo"><span aria-hidden="true">🛂 </span>Si vienes de otro país</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
+            <div class="metro-ventana-cuerpo space-y-4 text-sm">
+                <div class="metro-caja" style="border-left:6px solid #d01c58"><p class="font-semibold">Son solo recomendaciones, no información oficial.</p><p class="mt-1">Cada persona es responsable de averiguar qué necesita para entrar a Costa Rica según su nacionalidad, y de confirmarlo con Migración o con el consulado de Costa Rica en su país antes de viajar. Los requisitos pueden cambiar.</p></div>
+                <div class="metro-caja"><h3>Lo que pide Migración al llegar</h3><ul class="list-disc pl-5 space-y-1">
+                    <li>Un pasaporte vigente, que se pueda leer en una máquina.</li>
+                    <li>La visa, si tu nacionalidad la necesita.</li>
+                    <li>Un boleto de salida de Costa Rica: el vuelo de regreso o la continuación del viaje (también vale un boleto de bus o de crucero ya pagado).</li>
+                    <li>Medios económicos para la estadía: al menos 100 dólares por cada mes o fracción de mes.</li>
+                    <li>No tener impedimento de ingreso al país.</li>
+                </ul><p class="mt-2">Cuántos días te deja quedarte lo decide el oficial de Migración al entrar, según el grupo de tu país.</p></div>
+                <div class="metro-caja"><h3>¿Necesito visa?</h3><p>Depende de tu nacionalidad: unos países entran sin visa y otros necesitan visa consular, que se pide con tiempo en el consulado de Costa Rica. Revisa en qué grupo está tu país en <a href="https://migracion.go.cr/visas/" target="_blank" rel="noopener" class="underline font-semibold">la página de visas de Migración<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p><p class="mt-2">Si tu país pide visa pero tienes una visa o una residencia vigente de varias entradas de Estados Unidos, Canadá, el Reino Unido, la Unión Europea o el espacio Schengen, puede que no necesites la visa de Costa Rica: las directrices dicen cuáles valen y con cuánta vigencia. Confírmalo antes de comprar el pasaje.</p></div>
+                <div class="metro-caja"><h3>Vacuna contra la fiebre amarilla</h3><p>Si vives o estuviste hace poco en un país con riesgo de fiebre amarilla (en América: Bolivia, Brasil, Colombia, Ecuador, Guyana, Guayana Francesa, Paraguay, Perú, Surinam, Trinidad y Tobago y Venezuela, además de varios países de África), consulta si debes presentar el certificado internacional de vacunación. La vacuna se aplica al menos 10 días antes del viaje. Información en el <a href="https://www.ministeriodesalud.go.cr/" target="_blank" rel="noopener" class="underline font-semibold">Ministerio de Salud<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p></div>
+                <div class="metro-caja"><h3>Para el torneo</h3><ul class="list-disc pl-5 space-y-1">
+                    <li>Quien viene de otro país se inscribe con un seguro de viaje que lo cubra durante toda su estadía, además de la póliza de gastos médicos y de accidentes.</li>
+                    <li>Si tu consulado te pide una carta de invitación del torneo, pídela a la organización en <a href="mailto:metropolitano@fcacostarica.com" class="underline font-semibold">metropolitano@fcacostarica.com</a>.</li>
+                    <li>Si viaja un menor de edad sin su madre y su padre, lleva la autorización de viaje que pida tu país y pregunta en Migración si hace falta algo más.</li>
+                    <li>La ronda 1 de los clásicos es el sábado 26 de diciembre por la mañana: conviene llegar a más tardar el 25.</li>
+                    <li>Lleva copia (impresa o en el celular) del pasaporte, del boleto de salida, de la inscripción y del seguro.</li>
+                </ul></div>
+                <div class="metro-caja"><h3>Dónde consultar</h3><ul class="space-y-2">
+                    <li><strong>Migración de Costa Rica (visas):</strong> <a href="mailto:visascr@migracion.go.cr" class="underline font-semibold">visascr@migracion.go.cr</a> · desde Costa Rica, el teléfono 1311 (lunes a viernes de 7:00 a. m. a 6:00 p. m. y sábados de 9:00 a. m. a 2:00 p. m.) · <a href="https://migracion.go.cr/contactenos/" target="_blank" rel="noopener" class="underline font-semibold">todos sus contactos<span class="sr-only"> (se abre en otra pestaña)</span></a></li>
+                    <li><strong>Consulados de Costa Rica en el exterior:</strong> en la <a href="https://www.rree.go.cr/" target="_blank" rel="noopener" class="underline font-semibold">Cancillería de Costa Rica<span class="sr-only"> (se abre en otra pestaña)</span></a>.</li>
+                    <li><strong>Requisitos de ingreso para turistas:</strong> <a href="https://es.visitcostarica.com/planning-your-trip/entry-requirements" target="_blank" rel="noopener" class="underline font-semibold">Visit Costa Rica (Instituto Costarricense de Turismo)<span class="sr-only"> (se abre en otra pestaña)</span></a>.</li>
+                </ul></div>
+            </div>
+        </dialog>
+
+        <dialog id="paseos" class="metro-ventana" aria-labelledby="paseos-titulo">
+            <div class="metro-ventana-cabeza"><h2 id="paseos-titulo"><span aria-hidden="true">🌴 </span>Qué hacer en el tiempo libre</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
+            <div class="metro-ventana-cuerpo">
+                <div class="metro-caja mb-5 text-sm">
+                    <p class="font-bold">Revisa el horario antes de ir.</p>
+                    <p class="mt-1">Los horarios y los precios cambian: «Ver en el mapa» muestra los de hoy. Y vuelve con tiempo a la sala: el tiempo de espera es de 30 minutos en los clásicos y de 3 minutos en el blitz.</p>
+                </div>
+                <!-- Los paseos, en el idioma de la página: js/paseos-sabana.js. -->
+                <div id="paseos-lista" data-no-traducir></div>
+            </div>
+        </dialog>
+
+        <!-- Mientras esperas: juegos de ajedrez sin cuenta, los mismos del
+             Centroamericano. Batalla naval y «Aprende a jugar» son de la
+             Academia y se abren como invitado solo del 26 al 30 de diciembre
+             (js/invitado-centroamericano.js); los demás ya son públicos. Cada
+             uno se abre encima (js/visor-documento.js). -->
+        <dialog id="esperas" class="metro-ventana" aria-labelledby="esperas-titulo">
+            <div class="metro-ventana-cabeza"><h2 id="esperas-titulo"><span aria-hidden="true">🎈 </span>Mientras esperas</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
+            <div class="metro-ventana-cuerpo">
+                <p>Una ronda dura varias horas. Para los hermanos, los amigos y los que ya terminaron su partida: juegos de ajedrez gratis, sin cuenta. Lo que avancen queda guardado en este celular.</p>
+                <ul class="espera-lista mt-4">
+                    <li><a href="entreno/aprende-a-jugar.html?invitado=metropolitano" data-visor="Aprende a jugar" class="espera"><span class="espera-icono" aria-hidden="true">⭐</span><span class="espera-nombre">Aprende a jugar</span><span class="espera-texto">Para quien nunca ha jugado: cada pieza, paso a paso, juntando estrellas.</span><span class="espera-edad">Desde 5 años</span></a></li>
+                    <li><a href="confites.html" data-visor="Confites del caballo" class="espera"><span class="espera-icono" aria-hidden="true">🍬</span><span class="espera-nombre">Confites del caballo</span><span class="espera-texto">Recorre el tablero con el caballo y recoge los confites sin quedar encerrado.</span><span class="espera-edad">Desde 6 años</span></a></li>
+                    <li><a href="batalla-naval.html?invitado=metropolitano" data-visor="Batalla naval" class="espera"><span class="espera-icono" aria-hidden="true">🚢</span><span class="espera-nombre">Batalla naval</span><span class="espera-texto">La computadora esconde su flota de piezas y tú disparas: cada tiro al agua dice cuántas piezas apuntan ahí.</span><span class="espera-edad">Desde 8 años</span></a></li>
+                    <li><a href="buscaminas.html" data-visor="Buscaminas de ajedrez" class="espera"><span class="espera-icono" aria-hidden="true">💣</span><span class="espera-nombre">Buscaminas de ajedrez</span><span class="espera-texto">Cada casilla dice cuántas piezas escondidas la atacan: deduce dónde están.</span><span class="espera-edad">Desde 9 años</span></a></li>
+                    <li><a href="estilo-muestra.html" data-visor="¿Qué tipo de partida te gusta?" class="espera"><span class="espera-icono" aria-hidden="true">🧭</span><span class="espera-nombre">¿Qué tipo de partida te gusta?</span><span class="espera-texto">Doce posiciones de maestros con dos jugadas igual de buenas: descubre tu estilo.</span><span class="espera-edad">Jugadores y familias</span></a></li>
+                </ul>
+                <p class="mt-4 text-sm">Los juegos están en español.</p>
             </div>
         </dialog>
 
@@ -217,6 +308,13 @@
     <script src="js/salas-torneo.js"></script>
     <script src="js/calendario-ics.js"></script>
     <script src="js/metropolitano-reglas.js"></script>
+    <script src="js/visor-documento.js"></script>
+    <script src="js/paseos-sabana.js"></script>
+    <script src="js/idioma-pagina.js"></script>
+    <script src="js/metropolitano-en.js"></script>
+    <script src="js/metropolitano-fr.js"></script>
+    <script src="js/metropolitano-mi-ronda.js"></script>
+    <script src="js/metropolitano-hospedaje.js"></script>
     <script src="js/metropolitano-2026.js"></script>
 </body>
 </html>

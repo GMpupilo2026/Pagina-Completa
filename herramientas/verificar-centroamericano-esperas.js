@@ -106,6 +106,18 @@ ok("la ficha y la línea de «Hoy en el torneo» llevan a la ventana", /id="fich
       const r4 = await abrir(p4, ruta + "?invitado=centroamericano");
       ok(nombre + ": antes del festival tampoco (31 de octubre, 11:30 p. m. en Costa Rica, ya 1.º en UTC)", /login\.html/.test(r4.url), JSON.stringify(r4));
       await p4.context().close();
+
+      // El mismo modo invitado, desde «Mientras esperas» del Metropolitano 2026:
+      // del 26 al 30 de diciembre, con su vuelta y sin la cuenta gratis (que es del Centroamericano).
+      const p5 = await pestana("2026-12-27T10:00:00-06:00");
+      const r5 = await abrir(p5, ruta + "?invitado=metropolitano");
+      ok(nombre + ": en el Metropolitano (27 de diciembre) abre como invitado, con la vuelta a su página",
+         r5.app && !/login\.html/.test(r5.url) && /Juegas como invitado del Metropolitano 2026/.test(r5.franja) && /Volver al Metropolitano/.test(r5.franja) && !/cuenta gratis/.test(r5.franja), JSON.stringify(r5));
+      await p5.context().close();
+      const p6 = await pestana("2026-11-03T15:00:00-06:00");
+      const r6 = await abrir(p6, ruta + "?invitado=metropolitano");
+      ok(nombre + ": el ?invitado=metropolitano no abre nada fuera de sus fechas", /login\.html/.test(r6.url) && !r6.franja, JSON.stringify(r6));
+      await p6.context().close();
     }
   } finally {
     await nav.close();

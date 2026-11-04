@@ -49,6 +49,16 @@ de la bóveda y solo recibe el `id` del diagnóstico: a quién se le escribe y q
 dice sale de la fila. Con `verify_jwt` en true el trigger recibe un 401 y el
 supervisor simplemente no se entera, sin que nada falle a la vista.
 
+## `metropolitano-drive` va con `verify_jwt` en **false**
+
+Pasa al Drive las inscripciones del Metropolitano 2026 (foto, comprobante,
+tiquete, pasaporte y ficha), ordenadas por torneo y por delegación. La llama
+la base cada 10 minutos (`interno.metropolitano_drive_tocar`, pg_net), sin
+sesión de persona: trae en `x-aviso` el secreto `metropolitano_drive_aviso` de
+la bóveda y con él solo puede «enviar». Quien administra entra con su sesión,
+el `aal2` e `is_admin`. Ver «Las inscripciones en el Drive» en
+`docs/decisiones/cuentas-y-formularios.md`.
+
 ## `jdn-drive` va con `verify_jwt` en **false**
 
 La ficha de los JDN 2027 (`jdn.html`) la manda también la familia, sin cuenta:

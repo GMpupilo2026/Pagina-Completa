@@ -22,7 +22,10 @@ window.SUPABASE_ANON_KEY =
 // las cosas dos veces. Y de paso los verificadores pueden poner el suyo antes
 // de que la página cargue, sin depender —como hasta ahora— de que esta línea
 // reventara por no encontrar la librería.
-if (!window.sb) {
+// Sin la librería (un navegador viejo que no supo leerla: usa `?.` y `??`) no
+// se arma nada, en vez de reventar aquí: las páginas sin cuenta de las tablets
+// del Centroamericano tienen su respaldo en js/supabase-sin-libreria.js.
+if (!window.sb && window.supabase) {
   window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
 

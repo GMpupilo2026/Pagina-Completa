@@ -410,7 +410,9 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
             const original = window.sb.functions.invoke;
             const negras = "Acuña Porras Fabio";   // la mesa 2 del doble (MESAS de lib/doble-centroamericano-arbitro.js)
             window.__mesasFp = [{ mesa: 2, estado: "aprobada", color_si_tablas: "blancas", aplica_blancas: true, aplica_negras: false, no_aplica: negras + " no aplica: se revisó en la ronda 1", revisar_color: null }];
-            window.sb.functions.invoke = (f, o) => f === "centroamericano-fair-play" ? Promise.resolve({ data: { ok: true, mesas: window.__mesasFp }, error: null }) : original(f, o);
+            // Una COPIA, como llega por la red: si devolviera el mismo objeto que la prueba cambia después, la página
+            // vería el cambio sin pedirlo (y solo lo pintaba porque antes rearmaba las tarjetas siempre).
+            window.sb.functions.invoke = (f, o) => f === "centroamericano-fair-play" ? Promise.resolve({ data: { ok: true, mesas: JSON.parse(JSON.stringify(window.__mesasFp)) }, error: null }) : original(f, o);
         });
         await t.p.click("#actualizar");
         await t.p.waitForSelector('.cam-mesa[data-fair-play="aprobada"]', { timeout: 30000 });

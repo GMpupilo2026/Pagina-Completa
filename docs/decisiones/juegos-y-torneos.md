@@ -9737,6 +9737,71 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y
   `AbortSignal.timeout` tienen alternativa); la pantalla encendida (`wakeLock`) funciona desde iOS 16.4.
 
+## Las tablets viejas: el modo liviano (Centroamericano)
+
+En el Centroamericano 2026 (4/11, ronda en curso) algunas tablets de los árbitros eran muy viejas y a «Mis mesas»
+le costaba correr. Había dos problemas distintos, y los dos callados:
+
+- **En un navegador viejo la página ni abría.** `js/vendor/supabase.js` usa `?.` y `??` (Chrome 80, Safari 13.1):
+  el archivo entero falla al leerse, `window.supabase` no existe, `js/supabase-client.js` reventaba en su
+  `createClient` y la página se quedaba en «Entrando a tus mesas…» para siempre, sin ningún error a la vista.
+  Además las páginas usan `replaceChildren` (Chrome 86, Safari 14), `Array.flat` (Chrome 69, Safari 12) y
+  `<dialog>` con `showModal()` (Safari 15.4), que usan los avisos del sitio (`js/avisos.js`): en un iPad con iOS
+  12–15.3, «¿Anular esta anotación?» no se abría.
+- **En una tablet lenta, la página se trababa cada 8 s.** Cada consulta de avisos (cada 8 s) y cada lectura de las
+  mesas (cada 45 s) volvía a armar TODAS las tarjetas de las mesas aunque llegara exactamente lo mismo. En una
+  tablet nueva no se nota; en una vieja, el árbitro tocaba un botón justo cuando la lista se rehacía.
+
+Lo que se hizo:
+
+- **`js/modo-liviano.js`**, lo primero que corre (en el `<head>` de `centroamericano-arbitro.html`,
+  `centroamericano-mesas.html` y `centroamericano-fair-play.html`), **escrito a propósito en ES5** para que lo
+  lea cualquier tablet. Rellena lo que le falta al navegador (`replaceChildren`, `append`, `remove`, `flat`, `at`,
+  `Object.fromEntries`, `Promise.finally`, `replaceAll`, `globalThis` y lo justo de `<dialog>`: abrir encima de
+  todo con un fondo, `close(valor)`, el evento `close`, Escape y `<form method="dialog">`; los estilos van por
+  `element.style`, que la CSP deja).
+- **El cliente de respaldo, `js/supabase-sin-libreria.js`**, en las dos páginas SIN CUENTA (árbitro y Fair Play):
+  si `window.sb` no existe, arma uno con `fetch` que hace lo único que esas páginas usan —`functions.invoke` y
+  leer una tabla pública con `from().select().eq().maybeSingle()`— y contesta igual que la librería (`{ data,
+  error }`, con `error.context` = la respuesta en un 4xx/5xx, para que `llamar()` lea el mensaje de la función).
+  Con la librería andando no hace nada. `js/supabase-client.js` ahora solo arma el cliente si la librería está
+  (`if (!window.sb && window.supabase)`). La página de la organización no lo lleva: tiene sesión, y la sesión
+  sí necesita la librería; ahí lo que se arregló es su único `??` (`conVacio()` en `centroamericano-mesas-pagina.js`).
+- **El modo liviano** (`<html data-liviano="si">`) se enciende solo si la tablet **dice** que es modesta (poca
+  memoria, `deviceMemory` ≤ 2 GB; dos núcleos o menos; «ahorro de datos») o es **vieja** (le faltó algo de lo que
+  se rellena), o si se **mide** que dibuja menos de 12 cuadros por segundo en 3 s, un rato después de abrir (lo
+  medido se recuerda en esa tablet, `modo_liviano_medido_v1`). No se prueba la sintaxis con `new Function`: eso
+  depende de que la CSP deje `unsafe-eval`, y si algún día se quita, toda tablet se creería vieja. Se avisa una
+  vez por visita. **El botón «🪶 Liviano: sí/no»** del encabezado lo enciende o lo apaga a mano y la elección se
+  recuerda (`modo_liviano_v1`); manda sobre lo detectado.
+- **Qué cambia con el modo liviano**: sin animaciones ni transiciones, sin sombras difuminadas ni filtros, sin las
+  hojas de la portada (dos PNG grandes con transparencia encima de un degradado). **Lo que dice algo se queda,
+  quieto**: el borde dorado de Fair Play (sin el giro del degradado, que se repintaba en cada cuadro: un anillo
+  fijo de 4 px), el anillo del tiempo de espera cumplido y los avisos que latían (un anillo rojo fijo). Y algunas
+  consultas van menos seguido: Fair Play cada 40 s en vez de 20, «Mis mesas en vivo» cada 20 s en vez de 10, y
+  «Todas las mesas» se baja al abrirla en vez de adelantarse. **Los avisos de la organización y lo que se anota
+  no se demoran nunca.**
+- **Para todas las tablets, no solo las viejas**: las tarjetas solo se vuelven a armar si cambió algo. En
+  `mostrar()` se compara lo que llegó con lo que está pintado (sin `leido_en`, que cambia siempre) y las
+  anulaciones; en `aplicarAvisos()`, lo de los avisos que se ve en las tarjetas (`abiertas`, `ayuda`, `nombrado`,
+  el nombre del árbitro). Lo que corre con el reloj (la cuenta de cada jugador, el tiempo de espera) ya tenía su
+  propio intervalo y no dependía de repintar.
+
+- **En un navegador de pruebas no decide solo** (`navigator.webdriver`, que una tablet de verdad nunca tiene). En el
+  primer CI del PR, una prueba de `verificar-centroamericano-mesas-pagina.js` que pasaba en la máquina falló allá
+  (las tarjetas medían 0 × 0): con la máquina del CI cargada, la medición de cuadros por segundo podía encender el
+  modo a mitad de cualquier prueba, y una máquina de dos núcleos lo encendería en todas. Lo que mira cada
+  verificador no puede depender de cuán cargada esté la máquina ese día. Solo decide solo si la prueba lo pide
+  (`window.__modoLivianoAuto`, lo pone `verificar-modo-liviano.js`); el botón vale siempre.
+
+Lo revisa `verificar-modo-liviano.js`: que todo script de las tres páginas se lea como JavaScript de 2019 (Chrome
+66 / Safari 12) con `acorn` —salvo la librería de Supabase, que tiene su respaldo— y los dos archivos de arriba
+como ES5; una tablet vieja simulada (sin esas funciones y con la librería que no se lee) que abre sus mesas por el
+respaldo y por HTTP de verdad, enciende el modo sola, abre y cierra un aviso del sitio con el `<dialog>`
+rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mismo NO rearma las tarjetas y un pedido
+de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
+script con sintaxis nueva hace saltar la primera comprobación.
+
 ## Mesa del árbitro: los torneos ligados de un grupo
 
 `mesa-arbitro.html` (la Mesa del árbitro general) leía solo el torneo con el que abre la clave: si los torneos

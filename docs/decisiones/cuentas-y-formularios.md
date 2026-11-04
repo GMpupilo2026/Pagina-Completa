@@ -1493,6 +1493,63 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   una «lista para gafetes y Pareo» con las columnas que entienden
   `gafetes.html` y la carga de jugadores de Pareo Integral.
 
+### El seguro, la exoneración y el ID FIDE según de dónde viene
+
+Pedido del dueño (4/11):
+
+- **Una cuarta casilla obligatoria, «Seguro y responsabilidad»**: quien
+  inscribe declara que cada persona tiene su póliza de gastos médicos y de
+  accidentes (y, si viene de otro país, su seguro de viaje), que su costo no
+  es de la organización, que cada una asume los riesgos de la competencia, el
+  viaje y la estadía, y exime a la FCA, a la organización, al cuerpo arbitral
+  y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones,
+  pérdidas o daños, renunciando a cobrarles gastos o a demandarlos **salvo en
+  lo que la ley no permita renunciar**. Esa salvedad va a propósito: en Costa
+  Rica una cláusula que exime de todo (también del dolo o la culpa grave) se
+  cae entera; con ella, vale lo demás. Es un borrador para que lo revise el
+  comisionado de asuntos jurídicos de la FCA.
+- **La base la exige** (`acepta_seguro` en `metropolitano_inscribir()`,
+  migración 20261104170602) y guarda qué texto se aceptó
+  (`exoneracion_version = 'metropolitano-2026-v1'`). **Si el texto cambia, se
+  sube la versión** en la función: así se sabe qué firmó cada quien. La página
+  del torneo lo dice en «Lo esencial del reglamento».
+- **El ID FIDE según de dónde viene** (la pregunta «¿De dónde viene?» de cada
+  tarjeta): de Costa Rica casi nadie sabe su ID, así que se escribe el nombre y
+  el ID se busca y se carga solo; el buscador aparece de respaldo solo si por
+  el nombre no se encontró. De otro país, primero el ID FIDE (solo el número,
+  y solo vale la coincidencia exacta), y el nombre se llena con el de FIDE y
+  queda **bloqueado** (`readOnly`), para que salga el nombre real.
+- **El bloqueo es de la página, no un candado**: la base no tiene la lista de
+  FIDE para comprobarlo. Por eso guarda `nombre_fide` (el nombre que trajo la
+  búsqueda), y la lista de inscritos avisa con «⚠ En FIDE se llama …» cuando
+  el inscrito no coincide, con el enlace a su perfil de FIDE para confirmarlo.
+- **«¿De dónde viene?» va arriba de cada tarjeta, para todos los roles**
+  (también acompañantes y delegados, que no tienen ID FIDE). De Costa Rica no
+  se pide el viaje (llegada, salida, vuelo, traslado): se pide la **provincia
+  y el cantón** donde vive, de la División Territorial del TSE
+  (`js/division-territorial.js`), para las estadísticas; la base los guarda
+  en `provincia` y `canton` (migración 20261104172333) y no guarda viaje de
+  quien vive aquí. La lista de inscritos los cuenta por provincia y los saca
+  en el CSV. A las personas que agrega el delegado se les copia de dónde
+  viene, como el hospedaje.
+- **No hay habitaciones individuales.** Con hospedaje, la tarjeta dice que
+  las habitaciones son compartidas, se elige con quién se prefiere
+  (`organizacion`: con quien asigne la organización; `compartida`: con su
+  familia, su delegación o sus acompañantes) y hay que marcar
+  `acepta_compartir`. **Cada acompañante que viene con la persona** (el número
+  de «Acompañantes que vienen con esta persona») lleva sus datos: nombre
+  completo, documento, fecha de nacimiento y parentesco
+  (`acompanantes_detalle`). La base rechaza la habitación individual, la
+  falta de la aceptación y los acompañantes sin sus datos (migración
+  20261104172925).
+- **La exoneración cambia según de dónde vienen**: a los nacionales se les
+  pide solo la póliza que cubre el evento; si en la inscripción viene alguien
+  de otro país, además su seguro de viaje. El texto lo arma `pintarSeguro()`
+  y cubre también a los acompañantes y al hospedaje; la base guarda cuál se
+  aceptó (`exoneracion_version`: `metropolitano-2026-v2-nacionales` o
+  `metropolitano-2026-v2-con-extranjeros`, según el `origen` de cada
+  persona).
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la
@@ -1523,4 +1580,329 @@ también con su dirección (`#calendario`, `#premios`…). Verificador:
   horarios de la sede. La imagen para compartir es la del logo y las hojas de
   las bases (`img/metropolitano-2026/compartir.jpg`, en `IMAGEN_PROPIA` de
   `verificar-metadatos.py`).
+
+#### En inglés y en francés, con los paseos y los juegos del Centroamericano
+
+Pedido del dueño: la página del Metropolitano también en inglés y francés, con
+«Qué hacer en el tiempo libre» y «Mientras esperas» como en el
+Centroamericano, y lo que todavía no existe a la vista pero bloqueado.
+
+- **El idioma lo cambia `js/idioma-pagina.js`**, el motor del Centroamericano
+  sacado aparte: un mapa de cada texto del HTML en español a su traducción
+  (`js/metropolitano-en.js`, `js/metropolitano-fr.js`, en `textos`), el botón
+  que dice el idioma de ahora y `?lang=en` o `?lang=fr` para compartir el
+  enlace ya traducido. Lo que arma `js/metropolitano-2026.js` con datos (las
+  tablas, las fechas, la cuenta regresiva, los costos) va `data-no-traducir`
+  y se vuelve a pintar con sus textos (`dinamico` de los mismos archivos, con
+  las claves de `TX.es`) y las fechas con el formato de cada idioma, siempre
+  en hora de Costa Rica. La ventanita de documentos toma el idioma de
+  `<html lang>`.
+- **El Centroamericano todavía tiene su copia del motor**
+  (`js/centroamericano.js`): se está jugando del 1 al 9 de noviembre y no se
+  toca su página en pleno torneo. Pasado el 9, se pasa a `idioma-pagina.js` y
+  sus paseos a `js/paseos-sabana.js`: así queda una sola copia de cada cosa.
+- **Los paseos son los del Centroamericano** (los dos torneos se juegan en La
+  Sabana), con sus traducciones, en `js/paseos-sabana.js`: lista, filtros y
+  enlaces al mapa en los tres idiomas. Sin hoteles: los del Centroamericano
+  eran los oficiales de ese torneo, y las bases del Metropolitano no traen
+  ninguno. El aviso de volver a tiempo dice el tiempo de espera de estas
+  bases (30 minutos los clásicos, 3 el blitz).
+- **«Mientras esperas», los mismos juegos**, abiertos encima. Batalla naval y
+  «Aprende a jugar» se abren como invitado con `?invitado=metropolitano` solo
+  del 26 al 30 de diciembre (`EVENTOS` de `js/invitado-centroamericano.js`,
+  sin la cuenta gratis de 5 días, que es del Centroamericano). Los
+  «Ejercicios de la ronda» no van ahí: todavía no existen.
+- **Lo que viene, abajo y bloqueado**: «Pronto en esta página», con
+  «Partidas en vivo» y «Ejercicios de la ronda», cada una con su candado y
+  «Pendiente», sin `href` pero alcanzable con Tab. «Partidas en vivo» se
+  enciende sola cuando administración agrega la transmisión de Lichess en
+  «Torneos»; los ejercicios se encienden cuando se armen.
+- `herramientas/verificar-metropolitano.js` cambia la página a inglés y a
+  francés y falla si queda un solo texto en español fuera de lo que se pinta
+  con datos (se rompió a propósito quitando una traducción: salta).
+
+#### La tarjeta en «Torneos», con el diseño de las bases
+
+Pedido del dueño: que la tarjeta del Metropolitano en `torneos-en-vivo.html`
+(y en la vista previa de `admin.html#torneos`) lleve el diseño del torneo,
+como la del Centroamericano. Es una portada más en `PORTADAS` de
+`js/salas-torneo.js` (`metro-sala` en `css/styles.css`, que cargan las dos
+páginas): las hojas de las bases arriba y abajo, el logo con el Estadio
+Nacional, el azul de su letra y la marca de agua suave. Siempre blanca, también
+en el modo oscuro, como las bases. Sus botones no sacan a nadie del sitio: las
+bases llevan a `metropolitano-2026.html#bases` y chess-results a
+`#resultados`, que la página abre encima.
+
+#### Los titulados: hospedaje y alimentación de la organización
+
+Pedido del dueño: a los grandes maestros no se les pregunta el hospedaje ni la
+alimentación, que les da la organización. Vale para los tres títulos que las
+bases dejan sin pagar y con hospedaje y alimentación: **GM, IM y WGM**
+(`TITULOS_GRATIS`). En cuanto el ID FIDE elegido trae uno de esos títulos (y
+juega), la tarjeta:
+
+- **esconde el hospedaje y la alimentación** («Invitado titulado»: la
+  organización se los da según las fechas de su vuelo) y manda `hospedaje`
+  falso y ninguna comida;
+- **si viene de otro país, pide solo su viaje**: el día de llegada y el de
+  salida como en el tiquete, el número de vuelo, si necesita transporte del
+  aeropuerto al Estadio Nacional, la foto del tiquete aéreo y la del
+  pasaporte (carpeta `documento/` del bucket privado), y su correo y
+  teléfono aunque venga en un grupo;
+- **si es de Costa Rica, pide el día en que llega al Estadio Nacional y el día
+  en que sale** (con eso la organización le reserva el hospedaje y la
+  alimentación), sin vuelo, traslado, tiquete ni pasaporte; la provincia y el
+  cantón, como a todo el que viene de Costa Rica.
+
+La foto tamaño pasaporte se le pide a todos, titulados o no, de afuera o de
+Costa Rica: toda inscripción lleva gafete con su foto, y la base no acepta una
+persona sin ella.
+
+La base lo exige a los titulados de afuera (migración
+`metropolitano_titulados`): sin vuelo, tiquete, pasaporte o contacto, no
+entra. Al de Costa Rica, sin los dos días (diciembre de 2026 o enero de 2027,
+la salida después de la llegada), tampoco (`metropolitano_titulados_nacionales`). El título lo trae la búsqueda en FIDE; la lista de inscritos lo
+muestra con el enlace a su perfil para confirmarlo, y el tiquete y el
+pasaporte junto a la foto.
+
+#### Las inscripciones en el Drive
+
+Pedido del dueño: todo lo que se sube (fotos y documentos) se va guardando en
+un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
+
+    Inscripciones Metropolitano 2026 / Torneo A | Torneo B | Torneo U14 | Torneo Blitz /
+        MET-0012 - Mora Solís, Ana / Foto.jpg · Comprobante de pago.pdf · Ficha de inscripción.txt
+    Inscripciones Metropolitano 2026 / Delegación - Club Ajedrez Heredia /
+        Comprobante de pago.pdf
+        MET-0013 - Rojas Vega, Carlos (Delegado) / …
+        MET-0014 - Mora, Andrea (Torneo B) / …
+    Inscripciones Metropolitano 2026 / Entrenadores, acompañantes y delegados / …
+
+- **El número MET-… va delante**: en el Drive, ordenadas por nombre, quedan
+  en el orden en que se inscribieron. Un jugador va en la carpeta de su
+  clásico (o en «Torneo Blitz» si solo juega el blitz). El comprobante de una
+  delegación es uno solo y va a la carpeta de la delegación. Cada persona
+  lleva su foto, su tiquete y su pasaporte (los titulados de afuera) y una
+  ficha en texto con todos sus datos.
+- **El mismo camino que los JDN y el Centroamericano**: el Drive lo toca un
+  Apps Script de la dueña del Drive (`documentos/metropolitano-2026/puente-drive.gs`),
+  que se instala una vez; su dirección y su secreto se pegan en
+  `metropolitano-inscritos.html` («Inscripciones en el Drive» → «Conectar con
+  Drive»), se prueban y van a la bóveda (`metropolitano_drive_*`, solo
+  `service_role`). Los archivos los baja del bucket privado la Edge Function
+  `metropolitano-drive` (con la clave de servicio) y se los pasa al puente.
+- **Cada 10 minutos, sola** (pg_cron `metropolitano-drive` →
+  `interno.metropolitano_drive_tocar()`, que llama a la función con pg_net y
+  el aviso de la bóveda) si el Drive está conectado y falta alguna. Y a pedido:
+  «Mandar al Drive las que faltan». La fila guarda `drive_en` o el
+  `drive_error`; lo que falló se reintenta, después de las que nunca se
+  intentaron.
+- **La copia buena es la base**: los archivos siguen en el bucket privado; el
+  Drive es la copia ordenada para la organización. Una inscripción anulada no
+  se manda. La política de privacidad lo dice.
+- La forma de las carpetas la decide la función (`carpetasDe`), y
+  `verificar-metropolitano.js` la prueba con el mismo código.
+
+#### Las condiciones del hospedaje
+
+Pedido del dueño: el hospedaje es dentro del Estadio Nacional, una
+instalación pública, y tiene condiciones estrictas que la persona tiene que
+saber antes, para que después no diga que no sabía (si llega después de las
+10:30 p.m., no entra a dormir).
+
+- **El texto vive en un solo lugar**, `js/metropolitano-hospedaje.js`, en
+  español, inglés y francés: lo usan la inscripción y la página del torneo.
+  Cambiar una condición sube `VERSION`.
+- **Las condiciones del dueño**: la puerta se cierra a las 10:30 p.m. y
+  después nadie entra ni sale; silencio; no se camina alrededor del estadio;
+  no se entra a la cancha; se da solo el espacio y la cama, sin ropa de cama
+  ni cortinas (hay que traer sábanas, almohada, cobija o saco de dormir y
+  toalla). A los invitados especiales (GM, IM y WGM) la organización les da
+  la ropa de cama; todas las demás condiciones les aplican igual.
+- **Las que se agregaron para la convivencia**, propuestas y a confirmar con
+  la organización:
+  - no se fuma ni se vapea en el estadio (Ley 9028), ni alcohol ni drogas;
+  - no se cocina ni se usan aparatos de calor en los dormitorios, y nada se
+    pega en las paredes;
+  - la basura va a los basureros, y lo dañado lo paga quien lo dañó;
+  - no hay visitas ni mascotas;
+  - los menores van siempre con su responsable o con su delegado;
+  - las pertenencias son de cada quien;
+  - se siguen las indicaciones de la organización y de la seguridad;
+  - quien no cumpla puede perder el hospedaje sin devolución.
+- **En la inscripción** se muestran, en un cuadro que se desliza, a quien pide
+  hospedaje y al titulado invitado (que duerme ahí aunque no lo pida), con la
+  casilla obligatoria «Leí y acepto…», persona por persona. El resumen lo
+  repite.
+- **La base lo exige** (migración `metropolitano_condiciones_hospedaje`):
+  sin `acepta_hospedaje`, a quien pide hospedaje o al GM, IM o WGM no los
+  deja pasar, y guarda `acepta_hospedaje` y `hospedaje_version`. Probado con
+  un pedido anónimo: un IM sin aceptar se rechaza y aceptando entra con la
+  versión.
+- **En la página del torneo**, la ficha «Hospedaje en el Estadio Nacional»
+  abre las mismas condiciones encima, para leerlas antes de decidir.
+- La lista de inscritos dice en cada uno si las aceptó (y en el CSV).
+
+#### El parqueo
+
+Pedido del dueño: en la inscripción, «¿Necesita parqueo?», con el precio que
+pone administración y la placa del vehículo, que es la que entra; y que
+administración decida cuántos espacios hay, y que al llenarse la oferta
+desaparezca.
+
+- **Lo configura administración** en `metropolitano-inscritos.html`, sección
+  «🚗 Parqueo»: el precio por vehículo (en dólares), los espacios y si se
+  ofrece. Va en `metropolitano_parqueo`, una sola fila que nadie escribe desde
+  afuera: la escribe `metropolitano_parqueo_configurar()` (solo
+  administración), con su bitácora (`interno.auditar`, en `VIGILADAS`). Los
+  espacios no pueden quedar por debajo de los ya tomados.
+- **La página de inscripción** pregunta al cargar a
+  `metropolitano_parqueo_ver()` (sin cuenta): si se ofrece, su precio y
+  cuántos quedan. Si no se ofrece, se llenó o la base no contesta, la casilla
+  no aparece. Con 20 espacios o menos, dice cuántos quedan. La placa se pide
+  al marcarla y se guarda como la guarda la base: sin espacios ni guiones, en
+  mayúscula (`bcd-123` → `BCD123`).
+- **Se paga con la inscripción**: el precio se suma a lo de esa persona
+  después del código de descuento (el código es de la inscripción, no del
+  parqueo) y antes del IVA, en `MetropolitanoReglas.precio()` (`parqueo`,
+  `placa`) y en `metropolitano_inscribir()` con las mismas cuentas. Lo puede
+  pedir cualquiera: jugador, entrenador, acompañante o delegado; a un titulado
+  que no paga la inscripción, el parqueo sí se le cobra.
+- **Una placa es un espacio**: no puede ir dos veces en un envío (la página
+  y la base lo dicen) ni en dos inscripciones activas
+  (`metropolitano_una_placa`, índice único; anular la inscripción libera la
+  placa). Si vienen juntos, lo pide una sola persona.
+- **El cupo lo hace cumplir la base**: los espacios tomados son los de las
+  inscripciones activas con el pago no rechazado
+  (`interno.metropolitano_parqueo_usados()`), y `metropolitano_inscribir()`
+  bloquea la fila del parqueo (`for update`) antes de contar, así que dos
+  envíos a la vez no se pasan. Lleno, la base rechaza el envío con «Ya no
+  quedan espacios de parqueo» y la página deja de ofrecerlo.
+- **Para la entrada**: «Lista de placas para la entrada (CSV)» baja las
+  placas de las inscripciones activas, ordenadas, con su código, su nombre,
+  su teléfono y el estado del pago. La placa sale también en el detalle de
+  cada inscripción, en el CSV completo y en las cifras («Con parqueo»).
+- Probado en la base con un pedido anónimo y como administración, en una
+  transacción que se deshace: sin placa no entra; con 1 espacio, la primera
+  entra con los $5 sumados y la segunda recibe «Ya no quedan espacios»; lleno,
+  `metropolitano_parqueo_ver()` da `disponible: false`; sin cuenta no se
+  puede ver el estado ni configurarlo. La política de privacidad dice para
+  qué se guarda la placa.
+
+#### Mi ronda y mi mesa: el QR del gafete
+
+Pedido del dueño: el QR del gafete lleva a la ronda y la mesa del jugador, que
+cambian en cada ronda. **El QR no cambia nunca**: se imprime una vez con el
+nombre de la persona, y lo que cambia lo lee la página al abrirse.
+
+- **El QR de un jugador** lleva a
+  `metropolitano-2026#mi-ronda=<Apellidos, Nombre>`, con el nombre como en
+  FIDE (`nombre_fide`), que es como lo carga el árbitro en Swiss-Manager; sin
+  ID FIDE, el de la inscripción. Va sin tildes, para que el QR quede más corto
+  y se lea mejor (`qrDe()` en `js/metropolitano-gafete.js`). El de quien no
+  juega sigue llevando a la página del torneo. El nombre ya está impreso en
+  el gafete: el QR no publica nada que el gafete no diga.
+- **La página** (`js/metropolitano-mi-ronda.js`, ventanita «Mi ronda y mi
+  mesa» y su ficha en «Todo el torneo») le pide a la Edge Function
+  `sala-jugadores` —la misma del «Busca a tu jugador» del Centroamericano—
+  los torneos de la sala `metropolitano-2026` en cada modalidad (los
+  clásicos y el blitz): la lista de jugadores y la ronda emparejada más
+  reciente, leídas de chess-results. Busca a la persona por el nombre, sin
+  tildes, mayúsculas ni el orden de las palabras, y muestra en cada torneo
+  donde juega la ronda y la mesa en grande, el color, el rival con su Elo, la
+  hora de la ronda (de `MetropolitanoReglas.rondas()`), su puesto y el
+  enlace a la ronda en chess-results, que se abre encima. Con dos nombres
+  parecidos («Mora Solis» → Ana y Andrea) pregunta cuál; si no aparece, se
+  escribe otro nombre. Mientras está abierta se vuelve a leer cada minuto.
+- **Sin torneos en la sala** (antes de que administración agregue los
+  enlaces de chess-results en `admin.html#torneos`), dice que los
+  emparejamientos salen ahí en cuanto el árbitro publique la ronda 1. No hace
+  falta nada más: con los enlaces puestos, funciona sola.
+- **Llegar por el QR no deja una entrada en el historial**: el nombre se
+  quita de la dirección (`#mi-ronda`) y cerrar la ventanita no saca a nadie
+  de la página. El nombre se recuerda en el aparato, solo como comodidad.
+- **El dorso de cada gafete es de esa persona** (`js/gafetes-dibujo.js`,
+  `g.qr`): su clave lleva el QR y cuántas filas tiene el horario. Antes la
+  clave del dorso era solo el color, y en el PDF de una delegación un
+  jugador del A + Blitz se quedaba con el fondo del dorso de uno del A solo
+  (otro alto de tabla).
+- El verificador lee el QR del dorso dibujado con un lector de verdad
+  (`jsQR`) y comprueba que lleve a la ronda; con el QR general, falla.
+
+#### Los códigos de descuento
+
+Pedido del dueño: la FCA dona inscripciones (en una rifa, en un evento) o da
+descuentos del 10 o del 20 %; quien lo ganó recibe un código y lo canjea en la
+inscripción.
+
+- **Solo administración los genera**, en `metropolitano-inscritos.html`
+  («Códigos de descuento»): el porcentaje (100 % es gratis), cuántos (de 1 a
+  100) y para qué o para quién, que queda anotado. Los arma la base
+  (`metropolitano_codigos_crear()`, `MET-XXXX-XXXX` al azar, sin letras que se
+  confunden) y la tabla `metropolitano_codigos` solo la lee quien administra:
+  nadie la escribe desde afuera (sin permisos de escritura ni `TRUNCATE`, que
+  se salta la RLS; migración 20261104180724). Se pueden anular mientras no se
+  usen. Está en `VIGILADAS` de la auditoría.
+- **Vale una sola vez**: lo garantiza el índice único de
+  `metropolitano_inscripciones.codigo_descuento` y la función lo deja gastado
+  con la inscripción que lo usó (`usado_por`); si dos envíos lo usan a la vez,
+  el segundo se deshace entero. La lista dice quién usó cada código.
+- **En el formulario**, la tarjeta de cada jugador trae «¿Tiene un código de
+  descuento?»: `metropolitano_codigo_ver()` dice si sirve y de cuánto (nada
+  más), y el total baja. La cuenta es la misma en la página
+  (`MetropolitanoReglas.precio`, `descuento`) y en la base: el porcentaje
+  sobre lo de esa persona, antes del IVA. Con 100 % no se pide pago. No
+  aparece para los GM, IM y WGM (ya no pagan) ni para quien no juega.
+
+#### Si vienes de otro país
+
+Pedido del dueño: una ficha con recomendaciones para entrar a Costa Rica, que
+diga que **no es información oficial** y que cada persona averigua y confirma
+lo suyo. La ventana `#ingreso` de `metropolitano-2026.html`:
+
+- **Sale de las fuentes oficiales**, leídas el 4/11/2026: los requisitos del
+  art. 42 de la Ley 8764 tal como los publica Visit Costa Rica (ICT) —pasaporte
+  legible por máquina, visa si corresponde, boleto de salida, 100 dólares por
+  mes o fracción, sin impedimento—, la página de visas de Migración (la
+  excepción por visa o residencia de Estados Unidos, Canadá, el Reino Unido,
+  la Unión Europea y Schengen), sus contactos (1311 solo desde Costa Rica,
+  `visascr@migracion.go.cr`) y la fiebre amarilla del Ministerio de Salud.
+- **No dice qué países piden visa ni cuántos días se quedan**: esa lista la
+  cambia un decreto (las fuentes ya no coinciden entre sí: 90 o 180 días para
+  el primer grupo). La ficha manda a revisarlo en Migración.
+- Los enlaces de afuera son de sitios del gobierno (`.go.cr`) o del ICT y se
+  abren en otra pestaña: no se puede saber si se dejan mostrar en un marco.
+- La carta de invitación se le pide a la organización
+  (`metropolitano@fcacostarica.com`).
+
+#### Los documentos se abren encima
+
+Pedido del dueño: **ningún jugador sale nunca de la página para leer un
+documento**, ni tiene problemas para volver a donde está toda la información.
+En el celular, un PDF en otra pestaña es otra app (el lector de PDF, el
+navegador del WhatsApp) y volver es justo lo que no se sabe hacer. Por eso
+todo enlace con `data-visor="Título"` se abre en una ventanita encima de la
+página (`js/visor-documento.js`, que sirve para cualquier página):
+
+- **Las bases son una copia en el sitio**
+  (`documentos/metropolitano-2026/bases-metropolitano-2026.pdf`, bajada tal
+  cual de fcacostarica.com; es el documento de la FCA, así que no lleva
+  nuestra marca de agua). Un PDF de otro dominio no se puede leer desde la
+  página (CORS), y si la FCA lo cambia, se vuelve a bajar.
+- **El PDF lo pinta pdf.js**, página por página, del ancho de la ventana y
+  solo lo que está cerca de verse, con «−» y «+» para agrandar. El visor de
+  PDF del navegador en un marco no sirve: Chrome en Android no lo tiene y
+  Safari en el iPhone muestra solo la primera hoja. El texto de cada página
+  va también escrito, para el lector de pantalla.
+- **chess-results y la privacidad, en un marco**; Lichess, con su versión
+  para incrustar (`lichess.org/embed/broadcast/…`). Arriba queda siempre
+  «Bajar» o «Abrir aparte», por si un sitio no se deja mostrar.
+- **«Atrás» cierra la ventanita, no la página.** Abrirla deja una entrada en
+  el historial, y las ventanas de la página del torneo (`#costos`,
+  `#premios`…) también: antes cambiaban la dirección con `replaceState`, y
+  el «Atrás» del celular sacaba a la persona del sitio.
+- **Ctrl/⌘ + clic sigue abriendo otra pestaña**, para quien la quiere.
+- El QR del dorso del gafete lleva a la página del torneo, no al PDF.
+- En la inscripción, la privacidad, las bases y «toda la información del
+  torneo» también se abren encima: nadie pierde lo que llevaba escrito.
 

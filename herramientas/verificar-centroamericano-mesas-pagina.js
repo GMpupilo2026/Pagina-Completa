@@ -293,7 +293,14 @@ const CONTRASTE = `(sel) => {
     igual("anotada la primera, un cuadro que no se pasa por alto recuerda los 2 minutos", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Primera ilegal: dale 2 minutos al rival"), t.includes("2 minutos")]; }), [true, true]);
     await p.click("dialog[open] [data-avisos-aceptar]");
     await p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave');
-    igual("al anotar la primera ilegal (aparecen la marca, «Anular» y el aviso) NINGUNA tarjeta cambia de tamaño ni de forma", await medidas(), base);
+    const tras = await medidas();
+    igual("al anotar la primera ilegal (aparecen la marca, «Anular» y el aviso) NINGUNA tarjeta cambia de tamaño ni de forma", tras, base);
+    // Si falla, qué tenía la página en ese momento (en el CI llegó a medir 0 × 0 sin que en la máquina pasara).
+    if (JSON.stringify(tras) !== JSON.stringify(base)) console.log("      estado de la página: " + JSON.stringify(await p.evaluate(() => {
+        const t = document.querySelector(".cam-mesa"); const cadena = [];
+        for (let n = t; n && n !== document.documentElement; n = n.parentElement) cadena.push((n.id || n.tagName.toLowerCase()) + ":" + getComputedStyle(n).display + (n.hidden ? "(hidden)" : "") + (n.isConnected ? "" : "(suelto)"));
+        return { app: document.getElementById("app").hidden, problema: document.getElementById("problema").hidden ? null : document.getElementById("problema").textContent.trim().slice(0, 160), cargando: document.getElementById("cargando").hidden, hash: location.hash.slice(0, 12), dialogos: [...document.querySelectorAll("dialog[open]")].map((d) => d.textContent.trim().slice(0, 80)), cadena, liviano: document.documentElement.getAttribute("data-liviano"), llamadas: (window.__llamadas || []).slice(-6).map((x) => x.body && x.body.action) };
+    })));
     igual("el tipo elegido queda en la bitácora sin escribir nada", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.tipo === "ilegal").map((l) => l.body.texto)), ["Enroque ilegal"]);
     igual("la primera: se anota por ronda, mesa y color, y avisa los 2 minutos del rival (art. 7.5.5)", await p.evaluate(() => ({
         llamada: window.__llamadas.filter((l) => l.body.action === "anotar").map((l) => [l.body.ronda, l.body.mesa, l.body.color, l.body.tipo]),

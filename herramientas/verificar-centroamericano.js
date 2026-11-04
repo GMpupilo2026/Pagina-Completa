@@ -301,6 +301,11 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   try {
     const ctx = await nav.newContext({ viewport: { width: 375, height: 800 }, serviceWorkers: "block" });
     const p = await ctx.newPage();
+    // Sin la sala real: con la transmisión de Lichess ya puesta, «Partidas en
+    // vivo» se enciende sola a los pocos segundos y la ficha apagada que se
+    // busca con Tab deja de existir (el CI falló así el 4/11, con la sala de
+    // producción). La sala sin enlaces deja la página como antes del torneo.
+    await p.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
     await p.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
     const vistas = await p.$$eval("#fichas li", (ls) => ls.filter((l) => l.checkVisibility()).length);
     ok("las fichas se ven", vistas === items.length, vistas + " de " + items.length);

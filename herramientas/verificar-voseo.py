@@ -106,7 +106,7 @@ def es_futuro(b):
     else: return False
     return r.endswith(("ar", "er", "ir")) and len(r) > 3
 
-BLANCA = set("""canadá panamá haití corobicí sarchí sulá bogotá 
+BLANCA = set("""publié trouvé délégué invités payé propreté sécurité volés doré marché naturalisés thé solís canadá panamá haití corobicí sarchí sulá bogotá 
 miré más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
 demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
@@ -224,7 +224,9 @@ def archivos():
             # en ese archivo («vos», «été», «trié» no son voseo). Lo mismo con las frases
             # del arbitraje en inglés y francés (verificar-centroamericano-idioma.js revisa su español).
             and f != os.path.join("js", "centroamericano-fr.js")
-            and f != os.path.join("js", "centroamericano-frases.js")]
+            and f != os.path.join("js", "centroamericano-frases.js")
+            # Y la del Metropolitano, por lo mismo.
+            and f != os.path.join("js", "metropolitano-fr.js")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

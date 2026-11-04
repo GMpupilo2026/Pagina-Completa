@@ -57,6 +57,69 @@
                     <tbody id="filas"></tbody>
                 </table>
             </div>
+
+            <!-- El Drive: la foto, el comprobante, el tiquete, el pasaporte y la ficha de cada
+                 inscripción, ordenados por torneo y por delegación (Edge Function
+                 metropolitano-drive y el Apps Script documentos/metropolitano-2026/puente-drive.gs). -->
+            <section class="mt-10" aria-labelledby="drive-titulo">
+                <h2 id="drive-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📁</span> Inscripciones en el Drive</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Cada inscripción pasa sola al Drive, cada 10 minutos: <strong>Inscripciones Metropolitano 2026 / Torneo A, B, U14 o Blitz / MET-0012 - Apellidos, Nombre</strong>, y las delegaciones en <strong>Delegación - nombre</strong>, con su comprobante una vez y la carpeta de cada integrante. Los archivos se quedan también en la base: si el Drive falla, no se pierde nada y se vuelve a intentar.</p>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 space-y-3">
+                    <p id="drive-estado" class="text-sm font-semibold" role="status" aria-live="polite">Revisando el Drive…</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="drive-enviar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mandar al Drive las que faltan</button>
+                        <button type="button" id="drive-abrir-conectar" aria-expanded="false" aria-controls="drive-conectar" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Conectar con Drive</button>
+                    </div>
+                    <form id="drive-conectar" class="hidden space-y-2 border-t border-brand-100 dark:border-brand-800 pt-3">
+                        <p class="text-xs text-brand-600 dark:text-brand-300">Una sola vez, con la cuenta dueña del Drive: en script.google.com, un proyecto nuevo con el código de <code>documentos/metropolitano-2026/puente-drive.gs</code>; ejecutar <code>configurar</code> (deja el secreto en el registro) e implementarlo como aplicación web, «Ejecutar como: Yo» y acceso para «Cualquier persona». Aquí se pegan la dirección y el secreto: se prueban antes de guardarse.</p>
+                        <div><label for="drive-url" class="block text-xs font-semibold mb-1">Dirección de la aplicación web</label><input id="drive-url" type="url" placeholder="https://script.google.com/macros/s/…/exec" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                        <div><label for="drive-secreto" class="block text-xs font-semibold mb-1">Secreto</label><input id="drive-secreto" type="password" autocomplete="off" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                        <button type="submit" id="drive-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Probar y guardar</button>
+                    </form>
+                    <p id="drive-msg" class="text-sm" role="status" aria-live="polite"></p>
+                </div>
+            </section>
+
+            <!-- Los códigos de descuento: solo administración los genera, cada uno vale una vez
+                 (metropolitano_codigos_crear; los lee la RLS solo para quien administra). -->
+            <section class="mt-10" aria-labelledby="codigos-titulo">
+                <h2 id="codigos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎟️</span> Códigos de descuento</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Para las inscripciones que dona la FCA (una rifa, un evento) o un descuento. Cada código sirve <strong>una sola vez</strong>: quien lo recibe lo escribe en su tarjeta de la inscripción y la base baja el monto. Con 100 %, no paga.</p>
+                <form id="codigos-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4 flex flex-wrap items-end gap-3">
+                    <div><label for="cod-pct" class="block text-xs font-semibold mb-1">Descuento</label><select id="cod-pct" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="100">100 % (inscripción gratis)</option><option value="50">50 %</option><option value="25">25 %</option><option value="20">20 %</option><option value="10">10 %</option><option value="otro">Otro…</option></select></div>
+                    <div id="cod-otro-caja" class="hidden"><label for="cod-otro" class="block text-xs font-semibold mb-1">Porcentaje</label><input id="cod-otro" type="number" min="1" max="100" class="w-24 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div><label for="cod-cantidad" class="block text-xs font-semibold mb-1">Cuántos</label><input id="cod-cantidad" type="number" min="1" max="100" value="1" class="w-24 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div class="grow min-w-[14rem]"><label for="cod-nota" class="block text-xs font-semibold mb-1">Para qué o para quién (queda anotado)</label><input id="cod-nota" maxlength="200" placeholder="Rifa del 5 de diciembre · ganadora: Ana Mora" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <button type="submit" id="cod-generar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Generar códigos</button>
+                    <p id="cod-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
+                </form>
+                <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">Códigos de descuento del Metropolitano 2026</caption>
+                        <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300 border-b border-brand-200 dark:border-brand-700">
+                            <tr><th scope="col" class="p-3">Código</th><th scope="col" class="p-3">Descuento</th><th scope="col" class="p-3">Para</th><th scope="col" class="p-3">Estado</th><th scope="col" class="p-3"><span class="sr-only">Acciones</span></th></tr>
+                        </thead>
+                        <tbody id="codigos-filas"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- El parqueo: si se ofrece, cuánto cuesta y cuántos espacios hay
+                 (metropolitano_parqueo_configurar). Lleno, la inscripción deja de
+                 ofrecerlo y la base no deja pasar ninguno más. -->
+            <section class="mt-10" aria-labelledby="parqueo-titulo">
+                <h2 id="parqueo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🚗</span> Parqueo</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Quien lo marca en la inscripción escribe la <strong>placa del vehículo</strong>, que es la que entra, y lo paga con la inscripción. Una placa es un espacio. Cuando se llenan los espacios, la inscripción deja de ofrecerlo sola.</p>
+                <form id="parqueo-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4 flex flex-wrap items-end gap-3">
+                    <div><label for="parq-precio" class="block text-xs font-semibold mb-1">Precio por vehículo (USD)</label><input id="parq-precio" type="number" min="0" max="500" step="0.01" class="w-32 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div><label for="parq-cupos" class="block text-xs font-semibold mb-1">Espacios</label><input id="parq-cupos" type="number" min="0" max="5000" step="1" class="w-28 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <label class="flex items-center gap-2 text-sm font-semibold pb-2"><input id="parq-activo" type="checkbox" class="h-4 w-4"> Ofrecerlo en la inscripción</label>
+                    <button type="submit" id="parq-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar</button>
+                    <button type="button" id="parq-placas" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Lista de placas para la entrada (CSV)</button>
+                    <p id="parq-estado" class="w-full text-sm font-semibold" role="status" aria-live="polite">Leyendo el parqueo…</p>
+                    <p id="parq-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
+                </form>
+            </section>
         </div>
     </div>
 

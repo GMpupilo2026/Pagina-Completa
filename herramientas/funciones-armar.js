@@ -119,6 +119,8 @@ const FUNCIONES = {
   "mesa-arbitro": ["chess-results-ingreso.ts"],
   "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "inscritos-fed.ts"],
   "centroamericano-mesas-vivo": ["inscritos-fed.ts"],
+  // El Drive de las inscripciones del Metropolitano 2026: el mismo puente.
+  "metropolitano-drive": ["drive-puente.ts"],
   "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts"],
 };
 
