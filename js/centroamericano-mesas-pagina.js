@@ -191,6 +191,17 @@
         if (!sa.error) { salidas = (sa.data || []).filter((x) => ids.has(x.asignacion_id)); marcarSalidas(); }
     }
 
+    // La ronda abierta de cada torneo: la de su avance; si todavía no tiene, la que marcó su árbitro al empezar y, si
+    // tampoco, la más alta que se sabe (como antes, solo para quien no tiene nada propio).
+    function rondasAbiertas() {
+        const r = C.rondasPorTorneo(asignaciones, progreso);
+        const marcadas = {};
+        for (const x of Object.values(inicios)) if (x.inicio && Number(x.ronda) > (marcadas[x.tnr] || 0)) marcadas[x.tnr] = Number(x.ronda);
+        const alta = Math.max(0, ...Object.values(r));
+        for (const t of new Set(asignaciones.map((a) => a.tnr))) if (!(t in r)) r[t] = marcadas[t] || alta;
+        return r;
+    }
+
     const filasRonda = () => C.resumenRonda(asignaciones, progreso, finales, new Date(), listas)
         .sort((a, b) => (torneos.findIndex((t) => t.tnr === a.tnr) - torneos.findIndex((t) => t.tnr === b.tnr)) || a.mesa_desde - b.mesa_desde);
 
@@ -204,8 +215,10 @@
 
     function pintarResumen(filas) {
         $("resumen-vacio").hidden = filas.length > 0;
-        const ronda = filas.length ? filas[0].ronda : 0;
-        $("resumen-ronda").textContent = ronda ? " — ronda " + ronda : "";
+        // Cada torneo va en su ronda (la mañana y la tarde no van parejas).
+        const rondas = rondasAbiertas();
+        const txt = C.textoRondas(Object.fromEntries(filas.map((f) => [f.tnr, f.ronda])));
+        $("resumen-ronda").textContent = txt ? " — " + txt : "";
         const con = filas.reduce((s, f) => s + (f.con_resultado || 0), 0), total = filas.reduce((s, f) => s + (f.sinDatos ? 0 : f.total), 0);
         $("resumen-total").textContent = total ? "Con resultado: " + con + " de " + total + " mesas (" + Math.round(con * 100 / total) + " %)" : "";
         $("resumen").replaceChildren(...filas.map((f) => el("tr", { "data-id": f.id, "data-estado": f.estado },
@@ -217,13 +230,13 @@
             el("td", {}, el("span", { class: "cam-chip", "data-estado": f.estado, texto: ETIQUETA_ESTADO[f.estado] }), f.estado === "en-curso" || f.estado === "sin-datos" ? el("span", { class: "cam-lista-previa-estado", texto: " Revisión previa " + f.lista + "/" + PASOS_LISTA }) : null),
             el("td", { class: "cam-presencia-celda", texto: (() => { const q = presenciaDeFila(f); return q.marcados ? q.marcados + " de " + q.total + (q.faltan ? " · faltan " + q.faltan : "") : "Sin revisar"; })() }),
             el("td", { class: "cam-conectado", "data-en-linea": C.enLinea(asig(f.id) || {}, new Date()) ? "si" : "no", texto: C.enLinea(asig(f.id) || {}, new Date()) ? "● Conectado" : "—" }))));
-        pintarFaltan(ronda);
+        pintarFaltan(rondas);
     }
 
     // El tiempo de espera de las bases (30 min desde el inicio de la ronda, js/centroamericano-horario.js): mientras
     // la ronda está en juego, cuánto falta o cuánto pasó. Sin ronda en juego, null (no hay nada que avisar).
     // Cada categoría cuenta desde SU hora de inicio (la que marcó su árbitro) o, si no marcó ninguna, desde la del calendario.
-    let rondaDeFaltan = 0;
+    let rondaDeFaltan = null;   // { tnr: ronda }: la ronda abierta de cada torneo
     function esperaDeRonda(ronda, tnr) {
         const H = window.CentroamericanoHorario;
         const ev = H && ronda ? H.EVENTOS.find((e) => e.ronda === ronda) : null;
@@ -243,7 +256,7 @@
 
     // La ronda abierta de una categoría.
     function rondaDeCategoria(tnr) {
-        return Math.max(rondaDeFaltan || 0,
+        return Math.max((rondaDeFaltan && rondaDeFaltan[tnr]) || 0,
             ...progreso.filter((x) => (asig(x.asignacion_id) || {}).tnr === tnr).map((x) => Number(x.ronda) || 0),
             ...Object.values(inicios).filter((x) => x.tnr === tnr && x.inicio).map((x) => Number(x.ronda) || 0));
     }
@@ -275,13 +288,14 @@
 
     // Los que no han llegado, según el árbitro de cada mesa. Cuando se cumple el tiempo de espera, la alerta
     // sale arriba de la lista, bien visible (sin sonido: en un torneo no hay ruido) y en el título de la pestaña.
-    function pintarFaltan(ronda) {
-        rondaDeFaltan = ronda;
+    function pintarFaltan(rondas) {
+        rondaDeFaltan = rondas;
         pintarInicio();
-        const lista = C.jugadoresQueFaltan(presencia, ronda);
-        // Cada categoría tiene su propia hora de inicio y, por eso, su propio tiempo de espera.
-        const esperas = new Map([...new Set(lista.map((x) => x.tnr))].map((tnr) => [tnr, esperaDeRonda(ronda, tnr)]));
-        $("faltan-nota").textContent = ronda ? " — ronda " + ronda + ": " + lista.length : "";
+        const lista = C.jugadoresQueFaltan(presencia, rondas);
+        // Cada categoría tiene su propia ronda, su propia hora de inicio y, por eso, su propio tiempo de espera.
+        const esperas = new Map([...new Set(lista.map((x) => x.tnr))].map((tnr) => [tnr, esperaDeRonda(rondas[tnr], tnr)]));
+        const txt = C.textoRondas(rondas);
+        $("faltan-nota").textContent = txt ? " — " + txt + ": " + lista.length : "";
         $("faltan-vacio").hidden = lista.length > 0;
         const textoEspera = (e) => !e ? "" : e.cumplido ? "Tiempo cumplido" + (e.pasaron > 0 ? " (hace " + e.pasaron + " min)" : "") : "Quedan " + e.quedan + " min";
         $("faltan").replaceChildren(...lista.map((x) => { const e = esperas.get(x.tnr); return el("tr", { "data-mesa": String(x.mesa), "data-espera": e ? (e.cumplido ? "cumplido" : "corre") : null },
@@ -302,9 +316,10 @@
             alerta.hidden = false;
             alerta.dataset.nivel = nivelCumplido ? "cumplido" : "pronto";
             alerta.setAttribute("role", nivelCumplido ? "alert" : "status");
+            const ronda = C.textoRondas(Object.fromEntries(grupo.map((t) => [t, rondas[t]])));
             alerta.textContent = nivelCumplido
-                ? "⏰ Se cumplió el tiempo de espera (" + minutos + " min) de la ronda " + ronda + ": " + l.length + (l.length === 1 ? " jugador sigue sin llegar" : " jugadores siguen sin llegar") + " (" + donde + "). Avisa a los árbitros de esas mesas."
-                : "⏳ Quedan " + quedan + " min del tiempo de espera de la ronda " + ronda + " y " + l.length + (l.length === 1 ? " jugador no ha llegado" : " jugadores no han llegado") + " (" + donde + ").";
+                ? "⏰ Se cumplió el tiempo de espera (" + minutos + " min) de la " + ronda + ": " + l.length + (l.length === 1 ? " jugador sigue sin llegar" : " jugadores siguen sin llegar") + " (" + donde + "). Avisa a los árbitros de esas mesas."
+                : "⏳ Quedan " + quedan + " min del tiempo de espera de la " + ronda + " y " + l.length + (l.length === 1 ? " jugador no ha llegado" : " jugadores no han llegado") + " (" + donde + ").";
             esperaCumplida = nivelCumplido;
         } else { alerta.hidden = true; alerta.textContent = ""; esperaCumplida = false; }
         ponerTitulo();
@@ -419,9 +434,10 @@
     async function reportePdf() {
         const filas = filasRonda();
         if (!filas.length) { avisar("No hay enlaces activos para el reporte.", true); return; }
-        const ronda = filas[0].ronda;
+        const txt = C.textoRondas(Object.fromEntries(filas.map((f) => [f.tnr, f.ronda])));
+        const ronda = txt.replace(/\D+/g, "-").replace(/^-|-$/g, "");
         const doc = {
-            titulo: "Avance de la ronda " + (ronda || ""),
+            titulo: "Avance de la " + (txt || "ronda"),
             subtitulo: "Centroamericano 2026 · " + window.HoraCR.fechaHora(new Date()),
             pie: "Centroamericano 2026 · ajedrez-integral.com",
             bloques: [

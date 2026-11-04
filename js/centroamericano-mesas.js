@@ -274,10 +274,21 @@
   // El resumen de la ronda: una fila por enlace activo con lo que le queda. `progreso` son
   // las filas de centroamericano_progreso; `finales`, las de centroamericano_finales (sin
   // reabrir). Solo cuenta la ronda más alta con datos (la que está en juego).
+  // La ronda abierta de CADA torneo: la más alta de su avance. Cada categoría va en su ronda: el 4/11, con el Rápido y el
+  // Blitz ya en la ronda 9 y la mañana en la 4, una sola ronda para todos («la más alta») dejaba a los doce torneos de la
+  // mañana en «Sin datos» aunque chess-results se leía bien.
+  function rondasPorTorneo(asignaciones, progreso) {
+    const tnrDe = new Map(asignaciones.map((a) => [a.id, a.tnr]));
+    const r = {};
+    for (const p of progreso) { const t = tnrDe.get(p.asignacion_id); if (t != null && (!(t in r) || p.ronda > r[t])) r[t] = p.ronda; }
+    return r;
+  }
+
   function resumenRonda(asignaciones, progreso, finales, ahora, listas) {
     const activas = asignaciones.filter((a) => estadoAsignacion(a, ahora) === "activo");
-    const ronda = Math.max(0, ...progreso.map((p) => p.ronda));
+    const rondas = rondasPorTorneo(asignaciones, progreso);
     return activas.map((a) => {
+      const ronda = rondas[a.tnr] || 0;
       const p = progreso.find((x) => x.asignacion_id === a.id && x.ronda === ronda) || null;
       const f = finales.find((x) => x.asignacion_id === a.id && x.ronda === ronda && !x.reabierta) || null;
       const lista = (listas || []).filter((x) => x.asignacion_id === a.id && x.ronda === ronda).length;
@@ -290,6 +301,13 @@
         estado: f ? "finalizada" : !p ? "sin-datos" : quedan === 0 ? "termino" : "en-curso",
       };
     });
+  }
+
+  // «ronda 4» o «rondas 4 y 9»: lo que va al lado del título cuando cada torneo va en su ronda.
+  function textoRondas(rondas) {
+    const l = [...new Set(Object.values(rondas || {}).filter((r) => r > 0))].sort((a, b) => a - b);
+    if (!l.length) return "";
+    return l.length === 1 ? "ronda " + l[0] : "rondas " + l.slice(0, -1).join(", ") + " y " + l[l.length - 1];
   }
 
   // A dónde puede ir a ayudar quien terminó: los que más mesas les quedan, primero los de su
@@ -518,8 +536,10 @@
   // ---- La presencia: quiénes no han llegado. `mesas` son las de la ronda (de cada árbitro) y
   // `presencia` las filas de centroamericano_presencia. Un jugador «falta» si el árbitro lo marcó
   // ausente; «sin revisar» si todavía no lo marcó.
+  // ronda: un número, o la ronda de cada torneo ({ tnr: ronda }, de rondasPorTorneo).
   function jugadoresQueFaltan(presencia, ronda) {
-    return presencia.filter((p) => p.ronda === ronda && !p.presente)
+    const de = (tnr) => (typeof ronda === "object" && ronda ? ronda[tnr] : ronda);
+    return presencia.filter((p) => p.ronda === de(p.tnr) && !p.presente)
       .sort((a, b) => a.tnr.localeCompare(b.tnr) || a.mesa - b.mesa || a.color.localeCompare(b.color));
   }
   function presenciaDeLaMesa(presencia, tnr, ronda, mesa) {
@@ -566,7 +586,7 @@
     return b && !n ? "blancas" : n && !b ? "negras" : "mesa";
   }
 
-  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);
