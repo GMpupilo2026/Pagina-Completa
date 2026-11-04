@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
         // deno-lint-ignore no-explicit-any
         const prueba: any = await lcPedir(id + "/tournament.json", 0).catch(() => null);
         if (!prueba || !Array.isArray(prueba.rounds)) { errores.push("LiveChess no abre el enlace de Sub-" + Number(cat[1]) + " " + rama + "."); continue; }
-        filas.push({ tnr: t.tnr, torneo_id: id.toLowerCase(), tableros: tab.slice(0, 40), por: "Organización (" + new Date().toISOString().slice(0, 10) + ")" });
+        filas.push({ tnr: t.tnr, torneo_id: id.toLowerCase(), tableros: tab.slice(0, 40), por: "Organización (" + new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) + ")" });
       }
       if (filas.length) {
         const { error } = await servicio.from("centroamericano_livechess").upsert(filas.map((f) => ({ ...f, actualizado: new Date().toISOString() })), { onConflict: "tnr" });

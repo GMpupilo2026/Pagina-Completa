@@ -9121,7 +9121,7 @@ inmediato.
   lo pensado desde ahí (comprobado con la ronda 3 real: empezó a las 9:03).
 - **Por eso el enlace NO se publica**: va en `centroamericano_livechess` (tnr → id y tableros; RLS sin políticas, sin
   permisos para `anon` y `authenticated`; migración `centroamericano_livechess`). Lo lee solo `centroamericano-mesas-vivo`
-  (v3), que a cada tablet le da **solo sus mesas**: la mesa de chess-results es el tablero de LiveChess, y los **dos**
+  (v4), que a cada tablet le da **solo sus mesas**: la mesa de chess-results es el tablero de LiveChess, y los **dos**
   nombres tienen que coincidir (`mismoJugador`; LiveChess da `lname fname mname`). Comprobado con la ronda 3 real de las
   12 categorías: **58 de 58** coinciden. Si no coinciden, esa mesa no se da y la tablet dice por qué («el tablero 1 tiene
   otros jugadores», «todavía no tiene el pareo de esta ronda»). Con LiveChess, la transmisión privada de Lichess de la
