@@ -1621,6 +1621,10 @@
         // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
         $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
         $("donde-juega").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
+        // El logo y la «Ronda abierta» abren «Mis pareos»: los pareos de SUS mesas, de todas las rondas (la abierta al abrir).
+        const misPareos = () => window.CentroamericanoMisPareos.abrir({ pedir: (c) => invocar("mis_pareos", c, { intentos: 2 }), ronda: estado && estado.ronda });
+        $("logo-pareos").addEventListener("click", misPareos);
+        $("ver-rondas").addEventListener("click", misPareos);
         $("presencia-todos").addEventListener("click", marcarTodosLlegaron);
         $("bit-enviar").addEventListener("click", mandarBitacoraPorCorreo);
         $("ir-ahora").addEventListener("click", () => marcarInicio(new Date().toISOString(), false));

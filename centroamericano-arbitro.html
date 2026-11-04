@@ -20,10 +20,11 @@
 
     <header class="bg-brand-800 shadow-lg">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[3.5rem] py-2 flex items-center justify-between gap-3">
-            <a href="index.html" class="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+            <!-- El logo es un botón: abre «Mis pareos» (los pareos de SUS mesas, de todas las rondas), sin salirse de la página. -->
+            <button type="button" id="logo-pareos" aria-haspopup="dialog" aria-label="Ajedrez Integral: ver los pareos de mis mesas, de todas las rondas" class="cam-logo-boton flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 <img src="img/logo-marca.png" width="155" height="96" alt="" class="h-10 w-auto shrink-0">
                 <span class="font-serif text-lg font-bold text-white">Ajedrez <span class="text-accent-400">Integral</span></span>
-            </a>
+            </button>
             <button type="button" id="theme-toggle" class="cam-btn cam-btn-claro cam-btn-chico" aria-label="Cambiar entre tema claro y oscuro"><span aria-hidden="true">🌓</span> Tema</button>
         </div>
     </header>
@@ -50,7 +51,7 @@
             </div>
             <div class="cam-datos" id="datos" hidden>
                 <div class="cam-dato"><small>Árbitro</small><span id="d-arbitro"></span></div>
-                <div class="cam-dato"><small>Ronda abierta</small><span id="d-ronda"></span></div>
+                <button type="button" class="cam-dato cam-dato-boton" id="ver-rondas" aria-haspopup="dialog"><small>Ronda abierta</small><span id="d-ronda"></span><span class="sr-only">: toca para ver los pareos de las rondas</span></button>
                 <div class="cam-dato"><small>Tus mesas</small><span id="d-mesas"></span></div>
             </div>
         </div>
@@ -197,6 +198,7 @@
     <script src="js/centroamericano-reloj-apagado.js"></script>
     <script src="js/centroamericano-emparejamientos.js"></script>
     <script src="js/centroamericano-concentracion.js"></script>
+    <script src="js/centroamericano-mis-pareos.js"></script>
     <script src="js/centroamericano-arbitro.js"></script>
 </body>
 </html>

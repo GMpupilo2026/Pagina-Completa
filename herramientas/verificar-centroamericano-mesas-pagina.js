@@ -698,6 +698,39 @@ const CONTRASTE = `(sel) => {
     await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
 
     await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab { pointer-events: none !important; }"; document.head.append(e); });
+    // «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de SUS mesas (las de sus enlaces), de todas las rondas.
+    console.log("\n=== «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de mis mesas, ronda por ronda ===");
+    igual("el logo de Ajedrez Integral es un botón (no un enlace que saque de la página) con nombre accesible, y la «Ronda abierta» también", await p.evaluate(() => { const l = document.getElementById("logo-pareos"), r = document.getElementById("ver-rondas"); return [l.tagName, l.hasAttribute("href"), /pareos de mis mesas/.test(l.getAttribute("aria-label")), l.textContent.replace(/\s+/g, " ").trim(), r.tagName, document.getElementById("d-ronda").textContent, /ver los pareos de las rondas/.test(r.textContent)]; }),
+        ["BUTTON", false, true, "Ajedrez Integral", "BUTTON", "Ronda 3", true]);
+    await p.click("#logo-pareos");
+    await p.waitForSelector("#mis-pareos[open] .cam-mp-torneo");
+    const mp = () => p.evaluate(() => [...document.querySelectorAll("#mis-pareos .cam-mp-torneo")].map((t) => [t.querySelector("h3").textContent, [...t.querySelectorAll("tbody tr")].map((r) => r.dataset.mesa + ":" + r.children[3].textContent)]));
+    igual("abre en la ronda abierta con sus rondas como pestañas, y trae SOLO sus mesas de cada torneo suyo (el principal y el otro enlace)", await p.evaluate(() => [document.getElementById("mis-pareos").matches(":modal"), [...document.querySelectorAll("#mis-pareos .cam-dj-chips button")].map((b) => b.textContent + "|" + b.getAttribute("aria-pressed"))]),
+        [true, ["Ronda 1|false", "Ronda 2|false", "Ronda 3 · abierta|true"]]);
+    igual("la ronda abierta: sus tres mesas del torneo principal con el resultado en vivo (y «sin resultado» donde falta) y, del otro torneo, que todavía no tiene esa ronda", await mp(),
+        [["Sub-10 Femenino · mesas 1 a 3", ["1:sin resultado", "2:1-0", "3:½-½"]], ["Sub-12 Absoluto · mesas 5 a 6", []]]);
+    igual("el torneo sin pareo en esa ronda lo dice con palabras", await p.textContent('#mis-pareos [data-tnr="1529738"] .cam-dj-vacio'), "Esta ronda todavía no tiene pareo guardado para tus mesas.");
+    await p.click('#mis-pareos [data-ronda="1"]');
+    igual("una ronda anterior: los pareos de entonces con su resultado, en los dos torneos, y la pestaña elegida marcada", await p.evaluate(() => [[...document.querySelectorAll("#mis-pareos .cam-mp-torneo")].map((t) => [...t.querySelectorAll("tbody tr")].map((r) => r.dataset.mesa + ":" + r.children[1].textContent + " – " + r.children[2].textContent + " " + r.children[3].textContent)), document.querySelector('#mis-pareos [data-ronda="1"]').getAttribute("aria-pressed")]),
+        [[["1:Pérez Mora, Ana – Rojas Vega, Lía 1-0", "2:Solís Arce, Eva – Mora Cruz, Isa ½-½", "3:Vargas Ríos, Zoe – Núñez Soto, Mía 0-1"], ["5:Castro Vega, Luis – Jiménez Mora, Sofía 0-1", "6:Solano Brenes, Diego – Mora Ugalde, Camila 1-0"]], "true"]);
+    igual("dice de cuándo son los datos y los pide a la función con el token, solo leyendo", await p.evaluate(() => [/^Actualizado hace \d+ s$/.test(document.getElementById("mp-estado").textContent), window.__llamadas.filter((l) => l.body.action === "mis_pareos").every((l) => /^[0-9a-f]{64}$/.test(l.body.token) && Object.keys(l.body).sort().join() === "action,token")]), [true, true]);
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    igual("cerrar la quita y devuelve el foco al logo", await p.evaluate(() => document.activeElement && document.activeElement.id), "logo-pareos");
+    await p.click("#ver-rondas");
+    await p.waitForSelector("#mis-pareos[open] .cam-mp-torneo");
+    igual("la «Ronda abierta» abre lo mismo, ya en la ronda abierta", await p.evaluate(() => document.querySelector('#mis-pareos [data-ronda="3"]').getAttribute("aria-pressed")), "true");
+    // Sin señal: sigue mostrando lo último que se leyó y lo dice en rojo.
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    await p.evaluate(() => { window.__misFalla = true; });
+    await p.click("#logo-pareos");
+    await p.waitForFunction(() => /^Sin señal: son los pareos de hace/.test(document.getElementById("mp-estado").textContent), null, { timeout: 20000 });
+    igual("sin señal sigue mostrando los últimos pareos y lo dice en rojo, con palabras", await p.evaluate(() => [document.querySelectorAll("#mis-pareos tbody tr").length > 0, document.getElementById("mp-estado").classList.contains("cam-fallo")]), [true, true]);
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    await p.evaluate(() => { window.__misFalla = false; });
+
     // «¿Dónde juega?» lo habilita o deshabilita la organización: deshabilitado, el botón fijo se esconde, el pizote queda apagado y el servidor lo rechaza.
     console.log("\n=== «¿Dónde juega?» deshabilitado por la organización ===");
     await p.evaluate(() => { window.__avisos.todas_las_mesas = false; document.getElementById("actualizar").click(); });
