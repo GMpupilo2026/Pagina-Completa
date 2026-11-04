@@ -9288,6 +9288,37 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
+
+Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien
+lo abre** (nada de las demás mesas ni categorías), y que «Ronda abierta» (el dato que se actualiza solo)
+sirva también para ver las rondas anteriores. Es lo contrario de «¿Dónde juega?» (todas las mesas) y no lo
+apaga el interruptor de la organización: son SUS mesas.
+
+- **Los dos abren lo mismo** (`js/centroamericano-mis-pareos.js`, `CentroamericanoMisPareos.abrir`): el logo
+  (ya no es un `<a href>` a la portada: un árbitro en pleno torneo no necesita irse de la página) y el dato
+  «Ronda abierta» (ahora un `<button>`, con un «›» y el texto para lector de pantalla «toca para ver…»).
+  Un `<dialog>` con una pestaña por ronda (1 hasta la más alta emparejada; las que no existen no se eligen),
+  y por torneo una tabla Mesa / Blancas / Negras / Resultado. Abre en la ronda abierta; el foco vuelve al
+  logo al cerrar. Todo texto de chess-results va por `textContent`.
+- **«Sus mesas» = las de su enlace y las de sus otros enlaces** (las hermanas, ver «Mis torneos»), cada una
+  con su rango `mesa_desde`–`mesa_hasta` y filtrado en el SERVIDOR (acción `mis_pareos` de
+  `centroamericano-mesa`): nunca viaja una mesa ajena y la página no manda nada más que el token.
+- **De dónde sale cada ronda**: la abierta, de la copia compartida de chess-results
+  (`centroamericano_lecturas`, la misma de la lupa; con su resultado en vivo); las anteriores, de lo que
+  guarda el sorteo de Fair Play (`centroamericano_fp_partidas`, que tiene las rondas 1 a la actual con su
+  resultado de todos los torneos). La función **no llama a chess-results**: solo lee la base, así que no
+  cuesta nada pedirla cada 30 s. Consecuencia: una ronda anterior aparece cuando Fair Play ya la leyó; si
+  no hay pareo guardado, la ventana lo dice («Esta ronda todavía no tiene pareo guardado para tus mesas»).
+- Se pone al día sola cada 30 s mientras está abierta y no se pierde con la señal: si falla el pedido, se
+  queda con lo último y dice «Sin señal: son los pareos de hace N s» (en rojo).
+- Está en `DE_AVISOS`: no pide la clave de chess-results, y el enlace concluido también puede consultar (no
+  está en `ESCRIBE`).
+- Lo revisan `verificar-centroamericano-mesas.js` (la acción solo lee, hermanas, filtro por rango, sin
+  llamadas a chess-results) y `verificar-centroamericano-mesas-pagina.js` (el logo ya no es enlace y abre la
+  ventana, las pestañas, solo las mesas propias, el resultado de una ronda anterior, el estado, que el pedido
+  lleve solo la acción y el token, el foco, «Ronda abierta» y sin señal).
+
 ## El Rápido y el Blitz: la mesa en un toque (Centroamericano)
 
 Lo pidió el dueño el 3/11, antes del Rápido: «para el rápido y el blitz los árbitros tienen menos tiempo y hay
