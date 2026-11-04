@@ -9488,6 +9488,14 @@ el sistema las mesas que no traen un rival sino un nombre raro**.
   lecturas que no pasan por ahí: la copia que lee directo «¿Dónde juega?», «Mis pareos» (lo guardado y la copia) y las mesas en vivo
   (`centroamericano-mesas-vivo`, que si no la contaba como «no reconocida»). **`guardarYComprobar` sigue leyendo la pantalla entera**: lo
   que se guarda se compara con lo que de verdad hay en chess-results.
+- **«Inició la ronda» que volvía a salir (4/11).** `leer` desestructuraba 9 nombres para 10 peticiones: `inicio_ronda` tomaba el
+  resultado de `guardarAvance` (`{termino}`, sin `data`) y salía **siempre vacío**. La tablet conserva lo que marcó el árbitro solo
+  2 minutos (`conservarInicio`) y después se queda con lo que dice `leer`: pasados esos 2 minutos el aviso «Todavía no marcaste cuándo
+  empezó la ronda» volvía y los cronómetros regresaban al calendario, aunque la hora estaba bien guardada en
+  `centroamericano_inicios_torneo` (la organización, la bitácora y «Llegó tarde» la leen directo de ahí y por eso no fallaban). Arreglado
+  con un nombre por cada petición (`_avance`); comprobado con el torneo de pruebas (marcar → `leer` devuelve la hora → quitar). Lo
+  vigila `verificar-centroamericano-banderas.js` (el doble de las pruebas de la página siempre devolvió bien la hora, así que ahí no se
+  veía; la comprobación mira el código de la función).
 - **Lo que no cambia.** Esas mesas siguen en chess-results con su resultado (el de quien ganó por el retiro): solo dejan de mostrarse y de
   contarse en el sistema. Los byes de la página pública (el rival sin enlace) ya se trataban como bye en el sorteo de Fair Play.
 - **Para desplegar**: `node herramientas/funciones-armar.js` y subir `centroamericano-mesa`, `centroamericano-clave` y
