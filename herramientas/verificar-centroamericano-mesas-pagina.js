@@ -779,7 +779,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
     await p.waitForSelector("#donde-juega-grande[open]");
     igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
-        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, g.querySelector(".cam-dj-ginfo").firstChild.textContent, g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
+        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
         [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
@@ -1063,6 +1063,50 @@ const CONTRASTE = `(sel) => {
     await pm.waitForSelector("dialog[open], .cam-aviso, [role=alert]", { timeout: 5000 }).catch(() => {});
     igual("el tercer pedido lo rechaza la función (429) y la página no dice que se mandó", await pm.evaluate(() => !/Listo: te la mandamos/.test(document.getElementById("concluido-estado").textContent)), true);
     await cm.ctx.close();
+
+    console.log("\n=== La banderita del país al final del nombre de cada jugador (y nada si no hay país) ===");
+    {
+        const fb = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const pb = fb.p;
+        await pb.waitForSelector(".cam-mesa");
+        const alturas = () => pb.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
+        const antes = await alturas();
+        igual("sin país (la función no lo mandó) no sale ninguna banderita y los nombres quedan como siempre", await pb.evaluate(() => [document.querySelectorAll(".cam-bandera").length, document.querySelector('.cam-mesa[data-mesa="1"] .cam-nombre-texto').textContent]), [0, "Muñoz Feliz Alejandro"]);
+        const leidasAntes = await pb.evaluate(() => { window.__feds = true; return window.__llamadas.filter((l) => l.body.action === "leer").length; });
+        await pb.evaluate(() => document.getElementById("actualizar").click());
+        await pb.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        igual("con el país, cada nombre lleva su banderita AL FINAL (blancas de Costa Rica, negras de El Salvador), con el código escrito para el lector de pantalla",
+            await pb.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] .cam-jugador')].map((j) => { const n = j.querySelector(".cam-nombre-texto"), b = n.querySelector(".cam-bandera"); return [n.firstChild.textContent, n.lastElementChild === b, b.dataset.fed, b.title, b.querySelector(".sr-only").textContent, b.querySelector("img").getAttribute("alt"), b.querySelector("img").getAttribute("src")]; })),
+            [["Muñoz Feliz Alejandro", true, "CRC", "CRC", " (CRC)", "", "img/banderas/cr.svg"], ["Gramajo Tovar Marco", true, "ESA", "ESA", " (ESA)", "", "img/banderas/sv.svg"]]);
+        await pb.waitForFunction(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => i.complete && i.naturalWidth > 0));
+        igual("el dibujo carga de verdad (no queda un cuadro roto) y es pequeñito: cabe en 24 × 18 px, al lado del nombre",
+            await pb.evaluate(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => { const r = i.getBoundingClientRect(); return i.naturalWidth > 0 && r.width > 8 && r.width <= 24 && r.height > 6 && r.height <= 18; })), true);
+        igual("una federación sin dibujo no pone nada (ni un cuadro roto): la mesa 2 con «JAM» sí; la de un código inventado, no",
+            await pb.evaluate(() => { const C = window.CentroamericanoBanderas; return [!!C.de("JAM"), C.de("XXX"), C.de(""), C.de(null), C.de("jam").dataset.fed]; }), [true, null, null, null, "JAM"]);
+        igual("las tarjetas no cambian de tamaño por la banderita (siguen todas iguales)", await alturas(), antes);
+        igual("la ventana del control de tiempos también la lleva junto a cada nombre", await (async () => {
+            await pb.evaluate(() => document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]').click());
+            await pb.waitForSelector("#form-tiempos");
+            return pb.evaluate(() => [...document.querySelectorAll("#form-tiempos .cam-tiempo-nombre")].map((n) => [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]));
+        })(), [["Harvey Ian", "JAM"], ["Acuña Porras Fabio", "GUA"]]);
+        await pb.evaluate(() => document.querySelector('#control-tiempos [data-accion="cerrar-tiempos"]').click());
+        // «Mis pareos»: la banderita en cada celda de nombre.
+        await pb.click("#logo-pareos");
+        await pb.waitForSelector("#mis-pareos[open] .cam-mp-torneo tbody tr");
+        igual("«Mis pareos» la lleva al final de cada nombre (blancas y negras) y el resultado sigue en su columna",
+            await pb.evaluate(() => { const f = document.querySelector('#mis-pareos [data-tnr="1529737"] tbody tr[data-mesa="1"]'); return [f.children[1].textContent, f.children[1].querySelector(".cam-bandera").dataset.fed, f.children[2].querySelector(".cam-bandera").dataset.fed, f.children[3].textContent]; }),
+            ["Muñoz Feliz Alejandro (CRC)", "CRC", "ESA", "sin resultado"]);
+        await pb.click('#mis-pareos [data-accion="cerrar-mp"]');
+        // «¿Dónde juega?»: en la tarjeta del jugador que se busca (el botón arranca sin recibir clics: se le devuelven).
+        await pb.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); });
+        await pb.click("#donde-juega");
+        await pb.waitForSelector("#donde-juega-hoja[open]");
+        await pb.fill("#dj-buscar", "hopkins");
+        await pb.waitForSelector("#dj-res .cam-dj-tarj");
+        igual("«¿Dónde juega?» la lleva junto al nombre del atleta buscado", await pb.evaluate(() => { const n = document.querySelector("#dj-res .cam-dj-tarj .cam-dj-nombre"); return [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]; }), ["Hopkins John", "TTO"]);
+        igual("sin errores en la página", fb.errores, []);
+        await fb.ctx.close();
+    }
 
     console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
     const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });

@@ -875,3 +875,8 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-tx-control { border-color: #b8bbf2; }
 .cv-repeticion { font-weight: 800; color: #8a1c00; }
 .dark .cv-repeticion { color: #ffb59e; }
+
+/* La banderita del país al final del nombre de cada jugador: pequeña, sin mover el texto (sigue la última línea del nombre). */
+.cam-bandera { display: inline-block; margin-inline-start: 0.4em; vertical-align: -0.12em; line-height: 0; white-space: nowrap; }
+.cam-bandera img { display: inline-block; width: 1.05em; height: 0.8em; border-radius: 2px; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); object-fit: cover; }
+.dark .cam-bandera img { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35); }

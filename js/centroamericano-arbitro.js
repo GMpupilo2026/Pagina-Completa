@@ -161,6 +161,8 @@
     const clave = (mesa, color) => mesa + "|" + color;
     const marcaDe = (mesa, color) => (estado.marcas || {})[clave(mesa, color)] || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null, levantadas: 0, ultima_levantada: null };
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
+    // La banderita del país de cada jugador, al final de su nombre (js/centroamericano-banderas.js); sin ella, nada.
+    const banderaDe = (m, color) => (window.CentroamericanoBanderas ? window.CentroamericanoBanderas.deMesa(m, color) : null);
     const hora = (x, opciones) => window.HoraCR.hora(x, opciones);
 
     // ------------------------------------------------------------- avisos sin ruido, y pantalla encendida
@@ -224,7 +226,7 @@
         return el("div", { class: "cam-jugador", "data-color": color, "data-elegido": gana },
             el("div", { class: "cam-jugador-fila" },
                 el("span", { class: "cam-color", "data-color": color, title: color === "blancas" ? "Blancas" : "Negras" }, el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas" : "Negras" })),
-                el("span", { class: "cam-nombre" }, el("span", { class: "cam-nombre-texto", texto: nombre })),
+                el("span", { class: "cam-nombre" }, el("span", { class: "cam-nombre-texto" }, nombre, banderaDe(m, color))),
                 el("span", { class: "cam-jugador-estado" }, gana ? el("span", { class: "cam-gana", texto: gana === "tablas" ? "Tablas" : "Gana" }) : null, cuentaDe(m, color)),
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
             // Lo que cambia (las marcas, «Anular», la guía del tiempo de espera) va en UNA franja de altura reservada: la tarjeta no se mueve.
@@ -851,7 +853,7 @@
         const botonTodas = conTx ? el("button", { type: "button", id: "lt-tx-todas", class: "cam-btn cam-btn-claro", title: "Anota en la bitácora los relojes de la transmisión de todas tus mesas sin terminar", onclick: anotarTodasTx }, "Anotar todas desde la transmisión (" + conTx + ")") : null;
         const ult = lecturas(lecturaMesa).slice(0, 1);
         const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
-            el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
+            el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre" }, nombre, m ? banderaDe(m, color) : null)),
             el("div", { class: "grid grid-cols-2 gap-2" },
                 el("div", {}, el("label", { for: "lt-t" + id, class: "block text-sm font-bold", texto: "Tiempo" }),
                     // Se escriben solo los números y los dos puntos se ponen solos (el teclado numérico no los trae).

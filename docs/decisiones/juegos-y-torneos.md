@@ -9460,6 +9460,43 @@ del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de lo
   uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
   leer, el guardado con la hora de ahora y su nota).
 
+## Banderas y mesas sin rival (Centroamericano)
+
+Pedido del 4/11: **la banderita del país al final del nombre de cada jugador** (pequeña, «un poquito de identificación») y **no mostrar en
+el sistema las mesas que no traen un rival sino un nombre raro**.
+
+- **De dónde sale el país.** La pantalla de resultados de chess-results (la que leen las tablets) y los emparejamientos públicos NO traen la
+  federación; la lista de inscritos (`art=0`) sí, en la columna «FED» (CRC, GUA, ESA…). `_compartido/inscritos-fed.ts` (`fedsDe(tnr)`)
+  la lee una vez por torneo y la guarda **en la memoria de la función** 3 horas (los inscritos casi no cambian; sin tabla ni migración).
+  Si chess-results no contesta, no hay banderas, se reintenta al minuto, se sigue con la última lista que hubo y **nada más se retrasa**
+  (`leer` espera la lista a lo más 3 s y en paralelo con lo demás). Se busca por el nombre sin tildes, sin comas y sin mayúsculas
+  (`claveNombre`): «Ramos Rodriguez Daniel» (resultados) = «Ramos Rodríguez, Daniel» (inscritos). Quien no tiene federación o no está en
+  la lista, sin bandera: nunca se inventa una.
+- **Quién la manda.** `centroamericano-mesa`: `leer` (`fed_b`, `fed_n` en cada mesa), `todas_mesas` («¿Dónde juega?», una lista por
+  categoría) y `mis_pareos`. El dibujo es el de `js/gafetes-banderas.js` (tabla FIDE → ISO) y los SVG ya copiados en `img/banderas/`: nada
+  nuevo que mantener. `js/centroamericano-banderas.js` (`de(fed)`, `deMesa(m, color)`) arma un `<span class="cam-bandera">` con la
+  imagen **decorativa** (alt vacío; 1,05 × 0,8 em, sale de la letra del nombre) y el código de FIDE **escrito** para el lector de pantalla
+  y en el `title` (el color nunca va solo). Va al final del nombre en la tarjeta de cada jugador, en la ventana del control de tiempos,
+  en «Mis pareos» y en «¿Dónde juega?» (la tarjeta y la pantalla completa). Las tarjetas no cambian de tamaño. Sin país o sin dibujo, no
+  se pone nada (nunca un cuadro roto: si la imagen falla se esconde).
+- **Las mesas sin rival.** En la pantalla de resultados, quien se retiró deja su mesa con **«ausgeschieden»** (alemán de «retirado»; pasó en
+  el torneo 1529756, mesas 24 a 26 de la ronda 4) en lugar del nombre del rival. No es una partida: el árbitro no tiene qué anotar y
+  contaba en «Han llegado 0 de N jugadores» y en «Con resultado: x de N». `sinRival(nombre)`: vacío, sin letras o una de las palabras de
+  `SIN_RIVAL` (ausgeschieden, bye, spielfrei, freilos, libre, exento, descansa, retirado, withdrawn, sin emparejar, not paired…).
+  **Si aparece otra palabra rara, se agrega ahí** (una sola lista). Se quitan **al leer, en un solo lugar**: `aLectura` y `deFila` de
+  `lecturas-cache.ts` (lo que sirve TODA función que lee la copia compartida: tablets, organización, avance de la ronda), más las tres
+  lecturas que no pasan por ahí: la copia que lee directo «¿Dónde juega?», «Mis pareos» (lo guardado y la copia) y las mesas en vivo
+  (`centroamericano-mesas-vivo`, que si no la contaba como «no reconocida»). **`guardarYComprobar` sigue leyendo la pantalla entera**: lo
+  que se guarda se compara con lo que de verdad hay en chess-results.
+- **Lo que no cambia.** Esas mesas siguen en chess-results con su resultado (el de quien ganó por el retiro): solo dejan de mostrarse y de
+  contarse en el sistema. Los byes de la página pública (el rival sin enlace) ya se trataban como bye en el sorteo de Fair Play.
+- **Para desplegar**: `node herramientas/funciones-armar.js` y subir `centroamericano-mesa`, `centroamericano-clave` y
+  `centroamericano-mesas-vivo` (las tres reciben `inscritos-fed.ts`; está en el mapa del armador).
+- Lo revisan `verificar-centroamericano-banderas.js` (el lector de inscritos, las palabras, que cada lectura filtre y cada función
+  reciba el módulo, el dibujo decorativo con el código escrito) y `verificar-centroamericano-mesas-pagina.js` (la banderita al final de
+  cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
+  pareos» y «¿Dónde juega?»).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien

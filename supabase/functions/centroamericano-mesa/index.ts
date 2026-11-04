@@ -100,6 +100,7 @@ import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, deBase64, llamarPuente } from "./drive-puente.ts";
 import { aLectura, leerConCache, ponerLectura } from "./lecturas-cache.ts";
 import { pareosPublicos } from "./pareos-publicos.ts";
+import { conRival, fedDe, fedsDe, sinRival } from "./inscritos-fed.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -266,7 +267,7 @@ Deno.serve(async (req) => {
       const p = lectura.lectura;
       visto();
       // Todo lo que sigue es independiente entre sí: una sola tanda en paralelo.
-      const [filas, { data: fin }, { data: pasosOk }, { data: plan }, { data: pres }, { data: tiem }, avisos, hermanas, { data: inicioRonda }] = await Promise.all([
+      const [filas, { data: fin }, { data: pasosOk }, { data: plan }, { data: pres }, { data: tiem }, avisos, hermanas, _avance, { data: inicioRonda }, feds] = await Promise.all([
         registroDe(p.ronda),
         servicio.from("centroamericano_finales").select("finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).eq("reabierta", false).maybeSingle(),
         servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda),
@@ -283,6 +284,8 @@ Deno.serve(async (req) => {
         guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
         // La hora real en que el árbitro de esta categoría marcó que empezó la ronda (la tolerancia corre desde ahí); sin marca, null.
         servicio.from("centroamericano_inicios_torneo").select("ronda, inicio, arbitro").eq("tnr", a.tnr).eq("ronda", p.ronda).maybeSingle(),
+        // La federación de cada jugador, para su banderita (de la lista de inscritos, guardada en memoria; sin ella no hay banderas y nada más cambia).
+        fedsDe(a.tnr, 3000).catch(() => new Map<string, string>()),
       ]);
       return json({
         ...avisos,
@@ -296,7 +299,7 @@ Deno.serve(async (req) => {
         planillas: plan ?? [],
         arbitro: a.arbitro, tnr: a.tnr, torneo: torneoInfo?.nombre ?? p.torneo, categoria: torneoInfo?.categoria ?? "", rama: torneoInfo?.rama ?? "",
         ronda: p.ronda, desde: a.mesa_desde, hasta: a.mesa_hasta, vence: a.vence,
-        mesas: p.mesas.filter((m) => enRango(m.mesa)).map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor })),
+        mesas: p.mesas.filter((m) => enRango(m.mesa)).map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor, fed_b: fedDe(feds, blancas), fed_n: fedDe(feds, negras) })),
         marcas: marcasDe(filas),
         // Las últimas 60 (lo que se ve en «Lo anotado») MÁS todas las ilegales e irregularidades de la ronda: el reloj que se
         // apaga cuenta los 2 min de cada ilegal y las sanciones de tiempo, y una vieja que quedara fuera de las 60 faltaría
@@ -344,7 +347,8 @@ Deno.serve(async (req) => {
       });
       // El avance con lo que quedó: lo de la pantalla de antes, con lo confirmado encima.
       const quedo = new Map(res.cuerpo.resultados.filter((r) => r.ok).map((r) => [r.mesa, r.pedido === "D" ? "0" : r.pedido]));
-      await guardarAvance(servicio, a.id, res.cuerpo.ronda, avance(res.antes.mesas.map((m) => ({ mesa: m.mesa, valor: quedo.get(m.mesa) ?? m.valor })), a.mesa_desde, a.mesa_hasta));
+      // (Sin las mesas sin rival: igual que en «leer», para que el avance no salte de un número a otro al guardar.)
+      await guardarAvance(servicio, a.id, res.cuerpo.ronda, avance(conRival(res.antes.mesas.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, valor: quedo.get(m.mesa) ?? m.valor }))), a.mesa_desde, a.mesa_hasta));
       await ponerLectura(servicio, a.tnr, aLectura(res.despues));
       let registroError = false;
       if (filas.length) {
@@ -708,7 +712,7 @@ Deno.serve(async (req) => {
       type Copia = { ronda: number; mesas: { mesa: number; blancas: string; negras: string }[]; desde: string; viejo: boolean; error?: string };
       const copias = new Map<string, Copia>();
       for (const f of (filasCopia ?? []) as { tnr: string; ronda: number; mesas: { mesa: number; blancas: string; negras: string }[]; leida: string }[]) {
-        if (f.ronda > 0 && new Date(f.leida).getTime() > 86_400_000) copias.set(f.tnr, { ronda: f.ronda, mesas: f.mesas, desde: f.leida, viejo: Date.now() - new Date(f.leida).getTime() > MAX_TODAS_MS });
+        if (f.ronda > 0 && new Date(f.leida).getTime() > 86_400_000) copias.set(f.tnr, { ronda: f.ronda, mesas: conRival(f.mesas), desde: f.leida, viejo: Date.now() - new Date(f.leida).getTime() > MAX_TODAS_MS });
       }
       const porLeer = cats.filter((c) => !copias.has(c.tnr) || copias.get(c.tnr)!.viejo);
       const leer1 = async (c: { tnr: string; nombre: string }) => {
@@ -723,12 +727,16 @@ Deno.serve(async (req) => {
         for (let i = 0; i < porLeer.length; i += 6) await Promise.all(porLeer.slice(i, i + 6).map((c) => leer1(c).catch(() => {})));
       })();
       await Promise.race([refrescar, new Promise((ok) => setTimeout(ok, 12_000))]);
+      // Las banderitas: la lista de inscritos de cada categoría (en memoria; la que no alcance a leerse en 3 s sale sin banderas).
+      const fedsPor = new Map<string, Map<string, string>>();
+      await Promise.race([Promise.all(cats.map(async (c) => { fedsPor.set(c.tnr, await fedsDe(c.tnr, 3000).catch(() => new Map<string, string>())); })), new Promise((ok) => setTimeout(ok, 3_000))]);
       return json({
         ok: true, actual: a.tnr, generado: new Date().toISOString(),
         categorias: cats.map((c) => {
           const k = copias.get(c.tnr);
+          const fd = fedsPor.get(c.tnr);
           return { tnr: c.tnr, nombre: c.nombre, categoria: c.categoria, rama: c.rama, ronda: k?.ronda ?? 0, desde: k?.desde || null, viejo: k?.viejo ?? true, error: k?.error ?? (k ? null : "Todavía sin lectura."),
-            mesas: (k?.mesas ?? []).map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras })) };
+            mesas: (k?.mesas ?? []).map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras, fed_b: fedDe(fd, blancas), fed_n: fedDe(fd, negras) })) };
         }),
       });
     }
@@ -746,6 +754,8 @@ Deno.serve(async (req) => {
       const MAX_PAGINAS = 12, REVISAR_MS = 120_000, COPIA_VIEJA_MS = 180_000;
       const enlaces = [{ tnr: a.tnr, desde: a.mesa_desde, hasta: a.mesa_hasta }, ...hermanasFilas.map((x) => ({ tnr: x.tnr, desde: x.mesa_desde, hasta: x.mesa_hasta }))];
       const tnrs = [...new Set(enlaces.map((e) => e.tnr))];
+      const fedsPor = new Map<string, Map<string, string>>();
+      const lasFeds = Promise.race([Promise.all(tnrs.map(async (t) => { fedsPor.set(t, await fedsDe(t, 3000).catch(() => new Map<string, string>())); })), new Promise((ok) => setTimeout(ok, 3_000))]);
       const [{ data: ts }, { data: copias }, { data: guardados }] = await Promise.all([
         servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama").in("tnr", tnrs),
         servicio.from("centroamericano_lecturas").select("tnr, ronda, mesas, leida").in("tnr", tnrs),
@@ -796,6 +806,7 @@ Deno.serve(async (req) => {
       // El valor del desplegable de chess-results, dicho como en el pareo publicado.
       const RESULTADO_VIVO: Record<string, string> = { "0": "", "1": "1-0", "2": "½-½", "3": "0-1", "4": "1-0 (inc.)", "5": "0-1 (inc.)", "6": "0-0 (inc.)" };
       const limpio = (r: string) => String(r ?? "").replace(/\s*-\s*/g, "-").trim();
+      await lasFeds;   // las banderitas ya iban leyéndose mientras se pedían las rondas
       return json({
         ok: true, generado: new Date().toISOString(),
         torneos: enlaces.map((e) => {
@@ -805,18 +816,19 @@ Deno.serve(async (req) => {
           const porRonda = new Map<number, { mesa: number; blancas: string; negras: string; resultado: string }[]>();
           for (const g of filas.values()) {
             if (g.tnr !== e.tnr || !dentro(g.mesa)) continue;
+            if (sinRival(g.blancas) || sinRival(g.negras)) continue;   // sin rival (retirado, bye…) no es una partida
             if (!porRonda.has(g.ronda)) porRonda.set(g.ronda, []);
             porRonda.get(g.ronda)!.push({ mesa: g.mesa, blancas: g.blancas, negras: g.negras, resultado: limpio(g.resultado) });
           }
           // La ronda abierta, de la copia compartida (más fresca que lo guardado por Fair Play), salvo que ya se haya leído de chess-results ahora.
           // Una ronda ya terminada (la última) no trae mesas en la copia compartida: ahí manda lo leído de chess-results.
-          const delCopia = copia ? copia.mesas.filter((m) => dentro(m.mesa)) : [];
+          const delCopia = copia ? conRival(copia.mesas).filter((m) => dentro(m.mesa)) : [];
           if (copia && delCopia.length && !frescas.has(e.tnr + "|" + copia.ronda)) porRonda.set(copia.ronda, delCopia.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: RESULTADO_VIVO[m.valor] ?? "" })));
           const abierta = copia?.ronda ?? Math.max(0, ...porRonda.keys());
           return {
             tnr: e.tnr, nombre: t?.nombre ?? e.tnr, categoria: t?.categoria ?? "", rama: t?.rama ?? "", desde: e.desde, hasta: e.hasta,
             abierta, leida: copia?.leida ?? null,
-            rondas: [...porRonda.entries()].sort((x, y) => x[0] - y[0]).map(([ronda, mesas]) => ({ ronda, vivo: ronda === abierta, mesas: mesas.sort((x, y) => x.mesa - y.mesa) })),
+            rondas: [...porRonda.entries()].sort((x, y) => x[0] - y[0]).map(([ronda, mesas]) => ({ ronda, vivo: ronda === abierta, mesas: mesas.sort((x, y) => x.mesa - y.mesa).map((m) => ({ ...m, fed_b: fedDe(fedsPor.get(e.tnr), m.blancas), fed_n: fedDe(fedsPor.get(e.tnr), m.negras) })) })),
           };
         }),
       });
