@@ -392,7 +392,11 @@
   const RITMO = { inicial: 90 * 60, incremento: 30 };
   const BONO_ILEGAL = 120;
   const RITMO_CONFIABLE = 10;   // medias jugadas antes del control desde las que el ritmo cuenta entero
-  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [], llegadas = [] }) {
+  // `visto`: lo que marca AHORA un reloj que todavía se lee ({ blancas, negras }, en segundos; uno solo o los dos). Manda sobre el
+  // reparto: el tiempo total entre los dos es exacto, así que el del otro color es lo que sobra.
+  // `reparto`: «ritmo» (como venían gastando), «iguales» (mitad y mitad) o «turno» (todo lo que pasó lo gastó quien tenía el turno,
+  // solo si nadie ha movido desde el control). «ritmo» pasa solo a «turno» cuando nadie ha movido: es lo que de verdad pasó.
+  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [], llegadas = [], visto = null }) {
     const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
     if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
     if (jBlancas !== jNegras && jBlancas !== jNegras + 1) return { error: "Las blancas llevan las mismas jugadas que las negras o una más: revisa las jugadas." };
@@ -425,9 +429,15 @@
       if (reparto === "ritmo" && gB + gN > 0) { peso = Math.min(1, (cB + cN) / RITMO_CONFIABLE); pB = 0.5 + (gB / (gB + gN) - 0.5) * peso; }
       const tarde = cargaPorTarde(llegadas, desde, pasaron);
       const resto = pasaron - tarde.blancas - tarde.negras;
-      const usadoB = tarde.blancas + Math.round(resto * pB), usadoN = pasaron - usadoB;
+      // Nadie ha movido desde el control: todo lo que pasó lo gastó quien tenía el turno (menos la espera de quien llegó tarde).
+      const sinMoverse = jBlancas === cB && jNegras === cN, turnoCtl = cB === cN ? "blancas" : "negras";
+      if (reparto === "turno" && !sinMoverse) return { error: "Desde el control ya se jugaron jugadas: no se sabe cuánto gastó cada uno. Elige otro reparto o escribe lo que marca un reloj." };
+      const porTurno = sinMoverse && reparto !== "iguales";
+      if (porTurno) { pB = turnoCtl === "blancas" ? 1 : 0; peso = 1; }
+      const usadoB = porTurno ? (turnoCtl === "blancas" ? tarde.blancas + resto : tarde.blancas) : tarde.blancas + Math.round(resto * pB);
+      const usadoN = pasaron - usadoB;
       const res = {
-        turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
+        turno, pasaron, jugadas, total, reparto: porTurno ? "turno" : reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
         tarde, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
         blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
         negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
@@ -437,7 +447,7 @@
         const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN) + bonosAntes.blancas + bonosAntes.negras;
         res.comprobacion = { esperado, anotado: control.t_blancas + control.t_negras, diferencia: control.t_blancas + control.t_negras - esperado };
       }
-      return res;
+      return conVisto(res, visto, { blancas: base.blancas + R.incremento * (jBlancas - cB) + bonosDespues.blancas, negras: base.negras + R.incremento * (jNegras - cN) + bonosDespues.negras });
     }
     if (inicio == null) return { error: "Esta mesa no tiene ningún control de tiempos y no se sabe a qué hora empezó la ronda: no hay de dónde calcular." };
     pasaron = Math.round((ahora - inicio) / 1000);
@@ -446,9 +456,24 @@
     total = 2 * R.inicial - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
     const tardeS = cargaPorTarde(llegadas, inicio, pasaron);
     const usadoB = tardeS.blancas + Math.round((pasaron - tardeS.blancas - tardeS.negras) / 2), usadoN = pasaron - usadoB;
-    return { turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
+    return conVisto({ turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
       tarde: tardeS, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
-      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras };
+      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras },
+      visto, { blancas: R.inicial + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial + R.incremento * jNegras + bonosDespues.negras });
+  }
+  // Lo que el árbitro lee en un reloj que todavía marca manda sobre el reparto: el total entre los dos es exacto, así que si lee uno,
+  // el del otro es lo que sobra; si lee los dos, valen los dos (y se dice cuánto se aleja la suma del total). `tope` es lo que
+  // tendría cada uno sin haber gastado nada desde el control (para sacar cuánto gastó).
+  function conVisto(res, visto, tope) {
+    const ok = (x) => Number.isFinite(x) && x >= 0 ? Math.round(x) : null;
+    const vb = visto ? ok(visto.blancas) : null, vn = visto ? ok(visto.negras) : null;
+    if (vb == null && vn == null) return res;
+    const b = vb != null ? vb : res.total - vn, n = vn != null ? vn : res.total - vb;
+    if (b < 0 || n < 0) return { error: "Lo que marca ese reloj es más de lo que queda entre los dos (" + Math.max(0, res.total) + " s): revisa la lectura o la hora." };
+    const gB = tope.blancas - b, gN = tope.negras - n;
+    return Object.assign(res, { reparto: "lectura", blancas: b, negras: n, gastado: { blancas: gB, negras: gN },
+      visto: { blancas: vb, negras: vn, diferencia: vb != null && vn != null ? vb + vn - res.total : 0 },
+      proporcion: gB + gN > 0 ? { blancas: Math.min(1, Math.max(0, gB / (gB + gN))), negras: Math.min(1, Math.max(0, gN / (gB + gN))) } : res.proporcion });
   }
   // Los 2 minutos de cada ilegal de una mesa, sacados de la bitácora: solo la PRIMERA (sin anular) de cada jugador
   // da tiempo; con la segunda pierde la partida. Cada bono es del RIVAL de quien la hizo, con la hora en que se anotó.

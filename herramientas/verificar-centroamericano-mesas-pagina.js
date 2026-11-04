@@ -482,6 +482,51 @@ const CONTRASTE = `(sel) => {
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
     await p.waitForSelector("#form-tiempos");
     igual("la siguiente lectura empieza otra vez sin marcar", await p.evaluate(() => document.getElementById("lt-hora").dataset.marcada), "no");
+    // El reloj de quien tenía el turno SIGUE corriendo desde que se anotó el control: el último control de la mesa, de hace 10 min
+    // con 30:00 las blancas (les toca) y 50:00 las negras, tiene que decir cuánto les queda AHORA, y la calculadora del reloj
+    // apagado tiene que cobrarle esos 10 min a las blancas (el reloj de las negras no se movió) y no repartirlos entre las dos.
+    {
+        const copiaT = await p.evaluate(() => window.__tiempos.slice());
+        const leidasAntes = await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "leer").length);
+        await p.evaluate(() => {
+            window.__tiempos = window.__tiempos.filter((t) => t.mesa !== 2);
+            window.__tiempos.unshift({ id: "t-sem", ocurrio: new Date(Date.now() - 600000).toISOString(), mesa: 2, jugada: 20, j_blancas: 20, j_negras: 20, turno: null, t_blancas: 1800, t_negras: 3000, nota: "" });
+            document.getElementById("actualizar").click();
+        });
+        await p.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "leer").length > n && document.querySelector("#lt-ultimas li"), leidasAntes);
+        await p.waitForSelector("#lt-corriendo");
+        igual("lo último anotado dice cuánto le queda AHORA a quien tenía el turno, si nadie ha movido (30:00 menos los 10 min que pasaron)",
+            await p.evaluate(() => document.getElementById("lt-corriendo").textContent.replace(/\s+/g, " ")),
+            (await p.textContent("#lt-corriendo")).replace(/\s+/g, " ").match(/^Desde esa hora pasaron 10 min.* si nadie ha movido, a las blancas \(les toca\) les quedan ahora (20:00|19:5\d)\.$/) ? (await p.textContent("#lt-corriendo")).replace(/\s+/g, " ") : "FALTA");
+        await p.click("#lt-apagado");
+        await p.waitForSelector("#control-tiempos .ra-jb");
+        await p.fill("#control-tiempos .ra-jb", "20");
+        await p.fill("#control-tiempos .ra-jn", "20");
+        await p.waitForSelector("#control-tiempos .cam-reloj-dibujo");
+        igual("reloj apagado con el turno de las blancas y nadie movió: los 10 min son SOLO de las blancas (20:00) y el reloj de las negras no baja (50:00)",
+            await p.evaluate(() => [document.querySelector("#control-tiempos .ra-tb").value, document.querySelector("#control-tiempos .ra-tn").value, /Nadie movió desde el control, así que el reloj que corrió es el de las blancas/.test(document.querySelector("#control-tiempos .cam-apagado-cuentas").textContent)]),
+            [(await p.inputValue("#control-tiempos .ra-tb")), "50:00", true]);
+        igual("el tiempo de las blancas es 20:00 menos los segundos que ya pasaron de los 10 min (nunca el reparto a medias)", /^(20:00|19:5\d)$/.test(await p.inputValue("#control-tiempos .ra-tb")), true);
+        // Lo que marca un reloj que todavía se lee: manda, y al otro le queda lo que falta (la suma de los dos es exacta).
+        igual("sin leer ningún reloj, la hora del cálculo no está marcada", await p.evaluate(() => document.querySelector("#control-tiempos .ra-hora").dataset.marcada), "no");
+        await p.type("#control-tiempos .ra-vb", "1800");
+        igual("al escribir lo que marca un reloj se marca sola la hora de ese momento y lo escrito se entiende",
+            await p.evaluate(() => [document.querySelector("#control-tiempos .ra-hora").dataset.marcada, document.querySelector("#control-tiempos .ra-vb").value]), ["si", "18:00"]);
+        igual("con las blancas en 18:00, las negras son lo que falta para el total (nunca más que lo que quedaba): 51:5x o 52:00, y el texto lo explica",
+            await p.evaluate(() => [document.querySelector("#control-tiempos .ra-tb").value, /^(51:5\d|52:00)$/.test(document.querySelector("#control-tiempos .ra-tn").value), /Se usa lo que marca el reloj que se leyó de las blancas \(18:00\)/.test(document.querySelector("#control-tiempos .cam-apagado-cuentas").textContent)]),
+            ["18:00", true, true]);
+        await p.fill("#control-tiempos .ra-vb", "");
+        await p.type("#control-tiempos .ra-vn", "9000");
+        igual("un reloj leído que pasa de lo que queda entre los dos se rechaza con una explicación",
+            await p.evaluate(() => /más de lo que queda entre los dos/.test(document.querySelector("#control-tiempos .cam-aviso-suave").textContent)), true);
+        await p.fill("#control-tiempos .ra-vn", "");
+        await p.click("#control-tiempos .ra-volver");
+        await p.waitForSelector("#form-tiempos");
+        await p.evaluate((c) => { window.__tiempos = c; }, copiaT);
+        const leidas2 = await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "leer").length);
+        await p.evaluate(() => document.getElementById("actualizar").click());
+        await p.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "leer").length > n, leidas2);
+    }
     // «El reloj se apagó»: la calculadora compartida (js/centroamericano-reloj-apagado.js) en la ventana de la mesa.
     const tiemposAntesApagado = await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "tiempo").length);
     await p.click("#lt-apagado");
@@ -1071,6 +1116,21 @@ const CONTRASTE = `(sel) => {
         [2, true, true, 20, 20, "blancas", true, true]);
     await pv.waitForFunction(() => !document.getElementById("lt-tx-todas"));
     igual("ya anotado, no se ofrece otra vez", await pv.$("#lt-tx-todas"), null);
+    // «Llenar con los relojes de ahora»: la lectura de la transmisión es de hace unos segundos y el reloj de quien tenía el turno
+    // siguió corriendo; se le descuenta lo que pasó y el control queda con la hora de este momento.
+    await pv.selectOption("#lt-mesa", "2");
+    await pv.waitForSelector("#lt-tx-ahora");
+    await pv.click("#lt-tx-ahora");
+    igual("«Llenar con los relojes de ahora»: el de las blancas (les toca) baja lo que pasó desde la última jugada, el de las negras queda igual, y la hora es la de ahora",
+        await pv.evaluate((e) => { const tb = window.CentroamericanoMesas.leerTiempo(document.getElementById("lt-tb").value), tn = window.CentroamericanoMesas.leerTiempo(document.getElementById("lt-tn").value);
+            const dif = Date.now() - Date.parse(e.ocurrio);
+            return [e.tB - tb >= 35 && e.tB - tb <= dif / 1000 + 3, tn === e.tN, document.getElementById("lt-hora").dataset.marcada, Date.now() - Date.parse(window.__horaMarcadaPrueba || new Date().toISOString()) < 5000]; }, esperado),
+        [true, true, "si", true]);
+    await pv.click("#lt-guardar");
+    await pv.waitForFunction(() => window.__llamadas.filter((l) => l.body.action === "tiempo").length > 1);
+    igual("se guarda con la hora de ahora (no la de la última jugada) y la nota dice que el reloj de las blancas se descontó, sin marcarlo como corregido a mano",
+        await pv.evaluate((e) => { const b = window.__llamadas.filter((l) => l.body.action === "tiempo").pop().body; return [Date.parse(b.ocurrio) > Date.parse(e.ocurrio) + 30000, b.t_negras === e.tN, b.t_blancas < e.tB, /^Tomado de la transmisión sin atraso \(LiveChess\): los relojes después de la jugada 20 \(a las .*\), con el reloj de las blancas \(le tocaba\) descontado hasta la hora del control$/.test(b.nota), b.turno]; }, esperado),
+        [true, true, true, true, "blancas"]);
     // «Mis mesas en vivo» marca la repetición en la mesa.
     await pv.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     await pv.click("#ver-vivo");

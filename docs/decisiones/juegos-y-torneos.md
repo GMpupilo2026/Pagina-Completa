@@ -9435,6 +9435,31 @@ el reloj que se apaga lo tenga en cuenta al reconstruir los tiempos.
   `verificar-centroamericano-mesas-pagina.js` (el toque manda `ocurrio` e `inicio`, queda la nota, el aviso, corregir la anula y volver
   a marcar deja una nueva).
 
+### El reloj de quien tiene el turno sigue corriendo (el 4/11: «salía con 30 y en el reloj real tenía 20»)
+
+Un control es una foto **del momento en que se anotó**; la transmisión (LiveChess) trae los relojes justo después de la última jugada.
+Si quien tenía el turno lleva 10 minutos pensando, su reloj real ya no marca lo anotado, pero el sistema seguía mostrando (y la calculadora
+del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de los dos.
+
+- **Nadie movió desde el control → todo es de quien tenía el turno** (`relojApagado`, reparto `turno`; el turno sale de las
+  jugadas del control: iguales, blancas; una más las blancas, negras). Es lo que de verdad pasó, así que el reparto «Como venía gastando
+  cada uno» pasa solo a `turno` cuando las jugadas de ahora son las del control; «Mitad y mitad» se respeta si el árbitro lo elige. Con jugadas
+  desde el control no se sabe quién gastó qué y sigue el ritmo; `turno` pedido a la fuerza con jugadas nuevas se rechaza. La espera de quien
+  llegó tarde se le cobra aparte, como antes.
+- **Lo que marca un reloj que todavía se lee manda** (`visto`, «Si algún reloj todavía se lee, ¿qué marca ahora?»): el total entre los dos
+  es exacto, así que si el árbitro lee uno, el otro es lo que sobra; si lee los dos valen los dos y se avisa si la suma se aleja del total.
+  Lo leído más grande que el total se rechaza. Al escribir en esas casillas se marca sola la **hora de ese momento** (la lectura es de ese
+  instante; si no, el otro color se calcularía con la hora de guardar).
+- **Lo anotado dice cuánto le queda ahora** (`#lt-corriendo`, bajo «Lo último anotado»): «Desde esa hora pasaron 10 min: si nadie ha movido, a
+  las blancas (les toca) les quedan ahora 20:00». No se anota solo: el árbitro lo comprueba con el reloj.
+- **«Llenar con los relojes de ahora»** (junto a «Llenar con la transmisión»): descuenta lo que pasó al reloj de quien tenía el turno y deja el
+  control con la hora de este momento; la nota lo dice («… con el reloj de las blancas (le tocaba) descontado hasta la hora del control»).
+  Los botones «Llenar…» ya no pierden lo que pone el botón al dibujar (`borradorFresco`: `pintarTiempos` leía las casillas viejas y lo
+  pisaba).
+- Lo revisan `verificar-centroamericano-mesas.js` (blancas 30:00 y 10 min sin mover → 20:00 y las negras en 50:00; las negras; `visto` de
+  uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
+  leer, el guardado con la hora de ahora y su nota).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien

@@ -521,6 +521,28 @@ console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el in
   const sinCtl = C.relojApagado({ control: null, inicio: ini, ahora, jBlancas: 23, jNegras: 23 });
   igual("sin ningún control: desde el inicio, mitad y mitad (180 − 85 + 23), y lo dice", [sinCtl.total, sinCtl.reparto, sinCtl.sinControl], [(180 - 85 + 23) * 60, "iguales", true]);
   igual("sin control y sin hora de inicio no inventa nada", !!C.relojApagado({ control: null, inicio: null, ahora, jBlancas: 3, jNegras: 3 }).error, true);
+  // Nadie ha movido desde el control: el que tenía el turno venía pensando, y el reloj del otro NO corrió.
+  {
+    const c2 = { ocurrio: "2026-11-02T16:10:00-06:00", j_blancas: 20, j_negras: 20, t_blancas: 30 * 60, t_negras: 50 * 60 };
+    const a10 = Date.parse("2026-11-02T16:20:00-06:00");
+    const pensando = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20 });
+    igual("blancas con 30:00 y 10 min pensando sin mover: les quedan 20:00 y a las negras NADA les baja (50:00)", [C.formatoTiempo(pensando.blancas), C.formatoTiempo(pensando.negras), pensando.reparto, pensando.turno], ["20:00", "50:00", "turno", "blancas"]);
+    const negrasPiensan = C.relojApagado({ control: Object.assign({}, c2, { j_blancas: 21 }), inicio: ini, ahora: a10, jBlancas: 21, jNegras: 20 });
+    igual("si le tocaba a las negras (las blancas llevan una más), el que gasta es el de las negras", [C.formatoTiempo(negrasPiensan.blancas), C.formatoTiempo(negrasPiensan.negras)], ["30:00", "40:00"]);
+    igual("«Mitad y mitad» sigue valiendo aunque nadie haya movido", C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, reparto: "iguales" }).gastado, { blancas: 300, negras: 300 });
+    igual("pedir «solo el del turno» cuando ya se jugaron jugadas se rechaza (no se sabe cuánto gastó cada uno)", !!C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 21, jNegras: 21, reparto: "turno" }).error, true);
+    igual("con jugadas desde el control el reparto sigue siendo por el ritmo (no se inventa quién gastó)", C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 21, jNegras: 21 }).reparto, "ritmo");
+    // Lo que marca un reloj que todavía se lee manda: el otro es lo que sobra (el total entre los dos es exacto).
+    const vb = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 22, jNegras: 21, visto: { blancas: 25 * 60 } });
+    const sinV = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 22, jNegras: 21 });
+    igual("si lee el reloj de las blancas (25:00), las negras son el total menos eso, y la suma no cambia", [C.formatoTiempo(vb.blancas), vb.blancas + vb.negras === sinV.total, vb.negras === sinV.total - 25 * 60, vb.reparto], ["25:00", true, true, "lectura"]);
+    const vn = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { negras: 50 * 60 } });
+    igual("si lee el reloj de las negras (50:00 quieto), las blancas son lo que sobra: 20:00", [C.formatoTiempo(vn.blancas), C.formatoTiempo(vn.negras)], ["20:00", "50:00"]);
+    igual("leer más de lo que queda entre los dos se rechaza", !!C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { blancas: 80 * 60 } }).error, true);
+    const lasDosV = C.relojApagado({ control: c2, inicio: ini, ahora: a10, jBlancas: 20, jNegras: 20, visto: { blancas: 21 * 60, negras: 50 * 60 } });
+    igual("si lee los dos valen los dos, y se dice cuánto se aleja la suma del total (+1:00)", [lasDosV.blancas, lasDosV.negras, lasDosV.visto.diferencia], [21 * 60, 50 * 60, 60]);
+    igual("sin control también vale lo leído", C.relojApagado({ control: null, inicio: ini, ahora: a10, jBlancas: 5, jNegras: 5, visto: { blancas: 60 * 60 } }).reparto, "lectura");
+  }
   // Las llegadas tarde: el reloj de quien llegó tarde corría mientras no estaba (se le cobra entero a él; lo demás se reparte).
   const nota = (extra) => Object.assign({ id: "n1", tipo: "nota", articulo: "Llegó tarde", mesa: 6, color: "negras", ocurrio: "2026-11-02T15:22:08-06:00", texto: "Ramos, Daniel (negras) llegó tarde: 22 min 8 s después del inicio de la ronda (a las 3:22 p. m.; le faltaban 7 min 52 s para la incomparecencia)." }, extra || {});
   igual("«Llegó tarde» se lee de la bitácora: el color, la hora de la llegada y cuánto se tardó (22 min 8 s = 1328 s); lo anulado, de otra mesa o de otra clase de nota no cuenta",
