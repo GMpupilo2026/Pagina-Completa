@@ -1703,6 +1703,52 @@ un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
 - La forma de las carpetas la decide la función (`carpetasDe`), y
   `verificar-metropolitano.js` la prueba con el mismo código.
 
+#### El parqueo
+
+Pedido del dueño: en la inscripción, «¿Necesita parqueo?», con el precio que
+pone administración y la placa del vehículo, que es la que entra; y que
+administración decida cuántos espacios hay, y que al llenarse la oferta
+desaparezca.
+
+- **Lo configura administración** en `metropolitano-inscritos.html`, sección
+  «🚗 Parqueo»: el precio por vehículo (en dólares), los espacios y si se
+  ofrece. Va en `metropolitano_parqueo`, una sola fila que nadie escribe desde
+  afuera: la escribe `metropolitano_parqueo_configurar()` (solo
+  administración), con su bitácora (`interno.auditar`, en `VIGILADAS`). Los
+  espacios no pueden quedar por debajo de los ya tomados.
+- **La página de inscripción** pregunta al cargar a
+  `metropolitano_parqueo_ver()` (sin cuenta): si se ofrece, su precio y
+  cuántos quedan. Si no se ofrece, se llenó o la base no contesta, la casilla
+  no aparece. Con 20 espacios o menos, dice cuántos quedan. La placa se pide
+  al marcarla y se guarda como la guarda la base: sin espacios ni guiones, en
+  mayúscula (`bcd-123` → `BCD123`).
+- **Se paga con la inscripción**: el precio se suma a lo de esa persona
+  después del código de descuento (el código es de la inscripción, no del
+  parqueo) y antes del IVA, en `MetropolitanoReglas.precio()` (`parqueo`,
+  `placa`) y en `metropolitano_inscribir()` con las mismas cuentas. Lo puede
+  pedir cualquiera: jugador, entrenador, acompañante o delegado; a un titulado
+  que no paga la inscripción, el parqueo sí se le cobra.
+- **Una placa es un espacio**: no puede ir dos veces en un envío (la página
+  y la base lo dicen) ni en dos inscripciones activas
+  (`metropolitano_una_placa`, índice único; anular la inscripción libera la
+  placa). Si vienen juntos, lo pide una sola persona.
+- **El cupo lo hace cumplir la base**: los espacios tomados son los de las
+  inscripciones activas con el pago no rechazado
+  (`interno.metropolitano_parqueo_usados()`), y `metropolitano_inscribir()`
+  bloquea la fila del parqueo (`for update`) antes de contar, así que dos
+  envíos a la vez no se pasan. Lleno, la base rechaza el envío con «Ya no
+  quedan espacios de parqueo» y la página deja de ofrecerlo.
+- **Para la entrada**: «Lista de placas para la entrada (CSV)» baja las
+  placas de las inscripciones activas, ordenadas, con su código, su nombre,
+  su teléfono y el estado del pago. La placa sale también en el detalle de
+  cada inscripción, en el CSV completo y en las cifras («Con parqueo»).
+- Probado en la base con un pedido anónimo y como administración, en una
+  transacción que se deshace: sin placa no entra; con 1 espacio, la primera
+  entra con los $5 sumados y la segunda recibe «Ya no quedan espacios»; lleno,
+  `metropolitano_parqueo_ver()` da `disponible: false`; sin cuenta no se
+  puede ver el estado ni configurarlo. La política de privacidad dice para
+  qué se guarda la placa.
+
 #### Mi ronda y mi mesa: el QR del gafete
 
 Pedido del dueño: el QR del gafete lleva a la ronda y la mesa del jugador, que

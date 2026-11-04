@@ -80,6 +80,17 @@
   /* ===================== Una persona: su tarjeta ===================== */
   let siguiente = 0;
   const personas = [];
+  /* El parqueo: si administración lo ofrece, su precio y cuántos espacios
+     quedan (metropolitano_parqueo_ver). Mientras no conteste, o si no se
+     ofrece o se llenó, no aparece. Lo cuenta y lo cobra la base. */
+  let PARQUEO = { disponible: false, precio_usd: null, quedan: null };
+  async function leerParqueo() {
+    try {
+      const { data, error } = await window.sb.rpc("metropolitano_parqueo_ver");
+      if (!error && data && typeof data === "object") PARQUEO = data;
+    } catch (e) { /* sin la base, no se ofrece */ }
+    personas.forEach((p) => p.recalcular());
+  }
   const esGrupo = () => document.querySelector('input[name="modo"]:checked').value === "grupo";
 
   /* El HTML de la tarjeta es fijo: lo único que cambia es `k`, el prefijo de
@@ -214,6 +225,17 @@
           </div>
         </div>
 
+        <!-- El parqueo: solo si administración lo ofrece y quedan espacios
+             (metropolitano_parqueo_ver); lleno, no se muestra. -->
+        <div data-caja-parqueo class="hidden space-y-2">
+          <p class="font-semibold"><span aria-hidden="true">🚗 </span>Parqueo</p>
+          <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-c="parqueo" class="mt-1 h-4 w-4 shrink-0"> <span>Necesita parqueo en el Estadio Nacional <span data-parqueo-precio></span></span></label>
+          <div data-caja-placa class="hidden space-y-1">
+            <div class="max-w-xs"><label for="${id("placa")}" class="block text-sm font-semibold mb-1">Placa del vehículo${AST}</label><input id="${id("placa")}" data-campo data-c="placa" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BCD123" aria-describedby="${id("placa-ayuda")}"></div>
+            <p id="${id("placa-ayuda")}" class="text-xs text-brand-600 dark:text-brand-300">Solo entra el vehículo de esta placa, y es un espacio por vehículo: si vienen juntos, lo pide una sola persona. Se paga con la inscripción.</p>
+          </div>
+        </div>
+
         <div class="space-y-2">
           <p class="font-semibold">Condición y accesibilidad</p>
           <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-condicion value="sordo" class="mt-1"> <span>Atleta sordo (opta por el premio de mejor atleta sordo del Metropolitano B)</span></label>
@@ -264,6 +286,11 @@
     const hospeda = () => !esTitulado() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
     const comidas = () => (esTitulado() ? [] : [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value));
     const condicion = () => [...el.querySelectorAll("[data-condicion]:checked")].map((x) => x.value);
+    const parquea = () => PARQUEO.disponible && c("parqueo").checked;
+    // La placa como la guarda la base: sin espacios ni guiones, en mayúscula.
+    const placa = () => v("placa").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    yo.parquea = parquea;
+    yo.placa = placa;
     const v = (n) => { const x = c(n); return x ? String(x.value || "").trim() : ""; };
     yo.v = v;
 
@@ -576,6 +603,12 @@
       pintarAcompanantes();
       q("[data-caja-comidas]").classList.toggle("hidden", !comidas().length);
       q("[data-aviso-condicion]").classList.toggle("hidden", !condicion().some((x) => x === "sordo" || x === "ciego"));
+      // El parqueo se ofrece mientras queden espacios; si se acabó, se quita.
+      q("[data-caja-parqueo]").classList.toggle("hidden", !PARQUEO.disponible);
+      if (!PARQUEO.disponible) c("parqueo").checked = false;
+      q("[data-parqueo-precio]").textContent = PARQUEO.disponible
+        ? "(" + (Number(PARQUEO.precio_usd) > 0 ? R.dinero(Number(PARQUEO.precio_usd)) : "sin costo") + (PARQUEO.quedan != null && PARQUEO.quedan <= 20 ? "; quedan " + PARQUEO.quedan : "") + ")" : "";
+      q("[data-caja-placa]").classList.toggle("hidden", !parquea());
       q("[data-texto-publicidad]").textContent = esGrupo() && !yo.esDelegado
         ? "esta persona (o su madre o padre, si es menor) autoriza que la FCA y Ajedrez Integral usen su nombre y su foto en la publicidad del torneo: redes sociales, afiches, la página y la prensa."
         : "autorizo que la FCA y Ajedrez Integral usen el nombre y la foto de esta persona en la publicidad del torneo: redes sociales, afiches, la página y la prensa.";
@@ -715,6 +748,7 @@
       });
       if (comidas().length && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
+      if (parquea() && !/^[A-Z0-9]{2,10}$/.test(placa())) falta(c("placa"), "Falta la placa del vehículo para el parqueo (de 2 a 10 letras y números).");
       if (esTitulado() && !deAfuera() && (!v("llegada") || !v("salida") || v("salida") <= v("llegada"))) {
         falta(c("llegada"), "Faltan el día en que llega al Estadio Nacional y el día en que sale (después del de llegada).");
       }
@@ -745,10 +779,12 @@
         origen: deAfuera() ? "fuera" : "cr",
         comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
         dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
+        parqueo: parquea(), placa: parquea() ? placa() : null,
         acepta_publicidad: c("acepta_publicidad").checked,
       };
       const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura(),
-        descuento: yo.codigo && !esTitulado() ? yo.codigo.porcentaje : 0 });
+        descuento: yo.codigo && !esTitulado() ? yo.codigo.porcentaje : 0,
+        parqueo: parquea() ? Number(PARQUEO.precio_usd) || 0 : 0, placa: parquea() ? placa() : "" });
       const conCodigo = !!yo.codigo && rol === "jugador" && datos.torneos.length > 0 && !esTitulado();
       datos.codigo = conCodigo ? yo.codigo.codigo : null;
       datos.codigo_pct = conCodigo ? yo.codigo.porcentaje : null;
@@ -827,6 +863,7 @@
         precio.lineas.forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
         precio.avisos.forEach((a) => avisos.add(a));
       } else if (datos.rol !== "jugador") lineas.push(quien + " — " + (p.esDelegado ? "delegado" : R.rolDe(datos.rol, datos.sexo).toLowerCase()) + ": sin costo de inscripción");
+      if (!(datos.rol === "jugador" && datos.torneos.length)) precio.lineas.filter((l) => l.torneo === "PARQUEO").forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
       usd += precio.usd;
       iva += precio.iva;
       if (datos.rol === "jugador" && !precio.gratis) gratisTodo = false;
@@ -957,6 +994,12 @@
       r.errores.forEach(([campo, t]) => errores.push([campo, quien + t]));
       return Object.assign({ p }, r);
     });
+    // El parqueo del envío: una placa es un espacio, y no más de los que quedan.
+    const conParqueo = lista.filter((x) => x.datos.parqueo);
+    const placas = conParqueo.map((x) => x.datos.placa);
+    const repetida = placas.find((pl, i) => pl && placas.indexOf(pl) !== i);
+    if (repetida) errores.push([conParqueo[placas.lastIndexOf(repetida)].p.el.querySelector('[data-c="placa"]'), "La placa " + repetida + " está dos veces: es un espacio por vehículo, que lo pida una sola persona."]);
+    if (PARQUEO.quedan != null && conParqueo.length > PARQUEO.quedan) errores.push([conParqueo[0].p.el.querySelector('[data-c="parqueo"]'), "Solo quedan " + PARQUEO.quedan + " espacios de parqueo y esta inscripción pide " + conParqueo.length + "."]);
     const t = totales();
     if (t.usd > 0 && !metodo) errores.push([$("metodos"), "Elige cómo pagaste."]);
     if (t.usd > 0 && !comprobante) errores.push([$("comprobante"), "Falta el comprobante de pago."]);
@@ -999,6 +1042,7 @@
     );
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
     if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
+    if (d.parqueo) filas.push(["Parqueo", "Para el vehículo de placa " + d.placa]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
     const dl = document.createElement("dl"); dl.className = "grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm";
@@ -1166,4 +1210,5 @@
   $("otra").addEventListener("click", () => { location.href = location.pathname; });
 
   cambiarModo();
+  leerParqueo();
 })();

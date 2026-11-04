@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104185542
+# al-dia-con: 20261104212735
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -151,6 +151,7 @@ tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
 tabla  metropolitano_codigos  rls=true
 tabla  metropolitano_inscripciones  rls=true
+tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
@@ -1580,7 +1581,10 @@ columna  metropolitano_inscripciones.pago_fecha  date
 columna  metropolitano_inscripciones.pago_metodo  text
 columna  metropolitano_inscripciones.pago_referencia  text
 columna  metropolitano_inscripciones.pais_residencia  text
+columna  metropolitano_inscripciones.parqueo  boolean
+columna  metropolitano_inscripciones.parqueo_usd  numeric(8,2)
 columna  metropolitano_inscripciones.pasaporte  text
+columna  metropolitano_inscripciones.placa  text
 columna  metropolitano_inscripciones.provincia  text
 columna  metropolitano_inscripciones.responsable  jsonb
 columna  metropolitano_inscripciones.revisado_en  timestamp with time zone
@@ -1594,6 +1598,12 @@ columna  metropolitano_inscripciones.titulo  text
 columna  metropolitano_inscripciones.torneos  text[]
 columna  metropolitano_inscripciones.validado_en  timestamp with time zone
 columna  metropolitano_inscripciones.viaje  jsonb
+columna  metropolitano_parqueo.activo  boolean
+columna  metropolitano_parqueo.actualizado  timestamp with time zone
+columna  metropolitano_parqueo.actualizado_por  uuid
+columna  metropolitano_parqueo.cupos  integer
+columna  metropolitano_parqueo.id  boolean
+columna  metropolitano_parqueo.precio_usd  numeric(8,2)
 columna  misiones_secretas.color  text
 columna  misiones_secretas.created_at  timestamp with time zone
 columna  misiones_secretas.jugador_id  uuid
@@ -2761,6 +2771,7 @@ funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
 funcion  interno.metropolitano_drive_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
+funcion  interno.metropolitano_parqueo_usados()  definer  anon=false  auth=false
 funcion  interno.metropolitano_persona(x jsonb, hoy date, v_metodo text, p_correo_obligatorio boolean)  invoker  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
@@ -2853,6 +2864,9 @@ funcion  metropolitano_codigos_crear(p_porcentaje integer, p_cantidad integer, p
 funcion  metropolitano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  metropolitano_drive_leer()  definer  anon=false  auth=false
 funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
+funcion  metropolitano_parqueo_configurar(p_precio numeric, p_cupos integer, p_activo boolean)  definer  anon=false  auth=true
+funcion  metropolitano_parqueo_estado()  definer  anon=false  auth=true
+funcion  metropolitano_parqueo_ver()  definer  anon=true  auth=true
 funcion  metropolitano_recibe()  invoker  anon=true  auth=true
 funcion  metropolitano_revisar(p_id uuid, p_pago_estado text, p_estado text, p_nota text)  definer  anon=false  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
@@ -3354,6 +3368,7 @@ politica  mensajes_casa  mensajes_casa_insert  INSERT
 politica  mensajes_casa  mensajes_casa_select  SELECT
 politica  metropolitano_codigos  metropolitano_codigos_ver  SELECT
 politica  metropolitano_inscripciones  metropolitano_ver  SELECT
+politica  metropolitano_parqueo  metropolitano_parqueo_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
 politica  notas_alumno  notas_alumno_delete  DELETE
@@ -3676,6 +3691,7 @@ trigger  material_compartido  auditar
 trigger  mensajes_casa  mensajes_casa_al_crear
 trigger  metropolitano_codigos  auditar
 trigger  metropolitano_inscripciones  auditar
+trigger  metropolitano_parqueo  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
@@ -4085,6 +4101,8 @@ indice  metropolitano_inscripciones  metropolitano_por_grupo
 indice  metropolitano_inscripciones  metropolitano_un_codigo
 indice  metropolitano_inscripciones  metropolitano_un_documento
 indice  metropolitano_inscripciones  metropolitano_un_fide
+indice  metropolitano_inscripciones  metropolitano_una_placa
+indice  metropolitano_parqueo  metropolitano_parqueo_pkey
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
@@ -5083,6 +5101,7 @@ grant  metropolitano_inscripciones  authenticated  REFERENCES
 grant  metropolitano_inscripciones  authenticated  SELECT
 grant  metropolitano_inscripciones  authenticated  TRIGGER
 grant  metropolitano_inscripciones  authenticated  TRUNCATE
+grant  metropolitano_parqueo  authenticated  SELECT
 grant  misiones_secretas  anon  DELETE
 grant  misiones_secretas  anon  INSERT
 grant  misiones_secretas  anon  REFERENCES

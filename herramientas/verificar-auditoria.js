@@ -57,6 +57,7 @@ const VIGILADAS = [
   // La inscripción del Metropolitano 2026: cuánto se cobró y si el pago se dio por bueno.
   "metropolitano_inscripciones",
   "metropolitano_codigos",
+  "metropolitano_parqueo",
 ];
 
 let fallos = 0;

@@ -103,6 +103,23 @@
                     </table>
                 </div>
             </section>
+
+            <!-- El parqueo: si se ofrece, cuánto cuesta y cuántos espacios hay
+                 (metropolitano_parqueo_configurar). Lleno, la inscripción deja de
+                 ofrecerlo y la base no deja pasar ninguno más. -->
+            <section class="mt-10" aria-labelledby="parqueo-titulo">
+                <h2 id="parqueo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🚗</span> Parqueo</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Quien lo marca en la inscripción escribe la <strong>placa del vehículo</strong>, que es la que entra, y lo paga con la inscripción. Una placa es un espacio. Cuando se llenan los espacios, la inscripción deja de ofrecerlo sola.</p>
+                <form id="parqueo-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4 flex flex-wrap items-end gap-3">
+                    <div><label for="parq-precio" class="block text-xs font-semibold mb-1">Precio por vehículo (USD)</label><input id="parq-precio" type="number" min="0" max="500" step="0.01" class="w-32 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div><label for="parq-cupos" class="block text-xs font-semibold mb-1">Espacios</label><input id="parq-cupos" type="number" min="0" max="5000" step="1" class="w-28 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <label class="flex items-center gap-2 text-sm font-semibold pb-2"><input id="parq-activo" type="checkbox" class="h-4 w-4"> Ofrecerlo en la inscripción</label>
+                    <button type="submit" id="parq-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar</button>
+                    <button type="button" id="parq-placas" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Lista de placas para la entrada (CSV)</button>
+                    <p id="parq-estado" class="w-full text-sm font-semibold" role="status" aria-live="polite">Leyendo el parqueo…</p>
+                    <p id="parq-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
+                </form>
+            </section>
         </div>
     </div>
 
