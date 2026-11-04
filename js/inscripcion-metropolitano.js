@@ -169,14 +169,21 @@
             <div><label for="${id("prov")}" class="block text-sm font-semibold mb-1">Provincia donde vive${AST}</label><select id="${id("prov")}" data-campo data-c="provincia"></select></div>
             <div><label for="${id("cant")}" class="block text-sm font-semibold mb-1">Cantón${AST}</label><select id="${id("cant")}" data-campo data-c="canton"></select></div>
           </div>
+          <!-- GM, IM y WGM: la organización les da hospedaje y alimentación; de afuera, se pide solo el viaje. -->
+          <div data-caja-titulado class="hidden rounded-xl border-l-4 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4 text-sm space-y-1"><p class="font-semibold"><span aria-hidden="true">🏆 </span>Invitado titulado</p><p data-titulado-texto></p></div>
           <div data-caja-viaje class="space-y-4">
           <div class="grid sm:grid-cols-3 gap-4">
-            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1">Día de llegada</label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1">Día de salida</label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
-            <div><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada</label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
+            <div><label for="${id("lleg")}" class="block text-sm font-semibold mb-1">Día de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("lleg")}" data-campo data-c="llegada" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div><label for="${id("sal")}" class="block text-sm font-semibold mb-1">Día de salida<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("sal")}" data-campo data-c="salida" type="date" min="2026-12-15" max="2027-01-05"></div>
+            <div><label for="${id("vuelo")}" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada<span data-ast-viaje class="hidden">${AST}</span></label><input id="${id("vuelo")}" data-campo data-c="vuelo" maxlength="60" placeholder="AV 123, 14:30"></div>
           </div>
-          <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita traslado del aeropuerto</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-c="traslado"> Necesita transporte del aeropuerto al Estadio Nacional</label>
+          <div data-caja-docs class="hidden grid sm:grid-cols-2 gap-4">
+            <div><p class="text-sm font-semibold mb-1">Foto del tiquete aéreo${AST}</p><label for="${id("tiq")}" class="metro-boton inline-block cursor-pointer">🎫 Elegir el tiquete<input id="${id("tiq")}" data-doc="tiquete" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="tiquete" class="text-xs mt-1" aria-live="polite"></p></div>
+            <div><p class="text-sm font-semibold mb-1">Foto del pasaporte${AST}</p><label for="${id("pas")}" class="metro-boton inline-block cursor-pointer">🛂 Elegir el pasaporte<input id="${id("pas")}" data-doc="pasaporte" type="file" accept="image/*,.pdf" class="sr-only"></label><p data-doc-estado="pasaporte" class="text-xs mt-1" aria-live="polite"></p></div>
           </div>
+          </div>
+          <div data-caja-hosp-alim class="space-y-4">
           <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">¿Necesita hospedaje?</span><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="si"> Sí</label></div>
           <div data-caja-hosp class="hidden grid sm:grid-cols-2 gap-4">
             <div><label for="${id("hdes")}" class="block text-sm font-semibold mb-1">Desde (noche de llegada)${AST}</label><input id="${id("hdes")}" data-campo data-c="hospedaje_desde" type="date" min="2026-12-20" max="2027-01-02" value="2026-12-25"></div>
@@ -196,6 +203,7 @@
             <div><label for="${id("cdes")}" class="block text-sm font-semibold mb-1">Desde${AST}</label><input id="${id("cdes")}" data-campo data-c="comidas_desde" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-26"></div>
             <div><label for="${id("chas")}" class="block text-sm font-semibold mb-1">Hasta${AST}</label><input id="${id("chas")}" data-campo data-c="comidas_hasta" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-30"></div>
             <div class="sm:col-span-2"><label for="${id("dieta")}" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="${id("dieta")}" data-campo data-c="dieta" maxlength="300" placeholder="Vegetariana, sin gluten, alergia a los mariscos…"></div>
+          </div>
           </div>
         </div>
 
@@ -243,8 +251,11 @@
 
     const sinFide = () => el.querySelector('input[name="' + k + '-fide"]:checked').value === "no";
     yo.sinFide = sinFide;
-    const hospeda = () => el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
-    const comidas = () => [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
+    // GM, IM y WGM que juegan: la organización les da hospedaje y alimentación (las bases).
+    function esTitulado() { return yo.rol() === "jugador" && !sinFide() && !!yo.elegido && R.TITULOS_GRATIS.includes(String(yo.elegido.titulo || "").toUpperCase()); }
+    yo.titulado = esTitulado;
+    const hospeda = () => !esTitulado() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
+    const comidas = () => (esTitulado() ? [] : [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value));
     const condicion = () => [...el.querySelectorAll("[data-condicion]:checked")].map((x) => x.value);
     const v = (n) => { const x = c(n); return x ? String(x.value || "").trim() : ""; };
     yo.v = v;
@@ -508,9 +519,18 @@
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
       q("[data-caja-fide]").classList.toggle("hidden", sinFide());
       const afuera = deAfuera();
+      const tit = esTitulado();
       q("[data-caja-procedencia]").classList.toggle("hidden", afuera);
       q("[data-caja-viaje]").classList.toggle("hidden", !afuera);
-      q("[data-titulo-viaje]").textContent = afuera ? "Viaje, hospedaje y alimentación" : "De dónde viene, hospedaje y alimentación";
+      q("[data-caja-hosp-alim]").classList.toggle("hidden", tit);
+      q("[data-caja-titulado]").classList.toggle("hidden", !tit);
+      q("[data-caja-docs]").classList.toggle("hidden", !(tit && afuera));
+      el.querySelectorAll("[data-ast-viaje]").forEach((x) => x.classList.toggle("hidden", !(tit && afuera)));
+      if (tit) q("[data-titulado-texto]").textContent = "Como " + yo.elegido.titulo + ", no paga la inscripción y la organización le da el hospedaje y la alimentación"
+        + (afuera ? " según las fechas de su vuelo. Solo necesitamos su viaje: los días de llegada y de salida como en el tiquete, el número de vuelo, la foto del tiquete aéreo y la del pasaporte, y si necesita transporte del aeropuerto al Estadio Nacional."
+          : ". La organización lo coordina con usted por correo.");
+      q("[data-titulo-viaje]").textContent = tit ? (afuera ? "Su viaje" : "De dónde viene")
+        : afuera ? "Viaje, hospedaje y alimentación" : "De dónde viene, hospedaje y alimentación";
       q("[data-origen-ayuda]").textContent = sinFide() ? "" : afuera
         ? "Escribe primero el ID FIDE (el número): el nombre se llena solo, tal como aparece en FIDE, y no se puede cambiar."
         : "Escribe el nombre y los apellidos abajo, como en la cédula: el ID FIDE se busca y se carga solo.";
@@ -596,6 +616,18 @@
       estado.textContent = "Elegida: " + a.name;
     });
 
+    /* ---------- el tiquete y el pasaporte (titulados de afuera) ---------- */
+    yo.docs = { tiquete: null, pasaporte: null };
+    el.querySelectorAll("[data-doc]").forEach((inp) => inp.addEventListener("change", () => {
+      const a = inp.files[0], cual = inp.dataset.doc;
+      inp.value = "";
+      if (!a) return;
+      const est = q('[data-doc-estado="' + cual + '"]');
+      if (!/^image\//.test(a.type) && !/\.pdf$/i.test(a.name)) { est.textContent = "«" + a.name + "» no sirve: sube una foto o un PDF."; return; }
+      yo.docs[cual] = { archivo: a, ruta: null };
+      est.textContent = "Elegido: " + a.name;
+    }));
+
     /* ---------- copiar lo del delegado a una persona nueva ---------- */
     yo.copiarDe = (otra) => {
       ["nacionalidad", "pais_residencia", "club", "llegada", "salida", "vuelo", "hospedaje_desde", "hospedaje_hasta", "habitacion", "comidas_desde", "comidas_hasta", "documento_tipo"]
@@ -645,6 +677,12 @@
       });
       if (comidas().length && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
+      if (esTitulado() && deAfuera()) {
+        if (!v("llegada") || !v("salida") || v("salida") <= v("llegada") || v("vuelo").length < 3) falta(c("llegada"), "Faltan los datos del vuelo: el día de llegada, el de salida y el número de vuelo.");
+        if (!yo.docs.tiquete) falta(q('[data-doc="tiquete"]'), "Falta la foto del tiquete aéreo.");
+        if (!yo.docs.pasaporte) falta(q('[data-doc="pasaporte"]'), "Falta la foto del pasaporte.");
+        if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v("correo")) || v("telefono").replace(/\D/g, "").length < 7) falta(c("correo"), "Faltan su correo y su teléfono, para coordinar el viaje.");
+      }
       const datos = {
         rol, es_delegado: yo.esDelegado,
         sin_fide: !f, fide_id: f ? f.fideId : null, nombre_fide: f ? f.nombre : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
@@ -903,15 +941,16 @@
       ["Contacto", [d.correo, d.telefono].filter(Boolean).join(" · ") || "Por medio del delegado"],
     );
     if (d.responsable) filas.push(["Responsable", d.responsable.nombre + " · " + d.responsable.telefono]);
-    filas.push(
-      ["Emergencias", d.emergencia.nombre + (d.emergencia.parentesco ? " (" + d.emergencia.parentesco + ")" : "") + " · " + d.emergencia.telefono],
+    filas.push(["Emergencias", d.emergencia.nombre + (d.emergencia.parentesco ? " (" + d.emergencia.parentesco + ")" : "") + " · " + d.emergencia.telefono]);
+    if (p.titulado()) filas.push(["Hospedaje y alimentación", "Los da la organización" + (d.viaje && d.viaje.llegada ? ", del " + fechaLarga(d.viaje.llegada) + " al " + fechaLarga(d.viaje.salida) + ", según su vuelo" : "")]);
+    else filas.push(
       ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", en habitación compartida "
         + (d.habitacion === "compartida" ? "con su familia, su delegación o sus acompañantes" : "con quien asigne la organización")
         + (d.acompanantes_detalle.length ? ". Acompañantes: " + d.acompanantes_detalle.map((a) => a.nombre + (a.parentesco ? " (" + a.parentesco + ")" : "")).join(", ") : "") : "No requiere"],
       ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
     );
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
-    if (d.viaje) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con traslado del aeropuerto"].filter(Boolean).join(", ")]);
+    if (d.viaje) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
     filas.push(["Publicidad", d.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"]);
     const dl = document.createElement("dl"); dl.className = "grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm";
@@ -1017,7 +1056,13 @@
       const lista = [];
       for (const [i, x] of envio.personas.entries()) {
         msg.textContent = "Subiendo la foto " + (envio.personas.length > 1 ? (i + 1) + " de " + envio.personas.length : "") + "…";
-        lista.push(Object.assign({}, x.datos, { foto: await subir(x.p.foto, "foto") }));
+        const extra = { foto: await subir(x.p.foto, "foto") };
+        if (x.p.titulado() && x.p.deAfuera()) {
+          msg.textContent = "Subiendo el tiquete y el pasaporte…";
+          extra.tiquete = await subir(x.p.docs.tiquete, "documento");
+          extra.pasaporte = await subir(x.p.docs.pasaporte, "documento");
+        }
+        lista.push(Object.assign({}, x.datos, extra));
       }
       let rutaComp = null;
       if (envio.total.usd > 0) { msg.textContent = "Subiendo el comprobante…"; rutaComp = await subir(comprobante, "comprobante"); }

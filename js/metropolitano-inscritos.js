@@ -108,6 +108,7 @@
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
+      ["Invitado titulado", x.rol === "jugador" && R.TITULOS_GRATIS.includes(x.titulo || "") ? "Hospedaje y alimentación de la organización" + (x.viaje && x.viaje.llegada ? ", del " + x.viaje.llegada + " al " + x.viaje.salida + " según su vuelo" : "") + (x.viaje && x.viaje.traslado ? "; pide transporte del aeropuerto" : "") : ""],
       ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", compartida " + (HABITACION[x.habitacion] || x.habitacion)
         + (x.acepta_compartir ? " (aceptó compartir)" : "") + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
       ["Acompañantes", (x.acompanantes_detalle || []).map(acompananteTexto).join(" · ")],
@@ -151,6 +152,9 @@
       const archivos = document.createElement("div"); archivos.className = "flex gap-2";
       archivos.append(window.Adjuntos.celda([x.foto], bajar, x.nombre + " " + x.apellidos, "foto"));
       if (x.comprobante) archivos.append(window.Adjuntos.celda([x.comprobante], bajar, x.nombre + " " + x.apellidos, "comprobante"));
+      // Los titulados de afuera: la foto del tiquete aéreo y la del pasaporte.
+      if (x.tiquete) archivos.append(window.Adjuntos.celda([x.tiquete], bajar, x.nombre + " " + x.apellidos, "tiquete"));
+      if (x.pasaporte) archivos.append(window.Adjuntos.celda([x.pasaporte], bajar, x.nombre + " " + x.apellidos, "pasaporte"));
       const gaf = document.createElement("button"); gaf.type = "button"; gaf.className = "text-xs underline mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
       gaf.textContent = "⬇ Gafete (PDF)"; gaf.addEventListener("click", () => gafete(x, gaf));
       celda(tr, [archivos, gaf]);

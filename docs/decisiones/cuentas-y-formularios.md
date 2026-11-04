@@ -1633,6 +1633,30 @@ en el modo oscuro, como las bases. Sus botones no sacan a nadie del sitio: las
 bases llevan a `metropolitano-2026.html#bases` y chess-results a
 `#resultados`, que la página abre encima.
 
+#### Los titulados: hospedaje y alimentación de la organización
+
+Pedido del dueño: a los grandes maestros no se les pregunta el hospedaje ni la
+alimentación, que les da la organización. Vale para los tres títulos que las
+bases dejan sin pagar y con hospedaje y alimentación: **GM, IM y WGM**
+(`TITULOS_GRATIS`). En cuanto el ID FIDE elegido trae uno de esos títulos (y
+juega), la tarjeta:
+
+- **esconde el hospedaje y la alimentación** («Invitado titulado»: la
+  organización se los da según las fechas de su vuelo) y manda `hospedaje`
+  falso y ninguna comida;
+- **si viene de otro país, pide solo su viaje**: el día de llegada y el de
+  salida como en el tiquete, el número de vuelo, si necesita transporte del
+  aeropuerto al Estadio Nacional, la foto del tiquete aéreo y la del
+  pasaporte (carpeta `documento/` del bucket privado), y su correo y
+  teléfono aunque venga en un grupo;
+- de Costa Rica, nada de eso: la organización lo coordina por correo.
+
+La base lo exige a los titulados de afuera (migración
+`metropolitano_titulados`): sin vuelo, tiquete, pasaporte o contacto, no
+entra. El título lo trae la búsqueda en FIDE; la lista de inscritos lo
+muestra con el enlace a su perfil para confirmarlo, y el tiquete y el
+pasaporte junto a la foto.
+
 #### Si vienes de otro país
 
 Pedido del dueño: una ficha con recomendaciones para entrar a Costa Rica, que

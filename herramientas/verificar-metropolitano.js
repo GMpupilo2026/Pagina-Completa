@@ -117,6 +117,7 @@ function pngLiso(w, h, [r, g, b]) {
 const FILAS_FIDE = [
   { fideId: "6400000", nombre: "Mora Solis, Ana", titulo: "WCM", fed: "CRC", sexo: "w", nacimiento: 2013, estandar: 1950, rapido: 1900, blitz: 1880 },
   { fideId: "6400099", nombre: "Mora Solis, Andrea", titulo: "", fed: "CRC", sexo: "w", nacimiento: 1990, estandar: null, rapido: null, blitz: null },
+  { fideId: "3500123", nombre: "Gonzalez Perez, Mario", titulo: "GM", fed: "GUA", sexo: "m", nacimiento: 1990, estandar: 2510, rapido: 2480, blitz: 2470 },
 ];
 
 (async () => {
@@ -268,6 +269,44 @@ const FILAS_FIDE = [
     await u.locator("[data-rol]").dispatchEvent("change");
     cierto("un acompañante no ve ID FIDE ni torneos", !(await u.locator("[data-bloque-fide]").isVisible()) && !(await u.locator("[data-bloque-torneos]").isVisible()));
     cierto("y no paga", /sin costo/.test(await s2.p.textContent("#total")));
+
+    /* ----- Un GM de afuera: sin hospedaje ni alimentación, con su vuelo, tiquete y pasaporte ----- */
+    const s3 = await abrir();
+    const gm = tarjeta(s3.p, 0);
+    await gm.locator('input[name="p1-origen"][value="fuera"]').check();
+    await gm.locator("[data-buscar]").fill("3500123");
+    await gm.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
+    cierto("un GM no ve hospedaje ni alimentación: se los da la organización",
+      await gm.locator("[data-caja-titulado]").isVisible() && /hospedaje y la alimentación/.test(await gm.locator("[data-caja-titulado]").textContent())
+      && !(await gm.locator('input[name="p1-hosp"][value="si"]').isVisible()) && !(await gm.locator('[data-comida][value="cena"]').isVisible()));
+    cierto("y se le piden el vuelo, el tiquete, el pasaporte y el transporte del aeropuerto",
+      await gm.locator('[data-c="vuelo"]').isVisible() && await gm.locator("[data-caja-docs]").isVisible() && /aeropuerto al Estadio Nacional/.test(await gm.locator("[data-caja-viaje]").textContent()));
+    await llenar(gm, { nacimiento: "1990-04-04", sexo: "m", nacionalidad: "Guatemala", pais_residencia: "Guatemala", documento_tipo: "pasaporte", documento: "G1234567",
+      correo: "gm@ejemplo.com", telefono: "+502 5555 1234", emer_nombre: "Ana Pérez", emer_telefono: "+502 5555 0000" });
+    await gm.locator('input[name="p1-clasico"][value="A"]').check();
+    await gm.locator("[data-foto]").setInputFiles(FOTO);
+    await s3.p.check("#acepta-reglamento"); await s3.p.check("#acepta-imagen"); await s3.p.check("#acepta-seguro"); await s3.p.check("#acepta-datos");
+    await s3.p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
+    await s3.p.click("#revisar");
+    cierto("sin el vuelo no avanza", /datos del vuelo/.test(await s3.p.textContent("#msg")), await s3.p.textContent("#msg"));
+    await llenar(gm, { llegada: "2026-12-24", salida: "2026-12-31", vuelo: "TA 391" });
+    await gm.locator('[data-c="traslado"]').check();
+    await s3.p.click("#revisar");
+    cierto("sin el tiquete no avanza", /tiquete/.test(await s3.p.textContent("#msg")), await s3.p.textContent("#msg"));
+    await gm.locator('[data-doc="tiquete"]').setInputFiles(path.join(RAIZ, "img", "fca-logo.png"));
+    await gm.locator('[data-doc="pasaporte"]').setInputFiles(path.join(RAIZ, "img", "fca-logo.png"));
+    cierto("y no paga", /sin costo|\$0\.00/.test(await s3.p.textContent("#total")), await s3.p.textContent("#total"));
+    await s3.p.click("#revisar");
+    await s3.p.waitForSelector("#resumen:not(.hidden)", { timeout: 15000 });
+    cierto("el resumen dice que la organización le da el hospedaje y la alimentación según su vuelo", /Los da la organización, del .*24 de diciembre.* según su vuelo/.test(await s3.p.textContent("#resumen-personas")));
+    await s3.p.check("#confirmo");
+    await s3.p.click("#enviar");
+    await s3.p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
+    const xg = s3.anotado.enviado.personas[0];
+    cierto("se manda sin hospedaje ni comidas, con su vuelo, el tiquete y el pasaporte",
+      xg.hospedaje === false && xg.comidas.length === 0 && xg.viaje && xg.viaje.vuelo === "TA 391" && xg.viaje.traslado === true
+      && /^documento\//.test(xg.tiquete) && /^documento\//.test(xg.pasaporte) && xg.titulo === "GM", xg);
+    igual("se subieron la foto, el tiquete y el pasaporte", s3.anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "documento", "documento"]);
 
     /* ----- Un grupo: el delegado, una jugadora y un entrenador ----- */
     console.log("   La inscripción de grupo");
