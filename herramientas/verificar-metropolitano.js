@@ -638,6 +638,8 @@ const FILAS_FIDE = [
     cierto("el Drive dice si está conectado y cuántas faltan", /Conectado a «Inscripciones Metropolitano 2026»/.test(await a.textContent("#drive-estado")));
     await a.click("#drive-enviar");
     await a.waitForFunction(() => /2 inscripciones mandadas/.test(document.getElementById("drive-msg").textContent));
+    // El estado se vuelve a leer después del mensaje: esperarlo, no mirarlo de una.
+    await a.waitForFunction(() => /No falta ninguna/.test(document.getElementById("drive-estado").textContent), null, { timeout: 5000 }).catch(() => {});
     cierto("«Mandar al Drive las que faltan» las manda y lo dice", driveEnviado && /No falta ninguna/.test(await a.textContent("#drive-estado")));
     await a.waitForSelector("#codigos-filas tr");
     cierto("los códigos dicen quién usó cada uno", /Usado por MET-0012 — Ana Mora Solis/.test(await a.textContent("#codigos-filas")), await a.textContent("#codigos-filas"));
