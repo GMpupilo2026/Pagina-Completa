@@ -1335,3 +1335,92 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
   descripción de la carpeta dice quién la guardó, cuándo y qué versión de la
   Política de privacidad aceptó la familia (la casilla de la página; Google
   Drive está en la lista de proveedores).
+
+## La inscripción del Metropolitano 2026
+
+`inscripcion-metropolitano.html` (pública, sin cuenta) inscribe al **XLVII
+Torneo Internacional Metropolitano 2026** de la FCA (del 26 al 30 de
+diciembre, en el Estadio Nacional), con las reglas de sus bases
+(`fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf`).
+Quien administra ve lo que llega en `metropolitano-inscritos.html` (en la
+lista de `js/paginas-admin.js`, zona Contenido). Verificador:
+`node herramientas/verificar-todo.js metropolitano`.
+
+- **El ID FIDE se busca mientras se escribe.** El nombre (o el ID) va a la
+  Edge Function `pareo-listas-elo`, la misma de Pareo Integral, porque
+  ratings.fide.com no deja leerse desde el navegador; se espera 650 ms sin
+  teclear y lo ya buscado no se vuelve a pedir (el freno de esa función es de
+  60 búsquedas por IP en una hora). La persona **toca su nombre**: eso llena el
+  ID, la federación, el título y los tres Elo, y el nombre y los apellidos
+  (FIDE escribe «Apellido, Nombre»). Si la fecha de nacimiento no cuadra con el
+  año que dice FIDE, se avisa. Sin ID FIDE se piden el nombre completo, el
+  documento, la fecha de nacimiento y el correo, que es lo que la FCA necesita
+  para tramitarlo; a quien es de otro país se le dice que el ID lo pide su
+  federación.
+- **En qué puede jugar sale del Elo FIDE estándar y del año de nacimiento**:
+  A con 1900 o más, B con menos o sin Elo, U14 nacidos desde el 1/1/2012, y el
+  blitz abierto. A, B y U14 se juegan a la vez: se elige uno (o ninguno, solo
+  el blitz). Los que no puede jugar se ven, apagados y con el porqué. Si solo
+  puede uno, se marca solo.
+- **El monto sale solo y lo vuelve a calcular la base**: A $75, B $45, U14 $35,
+  blitz $12 (PayPal: 79,88, 47,93, 37,28 y 12,78, que ya traen su comisión);
+  del 17 al 20 de diciembre, +30 % en los clásicos; mayores de 65 al 26 de
+  diciembre, −10 % en los clásicos; GM, IM y WGM, gratis (y sin pedirles
+  comprobante). En colones, a ₡460 por dólar. Los clásicos cierran el 20 y el
+  blitz el 26 (hora de Costa Rica).
+  - **Lo que las bases no dejan claro y se decidió así** (para confirmarlo con
+    la FCA): el recargo no se cobra en el blitz (cierra aparte); «mayores de 65»
+    se leyó como 65 cumplidos; a los titulados no se les cobra tampoco el
+    blitz.
+- **Las reglas están escritas dos veces, a la fuerza**: `js/metropolitano-reglas.js`
+  (la cortesía de la página) y `public.metropolitano_inscribir()` (la que
+  decide). `verificar-metropolitano.js` lee la última migración que define la
+  función y comprueba que cada precio, fecha, tope y porcentaje sea el mismo de
+  la página. Se rompió a propósito el precio del A y el tope de Elo solo en la
+  página, y saltaron. Si la FCA cambia una cifra, se cambian las dos.
+- **La persona valida su información en el gafete, antes de mandar.** «Revisar
+  mi inscripción» esconde el formulario y enseña «Bienvenido/a al Torneo
+  Metropolitano 2026» con su gafete (frente y dorso) y el resumen de todo lo
+  que llenó. Sin marcar «Revisé mi información y está correcta» no se manda, y
+  la base exige `validado` y guarda `validado_en`. Recién al confirmar se suben
+  los archivos: un formulario abandonado no deja fotos subidas.
+- **El gafete es el de `gafetes.html`** (el del Centroamericano): lo dibuja
+  `js/gafetes-dibujo.js`, la misma función para la pantalla y para el PDF.
+  `js/metropolitano-gafete.js` solo tiene el diseño del Metropolitano (título,
+  un color por torneo, el horario de su categoría en el dorso, el QR a las
+  bases, el código MET-0001 abajo) y pasa una inscripción a la fila del dibujo.
+  Para este gafete el dibujo aprendió dos cosas, que `gafetes.html` no usa:
+  la **foto** de la persona (`g.foto`, en un marco de pasaporte donde iba la
+  mascota; su fondo no se comparte con nadie) y `fondoJpeg()`, que antes vivía
+  en `js/gafetes.js`. Después de enviar, la persona lo descarga en PDF (300
+  dpi, letras en curvas); administración lo vuelve a armar desde la lista.
+- **La base decide todo.** El público no toca la tabla
+  (`metropolitano_inscripciones`, sin permisos para `anon`, RLS de lectura
+  solo para `soy_admin()`); escribe con `metropolitano_inscribir(p jsonb)`, que
+  valida cada campo, recalcula torneo y monto, exige que la foto y el
+  comprobante existan en el bucket, pasa por el freno de los formularios
+  (`frenar_envio_publico('formulario', 'metropolitano-2026', correo)`) y suma
+  uno propio de 8 inscripciones por correo al día (una familia inscribe a
+  varios con el mismo). **Un ID FIDE o un documento no se inscribe dos veces**:
+  lo garantizan dos índices únicos (sobre las activas), y una anulada lo
+  libera. El monto que se le dijo es acta: se guarda.
+- **La foto y el comprobante van al bucket privado `metropolitano-2026`**: el
+  público solo sube (a `foto/` o `comprobante/`, y mientras se recibe,
+  `metropolitano_recibe()`), y solo administración lee.
+- **Revisar un pago** (por revisar, verificado, rechazado, sin costo) o anular
+  una inscripción es `metropolitano_revisar()`, solo administración, y queda
+  en la bitácora: la tabla lleva `interno.auditar('pago_estado', 'estado',
+  'monto_usd', 'torneos')` y está en `VIGILADAS`.
+- **Lo que se pide, además de lo que pidió el dueño del sitio**: nacionalidad y
+  país donde vive (vienen de otros países), tipo de documento (cédula, DIMEX,
+  pasaporte), teléfono con código de país, club, sexo (los premios de mejor
+  femenina), la persona responsable si es menor, un contacto de emergencia, la
+  llegada y la salida con el vuelo y si necesita traslado, el tipo de
+  habitación y los acompañantes, la dieta o alergias, la condición de atleta
+  sordo o ciego (los premios de las bases, con los contactos de las
+  asociaciones que validan) o silla de ruedas, la factura a otro nombre, la
+  referencia y la fecha del pago, y tres casillas: las bases, el uso de la
+  imagen que anuncian las bases y los datos (con la política de privacidad).
+- **Las descargas de administración**: el CSV entero (punto y coma y BOM) y
+  una «lista para gafetes y Pareo» con las columnas que entienden
+  `gafetes.html` y la carga de jugadores de Pareo Integral.

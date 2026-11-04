@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104024300
+# al-dia-con: 20261104054634
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -148,6 +148,7 @@ tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
 tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
+tabla  metropolitano_inscripciones  rls=true
 tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
@@ -1502,6 +1503,60 @@ columna  mensajes_casa.autor_id  uuid
 columna  mensajes_casa.created_at  timestamp with time zone
 columna  mensajes_casa.id  uuid
 columna  mensajes_casa.texto  text
+columna  metropolitano_inscripciones.accesibilidad  text
+columna  metropolitano_inscripciones.acepta_datos  boolean
+columna  metropolitano_inscripciones.acepta_imagen  boolean
+columna  metropolitano_inscripciones.acepta_reglamento  boolean
+columna  metropolitano_inscripciones.acompanantes  integer
+columna  metropolitano_inscripciones.apellidos  text
+columna  metropolitano_inscripciones.clasico  text
+columna  metropolitano_inscripciones.club  text
+columna  metropolitano_inscripciones.comidas  text[]
+columna  metropolitano_inscripciones.comidas_desde  date
+columna  metropolitano_inscripciones.comidas_hasta  date
+columna  metropolitano_inscripciones.comprobante  text
+columna  metropolitano_inscripciones.condicion  text[]
+columna  metropolitano_inscripciones.correo  text
+columna  metropolitano_inscripciones.creado  timestamp with time zone
+columna  metropolitano_inscripciones.dieta  text
+columna  metropolitano_inscripciones.documento  text
+columna  metropolitano_inscripciones.documento_tipo  text
+columna  metropolitano_inscripciones.elo_blitz  integer
+columna  metropolitano_inscripciones.elo_estandar  integer
+columna  metropolitano_inscripciones.elo_rapido  integer
+columna  metropolitano_inscripciones.emergencia  jsonb
+columna  metropolitano_inscripciones.estado  text
+columna  metropolitano_inscripciones.factura  jsonb
+columna  metropolitano_inscripciones.federacion  text
+columna  metropolitano_inscripciones.fide_id  text
+columna  metropolitano_inscripciones.foto  text
+columna  metropolitano_inscripciones.habitacion  text
+columna  metropolitano_inscripciones.hospedaje  boolean
+columna  metropolitano_inscripciones.hospedaje_desde  date
+columna  metropolitano_inscripciones.hospedaje_hasta  date
+columna  metropolitano_inscripciones.id  uuid
+columna  metropolitano_inscripciones.monto_crc  integer
+columna  metropolitano_inscripciones.monto_usd  numeric(8,2)
+columna  metropolitano_inscripciones.nacimiento  date
+columna  metropolitano_inscripciones.nacionalidad  text
+columna  metropolitano_inscripciones.nombre  text
+columna  metropolitano_inscripciones.nota_organizacion  text
+columna  metropolitano_inscripciones.numero  integer
+columna  metropolitano_inscripciones.pago_estado  text
+columna  metropolitano_inscripciones.pago_fecha  date
+columna  metropolitano_inscripciones.pago_metodo  text
+columna  metropolitano_inscripciones.pago_referencia  text
+columna  metropolitano_inscripciones.pais_residencia  text
+columna  metropolitano_inscripciones.responsable  jsonb
+columna  metropolitano_inscripciones.revisado_en  timestamp with time zone
+columna  metropolitano_inscripciones.revisado_por  uuid
+columna  metropolitano_inscripciones.sexo  text
+columna  metropolitano_inscripciones.sin_fide  boolean
+columna  metropolitano_inscripciones.telefono  text
+columna  metropolitano_inscripciones.titulo  text
+columna  metropolitano_inscripciones.torneos  text[]
+columna  metropolitano_inscripciones.validado_en  timestamp with time zone
+columna  metropolitano_inscripciones.viaje  jsonb
 columna  misiones_secretas.color  text
 columna  misiones_secretas.created_at  timestamp with time zone
 columna  misiones_secretas.jugador_id  uuid
@@ -2749,6 +2804,9 @@ funcion  mediciones_de_partidas(p_dias integer)  definer  anon=false  auth=true
 funcion  mensajes_casa_de(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
+funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
+funcion  metropolitano_recibe()  invoker  anon=true  auth=true
+funcion  metropolitano_revisar(p_id uuid, p_pago_estado text, p_estado text, p_nota text)  definer  anon=false  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
 funcion  mi_enlace_diagnostico()  definer  anon=false  auth=true
 funcion  mi_entreno_resumen(p_alumno uuid)  invoker  anon=false  auth=true
@@ -3246,6 +3304,7 @@ politica  material_compartido  material_compartido_select  SELECT
 politica  mensajes_casa  mensajes_casa_delete  DELETE
 politica  mensajes_casa  mensajes_casa_insert  INSERT
 politica  mensajes_casa  mensajes_casa_select  SELECT
+politica  metropolitano_inscripciones  metropolitano_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
 politica  notas_alumno  notas_alumno_delete  DELETE
@@ -3566,6 +3625,7 @@ trigger  ia_uso  ia_uso_avisa_tope
 trigger  licencias_herramientas  auditar
 trigger  material_compartido  auditar
 trigger  mensajes_casa  mensajes_casa_al_crear
+trigger  metropolitano_inscripciones  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
@@ -3965,6 +4025,11 @@ indice  material_compartido  material_compartido_todos_unico
 indice  mensajes_casa  mensajes_casa_alumno
 indice  mensajes_casa  mensajes_casa_autor
 indice  mensajes_casa  mensajes_casa_pkey
+indice  metropolitano_inscripciones  metropolitano_inscripciones_numero_key
+indice  metropolitano_inscripciones  metropolitano_inscripciones_pkey
+indice  metropolitano_inscripciones  metropolitano_por_correo
+indice  metropolitano_inscripciones  metropolitano_un_documento
+indice  metropolitano_inscripciones  metropolitano_un_fide
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
@@ -4957,6 +5022,10 @@ grant  mensajes_casa  authenticated  INSERT
 grant  mensajes_casa  authenticated  REFERENCES
 grant  mensajes_casa  authenticated  SELECT
 grant  mensajes_casa  authenticated  TRIGGER
+grant  metropolitano_inscripciones  authenticated  REFERENCES
+grant  metropolitano_inscripciones  authenticated  SELECT
+grant  metropolitano_inscripciones  authenticated  TRIGGER
+grant  metropolitano_inscripciones  authenticated  TRUNCATE
 grant  misiones_secretas  anon  DELETE
 grant  misiones_secretas  anon  INSERT
 grant  misiones_secretas  anon  REFERENCES

@@ -4512,6 +4512,13 @@ dirección del Centroamericano: 17 de 53 por lado), bien debajo del 30 % que
 aguanta. Módulos
 redondeados y unidos y marco negro, como el del Centroamericano.
 
+**El mismo dibujo hace el gafete de la inscripción del Metropolitano 2026**
+(`js/metropolitano-gafete.js`), que lleva además la foto de la persona: si la
+fila trae `g.foto`, va en un marco de pasaporte donde iba la ilustración, y su
+fondo lleva su propia clave (no se comparte). `fondoJpeg()` vive ahora en
+`js/gafetes-dibujo.js` para que lo usen los dos. Ver «La inscripción del
+Metropolitano 2026» en `cuentas-y-formularios.md`.
+
 `verificar-gafetes.js` sube un Excel de verdad, recorre la vista previa
 (mide el píxel de la franja, no la clase), lee el QR con jsQR, crea el PDF y
 lo abre byte a byte: tamaño exacto, ninguna `/Font`, ni `/SMask` ni grupos,
