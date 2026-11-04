@@ -1657,6 +1657,44 @@ entra. El título lo trae la búsqueda en FIDE; la lista de inscritos lo
 muestra con el enlace a su perfil para confirmarlo, y el tiquete y el
 pasaporte junto a la foto.
 
+#### Las inscripciones en el Drive
+
+Pedido del dueño: todo lo que se sube (fotos y documentos) se va guardando en
+un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
+
+    Inscripciones Metropolitano 2026 / Torneo A | Torneo B | Torneo U14 | Torneo Blitz /
+        MET-0012 - Mora Solís, Ana / Foto.jpg · Comprobante de pago.pdf · Ficha de inscripción.txt
+    Inscripciones Metropolitano 2026 / Delegación - Club Ajedrez Heredia /
+        Comprobante de pago.pdf
+        MET-0013 - Rojas Vega, Carlos (Delegado) / …
+        MET-0014 - Mora, Andrea (Torneo B) / …
+    Inscripciones Metropolitano 2026 / Entrenadores, acompañantes y delegados / …
+
+- **El número MET-… va delante**: en el Drive, ordenadas por nombre, quedan
+  en el orden en que se inscribieron. Un jugador va en la carpeta de su
+  clásico (o en «Torneo Blitz» si solo juega el blitz). El comprobante de una
+  delegación es uno solo y va a la carpeta de la delegación. Cada persona
+  lleva su foto, su tiquete y su pasaporte (los titulados de afuera) y una
+  ficha en texto con todos sus datos.
+- **El mismo camino que los JDN y el Centroamericano**: el Drive lo toca un
+  Apps Script de la dueña del Drive (`documentos/metropolitano-2026/puente-drive.gs`),
+  que se instala una vez; su dirección y su secreto se pegan en
+  `metropolitano-inscritos.html` («Inscripciones en el Drive» → «Conectar con
+  Drive»), se prueban y van a la bóveda (`metropolitano_drive_*`, solo
+  `service_role`). Los archivos los baja del bucket privado la Edge Function
+  `metropolitano-drive` (con la clave de servicio) y se los pasa al puente.
+- **Cada 10 minutos, sola** (pg_cron `metropolitano-drive` →
+  `interno.metropolitano_drive_tocar()`, que llama a la función con pg_net y
+  el aviso de la bóveda) si el Drive está conectado y falta alguna. Y a pedido:
+  «Mandar al Drive las que faltan». La fila guarda `drive_en` o el
+  `drive_error`; lo que falló se reintenta, después de las que nunca se
+  intentaron.
+- **La copia buena es la base**: los archivos siguen en el bucket privado; el
+  Drive es la copia ordenada para la organización. Una inscripción anulada no
+  se manda. La política de privacidad lo dice.
+- La forma de las carpetas la decide la función (`carpetasDe`), y
+  `verificar-metropolitano.js` la prueba con el mismo código.
+
 #### Los códigos de descuento
 
 Pedido del dueño: la FCA dona inscripciones (en una rifa, en un evento) o da

@@ -104,6 +104,7 @@
       ["Publicidad", x.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"],
       ["Seguro y exoneración", x.acepta_seguro ? "Declaró su póliza y eximió a la FCA (texto " + (x.exoneracion_version || "—") + ")" : ""],
       ["Nombre en FIDE", x.nombre_fide],
+      ["En el Drive", x.drive_en ? "Sí, desde " + window.HoraCR.fechaHora(x.drive_en) : x.drive_error ? "Todavía no: " + x.drive_error : "Todavía no (se manda sola)"],
       ["Código de descuento", x.codigo_descuento && x.codigo_descuento + " (" + x.descuento_pct + " %)"],
       ["Viene de", x.provincia && [x.canton, x.provincia].filter(Boolean).join(", ")],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
@@ -255,6 +256,52 @@
 
   ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad"].forEach((id) => $(id).addEventListener("input", pintar));
 
+  /* ===================== El Drive ===================== */
+  // La Edge Function metropolitano-drive: estado, conectar y mandar lo que falta.
+  async function alDrive(cuerpo) {
+    const { data, error } = await window.sb.functions.invoke("metropolitano-drive", { body: cuerpo });
+    if (error) {
+      let msg = "No se pudo hablar con el Drive.";
+      try { const d = await error.context.json(); if (d && d.error) msg = d.error; } catch (e) { /* sin cuerpo */ }
+      return { error: msg };
+    }
+    return data || {};
+  }
+  function pintarDrive(d) {
+    const faltan = d.pendientes || 0;
+    $("drive-estado").textContent = d.error && d.conectado === undefined ? d.error
+      : (d.conectado ? "✓ Conectado a «" + (d.carpeta || "Inscripciones Metropolitano 2026") + "»." : "Todavía no está conectado: usa «Conectar con Drive».")
+        + " " + (faltan === 0 ? "No falta ninguna inscripción por mandar." : (faltan === 1 ? "Falta 1 inscripción" : "Faltan " + faltan + " inscripciones") + " por mandar"
+        + (d.con_error ? " (" + d.con_error + " con error: se reintentan)" : "") + ".");
+    $("drive-enviar").disabled = !d.conectado || faltan === 0;
+  }
+  async function estadoDrive() { pintarDrive(await alDrive({ accion: "estado" })); }
+  $("drive-abrir-conectar").addEventListener("click", () => {
+    const abierto = $("drive-conectar").classList.toggle("hidden") === false;
+    $("drive-abrir-conectar").setAttribute("aria-expanded", abierto ? "true" : "false");
+    if (abierto) $("drive-url").focus();
+  });
+  $("drive-conectar").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("drive-guardar").disabled = true; $("drive-msg").textContent = "Probando la conexión…";
+    const d = await alDrive({ accion: "conectar", url: $("drive-url").value.trim(), secreto: $("drive-secreto").value.trim() });
+    $("drive-guardar").disabled = false;
+    if (d.error) { $("drive-msg").textContent = d.error; return; }
+    $("drive-msg").textContent = "Listo: el Drive quedó conectado.";
+    $("drive-secreto").value = "";
+    $("drive-conectar").classList.add("hidden"); $("drive-abrir-conectar").setAttribute("aria-expanded", "false");
+    pintarDrive(d);
+  });
+  $("drive-enviar").addEventListener("click", async () => {
+    $("drive-enviar").disabled = true; $("drive-msg").textContent = "Mandando al Drive…";
+    const d = await alDrive({ accion: "enviar" });
+    if (d.error) { $("drive-msg").textContent = d.error; $("drive-enviar").disabled = false; return; }
+    $("drive-msg").textContent = (d.enviados === 1 ? "1 inscripción mandada" : d.enviados + " inscripciones mandadas") + (d.errores ? ", " + d.errores + " con error" : "")
+      + (d.quedan ? ". Quedan " + d.quedan + ": vuelve a tocar el botón o espera, que se mandan solas cada 10 minutos." : ".");
+    await cargar();
+    await estadoDrive();
+  });
+
   /* ===================== Los códigos de descuento ===================== */
   // Los genera la base (metropolitano_codigos_crear, solo administración) y
   // cada uno vale una vez: la inscripción que lo usa queda atada a él.
@@ -330,6 +377,7 @@
     $("app").classList.remove("hidden");
     await cargar();
     await cargarCodigos();
+    estadoDrive();
   }
   iniciar();
 })();

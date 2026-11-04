@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104180724
+# al-dia-con: 20261104181434
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1546,6 +1546,8 @@ columna  metropolitano_inscripciones.descuento_pct  integer
 columna  metropolitano_inscripciones.dieta  text
 columna  metropolitano_inscripciones.documento  text
 columna  metropolitano_inscripciones.documento_tipo  text
+columna  metropolitano_inscripciones.drive_en  timestamp with time zone
+columna  metropolitano_inscripciones.drive_error  text
 columna  metropolitano_inscripciones.elo_blitz  integer
 columna  metropolitano_inscripciones.elo_estandar  integer
 columna  metropolitano_inscripciones.elo_rapido  integer
@@ -2757,6 +2759,7 @@ funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=fal
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
+funcion  interno.metropolitano_drive_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_persona(x jsonb, hoy date, v_metodo text, p_correo_obligatorio boolean)  invoker  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
@@ -2847,6 +2850,8 @@ funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  metropolitano_codigo_anular(p_codigo text)  definer  anon=false  auth=true
 funcion  metropolitano_codigo_ver(p_codigo text)  definer  anon=true  auth=true
 funcion  metropolitano_codigos_crear(p_porcentaje integer, p_cantidad integer, p_nota text)  definer  anon=false  auth=true
+funcion  metropolitano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
+funcion  metropolitano_drive_leer()  definer  anon=false  auth=false
 funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
 funcion  metropolitano_recibe()  invoker  anon=true  auth=true
 funcion  metropolitano_revisar(p_id uuid, p_pago_estado text, p_estado text, p_nota text)  definer  anon=false  auth=true
@@ -4389,6 +4394,7 @@ cron  cobros-recordatorios-programados  */5 * * * *
 cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
+cron  metropolitano-drive  */10 * * * *
 cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *
 cron  sala-avisos  * * 1-8 11 *

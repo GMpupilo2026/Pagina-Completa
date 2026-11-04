@@ -55,6 +55,24 @@ igual("sin recargo el 16/12", pr({ torneos: ["B"], metodo: "dolares", hoy: "2026
 igual("senior: 10 % en el clásico, no en el blitz (PayPal)", pr({ torneos: ["B", "BLITZ"], metodo: "paypal", nacimiento: "1958-01-01" }).usd, 55.92);
 igual("senior por año: nacido el 31/12/1961 ya cuenta", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1961-12-31" }).usd, 40.5);
 igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1962-01-01" }).usd, 45);
+// Las carpetas del Drive: el mismo código de la Edge Function metropolitano-drive.
+{
+  let fuente = fs.readFileSync(path.join(RAIZ, "supabase", "functions", "metropolitano-drive", "index.ts"), "utf8")
+    .replace(/^import .*$/mg, "").replace(/Deno\.serve\([\s\S]*$/, "").replace(/Deno\.env\.get\([^)]*\)!/g, '""');
+  const js = require("esbuild").transformSync(fuente, { loader: "ts", format: "cjs" }).code;
+  const m = { exports: {} };
+  new Function("module", "exports", js)(m, m.exports);
+  const D = m.exports;
+  igual("al Drive: un jugador suelto va en su torneo", D.carpetasDe({ numero: 12, apellidos: "Mora Solís", nombre: "Ana", rol: "jugador", clasico: "A" }), ["Torneo A", "MET-0012 - Mora Solís, Ana"]);
+  igual("solo el blitz, a Torneo Blitz", D.carpetasDe({ numero: 7, apellidos: "Pérez", nombre: "Luis", rol: "jugador", clasico: null }), ["Torneo Blitz", "MET-0007 - Pérez, Luis"]);
+  igual("una delegación, junta en su carpeta, cada uno con lo que es",
+    [D.carpetasDe({ numero: 13, apellidos: "Rojas Vega", nombre: "Carlos", rol: "delegado", es_delegado: true, grupo: "g1", delegacion: "Club Ajedrez Heredia" }),
+      D.carpetasDe({ numero: 14, apellidos: "Mora", nombre: "Andrea", rol: "jugador", clasico: "B", grupo: "g1", delegacion: "Club Ajedrez Heredia" })],
+    [["Delegación - Club Ajedrez Heredia", "MET-0013 - Rojas Vega, Carlos (Delegado)"], ["Delegación - Club Ajedrez Heredia", "MET-0014 - Mora, Andrea (Torneo B)"]]);
+  igual("un entrenador suelto, aparte", D.carpetasDe({ numero: 20, apellidos: "Solano", nombre: "Pedro", rol: "entrenador" }), ["Entrenadores, acompañantes y delegados", "MET-0020 - Solano, Pedro (Entrenador)"]);
+  cierto("la ficha del Drive trae lo esencial", /inscripción MET-0012[\s\S]*Torneos: Torneo A \+ Torneo Blitz[\s\S]*Código de descuento: MET-ABCD-EFGH \(100 %\)/.test(
+    D.fichaDe({ numero: 12, nombre: "Ana", apellidos: "Mora", rol: "jugador", clasico: "A", torneos: ["A", "BLITZ"], codigo_descuento: "MET-ABCD-EFGH", descuento_pct: 100, monto_usd: 0, nacionalidad: "Costa Rica", pais_residencia: "Costa Rica", documento_tipo: "cedula", documento: "1" })));
+}
 igual("GM: gratis", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", titulo: "GM" }).usd, 0);
 igual("código del 100 %: sin costo", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 100 }).usd, 0);
 igual("código del 20 % sobre A + blitz: 87 − 17,40", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", descuento: 20 }).usd, 69.6);
@@ -576,9 +594,19 @@ const FILAS_FIDE = [
       const nuevos = [{ codigo: "MET-CCCC-DDDD", porcentaje: creados.p_porcentaje, nota: creados.p_nota, creado: "2026-11-04T17:00:00Z", anulado: false, usado_por: null, usado_en: null }];
       codigosLista = nuevos.concat(codigosLista);
       r.fulfill({ contentType: "application/json", body: JSON.stringify(nuevos) }); });
+    let driveEnviado = false;
+    await a.route("**/functions/v1/metropolitano-drive", (r) => { const b = JSON.parse(r.request().postData());
+      if (b.accion === "enviar") driveEnviado = true;
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(b.accion === "enviar" ? { ok: true, enviados: 2, errores: 0, quedan: 0 }
+        : { conectado: true, carpeta: "Inscripciones Metropolitano 2026", pendientes: driveEnviado ? 0 : 2, con_error: 0 }) }); });
     await a.goto(BASE + "/metropolitano-inscritos.html");
     await a.waitForSelector("#filas tr", { timeout: 15000 });
     cierto("el club se escribe como texto, no como HTML", (await a.locator("#filas").innerHTML()).includes("&lt;b&gt;Club&lt;/b&gt;"));
+    await a.waitForFunction(() => /Faltan 2 inscripciones/.test(document.getElementById("drive-estado").textContent));
+    cierto("el Drive dice si está conectado y cuántas faltan", /Conectado a «Inscripciones Metropolitano 2026»/.test(await a.textContent("#drive-estado")));
+    await a.click("#drive-enviar");
+    await a.waitForFunction(() => /2 inscripciones mandadas/.test(document.getElementById("drive-msg").textContent));
+    cierto("«Mandar al Drive las que faltan» las manda y lo dice", driveEnviado && /No falta ninguna/.test(await a.textContent("#drive-estado")));
     await a.waitForSelector("#codigos-filas tr");
     cierto("los códigos dicen quién usó cada uno", /Usado por MET-0012 — Ana Mora Solis/.test(await a.textContent("#codigos-filas")), await a.textContent("#codigos-filas"));
     await a.selectOption("#cod-pct", "20");
