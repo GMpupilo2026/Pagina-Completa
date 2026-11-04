@@ -309,9 +309,8 @@ body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
 }
 /* La tablet de lado (1100 px o más): tres tarjetas por fila ya lo hace .cam-lista. */
 
-/* ===== La barra de un vistazo (se queda arriba al bajar) ===== */
+/* ===== La barra de un vistazo (NO es fija: se va con la página al bajar; lo que sí se queda arriba son los mensajes de la organización) ===== */
 .cam-barra {
-  position: sticky; top: 0; z-index: 30;
   background: #fff; color: var(--cac-morado-hondo);
   border: 2px solid #dfe0f7; border-radius: 1rem;
   padding: 0.7rem 0.9rem; margin-bottom: 1rem;
@@ -803,6 +802,22 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-fp-banda { background: #3a2c05; color: #ffe8a3; }
 .dark .cam-fp-banda[data-tipo="no-aplica"] { background: #2b2d38; color: #e4e5ec; }
 
+/* «Mis pareos»: el logo y la «Ronda abierta» son botones; la ventana usa la de «¿Dónde juega?» (.cam-dj) con una tabla por torneo. */
+.cam-logo-boton { background: none; border: 0; padding: 0.15rem 0.3rem; cursor: pointer; text-align: left; }
+.cam-dato-boton { font: inherit; text-align: left; cursor: pointer; }
+.cam-dato-boton:hover { border-color: #fff; }
+.cam-dato-boton:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-dato-boton #d-ronda::after { content: " ›"; font-weight: 400; opacity: 0.8; }
+.cam-mp { height: auto; min-height: 18rem; }
+.cam-mp-cuerpo { overflow: auto; display: grid; gap: 1rem; align-content: start; }
+.cam-mp-titulo { font-size: 1.05rem; font-weight: 800; margin: 0 0 0.3rem; }
+.cam-mp-tabla th[scope="row"] { font-size: 1.1rem; font-weight: 800; text-align: left; text-transform: none; letter-spacing: 0; }
+.cam-mp-res { font-weight: 800; white-space: nowrap; }
+.cam-mp-res[data-vacio="si"] { font-weight: 600; opacity: 0.75; }
+
+/* «Mis pareos»: las pestañas de ronda caen a otra línea en vez de cortarse en el celular. */
+.cam-mp .cam-dj-chips { flex-wrap: wrap; overflow: visible; }
+
 /* «Mis mesas en vivo» (la transmisión privada sin atraso): cada mesa con su tablero chico y sus relojes en palabras.
    Sin colores nuevos: el tablero es el de la sala de cine (css/styles.css) y el texto el de la ventana. */
 .cv-dialogo { width: min(52rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
@@ -813,3 +828,21 @@ body.cam-guia-abierta { overflow: hidden; }
 .cv-tablero { width: 100%; max-width: 16rem; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
 .cv-texto { font-variant-numeric: tabular-nums; }
 .cv-pie { padding: 0 1rem 1rem; }
+
+/* Las tablas que ve la transmisión (triple y quíntuple repetición, 75 jugadas): un aviso arriba de las mesas, con los
+   mismos colores ya medidos del aviso de tiempo de espera cumplido; el texto dice qué pasó (el color nunca va solo). */
+.cam-alertas-vivo { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cam-alertas-vivo[hidden] { display: none; }
+.cam-alerta-vivo { padding: 0.8rem 0.95rem; border: 3px solid #b3261e; border-radius: 1rem; background: #fff5f4; color: #4a0f0b; }
+.dark .cam-alerta-vivo { background: rgb(179 38 30 / 0.18); color: #ffdad6; border-color: #ff8a80; }
+.cam-alerta-vivo-titulo { font-weight: 800; font-size: 1.1rem; }
+.cam-alerta-vivo-texto { margin: 0.3rem 0 0.5rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .cam-alerta-vivo { animation: cam-alerta-vivo-entra 0.9s ease-out 2; }
+  @keyframes cam-alerta-vivo-entra { 50% { box-shadow: 0 0 0 6px rgb(179 38 30 / 0.35); } }
+}
+/* El control de tiempos desde la transmisión, en la ventana del control (borde del mismo morado de los relojes). */
+.cam-tx-control { padding: 0.5rem 0.7rem; border: 2px dashed var(--cac-morado-hondo); border-radius: 0.8rem; display: grid; gap: 0.35rem; justify-items: start; }
+.dark .cam-tx-control { border-color: #b8bbf2; }
+.cv-repeticion { font-weight: 800; color: #8a1c00; }
+.dark .cv-repeticion { color: #ffb59e; }

@@ -55,6 +55,21 @@ const SERVIDOR_ARBITRO = `
       return { data: { ok: true }, error: null }; }
     // «Modo concentración»: la tablet avisa cuándo se sale y cuándo vuelve (la función pone la hora con su reloj).
     if (b.action === "salida") { window.__salidasArgs = (window.__salidasArgs || []).concat([{ fase: b.fase, motivo: b.motivo, segundos: b.segundos }]); return { data: { ok: true }, error: null }; }
+    // «Mis pareos» (el logo y la «Ronda abierta»): los pareos de SUS mesas (las de su enlace y las de su otro enlace) de todas las rondas.
+    // El otro torneo (1529738) solo tiene pareadas las rondas 1 y 2.
+    if (b.action === "mis_pareos") {
+      window.__misPareosArgs = (window.__misPareosArgs || 0) + 1;
+      if (window.__misFalla) return falla(502, "chess-results no contestó.");
+      const m = (mesa, bl, ne, res) => ({ mesa, blancas: bl, negras: ne, resultado: res });
+      return { data: { ok: true, generado: new Date().toISOString(), torneos: [
+        { tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", desde: 1, hasta: 3, abierta: 3, leida: new Date().toISOString(), rondas: [
+          { ronda: 1, vivo: false, mesas: [m(1, "Pérez Mora, Ana", "Rojas Vega, Lía", "1-0"), m(2, "Solís Arce, Eva", "Mora Cruz, Isa", "½-½"), m(3, "Vargas Ríos, Zoe", "Núñez Soto, Mía", "0-1")] },
+          { ronda: 2, vivo: false, mesas: [m(1, "Rojas Vega, Lía", "Solís Arce, Eva", "1-0"), m(2, "Pérez Mora, Ana", "Vargas Ríos, Zoe", "1-0"), m(3, "Mora Cruz, Isa", "Núñez Soto, Mía", "½-½")] },
+          { ronda: 3, vivo: true, mesas: [m(1, "Muñoz Feliz Alejandro", "Gramajo Tovar Marco", ""), m(2, "Harvey Ian", "Acuña Porras Fabio", "1-0"), m(3, "Hopkins John", "Baquero Graterol", "½-½")] }] },
+        { tnr: "1529738", nombre: "Sub-12 Absoluto", categoria: "Sub-12", rama: "Absoluto", desde: 5, hasta: 6, abierta: 2, leida: new Date().toISOString(), rondas: [
+          { ronda: 1, vivo: false, mesas: [m(5, "Castro Vega, Luis", "Jiménez Mora, Sofía", "0-1"), m(6, "Solano Brenes, Diego", "Mora Ugalde, Camila", "1-0")] },
+          { ronda: 2, vivo: true, mesas: [m(5, "Jiménez Mora, Sofía", "Solano Brenes, Diego", ""), m(6, "Mora Ugalde, Camila", "Castro Vega, Luis", "")] }] },
+      ] }, error: null }; }
     // «¿Dónde juega?» (la lupa): TODAS las categorías en una sola respuesta. La 1529739 no tiene pareo todavía; la 1529738 trae datos viejos.
     if (b.action === "todas_mesas") {
       window.__todasArgs = (window.__todasArgs || 0) + 1;

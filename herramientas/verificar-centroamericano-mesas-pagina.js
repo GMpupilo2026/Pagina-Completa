@@ -583,6 +583,7 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== Horarios, planillas y finalizar la ronda ===");
     igual("la barra dice el tiempo de espera o lo que sigue", (await p.textContent("#espera")).startsWith("⏰"), true);
+    igual("la barra de arriba (progreso, botones, tiempo de espera) NO es fija: se va con la página al bajar", await p.evaluate(() => getComputedStyle(document.querySelector(".cam-barra")).position), "static");
     // «Inició la ronda» en la tablet: el árbitro toca el botón (o escribe la hora) y la hora de SU categoría la guarda la función.
     console.log("\n=== La tablet: Inició la ronda ===");
     igual("la tablet del árbitro trae el bloque «Inicio de la ronda» de su categoría: el botón, la hora, y dice que todavía no la marcó", await p.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-ronda").textContent, document.getElementById("ir-ahora").textContent.trim(), document.getElementById("ir-hora").type, document.getElementById("ir-quitar").hidden, document.getElementById("inicio-ronda").dataset.marcada, /Todavía no marcaste/.test(document.getElementById("ir-estado").textContent)]),
@@ -590,6 +591,18 @@ const CONTRASTE = `(sel) => {
     await p.click("#ir-ahora");
     await p.waitForFunction(() => document.getElementById("inicio-ronda").dataset.marcada === "si");
     igual("«Inició la ronda ahora» manda la hora de ESE momento a la función (ronda 3), lo dice escrito y la tolerancia corre desde ahí", await p.evaluate(() => [window.__inicioArgs.length, window.__inicioArgs[0].ronda, window.__inicioArgs[0].quitar, Math.abs(Date.parse(window.__inicioArgs[0].inicio) - Date.now()) < 15000, /^✓ La ronda 3 empezó a las .* \(la hora que marcaste\)\. El tiempo de espera de 30 min termina a las /.test(document.getElementById("ir-estado").textContent), /quedan (29|30) min de tolerancia/.test(document.getElementById("espera").textContent)]), [1, 3, false, true, true, true]);
+    igual("al marcar el inicio el bloque se esconde (ya no hace falta) y queda solo el botón chico «Corregir»; el cronómetro de cada jugador que no llegó corre desde esa hora YA, sin esperar otra lectura", await p.evaluate(() => { const c = document.querySelector(".cam-cuenta"); return [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-corregir").checkVisibility(), !!c && Math.abs(Number(c.dataset.fin) - (Date.parse(window.__inicioArgs[0].inicio) + 30 * 60000)) < 1000]; }), [false, true, true]);
+    // Una lectura que salió ANTES de marcar y llega DESPUÉS (sin la hora) no la borra: antes los cronómetros volvían al calendario.
+    const inicioMarcado = await p.evaluate(() => window.__inicioArgs[0].inicio);
+    await p.evaluate(() => { window.__inicioRonda = null; });
+    await p.click("#actualizar");
+    await p.waitForFunction(() => !document.getElementById("actualizar").disabled);
+    igual("una lectura vieja, sin la hora marcada, no la borra: sigue marcada y los cronómetros siguen contando desde ella", await p.evaluate((i) => { const c = document.querySelector(".cam-cuenta"); return [document.getElementById("inicio-ronda").dataset.marcada, !!c && Math.abs(Number(c.dataset.fin) - (Date.parse(i) + 30 * 60000)) < 1000, document.getElementById("inicio-ronda").checkVisibility()]; }, inicioMarcado), ["si", true, false]);
+    await p.evaluate((i) => { window.__inicioRonda = { ronda: 3, inicio: i }; }, inicioMarcado);
+    await p.click("#actualizar");
+    await p.waitForFunction(() => !document.getElementById("actualizar").disabled);
+    await p.click("#ir-corregir");
+    igual("«Corregir la hora de inicio» vuelve a abrir el bloque (con «Cerrar» y «Volver al calendario»), y «Cerrar» lo esconde otra vez", await p.evaluate(() => [document.getElementById("inicio-ronda").checkVisibility(), document.getElementById("ir-cerrar").checkVisibility(), document.getElementById("ir-quitar").checkVisibility(), document.getElementById("ir-corregir").checkVisibility()]), [true, true, true, false]);
     const campoHoraT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(11, 16));
     const mismoDiaT = await p.evaluate(() => window.HoraCR.paraCampo(new Date(Date.now() - 180000)).slice(0, 10) === window.HoraCR.hoy());
     if (mismoDiaT) {
@@ -600,6 +613,7 @@ const CONTRASTE = `(sel) => {
       await p.click("dialog[open] [data-avisos-aceptar]");
       await p.waitForFunction(() => window.__inicioArgs.length === 2);
       igual("la hora escrita (la de hace unos minutos, al minuto) se manda y queda a la vista", await p.evaluate(([campo]) => [Math.abs(Date.parse(window.__inicioArgs[1].inicio) - (Date.now() - 180000)) < 120000, document.getElementById("ir-hora").value], [campoHoraT]), [true, campoHoraT]);
+      await p.click("#ir-corregir");   // al guardar la hora nueva el bloque vuelve a esconderse
       const futuraT = await p.evaluate(() => { const f = window.HoraCR.paraCampo(new Date(Date.now() + 3600000)); return f.slice(0, 10) === window.HoraCR.hoy() ? f.slice(11, 16) : null; });
       if (futuraT) {
         await p.fill("#ir-hora", futuraT);
@@ -724,7 +738,40 @@ const CONTRASTE = `(sel) => {
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
 
-    await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab { pointer-events: none !important; }"; document.head.append(e); });
+    await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab, #avisos-zona, #avisos-zona * { pointer-events: none !important; }"; document.head.append(e); });
+    // «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de SUS mesas (las de sus enlaces), de todas las rondas.
+    console.log("\n=== «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de mis mesas, ronda por ronda ===");
+    igual("el logo de Ajedrez Integral es un botón (no un enlace que saque de la página) con nombre accesible, y la «Ronda abierta» también", await p.evaluate(() => { const l = document.getElementById("logo-pareos"), r = document.getElementById("ver-rondas"); return [l.tagName, l.hasAttribute("href"), /pareos de mis mesas/.test(l.getAttribute("aria-label")), l.textContent.replace(/\s+/g, " ").trim(), r.tagName, document.getElementById("d-ronda").textContent, /ver los pareos de las rondas/.test(r.textContent)]; }),
+        ["BUTTON", false, true, "Ajedrez Integral", "BUTTON", "Ronda 3", true]);
+    await p.click("#logo-pareos");
+    await p.waitForSelector("#mis-pareos[open] .cam-mp-torneo");
+    const mp = () => p.evaluate(() => [...document.querySelectorAll("#mis-pareos .cam-mp-torneo")].map((t) => [t.querySelector("h3").textContent, [...t.querySelectorAll("tbody tr")].map((r) => r.dataset.mesa + ":" + r.children[3].textContent)]));
+    igual("abre en la ronda abierta con sus rondas como pestañas, y trae SOLO sus mesas de cada torneo suyo (el principal y el otro enlace)", await p.evaluate(() => [document.getElementById("mis-pareos").matches(":modal"), [...document.querySelectorAll("#mis-pareos .cam-dj-chips button")].map((b) => b.textContent + "|" + b.getAttribute("aria-pressed"))]),
+        [true, ["Ronda 1|false", "Ronda 2|false", "Ronda 3 · abierta|true"]]);
+    igual("la ronda abierta: sus tres mesas del torneo principal con el resultado en vivo (y «sin resultado» donde falta) y, del otro torneo, que todavía no tiene esa ronda", await mp(),
+        [["Sub-10 Femenino · mesas 1 a 3", ["1:sin resultado", "2:1-0", "3:½-½"]], ["Sub-12 Absoluto · mesas 5 a 6", []]]);
+    igual("el torneo sin pareo en esa ronda lo dice con palabras", await p.textContent('#mis-pareos [data-tnr="1529738"] .cam-dj-vacio'), "Esta ronda todavía no tiene pareo guardado para tus mesas.");
+    await p.click('#mis-pareos [data-ronda="1"]');
+    igual("una ronda anterior: los pareos de entonces con su resultado, en los dos torneos, y la pestaña elegida marcada", await p.evaluate(() => [[...document.querySelectorAll("#mis-pareos .cam-mp-torneo")].map((t) => [...t.querySelectorAll("tbody tr")].map((r) => r.dataset.mesa + ":" + r.children[1].textContent + " – " + r.children[2].textContent + " " + r.children[3].textContent)), document.querySelector('#mis-pareos [data-ronda="1"]').getAttribute("aria-pressed")]),
+        [[["1:Pérez Mora, Ana – Rojas Vega, Lía 1-0", "2:Solís Arce, Eva – Mora Cruz, Isa ½-½", "3:Vargas Ríos, Zoe – Núñez Soto, Mía 0-1"], ["5:Castro Vega, Luis – Jiménez Mora, Sofía 0-1", "6:Solano Brenes, Diego – Mora Ugalde, Camila 1-0"]], "true"]);
+    igual("dice de cuándo son los datos y los pide a la función con el token, solo leyendo", await p.evaluate(() => [/^Actualizado hace \d+ s$/.test(document.getElementById("mp-estado").textContent), window.__llamadas.filter((l) => l.body.action === "mis_pareos").every((l) => /^[0-9a-f]{64}$/.test(l.body.token) && Object.keys(l.body).sort().join() === "action,token")]), [true, true]);
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    igual("cerrar la quita y devuelve el foco al logo", await p.evaluate(() => document.activeElement && document.activeElement.id), "logo-pareos");
+    await p.click("#ver-rondas");
+    await p.waitForSelector("#mis-pareos[open] .cam-mp-torneo");
+    igual("la «Ronda abierta» abre lo mismo, ya en la ronda abierta", await p.evaluate(() => document.querySelector('#mis-pareos [data-ronda="3"]').getAttribute("aria-pressed")), "true");
+    // Sin señal: sigue mostrando lo último que se leyó y lo dice en rojo.
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    await p.evaluate(() => { window.__misFalla = true; });
+    await p.click("#logo-pareos");
+    await p.waitForFunction(() => /^Sin señal: son los pareos de hace/.test(document.getElementById("mp-estado").textContent), null, { timeout: 20000 });
+    igual("sin señal sigue mostrando los últimos pareos y lo dice en rojo, con palabras", await p.evaluate(() => [document.querySelectorAll("#mis-pareos tbody tr").length > 0, document.getElementById("mp-estado").classList.contains("cam-fallo")]), [true, true]);
+    await p.click('#mis-pareos [data-accion="cerrar-mp"]');
+    await p.waitForFunction(() => !document.getElementById("mis-pareos"));
+    await p.evaluate(() => { window.__misFalla = false; });
+
     // «¿Dónde juega?» lo habilita o deshabilita la organización: deshabilitado, el botón fijo se esconde, el pizote queda apagado y el servidor lo rechaza.
     console.log("\n=== «¿Dónde juega?» deshabilitado por la organización ===");
     await p.evaluate(() => { window.__avisos.todas_las_mesas = false; document.getElementById("actualizar").click(); });
@@ -947,6 +994,66 @@ const CONTRASTE = `(sel) => {
     await pm.waitForSelector("dialog[open], .cam-aviso, [role=alert]", { timeout: 5000 }).catch(() => {});
     igual("el tercer pedido lo rechaza la función (429) y la página no dice que se mandó", await pm.evaluate(() => !/Listo: te la mandamos/.test(document.getElementById("concluido-estado").textContent)), true);
     await cm.ctx.close();
+
+    console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
+    const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+    const pv = vv.p;
+    await pv.waitForSelector(".cam-mesa");
+    // La mesa 2 en LiveChess con una triple repetición (20… Ag7, comprobada con chess.js); la 1 con otros jugadores.
+    const SANS_REP = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Na5 Bc2 c5 d4 Qc7 Nbd2 Bd7 Nf1 Rfe8 Ng3 g6 Bg5 Bf8 Qd2 Bg7 Bh6 Bh8 Bg5 Bg7 Bh6 Bh8 Bg5 Bg7".split(" ");
+    const esperado = await pv.evaluate((sans) => {
+        const antes = window.sb.functions.invoke;
+        let tB = 5430, tN = 5430, total = 0;
+        const jugadas = sans.map((s, i) => { const g = 60 + (i % 7) * 37; if (i > 0) total += g; if (i % 2 === 0) { tB = tB - g + 30; return s + " " + tB + "+" + g; } tN = tN - g + 30; return s + " " + tN + "+" + g; });
+        const primera = Date.now() - total * 1000 - 40000;
+        window.__vivoLecturas = 0;
+        window.sb.functions.invoke = (f, o) => {
+            if (f !== "centroamericano-mesas-vivo") return antes(f, o);
+            window.__vivoLecturas++;
+            return Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+                mesas: [{ mesa: 2, fuente: "livechess", jugadas, primera, en_vivo: true, estado: "*" }],
+                no_reconoce: [{ mesa: 1, motivo: "En la transmisión, el tablero 1 tiene otros jugadores." }] }, error: null });
+        };
+        return { tB, tN, ocurrio: new Date(primera + total * 1000).toISOString() };
+    }, SANS_REP);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="triple"][data-mesa="2"]');
+    igual("la triple repetición le llega al árbitro arriba de todo: un aviso que se lee (role=alert), con la jugada en la notación de la planilla y el artículo",
+        await pv.evaluate(() => { const a = document.querySelector("#alertas-vivo .cam-alerta-vivo"); return [a.getAttribute("role"), a.checkVisibility(), /Triple repetición · Mesa 2/.test(a.textContent), /20… Ag7/.test(a.textContent), /art\. 9\.2/.test(a.textContent), document.getElementById("app").firstElementChild.id === "alertas-vivo" || !!document.querySelector("#app > #alertas-vivo")]; }),
+        ["alert", true, true, true, true, true]);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    igual("al volver a leer no se repite el aviso (uno por mesa, tipo y jugada)", await pv.$$eval("#alertas-vivo .cam-alerta-vivo", (l) => l.length), 1);
+    await pv.click('#alertas-vivo [data-accion="entendido-tablas"]');
+    igual("«Entendido» lo quita", await pv.$eval("#alertas-vivo", (e) => e.checkVisibility()), false);
+    // El control de tiempos de la mesa 2: las casillas se llenan solas con los relojes de la transmisión y su hora.
+    await pv.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
+    await pv.waitForSelector("#lt-tx");
+    igual("el control de tiempos se llena solo: los dos relojes, las jugadas de cada uno y la hora real de la última jugada (marcada, no la de ahora)",
+        await pv.evaluate((e) => [document.getElementById("lt-tb").value, document.getElementById("lt-jb").value, document.getElementById("lt-tn").value, document.getElementById("lt-jn").value, document.getElementById("lt-hora").dataset.marcada, /Ya están en las casillas/.test(document.getElementById("lt-tx").textContent)], esperado),
+        [await pv.evaluate((t) => window.CentroamericanoMesas.formatoTiempo(t), esperado.tB), "20", await pv.evaluate((t) => window.CentroamericanoMesas.formatoTiempo(t), esperado.tN), "20", "si", true]);
+    // La mesa 1: la transmisión no la reconoce, queda el formulario de siempre, vacío, y lo dice.
+    await pv.selectOption("#lt-mesa", "1");
+    await pv.waitForSelector("#lt-tx-no");
+    igual("la mesa que la transmisión no reconoce queda a mano, como siempre, y dice por qué", await pv.evaluate(() => [/otros jugadores\. Anótalo a mano, como siempre\./.test(document.getElementById("lt-tx-no").textContent), document.getElementById("lt-tb").value, document.getElementById("lt-hora").dataset.marcada]), [true, "", "no"]);
+    // «Anotar todas desde la transmisión»: pregunta, y cada control va a la bitácora con su hora real y su nota.
+    const tiemposAntesTx = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "tiempo").length);
+    await pv.click("#lt-tx-todas");
+    await pv.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    igual("antes de anotar todas dice cuáles van y cuáles quedan a mano", await pv.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/la mesa 2/.test(t), /La mesa 1 no está en la transmisión/.test(t)]; }), [true, true]);
+    await pv.click("dialog[open] [data-avisos-aceptar]");
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "tiempo").length > n, tiemposAntesTx);
+    igual("lo anotado: la mesa, los relojes, las jugadas, el turno, la hora real de la última jugada y la nota de que salió de la transmisión",
+        await pv.evaluate((e) => { const b = window.__llamadas.filter((l) => l.body.action === "tiempo").pop().body; return [b.mesa, b.t_blancas === e.tB, b.t_negras === e.tN, b.j_blancas, b.j_negras, b.turno, b.ocurrio === e.ocurrio, /^Tomado de la transmisión sin atraso \(LiveChess\): los relojes después de la jugada 20$/.test(b.nota)]; }, esperado),
+        [2, true, true, 20, 20, "blancas", true, true]);
+    await pv.waitForFunction(() => !document.getElementById("lt-tx-todas"));
+    igual("ya anotado, no se ofrece otra vez", await pv.$("#lt-tx-todas"), null);
+    // «Mis mesas en vivo» marca la repetición en la mesa.
+    await pv.click('#control-tiempos [data-accion="cerrar-tiempos"]');
+    await pv.click("#ver-vivo");
+    await pv.waitForSelector('#mesas-en-vivo[open] .cv-mesa[data-repeticion="si"]');
+    igual("en «Mis mesas en vivo», la mesa dice la repetición y la que no reconoce, que va a mano", await pv.evaluate(() => [/Triple repetición \(con 20… Ag7\)/.test(document.querySelector('.cv-mesa[data-mesa="2"] .cv-repeticion').textContent), /Mesa 1: En la transmisión, el tablero 1 tiene otros jugadores\. Anota a mano como siempre\./.test(document.getElementById("mesas-en-vivo").textContent)]), [true, true]);
+    igual("sin errores en la página", vv.errores, []);
+    await vv.ctx.close();
 
     console.log("\n=== La organización: el candado ===");
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(false), { ancho: 1100 });

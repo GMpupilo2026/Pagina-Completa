@@ -32,6 +32,37 @@
     }
   }
 
+  // Los tableros por LiveChess: qué categorías tienen su enlace (sin mostrar el enlace) y pegar la tabla de la
+  // organización de tableros. Lo prueba y lo guarda la función (centroamericano_livechess, que solo ella lee).
+  async function livechess() {
+    try {
+      const d = await llamar("livechess");
+      const lista = $("livechess-lista");
+      lista.replaceChildren();
+      for (const t of (d.torneos || []).filter((x) => !x.prueba)) {
+        const li = document.createElement("li");
+        li.textContent = (t.conectado ? "✓ " : "— ") + t.nombre + ": " + (t.conectado ? "tableros " + (t.tableros || "todos") + (t.actualizado ? " (desde el " + window.HoraCR.fechaHora(t.actualizado) + ")" : "") : "sin enlace de LiveChess");
+        lista.append(li);
+      }
+    } catch (e) { $("livechess-estado").textContent = "No se pudo leer: " + e.message; }
+  }
+  $("livechess-guardar").addEventListener("click", async () => {
+    const texto = $("livechess-texto").value.trim();
+    if (!texto) { $("livechess-estado").textContent = "Pega la tabla: un renglón por categoría con sus tableros y su enlace."; return; }
+    $("livechess-guardar").disabled = true;
+    $("livechess-estado").textContent = "Probando cada enlace con LiveChess…";
+    try {
+      const d = await llamar("livechess_guardar", { texto });
+      $("livechess-texto").value = "";
+      $("livechess-estado").textContent = (d.guardados === 1 ? "Se guardó 1 categoría." : "Se guardaron " + d.guardados + " categorías.") + (d.errores.length ? " Revisa: " + d.errores.join(" ") : "");
+      await livechess();
+    } catch (e) {
+      $("livechess-estado").textContent = "No se guardó: " + e.message;
+    } finally {
+      $("livechess-guardar").disabled = false;
+    }
+  });
+
   async function estado() {
     try { pintar(await llamar("estado")); } catch (e) { $("vivo-estado").textContent = "No se pudo leer el estado: " + e.message; }
   }
@@ -62,7 +93,7 @@
   // Se lee cuando la pestaña de las claves se muestra (con el ratón, las flechas o Inicio/Fin), no antes: cada
   // lectura le pregunta a Lichess.
   const panel = $("panel-claves");
-  const alMostrarse = () => { if (!panel.hidden && !$("vivo-estado").textContent) estado(); };
+  const alMostrarse = () => { if (!panel.hidden && !$("vivo-estado").textContent) { estado(); livechess(); } };
   new MutationObserver(alMostrarse).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
   alMostrarse();
 })();
