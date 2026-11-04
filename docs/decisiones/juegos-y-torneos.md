@@ -9276,6 +9276,44 @@ Probado en un Postgres de ensayo con el esquema del Centroamericano (los pesos y
 la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no aplica, la corrección y el borrado, el
 rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
 jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroamericano-fair-play.js`.
+
+#### Retenido, el acumulado y el informe final
+
+Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):
+
+- **«Ya retuve a …»**: el árbitro de mesa recibía el aviso, pero el encargado no sabía si de verdad había detenido al
+  ganador. Cuando el resultado ya está guardado y dice a quién revisar (`aprobada` con `revisar_color`), la banda dorada
+  de la tablet trae el botón; la acción `retener` de `centroamericano-fair-play` valida el token del árbitro y que la
+  mesa sea de SU rango, y `centroamericano_fair_play_retener()` anota la hora y su nombre (`retenido_en`,
+  `retenido_por`; solo la clave de servicio la ejecuta). El botón no sale antes del resultado: la base todavía no sabe
+  a quién. Un resultado corregido que cambia el ganador, o uno borrado, borra lo retenido en el trigger
+  (`fp_tras_resultado`): era de otra persona.
+- **El borde dorado que se mueve, donde está quien se revisa** (`CentroamericanoMesas.fairPlayAlcance()`): si aplican
+  los dos, la ficha completa; si solo uno, únicamente su bloque (la mesa queda con su borde de siempre); con el
+  resultado guardado, el ganador. Es un brillo que da la vuelta (`conic-gradient` con `@property`, máscara para dejar
+  solo el anillo); con «reducir movimiento» queda quieto, pero sigue. Revisada o sin efecto, el borde de la mesa queda
+  quieto como antes.
+- **Las novedades del encargado**: entre una lectura y la siguiente (cada 20 s), lo que cambió —la alerta nueva, el
+  acumulado que salta, el resultado que dice a quién ir a revisar, el árbitro que lo retuvo, la mesa sin efecto, el
+  aviso que su árbitro leyó— sale arriba en «🔔 Novedades», sube al título de la pestaña («(3) …») y vibra (más largo
+  si pide moverse ya). **Sin sonido**: en una sala de juego no hay ruido. Al abrir la pantalla no hay novedades: solo
+  lo que pasa después. En un iPhone no vibra (Safari no lo deja); por eso va también escrito y en el título.
+- **El acumulado por jugador** (`centroamericano_fp_acumulado()`): una alerta por partida no ve a quien juega un poco
+  por encima de su nivel en cada ronda. Se suman sus partidas medidas en la categoría con la regla de Stouffer (suma de
+  las z entre la raíz del número de partidas: dos partidas a 1,5 dan 2,12), con 2 o más partidas y los mismos cortes
+  que por partida (2 «a mirar», 2,5 «muy alta»). Pesa en los sorteos dentro del +1 de las alertas —no se suma aparte—
+  mientras le quede alguna partida sin mirar; «Ya lo miré» / «Seguirlo» las marca todas
+  (`centroamericano_fp_acumulado_marcar`), y «mirado» no le quita el seguimiento a una partida que lo tenía. En la
+  primera lectura de la base, con 3 rondas, salió una jugadora «a mirar» (2 partidas, 2,35). Sigue siendo una alerta,
+  nunca una acusación.
+- **El informe de Fair Play del torneo** (PDF, con la marca de agua): el resumen con las cifras, una tabla por
+  categoría, cada revisión con su resultado, quién la retuvo y quién la hizo, las mesas que no llegaron a revisión con
+  su motivo, el acumulado y las alertas con lo que se decidió, y cómo se trabajó. Es para el árbitro principal y el
+  acta (y, si hace falta, la Comisión de Fair Play de FIDE); es confidencial, por eso lleva los nombres.
+
+Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
+resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
+desplegada.
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.

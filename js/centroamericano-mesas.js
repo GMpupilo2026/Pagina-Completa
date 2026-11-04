@@ -493,7 +493,17 @@
     return { tipo: "esperando", texto: "🛡 FAIR PLAY: cuando termine la partida, retén al GANADOR (si es tablas, a quien juega con " + fp.color_si_tablas + ") y no lo dejes salir del local. No se lo digas a nadie antes." + (fp.no_aplica ? " Ojo: " + fp.no_aplica + "; si gana esa persona, la mesa queda sin efecto." : "") };
   }
 
-  const api = { fairPlayDeMesa, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  // Dónde va el borde dorado que se mueve en la tablet: en la mesa entera si se puede revisar a los dos, o solo en el
+  // jugador que se puede revisar (el otro no aplica). Con el resultado ya guardado, en el ganador que se revisa. Solo
+  // mientras está aprobada: revisada o sin efecto, el borde queda quieto en la mesa (o no hay a quién mover).
+  function fairPlayAlcance(fp) {
+    if (!fp || fp.estado !== "aprobada") return null;
+    if (fp.revisar_color === "blancas" || fp.revisar_color === "negras") return fp.revisar_color;
+    const b = fp.aplica_blancas !== false, n = fp.aplica_negras !== false;
+    return b && !n ? "blancas" : n && !b ? "negras" : "mesa";
+  }
+
+  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

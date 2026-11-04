@@ -628,6 +628,8 @@ columna  centroamericano_fair_play.origen  text
 columna  centroamericano_fair_play.peso  numeric(4,2)
 columna  centroamericano_fair_play.resultado  text
 columna  centroamericano_fair_play.resultado_mesa  text
+columna  centroamericano_fair_play.retenido_en  timestamp with time zone
+columna  centroamericano_fair_play.retenido_por  text
 columna  centroamericano_fair_play.revisada_en  timestamp with time zone
 columna  centroamericano_fair_play.revisada_por  uuid
 columna  centroamericano_fair_play.revisada_por_nombre  text
@@ -2513,8 +2515,11 @@ funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
 funcion  centroamericano_fair_play_aprobar(p_id uuid, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_manual(p_tnr text, p_ronda integer, p_mesa integer, p_color text, p_resultado text, p_jugador text, p_nota text, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_retener(p_tnr text, p_ronda integer, p_mesa integer, p_quien text)  definer  anon=false  auth=false
 funcion  centroamericano_fair_play_revisar(p_id uuid, p_resultado text, p_color text, p_jugador text, p_nota text, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_sortear(p_ronda integer, p_tnrs text[], p_cantidad integer, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
+funcion  centroamericano_fp_acumulado(p_tnr text, p_antes_de integer)  definer  anon=false  auth=true
+funcion  centroamericano_fp_acumulado_marcar(p_tnr text, p_clave text, p_estado text, p_nota text, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fp_alerta(p_tnr text, p_ronda integer, p_mesa integer, p_color text, p_estado text, p_nota text, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fp_calibrar()  definer  anon=false  auth=true
 funcion  centroamericano_fp_candidatas(p_tnr text, p_ronda integer)  definer  anon=false  auth=true
