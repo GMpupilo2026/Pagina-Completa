@@ -8,8 +8,9 @@
    - el control de tiempos sale solo de los relojes de la transmisión (`control`), con la hora real de la última jugada,
      y el árbitro lo guarda para que quede en la bitácora; si la transmisión no reconoce una mesa, queda el formulario
      de siempre, a mano;
-   - las tablas que el árbitro tiene que saber apenas pasan (`tablas`): la triple repetición (art. 9.2, la reclama un
-     jugador), la quíntuple (9.6.1) y las 75 jugadas (9.6.2), que son tablas sin reclamo. Se calculan con
+   - las tablas que el árbitro tiene que saber apenas pasan (`tablas`): la triple repetición (art. 9.2) y las 50 jugadas
+     sin peón ni captura (9.3), que las reclama un jugador, y la quíntuple (9.6.1) y las 75 jugadas (9.6.2), que son
+     tablas sin reclamo. Se calculan con
      js/reclamos-tablas.js (chess.js, la misma regla de «la misma posición» que la página de reclamos), en la tablet.
 
    Mientras haya transmisión, se vuelve a leer cada 10 s (la pantalla a la vista): una repetición le llega al árbitro
@@ -94,6 +95,8 @@
       fen: fin ? fin.fen : null,
       repeticiones: (a.repeticiones || []).map((r) => ({ ply: r.ply, jugada: r.jugada.rotulo + " " + esp(r.jugada.san) })),
       cinco: a.cincoVeces ? { ply: a.cincoVeces.ply, jugada: a.cincoVeces.jugada.rotulo + " " + esp(a.cincoVeces.jugada.san) } : null,
+      // 50 jugadas de cada uno sin peón ni captura (art. 9.3): se pueden reclamar, como la triple. `desde`: dónde empezó la cuenta.
+      cincuenta: a.cincuenta ? { ply: a.cincuenta.ply, jugada: a.cincuenta.jugada.rotulo + " " + esp(a.cincuenta.jugada.san), desde: a.cincuenta.desde ? a.cincuenta.desde.rotulo + " " + esp(a.cincuenta.desde.san) : null } : null,
       setentaYCinco: a.setentaYCinco ? { ply: a.setentaYCinco.ply, jugada: a.setentaYCinco.jugada.rotulo + " " + esp(a.setentaYCinco.jugada.san) } : null,
       // ¿La posición de ahora es la que se repite? (si la tercera fue hace rato y ya se movió, el aviso sigue, pero dice que ya pasó)
       ahora: ultimaVez,
@@ -135,6 +138,7 @@
       };
       if (t.cinco) agregar("cinco", t.cinco, "Quíntuple repetición en la mesa " + m.mesa + " (con " + t.cinco.jugada + "): son tablas sin que nadie reclame (art. 9.6.1). Detén los relojes y anota el resultado.");
       else for (const r of t.repeticiones) agregar("triple", r, "Triple repetición en la mesa " + m.mesa + " (con " + r.jugada + "): cualquiera de los dos puede reclamar tablas (art. 9.2). Si nadie reclama, la partida sigue.");
+      if (t.cincuenta && !t.setentaYCinco) agregar("50", t.cincuenta, "50 jugadas de cada uno sin mover un peón ni capturar en la mesa " + m.mesa + " (se cumplieron con " + t.cincuenta.jugada + (t.cincuenta.desde ? "; la cuenta empezó con " + t.cincuenta.desde : "") + "): cualquiera de los dos puede reclamar tablas (art. 9.3). Si nadie reclama, la partida sigue.");
       if (t.setentaYCinco) agregar("75", t.setentaYCinco, "75 jugadas de cada uno sin mover un peón ni capturar en la mesa " + m.mesa + " (con " + t.setentaYCinco.jugada + "): son tablas sin reclamo (art. 9.6.2).");
     }
     return out;
@@ -238,7 +242,10 @@
       const tab = el("div", { class: "cine-tablero cv-tablero", "aria-hidden": "true" });
       if (raiz.TableroFen && m.fen) raiz.TableroFen.dibujar(tab, m.fen, m.ultima, { miniatura: true });
       const t = m.tablas;
-      const rep = t && (t.cinco ? "Quíntuple repetición (con " + t.cinco.jugada + "): tablas sin reclamo." : t.repeticiones.length ? "Triple repetición (con " + t.repeticiones[t.repeticiones.length - 1].jugada + "): se pueden reclamar tablas." : "");
+      const rep = t && [
+        t.cinco ? "Quíntuple repetición (con " + t.cinco.jugada + "): tablas sin reclamo." : t.repeticiones.length ? "Triple repetición (con " + t.repeticiones[t.repeticiones.length - 1].jugada + "): se pueden reclamar tablas." : "",
+        t.setentaYCinco ? "75 jugadas sin peón ni captura (con " + t.setentaYCinco.jugada + "): tablas sin reclamo." : t.cincuenta ? "50 jugadas sin peón ni captura (con " + t.cincuenta.jugada + "): se pueden reclamar tablas." : "",
+      ].filter(Boolean).join(" ");
       return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa), "data-repeticion": rep ? "si" : null },
         el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: "Mesa " + m.mesa })),
         tab,
