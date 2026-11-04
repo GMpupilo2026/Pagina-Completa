@@ -33,7 +33,7 @@
   const CUADRA_S = 180;          // la hora elegida y la que dicen los relojes desde el inicio: más de 3 min, se avisa
   const ATRASO_DEFECTO = 900;    // si la ronda no dice su atraso: el de la sala del Centroamericano
 
-  // «Pérez Solís, María José» y «PEREZ SOLIS Maria Jose» son la misma persona: sin tildes, sin mayúsculas, sin comas.
+  // «Pérez Mora, María José» y «PEREZ MORA Maria Jose» son la misma persona: sin tildes, sin mayúsculas, sin comas.
   const palabras = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
     .replace(/[^a-zñ0-9\s]/g, " ").split(/\s+/).filter((x) => x.length > 1);
 

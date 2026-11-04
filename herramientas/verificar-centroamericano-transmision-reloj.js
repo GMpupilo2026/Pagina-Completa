@@ -21,7 +21,7 @@ function ok(nombre, cond, detalle) {
 }
 
 // ---- los nombres
-ok("mismo jugador: chess-results y Lichess escriben distinto", TX.mismoJugador("Pérez Solís María José", "Perez Solis, Maria"));
+ok("mismo jugador: chess-results y Lichess escriben distinto", TX.mismoJugador("Pérez Mora María José", "Perez Mora, Maria"));
 ok("mismo jugador: mayúsculas y comas", TX.mismoJugador("ACUÑA PORRAS, Fabio", "Acuña Porras Fabio"));
 ok("mismo jugador: con solo el primer apellido y el nombre", TX.mismoJugador("Mora Jiménez, Daniel", "Mora, Daniel"));
 ok("otro jugador con el mismo apellido no", !TX.mismoJugador("Mora Jiménez, Daniel", "Mora Vargas, Andrés"));
@@ -114,7 +114,8 @@ const calc = fs.readFileSync(path.join(RAIZ, "js/centroamericano-reloj-apagado.j
 ok("la calculadora ofrece buscar la mesa en la transmisión", calc.includes("Buscar esta mesa en la transmisión") && calc.includes("o.transmision("));
 ok("la nota dice que salió de la transmisión", calc.includes("relojes de la transmisión de Lichess"));
 for (const js of ["js/centroamericano-arbitro.js", "js/centroamericano-mesas-pagina.js"]) {
-  ok(js + " le pasa la transmisión a la calculadora", /transmision[^\n]*TX\.buscar\(/.test(fs.readFileSync(path.join(RAIZ, js), "utf8")));
+  const t = fs.readFileSync(path.join(RAIZ, js), "utf8");
+  ok(js + " le pasa la transmisión a la calculadora", /const transmision = TX|transmision: TX \?/.test(t) && /TX\.buscar\(\{ blancas: \w+\.blancas, negras: \w+\.negras/.test(t) && /R\.armar\(\{[\s\S]{0,200}transmision/.test(t));
 }
 
 if (fallas) { console.error("\n" + fallas + " de " + pruebas + " comprobaciones fallaron."); process.exit(1); }

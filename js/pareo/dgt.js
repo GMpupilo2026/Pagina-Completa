@@ -182,7 +182,9 @@
     const nombre = String(d.nombre || "").trim().slice(0, 80);
     const campos = [
       ["name", nombre.length >= 3 ? nombre : (nombre + " — torneo").slice(0, 80)],
-      ["visibility", d.visibilidad === "unlisted" ? "unlisted" : "public"],
+      // «private»: la copia sin atraso para los árbitros (solo la ve la cuenta dueña; la Mesa de árbitros del
+      // Centroamericano la lee con su clave). Ver «La transmisión sin atraso para los árbitros».
+      ["visibility", d.visibilidad === "unlisted" || d.visibilidad === "private" ? d.visibilidad : "public"],
       ["showScores", "true"],
       ["info.timeZone", "America/Costa_Rica"],
     ];

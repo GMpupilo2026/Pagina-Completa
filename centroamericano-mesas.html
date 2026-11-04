@@ -295,6 +295,26 @@
                     <div class="cam-acciones"><button type="button" id="claves-bloque-guardar" class="cam-btn">Probar y guardar las claves pegadas</button></div>
                     <ul id="claves-bloque-resultado" class="mt-3 space-y-1 text-sm"></ul>
                 </details>
+
+                <h2 id="t-vivo" class="cam-subtitulo mt-6">La transmisión sin atraso para los árbitros</h2>
+                <div class="cam-clave-grupo mt-3" id="vivo">
+                    <p>La transmisión pública de Lichess va con <strong>15 minutos de atraso</strong> por juego limpio, y así se queda. Para que cada árbitro vea <strong>sus</strong> mesas en vivo en su tablet («Mis mesas en vivo»), arma en Lichess una <strong>segunda transmisión privada</strong> y conéctala aquí:</p>
+                    <ol class="text-sm mt-2 list-decimal pl-5 space-y-1">
+                        <li>En Lichess, «Nueva transmisión» con <strong>Visibilidad: Privada</strong>. Cada ronda con <strong>Retraso: 0</strong> y la <strong>misma fuente</strong> que la pública: la dirección de LiveChess, o en Pareo para DGT («Transmitir sin LiveChess») la casilla «También una copia privada sin atraso para los árbitros», que crea los torneos privados y empuja cada jugada a los dos.</li>
+                        <li>Crea una clave en <strong>lichess.org/account/oauth/token</strong> con el permiso <strong>«Leer estudios y transmisiones privados»</strong> (y ningún otro), con la cuenta dueña de esa transmisión.</li>
+                        <li>Pega aquí el enlace de la transmisión privada y la clave. Se prueban contra Lichess y la clave queda <strong>cifrada</strong>: nadie la vuelve a ver, y cada tablet recibe solo las partidas de sus mesas.</li>
+                    </ol>
+                    <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                        <div><label for="vivo-enlace" class="block text-sm font-bold">Enlace de la transmisión privada (si son varios torneos, uno por renglón)</label><textarea id="vivo-enlace" rows="3" class="cam-campo" autocomplete="off" spellcheck="false" placeholder="https://lichess.org/broadcast/…"></textarea></div>
+                        <div><label for="vivo-token" class="block text-sm font-bold">Clave de Lichess (lip_…)</label><input id="vivo-token" type="password" maxlength="80" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="cam-acciones">
+                        <button type="button" id="vivo-conectar" class="cam-btn">Probar y conectar</button>
+                        <button type="button" id="vivo-quitar" class="cam-btn cam-btn-claro" hidden>Desconectar</button>
+                    </div>
+                    <p id="vivo-estado" class="text-sm mt-2" role="status"></p>
+                    <ul id="vivo-torneos" class="text-sm mt-2 space-y-1"></ul>
+                </div>
             </section>
 
             <!-- 6. Respaldo -->
@@ -425,5 +445,6 @@
     <script src="js/centroamericano-reloj-apagado.js"></script>
     <script src="js/centroamericano-fair-play.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
+    <script src="js/centroamericano-vivo-conectar.js"></script>
 </body>
 </html>

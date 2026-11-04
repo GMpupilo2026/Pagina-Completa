@@ -510,6 +510,33 @@ const CONTRASTE = `(sel) => {
     await p.click("#lt-apagado");
     await p.waitForSelector("#control-tiempos .cam-apagado-datos");
     igual("si a la tablet le faltan anotaciones viejas de la mesa (trae las últimas 60), lo avisa: alguna ilegal o sanción podría faltar", await p.evaluate(() => /no tiene a mano todas las anotaciones de esta mesa/.test(document.querySelector("#control-tiempos .cam-apagado-datos").textContent)), true);
+    // «Mis mesas en vivo» (la transmisión privada sin atraso, js/centroamericano-arbitro-vivo.js): sin conectar, el botón no
+    // existe; conectada, la ventana muestra cada mesa con su tablero y sus relojes, y el reloj apagado la usa sin atraso.
+    igual("sin la transmisión privada conectada, la tablet no muestra «Mis mesas en vivo»", await p.$eval("#ver-vivo", (b) => b.checkVisibility()), false);
+    await p.evaluate(() => {
+        const antes = window.sb.functions.invoke;
+        window.__vivoPedidos = [];
+        window.sb.functions.invoke = (f, o) => {
+            if (f !== "centroamericano-mesas-vivo") return antes(f, o);
+            window.__vivoPedidos.push(o.body);
+            return Promise.resolve({ data: { ok: true, conectada: true, ronda: 3, delay: 0, leida: new Date().toISOString(),
+                mesas: [{ mesa: 2, fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 0 24", ultima: "g1f3", estado: "*", reloj_b: 270000, reloj_n: 312000, piensa: 40 }] }, error: null });
+        };
+    });
+    await p.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    igual("conectada: aparece «Mis mesas en vivo», y la tablet pidió con el token de SU enlace", [await p.$eval("#ver-vivo", (b) => b.checkVisibility()), await p.evaluate((t) => window.__vivoPedidos[0].action === "mesas" && window.__vivoPedidos[0].arbitro_token === t, TOKEN)], [true, true]);
+    await p.click("#control-tiempos .ra-tx-buscar");
+    await p.waitForSelector("#control-tiempos .ra-tx-estado");
+    igual("el reloj apagado toma los relojes de la transmisión sin atraso", await p.evaluate(() => /^Relojes de las .* \(en vivo, sin atraso\): Blancas 45:00 \(24 jug\.\) · Negras 52:00 \(23 jug\.\)\.$/.test(document.querySelector("#control-tiempos .ra-tx-estado").textContent)), true);
+    // La ventana del control de tiempos tapa el botón a 390 px: se abre con el teclado (el foco y Enter).
+    await p.focus("#ver-vivo");
+    await p.keyboard.press("Enter");
+    await p.waitForSelector("#mesas-en-vivo[open] .cv-mesa");
+    igual("la ventana: la mesa con su tablero (64 casillas, la última jugada marcada), sus relojes en palabras y el aviso de no mostrarla",
+        await p.evaluate(() => { const d = document.getElementById("mesas-en-vivo"); const m = d.querySelector('.cv-mesa[data-mesa="2"]'); return [m.querySelectorAll(".cine-sq").length, m.querySelectorAll(".cine-sq-ultima").length, /^Van 24 jugadas · le toca a las negras · Blancas 45:00 · Negras 5[01]:\d\d$/.test(m.querySelector(".cv-texto").textContent), /no lo muestres a jugadores/.test(d.textContent), d.querySelector(".cv-tablero").getBoundingClientRect().width > 100]; }),
+        [64, 2, true, true, true]);
+    await p.click("#mesas-en-vivo .cam-dialogo-titulo button");
+    igual("«Cerrar» la cierra y el foco vuelve al botón", await p.evaluate(() => [document.getElementById("mesas-en-vivo").open, document.activeElement && document.activeElement.id]), [false, "ver-vivo"]);
     await p.evaluate(() => { window.__recortar = null; document.getElementById("actualizar").click(); });
     await p.waitForTimeout(500);
     await p.click("#control-tiempos .ra-volver");
@@ -1248,7 +1275,7 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== La organización: UNA clave para todo el grupo ===");
     await q.click("#pest-claves");
-    igual("no hay una casilla de clave por torneo: solo la del grupo (y la del bloque de otras claves)", await q.evaluate(() => [document.querySelectorAll("#torneos input, #torneos textarea").length, [...document.querySelectorAll("#panel-claves input")].filter((i) => i.type === "password").map((i) => i.id)]), [0, ["g-sid"]]);
+    igual("no hay una casilla de clave por torneo: solo la del grupo de chess-results (y la del bloque de otras claves); la otra es la de Lichess de la transmisión sin atraso", await q.evaluate(() => [document.querySelectorAll("#torneos input, #torneos textarea").length, [...document.querySelectorAll("#panel-claves input")].filter((i) => i.type === "password").map((i) => i.id)]), [0, ["g-sid", "vivo-token"]]);
     igual("el código del grupo ya viene puesto (no es secreto) y las tarjetas solo dicen el estado de cada torneo", [await q.inputValue("#g-codigo"), await q.$$eval(".cam-estado-torneo", (l) => l.map((t) => [t.querySelector("p.font-bold").textContent, t.dataset.clave])), await q.textContent("#resumen-claves")],
         ["1529733", [["Sub-8 Absoluto", "no"], ["Sub-8 Femenino", "no"], ["Sub-10 Absoluto", "si"]], "1 de 3 torneos tienen la clave. Faltan: Sub-8 Absoluto, Sub-8 Femenino."]);
     await q.fill("#g-codigo", "1529700");

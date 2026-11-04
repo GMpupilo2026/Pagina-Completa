@@ -402,6 +402,9 @@
             e.cuando = Date.now();
             try {
                 await API().empujar(r.lichess.id, pgn);
+                // La copia privada sin atraso para los árbitros (si existe): la misma jugada, al mismo tiempo. Si falla,
+                // no frena la pública: se anota y va en el próximo envío.
+                if (r.privada) await API().empujar(r.privada.id, pgn).catch((err) => API().anotar("«" + r.nombre + "», ronda " + n + ": no llegó a la copia de los árbitros. " + err.message + ".", { error: true }));
                 e.pgn = pgn;
                 e.error = "";
                 e.hora = HoraCR.hora(new Date(), { hour: "numeric", minute: "2-digit", second: "2-digit" }).replace(/\.$/, "");

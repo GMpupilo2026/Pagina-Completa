@@ -802,3 +802,14 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-fp-banda[data-tipo="no-aplica"] { background: #f1f1f4; color: #33343d; border-color: #6b6e7d; }
 .dark .cam-fp-banda { background: #3a2c05; color: #ffe8a3; }
 .dark .cam-fp-banda[data-tipo="no-aplica"] { background: #2b2d38; color: #e4e5ec; }
+
+/* «Mis mesas en vivo» (la transmisión privada sin atraso): cada mesa con su tablero chico y sus relojes en palabras.
+   Sin colores nuevos: el tablero es el de la sala de cine (css/styles.css) y el texto el de la ventana. */
+.cv-dialogo { width: min(52rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.cv-cuerpo { justify-items: stretch; text-align: left; }
+.cv-mesas { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.9rem; }
+.cv-mesa { display: grid; gap: 0.35rem; align-content: start; }
+.cv-mesa-titulo { font-size: 1.05rem; }
+.cv-tablero { width: 100%; max-width: 16rem; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
+.cv-texto { font-variant-numeric: tabular-nums; }
+.cv-pie { padding: 0 1rem 1rem; }

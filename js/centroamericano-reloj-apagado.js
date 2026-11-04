@@ -91,13 +91,16 @@
   function nota(r, ctl, tB, tN) {
     const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
     const desde = !ctl ? "calculado desde el inicio de la ronda"
-      : ctl.origen === "transmision" ? "calculado desde los relojes de la transmisión de Lichess de las " + hora(ctl.ocurrio) + " (con " + Math.round(ctl.atraso / 60) + " min de atraso)"
+      : ctl.origen === "transmision" ? "calculado desde los relojes de la transmisión de Lichess de las " + hora(ctl.ocurrio) + " (" + conAtraso(ctl.atraso) + ")"
         : "calculado desde el control de las " + hora(ctl.ocurrio);
     return ("Reloj apagado (art. 6.10): " + desde
       + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
       + (r.ajustes && r.ajustes.length ? "; incluye " + r.ajustes.map((a) => (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + (a.motivo === "ilegal" ? " (ilegal)" : " (sanción)")).join(", ") : "")
       + (propuesto ? "" : "; propuesto " + T(Math.max(0, r.blancas)) + " / " + T(Math.max(0, r.negras)) + ", ajustado a mano")).slice(0, 500);
   }
+
+  // «con 15 min de atraso» o «en vivo, sin atraso» (la transmisión privada de los árbitros).
+  const conAtraso = (seg) => (seg > 0 ? "con " + Math.round(seg / 60) + " min de atraso" : "en vivo, sin atraso");
 
   // La hora en que empezó la ronda: la que marcó el árbitro de la categoría o, si no, la del horario.
   function inicioDeLaRonda(ronda, marcadaIso) {
@@ -131,13 +134,13 @@
       const masNueva = t && (!a || String(t.ocurrio) > String(a.ocurrio));
       const hijos = [
         el("p", { class: "text-sm font-bold", texto: "Desde la transmisión de Lichess" }),
-        el("p", { class: "text-sm", texto: "En las mesas que se transmiten, los relojes electrónicos sirven de control de tiempos. La transmisión va con atraso (15 min): se descuenta solo y se usa la hora en que de verdad marcaban eso." }),
+        el("p", { class: "text-sm", texto: "En las mesas que se transmiten, los relojes electrónicos sirven de control de tiempos: de la transmisión sin atraso si la organización la conectó, o de la pública, cuyo atraso (15 min) se descuenta solo. Se usa la hora en que de verdad marcaban eso." }),
         el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico ra-tx-buscar", disabled: !!st.txBuscando, onclick: buscarTx },
           st.txBuscando ? "Buscando en la transmisión…" : st.tx ? "Volver a leer la transmisión" : "Buscar esta mesa en la transmisión"),
       ];
       if (st.tx && st.tx.error) hijos.push(el("p", { class: "text-sm cam-apagado-falta ra-tx-estado", role: "status", texto: st.tx.error }));
       if (t) {
-        hijos.push(el("p", { class: "text-sm ra-tx-estado", role: "status", texto: "Relojes de las " + hora(t.ocurrio) + " (con " + Math.round(t.atraso / 60) + " min de atraso): Blancas " + T(t.t_blancas) + " (" + t.j_blancas + " jug.) · Negras " + T(t.t_negras) + " (" + t.j_negras + " jug.)." }));
+        hijos.push(el("p", { class: "text-sm ra-tx-estado", role: "status", texto: "Relojes de las " + hora(t.ocurrio) + " (" + conAtraso(t.atraso) + "): Blancas " + T(t.t_blancas) + " (" + t.j_blancas + " jug.) · Negras " + T(t.t_negras) + " (" + t.j_negras + " jug.)." }));
         for (const x of t.avisos || []) hijos.push(el("p", { class: "text-sm cam-apagado-ojo ra-tx-aviso", texto: "⚠ " + x }));
         hijos.push(masNueva
           ? el("label", { class: "cam-apagado-opcion" }, el("input", { type: "checkbox", class: "ra-tx-usar", checked: st.usarTx !== false, onchange: (e) => { st.usarTx = e.target.checked; pintar(); } }),
