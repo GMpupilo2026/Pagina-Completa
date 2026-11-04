@@ -271,7 +271,10 @@
         // Fair Play: la mesa elegida lleva un borde dorado que brilla y una banda que dice a quién retener (o que no aplica).
         const fp = ((estado && estado.fair_play) || []).find((x) => x.mesa === m.mesa);
         const fpTexto = C.fairPlayDeMesa(fp, m, elegido[m.mesa]);
-        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" : "") },
+        const alcance = C.fairPlayAlcance(fp);
+        const jugadores = [bloqueJugador(m, "blancas"), bloqueJugador(m, "negras")];
+        jugadores.forEach((j) => { if (alcance && alcance === j.dataset.color) j.setAttribute("data-fair-play", "si"); });
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, "data-fp-alcance": alcance, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" + (alcance === "blancas" || alcance === "negras" ? " (" + alcance + ")" : "") : "") },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
@@ -279,10 +282,11 @@
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
             // Los avisos van en una zona de altura reservada (vacía casi siempre): la tarjeta no cambia de forma al anotar. Dentro: lo de Fair Play y las ilegales.
             el("div", { class: "cam-mesa-avisos" },
-                fpTexto ? el("p", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo, role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }) : null,
+                fpTexto ? el("div", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo },
+                    el("p", { role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }),
+                    bandaRetener(m, fp)) : null,
                 bandas(m)),
-            bloqueJugador(m, "blancas"),
-            bloqueJugador(m, "negras"),
+            ...jugadores,
             rapido() ? resultadoRapido(m, sel, pendiente, ocupada, msg) : el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
                 el("div", { class: "cam-resultado-fila" }, sel, botonGuardar(m, pendiente, ocupada)),
@@ -893,13 +897,13 @@
 
     // ------------------------------------------------------------- la transmisión sin atraso
 
-    // Una tabla que la transmisión acaba de ver (triple o quíntuple repetición, 75 jugadas): un aviso arriba que no se
+    // Una tabla que la transmisión acaba de ver (triple o quíntuple repetición, 50 o 75 jugadas): un aviso arriba que no se
     // pierde hasta «Entendido», con «Ver la posición». Vibra (sin sonido: en un torneo no hay ruido). El aviso no decide
-    // nada: la triple la reclama un jugador (art. 9.2); la quíntuple y las 75 son tablas sin reclamo (9.6).
+    // nada: la triple y las 50 las reclama un jugador (arts. 9.2 y 9.3); la quíntuple y las 75 son tablas sin reclamo (9.6).
     function alertaDeTablas(a) {
         const caja = $("alertas-vivo");
         if (!caja) return;
-        const titulo = a.tipo === "triple" ? "Triple repetición" : a.tipo === "cinco" ? "Quíntuple repetición: tablas" : "75 jugadas: tablas";
+        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas" }[a.tipo] || "Tablas";
         const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
             el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
             el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
@@ -1439,6 +1443,29 @@
     // Las pide a centroamericano-fair-play con SU token (no a centroamericano-mesa, para no volver a desplegarla en pleno
     // torneo). Solo trae las suyas ya aprobadas; si no contesta, la tablet sigue igual. Ver «El sorteo de Fair Play» en
     // docs/decisiones/juegos-y-torneos.md.
+    // «Ya lo retuve»: solo cuando el resultado ya está guardado y dice a quién revisar. Avisa al encargado de Fair Play.
+    function bandaRetener(m, fp) {
+        if (!fp || fp.estado !== "aprobada" || !fp.revisar_color) return null;
+        const nombre = (fp.revisar_color === "blancas" ? m.blancas : m.negras) || (fp.revisar_color === "blancas" ? "quien jugó con blancas" : "quien jugó con negras");
+        if (fp.retenido_en) return el("p", { class: "cam-fp-retenido", texto: "✓ Avisaste a Fair Play que retuviste a " + nombre + " (" + hora(fp.retenido_en) + "). Que no se vaya hasta que llegue el encargado." });
+        return el("button", { type: "button", class: "cam-btn cam-btn-chico cam-fp-retener", "data-accion": "retener", onclick: (e) => retener(m, fp, e.currentTarget) },
+            el("span", { "aria-hidden": "true", texto: "✋ " }), "Ya retuve a " + nombre);
+    }
+
+    async function retener(m, fp, boton) {
+        boton.disabled = true;
+        try {
+            const { data, error } = await sb.functions.invoke("centroamericano-fair-play", { body: { action: "retener", arbitro_token: token(), ronda: estado.ronda, mesa: m.mesa } });
+            if (error || !data || !data.ok) throw new Error((data && data.error) || "sin respuesta");
+            fp.retenido_en = data.mesa.retenido_en;
+            avisar("Listo: el encargado de Fair Play ya sabe que lo retuviste en la mesa " + m.mesa + ".");
+            pintar();
+        } catch (e) {
+            boton.disabled = false;
+            avisar("No se pudo avisar a Fair Play. Revisa la conexión y vuelve a tocar el botón.", true);
+        }
+    }
+
     async function cargarFairPlay() {
         if (!estado) return;
         try {

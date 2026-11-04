@@ -171,7 +171,8 @@
         f.replaceWith(a);
       }
       const pie = document.querySelector("#ficha-ejercicios > span:last-child");
-      if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = tx.ficha(r); }
+      // Ya va en el idioma elegido: que el traductor de la página no lo toque.
+      if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.dataset.noTraducir = ""; pie.textContent = tx.ficha(r); }
     }
     const hoy = document.getElementById("hoy-ejercicios");
     if (hoy) {

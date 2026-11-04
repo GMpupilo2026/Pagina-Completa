@@ -69,6 +69,31 @@ const m5 = V.normalizar({ mesa: 4, fuente: "livechess", jugadas: QUINT.map((x) =
 const al5 = V.alertasNuevas([m5], 3, new Set());
 ok("con la quíntuple, el aviso es el de tablas sin reclamo (no el de reclamar)", al5.length === 1 && al5[0].tipo === "cinco" && /9\.6\.1/.test(al5[0].texto), JSON.stringify(al5));
 ok("la posición que se ve sale de las jugadas, y lo que lleva pensando quien tiene el turno", /^r/.test(mRep.fen) && mRep.fen.split(" ")[1] === "w" && mRep.reloj_b === 500000 && mRep.piensa === 600 - 39 * 10, mRep.fen + " " + mRep.piensa);
+// Las 50 jugadas (art. 9.3): una partida de verdad, armada con chess.js (determinista: la primera jugada en orden que no
+// mueve un peón, no captura, no da jaque ni repite una posición), con 50 jugadas de cada uno sin peón ni captura.
+const { Chess } = require("chess.js");
+const PRINC = ["e4", "e5", "d4", "d5"];
+const c50 = new Chess(); PRINC.forEach((x) => c50.move(x));
+const clave50 = () => c50.fen().split(" ").slice(0, 4).join(" ");
+const vistas50 = new Set([clave50()]), sin50 = [];
+(function buscar() {
+  if (sin50.length === 110) return true;
+  for (const m of c50.moves({ verbose: true }).filter((x) => x.piece !== "p" && !x.captured).sort((a, b) => (a.san < b.san ? -1 : 1))) {
+    c50.move(m.san);
+    const k = clave50();
+    if (!vistas50.has(k) && !c50.in_check()) { vistas50.add(k); sin50.push(m.san); if (buscar()) return true; sin50.pop(); vistas50.delete(k); }
+    c50.undo();
+  }
+  return false;
+})();
+const t50 = V.tablas(PRINC.concat(sin50));
+ok("las 50 jugadas: en la jugada en que se cumplen, con dónde empezó la cuenta, y sin repeticiones de por medio",
+  t50 && t50.cincuenta && t50.cincuenta.ply === 104 && t50.cincuenta.jugada === "52… Aa4" && t50.cincuenta.desde === "3. Aa6" && !t50.repeticiones.length && !t50.setentaYCinco, JSON.stringify(t50 && t50.cincuenta));
+ok("una jugada antes todavía no", !V.tablas(PRINC.concat(sin50.slice(0, 99))).cincuenta);
+const m50 = V.normalizar({ mesa: 5, fuente: "livechess", jugadas: PRINC.concat(sin50).map((x) => x + " 5000+10"), primera: PRIMERA, estado: "*" }, PRIMERA);
+const al50 = V.alertasNuevas([m50], 3, new Set());
+ok("el aviso de las 50: se pueden reclamar (9.3), con la jugada y dónde empezó la cuenta", al50.length === 1 && al50[0].tipo === "50" && /art\. 9\.3/.test(al50[0].texto) && /52… Aa4/.test(al50[0].texto) && /empezó con 3\. Aa6/.test(al50[0].texto), JSON.stringify(al50));
+ok("la tablet le pone su título al aviso de las 50", /"50": "50 jugadas sin peón ni captura"/.test(leer("js/centroamericano-arbitro.js")));
 ok("la notación de la planilla", V.esp("Nxe5+") === "Cxe5+" && V.esp("O-O") === "O-O" && V.esp("e8=Q") === "e8=D" && V.esp("Kh1") === "Rh1" && V.esp("Rd1") === "Td1");
 
 // ---- la Edge Function

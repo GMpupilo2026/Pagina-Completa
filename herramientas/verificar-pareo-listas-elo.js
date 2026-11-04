@@ -111,7 +111,9 @@ ok(yendry.estandar === null && yendry.nacional === 1407, "un Elo FIDE en 0 es nu
 ok(x.nacionalVacia.filas.length === 0 && x.nacionalVacia.total === 0, "una lista sin jugadores es una lista vacía: " + JSON.stringify(x.nacionalVacia));
 
 // ---- La página ----
-const URL_FUNCION = "**/functions/v1/pareo-listas-elo";
+// Con «**» al final: la búsqueda va con ?forceFunctionRegion=us-west-1 (ver
+// «El buscador de FIDE se fija en us-west-1» en docs/decisiones/juegos-y-torneos.md).
+const URL_FUNCION = "**/functions/v1/pareo-listas-elo**";
 const filasFide = x.fide.filas;
 const filasNacional = x.nacional.filas;
 

@@ -1,4 +1,41 @@
 {
   "sala": "centroamericano-2026",
-  "rondas": {}
+  "rondas": {
+    "1": [
+      {"categoria":"U10F","fen":"r4rk1/p4qpp/4N3/2PQ4/P3n3/1R6/5PPP/2R3K1 b - - 0 25","solucion":["f7f2","g1h1","f2f1","c1f1","f8f1"],"despues":[],"tema":"mate","mate":3,"logro":"Gramajo Tovar"},
+      {"categoria":"U14F","fen":"5r1k/2p3p1/1p1p1r2/p2R1q1p/P3nN2/2P3PP/1PQ4K/5R2 b - - 2 39","solucion":["f5d5","f4d5","f6f1"],"despues":["c2e4","f8f2","e4g2","f2g2"],"tema":"torre","logro":"Ortez Gutierrez"},
+      {"categoria":"U14","fen":"r1b2rk1/pp1ppp1p/2n3p1/q2N4/2PbP3/4B3/PP4PP/1R1QKB1R w K - 2 12","solucion":["b2b4","a5d8","e3d4"],"despues":["f7f5","e4e5","d7d6","e5d6"],"tema":"pieza","logro":"Alvarez Ramirez"},
+      {"categoria":"U16F","fen":"8/8/6p1/8/2p1kPPp/2P4P/4K3/8 b - - 0 44","solucion":["e4f4"],"despues":["g4g5","f4g3","e2e3","g3h3"],"tema":"calidad","logro":"Pieter"},
+      {"categoria":"U10","fen":"2r3k1/1R1R2pp/4p3/p3rp2/P7/5K1P/6P1/8 w - - 2 33","solucion":["d7g7","g8h8","g7h7"],"despues":["h8g8","b7g7","g8f8","g7a7"],"tema":"calidad","logro":"Arroyo Vargas"},
+      {"categoria":"U18F","fen":"7r/8/3pNk2/P2Pp3/2P1Pp1q/5Q2/4KbPr/R5R1 w - - 1 45","solucion":["f3f2"],"despues":["h4g4","f2f3","g4g8","e6f4"],"tema":"pieza","logro":"Wilson"},
+      {"categoria":"U12","fen":"r5n1/1b3pk1/p2q2pp/1p1nr3/P2B4/2P4P/1PB2PP1/R1QR2K1 w - - 2 26","solucion":["f2f4"],"despues":["a8e8","f4e5","e8e5","c2e4"],"tema":"pieza","logro":"Villalobos Garcia"},
+      {"categoria":"U10F","fen":"r4rk1/p3Rpp1/2Qpb2p/q7/2B3n1/2P5/PP3PPP/RNB3K1 b - - 0 14","solucion":["a5e5","b1d2","e5h2"],"despues":["g1f1","h2h4","g2g3","h4e7"],"tema":"torre"},
+      {"categoria":"U14F","fen":"7r/1p2ppk1/pq4p1/5P2/6n1/3B2Q1/PPP2RP1/R5K1 b - - 4 26","solucion":["g4f2"],"despues":["g3e5","f7f6","e5e7","g7h6"],"tema":"torre","logro":"Guerrero Diaz"},
+      {"categoria":"U18F","fen":"8/6pp/1pk5/1R3p2/2P2P2/p1K2N1P/Pp4P1/1r6 b - - 3 50","solucion":["b1c1"],"despues":["c3d3","b2b1q","b5b1","c1b1"],"tema":"corona","logro":"Ayerdi Hurtado"}
+    ],
+    "2": [
+      {"categoria":"U14F","fen":"8/8/p3k3/3R4/4K1P1/1P2R3/P3q3/8 b - - 30 64","solucion":["e2g4","e4d3","e6d5"],"despues":["d3c2","g4g2","c2c3","g2a2"],"tema":"torre","logro":"Patel"},
+      {"categoria":"U08F","fen":"b2rr2k/1q2npb1/p1nNp1pp/1pp1P3/6P1/PP1P1N2/BBP2Q1P/R4RK1 b - - 2 24","solucion":["d8d6"],"despues":["b3b4","d6d7","f3g5","c6e5"],"tema":"pieza","logro":"Ayala Barraza"},
+      {"categoria":"U10F","fen":"4rrk1/pQ3ppp/8/8/4B3/1bP4P/3q1PP1/R3R1K1 w - - 1 23","solucion":["b7b3"],"despues":["e8b8","b3c2","d2c2","e4c2"],"tema":"pieza","logro":"Herrera Cordoba"},
+      {"categoria":"U08","fen":"r3k3/1pp2p2/p2p1q2/4n1rp/4P3/2P1Q3/PP3PP1/R2BR1K1 w q - 6 24","solucion":["f2f4","g5g2","g1g2"],"despues":["e5g6","e3g3","e8c8","g2h1"],"tema":"pieza","logro":"Clarke"},
+      {"categoria":"U14","fen":"r2q1rk1/1b1n2B1/p3pp2/1pbp3Q/5P2/1P2P3/P1PN2PP/R4RK1 w - - 0 17","solucion":["g7h6"],"despues":["f8f7","h5g6","g8h8","g6f7"],"tema":"torre"},
+      {"categoria":"U16F","fen":"2b1r2k/5Q1p/p4nP1/1p1p4/P7/2PBq3/1P4P1/5RK1 w - - 4 38","solucion":["f1f2"],"despues":["e3c1","d3f1","c1g5","f2f6"],"tema":"pieza","logro":"Pieter"},
+      {"categoria":"U12F","fen":"r2qr1k1/pp1b1ppp/2p2n2/2b1B3/3N4/1PN2Q1P/1PP2PP1/R3R1K1 b - - 2 16","solucion":["e8e5","e1e5","c5d4"],"despues":["e5e2","d4c5","c3a4","c5f8"],"tema":"ataque"},
+      {"categoria":"U12","fen":"8/8/4k1K1/1pp2p2/p2p1Pp1/1P1P4/1PP2P2/8 w - - 0 36","solucion":["b3a4"],"despues":["b5a4","g6g5","e6d5","g5f5"],"tema":"ataque","logro":"Vargas Viquez"},
+      {"categoria":"U18F","fen":"r4rk1/p1p2ppp/1bbq4/2pp1P2/6Q1/2P5/PPNB2PP/4RRK1 w - - 2 20","solucion":["f5f6"],"despues":["g7g6","g4h4","f8e8","e1e7"],"tema":"ataque","logro":"Salazar Delgado"},
+      {"categoria":"U08F","fen":"5rk1/pp3p1p/3P1p1q/2b1p3/2B5/2P2bP1/PPQ2P1P/4RRK1 b - - 0 28","solucion":["h6h3"],"despues":["c2h7","g8h7","c4d3","h7g7"],"tema":"mate","mate":4,"logro":"Ramirez"}
+    ],
+    "3": [
+      {"categoria":"U08","fen":"r1b2k1r/pp4p1/2p4p/3p1P2/8/3P2Q1/P2q1bPP/4R2K w - - 2 23","solucion":["g3d6","f8g8","e1e8","g8f7","d6e7"],"despues":[],"tema":"mate","mate":3,"logro":"Villamil"},
+      {"categoria":"U18F","fen":"6k1/3b1pp1/p2bqn1p/1p1pNn2/3P1B2/1P5P/P3NPP1/1BQ3K1 w - - 11 31","solucion":["e5d7","e6d7","b1f5","d7f5","f4d6"],"despues":["h6h5","e2g3","f5e6","d6e5"],"tema":"pieza","logro":"Wilson"},
+      {"categoria":"U12F","fen":"6k1/1p3pp1/p6p/3p4/1P6/P2RPPK1/3Q2PP/1qr5 b - - 6 35","solucion":["c1c2","d2d1","b1b2","d3d5","c2g2"],"despues":["g3f4","g2h2","f4e4","b2a3"],"tema":"calidad","logro":"Noble"},
+      {"categoria":"U14F","fen":"r1b1k1nr/pp3ppp/4p3/8/1b1qN3/8/PP1B1PPP/R2QKB1R w KQkq - 0 10","solucion":["d1a4","c8d7","a4b4","d4b4","d2b4"],"despues":["g8e7","e4d6","e8f8","a1c1"],"tema":"pieza","logro":"Daniels"},
+      {"categoria":"U16F","fen":"3r2k1/1q5p/5ppn/pp2p3/1P4Q1/P1r1PNP1/5P1P/R1R3K1 w - - 2 37","solucion":["g4e6","h6f7","c1c3"],"despues":["a5b4","a3b4","b7f3","c3c7"],"tema":"pieza","logro":"Gabb Diaz"},
+      {"categoria":"U18","fen":"4r1k1/p4ppp/1p2p3/2q5/3Q4/5PBP/P5P1/3R2K1 b - - 2 30","solucion":["e8d8","g3f2","d8d4"],"despues":["d1d4","c5c1","g1h2","c1c7"],"tema":"pieza"},
+      {"categoria":"U10","fen":"3r1r1k/p5p1/2R4p/4p2Q/1P2B3/P5P1/1b1q3P/2R4K w - - 2 33","solucion":["h5g6"],"despues":["d2c1","c6c1","h8g8","g6h7"],"tema":"pieza","logro":"Thompson"},
+      {"categoria":"U08F","fen":"2qr2k1/p4p2/1p3bb1/6p1/8/2P2Q1P/PP2RP2/4R1K1 w - - 4 38","solucion":["f3f6"],"despues":["g8h7","e2e3","g6h5","e3g3"],"tema":"pieza","logro":"Lu"},
+      {"categoria":"U14","fen":"2b2rk1/5ppp/6r1/p1B5/Pp2QP1n/1B5P/1q4P1/R4RK1 w - - 1 24","solucion":["b3f7"],"despues":["g8h8","f7g6","h7g6","c5f8"],"tema":"dama","logro":"Jimenez Gamboa"},
+      {"categoria":"U10F","fen":"r2q1rk1/ppp3p1/1bn1pn1p/3pp3/4P3/P1NPBN1P/1PP1QPP1/3R1RK1 b - - 1 12","solucion":["d5d4","c3a4","d4e3"],"despues":["f2e3","a7a5","d3d4","d8e8"],"tema":"calidad","logro":"Borrell Espinoza"}
+    ]
+  }
 }

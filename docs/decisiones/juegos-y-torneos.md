@@ -3986,6 +3986,26 @@ el sexo.
   Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
   saltó.
 
+
+#### El buscador de FIDE se fija en us-west-1
+
+El 4/11/2026, la inscripción del Metropolitano no encontraba a nadie en FIDE:
+la Edge Function contestaba «FIDE no contestó» a los 15 s. ratings.fide.com
+**no le contesta a la función cuando corre en us-east-1**, que es la región que
+Supabase elige para quien entra desde Costa Rica. Medido llamándola con cada
+región: us-east-1, sa-east-1, eu-central-1 y eu-west-2 fallaban siempre;
+us-west-1 contestaba en 1-3 s (y ap-northeast-1 en 6 s), y desde la base, con
+pg_net, también. No daba ningún error en la página: solo el aviso de que FIDE
+no contestó, que parece un problema de FIDE.
+
+- `js/pareo/elo-nacional.js` (`buscarEnLista`, la única copia de la llamada,
+  que usan Pareo Integral y la inscripción del Metropolitano) la manda con
+  **`?forceFunctionRegion=us-west-1`** en la dirección. No con la cabecera
+  `x-region`: el CORS de la función no la deja pasar.
+- `verificar-metropolitano.js` comprueba que cada búsqueda lleve ese
+  parámetro; quitarlo lo hace saltar. Si FIDE cambia de opinión, se vuelve a
+  medir región por región antes de moverlo.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
@@ -9143,6 +9163,10 @@ inmediato.
   reclamos: una sola copia). Una repetición nueva sale **arriba de todo** (`#alertas-vivo`, `role="alert"`, vibra, sin
   sonido) con la jugada en la notación de la planilla («20… Ag7») y el artículo: la triple la reclama un jugador (9.2;
   si nadie reclama, sigue); la **quíntuple** (9.6.1) y las **75 jugadas** (9.6.2) son tablas sin reclamo y lo dicen.
+  **Las 50 jugadas** (9.3; lo preguntó el dueño el 4/11) avisan igual que la triple: se pueden reclamar, con la jugada
+  en que se cumplieron y dónde empezó la cuenta; si ya van 75, sale solo el aviso de las 75. El verificador arma una
+  partida de verdad con chess.js (la primera jugada en orden que no mueve un peón, no captura, no da jaque ni repite)
+  y comprueba que se cumplen en la jugada 52, ni una antes.
   «Ver la posición» abre «Mis mesas en vivo» en esa mesa; «Entendido» la quita. Sale una vez por mesa, tipo y jugada.
 - Lo prueban `verificar-centroamericano-mesas-vivo.js` (las jugadas y su hora, el control, la triple en su jugada, la
   quíntuple, que la alerta no se repite, la notación, que la función no devuelve el id y que el enlace no está en el
@@ -9252,6 +9276,44 @@ Probado en un Postgres de ensayo con el esquema del Centroamericano (los pesos y
 la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no aplica, la corrección y el borrado, el
 rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
 jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroamericano-fair-play.js`.
+
+#### Retenido, el acumulado y el informe final
+
+Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):
+
+- **«Ya retuve a …»**: el árbitro de mesa recibía el aviso, pero el encargado no sabía si de verdad había detenido al
+  ganador. Cuando el resultado ya está guardado y dice a quién revisar (`aprobada` con `revisar_color`), la banda dorada
+  de la tablet trae el botón; la acción `retener` de `centroamericano-fair-play` valida el token del árbitro y que la
+  mesa sea de SU rango, y `centroamericano_fair_play_retener()` anota la hora y su nombre (`retenido_en`,
+  `retenido_por`; solo la clave de servicio la ejecuta). El botón no sale antes del resultado: la base todavía no sabe
+  a quién. Un resultado corregido que cambia el ganador, o uno borrado, borra lo retenido en el trigger
+  (`fp_tras_resultado`): era de otra persona.
+- **El borde dorado que se mueve, donde está quien se revisa** (`CentroamericanoMesas.fairPlayAlcance()`): si aplican
+  los dos, la ficha completa; si solo uno, únicamente su bloque (la mesa queda con su borde de siempre); con el
+  resultado guardado, el ganador. Es un brillo que da la vuelta (`conic-gradient` con `@property`, máscara para dejar
+  solo el anillo); con «reducir movimiento» queda quieto, pero sigue. Revisada o sin efecto, el borde de la mesa queda
+  quieto como antes.
+- **Las novedades del encargado**: entre una lectura y la siguiente (cada 20 s), lo que cambió —la alerta nueva, el
+  acumulado que salta, el resultado que dice a quién ir a revisar, el árbitro que lo retuvo, la mesa sin efecto, el
+  aviso que su árbitro leyó— sale arriba en «🔔 Novedades», sube al título de la pestaña («(3) …») y vibra (más largo
+  si pide moverse ya). **Sin sonido**: en una sala de juego no hay ruido. Al abrir la pantalla no hay novedades: solo
+  lo que pasa después. En un iPhone no vibra (Safari no lo deja); por eso va también escrito y en el título.
+- **El acumulado por jugador** (`centroamericano_fp_acumulado()`): una alerta por partida no ve a quien juega un poco
+  por encima de su nivel en cada ronda. Se suman sus partidas medidas en la categoría con la regla de Stouffer (suma de
+  las z entre la raíz del número de partidas: dos partidas a 1,5 dan 2,12), con 2 o más partidas y los mismos cortes
+  que por partida (2 «a mirar», 2,5 «muy alta»). Pesa en los sorteos dentro del +1 de las alertas —no se suma aparte—
+  mientras le quede alguna partida sin mirar; «Ya lo miré» / «Seguirlo» las marca todas
+  (`centroamericano_fp_acumulado_marcar`), y «mirado» no le quita el seguimiento a una partida que lo tenía. En la
+  primera lectura de la base, con 3 rondas, salió una jugadora «a mirar» (2 partidas, 2,35). Sigue siendo una alerta,
+  nunca una acusación.
+- **El informe de Fair Play del torneo** (PDF, con la marca de agua): el resumen con las cifras, una tabla por
+  categoría, cada revisión con su resultado, quién la retuvo y quién la hizo, las mesas que no llegaron a revisión con
+  su motivo, el acumulado y las alertas con lo que se decidió, y cómo se trabajó. Es para el árbitro principal y el
+  acta (y, si hace falta, la Comisión de Fair Play de FIDE); es confidencial, por eso lleva los nombres.
+
+Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
+resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
+desplegada.
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.

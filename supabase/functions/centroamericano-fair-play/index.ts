@@ -19,7 +19,9 @@
 //   "alerta"      {tnr, ronda, mesa, color, estado: vista|seguir, nota?}
 //   "pareo"       {tnr, ronda, mesa}                   → los dos jugadores de esa mesa (para anotar a mano)
 //   "manual"      {tnr, ronda, mesa, color, resultado, jugador?, nota?} → una revisión ya hecha, anotada a mano
+//   "acumulado"   {tnr, clave, estado: vista|seguir, nota?} → todas las partidas medidas de ese jugador en la categoría
 //   "mesas_arbitro" {arbitro_token, ronda} → para la tablet de un árbitro de mesa: sus mesas elegidas (borde dorado)
+//   "retener"     {arbitro_token, ronda, mesa} → el árbitro de mesa confirma que retuvo a quien se revisa
 //   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos) y las partidas transmitidas a
 //                       Lichess, saca la precisión de cada jugador y calibra las alertas (a lo sumo cada 90 s).
 
@@ -64,13 +66,21 @@ Deno.serve(async (req) => {
   // Con SU token (el de centroamericano_asignaciones), solo sus mesas elegidas para Fair Play en esa ronda, ya aprobadas:
   // la tablet les pone el borde dorado y dice a quién retener. Nada más del sorteo (ni las descartadas, ni los pesos, ni
   // las alertas). Va acá y no en centroamericano-mesa para no volver a desplegar esa función en medio del torneo.
-  if (cuerpo.action === "mesas_arbitro") {
+  if (cuerpo.action === "mesas_arbitro" || cuerpo.action === "retener") {
     const t = String(cuerpo.arbitro_token ?? "").trim();
     if (!/^[0-9a-f]{64}$/.test(t)) return json({ error: "Enlace inválido." }, 404);
-    const { data: a } = await servicio.from("centroamericano_asignaciones").select("tnr, mesa_desde, mesa_hasta, vence, revocada").eq("token", t).maybeSingle();
+    const { data: a } = await servicio.from("centroamericano_asignaciones").select("tnr, arbitro, mesa_desde, mesa_hasta, vence, revocada").eq("token", t).maybeSingle();
     if (!a || a.revocada || new Date(a.vence).getTime() <= Date.now()) return json({ error: "Enlace inválido." }, 404);
+    if (cuerpo.action === "retener") {
+      // Solo una mesa de SU rango; que haya a quién retener lo decide la base.
+      const mesa = Number(cuerpo.mesa);
+      if (!Number.isInteger(mesa) || mesa < a.mesa_desde || mesa > a.mesa_hasta) return json({ error: "Esa mesa no es de tus mesas." }, 403);
+      const { data: f, error } = await servicio.rpc("centroamericano_fair_play_retener", { p_tnr: a.tnr, p_ronda: Number(cuerpo.ronda) || 0, p_mesa: mesa, p_quien: a.arbitro + " (árbitro de mesa)" });
+      if (error) return json({ error: error.message }, 400);
+      return json({ ok: true, mesa: { mesa: f.mesa, retenido_en: f.retenido_en, retenido_por: f.retenido_por } });
+    }
     const { data } = await servicio.from("centroamericano_fair_play")
-      .select("mesa, estado, color_si_tablas, aplica_blancas, aplica_negras, no_aplica, revisar_color")
+      .select("mesa, estado, color_si_tablas, aplica_blancas, aplica_negras, no_aplica, revisar_color, retenido_en")
       .eq("tnr", a.tnr).eq("ronda", Number(cuerpo.ronda) || 0).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta)
       .in("estado", ["aprobada", "sin_efecto", "revisada"]);
     return json({ ok: true, mesas: data ?? [] });
@@ -114,14 +124,16 @@ Deno.serve(async (req) => {
       const rondas = (await rpc("centroamericano_fp_rondas", {}) as { tnr: string; nombre: string; prueba: boolean; ronda: number }[])
         .filter((r) => (token ? !r.prueba : true));
       const tnrs = rondas.map((r) => r.tnr);
-      const [{ data: sorteos }, { data: alertas }] = await Promise.all([
+      const [{ data: sorteos }, { data: alertas }, acumulado] = await Promise.all([
         servicio.from("centroamericano_fair_play").select("*").in("tnr", tnrs.length ? tnrs : ["-"]).order("creado", { ascending: false }).range(0, 999),
         servicio.from("centroamericano_fp_analisis").select("*").in("tnr", tnrs.length ? tnrs : ["-"]).or("nivel.neq.normal,estado.eq.seguir").order("analizada", { ascending: false }).range(0, 499),
+        rpc("centroamericano_fp_acumulado", {}) as Promise<{ tnr: string; nivel: string; seguir: boolean }[]>,
       ]);
       const avisos = (sorteos ?? []).map((s: { aviso_id: string | null }) => s.aviso_id).filter(Boolean);
       const { data: leidos } = avisos.length ? await servicio.from("centroamericano_avisos").select("id, leido_en").in("id", avisos) : { data: [] };
       const { data: ultima } = await servicio.from("centroamericano_fp_partidas").select("leida").order("leida", { ascending: false }).limit(1).maybeSingle();
       return json({ ok: true, nombre: quien.replace(/ \(Fair Play\)$/, ""), principal: !token, rondas, sorteos: sorteos ?? [], alertas: alertas ?? [],
+        acumulado: (acumulado ?? []).filter((x) => tnrs.includes(x.tnr) && (x.nivel !== "normal" || x.seguir)),
         leidos: Object.fromEntries((leidos ?? []).map((x: { id: string; leido_en: string | null }) => [x.id, x.leido_en])), actualizado: ultima?.leida ?? null });
     }
     if (accion === "candidatas") return json({ ok: true, mesas: await rpc("centroamericano_fp_candidatas", { p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda) }) });
@@ -135,6 +147,9 @@ Deno.serve(async (req) => {
     }
     if (accion === "alerta") {
       return json({ ok: true, alerta: await rpc("centroamericano_fp_alerta", conQuien({ p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda), p_mesa: Number(cuerpo.mesa), p_color: String(cuerpo.color), p_estado: String(cuerpo.estado), p_nota: cuerpo.nota ?? null })) });
+    }
+    if (accion === "acumulado") {
+      return json({ ok: true, marcadas: await rpc("centroamericano_fp_acumulado_marcar", conQuien({ p_tnr: String(cuerpo.tnr), p_clave: String(cuerpo.clave ?? ""), p_estado: String(cuerpo.estado), p_nota: cuerpo.nota ?? null })) });
     }
     if (accion === "pareo") {
       // Los dos jugadores de una mesa en una ronda (para anotar a mano una revisión ya hecha): de los emparejamientos leídos.

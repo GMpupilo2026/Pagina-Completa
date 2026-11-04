@@ -26,6 +26,7 @@
 
     let ctx = null, datos = null, primera = true, ultimaActualizacion = 0;
     const vistasAlertas = new Set();
+    let novedades = [];                 // lo que pasó desde que se abrió la pantalla (lo más nuevo arriba)
     const $ = (id) => document.getElementById(id);
 
     function el(tag, attrs, ...hijos) {
@@ -65,10 +66,20 @@
                 el("p", { id: "fp-estado", class: "text-sm", role: "status" }),
                 el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results y Lichess ahora")),
 
+            el("section", { id: "fp-novedades-caja", class: "cam-fp-novedades", "aria-labelledby": "fp-t-novedades", hidden: true },
+                el("div", { class: "cam-fp-barra" },
+                    el("h3", { id: "fp-t-novedades", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "🔔 " }), "Novedades ", el("span", { id: "fp-novedades-n", class: "cam-contador" })),
+                    el("button", { type: "button", id: "fp-novedades-listo", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: limpiarNovedades }, "Ya las vi")),
+                el("ul", { id: "fp-novedades", class: "cam-fp-novedades-lista", "aria-live": "polite" })),
+
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-alertas" },
                 el("h3", { id: "fp-t-alertas", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📈 " }), "Alertas de los tableros electrónicos ", el("span", { id: "fp-alertas-n", class: "cam-contador", hidden: true })),
                 el("p", { class: "cam-herramientas-nota", texto: "Las partidas que se transmiten a Lichess, jugada por jugada: la precisión de cada jugador (la fórmula de Lichess, sin la apertura ni las posiciones ya decididas) contra la esperable para su Elo en este mismo torneo. Es una alerta para mirar, nunca una acusación: «Ya la miré» la cierra; «Seguirlo en los sorteos» hace que sus mesas salgan más seguido." }),
                 el("p", { id: "fp-alertas-vacio", class: "cam-herramientas-nota", texto: "Ninguna partida se sale de lo esperable para el Elo de su jugador." }),
+                el("h4", { id: "fp-t-acumulado", class: "cam-fp-subtitulo", hidden: true }, "Sumadas todas sus partidas del torneo"),
+                el("p", { id: "fp-acumulado-nota", class: "cam-herramientas-nota", hidden: true, texto: "Quien juega un poco por encima de su nivel en cada ronda no salta en ninguna partida sola, pero sí en el conjunto: se suman sus partidas medidas en la categoría (dos partidas a 1,5 desviaciones dan 2,1)." }),
+                el("div", { id: "fp-acumulado", class: "cam-fp-alertas" }),
+                el("h4", { id: "fp-t-por-partida", class: "cam-fp-subtitulo", hidden: true }, "Partida por partida"),
                 el("div", { id: "fp-alertas", class: "cam-fp-alertas" })),
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-sortear" },
@@ -92,7 +103,8 @@
                 el("p", { class: "cam-herramientas-nota", texto: "¿Ya se revisó a alguien sin el sorteo (por ejemplo, en las rondas 1 y 2)? Anótalo a mano: cuenta para que esa persona descanse las 2 rondas siguientes y para el tope de 3 revisiones, y un hallazgo hace que sus mesas salgan más seguido." }),
                 el("div", { class: "cam-herramientas mt-1", role: "toolbar", "aria-label": "Registro de Fair Play" },
                     el("button", { type: "button", id: "fp-manual", class: "cam-btn cam-btn-chico", onclick: anotarAMano }, el("span", { "aria-hidden": "true", texto: "✍ " }), "Anotar una revisión hecha a mano"),
-                    el("button", { type: "button", id: "fp-pdf", class: "cam-btn cam-btn-chico", disabled: true, onclick: pdf }, "Bajar el registro en PDF")),
+                    el("button", { type: "button", id: "fp-pdf", class: "cam-btn cam-btn-chico", disabled: true, onclick: pdf }, "Bajar el registro en PDF"),
+                    el("button", { type: "button", id: "fp-informe", class: "cam-btn cam-btn-chico", onclick: informe }, el("span", { "aria-hidden": "true", texto: "📄 " }), "Informe de Fair Play del torneo (PDF)")),
                 el("p", { id: "fp-vacio", class: "cam-herramientas-nota", texto: "Todavía no se ha sorteado ninguna mesa." }),
                 el("div", { class: "cam-tabla-envoltura mt-2" },
                     el("table", { class: "cam-tabla cam-rejilla" },
@@ -130,16 +142,62 @@
             d.sorteos = (d.sorteos || []).filter((f) => tnrs.has(f.tnr));
             d.alertas = (d.alertas || []).filter((a) => tnrs.has(a.tnr));
             d.leidos = d.leidos || {};
+            d.acumulado = (d.acumulado || []).filter((x) => tnrs.has(x.tnr));
             const nuevas = d.alertas.filter((a) => a.estado === "nueva" && a.nivel !== "normal" && !vistasAlertas.has(clave(a)));
-            if (!primera && nuevas.length && navigator.vibrate) navigator.vibrate([120, 80, 120]);   // sin sonido: en un torneo no hay ruido
             nuevas.forEach((a) => vistasAlertas.add(clave(a)));
+            if (!primera) {
+                const hay = novedadesEntre(datos, d, nuevas);
+                if (hay.length) {
+                    novedades = hay.concat(novedades).slice(0, 30);
+                    if (navigator.vibrate) navigator.vibrate(hay.some((n) => n.fuerte) ? [250, 120, 250, 120, 250] : [150, 90, 150]);   // sin sonido: en un torneo no hay ruido
+                }
+            }
             primera = false;
             datos = d;
+            pintarNovedades();
             pintar();
             if (ctx.principal) await cargarEnlaces();
         } catch (e) {
             $("fp-estado").textContent = "No se pudo leer: " + (e.message || e);
         }
+    }
+
+    // ---------------------------------------------------------------- las novedades (vibran; sin sonido)
+    // Lo que cambió entre dos lecturas: una alerta nueva de los tableros, un acumulado que salta, el resultado que dice a
+    // quién revisar, el árbitro que confirma que lo retuvo, una mesa que queda sin efecto y el aviso que su árbitro leyó.
+    // «fuerte»: lo que pide moverse ya (ir a revisar a alguien).
+    function novedadesEntre(antes, d, nuevas) {
+        const out = [], ahora = new Date().toISOString();
+        const de = (f) => nombreDe(f.tnr) + ", ronda " + f.ronda + ", mesa " + f.mesa;
+        const quien = (f) => (f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color] || "el ganador";
+        nuevas.forEach((a) => out.push({ hora: ahora, fuerte: a.nivel === "alta", texto: "📈 Precisión " + (NIVELES[a.nivel] || "").toLowerCase() + ": " + conElo(a.jugador, a.elo) + " (" + nombreDe(a.tnr) + ", ronda " + a.ronda + ", mesa " + a.mesa + ")." }));
+        const acAntes = new Map(((antes && antes.acumulado) || []).map((x) => [x.tnr + "|" + x.clave, x]));
+        (d.acumulado || []).forEach((x) => {
+            const v = acAntes.get(x.tnr + "|" + x.clave);
+            if (x.nivel !== "normal" && x.sin_mirar > 0 && (!v || v.nivel === "normal" || v.partidas < x.partidas)) out.push({ hora: ahora, fuerte: false, texto: "📈 Sumadas sus " + x.partidas + " partidas, " + conElo(x.jugador, x.elo) + " está muy por encima de lo esperable (" + nombreDe(x.tnr) + ")." });
+        });
+        const previos = new Map(((antes && antes.sorteos) || []).map((f) => [f.id, f]));
+        (d.sorteos || []).forEach((f) => {
+            const v = previos.get(f.id);
+            if (!v) return;
+            if (f.estado === "aprobada" && f.revisar_color && (v.revisar_color !== f.revisar_color || v.estado !== "aprobada")) out.push({ hora: ahora, fuerte: true, texto: "🛡 " + de(f) + ": terminó (" + (f.resultado_mesa || "") + "). Ve a revisar a " + quien(f) + "." });
+            if (f.retenido_en && !v.retenido_en) out.push({ hora: f.retenido_en, fuerte: true, texto: "✋ " + (f.retenido_por || "Su árbitro") + " ya retuvo a " + quien(f) + " (" + de(f) + ")." });
+            if (f.estado === "sin_efecto" && v.estado !== "sin_efecto") out.push({ hora: ahora, fuerte: false, texto: "⚪ " + de(f) + ": quedó sin efecto (" + (f.revisar_color ? "ganó " + quien(f) + ", que no aplica" : "no se jugó") + "). Su árbitro ya tiene el aviso." });
+            if (f.aviso_id && d.leidos[f.aviso_id] && !(antes.leidos || {})[f.aviso_id]) out.push({ hora: d.leidos[f.aviso_id], fuerte: false, texto: "✓ " + (f.arbitro || "Su árbitro") + " leyó el aviso de la " + de(f) + "." });
+        });
+        return out;
+    }
+
+    function pintarNovedades() {
+        $("fp-novedades-caja").hidden = novedades.length === 0;
+        $("fp-novedades-n").textContent = String(novedades.length);
+        $("fp-novedades").replaceChildren(...novedades.map((n) => el("li", { "data-fuerte": n.fuerte ? "si" : null }, el("span", { class: "cam-fp-de", texto: hora(n.hora) + " · " }), n.texto)));
+        document.title = (novedades.length ? "(" + novedades.length + ") " : "") + document.title.replace(/^\(\d+\) /, "");
+    }
+
+    function limpiarNovedades() {
+        novedades = [];
+        pintarNovedades();
     }
 
     function pintar() {
@@ -157,9 +215,22 @@
     function pintarAlertas() {
         const lista = [...datos.alertas].sort((a, b) => ((a.estado === "nueva" ? 0 : 1) - (b.estado === "nueva" ? 0 : 1)) || ((b.z || 0) - (a.z || 0)));
         const nuevas = lista.filter((a) => a.estado === "nueva").length;
-        $("fp-alertas-n").hidden = nuevas === 0;
-        $("fp-alertas-n").textContent = String(nuevas);
-        $("fp-alertas-vacio").hidden = lista.length > 0;
+        const pendientes = nuevas + (datos.acumulado || []).filter((x) => x.sin_mirar > 0).length;
+        $("fp-alertas-n").hidden = pendientes === 0;
+        $("fp-alertas-n").textContent = String(pendientes);
+        const acum = [...(datos.acumulado || [])].sort((a, b) => ((a.sin_mirar > 0 ? 0 : 1) - (b.sin_mirar > 0 ? 0 : 1)) || (b.z - a.z));
+        $("fp-alertas-vacio").hidden = lista.length > 0 || acum.length > 0;
+        $("fp-t-acumulado").hidden = $("fp-acumulado-nota").hidden = acum.length === 0;
+        $("fp-t-por-partida").hidden = acum.length === 0 || lista.length === 0;
+        $("fp-acumulado").replaceChildren(...acum.map((x) => el("article", { class: "cam-fp-alerta", "data-nivel": x.nivel, "data-estado": x.sin_mirar > 0 ? "nueva" : x.seguir ? "seguir" : "vista", "data-acumulado": x.tnr + "|" + x.clave },
+            el("p", { class: "cam-fp-alerta-titulo" },
+                el("span", { class: "cam-chip", "data-estado": "fp-nivel-" + x.nivel, texto: NIVELES[x.nivel] || "Seguimiento" }), " ",
+                el("strong", { texto: conElo(x.jugador, x.elo) }), " · " + nombreDe(x.tnr)),
+            el("p", { texto: x.partidas + " partidas medidas (rondas " + x.rondas + ") · precisión media " + uno(x.precision_media) + " %" + (x.esperada_media != null ? ", la esperable para su Elo: " + uno(x.esperada_media) + " %" : "") + " · juntas, " + uno(x.z) + " desviaciones arriba" }),
+            el("p", { class: "cam-fp-detalle", texto: x.sin_mirar > 0 ? x.sin_mirar + (x.sin_mirar === 1 ? " partida sin mirar" : " partidas sin mirar") + ": mientras tanto, sus mesas salen más seguido." : x.seguir ? "En seguimiento: sus mesas salen más seguido." : "Ya se miraron todas sus partidas." }),
+            el("div", { class: "cam-fp-acciones" },
+                x.sin_mirar > 0 || x.seguir ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "acumulado-vista", onclick: () => decidirAcumulado(x, "vista") }, "Ya lo miré") : null,
+                !x.seguir ? el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "acumulado-seguir", onclick: () => decidirAcumulado(x, "seguir") }, "Seguirlo en los sorteos") : null))));
         $("fp-alertas").replaceChildren(...lista.map((a) => el("article", { class: "cam-fp-alerta", "data-nivel": a.nivel, "data-estado": a.estado, "data-clave": clave(a) },
             el("p", { class: "cam-fp-alerta-titulo" },
                 el("span", { class: "cam-chip", "data-estado": "fp-nivel-" + a.nivel, texto: NIVELES[a.nivel] || "Seguimiento" }), " ",
@@ -189,6 +260,7 @@
             const detalle = f.estado === "descartada" ? "Motivo: " + (f.motivo || "")
                 : f.estado === "revisada" ? (RESULTADOS[f.resultado] || "") + (f.nota ? " · " + f.nota : "") + (f.revisada_por_nombre ? " · " + f.revisada_por_nombre : "")
                     : f.estado === "aprobada" ? (leido ? "✓ " + (f.arbitro || "Su árbitro") + " lo leyó a las " + hora(leido) : "⏳ " + (f.arbitro || "Su árbitro") + " todavía no lo ha leído")
+                        + (f.revisar_color ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
                         : f.estado === "sin_efecto" ? "Su árbitro ya recibió el aviso" : "";
             const acciones = f.estado === "sorteada"
                 ? [el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "aprobar", onclick: () => aprobar(f) }, "Aprobar y avisar a su árbitro"),
@@ -344,6 +416,14 @@
         await cargar();
     }
 
+    async function decidirAcumulado(x, estado) {
+        const nota = await Avisos.pedir(estado === "seguir" ? "Todas sus partidas medidas quedan en seguimiento: sus mesas van a salir más seguido. Si quieres, anota por qué." : "Todas sus partidas medidas quedan como miradas. Si quieres, anota qué viste.", { titulo: conElo(x.jugador, x.elo), etiqueta: "Nota (opcional)", aceptar: estado === "seguir" ? "Seguirlo" : "Marcar como mirado" });
+        if (nota === null) return;
+        try { await llamar("acumulado", { tnr: x.tnr, clave: x.clave, estado, nota: String(nota).trim() || null }); }
+        catch (e) { avisar("No se pudo guardar: " + (e.message || e), true); }
+        await cargar();
+    }
+
     async function actualizar(aMano) {
         ultimaActualizacion = Date.now();
         if (aMano) $("fp-actualizar").disabled = true;
@@ -373,6 +453,61 @@
             a.href = URL.createObjectURL(blob); a.download = "fair-play-centroamericano-2026.pdf";
             document.body.append(a); a.click(); a.remove();
         } catch (e) { avisar("No se pudo armar el PDF: " + (e.message || e), true); }
+    }
+
+    // El informe de Fair Play del torneo, para el árbitro principal y el acta (y, si hace falta, la Comisión de Fair
+    // Play de FIDE): las cifras, categoría por categoría, cada revisión con su resultado y las alertas con lo que se
+    // decidió. Confidencial: los nombres van porque el informe es del equipo de Fair Play y del principal.
+    async function informe() {
+        if (!datos) return;
+        const orden = (tnr) => datos.rondas.findIndex((r) => r.tnr === tnr);
+        const todos = [...datos.sorteos].sort((a, b) => (a.ronda - b.ronda) || (orden(a.tnr) - orden(b.tnr)) || (a.mesa - b.mesa));
+        const cuenta = (lista, estado) => lista.filter((f) => f.estado === estado).length;
+        const sorteo = todos.filter((f) => f.origen !== "manual");
+        const revisadas = todos.filter((f) => f.estado === "revisada");
+        const porResultado = Object.keys(RESULTADOS).map((k) => RESULTADOS[k] + ": " + revisadas.filter((f) => f.resultado === k).length);
+        const alertas = [...datos.alertas].sort((a, b) => (a.ronda - b.ronda) || (orden(a.tnr) - orden(b.tnr)) || (a.mesa - b.mesa));
+        const decision = (a) => a.estado === "seguir" ? "En seguimiento" : a.estado === "vista" ? "Mirada" : "Sin mirar";
+        const bloques = [
+            { tipo: "titulo", texto: "Resumen" },
+            { tipo: "lista", items: [
+                "Mesas sorteadas: " + sorteo.length + " (aprobadas y avisadas a su árbitro: " + sorteo.filter((f) => f.estado !== "sorteada" && f.estado !== "descartada").length + "; descartadas con su motivo: " + cuenta(sorteo, "descartada") + "; por decidir: " + cuenta(sorteo, "sorteada") + ").",
+                "Revisiones hechas: " + revisadas.length + " (" + porResultado.join("; ") + ")" + (todos.some((f) => f.origen === "manual") ? ", de ellas " + todos.filter((f) => f.origen === "manual").length + " anotadas a mano (sin sorteo)" : "") + ".",
+                "Mesas sin efecto (ganó quien no aplicaba, o no se jugó): " + cuenta(todos, "sin_efecto") + ". Por revisar todavía: " + cuenta(todos, "aprobada") + ".",
+                "Alertas de los tableros electrónicos: " + alertas.length + " partidas (" + alertas.filter((a) => a.estado === "vista").length + " miradas, " + alertas.filter((a) => a.estado === "seguir").length + " en seguimiento, " + alertas.filter((a) => a.estado === "nueva").length + " sin mirar)" + ((datos.acumulado || []).length ? "; " + datos.acumulado.length + " jugadores por encima de lo esperable sumando sus partidas" : "") + ".",
+            ] },
+            { tipo: "titulo", texto: "Por categoría" },
+            { tipo: "tabla", encabezados: ["Categoría", "Ronda actual", "Sorteadas", "Revisadas", "Sin efecto", "Descartadas", "Por revisar", "Alertas"], anchos: [2.2, 0.9, 0.9, 0.9, 0.9, 1, 0.9, 0.9],
+                filas: datos.rondas.map((r) => { const de = todos.filter((f) => f.tnr === r.tnr); return [r.nombre, String(r.ronda), String(de.filter((f) => f.origen !== "manual").length), String(cuenta(de, "revisada")), String(cuenta(de, "sin_efecto")), String(cuenta(de, "descartada")), String(cuenta(de, "aprobada")), String(alertas.filter((a) => a.tnr === r.tnr).length)]; }) },
+            { tipo: "titulo", texto: "Las revisiones" },
+            revisadas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
+                filas: revisadas.map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa) + (f.origen === "manual" ? " (a mano)" : ""), f.jugador || "—", RESULTADOS[f.resultado] || "", f.nota || "—", f.retenido_por ? f.retenido_por + " · " + hora(f.retenido_en) : "—", f.revisada_por_nombre || "—"]) }
+                : { tipo: "parrafo", texto: "Todavía no se ha revisado a nadie." },
+            { tipo: "titulo", texto: "Las mesas que no llegaron a revisión" },
+            todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
+                filas: todos.filter((f) => f.estado === "descartada" || f.estado === "sin_efecto").map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa), f.estado === "descartada" ? "Descartada: " + (f.motivo || "") : "Sin efecto: " + (f.revisar_color ? "ganó " + ((f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color]) + ", que no aplicaba (" + (f.no_aplica || "ya se había revisado") + ")" : "no se jugó"), f.decidida_por_nombre || "—"]) }
+                : { tipo: "parrafo", texto: "Ninguna." },
+            { tipo: "titulo", texto: "Alertas de los tableros electrónicos" },
+            { tipo: "nota", texto: "La precisión de cada jugador en las partidas transmitidas, contra la esperable para su Elo en el mismo torneo. Una alerta es una razón para mirar con más cuidado, nunca una prueba ni una acusación." },
+            (datos.acumulado || []).length ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
+                filas: datos.acumulado.map((x) => [conElo(x.jugador, x.elo), nombreDe(x.tnr), x.partidas + " (" + x.rondas + ")", uno(x.precision_media) + " %", x.esperada_media != null ? uno(x.esperada_media) + " %" : "—", uno(x.z), x.sin_mirar > 0 ? "Sin mirar" : x.seguir ? "En seguimiento" : "Mirado"]) } : null,
+            alertas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
+                filas: alertas.map((a) => [String(a.ronda), nombreDe(a.tnr), String(a.mesa), conElo(a.jugador, a.elo) + " (" + COLOR[a.color].toLowerCase() + ")", uno(a.precision) + " %", a.esperada != null ? uno(a.esperada) + " %" : "—", a.z != null ? uno(a.z) : "—", decision(a) + (a.vista_por_nombre ? " (" + a.vista_por_nombre + ")" : "") + (a.nota ? ": " + a.nota : "")]) }
+                : { tipo: "parrafo", texto: "Ninguna partida se salió de lo esperable." },
+            { tipo: "separador" },
+            { tipo: "nota", texto: "Cómo se trabajó: las mesas se sortean por categoría con un peso que ninguna señal decide sola (tope 4); de la mesa sorteada se revisa al ganador (en tablas, al color sorteado), en privado y por alguien del mismo sexo (Leyes del Ajedrez, art. 11.3.3). Quien se revisó no aplica en las 2 rondas siguientes y nadie pasa de 3 revisiones. Todo queda anotado con quién y cuándo. Documento confidencial del equipo de Fair Play y del árbitro principal." },
+        ].filter(Boolean);
+        try {
+            const blob = await window.ReportePDF.generar({
+                titulo: "Informe de Fair Play — Centroamericano 2026",
+                subtitulo: "Al " + window.HoraCR.fechaHora(new Date()) + (datos.nombre ? " · lo bajó " + datos.nombre : ""),
+                pie: "Centroamericano 2026 · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
+                bloques, fotos: [],
+            });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob); a.download = "informe-fair-play-centroamericano-2026.pdf";
+            document.body.append(a); a.click(); a.remove();
+        } catch (e) { avisar("No se pudo armar el informe: " + (e.message || e), true); }
     }
 
     // ---------------------------------------------------------------- los QR de los encargados (solo el principal)

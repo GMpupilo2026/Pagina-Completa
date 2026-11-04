@@ -196,6 +196,7 @@
       detalles: { x: 6 * sx, y: 73.5 * sy, paso: 5.2 * sy, tam: 10 * s, max: 46 * sx },
       bandera: caja(6, 88, 16, 12), paisTexto: { x: 25 * sx, y: 96.3 * sy, tam: 10 * s },
       ilustracion: caja(48, 64, 52, 52),
+      foto: caja(61, 65, 33, 42.4),      // 3,3 × 4,24: la proporción del pasaporte
       franja: caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
       dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
@@ -225,6 +226,14 @@
     if (!w0 || !h0) return;
     const k = Math.max(W / w0, H / h0), w = w0 * k, h = h0 * k;
     ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  }
+
+  // Cubre la caja entera (la foto), recortando lo que sobre por los lados.
+  function cubrirCaja(ctx, img, c) {
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    if (!w0 || !h0) return;
+    const k = Math.max(c.w / w0, c.h / h0), w = w0 * k, h = h0 * k;
+    ctx.drawImage(img, c.x + (c.w - w) / 2, c.y + (c.h - h) / 2, w, h);
   }
 
   function rectRedondo(ctx, x, y, w, h, r) {
@@ -406,7 +415,8 @@
 
     const iconos = g.iconos.map((si, i) => (si ? recursos.iconos[i] : null)).filter(Boolean);
     const bandera = lado === "frente" ? await recursos.bandera(g.iso) : null;
-    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos] : null]);
+    // Con foto, el fondo es de esa persona: no se comparte con nadie.
+    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : null]);
 
     if (lado === "frente") {
       const fondo = (ctx) => {
@@ -414,7 +424,16 @@
         if (img.fondoFrente) cubrir(ctx, img.fondoFrente, M.W, M.H);
         if (img.logoIzq) contener(ctx, img.logoIzq, M.logoIzq, "izq");
         if (img.logoDer) contener(ctx, img.logoDer, M.logoDer, "der");
-        if (img.ilustracion) contener(ctx, img.ilustracion, M.ilustracion, "der", true);
+        // La foto de la persona (la inscripción del Metropolitano la trae en
+        // `g.foto`), en un marco tamaño pasaporte que ocupa el lugar de la
+        // ilustración. Sin foto, todo queda como siempre.
+        if (g.foto) {
+          const fo = M.foto;
+          ctx.save(); rectRedondo(ctx, fo.x, fo.y, fo.w, fo.h, 1.2 * M.s); ctx.clip();
+          cubrirCaja(ctx, g.foto, fo); ctx.restore();
+          ctx.strokeStyle = color; ctx.lineWidth = 0.8 * M.s;
+          rectRedondo(ctx, fo.x, fo.y, fo.w, fo.h, 1.2 * M.s); ctx.stroke();
+        } else if (img.ilustracion) contener(ctx, img.ilustracion, M.ilustracion, "der", true);
         if (bandera) {
           const b = M.bandera;
           ctx.save(); rectRedondo(ctx, b.x, b.y, b.w, b.h, 0.8 * M.s); ctx.clip();
@@ -431,6 +450,12 @@
           rectRedondo(ctx, x + 0.9 * M.s, yI + 0.9 * M.s, lado2 - 1.8 * M.s, lado2 - 1.8 * M.s, lado2 * 0.2); ctx.stroke();
           contener(ctx, im, { x: x + 2 * M.s, y: yI + 2 * M.s, w: lado2 - 4 * M.s, h: lado2 - 4 * M.s }, "centro");
         };
+        // Una tira decorativa debajo de la franja (las hojas de las bases
+        // del Metropolitano); el del Centroamericano no la lleva.
+        if (img.cintaFrente) {
+          ctx.save(); ctx.beginPath(); ctx.rect(M.cinta.x, M.cinta.y, M.cinta.w, M.cinta.h); ctx.clip();
+          cubrirCaja(ctx, img.cintaFrente, M.cinta); ctx.restore();
+        }
         // Uno solo va a la derecha; dos, uno en cada esquina.
         if (iconos.length === 1) ponerIcono(iconos[0], M.W - M.icono.margen - lado2);
         if (iconos.length >= 2) { ponerIcono(iconos[0], M.icono.margen); ponerIcono(iconos[1], M.W - M.icono.margen - lado2); }
@@ -563,8 +588,23 @@
     return p;
   }
 
+  /* El fondo de una cara en JPEG, a `dpi` (450 para la imprenta), listo para
+     GafetesPdf: lo usan gafetes.html y la inscripción del Metropolitano. */
+  async function fondoJpeg(diseno, c, dpi) {
+    const M = medidas(diseno);
+    const px = (dpi || 450) / 25.4;
+    const lienzo = document.createElement("canvas");
+    lienzo.width = Math.round(M.W * px);
+    lienzo.height = Math.round(M.H * px);
+    const ctx = lienzo.getContext("2d");
+    ctx.setTransform(lienzo.width / M.W, 0, 0, lienzo.height / M.H, 0, 0);
+    c.fondo(ctx);
+    const blob = await new Promise((ok) => lienzo.toBlob(ok, "image/jpeg", 0.92));
+    return { jpeg: new Uint8Array(await blob.arrayBuffer()), anchoPx: lienzo.width, altoPx: lienzo.height };
+  }
+
   window.GafetesDibujo = {
     PT, columnasDe, valor, llenar, nombrePropio, gafetes, colorDe, contraste, medidas, preparar, cara, pintar,
-    svgConTamano, cargarImagen,
+    svgConTamano, cargarImagen, fondoJpeg,
   };
 })();

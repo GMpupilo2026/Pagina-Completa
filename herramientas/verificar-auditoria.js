@@ -54,6 +54,8 @@ const VIGILADAS = [
   // Los árbitros del Centroamericano: el enlace (QR) de cada uno da acceso a sus mesas, y
   // cargar o cambiar la clave de un torneo deja anotado quién y cuándo (nunca la clave).
   "centroamericano_asignaciones", "centroamericano_finales", "centroamericano_torneos", "centroamericano_fp_enlaces",
+  // La inscripción del Metropolitano 2026: cuánto se cobró y si el pago se dio por bueno.
+  "metropolitano_inscripciones",
 ];
 
 let fallos = 0;
