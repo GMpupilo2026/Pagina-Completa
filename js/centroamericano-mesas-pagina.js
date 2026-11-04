@@ -1074,11 +1074,14 @@
         const filas = data || [];
         const R = window.CentroamericanoRelojApagado;
         const asig = asignaciones.filter(activa).find((a) => a.tnr === f.tnr && f.mesa >= a.mesa_desde && f.mesa <= a.mesa_hasta);
+        const inicio = R.inicioDeLaRonda(f.ronda, (inicios[f.tnr + "|" + f.ronda] || {}).inicio || null);
+        const TX = window.CentroamericanoTransmisionReloj;
         $("ct-apagado-cuerpo").replaceChildren(R.armar({
             estado: apagadoEstado, mesa: f.mesa, blancas: f.blancas, negras: f.negras,
+            transmision: TX ? (bonos) => TX.buscar({ blancas: f.blancas, negras: f.negras, ronda: f.ronda, inicio: inicio ? inicio.ms : null, bonos }) : null,
             lecturas: tiempos.filter((x) => mismaPartida(x, f)),
             anotaciones: filas.filter((x) => x.tipo !== "anulacion"), anuladas: new Set(filas.filter((x) => x.tipo === "anulacion").map((x) => x.anula)),
-            inicio: R.inicioDeLaRonda(f.ronda, (inicios[f.tnr + "|" + f.ronda] || {}).inicio || null),
+            inicio,
             intro: "Con el último control de esta partida se calcula cuánto le queda a cada uno. Es una propuesta para el árbitro de la mesa: el tiempo lo decide él (art. 6.10)."
                 + (asig ? "" : " Esta mesa no tiene un árbitro con enlace activo: no se le puede mandar."),
             boton: "Mandárselo al árbitro", clase: "cam-apagado-form", avisar,

@@ -677,6 +677,10 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-apagado-ojo { font-weight: 700; color: #8a1c00; }
 .dark .cam-apagado-reloj { border-color: #b8bbf2; }
 .dark .cam-apagado-ojo { color: #ffb59e; }
+/* Los relojes de la transmisión de Lichess como control (solo en las mesas que se transmiten). Sin colores nuevos: el
+   borde es el mismo morado de los relojes, ya medido. */
+.cam-apagado-tx { margin: 0.6rem 0; padding: 0.6rem 0.8rem; border: 2px dashed var(--cac-morado-hondo); border-radius: 0.8rem; display: grid; gap: 0.35rem; justify-items: start; }
+.dark .cam-apagado-tx { border-color: #b8bbf2; }
 .cam-reloj-dibujo { display: block; width: 100%; max-width: 22rem; margin: 0.6rem auto 0; height: auto; }
 
 /* El tiempo de espera de la categoría se cumplió: quién sigue sin llegar y el botón de incomparecencia. */
@@ -798,3 +802,14 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-fp-banda[data-tipo="no-aplica"] { background: #f1f1f4; color: #33343d; border-color: #6b6e7d; }
 .dark .cam-fp-banda { background: #3a2c05; color: #ffe8a3; }
 .dark .cam-fp-banda[data-tipo="no-aplica"] { background: #2b2d38; color: #e4e5ec; }
+
+/* «Mis mesas en vivo» (la transmisión privada sin atraso): cada mesa con su tablero chico y sus relojes en palabras.
+   Sin colores nuevos: el tablero es el de la sala de cine (css/styles.css) y el texto el de la ventana. */
+.cv-dialogo { width: min(52rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.cv-cuerpo { justify-items: stretch; text-align: left; }
+.cv-mesas { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.9rem; }
+.cv-mesa { display: grid; gap: 0.35rem; align-content: start; }
+.cv-mesa-titulo { font-size: 1.05rem; }
+.cv-tablero { width: 100%; max-width: 16rem; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
+.cv-texto { font-variant-numeric: tabular-nums; }
+.cv-pie { padding: 0 1rem 1rem; }

@@ -880,9 +880,22 @@
         // jugador) las cuenta la función con TODA la bitácora: si dicen más de las que hay a mano, falta alguna.
         const aMano = (color, tipo) => (estado.anotaciones || []).filter((f) => f.mesa === mesa && f.color === color && f.tipo === tipo && !anuladas.has(f.id)).length;
         const incompleta = ["blancas", "negras"].some((color) => { const k = marcaDe(mesa, color); return k.ilegales > aMano(color, "ilegal") || k.irregularidades > aMano(color, "irregularidad"); });
+        const inicio = R.inicioDeLaRonda(estado.ronda, marcada);
+        // Las mesas que se transmiten traen sus relojes en Lichess (con atraso): un control más, si el árbitro lo pide.
+        const TX = window.CentroamericanoTransmisionReloj;
+        // Primero la transmisión privada sin atraso (si la organización la conectó); si no, la pública con su atraso.
+        const VIVO = window.CentroamericanoArbitroVivo;
+        const transmision = TX && m ? async (bonos) => {
+            if (VIVO && VIVO.conectada()) {
+                await VIVO.leer();
+                const v = VIVO.deLaMesa(mesa);
+                if (v) return Object.assign(TX.controlDe(VIVO.lectura(v.m), { ahora: v.leida, atraso: v.delay, inicio: inicio ? inicio.ms : null, bonos }), { sinAtraso: v.delay === 0 });
+            }
+            return TX.buscar({ blancas: m.blancas, negras: m.negras, ronda: estado.ronda, inicio: inicio ? inicio.ms : null, bonos });
+        } : null;
         return R.armar({
-            estado: apagado, mesa, incompleta, blancas: m ? m.blancas : "", negras: m ? m.negras : "",
-            lecturas: lecturas(mesa), anotaciones: estado.anotaciones, anuladas, inicio: R.inicioDeLaRonda(estado.ronda, marcada),
+            estado: apagado, mesa, incompleta, transmision, blancas: m ? m.blancas : "", negras: m ? m.negras : "",
+            lecturas: lecturas(mesa), anotaciones: estado.anotaciones, anuladas, inicio,
             antes, intro: "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decides tú (art. 6.10).",
             boton: "Anotar en la bitácora", clase: "cam-flotante-cuerpo", avisar,
             alVolver: () => { modoApagado = false; pintarTiempos(); },
@@ -1644,6 +1657,8 @@
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
         setInterval(() => { if (!document.hidden) cargarFairPlay(); }, 20000);
+        // «Mis mesas en vivo»: solo aparece si la organización conectó la transmisión privada sin atraso.
+        if (window.CentroamericanoArbitroVivo) window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo") });
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) return;
             mantenerEncendida();
