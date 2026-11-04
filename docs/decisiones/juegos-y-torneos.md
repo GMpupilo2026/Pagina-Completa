@@ -9349,6 +9349,46 @@ los tableros (LiveChess Cloud, el mismo de «Los tableros por LiveChess, sin atr
 Probado contra la base y LiveChess de verdad (con un enlace de prueba de 2 horas): 220 partidas terminadas pendientes de
 las rondas 1 a 5, las primeras analizadas y guardadas en la pantalla real, y las dos copias encontradas así.
 
+#### El detector de Fair Play, jugada por jugada
+
+El mismo 4/11 el dueño pidió «nuestro propio módulo de análisis de trampa», donde cada análisis venga **explicado de forma
+sencilla** para que el encargado entienda por qué se marca a alguien. Se armó en tres fases; la 1 es esta
+(`20261104220853` y su arreglo `20261104221723`, función en su versión 9). La 2 es sacarlo del Centroamericano a una
+herramienta general donde se pega el enlace de las partidas (LiveChess, una transmisión de Lichess aunque tenga atraso,
+chess-results, un PGN). La 3 es una base propia de partidas medidas de todos los eventos, para saber cómo juega de
+verdad cada Elo en Costa Rica.
+
+- **Cada jugada** (`centroamericano_fp_jugadas`, una fila por jugada medida): la pantalla de Fair Play pide a Stockfish
+  las **3 mejores** de cada posición (MultiPV 3, 150 000 nodos) y la función guarda en qué lugar quedó lo jugado
+  (`rango`, 0 = ninguna de las 3), cuánto perdió, si era **forzada** (una sola jugada legal, o la mejor es una captura y la
+  segunda pierde 3 peones: no cuenta), si era **difícil** (una sola jugada buena —la segunda pierde 1 peón o más— y no es
+  jaque ni captura: la que un humano suele no ver), **lo que pensó** (LiveChess lo trae: «Nf3 5482+5» son 5 s) y si la
+  hizo en los **5 minutos después de que el árbitro anotó que se levantó** (el registro de la tablet, sin lo anulado,
+  contra la hora de cada jugada: la primera más lo que pensaron los dos). El cálculo es `detallar()` en `analisis.ts`.
+- **Las señales**, por jugador y partida: la **precisión** (la de siempre), la **primera del motor** (en % de las jugadas
+  que cuentan) y las **difíciles acertadas**. Cada una se compara con **lo esperable para su Elo en el torneo** (una
+  recta contra el Elo, como la precisión) o, **si no tiene Elo** —casi todos en las categorías chicas—, **con su
+  categoría** (con 8 o más medidos); «alta» desde 2 desviaciones. El **tiempo raro** (en las difíciles pensó menos de 6
+  décimos de lo que pensó en las demás) solo suma junto a otra. El nivel: «muy alta» con una señal de 2,5 o más, o dos
+  señales (o una y el tiempo); «a mirar» con una. Con datos inventados en la base de ensayo: un 1400 que juega como un
+  2400 y un niño sin Elo muy por encima de su categoría salen con las 3 señales; de 65 normales, ninguno marcado.
+- **Explicado** (`explicar()` y `resumenAlerta()` en `js/centroamericano-fair-play.js`, una sola copia para la tarjeta y
+  el informe): arriba, cuántas señales salieron altas y cuáles; debajo, una frase por señal con su comparación
+  («Jugó la primera opción de Stockfish en 25 de 30 jugadas (83 %); lo esperable para su Elo en este torneo: 52,0 %
+  (3,1 desviaciones arriba)»), la alta en negrita (y «Señal alta:» para el lector de pantalla), «Pocas jugadas
+  medidas» si son menos de 20, las jugadas más llamativas («Jugada 23. Nxe5: la única buena de la posición, en 8 s») y
+  **«Qué no significa esto»**: que no prueba nada, que alguien puede estar en un gran día, haber preparado la apertura
+  o ser más fuerte que su Elo, que en un torneo grande algunos salen altos por casualidad, y que FIDE pide pruebas
+  físicas o de conducta para sancionar. El informe de Fair Play en PDF trae «Por qué se marcó cada alerta», alerta por
+  alerta.
+- **Lo medido antes se vuelve a medir solo**: `centroamericano_fp_partidas.analisis_version` (y `VERSION_ANALISIS` en
+  `analisis.ts`): una partida medida con una versión anterior vuelve a «pendientes». Al volver a medir, una partida que
+  resulta copia de la ronda anterior **borra** lo que se había medido de ella (así se fueron las dos de la prueba).
+- **El error del 99** (`20261104221723`): en Postgres, `greatest()` y `least()` **saltan los nulos**: `least(99, null)`
+  es 99. Sin con qué comparar (una categoría con pocos medidos), la señal quedaba en 99 desviaciones y todos en «muy
+  alta». Se vio en la base apenas se midieron las primeras partidas; ahora, sin comparación, la señal queda vacía y no
+  cuenta (la base de ensayo tiene el caso). Al aplicarse se volvió a calibrar: 339 normales y 6 «a mirar».
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.

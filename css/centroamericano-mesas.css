@@ -905,3 +905,10 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-fp-motor { margin-top: 0.5rem; padding: 0.5rem 0.75rem; border: 1px dashed rgb(127 127 127 / 0.5); border-radius: 0.8rem; display: grid; gap: 0.25rem; }
 .cam-fp-motor-casilla { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; cursor: pointer; }
 .cam-fp-motor-casilla input { width: 1.15rem; height: 1.15rem; }
+/* El porqué de cada alerta: cada señal en una frase; la alta, en negrita (y lo dice al lector de pantalla). */
+.cam-fp-resumen { font-weight: 700; }
+.cam-fp-por-que { list-style: disc; padding-left: 1.3rem; display: grid; gap: 0.2rem; font-size: 0.93rem; }
+.cam-fp-por-que li[data-alto="si"] { font-weight: 700; }
+.cam-fp-por-que li[data-momento="si"] { list-style: "♟ "; }
+.cam-fp-no-significa summary { cursor: pointer; font-size: 0.9rem; text-decoration: underline; }
+.cam-fp-no-significa p { font-size: 0.9rem; margin-top: 0.3rem; }

@@ -133,3 +133,91 @@ export function evalsValidas(evals: unknown, posiciones: number): (number | null
   }
   return out;
 }
+
+// ---- Fase 1 del detector: cada jugada con las 3 mejores del motor, la dificultad y el tiempo
+// Ver «El detector de Fair Play, jugada por jugada» en docs/decisiones/juegos-y-torneos.md.
+export const VERSION_ANALISIS = 2;   // sube cuando cambia lo que se mide: lo analizado antes se vuelve a analizar
+export const VENTANA_LEVANTO_MS = 5 * 60_000;   // las jugadas de los 5 minutos después de que el árbitro anotó «se levantó»
+
+// Lo que pensó en una jugada de LiveChess: «Nf3 5482+5» son 5 segundos (5482 es su reloj).
+export function segundosDe(jugada: unknown): number | null {
+  const m = String(jugada || "").match(/\s\d+\+(\d+)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+
+// Las opciones del motor para una posición: [jugada en UCI, centipeones para las blancas], la mejor primero.
+export type Opcion = [string, number];
+const UCI = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+export function opcionesValidas(opciones: unknown, posiciones: number): (Opcion[] | null)[] | null {
+  if (!Array.isArray(opciones) || opciones.length !== posiciones) return null;
+  const out: (Opcion[] | null)[] = [];
+  for (const o of opciones) {
+    if (o == null) { out.push(null); continue; }
+    if (!Array.isArray(o) || o.length > 5) return null;
+    const lista: Opcion[] = [];
+    for (const x of o) {
+      if (!Array.isArray(x) || !UCI.test(String(x[0])) || typeof x[1] !== "number" || !Number.isFinite(x[1]) || Math.abs(x[1]) > 10000) return null;
+      lista.push([String(x[0]), Math.round(x[1])]);
+    }
+    out.push(lista);
+  }
+  return out;
+}
+
+// Una jugada de la partida, como la arma la función con chess.js: lo jugado, las jugadas que había (con si eran
+// captura o jaque), lo que pensó y a qué hora se hizo.
+export type Ply = { san: string; uci: string; legales: Record<string, { captura: boolean; jaque: boolean }>; segundos: number | null; hora: number | null };
+export type Detalle = { ply: number; color: "blancas" | "negras"; san: string; uci: string; mejor: string | null; rango: number; perdida: number;
+  forzada: boolean; dificil: boolean; segundos: number | null; antes: number; despues: number; tras_levantarse: boolean };
+export type Resumen = { consideradas: number; t1: number; top3: number; dificiles: number; dificiles_ok: number;
+  seg_dificil: number | null; seg_resto: number | null; tras_levantarse: number; tras_levantarse_t1: number;
+  momentos: { jugada: number; san: string; segundos: number | null }[] };
+
+// Jugada por jugada, desde la DESDE_JUGADA de cada uno y sin las posiciones ya decididas (lo mismo que medir()):
+//   - rango: en qué lugar de las 3 del motor quedó lo jugado (0 = ninguna de las 3);
+//   - forzada: no había nada que pensar (una sola jugada legal, o la mejor es una captura y la segunda pierde 3 peones):
+//     no cuenta para la coincidencia con el motor;
+//   - difícil: una sola jugada buena (la segunda pierde 1 peón o más) y no es un jaque ni una captura: la que un humano
+//     suele no ver. Acertarlas una y otra vez es lo raro;
+//   - tras_levantarse: la hizo en los 5 minutos después de que el árbitro anotó que se levantó de la mesa.
+export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opcion[] | null)[], levantadas: { color: string; hora: number }[]) {
+  const jugadas: Detalle[] = [];
+  const vacio = (): Resumen => ({ consideradas: 0, t1: 0, top3: 0, dificiles: 0, dificiles_ok: 0, seg_dificil: null, seg_resto: null, tras_levantarse: 0, tras_levantarse_t1: 0, momentos: [] });
+  const res: Record<string, Resumen> = { blancas: vacio(), negras: vacio() };
+  const tiempos: Record<string, { dif: number[]; resto: number[] }> = { blancas: { dif: [], resto: [] }, negras: { dif: [], resto: [] } };
+  for (let j = (DESDE_JUGADA - 1) * 2; j < plies.length; j++) {
+    const opts = opciones[j - 1], previa = evals[j - 1], ahora = evals[j], p = plies[j];
+    if (!p || !opts || !opts.length || previa == null || ahora == null || Math.abs(previa) >= DECIDIDA_CP) continue;
+    const color = j % 2 === 0 ? "blancas" : "negras", s = color === "blancas" ? 1 : -1;
+    const mejor = s * opts[0][1], segunda = opts[1] ? s * opts[1][1] : null, jugado = s * ahora;
+    const rango = opts.findIndex((o) => o[0] === p.uci) + 1;
+    const datosMejor = p.legales[opts[0][0]] || { captura: false, jaque: false };
+    const nLegales = Object.keys(p.legales).length;
+    const forzada = nLegales === 1 || (segunda != null && mejor - segunda >= 300 && datosMejor.captura);
+    const dificil = !forzada && segunda != null && mejor - segunda >= 100 && !datosMejor.captura && !datosMejor.jaque;
+    const tras = levantadas.some((l) => l.color === color && p.hora != null && p.hora >= l.hora && p.hora - l.hora <= VENTANA_LEVANTO_MS);
+    const d: Detalle = { ply: j, color, san: p.san, uci: p.uci, mejor: opts[0][0], rango, perdida: rango === 1 ? 0 : Math.max(0, Math.min(1000, mejor - jugado)),
+      forzada, dificil, segundos: p.segundos, antes: mejor, despues: jugado, tras_levantarse: tras };
+    jugadas.push(d);
+    const r = res[color];
+    if (!forzada) {
+      r.consideradas++;
+      if (rango === 1) r.t1++;
+      if (rango >= 1 && rango <= 3) r.top3++;
+      if (p.segundos != null) (dificil ? tiempos[color].dif : tiempos[color].resto).push(p.segundos);
+    }
+    if (dificil) {
+      r.dificiles++;
+      if (rango === 1) { r.dificiles_ok++; r.momentos.push({ jugada: Math.floor(j / 2) + 1, san: p.san, segundos: p.segundos }); }
+    }
+    if (tras) { r.tras_levantarse++; if (rango === 1 && !forzada) r.tras_levantarse_t1++; }
+  }
+  const media = (v: number[]) => (v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null);
+  for (const c of ["blancas", "negras"]) {
+    res[c].seg_dificil = media(tiempos[c].dif);
+    res[c].seg_resto = media(tiempos[c].resto);
+    // Las tres más llamativas: las difíciles acertadas con menos tiempo.
+    res[c].momentos = res[c].momentos.sort((a, b) => (a.segundos ?? 1e9) - (b.segundos ?? 1e9)).slice(0, 3);
+  }
+  return { jugadas, resumen: res as { blancas: Resumen; negras: Resumen } };
+}

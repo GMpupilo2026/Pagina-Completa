@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104212407
+# al-dia-con: 20261104221723
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -52,6 +52,7 @@ tabla  centroamericano_fair_play  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_fp_analisis  rls=true
 tabla  centroamericano_fp_enlaces  rls=true
+tabla  centroamericano_fp_jugadas  rls=true
 tabla  centroamericano_fp_partidas  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_inicios_torneo  rls=true
@@ -649,13 +650,20 @@ columna  centroamericano_finales.ronda  integer
 columna  centroamericano_fp_analisis.acpl  numeric(7,1)
 columna  centroamericano_fp_analisis.analizada  timestamp with time zone
 columna  centroamericano_fp_analisis.color  text
+columna  centroamericano_fp_analisis.comparado  text
+columna  centroamericano_fp_analisis.consideradas  integer
+columna  centroamericano_fp_analisis.dificiles  integer
+columna  centroamericano_fp_analisis.dificiles_ok  integer
 columna  centroamericano_fp_analisis.elo  integer
 columna  centroamericano_fp_analisis.esperada  numeric(5,2)
+columna  centroamericano_fp_analisis.esperada_dif  numeric(5,2)
+columna  centroamericano_fp_analisis.esperada_t1  numeric(5,2)
 columna  centroamericano_fp_analisis.estado  text
 columna  centroamericano_fp_analisis.fuente  text
 columna  centroamericano_fp_analisis.jugadas  integer
 columna  centroamericano_fp_analisis.jugador  text
 columna  centroamericano_fp_analisis.mesa  integer
+columna  centroamericano_fp_analisis.momentos  jsonb
 columna  centroamericano_fp_analisis.nivel  text
 columna  centroamericano_fp_analisis.nota  text
 columna  centroamericano_fp_analisis.partida_url  text
@@ -664,10 +672,20 @@ columna  centroamericano_fp_analisis.resultado  text
 columna  centroamericano_fp_analisis.rival  text
 columna  centroamericano_fp_analisis.rival_elo  integer
 columna  centroamericano_fp_analisis.ronda  integer
+columna  centroamericano_fp_analisis.seg_dificil  numeric(7,1)
+columna  centroamericano_fp_analisis.seg_resto  numeric(7,1)
+columna  centroamericano_fp_analisis.senales  integer
+columna  centroamericano_fp_analisis.t1  integer
+columna  centroamericano_fp_analisis.tiempo_raro  boolean
 columna  centroamericano_fp_analisis.tnr  text
+columna  centroamericano_fp_analisis.top3  integer
+columna  centroamericano_fp_analisis.tras_levantarse  integer
+columna  centroamericano_fp_analisis.tras_levantarse_t1  integer
 columna  centroamericano_fp_analisis.vista_en  timestamp with time zone
 columna  centroamericano_fp_analisis.vista_por_nombre  text
 columna  centroamericano_fp_analisis.z  numeric(5,2)
+columna  centroamericano_fp_analisis.z_dif  numeric(5,2)
+columna  centroamericano_fp_analisis.z_t1  numeric(5,2)
 columna  centroamericano_fp_enlaces.creada  timestamp with time zone
 columna  centroamericano_fp_enlaces.creada_por  uuid
 columna  centroamericano_fp_enlaces.id  uuid
@@ -676,6 +694,23 @@ columna  centroamericano_fp_enlaces.revocada  boolean
 columna  centroamericano_fp_enlaces.token  text
 columna  centroamericano_fp_enlaces.ultimo_uso  timestamp with time zone
 columna  centroamericano_fp_enlaces.vence  timestamp with time zone
+columna  centroamericano_fp_jugadas.antes  integer
+columna  centroamericano_fp_jugadas.color  text
+columna  centroamericano_fp_jugadas.despues  integer
+columna  centroamericano_fp_jugadas.dificil  boolean
+columna  centroamericano_fp_jugadas.forzada  boolean
+columna  centroamericano_fp_jugadas.mejor  text
+columna  centroamericano_fp_jugadas.mesa  integer
+columna  centroamericano_fp_jugadas.perdida  integer
+columna  centroamericano_fp_jugadas.ply  integer
+columna  centroamericano_fp_jugadas.rango  smallint
+columna  centroamericano_fp_jugadas.ronda  integer
+columna  centroamericano_fp_jugadas.san  text
+columna  centroamericano_fp_jugadas.segundos  integer
+columna  centroamericano_fp_jugadas.tnr  text
+columna  centroamericano_fp_jugadas.tras_levantarse  boolean
+columna  centroamericano_fp_jugadas.uci  text
+columna  centroamericano_fp_partidas.analisis_version  smallint
 columna  centroamericano_fp_partidas.analizada_en  timestamp with time zone
 columna  centroamericano_fp_partidas.blancas  text
 columna  centroamericano_fp_partidas.elo_b  integer
@@ -3157,6 +3192,7 @@ politica  centroamericano_fp_analisis  centroamericano_fp_analisis_ver  SELECT
 politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_cambiar  UPDATE
 politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_crear  INSERT
 politica  centroamericano_fp_enlaces  centroamericano_fp_enlaces_ver  SELECT
+politica  centroamericano_fp_jugadas  centroamericano_fp_jugadas_ver  SELECT
 politica  centroamericano_fp_partidas  centroamericano_fp_partidas_ver  SELECT
 politica  centroamericano_inicios_ronda  centroamericano_inicios_ronda_ver  SELECT
 politica  centroamericano_inicios_torneo  centroamericano_inicios_torneo_ver  SELECT
@@ -3828,6 +3864,7 @@ indice  centroamericano_fp_analisis  centroamericano_fp_analisis_pkey
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_creada_por_idx
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_pkey
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_token_key
+indice  centroamericano_fp_jugadas  centroamericano_fp_jugadas_pkey
 indice  centroamericano_fp_partidas  centroamericano_fp_partidas_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
 indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_asignacion_idx
@@ -4566,6 +4603,7 @@ grant  centroamericano_fair_play  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
 grant  centroamericano_fp_analisis  authenticated  SELECT
 grant  centroamericano_fp_enlaces  authenticated  SELECT
+grant  centroamericano_fp_jugadas  authenticated  SELECT
 grant  centroamericano_fp_partidas  authenticated  SELECT
 grant  centroamericano_inicios_ronda  authenticated  SELECT
 grant  centroamericano_inicios_torneo  authenticated  SELECT
