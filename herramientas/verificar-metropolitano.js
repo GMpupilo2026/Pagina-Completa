@@ -410,6 +410,17 @@ const FILAS_FIDE = [
     igual("«Mientras esperas» trae los juegos, los de la Academia como invitado del Metropolitano", juegos,
       ["entreno/aprende-a-jugar.html?invitado=metropolitano", "confites.html", "batalla-naval.html?invitado=metropolitano", "buscaminas.html", "estilo-muestra.html"]);
     cierto("y cada juego se abre encima, sin otra pestaña", await i1.pg.evaluate(() => [...document.querySelectorAll("#esperas a.espera")].every((a) => a.dataset.visor && !a.target)));
+    // «Si vienes de otro país»: recomendaciones, con su aviso y solo enlaces oficiales.
+    await i1.pg.click("a[href='#ingreso']");
+    const ingreso = await i1.pg.evaluate(() => {
+      const d = document.getElementById("ingreso");
+      return { abierta: d.open, aviso: /solo recomendaciones, no información oficial/.test(d.textContent) && /responsable/.test(d.textContent),
+        enlaces: [...d.querySelectorAll("a[href^='http']")].every((a) => /\.go\.cr\/|visitcostarica\.com\//.test(a.href) && a.target === "_blank"),
+        correos: [...d.querySelectorAll("a[href^='mailto:']")].map((a) => a.getAttribute("href")) };
+    });
+    igual("«Si vienes de otro país» dice que son recomendaciones y enlaza solo a fuentes oficiales", ingreso,
+      { abierta: true, aviso: true, enlaces: true, correos: ["mailto:metropolitano@fcacostarica.com", "mailto:visascr@migracion.go.cr"] });
+    await i1.pg.keyboard.press("Escape");
     // Los idiomas: cada texto de la página tiene su inglés y su francés, y lo
     // que se arma con datos se vuelve a pintar en el idioma.
     for (const [lang, boton, ronda, mes] of [["en", "English", "Round 1", /December/], ["fr", "Français", "Ronde 1", /décembre/]]) {

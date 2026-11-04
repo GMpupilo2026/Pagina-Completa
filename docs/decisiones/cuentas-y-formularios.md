@@ -1633,6 +1633,27 @@ en el modo oscuro, como las bases. Sus botones no sacan a nadie del sitio: las
 bases llevan a `metropolitano-2026.html#bases` y chess-results a
 `#resultados`, que la página abre encima.
 
+#### Si vienes de otro país
+
+Pedido del dueño: una ficha con recomendaciones para entrar a Costa Rica, que
+diga que **no es información oficial** y que cada persona averigua y confirma
+lo suyo. La ventana `#ingreso` de `metropolitano-2026.html`:
+
+- **Sale de las fuentes oficiales**, leídas el 4/11/2026: los requisitos del
+  art. 42 de la Ley 8764 tal como los publica Visit Costa Rica (ICT) —pasaporte
+  legible por máquina, visa si corresponde, boleto de salida, 100 dólares por
+  mes o fracción, sin impedimento—, la página de visas de Migración (la
+  excepción por visa o residencia de Estados Unidos, Canadá, el Reino Unido,
+  la Unión Europea y Schengen), sus contactos (1311 solo desde Costa Rica,
+  `visascr@migracion.go.cr`) y la fiebre amarilla del Ministerio de Salud.
+- **No dice qué países piden visa ni cuántos días se quedan**: esa lista la
+  cambia un decreto (las fuentes ya no coinciden entre sí: 90 o 180 días para
+  el primer grupo). La ficha manda a revisarlo en Migración.
+- Los enlaces de afuera son de sitios del gobierno (`.go.cr`) o del ICT y se
+  abren en otra pestaña: no se puede saber si se dejan mostrar en un marco.
+- La carta de invitación se le pide a la organización
+  (`metropolitano@fcacostarica.com`).
+
 #### Los documentos se abren encima
 
 Pedido del dueño: **ningún jugador sale nunca de la página para leer un
