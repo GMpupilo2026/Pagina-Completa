@@ -202,9 +202,16 @@
   function leer(clave) { try { return window.localStorage.getItem(clave); } catch (e) { return null; } }
   function escribir(clave, v) { try { if (v == null) window.localStorage.removeItem(clave); else window.localStorage.setItem(clave, v); } catch (e) { /* sin almacenamiento */ } }
 
+  // En un navegador manejado por pruebas automáticas (`navigator.webdriver`; una tablet de verdad nunca lo tiene) no
+  // se decide solo: lo que mediría depende de cuán cargada esté la máquina ese día, y encenderlo a mitad de una
+  // prueba cambiaba lo que la prueba miraba. Solo si la prueba lo pide (`window.__modoLivianoAuto`, lo pone
+  // verificar-modo-liviano.js). Lo que elige la persona con el botón vale siempre.
+  var automatizado = !!(window.navigator && window.navigator.webdriver) && !window.__modoLivianoAuto;
+
   // Lo que la tablet dice de sí misma (no hace falta medir nada).
   function motivosDelAparato() {
     var n = window.navigator || {}, m = [];
+    if (automatizado) return m;
     if (typeof n.deviceMemory === "number" && n.deviceMemory > 0 && n.deviceMemory <= 2) m.push("poca memoria (" + n.deviceMemory + " GB)");
     if (typeof n.hardwareConcurrency === "number" && n.hardwareConcurrency > 0 && n.hardwareConcurrency <= 2) m.push("procesador de " + n.hardwareConcurrency + " núcleos");
     if (n.connection && n.connection.saveData) m.push("ahorro de datos encendido");
@@ -244,7 +251,7 @@
 
   // Medir: los cuadros que dibuja en 3 s, un rato después de abrir (lo que pesa al cargar no cuenta).
   function medir() {
-    if (activo || eleccion() === "no" || !window.requestAnimationFrame) return;
+    if (automatizado || activo || eleccion() === "no" || !window.requestAnimationFrame) return;
     if (document.hidden) return; // pestaña de fondo: el navegador frena los cuadros a propósito
     var cuadros = 0, inicio = 0;
     function cuadro(t) {

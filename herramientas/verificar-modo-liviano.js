@@ -70,8 +70,11 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null } = {}) {
+async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
+    // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
+    // las otras pruebas); esta lo pide.
+    if (auto) await ctx.addInitScript(() => { window.__modoLivianoAuto = true; });
     await ctx.addInitScript(`(function(){ window.__llamadas = []; window.__red = null; ${SERVIDOR_ARBITRO} })();`);
     if (vieja) {
         await ctx.addInitScript(TABLET_VIEJA);
@@ -169,6 +172,15 @@ const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttri
     await actualizar();
     igual("con un pedido de ayuda nuevo en la mesa 2: sí se vuelve a armar, y lo muestra", [await sigue(), await r.p.evaluate(() => document.querySelectorAll("#lista .cam-mesa")[1].querySelector(".cam-ayuda-mesa").disabled)], [false, true]);
     igual("sin errores en la página", r.errores, []);
+    await r.ctx.close();
+
+    console.log("\n=== En un navegador de pruebas, no decide solo (salvo que se le pida) ===");
+    r = await abrir(browser, { vieja: true, memoria: 1, lenta: true, auto: false });
+    await r.p.waitForSelector("#app:not([hidden])", { timeout: 15000 });
+    await r.p.waitForTimeout(6500);
+    igual("ni con el navegador viejo, poca memoria y dibujo lento: las otras pruebas no lo ven cambiar", [(await estadoLiviano(r.p))[0], await r.p.evaluate(() => [window.ModoLiviano.motivos(), localStorage.getItem("modo_liviano_medido_v1")])], [null, [[], null]]);
+    await r.p.click("#modo-liviano");
+    igual("pero el botón sí lo enciende", (await estadoLiviano(r.p))[0], "si");
     await r.ctx.close();
 
     console.log("\n=== Lo que dice la tablet y lo que se mide ===");

@@ -9634,6 +9634,13 @@ Lo que se hizo:
   el nombre del árbitro). Lo que corre con el reloj (la cuenta de cada jugador, el tiempo de espera) ya tenía su
   propio intervalo y no dependía de repintar.
 
+- **En un navegador de pruebas no decide solo** (`navigator.webdriver`, que una tablet de verdad nunca tiene). En el
+  primer CI del PR, una prueba de `verificar-centroamericano-mesas-pagina.js` que pasaba en la máquina falló allá
+  (las tarjetas medían 0 × 0): con la máquina del CI cargada, la medición de cuadros por segundo podía encender el
+  modo a mitad de cualquier prueba, y una máquina de dos núcleos lo encendería en todas. Lo que mira cada
+  verificador no puede depender de cuán cargada esté la máquina ese día. Solo decide solo si la prueba lo pide
+  (`window.__modoLivianoAuto`, lo pone `verificar-modo-liviano.js`); el botón vale siempre.
+
 Lo revisa `verificar-modo-liviano.js`: que todo script de las tres páginas se lea como JavaScript de 2019 (Chrome
 66 / Safari 12) con `acorn` —salvo la librería de Supabase, que tiene su respaldo— y los dos archivos de arriba
 como ES5; una tablet vieja simulada (sin esas funciones y con la librería que no se lee) que abre sus mesas por el
