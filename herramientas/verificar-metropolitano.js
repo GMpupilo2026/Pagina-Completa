@@ -598,6 +598,54 @@ const FILAS_FIDE = [
     await pb.waitForFunction(() => { const d = document.querySelector("dialog.visor-doc"); return d && d.open && /Bases/.test(d.querySelector("h2").textContent); }, null, { timeout: 15000 });
     cierto("y su «Bases del torneo» abre las bases encima de la página del torneo", true);
     await pb.close();
+
+    /* ----- El QR del gafete: «Mi ronda y mi mesa», al día con chess-results ----- */
+    const pr = await ctx.newPage();
+    const errsR = []; pr.on("pageerror", (e) => errsR.push(e.message));
+    await pr.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
+    const torneoA = { tnr: "1", texto: "Torneo A", modalidad: "clasico", url: "https://s1.chess-results.com/tnr1.aspx?lan=2&art=1", jugadores: [
+      { puesto: 4, no: 7, titulo: "WCM", nombre: "Mora Solis, Ana", fed: "CRC", elo: 1950, grupo: "", puntos: "2" },
+      { puesto: 1, no: 1, titulo: "GM", nombre: "Gonzalez Perez, Mario", fed: "GUA", elo: 2510, grupo: "", puntos: "2" },
+      { puesto: 9, no: 15, titulo: "", nombre: "Mora Solis, Andrea", fed: "CRC", elo: 0, grupo: "", puntos: "1" }],
+      pareo: { ronda: 3, mesas: [{ mesa: 1, blancas: { no: 1, titulo: "GM", nombre: "Gonzalez Perez, Mario" }, negras: { no: 7, titulo: "WCM", nombre: "Mora Solis, Ana" }, resultado: "" },
+        { mesa: 9, blancas: { no: 15, titulo: "", nombre: "Mora Solis, Andrea" }, negras: null, resultado: "bye" }] } };
+    const blitz = { tnr: "2", texto: "Blitz", modalidad: "blitz", url: "https://s1.chess-results.com/tnr2.aspx?lan=2&art=1", jugadores: [torneoA.jugadores[0]], pareo: null };
+    const pedidosSala = [];
+    await pr.route("**/functions/v1/sala-jugadores", (r) => { const b = JSON.parse(r.request().postData()); pedidosSala.push(b);
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(b.modalidad === "blitz" ? { torneos: [blitz], modalidad: "blitz", modalidades: ["clasico", "blitz"] }
+        : { torneos: [torneoA], modalidad: "clasico", modalidades: ["clasico", "blitz"] }) }); });
+    await pr.goto(BASE + "/metropolitano-2026.html#mi-ronda=" + encodeURIComponent("Mora Solis, Ana"));
+    await pr.waitForFunction(() => { const d = document.getElementById("mi-ronda"); return d && d.open && /Mesa 1/.test(d.textContent); }, null, { timeout: 15000 });
+    const vista = await pr.textContent("#mi-ronda-resultado");
+    cierto("el QR del gafete abre su ronda y su mesa: mesa, color, rival con su Elo y la hora de la ronda",
+      /Ronda 3 · Mesa 1/.test(vista) && /Juegas con negras/.test(vista) && /Rival: GM Gonzalez Perez, Mario \(2510\)/.test(vista) && /27 de diciembre a las 9:00/.test(vista)
+      && /puesto 4 con 2 puntos/.test(vista), vista);
+    cierto("y en el blitz, que todavía no está emparejado, lo dice", /Blitz[\s\S]*Todavía no sale el pareo/.test(vista), vista);
+    cierto("la función solo recibe la sala del Metropolitano", pedidosSala.length >= 2 && pedidosSala.every((b) => b.clave === "metropolitano-2026" && Object.keys(b).sort().join() === "clave,modalidad"), pedidosSala);
+    cierto("y el nombre sale de la dirección", /#mi-ronda$/.test(pr.url()), pr.url());
+    await pr.click("#mi-ronda-cerrar");
+    cierto("cerrarla no saca a nadie de la página", /metropolitano-2026\.html/.test(pr.url()) && !(await pr.evaluate(() => document.getElementById("mi-ronda").open)), pr.url());
+    await pr.click("#ficha-mi-ronda a");
+    await pr.waitForFunction(() => document.getElementById("mi-ronda").open);
+    await pr.fill("#mi-ronda-nombre", "mora solís");
+    await pr.click("#mi-ronda-buscar");
+    await pr.waitForFunction(() => /más de un nombre/.test(document.getElementById("mi-ronda-resultado").textContent));
+    await pr.locator("#mi-ronda-resultado button", { hasText: "Andrea" }).first().click();
+    await pr.waitForFunction(() => /bye/.test(document.getElementById("mi-ronda-resultado").textContent));
+    cierto("con dos nombres parecidos se elige y sale el suyo (aquí, con bye)", /Mora Solis, Andrea/.test(await pr.inputValue("#mi-ronda-nombre")));
+    await pr.fill("#mi-ronda-nombre", "Pérez Nadie, Juan");
+    await pr.click("#mi-ronda-buscar");
+    await pr.waitForFunction(() => /No encontramos/.test(document.getElementById("mi-ronda-resultado").textContent));
+    cierto("un nombre que no está se dice", true);
+    igual("sin errores en «Mi ronda y mi mesa»", errsR, []);
+    await pr.close();
+    const sinRes = await ctx.newPage();
+    await sinRes.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
+    await sinRes.route("**/functions/v1/sala-jugadores", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ torneos: [], modalidad: "clasico", modalidades: [] }) }));
+    await sinRes.goto(BASE + "/metropolitano-2026.html#mi-ronda=" + encodeURIComponent("Mora Solis, Ana"));
+    await sinRes.waitForFunction(() => /en cuanto el árbitro publique la ronda 1/.test((document.getElementById("mi-ronda-resultado") || {}).textContent || ""), null, { timeout: 15000 });
+    cierto("antes de que haya torneos en chess-results, dice cuándo salen", true);
+    await sinRes.close();
     // La inscripción: la privacidad y las bases encima, sin perder lo escrito.
     const ins = await ctx.newPage();
     await ins.goto(BASE + "/inscripcion-metropolitano.html");
@@ -605,6 +653,23 @@ const FILAS_FIDE = [
     await ins.waitForFunction(() => { const f = document.querySelector("dialog.visor-doc[open] iframe"); return f && /privacidad\.html$/.test(f.src); });
     cierto("en la inscripción, la política de privacidad se abre encima del formulario", /inscripcion-metropolitano\.html/.test(ins.url()));
     igual("y las bases, desde el formulario, sin enlace a otra pestaña", await ins.locator('a[href*="bases-metropolitano-2026.pdf"][target]').count(), 0);
+    igual("el QR del gafete de un jugador lleva a su ronda y su mesa, con su nombre de FIDE; el de los demás, a la página del torneo",
+      await ins.evaluate(() => [window.MetropolitanoGafete.qrDe({ rol: "jugador", nombre_fide: "Mora Solis, Ana", nombre: "Ana", apellidos: "Mora Solís" }),
+        window.MetropolitanoGafete.qrDe({ rol: "jugador", nombre: "Ana", apellidos: "Mora Solís" }), window.MetropolitanoGafete.qrDe({ rol: "entrenador", nombre: "Luis", apellidos: "Mora" })]),
+      ["https://ajedrez-integral.com/metropolitano-2026#mi-ronda=Mora%20Solis%2C%20Ana", "https://ajedrez-integral.com/metropolitano-2026#mi-ronda=Mora%20Solis%2C%20Ana", ""]);
+    // Y se lee de verdad: el dorso dibujado, leído con un lector de QR (jsQR).
+    await ins.addScriptTag({ path: path.join(RAIZ, "node_modules", "jsqr", "dist", "jsQR.js") });
+    const leido = await ins.evaluate(async () => {
+      const f = document.createElement("canvas"), d = document.createElement("canvas");
+      const w = document.createElement("div"); w.style.width = "600px"; w.append(f, d); document.body.prepend(w);
+      const x = { rol: "jugador", nombre: "José María", apellidos: "Fernández Solís", torneos: ["B"], sin_fide: true, codigo: "MET-0123" };
+      await window.MetropolitanoGafete.dibujar(x, null, f, d);
+      const c = d.getContext("2d").getImageData(0, 0, d.width, d.height);
+      const q = window.jsQR(c.data, c.width, c.height);
+      w.remove();
+      return [q && q.data, window.MetropolitanoGafete.qrDe(x)];
+    });
+    cierto("el QR del dorso se lee con un lector y lleva a su ronda", !!leido[0] && leido[0] === leido[1] && /#mi-ronda=Fernandez%20Solis%2C%20Jose%20Maria$/.test(leido[0]), leido);
     await ins.close();
 
     // La página de administración.

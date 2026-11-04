@@ -80,7 +80,7 @@
   const nombreRonda = (r) => (r.torneo === "BLITZ" ? t().blitz : t().ronda(r.numero));
   // Lo que se pinta aquí no lo toca el traductor del HTML.
   const DINAMICOS = ["plazo", "categorias-lista", "calendario-tablas", "cal-torneo", "hoy-principal", "hoy-cifras", "hoy-texto",
-    "costos-tabla", "costos-notas", "costos-metodos", "premios-tablas", "ficha-resultados", "ficha-partidas", "paseos-lista"];
+    "costos-tabla", "costos-notas", "costos-metodos", "premios-tablas", "ficha-resultados", "ficha-partidas", "ficha-mi-ronda", "paseos-lista"];
   DINAMICOS.forEach((id) => { const e = $(id); if (e) e.setAttribute("data-no-traducir", ""); });
 
   /* ===================== Las ventanas (con su dirección #) ===================== */
@@ -321,6 +321,7 @@
     pintarPlazo(); pintarCategorias(); pintarCalendario(); armarCifras(); ultimoMinuto = null; pintarHoy();
     pintarCostos(); pintarPremios(); pintarEnVivo();
     if (window.PaseosSabana && $("paseos-lista")) window.PaseosSabana.pintar($("paseos-lista"), idioma);
+    if (window.MetroMiRonda) window.MetroMiRonda.pintar(idioma, $("ficha-mi-ronda"));
   }
   const idiomas = window.IdiomaPagina.iniciar({
     mapas: { en: (window.MetropolitanoEN && window.MetropolitanoEN.textos) || {}, fr: (window.MetropolitanoFR && window.MetropolitanoFR.textos) || {} },
@@ -342,7 +343,9 @@
 
   // Desde la tarjeta de «Torneos» (js/salas-torneo.js, PORTADAS) se llega con
   // #bases o #resultados: se abren encima, como con su ficha.
+  // Y el QR del gafete, con #mi-ronda=<nombre> (js/metropolitano-mi-ronda.js).
   function abrirPorDireccion(id) {
+    if (window.MetroMiRonda && window.MetroMiRonda.deDireccion(id)) return;
     if (abrir(id)) return;
     if (id === "bases") { const a = document.querySelector("#fichas a[data-visor][href$='.pdf']"); if (a) a.click(); }
     else if (id === "resultados") { const a = document.querySelector("#ficha-resultados a"); if (a) a.click(); }

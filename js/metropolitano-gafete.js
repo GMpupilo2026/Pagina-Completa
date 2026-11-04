@@ -19,6 +19,16 @@ window.MetropolitanoGafete = (function () {
   // El QR lleva a la página con toda la información del torneo, no al PDF:
   // desde ahí se abren las bases encima, sin salir del sitio.
   const INFO = "https://ajedrez-integral.com/metropolitano-2026";
+  // El de un jugador lleva a SU ronda y SU mesa: el QR no cambia nunca, lo que
+  // cambia lo lee la página en cada ronda (js/metropolitano-mi-ronda.js). Con
+  // el nombre como en FIDE, que es como lo carga el árbitro en chess-results.
+  function qrDe(x) {
+    if ((x.rol || "jugador") !== "jugador") return "";
+    // Sin tildes: la página las ignora al buscar, y el QR queda más corto
+    // (menos cuadritos, se lee mejor de lejos o con un celular viejo).
+    const n = String(x.nombre_fide || [x.apellidos, x.nombre].filter(Boolean).join(", ")).normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    return n ? INFO + "#mi-ronda=" + encodeURIComponent(n) : "";
+  }
 
   let diseno = null, recursos = null;
 
@@ -111,6 +121,8 @@ window.MetropolitanoGafete = (function () {
     if (!recursos) recursos = await D().preparar(d);
     const g = D().gafetes(d, [filaDe(x)])[0];
     if (foto) { g.foto = foto; g.fotoClave = "foto"; }
+    const qr = qrDe(x);
+    if (qr) g.qr = qr;
     return { d, g };
   }
 
@@ -126,7 +138,8 @@ window.MetropolitanoGafete = (function () {
     D().pintar(lienzoDorso, d, dorso, px);
     const quien = [x.nombre, x.apellidos].filter(Boolean).join(" ");
     lienzoFrente.setAttribute("aria-label", "Frente del gafete de " + quien + ", con su foto: " + filaDe(x).Rol + (x.fide_id ? ", FIDE ID " + x.fide_id : ""));
-    lienzoDorso.setAttribute("aria-label", "Dorso del gafete: el horario de " + filaDe(x).Rol + (x.codigo ? ", código " + x.codigo : ""));
+    lienzoDorso.setAttribute("aria-label", "Dorso del gafete: el horario de " + filaDe(x).Rol + (x.codigo ? ", código " + x.codigo : "")
+      + (qrDe(x) ? ", y el QR que lleva a su ronda y su mesa" : ", y el QR de la página del torneo"));
     return [...new Set([...frente.avisos, ...dorso.avisos])];
   }
 
@@ -147,5 +160,5 @@ window.MetropolitanoGafete = (function () {
     return doc.cerrar();
   }
 
-  return { filaDe, dibujar, pdf, pdfDe, horarioDe };
+  return { filaDe, dibujar, pdf, pdfDe, horarioDe, qrDe };
 })();

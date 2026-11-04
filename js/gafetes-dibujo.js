@@ -415,8 +415,11 @@
 
     const iconos = g.iconos.map((si, i) => (si ? recursos.iconos[i] : null)).filter(Boolean);
     const bandera = lado === "frente" ? await recursos.bandera(g.iso) : null;
-    // Con foto, el fondo es de esa persona: no se comparte con nadie.
-    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : null]);
+    // Con foto, el fondo es de esa persona: no se comparte con nadie. El dorso
+    // depende de su QR (si trae uno propio, `g.qr`) y de cuántas filas tiene su
+    // horario (el marco de la tabla va en el fondo).
+    const filasDorso = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim())).length;
+    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : [g.qr || null, filasDorso]]);
 
     if (lado === "frente") {
       const fondo = (ctx) => {
@@ -490,6 +493,9 @@
     }
 
     /* ---------- el dorso ---------- */
+    // El QR: el del diseño, o el propio de este gafete (el Metropolitano lleva
+    // a cada jugador a su ronda y su mesa).
+    const qr = g.qr ? matrizQr(g.qr) : recursos.qr;
     const filas = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim()));
     const T = M.tabla;
     const enc = diseno.dorso.encabezados;
@@ -519,10 +525,10 @@
       if (img.patrocinador) contener(ctx, img.patrocinador, M.patrocinador, "centro");
       const c = M.cinta;
       ctx.fillStyle = color; ctx.fillRect(c.x, c.y, c.w, c.h);
-      if (recursos.qr) {     // el QR se apoya sobre la cinta con un borde blanco
+      if (qr) {     // el QR se apoya sobre la cinta con un borde blanco
         ctx.fillStyle = "#fff";
         rectRedondo(ctx, M.qr.x - 0.8 * M.s, M.qr.y - 0.8 * M.s, M.qr.w + 1.6 * M.s, M.qr.h + 1.6 * M.s, M.qr.w * 0.12); ctx.fill();
-        pintarQr(ctx, recursos.qr, M.qr, recursos.marca);
+        pintarQr(ctx, qr, M.qr, recursos.marca);
       }
     };
 
@@ -557,7 +563,7 @@
     if (g.codigo) {
       const c = M.cinta;
       const y = c.y + c.h / 2 + altoMayus(recursos.titulo) * M.codigo.tam * PT / 2;
-      escribir(recursos.titulo, g.codigo, M.codigo.tam, { x: M.codigo.x, y, color: "#ffffff", espaciado: 0.28, max: (recursos.qr ? M.qr.x - 2 * M.sx : M.W - 2 * M.sx) - M.codigo.x });
+      escribir(recursos.titulo, g.codigo, M.codigo.tam, { x: M.codigo.x, y, color: "#ffffff", espaciado: 0.28, max: (qr ? M.qr.x - 2 * M.sx : M.W - 2 * M.sx) - M.codigo.x });
     }
     return { clave, fondo, textos, avisos };
   }

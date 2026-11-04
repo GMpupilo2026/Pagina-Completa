@@ -1703,6 +1703,46 @@ un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
 - La forma de las carpetas la decide la función (`carpetasDe`), y
   `verificar-metropolitano.js` la prueba con el mismo código.
 
+#### Mi ronda y mi mesa: el QR del gafete
+
+Pedido del dueño: el QR del gafete lleva a la ronda y la mesa del jugador, que
+cambian en cada ronda. **El QR no cambia nunca**: se imprime una vez con el
+nombre de la persona, y lo que cambia lo lee la página al abrirse.
+
+- **El QR de un jugador** lleva a
+  `metropolitano-2026#mi-ronda=<Apellidos, Nombre>`, con el nombre como en
+  FIDE (`nombre_fide`), que es como lo carga el árbitro en Swiss-Manager; sin
+  ID FIDE, el de la inscripción. Va sin tildes, para que el QR quede más corto
+  y se lea mejor (`qrDe()` en `js/metropolitano-gafete.js`). El de quien no
+  juega sigue llevando a la página del torneo. El nombre ya está impreso en
+  el gafete: el QR no publica nada que el gafete no diga.
+- **La página** (`js/metropolitano-mi-ronda.js`, ventanita «Mi ronda y mi
+  mesa» y su ficha en «Todo el torneo») le pide a la Edge Function
+  `sala-jugadores` —la misma del «Busca a tu jugador» del Centroamericano—
+  los torneos de la sala `metropolitano-2026` en cada modalidad (los
+  clásicos y el blitz): la lista de jugadores y la ronda emparejada más
+  reciente, leídas de chess-results. Busca a la persona por el nombre, sin
+  tildes, mayúsculas ni el orden de las palabras, y muestra en cada torneo
+  donde juega la ronda y la mesa en grande, el color, el rival con su Elo, la
+  hora de la ronda (de `MetropolitanoReglas.rondas()`), su puesto y el
+  enlace a la ronda en chess-results, que se abre encima. Con dos nombres
+  parecidos («Mora Solis» → Ana y Andrea) pregunta cuál; si no aparece, se
+  escribe otro nombre. Mientras está abierta se vuelve a leer cada minuto.
+- **Sin torneos en la sala** (antes de que administración agregue los
+  enlaces de chess-results en `admin.html#torneos`), dice que los
+  emparejamientos salen ahí en cuanto el árbitro publique la ronda 1. No hace
+  falta nada más: con los enlaces puestos, funciona sola.
+- **Llegar por el QR no deja una entrada en el historial**: el nombre se
+  quita de la dirección (`#mi-ronda`) y cerrar la ventanita no saca a nadie
+  de la página. El nombre se recuerda en el aparato, solo como comodidad.
+- **El dorso de cada gafete es de esa persona** (`js/gafetes-dibujo.js`,
+  `g.qr`): su clave lleva el QR y cuántas filas tiene el horario. Antes la
+  clave del dorso era solo el color, y en el PDF de una delegación un
+  jugador del A + Blitz se quedaba con el fondo del dorso de uno del A solo
+  (otro alto de tabla).
+- El verificador lee el QR del dorso dibujado con un lector de verdad
+  (`jsQR`) y comprueba que lleve a la ronda; con el QR general, falla.
+
 #### Los códigos de descuento
 
 Pedido del dueño: la FCA dona inscripciones (en una rifa, en un evento) o da
