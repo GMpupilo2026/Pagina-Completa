@@ -62,6 +62,16 @@
     });
   } catch (e) { /* sin la lista, se escribe a mano */ }
 
+  // Las federaciones de FIDE, con el nombre del país que sabe decir el navegador.
+  const FEDERACIONES = (() => {
+    let dn = null;
+    try { dn = new Intl.DisplayNames(["es"], { type: "region" }); } catch (e) { /* sin nombres */ }
+    return Object.entries(window.GafetesBanderas.FIDE).map(([cod, iso]) => {
+      let n = cod;
+      try { if (dn && iso.length === 2) n = dn.of(iso.toUpperCase()) || cod; } catch (e) { /* el código */ }
+      return [cod, ({ ENG: "Inglaterra", SCO: "Escocia", WLS: "Gales" })[cod] || n];
+    }).sort((a, b) => a[1].localeCompare(b[1], "es"));
+  })();
   const AST = ' <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span>';
   const NOMBRE_DOC = { cedula: "Cédula", dimex: "DIMEX", pasaporte: "Pasaporte", otro: "Documento" };
   const fechaLarga = (d) => (d ? window.HoraCR.fecha(d + "T12:00:00-06:00", { day: "numeric", month: "long", year: "numeric" }) : "");
@@ -97,9 +107,10 @@
             <ul data-resultados class="space-y-2" aria-label="Jugadores encontrados en la lista de FIDE"></ul>
             <div data-elegido class="hidden rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4" tabindex="-1" aria-live="polite"></div>
           </div>
-          <div data-sin-fide class="hidden rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm text-brand-700 dark:text-brand-200 space-y-1">
-            <p><strong>Sin ID FIDE también se juega</strong> (en el Metropolitano B, el U14 o el blitz).</p>
-            <p>Si es de <strong>Costa Rica</strong>, la FCA le tramita el ID FIDE con su nombre completo, cédula, fecha de nacimiento y correo, que se llenan abajo. Si es de <strong>otro país</strong>, el ID lo pide su propia federación: hay que escribirle antes del torneo.</p>
+          <div data-sin-fide class="hidden rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm text-brand-700 dark:text-brand-200 space-y-3">
+            <div><label for="${id("fed")}" class="block text-sm font-semibold mb-1">¿De qué país es su federación?${AST}</label><select id="${id("fed")}" data-campo data-federacion></select></div>
+            <p data-fed-cr><strong>Es de Costa Rica: la FCA le tramita el ID FIDE</strong> con su nombre completo, cédula, fecha de nacimiento y correo, que se llenan abajo. Sin ID FIDE juega el Metropolitano B, el U14 o el blitz.</p>
+            <p data-fed-fuera class="hidden font-semibold ${ROJO}">Para jugar necesita ID FIDE, y fuera de Costa Rica lo tramita su propia federación, no la FCA. Escríbale cuanto antes a su federación para que se lo pida a FIDE; la inscripción se puede mandar ya, y el ID se agrega cuando lo tenga.</p>
           </div>
         </div>
 
@@ -221,6 +232,11 @@
     const v = (n) => { const x = c(n); return x ? String(x.value || "").trim() : ""; };
     yo.v = v;
 
+    /* ---------- la federación de quien no tiene ID FIDE ---------- */
+    const selFed = q("[data-federacion]");
+    FEDERACIONES.forEach(([cod, nombre]) => { const o = document.createElement("option"); o.value = cod; o.textContent = nombre + " (" + cod + ")"; selFed.append(o); });
+    selFed.value = "CRC";
+
     /* ---------- el ID FIDE ---------- */
     let espera = null, turno = 0;
     const buscarEl = q("[data-buscar]");
@@ -336,6 +352,8 @@
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
       q("[data-caja-fide]").classList.toggle("hidden", sinFide());
       q("[data-sin-fide]").classList.toggle("hidden", !(sinFide() && juega));
+      q("[data-fed-cr]").classList.toggle("hidden", selFed.value !== "CRC");
+      q("[data-fed-fuera]").classList.toggle("hidden", selFed.value === "CRC");
       q("[data-bloque-torneos]").classList.toggle("hidden", !juega);
       const contactoOpcional = esGrupo() && !yo.esDelegado;
       el.querySelectorAll("[data-ast-contacto]").forEach((x) => x.classList.toggle("hidden", contactoOpcional));
@@ -446,7 +464,7 @@
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
       const datos = {
         rol, es_delegado: yo.esDelegado,
-        sin_fide: !f, fide_id: f ? f.fideId : null, federacion: f ? f.fed : null, titulo: f ? f.titulo : "",
+        sin_fide: !f, fide_id: f ? f.fideId : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
         elo_estandar: f ? f.estandar : null, elo_rapido: f ? f.rapido : null, elo_blitz: f ? f.blitz : null,
         nombre: v("nombre"), apellidos: v("apellidos"), sexo: v("sexo"), nacimiento: nac,
         nacionalidad: v("nacionalidad"), pais_residencia: v("pais_residencia"),
@@ -610,7 +628,7 @@
   function resumenDe(d, p) {
     const filas = [
       ["Se inscribe como", p.esDelegado ? (d.rol === "delegado" ? "Delegado" : d.rol === "jugador" ? "Delegado y jugador" : "Delegado y entrenador") : R.rolDe(d.rol, d.sexo)],
-      ["ID FIDE", d.sin_fide ? (d.rol === "jugador" ? "No tiene: la FCA lo tramita" : "No tiene") : d.fide_id + (d.titulo ? " (" + d.titulo + ")" : "") + " · " + d.federacion],
+      ["ID FIDE", d.sin_fide ? (d.rol !== "jugador" ? "No tiene" : d.federacion === "CRC" ? "No tiene: la FCA lo tramita" : "No tiene: lo tramita su federación (" + d.federacion + ")") : d.fide_id + (d.titulo ? " (" + d.titulo + ")" : "") + " · " + d.federacion],
     ];
     if (d.rol === "jugador") {
       if (!d.sin_fide) filas.push(["Elo FIDE", "Estándar " + (d.elo_estandar || "sin Elo") + " · Rápido " + (d.elo_rapido || "—") + " · Blitz " + (d.elo_blitz || "—")]);

@@ -51,7 +51,8 @@
   const CIERRE_CLASICOS = "2026-12-20";   // del 17 al 20, con el 30 % de recargo
   const CIERRE_BLITZ = "2026-12-26";
   const RECARGO = 0.30;
-  const EDAD_SENIOR = 65;                 // «mayores de 65 años»: 10 % en los clásicos
+  const EDAD_SENIOR = 65;                 // «mayores de 65 años»: 10 % en los clásicos, contados por año
+  const ANIO_TORNEO = 2026;
   const DESCUENTO_SENIOR = 0.10;
   const TITULOS_GRATIS = ["GM", "IM", "WGM"];
   const TIPO_CAMBIO = 460;                // colones por dólar, según las bases
@@ -123,7 +124,9 @@
     const torneos = o.rol && o.rol !== "jugador" ? [] : (o.torneos || []), metodo = o.metodo || "dolares";
     const hoy = o.hoy, est = abierto(hoy);
     const titulado = TITULOS_GRATIS.includes(String(o.titulo || "").toUpperCase());
-    const senior = (edad(o.nacimiento, INICIO) || 0) >= EDAD_SENIOR;
+    // Senior se cuenta por AÑO, desde el 1 de enero (lo decidió la FCA):
+    // quien cumple 65 en 2026, o sea, nacidos en 1961 o antes.
+    const senior = anio(o.nacimiento) !== null && ANIO_TORNEO - anio(o.nacimiento) >= EDAD_SENIOR;
     const lineas = [], avisos = [];
     let total = 0;
     for (const t of torneos) {
@@ -150,7 +153,7 @@
 
   const api = {
     TORNEOS, METODOS, HORARIOS, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
-    RECARGO, EDAD_SENIOR, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO,
+    RECARGO, EDAD_SENIOR, ANIO_TORNEO, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO,
     edad, elegibles, abierto, precio, dinero, colones,
   };
   raiz.MetropolitanoReglas = api;

@@ -53,6 +53,8 @@ igual("B por PayPal", pr({ torneos: ["B"], metodo: "paypal" }).usd, 47.93);
 igual("recargo del 30 % el 17/12 solo en el clásico", pr({ torneos: ["B", "BLITZ"], metodo: "dolares", hoy: "2026-12-17" }).usd, 70.5);
 igual("sin recargo el 16/12", pr({ torneos: ["B"], metodo: "dolares", hoy: "2026-12-16" }).usd, 45);
 igual("senior: 10 % en el clásico, no en el blitz (PayPal)", pr({ torneos: ["B", "BLITZ"], metodo: "paypal", nacimiento: "1958-01-01" }).usd, 55.92);
+igual("senior por año: nacido el 31/12/1961 ya cuenta", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1961-12-31" }).usd, 40.5);
+igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1962-01-01" }).usd, 45);
 igual("GM: gratis", pr({ torneos: ["A", "BLITZ"], metodo: "dolares", titulo: "GM" }).usd, 0);
 igual("FM paga", pr({ torneos: ["A"], metodo: "dolares", titulo: "FM" }).usd, 75);
 igual("plazos el 21/12: clásicos cerrados, blitz abierto", R.abierto("2026-12-21"), { clasicos: false, blitz: true, recargo: false });
@@ -80,7 +82,7 @@ if (ultimaPersona && ultimaInscribir) {
     new RegExp(`hoy > date '${R.CIERRE_REGULAR}' and hoy <= date '${R.CIERRE_CLASICOS}'`));
   tiene(`el recargo es del ${R.RECARGO * 100} %`, new RegExp(`v_monto \\* ${(1 + R.RECARGO).toFixed(2)}`));
   tiene(`el descuento senior es del ${R.DESCUENTO_SENIOR * 100} %`, new RegExp(`v_monto \\* ${(1 - R.DESCUENTO_SENIOR).toFixed(2)}`));
-  tiene(`senior desde los ${R.EDAD_SENIOR}, contados al ${R.INICIO}`, new RegExp(`age\\(date '${R.INICIO}', v_nac\\)\\) >= ${R.EDAD_SENIOR}`));
+  tiene(`senior desde los ${R.EDAD_SENIOR}, contados por año (${R.ANIO_TORNEO})`, new RegExp(`v_senior := ${R.ANIO_TORNEO} - extract\\(year from v_nac\\) >= ${R.EDAD_SENIOR}`));
   tiene(`el A pide ${R.ELO_A}`, new RegExp(`v_clasico = 'A' and \\(v_elo is null or v_elo < ${R.ELO_A}\\)`));
   tiene(`el U14 es desde ${R.NACIDOS_U14_DESDE}`, new RegExp(`v_clasico = 'U14' and extract\\(year from v_nac\\) < ${R.NACIDOS_U14_DESDE}`));
   tiene("los clásicos cierran el mismo día", new RegExp(`v_clasico is not null and hoy > date '${R.CIERRE_CLASICOS}'`));
@@ -213,7 +215,10 @@ const FILAS_FIDE = [
     await u.locator('input[name="p1-fide"][value="no"]').check();
     await llenar(u, { nacimiento: "1990-01-01" });
     igual("sin ID FIDE, adulto: B o ninguno", await u.locator('input[name="p1-clasico"]').evaluateAll((xs) => xs.filter((x) => !x.disabled).map((x) => x.value)), ["B", ""]);
-    cierto("y le explica que la FCA tramita el ID", await u.locator("[data-sin-fide]").isVisible());
+    cierto("y le explica que la FCA tramita el ID", await u.locator("[data-sin-fide]").isVisible() && await u.locator("[data-fed-cr]").isVisible());
+    await u.locator("[data-federacion]").selectOption("PAN");
+    await u.locator("[data-federacion]").dispatchEvent("change");
+    cierto("si es de otro país, le dice que lo tramita su federación", await u.locator("[data-fed-fuera]").isVisible() && !(await u.locator("[data-fed-cr]").isVisible()));
     await u.locator("[data-rol]").selectOption("acompanante");
     await u.locator("[data-rol]").dispatchEvent("change");
     cierto("un acompañante no ve ID FIDE ni torneos", !(await u.locator("[data-bloque-fide]").isVisible()) && !(await u.locator("[data-bloque-torneos]").isVisible()));
@@ -265,7 +270,7 @@ const FILAS_FIDE = [
     const ge = g.anotado.enviado;
     cierto("se manda el grupo entero en un envío, con su delegado primero", ge && ge.modo === "grupo" && ge.delegacion === "Club Ajedrez Heredia" && ge.personas.length === 3
       && ge.personas[0].es_delegado === true && ge.personas[0].rol === "delegado" && ge.personas[1].rol === "jugador" && ge.personas[1].fide_id === "6400099"
-      && JSON.stringify(ge.personas[1].torneos) === '["B"]' && ge.personas[2].rol === "entrenador" && ge.personas[2].sin_fide === true
+      && JSON.stringify(ge.personas[1].torneos) === '["B"]' && ge.personas[2].rol === "entrenador" && ge.personas[2].sin_fide === true && ge.personas[2].federacion === null
       && ge.personas.every((x) => /^foto\//.test(x.foto)) && ge.pago_metodo === "dolares", ge);
     igual("se subieron tres fotos y un comprobante", g.anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "foto", "foto", "comprobante"]);
     cierto("dice el código de cada uno", /MET-0012 — Carlos Rojas Vega/.test(await g.p.textContent("#listo-codigos")) && /MET-0014 — Pedro Solano/.test(await g.p.textContent("#listo-codigos")));

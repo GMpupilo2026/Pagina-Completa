@@ -4,6 +4,8 @@
 --   · un DELEGADO inscribe a un grupo entero en un solo envío: él primero
 --     (`es_delegado`) y después cada integrante, todos con el mismo `grupo` y
 --     el nombre de la `delegacion`, y un solo pago por el total;
+--   · senior se cuenta por año (nacidos en 1961 o antes) y quien no tiene ID
+--     FIDE dice de qué federación es;
 --   · cada persona autoriza (o no) que su nombre y su foto se usen en la
 --     publicidad del torneo (`acepta_publicidad`). Es aparte del aviso de las
 --     bases sobre las fotos del evento, y no es obligatorio.
@@ -177,7 +179,9 @@ begin
   -- pagan los jugadores.
   v_gratis := v_titulo in ('GM', 'IM', 'WGM');
   v_recargo := hoy > date '2026-12-16' and hoy <= date '2026-12-20';
-  v_senior := extract(year from age(date '2026-12-26', v_nac)) >= 65;
+  -- Senior se cuenta por AÑO (lo decidió la FCA): desde el 1 de enero, quien
+  -- cumple 65 en 2026, o sea, nacidos en 1961 o antes.
+  v_senior := 2026 - extract(year from v_nac) >= 65;
   foreach t in array v_torneos loop
     v_monto := case t
       when 'A' then case when v_metodo = 'paypal' then 79.88 else 75 end
@@ -316,7 +320,9 @@ begin
         r->>'rol', v_grupo_modo and i = 1, v_grupo, v_delegacion, coalesce((x->>'acepta_publicidad')::boolean, false),
         r->>'fide_id', (r->>'sin_fide')::boolean, btrim(x->>'nombre'), btrim(x->>'apellidos'), x->>'sexo', (r->>'nacimiento')::date,
         btrim(coalesce(x->>'nacionalidad', '')), btrim(coalesce(x->>'pais_residencia', '')),
-        case when (r->>'sin_fide')::boolean then null else nullif(upper(btrim(coalesce(x->>'federacion', ''))), '') end,
+        -- Sin ID FIDE también se guarda su federación: si no es CRC, el trámite
+        -- lo hace su propia federación.
+        nullif(upper(btrim(coalesce(x->>'federacion', ''))), ''),
         x->>'documento_tipo', btrim(x->>'documento'), r->>'correo',
         btrim(coalesce(nullif(x->>'telefono', ''), p#>>'{personas,0,telefono}', '')),
         nullif(btrim(coalesce(x->>'club', '')), ''), r->>'titulo', (r->>'elo')::int,
