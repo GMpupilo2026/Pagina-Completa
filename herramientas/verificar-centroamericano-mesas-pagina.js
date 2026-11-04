@@ -586,6 +586,7 @@ const CONTRASTE = `(sel) => {
       await p.click("dialog[open] [data-avisos-aceptar]");
       await p.waitForFunction(() => window.__inicioArgs.length === 2);
       igual("la hora escrita (la de hace unos minutos, al minuto) se manda y queda a la vista", await p.evaluate(([campo]) => [Math.abs(Date.parse(window.__inicioArgs[1].inicio) - (Date.now() - 180000)) < 120000, document.getElementById("ir-hora").value], [campoHoraT]), [true, campoHoraT]);
+      await p.click("#ir-corregir");   // al guardar la hora nueva el bloque vuelve a esconderse
       const futuraT = await p.evaluate(() => { const f = window.HoraCR.paraCampo(new Date(Date.now() + 3600000)); return f.slice(0, 10) === window.HoraCR.hoy() ? f.slice(11, 16) : null; });
       if (futuraT) {
         await p.fill("#ir-hora", futuraT);
