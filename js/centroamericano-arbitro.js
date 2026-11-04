@@ -744,6 +744,7 @@
     // La hora exacta que el árbitro marcó con el botón (un momento, en ISO): la de su lectura de los relojes. Si no marca
     // ninguna, la función anota la hora en que llega el guardado. Nunca se teclea: así no hay horas inventadas.
     let horaMarcada = null;
+    let txLlenado = null;         // { mesa, c }: lo que se puso en las casillas desde la transmisión sin atraso
     // «El reloj se apagó»: la misma ventanita pasa a calcular los tiempos de esa mesa (ver relojApagado en
     // js/centroamericano-mesas.js). Lo escrito queda en `apagado` mientras la ventana se vuelve a dibujar.
     let modoApagado = false;
@@ -791,7 +792,7 @@
         const mesas = sinTerminar();
         if (!lecturaMesa || !mesas.some((m) => m.mesa === lecturaMesa)) lecturaMesa = mesas.length ? mesas[0].mesa : null;
         // Otra mesa: lo escrito era de la anterior.
-        if (borradorMesa !== lecturaMesa) { borrador = {}; horaMarcada = null; borradorMesa = lecturaMesa; }
+        if (borradorMesa !== lecturaMesa) { borrador = {}; horaMarcada = null; txLlenado = null; borradorMesa = lecturaMesa; }
         caja.dataset.minimizada = tiemposMin ? "si" : "no";
         const cabeza = el("div", { class: "cam-flotante-cabeza" },
             el("strong", { class: "cam-flotante-titulo" }, icono("reloj"), el("span", { texto: lecturaMesa ? "Mesa " + lecturaMesa + (modoApagado ? " · Reloj apagado" : "") : "Control de tiempos" })),
@@ -802,6 +803,21 @@
         if (!mesas.length) { caja.replaceChildren(cabeza, el("p", { class: "cam-flotante-cuerpo", texto: "Todas tus mesas ya tienen resultado: no hay partidas sin terminar." })); return; }
         const m = mesas.find((x) => x.mesa === lecturaMesa);
         if (modoApagado) { caja.replaceChildren(cabeza, formApagado(m, mesas)); return; }
+        // La transmisión sin atraso: si reconoce esta mesa, las casillas se llenan solas con sus relojes (el árbitro las
+        // revisa con el reloj y guarda); si no la reconoce, queda el formulario de siempre, a mano, y lo dice.
+        const VIVO = window.CentroamericanoArbitroVivo;
+        const ctlTx = vivoDe(lecturaMesa);
+        const nuevaTx = ctlTx && !yaAnotado(lecturaMesa, ctlTx);
+        if (nuevaTx && !borrador.tb && !borrador.tn && !borrador.jb && !borrador.jn && !horaMarcada) llenarConTx(ctlTx);
+        const llena = txLlenado && txLlenado.mesa === lecturaMesa;
+        const conTx = mesas.filter((x) => { const c = vivoDe(x.mesa); return c && !yaAnotado(x.mesa, c); }).length;
+        const bloqueTx = ctlTx
+            ? el("div", { class: "cam-tx-control", id: "lt-tx" },
+                el("p", { class: "text-sm", texto: "📡 Transmisión sin atraso: relojes después de la jugada " + ctlTx.jugada + ", a las " + textoHoraExacta(ctlTx.ocurrio).replace(/\.$/, "") + "."
+                    + (llena ? " Ya están en las casillas: revísalos con el reloj y toca «Guardar»." : nuevaTx ? "" : " Ya está anotado.") }),
+                llena ? null : el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "lt-tx-llenar", onclick: () => { llenarConTx(ctlTx); pintarTiempos(); } }, "Llenar con la transmisión"))
+            : VIVO && VIVO.conectada() ? el("p", { class: "text-sm cam-tx-no", id: "lt-tx-no", texto: "📡 " + (VIVO.noReconoce(lecturaMesa) || "Esta mesa no está en la transmisión.") + " Anótalo a mano, como siempre." }) : null;
+        const botonTodas = conTx ? el("button", { type: "button", id: "lt-tx-todas", class: "cam-btn cam-btn-claro", title: "Anota en la bitácora los relojes de la transmisión de todas tus mesas sin terminar", onclick: anotarTodasTx }, "Anotar todas desde la transmisión (" + conTx + ")") : null;
         const ult = lecturas(lecturaMesa).slice(0, 1);
         const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
             el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
@@ -819,11 +835,13 @@
             mesas.length > 1 ? el("div", {}, el("label", { for: "lt-mesa", class: "sr-only", texto: "Mesa" }),
                 el("select", { id: "lt-mesa", class: "cam-select", onchange: (e) => { leerBorrador(); lecturaMesa = Number(e.target.value); tiemposPorMesa = false; pintarTiempos(); } },
                     ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null,
+            bloqueTx,
             horaDeLectura,
             lado("blancas", m ? m.blancas : "", "b"),
             lado("negras", m ? m.negras : "", "n"),
             el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar"),
-                el("button", { type: "button", id: "lt-apagado", class: "cam-btn cam-btn-claro", "data-accion": "reloj-apagado", title: "Calcula cuánto le toca a cada uno con el último control de esta mesa", onclick: () => { leerBorrador(); modoApagado = true; apagado = {}; pintarTiempos(); } }, "El reloj se apagó")),
+                el("button", { type: "button", id: "lt-apagado", class: "cam-btn cam-btn-claro", "data-accion": "reloj-apagado", title: "Calcula cuánto le toca a cada uno con el último control de esta mesa", onclick: () => { leerBorrador(); modoApagado = true; apagado = {}; pintarTiempos(); } }, "El reloj se apagó"),
+                botonTodas),
             ult.length ? el("ul", { class: "text-sm mt-2", id: "lt-ultimas", "aria-label": "Lo último anotado en la mesa " + lecturaMesa },
                 ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") }))) : null));
     }
@@ -848,13 +866,21 @@
         try {
             const cuerpo = { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN };
             if (horaMarcada) cuerpo.ocurrio = horaMarcada;   // la función la acepta si es de hace poco; si no, anota la suya
+            // Llenado desde la transmisión: queda escrito, y si el árbitro cambió algo, también.
+            if (txLlenado && txLlenado.mesa === mesa) {
+                const c = txLlenado.c;
+                cuerpo.turno = c.turno;
+                cuerpo.nota = notaTx(c, !(tB === c.t_blancas && tN === c.t_negras && jB === c.j_blancas && jN === c.j_negras && horaMarcada === c.ocurrio));
+            }
             const r = await escribir("tiempo", cuerpo, "Control de tiempos de la mesa " + mesa, { mesa });
             const d = r.encolado ? { id: r.id, ocurrio: horaMarcada || new Date().toISOString(), jugada: Math.max(1, jB, jN) } : r.d;
             estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: jB, j_negras: jN, turno: null, t_blancas: tB, t_negras: tN, nota: "" }].concat(estado.tiempos || []);
+            if (txLlenado && txLlenado.mesa === mesa) anotadosTx.add(mesa + "|" + txLlenado.c.ocurrio);
             avisar(r.encolado ? "Sin señal: el control de tiempos de la mesa " + mesa + " quedó en la tablet y se manda solo cuando vuelva la conexión." : "Control de tiempos de la mesa " + mesa + " guardado: queda en la bitácora.");
             borrador = {};
             horaMarcada = null;
             borradorMesa = null;
+            txLlenado = null;
             // Desde el reloj de una mesa se cierra; si lo pidió la organización, queda abierta para la siguiente mesa.
             if (tiemposPorMesa) tiemposAbierto = false;
             pintarTiempos();
@@ -863,6 +889,69 @@
             avisar(e.message, true);
             if ($("lt-guardar")) $("lt-guardar").disabled = false;
         }
+    }
+
+    // ------------------------------------------------------------- la transmisión sin atraso
+
+    // Una tabla que la transmisión acaba de ver (triple o quíntuple repetición, 75 jugadas): un aviso arriba que no se
+    // pierde hasta «Entendido», con «Ver la posición». Vibra (sin sonido: en un torneo no hay ruido). El aviso no decide
+    // nada: la triple la reclama un jugador (art. 9.2); la quíntuple y las 75 son tablas sin reclamo (9.6).
+    function alertaDeTablas(a) {
+        const caja = $("alertas-vivo");
+        if (!caja) return;
+        const titulo = a.tipo === "triple" ? "Triple repetición" : a.tipo === "cinco" ? "Quíntuple repetición: tablas" : "75 jugadas: tablas";
+        const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
+            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
+            el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
+            el("div", { class: "cam-acciones" },
+                el("button", { type: "button", class: "cam-btn", "data-accion": "ver-posicion", onclick: () => window.CentroamericanoArbitroVivo.abrir(a.mesa) }, "Ver la posición"),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "entendido-tablas", onclick: () => { tarjeta.remove(); caja.hidden = !caja.children.length; } }, "Entendido")));
+        caja.prepend(tarjeta);
+        caja.hidden = false;
+        try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) { /* el iPad no vibra: se ve igual */ }
+    }
+
+    // El control de tiempos que sale de la transmisión (relojes justo después de la última jugada, con su hora real).
+    const vivoDe = (mesa) => { const V = window.CentroamericanoArbitroVivo; const v = V && V.deLaMesa(mesa); return v ? V.control(v.m, v.leida) : null; };
+    // Ya anotado: un control de esa mesa de esa hora o después (de la base), o lo que esta tablet ya anotó de la transmisión.
+    const anotadosTx = new Set();
+    const yaAnotado = (mesa, c) => anotadosTx.has(mesa + "|" + c.ocurrio) || lecturas(mesa).some((x) => String(x.ocurrio) >= c.ocurrio);
+    const notaTx = (c, corregido) => ("Tomado de la transmisión sin atraso (" + (c.fuente === "livechess" ? "LiveChess" : "Lichess") + "): los relojes después de la jugada " + c.jugada + (corregido ? "; corregido a mano por el árbitro" : "")).slice(0, 300);
+    function llenarConTx(c) {
+        borrador = { tb: C.formatoTiempo(c.t_blancas), jb: String(c.j_blancas), tn: C.formatoTiempo(c.t_negras), jn: String(c.j_negras) };
+        horaMarcada = c.ocurrio;
+        txLlenado = { mesa: lecturaMesa, c };
+    }
+
+    // «Anotar todas desde la transmisión»: un control de cada mesa sin terminar que la transmisión reconoce, cada uno
+    // con la hora real de su última jugada, en la bitácora. Las que no reconoce se dicen: esas van a mano.
+    async function anotarTodasTx() {
+        const V = window.CentroamericanoArbitroVivo;
+        if (!V) return;
+        await V.leer();
+        const mesas = sinTerminar();
+        const lista = mesas.map((m) => ({ m, c: vivoDe(m.mesa) })).filter((x) => x.c && !yaAnotado(x.m.mesa, x.c));
+        const aMano = mesas.filter((m) => !vivoDe(m.mesa)).map((m) => m.mesa);
+        if (!lista.length) { avisar("No hay controles nuevos de la transmisión para anotar." + (aMano.length ? " Las mesas " + aMano.join(", ") + " no están en la transmisión: van a mano." : "")); return; }
+        const si = await Avisos.confirmar("Se anotan en la bitácora los relojes de la transmisión de " + (lista.length === 1 ? "la mesa " : "las mesas ") + lista.map((x) => x.m.mesa).join(", ") + ", cada uno con la hora de su última jugada."
+            + (aMano.length ? " " + (aMano.length === 1 ? "La mesa " : "Las mesas ") + aMano.join(", ") + (aMano.length === 1 ? " no está" : " no están") + " en la transmisión: " + (aMano.length === 1 ? "anótala" : "anótalas") + " a mano." : ""),
+            { titulo: "Control de tiempos desde la transmisión", aceptar: lista.length === 1 ? "Anotarlo" : "Anotar los " + lista.length });
+        if (!si) return;
+        let ok = 0;
+        for (const { m, c } of lista) {
+            const cuerpo = { ronda: estado.ronda, mesa: m.mesa, t_blancas: c.t_blancas, j_blancas: c.j_blancas, t_negras: c.t_negras, j_negras: c.j_negras, turno: c.turno, ocurrio: c.ocurrio, nota: notaTx(c) };
+            try {
+                const r = await escribir("tiempo", cuerpo, "Control de tiempos de la mesa " + m.mesa, { mesa: m.mesa });
+                const d = r.encolado ? { id: r.id, ocurrio: c.ocurrio, jugada: c.jugada } : r.d;
+                estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa: m.mesa, jugada: d.jugada, j_blancas: c.j_blancas, j_negras: c.j_negras, turno: c.turno, t_blancas: c.t_blancas, t_negras: c.t_negras, nota: cuerpo.nota }].concat(estado.tiempos || []);
+                anotadosTx.add(m.mesa + "|" + c.ocurrio);
+                ok++;
+            } catch (e) { avisar("Mesa " + m.mesa + ": " + e.message, true); }
+        }
+        if (ok) avisar((ok === 1 ? "Un control de tiempos anotado" : ok + " controles de tiempos anotados") + " desde la transmisión: quedan en la bitácora.");
+        borrador = {}; horaMarcada = null; txLlenado = null;
+        pintarTiempos();
+        pintar();
     }
 
     // ------------------------------------------------------------- el reloj que se apagó
@@ -889,7 +978,8 @@
             if (VIVO && VIVO.conectada()) {
                 await VIVO.leer();
                 const v = VIVO.deLaMesa(mesa);
-                if (v) return Object.assign(TX.controlDe(VIVO.lectura(v.m), { ahora: v.leida, atraso: v.delay, inicio: inicio ? inicio.ms : null, bonos }), { sinAtraso: v.delay === 0 });
+                if (v && v.m.fuente === "livechess") { const c = VIVO.control(v.m, v.leida); if (c) return Object.assign(c, { origen: "transmision", atraso: 0, avisos: [], sinAtraso: true }); }
+                else if (v) return Object.assign(TX.controlDe(VIVO.lectura(v.m), { ahora: v.leida, atraso: v.delay, inicio: inicio ? inicio.ms : null, bonos }), { sinAtraso: v.delay === 0 });
             }
             return TX.buscar({ blancas: m.blancas, negras: m.negras, ronda: estado.ronda, inicio: inicio ? inicio.ms : null, bonos });
         } : null;
@@ -1658,7 +1748,7 @@
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
         setInterval(() => { if (!document.hidden) cargarFairPlay(); }, 20000);
         // «Mis mesas en vivo»: solo aparece si la organización conectó la transmisión privada sin atraso.
-        if (window.CentroamericanoArbitroVivo) window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo") });
+        if (window.CentroamericanoArbitroVivo) window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo"), alAlertar: alertaDeTablas });
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) return;
             mantenerEncendida();

@@ -1,28 +1,147 @@
 /* «Mis mesas en vivo»: las partidas de las mesas del árbitro SIN el atraso de la transmisión pública (Centroamericano 2026).
 
-   La transmisión pública de Lichess va con 15 min de atraso (juego limpio). La organización conecta una segunda
-   transmisión, privada y sin atraso, en centroamericano-mesas.html; la Edge Function centroamericano-mesas-vivo la lee con la
-   clave de quien organiza y a esta tablet le da SOLO sus mesas (acción `mesas`, con el token del enlace). Si la
-   organización no la conectó, el botón no aparece.
+   La transmisión pública de Lichess va con 15 min de atraso (juego limpio). Para el árbitro, la Edge Function
+   centroamericano-mesas-vivo le da SOLO sus mesas (acción `mesas`, con el token del enlace) desde LiveChess Cloud, sin
+   atraso (o, si la categoría no tiene su enlace de LiveChess, desde la transmisión privada de Lichess). Con eso:
 
-   Lo de las mesas puras (los relojes que corren, las jugadas de la FEN, el texto) se prueba en Node
-   (herramientas/verificar-centroamericano-mesas-vivo.js); lo demás es la ventana.
+   - «Mis mesas en vivo»: cada mesa con su tablero y sus relojes corriendo;
+   - el control de tiempos sale solo de los relojes de la transmisión (`control`), con la hora real de la última jugada,
+     y el árbitro lo guarda para que quede en la bitácora; si la transmisión no reconoce una mesa, queda el formulario
+     de siempre, a mano;
+   - las tablas que el árbitro tiene que saber apenas pasan (`tablas`): la triple repetición (art. 9.2, la reclama un
+     jugador), la quíntuple (9.6.1) y las 75 jugadas (9.6.2), que son tablas sin reclamo. Se calculan con
+     js/reclamos-tablas.js (chess.js, la misma regla de «la misma posición» que la página de reclamos), en la tablet.
 
-     CentroamericanoArbitroVivo.iniciar({ token, boton })   token: () => el token del enlace; boton: el botón «Mis mesas en vivo»
-     CentroamericanoArbitroVivo.deLaMesa(mesa)              → la última lectura de esa mesa (o null), para el reloj apagado
-     CentroamericanoArbitroVivo.leer()                      → Promise: vuelve a pedir ahora
-     CentroamericanoArbitroVivo.relojes(m, ahora)           → { blancas, negras, turno } en segundos, con el que tiene el turno corriendo
-     CentroamericanoArbitroVivo.lectura(m, leida)           → la partida con la forma que espera CentroamericanoTransmisionReloj.controlDe
+   Mientras haya transmisión, se vuelve a leer cada 10 s (la pantalla a la vista): una repetición le llega al árbitro
+   a lo sumo 10 s después de la jugada.
 
-   Ver «La transmisión sin atraso para los árbitros» en docs/decisiones/juegos-y-torneos.md. */
+     CentroamericanoArbitroVivo.iniciar({ token, boton, alAlertar })
+         token: () => el token del enlace; boton: «Mis mesas en vivo»; alAlertar(alerta): una tabla nueva que avisar
+     CentroamericanoArbitroVivo.deLaMesa(mesa)  → { m, leida, delay } (la última lectura de esa mesa) o null
+     CentroamericanoArbitroVivo.noReconoce(mesa)→ el motivo si la transmisión no reconoce esa mesa, o null
+     CentroamericanoArbitroVivo.control(m, leida) → { t_blancas, t_negras, j_blancas, j_negras, turno, ocurrio, jugada }
+     CentroamericanoArbitroVivo.leer()          → Promise: vuelve a pedir ahora
+     Puras (Node): relojes, texto, hms, lectura, normalizar, control, tablas, alertasNuevas
+
+   Ver «La transmisión sin atraso para los árbitros» y «Los tableros por LiveChess, sin atraso» en
+   docs/decisiones/juegos-y-torneos.md. */
 (function (raiz) {
   "use strict";
   const enNode = typeof module !== "undefined" && module.exports;
-  const CADA_MS = 10000;          // con la ventana abierta
+  const RT = () => raiz.ReclamosTablas || (enNode ? require("./reclamos-tablas.js") : null);
+  const CADA_MS = 10000;               // con transmisión: cada 10 s
   const SIN_CONEXION_MS = 5 * 60000;   // si no está conectada, se vuelve a preguntar cada 5 min
 
+  // ---------------------------------------------------------------- LiveChess: las jugadas con su reloj
+  // Cada jugada viene como «Nf3 5482+5»: la jugada, lo que marca el reloj de quien la hizo justo después (en segundos) y
+  // los segundos que pensó. `primera` es la hora (ms) de la primera jugada; la de las demás sale de sumar lo que pensó
+  // cada uno desde ahí.
+  function leerJugadas(jugadas, primera) {
+    const sans = [], relojes = [];
+    let ms = typeof primera === "number" ? primera : null;
+    (jugadas || []).forEach((t, i) => {
+      const m = String(t).trim().match(/^(\S+)(?:\s+(\d+)\+(\d+))?/);
+      if (!m) return;
+      const gasto = m[3] != null ? Number(m[3]) : null;
+      if (i > 0 && ms != null && gasto != null) ms += gasto * 1000;
+      sans.push(m[1]);
+      relojes.push({ color: i % 2 === 0 ? "blancas" : "negras", reloj: m[2] != null ? Number(m[2]) : null, gasto, ms: i === 0 ? primera : ms });
+    });
+    return { sans, relojes };
+  }
+
+  // El control de tiempos que sale de la transmisión: lo que marcaban los dos relojes justo después de la última jugada,
+  // con su hora real. Sin ninguna jugada (o sin relojes) no hay control.
+  function control(m, leida) {
+    if (!m) return null;
+    if (m.fuente === "livechess") {
+      const { relojes } = leerJugadas(m.jugadas, m.primera);
+      const ultB = relojes.filter((r) => r.color === "blancas").pop(), ultN = relojes.filter((r) => r.color === "negras").pop();
+      const ult = relojes[relojes.length - 1];
+      if (!ultB || !ultN || ultB.reloj == null || ultN.reloj == null || !ult || ult.ms == null) return null;
+      const jB = relojes.filter((r) => r.color === "blancas").length, jN = relojes.length - jB;
+      return { t_blancas: ultB.reloj, t_negras: ultN.reloj, j_blancas: jB, j_negras: jN, turno: jB === jN ? "blancas" : "negras",
+        ocurrio: new Date(ult.ms).toISOString(), jugada: Math.max(jB, jN), fuente: "livechess" };
+    }
+    // Lichess (privada, sin atraso): los relojes en centésimas, la hora es la de la lectura menos lo que llevaba pensando.
+    const p = String(m.fen || "").split(/\s+/), n = Number(p[5]);
+    if (!(p[1] === "w" || p[1] === "b") || !n || typeof m.reloj_b !== "number" || typeof m.reloj_n !== "number") return null;
+    const jB = p[1] === "w" ? n - 1 : n, jN = n - 1;
+    if (jB + jN === 0) return null;
+    return { t_blancas: Math.round(m.reloj_b / 100), t_negras: Math.round(m.reloj_n / 100), j_blancas: jB, j_negras: jN, turno: jB === jN ? "blancas" : "negras",
+      ocurrio: new Date((leida || Date.now()) - (typeof m.piensa === "number" ? m.piensa * 1000 : 0)).toISOString(), jugada: Math.max(jB, jN), fuente: "lichess" };
+  }
+
+  // La jugada como en la planilla de Costa Rica: R, D, T, A y C (las columnas van en minúscula, así que no se tocan).
+  const PIEZA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+  const esp = (texto) => String(texto || "").replace(/[KQRBN]/g, (x) => PIEZA_ES[x]);
+
+  // Las tablas que el árbitro tiene que saber: con las jugadas en SAN, js/reclamos-tablas.js (chess.js).
+  function pgnDe(sans) {
+    const partes = [];
+    sans.forEach((s, i) => { if (i % 2 === 0) partes.push((i / 2 + 1) + "."); partes.push(s); });
+    return partes.join(" ");
+  }
+  function tablas(sans) {
+    const R = RT();
+    if (!R || !sans || !sans.length) return null;
+    let a;
+    try { a = R.analizar(pgnDe(sans)); } catch (e) { return null; }
+    if (!a || a.error || !a.posiciones) return null;
+    const fin = a.posiciones[a.posiciones.length - 1];
+    const ultimaVez = fin ? fin.vez : 0;
+    return {
+      fen: fin ? fin.fen : null,
+      repeticiones: (a.repeticiones || []).map((r) => ({ ply: r.ply, jugada: r.jugada.rotulo + " " + esp(r.jugada.san) })),
+      cinco: a.cincoVeces ? { ply: a.cincoVeces.ply, jugada: a.cincoVeces.jugada.rotulo + " " + esp(a.cincoVeces.jugada.san) } : null,
+      setentaYCinco: a.setentaYCinco ? { ply: a.setentaYCinco.ply, jugada: a.setentaYCinco.jugada.rotulo + " " + esp(a.setentaYCinco.jugada.san) } : null,
+      // ¿La posición de ahora es la que se repite? (si la tercera fue hace rato y ya se movió, el aviso sigue, pero dice que ya pasó)
+      ahora: ultimaVez,
+    };
+  }
+
+  // Lo que llega de LiveChess, con la misma forma que lo de Lichess (la posición, la última jugada, los relojes en
+  // centésimas y lo que lleva pensando), más el control y las tablas.
+  function normalizar(m, leida) {
+    if (!m || m.fuente !== "livechess") return m;
+    const { sans, relojes } = leerJugadas(m.jugadas, m.primera);
+    const t = tablas(sans);
+    const ultB = relojes.filter((r) => r.color === "blancas").pop(), ultN = relojes.filter((r) => r.color === "negras").pop();
+    const ult = relojes[relojes.length - 1];
+    let fen = t && t.fen, ultima = "";
+    if (!fen && !sans.length) fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    if (sans.length && raiz.Chess) {
+      try { const c = new raiz.Chess(); sans.forEach((s) => c.move(s, { sloppy: true })); const h = c.history({ verbose: true }).pop(); if (h) ultima = h.from + h.to; if (!fen) fen = c.fen(); } catch (e) { /* sin la última jugada marcada */ }
+    }
+    return Object.assign({}, m, {
+      fen: fen || "", ultima, sans,
+      reloj_b: ultB && ultB.reloj != null ? ultB.reloj * 100 : null, reloj_n: ultN && ultN.reloj != null ? ultN.reloj * 100 : null,
+      piensa: m.estado === "*" && ult && ult.ms != null && leida ? Math.max(0, Math.round((leida - ult.ms) / 1000)) : null,
+      tablas: t,
+    });
+  }
+
+  // Las alertas que todavía no se dieron (la clave no se repite: una por mesa, tipo y jugada).
+  function alertasNuevas(mesas, ronda, vistas) {
+    const out = [];
+    for (const m of mesas || []) {
+      const t = m.tablas;
+      if (!t) continue;
+      const agregar = (tipo, x, texto) => {
+        const clave = ronda + "|" + m.mesa + "|" + tipo + "|" + x.ply;
+        if (vistas.has(clave)) return;
+        vistas.add(clave);
+        out.push({ clave, tipo, mesa: m.mesa, jugada: x.jugada, texto });
+      };
+      if (t.cinco) agregar("cinco", t.cinco, "Quíntuple repetición en la mesa " + m.mesa + " (con " + t.cinco.jugada + "): son tablas sin que nadie reclame (art. 9.6.1). Detén los relojes y anota el resultado.");
+      else for (const r of t.repeticiones) agregar("triple", r, "Triple repetición en la mesa " + m.mesa + " (con " + r.jugada + "): cualquiera de los dos puede reclamar tablas (art. 9.2). Si nadie reclama, la partida sigue.");
+      if (t.setentaYCinco) agregar("75", t.setentaYCinco, "75 jugadas de cada uno sin mover un peón ni capturar en la mesa " + m.mesa + " (con " + t.setentaYCinco.jugada + "): son tablas sin reclamo (art. 9.6.2).");
+    }
+    return out;
+  }
+
   // Los relojes de ahora: el de quien tiene el turno sigue corriendo desde la lectura (lo que llevaba pensando + lo
-  // que pasó desde que se leyó). Los relojes vienen de Lichess en centésimas.
+  // que pasó desde que se leyó). Los relojes vienen en centésimas.
   function relojes(m, ahora, leida) {
     const p = String(m.fen || "").split(/\s+/);
     const turno = p[1] === "b" ? "negras" : "blancas";
@@ -39,7 +158,7 @@
     return { blancas: b, negras: n, turno, terminada };
   }
 
-  // La forma de una partida del JSON de Lichess (la que lee controlDe), con el «thinkTime» al momento de la lectura.
+  // La forma de una partida del JSON de Lichess (la que lee CentroamericanoTransmisionReloj.controlDe).
   function lectura(m, leida) {
     return { fen: m.fen, status: m.estado || "*", thinkTime: m.piensa, players: [{ clock: m.reloj_b }, { clock: m.reloj_n }], leida };
   }
@@ -61,7 +180,8 @@
   }
 
   // ---------------------------------------------------------------- en el navegador
-  let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null;
+  let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null, ultimaLectura = 0;
+  const vistas = new Set();
 
   function el(tag, at, ...hijos) {
     const n = document.createElement(tag);
@@ -83,7 +203,15 @@
         preguntado = Date.now();
         if (error || !data || !data.ok) { if (data && data.conectada === false) conectada = false; return datos; }
         conectada = !!data.conectada;
-        if (conectada) { datos = data; leidaMs = Date.now(); }
+        if (conectada) {
+          leidaMs = Date.now();
+          const primera = !datos;
+          datos = Object.assign({}, data, { mesas: (data.mesas || []).map((m) => normalizar(m, leidaMs)) });
+          ultimaLectura = leidaMs;
+          // La primera lectura también avisa: si el árbitro abre la tablet con una repetición ya hecha, tiene que saberlo.
+          const nuevas = alertasNuevas(datos.mesas, data.ronda, vistas);
+          if (nuevas.length && o.alAlertar) nuevas.forEach((a) => o.alAlertar(a, { primera }));
+        }
         if (o.boton) o.boton.hidden = !conectada;
         pintar();
         return datos;
@@ -102,17 +230,21 @@
     const ahora = Date.now();
     if (!datos) { cuerpo.replaceChildren(el("p", { texto: "Leyendo tus mesas…" })); return; }
     const aviso = [];
-    aviso.push(el("p", { class: "text-sm cv-hora", role: "status", texto: "Sin atraso · leído a las " + raiz.HoraCR.hora(new Date(leidaMs).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + " · se actualiza cada 10 s mientras esta ventana está abierta." }));
+    aviso.push(el("p", { class: "text-sm cv-hora", role: "status", texto: "Sin atraso" + (datos.fuente === "livechess" ? " (LiveChess)" : "") + " · leído a las " + raiz.HoraCR.hora(new Date(leidaMs).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + " · se actualiza cada 10 s." }));
     if (datos.delay > 0) aviso.push(el("p", { class: "text-sm cam-apagado-ojo", texto: "⚠ La transmisión privada tiene un atraso de " + Math.round(datos.delay / 60) + " min: avísale a la organización (debe ir en 0)." }));
     if (!datos.mesas.length) aviso.push(el("p", { texto: "Ninguna de tus mesas está en la transmisión (solo se transmiten las que tienen tablero electrónico)." }));
+    for (const x of datos.no_reconoce || []) aviso.push(el("p", { class: "text-sm", texto: "Mesa " + x.mesa + ": " + x.motivo + " Anota a mano como siempre." }));
     const tarjetas = datos.mesas.map((m) => {
       const tab = el("div", { class: "cine-tablero cv-tablero", "aria-hidden": "true" });
-      if (raiz.TableroFen) raiz.TableroFen.dibujar(tab, m.fen, m.ultima, { miniatura: true });
-      return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa) },
+      if (raiz.TableroFen && m.fen) raiz.TableroFen.dibujar(tab, m.fen, m.ultima, { miniatura: true });
+      const t = m.tablas;
+      const rep = t && (t.cinco ? "Quíntuple repetición (con " + t.cinco.jugada + "): tablas sin reclamo." : t.repeticiones.length ? "Triple repetición (con " + t.repeticiones[t.repeticiones.length - 1].jugada + "): se pueden reclamar tablas." : "");
+      return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa), "data-repeticion": rep ? "si" : null },
         el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: "Mesa " + m.mesa })),
         tab,
         el("p", { class: "text-sm cv-texto", texto: texto(m, ahora, leidaMs) }),
-        raiz.TableroFen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(m.fen) }) : null);
+        rep ? el("p", { class: "text-sm cv-repeticion", texto: "⚖ " + rep }) : null,
+        raiz.TableroFen && m.fen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(m.fen) }) : null);
     });
     // No repintar bajo el dedo: lo único que cambia cada segundo es el texto de los relojes.
     cuerpo.replaceChildren(...aviso, el("div", { class: "cv-mesas" }, ...tarjetas));
@@ -127,41 +259,50 @@
     }
   }
 
-  function abrir() {
+  function abrir(mesa) {
     if (!dialogo) {
       dialogo = el("dialog", { id: "mesas-en-vivo", class: "cam-dialogo cv-dialogo", "aria-labelledby": "cv-titulo" },
         el("div", { class: "cam-dialogo-titulo" }, el("span", { id: "cv-titulo", texto: "Mis mesas en vivo (sin atraso)" }),
           el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => dialogo.close() }, "Cerrar")),
         el("div", { class: "cam-dialogo-cuerpo cv-cuerpo" }),
         el("p", { class: "text-sm cv-pie", texto: "Solo para ti: no lo muestres a jugadores ni a entrenadores. La transmisión pública va con 15 min de atraso por juego limpio." }));
-      dialogo.addEventListener("close", () => { clearInterval(cada); cada = null; if (o.boton) o.boton.focus(); });
+      dialogo.addEventListener("close", () => { if (o.boton) o.boton.focus(); });
       document.body.append(dialogo);
     }
     try { dialogo.showModal(); } catch (e) { dialogo.setAttribute("open", ""); }
     pintar();
     leer();
-    clearInterval(cada);
-    let n = 0;
-    cada = setInterval(() => { if (document.hidden) return; latir(); if (++n % (CADA_MS / 1000) === 0) leer(); }, 1000);
+    if (mesa) { const t = dialogo.querySelector('.cv-mesa[data-mesa="' + mesa + '"]'); if (t) t.scrollIntoView({ block: "center" }); }
   }
 
   function iniciar(op) {
     o = op;
-    if (o.boton) { o.boton.hidden = true; o.boton.addEventListener("click", abrir); }
+    if (o.boton) { o.boton.hidden = true; o.boton.addEventListener("click", () => abrir()); }
     // La primera pregunta va unos segundos después: al abrir, lo primero son las mesas del árbitro, no esto.
     setTimeout(leer, 3000);
-    // Si no está conectada, se vuelve a preguntar de vez en cuando (la organización la puede conectar en cualquier momento).
-    setInterval(() => { if (!document.hidden && !conectada && Date.now() - preguntado > SIN_CONEXION_MS) leer(); }, 30000);
+    // Con transmisión, cada 10 s (para que una repetición llegue enseguida); sin ella, cada 5 min por si la conectan.
+    setInterval(() => {
+      if (document.hidden) return;
+      latir();
+      const espera = conectada ? CADA_MS : SIN_CONEXION_MS;
+      if (Date.now() - Math.max(preguntado, ultimaLectura) >= espera) leer();
+    }, 1000);
   }
 
-  // La última lectura de una mesa (o null), con la hora en que se leyó: para el reloj apagado.
+  // La última lectura de una mesa (o null), con la hora en que se leyó: para el control de tiempos y el reloj apagado.
   function deLaMesa(mesa) {
     if (!conectada || !datos) return null;
     const m = datos.mesas.find((x) => x.mesa === Number(mesa));
     return m ? { m, leida: leidaMs, delay: datos.delay || 0 } : null;
   }
+  function noReconoce(mesa) {
+    if (!conectada || !datos) return null;
+    const x = (datos.no_reconoce || []).find((y) => y.mesa === Number(mesa));
+    return x ? x.motivo : null;
+  }
 
-  const api = { relojes, lectura, texto, hms, iniciar, leer, deLaMesa, conectada: () => conectada };
+  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, pgnDe, esp,
+    iniciar, leer, abrir, deLaMesa, noReconoce, conectada: () => conectada };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoArbitroVivo = api;
 })(typeof self !== "undefined" ? self : this);
