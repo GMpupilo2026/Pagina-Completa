@@ -912,3 +912,7 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-fp-por-que li[data-momento="si"] { list-style: "♟ "; }
 .cam-fp-no-significa summary { cursor: pointer; font-size: 0.9rem; text-decoration: underline; }
 .cam-fp-no-significa p { font-size: 0.9rem; margin-top: 0.3rem; }
+/* El índice del torneo (el modelo por jugada) y «¿Qué tan confiable es?». La fila marcada lleva la palabra en su chip. */
+#fp-indice tr[data-nivel="a_mirar"] td, #fp-indice tr[data-nivel="alta"] td { font-weight: 700; }
+.cam-fp-confianza summary { cursor: pointer; font-weight: 700; }
+.cam-fp-confianza p { margin-top: 0.35rem; font-size: 0.93rem; }
