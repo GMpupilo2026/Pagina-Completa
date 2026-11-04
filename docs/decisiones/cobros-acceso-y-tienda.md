@@ -96,6 +96,33 @@ salgan los avisos.
   clase: dice que se hable. Quien lee puede ser una familia a la que se le
   complicó el mes.
 
+### Cobros en pausa desde el 4/11/2026
+
+**Hoy los cobros automáticos están apagados**, a pedido del dueño: quiere
+revisarlos antes de que a las familias les vuelva a llegar un correo de cobro.
+La migración `20261104150000_cobros_pausados.sql` apagó con
+`cron.alter_job(active := false)` —sin borrarlas— las tres tareas:
+`cobros-generar`, `cobros-recordatorios` y `cobros-recordatorios-programados`.
+Así no se emite ningún cobro nuevo ni sale ningún aviso automático ni
+programado.
+
+- **Lo que sigue funcionando es lo que se aprieta a mano** en `cobros.html`:
+  «Recordar ahora», registrar un pago (y su recibo) y la vista previa. Eso no
+  lo hace el cron: si se aprieta, sale.
+- **Nada se pierde**: `emitir_cobros()` emite hasta la fecha que recibe, así
+  que al volver a encender `cobros-generar` se pone al día sola con los
+  periodos de la pausa. Ojo: los avisos de esos cobros salen en la tanda
+  siguiente si a esa altura les toca alguno de los tres días.
+- **Para volver a activarlos** (en una migración nueva, guardada como siempre):
+
+  ```sql
+  select cron.alter_job(jobid, active := true) from cron.job
+   where jobname in ('cobros-generar', 'cobros-recordatorios',
+                     'cobros-recordatorios-programados');
+  ```
+
+  y borrar esta sección.
+
 ### Cuándo salen los tres avisos automáticos
 
 Los tres días —antes de vencer, de atraso para "vencido", de atraso para
