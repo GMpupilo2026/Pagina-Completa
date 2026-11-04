@@ -9304,18 +9304,34 @@ apaga el interruptor de la organización: son SUS mesas.
 - **«Sus mesas» = las de su enlace y las de sus otros enlaces** (las hermanas, ver «Mis torneos»), cada una
   con su rango `mesa_desde`–`mesa_hasta` y filtrado en el SERVIDOR (acción `mis_pareos` de
   `centroamericano-mesa`): nunca viaja una mesa ajena y la página no manda nada más que el token.
-- **De dónde sale cada ronda**: la abierta, de la copia compartida de chess-results
-  (`centroamericano_lecturas`, la misma de la lupa; con su resultado en vivo); las anteriores, de lo que
-  guarda el sorteo de Fair Play (`centroamericano_fp_partidas`, que tiene las rondas 1 a la actual con su
-  resultado de todos los torneos). La función **no llama a chess-results**: solo lee la base, así que no
-  cuesta nada pedirla cada 30 s. Consecuencia: una ronda anterior aparece cuando Fair Play ya la leyó; si
-  no hay pareo guardado, la ventana lo dice («Esta ronda todavía no tiene pareo guardado para tus mesas»).
+- **De dónde sale cada ronda**: la abierta, de la copia compartida de chess-results (`centroamericano_lecturas`, la misma de la
+  lupa; con su resultado en vivo); las anteriores, de lo que guarda el sorteo de Fair Play (`centroamericano_fp_partidas`).
+  **Esa copia se quedaba corta**: Fair Play solo la pone al día cuando alguien abre su pestaña, así que las rondas anteriores
+  salían con resultados en blanco («—») y las rondas nuevas (las 4 a 8 del Rápido, por ejemplo) no estaban. Por eso `mis_pareos`
+  **completa lo que falta con la página pública de pareos de chess-results** (`_compartido/pareos-publicos.ts`,
+  `s3.chess-results.com/tnr<torneo>.aspx?art=2&rd=<ronda>`: sin clave ni sesión) y lo deja guardado en `fp_partidas`, que es lo
+  único que escribe (y de paso Fair Play también queda al día).
+  - Pide solo lo que hace falta: las rondas que no están, las que tienen una partida de SUS mesas sin resultado y la abierta si
+    su copia compartida tiene más de 3 min. Solo de los torneos de su enlace y sus hermanos.
+  - Topes: a lo más 12 páginas por pedido (4 a la vez, esperando 11 s) y una ronda no se vuelve a pedir antes de 2 min (por la
+    `leida` de lo guardado). Con 20 árbitros pidiendo cada 30 s, chess-results ve unas pocas visitas por minuto, no una por tablet.
+  - Si chess-results no contesta, se queda con lo último que había (nunca da error por eso).
+  - **El 3/11 las tablas salían sin resultado.** chess-results escribe una partida en tablas como `&frac12; - &frac12;` (una
+    entidad HTML) y el lector no la decodificaba: la partida quedaba con el resultado vacío, y «Mis pareos» mostraba «—» en todas
+    las tablas de rondas ya jugadas. Ya se decodifica (`&frac12;`, `&#189;`, `&#xbd;` → «½») en los DOS lectores, y
+    `verificar-centroamericano-fair-play.js` lleva una partida en tablas para que no vuelva a pasar. Fair Play no lo notaba
+    porque su SQL solo mira las victorias (`1-0` y `0-1`); se volvió a desplegar (v5) con el mismo arreglo.
+  - La última ronda ya terminada (la 9 del Rápido) no trae mesas en la copia compartida: ahí manda lo leído de chess-results.
+  - **Hay dos lectores de esa página** (`leerPareos`): el de Fair Play (`centroamericano-fair-play/analisis.ts`, que no se vuelve a
+    desplegar en pleno torneo) y el compartido. `verificar-centroamericano-fair-play.js` comprueba que lean IGUAL la misma
+    página; al terminar el torneo se deja solo el compartido.
 - Se pone al día sola cada 30 s mientras está abierta y no se pierde con la señal: si falla el pedido, se
   queda con lo último y dice «Sin señal: son los pareos de hace N s» (en rojo).
-- Está en `DE_AVISOS`: no pide la clave de chess-results, y el enlace concluido también puede consultar (no
+- Está en `DE_AVISOS`: no pide la clave de chess-results (lo suyo es público), y el enlace concluido también puede consultar (no
   está en `ESCRIBE`).
-- Lo revisan `verificar-centroamericano-mesas.js` (la acción solo lee, hermanas, filtro por rango, sin
-  llamadas a chess-results) y `verificar-centroamericano-mesas-pagina.js` (el logo ya no es enlace y abre la
+- Lo revisan `verificar-centroamericano-mesas.js` (solo lo de SUS mesas: hermanas y filtro por rango; sin la clave; la lectura
+  pública solo de sus torneos, con sus topes y lo único que escribe es `fp_partidas`; el lector pide solo chess-results.com con
+  números validados), `verificar-centroamericano-fair-play.js` (los dos lectores leen igual) y `verificar-centroamericano-mesas-pagina.js` (el logo ya no es enlace y abre la
   ventana, las pestañas, solo las mesas propias, el resultado de una ronda anterior, el estado, que el pedido
   lleve solo la acción y el token, el foco, «Ronda abierta» y sin señal).
 
