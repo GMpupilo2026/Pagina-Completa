@@ -291,7 +291,9 @@
     setInterval(() => {
       if (document.hidden) return;
       latir();
-      const espera = conectada ? CADA_MS : SIN_CONEXION_MS;
+      // En el modo liviano (tablet vieja o lenta, js/modo-liviano.js), con transmisión cada 20 s en vez de 10.
+      const lenta = raiz.ModoLiviano && raiz.ModoLiviano.activo();
+      const espera = conectada ? (lenta ? 2 * CADA_MS : CADA_MS) : SIN_CONEXION_MS;
       if (Date.now() - Math.max(preguntado, ultimaLectura) >= espera) leer();
     }, 1000);
   }
