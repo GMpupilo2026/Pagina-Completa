@@ -13,11 +13,11 @@ Son tres etiquetas y un script, en todas las páginas del sitio:
                                   SÍNCRONO a propósito: tiene que estar
                                   escuchando antes de que corran los scripts
                                   del final del <body> (ver js/errores.js)
-    <script src="…beacon.min.js"> la cuenta de visitas de Cloudflare Web
-                                  Analytics, sin cookies (ver «Cuántas
-                                  personas entran: Cloudflare Web Analytics,
-                                  sin cookies»); su token no es secreto: va en
-                                  cada página que se publica
+    <script src="js/visitas.js">  la cuenta de visitas de Cloudflare Web
+                                  Analytics, sin cookies, solo en
+                                  ajedrez-integral.com (ver «Cuántas personas
+                                  entran: Cloudflare Web Analytics, sin
+                                  cookies»)
 
 Van en TODAS y no solo en la portada porque la gente entra por donde sea —un
 enlace a un curso, el que le mandaron por WhatsApp— y el celular solo ofrece
@@ -36,10 +36,6 @@ import sys
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INICIO = "<!-- app: inicio -->"
 FIN = "<!-- app: fin -->"
-# El token del sitio en Cloudflare Web Analytics (ajedrez-integral.com no es un
-# dominio de esta cuenta de Cloudflare, así que no se instala solo: va en cada
-# página). No es una clave: cualquiera lo ve en el código de la página.
-TOKEN_VISITAS = "e9429513182b4d298706df747a14fb70"
 
 # Estas quedan fuera: no son páginas del sitio.
 #   - inscripcion.html tiene su propio diseño y su propio CSS;
@@ -128,7 +124,7 @@ def bloque(ruta):
         + f'<script src="{arriba}js/errores.js"></script>'
         + f'<script src="{arriba}js/pwa.js" defer></script>'
         + f'<script src="{arriba}js/navegacion.js" defer></script>'
-        + "<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='{\"token\": \"" + TOKEN_VISITAS + "\"}'></script>"
+        + f'<script src="{arriba}js/visitas.js" defer></script>'
         + FIN
     )
 

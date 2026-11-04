@@ -486,12 +486,20 @@ contador, a propósito (nada de Google Analytics). Lo que sí estaba en la base
   automático (que Cloudflare lo meta solo) no se pudo, porque
   `ajedrez-integral.com` no es un dominio de esta cuenta de Cloudflare: el
   panel dice «Este nombre de host no pertenece a ningún sitio web de tu
-  cuenta» y pide el script. Así que lo pone `herramientas/pwa-cabecera.py` en
-  el bloque de app de cada página (`TOKEN_VISITAS`, el mismo bloque y las
-  mismas páginas que `js/errores.js`): un `<script type="module">` externo de
-  `static.cloudflareinsights.com` que manda a `cloudflareinsights.com`. El
-  token no es una clave: va en cada página que se publica. Se ve en el panel
-  de Cloudflare, Observabilidad → Web Analytics.
+  cuenta» y pide el script. Así que `herramientas/pwa-cabecera.py` pone
+  `js/visitas.js` en el bloque de app de cada página (el mismo bloque y las
+  mismas páginas que `js/errores.js`), y ese archivo agrega el
+  `<script type="module">` de `static.cloudflareinsights.com`, que manda a
+  `cloudflareinsights.com`, con el token. El token no es una clave: va en
+  cada página que se publica. Se ve en el panel de Cloudflare, Observabilidad
+  → Web Analytics.
+- **Solo en `ajedrez-integral.com`**: la primera vez el script iba escrito
+  en cada página, y en el CI (`localhost`) Cloudflare rechazaba el envío por
+  CORS. Era un error en la consola de cada página, y cayeron todos los
+  verificadores que piden «sin errores en consola». Además, las pruebas, las
+  vistas previas (`*.workers.dev`) y la computadora de quien programa habrían
+  sumado visitas que no son de nadie. `js/visitas.js` no hace nada fuera del
+  dominio.
 - La CSP de `_headers` le abre solo esas dos direcciones: el script en
   `script-src` y el envío en `connect-src`. Sin ellas el navegador bloquea el
   script sin avisar a nadie y el panel se queda en cero.
