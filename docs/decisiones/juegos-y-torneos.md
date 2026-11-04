@@ -9143,6 +9143,10 @@ inmediato.
   reclamos: una sola copia). Una repetición nueva sale **arriba de todo** (`#alertas-vivo`, `role="alert"`, vibra, sin
   sonido) con la jugada en la notación de la planilla («20… Ag7») y el artículo: la triple la reclama un jugador (9.2;
   si nadie reclama, sigue); la **quíntuple** (9.6.1) y las **75 jugadas** (9.6.2) son tablas sin reclamo y lo dicen.
+  **Las 50 jugadas** (9.3; lo preguntó el dueño el 4/11) avisan igual que la triple: se pueden reclamar, con la jugada
+  en que se cumplieron y dónde empezó la cuenta; si ya van 75, sale solo el aviso de las 75. El verificador arma una
+  partida de verdad con chess.js (la primera jugada en orden que no mueve un peón, no captura, no da jaque ni repite)
+  y comprueba que se cumplen en la jugada 52, ni una antes.
   «Ver la posición» abre «Mis mesas en vivo» en esa mesa; «Entendido» la quita. Sale una vez por mesa, tipo y jugada.
 - Lo prueban `verificar-centroamericano-mesas-vivo.js` (las jugadas y su hora, el control, la triple en su jugada, la
   quíntuple, que la alerta no se repite, la notación, que la función no devuelve el id y que el enlace no está en el

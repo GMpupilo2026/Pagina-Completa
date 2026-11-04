@@ -893,13 +893,13 @@
 
     // ------------------------------------------------------------- la transmisión sin atraso
 
-    // Una tabla que la transmisión acaba de ver (triple o quíntuple repetición, 75 jugadas): un aviso arriba que no se
+    // Una tabla que la transmisión acaba de ver (triple o quíntuple repetición, 50 o 75 jugadas): un aviso arriba que no se
     // pierde hasta «Entendido», con «Ver la posición». Vibra (sin sonido: en un torneo no hay ruido). El aviso no decide
-    // nada: la triple la reclama un jugador (art. 9.2); la quíntuple y las 75 son tablas sin reclamo (9.6).
+    // nada: la triple y las 50 las reclama un jugador (arts. 9.2 y 9.3); la quíntuple y las 75 son tablas sin reclamo (9.6).
     function alertaDeTablas(a) {
         const caja = $("alertas-vivo");
         if (!caja) return;
-        const titulo = a.tipo === "triple" ? "Triple repetición" : a.tipo === "cinco" ? "Quíntuple repetición: tablas" : "75 jugadas: tablas";
+        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas" }[a.tipo] || "Tablas";
         const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
             el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
             el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
