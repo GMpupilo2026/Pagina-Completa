@@ -112,6 +112,17 @@
       // una): «#resultados», que la página abre encima.
       fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
     },
+    // El Metropolitano, con el diseño de sus bases: las hojas arriba y abajo,
+    // el logo con el Estadio Nacional y su azul (`metro-sala` en
+    // css/styles.css). Las bases y chess-results llevan a la página del
+    // torneo, que los abre encima (`#bases` y `#resultados`). Ver «La página
+    // del Metropolitano 2026» en docs/decisiones/cuentas-y-formularios.md.
+    "metropolitano-2026": {
+      clase: "metro-sala", imagen: "/img/metropolitano-2026/logo.png", ancho: 900, alto: 397,
+      pagina: "/metropolitano-2026.html",
+      marca: true,
+      fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-metropolitano-2026(-2)?\.pdf$/i, "bases"]],
+    },
     // Las universidades, con su azul y su logo (css/universidades.css). Lo
     // de afuera (chess-results, el enlace directo a Lichess) lleva a su ficha
     // en la página del torneo, que lo abre encima. Ver «Las páginas de los

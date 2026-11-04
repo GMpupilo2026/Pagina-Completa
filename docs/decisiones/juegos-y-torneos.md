@@ -3986,6 +3986,26 @@ el sexo.
   Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
   saltó.
 
+
+#### El buscador de FIDE se fija en us-west-1
+
+El 4/11/2026, la inscripción del Metropolitano no encontraba a nadie en FIDE:
+la Edge Function contestaba «FIDE no contestó» a los 15 s. ratings.fide.com
+**no le contesta a la función cuando corre en us-east-1**, que es la región que
+Supabase elige para quien entra desde Costa Rica. Medido llamándola con cada
+región: us-east-1, sa-east-1, eu-central-1 y eu-west-2 fallaban siempre;
+us-west-1 contestaba en 1-3 s (y ap-northeast-1 en 6 s), y desde la base, con
+pg_net, también. No daba ningún error en la página: solo el aviso de que FIDE
+no contestó, que parece un problema de FIDE.
+
+- `js/pareo/elo-nacional.js` (`buscarEnLista`, la única copia de la llamada,
+  que usan Pareo Integral y la inscripción del Metropolitano) la manda con
+  **`?forceFunctionRegion=us-west-1`** en la dirección. No con la cabecera
+  `x-region`: el CORS de la función no la deja pasar.
+- `verificar-metropolitano.js` comprueba que cada búsqueda lleve ese
+  parámetro; quitarlo lo hace saltar. Si FIDE cambia de opinión, se vuelve a
+  medir región por región antes de moverlo.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
@@ -9376,6 +9396,70 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+## «Llegó tarde»: la llegada de quien se tarda queda en la bitácora y cuenta en el reloj que se apaga (Centroamericano)
+
+Pedido (3/11, ronda 4): cuando un jugador llega con el tiempo de espera corriendo y el árbitro marca «Llegó», que quede la hora
+de llegada y cuánto se tardó (Ramos llegó faltándole 8 min para la incomparecencia = 22 min tarde) en la bitácora del árbitro, y que
+el reloj que se apaga lo tenga en cuenta al reconstruir los tiempos.
+
+- **Lo que ya había**: `centroamericano_presencia.marcada` guarda la hora del toque, pero nada decía cuánto se tardó y no iba a la
+  bitácora ni al cálculo.
+- **La nota** (acción `presencia` de `centroamericano-mesa`, v24): si `presente: true` y el jugador llega **más de un minuto
+  después del inicio de la ronda**, la función inserta en `centroamericano_registro` una nota (`tipo` «nota», `articulo`
+  «Llegó tarde», sin migración: la restricción de `tipo` no cambia, como «Levantó») con la hora de la llegada en `ocurrio` y un
+  texto fijo: «Ramos, Daniel (negras) llegó tarde: 22 min 8 s después del inicio de la ronda (a las 9:22 a. m.; le faltaban 7 min 52 s
+  para la incomparecencia).» El nombre sale de chess-results, no de la pantalla. Pasada la tolerancia (30 min) dice «ya había pasado
+  el tiempo de espera de 30 min». Más de 6 h se toma por dato malo y no se anota.
+- **El inicio**: manda el que marcó el árbitro de la categoría (`centroamericano_inicios_torneo`); si no hay, el que mandó la tablet
+  (`inicio`, el mismo de su cuenta del tiempo de espera, validado: no posterior a la llegada ni de hace más de 12 h). La hora de
+  la llegada la manda la tablet (`ocurrio`, de las últimas 6 h y no del futuro: vale también el toque que salió de la cola sin
+  señal); si no, la de la base. Esa hora es ahora también la de `marcada`.
+- **Una sola nota viva por jugador y partida**: marcar «Llegó» otra vez no la duplica. **Corregir** («no ha llegado», por un toque
+  equivocado) la **anula** (una línea `anulacion` que apunta a ella, como siempre) y el siguiente «Llegó» deja una nueva.
+- **«Marcar que llegaron todos» no deja notas** (`presencia_todos`): es el atajo de arrancar la ronda cuando llegan juntos, y
+  tocarlo unos minutos después de empezar dejaría una tardanza que no fue.
+- **En la tablet**: sale el aviso «X llegó 22 min 8 s tarde: quedó anotado en la bitácora», la nota aparece en «Lo anotado» (con la
+  etiqueta «Llegó tarde») y el reloj que se apaga ya la cuenta, sin esperar la lectura siguiente. En la organización y en el
+  PDF de la bitácora sale como «Llegó tarde».
+- **El reloj que se apaga** (`relojApagado`, parámetro `llegadas`, de `llegadasTarde(anotaciones, mesa, anuladas)`): mientras el
+  jugador no estaba **su reloj corría** (art. 6.7), así que esos minutos no se reparten como el resto: se le cobran enteros a quien
+  llegó tarde y lo demás sí se reparte. Con las dos tarde corre primero el reloj de las blancas hasta que llegan y después el de las
+  negras hasta que llegan ellas. Lo que cae antes del control ya está en lo que marcaban los relojes: solo cuenta lo que cae después
+  del control o, sin control, desde el inicio. El total no cambia (siempre anda un reloj); cambia el reparto, y la ventana lo dice
+  con palabras («Las blancas llegaron tarde (quedó anotado en la bitácora): …»). Sin control, el ejemplo: blancas 22 min tarde, 40 min
+  después del inicio → 31 min gastados por ellas y 9 por las negras (sin la llegada tarde serían 20 y 20).
+- **Lo que no se hace**: la nota no cambia el resultado ni sanciona; la incomparecencia la sigue decidiendo el árbitro. Y
+  para quien llegó tarde y ya no tiene control de tiempos el reparto es una propuesta, como todo lo del reloj que se apaga (art. 6.10).
+- Lo revisan `verificar-centroamericano-mesas.js` (el parser, el reparto con las blancas, las negras o las dos tarde, la llegada anterior y
+  posterior al control, y la acción: tope de hora, inicio, una sola viva, anulación, y que «todos» no deja nota) y
+  `verificar-centroamericano-mesas-pagina.js` (el toque manda `ocurrio` e `inicio`, queda la nota, el aviso, corregir la anula y volver
+  a marcar deja una nueva).
+
+### El reloj de quien tiene el turno sigue corriendo (el 4/11: «salía con 30 y en el reloj real tenía 20»)
+
+Un control es una foto **del momento en que se anotó**; la transmisión (LiveChess) trae los relojes justo después de la última jugada.
+Si quien tenía el turno lleva 10 minutos pensando, su reloj real ya no marca lo anotado, pero el sistema seguía mostrando (y la calculadora
+del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de los dos.
+
+- **Nadie movió desde el control → todo es de quien tenía el turno** (`relojApagado`, reparto `turno`; el turno sale de las
+  jugadas del control: iguales, blancas; una más las blancas, negras). Es lo que de verdad pasó, así que el reparto «Como venía gastando
+  cada uno» pasa solo a `turno` cuando las jugadas de ahora son las del control; «Mitad y mitad» se respeta si el árbitro lo elige. Con jugadas
+  desde el control no se sabe quién gastó qué y sigue el ritmo; `turno` pedido a la fuerza con jugadas nuevas se rechaza. La espera de quien
+  llegó tarde se le cobra aparte, como antes.
+- **Lo que marca un reloj que todavía se lee manda** (`visto`, «Si algún reloj todavía se lee, ¿qué marca ahora?»): el total entre los dos
+  es exacto, así que si el árbitro lee uno, el otro es lo que sobra; si lee los dos valen los dos y se avisa si la suma se aleja del total.
+  Lo leído más grande que el total se rechaza. Al escribir en esas casillas se marca sola la **hora de ese momento** (la lectura es de ese
+  instante; si no, el otro color se calcularía con la hora de guardar).
+- **Lo anotado dice cuánto le queda ahora** (`#lt-corriendo`, bajo «Lo último anotado»): «Desde esa hora pasaron 10 min: si nadie ha movido, a
+  las blancas (les toca) les quedan ahora 20:00». No se anota solo: el árbitro lo comprueba con el reloj.
+- **«Llenar con los relojes de ahora»** (junto a «Llenar con la transmisión»): descuenta lo que pasó al reloj de quien tenía el turno y deja el
+  control con la hora de este momento; la nota lo dice («… con el reloj de las blancas (le tocaba) descontado hasta la hora del control»).
+  Los botones «Llenar…» ya no pierden lo que pone el botón al dibujar (`borradorFresco`: `pintarTiempos` leía las casillas viejas y lo
+  pisaba).
+- Lo revisan `verificar-centroamericano-mesas.js` (blancas 30:00 y 10 min sin mover → 20:00 y las negras en 50:00; las negras; `visto` de
+  uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
+  leer, el guardado con la hora de ahora y su nota).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien
@@ -9563,6 +9647,71 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   vibrar. Se ven (aviso fijo arriba, grande, con número en el título de la pestaña) y la tablet vibra donde se
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y
   `AbortSignal.timeout` tienen alternativa); la pantalla encendida (`wakeLock`) funciona desde iOS 16.4.
+
+## Las tablets viejas: el modo liviano (Centroamericano)
+
+En el Centroamericano 2026 (4/11, ronda en curso) algunas tablets de los árbitros eran muy viejas y a «Mis mesas»
+le costaba correr. Había dos problemas distintos, y los dos callados:
+
+- **En un navegador viejo la página ni abría.** `js/vendor/supabase.js` usa `?.` y `??` (Chrome 80, Safari 13.1):
+  el archivo entero falla al leerse, `window.supabase` no existe, `js/supabase-client.js` reventaba en su
+  `createClient` y la página se quedaba en «Entrando a tus mesas…» para siempre, sin ningún error a la vista.
+  Además las páginas usan `replaceChildren` (Chrome 86, Safari 14), `Array.flat` (Chrome 69, Safari 12) y
+  `<dialog>` con `showModal()` (Safari 15.4), que usan los avisos del sitio (`js/avisos.js`): en un iPad con iOS
+  12–15.3, «¿Anular esta anotación?» no se abría.
+- **En una tablet lenta, la página se trababa cada 8 s.** Cada consulta de avisos (cada 8 s) y cada lectura de las
+  mesas (cada 45 s) volvía a armar TODAS las tarjetas de las mesas aunque llegara exactamente lo mismo. En una
+  tablet nueva no se nota; en una vieja, el árbitro tocaba un botón justo cuando la lista se rehacía.
+
+Lo que se hizo:
+
+- **`js/modo-liviano.js`**, lo primero que corre (en el `<head>` de `centroamericano-arbitro.html`,
+  `centroamericano-mesas.html` y `centroamericano-fair-play.html`), **escrito a propósito en ES5** para que lo
+  lea cualquier tablet. Rellena lo que le falta al navegador (`replaceChildren`, `append`, `remove`, `flat`, `at`,
+  `Object.fromEntries`, `Promise.finally`, `replaceAll`, `globalThis` y lo justo de `<dialog>`: abrir encima de
+  todo con un fondo, `close(valor)`, el evento `close`, Escape y `<form method="dialog">`; los estilos van por
+  `element.style`, que la CSP deja).
+- **El cliente de respaldo, `js/supabase-sin-libreria.js`**, en las dos páginas SIN CUENTA (árbitro y Fair Play):
+  si `window.sb` no existe, arma uno con `fetch` que hace lo único que esas páginas usan —`functions.invoke` y
+  leer una tabla pública con `from().select().eq().maybeSingle()`— y contesta igual que la librería (`{ data,
+  error }`, con `error.context` = la respuesta en un 4xx/5xx, para que `llamar()` lea el mensaje de la función).
+  Con la librería andando no hace nada. `js/supabase-client.js` ahora solo arma el cliente si la librería está
+  (`if (!window.sb && window.supabase)`). La página de la organización no lo lleva: tiene sesión, y la sesión
+  sí necesita la librería; ahí lo que se arregló es su único `??` (`conVacio()` en `centroamericano-mesas-pagina.js`).
+- **El modo liviano** (`<html data-liviano="si">`) se enciende solo si la tablet **dice** que es modesta (poca
+  memoria, `deviceMemory` ≤ 2 GB; dos núcleos o menos; «ahorro de datos») o es **vieja** (le faltó algo de lo que
+  se rellena), o si se **mide** que dibuja menos de 12 cuadros por segundo en 3 s, un rato después de abrir (lo
+  medido se recuerda en esa tablet, `modo_liviano_medido_v1`). No se prueba la sintaxis con `new Function`: eso
+  depende de que la CSP deje `unsafe-eval`, y si algún día se quita, toda tablet se creería vieja. Se avisa una
+  vez por visita. **El botón «🪶 Liviano: sí/no»** del encabezado lo enciende o lo apaga a mano y la elección se
+  recuerda (`modo_liviano_v1`); manda sobre lo detectado.
+- **Qué cambia con el modo liviano**: sin animaciones ni transiciones, sin sombras difuminadas ni filtros, sin las
+  hojas de la portada (dos PNG grandes con transparencia encima de un degradado). **Lo que dice algo se queda,
+  quieto**: el borde dorado de Fair Play (sin el giro del degradado, que se repintaba en cada cuadro: un anillo
+  fijo de 4 px), el anillo del tiempo de espera cumplido y los avisos que latían (un anillo rojo fijo). Y algunas
+  consultas van menos seguido: Fair Play cada 40 s en vez de 20, «Mis mesas en vivo» cada 20 s en vez de 10, y
+  «Todas las mesas» se baja al abrirla en vez de adelantarse. **Los avisos de la organización y lo que se anota
+  no se demoran nunca.**
+- **Para todas las tablets, no solo las viejas**: las tarjetas solo se vuelven a armar si cambió algo. En
+  `mostrar()` se compara lo que llegó con lo que está pintado (sin `leido_en`, que cambia siempre) y las
+  anulaciones; en `aplicarAvisos()`, lo de los avisos que se ve en las tarjetas (`abiertas`, `ayuda`, `nombrado`,
+  el nombre del árbitro). Lo que corre con el reloj (la cuenta de cada jugador, el tiempo de espera) ya tenía su
+  propio intervalo y no dependía de repintar.
+
+- **En un navegador de pruebas no decide solo** (`navigator.webdriver`, que una tablet de verdad nunca tiene). En el
+  primer CI del PR, una prueba de `verificar-centroamericano-mesas-pagina.js` que pasaba en la máquina falló allá
+  (las tarjetas medían 0 × 0): con la máquina del CI cargada, la medición de cuadros por segundo podía encender el
+  modo a mitad de cualquier prueba, y una máquina de dos núcleos lo encendería en todas. Lo que mira cada
+  verificador no puede depender de cuán cargada esté la máquina ese día. Solo decide solo si la prueba lo pide
+  (`window.__modoLivianoAuto`, lo pone `verificar-modo-liviano.js`); el botón vale siempre.
+
+Lo revisa `verificar-modo-liviano.js`: que todo script de las tres páginas se lea como JavaScript de 2019 (Chrome
+66 / Safari 12) con `acorn` —salvo la librería de Supabase, que tiene su respaldo— y los dos archivos de arriba
+como ES5; una tablet vieja simulada (sin esas funciones y con la librería que no se lee) que abre sus mesas por el
+respaldo y por HTTP de verdad, enciende el modo sola, abre y cierra un aviso del sitio con el `<dialog>`
+rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mismo NO rearma las tarjetas y un pedido
+de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
+script con sintaxis nueva hace saltar la primera comprobación.
 
 ## Mesa del árbitro: los torneos ligados de un grupo
 

@@ -34,8 +34,19 @@ window.PareoEloNacional = (function () {
      total, hayMas, periodo } o { ok: false, error }. Las tres listas de FIDE
      vienen en la misma fila: quien llama elige cuál usa. Nunca lanza. */
   async function buscarEnLista(lista, q) {
-    return pedir("pareo-listas-elo", { lista: lista, q: q });
+    return pedir("pareo-listas-elo" + REGION_FIDE, { lista: lista, q: q });
   }
+
+  /* ratings.fide.com NO le contesta a la Edge Function cuando corre en
+     us-east-1, que es la región que Supabase elige para quien entra desde
+     Costa Rica: se queda callado y la función devuelve «FIDE no contestó» a
+     los 15 s. Medido el 4/11/2026: us-east-1, sa-east-1, eu-central-1 y
+     eu-west-2 fallaban siempre; us-west-1 contestaba en 1-3 s, y desde la base
+     (pg_net) también. Por eso esta búsqueda se fija en us-west-1 con el
+     parámetro de la dirección (no con la cabecera x-region, que el CORS de la
+     función no deja pasar). Ver «El buscador de FIDE se fija en us-west-1» en
+     docs/decisiones/juegos-y-torneos.md. */
+  const REGION_FIDE = "?forceFunctionRegion=us-west-1";
 
   async function pedir(funcion, cuerpo) {
     let res;

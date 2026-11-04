@@ -56,6 +56,7 @@ const VIGILADAS = [
   "centroamericano_asignaciones", "centroamericano_finales", "centroamericano_torneos", "centroamericano_fp_enlaces",
   // La inscripción del Metropolitano 2026: cuánto se cobró y si el pago se dio por bueno.
   "metropolitano_inscripciones",
+  "metropolitano_codigos",
 ];
 
 let fallos = 0;

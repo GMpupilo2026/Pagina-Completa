@@ -75,7 +75,7 @@ const js = leer("js/centroamericano-academia.js");
 const fechasPagina = [(js.match(/DESDE = "([\d-]+)"/) || [])[1], (js.match(/HASTA = "([\d-]+)"/) || [])[1]];
 ok("la página y la base dicen las mismas fechas", JSON.stringify(fechasPagina) === JSON.stringify(fechasBase), fechasPagina);
 const inv = leer("js/invitado-centroamericano.js");
-ok("y el modo invitado de los juegos, también", /DESDE = "2026-11-01", HASTA = "2026-11-09"/.test(inv));
+ok("y el modo invitado de los juegos, también", /centroamericano: \{ desde: "2026-11-01", hasta: "2026-11-09"/.test(inv));
 const av = leer("js/acceso-vigente.js");
 ok("el panel dice los días y el nombre de la cuenta, no siempre «prueba gratis de 3 días»", /a\.dias_total \|\| 3/.test(av) && /centroamericano-2026/.test(av) && !/prueba gratis de 3 días terminó/.test(av));
 ok("la lista de administración lee solo las del Centroamericano, de mil en mil",

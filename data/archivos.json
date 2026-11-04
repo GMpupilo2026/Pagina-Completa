@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 892,
+  "total": 893,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8166,6 +8166,12 @@
     "titulo": "Normativa pjde 2026",
     "tipo": "otro",
     "kb": 1695
+   },
+   {
+    "ruta": "documentos/metropolitano-2026/bases-metropolitano-2026.pdf",
+    "titulo": "Bases metropolitano 2026",
+    "tipo": "otro",
+    "kb": 3086
    },
    {
     "ruta": "instrucciones-adaptadas.pdf",
@@ -19081,7 +19087,7 @@
   ]
  },
  "imagenes": {
-  "total": 1139,
+  "total": 1140,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26046,6 +26052,12 @@
     "titulo": "Metropolitano 2026",
     "grupo": "Carpetas",
     "archivos": [
+     {
+      "ruta": "img/metropolitano-2026/compartir.jpg",
+      "titulo": "Compartir",
+      "tipo": "otro",
+      "kb": 144
+     },
      {
       "ruta": "img/metropolitano-2026/hojas-abajo.jpg",
       "titulo": "Hojas abajo",
