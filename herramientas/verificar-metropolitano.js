@@ -305,6 +305,39 @@ const FILAS_FIDE = [
     igual("los gafetes del grupo salen en un solo PDF (frente y dorso de cada uno)", (pdfg.match(/\/Type \/Page\b/g) || []).length, 6);
     igual("sin errores en la página del grupo", g.anotado.errores, []);
 
+    // La página de información del torneo (metropolitano-2026.html).
+    console.log("   La página de información");
+    async function info(sala) {
+      const pg = await ctx.newPage();
+      const errs = []; pg.on("pageerror", (e) => errs.push(e.message));
+      await pg.route("**/rest/v1/salas_torneo**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(sala) }));
+      await pg.goto(BASE + "/metropolitano-2026.html#premios");
+      await pg.waitForFunction(() => document.querySelector("#ficha-resultados .metro-ficha"));
+      return { pg, errs };
+    }
+    const i1 = await info(null);
+    cierto("sin la tarjeta de «Torneos», resultados y partidas dicen «Pronto»",
+      (await i1.pg.getAttribute("#ficha-resultados .metro-ficha", "aria-disabled")) === "true" && /Pronto/.test(await i1.pg.textContent("#ficha-partidas")));
+    cierto("la dirección #premios abre su ventana", await i1.pg.evaluate(() => document.getElementById("premios").open));
+    igual("los premios, de las bases: 4 tablas y el 1.er lugar del A en $700", [await i1.pg.locator("#premios-tablas table").count(), (await i1.pg.locator("#premios-tablas tr").first().textContent()).replace(/\s+/g, " ").trim()], [4, "1.er lugar$700.00"]);
+    igual("el calendario: 9 rondas de A, B y U14 y el blitz", await i1.pg.locator("#calendario-tablas tbody tr").count(), 28);
+    cierto("los costos con los cuatro torneos y los métodos de pago", (await i1.pg.locator("#costos-tabla tbody tr").count()) === 4 && (await i1.pg.locator("#costos-metodos .metro-caja").count()) === 4);
+    cierto("la cuenta regresiva dice qué sigue", /Lo próximo|terminó/.test(await i1.pg.textContent("#hoy-principal")));
+    await i1.pg.keyboard.press("Escape");
+    const [ics] = await Promise.all([i1.pg.waitForEvent("download"), i1.pg.click("#hoy-ics")]);
+    const textoIcs = fs.readFileSync(await ics.path(), "utf8");
+    igual("«Agregar a mi calendario» baja las 28 rondas, en hora de Costa Rica", [(textoIcs.match(/BEGIN:VEVENT/g) || []).length, /DTSTART;TZID=America\/Costa_Rica:20261226T090000/.test(textoIcs)], [28, true]);
+    igual("sin errores en la página de información", i1.errs, []);
+    const i2 = await info({ clave: "metropolitano-2026", enlaces: [
+      { url: "https://ajedrez-integral.com/metropolitano-2026.html", texto: "Toda la información" },
+      { url: "https://s1.chess-results.com/tnr1.aspx", texto: "Metropolitano A" }, { url: "https://s1.chess-results.com/tnr2.aspx", texto: "Metropolitano B" },
+      { url: "https://lichess.org/broadcast/metropolitano-2026/AbCdEf12", texto: "En vivo" }] });
+    await i2.pg.waitForFunction(() => document.querySelector("#ficha-partidas a"));
+    igual("con los enlaces en «Torneos», las partidas llevan a Lichess", await i2.pg.getAttribute("#ficha-partidas a", "href"), "https://lichess.org/broadcast/metropolitano-2026/AbCdEf12");
+    await i2.pg.keyboard.press("Escape");
+    await i2.pg.click("#ficha-resultados a");
+    cierto("y con dos torneos en chess-results, se elige la categoría", await i2.pg.evaluate(() => document.getElementById("resultados").open) && (await i2.pg.locator("#resultados-lista a").count()) === 2);
+
     // La página de administración.
     console.log("   La lista de inscritos");
     const a = await ctx.newPage();

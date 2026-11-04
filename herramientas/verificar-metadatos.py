@@ -20,6 +20,7 @@ IMAGEN = SITIO + "/img/og-ajedrez-integral.jpg"
 # Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md.
 IMAGEN_PROPIA = {
     "centroamericano-2026.html": "img/centroamericano-2026/compartir.jpg",
+    "metropolitano-2026.html": "img/metropolitano-2026/compartir.jpg",
 }
 
 fallos = []
