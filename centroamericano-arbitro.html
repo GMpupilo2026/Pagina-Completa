@@ -73,6 +73,9 @@
         </div>
 
         <div id="app" hidden>
+            <!-- Las tablas que la transmisión ve apenas pasan (triple y quíntuple repetición, 75 jugadas): lo primero de la
+                 página, arriba de todo (js/centroamericano-arbitro-vivo.js). -->
+            <section id="alertas-vivo" class="cam-alertas-vivo" aria-label="Avisos de la transmisión" hidden></section>
             <!-- El árbitro «por definir» pone su nombre una vez: sale en lo que se anota. -->
             <section id="nombre-caja" class="cam-tarjeta mb-4" hidden aria-labelledby="nombre-titulo">
                 <h2 id="nombre-titulo" class="font-bold text-lg">¿Cómo te llamas?</h2>
@@ -205,6 +208,8 @@
     <script src="js/centroamericano-concentracion.js"></script>
     <script src="js/centroamericano-mis-pareos.js"></script>
     <script src="js/tablero-fen.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/reclamos-tablas.js"></script>
     <script src="js/centroamericano-arbitro-vivo.js"></script>
     <script src="js/centroamericano-arbitro.js"></script>
 </body>

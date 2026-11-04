@@ -828,3 +828,21 @@ body.cam-guia-abierta { overflow: hidden; }
 .cv-tablero { width: 100%; max-width: 16rem; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
 .cv-texto { font-variant-numeric: tabular-nums; }
 .cv-pie { padding: 0 1rem 1rem; }
+
+/* Las tablas que ve la transmisión (triple y quíntuple repetición, 75 jugadas): un aviso arriba de las mesas, con los
+   mismos colores ya medidos del aviso de tiempo de espera cumplido; el texto dice qué pasó (el color nunca va solo). */
+.cam-alertas-vivo { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cam-alertas-vivo[hidden] { display: none; }
+.cam-alerta-vivo { padding: 0.8rem 0.95rem; border: 3px solid #b3261e; border-radius: 1rem; background: #fff5f4; color: #4a0f0b; }
+.dark .cam-alerta-vivo { background: rgb(179 38 30 / 0.18); color: #ffdad6; border-color: #ff8a80; }
+.cam-alerta-vivo-titulo { font-weight: 800; font-size: 1.1rem; }
+.cam-alerta-vivo-texto { margin: 0.3rem 0 0.5rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .cam-alerta-vivo { animation: cam-alerta-vivo-entra 0.9s ease-out 2; }
+  @keyframes cam-alerta-vivo-entra { 50% { box-shadow: 0 0 0 6px rgb(179 38 30 / 0.35); } }
+}
+/* El control de tiempos desde la transmisión, en la ventana del control (borde del mismo morado de los relojes). */
+.cam-tx-control { padding: 0.5rem 0.7rem; border: 2px dashed var(--cac-morado-hondo); border-radius: 0.8rem; display: grid; gap: 0.35rem; justify-items: start; }
+.dark .cam-tx-control { border-color: #b8bbf2; }
+.cv-repeticion { font-weight: 800; color: #8a1c00; }
+.dark .cv-repeticion { color: #ffb59e; }

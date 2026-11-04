@@ -995,6 +995,66 @@ const CONTRASTE = `(sel) => {
     igual("el tercer pedido lo rechaza la función (429) y la página no dice que se mandó", await pm.evaluate(() => !/Listo: te la mandamos/.test(document.getElementById("concluido-estado").textContent)), true);
     await cm.ctx.close();
 
+    console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
+    const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+    const pv = vv.p;
+    await pv.waitForSelector(".cam-mesa");
+    // La mesa 2 en LiveChess con una triple repetición (20… Ag7, comprobada con chess.js); la 1 con otros jugadores.
+    const SANS_REP = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Na5 Bc2 c5 d4 Qc7 Nbd2 Bd7 Nf1 Rfe8 Ng3 g6 Bg5 Bf8 Qd2 Bg7 Bh6 Bh8 Bg5 Bg7 Bh6 Bh8 Bg5 Bg7".split(" ");
+    const esperado = await pv.evaluate((sans) => {
+        const antes = window.sb.functions.invoke;
+        let tB = 5430, tN = 5430, total = 0;
+        const jugadas = sans.map((s, i) => { const g = 60 + (i % 7) * 37; if (i > 0) total += g; if (i % 2 === 0) { tB = tB - g + 30; return s + " " + tB + "+" + g; } tN = tN - g + 30; return s + " " + tN + "+" + g; });
+        const primera = Date.now() - total * 1000 - 40000;
+        window.__vivoLecturas = 0;
+        window.sb.functions.invoke = (f, o) => {
+            if (f !== "centroamericano-mesas-vivo") return antes(f, o);
+            window.__vivoLecturas++;
+            return Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+                mesas: [{ mesa: 2, fuente: "livechess", jugadas, primera, en_vivo: true, estado: "*" }],
+                no_reconoce: [{ mesa: 1, motivo: "En la transmisión, el tablero 1 tiene otros jugadores." }] }, error: null });
+        };
+        return { tB, tN, ocurrio: new Date(primera + total * 1000).toISOString() };
+    }, SANS_REP);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="triple"][data-mesa="2"]');
+    igual("la triple repetición le llega al árbitro arriba de todo: un aviso que se lee (role=alert), con la jugada en la notación de la planilla y el artículo",
+        await pv.evaluate(() => { const a = document.querySelector("#alertas-vivo .cam-alerta-vivo"); return [a.getAttribute("role"), a.checkVisibility(), /Triple repetición · Mesa 2/.test(a.textContent), /20… Ag7/.test(a.textContent), /art\. 9\.2/.test(a.textContent), document.getElementById("app").firstElementChild.id === "alertas-vivo" || !!document.querySelector("#app > #alertas-vivo")]; }),
+        ["alert", true, true, true, true, true]);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    igual("al volver a leer no se repite el aviso (uno por mesa, tipo y jugada)", await pv.$$eval("#alertas-vivo .cam-alerta-vivo", (l) => l.length), 1);
+    await pv.click('#alertas-vivo [data-accion="entendido-tablas"]');
+    igual("«Entendido» lo quita", await pv.$eval("#alertas-vivo", (e) => e.checkVisibility()), false);
+    // El control de tiempos de la mesa 2: las casillas se llenan solas con los relojes de la transmisión y su hora.
+    await pv.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
+    await pv.waitForSelector("#lt-tx");
+    igual("el control de tiempos se llena solo: los dos relojes, las jugadas de cada uno y la hora real de la última jugada (marcada, no la de ahora)",
+        await pv.evaluate((e) => [document.getElementById("lt-tb").value, document.getElementById("lt-jb").value, document.getElementById("lt-tn").value, document.getElementById("lt-jn").value, document.getElementById("lt-hora").dataset.marcada, /Ya están en las casillas/.test(document.getElementById("lt-tx").textContent)], esperado),
+        [await pv.evaluate((t) => window.CentroamericanoMesas.formatoTiempo(t), esperado.tB), "20", await pv.evaluate((t) => window.CentroamericanoMesas.formatoTiempo(t), esperado.tN), "20", "si", true]);
+    // La mesa 1: la transmisión no la reconoce, queda el formulario de siempre, vacío, y lo dice.
+    await pv.selectOption("#lt-mesa", "1");
+    await pv.waitForSelector("#lt-tx-no");
+    igual("la mesa que la transmisión no reconoce queda a mano, como siempre, y dice por qué", await pv.evaluate(() => [/otros jugadores\. Anótalo a mano, como siempre\./.test(document.getElementById("lt-tx-no").textContent), document.getElementById("lt-tb").value, document.getElementById("lt-hora").dataset.marcada]), [true, "", "no"]);
+    // «Anotar todas desde la transmisión»: pregunta, y cada control va a la bitácora con su hora real y su nota.
+    const tiemposAntesTx = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "tiempo").length);
+    await pv.click("#lt-tx-todas");
+    await pv.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    igual("antes de anotar todas dice cuáles van y cuáles quedan a mano", await pv.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/la mesa 2/.test(t), /La mesa 1 no está en la transmisión/.test(t)]; }), [true, true]);
+    await pv.click("dialog[open] [data-avisos-aceptar]");
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "tiempo").length > n, tiemposAntesTx);
+    igual("lo anotado: la mesa, los relojes, las jugadas, el turno, la hora real de la última jugada y la nota de que salió de la transmisión",
+        await pv.evaluate((e) => { const b = window.__llamadas.filter((l) => l.body.action === "tiempo").pop().body; return [b.mesa, b.t_blancas === e.tB, b.t_negras === e.tN, b.j_blancas, b.j_negras, b.turno, b.ocurrio === e.ocurrio, /^Tomado de la transmisión sin atraso \(LiveChess\): los relojes después de la jugada 20$/.test(b.nota)]; }, esperado),
+        [2, true, true, 20, 20, "blancas", true, true]);
+    await pv.waitForFunction(() => !document.getElementById("lt-tx-todas"));
+    igual("ya anotado, no se ofrece otra vez", await pv.$("#lt-tx-todas"), null);
+    // «Mis mesas en vivo» marca la repetición en la mesa.
+    await pv.click('#control-tiempos [data-accion="cerrar-tiempos"]');
+    await pv.click("#ver-vivo");
+    await pv.waitForSelector('#mesas-en-vivo[open] .cv-mesa[data-repeticion="si"]');
+    igual("en «Mis mesas en vivo», la mesa dice la repetición y la que no reconoce, que va a mano", await pv.evaluate(() => [/Triple repetición \(con 20… Ag7\)/.test(document.querySelector('.cv-mesa[data-mesa="2"] .cv-repeticion').textContent), /Mesa 1: En la transmisión, el tablero 1 tiene otros jugadores\. Anota a mano como siempre\./.test(document.getElementById("mesas-en-vivo").textContent)]), [true, true]);
+    igual("sin errores en la página", vv.errores, []);
+    await vv.ctx.close();
+
     console.log("\n=== La organización: el candado ===");
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(false), { ancho: 1100 });
     await o.p.waitForSelector("#denegado:not([hidden])");

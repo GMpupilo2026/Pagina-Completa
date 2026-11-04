@@ -7,6 +7,11 @@
 // esta función la lee con esa clave (de la bóveda) y a cada tablet le da SOLO sus mesas, como ya hace con todo.
 // Ver «La transmisión sin atraso para los árbitros» en docs/decisiones/juegos-y-torneos.md.
 //
+// LIVECHESS (lo que se usa en el Centroamericano): la organización de los tableros DGT pasó un enlace del visor de
+// LiveChess Cloud por categoría, SIN atraso (centroamericano_livechess, que solo lee esta función). Si la categoría
+// de un enlace lo tiene, sus mesas salen de ahí (las jugadas con el reloj después de cada una); si no, de la
+// transmisión privada de Lichess. Ver «Los tableros por LiveChess, sin atraso».
+//
 // Va aparte de centroamericano-mesa para no volver a desplegar esa función en medio del torneo (lo mismo que
 // centroamericano-fair-play). verify_jwt en FALSE: la tablet no trae JWT; la función decide sola:
 //   - "mesas"      {arbitro_token}  → la tablet: sus mesas de la ronda abierta, con la posición y los relojes en vivo
@@ -16,6 +21,10 @@
 //                                     `enlace` puede traer varios (uno por renglón o separados por espacios): un grupo de
 //                                     LiveChess es UN enlace; Pareo para DGT crea un torneo por categoría.
 //     "quitar"     {}
+//     "livechess"  {}               → los enlaces de LiveChess guardados, por torneo (solo la organización)
+//     "livechess_guardar" {texto}   → pega la tabla de la organización de tableros («SUB-18 ABS  1-5  https://view.
+//                                     livechesscloud.com/#<id>», un renglón por categoría): cada una se prueba contra
+//                                     LiveChess y se guarda con su torneo de chess-results
 //
 // Nunca devuelve la clave ni el enlace de la transmisión privada (la tablet no tiene cómo abrirla en Lichess: no es
 // suya). Lo que devuelve de cada mesa es lo que el árbitro ya ve en el tablero: la posición, la última jugada y los
@@ -99,6 +108,60 @@ function partidasDe(idRonda: string, token: string) {
   return datos;
 }
 
+// ---- LiveChess Cloud: público y sin atraso (por eso el id no sale nunca de esta función)
+const LIVECHESS = "https://1.pool.livechesscloud.com/get/";
+const INDICE_MS = 15_000, PARTIDA_MS = 3_000;
+const lcCache = new Map<string, { leido: number; datos: Promise<unknown> }>();
+function lcPedir(ruta: string, ms: number) {
+  const c = lcCache.get(ruta);
+  if (c && Date.now() - c.leido < ms) return c.datos;
+  const datos = fetch(LIVECHESS + ruta, { headers: { "User-Agent": AGENTE }, signal: AbortSignal.timeout(10_000) })
+    .then((r) => { if (r.status === 404) return null; if (!r.ok) throw Object.assign(new Error("LiveChess contestó " + r.status + "."), { estado: 502 }); return r.json(); });
+  datos.catch(() => lcCache.delete(ruta));
+  lcCache.set(ruta, { leido: Date.now(), datos });
+  return datos;
+}
+// «Guevara Ruiz, Santiago» de chess-results contra { fname, mname, lname } de LiveChess.
+// deno-lint-ignore no-explicit-any
+const nombreLc = (p: any) => [p?.lname, p?.fname, p?.mname].filter(Boolean).join(" ");
+const RESULTADO_LC: Record<string, string> = { WHITEWIN: "1-0", BLACKWIN: "0-1", DRAW: "½-½" };
+// Los tableros que transmite: «1-5», «1-3, 7».
+function tablerosDe(t: string): Set<number> {
+  const out = new Set<number>();
+  for (const parte of String(t || "").split(",")) {
+    const m = parte.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (!m) continue;
+    for (let i = Number(m[1]); i <= Number(m[2] || m[1]) && i <= 200; i++) out.add(i);
+  }
+  return out;
+}
+// Las partidas de SUS mesas en LiveChess: la mesa de chess-results es el tablero de LiveChess, y los dos nombres
+// tienen que coincidir (si no, esa mesa no se da: mejor nada que la partida de otro).
+async function mesasLivechess(lc: { torneo_id: string; tableros: string }, ronda: number, suyas: { mesa: number; blancas: string; negras: string }[]) {
+  // deno-lint-ignore no-explicit-any
+  const indice: any = await lcPedir(lc.torneo_id + "/round-" + ronda + "/index.json", INDICE_MS);
+  const pareos = (indice && indice.pairings) || [];
+  const tabs = tablerosDe(lc.tableros);
+  const out: Record<string, unknown>[] = [];
+  const noReconoce: { mesa: number; motivo: string }[] = [];
+  await Promise.all(suyas.map(async (m) => {
+    if (tabs.size && !tabs.has(m.mesa)) return;   // esa mesa no tiene tablero electrónico
+    const p = pareos[m.mesa - 1];
+    if (!p) { noReconoce.push({ mesa: m.mesa, motivo: "La transmisión todavía no tiene el pareo de esta ronda." }); return; }
+    if (!(mismoJugador(m.blancas, nombreLc(p.white)) && mismoJugador(m.negras, nombreLc(p.black)))) {
+      noReconoce.push({ mesa: m.mesa, motivo: "En la transmisión, el tablero " + m.mesa + " tiene otros jugadores." });
+      return;
+    }
+    // deno-lint-ignore no-explicit-any
+    const g: any = await lcPedir(lc.torneo_id + "/round-" + ronda + "/game-" + m.mesa + ".json?poll", PARTIDA_MS);
+    if (!g) { noReconoce.push({ mesa: m.mesa, motivo: "La transmisión no tiene esta partida." }); return; }
+    out.push({ mesa: m.mesa, fuente: "livechess", jugadas: (Array.isArray(g.moves) ? g.moves : []).slice(0, 600).map(String),
+      primera: typeof g.firstMove === "number" ? g.firstMove : null, en_vivo: !!g.live, reloj: g.clock ?? null,
+      estado: RESULTADO_LC[String(g.result)] || (p.result && p.result !== "*" ? String(p.result).replace("1/2-1/2", "½-½") : "*") });
+  }));
+  return { mesas: out, noReconoce };
+}
+
 // El id de 8 letras de un enlace de transmisión de Lichess (de un torneo o de una ronda).
 function idDeEnlace(texto: unknown): { id: string; es: "torneo" | "ronda" } | null {
   const t = String(texto ?? "").trim();
@@ -135,14 +198,23 @@ Deno.serve(async (req) => {
       if (!/^[0-9a-f]{64}$/.test(t)) return json({ error: "Enlace inválido." }, 404);
       const { data: a } = await servicio.from("centroamericano_asignaciones").select("tnr, mesa_desde, mesa_hasta, vence, revocada").eq("token", t).maybeSingle();
       if (!a || a.revocada || new Date(a.vence).getTime() <= Date.now()) return json({ error: "Enlace inválido." }, 404);
-      const conf = await configuracion();
-      if (!conf) return json({ ok: true, conectada: false, mesas: [] });
+      const [{ data: lc }, conf] = await Promise.all([
+        servicio.from("centroamericano_livechess").select("torneo_id, tableros").eq("tnr", a.tnr).maybeSingle(),
+        configuracion(),
+      ]);
+      if (!lc && !conf) return json({ ok: true, conectada: false, mesas: [] });
       // Los jugadores de sus mesas salen de la lectura compartida de chess-results (la que ya usa centroamericano-mesa),
       // no de lo que diga la tablet: así un enlace no puede pedir las partidas de otras mesas.
       const { data: l } = await servicio.from("centroamericano_lecturas").select("ronda, mesas, leida").eq("tnr", a.tnr).maybeSingle();
       const ronda = Number(l?.ronda) || 0;
       const suyas = ((l?.mesas ?? []) as { mesa: number; blancas: string; negras: string }[]).filter((m) => m.mesa >= a.mesa_desde && m.mesa <= a.mesa_hasta && m.blancas && m.negras);
       if (!ronda || !suyas.length) return json({ ok: true, conectada: true, ronda, mesas: [] });
+      if (lc) {
+        const r = await mesasLivechess(lc as { torneo_id: string; tableros: string }, ronda, suyas);
+        return json({ ok: true, conectada: true, fuente: "livechess", ronda, delay: 0, leida: new Date().toISOString(),
+          mesas: r.mesas.sort((x, y) => Number(x.mesa) - Number(y.mesa)), no_reconoce: r.noReconoce.sort((x, y) => x.mesa - y.mesa) });
+      }
+      if (!conf) return json({ ok: true, conectada: false, mesas: [] });
       const lista = await torneos(conf.enlace, conf.token);
       const out: Record<string, unknown>[] = [];
       let delay = 0;
@@ -207,6 +279,41 @@ Deno.serve(async (req) => {
       const { error } = await servicio.rpc("centroamericano_vivo_guardar", { p_enlace: ids.join(","), p_token: token });
       if (error) return json({ error: error.message }, 400);
       return json({ ok: true, conectada: true, torneos: lista.map((t) => ({ nombre: t.nombre, rondas: t.rondas.length, conAtraso: t.rondas.filter((r) => r.delay > 0).map((r) => r.numero) })) });
+    }
+    if (accion === "livechess") {
+      const [{ data: filas }, { data: torneos }] = await Promise.all([
+        servicio.from("centroamericano_livechess").select("tnr, tableros, actualizado, por"),
+        servicio.from("centroamericano_torneos").select("tnr, nombre, prueba").order("nombre"),
+      ]);
+      // Sin el id: la organización ve qué categorías tienen su enlace, no el enlace.
+      return json({ ok: true, torneos: (torneos ?? []).map((t: { tnr: string; nombre: string; prueba: boolean }) => {
+        const f = (filas ?? []).find((x: { tnr: string }) => x.tnr === t.tnr) as { tableros: string; actualizado: string } | undefined;
+        return { tnr: t.tnr, nombre: t.nombre, prueba: t.prueba, conectado: !!f, tableros: f?.tableros ?? "", actualizado: f?.actualizado ?? null };
+      }) });
+    }
+    if (accion === "livechess_guardar") {
+      // «SUB-18 ABS  1-5  https://view.livechesscloud.com/#<id>»: la categoría, la rama, los tableros y el enlace.
+      const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, categoria, rama, prueba");
+      const filas: { tnr: string; torneo_id: string; tableros: string; por: string }[] = [];
+      const errores: string[] = [];
+      for (const renglon of String(cuerpo.texto ?? "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean).slice(0, 40)) {
+        const id = (renglon.match(/livechesscloud\.com\/?#([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i) || [])[1];
+        const cat = renglon.match(/sub\s*-?\s*0?(\d{1,2})/i);
+        const rama = /\bfem/i.test(renglon) ? "Femenino" : /\babs/i.test(renglon) ? "Absoluto" : /\bmix/i.test(renglon) ? "Mixto" : "";
+        const tab = (renglon.replace(/https?:\/\/\S+/g, "").replace(/sub\s*-?\s*\d+/ig, "").match(/\d+\s*-\s*\d+(?:\s*,\s*\d+(?:\s*-\s*\d+)?)*/) || [""])[0].replace(/\s+/g, "");
+        if (!id || !cat || !rama) { if (/livechess/i.test(renglon)) errores.push("No se entendió: «" + renglon.slice(0, 80) + "»"); continue; }
+        const t = (torneos ?? []).find((x: { categoria: string; rama: string; prueba: boolean }) => !x.prueba && x.categoria === "Sub-" + Number(cat[1]) && x.rama === rama) as { tnr: string } | undefined;
+        if (!t) { errores.push("No hay un torneo Sub-" + Number(cat[1]) + " " + rama + " en el sistema de árbitros."); continue; }
+        // deno-lint-ignore no-explicit-any
+        const prueba: any = await lcPedir(id + "/tournament.json", 0).catch(() => null);
+        if (!prueba || !Array.isArray(prueba.rounds)) { errores.push("LiveChess no abre el enlace de Sub-" + Number(cat[1]) + " " + rama + "."); continue; }
+        filas.push({ tnr: t.tnr, torneo_id: id.toLowerCase(), tableros: tab.slice(0, 40), por: "Organización (" + new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) + ")" });
+      }
+      if (filas.length) {
+        const { error } = await servicio.from("centroamericano_livechess").upsert(filas.map((f) => ({ ...f, actualizado: new Date().toISOString() })), { onConflict: "tnr" });
+        if (error) return json({ error: error.message }, 400);
+      }
+      return json({ ok: true, guardados: filas.length, errores });
     }
     if (accion === "quitar") {
       const { error } = await servicio.rpc("centroamericano_vivo_quitar");

@@ -9106,6 +9106,52 @@ pública no lo pone nuestro código: es el «Retraso» de cada ronda en Lichess,
   (devolver la clave, cambiar la regla en una sola copia), saltan. Desplegada y probada contra la base con pg_net (sin
   conectar: `conectada: false`; enlace falso: 404; sin sesión: 401); falta probarla con la transmisión privada de verdad.
 
+### Los tableros por LiveChess, sin atraso: el control de tiempos solo y la triple repetición (Centroamericano)
+
+El 4/11 el dueño pasó los enlaces de la organización de los tableros DGT (dos computadoras, PC-1 y PC-2): un enlace del
+visor de **LiveChess Cloud** por categoría (`view.livechesscloud.com/#<id>`, tableros 1-5; el Sub-8, 1-4). Pidió: usarlos
+para que el control de tiempos lo ponga el árbitro **automáticamente y quede el registro**; que si la transmisión deja de
+reconocer una mesa, **se pase sola a la versión de siempre**; y que la **triple repetición** le llegue al árbitro de
+inmediato.
+
+- **LiveChess no tiene atraso y se lee sin cuenta** (`https://1.pool.livechesscloud.com/get/<id>/tournament.json`,
+  `round-N/index.json` con los pareos y `round-N/game-M.json?poll` con las jugadas; CORS abierto). Cada jugada viene como
+  «Nf3 5482+5»: el reloj de quien jugó justo después (en segundos, como lo marca el DGT 3000: ya con el incremento de la
+  jugada siguiente) y los segundos que pensó; `firstMove` es la hora de la primera. La hora de cada jugada sale de sumar
+  lo pensado desde ahí (comprobado con la ronda 3 real: empezó a las 9:03).
+- **Por eso el enlace NO se publica**: va en `centroamericano_livechess` (tnr → id y tableros; RLS sin políticas, sin
+  permisos para `anon` y `authenticated`; migración `centroamericano_livechess`). Lo lee solo `centroamericano-mesas-vivo`
+  (v4), que a cada tablet le da **solo sus mesas**: la mesa de chess-results es el tablero de LiveChess, y los **dos**
+  nombres tienen que coincidir (`mismoJugador`; LiveChess da `lname fname mname`). Comprobado con la ronda 3 real de las
+  12 categorías: **58 de 58** coinciden. Si no coinciden, esa mesa no se da y la tablet dice por qué («el tablero 1 tiene
+  otros jugadores», «todavía no tiene el pareo de esta ronda»). Con LiveChess, la transmisión privada de Lichess de la
+  sección anterior queda para lo que no tenga enlace. Los 12 enlaces se cargaron en la base (no en el repositorio); la
+  organización los ve y los cambia en `centroamericano-mesas.html` («Los tableros electrónicos por LiveChess»: pega la
+  tabla de la organización de tableros, cada enlace se prueba contra LiveChess antes de guardarse y nunca se vuelve a
+  mostrar).
+- **El control de tiempos, solo** (`CentroamericanoArbitroVivo.control`): los dos relojes después de la última jugada,
+  las jugadas de cada uno, el turno y la **hora real de esa jugada** (no la de ahora). Al abrir el control de tiempos de
+  una mesa que la transmisión reconoce, las casillas se llenan solas con eso y la hora queda marcada; el árbitro revisa
+  con el reloj y toca «Guardar». «**Anotar todas desde la transmisión (N)**» anota de una vez las mesas sin terminar que
+  reconoce (pregunta antes y dice cuáles quedan a mano). Todo va por la acción `tiempo` de siempre (la bitácora, la hora
+  marcada que la función acepta si es de las últimas 6 h) con la nota «Tomado de la transmisión sin atraso (LiveChess):
+  los relojes después de la jugada N» (y «corregido a mano» si el árbitro cambió algo). No se anota dos veces la misma
+  lectura. **Si la transmisión no reconoce la mesa, queda el formulario de siempre, vacío**, y lo dice: «Anótalo a mano,
+  como siempre». El reloj apagado también parte de la lectura de LiveChess.
+- **La triple repetición, de inmediato**: con transmisión, la tablet vuelve a leer cada 10 s (con la pantalla a la vista)
+  y revisa cada partida con `js/reclamos-tablas.js` (chess.js, la regla de «la misma posición» del 9.2.2 de la página de
+  reclamos: una sola copia). Una repetición nueva sale **arriba de todo** (`#alertas-vivo`, `role="alert"`, vibra, sin
+  sonido) con la jugada en la notación de la planilla («20… Ag7») y el artículo: la triple la reclama un jugador (9.2;
+  si nadie reclama, sigue); la **quíntuple** (9.6.1) y las **75 jugadas** (9.6.2) son tablas sin reclamo y lo dicen.
+  «Ver la posición» abre «Mis mesas en vivo» en esa mesa; «Entendido» la quita. Sale una vez por mesa, tipo y jugada.
+- Lo prueban `verificar-centroamericano-mesas-vivo.js` (las jugadas y su hora, el control, la triple en su jugada, la
+  quíntuple, que la alerta no se repite, la notación, que la función no devuelve el id y que el enlace no está en el
+  repositorio) y `verificar-centroamericano-mesas-pagina.js` (en la tablet, con LiveChess simulado: la alerta arriba, que
+  no se repite, «Entendido», las casillas llenas con la hora real, la mesa no reconocida a mano, «Anotar todas» con su
+  nota y su hora, y «Mis mesas en vivo» con la repetición). Rotos a propósito (sin el «ya avisado», sin la notación de la
+  planilla), saltan. Desplegada y probada contra la base: con la ronda 4 todavía sin cargar en LiveChess, cada mesa dice
+  «todavía no tiene el pareo de esta ronda» y el Sub-8 solo pide los tableros 1-4.
+
 ### El sorteo de Fair Play (Centroamericano)
 
 La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para

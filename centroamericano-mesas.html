@@ -296,7 +296,17 @@
                     <ul id="claves-bloque-resultado" class="mt-3 space-y-1 text-sm"></ul>
                 </details>
 
-                <h2 id="t-vivo" class="cam-subtitulo mt-6">La transmisión sin atraso para los árbitros</h2>
+                <h2 id="t-livechess" class="cam-subtitulo mt-6">Los tableros electrónicos por LiveChess (sin atraso, para los árbitros)</h2>
+                <div class="cam-clave-grupo mt-3" id="livechess">
+                    <p>El enlace del visor de <strong>LiveChess Cloud</strong> de cada categoría muestra las partidas <strong>sin atraso</strong>. Con él, cada árbitro ve sus mesas en vivo, el control de tiempos se llena solo y le llega la <strong>triple repetición</strong> apenas pasa. Por eso el enlace no se publica: queda en la base y cada tablet recibe solo sus mesas.</p>
+                    <ul id="livechess-lista" class="text-sm mt-2 space-y-1"></ul>
+                    <label for="livechess-texto" class="block text-sm font-bold mt-3">Pegar la tabla de la organización de tableros (categoría, tableros y enlace, un renglón por categoría)</label>
+                    <textarea id="livechess-texto" rows="4" class="cam-campo mt-1" autocomplete="off" spellcheck="false" placeholder="SUB-18 ABS   1-5   https://view.livechesscloud.com/#…"></textarea>
+                    <div class="cam-acciones"><button type="button" id="livechess-guardar" class="cam-btn">Probar y guardar los enlaces</button></div>
+                    <p id="livechess-estado" class="text-sm mt-2" role="status"></p>
+                </div>
+
+                <h2 id="t-vivo" class="cam-subtitulo mt-6">La transmisión sin atraso para los árbitros (Lichess privada)</h2>
                 <div class="cam-clave-grupo mt-3" id="vivo">
                     <p>La transmisión pública de Lichess va con <strong>15 minutos de atraso</strong> por juego limpio, y así se queda. Para que cada árbitro vea <strong>sus</strong> mesas en vivo en su tablet («Mis mesas en vivo»), arma en Lichess una <strong>segunda transmisión privada</strong> y conéctala aquí:</p>
                     <ol class="text-sm mt-2 list-decimal pl-5 space-y-1">
