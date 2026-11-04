@@ -1442,6 +1442,15 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
     nadie. Los integrantes comparten `grupo` y `delegacion`.
   - El freno cuenta el grupo como UN envío; el tope de 8 por correo al día es
     solo para las inscripciones sueltas (una familia con varios hijos).
+  - **Cómo se aplicó** (para quien restaure): `20261104064500_metropolitano_grupos_roles`
+    se corrió a mano en el SQL Editor, porque el servidor de Supabase pedía
+    confirmar el `drop trigger` del primer borrador y nadie contestó; en
+    `schema_migrations` quedó anotada con una nota y su texto está en el
+    archivo. Su nombre se adelantó a 064500 para que quede ANTES de
+    `20261104065139_metropolitano_sin_modo`, que se aplicó después y la
+    corrige (un envío sin `modo` dejaba `es_delegado` en NULL; lo encontró la
+    prueba impersonando a `anon`). Esa corrección nombra a la primera por su
+    nombre de borrador, 20261104070000: es la misma.
 - **El permiso de publicidad va en cada tarjeta y no es obligatorio**
   (`acepta_publicidad`): autoriza que la FCA y Ajedrez Integral usen el nombre
   y la foto de esa persona en la publicidad del torneo. Es distinto del aviso
