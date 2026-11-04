@@ -1184,11 +1184,37 @@ const CONTRASTE = `(sel) => {
     await q.click('#tiempos tr:first-child [data-accion="reloj-apagado"]');
     await q.waitForSelector("#ct-apagado:not([hidden]) .ra-jb");
     igual("abre la calculadora de esa partida debajo de la tabla, con su último control", await q.evaluate(() => [document.getElementById("ct-apagado-titulo").textContent.startsWith("El reloj se apagó · Mesa 9"), /Blancas 10:00 \(31 jug\.\) · Negras 1:23:45 \(30 jug\.\)/.test(document.querySelector("#ct-apagado .cam-apagado-datos").textContent)]), [true, true]);
+    // Los relojes de la transmisión de Lichess como control (js/centroamericano-transmision-reloj.js): la sala dice qué se transmite,
+    // la ronda dice su atraso y la partida (por los dos nombres) sus relojes. Lichess, simulado; nada se pide hasta tocar el botón.
+    const pedidosLichess = [];
+    await q.context().route(/lichess\.org\/api\//, (r) => {
+        const u = r.request().url(); pedidosLichess.push(u);
+        if (/\/api\/broadcast\/AbCd1234$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ tour: { id: "AbCd1234", name: "Centroamericano 2026 | Sub-10 Abs" }, rounds: [{ id: "RoNdA002", name: "Round 2", finished: true }, { id: "RoNdA003", name: "Round 3", ongoing: true }] }) });
+        if (/\/api\/broadcast\/-\/-\/RoNdA003$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ round: { id: "RoNdA003", name: "Round 3", delay: 60 }, games: [
+            { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
+            { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] }] }) });
+        return r.fulfill({ status: 404, body: "{}" });
+    });
+    await q.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
+    igual("la calculadora ofrece buscar la mesa en la transmisión, sin pedirle nada a Lichess antes de tocarlo", [await q.$eval("#ct-apagado .ra-tx-buscar", (b) => [b.textContent, b.checkVisibility()]), pedidosLichess.length], [["Buscar esta mesa en la transmisión", true], 0]);
+    await q.click("#ct-apagado .ra-tx-buscar");
+    await q.waitForSelector("#ct-apagado .ra-tx-usar");
+    igual("encuentra la partida por los dos nombres y lee sus relojes, con el atraso descontado; como es más reciente que el último control, se calcula desde ella",
+        await q.evaluate(() => [/^Relojes de las .* \(con 1 min de atraso\): Blancas 5:00 \(35 jug\.\) · Negras 1:16:07 \(35 jug\.\)\.$/.test(document.querySelector("#ct-apagado .ra-tx-estado").textContent),
+            document.querySelector("#ct-apagado .ra-tx-usar").checked, /Último control: de la transmisión, /.test(document.querySelector("#ct-apagado .cam-apagado-datos").textContent)]), [true, true, true]);
+    await q.fill("#ct-apagado .ra-jb", "36");
+    await q.fill("#ct-apagado .ra-jn", "35");
+    await q.waitForSelector("#ct-apagado .cam-reloj-dibujo");
+    await q.click("#ct-apagado .ra-guardar");
+    await q.waitForFunction(() => /transmisión de Lichess/.test(([].concat((window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop() || {}).valores)[0] || {}).texto || ""));
+    igual("lo que se le manda al árbitro dice que salió de los relojes de la transmisión", await q.evaluate(() => /calculado desde los relojes de la transmisión de Lichess de las .* \(con 1 min de atraso\)/.test([].concat(window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores)[0].texto)), true);
+    await q.click("#ct-apagado .ra-tx-usar");
+    igual("sin la marca, vuelve al control del árbitro", await q.evaluate(() => /Último control: \d/.test(document.querySelector("#ct-apagado .cam-apagado-datos").textContent)), true);
     await q.fill("#ct-apagado .ra-jb", "32");
     await q.fill("#ct-apagado .ra-jn", "31");
     await q.waitForSelector("#ct-apagado .cam-reloj-dibujo");
     await q.click("#ct-apagado .ra-guardar");
-    await q.waitForFunction(() => window.__llamadas.some((l) => l.insert === "centroamericano_avisos" && [].concat(l.valores).some((v) => /^Mesa 9 · El reloj se apagó/.test(v.texto || ""))));
+    await q.waitForFunction(() => window.__llamadas.some((l) => l.insert === "centroamericano_avisos" && [].concat(l.valores).some((v) => /^Mesa 9 · El reloj se apagó.*van 32 y 31 jugadas/.test(v.texto || ""))));
     igual("«Mandárselo al árbitro» le manda un aviso a la tablet de ESA mesa con los dos tiempos, a quién le toca y la nota (no escribe en sus controles)",
         await q.evaluate(() => { const v = [].concat(window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores)[0]; return [v.de, v.asignacion_id, /pon Blancas .* y Negras .* \(le toca a las negras; van 32 y 31 jugadas\)\. Reloj apagado \(art\. 6\.10\)/.test(v.texto), v.texto.length <= 500, window.__llamadas.some((l) => l.insert === "centroamericano_tiempos")]; }),
         ["organizacion", "asig-ana", true, true, false]);

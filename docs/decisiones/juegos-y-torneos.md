@@ -9014,6 +9014,47 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
   copia actual no agrega nada de más.
 
+### El control de tiempos desde la transmisión (Centroamericano)
+
+Lo pidió el dueño al revisar la herramienta de mesas («me gusta; el detalle es que en Lichess la transmisión va con
+15 min de atraso»). En las mesas que se transmiten (tableros electrónicos con reloj DGT), Lichess sabe la posición y lo
+que marca cada reloj: eso es un control de tiempos que nadie tuvo que anotar. La calculadora del reloj apagado
+(`js/centroamericano-reloj-apagado.js`, la misma en la tablet y en la organización) trae el bloque «Desde la
+transmisión de Lichess» con **«Buscar esta mesa en la transmisión»**; las cuentas y la lectura son de
+`js/centroamericano-transmision-reloj.js`.
+
+- **El atraso no estorba.** Un control de hace 15 minutos sigue siendo un control: lo exacto del reloj apagado es el
+  total desde el control (lo que pasó de verdad más los incrementos), y el reparto mejora con un control reciente.
+  Lo único que hace falta es la HORA en que de verdad marcaban eso los relojes, y sale de la misma transmisión: la ronda
+  dice su atraso (`round.delay`, 900 s en el Centroamericano; si no lo dice, 900) y la partida en curso cuánto lleva
+  pensando quien tiene el turno (`thinkTime`). **La transmisión no se adelanta para nadie**: se sigue leyendo con su
+  atraso; el atraso es por juego limpio y se queda.
+- **Lo que no dice Lichess se comprueba.** No está escrito si `thinkTime` cuenta desde lo que se ve (ya con el atraso)
+  o desde ahora. Se calculan las dos horas posibles y se elige la que cuadra con la hora de inicio de la ronda (la que
+  marcó el árbitro o la del horario): con 90 min + 30 s, lo gastado por los dos juntos es justo el tiempo que pasó desde
+  el inicio, más los ajustes del árbitro (ilegales y sanciones de la bitácora). Si la elegida no cuadra por más de
+  3 min, se avisa («¿empezó a otra hora, hubo una pausa o el reloj electrónico se puso mal?»). Sin `thinkTime`, la hora
+  es «ahora − atraso», avisada como aproximada; sin hora de inicio, se avisa que no se pudo comprobar.
+- **De dónde sale cada número.** Del JSON de la ronda (`/api/broadcast/-/-/<ronda>`), no del PGN: la posición (FEN) da
+  las jugadas de cada color y el turno, y `players[].clock` los relojes **en centésimas** (comprobado el 4/11/2026 con
+  una transmisión real de 90 + 30 y `delay` 900: el `[%clk]` del PGN marca lo mismo, con el incremento ya sumado). El PGN
+  de una ronda en curso puede venir cortado y pide más a Lichess.
+- **Qué mesa es**: la de la misma ronda en cualquier torneo clásico de la sala (`salas_torneo.enlaces`, la que lee la
+  página del torneo; el Rápido y el Blitz se saltan con `ritmoRapido`), por los **dos** nombres
+  (`mismoJugador`: sin tildes, mayúsculas ni comas, con dos palabras en común) y con los colores como en chess-results;
+  con los colores al revés no se usa y se dice. Sin reloj electrónico, sin jugadas, o ya terminada en la transmisión:
+  se dice por qué y no se usa.
+- **El árbitro decide.** Si la lectura de la transmisión es más reciente que el último control anotado, la calculadora
+  parte de ella (con una casilla para no usarla); si no, sigue con el del árbitro. A Lichess se le pide solo al tocar
+  el botón, con copias de 10 min (torneos y rondas) y de 30 s (las partidas de la ronda): quince tablets no lo saturan.
+  No escribe nada en la base: lo que el árbitro pone en el reloj nuevo se anota como siempre (acción `tiempo`), y la
+  nota dice «calculado desde los relojes de la transmisión de Lichess de las HH:MM (con 15 min de atraso)».
+- Lo prueban `verificar-centroamericano-transmision-reloj.js` (300 partidas simuladas con un reloj de verdad, la
+  transmisión con atraso y los dos significados de `thinkTime`: la hora del control sale al segundo y el reloj apagado
+  da el total exacto; la pausa sin anotar y la ilegal con sus 2 min) y `verificar-centroamericano-mesas-pagina.js` (en la
+  organización, con Lichess simulado: nada se pide antes del botón, la partida se encuentra por los nombres, se calcula
+  desde ella y la nota lo dice). Rotos a propósito (una sola hora posible, los relojes sin pasar de centésimas), saltan.
+
 ### El sorteo de Fair Play (Centroamericano)
 
 La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para

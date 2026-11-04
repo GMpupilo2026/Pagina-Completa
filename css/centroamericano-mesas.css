@@ -677,6 +677,10 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-apagado-ojo { font-weight: 700; color: #8a1c00; }
 .dark .cam-apagado-reloj { border-color: #b8bbf2; }
 .dark .cam-apagado-ojo { color: #ffb59e; }
+/* Los relojes de la transmisión de Lichess como control (solo en las mesas que se transmiten). Sin colores nuevos: el
+   borde es el mismo morado de los relojes, ya medido. */
+.cam-apagado-tx { margin: 0.6rem 0; padding: 0.6rem 0.8rem; border: 2px dashed var(--cac-morado-hondo); border-radius: 0.8rem; display: grid; gap: 0.35rem; justify-items: start; }
+.dark .cam-apagado-tx { border-color: #b8bbf2; }
 .cam-reloj-dibujo { display: block; width: 100%; max-width: 22rem; margin: 0.6rem auto 0; height: auto; }
 
 /* El tiempo de espera de la categoría se cumplió: quién sigue sin llegar y el botón de incomparecencia. */
