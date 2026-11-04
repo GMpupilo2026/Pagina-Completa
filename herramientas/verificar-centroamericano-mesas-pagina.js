@@ -697,7 +697,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
 
-    await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab { pointer-events: none !important; }"; document.head.append(e); });
+    await p.evaluate(() => { const e = document.createElement("style"); e.id = "t-sin-fab"; e.textContent = ".cam-fab, #avisos-zona, #avisos-zona * { pointer-events: none !important; }"; document.head.append(e); });
     // «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de SUS mesas (las de sus enlaces), de todas las rondas.
     console.log("\n=== «Mis pareos»: el logo y la «Ronda abierta» abren los pareos de mis mesas, ronda por ronda ===");
     igual("el logo de Ajedrez Integral es un botón (no un enlace que saque de la página) con nombre accesible, y la «Ronda abierta» también", await p.evaluate(() => { const l = document.getElementById("logo-pareos"), r = document.getElementById("ver-rondas"); return [l.tagName, l.hasAttribute("href"), /pareos de mis mesas/.test(l.getAttribute("aria-label")), l.textContent.replace(/\s+/g, " ").trim(), r.tagName, document.getElementById("d-ronda").textContent, /ver los pareos de las rondas/.test(r.textContent)]; }),
