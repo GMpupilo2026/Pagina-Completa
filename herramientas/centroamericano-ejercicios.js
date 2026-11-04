@@ -93,8 +93,31 @@ function motor(profundidad) {
   return analizar;
 }
 
+// Lichess contesta 429 cuando se le pide mucho seguido y pide esperar un
+// minuto antes de volver a pedir. El 3 de noviembre eso tumbaba la vuelta
+// entera después de la ronda 1, y como el archivo se escribía al final, no se
+// publicaba ni la ronda que ya estaba lista.
+const espera = (ms) => new Promise((ok) => setTimeout(ok, ms));
+async function conPaciencia(pedir, intentos = 4) {
+  for (let i = 1; ; i++) {
+    try { return await pedir(); } catch (e) {
+      if (i >= intentos || !/ 429 /.test(String(e && e.message))) throw e;
+      console.log("Lichess pidió esperar (429); se vuelve a intentar en " + (60 * i) + " s.");
+      await espera(60000 * i);
+    }
+  }
+}
+
 function leerArchivo() {
   try { return JSON.parse(fs.readFileSync(ARCHIVO, "utf8")); } catch (e) { return { sala: SALA, rondas: {} }; }
+}
+
+// El archivo, siempre igual de ordenado: una ronda y un ejercicio por línea.
+function escribir(datos) {
+  const rondas = Object.keys(datos.rondas).map(Number).sort((a, b) => a - b);
+  const texto = "{\n  \"sala\": \"" + SALA + "\",\n  \"rondas\": {" + rondas.map((n) =>
+    "\n    \"" + n + "\": [" + datos.rondas[n].map((e) => "\n      " + JSON.stringify(e)).join(",") + (datos.rondas[n].length ? "\n    " : "") + "]").join(",") + (rondas.length ? "\n  " : "") + "}\n}\n";
+  fs.writeFileSync(ARCHIVO, texto);
 }
 
 async function main() {
@@ -112,7 +135,7 @@ async function main() {
   // Los torneos de partidas clásicas, cada uno con su categoría.
   const torneos = new Map();
   for (const e of enlaces) {
-    const ev = await L.torneosDelEvento(e.lichess);
+    const ev = await conPaciencia(() => L.torneosDelEvento(e.lichess));
     ev.torneos.forEach((t) => {
       const solo = ev.torneos.length === 1;
       const modalidad = modalidadDe(t.nombre + " " + (solo ? e.texto : ""));
@@ -120,7 +143,7 @@ async function main() {
       torneos.set(t.id, { id: t.id, nombre: t.nombre, categoria: codigoCategoria(t.nombre) || (solo ? codigoCategoria(e.texto) : "") });
     });
   }
-  for (const t of torneos.values()) t.rondas = (await L.rondas(t.id)).rondas;
+  for (const t of torneos.values()) t.rondas = (await conPaciencia(() => L.rondas(t.id))).rondas;
 
   // Las rondas listas: terminadas en todos los torneos que las tienen.
   const ahora = Date.now();
@@ -135,52 +158,59 @@ async function main() {
   if (!listas.length) { console.log("Ninguna ronda nueva terminada."); return; }
 
   const analizar = motor(profundidad);
+  let fallo = null;
   try {
     for (const n of listas) {
-      const juegos = [];
-      for (const t of torneos.values()) {
-        const r = t.rondas.find((x) => x.numero === n);
-        if (!r) continue;
-        L.leerPgn(await L.pgn(r.id), Chess).forEach((g) => { g.categoria = t.categoria; juegos.push(g); });
+      try {
+        const juegos = [];
+        for (const t of torneos.values()) {
+          const r = t.rondas.find((x) => x.numero === n);
+          if (!r) continue;
+          L.leerPgn(await conPaciencia(() => L.pgn(r.id)), Chess).forEach((g) => { g.categoria = t.categoria; juegos.push(g); });
+        }
+        // La evaluación de Lichess llega un rato después de cada partida: sin
+        // ella casi no hay de dónde elegir. Mientras falte en muchas jugadas,
+        // se espera a la vuelta siguiente (hasta las 8 horas).
+        const plies = juegos.reduce((a, g) => a + g.jugadas.length, 0);
+        const conEval = juegos.reduce((a, g) => a + g.jugadas.filter((j) => j.eval != null).length, 0);
+        const empezo = Math.min(...[...torneos.values()].map((t) => (t.rondas.find((x) => x.numero === n) || {}).empieza || ahora));
+        if (!soloRonda && (!plies || conEval / plies < 0.8) && ahora - empezo < HORAS_RONDA * 3600000) {
+          console.log("Ronda " + n + ": Lichess todavía no evaluó sus partidas (" + Math.round(100 * conEval / (plies || 1)) + " %); se espera.");
+          continue;
+        }
+        const cands = E.candidatas(juegos).slice(0, CANDIDATAS_MAX);
+        const ok = [];
+        for (const c of cands) {
+          const e = await E.verificar(c, analizar, { Chess });
+          if (e) ok.push(e);
+        }
+        const elegidos = E.elegir(ok, cuantos).map((e) => {
+          const x = { categoria: e.categoria, fen: e.fen, solucion: e.solucion, despues: e.despues, tema: e.tema.tipo };
+          if (e.tema.tipo === "mate") x.mate = e.tema.n;
+          if (e.logro) x.logro = e.logro;
+          return x;
+        });
+        datos.rondas[n] = elegidos;
+        escribir(datos);   // ya queda guardada, aunque falle la siguiente
+        const linea = "Ronda " + n + ": " + juegos.length + " partidas, " + cands.length + " posiciones revisadas, " + ok.length + " con una sola jugada que gana; se publican " + elegidos.length + ".";
+        console.log(linea);
+        resumen.push("- " + linea);
+      } catch (e) {
+        // Las rondas ya listas se publican igual; esta se busca a la vuelta siguiente.
+        console.error("Ronda " + n + ": no se pudo buscar (" + (e && e.message) + "); queda para la vuelta siguiente.");
+        fallo = fallo || e;
+        break;
       }
-      // La evaluación de Lichess llega un rato después de cada partida: sin
-      // ella casi no hay de dónde elegir. Mientras falte en muchas jugadas,
-      // se espera a la vuelta siguiente (hasta las 8 horas).
-      const plies = juegos.reduce((a, g) => a + g.jugadas.length, 0);
-      const conEval = juegos.reduce((a, g) => a + g.jugadas.filter((j) => j.eval != null).length, 0);
-      const empezo = Math.min(...[...torneos.values()].map((t) => (t.rondas.find((x) => x.numero === n) || {}).empieza || ahora));
-      if (!soloRonda && (!plies || conEval / plies < 0.8) && ahora - empezo < HORAS_RONDA * 3600000) {
-        console.log("Ronda " + n + ": Lichess todavía no evaluó sus partidas (" + Math.round(100 * conEval / (plies || 1)) + " %); se espera.");
-        continue;
-      }
-      const cands = E.candidatas(juegos).slice(0, CANDIDATAS_MAX);
-      const ok = [];
-      for (const c of cands) {
-        const e = await E.verificar(c, analizar, { Chess });
-        if (e) ok.push(e);
-      }
-      const elegidos = E.elegir(ok, cuantos).map((e) => {
-        const x = { categoria: e.categoria, fen: e.fen, solucion: e.solucion, despues: e.despues, tema: e.tema.tipo };
-        if (e.tema.tipo === "mate") x.mate = e.tema.n;
-        if (e.logro) x.logro = e.logro;
-        return x;
-      });
-      datos.rondas[n] = elegidos;
-      const linea = "Ronda " + n + ": " + juegos.length + " partidas, " + cands.length + " posiciones revisadas, " + ok.length + " con una sola jugada que gana; se publican " + elegidos.length + ".";
-      console.log(linea);
-      resumen.push("- " + linea);
     }
   } finally {
     analizar.cerrar();
   }
 
-  // El archivo, siempre igual de ordenado: una ronda y un ejercicio por línea.
-  const rondas = Object.keys(datos.rondas).map(Number).sort((a, b) => a - b);
-  const texto = "{\n  \"sala\": \"" + SALA + "\",\n  \"rondas\": {" + rondas.map((n) =>
-    "\n    \"" + n + "\": [" + datos.rondas[n].map((e) => "\n      " + JSON.stringify(e)).join(",") + (datos.rondas[n].length ? "\n    " : "") + "]").join(",") + (rondas.length ? "\n  " : "") + "}\n}\n";
-  fs.writeFileSync(ARCHIVO, texto);
+  escribir(datos);
   const r = arg("resumen");
   if (r) fs.appendFileSync(r, "Ejercicios de la ronda del Centroamericano 2026, buscados en las partidas de Lichess y confirmados con Stockfish (profundidad " + profundidad + ").\n\n" + resumen.join("\n") + "\n");
+  // Si falló antes de sacar alguna ronda, que el flujo lo marque en rojo.
+  if (fallo && !resumen.length) throw fallo;
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

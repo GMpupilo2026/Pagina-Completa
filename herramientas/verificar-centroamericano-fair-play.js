@@ -49,7 +49,8 @@ function pruebasDelCalculo() {
     const html = '<table class="CRs1"><tr class="CRg1b"><th>M.</th><th>No.</th><th></th><th></th><th>White</th><th>Elo</th><th>Pts.</th><th>Resultado</th><th>Pts.</th><th></th><th>Black</th><th>Elo</th><th></th><th>No.</th></tr>'
         + '<tr><td class="CRc">1</td><td>2</td><td></td><td></td><td><a href="x.aspx?art=9&amp;snr=2">Garcia Tabasco, Alberto</a></td><td>2023</td><td>1</td> <td>1 - 0</td><td>1</td><td></td><td><a href="x.aspx?art=9&amp;snr=21">Reynoso Almonte, Owen</a></td><td>1596</td><td></td><td>21</td></tr>'
         + '<tr><td class="CRc">2</td><td>20</td><td></td><td></td><td><a href="x.aspx?snr=20">Ordonez Ch., Dylan</a></td><td>1609</td><td>1</td> <td></td><td>1</td><td>AIM</td><td><a href="x.aspx?snr=3">Farley, Jeremiah</a></td><td>1874</td><td></td><td>3</td></tr>'
-        + '<tr><td class="CRc">3</td><td>45</td><td></td><td></td><td><a href="x.aspx?snr=45">Barrantes, Matias</a></td><td>0</td><td>1</td> <td>1 - -</td><td></td><td></td><td>bye</td><td></td><td></td><td></td></tr></table>';
+        + '<tr><td class="CRc">3</td><td>45</td><td></td><td></td><td><a href="x.aspx?snr=45">Barrantes, Matias</a></td><td>0</td><td>1</td> <td>1 - -</td><td></td><td></td><td>bye</td><td></td><td></td><td></td></tr>'
+        + '<tr><td class="CRc">4</td><td>5</td><td></td><td></td><td><a href="x.aspx?snr=5">Valle, Moises</a></td><td>2094</td><td>0</td> <td>&frac12; - &frac12;</td><td>0</td><td></td><td><a href="x.aspx?snr=25">Esquivel, Jeremy</a></td><td>1842</td><td></td><td>25</td></tr></table>';
     // Una partida de 40 jugadas: las blancas siempre dejan la evaluación igual (precisión ~100), las negras pierden 50
     // centipeones cada vez desde la jugada 9, hasta pasar los 6 peones (desde ahí ya no cuenta).
     let movs = "", ev = 20;
@@ -63,15 +64,19 @@ function pruebasDelCalculo() {
     const codigo = `
       const A = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/centroamericano-fair-play/analisis.ts"))});
       const p = A.leerPareos(${JSON.stringify(html)});
+      const P = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/pareos-publicos.ts"))});
+      const copia = P.leerPareos(${JSON.stringify(html)});
       const g = A.leerPgn(${JSON.stringify(pgn)});
       const m = A.medir(g[0].evals);
-      console.log(JSON.stringify({ p, n: g.length, tags: [g[0].tags.Round, g[1].tags.Result], mate: g[1].evals[0], m,
+      console.log(JSON.stringify({ p, copia, n: g.length, tags: [g[0].tags.Round, g[1].tags.Result], mate: g[1].evals[0], m,
         rm: A.rondaYMesa(g[0].tags), cats: ["Open U18", "Girls U08", "Open U10", "Girls U12", "Final"].map(A.categoriaDeLichess) }));`;
     const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", codigo], { encoding: "utf8" });
     if (r.status !== 0) { console.log("  ✗ no se pudo correr analisis.ts: " + r.stderr); fallos++; return; }
     const d = JSON.parse(r.stdout);
     igual("chess-results: cada mesa con el número de cada jugador en el torneo, su nombre, su Elo y el resultado", d.p[0], { mesa: 1, snr_b: 2, snr_n: 21, blancas: "Garcia Tabasco, Alberto", negras: "Reynoso Almonte, Owen", elo_b: 2023, elo_n: 1596, resultado: "1 - 0" });
+    igual("«Mis pareos» (centroamericano-mesa) lee la misma página IGUAL que Fair Play: las dos copias del lector dan lo mismo mesa por mesa", d.copia, d.p);
     igual("una mesa sin resultado todavía queda con el resultado vacío", [d.p[1].mesa, d.p[1].negras, d.p[1].resultado], [2, "Farley, Jeremiah", ""]);
+    igual("chess-results escribe las tablas como «&frac12; - &frac12;»: se decodifica y la partida NO queda sin resultado (en los dos lectores)", [d.p[3].resultado, d.copia[3].resultado], ["½ - ½", "½ - ½"]);
     igual("el bye: un solo jugador, negras vacío y sin Elo inventado (un 0 no es un Elo)", [d.p[2].mesa, d.p[2].negras, d.p[2].snr_n, d.p[2].elo_b], [3, "", null, null]);
     igual("Lichess: cada partida con sus etiquetas, y un mate vale ±10000", [d.n, d.tags, d.mate], [2, ["2.5", "*"], 10000]);
     igual("«Round 2.5» es la ronda 2, mesa 5", d.rm, { ronda: 2, mesa: 5 });

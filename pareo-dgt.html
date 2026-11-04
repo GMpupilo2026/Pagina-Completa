@@ -107,6 +107,11 @@
                     </div>
                 </div>
                 <label class="mt-3 flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="crear-rondas" type="checkbox" checked class="w-4 h-4 accent-brand-700"> Crear cada ronda en Lichess apenas sale el pareo</label>
+                <label class="mt-2 flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="copia-privada" type="checkbox" class="w-4 h-4 mt-0.5 accent-brand-700"> <span>También una copia <strong>privada y sin atraso</strong> para los árbitros: cada torneo y cada ronda se crean otra vez como privados, y cada jugada va a los dos. Sus enlaces se conectan en la Mesa de árbitros del Centroamericano. (El atraso de la pública se pone en Lichess, en cada ronda.)</span></label>
+                <div id="privadas" class="mt-2" hidden>
+                    <label for="privadas-enlaces" class="block text-sm font-semibold text-brand-800 dark:text-white">Enlaces de la copia privada (para la Mesa de árbitros)</label>
+                    <textarea id="privadas-enlaces" rows="3" readonly class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
                 <button id="btn-crear-torneos" type="button" disabled class="mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Crear los torneos en Lichess</button>
                 <details id="borrar-lichess" class="mt-4 rounded-lg border border-brand-200 dark:border-brand-700 px-3 py-2">
                     <summary class="cursor-pointer font-semibold text-sm text-brand-800 dark:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar torneos en Lichess</summary>

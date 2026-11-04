@@ -46,9 +46,9 @@
                 return t;
             });
             return { torneos, sinTildes: !!e.sinTildes, ritmo: e.ritmo || "blitz",
-                     visibilidad: e.visibilidad || "public", lugar: e.lugar || "", crearRondas: e.crearRondas !== false };
+                     visibilidad: e.visibilidad || "public", lugar: e.lugar || "", crearRondas: e.crearRondas !== false, copiaPrivada: !!e.copiaPrivada };
         } catch (_) {
-            return { torneos: [], sinTildes: false, ritmo: "blitz", visibilidad: "public", lugar: "", crearRondas: true };
+            return { torneos: [], sinTildes: false, ritmo: "blitz", visibilidad: "public", lugar: "", crearRondas: true, copiaPrivada: false };
         }
     }
     const estado = leerEstado();
@@ -261,6 +261,43 @@
         return t.lichess.id;
     }
 
+    // La copia privada y sin atraso para los árbitros (si está marcada): el mismo torneo, otra vez, privado. Se crea
+    // aparte del público (puede que el público ya existiera) y nunca lo frena: si falla, se anota y se reintenta.
+    async function torneoPrivado(t) {
+        if (!estado.copiaPrivada) return null;
+        if (t.privada && t.privada.id) return t.privada.id;
+        if (!token || !usuarioLichess) return null;
+        const r = await lichess("/broadcast/new", { form: PareoDGT.formTorneo({
+            nombre: (t.nombre + " · árbitros").slice(0, 80), ritmo: estado.ritmo, visibilidad: "private", lugar: estado.lugar, tnr: t.tnr,
+            descripcion: "Copia privada y sin atraso para los árbitros. No se comparte.",
+        }) });
+        t.privada = { id: r.tour.id, url: r.tour.url };
+        guardar();
+        pintarPrivadas();
+        anotar("«" + t.nombre + "»: copia privada para los árbitros creada en Lichess.", { enlaces: [{ href: r.tour.url, texto: "Verla en Lichess" }] });
+        return t.privada.id;
+    }
+    async function rondaPrivada(t, datos, pgn) {
+        try {
+            const idTorneo = await torneoPrivado(t);
+            if (!idTorneo) return;
+            const r = t.rondas[String(datos.ronda)];
+            if (!r.privada) {
+                const nueva = await lichess("/broadcast/" + idTorneo + "/new", { form: PareoDGT.formRonda({ ronda: datos.ronda, inicio: PareoDGT.inicioRonda(datos.fecha, datos.hora) }) });
+                r.privada = { id: nueva.round.id, url: nueva.round.url };
+                guardar();
+            }
+            if (!r.privadaEmpujada) { await lichess("/api/broadcast/round/" + r.privada.id + "/push", { texto: pgn }); r.privadaEmpujada = true; guardar(); }
+        } catch (e) {
+            anotar("«" + t.nombre + "», ronda " + datos.ronda + ": no se pudo preparar la copia privada para los árbitros. " + e.message + ". Se vuelve a intentar.", { error: true });
+        }
+    }
+    function pintarPrivadas() {
+        const urls = estado.torneos.filter((t) => t.privada && t.privada.url).map((t) => t.privada.url);
+        $("privadas").hidden = !urls.length;
+        $("privadas-enlaces").value = urls.join("\n");
+    }
+
     async function crearTorneos() {
         $("btn-crear-torneos").disabled = true;
         for (const t of estado.torneos) {
@@ -391,6 +428,7 @@
     // La ronda en Lichess, con el pareo empujado. Una sola vez por ronda.
     async function rondaLichess(t, datos, pgn) {
         const r = t.rondas[String(datos.ronda)];
+        if (estado.copiaPrivada) await rondaPrivada(t, datos, pgn);
         if (r.lichess && r.empujada) return;
         if (r.lichess) {
             // La ronda se creó pero el pareo no llegó: solo falta empujarlo.
@@ -430,6 +468,7 @@
         if (!ok) return;
         try {
             await lichess("/api/broadcast/round/" + r.lichess.id + "/push", { texto: r.pgn });
+            if (r.privada) await lichess("/api/broadcast/round/" + r.privada.id + "/push", { texto: r.pgn });
             anotar("«" + t.nombre + "», ronda " + ronda + ": pareo corregido mandado a Lichess.");
         } catch (e) {
             anotar("«" + t.nombre + "», ronda " + ronda + ": no se pudo mandar a Lichess. " + e.message + ".", { error: true });
@@ -472,7 +511,8 @@
         // pareo, y los resultados que el árbitro va anotando en chess-results
         // llegan solos a Lichess («Transmitir sin LiveChess» los toma de acá).
         if (yaHecha && que === "igual" && (!yaHecha.pareo || resultados(yaHecha.pareo) !== resultados(datos))) { yaHecha.pareo = pareoDe(datos); guardar(); }
-        if (que === "igual" && yaHecha.lichessPendiente && estado.crearRondas && token && usuarioLichess) {
+        // También si falta la copia privada de los árbitros (se marcó después, o Lichess falló esa vez).
+        if (que === "igual" && (yaHecha.lichessPendiente || (estado.copiaPrivada && yaHecha.lichess && !yaHecha.privadaEmpujada)) && estado.crearRondas && token && usuarioLichess) {
             await intentarLichess(t, datos, yaHecha.pgn);
         }
         if (que === "esperar" || que === "igual") {
@@ -778,6 +818,9 @@
         $("lugar").addEventListener("change", () => { estado.lugar = $("lugar").value.trim(); guardar(); });
         $("crear-rondas").checked = estado.crearRondas;
         $("crear-rondas").addEventListener("change", () => { estado.crearRondas = $("crear-rondas").checked; guardar(); });
+        $("copia-privada").checked = estado.copiaPrivada;
+        $("copia-privada").addEventListener("change", () => { estado.copiaPrivada = $("copia-privada").checked; guardar(); });
+        pintarPrivadas();
         try { $("recordar-token").checked = !!localStorage.getItem(CLAVE_TOKEN); } catch (_) { /* nada */ }
         $("recordar-token").addEventListener("change", () => {
             try {
@@ -824,7 +867,7 @@
             const n = numero || (t && t.ultima && t.ultima.ronda);
             const r = n && t.rondas && t.rondas[String(n)];
             if (!r || !r.pareo) return null;
-            return { ronda: Number(n), pareo: r.pareo, mesas: t.mesas || "", lichess: r.lichess || null, nombre: t.nombre };
+            return { ronda: Number(n), pareo: r.pareo, mesas: t.mesas || "", lichess: r.lichess || null, privada: r.privada || null, nombre: t.nombre };
         },
         vigilando: () => !!vigilando,
         vigilar: () => { if (!vigilando && estado.torneos.length) vigilar(true); },

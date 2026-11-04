@@ -261,12 +261,36 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
        !!pr && pr.ronda === 1 && pr.mesas.length === 2 && pr.mesas[1].negras && pr.mesas[1].negras.nombre === "Seis, Fito" && pr.mesas[1].mesa === 2, r.stderr || JSON.stringify(pr));
   }
   const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts"), "utf8");
-  ok("la función manda un solo resumen por país y ronda (tnr «0»), no uno por torneo",
-     /avisar\(s, "delegacion", "0", 0, r\.ronda/.test(fn) && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
+  ok("la función manda un solo resumen por país, ronda y modalidad (tnr «0» el clásico, «1» Rápidas, «2» Blitz), no uno por torneo",
+     /avisar\(s, "delegacion", enc\.tnr, 0, r\.ronda/.test(fn) && /clasico: \{ es: "", en: "", tnr: "0" \}/.test(fn)
+     && /rapidas: \{ es: "Rápidas · ", en: "Rapid · ", tnr: "1" \}/.test(fn) && /blitz: \{ es: "Blitz · ", en: "Blitz · ", tnr: "2" \}/.test(fn)
+     && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
   ok("y a cada jugador sin «Gr» le pone la categoría de su enlace", /grupo: j\.grupo \|\| t\.categoria/.test(fn));
   ok("la función lee solo los torneos de la modalidad que pide la página, y dice cuáles tiene la sala",
      /sala\.torneos\.filter\(\(t\) => t\.modalidad === modalidad\)\.slice\(0, 15\)/.test(fn) && /json\(\{ torneos, modalidad, modalidades: sala\.modalidades \}\)/.test(fn));
-  ok("y los avisos al celular siguen con el clásico", /const torneos = await datosDeSala\(admin, sala\);/.test(fn));
+  ok("los avisos al celular: el clásico siempre, y Rápidas o Blitz el día de su torneo, cada una con su Lichess",
+     /const torneos = await datosDeSala\(admin, sala\);/.test(fn) && /await porModalidad\(torneos, "clasico"\)/.test(fn)
+     && /for \(const m of modalidadesDeAhora\(await calendarioDe\(sala\), Date\.now\(\)\)\)[\s\S]{0,200}datosDeSala\(admin, sala, false, m\)[\s\S]{0,120}porModalidad\(deM, m\)/.test(fn)
+     && /partidasDeLichess\(admin, sala, modalidad\)/.test(fn) && /modalidadDe\(t\.nombre \+ " " \+ t\.texto\) !== modalidad/.test(fn)
+     && /titulo: pre\(s\.idioma === "en"\) \+ \(s\.idioma === "en" \? "Round " : "Ronda "\)/.test(fn));
+  {
+    // El calendario de la página dice cuándo es cada torneo de otra modalidad;
+    // se revisa desde una hora antes hasta 12 horas después, y nunca otro día.
+    const ini = fn.indexOf("export function leerCalendario"), fin = fn.indexOf("const ENCABEZADO");
+    const tmp = path.join(require("os").tmpdir(), "cac-calendario-" + process.pid + ".mts");
+    fs.writeFileSync(tmp, "type Calendario = any; type Modalidad = string;\nconst CALENDARIOS: Record<string, string> = {};\nconst calendarios = new Map();\n" + fn.slice(ini, fin));
+    const ics = fs.readFileSync(path.join(RAIZ, "documentos/centroamericano-2026/calendario-centroamericano-2026.ics"), "utf8");
+    const r = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+      `const m = await import(${JSON.stringify(tmp)}); const cal = m.leerEventos(process.argv[1]); const en = (d) => m.modalidadesDeAhora(cal, Date.parse(d));
+       process.stdout.write(JSON.stringify({ rondas: cal.rondas.length, torneos: cal.torneos.map((t) => t.modalidad + "@" + new Date(t.inicio).toISOString()),
+         r: [en("2026-11-03T19:30:00Z"), en("2026-11-03T20:30:00Z"), en("2026-11-04T08:00:00Z"), en("2026-11-04T10:00:00Z"), en("2026-11-05T21:30:00Z"), en("2026-11-02T21:00:00Z")] }));`, ics], { encoding: "utf8" });
+    fs.rmSync(tmp, { force: true });
+    const c = r.status === 0 ? JSON.parse(r.stdout) : null;
+    ok("el calendario trae las 9 rondas del clásico y los torneos de Rápidas (3/11, 3:00 p. m.) y Blitz (5/11, 3:00 p. m.)",
+       !!c && c.rondas === 9 && JSON.stringify(c.torneos) === JSON.stringify(["rapidas@2026-11-03T21:00:00.000Z", "blitz@2026-11-05T21:00:00.000Z"]), r.stderr || JSON.stringify(c));
+    ok("y Rápidas o Blitz se revisan desde una hora antes hasta 12 horas después de su hora, no otro día",
+       !!c && JSON.stringify(c.r) === JSON.stringify([[], ["rapidas"], ["rapidas"], [], ["blitz"], []]), JSON.stringify(c && c.r));
+  }
   ok("y manda cada aviso de la organización una vez a cada aparato que ya estaba suscrito, en su idioma",
      /avisar\(s, "anuncio", "0", 0, Number\(a\.id\)/.test(fn) && /new Date\(s\.creada\)\.getTime\(\) > new Date\(a\.creado\)\.getTime\(\)/.test(fn) && /en && a\.texto_en \? a\.texto_en : a\.texto/.test(fn));
 }

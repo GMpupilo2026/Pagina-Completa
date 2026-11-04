@@ -18,6 +18,8 @@
      alVolver     () => … o null (sin botón «Volver»)
      avisar       (texto, error) => …
      incompleta   true si la página sabe que le faltan anotaciones de la mesa (la tablet trae solo las últimas)
+     transmision  async (bonos) => la lectura de la transmisión de Lichess (CentroamericanoTransmisionReloj.buscar),
+                  o null si la página no la ofrece: se pide solo al tocar «Buscar esta mesa en la transmisión»
      clase        la clase del <form>
 
    Ver «El reloj que se apaga» en docs/decisiones/juegos-y-torneos.md. */
@@ -88,11 +90,17 @@
   // Lo que queda escrito (en la bitácora de la mesa o en el aviso al árbitro): de dónde salió y si se ajustó.
   function nota(r, ctl, tB, tN) {
     const propuesto = tB === Math.max(0, r.blancas) && tN === Math.max(0, r.negras);
-    return ("Reloj apagado (art. 6.10): " + (ctl ? "calculado desde el control de las " + hora(ctl.ocurrio) : "calculado desde el inicio de la ronda")
+    const desde = !ctl ? "calculado desde el inicio de la ronda"
+      : ctl.origen === "transmision" ? "calculado desde los relojes de la transmisión de Lichess de las " + hora(ctl.ocurrio) + " (" + conAtraso(ctl.atraso) + ")"
+        : "calculado desde el control de las " + hora(ctl.ocurrio);
+    return ("Reloj apagado (art. 6.10): " + desde
       + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
       + (r.ajustes && r.ajustes.length ? "; incluye " + r.ajustes.map((a) => (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + (a.motivo === "ilegal" ? " (ilegal)" : " (sanción)")).join(", ") : "")
       + (propuesto ? "" : "; propuesto " + T(Math.max(0, r.blancas)) + " / " + T(Math.max(0, r.negras)) + ", ajustado a mano")).slice(0, 500);
   }
+
+  // «con 15 min de atraso» o «en vivo, sin atraso» (la transmisión privada de los árbitros).
+  const conAtraso = (seg) => (seg > 0 ? "con " + Math.round(seg / 60) + " min de atraso" : "en vivo, sin atraso");
 
   // La hora en que empezó la ronda: la que marcó el árbitro de la categoría o, si no, la del horario.
   function inicioDeLaRonda(ronda, marcadaIso) {
@@ -106,7 +114,41 @@
     const st = o.estado;
     const form = el("form", { class: o.clase || "", novalidate: true });
     const bonos = () => C.bonosIlegales(o.anotaciones, o.mesa, o.anuladas);
-    const ctl = () => C.ultimoControl(o.lecturas || []);
+    // El control que vale: el último del árbitro o, si es más reciente y el árbitro no lo apagó, el de la transmisión.
+    const delArbitro = () => C.ultimoControl(o.lecturas || []);
+    const deTx = () => (st.tx && !st.tx.error ? st.tx : null);
+    const ctl = () => {
+      const a = delArbitro(), t = deTx();
+      return t && st.usarTx !== false && (!a || String(t.ocurrio) > String(a.ocurrio)) ? t : a;
+    };
+    async function buscarTx() {
+      st.txBuscando = true; st.tx = null; pintar();
+      try { st.tx = await o.transmision(bonos()); } catch (e) { st.tx = { error: e && e.message ? e.message : String(e) }; }
+      st.txBuscando = false;
+      if (form.isConnected) pintar();
+    }
+    // El bloque de la transmisión: un botón (Lichess se lee solo cuando el árbitro lo pide) y lo que se vio.
+    function bloqueTx() {
+      if (!o.transmision) return null;
+      const t = deTx(), a = delArbitro();
+      const masNueva = t && (!a || String(t.ocurrio) > String(a.ocurrio));
+      const hijos = [
+        el("p", { class: "text-sm font-bold", texto: "Desde la transmisión de Lichess" }),
+        el("p", { class: "text-sm", texto: "En las mesas que se transmiten, los relojes electrónicos sirven de control de tiempos: de la transmisión sin atraso si la organización la conectó, o de la pública, cuyo atraso (15 min) se descuenta solo. Se usa la hora en que de verdad marcaban eso." }),
+        el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico ra-tx-buscar", disabled: !!st.txBuscando, onclick: buscarTx },
+          st.txBuscando ? "Buscando en la transmisión…" : st.tx ? "Volver a leer la transmisión" : "Buscar esta mesa en la transmisión"),
+      ];
+      if (st.tx && st.tx.error) hijos.push(el("p", { class: "text-sm cam-apagado-falta ra-tx-estado", role: "status", texto: st.tx.error }));
+      if (t) {
+        hijos.push(el("p", { class: "text-sm ra-tx-estado", role: "status", texto: "Relojes de las " + hora(t.ocurrio) + " (" + conAtraso(t.atraso) + "): Blancas " + T(t.t_blancas) + " (" + t.j_blancas + " jug.) · Negras " + T(t.t_negras) + " (" + t.j_negras + " jug.)." }));
+        for (const x of t.avisos || []) hijos.push(el("p", { class: "text-sm cam-apagado-ojo ra-tx-aviso", texto: "⚠ " + x }));
+        hijos.push(masNueva
+          ? el("label", { class: "cam-apagado-opcion" }, el("input", { type: "checkbox", class: "ra-tx-usar", checked: st.usarTx !== false, onchange: (e) => { st.usarTx = e.target.checked; pintar(); } }),
+            el("span", { texto: "Calcular desde los relojes de la transmisión (más recientes que el último control anotado)" }))
+          : el("p", { class: "text-sm", texto: "El último control anotado es más reciente que la transmisión: se calcula desde ese." }));
+      }
+      return el("div", { class: "cam-apagado-tx", "aria-busy": st.txBuscando ? "true" : "false" }, ...hijos);
+    }
     const num = (v) => (v === "" || v == null ? NaN : Number(v));
     const calcular = () => {
       const ahora = st.horaMarcada ? new Date(st.horaMarcada).getTime() : Date.now();
@@ -142,7 +184,7 @@
         dato("Ilegales y sanciones de tiempo", b.length ? b.map((x) => (x.motivo === "ilegal" ? "Ilegal" : "Irregularidad") + " de las " + x.de + " a las " + hora(new Date(x.ms).toISOString())
           + " (" + (x.segundos > 0 ? "+" : "−") + T(Math.abs(x.segundos)) + " a las " + x.color + (c && x.ms <= new Date(c.ocurrio).getTime() ? ", ya en el control" : ", se cuenta") + ")").join(" · ") : "ninguna"),
         o.incompleta ? el("li", { class: "cam-apagado-ojo", texto: "⚠ La tablet no tiene a mano todas las anotaciones de esta mesa (trae las últimas 60 del árbitro): alguna ilegal o sanción vieja podría faltar en la cuenta. La organización lo puede calcular con la bitácora completa." }) : null,
-        dato("Último control", c ? hora(c.ocurrio) + " · Blancas " + T(c.t_blancas) + " (" + c.j_blancas + " jug.) · Negras " + T(c.t_negras) + " (" + c.j_negras + " jug.)" : "ninguno en esta mesa"));
+        dato("Último control", c ? (c.origen === "transmision" ? "de la transmisión, " : "") + hora(c.ocurrio) + " · Blancas " + T(c.t_blancas) + " (" + c.j_blancas + " jug.) · Negras " + T(c.t_negras) + " (" + c.j_negras + " jug.)" : "ninguno en esta mesa"));
       const jug = (color, k, nombre) => el("label", { class: "block" },
         el("span", { class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre || "" })),
         el("input", { type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo ra-j" + k.slice(1), value: st[k] || "", oninput: (e) => { st[k] = e.target.value; pintarResultado(); } }));
@@ -155,6 +197,7 @@
         o.antes || "",
         el("p", { class: "text-sm", texto: o.intro || "Con el último control de esta mesa se calcula cuánto le queda a cada uno. Es una propuesta: el tiempo lo decide el árbitro (art. 6.10)." }),
         datos,
+        bloqueTx(),
         el("fieldset", { class: "cam-tiempo-lado" }, el("legend", { texto: "Jugadas que lleva cada uno ahora" }),
           el("div", { class: "grid grid-cols-2 gap-2" }, jug("blancas", "jb", o.blancas), jug("negras", "jn", o.negras))),
         el("fieldset", { class: "cam-apagado-reparto" }, el("legend", { class: "text-sm font-bold", texto: "Lo que pasó desde el control, ¿cómo se reparte?" }),

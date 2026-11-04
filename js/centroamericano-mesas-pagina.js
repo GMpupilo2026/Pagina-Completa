@@ -719,7 +719,7 @@
         return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
             el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
                 a.concentracion ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "si", "data-concentracion": "si", texto: "🔒 Concentración" }) : null,
-                a.todas_las_mesas === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "no", "data-sin-todas": "si", texto: "Sin «Todas las mesas»" }) : null,
+                a.todas_las_mesas === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "no", "data-sin-todas": "si", texto: "Sin «¿Dónde juega?»" }) : null,
                 otrosEnlaces(a).length ? el("span", { class: "cam-tambien", texto: "También en: " + otrosEnlaces(a).map((x) => nombreTorneo(x.tnr) + " (mesas " + x.mesa_desde + " a " + x.mesa_hasta + ")").join("; ") }) : null),
             el("td", { texto: a.mesa_desde + " a " + a.mesa_hasta }),
             el("td", { texto: textoEstado(a) }),
@@ -732,7 +732,7 @@
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
                 est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
-                est === "activo" ? boton("todas-mesas", a.todas_las_mesas === false ? "Habilitar «Todas las mesas»" : "Quitar «Todas las mesas»", () => ponerTodasLasMesas(a, a.todas_las_mesas === false)) : null,
+                est === "activo" ? boton("todas-mesas", a.todas_las_mesas === false ? "Habilitar «¿Dónde juega?»" : "Quitar «¿Dónde juega?»", () => ponerTodasLasMesas(a, a.todas_las_mesas === false)) : null,
                 est === "activo" ? boton("concentracion", a.concentracion ? "Quitar concentración" : "Concentración", () => ponerConcentracion(a, !a.concentracion)) : null,
                 a.concluyo_en ? boton("reabrir-labores", "Reabrir sus labores", () => reabrirLabores(a)) : null,
                 boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"),
@@ -748,22 +748,22 @@
         await cargarAsignaciones();
     }
 
-    // «Todas las mesas» (el pizote): se habilita o deshabilita por enlace, o en todos. El servidor lo hace cumplir (403); la tablet esconde el botón.
+    // «¿Dónde juega?» (el pizote): se habilita o deshabilita por enlace, o en todos. El servidor lo hace cumplir (403); la tablet esconde el botón.
     async function ponerTodasLasMesas(a, si) {
         const { error } = await sb.from("centroamericano_asignaciones").update({ todas_las_mesas: si }).eq("id", a.id);
         if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
-        avisar(si ? "«Todas las mesas» habilitado para " + a.arbitro + "." : "«Todas las mesas» deshabilitado para " + a.arbitro + ".");
+        avisar(si ? "«¿Dónde juega?» habilitado para " + a.arbitro + "." : "«¿Dónde juega?» deshabilitado para " + a.arbitro + ".");
         await cargarAsignaciones();
     }
 
     async function todasLasMesasEnTodas(si) {
         const ids = asignaciones.filter((a) => !a.revocada && (si ? a.todas_las_mesas === false : a.todas_las_mesas !== false)).map((a) => a.id);
-        if (!ids.length) { avisar(si ? "«Todas las mesas» ya está habilitado en todas las tablets." : "«Todas las mesas» ya está deshabilitado en todas las tablets."); return; }
-        const sigue = await Avisos.confirmar(si ? "Se habilita «Todas las mesas» en " + ids.length + (ids.length === 1 ? " tablet." : " tablets.") : "Se deshabilita «Todas las mesas» en " + ids.length + (ids.length === 1 ? " tablet" : " tablets") + ": el árbitro ya no podrá ver los emparejamientos de las demás categorías.", { titulo: si ? "Habilitar «Todas las mesas»" : "Deshabilitar «Todas las mesas»", aceptar: si ? "Sí, habilitarlo" : "Sí, deshabilitarlo" });
+        if (!ids.length) { avisar(si ? "«¿Dónde juega?» ya está habilitado en todas las tablets." : "«¿Dónde juega?» ya está deshabilitado en todas las tablets."); return; }
+        const sigue = await Avisos.confirmar(si ? "Se habilita «¿Dónde juega?» en " + ids.length + (ids.length === 1 ? " tablet." : " tablets.") : "Se deshabilita «¿Dónde juega?» en " + ids.length + (ids.length === 1 ? " tablet" : " tablets") + ": el árbitro ya no podrá ver los emparejamientos de las demás categorías.", { titulo: si ? "Habilitar «¿Dónde juega?»" : "Deshabilitar «¿Dónde juega?»", aceptar: si ? "Sí, habilitarlo" : "Sí, deshabilitarlo" });
         if (!sigue) return;
         const { error } = await sb.from("centroamericano_asignaciones").update({ todas_las_mesas: si }).in("id", ids);
         if (error) { avisar("No se pudo cambiar: " + error.message, true); return; }
-        avisar(si ? "«Todas las mesas» habilitado en " + ids.length + " tablets." : "«Todas las mesas» deshabilitado en " + ids.length + " tablets.");
+        avisar(si ? "«¿Dónde juega?» habilitado en " + ids.length + " tablets." : "«¿Dónde juega?» deshabilitado en " + ids.length + " tablets.");
         await cargarAsignaciones();
     }
 
@@ -1074,11 +1074,14 @@
         const filas = data || [];
         const R = window.CentroamericanoRelojApagado;
         const asig = asignaciones.filter(activa).find((a) => a.tnr === f.tnr && f.mesa >= a.mesa_desde && f.mesa <= a.mesa_hasta);
+        const inicio = R.inicioDeLaRonda(f.ronda, (inicios[f.tnr + "|" + f.ronda] || {}).inicio || null);
+        const TX = window.CentroamericanoTransmisionReloj;
         $("ct-apagado-cuerpo").replaceChildren(R.armar({
             estado: apagadoEstado, mesa: f.mesa, blancas: f.blancas, negras: f.negras,
+            transmision: TX ? (bonos) => TX.buscar({ blancas: f.blancas, negras: f.negras, ronda: f.ronda, inicio: inicio ? inicio.ms : null, bonos }) : null,
             lecturas: tiempos.filter((x) => mismaPartida(x, f)),
             anotaciones: filas.filter((x) => x.tipo !== "anulacion"), anuladas: new Set(filas.filter((x) => x.tipo === "anulacion").map((x) => x.anula)),
-            inicio: R.inicioDeLaRonda(f.ronda, (inicios[f.tnr + "|" + f.ronda] || {}).inicio || null),
+            inicio,
             intro: "Con el último control de esta partida se calcula cuánto le queda a cada uno. Es una propuesta para el árbitro de la mesa: el tiempo lo decide él (art. 6.10)."
                 + (asig ? "" : " Esta mesa no tiene un árbitro con enlace activo: no se le puede mandar."),
             boton: "Mandárselo al árbitro", clase: "cam-apagado-form", avisar,

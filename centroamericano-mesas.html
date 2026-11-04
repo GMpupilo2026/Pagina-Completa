@@ -196,12 +196,12 @@
                     <button type="button" id="conc-todas-no" class="cam-btn cam-btn-claro cam-btn-chico">Apagarlo en todas</button>
                     <p class="cam-herramientas-nota">La tablet pasa a pantalla completa y, si el árbitro cambia de pestaña o de aplicación, o sale de la pantalla completa, se le tapa la pantalla hasta que toque «Volver a la mesa». Cada salida queda anotada con su hora y su duración. Una página no puede bloquear el aparato: para eso, en la tablet, «Fijar pantalla» (Android) o «Acceso guiado» (iPad). También se enciende o apaga en cada fila.</p>
                 </div>
-                <!-- «Todas las mesas»: el pizote de la tablet abre los emparejamientos de todas las categorías; la organización lo habilita o deshabilita. -->
+                <!-- «¿Dónde juega?»: el pizote de la tablet abre los emparejamientos de todas las categorías; la organización lo habilita o deshabilita. -->
                 <div class="cam-concentracion cam-no-qr" id="todas-mesas-admin" role="group" aria-labelledby="ct-tm-titulo">
-                    <strong id="ct-tm-titulo"><span aria-hidden="true">🐾</span> «Todas las mesas» (el pizote)</strong>
+                    <strong id="ct-tm-titulo"><span aria-hidden="true">🐾</span> «¿Dónde juega?» (la lupa y el pizote)</strong>
                     <button type="button" id="tm-todas-si" class="cam-btn cam-btn-chico">Habilitarlo en todas las tablets</button>
                     <button type="button" id="tm-todas-no" class="cam-btn cam-btn-claro cam-btn-chico">Deshabilitarlo en todas</button>
-                    <p class="cam-herramientas-nota">Con el pizote, el árbitro ve los emparejamientos de la ronda abierta de todas las categorías para ayudar a un atleta a encontrar su mesa. Viene habilitado; aquí lo apagas en todas las tablets o, en cada fila, en la de un árbitro. Lo hace cumplir el servidor, no solo la pantalla.</p>
+                    <p class="cam-herramientas-nota">Con la lupa «🔎 ¿Dónde juega?» (y el pizote), el árbitro busca a un atleta por su nombre en todas las categorías y le dice en qué mesa juega. Viene habilitado; aquí lo apagas en todas las tablets o, en cada fila, en la de un árbitro. Lo hace cumplir el servidor, no solo la pantalla.</p>
                 </div>
                 <div class="cam-tabla-envoltura cam-no-qr">
                     <table class="cam-tabla cam-rejilla" id="asignaciones-tabla">
@@ -295,6 +295,36 @@
                     <div class="cam-acciones"><button type="button" id="claves-bloque-guardar" class="cam-btn">Probar y guardar las claves pegadas</button></div>
                     <ul id="claves-bloque-resultado" class="mt-3 space-y-1 text-sm"></ul>
                 </details>
+
+                <h2 id="t-livechess" class="cam-subtitulo mt-6">Los tableros electrónicos por LiveChess (sin atraso, para los árbitros)</h2>
+                <div class="cam-clave-grupo mt-3" id="livechess">
+                    <p>El enlace del visor de <strong>LiveChess Cloud</strong> de cada categoría muestra las partidas <strong>sin atraso</strong>. Con él, cada árbitro ve sus mesas en vivo, el control de tiempos se llena solo y le llega la <strong>triple repetición</strong> apenas pasa. Por eso el enlace no se publica: queda en la base y cada tablet recibe solo sus mesas.</p>
+                    <ul id="livechess-lista" class="text-sm mt-2 space-y-1"></ul>
+                    <label for="livechess-texto" class="block text-sm font-bold mt-3">Pegar la tabla de la organización de tableros (categoría, tableros y enlace, un renglón por categoría)</label>
+                    <textarea id="livechess-texto" rows="4" class="cam-campo mt-1" autocomplete="off" spellcheck="false" placeholder="SUB-18 ABS   1-5   https://view.livechesscloud.com/#…"></textarea>
+                    <div class="cam-acciones"><button type="button" id="livechess-guardar" class="cam-btn">Probar y guardar los enlaces</button></div>
+                    <p id="livechess-estado" class="text-sm mt-2" role="status"></p>
+                </div>
+
+                <h2 id="t-vivo" class="cam-subtitulo mt-6">La transmisión sin atraso para los árbitros (Lichess privada)</h2>
+                <div class="cam-clave-grupo mt-3" id="vivo">
+                    <p>La transmisión pública de Lichess va con <strong>15 minutos de atraso</strong> por juego limpio, y así se queda. Para que cada árbitro vea <strong>sus</strong> mesas en vivo en su tablet («Mis mesas en vivo»), arma en Lichess una <strong>segunda transmisión privada</strong> y conéctala aquí:</p>
+                    <ol class="text-sm mt-2 list-decimal pl-5 space-y-1">
+                        <li>En Lichess, «Nueva transmisión» con <strong>Visibilidad: Privada</strong>. Cada ronda con <strong>Retraso: 0</strong> y la <strong>misma fuente</strong> que la pública: la dirección de LiveChess, o en Pareo para DGT («Transmitir sin LiveChess») la casilla «También una copia privada sin atraso para los árbitros», que crea los torneos privados y empuja cada jugada a los dos.</li>
+                        <li>Crea una clave en <strong>lichess.org/account/oauth/token</strong> con el permiso <strong>«Leer estudios y transmisiones privados»</strong> (y ningún otro), con la cuenta dueña de esa transmisión.</li>
+                        <li>Pega aquí el enlace de la transmisión privada y la clave. Se prueban contra Lichess y la clave queda <strong>cifrada</strong>: nadie la vuelve a ver, y cada tablet recibe solo las partidas de sus mesas.</li>
+                    </ol>
+                    <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                        <div><label for="vivo-enlace" class="block text-sm font-bold">Enlace de la transmisión privada (si son varios torneos, uno por renglón)</label><textarea id="vivo-enlace" rows="3" class="cam-campo" autocomplete="off" spellcheck="false" placeholder="https://lichess.org/broadcast/…"></textarea></div>
+                        <div><label for="vivo-token" class="block text-sm font-bold">Clave de Lichess (lip_…)</label><input id="vivo-token" type="password" maxlength="80" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="cam-acciones">
+                        <button type="button" id="vivo-conectar" class="cam-btn">Probar y conectar</button>
+                        <button type="button" id="vivo-quitar" class="cam-btn cam-btn-claro" hidden>Desconectar</button>
+                    </div>
+                    <p id="vivo-estado" class="text-sm mt-2" role="status"></p>
+                    <ul id="vivo-torneos" class="text-sm mt-2 space-y-1"></ul>
+                </div>
             </section>
 
             <!-- 6. Respaldo -->
@@ -420,8 +450,11 @@
     <script src="js/centroamericano-mesas.js"></script>
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/lichess-transmision.js"></script>
+    <script src="js/centroamericano-transmision-reloj.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>
     <script src="js/centroamericano-fair-play.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
+    <script src="js/centroamericano-vivo-conectar.js"></script>
 </body>
 </html>
