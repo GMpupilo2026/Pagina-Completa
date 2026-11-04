@@ -98,11 +98,13 @@
 
         <div data-bloque-fide class="space-y-3">
           <p class="font-semibold" data-fide-pregunta>ID FIDE</p>
+          <div class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
           <div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="si" checked> Tiene ID FIDE</label><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="no"> No tiene ID FIDE</label></div>
+          <p data-origen-ayuda class="text-sm rounded-xl bg-brand-50 dark:bg-brand-950 p-3"></p>
           <div data-caja-fide class="space-y-3">
-            <div><label for="${id("buscar")}" class="block text-sm font-semibold mb-1">Escribe el nombre (apellido primero) o el ID FIDE${AST}</label>
+            <div data-caja-buscar><label for="${id("buscar")}" class="block text-sm font-semibold mb-1"><span data-buscar-etiqueta>Escribe el nombre (apellido primero) o el ID FIDE</span>${AST}</label>
               <input id="${id("buscar")}" data-campo data-buscar type="search" autocomplete="off" placeholder="Ejemplo: Mora, Ana  —  o  6400000" aria-describedby="${id("buscar-ayuda")}">
-              <p id="${id("buscar-ayuda")}" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.</p></div>
+              <p id="${id("buscar-ayuda")}" class="text-xs text-brand-500 dark:text-brand-300 mt-1" data-buscar-ayuda>Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.</p></div>
             <p data-estado-fide class="text-sm" role="status" aria-live="polite"></p>
             <ul data-resultados class="space-y-2" aria-label="Jugadores encontrados en la lista de FIDE"></ul>
             <div data-elegido class="hidden rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4" tabindex="-1" aria-live="polite"></div>
@@ -115,8 +117,9 @@
         </div>
 
         <div class="grid sm:grid-cols-2 gap-4">
-          <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off"></div>
-          <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off"></div>
+          <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
+          <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
+          <p id="${id("nombre-fide")}" data-nombre-bloqueado class="hidden sm:col-span-2 text-sm font-semibold">🔒 El nombre y los apellidos son los de FIDE para el ID elegido, y no se pueden cambiar: así salen en el torneo. Si no es esta persona, busque otro ID arriba.</p>
           <div data-caja-nombre-fide class="sm:col-span-2 hidden space-y-2">
             <p data-estado-nombre class="text-sm" role="status" aria-live="polite"></p>
             <ul data-resultados-nombre class="space-y-2" aria-label="Jugadores de FIDE con ese nombre"></ul>
@@ -238,14 +241,52 @@
 
     /* ---------- la federación de quien no tiene ID FIDE ---------- */
     const selFed = q("[data-federacion]");
+    { const o = document.createElement("option"); o.value = ""; o.textContent = "Elige el país…"; selFed.append(o); }
     FEDERACIONES.forEach(([cod, nombre]) => { const o = document.createElement("option"); o.value = cod; o.textContent = nombre + " (" + cod + ")"; selFed.append(o); });
     selFed.value = "CRC";
+
+    /* ---------- de dónde viene: cómo se busca en FIDE ----------
+       De Costa Rica: casi nadie sabe su ID FIDE, así que se escribe el nombre
+       y el ID se busca y se carga solo (el buscador queda de respaldo si no
+       aparece). De otro país: primero el ID FIDE, y el nombre se llena con el
+       de FIDE y queda bloqueado, para que salga el nombre real del jugador. */
+    const deAfuera = () => el.querySelector('input[name="' + k + '-origen"]:checked').value === "fuera";
+    yo.deAfuera = deAfuera;
+    let sinResultadoPorNombre = false;
+    function bloquearNombre(si) {
+      [c("nombre"), c("apellidos")].forEach((x) => { x.readOnly = si; x.classList.toggle("metro-bloqueado", si); });
+      q("[data-nombre-bloqueado]").classList.toggle("hidden", !si);
+    }
+    el.querySelectorAll('input[name="' + k + '-origen"]').forEach((r) => r.addEventListener("change", () => {
+      const afuera = deAfuera();
+      yo.elegido = null; pintarElegido(); bloquearNombre(false);
+      buscarEl.value = ""; q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = "";
+      q("[data-caja-nombre-fide]").classList.add("hidden"); sinResultadoPorNombre = false;
+      if (afuera) {
+        ["nacionalidad", "pais_residencia"].forEach((n) => { if (/^costa rica$/i.test(v(n))) c(n).value = ""; });
+        if (c("documento_tipo").value === "cedula") c("documento_tipo").value = "pasaporte";
+        if (selFed.value === "CRC") selFed.value = "";
+      } else {
+        ["nacionalidad", "pais_residencia"].forEach((n) => { if (!v(n)) c(n).value = "Costa Rica"; });
+        if (!selFed.value) selFed.value = "CRC";
+      }
+      recalcular();
+    }));
 
     /* ---------- el ID FIDE ---------- */
     let espera = null, turno = 0;
     const buscarEl = q("[data-buscar]");
     buscarEl.addEventListener("input", () => {
       clearTimeout(espera);
+      if (deAfuera()) {
+        // De otro país: solo el número del ID FIDE.
+        const id = buscarEl.value.replace(/\D+/g, "").slice(0, 12);
+        if (buscarEl.value !== id) buscarEl.value = id;
+        if (id.length < 4) { q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = id ? "Escribe el número completo del ID FIDE." : ""; return; }
+        q("[data-estado-fide]").textContent = "Buscando el ID FIDE " + id + "…";
+        espera = setTimeout(() => buscar(id), 650);
+        return;
+      }
       const t = buscarEl.value.replace(/\s+/g, " ").trim();
       if (t.length < 3) { q("[data-resultados]").textContent = ""; q("[data-estado-fide]").textContent = t ? "Escribe al menos 3 letras." : ""; return; }
       q("[data-estado-fide]").textContent = "Buscando en la lista de FIDE…";
@@ -268,9 +309,17 @@
       if (desdeNombre) q("[data-caja-nombre-fide]").classList.remove("hidden");
       if (!r || !r.ok) { est.textContent = (r && r.error) || "No se pudo buscar en FIDE. Revisa la conexión e intenta de nuevo."; return; }
       if (desdeNombre && r.filas.length === 1) { elegir(r.filas[0], true); return; }
+      if (!desdeNombre && deAfuera()) {
+        // Un ID es una persona: la del número exacto, o nadie.
+        const exacto = r.filas.find((f) => String(f.fideId) === t);
+        if (exacto) { elegir(exacto, false); return; }
+        est.textContent = "No hay ningún jugador con el ID FIDE " + t + ". Revisa el número en ratings.fide.com; si no tiene ID FIDE, marca «No tiene ID FIDE».";
+        return;
+      }
+      if (desdeNombre && !r.filas.length) { sinResultadoPorNombre = true; recalcular(); }
       if (!r.filas.length) {
         est.textContent = desdeNombre
-          ? "No aparece en FIDE con ese nombre y apellidos. Si tiene ID FIDE, búsquelo arriba por el primer apellido o por el número; si no tiene, marque «No tiene ID FIDE»."
+          ? "No aparece en FIDE con ese nombre y apellidos. Si tiene ID FIDE, búsquelo en el buscador de arriba por el primer apellido o por el número; si no tiene, marque «No tiene ID FIDE»."
           : "No aparece con ese nombre. Prueba solo con el primer apellido, o con el ID FIDE. Si no tiene, marca «No tiene ID FIDE».";
         return;
       }
@@ -304,12 +353,17 @@
       // Si lo escribió la persona, su nombre se queda como lo escribió (FIDE
       // no lleva tildes: «Jimenez» por «Jiménez»). Desde el buscador, se llena.
       const [ap, no] = String(f.nombre).split(",").map((x) => (x || "").trim());
-      if (!desdeNombre) {
+      if (deAfuera()) {
+        // De otro país: el nombre es el de FIDE, y no se cambia.
+        c("nombre").value = no || ""; c("apellidos").value = ap || "";
+        bloquearNombre(true);
+      } else if (!desdeNombre) {
         if (no) { c("nombre").value = no; c("apellidos").value = ap; } else if (!c("apellidos").value) c("apellidos").value = ap;
       }
       const est = q("[data-estado-nombre]");
       est.textContent = "✓ ID FIDE " + f.fideId + " cargado: " + (f.titulo ? f.titulo + " " : "") + f.nombre + " · " + f.fed
         + (f.nacimiento ? " · nacido en " + f.nacimiento : "") + " · Elo estándar " + (f.estandar || "sin Elo") + ". Si no es esta persona, búsquela arriba.";
+      pintarTitulo();
       q("[data-caja-nombre-fide]").classList.remove("hidden");
       pintarElegido(); recalcular();
       if (!desdeNombre) q("[data-elegido]").focus();
@@ -321,7 +375,8 @@
     const buscarPorNombre = () => {
       clearTimeout(esperaNombre);
       const rol = yo.rol();
-      if (yo.elegido || sinFide() || (rol !== "jugador" && rol !== "entrenador")) return;
+      if (yo.elegido || sinFide() || deAfuera() || (rol !== "jugador" && rol !== "entrenador")) return;
+      sinResultadoPorNombre = false;
       const limpio = (x) => v(x).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z ,.'-]+/g, " ").replace(/\s+/g, " ").trim();
       const nom = limpio("nombre"), ape = limpio("apellidos");
       if (nom.length < 2 || ape.length < 2) { q("[data-caja-nombre-fide]").classList.add("hidden"); return; }
@@ -343,11 +398,16 @@
       const b = document.createElement("button"); b.type = "button";
       b.className = "mt-2 text-sm underline font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
       b.textContent = "No es esta persona: buscar otra vez";
-      b.addEventListener("click", () => { yo.elegido = null; pintarElegido(); q("[data-caja-nombre-fide]").classList.add("hidden"); recalcular(); buscarEl.value = ""; buscarEl.focus(); });
+      b.addEventListener("click", () => {
+        yo.elegido = null; pintarElegido(); q("[data-caja-nombre-fide]").classList.add("hidden");
+        if (deAfuera()) { bloquearNombre(false); c("nombre").value = ""; c("apellidos").value = ""; }
+        else sinResultadoPorNombre = true;
+        recalcular(); buscarEl.value = ""; buscarEl.focus();
+      });
       caja.append(t, d, b);
     }
     el.querySelectorAll('input[name="' + k + '-fide"]').forEach((r) => r.addEventListener("change", () => {
-      if (sinFide()) { yo.elegido = null; pintarElegido(); }
+      if (sinFide()) { yo.elegido = null; pintarElegido(); bloquearNombre(false); }
       recalcular();
     }));
 
@@ -392,6 +452,17 @@
       q("[data-fide-pregunta]").textContent = juega ? "ID FIDE" : "ID FIDE (si tiene)";
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
       q("[data-caja-fide]").classList.toggle("hidden", sinFide());
+      const afuera = deAfuera();
+      q("[data-origen-ayuda]").textContent = sinFide() ? "" : afuera
+        ? "Escribe primero el ID FIDE (el número): el nombre se llena solo, tal como aparece en FIDE, y no se puede cambiar."
+        : "Escribe el nombre y los apellidos abajo, como en la cédula: el ID FIDE se busca y se carga solo.";
+      q("[data-origen-ayuda]").classList.toggle("hidden", sinFide());
+      // De Costa Rica, el buscador es solo el respaldo: aparece si por el nombre no se encontró.
+      q("[data-caja-buscar]").classList.toggle("hidden", !afuera && !sinResultadoPorNombre);
+      q("[data-buscar-etiqueta]").textContent = afuera ? "ID FIDE (el número)" : "¿No aparece? Búsquelo por el primer apellido o por el ID FIDE";
+      buscarEl.inputMode = afuera ? "numeric" : "text";
+      buscarEl.placeholder = afuera ? "Ejemplo: 3500000" : "Ejemplo: Mora, Ana  —  o  6400000";
+      q("[data-buscar-ayuda]").textContent = afuera ? "Está en el perfil del jugador en ratings.fide.com." : "Buscamos en la lista oficial de FIDE mientras escribes. Toca el nombre para elegirlo.";
       q("[data-sin-fide]").classList.toggle("hidden", !(sinFide() && juega));
       q("[data-fed-cr]").classList.toggle("hidden", selFed.value !== "CRC");
       q("[data-fed-fuera]").classList.toggle("hidden", selFed.value === "CRC");
@@ -489,7 +560,10 @@
       const errores = [];
       const contactoObligatorio = !esGrupo() || yo.esDelegado;
       const falta = (campo, texto) => errores.push([campo, texto]);
-      if ((rol === "jugador" || rol === "entrenador") && !sinFide() && !f) falta(buscarEl, "Busca y elige el nombre en la lista de FIDE, o marca «No tiene ID FIDE».");
+      if ((rol === "jugador" || rol === "entrenador") && !sinFide() && !f) falta(deAfuera() ? buscarEl : c("apellidos"), deAfuera()
+        ? "Escribe el ID FIDE para cargar el nombre, o marca «No tiene ID FIDE»."
+        : "Escribe el nombre y los apellidos para cargar el ID FIDE y elige a la persona, o marca «No tiene ID FIDE».");
+      if (rol === "jugador" && sinFide() && !selFed.value) falta(selFed, "Elige el país de su federación.");
       if (!v("nombre") || !v("apellidos")) falta(c(!v("nombre") ? "nombre" : "apellidos"), "Falta el nombre completo.");
       if (!nac) falta(c("nacimiento"), "Falta la fecha de nacimiento.");
       if (!v("sexo")) falta(c("sexo"), "Falta el sexo.");
@@ -505,7 +579,7 @@
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
       const datos = {
         rol, es_delegado: yo.esDelegado,
-        sin_fide: !f, fide_id: f ? f.fideId : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
+        sin_fide: !f, fide_id: f ? f.fideId : null, nombre_fide: f ? f.nombre : null, federacion: f ? f.fed : (rol === "jugador" ? selFed.value : null), titulo: f ? f.titulo : "",
         elo_estandar: f ? f.estandar : null, elo_rapido: f ? f.rapido : null, elo_blitz: f ? f.blitz : null,
         nombre: v("nombre"), apellidos: v("apellidos"), sexo: v("sexo"), nacimiento: nac,
         nacionalidad: v("nacionalidad"), pais_residencia: v("pais_residencia"),
@@ -711,7 +785,7 @@
     if (t.usd > 0 && !metodo) errores.push([$("metodos"), "Elige cómo pagaste."]);
     if (t.usd > 0 && !comprobante) errores.push([$("comprobante"), "Falta el comprobante de pago."]);
     if (t.usd > 0 && quiereFactura()) errores.push(...erroresFactura());
-    if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las tres casillas del final."]);
+    if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-seguro").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las cuatro casillas del final."]);
     if (errores.length) {
       $("msg").textContent = errores[0][1] + (errores.length > 1 ? " (y " + (errores.length - 1) + " cosa" + (errores.length > 2 ? "s" : "") + " más)" : "");
       const el = errores[0][0];
@@ -859,7 +933,7 @@
         personas: lista, pago_metodo: envio.total.usd > 0 ? metodo : null, comprobante: rutaComp,
         pago_referencia: $("referencia").value.trim(), pago_fecha: $("pago_fecha").value || null,
         factura: quiereFactura() && envio.total.usd > 0 ? datosFactura() : null,
-        acepta_reglamento: $("acepta-reglamento").checked, acepta_imagen: $("acepta-imagen").checked, acepta_datos: $("acepta-datos").checked,
+        acepta_reglamento: $("acepta-reglamento").checked, acepta_imagen: $("acepta-imagen").checked, acepta_seguro: $("acepta-seguro").checked, acepta_datos: $("acepta-datos").checked,
         validado: true,
       };
       const { data, error } = await window.sb.rpc("metropolitano_inscribir", { p });

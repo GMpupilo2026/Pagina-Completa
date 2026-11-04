@@ -90,6 +90,8 @@
       [doc, x.documento], ["Nacimiento", x.nacimiento + " (" + R.edad(x.nacimiento, R.INICIO) + " años)"], ["Sexo", x.sexo === "f" ? "Femenino" : "Masculino"],
       ["Delegación", x.delegacion && x.delegacion + (x.es_delegado ? " (es el delegado)" : "")],
       ["Publicidad", x.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"],
+      ["Seguro y exoneración", x.acepta_seguro ? "Declaró su póliza y eximió a la FCA (texto " + (x.exoneracion_version || "—") + ")" : ""],
+      ["Nombre en FIDE", x.nombre_fide],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
@@ -120,7 +122,11 @@
       celda(tr, [texto(codigo(x), "font-mono font-semibold"), texto(x.estado === "anulada" ? "Anulada" : "", "text-xs text-red-700 dark:text-red-400")]);
       const fide = document.createElement("a");
       if (x.fide_id) { fide.href = "https://ratings.fide.com/profile/" + encodeURIComponent(x.fide_id); fide.target = "_blank"; fide.rel = "noopener"; fide.className = "text-xs underline"; fide.textContent = "FIDE " + x.fide_id + (x.federacion ? " · " + x.federacion : "") + " · Std " + (x.elo_estandar || "—"); }
-      celda(tr, [texto((x.titulo ? x.titulo + " " : "") + x.apellidos + ", " + x.nombre, "font-semibold"), x.fide_id ? fide : texto("Sin ID FIDE: tramitarlo", "text-xs text-amber-800 dark:text-amber-300"), detalles(x)], "min-w-[14rem]");
+      // El nombre que trajo FIDE: si no es el inscrito, se avisa (el perfil, en el enlace, dice el real).
+      const sinTildes = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]+/gi, " ").trim().toLowerCase();
+      const distinto = x.fide_id && x.nombre_fide && sinTildes(x.nombre_fide.replace(",", " ")).split(" ").sort().join(" ") !== sinTildes(x.apellidos + " " + x.nombre).split(" ").sort().join(" ");
+      celda(tr, [texto((x.titulo ? x.titulo + " " : "") + x.apellidos + ", " + x.nombre, "font-semibold"), x.fide_id ? fide : texto("Sin ID FIDE: tramitarlo", "text-xs text-amber-800 dark:text-amber-300"),
+        distinto ? texto("⚠ En FIDE se llama «" + x.nombre_fide + "»: revisa el perfil.", "text-xs font-semibold text-amber-800 dark:text-amber-300") : texto(""), detalles(x)], "min-w-[14rem]");
       const queEs = x.es_delegado ? "Delegado" + (x.rol === "delegado" ? "" : " y " + R.rolDe(x.rol, x.sexo).toLowerCase()) : R.rolDe(x.rol, x.sexo);
       celda(tr, [texto(queEs, "font-semibold"), texto(x.torneos.map((t) => R.TORNEOS[t].corto).join(" + "), "text-xs"),
         texto(x.delegacion || "", "text-xs text-brand-500 dark:text-brand-300"), texto(x.acepta_publicidad ? "📣 Autoriza publicidad" : "", "text-xs")]);
@@ -207,7 +213,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -215,7 +221,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 

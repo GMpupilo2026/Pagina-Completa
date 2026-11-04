@@ -1493,6 +1493,37 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   una «lista para gafetes y Pareo» con las columnas que entienden
   `gafetes.html` y la carga de jugadores de Pareo Integral.
 
+### El seguro, la exoneración y el ID FIDE según de dónde viene
+
+Pedido del dueño (4/11):
+
+- **Una cuarta casilla obligatoria, «Seguro y responsabilidad»**: quien
+  inscribe declara que cada persona tiene su póliza de gastos médicos y de
+  accidentes (y, si viene de otro país, su seguro de viaje), que su costo no
+  es de la organización, que cada una asume los riesgos de la competencia, el
+  viaje y la estadía, y exime a la FCA, a la organización, al cuerpo arbitral
+  y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones,
+  pérdidas o daños, renunciando a cobrarles gastos o a demandarlos **salvo en
+  lo que la ley no permita renunciar**. Esa salvedad va a propósito: en Costa
+  Rica una cláusula que exime de todo (también del dolo o la culpa grave) se
+  cae entera; con ella, vale lo demás. Es un borrador para que lo revise el
+  comisionado de asuntos jurídicos de la FCA.
+- **La base la exige** (`acepta_seguro` en `metropolitano_inscribir()`,
+  migración 20261104170602) y guarda qué texto se aceptó
+  (`exoneracion_version = 'metropolitano-2026-v1'`). **Si el texto cambia, se
+  sube la versión** en la función: así se sabe qué firmó cada quien. La página
+  del torneo lo dice en «Lo esencial del reglamento».
+- **El ID FIDE según de dónde viene** (la pregunta «¿De dónde viene?» de cada
+  tarjeta): de Costa Rica casi nadie sabe su ID, así que se escribe el nombre y
+  el ID se busca y se carga solo; el buscador aparece de respaldo solo si por
+  el nombre no se encontró. De otro país, primero el ID FIDE (solo el número,
+  y solo vale la coincidencia exacta), y el nombre se llena con el de FIDE y
+  queda **bloqueado** (`readOnly`), para que salga el nombre real.
+- **El bloqueo es de la página, no un candado**: la base no tiene la lista de
+  FIDE para comprobarlo. Por eso guarda `nombre_fide` (el nombre que trajo la
+  búsqueda), y la lista de inscritos avisa con «⚠ En FIDE se llama …» cuando
+  el inscrito no coincide, con el enlace a su perfil de FIDE para confirmarlo.
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la

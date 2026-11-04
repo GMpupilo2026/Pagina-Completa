@@ -157,13 +157,19 @@ const FILAS_FIDE = [
     const { p, anotado } = await abrir();
     const t1 = tarjeta(p, 0);
     igual("arranca con una tarjeta de jugador", [await p.locator("#personas > section").count(), await t1.locator("[data-rol]").inputValue()], [1, "jugador"]);
-    await t1.locator("[data-buscar]").fill("Mora Sol");
-    await t1.locator("[data-resultados] button").first().waitFor({ timeout: 8000 });
-    igual("se busca en la lista de FIDE con lo escrito", anotado.buscado[0], { lista: "fide", q: "Mora Sol" });
+    // De otro país: primero el ID FIDE, y el nombre sale de FIDE y no se cambia.
+    cierto("de Costa Rica, el buscador de FIDE no se ve: se escribe el nombre", !(await t1.locator("[data-caja-buscar]").isVisible()));
+    await t1.locator('input[name="p1-origen"][value="fuera"]').check();
+    cierto("de otro país se pide primero el ID FIDE", await t1.locator("[data-caja-buscar]").isVisible() && /ID FIDE \(el número\)/.test(await t1.locator("[data-buscar-etiqueta]").textContent()));
+    await t1.locator("[data-buscar]").fill("64ab00000");
+    igual("y solo acepta el número", await t1.locator("[data-buscar]").inputValue(), "6400000");
+    await t1.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
+    igual("se busca en la lista de FIDE con el número", anotado.buscado[0], { lista: "fide", q: "6400000" });
     cierto("y en la región donde FIDE contesta (us-west-1)", anotado.urls.every((u) => /[?&]forceFunctionRegion=us-west-1(&|$)/.test(u)), anotado.urls);
-    igual("aparecen los dos", await t1.locator("[data-resultados] button").count(), 2);
-    await t1.locator("[data-resultados] button").first().click();
-    igual("elegirse llena nombre y apellidos", [await t1.locator('[data-c="nombre"]').inputValue(), await t1.locator('[data-c="apellidos"]').inputValue()], ["Ana", "Mora Solis"]);
+    igual("el nombre y los apellidos se llenan con los de FIDE", [await t1.locator('[data-c="nombre"]').inputValue(), await t1.locator('[data-c="apellidos"]').inputValue()], ["Ana", "Mora Solis"]);
+    await t1.locator('[data-c="nombre"]').pressSequentially("X");
+    cierto("y no se pueden cambiar", (await t1.locator('[data-c="nombre"]').inputValue()) === "Ana" && await t1.locator('[data-c="apellidos"]').evaluate((x) => x.readOnly)
+      && await t1.locator("[data-nombre-bloqueado]").isVisible());
     cierto("la tarjeta dice a quién eligió", /Elegido: WCM Mora Solis, Ana/.test(await t1.locator("[data-elegido]").textContent()));
     await llenar(t1, { nacimiento: "2010-05-02" });
     cierto("avisa si la fecha no cuadra con el año de FIDE", /2013/.test(await t1.locator("[data-aviso-nac]").textContent()));
@@ -174,7 +180,7 @@ const FILAS_FIDE = [
     cierto("el responsable aparece por ser menor", await t1.locator("[data-caja-responsable]").isVisible());
     await t1.locator('input[name="p1-clasico"][value="A"]').check();
     await t1.locator("[data-blitz]").check();
-    await llenar(t1, { sexo: "f", documento: "1-2345-0678", correo: "ana@ejemplo.com", telefono: "+506 8888 1234", resp_nombre: "Luis Mora", resp_telefono: "88880000", emer_nombre: "Luis Mora", emer_telefono: "88880000" });
+    await llenar(t1, { nacionalidad: "Panamá", pais_residencia: "Panamá", documento_tipo: "pasaporte", sexo: "f", documento: "1-2345-0678", correo: "ana@ejemplo.com", telefono: "+506 8888 1234", resp_nombre: "Luis Mora", resp_telefono: "88880000", emer_nombre: "Luis Mora", emer_telefono: "88880000" });
     await t1.locator('input[name="p1-hosp"][value="si"]').check();
     await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
     await t1.locator('[data-c="acepta_publicidad"]').check();
@@ -186,6 +192,9 @@ const FILAS_FIDE = [
     await p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
     await p.check("#acepta-reglamento"); await p.check("#acepta-imagen"); await p.check("#acepta-datos");
     await p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
+    await p.click("#revisar");
+    cierto("sin aceptar el seguro y la exoneración no avanza", /cuatro casillas/.test(await p.textContent("#msg")), await p.textContent("#msg"));
+    await p.check("#acepta-seguro");
     await p.click("#revisar");
     const pintado = () => p.waitForFunction(() => { const c = document.querySelector("#resumen-personas canvas"); return c && c.width > 100 && c.getContext("2d").getImageData(Math.round(c.width * 0.03), Math.round(c.height * 0.87), 1, 1).data[3] > 0; }, null, { timeout: 15000 });
     await pintado();
@@ -209,7 +218,7 @@ const FILAS_FIDE = [
     cierto("lo que se manda es lo que se llenó", e1 && e1.modo === "individual" && e1.personas.length === 1 && x1.rol === "jugador" && x1.fide_id === "6400000" && x1.elo_estandar === 1950 && x1.titulo === "WCM"
       && JSON.stringify(x1.torneos) === '["A","BLITZ"]' && JSON.stringify(x1.comidas) === '["desayuno","cena"]' && x1.hospedaje === true && x1.acepta_publicidad === true
       && e1.pago_metodo === "sinpe" && e1.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(x1.foto)
-      && x1.responsable && x1.responsable.nombre === "Luis Mora", e1);
+      && x1.responsable && x1.responsable.nombre === "Luis Mora" && x1.nombre_fide === "Mora Solis, Ana" && e1.acepta_seguro === true, e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
     const pdf = fs.readFileSync(await descarga.path());
@@ -222,6 +231,10 @@ const FILAS_FIDE = [
     /* ----- Sin ID FIDE: el A no se puede elegir ----- */
     const s2 = await abrir();
     const u = tarjeta(s2.p, 0);
+    await u.locator('[data-c="nombre"]').fill("Zeta");
+    await u.locator('[data-c="apellidos"]').fill("Nadie");
+    await u.locator("[data-caja-buscar]").waitFor({ state: "visible", timeout: 8000 });
+    cierto("de Costa Rica, si por el nombre no aparece, sale el buscador de respaldo", /No aparece/.test(await u.locator("[data-buscar-etiqueta]").textContent()));
     await u.locator('[data-c="nombre"]').fill("Ana");
     await u.locator('[data-c="apellidos"]').fill("Mora Solís");
     await u.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });
@@ -261,9 +274,9 @@ const FILAS_FIDE = [
       && await j.locator('[data-comida][value="almuerzo"]').isChecked());
     igual("y la emergencia la atiende el delegado", await j.locator('[data-c="emer_nombre"]').inputValue(), "Carlos Rojas Vega");
     cierto("el correo de un integrante es opcional", await j.locator("[data-nota-contacto]").isVisible());
-    await j.locator("[data-buscar]").fill("Mora Sol");
-    await j.locator("[data-resultados] button").nth(1).waitFor({ timeout: 8000 });
-    await j.locator("[data-resultados] button").nth(1).click();   // Andrea, sin Elo: B
+    await j.locator('[data-c="nombre"]').fill("Andrea");
+    await j.locator('[data-c="apellidos"]').fill("Mora Solis");
+    await j.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 });   // Andrea, sin Elo: B
     await llenar(j, { nacimiento: "1990-07-07", sexo: "f", documento: "1-1111-2222" });
     await j.locator('input[name="p3-clasico"][value="B"]').check();
     await j.locator("[data-foto]").setInputFiles(FOTO);
@@ -278,7 +291,7 @@ const FILAS_FIDE = [
     await g.p.fill("#fac_id", "3-002-291916"); await g.p.fill("#fac_nombre", "Club Ajedrez Heredia"); await g.p.fill("#fac_correo", "facturas@club.cr");
     await g.p.selectOption("#fac_provincia", "Heredia"); await g.p.selectOption("#fac_canton", "Heredia"); await g.p.selectOption("#fac_distrito", "Heredia");
     await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
-    await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-datos");
+    await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-seguro"); await g.p.check("#acepta-datos");
     await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
     await g.p.click("#revisar");
     cierto("sin las otras señas, la factura no deja seguir y lo dice", /Factura: falta la dirección/.test(await g.p.textContent("#msg")), await g.p.textContent("#msg"));
