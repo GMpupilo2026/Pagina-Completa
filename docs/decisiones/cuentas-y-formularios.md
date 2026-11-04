@@ -1404,7 +1404,7 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   varios con el mismo). **Un ID FIDE o un documento no se inscribe dos veces**:
   lo garantizan dos índices únicos (sobre las activas), y una anulada lo
   libera. El monto que se le dijo es acta: se guarda.
-- **La foto y el comprobante van al bucket privado `metropolitano-2026`**: el
+- **La foto de cada persona y el comprobante van al bucket privado `metropolitano-2026`**: el
   público solo sube (a `foto/` o `comprobante/`, y mientras se recibe,
   `metropolitano_recibe()`), y solo administración lee.
 - **Revisar un pago** (por revisar, verificado, rechazado, sin costo) o anular
@@ -1421,6 +1421,42 @@ lista de `js/paginas-admin.js`, zona Contenido). Verificador:
   asociaciones que validan) o silla de ruedas, la factura a otro nombre, la
   referencia y la fecha del pago, y tres casillas: las bases, el uso de la
   imagen que anuncian las bases y los datos (con la política de privacidad).
+- **Se inscriben jugadores, entrenadores, acompañantes y delegados** (`rol`;
+  lo pidió el dueño del sitio). Solo el jugador elige torneo y paga; el
+  entrenador pone su ID FIDE si tiene (va en el gafete) y el acompañante ni lo
+  ve. Todos llevan foto, gafete, contacto de emergencia y logística. El color
+  del gafete y su franja dicen el torneo del jugador o el rol de los demás.
+- **La inscripción de grupo, con su delegado.** «Un grupo o delegación» abre
+  el nombre de la delegación y la tarjeta del delegado (que puede no jugar,
+  jugar o ser también entrenador: `es_delegado`), y los botones «+ Jugador»,
+  «+ Entrenador» y «+ Acompañante», hasta 80 personas. A cada persona nueva se
+  le copia del delegado la nacionalidad, el viaje, el hospedaje y las comidas,
+  y la emergencia la atiende el delegado; todo se puede cambiar en su tarjeta.
+  El correo y el teléfono de los integrantes son opcionales: se le escribe al
+  delegado. Hay un solo pago, por el total, con un solo comprobante.
+  - **Todo el grupo o nadie.** `metropolitano_inscribir()` recibe `personas`
+    (una en la individual) y valida a cada una con
+    `interno.metropolitano_persona()` antes de guardar a ninguna; si una falla,
+    el mensaje dice cuál («Persona 3 (Ana Mora): falta la foto»). Un mismo ID
+    FIDE dos veces en el grupo choca con el índice único y tampoco se guarda
+    nadie. Los integrantes comparten `grupo` y `delegacion`.
+  - El freno cuenta el grupo como UN envío; el tope de 8 por correo al día es
+    solo para las inscripciones sueltas (una familia con varios hijos).
+- **El permiso de publicidad va en cada tarjeta y no es obligatorio**
+  (`acepta_publicidad`): autoriza que la FCA y Ajedrez Integral usen el nombre
+  y la foto de esa persona en la publicidad del torneo. Es distinto del aviso
+  de las bases sobre las fotos del evento (que sí se acepta para inscribirse):
+  un permiso que hay que dar para poder inscribirse no es un permiso. En la
+  lista de inscritos se filtra por él, para saber de quién se puede usar la
+  foto.
+- **La página lleva el diseño de las bases**: las hojas de arriba y de abajo,
+  el logo «Metropolitano · International Tournament» con el Estadio Nacional y
+  su azul marino (`img/metropolitano-2026/`, sacados del PDF de las bases con
+  `pdfimages`, las hojas compuestas sobre blanco), y los colores de sus hojas
+  en cada torneo y cada rol, todos con 4,5:1 o más contra el blanco. El gafete
+  lleva el logo del Metropolitano y el de la FCA arriba, la foto en un marco de
+  pasaporte de 3,3 × 4,2 cm, y las hojas en la tira de abajo del frente
+  (`imagenes.cintaFrente` del dibujo, que el del Centroamericano no usa).
 - **Las descargas de administración**: el CSV entero (punto y coma y BOM) y
   una «lista para gafetes y Pareo» con las columnas que entienden
   `gafetes.html` y la carga de jugadores de Pareo Integral.

@@ -18,16 +18,31 @@
 (function (raiz) {
   "use strict";
 
+  /* Los colores son los de las hojas de las bases del Metropolitano, cada
+     uno con 4,5:1 o más contra el blanco (la franja del gafete lleva letra
+     blanca). */
   const TORNEOS = {
-    A: { nombre: "Metropolitano A", corto: "A", clasico: true, ritmo: "90 min + 30 s", usd: 75, paypal: 79.88, color: "#1d4ed8",
+    A: { nombre: "Metropolitano A", corto: "A", clasico: true, ritmo: "90 min + 30 s", usd: 75, paypal: 79.88, color: "#043576",
       quien: "1900 o más de Elo FIDE estándar" },
-    B: { nombre: "Metropolitano B", corto: "B", clasico: true, ritmo: "60 min + 30 s", usd: 45, paypal: 47.93, color: "#1e6b34",
+    B: { nombre: "Metropolitano B", corto: "B", clasico: true, ritmo: "60 min + 30 s", usd: 45, paypal: 47.93, color: "#377746",
       quien: "menos de 1900 de Elo FIDE estándar, o sin Elo" },
-    U14: { nombre: "Metropolitano U14", corto: "U14", clasico: true, ritmo: "30 min + 30 s", usd: 35, paypal: 37.28, color: "#9a3412",
+    U14: { nombre: "Metropolitano U14", corto: "U14", clasico: true, ritmo: "30 min + 30 s", usd: 35, paypal: 37.28, color: "#d01c58",
       quien: "nacidos desde el 1 de enero de 2012" },
-    BLITZ: { nombre: "Metropolitano Blitz", corto: "Blitz", clasico: false, ritmo: "3 min + 2 s", usd: 12, paypal: 12.78, color: "#6b21a8",
+    BLITZ: { nombre: "Metropolitano Blitz", corto: "Blitz", clasico: false, ritmo: "3 min + 2 s", usd: 12, paypal: 12.78, color: "#085ba4",
       quien: "abierto a todos (30 de diciembre, 16:00)" },
   };
+
+  /* Quién se inscribe. Solo el jugador juega y paga; los demás se inscriben
+     para su gafete, su acceso a la sala y la logística (hospedaje, comidas).
+     El delegado solo existe en la inscripción de grupo: es quien la llena. */
+  const ROLES = {
+    jugador: { nombre: "Jugador", femenino: "Jugadora", color: null },
+    entrenador: { nombre: "Entrenador", femenino: "Entrenadora", color: "#0e7c86" },
+    acompanante: { nombre: "Acompañante", femenino: "Acompañante", color: "#5f6604" },
+    delegado: { nombre: "Delegado", femenino: "Delegada", color: "#1d134d" },
+  };
+  const rolDe = (rol, sexo) => (ROLES[rol] ? (sexo === "f" ? ROLES[rol].femenino : ROLES[rol].nombre) : "");
+  const MAX_GRUPO = 80;
 
   const ELO_A = 1900;
   const NACIDOS_U14_DESDE = 2012;
@@ -105,7 +120,7 @@
      moneda, avisos }. `torneos` es la lista elegida (["A", "BLITZ"]),
      `metodo` una clave de METODOS. */
   function precio(o) {
-    const torneos = o.torneos || [], metodo = o.metodo || "dolares";
+    const torneos = o.rol && o.rol !== "jugador" ? [] : (o.torneos || []), metodo = o.metodo || "dolares";
     const hoy = o.hoy, est = abierto(hoy);
     const titulado = TITULOS_GRATIS.includes(String(o.titulo || "").toUpperCase());
     const senior = (edad(o.nacimiento, INICIO) || 0) >= EDAD_SENIOR;
@@ -134,7 +149,7 @@
   const colones = (crc) => "₡" + crc.toLocaleString("es-CR");
 
   const api = {
-    TORNEOS, METODOS, HORARIOS, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
+    TORNEOS, METODOS, HORARIOS, ROLES, rolDe, MAX_GRUPO, ELO_A, NACIDOS_U14_DESDE, INICIO, CIERRE_REGULAR, CIERRE_CLASICOS, CIERRE_BLITZ,
     RECARGO, EDAD_SENIOR, DESCUENTO_SENIOR, TITULOS_GRATIS, TIPO_CAMBIO,
     edad, elegibles, abierto, precio, dinero, colones,
   };

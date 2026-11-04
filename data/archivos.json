@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1135,
+  "total": 1139,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26038,6 +26038,37 @@
       "titulo": "Notara",
       "tipo": "otro",
       "kb": 155
+     }
+    ]
+   },
+   {
+    "carpeta": "img/metropolitano-2026",
+    "titulo": "Metropolitano 2026",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/metropolitano-2026/hojas-abajo.jpg",
+      "titulo": "Hojas abajo",
+      "tipo": "otro",
+      "kb": 79
+     },
+     {
+      "ruta": "img/metropolitano-2026/hojas-arriba.jpg",
+      "titulo": "Hojas arriba",
+      "tipo": "otro",
+      "kb": 84
+     },
+     {
+      "ruta": "img/metropolitano-2026/logo-blanco.png",
+      "titulo": "Logo blanco",
+      "tipo": "otro",
+      "kb": 56
+     },
+     {
+      "ruta": "img/metropolitano-2026/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 100
      }
     ]
    },

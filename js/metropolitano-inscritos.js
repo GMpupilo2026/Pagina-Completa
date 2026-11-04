@@ -43,12 +43,15 @@
   function visibles() {
     const q = $("f-texto").value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
     const t = $("f-torneo").value, p = $("f-pago").value, anuladas = $("f-anuladas").checked;
+    const rol = $("f-rol").value, pub = $("f-publicidad").value;
     return filas.filter((x) => {
       if (!anuladas && x.estado === "anulada") return false;
       if (t && !x.torneos.includes(t)) return false;
       if (p && x.pago_estado !== p) return false;
+      if (rol && (rol === "delegado" ? !x.es_delegado && x.rol !== "delegado" : x.rol !== rol)) return false;
+      if (pub && (pub === "si") !== !!x.acepta_publicidad) return false;
       if (!q) return true;
-      return [x.nombre, x.apellidos, x.fide_id, x.documento, x.correo, codigo(x), x.club].join(" ")
+      return [x.nombre, x.apellidos, x.fide_id, x.documento, x.correo, codigo(x), x.club, x.delegacion].join(" ")
         .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().includes(q);
     });
   }
@@ -58,7 +61,9 @@
     const n = (f) => act.filter(f).length;
     const usd = act.filter((x) => x.pago_estado === "verificado").reduce((s, x) => s + Number(x.monto_usd), 0);
     const datos = [
-      ["Inscritos", act.length], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
+      ["Inscritos", act.length], ["Jugadores", n((x) => x.rol === "jugador")], ["Entrenadores", n((x) => x.rol === "entrenador")],
+      ["Acompañantes", n((x) => x.rol === "acompanante")], ["Delegaciones", new Set(act.filter((x) => x.grupo).map((x) => x.grupo)).size],
+      ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
       ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)],
       ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)],
@@ -83,6 +88,8 @@
     const doc = { cedula: "Cédula", dimex: "DIMEX", pasaporte: "Pasaporte", otro: "Documento" }[x.documento_tipo];
     const datos = [
       [doc, x.documento], ["Nacimiento", x.nacimiento + " (" + R.edad(x.nacimiento, R.INICIO) + " años)"], ["Sexo", x.sexo === "f" ? "Femenino" : "Masculino"],
+      ["Delegación", x.delegacion && x.delegacion + (x.es_delegado ? " (es el delegado)" : "")],
+      ["Publicidad", x.acepta_publicidad ? "Autoriza el uso de su nombre y su foto" : "No autoriza el uso de su nombre ni de su foto"],
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
@@ -112,7 +119,9 @@
       const fide = document.createElement("a");
       if (x.fide_id) { fide.href = "https://ratings.fide.com/profile/" + encodeURIComponent(x.fide_id); fide.target = "_blank"; fide.rel = "noopener"; fide.className = "text-xs underline"; fide.textContent = "FIDE " + x.fide_id + (x.federacion ? " · " + x.federacion : "") + " · Std " + (x.elo_estandar || "—"); }
       celda(tr, [texto((x.titulo ? x.titulo + " " : "") + x.apellidos + ", " + x.nombre, "font-semibold"), x.fide_id ? fide : texto("Sin ID FIDE: tramitarlo", "text-xs text-amber-800 dark:text-amber-300"), detalles(x)], "min-w-[14rem]");
-      celda(tr, [texto(x.torneos.map((t) => R.TORNEOS[t].corto).join(" + "))]);
+      const queEs = x.es_delegado ? "Delegado" + (x.rol === "delegado" ? "" : " y " + R.rolDe(x.rol, x.sexo).toLowerCase()) : R.rolDe(x.rol, x.sexo);
+      celda(tr, [texto(queEs, "font-semibold"), texto(x.torneos.map((t) => R.TORNEOS[t].corto).join(" + "), "text-xs"),
+        texto(x.delegacion || "", "text-xs text-brand-500 dark:text-brand-300"), texto(x.acepta_publicidad ? "📣 Autoriza publicidad" : "", "text-xs")]);
       celda(tr, [texto(Number(x.monto_usd) ? R.dinero(Number(x.monto_usd)) : "Sin costo", "font-semibold"), texto(x.pago_metodo ? R.METODOS[x.pago_metodo].nombre : "", "text-xs")]);
       const archivos = document.createElement("div"); archivos.className = "flex gap-2";
       archivos.append(window.Adjuntos.celda([x.foto], bajar, x.nombre + " " + x.apellidos, "foto"));
@@ -183,13 +192,13 @@
 
   $("bajar-csv").addEventListener("click", () => {
     const l = visibles();
-    csv(["Código", "Estado", "Apellidos", "Nombre", "ID FIDE", "Sin ID FIDE", "Título", "Federación", "Elo estándar", "Elo rápido", "Elo blitz", "Torneos",
+    csv(["Código", "Estado", "Rol", "Es el delegado", "Delegación", "Autoriza publicidad", "Apellidos", "Nombre", "ID FIDE", "Sin ID FIDE", "Título", "Federación", "Elo estándar", "Elo rápido", "Elo blitz", "Torneos",
       "Sexo", "Nacimiento", "Edad al 26/12", "Nacionalidad", "Vive en", "Documento", "Número", "Correo", "Teléfono", "Club",
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
       "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "Factura a nombre de", "Identificación factura", "Correo factura", "Nota", "Se inscribió"],
-    l.map((x) => [codigo(x), x.estado, x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
+    l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
       x.responsable && x.responsable.nombre, x.responsable && x.responsable.telefono, x.emergencia && x.emergencia.nombre, x.emergencia && x.emergencia.telefono,
@@ -204,11 +213,11 @@
   $("bajar-gafetes").addEventListener("click", () => {
     const l = visibles().filter((x) => x.estado === "activa");
     csv(["Código", "Apellidos", "Nombre", "FIDE ID", "Federación", "Elo", "Sexo", "Nacimiento", "Institución", "Categoría", "Rol"],
-      l.map((x) => { const f = window.MetropolitanoGafete.filaDe(x); return [codigo(x), x.apellidos, x.nombre, x.fide_id, f["Federación"], x.elo_estandar, x.sexo === "f" ? "F" : "M", x.nacimiento, x.club, (x.clasico ? R.TORNEOS[x.clasico].nombre : "Blitz"), f.Rol]; }),
+      l.map((x) => { const f = window.MetropolitanoGafete.filaDe(x); return [codigo(x), x.apellidos, x.nombre, x.fide_id, f["Federación"], x.elo_estandar, x.sexo === "f" ? "F" : "M", x.nacimiento, x.delegacion || x.club, x.rol !== "jugador" ? "" : (x.clasico ? R.TORNEOS[x.clasico].nombre : "Blitz"), f.Rol]; }),
       "Metropolitano 2026 - lista para gafetes y Pareo.csv");
   });
 
-  ["f-texto", "f-torneo", "f-pago", "f-anuladas"].forEach((id) => $(id).addEventListener("input", pintar));
+  ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad"].forEach((id) => $(id).addEventListener("input", pintar));
 
   async function iniciar() {
     const { data } = await window.sb.auth.getSession();

@@ -34,55 +34,78 @@ window.MetropolitanoGafete = (function () {
     return [["Reunión técnica", "25/12", "19:00"], ...filas, ["Premiación", "30/12", ""]].slice(0, 16);
   }
 
-  // El diseño: el del Centroamericano con los datos del Metropolitano.
+  // El diseño: el del Centroamericano con la marca de las bases del
+  // Metropolitano (su logo, el de la FCA, las hojas abajo y sus colores).
   async function disenoDe(torneos) {
     if (!diseno) {
       const colores = {}, etiquetas = {};
       for (const [k, t] of Object.entries(R().TORNEOS)) { colores[k.toLowerCase()] = t.color; etiquetas[k.toLowerCase()] = t.nombre; }
+      for (const [k, r] of Object.entries(R().ROLES)) if (r.color) { colores[k] = r.color; etiquetas[k] = r.nombre; }
       diseno = {
         version: 1, nombreDiseno: "Metropolitano 2026", aprobado: true,
         tamano: { ancho: 100, alto: 140 },
         imagenes: {},
-        titulo: { texto: "XLVII TORNEO INTERNACIONAL\nMETROPOLITANO 2026\nSAN JOSÉ, COSTA RICA", color: "#1b2a4a" },
+        titulo: { texto: "XLVII TORNEO INTERNACIONAL\nMETROPOLITANO 2026\nESTADIO NACIONAL, COSTA RICA", color: "#1d134d" },
         nombre: { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true },
-        detalles: ["FIDE ID: {FIDE ID}", "Elo FIDE: {Elo}", "{Club}"],
+        detalles: ["{Detalle1}", "{Detalle2}", "{Detalle3}"],
         bandera: { plantilla: "{Federación}", texto: true },
         franja: { plantilla: "{Rol}" },
         iconos: [{ columna: "", dibujo: "telefono", imagen: null }, { columna: "", dibujo: "camara", imagen: null }],
-        colores: { columna: "Color", valores: colores, etiquetas, omision: "#1d4ed8" },
+        colores: { columna: "Color", valores: colores, etiquetas, omision: "#043576" },
         dorso: { vertical: "{Rol}", repetirLogos: true, qr: BASES, qrMarca: true, encabezados: ["Actividad", "Fecha", "Hora"], horario: [] },
         codigo: { plantilla: "{Código}", sinCodigoSi: "" },
         fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
         salida: { separarPor: "" },
       };
-      try { diseno.imagenes.logoIzq = { nombre: "fca-logo.png", datos: await aDatos("img/fca-logo.png") }; } catch (e) { /* sin logo */ }
+      for (const [id, ruta] of [["logoIzq", "img/metropolitano-2026/logo.png"], ["logoDer", "img/fca-logo.png"], ["cintaFrente", "img/metropolitano-2026/hojas-abajo.jpg"]]) {
+        try { diseno.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(ruta) }; } catch (e) { /* sin esa imagen */ }
+      }
     }
     return Object.assign({}, diseno, { dorso: Object.assign({}, diseno.dorso, { horario: horarioDe(torneos) }) });
   }
 
   /* De una inscripción (como la manda la página o como la lee la base) a la
-     fila del gafete. */
+     fila del gafete. El jugador lleva su torneo en la franja; los demás, su
+     rol. */
   function filaDe(x) {
-    const torneos = x.torneos || [];
+    const rol = x.rol || "jugador";
+    const torneos = rol === "jugador" ? (x.torneos || []) : [];
     const clasico = torneos.find((t) => t !== "BLITZ");
-    let rol;
-    if (clasico) rol = R().TORNEOS[clasico].nombre + (torneos.includes("BLITZ") ? " + Blitz" : "");
-    else rol = R().TORNEOS.BLITZ.nombre;
+    let franja, color;
+    if (rol === "jugador") {
+      franja = clasico ? R().TORNEOS[clasico].nombre + (torneos.includes("BLITZ") ? " + Blitz" : "") : R().TORNEOS.BLITZ.nombre;
+      color = (clasico || "BLITZ").toLowerCase();
+    } else {
+      franja = R().rolDe(rol, x.sexo);
+      color = rol;
+    }
+    const detalles = [];
+    if (x.fide_id) detalles.push("FIDE ID: " + x.fide_id);
+    else if (rol === "jugador" && x.sin_fide) detalles.push("FIDE ID: en trámite");
+    if (rol === "jugador") detalles.push(x.elo_estandar ? "Elo FIDE: " + x.elo_estandar : (x.sin_fide ? "" : "Elo FIDE: sin Elo"));
+    else if (x.es_delegado && rol !== "delegado") detalles.push("Delegado del grupo");
+    if (x.delegacion) detalles.push(x.delegacion);
+    else if (x.club) detalles.push(x.club);
+    const d = detalles.filter(Boolean);
     return {
       Apellidos: x.apellidos || "", Nombre: x.nombre || "",
-      "FIDE ID": x.fide_id || (x.sin_fide ? "en trámite" : ""),
-      Elo: x.elo_estandar ? String(x.elo_estandar) : (x.sin_fide ? "" : "sin Elo"),
+      "FIDE ID": x.fide_id || "",
+      Elo: x.elo_estandar ? String(x.elo_estandar) : "",
       Club: x.club || "",
+      Detalle1: d[0] || "", Detalle2: d[1] || "", Detalle3: d[2] || "",
       // La bandera: la federación de FIDE o, sin FIDE, la nacionalidad.
       "Federación": x.federacion || x.nacionalidad || "",
-      Rol: rol,
-      Color: (clasico || "BLITZ").toLowerCase(),
+      Rol: franja,
+      Color: color,
       "Código": x.codigo || "",
     };
   }
 
+  // En el dorso, el horario de su torneo; a quien no juega, el del A y el blitz.
+  const torneosDelDorso = (x) => ((x.rol || "jugador") === "jugador" ? (x.torneos || []) : ["A", "BLITZ"]);
+
   async function preparar(x, foto) {
-    const d = await disenoDe(x.torneos || []);
+    const d = await disenoDe(torneosDelDorso(x));
     if (!recursos) recursos = await D().preparar(d);
     const g = D().gafetes(d, [filaDe(x)])[0];
     if (foto) { g.foto = foto; g.fotoClave = "foto"; }
@@ -90,6 +113,7 @@ window.MetropolitanoGafete = (function () {
   }
 
   // Pinta las dos caras en dos <canvas> (la vista previa).
+  // (La etiqueta del lienzo dice lo que el gafete dice, para quien no lo ve.)
   async function dibujar(x, foto, lienzoFrente, lienzoDorso) {
     const { d, g } = await preparar(x, foto);
     const frente = await D().cara(d, recursos, g, "frente");
@@ -99,21 +123,27 @@ window.MetropolitanoGafete = (function () {
     D().pintar(lienzoFrente, d, frente, px);
     D().pintar(lienzoDorso, d, dorso, px);
     const quien = [x.nombre, x.apellidos].filter(Boolean).join(" ");
-    lienzoFrente.setAttribute("aria-label", "Frente del gafete de " + quien + ": " + filaDe(x).Rol + (x.fide_id ? ", FIDE ID " + x.fide_id : ""));
+    lienzoFrente.setAttribute("aria-label", "Frente del gafete de " + quien + ", con su foto: " + filaDe(x).Rol + (x.fide_id ? ", FIDE ID " + x.fide_id : ""));
     lienzoDorso.setAttribute("aria-label", "Dorso del gafete: el horario de " + filaDe(x).Rol + (x.codigo ? ", código " + x.codigo : ""));
     return [...new Set([...frente.avisos, ...dorso.avisos])];
   }
 
-  // El PDF de un gafete (frente y dorso), como el de la imprenta.
-  async function pdf(x, foto) {
-    const { d, g } = await preparar(x, foto);
-    const doc = window.GafetesPdf.nuevo(d.tamano.ancho, d.tamano.alto, "Gafete Metropolitano 2026 - " + [x.nombre, x.apellidos].join(" "));
-    for (const lado of ["frente", "dorso"]) {
-      const c = await D().cara(d, recursos, g, lado);
-      await doc.agregar({ clave: c.clave, ...(await D().fondoJpeg(d, c, 300)), textos: c.textos });
+  /* El PDF de uno o varios gafetes (frente y dorso de cada uno), como el de
+     la imprenta. `lista` es [{ x, foto }]; un grupo sale en un solo PDF. */
+  async function pdf(x, foto) { return pdfDe([{ x, foto }], "Gafete Metropolitano 2026 - " + [x.nombre, x.apellidos].join(" ")); }
+  async function pdfDe(lista, titulo) {
+    let doc = null;
+    for (const it of lista) {
+      const { d, g } = await preparar(it.x, it.foto);
+      if (!doc) doc = window.GafetesPdf.nuevo(d.tamano.ancho, d.tamano.alto, titulo || "Gafetes Metropolitano 2026");
+      if (it.foto) g.fotoClave = "foto-" + lista.indexOf(it);
+      for (const lado of ["frente", "dorso"]) {
+        const c = await D().cara(d, recursos, g, lado);
+        await doc.agregar({ clave: c.clave, ...(await D().fondoJpeg(d, c, 300)), textos: c.textos });
+      }
     }
     return doc.cerrar();
   }
 
-  return { filaDe, dibujar, pdf, horarioDe };
+  return { filaDe, dibujar, pdf, pdfDe, horarioDe };
 })();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Inscripción al Metropolitano 2026 — Ajedrez Integral</title>
-    <meta name="description" content="Inscripción al XLVII Torneo Internacional Metropolitano 2026 de la Federación Costarricense de Ajedrez: del 26 al 30 de diciembre en el Estadio Nacional.">
+    <meta name="description" content="Inscripción de jugadores, entrenadores, acompañantes y delegaciones al XLVII Torneo Internacional Metropolitano 2026 de la Federación Costarricense de Ajedrez: del 26 al 30 de diciembre en el Estadio Nacional.">
     <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -66,7 +66,7 @@
             </ul>
         </div>
     </header>
-    <main id="main-content" class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main id="main-content" class="metro max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="cerrado" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
             <p class="text-4xl mb-3" aria-hidden="true">📋</p>
             <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">La inscripción del Metropolitano 2026 ya cerró</h1>
@@ -74,230 +74,127 @@
         </div>
 
         <!-- ========================= 1. El formulario ========================= -->
-        <form id="formulario" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 sm:p-8 space-y-8" novalidate>
-            <header class="-mx-6 sm:-mx-8 -mt-6 sm:-mt-8 px-6 sm:px-8 py-5 rounded-t-2xl bg-brand-800 text-white flex items-center gap-4">
-                <img src="img/fca-logo.png" alt="Federación Costarricense de Ajedrez" class="h-14 w-14 object-contain rounded-lg bg-white p-1 shrink-0">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-accent-300">Federación Costarricense de Ajedrez</p>
-                    <h1 class="font-serif text-2xl sm:text-3xl font-bold">Inscripción al XLVII Torneo Internacional Metropolitano 2026</h1>
-                    <p class="text-sm text-brand-100 mt-1">Del 26 al 30 de diciembre de 2026 · Estadio Nacional, San José, Costa Rica</p>
+        <form id="formulario" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden" novalidate>
+            <!-- La portada, como la de las bases: las hojas, el logo con el Estadio Nacional y la FCA. -->
+            <header class="bg-white text-[#1d134d]">
+                <img src="img/metropolitano-2026/hojas-arriba.jpg" alt="" width="1400" height="382" class="block w-full h-20 sm:h-28 object-cover object-top">
+                <div class="px-6 sm:px-8 pt-2 pb-5 text-center">
+                    <img src="img/metropolitano-2026/logo.png" alt="Metropolitano, International Tournament" width="900" height="397" class="mx-auto h-24 sm:h-32 w-auto">
+                    <h1 class="mt-3 text-2xl sm:text-3xl font-semibold tracking-wide">XLVII Torneo Internacional Metropolitano 2026</h1>
+                    <p class="text-sm sm:text-base mt-1">Inscripción · del 26 al 30 de diciembre de 2026 · Estadio Nacional de Costa Rica</p>
+                    <p class="mt-2 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide"><img src="img/fca-logo.png" alt="" class="h-8 w-8 object-contain"> Federación Costarricense de Ajedrez</p>
                 </div>
             </header>
 
-            <div class="text-sm text-brand-700 dark:text-brand-200 space-y-2">
-                <p>Llena esta inscripción una vez por jugador. Al final ves tu <strong>gafete</strong> con el resumen de tus datos, los revisas y confirmas.</p>
-                <p>Antes de empezar ten a mano: tu <strong>ID FIDE</strong> (si tienes), una <strong>foto tamaño pasaporte</strong> y el <strong>comprobante de pago</strong>. Lee las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a>.</p>
-                <p id="aviso-plazo" class="font-semibold text-accent-800 dark:text-accent-300"></p>
-                <p class="text-xs text-brand-500 dark:text-brand-300">Los campos con <span class="text-red-700 dark:text-red-400">*</span> son obligatorios.</p>
+            <div class="px-6 sm:px-8 pb-8 space-y-8">
+                <div class="text-sm text-brand-700 dark:text-brand-200 space-y-2">
+                    <p>Se inscriben <strong>jugadores, entrenadores y acompañantes</strong>. Al final ves el <strong>gafete</strong> de cada persona, con su foto y el resumen de sus datos, los revisas y confirmas.</p>
+                    <p>Ten a mano: el <strong>ID FIDE</strong> de cada jugador (si tiene), una <strong>foto tamaño pasaporte</strong> de cada persona y el <strong>comprobante de pago</strong>. Lee las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a>.</p>
+                    <p id="aviso-plazo" class="font-semibold text-accent-800 dark:text-accent-300"></p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">Los campos con <span class="text-red-700 dark:text-red-400">*</span> son obligatorios.</p>
+                </div>
+
+                <fieldset class="space-y-3">
+                    <legend class="metro-titulo">¿Cómo te inscribes?</legend>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <label class="metro-opcion"><input type="radio" name="modo" value="individual" checked class="mt-1 h-5 w-5"><span><span class="font-semibold block">Una persona</span><span class="text-sm text-brand-600 dark:text-brand-300">Me inscribo yo, o inscribo a mi hija o hijo.</span></span></label>
+                        <label class="metro-opcion"><input type="radio" name="modo" value="grupo" class="mt-1 h-5 w-5"><span><span class="font-semibold block">Un grupo o delegación</span><span class="text-sm text-brand-600 dark:text-brand-300">Soy delegado e inscribo a varias personas (club, colegio, academia o país) en un solo formulario y un solo pago.</span></span></label>
+                    </div>
+                    <div id="caja-grupo" class="hidden rounded-xl bg-brand-50 dark:bg-brand-950 p-4 space-y-3">
+                        <div><label for="delegacion" class="block text-sm font-semibold mb-1">Nombre de la delegación <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="delegacion" data-campo maxlength="100" placeholder="Club Ajedrez Heredia, Federación de Panamá, Liceo…"></div>
+                        <p class="text-sm text-brand-700 dark:text-brand-200">Primero llena tus datos como delegado. Después agrega a cada persona: lo de viaje, hospedaje y alimentación se copia de lo tuyo y lo puedes cambiar en cada una.</p>
+                    </div>
+                </fieldset>
+
+                <div id="personas" class="space-y-6"></div>
+
+                <div id="agregar" class="hidden rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-600 p-4 space-y-3">
+                    <p class="font-semibold">Agregar a la delegación <span id="cuenta-personas" class="font-normal text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></span></p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" data-agregar="jugador" class="metro-boton">+ Jugador</button>
+                        <button type="button" data-agregar="entrenador" class="metro-boton">+ Entrenador</button>
+                        <button type="button" data-agregar="acompanante" class="metro-boton">+ Acompañante</button>
+                    </div>
+                </div>
+
+                <!-- El pago: uno solo, por el total. -->
+                <fieldset id="caja-pago" class="space-y-4">
+                    <legend class="metro-titulo">El pago</legend>
+                    <div id="total" class="rounded-xl bg-brand-50 dark:bg-brand-950 p-4" aria-live="polite"></div>
+                    <div id="con-pago" class="space-y-4">
+                        <div><p class="font-semibold mb-2">¿Cómo pagaste? <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></p><div id="metodos" class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Método de pago"></div></div>
+                        <div id="datos-metodo" class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 text-sm" aria-live="polite"></div>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div><label for="referencia" class="block text-sm font-semibold mb-1">Número de comprobante o referencia</label><input id="referencia" data-campo maxlength="60"></div>
+                            <div><label for="pago_fecha" class="block text-sm font-semibold mb-1">Fecha del pago</label><input id="pago_fecha" data-campo type="date" min="2026-08-01" max="2026-12-26"></div>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="font-semibold">Comprobante de pago <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300">Foto, captura de pantalla o PDF. Con subirlo acá basta: no hace falta mandarlo también por correo.</p>
+                            <label for="comprobante" class="metro-boton inline-block cursor-pointer">📎 Elegir el comprobante<input id="comprobante" type="file" accept="image/*,.pdf" class="sr-only"></label>
+                            <ul id="comprobante-lista" class="flex flex-wrap gap-3"></ul>
+                            <p id="comprobante-estado" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                        <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="quiere-factura"> Necesito factura electrónica a otro nombre (empresa, club, colegio)</label>
+                        <div id="caja-factura" class="hidden grid sm:grid-cols-3 gap-4">
+                            <div><label for="fac_nombre" class="block text-sm font-semibold mb-1">A nombre de</label><input id="fac_nombre" data-campo maxlength="100"></div>
+                            <div><label for="fac_id" class="block text-sm font-semibold mb-1">Cédula física o jurídica</label><input id="fac_id" data-campo maxlength="30"></div>
+                            <div><label for="fac_correo" class="block text-sm font-semibold mb-1">Correo para la factura</label><input id="fac_correo" data-campo type="email" maxlength="120"></div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="space-y-3">
+                    <legend class="metro-titulo">Para terminar</legend>
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-reglamento" class="mt-1 h-4 w-4 shrink-0"> <span>Leí las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a> y las acepto. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-imagen" class="mt-1 h-4 w-4 shrink-0"> <span>Sé que la FCA toma fotos y videos en el torneo y los publica en sus canales oficiales, como dicen las bases. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-datos" class="mt-1 h-4 w-4 shrink-0"> <span id="acepta-datos-texto">Acepto que estos datos se usen para organizar el torneo y tramitar el ID FIDE de quien no lo tiene, según la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold">Política de privacidad</a>. Si inscribo a otra persona o a un grupo, cuento con la autorización de cada una, y si es menor de edad, con la de su madre, padre o persona encargada. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">El permiso para usar el nombre y la foto de cada persona en la publicidad del torneo se marca en su tarjeta: es aparte y no es obligatorio.</p>
+                </fieldset>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="submit" id="revisar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar la inscripción</button>
+                    <span id="msg" class="text-sm text-red-700 dark:text-red-400" role="alert"></span>
+                </div>
             </div>
-
-            <!-- 1. ID FIDE -->
-            <fieldset class="space-y-4">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">1. Tu ID FIDE</legend>
-                <div class="flex flex-wrap gap-4" role="radiogroup" aria-label="¿Tienes ID FIDE?">
-                    <label class="flex items-center gap-2"><input type="radio" name="tiene_fide" value="si" checked> Sí, tengo ID FIDE</label>
-                    <label class="flex items-center gap-2"><input type="radio" name="tiene_fide" value="no"> No tengo ID FIDE</label>
-                </div>
-                <div id="caja-fide" class="space-y-3">
-                    <div>
-                        <label for="buscar-fide" class="block text-sm font-semibold mb-1">Escribe tu nombre (apellido primero) o tu ID FIDE <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label>
-                        <input id="buscar-fide" data-campo type="search" autocomplete="off" placeholder="Ejemplo: Mora, Ana  —  o  6400000" aria-describedby="buscar-fide-ayuda" aria-controls="resultados-fide">
-                        <p id="buscar-fide-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Buscamos en la lista oficial de FIDE mientras escribes. Toca tu nombre para elegirte.</p>
-                    </div>
-                    <p id="estado-fide" class="text-sm" role="status" aria-live="polite"></p>
-                    <ul id="resultados-fide" class="space-y-2" aria-label="Jugadores encontrados en la lista de FIDE"></ul>
-                    <div id="elegido-fide" class="hidden rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4" aria-live="polite"></div>
-                </div>
-                <div id="caja-sin-fide" class="hidden rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm text-brand-700 dark:text-brand-200 space-y-1">
-                    <p><strong>Sin ID FIDE también puedes jugar</strong> (en el Metropolitano B, el U14 o el blitz).</p>
-                    <p>Si eres de <strong>Costa Rica</strong>, la FCA te tramita el ID FIDE con tu nombre completo, cédula, fecha de nacimiento y correo, que llenas abajo. Si eres de <strong>otro país</strong>, el ID lo pide tu propia federación: escríbele antes del torneo.</p>
-                </div>
-            </fieldset>
-
-            <!-- 2. Datos personales -->
-            <fieldset class="space-y-4">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">2. Tus datos</legend>
-                <div class="grid sm:grid-cols-2 gap-4">
-                    <div><label for="nombre" class="block text-sm font-semibold mb-1">Nombre(s) <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="nombre" data-campo required autocomplete="given-name" maxlength="80"></div>
-                    <div><label for="apellidos" class="block text-sm font-semibold mb-1">Apellidos <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="apellidos" data-campo required autocomplete="family-name" maxlength="80"></div>
-                    <div><label for="nacimiento" class="block text-sm font-semibold mb-1">Fecha de nacimiento <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="nacimiento" data-campo type="date" required min="1920-01-01" max="2022-12-31" autocomplete="bday"><p id="nacimiento-aviso" class="text-xs mt-1 text-red-700 dark:text-red-400" aria-live="polite"></p></div>
-                    <div><label for="sexo" class="block text-sm font-semibold mb-1">Sexo <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="sexo" data-campo required><option value="">Elige…</option><option value="f">Femenino</option><option value="m">Masculino</option></select><p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo piden los premios de mejor femenina.</p></div>
-                    <div><label for="nacionalidad" class="block text-sm font-semibold mb-1">Nacionalidad <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="nacionalidad" data-campo required list="paises" maxlength="60" value="Costa Rica"></div>
-                    <div><label for="pais_residencia" class="block text-sm font-semibold mb-1">País donde vives <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="pais_residencia" data-campo required list="paises" maxlength="60" value="Costa Rica"></div>
-                    <div><label for="documento_tipo" class="block text-sm font-semibold mb-1">Documento de identidad <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><select id="documento_tipo" data-campo required><option value="cedula">Cédula de Costa Rica</option><option value="dimex">DIMEX (residente en Costa Rica)</option><option value="pasaporte">Pasaporte</option><option value="otro">Documento de identidad de otro país</option></select></div>
-                    <div><label for="documento" class="block text-sm font-semibold mb-1">Número de documento <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="documento" data-campo required maxlength="30" placeholder="1-2345-0678"></div>
-                    <div><label for="correo" class="block text-sm font-semibold mb-1">Correo electrónico <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="correo" data-campo type="email" required autocomplete="email" maxlength="120"></div>
-                    <div><label for="telefono" class="block text-sm font-semibold mb-1">Teléfono o WhatsApp, con el código del país <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="telefono" data-campo type="tel" required autocomplete="tel" maxlength="25" placeholder="+506 8888 1234"></div>
-                    <div class="sm:col-span-2"><label for="club" class="block text-sm font-semibold mb-1">Club, academia o colegio que representas</label><input id="club" data-campo maxlength="100"></div>
-                </div>
-                <datalist id="paises"></datalist>
-
-                <div id="caja-responsable" class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
-                    <p class="font-semibold">Eres menor de edad: datos de tu madre, padre o persona responsable en el torneo</p>
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div><label for="resp_nombre" class="block text-sm font-semibold mb-1">Nombre completo <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="resp_nombre" data-campo maxlength="100"></div>
-                        <div><label for="resp_parentesco" class="block text-sm font-semibold mb-1">Parentesco</label><input id="resp_parentesco" data-campo maxlength="40" placeholder="Madre, padre, entrenador…"></div>
-                        <div><label for="resp_documento" class="block text-sm font-semibold mb-1">Documento</label><input id="resp_documento" data-campo maxlength="30"></div>
-                        <div><label for="resp_telefono" class="block text-sm font-semibold mb-1">Teléfono <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="resp_telefono" data-campo type="tel" maxlength="25"></div>
-                        <div class="sm:col-span-2"><label for="resp_correo" class="block text-sm font-semibold mb-1">Correo</label><input id="resp_correo" data-campo type="email" maxlength="120"></div>
-                    </div>
-                </div>
-
-                <div class="rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
-                    <p class="font-semibold">Contacto para una emergencia</p>
-                    <div class="grid sm:grid-cols-3 gap-4">
-                        <div><label for="emer_nombre" class="block text-sm font-semibold mb-1">Nombre <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="emer_nombre" data-campo maxlength="100"></div>
-                        <div><label for="emer_parentesco" class="block text-sm font-semibold mb-1">Parentesco</label><input id="emer_parentesco" data-campo maxlength="40"></div>
-                        <div><label for="emer_telefono" class="block text-sm font-semibold mb-1">Teléfono <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="emer_telefono" data-campo type="tel" maxlength="25"></div>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- 3. Torneos -->
-            <fieldset class="space-y-4">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">3. En qué torneo juegas</legend>
-                <p class="text-sm text-brand-600 dark:text-brand-300">Te mostramos los que puedes jugar según tu Elo FIDE estándar y tu fecha de nacimiento. A, B y U14 se juegan a la vez: se elige uno. El blitz se suma aparte.</p>
-                <div id="opciones-clasico" class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Torneo clásico"></div>
-                <label id="opcion-blitz" class="flex items-start gap-3 rounded-xl border-2 border-brand-200 dark:border-brand-700 p-4 cursor-pointer">
-                    <input type="checkbox" id="blitz" class="mt-1 h-5 w-5">
-                    <span><span class="font-semibold">Sumar el Metropolitano Blitz</span><span class="block text-sm text-brand-600 dark:text-brand-300">3 min + 2 s · 30 de diciembre, 16:00 · abierto a todos</span></span>
-                </label>
-                <p id="torneos-aviso" class="text-sm text-red-700 dark:text-red-400" aria-live="polite"></p>
-            </fieldset>
-
-            <!-- 4. Viaje, hospedaje y comidas -->
-            <fieldset class="space-y-4">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">4. Viaje, hospedaje y alimentación</legend>
-                <p id="aviso-titulado" class="hidden text-sm rounded-lg bg-accent-50 dark:bg-brand-950 p-3"></p>
-                <div id="caja-viaje" class="rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
-                    <p class="font-semibold">Si vienes de otro país o de lejos: tu llegada y tu salida</p>
-                    <div class="grid sm:grid-cols-3 gap-4">
-                        <div><label for="llegada" class="block text-sm font-semibold mb-1">Día de llegada</label><input id="llegada" data-campo type="date" min="2026-12-15" max="2027-01-05"></div>
-                        <div><label for="salida" class="block text-sm font-semibold mb-1">Día de salida</label><input id="salida" data-campo type="date" min="2026-12-15" max="2027-01-05"></div>
-                        <div><label for="vuelo" class="block text-sm font-semibold mb-1">Vuelo o medio de llegada</label><input id="vuelo" data-campo maxlength="60" placeholder="AV 123, 14:30"></div>
-                    </div>
-                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="traslado"> Necesito traslado del aeropuerto</label>
-                </div>
-                <div class="space-y-3">
-                    <p class="font-semibold">¿Necesitas hospedaje?</p>
-                    <div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="hospedaje" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="hospedaje" value="si"> Sí</label></div>
-                    <div id="caja-hospedaje" class="hidden grid sm:grid-cols-2 gap-4">
-                        <div><label for="hosp_desde" class="block text-sm font-semibold mb-1">Desde (noche de llegada) <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="hosp_desde" data-campo type="date" min="2026-12-20" max="2027-01-02" value="2026-12-25"></div>
-                        <div><label for="hosp_hasta" class="block text-sm font-semibold mb-1">Hasta (día de salida) <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="hosp_hasta" data-campo type="date" min="2026-12-21" max="2027-01-03" value="2026-12-31"></div>
-                        <div><label for="habitacion" class="block text-sm font-semibold mb-1">Habitación</label><select id="habitacion" data-campo><option value="individual">Individual</option><option value="doble">Doble (con un acompañante)</option><option value="compartida">Compartida con otros jugadores</option></select></div>
-                        <div><label for="acompanantes" class="block text-sm font-semibold mb-1">¿Cuántos acompañantes se hospedan contigo?</label><input id="acompanantes" data-campo type="number" min="0" max="6" value="0"></div>
-                        <p id="hosp-noches" class="sm:col-span-2 text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></p>
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <p class="font-semibold">¿Necesitas alimentación?</p>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center gap-2"><input type="checkbox" name="comida" value="desayuno"> Desayuno</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="comida" value="almuerzo"> Almuerzo</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="comida" value="cena"> Cena</label>
-                    </div>
-                    <p class="text-xs text-brand-500 dark:text-brand-300">Si no marcas ninguna, quedas como «no requiere alimentación».</p>
-                    <div id="caja-comidas" class="hidden grid sm:grid-cols-2 gap-4">
-                        <div><label for="com_desde" class="block text-sm font-semibold mb-1">Desde <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="com_desde" data-campo type="date" min="2026-12-20" max="2027-01-03" value="2026-12-26"></div>
-                        <div><label for="com_hasta" class="block text-sm font-semibold mb-1">Hasta <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></label><input id="com_hasta" data-campo type="date" min="2026-12-20" max="2027-01-03" value="2026-12-30"></div>
-                        <div class="sm:col-span-2"><label for="dieta" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="dieta" data-campo maxlength="300" placeholder="Vegetariana, sin gluten, alergia al maní…"></div>
-                    </div>
-                </div>
-                <p class="text-xs text-brand-500 dark:text-brand-300">El hospedaje y la alimentación son una solicitud: la organización te confirma la disponibilidad y el costo por correo. A los GM, IM y WGM se les dan sin costo, como dicen las bases.</p>
-            </fieldset>
-
-            <!-- 5. Condición y accesibilidad -->
-            <fieldset class="space-y-3">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">5. Condición y accesibilidad</legend>
-                <label class="flex items-start gap-2"><input type="checkbox" name="condicion" value="sordo" class="mt-1"> <span>Soy atleta sordo (opto por el premio de mejor atleta sordo del Metropolitano B)</span></label>
-                <label class="flex items-start gap-2"><input type="checkbox" name="condicion" value="ciego" class="mt-1"> <span>Soy atleta ciego o de baja visión (opto por el premio de mejor atleta ciego o de baja visión)</span></label>
-                <label class="flex items-start gap-2"><input type="checkbox" name="condicion" value="silla" class="mt-1"> <span>Uso silla de ruedas o necesito una mesa accesible</span></label>
-                <p id="aviso-condicion" class="hidden text-xs text-brand-600 dark:text-brand-300">Para optar por esos premios hay que estar validado antes por la asociación: sordos, <a class="underline" href="mailto:adas.costarica@gmail.com">adas.costarica@gmail.com</a> (8333-2510, solo texto o video en LESCO); ciegos y baja visión, ADAES, <a class="underline" href="mailto:adaescr@gmail.com">adaescr@gmail.com</a> (6021-0579).</p>
-                <div><label for="accesibilidad" class="block text-sm font-semibold mb-1">¿Algo más que necesites para jugar? (tablero para ciegos, intérprete, otra)</label><input id="accesibilidad" data-campo maxlength="300"></div>
-            </fieldset>
-
-            <!-- 6. Foto -->
-            <fieldset class="space-y-3">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">6. Foto tamaño pasaporte <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></legend>
-                <p class="text-sm text-brand-600 dark:text-brand-300">De frente, de los hombros hacia arriba, con fondo claro y sin lentes oscuros ni gorra. Va en tu gafete.</p>
-                <label for="foto" class="inline-block bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 font-semibold px-4 py-2.5 rounded-lg cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">📷 Elegir la foto<input id="foto" type="file" accept="image/*" class="sr-only"></label>
-                <ul id="foto-lista" class="flex flex-wrap gap-3"></ul>
-                <p id="foto-estado" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
-            </fieldset>
-
-            <!-- 7. Pago -->
-            <fieldset id="caja-pago" class="space-y-4">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">7. El pago</legend>
-                <div id="total" class="rounded-xl bg-brand-50 dark:bg-brand-950 p-4" aria-live="polite"></div>
-                <div id="con-pago" class="space-y-4">
-                    <div><p class="font-semibold mb-2">¿Cómo pagaste? <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></p><div id="metodos" class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Método de pago"></div></div>
-                    <div id="datos-metodo" class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 text-sm" aria-live="polite"></div>
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div><label for="referencia" class="block text-sm font-semibold mb-1">Número de comprobante o referencia</label><input id="referencia" data-campo maxlength="60"></div>
-                        <div><label for="pago_fecha" class="block text-sm font-semibold mb-1">Fecha del pago</label><input id="pago_fecha" data-campo type="date" min="2026-08-01" max="2026-12-26"></div>
-                    </div>
-                    <div class="space-y-2">
-                        <p class="font-semibold">Comprobante de pago <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span></p>
-                        <p class="text-xs text-brand-500 dark:text-brand-300">Foto, captura de pantalla o PDF. Con subirlo acá basta: no hace falta mandarlo también por correo.</p>
-                        <label for="comprobante" class="inline-block bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 font-semibold px-4 py-2.5 rounded-lg cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">📎 Elegir el comprobante<input id="comprobante" type="file" accept="image/*,.pdf" class="sr-only"></label>
-                        <ul id="comprobante-lista" class="flex flex-wrap gap-3"></ul>
-                        <p id="comprobante-estado" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
-                    </div>
-                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="quiere-factura"> Necesito factura electrónica a otro nombre (empresa, club, colegio)</label>
-                    <div id="caja-factura" class="hidden grid sm:grid-cols-3 gap-4">
-                        <div><label for="fac_nombre" class="block text-sm font-semibold mb-1">A nombre de</label><input id="fac_nombre" data-campo maxlength="100"></div>
-                        <div><label for="fac_id" class="block text-sm font-semibold mb-1">Cédula física o jurídica</label><input id="fac_id" data-campo maxlength="30"></div>
-                        <div><label for="fac_correo" class="block text-sm font-semibold mb-1">Correo para la factura</label><input id="fac_correo" data-campo type="email" maxlength="120"></div>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- 8. Consentimientos -->
-            <fieldset class="space-y-3">
-                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white">8. Para terminar</legend>
-                <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-reglamento" class="mt-1 h-4 w-4 shrink-0"> <span>Leí las <a class="underline font-semibold" href="https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf" target="_blank" rel="noopener">bases del torneo</a> y las acepto. <span class="text-red-700 dark:text-red-400">*</span></span></label>
-                <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-imagen" class="mt-1 h-4 w-4 shrink-0"> <span>Sé que la FCA toma fotos y videos en el torneo para sus canales oficiales, como dicen las bases. <span class="text-red-700 dark:text-red-400">*</span></span></label>
-                <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-datos" class="mt-1 h-4 w-4 shrink-0"> <span>Acepto que estos datos se usen para organizar el torneo y tramitar mi ID FIDE si no lo tengo, según la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold">Política de privacidad</a>. Si inscribo a una persona menor de edad, soy su madre, padre o persona encargada, o cuento con su autorización. <span class="text-red-700 dark:text-red-400">*</span></span></label>
-            </fieldset>
-
-            <div class="flex flex-wrap items-center gap-3">
-                <button type="submit" id="revisar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar mi inscripción</button>
-                <span id="msg" class="text-sm text-red-700 dark:text-red-400" role="alert"></span>
-            </div>
+            <img src="img/metropolitano-2026/hojas-abajo.jpg" alt="" width="1400" height="364" class="block w-full h-16 sm:h-24 object-cover object-bottom">
         </form>
 
-        <!-- ========================= 2. El resumen y el gafete ========================= -->
-        <section id="resumen" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 sm:p-8 space-y-6" aria-labelledby="resumen-titulo" tabindex="-1">
-            <div>
-                <h2 id="resumen-titulo" class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white"></h2>
-                <p id="resumen-sub" class="text-brand-600 dark:text-brand-300 mt-1"></p>
-            </div>
-            <div class="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-                <figure><canvas id="gafete-frente" role="img" class="w-full h-auto rounded-lg shadow border border-brand-200 dark:border-brand-700 bg-white"></canvas><figcaption class="text-xs text-center text-brand-500 dark:text-brand-300 mt-1">Frente</figcaption></figure>
-                <figure><canvas id="gafete-dorso" role="img" class="w-full h-auto rounded-lg shadow border border-brand-200 dark:border-brand-700 bg-white"></canvas><figcaption class="text-xs text-center text-brand-500 dark:text-brand-300 mt-1">Dorso</figcaption></figure>
-            </div>
-            <p id="gafete-error" class="hidden text-sm text-red-700 dark:text-red-400" role="alert"></p>
-            <dl id="resumen-datos" class="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm"></dl>
+        <!-- ========================= 2. El resumen y los gafetes ========================= -->
+        <section id="resumen" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden" aria-labelledby="resumen-titulo" tabindex="-1">
+            <img src="img/metropolitano-2026/hojas-arriba.jpg" alt="" width="1400" height="382" class="block w-full h-16 sm:h-20 object-cover object-top">
+            <div class="px-6 sm:px-8 pb-8 space-y-6">
+                <div class="text-center">
+                    <img src="img/metropolitano-2026/logo.png" alt="" width="900" height="397" class="mx-auto h-16 w-auto">
+                    <h2 id="resumen-titulo" class="mt-2 text-2xl sm:text-3xl font-semibold text-[#1d134d] dark:text-white"></h2>
+                    <p id="resumen-sub" class="text-brand-600 dark:text-brand-300 mt-1"></p>
+                </div>
+                <div id="resumen-personas" class="space-y-8"></div>
+                <div id="resumen-total" class="rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm"></div>
 
-            <div id="validar" class="space-y-4">
-                <label class="flex items-start gap-3 rounded-xl border-2 border-accent-500 p-4"><input type="checkbox" id="confirmo" class="mt-1 h-5 w-5 shrink-0"> <span class="font-semibold">Revisé mi información y está correcta.</span></label>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button type="button" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Confirmar y enviar la inscripción</button>
-                    <button type="button" id="corregir" class="border border-brand-300 dark:border-brand-600 font-semibold px-5 py-3 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a corregir</button>
-                    <span id="msg-enviar" class="text-sm" role="alert"></span>
+                <div id="validar" class="space-y-4">
+                    <label class="flex items-start gap-3 rounded-xl border-2 border-accent-500 p-4"><input type="checkbox" id="confirmo" class="mt-1 h-5 w-5 shrink-0"> <span id="confirmo-texto" class="font-semibold">Revisé mi información y está correcta.</span></label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button type="button" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Confirmar y enviar la inscripción</button>
+                        <button type="button" id="corregir" class="metro-boton py-3">Volver a corregir</button>
+                        <span id="msg-enviar" class="text-sm" role="alert"></span>
+                    </div>
+                </div>
+
+                <div id="listo" class="hidden space-y-3 rounded-xl bg-accent-50 dark:bg-brand-950 p-5">
+                    <p class="text-lg font-bold text-brand-800 dark:text-white">✅ <span id="listo-texto"></span></p>
+                    <ul id="listo-codigos" class="text-sm space-y-1"></ul>
+                    <p id="listo-pago" class="text-sm text-brand-700 dark:text-brand-200"></p>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="button" id="bajar-gafete" class="bg-[#1d134d] hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Descargar los gafetes (PDF)</button>
+                        <button type="button" id="otra" class="metro-boton">Hacer otra inscripción</button>
+                    </div>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">¿Algo quedó mal? Escribe a <a class="underline" href="mailto:metropolitano@fcacostarica.com">metropolitano@fcacostarica.com</a> con el código.</p>
                 </div>
             </div>
-
-            <div id="listo" class="hidden space-y-3 rounded-xl bg-accent-50 dark:bg-brand-950 p-5">
-                <p class="text-lg font-bold text-brand-800 dark:text-white">✅ <span id="listo-texto"></span></p>
-                <p id="listo-pago" class="text-sm text-brand-700 dark:text-brand-200"></p>
-                <div class="flex flex-wrap gap-3">
-                    <button type="button" id="bajar-gafete" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Descargar mi gafete (PDF)</button>
-                    <button type="button" id="otra" class="border border-brand-300 dark:border-brand-600 font-semibold px-5 py-2.5 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Inscribir a otro jugador</button>
-                </div>
-                <p class="text-xs text-brand-500 dark:text-brand-300">¿Algo quedó mal? Escribe a <a class="underline" href="mailto:metropolitano@fcacostarica.com">metropolitano@fcacostarica.com</a> con tu código.</p>
-            </div>
+            <img src="img/metropolitano-2026/hojas-abajo.jpg" alt="" width="1400" height="364" class="block w-full h-14 sm:h-20 object-cover object-bottom">
         </section>
+        <datalist id="paises"></datalist>
     </main>
 
 <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">

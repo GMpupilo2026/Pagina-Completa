@@ -61,13 +61,17 @@ igual("plazos el 27/12: todo cerrado", R.abierto("2026-12-27").blitz, false);
 /* ===================== 2. La página y la base, iguales ===================== */
 console.log("2. Las cifras de la página y las de la base");
 const MIG = path.join(RAIZ, "supabase", "migraciones");
-const ultima = fs.readdirSync(MIG).filter((f) => f.endsWith(".sql")).sort().reverse()
-  .find((f) => /create or replace function public\.metropolitano_inscribir/.test(fs.readFileSync(path.join(MIG, f), "utf8")));
-cierto("hay una migración que define metropolitano_inscribir()", !!ultima);
-if (ultima) {
-  const sql = fs.readFileSync(path.join(MIG, ultima), "utf8");
-  const cuerpo = sql.slice(sql.indexOf("create or replace function public.metropolitano_inscribir"));
-  const tiene = (n, re) => cierto(n, re.test(cuerpo), ultima);
+const definida = (re) => fs.readdirSync(MIG).filter((f) => f.endsWith(".sql")).sort().reverse()
+  .find((f) => re.test(fs.readFileSync(path.join(MIG, f), "utf8")));
+const ultimaPersona = definida(/create or replace function interno\.metropolitano_persona/);
+const ultimaInscribir = definida(/create or replace function public\.metropolitano_inscribir/);
+cierto("hay una migración que define interno.metropolitano_persona() y otra (o la misma) metropolitano_inscribir()", !!ultimaPersona && !!ultimaInscribir);
+if (ultimaPersona && ultimaInscribir) {
+  const sqlP = fs.readFileSync(path.join(MIG, ultimaPersona), "utf8");
+  const cuerpo = sqlP.slice(sqlP.indexOf("create or replace function interno.metropolitano_persona"), sqlP.indexOf("create or replace function public.metropolitano_inscribir") > 0 ? sqlP.indexOf("create or replace function public.metropolitano_inscribir") : undefined);
+  const sqlI = fs.readFileSync(path.join(MIG, ultimaInscribir), "utf8");
+  const inscribir = sqlI.slice(sqlI.indexOf("create or replace function public.metropolitano_inscribir"));
+  const tiene = (n, re, texto) => cierto(n, re.test(texto || cuerpo), ultimaPersona);
   for (const [k, T] of Object.entries(R.TORNEOS)) {
     tiene(`${T.nombre}: ${T.paypal} por PayPal y ${T.usd} por lo demás`,
       new RegExp(`when '${k}' then case when v_metodo = 'paypal' then ${T.paypal.toFixed(2).replace(/\.?0+$/, "")} else ${T.usd} end`));
@@ -80,14 +84,27 @@ if (ultima) {
   tiene(`el A pide ${R.ELO_A}`, new RegExp(`v_clasico = 'A' and \\(v_elo is null or v_elo < ${R.ELO_A}\\)`));
   tiene(`el U14 es desde ${R.NACIDOS_U14_DESDE}`, new RegExp(`v_clasico = 'U14' and extract\\(year from v_nac\\) < ${R.NACIDOS_U14_DESDE}`));
   tiene("los clásicos cierran el mismo día", new RegExp(`v_clasico is not null and hoy > date '${R.CIERRE_CLASICOS}'`));
-  tiene("el blitz cierra el mismo día", new RegExp(`hoy > date '${R.CIERRE_BLITZ}'`));
+  tiene("el blitz cierra el mismo día", new RegExp(`hoy > date '${R.CIERRE_BLITZ}'`), inscribir);
   tiene("gratis los mismos títulos", new RegExp(`v_titulo in \\(${R.TITULOS_GRATIS.map((t) => `'${t}'`).join(", ")}\\)`));
-  tiene(`el tipo de cambio es ₡${R.TIPO_CAMBIO}`, new RegExp(`round\\(v_total \\* ${R.TIPO_CAMBIO}\\)`));
+  tiene(`el tipo de cambio es ₡${R.TIPO_CAMBIO}`, new RegExp(`round\\(v_total \\* ${R.TIPO_CAMBIO}\\)`), inscribir);
+  tiene("los mismos roles", new RegExp(`v_rol not in \\(${Object.keys(R.ROLES).map((t) => `'${t}'`).join(", ")}\\)`));
+  tiene("solo el jugador juega (y paga)", /if v_rol = 'jugador' then[\s\S]*?else\s+v_torneos := '\{\}';/);
+  tiene(`un grupo lleva hasta ${R.MAX_GRUPO}`, new RegExp(`n > ${R.MAX_GRUPO}`), inscribir);
   cierto("llama al freno antes del insert",
-    /frenar_envio_publico\('formulario', 'metropolitano-2026'/.test(cuerpo) && cuerpo.indexOf("frenar_envio_publico") < cuerpo.indexOf("insert into public.metropolitano_inscripciones"));
+    /frenar_envio_publico\('formulario', 'metropolitano-2026'/.test(inscribir) && inscribir.indexOf("frenar_envio_publico") < inscribir.indexOf("insert into public.metropolitano_inscripciones"));
 }
 
 /* ============================ 3. En el navegador ============================ */
+// Un PNG de un solo color, armado a mano (sin librerías).
+function pngLiso(w, h, [r, g, b]) {
+  const zlib = require("zlib");
+  const crc = (buf) => { let c, t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } let x = 0xffffffff; for (const v of buf) x = t[(x ^ v) & 0xff] ^ (x >>> 8); return (x ^ 0xffffffff) >>> 0; };
+  const trozo = (tipo, datos) => { const l = Buffer.alloc(4); l.writeUInt32BE(datos.length); const td = Buffer.concat([Buffer.from(tipo), datos]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([l, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
+  const fila = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: w }, () => [r, g, b]).flat())]);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), trozo("IHDR", ihdr), trozo("IDAT", zlib.deflateSync(Buffer.concat(Array(h).fill(fila)))), trozo("IEND", Buffer.alloc(0))]);
+}
+
 const FILAS_FIDE = [
   { fideId: "6400000", nombre: "Mora Solis, Ana", titulo: "WCM", fed: "CRC", sexo: "w", nacimiento: 2013, estandar: 1950, rapido: 1900, blitz: 1880 },
   { fideId: "6400099", nombre: "Mora Solis, Andrea", titulo: "", fed: "CRC", sexo: "w", nacimiento: 1990, estandar: null, rapido: null, blitz: null },
@@ -98,85 +115,169 @@ const FILAS_FIDE = [
   const nav = await chromium.launch();
   try {
     const ctx = await nav.newContext({ viewport: { width: 420, height: 900 }, serviceWorkers: "block" });
-    const p = await ctx.newPage();
-    const errores = [];
-    p.on("pageerror", (e) => errores.push(e.message));
-    const buscado = [], subidos = [];
-    let enviado = null;
-    await p.route("**/functions/v1/pareo-listas-elo", (r) => { buscado.push(JSON.parse(r.request().postData())); r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, filas: FILAS_FIDE, total: 2, hayMas: false }) }); });
-    await p.route("**/storage/v1/object/**", (r) => { subidos.push(decodeURIComponent(new URL(r.request().url()).pathname)); r.fulfill({ contentType: "application/json", body: '{"Key":"x"}' }); });
-    await p.route("**/rest/v1/rpc/metropolitano_inscribir", (r) => { enviado = JSON.parse(r.request().postData()).p; r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, codigo: "MET-0012", numero: 12, monto_usd: 87, monto_crc: 40020 }) }); });
-    await p.goto(BASE + "/inscripcion-metropolitano.html");
+    // Una «foto» de prueba: un PNG liso de un color que no está en el gafete.
+    const FOTO = path.join(require("os").tmpdir(), "metropolitano-foto-prueba.png");
+    fs.writeFileSync(FOTO, pngLiso(60, 80, [200, 120, 40]));
+    // Una página con el doble de Supabase: lo que busca, sube y manda queda anotado.
+    async function abrir() {
+      const p = await ctx.newPage();
+      const anotado = { errores: [], buscado: [], subidos: [], enviado: null };
+      p.on("pageerror", (e) => anotado.errores.push(e.message));
+      await p.route("**/functions/v1/pareo-listas-elo", (r) => { anotado.buscado.push(JSON.parse(r.request().postData())); r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, filas: FILAS_FIDE, total: 2, hayMas: false }) }); });
+      await p.route("**/storage/v1/object/**", (r) => { anotado.subidos.push(decodeURIComponent(new URL(r.request().url()).pathname)); r.fulfill({ contentType: "application/json", body: '{"Key":"x"}' }); });
+      await p.route("**/rest/v1/rpc/metropolitano_inscribir", (r) => {
+        anotado.enviado = JSON.parse(r.request().postData()).p;
+        const personas = anotado.enviado.personas.map((x, i) => ({ codigo: "MET-00" + (12 + i), numero: 12 + i, nombre: x.nombre }));
+        r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, personas, codigo: personas[0].codigo, numero: 12, monto_usd: 87, monto_crc: 40020 }) });
+      });
+      await p.goto(BASE + "/inscripcion-metropolitano.html");
+      return { p, anotado };
+    }
+    const tarjeta = (p, n) => p.locator("#personas > section").nth(n);
+    async function llenar(t, d) {
+      for (const [k, x] of Object.entries(d)) {
+        const el = t.locator(`[data-c="${k}"]`);
+        if (k === "sexo" || k === "documento_tipo") await el.selectOption(x); else await el.fill(x);
+        await el.dispatchEvent("change");
+      }
+    }
 
-    await p.fill("#buscar-fide", "Mora Sol");
-    await p.waitForSelector("#resultados-fide button", { timeout: 8000 });
-    igual("se busca en la lista de FIDE con lo escrito", buscado[0], { lista: "fide", q: "Mora Sol" });
-    igual("aparecen los dos", await p.locator("#resultados-fide button").count(), 2);
-    await p.click("#resultados-fide button >> nth=0");
-    igual("elegirse llena nombre y apellidos", [await p.inputValue("#nombre"), await p.inputValue("#apellidos")], ["Ana", "Mora Solis"]);
-    cierto("la tarjeta dice a quién eligió", /Elegiste a WCM Mora Solis, Ana/.test(await p.textContent("#elegido-fide")));
-
-    await p.fill("#nacimiento", "2010-05-02"); await p.dispatchEvent("#nacimiento", "change");
-    cierto("avisa si la fecha no cuadra con el año de FIDE", /2013/.test(await p.textContent("#nacimiento-aviso")));
-    await p.fill("#nacimiento", "2013-05-02"); await p.dispatchEvent("#nacimiento", "change");
-    const habilitados = await p.$$eval('input[name="clasico"]', (xs) => xs.filter((x) => !x.disabled).map((x) => x.value));
+    /* ----- Una persona: una jugadora con ID FIDE ----- */
+    const { p, anotado } = await abrir();
+    const t1 = tarjeta(p, 0);
+    igual("arranca con una tarjeta de jugador", [await p.locator("#personas > section").count(), await t1.locator("[data-rol]").inputValue()], [1, "jugador"]);
+    await t1.locator("[data-buscar]").fill("Mora Sol");
+    await t1.locator("[data-resultados] button").first().waitFor({ timeout: 8000 });
+    igual("se busca en la lista de FIDE con lo escrito", anotado.buscado[0], { lista: "fide", q: "Mora Sol" });
+    igual("aparecen los dos", await t1.locator("[data-resultados] button").count(), 2);
+    await t1.locator("[data-resultados] button").first().click();
+    igual("elegirse llena nombre y apellidos", [await t1.locator('[data-c="nombre"]').inputValue(), await t1.locator('[data-c="apellidos"]').inputValue()], ["Ana", "Mora Solis"]);
+    cierto("la tarjeta dice a quién eligió", /Elegido: WCM Mora Solis, Ana/.test(await t1.locator("[data-elegido]").textContent()));
+    await llenar(t1, { nacimiento: "2010-05-02" });
+    cierto("avisa si la fecha no cuadra con el año de FIDE", /2013/.test(await t1.locator("[data-aviso-nac]").textContent()));
+    await llenar(t1, { nacimiento: "2013-05-02" });
+    const habilitados = await t1.locator('input[name="p1-clasico"]').evaluateAll((xs) => xs.filter((x) => !x.disabled).map((x) => x.value));
     igual("con 1950 y nacida en 2013: A, U14 o ninguno", habilitados, ["A", "U14", ""]);
-    cierto("el B dice por qué no", /menos de 1900.*1950/.test(await p.textContent("#opciones-clasico")));
-    cierto("el responsable aparece por ser menor", await p.isVisible("#caja-responsable"));
-
-    await p.check('input[name="clasico"][value="A"]');
-    await p.check("#blitz");
-    await p.selectOption("#sexo", "f");
-    await p.fill("#documento", "1-2345-0678"); await p.fill("#correo", "ana@ejemplo.com"); await p.fill("#telefono", "+506 8888 1234");
-    await p.fill("#resp_nombre", "Luis Mora"); await p.fill("#resp_telefono", "88880000");
-    await p.fill("#emer_nombre", "Luis Mora"); await p.fill("#emer_telefono", "88880000");
-    await p.check('input[name="hospedaje"][value="si"]');
-    await p.check('input[name="comida"][value="desayuno"]'); await p.check('input[name="comida"][value="cena"]');
+    cierto("el B dice por qué no", /menos de 1900.*1950/.test(await t1.locator("[data-clasicos]").textContent()));
+    cierto("el responsable aparece por ser menor", await t1.locator("[data-caja-responsable]").isVisible());
+    await t1.locator('input[name="p1-clasico"][value="A"]').check();
+    await t1.locator("[data-blitz]").check();
+    await llenar(t1, { sexo: "f", documento: "1-2345-0678", correo: "ana@ejemplo.com", telefono: "+506 8888 1234", resp_nombre: "Luis Mora", resp_telefono: "88880000", emer_nombre: "Luis Mora", emer_telefono: "88880000" });
+    await t1.locator('input[name="p1-hosp"][value="si"]').check();
+    await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
+    await t1.locator('[data-c="acepta_publicidad"]').check();
     await p.check('input[name="metodo"][value="sinpe"]');
     cierto("el total sale en colones por SINPE", /\$87\.00 = ₡40\s?020/.test(await p.textContent("#total")));
     await p.click("#revisar");
     cierto("sin foto no avanza, y lo dice", /foto/.test(await p.textContent("#msg")));
-    await p.setInputFiles("#foto", path.join(RAIZ, "img", "fca-logo.png"));
+    await t1.locator("[data-foto]").setInputFiles(FOTO);
     await p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
     await p.check("#acepta-reglamento"); await p.check("#acepta-imagen"); await p.check("#acepta-datos");
+    await p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
     await p.click("#revisar");
-    await p.waitForFunction(() => { const c = document.getElementById("gafete-frente"); return c.width > 100 && c.getContext("2d").getImageData(Math.round(c.width * 0.03), Math.round(c.height * 0.87), 1, 1).data[3] > 0; }, null, { timeout: 15000 });
+    const pintado = () => p.waitForFunction(() => { const c = document.querySelector("#resumen-personas canvas"); return c && c.width > 100 && c.getContext("2d").getImageData(Math.round(c.width * 0.03), Math.round(c.height * 0.87), 1, 1).data[3] > 0; }, null, { timeout: 15000 });
+    await pintado();
     igual("el resumen da la bienvenida", await p.textContent("#resumen-titulo"), "Bienvenida al Torneo Metropolitano 2026");
     cierto("el formulario se esconde", !(await p.isVisible("#formulario")));
     // La franja del gafete, del color del Metropolitano A (se mide el píxel, no la clase).
-    const pixel = await p.evaluate(() => { const c = document.getElementById("gafete-frente"); const d = c.getContext("2d").getImageData(Math.round(c.width * 0.03), Math.round(c.height * 0.87), 1, 1).data; return [d[0], d[1], d[2]]; });
-    igual("la franja del gafete es del color del A", pixel, [0x1d, 0x4e, 0xd8]);
-    cierto("el resumen dice los torneos", /Metropolitano A .* y Metropolitano Blitz/.test(await p.textContent("#resumen-datos")));
+    const pixel = (sel, fx, fy) => p.evaluate(([s, x, y]) => { const c = document.querySelectorAll("#resumen-personas canvas")[s]; const d = c.getContext("2d").getImageData(Math.round(c.width * x), Math.round(c.height * y), 1, 1).data; return [d[0], d[1], d[2]]; }, [sel, fx, fy]);
+    igual("la franja del gafete es del color del A", await pixel(0, 0.03, 0.87), [0x04, 0x35, 0x76]);
+    // La foto va en su marco: el píxel del centro del marco no es blanco.
+    const centro = await pixel(0, 0.775, 0.62);
+    cierto("la foto va en el gafete, en su marco", Math.abs(centro[0] - 200) < 12 && Math.abs(centro[1] - 120) < 12 && Math.abs(centro[2] - 40) < 12, centro);
+    cierto("el resumen dice los torneos y la publicidad", /Metropolitano A .* y Metropolitano Blitz/.test(await p.textContent("#resumen-personas")) && /Autoriza el uso de su nombre y su foto/.test(await p.textContent("#resumen-personas")));
 
     await p.click("#enviar");
-    cierto("sin confirmar no se manda", enviado === null && /Marca que revisaste/.test(await p.textContent("#msg-enviar")));
+    cierto("sin confirmar no se manda", anotado.enviado === null && /Marca que revisaste/.test(await p.textContent("#msg-enviar")));
     await p.check("#confirmo");
     await p.click("#enviar");
     await p.waitForSelector("#listo:not(.hidden)", { timeout: 10000 });
-    igual("se subieron la foto y el comprobante, cada uno a su carpeta", subidos.map((s) => s.split("/").slice(-3, -2)[0]), ["foto", "comprobante"]);
-    cierto("lo que se manda es lo que se llenó", enviado && enviado.fide_id === "6400000" && enviado.elo_estandar === 1950 && enviado.titulo === "WCM"
-      && JSON.stringify(enviado.torneos) === '["A","BLITZ"]' && JSON.stringify(enviado.comidas) === '["desayuno","cena"]' && enviado.hospedaje === true
-      && enviado.pago_metodo === "sinpe" && enviado.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(enviado.foto)
-      && enviado.responsable && enviado.responsable.nombre === "Luis Mora", enviado);
+    igual("se subieron la foto y el comprobante, cada uno a su carpeta", anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "comprobante"]);
+    const e1 = anotado.enviado, x1 = e1 && e1.personas[0];
+    cierto("lo que se manda es lo que se llenó", e1 && e1.modo === "individual" && e1.personas.length === 1 && x1.rol === "jugador" && x1.fide_id === "6400000" && x1.elo_estandar === 1950 && x1.titulo === "WCM"
+      && JSON.stringify(x1.torneos) === '["A","BLITZ"]' && JSON.stringify(x1.comidas) === '["desayuno","cena"]' && x1.hospedaje === true && x1.acepta_publicidad === true
+      && e1.pago_metodo === "sinpe" && e1.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(x1.foto)
+      && x1.responsable && x1.responsable.nombre === "Luis Mora", e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
     const pdf = fs.readFileSync(await descarga.path());
     cierto("el gafete se descarga en PDF de 10 × 14 cm, con dos páginas y sin fuentes",
       pdf.slice(0, 5).toString() === "%PDF-" && /\/MediaBox \[0 0 283\.46 396\.85\]/.test(pdf.toString("latin1"))
       && (pdf.toString("latin1").match(/\/Type \/Page\b/g) || []).length === 2 && !/\/Font/.test(pdf.toString("latin1")));
-    igual("sin errores en la página", errores, []);
+    igual("sin errores en la página", anotado.errores, []);
+    const enviado = x1;
 
-    // Sin ID FIDE: el A no se puede elegir.
-    const q = await ctx.newPage();
-    await q.goto(BASE + "/inscripcion-metropolitano.html");
-    await q.check('input[name="tiene_fide"][value="no"]');
-    await q.fill("#nacimiento", "1990-01-01"); await q.dispatchEvent("#nacimiento", "change");
-    igual("sin ID FIDE, adulto: B o ninguno", await q.$$eval('input[name="clasico"]', (xs) => xs.filter((x) => !x.disabled).map((x) => x.value)), ["B", ""]);
-    cierto("y le explica que la FCA tramita el ID", await q.isVisible("#caja-sin-fide"));
+    /* ----- Sin ID FIDE: el A no se puede elegir ----- */
+    const s2 = await abrir();
+    const u = tarjeta(s2.p, 0);
+    await u.locator('input[name="p1-fide"][value="no"]').check();
+    await llenar(u, { nacimiento: "1990-01-01" });
+    igual("sin ID FIDE, adulto: B o ninguno", await u.locator('input[name="p1-clasico"]').evaluateAll((xs) => xs.filter((x) => !x.disabled).map((x) => x.value)), ["B", ""]);
+    cierto("y le explica que la FCA tramita el ID", await u.locator("[data-sin-fide]").isVisible());
+    await u.locator("[data-rol]").selectOption("acompanante");
+    await u.locator("[data-rol]").dispatchEvent("change");
+    cierto("un acompañante no ve ID FIDE ni torneos", !(await u.locator("[data-bloque-fide]").isVisible()) && !(await u.locator("[data-bloque-torneos]").isVisible()));
+    cierto("y no paga", /sin costo/.test(await s2.p.textContent("#total")));
+
+    /* ----- Un grupo: el delegado, una jugadora y un entrenador ----- */
+    console.log("   La inscripción de grupo");
+    const g = await abrir();
+    await g.p.check('input[name="modo"][value="grupo"]');
+    await g.p.waitForFunction(() => document.querySelector("#personas > section [data-rol]") && document.querySelector("#personas > section [data-rol]").value === "delegado");
+    cierto("en grupo, la primera tarjeta es la del delegado y aparece «Agregar»", await g.p.isVisible("#caja-grupo") && await g.p.isVisible("#agregar"));
+    await g.p.fill("#delegacion", "Club Ajedrez Heredia");
+    const d = tarjeta(g.p, 0);
+    await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777", llegada: "2026-12-25", salida: "2026-12-31" });
+    await d.locator('input[name="p2-hosp"][value="si"]').check();
+    await d.locator('[data-comida][value="almuerzo"]').check();
+    await d.locator("[data-foto]").setInputFiles(FOTO);
+    await g.p.click('[data-agregar="jugador"]');
+    await g.p.click('[data-agregar="entrenador"]');
+    igual("se agregaron dos personas", await g.p.locator("#personas > section").count(), 3);
+    const j = tarjeta(g.p, 1), en = tarjeta(g.p, 2);
+    cierto("a cada persona nueva se le copia el viaje, el hospedaje y las comidas del delegado",
+      (await j.locator('[data-c="llegada"]').inputValue()) === "2026-12-25" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
+      && await j.locator('[data-comida][value="almuerzo"]').isChecked());
+    igual("y la emergencia la atiende el delegado", await j.locator('[data-c="emer_nombre"]').inputValue(), "Carlos Rojas Vega");
+    cierto("el correo de un integrante es opcional", await j.locator("[data-nota-contacto]").isVisible());
+    await j.locator("[data-buscar]").fill("Mora Sol");
+    await j.locator("[data-resultados] button").nth(1).waitFor({ timeout: 8000 });
+    await j.locator("[data-resultados] button").nth(1).click();   // Andrea, sin Elo: B
+    await llenar(j, { nacimiento: "1990-07-07", sexo: "f", documento: "1-1111-2222" });
+    await j.locator('input[name="p3-clasico"][value="B"]').check();
+    await j.locator("[data-foto]").setInputFiles(FOTO);
+    await en.locator('input[name="p4-fide"][value="no"]').check();
+    await llenar(en, { nombre: "Pedro", apellidos: "Solano", nacimiento: "1975-01-01", sexo: "m", documento: "2-3333-4444" });
+    await en.locator("[data-foto]").setInputFiles(FOTO);
+    cierto("el total del grupo suma solo a la jugadora", /\$45\.00/.test(await g.p.textContent("#total")) && /entrenador: sin costo/.test(await g.p.textContent("#total")));
+    await g.p.check('input[name="metodo"][value="dolares"]');
+    await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-datos");
+    await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
+    await g.p.click("#revisar");
+    await g.p.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    if (!(await g.p.isVisible("#resumen"))) cierto("el grupo pasa a la revisión", false, await g.p.textContent("#msg"));
+    igual("el resumen del grupo da la bienvenida a todos", await g.p.textContent("#resumen-titulo"), "Bienvenidos al Torneo Metropolitano 2026");
+    igual("hay un gafete por persona", await g.p.locator("#resumen-personas article").count(), 3);
+    await g.p.check("#confirmo");
+    await g.p.click("#enviar");
+    await g.p.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    const ge = g.anotado.enviado;
+    cierto("se manda el grupo entero en un envío, con su delegado primero", ge && ge.modo === "grupo" && ge.delegacion === "Club Ajedrez Heredia" && ge.personas.length === 3
+      && ge.personas[0].es_delegado === true && ge.personas[0].rol === "delegado" && ge.personas[1].rol === "jugador" && ge.personas[1].fide_id === "6400099"
+      && JSON.stringify(ge.personas[1].torneos) === '["B"]' && ge.personas[2].rol === "entrenador" && ge.personas[2].sin_fide === true
+      && ge.personas.every((x) => /^foto\//.test(x.foto)) && ge.pago_metodo === "dolares", ge);
+    igual("se subieron tres fotos y un comprobante", g.anotado.subidos.map((x) => x.split("/").slice(-3, -2)[0]), ["foto", "foto", "foto", "comprobante"]);
+    cierto("dice el código de cada uno", /MET-0012 — Carlos Rojas Vega/.test(await g.p.textContent("#listo-codigos")) && /MET-0014 — Pedro Solano/.test(await g.p.textContent("#listo-codigos")));
+    const [dg] = await Promise.all([g.p.waitForEvent("download"), g.p.click("#bajar-gafete")]);
+    const pdfg = fs.readFileSync(await dg.path()).toString("latin1");
+    igual("los gafetes del grupo salen en un solo PDF (frente y dorso de cada uno)", (pdfg.match(/\/Type \/Page\b/g) || []).length, 6);
+    igual("sin errores en la página del grupo", g.anotado.errores, []);
 
     // La página de administración.
     console.log("   La lista de inscritos");
     const a = await ctx.newPage();
+    void s2;
     const fila = Object.assign({}, enviado, { id: "11111111-1111-1111-1111-111111111111", numero: 12, creado: "2026-11-04T15:00:00Z", clasico: "A", monto_usd: 87, monto_crc: 40020,
       comprobante: "comprobante/abcdef12/sinpe.png", foto: "foto/abcdef12/foto.png", pago_estado: "por_revisar", estado: "activa", club: "<b>Club</b>" });
     let revisado = null;

@@ -196,7 +196,7 @@
       detalles: { x: 6 * sx, y: 73.5 * sy, paso: 5.2 * sy, tam: 10 * s, max: 46 * sx },
       bandera: caja(6, 88, 16, 12), paisTexto: { x: 25 * sx, y: 96.3 * sy, tam: 10 * s },
       ilustracion: caja(48, 64, 52, 52),
-      foto: caja(62, 67, 30, 38.5),      // 3 × 3,85: la proporción del pasaporte
+      foto: caja(61, 65, 33, 42.4),      // 3,3 × 4,24: la proporción del pasaporte
       franja: caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
       dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
@@ -450,6 +450,12 @@
           rectRedondo(ctx, x + 0.9 * M.s, yI + 0.9 * M.s, lado2 - 1.8 * M.s, lado2 - 1.8 * M.s, lado2 * 0.2); ctx.stroke();
           contener(ctx, im, { x: x + 2 * M.s, y: yI + 2 * M.s, w: lado2 - 4 * M.s, h: lado2 - 4 * M.s }, "centro");
         };
+        // Una tira decorativa debajo de la franja (las hojas de las bases
+        // del Metropolitano); el del Centroamericano no la lleva.
+        if (img.cintaFrente) {
+          ctx.save(); ctx.beginPath(); ctx.rect(M.cinta.x, M.cinta.y, M.cinta.w, M.cinta.h); ctx.clip();
+          cubrirCaja(ctx, img.cintaFrente, M.cinta); ctx.restore();
+        }
         // Uno solo va a la derecha; dos, uno en cada esquina.
         if (iconos.length === 1) ponerIcono(iconos[0], M.W - M.icono.margen - lado2);
         if (iconos.length >= 2) { ponerIcono(iconos[0], M.icono.margen); ponerIcono(iconos[1], M.W - M.icono.margen - lado2); }
