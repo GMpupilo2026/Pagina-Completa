@@ -52,6 +52,16 @@
                     <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="relative shrink-0" data-no-traducir>
+                        <!-- El idioma de la página (js/idioma-pagina.js): el botón dice el
+                             de ahora y abre la lista de los tres, cada uno en su idioma. -->
+                        <button id="metro-idioma" type="button" lang="es" aria-haspopup="true" aria-expanded="false" aria-controls="metro-idiomas" aria-label="Idioma · Language · Langue : Español" class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden">ES</span><span class="hidden sm:inline">Español</span><span class="hidden sm:inline" aria-hidden="true"> ▾</span></button>
+                        <ul id="metro-idiomas" class="idiomas-menu" hidden>
+                            <li><button type="button" data-idioma="es" lang="es">Español</button></li>
+                            <li><button type="button" data-idioma="en" lang="en">English</button></li>
+                            <li><button type="button" data-idioma="fr" lang="fr">Français</button></li>
+                        </ul>
+                    </div>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -122,10 +132,20 @@
                 <li><a href="#premios" class="metro-ficha" data-tono="5"><span class="metro-ficha-emoji" aria-hidden="true">🏆</span><span class="metro-ficha-titulo">Premios</span><span class="metro-ficha-texto">Los premios en dólares de cada categoría y del blitz.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li><a href="#reglamento" class="metro-ficha" data-tono="0"><span class="metro-ficha-emoji" aria-hidden="true">📋</span><span class="metro-ficha-titulo">Lo esencial del reglamento</span><span class="metro-ficha-texto">Sistema, desempates, tiempo de espera y apelaciones.</span><span class="metro-ficha-accion">Ver →</span></a></li>
                 <li id="ficha-resultados"></li>
-                <li id="ficha-partidas"></li>
                 <li><a href="https://www.google.com/maps/search/?api=1&amp;query=Estadio+Nacional+de+Costa+Rica+La+Sabana" target="_blank" rel="noopener" class="metro-ficha" data-tono="4"><span class="metro-ficha-emoji" aria-hidden="true">📍</span><span class="metro-ficha-titulo">La sede</span><span class="metro-ficha-texto">Estadio Nacional de Costa Rica, Parque Metropolitano La Sabana, San José. Hay zonas de acceso restringido: se respetan las señales.</span><span class="metro-ficha-accion">Abrir en el mapa →<span class="sr-only"> (se abre en otra pestaña)</span></span></a></li>
                 <li><a href="https://chat.whatsapp.com/HMN8sTyhZ8sAayt39m7XIV" target="_blank" rel="noopener" class="metro-ficha" data-tono="1"><span class="metro-ficha-emoji" aria-hidden="true">💬</span><span class="metro-ficha-titulo">Grupo de WhatsApp</span><span class="metro-ficha-texto">El grupo oficial del torneo, para los avisos de la organización.</span><span class="metro-ficha-accion">Entrar al grupo →<span class="sr-only"> (se abre en otra pestaña)</span></span></a></li>
                 <li><a href="#contacto" class="metro-ficha" data-tono="2"><span class="metro-ficha-emoji" aria-hidden="true">📞</span><span class="metro-ficha-titulo">Contacto</span><span class="metro-ficha-texto">Los correos de la organización y de tesorería.</span><span class="metro-ficha-accion">Ver →</span></a></li>
+                <li><a href="#paseos" class="metro-ficha" data-tono="3"><span class="metro-ficha-emoji" aria-hidden="true">🌴</span><span class="metro-ficha-titulo">Qué hacer en el tiempo libre</span><span class="metro-ficha-texto">Paseos cerca del Estadio Nacional y en San José: parques, museos y excursiones, con filtros para niños y para días de lluvia.</span><span class="metro-ficha-accion">Ver los paseos →</span></a></li>
+                <li><a href="#esperas" class="metro-ficha" data-tono="5"><span class="metro-ficha-emoji" aria-hidden="true">🎈</span><span class="metro-ficha-titulo">Mientras esperas</span><span class="metro-ficha-texto">Juegos de ajedrez gratis y sin cuenta para los que esperan entre rondas: hermanos, amigos y quien ya terminó su partida.</span><span class="metro-ficha-accion">Ver los juegos →</span></a></li>
+            </ul>
+            <!-- Lo que va a existir pero todavía no: se ve, con su candado, para
+                 que la gente sepa que viene. «Partidas en vivo» se enciende sola
+                 cuando administración agrega la transmisión en «Torneos». -->
+            <h2 id="pendientes-titulo" class="metro-titulo text-center mt-10 mb-2">Pronto en esta página</h2>
+            <p class="text-center text-sm mb-6">Se habilitan durante el torneo.</p>
+            <ul class="grid sm:grid-cols-2 gap-4" aria-labelledby="pendientes-titulo">
+                <li id="ficha-partidas"></li>
+                <li><div class="metro-ficha" data-tono="2" tabindex="0" aria-disabled="true"><span class="metro-ficha-pendiente"><span aria-hidden="true">🔒</span> Pendiente</span><span class="metro-ficha-emoji" aria-hidden="true">🧩</span><span class="metro-ficha-titulo">Ejercicios de la ronda</span><span class="metro-ficha-texto">Los mejores momentos de cada ronda: posiciones de las partidas del torneo con una sola jugada que gana, para resolver.</span><span class="metro-ficha-accion">Todavía no está habilitado</span></div></li>
             </ul>
             <p class="text-center text-xs text-brand-500 dark:text-brand-300 mt-8">Organiza la Federación Costarricense de Ajedrez. La información sale de las bases oficiales; si algo cambia, manda lo que diga la organización.</p>
         </section>
@@ -189,6 +209,38 @@
             </div>
         </dialog>
 
+        <dialog id="paseos" class="metro-ventana" aria-labelledby="paseos-titulo">
+            <div class="metro-ventana-cabeza"><h2 id="paseos-titulo"><span aria-hidden="true">🌴 </span>Qué hacer en el tiempo libre</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
+            <div class="metro-ventana-cuerpo">
+                <div class="metro-caja mb-5 text-sm">
+                    <p class="font-bold">Revisa el horario antes de ir.</p>
+                    <p class="mt-1">Los horarios y los precios cambian: «Ver en el mapa» muestra los de hoy. Y vuelve con tiempo a la sala: el tiempo de espera es de 30 minutos en los clásicos y de 3 minutos en el blitz.</p>
+                </div>
+                <!-- Los paseos, en el idioma de la página: js/paseos-sabana.js. -->
+                <div id="paseos-lista" data-no-traducir></div>
+            </div>
+        </dialog>
+
+        <!-- Mientras esperas: juegos de ajedrez sin cuenta, los mismos del
+             Centroamericano. Batalla naval y «Aprende a jugar» son de la
+             Academia y se abren como invitado solo del 26 al 30 de diciembre
+             (js/invitado-centroamericano.js); los demás ya son públicos. Cada
+             uno se abre encima (js/visor-documento.js). -->
+        <dialog id="esperas" class="metro-ventana" aria-labelledby="esperas-titulo">
+            <div class="metro-ventana-cabeza"><h2 id="esperas-titulo"><span aria-hidden="true">🎈 </span>Mientras esperas</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
+            <div class="metro-ventana-cuerpo">
+                <p>Una ronda dura varias horas. Para los hermanos, los amigos y los que ya terminaron su partida: juegos de ajedrez gratis, sin cuenta. Lo que avancen queda guardado en este celular.</p>
+                <ul class="espera-lista mt-4">
+                    <li><a href="entreno/aprende-a-jugar.html?invitado=metropolitano" data-visor="Aprende a jugar" class="espera"><span class="espera-icono" aria-hidden="true">⭐</span><span class="espera-nombre">Aprende a jugar</span><span class="espera-texto">Para quien nunca ha jugado: cada pieza, paso a paso, juntando estrellas.</span><span class="espera-edad">Desde 5 años</span></a></li>
+                    <li><a href="confites.html" data-visor="Confites del caballo" class="espera"><span class="espera-icono" aria-hidden="true">🍬</span><span class="espera-nombre">Confites del caballo</span><span class="espera-texto">Recorre el tablero con el caballo y recoge los confites sin quedar encerrado.</span><span class="espera-edad">Desde 6 años</span></a></li>
+                    <li><a href="batalla-naval.html?invitado=metropolitano" data-visor="Batalla naval" class="espera"><span class="espera-icono" aria-hidden="true">🚢</span><span class="espera-nombre">Batalla naval</span><span class="espera-texto">La computadora esconde su flota de piezas y tú disparas: cada tiro al agua dice cuántas piezas apuntan ahí.</span><span class="espera-edad">Desde 8 años</span></a></li>
+                    <li><a href="buscaminas.html" data-visor="Buscaminas de ajedrez" class="espera"><span class="espera-icono" aria-hidden="true">💣</span><span class="espera-nombre">Buscaminas de ajedrez</span><span class="espera-texto">Cada casilla dice cuántas piezas escondidas la atacan: deduce dónde están.</span><span class="espera-edad">Desde 9 años</span></a></li>
+                    <li><a href="estilo-muestra.html" data-visor="¿Qué tipo de partida te gusta?" class="espera"><span class="espera-icono" aria-hidden="true">🧭</span><span class="espera-nombre">¿Qué tipo de partida te gusta?</span><span class="espera-texto">Doce posiciones de maestros con dos jugadas igual de buenas: descubre tu estilo.</span><span class="espera-edad">Jugadores y familias</span></a></li>
+                </ul>
+                <p class="mt-4 text-sm">Los juegos están en español.</p>
+            </div>
+        </dialog>
+
         <dialog id="contacto" class="metro-ventana" aria-labelledby="contacto-titulo">
             <div class="metro-ventana-cabeza"><h2 id="contacto-titulo"><span aria-hidden="true">📞 </span>Contacto</h2><button type="button" data-cerrar class="metro-boton">Cerrar</button></div>
             <div class="metro-ventana-cuerpo space-y-3 text-sm">
@@ -218,6 +270,10 @@
     <script src="js/calendario-ics.js"></script>
     <script src="js/metropolitano-reglas.js"></script>
     <script src="js/visor-documento.js"></script>
+    <script src="js/paseos-sabana.js"></script>
+    <script src="js/idioma-pagina.js"></script>
+    <script src="js/metropolitano-en.js"></script>
+    <script src="js/metropolitano-fr.js"></script>
     <script src="js/metropolitano-2026.js"></script>
 </body>
 </html>

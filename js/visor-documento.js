@@ -44,6 +44,22 @@
   }
 
   const ZOOMS = [1, 1.5, 2, 3];
+  // Sus botones y avisos, en el idioma de la página (<html lang>): una página
+  // en inglés o francés (js/idioma-pagina.js) no la traduce, va marcada
+  // data-no-traducir.
+  const TEXTOS = {
+    es: { chico: "Más chico", grande: "Más grande", cerrar: "Cerrar", bajar: "Bajar", bajarPdf: "Bajar el PDF", aparte: "Abrir aparte", aparteLargo: "Abrir aparte, en otra pestaña",
+      abriendo: "Abriendo el documento…", una: "1 página.", varias: (n) => n + " páginas. Desliza para leerlas.", error: (b) => "No se pudo abrir el documento aquí. Usa «" + b + "».",
+      tamano: (z) => "Tamaño: " + z + " veces.", normal: "Tamaño normal.", pagina: (i, n) => "Página " + i + " de " + n, documento: "Documento" },
+    en: { chico: "Smaller", grande: "Larger", cerrar: "Close", bajar: "Download", bajarPdf: "Download the PDF", aparte: "Open separately", aparteLargo: "Open separately, in a new tab",
+      abriendo: "Opening the document…", una: "1 page.", varias: (n) => n + " pages. Scroll to read them.", error: (b) => "The document could not be opened here. Use “" + b + "”.",
+      tamano: (z) => "Size: " + z + "×.", normal: "Normal size.", pagina: (i, n) => "Page " + i + " of " + n, documento: "Document" },
+    fr: { chico: "Plus petit", grande: "Plus grand", cerrar: "Fermer", bajar: "Télécharger", bajarPdf: "Télécharger le PDF", aparte: "Ouvrir à part", aparteLargo: "Ouvrir à part, dans un nouvel onglet",
+      abriendo: "Ouverture du document…", una: "1 page.", varias: (n) => n + " pages. Faites défiler pour les lire.", error: (b) => "Impossible d’ouvrir le document ici. Utilisez « " + b + " ».",
+      tamano: (z) => "Taille : " + z + " fois.", normal: "Taille normale.", pagina: (i, n) => "Page " + i + " sur " + n, documento: "Document" },
+  };
+  const tx = () => TEXTOS[(document.documentElement.lang || "es").slice(0, 2)] || TEXTOS.es;
+  let cerrarB = null;
   let dlg = null, cuerpo = null, titulo = null, estado = null, aparte = null, masB = null, menosB = null;
   let turno = 0, doc = null, observador = null, zoom = 0, volverA = null, conHistoria = false;
 
@@ -57,13 +73,14 @@
     if (dlg) return;
     dlg = document.createElement("dialog");
     dlg.className = "visor-doc";
+    dlg.setAttribute("data-no-traducir", "");
     dlg.setAttribute("aria-labelledby", "visor-doc-titulo");
     const cab = document.createElement("div"); cab.className = "visor-doc-cabeza";
     titulo = document.createElement("h2"); titulo.id = "visor-doc-titulo";
-    menosB = boton("−"); menosB.setAttribute("aria-label", "Más chico");
-    masB = boton("+"); masB.setAttribute("aria-label", "Más grande");
+    menosB = boton("−");
+    masB = boton("+");
     aparte = document.createElement("a"); aparte.className = "visor-doc-boton"; aparte.rel = "noopener";
-    const cerrarB = boton("Cerrar", "visor-doc-boton visor-doc-cerrar");
+    cerrarB = boton("", "visor-doc-boton visor-doc-cerrar");
     cab.append(titulo, menosB, masB, aparte, cerrarB);
     estado = document.createElement("p"); estado.className = "visor-doc-estado"; estado.setAttribute("role", "status");
     cuerpo = document.createElement("div"); cuerpo.className = "visor-doc-cuerpo"; cuerpo.tabIndex = 0;
@@ -113,12 +130,14 @@
     turno++;
     limpiar();
     const { tipo, url } = tipoDe(ruta);
-    titulo.textContent = t || "Documento";
+    const T = tx();
+    titulo.textContent = t || T.documento;
+    menosB.setAttribute("aria-label", T.chico); masB.setAttribute("aria-label", T.grande); cerrarB.textContent = T.cerrar;
     const esPdf = tipo === "pdf";
     const mismoSitio = new URL(url, location.href).origin === location.origin;
     aparte.href = esPdf ? url : ruta;
-    if (esPdf && mismoSitio) { aparte.setAttribute("download", ""); aparte.removeAttribute("target"); aparte.textContent = "Bajar"; aparte.setAttribute("aria-label", "Bajar el PDF"); }
-    else { aparte.removeAttribute("download"); aparte.target = "_blank"; aparte.textContent = "Abrir aparte"; aparte.setAttribute("aria-label", "Abrir aparte, en otra pestaña"); }
+    if (esPdf && mismoSitio) { aparte.setAttribute("download", ""); aparte.removeAttribute("target"); aparte.textContent = T.bajar; aparte.setAttribute("aria-label", T.bajarPdf); }
+    else { aparte.removeAttribute("download"); aparte.target = "_blank"; aparte.textContent = T.aparte; aparte.setAttribute("aria-label", T.aparteLargo); }
     menosB.hidden = masB.hidden = !esPdf;
     volverA = document.activeElement;
     if (!dlg.open) {
@@ -133,14 +152,14 @@
       const f = document.createElement("iframe");
       f.className = "visor-doc-marco";
       f.src = url;
-      f.title = t || "Documento";
+      f.title = t || T.documento;
       f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
       cuerpo.append(f);
     }
   }
 
   async function pintarPdf(url, miTurno) {
-    estado.textContent = "Abriendo el documento…";
+    estado.textContent = tx().abriendo;
     try {
       const lib = await cargarPdfjs();
       lib.GlobalWorkerOptions.workerSrc = "js/pdf.worker.min.js";
@@ -150,7 +169,7 @@
       const primera = await d.getPage(1);
       const vp = primera.getViewport({ scale: 1 });
       const proporcion = vp.height / vp.width;
-      estado.textContent = d.numPages === 1 ? "1 página." : d.numPages + " páginas. Desliza para leerlas.";
+      estado.textContent = d.numPages === 1 ? tx().una : tx().varias(d.numPages);
       observador = new IntersectionObserver((entradas) => {
         entradas.forEach((e) => { if (e.isIntersecting) pintarPagina(e.target, miTurno); });
       }, { root: cuerpo, rootMargin: "800px 0px" });
@@ -159,13 +178,13 @@
         fig.className = "visor-doc-pagina";
         fig.dataset.pagina = String(i);
         fig.style.aspectRatio = "1 / " + proporcion;
-        fig.setAttribute("aria-label", "Página " + i + " de " + d.numPages);
+        fig.setAttribute("aria-label", tx().pagina(i, d.numPages));
         cuerpo.append(fig);
         observador.observe(fig);
       }
     } catch (e) {
       if (miTurno !== turno) return;
-      estado.textContent = "No se pudo abrir el documento aquí. Usa «" + aparte.textContent + "».";
+      estado.textContent = tx().error(aparte.textContent);
     }
   }
 
@@ -212,7 +231,7 @@
     cuerpo.classList.toggle("visor-doc-ampliado", zoom > 0);
     cuerpo.scrollTop = relativo * cuerpo.scrollHeight;
     menosB.disabled = zoom === 0; masB.disabled = zoom === ZOOMS.length - 1;
-    estado.textContent = zoom ? "Tamaño: " + ZOOMS[zoom] + " veces." : "Tamaño normal.";
+    estado.textContent = zoom ? tx().tamano(ZOOMS[zoom]) : tx().normal;
     cuerpo.querySelectorAll(".visor-doc-pagina").forEach((fig) => {
       const r = fig.getBoundingClientRect(), c = cuerpo.getBoundingClientRect();
       if (r.bottom > c.top - 800 && r.top < c.bottom + 800) pintarPagina(fig, turno);

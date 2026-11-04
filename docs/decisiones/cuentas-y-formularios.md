@@ -1524,6 +1524,46 @@ también con su dirección (`#calendario`, `#premios`…). Verificador:
   las bases (`img/metropolitano-2026/compartir.jpg`, en `IMAGEN_PROPIA` de
   `verificar-metadatos.py`).
 
+#### En inglés y en francés, con los paseos y los juegos del Centroamericano
+
+Pedido del dueño: la página del Metropolitano también en inglés y francés, con
+«Qué hacer en el tiempo libre» y «Mientras esperas» como en el
+Centroamericano, y lo que todavía no existe a la vista pero bloqueado.
+
+- **El idioma lo cambia `js/idioma-pagina.js`**, el motor del Centroamericano
+  sacado aparte: un mapa de cada texto del HTML en español a su traducción
+  (`js/metropolitano-en.js`, `js/metropolitano-fr.js`, en `textos`), el botón
+  que dice el idioma de ahora y `?lang=en` o `?lang=fr` para compartir el
+  enlace ya traducido. Lo que arma `js/metropolitano-2026.js` con datos (las
+  tablas, las fechas, la cuenta regresiva, los costos) va `data-no-traducir`
+  y se vuelve a pintar con sus textos (`dinamico` de los mismos archivos, con
+  las claves de `TX.es`) y las fechas con el formato de cada idioma, siempre
+  en hora de Costa Rica. La ventanita de documentos toma el idioma de
+  `<html lang>`.
+- **El Centroamericano todavía tiene su copia del motor**
+  (`js/centroamericano.js`): se está jugando del 1 al 9 de noviembre y no se
+  toca su página en pleno torneo. Pasado el 9, se pasa a `idioma-pagina.js` y
+  sus paseos a `js/paseos-sabana.js`: así queda una sola copia de cada cosa.
+- **Los paseos son los del Centroamericano** (los dos torneos se juegan en La
+  Sabana), con sus traducciones, en `js/paseos-sabana.js`: lista, filtros y
+  enlaces al mapa en los tres idiomas. Sin hoteles: los del Centroamericano
+  eran los oficiales de ese torneo, y las bases del Metropolitano no traen
+  ninguno. El aviso de volver a tiempo dice el tiempo de espera de estas
+  bases (30 minutos los clásicos, 3 el blitz).
+- **«Mientras esperas», los mismos juegos**, abiertos encima. Batalla naval y
+  «Aprende a jugar» se abren como invitado con `?invitado=metropolitano` solo
+  del 26 al 30 de diciembre (`EVENTOS` de `js/invitado-centroamericano.js`,
+  sin la cuenta gratis de 5 días, que es del Centroamericano). Los
+  «Ejercicios de la ronda» no van ahí: todavía no existen.
+- **Lo que viene, abajo y bloqueado**: «Pronto en esta página», con
+  «Partidas en vivo» y «Ejercicios de la ronda», cada una con su candado y
+  «Pendiente», sin `href` pero alcanzable con Tab. «Partidas en vivo» se
+  enciende sola cuando administración agrega la transmisión de Lichess en
+  «Torneos»; los ejercicios se encienden cuando se armen.
+- `herramientas/verificar-metropolitano.js` cambia la página a inglés y a
+  francés y falla si queda un solo texto en español fuera de lo que se pinta
+  con datos (se rompió a propósito quitando una traducción: salta).
+
 #### Los documentos se abren encima
 
 Pedido del dueño: **ningún jugador sale nunca de la página para leer un

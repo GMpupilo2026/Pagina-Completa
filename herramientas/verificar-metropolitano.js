@@ -316,8 +316,16 @@ const FILAS_FIDE = [
       return { pg, errs };
     }
     const i1 = await info(null);
-    cierto("sin la tarjeta de «Torneos», resultados y partidas dicen «Pronto»",
-      (await i1.pg.getAttribute("#ficha-resultados .metro-ficha", "aria-disabled")) === "true" && /Pronto/.test(await i1.pg.textContent("#ficha-partidas")));
+    cierto("sin la tarjeta de «Torneos», resultados dice «Pronto»",
+      (await i1.pg.getAttribute("#ficha-resultados .metro-ficha", "aria-disabled")) === "true" && /Pronto/.test(await i1.pg.textContent("#ficha-resultados")));
+    // Lo que va a existir pero todavía no: abajo de todo, con su candado.
+    const pendientes = await i1.pg.evaluate(() => {
+      const fichas = [...document.querySelectorAll("#fichas .metro-ficha")];
+      const ultimas = fichas.slice(-2);
+      return { titulos: ultimas.map((f) => f.querySelector(".metro-ficha-titulo").textContent),
+        bloqueadas: ultimas.every((f) => f.getAttribute("aria-disabled") === "true" && !f.hasAttribute("href") && f.tabIndex === 0 && /Pendiente/.test(f.textContent)) };
+    });
+    igual("partidas en vivo y ejercicios de la ronda van al final, bloqueadas como «Pendiente»", pendientes, { titulos: ["Partidas en vivo", "Ejercicios de la ronda"], bloqueadas: true });
     cierto("la dirección #premios abre su ventana", await i1.pg.evaluate(() => document.getElementById("premios").open));
     igual("los premios, de las bases: 4 tablas y el 1.er lugar del A en $700", [await i1.pg.locator("#premios-tablas table").count(), (await i1.pg.locator("#premios-tablas tr").first().textContent()).replace(/\s+/g, " ").trim()], [4, "1.er lugar$700.00"]);
     igual("el calendario: 9 rondas de A, B y U14 y el blitz", await i1.pg.locator("#calendario-tablas tbody tr").count(), 28);
@@ -355,6 +363,44 @@ const FILAS_FIDE = [
     await i1.pg.goBack();
     await i1.pg.waitForFunction(() => !document.getElementById("costos").open);
     cierto("«Atrás» con la ventana de costos abierta la cierra, sin salir", /metropolitano-2026\.html/.test(i1.pg.url()));
+    // Qué hacer en el tiempo libre y Mientras esperas, los del Centroamericano.
+    await i1.pg.click("a[href='#paseos']");
+    igual("«Qué hacer en el tiempo libre» trae los 14 paseos", await i1.pg.locator("#paseos-lista li.paseo").count(), 14);
+    await i1.pg.click("#paseos-lista button[data-filtro='ninos']");
+    const ninos = await i1.pg.evaluate(() => [...document.querySelectorAll("#paseos-lista li.paseo")].filter((l) => l.checkVisibility()).length);
+    cierto("y el filtro «Para niños» deja solo los suyos", ninos > 0 && ninos < 14, ninos);
+    await i1.pg.keyboard.press("Escape");
+    const juegos = await i1.pg.evaluate(() => [...document.querySelectorAll("#esperas a.espera")].map((a) => a.getAttribute("href")));
+    igual("«Mientras esperas» trae los juegos, los de la Academia como invitado del Metropolitano", juegos,
+      ["entreno/aprende-a-jugar.html?invitado=metropolitano", "confites.html", "batalla-naval.html?invitado=metropolitano", "buscaminas.html", "estilo-muestra.html"]);
+    cierto("y cada juego se abre encima, sin otra pestaña", await i1.pg.evaluate(() => [...document.querySelectorAll("#esperas a.espera")].every((a) => a.dataset.visor && !a.target)));
+    // Los idiomas: cada texto de la página tiene su inglés y su francés, y lo
+    // que se arma con datos se vuelve a pintar en el idioma.
+    for (const [lang, boton, ronda, mes] of [["en", "English", "Round 1", /December/], ["fr", "Français", "Ronde 1", /décembre/]]) {
+      await i1.pg.click("#metro-idioma");
+      await i1.pg.click("#metro-idiomas [data-idioma='" + lang + "']");
+      const r = await i1.pg.evaluate(() => {
+        const limpio = (t) => String(t || "").replace(/\s+/g, " ").trim();
+        const fuera = (el) => !el || !!el.closest("script, style, [data-no-traducir]");
+        const mapa = (document.documentElement.lang === "en" ? window.MetropolitanoEN : window.MetropolitanoFR).textos;
+        const espanol = new Set(Object.keys(mapa));
+        const sin = [];
+        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+        while ((n = w.nextNode())) {
+          if (fuera(n.parentElement)) continue;
+          const t = limpio(n.nodeValue);
+          // Un texto que quedó en español: es una clave del mapa (o no está en él) y no es su traducción.
+          if (t && /[A-Za-zÁÉÍÓÚáéíóúñ]/.test(t) && !Object.values(mapa).includes(t) && (espanol.has(t) || !(t in mapa))) sin.push(t);
+        }
+        return { lang: document.documentElement.lang, sin: [...new Set(sin)], calendario: document.querySelector("#calendario-tablas tbody th").textContent,
+          fecha: document.querySelector("#calendario-tablas tbody td").textContent, titulo: document.title };
+      });
+      igual(boton + ": ningún texto de la página queda en español", r.sin, []);
+      cierto(boton + ": el calendario y sus fechas, en " + boton, r.lang === lang && r.calendario === ronda && mes.test(r.fecha), r);
+    }
+    await i1.pg.click("#metro-idioma");
+    await i1.pg.click("#metro-idiomas [data-idioma='es']");
+    cierto("y de vuelta al español, todo como estaba", await i1.pg.evaluate(() => document.documentElement.lang === "es" && /Ronda 1/.test(document.querySelector("#calendario-tablas tbody th").textContent) && document.querySelector("#fichas-titulo").textContent === "Todo el torneo"));
     igual("sin errores en la página de información", i1.errs, []);
     const i2 = await info({ clave: "metropolitano-2026", enlaces: [
       { url: "https://ajedrez-integral.com/metropolitano-2026.html", texto: "Toda la información" },

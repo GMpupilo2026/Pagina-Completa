@@ -2884,7 +2884,7 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .metro-ficha:hover { box-shadow: 0 6px 18px rgba(29, 19, 77, .14); transform: translateY(-1px); }
 .metro-ficha:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .metro-ficha:hover { transform: none; } }
-.metro-ficha[aria-disabled="true"] { border-left-style: dashed; opacity: .85; }
+.metro-ficha[aria-disabled="true"] { border-left-style: dashed; }
 .metro-ficha[aria-disabled="true"]:hover { transform: none; box-shadow: 0 1px 3px rgba(29, 19, 77, .08); }
 .metro-ficha[data-tono="0"] { --metro-tono: #043576; }
 .metro-ficha[data-tono="1"] { --metro-tono: #377746; }
@@ -2937,3 +2937,44 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .dark .visor-doc { background: #0b1d30; }
 .dark .visor-doc-estado { background: #102a43; color: #fff; }
 @media (max-width: 480px) { .visor-doc-cabeza h2 { font-size: .95rem; } .visor-doc-boton { padding: .4rem .55rem; } }
+
+/* El menú de idiomas de una página de torneo (js/idioma-pagina.js). */
+.idiomas-menu { position: absolute; right: 0; top: calc(100% + .35rem); z-index: 60; min-width: 9rem; padding: .3rem; border-radius: .75rem; background: #fff; box-shadow: 0 10px 30px rgb(0 0 0 / .25); }
+.idiomas-menu[hidden] { display: none; }
+.dark .idiomas-menu { background: #102a43; border: 1px solid rgb(255 255 255 / .15); }
+.idiomas-menu button { display: block; width: 100%; text-align: left; padding: .55rem .75rem; border-radius: .5rem; font-weight: 700; color: #1d134d; min-height: 2.75rem; }
+.dark .idiomas-menu button { color: #fff; }
+.idiomas-menu button:hover { background: #f3f2fa; }
+.dark .idiomas-menu button:hover { background: rgb(255 255 255 / .1); }
+.idiomas-menu button[aria-current="true"]::before { content: "✓ "; }
+.idiomas-menu button:focus-visible { outline: 3px solid #f0b429; outline-offset: -3px; }
+
+/* Los paseos (js/paseos-sabana.js) y «Mientras esperas», con los colores del Metropolitano. */
+.paseo { background: #fff; border: 1px solid #d9dbea; border-radius: 1rem; padding: 1.25rem; color: #1d134d; }
+.paseo[hidden] { display: none; }
+.paseo a { color: #1d134d; }
+.paseo-etiquetas { color: #377746; }
+.dark .paseo { background: #102a43; border-color: #334e68; color: #fff; }
+.dark .paseo a { color: #fff; }
+.dark .paseo-etiquetas { color: #9fe3b0; }
+.paseo-filtro { min-height: 2.75rem; padding: .4rem .9rem; border-radius: 999px; border: 2px solid #1d134d; background: #fff; color: #1d134d; font-weight: 700; font-size: .9rem; }
+.paseo-filtro[aria-pressed="true"] { background: #1d134d; color: #fff; }
+.paseo-filtro[aria-pressed="true"]::before { content: "✓ "; }
+.paseo-filtro:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+.dark .paseo-filtro { background: transparent; color: #fff; border-color: #9fb3c8; }
+.dark .paseo-filtro[aria-pressed="true"] { background: #fff; color: #1d134d; }
+.espera-lista { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+.espera { display: grid; grid-template-columns: 3rem minmax(0, 1fr); column-gap: .75rem; row-gap: .15rem; height: 100%; background: #fff; border-radius: 1rem; padding: .85rem; border: 2px solid #d9dbea; color: #1d134d; text-decoration: none; }
+.espera:hover { border-color: #1d134d; }
+.espera:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+.dark .espera { background: #102a43; border-color: #334e68; color: #fff; }
+.espera-icono { grid-row: span 3; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 9999px; background: #f3f2fa; font-size: 1.6rem; }
+.dark .espera-icono { background: rgb(255 255 255 / .08); }
+.espera-nombre { font-weight: 800; }
+.espera-texto { font-size: .88rem; line-height: 1.35; }
+.espera-edad { font-size: .8rem; font-weight: 700; color: #377746; }
+.dark .espera-edad { color: #9fe3b0; }
+
+/* Lo que va a existir pero todavía no: la ficha con su candado y «Pendiente». */
+.metro-ficha-pendiente { align-self: flex-start; display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .6rem; border-radius: 999px; background: #1d134d; color: #fff; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.dark .metro-ficha-pendiente { background: #fff; color: #1d134d; }
