@@ -183,10 +183,22 @@ const FILAS_FIDE = [
     await t1.locator("[data-blitz]").check();
     await llenar(t1, { nacionalidad: "Panamá", pais_residencia: "Panamá", documento_tipo: "pasaporte", sexo: "f", documento: "1-2345-0678", correo: "ana@ejemplo.com", telefono: "+506 8888 1234", resp_nombre: "Luis Mora", resp_telefono: "88880000", emer_nombre: "Luis Mora", emer_telefono: "88880000" });
     await t1.locator('input[name="p1-hosp"][value="si"]').check();
+    igual("con hospedaje no hay habitación individual: se comparte", await t1.locator('[data-c="habitacion"] option').evaluateAll((os) => os.map((o) => o.value)), ["organizacion", "compartida"]);
+    cierto("y lo dice", /no son individuales/.test(await t1.locator("[data-caja-hosp]").textContent()));
+    await t1.locator('[data-c="acompanantes"]').fill("1");
+    await t1.locator('[data-c="acompanantes"]').dispatchEvent("change");
+    igual("un acompañante pide sus datos", await t1.locator("[data-acomp] [data-acomp-campo]").evaluateAll((xs) => xs.map((x) => x.dataset.acompCampo)), ["nombre", "documento", "nacimiento", "parentesco"]);
+    await t1.locator('[data-acomp-campo="nombre"]').fill("Luis Mora Rojas");
+    await t1.locator('[data-acomp-campo="documento"]').fill("PA123456");
+    await t1.locator('[data-acomp-campo="nacimiento"]').fill("1975-02-02");
+    await t1.locator('[data-acomp-campo="parentesco"]').fill("Padre");
     await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
     await t1.locator('[data-c="acepta_publicidad"]').check();
     await p.check('input[name="metodo"][value="sinpe"]');
     cierto("el total sale en colones por SINPE", /\$87\.00 = ₡40\s?020/.test(await p.textContent("#total")));
+    await p.click("#revisar");
+    cierto("sin aceptar que la habitación es compartida no avanza", /habitación es compartida/.test(await p.textContent("#msg")), await p.textContent("#msg"));
+    await t1.locator('[data-c="acepta_compartir"]').check();
     await p.click("#revisar");
     cierto("sin foto no avanza, y lo dice", /foto/.test(await p.textContent("#msg")));
     await t1.locator("[data-foto]").setInputFiles(FOTO);
@@ -195,6 +207,7 @@ const FILAS_FIDE = [
     await p.waitForFunction(() => document.querySelector("[data-foto-lista] img"));
     await p.click("#revisar");
     cierto("sin aceptar el seguro y la exoneración no avanza", /cuatro casillas/.test(await p.textContent("#msg")), await p.textContent("#msg"));
+    cierto("quien viene de otro país declara también su seguro de viaje", /seguro de viaje/.test(await p.textContent("#acepta-seguro-texto")) && /acompañante/.test(await p.textContent("#acepta-seguro-texto")));
     await p.check("#acepta-seguro");
     await p.click("#revisar");
     const pintado = () => p.waitForFunction(() => { const c = document.querySelector("#resumen-personas canvas"); return c && c.width > 100 && c.getContext("2d").getImageData(Math.round(c.width * 0.03), Math.round(c.height * 0.87), 1, 1).data[3] > 0; }, null, { timeout: 15000 });
@@ -219,7 +232,9 @@ const FILAS_FIDE = [
     cierto("lo que se manda es lo que se llenó", e1 && e1.modo === "individual" && e1.personas.length === 1 && x1.rol === "jugador" && x1.fide_id === "6400000" && x1.elo_estandar === 1950 && x1.titulo === "WCM"
       && JSON.stringify(x1.torneos) === '["A","BLITZ"]' && JSON.stringify(x1.comidas) === '["desayuno","cena"]' && x1.hospedaje === true && x1.acepta_publicidad === true
       && e1.pago_metodo === "sinpe" && e1.validado === true && /^foto\/[a-z0-9-]+\/.+\.jpg$/.test(x1.foto)
-      && x1.responsable && x1.responsable.nombre === "Luis Mora" && x1.nombre_fide === "Mora Solis, Ana" && e1.acepta_seguro === true, e1);
+      && x1.responsable && x1.responsable.nombre === "Luis Mora" && x1.nombre_fide === "Mora Solis, Ana" && e1.acepta_seguro === true
+      && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion"
+      && JSON.stringify(x1.acompanantes_detalle) === JSON.stringify([{ nombre: "Luis Mora Rojas", documento: "PA123456", nacimiento: "1975-02-02", parentesco: "Padre" }]), e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
     const pdf = fs.readFileSync(await descarga.path());
@@ -297,6 +312,8 @@ const FILAS_FIDE = [
     await g.p.fill("#fac_id", "3-002-291916"); await g.p.fill("#fac_nombre", "Club Ajedrez Heredia"); await g.p.fill("#fac_correo", "facturas@club.cr");
     await g.p.selectOption("#fac_provincia", "Heredia"); await g.p.selectOption("#fac_canton", "Heredia"); await g.p.selectOption("#fac_distrito", "Heredia");
     await g.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    for (const t of [d, j, en]) if (await t.locator('[data-c="acepta_compartir"]').isVisible()) await t.locator('[data-c="acepta_compartir"]').check();
+    cierto("si todos son de Costa Rica, no se les pide seguro de viaje: la póliza del evento", !/seguro de viaje/.test(await g.p.textContent("#acepta-seguro-texto")) && /póliza de seguro/.test(await g.p.textContent("#acepta-seguro-texto")));
     await g.p.check("#acepta-reglamento"); await g.p.check("#acepta-imagen"); await g.p.check("#acepta-seguro"); await g.p.check("#acepta-datos");
     await g.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 3);
     await g.p.click("#revisar");

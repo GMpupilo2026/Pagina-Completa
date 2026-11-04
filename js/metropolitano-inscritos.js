@@ -89,6 +89,8 @@
   }
 
   function celda(tr, hijos, clase) { const td = document.createElement("td"); td.className = "p-3 align-top " + (clase || ""); hijos.forEach((h) => td.append(h)); tr.append(td); return td; }
+  const HABITACION = { organizacion: "con quien asigne la organización", compartida: "con su familia, delegación o acompañantes", doble: "doble", individual: "individual" };
+  const acompananteTexto = (a) => [a.nombre, a.parentesco, a.documento, a.nacimiento && "nació el " + a.nacimiento].filter(Boolean).join(", ");
   function texto(t, clase) { const s = document.createElement("span"); s.className = "block " + (clase || ""); s.textContent = t; return s; }
 
   function detalles(x) {
@@ -106,7 +108,9 @@
       ["Nacionalidad / vive en", x.nacionalidad + " / " + x.pais_residencia], ["Correo", x.correo], ["Teléfono", x.telefono], ["Club", x.club],
       ["Responsable", x.responsable && [x.responsable.nombre, x.responsable.parentesco, x.responsable.documento, x.responsable.telefono, x.responsable.correo].filter(Boolean).join(" · ")],
       ["Emergencias", x.emergencia && [x.emergencia.nombre, x.emergencia.parentesco, x.emergencia.telefono].filter(Boolean).join(" · ")],
-      ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", " + x.habitacion + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
+      ["Hospedaje", x.hospedaje ? x.hospedaje_desde + " a " + x.hospedaje_hasta + ", compartida " + (HABITACION[x.habitacion] || x.habitacion)
+        + (x.acepta_compartir ? " (aceptó compartir)" : "") + (x.acompanantes ? ", " + x.acompanantes + " acompañantes" : "") : "No"],
+      ["Acompañantes", (x.acompanantes_detalle || []).map(acompananteTexto).join(" · ")],
       ["Comidas", x.comidas.length ? x.comidas.join(", ") + " del " + x.comidas_desde + " al " + x.comidas_hasta : "No"], ["Dieta", x.dieta],
       ["Viaje", x.viaje && [x.viaje.llegada && "llega " + x.viaje.llegada, x.viaje.salida && "sale " + x.viaje.salida, x.viaje.vuelo, x.viaje.traslado && "traslado"].filter(Boolean).join(" · ")],
       ["Condición", x.condicion.join(", ")], ["Accesibilidad", x.accesibilidad],
@@ -224,7 +228,7 @@
       "Responsable", "Teléfono responsable", "Emergencia", "Teléfono emergencia",
       "Hospedaje desde", "Hospedaje hasta", "Habitación", "Acompañantes", "Comidas", "Comidas desde", "Comidas hasta", "Dieta",
       "Llegada", "Salida", "Vuelo", "Traslado", "Condición", "Accesibilidad",
-      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Nota", "Se inscribió"],
+      "Monto USD", "Monto CRC", "Método", "Referencia", "Fecha de pago", "Estado del pago", "IVA USD", ...FACTURA_CSV, "Nombre en FIDE", "Seguro y exoneración", "Provincia", "Cantón", "Acepta compartir habitación", "Acompañantes (datos)", "Nota", "Se inscribió"],
     l.map((x) => [codigo(x), x.estado, R.rolDe(x.rol, x.sexo), x.es_delegado ? "Sí" : "", x.delegacion, x.acepta_publicidad ? "Sí" : "No", x.apellidos, x.nombre, x.fide_id, x.sin_fide ? "Sí" : "", x.titulo, x.federacion, x.elo_estandar, x.elo_rapido, x.elo_blitz,
       x.torneos.map((t) => R.TORNEOS[t].nombre).join(" + "), x.sexo === "f" ? "F" : "M", x.nacimiento, R.edad(x.nacimiento, R.INICIO), x.nacionalidad, x.pais_residencia,
       x.documento_tipo, x.documento, x.correo, x.telefono, x.club,
@@ -232,7 +236,7 @@
       x.hospedaje_desde, x.hospedaje_hasta, x.habitacion, x.hospedaje ? x.acompanantes : "", x.comidas.join(", "), x.comidas_desde, x.comidas_hasta, x.dieta,
       x.viaje && x.viaje.llegada, x.viaje && x.viaje.salida, x.viaje && x.viaje.vuelo, x.viaje && x.viaje.traslado ? "Sí" : "", x.condicion.join(", "), x.accesibilidad,
       x.monto_usd, x.monto_crc, x.pago_metodo && R.METODOS[x.pago_metodo].nombre, x.pago_referencia, x.pago_fecha, PAGO[x.pago_estado].texto,
-      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
+      x.iva_usd, ...facturaCsv(x.factura), x.nombre_fide, x.acepta_seguro ? "Aceptó (" + (x.exoneracion_version || "") + ")" : "No", x.provincia, x.canton, x.hospedaje ? (x.acepta_compartir ? "Sí" : "No") : "", (x.acompanantes_detalle || []).map(acompananteTexto).join(" | "), x.nota_organizacion, window.HoraCR.fechaHora(x.creado)]),
     "Metropolitano 2026 - inscritos.csv");
   });
 

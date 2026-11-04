@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104172333
+# al-dia-con: 20261104172925
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1512,12 +1512,14 @@ columna  mensajes_casa.created_at  timestamp with time zone
 columna  mensajes_casa.id  uuid
 columna  mensajes_casa.texto  text
 columna  metropolitano_inscripciones.accesibilidad  text
+columna  metropolitano_inscripciones.acepta_compartir  boolean
 columna  metropolitano_inscripciones.acepta_datos  boolean
 columna  metropolitano_inscripciones.acepta_imagen  boolean
 columna  metropolitano_inscripciones.acepta_publicidad  boolean
 columna  metropolitano_inscripciones.acepta_reglamento  boolean
 columna  metropolitano_inscripciones.acepta_seguro  boolean
 columna  metropolitano_inscripciones.acompanantes  integer
+columna  metropolitano_inscripciones.acompanantes_detalle  jsonb
 columna  metropolitano_inscripciones.apellidos  text
 columna  metropolitano_inscripciones.canton  text
 columna  metropolitano_inscripciones.clasico  text
@@ -1559,6 +1561,7 @@ columna  metropolitano_inscripciones.nombre  text
 columna  metropolitano_inscripciones.nombre_fide  text
 columna  metropolitano_inscripciones.nota_organizacion  text
 columna  metropolitano_inscripciones.numero  integer
+columna  metropolitano_inscripciones.origen  text
 columna  metropolitano_inscripciones.pago_estado  text
 columna  metropolitano_inscripciones.pago_fecha  date
 columna  metropolitano_inscripciones.pago_metodo  text

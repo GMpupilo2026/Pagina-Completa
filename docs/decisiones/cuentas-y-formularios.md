@@ -1532,6 +1532,23 @@ Pedido del dueño (4/11):
   quien vive aquí. La lista de inscritos los cuenta por provincia y los saca
   en el CSV. A las personas que agrega el delegado se les copia de dónde
   viene, como el hospedaje.
+- **No hay habitaciones individuales.** Con hospedaje, la tarjeta dice que
+  las habitaciones son compartidas, se elige con quién se prefiere
+  (`organizacion`: con quien asigne la organización; `compartida`: con su
+  familia, su delegación o sus acompañantes) y hay que marcar
+  `acepta_compartir`. **Cada acompañante que viene con la persona** (el número
+  de «Acompañantes que vienen con esta persona») lleva sus datos: nombre
+  completo, documento, fecha de nacimiento y parentesco
+  (`acompanantes_detalle`). La base rechaza la habitación individual, la
+  falta de la aceptación y los acompañantes sin sus datos (migración
+  20261104172925).
+- **La exoneración cambia según de dónde vienen**: a los nacionales se les
+  pide solo la póliza que cubre el evento; si en la inscripción viene alguien
+  de otro país, además su seguro de viaje. El texto lo arma `pintarSeguro()`
+  y cubre también a los acompañantes y al hospedaje; la base guarda cuál se
+  aceptó (`exoneracion_version`: `metropolitano-2026-v2-nacionales` o
+  `metropolitano-2026-v2-con-extranjeros`, según el `origen` de cada
+  persona).
 
 ### La página del Metropolitano 2026
 
