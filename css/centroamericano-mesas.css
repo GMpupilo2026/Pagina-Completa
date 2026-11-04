@@ -811,3 +811,6 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-mp-tabla th[scope="row"] { font-size: 1.1rem; font-weight: 800; text-align: left; text-transform: none; letter-spacing: 0; }
 .cam-mp-res { font-weight: 800; white-space: nowrap; }
 .cam-mp-res[data-vacio="si"] { font-weight: 600; opacity: 0.75; }
+
+/* «Mis pareos»: las pestañas de ronda caen a otra línea en vez de cortarse en el celular. */
+.cam-mp .cam-dj-chips { flex-wrap: wrap; overflow: visible; }
