@@ -2912,3 +2912,28 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .metro-cifra { min-width: 3.6rem; padding: .5rem .4rem; border-radius: .6rem; background: rgba(255, 255, 255, .12); }
 .metro-cifra b { display: block; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .metro-cifra span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+
+/* El documento en una ventanita encima de la página (js/visor-documento.js):
+   las bases de un torneo, la privacidad, chess-results. Ocupa casi toda la
+   pantalla y se lee deslizando; arriba quedan el título y sus botones. */
+.visor-doc { width: min(64rem, calc(100vw - 1rem)); height: calc(100dvh - 1rem); max-height: none; max-width: none; padding: 0; border: 0; border-radius: .75rem; background: #e8e8ef; color: #1d134d; overflow: hidden; }
+.visor-doc[open] { display: flex; flex-direction: column; }
+.visor-doc::backdrop { background: rgba(16, 12, 40, .7); }
+.visor-doc-cabeza { display: flex; align-items: center; gap: .4rem; padding: .6rem .75rem; background: #1d134d; color: #fff; }
+.visor-doc-cabeza h2 { flex: 1; min-width: 0; font-size: 1.05rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visor-doc-boton { flex: none; min-width: 2.5rem; min-height: 2.5rem; padding: .4rem .75rem; border-radius: .5rem; border: 1px solid #fff; background: transparent; color: #fff; font-weight: 600; font-size: .875rem; text-align: center; line-height: 1.6; }
+.visor-doc-boton:hover { background: rgba(255, 255, 255, .15); }
+.visor-doc-boton:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+.visor-doc-boton[disabled] { opacity: .45; }
+.visor-doc-cerrar { background: #fff; color: #1d134d; }
+.visor-doc-cerrar:hover { background: #f3f2fa; }
+.visor-doc-estado { padding: .3rem .75rem; font-size: .8rem; background: #f3f2fa; color: #1d134d; }
+.visor-doc-estado:empty { display: none; }
+.visor-doc-cuerpo { flex: 1; min-height: 0; overflow: auto; padding: .5rem; -webkit-overflow-scrolling: touch; }
+.visor-doc-cuerpo:focus-visible { outline: 3px solid #f0b429; outline-offset: -3px; }
+.visor-doc-pagina { width: calc(var(--visor-zoom, 1) * 100%); margin: 0 auto .5rem; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+.visor-doc-pagina canvas { display: block; width: 100%; height: auto; }
+.visor-doc-marco { display: block; width: 100%; height: 100%; border: 0; background: #fff; border-radius: .25rem; }
+.dark .visor-doc { background: #0b1d30; }
+.dark .visor-doc-estado { background: #102a43; color: #fff; }
+@media (max-width: 480px) { .visor-doc-cabeza h2 { font-size: .95rem; } .visor-doc-boton { padding: .4rem .55rem; } }

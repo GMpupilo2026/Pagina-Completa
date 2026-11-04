@@ -24,6 +24,8 @@
   const horaDe = (iso) => H.hora(iso, { hour: "numeric", minute: "2-digit" });
 
   /* ===================== Las ventanas (con su dirección #) ===================== */
+  // Abrir una ventana deja una entrada en el historial: el botón «Atrás» del
+  // celular la cierra, en vez de sacar a la persona de la página.
   function abrir(id) {
     const d = $(id);
     if (!d || d.tagName !== "DIALOG") return false;
@@ -32,14 +34,23 @@
   }
   document.addEventListener("click", (ev) => {
     const a = ev.target.closest('a[href^="#"]');
-    if (a && abrir(a.getAttribute("href").slice(1))) { ev.preventDefault(); history.replaceState(null, "", a.getAttribute("href")); }
+    if (a && abrir(a.getAttribute("href").slice(1))) {
+      ev.preventDefault();
+      const id = a.getAttribute("href").slice(1);
+      if (!(history.state && history.state.metroVentana === id)) history.pushState({ metroVentana: id }, "", "#" + id);
+    }
     const c = ev.target.closest("[data-cerrar]");
     if (c) c.closest("dialog").close();
   });
-  document.querySelectorAll("dialog").forEach((d) => {
-    d.addEventListener("close", () => { if (location.hash === "#" + d.id) history.replaceState(null, "", location.pathname); });
-    // Tocar fuera de la ventana la cierra.
-    d.addEventListener("click", (ev) => { if (ev.target === d) d.close(); });
+  function alCerrar(d) {
+    if (history.state && history.state.metroVentana === d.id) history.back();
+    else if (location.hash === "#" + d.id) history.replaceState(null, "", location.pathname);
+  }
+  document.addEventListener("close", (ev) => { const d = ev.target; if (d.tagName === "DIALOG" && d.classList.contains("metro-ventana")) alCerrar(d); }, true);
+  document.addEventListener("click", (ev) => { const d = ev.target; if (d.tagName === "DIALOG" && d.classList.contains("metro-ventana") && d.open) d.close(); });
+  window.addEventListener("popstate", () => {
+    const quedan = history.state && history.state.metroVentana;
+    document.querySelectorAll("dialog.metro-ventana[open]").forEach((d) => { if (d.id !== quedan) d.close(); });
   });
 
   /* ===================== El plazo de inscripción ===================== */
@@ -183,15 +194,16 @@
   }
 
   /* ===================== Resultados y partidas en vivo (de «Torneos») ===================== */
-  function ficha(caja, { href, titulo, texto, accion, emoji, tono, externo }) {
+  // Lo de afuera (chess-results, Lichess) se abre en la ventanita de
+  // js/visor-documento.js, encima de esta página: nadie se va de aquí.
+  function ficha(caja, { href, titulo, texto, accion, emoji, tono, visor }) {
     caja.textContent = "";
     const a = el(href ? "a" : "div", "metro-ficha");
     a.dataset.tono = tono;
-    if (href) { a.href = href; if (externo) { a.target = "_blank"; a.rel = "noopener"; } }
+    if (href) { a.href = href; if (visor) a.dataset.visor = visor; }
     else { a.tabIndex = 0; a.setAttribute("aria-disabled", "true"); }
     a.append(el("span", "metro-ficha-emoji", emoji), el("span", "metro-ficha-titulo", titulo), el("span", "metro-ficha-texto", texto));
     const ac = el("span", "metro-ficha-accion", accion);
-    if (externo) ac.append(el("span", "sr-only", " (se abre en otra pestaña)"));
     a.querySelector(".metro-ficha-emoji").setAttribute("aria-hidden", "true");
     a.append(ac);
     caja.append(a);
@@ -200,11 +212,11 @@
     const res = enlaces.filter((e) => /chess-results\.com/i.test(e.url));
     const vivo = enlaces.find((e) => /lichess\.org\/broadcast/i.test(e.url));
     ficha($("ficha-resultados"), res.length
-      ? { href: res.length === 1 ? res[0].url : "#resultados", externo: res.length === 1, titulo: "Resultados en vivo", emoji: "📊", tono: 3,
+      ? { href: res.length === 1 ? res[0].url : "#resultados", visor: res.length === 1 ? (res[0].texto || "Resultados en vivo") : "", titulo: "Resultados en vivo", emoji: "📊", tono: 3,
         texto: "Emparejamientos, resultados y clasificación de cada ronda en chess-results.", accion: res.length === 1 ? "Abrir chess-results →" : "Elegir la categoría →" }
       : { titulo: "Resultados en vivo", emoji: "📊", tono: 3, texto: "Los emparejamientos y la clasificación de cada ronda, en chess-results.", accion: "Pronto: se publican cuando la FCA cree los torneos" });
     ficha($("ficha-partidas"), vivo
-      ? { href: vivo.url, externo: true, titulo: "Partidas en vivo", emoji: "📺", tono: 5, texto: "La transmisión de los tableros en directo, jugada a jugada, en Lichess.", accion: "Ver las partidas →" }
+      ? { href: vivo.url, visor: "Partidas en vivo", titulo: "Partidas en vivo", emoji: "📺", tono: 5, texto: "La transmisión de los tableros en directo, jugada a jugada, en Lichess.", accion: "Ver las partidas →" }
       : { titulo: "Partidas en vivo", emoji: "📺", tono: 5, texto: "La transmisión de los tableros en directo, jugada a jugada.", accion: "Pronto: la transmisión todavía no está publicada" });
     if (res.length > 1) {
       // Varias categorías en chess-results: una ventana para elegir.
@@ -216,10 +228,9 @@
         cab.append(h2, b);
         const cu = el("div", "metro-ventana-cuerpo"); const ul = el("ul", "grid sm:grid-cols-2 gap-2"); ul.id = "resultados-lista"; cu.append(ul);
         d.append(cab, cu); document.querySelector("main").append(d);
-        d.addEventListener("click", (ev) => { if (ev.target === d) d.close(); });
       }
       const ul = $("resultados-lista"); ul.textContent = "";
-      res.forEach((e) => { const li = el("li"); const a = el("a", "metro-boton block", e.texto || e.url); a.href = e.url; a.target = "_blank"; a.rel = "noopener"; li.append(a); ul.append(li); });
+      res.forEach((e) => { const li = el("li"); const a = el("a", "metro-boton block", e.texto || e.url); a.href = e.url; a.dataset.visor = e.texto || "Resultados en vivo"; li.append(a); ul.append(li); });
     }
   }
   pintarEnVivo([]);

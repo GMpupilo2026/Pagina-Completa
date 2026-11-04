@@ -327,6 +327,34 @@ const FILAS_FIDE = [
     const [ics] = await Promise.all([i1.pg.waitForEvent("download"), i1.pg.click("#hoy-ics")]);
     const textoIcs = fs.readFileSync(await ics.path(), "utf8");
     igual("«Agregar a mi calendario» baja las 28 rondas, en hora de Costa Rica", [(textoIcs.match(/BEGIN:VEVENT/g) || []).length, /DTSTART;TZID=America\/Costa_Rica:20261226T090000/.test(textoIcs)], [28, true]);
+    // Las bases se abren en la ventanita de encima (js/visor-documento.js), no
+    // en otra pestaña: nadie se va de la página. Y «Atrás» la cierra.
+    const pestanas = [];
+    ctx.on("page", (p) => pestanas.push(p));
+    const antes = i1.pg.url();
+    await i1.pg.click("a.metro-ficha[data-visor]");
+    await i1.pg.waitForFunction(() => document.querySelector("dialog.visor-doc[open] .visor-doc-pagina[data-pagina='2'] canvas"), null, { timeout: 30000 });
+    const visto = await i1.pg.evaluate(() => {
+      const d = document.querySelector("dialog.visor-doc");
+      const c = d.querySelector("canvas");
+      return { titulo: d.querySelector("h2").textContent, paginas: d.querySelectorAll(".visor-doc-pagina").length,
+        ancho: c.getBoundingClientRect().width > 200, bajar: d.querySelector("a.visor-doc-boton").getAttribute("href").replace(location.origin + "/", ""),
+        visible: d.checkVisibility(), texto: /Invitación/.test((d.querySelector(".visor-doc-pagina[data-pagina='2'] .sr-only") || {}).textContent || "") };
+    });
+    igual("las bases se abren encima de la página, con sus 14 páginas pintadas y escritas", visto,
+      { titulo: "Bases del Metropolitano 2026", paginas: 14, ancho: true, bajar: "documentos/metropolitano-2026/bases-metropolitano-2026.pdf", visible: true, texto: true });
+    igual("y no se abre ninguna otra pestaña", pestanas.length, 0);
+    await i1.pg.click("dialog.visor-doc [aria-label='Más grande']");
+    await i1.pg.waitForFunction(() => { const c = document.querySelector(".visor-doc-pagina canvas"), f = document.querySelector(".visor-doc-cuerpo"); return c && c.getBoundingClientRect().width > f.clientWidth * 1.3; });
+    cierto("«Más grande» agranda la página", true);
+    await i1.pg.goBack();
+    await i1.pg.waitForFunction(() => !document.querySelector("dialog.visor-doc").open);
+    igual("«Atrás» cierra la ventanita y deja a la persona en la página", i1.pg.url(), antes);
+    // Una ventana del torneo, también: «Atrás» la cierra sin salir.
+    await i1.pg.click("a[href='#costos']");
+    await i1.pg.goBack();
+    await i1.pg.waitForFunction(() => !document.getElementById("costos").open);
+    cierto("«Atrás» con la ventana de costos abierta la cierra, sin salir", /metropolitano-2026\.html/.test(i1.pg.url()));
     igual("sin errores en la página de información", i1.errs, []);
     const i2 = await info({ clave: "metropolitano-2026", enlaces: [
       { url: "https://ajedrez-integral.com/metropolitano-2026.html", texto: "Toda la información" },
@@ -337,6 +365,23 @@ const FILAS_FIDE = [
     await i2.pg.keyboard.press("Escape");
     await i2.pg.click("#ficha-resultados a");
     cierto("y con dos torneos en chess-results, se elige la categoría", await i2.pg.evaluate(() => document.getElementById("resultados").open) && (await i2.pg.locator("#resultados-lista a").count()) === 2);
+    await i2.pg.route("https://s1.chess-results.com/**", (r) => r.fulfill({ contentType: "text/html", body: "<p>Clasificación</p>" }));
+    await i2.pg.click("#resultados-lista a >> nth=1");
+    await i2.pg.waitForFunction(() => { const f = document.querySelector("dialog.visor-doc[open] iframe"); return f && /tnr2/.test(f.src); });
+    cierto("una categoría de chess-results se abre encima, en un marco", true);
+    igual("con «Abrir aparte» para quien la quiera en otra pestaña", await i2.pg.getAttribute("dialog.visor-doc a.visor-doc-boton", "target"), "_blank");
+    await i2.pg.click("dialog.visor-doc .visor-doc-cerrar");
+    await i2.pg.waitForFunction(() => !document.querySelector("dialog.visor-doc").open && document.getElementById("resultados").open);
+    cierto("«Cerrar» vuelve a la lista de categorías", true);
+    cierto("las partidas de Lichess también se abren encima", await i2.pg.getAttribute("#ficha-partidas a", "data-visor") === "Partidas en vivo");
+    // La inscripción: la privacidad y las bases encima, sin perder lo escrito.
+    const ins = await ctx.newPage();
+    await ins.goto(BASE + "/inscripcion-metropolitano.html");
+    await ins.click("#acepta-datos-texto a[data-visor]");
+    await ins.waitForFunction(() => { const f = document.querySelector("dialog.visor-doc[open] iframe"); return f && /privacidad\.html$/.test(f.src); });
+    cierto("en la inscripción, la política de privacidad se abre encima del formulario", /inscripcion-metropolitano\.html/.test(ins.url()));
+    igual("y las bases, desde el formulario, sin enlace a otra pestaña", await ins.locator('a[href*="bases-metropolitano-2026.pdf"][target]').count(), 0);
+    await ins.close();
 
     // La página de administración.
     console.log("   La lista de inscritos");

@@ -1524,3 +1524,34 @@ también con su dirección (`#calendario`, `#premios`…). Verificador:
   las bases (`img/metropolitano-2026/compartir.jpg`, en `IMAGEN_PROPIA` de
   `verificar-metadatos.py`).
 
+#### Los documentos se abren encima
+
+Pedido del dueño: **ningún jugador sale nunca de la página para leer un
+documento**, ni tiene problemas para volver a donde está toda la información.
+En el celular, un PDF en otra pestaña es otra app (el lector de PDF, el
+navegador del WhatsApp) y volver es justo lo que no se sabe hacer. Por eso
+todo enlace con `data-visor="Título"` se abre en una ventanita encima de la
+página (`js/visor-documento.js`, que sirve para cualquier página):
+
+- **Las bases son una copia en el sitio**
+  (`documentos/metropolitano-2026/bases-metropolitano-2026.pdf`, bajada tal
+  cual de fcacostarica.com; es el documento de la FCA, así que no lleva
+  nuestra marca de agua). Un PDF de otro dominio no se puede leer desde la
+  página (CORS), y si la FCA lo cambia, se vuelve a bajar.
+- **El PDF lo pinta pdf.js**, página por página, del ancho de la ventana y
+  solo lo que está cerca de verse, con «−» y «+» para agrandar. El visor de
+  PDF del navegador en un marco no sirve: Chrome en Android no lo tiene y
+  Safari en el iPhone muestra solo la primera hoja. El texto de cada página
+  va también escrito, para el lector de pantalla.
+- **chess-results y la privacidad, en un marco**; Lichess, con su versión
+  para incrustar (`lichess.org/embed/broadcast/…`). Arriba queda siempre
+  «Bajar» o «Abrir aparte», por si un sitio no se deja mostrar.
+- **«Atrás» cierra la ventanita, no la página.** Abrirla deja una entrada en
+  el historial, y las ventanas de la página del torneo (`#costos`,
+  `#premios`…) también: antes cambiaban la dirección con `replaceState`, y
+  el «Atrás» del celular sacaba a la persona del sitio.
+- **Ctrl/⌘ + clic sigue abriendo otra pestaña**, para quien la quiere.
+- El QR del dorso del gafete lleva a la página del torneo, no al PDF.
+- En la inscripción, la privacidad, las bases y «toda la información del
+  torneo» también se abren encima: nadie pierde lo que llevaba escrito.
+

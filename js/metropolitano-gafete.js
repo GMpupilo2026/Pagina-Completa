@@ -16,7 +16,9 @@ window.MetropolitanoGafete = (function () {
   "use strict";
   const R = () => window.MetropolitanoReglas;
   const D = () => window.GafetesDibujo;
-  const BASES = "https://fcacostarica.com/wp-content/uploads/2026/08/Bases-Metropolitano-2026-2.pdf";
+  // El QR lleva a la página con toda la información del torneo, no al PDF:
+  // desde ahí se abren las bases encima, sin salir del sitio.
+  const INFO = "https://ajedrez-integral.com/metropolitano-2026";
 
   let diseno = null, recursos = null;
 
@@ -52,7 +54,7 @@ window.MetropolitanoGafete = (function () {
         franja: { plantilla: "{Rol}" },
         iconos: [{ columna: "", dibujo: "telefono", imagen: null }, { columna: "", dibujo: "camara", imagen: null }],
         colores: { columna: "Color", valores: colores, etiquetas, omision: "#043576" },
-        dorso: { vertical: "{Rol}", repetirLogos: true, qr: BASES, qrMarca: true, encabezados: ["Actividad", "Fecha", "Hora"], horario: [] },
+        dorso: { vertical: "{Rol}", repetirLogos: true, qr: INFO, qrMarca: true, encabezados: ["Actividad", "Fecha", "Hora"], horario: [] },
         codigo: { plantilla: "{Código}", sinCodigoSi: "" },
         fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
         salida: { separarPor: "" },
