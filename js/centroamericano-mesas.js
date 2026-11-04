@@ -386,11 +386,35 @@
   //     cada uno con el color que los RECIBIÓ y su hora. Los de antes del control ya están en lo que marcaban los
   //     relojes: no se suman otra vez, pero sí se descuentan de lo «gastado» (si no, quien los recibió parecería
   //     haber pensado 2 minutos menos) y entran en la comprobación con el inicio. Los de después se le suman.
+  //   · Las llegadas tarde (`llegadas`, de llegadasTarde): mientras el jugador no estaba, SU reloj corría (art. 6.7: la partida
+  //     empieza al hacer andar el reloj de las blancas; si llegan tarde las negras, corre el suyo apenas mueven las blancas).
+  //     Ese tiempo no se reparte como el resto: se le cobra entero a quien llegó tarde, y lo demás sí se reparte. Lo que cae
+  //     ANTES del control ya está en lo que marcaban los relojes; solo cuenta lo que cae después del control (o, sin
+  //     control, desde el inicio de la ronda). Con las dos tarde, primero corre el reloj de las blancas hasta que llegan, y
+  //     después el de las negras hasta que llegan ellas.
   // Todo en segundos y en milisegundos de reloj (Date.getTime()). Devuelve { error } si algo no cuadra.
+  // Lo que corrió en el reloj de cada uno por haber llegado tarde, dentro de los `pasaron` segundos que se están repartiendo (los que van
+  // desde `desdeMs`, el control o el inicio, hasta ahora). Cada llegada es { color, ms, segundos }: la hora en que llegó y cuánto
+  // se había tardado; la espera cubre desde ms − segundos hasta ms, y solo cuenta la parte que cae después de `desdeMs`.
+  function cargaPorTarde(llegadas, desdeMs, pasaron) {
+    const t = { blancas: 0, negras: 0 };
+    for (const l of llegadas || []) {
+      if (l.color !== "blancas" && l.color !== "negras") continue;
+      const seg = Math.max(0, (l.ms - Math.max(l.ms - l.segundos * 1000, desdeMs)) / 1000);
+      t[l.color] = Math.max(t[l.color], seg);
+    }
+    const b = Math.min(pasaron, Math.round(t.blancas));
+    const n = Math.min(pasaron - b, Math.max(0, Math.round(t.negras - t.blancas)));
+    return { blancas: b, negras: n };
+  }
   const RITMO = { inicial: 90 * 60, incremento: 30 };
   const BONO_ILEGAL = 120;
   const RITMO_CONFIABLE = 10;   // medias jugadas antes del control desde las que el ritmo cuenta entero
-  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [] }) {
+  // `visto`: lo que marca AHORA un reloj que todavía se lee ({ blancas, negras }, en segundos; uno solo o los dos). Manda sobre el
+  // reparto: el tiempo total entre los dos es exacto, así que el del otro color es lo que sobra.
+  // `reparto`: «ritmo» (como venían gastando), «iguales» (mitad y mitad) o «turno» (todo lo que pasó lo gastó quien tenía el turno,
+  // solo si nadie ha movido desde el control). «ritmo» pasa solo a «turno» cuando nadie ha movido: es lo que de verdad pasó.
+  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [], llegadas = [], visto = null }) {
     const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
     if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
     if (jBlancas !== jNegras && jBlancas !== jNegras + 1) return { error: "Las blancas llevan las mismas jugadas que las negras o una más: revisa las jugadas." };
@@ -421,10 +445,18 @@
       // y disparejos (ver «El reloj que se apaga» en docs/decisiones/juegos-y-torneos.md).
       let pB = 0.5, peso = 0;
       if (reparto === "ritmo" && gB + gN > 0) { peso = Math.min(1, (cB + cN) / RITMO_CONFIABLE); pB = 0.5 + (gB / (gB + gN) - 0.5) * peso; }
-      const usadoB = Math.round(pasaron * pB), usadoN = pasaron - usadoB;
+      const tarde = cargaPorTarde(llegadas, desde, pasaron);
+      const resto = pasaron - tarde.blancas - tarde.negras;
+      // Nadie ha movido desde el control: todo lo que pasó lo gastó quien tenía el turno (menos la espera de quien llegó tarde).
+      const sinMoverse = jBlancas === cB && jNegras === cN, turnoCtl = cB === cN ? "blancas" : "negras";
+      if (reparto === "turno" && !sinMoverse) return { error: "Desde el control ya se jugaron jugadas: no se sabe cuánto gastó cada uno. Elige otro reparto o escribe lo que marca un reloj." };
+      const porTurno = sinMoverse && reparto !== "iguales";
+      if (porTurno) { pB = turnoCtl === "blancas" ? 1 : 0; peso = 1; }
+      const usadoB = porTurno ? (turnoCtl === "blancas" ? tarde.blancas + resto : tarde.blancas) : tarde.blancas + Math.round(resto * pB);
+      const usadoN = pasaron - usadoB;
       const res = {
-        turno, pasaron, jugadas, total, reparto: reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
-        gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
+        turno, pasaron, jugadas, total, reparto: porTurno ? "turno" : reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
+        tarde, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
         blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
         negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
       };
@@ -433,17 +465,33 @@
         const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN) + bonosAntes.blancas + bonosAntes.negras;
         res.comprobacion = { esperado, anotado: control.t_blancas + control.t_negras, diferencia: control.t_blancas + control.t_negras - esperado };
       }
-      return res;
+      return conVisto(res, visto, { blancas: base.blancas + R.incremento * (jBlancas - cB) + bonosDespues.blancas, negras: base.negras + R.incremento * (jNegras - cN) + bonosDespues.negras });
     }
     if (inicio == null) return { error: "Esta mesa no tiene ningún control de tiempos y no se sabe a qué hora empezó la ronda: no hay de dónde calcular." };
     pasaron = Math.round((ahora - inicio) / 1000);
     if (pasaron < 0) return { error: "La hora de ahora es anterior al inicio de la ronda." };
     jugadas = jBlancas + jNegras;
     total = 2 * R.inicial - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
-    const usadoB = Math.round(pasaron / 2), usadoN = pasaron - usadoB;
-    return { turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
-      gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
-      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras };
+    const tardeS = cargaPorTarde(llegadas, inicio, pasaron);
+    const usadoB = tardeS.blancas + Math.round((pasaron - tardeS.blancas - tardeS.negras) / 2), usadoN = pasaron - usadoB;
+    return conVisto({ turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
+      tarde: tardeS, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
+      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras },
+      visto, { blancas: R.inicial + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial + R.incremento * jNegras + bonosDespues.negras });
+  }
+  // Lo que el árbitro lee en un reloj que todavía marca manda sobre el reparto: el total entre los dos es exacto, así que si lee uno,
+  // el del otro es lo que sobra; si lee los dos, valen los dos (y se dice cuánto se aleja la suma del total). `tope` es lo que
+  // tendría cada uno sin haber gastado nada desde el control (para sacar cuánto gastó).
+  function conVisto(res, visto, tope) {
+    const ok = (x) => Number.isFinite(x) && x >= 0 ? Math.round(x) : null;
+    const vb = visto ? ok(visto.blancas) : null, vn = visto ? ok(visto.negras) : null;
+    if (vb == null && vn == null) return res;
+    const b = vb != null ? vb : res.total - vn, n = vn != null ? vn : res.total - vb;
+    if (b < 0 || n < 0) return { error: "Lo que marca ese reloj es más de lo que queda entre los dos (" + Math.max(0, res.total) + " s): revisa la lectura o la hora." };
+    const gB = tope.blancas - b, gN = tope.negras - n;
+    return Object.assign(res, { reparto: "lectura", blancas: b, negras: n, gastado: { blancas: gB, negras: gN },
+      visto: { blancas: vb, negras: vn, diferencia: vb != null && vn != null ? vb + vn - res.total : 0 },
+      proporcion: gB + gN > 0 ? { blancas: Math.min(1, Math.max(0, gB / (gB + gN))), negras: Math.min(1, Math.max(0, gN / (gB + gN))) } : res.proporcion });
   }
   // Los 2 minutos de cada ilegal de una mesa, sacados de la bitácora: solo la PRIMERA (sin anular) de cada jugador
   // da tiempo; con la segunda pierde la partida. Cada bono es del RIVAL de quien la hizo, con la hora en que se anotó.
@@ -463,6 +511,21 @@
       const primera = (anotaciones || []).filter((f) => f.tipo === "ilegal" && f.mesa === mesa && f.color === color && !fuera.has(f.id))
         .sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)))[0];
       if (primera) out.push({ color: color === "blancas" ? "negras" : "blancas", de: color, ms: new Date(primera.ocurrio).getTime(), segundos: BONO_ILEGAL, motivo: "ilegal" });
+    }
+    return out.sort((a, b) => a.ms - b.ms);
+  }
+  // Las llegadas tarde de una mesa, sacadas de la bitácora: la nota «Llegó tarde» que anota la función cuando el árbitro marca
+  // que un jugador llegó después de empezar la ronda. La hora de la nota es la de la llegada y el texto dice cuánto se tardó
+  // («llegó tarde: 22 min 8 s …»): de ahí salen { color, ms, segundos }. Lo anulado no cuenta.
+  const ARTICULO_TARDE = "Llegó tarde";
+  const leerTarde = (texto) => { const m = String(texto || "").match(/llegó tarde: (\d+) min (\d+) s/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+  function llegadasTarde(anotaciones, mesa, anuladas) {
+    const fuera = anuladas instanceof Set ? anuladas : new Set(anuladas || []);
+    const out = [];
+    for (const f of anotaciones || []) {
+      if (f.tipo !== "nota" || f.articulo !== ARTICULO_TARDE || f.mesa !== mesa || fuera.has(f.id) || (f.color !== "blancas" && f.color !== "negras")) continue;
+      const segundos = leerTarde(f.texto), ms = new Date(f.ocurrio).getTime();
+      if (segundos > 0 && Number.isFinite(ms)) out.push({ color: f.color, ms, segundos });
     }
     return out.sort((a, b) => a.ms - b.ms);
   }
@@ -523,7 +586,7 @@
     return b && !n ? "blancas" : n && !b ? "negras" : "mesa";
   }
 
-  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

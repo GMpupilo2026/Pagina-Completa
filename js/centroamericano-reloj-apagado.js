@@ -72,10 +72,15 @@
     const out = [
       { texto: "Entre los dos les quedan " + T(Math.max(0, r.total)) + " (exacto): " + (r.sinControl ? "desde el inicio pasaron " : "desde el control pasaron ") + T(r.pasaron) + " y se jugaron " + r.jugadas + (r.jugadas === 1 ? " jugada" : " jugadas") + " (+" + T(r.jugadas * C.RITMO.incremento) + " de incremento)." },
       { texto: r.sinControl ? "Esta mesa no tiene ningún control: se reparte mitad y mitad. Pregúntales a los jugadores si les parece justo."
+        : r.reparto === "lectura" ? "Se usa lo que marca el reloj que se leyó" + (r.visto.blancas != null && r.visto.negras != null ? " en los dos (blancas " + T(r.visto.blancas) + ", negras " + T(r.visto.negras) + ")" : r.visto.blancas != null ? " de las blancas (" + T(r.visto.blancas) + "): al otro le queda lo que falta para el total" : " de las negras (" + T(r.visto.negras) + "): al otro le queda lo que falta para el total") + ". Desde el control gastaron: blancas " + T(Math.max(0, r.gastado.blancas)) + ", negras " + T(Math.max(0, r.gastado.negras)) + "."
+        : r.reparto === "turno" ? "Nadie movió desde el control, así que el reloj que corrió es el de las " + r.turno + " (les tocaba): gastaron " + T(r.gastado[r.turno]) + " pensando" + (r.gastado[r.turno === "blancas" ? "negras" : "blancas"] > 0 ? ", y a las " + (r.turno === "blancas" ? "negras" : "blancas") + " solo se les cobra la espera de su llegada tarde." : "; el reloj de las " + (r.turno === "blancas" ? "negras" : "blancas") + " no se mueve.")
         : r.reparto === "ritmo" ? (r.pesoRitmo < 1 ? "El control es de muy temprano (pocas jugadas): el ritmo pesa poco y el reparto queda cerca de mitad y mitad. " : "")
           + "Lo que pasó se reparte como venían gastando hasta el control: blancas " + pct(r.proporcion.blancas) + " (" + T(r.gastado.blancas) + "), negras " + pct(r.proporcion.negras) + " (" + T(r.gastado.negras) + ")."
         : "Lo que pasó se reparte mitad y mitad: " + T(r.gastado.blancas) + " cada uno." },
     ];
+    for (const color of ["blancas", "negras"]) {
+      if (r.tarde && r.tarde[color] > 0) out.push({ texto: "Las " + color + " llegaron tarde (quedó anotado en la bitácora): " + T(r.tarde[color]) + " de lo que pasó corrió en su reloj mientras no estaba, y se le cobra entero a ese reloj; el resto se reparte como se dijo." });
+    }
     for (const a of r.ajustes || []) out.push({ texto: "Incluye " + (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + " por " + (a.motivo === "ilegal" ? "la jugada ilegal de su rival (art. " + C.ARTICULO_ILEGAL + ")" : a.color === a.de ? "la sanción de su irregularidad (art. " + C.ARTICULO_SANCION + ")" : "la sanción a su rival por una irregularidad (art. " + C.ARTICULO_SANCION + ")") + ", anotada a las " + hora(new Date(a.ms).toISOString()) });
     if (r.bonosAntes && (r.bonosAntes.blancas || r.bonosAntes.negras) && !r.sinControl) out.push({ texto: "Lo que se dio o quitó antes del control ya estaba en esos relojes: no se cuenta de nuevo, pero sí al ver cómo venía gastando cada uno y en la comprobación con el inicio." });
     if (r.comprobacion) {
@@ -83,6 +88,7 @@
       out.push(cuadra ? { texto: "✓ El control cuadra con la hora de inicio (diferencia de " + T(Math.abs(d)) + ")." }
         : { ojo: true, texto: "⚠ El control no cuadra con la hora de inicio por " + T(Math.abs(d)) + (d > 0 ? " de más" : " de menos") + ": ¿la partida empezó tarde, hubo una pausa o el control se anotó mal? Revísalo antes de poner el reloj." });
     }
+    if (r.visto && r.visto.blancas != null && r.visto.negras != null && Math.abs(r.visto.diferencia) > 60) out.push({ ojo: true, texto: "⚠ Los dos relojes que leíste suman " + T(Math.abs(r.visto.diferencia)) + (r.visto.diferencia > 0 ? " de más" : " de menos") + " que lo que da la cuenta (" + T(Math.max(0, r.total)) + "): ¿la hora o la lectura están bien? Valen los tiempos que leíste." });
     if (r.blancas < 0 || r.negras < 0) out.push({ ojo: true, texto: "⚠ Con este cálculo a " + (r.blancas < 0 ? "las blancas" : "las negras") + " ya se les habría acabado el tiempo: decide tú." });
     return out;
   }
@@ -94,7 +100,9 @@
       : ctl.origen === "transmision" ? "calculado desde los relojes de la transmisión de Lichess de las " + hora(ctl.ocurrio) + " (" + conAtraso(ctl.atraso) + ")"
         : "calculado desde el control de las " + hora(ctl.ocurrio);
     return ("Reloj apagado (art. 6.10): " + desde
-      + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)" : "mitad y mitad")
+      + ", reparto " + (r.reparto === "ritmo" ? "según el ritmo (" + Math.round(r.proporcion.blancas * 100) + " % / " + Math.round(r.proporcion.negras * 100) + " %)"
+        : r.reparto === "turno" ? "todo del reloj de las " + r.turno + " (nadie movió desde el control)"
+          : r.reparto === "lectura" ? "con lo que marcaba el reloj leído (" + [r.visto.blancas != null ? "blancas " + T(r.visto.blancas) : "", r.visto.negras != null ? "negras " + T(r.visto.negras) : ""].filter(Boolean).join(", ") + ")" : "mitad y mitad")
       + (r.ajustes && r.ajustes.length ? "; incluye " + r.ajustes.map((a) => (a.segundos > 0 ? "+" : "−") + T(Math.abs(a.segundos)) + " a las " + a.color + (a.motivo === "ilegal" ? " (ilegal)" : " (sanción)")).join(", ") : "")
       + (propuesto ? "" : "; propuesto " + T(Math.max(0, r.blancas)) + " / " + T(Math.max(0, r.negras)) + ", ajustado a mano")).slice(0, 500);
   }
@@ -150,9 +158,11 @@
       return el("div", { class: "cam-apagado-tx", "aria-busy": st.txBuscando ? "true" : "false" }, ...hijos);
     }
     const num = (v) => (v === "" || v == null ? NaN : Number(v));
+    const leido = (v) => { const t = v ? C.leerTiempo(v) : null; return t === null ? NaN : t; };   // «» o ilegible: no se leyó nada
     const calcular = () => {
       const ahora = st.horaMarcada ? new Date(st.horaMarcada).getTime() : Date.now();
-      return { ahora, r: C.relojApagado({ control: ctl(), inicio: o.inicio ? o.inicio.ms : null, ahora, jBlancas: num(st.jb), jNegras: num(st.jn), reparto: st.reparto || "ritmo", bonos: bonos() }) };
+      return { ahora, r: C.relojApagado({ control: ctl(), inicio: o.inicio ? o.inicio.ms : null, ahora, jBlancas: num(st.jb), jNegras: num(st.jn), reparto: st.reparto || "ritmo", bonos: bonos(), llegadas: C.llegadasTarde(o.anotaciones, o.mesa, o.anuladas),
+        visto: { blancas: leido(st.vb), negras: leido(st.vn) } }) };
     };
     const resultado = el("div", { class: "ra-resultado", "aria-live": "polite" });
 
@@ -189,6 +199,13 @@
         el("span", { class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre || "" })),
         el("input", { type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo ra-j" + k.slice(1), value: st[k] || "", oninput: (e) => { st[k] = e.target.value; pintarResultado(); } }));
       const opcion = (valor, texto) => el("label", { class: "cam-apagado-opcion" }, el("input", { type: "radio", name: "ra-reparto-" + (o.mesa || 0), value: valor, checked: (st.reparto || "ritmo") === valor, onchange: () => { st.reparto = valor; pintarResultado(); } }), el("span", { texto }));
+      // Un reloj que todavía se lee: lo que marca AHORA manda. Al escribir se marca sola la hora de ese momento (si no estaba marcada).
+      const leer = (color, k, nombre) => el("label", { class: "block" },
+        el("span", { class: "block text-sm font-bold" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre || "" })),
+        el("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss", class: "cam-campo ra-v" + k.slice(1), "aria-describedby": "ra-visto-ayuda", value: st[k] || "",
+          oninput: (e) => { const v = C.ponerDosPuntos(e.target.value); if (e.target.value !== v) e.target.value = v; st[k] = v;
+            if (v && !st.horaMarcada) { st.horaMarcada = new Date().toISOString(); const h = form.querySelector(".ra-hora"); if (h) { h.textContent = hora(st.horaMarcada); h.dataset.marcada = "si"; } const b = form.querySelector(".ra-marcar-hora span"); if (b) b.textContent = "Marcar de nuevo"; }
+            pintarResultado(); } }));
       const horaDeCalculo = el("div", { class: "cam-hora-control" },
         el("span", { class: "text-sm font-bold", texto: "Hora del cálculo" }),
         el("output", { class: "cam-hora-valor ra-hora", "data-marcada": st.horaMarcada ? "si" : "no", texto: st.horaMarcada ? hora(st.horaMarcada) : "Ahora (márcala al poner el reloj nuevo)" }),
@@ -201,7 +218,10 @@
         el("fieldset", { class: "cam-tiempo-lado" }, el("legend", { texto: "Jugadas que lleva cada uno ahora" }),
           el("div", { class: "grid grid-cols-2 gap-2" }, jug("blancas", "jb", o.blancas), jug("negras", "jn", o.negras))),
         el("fieldset", { class: "cam-apagado-reparto" }, el("legend", { class: "text-sm font-bold", texto: "Lo que pasó desde el control, ¿cómo se reparte?" }),
-          opcion("ritmo", "Como venía gastando cada uno"), opcion("iguales", "Mitad y mitad")),
+          opcion("ritmo", "Como venía gastando cada uno (si nadie movió desde el control, todo es de quien tenía el turno)"), opcion("iguales", "Mitad y mitad")),
+        el("fieldset", { class: "cam-tiempo-lado ra-visto" }, el("legend", { texto: "Si algún reloj todavía se lee, ¿qué marca ahora? (opcional)" }),
+          el("p", { class: "text-sm", id: "ra-visto-ayuda", texto: "Es el tiempo real del reloj en este momento: manda sobre el cálculo y al otro le queda lo que falta. Al escribirlo se marca la hora de ahora." }),
+          el("div", { class: "grid grid-cols-2 gap-2" }, leer("blancas", "vb", o.blancas), leer("negras", "vn", o.negras))),
         horaDeCalculo,
         resultado,
         el("div", { class: "cam-acciones" },

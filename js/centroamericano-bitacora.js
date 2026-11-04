@@ -40,7 +40,7 @@
     if (f.tipo === "anulacion") return "Anula una anotación de " + (f.jugador || "");
     return f.texto || "";
   }
-  const etiquetaDe = (f) => (nota(f, "Levantó") ? "Se levantó" : TIPO[f.tipo] || f.tipo);
+  const etiquetaDe = (f) => (nota(f, "Levantó") ? "Se levantó" : nota(f, "Llegó tarde") ? "Llegó tarde" : TIPO[f.tipo] || f.tipo);
 
   function armar(d, F) {
     F = F || { hora: (x) => String(x), fechaHora: (x) => String(x) };

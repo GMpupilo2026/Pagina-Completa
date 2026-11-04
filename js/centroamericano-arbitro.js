@@ -660,8 +660,28 @@
         // Se ve al instante; si la función dice que no, se deshace.
         estado.presencia = presencias().filter((x) => !(x.mesa === m.mesa && x.color === color)).concat([{ mesa: m.mesa, color, presente, marcada: new Date().toISOString() }]);
         pintar();
-        try { await escribir("presencia", { ronda: estado.ronda, mesa: m.mesa, color, presente }, "Presencia de " + (color === "blancas" ? "blancas" : "negras") + " en la mesa " + m.mesa, { mesa: m.mesa }); }
+        // Con la hora del toque y la del inicio que usa la cuenta de la tablet: si llega tarde, la función deja la nota en la bitácora.
+        const cuerpo = { ronda: estado.ronda, mesa: m.mesa, color, presente, ocurrio: new Date().toISOString() };
+        const ini = inicioEfectivo();
+        if (ini) cuerpo.inicio = ini;
+        try {
+            const res = await escribir("presencia", cuerpo, "Presencia de " + (color === "blancas" ? "blancas" : "negras") + " en la mesa " + m.mesa, { mesa: m.mesa });
+            const d = res.d;
+            if (d && d.anuladas && d.anuladas.length) for (const id of d.anuladas) anuladas.add(id);
+            if (d && d.tarde) {
+                // Queda a la vista en «Lo anotado» y el reloj que se apaga ya la cuenta, sin esperar la próxima lectura.
+                estado.anotaciones = (estado.anotaciones || []).concat([d.tarde]);
+                avisar(nombreDe(m, color) + " llegó " + C.tiempoEnPalabras(C.leerTarde(d.tarde.texto)) + " tarde: quedó anotado en la bitácora.");
+            }
+            if (d && ((d.anuladas && d.anuladas.length) || d.tarde)) pintar();
+        }
         catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
+    }
+    // La hora en que empezó la ronda, la que usa la cuenta del tiempo de espera (la marcada por el árbitro de la categoría o, si no, la del horario).
+    function inicioEfectivo() {
+        const H = window.CentroamericanoHorario;
+        const ev = H && estado && estado.ronda ? H.EVENTOS.find((e) => e.ronda === estado.ronda) : null;
+        return ev ? new Date(H.inicioDe(ev, iniciosMarcados())).toISOString() : null;
     }
 
     // Solo hay un botón: «Llegó». Sin marcar se entiende que no ha llegado. Al marcarlo, el botón desaparece y queda su estado con un
@@ -788,11 +808,15 @@
         campo.setAttribute("aria-invalid", v && C.leerTiempo(v) === null ? "true" : "false");
     }
 
+    // Lo que pone un botón de «Llenar…» no se vuelve a leer de las casillas viejas al dibujar (las pisaría con lo que había escrito).
+    let borradorFresco = false;
+    function llenarYPintar(c, alAhora) { llenarConTx(c, alAhora); borradorFresco = true; pintarTiempos(); }
+
     function pintarTiempos() {
         const caja = $("control-tiempos");
         caja.hidden = !tiemposAbierto;
         if (!tiemposAbierto) { caja.replaceChildren(); return; }
-        leerBorrador();
+        if (borradorFresco) borradorFresco = false; else leerBorrador();
         const mesas = sinTerminar();
         if (!lecturaMesa || !mesas.some((m) => m.mesa === lecturaMesa)) lecturaMesa = mesas.length ? mesas[0].mesa : null;
         // Otra mesa: lo escrito era de la anterior.
@@ -819,7 +843,10 @@
             ? el("div", { class: "cam-tx-control", id: "lt-tx" },
                 el("p", { class: "text-sm", texto: "📡 Transmisión sin atraso: relojes después de la jugada " + ctlTx.jugada + ", a las " + textoHoraExacta(ctlTx.ocurrio).replace(/\.$/, "") + "."
                     + (llena ? " Ya están en las casillas: revísalos con el reloj y toca «Guardar»." : nuevaTx ? "" : " Ya está anotado.") }),
-                llena ? null : el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "lt-tx-llenar", onclick: () => { llenarConTx(ctlTx); pintarTiempos(); } }, "Llenar con la transmisión"))
+                el("p", { class: "text-sm", texto: "El reloj de quien tiene el turno sigue corriendo desde esa hora: si ya lleva un rato pensando, «Llenar con los relojes de ahora» le descuenta ese rato y marca la hora de este momento." }),
+                el("div", { class: "cam-acciones" },
+                    llena ? null : el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "lt-tx-llenar", onclick: () => llenarYPintar(ctlTx) }, "Llenar con la transmisión"),
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", id: "lt-tx-ahora", onclick: () => llenarYPintar(ctlTx, true) }, "Llenar con los relojes de ahora")))
             : VIVO && VIVO.conectada() ? el("p", { class: "text-sm cam-tx-no", id: "lt-tx-no", texto: "📡 " + (VIVO.noReconoce(lecturaMesa) || "Esta mesa no está en la transmisión.") + " Anótalo a mano, como siempre." }) : null;
         const botonTodas = conTx ? el("button", { type: "button", id: "lt-tx-todas", class: "cam-btn cam-btn-claro", title: "Anota en la bitácora los relojes de la transmisión de todas tus mesas sin terminar", onclick: anotarTodasTx }, "Anotar todas desde la transmisión (" + conTx + ")") : null;
         const ult = lecturas(lecturaMesa).slice(0, 1);
@@ -847,9 +874,19 @@
                 el("button", { type: "button", id: "lt-apagado", class: "cam-btn cam-btn-claro", "data-accion": "reloj-apagado", title: "Calcula cuánto le toca a cada uno con el último control de esta mesa", onclick: () => { leerBorrador(); modoApagado = true; apagado = {}; pintarTiempos(); } }, "El reloj se apagó"),
                 botonTodas),
             ult.length ? el("ul", { class: "text-sm mt-2", id: "lt-ultimas", "aria-label": "Lo último anotado en la mesa " + lecturaMesa },
-                ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") }))) : null));
+                ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") })),
+                ...ult.map((x) => { const t = corriendoAhora(x); return t ? el("li", { id: "lt-corriendo", texto: t }) : null; })) : null));
     }
 
+    // Lo anotado es del momento en que se anotó: el reloj de quien tenía el turno siguió corriendo. Si pasó un rato, se dice cuánto le
+    // quedaría hoy SI NADIE HA MOVIDO (el árbitro lo comprueba con el reloj; no se anota solo). El turno sale de las jugadas.
+    function corriendoAhora(x) {
+        if (x.j_blancas == null || x.j_negras == null || x.t_blancas == null || x.t_negras == null) return null;
+        const pasaron = Math.round((Date.now() - new Date(x.ocurrio).getTime()) / 1000);
+        if (pasaron < 30 || pasaron > 3 * 3600) return null;
+        const color = x.j_blancas === x.j_negras ? "blancas" : "negras";
+        return "Desde esa hora pasaron " + C.tiempoEnPalabras(pasaron) + ": si nadie ha movido, a las " + color + " (les toca) les quedan ahora " + C.formatoTiempo(Math.max(0, (color === "blancas" ? x.t_blancas : x.t_negras) - pasaron)) + ".";
+    }
     const textoHoraExacta = (iso) => hora(iso, { hour: "numeric", minute: "2-digit", second: "2-digit" });
     // Toca el botón y queda anotada la hora de ESE momento (la del aparato, en hora de Costa Rica al mostrarla).
     function marcarHora() {
@@ -874,7 +911,8 @@
             if (txLlenado && txLlenado.mesa === mesa) {
                 const c = txLlenado.c;
                 cuerpo.turno = c.turno;
-                cuerpo.nota = notaTx(c, !(tB === c.t_blancas && tN === c.t_negras && jB === c.j_blancas && jN === c.j_negras && horaMarcada === c.ocurrio));
+                const v = txLlenado.v || c;
+                cuerpo.nota = notaTx(c, !(tB === v.t_blancas && tN === v.t_negras && jB === v.j_blancas && jN === v.j_negras && horaMarcada === v.ocurrio), txLlenado.alAhora);
             }
             const r = await escribir("tiempo", cuerpo, "Control de tiempos de la mesa " + mesa, { mesa });
             const d = r.encolado ? { id: r.id, ocurrio: horaMarcada || new Date().toISOString(), jugada: Math.max(1, jB, jN) } : r.d;
@@ -920,11 +958,21 @@
     // Ya anotado: un control de esa mesa de esa hora o después (de la base), o lo que esta tablet ya anotó de la transmisión.
     const anotadosTx = new Set();
     const yaAnotado = (mesa, c) => anotadosTx.has(mesa + "|" + c.ocurrio) || lecturas(mesa).some((x) => String(x.ocurrio) >= c.ocurrio);
-    const notaTx = (c, corregido) => ("Tomado de la transmisión sin atraso (" + (c.fuente === "livechess" ? "LiveChess" : "Lichess") + "): los relojes después de la jugada " + c.jugada + (corregido ? "; corregido a mano por el árbitro" : "")).slice(0, 300);
-    function llenarConTx(c) {
-        borrador = { tb: C.formatoTiempo(c.t_blancas), jb: String(c.j_blancas), tn: C.formatoTiempo(c.t_negras), jn: String(c.j_negras) };
-        horaMarcada = c.ocurrio;
-        txLlenado = { mesa: lecturaMesa, c };
+    const notaTx = (c, corregido, alAhora) => ("Tomado de la transmisión sin atraso (" + (c.fuente === "livechess" ? "LiveChess" : "Lichess") + "): los relojes después de la jugada " + c.jugada
+        + (alAhora ? " (a las " + hora(c.ocurrio, { hour: "numeric", minute: "2-digit", second: "2-digit" }) + "), con el reloj de las " + (c.turno === "negras" ? "negras" : "blancas") + " (le tocaba) descontado hasta la hora del control" : "") + (corregido ? "; corregido a mano por el árbitro" : "")).slice(0, 300);
+    // `alAhora`: el reloj de quien tiene el turno sigue corriendo desde la hora de la lectura; se le descuenta lo que pasó hasta este
+    // momento y el control queda con la hora de ahora (nadie ha movido: la transmisión lo habría traído).
+    function llenarConTx(c, alAhora) {
+        const v = { t_blancas: c.t_blancas, t_negras: c.t_negras, j_blancas: c.j_blancas, j_negras: c.j_negras, ocurrio: c.ocurrio };
+        if (alAhora) {
+            const ahora = Date.now(), pasaron = Math.max(0, Math.round((ahora - new Date(c.ocurrio).getTime()) / 1000));
+            const campo = c.turno === "negras" ? "t_negras" : "t_blancas";
+            v[campo] = Math.max(0, v[campo] - pasaron);
+            v.ocurrio = new Date(ahora).toISOString();
+        }
+        borrador = { tb: C.formatoTiempo(v.t_blancas), jb: String(v.j_blancas), tn: C.formatoTiempo(v.t_negras), jn: String(v.j_negras) };
+        horaMarcada = v.ocurrio;
+        txLlenado = { mesa: lecturaMesa, c, v, alAhora: !!alAhora };
     }
 
     // «Anotar todas desde la transmisión»: un control de cada mesa sin terminar que la transmisión reconoce, cada uno
@@ -1165,7 +1213,7 @@
             else if (f.tipo === "ilegal" || f.tipo === "irregularidad") detalle = f.jugador + " (" + (f.color === "negras" ? "negras" : "blancas") + ")" + (f.texto ? ": " + f.texto : "");
             else detalle = f.texto;
             filas.append(el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
-                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
+                el("td", { texto: hora(f.ocurrio) }), el("td", { texto: String(f.mesa) }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : nombre[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle })));
         }
     }
 
