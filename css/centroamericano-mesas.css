@@ -726,13 +726,41 @@ body.cam-guia-abierta { overflow: hidden; }
 /* La mesa elegida para Fair Play en la tablet del árbitro: un borde dorado que brilla poquito (y lo dice escrito,
  * en la banda de arriba). Sin efecto o ya revisada, el borde queda quieto. */
 .cam-mesa[data-fair-play] { border: 3px solid #b8860b; }
-.cam-mesa[data-fair-play="aprobada"] { animation: cam-fp-brillo 2.6s ease-in-out infinite; }
+/* Aprobada: el borde dorado SE MUEVE (un brillo que da la vuelta) donde está quien se revisa: la mesa entera si
+ * aplican los dos; si solo uno, únicamente su bloque (y la mesa queda con el borde de siempre). Con el resultado, en
+ * el ganador. Lo decide CentroamericanoMesas.fairPlayAlcance(). */
+.cam-mesa[data-fp-alcance="blancas"], .cam-mesa[data-fp-alcance="negras"] { border: 2px solid #dfe0f7; }
+.dark .cam-mesa[data-fp-alcance="blancas"], .dark .cam-mesa[data-fp-alcance="negras"] { border-color: rgb(255 255 255 / 0.14); }
+.cam-mesa[data-fp-alcance="mesa"], .cam-jugador[data-fair-play="si"] { position: relative; animation: cam-fp-brillo 2.6s ease-in-out infinite; }
+.cam-jugador[data-fair-play="si"] { border-radius: 0.9rem; margin: 0.25rem; }
+.cam-mesa[data-fp-alcance="mesa"]::before, .cam-jugador[data-fair-play="si"]::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 4px; pointer-events: none; z-index: 1;
+  background: conic-gradient(from var(--cam-fp-giro, 0deg), #b8860b, #ffe08a, #b8860b 30%, #8a6508 50%, #b8860b 70%, #ffe08a, #b8860b);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: cam-fp-giro 3s linear infinite;
+}
+@property --cam-fp-giro { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes cam-fp-giro { to { --cam-fp-giro: 360deg; } }
 @keyframes cam-fp-brillo {
   0%, 100% { box-shadow: 0 0 0 2px rgb(212 160 23 / 0.25), 0 0 8px rgb(212 160 23 / 0.35); }
   50% { box-shadow: 0 0 0 3px rgb(212 160 23 / 0.45), 0 0 18px rgb(212 160 23 / 0.7); }
 }
-@media (prefers-reduced-motion: reduce) { .cam-mesa[data-fair-play="aprobada"] { animation: none; box-shadow: 0 0 0 3px rgb(212 160 23 / 0.45); } }
+@media (prefers-reduced-motion: reduce) {
+  .cam-mesa[data-fp-alcance="mesa"], .cam-jugador[data-fair-play="si"] { animation: none; box-shadow: 0 0 0 3px rgb(212 160 23 / 0.45); }
+  .cam-mesa[data-fp-alcance="mesa"]::before, .cam-jugador[data-fair-play="si"]::before { animation: none; }
+}
+.cam-fp-banda .cam-fp-retener { margin-top: 0.45rem; background: #6b4e00; border-color: #6b4e00; color: #fff; }
+.cam-fp-banda .cam-fp-retener:hover:not(:disabled) { background: #4a3500; border-color: #4a3500; }
+.cam-fp-retenido { margin-top: 0.35rem; font-weight: 700; }
 .cam-fp-banda { background: #fdf3d7; color: #4a3500; border: 1px solid #b8860b; border-radius: 0.6rem; padding: 0.45rem 0.7rem; font-weight: 700; font-size: 0.92rem; margin: 0.4rem 0; }
 .cam-fp-banda[data-tipo="no-aplica"] { background: #f1f1f4; color: #33343d; border-color: #6b6e7d; }
 .dark .cam-fp-banda { background: #3a2c05; color: #ffe8a3; }
 .dark .cam-fp-banda[data-tipo="no-aplica"] { background: #2b2d38; color: #e4e5ec; }
+/* Las novedades del encargado de Fair Play (vibran; sin sonido) y el acumulado de las alertas. */
+.cam-fp-novedades { border: 2px solid #b8860b; border-radius: 0.9rem; padding: 0.7rem 0.9rem; background: #fdf3d7; color: #4a3500; margin-bottom: 0.6rem; }
+.dark .cam-fp-novedades { background: #3a2c05; color: #ffe8a3; }
+.cam-fp-novedades .cam-fp-barra { margin-bottom: 0.3rem; }
+.cam-fp-novedades-lista { display: grid; gap: 0.3rem; font-size: 0.95rem; }
+.cam-fp-novedades-lista li[data-fuerte="si"] { font-weight: 700; }
+.cam-fp-subtitulo { font-weight: 700; margin-top: 0.8rem; }

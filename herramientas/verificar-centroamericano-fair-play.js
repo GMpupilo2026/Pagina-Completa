@@ -14,8 +14,13 @@
      con su peso y quién no aplica, sortea (pregunta antes, con la ronda de cada categoría), aprueba, descarta con
      motivo, anota la revisión eligiendo a quién; NO ve la sección de los QR ni lee tablas directo (todo por la función);
    - el principal ve lo mismo y además crea y apaga los QR de los encargados;
-   - la tablet del árbitro marca la mesa elegida con un borde dorado que brilla y una banda que dice a quién retener;
-     al elegir el resultado, si gana quien no aplica, la banda dice que no aplica y la mesa queda sin efecto;
+   - la tablet del árbitro marca con un borde dorado que se mueve la mesa entera si aplican los dos, o solo el bloque
+     del jugador que aplica (y con el resultado, el del ganador), con una banda que dice a quién retener; al elegir el
+     resultado, si gana quien no aplica, la banda dice que no aplica; con el resultado guardado, «Ya retuve a …»
+     avisa a Fair Play (CentroamericanoMesas.fairPlayAlcance() decide dónde va el borde);
+   - el encargado ve las NOVEDADES (el resultado que dice a quién revisar, el árbitro que lo retuvo, la alerta nueva),
+     que vibran y suben al título de la pestaña; el ACUMULADO de cada jugador sumando sus partidas, con «Ya lo miré»
+     y «Seguirlo»; la fila dice si su árbitro ya lo retuvo; y baja el INFORME de Fair Play del torneo en PDF;
    - a 820 px no se desplaza a lo ancho y el texto da 4,5 o más, en claro y en oscuro.
 
    Ver «El sorteo de Fair Play» en docs/decisiones/juegos-y-torneos.md.
@@ -84,6 +89,12 @@ function pruebasDelCalculo() {
     igual("en tablas se retiene al color sorteado; si nadie jugó, sin efecto; ya revisada, solo lo dice", [t("2").tipo, /Cinco, Eva/.test(t("2").texto), t("6").tipo, C.fairPlayDeMesa(Object.assign({}, fp, { estado: "revisada" }), m).tipo], ["retener", true, "no-aplica", "revisada"]);
     igual("con el resultado ya en chess-results (sin elegir otro) dice lo mismo, sin «con este resultado»", [t(undefined, Object.assign({}, m, { valor: "3" })).tipo, /con este resultado/.test(t(undefined, Object.assign({}, m, { valor: "3" })).texto)], ["no-aplica", false]);
     igual("una mesa que no es de Fair Play no lleva banda", C.fairPlayDeMesa(undefined, m, "1"), null);
+
+    console.log("\n=== Dónde va el borde dorado que se mueve (fairPlayAlcance) ===");
+    const al = (x) => C.fairPlayAlcance(Object.assign({ estado: "aprobada", aplica_blancas: true, aplica_negras: true, revisar_color: null }, x));
+    igual("aplican los dos: la mesa entera; solo blancas o solo negras: ese jugador", [al({}), al({ aplica_negras: false }), al({ aplica_blancas: false })], ["mesa", "blancas", "negras"]);
+    igual("con el resultado guardado, el ganador que se revisa (aunque aplicaran los dos)", [al({ revisar_color: "negras" }), al({ revisar_color: "blancas", aplica_negras: false })], ["negras", "blancas"]);
+    igual("sorteada, revisada o sin efecto: no se mueve; sin Fair Play, nada", [al({ estado: "sorteada" }), al({ estado: "revisada" }), al({ estado: "sin_efecto", revisar_color: "blancas" }), C.fairPlayAlcance(null)], [null, null, null, null]);
 }
 
 // ---------------------------------------------------------------- 2. el doble de la Edge Function
@@ -101,18 +112,19 @@ const SERVIDOR_FP = `
       "900": [] },
     sorteos: [],
     alertas: [{ tnr: "100", ronda: 2, mesa: 4, color: "negras", jugador: "Castro, Alana", elo: 1588, rival: "Ruiz, Mia", rival_elo: 1810, resultado: "0-1", jugadas: 36, precision: 97.13, acpl: 7.7, esperada: 87.5, z: 2.6, nivel: "alta", partida_url: "https://lichess.org/broadcast/x/y/z", estado: "nueva", nota: null, vista_por_nombre: null, vista_en: null }],
-    avisos: [] };
+    avisos: [],
+    acumulado: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, partidas: 3, rondas: "1, 2, 3", precision_media: 91.2, esperada_media: 84, z: 2.31, nivel: "a_mirar", sin_mirar: 2, seguir: false }] };
   let n = 0;
   window.__fpServidor = (b, conSesion) => {
     const S = window.__fp; S.llamadas.push(JSON.parse(JSON.stringify(b)));
     const err = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
     const ok = (d) => ({ data: Object.assign({ ok: true }, d), error: null });
-    if (b.action === "mesas_arbitro") return ok({ mesas: S.sorteos.filter((f) => f.estado !== "sorteada" && f.estado !== "descartada").map((f) => ({ mesa: f.mesa, estado: f.estado, color_si_tablas: f.color_si_tablas, aplica_blancas: f.aplica_blancas, aplica_negras: f.aplica_negras, no_aplica: f.no_aplica, revisar_color: f.revisar_color || null })) });
+    if (b.action === "mesas_arbitro") return ok({ mesas: S.sorteos.filter((f) => f.estado !== "sorteada" && f.estado !== "descartada").map((f) => ({ mesa: f.mesa, estado: f.estado, color_si_tablas: f.color_si_tablas, aplica_blancas: f.aplica_blancas, aplica_negras: f.aplica_negras, no_aplica: f.no_aplica, revisar_color: f.revisar_color || null, retenido_en: f.retenido_en || null })) });
     let quien;
     if (b.token) { const e = S.enlaces.find((x) => x.token === b.token); if (!e) return err(404, "Este enlace no es válido. Pídele al árbitro principal que te mande el QR de nuevo."); if (e.revocada) return err(410, "El árbitro principal apagó este enlace."); quien = e.nombre + " (Fair Play)"; }
     else if (conSesion) quien = "Oscar Principal"; else return err(401, "Falta el enlace de Fair Play.");
     const rondas = S.rondas.filter((r) => !b.token || !r.prueba);
-    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, rondas, sorteos: S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)), alertas: S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"), leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
+    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, rondas, sorteos: JSON.parse(JSON.stringify(S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)))), alertas: JSON.parse(JSON.stringify(S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"))), acumulado: JSON.parse(JSON.stringify(S.acumulado)), leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
     if (b.action === "candidatas") return ok({ mesas: (S.mesas[b.tnr] || []).map((m) => Object.assign({}, m, { excluida: m.excluida || (S.sorteos.some((f) => f.tnr === b.tnr && f.ronda === b.ronda && f.mesa === m.mesa) ? "Ya salió en esta ronda" : null) })) });
     if (b.action === "sortear") {
       const salen = [];
@@ -137,6 +149,7 @@ const SERVIDOR_FP = `
       Object.assign(f, { estado: "revisada", resultado: b.resultado, jugador_color: b.color, jugador: b.color === "negras" ? f.negras : f.blancas, nota: b.nota || null, revisada_por_nombre: quien }); return ok({ sorteo: f });
     }
     if (b.action === "alerta") { const a = S.alertas.find((x) => x.tnr === b.tnr && x.ronda === b.ronda && x.mesa === b.mesa && x.color === b.color); Object.assign(a, { estado: b.estado, nota: b.nota, vista_por_nombre: quien, vista_en: new Date().toISOString() }); return ok({ alerta: a }); }
+    if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
     if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
     if (b.action === "manual") {
@@ -232,16 +245,25 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         igual("las categorías con su ronda, sin las de ensayo", await p.$$eval("#fp-categoria option", (l) => l.map((o) => o.textContent)), ["Todas las categorías (2)", "Sub-12 Absoluto — ronda 3", "Sub-14 Femenino — ronda 3"]);
         igual("el encargado NO ve la sección de los QR de los encargados y no lee ninguna tabla directo: todo pasa por la función", await p.evaluate(() => [!!document.getElementById("fp-t-encargados"), window.__directo]), [false, []]);
         igual("la pantalla no tiene texto suelto («null») de una sección que no va", await p.evaluate(() => [...document.getElementById("fp-app").childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).length), 0);
-        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, la partida en Lichess y sus dos botones", await p.$eval(".cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), /Precisión 97,1 % en 36 jugadas · la esperable para su Elo: 87,5 % · 2,6 desviaciones arriba/.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
+        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, la partida en Lichess y sus dos botones", await p.$eval("#fp-alertas .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), /Precisión 97,1 % en 36 jugadas · la esperable para su Elo: 87,5 % · 2,6 desviaciones arriba/.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
             ["alta", "Muy alta", true, true, true, ["Ya la miré", "Seguirlo en los sorteos"]]);
-        igual("el contador de alertas nuevas", await p.evaluate(() => [document.getElementById("fp-alertas-n").checkVisibility(), document.getElementById("fp-alertas-n").textContent]), [true, "1"]);
-        await p.click('.cam-fp-alerta [data-accion="seguir"]');
+        igual("el contador de alertas sin mirar (la de la partida y el acumulado)", await p.evaluate(() => [document.getElementById("fp-alertas-n").checkVisibility(), document.getElementById("fp-alertas-n").textContent]), [true, "2"]);
+        igual("al abrir no hay novedades: solo lo que pasa después", await p.evaluate(() => document.getElementById("fp-novedades-caja").checkVisibility()), false);
+        await p.click('#fp-alertas .cam-fp-alerta [data-accion="seguir"]');
         await p.waitForSelector("dialog[open] input, dialog[open] textarea");
         await p.fill("dialog[open] input, dialog[open] textarea", "Muy rápida en el medio juego");
         await p.click("dialog[open] [data-avisos-aceptar]");
-        await p.waitForFunction(() => document.querySelector(".cam-fp-alerta").dataset.estado === "seguir");
-        igual("«Seguirlo en los sorteos» llega a la función con la nota, y queda con quién y cuándo", await p.evaluate(() => [window.__fp.llamadas.filter((l) => l.action === "alerta").map((l) => [l.estado, l.nota, l.token.length]), /En seguimiento por Laura Mora \(Fair Play\) a las .*: Muy rápida en el medio juego/.test(document.querySelector(".cam-fp-alerta").textContent), document.getElementById("fp-alertas-n").hidden]),
-            [[["seguir", "Muy rápida en el medio juego", 64]], true, true]);
+        await p.waitForFunction(() => document.querySelector("#fp-alertas .cam-fp-alerta").dataset.estado === "seguir");
+        igual("«Seguirlo en los sorteos» llega a la función con la nota, y queda con quién y cuándo", await p.evaluate(() => [window.__fp.llamadas.filter((l) => l.action === "alerta").map((l) => [l.estado, l.nota, l.token.length]), /En seguimiento por Laura Mora \(Fair Play\) a las .*: Muy rápida en el medio juego/.test(document.querySelector("#fp-alertas .cam-fp-alerta").textContent), document.getElementById("fp-alertas-n").textContent]),
+            [[["seguir", "Muy rápida en el medio juego", 64]], true, "1"]);
+        igual("el acumulado: sumadas sus 3 partidas, precisión media contra la esperable, las desviaciones juntas y cuántas faltan por mirar", await p.$eval("#fp-acumulado .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Pérez, Luis \(1500\) · Sub-12 Absoluto/.test(a.textContent), /3 partidas medidas \(rondas 1, 2, 3\) · precisión media 91,2 %, la esperable para su Elo: 84,0 % · juntas, 2,3 desviaciones arriba/.test(a.textContent), /2 partidas sin mirar/.test(a.textContent), [...a.querySelectorAll("button")].map((b) => b.textContent), document.getElementById("fp-t-acumulado").checkVisibility()]),
+            ["a_mirar", "A mirar", true, true, true, ["Ya lo miré", "Seguirlo en los sorteos"], true]);
+        await p.click('#fp-acumulado [data-accion="acumulado-vista"]');
+        await p.waitForSelector("dialog[open] input, dialog[open] textarea");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => /Ya se miraron todas sus partidas/.test(document.getElementById("fp-acumulado").textContent));
+        igual("«Ya lo miré» en el acumulado marca todas sus partidas (por su nombre normalizado) y apaga el contador", await p.evaluate(() => [window.__fp.llamadas.filter((l) => l.action === "acumulado").map((l) => [l.tnr, l.clave, l.estado, l.token.length]), document.getElementById("fp-alertas-n").hidden]),
+            [[["100", "perez luis", "vista", 64]], true]);
 
         await p.click("#fp-ver-mesas");
         await p.waitForFunction(() => document.querySelectorAll("#fp-mesas tr").length === 3);
@@ -269,6 +291,19 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction((s) => document.querySelector(s).dataset.estado === "aprobada", fila(2));
         igual("aprobada: le llegó el aviso a su árbitro y la fila dice que todavía no lo lee", await p.$eval(fila(2), (tr) => tr.children[5].textContent), "Aprobada: avisado su árbitro⏳ Ana Árbitra todavía no lo ha leído");
+        // Su árbitro guarda el resultado (gana Cinco, Eva): una novedad que vibra fuerte y sube al título.
+        await p.evaluate(() => { window.__vibra = []; navigator.vibrate = (x) => { window.__vibra.push(x); return true; };
+            const f = window.__fp.sorteos.find((x) => x.mesa === 2); Object.assign(f, { revisar_color: "blancas", resultado_mesa: "1-0" }); window.__fp.avisos.find((a) => a.id === f.aviso_id).leido_en = new Date().toISOString(); window.CentroamericanoFairPlay.cargar(); });
+        await p.waitForFunction(() => document.getElementById("fp-novedades-caja").checkVisibility());
+        igual("novedades: el resultado que dice a quién ir a revisar y que su árbitro leyó el aviso; vibra fuerte y el título lleva cuántas", await p.evaluate(() => [[...document.querySelectorAll("#fp-novedades li")].map((li) => [li.textContent.replace(/^.*? · /, ""), li.dataset.fuerte || ""]), window.__vibra.length, window.__vibra[0].length, document.title.startsWith("(2) ")]),
+            [[["🛡 Sub-12 Absoluto, ronda 3, mesa 2: terminó (1-0). Ve a revisar a Cinco, Eva.", "si"], ["✓ Ana Árbitra leyó el aviso de la Sub-12 Absoluto, ronda 3, mesa 2.", ""]], 1, 5, true]);
+        igual("y la fila dice que falta que su árbitro confirme que lo retuvo", await p.$eval(fila(2), (tr) => /⏳ Terminó: falta que su árbitro confirme que lo retuvo/.test(tr.children[5].textContent)), true);
+        await p.evaluate(() => { Object.assign(window.__fp.sorteos.find((x) => x.mesa === 2), { retenido_en: new Date().toISOString(), retenido_por: "Ana Árbitra (árbitro de mesa)" }); window.CentroamericanoFairPlay.cargar(); });
+        await p.waitForFunction(() => document.querySelectorAll("#fp-novedades li").length === 3);
+        igual("cuando su árbitro toca «Ya lo retuve»: la novedad arriba y la fila con la hora y quién", await p.evaluate(() => [document.querySelector("#fp-novedades li").textContent.replace(/^.*? · /, ""), /✋ Retenido a las .* \(Ana Árbitra \(árbitro de mesa\)\)/.test(document.querySelector('#fp-lista tr[data-estado="aprobada"]').children[5].textContent)]),
+            ["✋ Ana Árbitra (árbitro de mesa) ya retuvo a Cinco, Eva (Sub-12 Absoluto, ronda 3, mesa 2).", true]);
+        await p.click("#fp-novedades-listo");
+        igual("«Ya las vi» las quita, y el título vuelve a ser el de antes", await p.evaluate(() => [document.getElementById("fp-novedades-caja").checkVisibility(), document.title.startsWith("(")]), [false, false]);
         await p.click(fila(1) + ' [data-accion="descartar"]');
         await p.waitForSelector("dialog[open] input, dialog[open] textarea");
         await p.click("dialog[open] [data-avisos-aceptar]");
@@ -333,6 +368,10 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const [bajada] = await Promise.all([p.waitForEvent("download"), p.click("#fp-pdf")]);
         const bytes = fs.readFileSync(await bajada.path()).toString("latin1");
         igual("el registro en PDF, con la marca de agua", [bajada.suggestedFilename(), bytes.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytes)], ["fair-play-centroamericano-2026.pdf", true, true]);
+        const [informe] = await Promise.all([p.waitForEvent("download"), p.click("#fp-informe")]);
+        const ib = fs.readFileSync(await informe.path()).toString("latin1");
+        igual("el informe de Fair Play del torneo en PDF: con la marca de agua, el resumen, las revisiones, el acumulado y las alertas", [informe.suggestedFilename(), ib.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(ib), ...["Resumen", "Por categor", "Las revisiones", "Tenia un papel|Ten\\355a un papel|Ten.a un papel", "P.rez, Luis", "Castro, Alana"].map((x) => new RegExp(x).test(ib))],
+            ["informe-fair-play-centroamericano-2026.pdf", true, true, true, true, true, true, true, true]);
         igual("a 820 px no se desplaza a lo ancho, y sin errores en la página", await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth).then((x) => [x, e.errores]), [true, []]);
         igual("en claro, todo el texto da 4,5 o más", await p.evaluate(CONTRASTE, TEXTO_PANEL), []);
         await e.ctx.close();
@@ -371,14 +410,37 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await t.p.click("#actualizar");
         await t.p.waitForSelector('.cam-mesa[data-fair-play="aprobada"]', { timeout: 30000 });
         const mesa2 = '.cam-mesa[data-mesa="2"]';
-        igual("solo su mesa elegida lleva el borde dorado que brilla (y la banda lo dice escrito)", await t.p.evaluate((s) => { const a = document.querySelector(s); const cs = getComputedStyle(a);
-            return [document.querySelectorAll(".cam-mesa[data-fair-play]").length, cs.borderTopColor, cs.animationName, a.querySelector(".cam-fp-banda").checkVisibility(), /retén al GANADOR/.test(a.querySelector(".cam-fp-banda").textContent), a.getAttribute("aria-label")]; }, mesa2),
-            [1, "rgb(184, 134, 11)", "cam-fp-brillo", true, true, "Mesa 2, elegida para Fair Play"]);
+        // Dónde se mueve el borde: [la mesa, el bloque de blancas, el de negras] → [animación, animación del ::before].
+        const borde = () => t.p.evaluate((s) => { const a = document.querySelector(s);
+            const de = (n) => [getComputedStyle(n).animationName, getComputedStyle(n, "::before").animationName];
+            return [de(a), de(a.querySelector('.cam-jugador[data-color="blancas"]')), de(a.querySelector('.cam-jugador[data-color="negras"]')), a.getAttribute("aria-label")]; }, mesa2);
+        const QUIETO = ["none", "none"], MUEVE = ["cam-fp-brillo", "cam-fp-giro"];
+        igual("solo blancas aplica: el borde dorado se mueve SOLO en su bloque, no en la mesa ni en negras (y la banda lo dice escrito)", [await t.p.evaluate(() => document.querySelectorAll(".cam-mesa[data-fair-play]").length), ...(await borde()), await t.p.$eval(mesa2 + " .cam-fp-banda", (b) => b.checkVisibility() && /retén al GANADOR/.test(b.textContent))],
+            [1, QUIETO, MUEVE, QUIETO, "Mesa 2, elegida para Fair Play (blancas)", true]);
+        const cambiar = async (x, espera) => { await t.p.evaluate((x) => { Object.assign(window.__mesasFp[0], x); }, x); await t.p.click("#actualizar"); await t.p.waitForFunction(espera, null, { timeout: 30000 }); };
+        await cambiar({ aplica_blancas: false, aplica_negras: true }, () => document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"][data-fair-play="si"]'));
+        igual("solo negras aplica: solo su bloque", await borde(), [QUIETO, QUIETO, MUEVE, "Mesa 2, elegida para Fair Play (negras)"]);
+        await cambiar({ aplica_blancas: true, aplica_negras: true }, () => document.querySelector('.cam-mesa[data-mesa="2"]').dataset.fpAlcance === "mesa");
+        igual("aplican los dos: se mueve la ficha completa", await borde(), [MUEVE, QUIETO, QUIETO, "Mesa 2, elegida para Fair Play"]);
+        await t.p.emulateMedia({ reducedMotion: "reduce" });
+        igual("con «reducir movimiento», el borde dorado queda quieto (pero sigue)", await t.p.evaluate((s) => { const cs = getComputedStyle(document.querySelector(s)); return [cs.animationName, cs.boxShadow !== "none"]; }, mesa2), ["none", true]);
+        await t.p.emulateMedia({ reducedMotion: "no-preference" });
+        await cambiar({ aplica_blancas: true, aplica_negras: false }, () => document.querySelector('.cam-mesa[data-mesa="2"]').dataset.fpAlcance === "blancas");
         await t.p.selectOption("#res-2", "3");
         igual("al elegir que ganan negras (que no aplica), la banda lo dice: no aplica, la mesa queda sin efecto", await t.p.$eval(mesa2 + " .cam-fp-banda", (b) => [b.dataset.tipo, /NO APLICA \(se revisó en la ronda 1\)\. La mesa queda sin efecto/.test(b.textContent)]), ["no-aplica", true]);
         await t.p.selectOption("#res-2", "1");
         igual("y si ganan blancas: «retén a …»", await t.p.$eval(mesa2 + " .cam-fp-banda", (b) => [b.dataset.tipo, /retén a .* \(blancas\)/.test(b.textContent)]), ["retener", true]);
-        igual("la banda dorada da 4,5 o más", await t.p.evaluate(CONTRASTE, ".cam-fp-banda"), []);
+        // El resultado ya guardado: gana blancas, que aplica. «Ya retuve a …» avisa a Fair Play.
+        await t.p.evaluate(() => { window.__retener = []; const antes = window.sb.functions.invoke;
+            window.sb.functions.invoke = (f, o) => { if (f === "centroamericano-fair-play" && o.body.action === "retener") { window.__retener.push(o.body); window.__mesasFp[0].retenido_en = new Date().toISOString(); return Promise.resolve({ data: { ok: true, mesa: { mesa: 2, retenido_en: window.__mesasFp[0].retenido_en } }, error: null }); } return antes(f, o); }; });
+        await t.p.selectOption("#res-2", "");
+        await cambiar({ revisar_color: "blancas" }, () => document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="retener"]'));
+        igual("con el resultado guardado, el borde se mueve en el ganador y aparece «Ya retuve a …»", [(await borde())[1], await t.p.$eval(mesa2 + ' [data-accion="retener"]', (b) => b.textContent)], [MUEVE, "✋ Ya retuve a Harvey Ian"]);
+        await t.p.click(mesa2 + ' [data-accion="retener"]');
+        await t.p.waitForSelector(mesa2 + " .cam-fp-retenido");
+        igual("«Ya retuve» llega a la función con SU token, la ronda y la mesa, y la banda dice que ya avisó", await t.p.evaluate((s) => [window.__retener.map((b) => [b.arbitro_token.length, typeof b.ronda, b.mesa]), /✓ Avisaste a Fair Play que retuviste a .* \(.*\)\. Que no se vaya/.test(document.querySelector(s + " .cam-fp-retenido").textContent), !document.querySelector(s + ' [data-accion="retener"]')], mesa2),
+            [[[64, "number", 2]], true, true]);
+        igual("la banda dorada (y su botón) da 4,5 o más", await t.p.evaluate(CONTRASTE, ".cam-fp-banda p, .cam-fp-banda button"), []);
         igual("y sin errores en la tablet", t.errores, []);
         await t.ctx.close();
     } finally {
