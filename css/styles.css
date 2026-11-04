@@ -2855,3 +2855,23 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 @keyframes dgt-destello { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9); } 50% { box-shadow: 0 0 0 28px rgba(245, 158, 11, 0); } }
 .dgt-destello { animation: dgt-destello 0.8s ease-out 8; }
 @media (prefers-reduced-motion: reduce) { .dgt-destello { animation: none; } }
+
+/* Inscripción del Metropolitano 2026: el azul marino y la letra condensada de
+   sus bases (el logo del Estadio Nacional), sobre la letra del sitio. */
+.metro-titulo { font-size: 1.35rem; font-weight: 700; letter-spacing: .02em; color: #1d134d; font-stretch: condensed; }
+.dark .metro-titulo { color: #fff; }
+.metro-opcion { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem; border-radius: .75rem; border: 2px solid #c9cbe0; cursor: pointer; }
+.metro-opcion:hover, .metro-opcion:has(input:checked) { border-color: #1d134d; background: #f3f2fa; }
+.dark .metro-opcion { border-color: #334e68; }
+.dark .metro-opcion:hover, .dark .metro-opcion:has(input:checked) { border-color: #fff; background: #102a43; }
+.metro-opcion:has(input:disabled) { cursor: default; border-style: dashed; opacity: .75; }
+.metro-opcion:has(input:disabled):hover { border-color: #c9cbe0; background: transparent; }
+.metro-opcion:has(input:focus-visible) { outline: 2px solid #f0b429; outline-offset: 2px; }
+.metro-boton { border: 1px solid #1d134d; color: #1d134d; background: #fff; font-weight: 600; font-size: .875rem; padding: .55rem 1rem; border-radius: .5rem; }
+.metro-boton:hover { background: #f3f2fa; }
+.metro-boton:focus-visible, .metro-boton:focus-within { outline: 2px solid #f0b429; outline-offset: 2px; }
+.dark .metro-boton { background: transparent; color: #fff; border-color: #9fb3c8; }
+.dark .metro-boton:hover { background: #243b53; }
+.metro-persona { border: 2px solid #1d134d; border-radius: 1rem; overflow: hidden; }
+.dark .metro-persona { border-color: #486581; }
+.metro-persona > header { background: #1d134d; color: #fff; }

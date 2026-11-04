@@ -439,18 +439,7 @@
   }
 
   /* ===================== Crear los PDF ===================== */
-  async function fondoJpeg(diseno2, c) {
-    const M = D().medidas(diseno2);
-    const px = DPI / 25.4;
-    const lienzo = document.createElement("canvas");
-    lienzo.width = Math.round(M.W * px);
-    lienzo.height = Math.round(M.H * px);
-    const ctx = lienzo.getContext("2d");
-    ctx.setTransform(lienzo.width / M.W, 0, 0, lienzo.height / M.H, 0, 0);
-    c.fondo(ctx);
-    const blob = await new Promise((ok) => lienzo.toBlob(ok, "image/jpeg", 0.92));
-    return { jpeg: new Uint8Array(await blob.arrayBuffer()), anchoPx: lienzo.width, altoPx: lienzo.height };
-  }
+  const fondoJpeg = (diseno2, c) => D().fondoJpeg(diseno2, c, DPI);
 
   const nombreSeguro = (t) => String(t).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 80) || "sin grupo";
 
