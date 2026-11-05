@@ -8819,6 +8819,14 @@ transmiten**.
   nombres del encabezado: es para quien organiza y para revisar, **nunca para el repositorio**. Las
   palabras se guardan con la lectura en el navegador, compactas (`[texto, x0, y0, x1, y1]`, unos
   18 KB por foto); si no caben, se borran las lecturas guardadas de las otras fotos.
+- **«Failed to fetch» en una mesa que SÍ se transmite** (Sub-12, R4, M6; 5/11): la fila ya decía «Se
+  transmite: sale de Lichess» y al generar falló el pedido del PGN de la ronda. Desde aquí no se pudo
+  repetir: Lichess contesta 200 con `Access-Control-Allow-Origin: *`, también 40 veces seguidas. Ahora se
+  pide primero el PGN de **esa sola partida** (`/api/study/<ronda>/<partida>.pgn`: la ronda es un estudio y
+  cada partida un capítulo; trae el mismo bloque, con relojes y evaluación, en 5 KB contra 27 KB), si no
+  sale el de la ronda, cada uno dos veces, y si Lichess sigue sin contestar lo dice en palabras («Lichess
+  no contestó… vuelve a intentarlo en un minuto»), sin leer la foto. Lo prueba el verificador con un
+  Lichess que corta la conexión.
 - **La clave de Google Vision no estaba puesta** (4/11): el registro de `ocr-scoresheet` dice
   «GOOGLE_VISION_API_KEY no configurado» y las dos primeras lecturas terminaron en 504 a los 160 s.
   Supabase contesta eso sin el permiso de origen y el navegador solo ve «Failed to fetch»; ahora la

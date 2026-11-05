@@ -107,10 +107,32 @@
 
     // ------------------------------------------------------------------ leer
 
-    // La partida de la transmisión: el PGN de la ronda de Lichess, solo el bloque de esa partida (con sus relojes).
+    // La partida de la transmisión, con sus relojes: primero el PGN de esa sola partida (el mismo bloque, 5 KB contra
+    // los 27 KB de la ronda entera) y, si no sale, el de la ronda. En la organización salió «Failed to fetch» con el
+    // de la ronda (Sub-12 R4 M6, 5/11) justo después de que Lichess contestara si la mesa se transmitía; desde aquí
+    // no se pudo repetir (Lichess contesta 200 con «Access-Control-Allow-Origin: *»), así que la defensa es pedir
+    // menos, probar cada pedido dos veces y, si aun así no contesta, decirlo en palabras.
+    const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    async function conOtraVez(pedido) {
+        try { return await pedido(); } catch (e) { await esperar(1500); return pedido(); }
+    }
+    async function textoDeLaTransmision(f) {
+        const L = window.LichessTransmision;
+        const id = f.h.g && f.h.g.id;
+        let error = null;
+        if (id && L.pgnDePartida) {
+            try { return await conOtraVez(() => L.pgnDePartida(f.h.idRonda, id)); } catch (e) { error = e; }
+        }
+        try { return await conOtraVez(() => L.pgn(f.h.idRonda)); } catch (e) { error = e; }
+        if (/failed to fetch|networkerror|load failed/i.test(String(error && error.message))) {
+            throw new Error("Lichess no contestó (se cortó la conexión o está frenando por muchas consultas seguidas). Vuelve a intentarlo en un minuto.");
+        }
+        throw error;
+    }
+
     async function deLaTransmision(f) {
         const L = window.LichessTransmision, TX = window.CentroamericanoTransmisionReloj;
-        const texto = await L.pgn(f.h.idRonda);
+        const texto = await textoDeLaTransmision(f);
         const bloques = String(texto || "").replace(/\r/g, "").split(/\n\s*\n(?=\[)/).filter((b) => /\[\w+\s+"/.test(b));
         const id = f.h.g.id;
         const pl = f.h.g.players || [];

@@ -11,6 +11,8 @@
  *   /api/broadcast/round/<ronda>.pgn     el PGN de la ronda, con la evaluación
  *                                        de Lichess ([%eval]) y el reloj ([%clk])
  *                                        después de cada jugada
+ *   /api/study/<ronda>/<partida>.pgn     el PGN de UNA partida (la ronda es un
+ *                                        estudio y cada partida un capítulo)
  * Un evento con varias categorías es en Lichess un GRUPO de torneos, uno por
  * categoría («Open U15», «Girls U15»…): con el enlace de cualquiera de ellos
  * (o de una de sus rondas) se llega a todos. Ver «Las partidas en vivo, dentro
@@ -22,6 +24,7 @@
  *   LichessTransmision.rondaDeAhora(r)      → la ronda que se está jugando (o la última)
  *   LichessTransmision.partidas(idRonda)    → las partidas de la ronda, sin las jugadas
  *   LichessTransmision.pgn(idRonda)         → el PGN de la ronda, en texto
+ *   LichessTransmision.pgnDePartida(r, id)  → el PGN de una sola partida de la ronda
  *   LichessTransmision.leerPgn(texto, Chess)→ cada partida con sus jugadas y posiciones
  *   LichessTransmision.porcentaje(ev)       → cuánto de la barra es de las blancas
  *   LichessTransmision.apellido(nombre)     → solo el apellido («Apellidos, Nombre» → «Apellidos»)
@@ -110,6 +113,7 @@
   }
 
   const pgn = (idRonda) => pedir("/api/broadcast/round/" + idRonda + ".pgn", true);
+  const pgnDePartida = (idRonda, idPartida) => pedir("/api/study/" + idRonda + "/" + idPartida + ".pgn", true);
 
   // [%eval 0.15] → 0.15 peones para las blancas; [%eval #-3] → mate en 3 de
   // las negras, que se guarda como −97 (la misma cuenta que js/preparacion-motor.js:
@@ -276,7 +280,7 @@
     return out.sort((a, b) => b.valor - a.valor || a.mesa - b.mesa);
   }
 
-  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, leerPgn, porcentaje, evalDe, relojDe, resultadoDe, momentos, apellido };
+  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, pgnDePartida, leerPgn, porcentaje, evalDe, relojDe, resultadoDe, momentos, apellido };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.LichessTransmision = api;
 })(typeof window !== "undefined" ? window : globalThis);
