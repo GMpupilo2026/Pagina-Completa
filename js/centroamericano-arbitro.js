@@ -1913,20 +1913,26 @@
     // `conSancion`: la irregularidad pregunta además si hubo sanción de tiempo (art. 12.9). Va escrita al final del
     // texto con la forma de C.sancionTexto, y de ahí la lee el cálculo del reloj que se apaga.
     async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro, conSancion, detalle) {
-        const r = await Avisos.formulario({
-            titulo, texto, aceptar, peligro,
-            campos: [
-                { nombre: "tipo", etiqueta, tipo: "select", opciones: lista.map((t) => [t.id, t.texto]) },
-                conSancion ? { nombre: "sancion", etiqueta: "Sanción de tiempo (art. " + C.ARTICULO_SANCION + ")", tipo: "select", valor: "", opciones: C.SANCIONES_TIEMPO.map((x) => [x.id, x.texto]) } : null,
-                { nombre: "nota", etiqueta: "Detalle (opcional; obligatorio si eliges «Otra»)", tipo: "textarea", max: 500, valor: detalle ? String(detalle).slice(0, 500) : null },
-            ].filter(Boolean),
-        });
-        if (r === null) return null;
-        const t = C.textoTipo(lista, r.tipo, r.nota);
-        if (!t) { avisar("Cuenta qué pasó para anotar «Otra».", true); return null; }
-        const sancion = conSancion ? C.SANCIONES_TIEMPO.find((x) => x.id === r.sancion && x.segundos) : null;
-        if (sancion) { t.texto += C.sancionTexto(sancion.id); t.sancion = sancion; }
-        return t;
+        // «Otra» viene elegida (va primera en la lista): lo que escriba el árbitro queda tal cual, sin una frase de la lista que no eligió.
+        // Con «Otra» y sin escribir nada, el cuadro vuelve a abrirse con lo que ya tenía, en vez de cerrarse y perderlo.
+        let previo = { tipo: lista[0].id, sancion: "", nota: detalle ? String(detalle).slice(0, 500) : null };
+        for (;;) {
+            const r = await Avisos.formulario({
+                titulo, aceptar, peligro,
+                texto: previo.falta ? "Escribe qué pasó: con «Otra» es obligatorio. " + texto : texto,
+                campos: [
+                    { nombre: "tipo", etiqueta, tipo: "select", valor: previo.tipo, opciones: lista.map((t) => [t.id, t.texto]) },
+                    conSancion ? { nombre: "sancion", etiqueta: "Sanción de tiempo (art. " + C.ARTICULO_SANCION + ")", tipo: "select", valor: previo.sancion, opciones: C.SANCIONES_TIEMPO.map((x) => [x.id, x.texto]) } : null,
+                    { nombre: "nota", etiqueta: "Qué pasó (obligatorio con «Otra»; opcional si eliges uno de la lista)", tipo: "textarea", max: 500, valor: previo.nota },
+                ].filter(Boolean),
+            });
+            if (r === null) return null;
+            const t = C.textoTipo(lista, r.tipo, r.nota);
+            if (!t) { previo = { tipo: r.tipo, sancion: r.sancion || "", nota: r.nota || null, falta: true }; continue; }
+            const sancion = conSancion ? C.SANCIONES_TIEMPO.find((x) => x.id === r.sancion && x.segundos) : null;
+            if (sancion) { t.texto += C.sancionTexto(sancion.id); t.sancion = sancion; }
+            return t;
+        }
     }
 
     // `detalle`: lo que dijo la transmisión, cuando se anota desde su aviso (queda en la bitácora). Devuelve true si se anotó.

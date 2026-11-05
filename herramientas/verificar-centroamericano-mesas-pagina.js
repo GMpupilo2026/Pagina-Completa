@@ -256,7 +256,7 @@ const CONTRASTE = `(sel) => {
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
     await p.click(acc(2, "blancas", "ilegal"));
     await p.waitForSelector("dialog[open] select");
-    igual("al tocar «Ilegal» sale la lista de tipos (con «Otra») y dice que es la primera: dos minutos al rival", await p.evaluate(() => { const d = document.querySelector("dialog[open]"); return [[...d.querySelectorAll("option")].map((o) => o.textContent).slice(0, 2), d.querySelectorAll("option").length, d.textContent.includes("2 minutos más a su rival")]; }), [["Movió una pieza como esa pieza no puede moverse", "Dejó o puso su propio rey en jaque"], 8, true]);
+    igual("al tocar «Ilegal» sale la lista de tipos (con «Otra») y dice que es la primera: dos minutos al rival", await p.evaluate(() => { const d = document.querySelector("dialog[open]"); return [[...d.querySelectorAll("option")].map((o) => o.textContent).slice(0, 2), d.querySelectorAll("option").length, d.textContent.includes("2 minutos más a su rival")]; }), [["Otra (escribir qué pasó)", "Movió una pieza como esa pieza no puede moverse"], 8, true]);
     await p.selectOption("dialog[open] select", "enroque");
     await p.click("dialog[open] [data-avisos-aceptar]");
     await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
@@ -304,8 +304,11 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las irregularidades ===");
     await p.click(acc(1, "negras", "irregularidad"));
     await p.waitForSelector("dialog[open] select");
-    igual("«Irregularidad» ofrece una lista para elegir, con «Otra»", await p.$eval("dialog[open] select", (s) => { const l = [...s.options]; return [l.length, l[0].textContent, l[l.length - 1].textContent]; }), [10, "Tocó una pieza y no la movió (pieza tocada)", "Otra (escribir qué pasó)"]);
+    igual("«Irregularidad» ofrece una lista para elegir, con «Otra» primero y ya elegida", await p.$eval("dialog[open] select", (s) => { const l = [...s.options]; return [l.length, l[0].textContent, l[1].textContent, s.value]; }), [10, "Otra (escribir qué pasó)", "Tocó una pieza y no la movió (pieza tocada)", "otra"]);
     igual("y pregunta la sanción de tiempo (art. 12.9), que sale «Sin sanción» si no se toca", await p.$$eval("dialog[open] select", (l) => l.length === 2 ? [l[1].value, l[1].options.length, l[1].options[0].textContent] : null), ["", 5, "Sin sanción de tiempo"]);
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => /con «Otra» es obligatorio/.test((document.querySelector("dialog[open]") || {}).textContent || ""));
+    igual("«Otra» sin escribir qué pasó no anota nada: el cuadro vuelve a abrirse pidiéndolo, con «Otra» todavía elegida", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.tipo === "irregularidad").length, document.querySelector("dialog[open] select").value]), [0, "otra"]);
     await p.selectOption("dialog[open] select", "toque");
     await p.fill("dialog[open] textarea", "Tocó una pieza sin avisar");
     await p.click("dialog[open] [data-avisos-aceptar]");
@@ -915,6 +918,7 @@ const CONTRASTE = `(sel) => {
     await o.p.waitForSelector('.cam-mesa[data-mesa="1"] .cam-guardado');
     await o.p.click(acc(2, "negras", "ilegal"));
     await o.p.waitForSelector("dialog[open] select");
+    await o.p.selectOption("dialog[open] select", "enroque");
     await o.p.click("dialog[open] [data-avisos-aceptar]");
     await o.p.waitForSelector("dialog[open] [data-avisos-aceptar]");
     await o.p.click("dialog[open] [data-avisos-aceptar]");

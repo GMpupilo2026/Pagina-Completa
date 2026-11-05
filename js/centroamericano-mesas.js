@@ -221,8 +221,11 @@
   // queden en la bitácora sin escribir. Son los casos de siempre de un torneo; el artículo
   // solo va donde el reglamento de FIDE lo dice sin duda (si falta uno, el árbitro puede
   // elegir «Otra» y escribirlo). La ilegal es siempre el 7.5.5 (dos minutos al rival la
-  // primera; la segunda pierde la partida).
+  // primera; la segunda pierde la partida). «Otra» va PRIMERO y es la que viene elegida: si el
+  // árbitro escribe lo que pasó y no toca la lista, queda anotado tal cual en «Otra», y no
+  // con una frase de la lista que no eligió (pasó en el Centroamericano 2026).
   const TIPOS_ILEGAL = [
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
     { id: "pieza", texto: "Movió una pieza como esa pieza no puede moverse" },
     { id: "rey-jaque", texto: "Dejó o puso su propio rey en jaque" },
     { id: "no-salio-jaque", texto: "No salió de un jaque" },
@@ -230,9 +233,9 @@
     { id: "captura", texto: "Captura ilegal (de su propia pieza o de una casilla que no corresponde)" },
     { id: "promocion", texto: "Peón en la última fila sin promover a una pieza válida" },
     { id: "turno", texto: "Jugó fuera de turno o dos jugadas seguidas" },
-    { id: "otra", texto: "Otra (escribir qué pasó)" },
   ];
   const TIPOS_IRREGULARIDAD = [
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
     { id: "toque", texto: "Tocó una pieza y no la movió (pieza tocada)", articulo: "4.3" },
     { id: "componer", texto: "Arregló piezas sin decir «compongo»", articulo: "4.2" },
     { id: "planilla", texto: "No anota la partida en la planilla", articulo: "8.1" },
@@ -242,7 +245,6 @@
     { id: "salio", texto: "Salió del área de juego sin permiso" },
     { id: "ayuda", texto: "Recibió ayuda o habló con otras personas durante la partida" },
     { id: "reloj", texto: "Usó mal el reloj (con la otra mano, golpeándolo, sin soltar la pieza)" },
-    { id: "otra", texto: "Otra (escribir qué pasó)" },
   ];
   // La sanción de tiempo de una irregularidad (art. 12.9: quitarle tiempo a quien la cometió o dárselo a su rival).
   // Va escrita al final del texto de la irregularidad, siempre con esta forma, y se vuelve a leer de ahí para el reloj
