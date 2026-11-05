@@ -59,6 +59,15 @@
     if (/\br[aá]pid[oa]s?\b|\brapid\b/i.test(n)) return "rapido";
     return null;
   }
+  // Los tres modos de torneo y lo que cambia en la tablet del árbitro en cada uno (la organización los ve separados en «Árbitros y mesas»).
+  // El modo sale de `ritmoRapido` (la base o el nombre); sin ninguna pista, clásico.
+  const RITMOS = [
+    { id: "clasico", nombre: "Clásico", config: "Mesa completa: «Llegó» y tiempo de espera, ilegal con su tipo (2 min), irregularidades, control de tiempos y fotos de las planillas." },
+    { id: "rapido", nombre: "Rápido", config: "Mesa en un toque: el resultado guarda de una; sin «Llegó», control de tiempos ni fotos. Ilegal sin tipo (2 min)." },
+    { id: "blitz", nombre: "Blitz", config: "Solo resultado e ilegal (1 min; el aviso se va solo con «Deshacer»). Sin «Llegó», irregularidades, control de tiempos ni fotos." },
+  ];
+  const ritmoDe = (t) => ritmoRapido(t && t.nombre, t && t.ritmo) || "clasico";
+  const configDeRitmo = (id) => (RITMOS.find((r) => r.id === id) || RITMOS[0]).config;
   // La primera ilegal: 2 minutos para el rival; en el blitz, 1 (apéndice B.3).
   const minutosIlegal = (ritmo) => (ritmo === "blitz" ? 1 : 2);
 
@@ -586,7 +595,7 @@
     return b && !n ? "blancas" : n && !b ? "negras" : "mesa";
   }
 
-  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, RITMOS, ritmoDe, configDeRitmo, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

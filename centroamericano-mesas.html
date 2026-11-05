@@ -169,7 +169,7 @@
                             <div class="lg:col-span-4"><label for="a-persona" class="block text-sm font-bold">¿Es un árbitro que ya tiene mesas en otro torneo?</label><select id="a-persona" class="cam-select"><option value="">No: es un árbitro nuevo</option></select>
                                 <p class="text-sm mt-1">Si eliges uno, sus mesas de varios torneos quedan juntas: abre UN enlace (un QR) y la página le deja pasar de un torneo a otro.</p></div>
                             <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro (opcional)</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido, o vacío si está por definir"></div>
-                            <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select></div>
+                            <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select><p id="a-ritmo-nota" class="cam-ritmo-nota" role="status"></p></div>
                             <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div class="lg:col-span-2"><label for="a-vence" class="block text-sm font-bold">El enlace vence</label>
@@ -184,7 +184,7 @@
                     <summary>Repartir las mesas de un torneo entre varios árbitros por definir</summary>
                     <p class="text-sm mt-2">Dices cuántas mesas hay y cuántos árbitros serán: se crean todos los enlaces de una vez, con mesas seguidas y parejas, y cada uno queda como «Árbitro N» hasta que alguien le ponga nombre. Puedes cambiar después las mesas de cada uno.</p>
                     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-                        <div class="lg:col-span-2"><label for="rp-torneo" class="block text-sm font-bold">Torneo</label><select id="rp-torneo" class="cam-select"></select></div>
+                        <div class="lg:col-span-2"><label for="rp-torneo" class="block text-sm font-bold">Torneo</label><select id="rp-torneo" class="cam-select"></select><p id="rp-ritmo-nota" class="cam-ritmo-nota" role="status"></p></div>
                         <div><label for="rp-mesas" class="block text-sm font-bold">Mesas en total</label><input id="rp-mesas" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                         <div><label for="rp-arbitros" class="block text-sm font-bold">Árbitros</label><input id="rp-arbitros" type="number" min="1" max="60" inputmode="numeric" class="cam-campo"></div>
                     </div>

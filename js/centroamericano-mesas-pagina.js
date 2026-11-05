@@ -578,18 +578,32 @@
 
     // ------------------------------------------------------------- 5. la clave del grupo
 
+    // Lo que cambia según el modo del torneo elegido, justo debajo de cada selector (para no crear enlaces a ciegas).
+    function notaDeRitmo() {
+        for (const [sel, nota] of [["a-torneo", "a-ritmo-nota"], ["rp-torneo", "rp-ritmo-nota"]]) {
+            const n = $(nota); if (!n) continue;
+            const t = torneos.find((x) => x.tnr === $(sel).value);
+            const r = t ? C.RITMOS.find((x) => x.id === C.ritmoDe(t)) : null;
+            n.textContent = r ? "Torneo " + r.nombre + ". En la tablet del árbitro: " + r.config : "";
+            n.dataset.ritmo = r ? r.id : "";
+        }
+    }
+
     async function cargarTorneos() {
         const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba").order("orden");
         if (error) { avisar("No se pudieron leer los torneos: " + error.message, true); return; }
         pruebas = new Set((data || []).filter((t) => t.prueba).map((t) => t.tnr));
         torneos = (data || []).filter((t) => dentro(t.tnr));
         pintarTorneos();
-        const opciones = () => torneos.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }));
+        // Los torneos van separados por modo (Clásico, Rápido, Blitz): cada uno trae una configuración distinta en la tablet del árbitro.
+        const opciones = () => C.RITMOS.map((r) => ({ r, lista: torneos.filter((t) => C.ritmoDe(t) === r.id) })).filter((g) => g.lista.length)
+            .map((g) => el("optgroup", { label: g.r.nombre }, ...g.lista.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }))));
         for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo", "ct-torneo"]) {
             const s = $(id), antes = s.value;
             s.replaceChildren(...(id === "r-torneo" || id === "pl-torneo" || id === "ct-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
             if (antes) s.value = antes;
         }
+        notaDeRitmo();
         // El código del grupo no es secreto: se propone el que ya se usó.
         if (!$("g-codigo").value) {
             const usados = torneos.map((t) => t.acceso_tnr).filter(Boolean);
@@ -833,18 +847,28 @@
     function pintarAsignaciones() {
         $("sin-asignaciones").hidden = asignaciones.length > 0;
         const ahora = new Date();
-        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, a.concentracion, a.todas_las_mesas, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
+        const firma = JSON.stringify([torneos.map((t) => [t.nombre, t.ritmo]), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, a.concluyo_en, a.concentracion, a.todas_las_mesas, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
         if (firma === firmaAsignaciones) return;
         firmaAsignaciones = firma;
         const grupos = new Map();
         for (const t of torneos) grupos.set(t.tnr, []);
         for (const a of asignaciones) { if (!grupos.has(a.tnr)) grupos.set(a.tnr, []); grupos.get(a.tnr).push(a); }
         const filas = [];
-        for (const [tnr, lista] of grupos) {
-            if (!lista.length) continue;
-            lista.sort((x, y) => x.mesa_desde - y.mesa_desde || x.mesa_hasta - y.mesa_hasta || String(x.creada).localeCompare(String(y.creada)));
-            filas.push(el("tr", { class: "cam-grupo-torneo", "data-tnr": tnr }, el("th", { colspan: "5", scope: "colgroup", texto: nombreTorneo(tnr) + " — " + lista.length + (lista.length === 1 ? " enlace" : " enlaces") })));
-            filas.push(...lista.map(filaAsignacion));
+        // Separados por modo: Clásico, Rápido y Blitz, cada uno con lo que cambia en la tablet de sus árbitros.
+        for (const r of C.RITMOS) {
+            const deEste = [...grupos].filter(([tnr]) => C.ritmoDe(torneos.find((t) => t.tnr === tnr)) === r.id);
+            const hayTorneos = torneos.some((t) => C.ritmoDe(t) === r.id);
+            const enlaces = deEste.reduce((n, [, l]) => n + l.length, 0);
+            if (!hayTorneos && r.id !== "blitz") continue;
+            filas.push(el("tr", { class: "cam-grupo-ritmo", "data-ritmo": r.id }, el("th", { colspan: "5", scope: "colgroup" },
+                el("span", { class: "cam-ritmo-nombre", texto: r.nombre }), el("span", { class: "cam-ritmo-cuenta", texto: " · " + (enlaces ? enlaces + (enlaces === 1 ? " enlace" : " enlaces") : hayTorneos ? "sin enlaces todavía" : "todavía no hay torneos de Blitz cargados") }),
+                el("span", { class: "cam-ritmo-config", texto: r.config }))));
+            for (const [tnr, lista] of deEste) {
+                if (!lista.length) continue;
+                lista.sort((x, y) => x.mesa_desde - y.mesa_desde || x.mesa_hasta - y.mesa_hasta || String(x.creada).localeCompare(String(y.creada)));
+                filas.push(el("tr", { class: "cam-grupo-torneo", "data-tnr": tnr }, el("th", { colspan: "5", scope: "colgroup", texto: nombreTorneo(tnr) + " — " + lista.length + (lista.length === 1 ? " enlace" : " enlaces") })));
+                filas.push(...lista.map(filaAsignacion));
+            }
         }
         $("asignaciones").replaceChildren(...filas);
         marcarPedidos();
@@ -1528,6 +1552,7 @@
     }
 
     async function init() {
+        for (const id of ["a-torneo", "rp-torneo"]) $(id).addEventListener("change", notaDeRitmo);
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { location.href = "login.html?next=centroamericano-mesas.html"; return; }
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "mesa-arbitro" });
