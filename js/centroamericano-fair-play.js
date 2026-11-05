@@ -94,6 +94,13 @@
             ? { alto: true, texto: "Rachas: en las posiciones difíciles para su nivel sale muy alto (" + masMenos(x.crit_z) + " desviaciones) y en las fáciles, normal (" + masMenos(x.facil_z) + "). Es como juega quien usa el motor solo en el momento decisivo; alguien más fuerte que su Elo sale alto en las dos. Señal para mirar: no entra en el índice." + racha }
             : { alto: false, texto: "En las posiciones difíciles para su nivel: " + masMenos(x.crit_z) + " desviaciones; en las fáciles: " + masMenos(x.facil_z) + "." + racha });
         else if (racha) out.push({ alto: false, texto: racha.trim() });
+        // Las trampas de la mirada corta: las que parecen buenas a primera vista y son malas.
+        if (x.trampas_n) out.push(x.trampas_z != null && Number(x.trampas_z) >= 2
+            ? { alto: true, texto: "Trampas: tuvo " + x.trampas_n + " posiciones donde lo que parece mejor a primera vista es malo, y cayó en " + x.trampas_cayo + "; alguien de su nivel caería en unas " + uno(x.trampas_e) + " (" + masMenos(x.trampas_z) + " desviaciones). Esquivarlas así es como juega el motor. Señal para mirar." }
+            : { alto: false, texto: "Trampas (lo que parece bueno a primera vista y es malo): cayó en " + x.trampas_cayo + " de " + x.trampas_n + "; se esperaban unas " + uno(x.trampas_e) + (x.trampas_z != null ? " (" + masMenos(x.trampas_z) + ")" : " (pocas para medir)") + "." });
+        // Todas las señales en una cuenta, y la vara para el tamaño del torneo.
+        if (x.roi_combinado != null) out.push({ alto: Number(x.roi_combinado) >= 60, texto: "Con todas las señales juntas (el índice, el tiempo, las rachas y las trampas, sin contar dos veces lo que dicen igual): " + uno(x.roi_combinado) + "." });
+        if (x.umbral_z != null && x.z != null && Number(x.z) >= Number(x.umbral_z)) out.push({ alto: true, texto: "Raro aun para un torneo de este tamaño: pasa la vara de " + uno(50 + 5 * Number(x.umbral_z)) + " (lo que por azar pasaría un jugador de cada 20 torneos así)." + (Number(x.z) >= 4.5 ? " Y llega a lo que FIDE pide para sancionar sin prueba física (4,5 desviaciones)." : "") });
         return out;
     }
 
@@ -353,7 +360,9 @@
                 el("p", { texto: "Medido con " + (v.jugadores === 1 ? "el único jugador que tiene" : "los " + v.jugadores + " jugadores que tienen") + " 30 jugadas o más analizadas." }),
                 el("p", { texto: "Alarmas falsas: " + uno(v.falsas_a_mirar) + " % pasa de 60 y " + uno(v.falsas_alta) + " % de 62,5. Por pura casualidad se esperaría " + uno(v.esperadas_a_mirar) + " % y " + uno(v.esperadas_alta) + " %. Como casi todos juegan limpio, esto es lo más que se equivoca." }),
                 el("p", { texto: "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el " + det("0.1") + " de las veces; en 2 de cada 10, el " + det("0.2") + "; en 3 de cada 10, el " + det("0.3") + "." }),
-                v.casos ? el("p", { texto: "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a " + uno(v.casos.marcados_a_mirar) + " % de los " + v.casos.con_trampa + " que hicieron trampa (" + uno(v.casos.marcados_alta) + " % muy alto), y a " + uno(v.casos.falsos_a_mirar) + " % de sus " + v.casos.sin_trampa + " rivales, que jugaron limpio." }) : el("p", { class: "cam-fp-detalle", texto: "Todavía no hay casos de prueba: se cargan en «Partidas de referencia» como «De prueba»." }),
+                v.casos ? el("p", { texto: "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a " + uno(v.casos.marcados_a_mirar) + " % de los " + v.casos.con_trampa + " que hicieron trampa" + (v.casos.ic_marcados ? " (con estos casos, entre " + uno(v.casos.ic_marcados[0]) + " % y " + uno(v.casos.ic_marcados[1]) + " %)" : "") + ", " + uno(v.casos.marcados_alta) + " % muy alto, y a " + uno(v.casos.falsos_a_mirar) + " % de sus " + v.casos.sin_trampa + " rivales, que jugaron limpio" + (v.casos.ic_falsos ? " (entre " + uno(v.casos.ic_falsos[0]) + " % y " + uno(v.casos.ic_falsos[1]) + " %)" : "") + "." + (v.casos.auc != null ? " Separa a unos de otros con un AUC de " + dos(v.casos.auc) + " (0,5 es al azar; 1, siempre)." : "") }) : el("p", { class: "cam-fp-detalle", texto: "Todavía no hay casos de prueba: se cargan en «Partidas de referencia» como «De prueba»." }),
+                v.casos && v.casos.por_porcentaje ? el("p", { texto: "Por cuánto usaron el motor: " + Object.keys(v.casos.por_porcentaje).sort((a, b) => a - b).map((k) => { const x = v.casos.por_porcentaje[k]; return "en " + k + " de cada 100 jugadas, marcó " + uno(x.marcados_a_mirar) + " % de " + x.casos; }).join("; ") + "." }) : null,
+                m.validacion.grupos && m.validacion.grupos.clasico && m.validacion.grupos.clasico.umbral ? el("p", { texto: "Con " + m.validacion.grupos.clasico.jugadores + " jugadores medidos en las clásicas, la vara para que sea raro aun por el tamaño del torneo es " + uno(50 + 5 * m.validacion.grupos.clasico.umbral) + "; para sancionar sin prueba física, FIDE pide alrededor de 72,5 (4,5 desviaciones)." }) : null,
                 v.rapido ? el("p", { texto: "En las rápidas (con su propio ajuste, " + v.rapido.jugadores + " jugadores): alarmas falsas " + uno(v.rapido.falsas_a_mirar) + " % y " + uno(v.rapido.falsas_alta) + " %." }) : null,
                 el("p", { class: "cam-fp-detalle", texto: "El modelo se ajustó con " + m.movimientos + " jugadas de jugadores con Elo" + (m.referencia ? " (" + m.referencia + " de partidas de referencia)" : "") + (m.ajustado ? " a las " + hora(m.ajustado) : "") + ". La gente real varía " + uno(m.factor) + " veces lo que dice el modelo, y la mitad queda en " + uno(50 + 5 * Number(m.centro)) + " antes de centrarla en 50." }));
         }
@@ -812,7 +821,7 @@
     function opcionesDe(lineas, ultima, fen) {
         const opciones = Object.keys(lineas).sort((a, b) => a - b)
             .map((k) => [(lineas[k].match(/ pv (\S+)/) || [])[1], puntaje(lineas[k], fen)])
-            .filter((o) => o[0] && o[1] != null).slice(0, 9);
+            .filter((o) => o[0] && o[1] != null).slice(0, 20);
         return { cp: opciones.length ? opciones[0][1] : puntaje(ultima, fen), opciones };
     }
 
@@ -832,7 +841,8 @@
             if (r.status === 429) { nubePausa = Date.now() + 60000; return null; }
             if (!r.ok) return null;
             const d = await r.json();
-            if (!d || !(d.depth >= NUBE_PROFUNDIDAD) || !Array.isArray(d.pvs) || d.pvs.length < Math.min(multipv, legales)) return null;
+            // La nube suele guardar 5 opciones: si se piden más (10), con 5 alcanza (lo de más va junto en el modelo).
+            if (!d || !(d.depth >= NUBE_PROFUNDIDAD) || !Array.isArray(d.pvs) || d.pvs.length < Math.min(multipv, 5, legales)) return null;
             const opciones = d.pvs.slice(0, multipv).map((pv) => {
                 let uci = String(pv.moves || "").split(" ")[0];
                 const pieza = uci.length >= 4 ? juego.get(uci.slice(0, 2)) : null;
@@ -853,6 +863,12 @@
         const n = await nube(fen, c.multipv || 3);
         if (n) { deLaNube++; return n; }
         return calcular(fen, c);
+    }
+    // La mirada corta: lo que parece mejor a primera vista (a poca profundidad), para las trampas. [jugada UCI, cp] o null.
+    async function mirada(fen, profundidad) {
+        if (!profundidad || !motor) return null;
+        const r = await calcular(fen, { multipv: 1, profundidad, nodos: 200000 });
+        return r && r.opciones && r.opciones[0] ? r.opciones[0] : null;
     }
     function calcular(fen, c) {
         const multipv = c.multipv || 3;
@@ -894,15 +910,16 @@
                     break;
                 }
                 for (const p of r.partidas) {
-                    const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null);
+                    const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null), superficiales = p.posiciones.map(() => null);
                     const total = Math.ceil(p.posiciones.length / 2);
                     for (let i = p.desde; i < p.posiciones.length; i++) {
                         if (!motorEncendido() || (ctx.visible && !ctx.visible())) { estadoMotor("En pausa: se sigue cuando vuelvas a esta pantalla."); return; }
                         if (i % 6 === p.desde % 6) estadoMotor("🤖 " + (p.honda ? "Confirmando a fondo (alerta) " : "Analizando ") + nombreDe(p.tnr) + ", ronda " + p.ronda + ", mesa " + p.mesa + (p.fuente === "planilla" ? " (de la foto de la planilla)" : "") + " (" + p.blancas + " – " + p.negras + "): jugada " + (Math.floor(i / 2) + 1) + " de " + total + (r.quedan ? " · faltan " + r.quedan + " partidas más" : "") + ".");
                         const ev = await evaluar(p.posiciones[i], { multipv: p.multipv || r.multipv, profundidad: p.profundidad, nodos: r.nodos });   // cuánto pensar lo dice la función
                         if (ev) { evals[i] = ev.cp; opciones[i] = ev.opciones; }
+                        if (p.superficial) superficiales[i] = await mirada(p.posiciones[i], p.superficial);
                     }
-                    await llamar("vivo_guardar", { tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, evals, opciones, honda: !!p.honda });
+                    await llamar("vivo_guardar", { tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, evals, opciones, superficiales, honda: !!p.honda });
                     hechas++;
                     analizadasAqui++;
                 }
@@ -927,6 +944,8 @@
         return !m || Number(m[1]) + 60 * Number(m[2] || 0) >= 3600;
     }
     // Quién hizo trampa en una partida de prueba: la etiqueta [Trampa "Blancas"] (o «White», «Negras», «Black»).
+    // [TrampaPorcentaje "30"]: en qué proporción de sus jugadas usó el motor (para medir cuánto marca en cada una).
+    const trampaPctDe = (h) => { const n = Math.round(Number(String((h && (h.TrampaPorcentaje || h.CheatPercent)) || "").replace(/[%\s]/g, ""))); return n >= 1 && n <= 100 ? n : null; };
     function trampaDe(h) {
         const t = String((h && (h.Trampa || h.Cheat)) || "").trim().toLowerCase();
         return /^(blancas|white|w)$/.test(t) ? "blancas" : /^(negras|black|b)$/.test(t) ? "negras" : null;
@@ -941,7 +960,7 @@
             const elo_b = Number(h.WhiteElo) || null, elo_n = Number(h.BlackElo) || null;
             if ((!elo_b && !elo_n) || jugadas.length < 20 || !esClasica(h.TimeControl)) return null;
             const repaso = new window.Chess(), posiciones = jugadas.map((m) => { repaso.move(m); return repaso.fen(); });
-            return { partida: huella([h.White, h.Black, h.Date, h.Round, jugadas.join(" ")].join("|")), elo_b, elo_n, jugadas, posiciones, trampa: trampaDe(h) };
+            return { partida: huella([h.White, h.Black, h.Date, h.Round, jugadas.join(" ")].join("|")), elo_b, elo_n, jugadas, posiciones, trampa: trampaDe(h), trampa_pct: trampaPctDe(h) };
         }).filter(Boolean);
     }
     // El PGN de una transmisión de Lichess: de un torneo entero (lichess.org/broadcast/<nombre>/<id>) o de una ronda
@@ -978,14 +997,16 @@
             const inicio = Date.now();
             for (const p of partidas) {
                 if (detenerReferencia) break;
-                const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null);
+                const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null), superficiales = p.posiciones.map(() => null);
                 for (let i = 15; i < p.posiciones.length; i++) {
                     if (detenerReferencia) break;
-                    const ev = await evaluar(p.posiciones[i], { multipv: 5, profundidad: 12 });
+                    const ev = await evaluar(p.posiciones[i], { multipv: 10, profundidad: 12 });
                     if (ev) { evals[i] = ev.cp; opciones[i] = ev.opciones; }
+                    superficiales[i] = await mirada(p.posiciones[i], 5);
                 }
                 if (detenerReferencia) break;
-                const r = await llamar("referencia_guardar", { evento, partida: p.partida, elo_b: p.elo_b, elo_n: p.elo_n, jugadas: p.jugadas, evals, opciones, trampa: prueba ? p.trampa : null });
+                const r = await llamar("referencia_guardar", { evento, partida: p.partida, elo_b: p.elo_b, elo_n: p.elo_n, jugadas: p.jugadas, evals, opciones, superficiales,
+                    trampa: prueba ? p.trampa : null, trampa_pct: prueba ? p.trampa_pct : null });
                 hechas++; jugadas += r.jugadas || 0;
                 const faltan = Math.round(((Date.now() - inicio) / hechas) * (total - hechas) / 60000);
                 $("fp-ref-estado").textContent = "Cargadas " + hechas + " de " + total + " (" + jugadas + " jugadas)" + (ya.size ? "; " + ya.size + " ya estaban" : "") + (total > hechas ? " · faltan unos " + faltan + " min" : "") + ".";
