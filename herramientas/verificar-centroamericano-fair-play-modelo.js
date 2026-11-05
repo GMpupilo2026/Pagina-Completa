@@ -50,8 +50,19 @@ const igual = (que, salio, esperaba) => {
     const pos = () => { const d = [0]; for (let i = 1; i < 5; i++) d.push(Math.round((d[i - 1] + rnd() * (i === 1 ? 15 : 8)) * 10) / 10); return d; };
     const jugar = (d, s, c) => { const pr = A.probabilidades(d, 30, s, c); let x = rnd(); for (let i = 0; i < pr.p.length; i++) { x -= pr.p[i]; if (x <= 0) return { rango: i + 1, dj: d[i] }; } return { rango: 0, dj: pr.dOtras }; };
     const T = { centroamericano_torneos: [{ tnr: "A", nombre: "Sub-12 Absoluto", prueba: false }, { tnr: "B", nombre: "Rápido Sub-12", prueba: false }, { tnr: "Z", nombre: "PRUEBA", prueba: true }],
-        centroamericano_fp_jugadas: [], centroamericano_fp_partidas: [], centroamericano_fp_referencia: [], centroamericano_fp_modelo: [] };
+        centroamericano_fp_jugadas: [], centroamericano_fp_partidas: [], centroamericano_fp_referencia: [], centroamericano_fp_modelo: [],
+        centroamericano_fp_fide: [], centroamericano_fp_elo_fide: [] };
     const TRAMPOSO = "A Jugador 3";
+    // El que usa el motor SOLO en las posiciones difíciles para su nivel (las rachas): en las fáciles juega como siempre.
+    const DECISIVO = "A Jugador 10";
+    // Lo difícil para él: el tercio más difícil de SUS posiciones (con su propio azar, para no mover el del torneo).
+    let umbralD = null;
+    const umbralDecisivo = (s) => {
+        if (umbralD == null) { let u = 11; const r2 = () => { u = (u * 1103515245 + 12345) % 2147483648; return u / 2147483648; };
+            const v = Array.from({ length: 3000 }, () => { const d = [0]; for (let i = 1; i < 5; i++) d.push(Math.round((d[i - 1] + r2() * (i === 1 ? 15 : 8)) * 10) / 10); return A.dificultadEsperada({ deltas: d, n: 30 }, s, 0.9); }).sort((a, b) => a - b);
+            umbralD = v[Math.floor(v.length * 2 / 3)]; }
+        return umbralD;
+    };
     const crear = (tnr, n, rapido) => {
         const js = Array.from({ length: n }, (_, k) => { const elo = k % 7 === 0 ? null : 1100 + Math.floor(rnd() * 1000); return { nombre: tnr + " Jugador " + k, elo, fuerza: (elo || 1300) + (k % 3 === 0 ? 150 : 0) }; });
         for (let ronda = 1; ronda <= 4; ronda++) for (let m = 0; m < n / 2; m++) {
@@ -62,7 +73,8 @@ const igual = (que, salio, esperaba) => {
             for (const [color, j] of [["blancas", b], ["negras", ne]]) {
                 const s = A.sDeElo(Math.log(8) + (rapido ? 0.4 : 0), -0.6, j.fuerza), trampa = j.nombre === TRAMPOSO;
                 for (let ply = 16; ply < 56; ply++) {
-                    const d = pos(), y = trampa && rnd() < 0.4 ? { rango: 1, dj: 0 } : jugar(d, s, 0.9);
+                    const d = pos(), dificil = j.nombre === DECISIVO && A.dificultadEsperada({ deltas: d, n: 30 }, s, 0.9) > umbralDecisivo(s);
+                    const y = (trampa && rnd() < 0.4) || (dificil && rnd() < 0.8) ? { rango: 1, dj: 0 } : jugar(d, s, 0.9);
                     T.centroamericano_fp_jugadas.push({ tnr, ronda, mesa: m + 1, color, ply, deltas: d, n_legales: 30, rango: y.rango, delta_jugada: y.dj, dificil: d[1] >= 10,
                         segundos: trampa ? 25 + Math.round(rnd() * 10) : Math.round(5 + 4 * A.dificultadEsperada({ deltas: d, n: 30 }, s, 0.9) + rnd() * 20) });
                 }
@@ -70,6 +82,19 @@ const igual = (que, salio, esperaba) => {
         }
     };
     crear("A", 60, false); crear("B", 30, true);
+    // Su Elo en FIDE: los que juegan 150 por encima de su Elo (uno de cada tres) vienen subiendo 20 puntos por mes en el
+    // último año; los demás, parejos. Los meses, contados desde hoy (como los lee la función).
+    const MESES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const hoy = A.mesDe(new Date());
+    const periodo = (m) => Math.floor(m / 12) + "-" + MESES[m % 12];
+    for (let k = 0; k < 60; k++) {
+        const nombre = "A Jugador " + k, p = T.centroamericano_fp_partidas.find((x) => x.tnr === "A" && (x.blancas === nombre || x.negras === nombre));
+        const elo = p ? (p.blancas === nombre ? p.elo_b : p.elo_n) : null;
+        if (!elo) continue;
+        const id = String(1000000 + k), sube = k % 3 === 0;
+        T.centroamericano_fp_fide.push({ tnr: "A", clave: A.claveDe(nombre), fide_id: id });
+        T.centroamericano_fp_elo_fide.push({ fide_id: id, historial: Array.from({ length: 12 }, (_, i) => ({ periodo: periodo(hoy - i), std: elo - (sube ? 20 * i : 0), rpd: null, blz: null })) });
+    }
     for (let ply = 16; ply < 60; ply++) {
         const d = pos(), color = ply % 2 ? "negras" : "blancas", y = color === "negras" ? { rango: 1, dj: 0 } : jugar(d, A.sDeElo(Math.log(8), -0.6, 1700), 0.9);
         T.centroamericano_fp_referencia.push({ evento: "P", partida: "p1", ply, color, elo: 1700, deltas: d, n_legales: 30, rango: y.rango, delta_jugada: y.dj, dificil: d[1] >= 10, trampa: "negras" });
@@ -102,7 +127,7 @@ const igual = (que, salio, esperaba) => {
     const R = v.grupos.clasico.R;
     igual("la correlación entre las señales sale medida en la gente (no la inicial) y entre 0 y 0,95", [R.t1dj !== 0.5, [R.t1dj, R.t1dif, R.djdif].every((x) => x >= 0 && x <= 0.95)], [true, true]);
     const clasicos = ix.filter((x) => x.ritmo === "clasico").sort((a, b) => b.roi - a.roi);
-    igual("quien usó el motor queda primero de su categoría", clasicos[0].jugador, TRAMPOSO);
+    igual("los dos que usaron el motor quedan primeros de su categoría", clasicos.slice(0, 2).map((x) => x.jugador).sort(), [DECISIVO, TRAMPOSO].sort());
     const rhos = ix.filter((x) => x.tiempo_rho != null && x.jugador !== TRAMPOSO).map((x) => x.tiempo_rho).sort((a, b) => a - b);
     const tramposo = ix.find((x) => x.jugador === TRAMPOSO);
     igual("el tiempo: los honestos piensan más donde es más difícil (la mitad, con una correlación de más de 0,15); el que espera la jugada, casi nada (debajo de todos)",
@@ -114,6 +139,24 @@ const igual = (que, salio, esperaba) => {
     igual("los casos de prueba se miden aparte (una partida de prueba: el que usó el motor y su rival limpio) y el lado que hizo trampa no entra al ajuste",
         [v.casos.con_trampa, v.casos.sin_trampa, guardado.p_modelo.referencia, guardado.p_modelo.movimientos], [1, 1, 44, conEloJugadas + 22]);
     igual("y las alarmas falsas de la gente de verdad, bajas (un tercio juega más fuerte que su Elo)", v.falsas_alta <= 5, true);
+
+    console.log("\n=== Cómo viene su Elo en FIDE ===");
+    const enA = ix.filter((x) => x.tnr === "A" && x.elo);
+    const sube = (x) => Number(x.jugador.split(" ").pop()) % 3 === 0;
+    const media = (l) => l.reduce((t, x) => t + (x.elo_usado - x.elo), 0) / l.length;
+    igual("quien viene subiendo 20 por mes lleva su tendencia (20 por mes, 60 de los 3 meses de atraso); los parejos, 0",
+        [enA.filter(sube).every((x) => x.elo_tendencia === 60 && Number(x.tendencia_mes) === 20), enA.filter((x) => !sube(x)).every((x) => x.elo_tendencia === 0 && Number(x.tendencia_mes) === 0)], [true, true]);
+    igual("y se compara más arriba: en promedio, más Elo reconocido que los parejos (lo que rinde lo corrige, nunca por debajo de su Elo)",
+        [media(enA.filter(sube)) > media(enA.filter((x) => !sube(x))) + 30, enA.every((x) => x.elo_usado >= x.elo)], [true, true]);
+    igual("y en la rápida (sin ficha de FIDE), sin tendencia", ix.filter((x) => x.tnr === "B").every((x) => x.elo_tendencia == null), true);
+
+    console.log("\n=== Las rachas ===");
+    const dec = ix.find((x) => x.jugador === DECISIVO), tra = ix.find((x) => x.jugador === TRAMPOSO);
+    const honestos = ix.filter((x) => x.tnr === "A" && x.jugador !== DECISIVO && x.jugador !== TRAMPOSO && x.contraste_z != null).map((x) => Number(x.contraste_z)).sort((a, b) => a - b);
+    igual("quien usa el motor solo en lo difícil: muy alto en las difíciles, normal en las fáciles y el contraste por encima de 2 (y de todos los honestos)",
+        [Number(dec.crit_z) >= 2, Math.abs(Number(dec.facil_z)) < 2, Number(dec.contraste_z) >= 2, Number(dec.contraste_z) > honestos[honestos.length - 1]], [true, true, true, true]);
+    igual("el que lo usa en cualquier jugada no tiene contraste (sale parejo en las dos), y en los honestos el contraste ronda 0", [Math.abs(Number(tra.contraste_z)) < 1.5, Number(tra.contraste_z) < Number(dec.contraste_z), Math.abs(honestos[Math.floor(honestos.length / 2)]) < 1], [true, true, true]);
+    igual("su racha más rara: varias difíciles seguidas, todas la primera, muy improbable para su nivel", [dec.racha_largo >= 5, Number(dec.racha_log10) <= -3], [true, true]);
 
     fs.rmSync(dir, { recursive: true, force: true });
     console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");

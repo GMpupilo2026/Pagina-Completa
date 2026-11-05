@@ -130,6 +130,29 @@ function pruebasDelCalculo() {
           return [A.finDeTeoria(plies, fens, (f) => base[f]), A.finDeTeoria(plies, fens, (f) => (f === "f2" ? null : base[f])), A.inicioDeMedida({ fin: 3, seguro: true }), A.inicioDeMedida({ fin: 21, seguro: true }), A.inicioDeMedida({ fin: 2, seguro: false }), A.inicioDeMedida(null),
             A.fenExplorador("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")];
         })(),
+        cobertura: (() => {
+          // Inventados (sin nadie de verdad): la lista inicial de chess-results y la ficha de FIDE, como vienen.
+          const lista = '<table class="CRs1"><tr class="CRng1b"><th>No.</th><th>Nombre</th><th>FIDE-ID</th></tr>'
+            + '<tr><td>1</td><td><a class="CRdb" href="https://chess-results.com/tnr1.aspx?lan=2&amp;art=9&amp;snr=1">Pérez, Ana</a></td><td><a href="http://ratings.fide.com/profile/9990001">9990001</a></td></tr>'
+            + '<tr><td>2</td><td><a class="CRdb" href="https://chess-results.com/tnr1.aspx?lan=2&amp;art=9&amp;snr=2">Sin, Ficha</a></td><td></td></tr></table>';
+          const fila = (p, std, rpd) => '<tr><td>&nbsp;' + p + '&nbsp;</td><td>&nbsp;' + std + '&nbsp;</td><td>0</td><td>&nbsp;' + rpd + '&nbsp;</td><td>0</td><td>&nbsp;0&nbsp;</td><td>0</td></tr>';
+          const ficha = '<table class="profile-table_calc"><thead><tr><th>Period</th></tr></thead><tbody>' + fila("2026-Nov", 1660, 1500) + fila("2026-Oct", 1640, "") + fila("2026-Sep", 1620, 1490) + fila("2026-Aug", 1600, 1480) + fila("2026-Jul", 1580, 1470) + '</tbody></table>';
+          const hist = A.leerHistorialFide(ficha);
+          const nov = 2026 * 12 + 10;
+          const plies = Array.from({ length: 24 }, (_, i) => ({ san: "x", uci: "a2a3", legales: { a2a3: { captura: false, jaque: false }, b2b3: { captura: false, jaque: false } }, segundos: null, hora: null }));
+          const evals = plies.map(() => 0), ops = plies.map(() => [["a2a3", 0], ["b2b3", -200]]);
+          return {
+            ids: A.leerFideIds(lista), hist: hist.slice(0, 2), mal: A.leerHistorialFide("<p>nada</p>"),
+            tend: [A.tendencia(hist, "clasico", nov, true), A.tendencia(hist, "clasico", nov, false), A.tendencia(hist, "rapido", nov, true), A.tendencia(hist.slice(0, 3), "clasico", nov, true), A.tendencia(hist, "clasico", nov + 24, true), A.tendencia(null, "clasico", nov, true)],
+            baja: A.tendencia(hist.map((h, i) => ({ ...h, std: 1500 + 20 * i })), "clasico", nov, true),
+            usados: [A.eloUsado(1500, null, true, 60), A.eloUsado(1500, null, true, 500), A.eloUsado(1500, { rp: 1300, n: 9 }, true, 60) < 1560, A.eloUsado(1500, { rp: 1000, n: 30 }, true, 60), A.eloUsado(1500, { rp: 1700, n: 9 }, true, 60) > A.eloUsado(1500, { rp: 1700, n: 9 }, true, 0)],
+            mes: [A.mesDe(new Date("2026-11-01T03:00:00Z")) % 12, A.mesDe(new Date("2026-11-01T07:00:00Z")) % 12],
+            resultado: ["1 - 0", "0 - 1", "½ - ½", "", "+ - -"].map(A.resultadoDe),
+            planilla: [A.planillaValida(Array(19).fill("e4"), []), A.planillaValida(Array(20).fill("Nf3"), [3, 3, 99, -1, "2"]), A.planillaValida(Array(20).fill("e4 x"), [])],
+            saltar: [A.detallar(plies, evals, ops, []).jugadas.length, A.detallar(plies, evals, ops, [], 16, new Set([17, 19])).jugadas.map((d) => d.ply)],
+            mediana: [A.mediana([3, 1, 2]), A.mediana([4, 1, 2, 3]), A.mediana([])],
+          };
+        })(),
         clave: [A.claveDe("Pérez Ñuñez,  José."), A.claveDe("  ANA  maría ")],
         validas: [A.evalsValidas([null, 30, -10000], 3), A.evalsValidas([null, 30], 3), A.evalsValidas([null, "30", 1], 3), A.evalsValidas([null, 99999, 1], 3), A.evalsValidas("x", 1)] }));`;
     const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", codigo], { encoding: "utf8" });
@@ -175,6 +198,21 @@ function pruebasDelCalculo() {
     igual("la teoría: hasta la primera jugada que no está en las partidas de maestros (o con menos de 5); si no se sabe, lo dice; desde ahí se mide (nunca antes de la 5.ª de cada uno), y sin saberlo, desde la 9.ª; el FEN del explorador sin la casilla al paso",
         d.teoria, [{ fin: 3, seguro: true }, { fin: 2, seguro: false }, 8, 21, 16, 16, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -"]);
     igual("la clave de un nombre, igual que interno.fp_clave() en la base", d.clave, ["perez nunez jose", "ana maria"]);
+    console.log("\n=== Para todos los torneos: FIDE, planillas ===");
+    const c = d.cobertura;
+    igual("la lista inicial de chess-results: cada jugador con su ID FIDE (quien no tiene, no sale)", c.ids, [{ nombre: "Pérez, Ana", fide: "9990001" }]);
+    igual("la ficha de FIDE: el Elo de cada mes (una celda vacía es null); si la página cambió, nada", [c.hist, c.mal], [[{ periodo: "2026-Nov", std: 1660, rpd: 1500, blz: null }, { periodo: "2026-Oct", std: 1640, rpd: null, blz: null }], []]);
+    igual("la tendencia: sube 20 por mes → 60 en 3 meses a un menor (75 de tope a un adulto: también 60), la rápida con su propio Elo (sin el mes que falta: 7,4 por mes → 22), con menos de 4 meses o fuera del último año nada, y sin ficha nada",
+        c.tend, [{ puntos: 60, pendiente: 20, meses: 5 }, { puntos: 60, pendiente: 20, meses: 5 }, { puntos: 22, pendiente: 7.4, meses: 4 }, null, null, null]);
+    igual("quien viene bajando no recibe nada (nunca de menos)", c.baja, { puntos: 0, pendiente: -20, meses: 5 });
+    igual("el Elo reconocido con la tendencia: se parte de su Elo más ella (con el tope de 200), lo que rinde lo corrige hacia abajo sin bajar de su Elo, y hacia arriba suma",
+        c.usados, [1560, 1700, true, 1500, true]);
+    igual("el mes, en hora de Costa Rica (el 1.° a las 9 p. m. todavía es octubre)", c.mes, [9, 10]);
+    igual("el resultado de chess-results como el de una partida: «½ - ½» son tablas; sin resultado o por incomparecencia, nada", c.resultado, ["1-0", "0-1", "1/2-1/2", null, null]);
+    igual("la planilla: con menos de 20 medias jugadas no; las dudosas se ordenan sin repetidas ni fuera de la partida; una jugada con espacio, no",
+        c.planilla, [null, { jugadas: Array(20).fill("Nf3"), dudosas: [2, 3] }, null]);
+    igual("las jugadas dudosas de la planilla no se miden (las demás, sí)", c.saltar, [8, [16, 18, 20, 21, 22, 23]]);
+    igual("la mediana (la mitad más difícil de las jugadas de cada uno, para las rachas)", c.mediana, [2, 2.5, null]);
     igual("el tablero sin limpiar: la partida de la ronda anterior (entera, o con lo que siguió, desde 40 jugadas) es copia; 20 jugadas iguales de apertura o una que se aparta, no", d.copias, [true, true, false, false, false, false]);
     igual("la evaluación de la pantalla: una por posición, números de ±10000 o null; si no, se rechaza entera", d.validas, [[null, 30, -10000], null, null, null, null]);
     const regla = (t) => {
@@ -275,7 +313,8 @@ const SERVIDOR_FP = `
     vivo: [{ tnr: "100", ronda: 3, mesa: 1, blancas: "Clark, Arty", negras: "Garcia, Alberto", resultado: "1-0", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 12, honda: false },
            { tnr: "100", ronda: 2, mesa: 4, blancas: "Ruiz, Mia", negras: "Castro, Alana", resultado: "0-1", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 16, honda: true }], guardados: [], referencias: [],
     indice: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, comparado: "elo", partidas: 3, rondas: "1, 2, 3", jugadas: 90, t1: 70, e_t1: 45.2, z_t1: 3.1, dificiles: 8, t1_dif: 8, e_t1_dif: 3.4, roi: 66.4,
-               ritmo: "clasico", elo_usado: 1620, rendimiento: 1800, rendimiento_partidas: 3, hist_partidas: 4, hist_roi: 51.3, tiempo_rho: 0.05, tiempo_z: 2.4, tiempo_jugadas: 40 },
+               ritmo: "clasico", elo_usado: 1620, rendimiento: 1800, rendimiento_partidas: 3, hist_partidas: 4, hist_roi: 51.3, tiempo_rho: 0.05, tiempo_z: 2.4, tiempo_jugadas: 40,
+               elo_tendencia: 40, tendencia_mes: 13.3, crit_z: 3.2, facil_z: 0.4, contraste_z: 2, racha_largo: 6, racha_log10: -3.4 },
              { tnr: "200", clave: "nina sin elo", jugador: "Niña, Sin Elo", elo: null, comparado: "categoria", partidas: 2, rondas: "2, 3", jugadas: 50, t1: 22, e_t1: 21.5, z_t1: 0.1, dificiles: 0, t1_dif: 0, e_t1_dif: 0, roi: 51.2,
                ritmo: "rapido", elo_usado: null, rendimiento: null, hist_partidas: null, tiempo_rho: 0.42, tiempo_z: -0.3, tiempo_jugadas: 30 }],
     modelo: { movimientos: 9000, referencia: 1200, factor: 1.2, centro: -0.3, ajustado: "2026-11-04T22:00:00Z", validacion: { jugadores: 140, falsas_a_mirar: 3.1, falsas_alta: 0.7, esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion: { "0.1": { a_mirar: 30, alta: 20 }, "0.2": { a_mirar: 62, alta: 50 }, "0.3": { a_mirar: 85, alta: 74 } },
@@ -291,7 +330,7 @@ const SERVIDOR_FP = `
     if (b.token) { const e = S.enlaces.find((x) => x.token === b.token); if (!e) return err(404, "Este enlace no es válido. Pídele al árbitro principal que te mande el QR de nuevo."); if (e.revocada) return err(410, "El árbitro principal apagó este enlace."); quien = e.nombre + " (Fair Play)"; }
     else if (conSesion) quien = "Oscar Principal"; else return err(401, "Falta el enlace de Fair Play.");
     const rondas = S.rondas.filter((r) => !b.token || !r.prueba);
-    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, rondas, sorteos: JSON.parse(JSON.stringify(S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)))), alertas: JSON.parse(JSON.stringify(S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"))), acumulado: JSON.parse(JSON.stringify(S.acumulado)), indice: S.indice, modelo: S.modelo, leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
+    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, evento: "Centroamericano 2026", rondas, sorteos: JSON.parse(JSON.stringify(S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)))), alertas: JSON.parse(JSON.stringify(S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"))), acumulado: JSON.parse(JSON.stringify(S.acumulado)), indice: S.indice, modelo: S.modelo, leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
     if (b.action === "candidatas") return ok({ mesas: (S.mesas[b.tnr] || []).map((m) => Object.assign({}, m, { excluida: m.excluida || (S.sorteos.some((f) => f.tnr === b.tnr && f.ronda === b.ronda && f.mesa === m.mesa) ? "Ya salió en esta ronda" : null) })) });
     if (b.action === "sortear") {
       const salen = [];
@@ -319,6 +358,10 @@ const SERVIDOR_FP = `
     if (b.action === "vivo_pendientes") return ok({ conectada: true, partidas: S.vivo.splice(0, 3), quedan: 0, nodos: 3000 });
     if (b.action === "vivo_guardar") { S.guardados.push(b); return ok({ medidas: [] }); }
     if (b.action === "referencia_guardar") { S.referencias.push(b); return ok({ jugadas: 9 }); }
+    if (b.action === "jugador") {
+      const cl = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[^a-z ]/g, "").replace(/ +/g, " ").trim();
+      return ok({ partidas: S.alertas.filter((a) => a.tnr === b.tnr && cl(a.jugador) === b.clave), indice: S.indice.find((x) => x.tnr === b.tnr && x.clave === b.clave) || null });
+    }
     if (b.action === "referencia_hechas") return ok({ partidas: S.referencias.filter((r) => r.evento === b.evento).map((r) => r.partida) });
     if (b.action === "modelo") { (S.modelos = S.modelos || []).push(b); return ok({ insuficiente: true, movimientos: 420 }); }
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
@@ -447,14 +490,17 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.waitForFunction(() => /Al día/.test(document.getElementById("fp-motor-estado").textContent));
         igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
             ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora · 2 de 18 posiciones salieron de la nube de Lichess (más hondas). Se vuelve a mirar cada 45 s.", true]);
-        igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].slice(0, 6).map((td) => td.textContent)])),
+        igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].slice(0, 6).map((td) => { const c = td.cloneNode(true); c.querySelectorAll(".cam-fp-informe-jugador").forEach((b) => b.remove()); return c.textContent; })])),
             [["alta", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 Muy alta", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
              ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
         igual("y lo que se tuvo en cuenta de cada uno, una frase por línea: el Elo que se le reconoció, su historia en otros eventos, el tiempo (la señal alta en negrita) y el ritmo",
             await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [...tr.children[6].querySelectorAll(":scope > .cam-fp-detalle")].map((n) => [n.textContent.slice(0, 40), getComputedStyle(n).fontWeight >= 700, getComputedStyle(n).display]))),
-            [[["Se lo comparó como un 1620: su Elo es 15", false, "block"], ["Su historia: en otras categorías o event", false, "block"], ["Señal alta: Tiempo: pensó parecido en la", true, "block"]],
+            [[["Se lo comparó como un 1620: su Elo es 15", false, "block"], ["Su historia: en otras categorías o event", false, "block"], ["Señal alta: Tiempo: pensó parecido en la", true, "block"], ["Señal alta: Rachas: en las posiciones di", true, "block"]],
              [["Partidas rápidas: se compara con lo espe", false, "block"], ["Tiempo: piensa más donde es más difícil,", false, "block"]]]);
         igual("las cifras van con su coma: la correlación con dos decimales y el índice de su historia con uno", await p.$eval("#fp-indice tr", (tr) => [/correlación 0,05 en 40 jugadas; 2,4 desviaciones/.test(tr.textContent), /su índice fue 51,3\./.test(tr.textContent)]), [true, true]);
+        igual("cómo viene su Elo en FIDE (va en el Elo con que se compara) y las rachas: alto en lo difícil, normal en lo fácil, y su racha más rara con lo improbable que es",
+            await p.$eval("#fp-indice tr", (tr) => [/viene subiendo en FIDE unos 13,3 puntos por mes \(se le reconocen 40 que la lista todavía no refleja\) y rindió 1800 en 3 partidas/.test(tr.textContent),
+                /sale muy alto \(\+3,2 desviaciones\) y en las fáciles, normal \(\+0,4\)/.test(tr.textContent), /6 jugadas difíciles seguidas de una partida, todas la primera del motor \(para su nivel, 1 vez en 2\s512\)/.test(tr.textContent)]), [true, true, true]);
         await p.click("#fp-confianza summary");
         igual("«¿Qué tan confiable es?»: las alarmas falsas contra las del azar y cuánto detectaría", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(0, 3)), [
             "Medido con los 140 jugadores que tienen 30 jugadas o más analizadas.",
@@ -589,6 +635,13 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const ib = fs.readFileSync(await informe.path()).toString("latin1");
         igual("el informe de Fair Play del torneo en PDF: con la marca de agua, el resumen, las revisiones, el acumulado y las alertas", [informe.suggestedFilename(), ib.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(ib), ...["Resumen", "Por categor", "Las revisiones", "Tenia un papel|Ten\\355a un papel|Ten.a un papel", "P.rez, Luis", "Castro, Alana"].map((x) => new RegExp(x).test(ib))],
             ["informe-fair-play-centroamericano-2026.pdf", true, true, true, true, true, true, true, true]);
+        // El informe de UN jugador (para presentar un caso): sus partidas, sus señales y el método.
+        const [deJugador] = await Promise.all([p.waitForEvent("download"), p.click("#fp-indice tr >> nth=0 >> [data-accion='informe-jugador']")]);
+        const jb = fs.readFileSync(await deJugador.path()).toString("latin1");
+        igual("el informe de un jugador en PDF: lo pide con su categoría y su clave, con la marca de agua, su índice, lo que se tuvo en cuenta, partida por partida y cómo se midió",
+            [deJugador.suggestedFilename(), await p.evaluate(() => window.__fp.llamadas.filter((l) => l.action === "jugador").map((l) => [l.tnr, l.clave]).pop()), jb.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(jb),
+                ...["El jugador", "como el de FIDE", "Lo que se tuvo en cuenta", "Partida por partida", "C.mo se midi", "Rachas"].map((x) => new RegExp(x).test(jb))],
+            ["fair-play-perez-luis.pdf", ["100", "perez luis"], true, true, true, true, true, true, true, true]);
         igual("a 820 px no se desplaza a lo ancho, y sin errores en la página", await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth).then((x) => [x, e.errores]), [true, []]);
         igual("en claro, todo el texto da 4,5 o más", await p.evaluate(CONTRASTE, TEXTO_PANEL), []);
         await e.ctx.close();
@@ -605,7 +658,9 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await q.p.fill("#fp-enlace-nombre", "Pedro Solís");
         await q.p.click('#fp-form-enlace button[type="submit"]');
         await q.p.waitForFunction(() => document.querySelectorAll("#fp-enlaces .cam-fp-enlace").length === 2);
-        igual("«Crear su QR» crea el enlace con el nombre y el vencimiento del torneo", await q.p.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_fp_enlaces").map((l) => l.valores)), [{ nombre: "Pedro Solís", vence: "2026-11-10T05:59:59Z" }]);
+        // Vence a los 10 días (lo que dura un evento): sirve para cualquier torneo, no solo el Centroamericano.
+        const creados = await q.p.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_fp_enlaces").map((l) => l.valores));
+        igual("«Crear su QR» crea el enlace con el nombre y vence a los 10 días", creados.map((c) => ({ nombre: c.nombre, dias: Math.round((new Date(c.vence) - Date.now()) / 864e5) })), [{ nombre: "Pedro Solís", dias: 10 }]);
         await q.p.click('#fp-enlaces .cam-fp-enlace[data-id="en-1"] [data-accion="apagar"]');
         await q.p.waitForSelector("dialog[open]");
         await q.p.click("dialog[open] [data-avisos-aceptar]");

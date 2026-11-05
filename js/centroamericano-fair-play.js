@@ -28,7 +28,7 @@
     const NIVELES = { a_mirar: "A mirar", alta: "Muy alta" };
     const COLOR = { blancas: "Blancas", negras: "Negras" };
     const LEER_MS = 20000, ACTUALIZAR_MS = 120000;
-    const VENCE_DEFECTO = "2026-11-10T05:59:59Z";   // el final del torneo, como los enlaces de los árbitros
+    const VENCE_DIAS = 10;             // un QR de encargado dura 10 días (lo que dura un evento); se apaga antes a mano
     const MOTOR_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";   // las dos pantallas están en la raíz del sitio
     const NODOS = 150000;              // sin profundidad fija: cuánto piensa en cada posición
     const TOPE_NODOS = 800000;         // con profundidad fija, el tope por si una posición se complica mucho
@@ -66,6 +66,9 @@
     const uno = (x) => Number(x).toLocaleString("es-CR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     const dos = (x) => Number(x).toLocaleString("es-CR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const conElo = (nombre, elo) => (nombre || "—") + (elo ? " (" + elo + ")" : "");
+    // El evento que se está mirando (lo dice la función, de los torneos): «Centroamericano 2026», «Nacional 2027»…
+    const evento = () => (datos && datos.evento) || "Fair Play";
+    const archivo = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const clave = (a) => a.tnr + "|" + a.ronda + "|" + a.mesa + "|" + a.color;
     // La clave de un nombre, IGUAL que claveDe() de la función e interno.fp_clave() de la base.
     const claveNombre = (p) => String(p == null ? "" : p).toLowerCase().replace(/[áéíóúüñ,.]/g, (x) => ({ "á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u", "ü": "u", "ñ": "n", ",": " ", ".": " " })[x]).replace(/\s+/g, " ").trim();
@@ -75,11 +78,22 @@
         if (!x) return [];
         const out = [];
         if (x.ritmo === "rapido") out.push({ alto: false, texto: "Partidas rápidas: se compara con lo esperable en rápidas, que tienen su propio ajuste." });
-        if (x.elo_usado && x.elo && x.elo_usado > x.elo) out.push({ alto: false, texto: "Se lo comparó como un " + x.elo_usado + ": su Elo es " + x.elo + " y rindió " + x.rendimiento + " en " + x.rendimiento_partidas + (x.rendimiento_partidas === 1 ? " partida" : " partidas") + " del torneo (se le reconoce parte de lo que rinde, hasta 200 puntos a los menores y 100 a los demás: el Elo de quien mejora rápido se atrasa)." });
+        if (x.elo_usado && x.elo && x.elo_usado > x.elo) out.push({ alto: false, texto: "Se lo comparó como un " + x.elo_usado + ": su Elo es " + x.elo
+            + (x.elo_tendencia ? ", viene subiendo en FIDE unos " + uno(x.tendencia_mes) + " puntos por mes (se le reconocen " + x.elo_tendencia + " que la lista todavía no refleja)" : "")
+            + (x.rendimiento != null && x.rendimiento_partidas ? " y rindió " + x.rendimiento + " en " + x.rendimiento_partidas + (x.rendimiento_partidas === 1 ? " partida" : " partidas") + " del torneo" : "")
+            + " (se le reconoce parte de lo que rinde, hasta 200 puntos a los menores y 100 a los demás: el Elo de quien mejora rápido se atrasa)." });
+        else if (x.tendencia_mes != null && x.elo) out.push({ alto: false, texto: "Su Elo en FIDE en el último año: " + (Number(x.tendencia_mes) > 0 ? "sube unos " + uno(x.tendencia_mes) + " puntos por mes, pero no lo suficiente para cambiar con quién se compara." : "estable o bajando: se compara con su Elo.") });
         if (x.hist_partidas) out.push({ alto: false, texto: "Su historia: en otras categorías o eventos ya medidos (" + x.hist_partidas + (x.hist_partidas === 1 ? " partida" : " partidas") + ") su índice fue " + (x.hist_roi != null ? uno(x.hist_roi) : "—") + ". Quien siempre juega así no es raro; quien de pronto juega muy por encima de su historia, sí. (Por el nombre: dos personas que se llamen igual se juntan.)" });
         if (x.tiempo_rho != null) out.push(Number(x.tiempo_z) >= 2
             ? { alto: true, texto: "Tiempo: pensó parecido en las jugadas fáciles y en las difíciles (correlación " + dos(x.tiempo_rho) + " en " + x.tiempo_jugadas + " jugadas; " + uno(x.tiempo_z) + " desviaciones por debajo de lo normal en su ritmo). Es típico de quien espera la jugada de afuera, pero hay jugadores de ritmo parejo: es una señal para mirar, no entra en el índice." }
             : { alto: false, texto: "Tiempo: piensa más donde es más difícil, como casi todos (correlación " + dos(x.tiempo_rho) + " en " + x.tiempo_jugadas + " jugadas)." });
+        // Las rachas: el motor solo en el momento decisivo (señal para explicar; no entra en el índice).
+        const masMenos = (z) => (Number(z) >= 0 ? "+" : "") + uno(z);
+        const racha = x.racha_largo && x.racha_log10 != null ? " Su racha más rara: " + x.racha_largo + " jugadas difíciles seguidas de una partida, todas la primera del motor (para su nivel, 1 vez en " + Math.round(Math.pow(10, -Number(x.racha_log10))).toLocaleString("es-CR") + ")." : "";
+        if (x.crit_z != null && x.facil_z != null) out.push(Number(x.contraste_z) >= 2 && Number(x.crit_z) >= 2
+            ? { alto: true, texto: "Rachas: en las posiciones difíciles para su nivel sale muy alto (" + masMenos(x.crit_z) + " desviaciones) y en las fáciles, normal (" + masMenos(x.facil_z) + "). Es como juega quien usa el motor solo en el momento decisivo; alguien más fuerte que su Elo sale alto en las dos. Señal para mirar: no entra en el índice." + racha }
+            : { alto: false, texto: "En las posiciones difíciles para su nivel: " + masMenos(x.crit_z) + " desviaciones; en las fáciles: " + masMenos(x.facil_z) + "." + racha });
+        else if (racha) out.push({ alto: false, texto: racha.trim() });
         return out;
     }
 
@@ -322,7 +336,9 @@
         $("fp-indice-tabla").hidden = lista.length === 0;
         const nivel = (r) => (r >= 62.5 ? "alta" : r >= 60 ? "a_mirar" : "normal");
         $("fp-indice").replaceChildren(...lista.slice(0, 60).map((x) => el("tr", { "data-nivel": nivel(x.roi) },
-            el("td", {}, el("strong", { texto: conElo(x.jugador, x.elo) }), x.comparado === "categoria" ? el("span", { class: "cam-fp-detalle", texto: "Sin Elo: comparado con su categoría" }) : null),
+            el("td", {}, el("strong", { texto: conElo(x.jugador, x.elo) }), x.comparado === "categoria" ? el("span", { class: "cam-fp-detalle", texto: "Sin Elo: comparado con su categoría" }) : null,
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico cam-fp-informe-jugador", "data-accion": "informe-jugador", onclick: (e) => informeJugador(x, e.currentTarget) },
+                    el("span", { "aria-hidden": "true", texto: "📄 " }), "Informe", el("span", { class: "sr-only", texto: " de " + (x.jugador || "este jugador") + " en PDF" }))),
             el("td", { texto: nombreDe(x.tnr) }),
             el("td", { texto: x.partidas + " (rondas " + x.rondas + ") · " + x.jugadas + " jugadas" }),
             el("td", {}, el("strong", { texto: uno(x.roi) }), nivel(x.roi) !== "normal" ? el("span", { class: "cam-chip", "data-estado": "fp-nivel-" + nivel(x.roi), texto: " " + NIVELES[nivel(x.roi)] }) : null),
@@ -538,9 +554,9 @@
         const lista = [...datos.sorteos].sort((a, b) => (a.ronda - b.ronda) || (orden(a.tnr) - orden(b.tnr)) || (a.mesa - b.mesa));
         try {
             const blob = await window.ReportePDF.generar({
-                titulo: "Fair Play: mesas sorteadas — Centroamericano 2026",
+                titulo: "Fair Play: mesas sorteadas — " + evento(),
                 subtitulo: window.HoraCR.fechaHora(new Date()),
-                pie: "Centroamericano 2026 · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
+                pie: evento() + " · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
                 bloques: [{ tipo: "tabla", encabezados: ["Categoría", "Ronda", "Mesa", "Peso y por qué", "Jugadores", "Estado", "Sorteó / decidió", "Resultado o motivo"], anchos: [1.4, 0.5, 0.7, 2, 2.2, 1, 1.5, 2.4],
                     filas: lista.map((f) => [nombreDe(f.tnr), String(f.ronda), f.mesa + " de " + f.mesas_en_sorteo, Number(f.peso || 1) + (f.motivos && f.motivos.length ? ": " + f.motivos.join("; ") : ""),
                         conElo(f.blancas, f.elo_b) + " – " + conElo(f.negras, f.elo_n) + (f.no_aplica ? " (" + f.no_aplica + ")" : ""), ESTADOS[f.estado] || f.estado,
@@ -549,7 +565,7 @@
                 fotos: [],
             });
             const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = "fair-play-centroamericano-2026.pdf";
+            a.href = URL.createObjectURL(blob); a.download = "fair-play-" + archivo(evento()) + ".pdf";
             document.body.append(a); a.click(); a.remove();
         } catch (e) { avisar("No se pudo armar el PDF: " + (e.message || e), true); }
     }
@@ -610,15 +626,72 @@
         ].filter(Boolean);
         try {
             const blob = await window.ReportePDF.generar({
-                titulo: "Informe de Fair Play — Centroamericano 2026",
+                titulo: "Informe de Fair Play — " + evento(),
                 subtitulo: "Al " + window.HoraCR.fechaHora(new Date()) + (datos.nombre ? " · lo bajó " + datos.nombre : ""),
-                pie: "Centroamericano 2026 · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
+                pie: evento() + " · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
                 bloques, fotos: [],
             });
             const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob); a.download = "informe-fair-play-centroamericano-2026.pdf";
+            a.href = URL.createObjectURL(blob); a.download = "informe-fair-play-" + archivo(evento()) + ".pdf";
             document.body.append(a); a.click(); a.remove();
         } catch (e) { avisar("No se pudo armar el informe: " + (e.message || e), true); }
+    }
+
+    // ---------------------------------------------------------------- el informe de UN jugador (para presentar un caso)
+    // Lo que pide la Comisión de Fair Play de FIDE para mirar un caso: quién es, contra qué se lo comparó, todas sus partidas
+    // medidas con su índice y sus señales, por qué se marcó cada una, el método y qué tan confiable es. Con la marca de agua
+    // de Ajedrez Integral (js/reporte-pdf.js) y confidencial. Ver «El informe de un jugador en PDF».
+    const FUENTE = { livechess: "Tablero electrónico (LiveChess)", planilla: "Foto de las planillas", lichess: "Lichess" };
+    async function informeJugador(x, boton) {
+        if (boton) boton.disabled = true;
+        try {
+            const r = await llamar("jugador", { tnr: x.tnr, clave: x.clave });
+            const ix = r.indice || x;
+            const partidas = (r.partidas || []).slice().sort((a, b) => (a.ronda - b.ronda) || (a.mesa - b.mesa));
+            const m = datos.modelo, v = m && m.validacion;
+            const nivel = (z) => (z == null ? "—" : (Number(z) >= 0 ? "+" : "") + uno(z));
+            const bloques = [
+                { tipo: "titulo", texto: "El jugador" },
+                { tipo: "lista", items: [
+                    "Jugador: " + (ix.jugador || x.jugador) + " · categoría: " + nombreDe(x.tnr) + ".",
+                    ix.elo ? "Elo con que juega el torneo: " + ix.elo + (ix.elo_usado && ix.elo_usado > ix.elo ? "; se lo comparó como un " + ix.elo_usado + " (lo que se le reconoce por cómo viene subiendo y por lo que rindió)." : ".") : "Sin Elo: comparado con el promedio de su categoría, sin él.",
+                    "Partidas medidas: " + ix.partidas + " (rondas " + ix.rondas + "), " + ix.jugadas + " jugadas que no eran forzadas ni de teoría.",
+                ] },
+                { tipo: "titulo", texto: "El índice (como el de FIDE)" },
+                { tipo: "lista", items: [
+                    "Índice del torneo: " + (ix.roi != null ? uno(ix.roi) : "—") + ". Lo normal es 50 y cada 5 puntos es una desviación; desde 60 se mira y desde 62,5 es muy alto.",
+                    "Primera del motor: jugó " + ix.t1 + " de " + ix.jugadas + "; lo esperable para su nivel, " + uno(ix.e_t1) + " (" + nivel(ix.z_t1) + " desviaciones).",
+                    "Lo que perdió por jugada: " + uno(ix.dj / Math.max(1, ix.jugadas)) + " puntos de probabilidad de ganar; lo esperable, " + uno(ix.e_dj / Math.max(1, ix.jugadas)) + " (" + nivel(ix.z_dj) + " desviaciones; menos es más preciso).",
+                    ix.dificiles ? "Posiciones de una sola jugada buena: acertó " + ix.t1_dif + " de " + ix.dificiles + "; lo esperable, " + uno(ix.e_t1_dif) + " (" + nivel(ix.z_dif) + ")." : "No tuvo posiciones de una sola jugada buena que medir.",
+                ] },
+                { tipo: "titulo", texto: "Lo que se tuvo en cuenta" },
+                { tipo: "lista", items: notasDe(ix).map((n) => (n.alto ? "[ALTA] " : "") + n.texto).concat(notasDe(ix).length ? [] : ["Nada más que su Elo y sus partidas."]) },
+                { tipo: "titulo", texto: "Partida por partida" },
+                partidas.length ? { tipo: "tabla", encabezados: ["Ronda", "Mesa", "Color", "Rival", "Resultado", "Jugadas", "Primera del motor (jugó / esperable)", "Índice", "De dónde"], anchos: [0.6, 0.6, 0.8, 2, 0.9, 0.8, 1.6, 0.7, 1.6],
+                    filas: partidas.map((a) => [String(a.ronda), String(a.mesa), COLOR[a.color] || a.color, conElo(a.rival, a.rival_elo), a.resultado || "—", String(a.m_jugadas || a.jugadas), a.m_jugadas ? a.m_t1 + " / " + uno(a.m_e_t1) : "—", a.roi != null ? uno(a.roi) : "—", FUENTE[a.fuente] || a.fuente || "—"]) }
+                    : { tipo: "parrafo", texto: "No hay partidas medidas." },
+                ...partidas.filter((a) => a.roi != null && Number(a.roi) >= 55 || a.nivel !== "normal").flatMap((a) => [
+                    { tipo: "subtitulo", texto: "Ronda " + a.ronda + ", mesa " + a.mesa + " (" + (COLOR[a.color] || a.color).toLowerCase() + ") contra " + conElo(a.rival, a.rival_elo) },
+                    { tipo: "parrafo", texto: resumenAlerta(a) },
+                    { tipo: "lista", items: explicar(a).map((y) => (y.alto ? "[ALTA] " : "") + y.texto) },
+                ]),
+                { tipo: "titulo", texto: "Cómo se midió" },
+                { tipo: "parrafo", texto: "Cada jugada desde que termina la teoría (las partidas de maestros) se analiza con Stockfish, o con la evaluación más honda de la nube de Lichess cuando la tiene, y se compara con lo que elegiría alguien de su nivel según un modelo por jugada como el de Ken Regan (el que usa FIDE): en cada posición, la probabilidad de cada jugada según cuánto peor es que la mejor. El modelo se ajusta con las jugadas de los jugadores con Elo del torneo y de partidas de referencia de otros torneos, cada ritmo por separado. No cuentan las jugadas forzadas, las de posiciones ya decididas (6 peones o más) ni, en las partidas leídas de la foto de las planillas, las que la lectura dejó dudosas." },
+                v ? { tipo: "parrafo", texto: "Qué tan confiable es, con los " + v.jugadores + " jugadores medidos: alarmas falsas, " + uno(v.falsas_a_mirar) + " % desde 60 (por azar, " + uno(v.esperadas_a_mirar) + " %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((v.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." + (v.casos ? " Con " + v.casos.con_trampa + " casos de prueba donde se sabe quién usó el motor, marcó al " + uno(v.casos.marcados_a_mirar) + " %." : "") } : null,
+                { tipo: "nota", texto: NO_SIGNIFICA },
+                { tipo: "nota", texto: "Documento confidencial del equipo de Fair Play y del árbitro principal. Lo bajó " + (datos.nombre || "—") + " el " + window.HoraCR.fechaHora(new Date()) + "." },
+            ].filter(Boolean);
+            const blob = await window.ReportePDF.generar({
+                titulo: "Fair Play: " + (ix.jugador || x.jugador),
+                subtitulo: evento() + " · " + nombreDe(x.tnr) + " · al " + window.HoraCR.fechaHora(new Date()),
+                pie: evento() + " · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
+                bloques, fotos: [],
+            });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob); a.download = "fair-play-" + archivo(ix.jugador || x.jugador || "jugador") + ".pdf";
+            document.body.append(a); a.click(); a.remove();
+        } catch (e) { avisar("No se pudo armar el informe del jugador: " + (e.message || e), true); }
+        finally { if (boton) boton.disabled = false; }
     }
 
     // ---------------------------------------------------------------- los QR de los encargados (solo el principal)
@@ -636,7 +709,7 @@
                     el("p", { class: "cam-fp-detalle", texto: x.ultimo_uso ? "Entró por última vez a las " + hora(x.ultimo_uso) : "Todavía no ha entrado" }),
                     el("div", { class: "cam-fp-acciones mt-1" },
                         el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "copiar", onclick: () => { navigator.clipboard.writeText(url).then(() => avisar("Enlace de " + x.nombre + " copiado.")).catch(() => avisar(url)); } }, "Copiar el enlace"),
-                        el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: "https://wa.me/?text=" + encodeURIComponent("Tu pantalla de Fair Play del Centroamericano 2026 (no la compartas): " + url), target: "_blank", rel: "noopener" }, "Mandar por WhatsApp"),
+                        el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: "https://wa.me/?text=" + encodeURIComponent("Tu pantalla de Fair Play de " + evento() + " (no la compartas): " + url), target: "_blank", rel: "noopener" }, "Mandar por WhatsApp"),
                         el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "apagar", onclick: () => apagarEnlace(x) }, "Apagar"))),
                 window.QrSvg ? window.QrSvg.dibujar(url, "QR de Fair Play de " + x.nombre, { marca: true }) : null);
         }));
@@ -646,7 +719,7 @@
         e.preventDefault();
         const nombre = $("fp-enlace-nombre").value.trim();
         if (!nombre) return;
-        const { error } = await window.sb.from("centroamericano_fp_enlaces").insert({ nombre, vence: VENCE_DEFECTO });
+        const { error } = await window.sb.from("centroamericano_fp_enlaces").insert({ nombre, vence: new Date(Date.now() + VENCE_DIAS * 864e5).toISOString() });
         if (error) { avisar("No se pudo crear: " + error.message, true); return; }
         $("fp-enlace-nombre").value = "";
         avisar("Listo: el QR de " + nombre + " está abajo. Con él entra a su pantalla de Fair Play, sin cuenta.");
@@ -825,7 +898,7 @@
                     const total = Math.ceil(p.posiciones.length / 2);
                     for (let i = p.desde; i < p.posiciones.length; i++) {
                         if (!motorEncendido() || (ctx.visible && !ctx.visible())) { estadoMotor("En pausa: se sigue cuando vuelvas a esta pantalla."); return; }
-                        if (i % 6 === p.desde % 6) estadoMotor("🤖 " + (p.honda ? "Confirmando a fondo (alerta) " : "Analizando ") + nombreDe(p.tnr) + ", ronda " + p.ronda + ", mesa " + p.mesa + " (" + p.blancas + " – " + p.negras + "): jugada " + (Math.floor(i / 2) + 1) + " de " + total + (r.quedan ? " · faltan " + r.quedan + " partidas más" : "") + ".");
+                        if (i % 6 === p.desde % 6) estadoMotor("🤖 " + (p.honda ? "Confirmando a fondo (alerta) " : "Analizando ") + nombreDe(p.tnr) + ", ronda " + p.ronda + ", mesa " + p.mesa + (p.fuente === "planilla" ? " (de la foto de la planilla)" : "") + " (" + p.blancas + " – " + p.negras + "): jugada " + (Math.floor(i / 2) + 1) + " de " + total + (r.quedan ? " · faltan " + r.quedan + " partidas más" : "") + ".");
                         const ev = await evaluar(p.posiciones[i], { multipv: p.multipv || r.multipv, profundidad: p.profundidad, nodos: r.nodos });   // cuánto pensar lo dice la función
                         if (ev) { evals[i] = ev.cp; opciones[i] = ev.opciones; }
                     }

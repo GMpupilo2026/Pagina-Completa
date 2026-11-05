@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105053157
+# al-dia-con: 20261105110000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -51,11 +51,14 @@ tabla  centroamericano_correos_bitacora  rls=true
 tabla  centroamericano_fair_play  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_fp_analisis  rls=true
+tabla  centroamericano_fp_elo_fide  rls=true
 tabla  centroamericano_fp_enlaces  rls=true
+tabla  centroamericano_fp_fide  rls=true
 tabla  centroamericano_fp_indice  rls=true
 tabla  centroamericano_fp_jugadas  rls=true
 tabla  centroamericano_fp_modelo  rls=true
 tabla  centroamericano_fp_partidas  rls=true
+tabla  centroamericano_fp_planillas  rls=true
 tabla  centroamericano_fp_referencia  rls=true
 tabla  centroamericano_inicios_ronda  rls=true
 tabla  centroamericano_inicios_torneo  rls=true
@@ -709,6 +712,9 @@ columna  centroamericano_fp_analisis.z  numeric(5,2)
 columna  centroamericano_fp_analisis.z_dif  numeric(5,2)
 columna  centroamericano_fp_analisis.z_modelo  numeric(5,2)
 columna  centroamericano_fp_analisis.z_t1  numeric(5,2)
+columna  centroamericano_fp_elo_fide.fide_id  text
+columna  centroamericano_fp_elo_fide.historial  jsonb
+columna  centroamericano_fp_elo_fide.leido  timestamp with time zone
 columna  centroamericano_fp_enlaces.creada  timestamp with time zone
 columna  centroamericano_fp_enlaces.creada_por  uuid
 columna  centroamericano_fp_enlaces.id  uuid
@@ -717,21 +723,32 @@ columna  centroamericano_fp_enlaces.revocada  boolean
 columna  centroamericano_fp_enlaces.token  text
 columna  centroamericano_fp_enlaces.ultimo_uso  timestamp with time zone
 columna  centroamericano_fp_enlaces.vence  timestamp with time zone
+columna  centroamericano_fp_fide.clave  text
+columna  centroamericano_fp_fide.fide_id  text
+columna  centroamericano_fp_fide.leido  timestamp with time zone
+columna  centroamericano_fp_fide.nombre  text
+columna  centroamericano_fp_fide.tnr  text
 columna  centroamericano_fp_indice.actualizado  timestamp with time zone
 columna  centroamericano_fp_indice.clave  text
 columna  centroamericano_fp_indice.comparado  text
+columna  centroamericano_fp_indice.contraste_z  numeric(5,2)
+columna  centroamericano_fp_indice.crit_z  numeric(5,2)
 columna  centroamericano_fp_indice.dificiles  integer
 columna  centroamericano_fp_indice.dj  numeric(9,1)
 columna  centroamericano_fp_indice.e_dj  numeric(9,1)
 columna  centroamericano_fp_indice.e_t1  numeric(7,2)
 columna  centroamericano_fp_indice.e_t1_dif  numeric(7,2)
 columna  centroamericano_fp_indice.elo  integer
+columna  centroamericano_fp_indice.elo_tendencia  integer
 columna  centroamericano_fp_indice.elo_usado  integer
+columna  centroamericano_fp_indice.facil_z  numeric(5,2)
 columna  centroamericano_fp_indice.hist_partidas  integer
 columna  centroamericano_fp_indice.hist_roi  numeric(5,1)
 columna  centroamericano_fp_indice.jugadas  integer
 columna  centroamericano_fp_indice.jugador  text
 columna  centroamericano_fp_indice.partidas  integer
+columna  centroamericano_fp_indice.racha_largo  integer
+columna  centroamericano_fp_indice.racha_log10  numeric(5,1)
 columna  centroamericano_fp_indice.rendimiento  integer
 columna  centroamericano_fp_indice.rendimiento_partidas  integer
 columna  centroamericano_fp_indice.ritmo  text
@@ -739,6 +756,7 @@ columna  centroamericano_fp_indice.roi  numeric(5,1)
 columna  centroamericano_fp_indice.rondas  text
 columna  centroamericano_fp_indice.t1  integer
 columna  centroamericano_fp_indice.t1_dif  integer
+columna  centroamericano_fp_indice.tendencia_mes  numeric(5,1)
 columna  centroamericano_fp_indice.tiempo_jugadas  integer
 columna  centroamericano_fp_indice.tiempo_rho  numeric(4,2)
 columna  centroamericano_fp_indice.tiempo_z  numeric(5,2)
@@ -795,6 +813,13 @@ columna  centroamericano_fp_partidas.snr_n  integer
 columna  centroamericano_fp_partidas.teoria_hasta  smallint
 columna  centroamericano_fp_partidas.teoria_segura  boolean
 columna  centroamericano_fp_partidas.tnr  text
+columna  centroamericano_fp_planillas.cargado  timestamp with time zone
+columna  centroamericano_fp_planillas.cargado_por  text
+columna  centroamericano_fp_planillas.dudosas  integer[]
+columna  centroamericano_fp_planillas.jugadas  text[]
+columna  centroamericano_fp_planillas.mesa  integer
+columna  centroamericano_fp_planillas.ronda  integer
+columna  centroamericano_fp_planillas.tnr  text
 columna  centroamericano_fp_referencia.cargado  timestamp with time zone
 columna  centroamericano_fp_referencia.cargado_por  text
 columna  centroamericano_fp_referencia.color  text
@@ -906,13 +931,17 @@ columna  centroamericano_tiempos.t_negras  integer
 columna  centroamericano_tiempos.tnr  text
 columna  centroamericano_tiempos.turno  text
 columna  centroamericano_torneos.acceso_tnr  text
+columna  centroamericano_torneos.archivado  boolean
 columna  centroamericano_torneos.categoria  text
 columna  centroamericano_torneos.clave_puesta  timestamp with time zone
 columna  centroamericano_torneos.clave_puesta_por  uuid
+columna  centroamericano_torneos.evento  text
+columna  centroamericano_torneos.menores  boolean
 columna  centroamericano_torneos.nombre  text
 columna  centroamericano_torneos.orden  integer
 columna  centroamericano_torneos.prueba  boolean
 columna  centroamericano_torneos.rama  text
+columna  centroamericano_torneos.ritmo  text
 columna  centroamericano_torneos.sid_en_boveda  boolean
 columna  centroamericano_torneos.tnr  text
 columna  centroamericano_traducciones.asignacion_id  uuid
@@ -2734,6 +2763,7 @@ funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
+funcion  centroamericano_evento_archivar(p_evento text, p_archivar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_aprobar(p_id uuid, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_manual(p_tnr text, p_ronda integer, p_mesa integer, p_color text, p_resultado text, p_jugador text, p_nota text, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
@@ -2754,6 +2784,7 @@ funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inici
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
+funcion  centroamericano_torneos_agregar(p_evento text, p_torneos jsonb)  definer  anon=false  auth=true
 funcion  centroamericano_vivo_guardar(p_enlace text, p_token text)  definer  anon=false  auth=false
 funcion  centroamericano_vivo_leer()  definer  anon=false  auth=false
 funcion  centroamericano_vivo_quitar()  definer  anon=false  auth=false
@@ -4059,13 +4090,16 @@ indice  centroamericano_fair_play  centroamericano_fair_play_una_vez
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
 indice  centroamericano_fp_analisis  centroamericano_fp_analisis_pkey
+indice  centroamericano_fp_elo_fide  centroamericano_fp_elo_fide_pkey
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_creada_por_idx
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_pkey
 indice  centroamericano_fp_enlaces  centroamericano_fp_enlaces_token_key
+indice  centroamericano_fp_fide  centroamericano_fp_fide_pkey
 indice  centroamericano_fp_indice  centroamericano_fp_indice_pkey
 indice  centroamericano_fp_jugadas  centroamericano_fp_jugadas_pkey
 indice  centroamericano_fp_modelo  centroamericano_fp_modelo_pkey
 indice  centroamericano_fp_partidas  centroamericano_fp_partidas_pkey
+indice  centroamericano_fp_planillas  centroamericano_fp_planillas_pkey
 indice  centroamericano_fp_referencia  centroamericano_fp_referencia_pkey
 indice  centroamericano_inicios_ronda  centroamericano_inicios_ronda_pkey
 indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_asignacion_idx
