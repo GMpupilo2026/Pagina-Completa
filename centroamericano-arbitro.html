@@ -119,19 +119,14 @@
                     <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <!-- Cómo ve cada árbitro sus mesas: un botón chico que despliega las dos opciones (mismas funciones). La tablet recuerda la elegida. -->
+                    <span class="cam-desplegable" id="vista-mesas" data-vista="">
+                        <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
+                        <div id="vista-menu" class="cam-desplegable-lista" role="menu" aria-label="Cómo ver tus mesas" hidden></div>
+                    </span>
                     <button type="button" id="concluir" class="cam-btn cam-btn-claro"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
-                <!-- Cómo ve cada árbitro sus mesas: las mismas funciones, dos formas de verlas. La tablet recuerda la elegida (js/centroamericano-arbitro.js). -->
-                <details id="vista-mesas" class="cam-vista cam-detalle" data-vista="">
-                    <summary id="vista-resumen">Cómo ver mis mesas</summary>
-                    <fieldset class="cam-vista-opciones">
-                        <legend class="sr-only">Cómo ver tus mesas</legend>
-                        <p id="vista-ayuda" class="cam-herramientas-nota"></p>
-                        <div id="vista-lista" class="cam-vista-lista"></div>
-                        <p id="vista-blitz" class="cam-herramientas-nota" hidden>En el Blitz las mesas siempre se ven con la ficha corta («Tres toques»): es lo único que hay que tocar.</p>
-                    </fieldset>
-                </details>
                 <p id="espera" class="cam-espera" role="status"></p>
                 <button type="button" id="ir-corregir" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✎</span> Corregir la hora de inicio de la ronda</button>
                 <p id="presencia-resumen" class="cam-espera" role="status"></p>

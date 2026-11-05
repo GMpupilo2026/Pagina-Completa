@@ -10184,16 +10184,17 @@ Pedido: que cada árbitro escoja la forma en que le gusta más ver la informaci�
 ahora la ficha corta «Tres toques» (opción A) solo la tenía Óscar Angulo, por una lista fija. El Rápido no es una vista a elegir (se decide por
 el tipo de torneo, ver «El Rápido y el Blitz»).
 
-- **Dónde.** `centroamericano-arbitro.html`, en la barra de la tablet, un detalle plegado **«Cómo ver mis mesas · De siempre»** con dos
-  opciones (radios con su explicación, 56 px de alto, se alcanzan con el teclado). Elegir otra **vuelve a armar las tarjetas al instante**, sin
-  recargar, y dice «Ves tus mesas con «Tres toques»».
+- **Dónde.** `centroamericano-arbitro.html`, en la barra de la tablet: **un solo botón chico «👁 Vista ▾»** (al lado de «Horarios»). Nada más
+  se ve hasta tocarlo; entonces se despliega un menú de dos opciones (`role="menuitemradio"`, la elegida con ✓ y en negrita, 44 px de alto,
+  flechas para pasar de una a otra, Escape o un toque afuera lo cierran y el foco vuelve al botón). Su nombre accesible dice la vista puesta
+  («Cómo ver tus mesas: De siempre»). Elegir otra **vuelve a armar las tarjetas al instante**, sin recargar, y dice «Ves tus mesas con
+  «Tres toques»». La clase es `cam-desplegable` (ojo: `cam-menu` ya es el menú de pestañas de la organización).
 - **Cómo se decide** (`vistaElegida()`, y `fichaA()` queda como `vistaElegida() === "tres"`): 1) `?ficha=hoy` / `?ficha=a` en la dirección (para
   probar y comparar); 2) lo que eligió en esta página; 3) lo que la tablet recuerda (`localStorage["cam-vista-mesas"]`, siempre en
   try/catch: sin almacenamiento la elección vale mientras la página esté abierta); 4) si no hay nada, quien está en `FICHA_A` (Óscar Angulo)
   arranca con «Tres toques» y todos los demás con «De siempre». **Lo que elige el árbitro manda sobre la lista**: Óscar puede volver a la de
   siempre. Es por tablet, no por árbitro: otra tablet o un navegador sin datos arranca con el valor de la lista.
-- **En el Blitz no hay nada que elegir**: siempre va la ficha corta (es lo único que hay que tocar); las opciones salen deshabilitadas y una
-  nota lo dice. El Rápido sí puede elegir.
+- **En el Blitz no hay nada que elegir**: siempre va la ficha corta (es lo único que hay que tocar); el botón no se ofrece. El Rápido sí puede elegir.
 - **Las mismas funciones.** Lo revisa `verificar-centroamericano-mesas-pagina.js` («Cada árbitro elige cómo ver sus mesas»): todo `data-accion`
   que tiene una mesa en la ficha de siempre está también en la corta (solo cambia elegir el resultado: la lista contra los tres botones), la
   elección se recuerda al recargar, Óscar arranca con la corta pero puede cambiarla, y sin `localStorage` no se rompe nada. **Una vista nueva

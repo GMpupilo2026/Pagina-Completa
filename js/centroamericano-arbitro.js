@@ -1385,24 +1385,43 @@
 
     // La leyenda de los iconos: en el Blitz solo lo que hay en pantalla (Ilegal, Anular y Principal); sin «Llegó», «Irregularidad», «Se levantó», fotos ni tiempos.
     let leyendaCompleta = null;
-    // «Cómo ver mis mesas»: las vistas como botones de opción (radio) con su explicación. El resumen dice cuál está puesta. Elegir otra
-    // vuelve a armar las tarjetas al instante y la tablet la recuerda. En el Blitz no hay nada que elegir.
+    // «Vista»: un botón chico que despliega las vistas como un menú de una opción marcada (menuitemradio). Elegir otra vuelve a armar las
+    // tarjetas al instante y la tablet la recuerda. En el Blitz no hay nada que elegir y el botón no se ofrece. Sin ruido: nada visible
+    // aparte del botón hasta que se toca.
+    function menuVista() { return $("vista-menu"); }
+    function cerrarMenuVista(devolverFoco) {
+        const m = menuVista();
+        if (m.hidden) return;
+        m.hidden = true;
+        $("vista-boton").setAttribute("aria-expanded", "false");
+        if (devolverFoco) $("vista-boton").focus();
+    }
+    function abrirMenuVista() {
+        const m = menuVista();
+        m.hidden = false;
+        $("vista-boton").setAttribute("aria-expanded", "true");
+        const marcada = m.querySelector('[aria-checked="true"]') || m.querySelector("button");
+        if (marcada) marcada.focus();
+    }
     function pintarVista() {
         const blitz = rapido() === "blitz";
         const actual = blitz ? "tres" : vistaElegida();
         const v = VISTAS.find((x) => x.id === actual);
         $("vista-mesas").dataset.vista = actual;
-        $("vista-resumen").textContent = "Cómo ver mis mesas · " + v.texto;
-        $("vista-blitz").hidden = !blitz;
-        $("vista-ayuda").textContent = blitz ? "" : "Las dos tienen las mismas funciones; solo cambia cómo se ven. La tablet recuerda tu elección.";
-        const lista = $("vista-lista");
-        if (lista.dataset.armada !== (blitz ? "blitz" : "si")) {
-            lista.dataset.armada = blitz ? "blitz" : "si";
-            lista.replaceChildren(...VISTAS.map((x) => el("label", { class: "cam-vista-opcion" },
-                el("input", { type: "radio", name: "vista-mesas", value: x.id, class: "w-5 h-5", onchange: () => elegirVista(x.id) }),
-                el("span", {}, el("strong", { texto: x.texto }), el("span", { class: "cam-vista-ayuda", texto: x.ayuda })))));
+        $("vista-mesas").hidden = blitz;
+        if (blitz) cerrarMenuVista(false);
+        $("vista-boton").setAttribute("aria-label", "Cómo ver tus mesas: " + v.texto);
+        const m = menuVista();
+        if (!m.dataset.armado) {
+            m.dataset.armado = "si";
+            m.replaceChildren(...VISTAS.map((x) => el("button", { type: "button", role: "menuitemradio", class: "cam-desplegable-opcion", "data-vista": x.id, title: x.ayuda, onclick: () => { elegirVista(x.id); cerrarMenuVista(true); } },
+                el("span", { class: "cam-desplegable-marca", "aria-hidden": "true" }), x.texto)));
         }
-        for (const r of lista.querySelectorAll("input")) { r.checked = r.value === actual; r.disabled = blitz; }
+        for (const b of m.querySelectorAll("button")) {
+            const es = b.dataset.vista === actual;
+            b.setAttribute("aria-checked", es ? "true" : "false");
+            b.querySelector(".cam-desplegable-marca").textContent = es ? "✓" : "";
+        }
     }
     function elegirVista(id) {
         if (!VISTAS.some((x) => x.id === id) || id === vistaElegida()) return;
@@ -1411,6 +1430,19 @@
         pintarVista();
         pintar();
         avisar("Ves tus mesas con «" + VISTAS.find((x) => x.id === id).texto + "».");
+    }
+    // El menú se cierra con Escape, con un toque afuera y al salir con el teclado; las flechas pasan de una opción a otra.
+    function armarMenuVista() {
+        $("vista-boton").addEventListener("click", () => { if (menuVista().hidden) abrirMenuVista(); else cerrarMenuVista(false); });
+        menuVista().addEventListener("keydown", (e) => {
+            const op = [...menuVista().querySelectorAll("button")];
+            const i = op.indexOf(document.activeElement);
+            if (e.key === "Escape") { e.preventDefault(); cerrarMenuVista(true); }
+            else if (e.key === "ArrowDown") { e.preventDefault(); op[(i + 1) % op.length].focus(); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); op[(i - 1 + op.length) % op.length].focus(); }
+            else if (e.key === "Tab") cerrarMenuVista(false);
+        });
+        document.addEventListener("click", (e) => { if (!menuVista().hidden && !$("vista-mesas").contains(e.target)) cerrarMenuVista(false); });
     }
 
     function pintarLeyenda(blitz) {
@@ -2156,6 +2188,7 @@
     }
 
     function arrancar() {
+        armarMenuVista();
         $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
