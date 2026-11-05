@@ -9707,6 +9707,38 @@ cambiar los nombres de un tablero si la organización mueve a un jugador de mesa
   chess.js, una partida normal sin ninguno, la función, la migración y las páginas); roto a propósito (el reloj detenido
   desde los 10 s, sin la regla de la jugada no registrada), salta.
 
+#### Avisar al árbitro, la pantalla grande, el tablero en grande y el informe
+
+Lo pidió el dueño el 5/11, de una lista de mejoras (eligió la 2, la 3, la 4 y la 5).
+
+- **«📨 Avisar al árbitro»** en cada aviso con mesa: la función (`avisar`) busca los árbitros con enlace vigente que
+  tienen esa mesa (`centroamericano_asignaciones`, también los que tienen «todas las mesas»; uno por persona) y les
+  manda **el mismo aviso de la organización** (`centroamericano_avisos`, `de = 'organizacion'`, con «📡 Transmisión, mesa
+  N:» delante). Así no hizo falta tocar la tablet: lo ve arriba con su «Entendido», como cualquier aviso. En el Sub-12
+  tres árbitros comparten todas las mesas: le llega a los tres y el botón lo dice («Avisar a sus 3 árbitros»). La
+  pantalla dice a quién se avisó, a qué hora y si ya lo leyó (el `leido_en` de esos avisos). Sin árbitro con enlace, lo
+  dice («avísale en persona»). La mesa la pone la base (la del tablero), no el navegador.
+- **El historial** (`centroamericano_tx_historial`, migración `20261105053157`): los avisos los calcula la pantalla, así
+  que la base no sabía cuándo apareció cada uno. Cada pantalla abierta registra los que ve por primera vez
+  (`registrar`, una vez por clave y por pantalla); la base se queda con la **primera** hora (`ignoreDuplicates`: una
+  segunda pantalla no la pisa) y con quién lo vio. Ahí se anota también a quién se le avisó y con qué avisos.
+- **«📄 Informe de la transmisión (PDF)»** (`historial`, con `js/reporte-pdf.js` y la marca de agua): el resumen
+  (cuántos, para ir ya y para mirar, revisados con la mediana de lo que se tardó, avisados y leídos), por tipo de aviso
+  y, ronda por ronda, cada aviso con su hora, categoría, tablero y mesa, a quién se avisó y si lo leyó, quién lo revisó
+  y cuánto tardó (desde la primera vez que una pantalla lo vio hasta «Ya lo revisé»).
+- **«📺 Pantalla grande»**: para una pantalla o un proyector en la mesa de transmisión. A pantalla completa, solo los
+  tableros con un problema, en grande, con arriba cuántos avisos hay y la hora; sin problemas, «Todo en orden» en
+  letras grandes. Esc (o «Salir de la pantalla grande») vuelve.
+- **«🔍 Ver en grande»** en cada tablero: el tablero grande con todas las jugadas en una tabla (el reloj de quien jugó
+  después de cada una, lo que pensó y la hora), la jugada imposible marcada, y ◀ ▶ ⏮ ⏭ o las flechas del teclado para ir
+  jugada por jugada y ver dónde se trabó; en la última, sigue sola con las jugadas nuevas. Repintar no le quita el foco
+  a quien recorre con el teclado (se pasaba a la página y las flechas dejaban de andar).
+- Probado contra la base (función en su versión 4) con el torneo de ensayo: el aviso le llegó al árbitro de ensayo, un
+  segundo registro del mismo aviso no pisó el primero, el historial trae a quién se avisó; lo de prueba se borró. En el
+  navegador, con los datos reales de la ronda 5: el botón, la pantalla grande, las flechas y el PDF. Lo comprueba
+  `verificar-centroamericano-transmision.js`; roto a propósito (sin `ignoreDuplicates`, sin mirar si el enlace sigue
+  encendido), salta.
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.
