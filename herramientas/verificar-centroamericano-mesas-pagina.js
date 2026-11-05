@@ -118,6 +118,10 @@ function dobleOrganizacion(licencia) {
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) } },
     rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
       if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
+      // Un evento nuevo: la base agrega los torneos (con la licencia) y archiva un evento.
+      if (f === "centroamericano_torneos_agregar") { (window.__agregados = window.__agregados || []).push(JSON.parse(JSON.stringify(a)));
+        a.p_torneos.forEach((t, i) => TORNEOS.push(Object.assign({ orden: 200 + i, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null, prueba: false, archivado: false, evento: a.p_evento }, t))); return R(a.p_torneos.length); }
+      if (f === "centroamericano_evento_archivar") { let n = 0; TORNEOS.forEach((t) => { if (t.evento === a.p_evento && !t.prueba) { t.archivado = a.p_archivar; n++; } }); return R(n); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
         { cuando: hace(60), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "finalizo", detalle: "Finalizó la ronda 1" },
@@ -148,11 +152,13 @@ function dobleOrganizacion(licencia) {
       const err = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
       if (b.action === "poner") {
         if (b.sid === "MALAMALAMALA1234") return Promise.resolve(err(401, "chess-results no aceptó el código o la clave. Revísalos en Swiss-Manager. No se guardó la clave."));
-        const abre = b.tnr === "1529700" ? ["1529719", "1529729"] : [b.tnr];
-        const mios = TORNEOS.filter((t) => abre.includes(t.tnr)); if (!mios.length) return Promise.resolve(err(404, "Esa clave abre " + b.tnr + " (otro), y ninguno es del Centroamericano. No se guardó la clave."));
+        const abre = b.tnr === "1529700" ? ["1529719", "1529729"] : b.tnr === "1600000" ? ["1600001", "1600002"] : [b.tnr];
+        const NOMBRES = { "1600001": "Nacional Juvenil Sub-14", "1600002": "Rápido Abierto Femenino" };
+        const mios = TORNEOS.filter((t) => abre.includes(t.tnr)); if (!mios.length) return Promise.resolve(err(404, "Esa clave abre " + abre.map((t) => t + " (" + (NOMBRES[t] || "otro") + ")").join(", ") + ", y ninguno es del Centroamericano. No se guardó la clave."));
         mios.forEach((t) => { t.sid_en_boveda = true; t.acceso_tnr = b.tnr; t.clave_puesta = "2026-11-02T16:00:00Z"; });
         return Promise.resolve({ data: { ok: true, acceso: b.tnr, torneos: mios.map((t) => ({ tnr: t.tnr, nombre: t.nombre })), ronda: 1, mesas: 21, otros: [] }, error: null }); }
       if (b.action === "probar") return Promise.resolve({ data: { ok: true, torneo: "Sub-10 Absoluto", ronda: 2, mesas: 30 }, error: null });
+      if (f === "centroamericano-fair-play" && b.action === "planilla_guardar") return Promise.resolve({ data: { ok: true, jugadas: b.jugadas.length, dudosas: b.dudosas.length }, error: null });
       if (b.action === "resumen") { { const pa = PROGRESO.find((x) => x.asignacion_id === "asig-ana" && x.ronda === 3); pa.con_resultado = 9; pa.pendientes = [10, 11, 12, 13, 14, 15]; } return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
       if (b.action === "drive_estado") return Promise.resolve({ data: { ok: true, conectado: window.__driveOk, pendientes: PLANILLAS.filter((x) => !x.drive_ok).length, ultima_copia: window.__driveOk ? hace(300) : null }, error: null });
       if (b.action === "drive_conectar") {
@@ -1872,6 +1878,11 @@ const CONTRASTE = `(sel) => {
     const pgnTexto = fs.readFileSync(await pgnBajado.path(), "utf8");
     igual("el PGN se baja con el torneo, la ronda, el día y los jugadores (con sus tildes), termina en «*» y dice desde dónde es ilegible", [pgnBajado.suggestedFilename(), pgnTexto.includes('[Round "3"]'), pgnTexto.includes('[White "Harvey Ian"]'), pgnTexto.includes('[Black "Acuña Porras Fabio"]'), /\[Date "\d{4}\.\d\d\.\d\d"\]/.test(pgnTexto), /\{Desde aquí la planilla es ilegible \(jugada 17\)\.\}\s+\*\s*$/.test(pgnTexto)],
         ["Mesa 02 - Ronda 3 - Harvey Ian vs Acuna Porras Fabio.pgn", true, true, true, true, true]);
+    // La partida leída va también a Fair Play (las mesas sin tablero electrónico también se miden).
+    igual("la partida leída de la foto se manda a Fair Play: su torneo, ronda y mesa, las jugadas en SAN y cuáles quedaron dudosas, y la fila lo dice",
+        [await q.evaluate(() => window.__llamadas.filter((l) => l.f === "centroamericano-fair-play" && l.body.action === "planilla_guardar").map((l) => [l.body.action, l.body.tnr, l.body.ronda, l.body.mesa, l.body.jugadas.length, l.body.jugadas.slice(0, 2), Array.isArray(l.body.dudosas)])),
+            /^Enviada a Fair Play/.test(await q.textContent(".cam-lp-fila .cam-lp-fair-play"))],
+        [[["planilla_guardar", "1529733", 3, 2, 32, ["e4", "c6"], true]], true]);
     // «Descargar la lectura»: lo que devolvió Vision, tal cual, y lo que salió de eso (para afinar el corrector con datos reales)
     const [lecturaBajada] = await Promise.all([q.waitForEvent("download"), q.click('.cam-lp-fila [data-accion="bajar-lectura"]')]);
     const lectura = JSON.parse(fs.readFileSync(await lecturaBajada.path(), "utf8"));
@@ -1956,6 +1967,33 @@ const CONTRASTE = `(sel) => {
     await q.click("#claves-bloque-guardar");
     await q.waitForFunction(() => document.querySelectorAll("#claves-bloque-resultado li").length >= 3 && [...document.querySelectorAll("#claves-bloque-resultado li")].some((l) => l.textContent.startsWith("✓")));
     igual("otras claves en bloque: las malas se reportan con su línea y la buena ya no queda escrita", [await q.$$eval("#claves-bloque-resultado li", (l) => [l[0].textContent.startsWith("Línea 2: La clave son entre 8 y 32"), l[1].textContent.startsWith("Línea 3: El código del torneo son hasta 7"), l[2].textContent.startsWith("✓ Código 1529700: Guardada: esta clave abre 2 torneos")]), await q.inputValue("#claves-bloque")], [[true, true, true], "1529733 corta\nabc " + SID]);
+
+    console.log("\n=== Un evento nuevo, sin tocar código ===");
+    await q.fill("#g-codigo", "1600000");
+    await q.fill("#g-sid", SID);
+    await q.click("#g-guardar");
+    await q.waitForSelector("#g-nuevos tr[data-tnr]");
+    igual("una clave que abre torneos que todavía no están: los ofrece (no da error), con la categoría, la rama, el ritmo y «de menores» sacados del nombre",
+        [await q.evaluate(() => getComputedStyle(document.getElementById("g-nuevos")).display !== "none"), await q.$$eval("#g-nuevos tr[data-tnr]", (l) => l.map((tr) => [tr.dataset.tnr, tr.querySelector("[data-campo=categoria]").value, tr.querySelector("[data-campo=rama]").value, tr.querySelector("[data-campo=ritmo]").value, tr.querySelector("[data-campo=menores]").checked]))],
+        [true, [["1600001", "Sub-14", "Absoluto", "clasico", true], ["1600002", "Abierto", "Femenino", "rapido", false]]]);
+    await q.click("[data-accion='agregar-torneos']");
+    igual("sin el nombre del evento no agrega nada", [await q.textContent("#g-nuevos [role=status]"), await q.evaluate(() => (window.__agregados || []).length)], ["✗ Ponle nombre al evento (así se juntan sus torneos y se archivan juntos).", 0]);
+    await q.fill("#gn-evento", "Nacional Juvenil 2027");
+    await q.selectOption("#g-nuevos tr[data-tnr='1600002'] [data-campo=ritmo]", "blitz");
+    await q.click("[data-accion='agregar-torneos']");
+    await q.waitForSelector("#g-estado.cam-guardado");
+    igual("los agrega la base al evento (con lo corregido a mano) y se guarda la clave en el mismo paso, con el mismo código",
+        [await q.evaluate(() => window.__agregados), await q.textContent("#g-estado"), await q.evaluate(() => window.__llamadas.filter((l) => l.body && l.body.action === "poner" && l.body.tnr === "1600000").length), await q.evaluate(() => document.getElementById("g-nuevos").hidden)],
+        [[{ p_evento: "Nacional Juvenil 2027", p_torneos: [{ tnr: "1600001", nombre: "Nacional Juvenil Sub-14", categoria: "Sub-14", rama: "Absoluto", ritmo: "clasico", menores: true }, { tnr: "1600002", nombre: "Rápido Abierto Femenino", categoria: "Abierto", rama: "Femenino", ritmo: "blitz", menores: false }] }],
+         "✓ Guardada: esta clave abre 2 torneos ligados (Nacional Juvenil Sub-14, Rápido Abierto Femenino). Ronda 1 con 21 mesas en el primero.", 2, true]);
+    igual("cada evento con su «Archivar» y sus torneos en la lista", [await q.$$eval("#eventos > p[data-evento]", (l) => l.map((x) => x.dataset.evento)), await q.evaluate(() => !!document.querySelector('.cam-estado-torneo[data-tnr="1600001"]'))], [["Sin evento", "Nacional Juvenil 2027"], true]);
+    await q.click('#eventos p[data-evento="Nacional Juvenil 2027"] [data-accion="archivar-evento"]');
+    await q.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    igual("archivar pregunta antes, con el botón que dice lo que hace", await q.textContent("dialog[open] [data-avisos-aceptar]"), "Archivar el evento");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => !document.querySelector('.cam-estado-torneo[data-tnr="1600001"]'));
+    igual("archivado: sus torneos dejan de verse y queda en «Eventos archivados», donde se puede volver a abrir",
+        [await q.$$eval("#eventos > p[data-evento]", (l) => l.map((x) => x.dataset.evento)), await q.$$eval("#eventos details p[data-evento]", (l) => l.map((x) => [x.dataset.evento, !!x.querySelector("[data-accion=reabrir-evento]")]))], [["Sin evento"], [["Nacional Juvenil 2027", true]]]);
 
     console.log("\n=== La organización: el respaldo y restaurar ===");
     await q.click("#pest-respaldo");

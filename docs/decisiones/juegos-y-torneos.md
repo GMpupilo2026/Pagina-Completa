@@ -9688,6 +9688,93 @@ de cada 10 jugadas en ~40 % de las veces (con el Elo exacto, ~70 %). Por eso cas
   donde se pegue cualquier enlace de partidas, es lo siguiente. Comparar con sus partidas de Lichess o Chess.com no se
   hizo: no se sabe la cuenta de cada jugador del torneo.
 
+#### Para todos los torneos: las planillas, el Elo de FIDE, las rachas, el índice en el sorteo y el informe por jugador
+
+El mismo 5/11 el dueño pidió seis mejoras más de una lista de ocho (migración `20261105110000`, función en su versión
+13). Lo que quedó afuera, a propósito: mirar la partida mientras se juega (solo se miden partidas terminadas: así un
+árbitro no retiene a nadie por media partida) y comparar con sus cuentas de Lichess o Chess.com.
+
+##### Las mesas sin tablero electrónico: de la foto de las planillas
+
+Antes solo se medían las mesas transmitidas (unas 5 por categoría). Ahora, cuando la organización lee la foto de las
+planillas de una mesa con «Generar PGN» (ver «Leer la partida de las planillas»), la partida se manda sola a Fair Play
+(`planilla_guardar`): las jugadas en SAN y cuáles quedaron **dudosas** (?), que no se miden (una jugada mal leída
+parecería un error o un acierto que nadie hizo; `detallar(…, saltar)`). La función la vuelve a armar entera con
+chess.js (una ilegal y no se guarda nada), la guarda en `centroamericano_fp_planillas` y la mesa queda por analizar como
+una de LiveChess: con su teoría, el motor en la pantalla de Fair Play y el resultado de chess-results (`resultadoDe()`).
+No tiene el tiempo de cada jugada (la planilla no lo dice) ni «después de levantarse». La mesa que es un tablero
+electrónico no la necesita: sale de LiveChess, con el reloj. Con menos de 20 medias jugadas legibles, no se manda; la
+fila dice si se mandó o por qué no, con «Mandar a Fair Play» para reintentar. Solo se mide lo que alguien leyó: no hay
+un «leer todas las fotos» (cada lectura cuesta y el tope diario es el del Lector de planilla).
+
+##### Cómo viene su Elo en FIDE
+
+La lista inicial de chess-results (`art=0`) trae el ID FIDE de cada jugador, y su ficha pública en FIDE
+(`ratings.fide.com/profile/<id>/chart`) su Elo de cada mes. «Actualizar» (cada 90 s con una pantalla de Fair Play
+abierta) lee de a poco: tres listas por vez (una vez al día cada una) y diez fichas (de a cinco a la vez; cada ficha se
+vuelve a leer a los 20 días, y la que no contestó al otro día). Se guardan en `centroamericano_fp_fide` (el ID por la
+clave del nombre) y `centroamericano_fp_elo_fide` (el historial); solo la clave de servicio. Se probó desde aquí: los dos
+contestan sin problema.
+
+`tendencia()`: la recta que mejor explica su Elo del último año (al menos 4 meses con Elo; Estándar para las clásicas,
+Rápido para las rápidas), y se le reconoce lo que subiría en **3 meses** más (lo que se atrasa la lista), con tope de
+150 a un menor y 75 a los demás, y nunca de menos: quien viene bajando se compara con su Elo. Entra como punto de partida
+de `eloUsado()`: su Elo más la tendencia, y lo que rinde en el torneo lo corre hacia arriba o hacia abajo (sin bajar de su
+Elo; el tope de 200 sigue). Así a un niño que viene subiendo se le reconoce desde la primera ronda, sin esperar sus
+resultados. Sin ficha, nada (nunca se inventa). El mes se cuenta en hora de Costa Rica (`mesDe()`).
+
+##### Las rachas: el motor solo en el momento decisivo
+
+Quien usa el motor solo cuando la posición se complica puede quedar con un índice normal sumando todo. `rachas()` mide a
+cada jugador por separado en **la mitad más difícil de sus posiciones** (según el modelo, para su nivel) y en la más
+fácil, y el contraste entre las dos: `(z difíciles − z fáciles) / √2`. Alguien más fuerte que su Elo sale alto en las
+dos; quien se ayuda solo en lo difícil, alto en las difíciles y normal en las fáciles. Desde 2 desviaciones en las
+difíciles y 2 de contraste, es señal alta. Y su **racha más rara**: las jugadas difíciles seguidas de una partida (sin
+contar las fáciles de en medio) en que jugó la primera del motor, con lo improbable que es para su nivel («1 vez en
+2512»). **La primera versión** cortaba con la mediana de todo el ritmo: a un jugador fuerte todas sus posiciones le
+quedaban «fáciles» y a uno débil todas «difíciles», y casi nadie tenía con qué comparar; por eso la mitad es de las
+suyas. Como el tiempo, **no entra en el índice**: es para explicar y para mirar. En la simulación, quien usa el motor en
+el tercio más difícil sale con contraste 2,6, los honestos entre −1,8 y 1,3, y el que lo usa en cualquier jugada, 0,4.
+
+##### El índice en el sorteo
+
+`centroamericano_fp_candidatas()` suma el índice del modelo de cada jugador (sumadas sus partidas del torneo, con 30
+jugadas o más): +1 desde 60 y +1,5 desde 62,5, con el motivo escrito («Índice del modelo alto, sumadas sus partidas
+(Pérez, Luis: 63,4)»). El tope de 4 sigue: ninguna señal decide sola. Antes pesaban solo las alertas de precisión.
+
+##### El informe de un jugador en PDF
+
+En el índice, cada jugador tiene «📄 Informe»: un PDF con la marca de agua (por `js/reporte-pdf.js`) con lo que pide la
+Comisión de Fair Play de FIDE para mirar un caso: quién es y contra qué Elo se lo comparó, su índice con cada señal, lo
+que se tuvo en cuenta (Elo reconocido, tendencia, historia, tiempo, rachas), partida por partida (de dónde salió cada
+una: tablero o planilla), por qué se marcó cada partida, cómo se midió, qué tan confiable es y qué no significa. Las
+partidas las pide a la función (`jugador`), por la clave de su nombre.
+
+##### Un torneo nuevo sin tocar código
+
+Antes los torneos se cargaban con una migración. Ahora `centroamericano_torneos` tiene **evento**, **ritmo** (clásico,
+rápido o blitz; el blitz va con las rápidas en el modelo), **de menores** y **archivado**, y la categoría ya no tiene que
+ser «Sub-N». En la organización, al poner la clave de un grupo de chess-results que abre torneos que no están, en vez del
+error se ofrecen para agregarlos a un evento, con la categoría, la rama, el ritmo y «de menores» adivinados del nombre
+(se corrigen antes); los agrega la base (`centroamericano_torneos_agregar()`, con la licencia de la Mesa del árbitro, y
+queda en la auditoría por el trigger de la tabla) y se guarda la clave en el mismo paso. Los torneos que abre la clave
+salen del texto que ya devolvía `centroamericano-clave` («1234 (Abierto), …»): así no hubo que volver a desplegar esa
+función en medio del torneo. Un evento que terminó se **archiva** (`centroamericano_evento_archivar()`): sus torneos dejan
+de verse en la organización y en Fair Play (`centroamericano_fp_rondas()` los salta), pero nada se borra: lo medido queda
+como historia de cada jugador y para el ajuste del modelo del evento siguiente. Se puede volver a abrir. El modelo toma el
+ritmo y «de menores» del torneo y, si no lo dicen, del nombre como antes. La pantalla de Fair Play pone el nombre del
+evento en sus títulos y en los PDF, y los QR de los encargados vencen a los 10 días (antes, el 10/11 fijo). Lo que sigue
+diciendo «Centroamericano 2026» son los textos de la organización y de las tablets.
+
+- Lo prueban `verificar-centroamericano-fair-play.js` (la lista de chess-results y la ficha de FIDE de mentira, la
+  tendencia, el Elo reconocido con ella, el mes en hora de Costa Rica, la planilla y sus dudosas, las notas nuevas en la
+  pantalla y el informe del jugador en PDF), `verificar-centroamericano-fair-play-modelo.js` (en el torneo simulado: un
+  jugador que usa el motor solo en lo difícil y los que vienen subiendo 20 por mes en FIDE) y
+  `verificar-centroamericano-mesas-pagina.js` (la foto leída llega a Fair Play; una clave con torneos nuevos los ofrece,
+  sin el nombre del evento no agrega, los agrega con lo corregido a mano y guarda la clave, y archivar pregunta, los
+  esconde y deja volver a abrirlos). La migración se probó en el Postgres de ensayo: agregar y archivar sin la licencia lo
+  rechaza, y el índice pesa en el sorteo con su motivo.
+
 ### El encargado de transmisión (Centroamericano)
 
 Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de

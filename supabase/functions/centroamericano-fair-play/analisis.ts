@@ -538,15 +538,17 @@ export const mesDe = (fecha: Date) => {
 // ---- Las rachas: el motor solo en el momento decisivo
 // Quien usa el motor a veces no lo usa en todas: lo usa cuando la posición se pone difícil y juega normal el resto.
 // Sumado todo, su índice puede quedar cerca de lo normal. Por eso, aparte, se mide cada jugador en las posiciones
-// difíciles para su nivel (las que, según el modelo, más le cuestan: la mitad más difícil de su ritmo, «umbral») y en
-// las fáciles por separado, y el contraste entre las dos: alguien fuerte de verdad sale alto en las dos; quien se ayuda
+// difíciles para su nivel (las que, según el modelo, más le cuestan: la mitad más difícil de LAS SUYAS; con un umbral
+// común, a uno fuerte todas le quedaban fáciles y a uno débil todas difíciles, y no había con qué comparar) y en las
+// fáciles por separado, y el contraste entre las dos: alguien fuerte de verdad sale alto en las dos; quien se ayuda
 // solo en lo difícil, alto en las difíciles y normal en las fáciles. Y la racha más rara: las jugadas difíciles
 // SEGUIDAS de una partida (sin contar las fáciles de en medio) en que jugó la primera del motor, con lo improbable que
 // es para su nivel (el producto de la probabilidad de cada una). Son señales para explicar, como el tiempo: no entran
 // en el índice.
 export const MIN_RACHA_JUGADAS = 10;
-export function rachas(juegos: MovModelo[][], s: number, c: number, umbral: number, factor = 1, R: Correlaciones = CORR_INICIAL) {
+export function rachas(juegos: MovModelo[][], s: number, c: number, factor = 1, R: Correlaciones = CORR_INICIAL) {
   const crit: MovModelo[] = [], facil: MovModelo[] = [];
+  const umbral = mediana(juegos.flat().filter((m) => m.n > 1 && m.deltas.length).map((m) => dificultadEsperada(m, s, c))) ?? 0;
   let mejor = { largo: 0, log10: 0 };
   for (const movs of juegos) {
     let largo = 0, log = 0;
@@ -566,7 +568,7 @@ export function rachas(juegos: MovModelo[][], s: number, c: number, umbral: numb
   return { largo: mejor.largo, log10: mejor.largo ? Math.round(mejor.log10 * 10) / 10 : null, zCrit: r2(zC), zFacil: r2(zF),
     contraste: zC != null && zF != null ? r2((zC - zF) / Math.SQRT2) : null, nCrit: crit.length, nFacil: facil.length };
 }
-// La mitad más difícil de un ritmo: la mediana de lo difícil de todas sus jugadas.
+// La mediana (la mitad más difícil de las jugadas de un jugador).
 export function mediana(v: number[]): number | null {
   if (!v.length) return null;
   const o = [...v].sort((a, b) => a - b);

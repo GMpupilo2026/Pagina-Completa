@@ -48,7 +48,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { Chess } from "npm:chess.js@0.10.3";
 import { ajustar, casosDePrueba, centroYFactor, claveDe, copiaDeOtra, correlaciones, type Correlaciones, DESDE_POSICION, detallar, dificultadEsperada, eloUsado,
   esJoven, esperado, type Esperado, esRapido, evalsValidas, fenExplorador, finDeTeoria, indice, inicioDeMedida, leerFideIds, leerHistorialFide, leerPareos,
-  mediana, medir, type MesFide, mesDe, MIN_JUGADAS, mismoJugador, type MovModelo, MULTIPV, nombreLc, opcionesValidas, planillaValida, type Ply, PROFUNDIDAD,
+  medir, type MesFide, mesDe, MIN_JUGADAS, mismoJugador, type MovModelo, MULTIPV, nombreLc, opcionesValidas, planillaValida, type Ply, PROFUNDIDAD,
   PROFUNDIDAD_HONDA, puntosBlancas, rachas, rendimiento, RESULTADO_LC, resultadoDe, sanDe, sDeElo, segundosDe, spearman, sSinElJugador, sumar, tablerosDe,
   tendencia, terminadaLc, validar, VERSION_ANALISIS, zCruda, zsCrudas } from "./analisis.ts";
 
@@ -191,7 +191,12 @@ Deno.serve(async (req) => {
       const avisos = (sorteos ?? []).map((s: { aviso_id: string | null }) => s.aviso_id).filter(Boolean);
       const { data: leidos } = avisos.length ? await servicio.from("centroamericano_avisos").select("id, leido_en").in("id", avisos) : { data: [] };
       const { data: ultima } = await servicio.from("centroamericano_fp_partidas").select("leida").order("leida", { ascending: false }).limit(1).maybeSingle();
-      return json({ ok: true, nombre: quien.replace(/ \(Fair Play\)$/, ""), principal: !token, rondas, sorteos: sorteos ?? [], alertas: alertas ?? [],
+      // El evento que se está mirando (el de la mayoría de sus categorías): los títulos de la pantalla y de los PDF.
+      const { data: deEvento } = await servicio.from("centroamericano_torneos").select("evento").in("tnr", tnrs.length ? tnrs : ["-"]).eq("prueba", false);
+      const cuenta = new Map<string, number>();
+      for (const t of (deEvento ?? []) as { evento: string }[]) cuenta.set(t.evento, (cuenta.get(t.evento) ?? 0) + 1);
+      const evento = [...cuenta].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+      return json({ ok: true, nombre: quien.replace(/ \(Fair Play\)$/, ""), principal: !token, evento, rondas, sorteos: sorteos ?? [], alertas: alertas ?? [],
         acumulado: (acumulado ?? []).filter((x) => tnrs.includes(x.tnr) && (x.nivel !== "normal" || x.seguir)),
         indice: indiceJ ?? [], modelo: modeloA ?? null,
         leidos: Object.fromEntries((leidos ?? []).map((x: { id: string; leido_en: string | null }) => [x.id, x.leido_en])), actualizado: ultima?.leida ?? null });
@@ -703,13 +708,6 @@ async function modelo(servicio: any, rpc: Rpc, forzar: boolean) {
     const media = v.reduce((t, x) => t + x, 0) / v.length, desv = Math.sqrt(v.reduce((t, x) => t + (x - media) ** 2, 0) / v.length);
     tiempoDe[r] = desv > 0 ? { media, desv } : null;
   }
-  // Las rachas: lo difícil de cada jugada para su nivel, y la mitad más difícil de cada ritmo.
-  const umbral: Record<string, number> = {};
-  for (const r of ["clasico", "rapido"]) {
-    const v: number[] = [];
-    for (const j of jugadores.values()) if (j.ritmo === r) for (const m of j.movs) if (m.n > 1 && m.deltas.length) v.push(dificultadEsperada(m, j.s!, par[r].c));
-    umbral[r] = mediana(v) ?? 0;
-  }
   // Su historia: el mismo jugador (por su nombre) en otras categorías o eventos ya medidos.
   const porClave = new Map<string, Jugador[]>();
   for (const j of jugadores.values()) { if (!porClave.has(j.clave)) porClave.set(j.clave, []); porClave.get(j.clave)!.push(j); }
@@ -729,7 +727,7 @@ async function modelo(servicio: any, rpc: Rpc, forzar: boolean) {
     const eHist = otros.reduce<Esperado | null>((t, o) => { const eo = esperado(o.movs, o.s!, par[o.ritmo].c); return t ? sumar(t, eo) : eo; }, null);
     const hist = eHist && eHist.n ? indice(eHist, g.factor, g.centro, g.R) : null;
     const t = rho.get(k)!, td = tiempoDe[j.ritmo];
-    const ra = rachas(j.juegos.map((x) => x.movs), j.s!, p.c, umbral[j.ritmo], g.factor, g.R);
+    const ra = rachas(j.juegos.map((x) => x.movs), j.s!, p.c, g.factor, g.R);
     pIndice.push({ tnr: j.tnr, clave: j.clave, jugador: j.jugador, elo: j.elo, comparado: j.elo ? "elo" : "categoria", partidas: j.juegos.length, jugadas: e.n,
       t1: e.t1, e_t1: r2(e.eT1), dj: r1(e.dj), e_dj: r1(e.eDj), dificiles: e.dificiles, t1_dif: e.t1Dif, e_t1_dif: r2(e.eT1Dif),
       z_t1: ix.zT1, z_dj: ix.zDj, z_dif: ix.zDif, z: ix.z, roi: ix.roi, rondas: [...new Set(j.juegos.map((x) => x.ronda))].sort((a, b) => a - b).join(", "),

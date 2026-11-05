@@ -43,7 +43,7 @@
     const FRASES = ["Ya empieza la ronda: a sus mesas.", "Pasen por el escritorio principal, por favor.", "Pausa de 10 minutos.", "Revisen que cada mesa tenga su resultado guardado."];
     const PASOS_LISTA = 2; // relojes y tableros (centroamericano-mesa)
 
-    let torneos = [];
+    let torneos = [], archivados = [];
     let asignaciones = [];
     let avisos = [];
     let progreso = [];
@@ -81,7 +81,7 @@
         if (error && error.context && typeof error.context.json === "function") {
             try { data = await error.context.json(); } catch (e) { /* sin cuerpo */ }
         }
-        if (!data || data.error) throw new Error((data && data.error) || (error && error.message) || "No hubo respuesta. Revisa tu conexión.");
+        if (!data || data.error) { const e = new Error((data && data.error) || (error && error.message) || "No hubo respuesta. Revisa tu conexión."); e.datos = data; throw e; }
         return data;
     }
 
@@ -579,11 +579,14 @@
     // ------------------------------------------------------------- 5. la clave del grupo
 
     async function cargarTorneos() {
-        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba").order("orden");
+        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba, evento, archivado").order("orden");
         if (error) { avisar("No se pudieron leer los torneos: " + error.message, true); return; }
         pruebas = new Set((data || []).filter((t) => t.prueba).map((t) => t.tnr));
-        torneos = (data || []).filter((t) => dentro(t.tnr));
+        // Un evento archivado (ya terminó) no se ve: lo medido queda de historia para Fair Play.
+        torneos = (data || []).filter((t) => dentro(t.tnr) && !t.archivado);
+        archivados = (data || []).filter((t) => !t.prueba && t.archivado);
         pintarTorneos();
+        pintarEventos();
         const opciones = () => torneos.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }));
         for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo", "ct-torneo"]) {
             const s = $(id), antes = s.value;
@@ -634,19 +637,126 @@
         estado.textContent = "Probando la clave en chess-results…";
         estado.className = "text-sm mt-2";
         $("g-guardar").disabled = true;
+        $("g-nuevos").hidden = true;
         try {
             const d = await invocar({ action: "poner", tnr, sid });
             $("g-sid").value = "";
             await cargarTorneos();
-            estado.textContent = "✓ " + resumenPuesta(d) + (d.otros && d.otros.length ? " También abre otros torneos que no son del Centroamericano (" + d.otros.join(", ") + "): no se usan." : "");
+            // La clave abre también torneos que todavía no están: se ofrecen para agregarlos (un evento nuevo).
+            const nuevos = torneosDeTexto((d.otros || []).join(", "));
+            if (nuevos.length) ofrecerNuevos(nuevos, tnr, sid);
+            estado.textContent = "✓ " + resumenPuesta(d) + (d.otros && d.otros.length ? " También abre otros torneos que todavía no están (" + d.otros.join(", ") + "): si son de un evento nuevo, agrégalos abajo." : "");
             estado.className = "cam-guardado text-sm mt-2";
             const faltan = torneos.filter((t) => !t.sid_en_boveda);
             if (faltan.length) estado.textContent += " Todavía sin clave: " + faltan.map((t) => t.nombre).join(", ") + ".";
         } catch (e) {
-            mal(e.message);
+            // «Esa clave abre 1234 (Abierto), … y ninguno es del Centroamericano»: un evento nuevo. Se ofrece agregarlos.
+            const nuevos = /ninguno es del Centroamericano/.test(e.message) ? torneosDeTexto(e.message.split(", y ninguno")[0]) : [];
+            if (nuevos.length) {
+                estado.textContent = "Esa clave abre " + nuevos.length + (nuevos.length === 1 ? " torneo que todavía no está" : " torneos que todavía no están") + " en la Mesa del árbitro: agrégalos abajo y se guarda la clave.";
+                estado.className = "text-sm mt-2";
+                ofrecerNuevos(nuevos, tnr, sid);
+            } else mal(e.message);
         } finally {
             $("g-guardar").disabled = false;
         }
+    }
+
+    // ------------------------------------------------------------- un evento nuevo, sin tocar código
+    // La clave de un grupo de chess-results dice qué torneos abre («1234 (Sub-12 Absoluto), 1235 (Abierto)»): los que no
+    // están se agregan aquí a un evento, con su categoría, su rama, su ritmo y si es de menores (adivinados del nombre;
+    // se corrigen antes de agregar). Lo guarda la base (centroamericano_torneos_agregar, con la licencia) y queda en la
+    // auditoría. Un evento que terminó se archiva: deja de verse aquí y en Fair Play, pero lo medido queda de historia.
+    // Ver «Un torneo nuevo sin tocar código» en docs/decisiones/juegos-y-torneos.md.
+    function torneosDeTexto(t) {
+        const out = [], vistos = new Set();
+        for (const m of String(t || "").matchAll(/(\d{1,7}) \(([^()]{1,80})\)/g)) if (!vistos.has(m[1])) { vistos.add(m[1]); out.push({ tnr: m[1], nombre: m[2].trim() }); }
+        return out;
+    }
+    const adivinar = (nombre) => {
+        const n = String(nombre || "");
+        const sub = n.match(/sub[\s-]?(\d{1,2})\b/i) || n.match(/\bu-?(\d{1,2})\b/i);
+        return {
+            categoria: sub ? "Sub-" + Number(sub[1]) : /senior|s[eé]nior|veteran|\+50|\+65/i.test(n) ? "Senior" : "Abierto",
+            rama: /femen|girls|damas|mujer|women|ladies/i.test(n) ? "Femenino" : /mixt/i.test(n) ? "Mixto" : "Absoluto",
+            ritmo: /blitz|rel[aá]mpago/i.test(n) ? "blitz" : /r[aá]pid/i.test(n) ? "rapido" : "clasico",
+            menores: !!sub || /juvenil|infantil|escolar|colegial|junior/i.test(n),
+        };
+    };
+    const eventoActual = () => {
+        const cuenta = new Map();
+        torneos.filter((t) => !t.prueba).forEach((t) => cuenta.set(t.evento, (cuenta.get(t.evento) || 0) + 1));
+        return [...cuenta].sort((a, b) => b[1] - a[1]).map((x) => x[0]).find(Boolean) || "";
+    };
+    function ofrecerNuevos(nuevos, codigo, sid) {
+        const caja = $("g-nuevos");
+        const filas = nuevos.map((t) => {
+            const g = adivinar(t.nombre), id = "gn-" + t.tnr;
+            const sel = (campo, opciones, valor) => el("select", { class: "cam-campo", "data-campo": campo, "aria-label": campo[0].toUpperCase() + campo.slice(1) + " de " + t.nombre },
+                ...opciones.map(([v, txt]) => el("option", { value: v, texto: txt, selected: v === valor ? true : null })));
+            return el("tr", { "data-tnr": t.tnr },
+                el("td", {}, el("input", { type: "checkbox", id, checked: true, "data-campo": "agregar" }), " ", el("label", { for: id, texto: t.nombre + " (" + t.tnr + ")" })),
+                el("td", {}, el("input", { type: "text", class: "cam-campo", maxlength: "40", value: g.categoria, "data-campo": "categoria", "aria-label": "Categoría de " + t.nombre })),
+                el("td", {}, sel("rama", [["Absoluto", "Absoluto"], ["Femenino", "Femenino"], ["Mixto", "Mixto"]], g.rama)),
+                el("td", {}, sel("ritmo", [["clasico", "Clásico"], ["rapido", "Rápido"], ["blitz", "Blitz"]], g.ritmo)),
+                el("td", {}, el("input", { type: "checkbox", checked: g.menores ? true : null, "data-campo": "menores", "aria-label": t.nombre + " es de menores" })));
+        });
+        const evento = el("input", { id: "gn-evento", type: "text", class: "cam-campo", maxlength: "80", value: "", placeholder: "Por ejemplo: Nacional Juvenil 2027", autocomplete: "off" });
+        const estado = el("p", { class: "text-sm mt-2", role: "status" });
+        const boton = el("button", { type: "button", class: "cam-btn", "data-accion": "agregar-torneos", onclick: async () => {
+            const nombreEvento = evento.value.trim();
+            if (!nombreEvento) { estado.textContent = "✗ Ponle nombre al evento (así se juntan sus torneos y se archivan juntos)."; estado.className = "cam-fallo text-sm mt-2"; evento.focus(); return; }
+            const lista = filas.filter((f) => f.querySelector("[data-campo='agregar']").checked).map((f) => {
+                const t = nuevos.find((x) => x.tnr === f.dataset.tnr), v = (c) => f.querySelector("[data-campo='" + c + "']");
+                return { tnr: t.tnr, nombre: t.nombre, categoria: v("categoria").value.trim() || "Abierto", rama: v("rama").value, ritmo: v("ritmo").value, menores: v("menores").checked };
+            });
+            if (!lista.length) { estado.textContent = "✗ Marca al menos un torneo."; estado.className = "cam-fallo text-sm mt-2"; return; }
+            boton.disabled = true;
+            estado.textContent = "Agregando…"; estado.className = "text-sm mt-2";
+            const { error } = await sb.rpc("centroamericano_torneos_agregar", { p_evento: nombreEvento, p_torneos: lista });
+            if (error) { boton.disabled = false; estado.textContent = "✗ No se pudieron agregar: " + error.message; estado.className = "cam-fallo text-sm mt-2"; return; }
+            caja.hidden = true;
+            $("g-codigo").value = codigo;
+            $("g-sid").value = sid;
+            avisar("Listo: " + lista.length + (lista.length === 1 ? " torneo agregado" : " torneos agregados") + " a «" + nombreEvento + "». Ahora se guarda la clave.");
+            await cargarTorneos();
+            await guardarGrupo();
+        } }, "Agregar al evento y guardar la clave");
+        caja.replaceChildren(
+            el("p", { class: "font-bold", texto: "Torneos nuevos que abre esta clave" }),
+            el("p", { class: "text-sm", texto: "Revisa la categoría, la rama, el ritmo y si es de menores (salen del nombre): Fair Play compara a cada uno con los de su ritmo y le reconoce más a un menor que mejora rápido." }),
+            el("div", { class: "mt-2" }, el("label", { for: "gn-evento", class: "block text-sm font-bold", texto: "Nombre del evento" }), evento,
+                eventoActual() ? el("p", { class: "text-sm", texto: "Si son del mismo evento que los de ahora, escribe «" + eventoActual() + "»." }) : null),
+            el("div", { class: "cam-tabla-scroll mt-2" }, el("table", { class: "cam-tabla" },
+                el("thead", {}, el("tr", {}, ...["Torneo", "Categoría", "Rama", "Ritmo", "De menores"].map((h) => el("th", { scope: "col", texto: h })))),
+                el("tbody", {}, ...filas))),
+            el("div", { class: "cam-acciones" }, boton),
+            estado);
+        caja.hidden = false;
+    }
+    function pintarEventos() {
+        const caja = $("eventos");
+        if (!caja || ensayo) { if (caja) caja.replaceChildren(); return; }
+        const porEvento = (lista) => { const m = new Map(); lista.forEach((t) => { const k = t.evento || "Sin evento"; m.set(k, (m.get(k) || 0) + 1); }); return [...m]; };
+        const abiertos = porEvento(torneos.filter((t) => !t.prueba)), cerrados = porEvento(archivados);
+        caja.replaceChildren(
+            ...abiertos.map(([nombre, n]) => el("p", { class: "text-sm", "data-evento": nombre },
+                el("strong", { texto: "Evento «" + nombre + "»" }), ": " + n + (n === 1 ? " torneo. " : " torneos. "),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "archivar-evento", onclick: () => archivarEvento(nombre, true) }, "Archivar el evento (ya terminó)"))),
+            cerrados.length ? el("details", { class: "cam-detalle mt-2" }, el("summary", { texto: "Eventos archivados (" + cerrados.length + ")" }),
+                ...cerrados.map(([nombre, n]) => el("p", { class: "text-sm", "data-evento": nombre }, nombre + ": " + n + (n === 1 ? " torneo. " : " torneos. "),
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "reabrir-evento", onclick: () => archivarEvento(nombre, false) }, "Volver a abrirlo")))) : null);
+    }
+    async function archivarEvento(nombre, archivar) {
+        if (archivar) {
+            const ok = await Avisos.confirmar("Sus torneos dejan de verse aquí, en las tablets de los árbitros nuevos y en Fair Play. Nada se borra: lo medido queda como historia de cada jugador para los eventos siguientes, y se puede volver a abrir.",
+                { titulo: "Archivar «" + nombre + "»", aceptar: "Archivar el evento" });
+            if (!ok) return;
+        }
+        const { data, error } = await sb.rpc("centroamericano_evento_archivar", { p_evento: nombre, p_archivar: archivar });
+        if (error) { avisar("No se pudo: " + error.message, true); return; }
+        avisar(archivar ? "«" + nombre + "» quedó archivado (" + data + " torneos)." : "«" + nombre + "» se volvió a abrir.");
+        await cargarTorneos();
     }
 
     async function probar(t, estado) {
