@@ -1550,6 +1550,89 @@ Pedido del dueño (4/11):
   `metropolitano-2026-v2-con-extranjeros`, según el `origen` de cada
   persona).
 
+### Un formulario más amigable: pasos, errores en su campo, borrador e idiomas
+
+Pedido del dueño: «¿cómo podemos hacer el formulario más amigable?», y las seis
+mejoras de una vez. Era una sola página larguísima que, al fallar, decía solo
+el primer error «(y 12 cosas más)» y llevaba hasta él; una delegación de
+quince personas perdía todo si se cerraba la pestaña, y la inscripción la
+llenan delegaciones de afuera que no leen español.
+
+- **Por pasos** (1 Quién se inscribe, 2 Torneos, 3 Viaje y estadía, 4 Pago,
+  5 Confirmar), con la barra de avance arriba y, abajo y siempre a la vista
+  (`#barra`, `position: sticky`), el total y «Atrás / Siguiente». No hay un
+  formulario por paso: cada bloque lleva `data-paso="N"` (la tarjeta de una
+  persona, `"1 2 3"`, y adentro cada parte el suyo) y el CSS
+  (`.metro-pasos[data-paso-actual]`) esconde lo que no es del paso. Por eso
+  «Ver todo en una página» es solo quitar el atributo: se recuerda en el
+  aparato (`metro_todo_v1`), y `?todo=1` lo abre así sin recordarlo (lo usa
+  el verificador para las pruebas de antes, que llenan todo de corrido).
+- **«Siguiente» revisa solo los pasos que quedan atrás**, con las mismas
+  reglas de siempre (`recogerErrores()`, que junta lo de `armar()` de cada
+  persona, el parqueo y el pago); el paso de cada error es el del bloque
+  donde está su campo (`pasoDe`). Avanzar tocando un paso de arriba revisa
+  igual. «Revisar la inscripción» revisa todo y lleva al paso del primero.
+- **Lo que falta, todo junto y en su campo**: arriba, la lista entera
+  (`#errores`, cada cosa un botón que lleva a su paso, abre su tarjeta y lo
+  plegado y le pone el foco); y debajo de cada campo su frase
+  (`p.metro-error`), con `aria-invalid` y en su `aria-describedby`. Al
+  corregirlo, la frase se va de los dos lados. `#msg` junto al botón sigue
+  diciendo lo mismo de antes («… (y N cosas más)»).
+- **En una delegación, cada tarjeta se pliega** («Plegar / Abrir», con
+  `aria-expanded`) y su título dice «✓ Completa» o «Faltan N datos». Al
+  agregar a alguien, las demás se pliegan solas.
+- **Lo opcional, plegado**: la alimentación y «Condición y accesibilidad» son
+  un `<details>` que dice en su título qué tiene («(no requiere)»,
+  «(desayuno, cena)») y se abre solo si ya tiene algo o si adentro hay un
+  error. El seguro y la responsabilidad: una frase corta en la casilla y el
+  texto entero en «Leer el texto completo» (`#acepta-seguro-texto`, el mismo
+  que arma `pintarSeguro()` y cuya versión guarda la base).
+- **El borrador, en el aparato** (`localStorage`, `metro_borrador_v1`): todo
+  lo escrito de cada persona (`estado()` / `restaurar()` de su tarjeta), la
+  delegación y el pago, **sin las fotos, los documentos ni el comprobante**
+  (no caben y no deben quedar ahí) **ni las casillas de aceptar**, que se
+  vuelven a marcar. Se guarda al escribir y al cerrar la página; al volver,
+  «Tienes una inscripción a medio llenar» ofrece «Seguir donde quedé» o
+  «Empezar de nuevo» (mientras no se elige, no se pisa). Se borra al
+  mandarla; uno de más de 60 días se ignora. No hay aviso del navegador al
+  cerrar (`beforeunload`): con el borrador no se pierde nada, y el sitio no
+  usa los diálogos del navegador. La política de privacidad lo dice.
+- **En el celular**: el correo y el teléfono con su `autocomplete` y su
+  teclado; el nombre sigue con `autocomplete="off"` porque abajo sale la
+  lista de FIDE.
+- **En inglés y en francés**, con el mismo botón de idioma de la página del
+  torneo (`js/idioma-pagina.js`, la misma clave `metro_idioma_v1`: quien lo
+  eligió allá llega con su idioma). Los textos están en
+  `js/inscripcion-metropolitano-en.js` y `-fr.js`, más el encabezado y el pie
+  de `js/metropolitano-en.js` y `-fr.js`. Lo que se arma con datos («Faltan
+  3 datos», «1. Ana Mora: Falta el sexo.», «Paga ₡14 950 por SINPE Móvil:»,
+  las fechas del resumen) se traduce con **patrones**, nuevos en
+  `idioma-pagina.js`: si un texto no está en el mapa, una RegExp que calza
+  con el texto entero arma su traducción, y una función puede traducir un
+  pedazo con `t()`. Para eso cada frase que se junta con otra va en su propio
+  `<span>` (los avisos del total, las frases de un mismo campo). Las fechas y
+  los nombres de los países (`Intl.DisplayNames`) se pintan en el idioma de
+  ahora; las provincias y los cantones son nombres propios
+  (`data-no-traducir`); las condiciones del hospedaje las pinta en cada
+  idioma `js/metropolitano-hospedaje.js`.
+- **Lo que se manda y se acepta sigue en español**: la base guarda las
+  claves de siempre (`B`, `sinpe`…) y la versión del texto en español; el
+  inglés del seguro dice que es una traducción para entenderlo.
+- **El traductor no se traduce a sí mismo**: su propio cambio vuelve por el
+  `MutationObserver`, y un patrón calzaba con el texto ya traducido (salía
+  «personne sans nom  :», con dos espacios, y al volver al español quedaba
+  el francés como «original»). Ahora recuerda lo que puso (`puestos`) y no lo
+  toca otra vez. También anota lo que queda igual en los dos idiomas
+  («PayPal», «Total: $45.00»), y `IdiomaPagina.actual.traducidos()` le dice
+  al verificador qué nodos ya están en el idioma.
+- `verificar-metropolitano.js` llena una inscripción entera **en inglés y por
+  pasos** (Siguiente que no avanza y dice todo, la frase en el campo que se
+  va al corregir, el resumen y la confirmación), revisa en cada paso que nada
+  quede en español (un nodo que el idioma no tocó y no está en el mapa; los
+  datos de prueba no cuentan), prueba el borrador en un aparato aparte y un
+  grupo a medias en francés con el aviso de quitar a alguien. Se rompió a
+  propósito el mapa (una entrada menos) y el guardado del borrador, y saltó.
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la

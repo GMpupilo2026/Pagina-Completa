@@ -41,6 +41,16 @@
                     <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="relative shrink-0" data-no-traducir>
+                        <!-- El idioma de la página (js/idioma-pagina.js): el botón dice el
+                             de ahora y abre la lista de los tres, cada uno en su idioma. -->
+                        <button id="metro-idioma" type="button" lang="es" aria-haspopup="true" aria-expanded="false" aria-controls="metro-idiomas" aria-label="Idioma · Language · Langue : Español" class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden">ES</span><span class="hidden sm:inline">Español</span><span class="hidden sm:inline" aria-hidden="true"> ▾</span></button>
+                        <ul id="metro-idiomas" class="idiomas-menu" hidden>
+                            <li><button type="button" data-idioma="es" lang="es">Español</button></li>
+                            <li><button type="button" data-idioma="en" lang="en">English</button></li>
+                            <li><button type="button" data-idioma="fr" lang="fr">Français</button></li>
+                        </ul>
+                    </div>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -74,7 +84,7 @@
         </div>
 
         <!-- ========================= 1. El formulario ========================= -->
-        <form id="formulario" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden" novalidate>
+        <form id="formulario" class="metro-pasos bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden" novalidate>
             <!-- La portada, como la de las bases: las hojas, el logo con el Estadio Nacional y la FCA. -->
             <header class="bg-white text-[#1d134d]">
                 <img src="img/metropolitano-2026/hojas-arriba.jpg" alt="" width="1400" height="382" class="block w-full h-20 sm:h-28 object-cover object-top">
@@ -87,14 +97,41 @@
             </header>
 
             <div class="px-6 sm:px-8 pb-8 space-y-8">
-                <div class="text-sm text-brand-700 dark:text-brand-200 space-y-2">
+                <!-- El borrador guardado en este aparato (js/inscripcion-metropolitano.js, «El borrador»). -->
+                <div id="borrador" hidden class="rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-950 p-4 space-y-2" role="region" aria-labelledby="borrador-titulo">
+                    <p id="borrador-titulo" class="font-semibold">Tienes una inscripción a medio llenar en este aparato</p>
+                    <p id="borrador-texto" class="text-sm"></p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="borrador-seguir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir donde quedé</button>
+                        <button type="button" id="borrador-nuevo" class="metro-boton">Empezar de nuevo</button>
+                    </div>
+                </div>
+
+                <!-- Los pasos: lo de cada uno lleva data-paso; el resto se esconde con CSS
+                     (.metro-pasos[data-paso-actual]). «Ver todo en una página» los junta. -->
+                <nav id="pasos" aria-label="Pasos de la inscripción" class="space-y-2">
+                    <ol id="pasos-lista" class="metro-solo-pasos grid grid-cols-5 gap-1 text-center text-xs font-semibold"></ol>
+                    <div class="metro-solo-pasos metro-avance" aria-hidden="true"><span id="pasos-avance"></span></div>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 id="paso-titulo" class="metro-solo-pasos metro-titulo" tabindex="-1"></h2>
+                        <button type="button" id="ver-todo" class="text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver todo en una página</button>
+                    </div>
+                </nav>
+
+                <!-- Lo que falta: todo junto, con un enlace a cada campo (y cada campo con su frase debajo). -->
+                <div id="errores" hidden class="rounded-xl border-2 border-red-700 dark:border-red-400 bg-red-50 dark:bg-brand-950 p-4 space-y-2" role="alert" aria-labelledby="errores-titulo" tabindex="-1">
+                    <p id="errores-titulo" class="font-bold text-red-800 dark:text-red-300"></p>
+                    <ul id="errores-lista" class="space-y-1 text-sm"></ul>
+                </div>
+
+                <div data-paso="1" class="text-sm text-brand-700 dark:text-brand-200 space-y-2">
                     <p>Se inscriben <strong>jugadores, entrenadores y acompañantes</strong>. Al final ves el <strong>gafete</strong> de cada persona, con su foto y el resumen de sus datos, los revisas y confirmas.</p>
                     <p>Ten a mano: el <strong>ID FIDE</strong> de cada jugador (si tiene), una <strong>foto tamaño pasaporte</strong> de cada persona y el <strong>comprobante de pago</strong>. Lee las <a class="underline font-semibold" href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026">bases del torneo</a> o <a class="underline font-semibold" href="metropolitano-2026.html" data-visor="Toda la información del torneo">toda la información del torneo</a>: calendario, premios y costos.</p>
                     <p id="aviso-plazo" class="font-semibold text-accent-700 dark:text-accent-400"></p>
-                    <p class="text-xs text-brand-500 dark:text-brand-300">Los campos con <span class="text-red-700 dark:text-red-400">*</span> son obligatorios.</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">Los campos con <span class="text-red-700 dark:text-red-400">*</span> son obligatorios. Lo que llenas se guarda en este aparato mientras tanto, por si se cierra la página (sin las fotos ni el comprobante), y se borra al mandar la inscripción.</p>
                 </div>
 
-                <fieldset class="space-y-3">
+                <fieldset data-paso="1" class="space-y-3">
                     <legend class="metro-titulo">¿Cómo te inscribes?</legend>
                     <div class="grid sm:grid-cols-2 gap-3">
                         <label class="metro-opcion"><input type="radio" name="modo" value="individual" checked class="mt-1 h-5 w-5"><span><span class="font-semibold block">Una persona</span><span class="text-sm text-brand-600 dark:text-brand-300">Me inscribo yo, o inscribo a mi hija o hijo.</span></span></label>
@@ -108,7 +145,7 @@
 
                 <div id="personas" class="space-y-6"></div>
 
-                <div id="agregar" class="hidden rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-600 p-4 space-y-3">
+                <div id="agregar" data-paso="1" class="hidden rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-600 p-4 space-y-3">
                     <p class="font-semibold">Agregar a la delegación <span id="cuenta-personas" class="font-normal text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></span></p>
                     <div class="flex flex-wrap gap-2">
                         <button type="button" data-agregar="jugador" class="metro-boton">+ Jugador</button>
@@ -118,7 +155,7 @@
                 </div>
 
                 <!-- El pago: uno solo, por el total. -->
-                <fieldset id="caja-pago" class="space-y-4">
+                <fieldset id="caja-pago" data-paso="4" class="space-y-4">
                     <legend class="metro-titulo">El pago</legend>
                     <div id="total" class="rounded-xl bg-brand-50 dark:bg-brand-950 p-4" aria-live="polite"></div>
                     <div id="con-pago" class="space-y-4">
@@ -160,7 +197,7 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="space-y-3">
+                <fieldset data-paso="5" class="space-y-3">
                     <legend class="metro-titulo">Para terminar</legend>
                     <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-reglamento" class="mt-1 h-4 w-4 shrink-0"> <span>Leí las <a class="underline font-semibold" href="documentos/metropolitano-2026/bases-metropolitano-2026.pdf" data-visor="Bases del Metropolitano 2026">bases del torneo</a> y las acepto. <span class="text-red-700 dark:text-red-400">*</span></span></label>
                     <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-imagen" class="mt-1 h-4 w-4 shrink-0"> <span>Sé que la FCA toma fotos y videos en el torneo y los publica en sus canales oficiales, como dicen las bases. <span class="text-red-700 dark:text-red-400">*</span></span></label>
@@ -171,13 +208,23 @@
                          según si viene alguien de otro país). El texto lo arma
                          js/inscripcion-metropolitano.js (pintarSeguro); si cambia,
                          se sube la versión en la función. -->
-                    <label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-seguro" class="mt-1 h-4 w-4 shrink-0"> <span id="acepta-seguro-texto"><strong>Seguro y responsabilidad.</strong> Declaro que cada persona de esta inscripción cuenta con una póliza de seguro vigente que la cubre durante todo el torneo —de gastos médicos y de accidentes— y, si viene de otro país, con un seguro de viaje que la cubre durante toda su estadía en Costa Rica, y que el costo de esa póliza no corre por cuenta de la organización. Cada persona participa por su propia voluntad y asume los riesgos propios de la competencia, del viaje y de la estadía. Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <div class="space-y-1"><label class="flex items-start gap-3 text-sm"><input type="checkbox" id="acepta-seguro" class="mt-1 h-4 w-4 shrink-0" aria-describedby="acepta-seguro-texto"> <span><strong>Seguro y responsabilidad.</strong> Declaro que cada persona tiene su póliza de seguro durante el torneo y eximo a la organización de toda responsabilidad, como dice el texto completo. <span class="text-red-700 dark:text-red-400">*</span></span></label>
+                    <details class="metro-plegable ml-7 text-sm"><summary>Leer el texto completo del seguro y la responsabilidad</summary><p class="mt-2"><span id="acepta-seguro-texto"><strong>Seguro y responsabilidad.</strong> Declaro que cada persona de esta inscripción cuenta con una póliza de seguro vigente que la cubre durante todo el torneo —de gastos médicos y de accidentes— y, si viene de otro país, con un seguro de viaje que la cubre durante toda su estadía en Costa Rica, y que el costo de esa póliza no corre por cuenta de la organización. Cada persona participa por su propia voluntad y asume los riesgos propios de la competencia, del viaje y de la estadía. Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización.</span></p></details></div>
                     <p class="text-xs text-brand-500 dark:text-brand-300">El permiso para usar el nombre y la foto de cada persona en la publicidad del torneo se marca en su tarjeta: es aparte y no es obligatorio.</p>
                 </fieldset>
 
-                <div class="flex flex-wrap items-center gap-3">
+                <div data-paso="5" class="flex flex-wrap items-center gap-3">
                     <button type="submit" id="revisar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar la inscripción</button>
                     <span id="msg" class="text-sm text-red-700 dark:text-red-400" role="alert"></span>
+                </div>
+
+                <!-- La barra de abajo, siempre a la vista: el total que va cambiando y cómo moverse entre los pasos. -->
+                <div id="barra" class="metro-barra">
+                    <p id="barra-total" class="font-semibold text-sm" aria-live="polite"></p>
+                    <div class="metro-solo-pasos flex gap-2">
+                        <button type="button" id="atras" class="metro-boton">← Atrás</button>
+                        <button type="button" id="siguiente" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Siguiente →</button>
+                    </div>
                 </div>
             </div>
             <img src="img/metropolitano-2026/hojas-abajo.jpg" alt="" width="1400" height="364" class="block w-full h-16 sm:h-24 object-cover object-bottom">
@@ -249,6 +296,11 @@
     <script src="js/metropolitano-gafete.js"></script>
     <script src="js/visor-documento.js"></script>
     <script src="js/metropolitano-hospedaje.js"></script>
+    <script src="js/idioma-pagina.js"></script>
+    <script src="js/metropolitano-en.js"></script>
+    <script src="js/metropolitano-fr.js"></script>
+    <script src="js/inscripcion-metropolitano-en.js"></script>
+    <script src="js/inscripcion-metropolitano-fr.js"></script>
     <script src="js/inscripcion-metropolitano.js"></script>
 </body>
 </html>

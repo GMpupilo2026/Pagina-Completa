@@ -226,7 +226,8 @@ def archivos():
             and f != os.path.join("js", "centroamericano-fr.js")
             and f != os.path.join("js", "centroamericano-frases.js")
             # Y la del Metropolitano, por lo mismo.
-            and f != os.path.join("js", "metropolitano-fr.js")]
+            and f != os.path.join("js", "metropolitano-fr.js")
+            and f != os.path.join("js", "inscripcion-metropolitano-fr.js")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

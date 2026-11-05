@@ -184,8 +184,8 @@ const FILAS_FIDE = [
     fs.writeFileSync(FOTO, pngLiso(60, 80, [200, 120, 40]));
     // Una página con el doble de Supabase: lo que busca, sube y manda queda anotado.
     // El parqueo, como lo contesta metropolitano_parqueo_ver (fijo: nunca la base real).
-    async function abrir(parqueo) {
-      const p = await ctx.newPage();
+    async function abrir(parqueo, consulta, contexto) {
+      const p = await (contexto || ctx).newPage();
       await p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json",
         body: JSON.stringify(parqueo || { disponible: false, precio_usd: null, quedan: 0 }) }));
       const anotado = { errores: [], buscado: [], subidos: [], enviado: null };
@@ -199,7 +199,7 @@ const FILAS_FIDE = [
         const personas = anotado.enviado.personas.map((x, i) => ({ codigo: "MET-00" + (12 + i), numero: 12 + i, nombre: x.nombre }));
         r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, personas, codigo: personas[0].codigo, numero: 12, monto_usd: 87, monto_crc: 40020 }) });
       });
-      await p.goto(BASE + "/inscripcion-metropolitano.html");
+      await p.goto(BASE + "/inscripcion-metropolitano.html" + (consulta || "?todo=1"));
       return { p, anotado };
     }
     const tarjeta = (p, n) => p.locator("#personas > section").nth(n);
@@ -250,7 +250,10 @@ const FILAS_FIDE = [
     await t1.locator('[data-acomp-campo="documento"]').fill("PA123456");
     await t1.locator('[data-acomp-campo="nacimiento"]').fill("1975-02-02");
     await t1.locator('[data-acomp-campo="parentesco"]').fill("Padre");
+    cierto("la alimentación viene plegada y dice que no se pide", !(await t1.locator('[data-comida][value="desayuno"]').isVisible()) && /no requiere/.test(await t1.locator("[data-resumen-comidas]").textContent()));
+    await t1.locator("[data-plegable-comidas] > summary").click();
     await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
+    igual("y al marcar, su título dice qué comidas", await t1.locator("[data-resumen-comidas]").textContent(), "(desayuno, cena)");
     await t1.locator('[data-c="acepta_publicidad"]').check();
     await p.check('input[name="metodo"][value="sinpe"]');
     cierto("el total sale en colones por SINPE", /\$87\.00 = ₡40\s?020/.test(await p.textContent("#total")));
@@ -426,7 +429,7 @@ const FILAS_FIDE = [
     // (en una página recién abierta, cuando ya contestó la base: lleno, no se ofrece)
     const s0p = await ctx.newPage();
     await s0p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ disponible: false, precio_usd: null, quedan: 0 }) }));
-    const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html")]);
+    const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html?todo=1")]);
     await s0r.finished(); await s0p.waitForTimeout(300);
     cierto("sin espacios de parqueo, la inscripción no lo ofrece", await s0p.locator("#personas > section [data-c='nombre']").first().isVisible()
       && !(await s0p.locator("#personas > section [data-caja-parqueo]").first().evaluate((x) => x.checkVisibility())));
@@ -480,12 +483,19 @@ const FILAS_FIDE = [
     await d.locator('[data-c="canton"]').selectOption("Barva");
     await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777" });
     await d.locator('input[name="p2-hosp"][value="si"]').check();
+    await d.locator("[data-plegable-comidas] > summary").click();
     await d.locator('[data-comida][value="almuerzo"]').check();
     await d.locator("[data-foto]").setInputFiles(FOTO);
     await g.p.click('[data-agregar="jugador"]');
     await g.p.click('[data-agregar="entrenador"]');
     igual("se agregaron dos personas", await g.p.locator("#personas > section").count(), 3);
     const j = tarjeta(g.p, 1), en = tarjeta(g.p, 2);
+    // Al agregar, las demás se pliegan, y cada una dice en su título si le falta algo.
+    cierto("al agregar a alguien, las tarjetas de antes se pliegan y se ve la nueva", !(await d.locator('[data-c="nombre"]').isVisible()) && !(await j.locator('[data-c="nombre"]').isVisible())
+      && await en.locator('[data-c="nombre"]').isVisible() && (await d.locator("[data-plegar]").getAttribute("aria-expanded")) === "false");
+    cierto("cada tarjeta dice en su título cuánto le falta", /^Falta/.test(await j.locator("[data-estado]").textContent()) && /^Falta/.test(await d.locator("[data-estado]").textContent()), [await d.locator("[data-estado]").textContent()]);
+    await j.locator("[data-plegar]").click();
+    await d.locator("[data-plegar]").click();
     cierto("a cada persona nueva se le copia de dónde viene, el hospedaje y las comidas del delegado",
       (await j.locator('[data-c="provincia"]').inputValue()) === "Heredia" && (await j.locator('[data-c="canton"]').inputValue()) === "Barva" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
       && await j.locator('[data-comida][value="almuerzo"]').isChecked());
@@ -537,6 +547,140 @@ const FILAS_FIDE = [
     const pdfg = fs.readFileSync(await dg.path()).toString("latin1");
     igual("los gafetes del grupo salen en un solo PDF (frente y dorso de cada uno)", (pdfg.match(/\/Type \/Page\b/g) || []).length, 6);
     igual("sin errores en la página del grupo", g.anotado.errores, []);
+
+
+    /* ----- Por pasos y en inglés: los errores en su campo, el borrador y el idioma ----- */
+    console.log("   Por pasos, en inglés y en francés");
+    // Lo que quedó en español con otro idioma puesto: un texto que el idioma no
+    // tocó y no está en su mapa (los datos de prueba, que son nombres, no cuentan).
+    const enEspanol = (pg) => pg.evaluate(() => {
+      const api = window.IdiomaPagina.actual, hechos = api.traducidos();
+      const en = document.documentElement.lang === "en";
+      const mapa = Object.assign({}, (en ? window.MetropolitanoEN : window.MetropolitanoFR).textos, (en ? window.InscripcionMetroEN : window.InscripcionMetroFR).textos);
+      const datos = /Andrea|Mora|Solis|Pedro|Carlos|Rojas|Vega|Solano|San José|Escazú|Costa Rica|Heredia|Barva|MET-|fca-logo|@ejemplo/;
+      const L = (t) => String(t || "").replace(/\s+/g, " ").trim();
+      const sin = [];
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) {
+        if (!n.parentElement || n.parentElement.closest("script, style, [data-no-traducir]")) continue;
+        const t = L(n.nodeValue);
+        if (t && /[a-záéíóúñ]/.test(t) && !hechos.has(n) && !Object.prototype.hasOwnProperty.call(mapa, t) && !datos.test(t)) sin.push(t);
+      }
+      document.querySelectorAll("[aria-label], [placeholder], [title], [alt]").forEach((el) => {
+        if (el.closest("[data-no-traducir]")) return;
+        ["aria-label", "placeholder", "title", "alt"].forEach((a) => { const v = L(el.getAttribute(a)); if (v && api.traducir(v) !== v) sin.push("@" + a + ": " + v); });
+      });
+      return [...new Set(sin)];
+    });
+    const ingles = await abrir(null, "?lang=en");
+    const ip = ingles.p, it = tarjeta(ip, 0);
+    igual("con ?lang=en la página sale en inglés", await ip.evaluate(() => document.documentElement.lang), "en");
+    igual("por pasos: arranca en el primero", await ip.textContent("#paso-titulo"), "Step 1 of 5: Who registers");
+    cierto("en el paso 1 se ve quién es, y no los torneos, la estadía ni el pago", await it.locator('[data-c="nombre"]').isVisible() && !(await it.locator("[data-bloque-torneos]").isVisible())
+      && !(await it.locator('[data-c="provincia"]').isVisible()) && !(await ip.isVisible("#caja-pago")) && !(await ip.isVisible("#atras")));
+    cierto("y abajo, siempre a la vista, el total y «Siguiente»", await ip.isVisible("#barra") && /Total/.test(await ip.textContent("#barra-total")) && await ip.isVisible("#siguiente"));
+    await ip.click("#ver-todo");
+    cierto("«Ver todo en una página» junta los pasos", await ip.isVisible("#caja-pago") && await it.locator("[data-bloque-torneos]").isVisible() && !(await ip.isVisible("#siguiente")));
+    await ip.click("#ver-todo");
+    cierto("y «Ver por pasos» los vuelve a separar", !(await ip.isVisible("#caja-pago")) && await ip.isVisible("#siguiente"));
+    await ip.click("#siguiente");
+    cierto("«Siguiente» con lo del paso a medias no avanza: dice todo lo que falta, junto", (await ip.textContent("#paso-titulo")).startsWith("Step 1") && await ip.isVisible("#errores")
+      && (await ip.locator("#errores-lista li").count()) >= 5 && /The full name is missing\./.test(await ip.textContent("#errores-lista")));
+    cierto("y cada campo dice lo suyo debajo, marcado para el lector de pantalla", await it.locator('[data-c="sexo"]').getAttribute("aria-invalid") === "true"
+      && /The sex is missing\./.test(await ip.textContent("#" + await it.locator('[data-c="sexo"]').getAttribute("aria-describedby").then((x) => x.split(" ").pop()))));
+    const cuantosAntes = await ip.locator("#errores-lista li").count();
+    await it.locator('[data-c="sexo"]').selectOption("f");
+    cierto("al corregirlo, su frase se va, y también de la lista de arriba", (await ip.locator("#errores-lista li").count()) === cuantosAntes - 1 && (await it.locator('[data-c="sexo"]').getAttribute("aria-invalid")) === null);
+    await ip.locator("#errores-lista button").first().click();
+    cierto("cada cosa de la lista lleva a su campo", await ip.evaluate(() => document.activeElement && document.activeElement.matches("#personas input, #personas select")));
+    await it.locator('[data-c="nombre"]').fill("Andrea"); await it.locator('[data-c="apellidos"]').fill("Mora Solis");
+    await it.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 }).catch(() => {});
+    await ip.waitForFunction(() => /6400099/.test(document.querySelector("[data-estado-nombre]").textContent), null, { timeout: 8000 });
+    await llenar(it, { nacimiento: "1990-07-07", documento: "1-1111-2222", correo: "andrea@ejemplo.com", telefono: "+506 8888 0000", emer_nombre: "Carlos Rojas", emer_telefono: "88887777" });
+    await it.locator("[data-foto]").setInputFiles(FOTO);
+    await ip.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 1);
+    igual("en inglés, nada del paso 1 queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    igual("con el paso completo, «Siguiente» lleva al de los torneos", await ip.textContent("#paso-titulo"), "Step 2 of 5: Tournaments");
+    cierto("donde ya no se ve lo del paso 1, y sí «Atrás»", !(await it.locator('[data-c="nombre"]').isVisible()) && await it.locator("[data-bloque-torneos]").isVisible() && await ip.isVisible("#atras"));
+    cierto("sin Elo y nacida en 1990: el B, elegido solo", await it.locator('input[name="p1-clasico"][value="B"]').isChecked());
+    igual("en inglés, nada de los torneos queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    await ip.click("#siguiente");
+    cierto("en la estadía, sin la provincia no avanza", (await ip.textContent("#paso-titulo")).startsWith("Step 3") && /province or canton/.test(await ip.textContent("#errores-lista")));
+    await it.locator('[data-c="provincia"]').selectOption("San José"); await it.locator('[data-c="canton"]').selectOption("Escazú");
+    await it.locator('input[name="p1-hosp"][value="si"]').check();
+    cierto("las condiciones del hospedaje, en inglés", /The door closes at 10:30 p\.m\./.test(await it.locator("[data-condiciones-texto]").textContent())
+      && /I have read and accept the conditions of the lodging/.test(await it.locator("[data-acepto-hospedaje]").textContent()));
+    await it.locator('[data-c="acepta_compartir"]').check(); await it.locator('[data-c="acepta_hospedaje"]').check();
+    igual("en inglés, nada de la estadía queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    igual("después, el pago", await ip.textContent("#paso-titulo"), "Step 4 of 5: Payment");
+    await ip.check('input[name="metodo"][value="sinpe"]');
+    await ip.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await ip.check("#quiere-factura");
+    igual("en inglés, nada del pago queda en español", await enEspanol(ip), []);
+    await ip.uncheck("#quiere-factura");
+    await ip.click("#siguiente");
+    cierto("y al final, confirmar: el seguro corto en la casilla, con su texto entero plegado", (await ip.textContent("#paso-titulo")).startsWith("Step 5")
+      && await ip.isVisible("#acepta-seguro") && !(await ip.isVisible("#acepta-seguro-texto")) && /valid insurance policy/.test(await ip.textContent("#acepta-seguro-texto")));
+    await ip.check("#acepta-reglamento"); await ip.check("#acepta-imagen"); await ip.check("#acepta-seguro"); await ip.check("#acepta-datos");
+    await ip.waitForTimeout(600);
+    cierto("lo llenado se guarda en el aparato, sin las fotos", await ip.evaluate(() => { const b = JSON.parse(localStorage.getItem("metro_borrador_v1") || "null");
+      return !!b && b.personas[0].campos.nombre === "Andrea" && !/blob:|data:image/.test(JSON.stringify(b)) && !("acepta_hospedaje" in b.personas[0].campos); }));
+    await ip.click("#revisar");
+    await ip.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    igual("el resumen, en inglés", await ip.textContent("#resumen-titulo"), "Welcome to the Metropolitano Tournament 2026");
+    igual("en inglés, nada del resumen queda en español", await enEspanol(ip), []);
+    await ip.check("#confirmo");
+    await ip.click("#enviar");
+    await ip.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    igual("lo que se manda va en español, como lo guarda la base", ingles.anotado.enviado.personas[0].torneos, ["B"]);
+    igual("en inglés, nada de la confirmación queda en español", await enEspanol(ip), []);
+    cierto("y al mandarla, el borrador se borra", await ip.evaluate(() => localStorage.getItem("metro_borrador_v1") === null));
+    igual("sin errores en la página en inglés", ingles.anotado.errores, []);
+
+    // El borrador: al volver, se ofrece seguir donde quedó (en un aparato aparte).
+    const ctxB = await nav.newContext({ viewport: { width: 420, height: 900 }, serviceWorkers: "block" });
+    const b1 = await abrir(null, "?todo=1", ctxB);
+    await b1.p.check('input[name="modo"][value="grupo"]');
+    await b1.p.fill("#delegacion", "Club Ajedrez Heredia");
+    await b1.p.click('[data-agregar="acompanante"]');
+    await tarjeta(b1.p, 1).locator('[data-c="nombre"]').fill("Pedro");
+    await tarjeta(b1.p, 1).locator('[data-c="apellidos"]').fill("Solano");
+    await b1.p.waitForTimeout(700);
+    await b1.p.close();
+    const b2 = await abrir(null, "?todo=1", ctxB);
+    cierto("al volver, ofrece seguir donde quedó", await b2.p.isVisible("#borrador") && /Club Ajedrez Heredia.*2 personas/.test(await b2.p.textContent("#borrador-texto"))
+      && /fotos/.test(await b2.p.textContent("#borrador-texto")));
+    await b2.p.click("#borrador-seguir");
+    cierto("y «Seguir donde quedé» vuelve a poner todo", (await b2.p.inputValue("#delegacion")) === "Club Ajedrez Heredia" && (await b2.p.locator("#personas > section").count()) === 2
+      && (await tarjeta(b2.p, 1).locator("[data-rol]").inputValue()) === "acompanante" && (await tarjeta(b2.p, 1).locator('[data-c="apellidos"]').inputValue()) === "Solano"
+      && !(await b2.p.isVisible("#borrador")));
+    await b2.p.close();
+    const b3 = await abrir(null, "?todo=1", ctxB);
+    await b3.p.click("#borrador-nuevo");
+    cierto("«Empezar de nuevo» lo borra", !(await b3.p.isVisible("#borrador")) && await b3.p.evaluate(() => localStorage.getItem("metro_borrador_v1") === null)
+      && (await b3.p.locator("#personas > section").count()) === 1);
+    await ctxB.close();
+
+    // En francés, un grupo a medias: la lista de lo que falta y el aviso de quitar a alguien.
+    const fr = await abrir(null, "?lang=fr&todo=1");
+    await fr.p.check('input[name="modo"][value="grupo"]');
+    await fr.p.click('[data-agregar="jugador"]');
+    await fr.p.click("#revisar");
+    cierto("en francés, lo que falta del grupo, con el número y el nombre de cada uno", /Il manque/.test(await fr.p.textContent("#errores-titulo")) && (await fr.p.locator("#errores-lista li").allTextContents()).some((x) => /^2\. personne sans nom : Il manque/.test(x)), [await fr.p.textContent("#errores-titulo"), await fr.p.locator("#errores-lista li").allTextContents()]);
+    igual("en francés, nada del grupo queda en español", await enEspanol(fr.p), []);
+    await tarjeta(fr.p, 1).locator("[data-quitar]").click();
+    await fr.p.waitForSelector("dialog[open]");
+    cierto("el aviso de quitar a alguien, en francés", /Retirer de l’inscription/.test(await fr.p.textContent("dialog[open]")));
+    igual("en francés, nada del aviso queda en español", await enEspanol(fr.p), []);
+    await fr.p.keyboard.press("Escape");
+    await fr.p.click("#metro-idioma");
+    await fr.p.click("#metro-idiomas [data-idioma='es']");
+    cierto("y de vuelta al español, todo como estaba", /^Faltan \d+ cosas para seguir:$/.test(await fr.p.textContent("#errores-titulo")) && /^Persona sin nombre todavía/.test(await tarjeta(fr.p, 1).locator("[data-titulo]").textContent()) === false
+      && /— Jugador/.test(await tarjeta(fr.p, 1).locator("[data-titulo]").textContent()));
+    igual("sin errores en la página en francés", fr.anotado.errores, []);
 
     // La página de información del torneo (metropolitano-2026.html).
     console.log("   La página de información");
@@ -746,7 +890,7 @@ const FILAS_FIDE = [
     await sinRes.close();
     // La inscripción: la privacidad y las bases encima, sin perder lo escrito.
     const ins = await ctx.newPage();
-    await ins.goto(BASE + "/inscripcion-metropolitano.html");
+    await ins.goto(BASE + "/inscripcion-metropolitano.html?todo=1");
     await ins.click("#acepta-datos-texto a[data-visor]");
     await ins.waitForFunction(() => { const f = document.querySelector("dialog.visor-doc[open] iframe"); return f && /privacidad\.html$/.test(f.src); });
     cierto("en la inscripción, la política de privacidad se abre encima del formulario", /inscripcion-metropolitano\.html/.test(ins.url()));

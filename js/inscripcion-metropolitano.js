@@ -21,6 +21,10 @@
  * public.metropolitano_inscribir(), que vuelve a comprobar y calcular todo y
  * guarda a todo el grupo o a nadie.
  *
+ * Se llena por pasos (o todo en una página), lo que falta se dice junto y al
+ * pie de cada campo, se guarda un borrador en el aparato y se puede leer en
+ * inglés y francés: ver «Un formulario más amigable» en las decisiones.
+ *
  * Lo que se decide acá es cortesía; quien decide es la base. Ver «La
  * inscripción del Metropolitano 2026» en docs/decisiones/cuentas-y-formularios.md.
  */
@@ -63,18 +67,25 @@
   } catch (e) { /* sin la lista, se escribe a mano */ }
 
   // Las federaciones de FIDE, con el nombre del país que sabe decir el navegador.
-  const FEDERACIONES = (() => {
+  const federaciones = (lang) => {
     let dn = null;
-    try { dn = new Intl.DisplayNames(["es"], { type: "region" }); } catch (e) { /* sin nombres */ }
+    try { dn = new Intl.DisplayNames([lang || "es"], { type: "region" }); } catch (e) { /* sin nombres */ }
     return Object.entries(window.GafetesBanderas.FIDE).map(([cod, iso]) => {
       let n = cod;
       try { if (dn && iso.length === 2) n = dn.of(iso.toUpperCase()) || cod; } catch (e) { /* el código */ }
-      return [cod, ({ ENG: "Inglaterra", SCO: "Escocia", WLS: "Gales" })[cod] || n];
-    }).sort((a, b) => a[1].localeCompare(b[1], "es"));
-  })();
+      const propios = { es: { ENG: "Inglaterra", SCO: "Escocia", WLS: "Gales" }, en: { ENG: "England", SCO: "Scotland", WLS: "Wales" }, fr: { ENG: "Angleterre", SCO: "Écosse", WLS: "pays de Galles" } };
+      return [cod, (propios[lang] || propios.es)[cod] || n];
+    }).sort((a, b) => a[1].localeCompare(b[1], lang || "es"));
+  };
   const AST = ' <span class="text-red-700 dark:text-red-400" aria-hidden="true">*</span>';
   const NOMBRE_DOC = { cedula: "Cédula", dimex: "DIMEX", pasaporte: "Pasaporte", otro: "Documento" };
-  const fechaLarga = (d) => (d ? window.HoraCR.fecha(d + "T12:00:00-06:00", { day: "numeric", month: "long", year: "numeric" }) : "");
+  /* El idioma de la página (js/idioma-pagina.js, con los mapas de
+     js/inscripcion-metropolitano-en.js y -fr.js). Lo escrito se traduce solo;
+     lo que se pinta acá en el idioma de ahora son las fechas y las
+     condiciones del hospedaje (de js/metropolitano-hospedaje.js). */
+  let idioma = "es";
+  const LOCALES = { es: "es-CR", en: "en-US", fr: "fr-FR" };
+  const fechaLarga = (d) => (d ? new Date(d + "T12:00:00-06:00").toLocaleDateString(LOCALES[idioma], { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" }) : "");
   const cacheFide = new Map();
 
   /* ===================== Una persona: su tarjeta ===================== */
@@ -100,15 +111,17 @@
   function plantilla(k) {
     const id = (x) => k + "-" + x;
     return `
-      <header class="px-4 py-3 flex items-center gap-3">
+      <header class="px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <span class="font-semibold grow" data-titulo></span>
+        <span data-estado class="metro-estado hidden"></span>
+        <button type="button" data-plegar aria-expanded="true" aria-controls="${id("cuerpo")}" class="hidden text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Plegar</button>
         <button type="button" data-quitar class="hidden text-sm underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Quitar</button>
       </header>
-      <div class="p-4 sm:p-5 space-y-6">
-        <div><label for="${id("rol")}" class="block text-sm font-semibold mb-1">Se inscribe como${AST}</label><select id="${id("rol")}" data-campo data-rol></select></div>
-        <div class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?${AST}</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
+      <div id="${id("cuerpo")}" data-cuerpo class="p-4 sm:p-5 space-y-6">
+        <div data-paso="1"><label for="${id("rol")}" class="block text-sm font-semibold mb-1">Se inscribe como${AST}</label><select id="${id("rol")}" data-campo data-rol></select></div>
+        <div data-paso="1" class="flex flex-wrap items-center gap-4" role="radiogroup" aria-label="¿De dónde viene?"><span class="text-sm font-semibold">¿De dónde viene?${AST}</span><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="cr" checked> De Costa Rica</label><label class="flex items-center gap-2"><input type="radio" name="${id("origen")}" value="fuera"> De otro país</label></div>
 
-        <div data-bloque-fide class="space-y-3">
+        <div data-paso="1" data-bloque-fide class="space-y-3">
           <p class="font-semibold" data-fide-pregunta>ID FIDE</p>
           <div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="si" checked> Tiene ID FIDE</label><label class="flex items-center gap-2"><input type="radio" name="${id("fide")}" value="no"> No tiene ID FIDE</label></div>
           <p data-origen-ayuda class="text-sm rounded-xl bg-brand-50 dark:bg-brand-950 p-3"></p>
@@ -127,7 +140,7 @@
           </div>
         </div>
 
-        <div class="grid sm:grid-cols-2 gap-4">
+        <div data-paso="1" class="grid sm:grid-cols-2 gap-4">
           <div><label for="${id("nombre")}" class="block text-sm font-semibold mb-1">Nombre(s)${AST}</label><input id="${id("nombre")}" data-campo data-c="nombre" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
           <div><label for="${id("apellidos")}" class="block text-sm font-semibold mb-1">Apellidos${AST}</label><input id="${id("apellidos")}" data-campo data-c="apellidos" maxlength="80" autocomplete="off" aria-describedby="${id("nombre-fide")}"></div>
           <p id="${id("nombre-fide")}" data-nombre-bloqueado class="hidden sm:col-span-2 text-sm font-semibold">🔒 El nombre y los apellidos son los de FIDE para el ID elegido, y no se pueden cambiar: así salen en el torneo. Si no es esta persona, busque otro ID arriba.</p>
@@ -141,13 +154,13 @@
           <div><label for="${id("pais")}" class="block text-sm font-semibold mb-1">País donde vive${AST}</label><input id="${id("pais")}" data-campo data-c="pais_residencia" list="paises" maxlength="60" value="Costa Rica"></div>
           <div><label for="${id("doctipo")}" class="block text-sm font-semibold mb-1">Documento de identidad${AST}</label><select id="${id("doctipo")}" data-campo data-c="documento_tipo"><option value="cedula">Cédula de Costa Rica</option><option value="dimex">DIMEX (residente en Costa Rica)</option><option value="pasaporte">Pasaporte</option><option value="otro">Documento de identidad de otro país</option></select></div>
           <div><label for="${id("doc")}" class="block text-sm font-semibold mb-1">Número de documento${AST}</label><input id="${id("doc")}" data-campo data-c="documento" maxlength="30" placeholder="1-2345-0678"></div>
-          <div><label for="${id("correo")}" class="block text-sm font-semibold mb-1">Correo electrónico<span data-ast-contacto>${AST}</span></label><input id="${id("correo")}" data-campo data-c="correo" type="email" maxlength="120"></div>
-          <div><label for="${id("tel")}" class="block text-sm font-semibold mb-1">Teléfono o WhatsApp, con el código del país<span data-ast-contacto>${AST}</span></label><input id="${id("tel")}" data-campo data-c="telefono" type="tel" maxlength="25" placeholder="+506 8888 1234"></div>
+          <div><label for="${id("correo")}" class="block text-sm font-semibold mb-1">Correo electrónico<span data-ast-contacto>${AST}</span></label><input id="${id("correo")}" data-campo data-c="correo" type="email" maxlength="120" autocomplete="email" inputmode="email"></div>
+          <div><label for="${id("tel")}" class="block text-sm font-semibold mb-1">Teléfono o WhatsApp, con el código del país<span data-ast-contacto>${AST}</span></label><input id="${id("tel")}" data-campo data-c="telefono" type="tel" maxlength="25" autocomplete="tel" placeholder="+506 8888 1234"></div>
           <div class="sm:col-span-2"><label for="${id("club")}" class="block text-sm font-semibold mb-1">Club, academia o colegio</label><input id="${id("club")}" data-campo data-c="club" maxlength="100"></div>
         </div>
-        <p data-nota-contacto class="hidden text-xs text-brand-500 dark:text-brand-300">En un grupo, el correo y el teléfono de cada integrante son opcionales: la organización le escribe al delegado.</p>
+        <p data-paso="1" data-nota-contacto class="hidden text-xs text-brand-500 dark:text-brand-300">En un grupo, el correo y el teléfono de cada integrante son opcionales: la organización le escribe al delegado.</p>
 
-        <div data-caja-responsable class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
+        <div data-paso="1" data-caja-responsable class="hidden rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
           <p class="font-semibold">Es menor de edad: su madre, padre o la persona responsable en el torneo</p>
           <div class="grid sm:grid-cols-2 gap-4">
             <div><label for="${id("rnom")}" class="block text-sm font-semibold mb-1">Nombre completo${AST}</label><input id="${id("rnom")}" data-campo data-c="resp_nombre" maxlength="100"></div>
@@ -157,7 +170,7 @@
           </div>
         </div>
 
-        <div class="rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
+        <div data-paso="1" class="rounded-xl border border-brand-200 dark:border-brand-700 p-4 space-y-3">
           <p class="font-semibold">Contacto para una emergencia</p>
           <div class="grid sm:grid-cols-3 gap-4">
             <div><label for="${id("enom")}" class="block text-sm font-semibold mb-1">Nombre${AST}</label><input id="${id("enom")}" data-campo data-c="emer_nombre" maxlength="100"></div>
@@ -166,7 +179,8 @@
           </div>
         </div>
 
-        <div data-bloque-torneos class="space-y-3">
+        <p data-paso="2" data-no-juega class="hidden text-sm rounded-xl bg-brand-50 dark:bg-brand-950 p-3">No juega: no elige torneo. Sigue con el paso siguiente.</p>
+        <div data-paso="2" data-bloque-torneos class="space-y-3">
           <p class="font-semibold">En qué torneo juega</p>
           <p class="text-sm text-brand-600 dark:text-brand-300">Se habilitan los que puede jugar según su Elo FIDE estándar y su fecha de nacimiento. A, B y U14 se juegan a la vez: se elige uno. El blitz se suma aparte.</p>
           <div data-clasicos class="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Torneo clásico"></div>
@@ -179,7 +193,7 @@
           </div>
         </div>
 
-        <div class="space-y-4">
+        <div data-paso="3" class="space-y-4">
           <p class="font-semibold" data-titulo-viaje>Viaje, hospedaje y alimentación</p>
           <!-- De Costa Rica no se pide el viaje: la provincia y el cantón, para las estadísticas. -->
           <div data-caja-procedencia class="grid sm:grid-cols-2 gap-4">
@@ -212,7 +226,8 @@
             <div data-acomp-lista class="sm:col-span-2 space-y-3"></div>
             <label class="sm:col-span-2 flex items-start gap-3 text-sm"><input type="checkbox" data-c="acepta_compartir" class="mt-1 h-4 w-4 shrink-0"> <span>Acepto que la habitación es compartida y que puede tocarme compartirla con otras personas que asigne la organización.${AST}</span></label>
           </div>
-          <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">Alimentación:</span>
+          <details data-plegable-comidas class="metro-plegable space-y-3"><summary><span>Alimentación</span> <span data-resumen-comidas class="text-sm font-normal text-brand-600 dark:text-brand-300"></span></summary>
+          <div class="flex flex-wrap items-center gap-4 mt-3">
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="desayuno"> Desayuno</label>
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="almuerzo"> Almuerzo</label>
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="cena"> Cena</label></div>
@@ -222,22 +237,23 @@
             <div><label for="${id("chas")}" class="block text-sm font-semibold mb-1">Hasta${AST}</label><input id="${id("chas")}" data-campo data-c="comidas_hasta" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-30"></div>
             <div class="sm:col-span-2"><label for="${id("dieta")}" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="${id("dieta")}" data-campo data-c="dieta" maxlength="300" placeholder="Vegetariana, sin gluten, alergia a los mariscos…"></div>
           </div>
+          </details>
           </div>
         </div>
 
         <!-- Las condiciones del hospedaje (js/metropolitano-hospedaje.js): a quien
              lo pide y a los titulados invitados, que duermen ahí. Se aceptan
              persona por persona y la base lo exige. -->
-        <div data-caja-condiciones class="hidden space-y-2 rounded-xl border-2 border-accent-500 p-4">
+        <div data-paso="3" data-caja-condiciones class="hidden space-y-2 rounded-xl border-2 border-accent-500 p-4">
           <p class="font-semibold"><span aria-hidden="true">🛏️ </span>Condiciones del hospedaje en el Estadio Nacional</p>
-          <div data-condiciones-texto class="text-sm max-h-72 overflow-y-auto pr-2" tabindex="0" role="region" aria-label="Condiciones del hospedaje en el Estadio Nacional"></div>
+          <div data-condiciones-texto data-no-traducir class="text-sm max-h-72 overflow-y-auto pr-2" tabindex="0" role="region" aria-label="Condiciones del hospedaje en el Estadio Nacional"></div>
           <p class="text-xs text-brand-600 dark:text-brand-300">Desliza dentro del cuadro para leerlas todas: también dicen qué hay que traer.</p>
-          <label class="flex items-start gap-3 text-sm font-semibold"><input type="checkbox" data-c="acepta_hospedaje" class="mt-1 h-4 w-4 shrink-0"> <span><span data-acepto-hospedaje></span>${AST}</span></label>
+          <label class="flex items-start gap-3 text-sm font-semibold"><input type="checkbox" data-c="acepta_hospedaje" class="mt-1 h-4 w-4 shrink-0"> <span><span data-acepto-hospedaje data-no-traducir></span>${AST}</span></label>
         </div>
 
         <!-- El parqueo: solo si administración lo ofrece y quedan espacios
              (metropolitano_parqueo_ver); lleno, no se muestra. -->
-        <div data-caja-parqueo class="hidden space-y-2">
+        <div data-paso="3" data-caja-parqueo class="hidden space-y-2">
           <p class="font-semibold"><span aria-hidden="true">🚗 </span>Parqueo</p>
           <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-c="parqueo" class="mt-1 h-4 w-4 shrink-0"> <span>Necesita parqueo en el Estadio Nacional <span data-parqueo-precio></span></span></label>
           <div data-caja-placa class="hidden space-y-1">
@@ -246,16 +262,15 @@
           </div>
         </div>
 
-        <div class="space-y-2">
-          <p class="font-semibold">Condición y accesibilidad</p>
+        <details data-paso="3" data-plegable-condicion class="metro-plegable space-y-2"><summary><span>Condición y accesibilidad</span> <span data-resumen-condicion class="text-sm font-normal text-brand-600 dark:text-brand-300"></span></summary>
           <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-condicion value="sordo" class="mt-1"> <span>Atleta sordo (opta por el premio de mejor atleta sordo del Metropolitano B)</span></label>
           <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-condicion value="ciego" class="mt-1"> <span>Atleta ciego o de baja visión (opta por el premio de mejor atleta ciego o de baja visión)</span></label>
           <label class="flex items-start gap-2 text-sm"><input type="checkbox" data-condicion value="silla" class="mt-1"> <span>Usa silla de ruedas o necesita una mesa accesible</span></label>
           <p data-aviso-condicion class="hidden text-xs text-brand-600 dark:text-brand-300">Para optar por esos premios hay que estar validado antes por la asociación: sordos, adas.costarica@gmail.com (8333-2510, solo texto o video en LESCO); ciegos y baja visión, ADAES, adaescr@gmail.com (6021-0579).</p>
           <div><label for="${id("acc")}" class="block text-sm font-semibold mb-1">¿Algo más que necesite? (tablero para ciegos, intérprete, otra)</label><input id="${id("acc")}" data-campo data-c="accesibilidad" maxlength="300"></div>
-        </div>
+        </details>
 
-        <div class="space-y-2">
+        <div data-paso="1" class="space-y-2">
           <p class="font-semibold">Foto tamaño pasaporte${AST}</p>
           <p class="text-sm text-brand-600 dark:text-brand-300">De frente, de los hombros hacia arriba, con fondo claro y sin lentes oscuros ni gorra. Va en el gafete.</p>
           <label for="${id("foto")}" class="metro-boton inline-block cursor-pointer">📷 Elegir la foto<input id="${id("foto")}" data-foto type="file" accept="image/*" class="sr-only"></label>
@@ -263,7 +278,7 @@
           <p data-foto-estado class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
         </div>
 
-        <label class="flex items-start gap-3 rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm"><input type="checkbox" data-c="acepta_publicidad" class="mt-1 h-4 w-4 shrink-0"> <span><strong>Permiso para publicidad (opcional):</strong> <span data-texto-publicidad></span></span></label>
+        <label data-paso="1" class="flex items-start gap-3 rounded-xl bg-brand-50 dark:bg-brand-950 p-4 text-sm"><input type="checkbox" data-c="acepta_publicidad" class="mt-1 h-4 w-4 shrink-0"> <span><strong>Permiso para publicidad (opcional):</strong> <span data-texto-publicidad></span></span></label>
       </div>`;
   }
 
@@ -271,6 +286,7 @@
     const k = "p" + (++siguiente);
     const el = document.createElement("section");
     el.className = "metro-persona";
+    el.dataset.paso = "1 2 3";
     el.innerHTML = plantilla(k);
     estilar(el);
     const q = (s) => el.querySelector(s);
@@ -306,8 +322,15 @@
 
     /* ---------- la federación de quien no tiene ID FIDE ---------- */
     const selFed = q("[data-federacion]");
-    { const o = document.createElement("option"); o.value = ""; o.textContent = "Elige el país…"; selFed.append(o); }
-    FEDERACIONES.forEach(([cod, nombre]) => { const o = document.createElement("option"); o.value = cod; o.textContent = nombre + " (" + cod + ")"; selFed.append(o); });
+    // Los países, con su nombre en el idioma de la página (el navegador los sabe decir).
+    yo.pintarFederaciones = () => {
+      const antes = selFed.value;
+      selFed.textContent = "";
+      const o0 = document.createElement("option"); o0.value = ""; o0.textContent = "Elige el país…"; selFed.append(o0);
+      federaciones(idioma).forEach(([cod, nombre]) => { const o = document.createElement("option"); o.value = cod; o.textContent = nombre + " (" + cod + ")"; o.dataset.noTraducir = ""; selFed.append(o); });
+      selFed.value = antes;
+    };
+    yo.pintarFederaciones();
     selFed.value = "CRC";
 
     /* ---------- de dónde viene: cómo se busca en FIDE ----------
@@ -321,7 +344,7 @@
     const lista = (sel, xs, primera) => {
       const antes = sel.value; sel.textContent = "";
       const o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; sel.append(o0);
-      xs.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; sel.append(o); });
+      xs.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; o.dataset.noTraducir = ""; sel.append(o); });
       if (xs.includes(antes)) sel.value = antes;
     };
     const cantones = () => { const pr = DIV.find((x) => x.provincia === c("provincia").value); lista(c("canton"), pr ? pr.cantones.map((x) => x.canton) : [], pr ? "Elige el cantón…" : "Primero la provincia"); };
@@ -595,6 +618,7 @@
       q("[data-fed-cr]").classList.toggle("hidden", selFed.value !== "CRC");
       q("[data-fed-fuera]").classList.toggle("hidden", selFed.value === "CRC");
       q("[data-bloque-torneos]").classList.toggle("hidden", !juega);
+      q("[data-no-juega]").classList.toggle("hidden", juega);
       q("[data-caja-codigo]").classList.toggle("hidden", !juega || esTitulado());
       const contactoOpcional = esGrupo() && !yo.esDelegado;
       el.querySelectorAll("[data-ast-contacto]").forEach((x) => x.classList.toggle("hidden", contactoOpcional));
@@ -613,6 +637,13 @@
       pintarAcompanantes();
       q("[data-caja-comidas]").classList.toggle("hidden", !comidas().length);
       q("[data-aviso-condicion]").classList.toggle("hidden", !condicion().some((x) => x === "sordo" || x === "ciego"));
+      // Lo plegado dice en su título qué tiene, y se abre si ya tiene algo.
+      const marcadas = [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
+      q("[data-resumen-comidas]").textContent = marcadas.length ? "(" + marcadas.join(", ") + ")" : "(no requiere)";
+      if (marcadas.length) q("[data-plegable-comidas]").open = true;
+      const conCondicion = condicion().length > 0 || !!v("accesibilidad");
+      q("[data-resumen-condicion]").textContent = conCondicion ? "(con lo marcado)" : "(opcional)";
+      if (conCondicion) q("[data-plegable-condicion]").open = true;
       // El parqueo se ofrece mientras queden espacios; si se acabó, se quita.
       q("[data-caja-parqueo]").classList.toggle("hidden", !PARQUEO.disponible);
       if (!PARQUEO.disponible) c("parqueo").checked = false;
@@ -623,10 +654,12 @@
       // (a él la ropa de cama se la da la organización).
       const conCondiciones = hospeda() || tit;
       q("[data-caja-condiciones]").classList.toggle("hidden", !conCondiciones);
-      if (conCondiciones && q("[data-caja-condiciones]").dataset.titulado !== String(tit)) {
-        q("[data-caja-condiciones]").dataset.titulado = String(tit);
-        window.MetropolitanoHospedaje.pintar(q("[data-condiciones-texto]"), "es", { titulado: tit, soloUno: true });
-        q("[data-acepto-hospedaje]").textContent = tit ? window.MetropolitanoHospedaje.TX.es.aceptoTitulado : window.MetropolitanoHospedaje.TX.es.acepto;
+      if (conCondiciones && q("[data-caja-condiciones]").dataset.pintadas !== tit + idioma) {
+        q("[data-caja-condiciones]").dataset.pintadas = tit + idioma;
+        const H = window.MetropolitanoHospedaje, T = H.TX[idioma] || H.TX.es;
+        H.pintar(q("[data-condiciones-texto]"), idioma, { titulado: tit, soloUno: true });
+        q("[data-acepto-hospedaje]").textContent = tit ? T.aceptoTitulado : T.acepto;
+        q("[data-condiciones-texto]").lang = idioma; q("[data-acepto-hospedaje]").lang = idioma;
       }
       q("[data-texto-publicidad]").textContent = esGrupo() && !yo.esDelegado
         ? "esta persona (o su madre o padre, si es menor) autoriza que la FCA y Ajedrez Integral usen su nombre y su foto en la publicidad del torneo: redes sociales, afiches, la página y la prensa."
@@ -645,6 +678,7 @@
       const torneo = rol === "jugador" && yo.torneos().length ? " · " + yo.torneos().map((t) => R.TORNEOS[t].corto).join(" + ") : "";
       q("[data-titulo]").textContent = (esGrupo() ? i + ". " : "") + (n || "Persona sin nombre todavía") + " — " + queEs + torneo;
       q("[data-quitar]").classList.toggle("hidden", !esGrupo() || yo.esDelegado);
+      q("[data-plegar]").classList.toggle("hidden", !esGrupo());
       q("[data-quitar]").setAttribute("aria-label", "Quitar a " + (n || "esta persona") + " de la inscripción");
     }
 
@@ -658,6 +692,7 @@
       if (!(await window.Avisos.confirmar("Se quita a " + n + " de la inscripción, con todo lo que llenaste de ella.", { titulo: "¿Quitar a " + n + "?", aceptar: "Quitar de la inscripción", peligro: true }))) return;
       personas.splice(personas.indexOf(yo), 1);
       el.remove();
+      guardarLuego();
       personas.forEach((p) => p.recalcular());
       $("agregar").querySelector("button").focus();
     });
@@ -735,6 +770,66 @@
       if (c("habitacion").value === "organizacion") c("habitacion").value = "compartida";
     };
     yo.hospeda = hospeda; yo.comidas = comidas;
+
+    /* ---------- plegar la tarjeta (en un grupo) y lo que le falta ---------- */
+    yo.plegar = (si) => {
+      q("[data-cuerpo]").hidden = si;
+      const b = q("[data-plegar]");
+      b.setAttribute("aria-expanded", si ? "false" : "true");
+      b.textContent = si ? "Abrir" : "Plegar";
+    };
+    yo.plegada = () => q("[data-cuerpo]").hidden;
+    q("[data-plegar]").addEventListener("click", () => yo.plegar(!yo.plegada()));
+    yo.pintarEstado = (faltan) => {
+      const e = q("[data-estado]");
+      e.classList.toggle("hidden", !esGrupo());
+      e.textContent = faltan ? (faltan === 1 ? "Falta 1 dato" : "Faltan " + faltan + " datos") : "✓ Completa";
+      if (faltan) e.dataset.falta = ""; else delete e.dataset.falta;
+    };
+
+    /* ---------- el borrador: lo que se guarda en el aparato ----------
+       Todo lo escrito, sin las fotos ni los documentos (no caben y no deben
+       quedar en el aparato) ni las casillas de aceptar, que se vuelven a marcar. */
+    yo.estado = () => {
+      const campos = {};
+      el.querySelectorAll("[data-c]").forEach((x) => { if (!/^acepta_/.test(x.dataset.c)) campos[x.dataset.c] = x.type === "checkbox" ? x.checked : x.value; });
+      return {
+        rol: yo.rol(), origen: deAfuera() ? "fuera" : "cr", fide: sinFide() ? "no" : "si", fed: selFed.value,
+        elegido: yo.elegido, clasico: yo.clasico, blitz: q("[data-blitz]").checked, tocado: yo.tocado,
+        hosp: el.querySelector('input[name="' + k + '-hosp"]:checked').value,
+        comidas: [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value), condicion: condicion(),
+        campos, acomp: yo.acompanantes(), codigo: yo.codigo, buscar: buscarEl.value, sinNombre: sinResultadoPorNombre,
+      };
+    };
+    yo.restaurar = (e) => {
+      const marcar = (nombre, valor) => { const r = el.querySelector('input[name="' + k + "-" + nombre + '"][value="' + valor + '"]'); if (r) r.checked = true; };
+      if (roles.includes(e.rol)) selRol.value = e.rol;
+      marcar("origen", e.origen === "fuera" ? "fuera" : "cr");
+      marcar("fide", e.fide === "no" ? "no" : "si");
+      marcar("hosp", e.hosp === "si" ? "si" : "no");
+      selFed.value = e.fed || "";
+      Object.entries(e.campos || {}).forEach(([n, x]) => {
+        const f = c(n);
+        if (!f || n === "canton") return;
+        if (f.type === "checkbox") f.checked = !!x; else f.value = x == null ? "" : String(x);
+      });
+      cantones(); c("canton").value = (e.campos && e.campos.canton) || "";
+      el.querySelectorAll("[data-comida]").forEach((x) => { x.checked = (e.comidas || []).includes(x.value); });
+      el.querySelectorAll("[data-condicion]").forEach((x) => { x.checked = (e.condicion || []).includes(x.value); });
+      q("[data-blitz]").checked = !!e.blitz;
+      yo.elegido = e.elegido && e.elegido.fideId ? e.elegido : null;
+      yo.clasico = e.clasico || null; yo.tocado = !!e.tocado;
+      sinResultadoPorNombre = !!e.sinNombre; buscarEl.value = e.buscar || "";
+      bloquearNombre(!!yo.elegido && deAfuera());
+      pintarElegido();
+      pintarAcompanantes();
+      (e.acomp || []).forEach((a, i) => {
+        const fs = q('[data-acomp="' + i + '"]');
+        if (fs) fs.querySelectorAll("[data-acomp-campo]").forEach((x) => { x.value = a[x.dataset.acompCampo] || ""; });
+      });
+      if (e.codigo && e.codigo.codigo) { yo.codigo = e.codigo; entradaCodigo.value = e.codigo.codigo; entradaCodigo.disabled = true; pintarCodigo(); }
+      recalcular();
+    };
 
     /* ---------- lo que se manda, y lo que falta ---------- */
     yo.armar = (metodo) => {
@@ -848,6 +943,8 @@
     if (!b) return;
     if (personas.length >= R.MAX_GRUPO) { window.Avisos.avisar("Un grupo lleva hasta " + R.MAX_GRUPO + " personas. Para más, haz otra inscripción de grupo.", { tipo: "error" }); return; }
     const p = agregar(b.dataset.agregar);
+    // Las demás se pliegan: se ve la nueva, y cada una dice en su título si le falta algo.
+    personas.forEach((x) => { if (x !== p) x.plegar(true); });
     p.el.scrollIntoView({ block: "start", behavior: "smooth" });
     p.el.querySelector("select").focus({ preventScroll: true });
   });
@@ -863,13 +960,12 @@
     if (!caja) return;
     const afuera = personas.some((p) => p.deAfuera());
     const fuerte = document.createElement("strong"); fuerte.textContent = "Seguro y responsabilidad.";
-    const ast = document.createElement("span"); ast.className = "text-red-700 dark:text-red-400"; ast.textContent = "*";
     caja.textContent = "";
     caja.append(fuerte, " Declaro que cada persona de esta inscripción, y cada acompañante que se anota con ella, cuenta con una póliza de seguro vigente que la cubre durante todo el evento —de gastos médicos y de accidentes—"
       + (afuera ? " y, quien viene de otro país, además con un seguro de viaje que la cubre durante toda su estadía en Costa Rica," : "")
       + " y que el costo de esa póliza no corre por cuenta de la organización. Cada persona participa por su propia voluntad y asume los riesgos propios de la competencia, "
       + (afuera ? "del viaje, del hospedaje y de la estadía" : "de los traslados y del hospedaje")
-      + ". Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, también en el hospedaje, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización. ", ast);
+      + ". Por eso eximo a la Federación Costarricense de Ajedrez, a la organización del torneo, a su cuerpo arbitral y a Ajedrez Integral de toda responsabilidad por accidentes, lesiones, enfermedades, pérdidas, robos o daños a las personas o a sus pertenencias, antes, durante o después de las rondas, también en el hospedaje, y renuncio a cobrarles gastos médicos, de traslado, indemnizaciones o cualquier otro costo, y a demandarlos por esos hechos, salvo en lo que la ley no permita renunciar. Si inscribo a un menor de edad, acepto esto como su madre, padre o persona encargada, o con su autorización.");
   }
 
   function totales() {
@@ -878,7 +974,8 @@
     const lineas = [], avisos = new Set();
     let usd = 0, iva = 0, gratisTodo = true;
     personas.forEach((p, i) => {
-      const { datos, precio } = p.armar(metodo);
+      const { datos, precio, errores } = p.armar(metodo);
+      p.pintarEstado(errores.length);
       const quien = [datos.nombre, datos.apellidos].filter(Boolean).join(" ") || "Persona " + (i + 1);
       if (datos.rol === "jugador" && datos.torneos.length) {
         precio.lineas.forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
@@ -900,12 +997,21 @@
     const enColones = metodo && R.METODOS[metodo].moneda === "CRC";
     tot.textContent = usd === 0 ? "Total: sin costo" : "Total: " + R.dinero(usd) + (enColones ? " = " + R.colones(crc) + " (a ₡" + R.TIPO_CAMBIO + " por dólar)" : "");
     caja.append(ul, tot);
-    if (usd > 0) { const av = document.createElement("p"); av.className = "text-xs text-brand-500 dark:text-brand-300 mt-1"; av.textContent = [...avisos].join(" "); caja.append(av); }
+    if (usd > 0) {
+      // Cada aviso en su propio pedazo, para que se traduzca solo.
+      const av = document.createElement("p"); av.className = "text-xs text-brand-500 dark:text-brand-300 mt-1";
+      [...avisos].forEach((a, i) => { const sp = document.createElement("span"); sp.textContent = a; if (i) av.append(" "); av.append(sp); });
+      caja.append(av);
+    }
     $("con-pago").classList.toggle("hidden", usd === 0);
     pintarMetodos(usd, crc);
     $("cuenta-personas").textContent = "(" + (personas.length === 1 ? "1 persona" : personas.length + " personas") + " hasta ahora)";
     // Sin nada que cobrar no hay factura que pedir.
     $("caja-factura-todo").classList.toggle("hidden", usd === 0 && iva === 0);
+    // La barra de abajo: el total, siempre a la vista.
+    $("barra-total").textContent = (esGrupo() ? (personas.length === 1 ? "1 persona" : personas.length + " personas") + " · " : "")
+      + (usd === 0 ? "Total: sin costo" : "Total: " + R.dinero(usd) + (enColones ? " = " + R.colones(crc) : ""));
+    guardarLuego();
     return { usd, crc, iva, lineas, gratisTodo };
   }
 
@@ -936,7 +1042,7 @@
   const opciones = (sel, lista, primera) => {
     sel.textContent = "";
     const o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; sel.append(o0);
-    lista.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; sel.append(o); });
+    lista.forEach((x) => { const o = document.createElement("option"); o.value = x; o.textContent = x; o.dataset.noTraducir = ""; sel.append(o); });
   };
   const DT = window.DivisionTerritorial || [];
   opciones($("fac_provincia"), DT.map((x) => x.provincia), "Elige la provincia…");
@@ -1000,19 +1106,17 @@
     est.textContent = "Elegido: " + a.name;
   });
 
-  /* ===================== Revisar ===================== */
-  let envio = null;   // { personas: [{ p, datos, precio }], total }
-
-  $("formulario").addEventListener("submit", async (ev) => {
-    ev.preventDefault();
-    $("msg").textContent = "";
+  /* Todo lo que falta, de todas las personas y del pago: [campo, texto, texto
+     sin el nombre de la persona] (el segundo, para la lista de arriba en un
+     grupo; el tercero, para la frase al pie del campo). */
+  function recogerErrores() {
     const errores = [];
     if (esGrupo() && !$("delegacion").value.trim()) errores.push([$("delegacion"), "Falta el nombre de la delegación."]);
     if (esGrupo() && personas.length < 2) errores.push([$("agregar").querySelector("button"), "Agrega al menos a una persona a la delegación."]);
     const lista = personas.map((p, i) => {
       const r = p.armar(metodo);
       const quien = esGrupo() ? (i + 1) + ". " + ([r.datos.nombre, r.datos.apellidos].filter(Boolean).join(" ") || "persona sin nombre") + ": " : "";
-      r.errores.forEach(([campo, t]) => errores.push([campo, quien + t]));
+      r.errores.forEach(([campo, t]) => errores.push([campo, quien + t, t]));
       return Object.assign({ p }, r);
     });
     // El parqueo del envío: una placa es un espacio, y no más de los que quedan.
@@ -1026,14 +1130,254 @@
     if (t.usd > 0 && !comprobante) errores.push([$("comprobante"), "Falta el comprobante de pago."]);
     if (t.usd > 0 && quiereFactura()) errores.push(...erroresFactura());
     if (!$("acepta-reglamento").checked || !$("acepta-imagen").checked || !$("acepta-seguro").checked || !$("acepta-datos").checked) errores.push([$("acepta-reglamento"), "Falta marcar las cuatro casillas del final."]);
+    return { errores, lista, t };
+  }
+
+  /* ===================== Lo que falta: al pie de cada campo y todo junto ===================== */
+  const form = $("formulario");
+  let numError = 0;
+  // El paso de un campo: el del bloque donde está (una tarjeta es de los pasos 1 a 3).
+  function pasoDe(campo) {
+    const b = campo && campo.closest && campo.closest("[data-paso]");
+    return b ? Math.min(...b.dataset.paso.split(" ").map(Number)) : 1;
+  }
+  function quitarMarca(campo) {
+    const id = campo.dataset.errorId;
+    if (!id) return;
+    const p = document.getElementById(id);
+    if (p) p.remove();
+    campo.removeAttribute("aria-invalid");
+    const resto = (campo.getAttribute("aria-describedby") || "").split(" ").filter((x) => x && x !== id).join(" ");
+    if (resto) campo.setAttribute("aria-describedby", resto); else campo.removeAttribute("aria-describedby");
+    delete campo.dataset.errorId;
+    // Y sale de la lista de arriba.
+    $("errores-lista").querySelectorAll('[data-para="' + id + '"]').forEach((li) => li.remove());
+    tituloErrores();
+  }
+  function marcar(errores) {
+    form.querySelectorAll("[data-error-id]").forEach(quitarMarca);
+    errores.forEach(([campo, texto, solo]) => {
+      if (!campo) return;
+      const frase = solo || texto;
+      const ya = campo.dataset.errorId && document.getElementById(campo.dataset.errorId);
+      // Cada frase en su pedazo, para que se traduzca sola.
+      const pedazo = () => { const sp = document.createElement("span"); sp.textContent = frase; return sp; };
+      if (ya) { if (ya.textContent.indexOf(frase) === -1) ya.append(" ", pedazo()); return; }
+      const p = document.createElement("p");
+      p.className = "metro-error"; p.id = "error-" + (++numError); p.append(pedazo());
+      (campo.closest("label") || campo).after(p);
+      campo.dataset.errorId = p.id;
+      if (campo.matches("input, select, textarea, [role=radiogroup]")) campo.setAttribute("aria-invalid", "true");
+      campo.setAttribute("aria-describedby", ((campo.getAttribute("aria-describedby") || "") + " " + p.id).trim());
+      // Si está en algo plegado, se abre para que se vea.
+      const det = campo.closest("details");
+      if (det) det.open = true;
+    });
+  }
+  function tituloErrores() {
+    const n = $("errores-lista").childElementCount;
+    $("errores-titulo").textContent = n === 1 ? "Falta 1 cosa para seguir:" : "Faltan " + n + " cosas para seguir:";
+    if (!n) $("errores").hidden = true;
+  }
+  function mostrarErrores(errores) {
+    const ul = $("errores-lista");
+    ul.textContent = "";
+    errores.forEach(([campo, texto]) => {
+      const li = document.createElement("li");
+      if (campo && campo.dataset.errorId) li.dataset.para = campo.dataset.errorId;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "text-left underline text-red-800 dark:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+      b.textContent = texto;
+      b.addEventListener("click", () => irAlCampo(campo));
+      li.append(b); ul.append(li);
+    });
+    $("errores").hidden = !errores.length;
+    tituloErrores();
+  }
+  // Lleva al campo: a su paso, abre su tarjeta y lo que esté plegado, y le pone el foco.
+  function irAlCampo(campo) {
+    if (!campo) return;
+    if (porPasos && pasoDe(campo) !== paso) irA(pasoDe(campo), false);
+    const p = personas.find((x) => x.el.contains(campo));
+    if (p && p.plegada()) p.plegar(false);
+    const det = campo.closest("details");
+    if (det) det.open = true;
+    campo.scrollIntoView({ block: "center", behavior: "smooth" });
+    (campo.matches("input, select, textarea, button") ? campo : campo.querySelector("input, button") || campo).focus({ preventScroll: true });
+  }
+  // Al corregir un campo, su frase se va.
+  ["input", "change"].forEach((tipo) => form.addEventListener(tipo, (ev) => {
+    const campo = ev.target.closest && ev.target.closest("[data-error-id]");
+    if (campo) quitarMarca(campo);
+  }));
+
+  /* ===================== Los pasos ===================== */
+  const PASOS = ["Quién se inscribe", "Torneos", "Viaje y estadía", "Pago", "Confirmar"];
+  let paso = 1;
+  // «Ver todo en una página» se recuerda en el aparato; ?todo=1 lo abre así sin recordarlo.
+  let porPasos = true;
+  try { porPasos = localStorage.getItem("metro_todo_v1") !== "1"; } catch (e) { /* sin localStorage: por pasos */ }
+  if (new URLSearchParams(location.search).get("todo") === "1") porPasos = false;
+  PASOS.forEach((nombre, i) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "metro-paso"; b.dataset.ir = String(i + 1);
+    const n = document.createElement("span"); n.className = "metro-paso-num"; n.textContent = String(i + 1);
+    const t = document.createElement("span"); t.textContent = nombre;
+    b.append(n, t); li.append(b); $("pasos-lista").append(li);
+  });
+  function pintarPasos() {
+    if (porPasos) form.dataset.pasoActual = String(paso); else delete form.dataset.pasoActual;
+    $("pasos-lista").querySelectorAll("[data-ir]").forEach((b) => {
+      const n = Number(b.dataset.ir);
+      if (n === paso) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+      if (n < paso) b.dataset.hecho = ""; else delete b.dataset.hecho;
+    });
+    $("pasos-avance").style.width = ((paso - 1) / (PASOS.length - 1)) * 100 + "%";
+    $("paso-titulo").textContent = "Paso " + paso + " de " + PASOS.length + ": " + PASOS[paso - 1];
+    $("ver-todo").textContent = porPasos ? "Ver todo en una página" : "Ver por pasos";
+    $("atras").hidden = paso === 1;
+    $("siguiente").hidden = paso === PASOS.length;
+  }
+  function irA(n, foco) {
+    paso = Math.max(1, Math.min(PASOS.length, n));
+    pintarPasos();
+    if (foco !== false) {
+      $("pasos").scrollIntoView({ block: "start", behavior: "smooth" });
+      $("paso-titulo").focus({ preventScroll: true });
+    }
+  }
+  // Avanzar: solo si lo de los pasos que quedan atrás está completo.
+  function avanzarA(n) {
+    const errores = recogerErrores().errores.filter(([campo]) => pasoDe(campo) < n);
+    marcar(errores);
+    mostrarErrores(errores);
+    if (errores.length) {
+      const primero = Math.min(...errores.map(([campo]) => pasoDe(campo)));
+      if (primero !== paso) irA(primero, false);
+      $("errores").scrollIntoView({ block: "start", behavior: "smooth" });
+      $("errores").focus({ preventScroll: true });
+      return;
+    }
+    irA(n);
+  }
+  $("siguiente").addEventListener("click", () => avanzarA(paso + 1));
+  $("atras").addEventListener("click", () => { mostrarErrores([]); irA(paso - 1); });
+  $("pasos-lista").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-ir]");
+    if (!b) return;
+    const n = Number(b.dataset.ir);
+    if (n <= paso) { mostrarErrores([]); irA(n); } else avanzarA(n);
+  });
+  $("ver-todo").addEventListener("click", () => {
+    porPasos = !porPasos;
+    try { localStorage.setItem("metro_todo_v1", porPasos ? "0" : "1"); } catch (e) { /* solo esta visita */ }
+    pintarPasos();
+    $("ver-todo").focus();
+  });
+
+  /* ===================== Revisar ===================== */
+  let envio = null;   // { personas: [{ p, datos, precio }], total }
+
+  $("formulario").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("msg").textContent = "";
+    const { errores, lista, t } = recogerErrores();
+    marcar(errores);
+    mostrarErrores(errores);
     if (errores.length) {
       $("msg").textContent = errores[0][1] + (errores.length > 1 ? " (y " + (errores.length - 1) + " cosa" + (errores.length > 2 ? "s" : "") + " más)" : "");
-      const el = errores[0][0];
-      if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); (el.querySelector && el.querySelector("input, button") || el).focus({ preventScroll: true }); }
+      irAlCampo(errores[0][0]);
       return;
     }
     envio = { personas: lista, total: t };
     await mostrarResumen();
+  });
+
+  /* ===================== El borrador, guardado en este aparato =====================
+     Lo escrito se guarda en localStorage mientras se llena (sin fotos ni
+     comprobante), por si se cierra la página o se acaba la batería. Al volver,
+     se ofrece seguir donde quedó. Se borra al mandar la inscripción. */
+  const CLAVE_BORRADOR = "metro_borrador_v1";
+  const FACTURA_CAMPOS = ["fac_tipo", "fac_id", "fac_nombre", "fac_comercial", "fac_correo", "fac_copia", "fac_tel", "fac_actividad", "fac_provincia", "fac_canton", "fac_distrito", "fac_senas"];
+  let borradorEnEspera = false, enviada = false, esperaGuardar = null;
+  function guardarBorrador() {
+    if (borradorEnEspera || enviada || !personas.length) return;
+    const ps = personas.map((p) => p.estado());
+    const algo = $("delegacion").value.trim() || ps.some((x) => x.campos.nombre || x.campos.apellidos || x.elegido);
+    if (!algo) return;
+    const fac = {};
+    FACTURA_CAMPOS.forEach((id) => { fac[id] = $(id).value; });
+    try {
+      localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({
+        v: 1, guardado: new Date().toISOString(), modo: esGrupo() ? "grupo" : "individual", delegacion: $("delegacion").value,
+        metodo, referencia: $("referencia").value, pago_fecha: $("pago_fecha").value, factura: quiereFactura(), fac, personas: ps,
+      }));
+    } catch (e) { /* sin lugar o sin localStorage: no se guarda */ }
+  }
+  function guardarLuego() { clearTimeout(esperaGuardar); esperaGuardar = setTimeout(guardarBorrador, 400); }
+  function borrarBorrador() { try { localStorage.removeItem(CLAVE_BORRADOR); } catch (e) { /* nada que borrar */ } }
+  form.addEventListener("input", guardarLuego);
+  form.addEventListener("change", guardarLuego);
+  window.addEventListener("pagehide", guardarBorrador);
+  function leerBorrador() {
+    try {
+      const b = JSON.parse(localStorage.getItem(CLAVE_BORRADOR) || "null");
+      // Uno de hace más de 60 días ya no sirve.
+      if (b && b.v === 1 && Array.isArray(b.personas) && b.personas.length && Date.now() - new Date(b.guardado).getTime() < 60 * 864e5) return b;
+    } catch (e) { /* roto: como si no hubiera */ }
+    return null;
+  }
+  function restaurarBorrador(b) {
+    const r = document.querySelector('input[name="modo"][value="' + (b.modo === "grupo" ? "grupo" : "individual") + '"]');
+    r.checked = true;
+    cambiarModo();
+    $("delegacion").value = b.delegacion || "";
+    b.personas.slice(0, R.MAX_GRUPO).forEach((e, i) => {
+      const p = i === 0 ? personas[0] : agregar(e.rol);
+      p.restaurar(e);
+    });
+    personas.forEach((p, i) => p.plegar(esGrupo() && i < personas.length - 1));
+    $("referencia").value = b.referencia || ""; $("pago_fecha").value = b.pago_fecha || "";
+    $("quiere-factura").checked = !!b.factura;
+    $("caja-factura").classList.toggle("hidden", !b.factura);
+    const fac = b.fac || {};
+    FACTURA_CAMPOS.forEach((id) => {
+      if (fac[id] == null) return;
+      $(id).value = fac[id];
+      if (["fac_tipo", "fac_provincia", "fac_canton"].includes(id)) $(id).dispatchEvent(new Event("change"));
+    });
+    if (b.metodo && R.METODOS[b.metodo]) { metodo = b.metodo; totales(); const m = document.querySelector('input[name="metodo"][value="' + b.metodo + '"]'); if (m) m.checked = true; }
+    personas.forEach((p) => p.recalcular());
+  }
+  const pendiente = leerBorrador();
+  if (pendiente) {
+    borradorEnEspera = true;
+    $("borrador").hidden = false;
+  }
+  // Su texto, con la fecha en el idioma de ahora.
+  function pintarBorrador() {
+    if (!pendiente) return;
+    const nombres = pendiente.personas.map((e) => [e.campos.nombre, e.campos.apellidos].filter(Boolean).join(" ")).filter(Boolean);
+    const n = pendiente.personas.length;
+    const cuando = new Date(pendiente.guardado).toLocaleString(LOCALES[idioma], { day: "numeric", month: "long", hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" });
+    $("borrador-texto").textContent = "Guardada el " + cuando + ": "
+      + (pendiente.modo === "grupo" ? "la delegación " + (pendiente.delegacion || "sin nombre") + ", con " + (n === 1 ? "1 persona" : n + " personas") : nombres[0] || "una persona sin nombre todavía")
+      + ". Las fotos, los documentos y el comprobante no se guardan: hay que volver a elegirlos.";
+  }
+  $("borrador-seguir").addEventListener("click", () => {
+    $("borrador").hidden = true;
+    restaurarBorrador(pendiente);
+    borradorEnEspera = false;
+    guardarBorrador();
+    irA(1);
+  });
+  $("borrador-nuevo").addEventListener("click", () => {
+    $("borrador").hidden = true;
+    borradorEnEspera = false;
+    borrarBorrador();
+    $("paso-titulo").focus();
   });
 
   function resumenDe(d, p) {
@@ -1062,7 +1406,7 @@
       ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
     );
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
-    if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(", ")]);
+    if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(" · ")]);
     if (d.parqueo) filas.push(["Parqueo", "Para el vehículo de placa " + d.placa]);
     if (d.acepta_hospedaje) filas.push(["Condiciones del hospedaje", "Aceptadas: la puerta se cierra a las 10:30 p.m. y después no se entra ni se sale" + (p.titulado() ? "" : "; trae la ropa de cama (no hay sábanas ni cortinas)")]);
     if (d.condicion.length || d.accesibilidad) filas.push(["Condición", [...d.condicion.map((c) => ({ sordo: "atleta sordo", ciego: "atleta ciego o de baja visión", silla: "silla de ruedas" })[c]), d.accesibilidad].filter(Boolean).join(", ")]);
@@ -1169,7 +1513,7 @@
     try {
       const lista = [];
       for (const [i, x] of envio.personas.entries()) {
-        msg.textContent = "Subiendo la foto " + (envio.personas.length > 1 ? (i + 1) + " de " + envio.personas.length : "") + "…";
+        msg.textContent = "Subiendo la foto" + (envio.personas.length > 1 ? " " + (i + 1) + " de " + envio.personas.length : "") + "…";
         const extra = { foto: await subir(x.p.foto, "foto") };
         if (x.p.titulado() && x.p.deAfuera()) {
           msg.textContent = "Subiendo el tiquete y el pasaporte…";
@@ -1192,6 +1536,8 @@
       const { data, error } = await window.sb.rpc("metropolitano_inscribir", { p });
       if (error || !data || !data.ok) throw new Error((data && data.error) || "No se pudo enviar. Revisa la conexión e intenta de nuevo.");
       (data.personas || [{ codigo: data.codigo }]).forEach((r, i) => { if (envio.personas[i]) envio.personas[i].p.codigo = r.codigo; });
+      enviada = true;
+      borrarBorrador();
       $("validar").classList.add("hidden");
       $("listo").classList.remove("hidden");
       const varios = envio.personas.length > 1;
@@ -1233,6 +1579,25 @@
   });
   $("otra").addEventListener("click", () => { location.href = location.pathname; });
 
+  /* ===================== El idioma ===================== */
+  const EN = window.InscripcionMetroEN || {}, FR = window.InscripcionMetroFR || {};
+  const idiomas = window.IdiomaPagina.iniciar({
+    // Lo del encabezado y el pie ya está traducido para la página del torneo.
+    mapas: { en: Object.assign({}, (window.MetropolitanoEN || {}).textos, EN.textos), fr: Object.assign({}, (window.MetropolitanoFR || {}).textos, FR.textos) },
+    patrones: { en: EN.patrones || [], fr: FR.patrones || [] },
+    titulos: { en: EN.titulo, fr: FR.titulo },
+    clave: "metro_idioma_v1", boton: "metro-idioma", menu: "metro-idiomas",
+    alCambiar: (nuevo) => {
+      idioma = nuevo;
+      personas.forEach((p) => { p.pintarFederaciones(); p.recalcular(); });
+      pintarBorrador();
+      if (envio && !enviada && !$("resumen").classList.contains("hidden")) mostrarResumen();
+    },
+  });
+  idioma = idiomas.idioma();
+  pintarBorrador();
+
   cambiarModo();
+  pintarPasos();
   leerParqueo();
 })();

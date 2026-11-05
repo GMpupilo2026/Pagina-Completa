@@ -70,6 +70,8 @@ window.MetropolitanoHospedaje = (function () {
       ropa: "Only the space to sleep and the bed are provided: there is no bedding and there are no curtains. Bring sheets, a pillow, a blanket or sleeping bag, a towel and your toiletries (an eye mask helps you sleep).",
       ropaTitulado: "Special guests (GM, IM and WGM) receive bedding from the organisers. All the other conditions apply to them as well.",
       cierre: "Asking for lodging means accepting these conditions: nobody can say afterwards that they did not know them.",
+      acepto: "I have read and accept the conditions of the lodging at the Estadio Nacional: the door closes at 10:30 p.m. and nobody enters or leaves after that, and only the space and the bed are provided.",
+      aceptoTitulado: "I have read and accept the conditions of the lodging at the Estadio Nacional: the door closes at 10:30 p.m. and nobody enters or leaves after that. The bedding is provided by the organisers.",
     },
     fr: {
       titulo: "Hébergement au Stade national",
@@ -95,6 +97,8 @@ window.MetropolitanoHospedaje = (function () {
       ropa: "On fournit uniquement l’espace pour dormir et le lit : il n’y a ni linge de lit ni rideaux. Apportez draps, oreiller, couverture ou sac de couchage, serviette et affaires de toilette (un masque de nuit aide à dormir).",
       ropaTitulado: "Les invités spéciaux (GM, IM et WGM) reçoivent le linge de lit de l’organisation. Toutes les autres conditions s’appliquent à eux aussi.",
       cierre: "Demander l’hébergement, c’est accepter ces conditions : personne ne pourra dire ensuite qu’il ne les connaissait pas.",
+      acepto: "J’ai lu et j’accepte les conditions de l’hébergement au Stade national : la porte ferme à 22 h 30 et personne n’entre ni ne sort ensuite, et seuls l’espace et le lit sont fournis.",
+      aceptoTitulado: "J’ai lu et j’accepte les conditions de l’hébergement au Stade national : la porte ferme à 22 h 30 et personne n’entre ni ne sort ensuite. Le linge de lit est fourni par l’organisation.",
     },
   };
 

@@ -2876,6 +2876,48 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .dark .metro-persona { border-color: #486581; }
 .metro-persona > header { background: #1d134d; color: #fff; }
 
+/* La inscripción por pasos (js/inscripcion-metropolitano.js): lo de cada paso
+   lleva data-paso="N" (o varios, "1 2 3"); lo que no es del paso de ahora no
+   se ve. Sin data-paso-actual («Ver todo en una página») se ve todo. */
+.metro-pasos[data-paso-actual="1"] [data-paso]:not([data-paso~="1"]),
+.metro-pasos[data-paso-actual="2"] [data-paso]:not([data-paso~="2"]),
+.metro-pasos[data-paso-actual="3"] [data-paso]:not([data-paso~="3"]),
+.metro-pasos[data-paso-actual="4"] [data-paso]:not([data-paso~="4"]),
+.metro-pasos[data-paso-actual="5"] [data-paso]:not([data-paso~="5"]) { display: none; }
+.metro-pasos:not([data-paso-actual]) .metro-solo-pasos { display: none; }
+.metro-paso { display: flex; flex-direction: column; align-items: center; gap: .25rem; width: 100%; padding: .35rem .1rem; border-radius: .5rem; color: #52606d; line-height: 1.15; }
+.metro-paso:focus-visible { outline: 2px solid #f0b429; outline-offset: 2px; }
+.metro-paso-num { display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; border-radius: 999px; border: 2px solid #9aa5b1; background: #fff; color: #1d134d; font-weight: 700; }
+.metro-paso[aria-current="step"] { color: #1d134d; }
+.metro-paso[aria-current="step"] .metro-paso-num { background: #1d134d; border-color: #1d134d; color: #fff; }
+.metro-paso[data-hecho] .metro-paso-num { border-color: #1d134d; }
+.dark .metro-paso { color: #bcccdc; }
+.dark .metro-paso[aria-current="step"] { color: #fff; }
+.dark .metro-paso-num { background: #102a43; color: #fff; border-color: #627d98; }
+.dark .metro-paso[aria-current="step"] .metro-paso-num { background: #fff; border-color: #fff; color: #1d134d; }
+.metro-avance { height: .4rem; border-radius: 999px; background: #e4e7eb; overflow: hidden; }
+.metro-avance > span { display: block; height: 100%; background: #1d134d; transition: width .2s; }
+.dark .metro-avance { background: #243b53; }
+.dark .metro-avance > span { background: #f0b429; }
+/* La barra de abajo: el total y Atrás / Siguiente, siempre a la vista. */
+.metro-barra { position: sticky; bottom: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem;
+  margin: 0 -1.5rem; padding: .75rem 1.5rem; background: #fff; border-top: 2px solid #1d134d; box-shadow: 0 -4px 12px rgba(29, 19, 77, .12); }
+.dark .metro-barra { background: #102a43; border-top-color: #486581; }
+@media (min-width: 640px) { .metro-barra { margin: 0 -2rem; padding: .75rem 2rem; } }
+/* Lo que falta, al pie de cada campo. */
+.metro-error { margin-top: .25rem; font-size: .8125rem; font-weight: 600; color: #b91c1c; }
+.dark .metro-error { color: #fca5a5; }
+.metro-pasos [aria-invalid="true"] { border-color: #b91c1c !important; box-shadow: 0 0 0 1px #b91c1c; }
+.metro-persona > header .metro-estado { font-size: .75rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; background: #fff; color: #1d134d; white-space: nowrap; }
+.metro-persona > header .metro-estado[data-falta] { background: #fde8e8; color: #9b1c1c; }
+.metro-persona > header button { color: #fff; }
+/* Lo que se pliega (alimentación, condición, el texto completo del seguro). */
+.metro-plegable > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; gap: .5rem; }
+.metro-plegable > summary::-webkit-details-marker { display: none; }
+.metro-plegable > summary::before { content: "▸"; display: inline-block; transition: transform .15s; }
+.metro-plegable[open] > summary::before { transform: rotate(90deg); }
+.metro-plegable > summary:focus-visible { outline: 2px solid #f0b429; outline-offset: 2px; border-radius: .25rem; }
+
 /* La página del Metropolitano 2026: las fichas (con la franja de color de
    las hojas de las bases a la izquierda; el texto va siempre en el azul
    marino del logo) y las ventanas. */
