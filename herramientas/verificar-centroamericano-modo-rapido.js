@@ -126,13 +126,31 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
     await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="2"]').dataset.estado === "con-resultado");
     igual("y se guarda el 0-1 por incomparecencia", (await llamadas(p, "guardar")).pop().cambios[0].valor, "5");
 
+    console.log("\n=== La ficha del Blitz: solo resultado e ilegal ===");
+    igual("cada jugador tiene SOLO el botón «Ilegal» (ni «Se levantó» ni «Irregularidad» ni «Llegó»), en la misma línea que su nombre",
+        await p.evaluate(() => [...document.querySelectorAll(".cam-mesa .cam-jugador")].map((j) => { const b = j.querySelectorAll(".cam-jugador-botones button"), n = j.querySelector(".cam-nombre").getBoundingClientRect(), r = b[0].getBoundingClientRect(); return [b.length, b[0].dataset.accion, r.top < n.bottom && r.bottom > n.top]; }).filter((x, i) => i < 4)),
+        [[1, "ilegal", true], [1, "ilegal", true], [1, "ilegal", true], [1, "ilegal", true]]);
+    igual("la leyenda de los iconos habla solo de lo que hay: ilegal, anular y principal (sin «Llegó», «Irregularidad», «Se levantó», fotos ni tiempos)", await p.evaluate(() => { const t = document.querySelector(".cam-leyenda").textContent; return [/Jugada ilegal/.test(t) && /Anular/.test(t) && /Principal/.test(t), /Lleg|Irregularidad|levantó|Foto|tiempos/.test(t), document.querySelectorAll(".cam-leyenda svg").length]; }), [true, false, 3]);
+    igual("la ficha es la corta (mide menos de 480 px) y las tarjetas de la lista están separadas unas de otras (al menos 20 px)",
+        await p.evaluate(() => { const l = [...document.querySelectorAll(".cam-mesa")].map((c) => c.getBoundingClientRect()); const sep = l.length > 1 ? Math.min(...l.slice(1).map((r, i) => Math.max(r.left - l[i].right, r.top - l[i].bottom))) : 99; return [l.every((r) => r.height < 480), sep >= 20]; }), [true, true]);
+
     console.log("\n=== La ilegal, en un toque ===");
     await p.click('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] [data-accion="ilegal"]');
+    await p.waitForSelector("#aviso-ilegal");
+    igual("no pide elegir el tipo ni tapa la pantalla: se anota y un aviso abajo dice el minuto del blitz, con «Deshacer»", [(await llamadas(p, "anotar")).map((b) => [b.mesa, b.color, b.tipo, b.texto]), await p.evaluate(() => [!!document.querySelector("dialog[open]"), document.querySelector("#aviso-ilegal").textContent.includes("+1 minuto al reloj de las blancas"), document.querySelector("#aviso-ilegal").getAttribute("role"), document.querySelector("#aviso-ilegal [data-accion=deshacer-ilegal]").getBoundingClientRect().height >= 44])],
+        [[[1, "negras", "ilegal", "Jugada ilegal (Blitz: sin elegir el tipo)"]], [false, true, "status", true]]);
+    igual("queda la marca y «Anular la última ilegal» para un toque por error", await p.evaluate(() => [!!document.querySelector('.cam-mesa[data-mesa="1"] .cam-mesa-marcas .cam-marca[data-tipo="ilegal"]'), !!document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="anular-ilegal"]')]), [true, true]);
+    await p.click("#aviso-ilegal [data-accion=deshacer-ilegal]");
+    await p.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="1"] .cam-marca[data-tipo="ilegal"]'));
+    igual("«Deshacer» la anula SIN preguntar y el aviso se va", await p.evaluate(() => [!document.querySelector("#aviso-ilegal"), !document.querySelector("dialog[open]")]), [true, true]);
+    await p.click('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] [data-accion="ilegal"]');
+    await p.waitForSelector("#aviso-ilegal");
+    await p.waitForFunction(() => !document.querySelector("#aviso-ilegal"), null, { timeout: 12000 });
+    igual("el aviso se va solo a los 7 s (sin tocarlo)", await p.evaluate(() => !document.querySelector("#aviso-ilegal")), true);
+    await p.click('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] [data-accion="ilegal"]');
     await p.waitForSelector("dialog[open]");
-    igual("no pide elegir el tipo: se anota y avisa el minuto del blitz", [(await llamadas(p, "anotar")).map((b) => [b.mesa, b.color, b.tipo, b.texto]), await p.evaluate(() => [!!document.querySelector("dialog[open] select"), document.querySelector("dialog[open]").textContent.includes("Primera ilegal: dale 1 minuto al rival")])],
-        [[[1, "negras", "ilegal", "Jugada ilegal (Blitz: sin elegir el tipo)"]], [false, true]]);
+    igual("la SEGUNDA ilegal sigue con su cuadro (hace perder la partida): no se acelera", await p.evaluate(() => [!document.querySelector("#aviso-ilegal"), /pierde/i.test(document.querySelector("dialog[open]").textContent)]), [true, true]);
     await p.click("dialog[open] [data-avisos-aceptar]");
-    igual("queda la marca y «Anular la última ilegal» para un toque por error", await p.evaluate(() => [!!document.querySelector('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="ilegal"]'), !!document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="anular-ilegal"]')]), [true, true]);
 
     console.log("\n=== Cerrar la ronda ===");
     igual("la revisión final es una sola casilla, sin planillas ni fotos", await p.evaluate(() => { const c = document.getElementById("revision"); return [c.checkVisibility(), c.querySelectorAll("input[type=checkbox]").length, /planilla|foto/i.test(c.textContent), document.getElementById("finalizar").disabled]; }), [true, 1, false, true]);
