@@ -16,6 +16,12 @@
 //                                                               chess-results»; los nombres salen de los emparejamientos
 //                                                               ya leídos. mesa null: vuelve a lo de siempre.
 //   "atender"    {clave, nota?}                             → «Ya lo revisé», con quién y cuándo
+//   "registrar"  {avisos: [{clave, tnr, ronda, tablero, mesa, tipo, nivel, titulo, texto}]} → la primera vez que una
+//                                                               pantalla ve un aviso (para el historial de la ronda)
+//   "avisar"     {clave, tnr, ronda, mesa, texto}           → se lo manda al árbitro de esa mesa: el mismo aviso de la
+//                                                               organización (centroamericano_avisos), con «Entendido»
+//   "historial"  {}                                         → todo lo registrado, con quién lo revisó y si el árbitro
+//                                                               leyó el aviso: el informe de la ronda en PDF
 //
 // El reloj de LiveChess: `run` es true cuando corre el de las blancas, false cuando corre el de las negras y null
 // cuando está detenido (comprobado el 4/11 con la ronda 5: tras cada jugada de las blancas, false). Se pasa como
@@ -118,6 +124,19 @@ function resultadosDe(filas: Reg[]) {
   return out;
 }
 
+type Asig = { id: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number; persona: string | null; todas_las_mesas: boolean | null };
+// Los árbitros con enlace vigente que tienen esa mesa (uno por persona: el mismo árbitro con dos enlaces, una vez).
+function arbitrosDe(asigs: Asig[], tnr: string, mesa: number) {
+  const vistos = new Set<string>();
+  return asigs.filter((a) => a.tnr === tnr && (a.todas_las_mesas || (mesa >= a.mesa_desde && mesa <= a.mesa_hasta)))
+    .filter((a) => { const k = a.persona || a.id; if (vistos.has(k)) return false; vistos.add(k); return true; });
+}
+const asignacionesVigentes = async (servicio: ReturnType<typeof createClient>, tnrs: string[]) => {
+  const { data } = await servicio.from("centroamericano_asignaciones").select("id, tnr, arbitro, mesa_desde, mesa_hasta, persona, todas_las_mesas")
+    .in("tnr", tnrs.length ? tnrs : ["-"]).eq("revocada", false).gt("vence", new Date().toISOString()).range(0, 999);
+  return (data ?? []) as Asig[];
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Solo POST." }, 405);
@@ -162,13 +181,19 @@ Deno.serve(async (req) => {
       const conLc = (torneos ?? []).filter((t: { tnr: string; prueba: boolean }) => !t.prueba && (lcs ?? []).some((l: { tnr: string }) => l.tnr === t.tnr));
       const tnrs = conLc.map((t: { tnr: string }) => t.tnr);
       const rondas = [...new Set((lecturas ?? []).filter((l: { tnr: string }) => tnrs.includes(l.tnr)).map((l: { ronda: number }) => Number(l.ronda) || 0))];
-      const [{ data: cambios }, { data: registro }, { data: atendidas }, { data: completas }] = await Promise.all([
+      const [{ data: cambios }, { data: registro }, { data: atendidas }, { data: completas }, asigs, { data: historial }] = await Promise.all([
         servicio.from("centroamericano_tx_tableros").select("*").in("tnr", tnrs.length ? tnrs : ["-"]).in("ronda", rondas.length ? rondas : [0]),
         servicio.from("centroamericano_registro").select("id, tnr, ronda, mesa, tipo, resultado, anula, ocurrio")
           .in("tnr", tnrs.length ? tnrs : ["-"]).in("ronda", rondas.length ? rondas : [0]).in("tipo", ["resultado", "correccion", "anulacion"]).range(0, 4999),
         servicio.from("centroamericano_tx_atendidas").select("clave, quien, en").gte("en", new Date(Date.now() - 36 * 3600_000).toISOString()).range(0, 4999),
         servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, blancas, negras").in("tnr", tnrs.length ? tnrs : ["-"]).in("ronda", rondas.length ? rondas : [0]).range(0, 4999),
+        asignacionesVigentes(servicio, tnrs),
+        servicio.from("centroamericano_tx_historial").select("clave, avisado_en, avisado_por, avisado_a, avisos").in("tnr", tnrs.length ? tnrs : ["-"]).in("ronda", rondas.length ? rondas : [0]).not("avisado_en", "is", null).range(0, 1999),
       ]);
+      // Si el árbitro ya tocó «Entendido» en cada aviso que se le mandó.
+      const idsAvisos = (historial ?? []).flatMap((h: { avisos: string[] }) => h.avisos || []);
+      const { data: leidos } = idsAvisos.length ? await servicio.from("centroamericano_avisos").select("id, leido_en").in("id", idsAvisos) : { data: [] };
+      const leidoDe = new Map((leidos ?? []).map((x: { id: string; leido_en: string | null }) => [x.id, x.leido_en]));
       const resultados = resultadosDe((registro ?? []) as Reg[]);
 
       const categorias = await Promise.all(conLc.map(async (t: { tnr: string; nombre: string }) => {
@@ -191,7 +216,8 @@ Deno.serve(async (req) => {
           const tableros = await Promise.all(lista.map(async (n: number) => {
             const { mesa, cambio } = mesaDelTablero(n, susCambios, mesasCr);
             const p = pareos[n - 1];
-            const cr = mesa ? { ...mesa, resultado: resultados.get(t.tnr + "|" + ronda + "|" + mesa.mesa) ?? null } : null;
+            const cr = mesa ? { ...mesa, resultado: resultados.get(t.tnr + "|" + ronda + "|" + mesa.mesa) ?? null,
+              arbitros: arbitrosDe(asigs, t.tnr, mesa.mesa).map((a) => a.arbitro) } : null;
             // ¿Los de LiveChess están en otra mesa de chess-results? (alguien se cambió de tablero)
             const otra = p ? mesasCr.find((m) => mismoJugador(m.blancas, nombreLc(p.white)) && mismoJugador(m.negras, nombreLc(p.black))) : null;
             const fila: Record<string, unknown> = { tablero: n, cr, cambio: cambio ? { por: cambio.por, actualizado: cambio.actualizado } : null,
@@ -215,7 +241,10 @@ Deno.serve(async (req) => {
         }
       }));
       return json({ ok: true, nombre: quien.replace(/ \(transmisión\)$/, ""), principal: !token, leida: Date.now(), categorias,
-        atendidas: (atendidas ?? []).map((a: { clave: string; quien: string; en: string }) => a) });
+        atendidas: (atendidas ?? []).map((a: { clave: string; quien: string; en: string }) => a),
+        avisados: (historial ?? []).map((h: { clave: string; avisado_en: string; avisado_por: string; avisado_a: string; avisos: string[] }) => ({
+          clave: h.clave, en: h.avisado_en, por: h.avisado_por, a: h.avisado_a,
+          leido: (h.avisos || []).map((id) => leidoDe.get(id)).filter(Boolean).sort()[0] ?? null })) });
     }
 
     if (accion === "reasignar") {
@@ -263,6 +292,59 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 400);
       return json({ ok: true });
     }
+    if (accion === "registrar") {
+      // La primera vez que una pantalla ve cada aviso. Si ya estaba, no se toca (la hora es la primera).
+      const lista = (Array.isArray(cuerpo.avisos) ? cuerpo.avisos : []).slice(0, 200) as Record<string, unknown>[];
+      const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr");
+      const validos = new Set((torneos ?? []).map((t: { tnr: string }) => t.tnr));
+      const filas = lista.map((a) => ({
+        clave: String(a.clave ?? "").slice(0, 200), tnr: String(a.tnr ?? ""), ronda: Number(a.ronda) || 0, tablero: Number(a.tablero) || 0,
+        mesa: Number.isInteger(Number(a.mesa)) && Number(a.mesa) > 0 ? Number(a.mesa) : null,
+        tipo: String(a.tipo ?? "").slice(0, 40), nivel: a.nivel === "urgente" ? "urgente" : "revisar",
+        titulo: String(a.titulo ?? "").slice(0, 120), texto: String(a.texto ?? "").slice(0, 800), visto_por: quien.slice(0, 120),
+      })).filter((f) => f.clave.length >= 3 && validos.has(f.tnr) && /^[a-z_0-9]{2,40}$/.test(f.tipo) && f.ronda >= 0 && f.ronda <= 99 && f.tablero >= 0 && f.tablero <= 200);
+      if (filas.length) {
+        const { error } = await servicio.from("centroamericano_tx_historial").upsert(filas, { onConflict: "clave", ignoreDuplicates: true });
+        if (error) return json({ error: error.message }, 400);
+      }
+      return json({ ok: true, registrados: filas.length });
+    }
+
+    if (accion === "avisar") {
+      // Al árbitro (o árbitros) con enlace vigente que tienen esa mesa, como un aviso de la organización.
+      const tnr = String(cuerpo.tnr ?? ""), ronda = Number(cuerpo.ronda) || null, mesa = Number(cuerpo.mesa);
+      const clave = String(cuerpo.clave ?? "").slice(0, 200);
+      const texto = String(cuerpo.texto ?? "").replace(/\s+/g, " ").trim().slice(0, 480);
+      if (!Number.isInteger(mesa) || mesa < 1) return json({ error: "Ese tablero no tiene mesa: asígnale una primero con «Cambiar jugadores»." }, 400);
+      if (!texto) return json({ error: "Falta el texto del aviso." }, 400);
+      const destino = arbitrosDe(await asignacionesVigentes(servicio, [tnr]), tnr, mesa);
+      if (!destino.length) return json({ error: "La mesa " + mesa + " no tiene un árbitro con su enlace encendido: avísale en persona." }, 404);
+      const { data: creados, error } = await servicio.from("centroamericano_avisos")
+        .insert(destino.map((a) => ({ de: "organizacion", asignacion_id: a.id, mesa, ronda, texto: "📡 Transmisión, mesa " + mesa + ": " + texto }))).select("id");
+      if (error) return json({ error: error.message }, 400);
+      const a = destino.map((x) => x.arbitro).join(", ").slice(0, 300);
+      if (clave.length >= 3) {
+        const { data: h } = await servicio.from("centroamericano_tx_historial").select("avisos").eq("clave", clave).maybeSingle();
+        const ids = [...((h?.avisos as string[] | undefined) ?? []), ...(creados ?? []).map((c: { id: string }) => c.id)];
+        await servicio.from("centroamericano_tx_historial").update({ avisado_en: new Date().toISOString(), avisado_por: quien.slice(0, 120), avisado_a: a, avisos: ids }).eq("clave", clave);
+      }
+      return json({ ok: true, a, texto: "Listo: el aviso le llegó a " + a + " (lo ve en su tablet, con «Entendido»)." });
+    }
+
+    if (accion === "historial") {
+      const [{ data: filas }, { data: atendidas }, { data: torneos }] = await Promise.all([
+        servicio.from("centroamericano_tx_historial").select("*").order("visto", { ascending: true }).range(0, 4999),
+        servicio.from("centroamericano_tx_atendidas").select("clave, quien, en, nota").range(0, 4999),
+        servicio.from("centroamericano_torneos").select("tnr, nombre, orden").order("orden"),
+      ]);
+      const ids = (filas ?? []).flatMap((h: { avisos: string[] }) => h.avisos || []);
+      const { data: leidos } = ids.length ? await servicio.from("centroamericano_avisos").select("id, leido_en").in("id", ids) : { data: [] };
+      const leidoDe = new Map((leidos ?? []).map((x: { id: string; leido_en: string | null }) => [x.id, x.leido_en]));
+      const at = new Map((atendidas ?? []).map((x: { clave: string }) => [x.clave, x]));
+      return json({ ok: true, torneos: torneos ?? [], avisos: (filas ?? []).map((h: Record<string, unknown>) => ({ ...h, atendida: at.get(String(h.clave)) ?? null,
+        leido: ((h.avisos as string[]) || []).map((id) => leidoDe.get(id)).filter(Boolean).sort()[0] ?? null, avisos: undefined })) });
+    }
+
     return json({ error: "Acción desconocida." }, 400);
   } catch (e) {
     return json({ error: (e as Error).message || String(e) }, 400);
