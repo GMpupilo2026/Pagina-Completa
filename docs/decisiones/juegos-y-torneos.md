@@ -9775,6 +9775,53 @@ diciendo «Centroamericano 2026» son los textos de la organización y de las ta
   esconde y deja volver a abrirlos). La migración se probó en el Postgres de ensayo: agregar y archivar sin la licencia lo
   rechaza, y el índice pesa en el sorteo con su motivo.
 
+#### Más allá de Regan: más opciones, las trampas de la mirada corta, el contexto, la vara según el torneo, todas las señales en una cuenta y cuánto acierta de verdad
+
+El 5/11 el dueño preguntó qué haría falta para que fuera superior al modelo de Ken Regan y pidió hacerlo todo (migración
+`20261105130000`, función en su versión 14). Lo honesto: la ventaja de Regan no es la fórmula —la nuestra es casi la
+misma— sino los datos (millones de jugadas de todos los niveles) y años de casos reales. Lo de abajo apunta a esas dos
+cosas y a lo que él no usa.
+
+- **Miles de partidas, analizadas en una computadora** (`herramientas/fair-play-calibrar.js`): lee PGN (TWIC, una
+  transmisión bajada, una base), se queda con las clásicas con Elo (el mismo filtro y la misma huella que la pantalla:
+  lo comprueba `verificar-fair-play-calibrar.js`), las analiza con el Stockfish instalado en varios hilos, con 20
+  opciones por posición y la mirada corta, y las manda a `referencia_guardar` con el QR de un encargado (`FP_TOKEN`);
+  la función las vuelve a armar y comprobar, y sigue donde quedó. Al final pide recalcular el modelo. Los nombres no se
+  mandan. Sin Stockfish en el CI, se prueba con un motor y una función de mentira.
+- **Más opciones del motor**: la pantalla pide 10 por posición (antes 5; Regan mira todas) y las referencias de la
+  computadora hasta 20; el rango de lo jugado va hasta 20 en la base. La nube de Lichess guarda unas 5: con eso alcanza
+  (lo de más va junto en el modelo). Analizar una partida tarda más.
+- **Las trampas de la mirada corta** (`trampas()`): la pantalla mira también cada posición a profundidad 5 (lo que
+  parece mejor a primera vista). Donde eso pierde 8 o más de probabilidad de ganar a la profundidad del análisis, es una
+  trampa: una persona cae a menudo, el motor nunca. El modelo mira lo hondo y no sabe cuánto ATRAE una jugada, así que lo
+  esperable se multiplica por la atracción medida en la gente del torneo (`atraccionDe()`: cuántas veces más caen todos
+  que lo que dice el modelo). Quien las esquiva muy por encima de lo esperable juega como el motor. **La primera
+  versión** comparaba con el modelo solo: en la simulación, a quien usaba el motor se le esperaban 2 caídas y se
+  confundía con los honestos; con la atracción (×4 en la simulación) sale 3 desviaciones arriba y ningún honesto pasa de
+  1,9. Se guarda por jugada dónde quedó la jugada de la mirada corta (`sup_rango`) y si cayó (`cayo`).
+- **El contexto**: Regan mira cada jugada sola. Aquí la sensibilidad de cada jugada se corre según lo desigual de la
+  posición (de pareja a seis peones) y si le quedaban menos de 5 minutos (`contextoDe()`, `factorContexto()`); cuánto pesa
+  cada uno (`kv`, `kr`) lo ajusta el modelo con la gente, como a, b y c. El reloj sale de LiveChess (`reloj`); sin 30
+  jugadas con reloj apurado, `kr` no se mueve.
+- **La vara según el tamaño del torneo** (`umbralTorneo()`): con 300 jugadores, unos 7 pasan de 60 por azar. La vara
+  «raro aun para un torneo de este tamaño» es la que pasaría uno solo de cada 20 torneos así (Bonferroni al 5 %): con 10
+  jugadores, 2,6 desviaciones (63); con 300, 3,6 (68). Y FIDE pide alrededor de 4,5 (72,5) para sancionar sin prueba
+  física; la pantalla lo dice cuando se llega.
+- **Todas las señales en una cuenta** (`combinada()`): el índice de siempre no cambia; aparte, el índice con el tiempo,
+  el contraste de las rachas y las trampas, sumadas como el índice suma las suyas: divididas por la raíz de su matriz de
+  correlación medida en el torneo (`correlacionDe()`), para no contar dos veces lo mismo. Pesan igual: para darles pesos
+  hacen falta muchos casos de prueba.
+- **Cuánto acierta de verdad**: «¿Qué tan confiable es?» da cada cifra de los casos de prueba con su margen (Wilson al
+  95 %: con 10 casos, «80 %» puede ser de 49 % a 94 %), cuánto separa a los que usaron el motor de los limpios (el AUC) y,
+  con `[TrampaPorcentaje "30"]` en las partidas de prueba (`trampa_pct`), cuánto marca en cada proporción. Lo que falta
+  no es código: que unos entrenadores jueguen 50 partidas o más usando el motor en distintas proporciones y se carguen
+  como de prueba; con eso esa cifra tiene respaldo.
+- Lo prueban `verificar-centroamericano-fair-play.js` (el reloj, la mirada corta, el contexto, las trampas con su
+  atracción, la vara, la combinación, Wilson y el AUC, y las notas en la pantalla),
+  `verificar-centroamericano-fair-play-modelo.js` (en el torneo simulado: las trampas, que atraen a los honestos el 30 % de
+  las veces, la vara por ritmo, la combinación con los dos que usaron el motor arriba y el contexto ajustado) y
+  `verificar-fair-play-calibrar.js`.
+
 ### El encargado de transmisión (Centroamericano)
 
 Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de
