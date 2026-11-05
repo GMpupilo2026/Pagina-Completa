@@ -10335,6 +10335,28 @@ el tipo de torneo, ver «El Rápido y el Blitz»).
   derecha, como en el tablero; el resultado es «gana el de la izquierda · tablas · gana el de la derecha») y «Lista» (una fila por mesa que se
   abre al tocar: 8 a 10 mesas a la vez; es el cambio grande, lo de uso frecuente pasa a dos toques).
 
+## Cambiar el nombre de un torneo (Centroamericano, 5/11)
+
+Pedido: los torneos que se agregan con la clave del grupo traen el nombre de chess-results y el del Blitz quedó larguísimo, sin forma de
+cambiarlo (`centroamericano_torneos` no tiene política de escritura).
+
+- **Dónde.** `centroamericano-mesas.html`, pestaña «Claves»: cada torneo trae **«Cambiar nombre»** junto a «Probar». Abre una ventana con el
+  nombre (hasta 80 caracteres) y la categoría (hasta 40: es la que sale en el título de la tablet del árbitro junto a la rama). Con una
+  explicación de lo que cambia, el error escrito en la ventana (`aria-live`) y lo escrito se conserva si algo sale mal.
+- **Quién lo hace.** `centroamericano_torneo_renombrar(p_tnr, p_nombre, p_categoria)` (`SECURITY DEFINER`, con la licencia `mesa-arbitro`, solo
+  `authenticated`; queda en la auditoría por el trigger de la tabla): recorta, valida los largos y actualiza. El nombre nuevo se ve en la
+  tarjeta, en los selectores, en la tabla de enlaces y en la tablet del árbitro.
+- **LA REGLA: el nombre tiene que seguir diciendo su ritmo.** La tablet del árbitro reconoce el Blitz y el Rápido **por el nombre**
+  (`C.ritmoRapido`: «Blitz», «Rápido/Rápidas», «Rapid»), no por la columna `ritmo`, porque la Edge Function `centroamericano-mesa` todavía no
+  se la manda. Un torneo Blitz que dejara de decir «Blitz» se vería como clásico en las tablets sin dar ningún error; por eso la base lo rechaza
+  (y la pantalla lo avisa antes de mandarlo): se puede acortar («Blitz Sub-12») pero no quitar la palabra; y a un clásico no se le puede poner
+  «Blitz» ni «Rápido». Las dos reglas usan las mismas palabras. **Si la función `centroamericano-mesa` pasa a devolver `ritmo` y la tablet lo
+  lee, esta regla se puede soltar** (hoy cuesta volver a desplegar esa función grande, y no se hizo en pleno torneo).
+- **Qué no cambia.** El `tnr` (el código de chess-results), la clave, los enlaces ni nada de lo anotado: solo el texto.
+- Lo revisa `verificar-centroamericano-mesas-pagina.js` («Cambiar el nombre de un torneo»): el botón, los topes, el rechazo de un nombre sin
+  «Blitz», el vacío, el rechazo de la base con su mensaje, el guardado con lo que recibe la base, el nombre nuevo en tarjeta, selectores y tabla,
+  y que un clásico no pueda pasar a «Blitz». Migración `20261105203936_centroamericano_torneo_renombrar.sql`.
+
 ## El código corto del árbitro: entrar sin cámara ni WhatsApp (Centroamericano, 5/11)
 
 Pedido: si una tablet no tiene cámara (no lee el QR) ni WhatsApp (no recibe el enlace), ¿cómo abre el árbitro su mesa? Y que no haya que

@@ -85,6 +85,11 @@ function dobleOrganizacion(licencia) {
       // Un evento nuevo: la base agrega los torneos (con la licencia) y archiva un evento.
       if (f === "centroamericano_torneos_agregar") { (window.__agregados = window.__agregados || []).push(JSON.parse(JSON.stringify(a)));
         a.p_torneos.forEach((t, i) => TORNEOS.push(Object.assign({ orden: 200 + i, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null, prueba: false, archivado: false, evento: a.p_evento }, t))); return R(a.p_torneos.length); }
+      // Cambiar el nombre de un torneo: window.__renombrarFalla = «mensaje» hace que la base lo rechace (como sin licencia o con el ritmo cambiado).
+      if (f === "centroamericano_torneo_renombrar") { (window.__renombrados = window.__renombrados || []).push(JSON.parse(JSON.stringify(a)));
+        if (window.__renombrarFalla) return R(null, { message: window.__renombrarFalla });
+        const t = TORNEOS.find((x) => x.tnr === a.p_tnr); if (!t) return R(null, { message: "No existe ese torneo" });
+        t.nombre = a.p_nombre; if (a.p_categoria) t.categoria = a.p_categoria; return R(null); }
       if (f === "centroamericano_evento_archivar") { let n = 0; TORNEOS.forEach((t) => { if (t.evento === a.p_evento && !t.prueba) { t.archivado = a.p_archivar; n++; } }); return R(n); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([

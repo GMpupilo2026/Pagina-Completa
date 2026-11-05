@@ -2133,6 +2133,55 @@ const CONTRASTE = `(sel) => {
         await o3.ctx.close();
     }
 
+    console.log("\n=== Cambiar el nombre de un torneo (el del Blitz quedaba larguísimo) ===");
+    {
+        const oc = await abrir(browser, "centroamericano-mesas.html?ritmos=1", dobleOrganizacion(true), { ancho: 1100 });
+        const po = oc.p;
+        await po.click("#pest-claves");
+        const tarjeta = '.cam-estado-torneo[data-tnr="1540001"]';
+        await po.waitForSelector(tarjeta + ' [data-accion="renombrar"]');
+        igual("cada torneo trae «Cambiar nombre», con un nombre accesible que dice cuál", await po.$eval(tarjeta + ' [data-accion="renombrar"]', (b) => [b.textContent.trim(), b.getAttribute("aria-label")]), ["Cambiar nombre", "Cambiar el nombre de Blitz Sub-12"]);
+        await po.click(tarjeta + ' [data-accion="renombrar"]');
+        await po.waitForSelector("dialog[open] #rn-nombre");
+        igual("se abre con el nombre de ahora y avisa que tiene que seguir diciendo «Blitz» (la tablet reconoce el ritmo por el nombre); tope de 80 y de 40",
+            await po.evaluate(() => [document.getElementById("rn-nombre").value, document.getElementById("rn-nombre").maxLength, document.getElementById("rn-categoria").maxLength, document.getElementById("rn-ayuda").textContent.includes("«Blitz»"), document.activeElement.id]),
+            ["Blitz Sub-12", 80, 40, true, "rn-nombre"]);
+        // Un nombre sin «Blitz» se rechaza en la pantalla (sin molestar a la base).
+        await po.fill("#rn-nombre", "Sub-12 relámpago");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("un nombre que ya no dice «Blitz» se rechaza con su explicación y sin llamar a la base", await po.evaluate(() => [document.getElementById("rn-error").hidden, document.getElementById("rn-error").textContent, (window.__renombrados || []).length, !!document.querySelector("dialog[open]")]),
+            [false, "✗ El nombre de un torneo Blitz tiene que seguir diciendo «Blitz».", 0, true]);
+        await po.fill("#rn-nombre", "   ");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("vacío tampoco", await po.$eval("#rn-error", (e) => e.textContent), "✗ El nombre no puede quedar vacío.");
+        // Si la base lo rechaza (sin licencia, por ejemplo), el mensaje sale en la ventana y no se pierde lo escrito.
+        await po.evaluate(() => { window.__renombrarFalla = "Hace falta la licencia de la Mesa del árbitro"; });
+        await po.fill("#rn-nombre", "Blitz S12");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        await po.waitForFunction(() => document.getElementById("rn-error").textContent.includes("licencia"));
+        igual("si la base lo rechaza, lo dice en la ventana y deja corregir (conserva lo escrito)", await po.evaluate(() => [document.getElementById("rn-error").textContent, document.getElementById("rn-nombre").value, !!document.querySelector("dialog[open]"), document.getElementById("rn-nombre").getAttribute("aria-invalid")]),
+            ["✗ No se pudo cambiar: Hace falta la licencia de la Mesa del árbitro", "Blitz S12", true, "true"]);
+        // El bueno: se manda a la base, la ventana se cierra, y el nombre nuevo sale en todos lados (tarjeta, selectores y tabla de enlaces).
+        await po.evaluate(() => { window.__renombrarFalla = ""; window.__renombrados = []; });
+        await po.fill("#rn-categoria", "Sub-12 B");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        await po.waitForFunction(() => !document.querySelector("dialog[open]"));
+        igual("al guardar, la base recibe el torneo, el nombre y la categoría (todo recortado), y la ventana se cierra", await po.evaluate(() => window.__renombrados), [{ p_tnr: "1540001", p_nombre: "Blitz S12", p_categoria: "Sub-12 B" }]);
+        await po.waitForFunction(() => document.querySelector('.cam-estado-torneo[data-tnr="1540001"] .font-bold').textContent === "Blitz S12");
+        igual("el nombre nuevo se ve en la tarjeta y en los selectores, y el torneo sigue siendo Blitz (sigue en su bloque)",
+            await po.evaluate(() => [[...document.querySelectorAll("#a-torneo option")].map((o) => o.textContent).includes("Blitz S12"), [...document.querySelectorAll("#a-torneo optgroup")].find((g) => g.label === "Blitz").textContent.includes("Blitz S12")]), [true, true]);
+        await po.click("#pest-arbitros");
+        igual("y en la tabla de enlaces, bajo Blitz", await po.evaluate(() => { const h = [...document.querySelectorAll("#asignaciones tr")]; const i = h.findIndex((t) => t.dataset.ritmo === "blitz"); return h[i + 1].textContent.includes("Blitz S12"); }), true);
+        // Un torneo clásico no puede pasar a llevar «Blitz» o «Rápido» en el nombre (la tablet lo vería como de otro ritmo).
+        await po.click("#pest-claves");
+        await po.click('.cam-estado-torneo[data-tnr="1529733"] [data-accion="renombrar"]');
+        await po.waitForSelector("dialog[open] #rn-nombre");
+        await po.fill("#rn-nombre", "Sub-10 Blitz");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("un torneo clásico no puede pasar a decir «Blitz»", await po.evaluate(() => [document.getElementById("rn-error").textContent, document.getElementById("rn-ayuda").textContent.includes("No puede decir")]), ["✗ Un torneo clásico no puede llevar «Blitz» ni «Rápido» en el nombre.", true]);
+        await oc.ctx.close();
+    }
+
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
     const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-barra-estado, .cam-celda-estado, .cam-titulo-ventana, .cam-subtitulo, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion td, .cam-conectado, .cam-clave-grupo, .cam-detalle summary, .cam-estado-drive, .cam-sugerencia, .cam-herramientas, .cam-guardado, .cam-fallo, .cam-rejilla td, .cam-rejilla th, .cam-rejilla thead th";
     const contrastePorPanel = async (pg) => {

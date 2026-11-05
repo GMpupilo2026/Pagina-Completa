@@ -661,9 +661,49 @@
                 el("p", { class: "font-bold", texto: t.nombre }),
                 el("p", { class: "mt-1" }, el("span", { class: "cam-chip", "data-clave": t.sid_en_boveda ? "si" : "no", texto: t.sid_en_boveda ? "Con clave" : "Sin clave" })),
                 t.sid_en_boveda && t.acceso_tnr && t.acceso_tnr !== t.tnr ? el("p", { class: "text-sm mt-1", texto: "Entra por el grupo " + t.acceso_tnr }) : null,
-                el("div", { class: "cam-acciones" }, el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "probar", disabled: !t.sid_en_boveda, onclick: () => probar(t, estado) }, "Probar")),
+                el("div", { class: "cam-acciones" },
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "probar", disabled: !t.sid_en_boveda, onclick: () => probar(t, estado) }, "Probar"),
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "renombrar", "aria-label": "Cambiar el nombre de " + t.nombre, onclick: () => renombrarTorneo(t) }, "Cambiar nombre")),
                 estado);
         }));
+    }
+
+    // Cambiar el nombre (y la categoría) de un torneo: los que se agregan con la clave del grupo traen el nombre largo de chess-results. La base
+    // (centroamericano_torneo_renombrar) exige la licencia y que el nombre siga diciendo su ritmo: la tablet del árbitro reconoce el Blitz y el
+    // Rápido por el nombre, así que un torneo Blitz que dejara de decir «Blitz» se vería como clásico sin avisar. Aquí se avisa antes de mandarlo.
+    function renombrarTorneo(t) {
+        const ritmo = C.ritmoDe(t);
+        const palabra = ritmo === "blitz" ? "Blitz" : ritmo === "rapido" ? "Rápido" : "";
+        const nombre = el("input", { id: "rn-nombre", class: "cam-campo", type: "text", maxlength: "80", value: t.nombre, autocomplete: "off", "aria-describedby": "rn-ayuda rn-error" });
+        const cat = el("input", { id: "rn-categoria", class: "cam-campo", type: "text", maxlength: "40", value: t.categoria || "", autocomplete: "off", "aria-describedby": "rn-ayuda-cat" });
+        const error = el("p", { id: "rn-error", class: "cam-fallo text-sm mt-2", "aria-live": "assertive", hidden: true });
+        const guardar = el("button", { type: "submit", class: "cam-btn", "data-accion": "guardar-nombre" }, "Guardar el nombre");
+        const form = el("form", { class: "cam-formulario", novalidate: true },
+            el("label", { for: "rn-nombre", class: "block text-sm font-bold", texto: "Nombre del torneo" }), nombre,
+            el("p", { id: "rn-ayuda", class: "text-sm mt-1", texto: palabra ? "Hasta 80 caracteres. Tiene que seguir diciendo «" + palabra + "»: la tablet del árbitro reconoce el ritmo por el nombre." : "Hasta 80 caracteres. No puede decir «Blitz» ni «Rápido» (es un torneo clásico)." }),
+            el("label", { for: "rn-categoria", class: "block text-sm font-bold mt-3", texto: "Categoría (el título de la tablet del árbitro)" }), cat,
+            el("p", { id: "rn-ayuda-cat", class: "text-sm mt-1", texto: "Hasta 40 caracteres. En la tablet el título es la categoría y la rama (" + (t.rama || "—") + "). Déjala como está si no quieres cambiarla." }),
+            error, el("div", { class: "cam-acciones mt-3" }, guardar));
+        const d = ventanita("Cambiar el nombre de un torneo", form);
+        nombre.focus(); nombre.select();
+        const mal = (texto) => { error.textContent = "✗ " + texto; error.hidden = false; nombre.setAttribute("aria-invalid", "true"); };
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nuevo = nombre.value.replace(/\s+/g, " ").trim(), nuevaCat = cat.value.replace(/\s+/g, " ").trim();
+            if (!nuevo) { mal("El nombre no puede quedar vacío."); return; }
+            if (nuevo.length > 80) { mal("El nombre puede tener hasta 80 caracteres."); return; }
+            if (nuevaCat.length > 40) { mal("La categoría puede tener hasta 40 caracteres."); return; }
+            if ((C.ritmoRapido(nuevo, null) || "clasico") !== ritmo) { mal(palabra ? "El nombre de un torneo " + palabra + " tiene que seguir diciendo «" + palabra + "»." : "Un torneo clásico no puede llevar «Blitz» ni «Rápido» en el nombre."); return; }
+            if (nuevo === t.nombre && (!nuevaCat || nuevaCat === t.categoria)) { d.close(); return; }
+            guardar.disabled = true;
+            const { error: e1 } = await sb.rpc("centroamericano_torneo_renombrar", { p_tnr: t.tnr, p_nombre: nuevo, p_categoria: nuevaCat || null });
+            guardar.disabled = false;
+            if (e1) { mal("No se pudo cambiar: " + e1.message); return; }
+            d.close();
+            avisar("Listo: ahora se llama «" + nuevo + "».");
+            await cargarTorneos();
+            await cargarAsignaciones();
+        });
     }
 
     // Lo que dice una clave guardada: a cuántos torneos del Centroamericano abre.
