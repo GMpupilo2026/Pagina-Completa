@@ -4,8 +4,9 @@
  *   img/redes/instagram.png          1080×1350  publicación de Instagram (4:5)
  *   img/redes/whatsapp/*.png         1080×1920  estados de WhatsApp (9:16): el sitio
  *   img/redes/whatsapp-academia/     1080×1920  la Academia por dentro
- *   img/redes/whatsapp-mesa-arbitro/ 1080×1920  la Mesa del árbitro, con capturas de
- *                                    verdad (las saca capturas-mesa-arbitro.js: correrlo antes)
+ *   img/redes/whatsapp-mesa-arbitro/ 1080×1920  la herramienta de mesas del árbitro (la del
+ *                                    Centroamericano), con capturas de verdad: las saca
+ *                                    capturas-centroamericano.js, que se corre antes
  *
  * Mismo criterio que og-imagen.js: se dibujan acá y no a mano para que salgan
  * siempre igual y con los colores de la paleta; si cambian, se vuelve a correr.
@@ -199,6 +200,7 @@ const ESTADO_CSS = `${FUENTES}
   .pantalla img { display: block; width: 100%; border-radius: 20px; background: #fff; }
   .pantalla img + img { margin-top: 14px; }
   .pantalla.angosta { width: 78%; margin-top: 24px; }
+  .pantalla.estrecha { width: 68%; margin-top: 24px; }
   .ejemplo { color: ${C.brand300}; font-size: 26px; margin-top: 16px; }
   .marca.chica { width: 220px; height: 163px; }`;
 
@@ -336,60 +338,61 @@ const ACADEMIA = [
     },
 ];
 
-// La Mesa del árbitro (mesa-arbitro.html): lo que dice su ficha en la vitrina
-// (js/herramientas-arbitraje.js). Va con licencia, que se pide por WhatsApp.
+// La herramienta de mesas del árbitro, la del Centroamericano (centroamericano-arbitro.html en la
+// tableta de cada árbitro y centroamericano-mesas.html en la organización), con pantallas de verdad.
+// Va con la licencia de la Mesa del árbitro, que se pide por WhatsApp.
 const LICENCIA = "Pide tu licencia por WhatsApp";
-// Las capturas de verdad de la herramienta (herramientas/capturas-mesa-arbitro.js).
-const CAPTURAS = path.join(RAIZ, "img", "redes", "capturas", "mesa-arbitro");
+const CAPTURAS = path.join(RAIZ, "img", "redes", "capturas", "centroamericano");
 const captura = (nombre) => {
     const archivo = path.join(CAPTURAS, nombre);
     if (!fs.existsSync(archivo)) {
-        console.error(`Falta ${path.relative(RAIZ, archivo)}: corre antes node herramientas/capturas-mesa-arbitro.js`);
+        console.error(`Falta ${path.relative(RAIZ, archivo)}: corre antes node herramientas/capturas-centroamericano.js`);
         process.exit(1);
     }
     return `<img src="data:image/png;base64,${fs.readFileSync(archivo).toString("base64")}" alt="">`;
 };
 const EJEMPLO = `<div class="ejemplo">Pantallas reales de la herramienta, con un torneo de ejemplo</div>`;
 const CHICA = `<div class="marca chica"></div>`;
+const ESTADO_MESA = (etiqueta, titulo, texto, pantallas) => `${CHICA}<div class="medio"><div class="etiqueta">${etiqueta}</div>
+    <div class="titulo" style="font-size:64px;margin-top:22px">${titulo}</div>
+    ${texto ? `<div class="texto" style="font-size:34px;margin-top:16px">${texto}</div>` : ""}
+    ${pantallas}${EJEMPLO}</div>${PIE("/herramientas-arbitraje", LICENCIA)}`;
 const MESA = [
     {
-        archivo: "01-mesa-del-arbitro.png",
-        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Mesa del árbitro</div>
-            <div class="titulo" style="font-size:68px;margin-top:24px">Tu ronda, <em>mesa por mesa</em></div>
-            <div class="pantalla">${captura("mesas.png")}</div>${EJEMPLO}
-            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "01-la-tablet.png",
+        cuerpo: ESTADO_MESA("En la tablet del árbitro", "Cada árbitro,<br><em>sus mesas</em>",
+            "Entra con su QR, sin cuenta.",
+            `<div class="pantalla estrecha">${captura("arbitro-pantalla.png")}</div>`),
     },
     {
-        archivo: "02-como-funciona.png",
-        cuerpo: `${CABEZA}<div class="medio"><div class="titulo" style="margin-top:0">Así <em>funciona</em></div>
-            <ul class="lista">
-              <li><span class="num">1</span><div><b>Entra con tus dos claves</b><span class="d">El código y el SID de «Enter Results Online»</span></div></li>
-              <li><span class="num">2</span><div><b>Trae la ronda abierta</b><span class="d">Sus mesas, y también los torneos ligados del grupo</span></div></li>
-              <li><span class="num">3</span><div><b>Anota y manda</b><span class="d">Solo dice «guardado» si el resultado ya está en chess-results</span></div></li>
-            </ul></div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "02-el-resultado.png",
+        cuerpo: ESTADO_MESA("Mesa por mesa", "El resultado,<br>directo a <em>chess-results</em>",
+            "Cada mesa con su «Guardar» al lado.<br>Solo dice «guardado» si ya está allá.",
+            `<div class="pantalla estrecha">${captura("arbitro-mesas.png")}</div>`),
     },
     {
-        archivo: "03-guardar.png",
-        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Sin sorpresas</div>
-            <div class="titulo" style="font-size:64px;margin-top:20px">Confirmas y queda<br>en <em>chess-results</em></div>
-            <div class="pantalla angosta">${captura("confirmar.png")}</div>
-            <div class="pantalla">${captura("guardado.png")}</div>${EJEMPLO}
-            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "03-antes-de-la-ronda.png",
+        cuerpo: ESTADO_MESA("Antes de la ronda", "Relojes y tableros,<br><em>revisados</em>",
+            "Hasta aprobar los dos pasos<br>no se guarda ningún resultado.",
+            `<div class="pantalla">${captura("arbitro-lista-previa.png")}</div>`),
     },
     {
-        archivo: "04-bitacora.png",
-        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">La bitácora del árbitro</div>
-            <div class="titulo" style="font-size:68px;margin-top:24px">Todo queda <em>anotado</em></div>
-            <div class="texto" style="font-size:36px;margin-top:20px">Con su hora, y las incidencias con su artículo.<br>Sale en PDF o Word, para firmar.</div>
-            <div class="pantalla">${captura("bitacora.png")}</div>${EJEMPLO}
-            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "04-la-organizacion.png",
+        cuerpo: ESTADO_MESA("Para la organización", "Toda la ronda,<br><em>en una pantalla</em>",
+            "Cuánto le queda a cada árbitro, si está<br>conectado y el reporte de la ronda en PDF.",
+            `<div class="pantalla">${captura("organizacion-ronda.png")}</div>`),
     },
     {
-        archivo: "05-mis-torneos.png",
-        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Mis torneos</div>
-            <div class="titulo" style="font-size:68px;margin-top:24px">Cada torneo,<br>con su <em>bitácora</em></div>
-            <div class="pantalla">${captura("mis-torneos.png")}</div>${EJEMPLO}
-            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "05-pedidos-de-ayuda.png",
+        cuerpo: ESTADO_MESA("Sin correr por la sala", "Piden ayuda<br>y te <em>llega sola</em>",
+            "Con la mesa y el motivo. Sin sonido:<br>en un torneo no hay ruido.",
+            `<div class="pantalla">${captura("organizacion-pedidos.png")}</div>`),
+    },
+    {
+        archivo: "06-arbitros-y-mesas.png",
+        cuerpo: ESTADO_MESA("Árbitros y mesas", "Cada árbitro con<br><em>su enlace y su QR</em>",
+            "Las mesas de cada uno, si ya se conectó<br>y los avisos que tiene abiertos.",
+            `<div class="pantalla">${captura("organizacion-arbitros.png")}</div>`),
     },
 ];
 for (const e of ACADEMIA) e.carpeta = "whatsapp-academia";
