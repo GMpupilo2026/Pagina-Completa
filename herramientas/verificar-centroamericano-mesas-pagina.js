@@ -1176,7 +1176,11 @@ const CONTRASTE = `(sel) => {
     {
         const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
         const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
-        const formas = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        // Igual que «medidas»: si la página se está repintando, las tarjetas miden 0 × 0 un instante; se espera (hasta 8 s) a que tengan tamaño.
+        const formas = async (p) => {
+            await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(() => console.log("      (las tarjetas siguen midiendo 0 después de 8 s)"));
+            return p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        };
         const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
         await normal.p.waitForSelector(".cam-mesa");
         const altoHoy = await altos(normal.p);
