@@ -1,21 +1,23 @@
-/* «Leer la partida» de cada foto en «Planillas y Drive» (centroamericano-mesas.html):
-   de la foto de las dos planillas de una mesa a la partida, para reproducirla en
-   un tablero y bajarla en PGN.
+/* «Generar PGN» de cada foto en «Planillas y Drive» (centroamericano-mesas.html): la partida
+   de esa mesa, ahí mismo, en una fila debajo de la foto, con su vista previa en un tablero y
+   la descarga del PGN.
 
-   1. Baja la foto del bucket privado (URL firmada de 2 minutos).
-   2. La lee Google Vision por la Edge Function ocr-scoresheet (gasta un uso del
-      tope diario del lector, como el Lector de planilla).
-   3. js/planilla-reconstruir.js: las celdas de cada planilla (por los números
-      impresos 1–60) y la partida legal que mejor explica las DOS a la vez, en su
-      propio hilo (js/planilla-reconstruir-worker.js).
-   4. Se muestra todo lo que se pudo salvar: cada jugada dice si se leyó tal cual,
-      si se corrigió o si es dudosa (con lo que dice cada planilla), y, si desde
-      un punto ya no hubo salida, «Ilegible desde la jugada N» con lo que está
-      escrito de ahí en adelante, sin inventarle jugadas.
+   De dónde sale la partida:
+   - **Si la mesa se transmite en vivo** (la sala de Lichess del Centroamericano), de la
+     transmisión: sus jugadas son las del tablero electrónico, no hace falta leer la letra de
+     nadie y no se gasta el lector. Se averigua sola al pintar la tabla (por los dos nombres
+     y la ronda, CentroamericanoTransmisionReloj.buscarPartida) y la fila lo dice.
+   - **Si no se transmite**, de la foto de las dos planillas: Google Vision por la Edge
+     Function ocr-scoresheet (gasta un uso del tope diario del lector) y
+     js/planilla-reconstruir.js en su propio hilo (js/planilla-reconstruir-worker.js), que
+     salva todo lo que puede y deja «Ilegible desde la jugada N» lo que ya no tiene salida,
+     sin inventarle jugadas. Cada jugada dice si se leyó tal cual, se corrigió o es dudosa.
 
-   Lo leído se guarda en este navegador (por foto): volver a abrirla no gasta otra
-   lectura. «Volver a leer» sí. Nada se anota en ningún resultado: es para revisar.
-   Ver «Leer la partida de las planillas» en docs/decisiones/juegos-y-torneos.md. */
+   Lo leído de una foto se guarda en este navegador (por foto): volver a abrirla no gasta otra
+   lectura; «Volver a leer la foto» sí. Una partida de la transmisión que ya terminó también se
+   guarda; la que sigue en juego se vuelve a pedir. Nada de esto anota ni cambia ningún
+   resultado: es para revisar. Ver «Leer la partida de las planillas» en
+   docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
 
@@ -26,12 +28,95 @@
     const enEspanol = (san) => String(san).replace(/^[KQRBN]/, (p) => ES[p]).replace(/=([QRBN])/, (m, p) => "=" + ES[p]);
     const numero = (i) => Math.floor(i / 2) + 1 + (i % 2 ? "…" : ".");
     const deQuien = (i) => "jugada " + (Math.floor(i / 2) + 1) + (i % 2 ? " de las negras" : " de las blancas");
+    const FUENTE_MS = 2 * 60 * 1000;   // cada cuánto se vuelve a preguntar si una mesa está en la transmisión
+
+    const fuentes = new Map();   // ruta → { estado: "buscando" | "transmision" | "foto" | "error", h, cuando, texto }
+    const abiertos = new Map();  // ruta → la fila de debajo, con la partida (se conserva al repintar la tabla)
 
     function guardado(p) {
         try { const x = JSON.parse(localStorage.getItem(CLAVE + p.ruta) || "null"); return x && x.subida === p.subida ? x : null; } catch (e) { return null; }
     }
     function guardar(p, datos) {
         try { localStorage.setItem(CLAVE + p.ruta, JSON.stringify(Object.assign({ subida: p.subida }, datos))); } catch (e) { /* sin espacio: se vuelve a leer */ }
+    }
+
+    // ------------------------------------------------------------------ de dónde sale
+
+    function fuenteDe(p, ctx) {
+        const f = fuentes.get(p.ruta);
+        if (f && (f.promesa || Date.now() - f.cuando < FUENTE_MS)) return f.promesa || Promise.resolve(f);
+        const [blancas, negras] = ctx.enfrentamiento(p).split(" vs ");
+        const nueva = { estado: "buscando", cuando: Date.now() };
+        fuentes.set(p.ruta, nueva);
+        const TX = window.CentroamericanoTransmisionReloj;
+        nueva.promesa = (TX ? TX.buscarPartida({ blancas, negras, ronda: p.ronda }) : Promise.resolve({ error: "Esta página no puede leer la transmisión.", noSeTransmite: true }))
+            .then((h) => {
+                const f2 = { cuando: Date.now(), h };
+                if (!h.error) f2.estado = "transmision";
+                else if (h.noSeTransmite || h.alReves) { f2.estado = "foto"; f2.texto = h.alReves ? h.error : ""; }
+                else { f2.estado = "error"; f2.texto = h.error; }
+                fuentes.set(p.ruta, f2);
+                return f2;
+            });
+        return nueva.promesa;
+    }
+
+    const ROTULO = {
+        buscando: "Buscando si se transmite…",
+        transmision: "📡 Se transmite: sale de Lichess",
+        foto: "📷 Sin transmisión: sale de la foto",
+        error: "No se pudo ver la transmisión",
+    };
+
+    function pintarRotulo(p) {
+        const f = fuentes.get(p.ruta);
+        document.querySelectorAll(".cam-lp-fuente").forEach((s) => {
+            if (s.dataset.fuenteDe !== p.ruta) return;
+            s.textContent = f ? ROTULO[f.estado] : "";
+            s.dataset.fuente = f ? f.estado : "";
+            s.title = f && f.texto ? f.texto : "";
+        });
+    }
+
+    /* Se llama después de pintar la tabla: averigua, de a una (todas comparten la misma ronda de
+       Lichess, que queda guardada), cuáles mesas se transmiten. */
+    let revisando = false;
+    async function revisarFuentes(lista, ctx) {
+        lista.forEach(pintarRotulo);
+        if (revisando) return;
+        revisando = true;
+        try {
+            for (const p of lista) {
+                const f = fuentes.get(p.ruta);
+                if (f && f.estado !== "buscando" && Date.now() - f.cuando < FUENTE_MS) continue;
+                const promesa = fuenteDe(p, ctx);
+                pintarRotulo(p);
+                await promesa;
+                pintarRotulo(p);
+            }
+        } finally { revisando = false; }
+    }
+
+    // ------------------------------------------------------------------ leer
+
+    // La partida de la transmisión: el PGN de la ronda de Lichess, solo el bloque de esa partida (con sus relojes).
+    async function deLaTransmision(f) {
+        const L = window.LichessTransmision, TX = window.CentroamericanoTransmisionReloj;
+        const texto = await L.pgn(f.h.idRonda);
+        const bloques = String(texto || "").replace(/\r/g, "").split(/\n\s*\n(?=\[)/).filter((b) => /\[\w+\s+"/.test(b));
+        const id = f.h.g.id;
+        const pl = f.h.g.players || [];
+        const bloque = bloques.find((b) => id && new RegExp("\\[(?:GameURL|Site) \"[^\"]*/" + id + "\"\\]").test(b))
+            || bloques.find((b) => { const t = L.leerPgn(b, window.Chess)[0]; return t && pl[0] && pl[1] && TX.mismoJugador(t.blancas.nombre, pl[0].name) && TX.mismoJugador(t.negras.nombre, pl[1].name); });
+        if (!bloque) throw new Error("La transmisión no trae las jugadas de esta partida todavía.");
+        const partida = L.leerPgn(bloque, window.Chess)[0];
+        const enCurso = !partida.tags.Result || partida.tags.Result === "*";
+        return {
+            fuente: "transmision", url: partida.url || f.h.url, enCurso, resultadoTxt: partida.tags.Result || "*",
+            pgnTexto: bloque.trim() + "\n",
+            resultado: { jugadas: partida.jugadas.map((j) => ({ san: j.san, estado: "leida", escrito: [] })), ilegibleDesde: null, resto: [], hojas: 0 },
+            leida: new Date().toISOString(),
+        };
     }
 
     let hilo = null, pedido = 0;
@@ -50,7 +135,7 @@
         });
     }
 
-    async function leer(p, decir) {
+    async function deLaFoto(p, decir) {
         decir("Bajando la foto…");
         const { data, error } = await window.sb.storage.from("centroamericano-planillas").createSignedUrl(p.ruta, 120);
         if (error || !data) throw new Error("No se pudo abrir la foto" + (error ? ": " + error.message : "."));
@@ -65,12 +150,11 @@
         if (!hojas.length) throw new Error("No se encontró nada escrito en la foto.");
         decir("Armando la partida… 0 %");
         const resultado = await reconstruirEnHilo(hojas, (x) => decir("Armando la partida… " + Math.round(x * 100) + " %"));
-        const datos = { hojas, metodo, resultado, leida: new Date().toISOString() };
-        guardar(p, datos);
-        return datos;
+        return { fuente: "foto", hojas, metodo, resultado, leida: new Date().toISOString() };
     }
 
     function pgnDe(p, datos, ctx) {
+        if (datos.fuente === "transmision") return datos.pgnTexto;
         const enfrentamiento = ctx.enfrentamiento(p).split(" vs ");
         const g = new window.Chess();
         datos.resultado.jugadas.forEach((j) => g.move(j.san));
@@ -85,22 +169,35 @@
         });
     }
 
-    function pintar(caja, p, datos, ctx, volverALeer) {
+    // ------------------------------------------------------------------ la vista previa
+
+    function pintar(caja, p, datos, ctx, acciones) {
         const { el } = ctx;
         const r = datos.resultado;
         const js = r.jugadas;
+        const deFoto = datos.fuente !== "transmision";
         const cuenta = (e) => js.filter((j) => j.estado === e).length;
         caja.replaceChildren();
 
-        const resumen = el("div", { class: "cam-lp-resumen" },
-            el("p", { class: "cam-lp-titular", texto: r.ilegibleDesde === null
-                ? "Se reprodujo la partida entera: " + js.length + " medias jugadas."
-                : js.length ? "Se pudieron salvar " + js.length + " medias jugadas, hasta la " + deQuien(js.length - 1) + "." : "No se pudo reproducir ninguna jugada." }),
-            el("p", { texto: cuenta("leida") + " leídas tal cual · " + cuenta("corregida") + " corregidas (*) · " + cuenta("dudosa") + " dudosas (?)" + (r.hojas === 2 ? " · se leyeron las dos planillas" : r.hojas === 1 ? " · se leyó una sola planilla" : "") }),
-            datos.metodo === "filas" ? el("p", { texto: "No se encontraron los números impresos de la planilla: se leyó por filas, que es menos seguro." }) : null);
+        const resumen = el("div", { class: "cam-lp-resumen" });
+        // append() escribe «null» si le llega uno: lo que no va se saca antes
+        const agregar = (...hijos) => resumen.append(...hijos.filter(Boolean));
+        if (deFoto) {
+            agregar(
+                el("p", { class: "cam-lp-titular", texto: r.ilegibleDesde === null
+                    ? "Leída de la foto: la partida entera, " + js.length + " medias jugadas."
+                    : js.length ? "Leída de la foto: se pudieron salvar " + js.length + " medias jugadas, hasta la " + deQuien(js.length - 1) + "." : "Leída de la foto: no se pudo reproducir ninguna jugada." }),
+                el("p", { texto: cuenta("leida") + " leídas tal cual · " + cuenta("corregida") + " corregidas (*) · " + cuenta("dudosa") + " dudosas (?)" + (r.hojas === 2 ? " · se leyeron las dos planillas" : r.hojas === 1 ? " · se leyó una sola planilla" : "") }),
+                datos.metodo === "filas" ? el("p", { texto: "No se encontraron los números impresos de la planilla: se leyó por filas, que es menos seguro." }) : null);
+        } else {
+            agregar(
+                el("p", { class: "cam-lp-titular", texto: "De la transmisión en vivo de Lichess: " + js.length + " medias jugadas" + (datos.enCurso ? "." : " · " + datos.resultadoTxt + ".") }),
+                datos.enCurso ? el("p", { texto: "La partida sigue en juego: llega hasta donde va la transmisión (que va con atraso). «Actualizar desde la transmisión» trae lo que siga." }) : null,
+                datos.url ? el("p", {}, el("a", { href: datos.url, target: "_blank", rel: "noopener", class: "cam-lp-enlace" }, "Verla en Lichess")) : null);
+        }
         caja.append(resumen);
 
-        if (r.ilegibleDesde !== null) {
+        if (deFoto && r.ilegibleDesde !== null) {
             const resto = (r.resto || []).map((h, k) => h.length ? el("li", { texto: (r.hojas === 2 ? "Planilla " + (k + 1) + ": " : "") + h.join(" · ") }) : null).filter(Boolean);
             caja.append(el("div", { class: "cam-lp-ilegible", role: "note" },
                 el("strong", { texto: "⚠ Ilegible desde la " + deQuien(r.ilegibleDesde) + "." }),
@@ -116,25 +213,26 @@
         const g = new window.Chess();
         const fens = [g.fen()], ucis = [null];
         js.forEach((j) => { const m = g.move(j.san); fens.push(g.fen()); ucis.push(m.from + m.to); });
-        const botones = js.map((j, i) => el("button", {
+        const botonesJ = js.map((j, i) => el("button", {
             type: "button", class: "cam-lp-jugada cam-lp-" + j.estado, "data-ply": String(i),
-            title: ESTADO_TXT[j.estado] + (j.escrito && j.escrito.length ? " · escrito: " + j.escrito.join(" | ") : ""),
+            title: deFoto ? ESTADO_TXT[j.estado] + (j.escrito && j.escrito.length ? " · escrito: " + j.escrito.join(" | ") : "") : null,
             onclick: () => ir(i + 1),
         }, enEspanol(j.san) + MARCA[j.estado]));
-        for (let i = 0; i < botones.length; i += 2) {
-            lista.append(el("li", {}, el("span", { class: "cam-lp-num", texto: (i / 2 + 1) + "." }), botones[i], botones[i + 1] || null));
+        for (let i = 0; i < botonesJ.length; i += 2) {
+            lista.append(el("li", {}, el("span", { class: "cam-lp-num", texto: (i / 2 + 1) + "." }), botonesJ[i], botonesJ[i + 1] || null));
         }
         function ir(n) {
             pos = Math.max(0, Math.min(js.length, n));
             window.TableroFen.dibujar(tablero, fens[pos], ucis[pos], {});
             tablero.setAttribute("aria-label", "Tablero. " + window.TableroFen.describir(fens[pos]));
-            botones.forEach((b, i) => b.setAttribute("aria-current", i === pos - 1 ? "true" : "false"));
-            if (pos) botones[pos - 1].scrollIntoView({ block: "nearest" });
+            botonesJ.forEach((b, i) => b.setAttribute("aria-current", i === pos - 1 ? "true" : "false"));
+            if (pos) botonesJ[pos - 1].scrollIntoView({ block: "nearest" });
             if (!pos) { linea.textContent = "Posición inicial."; return; }
             const j = js[pos - 1];
-            linea.textContent = numero(pos - 1) + " " + enEspanol(j.san) + " — " + ESTADO_TXT[j.estado]
-                + (j.escrito && j.escrito.length ? ". En la planilla: «" + j.escrito.join("» y «") + "»" : "")
-                + (j.alternativa ? ". También podría ser " + enEspanol(j.alternativa) : "") + ".";
+            linea.textContent = numero(pos - 1) + " " + enEspanol(j.san)
+                + (deFoto ? " — " + ESTADO_TXT[j.estado]
+                    + (j.escrito && j.escrito.length ? ". En la planilla: «" + j.escrito.join("» y «") + "»" : "")
+                    + (j.alternativa ? ". También podría ser " + enEspanol(j.alternativa) : "") : "") + ".";
         }
         const ctl = (texto, etiqueta, f) => el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "aria-label": etiqueta, onclick: f }, texto);
         const controles = el("div", { class: "cam-lp-controles" },
@@ -142,7 +240,7 @@
             ctl("▶", "Jugada siguiente", () => ir(pos + 1)), ctl("⏭", "Al final", () => ir(js.length)));
         const zona = el("div", { class: "cam-lp-zona" },
             el("div", { class: "cam-lp-izq" }, el("div", { class: "cine-tablero-marco cam-lp-marco" }, tablero), controles, linea),
-            el("div", { class: "cam-lp-der" }, el("p", { class: "cam-lp-leyenda", texto: "Sin marca: leída tal cual · * corregida · ? dudosa (revísala en la foto)" }), lista));
+            el("div", { class: "cam-lp-der" }, deFoto ? el("p", { class: "cam-lp-leyenda", texto: "Sin marca: leída tal cual · * corregida · ? dudosa (revísala en la foto)" }) : null, lista));
         zona.addEventListener("keydown", (e) => {
             if (e.key === "ArrowLeft") { e.preventDefault(); ir(pos - 1); }
             if (e.key === "ArrowRight") { e.preventDefault(); ir(pos + 1); }
@@ -152,41 +250,100 @@
         const pgn = pgnDe(p, datos, ctx);
         // sin tildes ni eñes en el NOMBRE del archivo (algunos navegadores lo cambian por «download»); dentro, tal cual
         const nombre = ("Mesa " + String(p.mesa).padStart(2, "0") + " - Ronda " + p.ronda + " - " + ctx.enfrentamiento(p))
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w .,()-]/g, "") + ".pgn";
+            .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w .,()-]/g, "") + ".pgn";
         caja.append(el("div", { class: "cam-acciones cam-lp-acciones" },
             el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "bajar-pgn", onclick: () => {
-                // el enlace va DENTRO de la ventanita: con el modal abierto, el resto de la página queda inerte
                 const a = el("a", { href: URL.createObjectURL(new Blob([pgn], { type: "application/x-chess-pgn" })), download: nombre, hidden: true });
                 caja.append(a); a.click(); a.remove();
             } }, "Descargar el PGN"),
             el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: async (e) => {
-                try { await navigator.clipboard.writeText(pgn); e.currentTarget.textContent = "PGN copiado ✓"; } catch (err) { ctx.avisar("No se pudo copiar: bájalo con «Descargar el PGN».", true); }
+                const b = e.currentTarget;
+                try { await navigator.clipboard.writeText(pgn); b.textContent = "PGN copiado ✓"; } catch (err) { ctx.avisar("No se pudo copiar: bájalo con «Descargar el PGN».", true); }
             } }, "Copiar el PGN"),
-            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "volver-a-leer", onclick: volverALeer }, "Volver a leer la foto")),
-            el("p", { class: "cam-lp-nota", texto: "Leída " + window.HoraCR.fechaHora(datos.leida) + ". Es una ayuda para revisar: nada de esto cambia ningún resultado. «Volver a leer» gasta otra lectura." }));
+            deFoto
+                ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "volver-a-leer", onclick: acciones.leerFoto }, "Volver a leer la foto")
+                : el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "actualizar-transmision", onclick: acciones.generar }, "Actualizar desde la transmisión")),
+            el("p", { class: "cam-lp-nota", texto: deFoto
+                ? "Leída " + window.HoraCR.fechaHora(datos.leida) + ". Es una ayuda para revisar: nada de esto cambia ningún resultado. «Volver a leer» gasta otra lectura."
+                : "Traída " + window.HoraCR.fechaHora(datos.leida) + " de la transmisión: son las jugadas del tablero electrónico, sin leer ninguna planilla." }));
         ir(js.length);
     }
 
-    /* ctx: { el, ventanita, nombreTorneo, enfrentamiento, avisar } de la página. */
-    function abrir(p, ctx) {
+    async function generar(p, caja, ctx, opciones) {
+        const o = opciones || {};
         const { el } = ctx;
         const estado = el("p", { class: "cam-lp-estado", role: "status" });
-        const caja = el("div", { class: "cam-lp" }, estado);
-        const d = ctx.ventanita("Leer la partida · Mesa " + p.mesa + " · " + ctx.enfrentamiento(p), caja);
-        d.classList.add("cam-dialogo-ancho");
+        caja.replaceChildren(estado);
         const decir = (t) => { estado.textContent = t; };
-        const correr = async () => {
-            caja.replaceChildren(estado);
-            try {
-                const datos = await leer(p, decir);
-                if (d.open) pintar(caja, p, datos, ctx, correr);
-            } catch (e) {
-                decir("No se pudo leer: " + (e.message || e));
+        const acciones = { generar: () => generar(p, caja, ctx, { sinGuardado: true }), leerFoto: () => generar(p, caja, ctx, { foto: true, sinGuardado: true }) };
+        try {
+            const ya = !o.sinGuardado && guardado(p);
+            if (ya) { pintar(caja, p, ya, ctx, acciones); return; }
+            let datos;
+            if (!o.foto) {
+                decir("Buscando la mesa en la transmisión de Lichess…");
+                if (o.sinGuardado) fuentes.delete(p.ruta);
+                const f = await fuenteDe(p, ctx);
+                pintarRotulo(p);
+                if (f.estado === "transmision") {
+                    decir("Trayendo la partida de la transmisión…");
+                    datos = await deLaTransmision(f);
+                    if (!datos.enCurso) guardar(p, datos);
+                } else if (f.estado === "error") {
+                    // no se sabe si se transmite: no se gasta una lectura sin preguntar
+                    caja.replaceChildren(el("p", { class: "cam-lp-estado", role: "status", texto: f.texto }),
+                        el("div", { class: "cam-acciones" },
+                            el("button", { type: "button", class: "cam-btn cam-btn-chico", onclick: () => { fuentes.delete(p.ruta); generar(p, caja, ctx, o); } }, "Probar otra vez"),
+                            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "leer-foto", onclick: acciones.leerFoto }, "Leer la foto de todos modos")));
+                    return;
+                }
             }
-        };
-        const ya = guardado(p);
-        if (ya) pintar(caja, p, ya, ctx, correr); else correr();
+            if (!datos) {
+                datos = await deLaFoto(p, decir);
+                guardar(p, datos);
+            }
+            pintar(caja, p, datos, ctx, acciones);
+        } catch (e) {
+            decir("No se pudo generar el PGN: " + (e.message || e));
+        }
     }
 
-    window.CentroamericanoLeerPartida = { abrir };
+    // ------------------------------------------------------------------ en la tabla
+
+    /* El botón de la fila y su rótulo de dónde sale la partida. */
+    function botones(p, ctx, columnas) {
+        const { el } = ctx;
+        const abierto = abiertos.has(p.ruta);
+        const id = "lp-" + p.ruta.replace(/[^A-Za-z0-9]/g, "-");
+        const b = el("button", {
+            type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "generar-pgn",
+            "aria-expanded": abierto ? "true" : "false", "aria-controls": id,
+            onclick: () => alternar(p, ctx, columnas, b, id),
+        }, abierto ? "Ocultar la partida" : "Generar PGN");
+        const rotulo = el("span", { class: "cam-lp-fuente" });
+        rotulo.dataset.fuenteDe = p.ruta;
+        return [b, rotulo];
+    }
+
+    function alternar(p, ctx, columnas, b, id) {
+        if (abiertos.has(p.ruta)) {
+            abiertos.get(p.ruta).remove();
+            abiertos.delete(p.ruta);
+            b.setAttribute("aria-expanded", "false");
+            b.textContent = "Generar PGN";
+            return;
+        }
+        const caja = ctx.el("div", { class: "cam-lp" });
+        const fila = ctx.el("tr", { class: "cam-lp-fila", id }, ctx.el("td", { colspan: String(columnas) }, caja));
+        b.closest("tr").after(fila);
+        abiertos.set(p.ruta, fila);
+        b.setAttribute("aria-expanded", "true");
+        b.textContent = "Ocultar la partida";
+        generar(p, caja, ctx);
+    }
+
+    /* La fila abierta de esta foto (la misma, con lo que ya tenía), para volver a ponerla al repintar. */
+    const detalle = (p) => abiertos.get(p.ruta) || null;
+
+    window.CentroamericanoLeerPartida = { botones, detalle, revisarFuentes };
 })();

@@ -24,6 +24,7 @@
      CentroamericanoTransmisionReloj.jugadasDeFen(fen)           → { j_blancas, j_negras, turno }
      CentroamericanoTransmisionReloj.controlDe(partida, opciones)→ la lectura (con la forma de un control) o { error }
      CentroamericanoTransmisionReloj.buscar({ blancas, negras, ronda, inicio }) → Promise de lo mismo, o { error }
+     CentroamericanoTransmisionReloj.buscarPartida({ blancas, negras, ronda })   → la partida en la transmisión, o { error }
 
    Ver «El control de tiempos desde la transmisión» en docs/decisiones/juegos-y-torneos.md. */
 (function (raiz) {
@@ -143,12 +144,13 @@
   }
 
   // La partida de ESA mesa (por los dos nombres, con los colores como en chess-results) en la ronda `ronda` de
-  // cualquiera de los torneos clásicos que se transmiten.
-  async function buscar({ blancas, negras, ronda, inicio = null, bonos = [] }) {
+  // cualquiera de los torneos clásicos que se transmiten: { g, datos, torneo, idRonda, url } o { error }.
+  // La usan buscar() (el reloj) y «Generar PGN» de la organización (js/centroamericano-leer-partida.js).
+  async function buscarPartida({ blancas, negras, ronda }) {
     try {
       if (!raiz.sb || !raiz.LichessTransmision) return { error: "Esta página no puede leer la transmisión." };
       const lista = await torneosDeLaSala();
-      if (!lista.length) return { error: "La sala del Centroamericano no tiene ninguna transmisión de Lichess." };
+      if (!lista.length) return { error: "La sala del Centroamericano no tiene ninguna transmisión de Lichess.", noSeTransmite: true };
       let alReves = false;
       for (const t of lista) {
         const r = await rondaDelTorneo(t.id, ronda);
@@ -157,20 +159,26 @@
         for (const g of d.games || []) {
           const pl = g.players || [];
           const w = pl[0] && pl[0].name, b = pl[1] && pl[1].name;
-          if (mismoJugador(blancas, w) && mismoJugador(negras, b)) {
-            const c = controlDe(g, { ahora: Date.now(), atraso: d.round && d.round.delay, inicio, bonos });
-            return Object.assign(c, { torneo: t.nombre, url: (r.url || "") + (g.id ? "/" + g.id : "") });
-          }
+          if (mismoJugador(blancas, w) && mismoJugador(negras, b)) return { g, datos: d, torneo: t.nombre, idRonda: r.id, url: (r.url || LICHESS + "/broadcast/-/-/" + r.id) + (g.id ? "/" + g.id : "") };
           if (mismoJugador(blancas, b) && mismoJugador(negras, w)) alReves = true;
         }
       }
-      return { error: alReves ? "En la transmisión esta partida sale con los colores al revés: no se usa (revísalo con la organización)." : "Esta mesa no se transmite (solo se transmiten las primeras mesas de cada categoría)." };
+      return alReves
+        ? { error: "En la transmisión esta partida sale con los colores al revés: no se usa (revísalo con la organización).", alReves: true }
+        : { error: "Esta mesa no se transmite (solo se transmiten las primeras mesas de cada categoría).", noSeTransmite: true };
     } catch (e) {
       return { error: "No se pudo leer la transmisión de Lichess: " + (e && e.message ? e.message : e) };
     }
   }
 
-  const api = { RITMO, CUADRA_S, mismoJugador, jugadasDeFen, controlDe, buscar };
+  async function buscar({ blancas, negras, ronda, inicio = null, bonos = [] }) {
+    const h = await buscarPartida({ blancas, negras, ronda });
+    if (h.error) return { error: h.error };
+    const c = controlDe(h.g, { ahora: Date.now(), atraso: h.datos.round && h.datos.round.delay, inicio, bonos });
+    return Object.assign(c, { torneo: h.torneo, url: h.url });
+  }
+
+  const api = { RITMO, CUADRA_S, mismoJugador, jugadasDeFen, controlDe, buscar, buscarPartida };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoTransmisionReloj = api;
 })(typeof self !== "undefined" ? self : this);

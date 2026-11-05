@@ -1,6 +1,6 @@
 /* La partida entera a partir de la foto de las DOS planillas de una mesa.
 
-   Lo usa «Leer la partida» de «Planillas y Drive» en la organización de la
+   Lo usa «Generar PGN» de «Planillas y Drive» en la organización de la
    Mesa del árbitro (centroamericano-mesas.html), en su propio hilo
    (js/planilla-reconstruir-worker.js). Ver «Leer la partida de las planillas»
    en docs/decisiones/juegos-y-torneos.md.

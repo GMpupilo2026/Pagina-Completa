@@ -902,10 +902,13 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 /* El botón «Liviano» encendido se distingue también por el texto («Liviano: sí»), no solo por esto. */
 #modo-liviano[aria-pressed="true"] { outline: 2px solid #fbd38d; outline-offset: 1px; }
 
-/* «Leer la partida» (js/centroamericano-leer-partida.js): la ventanita más ancha, el tablero
-   de solo mirar (.cine-tablero de styles.css) y las jugadas con su marca escrita (* corregida,
-   ? dudosa): el color ayuda, pero el dato va también en el texto. */
-.cam-dialogo.cam-dialogo-ancho { width: min(62rem, calc(100% - 1rem)); max-height: calc(100dvh - 1rem); overflow: auto; }
+/* «Generar PGN» (js/centroamericano-leer-partida.js): la partida en una fila debajo de la foto,
+   el tablero de solo mirar (.cine-tablero de styles.css) y las jugadas con su marca escrita
+   (* corregida, ? dudosa): el color ayuda, pero el dato va también en el texto. */
+.cam-lp-fila > td { background: #f6f6fd; padding: 0.8rem; }
+.dark .cam-lp-fila > td { background: rgb(var(--c-brand-900, 10 31 51)); }
+.cam-lp-fuente { display: block; white-space: normal; font-size: 0.8rem; margin-top: 0.25rem; max-width: 16rem; }
+.cam-lp-enlace { text-decoration: underline; font-weight: 700; }
 .cam-lp { width: 100%; display: grid; gap: 0.75rem; text-align: left; justify-items: stretch; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(250 204 21 / 0.45); }
 .cam-lp-estado { font-weight: 700; }
 .cam-lp-titular { font-weight: 800; font-size: 1.05rem; }

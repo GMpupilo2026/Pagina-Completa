@@ -13,8 +13,9 @@
       reparto de las mesas entre varios de una vez); nombre, mesas, aviso, apagar; la hoja de
       QR para imprimir (todos los QR llevan la marca de Ajedrez Integral).
    4. Planillas y Drive: las fotos de las planillas y su paso al Drive «Planillas
-      Centroamericano»; conectar el Drive y reintentar lo que no llegó; y «Leer la partida»
-      de cada foto (js/centroamericano-leer-partida.js).
+      Centroamericano»; conectar el Drive y reintentar lo que no llegó; y «Generar PGN» de cada
+      foto, ahí mismo: de la transmisión si la mesa se transmite, si no de la foto
+      (js/centroamericano-leer-partida.js).
    5. Clave de chess-results: UNA sola para el grupo de torneos ligados. Va a la Edge Function
       centroamericano-clave, que la prueba y la guarda CIFRADA: esta página nunca la vuelve a
       ver y la casilla se vacía.
@@ -1210,16 +1211,20 @@
         const ronda = $("pl-ronda").value;
         const lista = planillas.filter((p) => (!tnr || p.tnr === tnr) && (!ronda || String(p.ronda) === ronda))
             .sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa || a.lado.localeCompare(b.lado));
-        $("planillas").replaceChildren(...lista.map((p) => el("tr", { "data-drive": p.drive_ok ? "si" : "no" },
+        const LP = window.CentroamericanoLeerPartida;
+        const ctxPartida = { el, nombreTorneo, avisar, enfrentamiento: (x) => (x.lado === "blancas" ? x.jugador + " vs " + x.rival : x.rival + " vs " + x.jugador) };
+        const COLUMNAS = 8;
+        // Cada foto: su fila y, si se abrió «Generar PGN», la de debajo con la partida (la misma: no se pierde al refrescar).
+        $("planillas").replaceChildren(...lista.flatMap((p) => [el("tr", { "data-drive": p.drive_ok ? "si" : "no" },
             el("td", { texto: nombreTorneo(p.tnr) }), el("td", { texto: String(p.ronda) }), el("td", { texto: String(p.mesa) }),
-            el("td", { texto: (p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador) }),
+            el("td", { texto: ctxPartida.enfrentamiento(p) }),
             el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
             el("td", { texto: p.drive_ok ? "✓ En el Drive" : p.drive_error ? "✗ " + p.drive_error : "Pendiente" }),
             el("td", { class: "cam-celda-acciones" },
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver"),
-                p.lado === "blancas" || p.lado === "negras"
-                    ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "leer-partida", onclick: () => leerPartida(p) }, "Leer la partida")
-                    : null))));
+                ...LP.botones(p, ctxPartida, COLUMNAS))), LP.detalle(p)].filter(Boolean)));
+        // Cuáles se transmiten en vivo: esas salen de Lichess, sin leer la foto.
+        LP.revisarFuentes(lista, ctxPartida);
         $("planillas-vacio").hidden = lista.length > 0;
     }
 
@@ -1229,14 +1234,6 @@
         const enfrentamiento = p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador;
         ventanita("Mesa " + p.mesa + " · " + enfrentamiento,
             el("img", { src: data.signedUrl, alt: "Foto de las dos planillas de la mesa " + p.mesa + ": " + enfrentamiento, class: "cam-foto-planilla" }));
-    }
-
-    // «Leer la partida»: de la foto a una partida que se reproduce (js/centroamericano-leer-partida.js).
-    function leerPartida(p) {
-        window.CentroamericanoLeerPartida.abrir(p, {
-            el, ventanita, nombreTorneo, avisar,
-            enfrentamiento: (x) => (x.lado === "blancas" ? x.jugador + " vs " + x.rival : x.rival + " vs " + x.jugador),
-        });
     }
 
     // ------------------------------------------------------------- 6. respaldo

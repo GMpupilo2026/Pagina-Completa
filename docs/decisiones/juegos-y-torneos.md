@@ -8729,11 +8729,27 @@ resultado).
 ### Leer la partida de las planillas (Centroamericano)
 
 En «Planillas y Drive» de la organización (`centroamericano-mesas.html`), cada foto lleva, al lado
-de «Ver», **«Leer la partida»**: de la foto de las dos planillas a una partida que se reproduce en un
-tablero (⏮ ◀ ▶ ⏭ y las flechas) y se baja o se copia en PGN. **Todo lo que se pueda salvar se salva;
-lo que ya no tiene salida queda «ilegible» y no se le inventa nada.** Es para revisar: no anota ni
-cambia ningún resultado.
+de «Ver», **«Generar PGN»**: la partida de esa mesa **ahí mismo**, en una fila que se abre debajo de
+su foto (sin ventanita), con la vista previa en un tablero (⏮ ◀ ▶ ⏭ y las flechas) y la descarga o
+la copia del PGN. «Ocultar la partida» la cierra; la tabla se refresca sola cada 30 s y la fila
+abierta se conserva tal cual (`detalle()` devuelve la misma fila). Es para revisar: no anota ni
+cambia ningún resultado. Lo pidió así el dueño: la herramienta es **para las partidas que no se
+transmiten**.
 
+- **Si la mesa se transmite en vivo, sale de la transmisión, no de la foto.** Al pintar la tabla se
+  averigua sola, de a una mesa (todas comparten la ronda de Lichess guardada), cuáles están en la
+  transmisión de la sala del Centroamericano —por los dos nombres y la ronda, con
+  `CentroamericanoTransmisionReloj.buscarPartida()`, la misma búsqueda del control de tiempos, que
+  se separó de `buscar()` para no copiarla—, y cada fila lo dice («📡 Se transmite: sale de
+  Lichess» / «📷 Sin transmisión: sale de la foto»). La de la transmisión es el bloque de esa
+  partida en el PGN de la ronda (`/api/broadcast/round/<id>.pgn`, con sus relojes), con sus jugadas
+  del tablero electrónico: no se lee la letra de nadie ni se gasta el lector. Si sigue en juego, se
+  dice (la transmisión va con atraso) y «Actualizar desde la transmisión» trae lo que siga; ya
+  terminada, se guarda. Solo las clásicas: el Rápido y el Blitz no se fotografían. Si no se sabe si
+  se transmite (Lichess no contesta), **no se gasta una lectura sin preguntar**: «Probar otra vez» o
+  «Leer la foto de todos modos». Con los colores al revés en la transmisión, se lee la foto.
+- **Si no se transmite, de la foto.** **Todo lo que se pueda salvar se salva; lo que ya no tiene
+  salida queda «ilegible» y no se le inventa nada.**
 - **Cómo se lee la foto.** Va del bucket privado a Google Vision por `ocr-scoresheet` (la misma del
   Lector de planilla, con su tope diario: ver «El lector de planilla tiene tope diario» en
   cuentas-y-formularios.md), a **2600 px** de lado (`leerFoto(…, { maxLado })`): a 1600, cada una
@@ -8789,12 +8805,15 @@ cambia ningún resultado.
   foto» sí gasta otra lectura.
 - **El tablero** es el de solo mirar (`js/tablero-fen.js`), con las coordenadas por fuera y las
   piezas y casillas que eligió cada quien (la página entró a `tablero-cabecera.py`).
+- `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
+  `append` no): lo que no va se saca antes; lo comprueba el verificador.
 - Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de
   verdad de las mesas 5, 7 y 11, en `herramientas/lib/planillas-reales.js`, solo las jugadas y sin
   nombres; y fotos sintéticas, `herramientas/lib/planilla-sintetica.js`) y
-  `verificar-centroamericano-mesas-pagina.js` (la pantalla con un Vision de mentira: lo salvado, lo
-  ilegible, las marcas, el tablero, el PGN, que abrirla otra vez no gasta, y el contraste en claro y
-  en oscuro). **Sin probar de verdad**: Google Vision con estas fotos (la función pide la sesión de
+  `verificar-centroamericano-mesas-pagina.js` (la pantalla: la mesa que se transmite sale de un
+  Lichess de mentira sin leer la foto, con su PGN y sus relojes; la que no, de un Vision de mentira:
+  lo salvado, lo ilegible, las marcas, el tablero, el PGN, que la fila sigue abierta al refrescar,
+  que abrirla otra vez no gasta, y el contraste en claro y en oscuro). **Sin probar de verdad**: Google Vision con estas fotos (la función pide la sesión de
   una cuenta). Las planillas que se usaron para probar se transcribieron mirando las fotos; lo
   que Vision lea de la letra a mano puede ser peor, y los costos (1,5, 3, el promedio de 1,5)
   conviene ajustarlos con las primeras fotos de verdad.

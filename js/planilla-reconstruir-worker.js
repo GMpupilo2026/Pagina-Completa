@@ -1,4 +1,4 @@
-/* «Leer la partida» en su propio hilo: reconstruir una partida larga prueba
+/* «Generar PGN» (la partida de la foto) en su propio hilo: reconstruir una partida larga prueba
  * miles de continuaciones y tarda varios segundos; en el hilo de la página la
  * organización se quedaría congelada (sin avisos ni pedidos de ayuda) mientras
  * tanto. Recibe las celdas de cada planilla y devuelve la partida, avisando

@@ -1,6 +1,6 @@
 /* La lectura de una planilla escrita a mano, en una sola copia: la usan el
    Lector de planilla (lector-planilla.html), «Anota tu partida» de «Tus
-   propios errores» (entreno/tipos.html) y «Leer la partida» de la organización
+   propios errores» (entreno/tipos.html) y «Generar PGN» de la organización
    del Centroamericano (js/centroamericano-leer-partida.js, que arma la partida
    con js/planilla-reconstruir.js).
 
