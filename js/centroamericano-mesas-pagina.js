@@ -1210,13 +1210,28 @@
         $("pl-ronda").replaceChildren(el("option", { value: "", texto: "Todas" }), ...rondas.map((r) => el("option", { value: String(r), texto: "Ronda " + r })));
         $("pl-ronda").value = actual;
         const ronda = $("pl-ronda").value;
+        // Ordenadas como en el Drive: por torneo (su orden, Sub-8, Sub-10…; si no tiene, por el nombre, no por su
+        // código), la ronda y la mesa.
+        const ordenDe = (x) => { const t = torneos.find((y) => y.tnr === x); return t && t.orden != null ? t.orden : 99999; };
         const lista = planillas.filter((p) => (!tnr || p.tnr === tnr) && (!ronda || String(p.ronda) === ronda))
-            .sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa || a.lado.localeCompare(b.lado));
+            .sort((a, b) => ordenDe(a.tnr) - ordenDe(b.tnr) || nombreTorneo(a.tnr).localeCompare(nombreTorneo(b.tnr), "es", { numeric: true })
+                || a.ronda - b.ronda || a.mesa - b.mesa || a.lado.localeCompare(b.lado));
         const LP = window.CentroamericanoLeerPartida;
         const ctxPartida = { el, nombreTorneo, avisar, enfrentamiento: (x) => (x.lado === "blancas" ? x.jugador + " vs " + x.rival : x.rival + " vs " + x.jugador) };
         const COLUMNAS = 8;
-        // Cada foto: su fila y, si se abrió «Generar PGN», la de debajo con la partida (la misma: no se pierde al refrescar).
-        $("planillas").replaceChildren(...lista.flatMap((p) => [el("tr", { "data-drive": p.drive_ok ? "si" : "no" },
+        const grupo = (p) => p.tnr + "|" + p.ronda;
+        const cuantas = new Map();
+        lista.forEach((p) => cuantas.set(grupo(p), (cuantas.get(grupo(p)) || 0) + 1));
+        // Un encabezado por torneo y ronda; debajo, cada foto: su fila y, si se abrió «Generar PGN», la de la partida
+        // (la misma: no se pierde al refrescar).
+        $("planillas").replaceChildren(...lista.flatMap((p, i) => [
+            i === 0 || grupo(lista[i - 1]) !== grupo(p)
+                ? el("tr", { class: "cam-pl-grupo" }, el("th", { colspan: String(COLUMNAS), scope: "colgroup" },
+                    nombreTorneo(p.tnr) + " · Ronda " + p.ronda + " · " + cuantas.get(grupo(p)) + (cuantas.get(grupo(p)) === 1 ? " foto" : " fotos"),
+                    // si esa categoría y esa ronda se transmiten: el enlace directo al PGN de todas sus partidas
+                    el("span", { class: "cam-pl-tx", "data-tnr": p.tnr, "data-ronda": String(p.ronda) })))
+                : null,
+            el("tr", { class: "cam-pl-fila", "data-drive": p.drive_ok ? "si" : "no" },
             el("td", { texto: nombreTorneo(p.tnr) }), el("td", { texto: String(p.ronda) }), el("td", { texto: String(p.mesa) }),
             el("td", { texto: ctxPartida.enfrentamiento(p) }),
             el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
@@ -1225,7 +1240,7 @@
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver"),
                 ...LP.botones(p, ctxPartida, COLUMNAS))), LP.detalle(p)].filter(Boolean)));
         // Cuáles se transmiten en vivo: esas salen de Lichess, sin leer la foto.
-        LP.revisarFuentes(lista, ctxPartida);
+        LP.revisarFuentes(lista, ctxPartida).then(() => LP.revisarGrupos(ctxPartida));
         $("planillas-vacio").hidden = lista.length > 0;
     }
 

@@ -8748,6 +8748,18 @@ transmiten**.
   terminada, se guarda. Solo las clásicas: el Rápido y el Blitz no se fotografían. Si no se sabe si
   se transmite (Lichess no contesta), **no se gasta una lectura sin preguntar**: «Probar otra vez» o
   «Leer la foto de todos modos». Con los colores al revés en la transmisión, se lee la foto.
+- **La búsqueda va solo al torneo de Lichess de su categoría** (`torneoDeCategoria()`: «Sub-18
+  Absoluto» es «… Open U18», «Sub-8 Femenino» es «… Girls U08»; sin categoría reconocible, en
+  todos). Antes se buscaba en los doce torneos del grupo, dos consultas por categoría y por foto:
+  con la tabla entera, Lichess frenaba («espera un momento») y la fila quedaba en «No se pudo ver la
+  transmisión» aunque la mesa no se transmitiera (pasó el 4/11 con la mesa 14 de la ronda 5 del
+  Sub-18: solo se transmiten sus 5 primeras mesas). Lo averiguado se guarda 10 minutos; si Lichess
+  no contestó, se vuelve a probar al minuto.
+- **La tabla, como el Drive**: un encabezado por torneo y ronda (por el `orden` del torneo, Sub-8,
+  Sub-10…; antes se ordenaba por el código de chess-results), con cuántas fotos tiene y, si esa
+  categoría y esa ronda se transmiten, **el enlace directo al PGN de todas sus partidas
+  transmitidas** (`/api/broadcast/round/<id>.pgn` de Lichess, con el enlace de cada partida en su
+  `GameURL`) y a la ronda en Lichess, para recolectarlas de una vez (`rondaTransmitida()`).
 - **Si no se transmite, de la foto.** **Todo lo que se pueda salvar se salva; lo que ya no tiene
   salida queda «ilegible» y no se le inventa nada.**
 - **Cómo se lee la foto.** Va del bucket privado a Google Vision por `ocr-scoresheet` (la misma del
@@ -8800,6 +8812,18 @@ transmiten**.
   Chromium de las pruebas cambia «Acuña» por «download»); dentro, los nombres van tal cual.
 - **Privacidad**: la foto va a Google Vision como la del Lector de planilla; `privacidad.html` lo
   dice en la línea de Google (sin cambiar la versión: se agregó el mismo día de la última).
+- **«Descargar la lectura»** (solo en las de la foto): un `.json` con lo que devolvió Google Vision tal
+  cual (cada palabra con su caja: se puede pasar de nuevo a `hojasDeLaFoto()`), las celdas de cada
+  planilla y la partida que salió, para afinar el corrector con lecturas de verdad. El nombre del
+  archivo no lleva a los jugadores, pero adentro va lo que está escrito en la planilla, también los
+  nombres del encabezado: es para quien organiza y para revisar, **nunca para el repositorio**. Las
+  palabras se guardan con la lectura en el navegador, compactas (`[texto, x0, y0, x1, y1]`, unos
+  18 KB por foto); si no caben, se borran las lecturas guardadas de las otras fotos.
+- **La clave de Google Vision no estaba puesta** (4/11): el registro de `ocr-scoresheet` dice
+  «GOOGLE_VISION_API_KEY no configurado» y las dos primeras lecturas terminaron en 504 a los 160 s.
+  Supabase contesta eso sin el permiso de origen y el navegador solo ve «Failed to fetch»; ahora la
+  página lo dice en palabras («el lector de planillas no contestó… avísale a administración»). La
+  clave se pone en Supabase, Edge Functions → Secrets, `GOOGLE_VISION_API_KEY`.
 - **No se paga dos veces**: lo leído se guarda en ese navegador por foto (`cam-partida-leida:`,
   con la hora de subida: una foto nueva de la misma mesa se vuelve a leer). «Volver a leer la
   foto» sí gasta otra lectura.
