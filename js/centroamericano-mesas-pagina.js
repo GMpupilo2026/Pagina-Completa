@@ -499,7 +499,7 @@
         const ahora = new Date();
         const orden = new Map(torneos.map((t, i) => [t.tnr, i]));
         const lista = asignaciones.filter((a) => C.estadoAsignacion(a, ahora) === "activo" && C.codigoLindo(a.codigo))
-            .sort((x, y) => (orden.get(x.tnr) ?? 99) - (orden.get(y.tnr) ?? 99) || x.mesa_desde - y.mesa_desde || String(x.arbitro).localeCompare(String(y.arbitro), "es"));
+            .sort((x, y) => (orden.has(x.tnr) ? orden.get(x.tnr) : 99) - (orden.has(y.tnr) ? orden.get(y.tnr) : 99) || x.mesa_desde - y.mesa_desde || String(x.arbitro).localeCompare(String(y.arbitro), "es"));
         if (!lista.length) { avisar("No hay enlaces activos con código.", true); return; }
         $("codigos-pdf").disabled = true;
         try {
