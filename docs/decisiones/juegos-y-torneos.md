@@ -9567,6 +9567,34 @@ el sistema las mesas que no traen un rival sino un nombre raro**.
   cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
   pareos» y «¿Dónde juega?»).
 
+## Cuántas tablets aguanta la mesa del árbitro (Centroamericano, 5/11)
+
+Pregunta del dueño: ¿cuántos árbitros a la vez? Se simuló con el enlace del torneo de PRUEBA (solo lecturas: «leer» y «avisos» de
+`centroamericano-mesa`, nada que escriba), a su ritmo real —avisos cada 8 s, mesas cada 45 s, con desfase al azar— durante 60 s, de noche y
+sin ronda en curso. Resultado **antes del cambio** (mediana de «leer» / de «avisos»):
+
+| tablets a la vez | «leer» | «avisos» | fallos |
+|---|---|---|---|
+| 30 (la carga de hoy: 28 enlaces activos) | 3,2 s | 0,5 s | 0 |
+| 60 | 12 s | 1,7 s | 0 |
+| 100 | 24 s | 5,3 s | 8 de 199 («leer», a los 30 s) |
+| 100 abriendo la página en el mismo instante | 30 s | 11 s | 70 de 100 |
+
+Una petición suelta tarda 0,7–1,1 s («leer») y 0,3 s («avisos»). Los registros de Supabase (`function_edge_logs`) confirman que la espera está
+DENTRO de la función (hasta 37 s, ningún 5xx): es el servidor, no la red de quien probó.
+
+- **Los avisos eran la mayor parte de los pedidos** (con 28 tablets, ~4 por segundo): ahora `AVISOS_MS` = 20 s (eran 8). El pedido de ayuda de
+  una tablet sigue yendo al instante; lo que tarda hasta 20 s es que le llegue a la tablet un aviso de la organización.
+- **«Ver mis mesas» comparte la lectura** entre las tablets de la misma categoría: `leerCompartidaBreve` (en `centroamericano-mesa`) guarda 5 s la
+  lectura compartida de chess-results (la copia ya puede tener 40 s), incluso mientras todavía se está leyendo, para que un arranque de ronda no
+  haga que cada pedido consulte la copia por su cuenta y todos esperen en fila. Solo la acción «leer»; una lectura que falla no se guarda; las
+  demás acciones siguen leyendo lo suyo.
+- **Para repetir la prueba**: un script que haga `leer`/`avisos` con el token de un enlace del torneo de prueba (no con uno real), con
+  `NODE_USE_ENV_PROXY=1` y `NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt` en el contenedor, y fuera de las rondas. Mirar `function_edge_logs`
+  (`execution_time_ms`) para separar lo que tarda el servidor de lo que tarda la conexión de quien prueba.
+- **Límites de la prueba**: un solo enlace (no 100 distintos) y todo desde un mismo origen. Si hace falta más, el siguiente paso es revisar el
+  tamaño del servidor de Supabase.
+
 ## La ficha de la mesa, opción A «tres toques» (Centroamericano, a prueba con un árbitro)
 
 Pedido del 5/11: una ficha de mesa «más bonita y eficiente». Se dibujaron cuatro opciones (A «tres toques», B «duelo» con los dos jugadores
