@@ -74,8 +74,13 @@ const igual = (que, salio, esperaba) => {
                 const s = A.sDeElo(Math.log(8) + (rapido ? 0.4 : 0), -0.6, j.fuerza), trampa = j.nombre === TRAMPOSO;
                 for (let ply = 16; ply < 56; ply++) {
                     const d = pos(), dificil = j.nombre === DECISIVO && A.dificultadEsperada({ deltas: d, n: 30 }, s, 0.9) > umbralDecisivo(s);
-                    const y = (trampa && rnd() < 0.4) || (dificil && rnd() < 0.8) ? { rango: 1, dj: 0 } : jugar(d, s, 0.9);
+                    const motor = (trampa && rnd() < 0.4) || (dificil && rnd() < 0.8);
+                    // A una persona la trampa la atrae: cae más de lo que dice el modelo (que solo mira lo hondo).
+                    const celada = d[1] >= 8 && (ply % 3 === 0);
+                    const y = motor ? { rango: 1, dj: 0 } : celada && j.nombre !== TRAMPOSO && rnd() < 0.3 ? { rango: 2, dj: d[1] } : jugar(d, s, 0.9);
+                    // Una de cada tres posiciones donde la segunda pierde 8 o más es una trampa: a primera vista parece mejor la segunda.
                     T.centroamericano_fp_jugadas.push({ tnr, ronda, mesa: m + 1, color, ply, deltas: d, n_legales: 30, rango: y.rango, delta_jugada: y.dj, dificil: d[1] >= 10,
+                        antes: ((ply * 37) % 400) - 200, sup_rango: celada ? 2 : 1, cayo: celada ? y.rango === 2 : false,
                         segundos: trampa ? 25 + Math.round(rnd() * 10) : Math.round(5 + 4 * A.dificultadEsperada({ deltas: d, n: 30 }, s, 0.9) + rnd() * 20) });
                 }
             }
@@ -143,12 +148,24 @@ const igual = (que, salio, esperaba) => {
     console.log("\n=== Cómo viene su Elo en FIDE ===");
     const enA = ix.filter((x) => x.tnr === "A" && x.elo);
     const sube = (x) => Number(x.jugador.split(" ").pop()) % 3 === 0;
-    const media = (l) => l.reduce((t, x) => t + (x.elo_usado - x.elo), 0) / l.length;
     igual("quien viene subiendo 20 por mes lleva su tendencia (20 por mes, 60 de los 3 meses de atraso); los parejos, 0",
         [enA.filter(sube).every((x) => x.elo_tendencia === 60 && Number(x.tendencia_mes) === 20), enA.filter((x) => !sube(x)).every((x) => x.elo_tendencia === 0 && Number(x.tendencia_mes) === 0)], [true, true]);
-    igual("y se compara más arriba: en promedio, más Elo reconocido que los parejos (lo que rinde lo corrige, nunca por debajo de su Elo)",
-        [media(enA.filter(sube)) > media(enA.filter((x) => !sube(x))) + 30, enA.every((x) => x.elo_usado >= x.elo)], [true, true]);
+    // Lo mismo sin la tendencia (solo con lo que rindió): con ella, a quien viene subiendo se lo compara más arriba.
+    const sinTend = (x) => A.eloUsado(x.elo, x.rendimiento != null ? { rp: x.rendimiento, n: x.rendimiento_partidas } : null, true, 0);
+    igual("y se compara más arriba que solo con lo que rindió (nunca menos; a quien rinde muy por debajo, lo que rinde lo baja hasta su Elo igual), nunca por debajo de su Elo",
+        [enA.filter(sube).every((x) => x.elo_usado >= sinTend(x)) && enA.filter(sube).filter((x) => x.elo_usado > sinTend(x)).length >= 0.5 * enA.filter(sube).length, enA.filter((x) => !sube(x)).every((x) => x.elo_usado === sinTend(x)), enA.every((x) => x.elo_usado >= x.elo)], [true, true, true]);
     igual("y en la rápida (sin ficha de FIDE), sin tendencia", ix.filter((x) => x.tnr === "B").every((x) => x.elo_tendencia == null), true);
+
+    console.log("\n=== Más allá de Regan ===");
+    const tramp = ix.find((x) => x.jugador === TRAMPOSO), honestosT = ix.filter((x) => x.tnr === "A" && x.jugador !== TRAMPOSO && x.jugador !== DECISIVO && x.trampas_z != null).map((x) => Number(x.trampas_z)).sort((a, b) => a - b);
+    igual("las trampas de la mirada corta: el que usa el motor cae menos de lo esperable para su nivel (por encima de casi todos los honestos), y los honestos rondan 0",
+        [tramp.trampas_n > 10, Number(tramp.trampas_z) > honestosT[Math.floor(honestosT.length * 0.9)], Math.abs(honestosT[Math.floor(honestosT.length / 2)]) < 1, v.atraccion.clasico > 2], [true, true, true, true]);
+    igual("la vara para el tamaño del torneo: con los jugadores medidos de cada ritmo (Bonferroni al 5 %), más alta en la clásica, que tiene más",
+        [v.grupos.clasico.umbral > v.grupos.rapido.umbral, v.grupos.clasico.umbral > 2.9 && v.grupos.clasico.umbral < 3.4, ix.every((x) => x.umbral_z === v.grupos[x.ritmo].umbral)], [true, true, true]);
+    igual("todas las señales en una cuenta: su correlación medida en la gente (una matriz de 4) y los dos que usaron el motor quedan arriba",
+        [v.grupos.clasico.M.length, ix.filter((x) => x.tnr === "A" && x.roi_combinado != null).sort((a, b) => b.roi_combinado - a.roi_combinado).slice(0, 3).map((x) => x.jugador).filter((j) => j === TRAMPOSO || j === DECISIVO).length], [4, 2]);
+    igual("el contexto: el modelo ajusta cuánto pesa lo desigual de la posición (un número razonable) y sin reloj no toca el del reloj",
+        [Number.isFinite(v.parametros.clasico.kv) && Math.abs(v.parametros.clasico.kv) < 1.5, v.parametros.clasico.kr], [true, 0]);
 
     console.log("\n=== Las rachas ===");
     const dec = ix.find((x) => x.jugador === DECISIVO), tra = ix.find((x) => x.jugador === TRAMPOSO);

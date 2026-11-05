@@ -86,7 +86,7 @@ function pruebasDelCalculo() {
           return { jugadas: r.jugadas.map((d) => [d.ply, d.color, d.rango, d.perdida, d.forzada, d.dificil, d.tras_levantarse]), blancas: r.resumen.blancas, negras: r.resumen.negras };
         })(),
         segundos: [A.segundosDe("Nf3 5482+5"), A.segundosDe("O-O 10+12"), A.segundosDe("d4 +396"), A.segundosDe("")],
-        opciones: [A.opcionesValidas([null, [["e2e4", 30], ["d2d4", 10.4]]], 2), A.opcionesValidas([null], 2), A.opcionesValidas([[["e9e4", 1]]], 1), A.opcionesValidas([[["e2e4", 99999]]], 1), A.opcionesValidas([[["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1]]], 1)],
+        opciones: [A.opcionesValidas([null, [["e2e4", 30], ["d2d4", 10.4]]], 2), A.opcionesValidas([null], 2), A.opcionesValidas([[["e9e4", 1]]], 1), A.opcionesValidas([[["e2e4", 99999]]], 1), A.opcionesValidas([Array.from({ length: 21 }, () => ["e2e4", 1])], 1)],
         deltas16: (() => { const L = { e2e4: { captura: false, jaque: false }, d2d4: { captura: false, jaque: false } };
           const plies = Array.from({ length: 18 }, () => ({ san: "x", uci: "a1a2", legales: {}, segundos: 1, hora: 1 })); plies[16] = { san: "e4", uci: "e2e4", legales: L, segundos: 5, hora: 1 };
           const ev = Array(18).fill(null); ev[15] = 50; ev[16] = 50; const op = Array(18).fill(null); op[15] = [["e2e4", 50], ["d2d4", -100]];
@@ -151,6 +151,26 @@ function pruebasDelCalculo() {
             planilla: [A.planillaValida(Array(19).fill("e4"), []), A.planillaValida(Array(20).fill("Nf3"), [3, 3, 99, -1, "2"]), A.planillaValida(Array(20).fill("e4 x"), [])],
             saltar: [A.detallar(plies, evals, ops, []).jugadas.length, A.detallar(plies, evals, ops, [], 16, new Set([17, 19])).jugadas.map((d) => d.ply)],
             mediana: [A.mediana([3, 1, 2]), A.mediana([4, 1, 2, 3]), A.mediana([])],
+            // Más allá de Regan
+            reloj: [A.relojDe("Nf3 5482+5"), A.relojDe("Nf3")],
+            sup: [A.superficialesValidas(null, 2), A.superficialesValidas([null, ["e2e4", 20]], 2), A.superficialesValidas([["zz", 1]], 1), A.superficialesValidas([null], 2)],
+            detSup: (() => { const d = A.detallar(plies, evals, ops, [], 16, new Set(), plies.map((_, i) => (i === 16 ? ["b2b3", 0] : i === 17 ? ["a2a3", 0] : null))).jugadas; return d.slice(0, 3).map((x) => [x.ply, x.sup_rango, x.cayo]); })(),
+            ctx: [A.contextoDe(300, 100), A.contextoDe(-900, null), A.contextoDe(null, 500), Math.round(A.factorContexto({ v: 1, r: 1 }, 0.5, -0.2) * 1000) / 1000],
+            trampas: (() => {
+              const t = (cayo) => ({ deltas: [0, 20, 30], n: 20, rango: cayo ? 2 : 1, dj: 0, sup: 2, cayo });
+              const muchas = (k) => Array.from({ length: 10 }, (_, i) => t(i < k));
+              const r1 = A.trampas(muchas(0), 6, 0.8, 6), r2 = A.trampas(muchas(4), 6, 0.8, 6), pocas = A.trampas(muchas(0).slice(0, 4), 6, 0.8);
+              const sinTrampa = A.trampas([{ deltas: [0, 3, 30], n: 20, rango: 1, dj: 0, sup: 2, cayo: false }, { deltas: [0, 20], n: 20, rango: 1, dj: 0, sup: 1, cayo: false }], 6, 0.8);
+              return [r1.n, r1.cayo, r1.z > 2, r2.z < r1.z, pocas.z, sinTrampa.n, A.atraccionDe([{ n: 10, cayo: 12, esperado: 3 }, { n: 10, cayo: 8, esperado: 2 }]), A.atraccionDe([{ n: 2, cayo: 1, esperado: 1 }])];
+            })(),
+            umbral: [A.umbralTorneo(1), A.umbralTorneo(10), A.umbralTorneo(300), Math.round(A.normalInversa(0.975) * 1000) / 1000],
+            combinada: (() => { const M = A.correlacionDe(Array.from({ length: 20 }, (_, i) => [i, i * 2, (i * 7) % 5, null])); return [M.length, M[0][1], M[0][3], A.combinada([2, 2, null, null], [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), A.combinada([2, 2, null, null], [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]), A.combinada([null, 2], M)]; })(),
+            casos: (() => {
+              const w = A.wilson(8, 10), a = [A.auc([3, 4], [0, 1]), A.auc([1], [1]), A.auc([], [1])];
+              const mv = (r) => Array.from({ length: 20 }, () => ({ deltas: [0, 5, 10], n: 20, rango: r, dj: r === 1 ? 0 : 5 }));
+              const c = A.casosDePrueba([{ movs: mv(1), s: 6, trampa: true, pct: 30 }, { movs: mv(1), s: 6, trampa: true, pct: 30 }, { movs: mv(2), s: 6, trampa: false }], 0.8, 1, 0);
+              return [w, a, c.por_porcentaje && c.por_porcentaje["30"].casos, Array.isArray(c.ic_marcados), c.auc];
+            })(),
           };
         })(),
         clave: [A.claveDe("Pérez Ñuñez,  José."), A.claveDe("  ANA  maría ")],
@@ -213,6 +233,18 @@ function pruebasDelCalculo() {
         c.planilla, [null, { jugadas: Array(20).fill("Nf3"), dudosas: [2, 3] }, null]);
     igual("las jugadas dudosas de la planilla no se miden (las demás, sí)", c.saltar, [8, [16, 18, 20, 21, 22, 23]]);
     igual("la mediana (la mitad más difícil de las jugadas de cada uno, para las rachas)", c.mediana, [2, 2.5, null]);
+    console.log("\n=== Más allá de Regan ===");
+    igual("lo que le quedaba en el reloj después de cada jugada de LiveChess", c.reloj, [5482, null]);
+    igual("la mirada corta que manda la pantalla: una por posición o ninguna (sin ella, todas null); si no, se rechaza", c.sup, [[null, null], [null, ["e2e4", 20]], null, null]);
+    igual("cada jugada dice dónde quedó lo que parecía mejor a primera vista y si cayó en eso", c.detSup, [[16, null, null], [17, 2, false], [18, 1, true]]);
+    igual("el contexto: lo desigual de la posición (de 0 a 1, tope 6 peones) y el reloj apurado (menos de 5 min), y lo que corren la sensibilidad",
+        c.ctx, [{ v: 0.5, r: 1 }, { v: 1, r: 0 }, { v: 0, r: 0 }, 1.35]);
+    igual("las trampas: quien no cae en ninguna, con lo que atraen de verdad, sale alto; cayendo en algunas, menos; con menos de 5 no se mide; la que no es trampa no cuenta; la atracción se mide en la gente (y sin datos, 1)",
+        c.trampas, [10, 0, true, true, null, 0, 4, 1]);
+    igual("la vara para el tamaño del torneo (Bonferroni al 5 %): nunca menos de 2; con 10 jugadores, 2,6; con 300, 3,6", c.umbral, [2, 2.58, 3.59, 1.96]);
+    igual("todas las señales en una cuenta: la correlación medida (nunca negativa; sin datos, 0), independientes suman más, parecidas no cuentan doble, y sin el índice no hay",
+        c.combinada, [4, 0.95, 0, 2.83, 2, null]);
+    igual("los casos de prueba con su margen (Wilson), cuánto separan (AUC) y por proporción de uso del motor", c.casos, [[49, 94.3], [1, 0.5, null], 2, true, 1]);
     igual("el tablero sin limpiar: la partida de la ronda anterior (entera, o con lo que siguió, desde 40 jugadas) es copia; 20 jugadas iguales de apertura o una que se aparta, no", d.copias, [true, true, false, false, false, false]);
     igual("la evaluación de la pantalla: una por posición, números de ±10000 o null; si no, se rechaza entera", d.validas, [[null, 30, -10000], null, null, null, null]);
     const regla = (t) => {
@@ -314,7 +346,8 @@ const SERVIDOR_FP = `
            { tnr: "100", ronda: 2, mesa: 4, blancas: "Ruiz, Mia", negras: "Castro, Alana", resultado: "0-1", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 16, honda: true }], guardados: [], referencias: [],
     indice: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, comparado: "elo", partidas: 3, rondas: "1, 2, 3", jugadas: 90, t1: 70, e_t1: 45.2, z_t1: 3.1, dificiles: 8, t1_dif: 8, e_t1_dif: 3.4, roi: 66.4,
                ritmo: "clasico", elo_usado: 1620, rendimiento: 1800, rendimiento_partidas: 3, hist_partidas: 4, hist_roi: 51.3, tiempo_rho: 0.05, tiempo_z: 2.4, tiempo_jugadas: 40,
-               elo_tendencia: 40, tendencia_mes: 13.3, crit_z: 3.2, facil_z: 0.4, contraste_z: 2, racha_largo: 6, racha_log10: -3.4 },
+               elo_tendencia: 40, tendencia_mes: 13.3, crit_z: 3.2, facil_z: 0.4, contraste_z: 2, racha_largo: 6, racha_log10: -3.4,
+               z: 3.28, trampas_n: 12, trampas_cayo: 0, trampas_e: 3.4, trampas_z: 2.3, roi_combinado: 68.2, umbral_z: 2.6 },
              { tnr: "200", clave: "nina sin elo", jugador: "Niña, Sin Elo", elo: null, comparado: "categoria", partidas: 2, rondas: "2, 3", jugadas: 50, t1: 22, e_t1: 21.5, z_t1: 0.1, dificiles: 0, t1_dif: 0, e_t1_dif: 0, roi: 51.2,
                ritmo: "rapido", elo_usado: null, rendimiento: null, hist_partidas: null, tiempo_rho: 0.42, tiempo_z: -0.3, tiempo_jugadas: 30 }],
     modelo: { movimientos: 9000, referencia: 1200, factor: 1.2, centro: -0.3, ajustado: "2026-11-04T22:00:00Z", validacion: { jugadores: 140, falsas_a_mirar: 3.1, falsas_alta: 0.7, esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion: { "0.1": { a_mirar: 30, alta: 20 }, "0.2": { a_mirar: 62, alta: 50 }, "0.3": { a_mirar: 85, alta: 74 } },
@@ -495,7 +528,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
              ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
         igual("y lo que se tuvo en cuenta de cada uno, una frase por línea: el Elo que se le reconoció, su historia en otros eventos, el tiempo (la señal alta en negrita) y el ritmo",
             await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [...tr.children[6].querySelectorAll(":scope > .cam-fp-detalle")].map((n) => [n.textContent.slice(0, 40), getComputedStyle(n).fontWeight >= 700, getComputedStyle(n).display]))),
-            [[["Se lo comparó como un 1620: su Elo es 15", false, "block"], ["Su historia: en otras categorías o event", false, "block"], ["Señal alta: Tiempo: pensó parecido en la", true, "block"], ["Señal alta: Rachas: en las posiciones di", true, "block"]],
+            [[["Se lo comparó como un 1620: su Elo es 15", false, "block"], ["Su historia: en otras categorías o event", false, "block"], ["Señal alta: Tiempo: pensó parecido en la", true, "block"], ["Señal alta: Rachas: en las posiciones di", true, "block"], ["Señal alta: Trampas: tuvo 12 posiciones ", true, "block"], ["Señal alta: Con todas las señales juntas", true, "block"], ["Señal alta: Raro aun para un torneo de e", true, "block"]],
              [["Partidas rápidas: se compara con lo espe", false, "block"], ["Tiempo: piensa más donde es más difícil,", false, "block"]]]);
         igual("las cifras van con su coma: la correlación con dos decimales y el índice de su historia con uno", await p.$eval("#fp-indice tr", (tr) => [/correlación 0,05 en 40 jugadas; 2,4 desviaciones/.test(tr.textContent), /su índice fue 51,3\./.test(tr.textContent)]), [true, true]);
         igual("cómo viene su Elo en FIDE (va en el Elo con que se compara) y las rachas: alto en lo difícil, normal en lo fácil, y su racha más rara con lo improbable que es",
@@ -507,7 +540,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
             "Alarmas falsas: 3,1 % pasa de 60 y 0,7 % de 62,5. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
             "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el 30,0 % (20,0 % muy alto) de las veces; en 2 de cada 10, el 62,0 % (50,0 % muy alto); en 3 de cada 10, el 85,0 % (74,0 % muy alto)."]);
         igual("y con los casos de prueba (se sabe quién usó el motor) y las rápidas, aparte", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(3, 5)), [
-            "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a 83,3 % de los 6 que hicieron trampa (66,7 % muy alto), y a 0,0 % de sus 6 rivales, que jugaron limpio.",
+            "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a 83,3 % de los 6 que hicieron trampa, 66,7 % muy alto, y a 0,0 % de sus 6 rivales, que jugaron limpio.",
             "En las rápidas (con su propio ajuste, 40 jugadores): alarmas falsas 2,5 % y 0,0 %."]);
         await p.click("#fp-motor-si");
         igual("apagado en esta computadora: lo dice y se recuerda", await p.evaluate(() => [/Apagado en esta computadora/.test(document.getElementById("fp-motor-estado").textContent), localStorage.getItem("fp_motor_v1")]), [true, "no"]);
@@ -676,9 +709,9 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await q.p.setInputFiles("#fp-ref-archivo", [{ name: "nacional.pgn", mimeType: "text/plain", buffer: Buffer.from(partidaA + sinElo) }, { name: "otra.pgn", mimeType: "text/plain", buffer: Buffer.from(partidaA + relampago) }]);
         await q.p.click("#fp-ref-cargar");
         await q.p.waitForFunction(() => /hacen falta 600/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
-        igual("la referencia: de los dos archivos, una sola vez la partida con Elo (la sin Elo, la repetida y la relámpago no), con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
+        igual("la referencia: de los dos archivos, una sola vez la partida con Elo (la sin Elo, la repetida y la relámpago no), con sus jugadas (sin nombres), una evaluación y hasta 10 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
             const r = window.__fp.referencias; const g = r[0] || {};
-            return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 5), g.trampa, document.getElementById("fp-ref-estado").textContent]; }),
+            return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 10), g.trampa, document.getElementById("fp-ref-estado").textContent]; }),
             [1, "Nacional 2025", 1800, 1700, 22, false, true, true, null, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo todavía no se ajusta: hay 420 jugadas de jugadores con Elo y hacen falta 600."]);
         igual("al terminar de cargar, el modelo se recalcula ya (forzado), una sola vez", await q.p.evaluate(() => (window.__fp.modelos || []).map((m) => m.forzar)), [true]);
         // Volver a cargar lo mismo sigue donde quedó: no se repite nada.

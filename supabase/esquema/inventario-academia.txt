@@ -755,6 +755,7 @@ columna  centroamericano_fp_indice.rendimiento  integer
 columna  centroamericano_fp_indice.rendimiento_partidas  integer
 columna  centroamericano_fp_indice.ritmo  text
 columna  centroamericano_fp_indice.roi  numeric(5,1)
+columna  centroamericano_fp_indice.roi_combinado  numeric(5,1)
 columna  centroamericano_fp_indice.rondas  text
 columna  centroamericano_fp_indice.t1  integer
 columna  centroamericano_fp_indice.t1_dif  integer
@@ -763,11 +764,18 @@ columna  centroamericano_fp_indice.tiempo_jugadas  integer
 columna  centroamericano_fp_indice.tiempo_rho  numeric(4,2)
 columna  centroamericano_fp_indice.tiempo_z  numeric(5,2)
 columna  centroamericano_fp_indice.tnr  text
+columna  centroamericano_fp_indice.trampas_cayo  integer
+columna  centroamericano_fp_indice.trampas_e  numeric(7,2)
+columna  centroamericano_fp_indice.trampas_n  integer
+columna  centroamericano_fp_indice.trampas_z  numeric(5,2)
+columna  centroamericano_fp_indice.umbral_z  numeric(4,2)
 columna  centroamericano_fp_indice.z  numeric(5,2)
+columna  centroamericano_fp_indice.z_combinada  numeric(5,2)
 columna  centroamericano_fp_indice.z_dif  numeric(5,2)
 columna  centroamericano_fp_indice.z_dj  numeric(5,2)
 columna  centroamericano_fp_indice.z_t1  numeric(5,2)
 columna  centroamericano_fp_jugadas.antes  integer
+columna  centroamericano_fp_jugadas.cayo  boolean
 columna  centroamericano_fp_jugadas.color  text
 columna  centroamericano_fp_jugadas.delta_jugada  real
 columna  centroamericano_fp_jugadas.deltas  real[]
@@ -780,9 +788,11 @@ columna  centroamericano_fp_jugadas.n_legales  smallint
 columna  centroamericano_fp_jugadas.perdida  integer
 columna  centroamericano_fp_jugadas.ply  integer
 columna  centroamericano_fp_jugadas.rango  smallint
+columna  centroamericano_fp_jugadas.reloj  integer
 columna  centroamericano_fp_jugadas.ronda  integer
 columna  centroamericano_fp_jugadas.san  text
 columna  centroamericano_fp_jugadas.segundos  integer
+columna  centroamericano_fp_jugadas.sup_rango  smallint
 columna  centroamericano_fp_jugadas.tnr  text
 columna  centroamericano_fp_jugadas.tras_levantarse  boolean
 columna  centroamericano_fp_jugadas.uci  text
@@ -822,8 +832,10 @@ columna  centroamericano_fp_planillas.jugadas  text[]
 columna  centroamericano_fp_planillas.mesa  integer
 columna  centroamericano_fp_planillas.ronda  integer
 columna  centroamericano_fp_planillas.tnr  text
+columna  centroamericano_fp_referencia.antes  integer
 columna  centroamericano_fp_referencia.cargado  timestamp with time zone
 columna  centroamericano_fp_referencia.cargado_por  text
+columna  centroamericano_fp_referencia.cayo  boolean
 columna  centroamericano_fp_referencia.color  text
 columna  centroamericano_fp_referencia.delta_jugada  real
 columna  centroamericano_fp_referencia.deltas  real[]
@@ -834,7 +846,10 @@ columna  centroamericano_fp_referencia.n_legales  smallint
 columna  centroamericano_fp_referencia.partida  text
 columna  centroamericano_fp_referencia.ply  integer
 columna  centroamericano_fp_referencia.rango  smallint
+columna  centroamericano_fp_referencia.reloj  integer
+columna  centroamericano_fp_referencia.sup_rango  smallint
 columna  centroamericano_fp_referencia.trampa  text
+columna  centroamericano_fp_referencia.trampa_pct  smallint
 columna  centroamericano_inicios_ronda.inicio  timestamp with time zone
 columna  centroamericano_inicios_ronda.prueba  boolean
 columna  centroamericano_inicios_ronda.puesto_en  timestamp with time zone
