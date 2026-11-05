@@ -10,6 +10,8 @@ con lo anterior. No necesita nada instalado:
     python3 herramientas/verificar-metadatos.py
 """
 import glob, json, os, re, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from direccion_publica import direccion
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(RAIZ)
@@ -50,7 +52,9 @@ print(f"— {len(publicas)} páginas públicas, {len(privadas)} con noindex —\
 # ---- 1. Toda página pública se comparte bien y se puede indexar ----
 for ruta in publicas:
     t = leer(ruta)
-    esperada = SITIO + "/" if ruta == "index.html" else SITIO + "/" + ruta
+    # La dirección final, sin .html: la que lo lleva contesta con un 307 (ver
+    # «El canonical va sin .html» en docs/decisiones/sitio-e-infraestructura.md).
+    esperada = direccion(ruta)
     d = meta(t, "description")
     check(bool(d) and 70 <= len(d) <= 300, f"{ruta}: descripción presente y de largo razonable ({len(d) if d else 0})")
     check(bool(meta(t, "og:title", "property")) and bool(meta(t, "og:description", "property")),
@@ -92,7 +96,7 @@ for ruta, tipos in ESPERADO.items():
     if "BlogPosting" in tipos or "Course" in tipos:
         check(datos.get("description") == meta(t, "description"),
               f"{ruta}: el marcado repite la descripción real de la página")
-        check(datos.get("url") == SITIO + "/" + ruta, f"{ruta}: el marcado apunta a su propia dirección")
+        check(datos.get("url") == direccion(ruta), f"{ruta}: el marcado apunta a su propia dirección")
 
 # El catálogo tiene que listar los cursos que de verdad están en la página.
 catalogo = leer("cursos.html")
@@ -100,7 +104,8 @@ lista = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script
 enlaces = []
 for m in re.finditer(r'href="(cursos/[a-z0-9-]+\.html)"', catalogo):
     if m.group(1) not in enlaces: enlaces.append(m.group(1))
-en_lista = [x["item"]["url"].replace(SITIO + "/", "") for x in lista["itemListElement"]]
+en_lista = [x["item"]["url"] for x in lista["itemListElement"]]
+enlaces = [direccion(e) for e in enlaces]
 check(en_lista == enlaces, f"cursos.html: la lista marcada son los mismos cursos y en el mismo orden que las tarjetas")
 check(lista["numberOfItems"] == len(en_lista), "cursos.html: numberOfItems coincide con la lista")
 check(all(x["item"].get("name") and x["item"].get("description") for x in lista["itemListElement"]),
@@ -146,12 +151,12 @@ check("Disallow: /cursos/protegido/" in robots, "robots.txt deja fuera los fragm
 check(os.path.exists("sitemap.xml"), "sitemap.xml existe")
 mapa = leer("sitemap.xml")
 locs = re.findall(r"<loc>([^<]+)</loc>", mapa)
-esperadas = sorted((SITIO + "/") if f == "index.html" else (SITIO + "/" + f) for f in publicas)
+esperadas = sorted(direccion(f) for f in publicas)
 check(sorted(locs) == esperadas,
       f"el sitemap lista exactamente las páginas públicas ({len(locs)} contra {len(esperadas)})")
 # El diagnóstico de nivel es la excepción de /entreno/: se hace sin cuenta y es
 # la puerta de entrada al sitio, así que sí va en el sitemap.
-DIAGNOSTICO = SITIO + "/entreno/diagnostico.html"
+DIAGNOSTICO = direccion("entreno/diagnostico.html")
 check(not [u for u in locs
            if ("/cursos/protegido/" in u or "/cursos/academia/" in u
                or ("/entreno/" in u and u != DIAGNOSTICO))],
@@ -161,10 +166,17 @@ check(not [u for u in locs
 # tapando, quitarle el noindex a la página no sirve de nada y nadie se entera —
 # la página se indexa igual de poco, sin ningún error a la vista.
 check(DIAGNOSTICO in locs, "el diagnóstico de nivel está en el sitemap")
-check("Allow: /entreno/diagnostico.html" in robots,
-      "robots.txt deja pasar el diagnóstico de nivel")
-check(robots.index("Allow: /entreno/diagnostico.html") < robots.index("Disallow: /entreno/"),
-      "ese Allow va antes del Disallow de /entreno/")
+# Las dos direcciones: la que se indexa (/entreno/diagnostico, la final) y la
+# vieja con .html, que solo redirige pero tiene que poder seguirse.
+for permiso in ("Allow: /entreno/diagnostico$", "Allow: /entreno/diagnostico.html"):
+    check(permiso in robots, f"robots.txt deja pasar el diagnóstico de nivel ({permiso})")
+    check(permiso in robots and robots.index(permiso) < robots.index("Disallow: /entreno/"),
+          f"«{permiso}» va antes del Disallow de /entreno/")
+# Ningún canonical ni og:url nombra una dirección con .html: esa contesta con
+# un 307 y Google recibiría «la oficial es X» y «X está temporalmente en otro lado».
+con_html = [f for f in TODAS if re.search(r'(rel="canonical" href|property="og:url" content)="[^"]*\.html"', leer(f))]
+check(not con_html, f"ningún canonical ni og:url lleva .html ({con_html[:3]})")
+check(".html</loc>" not in mapa, "ninguna dirección del sitemap lleva .html")
 check('name="robots"' not in leer("entreno/diagnostico.html"),
       "el diagnóstico de nivel ya no lleva noindex")
 check(all(re.match(r"20\d\d-\d\d-\d\d$", d) for d in re.findall(r"<lastmod>([^<]+)</lastmod>", mapa)),
