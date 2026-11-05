@@ -109,16 +109,27 @@
   function normalizar(m, leida) {
     if (!m || m.fuente !== "livechess") return m;
     const { sans, relojes } = leerJugadas(m.jugadas, m.primera);
-    const t = tablas(sans);
+    // Las jugadas se pasan por chess.js hasta la primera que no es posible (`ilegal`): de ahí en adelante no se sigue
+    // (la posición, las tablas y el control salen de lo que sí se jugó).
+    const C = raiz.Chess || (enNode ? require("chess.js").Chess : null);
+    let legales = sans, ilegal = null, ultima = "", fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    if (C && sans.length) {
+      const c = new C();
+      legales = [];
+      for (let i = 0; i < sans.length; i++) {
+        let h = null;
+        try { h = c.move(sans[i], { sloppy: true }); } catch (e) { h = null; }
+        if (!h) { ilegal = { ply: i + 1, jugada: Math.floor(i / 2) + 1 + (i % 2 ? "… " : ". ") + esp(sans[i]) }; break; }
+        legales.push(sans[i]);
+        ultima = h.from + h.to;
+      }
+      fen = c.fen();
+    }
+    const t = tablas(legales);
     const ultB = relojes.filter((r) => r.color === "blancas").pop(), ultN = relojes.filter((r) => r.color === "negras").pop();
     const ult = relojes[relojes.length - 1];
-    let fen = t && t.fen, ultima = "";
-    if (!fen && !sans.length) fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    if (sans.length && raiz.Chess) {
-      try { const c = new raiz.Chess(); sans.forEach((s) => c.move(s, { sloppy: true })); const h = c.history({ verbose: true }).pop(); if (h) ultima = h.from + h.to; if (!fen) fen = c.fen(); } catch (e) { /* sin la última jugada marcada */ }
-    }
     return Object.assign({}, m, {
-      fen: fen || "", ultima, sans,
+      fen, ultima, sans, legales, ilegal,
       reloj_b: ultB && ultB.reloj != null ? ultB.reloj * 100 : null, reloj_n: ultN && ultN.reloj != null ? ultN.reloj * 100 : null,
       piensa: m.estado === "*" && ult && ult.ms != null && leida ? Math.max(0, Math.round((leida - ult.ms) / 1000)) : null,
       tablas: t,
@@ -129,6 +140,14 @@
   function alertasNuevas(mesas, ronda, vistas) {
     const out = [];
     for (const m of mesas || []) {
+      // Una jugada imposible en la transmisión: una ilegal, o una pieza mal puesta o mal leída. Solo con la partida en juego.
+      if (m.ilegal && (!m.estado || m.estado === "*")) {
+        const clave = ronda + "|" + m.mesa + "|imposible|" + m.ilegal.ply;
+        if (!vistas.has(clave)) {
+          vistas.add(clave);
+          out.push({ clave, tipo: "ilegal", mesa: m.mesa, jugada: m.ilegal.jugada, texto: "La transmisión de la mesa " + m.mesa + " trae una jugada imposible (" + m.ilegal.jugada + "): puede ser una jugada ilegal, o una pieza mal puesta o mal leída por el tablero. Mira la mesa: si fue una jugada ilegal, la primera le da 2 minutos al rival y la segunda pierde la partida (art. 7.5.5)." });
+        }
+      }
       const t = m.tablas;
       if (!t) continue;
       const agregar = (tipo, x, texto) => {
@@ -190,6 +209,40 @@
     return out;
   }
 
+  // Una jugada que el tablero no registró: con el reloj en vivo de LiveChess, el reloj corre para quien, según el tablero,
+  // acaba de jugar. Es decir: su rival apretó el reloj, pero el tablero no vio su jugada (una jugada ilegal, o una pieza
+  // fuera de su casilla). La misma regla que el encargado de transmisión. Solo cuenta si la lectura del reloj es de
+  // después de la última jugada registrada.
+  function noRegistrada(m) {
+    if (!m || (m.estado && m.estado !== "*") || m.ilegal) return null;
+    const r = m.reloj && typeof m.reloj === "object" ? m.reloj : null;
+    if (!r || !Number(r.time)) return null;
+    const n = (m.legales || m.sans || []).length;
+    if (!n) return null;
+    const quienJugo = n % 2 === 1 ? "blancas" : "negras";
+    const corre = r.run === true ? "blancas" : r.run === false ? "negras" : null;
+    const { relojes: rs } = leerJugadas(m.jugadas, m.primera);
+    const ultMs = rs.length ? rs[rs.length - 1].ms : null;
+    if (corre !== quienJugo || (ultMs != null && Number(r.time) < ultMs - 2000)) return null;
+    return { n, corre, sospechoso: quienJugo === "blancas" ? "negras" : "blancas" };
+  }
+  // El aviso sale si sigue así unos segundos (un reloj apretado justo cuando se lee no es una jugada perdida).
+  const ESPERA_NO_REGISTRADA_MS = 8000;
+  function alertasNoRegistrada(mesas, ronda, ahora, vistas, pendientes) {
+    const out = [];
+    for (const m of mesas || []) {
+      const x = noRegistrada(m);
+      const clave = ronda + "|" + m.mesa + "|noregistrada|" + (x ? x.n : "");
+      if (!x) { for (const k of [...pendientes.keys()]) if (k.startsWith(ronda + "|" + m.mesa + "|")) pendientes.delete(k); continue; }
+      if (vistas.has(clave)) continue;
+      if (!pendientes.has(clave)) { pendientes.set(clave, ahora); continue; }
+      if (ahora - pendientes.get(clave) < ESPERA_NO_REGISTRADA_MS) continue;
+      vistas.add(clave);
+      out.push({ clave, tipo: "ilegal", mesa: m.mesa, color: x.sospechoso, texto: "En la mesa " + m.mesa + " el reloj corre para las " + x.corre + ", que según el tablero ya jugaron: las " + x.sospechoso + " apretaron el reloj, pero el tablero no registró su jugada. Puede ser una jugada ilegal (o una pieza fuera de su casilla). Mira la mesa: si fue ilegal, la primera le da 2 minutos al rival y la segunda pierde la partida (art. 7.5.5)." });
+    }
+    return out;
+  }
+
   // Los relojes de ahora: el de quien tiene el turno sigue corriendo desde la lectura (lo que llevaba pensando + lo
   // que pasó desde que se leyó). Los relojes vienen en centésimas.
   function relojes(m, ahora, leida) {
@@ -232,6 +285,7 @@
   // ---------------------------------------------------------------- en el navegador
   let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null, ultimaLectura = 0;
   const vistas = new Set();
+  const pendientesIlegal = new Map();   // las jugadas no registradas que se están esperando (alertasNoRegistrada)
 
   function el(tag, at, ...hijos) {
     const n = document.createElement(tag);
@@ -292,6 +346,7 @@
         t.cinco ? "Quíntuple repetición (con " + t.cinco.jugada + "): tablas sin reclamo." : t.repeticiones.length ? "Triple repetición (con " + t.repeticiones[t.repeticiones.length - 1].jugada + "): se pueden reclamar tablas." : "",
         t.setentaYCinco ? "75 jugadas sin peón ni captura (con " + t.setentaYCinco.jugada + "): tablas sin reclamo." : t.cincuenta ? "50 jugadas sin peón ni captura (con " + t.cincuenta.jugada + "): se pueden reclamar tablas." : "",
         bandera(m, ahora, leidaMs) ? "Bandera caída: a las " + bandera(m, ahora, leidaMs).color + " se les acabó el tiempo." : "",
+        m.ilegal ? "Jugada imposible en la transmisión (" + m.ilegal.jugada + "): ¿una jugada ilegal?" : noRegistrada(m) ? "El tablero no registró la última jugada de las " + noRegistrada(m).sospechoso + ": ¿una jugada ilegal?" : "",
       ].filter(Boolean).join(" ");
       return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa), "data-repeticion": rep ? "si" : null },
         el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: "Mesa " + m.mesa })),
@@ -340,7 +395,10 @@
       latir();
       // La bandera se mira cada segundo (el reloj corre entre lecturas), pero solo con datos de hace menos de 30 s:
       // sin señal, una lectura vieja no puede dar una bandera que no cayó.
-      if (conectada && datos && o.alAlertar && Date.now() - leidaMs < 30000) alertasBandera(datos.mesas, datos.ronda, Date.now(), leidaMs, vistas).forEach((a) => o.alAlertar(a, {}));
+      if (conectada && datos && o.alAlertar && Date.now() - leidaMs < 30000) {
+        alertasBandera(datos.mesas, datos.ronda, Date.now(), leidaMs, vistas).forEach((a) => o.alAlertar(a, {}));
+        alertasNoRegistrada(datos.mesas, datos.ronda, Date.now(), vistas, pendientesIlegal).forEach((a) => o.alAlertar(a, {}));
+      }
       // En el modo liviano (tablet vieja o lenta, js/modo-liviano.js), con transmisión cada 20 s en vez de 10.
       const lenta = raiz.ModoLiviano && raiz.ModoLiviano.activo();
       const espera = conectada ? (lenta ? 2 * CADA_MS : CADA_MS) : SIN_CONEXION_MS;
@@ -360,7 +418,7 @@
     return x ? x.motivo : null;
   }
 
-  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, pgnDe, esp,
+  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, noRegistrada, alertasNoRegistrada, pgnDe, esp,
     iniciar, leer, abrir, deLaMesa, noReconoce, conectada: () => conectada };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoArbitroVivo = api;

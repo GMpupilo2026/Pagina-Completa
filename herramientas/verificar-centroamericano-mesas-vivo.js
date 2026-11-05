@@ -110,7 +110,29 @@ ok("si al rival solo le queda el rey, se dice (serían tablas)", bSolo && bSolo.
 const vistasB = new Set();
 const alB = V.alertasBandera([enVivo], 5, TB + 4000, TB, vistasB), alB2 = V.alertasBandera([enVivo], 5, TB + 9000, TB, vistasB);
 ok("el aviso de la bandera: una vez, con el color, la mesa y el art. 6.9", alB.length === 1 && alB[0].tipo === "bandera" && /a las negras de la mesa 3 se les acabó el tiempo/.test(alB[0].texto) && /art\. 6\.9/.test(alB[0].texto) && alB2.length === 0, JSON.stringify(alB));
-ok("la tablet le pone su título y mira la bandera solo con datos de hace menos de 30 s", /bandera: "Bandera caída"/.test(leer("js/centroamericano-arbitro.js")) && /Date\.now\(\) - leidaMs < 30000\) alertasBandera\(/.test(leer("js/centroamericano-arbitro-vivo.js")));
+ok("la tablet le pone su título y mira la bandera y la jugada no registrada solo con datos de hace menos de 30 s", /bandera: "Bandera caída"/.test(leer("js/centroamericano-arbitro.js")) && /Date\.now\(\) - leidaMs < 30000\) \{\s*alertasBandera\([^\n]*\n\s*alertasNoRegistrada\(/.test(leer("js/centroamericano-arbitro-vivo.js")));
+// La jugada ilegal: una jugada imposible en la transmisión, o el reloj que corre para quien ya jugó.
+const TI = Date.UTC(2026, 10, 5, 16, 0, 0);
+const mImp = V.normalizar({ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Nf3 5480+10", "Nc6 5450+20", "Ke3 5470+10"], primera: TI - 100000, estado: "*", en_vivo: true }, TI);
+ok("una jugada imposible en la transmisión (el rey de e1 a e3): se marca en la notación de la planilla, y la posición queda en la última posible",
+  mImp.ilegal && mImp.ilegal.ply === 5 && mImp.ilegal.jugada === "3. Re3" && mImp.legales.length === 4 && /^r1bqkbnr\/pppp1ppp\/2n5\/4p3\/4P3\/5N2\/PPPP1PPP\/RNBQKB1R w KQkq/.test(mImp.fen), JSON.stringify([mImp.ilegal, mImp.fen]));
+const alImp = V.alertasNuevas([mImp], 4, new Set());
+ok("su aviso: una vez, de tipo ilegal, con la jugada y el art. 7.5.5 (la primera da 2 minutos, la segunda pierde)", alImp.length === 1 && alImp[0].tipo === "ilegal" && /jugada imposible \(3\. Re3\)/.test(alImp[0].texto) && /2 minutos/.test(alImp[0].texto) && /7\.5\.5/.test(alImp[0].texto), JSON.stringify(alImp));
+ok("con la partida terminada no se avisa", V.alertasNuevas([Object.assign({}, mImp, { estado: "1-0" })], 4, new Set()).filter((x) => x.tipo === "ilegal").length === 0);
+const mNr = V.normalizar({ mesa: 3, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Nf3 5480+10"], primera: TI - 100000, estado: "*", en_vivo: true, reloj: { white: 5470, black: 5400, run: true, time: TI } }, TI);
+const nr = V.noRegistrada(mNr);
+ok("el reloj corre para las blancas, que según el tablero ya jugaron: las negras apretaron sin que el tablero viera su jugada", nr && nr.corre === "blancas" && nr.sospechoso === "negras", JSON.stringify(nr));
+ok("si el reloj corre para quien tiene el turno, todo bien", V.noRegistrada(Object.assign({}, mNr, { reloj: { white: 5470, black: 5400, run: false, time: TI } })) === null);
+ok("una lectura del reloj de antes de la última jugada no cuenta", V.noRegistrada(Object.assign({}, mNr, { reloj: { white: 5470, black: 5400, run: true, time: TI - 200000 } })) === null);
+const visNr = new Set(), penNr = new Map();
+const nr0 = V.alertasNoRegistrada([mNr], 4, TI, visNr, penNr).length, nr5 = V.alertasNoRegistrada([mNr], 4, TI + 5000, visNr, penNr).length;
+const nr9 = V.alertasNoRegistrada([mNr], 4, TI + 9000, visNr, penNr), nr20 = V.alertasNoRegistrada([mNr], 4, TI + 20000, visNr, penNr).length;
+ok("su aviso espera a que siga así 8 s (un reloj apretado justo al leer no es una jugada perdida) y sale una vez", nr0 === 0 && nr5 === 0 && nr9.length === 1 && nr9[0].tipo === "ilegal" && /las negras apretaron el reloj, pero el tablero no registró su jugada/.test(nr9[0].texto) && nr20 === 0, JSON.stringify([nr0, nr5, nr9, nr20]));
+const visNr2 = new Set(), penNr2 = new Map();
+V.alertasNoRegistrada([mNr], 4, TI, visNr2, penNr2);
+V.alertasNoRegistrada([Object.assign({}, mNr, { reloj: { white: 5470, black: 5400, run: false, time: TI + 3000 } })], 4, TI + 4000, visNr2, penNr2);
+ok("si en la espera se arregla (el tablero registró la jugada), no se avisa", V.alertasNoRegistrada([mNr], 4, TI + 9000, visNr2, penNr2).length === 0);
+ok("la tablet le pone su título y su ícono al aviso de la jugada ilegal", /ilegal: "Posible jugada ilegal"/.test(leer("js/centroamericano-arbitro.js")) && /a\.tipo === "ilegal" \? "⚠ "/.test(leer("js/centroamericano-arbitro.js")));
 ok("la notación de la planilla", V.esp("Nxe5+") === "Cxe5+" && V.esp("O-O") === "O-O" && V.esp("e8=Q") === "e8=D" && V.esp("Kh1") === "Rh1" && V.esp("Rd1") === "Td1");
 
 // ---- la Edge Function

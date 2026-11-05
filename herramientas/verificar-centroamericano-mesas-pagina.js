@@ -1425,6 +1425,15 @@ const CONTRASTE = `(sel) => {
     igual("la bandera caída le llega al árbitro arriba de todo, con el color, la mesa y el art. 6.9", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]'); return [a.getAttribute("role"), /Bandera caída · Mesa 1/.test(a.textContent), /a las negras de la mesa 1 se les acabó el tiempo/.test(a.textContent), /art\. 6\.9/.test(a.textContent)]; }), ["alert", true, true, true]);
     await pv.waitForTimeout(1500);
     igual("y no se repite en los latidos siguientes", await pv.$$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]', (l) => l.length), 1);
+    // La jugada imposible en la transmisión (el rey de e1 a e3): el aviso de posible jugada ilegal.
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke;
+        window.sb.functions.invoke = (f, o) => f !== "centroamericano-mesas-vivo" ? antes(f, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Nf3 5480+10", "Nc6 5450+20", "Ke3 5470+10"], primera: Date.now() - 100000, en_vivo: true, estado: "*" }] }, error: null });
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"][data-mesa="2"]', { timeout: 5000 });
+    igual("una jugada imposible en la transmisión le llega como posible jugada ilegal, con la jugada y el art. 7.5.5", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'); return [/Posible jugada ilegal · Mesa 2/.test(a.textContent), /jugada imposible \(3\. Re3\)/.test(a.textContent), /7\.5\.5/.test(a.textContent)]; }), [true, true, true]);
     igual("sin errores en la página", vv.errores, []);
     await vv.ctx.close();
 
