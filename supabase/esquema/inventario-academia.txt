@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105045527
+# al-dia-con: 20261105050000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -725,13 +725,22 @@ columna  centroamericano_fp_indice.e_dj  numeric(9,1)
 columna  centroamericano_fp_indice.e_t1  numeric(7,2)
 columna  centroamericano_fp_indice.e_t1_dif  numeric(7,2)
 columna  centroamericano_fp_indice.elo  integer
+columna  centroamericano_fp_indice.elo_usado  integer
+columna  centroamericano_fp_indice.hist_partidas  integer
+columna  centroamericano_fp_indice.hist_roi  numeric(5,1)
 columna  centroamericano_fp_indice.jugadas  integer
 columna  centroamericano_fp_indice.jugador  text
 columna  centroamericano_fp_indice.partidas  integer
+columna  centroamericano_fp_indice.rendimiento  integer
+columna  centroamericano_fp_indice.rendimiento_partidas  integer
+columna  centroamericano_fp_indice.ritmo  text
 columna  centroamericano_fp_indice.roi  numeric(5,1)
 columna  centroamericano_fp_indice.rondas  text
 columna  centroamericano_fp_indice.t1  integer
 columna  centroamericano_fp_indice.t1_dif  integer
+columna  centroamericano_fp_indice.tiempo_jugadas  integer
+columna  centroamericano_fp_indice.tiempo_rho  numeric(4,2)
+columna  centroamericano_fp_indice.tiempo_z  numeric(5,2)
 columna  centroamericano_fp_indice.tnr  text
 columna  centroamericano_fp_indice.z  numeric(5,2)
 columna  centroamericano_fp_indice.z_dif  numeric(5,2)
@@ -797,6 +806,7 @@ columna  centroamericano_fp_referencia.n_legales  smallint
 columna  centroamericano_fp_referencia.partida  text
 columna  centroamericano_fp_referencia.ply  integer
 columna  centroamericano_fp_referencia.rango  smallint
+columna  centroamericano_fp_referencia.trampa  text
 columna  centroamericano_inicios_ronda.inicio  timestamp with time zone
 columna  centroamericano_inicios_ronda.prueba  boolean
 columna  centroamericano_inicios_ronda.puesto_en  timestamp with time zone
@@ -2720,6 +2730,7 @@ funcion  centroamericano_fp_alerta(p_tnr text, p_ronda integer, p_mesa integer, 
 funcion  centroamericano_fp_calibrar()  definer  anon=false  auth=true
 funcion  centroamericano_fp_candidatas(p_tnr text, p_ronda integer)  definer  anon=false  auth=true
 funcion  centroamericano_fp_modelo_guardar(p_juegos jsonb, p_indice jsonb, p_modelo jsonb)  definer  anon=false  auth=false
+funcion  centroamericano_fp_referencia_partidas(p_evento text)  definer  anon=false  auth=false
 funcion  centroamericano_fp_rondas()  definer  anon=false  auth=true
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
