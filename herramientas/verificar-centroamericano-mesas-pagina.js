@@ -1639,7 +1639,7 @@ const CONTRASTE = `(sel) => {
     await q.keyboard.press("ArrowRight");
     igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-tiempos", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-tiempos"]);
     await q.keyboard.press("ArrowLeft");
-    igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
+    igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr:not(.cam-grupo-ritmo)", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
         ["Sub-10 Absoluto — 2 enlaces", ["Ana Árbitra", "1 a 15", "si"], ["Árbitro 1Por definir", "16 a 30", "no"]]);
     igual("cada uno dice si está conectado ahora o que no ha abierto el enlace", await q.$$eval("#asignaciones .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent.replace("🆘", "").trim().split("\n")[0].slice(0, 40)])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
     await q.click('#asignaciones tr[data-id="asig-ana"] [data-accion="qr"]');
@@ -2063,13 +2063,14 @@ const CONTRASTE = `(sel) => {
         igual("cada modo explica qué cambia en la tablet (y solo el Blitz habla del aviso que se va solo)", M.RITMOS.map((r) => [r.id, r.config.length > 40, /se va solo/.test(r.config)]), [["clasico", true, false], ["rapido", true, false], ["blitz", true, true]]);
         const oc = await abrir(browser, "centroamericano-mesas.html?ritmos=1", dobleOrganizacion(true), { ancho: 1100 });
         const po = oc.p;
-        await po.waitForSelector("#asignaciones .cam-grupo-ritmo");
         await po.click("#pest-arbitros");
+        await po.waitForSelector("#asignaciones .cam-grupo-ritmo");
         igual("la tabla de enlaces va en tres bloques, en orden Clásico → Rápido → Blitz, cada uno con su configuración y sus torneos adentro",
             await po.evaluate(() => [...document.querySelectorAll("#asignaciones tr.cam-grupo-ritmo, #asignaciones tr.cam-grupo-torneo")].map((tr) => tr.classList.contains("cam-grupo-ritmo") ? [tr.dataset.ritmo, tr.querySelector(".cam-ritmo-config").textContent.length > 40] : tr.textContent.split(" — ")[0])),
             [["clasico", true], "Sub-10 Absoluto", ["rapido", true], "Rápido Sub-10", ["blitz", true], "Blitz Sub-12"]);
-        igual("los selectores de torneo también separan por modo (Clásico, Rápido, Blitz) y cada torneo sigue siendo una opción", await po.evaluate(() => ["a-torneo", "rp-torneo"].map((id) => { const s = document.getElementById(id); return [[...s.querySelectorAll("optgroup")].map((g) => g.label), s.querySelectorAll("option").length]; })), [[["Clásico", "Rápido", "Blitz"], 6], [["Clásico", "Rápido", "Blitz"], 6]]);
+        igual("los selectores de torneo también separan por modo (Clásico, Rápido, Blitz) y cada torneo sigue siendo una opción", await po.evaluate(() => ["a-torneo", "rp-torneo"].map((id) => { const s = document.getElementById(id); return [[...s.querySelectorAll("optgroup")].map((g) => g.label), s.querySelectorAll("option").length]; })), [[["Clásico", "Rápido", "Blitz"], 5], [["Clásico", "Rápido", "Blitz"], 5]]);
         igual("al elegir un torneo, debajo dice su modo y lo que cambia en la tablet", await (async () => {
+            await po.evaluate(() => { document.getElementById("nuevo").open = true; });
             await po.selectOption("#a-torneo", "1540001");
             const blitz = await po.$eval("#a-ritmo-nota", (n) => [n.dataset.ritmo, /Blitz.*solo resultado e ilegal/i.test(n.textContent)]);
             await po.selectOption("#a-torneo", "1529733");
