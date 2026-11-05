@@ -34,7 +34,7 @@
     // La tablet vieja o lenta (js/modo-liviano.js): algunas consultas van menos seguido. Los avisos de la organización
     // y lo que se anota NO: eso no se demora nunca.
     const liviano = () => !!(window.ModoLiviano && window.ModoLiviano.activo());
-    const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
+    const AVISOS_MS = 20000; // los avisos (solo la base: liviano). Eran cada 8 s; con 30 tablets eran la mayor parte de los pedidos (ver «Cuántas tablets aguanta»).
 
     let estado = null; // lo que contestó «leer»
     let fairPlay = []; // sus mesas elegidas para Fair Play en la ronda (borde dorado), de centroamericano-fair-play
