@@ -8726,6 +8726,98 @@ resultado).
   al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
   sesión (lo prueba el navegador con un doble, no la función desplegada).
 
+### Leer la partida de las planillas (Centroamericano)
+
+En «Planillas y Drive» de la organización (`centroamericano-mesas.html`), cada foto lleva, al lado
+de «Ver», **«Generar PGN»**: la partida de esa mesa **ahí mismo**, en una fila que se abre debajo de
+su foto (sin ventanita), con la vista previa en un tablero (⏮ ◀ ▶ ⏭ y las flechas) y la descarga o
+la copia del PGN. «Ocultar la partida» la cierra; la tabla se refresca sola cada 30 s y la fila
+abierta se conserva tal cual (`detalle()` devuelve la misma fila). Es para revisar: no anota ni
+cambia ningún resultado. Lo pidió así el dueño: la herramienta es **para las partidas que no se
+transmiten**.
+
+- **Si la mesa se transmite en vivo, sale de la transmisión, no de la foto.** Al pintar la tabla se
+  averigua sola, de a una mesa (todas comparten la ronda de Lichess guardada), cuáles están en la
+  transmisión de la sala del Centroamericano —por los dos nombres y la ronda, con
+  `CentroamericanoTransmisionReloj.buscarPartida()`, la misma búsqueda del control de tiempos, que
+  se separó de `buscar()` para no copiarla—, y cada fila lo dice («📡 Se transmite: sale de
+  Lichess» / «📷 Sin transmisión: sale de la foto»). La de la transmisión es el bloque de esa
+  partida en el PGN de la ronda (`/api/broadcast/round/<id>.pgn`, con sus relojes), con sus jugadas
+  del tablero electrónico: no se lee la letra de nadie ni se gasta el lector. Si sigue en juego, se
+  dice (la transmisión va con atraso) y «Actualizar desde la transmisión» trae lo que siga; ya
+  terminada, se guarda. Solo las clásicas: el Rápido y el Blitz no se fotografían. Si no se sabe si
+  se transmite (Lichess no contesta), **no se gasta una lectura sin preguntar**: «Probar otra vez» o
+  «Leer la foto de todos modos». Con los colores al revés en la transmisión, se lee la foto.
+- **Si no se transmite, de la foto.** **Todo lo que se pueda salvar se salva; lo que ya no tiene
+  salida queda «ilegible» y no se le inventa nada.**
+- **Cómo se lee la foto.** Va del bucket privado a Google Vision por `ocr-scoresheet` (la misma del
+  Lector de planilla, con su tope diario: ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md), a **2600 px** de lado (`leerFoto(…, { maxLado })`): a 1600, cada una
+  de las dos hojas quedaba en unos 800 px, poco para la letra a mano. Las celdas salen de
+  **los números impresos de la planilla** (1 a 60, en tres bloques): cada columna de números da la
+  altura de cada renglón y dónde empiezan Blancas y Negras. Ordenar las palabras por filas de toda
+  la foto (lo que hace el Lector de planilla con una hoja de una columna) mezclaba la jugada 1 con la
+  21 y la 41, y las dos hojas entre sí. Los números se encadenan con el que sigue justo debajo, no
+  por «misma x», y la altura de cada palabra se endereza con la inclinación de su columna: con la
+  foto girada 6° la columna se partía en dos y las Negras caían en el renglón de al lado. Aguanta
+  ±12°, números que el lector no vio, jugadas que llegan en dos palabras y los números del
+  encabezado («Ronda 4», «Mesa 11»). Sin ningún número, se lee por filas y lo dice.
+- **Cómo se arma la partida** (`js/planilla-reconstruir.js`, en su propio hilo:
+  `js/planilla-reconstruir-worker.js`, porque tarda de 5 a 30 s y la organización no puede
+  congelarse con pedidos de ayuda llegando). **No decide jugada por jugada.** El Lector de planilla
+  cambia cada texto por la jugada legal más parecida y sigue; se probó con fotos reales del Drive
+  (ronda 4): en la mesa 5, «Nd2» era ambiguo (podían ir los dos caballos), eligió el equivocado y
+  desde ahí «corrigió» 74 de 106 medias jugadas que estaban bien, sin avisar. Aquí se llevan muchas
+  continuaciones a la vez (búsqueda en haz, 150) y gana la que menos se aparta de lo escrito en toda
+  la partida.
+  - **Las dos planillas a la vez**: cada jugada paga lo lejos que está de lo escrito en cada una
+    (hasta 3). Una planilla corrige a la otra: en la mesa 11 la de negras dice 16. The1 The8 (fue
+    Thf1 Thf8) y leída sola ya no llega a la partida; con la de blancas al lado, sí.
+  - **En inglés o en español**, con o sin la letra que desambigua, la «P» de peón del Caribe
+    («Pe4»), el enroque con ceros, la captura escrita solo con la casilla de llegada. «R» se prueba
+    como torre (inglés) y como rey (español). Las confusiones de la letra («5»/«s», «0»/«O»,
+    «c»/«C») cuestan menos que un cambio cualquiera.
+  - **Una planilla que se saltó o repitió un renglón**: cada hoja puede saltarse una celda o no
+    tener la jugada, con un costo (1,5), así que una planilla corrida se vuelve a alinear sola.
+  - **Un borrón** (una celda sin ninguna letra ni número de ajedrez) no castiga ninguna jugada —si
+    no, saltarse jugadas para esquivarlo salía más barato— pero tampoco respalda ninguna: lo que se
+    puso ahí queda dudoso.
+  - **Cuándo se rinde.** Se mira cuánto respalda lo escrito cada jugada (lo que dice la planilla que
+    MEJOR la respalda; un borrón no respalda nada). Si en TODAS las continuaciones las últimas 6
+    medias jugadas promedian más de 1,5, se corta: se vuelve atrás hasta la última jugada bien
+    leída, y de ahí en adelante es «Ilegible desde la jugada N», con lo que dice cada planilla tal
+    cual. No se sigue buscando. Una planilla manchada desde la media jugada 25 da 24 jugadas, no 50
+    inventadas.
+  - **Cada jugada dice cómo se leyó**: tal cual (sin marca), corregida (*: lo escrito no era
+    exacto, o una de las dos planillas decía otra cosa) o dudosa (?: se parece poco, o otra
+    partida casi igual de buena dice otra cosa aquí; por ejemplo «Nd7» escrito en las dos cuando
+    podían ir los dos caballos). La marca va escrita, no solo en color, y al tocarla dice qué
+    estaba escrito en cada planilla.
+- **El PGN** lleva el torneo, la ronda, el día de la foto (en hora de Costa Rica), los jugadores y
+  «Leída de la foto de las planillas (mesa N)»; si se cortó, termina en «*» con el comentario
+  «Desde aquí la planilla es ilegible (jugada N)». El resultado no se lee de la casilla de la
+  planilla: solo se pone si la partida termina en mate. El nombre del archivo va sin tildes (el
+  Chromium de las pruebas cambia «Acuña» por «download»); dentro, los nombres van tal cual.
+- **Privacidad**: la foto va a Google Vision como la del Lector de planilla; `privacidad.html` lo
+  dice en la línea de Google (sin cambiar la versión: se agregó el mismo día de la última).
+- **No se paga dos veces**: lo leído se guarda en ese navegador por foto (`cam-partida-leida:`,
+  con la hora de subida: una foto nueva de la misma mesa se vuelve a leer). «Volver a leer la
+  foto» sí gasta otra lectura.
+- **El tablero** es el de solo mirar (`js/tablero-fen.js`), con las coordenadas por fuera y las
+  piezas y casillas que eligió cada quien (la página entró a `tablero-cabecera.py`).
+- `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
+  `append` no): lo que no va se saca antes; lo comprueba el verificador.
+- Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de
+  verdad de las mesas 5, 7 y 11, en `herramientas/lib/planillas-reales.js`, solo las jugadas y sin
+  nombres; y fotos sintéticas, `herramientas/lib/planilla-sintetica.js`) y
+  `verificar-centroamericano-mesas-pagina.js` (la pantalla: la mesa que se transmite sale de un
+  Lichess de mentira sin leer la foto, con su PGN y sus relojes; la que no, de un Vision de mentira:
+  lo salvado, lo ilegible, las marcas, el tablero, el PGN, que la fila sigue abierta al refrescar,
+  que abrirla otra vez no gasta, y el contraste en claro y en oscuro). **Sin probar de verdad**: Google Vision con estas fotos (la función pide la sesión de
+  una cuenta). Las planillas que se usaron para probar se transcribieron mirando las fotos; lo
+  que Vision lea de la letra a mano puede ser peor, y los costos (1,5, 3, el promedio de 1,5)
+  conviene ajustarlos con las primeras fotos de verdad.
+
 ### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
 
 Lo que pidió el dueño después: que **un árbitro pueda tener mesas de torneos distintos**; que
@@ -9314,6 +9406,68 @@ Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplic
 Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
 resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
 desplegada.
+### El encargado de transmisión (Centroamericano)
+
+Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de
+transmisión**, donde vea todas las partidas que se transmiten en vivo, y que cualquier problema de un tablero (que deje
+de transmitir, el reloj detenido, apagado o mal configurado, la triple repetición, las 50 o 75 jugadas, la quíntuple, una
+posición que no es legal…) le llegue como un aviso **muy visual**, «que el tablero empiece a brillar»; y que pueda
+cambiar los nombres de un tablero si la organización mueve a un jugador de mesa, con los datos que ya hay.
+
+- **Dos lugares, una pantalla** (`js/centroamericano-transmision.js`, como Fair Play): la pestaña **«📡 Transmisión»** de
+  `centroamericano-mesas.html` (el principal, con su contador de avisos visible desde cualquier pestaña, y la sección
+  «Encargados de transmisión» para crear y apagar sus QR) y `centroamericano-transmision.html#<token>` (el encargado,
+  sin cuenta; el token después del «#», nunca guardado). Los enlaces son `centroamericano_tx_enlaces`, con auditoría
+  (reparten acceso), la misma forma que los de Fair Play. Migración `20261104232418_centroamericano_transmision`.
+- **Los datos** los junta la Edge Function nueva **`centroamericano-transmision`** (`verify_jwt` en false; token o
+  sesión con `tengo_herramienta('mesa-arbitro')`): de cada categoría con tableros de LiveChess, el pareo, las jugadas
+  con su reloj, el reloj (`clock`) y si transmite; los jugadores de esa mesa en chess-results y el resultado que anotó su
+  árbitro (`centroamericano_registro`, sin los anulados). **Nunca devuelve el id de LiveChess** (sin atraso: no se
+  publica). Los emparejamientos salen de dos lados: `centroamericano_lecturas` trae **solo las mesas sin resultado**
+  (con eso, una categoría terminada quedaba sin nadie) y `centroamericano_fp_partidas` (la lectura completa de Fair Play)
+  el resto. Va aparte de `centroamericano-mesas-vivo` para no tocar lo que usan las tablets en pleno torneo.
+- **El reloj de LiveChess** (comprobado con la ronda 5 real): `clock.run` NO dice «corre o está detenido» sino **de
+  quién es el reloj que corre**: `true` las blancas, `false` las negras (después de cada jugada de las blancas, siempre
+  `false`); se entiende que `null` es detenido. Leído al revés, 13 de 58 tableros salían «detenidos». La función lo pasa
+  como `corre: "blancas" | "negras" | null`. `clock.time` es la hora de esa lectura del reloj, no de ahora.
+- **Las jugadas de LiveChess** a veces traen solo el reloj («Ba6 2912») o solo lo pensado («e4 +152»): ahora
+  `leerJugadas` (en `js/centroamericano-arbitro-vivo.js`, el de la tablet) las lee las dos; antes se perdía el reloj y
+  el control de tiempos desde la transmisión partía de un reloj viejo.
+- **Los avisos se calculan en la pantalla** (chess.js y `js/reclamos-tablas.js`, las mismas reglas de tablas que la
+  tablet). En rojo («Ir ya»): la categoría que no transmite o sin el pareo de la ronda en LiveChess, el tablero que dejó
+  de transmitir con la partida en curso, una jugada imposible (chess.js no la acepta: pieza mal puesta, el tablero leyó
+  mal), jugadas de hace más de 10 h (el tablero no se reinició entre rondas: pasó de verdad el 4/11), el reloj que no
+  llega, detenido más de 5 min, que corre para quien ya jugó según el tablero (**una jugada que el tablero no registró**)
+  o cuyo tiempo bajó sin jugada, el que no suma el incremento (la mediana de lo que suma por jugada, con 3 o más) o
+  empezó con más de lo que da el ritmo (el ritmo sale de `tournament.json` de LiveChess, también escrito en palabras:
+  «Noventa (90) minutos…»), la bandera, la quíntuple y las 75 jugadas, ahogado y posición muerta, otros jugadores o
+  colores al revés, y el resultado del tablero distinto del que anotó el árbitro. En ámbar («Mirar»): la triple y las
+  50 (las reclama un jugador), el reloj detenido más de 1 min, un mate sin resultado, el tablero sin jugadas cuando la
+  mitad de la categoría ya empezó, 25 min sin jugadas con el reloj corriendo, el reloj que empezó con 20 min menos
+  (¿llegó tarde?), la partida que el árbitro cerró y sigue transmitiéndose, y una jugada imposible en una partida ya
+  terminada. Cada aviso dice qué pasa, por qué y qué hacer; el brillo nunca va solo.
+- **El brillo**: la tarjeta del tablero late (rojo rápido, ámbar lento; con «reducir movimiento», el anillo quieto y
+  grueso), arriba la lista «🚨 Avisos para revisar» con «Ver el tablero», y el título de la pestaña lleva cuántos hay.
+  Vibra con lo nuevo (no al abrir). **Sin sonido**, como todo en la sala.
+- **«Ya lo revisé»** (`centroamericano_tx_atendidas`, compartido entre el principal y los encargados, con quién y a
+  qué hora): cada aviso tiene una clave estable (categoría, ronda, tablero, tipo y la jugada o la hora del reloj), así
+  que lo revisado no vuelve a brillar, y algo distinto en el mismo tablero sí.
+- **«Cambiar jugadores»** (`centroamericano_tx_tableros`): se elige de la lista de emparejamientos de esa ronda qué mesa
+  se juega en el tablero (sugiere la que dice LiveChess si está en otra mesa); los nombres los pone la función desde
+  chess-results, el navegador no manda ninguno. Con «Intercambiar», el otro tablero se queda con la mesa de este. Un
+  índice único impide la misma mesa en dos tableros. **Lo que no hace**: la transmisión pública de Lichess y la tablet
+  del árbitro toman los nombres de LiveChess (el pareo lo carga la computadora de los tableros en el local), y el
+  reemplazo de nombres de Lichess es por torneo, no por tablero; por eso «Mensaje para el operador» copia lo que hay que
+  corregir allá. Que la tablet del árbitro use el cambio queda pendiente: `centroamericano-mesas-vivo` tiene una
+  versión desplegada (la 5, con las banderas) que todavía no está en el repositorio, y desplegarla desde acá la pisaría.
+- Probado contra la base con la ronda 5 real (12 categorías, 58 tableros): con `run` bien leído quedaron 5 tableros
+  con avisos, todos de verdad (un tablero del Sub-10 con 31 jugadas en dos horas y el reloj de las blancas 34 min por
+  debajo de lo registrado; tres jugadas imposibles en partidas terminadas; una partida cerrada por el árbitro que seguía
+  transmitiéndose), el intercambio de dos tableros y su vuelta atrás, «Ya lo revisé», un enlace inválido (404) y sin
+  enlace ni sesión (401). Lo comprueba `verificar-centroamericano-transmision.js` (cada aviso con partidas armadas con
+  chess.js, una partida normal sin ninguno, la función, la migración y las páginas); roto a propósito (el reloj detenido
+  desde los 10 s, sin la regla de la jugada no registrada), salta.
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.
@@ -9459,6 +9613,144 @@ del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de lo
 - Lo revisan `verificar-centroamericano-mesas.js` (blancas 30:00 y 10 min sin mover → 20:00 y las negras en 50:00; las negras; `visto` de
   uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
   leer, el guardado con la hora de ahora y su nota).
+
+## Banderas y mesas sin rival (Centroamericano)
+
+Pedido del 4/11: **la banderita del país al final del nombre de cada jugador** (pequeña, «un poquito de identificación») y **no mostrar en
+el sistema las mesas que no traen un rival sino un nombre raro**.
+
+- **De dónde sale el país.** La pantalla de resultados de chess-results (la que leen las tablets) y los emparejamientos públicos NO traen la
+  federación; la lista de inscritos (`art=0`) sí, en la columna «FED» (CRC, GUA, ESA…). `_compartido/inscritos-fed.ts` (`fedsDe(tnr)`)
+  la lee una vez por torneo y la guarda **en la memoria de la función** 3 horas (los inscritos casi no cambian; sin tabla ni migración).
+  Si chess-results no contesta, no hay banderas, se reintenta al minuto, se sigue con la última lista que hubo y **nada más se retrasa**
+  (`leer` espera la lista a lo más 3 s y en paralelo con lo demás). Se busca por el nombre sin tildes, sin comas y sin mayúsculas
+  (`claveNombre`): «Ramos Rodriguez Daniel» (resultados) = «Ramos Rodríguez, Daniel» (inscritos). Quien no tiene federación o no está en
+  la lista, sin bandera: nunca se inventa una.
+- **Quién la manda.** `centroamericano-mesa`: `leer` (`fed_b`, `fed_n` en cada mesa), `todas_mesas` («¿Dónde juega?», una lista por
+  categoría) y `mis_pareos`. El dibujo es el de `js/gafetes-banderas.js` (tabla FIDE → ISO) y los SVG ya copiados en `img/banderas/`: nada
+  nuevo que mantener. `js/centroamericano-banderas.js` (`de(fed)`, `deMesa(m, color)`) arma un `<span class="cam-bandera">` con la
+  imagen **decorativa** (alt vacío; 1,05 × 0,8 em, sale de la letra del nombre) y el código de FIDE **escrito** para el lector de pantalla
+  y en el `title` (el color nunca va solo). Va al final del nombre en la tarjeta de cada jugador, en la ventana del control de tiempos,
+  en «Mis pareos» y en «¿Dónde juega?» (la tarjeta y la pantalla completa). Las tarjetas no cambian de tamaño. Sin país o sin dibujo, no
+  se pone nada (nunca un cuadro roto: si la imagen falla se esconde).
+- **Las mesas sin rival.** En la pantalla de resultados, quien se retiró deja su mesa con **«ausgeschieden»** (alemán de «retirado»; pasó en
+  el torneo 1529756, mesas 24 a 26 de la ronda 4) en lugar del nombre del rival. No es una partida: el árbitro no tiene qué anotar y
+  contaba en «Han llegado 0 de N jugadores» y en «Con resultado: x de N». `sinRival(nombre)`: vacío, sin letras o una de las palabras de
+  `SIN_RIVAL` (ausgeschieden, bye, spielfrei, freilos, libre, exento, descansa, retirado, withdrawn, sin emparejar, not paired…).
+  **Si aparece otra palabra rara, se agrega ahí** (una sola lista). Se quitan **al leer, en un solo lugar**: `aLectura` y `deFila` de
+  `lecturas-cache.ts` (lo que sirve TODA función que lee la copia compartida: tablets, organización, avance de la ronda), más las tres
+  lecturas que no pasan por ahí: la copia que lee directo «¿Dónde juega?», «Mis pareos» (lo guardado y la copia) y las mesas en vivo
+  (`centroamericano-mesas-vivo`, que si no la contaba como «no reconocida»). **`guardarYComprobar` sigue leyendo la pantalla entera**: lo
+  que se guarda se compara con lo que de verdad hay en chess-results.
+- **«Inició la ronda» que volvía a salir (4/11).** `leer` desestructuraba 9 nombres para 10 peticiones: `inicio_ronda` tomaba el
+  resultado de `guardarAvance` (`{termino}`, sin `data`) y salía **siempre vacío**. La tablet conserva lo que marcó el árbitro solo
+  2 minutos (`conservarInicio`) y después se queda con lo que dice `leer`: pasados esos 2 minutos el aviso «Todavía no marcaste cuándo
+  empezó la ronda» volvía y los cronómetros regresaban al calendario, aunque la hora estaba bien guardada en
+  `centroamericano_inicios_torneo` (la organización, la bitácora y «Llegó tarde» la leen directo de ahí y por eso no fallaban). Arreglado
+  con un nombre por cada petición (`_avance`); comprobado con el torneo de pruebas (marcar → `leer` devuelve la hora → quitar). Lo
+  vigila `verificar-centroamericano-banderas.js` (el doble de las pruebas de la página siempre devolvió bien la hora, así que ahí no se
+  veía; la comprobación mira el código de la función).
+- **Lo que no cambia.** Esas mesas siguen en chess-results con su resultado (el de quien ganó por el retiro): solo dejan de mostrarse y de
+  contarse en el sistema. Los byes de la página pública (el rival sin enlace) ya se trataban como bye en el sorteo de Fair Play.
+- **Para desplegar**: `node herramientas/funciones-armar.js` y subir `centroamericano-mesa`, `centroamericano-clave` y
+  `centroamericano-mesas-vivo` (las tres reciben `inscritos-fed.ts`; está en el mapa del armador).
+- Lo revisan `verificar-centroamericano-banderas.js` (el lector de inscritos, las palabras, que cada lectura filtre y cada función
+  reciba el módulo, el dibujo decorativo con el código escrito) y `verificar-centroamericano-mesas-pagina.js` (la banderita al final de
+  cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
+  pareos» y «¿Dónde juega?»).
+
+## La ficha de la mesa, opción A «tres toques» (Centroamericano, a prueba con un árbitro)
+
+Pedido del 5/11: una ficha de mesa «más bonita y eficiente». Se dibujaron cuatro opciones (A «tres toques», B «duelo» con los dos jugadores
+lado a lado, C «lista» con una fila por mesa y D «un paso a la vez») y el dueño eligió **la A**, **para probarla solo con el árbitro Oscar
+Angulo** antes de darla a todos.
+
+- **Quién la ve.** `fichaA()` en `js/centroamericano-arbitro.js`: el nombre del árbitro (`estado.arbitro`) trae todas las palabras de
+  `FICHA_A` (hoy `"oscar angulo"`; sin tildes ni mayúsculas, así que «Óscar Angulo Camacho» sirve). Para sumar a otro árbitro se agrega su
+  nombre a esa lista. **`?ficha=a`** después de la dirección la enciende para cualquier enlace (probarla, o enseñarla); **`?ficha=hoy`** le
+  devuelve a quien está en la lista la de siempre (para comparar). El resto de los árbitros no ve ninguna diferencia.
+- **Qué cambia** (la tarjeta lleva `data-ficha="a"`): la tablet pasa de 662 a ~546 px de alto (−17 %, medido con 820 px de ancho).
+  1. El resultado son **tres botones grandes (1-0, ½-½, 0-1) que guardan de un toque**: es el mismo `resultadoRapido` del Rápido y Blitz;
+     «Otro resultado (a mano)» sigue con el selector y «Guardar». Cambiar un resultado ya guardado sigue preguntando antes (lo hace
+     `guardar()`), y el guardado sigue esperando la revisión previa de la ronda. «En chess-results: …» solo se escribe cuando el resultado no
+     tiene botón (una incomparecencia, etc.); si no, la cabecera dice si hay resultado y el botón guardado se ve marcado.
+  2. **Las marcas (ilegal, irregularidad, se levantó) y los «Anular» de los dos jugadores van juntos en UNA franja** (`franjaMarcas`,
+     `.cam-mesa-marcas`), con un puntito del color de cada jugador (y «Blancas:» / «Negras:» para el lector de pantalla), en vez de una
+     franja reservada por jugador. Esa franja vive **dentro** de la zona reservada de los avisos (3,1 rem, lo que mide un botón «Anular»):
+     **anotar una ilegal no mueve ninguna tarjeta** (lo comprueba la prueba). El aviso de la primera ilegal ya no se escribe aparte (lo dice la
+     marca y el cuadro que sale al anotar); el texto completo sigue ahí para el lector de pantalla. La guía «se acabó el tiempo de espera»
+     lleva `data-color` para encontrarla aunque cambie de lugar.
+  3. Menos aire: cabecera, jugadores, resultado y fila de iconos con menos relleno; el nombre ya no reserva siempre dos líneas.
+- **Lo que NO cambia**: las funciones (llegó, se levantó, ilegal, irregularidad, foto, hablar, tiempos, pedir al principal), los botones de 46 px,
+  los colores ya medidos, Fair Play, las bandas de la segunda ilegal. Lo que queda por evaluar con el árbitro: si el guardado de un toque lo
+  equivoca más (se puede «Anular»/corregir) y si le sirve el espacio ganado.
+- **Si funciona**, darla a todos es quitar el `if` de `fichaA()` (y borrar la ficha vieja y `FICHA_A`); si no, se quita el nombre de la lista.
+  Si se quiere ganar más, la C (una fila por mesa) es la opción pendiente.
+- Lo revisa `verificar-centroamericano-mesas-pagina.js` (bloque «La ficha de la mesa, opción A»: solo Óscar la ve, mide menos y las tres
+  igual, los tres botones guardan de un toque, las acciones y los iconos siguen, 46 px, la marca y «Anular» en la franja sin mover nada,
+  `?ficha=hoy` y `?ficha=a`, el celular sin desplazarse a lo ancho).
+
+## «Llegó» desaparece cuando ya llegó (Centroamericano, 5/11)
+
+Pedido: una vez marcado que el jugador llegó, **no se ve nada de «Llegó»**; el botón solo está mientras NO ha llegado, y mientras no ha llegado
+corre su tiempo de espera, nada más. `bloquePresencia` (en todas las fichas, la de siempre y la A): sin llegar, el icono ✗ y el botón «Llegó»
+(más el cronómetro de espera junto al nombre, como antes); ya llegó, el bloque queda **vacío a la vista** (solo el texto «✓ Llegó» para el lector
+de pantalla). Antes quedaba un ✓ y un botón «Corregir» siempre.
+
+- **Un toque equivocado** (decisión de diseño, a confirmar con el dueño): durante **15 segundos** (`VENTANA_DESHACER_MS`) queda un botón
+  «Deshacer» (`data-accion="corregir-presencia"`, el mismo de antes); pasado ese rato desaparece. También después de «Marcar que llegaron
+  todos» (cada uno queda con su «Deshacer» esos segundos). Pasado ese tiempo, corregirlo es pedirle a la organización. Si se quisiera poder
+  corregir siempre, habría que dar otra puerta discreta (por ejemplo, mantener tocado el nombre).
+- Lo revisa `verificar-centroamericano-mesas-pagina.js`: quien llegó no muestra icono ni botón (solo «Deshacer» y el texto del lector de
+  pantalla), a los 15 s no queda nada visible, «Deshacer» lo devuelve a «no ha llegado» con su botón, y el resumen sigue contando bien.
+
+## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
+
+Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
+diálogo en cada mesa (`centroamericano-arbitro.html`, junto a la cámara y el reloj) abre `js/centroamericano-hablar.js`, con tres cosas:
+
+- **Frases fijas** (pestaña «Frases», `js/centroamericano-frases.js`). Unas 40 frases del arbitraje (al empezar, el reloj, las piezas, la
+  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, **Fair Play**, respuestas rápidas), cada una **escrita una vez en español,
+  inglés y francés** con la regla de las Leyes que la respalda (`art`). El árbitro toca la frase en español y la tablet le muestra al
+  jugador la suya, **en grande y a pantalla completa**, con el original en español debajo «para el árbitro» y «Leer en voz alta»
+  (`speechSynthesis`, con el idioma de la frase). **No pasan por el traductor**: no pueden decir algo distinto de la regla y funcionan sin
+  internet. Nuevas frases: agregar un `f(...)` con los tres idiomas; `verificar-centroamericano-idioma.js` falla si falta un idioma, si se
+  repite un id o si los números (minutos, resultados) no cuadran. **Las revisa una persona que domine inglés y francés antes del torneo**:
+  la terminología sigue la de las Leyes de FIDE, pero no hay un revisor humano todavía.
+- **Fair Play** (tema propio, 6 frases, hablándole de usted como el aviso de la organización): «Deberá esperar sentado, ya que le corresponde
+  revisión de Fair Play.», «Al terminar su partida, no se retire…», «El encargado de Fair Play vendrá a revisarlo…», «Es una revisión al azar, de
+  rutina…», «No se levante ni use aparatos electrónicos…» y «La revisión de Fair Play terminó…». **Si la mesa fue elegida para Fair Play, ese
+  tema sale primero** (con un aviso que lo dice).
+- **El idioma se sugiere por el país del jugador**: la federación (la banderita, ver «Banderas y mesas sin rival») decide inglés o francés
+  (`idiomaDeFed`; países de habla francesa, de habla inglesa y el Caribe anglófono). Lo desconocido, la región hispana y Surinam, Aruba y
+  Curazao empiezan en inglés pero el árbitro cambia con un toque. Se cambia siempre a mano también: la sugerencia nunca es la última palabra.
+- **Conversar** (traductor). Dos mitades frente a frente: la del jugador va girada 180° para leerla del otro lado de la mesa, cada uno
+  escribe en su idioma y lee lo del otro en el suyo. El jugador tiene además **nueve botones de respuesta rápida** en su idioma («Quiero
+  reclamar tablas», «Mi rival hizo una jugada ilegal», «Necesito ir al baño»…) que el árbitro lee en español **sin traductor**. La
+  traducción la hace la Edge Function **`centroamericano-traducir`** (sin cuenta, con el token del enlace, `verify_jwt` en false) con Claude
+  (`claude-haiku-4-5`, el secreto `ANTHROPIC_API_KEY`). Se defiende sola: enlace vigente, solo es/en/fr, mensaje de hasta 500 caracteres,
+  **20 por minuto y 500 al día por enlace y 4000 al día en total** (la tabla `centroamericano_traducciones` cuenta cada intento y lo que
+  costó, **sin guardar nunca el texto ni la traducción**; sin permisos ni políticas, solo la escribe la función). Al modelo le llega
+  **solo el mensaje** (entre etiquetas, que el modelo toma como texto por traducir y nunca como instrucciones; no el nombre, la mesa ni el
+  torneo) y nunca se imprime en los registros. Dice en los dos idiomas que es una **traducción automática de ayuda, no oficial**; si falla
+  (sin señal, sin saldo, tope) lo dice, conserva lo escrito y manda a las frases, que siguen sirviendo.
+- **Nada se anota solo.** Lo que se le dijo al jugador queda en la bitácora **solo si el árbitro toca «Anotar en la bitácora»** (o
+  «Anotar la conversación»): una nota de artículo `Comunicado` («Se le comunicó a X (blancas) en inglés: «…» (en español: «…»)»; la
+  conversación con las dos versiones de cada mensaje), con el mismo `anotar` de siempre (misma cola sin señal, mismo rango de mesas). Se ve
+  como «Comunicado» en la tablet, en la bitácora del árbitro (PDF y correo) y en la actividad de la organización.
+- **«Necesito un árbitro que hable inglés / francés»** en la misma ventana: es el pedido de ayuda de siempre a esa mesa (`ayuda`) con el
+  texto «Necesito un árbitro que hable francés en esta mesa.», que le llega a la organización con sonido y «Atendido».
+- **Privacidad.** `privacidad.html` nombra a Anthropic como proveedor del traductor, qué se le manda (solo el mensaje, sin nombres ni
+  mesa) y que no se guarda. Las frases fijas no salen del aparato.
+- **Pendiente de quien tiene la cuenta de Anthropic.** El 4/11 la función respondía `invalid_request_error` («credit balance is too low»):
+  la clave es válida pero la cuenta no tenía saldo. Hay que agregar crédito en la consola de Anthropic (Plans & Billing); hasta entonces
+  «Conversar» dice que no está disponible y las frases y las respuestas rápidas funcionan igual.
+- **Para desplegar**: `centroamericano-traducir` (sin archivos compartidos) y la migración `centroamericano_traducciones`; la página es
+  estática.
+- Lo revisan `verificar-centroamericano-idioma.js` (las frases en los tres idiomas, el idioma por país, el texto de la bitácora, que la
+  función se defienda sola y no mande ni guarde nada de más, la política de privacidad) y `verificar-centroamericano-mesas-pagina.js`
+  («Hablar con el jugador»: el idioma sugerido, la frase en grande y en voz, que nada se anota ni se traduce solo, el traductor de ida y
+  vuelta, la falla del traductor, el pedido por idioma y «Comunicado» en la bitácora).
 
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 

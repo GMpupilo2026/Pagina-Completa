@@ -37,10 +37,11 @@
     if (f.tipo === "correccion") return (f.jugador || "") + ": de «" + f.anterior + "» a «" + f.resultado + "»" + (f.enviado ? " · enviado" : "");
     if (f.tipo === "ilegal" || f.tipo === "irregularidad") return quien + (f.texto ? ": " + f.texto : "") + (f.articulo ? " (art. " + f.articulo + ")" : "");
     if (nota(f, "Levantó")) return quien + " se levantó de la mesa";
+    if (nota(f, "Comunicado")) return f.texto || "";
     if (f.tipo === "anulacion") return "Anula una anotación de " + (f.jugador || "");
     return f.texto || "";
   }
-  const etiquetaDe = (f) => (nota(f, "Levantó") ? "Se levantó" : nota(f, "Llegó tarde") ? "Llegó tarde" : TIPO[f.tipo] || f.tipo);
+  const etiquetaDe = (f) => (nota(f, "Levantó") ? "Se levantó" : nota(f, "Llegó tarde") ? "Llegó tarde" : nota(f, "Comunicado") ? "Comunicado" : TIPO[f.tipo] || f.tipo);
 
   function armar(d, F) {
     F = F || { hora: (x) => String(x), fechaHora: (x) => String(x) };

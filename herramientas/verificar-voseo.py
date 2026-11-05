@@ -221,8 +221,10 @@ def archivos():
             # herramientas/, fuera del sitio.
             and f != os.path.join("herramientas", "datos", "arbitros-cr-chess-results.json")
             # La página del Centroamericano en francés: todo su francés vive
-            # en ese archivo («vos», «été», «trié» no son voseo).
+            # en ese archivo («vos», «été», «trié» no son voseo). Lo mismo con las frases
+            # del arbitraje en inglés y francés (verificar-centroamericano-idioma.js revisa su español).
             and f != os.path.join("js", "centroamericano-fr.js")
+            and f != os.path.join("js", "centroamericano-frases.js")
             # Y la del Metropolitano, por lo mismo.
             and f != os.path.join("js", "metropolitano-fr.js")]
 

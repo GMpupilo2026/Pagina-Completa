@@ -876,6 +876,63 @@ body.cam-guia-abierta { overflow: hidden; }
 .cv-repeticion { font-weight: 800; color: #8a1c00; }
 .dark .cv-repeticion { color: #ffb59e; }
 
+/* La banderita del país al final del nombre de cada jugador: pequeña, sin mover el texto (sigue la última línea del nombre). */
+.cam-bandera { display: inline-block; margin-inline-start: 0.4em; vertical-align: -0.12em; line-height: 0; white-space: nowrap; }
+.cam-bandera img { display: inline-block; width: 1.05em; height: 0.8em; border-radius: 2px; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); object-fit: cover; }
+.dark .cam-bandera img { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35); }
+
+/* «Hablar con el jugador» (js/centroamericano-hablar.js): la ventana con las frases y el traductor, y la pantalla grande que se le da vuelta
+   al jugador. Texto morado hondo (#1e2453) sobre blanco, y blanco sobre ese mismo morado en la pantalla grande: contraste alto en ambos. */
+.cam-hb .cam-hb-fila { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.cam-hb .cam-hb-fila .cam-pestana[aria-pressed="true"] { background: var(--cac-morado); color: #fff; }
+.cam-hb-pestanas { margin-bottom: 0; }
+.cam-hb-cuerpo { overflow: auto; display: grid; gap: 0.8rem; align-content: start; padding-bottom: 0.6rem; min-height: 0; }
+.cam-hb-estado { font-weight: 700; font-size: 0.95rem; margin: 0; min-height: 1.3em; }
+.cam-hb-estado[data-error="si"] { color: #8a1c00; }
+.dark .cam-hb-estado[data-error="si"] { color: #ffb59e; }
+.cam-hb-tema-titulo { font-size: 1rem; font-weight: 800; margin: 0 0 0.35rem; }
+.cam-hb-frases { display: grid; gap: 0.4rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+.cam-hb-frase { display: grid; gap: 0.15rem; text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid #dfe0f7; border-radius: 0.8rem; padding: 0.55rem 0.7rem; min-height: 52px; cursor: pointer; }
+.dark .cam-hb-frase { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(255 255 255 / 0.25); }
+.cam-hb-frase:hover { border-color: var(--cac-morado); }
+.cam-hb-frase:focus-visible, .cam-hb-rapida:focus-visible, .cam-hb-boton:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-hb-art { font-weight: 700; opacity: 0.85; }
+
+/* La pantalla para el jugador: letra enorme, fondo morado hondo, texto blanco. */
+.cam-hb-pantalla { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; padding: 1.5rem; border: 0; background: var(--cac-morado-hondo); color: #fff; overflow: auto; }
+.cam-hb-pantalla[open] { display: flex; flex-direction: column; gap: 1rem; justify-content: center; align-items: center; text-align: center; }
+.cam-hb-pantalla::backdrop { background: var(--cac-morado-hondo); }
+.cam-hb-idioma-p { margin: 0; font-size: 1rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.cam-hb-grande { margin: 0; font-size: clamp(2rem, 6.5vw, 4.5rem); font-weight: 900; line-height: 1.15; max-width: 22ch; }
+.cam-hb-original { margin: 0; font-size: 1rem; opacity: 0.9; max-width: 48rem; }
+.cam-hb-acciones { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+.cam-hb-boton { font: inherit; font-weight: 800; min-height: 52px; padding: 0.5rem 1.1rem; border-radius: 999px; border: 3px solid #fff; background: transparent; color: #fff; cursor: pointer; }
+.cam-hb-boton:hover:not(:disabled) { background: #fff; color: var(--cac-morado-hondo); }
+.cam-hb-boton:disabled { opacity: 0.6; cursor: not-allowed; }
+.cam-hb-listo { background: #fff; color: var(--cac-morado-hondo); }
+.cam-hb-pantalla .cam-hb-estado { color: #fff; }
+
+/* Conversar: dos mitades, la del jugador girada para leerse del otro lado de la mesa. */
+.cam-hb-conversar { display: grid; gap: 0.8rem; grid-template-rows: 1fr 1fr; }
+.cam-hb-lado { display: grid; gap: 0.45rem; align-content: start; padding: 0.7rem; border: 3px solid #dfe0f7; border-radius: 1rem; min-width: 0; }
+.dark .cam-hb-lado { border-color: rgb(255 255 255 / 0.25); }
+.cam-hb-girado { transform: rotate(180deg); }
+.cam-hb-lado-titulo { margin: 0; font-weight: 800; font-size: 0.95rem; }
+.cam-hb-mensajes { display: grid; gap: 0.35rem; min-height: 4.5rem; align-content: start; }
+.cam-hb-mensaje { margin: 0; padding: 0.4rem 0.6rem; border-radius: 0.8rem; background: #eef0fb; display: grid; gap: 0.1rem; font-size: 1.15rem; }
+.dark .cam-hb-mensaje { background: rgb(255 255 255 / 0.12); }
+.cam-hb-mensaje[data-mio="si"] { background: var(--cac-morado); color: #fff; }
+.cam-hb-quien { font-weight: 800; opacity: 0.9; }
+.cam-hb-vacio { margin: 0; font-style: italic; }
+.cam-hb-campo { font-size: 1.2rem; }
+.cam-hb-rapidas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cam-hb-rapida { font: inherit; font-weight: 700; min-height: 44px; padding: 0.3rem 0.8rem; border-radius: 999px; border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado-hondo); cursor: pointer; }
+.cam-hb-aviso { margin: 0; font-size: 0.8rem; }
+.cam-hb-error { margin: 0; font-weight: 700; color: #8a1c00; }
+.dark .cam-hb-error { color: #ffb59e; }
+.cam-hb-error[hidden] { display: none; }
+.cam-hb-acciones-chicas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+@media (prefers-reduced-motion: no-preference) { .cam-hb-girado { transition: transform 0.2s; } }
 /* ===== Modo liviano: la tablet vieja o lenta (js/modo-liviano.js pone <html data-liviano="si">) =====
  * Lo que cuesta dibujar en una tablet vieja y no dice nada: las animaciones que no paran (cada cuadro se vuelve a
  * pintar), las sombras difuminadas, los filtros y las hojas de la portada (dos PNG grandes con transparencia encima
@@ -901,3 +958,130 @@ html[data-liviano="si"] .cam-mesa[data-fp-alcance="mesa"], html[data-liviano="si
 html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[data-estado="abierto"], html[data-liviano="si"] .cam-barra-estado[data-alerta="si"] { box-shadow: 0 0 0 4px rgb(206 19 40 / 0.55); }
 /* El botón «Liviano» encendido se distingue también por el texto («Liviano: sí»), no solo por esto. */
 #modo-liviano[aria-pressed="true"] { outline: 2px solid #fbd38d; outline-offset: 1px; }
+
+/* La ficha de la mesa, opción A («tres toques»; js/centroamericano-arbitro.js, fichaA): más corta que la de siempre. El resultado en tres
+   botones que guardan de un toque (los de Rápido y Blitz), las marcas de los dos jugadores en UNA franja, menos aire. Las alturas reservadas
+   se mantienen (anotar una ilegal no mueve nada), solo se achican. */
+.cam-mesa[data-ficha="a"] .cam-mesa-cabeza { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador { padding-top: 0.5rem; padding-bottom: 0.55rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador-fila { row-gap: 0.3rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador-fila .cam-nombre { height: auto; min-height: 1.7em; }
+/* La franja de marcas vive DENTRO de la zona reservada de los avisos (una sola altura reservada, 3,1 rem: lo que cabe un botón «Anular»).
+   El aviso de la primera ilegal ya no se escribe aparte: la marca «Ilegal» de su jugador y el cuadro que sale al anotar lo dicen (el lector de
+   pantalla lo sigue oyendo: el texto completo va como sr-only). */
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos { min-height: 3.1rem; }
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos .cam-aviso-suave { min-height: 0; padding: 0; }
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos .cam-aviso-suave .cam-aviso-corto { display: none; }
+.cam-mesa[data-ficha="a"] .cam-resultado { padding-top: 0.6rem; padding-bottom: 0.5rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-btn { min-height: 54px; }
+.cam-mesa[data-ficha="a"] .cam-rapido-valor { font-size: 1.5rem; }
+.cam-mesa[data-ficha="a"] .cam-resultado-msg { min-height: 1.3rem; margin-top: 0.25rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-otro { margin-top: 0.15rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-otro > summary { min-height: 32px; }
+.cam-mesa[data-ficha="a"] .cam-planillas { padding-top: 0.45rem; padding-bottom: 0.5rem; }
+.cam-mesa-marcas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.9rem; padding: 0 0.9rem; }
+.cam-extra-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.cam-extra-grupo[data-vacio="si"] { display: none; }
+.cam-extra-grupo .cam-marcas, .cam-extra-grupo .cam-anulares { margin-top: 0; }
+.cam-extra-grupo .cam-cuenta-guia { flex-basis: 100%; }
+@media (min-width: 768px) { .cam-mesa-marcas { padding-left: 1.1rem; padding-right: 1.1rem; } }
+.cam-hb-fp-aviso { margin: 0; padding: 0.5rem 0.8rem; border: 2px solid #b8860b; border-radius: 0.8rem; background: #fff8e1; color: #3a2a00; font-weight: 800; }
+.dark .cam-hb-fp-aviso { background: rgb(255 193 7 / 0.18); color: #ffe9a8; border-color: #d4a017; }
+/* ===== El encargado de transmisión: todos los tableros en vivo (js/centroamericano-transmision.js) =====
+ * Un tablero con un problema BRILLA: rojo si hay que ir ya, ámbar si hay que mirarlo. El brillo nunca va solo: el
+ * aviso va escrito en la tarjeta y en la lista de arriba. Con «reducir movimiento» queda quieto, con el borde grueso.
+ * Los pares de color son los ya medidos de este archivo (blanco sobre --cac-rojo, --cac-verde y --cac-morado;
+ * --cac-morado-hondo sobre --cac-naranja). */
+.tx-barra { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.6rem 1rem; margin-bottom: 0.8rem; }
+.tx-controles { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem; }
+.tx-casilla { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; font-weight: 700; font-size: 0.9rem; }
+.tx-resumen { border: 2px solid var(--cac-morado); border-radius: 1rem; padding: 0.8rem 1rem; margin-bottom: 1rem; background: #fff; }
+.dark .tx-resumen { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(255 255 255 / 0.18); }
+.tx-todo-bien { color: var(--cac-verde); font-weight: 800; }
+.dark .tx-todo-bien { color: #9be0bb; }
+.tx-lista { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+.tx-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; padding: 0.55rem 0.7rem; border-radius: 0.8rem; border: 2px solid var(--cac-naranja); }
+.tx-item[data-nivel="urgente"] { border-color: var(--cac-rojo); border-width: 3px; }
+.tx-item-texto { flex: 1 1 20rem; font-size: 0.92rem; }
+.tx-item-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tx-nivel { font-weight: 900; font-size: 0.8rem; text-transform: uppercase; border-radius: 9999px; padding: 0.2rem 0.6rem; background: var(--cac-naranja); color: var(--cac-morado-hondo); }
+.tx-item[data-nivel="urgente"] .tx-nivel { background: var(--cac-rojo); color: #fff; }
+.cam-contador[data-urgente="si"] { background: var(--cac-rojo); color: #fff; }
+.tx-categoria { margin-top: 1.2rem; padding: 0.6rem; border-radius: 1rem; }
+.tx-aviso-cat { margin: 0.4rem 0; padding: 0.6rem 0.8rem; border-radius: 0.8rem; border: 3px solid var(--cac-rojo); font-size: 0.92rem; }
+.tx-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.9rem; margin-top: 0.6rem; }
+.tx-grilla.tx-grandes { grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); }
+.tx-tarjeta { display: grid; gap: 0.35rem; align-content: start; padding: 0.7rem; border-radius: 1rem; border: 2px solid rgb(30 36 83 / 0.18); background: #fff; color: var(--cac-morado-hondo); }
+.dark .tx-tarjeta { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.tx-tarjeta:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 3px; }
+.tx-tarjeta-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.tx-mesa { font-size: 0.85rem; font-weight: 700; }
+.tx-chip { margin-left: auto; font-size: 0.75rem; font-weight: 800; border-radius: 9999px; padding: 0.15rem 0.55rem; background: var(--cac-rojo); color: #fff; }
+.tx-chip[data-estado="vivo"] { background: var(--cac-verde); }
+.tx-chip[data-estado="fin"] { background: var(--cac-morado); }
+.tx-jugador { font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.tx-tablero { width: 100%; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
+.tx-dato { font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.tx-nota { font-size: 0.8rem; font-style: italic; }
+.tx-ok { font-weight: 800; color: var(--cac-verde); font-size: 0.9rem; }
+.dark .tx-ok { color: #9be0bb; }
+.tx-avisos { display: grid; gap: 0.35rem; font-size: 0.86rem; }
+.tx-avisos li { padding: 0.4rem 0.5rem; border-radius: 0.6rem; border-left: 5px solid var(--cac-naranja); background: rgb(224 171 91 / 0.12); }
+.tx-avisos li[data-nivel="urgente"] { border-left-color: var(--cac-rojo); background: rgb(206 19 40 / 0.07); }
+.tx-avisos li[data-atendido="si"] { opacity: 0.75; border-left-style: dashed; }
+.tx-atendido { display: block; font-weight: 700; font-size: 0.8rem; }
+.tx-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+.tx-dialogo { width: min(40rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.tx-d-cuerpo { display: grid; gap: 0.7rem; text-align: left; }
+.tx-d-campo select { width: 100%; }
+
+/* El brillo: un anillo que late. */
+@keyframes tx-latido-rojo { 0%, 100% { box-shadow: 0 0 0 3px var(--cac-rojo), 0 0 6px 2px rgb(206 19 40 / 0.45); } 50% { box-shadow: 0 0 0 6px var(--cac-rojo), 0 0 26px 10px rgb(206 19 40 / 0.7); } }
+@keyframes tx-latido-ambar { 0%, 100% { box-shadow: 0 0 0 3px var(--cac-naranja), 0 0 4px 1px rgb(224 171 91 / 0.4); } 50% { box-shadow: 0 0 0 5px var(--cac-naranja), 0 0 18px 6px rgb(224 171 91 / 0.65); } }
+.tx-tarjeta[data-brilla="urgente"], .tx-categoria[data-brilla="urgente"] { border-color: var(--cac-rojo); animation: tx-latido-rojo 1.1s ease-in-out infinite; }
+.tx-tarjeta[data-brilla="revisar"] { border-color: var(--cac-naranja); animation: tx-latido-ambar 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tx-tarjeta[data-brilla="urgente"], .tx-categoria[data-brilla="urgente"] { animation: none; box-shadow: 0 0 0 6px var(--cac-rojo); }
+  .tx-tarjeta[data-brilla="revisar"] { animation: none; box-shadow: 0 0 0 5px var(--cac-naranja); }
+}
+
+.tx-color { flex: none; font-size: 0.72rem; font-weight: 800; border-radius: 0.4rem; padding: 0.05rem 0.4rem; border: 2px solid var(--cac-morado-hondo); }
+.tx-color[data-color="blancas"] { background: #fff; color: var(--cac-morado-hondo); }
+.tx-color[data-color="negras"] { background: var(--cac-morado-hondo); color: #fff; }
+.dark .tx-color[data-color="negras"] { border-color: #fff; }
+
+/* «Generar PGN» (js/centroamericano-leer-partida.js): la partida en una fila debajo de la foto,
+   el tablero de solo mirar (.cine-tablero de styles.css) y las jugadas con su marca escrita
+   (* corregida, ? dudosa): el color ayuda, pero el dato va también en el texto. */
+.cam-lp-fila > td { background: #f6f6fd; padding: 0.8rem; }
+.dark .cam-lp-fila > td { background: rgb(var(--c-brand-900, 10 31 51)); }
+.cam-lp-fuente { display: block; white-space: normal; font-size: 0.8rem; margin-top: 0.25rem; max-width: 16rem; }
+.cam-lp-enlace { text-decoration: underline; font-weight: 700; }
+.cam-lp { width: 100%; display: grid; gap: 0.75rem; text-align: left; justify-items: stretch; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(250 204 21 / 0.45); }
+.cam-lp-estado { font-weight: 700; }
+.cam-lp-titular { font-weight: 800; font-size: 1.05rem; }
+.cam-lp-ilegible { border: 2px solid #b45309; background: #fffbeb; color: #78350f; border-radius: 0.6rem; padding: 0.6rem 0.8rem; }
+.cam-lp-ilegible ul { list-style: disc; padding-left: 1.2rem; margin-top: 0.3rem; overflow-wrap: anywhere; }
+.cam-lp-zona { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 44rem) { .cam-lp-zona { grid-template-columns: minmax(0, 1fr); } }
+.cam-lp-marco { padding: 0 0 18px 18px; max-width: 26rem; margin: 0; }  /* aire para las coordenadas por fuera */
+.cam-lp-controles { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.cam-lp-linea { margin-top: 0.4rem; min-height: 3em; font-size: 0.95rem; }
+.cam-lp-leyenda { font-size: 0.85rem; margin-bottom: 0.3rem; }
+.cam-lp-lista { max-height: 24rem; overflow: auto; border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.4rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.15rem 0.6rem; }
+.cam-lp-lista li { display: flex; align-items: center; gap: 0.25rem; }
+.cam-lp-num { min-width: 2rem; text-align: right; color: #4b4f7a; font-size: 0.85rem; }
+.cam-lp-jugada { border: 1px solid transparent; border-radius: 0.3rem; padding: 0.05rem 0.35rem; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.cam-lp-jugada:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 1px; }
+.cam-lp-corregida { background: #e0f2fe; border-color: #0369a1; color: #0c4a6e; }
+.cam-lp-dudosa { background: #fef3c7; border-color: #b45309; color: #78350f; font-weight: 700; }
+/* la jugada que está en el tablero: gana sobre corregida/dudosa, también en oscuro */
+.cam-lp-lista .cam-lp-jugada[aria-current="true"] { background: var(--cac-morado-hondo); color: #fff; border-color: var(--cac-morado-hondo); outline: 2px solid var(--cac-naranja); outline-offset: 1px; }
+.dark .cam-lp-lista .cam-lp-jugada[aria-current="true"] { background: #fff; color: #1e1b4b; border-color: #fff; }
+.cam-lp-nota { font-size: 0.85rem; }
+.cam-celda-acciones { white-space: nowrap; }
+.cam-celda-acciones > .cam-btn + .cam-btn { margin-left: 0.3rem; }
+.dark .cam-lp-ilegible { background: #451a03; color: #fde68a; border-color: #f59e0b; }
+.dark .cam-lp-corregida { background: #0c4a6e; color: #e0f2fe; border-color: #7dd3fc; }
+.dark .cam-lp-dudosa { background: #78350f; color: #fef3c7; border-color: #fcd34d; }
+.dark .cam-lp-num { color: #c9cbee; }

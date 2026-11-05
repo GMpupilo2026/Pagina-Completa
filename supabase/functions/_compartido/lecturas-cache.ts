@@ -22,6 +22,7 @@
 // Se copia a cada función al armarla (herramientas/funciones-armar.js).
 
 import { leerRonda, type Pantalla } from "./chess-results-ingreso.ts";
+import { conRival } from "./inscritos-fed.ts";
 
 export type Mesa = { mesa: number; blancas: string; negras: string; valor: string };
 export type Lectura = { ronda: number; torneo: string; mesas: Mesa[] };
@@ -34,9 +35,11 @@ export const TURNO_MS = 25_000;        // lo que dura el «turno» de leer si qu
 export const ESPERA_MS = 9_000;        // lo que espera quien no tiene el turno, mirando si ya hay lectura nueva
 export const VIEJA_MAX_MS = 30 * 60_000; // hasta cuándo una copia sirve de respaldo si chess-results no contesta
 
+// Las mesas SIN RIVAL (alguien retirado: «ausgeschieden», un bye…) no son partidas: no salen en ninguna lectura que se sirve (ver
+// inscritos-fed.ts). `guardarYComprobar` lee la pantalla entera por su cuenta y no pasa por aquí.
 export const aLectura = (p: Pantalla): Lectura => ({
   ronda: p.ronda, torneo: p.torneo,
-  mesas: p.mesas.map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor })),
+  mesas: conRival(p.mesas.map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor }))),
 });
 const edad = (iso: string | null | undefined) => (iso ? Date.now() - new Date(iso).getTime() : Infinity);
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -48,7 +51,7 @@ async function fila(servicio: Servicio, tnr: string) {
   const { data } = await servicio.from(TABLA).select("tnr, ronda, torneo, mesas, leida, leyendo_hasta").eq("tnr", tnr).maybeSingle();
   return data as { tnr: string; ronda: number; torneo: string; mesas: Mesa[]; leida: string; leyendo_hasta: string | null } | null;
 }
-const deFila = (f: NonNullable<Awaited<ReturnType<typeof fila>>>): Lectura => ({ ronda: f.ronda, torneo: f.torneo, mesas: f.mesas });
+const deFila = (f: NonNullable<Awaited<ReturnType<typeof fila>>>): Lectura => ({ ronda: f.ronda, torneo: f.torneo, mesas: conRival(f.mesas) });
 // Una fila recién creada tiene «leida» en 1970 y ronda 0: eso no es una lectura.
 const hayLectura = (f: Awaited<ReturnType<typeof fila>>) => !!f && f.ronda > 0 && new Date(f.leida).getTime() > 86_400_000;
 

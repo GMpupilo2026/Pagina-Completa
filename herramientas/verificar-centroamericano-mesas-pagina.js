@@ -20,7 +20,10 @@
    una casilla por torneo), los pedidos de ayuda que llegan solos con su contador y
    «Atendido», los avisos a un árbitro, a un torneo o a todos con quién ya los leyó, los
    enlaces agrupados por torneo y ordenados por mesa, un árbitro por definir (crearlo,
-   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF.
+   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF; y
+   «Generar PGN» de cada foto de planillas, ahí mismo en la tabla: la mesa que se transmite sale
+   de Lichess (simulado) sin leer la foto; la que no, de la foto con un Google Vision de mentira
+   (lo salvado, lo ilegible, las marcas, el tablero, el PGN y que abrirla de nuevo no gasta).
 
    Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md.
 
@@ -40,6 +43,8 @@ function igual(nombre, hallado, esperado) {
 }
 
 const { MESAS, SERVIDOR_ARBITRO, dobleArbitro } = require("./lib/doble-centroamericano-arbitro");
+const { palabrasDePlanillas } = require("./lib/planilla-sintetica");
+const PLANILLAS_REALES = require("./lib/planillas-reales");
 
 // El programa de la organización: los 12 torneos (3 de muestra), sus enlaces, el avance, los avisos,
 // las planillas, las copias y el registro.
@@ -102,7 +107,7 @@ function dobleOrganizacion(licencia) {
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS, centroamericano_fp_enlaces: [], centroamericano_tx_enlaces: [] };
   // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
   window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
   const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
@@ -194,6 +199,42 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     return { ctx, p, errores };
 }
 
+// Lichess simulado: la sala del Centroamericano transmite «Sub-10 Abs», con la ronda 3 en curso (atraso de 1 min).
+// En la transmisión están la mesa 9 (Eli Uno – Fran Dos, para los relojes) y la 3 de la ronda 3 (Hopkins – Baquero,
+// ya terminada, con su PGN: para «Generar PGN», que la saca de ahí sin leer la foto). La mesa 2 no se transmite.
+const PGN_TRANSMISION = `[Event "Centroamericano 2026 | Sub-10 Abs"]
+[Site "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3"]
+[Round "3.3"]
+[White "Hopkins, John"]
+[Black "Baquero Graterol"]
+[Result "1-0"]
+[GameURL "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3"]
+
+1. e4 { [%clk 1:30:10] } 1... e5 { [%clk 1:30:05] } 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Centroamericano 2026 | Sub-10 Abs"]
+[Round "3.9"]
+[White "Uno, Eli"]
+[Black "Dos, Fran"]
+[Result "*"]
+[GameURL "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x2"]
+
+1. d4 d5 *
+`;
+async function simularLichess(pagina, pedidos) {
+    await pagina.context().route(/lichess\.org\/api\//, (r) => {
+        const u = r.request().url(); pedidos.push(u);
+        if (/\/api\/broadcast\/AbCd1234$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ tour: { id: "AbCd1234", name: "Centroamericano 2026 | Sub-10 Abs" }, rounds: [{ id: "RoNdA002", name: "Round 2", finished: true }, { id: "RoNdA003", name: "Round 3", ongoing: true }] }) });
+        if (/\/api\/broadcast\/-\/-\/RoNdA003$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ round: { id: "RoNdA003", name: "Round 3", delay: 60 }, games: [
+            { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
+            { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] },
+            { id: "x3", fen: "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", status: "1-0", players: [{ name: "Hopkins, John", clock: 540000 }, { name: "Baquero Graterol", clock: 538000 }] }] }) });
+        if (/\/api\/broadcast\/round\/RoNdA003\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION });
+        return r.fulfill({ status: 404, body: "{}" });
+    });
+    await pagina.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
+}
+
 // El contraste de lo que se ve: el color del texto contra el fondo opaco más cercano.
 const CONTRASTE = `(sel) => {
   const luz = (c) => { const v = c.map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
@@ -280,7 +321,14 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las ilegales: la primera avisa, la segunda pierde ===");
     const acc = (m, color, a) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + color + '"] [data-accion="' + a + '"]';
     // Las tarjetas son SIEMPRE del mismo tamaño y de la misma forma: ninguna crece ni se corre cuando le pasa algo.
-    const medidas = () => p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    // En un CI lento a veces la tarjeta se mide en el instante en que la página se está repintando (todas en 0 × 0): se espera, hasta 8 s, a que
+    // tengan tamaño; si de verdad no lo tienen, el fallo dice por qué (la página escondida, el aviso de «no se pudo abrir», etc.).
+    const medidas = async () => {
+        await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
+            console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
+        });
+        return p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    };
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
@@ -424,16 +472,22 @@ const CONTRASTE = `(sel) => {
       ["✗ No ha llegado", 0, 6, "Han llegado 0 de 6 jugadores · faltan 6."]);
     await p.click(acc(2, "blancas", "presente"));
     await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
-    igual("«Llegó» se anota con la mesa y el color y se ve al instante; ese jugador queda «✓ Llegó» SIN su botón (con un «Corregir»), y los demás conservan el suyo",
-      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), j.querySelector(".cam-presencia-estado").textContent, vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), document.querySelectorAll('.cam-jugador [data-accion="presente"]').length]; }, jug("blancas")),
-      [[[2, "blancas", true]], "✓ Llegó", false, true, 5]);
-    await p.click(jug("blancas") + ' [data-accion="corregir-presencia"]');
-    await p.waitForSelector(acc(2, "blancas", "presente"));
-    igual("«Corregir» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»",
-      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => l.body.presente), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("blancas")),
-      [[true, false], "✗ No ha llegado", "Han llegado 0 de 6 jugadores · faltan 6."]);
-    await p.click(acc(2, "blancas", "presente"));
-    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
+    igual("«Llegó» se anota con la mesa y el color; ese jugador ya NO muestra nada de «Llegó» (ni icono ni botón: solo un «Deshacer» unos segundos y el texto para el lector de pantalla), y los demás conservan su botón",
+      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), !!j.querySelector(".cam-presencia-estado"), vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), j.querySelector('[data-accion="corregir-presencia"]').textContent, pr.querySelector(".sr-only").textContent, document.querySelectorAll('.cam-mesa [data-accion="presente"]').length]; }, jug("blancas")),
+      [[[2, "blancas", true]], false, false, true, "Deshacer", "✓ Llegó", 5]);
+    // Pasados unos segundos el «Deshacer» también se va: no queda nada de «Llegó» a la vista (y la cuenta de los demás no cambia).
+    await p.waitForFunction((q) => !document.querySelector(q + ' [data-accion="corregir-presencia"]'), jug("blancas"), { timeout: 20000 });
+    igual("a los 15 s el «Deshacer» desaparece y el bloque de quien llegó queda vacío a la vista (solo el texto del lector de pantalla); el resumen sigue en 1 de 6",
+      await p.evaluate((q) => { const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [[...pr.children].filter((c) => c.checkVisibility() && !c.classList.contains("sr-only")).length, pr.textContent, document.getElementById("presencia-resumen").textContent]; }, jug("blancas")),
+      [0, "✓ Llegó", "Han llegado 1 de 6 jugadores · faltan 5."]);
+    // Un toque equivocado en la mesa se deshace dentro de la ventana: se vuelve a marcar y se prueba el «Deshacer».
+    await p.click(acc(2, "negras", "presente"));
+    await p.waitForSelector(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.click(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.waitForSelector(acc(2, "negras", "presente"));
+    igual("«Deshacer» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»; el otro jugador sigue como estaba",
+      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.color, l.body.presente]), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("negras")),
+      [[["blancas", true], ["negras", true], ["negras", false]], "✗ No ha llegado", "Han llegado 1 de 6 jugadores · faltan 5."]);
     igual("cada mesa SIN terminar tiene su relojito (icono, sin texto y con su nombre accesible); las que ya tienen resultado, no", await p.evaluate(() => [[...document.querySelectorAll('.cam-mesa [data-accion="tiempo"]')].map((b) => [b.closest(".cam-mesa").dataset.mesa, b.textContent.trim(), !!b.querySelector("svg"), b.getAttribute("aria-label")]), document.querySelector('.cam-mesa[data-mesa="3"] [data-accion="tiempo"]')]),
         [[["2", "", true, "Control de tiempos de la mesa 2"]], null]);
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
@@ -786,7 +840,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
     await p.waitForSelector("#donde-juega-grande[open]");
     igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
-        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, g.querySelector(".cam-dj-ginfo").firstChild.textContent, g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
+        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
         [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
@@ -927,7 +981,7 @@ const CONTRASTE = `(sel) => {
     const colores = ".cam-mesa-cabeza, .cam-nombre, .cam-color, .cam-marca, .cam-btn, .cam-select, .cam-resultado-actual, .cam-aviso-suave, .cam-guardado, .cam-fallo, .cam-estado";
     igual("en claro, todo el texto de las mesas da 4,5:1 o más", (await p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(colores) + ")")).every((x) => x >= 4.5), true);
     if (process.env.CAPTURA) await p.screenshot({ path: process.env.CAPTURA + "-arbitro-claro.png", fullPage: true });
-    igual("sin errores en la página", errores, []);
+    igual("sin errores en la página", errores, []); if (errores.length) console.error("ERRORES:", errores);
     await r.ctx.close();
 
     let o = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, esquema: "dark" });
@@ -1021,7 +1075,7 @@ const CONTRASTE = `(sel) => {
     await pe.click("dialog[open] [data-avisos-aceptar]");
     await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 6 de 6 jugadores.");
     igual("al aceptar la función recibe «presencia_todos» de la ronda 3, los 6 quedan «llegó», el botón se va y los cronómetros también", await pe.evaluate(() => [window.__todosArgs[0].ronda, document.getElementById("presencia-todos").hidden, document.querySelectorAll(".cam-cuenta").length, window.__presencia.every((x) => x.presente)]), [3, true, 0, true]);
-    // Se equivocó con la mesa 2 de las negras: «Corregir» la deja como que no ha llegado (y vuelve su cronómetro).
+    // Se equivocó con la mesa 2 de las negras: «Deshacer» (queda unos segundos también después de «llegaron todos») la deja como que no ha llegado (y vuelve su cronómetro).
     await pe.click(jugE(2, "negras") + ' [data-accion="corregir-presencia"]');
     await pe.waitForSelector(jugE(2, "negras") + " .cam-cuenta");
     // La ronda empezó hace 40 min: el tiempo de espera (30) se cumplió.
@@ -1070,6 +1124,219 @@ const CONTRASTE = `(sel) => {
     await pm.waitForSelector("dialog[open], .cam-aviso, [role=alert]", { timeout: 5000 }).catch(() => {});
     igual("el tercer pedido lo rechaza la función (429) y la página no dice que se mandó", await pm.evaluate(() => !/Listo: te la mandamos/.test(document.getElementById("concluido-estado").textContent)), true);
     await cm.ctx.close();
+
+    console.log("\n=== La banderita del país al final del nombre de cada jugador (y nada si no hay país) ===");
+    {
+        const fb = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const pb = fb.p;
+        await pb.waitForSelector(".cam-mesa");
+        const alturas = () => pb.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
+        const antes = await alturas();
+        igual("sin país (la función no lo mandó) no sale ninguna banderita y los nombres quedan como siempre", await pb.evaluate(() => [document.querySelectorAll(".cam-bandera").length, document.querySelector('.cam-mesa[data-mesa="1"] .cam-nombre-texto').textContent]), [0, "Muñoz Feliz Alejandro"]);
+        const leidasAntes = await pb.evaluate(() => { window.__feds = true; return window.__llamadas.filter((l) => l.body.action === "leer").length; });
+        await pb.evaluate(() => document.getElementById("actualizar").click());
+        await pb.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        igual("con el país, cada nombre lleva su banderita AL FINAL (blancas de Costa Rica, negras de El Salvador), con el código escrito para el lector de pantalla",
+            await pb.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] .cam-jugador')].map((j) => { const n = j.querySelector(".cam-nombre-texto"), b = n.querySelector(".cam-bandera"); return [n.firstChild.textContent, n.lastElementChild === b, b.dataset.fed, b.title, b.querySelector(".sr-only").textContent, b.querySelector("img").getAttribute("alt"), b.querySelector("img").getAttribute("src")]; })),
+            [["Muñoz Feliz Alejandro", true, "CRC", "CRC", " (CRC)", "", "img/banderas/cr.svg"], ["Gramajo Tovar Marco", true, "ESA", "ESA", " (ESA)", "", "img/banderas/sv.svg"]]);
+        await pb.waitForFunction(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => i.complete && i.naturalWidth > 0));
+        igual("el dibujo carga de verdad (no queda un cuadro roto) y es pequeñito: cabe en 24 × 18 px, al lado del nombre",
+            await pb.evaluate(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => { const r = i.getBoundingClientRect(); return i.naturalWidth > 0 && r.width > 8 && r.width <= 24 && r.height > 6 && r.height <= 18; })), true);
+        igual("una federación sin dibujo no pone nada (ni un cuadro roto): la mesa 2 con «JAM» sí; la de un código inventado, no",
+            await pb.evaluate(() => { const C = window.CentroamericanoBanderas; return [!!C.de("JAM"), C.de("XXX"), C.de(""), C.de(null), C.de("jam").dataset.fed]; }), [true, null, null, null, "JAM"]);
+        igual("las tarjetas no cambian de tamaño por la banderita (siguen todas iguales)", await alturas(), antes);
+        igual("la ventana del control de tiempos también la lleva junto a cada nombre", await (async () => {
+            await pb.evaluate(() => document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]').click());
+            await pb.waitForSelector("#form-tiempos");
+            return pb.evaluate(() => [...document.querySelectorAll("#form-tiempos .cam-tiempo-nombre")].map((n) => [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]));
+        })(), [["Harvey Ian", "JAM"], ["Acuña Porras Fabio", "GUA"]]);
+        await pb.evaluate(() => document.querySelector('#control-tiempos [data-accion="cerrar-tiempos"]').click());
+        // «Mis pareos»: la banderita en cada celda de nombre.
+        await pb.click("#logo-pareos");
+        await pb.waitForSelector("#mis-pareos[open] .cam-mp-torneo tbody tr");
+        igual("«Mis pareos» la lleva al final de cada nombre (blancas y negras) y el resultado sigue en su columna",
+            await pb.evaluate(() => { const f = document.querySelector('#mis-pareos [data-tnr="1529737"] tbody tr[data-mesa="1"]'); return [f.children[1].textContent, f.children[1].querySelector(".cam-bandera").dataset.fed, f.children[2].querySelector(".cam-bandera").dataset.fed, f.children[3].textContent]; }),
+            ["Muñoz Feliz Alejandro (CRC)", "CRC", "ESA", "sin resultado"]);
+        await pb.click('#mis-pareos [data-accion="cerrar-mp"]');
+        // «¿Dónde juega?»: en la tarjeta del jugador que se busca (el botón arranca sin recibir clics: se le devuelven).
+        await pb.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); });
+        await pb.click("#donde-juega");
+        await pb.waitForSelector("#donde-juega-hoja[open]");
+        await pb.fill("#dj-buscar", "hopkins");
+        await pb.waitForSelector("#dj-res .cam-dj-tarj");
+        igual("«¿Dónde juega?» la lleva junto al nombre del atleta buscado", await pb.evaluate(() => { const n = document.querySelector("#dj-res .cam-dj-tarj .cam-dj-nombre"); return [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]; }), ["Hopkins John", "TTO"]);
+        igual("sin errores en la página", fb.errores, []);
+        await fb.ctx.close();
+    }
+
+    console.log("\n=== La ficha de la mesa, opción A (por ahora solo para Oscar Angulo) ===");
+    {
+        const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
+        const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
+        const formas = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await normal.p.waitForSelector(".cam-mesa");
+        const altoHoy = await altos(normal.p);
+        igual("con otro árbitro (Ana) la ficha es la de siempre: sin marca de ficha nueva y con el selector y «Guardar»", await normal.p.evaluate(() => [document.querySelectorAll('.cam-mesa[data-ficha]').length, !!document.querySelector('.cam-mesa [data-accion="guardar"]'), !!document.querySelector('.cam-mesa-marcas')]), [0, true, false]);
+        await normal.ctx.close();
+
+        const a = await abrir(browser, "centroamericano-arbitro.html", OSCAR, { hash: TOKEN, ancho: 820 });
+        const pa = a.p;
+        await pa.waitForSelector(".cam-mesa");
+        igual("para «Óscar Angulo Camacho» (con tilde y apellido de más) las tres mesas llevan la ficha nueva", await pa.$$eval(".cam-mesa", (l) => l.map((c) => c.dataset.ficha)), ["a", "a", "a"]);
+        const altoA = await altos(pa);
+        igual("la ficha nueva es más corta que la de siempre (al menos 80 px menos) y las tres miden lo mismo", [altoA.every((x, i) => altoHoy[i] - x >= 80), new Set(altoA).size], [true, 1]);
+        igual("el resultado son tres botones grandes (1-0, ½-½, 0-1), sin selector ni «Guardar» a la vista, y «Otro resultado» sigue ahí", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [[...c.querySelectorAll(".cam-rapido-btn")].map((b) => b.dataset.valor), c.querySelector('details.cam-rapido-otro').open, !!c.querySelector(".cam-rapido-otro summary")]; }), [["1", "2", "3"], false, true]);
+        igual("las acciones de cada jugador (llegó, se levantó, ilegal, irregularidad) y los tres iconos de la mesa siguen en la tarjeta", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return ["presente", "levanto", "ilegal", "irregularidad"].map((x) => c.querySelectorAll('.cam-jugador [data-accion="' + x + '"]').length).concat(["planilla", "hablar", "tiempo"].map((x) => c.querySelectorAll('[data-accion="' + x + '"]').length)); }), [2, 2, 2, 2, 1, 1, 1]);
+        igual("los botones de la ficha nueva se tocan con el dedo: 46 px o más", await pa.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] button')].filter((b) => b.checkVisibility() && !b.closest("summary")).every((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; })), true);
+        // La revisión previa de la ronda destraba el guardado de un toque.
+        await pa.evaluate(() => { window.__lista = ["relojes", "tableros"]; document.getElementById("actualizar").click(); });
+        await pa.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn').disabled);
+        const guardadasAntes = await pa.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
+        await pa.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"]');
+        await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"][aria-pressed="true"]');
+        igual("un toque en ½-½ GUARDA (una sola llamada) y el botón queda marcado", await pa.evaluate((n) => { const g = window.__llamadas.filter((l) => l.body.action === "guardar"); const c = g[g.length - 1].body.cambios; return [g.length - n, c.length, c[0].mesa, c[0].valor]; }, guardadasAntes), [1, 1, 1, "2"]);
+        igual("con un resultado que no tiene botón, no se esconde: se escribe «En chess-results: …»", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [!c.querySelector(".cam-resultado-actual")]; }), [true]);
+        // La primera ilegal: marca y «Anular» salen en la franja de las marcas y NADA cambia de tamaño.
+        const antesIl = await formas(pa);
+        await pa.click(acc(2, "blancas", "ilegal"));
+        await pa.waitForSelector("dialog[open] select");
+        await pa.selectOption("dialog[open] select", "enroque");
+        await pa.click("dialog[open] [data-avisos-aceptar]");
+        await pa.waitForSelector("dialog[open] [data-avisos-aceptar]");
+        await pa.click("dialog[open] [data-avisos-aceptar]");
+        await pa.waitForSelector('.cam-mesa[data-mesa="2"] .cam-mesa-marcas .cam-marca[data-tipo="ilegal"]');
+        igual("al anotar la primera ilegal NINGUNA tarjeta cambia de tamaño ni de forma", await formas(pa), antesIl);
+        igual("la marca y «Anular» van en la franja de la mesa, bajo el color de quien es; el otro jugador no deja ni el puntito; no queda una franja por jugador",
+            await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="2"]'); const g = (col) => c.querySelector('.cam-extra-grupo[data-color="' + col + '"]'); return [!!g("blancas").querySelector('.cam-marca[data-tipo="ilegal"]'), !!g("blancas").querySelector('[data-accion="anular-ilegal"]'), g("blancas").querySelector(".cam-color").dataset.color, getComputedStyle(g("negras")).display, c.querySelectorAll(".cam-jugador-extra").length, g("blancas").closest(".cam-mesa-avisos") !== null]; }),
+            [true, true, "blancas", "none", 0, true]);
+        await pa.click('.cam-mesa[data-mesa="2"] [data-accion="anular-ilegal"]');
+        await pa.waitForSelector("[data-avisos-aceptar]");
+        await pa.click("[data-avisos-aceptar]");
+        await pa.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="ilegal"]'));
+        igual("«Anular» desde la franja deshace la ilegal y la tarjeta sigue igual de grande", await formas(pa), antesIl);
+        igual("el aviso de la primera ilegal no se ve aparte (lo dice la marca), pero el lector de pantalla lo sigue teniendo", await (async () => {
+            await pa.click(acc(2, "blancas", "ilegal"));
+            await pa.waitForSelector("dialog[open] select");
+            await pa.selectOption("dialog[open] select", "enroque");
+            await pa.click("dialog[open] [data-avisos-aceptar]");
+            await pa.waitForSelector("dialog[open] [data-avisos-aceptar]");
+            await pa.click("dialog[open] [data-avisos-aceptar]");
+            await pa.waitForSelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave', { state: "attached" });
+            return pa.evaluate(() => { const n = document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave'); return [!n.querySelector(".cam-aviso-corto").checkVisibility(), /ilegal/i.test(n.querySelector(".sr-only").textContent)]; });
+        })(), [true, true]);
+        igual("la guía del tiempo de espera lleva el color del jugador (se encuentra aunque cambie de lugar)", /cam-cuenta-guia", "data-color": color/.test(fs.readFileSync("js/centroamericano-arbitro.js", "utf8")), true);
+        igual("sin errores en la página", a.errores, []);
+        await a.ctx.close();
+
+        const hoy = await abrir(browser, "centroamericano-arbitro.html?ficha=hoy", OSCAR, { hash: TOKEN, ancho: 820 });
+        await hoy.p.waitForSelector(".cam-mesa");
+        igual("«?ficha=hoy» le devuelve a Óscar la ficha de siempre (para comparar)", await hoy.p.evaluate(() => document.querySelectorAll(".cam-mesa[data-ficha]").length), 0);
+        await hoy.ctx.close();
+        const forzada = await abrir(browser, "centroamericano-arbitro.html?ficha=a", dobleArbitro(), { hash: TOKEN, ancho: 390 });
+        await forzada.p.waitForSelector(".cam-mesa");
+        igual("«?ficha=a» la enciende para otro enlace (para probarla), y en el celular (390 px) no se desplaza a lo ancho",
+            await forzada.p.evaluate(() => [document.querySelectorAll(".cam-mesa[data-ficha='a']").length, document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1]), [3, true]);
+        await forzada.ctx.close();
+    }
+
+    console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
+    {
+        const fh = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const ph = fh.p;
+        await ph.waitForSelector(".cam-mesa");
+        await ph.evaluate(() => { window.__feds = true; document.getElementById("actualizar").click(); });
+        await ph.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        await ph.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); window.__voz = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { cancel() {}, speak(u) { window.__voz.push([u.text, u.lang]); } } }); Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: function (t) { this.text = t; } }); });
+        const llamadasTraducir = () => ph.evaluate(() => window.__llamadas.filter((l) => l.f === "centroamericano-traducir").length);
+        const filasAnotar = () => ph.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Comunicado").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]));
+        igual("cada mesa tiene su botón «Hablar con el jugador» con nombre accesible", await ph.$$eval('.cam-mesa [data-accion="hablar"]', (l) => l.map((b) => b.getAttribute("aria-label").startsWith("Hablar con el jugador de la mesa "))), [true, true, true]);
+
+        // Una mesa de Fair Play: sus frases van primero, con un aviso que lo dice; la de siempre empieza por «Al empezar».
+        igual("en una mesa de Fair Play el tema «Fair Play» va primero y lo dice; en una normal, va en su lugar y sin aviso", await ph.evaluate(() => {
+            const J = [{ color: "blancas", nombre: "A B", fed: "" }, { color: "negras", nombre: "C D", fed: "" }];
+            const primero = () => [document.querySelector("#hablar .cam-hb-tema").dataset.tema, !!document.querySelector("#hablar .cam-hb-fp-aviso")];
+            window.CentroamericanoHablar.abrir({ mesa: 9, jugadores: J, fairPlay: true });
+            const a = primero(); document.getElementById("hablar").close();
+            window.CentroamericanoHablar.abrir({ mesa: 9, jugadores: J });
+            const b = primero(); document.getElementById("hablar").close();
+            return [a, b];
+        }), [["fairplay", true], ["inicio", false]]);
+
+        // Mesa 3: Hopkins (TTO, habla inglés) vs Baquero (FRA, francés).
+        await ph.click('.cam-mesa[data-mesa="3"] [data-accion="hablar"]');
+        await ph.waitForSelector("#hablar[open]");
+        igual("se abre sin hablar con nadie todavía y no anota nada solo", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        igual("el idioma se sugiere por el país del primer jugador (TTO → inglés) y al elegir al segundo (FRA) pasa a francés",
+            await (async () => {
+                const a = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (b) => b.dataset.idioma);
+                await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+                const b = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (x) => x.dataset.idioma);
+                return [a, b];
+            })(), ["en", "fr"]);
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="blancas"]');
+        igual("las banderitas están en los botones de los jugadores", await ph.$$eval("#hablar .cam-hb-jug .cam-bandera", (l) => l.map((b) => b.dataset.fed)), ["TTO", "FRA"]);
+
+        // Una frase: pantalla grande en SU idioma.
+        const frase = await ph.$eval('#hablar [data-frase]', (b) => b.dataset.frase);
+        await ph.click('#hablar [data-frase="' + frase + '"]');
+        await ph.waitForSelector("#hablar-jugador[open]");
+        const pant = await ph.evaluate(() => { const g = document.querySelector("#hablar-jugador .cam-hb-grande"); const r = g.getBoundingClientRect(); return [g.lang, g.textContent.length > 5, parseFloat(getComputedStyle(g).fontSize) >= 32, document.querySelector("#hablar-jugador .cam-hb-original").textContent.startsWith("Para el árbitro: "), r.width > 0]; });
+        igual("la frase sale en grande, en inglés, y el original en español va aparte, para el árbitro", pant, ["en", true, true, true, true]);
+        igual("la frase en pantalla es la misma del módulo de frases (texto fijo, sin pasar por el traductor)", await ph.evaluate((id) => document.querySelector("#hablar-jugador .cam-hb-grande").textContent === window.CentroamericanoFrases.FRASE.get(id).en, frase), true);
+        await ph.click('#hablar-jugador [data-accion="voz"]');
+        igual("«Leer en voz alta» habla en el idioma de la frase", await ph.evaluate(() => window.__voz.map((v) => v[1])), ["en-US"]);
+        igual("nada se anotó solo ni se llamó al traductor", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        await ph.click('#hablar-jugador [data-accion="anotar-frase"]');
+        await ph.waitForFunction(() => /Quedó anotado/.test(document.querySelector("#hablar-jugador .cam-hb-estado").textContent));
+        const anot = await filasAnotar();
+        igual("«Anotar en la bitácora» anota UNA nota «Comunicado» con quién, en qué idioma y lo dicho en español", [anot.length, anot[0][0], anot[0][1], anot[0][2], /^Se le comunicó a Hopkins John \(blancas\) en inglés: «/.test(anot[0][3]), /\(en español: «/.test(anot[0][3])], [1, 3, "blancas", "nota", true, true]);
+        await ph.click('#hablar-jugador [data-accion="listo"]');
+        igual("«Listo» cierra la pantalla del jugador y deja la ventana del árbitro", await ph.evaluate(() => [!document.getElementById("hablar-jugador"), !!document.querySelector("#hablar[open]")]), [true, true]);
+
+        // Conversar.
+        await ph.click('#hablar [data-pestana="conversar"]');
+        await ph.fill("#hb-arbitro", "Debe anotar la partida.");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForSelector('#hablar .cam-hb-jugador .cam-hb-mensaje');
+        igual("el árbitro escribe en español y el jugador lo lee en su idioma (la traducción viene del servidor)", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador .cam-hb-mensaje span").textContent, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje span").textContent]), ["[EN] Debe anotar la partida.", "Debe anotar la partida."]);
+        igual("al servidor solo viaja el mensaje y los idiomas con el enlace (ni el nombre del jugador ni la mesa)", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return Object.keys(l.body).sort(); }), ["a", "de", "texto", "token"]);
+        igual("la mitad del jugador está girada para leerse del otro lado y dice que es una traducción de ayuda", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador").classList.contains("cam-hb-girado"), /Automatic translation/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent) || /Traduction automatique/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent)]), [true, true]);
+        await ph.click('#hablar .cam-hb-rapida >> nth=0');
+        igual("la respuesta rápida del jugador le llega al árbitro en español, sin traductor", await ph.evaluate(() => [window.__llamadas.filter((x) => x.f === "centroamericano-traducir").length, document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length]), [1, 2]);
+        await ph.fill("#hb-jugador", "I need the toilet please");
+        await ph.click('#hablar [data-accion="enviar-jugador"]');
+        await ph.waitForFunction(() => document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length === 3);
+        igual("el jugador escribe en su idioma y el árbitro lo lee en español", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return [l.body.de, l.body.a, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje:last-child span").textContent]; }), ["en", "es", "[ES] I need the toilet please"]);
+        igual("la conversación no se anotó sola", (await filasAnotar()).length, 1);
+        await ph.click('#hablar [data-accion="anotar-conversacion"]');
+        await ph.waitForFunction(() => /conversación quedó anotada/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        const conv = (await filasAnotar())[1];
+        igual("al marcarlo, la conversación se anota con las dos versiones de cada mensaje", [conv[0], /^Conversación con Hopkins John \(blancas\) en inglés/.test(conv[3]), /Árbitro: «Debe anotar la partida\.» \(EN: «\[EN\] Debe anotar la partida\.»\)/.test(conv[3]), /Jugador: «I need the toilet please» \(ES: «\[ES\] I need the toilet please»\)/.test(conv[3]), conv[3].length <= 2000], [3, true, true, true, true]);
+
+        // Sin traductor (cuenta sin saldo, sin señal…): lo dice y manda a las frases; las frases siguen.
+        await ph.evaluate(() => { window.__traducirFalla = 1; });
+        await ph.fill("#hb-arbitro", "Otra cosa");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForFunction(() => !document.querySelector(".cam-hb-error").hidden);
+        igual("si el traductor falla lo dice, manda a las frases y NO pierde lo escrito ni se anota nada", await ph.evaluate(() => [/Usa las frases/.test(document.querySelector(".cam-hb-error").textContent), document.querySelector(".cam-hb-error").getAttribute("role"), document.getElementById("hb-arbitro").value]), [true, "alert", "Otra cosa"]);
+        await ph.click('#hablar [data-pestana="frases"]');
+        igual("las frases siguen sirviendo", await ph.$$eval("#hablar [data-frase]", (l) => l.length > 30), true);
+
+        // «Necesito un árbitro que hable francés».
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+        await ph.click('#hablar [data-accion="pedir-idioma"]');
+        await ph.waitForFunction(() => /ya sabe que necesitas/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        igual("el pedido va al árbitro principal, a esa mesa, con el idioma escrito", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.body.action === "ayuda").pop(); return [l.body.mesa, l.body.texto]; }), [3, "Necesito un árbitro que hable francés en esta mesa."]);
+        await ph.click('#hablar [data-accion="cerrar-hablar"]');
+        igual("la bitácora de la tablet muestra «Comunicado» (y no «Nota») en las dos anotaciones", await (async () => {
+            await ph.evaluate(() => { document.getElementById("anotado").open = true; });
+            return ph.$$eval("#anotado-filas tr", (l) => l.map((r) => r.children[2].textContent));
+        })(), ["Comunicado", "Comunicado"]);
+        igual("las tres tarjetas siguen iguales de alto entre sí (el botón nuevo no deforma ninguna)", new Set(await ph.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)))).size <= 2, true);
+        igual("sin errores en la página", fh.errores, []);
+        await fh.ctx.close();
+    }
 
     console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
     const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
@@ -1157,9 +1424,9 @@ const CONTRASTE = `(sel) => {
     const q = o.p;
     await q.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     await q.waitForSelector(".cam-pedido");
-    igual("se ve como un programa: barra de título, menú con nueve pestañas (la última, Fair Play), contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
-        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"], true, true, true]);
-    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false", "false"]);
+    igual("se ve como un programa: barra de título, menú con diez pestañas (las últimas, Fair Play y Transmisión), contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
+        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision"], true, true, true]);
+    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false", "false", "false"]);
     igual("el resumen dice cuánto le queda a cada árbitro, con las mesas que faltan", await q.$$eval("#resumen tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[2].textContent, tr.children[3].textContent.replace(/\s+/g, " ").trim(), tr.children[4].textContent, tr.dataset.estado])),
         [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
     igual("el resumen dice cuántos jugadores revisó cada árbitro y cuántos no han llegado", await q.$$eval("#resumen tr", (l) => l.map((tr) => tr.children[6].textContent)), ["2 de 30 · faltan 1", "Sin revisar"]);
@@ -1412,15 +1679,7 @@ const CONTRASTE = `(sel) => {
     // Los relojes de la transmisión de Lichess como control (js/centroamericano-transmision-reloj.js): la sala dice qué se transmite,
     // la ronda dice su atraso y la partida (por los dos nombres) sus relojes. Lichess, simulado; nada se pide hasta tocar el botón.
     const pedidosLichess = [];
-    await q.context().route(/lichess\.org\/api\//, (r) => {
-        const u = r.request().url(); pedidosLichess.push(u);
-        if (/\/api\/broadcast\/AbCd1234$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ tour: { id: "AbCd1234", name: "Centroamericano 2026 | Sub-10 Abs" }, rounds: [{ id: "RoNdA002", name: "Round 2", finished: true }, { id: "RoNdA003", name: "Round 3", ongoing: true }] }) });
-        if (/\/api\/broadcast\/-\/-\/RoNdA003$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ round: { id: "RoNdA003", name: "Round 3", delay: 60 }, games: [
-            { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
-            { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] }] }) });
-        return r.fulfill({ status: 404, body: "{}" });
-    });
-    await q.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
+    await simularLichess(q, pedidosLichess);
     igual("la calculadora ofrece buscar la mesa en la transmisión, sin pedirle nada a Lichess antes de tocarlo", [await q.$eval("#ct-apagado .ra-tx-buscar", (b) => [b.textContent, b.checkVisibility()]), pedidosLichess.length], [["Buscar esta mesa en la transmisión", true], 0]);
     await q.click("#ct-apagado .ra-tx-buscar");
     await q.waitForSelector("#ct-apagado .ra-tx-usar");
@@ -1457,6 +1716,64 @@ const CONTRASTE = `(sel) => {
     await q.waitForSelector("dialog.cam-dialogo[open] img");
     igual("«Ver» abre la foto desde el bucket privado (con un enlace que vence)", await q.evaluate(() => [window.__llamadas.filter((l) => l.foto).map((l) => l.foto), document.querySelector("dialog.cam-dialogo img").alt]), [["centroamericano-planillas/1529733/ronda-3/mesa-2-planillas.jpg"], "Foto de las dos planillas de la mesa 2: Harvey Ian vs Acuña Porras Fabio"]);
     await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+
+    // «Generar PGN»: un Google Vision de mentira que devuelve la foto de las dos planillas de la mesa 11 de la ronda 4
+    // (de verdad, con su desacuerdo en la jugada 16) y, desde la jugada 17, basura en las dos. La mesa 2 no se transmite
+    // (sale de la foto); la 3 sí (sale de Lichess, sin leer la foto).
+    const BASURA = ["qz", "Lw", "m3m", "zz", "uu", "k9", "pp", "XX", "Ww", "yy", "j7", "vv"];
+    const palabrasFoto = palabrasDePlanillas([PLANILLAS_REALES.mesa11.blancas.slice(0, 32).concat(BASURA), PLANILLAS_REALES.mesa11.negras.slice(0, 32).concat(BASURA.slice().reverse())], { giro: 3, partir: true });
+    let lecturasVision = 0;
+    await q.context().route("**/functions/v1/ocr-scoresheet", (rr) => { lecturasVision++; rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }); });
+    const botonPgn = (mesa) => q.locator("#planillas tr:not(.cam-lp-fila)").nth(mesa === 2 ? 0 : 1).locator('[data-accion="generar-pgn"]');
+    igual("cada foto tiene su «Generar PGN» ahí mismo, al lado de «Ver»", await q.$$eval("#planillas tr", (l) => l.map((tr) => [...tr.lastElementChild.querySelectorAll("button")].map((b) => b.textContent))), [["Ver", "Generar PGN"], ["Ver", "Generar PGN"]]);
+    await q.waitForFunction(() => [...document.querySelectorAll(".cam-lp-fuente")].every((x) => x.dataset.fuente && x.dataset.fuente !== "buscando"));
+    igual("la tabla averigua sola cuáles se transmiten y lo dice en cada fila (sin leer ninguna foto)", [await q.$$eval(".cam-lp-fuente", (l) => l.map((x) => x.textContent)), lecturasVision],
+        [["📷 Sin transmisión: sale de la foto", "📡 Se transmite: sale de Lichess"], 0]);
+
+    await botonPgn(2).click();
+    await q.waitForSelector(".cam-lp-fila .cam-lp-titular", { timeout: 120000 });
+    igual("la partida se abre ahí mismo, en la fila de debajo de su foto, sin ventanita", await q.evaluate(() => { const f = document.querySelector(".cam-lp-fila"); const b = document.querySelector('#planillas tr:first-child [data-accion="generar-pgn"]');
+        return [f.previousElementSibling === b.closest("tr"), b.getAttribute("aria-expanded"), b.getAttribute("aria-controls") === f.id, b.textContent, !document.querySelector("dialog[open]")]; }), [true, "true", true, "Ocultar la partida", true]);
+    igual("la mesa sin transmisión se lee de la foto (bucket privado y lector) y dice hasta dónde se salvó", [await q.textContent(".cam-lp-fila .cam-lp-titular"), await q.evaluate(() => window.__llamadas.filter((l) => l.foto).length), lecturasVision],
+        ["Leída de la foto: se pudieron salvar 32 medias jugadas, hasta la jugada 16 de las negras.", 2, 1]);
+    igual("desde ahí: «Ilegible», con lo que dicen las planillas, sin inventar jugadas", await q.evaluate(() => { const c = document.querySelector(".cam-lp-ilegible"); return [c.checkVisibility(), c.querySelector("strong").textContent, c.textContent.includes("qz · Lw · m3m")]; }), [true, "⚠ Ilegible desde la jugada 17 de las blancas.", true]);
+    igual("las 32 jugadas, en español; donde las planillas no coincidían (16. Thf1 / The1) sale marcada con * y dice qué decía cada una", await q.evaluate(() => { const b = [...document.querySelectorAll(".cam-lp-fila .cam-lp-jugada")]; return [b.length, b[0].textContent, b[30].textContent, b[30].title]; }),
+        [32, "e4", "Thf1 *", "corregida · escrito: Thf1 | The1"]);
+    igual("la vista previa muestra la última jugada salvada en el tablero y la dice en palabras", await q.evaluate(() => [[...document.querySelectorAll(".cam-lp-tablero .cine-sq > span")].filter((x) => x.checkVisibility()).length > 10, document.querySelector(".cam-lp-linea").textContent.startsWith("16… Thf8"), document.querySelector(".cam-lp-jugada[aria-current='true']").textContent]), [true, true, "Thf8 *"]);
+    await q.click('.cam-lp-controles [aria-label="Al inicio"]');
+    await q.click('.cam-lp-controles [aria-label="Jugada siguiente"]');
+    igual("se recorre con ⏮ ◀ ▶ ⏭ y con las flechas", [await q.textContent(".cam-lp-linea"), await (async () => { await q.keyboard.press("ArrowRight"); return q.textContent(".cam-lp-linea"); })()],
+        ["1. e4 — leída tal cual. En la planilla: «e4» y «e4».", "1… c6 — leída tal cual. En la planilla: «c6» y «c6»."]);
+    const [pgnBajado] = await Promise.all([q.waitForEvent("download"), q.click('.cam-lp-fila [data-accion="bajar-pgn"]')]);
+    const pgnTexto = fs.readFileSync(await pgnBajado.path(), "utf8");
+    igual("el PGN se baja con el torneo, la ronda, el día y los jugadores (con sus tildes), termina en «*» y dice desde dónde es ilegible", [pgnBajado.suggestedFilename(), pgnTexto.includes('[Round "3"]'), pgnTexto.includes('[White "Harvey Ian"]'), pgnTexto.includes('[Black "Acuña Porras Fabio"]'), /\[Date "\d{4}\.\d\d\.\d\d"\]/.test(pgnTexto), /\{Desde aquí la planilla es ilegible \(jugada 17\)\.\}\s+\*\s*$/.test(pgnTexto)],
+        ["Mesa 02 - Ronda 3 - Harvey Ian vs Acuna Porras Fabio.pgn", true, true, true, true, true]);
+    igual("en claro, lo marcado y el aviso de ilegible dan 4,5:1 o más", Math.min(...await q.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota, .cam-lp-titular, .cam-lp-fuente, .cam-lp-fila p") + ")")) >= 4.5, true);
+    const llamadasAntes = await q.evaluate(() => window.__llamadas.length);
+    await q.click("#pl-actualizar");
+    await q.waitForFunction((n) => window.__llamadas.length > n || document.querySelectorAll("#planillas tr").length > 0, llamadasAntes);
+    await q.waitForTimeout(500);
+    igual("la tabla se refresca y la partida abierta sigue ahí, sin volver a leer la foto", [await q.$$eval(".cam-lp-fila .cam-lp-titular", (l) => l.length), lecturasVision, await botonPgn(2).textContent()], [1, 1, "Ocultar la partida"]);
+
+    await botonPgn(3).click();
+    await q.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2);
+    igual("la mesa que se transmite sale sola de Lichess: sus jugadas y el resultado, sin leer la foto",
+        [...await q.evaluate(() => { const f = document.querySelectorAll(".cam-lp-fila")[1]; return [f.querySelector(".cam-lp-titular").textContent, [...f.querySelectorAll(".cam-lp-jugada")].map((b) => b.textContent).join(" "), f.querySelector(".cam-lp-enlace").href, !f.querySelector(".cam-lp-leyenda")]; }), lecturasVision],
+        ["De la transmisión en vivo de Lichess: 7 medias jugadas · 1-0.", "e4 e5 Ac4 Cc6 Dh5 Cf6 Dxf7#", "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3", true, 1]);
+    igual("ninguna de las dos dice «null» ni «undefined» en ningún lado", await q.$$eval(".cam-lp-fila", (l) => l.map((f) => /\bnull\b|undefined/.test(f.textContent))), [false, false]);
+    const [pgnTx] = await Promise.all([q.waitForEvent("download"), q.locator('.cam-lp-fila [data-accion="bajar-pgn"]').nth(1).click()]);
+    const pgnTxTexto = fs.readFileSync(await pgnTx.path(), "utf8");
+    igual("su PGN es el de la transmisión (solo esa partida, con sus relojes)", [pgnTx.suggestedFilename(), pgnTxTexto.includes('[White "Hopkins, John"]'), pgnTxTexto.includes("[%clk 1:30:10]"), pgnTxTexto.includes("Uno, Eli")],
+        ["Mesa 03 - Ronda 3 - Hopkins John vs Baquero Graterol.pgn", true, true, false]);
+    for (const mesa of [2, 3]) await botonPgn(mesa).click();
+    igual("«Ocultar la partida» la cierra", [await q.$$eval(".cam-lp-fila", (l) => l.length), await q.$$eval('[data-accion="generar-pgn"]', (l) => l.map((b) => [b.textContent, b.getAttribute("aria-expanded")]))], [0, [["Generar PGN", "false"], ["Generar PGN", "false"]]]);
+    await botonPgn(2).click();
+    await q.waitForSelector(".cam-lp-fila .cam-lp-titular");
+    igual("abrirla otra vez no gasta otra lectura (quedó guardada en este navegador)", lecturasVision, 1);
+    await q.click('.cam-lp-fila [data-accion="volver-a-leer"]');
+    await q.waitForFunction(() => document.querySelector(".cam-lp-fila .cam-lp-titular"), null, { timeout: 120000 });
+    igual("«Volver a leer la foto» sí la vuelve a leer", lecturasVision, 2);
+    await botonPgn(2).click();
     await q.evaluate(() => { document.getElementById("drive-conectar-caja").open = true; });
     await q.fill("#drive-url", "https://script.google.com/macros/s/" + "A".repeat(30) + "/exec");
     await q.fill("#drive-secreto", "MALOMALOMALOMALOMALOMALOMALOMALOMALO");
@@ -1586,7 +1903,7 @@ const CONTRASTE = `(sel) => {
     const [descargaF] = await Promise.all([q.waitForEvent("download"), q.click("#r-informe")]);
     const pdfF = fs.readFileSync(await descargaF.path());
     igual("el informe final en PDF (resumen por ronda, ilegales, ausentes, rondas finalizadas y planillas), con su nombre y la marca de agua", [descargaF.suggestedFilename(), pdfF.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfF.toString("latin1")), await q.$eval("#r-informe", (b) => b.disabled)], ["informe-final-arbitros-centroamericano-2026.pdf", true, true, false]);
-    igual("sin errores en la página", errores, []);
+    igual("sin errores en la página", errores, []); if (errores.length) console.error("ERRORES:", errores);
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
     const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-barra-estado, .cam-celda-estado, .cam-titulo-ventana, .cam-subtitulo, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion td, .cam-conectado, .cam-clave-grupo, .cam-detalle summary, .cam-estado-drive, .cam-sugerencia, .cam-herramientas, .cam-guardado, .cam-fallo, .cam-rejilla td, .cam-rejilla th, .cam-rejilla thead th";
@@ -1612,7 +1929,16 @@ const CONTRASTE = `(sel) => {
     await o.ctx.close();
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100, esquema: "dark" });
     await o.p.waitForSelector(".cam-pedido");
+    // antes de abrir «Planillas y Drive»: la tabla pregunta por la transmisión apenas se pinta
+    await o.ctx.route("**/functions/v1/ocr-scoresheet", (rr) => rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }));
+    await simularLichess(o.p, []);
     igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las ocho pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
+    await o.p.click("#pest-planillas");
+    await o.p.waitForSelector("#planillas tr");
+    for (const n of [0, 1]) await o.p.locator("#planillas tr:not(.cam-lp-fila)").nth(n).locator('[data-accion="generar-pgn"]').click();
+    await o.p.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2, null, { timeout: 120000 });
+    igual("en oscuro, la partida (de la foto y de la transmisión: lo marcado, el aviso de ilegible, el texto) da 4,5:1 o más", Math.min(...await o.p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota, .cam-lp-titular, .cam-lp-leyenda, .cam-lp-fuente, .cam-lp-fila p, .cam-lp-enlace") + ")")) >= 4.5, true);
+    if (process.env.CAPTURA) { await o.p.locator(".cam-lp-fila").first().scrollIntoViewIfNeeded(); await o.p.screenshot({ path: process.env.CAPTURA + "-leer-partida-oscuro.png", fullPage: true }); }
     if (process.env.CAPTURA) { await o.p.click("#pest-ronda"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
     await o.ctx.close();
 

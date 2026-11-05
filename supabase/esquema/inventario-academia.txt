@@ -65,6 +65,10 @@ tabla  centroamericano_registro  rls=true
 tabla  centroamericano_salidas  rls=true
 tabla  centroamericano_tiempos  rls=true
 tabla  centroamericano_torneos  rls=true
+tabla  centroamericano_traducciones  rls=true
+tabla  centroamericano_tx_atendidas  rls=true
+tabla  centroamericano_tx_enlaces  rls=true
+tabla  centroamericano_tx_tableros  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
@@ -794,6 +798,34 @@ columna  centroamericano_torneos.prueba  boolean
 columna  centroamericano_torneos.rama  text
 columna  centroamericano_torneos.sid_en_boveda  boolean
 columna  centroamericano_torneos.tnr  text
+columna  centroamericano_traducciones.asignacion_id  uuid
+columna  centroamericano_traducciones.caracteres  integer
+columna  centroamericano_traducciones.costo_usd  numeric(10,6)
+columna  centroamericano_traducciones.creada  timestamp with time zone
+columna  centroamericano_traducciones.id  uuid
+columna  centroamericano_traducciones.ok  boolean
+columna  centroamericano_traducciones.tokens_entrada  integer
+columna  centroamericano_traducciones.tokens_salida  integer
+columna  centroamericano_tx_atendidas.clave  text
+columna  centroamericano_tx_atendidas.en  timestamp with time zone
+columna  centroamericano_tx_atendidas.nota  text
+columna  centroamericano_tx_atendidas.quien  text
+columna  centroamericano_tx_enlaces.creada  timestamp with time zone
+columna  centroamericano_tx_enlaces.creada_por  uuid
+columna  centroamericano_tx_enlaces.id  uuid
+columna  centroamericano_tx_enlaces.nombre  text
+columna  centroamericano_tx_enlaces.revocada  boolean
+columna  centroamericano_tx_enlaces.token  text
+columna  centroamericano_tx_enlaces.ultimo_uso  timestamp with time zone
+columna  centroamericano_tx_enlaces.vence  timestamp with time zone
+columna  centroamericano_tx_tableros.actualizado  timestamp with time zone
+columna  centroamericano_tx_tableros.blancas  text
+columna  centroamericano_tx_tableros.mesa  integer
+columna  centroamericano_tx_tableros.negras  text
+columna  centroamericano_tx_tableros.por  text
+columna  centroamericano_tx_tableros.ronda  integer
+columna  centroamericano_tx_tableros.tablero  integer
+columna  centroamericano_tx_tableros.tnr  text
 columna  certificados.academia_id  uuid
 columna  certificados.academia_logo_path  text
 columna  certificados.academia_nombre  text
@@ -3188,6 +3220,9 @@ politica  centroamericano_registro  centroamericano_registro_ver  SELECT
 politica  centroamericano_salidas  centroamericano_salidas_ver  SELECT
 politica  centroamericano_tiempos  centroamericano_tiempos_ver  SELECT
 politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
+politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_cambiar  UPDATE
+politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_crear  INSERT
+politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
@@ -3654,6 +3689,7 @@ trigger  centroamericano_finales  auditar
 trigger  centroamericano_fp_enlaces  auditar
 trigger  centroamericano_registro  fair_play_resultado
 trigger  centroamericano_torneos  auditar
+trigger  centroamericano_tx_enlaces  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
@@ -3871,6 +3907,15 @@ indice  centroamericano_salidas  centroamericano_salidas_pkey
 indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
 indice  centroamericano_tiempos  centroamericano_tiempos_pkey
 indice  centroamericano_torneos  centroamericano_torneos_pkey
+indice  centroamericano_traducciones  centroamericano_traducciones_asignacion_idx
+indice  centroamericano_traducciones  centroamericano_traducciones_creada_idx
+indice  centroamericano_traducciones  centroamericano_traducciones_pkey
+indice  centroamericano_tx_atendidas  centroamericano_tx_atendidas_pkey
+indice  centroamericano_tx_enlaces  centroamericano_tx_enlaces_creada_por_idx
+indice  centroamericano_tx_enlaces  centroamericano_tx_enlaces_pkey
+indice  centroamericano_tx_enlaces  centroamericano_tx_enlaces_token_key
+indice  centroamericano_tx_tableros  centroamericano_tx_tableros_mesa_unica
+indice  centroamericano_tx_tableros  centroamericano_tx_tableros_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
 indice  certificados  certificados_codigo_key
@@ -4602,6 +4647,7 @@ grant  centroamericano_progreso  authenticated  SELECT
 grant  centroamericano_registro  authenticated  SELECT
 grant  centroamericano_salidas  authenticated  SELECT
 grant  centroamericano_tiempos  authenticated  SELECT
+grant  centroamericano_tx_enlaces  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT
