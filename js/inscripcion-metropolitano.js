@@ -101,7 +101,8 @@
   let HOSPEDAJE = { limite: false };
   async function leerParqueo() {
     try {
-      const [pq, hs] = await Promise.all([window.sb.rpc("metropolitano_parqueo_ver"), window.sb.rpc("metropolitano_hospedaje_ver")]);
+      // Y los menús de la alimentación (js/metropolitano-menu.js), que se leen solos.
+      const [pq, hs] = await Promise.all([window.sb.rpc("metropolitano_parqueo_ver"), window.sb.rpc("metropolitano_hospedaje_ver"), window.MetroMenu.cargar()]);
       if (!pq.error && pq.data && typeof pq.data === "object") PARQUEO = pq.data;
       if (!hs.error && hs.data && typeof hs.data === "object") HOSPEDAJE = hs.data;
     } catch (e) { /* sin la base, no se ofrece el parqueo y el hospedaje lo decide la base */ }
@@ -241,15 +242,40 @@
             <label class="sm:col-span-2 flex items-start gap-3 text-sm"><input type="checkbox" data-c="acepta_compartir" class="mt-1 h-4 w-4 shrink-0"> <span>Acepto que la habitación es compartida y que puede tocarme compartirla con otras personas que asigne la organización.${AST}</span></label>
           </div>
           <details data-plegable-comidas class="metro-plegable space-y-3"><summary><span>Alimentación</span> <span data-resumen-comidas class="text-sm font-normal text-brand-600 dark:text-brand-300"></span></summary>
-          <div class="flex flex-wrap items-center gap-4 mt-3">
+          <!-- «¿Va a necesitar alimentación?»: con «Sí», las comidas, los días y el
+               plato de cada una con quién lo prepara (js/metropolitano-menu.js), que
+               se cobra con la inscripción; con «Aún no lo sé», lo que podría
+               necesitar, sin costo (para la estimación de los platos de más), y si
+               quiere, el menú solo para mirar; con «No», nada. -->
+          <div data-caja-alim-pregunta>
+          <fieldset class="mt-3"><legend class="text-sm font-semibold">¿Va a necesitar alimentación durante el torneo?${AST}</legend>
+            <div class="flex flex-wrap gap-4 mt-1">
+              <label class="flex items-center gap-2"><input type="radio" name="${k}-alim" value="si" data-alim> Sí</label>
+              <label class="flex items-center gap-2"><input type="radio" name="${k}-alim" value="tal_vez" data-alim> Aún no lo sé</label>
+              <label class="flex items-center gap-2"><input type="radio" name="${k}-alim" value="no" data-alim> No</label>
+            </div></fieldset>
+          </div>
+          <div data-caja-alim class="hidden space-y-3 mt-3">
+          <p data-alim-texto-si class="text-sm font-semibold">¿Qué comidas necesita?${AST}</p>
+          <p data-alim-texto-tal-vez class="text-sm font-semibold">¿Qué comidas cree que podría necesitar?${AST}</p>
+          <div class="flex flex-wrap items-center gap-4">
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="desayuno"> Desayuno</label>
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="almuerzo"> Almuerzo</label>
             <label class="flex items-center gap-2"><input type="checkbox" data-comida value="cena"> Cena</label></div>
-          <p class="text-xs text-brand-500 dark:text-brand-300">Si no se marca ninguna, queda como «no requiere alimentación». El hospedaje y la alimentación son una solicitud: la organización confirma la disponibilidad y el costo por correo (a los GM, IM y WGM se les dan sin costo, como dicen las bases).</p>
           <div data-caja-comidas class="hidden grid sm:grid-cols-2 gap-4">
             <div><label for="${id("cdes")}" class="block text-sm font-semibold mb-1">Desde${AST}</label><input id="${id("cdes")}" data-campo data-c="comidas_desde" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-26"></div>
             <div><label for="${id("chas")}" class="block text-sm font-semibold mb-1">Hasta${AST}</label><input id="${id("chas")}" data-campo data-c="comidas_hasta" type="date" min="2026-12-20" max="2027-01-03" value="2026-12-30"></div>
-            <div class="sm:col-span-2"><label for="${id("dieta")}" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="${id("dieta")}" data-campo data-c="dieta" maxlength="300" placeholder="Vegetariana, sin gluten, alergia a los mariscos…"></div>
+          </div>
+          <fieldset data-alim-ver class="hidden"><legend class="text-sm font-semibold">¿Quiere ver cuáles serán las opciones y sus precios?</legend>
+            <div class="flex flex-wrap gap-4 mt-1">
+              <label class="flex items-center gap-2"><input type="radio" name="${k}-alim-ver" value="si" data-alim-ver-op> Sí, quiero verlas</label>
+              <label class="flex items-center gap-2"><input type="radio" name="${k}-alim-ver" value="no" data-alim-ver-op> Por ahora no</label>
+            </div></fieldset>
+          <div data-menus class="space-y-4"></div>
+          <p data-alim-nota-menu class="text-xs text-brand-500 dark:text-brand-300">La alimentación con menú se paga con la inscripción: elige un plato de cada comida y quién te lo prepara. El precio es por día y se suma al total.</p>
+          <p data-alim-nota-solicitud class="text-xs text-brand-500 dark:text-brand-300">La alimentación sin menú es una solicitud: la organización confirma la disponibilidad y el costo por correo (a los GM, IM y WGM se les da sin costo, como dicen las bases).</p>
+          <p data-alim-nota-tal-vez class="text-xs text-brand-500 dark:text-brand-300">No se cobra ni se reserva nada: nos sirve para preparar platos de más, por si al final decide comer con nosotros.</p>
+          <div data-caja-dieta><label for="${id("dieta")}" class="block text-sm font-semibold mb-1">Dieta especial o alergias</label><input id="${id("dieta")}" data-campo data-c="dieta" maxlength="300" placeholder="Vegetariana, sin gluten, alergia a los mariscos…"></div>
           </div>
           </details>
           </div>
@@ -326,7 +352,56 @@
     // Lleno, no se ofrece (y lo que estaba marcado se quita).
     const hospedajeLleno = () => !!(HOSPEDAJE.limite && HOSPEDAJE.lleno);
     const hospeda = () => !esTitulado() && !hospedajeLleno() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
-    const comidas = () => (esTitulado() ? [] : [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value));
+    // La alimentación: «si», «tal_vez», «no» o "" (sin responder). Al titulado
+    // se la da la organización: no se le pregunta.
+    const alim = () => { if (esTitulado()) return "no"; const r = el.querySelector('input[name="' + k + '-alim"]:checked'); return r ? r.value : ""; };
+    const marcadas = () => [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
+    const comidas = () => (alim() === "si" ? marcadas() : []);
+    // Con «Aún no lo sé»: las comidas y los días que podría necesitar.
+    const talVez = () => (alim() === "tal_vez" ? { comidas: marcadas(), desde: v("comidas_desde"), hasta: v("comidas_hasta") } : null);
+    const verMenu = () => { const r = el.querySelector('input[name="' + k + '-alim-ver"]:checked'); return r ? r.value === "si" : false; };
+    // El plato elegido de cada comida (el id del menú), de los radios pintados.
+    const eleccion = () => { const o = {}; el.querySelectorAll("[data-menu-plato]:checked").forEach((x) => { o[x.dataset.menuPlato] = x.value; }); return o; };
+    yo.menuElegido = yo.menuElegido || {};
+    const costoComidas = () => window.MetroMenu.costo(comidas(), eleccion(), v("comidas_desde"), v("comidas_hasta"), idioma);
+    yo.alim = alim; yo.talVez = talVez; yo.eleccion = eleccion; yo.costoComidas = costoComidas;
+
+    /* Lo que se ve de la alimentación según la respuesta. Los menús se vuelven
+       a pintar solo cuando cambia lo que muestran (no a cada tecla: se perdería
+       el foco del plato que se está eligiendo), y lo elegido se conserva. */
+    let claveMenus = "";
+    function pintarAlimentacion() {
+      const M = window.MetroMenu, a = alim(), tit = esTitulado();
+      q("[data-caja-alim-pregunta]").classList.toggle("hidden", tit);
+      q("[data-caja-alim]").classList.toggle("hidden", tit || !(a === "si" || a === "tal_vez"));
+      q("[data-alim-texto-si]").classList.toggle("hidden", a !== "si");
+      q("[data-alim-texto-tal-vez]").classList.toggle("hidden", a !== "tal_vez");
+      q("[data-caja-comidas]").classList.toggle("hidden", !marcadas().length);
+      const conMenu = marcadas().filter((c) => M.hay(c));
+      q("[data-alim-ver]").classList.toggle("hidden", a !== "tal_vez" || !M.hayAlguno());
+      q("[data-alim-nota-menu]").classList.toggle("hidden", a !== "si" || !conMenu.length);
+      q("[data-alim-nota-solicitud]").classList.toggle("hidden", a !== "si" || !marcadas().some((c) => !M.hay(c)));
+      q("[data-alim-nota-tal-vez]").classList.toggle("hidden", a !== "tal_vez");
+      q("[data-caja-dieta]").classList.toggle("hidden", a !== "si");
+      // Con «Sí», el menú de cada comida marcada, para elegir; con «Aún no lo
+      // sé» y «Sí, quiero verlas», todos los menús, solo para mirar.
+      const mostrar = a === "si" ? conMenu : a === "tal_vez" && verMenu() ? M.COMIDAS.filter((c) => M.hay(c)) : [];
+      Object.assign(yo.menuElegido, eleccion());
+      const clave = [idioma, a, mostrar.join(","), M.hayAlguno()].join("|");
+      if (clave !== claveMenus) {
+        claveMenus = clave;
+        const caja = q("[data-menus]");
+        caja.textContent = "";
+        mostrar.forEach((c) => {
+          const d = document.createElement("div");
+          M.pintar(d, c, { idioma, nombre: a === "si" ? k + "-menu-" + c : null, elegido: yo.menuElegido[c] });
+          caja.append(d);
+        });
+      }
+      // Lo plegado dice en su título qué tiene, y se abre si ya tiene algo.
+      q("[data-resumen-comidas]").textContent = tit ? "" : a === "si" ? "(Sí)" : a === "tal_vez" ? "(Aún no lo sé)" : a === "no" ? "(No)" : "(Falta responder)";
+      if (a === "si" || a === "tal_vez") q("[data-plegable-comidas]").open = true;
+    }
     const condicion = () => [...el.querySelectorAll("[data-condicion]:checked")].map((x) => x.value);
     const parquea = () => PARQUEO.disponible && c("parqueo").checked;
     // La placa como la guarda la base: sin espacios ni guiones, en mayúscula.
@@ -655,12 +730,8 @@
       if (hospedajeLleno()) el.querySelector('input[name="' + k + '-hosp"][value="no"]').checked = true;
       q("[data-caja-hosp]").classList.toggle("hidden", !hospeda());
       pintarAcompanantes();
-      q("[data-caja-comidas]").classList.toggle("hidden", !comidas().length);
+      pintarAlimentacion();
       q("[data-aviso-condicion]").classList.toggle("hidden", !condicion().some((x) => x === "sordo" || x === "ciego"));
-      // Lo plegado dice en su título qué tiene, y se abre si ya tiene algo.
-      const marcadas = [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
-      q("[data-resumen-comidas]").textContent = marcadas.length ? "(" + marcadas.join(", ") + ")" : "(no requiere)";
-      if (marcadas.length) q("[data-plegable-comidas]").open = true;
       const conCondicion = condicion().length > 0 || !!v("accesibilidad");
       q("[data-resumen-condicion]").textContent = conCondicion ? "(con lo marcado)" : "(opcional)";
       if (conCondicion) q("[data-plegable-condicion]").open = true;
@@ -781,8 +852,12 @@
       el.querySelector('input[name="' + k + '-origen"][value="' + (otra.deAfuera() ? "fuera" : "cr") + '"]').checked = true;
       yo.ponerProcedencia(otra.v("provincia"), otra.v("canton"));
       el.querySelector('input[name="' + k + '-hosp"][value="' + (otra.hospeda() ? "si" : "no") + '"]').checked = true;
-      const suyas = otra.comidas();
+      // La alimentación: la misma respuesta, las mismas comidas y los mismos platos.
+      const suAlim = otra.alim();
+      if (suAlim) { const r = el.querySelector('input[name="' + k + '-alim"][value="' + suAlim + '"]'); if (r) r.checked = true; }
+      const suyas = [...otra.el.querySelectorAll("[data-comida]:checked")].map((x) => x.value);
       el.querySelectorAll("[data-comida]").forEach((x) => { x.checked = suyas.includes(x.value); });
+      Object.assign(yo.menuElegido, otra.menuElegido, otra.eleccion());
       // Para una emergencia, si no se dice otra cosa, se llama al delegado.
       c("emer_nombre").value = [otra.v("nombre"), otra.v("apellidos")].filter(Boolean).join(" ");
       c("emer_parentesco").value = "Delegado";
@@ -818,6 +893,8 @@
         elegido: yo.elegido, clasico: yo.clasico, blitz: q("[data-blitz]").checked, tocado: yo.tocado,
         hosp: el.querySelector('input[name="' + k + '-hosp"]:checked').value,
         comidas: [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value), condicion: condicion(),
+        alim: (el.querySelector('input[name="' + k + '-alim"]:checked') || {}).value || "", verMenu: verMenu(),
+        menu: Object.assign({}, yo.menuElegido, eleccion()),
         campos, acomp: yo.acompanantes(), codigo: yo.codigo, buscar: buscarEl.value, sinNombre: sinResultadoPorNombre,
       };
     };
@@ -835,6 +912,11 @@
       });
       cantones(); c("canton").value = (e.campos && e.campos.canton) || "";
       el.querySelectorAll("[data-comida]").forEach((x) => { x.checked = (e.comidas || []).includes(x.value); });
+      // Un borrador de antes de la pregunta: con comidas marcadas, era un «sí».
+      const suAlim = e.alim || ((e.comidas || []).length ? "si" : "");
+      if (suAlim) marcar("alim", suAlim);
+      if (e.verMenu) marcar("alim-ver", "si");
+      yo.menuElegido = Object.assign({}, e.menu || {});
       el.querySelectorAll("[data-condicion]").forEach((x) => { x.checked = (e.condicion || []).includes(x.value); });
       q("[data-blitz]").checked = !!e.blitz;
       yo.elegido = e.elegido && e.elegido.fideId ? e.elegido : null;
@@ -883,7 +965,12 @@
           falta(q('[data-acomp="' + i + '"] input'), "Faltan los datos del acompañante " + (i + 1) + ": nombre completo, documento y fecha de nacimiento.");
         }
       });
-      if (comidas().length && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
+      if (!esTitulado() && !alim()) falta(el.querySelector('input[name="' + k + '-alim"]'), "Responde si va a necesitar alimentación durante el torneo.");
+      if (alim() === "si" && !marcadas().length) falta(q("[data-comida]"), "Marca qué comidas necesita.");
+      if (alim() === "tal_vez" && !marcadas().length) falta(q("[data-comida]"), "Marca qué comidas cree que podría necesitar.");
+      if (marcadas().length && (alim() === "si" || alim() === "tal_vez") && (!v("comidas_desde") || !v("comidas_hasta") || v("comidas_desde") > v("comidas_hasta"))) falta(c("comidas_desde"), "Revisa los días de la alimentación.");
+      if (alim() === "si") costoComidas().faltan.forEach((cm) => falta(q('[data-menus] [data-menu-comida="' + cm + '"] input') || q("[data-menus]"),
+        { desayuno: "Elige el plato del desayuno y quién lo prepara.", almuerzo: "Elige el plato del almuerzo y quién lo prepara.", cena: "Elige el plato de la cena y quién lo prepara." }[cm]));
       if (!yo.foto) falta(inFoto, "Falta la foto tamaño pasaporte.");
       if (parquea() && !/^[A-Z0-9]{2,10}$/.test(placa())) falta(c("placa"), "Falta la placa del vehículo para el parqueo (de 2 a 10 letras y números).");
       if (esTitulado() && !deAfuera() && (!v("llegada") || !v("salida") || v("salida") <= v("llegada"))) {
@@ -915,14 +1002,16 @@
         acepta_compartir: hospeda() && c("acepta_compartir").checked,
         acepta_hospedaje: (hospeda() || esTitulado()) && c("acepta_hospedaje").checked, acompanantes_detalle: hospeda() ? yo.acompanantes() : [],
         origen: deAfuera() ? "fuera" : "cr",
-        comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
-        dieta: v("dieta"), condicion: condicion(), accesibilidad: v("accesibilidad"),
+        alimentacion: alim() || "no", comidas: comidas(), comidas_desde: comidas().length ? v("comidas_desde") : null, comidas_hasta: comidas().length ? v("comidas_hasta") : null,
+        menu: comidas().length ? eleccion() : null, tal_vez: talVez(),
+        dieta: alim() === "si" ? v("dieta") : "", condicion: condicion(), accesibilidad: v("accesibilidad"),
         parqueo: parquea(), placa: parquea() ? placa() : null,
         acepta_publicidad: c("acepta_publicidad").checked,
       };
       const precio = R.precio({ rol, torneos: datos.torneos, metodo: metodo || "dolares", hoy, nacimiento: nac, titulo: datos.titulo, factura: quiereFactura(),
         descuento: yo.codigo && !esTitulado() ? yo.codigo.porcentaje : 0,
-        parqueo: parquea() ? Number(PARQUEO.precio_usd) || 0 : 0, placa: parquea() ? placa() : "" });
+        parqueo: parquea() ? Number(PARQUEO.precio_usd) || 0 : 0, placa: parquea() ? placa() : "",
+        comidas: esTitulado() ? [] : costoComidas().lineas });
       const conCodigo = !!yo.codigo && rol === "jugador" && datos.torneos.length > 0 && !esTitulado();
       datos.codigo = conCodigo ? yo.codigo.codigo : null;
       datos.codigo_pct = conCodigo ? yo.codigo.porcentaje : null;
@@ -1003,7 +1092,7 @@
         precio.lineas.forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
         precio.avisos.forEach((a) => avisos.add(a));
       } else if (datos.rol !== "jugador") lineas.push(quien + " — " + (p.esDelegado ? "delegado" : R.rolDe(datos.rol, datos.sexo).toLowerCase()) + ": sin costo de inscripción");
-      if (!(datos.rol === "jugador" && datos.torneos.length)) precio.lineas.filter((l) => l.torneo === "PARQUEO").forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
+      if (!(datos.rol === "jugador" && datos.torneos.length)) precio.lineas.filter((l) => l.torneo === "PARQUEO" || l.torneo === "COMIDA").forEach((l) => lineas.push(quien + " — " + l.texto + ": " + R.dinero(l.usd)));
       usd += precio.usd;
       iva += precio.iva;
       if (datos.rol === "jugador" && !precio.gratis) gratisTodo = false;
@@ -1425,8 +1514,12 @@
       ["Hospedaje", d.hospedaje ? "Del " + fechaLarga(d.hospedaje_desde) + " al " + fechaLarga(d.hospedaje_hasta) + ", en habitación compartida "
         + (d.habitacion === "compartida" ? "con su familia, su delegación o sus acompañantes" : "con quien asigne la organización")
         + (d.acompanantes_detalle.length ? ". Acompañantes: " + d.acompanantes_detalle.map((a) => a.nombre + (a.parentesco ? " (" + a.parentesco + ")" : "")).join(", ") : "") : "No requiere"],
-      ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "") : "No requiere"],
+      ["Alimentación", d.comidas.length ? d.comidas.join(", ") + " del " + fechaLarga(d.comidas_desde) + " al " + fechaLarga(d.comidas_hasta) + (d.dieta ? " · " + d.dieta : "")
+        : d.tal_vez ? "Aún no lo sé" : "No requiere"],
     );
+    // Los platos elegidos (en el idioma de la página: los arma js/metropolitano-menu.js).
+    if (!p.titulado() && d.comidas.length) p.costoComidas().lineas.forEach((l) => filas.push(["Plato", l.texto + " = " + R.dinero(l.usd)]));
+    if (!p.titulado() && d.tal_vez) filas.push(["Podría necesitar", d.tal_vez.comidas.join(", ") + " del " + fechaLarga(d.tal_vez.desde) + " al " + fechaLarga(d.tal_vez.hasta)]);
     if (d.provincia) filas.push(["Viene de", d.canton + ", " + d.provincia]);
     if (d.viaje && p.deAfuera()) filas.push(["Viaje", [d.viaje.llegada && "llega el " + fechaLarga(d.viaje.llegada), d.viaje.salida && "sale el " + fechaLarga(d.viaje.salida), d.viaje.vuelo, d.viaje.traslado && "con transporte del aeropuerto al Estadio Nacional"].filter(Boolean).join(" · ")]);
     if (d.parqueo) filas.push(["Parqueo", "Para el vehículo de placa " + d.placa]);

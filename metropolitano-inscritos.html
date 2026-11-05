@@ -137,6 +137,54 @@
                 </form>
             </section>
 
+            <!-- Los menús de la alimentación (js/metropolitano-menu-admin.js): quién
+                 prepara, los platos con su foto y su precio, y la estimación de los
+                 platos que hay que preparar cada día. -->
+            <section class="mt-10" aria-labelledby="menu-titulo">
+                <h2 id="menu-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🍽️</span> Menús de la alimentación</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Quien se inscribe responde si va a necesitar alimentación. Con «Sí», marca las comidas y los días y elige de cada una el plato y quién se lo prepara: se cobra por día con la inscripción. Con «Aún no lo sé», no paga nada: dice qué comidas podría necesitar, y eso sirve para la estimación de abajo. Una comida sin platos sigue como una solicitud sin costo. Un precio nuevo vale para las inscripciones que vienen: las ya hechas guardan el suyo.</p>
+                <p id="menu-estado" class="text-sm mb-3" role="status" aria-live="polite">Leyendo los menús…</p>
+
+                <h3 class="font-bold text-lg mb-2">Quién prepara (sodas, cocineras…)</h3>
+                <form id="cocina-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3 flex flex-wrap items-end gap-3">
+                    <input type="hidden" id="cocina-id">
+                    <div><label for="cocina-nombre" class="block text-xs font-semibold mb-1">Nombre</label><input id="cocina-nombre" maxlength="80" required class="w-56 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm" placeholder="Soda La Sabana"></div>
+                    <div class="grow"><label for="cocina-detalle" class="block text-xs font-semibold mb-1">Detalle (opcional: dónde queda, qué la distingue)</label><input id="cocina-detalle" maxlength="300" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div><label for="cocina-orden" class="block text-xs font-semibold mb-1">Orden</label><input id="cocina-orden" type="number" min="0" max="999" value="0" class="w-20 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <button type="submit" id="cocina-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
+                    <button type="button" id="cocina-cancelar" class="hidden border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cancelar</button>
+                    <p id="cocina-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
+                </form>
+                <ul id="cocinas" class="space-y-2 mb-6"></ul>
+
+                <h3 class="font-bold text-lg mb-2">Platos</h3>
+                <form id="plato-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+                    <input type="hidden" id="plato-id">
+                    <div><label for="plato-comida" class="block text-xs font-semibold mb-1">Comida</label><select id="plato-comida" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="desayuno">Desayuno</option><option value="almuerzo">Almuerzo</option><option value="cena">Cena</option></select></div>
+                    <div><label for="plato-nombre" class="block text-xs font-semibold mb-1">Nombre del plato</label><input id="plato-nombre" maxlength="80" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm" placeholder="Gallo pinto con huevo"></div>
+                    <div><label for="plato-cocina" class="block text-xs font-semibold mb-1">Quién lo prepara</label><select id="plato-cocina" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></select></div>
+                    <div class="sm:col-span-2 lg:col-span-3"><label for="plato-desc" class="block text-xs font-semibold mb-1">Descripción (qué trae, si es vegetariano…)</label><textarea id="plato-desc" maxlength="500" rows="2" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></textarea></div>
+                    <div><label for="plato-precio" class="block text-xs font-semibold mb-1">Precio por día (USD)</label><input id="plato-precio" type="number" min="0" max="200" step="0.01" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <div><label for="plato-orden" class="block text-xs font-semibold mb-1">Orden</label><input id="plato-orden" type="number" min="0" max="999" value="0" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <label class="flex items-center gap-2 text-sm font-semibold pb-2"><input id="plato-activo" type="checkbox" checked class="h-4 w-4"> Se ofrece en la inscripción</label>
+                    <div class="sm:col-span-2"><label for="plato-foto" class="block text-xs font-semibold mb-1">Foto (JPG, PNG o WebP; si pesa más de 1 MB, se achica)</label><input id="plato-foto" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm">
+                        <div id="plato-foto-vista" class="hidden mt-2 flex items-center gap-3"><img id="plato-foto-img" alt="Foto del plato" class="w-24 h-20 object-cover rounded-lg"><button type="button" id="plato-foto-quitar" class="underline text-sm">Quitar la foto</button></div></div>
+                    <div class="flex gap-2"><button type="submit" id="plato-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar el plato</button>
+                        <button type="button" id="plato-cancelar" class="hidden border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cancelar</button></div>
+                    <p id="plato-msg" class="sm:col-span-2 lg:col-span-3 text-sm" role="status" aria-live="polite"></p>
+                </form>
+                <div id="platos" class="space-y-4 mb-6"></div>
+
+                <h3 class="font-bold text-lg mb-1">Estimación: cuántos platos preparar</h3>
+                <p class="text-brand-600 dark:text-brand-300 mb-3 max-w-3xl text-sm">Por día y por comida: los platos ya pagados (de cada cocina), cuántas personas dijeron «Aún no lo sé» y, con el porcentaje que elijas de ellas, los platos de más que conviene preparar por si se suman. Cuenta las inscripciones activas con el pago no rechazado.</p>
+                <div class="flex flex-wrap items-end gap-3 mb-3">
+                    <div><label for="estimacion-pct" class="block text-xs font-semibold mb-1">De los que «aún no saben», ¿qué porcentaje cree que comerá?</label><input id="estimacion-pct" type="number" min="0" max="100" step="5" value="50" class="w-28 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <button type="button" id="menu-actualizar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Actualizar</button>
+                    <button type="button" id="estimacion-excel" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Excel de la estimación</button>
+                </div>
+                <div id="estimacion" class="overflow-x-auto"></div>
+            </section>
+
             <!-- La logística en números: lo cuenta la base (metropolitano_logistica). -->
             <section class="mt-10" aria-labelledby="logistica-titulo">
                 <h2 id="logistica-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📋</span> Logística en números</h2>
@@ -170,6 +218,7 @@
     <script src="js/metropolitano-gafete.js"></script>
     <script src="js/tabla-excel.js"></script>
     <script src="js/metropolitano-inscritos.js"></script>
+    <script src="js/metropolitano-menu-admin.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
 

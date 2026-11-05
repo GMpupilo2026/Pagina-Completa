@@ -7196,6 +7196,9 @@
     // distinta adentro de la misma página.
     // Cada uno con su botón de idioma, que vuelve a abrir la misma dirección.
     const modoVer = () => {
+      // Lo que ve el público (o el adjunto, el capitán…) va sin licencia:
+      // el editor queda escondido. Ver js/candado-herramienta.js.
+      if (window.CandadoHerramienta) window.CandadoHerramienta.liberar();
       $("pi-editor").hidden = true;
       $("pi-ver-barra").hidden = false;
       $("pi-ver-barra").prepend(PareoVer.botonIdioma(idioma, (n) => { escribir(CLAVE_IDIOMA, n); location.reload(); }));

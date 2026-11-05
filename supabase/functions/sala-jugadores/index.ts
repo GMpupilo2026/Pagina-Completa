@@ -71,7 +71,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
-import { codigoCategoria, deCategorias, idDeEnlaceLichess, MODALIDADES, type Modalidad, modalidadDe, type Jug, type Mesa, type PartidaLichess, partidaEnVivo, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
+import { codigoCategoria, deCategorias, idDeEnlaceLichess, lecturaVacia, MODALIDADES, type Modalidad, modalidadDe, type Jug, type Mesa, type PartidaLichess, partidaEnVivo, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -272,15 +272,32 @@ function torneoDe(url: string) {
 
 type Admin = ReturnType<typeof createClient>;
 
+// Las direcciones que hace poco dieron una lectura vacía: por un rato se sirve
+// lo guardado sin volver a pedirlas, para no insistirle a chess-results justo
+// cuando está ocupado (en memoria: cada instancia de la función lleva la suya).
+const vaciaHace = new Map<string, number>();
+const ESPERA_VACIA_MS = 30_000;
+
 async function leer(admin: Admin, url: string, leerHtml: (h: string) => unknown) {
   const { data: guardado } = await admin.from("pizarras_cache").select("datos, leido_en").eq("url", url).maybeSingle();
   if (guardado && Date.now() - new Date(guardado.leido_en as string).getTime() < FRESCO_MS) {
     return { leido_en: guardado.leido_en, datos: guardado.datos };
   }
+  if (guardado && Date.now() - (vaciaHace.get(url) || 0) < ESPERA_VACIA_MS) {
+    return { leido_en: guardado.leido_en, datos: guardado.datos, viejo: true };
+  }
   try {
     const res = await fetch(url, { headers: { "User-Agent": CR_USER_AGENT }, signal: AbortSignal.timeout(12_000) });
     if (!res.ok) throw new Error("chess-results respondió " + res.status);
     const datos = leerHtml(await res.text());
+    // Vacía con lo guardado lleno: chess-results no mandó la tabla. No se
+    // guarda; se sirve lo de antes, marcado como viejo (ver lecturaVacia()).
+    if (guardado && lecturaVacia(datos, guardado.datos)) {
+      vaciaHace.set(url, Date.now());
+      console.warn("sala-jugadores: lectura vacía, se sirve la guardada:", url);
+      return { leido_en: guardado.leido_en, datos: guardado.datos, viejo: true };
+    }
+    vaciaHace.delete(url);
     const leido_en = new Date().toISOString();
     await admin.from("pizarras_cache").upsert({ url, datos, leido_en });
     return { leido_en, datos };

@@ -3305,6 +3305,8 @@
     // cámara abierta y transmitiendo. El # se queda: al recargar, sigue en
     // modo mesa.
     async function modoMesa(qr) {
+        // La mesa con su QR, sin cuenta ni licencia (js/candado-herramienta.js).
+        if (window.CandadoHerramienta) window.CandadoHerramienta.liberar();
         document.documentElement.classList.add("camara-compacta", "camara-mesa");
         $("loading").classList.add("hidden");
         arrancar();

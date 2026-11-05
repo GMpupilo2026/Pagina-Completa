@@ -199,7 +199,7 @@
                le pinta: el grupo queda vacío y no sale. Ver «Herramientas de
                arbitraje» y «Pareo Integral» en docs/decisiones/juegos-y-torneos.md. */
             { title: "Herramientas de arbitraje", tiles: [
-                { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", soloDocente: true },
+                { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Con licencia", href: "pareo.html", soloDocente: true },
                 { emoji: "🧰", label: "Todas las herramientas", desc: "La vitrina: la selección CODICADER por parámetros y las que vienen, con su licencia", href: "herramientas-arbitraje.html", soloDocente: true },
             ] },
             /* El orden lo pidió el dueño de la Academia: Configuración,

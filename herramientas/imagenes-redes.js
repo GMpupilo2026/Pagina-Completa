@@ -264,8 +264,8 @@ const ESTADOS = [
         archivo: "07-pareo-integral.png",
         cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Para quien arbitra</div>
             <div class="titulo">¿Organizas<br>un <em>torneo</em>?</div>
-            <div class="texto">Emparéjalo gratis con el<br><b style="color:#fff">Sistema Holandés de FIDE</b><br>en Pareo Integral.</div>
-            <div class="texto">Sin cuenta y en el navegador.</div>
+            <div class="texto">Emparéjalo con el<br><b style="color:#fff">Sistema Holandés de FIDE</b><br>en Pareo Integral.</div>
+            <div class="texto">Con tu licencia, en el navegador.</div>
             </div>${PIE("/pareo")}`,
     },
 ];

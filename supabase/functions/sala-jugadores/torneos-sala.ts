@@ -140,3 +140,24 @@ export function partidaEnVivo(partidas: PartidaLichess[], nombre: string, catego
   if (calzan.length !== 1) return null;
   return { p: calzan[0], color: mismoNombre(calzan[0].blancas, nombre) ? "w" : "b" };
 }
+
+// ---- Una lectura vacía no pisa la buena. chess-results a veces contesta
+// 200 con una página sin la tabla (está ocupado o corta a quien pide mucho):
+// leerClasificacion() da cero jugadores, leerCruzado() un cuadro vacío y
+// leerRonda() ningún pareo. Pasó el 5/11/2026 en el Centroamericano: esa
+// lectura se guardaba en la caché encima de la buena y durante casi un minuto
+// la página decía «Ya no aparece en la lista de chess-results» de jugadores
+// que seguían ahí (la mitad de las categorías, sin nadie). Un torneo no se
+// queda sin jugadores, un cuadro cruzado no se borra y un pareo publicado no
+// desaparece: si lo nuevo viene vacío y lo guardado no, lo nuevo es la falla.
+// Ver «Una lectura vacía de chess-results no pisa la buena» en
+// docs/decisiones/juegos-y-torneos.md.
+function cuantoTrae(d: unknown): number {
+  if (!d || typeof d !== "object") return 0;
+  const o = d as { jugadores?: unknown; cruce?: unknown; mesas?: unknown };
+  if (Array.isArray(o.jugadores)) return o.jugadores.length;
+  if (Array.isArray(o.mesas)) return o.mesas.length;
+  if (o.cruce && typeof o.cruce === "object") return Object.keys(o.cruce).length;
+  return 0;
+}
+export const lecturaVacia = (nueva: unknown, guardada: unknown) => cuantoTrae(nueva) === 0 && cuantoTrae(guardada) > 0;

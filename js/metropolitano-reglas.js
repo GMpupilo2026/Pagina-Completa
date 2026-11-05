@@ -202,6 +202,15 @@
       lineas.push({ torneo: "PARQUEO", texto: "Parqueo" + (o.placa ? " (placa " + o.placa + ")" : ""), usd: parqueo });
       total = redondear(total + parqueo);
     }
+    // La alimentación con menú (js/metropolitano-menu.js): cada comida con el
+    // plato elegido por los días, después del código de descuento y antes del
+    // IVA, como el parqueo. Las mismas cuentas que metropolitano_inscribir().
+    (o.comidas || []).forEach((l) => {
+      const usd = redondear(Number(l.usd) || 0);
+      if (usd <= 0) return;
+      lineas.push({ torneo: "COMIDA", texto: l.texto, usd });
+      total = redondear(total + usd);
+    });
     // Con factura electrónica, el IVA lo asume quien se inscribe (lo decidió
     // la FCA): el 13 % sobre lo de esta persona, redondeado a céntimos.
     const subtotal = total;

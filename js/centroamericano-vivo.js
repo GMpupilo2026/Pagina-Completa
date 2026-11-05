@@ -398,6 +398,23 @@
     return d;
   }
 
+  // Un torneo que llega sin jugadores (o sin poder leerse) cuando lo de antes
+  // sí los tenía es una lectura fallida de chess-results, no un torneo que se
+  // vació: se queda el de antes, marcado viejo. Si no, cada seguido de ese
+  // torneo salía como «Ya no aparece en la lista de chess-results» (pasó el
+  // 5/11/2026). La función ya no guarda esas lecturas (lecturaVacia() en
+  // sala-jugadores); esto cubre lo que llegue igual. Ver «Una lectura vacía de
+  // chess-results no pisa la buena» en docs/decisiones/juegos-y-torneos.md.
+  function conLoDeAntes(torneos, antes) {
+    const previos = new Map(((antes && antes.torneos) || []).concat((antes && antes.otros) || [])
+      .filter((tor) => Array.isArray(tor.jugadores) && tor.jugadores.length).map((tor) => [String(tor.tnr), tor]));
+    return torneos.map((tor) => {
+      const vacio = !Array.isArray(tor.jugadores) || !tor.jugadores.length;
+      const previo = previos.get(String(tor.tnr));
+      return vacio && previo ? Object.assign({}, previo, { viejo: true }) : tor;
+    });
+  }
+
   // Cada pedido lleva su número: si se cambia de modalidad mientras uno va en
   // camino, lo que trae ya no se pinta ni se guarda como de la otra.
   let pedidos = 0;
@@ -423,7 +440,7 @@
         }
         const llego = MODALIDADES.includes(data.modalidad) ? data.modalidad : pidio;
         if (llego !== modalidad) { modalidad = llego; try { localStorage.setItem(CLAVE_MODALIDAD, JSON.stringify(llego)); } catch (e) {} }
-        datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString(), modalidad: llego });
+        datos = normalizar({ torneos: conLoDeAntes(data.torneos, datos && datos.modalidad === llego ? datos : guardados()), recibido: new Date().toISOString(), modalidad: llego });
         deGuardado = false;
         pruebaFallo = false;
         try { localStorage.setItem(claveGuardado(llego), JSON.stringify(datos)); } catch (e) {}

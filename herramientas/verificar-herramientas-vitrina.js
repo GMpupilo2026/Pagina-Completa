@@ -3,8 +3,8 @@
  *   - que el enlace de cada herramienta lleve a una página que existe;
  *   - que cada `imagen` exista, mida lo que dice (sin eso la página salta al
  *     cargarla) y tenga un `alt` que la describa;
- *   - que Notara, la cámara que lee el tablero, esté: gratis (no lleva
- *     licencia), en Arbitraje y abriendo camara-tablero.html.
+ *   - que Notara, la cámara que lee el tablero, esté: con licencia (todas
+ *     las herramientas la llevan), en Arbitraje y abriendo camara-tablero.html.
  * Sin navegador.
  *
  *   node herramientas/verificar-herramientas-vitrina.js
@@ -54,7 +54,7 @@ for (const h of conImagen) {
 
 console.log("\nNotara en la vitrina");
 const notara = LISTA.find((h) => h.id === "notara");
-igual("está, en Arbitraje, gratis y abriendo la cámara", notara && [notara.tema, !!notara.gratis, notara.disponible, notara.href, notara.corto], ["arbitraje", true, true, "camara-tablero.html", "Notara"]);
+igual("está, en Arbitraje, con licencia y abriendo la cámara", notara && [notara.tema, !!notara.gratis, notara.disponible, notara.href, notara.corto], ["arbitraje", false, true, "camara-tablero.html", "Notara"]);
 igual("con su imagen", !!(notara && notara.imagen), true);
 
 console.log(fallos ? "\n✗ " + fallos + " comprobaciones fallaron." : "\nLa lista de herramientas está como se pidió.");

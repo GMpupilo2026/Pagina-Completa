@@ -59,6 +59,8 @@ const VIGILADAS = [
   "metropolitano_codigos",
   "metropolitano_parqueo",
   "metropolitano_hospedaje",
+  "metropolitano_menu",
+  "metropolitano_menu_cocinas",
 ];
 
 let fallos = 0;
