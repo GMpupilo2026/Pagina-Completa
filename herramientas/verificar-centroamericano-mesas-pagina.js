@@ -321,7 +321,14 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las ilegales: la primera avisa, la segunda pierde ===");
     const acc = (m, color, a) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + color + '"] [data-accion="' + a + '"]';
     // Las tarjetas son SIEMPRE del mismo tamaño y de la misma forma: ninguna crece ni se corre cuando le pasa algo.
-    const medidas = () => p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    // En un CI lento a veces la tarjeta se mide en el instante en que la página se está repintando (todas en 0 × 0): se espera, hasta 8 s, a que
+    // tengan tamaño; si de verdad no lo tienen, el fallo dice por qué (la página escondida, el aviso de «no se pudo abrir», etc.).
+    const medidas = async () => {
+        await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
+            console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
+        });
+        return p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    };
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
@@ -465,16 +472,22 @@ const CONTRASTE = `(sel) => {
       ["✗ No ha llegado", 0, 6, "Han llegado 0 de 6 jugadores · faltan 6."]);
     await p.click(acc(2, "blancas", "presente"));
     await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
-    igual("«Llegó» se anota con la mesa y el color y se ve al instante; ese jugador queda «✓ Llegó» SIN su botón (con un «Corregir»), y los demás conservan el suyo",
-      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), j.querySelector(".cam-presencia-estado").textContent, vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), document.querySelectorAll('.cam-jugador [data-accion="presente"]').length]; }, jug("blancas")),
-      [[[2, "blancas", true]], "✓ Llegó", false, true, 5]);
-    await p.click(jug("blancas") + ' [data-accion="corregir-presencia"]');
-    await p.waitForSelector(acc(2, "blancas", "presente"));
-    igual("«Corregir» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»",
-      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => l.body.presente), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("blancas")),
-      [[true, false], "✗ No ha llegado", "Han llegado 0 de 6 jugadores · faltan 6."]);
-    await p.click(acc(2, "blancas", "presente"));
-    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
+    igual("«Llegó» se anota con la mesa y el color; ese jugador ya NO muestra nada de «Llegó» (ni icono ni botón: solo un «Deshacer» unos segundos y el texto para el lector de pantalla), y los demás conservan su botón",
+      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), !!j.querySelector(".cam-presencia-estado"), vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), j.querySelector('[data-accion="corregir-presencia"]').textContent, pr.querySelector(".sr-only").textContent, document.querySelectorAll('.cam-mesa [data-accion="presente"]').length]; }, jug("blancas")),
+      [[[2, "blancas", true]], false, false, true, "Deshacer", "✓ Llegó", 5]);
+    // Pasados unos segundos el «Deshacer» también se va: no queda nada de «Llegó» a la vista (y la cuenta de los demás no cambia).
+    await p.waitForFunction((q) => !document.querySelector(q + ' [data-accion="corregir-presencia"]'), jug("blancas"), { timeout: 20000 });
+    igual("a los 15 s el «Deshacer» desaparece y el bloque de quien llegó queda vacío a la vista (solo el texto del lector de pantalla); el resumen sigue en 1 de 6",
+      await p.evaluate((q) => { const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [[...pr.children].filter((c) => c.checkVisibility() && !c.classList.contains("sr-only")).length, pr.textContent, document.getElementById("presencia-resumen").textContent]; }, jug("blancas")),
+      [0, "✓ Llegó", "Han llegado 1 de 6 jugadores · faltan 5."]);
+    // Un toque equivocado en la mesa se deshace dentro de la ventana: se vuelve a marcar y se prueba el «Deshacer».
+    await p.click(acc(2, "negras", "presente"));
+    await p.waitForSelector(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.click(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.waitForSelector(acc(2, "negras", "presente"));
+    igual("«Deshacer» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»; el otro jugador sigue como estaba",
+      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.color, l.body.presente]), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("negras")),
+      [[["blancas", true], ["negras", true], ["negras", false]], "✗ No ha llegado", "Han llegado 1 de 6 jugadores · faltan 5."]);
     igual("cada mesa SIN terminar tiene su relojito (icono, sin texto y con su nombre accesible); las que ya tienen resultado, no", await p.evaluate(() => [[...document.querySelectorAll('.cam-mesa [data-accion="tiempo"]')].map((b) => [b.closest(".cam-mesa").dataset.mesa, b.textContent.trim(), !!b.querySelector("svg"), b.getAttribute("aria-label")]), document.querySelector('.cam-mesa[data-mesa="3"] [data-accion="tiempo"]')]),
         [[["2", "", true, "Control de tiempos de la mesa 2"]], null]);
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
@@ -1062,7 +1075,7 @@ const CONTRASTE = `(sel) => {
     await pe.click("dialog[open] [data-avisos-aceptar]");
     await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 6 de 6 jugadores.");
     igual("al aceptar la función recibe «presencia_todos» de la ronda 3, los 6 quedan «llegó», el botón se va y los cronómetros también", await pe.evaluate(() => [window.__todosArgs[0].ronda, document.getElementById("presencia-todos").hidden, document.querySelectorAll(".cam-cuenta").length, window.__presencia.every((x) => x.presente)]), [3, true, 0, true]);
-    // Se equivocó con la mesa 2 de las negras: «Corregir» la deja como que no ha llegado (y vuelve su cronómetro).
+    // Se equivocó con la mesa 2 de las negras: «Deshacer» (queda unos segundos también después de «llegaron todos») la deja como que no ha llegado (y vuelve su cronómetro).
     await pe.click(jugE(2, "negras") + ' [data-accion="corregir-presencia"]');
     await pe.waitForSelector(jugE(2, "negras") + " .cam-cuenta");
     // La ronda empezó hace 40 min: el tiempo de espera (30) se cumplió.
@@ -1156,6 +1169,77 @@ const CONTRASTE = `(sel) => {
         await fb.ctx.close();
     }
 
+    console.log("\n=== La ficha de la mesa, opción A (por ahora solo para Oscar Angulo) ===");
+    {
+        const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
+        const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
+        const formas = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await normal.p.waitForSelector(".cam-mesa");
+        const altoHoy = await altos(normal.p);
+        igual("con otro árbitro (Ana) la ficha es la de siempre: sin marca de ficha nueva y con el selector y «Guardar»", await normal.p.evaluate(() => [document.querySelectorAll('.cam-mesa[data-ficha]').length, !!document.querySelector('.cam-mesa [data-accion="guardar"]'), !!document.querySelector('.cam-mesa-marcas')]), [0, true, false]);
+        await normal.ctx.close();
+
+        const a = await abrir(browser, "centroamericano-arbitro.html", OSCAR, { hash: TOKEN, ancho: 820 });
+        const pa = a.p;
+        await pa.waitForSelector(".cam-mesa");
+        igual("para «Óscar Angulo Camacho» (con tilde y apellido de más) las tres mesas llevan la ficha nueva", await pa.$$eval(".cam-mesa", (l) => l.map((c) => c.dataset.ficha)), ["a", "a", "a"]);
+        const altoA = await altos(pa);
+        igual("la ficha nueva es más corta que la de siempre (al menos 80 px menos) y las tres miden lo mismo", [altoA.every((x, i) => altoHoy[i] - x >= 80), new Set(altoA).size], [true, 1]);
+        igual("el resultado son tres botones grandes (1-0, ½-½, 0-1), sin selector ni «Guardar» a la vista, y «Otro resultado» sigue ahí", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [[...c.querySelectorAll(".cam-rapido-btn")].map((b) => b.dataset.valor), c.querySelector('details.cam-rapido-otro').open, !!c.querySelector(".cam-rapido-otro summary")]; }), [["1", "2", "3"], false, true]);
+        igual("las acciones de cada jugador (llegó, se levantó, ilegal, irregularidad) y los tres iconos de la mesa siguen en la tarjeta", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return ["presente", "levanto", "ilegal", "irregularidad"].map((x) => c.querySelectorAll('.cam-jugador [data-accion="' + x + '"]').length).concat(["planilla", "hablar", "tiempo"].map((x) => c.querySelectorAll('[data-accion="' + x + '"]').length)); }), [2, 2, 2, 2, 1, 1, 1]);
+        igual("los botones de la ficha nueva se tocan con el dedo: 46 px o más", await pa.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] button')].filter((b) => b.checkVisibility() && !b.closest("summary")).every((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; })), true);
+        // La revisión previa de la ronda destraba el guardado de un toque.
+        await pa.evaluate(() => { window.__lista = ["relojes", "tableros"]; document.getElementById("actualizar").click(); });
+        await pa.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn').disabled);
+        const guardadasAntes = await pa.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
+        await pa.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"]');
+        await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"][aria-pressed="true"]');
+        igual("un toque en ½-½ GUARDA (una sola llamada) y el botón queda marcado", await pa.evaluate((n) => { const g = window.__llamadas.filter((l) => l.body.action === "guardar"); const c = g[g.length - 1].body.cambios; return [g.length - n, c.length, c[0].mesa, c[0].valor]; }, guardadasAntes), [1, 1, 1, "2"]);
+        igual("con un resultado que no tiene botón, no se esconde: se escribe «En chess-results: …»", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [!c.querySelector(".cam-resultado-actual")]; }), [true]);
+        // La primera ilegal: marca y «Anular» salen en la franja de las marcas y NADA cambia de tamaño.
+        const antesIl = await formas(pa);
+        await pa.click(acc(2, "blancas", "ilegal"));
+        await pa.waitForSelector("dialog[open] select");
+        await pa.selectOption("dialog[open] select", "enroque");
+        await pa.click("dialog[open] [data-avisos-aceptar]");
+        await pa.waitForSelector("dialog[open] [data-avisos-aceptar]");
+        await pa.click("dialog[open] [data-avisos-aceptar]");
+        await pa.waitForSelector('.cam-mesa[data-mesa="2"] .cam-mesa-marcas .cam-marca[data-tipo="ilegal"]');
+        igual("al anotar la primera ilegal NINGUNA tarjeta cambia de tamaño ni de forma", await formas(pa), antesIl);
+        igual("la marca y «Anular» van en la franja de la mesa, bajo el color de quien es; el otro jugador no deja ni el puntito; no queda una franja por jugador",
+            await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="2"]'); const g = (col) => c.querySelector('.cam-extra-grupo[data-color="' + col + '"]'); return [!!g("blancas").querySelector('.cam-marca[data-tipo="ilegal"]'), !!g("blancas").querySelector('[data-accion="anular-ilegal"]'), g("blancas").querySelector(".cam-color").dataset.color, getComputedStyle(g("negras")).display, c.querySelectorAll(".cam-jugador-extra").length, g("blancas").closest(".cam-mesa-avisos") !== null]; }),
+            [true, true, "blancas", "none", 0, true]);
+        await pa.click('.cam-mesa[data-mesa="2"] [data-accion="anular-ilegal"]');
+        await pa.waitForSelector("[data-avisos-aceptar]");
+        await pa.click("[data-avisos-aceptar]");
+        await pa.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="ilegal"]'));
+        igual("«Anular» desde la franja deshace la ilegal y la tarjeta sigue igual de grande", await formas(pa), antesIl);
+        igual("el aviso de la primera ilegal no se ve aparte (lo dice la marca), pero el lector de pantalla lo sigue teniendo", await (async () => {
+            await pa.click(acc(2, "blancas", "ilegal"));
+            await pa.waitForSelector("dialog[open] select");
+            await pa.selectOption("dialog[open] select", "enroque");
+            await pa.click("dialog[open] [data-avisos-aceptar]");
+            await pa.waitForSelector("dialog[open] [data-avisos-aceptar]");
+            await pa.click("dialog[open] [data-avisos-aceptar]");
+            await pa.waitForSelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave', { state: "attached" });
+            return pa.evaluate(() => { const n = document.querySelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave'); return [!n.querySelector(".cam-aviso-corto").checkVisibility(), /ilegal/i.test(n.querySelector(".sr-only").textContent)]; });
+        })(), [true, true]);
+        igual("la guía del tiempo de espera lleva el color del jugador (se encuentra aunque cambie de lugar)", /cam-cuenta-guia", "data-color": color/.test(fs.readFileSync("js/centroamericano-arbitro.js", "utf8")), true);
+        igual("sin errores en la página", a.errores, []);
+        await a.ctx.close();
+
+        const hoy = await abrir(browser, "centroamericano-arbitro.html?ficha=hoy", OSCAR, { hash: TOKEN, ancho: 820 });
+        await hoy.p.waitForSelector(".cam-mesa");
+        igual("«?ficha=hoy» le devuelve a Óscar la ficha de siempre (para comparar)", await hoy.p.evaluate(() => document.querySelectorAll(".cam-mesa[data-ficha]").length), 0);
+        await hoy.ctx.close();
+        const forzada = await abrir(browser, "centroamericano-arbitro.html?ficha=a", dobleArbitro(), { hash: TOKEN, ancho: 390 });
+        await forzada.p.waitForSelector(".cam-mesa");
+        igual("«?ficha=a» la enciende para otro enlace (para probarla), y en el celular (390 px) no se desplaza a lo ancho",
+            await forzada.p.evaluate(() => [document.querySelectorAll(".cam-mesa[data-ficha='a']").length, document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1]), [3, true]);
+        await forzada.ctx.close();
+    }
+
     console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
     {
         const fh = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
@@ -1167,6 +1251,17 @@ const CONTRASTE = `(sel) => {
         const llamadasTraducir = () => ph.evaluate(() => window.__llamadas.filter((l) => l.f === "centroamericano-traducir").length);
         const filasAnotar = () => ph.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Comunicado").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]));
         igual("cada mesa tiene su botón «Hablar con el jugador» con nombre accesible", await ph.$$eval('.cam-mesa [data-accion="hablar"]', (l) => l.map((b) => b.getAttribute("aria-label").startsWith("Hablar con el jugador de la mesa "))), [true, true, true]);
+
+        // Una mesa de Fair Play: sus frases van primero, con un aviso que lo dice; la de siempre empieza por «Al empezar».
+        igual("en una mesa de Fair Play el tema «Fair Play» va primero y lo dice; en una normal, va en su lugar y sin aviso", await ph.evaluate(() => {
+            const J = [{ color: "blancas", nombre: "A B", fed: "" }, { color: "negras", nombre: "C D", fed: "" }];
+            const primero = () => [document.querySelector("#hablar .cam-hb-tema").dataset.tema, !!document.querySelector("#hablar .cam-hb-fp-aviso")];
+            window.CentroamericanoHablar.abrir({ mesa: 9, jugadores: J, fairPlay: true });
+            const a = primero(); document.getElementById("hablar").close();
+            window.CentroamericanoHablar.abrir({ mesa: 9, jugadores: J });
+            const b = primero(); document.getElementById("hablar").close();
+            return [a, b];
+        }), [["fairplay", true], ["inicio", false]]);
 
         // Mesa 3: Hopkins (TTO, habla inglés) vs Baquero (FRA, francés).
         await ph.click('.cam-mesa[data-mesa="3"] [data-accion="hablar"]');

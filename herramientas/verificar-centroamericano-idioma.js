@@ -35,6 +35,11 @@ console.log("\n=== Las frases (js/centroamericano-frases.js) ===");
   igual("cada frase cuelga de un tema que existe", F.FRASES.filter((x) => !F.TEMAS.some((t) => t.id === x.tema)).map((x) => x.id), []);
   igual("toda regla citada parece un artículo de las Leyes (número, con puntos)", F.FRASES.filter((x) => x.art && !/^\d{1,2}(\.\d{1,2}){0,2}$/.test(x.art)).map((x) => x.id), []);
   igual("hay suficientes frases para los casos de la mesa (30 o más) y 9 respuestas del jugador", [F.FRASES.length >= 30, F.DEL_JUGADOR.length], [true, 9]);
+  const fp = F.FRASES.filter((x) => x.tema === "fairplay");
+  igual("hay un tema «Fair Play» con varias frases (5 o más)", [F.TEMAS.some((t) => t.id === "fairplay"), fp.length >= 5], [true, true]);
+  igual("la frase pedida está: «Deberá esperar sentado, ya que le corresponde revisión de Fair Play.» en los tres idiomas",
+    (() => { const x = F.FRASE.get("fp-esperar"); return [x.es, /remain seated/.test(x.en) && /Fair Play/.test(x.en), /rester assis/.test(x.fr) && /Fair Play/.test(x.fr)]; })(),
+    ["Deberá esperar sentado, ya que le corresponde revisión de Fair Play.", true, true]);
   // verificar-voseo.py se salta este archivo (trae francés e inglés, y sus «-é», «-és» no son voseo): el español se revisa aquí.
   igual("el español de las frases es de tuteo (nada de voseo)", todas.filter((x) => /\b(podés|tenés|querés|sentate|sentáte|apagá|guardalo|mirá|decime|esperá|levantá|vení|andá|escribí|tocá|poné|dejá|usá|pedí|avisá|fijate|acordate|quedate|callate)\b/i.test(x.es)).map((x) => x.id), []);
   igual("el francés usa los signos de su ortografía (espacio antes de «:», «?» y «!») donde los hay",

@@ -9659,19 +9659,68 @@ el sistema las mesas que no traen un rival sino un nombre raro**.
   cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
   pareos» y «¿Dónde juega?»).
 
+## La ficha de la mesa, opción A «tres toques» (Centroamericano, a prueba con un árbitro)
+
+Pedido del 5/11: una ficha de mesa «más bonita y eficiente». Se dibujaron cuatro opciones (A «tres toques», B «duelo» con los dos jugadores
+lado a lado, C «lista» con una fila por mesa y D «un paso a la vez») y el dueño eligió **la A**, **para probarla solo con el árbitro Oscar
+Angulo** antes de darla a todos.
+
+- **Quién la ve.** `fichaA()` en `js/centroamericano-arbitro.js`: el nombre del árbitro (`estado.arbitro`) trae todas las palabras de
+  `FICHA_A` (hoy `"oscar angulo"`; sin tildes ni mayúsculas, así que «Óscar Angulo Camacho» sirve). Para sumar a otro árbitro se agrega su
+  nombre a esa lista. **`?ficha=a`** después de la dirección la enciende para cualquier enlace (probarla, o enseñarla); **`?ficha=hoy`** le
+  devuelve a quien está en la lista la de siempre (para comparar). El resto de los árbitros no ve ninguna diferencia.
+- **Qué cambia** (la tarjeta lleva `data-ficha="a"`): la tablet pasa de 662 a ~546 px de alto (−17 %, medido con 820 px de ancho).
+  1. El resultado son **tres botones grandes (1-0, ½-½, 0-1) que guardan de un toque**: es el mismo `resultadoRapido` del Rápido y Blitz;
+     «Otro resultado (a mano)» sigue con el selector y «Guardar». Cambiar un resultado ya guardado sigue preguntando antes (lo hace
+     `guardar()`), y el guardado sigue esperando la revisión previa de la ronda. «En chess-results: …» solo se escribe cuando el resultado no
+     tiene botón (una incomparecencia, etc.); si no, la cabecera dice si hay resultado y el botón guardado se ve marcado.
+  2. **Las marcas (ilegal, irregularidad, se levantó) y los «Anular» de los dos jugadores van juntos en UNA franja** (`franjaMarcas`,
+     `.cam-mesa-marcas`), con un puntito del color de cada jugador (y «Blancas:» / «Negras:» para el lector de pantalla), en vez de una
+     franja reservada por jugador. Esa franja vive **dentro** de la zona reservada de los avisos (3,1 rem, lo que mide un botón «Anular»):
+     **anotar una ilegal no mueve ninguna tarjeta** (lo comprueba la prueba). El aviso de la primera ilegal ya no se escribe aparte (lo dice la
+     marca y el cuadro que sale al anotar); el texto completo sigue ahí para el lector de pantalla. La guía «se acabó el tiempo de espera»
+     lleva `data-color` para encontrarla aunque cambie de lugar.
+  3. Menos aire: cabecera, jugadores, resultado y fila de iconos con menos relleno; el nombre ya no reserva siempre dos líneas.
+- **Lo que NO cambia**: las funciones (llegó, se levantó, ilegal, irregularidad, foto, hablar, tiempos, pedir al principal), los botones de 46 px,
+  los colores ya medidos, Fair Play, las bandas de la segunda ilegal. Lo que queda por evaluar con el árbitro: si el guardado de un toque lo
+  equivoca más (se puede «Anular»/corregir) y si le sirve el espacio ganado.
+- **Si funciona**, darla a todos es quitar el `if` de `fichaA()` (y borrar la ficha vieja y `FICHA_A`); si no, se quita el nombre de la lista.
+  Si se quiere ganar más, la C (una fila por mesa) es la opción pendiente.
+- Lo revisa `verificar-centroamericano-mesas-pagina.js` (bloque «La ficha de la mesa, opción A»: solo Óscar la ve, mide menos y las tres
+  igual, los tres botones guardan de un toque, las acciones y los iconos siguen, 46 px, la marca y «Anular» en la franja sin mover nada,
+  `?ficha=hoy` y `?ficha=a`, el celular sin desplazarse a lo ancho).
+
+## «Llegó» desaparece cuando ya llegó (Centroamericano, 5/11)
+
+Pedido: una vez marcado que el jugador llegó, **no se ve nada de «Llegó»**; el botón solo está mientras NO ha llegado, y mientras no ha llegado
+corre su tiempo de espera, nada más. `bloquePresencia` (en todas las fichas, la de siempre y la A): sin llegar, el icono ✗ y el botón «Llegó»
+(más el cronómetro de espera junto al nombre, como antes); ya llegó, el bloque queda **vacío a la vista** (solo el texto «✓ Llegó» para el lector
+de pantalla). Antes quedaba un ✓ y un botón «Corregir» siempre.
+
+- **Un toque equivocado** (decisión de diseño, a confirmar con el dueño): durante **15 segundos** (`VENTANA_DESHACER_MS`) queda un botón
+  «Deshacer» (`data-accion="corregir-presencia"`, el mismo de antes); pasado ese rato desaparece. También después de «Marcar que llegaron
+  todos» (cada uno queda con su «Deshacer» esos segundos). Pasado ese tiempo, corregirlo es pedirle a la organización. Si se quisiera poder
+  corregir siempre, habría que dar otra puerta discreta (por ejemplo, mantener tocado el nombre).
+- Lo revisa `verificar-centroamericano-mesas-pagina.js`: quien llegó no muestra icono ni botón (solo «Deshacer» y el texto del lector de
+  pantalla), a los 15 s no queda nada visible, «Deshacer» lo devuelve a «no ha llegado» con su botón, y el resumen sigue contando bien.
+
 ## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
 
 Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
 diálogo en cada mesa (`centroamericano-arbitro.html`, junto a la cámara y el reloj) abre `js/centroamericano-hablar.js`, con tres cosas:
 
 - **Frases fijas** (pestaña «Frases», `js/centroamericano-frases.js`). Unas 40 frases del arbitraje (al empezar, el reloj, las piezas, la
-  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, respuestas rápidas), cada una **escrita una vez en español,
+  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, **Fair Play**, respuestas rápidas), cada una **escrita una vez en español,
   inglés y francés** con la regla de las Leyes que la respalda (`art`). El árbitro toca la frase en español y la tablet le muestra al
   jugador la suya, **en grande y a pantalla completa**, con el original en español debajo «para el árbitro» y «Leer en voz alta»
   (`speechSynthesis`, con el idioma de la frase). **No pasan por el traductor**: no pueden decir algo distinto de la regla y funcionan sin
   internet. Nuevas frases: agregar un `f(...)` con los tres idiomas; `verificar-centroamericano-idioma.js` falla si falta un idioma, si se
   repite un id o si los números (minutos, resultados) no cuadran. **Las revisa una persona que domine inglés y francés antes del torneo**:
   la terminología sigue la de las Leyes de FIDE, pero no hay un revisor humano todavía.
+- **Fair Play** (tema propio, 6 frases, hablándole de usted como el aviso de la organización): «Deberá esperar sentado, ya que le corresponde
+  revisión de Fair Play.», «Al terminar su partida, no se retire…», «El encargado de Fair Play vendrá a revisarlo…», «Es una revisión al azar, de
+  rutina…», «No se levante ni use aparatos electrónicos…» y «La revisión de Fair Play terminó…». **Si la mesa fue elegida para Fair Play, ese
+  tema sale primero** (con un aviso que lo dice).
 - **El idioma se sugiere por el país del jugador**: la federación (la banderita, ver «Banderas y mesas sin rival») decide inglés o francés
   (`idiomaDeFed`; países de habla francesa, de habla inglesa y el Caribe anglófono). Lo desconocido, la región hispana y Surinam, Aruba y
   Curazao empiezan en inglés pero el árbitro cambia con un toque. Se cambia siempre a mano también: la sugerencia nunca es la última palabra.
