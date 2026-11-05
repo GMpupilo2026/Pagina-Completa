@@ -75,3 +75,5 @@ ok(/old\.ventaja_max_cp\)\s+on conflict/.test(sql), "el intento guardado se llev
 
 console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron` : "\n✓ Todo bien");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

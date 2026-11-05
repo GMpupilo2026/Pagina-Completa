@@ -68,3 +68,5 @@ if (!fallos) bien("«Deshacer» solo la jugada propia y «Jugar desde aquí» so
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

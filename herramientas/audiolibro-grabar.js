@@ -290,3 +290,5 @@ if (require.main === module) {
     console.log(`La autorización: ${path.relative(process.cwd(), c)}`);
   })().catch((e) => { console.error(e.message); process.exit(1); });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

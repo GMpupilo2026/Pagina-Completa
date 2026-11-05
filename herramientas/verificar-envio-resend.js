@@ -96,3 +96,5 @@ cierto("las dos lo despliegan (funciones-armar.js)",
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: un correo que no llegó ya no pasa por enviado.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

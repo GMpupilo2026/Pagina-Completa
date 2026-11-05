@@ -295,3 +295,5 @@ def limpiar_metadatos(ruta):
     with zipfile.ZipFile(ruta) as z:
         for nombre in z.namelist():
             assert b"python-docx" not in z.read(nombre), nombre
+
+# rev bfb5bbb0d2d82f9f

@@ -373,3 +373,5 @@ async function main() {
    reglas para decidir que una posición tiene UNA sola respuesta buena. */
 module.exports = { analizar, elegirDistractores, sanEs, lineaEs, valor, motivo, jugar, uciAMov, refutacion, PROFUNDIDAD };
 if (require.main === module) main();
+
+/*! rev bfb5bbb0d2d82f9f */

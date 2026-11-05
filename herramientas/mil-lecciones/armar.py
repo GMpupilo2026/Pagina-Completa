@@ -245,3 +245,5 @@ if __name__ == '__main__':
     import collections
     c = collections.Counter(it['tipo'] for l in res for it in l['items'])
     print(c, sum(1 for l in res if l['que_veras']), sum(1 for l in res if l['conclusiones']))
+
+# rev bfb5bbb0d2d82f9f

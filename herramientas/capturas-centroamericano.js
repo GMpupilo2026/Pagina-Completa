@@ -132,3 +132,5 @@ function dobleConEjemplo() {
     sitio.cerrar();
     if (errores.length) { console.error("Errores en la página:\n" + errores.join("\n")); process.exit(1); }
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

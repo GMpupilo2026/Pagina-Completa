@@ -224,3 +224,5 @@ def clasificar(nombre, organizador, lugar, inicio, clave=""):
         "modalidad": "Equipos" if re.search(r"equipo|por eq|team|\beq\b", t) else "Individual",
         "ritmo": "Blitz o rápido" if re.search(r"blitz|rapid|rapido", t) else "Clásico",
     }
+
+# rev bfb5bbb0d2d82f9f

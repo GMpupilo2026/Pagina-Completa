@@ -696,3 +696,5 @@ function pruebaNotacionEspanola() {
   console.log(fallos ? `\n${fallos} fallo(s)` : "\nLos cursos se pueden recorrer con lector de pantalla.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -205,3 +205,5 @@ REFERENCIAS = [
     "Russek, G. Manual 4: Partidas selectas. Nivel 4.",
     "Russek, G. Manual 5: Ejercicios tácticos. Nivel 5.",
 ]
+
+# rev bfb5bbb0d2d82f9f

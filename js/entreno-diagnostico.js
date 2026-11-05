@@ -1345,3 +1345,5 @@ init();
    y el número de fila a la izquierda, para que se entienda hacia dónde avanza la
    posición. Se repintan solas cada vez que la página redibuja el tablero. */
 if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('q-board'));
+
+/*! rev bfb5bbb0d2d82f9f */

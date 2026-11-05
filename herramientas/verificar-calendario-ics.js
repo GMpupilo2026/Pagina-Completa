@@ -94,3 +94,5 @@ igual("sin nada, el archivo no trae eventos", Cal.armar({ ahora: AHORA }).evento
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nEl calendario sale bien armado.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

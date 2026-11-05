@@ -316,3 +316,5 @@ if (document.getElementById("equipos-armar-btn")) {
     });
     document.getElementById("equipos-profe").addEventListener("toggle", (e) => { if (e.target.open) pintarEquiposProfe(); });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

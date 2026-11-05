@@ -129,3 +129,5 @@ for ruta in sorted(glob.glob("articulos/*.html")):
     articulos += 1
 
 print(f"portada + catálogo · {len(cursos)} cursos · {articulos} artículos")
+
+# rev bfb5bbb0d2d82f9f

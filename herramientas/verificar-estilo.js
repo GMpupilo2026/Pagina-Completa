@@ -217,3 +217,5 @@ if (fallas.length) {
   process.exit(1);
 }
 console.log("✓ Prueba de estilo: " + items.length + " preguntas (" + ejes.map((e) => e + " " + POR_EJE[e]).join(", ") + "), comprobadas");
+
+/*! rev bfb5bbb0d2d82f9f */

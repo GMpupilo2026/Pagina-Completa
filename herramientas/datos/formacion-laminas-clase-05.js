@@ -157,3 +157,5 @@ module.exports = [
     { ic: "📚", t: "Tarea", s: "propuesta logística breve para un torneo de tu región: inscripción, espacios, materiales y personal" },
     { ic: "👋", t: "¿Dudas?", s: "este es el momento. ¡Gracias por participar!" } ] },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

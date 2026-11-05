@@ -1083,3 +1083,5 @@
   ClasesBoard.DEFAULT_MARK_COLOR = DEFAULT_MARK_COLOR;
   window.ClasesBoard = ClasesBoard;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

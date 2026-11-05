@@ -201,3 +201,5 @@
 
     window.EquipoVolcar = { montar: montar, planear: planear, gruposDe: gruposDe, frase: frase, norm: norm };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

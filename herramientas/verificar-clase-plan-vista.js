@@ -137,3 +137,5 @@ async function pruebaVerTodas(browser) {
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

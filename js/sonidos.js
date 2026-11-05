@@ -98,3 +98,5 @@
 
   window.Sonidos = { tocar, encendido, poner, boton, historial };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

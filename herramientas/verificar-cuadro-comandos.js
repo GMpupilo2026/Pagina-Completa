@@ -979,3 +979,5 @@ async function prueba4x4Normal(browser) {
   console.log(fallos ? `\n${fallos} fallo(s)` : "\nTodo se puede contestar sin tocar el tablero.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

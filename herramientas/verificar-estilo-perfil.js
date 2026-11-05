@@ -497,3 +497,5 @@ console.log("\n=== 11. Por qué: sus propias jugadas ===");
 
 if (fallos) { console.log(`\n✗ ${fallos} comprobación(es) fallaron.`); process.exit(1); }
 console.log("\n✓ La medición, la recomendación y las partidas de la prueba de estilo dicen lo que saben.");
+
+/*! rev bfb5bbb0d2d82f9f */

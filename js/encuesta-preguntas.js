@@ -75,3 +75,5 @@ window.EncuestaPreguntas = (function () {
 
     return { PREGUNTAS, SEGUIR, mesActual, nota, lectura, textoSeguir };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

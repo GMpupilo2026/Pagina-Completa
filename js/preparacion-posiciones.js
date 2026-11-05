@@ -276,3 +276,5 @@
 
   return { inicial, aplicar, clave, piezas, desdeFen, valorPiezas, cuantasPiezas, esFinal, tipoDeFinal };
 });
+
+/*! rev bfb5bbb0d2d82f9f */

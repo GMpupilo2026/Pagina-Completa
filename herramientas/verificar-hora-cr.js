@@ -127,3 +127,5 @@ if (errores.length) {
   process.exit(1);
 }
 console.log("✓ Todas las fechas y horas dicen su zona: la de Costa Rica.");
+
+/*! rev bfb5bbb0d2d82f9f */

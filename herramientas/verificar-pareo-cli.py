@@ -120,3 +120,5 @@ with tempfile.TemporaryDirectory() as tmp:
 
 print(f"\n{fallos} comprobaciones fallaron" if fallos else "\nTodo bien")
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

@@ -118,3 +118,5 @@ async function pruebaAlumna(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: las jugadas del tablero de verdad entran a la clase.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -312,3 +312,5 @@
   raiz.APRENDE_CATEGORIAS = CATEGORIAS;
   if (typeof module !== "undefined" && module.exports) module.exports = { ETAPAS, CATEGORIAS };
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

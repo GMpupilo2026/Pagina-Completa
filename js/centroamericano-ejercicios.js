@@ -457,3 +457,5 @@
 
   window.CentroamericanoEjercicios = { cargar: () => cargar(true), abrir: (r, i) => { rondaVista = r; abrir(r, i); } };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

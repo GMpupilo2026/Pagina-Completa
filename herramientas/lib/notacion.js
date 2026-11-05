@@ -203,3 +203,5 @@ function sanEspanol(san) { return aEspanol(String(san), "ingles"); }
 function sanHablada(san) { return hablada(String(san), "ingles"); }
 
 module.exports = { origenDe, textoEspanol, textoHablado, sanEspanol, sanHablada, ensenaNotacion, INGLESA, ESPANOLA };
+
+/*! rev bfb5bbb0d2d82f9f */

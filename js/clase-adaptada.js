@@ -383,3 +383,5 @@ window.ClaseAdaptada = (function () {
     numerarJugadas: numerarJugadas, describirVista: describirVista,
     vigiaDeMarcas: vigiaDeMarcas, casillaDicha: casillaDicha };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

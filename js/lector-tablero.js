@@ -340,3 +340,5 @@
 
     global.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, mezclarCal, cambiarCoronacion, deducirCoronacion, diferentes, casilla };
 })(typeof self !== "undefined" ? self : this);
+
+/*! rev bfb5bbb0d2d82f9f */

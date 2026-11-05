@@ -160,3 +160,5 @@ function trocear(css) {
   console.log(`Hoja escrita en css/fuentes.css`);
   console.log("\nAhora: node herramientas/fuentes-metricas.js  (calcula los respaldos)");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

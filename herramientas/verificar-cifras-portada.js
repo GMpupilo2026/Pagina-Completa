@@ -101,3 +101,5 @@ const miles = (n) => n.toLocaleString("es-CR");
   console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas cifras de la portada salen de las funciones y aguantan que fallen.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

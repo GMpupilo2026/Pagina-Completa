@@ -92,3 +92,5 @@ function prueba(version, quiere) {
   if (fallos) { console.log(`\n✗ ${fallos} comprobación(es) fallaron.`); process.exit(1); }
   console.log("\n✓ La ficha en PDF de la prueba de estilo dice lo que dice la pantalla.");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

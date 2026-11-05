@@ -116,3 +116,5 @@
 
     global.CentroamericanoMisPareos = { abrir, rondasDe, deRonda, estado: () => ultima };
 })(window);
+
+/*! rev bfb5bbb0d2d82f9f */

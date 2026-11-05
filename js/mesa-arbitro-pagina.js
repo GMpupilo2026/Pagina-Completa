@@ -415,3 +415,5 @@
 
     init().catch((e) => { $("loading").classList.add("hidden"); avisar("No se pudo abrir la herramienta: " + (e.message || e), true); });
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -474,3 +474,5 @@ if __name__ == "__main__":
                 z.write(r, os.path.join("Programas de Estudio de Ajedrez", os.path.basename(r)))
         manifiesto(grados)
     print(len(rutas), "documentos en", SALIDA)
+
+# rev bfb5bbb0d2d82f9f

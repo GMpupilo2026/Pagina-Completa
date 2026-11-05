@@ -83,11 +83,13 @@ function armar() {
   });
 }
 
+// Con el sello escondido puesto (herramientas/lib/sello.js): volver a generar
+// el banco no se lo borra.
 function texto(banco) {
-  return "/* «La partida perdida»: el banco de retos (partida-perdida.html).\n" +
+  return require("./lib/sello").estampar("/* «La partida perdida»: el banco de retos (partida-perdida.html).\n" +
     "   LO GENERA herramientas/partida-perdida-generar.js: no se edita a mano.\n" +
     "   Cada `posicion` la calculó chess.js jugando `solucion` desde la salida. */\n" +
-    "window.PARTIDA_PERDIDA = " + JSON.stringify(banco, null, 1) + ";\n";
+    "window.PARTIDA_PERDIDA = " + JSON.stringify(banco, null, 1) + ";\n", "banco.js");
 }
 
 if (require.main === module) {
@@ -96,3 +98,5 @@ if (require.main === module) {
   console.log(`Escrito ${path.relative(process.cwd(), destino)} con ${RETOS.length} retos.`);
 }
 module.exports = { armar, texto, RETOS };
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -241,3 +241,5 @@ async function pruebaPuntosDelMes(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: la clase se limpia al cerrar, avisa en voz, se maneja desde el celular y suma el mes.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

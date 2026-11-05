@@ -59,3 +59,5 @@ igual("con su imagen", !!(notara && notara.imagen), true);
 
 console.log(fallos ? "\n✗ " + fallos + " comprobaciones fallaron." : "\nLa lista de herramientas está como se pidió.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -137,3 +137,5 @@
     if (typeof window !== "undefined") window.RetoEjercicios = api;
     if (typeof module !== "undefined") module.exports = api;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -25,3 +25,5 @@ def direccion(ruta):
     if ruta.endswith(".html"):
         return SITIO + "/" + ruta[: -len(".html")]
     return SITIO + "/" + ruta
+
+# rev bfb5bbb0d2d82f9f

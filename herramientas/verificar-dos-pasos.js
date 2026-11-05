@@ -249,3 +249,5 @@ const ruta = (page) => new URL(page.url()).pathname;
   console.log("  ✗ la prueba se cortó: " + e.message.split("\n")[0]);
   process.exit(1);
 });
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -1194,3 +1194,5 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-grupo-ritmo[data-ritmo="blitz"] th { background: var(--cac-morado-hondo); }
 .cam-ritmo-nota { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--cac-morado-hondo); }
 .dark .cam-ritmo-nota { color: #dfe0f7; }
+
+/*! rev bfb5bbb0d2d82f9f */

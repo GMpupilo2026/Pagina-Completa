@@ -269,3 +269,5 @@ window.ResumenClase = (function () {
     return { cargar, cargarConPuntos, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, textoTurnos, pintarUltimaClaseDelAlumno,
         cargarSalida, veredictoSalida, pintarSalida };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

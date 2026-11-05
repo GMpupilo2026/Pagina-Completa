@@ -181,3 +181,5 @@ ok("el instalador pasa al script solo opciones que existen, con --vigilar y --re
 
 print("\n" + ("Todo bien." if not fallos else f"{fallos} fallo(s)."))
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

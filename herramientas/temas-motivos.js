@@ -33,3 +33,5 @@ if (require.main === module) {
   fs.writeFileSync(module.exports.DESTINO, armar());
   console.log("entreno/data/temas-motivos.json: " + Object.keys(JSON.parse(armar())).length + " motivos.");
 }
+
+/*! rev bfb5bbb0d2d82f9f */

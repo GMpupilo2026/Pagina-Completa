@@ -206,3 +206,5 @@ function python(guion, args, queHacia) {
     ? `\n${hechos} lecciones · ${hechos} archivos accesibles (el PDF no se tocó)`
     : `\n${hechos} lecciones · ${hechos * 2} archivos · ${paginas} páginas de PDF`);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

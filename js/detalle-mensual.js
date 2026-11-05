@@ -149,3 +149,5 @@ window.DetalleMensual = (function () {
 
     return { pintar, duracion, dondeDe, fecha, csv };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

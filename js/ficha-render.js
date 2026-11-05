@@ -245,3 +245,5 @@ window.FichaRender = (function () {
 
   return { crear, jugadasDe, lineaDe };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

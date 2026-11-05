@@ -91,3 +91,5 @@ if (ids.length) {
   if (fuera.length) console.log(`Ojo: ${fuera.length} mates que ya no están en mates.json.`);
 }
 console.log(`\nEscrito ${path.relative(RAIZ, SALIDA)}.`);
+
+/*! rev bfb5bbb0d2d82f9f */

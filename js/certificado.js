@@ -129,3 +129,5 @@ window.Certificado = (function () {
   iniciar();
   return { enlace, CODIGO_RE };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

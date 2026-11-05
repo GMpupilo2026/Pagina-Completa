@@ -128,3 +128,5 @@ async function pruebaDesdeElElegido(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: las notas rápidas de la clase llevan la clase y la posición.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

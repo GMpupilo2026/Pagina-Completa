@@ -131,3 +131,5 @@ LESSONS.forEach((l) => {
 console.log(`\n${alternativas} jugadas más cumplen el motivo en algún ejercicio de táctica: la página también las acepta.`);
 console.log(fallos ? `\n✗ ${fallos} problema(s) en ${revisados} ejercicios.` : `\n✓ Todo bien: ${revisados} ejercicios revisados.`);
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -155,3 +155,5 @@ const ClaseCamara = (function () {
     return { montar, faltan };
 })();
 window.ClaseCamara = ClaseCamara;
+
+/*! rev bfb5bbb0d2d82f9f */

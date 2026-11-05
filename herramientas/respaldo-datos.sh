@@ -89,3 +89,5 @@ echo "Conviene guardar una copia FUERA de esta computadora: un respaldo que vive
 echo "mismo lugar que lo respaldado no es un respaldo."
 echo
 echo "Los archivos de Storage NO están en este volcado: node herramientas/respaldo-storage.js"
+
+# rev bfb5bbb0d2d82f9f

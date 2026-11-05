@@ -642,3 +642,5 @@ if (require.main === module) {
   const n = LISTOS.reduce((a, c) => a + c.preguntas.length, 0);
   console.log("herramientas/cuestionarios/semilla.sql: " + LISTOS.length + " cuestionarios, " + n + " preguntas.");
 }
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -180,3 +180,5 @@ console.log("\nEn pantalla, las jugadas en algebraica española");
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas preguntas de ataque y de la partida contestan lo que hay.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

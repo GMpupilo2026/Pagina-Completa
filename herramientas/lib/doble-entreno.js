@@ -102,3 +102,5 @@ async function abrir(browser, ruta, tablas, local, preparar) {
   return { page, ctx, errores };
 }
 module.exports = { clienteFalso, abrir, BASE };
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -11,3 +11,5 @@
     // Sola, pero con `replace` para no dejar esta página en el historial: quien
     // le dé "atrás" tiene que volver a donde venía, no rebotar de nuevo acá.
     window.location.replace('temas.html');
+
+/*! rev bfb5bbb0d2d82f9f */

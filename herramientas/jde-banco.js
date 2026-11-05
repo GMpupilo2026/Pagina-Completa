@@ -259,3 +259,5 @@ if (require.main === module) {
     console.log("data/jde-banco.json escrito.");
   }
 }
+
+/*! rev bfb5bbb0d2d82f9f */

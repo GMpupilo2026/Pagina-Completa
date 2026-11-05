@@ -156,3 +156,5 @@
   });
   window.PieceStyleThemes = { THEMES, getPreference, setPreference, esDibujado, porOmisionDeLaCuenta, CORTE_ALUMNOS };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

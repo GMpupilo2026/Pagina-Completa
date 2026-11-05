@@ -224,3 +224,5 @@ document.getElementById("planilla-resultados")?.addEventListener("click", (e) =>
 document.getElementById("planilla-limpiar-btn")?.addEventListener("click", () => {
     if (planillaActual) guardarPlanilla({ ...planillaActual, tablas: [], resultado: "" });
 });
+
+/*! rev bfb5bbb0d2d82f9f */

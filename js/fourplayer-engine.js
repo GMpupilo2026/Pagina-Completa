@@ -578,3 +578,5 @@
 
   window.FourPlayerChess = { Game, SEATS, TURN_ORDER, TEAMMATE, isOnBoard, sq, parseSq, nombre, localRank, SEAT_INFO, PIECE_VALUE };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

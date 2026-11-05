@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 1B6oB de la base abierta de Lichess (CC0), rating 2470. Stockfish 16 a profundidad 18: c7 es la mejor (+4,9) y la segunda queda en -0,6.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -2406,3 +2406,5 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     comprobado: 'Ejercicio 2i7ZP de la base abierta de Lichess (CC0), rating 2386. Stockfish 16 a profundidad 18: Dc4+ es la mejor (+4,3) y la segunda queda en -0,2.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

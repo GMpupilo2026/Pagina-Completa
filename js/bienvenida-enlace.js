@@ -15,3 +15,4 @@
            como "no hay sesión" a secas y la página no podría decir por qué. */
         window.__entrada = { hash: window.location.hash || "", busqueda: window.location.search || "" };
     
+/*! rev bfb5bbb0d2d82f9f */

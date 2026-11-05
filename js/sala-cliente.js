@@ -31,3 +31,5 @@ if (!window.sbSala) {
     auth: { storageKey: "sb-sala-auth", persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

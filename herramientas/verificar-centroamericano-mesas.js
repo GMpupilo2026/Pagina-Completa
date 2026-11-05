@@ -624,3 +624,5 @@ console.log("\n=== El reloj que se apagó (art. 6.10): el último control, el in
 
 console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

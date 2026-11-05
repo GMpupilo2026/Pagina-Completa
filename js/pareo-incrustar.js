@@ -94,3 +94,5 @@
     " · Se pone al día solo cada minuto."));
   caja.replaceChildren(...partes);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

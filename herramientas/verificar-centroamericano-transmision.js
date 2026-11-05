@@ -182,3 +182,5 @@ ok("cada aviso se registra una sola vez por pantalla", /registrados\.has\(y\.x\.
 
 console.log((fallas ? "✗ " : "✓ ") + (pruebas - fallas) + " de " + pruebas + " pruebas del encargado de transmisión");
 process.exit(fallas ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

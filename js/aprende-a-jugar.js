@@ -534,3 +534,5 @@
   // Las letras y los números del borde (js/coordenadas-tablero.js).
   if (window.Coordenadas) Coordenadas.aplicar(tableroEl);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

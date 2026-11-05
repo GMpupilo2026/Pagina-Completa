@@ -144,3 +144,5 @@
   const api = { descargar, contarPartidas, primeras, cuentasDe, unirCuentas, USUARIO_VALIDO, ultimoTexto: "" };
   window.PreparacionDescarga = api;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

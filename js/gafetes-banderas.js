@@ -83,3 +83,5 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.GafetesBanderas = api;
 })(typeof window !== "undefined" ? window : this);
+
+/*! rev bfb5bbb0d2d82f9f */

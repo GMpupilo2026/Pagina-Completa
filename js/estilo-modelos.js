@@ -12,3 +12,5 @@
   raiz.EstiloModelos = MODELOS;
   if (typeof module !== "undefined" && module.exports) module.exports = MODELOS;
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

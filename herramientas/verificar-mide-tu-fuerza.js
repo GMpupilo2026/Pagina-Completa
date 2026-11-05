@@ -127,3 +127,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log(`✓ «Mide tu fuerza», ${VOLUMENES.length} volumen(es): ${BANCOS.map((b) => b.ITEMS.length).join(" + ")} posiciones en tests de ${POR_TEST}, legales, sin repetir entre volúmenes, con sus soluciones y su versión accesible.`);
+
+/*! rev bfb5bbb0d2d82f9f */

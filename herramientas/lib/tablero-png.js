@@ -26,3 +26,5 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
   }
   await navegador.close();
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

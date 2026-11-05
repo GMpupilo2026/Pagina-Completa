@@ -539,3 +539,5 @@ module.exports = {
     "Los datos de los estudios se cuentan como los presenta el autor, sin volver a comprobarlos. Nada de lo que aquí se dice sobre salud, alimentación o suplementos reemplaza la opinión de un profesional de la salud.",
   ],
 };
+
+/*! rev bfb5bbb0d2d82f9f */

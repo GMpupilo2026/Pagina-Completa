@@ -208,3 +208,5 @@ console.log("  ✓ " + comprobadas + " posiciones de apertura salen de jugar su 
 
 console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: los planes de arranque y los de los proyectos se pueden dar tal cual.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

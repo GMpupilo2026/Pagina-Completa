@@ -300,3 +300,5 @@ window.Coordenadas = (function () {
 
   return { aplicar, pintar: (tablero) => tablero && tablero.__coordenadas && posicionar(tablero, tablero.__coordenadas) };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -1797,3 +1797,5 @@ if (!SOLO) (async () => {
   Object.keys(datos).filter((k) => k !== "fuente").forEach((k) => console.log(k.padEnd(14), JSON.stringify(cuenta(datos[k]))));
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

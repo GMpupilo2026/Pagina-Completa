@@ -95,3 +95,5 @@
 
   window.TableroFen = { INICIAL, piezas, dibujar, ajustar, describir };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

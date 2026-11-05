@@ -42,3 +42,5 @@ window.OSCAR_ELO_CALIB = {
     "n_games": 544
   }
 };
+
+/*! rev bfb5bbb0d2d82f9f */

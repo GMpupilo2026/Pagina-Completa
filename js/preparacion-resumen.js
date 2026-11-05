@@ -467,3 +467,5 @@
 
   return { armar, comoLeVa, jugadaNumerada, derrotasEn, mismoRitmo };
 });
+
+/*! rev bfb5bbb0d2d82f9f */

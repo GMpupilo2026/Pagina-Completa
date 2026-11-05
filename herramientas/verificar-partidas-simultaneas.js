@@ -1064,3 +1064,5 @@ async function ronda4(browser, nombre, MESAS, red, limites) {
   if (fallos) { console.log("\n" + fallos + " comprobación(es) fallaron."); process.exit(1); }
   console.log("\nTodo bien: " + PARTIDAS + " partidas a la vez, sin jugadas perdidas.");
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

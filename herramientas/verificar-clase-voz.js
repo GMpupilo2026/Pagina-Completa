@@ -185,3 +185,5 @@ async function empujar(page, f) {
   console.log(total ? "\n" + total + " fallo(s)." : "\nTodo bien: la clase se oye con «Activar voz».");
   process.exit(total ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

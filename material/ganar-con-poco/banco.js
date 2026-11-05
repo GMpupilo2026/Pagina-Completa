@@ -2176,3 +2176,5 @@ window.GANAR_CON_POCO_ITEMS = [
     comprobado: 'Ejercicio 0yUTj de la base abierta de Lichess (CC0), rating 2393. Stockfish 16 a profundidad 18: Axb4 es la mejor (+7,1) y la segunda queda en -5,0.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

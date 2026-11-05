@@ -146,3 +146,5 @@ window.EntrenoProgress = (function () {
 
   return { init, log, estrellasDeLaRonda, comoSalio, volver, hasSession: () => !!userId };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

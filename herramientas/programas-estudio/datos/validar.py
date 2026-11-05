@@ -63,3 +63,5 @@ rep = {t for t in temas if temas.count(t) > 1}
 if rep: err.append(f"temas repetidos idénticos: {list(rep)[:5]}")
 print(f"palabras por día: mín {min(palabras)}, media {sum(palabras)//len(palabras)}, máx {max(palabras)}; flex {flex}; tareas {tareas}")
 print("\n".join(err) if err else "OK")
+
+# rev bfb5bbb0d2d82f9f

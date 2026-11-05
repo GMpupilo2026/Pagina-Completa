@@ -987,3 +987,5 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
 .cac-cuenta-datos dt::after { content: ": "; }
 .cac-cuenta-datos dd { display: inline; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 800; word-break: break-all; }
 .cac-cuenta-datos dd[data-dato="hasta"] { font-family: inherit; }
+
+/*! rev bfb5bbb0d2d82f9f */

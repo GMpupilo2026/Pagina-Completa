@@ -68,3 +68,5 @@ Se arma con herramientas/pareo-motor-compilar.sh.
 EOF
 rm -rf "$OBJ"
 ls -la "$DESTINO"
+
+# rev bfb5bbb0d2d82f9f

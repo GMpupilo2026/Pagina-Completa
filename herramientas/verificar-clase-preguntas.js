@@ -219,3 +219,5 @@ async function pruebaAlumnaResultados(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: las preguntas llevan su tiempo, sus opciones y lo que contestó la clase.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

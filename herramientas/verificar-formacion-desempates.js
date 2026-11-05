@@ -175,3 +175,5 @@ const col = (c, nombre) => c.cab.indexOf(nombre);
   console.log(fallas ? "\n✗ " + fallas + " fallas" : "\nTodo bien.");
   process.exit(fallas ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

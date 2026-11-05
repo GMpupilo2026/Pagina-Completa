@@ -126,3 +126,5 @@ ok("la foto girada de la mesa 11 da la partida entera", deFoto.ilegibleDesde ===
 console.log(`\n${pruebas - fallos}/${pruebas} comprobaciones bien.`);
 if (fallos) { console.log(`✗ ${fallos} fallaron.`); process.exit(1); }
 console.log("✓ Todo bien.");
+
+/*! rev bfb5bbb0d2d82f9f */

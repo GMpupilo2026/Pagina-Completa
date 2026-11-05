@@ -100,3 +100,5 @@ nuevo = re.sub(re.escape(INICIO) + r".*?" + re.escape(FIN),
 open(PAGINA, "w", encoding="utf-8").write(nuevo)
 print(f"cursos.html: {len(cursos)} tarjetas, {len(chips)} filtros "
       f"({', '.join(n['nombre'] + ' ' + str(cuenta[n['id']]) for n in niveles)})")
+
+# rev bfb5bbb0d2d82f9f

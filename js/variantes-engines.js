@@ -574,3 +574,5 @@
     crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : id === "vampiro" ? new Vampiro() : id === "volcanes" ? new Volcanes() : new Ciegas(); },
     inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : id === "vampiro" ? Vampiro.START : Ciegas.START; } };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

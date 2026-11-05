@@ -152,3 +152,5 @@ const MUESTRA =
   console.log(`\nRespaldos escritos en css/fuentes.css`);
   console.log(`Falta ponerlos en la pila de font-family: herramientas/css-construir.js`);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

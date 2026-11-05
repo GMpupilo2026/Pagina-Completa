@@ -286,3 +286,5 @@ window.PARTIDA_PERDIDA = [
   "pista": "Un caballo de cada bando se comió todo lo que encontró en su camino."
  }
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -37,3 +37,5 @@ def bloque_de(titulo):
         if any(re.search(r, t) for r in reglas):
             return clave
     return 'posicional'
+
+# rev bfb5bbb0d2d82f9f

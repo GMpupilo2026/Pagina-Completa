@@ -77,3 +77,5 @@
     formato, cotizar, tramo, anual,
   };
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

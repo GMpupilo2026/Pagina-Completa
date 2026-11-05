@@ -140,3 +140,5 @@ if __name__ == "__main__":
         revisar_externo(externos[0])
     print("\n" + (str(fallos) + " fallo(s)" if fallos else "Los dos archivos, bien."))
     sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

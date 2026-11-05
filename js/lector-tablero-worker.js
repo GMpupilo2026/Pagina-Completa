@@ -30,3 +30,5 @@ self.onmessage = (e) => {
         self.postMessage({ id, error: String(err && err.message || err) });
     }
 };
+
+/*! rev bfb5bbb0d2d82f9f */

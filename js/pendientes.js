@@ -262,3 +262,5 @@
 
   window.Pendientes = { contarEnLaBase, EN_LA_BASE, hoyCR, pintar, DE_SUPERVISOR, aCargo };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -2582,3 +2582,5 @@ window.ROMPE_EL_ESTANCAMIENTO_ITEMS = [
     comprobado: 'Ejercicio 1GDHY de la base abierta de Lichess (CC0), rating 2402. Stockfish 16 a profundidad 18: Axd4+ es la mejor (+6,0) y la segunda queda en -0,9.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

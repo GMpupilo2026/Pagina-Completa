@@ -51,3 +51,5 @@
   if (V.datos()) pintar();
   V.pedir().then(pintar, () => { if (!V.datos()) estado.textContent = V.textos().error; });
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

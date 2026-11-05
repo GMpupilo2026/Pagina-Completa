@@ -137,3 +137,5 @@ async function recibirAvisoDeSacar(payload) {
     if (!payload || payload.studentId !== profile.id) return;
     if (await meSacaronDe(currentOpenSessionId)) await quedarFueraDeLaClase();
 }
+
+/*! rev bfb5bbb0d2d82f9f */

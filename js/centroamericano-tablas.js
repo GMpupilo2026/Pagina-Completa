@@ -2194,3 +2194,5 @@
 
   window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

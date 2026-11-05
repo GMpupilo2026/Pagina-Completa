@@ -153,3 +153,5 @@ como dice RESTAURAR.md antes de tocar nada más.
 
 if (fallos) { console.log(`✗ ${fallos} problema(s) en el punto de restauración`); process.exit(1); }
 console.log("✓ El punto de restauración está completo");
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -85,3 +85,5 @@ if (distintas.size > 1) mal(`hay ${distintas.size} guardias distintas: tiene que
 if (!fallos) console.log(`  ✓ ${con} páginas con su guardia —una sola, igual en todas—, ${SIN_GUARDIA.size} sin ella a propósito`);
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

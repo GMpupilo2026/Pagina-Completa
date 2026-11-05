@@ -40,3 +40,5 @@ self.onmessage = (ev) => {
     self.postMessage({ id: m.id, error: String((e && e.message) || e) });
   }
 };
+
+/*! rev bfb5bbb0d2d82f9f */

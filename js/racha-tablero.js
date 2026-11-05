@@ -271,3 +271,5 @@
             boardEl.classList.add("ring-8", kind === "correct" ? "ring-green-500" : "ring-red-500");
             setTimeout(() => boardEl.classList.remove("ring-8", "ring-green-500", "ring-red-500"), 400);
         }
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -258,3 +258,5 @@ ok("el final se avisa solo si chess-results no tiene resultado", /if \(a\.tipo =
 
 if (fallas) { console.error("\n" + fallas + " de " + pruebas + " comprobaciones fallaron."); process.exit(1); }
 console.log("✓ La transmisión sin atraso para los árbitros: " + pruebas + " comprobaciones.");
+
+/*! rev bfb5bbb0d2d82f9f */

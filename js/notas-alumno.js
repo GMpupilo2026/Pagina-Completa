@@ -485,3 +485,5 @@ window.NotasAlumno = (function () {
 
     return { listar, crear, actualizar, borrar, fechaCorta, enlaceTarea, montarPanel, montarLectura, TOPE_COMPACTO, diagrama };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

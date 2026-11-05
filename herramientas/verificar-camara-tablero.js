@@ -2725,3 +2725,5 @@ async function esperarJugadas(p, n) {
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa cámara que lee el tablero y la partida en vivo están como se pidió.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

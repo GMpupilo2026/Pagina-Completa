@@ -244,3 +244,5 @@ window.ReporteExcel = (function () {
   // lector de ZIP se irían separando a la primera corrección.
   return { leer: leer, abrirZip: abrirZip, _fechaDeExcel: fechaDeExcel, _leerCsv: leerCsv };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

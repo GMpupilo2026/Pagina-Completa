@@ -219,3 +219,5 @@ window.TableroPregunta = (function () {
 
   return { montar, GLYPH };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

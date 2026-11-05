@@ -146,3 +146,5 @@ function publicar(ajuste, total, minimo, fecha) {
 }
 
 module.exports = { ajustar, publicar, categoriaDe, CENTRO_INICIAL, PE };
+
+/*! rev bfb5bbb0d2d82f9f */

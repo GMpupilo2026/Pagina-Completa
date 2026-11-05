@@ -182,3 +182,5 @@
     $("rt-ejemplo").addEventListener("click", () => { $("rt-pgn").value = EJEMPLO; $("rt-elegir").textContent = ""; $("rt-numero").value = ""; revisar(); });
     $("rt-form-reclamo").addEventListener("submit", revisarReclamo);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -821,3 +821,5 @@ window.Puntos = (function () {
     montarTarjetaPanel, montarTienda,
   };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

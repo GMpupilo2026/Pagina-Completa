@@ -477,3 +477,5 @@ if (document.getElementById("formacion-resp-bloque")) {
     document.getElementById("formacion-resp-lamina").addEventListener("change", () => cargarRespuestasDeFormacion());
     document.getElementById("formacion-resp-actualizar").addEventListener("click", () => abrirRespuestasDeFormacion());
 }
+
+/*! rev bfb5bbb0d2d82f9f */

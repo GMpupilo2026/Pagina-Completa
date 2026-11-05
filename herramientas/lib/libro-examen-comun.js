@@ -102,3 +102,5 @@ module.exports = {
   RAIZ, LETRAS, banco, LOGO_CREMA, LOGO_MARCA, esc, puntosTexto,
   acierto, esperado, FUERZAS, filasTablaPuntos, diagrama, htmlMarca,
 };
+
+/*! rev bfb5bbb0d2d82f9f */

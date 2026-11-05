@@ -255,3 +255,5 @@ const SALAS = [
 ];
 
 module.exports = { dobleSalas, SALAS };
+
+/*! rev bfb5bbb0d2d82f9f */

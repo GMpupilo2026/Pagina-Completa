@@ -102,3 +102,5 @@ async function abrir(browser, yo) {
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa página de actualizaciones está como se pidió.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

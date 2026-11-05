@@ -427,7 +427,11 @@ function armar(id, c) {
   if (c.pagina !== id + ".html") throw new Error(id + ": la página tiene que llamarse " + id + ".html");
   const ruta = path.join(RAIZ, c.pagina);
   const viejo = fs.existsSync(ruta) ? fs.readFileSync(ruta, "utf8") : "";
-  return [[ruta, conservarBloques(pagina(c), viejo)], [path.join(RAIZ, c.config), configJs(c)]];
+  // Con el sello escondido (herramientas/lib/sello.js): volver a generar no
+  // se lo borra. Va después de conservarBloques: es lo último del archivo.
+  const { estampar } = require("./lib/sello");
+  return [[ruta, estampar(conservarBloques(pagina(c), viejo), ruta)],
+          [path.join(RAIZ, c.config), estampar(configJs(c), c.config)]];
 }
 
 module.exports = { armar, configuraciones };
@@ -451,3 +455,5 @@ if (require.main === module) {
   });
   if (viejas) process.exit(1);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -665,3 +665,5 @@ console.log(proyecto.nombre + ": " + proyecto.grupos.length + " grupos · " + pl
             posiciones + " posiciones · " + lecc + " lecciones · " + tareas.length + " tareas semanales");
 console.log(contador.descartadas + " posiciones descartadas por la regla de la clase en vivo");
 console.log("Escritos: herramientas/planes/proyecto-" + SLUG + ".json, .sql (sembrar de cero) y -actualizar.sql (sin cambiar ids)");
+
+/*! rev bfb5bbb0d2d82f9f */

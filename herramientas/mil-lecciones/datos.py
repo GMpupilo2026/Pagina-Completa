@@ -134,3 +134,5 @@ if __name__ == '__main__':
               'meta': dict(stats, version=1, nota='Partidas leídas del libro y comprobadas jugada a jugada con python-chess; momentos clave y ejercicios contrastados con Stockfish 16.')}
     json.dump(indice, open(os.path.join(RAIZ, 'cursos/protegido/data', SLUG + '.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
     print(stats, n)
+
+# rev bfb5bbb0d2d82f9f

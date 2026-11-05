@@ -7081,3 +7081,5 @@ window.DiagnosticoPrueba = (function () {
 
   return { FORMA, AREAS, TOTAL, PUNTOS, cuota, armar, porIds };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

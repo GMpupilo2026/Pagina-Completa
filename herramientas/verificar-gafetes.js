@@ -242,3 +242,5 @@ async function aceptar(page, boton) {
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa creación de gafetes está como se pidió.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

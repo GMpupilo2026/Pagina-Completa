@@ -129,3 +129,5 @@ async function contestar(page, lado, escribiendo) {
   if (fallos) { console.log("\n" + fallos + " comprobación(es) fallaron"); process.exit(1); }
   console.log("\nTodo bien: la muestra de la prueba de estilo.");
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

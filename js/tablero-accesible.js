@@ -590,3 +590,5 @@ window.TableroAccesible = (function () {
 
   return { montar: montar, casillaHablada: casillaHablada, piezaDicha: piezaDicha, listaEspanola: listaEspanola, NOMBRE: NOMBRE, PLURAL: PLURAL };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -291,3 +291,5 @@ async function pruebaNoEnsucia(browser) {
   console.log(fallos ? `\n❌ ${fallos} comprobaciones fallaron.` : "\n✅ El aviso de partida asignada hace lo que promete.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

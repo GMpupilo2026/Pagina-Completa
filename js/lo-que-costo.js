@@ -178,3 +178,5 @@ window.LoQueCosto = (function () {
 
     return { DIAS, cargar, armarPlan, pintar, pintarDelAlumno };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -26,3 +26,5 @@ const r = spawnSync(process.execPath, [path.join(__dirname, "verificar-partidas-
   env: Object.assign({}, process.env, { RONDAS: process.env.RONDAS || "6,7" }),
 });
 process.exit(r.status === null ? 1 : r.status);
+
+/*! rev bfb5bbb0d2d82f9f */
