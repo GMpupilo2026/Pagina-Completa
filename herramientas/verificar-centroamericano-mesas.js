@@ -484,6 +484,9 @@ console.log("\n=== Las páginas: el token y la clave no se guardan ===");
 const paginaArb = sinComentarios(leer("js", "centroamericano-arbitro.js"));
 const paginaOrg = sinComentarios(leer("js", "centroamericano-mesas-pagina.js"));
 igual("el árbitro no guarda su token en el navegador ni lo manda a otra parte", [/(localStorage|sessionStorage|indexedDB|document\.cookie)/.test(paginaArb), /console\./.test(paginaArb), /fetch\(/.test(paginaArb)], [false, false, false]);
+const moduloVista = sinComentarios(leer("js", "centroamericano-vista.js"));
+igual("lo único que la tablet recuerda es la vista elegida, en su propio módulo: una llave y dos valores, sin saber nada del token; la página la usa por ahí",
+    [/token/i.test(moduloVista), /setItem\(LLAVE, v\)/.test(moduloVista), /VALIDAS = \["clasica", "tres"\]/.test(moduloVista), /CentroamericanoVista\.guardar/.test(paginaArb)], [false, true, true, true]);
 igual("la organización no guarda ninguna clave: la casilla se vacía en cuanto se manda", [/(localStorage|sessionStorage|indexedDB)/.test(paginaOrg), /\$\("g-sid"\)\.value = ""/.test(paginaOrg)], [false, true]);
 igual("las dos páginas son noindex y no entran a los buscadores", ["centroamericano-arbitro.html", "centroamericano-mesas.html"].map((f) => /<meta name="robots" content="noindex">/.test(leer(f))), [true, true]);
 

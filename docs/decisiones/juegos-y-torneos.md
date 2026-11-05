@@ -10237,8 +10237,9 @@ el tipo de torneo, ver «El Rápido y el Blitz»).
   («Cómo ver tus mesas: De siempre»). Elegir otra **vuelve a armar las tarjetas al instante**, sin recargar, y dice «Ves tus mesas con
   «Tres toques»». La clase es `cam-desplegable` (ojo: `cam-menu` ya es el menú de pestañas de la organización).
 - **Cómo se decide** (`vistaElegida()`, y `fichaA()` queda como `vistaElegida() === "tres"`): 1) `?ficha=hoy` / `?ficha=a` en la dirección (para
-  probar y comparar); 2) lo que eligió en esta página; 3) lo que la tablet recuerda (`localStorage["cam-vista-mesas"]`, siempre en
-  try/catch: sin almacenamiento la elección vale mientras la página esté abierta); 4) si no hay nada, quien está en `FICHA_A` (Óscar Angulo)
+  probar y comparar); 2) lo que eligió en esta página; 3) lo que la tablet recuerda (`localStorage["cam-vista-mesas"]`, **en su propio módulo `js/centroamericano-vista.js`**: la página del árbitro no puede tocar
+  ningún almacenamiento —el token de su enlace no se guarda en ningún lado, lo comprueba `verificar-centroamericano-mesas.js`— y la vista no tiene
+  nada que ver con el token; siempre en try/catch: sin almacenamiento la elección vale mientras la página esté abierta); 4) si no hay nada, quien está en `FICHA_A` (Óscar Angulo)
   arranca con «Tres toques» y todos los demás con «De siempre». **Lo que elige el árbitro manda sobre la lista**: Óscar puede volver a la de
   siempre. Es por tablet, no por árbitro: otra tablet o un navegador sin datos arranca con el valor de la lista.
 - **En el Blitz no hay nada que elegir**: siempre va la ficha corta (es lo único que hay que tocar); el botón no se ofrece. El Rápido sí puede elegir.

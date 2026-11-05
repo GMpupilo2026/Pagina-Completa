@@ -65,7 +65,7 @@
     // CÓMO VE CADA ÁRBITRO SUS MESAS. Dos vistas con las MISMAS funciones (llegada, ilegal, se levantó, irregularidad, hablar con el jugador,
     // foto, tiempos, pedir al principal…): «De siempre» (la ficha completa) y «Tres toques» (la ficha corta: el resultado en tres botones que
     // guardan de un toque y las marcas de los dos jugadores en una sola franja). Cada uno elige la suya en «Cómo ver mis mesas» y la tablet la
-    // recuerda (localStorage; sin él, vale la de la lista de abajo o la de siempre). En el Blitz siempre va la corta (es lo único que hay).
+    // recuerda (js/centroamericano-vista.js; sin almacenamiento, vale la de la lista de abajo o la de siempre). En el Blitz siempre va la corta (es lo único que hay).
     // Quien está en FICHA_A arranca con «Tres toques» hasta que elija otra. El nombre se compara sin tildes ni mayúsculas y basta con que
     // traiga todas las palabras («Oscar Angulo Camacho» sirve). «?ficha=a» y «?ficha=hoy» después de la dirección fuerzan una u otra (pruebas).
     // Ver «La ficha de la mesa, opción A» y «Cada árbitro elige cómo ver sus mesas» en docs/decisiones/juegos-y-torneos.md.
@@ -74,12 +74,10 @@
         { id: "clasica", texto: "De siempre", ayuda: "La ficha completa: cada jugador con sus botones y el resultado en una lista." },
         { id: "tres", texto: "Tres toques", ayuda: "La ficha corta: el resultado en tres botones que guardan de un toque y las marcas de los dos jugadores juntas." },
     ];
-    const LLAVE_VISTA = "cam-vista-mesas";
     const sinTildes = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    function vistaGuardada() {
-        try { const v = localStorage.getItem(LLAVE_VISTA); return VISTAS.some((x) => x.id === v) ? v : null; } catch (e) { return null; }
-    }
-    function guardarVista(v) { try { localStorage.setItem(LLAVE_VISTA, v); } catch (e) { /* sin almacenamiento: vale hasta cerrar la página */ } }
+    // Lo que la tablet recuerda lo guarda js/centroamericano-vista.js (esta página no toca el almacenamiento: ver su cabecera).
+    const vistaGuardada = () => window.CentroamericanoVista.leer();
+    const guardarVista = (v) => window.CentroamericanoVista.guardar(v);
     let vistaDeEstaSesion = null;   // lo que eligió ahora (por si el navegador no deja guardar)
     function vistaElegida() {
         const q = location.search || "";
