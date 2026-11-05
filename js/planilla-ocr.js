@@ -1,8 +1,11 @@
 /* La lectura de una planilla escrita a mano, en una sola copia: la usan el
-   Lector de planilla (lector-planilla.html) y «Anota tu partida» de «Tus
-   propios errores» (entreno/tipos.html).
+   Lector de planilla (lector-planilla.html), «Anota tu partida» de «Tus
+   propios errores» (entreno/tipos.html) y «Leer la partida» de la organización
+   del Centroamericano (js/centroamericano-leer-partida.js, que arma la partida
+   con js/planilla-reconstruir.js).
 
-   - leerFoto(file, token): achica la foto (lado más largo a 1600 px) y la
+   - leerFoto(file, token, { maxLado }): achica la foto (lado más largo a 1600 px,
+     o a maxLado) y la
      manda a la Edge Function ocr-scoresheet, que la pasa por Google Vision
      con la clave guardada en el servidor y gasta un uso del tope diario (ver
      «El lector de planilla tiene tope diario» en
@@ -189,7 +192,7 @@
     return { jugadas: game.history(), adivinadas };
   }
 
-  function fileToResizedBase64(file) {
+  function fileToResizedBase64(file, maxLado) {
       return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
@@ -197,7 +200,7 @@
               const img = new Image();
               img.onerror = () => reject(new Error("No se pudo leer la imagen."));
               img.onload = () => {
-                  const MAX_SIDE = 1600;
+                  const MAX_SIDE = maxLado || 1600;
                   let { width, height } = img;
                   if (width > MAX_SIDE || height > MAX_SIDE) {
                       const scale = MAX_SIDE / Math.max(width, height);
@@ -216,8 +219,10 @@
       });
   }
 
-  async function leerFoto(file, token) {
-    const image_base64 = await fileToResizedBase64(file);
+  // opciones.maxLado: la foto de las DOS planillas de una mesa (organización del
+  // Centroamericano) va a 2600 px; a 1600 cada hoja quedaba en ~800 px.
+  async function leerFoto(file, token, opciones) {
+    const image_base64 = await fileToResizedBase64(file, opciones && opciones.maxLado);
     const res = await fetch(`${raiz.SUPABASE_URL}/functions/v1/ocr-scoresheet`, {
       method: "POST",
       headers: {

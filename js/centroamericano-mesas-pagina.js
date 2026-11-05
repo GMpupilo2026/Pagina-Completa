@@ -13,7 +13,8 @@
       reparto de las mesas entre varios de una vez); nombre, mesas, aviso, apagar; la hoja de
       QR para imprimir (todos los QR llevan la marca de Ajedrez Integral).
    4. Planillas y Drive: las fotos de las planillas y su paso al Drive «Planillas
-      Centroamericano»; conectar el Drive y reintentar lo que no llegó.
+      Centroamericano»; conectar el Drive y reintentar lo que no llegó; y «Leer la partida»
+      de cada foto (js/centroamericano-leer-partida.js).
    5. Clave de chess-results: UNA sola para el grupo de torneos ligados. Va a la Edge Function
       centroamericano-clave, que la prueba y la guarda CIFRADA: esta página nunca la vuelve a
       ver y la casilla se vacía.
@@ -1214,7 +1215,11 @@
             el("td", { texto: (p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador) }),
             el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
             el("td", { texto: p.drive_ok ? "✓ En el Drive" : p.drive_error ? "✗ " + p.drive_error : "Pendiente" }),
-            el("td", {}, el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver")))));
+            el("td", { class: "cam-celda-acciones" },
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver"),
+                p.lado === "blancas" || p.lado === "negras"
+                    ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "leer-partida", onclick: () => leerPartida(p) }, "Leer la partida")
+                    : null))));
         $("planillas-vacio").hidden = lista.length > 0;
     }
 
@@ -1224,6 +1229,14 @@
         const enfrentamiento = p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador;
         ventanita("Mesa " + p.mesa + " · " + enfrentamiento,
             el("img", { src: data.signedUrl, alt: "Foto de las dos planillas de la mesa " + p.mesa + ": " + enfrentamiento, class: "cam-foto-planilla" }));
+    }
+
+    // «Leer la partida»: de la foto a una partida que se reproduce (js/centroamericano-leer-partida.js).
+    function leerPartida(p) {
+        window.CentroamericanoLeerPartida.abrir(p, {
+            el, ventanita, nombreTorneo, avisar,
+            enfrentamiento: (x) => (x.lado === "blancas" ? x.jugador + " vs " + x.rival : x.rival + " vs " + x.jugador),
+        });
     }
 
     // ------------------------------------------------------------- 6. respaldo

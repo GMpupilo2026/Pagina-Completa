@@ -20,7 +20,9 @@
    una casilla por torneo), los pedidos de ayuda que llegan solos con su contador y
    «Atendido», los avisos a un árbitro, a un torneo o a todos con quién ya los leyó, los
    enlaces agrupados por torneo y ordenados por mesa, un árbitro por definir (crearlo,
-   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF.
+   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF; y
+   «Leer la partida» de cada foto de planillas, con un Google Vision de mentira: lo salvado, lo
+   ilegible, las marcas, el tablero, el PGN y que abrirla de nuevo no gasta otra lectura.
 
    Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md.
 
@@ -40,6 +42,8 @@ function igual(nombre, hallado, esperado) {
 }
 
 const { MESAS, SERVIDOR_ARBITRO, dobleArbitro } = require("./lib/doble-centroamericano-arbitro");
+const { palabrasDePlanillas } = require("./lib/planilla-sintetica");
+const PLANILLAS_REALES = require("./lib/planillas-reales");
 
 // El programa de la organización: los 12 torneos (3 de muestra), sus enlaces, el avance, los avisos,
 // las planillas, las copias y el registro.
@@ -1457,6 +1461,39 @@ const CONTRASTE = `(sel) => {
     await q.waitForSelector("dialog.cam-dialogo[open] img");
     igual("«Ver» abre la foto desde el bucket privado (con un enlace que vence)", await q.evaluate(() => [window.__llamadas.filter((l) => l.foto).map((l) => l.foto), document.querySelector("dialog.cam-dialogo img").alt]), [["centroamericano-planillas/1529733/ronda-3/mesa-2-planillas.jpg"], "Foto de las dos planillas de la mesa 2: Harvey Ian vs Acuña Porras Fabio"]);
     await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+
+    // «Leer la partida»: un Google Vision de mentira que devuelve la foto de las dos planillas de la mesa 11 de la
+    // ronda 4 (de verdad, con su desacuerdo en la jugada 16) y, desde la jugada 17, basura en las dos.
+    const BASURA = ["qz", "Lw", "m3m", "zz", "uu", "k9", "pp", "XX", "Ww", "yy", "j7", "vv"];
+    const palabrasFoto = palabrasDePlanillas([PLANILLAS_REALES.mesa11.blancas.slice(0, 32).concat(BASURA), PLANILLAS_REALES.mesa11.negras.slice(0, 32).concat(BASURA.slice().reverse())], { giro: 3, partir: true });
+    let lecturasVision = 0;
+    await q.context().route("**/functions/v1/ocr-scoresheet", (rr) => { lecturasVision++; rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }); });
+    igual("cada foto tiene su «Leer la partida» al lado de «Ver»", await q.$$eval("#planillas tr", (l) => l.map((tr) => [...tr.lastElementChild.querySelectorAll("button")].map((b) => b.textContent))), [["Ver", "Leer la partida"], ["Ver", "Leer la partida"]]);
+    await q.click('#planillas tr:first-child [data-accion="leer-partida"]');
+    await q.waitForSelector("dialog.cam-dialogo[open] .cam-lp-titular", { timeout: 120000 });
+    igual("lee la foto del bucket privado y dice hasta dónde se salvó la partida", await q.evaluate(() => [document.querySelector("dialog.cam-dialogo").getAttribute("aria-label"), document.querySelector(".cam-lp-titular").textContent, window.__llamadas.filter((l) => l.foto).length]),
+        ["Leer la partida · Mesa 2 · Harvey Ian vs Acuña Porras Fabio", "Se pudieron salvar 32 medias jugadas, hasta la jugada 16 de las negras.", 2]);
+    igual("desde ahí: «Ilegible», con lo que dicen las planillas, sin inventar jugadas", await q.evaluate(() => { const c = document.querySelector(".cam-lp-ilegible"); return [c.checkVisibility(), c.querySelector("strong").textContent, c.textContent.includes("qz · Lw · m3m")]; }), [true, "⚠ Ilegible desde la jugada 17 de las blancas.", true]);
+    igual("las 32 jugadas, en español; donde las planillas no coincidían (16. Thf1 / The1) sale marcada con * y dice qué decía cada una", await q.evaluate(() => { const b = [...document.querySelectorAll(".cam-lp-jugada")]; return [b.length, b[0].textContent, b[30].textContent, b[30].title]; }),
+        [32, "e4", "Thf1 *", "corregida · escrito: Thf1 | The1"]);
+    igual("el tablero muestra la última jugada salvada y la dice en palabras", await q.evaluate(() => [[...document.querySelectorAll(".cam-lp-tablero .cine-sq > span")].filter((x) => x.checkVisibility()).length > 10, document.querySelector(".cam-lp-linea").textContent.startsWith("16… Thf8"), document.querySelector(".cam-lp-jugada[aria-current='true']").textContent]), [true, true, "Thf8 *"]);
+    await q.click('.cam-lp-controles [aria-label="Al inicio"]');
+    await q.click('.cam-lp-controles [aria-label="Jugada siguiente"]');
+    igual("se recorre con ⏮ ◀ ▶ ⏭ y con las flechas", [await q.textContent(".cam-lp-linea"), await (async () => { await q.keyboard.press("ArrowRight"); return q.textContent(".cam-lp-linea"); })()],
+        ["1. e4 — leída tal cual. En la planilla: «e4» y «e4».", "1… c6 — leída tal cual. En la planilla: «c6» y «c6»."]);
+    const [pgnBajado] = await Promise.all([q.waitForEvent("download"), q.click('[data-accion="bajar-pgn"]')]);
+    const pgnTexto = fs.readFileSync(await pgnBajado.path(), "utf8");
+    igual("el PGN se baja con el torneo, la ronda, el día y los jugadores (con sus tildes), termina en «*» y dice desde dónde es ilegible", [pgnBajado.suggestedFilename(), pgnTexto.includes('[Round "3"]'), pgnTexto.includes('[White "Harvey Ian"]'), pgnTexto.includes('[Black "Acuña Porras Fabio"]'), /\[Date "\d{4}\.\d\d\.\d\d"\]/.test(pgnTexto), /\{Desde aquí la planilla es ilegible \(jugada 17\)\.\}\s+\*\s*$/.test(pgnTexto)],
+        ["Mesa 02 - Ronda 3 - Harvey Ian vs Acuna Porras Fabio.pgn", true, true, true, true, true]);
+    igual("en claro, lo marcado y el aviso de ilegible dan 4,5:1 o más", Math.min(...await q.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota") + ")")) >= 4.5, true);
+    await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+    await q.click('#planillas tr:first-child [data-accion="leer-partida"]');
+    await q.waitForSelector("dialog.cam-dialogo[open] .cam-lp-titular");
+    igual("abrirla otra vez no gasta otra lectura (quedó guardada en este navegador)", lecturasVision, 1);
+    await q.click('[data-accion="volver-a-leer"]');
+    await q.waitForFunction(() => document.querySelector("dialog.cam-dialogo[open] .cam-lp-titular"), null, { timeout: 120000 });
+    igual("«Volver a leer la foto» sí la vuelve a leer", lecturasVision, 2);
+    await q.click("dialog.cam-dialogo [data-accion='cerrar']");
     await q.evaluate(() => { document.getElementById("drive-conectar-caja").open = true; });
     await q.fill("#drive-url", "https://script.google.com/macros/s/" + "A".repeat(30) + "/exec");
     await q.fill("#drive-secreto", "MALOMALOMALOMALOMALOMALOMALOMALOMALO");
@@ -1613,6 +1650,14 @@ const CONTRASTE = `(sel) => {
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100, esquema: "dark" });
     await o.p.waitForSelector(".cam-pedido");
     igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las ocho pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
+    await o.ctx.route("**/functions/v1/ocr-scoresheet", (rr) => rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }));
+    await o.p.click("#pest-planillas");
+    await o.p.waitForSelector("#planillas tr");
+    await o.p.click('#planillas tr:first-child [data-accion="leer-partida"]');
+    await o.p.waitForSelector("dialog.cam-dialogo[open] .cam-lp-titular", { timeout: 120000 });
+    igual("en oscuro, «Leer la partida» (lo marcado, el aviso de ilegible, el texto) da 4,5:1 o más", Math.min(...await o.p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota, .cam-lp-titular, .cam-lp-leyenda") + ")")) >= 4.5, true);
+    if (process.env.CAPTURA) await o.p.screenshot({ path: process.env.CAPTURA + "-leer-partida-oscuro.png" });
+    await o.p.click("dialog.cam-dialogo [data-accion='cerrar']");
     if (process.env.CAPTURA) { await o.p.click("#pest-ronda"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
     await o.ctx.close();
 
