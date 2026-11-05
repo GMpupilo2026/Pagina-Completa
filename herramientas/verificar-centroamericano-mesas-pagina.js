@@ -53,6 +53,7 @@ const PLANILLAS_REALES = require("./lib/planillas-reales");
 function dobleOrganizacion(licencia) {
     return `(function(){
   window.__llamadas = [];
+  window.__torneosFallan = /[?&]torneosfallan=1/.test(location.search);
   const R = (data, error) => Promise.resolve({ data, error: error || null });
   const hace = (seg) => new Date(Date.now() - seg * 1000).toISOString();
   const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
@@ -179,6 +180,7 @@ function dobleOrganizacion(licencia) {
         maybeSingle: () => { const x = filtrar(tabla, f)[0]; return Promise.resolve({ data: x ? Object.assign({}, x) : null, error: null }); },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
+          if (accion === "select" && tabla === "centroamericano_torneos" && window.__torneosFallan) return Promise.resolve({ data: null, error: { message: "statement timeout" } }).then(ok, ko);
           if (accion === "insert") {
             const lista = Array.isArray(valores) ? valores : [valores];
             for (const v of lista) {
@@ -2121,6 +2123,19 @@ const CONTRASTE = `(sel) => {
         await o2.p.waitForSelector("#asignaciones .cam-grupo-ritmo");
         igual("sin torneos de Blitz cargados, el bloque de Blitz sale igual y lo dice (así se sabe dónde van)", await o2.p.evaluate(() => { const b = document.querySelector('#asignaciones tr.cam-grupo-ritmo[data-ritmo="blitz"]'); return [!!b, b && /todavía no hay torneos de Blitz/.test(b.textContent), !document.querySelector('#asignaciones tr.cam-grupo-ritmo[data-ritmo="rapido"]')]; }), [true, true, true]);
         await o2.ctx.close();
+        // Si la lectura de los torneos falla (la base lenta), los enlaces NO desaparecen: salen bajo Clásico con el número del torneo, y en cuanto
+        // la lectura vuelve se reparten por modo (el 5/11 la tabla quedó sin ningún árbitro del Clásico porque se agrupaba solo con los torneos a mano).
+        const o3 = await abrir(browser, "centroamericano-mesas.html?torneosfallan=1&ritmos=1", dobleOrganizacion(true), { ancho: 1100 });
+        await o3.p.click("#pest-arbitros");
+        await o3.p.waitForSelector("#asignaciones .cam-asignacion");
+        igual("sin los torneos leídos, los enlaces igual se ven (bajo Clásico), cada uno con su fila",
+            await o3.p.evaluate(() => [document.querySelectorAll("#asignaciones .cam-asignacion").length, [...document.querySelectorAll("#asignaciones tr.cam-grupo-ritmo")].map((t) => t.dataset.ritmo)]),
+            [5, ["clasico", "blitz"]]);
+        await o3.p.evaluate(() => { window.__torneosFallan = false; });
+        await o3.p.waitForFunction(() => document.querySelector('#asignaciones tr.cam-grupo-ritmo[data-ritmo="rapido"]'), null, { timeout: 30000 });
+        igual("cuando la lectura vuelve, los torneos se piden otra vez y la tabla se reparte por modo",
+            await o3.p.evaluate(() => [...document.querySelectorAll("#asignaciones tr.cam-grupo-ritmo")].map((t) => t.dataset.ritmo)), ["clasico", "rapido", "blitz"]);
+        await o3.ctx.close();
     }
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");

@@ -10163,6 +10163,21 @@ separar los torneos Clásicos, Rápidos y Blitz para ajustar la configuración s
   («Árbitros y mesas separado por modo»). Ojo: las filas de encabezado `cam-grupo-ritmo` cuentan como `tr` en `#asignaciones`: una prueba que
   recorra esas filas las excluye con `tr:not(.cam-grupo-ritmo)`.
 
+## «No me sale la distribución de árbitros del Clásico» (Centroamericano, 5/11): columnas sin permiso y enlaces que no se esconden
+
+El 5/11 la pestaña «Árbitros y mesas» solo mostraba el bloque de Blitz, vacío, y un aviso rojo: «No se pudieron leer los torneos: permission
+denied for table centroamericano_torneos». **`centroamericano_torneos` da `SELECT` columna por columna** (`clave_puesta_por` no se lee desde
+afuera). Fair Play para todos los torneos agregó `evento`, `ritmo`, `menores` y `archivado`, la página los pidió y **a esas cuatro nadie les
+dio permiso**: una sola columna sin permiso tumba TODA la consulta, y la tabla de enlaces se quedaba sin torneos. Arreglado con la migración
+`centroamericano_torneos_columnas_visibles` (`grant select (evento, ritmo, menores, archivado) … to authenticated`). **Regla: al agregar una
+columna a una tabla con permisos por columna, la migración le da su `grant select (col)` si la página la lee** (el inventario del esquema no
+registra los permisos de columna, así que ningún verificador lo ve: hay que mirar `information_schema.column_privileges`).
+
+Además, la tabla agrupaba por modo SOLO con los torneos a mano: sin ellos, los enlaces del Clásico y del Rápido desaparecían en vez de verse.
+Ahora **los enlaces nunca se esconden** (salen bajo Clásico con el número del torneo), `cargarTorneos()` repinta la tabla al terminar, y el
+pulso vuelve a pedir los torneos mientras la lista esté vacía. Lo revisa `verificar-centroamericano-mesas-pagina.js` con
+`?torneosfallan=1` (la lectura falla, los enlaces igual se ven; vuelve y se reparten por modo).
+
 ## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
 
 Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
