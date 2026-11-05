@@ -34,7 +34,9 @@
   const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f"];
   const CASI = new Set();
   PARECIDAS.forEach((p) => { CASI.add(p[0] + p[1]); CASI.add(p[1] + p[0]); });
-  const sustitucion = (a, b) => (a === b ? 0 : CASI.has(a + b) || a.toLowerCase() === b.toLowerCase() ? 0.4 : 1);
+  // La misma letra en mayúscula o minúscula casi no cuesta: hay planillas enteras con las piezas en minúscula
+  // («bxe5» por el alfil, «rf1» por la torre; Centroamericano 2026). Si las dos lecturas son legales, gana la exacta.
+  const sustitucion = (a, b) => (a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? 0.15 : CASI.has(a + b) ? 0.4 : 1);
 
   function distancia(a, b) {
     const m = a.length, n = b.length;
@@ -67,8 +69,20 @@
   /* Cómo se puede haber escrito una jugada legal: en inglés y en español, con
      o sin la letra o el número que la desambigua (muchos escriben «Cd2»
      aunque sean dos los caballos que pueden ir). */
-  function formasDe(san) {
+  const LETRA_EN = { n: "N", b: "B", r: "R", q: "Q", k: "K", p: "P" };
+  const LETRA_ES = { n: "C", b: "A", r: "T", q: "D", k: "R", p: "P" };
+
+  // mov (opcional): la jugada de chess.js con { piece, captured, from } para las capturas anotadas con la PIEZA
+  // capturada en vez de la casilla («AxA», «CxC+», «DxA», «cxA», «PxP»), como anotan muchos niños.
+  function formasDe(san, mov) {
     const formas = new Set();
+    if (mov && mov.captured) {
+      [LETRA_EN, LETRA_ES].forEach((L) => {
+        const quien = mov.piece === "p" ? mov.from[0] : L[mov.piece];
+        formas.add(normalizar(quien + "x" + L[mov.captured]));
+        if (mov.piece === "p") formas.add(normalizar("Px" + L[mov.captured]));
+      });
+    }
     const en = normalizar(san), es = normalizar(PO.sanEnEspanol(san));
     [en, es].forEach((f) => {
       formas.add(f);
@@ -86,7 +100,7 @@
   const FALTA = 1.5;         // la planilla no anotó esta jugada
   const VENTANA = 6;         // medias jugadas que se miran para decidir si ya no se puede seguir
   const UMBRAL = 1.5;        // costo medio por media jugada a partir del cual es ilegible
-  const ESTADO_LEIDA = 0.1, ESTADO_CORREGIDA = 1.0;
+  const ESTADO_LEIDA = 0.2, ESTADO_CORREGIDA = 1.0;
 
   function reconstruir(Chess, hojasCrudas, opciones) {
     const opt = Object.assign({ haz: 150, alProgresar: null }, opciones || {});
@@ -106,7 +120,7 @@
       let m = cacheMov.get(fen);
       if (!m) {
         const g = new Chess(fen);
-        m = g.moves().map((san) => ({ san, formas: formasDe(san) }));
+        m = g.moves({ verbose: true }).map((v) => { const formas = formasDe(v.san, v); return { san: v.san, formas, clave: formas.join(",") }; });
         cacheMov.set(fen, m);
         if (cacheMov.size > 20000) cacheMov.clear();
       }
@@ -118,7 +132,9 @@
     const sinDato = (leido) => !leido || !/[a-hA-H1-8KQRBNTCADO]/.test(leido);
     function costoCelda(leido, mov) {
       if (sinDato(leido)) return 1;
-      const clave = leido + "|" + mov.san;
+      // la clave lleva las formas, no solo la jugada: «Txf6» captura una torre en una posición y un caballo en otra
+      // («TxT» o «TxC»), y con solo la jugada se reusaba la distancia de la otra
+      const clave = leido + "|" + mov.clave;
       let d = cacheDist.get(clave);
       if (d === undefined) {
         d = TOPE;
