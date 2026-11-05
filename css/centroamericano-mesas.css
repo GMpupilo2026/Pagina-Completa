@@ -1047,7 +1047,6 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .tx-jugador { font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .tx-tablero { width: 100%; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
 .tx-dato { font-size: 0.88rem; font-variant-numeric: tabular-nums; }
-.tx-arbitro { font-size: 0.88rem; font-weight: 700; }
 .tx-nota { font-size: 0.8rem; font-style: italic; }
 .tx-ok { font-weight: 800; color: var(--cac-verde); font-size: 0.9rem; }
 .dark .tx-ok { color: #9be0bb; }
@@ -1118,6 +1117,43 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-rejilla tbody tr.cam-pl-grupo .cam-pl-tx { font-weight: 600; }
 .cam-pl-tx-enlace { color: inherit; text-decoration: underline; }
 .cam-pl-tx-enlace:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+
+/* Avisado al árbitro de la mesa (texto, no solo color). */
+.tx-avisado { display: block; font-weight: 700; font-size: 0.8rem; }
+.tx-item .tx-avisado { flex-basis: 100%; }
+
+/* «Pantalla grande»: para un proyector en la mesa de transmisión. Solo los tableros con un problema, en grande. */
+.tx-app.tx-proyector { background: var(--cac-fondo); padding: 1rem; overflow: auto; }
+.dark .tx-app.tx-proyector { background: rgb(var(--c-brand-950, 7 21 39)); }
+.tx-proyector .tx-barra, .tx-proyector .tx-resumen, .tx-proyector > details { display: none; }
+.tx-proyector-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.8rem; }
+.tx-proyector-estado { font-size: 1.6rem; font-weight: 900; }
+.tx-proyector-vacio { font-size: 2.2rem; font-weight: 900; text-align: center; padding: 3rem 1rem; color: var(--cac-verde); }
+.dark .tx-proyector-vacio { color: #9be0bb; }
+.tx-proyector .tx-grilla.tx-grandes { grid-template-columns: repeat(auto-fill, minmax(min(26rem, 100%), 1fr)); }
+.tx-proyector .tx-tarjeta { font-size: 1.15rem; }
+.tx-proyector .tx-avisos { font-size: 1.05rem; }
+.tx-proyector .tx-categoria > h3 { font-size: 1.5rem; }
+
+/* El tablero en grande, jugada por jugada. */
+.tx-dialogo-grande { width: min(64rem, calc(100% - 1rem)); max-height: calc(100vh - 1rem); overflow: auto; }
+.tx-g-cuerpo { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem; text-align: left; align-items: start; }
+@media (max-width: 760px) { .tx-g-cuerpo { grid-template-columns: minmax(0, 1fr); } }
+.tx-g-lado { display: grid; gap: 0.45rem; }
+.tx-g-tablero { width: 100%; max-width: 32rem; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
+.tx-g-nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.tx-g-nav .cam-btn { min-width: 3rem; font-size: 1.1rem; }
+.tx-g-jugadas { max-height: 34rem; overflow: auto; }
+.tx-g-jugadas td { font-variant-numeric: tabular-nums; }
+.tx-g-jugada { background: none; border: 0; padding: 0.15rem 0.3rem; font: inherit; font-weight: 700; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; border-radius: 0.3rem; }
+.tx-g-jugada:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 1px; }
+.tx-g-jugada:disabled { cursor: default; text-decoration: none; }
+.tx-g-jugadas tr[data-actual="si"] td { background: rgb(224 171 91 / 0.28); }
+.tx-g-jugadas tr[data-ilegal="si"] td { color: var(--cac-rojo); }
+.dark .tx-g-jugadas tr[data-ilegal="si"] td { color: #ff9aa5; }
+.tx-proyector .tx-tablero { max-width: 20rem; justify-self: center; }
+@media (max-width: 760px) { .tx-g-jugadas { max-height: 18rem; } }
+.tx-g-jugadas { position: relative; }
 /* Lo que el índice tuvo en cuenta de cada jugador (Elo reconocido, historia, tiempo): una frase por línea; la señal alta en
    negrita (y lo dice al lector de pantalla). */
 #fp-indice td .cam-fp-detalle { display: block; font-weight: 400; }

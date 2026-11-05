@@ -14,8 +14,6 @@
  *     enlaces   (principal) dónde armar «Encargados de transmisión» con sus QR
  *     contador  un número que lleva cuántos avisos hay pendientes (la pestaña del principal)
  *     alFallar  (texto) → el enlace no sirve (apagado, vencido o inexistente)
- *     arbitroDe (tnr, mesa) → { id, nombre } o null (principal): el árbitro que tiene esa mesa, para nombrarlo en cada aviso
- *     avisarArbitro (arbitro, texto) → Promise<boolean> (principal): «Avisarle» le manda el aviso a su tablet
  *   CentroamericanoTransmision.cargar()
  *   Puras (Node): analizar(jugadas, primera), avisos(tablero, categoria, ahora), TIPOS
  */
@@ -252,6 +250,9 @@
     // ---------------------------------------------------------------- en el navegador
     let ctx = null, datos = null, leidaMs = 0, pidiendo = null, dialogo = null;
     const atendidas = new Map();       // clave → { quien, en }
+    const avisados = new Map();        // clave → { en, por, a, leido }: lo que se le mandó al árbitro de la mesa
+    const registrados = new Set();     // las claves que esta pantalla ya mandó al historial
+    let proyector = false, grande = null;   // la pantalla grande; el tablero abierto en grande { tnr, tablero, ply }
     const vistos = new Set();          // las claves ya avisadas (para vibrar solo con lo nuevo)
     let primera = true;
     const $ = (id) => document.getElementById(id);
@@ -296,7 +297,13 @@
                     el("label", { class: "cam-herramientas-campo" }, el("span", { texto: "Mostrar" }), el("select", { id: "tx-filtro", class: "cam-select", onchange: () => { guardarPref({ filtro: $("tx-filtro").value }); pintar(); } },
                         el("option", { value: "todos", texto: "Todos los tableros" }), el("option", { value: "avisos", texto: "Solo los que tienen un aviso" }))),
                     el("label", { class: "tx-casilla" }, el("input", { type: "checkbox", id: "tx-grandes", class: "w-4 h-4", onchange: () => { guardarPref({ grandes: $("tx-grandes").checked }); pintar(); } }), " Tableros grandes"),
-                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => cargar() }, el("span", { "aria-hidden": "true", texto: "🔄 " }), "Leer ahora"))),
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => cargar() }, el("span", { "aria-hidden": "true", texto: "🔄 " }), "Leer ahora"),
+                    el("button", { type: "button", id: "tx-proyector", class: "cam-btn cam-btn-claro cam-btn-chico", "aria-pressed": "false", onclick: alternarProyector }, el("span", { "aria-hidden": "true", texto: "📺 " }), "Pantalla grande"),
+                    el("button", { type: "button", id: "tx-informe", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: informe }, el("span", { "aria-hidden": "true", texto: "📄 " }), "Informe de la transmisión (PDF)"))),
+            el("div", { id: "tx-proyector-cabeza", class: "tx-proyector-cabeza", hidden: true },
+                el("p", { id: "tx-proyector-estado", class: "tx-proyector-estado", role: "status" }),
+                el("button", { type: "button", class: "cam-btn cam-btn-chico", onclick: alternarProyector }, "Salir de la pantalla grande")),
+            el("p", { id: "tx-proyector-vacio", class: "tx-proyector-vacio", hidden: true, texto: "✔ Todo en orden: ningún tablero tiene un problema." }),
             el("section", { id: "tx-resumen", class: "tx-resumen", "aria-labelledby": "tx-t-resumen" },
                 el("h3", { id: "tx-t-resumen", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "🚨 " }), "Avisos para revisar ", el("span", { id: "tx-n", class: "cam-contador", hidden: true })),
                 el("p", { id: "tx-sin-avisos", class: "tx-todo-bien", texto: "Todo en orden: ningún tablero tiene un problema." }),
@@ -309,6 +316,10 @@
                     ["En ámbar (mirar)", "la triple repetición y las 50 jugadas (las reclama un jugador), el reloj detenido más de 1 min, un mate sin resultado, un tablero sin jugadas cuando los demás empezaron o en el que nadie mueve hace 25 min, el reloj que empezó con mucho menos tiempo (¿llegó tarde?) y la partida que el árbitro ya cerró y sigue transmitiéndose."],
                     ["«Ya lo revisé»", "apaga el brillo de ese aviso para todos los que miran esta pantalla (queda quién y a qué hora). Si vuelve a pasar algo distinto, brilla de nuevo."],
                     ["«Cambiar jugadores»", "si alguien se cambió de tablero, elige de los emparejamientos de chess-results qué mesa se juega en ese tablero: esta pantalla muestra los nombres buenos y deja de avisar. La transmisión pública de Lichess (y la tablet del árbitro) toman los nombres de LiveChess: el botón «Mensaje para el operador» copia lo que hay que cambiar allá."],
+                    ["«Avisar al árbitro»", "le manda el aviso a la tablet del árbitro de esa mesa, como los de la organización: lo ve arriba con «Entendido», y aquí sale cuándo se le avisó y si ya lo leyó."],
+                    ["«Pantalla grande»", "para una pantalla o un proyector en la mesa de transmisión: solo los tableros con un problema, en grande y a pantalla completa, para verlos de lejos. Sin problemas, dice «Todo en orden»."],
+                    ["«Ver en grande»", "abre el tablero con todas sus jugadas, el reloj de cada uno después de cada jugada y lo que pensó: con ◀ ▶ (o las flechas del teclado) se ve dónde se trabó o qué jugada no se registró."],
+                    ["El informe", "en PDF, con la marca de agua: cada aviso de la transmisión con su hora, a quién se le avisó y si lo leyó, quién lo revisó y cuánto tardó."],
                     ["Sin sonido", "en la sala de juego no hay ruido: vibra (en Android), el título de la pestaña lleva cuántos avisos hay y el tablero brilla."],
                 ].map(([t, d]) => el("li", {}, el("strong", { texto: t }), ": " + d)))),
         ]);
@@ -327,6 +338,8 @@
                 leidaMs = Date.now();
                 atendidas.clear();
                 for (const x of d.atendidas || []) atendidas.set(x.clave, x);
+                avisados.clear();
+                for (const x of d.avisados || []) avisados.set(x.clave, x);
                 llenarCategorias();
                 pintar();
             } catch (e) {
@@ -373,6 +386,7 @@
         pend.forEach((y) => vistos.add(y.x.clave));
         if (!primera && nuevos.length && navigator.vibrate) { try { navigator.vibrate(nuevos.some((y) => y.x.nivel === "urgente") ? [300, 120, 300, 120, 300] : [200]); } catch (e) { /* sin vibración */ } }
         primera = false;
+        registrar(lista);
         document.title = (pend.length ? "(" + pend.length + ") " : "") + document.title.replace(/^\(\d+\) /, "");
 
         const totalT = todo.reduce((s, g) => s + g.tableros.length, 0);
@@ -382,20 +396,25 @@
         $("tx-n").hidden = !pend.length;
         $("tx-n").setAttribute("data-urgente", urg ? "si" : "no");
         $("tx-sin-avisos").hidden = pend.length > 0;
+        if (proyector) {
+            $("tx-proyector-estado").textContent = (pend.length ? pend.length + (pend.length === 1 ? " aviso" : " avisos") + (urg ? " · " + urg + " para ir ya" : "") : "Todo en orden") + " · " + horaS(Date.now());
+            $("tx-proyector-vacio").hidden = pend.length > 0;
+        }
         if (ctx.contador) { ctx.contador.textContent = String(pend.length); ctx.contador.hidden = !pend.length; ctx.contador.setAttribute("data-urgente", urg ? "si" : "no"); }
         $("tx-lista").replaceChildren(...pend.map((y) => el("li", { class: "tx-item", "data-nivel": y.x.nivel },
             el("span", { class: "tx-nivel", texto: y.x.nivel === "urgente" ? "Ir ya" : "Mirar" }),
-            el("span", { class: "tx-item-texto" }, el("strong", { texto: y.g.c.nombre + (y.t ? " · tablero " + y.t.tablero + (y.t.cr ? " (mesa " + y.t.cr.mesa + ")" : "") : "") + ": " + y.x.titulo }), " — " + y.x.texto,
-                arbitroDe(y.g.c, y.t) ? el("span", { class: "tx-arbitro", texto: " Árbitro de la mesa: " + arbitroDe(y.g.c, y.t).nombre + "." }) : null),
+            el("span", { class: "tx-item-texto" }, el("strong", { texto: y.g.c.nombre + (y.t ? " · tablero " + y.t.tablero + (y.t.cr ? " (mesa " + y.t.cr.mesa + ")" : "") : "") + ": " + y.x.titulo }), " — " + y.x.texto),
+            y.t ? avisadoTexto(y.x) : null,
             el("span", { class: "tx-item-botones" },
                 y.t ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => irA(y.g.c.tnr, y.t.tablero) }, "Ver el tablero") : null,
                 y.t ? botonAvisar(y.g.c, y.t, y.x) : null,
                 el("button", { type: "button", class: "cam-btn cam-btn-chico", onclick: () => atender([y.x]) }, "Ya lo revisé")))));
 
         // Las categorías.
+        const soloConAvisos = soloAvisos || proyector;
         const secciones = todo.filter((g) => !filtroCat || g.c.tnr === filtroCat).map((g) => {
-            const tabs = g.tableros.filter((x) => !soloAvisos || x.av.some(pendiente));
-            if (soloAvisos && !tabs.length && !g.propios.some(pendiente)) return null;
+            const tabs = g.tableros.filter((x) => !soloConAvisos || x.av.some(pendiente));
+            if (soloConAvisos && !tabs.length && !g.propios.some(pendiente)) return null;
             const nivelCat = g.propios.filter(pendiente).some((x) => x.nivel === "urgente") ? "urgente" : null;
             const rl = g.c.ronda_lc;
             return el("section", { class: "tx-categoria", "data-tnr": g.c.tnr, "data-brilla": nivelCat, "aria-labelledby": "tx-c-" + g.c.tnr },
@@ -403,9 +422,10 @@
                     el("span", { class: "cam-subtitulo-nota", texto: " · ronda " + g.c.ronda + (g.c.ritmo && g.c.ritmo.texto ? " · " + g.c.ritmo.texto : "") + (rl ? " · " + rl.en_vivo + " de " + rl.partidas + " en vivo en LiveChess" : "") })),
                 ...g.propios.map((x) => el("p", { class: "tx-aviso-cat", "data-nivel": x.nivel, role: "alert" }, el("strong", { texto: x.titulo + ": " }), x.texto,
                     pendiente(x) ? el("button", { type: "button", class: "cam-btn cam-btn-chico ml-2", onclick: () => atender([x]) }, "Ya lo revisé") : el("span", { class: "tx-atendido", texto: " ✔ Revisado" }))),
-                el("div", { class: "tx-grilla" + (grandes ? " tx-grandes" : "") }, ...tabs.map((x) => tarjeta(g.c, x.t, x.av, ahora))));
+                el("div", { class: "tx-grilla" + (grandes || proyector ? " tx-grandes" : "") }, ...tabs.map((x) => tarjeta(g.c, x.t, x.av, ahora))));
         }).filter(Boolean);
-        $("tx-categorias").replaceChildren(...(secciones.length ? secciones : [el("p", { class: "cam-herramientas-nota", texto: soloAvisos ? "Ningún tablero tiene avisos pendientes." : "No hay categorías con tableros electrónicos (se cargan en «Clave de chess-results» → «Los tableros electrónicos por LiveChess»)." })]));
+        if (grande) pintarGrande(ahora);
+        $("tx-categorias").replaceChildren(...(secciones.length ? secciones : proyector ? [] : [el("p", { class: "cam-herramientas-nota", texto: soloAvisos ? "Ningún tablero tiene avisos pendientes." : "No hay categorías con tableros electrónicos (se cargan en «Clave de chess-results» → «Los tableros electrónicos por LiveChess»)." })]));
     }
 
     function tarjeta(c, t, av, ahora) {
@@ -437,18 +457,21 @@
             el("p", { class: "tx-jugador" }, el("span", { class: "tx-color", "data-color": "negras", texto: "Negras" }), el("span", { texto: negras })),
             a ? tab : null,
             a && raiz.TableroFen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(a.fen) }) : null,
-            arbitroDe(c, t) ? el("p", { class: "tx-arbitro", texto: "Árbitro: " + arbitroDe(c, t).nombre }) : null,
-            el("p", { class: "tx-dato tx-reloj", texto: relojTxt }),
+            el("p", { class: "tx-dato", texto: relojTxt }),
             jugTxt ? el("p", { class: "tx-dato", texto: jugTxt }) : null,
             t.cambio ? el("p", { class: "tx-nota", texto: "Cambiado por " + t.cambio.por + " a las " + raiz.HoraCR.hora(t.cambio.actualizado) + (t.lc ? " (LiveChess dice " + t.lc.blancas + " – " + t.lc.negras + ")" : "") }) : null,
             av.length ? el("ul", { class: "tx-avisos" }, ...av.map((x) => {
                 const at = atendidas.get(x.clave);
                 return el("li", { "data-nivel": x.nivel, "data-atendido": at ? "si" : null },
                     el("strong", { texto: (x.nivel === "urgente" ? "⚠ " : "👁 ") + x.titulo + ": " }), x.texto,
-                    at ? el("span", { class: "tx-atendido", texto: " ✔ Revisado por " + at.quien + " a las " + raiz.HoraCR.hora(at.en) }) : null);
+                    avisadoTexto(x),
+                    at ? el("span", { class: "tx-atendido", texto: " ✔ Revisado por " + at.quien + " a las " + raiz.HoraCR.hora(at.en) }) : null,
+                    !at ? botonAvisar(c, t, x) : null);
             })) : el("p", { class: "tx-ok", texto: "✔ Sin problemas" }),
+            t.cr && t.cr.arbitros && t.cr.arbitros.length ? el("p", { class: "tx-nota", texto: "Árbitro de la mesa: " + t.cr.arbitros.join(", ") }) : null,
             el("div", { class: "tx-botones" },
                 pend.length ? el("button", { type: "button", class: "cam-btn cam-btn-chico", onclick: () => atender(pend) }, "Ya lo revisé") : null,
+                p ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => abrirGrande(c.tnr, t.tablero) }, el("span", { "aria-hidden": "true", texto: "🔍 " }), "Ver en grande") : null,
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => cambiarJugadores(c, t) }, "Cambiar jugadores")));
     }
 
@@ -459,28 +482,217 @@
         if (x) { x.scrollIntoView({ block: "center", behavior: "smooth" }); x.focus({ preventScroll: true }); }
     }
 
-    // El árbitro de la mesa de un aviso (solo en la pestaña del principal) y el botón para avisarle.
-    function arbitroDe(c, t) {
-        return t && t.cr && ctx.arbitroDe ? ctx.arbitroDe(c.tnr, t.cr.mesa) : null;
-    }
-    function botonAvisar(c, t, x) {
-        const arb = arbitroDe(c, t);
-        if (!arb || !ctx.avisarArbitro) return null;
-        const b = el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "avisar-arbitro",
-            onclick: async () => {
-                b.disabled = true;
-                const ok = await ctx.avisarArbitro(arb, "Mesa " + t.cr.mesa + " (" + c.nombre + "): " + x.titulo + ". " + x.texto);
-                b.textContent = ok ? "✔ Avisado" : "Avisarle a " + arb.nombre;
-                b.disabled = ok;
-            } }, "Avisarle a " + arb.nombre);
-        return b;
-    }
-
     async function atender(lista) {
         try {
             for (const x of lista) { await llamar("atender", { clave: x.clave }); atendidas.set(x.clave, { quien: (datos && datos.nombre) || "tú", en: new Date().toISOString() }); }
             pintar();
         } catch (e) { avisar("No se pudo marcar: " + (e.message || e), true); }
+    }
+
+    // ---------------------------------------------------------------- el historial: la primera vez que se ve cada aviso
+    // Cualquier pantalla abierta lo anota (la base se queda con la primera hora); cada clave se manda una sola vez.
+    function registrar(lista) {
+        const nuevos = lista.filter((y) => !registrados.has(y.x.clave));
+        if (!nuevos.length) return;
+        nuevos.forEach((y) => registrados.add(y.x.clave));
+        const avisos = nuevos.map((y) => ({ clave: y.x.clave, tnr: y.g.c.tnr, ronda: y.g.c.ronda, tablero: y.t ? y.t.tablero : 0,
+            mesa: y.t && y.t.cr ? y.t.cr.mesa : null, tipo: y.x.tipo, nivel: y.x.nivel, titulo: y.x.titulo, texto: y.x.texto }));
+        for (let i = 0; i < avisos.length; i += 100) {
+            llamar("registrar", { avisos: avisos.slice(i, i + 100) }).catch(() => { avisos.slice(i, i + 100).forEach((a) => registrados.delete(a.clave)); });
+        }
+    }
+
+    // ---------------------------------------------------------------- avisarle al árbitro de la mesa
+    function avisadoTexto(x) {
+        const a = avisados.get(x.clave);
+        if (!a) return null;
+        return el("span", { class: "tx-avisado", "data-leido": a.leido ? "si" : "no",
+            texto: " 📨 Avisado a " + a.a + " a las " + raiz.HoraCR.hora(a.en) + (a.leido ? " · lo leyó a las " + raiz.HoraCR.hora(a.leido) + " ✔" : " · todavía no lo lee") });
+    }
+    function botonAvisar(c, t, x) {
+        if (!t.cr || !t.cr.arbitros || !t.cr.arbitros.length || atendidas.has(x.clave)) return null;
+        const ya = avisados.get(x.clave);
+        return el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "avisar", title: "Le llega a " + t.cr.arbitros.join(", "),
+            onclick: () => avisarArbitro(c, t, x) }, el("span", { "aria-hidden": "true", texto: "📨 " }), ya ? "Avisar otra vez" : t.cr.arbitros.length > 1 ? "Avisar a sus " + t.cr.arbitros.length + " árbitros" : "Avisar a " + t.cr.arbitros[0]);
+    }
+    async function avisarArbitro(c, t, x) {
+        const texto = "tablero " + t.tablero + " (" + c.nombre + "): " + x.titulo + ". " + x.texto;
+        try {
+            const r = await llamar("avisar", { clave: x.clave, tnr: c.tnr, ronda: c.ronda, mesa: t.cr.mesa, texto });
+            avisados.set(x.clave, { en: new Date().toISOString(), por: (datos && datos.nombre) || "", a: r.a, leido: null });
+            avisar(r.texto || "Aviso enviado.");
+            pintar();
+        } catch (e) { avisar("No se pudo avisar: " + (e.message || e), true); }
+    }
+
+    // ---------------------------------------------------------------- la pantalla grande (para un proyector)
+    function alternarProyector() {
+        proyector = !proyector;
+        ctx.raiz.classList.toggle("tx-proyector", proyector);
+        $("tx-proyector").setAttribute("aria-pressed", proyector ? "true" : "false");
+        $("tx-proyector-cabeza").hidden = !proyector;
+        if (!proyector) $("tx-proyector-vacio").hidden = true;
+        try {
+            if (proyector && ctx.raiz.requestFullscreen && !document.fullscreenElement) ctx.raiz.requestFullscreen().catch(() => {});
+            if (!proyector && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        } catch (e) { /* sin pantalla completa: igual se ve en grande */ }
+        pintar();
+        (proyector ? $("tx-proyector-cabeza").querySelector("button") : $("tx-proyector")).focus();
+    }
+    if (typeof document !== "undefined") document.addEventListener("fullscreenchange", () => {
+        if (proyector && !document.fullscreenElement && ctx) alternarProyector();   // salió con Esc
+    });
+
+    // ---------------------------------------------------------------- el informe de la transmisión (PDF)
+    async function informe() {
+        const b = $("tx-informe");
+        b.disabled = true;
+        try {
+            const d = await llamar("historial");
+            const nombre = (tnr) => ((d.torneos || []).find((t) => t.tnr === tnr) || { nombre: tnr }).nombre;
+            const orden = (tnr) => (d.torneos || []).findIndex((t) => t.tnr === tnr);
+            const lista = (d.avisos || []).slice().sort((a, b2) => (a.ronda - b2.ronda) || (orden(a.tnr) - orden(b2.tnr)) || a.visto.localeCompare(b2.visto));
+            const mins = (desde, hasta) => (desde && hasta ? Math.max(0, Math.round((new Date(hasta) - new Date(desde)) / 60000)) + " min" : "—");
+            const rondas = [...new Set(lista.map((a) => a.ronda))].sort((x, y) => x - y);
+            const revisados = lista.filter((a) => a.atendida);
+            const demoras = revisados.map((a) => (new Date(a.atendida.en) - new Date(a.visto)) / 60000).filter((x) => x >= 0).sort((x, y) => x - y);
+            const porTipo = {};
+            lista.forEach((a) => { porTipo[a.titulo || a.tipo] = (porTipo[a.titulo || a.tipo] || 0) + 1; });
+            const bloques = [
+                { tipo: "titulo", texto: "Resumen" },
+                { tipo: "lista", items: [
+                    lista.length + " avisos en " + rondas.length + (rondas.length === 1 ? " ronda" : " rondas") + ": " + lista.filter((a) => a.nivel === "urgente").length + " para ir ya y " + lista.filter((a) => a.nivel !== "urgente").length + " para mirar.",
+                    revisados.length + " revisados" + (demoras.length ? " (la mitad en " + Math.round(demoras[Math.floor(demoras.length / 2)]) + " min o menos)" : "") + "; " + lista.filter((a) => a.avisado_en).length + " avisados al árbitro de la mesa, " + lista.filter((a) => a.leido).length + " leídos.",
+                ] },
+                { tipo: "titulo", texto: "Por tipo de aviso" },
+                { tipo: "tabla", encabezados: ["Aviso", "Cuántos"], anchos: [5, 1],
+                    filas: Object.entries(porTipo).sort((x, y) => y[1] - x[1]).map(([t, n]) => [t, String(n)]) },
+            ];
+            for (const r of rondas) {
+                const deR = lista.filter((a) => a.ronda === r);
+                bloques.push({ tipo: "titulo", texto: r ? "Ronda " + r : "Sin ronda" },
+                    { tipo: "tabla", encabezados: ["Hora", "Categoría", "Tablero (mesa)", "Aviso", "Nivel", "Avisado al árbitro", "Revisado", "Tardó"], anchos: [0.6, 1.3, 0.8, 3.2, 0.6, 1.6, 1.4, 0.6],
+                        filas: deR.map((a) => [raiz.HoraCR.hora(a.visto), nombre(a.tnr), a.tablero ? a.tablero + (a.mesa ? " (" + a.mesa + ")" : "") : "—",
+                            (a.titulo ? a.titulo + ": " : "") + a.texto, a.nivel === "urgente" ? "Ir ya" : "Mirar",
+                            a.avisado_en ? a.avisado_a + ", " + raiz.HoraCR.hora(a.avisado_en) + (a.leido ? " (leído " + raiz.HoraCR.hora(a.leido) + ")" : " (sin leer)") : "—",
+                            a.atendida ? a.atendida.quien + ", " + raiz.HoraCR.hora(a.atendida.en) : "Sin revisar",
+                            a.atendida ? mins(a.visto, a.atendida.en) : "—"]) });
+            }
+            if (!lista.length) bloques.push({ tipo: "parrafo", texto: "Todavía no hubo ningún aviso." });
+            bloques.push({ tipo: "nota", texto: "La hora de cada aviso es la primera vez que lo vio una pantalla de transmisión (se lee cada 10 s). «Tardó» va desde ahí hasta «Ya lo revisé»." });
+            const blob = await raiz.ReportePDF.generar({
+                titulo: "Informe de la transmisión — Centroamericano 2026",
+                subtitulo: "Al " + raiz.HoraCR.fechaHora(new Date()) + (datos && datos.nombre ? " · lo bajó " + datos.nombre : ""),
+                pie: "Centroamericano 2026 · ajedrez-integral.com · Los tableros electrónicos (LiveChess)",
+                bloques, fotos: [],
+            });
+            const enl = document.createElement("a");
+            enl.href = URL.createObjectURL(blob); enl.download = "informe-transmision-centroamericano-2026.pdf";
+            document.body.append(enl); enl.click(); enl.remove();
+        } catch (e) { avisar("No se pudo armar el informe: " + (e.message || e), true); }
+        finally { b.disabled = false; }
+    }
+
+    // ---------------------------------------------------------------- el tablero en grande, jugada por jugada
+    function buscarTablero(tnr, n) {
+        const c = datos && datos.categorias.find((x) => x.tnr === tnr);
+        const t = c && (c.tableros || []).find((x) => x.tablero === n);
+        return c && t ? { c, t } : null;
+    }
+    // La posición después de `ply` jugadas (0: la inicial), con la última marcada.
+    function posicionEn(legales, ply) {
+        const C = ChessCtor();
+        const ch = new C();
+        let ultima = "";
+        for (let i = 0; i < ply && i < legales.length; i++) { const h = ch.move(legales[i], { sloppy: true }); if (h) ultima = h.from + h.to; }
+        return { fen: ch.fen(), ultima };
+    }
+    let dialogoGrande = null;
+    function abrirGrande(tnr, n) {
+        const x = buscarTablero(tnr, n);
+        if (!x) return;
+        const a = analizar(x.t.partida.jugadas, x.t.partida.primera);
+        grande = { tnr, tablero: n, ply: a.legales.length, siguiendo: true };
+        if (!dialogoGrande) {
+            dialogoGrande = el("dialog", { id: "tx-grande", class: "cam-dialogo tx-dialogo-grande", "aria-labelledby": "tx-g-titulo" },
+                el("div", { class: "cam-dialogo-titulo" }, el("span", { id: "tx-g-titulo" }),
+                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => dialogoGrande.close() }, "Cerrar")),
+                el("div", { class: "cam-dialogo-cuerpo tx-g-cuerpo" }));
+            dialogoGrande.addEventListener("keydown", (e) => {
+                const paso = { ArrowLeft: -1, ArrowRight: 1, Home: -9999, End: 9999 }[e.key];
+                if (paso == null || (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))) return;
+                e.preventDefault(); mover(paso);
+            });
+            document.body.append(dialogoGrande);
+        }
+        const quien = document.activeElement;
+        dialogoGrande.onclose = () => { grande = null; if (quien && quien.focus) quien.focus(); };
+        try { dialogoGrande.showModal(); } catch (e) { dialogoGrande.setAttribute("open", ""); }
+        pintarGrande(Date.now());
+        const b = dialogoGrande.querySelector('[data-paso="-1"]');
+        if (b) b.focus();
+    }
+    function mover(paso) {
+        if (!grande) return;
+        const x = buscarTablero(grande.tnr, grande.tablero);
+        if (!x) return;
+        const total = analizar(x.t.partida.jugadas, x.t.partida.primera).legales.length;
+        grande.ply = Math.max(0, Math.min(total, grande.ply + paso));
+        grande.siguiendo = grande.ply === total;
+        pintarGrande(Date.now());
+    }
+    function pintarGrande(ahora) {
+        if (!grande || !dialogoGrande || !dialogoGrande.open) return;
+        const x = buscarTablero(grande.tnr, grande.tablero);
+        const cuerpo = dialogoGrande.querySelector(".tx-g-cuerpo");
+        if (!x || !x.t.partida) { cuerpo.replaceChildren(el("p", { texto: "Este tablero ya no está en la transmisión." })); return; }
+        const V = Vivo();
+        const { c, t } = x;
+        const a = analizar(t.partida.jugadas, t.partida.primera);
+        if (grande.siguiendo) grande.ply = a.legales.length;   // en la última, sigue sola con las jugadas nuevas
+        const pos = posicionEn(a.legales, grande.ply);
+        $("tx-g-titulo").textContent = c.nombre + " · tablero " + t.tablero + (t.cr ? " · mesa " + t.cr.mesa : "");
+        const tab = el("div", { class: "cine-tablero tx-g-tablero", "aria-hidden": "true" });
+        if (raiz.TableroFen) raiz.TableroFen.dibujar(tab, pos.fen, pos.ultima, {});
+        const blancas = t.cr ? t.cr.blancas : t.lc ? t.lc.blancas : "—", negras = t.cr ? t.cr.negras : t.lc ? t.lc.negras : "—";
+        const dondeTxt = grande.ply === 0 ? "Posición inicial" : "Después de " + Math.ceil(grande.ply / 2) + (grande.ply % 2 ? ". " : "… ") + V.esp(a.legales[grande.ply - 1]) + " (jugada " + grande.ply + " de " + a.legales.length + ")";
+        const filas = a.sans.map((san, i) => {
+            const r = a.relojes[i] || {};
+            const ilegal = a.ilegal && i >= a.ilegal.ply - 1;
+            return el("tr", { "data-actual": i === grande.ply - 1 ? "si" : null, "data-ilegal": ilegal ? "si" : null },
+                el("td", { texto: Math.floor(i / 2) + 1 + (i % 2 ? "…" : ".") }),
+                el("td", {}, el("button", { type: "button", class: "tx-g-jugada", disabled: ilegal, onclick: () => { grande.ply = i + 1; grande.siguiendo = i + 1 === a.legales.length; pintarGrande(Date.now()); } }, V.esp(san) + (ilegal && i === a.ilegal.ply - 1 ? " ⚠ imposible" : ""))),
+                el("td", { texto: r.reloj != null ? V.hms(r.reloj) : "—" }),
+                el("td", { texto: r.gasto != null ? V.hms(r.gasto) : "—" }),
+                el("td", { texto: r.ms != null ? raiz.HoraCR.hora(new Date(r.ms).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" }) : "—" }));
+        });
+        const av = avisos(t, Object.assign({}, c), ahora);
+        // Repintar no le quita el foco a quien recorre con el teclado.
+        const enfocado = document.activeElement && cuerpo.contains(document.activeElement) ? (document.activeElement.getAttribute("data-paso") || "jugada") : null;
+        cuerpo.replaceChildren(
+            el("div", { class: "tx-g-lado" },
+                el("p", { class: "tx-jugador" }, el("span", { class: "tx-color", "data-color": "negras", texto: "Negras" }), el("span", { texto: negras })),
+                tab,
+                el("p", { class: "tx-jugador" }, el("span", { class: "tx-color", "data-color": "blancas", texto: "Blancas" }), el("span", { texto: blancas })),
+                el("p", { class: "tx-dato", role: "status", texto: dondeTxt }),
+                raiz.TableroFen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(pos.fen) }) : null,
+                el("div", { class: "tx-g-nav", role: "toolbar", "aria-label": "Recorrer la partida" },
+                    ...[["⏮", -9999, "Al principio"], ["◀", -1, "Una jugada atrás"], ["▶", 1, "Una jugada adelante"], ["⏭", 9999, "A la última (sigue en vivo)"]].map(([ic, paso, nom]) =>
+                        el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-paso": String(paso), "aria-label": nom, title: nom, onclick: () => mover(paso) }, ic))),
+                av.length ? el("ul", { class: "tx-avisos" }, ...av.map((y) => el("li", { "data-nivel": y.nivel }, el("strong", { texto: y.titulo + ": " }), y.texto))) : el("p", { class: "tx-ok", texto: "✔ Sin problemas" })),
+            el("div", { class: "tx-g-jugadas cam-tabla-envoltura" },
+                el("table", { class: "cam-tabla cam-rejilla" },
+                    el("caption", { class: "sr-only", texto: "Las jugadas con el reloj de quien jugó, lo que pensó y la hora" }),
+                    el("thead", {}, el("tr", {}, ["", "Jugada", "Reloj después", "Pensó", "Hora"].map((h) => el("th", { scope: "col", texto: h })))),
+                    el("tbody", {}, ...filas))));
+        const actual = cuerpo.querySelector('tr[data-actual="si"]');
+        // Solo se mueve la tabla (no la ventana): en el celular el tablero sigue a la vista.
+        const caja = cuerpo.querySelector(".tx-g-jugadas");
+        if (actual && caja) caja.scrollTop = Math.max(0, actual.offsetTop - caja.clientHeight / 2);
+        if (enfocado) {
+            const b = enfocado === "jugada" ? (actual && actual.querySelector("button")) : cuerpo.querySelector('[data-paso="' + enfocado + '"]');
+            (b || dialogoGrande).focus({ preventScroll: true });
+        }
     }
 
     // ---------------------------------------------------------------- cambiar los jugadores de un tablero
@@ -610,7 +822,7 @@
             const p = t.partida;
             if (!x || !p || !p.reloj || !p.reloj.corre || resultadoNormal(p.resultado)) continue;
             const r = p.reloj, corre = r.hora ? Math.max(0, Math.round((ahora - r.hora) / 1000)) : 0;
-            const d = x.querySelector(".tx-reloj");
+            const d = x.querySelector(".tx-dato");
             const V = Vivo();
             if (d) d.textContent = "Blancas " + V.hms(r.blancas - (r.corre === "blancas" ? corre : 0)) + " · Negras " + V.hms(r.negras - (r.corre === "negras" ? corre : 0));
         }

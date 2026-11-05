@@ -168,5 +168,17 @@ ok("sin sonido (en la sala no hay ruido): ni Audio ni AudioContext", !/new Audio
 ok("el brillo con «reducir movimiento» queda quieto", /prefers-reduced-motion: reduce\)[\s\S]*tx-tarjeta\[data-brilla="urgente"\][^}]*animation: none/.test(leer("css/centroamericano-mesas.css")));
 ok("nada de alert/confirm/prompt", !/\b(alert|confirm|prompt)\(/.test(mod.replace(/Avisos\.confirmar\(/g, "")));
 
+// ---- las mejoras del 5/11: avisar al árbitro, el historial, la pantalla grande y el tablero en grande
+ok("«avisar» manda el aviso de la organización solo a los árbitros con enlace vigente de ESA mesa", /from\("centroamericano_avisos"\)\s*\.insert\(destino\.map\(\(a\) => \(\{ de: "organizacion", asignacion_id: a\.id, mesa/.test(fn) && /\.eq\("revocada", false\)\.gt\("vence"/.test(fn) && /mesa >= a\.mesa_desde && mesa <= a\.mesa_hasta/.test(fn));
+ok("el historial guarda la PRIMERA vez que se vio cada aviso (no la pisa)", /from\("centroamericano_tx_historial"\)\.upsert\(filas, \{ onConflict: "clave", ignoreDuplicates: true \}\)/.test(fn));
+ok("el historial solo acepta torneos que existen y tipos con su forma", /validos\.has\(f\.tnr\) && \/\^\[a-z_0-9\]\{2,40\}\$\/\.test\(f\.tipo\)/.test(fn));
+const mig2 = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /_centroamericano_transmision_historial\.sql$/.test(f)).map((f) => leer("supabase/migraciones/" + f)).join("\n");
+ok("la tabla del historial, con RLS y sin permisos para anon", /alter table public\.centroamericano_tx_historial enable row level security/.test(mig2) && /revoke all on public\.centroamericano_tx_historial from public, anon, authenticated/.test(mig2));
+ok("el informe de la transmisión en PDF va con ReportePDF (la marca de agua) y la página trae sus scripts", /ReportePDF\.generar\(/.test(mod) && /js\/reporte-pdf\.js/.test(pag) && /js\/marca-agua\.js/.test(pag));
+ok("la pantalla grande es pantalla completa y sale con Esc", /requestFullscreen/.test(mod) && /fullscreenchange/.test(mod));
+ok("la pantalla grande muestra solo los tableros con un problema", /const soloConAvisos = soloAvisos \|\| proyector/.test(mod));
+ok("el tablero en grande se recorre con las flechas y sigue solo en la última jugada", /ArrowLeft: -1, ArrowRight: 1/.test(mod) && /if \(grande\.siguiendo\) grande\.ply = a\.legales\.length/.test(mod));
+ok("cada aviso se registra una sola vez por pantalla", /registrados\.has\(y\.x\.clave\)/.test(mod));
+
 console.log((fallas ? "✗ " : "✓ ") + (pruebas - fallas) + " de " + pruebas + " pruebas del encargado de transmisión");
 process.exit(fallas ? 1 : 0);

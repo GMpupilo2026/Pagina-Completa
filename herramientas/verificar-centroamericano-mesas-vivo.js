@@ -255,8 +255,6 @@ ok("la tablet: el botón del ensayo", /id="ensayar-vivo"/.test(tablet) && /inici
 ok("guardar el resultado de la transmisión pregunta antes", /async function guardarDeTransmision[\s\S]*?Avisos\.confirmar\([\s\S]*?if \(!si\) return false;\s*elegido\[m\.mesa\] = valor;\s*await guardar\(m\);/.test(arb));
 ok("la ilegal desde el aviso usa el mismo «ilegal()» con lo que dijo la transmisión", /hacer: \(m\) => ilegal\(m, a\.color, "Avisada por la transmisión: "/.test(arb));
 ok("el final se avisa solo si chess-results no tiene resultado", /if \(a\.tipo === "fin" && !a\.ensayo && \(!m \|\| m\.valor !== "0"\)\) return;/.test(arb));
-const txOrg = leer("js/centroamericano-transmision.js"), pagOrg = leer("js/centroamericano-mesas-pagina.js");
-ok("la organización: cada aviso de un tablero con su árbitro y «Avisarle»", /arbitroDe: \(tnr, mesa\) =>/.test(pagOrg) && /avisarArbitro: async/.test(pagOrg) && /"Avisarle a " \+ arb\.nombre/.test(txOrg));
 
 if (fallas) { console.error("\n" + fallas + " de " + pruebas + " comprobaciones fallaron."); process.exit(1); }
 console.log("✓ La transmisión sin atraso para los árbitros: " + pruebas + " comprobaciones.");
