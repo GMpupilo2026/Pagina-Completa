@@ -9329,6 +9329,49 @@ inmediato.
   planilla), saltan. Desplegada y probada contra la base: con la ronda 4 todavía sin cargar en LiveChess, cada mesa dice
   «todavía no tiene el pareo de esta ronda» y el Sub-8 solo pide los tableros 1-4.
 
+### Del aviso a la bitácora: el resultado que dice la transmisión, el reclamo de tablas y el ensayo (Centroamericano)
+
+El 5/11 el dueño pidió, de una lista de mejoras: que el resultado llegue solo para confirmar, anotar desde el aviso, ver
+las alertas de todas las mesas en la organización con su árbitro (ya hecho en #1191), una ayuda para resolver un reclamo de tablas y un modo
+ensayo para practicar. Todo sale de las mismas jugadas de LiveChess de la sección anterior.
+
+- **El resultado nunca se guarda solo.** `CentroamericanoArbitroVivo.sugerencia(m, ahora?)` dice qué terminó según la
+  transmisión: el resultado que trae el tablero electrónico, el **mate**, el **ahogado** (5.2.1) y la **posición
+  muerta** (5.2.2) de chess.js, la quíntuple y las 75 (9.6), y con la hora la **bandera** (6.9; tablas si al rival solo
+  le queda el rey). Con una jugada imposible no dice nada. En la tablet sale de dos formas: el aviso «🏁 Terminó la
+  partida» (solo si chess-results todavía no tiene resultado en esa mesa) y una banda en la tarjeta de la mesa con
+  «Guardar 1-0». Los dos **preguntan antes** («Confírmalo en la mesa y en las planillas firmadas») y guardan con el
+  `guardar()` de siempre, que además vuelve a preguntar si chess-results ya tenía otro. Si chess-results tiene uno
+  distinto del de la transmisión, la banda lo dice («Ojo: … revisa cuál es el bueno»). La tarjeta se repinta solo cuando
+  cambia lo que dice la transmisión (`alActualizar`), no cada 10 s bajo el dedo.
+- **Anotar desde el aviso.** Cada aviso trae su botón: la posible ilegal, «Anotar la ilegal de las blancas» (el color lo
+  da la jugada imposible, o quien apretó el reloj sin que el tablero viera la jugada), que abre el **mismo** cuadro de la
+  ilegal de la mesa (con el 7.5.5, la segunda que pierde y el Rápido de un toque) con lo que dijo la transmisión ya
+  escrito en el detalle de la bitácora; la bandera, la quíntuple y las 75, «Guardar 0-1» / «Guardar ½-½» con la misma
+  confirmación; la triple y las 50, «Revisar el reclamo». Hecho, el aviso se quita.
+- **La organización ve a quién le toca.** Lo resolvió el PR #1191 (otra sesión, el mismo día) en la pestaña
+  «Transmisión»: cada aviso de un tablero trae «Avisar a …» con los árbitros de esa mesa y dice si ya lo leyeron (ver «El
+  encargado de transmisión»). Este cambio no agrega otra copia.
+- **El reclamo de tablas** (`reclamo(legales, anunciada)`, con `js/reclamos-tablas.js`): en «Mis mesas en vivo», «⚖
+  Reclamo de tablas» en cada mesa. Quien reclama tiene el turno: o la posición de ahora ya apareció tres veces (9.2.1.2),
+  o aparece con la jugada que anotó y anuncia sin hacerla (9.2.1.1), que el árbitro escribe en la notación de la planilla
+  («Ag7», «O-O»; se pasa a inglés para chess.js y se rechaza si no es legal ahí). Dice dónde apareció cada vez («después
+  de 16… Ag7, 18… Ag7 y 20… Ag7») y, para las 50, cuántas van y con qué jugada empezó la cuenta. Es una ayuda: dice que
+  se compare con las planillas (el tablero puede haber leído mal) y recuerda el 9.5 (si no procede, 2 minutos al rival
+  y la jugada anunciada se hace).
+- **El ensayo** (`#ensayar-vivo`, al final de la tablet): cinco «mesas de ensayo» juegan solas (una jugada cada 3 s,
+  4 minutos) y terminan en cada aviso: triple repetición, mate, bandera caída, una jugada imposible y una que el tablero
+  no registró. **Ninguna posición se inventa**: las jugadas están en `ESCENARIOS` y el verificador las pasa por chess.js
+  (todas legales, salvo la imposible, que es la única y la que se busca). Todo lo del ensayo dice «ENSAYO» (y el borde
+  va a rayas); sus botones **no anotan nada**, solo explican qué harían en una ronda. Mientras dura, la tablet no lee la
+  transmisión real y `deLaMesa`/`noReconoce` dan null (el control de tiempos y las sugerencias de las mesas reales no se
+  mezclan con el ensayo); por eso la confirmación dice que se haga antes de la ronda. Al terminar, se van sus avisos.
+- Lo prueban `verificar-centroamericano-mesas-vivo.js` (cada sugerencia, que la triple sola no da resultado, el reclamo
+  con y sin jugada anunciada y las 50, la notación de la planilla, los escenarios con chess.js y que el ensayo llega a
+  sus cinco avisos) y `verificar-centroamericano-mesas-pagina.js` (en la tablet: la ilegal desde el aviso con su detalle,
+  el mate con «Guardar 1-0» que pregunta y no guarda si no se confirma, el reclamo en «Mis mesas en vivo» y el ensayo
+  sin anotar nada). Rotos a propósito (el mate sin sugerencia, la triple que pide cuatro), saltan.
+
 ### El sorteo de Fair Play (Centroamericano)
 
 La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para

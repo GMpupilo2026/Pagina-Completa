@@ -110,7 +110,7 @@ ok("si al rival solo le queda el rey, se dice (serían tablas)", bSolo && bSolo.
 const vistasB = new Set();
 const alB = V.alertasBandera([enVivo], 5, TB + 4000, TB, vistasB), alB2 = V.alertasBandera([enVivo], 5, TB + 9000, TB, vistasB);
 ok("el aviso de la bandera: una vez, con el color, la mesa y el art. 6.9", alB.length === 1 && alB[0].tipo === "bandera" && /a las negras de la mesa 3 se les acabó el tiempo/.test(alB[0].texto) && /art\. 6\.9/.test(alB[0].texto) && alB2.length === 0, JSON.stringify(alB));
-ok("la tablet le pone su título y mira la bandera y la jugada no registrada solo con datos de hace menos de 30 s", /bandera: "Bandera caída"/.test(leer("js/centroamericano-arbitro.js")) && /Date\.now\(\) - leidaMs < 30000\) \{\s*alertasBandera\([^\n]*\n\s*alertasNoRegistrada\(/.test(leer("js/centroamericano-arbitro-vivo.js")));
+ok("la tablet le pone su título y mira la bandera y la jugada no registrada solo con datos de hace menos de 30 s", /bandera: "Bandera caída"/.test(leer("js/centroamericano-arbitro.js")) && /Date\.now\(\) - leidaMs < 30000\) \{\s*const marca = [^\n]*\n\s*alertasBandera\([^\n]*\n\s*alertasNoRegistrada\(/.test(leer("js/centroamericano-arbitro-vivo.js")));
 // La jugada ilegal: una jugada imposible en la transmisión, o el reloj que corre para quien ya jugó.
 const TI = Date.UTC(2026, 10, 5, 16, 0, 0);
 const mImp = V.normalizar({ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Nf3 5480+10", "Nc6 5450+20", "Ke3 5470+10"], primera: TI - 100000, estado: "*", en_vivo: true }, TI);
@@ -179,7 +179,7 @@ ok("la tablet: el botón «Mis mesas en vivo» empieza escondido", /<button type
 const i1 = tablet.indexOf('src="js/tablero-fen.js"'), i2 = tablet.indexOf('src="js/centroamericano-arbitro-vivo.js"'), i3 = tablet.indexOf('src="js/centroamericano-arbitro.js"');
 ok("la tablet carga el tablero y el módulo antes de su página", i1 > 0 && i2 > i1 && i3 > i2);
 const arb = leer("js/centroamericano-arbitro.js");
-ok("la tablet arranca el módulo con su token, su botón y el aviso de las tablas", /CentroamericanoArbitroVivo\.iniciar\(\{ token, boton: \$\("ver-vivo"\), alAlertar: alertaDeTablas \}\)/.test(arb));
+ok("la tablet arranca el módulo con su token, su botón y el aviso de las tablas", /CentroamericanoArbitroVivo\.iniciar\(\{ token, boton: \$\("ver-vivo"\), alAlertar: alertaDeTablas, alActualizar: alActualizarVivo,/.test(arb));
 const iC = tablet.indexOf('src="js/vendor/chess.js"'), iR = tablet.indexOf('src="js/reclamos-tablas.js"');
 ok("la tablet carga chess.js y la regla de las tablas antes del módulo", iC > 0 && iR > iC && i2 > iR);
 ok("el aviso de las tablas es lo primero de la página", /<div id="app" hidden>\s*<!--[\s\S]*?-->\s*<section id="alertas-vivo"/.test(tablet));
@@ -197,6 +197,64 @@ const dgtPag = leer("js/pareo-dgt.js"), dgtDir = leer("js/pareo-dgt-directo.js")
 ok("Pareo para DGT: la copia de los árbitros es privada y cada jugada va también ahí", /visibilidad: "private"/.test(dgtPag) && /if \(r\.privada\) await API\(\)\.empujar\(r\.privada\.id, pgn\)/.test(dgtDir));
 ok("Pareo para DGT: si la copia privada falla, la pública no se frena", /empujar\(r\.privada\.id, pgn\)\.catch\(/.test(dgtDir));
 ok("la política de privacidad dice que la clave se guarda cifrada", /clave de su cuenta de Lichess que solo sirve para leer sus transmisiones privadas: queda cifrada/.test(leer("privacidad.html")));
+
+// ---- el resultado que dice la transmisión (nunca se guarda solo)
+const mate = V.normalizar({ mesa: 6, fuente: "livechess", jugadas: "e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#".split(" ").map((x) => x + " 5000+10"), primera: PRIMERA, estado: "*" }, PRIMERA);
+ok("el mate en el tablero: 1-0 para confirmar", mate.fin === "mate" && V.sugerencia(mate).valor === "1" && /mate de las blancas/.test(V.sugerencia(mate).motivo), JSON.stringify(V.sugerencia(mate)));
+const mateN = V.normalizar({ mesa: 6, fuente: "livechess", jugadas: "f3 e5 g4 Qh4#".split(" ").map((x) => x + " 5000+10"), primera: PRIMERA, estado: "*" }, PRIMERA);
+ok("el mate de las negras: 0-1", V.sugerencia(mateN).valor === "3");
+ok("el resultado del tablero electrónico: ½-½", V.sugerencia(Object.assign({}, mRep, { estado: "½-½" })).valor === "2");
+ok("la quíntuple repetición: ½-½", V.sugerencia(m5).valor === "2");
+ok("la triple sola no da resultado (la reclama un jugador)", V.sugerencia(mRep) === null);
+const banB = { mesa: 7, fuente: "livechess", fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", estado: "*", reloj: { white: 5, black: 300, run: true, time: LEIDA } };
+ok("la bandera de las blancas: 0-1, solo con la hora", V.sugerencia(banB) === null && V.sugerencia(banB, LEIDA + 9000, LEIDA).valor === "3");
+ok("con una jugada imposible no se sugiere nada", V.sugerencia(Object.assign({}, mate, { ilegal: { ply: 3, jugada: "2. Re3" } })) === null);
+const alFin = V.alertasNuevas([mate], 3, new Set());
+ok("el final de la partida se avisa, con su resultado", alFin.some((a) => a.tipo === "fin" && a.valor === "1" && a.resultado === "1-0"));
+const mImp2 = V.normalizar({ mesa: 8, fuente: "livechess", jugadas: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 Ke3 h6".split(" ").map((x) => x + " 5000+10"), primera: PRIMERA, estado: "*" }, PRIMERA);
+ok("la jugada imposible dice quién la hizo (para anotarla desde el aviso)", V.alertasNuevas([mImp2], 3, new Set()).some((a) => a.tipo === "ilegal" && a.color === "blancas"));
+
+// ---- el reclamo de tablas
+const rTriple = V.reclamo(mRep.legales);
+ok("reclamo: la triple de ahora procede (9.2.1.2) y dice dónde apareció", rTriple.triple.procede && /9\.2\.1\.2/.test(rTriple.triple.texto) && /16… Ag7, 18… Ag7 y 20… Ag7/.test(rTriple.triple.texto), rTriple.triple.texto);
+ok("reclamo: las 50 no proceden y dice cuántas van", !rTriple.cincuenta.procede && /llevan 6 jugadas/.test(rTriple.cincuenta.texto), rTriple.cincuenta.texto);
+const rAnun = V.reclamo(mRep.legales.slice(0, -1), "Ag7");
+ok("reclamo: con la jugada anunciada en la notación de la planilla (9.2.1.1)", rAnun.triple.procede && /anotaron 20… Ag7/.test(rAnun.triple.texto) && /9\.2\.1\.1/.test(rAnun.triple.texto), rAnun.triple.texto);
+ok("reclamo: sin la jugada anunciada no procede", !V.reclamo(mRep.legales.slice(0, -1)).triple.procede);
+ok("reclamo: una jugada anunciada imposible se dice", /no es una jugada legal/.test(V.reclamo(mRep.legales, "Re9").error || ""));
+ok("reclamo: la planilla a inglés (R, D, T, A, C y los enroques)", V.aIngles("Ag7") === "Bg7" && V.aIngles("Cf3") === "Nf3" && V.aIngles("0-0") === "O-O" && V.aIngles("e8=D") === "e8=Q" && V.aIngles("exd5") === "exd5");
+const cien = []; { const cc = new Chess(); const vuelta = ["Nf3", "Nf6", "Ng1", "Ng8"]; let i = 0; cc.move("e4"); cien.push("e4"); cc.move("e5"); cien.push("e5");
+  // Las 50 sin repetir tres veces: caballos que pasean por casillas distintas.
+  const ruta = "Nc3 Nc6 Nb5 Nb4 Na3 Na6 Nb1 Nb8 Ne2 Ne7 Ng3 Ng6 Nh5 Nh4 Nf4 Nf5 Nd3 Nd6 Nb4 Nb5 Nc6 Nc3 Na5 Na4 Nb3 Nb6 Nc5 Nc4 Na6 Na3 Nb8 Nb1 Nc6 Nc3 Ne7 Ne2 Ng6 Ng3 Nh8 Nh1 Ng6 Ng3".split(" ");
+  void vuelta; void i;
+  for (const x of ruta) { if (!cc.move(x)) break; cien.push(x); } }
+const r50 = V.reclamo(cien);
+ok("reclamo: las 50 jugadas, con dónde empezó la cuenta", /jugadas de cada uno/.test(r50.cincuenta.texto) && /la cuenta empezó con 2\. Cc3/.test(r50.cincuenta.texto), r50.cincuenta.texto);
+
+// ---- el ensayo: las jugadas son de verdad (chess.js) y cada mesa llega a su aviso
+for (const e of V.ESCENARIOS) {
+  const cc = new Chess(); const sans = e.sans;
+  let hasta = sans.length;
+  for (let i = 0; i < sans.length; i++) if (!cc.move(sans[i], { sloppy: true })) { hasta = i; break; }
+  ok("ensayo, mesa " + e.mesa + " (" + e.que + "): " + (e.que === "imposible" ? "una sola jugada imposible, la que se busca" : "todas las jugadas son legales"), e.que === "imposible" ? hasta === 14 && sans[14] === "Ke3" : hasta === sans.length);
+}
+const T0 = LEIDA, FIN = T0 + 3 * 60000;
+const dE = V.datosEnsayo(T0, FIN);
+const mE = dE.mesas.map((m) => V.normalizar(m, FIN));
+const vE = new Set(), pE = new Map();
+const tiposE = new Set([...V.alertasNuevas(mE, "ensayo", vE), ...V.alertasBandera(mE, "ensayo", FIN, FIN, vE)].map((a) => a.mesa + ":" + a.tipo));
+V.alertasNoRegistrada(mE, "ensayo", FIN, vE, pE);
+V.alertasNoRegistrada(mE, "ensayo", FIN + 9000, vE, pE).forEach((a) => tiposE.add(a.mesa + ":" + a.tipo + "-noregistrada"));
+ok("ensayo: llegan los cinco avisos", ["1:triple", "2:fin", "3:bandera", "4:ilegal", "5:ilegal-noregistrada"].every((x) => tiposE.has(x)), [...tiposE].join(" "));
+ok("ensayo: al empezar todavía no hay avisos", V.alertasNuevas(V.datosEnsayo(T0, T0).mesas.map((m) => V.normalizar(m, T0)), "ensayo", new Set()).length === 0);
+ok("ensayo: no toca las mesas reales (control de tiempos y sugerencias)", /function deLaMesa\(mesa\) \{\s*if \(ensayo \|\|/.test(vivo) && /function noReconoce\(mesa\) \{\s*if \(ensayo \|\|/.test(vivo));
+ok("ensayo: los botones no anotan nada", /if \(a\.ensayo\) \{ await Avisos\.alerta\("En el ensayo no se anota nada/.test(arb));
+ok("la tablet: el botón del ensayo", /id="ensayar-vivo"/.test(tablet) && /iniciarEnsayo\(\)/.test(arb));
+
+// ---- anotar desde el aviso, siempre confirmando
+ok("guardar el resultado de la transmisión pregunta antes", /async function guardarDeTransmision[\s\S]*?Avisos\.confirmar\([\s\S]*?if \(!si\) return false;\s*elegido\[m\.mesa\] = valor;\s*await guardar\(m\);/.test(arb));
+ok("la ilegal desde el aviso usa el mismo «ilegal()» con lo que dijo la transmisión", /hacer: \(m\) => ilegal\(m, a\.color, "Avisada por la transmisión: "/.test(arb));
+ok("el final se avisa solo si chess-results no tiene resultado", /if \(a\.tipo === "fin" && !a\.ensayo && \(!m \|\| m\.valor !== "0"\)\) return;/.test(arb));
 
 if (fallas) { console.error("\n" + fallas + " de " + pruebas + " comprobaciones fallaron."); process.exit(1); }
 console.log("✓ La transmisión sin atraso para los árbitros: " + pruebas + " comprobaciones.");

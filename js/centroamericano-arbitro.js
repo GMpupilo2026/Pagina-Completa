@@ -324,6 +324,7 @@
                     el("p", { role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }),
                     bandaRetener(m, fp)) : null,
                 bandas(m),
+                bandaTransmision(m),
                 marcasJuntas),
             ...jugadores,
             rapido() || A ? resultadoRapido(m, sel, pendiente, ocupada, msg, A) : el("div", { class: "cam-resultado" },
@@ -1002,16 +1003,89 @@
     function alertaDeTablas(a) {
         const caja = $("alertas-vivo");
         if (!caja) return;
-        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas", bandera: "Bandera caída", ilegal: "Posible jugada ilegal" }[a.tipo] || "Tablas";
-        const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
-            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: a.tipo === "bandera" ? "⚑ " : a.tipo === "ilegal" ? "⚠ " : "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
+        const V = window.CentroamericanoArbitroVivo;
+        const m = a.ensayo ? null : ((estado && estado.mesas) || []).find((x) => x.mesa === a.mesa);
+        // El final de una partida solo se avisa si chess-results todavía no tiene resultado en esa mesa.
+        if (a.tipo === "fin" && !a.ensayo && (!m || m.valor !== "0")) return;
+        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas", bandera: "Bandera caída", ilegal: "Posible jugada ilegal", fin: "Terminó la partida" }[a.tipo] || "Tablas";
+        const cerrar = () => { tarjeta.remove(); caja.hidden = !caja.children.length; };
+        // Lo que se puede hacer desde el aviso (en el ensayo, los botones solo dicen qué harían).
+        const accion = accionDeAlerta(a);
+        const hacer = async () => {
+            if (a.ensayo) { await Avisos.alerta("En el ensayo no se anota nada. En una ronda real, este botón " + accion.real + ".", { titulo: "Ensayo", aceptar: "Entendido" }); return; }
+            if (!m) { avisar("Esa mesa ya no está en tu lista: anótalo en la mesa.", true); return; }
+            const hecho = await accion.hacer(m);
+            if (hecho) cerrar();
+        };
+        const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa), "data-ensayo": a.ensayo ? "si" : null },
+            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: a.tipo === "bandera" ? "⚑ " : a.tipo === "ilegal" ? "⚠ " : a.tipo === "fin" ? "🏁 " : "⚖ " }), el("span", { texto: (a.ensayo ? "ENSAYO · " : "") + titulo + " · Mesa " + a.mesa })),
             el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
             el("div", { class: "cam-acciones" },
-                el("button", { type: "button", class: "cam-btn", "data-accion": "ver-posicion", onclick: () => window.CentroamericanoArbitroVivo.abrir(a.mesa) }, "Ver la posición"),
-                el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "entendido-tablas", onclick: () => { tarjeta.remove(); caja.hidden = !caja.children.length; } }, "Entendido")));
+                accion && (a.ensayo || (m && accion.puede(m))) ? el("button", { type: "button", class: "cam-btn", "data-accion": "alerta-" + accion.id, onclick: hacer }, accion.texto) : null,
+                el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "ver-posicion", onclick: () => V.abrir(a.mesa) }, "Ver la posición"),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "entendido-tablas", onclick: cerrar }, "Entendido")));
         caja.prepend(tarjeta);
         caja.hidden = false;
         try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) { /* el iPad no vibra: se ve igual */ }
+    }
+
+    // El botón de cada aviso: anotar la ilegal (con el color que dice la transmisión), guardar el resultado (después de
+    // confirmarlo) o revisar el reclamo de tablas. `puede(m)`: si tiene sentido en esa mesa ahora.
+    const VALOR_RES = { "1": "1-0", "2": "½-½", "3": "0-1" };
+    function accionDeAlerta(a) {
+        const V = window.CentroamericanoArbitroVivo;
+        const sinResultado = (m) => m.valor === "0";
+        const guardarRes = (valor, motivo) => ({ id: "resultado", texto: "Guardar " + VALOR_RES[valor], real: "guarda " + VALOR_RES[valor] + " en chess-results después de que lo confirmes", puede: sinResultado,
+            hacer: (m) => guardarDeTransmision(m, valor, motivo) });
+        if (a.tipo === "ilegal" && a.color) return { id: "ilegal", texto: "Anotar la ilegal de las " + a.color, real: "anota la jugada ilegal de las " + a.color + " en la bitácora (con el aviso de los 2 minutos o de la partida perdida)", puede: () => true,
+            hacer: (m) => ilegal(m, a.color, "Avisada por la transmisión: " + a.texto.replace(/ Mira la mesa:.*$/, "")) };
+        if (a.tipo === "bandera" && a.color) {
+            const v = V && V.deLaMesa(a.mesa);
+            const s = v ? V.sugerencia(v.m, Date.now(), v.leida) : null;
+            const valor = s && s.por === "bandera" ? s.valor : a.color === "blancas" ? "3" : "1";
+            return guardarRes(valor, s ? s.motivo : "cayó la bandera de las " + a.color + ", art. 6.9");
+        }
+        if (a.tipo === "cinco") return guardarRes("2", "la misma posición cinco veces, art. 9.6.1");
+        if (a.tipo === "75") return guardarRes("2", "75 jugadas de cada uno sin peón ni captura, art. 9.6.2");
+        if (a.tipo === "fin" && a.valor) return guardarRes(a.valor, a.motivo || "lo dice la transmisión");
+        if (a.tipo === "triple" || a.tipo === "50") return { id: "reclamo", texto: "Revisar el reclamo", real: "revisa si el reclamo de tablas procede", puede: () => true, hacer: () => { V.revisarReclamo(a.mesa); return false; } };
+        return null;
+    }
+
+    // Guardar el resultado que dice la transmisión: SIEMPRE con la confirmación del árbitro, y con el mismo guardar() de
+    // siempre (que vuelve a preguntar si chess-results ya tenía otro). Devuelve true si quedó guardado (o en la cola).
+    async function guardarDeTransmision(m, valor, motivo) {
+        if (!listaCompleta()) { avisar("Primero la revisión previa de la ronda.", true); return false; }
+        const res = VALOR_RES[valor];
+        const si = await Avisos.confirmar("La transmisión dice que la mesa " + m.mesa + " (" + m.blancas + " – " + m.negras + ") terminó " + res + ": " + motivo + ". Confírmalo en la mesa (el reloj y la posición) y en las planillas firmadas antes de guardarlo.",
+            { titulo: "¿Guardar " + res + " en la mesa " + m.mesa + "?", aceptar: "Guardar " + res });
+        if (!si) return false;
+        elegido[m.mesa] = valor;
+        await guardar(m);
+        const msg = mensajes[m.mesa];
+        return !!(msg && msg.ok);
+    }
+
+    // La banda de la tarjeta de la mesa: lo que dice la transmisión del resultado (sin chess-results) o, si chess-results
+    // ya tiene otro, que no coinciden.
+    function bandaTransmision(m) {
+        const V = window.CentroamericanoArbitroVivo;
+        const s = V && V.sugerenciaDe ? V.sugerenciaDe(m.mesa) : null;
+        if (!s) return null;
+        if (m.valor === "0") return el("div", { class: "cam-aviso-suave cam-tx-resultado", "data-nivel": "transmision" },
+            el("span", { texto: "🏁 La transmisión: " + s.resultado + " (" + s.motivo + "). " }),
+            el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "guardar-tx", disabled: ocupadas.has(m.mesa), onclick: () => guardarDeTransmision(m, s.valor, s.motivo) }, "Guardar " + s.resultado));
+        if (["1", "2", "3"].includes(m.valor) && m.valor !== s.valor) return el("div", { class: "cam-aviso-suave cam-tx-resultado", "data-nivel": "distinto", role: "status" },
+            el("strong", { texto: "Ojo: " }), "la transmisión dice " + s.resultado + " y en chess-results está " + VALOR_RES[m.valor] + ". Revisa cuál es el bueno.");
+        return null;
+    }
+    // Repintar las mesas solo cuando cambia lo que dice la transmisión (no cada 10 s bajo el dedo).
+    let firmaTx = "";
+    function alActualizarVivo() {
+        const V = window.CentroamericanoArbitroVivo;
+        if (!estado || !V || !V.sugerenciaDe) return;
+        const f = (estado.mesas || []).map((m) => { const s = V.sugerenciaDe(m.mesa); return s ? m.mesa + s.valor : ""; }).join(",");
+        if (f !== firmaTx) { firmaTx = f; pintar(); }
     }
 
     // El control de tiempos que sale de la transmisión (relojes justo después de la última jugada, con su hora real).
@@ -1742,13 +1816,13 @@
     // (tipo de jugada, el artículo cuando lo hay y lo que quiera agregar el árbitro).
     // `conSancion`: la irregularidad pregunta además si hubo sanción de tiempo (art. 12.9). Va escrita al final del
     // texto con la forma de C.sancionTexto, y de ahí la lee el cálculo del reloj que se apaga.
-    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro, conSancion) {
+    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro, conSancion, detalle) {
         const r = await Avisos.formulario({
             titulo, texto, aceptar, peligro,
             campos: [
                 { nombre: "tipo", etiqueta, tipo: "select", opciones: lista.map((t) => [t.id, t.texto]) },
                 conSancion ? { nombre: "sancion", etiqueta: "Sanción de tiempo (art. " + C.ARTICULO_SANCION + ")", tipo: "select", valor: "", opciones: C.SANCIONES_TIEMPO.map((x) => [x.id, x.texto]) } : null,
-                { nombre: "nota", etiqueta: "Detalle (opcional; obligatorio si eliges «Otra»)", tipo: "textarea", max: 500 },
+                { nombre: "nota", etiqueta: "Detalle (opcional; obligatorio si eliges «Otra»)", tipo: "textarea", max: 500, valor: detalle ? String(detalle).slice(0, 500) : null },
             ].filter(Boolean),
         });
         if (r === null) return null;
@@ -1759,19 +1833,20 @@
         return t;
     }
 
-    async function ilegal(m, color) {
+    // `detalle`: lo que dijo la transmisión, cuando se anota desde su aviso (queda en la bitácora). Devuelve true si se anotó.
+    async function ilegal(m, color, detalle) {
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
         const segunda = k.ilegales >= 1;
         // En el Rápido y el Blitz no hay tiempo para elegir cuál fue: un toque la anota (y cuenta igual para el art. 7.5.5).
         // Un toque por error se deshace con «Anular la última ilegal».
-        const t = rapido() ? { texto: "Jugada ilegal (" + (rapido() === "blitz" ? "Blitz" : "Rápido") + ": sin elegir el tipo)" } : await elegirTipo(
+        const t = rapido() ? { texto: "Jugada ilegal (" + (rapido() === "blitz" ? "Blitz" : "Rápido") + ": sin elegir el tipo)" + (detalle ? ". " + detalle : "") } : await elegirTipo(
             "Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")",
             segunda
                 ? "Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. 7.5.5)."
                 : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan " + textoMinutos() + " más a su rival (art. 7.5.5).",
-            C.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda);
-        if (!t) return;
+            C.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda, false, detalle);
+        if (!t) return false;
         ocupadas.add(m.mesa);
         pintar();
         try {
@@ -1784,7 +1859,7 @@
                 pintar();
                 const a = C.avisoIlegal(marca.ilegales, nombre, color, minutosIlegal());
                 await Avisos.alerta("Sin señal: quedó anotada en la tablet y se manda sola cuando vuelva la conexión. " + a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale " + textoMinutos() + " al rival", aceptar: "Entendido" });
-                return;
+                return true;
             }
             const d = r.d;
             estado.marcas[clave(m.mesa, color)] = d.marca;
@@ -1793,8 +1868,10 @@
             pintar();
             // Las dos se avisan con un cuadro que no se pasa por alto: la primera recuerda los minutos (1 en el blitz).
             await Avisos.alerta(a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale " + textoMinutos() + " al rival", aceptar: "Entendido" });
+            return true;
         } catch (e) {
             avisar(e.message, true);
+            return false;
         } finally {
             ocupadas.delete(m.mesa);
             pintar();
@@ -1969,7 +2046,17 @@
         let vueltaFp = 0;
         setInterval(() => { if (document.hidden) return; if (liviano() && (vueltaFp++ % 2)) return; cargarFairPlay(); }, 20000);
         // «Mis mesas en vivo»: solo aparece si la organización conectó la transmisión privada sin atraso.
-        if (window.CentroamericanoArbitroVivo) window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo"), alAlertar: alertaDeTablas });
+        if (window.CentroamericanoArbitroVivo) {
+            window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo"), alAlertar: alertaDeTablas, alActualizar: alActualizarVivo,
+                // Al terminar el ensayo se quitan sus avisos (los reales se quedan).
+                alTerminarEnsayo: () => { const caja = $("alertas-vivo"); if (!caja) return; caja.querySelectorAll('[data-ensayo="si"]').forEach((x) => x.remove()); caja.hidden = !caja.children.length; } });
+            const b = $("ensayar-vivo");
+            if (b) b.addEventListener("click", async () => {
+                const si = await Avisos.confirmar("Durante 4 minutos, cinco mesas de ensayo juegan solas y terminan en lo que hay que practicar: triple repetición, mate, bandera caída, una jugada imposible y una que el tablero no registró. No se anota nada. Mientras dura, los avisos reales de tus mesas no llegan: hazlo antes de la ronda.",
+                    { titulo: "¿Ensayar los avisos de la transmisión?", aceptar: "Empezar el ensayo" });
+                if (si) window.CentroamericanoArbitroVivo.iniciarEnsayo();
+            });
+        }
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) return;
             mantenerEncendida();
