@@ -693,6 +693,9 @@
         const antes = presencias().slice();
         const ahora = new Date().toISOString();
         estado.presencia = presencias().filter((x) => x.presente).concat(falta.map((x) => ({ mesa: x.mesa, color: x.color, presente: true, marcada: ahora })));
+        // Cada uno queda con su «Deshacer» unos segundos (por si uno de los marcados no había llegado).
+        for (const x of falta) recienLlego.set(clave(x.mesa, x.color), Date.now());
+        setTimeout(() => { if (estado && !document.hidden) pintar(); }, VENTANA_DESHACER_MS + 200);
         pintar();
         try {
             await escribir("presencia_todos", { ronda: estado.ronda }, "Presencia de todos los jugadores");
@@ -700,8 +703,13 @@
         } catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
     }
 
+    // Cuánto tiempo queda el «Deshacer» después de marcar que llegó (y cuándo se marcó cada uno en esta pantalla).
+    const VENTANA_DESHACER_MS = 15000;
+    const recienLlego = new Map();
     async function marcarPresencia(m, color, presente) {
         const antes = presencias().slice();
+        if (presente) { recienLlego.set(clave(m.mesa, color), Date.now()); setTimeout(() => { if (estado && !document.hidden) pintar(); }, VENTANA_DESHACER_MS + 200); }
+        else recienLlego.delete(clave(m.mesa, color));
         // Se ve al instante; si la función dice que no, se deshace.
         estado.presencia = presencias().filter((x) => !(x.mesa === m.mesa && x.color === color)).concat([{ mesa: m.mesa, color, presente, marcada: new Date().toISOString() }]);
         pintar();
@@ -737,13 +745,21 @@
         if (rapido()) return null;
         const v = llego(m.mesa, color);
         const nombre = nombreDe(m, color);
-        const texto = v ? "✓ Llegó" : "✗ No ha llegado";
-        return el("div", { class: "cam-presencia", "data-presente": v ? "si" : "no" },
-            // El estado: un icono (✓ llegó, ✗ no ha llegado) con su texto para el lector de pantalla.
-            el("span", { class: "cam-presencia-estado", title: texto }, icono(v ? "llego" : "ausente"), el("span", { class: "sr-only", texto })),
-            v && !concluida()
-                ? el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-claro", "data-accion": "corregir-presencia", "aria-label": "Corregir: " + nombre + " no ha llegado", onclick: () => marcarPresencia(m, color, false) }, "Corregir")
-                : botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: false }));
+        // Quien ya llegó NO muestra nada de «Llegó» (ni el icono ni un botón: no hace falta verlo, el botón y el cronómetro solo importan mientras
+        // NO ha llegado). Para un toque equivocado, durante unos segundos queda un «Deshacer»; pasado ese rato, nada (el lector de pantalla
+        // sigue oyendo que llegó). Si de verdad hay que corregirlo después, se le pide a la organización.
+        if (v) {
+            const hace = Date.now() - (recienLlego.get(clave(m.mesa, color)) || 0);
+            const puede = hace < VENTANA_DESHACER_MS && !concluida();
+            return el("div", { class: "cam-presencia", "data-presente": "si" },
+                el("span", { class: "sr-only", texto: "✓ Llegó" }),
+                puede ? el("button", { type: "button", class: "cam-btn cam-btn-chico cam-btn-claro", "data-accion": "corregir-presencia", "aria-label": "Deshacer: " + nombre + " no ha llegado", onclick: () => marcarPresencia(m, color, false) }, "Deshacer") : null);
+        }
+        const texto = "✗ No ha llegado";
+        return el("div", { class: "cam-presencia", "data-presente": "no" },
+            // El estado: un icono (✗ no ha llegado) con su texto para el lector de pantalla.
+            el("span", { class: "cam-presencia-estado", title: texto }, icono("ausente"), el("span", { class: "sr-only", texto })),
+            botonJugador("presente", "llego", nombre + " llegó", "Llegó", () => marcarPresencia(m, color, true), { variante: "cam-btn-icono-verde", pulsado: false }));
     }
 
     // El cronómetro de cada jugador que no ha llegado: cuenta el tiempo de espera (30 min desde que empezó la ronda de su categoría) y,

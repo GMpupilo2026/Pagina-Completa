@@ -9598,6 +9598,20 @@ Angulo** antes de darla a todos.
   igual, los tres botones guardan de un toque, las acciones y los iconos siguen, 46 px, la marca y «Anular» en la franja sin mover nada,
   `?ficha=hoy` y `?ficha=a`, el celular sin desplazarse a lo ancho).
 
+## «Llegó» desaparece cuando ya llegó (Centroamericano, 5/11)
+
+Pedido: una vez marcado que el jugador llegó, **no se ve nada de «Llegó»**; el botón solo está mientras NO ha llegado, y mientras no ha llegado
+corre su tiempo de espera, nada más. `bloquePresencia` (en todas las fichas, la de siempre y la A): sin llegar, el icono ✗ y el botón «Llegó»
+(más el cronómetro de espera junto al nombre, como antes); ya llegó, el bloque queda **vacío a la vista** (solo el texto «✓ Llegó» para el lector
+de pantalla). Antes quedaba un ✓ y un botón «Corregir» siempre.
+
+- **Un toque equivocado** (decisión de diseño, a confirmar con el dueño): durante **15 segundos** (`VENTANA_DESHACER_MS`) queda un botón
+  «Deshacer» (`data-accion="corregir-presencia"`, el mismo de antes); pasado ese rato desaparece. También después de «Marcar que llegaron
+  todos» (cada uno queda con su «Deshacer» esos segundos). Pasado ese tiempo, corregirlo es pedirle a la organización. Si se quisiera poder
+  corregir siempre, habría que dar otra puerta discreta (por ejemplo, mantener tocado el nombre).
+- Lo revisa `verificar-centroamericano-mesas-pagina.js`: quien llegó no muestra icono ni botón (solo «Deshacer» y el texto del lector de
+  pantalla), a los 15 s no queda nada visible, «Deshacer» lo devuelve a «no ha llegado» con su botón, y el resumen sigue contando bien.
+
 ## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
 
 Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de

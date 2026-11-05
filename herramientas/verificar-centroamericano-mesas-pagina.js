@@ -424,16 +424,22 @@ const CONTRASTE = `(sel) => {
       ["✗ No ha llegado", 0, 6, "Han llegado 0 de 6 jugadores · faltan 6."]);
     await p.click(acc(2, "blancas", "presente"));
     await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
-    igual("«Llegó» se anota con la mesa y el color y se ve al instante; ese jugador queda «✓ Llegó» SIN su botón (con un «Corregir»), y los demás conservan el suyo",
-      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), j.querySelector(".cam-presencia-estado").textContent, vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), document.querySelectorAll('.cam-jugador [data-accion="presente"]').length]; }, jug("blancas")),
-      [[[2, "blancas", true]], "✓ Llegó", false, true, 5]);
-    await p.click(jug("blancas") + ' [data-accion="corregir-presencia"]');
-    await p.waitForSelector(acc(2, "blancas", "presente"));
-    igual("«Corregir» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»",
-      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => l.body.presente), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("blancas")),
-      [[true, false], "✗ No ha llegado", "Han llegado 0 de 6 jugadores · faltan 6."]);
-    await p.click(acc(2, "blancas", "presente"));
-    await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 1 de 6 jugadores · faltan 5.");
+    igual("«Llegó» se anota con la mesa y el color; ese jugador ya NO muestra nada de «Llegó» (ni icono ni botón: solo un «Deshacer» unos segundos y el texto para el lector de pantalla), y los demás conservan su botón",
+      await p.evaluate((q) => { const vis = (n) => !!n && n.checkVisibility(); const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.mesa, l.body.color, l.body.presente]), !!j.querySelector(".cam-presencia-estado"), vis(j.querySelector('[data-accion="presente"]')), vis(j.querySelector('[data-accion="corregir-presencia"]')), j.querySelector('[data-accion="corregir-presencia"]').textContent, pr.querySelector(".sr-only").textContent, document.querySelectorAll('.cam-mesa [data-accion="presente"]').length]; }, jug("blancas")),
+      [[[2, "blancas", true]], false, false, true, "Deshacer", "✓ Llegó", 5]);
+    // Pasados unos segundos el «Deshacer» también se va: no queda nada de «Llegó» a la vista (y la cuenta de los demás no cambia).
+    await p.waitForFunction((q) => !document.querySelector(q + ' [data-accion="corregir-presencia"]'), jug("blancas"), { timeout: 20000 });
+    igual("a los 15 s el «Deshacer» desaparece y el bloque de quien llegó queda vacío a la vista (solo el texto del lector de pantalla); el resumen sigue en 1 de 6",
+      await p.evaluate((q) => { const j = document.querySelector(q); const pr = j.querySelector(".cam-presencia"); return [[...pr.children].filter((c) => c.checkVisibility() && !c.classList.contains("sr-only")).length, pr.textContent, document.getElementById("presencia-resumen").textContent]; }, jug("blancas")),
+      [0, "✓ Llegó", "Han llegado 1 de 6 jugadores · faltan 5."]);
+    // Un toque equivocado en la mesa se deshace dentro de la ventana: se vuelve a marcar y se prueba el «Deshacer».
+    await p.click(acc(2, "negras", "presente"));
+    await p.waitForSelector(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.click(jug("negras") + ' [data-accion="corregir-presencia"]');
+    await p.waitForSelector(acc(2, "negras", "presente"));
+    igual("«Deshacer» lo vuelve a poner como que NO ha llegado (se lo dice a la función) y le devuelve su botón «Llegó»; el otro jugador sigue como estaba",
+      await p.evaluate((q) => [window.__llamadas.filter((l) => l.body.action === "presencia").map((l) => [l.body.color, l.body.presente]), document.querySelector(q + " .cam-presencia-estado").textContent, document.getElementById("presencia-resumen").textContent], jug("negras")),
+      [[["blancas", true], ["negras", true], ["negras", false]], "✗ No ha llegado", "Han llegado 1 de 6 jugadores · faltan 5."]);
     igual("cada mesa SIN terminar tiene su relojito (icono, sin texto y con su nombre accesible); las que ya tienen resultado, no", await p.evaluate(() => [[...document.querySelectorAll('.cam-mesa [data-accion="tiempo"]')].map((b) => [b.closest(".cam-mesa").dataset.mesa, b.textContent.trim(), !!b.querySelector("svg"), b.getAttribute("aria-label")]), document.querySelector('.cam-mesa[data-mesa="3"] [data-accion="tiempo"]')]),
         [[["2", "", true, "Control de tiempos de la mesa 2"]], null]);
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
@@ -1021,7 +1027,7 @@ const CONTRASTE = `(sel) => {
     await pe.click("dialog[open] [data-avisos-aceptar]");
     await pe.waitForFunction(() => document.getElementById("presencia-resumen").textContent === "Han llegado 6 de 6 jugadores.");
     igual("al aceptar la función recibe «presencia_todos» de la ronda 3, los 6 quedan «llegó», el botón se va y los cronómetros también", await pe.evaluate(() => [window.__todosArgs[0].ronda, document.getElementById("presencia-todos").hidden, document.querySelectorAll(".cam-cuenta").length, window.__presencia.every((x) => x.presente)]), [3, true, 0, true]);
-    // Se equivocó con la mesa 2 de las negras: «Corregir» la deja como que no ha llegado (y vuelve su cronómetro).
+    // Se equivocó con la mesa 2 de las negras: «Deshacer» (queda unos segundos también después de «llegaron todos») la deja como que no ha llegado (y vuelve su cronómetro).
     await pe.click(jugE(2, "negras") + ' [data-accion="corregir-presencia"]');
     await pe.waitForSelector(jugE(2, "negras") + " .cam-cuenta");
     // La ronda empezó hace 40 min: el tiempo de espera (30) se cumplió.
