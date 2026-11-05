@@ -4,7 +4,8 @@
  *   img/redes/instagram.png          1080×1350  publicación de Instagram (4:5)
  *   img/redes/whatsapp/*.png         1080×1920  estados de WhatsApp (9:16): el sitio
  *   img/redes/whatsapp-academia/     1080×1920  la Academia por dentro
- *   img/redes/whatsapp-mesa-arbitro/ 1080×1920  la Mesa del árbitro
+ *   img/redes/whatsapp-mesa-arbitro/ 1080×1920  la Mesa del árbitro, con capturas de
+ *                                    verdad (las saca capturas-mesa-arbitro.js: correrlo antes)
  *
  * Mismo criterio que og-imagen.js: se dibujan acá y no a mano para que salgan
  * siempre igual y con los colores de la paleta; si cambian, se vuelve a correr.
@@ -191,7 +192,15 @@ const ESTADO_CSS = `${FUENTES}
   .resultados span { min-width: 220px; padding: 26px 0; border-radius: 26px; font-size: 64px; font-weight: 800;
                      background: rgba(10,31,51,0.55); border: 3px solid ${C.accent400}; color: #fff; }
   .resultados span.marcado { background: ${C.accent400}; color: ${C.brand900}; }
-  .lista .d b { display: inline; font-size: inherit; color: #fff; }`;
+  .lista .d b { display: inline; font-size: inherit; color: #fff; }
+  /* Una captura de la herramienta, en el marco de una tableta. */
+  .pantalla { margin-top: 36px; width: 100%; padding: 16px; border-radius: 34px; background: #0a1420;
+              box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 2px rgba(240,180,41,0.35); }
+  .pantalla img { display: block; width: 100%; border-radius: 20px; background: #fff; }
+  .pantalla img + img { margin-top: 14px; }
+  .pantalla.angosta { width: 78%; margin-top: 24px; }
+  .ejemplo { color: ${C.brand300}; font-size: 26px; margin-top: 16px; }
+  .marca.chica { width: 220px; height: 163px; }`;
 
 const PIE = (ruta, frase) => `<div class="pie"><div class="sitio${(ruta || "").length > 20 ? " muy-larga" : (ruta || "").length > 10 ? " larga" : ""}">ajedrez-integral.com${ruta || ""}</div>
   <div class="ruta">${frase || "WhatsApp"} <b>+506 8309-2291</b></div></div>`;
@@ -330,13 +339,24 @@ const ACADEMIA = [
 // La Mesa del árbitro (mesa-arbitro.html): lo que dice su ficha en la vitrina
 // (js/herramientas-arbitraje.js). Va con licencia, que se pide por WhatsApp.
 const LICENCIA = "Pide tu licencia por WhatsApp";
+// Las capturas de verdad de la herramienta (herramientas/capturas-mesa-arbitro.js).
+const CAPTURAS = path.join(RAIZ, "img", "redes", "capturas", "mesa-arbitro");
+const captura = (nombre) => {
+    const archivo = path.join(CAPTURAS, nombre);
+    if (!fs.existsSync(archivo)) {
+        console.error(`Falta ${path.relative(RAIZ, archivo)}: corre antes node herramientas/capturas-mesa-arbitro.js`);
+        process.exit(1);
+    }
+    return `<img src="data:image/png;base64,${fs.readFileSync(archivo).toString("base64")}" alt="">`;
+};
+const EJEMPLO = `<div class="ejemplo">Pantallas reales de la herramienta, con un torneo de ejemplo</div>`;
+const CHICA = `<div class="marca chica"></div>`;
 const MESA = [
     {
         archivo: "01-mesa-del-arbitro.png",
-        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Para quien arbitra</div>
-            <div class="titulo">Mesa del<br><em>árbitro</em></div>
-            <div class="texto">Los resultados de tu torneo suizo,<br>mesa por mesa, directo<br>a <b style="color:#fff">chess-results</b>.</div>
-            <div class="resultados" aria-hidden="true"><span>1-0</span><span class="marcado">½-½</span><span>0-1</span></div>
+        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Mesa del árbitro</div>
+            <div class="titulo" style="font-size:68px;margin-top:24px">Tu ronda, <em>mesa por mesa</em></div>
+            <div class="pantalla">${captura("mesas.png")}</div>${EJEMPLO}
             </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
     },
     {
@@ -349,22 +369,26 @@ const MESA = [
             </ul></div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
     },
     {
-        archivo: "03-sin-errores.png",
-        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Sin sorpresas</div>
-            <div class="titulo">Cada resultado,<br><em>comprobado</em></div>
-            <ul class="lista">
-              <li><span class="punto" aria-hidden="true"></span><div><b>Antes de guardar</b><span class="d">Revisa que sea la misma ronda y los mismos jugadores que viste</span></div></li>
-              <li><span class="punto" aria-hidden="true"></span><div><b>Después de guardar</b><span class="d">Vuelve a leer chess-results para confirmarlo</span></div></li>
-              <li><span class="punto" aria-hidden="true"></span><div><b>Tu clave no se guarda</b><span class="d">Se usa para entrar y se olvida</span></div></li>
-            </ul></div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+        archivo: "03-guardar.png",
+        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Sin sorpresas</div>
+            <div class="titulo" style="font-size:64px;margin-top:20px">Confirmas y queda<br>en <em>chess-results</em></div>
+            <div class="pantalla angosta">${captura("confirmar.png")}</div>
+            <div class="pantalla">${captura("guardado.png")}</div>${EJEMPLO}
+            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
     },
     {
         archivo: "04-bitacora.png",
-        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">La bitácora del árbitro</div>
-            <div class="titulo">Todo queda<br><em>anotado</em></div>
-            <div class="texto">Cada resultado y cada corrección,<br>con su hora y el resultado anterior.<br>Las incidencias, con su artículo.</div>
-            <div class="texto" style="color:#fff">Solo se agrega:<br>nada se edita ni se borra.</div>
-            <div class="datos"><div><b>PDF</b><span>con espacio<br>para tu firma</span></div><div><b>Word</b><span>con la marca<br>de agua</span></div></div>
+        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">La bitácora del árbitro</div>
+            <div class="titulo" style="font-size:68px;margin-top:24px">Todo queda <em>anotado</em></div>
+            <div class="texto" style="font-size:36px;margin-top:20px">Con su hora, y las incidencias con su artículo.<br>Sale en PDF o Word, para firmar.</div>
+            <div class="pantalla">${captura("bitacora.png")}</div>${EJEMPLO}
+            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+    },
+    {
+        archivo: "05-mis-torneos.png",
+        cuerpo: `${CHICA}<div class="medio"><div class="etiqueta">Mis torneos</div>
+            <div class="titulo" style="font-size:68px;margin-top:24px">Cada torneo,<br>con su <em>bitácora</em></div>
+            <div class="pantalla">${captura("mis-torneos.png")}</div>${EJEMPLO}
             </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
     },
 ];

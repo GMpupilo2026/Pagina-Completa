@@ -1006,6 +1006,17 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   «Pide tu licencia por WhatsApp» y la vitrina de herramientas). Los textos
   salen de la documentación de cada pieza y de la ficha de la vitrina
   (`js/herramientas-arbitraje.js`); si cambian allá, se cambian acá.
+- **Los estados de la Mesa del árbitro llevan pantallas de verdad** (pedido
+  del dueño: «que la gente vea cómo va a ver el torneo»). Las saca
+  `herramientas/capturas-mesa-arbitro.js`: abre `mesa-arbitro.html` tal cual,
+  en una tableta (768 px, a 2x), con un doble de Supabase como el de su
+  verificador, lee una ronda, anota tres resultados, los guarda y agrega una
+  incidencia, y fotografía cada parte en `img/redes/capturas/mesa-arbitro/`.
+  `imagenes-redes.js` las pone en un marco de tableta y falla si faltan (se
+  corre primero el de las capturas). **El torneo es de ejemplo y cada imagen
+  lo dice**; los nombres son inventados a propósito, para no poner jugadores
+  reales —muchos, menores— en una publicidad sin su permiso. Si la página
+  cambia, se vuelven a sacar.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
