@@ -36,6 +36,18 @@
       {"categoria":"U08F","fen":"2qr2k1/p4p2/1p3bb1/6p1/8/2P2Q1P/PP2RP2/4R1K1 w - - 4 38","solucion":["f3f6"],"despues":["g8h7","e2e3","g6h5","e3g3"],"tema":"pieza","logro":"Lu"},
       {"categoria":"U14","fen":"2b2rk1/5ppp/6r1/p1B5/Pp2QP1n/1B5P/1q4P1/R4RK1 w - - 1 24","solucion":["b3f7"],"despues":["g8h8","f7g6","h7g6","c5f8"],"tema":"dama","logro":"Jimenez Gamboa"},
       {"categoria":"U10F","fen":"r2q1rk1/ppp3p1/1bn1pn1p/3pp3/4P3/P1NPBN1P/1PP1QPP1/3R1RK1 b - - 1 12","solucion":["d5d4","c3a4","d4e3"],"despues":["f2e3","a7a5","d3d4","d8e8"],"tema":"calidad","logro":"Borrell Espinoza"}
+    ],
+    "4": [
+      {"categoria":"U08","fen":"7k/2p3pp/2N5/8/qp6/P2P4/6PP/5R1K w - - 0 38","solucion":["f1f8"],"despues":[],"tema":"mate","mate":1},
+      {"categoria":"U10","fen":"8/P1R2p2/1R2pkp1/3b4/8/6KP/r5P1/8 b - - 0 40","solucion":["g6g5","g3h2","a2g2"],"despues":["h2h1","g2c2","h1g1","c2c7"],"tema":"torre"},
+      {"categoria":"U12","fen":"3n4/1rN3pp/3k4/3P1p2/5P2/7P/2R2KP1/8 w - - 1 37","solucion":["c7e8","d6d5","c2d2"],"despues":["d5e6","d2d8","e6e7","d8a8"],"tema":"calidad","logro":"Humphrey"},
+      {"categoria":"U08F","fen":"5rk1/5pp1/3bpn1p/p7/q2P4/4RN1P/1rPB1PP1/2Q1R1K1 w - - 0 32","solucion":["c1b2"],"despues":["f6d5","e3b3","f8c8","g1h1"],"tema":"torre","logro":"Sorto"},
+      {"categoria":"U14F","fen":"r4rk1/pppq1ppp/2np1n2/2b1p3/2Q1P3/2PP1NN1/PP3PPP/R1B1K2R b KQ - 4 10","solucion":["c6a5"],"despues":["f3e5","d7e8","c4c5","d6c5"],"tema":"torre","logro":"Poetoe"},
+      {"categoria":"U10F","fen":"r5k1/ppp2p2/3pr1p1/3N3p/3P4/6P1/PPP1N3/2K1R3 w - - 2 21","solucion":["d5c7"],"despues":["a8e8","c1d2","g8g7","c7e6"],"tema":"torre","logro":"Chacon Hernandez"},
+      {"categoria":"U18","fen":"2b1q1k1/3nrp1p/2p2Pp1/1pbp2Q1/p2P4/P2B1PP1/1P3B1P/2R3K1 w - - 0 27","solucion":["f6e7"],"despues":["c5e7","c1e1","g8f8","g5h6"],"tema":"pieza","logro":"Linares Orellana"},
+      {"categoria":"U16F","fen":"3Q4/7p/6pk/p4p2/P3p3/1pq1P1P1/5PKP/8 b - - 1 52","solucion":["c3b4"],"despues":["d8h4","h6g7","h4d8","b3b2"],"tema":"ataque"},
+      {"categoria":"U12F","fen":"8/5pk1/2R2n1p/3p2p1/P2p4/r2P2PP/5KP1/3B4 b - - 2 36","solucion":["a3d3"],"despues":["d1f3","f6e4","f3e4","d5e4"],"tema":"ataque","logro":"Duran Araya"},
+      {"categoria":"U10","fen":"5k2/4r3/4p3/5p2/5P2/4K2P/1P5R/8 w - - 10 53","solucion":["b2b4"],"despues":["e7a7","b4b5","a7a3","e3d4"],"tema":"ataque","logro":"Nunez"}
     ]
   }
 }
