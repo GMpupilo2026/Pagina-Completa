@@ -958,3 +958,66 @@ html[data-liviano="si"] .cam-mesa[data-fp-alcance="mesa"], html[data-liviano="si
 html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[data-estado="abierto"], html[data-liviano="si"] .cam-barra-estado[data-alerta="si"] { box-shadow: 0 0 0 4px rgb(206 19 40 / 0.55); }
 /* El botón «Liviano» encendido se distingue también por el texto («Liviano: sí»), no solo por esto. */
 #modo-liviano[aria-pressed="true"] { outline: 2px solid #fbd38d; outline-offset: 1px; }
+
+/* ===== El encargado de transmisión: todos los tableros en vivo (js/centroamericano-transmision.js) =====
+ * Un tablero con un problema BRILLA: rojo si hay que ir ya, ámbar si hay que mirarlo. El brillo nunca va solo: el
+ * aviso va escrito en la tarjeta y en la lista de arriba. Con «reducir movimiento» queda quieto, con el borde grueso.
+ * Los pares de color son los ya medidos de este archivo (blanco sobre --cac-rojo, --cac-verde y --cac-morado;
+ * --cac-morado-hondo sobre --cac-naranja). */
+.tx-barra { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.6rem 1rem; margin-bottom: 0.8rem; }
+.tx-controles { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem; }
+.tx-casilla { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; font-weight: 700; font-size: 0.9rem; }
+.tx-resumen { border: 2px solid var(--cac-morado); border-radius: 1rem; padding: 0.8rem 1rem; margin-bottom: 1rem; background: #fff; }
+.dark .tx-resumen { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(255 255 255 / 0.18); }
+.tx-todo-bien { color: var(--cac-verde); font-weight: 800; }
+.dark .tx-todo-bien { color: #9be0bb; }
+.tx-lista { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+.tx-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; padding: 0.55rem 0.7rem; border-radius: 0.8rem; border: 2px solid var(--cac-naranja); }
+.tx-item[data-nivel="urgente"] { border-color: var(--cac-rojo); border-width: 3px; }
+.tx-item-texto { flex: 1 1 20rem; font-size: 0.92rem; }
+.tx-item-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tx-nivel { font-weight: 900; font-size: 0.8rem; text-transform: uppercase; border-radius: 9999px; padding: 0.2rem 0.6rem; background: var(--cac-naranja); color: var(--cac-morado-hondo); }
+.tx-item[data-nivel="urgente"] .tx-nivel { background: var(--cac-rojo); color: #fff; }
+.cam-contador[data-urgente="si"] { background: var(--cac-rojo); color: #fff; }
+.tx-categoria { margin-top: 1.2rem; padding: 0.6rem; border-radius: 1rem; }
+.tx-aviso-cat { margin: 0.4rem 0; padding: 0.6rem 0.8rem; border-radius: 0.8rem; border: 3px solid var(--cac-rojo); font-size: 0.92rem; }
+.tx-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.9rem; margin-top: 0.6rem; }
+.tx-grilla.tx-grandes { grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); }
+.tx-tarjeta { display: grid; gap: 0.35rem; align-content: start; padding: 0.7rem; border-radius: 1rem; border: 2px solid rgb(30 36 83 / 0.18); background: #fff; color: var(--cac-morado-hondo); }
+.dark .tx-tarjeta { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
+.tx-tarjeta:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 3px; }
+.tx-tarjeta-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.tx-mesa { font-size: 0.85rem; font-weight: 700; }
+.tx-chip { margin-left: auto; font-size: 0.75rem; font-weight: 800; border-radius: 9999px; padding: 0.15rem 0.55rem; background: var(--cac-rojo); color: #fff; }
+.tx-chip[data-estado="vivo"] { background: var(--cac-verde); }
+.tx-chip[data-estado="fin"] { background: var(--cac-morado); }
+.tx-jugador { font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.tx-tablero { width: 100%; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
+.tx-dato { font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.tx-nota { font-size: 0.8rem; font-style: italic; }
+.tx-ok { font-weight: 800; color: var(--cac-verde); font-size: 0.9rem; }
+.dark .tx-ok { color: #9be0bb; }
+.tx-avisos { display: grid; gap: 0.35rem; font-size: 0.86rem; }
+.tx-avisos li { padding: 0.4rem 0.5rem; border-radius: 0.6rem; border-left: 5px solid var(--cac-naranja); background: rgb(224 171 91 / 0.12); }
+.tx-avisos li[data-nivel="urgente"] { border-left-color: var(--cac-rojo); background: rgb(206 19 40 / 0.07); }
+.tx-avisos li[data-atendido="si"] { opacity: 0.75; border-left-style: dashed; }
+.tx-atendido { display: block; font-weight: 700; font-size: 0.8rem; }
+.tx-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+.tx-dialogo { width: min(40rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.tx-d-cuerpo { display: grid; gap: 0.7rem; text-align: left; }
+.tx-d-campo select { width: 100%; }
+
+/* El brillo: un anillo que late. */
+@keyframes tx-latido-rojo { 0%, 100% { box-shadow: 0 0 0 3px var(--cac-rojo), 0 0 6px 2px rgb(206 19 40 / 0.45); } 50% { box-shadow: 0 0 0 6px var(--cac-rojo), 0 0 26px 10px rgb(206 19 40 / 0.7); } }
+@keyframes tx-latido-ambar { 0%, 100% { box-shadow: 0 0 0 3px var(--cac-naranja), 0 0 4px 1px rgb(224 171 91 / 0.4); } 50% { box-shadow: 0 0 0 5px var(--cac-naranja), 0 0 18px 6px rgb(224 171 91 / 0.65); } }
+.tx-tarjeta[data-brilla="urgente"], .tx-categoria[data-brilla="urgente"] { border-color: var(--cac-rojo); animation: tx-latido-rojo 1.1s ease-in-out infinite; }
+.tx-tarjeta[data-brilla="revisar"] { border-color: var(--cac-naranja); animation: tx-latido-ambar 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tx-tarjeta[data-brilla="urgente"], .tx-categoria[data-brilla="urgente"] { animation: none; box-shadow: 0 0 0 6px var(--cac-rojo); }
+  .tx-tarjeta[data-brilla="revisar"] { animation: none; box-shadow: 0 0 0 5px var(--cac-naranja); }
+}
+
+.tx-color { flex: none; font-size: 0.72rem; font-weight: 800; border-radius: 0.4rem; padding: 0.05rem 0.4rem; border: 2px solid var(--cac-morado-hondo); }
+.tx-color[data-color="blancas"] { background: #fff; color: var(--cac-morado-hondo); }
+.tx-color[data-color="negras"] { background: var(--cac-morado-hondo); color: #fff; }
+.dark .tx-color[data-color="negras"] { border-color: #fff; }
