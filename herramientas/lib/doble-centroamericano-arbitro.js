@@ -19,6 +19,9 @@ const SERVIDOR_ARBITRO = `
   const TOKEN_B = ${JSON.stringify(TOKEN_B)};
   const MESAS = ${JSON.stringify(MESAS)};
   const filas = []; let n = 0;
+  // Las banderitas (la federación de cada jugador): solo cuando la prueba enciende window.__feds, para no tocar las demás pruebas.
+  const FEDS = { "Muñoz Feliz Alejandro": "CRC", "Gramajo Tovar Marco": "ESA", "Harvey Ian": "JAM", "Acuña Porras Fabio": "GUA", "Hopkins John": "TTO", "Baquero Graterol": "FRA", "Pérez Mora, Ana": "CRC", "Rojas Vega, Lía": "PAN" };
+  const conFed = (m) => (window.__feds ? Object.assign({}, m, { fed_b: FEDS[m.blancas] || null, fed_n: FEDS[m.negras] || null }) : m);
   const falla = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
   const marcasDe = () => {
     const anul = new Set(filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula)); const out = {};
@@ -60,7 +63,7 @@ const SERVIDOR_ARBITRO = `
     if (b.action === "mis_pareos") {
       window.__misPareosArgs = (window.__misPareosArgs || 0) + 1;
       if (window.__misFalla) return falla(502, "chess-results no contestó.");
-      const m = (mesa, bl, ne, res) => ({ mesa, blancas: bl, negras: ne, resultado: res });
+      const m = (mesa, bl, ne, res) => conFed({ mesa, blancas: bl, negras: ne, resultado: res });
       return { data: { ok: true, generado: new Date().toISOString(), torneos: [
         { tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", desde: 1, hasta: 3, abierta: 3, leida: new Date().toISOString(), rondas: [
           { ronda: 1, vivo: false, mesas: [m(1, "Pérez Mora, Ana", "Rojas Vega, Lía", "1-0"), m(2, "Solís Arce, Eva", "Mora Cruz, Isa", "½-½"), m(3, "Vargas Ríos, Zoe", "Núñez Soto, Mía", "0-1")] },
@@ -75,7 +78,7 @@ const SERVIDOR_ARBITRO = `
       window.__todasArgs = (window.__todasArgs || 0) + 1;
       if (window.__avisos.todas_las_mesas === false) return falla(403, "La organización no habilitó «¿Dónde juega?» en tu enlace.");
       if (window.__todasFalla) return falla(502, "chess-results no contestó.");
-      const mesas1 = MESAS.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras }));
+      const mesas1 = MESAS.map((m) => conFed({ mesa: m.mesa, blancas: m.blancas, negras: m.negras }));
       const otras = [{ mesa: 1, blancas: "Árias Núñez, María José", negras: "Zúñiga Rojas, Pedro" }, { mesa: 2, blancas: "Castro Vega, Luis", negras: "Jiménez Mora, Ana Sofía" }, { mesa: 15, blancas: "Solano Brenes, Diego", negras: "Mora Ugalde, Camila" }];
       const ahora = new Date().toISOString();
       return { data: { ok: true, actual: "1529737", generado: ahora, categorias: [
@@ -176,7 +179,7 @@ const SERVIDOR_ARBITRO = `
       if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
       window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
     if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { concluyo: window.__concluyo || null, arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
-      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: ((an) => window.__recortar == null ? an : window.__recortar === 0 ? [] : an.slice(-window.__recortar))(filas.filter((f) => f.tipo !== "anulacion")), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
+      mesas: MESAS.map((m) => conFed(Object.assign({}, m))), marcas: marcasDe(), anotaciones: ((an) => window.__recortar == null ? an : window.__recortar === 0 ? [] : an.slice(-window.__recortar))(filas.filter((f) => f.tipo !== "anulacion")), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {
       if (window.__lista.length < 2) return falla(409, "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda 3 (relojes y tableros). No se guardó nada.");
       const r = b.cambios.map((c) => { const m = MESAS.find((x) => x.mesa === c.mesa); const malo = window.__falla === true; const esperado = c.valor === "D" ? "0" : c.valor;
@@ -208,6 +211,11 @@ function dobleArbitro() {
     auth: { getSession: () => R({ session: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
     functions: { invoke: (f, o) => {
       window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) });
+      // El traductor (otra función): «[EN] texto». window.__traducirFalla = N hace que falle esa cantidad de veces, como una cuenta sin saldo.
+      if (f === "centroamericano-traducir") {
+        if (window.__traducirFalla > 0) { window.__traducirFalla--; return Promise.resolve({ data: null, error: { context: { status: 502, json: () => Promise.resolve({ error: "No se pudo traducir ahora. Usa las frases o intenta de nuevo.", codigo: "api_400" }) } } }); }
+        return Promise.resolve({ data: { ok: true, traduccion: "[" + o.body.a.toUpperCase() + "] " + o.body.texto }, error: null });
+      }
       // Fallas de la señal para las pruebas: window.__red = { fallar: N | siempre: true, tipo: "red" | "boot" | "h404", accion?, perderRespuesta? }
       // («perderRespuesta»: la función SÍ procesa el pedido pero la respuesta no llega, como un wifi que se cae a medias).
       const m = window.__red;

@@ -876,6 +876,63 @@ body.cam-guia-abierta { overflow: hidden; }
 .cv-repeticion { font-weight: 800; color: #8a1c00; }
 .dark .cv-repeticion { color: #ffb59e; }
 
+/* La banderita del país al final del nombre de cada jugador: pequeña, sin mover el texto (sigue la última línea del nombre). */
+.cam-bandera { display: inline-block; margin-inline-start: 0.4em; vertical-align: -0.12em; line-height: 0; white-space: nowrap; }
+.cam-bandera img { display: inline-block; width: 1.05em; height: 0.8em; border-radius: 2px; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); object-fit: cover; }
+.dark .cam-bandera img { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35); }
+
+/* «Hablar con el jugador» (js/centroamericano-hablar.js): la ventana con las frases y el traductor, y la pantalla grande que se le da vuelta
+   al jugador. Texto morado hondo (#1e2453) sobre blanco, y blanco sobre ese mismo morado en la pantalla grande: contraste alto en ambos. */
+.cam-hb .cam-hb-fila { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.cam-hb .cam-hb-fila .cam-pestana[aria-pressed="true"] { background: var(--cac-morado); color: #fff; }
+.cam-hb-pestanas { margin-bottom: 0; }
+.cam-hb-cuerpo { overflow: auto; display: grid; gap: 0.8rem; align-content: start; padding-bottom: 0.6rem; min-height: 0; }
+.cam-hb-estado { font-weight: 700; font-size: 0.95rem; margin: 0; min-height: 1.3em; }
+.cam-hb-estado[data-error="si"] { color: #8a1c00; }
+.dark .cam-hb-estado[data-error="si"] { color: #ffb59e; }
+.cam-hb-tema-titulo { font-size: 1rem; font-weight: 800; margin: 0 0 0.35rem; }
+.cam-hb-frases { display: grid; gap: 0.4rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+.cam-hb-frase { display: grid; gap: 0.15rem; text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid #dfe0f7; border-radius: 0.8rem; padding: 0.55rem 0.7rem; min-height: 52px; cursor: pointer; }
+.dark .cam-hb-frase { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(255 255 255 / 0.25); }
+.cam-hb-frase:hover { border-color: var(--cac-morado); }
+.cam-hb-frase:focus-visible, .cam-hb-rapida:focus-visible, .cam-hb-boton:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+.cam-hb-art { font-weight: 700; opacity: 0.85; }
+
+/* La pantalla para el jugador: letra enorme, fondo morado hondo, texto blanco. */
+.cam-hb-pantalla { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; padding: 1.5rem; border: 0; background: var(--cac-morado-hondo); color: #fff; overflow: auto; }
+.cam-hb-pantalla[open] { display: flex; flex-direction: column; gap: 1rem; justify-content: center; align-items: center; text-align: center; }
+.cam-hb-pantalla::backdrop { background: var(--cac-morado-hondo); }
+.cam-hb-idioma-p { margin: 0; font-size: 1rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.cam-hb-grande { margin: 0; font-size: clamp(2rem, 6.5vw, 4.5rem); font-weight: 900; line-height: 1.15; max-width: 22ch; }
+.cam-hb-original { margin: 0; font-size: 1rem; opacity: 0.9; max-width: 48rem; }
+.cam-hb-acciones { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+.cam-hb-boton { font: inherit; font-weight: 800; min-height: 52px; padding: 0.5rem 1.1rem; border-radius: 999px; border: 3px solid #fff; background: transparent; color: #fff; cursor: pointer; }
+.cam-hb-boton:hover:not(:disabled) { background: #fff; color: var(--cac-morado-hondo); }
+.cam-hb-boton:disabled { opacity: 0.6; cursor: not-allowed; }
+.cam-hb-listo { background: #fff; color: var(--cac-morado-hondo); }
+.cam-hb-pantalla .cam-hb-estado { color: #fff; }
+
+/* Conversar: dos mitades, la del jugador girada para leerse del otro lado de la mesa. */
+.cam-hb-conversar { display: grid; gap: 0.8rem; grid-template-rows: 1fr 1fr; }
+.cam-hb-lado { display: grid; gap: 0.45rem; align-content: start; padding: 0.7rem; border: 3px solid #dfe0f7; border-radius: 1rem; min-width: 0; }
+.dark .cam-hb-lado { border-color: rgb(255 255 255 / 0.25); }
+.cam-hb-girado { transform: rotate(180deg); }
+.cam-hb-lado-titulo { margin: 0; font-weight: 800; font-size: 0.95rem; }
+.cam-hb-mensajes { display: grid; gap: 0.35rem; min-height: 4.5rem; align-content: start; }
+.cam-hb-mensaje { margin: 0; padding: 0.4rem 0.6rem; border-radius: 0.8rem; background: #eef0fb; display: grid; gap: 0.1rem; font-size: 1.15rem; }
+.dark .cam-hb-mensaje { background: rgb(255 255 255 / 0.12); }
+.cam-hb-mensaje[data-mio="si"] { background: var(--cac-morado); color: #fff; }
+.cam-hb-quien { font-weight: 800; opacity: 0.9; }
+.cam-hb-vacio { margin: 0; font-style: italic; }
+.cam-hb-campo { font-size: 1.2rem; }
+.cam-hb-rapidas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cam-hb-rapida { font: inherit; font-weight: 700; min-height: 44px; padding: 0.3rem 0.8rem; border-radius: 999px; border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado-hondo); cursor: pointer; }
+.cam-hb-aviso { margin: 0; font-size: 0.8rem; }
+.cam-hb-error { margin: 0; font-weight: 700; color: #8a1c00; }
+.dark .cam-hb-error { color: #ffb59e; }
+.cam-hb-error[hidden] { display: none; }
+.cam-hb-acciones-chicas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+@media (prefers-reduced-motion: no-preference) { .cam-hb-girado { transition: transform 0.2s; } }
 /* ===== Modo liviano: la tablet vieja o lenta (js/modo-liviano.js pone <html data-liviano="si">) =====
  * Lo que cuesta dibujar en una tablet vieja y no dice nada: las animaciones que no paran (cada cuadro se vuelve a
  * pintar), las sombras difuminadas, los filtros y las hojas de la portada (dos PNG grandes con transparencia encima

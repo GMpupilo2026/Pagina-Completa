@@ -9389,6 +9389,49 @@ verdad cada Elo en Costa Rica.
   alta». Se vio en la base apenas se midieron las primeras partidas; ahora, sin comparación, la señal queda vacía y no
   cuenta (la base de ensayo tiene el caso). Al aplicarse se volvió a calibrar: 339 normales y 6 «a mirar».
 
+#### El modelo por jugada, al estilo de Regan
+
+El dueño preguntó qué tan preciso era esto contra el modelo de Ken Regan, el que usa FIDE, y pidió armar todas las
+mejoras (4/11, migración `20261104235900`, función en su versión 11). Lo de la fase 1 comparaba porcentajes de la
+partida con una recta contra el Elo; Regan mira **cada posición**: qué tan difícil era, y por eso cuánto habría acertado
+alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
+
+- **El modelo**, en `analisis.ts`: en cada posición, la probabilidad de cada jugada es p ∝ exp(−(δ/s)^c), con δ lo que
+  pierde esa jugada contra la mejor **en puntos de probabilidad de ganar** (la fórmula de Lichess, 0 a 100; con
+  centipeones, una pieza de más en una posición ganada pesaba igual que en una pareja). La sensibilidad sale del Elo,
+  s = exp(a + b·(Elo − 1500)/400); las jugadas que el motor no listó cuentan juntas, un poco peor que la última. a, b y
+  c se ajustan con las jugadas reales de quien tiene Elo (máxima verosimilitud, `ajustar()`, cada 15 min, con una
+  muestra de 3000 para no pasarse del tiempo de la función). Por eso MultiPV pasó de 3 a **5**, a **profundidad fija
+  12**: con nodos, dos computadoras daban opciones distintas.
+- **Sin Elo** (casi todos en las categorías chicas), la sensibilidad de su categoría **sin contarlo a él**
+  (`sSinElJugador()`): si se le contara, el que hace trampa subiría el nivel de su propio grupo y se escondería.
+- **Un solo número**, el índice en la escala de Regan: 50 es lo normal y cada 5 puntos es una desviación. Junta la
+  primera del motor y lo que perdió (que se parecen mucho: van divididas entre √3 para no contarlas dos veces). Se
+  centra con la mediana del torneo y se corrige con cuánto más varía la gente real que el modelo (la desviación mediana,
+  nunca menos de 1): así un tramposo no mueve la regla. Con el índice, **decide el índice**: 62,5 o más es «muy alta» y
+  60 o más «a mirar» (`centroamericano_fp_calibrar`); las señales de la fase 1 quedan para explicarlo. Por partida
+  (`centroamericano_fp_analisis.roi`) y **por jugador, sumando todo el torneo** (`centroamericano_fp_indice`), que es
+  lo que mira FIDE: una partida sola casi nunca alcanza.
+- **¿Qué tan confiable es?** (`validar()`, en `centroamericano_fp_modelo.validacion`): con los jugadores de verdad,
+  cuántos pasan cada umbral (lo esperable por azar es 2,3 % y 0,6 %), y cuántos detectaría si cada uno usara el motor
+  en 1, 2 o 3 de cada 10 jugadas. Con 80 jugadores inventados en el verificador: alarmas falsas «muy alta» 0,8 % y,
+  con 3 de cada 10, 84 % detectados. Se muestra en la pantalla, para que nadie le crea más de lo que da.
+- **La teoría de verdad**: se mide desde la primera jugada que ya no está en las partidas de maestros de Lichess (con 5
+  o más), nunca antes de la 5.ª de cada uno, con el caché `explorador_maestros_cache` y el `LICHESS_TOKEN` que ya tenía
+  el sitio (20 pedidos por vez a lo sumo). El enroque del explorador viene como «e1h1»: se pasa a «e1g1». Si no se
+  sabe, la regla fija de siempre (desde la 9.ª).
+- **Dos pasadas**: toda partida que sale con alerta se vuelve a analizar a **profundidad 16** antes de darla por
+  buena (`centroamericano_fp_partidas.profunda`); a 12 el motor a veces no ve la jugada que el jugador sí jugó.
+- **Partidas de referencia** (`centroamericano_fp_referencia`): el principal carga un PGN de otro torneo con el Elo de
+  cada uno, se analiza con el mismo motor en la pantalla y se guardan **solo las jugadas y el Elo**, sin nombres, para
+  ajustar el modelo con más gente que la del torneo.
+- **Lo que no es igual a Regan**: él ajusta con millones de jugadas de partidas de maestros analizadas muy hondo; acá el
+  modelo se ajusta con el torneo (y las referencias), a profundidad 12-16. Por eso el centro y el factor salen del
+  mismo torneo y la validación va en la pantalla. Y lo mismo que en la fase 1: el índice **no prueba nada**; es para
+  mirar, y FIDE pide pruebas físicas o de conducta para sancionar.
+- La migración se pegó en el editor SQL (Supabase no llegó a pedir la confirmación de `apply_migration`), y su fila en
+  `supabase_migrations.schema_migrations` se agregó a mano con el mismo nombre.
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.
@@ -9534,6 +9577,95 @@ del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de lo
 - Lo revisan `verificar-centroamericano-mesas.js` (blancas 30:00 y 10 min sin mover → 20:00 y las negras en 50:00; las negras; `visto` de
   uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
   leer, el guardado con la hora de ahora y su nota).
+
+## Banderas y mesas sin rival (Centroamericano)
+
+Pedido del 4/11: **la banderita del país al final del nombre de cada jugador** (pequeña, «un poquito de identificación») y **no mostrar en
+el sistema las mesas que no traen un rival sino un nombre raro**.
+
+- **De dónde sale el país.** La pantalla de resultados de chess-results (la que leen las tablets) y los emparejamientos públicos NO traen la
+  federación; la lista de inscritos (`art=0`) sí, en la columna «FED» (CRC, GUA, ESA…). `_compartido/inscritos-fed.ts` (`fedsDe(tnr)`)
+  la lee una vez por torneo y la guarda **en la memoria de la función** 3 horas (los inscritos casi no cambian; sin tabla ni migración).
+  Si chess-results no contesta, no hay banderas, se reintenta al minuto, se sigue con la última lista que hubo y **nada más se retrasa**
+  (`leer` espera la lista a lo más 3 s y en paralelo con lo demás). Se busca por el nombre sin tildes, sin comas y sin mayúsculas
+  (`claveNombre`): «Ramos Rodriguez Daniel» (resultados) = «Ramos Rodríguez, Daniel» (inscritos). Quien no tiene federación o no está en
+  la lista, sin bandera: nunca se inventa una.
+- **Quién la manda.** `centroamericano-mesa`: `leer` (`fed_b`, `fed_n` en cada mesa), `todas_mesas` («¿Dónde juega?», una lista por
+  categoría) y `mis_pareos`. El dibujo es el de `js/gafetes-banderas.js` (tabla FIDE → ISO) y los SVG ya copiados en `img/banderas/`: nada
+  nuevo que mantener. `js/centroamericano-banderas.js` (`de(fed)`, `deMesa(m, color)`) arma un `<span class="cam-bandera">` con la
+  imagen **decorativa** (alt vacío; 1,05 × 0,8 em, sale de la letra del nombre) y el código de FIDE **escrito** para el lector de pantalla
+  y en el `title` (el color nunca va solo). Va al final del nombre en la tarjeta de cada jugador, en la ventana del control de tiempos,
+  en «Mis pareos» y en «¿Dónde juega?» (la tarjeta y la pantalla completa). Las tarjetas no cambian de tamaño. Sin país o sin dibujo, no
+  se pone nada (nunca un cuadro roto: si la imagen falla se esconde).
+- **Las mesas sin rival.** En la pantalla de resultados, quien se retiró deja su mesa con **«ausgeschieden»** (alemán de «retirado»; pasó en
+  el torneo 1529756, mesas 24 a 26 de la ronda 4) en lugar del nombre del rival. No es una partida: el árbitro no tiene qué anotar y
+  contaba en «Han llegado 0 de N jugadores» y en «Con resultado: x de N». `sinRival(nombre)`: vacío, sin letras o una de las palabras de
+  `SIN_RIVAL` (ausgeschieden, bye, spielfrei, freilos, libre, exento, descansa, retirado, withdrawn, sin emparejar, not paired…).
+  **Si aparece otra palabra rara, se agrega ahí** (una sola lista). Se quitan **al leer, en un solo lugar**: `aLectura` y `deFila` de
+  `lecturas-cache.ts` (lo que sirve TODA función que lee la copia compartida: tablets, organización, avance de la ronda), más las tres
+  lecturas que no pasan por ahí: la copia que lee directo «¿Dónde juega?», «Mis pareos» (lo guardado y la copia) y las mesas en vivo
+  (`centroamericano-mesas-vivo`, que si no la contaba como «no reconocida»). **`guardarYComprobar` sigue leyendo la pantalla entera**: lo
+  que se guarda se compara con lo que de verdad hay en chess-results.
+- **«Inició la ronda» que volvía a salir (4/11).** `leer` desestructuraba 9 nombres para 10 peticiones: `inicio_ronda` tomaba el
+  resultado de `guardarAvance` (`{termino}`, sin `data`) y salía **siempre vacío**. La tablet conserva lo que marcó el árbitro solo
+  2 minutos (`conservarInicio`) y después se queda con lo que dice `leer`: pasados esos 2 minutos el aviso «Todavía no marcaste cuándo
+  empezó la ronda» volvía y los cronómetros regresaban al calendario, aunque la hora estaba bien guardada en
+  `centroamericano_inicios_torneo` (la organización, la bitácora y «Llegó tarde» la leen directo de ahí y por eso no fallaban). Arreglado
+  con un nombre por cada petición (`_avance`); comprobado con el torneo de pruebas (marcar → `leer` devuelve la hora → quitar). Lo
+  vigila `verificar-centroamericano-banderas.js` (el doble de las pruebas de la página siempre devolvió bien la hora, así que ahí no se
+  veía; la comprobación mira el código de la función).
+- **Lo que no cambia.** Esas mesas siguen en chess-results con su resultado (el de quien ganó por el retiro): solo dejan de mostrarse y de
+  contarse en el sistema. Los byes de la página pública (el rival sin enlace) ya se trataban como bye en el sorteo de Fair Play.
+- **Para desplegar**: `node herramientas/funciones-armar.js` y subir `centroamericano-mesa`, `centroamericano-clave` y
+  `centroamericano-mesas-vivo` (las tres reciben `inscritos-fed.ts`; está en el mapa del armador).
+- Lo revisan `verificar-centroamericano-banderas.js` (el lector de inscritos, las palabras, que cada lectura filtre y cada función
+  reciba el módulo, el dibujo decorativo con el código escrito) y `verificar-centroamericano-mesas-pagina.js` (la banderita al final de
+  cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
+  pareos» y «¿Dónde juega?»).
+
+## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
+
+Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
+diálogo en cada mesa (`centroamericano-arbitro.html`, junto a la cámara y el reloj) abre `js/centroamericano-hablar.js`, con tres cosas:
+
+- **Frases fijas** (pestaña «Frases», `js/centroamericano-frases.js`). Unas 40 frases del arbitraje (al empezar, el reloj, las piezas, la
+  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, respuestas rápidas), cada una **escrita una vez en español,
+  inglés y francés** con la regla de las Leyes que la respalda (`art`). El árbitro toca la frase en español y la tablet le muestra al
+  jugador la suya, **en grande y a pantalla completa**, con el original en español debajo «para el árbitro» y «Leer en voz alta»
+  (`speechSynthesis`, con el idioma de la frase). **No pasan por el traductor**: no pueden decir algo distinto de la regla y funcionan sin
+  internet. Nuevas frases: agregar un `f(...)` con los tres idiomas; `verificar-centroamericano-idioma.js` falla si falta un idioma, si se
+  repite un id o si los números (minutos, resultados) no cuadran. **Las revisa una persona que domine inglés y francés antes del torneo**:
+  la terminología sigue la de las Leyes de FIDE, pero no hay un revisor humano todavía.
+- **El idioma se sugiere por el país del jugador**: la federación (la banderita, ver «Banderas y mesas sin rival») decide inglés o francés
+  (`idiomaDeFed`; países de habla francesa, de habla inglesa y el Caribe anglófono). Lo desconocido, la región hispana y Surinam, Aruba y
+  Curazao empiezan en inglés pero el árbitro cambia con un toque. Se cambia siempre a mano también: la sugerencia nunca es la última palabra.
+- **Conversar** (traductor). Dos mitades frente a frente: la del jugador va girada 180° para leerla del otro lado de la mesa, cada uno
+  escribe en su idioma y lee lo del otro en el suyo. El jugador tiene además **nueve botones de respuesta rápida** en su idioma («Quiero
+  reclamar tablas», «Mi rival hizo una jugada ilegal», «Necesito ir al baño»…) que el árbitro lee en español **sin traductor**. La
+  traducción la hace la Edge Function **`centroamericano-traducir`** (sin cuenta, con el token del enlace, `verify_jwt` en false) con Claude
+  (`claude-haiku-4-5`, el secreto `ANTHROPIC_API_KEY`). Se defiende sola: enlace vigente, solo es/en/fr, mensaje de hasta 500 caracteres,
+  **20 por minuto y 500 al día por enlace y 4000 al día en total** (la tabla `centroamericano_traducciones` cuenta cada intento y lo que
+  costó, **sin guardar nunca el texto ni la traducción**; sin permisos ni políticas, solo la escribe la función). Al modelo le llega
+  **solo el mensaje** (entre etiquetas, que el modelo toma como texto por traducir y nunca como instrucciones; no el nombre, la mesa ni el
+  torneo) y nunca se imprime en los registros. Dice en los dos idiomas que es una **traducción automática de ayuda, no oficial**; si falla
+  (sin señal, sin saldo, tope) lo dice, conserva lo escrito y manda a las frases, que siguen sirviendo.
+- **Nada se anota solo.** Lo que se le dijo al jugador queda en la bitácora **solo si el árbitro toca «Anotar en la bitácora»** (o
+  «Anotar la conversación»): una nota de artículo `Comunicado` («Se le comunicó a X (blancas) en inglés: «…» (en español: «…»)»; la
+  conversación con las dos versiones de cada mensaje), con el mismo `anotar` de siempre (misma cola sin señal, mismo rango de mesas). Se ve
+  como «Comunicado» en la tablet, en la bitácora del árbitro (PDF y correo) y en la actividad de la organización.
+- **«Necesito un árbitro que hable inglés / francés»** en la misma ventana: es el pedido de ayuda de siempre a esa mesa (`ayuda`) con el
+  texto «Necesito un árbitro que hable francés en esta mesa.», que le llega a la organización con sonido y «Atendido».
+- **Privacidad.** `privacidad.html` nombra a Anthropic como proveedor del traductor, qué se le manda (solo el mensaje, sin nombres ni
+  mesa) y que no se guarda. Las frases fijas no salen del aparato.
+- **Pendiente de quien tiene la cuenta de Anthropic.** El 4/11 la función respondía `invalid_request_error` («credit balance is too low»):
+  la clave es válida pero la cuenta no tenía saldo. Hay que agregar crédito en la consola de Anthropic (Plans & Billing); hasta entonces
+  «Conversar» dice que no está disponible y las frases y las respuestas rápidas funcionan igual.
+- **Para desplegar**: `centroamericano-traducir` (sin archivos compartidos) y la migración `centroamericano_traducciones`; la página es
+  estática.
+- Lo revisan `verificar-centroamericano-idioma.js` (las frases en los tres idiomas, el idioma por país, el texto de la bitácora, que la
+  función se defienda sola y no mande ni guarde nada de más, la política de privacidad) y `verificar-centroamericano-mesas-pagina.js`
+  («Hablar con el jugador»: el idioma sugerido, la frase en grande y en voz, que nada se anota ni se traduce solo, el traductor de ida y
+  vuelta, la falla del traductor, el pedido por idioma y «Comunicado» en la bitácora).
 
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 

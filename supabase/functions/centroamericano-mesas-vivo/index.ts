@@ -31,6 +31,7 @@
 // relojes.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sinRival } from "./inscritos-fed.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -207,7 +208,7 @@ Deno.serve(async (req) => {
       // no de lo que diga la tablet: así un enlace no puede pedir las partidas de otras mesas.
       const { data: l } = await servicio.from("centroamericano_lecturas").select("ronda, mesas, leida").eq("tnr", a.tnr).maybeSingle();
       const ronda = Number(l?.ronda) || 0;
-      const suyas = ((l?.mesas ?? []) as { mesa: number; blancas: string; negras: string }[]).filter((m) => m.mesa >= a.mesa_desde && m.mesa <= a.mesa_hasta && m.blancas && m.negras);
+      const suyas = ((l?.mesas ?? []) as { mesa: number; blancas: string; negras: string }[]).filter((m) => m.mesa >= a.mesa_desde && m.mesa <= a.mesa_hasta && !sinRival(m.blancas) && !sinRival(m.negras));
       if (!ronda || !suyas.length) return json({ ok: true, conectada: true, ronda, mesas: [] });
       if (lc) {
         const r = await mesasLivechess(lc as { torneo_id: string; tableros: string }, ronda, suyas);
