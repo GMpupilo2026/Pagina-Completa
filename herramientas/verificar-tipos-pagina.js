@@ -1551,6 +1551,17 @@ window.PreparacionMotor = {
       if (x.modo === "clase") return v > 0 ? "si" : v < 0 ? "no" : "igual";
       return v > 0 ? "+" + v : v < 0 ? "-" + (-v) : "0";
     };
+    // Con la red lenta: el script de los juegos de Conteo llega después de
+    // los ejercicios. Antes, un enlace directo se rompía («JUEGOS[partida.tipo]
+    // is not a function», en el CI el 5/11).
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 3);
+      const lento = (ctx) => ctx.route("**/js/entreno-tipos-mas.js", async (r) => { await new Promise((ok) => setTimeout(ok, 1500)); await r.continue(); });
+      const { page, ctx, errores } = await abrir(browser, true, "#conteo/3/" + item.id, lento);
+      await page.waitForSelector("#vista-juego:not(.hidden) #controles button[data-op]");
+      ok("con la red lenta, un enlace directo a Conteo espera a sus juegos y abre el ejercicio", errores.length === 0, errores.join(" | "));
+      await ctx.close();
+    }
     // Una por cada nivel: contestar con el botón da tres estrellas y queda guardado.
     for (let n = 2; n <= 14; n++) {
       const item = DATOS.conteo.find((x) => x.nivel === n);

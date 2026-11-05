@@ -1512,6 +1512,11 @@
       $("main-content").innerHTML = '<p class="text-center text-brand-500 dark:text-brand-300 py-10">No se pudieron cargar los ejercicios. Intenta recargar la página.</p>';
       return;
     }
+    // Los juegos de js/entreno-tipos-mas.js (Conteo, Barrido…) se registran
+    // cuando ese script corre, después de este. Con la red lenta, tipos.json
+    // llegaba antes y un enlace directo a un ejercicio de Conteo se rompía
+    // («JUEGOS[partida.tipo] is not a function», en el CI el 5/11).
+    if (document.readyState === "loading") await new Promise((r) => document.addEventListener("DOMContentLoaded", r, { once: true }));
     rutear();
   }
   /* Los tipos `propio` (Tus propios errores) no vienen en tipos.json: sus
