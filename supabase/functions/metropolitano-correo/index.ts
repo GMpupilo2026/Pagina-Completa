@@ -69,7 +69,7 @@ function mismoSecreto(a: string, b: string): boolean {
   return d === 0;
 }
 
-const COLUMNAS = "id, numero, grupo, delegacion, es_delegado, rol, sexo, nombre, apellidos, correo, fide_id, nombre_fide, titulo, torneos, monto_usd, iva_usd, pago_estado, pago_metodo, hospedaje, hospedaje_desde, hospedaje_hasta, acepta_hospedaje, parqueo, placa, comidas, viaje, confirmacion_intentos, nota_organizacion, pago_aviso_intentos";
+const COLUMNAS = "id, numero, grupo, delegacion, es_delegado, rol, sexo, nombre, apellidos, correo, fide_id, nombre_fide, titulo, torneos, monto_usd, iva_usd, pago_estado, pago_metodo, hospedaje, hospedaje_desde, hospedaje_hasta, acepta_hospedaje, parqueo, placa, comidas, comidas_desde, comidas_hasta, alimentacion, menu, tal_vez, viaje, confirmacion_intentos, nota_organizacion, pago_aviso_intentos";
 
 // Manda un correo; null si salió, o por qué no.
 async function mandar(apiKey: string, c: Correo): Promise<string | null> {

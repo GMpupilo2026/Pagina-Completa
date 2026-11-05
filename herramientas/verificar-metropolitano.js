@@ -98,6 +98,14 @@ igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimient
   const enl = C.correoEnlace([del, ana], TOK);
   cierto("correo del enlace pedido: a quien mandó el envío, con el enlace y el aviso de guardarlo", enl.para === "carlos@ejemplo.com" && enl.texto.includes("#t=" + TOK) && /Guárdalo: es solo tuyo/.test(enl.texto));
   igual("correo: sin enlace no hay correo del enlace, y sin correo válido tampoco del pago", [C.correoEnlace([del], ""), C.correoPago([Object.assign({}, del, { correo: "x" })], "verificado", null, TOK)], [null, null]);
+  const conMenu = C.correosDeEnvio([{ id: "g", numero: 19, rol: "acompanante", nombre: "Rosa", apellidos: "Vega", correo: "rosa@ejemplo.com", torneos: [], monto_usd: 30,
+    alimentacion: "si", comidas: ["desayuno", "cena"], comidas_desde: "2026-12-26", comidas_hasta: "2026-12-30",
+    menu: [{ comida: "desayuno", nombre: "Gallo <b>pinto</b>", cocina: "Soda Tala", precio_usd: 6, dias: 5, usd: 30 }] }])[0];
+  cierto("correo: cada plato elegido, con quién lo prepara, los días y lo que cuesta; lo pedido sin menú, como solicitud",
+    /Desayuno: Gallo <b>pinto<\/b>, de Soda Tala, del 26 de diciembre al 30 de diciembre \(\$6\.00 por día: \$30\.00\)/.test(conMenu.texto)
+    && /Alimentación: Solicitada: cena, del 26 de diciembre al 30 de diciembre/.test(conMenu.texto) && conMenu.html.includes("Gallo &lt;b&gt;pinto&lt;/b&gt;"), conMenu.texto);
+  cierto("correo: «aún no lo sé» lo dice, con a quién escribir si se decide",
+    /Alimentación: Aún no lo sabe\. Si decide comer con nosotros, escribe a metropolitano@fcacostarica\.com\./.test(C.correosDeEnvio([{ id: "h", numero: 20, rol: "acompanante", nombre: "Rosa", apellidos: "Vega", correo: "rosa@ejemplo.com", torneos: [], monto_usd: 0, alimentacion: "tal_vez", comidas: [] }])[0].texto));
   cierto("correo: el árbitro se llama árbitro", /Se inscribe como: Árbitra/.test(C.correosDeEnvio([{ id: "f", numero: 18, rol: "arbitro", sexo: "f", nombre: "Rosa", apellidos: "Vega", correo: "rosa@ejemplo.com", torneos: [], monto_usd: 0 }])[0].texto));
 }
 // Las carpetas del Drive: el mismo código de la Edge Function metropolitano-drive.
@@ -201,8 +209,10 @@ const FILAS_FIDE = [
     fs.writeFileSync(FOTO, pngLiso(60, 80, [200, 120, 40]));
     // Una página con el doble de Supabase: lo que busca, sube y manda queda anotado.
     // El parqueo, como lo contesta metropolitano_parqueo_ver (fijo: nunca la base real).
-    async function abrir(parqueo, consulta, contexto, hospedaje) {
+    async function abrir(parqueo, consulta, contexto, hospedaje, menu) {
       const p = await (contexto || ctx).newPage();
+      // Los menús de la alimentación (metropolitano_menu_ver): sin platos, salvo que la prueba diga otra cosa.
+      await p.route("**/rest/v1/rpc/metropolitano_menu_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(menu || []) }));
       await p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json",
         body: JSON.stringify(parqueo || { disponible: false, precio_usd: null, quedan: 0 }) }));
       // Las camas del hospedaje (metropolitano_hospedaje_ver): sin tope, salvo que la prueba diga otra cosa.
@@ -228,6 +238,13 @@ const FILAS_FIDE = [
         if (k === "sexo" || k === "documento_tipo") await el.selectOption(x); else await el.fill(x);
         await el.dispatchEvent("change");
       }
+      // «¿Va a necesitar alimentación?» se responde siempre: si nadie la
+      // respondió todavía, «No» (como quien no la necesita).
+      await t.evaluate((sec) => {
+        if (sec.querySelector("[data-alim]:checked")) return;
+        const r = sec.querySelector('[data-alim][value="no"]');
+        if (r) { r.checked = true; r.dispatchEvent(new Event("change", { bubbles: true })); }
+      });
     }
 
     /* ----- Una persona: una jugadora con ID FIDE ----- */
@@ -269,10 +286,15 @@ const FILAS_FIDE = [
     await t1.locator('[data-acomp-campo="documento"]').fill("PA123456");
     await t1.locator('[data-acomp-campo="nacimiento"]').fill("1975-02-02");
     await t1.locator('[data-acomp-campo="parentesco"]').fill("Padre");
-    cierto("la alimentación viene plegada y dice que no se pide", !(await t1.locator('[data-comida][value="desayuno"]').isVisible()) && /no requiere/.test(await t1.locator("[data-resumen-comidas]").textContent()));
+    cierto("la alimentación viene plegada y su título dice la respuesta", !(await t1.locator('[data-comida][value="desayuno"]').isVisible()) && (await t1.locator("[data-resumen-comidas]").textContent()) === "(No)");
     await t1.locator("[data-plegable-comidas] > summary").click();
+    cierto("con «No», no se despliega nada", !(await t1.locator('[data-comida][value="desayuno"]').isVisible()));
+    await t1.locator('[data-alim][value="si"]').check();
+    cierto("con «Sí», se piden las comidas", await t1.locator('[data-comida][value="desayuno"]').isVisible() && /¿Qué comidas necesita\?/.test(await t1.locator("[data-alim-texto-si]").textContent()));
     await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
-    igual("y al marcar, su título dice qué comidas", await t1.locator("[data-resumen-comidas]").textContent(), "(desayuno, cena)");
+    igual("y su título dice que sí", await t1.locator("[data-resumen-comidas]").textContent(), "(Sí)");
+    cierto("sin menús, la alimentación es una solicitud sin costo (y lo dice)", await t1.locator("[data-alim-nota-solicitud]").isVisible() && !(await t1.locator("[data-alim-nota-menu]").isVisible())
+      && (await t1.locator("[data-menus] *").count()) === 0);
     await t1.locator('[data-c="acepta_publicidad"]').check();
     await p.check('input[name="metodo"][value="sinpe"]');
     cierto("el total sale en colones por SINPE", /\$87\.00 = ₡40\s?020/.test(await p.textContent("#total")));
@@ -447,6 +469,7 @@ const FILAS_FIDE = [
     /* ----- El parqueo: se pide con la placa y se paga con la inscripción ----- */
     // (en una página recién abierta, cuando ya contestó la base: lleno, no se ofrece)
     const s0p = await ctx.newPage();
+    await s0p.route("**/rest/v1/rpc/metropolitano_menu_ver", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
     await s0p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ disponible: false, precio_usd: null, quedan: 0 }) }));
     const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html?todo=1")]);
     await s0r.finished(); await s0p.waitForTimeout(300);
@@ -503,6 +526,7 @@ const FILAS_FIDE = [
     await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777" });
     await d.locator('input[name="p2-hosp"][value="si"]').check();
     await d.locator("[data-plegable-comidas] > summary").click();
+    await d.locator('[data-alim][value="si"]').check();
     await d.locator('[data-comida][value="almuerzo"]').check();
     await d.locator("[data-foto]").setInputFiles(FOTO);
     await g.p.click('[data-agregar="jugador"]');
@@ -517,7 +541,7 @@ const FILAS_FIDE = [
     await d.locator("[data-plegar]").click();
     cierto("a cada persona nueva se le copia de dónde viene, el hospedaje y las comidas del delegado",
       (await j.locator('[data-c="provincia"]').inputValue()) === "Heredia" && (await j.locator('[data-c="canton"]').inputValue()) === "Barva" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
-      && await j.locator('[data-comida][value="almuerzo"]').isChecked());
+      && await j.locator('[data-comida][value="almuerzo"]').isChecked() && await j.locator('[data-alim][value="si"]').isChecked());
     igual("y la emergencia la atiende el delegado", await j.locator('[data-c="emer_nombre"]').inputValue(), "Carlos Rojas Vega");
     cierto("el correo de un integrante es opcional", await j.locator("[data-nota-contacto]").isVisible());
     await j.locator('[data-c="nombre"]').fill("Andrea");
@@ -735,6 +759,104 @@ const FILAS_FIDE = [
     await lleno.p.check('input[name="modo"][value="grupo"]');
     cierto("en un grupo se agrega un árbitro", await lleno.p.isVisible('[data-agregar="arbitro"]'));
     await lleno.p.close();
+
+    /* ----- La alimentación: sí, aún no lo sé o no; los menús y quién los prepara ----- */
+    console.log("   Los menús de la alimentación");
+    const MENU = [
+      { id: "a1111111-1111-4111-8111-111111111111", comida: "desayuno", nombre: "Gallo pinto", descripcion: "Con huevo y plátano", cocina: "Soda Tala", cocina_detalle: "Frente al estadio", precio_usd: 6.5, imagen: "menu/gallo.jpg" },
+      { id: "a2222222-2222-4222-8222-222222222222", comida: "desayuno", nombre: "Gallo pinto", descripcion: null, cocina: "Doña Rosa", cocina_detalle: null, precio_usd: 6, imagen: null },
+      { id: "a3333333-3333-4333-8333-333333333333", comida: "almuerzo", nombre: "Casado", descripcion: "Arroz, frijoles, ensalada y carne", cocina: null, cocina_detalle: null, precio_usd: 9, imagen: null },
+    ];
+    const mn = await abrir(null, "?todo=1", null, null, MENU);
+    await mn.p.route("**/storage/v1/object/public/metropolitano-menu/**", (r) => r.fulfill({ contentType: "image/png", body: fs.readFileSync(FOTO) }));
+    const tm = tarjeta(mn.p, 0);
+    await tm.locator("[data-rol]").selectOption("arbitro");
+    await tm.locator('input[name="p1-fide"][value="no"]').check();
+    await tm.locator("[data-plegable-comidas] > summary").click();
+    igual("la pregunta tiene tres respuestas: sí, aún no lo sé y no", await tm.locator("[data-alim]").evaluateAll((xs) => xs.map((x) => x.value)), ["si", "tal_vez", "no"]);
+    await tm.locator('[data-alim][value="tal_vez"]').check();
+    cierto("con «Aún no lo sé» se pregunta si quiere ver las opciones y sus precios, y todavía no se muestran",
+      await tm.locator("[data-alim-ver]").isVisible() && /opciones y sus precios/.test(await tm.locator("[data-alim-ver]").textContent()) && (await tm.locator("[data-menus] .metro-plato").count()) === 0);
+    await tm.locator('[data-alim-ver-op][value="si"]').check();
+    const vistos = await tm.locator("[data-menus]").textContent();
+    cierto("con «Sí, quiero verlas» se ven todos los menús, solo para mirar (sin elegir), con quién prepara y el precio por día",
+      (await tm.locator("[data-menus] .metro-plato").count()) === 2 && (await tm.locator("[data-menus] input").count()) === 0
+      && /Lo prepara: Soda Tala/.test(vistos) && /Lo prepara: Doña Rosa/.test(vistos) && /\$6\.50 por día/.test(vistos) && /Lo prepara: La organización/.test(vistos), vistos);
+    cierto("el mismo plato de dos cocinas va en una sola tarjeta, con su foto", (await tm.locator("[data-menus] .metro-plato").first().locator(".metro-plato-nombre").textContent()) === "Gallo pinto"
+      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => i.complete && i.naturalWidth > 0));
+    cierto("y no se cobra nada: el total sigue sin costo, y lo dice", /sin costo/.test(await mn.p.textContent("#total")) && await tm.locator("[data-alim-nota-tal-vez]").isVisible());
+    await tm.locator('[data-alim-ver-op][value="no"]').check();
+    cierto("con «Por ahora no» se esconden y se sigue", (await tm.locator("[data-menus] .metro-plato").count()) === 0);
+    await tm.locator('[data-alim][value="si"]').check();
+    await tm.locator('[data-comida][value="desayuno"]').check(); await tm.locator('[data-comida][value="almuerzo"]').check();
+    igual("con «Sí», cada comida marcada trae su menú para elegir el plato y quién lo prepara",
+      await tm.locator("[data-menus] [data-menu-plato]").evaluateAll((xs) => xs.map((x) => x.dataset.menuPlato + ":" + x.value.slice(0, 2))), ["desayuno:a1", "desayuno:a2", "almuerzo:a3"]);
+    await llenar(tm, { nombre: "Rosa", apellidos: "Vega Mora", nacimiento: "1980-04-04", sexo: "f", documento: "1-3333-4444", correo: "rosa@ejemplo.com", telefono: "+506 8888 1111", emer_nombre: "Luis Vega", emer_telefono: "88880000" });
+    await tm.locator('[data-c="provincia"]').selectOption("San José"); await tm.locator('[data-c="canton"]').selectOption("Escazú");
+    await tm.locator("[data-foto]").setInputFiles(FOTO);
+    await mn.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 1);
+    await mn.p.check("#acepta-reglamento"); await mn.p.check("#acepta-imagen"); await mn.p.check("#acepta-seguro"); await mn.p.check("#acepta-datos");
+    await mn.p.click("#revisar");
+    const faltaPlato = (await mn.p.textContent("#msg")) + " " + (await mn.p.textContent("#errores"));
+    cierto("sin elegir el plato no avanza, y dice cuál falta", /Elige el plato del desayuno y quién lo prepara/.test(faltaPlato) && /Elige el plato del almuerzo/.test(faltaPlato), faltaPlato);
+    await tm.locator('[data-menu-plato="desayuno"][value^="a2"]').check();
+    await tm.locator('[data-menu-plato="almuerzo"]').check();
+    const totMenu = await mn.p.textContent("#total");
+    cierto("el total suma cada plato por los días (del 26 al 30: 5 días): $30 de desayuno y $45 de almuerzo",
+      /Gallo pinto \(Doña Rosa\), \$6\.00 × 5 días: \$30\.00/.test(totMenu) && /Casado \(La organización\), \$9\.00 × 5 días: \$45\.00/.test(totMenu) && /Total: \$75\.00/.test(totMenu), totMenu);
+    await llenar(tm, { comidas_hasta: "2026-12-27" });
+    cierto("y al cambiar los días, cambia el total (2 días: $30)", /Total: \$30\.00/.test(await mn.p.textContent("#total")), await mn.p.textContent("#total"));
+    await mn.p.check('input[name="metodo"][value="sinpe"]');
+    await mn.p.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await mn.p.click("#revisar");
+    await mn.p.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    const resMenu = await mn.p.textContent("#resumen");
+    cierto("el resumen dice cada plato, quién lo prepara y cuánto", /Gallo pinto \(Doña Rosa\), \$6\.00 × 2 días = \$12\.00/.test(resMenu) && /Casado/.test(resMenu), await mn.p.textContent("#msg"));
+    await mn.p.check("#confirmo"); await mn.p.click("#enviar");
+    await mn.p.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    const em = mn.anotado.enviado.personas[0];
+    igual("se manda la respuesta, las comidas y el plato elegido de cada una (la base recalcula el monto)",
+      [em.alimentacion, em.comidas, em.menu, em.tal_vez], ["si", ["desayuno", "almuerzo"], { desayuno: MENU[1].id, almuerzo: MENU[2].id }, null]);
+    igual("sin errores en la inscripción con menú", mn.anotado.errores, []);
+    await mn.p.close();
+    // «Aún no lo sé» se manda sin costo, con lo que podría necesitar.
+    const tv1 = await abrir(null, "?todo=1", null, null, MENU);
+    const tvt = tarjeta(tv1.p, 0);
+    await tvt.locator("[data-rol]").selectOption("arbitro");
+    await tvt.locator('input[name="p1-fide"][value="no"]').check();
+    await tvt.locator("[data-plegable-comidas] > summary").click();
+    await tvt.locator('[data-alim][value="tal_vez"]').check();
+    await llenar(tvt, { nombre: "Rosa", apellidos: "Vega Mora", nacimiento: "1980-04-04", sexo: "f", documento: "1-3333-4444", correo: "rosa@ejemplo.com", telefono: "+506 8888 1111", emer_nombre: "Luis Vega", emer_telefono: "88880000" });
+    await tvt.locator('[data-c="provincia"]').selectOption("San José"); await tvt.locator('[data-c="canton"]').selectOption("Escazú");
+    await tvt.locator("[data-foto]").setInputFiles(FOTO);
+    await tv1.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 1);
+    await tv1.p.check("#acepta-reglamento"); await tv1.p.check("#acepta-imagen"); await tv1.p.check("#acepta-seguro"); await tv1.p.check("#acepta-datos");
+    await tv1.p.click("#revisar");
+    cierto("con «Aún no lo sé» se pide qué comidas podría necesitar", /Marca qué comidas cree que podría necesitar/.test(await tv1.p.textContent("#msg")), await tv1.p.textContent("#msg"));
+    await tvt.locator('[data-comida][value="cena"]').check();
+    await tv1.p.click("#revisar");
+    await tv1.p.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    cierto("y pasa sin pagar, con su respuesta en el resumen", /Aún no lo sé/.test(await tv1.p.textContent("#resumen")) && /cena del/.test(await tv1.p.textContent("#resumen")), await tv1.p.textContent("#msg"));
+    await tv1.p.check("#confirmo"); await tv1.p.click("#enviar");
+    await tv1.p.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    const et = tv1.anotado.enviado.personas[0];
+    igual("se manda «tal_vez» con las comidas y los días, sin comidas pedidas ni plato",
+      [et.alimentacion, et.comidas, et.menu, et.tal_vez], ["tal_vez", [], null, { comidas: ["cena"], desde: "2026-12-26", hasta: "2026-12-30" }]);
+    await tv1.p.close();
+    // En inglés, el menú sale en inglés (los nombres de los platos, como los escribió administración).
+    const mnEn = await abrir(null, "?todo=1", null, null, MENU);
+    const te = tarjeta(mnEn.p, 0);
+    await te.locator("[data-plegable-comidas] > summary").click();
+    await te.locator('[data-alim][value="si"]').check();
+    await te.locator('[data-comida][value="desayuno"]').check();
+    await mnEn.p.click("#metro-idioma"); await mnEn.p.click("#metro-idiomas [data-idioma='en']");
+    await mnEn.p.waitForFunction(() => /Prepared by/.test(document.querySelector("#personas [data-menus]").textContent));
+    const enMenu = await te.locator("[data-menus]").textContent();
+    cierto("English: el menú dice quién prepara y el precio por día en inglés", /Choose the breakfast/.test(enMenu) && /Prepared by: Soda Tala/.test(enMenu) && /\$6\.50 per day/.test(enMenu), enMenu);
+    cierto("English: la pregunta y sus respuestas, en inglés", /Will they need meals during the tournament\?/.test(await te.locator("[data-caja-alim-pregunta]").textContent())
+      && /I don’t know yet/.test(await te.locator("[data-caja-alim-pregunta]").textContent()));
+    await mnEn.p.click("#metro-idioma"); await mnEn.p.click("#metro-idiomas [data-idioma='es']");
+    await mnEn.p.close();
 
     /* ----- Corregir la inscripción con el enlace ----- */
     console.log("   Corregir la inscripción");
@@ -1111,8 +1233,40 @@ const FILAS_FIDE = [
       noches: [{ noche: "2026-12-26", inscritos: 30, acompanantes: 8, titulados: 2 }], comidas: [{ dia: "2026-12-27", desayuno: 25, almuerzo: 31, cena: 28 }],
       dietas: [{ codigo: "MET-0012", quien: "Ana Mora", delegacion: null, dieta: "Sin <b>gluten</b>", comidas: ["cena"], desde: "2026-12-26", hasta: "2026-12-30" }],
       accesibilidad: [], traslados: [{ codigo: "MET-0012", quien: "Ana Mora", llegada: "2026-12-24", salida: "2026-12-31", vuelo: "AV 123", telefono: "+506 8888" }], llegadas: [{ dia: "2026-12-24", personas: 3 }] }) }));
+    // Los menús (metropolitano_menu_admin): una cocina, dos platos, lo pagado y lo «tal vez».
+    const COC = "c1111111-1111-4111-8111-111111111111", P1 = "b1111111-1111-4111-8111-111111111111";
+    let menuAdmin = {
+      cocinas: [{ id: COC, nombre: "Soda <i>Tala</i>", detalle: "Frente al estadio", orden: 0, activo: true, platos: 1 }],
+      platos: [{ id: P1, comida: "desayuno", nombre: "Gallo pinto", descripcion: "Con huevo", cocina: COC, precio_usd: 6.5, imagen: null, orden: 0, activo: true, personas: 4 },
+        { id: "b2222222-2222-4222-8222-222222222222", comida: "cena", nombre: "Sopa negra", descripcion: null, cocina: null, precio_usd: 7, imagen: null, orden: 0, activo: false, personas: 0 }],
+      por_dia: [{ dia: "2026-12-27", id: P1, platos: 4 }],
+      tal_vez: [{ dia: "2026-12-27", comida: "desayuno", personas: 3 }, { dia: "2026-12-28", comida: "almuerzo", personas: 2 }] };
+    const menuGuardado = [];
+    await a.route("**/rest/v1/rpc/metropolitano_menu_admin", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(menuAdmin) }));
+    await a.route("**/rest/v1/rpc/metropolitano_menu_guardar", (r) => { menuGuardado.push(JSON.parse(r.request().postData()).p); r.fulfill({ contentType: "application/json", body: JSON.stringify(menuAdmin) }); });
+    await a.route("**/rest/v1/rpc/metropolitano_cocina_guardar", (r) => { menuGuardado.push(JSON.parse(r.request().postData()).p); r.fulfill({ contentType: "application/json", body: JSON.stringify(menuAdmin) }); });
     await a.goto(BASE + "/metropolitano-inscritos.html");
     await a.waitForSelector("#filas tr", { timeout: 15000 });
+    await a.waitForFunction(() => /se ofrece/.test(document.getElementById("menu-estado").textContent));
+    const pl = await a.textContent("#platos");
+    cierto("los platos salen por comida, con quién los prepara, el precio por día y cuántos lo eligieron (y el quitado lo dice)",
+      /Gallo pinto/.test(pl) && /Lo prepara: Soda <i>Tala<\/i>/.test(pl) && /\$6\.50 por día/.test(pl) && /Lo eligieron 4 personas/.test(pl) && /Sopa negra \(ya no se ofrece\)/.test(pl) && /Lo prepara: La organización/.test(pl), pl);
+    cierto("el nombre de la cocina se escribe como texto, no como HTML", (await a.locator("#cocinas").innerHTML()).includes("Soda &lt;i&gt;Tala&lt;/i&gt;"));
+    igual("se elige quién prepara cada plato (o la organización)", await a.locator("#plato-cocina option").evaluateAll((os) => os.map((o) => o.textContent)), ["La organización", "Soda <i>Tala</i>"]);
+    const est = async () => a.locator("#estimacion tbody tr").evaluateAll((trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent).slice(1)));
+    igual("la estimación: por día y comida, lo pagado de cada cocina, los que «aún no saben» y los platos de más (50 %: 3 → 2)", await est(),
+      [["Desayuno", "4", "4 × Soda <i>Tala</i>: Gallo pinto", "3", "2", "6"], ["Almuerzo", "0", "—", "2", "1", "1"]]);
+    await a.fill("#estimacion-pct", "100");
+    igual("y con otro porcentaje, otros platos de más", (await est()).map((f) => f.slice(4)), [["3", "7"], ["2", "2"]]);
+    await a.fill("#plato-nombre", "Casado"); await a.selectOption("#plato-comida", "almuerzo"); await a.selectOption("#plato-cocina", COC);
+    await a.fill("#plato-precio", "9"); await a.fill("#plato-desc", "Arroz y frijoles");
+    await a.click("#plato-guardar");
+    await a.waitForFunction(() => /Listo/.test(document.getElementById("plato-msg").textContent));
+    igual("agregar un plato manda la comida, el nombre, quién lo prepara y el precio", menuGuardado.pop(),
+      { id: null, comida: "almuerzo", nombre: "Casado", descripcion: "Arroz y frijoles", cocina: COC, precio_usd: 9, orden: 0, activo: true, imagen: null });
+    await a.fill("#cocina-nombre", "Doña Rosa"); await a.click("#cocina-guardar");
+    await a.waitForFunction(() => /Listo/.test(document.getElementById("cocina-msg").textContent));
+    igual("y agregar quién prepara, su nombre", menuGuardado.pop(), { id: null, nombre: "Doña Rosa", detalle: "", orden: 0 });
     await a.waitForFunction(() => /40 camas por noche/.test(document.getElementById("hosp-estado").textContent));
     cierto("el hospedaje dice las camas por noche y que hay noches llenas", /Hay noches llenas/.test(await a.textContent("#hosp-estado")));
     await a.fill("#hosp-camas", ""); await a.click("#hosp-guardar");

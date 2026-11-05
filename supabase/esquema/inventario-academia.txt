@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105144301
+# al-dia-con: 20261105162311
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -165,6 +165,8 @@ tabla  metropolitano_codigos  rls=true
 tabla  metropolitano_enlaces  rls=true
 tabla  metropolitano_hospedaje  rls=true
 tabla  metropolitano_inscripciones  rls=true
+tabla  metropolitano_menu  rls=true
+tabla  metropolitano_menu_cocinas  rls=true
 tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
@@ -1748,6 +1750,7 @@ columna  metropolitano_inscripciones.acompanantes  integer
 columna  metropolitano_inscripciones.acompanantes_detalle  jsonb
 columna  metropolitano_inscripciones.acreditado_en  timestamp with time zone
 columna  metropolitano_inscripciones.acreditado_por  uuid
+columna  metropolitano_inscripciones.alimentacion  text
 columna  metropolitano_inscripciones.apellidos  text
 columna  metropolitano_inscripciones.canton  text
 columna  metropolitano_inscripciones.clasico  text
@@ -1756,6 +1759,7 @@ columna  metropolitano_inscripciones.codigo_descuento  text
 columna  metropolitano_inscripciones.comidas  text[]
 columna  metropolitano_inscripciones.comidas_desde  date
 columna  metropolitano_inscripciones.comidas_hasta  date
+columna  metropolitano_inscripciones.comidas_usd  numeric(8,2)
 columna  metropolitano_inscripciones.comprobante  text
 columna  metropolitano_inscripciones.condicion  text[]
 columna  metropolitano_inscripciones.confirmacion_en  timestamp with time zone
@@ -1795,6 +1799,7 @@ columna  metropolitano_inscripciones.hospedaje_hasta  date
 columna  metropolitano_inscripciones.hospedaje_version  text
 columna  metropolitano_inscripciones.id  uuid
 columna  metropolitano_inscripciones.iva_usd  numeric(8,2)
+columna  metropolitano_inscripciones.menu  jsonb
 columna  metropolitano_inscripciones.monto_crc  integer
 columna  metropolitano_inscripciones.monto_usd  numeric(8,2)
 columna  metropolitano_inscripciones.nacimiento  date
@@ -1825,12 +1830,33 @@ columna  metropolitano_inscripciones.revisado_por  uuid
 columna  metropolitano_inscripciones.rol  text
 columna  metropolitano_inscripciones.sexo  text
 columna  metropolitano_inscripciones.sin_fide  boolean
+columna  metropolitano_inscripciones.tal_vez  jsonb
 columna  metropolitano_inscripciones.telefono  text
 columna  metropolitano_inscripciones.tiquete  text
 columna  metropolitano_inscripciones.titulo  text
 columna  metropolitano_inscripciones.torneos  text[]
 columna  metropolitano_inscripciones.validado_en  timestamp with time zone
 columna  metropolitano_inscripciones.viaje  jsonb
+columna  metropolitano_menu.activo  boolean
+columna  metropolitano_menu.actualizado  timestamp with time zone
+columna  metropolitano_menu.actualizado_por  uuid
+columna  metropolitano_menu.cocina  uuid
+columna  metropolitano_menu.comida  text
+columna  metropolitano_menu.creado  timestamp with time zone
+columna  metropolitano_menu.descripcion  text
+columna  metropolitano_menu.id  uuid
+columna  metropolitano_menu.imagen  text
+columna  metropolitano_menu.nombre  text
+columna  metropolitano_menu.orden  integer
+columna  metropolitano_menu.precio_usd  numeric(8,2)
+columna  metropolitano_menu_cocinas.activo  boolean
+columna  metropolitano_menu_cocinas.actualizado  timestamp with time zone
+columna  metropolitano_menu_cocinas.actualizado_por  uuid
+columna  metropolitano_menu_cocinas.creado  timestamp with time zone
+columna  metropolitano_menu_cocinas.detalle  text
+columna  metropolitano_menu_cocinas.id  uuid
+columna  metropolitano_menu_cocinas.nombre  text
+columna  metropolitano_menu_cocinas.orden  integer
 columna  metropolitano_parqueo.activo  boolean
 columna  metropolitano_parqueo.actualizado  timestamp with time zone
 columna  metropolitano_parqueo.actualizado_por  uuid
@@ -3012,11 +3038,14 @@ funcion  interno.metropolitano_correo_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_dia(d date)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_drive_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
+funcion  interno.metropolitano_menu_costo(p_comidas jsonb, p_menu jsonb, p_desde date, p_hasta date)  definer  anon=false  auth=false
+funcion  interno.metropolitano_menu_fijo()  definer  anon=false  auth=false
 funcion  interno.metropolitano_noches()  definer  anon=false  auth=false
 funcion  interno.metropolitano_pago_envio(p_id uuid)  definer  anon=false  auth=false
 funcion  interno.metropolitano_parqueo_usados()  definer  anon=false  auth=false
 funcion  interno.metropolitano_persona(x jsonb, hoy date, v_metodo text, p_correo_obligatorio boolean)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_principal(p_id uuid)  definer  anon=false  auth=false
+funcion  interno.metropolitano_tal_vez(p jsonb)  invoker  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
@@ -3104,6 +3133,8 @@ funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  metropolitano_acreditar(p_id uuid, p_llego boolean)  definer  anon=false  auth=true
 funcion  metropolitano_avisos_tomar()  definer  anon=false  auth=false
+funcion  metropolitano_cocina_guardar(p jsonb)  definer  anon=false  auth=true
+funcion  metropolitano_cocina_quitar(p_id uuid)  definer  anon=false  auth=true
 funcion  metropolitano_codigo_anular(p_codigo text)  definer  anon=false  auth=true
 funcion  metropolitano_codigo_ver(p_codigo text)  definer  anon=true  auth=true
 funcion  metropolitano_codigos_crear(p_porcentaje integer, p_cantidad integer, p_nota text)  definer  anon=false  auth=true
@@ -3116,6 +3147,10 @@ funcion  metropolitano_hospedaje_estado()  definer  anon=false  auth=true
 funcion  metropolitano_hospedaje_ver()  definer  anon=true  auth=true
 funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
 funcion  metropolitano_logistica()  definer  anon=false  auth=true
+funcion  metropolitano_menu_admin()  definer  anon=false  auth=true
+funcion  metropolitano_menu_guardar(p jsonb)  definer  anon=false  auth=true
+funcion  metropolitano_menu_quitar(p_id uuid)  definer  anon=false  auth=true
+funcion  metropolitano_menu_ver()  definer  anon=true  auth=true
 funcion  metropolitano_mi_inscripcion(p_token text)  definer  anon=true  auth=true
 funcion  metropolitano_parqueo_configurar(p_precio numeric, p_cupos integer, p_activo boolean)  definer  anon=false  auth=true
 funcion  metropolitano_parqueo_estado()  definer  anon=false  auth=true
@@ -3631,6 +3666,8 @@ politica  mensajes_casa  mensajes_casa_select  SELECT
 politica  metropolitano_codigos  metropolitano_codigos_ver  SELECT
 politica  metropolitano_hospedaje  metropolitano_hospedaje_ver  SELECT
 politica  metropolitano_inscripciones  metropolitano_ver  SELECT
+politica  metropolitano_menu  metropolitano_menu_ver  SELECT
+politica  metropolitano_menu_cocinas  metropolitano_menu_cocinas_ver  SELECT
 politica  metropolitano_parqueo  metropolitano_parqueo_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
@@ -3957,7 +3994,10 @@ trigger  metropolitano_codigos  auditar
 trigger  metropolitano_hospedaje  auditar
 trigger  metropolitano_inscripciones  auditar
 trigger  metropolitano_inscripciones  metropolitano_correo_avisa
+trigger  metropolitano_inscripciones  metropolitano_menu_fijo
 trigger  metropolitano_inscripciones  metropolitano_pago_avisa
+trigger  metropolitano_menu  auditar
+trigger  metropolitano_menu_cocinas  auditar
 trigger  metropolitano_parqueo  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
@@ -4390,6 +4430,9 @@ indice  metropolitano_inscripciones  metropolitano_un_codigo
 indice  metropolitano_inscripciones  metropolitano_un_documento
 indice  metropolitano_inscripciones  metropolitano_un_fide
 indice  metropolitano_inscripciones  metropolitano_una_placa
+indice  metropolitano_menu  metropolitano_menu_cocina
+indice  metropolitano_menu  metropolitano_menu_pkey
+indice  metropolitano_menu_cocinas  metropolitano_menu_cocinas_pkey
 indice  metropolitano_parqueo  metropolitano_parqueo_pkey
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
@@ -5396,6 +5439,8 @@ grant  metropolitano_inscripciones  authenticated  REFERENCES
 grant  metropolitano_inscripciones  authenticated  SELECT
 grant  metropolitano_inscripciones  authenticated  TRIGGER
 grant  metropolitano_inscripciones  authenticated  TRUNCATE
+grant  metropolitano_menu  authenticated  SELECT
+grant  metropolitano_menu_cocinas  authenticated  SELECT
 grant  metropolitano_parqueo  authenticated  SELECT
 grant  misiones_secretas  anon  DELETE
 grant  misiones_secretas  anon  INSERT

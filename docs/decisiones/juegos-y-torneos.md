@@ -8666,6 +8666,14 @@ resultado).
   rival**; la segunda, que pierde la partida (la página solo avisa; el resultado lo decide el
   árbitro). **Las listas son una propuesta: si el árbitro principal quiere otros tipos, se
   cambian en esas dos constantes.**
+  **«Otra» va PRIMERO y viene elegida** (5/11/2026). Antes era la última y venía elegido el
+  primer tipo de la lista: una árbitra escribía su comentario («Espacio en blanco en la
+  planilla», «Omisión de movimiento») sin tocar la lista, y quedaba anotado como «Tocó una pieza
+  y no la movió (pieza tocada)», con el art. 4.3, cinco veces en el Centroamericano 2026. Ahora lo
+  que no se elige queda tal cual en «Otra»; con «Otra» y sin escribir nada, el cuadro vuelve a
+  abrirse con lo que tenía (no se cierra ni se pierde). Esas cinco filas de
+  `centroamericano_registro` se corrigieron a mano en la base: «Otra: <su comentario>», sin
+  artículo. Lo revisan `verificar-centroamericano-mesas.js` y `-pagina.js`.
 - **Planillas a un Drive ordenado: UN botón, una camarita.** Cada mesa tiene un solo botón con una
   cámara (icono, sin texto; su nombre está en `aria-label` y `title`) y el árbitro cuida que en la
   foto salgan **las dos planillas juntas**. Se achica a ≤1800 px y JPG en el aparato y sube. La

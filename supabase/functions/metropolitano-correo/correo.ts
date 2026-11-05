@@ -13,7 +13,8 @@
 // QUÉ DICE
 // El código MET-…, el rol y los torneos, el monto y si el pago está por
 // revisar, el hospedaje (con lo esencial de sus condiciones: la puerta a las
-// 10:30 p.m. y la ropa de cama), el parqueo con su placa, el enlace a «Mi ronda
+// 10:30 p.m. y la ropa de cama), la alimentación (cada plato elegido con quién
+// lo prepara, o «aún no lo sabe»), el parqueo con su placa, el enlace a «Mi ronda
 // y mi mesa» de cada jugador (el mismo del QR del gafete) y a la página del
 // torneo, y el contacto de la organización. Ver «Los correos de confirmación»
 // en docs/decisiones/cuentas-y-formularios.md.
@@ -36,6 +37,9 @@ export type Fila = {
   hospedaje?: boolean; hospedaje_desde?: string | null; hospedaje_hasta?: string | null;
   acepta_hospedaje?: boolean; parqueo?: boolean; placa?: string | null;
   comidas?: string[] | null; viaje?: { llegada?: string; salida?: string } | null;
+  comidas_desde?: string | null; comidas_hasta?: string | null; alimentacion?: string | null;
+  menu?: { comida: string; nombre: string; cocina?: string | null; precio_usd: number | string; dias: number; usd: number | string }[] | null;
+  tal_vez?: { comidas?: string[]; desde?: string; hasta?: string } | null;
 };
 export type Correo = { para: string; asunto: string; html: string; texto: string; ids: string[] };
 
@@ -83,6 +87,16 @@ function lineas(x: Fila): [string, string][] {
     l.push(["Hospedaje y alimentación", "Los da la organización" + (x.viaje && x.viaje.llegada ? ", del " + dia(x.viaje.llegada) + " al " + dia(x.viaje.salida) : "")]);
   } else if (x.hospedaje) {
     l.push(["Hospedaje", "Solicitado del " + dia(x.hospedaje_desde) + " al " + dia(x.hospedaje_hasta) + ", en habitación compartida. La organización confirma la disponibilidad y el costo por correo."]);
+  }
+  if (!esTitulado(x)) {
+    // La alimentación: los platos elegidos (con quién los prepara), lo pedido
+    // sin menú, o «aún no lo sabe». Ver «Los menús de la alimentación».
+    const COMIDA: Record<string, string> = { desayuno: "Desayuno", almuerzo: "Almuerzo", cena: "Cena" };
+    (x.menu || []).forEach((m) => l.push([COMIDA[m.comida] || m.comida,
+      m.nombre + (m.cocina ? ", de " + m.cocina : "") + ", del " + dia(x.comidas_desde) + " al " + dia(x.comidas_hasta) + " (" + dinero(m.precio_usd) + " por día: " + dinero(m.usd) + ")"]));
+    const sinMenu = (x.comidas || []).filter((c) => !(x.menu || []).some((m) => m.comida === c));
+    if (sinMenu.length) l.push(["Alimentación", "Solicitada: " + sinMenu.map((c) => (COMIDA[c] || c).toLowerCase()).join(", ") + ", del " + dia(x.comidas_desde) + " al " + dia(x.comidas_hasta) + ". La organización confirma la disponibilidad y el costo por correo."]);
+    if (x.alimentacion === "tal_vez") l.push(["Alimentación", "Aún no lo sabe. Si decide comer con nosotros, escribe a " + CONTACTO + "."]);
   }
   if (x.parqueo && x.placa) l.push(["Parqueo", "Para el vehículo de placa " + x.placa + ": solo entra ese vehículo."]);
   return l;
