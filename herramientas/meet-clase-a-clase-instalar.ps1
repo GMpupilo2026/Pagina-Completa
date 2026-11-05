@@ -130,3 +130,5 @@ Write-Host "`nListo. Ya está corriendo y va a arrancar sola cada vez que entres
 Write-Host "- Lo que va pasando:   $registro"
 Write-Host "- El informe del mes:  $Trabajo\AAAA-MM\"
 Write-Host "La primera grabación tarda más: baja el modelo de Whisper (una sola vez)."
+
+# rev bfb5bbb0d2d82f9f

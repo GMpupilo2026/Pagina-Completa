@@ -492,3 +492,5 @@ async function pruebaBitacora(browser) {
   console.log(total ? `\n${total} fallo(s)` : "\nEl supervisor y los modos de vista están como se pidió.");
   process.exit(total ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

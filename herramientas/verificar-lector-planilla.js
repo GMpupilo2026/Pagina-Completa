@@ -92,3 +92,5 @@ if (!ultima) {
 
 console.log(fallos ? `\n✗ ${fallos} problema(s)` : "\n✓ El lector de planilla tiene su tope");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -78,3 +78,5 @@ if (!cambios.length) { console.error("✗ No salió ningún cambio de la histori
 fs.mkdirSync(path.dirname(SALIDA), { recursive: true });
 fs.writeFileSync(SALIDA, JSON.stringify({ cambios }, null, 1) + "\n");
 console.log(`✓ ${cambios.length} cambios, del ${cambios[cambios.length - 1].fecha.slice(0, 10)} al ${cambios[0].fecha.slice(0, 10)} → data/novedades.json`);
+
+/*! rev bfb5bbb0d2d82f9f */

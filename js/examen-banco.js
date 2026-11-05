@@ -413,3 +413,5 @@ window.ExamenBanco = (function () {
   return { AREAS_DEL_CURSO, armar, completar, disponibles, cursosConPreguntas, minutosRecomendados,
            _barajar: barajar, _azar: azar };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

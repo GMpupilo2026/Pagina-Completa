@@ -377,3 +377,5 @@ ${cuerpo}
 
 if (require.main === module) main();
 module.exports = { EVALUACION, CATEGORIAS, puntosEvaluacion, puntosJugada, tramoEval, DESCUENTO_LICHESS };
+
+/*! rev bfb5bbb0d2d82f9f */

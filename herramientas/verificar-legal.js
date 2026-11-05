@@ -279,3 +279,5 @@ async function proveedores(ctx) {
   console.log(fallos ? `\n${fallos} fallas` : "\nTodo bien: lo legal está en su lugar.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

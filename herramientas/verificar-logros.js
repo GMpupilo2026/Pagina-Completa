@@ -357,3 +357,5 @@ async function abrir(browser, ruta, sesion, stats, opts) {
   console.log(fallos ? `\n${fallos} comprobación(es) fallaron` : "\nTodo bien: la racha y los logros pintan lo que dice la base.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

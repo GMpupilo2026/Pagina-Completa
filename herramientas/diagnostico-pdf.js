@@ -329,3 +329,5 @@ console.log(`Maqueta: ${htmlTemporal} · ${ITEMS.length} ítems · ${TOTAL_PUNTO
   await navegador.close();
   console.log("PDF listo:", destino);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

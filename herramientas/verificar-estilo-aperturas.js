@@ -79,3 +79,5 @@ if (fallas.length) {
   process.exit(1);
 }
 console.log("✓ El carácter de las aperturas: " + A.MEDIDO.filter((m) => m.n).length + " de " + A.MEDIDO.length + " medidas, iguales al volver a medir");
+
+/*! rev bfb5bbb0d2d82f9f */

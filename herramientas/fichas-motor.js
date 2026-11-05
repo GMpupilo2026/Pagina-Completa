@@ -89,3 +89,5 @@ const texto = (r) => (r.mate !== null ? "mate en " + Math.abs(r.mate) + (r.mate 
   console.log(fallos ? `\n✗ ${fallos} problema(s).` : `\n✓ ${lista.length === 1 ? "La promesa, confirmada" : "Las " + lista.length + " promesas, confirmadas"} por Stockfish (profundidad ${PROF}).`);
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

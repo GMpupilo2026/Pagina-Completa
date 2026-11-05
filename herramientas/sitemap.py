@@ -63,3 +63,5 @@ for ruta in paginas:
 lineas.append("</urlset>")
 open("sitemap.xml", "w", encoding="utf-8").write("\n".join(lineas) + "\n")
 print(f"sitemap.xml: {len(paginas)} páginas")
+
+# rev bfb5bbb0d2d82f9f

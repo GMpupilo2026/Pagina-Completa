@@ -148,3 +148,5 @@ function partidas(slug) {
 }
 
 module.exports = { lecciones, posiciones, partidas, sinEtiquetas, detallesDePrimerNivel };
+
+/*! rev bfb5bbb0d2d82f9f */

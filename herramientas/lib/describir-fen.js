@@ -44,3 +44,5 @@ function describir(fen) {
 }
 
 module.exports = { describir, NOMBRE_PIEZA, PLURAL_PIEZA };
+
+/*! rev bfb5bbb0d2d82f9f */

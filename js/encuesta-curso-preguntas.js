@@ -79,3 +79,5 @@ window.EncuestaCursoPreguntas = (function () {
 
     return { ASISTENCIA, MOTIVOS, ESCALA, NO_SE, METODOLOGIA, APRENDIZAJE, SUFICIENTE, RECOMENDARIA, TEXTOS, texto };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

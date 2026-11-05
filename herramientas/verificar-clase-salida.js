@@ -203,3 +203,5 @@ async function pruebaAlumna(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: la pregunta de salida dice si el tema quedó, al cerrar y en la clase siguiente.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

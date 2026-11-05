@@ -86,3 +86,5 @@ if (require.main === module) {
   const cs = cuestionarios();
   console.log(`${path.relative(RAIZ, destino)}: ${cs.length} cuestionarios, ${cs.reduce((a, c) => a + c.preguntas.length, 0)} preguntas.`);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

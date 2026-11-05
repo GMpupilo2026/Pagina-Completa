@@ -399,3 +399,5 @@ window.CartasChess = (function () {
 
   return { Game: Game, CARTAS: CARTAS, CARD_IDS: CARD_IDS, mazoNuevo: mazoNuevo };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

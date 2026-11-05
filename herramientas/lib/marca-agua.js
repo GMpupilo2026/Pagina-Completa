@@ -7,3 +7,5 @@
  * nadie vuelva a poner la vieja).
  */
 module.exports = { MARCA_AGUA: "img/marca-agua-ajedrez-integral.png" };
+
+/*! rev bfb5bbb0d2d82f9f */

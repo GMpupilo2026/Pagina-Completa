@@ -352,3 +352,5 @@ module.exports = [
     { ic: "📚", t: "Tarea", s: "lee las reglas básicas de las Leyes FIDE y llena la ficha de reflexión" },
     { ic: "👋", t: "Antes de irte", s: "dudas, evaluación breve y el cuadernillo en la Academia" } ] },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

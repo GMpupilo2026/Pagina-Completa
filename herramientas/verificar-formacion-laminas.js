@@ -83,3 +83,5 @@ for (const clase of clases) {
 
 if (fallas) { console.log("\n✗ " + fallas + " fallas"); process.exit(1); }
 console.log("\n✓ Las láminas de Formación Ajedrez están bien");
+
+/*! rev bfb5bbb0d2d82f9f */

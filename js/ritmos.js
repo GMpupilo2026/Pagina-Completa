@@ -112,3 +112,5 @@
 
   window.Ritmos = { LISTA: LISTA, etiqueta: etiqueta, buscar: buscar, montar: montar };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

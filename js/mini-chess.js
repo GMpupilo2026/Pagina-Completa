@@ -217,3 +217,5 @@ class MiniChess {
 // Una clase no queda en `window` sola: la clase en vivo la busca ahí al cargarla.
 if (typeof window !== "undefined") window.MiniChess = MiniChess;
 if (typeof module !== "undefined" && module.exports) module.exports = MiniChess;
+
+/*! rev bfb5bbb0d2d82f9f */

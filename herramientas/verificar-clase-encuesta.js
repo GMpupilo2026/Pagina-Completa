@@ -264,3 +264,5 @@ async function pruebaElPodioDelAlumno(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: el mapa, el calentamiento y el podio los ve toda la clase.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

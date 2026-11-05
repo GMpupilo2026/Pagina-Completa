@@ -149,3 +149,5 @@ window.MetropolitanoHospedaje = (function () {
 
   return { VERSION, TX, pintar, pintarPagina };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

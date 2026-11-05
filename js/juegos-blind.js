@@ -469,3 +469,5 @@ window.JuegosBlind = (function () {
 
   return { init: init, modoPuesto: modoPuesto, tiempoDicho: tiempoDicho };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

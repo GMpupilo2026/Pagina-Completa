@@ -67,3 +67,5 @@ if __name__ == "__main__":
         salida = sys.argv[sys.argv.index("--salida") + 1]
     armar(salida)
     print(f"{os.path.relpath(salida, RAIZ)}: {os.path.getsize(salida) // 1024} KB")
+
+# rev bfb5bbb0d2d82f9f

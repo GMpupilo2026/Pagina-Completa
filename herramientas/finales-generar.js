@@ -187,3 +187,5 @@ function legal(fen) {
   console.log(`\n✓ ${salida.finales.length} finales en ${path.relative(RAIZ, SALIDA)}`);
   process.exit(0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

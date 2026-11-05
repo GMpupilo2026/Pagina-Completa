@@ -99,3 +99,5 @@ else bien("la CSP de _headers ya no deja pasar cdnjs.cloudflare.com");
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: las librerías salen del repositorio, no de un CDN.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

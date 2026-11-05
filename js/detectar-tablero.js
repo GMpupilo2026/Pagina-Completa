@@ -312,3 +312,5 @@
 
     window.DetectarTablero = { gris, reducir, puntaje, parejo, ajustar, buscar, tapar, ordenar, girar, hayTablero, FINO, GRUESO, MINIMO };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

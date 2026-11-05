@@ -205,3 +205,5 @@ async function pruebaResumen(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: la participación queda anotada y las manos van en orden.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

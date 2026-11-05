@@ -595,3 +595,5 @@ async function init() {
   else if (document.documentElement.classList.contains("modo-ciego")) document.getElementById("lista-titulo").focus();
 }
 init();
+
+/*! rev bfb5bbb0d2d82f9f */

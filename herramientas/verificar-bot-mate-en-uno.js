@@ -102,3 +102,5 @@ const HOLGURA_MS = 1500;
   console.log(fallos ? `\n${fallos} comprobación(es) fallaron.` : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -74,3 +74,5 @@ igual("los resultados como los anota una mesa", ["1-0", "0-1", "=", "½-½", "1/
 
 console.log(fallos ? "\n✗ " + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

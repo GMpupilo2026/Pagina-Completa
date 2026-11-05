@@ -52,3 +52,5 @@ for (const lib of LIBRERIAS) {
 }
 console.log("Correr después: node herramientas/verificar-vendor.js");
 process.exit(faltan ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

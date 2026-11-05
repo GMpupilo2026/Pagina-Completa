@@ -353,3 +353,5 @@
     else if (id === "resultados") { const a = document.querySelector("#ficha-resultados a"); if (a) a.click(); }
   }
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

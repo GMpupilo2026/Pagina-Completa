@@ -206,3 +206,5 @@ if fallos:
         print(f"  … y {len(fallos) - 40} más")
     sys.exit(1)
 print("\nTodo bien.")
+
+# rev bfb5bbb0d2d82f9f

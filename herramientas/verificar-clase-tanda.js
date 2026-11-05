@@ -357,3 +357,5 @@ async function pruebaDelProfe(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: cada alumno resuelve sus 20, del mismo nivel, y ve su nota; la competencia da los mismos a todos; el tiempo se cambia.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

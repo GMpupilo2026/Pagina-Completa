@@ -785,3 +785,5 @@ function engancharRecibos() {
     document.getElementById("rc-academia").addEventListener("change", pintarPrefijo);
     document.getElementById("rc-prefijo-guardar").addEventListener("click", guardarPrefijo);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

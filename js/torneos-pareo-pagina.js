@@ -1976,3 +1976,5 @@
   window.addEventListener("hashchange", pintar);
   enlaceAvisos().then(pintar);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

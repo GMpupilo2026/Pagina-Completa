@@ -124,3 +124,5 @@ module.exports = [
   "s": "¿Qué decides y con qué artículo?"
  }
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

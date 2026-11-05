@@ -347,3 +347,5 @@ function html(d, diapo) {
   if (DESTINO === CARPETA) fs.writeFileSync(archivo(clase), huella(clase) + "\n");
   console.log("✓ " + DATOS.length + " láminas en " + path.relative(RAIZ, DESTINO));
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

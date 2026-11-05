@@ -692,3 +692,5 @@ requireLoginThenGate();
    y el número de fila a la izquierda. Acá no hace falta el observador que
    repinta solo: el tablero no vuelve a redibujarse durante el ejercicio, así
    que drawStaticBoard() la llama a mano cada vez que dibuja. */
+
+/*! rev bfb5bbb0d2d82f9f */

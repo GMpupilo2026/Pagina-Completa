@@ -71,3 +71,5 @@ for (const [quien, h] of Object.entries(bien)) {
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLa cabecera de los correos lleva el logo que corresponde.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

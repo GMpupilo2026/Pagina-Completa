@@ -335,3 +335,5 @@ window.MaterialPlataforma = (function () {
 
   return { HERRAMIENTAS, META_LABEL, cursos, metas, recortesDe, actividadesDe, herramienta, frase };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

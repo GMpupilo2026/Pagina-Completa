@@ -490,3 +490,5 @@ async function redDeSeguridad(browser) {
     : "\nTodo bien: la invitación pide la contraseña y explica cómo se entra.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

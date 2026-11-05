@@ -184,3 +184,5 @@ const estado = (page) => page.textContent("#aj-estado");
   if (fallos) { console.log("\n✗ " + fallos + " problema(s)."); process.exit(1); }
   console.log("\n✓ Aprende a jugar funciona en pantalla.");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

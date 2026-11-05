@@ -76,3 +76,5 @@
   if (typeof module !== "undefined" && module.exports) module.exports = MatesDificultad;
   else raiz.MatesDificultad = MatesDificultad;
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

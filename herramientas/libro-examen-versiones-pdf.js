@@ -363,3 +363,5 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
 
 module.exports = { versiones, archivoDe };
 if (require.main === module) main();
+
+/*! rev bfb5bbb0d2d82f9f */

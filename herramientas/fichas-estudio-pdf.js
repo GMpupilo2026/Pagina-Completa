@@ -565,7 +565,8 @@ function htmlAccesible() {
     ${fichas.map((F) => fichaAccesible(F, cat, numero.get(F.id), todas.length)).join("")}
   </section>`).join("");
 
-  return `<!doctype html>
+  // Con el sello escondido (herramientas/lib/sello.js): volver a generar no se lo borra.
+  return require("./lib/sello").estampar(`<!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
@@ -641,7 +642,7 @@ ${fichas}
   <p><a href="#indice">Volver al índice</a> · <a href="../../entreno/estudio.html">Volver a Estudio, en Entrenamiento</a></p>
 </footer>
 </body></html>
-`;
+`, "accesible.html");
 }
 
 const etiquetaCat = (id) => (CATEGORIAS.find((c) => c.id === id) || {}).etiqueta || id;
@@ -716,3 +717,5 @@ function generarPapel() {
   }
 })().catch((e) => { console.error("✗ " + e.message); process.exit(1); });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

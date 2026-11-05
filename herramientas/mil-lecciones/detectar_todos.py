@@ -15,3 +15,5 @@ if __name__=='__main__':
         r=dict(pool.map(f, sorted(d), chunksize=20))
     json.dump(r,open('ext/rejillas.json','w'))
     print(len(r), sum(1 for v in r.values() if v is None))
+
+# rev bfb5bbb0d2d82f9f

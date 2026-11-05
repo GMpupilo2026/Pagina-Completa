@@ -199,3 +199,5 @@ window.PgnClase = (function () {
     // recorrer la clase con sus variantes: el mismo árbol del que sale el PGN.
     return { armar, contar, caminos, clave, comentarioDe, signoDe, nombreDelSigno, arbol, SIGNOS, INICIAL };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

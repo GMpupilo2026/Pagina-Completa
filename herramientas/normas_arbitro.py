@@ -160,3 +160,5 @@ def valorado(texto):
         return ""
     mes, anio = texto.split()
     return f"{MESES.get(mes, mes)} de {anio}"
+
+# rev bfb5bbb0d2d82f9f

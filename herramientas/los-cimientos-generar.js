@@ -510,3 +510,5 @@ ${cuerpo}
 
 if (require.main === module) main().catch((e) => { console.error(e.stack || e.message); process.exit(1); });
 module.exports = { FILTRO, DE_LA_BASE, SALVAR, AGUANTAR, juzgar, juzgarEjemplo };
+
+/*! rev bfb5bbb0d2d82f9f */

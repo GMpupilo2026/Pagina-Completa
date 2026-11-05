@@ -160,3 +160,5 @@ async function abrir(browser, yo) {
   console.log(fallos ? "\n✗ " + fallos + " comprobaciones fallaron." : "\nLos casos del VAR están como se pidió.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

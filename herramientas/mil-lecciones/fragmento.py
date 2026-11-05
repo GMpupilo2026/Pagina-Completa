@@ -63,3 +63,5 @@ if __name__ == '__main__':
     s = '\n'.join(out) + '\n'
     open(os.path.join(RAIZ, 'cursos/protegido', SLUG + '.html'), 'w').write(s)
     print(len(s))
+
+# rev bfb5bbb0d2d82f9f

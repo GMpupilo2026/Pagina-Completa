@@ -40,3 +40,5 @@ for (const f of archivos) {
 if (!fallos) console.log(`  ✓ ${claves} clave(s) en ${archivos.length} migración(es) desde ${DESDE}, todas con su on delete`);
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

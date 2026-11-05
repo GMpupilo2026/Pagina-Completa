@@ -205,3 +205,5 @@
   // casilla, y no entendía el juego de piezas ilustrado.
   window.ExampleBoard = { render: renderBoard, sizePieces: sizePieces };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

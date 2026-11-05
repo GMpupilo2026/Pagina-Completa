@@ -211,3 +211,5 @@ def resultado_tras(toks, j, b):
         if x.san is not None and x.num is not None and x.d==0: break
     if b.is_checkmate(): return ('1-0' if not b.turn else '0-1'), None
     return None, None
+
+# rev bfb5bbb0d2d82f9f

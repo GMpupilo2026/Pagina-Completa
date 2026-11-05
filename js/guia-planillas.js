@@ -408,3 +408,5 @@
 
   raiz.GuiaPlanillas = Object.assign({ disponible, abrir }, puras);
 })(typeof self !== "undefined" ? self : this);
+
+/*! rev bfb5bbb0d2d82f9f */

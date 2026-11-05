@@ -14,3 +14,5 @@ const { spawnSync } = require("child_process");
 const path = require("path");
 const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", path.join(__dirname, "lib", "prueba-lecturas-cache.mjs")], { stdio: "inherit", cwd: path.join(__dirname, "..") });
 process.exit(r.status === null ? 1 : r.status);
+
+/*! rev bfb5bbb0d2d82f9f */

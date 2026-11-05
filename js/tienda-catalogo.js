@@ -450,3 +450,5 @@ window.TiendaCatalogo = (function () {
     precioDe, precioMinimo, precioSuelto, precioPack, ahorroPack, moneda, piezasDe, archivosDe, totalArchivos, vistaDe,
   };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

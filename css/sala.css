@@ -61,3 +61,5 @@ html.dark .sala-reloj.poco { background: #c0392b; color: #fff; }
 @media (prefers-reduced-motion: reduce) {
   .sala-tablero .sq { transition: none; }
 }
+
+/*! rev bfb5bbb0d2d82f9f */

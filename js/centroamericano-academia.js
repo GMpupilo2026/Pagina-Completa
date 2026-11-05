@@ -315,3 +315,5 @@
   if (dialogo.open) pintarDialogo();
   window.CentroamericanoAcademia = { abrir: () => { if (!dialogo.open) (window.VentanaEnlace && window.VentanaEnlace.abrirDialogo ? window.VentanaEnlace.abrirDialogo(dialogo) : dialogo.showModal()); } };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

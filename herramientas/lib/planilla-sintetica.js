@@ -57,3 +57,5 @@ function palabrasDePlanillas(hojas, opciones) {
 }
 
 module.exports = { palabrasDePlanillas };
+
+/*! rev bfb5bbb0d2d82f9f */

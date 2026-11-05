@@ -99,3 +99,5 @@ window.PartidasClase = (function () {
 
     return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirConMenos, ventajaDeMaterial };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

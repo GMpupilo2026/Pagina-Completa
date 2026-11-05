@@ -404,3 +404,5 @@ if (require.main === module) {
     // función y no con una copia: comprobar una copia no comprobaría nada.
     module.exports = { PALETA, cssDeTemas, rgb, CAPAS };
 }
+
+/*! rev bfb5bbb0d2d82f9f */

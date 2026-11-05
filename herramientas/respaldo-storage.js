@@ -168,3 +168,5 @@ if (require.main === module) {
 }
 
 module.exports = { main, listar, rutaUrl, cabeceras, pedir, sha256 };
+
+/*! rev bfb5bbb0d2d82f9f */

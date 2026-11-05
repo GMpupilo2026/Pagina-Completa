@@ -1123,3 +1123,5 @@
   window.CentroamericanoPartidas = { sanVer, botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista, enJuego, tarjetaGrande, pintarEnVivo,
     actualizar: () => (visor ? traerJugadas(true) : (Object.values(evento ? evento.torneos : []).forEach((t) => { t.partidasPorRonda = {}; }), pintarLista())) };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

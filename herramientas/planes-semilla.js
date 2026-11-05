@@ -283,3 +283,5 @@ planes.forEach((p) => {
 });
 Object.entries(porBloque).sort((a, b) => b[1] - a[1]).forEach(([b, n]) => console.log("  " + n + "\t" + b));
 console.log("\nEscritos:\n  " + path.relative(RAIZ, salidaJSON) + "\n  " + path.relative(RAIZ, salidaSQL));
+
+/*! rev bfb5bbb0d2d82f9f */

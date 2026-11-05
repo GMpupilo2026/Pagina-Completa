@@ -721,3 +721,5 @@ window.ComandosTablero = (function () {
     COMO_SE_LLAMA: COMO_SE_LLAMA,
   };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

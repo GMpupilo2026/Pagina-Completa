@@ -41,3 +41,5 @@ self.onmessage = async (e) => {
     self.postMessage({ id, codigo: 2, salida, errores: errores + String(x && x.message || x), archivo: null });
   }
 };
+
+/*! rev bfb5bbb0d2d82f9f */

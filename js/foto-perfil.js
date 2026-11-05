@@ -294,3 +294,5 @@ window.FotoPerfil = (function () {
 
   return { BUCKET: BUCKET, urls: urls, url: url, firmar: firmar, pintar: pintar, poner: poner, avatar: avatar, preparar: preparar, subir: subir, quitar: quitar };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

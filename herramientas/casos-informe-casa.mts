@@ -17,3 +17,5 @@ for (const c of casos) {
     (t, color) => cabeceraCorreo(c.marca ?? null, t, color), c.foto ?? null);
 }
 process.stdout.write(JSON.stringify({ html: salida, periodos: PERIODOS, situaciones }));
+
+/*! rev bfb5bbb0d2d82f9f */

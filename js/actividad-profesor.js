@@ -141,3 +141,5 @@ window.ActividadProfesor = (function () {
 
     return { CAMPOS, hoyCR, textoMes, meses, mesPorOmision, horas, valor, tarjetas, fecha, estadoInforme };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

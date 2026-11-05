@@ -300,3 +300,5 @@ if (require.main === module) {
   }
 }
 module.exports = { TITULO_PROPIO, armar, archivos, sqlDeClaves, SALIDA, JSON_PROPIO, DATOS_PROPIO, DECK_PROPIO, CARPETA_PROPIA, ES_PRACTICA, NUNCA, ESTADOS, DICTADO, FILAS_PLANILLA, aIngles, estadoDe, lineaDelDictado };
+
+/*! rev bfb5bbb0d2d82f9f */

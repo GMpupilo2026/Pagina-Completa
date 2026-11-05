@@ -325,3 +325,5 @@ cierto("los tres JSON de ajedrez estudiantil están al día", r.returncode == 0,
 
 print(f"\n{fallos} comprobación(es) fallaron" if fallos else "\nTodo bien")
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

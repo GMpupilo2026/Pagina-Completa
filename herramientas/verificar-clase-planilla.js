@@ -182,3 +182,5 @@ async function pruebaAlumna(browser) {
   if (fallos) { console.log("\n" + fallos + " fallo(s)."); process.exit(1); }
   console.log("\n✓ La planilla en vivo está bien.");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

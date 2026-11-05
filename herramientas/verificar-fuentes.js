@@ -172,3 +172,5 @@ function archivos(dir, ext, salida = []) {
   console.log(fallos ? `\n✗ ${fallos} problema(s)` : "\n✓ Las fuentes las sirve el sitio");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

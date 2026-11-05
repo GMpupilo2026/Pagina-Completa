@@ -57,3 +57,5 @@ if __name__ == '__main__':
                     etiquetas[k] = {'fen': mejor[2].fen(), 'ply': mejor[1], 'leccion': lec['n'], 'ocup': mejor[0]}
     json.dump(etiquetas, open('ext/etiquetas.json', 'w'))
     print('etiquetados', len(etiquetas), 'de', len(D))
+
+# rev bfb5bbb0d2d82f9f

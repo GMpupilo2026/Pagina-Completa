@@ -48,3 +48,5 @@ for origen, destino in [
     # se ve igual y pesa una cuarta parte.
     completo.quantize(colors=32, method=Image.Quantize.FASTOCTREE).save(destino, optimize=True)
     print(f"{destino.relative_to(RAIZ)}: {ANCHO_COMPLETO}×{alto}")
+
+# rev bfb5bbb0d2d82f9f

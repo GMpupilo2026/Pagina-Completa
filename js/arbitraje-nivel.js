@@ -162,3 +162,5 @@ window.ArbitrajeNivel = (function () {
 
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, UMBRAL, porEscalon, resumir };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

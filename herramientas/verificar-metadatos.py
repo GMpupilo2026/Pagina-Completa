@@ -184,3 +184,5 @@ check(all(re.match(r"20\d\d-\d\d-\d\d$", d) for d in re.findall(r"<lastmod>([^<]
 
 print("\n" + (f"{len(fallos)} fallas" if fallos else "Todo bien"))
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

@@ -103,3 +103,5 @@ cierto("y está en el retrato de las tareas programadas", /^avisos-arbitros\s+7 
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -402,3 +402,5 @@ async function botonEn(browser, ruta) {
   console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: la voz se enciende en todo el sitio y no habla de más.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

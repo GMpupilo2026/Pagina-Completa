@@ -981,3 +981,5 @@
   const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, contarEnSilencio, montarProfe, montarClase, botonFicha, frasesSalud, correlacion, lado, cuadrantes, parejas };
   if (typeof window !== "undefined") window.EstiloTarjeta = api;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -267,3 +267,5 @@ window.TiempoSecciones = (function () {
 
     return { SECCIONES, describir, duracion, filasUtiles, montar };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

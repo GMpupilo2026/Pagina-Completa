@@ -208,3 +208,5 @@ function main() {
 
 if (require.main === module) main();
 module.exports = { posiciones, leerPgn, gana, aperturasModelo, BUSCAR_HASTA, MIN_PLIES, HONDO };
+
+/*! rev bfb5bbb0d2d82f9f */

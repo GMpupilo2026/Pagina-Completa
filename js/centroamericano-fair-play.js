@@ -1040,3 +1040,5 @@
 
     window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

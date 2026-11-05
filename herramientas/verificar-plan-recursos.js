@@ -158,3 +158,5 @@ console.log(fallos
   ? `\n${fallos} fallo(s)`
   : "\nEl plan manda a material que existe, y cada área tiene dónde practicar.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

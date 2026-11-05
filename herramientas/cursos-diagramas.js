@@ -134,3 +134,5 @@ for (const curso of CURSOS) {
 }
 console.log(fallos ? "\n" + fallos + " diagramas sin generar" : "\n" + CURSOS.length + " diagramas listos en img/cursos/");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

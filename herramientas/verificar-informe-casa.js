@@ -365,3 +365,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log("✅ El informe de la casa: todo bien.");
+
+/*! rev bfb5bbb0d2d82f9f */

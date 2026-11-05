@@ -235,3 +235,5 @@ function dobleArbitro() {
 }
 
 module.exports = { TOKEN, TOKEN_B, MESAS, SERVIDOR_ARBITRO, dobleArbitro };
+
+/*! rev bfb5bbb0d2d82f9f */

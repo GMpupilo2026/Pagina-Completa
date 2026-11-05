@@ -34,3 +34,5 @@ details.ac-hecha > summary .ac-marca{color:#1f7a4d}.dark details.ac-hecha > summ
 .ac-card-txt{font-size:.78rem;color:#627d98;margin-bottom:.35rem}.dark .ac-card-txt{color:#9fb3c8}
 .ac-completo .ac-card-txt::before{content:"🏁 "}
 @media (prefers-reduced-motion:reduce){.ac-fill{transition:none}}
+
+/*! rev bfb5bbb0d2d82f9f */

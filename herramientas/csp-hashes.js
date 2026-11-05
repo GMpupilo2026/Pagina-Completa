@@ -72,3 +72,5 @@ function main() {
 
 if (require.main === module) main();
 module.exports = { hashesDeLasPaginas, scriptSrc, BLOQUES };
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -192,3 +192,5 @@ if (conElo.length >= 5) {
     .sort((a, b) => a.elo - b.elo)
     .forEach((x) => console.log(`  Elo ${String(x.elo).padStart(4)} (${x.tipo.padEnd(8)}) ${String(x.pct).padStart(3)} % → prueba ≈${x.m.elo} ± ${x.m.error}`));
 }
+
+/*! rev bfb5bbb0d2d82f9f */

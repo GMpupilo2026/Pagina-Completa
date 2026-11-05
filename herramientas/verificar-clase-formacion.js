@@ -660,3 +660,5 @@ async function pruebaLaClaseSeCierra(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: las prácticas llegan a cada alumno sin respuestas, cada uno marca las suyas y el profe ve quién terminó.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

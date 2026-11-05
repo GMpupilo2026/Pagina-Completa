@@ -147,3 +147,5 @@ async function resolver(m, t) {
   console.log("Escrito: " + path.relative(path.join(__dirname, ".."), SALIDA));
   process.exit(malos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -169,3 +169,5 @@ module.exports = {
     recorta, posicion, nota, renglonDeLinea, lineasDeAperturas,
     ejerciciosDeTema, renglonDeEjercicio,
 };
+
+/*! rev bfb5bbb0d2d82f9f */

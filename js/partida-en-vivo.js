@@ -426,3 +426,5 @@
 
     window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, repeticiones, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

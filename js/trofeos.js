@@ -458,3 +458,5 @@ window.Trofeos = (function () {
   return { cargar, historial, ajustar, montarPanel, montarLectura, texto, LIMITE,
            premios, otorgar, quitar, tiposInsignias, textoInsignias, chipsInsignias };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

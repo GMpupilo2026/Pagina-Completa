@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 0e6ks de la base abierta de Lichess (CC0), rating 2389. Stockfish 16 a profundidad 18: Rd3 es la mejor (+4,8) y la segunda queda en +0,3.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

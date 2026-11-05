@@ -8,3 +8,5 @@ module.exports = [
   require("./trucos.js"),
   require("./rey.js"),
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

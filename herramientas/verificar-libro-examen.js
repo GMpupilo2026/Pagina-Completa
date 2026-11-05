@@ -168,3 +168,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log(`✓ Libro «Ponte a prueba»: ${ITEMS.length} posiciones en ${LIBRO.PRUEBAS} pruebas, ${revisadas} preguntas de examen con la clave bien, ${vs.length} versiones para imprimir.`);
+
+/*! rev bfb5bbb0d2d82f9f */

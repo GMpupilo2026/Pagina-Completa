@@ -54,3 +54,5 @@ if __name__ == '__main__':
     res = [json.load(open('ext/lec/%03d.json' % l['n'])) for l in L]
     json.dump(res, open('ext/lecciones.json', 'w'), ensure_ascii=False)
     print('ok', len(res), flush=True)
+
+# rev bfb5bbb0d2d82f9f

@@ -60,3 +60,5 @@ window.RepasoClase = (function () {
 
     return { MAXIMO, pendientes, igualJugada, jugadaDe, href };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

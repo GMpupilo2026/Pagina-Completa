@@ -24,3 +24,5 @@ def rasgos(img, x0, y0, s):
     return np.array(feats), np.array(occ)
 
 ORDEN = [f+r for r in '87654321' for f in 'abcdefgh']
+
+# rev bfb5bbb0d2d82f9f

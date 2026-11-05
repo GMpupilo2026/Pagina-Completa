@@ -107,3 +107,5 @@ if (document.getElementById("proyector-qr-btn")) {
         mostrarQrDeEntrada(document.getElementById("entrar-qr-caja").hidden);
     });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

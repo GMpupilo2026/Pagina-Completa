@@ -1300,3 +1300,5 @@ window.PareoVer = (function () {
 
   return { irAMesa, iniciarInscribir, paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

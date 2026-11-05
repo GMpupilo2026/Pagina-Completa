@@ -37,3 +37,5 @@ if __name__ == '__main__':
     m = Knn(Xa, ya); p, c = m.predecir(Xb)
     print('casillas ocupadas: aciertos', (p == yb).mean(), len(yb))
     malos = set(gb[p != yb]); print('diagramas con algún error', len(malos), 'de', len(set(gb)))
+
+# rev bfb5bbb0d2d82f9f

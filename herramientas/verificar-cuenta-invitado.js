@@ -230,3 +230,5 @@ ok("la lista de administración lee solo las del Centroamericano, de mil en mil"
   console.log(fallos ? "\n✗ " + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

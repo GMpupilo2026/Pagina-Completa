@@ -150,3 +150,5 @@ function igual(nombre, hallado, esperado) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: el profe ve lo que más le costó a su clase y lo manda al plan.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

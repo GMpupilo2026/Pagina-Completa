@@ -206,3 +206,5 @@ self.addEventListener("pushsubscriptionchange", (evento) => {
     clientes.forEach((c) => c.postMessage({ tipo: "push-renovar" }));
   })());
 });
+
+/*! rev bfb5bbb0d2d82f9f */

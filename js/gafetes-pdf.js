@@ -127,3 +127,5 @@
 
   window.GafetesPdf = { nuevo, _trazos: trazos };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

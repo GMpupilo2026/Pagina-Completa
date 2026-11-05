@@ -48,3 +48,5 @@ window.DificultadAdaptable = (function () {
 
   return { crear, escalon, SUBIR_CON, VENTANA, BAJAR_CON };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

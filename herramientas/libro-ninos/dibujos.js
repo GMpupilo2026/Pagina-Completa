@@ -494,3 +494,5 @@ function piezaSola(tipo, color, opciones) {
 module.exports = {
   pieza, perezoso, mapache, panda, volcan, lupa, medalla, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, piedra, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };
+
+/*! rev bfb5bbb0d2d82f9f */

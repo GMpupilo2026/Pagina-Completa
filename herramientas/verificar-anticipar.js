@@ -141,3 +141,5 @@ function servidor(bloques) {
   console.log(fallos ? `\n✗ ${fallos} problema(s)` : "\n✓ La navegación se adelanta, solo con prefetch");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

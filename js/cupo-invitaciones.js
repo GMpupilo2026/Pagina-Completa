@@ -37,3 +37,5 @@ window.CupoInvitaciones = (function () {
 
   return { de: de, textoQuedan: textoQuedan, textoSinCupo: textoSinCupo, PLANES: PLANES };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

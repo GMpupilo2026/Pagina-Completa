@@ -166,3 +166,5 @@ module.exports = [
     { ic: "💬", t: "¿Dudas?", s: "este es el momento" },
     { ic: "🙌", t: "Gracias", s: "por tu participación" } ] },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

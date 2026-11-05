@@ -33,3 +33,5 @@ window.errorDeFuncion = function (res, cuerpo) {
   if (res && res.status === 401) return "Tu sesión venció. Recarga la página y vuelve a intentarlo.";
   return "El servidor respondió " + (res ? res.status : "sin contestar") + ". Vuelve a intentarlo.";
 };
+
+/*! rev bfb5bbb0d2d82f9f */

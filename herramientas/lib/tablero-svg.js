@@ -159,3 +159,5 @@ function tablero(fen, opciones) {
 }
 
 module.exports = { tablero: tablero, CLARA: CLARA, OSCURA: OSCURA, BORDE: BORDE, MARCA: MARCA };
+
+/*! rev bfb5bbb0d2d82f9f */

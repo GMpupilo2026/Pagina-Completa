@@ -122,3 +122,5 @@ function datosAdaptado(archivo, datos) {
 }
 
 module.exports = { unir, proteger, datosAdaptado };
+
+/*! rev bfb5bbb0d2d82f9f */

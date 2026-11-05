@@ -787,3 +787,5 @@ window.HoyTeToca = (function () {
 
   return { pintar, textoSemana, proximaMedalla, avanceMetaSemana, textoMetaSemana };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -476,3 +476,5 @@ print("protegido")
   }
   console.log("Protegido: se abre sin contraseña, no se puede copiar ni imprimir.");
 }
+
+/*! rev bfb5bbb0d2d82f9f */

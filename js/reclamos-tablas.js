@@ -200,3 +200,5 @@
     if (typeof module === "object" && module.exports) module.exports = api;
     else global.ReclamosTablas = api;
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

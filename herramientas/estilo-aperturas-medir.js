@@ -221,3 +221,5 @@ if (require.main === module) {
 }
 
 module.exports = { medir, propias, posTras, clavePos, MINIMO, MUESTRAS, MUESTRAS_MATERIAL, BUSCAR_HASTA };
+
+/*! rev bfb5bbb0d2d82f9f */

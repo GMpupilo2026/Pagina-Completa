@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 2UYQV de la base abierta de Lichess (CC0), rating 2267. Stockfish 16 a profundidad 18: d7 es la mejor (+4,8) y la segunda queda en -0,2.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

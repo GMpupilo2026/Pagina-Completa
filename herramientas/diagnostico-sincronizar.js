@@ -153,3 +153,5 @@ if (require.main === module) {
 }
 
 module.exports = { BANCO, CATALOGO, ITEMS, catalogoDe };
+
+/*! rev bfb5bbb0d2d82f9f */

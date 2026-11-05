@@ -503,3 +503,5 @@ window.InscripcionMetroFR = {
     [/^(atleta sordo|atleta ciego o de baja visión|silla de ruedas)((?:, .+)?)$/, (m) => m[0].split(", ").map((x) => ({ "atleta sordo": "athlète sourd", "atleta ciego o de baja visión": "athlète aveugle ou malvoyant", "silla de ruedas": "fauteuil roulant" })[x] || x).join(", ")],
   ];
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

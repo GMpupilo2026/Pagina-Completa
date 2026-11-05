@@ -1059,3 +1059,5 @@ if (document.getElementById("entreno-aviso-cerrar")) {
 if (document.getElementById("entreno-pedido-quitar")) {
     document.getElementById("entreno-pedido-quitar").addEventListener("click", dejarDePedirloAbrir);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

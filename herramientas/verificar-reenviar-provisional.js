@@ -96,3 +96,5 @@ for (const pagina of ["admin", "cuenta-coordinacion", "informes"]) {
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: reenviar el acceso a una cuenta nueva manda otra contraseña provisional.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

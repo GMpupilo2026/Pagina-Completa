@@ -180,3 +180,5 @@ if (process.argv.includes("--json")) {
   console.log(`\nListo en ${salida}`);
   console.log("Para desplegar: se suben esos archivos a cada función del proyecto AjedrezIntegral.");
 }
+
+/*! rev bfb5bbb0d2d82f9f */

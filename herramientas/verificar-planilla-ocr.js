@@ -71,3 +71,5 @@ console.log("\n=== leerTokens(): la partida entera ===");
 
 console.log(fallos ? `\n✗ ${fallos} de ${pruebas} comprobaciones fallaron.` : `\n✓ Las ${pruebas} comprobaciones pasaron.`);
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

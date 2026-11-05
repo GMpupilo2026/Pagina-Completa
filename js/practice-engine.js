@@ -189,3 +189,5 @@
   const publico = { LEVELS, getMove, evaluate, preload, jugadaDeRespaldo, responder };
   window.PracticeEngine = publico;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

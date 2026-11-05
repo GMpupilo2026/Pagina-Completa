@@ -98,3 +98,5 @@ async function pruebaProfe(browser) {
   console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: quien se reconecta ve lo que pasó mientras tanto.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

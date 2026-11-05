@@ -247,3 +247,5 @@ ${ejercicios.map((e) => `  ${js({ n: e.n, blancas: e.blancas, negras: e.negras, 
 
 if (require.main === module) main().then(() => process.exit(0)).catch((e) => { console.error(e.message); process.exit(1); });
 module.exports = { numerada, sanEs };
+
+/*! rev bfb5bbb0d2d82f9f */

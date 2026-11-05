@@ -99,3 +99,5 @@ const html = ({ titulo, texto, nota }) => `<!DOCTYPE html><html><head><meta char
     }
     await navegador.close();
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

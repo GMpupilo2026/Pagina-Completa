@@ -70,3 +70,5 @@ if (require.main === module) {
   console.log("memoria.json: " + total + " posiciones, de " + datos.min + " a " + datos.max + " piezas.");
 }
 module.exports = { generar };
+
+/*! rev bfb5bbb0d2d82f9f */

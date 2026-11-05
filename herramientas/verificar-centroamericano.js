@@ -1556,3 +1556,5 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

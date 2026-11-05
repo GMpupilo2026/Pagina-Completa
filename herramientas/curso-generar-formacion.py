@@ -64,8 +64,13 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# El sello escondido (herramientas/lib/sello.js): volver a generar las tres
+# páginas del curso no se lo borra.
+sys.path.insert(0, os.path.join(RAIZ, "herramientas", "lib"))
+from sello import estampar  # noqa: E402
 MOLDE_PORTADA = os.path.join(RAIZ, "cursos", "finales-practicos.html")
 MOLDE_ACADEMIA = os.path.join(RAIZ, "cursos", "academia", "fundamentos-del-ajedrez.html")
 DATOS = os.path.join(RAIZ, "herramientas", "cursos", "formacion-ajedrez.json")
@@ -188,7 +193,7 @@ def portada(curso):
                     '<meta property="og:description" content="%s">' % escapar(descripcion_meta), salida)
     salida = re.sub(r'<meta property="og:url" content="[^"]*">',
                     '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s">' % slug, salida)
-    return salida
+    return estampar(salida, "curso.html")
 
 
 # ---------------------------------------------------- fragmento con lecciones
@@ -416,7 +421,7 @@ def protegido(curso):
             '                        </div>\n'
             '                    </div>' % (bloque["n"], escapar(bloque["titulo"]),
                                             "\n                            ".join(detalles)))
-    return "\n".join(partes) + "\n"
+    return estampar("\n".join(partes) + "\n", "curso.html")
 
 
 # ----------------------------------------------------------------- academia
@@ -471,7 +476,7 @@ def academia(curso):
     assert n == 1, "no encontré el <title> del molde de academia"
     salida = re.sub(r'<meta name="description" content="[^"]*">',
                     '<meta name="description" content="%s">' % escapar(curso["descripcion_larga"]), salida, count=1)
-    return salida
+    return estampar(salida, "curso.html")
 
 
 # ------------------------------------------------------------- presentaciones
@@ -1156,3 +1161,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# rev bfb5bbb0d2d82f9f

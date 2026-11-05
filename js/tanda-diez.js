@@ -157,3 +157,5 @@ window.TandaDiez = (function () {
 
   return { empezar, empezarRepaso, activa: () => !!leer(), CLAVE, DURACION_MS };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

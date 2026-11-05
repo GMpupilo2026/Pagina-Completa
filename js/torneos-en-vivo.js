@@ -18,3 +18,5 @@
         cargando.textContent = "No pudimos cargar los torneos ahora mismo. Vuelve a intentarlo en un rato.";
     });
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -112,3 +112,5 @@ if __name__ == '__main__':
                         'solucion': movs, 'sol_leccion': n + 1, 'sol_rango': [a, b_fin]})
     json.dump(res, open('ext/ejercicios.json', 'w'), ensure_ascii=False)
     print(cont)
+
+# rev bfb5bbb0d2d82f9f

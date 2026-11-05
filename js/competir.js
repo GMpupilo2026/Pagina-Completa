@@ -572,3 +572,5 @@
             document.getElementById("app").classList.remove("hidden");
         }
         init();
+
+/*! rev bfb5bbb0d2d82f9f */

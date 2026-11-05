@@ -75,3 +75,5 @@ for (const clave of Object.keys(SIN_FILTRO)) {
 
 if (fallos) { console.log(`\n${fallos} problema(s).`); process.exit(1); }
 console.log(`  ✓ toda escucha de postgres_changes va filtrada (${Object.keys(SIN_FILTRO).length} excepciones anotadas)`);
+
+/*! rev bfb5bbb0d2d82f9f */
