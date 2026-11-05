@@ -65,6 +65,17 @@ async function porQueCero(p) {
     });
 }
 
+// Mide las tarjetas EN EL MISMO INSTANTE en que dejan de medir 0: si se esperaba con una llamada y se medía con otra, la página podía repintarse entre las
+// dos (el CI lento lo mostró: la espera pasaba y la medida salía 0 × 0, con la página perfectamente bien un instante después).
+async function medirTarjetas(p) {
+    try {
+        const h = await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; if (!l.length) return null; const m = l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }); return m.every((x) => x[1] > 0) ? m : null; }, null, { timeout: 8000 });
+        return await h.jsonValue();
+    } catch (e) {
+        return "MIDEN 0 (o no hay tarjetas) después de 8 s: " + await porQueCero(p);
+    }
+}
+
 async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema = "light" } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: ancho, height: 800 }, acceptDownloads: true, colorScheme: esquema });
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
@@ -260,13 +271,7 @@ const CONTRASTE = `(sel) => {
     // Las tarjetas son SIEMPRE del mismo tamaño y de la misma forma: ninguna crece ni se corre cuando le pasa algo.
     // En un CI lento a veces la tarjeta se mide en el instante en que la página se está repintando (todas en 0 × 0): se espera, hasta 8 s, a que
     // tengan tamaño; si de verdad no lo tienen, el fallo dice por qué (la página escondida, el aviso de «no se pudo abrir», etc.).
-    const medidas = async () => {
-        await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
-            console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
-        });
-        const m = await p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
-        return m.length && m.every((x) => x[1] === 0) ? "MIDEN 0: " + await porQueCero(p) : m;
-    };
+    const medidas = () => medirTarjetas(p);
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
@@ -1116,11 +1121,7 @@ const CONTRASTE = `(sel) => {
         const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
         const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
         // Igual que «medidas»: si la página se está repintando, las tarjetas miden 0 × 0 un instante; se espera (hasta 8 s) a que tengan tamaño.
-        const formas = async (p) => {
-            await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(() => console.log("      (las tarjetas siguen midiendo 0 después de 8 s)"));
-            const m = await p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
-            return m.length && m.every((x) => x[1] === 0) ? "MIDEN 0: " + await porQueCero(p) : m;
-        };
+        const formas = (p) => medirTarjetas(p);
         const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
         await normal.p.waitForSelector(".cam-mesa");
         const altoHoy = await altos(normal.p);
