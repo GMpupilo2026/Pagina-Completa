@@ -66,3 +66,5 @@ for (const p of paginas) {
 
 if (fallas) { console.log(`\n${fallas} problema(s).`); process.exit(1); }
 console.log("\nTodo bien.");
+
+/*! rev bfb5bbb0d2d82f9f */

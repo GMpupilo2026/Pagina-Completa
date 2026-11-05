@@ -8,3 +8,5 @@ def lecciones(ruta='ext/extraido.json'):
             if m and (cur is None or int(m.group(1))==cur['n']+1): cur={'n':int(m.group(1)),'lineas':[]};lec.append(cur)
             if cur is not None: cur['lineas'].append((pg,l))
     return lec
+
+# rev bfb5bbb0d2d82f9f

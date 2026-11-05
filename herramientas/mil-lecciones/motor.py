@@ -52,3 +52,5 @@ if __name__ == '__main__':
         res = dict(pool.imap_unordered(analizar, tareas, chunksize=8))
     json.dump(res, open('ext/motor.json', 'w'))
     print('ok', len(res))
+
+# rev bfb5bbb0d2d82f9f

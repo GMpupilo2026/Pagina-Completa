@@ -365,3 +365,5 @@ if (require.main === module) {
 }
 
 module.exports = { armar, texto, enDisco, TIPOS, SALIDA, RAIZ };
+
+/*! rev bfb5bbb0d2d82f9f */

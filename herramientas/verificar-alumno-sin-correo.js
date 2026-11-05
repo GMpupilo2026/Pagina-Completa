@@ -554,3 +554,5 @@ async function pruebaAlta(browser) {
   console.log(fallos === 0 ? "\n✅ Todo bien." : `\n❌ ${fallos} fallo(s).`);
   process.exit(fallos === 0 ? 0 : 1);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -659,3 +659,5 @@
   window.Gafetes = { _estado: () => ({ diseno, datos }) };
   iniciar();
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

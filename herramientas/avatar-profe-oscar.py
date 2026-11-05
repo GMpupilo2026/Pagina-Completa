@@ -31,3 +31,5 @@ for viejo in SALIDA.glob("*.webp"):
     if viejo.name not in hechos:
         viejo.unlink()
 print(f"{len(hechos)} avatares en {SALIDA.relative_to(RAIZ)}")
+
+# rev bfb5bbb0d2d82f9f

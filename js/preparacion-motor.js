@@ -316,3 +316,5 @@
   // `evaluar(fen)` sola también: el tablero de la línea la pide en cada paso.
   window.PreparacionMotor = { revisar, revisarTactica, aFondo, opciones, continuar, faltan, evaluar, disponible, PROFUNDIDAD, MOTOR };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

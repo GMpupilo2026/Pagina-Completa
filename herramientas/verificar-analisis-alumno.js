@@ -198,3 +198,5 @@ async function abrir(browser, filas) {
   console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: el análisis de sus partidas se arma, se compara y se guarda.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

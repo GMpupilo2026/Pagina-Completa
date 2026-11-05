@@ -974,3 +974,5 @@ window.PlanEntrenamiento = (function () {
            ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaRecalibrado, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

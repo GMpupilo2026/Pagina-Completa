@@ -75,7 +75,10 @@ const js = `/* GENERADO por herramientas/division-territorial-generar.js: no se 
   if (typeof module !== "undefined" && module.exports) module.exports = DIVISION;
 })(typeof window !== "undefined" ? window : globalThis);
 `;
-fs.writeFileSync(SALIDA, js);
+// Con el sello escondido (herramientas/lib/sello.js): volver a generar no se lo borra.
+fs.writeFileSync(SALIDA, require("./lib/sello").estampar(js, SALIDA));
 const nC = lista.reduce((s, p) => s + p.cantones.length, 0);
 const nD = lista.reduce((s, p) => s + p.cantones.reduce((t, c) => t + c.distritos.length, 0), 0);
 console.log(`${lista.length} provincias, ${nC} cantones, ${nD} distritos → js/division-territorial.js`);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -92,3 +92,5 @@ const marca = (m) => ({ uid: "u1", marca: m });
   console.log(fallos ? `\n${fallos} fallo(s)` : "\nEl login muestra el logo de la academia y aguanta que falle.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

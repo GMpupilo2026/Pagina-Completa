@@ -234,3 +234,5 @@ window.MetropolitanoEN = {
       pendiente: "Coming soon", todavia: "Not available yet", cerrar: "Close" },
   },
 };
+
+/*! rev bfb5bbb0d2d82f9f */

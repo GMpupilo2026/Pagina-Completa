@@ -81,3 +81,5 @@
 
   window.AvatarProfeOscar = { LISTA, ALTO, ruta, porId, conFrase };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

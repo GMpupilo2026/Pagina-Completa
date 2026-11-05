@@ -50,3 +50,5 @@ const ANCHO = 760;
   await browser.close();
   for (const f of [SALIDA, SALIDA_WORD]) console.log("Listo: " + path.relative(RAIZ, f) + " (" + Math.round(fs.statSync(f).size / 1024) + " KB)");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

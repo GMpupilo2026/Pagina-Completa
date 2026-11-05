@@ -98,3 +98,5 @@ if (js) {
 
 console.log(fallos ? `\n${fallos} comprobación(es) fallaron` : "\nTodo bien: el Espacio de consultas pasa por el freno y gasta con tope.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

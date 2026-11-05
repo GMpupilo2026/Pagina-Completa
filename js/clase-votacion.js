@@ -277,3 +277,5 @@ if (document.getElementById("partida-empezar-btn")) {
         b.hidden = false;
     }
 }
+
+/*! rev bfb5bbb0d2d82f9f */

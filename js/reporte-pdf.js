@@ -537,3 +537,5 @@ window.ReportePDF = (function () {
 
   return { generar: generar, deImagen: deImagen, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

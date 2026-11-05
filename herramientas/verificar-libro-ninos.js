@@ -585,3 +585,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log(`✓ Los cuentos de Peonita: ${LIBROS.map((l) => `${l.SLUG} (${l.CAPITULOS.length} capítulos, ${l.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios)`).join(", ")}; ${comprobadas} posiciones comprobadas con chess.js.`);
+
+/*! rev bfb5bbb0d2d82f9f */

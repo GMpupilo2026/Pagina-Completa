@@ -127,3 +127,5 @@ igual("fuente con la correcta primero: tres o más opciones y a lo sumo cuatro",
 
 console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: los 30 cuestionarios listos.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

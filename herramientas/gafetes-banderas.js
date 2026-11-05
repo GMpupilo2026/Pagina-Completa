@@ -51,3 +51,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(comprobar ? `Las ${isos.length} banderas están al día.` : `${isos.length} banderas copiadas a img/banderas/.`);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -611,3 +611,5 @@
 
   window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, pensado, rehacerConChess, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas, resumenDemoras };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

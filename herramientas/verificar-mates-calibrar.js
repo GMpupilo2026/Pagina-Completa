@@ -145,3 +145,5 @@ ok(real.minimo >= MINIMO, `se publicó con un mínimo de ${real.minimo} intentos
 
 if (fallos) { console.log(`\n${fallos} comprobación(es) fallaron.`); process.exit(1); }
 console.log("\nTodo en orden.");
+
+/*! rev bfb5bbb0d2d82f9f */

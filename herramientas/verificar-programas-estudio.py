@@ -92,3 +92,5 @@ cierto("el generador y sus datos no se publican (en .assetsignore)",
 
 print("\n" + ("Todo bien." if not fallos else f"{fallos} comprobaciones fallaron."))
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

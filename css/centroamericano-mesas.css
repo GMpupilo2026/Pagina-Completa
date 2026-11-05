@@ -1223,3 +1223,4 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-desplegable-opcion:focus-visible { outline: 3px solid var(--cac-morado); outline-offset: -2px; }
 .dark .cam-desplegable-opcion:focus-visible { outline-color: #dfe0fb; }
 .cam-desplegable-marca { display: inline-block; width: 1.1rem; text-align: center; flex: none; }
+/*! rev bfb5bbb0d2d82f9f */

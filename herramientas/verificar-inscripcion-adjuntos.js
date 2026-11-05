@@ -101,3 +101,5 @@ function igual(nombre, hallado, esperado) {
   if (fallos) { console.log("\n" + fallos + " comprobación(es) fallaron"); process.exit(1); }
   console.log("\nTodo bien: la inscripción al torneo no pide ni sube archivos.");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

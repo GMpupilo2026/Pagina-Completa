@@ -102,3 +102,5 @@ if (document.getElementById("encuesta-btn")) {
     document.getElementById("encuesta-btn").addEventListener("click", pasarEncuestaAlTablero);
 }
 document.getElementById("encuesta-quitar-btn").addEventListener("click", quitarEncuesta);
+
+/*! rev bfb5bbb0d2d82f9f */

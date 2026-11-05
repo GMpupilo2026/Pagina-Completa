@@ -262,3 +262,5 @@ img{width:${d}px;height:${d}px;border-radius:50%;object-fit:cover;border:${borde
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

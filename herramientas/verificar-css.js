@@ -183,3 +183,5 @@ function usadas() {
     console.log("Si no hacen nada a propósito (un gancho para el JavaScript), van a SIN_ESTILO.");
     process.exit(1);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

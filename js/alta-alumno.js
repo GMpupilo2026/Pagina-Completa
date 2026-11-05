@@ -489,3 +489,5 @@
     // verificar-alumno-sin-correo.js la compara con la del servidor desde la página.
     window.baseDeUsuarioEnPantalla = baseDeUsuarioEnPantalla;
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

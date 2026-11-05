@@ -417,3 +417,5 @@ module.exports = [
     { ic: "📚", t: "Tarea", s: "un caso de inscripción o categoría JDE y la ronda 2 de un suizo simulado" },
     { ic: "👋", t: "¿Dudas?", s: "Este es el momento. ¡Gracias por participar!" } ] },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

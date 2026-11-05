@@ -276,3 +276,5 @@
   raiz.AprendeMotor = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -121,3 +121,5 @@ async function pruebaTope(browser) {
   console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: nadie se queda fuera de la presencia por anunciarse de más.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -355,3 +355,5 @@
   if (typeof window !== "undefined") window.LectorReloj = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);
+
+/*! rev bfb5bbb0d2d82f9f */

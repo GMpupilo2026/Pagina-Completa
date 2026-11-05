@@ -198,3 +198,5 @@ if (document.getElementById("ronda-siguiente-btn")) {
     document.getElementById("ronda-terminar-btn").addEventListener("click", () => terminarRonda());
     document.getElementById("ronda-podio-btn").addEventListener("click", mostrarPodioDeLaRonda);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

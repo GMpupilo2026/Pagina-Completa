@@ -236,3 +236,5 @@ ok(/^funcion  asignar_grupo_proyecto\(p_grupo uuid, p_profesor uuid\)  definer  
 
 console.log(fallos ? `\n${fallos} cosas por arreglar.` : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

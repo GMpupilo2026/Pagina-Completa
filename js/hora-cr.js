@@ -84,3 +84,5 @@ window.HoraCR = (function () {
 
     return { ZONA, momento, fecha, hora, fechaHora, dia, hoy, mes, sumarDias, desdeCampo, paraCampo, duracion };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -137,3 +137,5 @@ else bien("la lista de pendientes está al día");
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

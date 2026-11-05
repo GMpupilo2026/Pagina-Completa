@@ -178,3 +178,5 @@ async function dobleListaPareo(page, filas, opciones) {
 }
 
 module.exports = { dobleListaPareo, respuestaLista, columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+
+/*! rev bfb5bbb0d2d82f9f */

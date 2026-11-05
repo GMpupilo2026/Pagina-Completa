@@ -468,3 +468,5 @@ if (document.getElementById("formacion-tarjeta")) {
         else if (e.key === "ArrowRight") { e.preventDefault(); irALaminaDeFormacion(formacionMia.i + 1); }
     });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

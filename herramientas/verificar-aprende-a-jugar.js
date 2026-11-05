@@ -152,3 +152,5 @@ const cifra = `${total} etapas y ${niveles} niveles`;
 console.log(`\n${total} etapas, ${niveles} niveles revisados en ${((Date.now() - t0) / 1000).toFixed(1)} s.`);
 if (fallos) { console.log(`✗ ${fallos} problema(s).`); process.exit(1); }
 console.log("✓ Todas las lecciones de Aprende a jugar se pueden ganar con tres estrellas.");
+
+/*! rev bfb5bbb0d2d82f9f */

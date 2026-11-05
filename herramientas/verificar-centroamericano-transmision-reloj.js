@@ -120,3 +120,5 @@ for (const js of ["js/centroamericano-arbitro.js", "js/centroamericano-mesas-pag
 
 if (fallas) { console.error("\n" + fallas + " de " + pruebas + " comprobaciones fallaron."); process.exit(1); }
 console.log("✓ El control de tiempos desde la transmisión: " + pruebas + " comprobaciones (hora del control con error máximo de " + maxErr + " s).");
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -177,3 +177,5 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.CentroamericanoBitacora = api;
 })(typeof self !== "undefined" ? self : this);
+
+/*! rev bfb5bbb0d2d82f9f */

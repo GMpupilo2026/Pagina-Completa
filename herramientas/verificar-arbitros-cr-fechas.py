@@ -83,3 +83,5 @@ if fallos:
     print(f"\n✗ {fallos} comprobación(es) fallaron.")
     sys.exit(1)
 print("\n✓ Todo bien.")
+
+# rev bfb5bbb0d2d82f9f

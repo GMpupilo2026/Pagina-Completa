@@ -547,3 +547,5 @@ window.CalendarioTaller = (function () {
 
     return { pintar, ponerEntrada, hora, dia, conPunto };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

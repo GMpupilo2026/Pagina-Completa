@@ -265,3 +265,5 @@ function armarIndice_(destino) {
   hoja.getRange(2, 4, filas.length, 7).setRichTextValues(ricos);
   hoja.setFrozenRows(1);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

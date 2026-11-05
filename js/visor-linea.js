@@ -330,3 +330,5 @@ window.VisorLinea = (function () {
 
   return { montar, dibujarPieza, jugadaContada, pasoPedido, aEspanol };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

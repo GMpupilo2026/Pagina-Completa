@@ -890,3 +890,5 @@ if (document.getElementById("tanda-pasar-btn")) {
         cerrarEjercicioDeLaTanda(false, 600);
     });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -253,3 +253,5 @@ window.ClaseStickers = (function () {
 
   return { CATALOGO, DURA, MAX_TEXTO, ruta, porId, vigente, mostrar, ocultar, montarProfe };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

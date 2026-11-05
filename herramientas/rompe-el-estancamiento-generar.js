@@ -345,3 +345,5 @@ ${cuerpo}
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
 module.exports = { TEMAS_CAPITULO, PISTA, DESCUENTO_LICHESS };
+
+/*! rev bfb5bbb0d2d82f9f */

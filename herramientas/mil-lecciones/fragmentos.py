@@ -73,3 +73,5 @@ if __name__ == '__main__':
     tot = sum(len(v) for v in res.values())
     con = sum(1 for v in res.values() for f in v if f['res'])
     print('fragmentos', tot, 'con resultado', con, 'jugadas', sum(len(f['movs']) for v in res.values() for f in v))
+
+# rev bfb5bbb0d2d82f9f

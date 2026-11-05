@@ -38,3 +38,5 @@ def detectar(img):
                     q = _puntaje(g, x2, y2, s2)
                     if q > mejor[0]: mejor = (q, x2, y2, s2)
     return mejor
+
+# rev bfb5bbb0d2d82f9f

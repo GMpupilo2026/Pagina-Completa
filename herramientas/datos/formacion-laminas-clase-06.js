@@ -154,3 +154,5 @@ module.exports = [
     { ic: "🎒", t: "Reúne los materiales", s: "para el día presencial" } ],
     clave: "¿Dudas? Este es el momento. ¡Gracias por participar!" },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

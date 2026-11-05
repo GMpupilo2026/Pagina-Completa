@@ -3062,3 +3062,5 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 /* El nombre de quien viene de otro país, bloqueado con el de FIDE (js/inscripcion-metropolitano.js). */
 .metro-persona input.metro-bloqueado { background: #eef0f6; color: #1d134d; cursor: not-allowed; }
 .dark .metro-persona input.metro-bloqueado { background: #243b53; color: #fff; }
+
+/*! rev bfb5bbb0d2d82f9f */

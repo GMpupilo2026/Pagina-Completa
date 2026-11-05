@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 1A9mJ de la base abierta de Lichess (CC0), rating 2512. Stockfish 16 a profundidad 18: exf3 es la mejor (+4,5) y la segunda queda en -2,3.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

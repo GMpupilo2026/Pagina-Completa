@@ -1033,3 +1033,5 @@ document.getElementById("presentacion-caja").addEventListener("keydown", (e) => 
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); pasarDiapositiva(1); }
     else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); pasarDiapositiva(-1); }
 });
+
+/*! rev bfb5bbb0d2d82f9f */

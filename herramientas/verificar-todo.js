@@ -213,3 +213,5 @@ async function asegurarSitio() {
     : "Todo bien: " + resultados.length + " verificador(es)."));
   process.exit(malos.length ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

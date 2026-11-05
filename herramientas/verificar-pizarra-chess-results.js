@@ -87,3 +87,5 @@ for (const mala of ["https://chess-results.com.otro-sitio.com/tnr1.aspx", "https
 
 console.log(fallos ? "\n" + fallos + " falla(s)." : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

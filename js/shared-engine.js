@@ -165,3 +165,5 @@
 
   window.SharedEngine = { ensureEngine, runTask, listo, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA, URL: STOCKFISH_URL };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

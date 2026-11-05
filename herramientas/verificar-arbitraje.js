@@ -117,3 +117,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log("\nTodo en orden.");
+
+/*! rev bfb5bbb0d2d82f9f */

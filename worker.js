@@ -646,3 +646,5 @@ ${SCRIPTS_INCRUSTAR.map((f) => `<script src="/js/${f}"></script>`).join("\n")}` 
     },
   });
 }
+
+/*! rev bfb5bbb0d2d82f9f */

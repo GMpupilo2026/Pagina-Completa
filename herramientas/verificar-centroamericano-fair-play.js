@@ -309,6 +309,11 @@ function pruebasDelCalculo() {
     igual("en tablas se retiene al color sorteado; si nadie jugó, sin efecto; ya revisada, solo lo dice", [t("2").tipo, /Cinco, Eva/.test(t("2").texto), t("6").tipo, C.fairPlayDeMesa(Object.assign({}, fp, { estado: "revisada" }), m).tipo], ["retener", true, "no-aplica", "revisada"]);
     igual("con el resultado ya en chess-results (sin elegir otro) dice lo mismo, sin «con este resultado»", [t(undefined, Object.assign({}, m, { valor: "3" })).tipo, /con este resultado/.test(t(undefined, Object.assign({}, m, { valor: "3" })).texto)], ["no-aplica", false]);
     igual("una mesa que no es de Fair Play no lleva banda", C.fairPlayDeMesa(undefined, m, "1"), null);
+    const fijo = { estado: "aprobada", color_si_tablas: "negras", aplica_blancas: false, aplica_negras: true, revisar_fijo: "negras", revisar_color: "negras" };
+    const tf = (v) => C.fairPlayDeMesa(fijo, m, v);
+    igual("elegida a mano con el de negras: lo retiene gane, pierda o empate; si no se presentó, sin efecto",
+        [tf().tipo, /gane, pierda o empate\), retén a Seis, Fio \(negras\)/.test(tf().texto), tf("1").tipo, /retén a Seis, Fio/.test(tf("1").texto), tf("2").tipo, tf("4").tipo, /Seis, Fio no se presentó/.test(tf("4").texto), tf("5").tipo, tf("6").tipo],
+        ["esperando", true, "retener", true, "retener", "no-aplica", true, "retener", "no-aplica"]);
 
     console.log("\n=== Dónde va el borde dorado que se mueve (fairPlayAlcance) ===");
     const al = (x) => C.fairPlayAlcance(Object.assign({ estado: "aprobada", aplica_blancas: true, aplica_negras: true, revisar_color: null }, x));
@@ -400,6 +405,19 @@ const SERVIDOR_FP = `
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
     if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
+    if (b.action === "elegir") {
+      if (!String(b.motivo || "").trim()) return err(400, "Una mesa elegida a mano lleva el motivo: queda en el acta");
+      const m = (S.mesas[b.tnr] || []).find((x) => x.mesa === b.mesa);
+      if (!m) return err(400, "La mesa " + b.mesa + " no tiene un árbitro con enlace vigente en esa categoría");
+      if (S.sorteos.some((x) => x.tnr === b.tnr && x.ronda === b.ronda && x.mesa === b.mesa)) return err(400, "La mesa " + b.mesa + " ya está en la lista de esta ronda");
+      const fijo = b.revisar === "ganador" ? null : b.revisar;
+      if (fijo && !(fijo === "blancas" ? m.aplica_blancas : m.aplica_negras)) return err(400, (fijo === "blancas" ? m.blancas : m.negras) + " no aplica para Fair Play (" + m.no_aplica + ")");
+      const f = Object.assign({}, m, { id: "fp-" + (++n), tnr: b.tnr, ronda: b.ronda, mesas_en_sorteo: 1, color_si_tablas: fijo || "blancas", estado: "sorteada", origen: "elegida", motivo: b.motivo, revisar_fijo: fijo, revisar_color: fijo,
+        aplica_blancas: fijo === "negras" ? false : m.aplica_blancas, aplica_negras: fijo === "blancas" ? false : m.aplica_negras, no_aplica: fijo ? null : m.no_aplica, sorteada_por: quien, creado: new Date().toISOString() });
+      delete f.excluida; S.sorteos.push(f);
+      if (b.avisar) { const av = { id: "av-" + (++n), leido_en: null, mesa: f.mesa, texto: "🛡 FAIR PLAY · mesa " + f.mesa }; S.avisos.push(av); Object.assign(f, { estado: "aprobada", aviso_id: av.id, arbitro: "Ana Árbitra", decidida_por_nombre: quien }); }
+      return ok({ sorteo: f });
+    }
     if (b.action === "manual") {
       if (b.resultado !== "sin_novedad" && !String(b.nota || "").trim()) return err(400, "Con ese resultado hace falta anotar qué pasó");
       if (S.sorteos.some((f) => f.tnr === b.tnr && f.ronda === b.ronda && f.mesa === b.mesa)) return err(400, "La mesa " + b.mesa + " de la ronda " + b.ronda + " ya tiene un registro de Fair Play: corrígelo desde la lista");
@@ -661,6 +679,31 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.waitForFunction(() => document.querySelectorAll("#fp-lista tr").length === 4);
         igual("y queda con ese nombre", await p.evaluate(() => window.__fp.sorteos.filter((f) => f.origen === "manual").map((f) => [f.tnr, f.ronda, f.mesa, f.jugador, f.resultado])), [["100", 2, 7, "Once, Kai", "hallazgo"], ["200", 1, 3, "Ana Pérez", "sin_novedad"]]);
 
+        console.log("\n=== Elegir una mesa a mano (no por sorteo) ===");
+        await p.selectOption("#fp-categoria", "200");
+        await p.click("#fp-elegir");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /Elegir una mesa a mano · Sub-14 Femenino, ronda 3/.test(d.textContent); });
+        igual("con la categoría desplegada: sus mesas libres con los jugadores, a quién se revisa y si se avisa ya", await p.$$eval("dialog[open] select", (l) => l.map((x) => [...x.options].map((o) => o.value))),
+            [["1"], ["blancas", "negras", "ganador"], ["si", "no"]]);
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => /lleva el motivo/.test(document.body.textContent));
+        igual("sin motivo no se elige", await p.evaluate(() => window.__fp.llamadas.filter((l) => l.action === "elegir").length), 0);
+        await p.click("#fp-elegir");
+        await p.waitForSelector("dialog[open] textarea");
+        await p.selectOption("dialog[open] select >> nth=1", "blancas");
+        await p.fill("dialog[open] textarea", "Lo pidió el árbitro principal");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => window.__fp.sorteos.some((f) => f.origen === "elegida") && /ya tiene el aviso de retener a Ana \(blancas\)/.test(document.body.textContent));
+        igual("llega a la función: la categoría, la ronda, la mesa, el de blancas, el motivo y que avise ya", await p.evaluate(() => window.__fp.llamadas.filter((l) => l.action === "elegir").map((l) => [l.tnr, l.ronda, l.mesa, l.revisar, l.motivo, l.avisar]).pop()),
+            ["200", 3, 1, "blancas", "Lo pidió el árbitro principal", true]);
+        await p.waitForFunction(() => [...document.querySelectorAll("#fp-lista tr")].some((tr) => /Elegida a mano/.test(tr.textContent)));
+        igual("en la lista: «Elegida a mano por» con el motivo, a quién (gane, pierda o empate) y aprobada", await p.$$eval("#fp-lista tr", (l) => l.filter((tr) => /Elegida a mano/.test(tr.textContent)).map((tr) => [tr.children[2].textContent, tr.children[4].textContent, tr.dataset.estado])),
+            [["Mesa 1✋ Elegida a mano por Laura Mora (Fair Play) · Lo pidió el árbitro principal", "Ana (blancas), gane, pierda o empate", "aprobada"]]);
+        await p.click("#fp-elegir");
+        await p.waitForFunction(() => /no queda ninguna mesa por elegir/.test(document.body.textContent));
+        igual("una mesa ya elegida no se vuelve a ofrecer", await p.evaluate(() => !document.querySelector("dialog[open]")), true);
+        await p.selectOption("#fp-categoria", "");
+
         const [bajada] = await Promise.all([p.waitForEvent("download"), p.click("#fp-pdf")]);
         const bytes = fs.readFileSync(await bajada.path()).toString("latin1");
         igual("el registro en PDF, con la marca de agua", [bajada.suggestedFilename(), bytes.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytes)], ["fair-play-centroamericano-2026.pdf", true, true]);
@@ -791,3 +834,5 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
     console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien.");
     process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

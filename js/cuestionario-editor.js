@@ -492,3 +492,5 @@ function montarArmador() {
     document.getElementById("cuestionario-guardar-btn").addEventListener("click", guardarCuestionario);
     document.getElementById("cuestionario-borrar-btn").addEventListener("click", borrarCuestionario);
 }
+
+/*! rev bfb5bbb0d2d82f9f */

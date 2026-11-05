@@ -9557,6 +9557,32 @@ la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no
 rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
 jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroamericano-fair-play.js`.
 
+#### Elegir una mesa a mano
+
+Lo pidió el dueño el 5 de noviembre (`20261105170000`, pegada a mano en el editor SQL y anotada en `schema_migrations`; función `centroamericano-fair-play`
+en su versión 15): además del sorteo, poder elegir una mesa con todas sus indicaciones, sin sortear y descartar hasta que
+salga la que se quiere.
+
+- **«✋ Elegir una mesa a mano»**, junto a «Sortear», con la categoría desplegada (si está en «Todas», la pregunta): sus
+  mesas libres con los dos jugadores (las que ya salieron en la ronda, los bye y donde ninguno aplica no se ofrecen), **a
+  quién se revisa** —al de blancas o al de negras, gane, pierda o empate, o al ganador como en el sorteo—, **el motivo**
+  (obligatorio: va al acta) y si se le avisa ya a su árbitro o queda en la lista para aprobarla después.
+- `centroamericano_fair_play_elegir()` la guarda como una mesa más de `centroamericano_fair_play`, con `origen` =
+  `'elegida'`, el motivo y quién la eligió; en la lista dice «Elegida a mano por …» y en el informe del torneo va aparte:
+  **no es azar** y el acta lo dice. Una mesa no se elige dos veces en la ronda (el mismo índice único que el sorteo).
+- **La regla contra el acoso vale igual**: a quien se revisó en las 2 rondas anteriores (o ya tuvo 3) no se le puede
+  elegir; la base lo rechaza con el porqué. Elegir no es una vía para saltársela.
+- **Un jugador fijo** (`revisar_fijo`): el aviso al árbitro dice «cuando TERMINE la partida (gane, pierda o empate), retén
+  a …»; el borde dorado va en esa persona desde el principio; el resultado no cambia a quién se revisa
+  (`interno.fp_tras_resultado`), y la mesa queda **sin efecto** solo si esa persona no se presentó (o no se jugó).
+  «Ya retuve a …» se puede marcar solo con el resultado guardado, como en el sorteo: la base lo exige
+  (`centroamericano_fair_play_retener`) y la tablet no muestra el botón antes.
+
+Probado en el Postgres de ensayo, en una transacción que se deshizo: la mesa elegida con el de blancas y el aviso al
+árbitro, «Ya retuve» rechazado antes del resultado, que pierda y se le revise igual, la corrección a 0f-1f (sin efecto) y
+el borrado (vuelve a esperar), la mesa repetida, quien no aplica, sin motivo, sin árbitro, sin permiso, y en tablas el de
+negras fijo. Lo comprueba `verificar-centroamericano-fair-play.js`.
+
 #### Retenido, el acumulado y el informe final
 
 Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):
@@ -12650,6 +12676,32 @@ que ningún teléfono aparezca sin estar en la lista de los confirmados, que cad
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
 
+
+### Una lectura vacía de chess-results no pisa la buena
+
+El 5/11/2026, en plena ronda del Centroamericano, el dueño vio en «Mis
+jugadores» a un jugador que seguía en su torneo con «Ya no aparece en la lista
+de chess-results». La lista sí lo traía: lo que pasó es que chess-results, a
+veces, contesta **200 con una página sin la tabla** (ocupado, o cortándole a
+quien pide mucho: la función y pg_cron le piden tres páginas por torneo cada
+minuto). `leerClasificacion()` daba cero jugadores, `leerCruzado()` un cuadro
+vacío y `leerRonda()` ningún pareo, y `leer()` lo guardaba en `pizarras_cache`
+**encima** de la lectura buena. Durante casi un minuto todos veían la mitad de
+las categorías sin nadie (comprobado pidiendo la función: seis de doce torneos
+con `jugadores: []` y ronda 0, y un minuto después, otra vez completos).
+
+- **En la función**: `lecturaVacia(nueva, guardada)` (en `torneos-sala.ts`)
+  dice si lo nuevo viene vacío y lo guardado no. Un torneo no se queda sin
+  jugadores, un cuadro cruzado no se borra y un pareo publicado no
+  desaparece: eso es la falla. Entonces no se guarda, se sirve lo de antes
+  marcado `viejo` y esa dirección no se vuelve a pedir en 30 s (en memoria),
+  para no insistirle a chess-results justo cuando está ocupado. Vacía con
+  nada guardado (un torneo que todavía no empieza) se guarda como siempre.
+- **En la página**: `conLoDeAntes()` (`js/centroamericano-vivo.js`) hace lo
+  mismo con lo que llega: un torneo sin jugadores cuando el de antes (o el
+  guardado en el aparato) los tenía se queda con el de antes. Cubre lo que
+  ya estaba en la caché y cualquier otra vía por la que llegue vacío.
+- Lo prueba `verificar-centroamericano.js`.
 
 ### Un torneo por categoría
 

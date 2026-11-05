@@ -216,3 +216,5 @@ window.PuntosClase = (function () {
     return { REGLAS, INTENTOS, PUESTOS, puntosDeUnaRespuesta, juntar, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos,
         EQUIPOS, repartir, puntosDeEquipos, cargarDelMes, nombreDelMes, pintarDelMesDelAlumno };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -660,3 +660,5 @@
 
   window.AdminMateriales = { iniciar, pintar, abrir, montarCompartir, MATERIALES };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

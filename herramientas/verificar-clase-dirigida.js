@@ -199,3 +199,5 @@ async function pruebaOtraAlumna(browser) {
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: la pregunta dirigida llega solo a quien tiene el turno y el profe ve los tableros en vivo.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

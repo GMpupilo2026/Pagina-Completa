@@ -471,3 +471,5 @@ ${volverA(curso)}
 
 module.exports = { conceptosDe, posicionesDe, partidaDe, textoDe, describir, cuadernilloHtml, accesibleHtml,
                    fuentesDe, lecturasDe, slugDe, CURSOS, AUTOR, CLAVE_PROPIETARIO };
+
+/*! rev bfb5bbb0d2d82f9f */

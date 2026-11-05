@@ -220,3 +220,5 @@ const filasNacional = x.nacional.filas;
   }
   console.log("✅ Agregar desde las listas de Elo: todo bien.");
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

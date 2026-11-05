@@ -82,3 +82,5 @@ a = re.sub(r'(<p class="text-brand-500 dark:text-brand-300 text-sm mb-5">)Cada l
            r'\g<1>' + AC_DESC + ' Las lecciones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. Tu avance queda guardado y tu profesor puede verlo en Informes.', a)
 open(os.path.join(RAIZ, 'cursos/academia', SLUG + '.html'), 'w', encoding='utf-8').write(a)
 print('ok')
+
+# rev bfb5bbb0d2d82f9f

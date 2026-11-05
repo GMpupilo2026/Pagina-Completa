@@ -243,3 +243,5 @@ def armar(destino):
 
 if __name__ == "__main__":
     armar(sys.argv[1] if len(sys.argv) > 1 else "guia-rapida-arbitro-jde.pdf")
+
+# rev bfb5bbb0d2d82f9f

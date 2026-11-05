@@ -128,3 +128,5 @@ async function dibujar({ logo, fondo, finDelDibujo, lado, margen, redondeado, re
   await navegador.close();
   console.log(`\n${ICONOS.length} iconos en img/app/ y el favicon`);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

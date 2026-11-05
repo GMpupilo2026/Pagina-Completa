@@ -184,3 +184,5 @@ if existe:
 
 print(f"\n✗ {fallos} problema(s)." if fallos else "\n✓ Todo bien.")
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

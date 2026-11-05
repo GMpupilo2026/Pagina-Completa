@@ -260,3 +260,5 @@ ok("una jugada es la única que gana: +3 contra +0,5 sí; contra +2 no; dos mate
   console.log(fallos ? "\n✗ " + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

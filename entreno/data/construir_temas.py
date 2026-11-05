@@ -163,3 +163,5 @@ print(f'ejercicios únicos: {len(puzzles)}  tamaño: {len(txt.encode())//1024} K
 for k in wanted:
     flag = '' if len(themes[k]) >= N else '   <-- incompleto'
     print(f'  {k:20s} {len(themes[k]):4d}{flag}')
+
+# rev bfb5bbb0d2d82f9f

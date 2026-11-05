@@ -1735,7 +1735,7 @@
     // docs/decisiones/juegos-y-torneos.md.
     // «Ya lo retuve»: solo cuando el resultado ya está guardado y dice a quién revisar. Avisa al encargado de Fair Play.
     function bandaRetener(m, fp) {
-        if (!fp || fp.estado !== "aprobada" || !fp.revisar_color) return null;
+        if (!fp || fp.estado !== "aprobada" || !fp.revisar_color || (fp.revisar_fijo && !fp.resultado_mesa)) return null;
         const nombre = (fp.revisar_color === "blancas" ? m.blancas : m.negras) || (fp.revisar_color === "blancas" ? "quien jugó con blancas" : "quien jugó con negras");
         if (fp.retenido_en) return el("p", { class: "cam-fp-retenido", texto: "✓ Avisaste a Fair Play que retuviste a " + nombre + " (" + hora(fp.retenido_en) + "). Que no se vaya hasta que llegue el encargado." });
         return el("button", { type: "button", class: "cam-btn cam-btn-chico cam-fp-retener", "data-accion": "retener", onclick: (e) => retener(m, fp, e.currentTarget) },
@@ -2256,3 +2256,5 @@
 
     init();
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

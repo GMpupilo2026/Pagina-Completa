@@ -245,3 +245,5 @@ function resolver(piezas) {
 
 const FinalesDTM = { resolver };
 if (typeof module !== "undefined" && module.exports) module.exports = FinalesDTM;
+
+/*! rev bfb5bbb0d2d82f9f */

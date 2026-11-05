@@ -205,3 +205,5 @@ window.ILUMINA_NIVELES = [
     solucion: { caballo1: [2, 2], torre1: [8, 1], peon2: [13, 2], torre2: [16, 2] },
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

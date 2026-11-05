@@ -440,3 +440,5 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

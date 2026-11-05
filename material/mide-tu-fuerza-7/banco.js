@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 0nlzc de la base abierta de Lichess (CC0), rating 2372. Stockfish 16 a profundidad 18: Tf5+ es la mejor (+3,2) y la segunda queda en 0,0.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

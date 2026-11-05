@@ -261,3 +261,5 @@ async function pruebaSelectorDeClase(browser) {
   console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: el navegador manda lo correcto.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

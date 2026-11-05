@@ -145,3 +145,5 @@ if (require.main === module) {
 }
 
 module.exports = { partidasDePgn, esClasica, huella, analizarPartida, calibrar, argumentos, paraBlancas };
+
+/*! rev bfb5bbb0d2d82f9f */

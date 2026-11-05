@@ -1467,3 +1467,5 @@
   window.PRECISION_POSICIONAL_ITEMS = ITEMS;
   window.PrecisionPosicionalPrueba = { AREAS: AREAS, TOTAL: ITEMS.length, porArea: porArea, armar: armar, idea: idea };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

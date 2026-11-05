@@ -195,3 +195,5 @@ async function pruebaRepaso(browser) {
   if (fallos) { console.log("\n✗ " + fallos + " comprobación(es) fallaron"); process.exit(1); }
   console.log("\n✓ Todo bien");
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

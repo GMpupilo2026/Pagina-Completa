@@ -79,3 +79,5 @@ cursos.forEach((slug) => {
 });
 
 console.log(`\n${cambiados} lecciones con su material enlazado` + (armadas ? ` · a ${armadas} hubo que armarle la fila de enlaces` : ""));
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -672,3 +672,4 @@ document.getElementById("f-rol").addEventListener("change", () => cargar(true));
 document.getElementById("mas").addEventListener("click", () => cargar(false));
 init();
     
+/*! rev bfb5bbb0d2d82f9f */

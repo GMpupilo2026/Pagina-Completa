@@ -136,3 +136,5 @@ cierto("el subprocess que reconstruye los JSON corre también cuando una vuelta 
 
 print("Todo bien" if fallos == 0 else f"\n{fallos} fallo(s)")
 sys.exit(1 if fallos else 0)
+
+# rev bfb5bbb0d2d82f9f

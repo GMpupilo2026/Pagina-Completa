@@ -14,3 +14,5 @@ window.BusquedaBase = {
         return String(texto == null ? "" : texto).replace(/[,()%*\\"']/g, " ").trim().slice(0, 60);
     },
 };
+
+/*! rev bfb5bbb0d2d82f9f */

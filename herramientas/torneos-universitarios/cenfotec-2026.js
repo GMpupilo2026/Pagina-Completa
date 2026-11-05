@@ -159,3 +159,5 @@ edición 2025.`,
     },
   ],
 };
+
+/*! rev bfb5bbb0d2d82f9f */

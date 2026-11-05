@@ -149,3 +149,5 @@ async function pruebaAlumna(browser) {
   console.log(n ? "\n" + n + " comprobación(es) fallaron" : "\nTodo bien: vaciar vacía de verdad.");
   process.exit(n || process.exitCode ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

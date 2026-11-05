@@ -197,3 +197,5 @@ ok("ordenar otra vez no cambia nada", JSON.stringify(Object.values(todas).map((c
 
 console.log("\n" + (fallos ? `${fallos} fallo(s).` : "Todo bien."));
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

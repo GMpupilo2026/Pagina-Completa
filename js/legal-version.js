@@ -11,3 +11,5 @@ window.LegalVersion = Object.freeze({
   PRIVACIDAD: "2026-11-04",
   TERMINOS: "2026-10-31",
 });
+
+/*! rev bfb5bbb0d2d82f9f */

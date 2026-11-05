@@ -77,3 +77,5 @@ function ganancias(fen, profundidad) {
 }
 
 module.exports = { ganancias, material, VALOR, MATE };
+
+/*! rev bfb5bbb0d2d82f9f */

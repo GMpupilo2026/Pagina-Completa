@@ -428,3 +428,5 @@ def main(slug):
 
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else "estrategia-en-el-final")
+
+# rev bfb5bbb0d2d82f9f

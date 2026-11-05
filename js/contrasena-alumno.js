@@ -121,3 +121,5 @@
 
     global.ContrasenaAlumno = { montar: montar, claveFacil: claveFacil, MINIMO: MINIMO };
 })(window);
+
+/*! rev bfb5bbb0d2d82f9f */

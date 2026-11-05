@@ -21,3 +21,5 @@ for k in sorted(D):
     out[k] = {'tablero': fen, 'conf_min': float(c.min())}
 json.dump(out, open('ext/reconocidos.json', 'w'))
 print(len(out))
+
+# rev bfb5bbb0d2d82f9f

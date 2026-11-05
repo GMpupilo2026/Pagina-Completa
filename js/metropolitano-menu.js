@@ -147,3 +147,5 @@ window.MetroMenu = (function () {
 
   return { COMIDAS, TX, BUCKET, cargar, poner, de, hay, hayAlguno, plato, agrupar, dias, costo, pintar, urlFoto, dinero };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

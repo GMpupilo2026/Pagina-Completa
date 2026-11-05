@@ -65,3 +65,5 @@ ok(/RelojServidor\.iniciar\(sb\)/.test(init.slice(0, 1500)), "sesion.js mide el 
 
 if (fallos) { console.log("\n✗ " + fallos + " comprobación(es) fallaron."); process.exit(1); }
 console.log("\n✓ La cuenta regresiva de las preguntas usa la hora de la base.");
+
+/*! rev bfb5bbb0d2d82f9f */

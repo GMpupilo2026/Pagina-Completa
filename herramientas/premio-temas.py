@@ -143,3 +143,5 @@ if __name__ == "__main__":
     SALIDA.write_text(json.dumps(datos, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"{SALIDA.relative_to(RAIZ)}: {len(datos['temas'])} temas, "
           f"{sum(len(t['items']) for t in datos['temas'])} ejercicios")
+
+# rev bfb5bbb0d2d82f9f

@@ -112,3 +112,5 @@ window.PrecisionPosicionalCriterio = (function () {
 
   return { AREAS: AREAS, AREA_POR_ID: AREA_POR_ID, veredicto: veredicto, resumir: resumir };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

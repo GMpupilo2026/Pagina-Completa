@@ -397,3 +397,5 @@
   if (enNode) module.exports = api;
   else raiz.PareoEquipos = api;
 })(typeof self !== "undefined" ? self : this);
+
+/*! rev bfb5bbb0d2d82f9f */

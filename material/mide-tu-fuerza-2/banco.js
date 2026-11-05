@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 2lEov de la base abierta de Lichess (CC0), rating 2367. Stockfish 16 a profundidad 18: Txh2+ es la mejor (+3,0) y la segunda queda en -2,8.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

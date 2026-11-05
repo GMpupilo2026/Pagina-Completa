@@ -240,3 +240,5 @@ function crear(s) {
 }
 
 module.exports = { crear, armar, fuente, numero, numerar };
+
+/*! rev bfb5bbb0d2d82f9f */

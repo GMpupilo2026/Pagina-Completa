@@ -134,3 +134,5 @@ window.LogrosCatalogo = (function () {
 
   return { LOGROS: LOGROS, conEstado: conEstado, ACTIVIDADES_ALCANZABLES: ACTIVIDADES_ALCANZABLES };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

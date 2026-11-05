@@ -313,3 +313,5 @@ window.ReporteAsistencia = (function () {
     _marcaDice: marcaDice,
   };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

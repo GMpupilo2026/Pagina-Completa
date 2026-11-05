@@ -121,3 +121,5 @@
 
   return { pendientes, aplicar, evaluarLinea, MIN_MAESTROS, MAX_JUGADAS };
 });
+
+/*! rev bfb5bbb0d2d82f9f */

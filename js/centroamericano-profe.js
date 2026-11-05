@@ -191,3 +191,5 @@
   document.body.append(panel, boton);
   window.CentroamericanoProfe = { abrir, cerrar: () => cerrar(false) };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

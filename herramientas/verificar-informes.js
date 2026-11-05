@@ -2633,3 +2633,5 @@ async function pruebaInformeGrupo(browser) {
   console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: informes.html pinta lo que la base le manda.");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

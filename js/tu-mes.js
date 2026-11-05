@@ -163,3 +163,5 @@ window.TuMes = (function () {
 
   return { montar, pedir, textos, mesDeHoy, sumarMeses, nombreMes };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -74,3 +74,5 @@ if (fallas.length) {
 const deKb = Object.values(MODELOS).filter((m) => m.fuente === "kingbase").length;
 console.log("✓ Partidas modelo: " + Object.keys(MODELOS).length + " aperturas, cada una con una partida real de su fuente ("
   + deKb + " de KingBase), que llega a su posición y la gana quien la juega.");
+
+/*! rev bfb5bbb0d2d82f9f */

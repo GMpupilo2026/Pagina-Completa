@@ -124,3 +124,5 @@ window.TorneoSync = (function () {
 
   return { onRoomUpdate: onRoomUpdate, maybeFinishRound: maybeFinishRound };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

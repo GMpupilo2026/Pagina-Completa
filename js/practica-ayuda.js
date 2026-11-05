@@ -125,3 +125,5 @@
 
   window.PracticaAyuda = { limpiar, mismoContenido, vale, leerMarcas, escribirMarcas, enPalabras, MAX_TEXTO, MAX_MARCAS };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

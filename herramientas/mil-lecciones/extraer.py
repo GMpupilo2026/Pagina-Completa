@@ -40,3 +40,5 @@ for pn in range(doc.page_count):
         corriente.append((pn+1, e[3]))
 json.dump({'corriente': corriente, 'diagramas': diags}, open(os.path.join(salida, 'extraido.json'), 'w'), ensure_ascii=False)
 print(len(corriente), len(diags))
+
+# rev bfb5bbb0d2d82f9f

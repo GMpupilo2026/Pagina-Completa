@@ -535,3 +535,5 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
   });
   console.log("PDF listo:", destino);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

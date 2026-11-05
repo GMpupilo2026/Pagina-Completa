@@ -1811,3 +1811,5 @@
 
     init().catch((e) => { $("cargando").hidden = true; avisar("No se pudo abrir la página: " + (e.message || e), true); });
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

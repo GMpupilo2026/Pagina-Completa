@@ -772,3 +772,5 @@ async function requireLoginThenGate(){
 requireLoginThenGate();
 
 if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('board'));
+
+/*! rev bfb5bbb0d2d82f9f */

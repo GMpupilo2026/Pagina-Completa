@@ -7221,3 +7221,5 @@ window.MIDE_TU_FUERZA_ITEMS = [
     comprobado: 'Ejercicio 04yi1 de la base abierta de Lichess (CC0), rating 2499. Stockfish 16 a profundidad 18: Tg6+ es la mejor (+4,0) y la segunda queda en 0,0.',
   },
 ];
+
+/*! rev bfb5bbb0d2d82f9f */

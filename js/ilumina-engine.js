@@ -136,3 +136,5 @@
     PIECE_NAME, PIECE_GLYPH_WHITE, PIECE_GLYPH_BLACK,
   };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

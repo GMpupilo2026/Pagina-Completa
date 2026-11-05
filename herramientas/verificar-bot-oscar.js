@@ -333,3 +333,5 @@ console.log("\n8. Los adaptadores de bot.html saben ordenar sin clonar");
 
 console.log(fallos ? `\n${fallos} comprobaciones fallaron\n` : "\nTodo bien.\n");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -2301,3 +2301,64 @@ mano.
 vuelva a usar la vieja salvo los que lo dicen en `PERMITIDOS`, que los
 generadores tomen la copia única y que los libros publicados traigan la
 imagen nueva (la buscan por su tamaño, 760 × 564; la vieja mide 760 × 571).
+
+## El sello escondido en cada archivo
+
+El dueño preguntó si se podía cifrar el sitio para que nadie copiara las
+herramientas con «Inspeccionar». **No se puede**: lo que corre en el
+navegador, quien lo recibe lo lee. Ofuscar solo lo hace más lento de leer, y
+bloquear el clic derecho o F12 se salta en segundos y le estorba a quien usa
+lector de pantalla. Lo que de verdad protege es otra cosa: que la lógica
+valiosa viva en la base o en una Edge Function, que el código de lo que
+exige cuenta lo sirva el worker solo con sesión (el candado de
+`cursos/protegido/`) y que **el repositorio sea privado**. El 5/11/2026 era
+público: cualquiera podía bajar los cursos de `cursos/protegido/` desde
+`raw.githubusercontent.com` sin pasar por el candado, y con ellos
+`supabase/` y `docs/`, que `.assetsignore` saca del sitio justamente para
+que no se publiquen. Pasarlo a privado lo decide el dueño en GitHub.
+
+Lo que sí se puede es **reconocer una copia**. Para eso cada archivo de
+código lleva el mismo sello, `rev bfb5bbb0d2d82f9f`, que no existe en
+ningún otro lado: si aparece en otra página o en otro repositorio, salió de
+acá, y queda la prueba. Una búsqueda de ese texto en Google o en GitHub
+encuentra la copia de cualquier archivo.
+
+- **Una sola copia**: `herramientas/lib/sello.js` (el sello, cómo se escribe
+  en cada tipo de archivo, `estampar()` y `quitar()`). Los generadores de
+  Python lo leen de ahí con `herramientas/lib/sello.py`.
+- **Parece un número de versión y no dice de quién es.** Un sello que se
+  anuncia es un sello que se borra antes de copiar: no lleva el nombre del
+  sitio ni la palabra «sello», y no se nombra en ninguna página.
+- **Va en una línea propia al final del archivo**, debajo de lo que había,
+  que queda intacto letra por letra. Al principio no podía ir: un comentario
+  antes del `<!DOCTYPE html>` pone la página en modo «quirks», antes del
+  `<?xml ?>` rompe el SVG y antes del `#!` el script no se ejecuta. Y la
+  primera línea de un archivo de `js/` dice de qué página es el código
+  (`herramientas/lib/codigo-de-pagina.js` la lee): la primera versión, con
+  el sello arriba, hizo fallar cuatro verificadores que de pronto no
+  encontraban el código de su página.
+- **En JS y CSS va como `/*! … */`**: los minificadores borran los
+  comentarios, pero conservan los que empiezan con `!`. Quien copia y
+  minifica se lo lleva igual (`verificar-sello.js` lo prueba con esbuild).
+- **Dónde va**: todo `.html`, `.js`, `.mjs`, `.mts`, `.css`, `.svg`, `.py`,
+  `.gs`, `.sh` y `.ps1` que git conoce. **Dónde no**: `supabase/` (cada
+  migración y cada función se guarda tal cual se aplicó), `js/vendor/` y
+  `js/pdf*.min.js` (librerías de otros, comparadas con su versión publicada),
+  `img/banderas/` (las de flag-icons, que `verificar-gafetes.js` compara con
+  el paquete)
+  y `docs/`. El zip de la línea de comandos de Pareo Integral lo lleva solo,
+  porque empaqueta los mismos archivos de `js/pareo/`.
+- **Un generador que reescribe un archivo le borra el sello**, y el CI lo
+  avisa: `node herramientas/sello-estampar.js` lo vuelve a poner. Los que
+  comparan lo que arman con el archivo (el banco de La partida perdida, las
+  páginas universitarias, la división territorial, la versión accesible de
+  las fichas, las páginas de Formación Ajedrez y los datos de su práctica propia) lo ponen ellos mismos con
+  `estampar()`, y la huella de las láminas de Formación se calcula con
+  `quitar()`: el sello no es parte de lo que el archivo dice.
+- **Los documentos (PDF, Word, PowerPoint) todavía no lo llevan**: ya
+  llevan la marca de agua visible, y meterles el sello pide volver a
+  generarlos.
+
+`node herramientas/verificar-sello.js` (sin navegador) revisa que cada
+archivo lo lleve, que vaya al final, que `quitar()` devuelva el texto exacto
+y que sobreviva a un minificador.

@@ -368,3 +368,5 @@
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (raiz) raiz.Ajedrez4x8 = API;
 })(typeof window !== "undefined" ? window : null);
+
+/*! rev bfb5bbb0d2d82f9f */

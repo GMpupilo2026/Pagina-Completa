@@ -201,3 +201,5 @@ const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttri
     console.log(fallos ? "\n✗ " + fallos + " comprobaciones fallaron." : "\n✓ El modo liviano y el respaldo de Supabase funcionan.");
     process.exit(fallos ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

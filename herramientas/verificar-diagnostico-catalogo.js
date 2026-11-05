@@ -60,3 +60,5 @@ if (fallos.length) {
   process.exit(1);
 }
 console.log(`OK: js/diagnostico-catalogo.js está al día con js/diagnostico-items.js (${ITEMS.length} ítems).`);
+
+/*! rev bfb5bbb0d2d82f9f */

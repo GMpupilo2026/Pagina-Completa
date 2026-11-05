@@ -15,6 +15,8 @@
 //   "candidatas"  {tnr, ronda}                         → las mesas con su peso, sus motivos y quién no aplica
 //   "sortear"     {ronda, tnrs, cantidad}
 //   "aprobar"     {id}            "descartar" {id, motivo}
+//   "elegir"      {tnr, ronda, mesa, revisar: ganador|blancas|negras, motivo, avisar?} → una mesa elegida a mano, no por
+//                       sorteo, con el motivo; con «avisar», su árbitro recibe el aviso ya (como «aprobar»)
 //   "revisar"     {id, resultado, color?, jugador?, nota?}
 //   "alerta"      {tnr, ronda, mesa, color, estado: vista|seguir, nota?}
 //   "pareo"       {tnr, ronda, mesa}                   → los dos jugadores de esa mesa (para anotar a mano)
@@ -139,7 +141,7 @@ Deno.serve(async (req) => {
       return json({ ok: true, mesa: { mesa: f.mesa, retenido_en: f.retenido_en, retenido_por: f.retenido_por } });
     }
     const { data } = await servicio.from("centroamericano_fair_play")
-      .select("mesa, estado, color_si_tablas, aplica_blancas, aplica_negras, no_aplica, revisar_color, retenido_en")
+      .select("mesa, estado, color_si_tablas, aplica_blancas, aplica_negras, no_aplica, revisar_color, revisar_fijo, resultado_mesa, retenido_en")
       .eq("tnr", a.tnr).eq("ronda", Number(cuerpo.ronda) || 0).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta)
       .in("estado", ["aprobada", "sin_efecto", "revisada"]);
     return json({ ok: true, mesas: data ?? [] });
@@ -206,6 +208,10 @@ Deno.serve(async (req) => {
     if (accion === "candidatas") return json({ ok: true, mesas: await rpc("centroamericano_fp_candidatas", { p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda) }) });
     if (accion === "sortear") {
       return json({ ok: true, sorteos: await rpc("centroamericano_fair_play_sortear", conQuien({ p_ronda: Number(cuerpo.ronda), p_tnrs: (cuerpo.tnrs as string[]) ?? [], p_cantidad: Number(cuerpo.cantidad) || 1, p_enlace: enlace })) });
+    }
+    if (accion === "elegir") {
+      return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_elegir", conQuien({ p_tnr: String(cuerpo.tnr), p_ronda: Number(cuerpo.ronda), p_mesa: Number(cuerpo.mesa),
+        p_revisar: String(cuerpo.revisar ?? ""), p_motivo: String(cuerpo.motivo ?? ""), p_avisar: cuerpo.avisar === true, p_enlace: enlace })) });
     }
     if (accion === "aprobar") return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_aprobar", conQuien({ p_id: String(cuerpo.id) })) });
     if (accion === "descartar") return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_descartar", conQuien({ p_id: String(cuerpo.id), p_motivo: String(cuerpo.motivo ?? "") })) });

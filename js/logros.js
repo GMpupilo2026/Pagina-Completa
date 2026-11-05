@@ -109,3 +109,5 @@ window.Logros = (function () {
 
   return { cargar: cargar, META_DIARIA: META_DIARIA };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

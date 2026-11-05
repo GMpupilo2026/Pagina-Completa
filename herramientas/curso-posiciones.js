@@ -104,3 +104,5 @@ function main(slug) {
 }
 
 main(process.argv[2] || "estrategia-en-el-final");
+
+/*! rev bfb5bbb0d2d82f9f */

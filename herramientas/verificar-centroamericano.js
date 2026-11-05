@@ -235,6 +235,32 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("ni mientras una categoría vaya atrás (todavía sin emparejar esa ronda)", o.atras === null, JSON.stringify(o.atras));
     ok("salvo que esa ya haya terminado (un Round Robin de pocos)", !!o.rr && o.rr.cuerpo === "1 ganada: 1 de 1 puntos en sus partidas.", JSON.stringify(o.rr));
   }
+  // Una lectura vacía de chess-results (la página sin la tabla) no pisa la
+  // buena guardada: el 5/11/2026 media sala salió sin jugadores y la página
+  // decía «Ya no aparece en la lista de chess-results».
+  {
+    const r = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+      `import { lecturaVacia as v } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
+       const J = { ronda: 5, rondas: 9, jugadores: [{ no: 1 }] }, J0 = { ronda: 0, rondas: 0, jugadores: [] };
+       const C = { cruce: { 1: ["2w1"] } }, C0 = { cruce: {} }, M = { ronda: 5, mesas: [{ mesa: 1 }] }, M0 = { ronda: 0, mesas: [] };
+       process.stdout.write(JSON.stringify([v(J0, J), v(C0, C), v(M0, M), v(J, J), v(J0, J0), v(C0, C0), v(M0, null), v(J, J0)]));`], { encoding: "utf8" });
+    ok("una lectura vacía (sin jugadores, sin cuadro, sin pareo) con lo guardado lleno es la falla; vacía con nada guardado, o llena, no",
+       r.status === 0 && r.stdout === JSON.stringify([true, true, true, false, false, false, false, false]), r.stderr || r.stdout);
+    const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts"), "utf8");
+    const cuerpo = fn.slice(fn.indexOf("async function leer("), fn.indexOf("// ------------------------------------------------------------- los avisos"));
+    ok("leer() mira lecturaVacia() ANTES de guardar en la caché, y entonces sirve lo guardado como viejo",
+       cuerpo.indexOf("lecturaVacia(datos, guardado.datos)") > 0 && cuerpo.indexOf("lecturaVacia(datos, guardado.datos)") < cuerpo.indexOf('upsert({ url, datos, leido_en })'));
+    const vivo = fs.readFileSync(path.join(RAIZ, "js/centroamericano-vivo.js"), "utf8");
+    const m = vivo.match(/function conLoDeAntes\([\s\S]*?\n  \}\n/);
+    let res = null;
+    try {
+      const f = new Function(m[0] + "; return conLoDeAntes;")();
+      const antes = { torneos: [{ tnr: "1", jugadores: [{ no: 31, nombre: "Sequeira Solis, Shane Stevens" }] }, { tnr: "2", jugadores: [{ no: 1 }] }] };
+      res = f([{ tnr: "1", jugadores: [] }, { tnr: "2", jugadores: [{ no: 1 }, { no: 2 }] }, { tnr: "3", jugadores: [] }], antes);
+    } catch (e) { res = String(e); }
+    ok("la página se queda con el torneo de antes si llega vacío (marcado viejo), y toma el nuevo si trae jugadores",
+       Array.isArray(res) && res[0].jugadores.length === 1 && res[0].viejo === true && res[1].jugadores.length === 2 && res[2].jugadores.length === 0, JSON.stringify(res));
+  }
   // El pareo (art=2) de chess-results trae TODAS las rondas armadas, de la
   // última a la primera, y las que vienen pueden tener solo «sin emparejar»; el
   // título dice «1. Ronda el …». La función se queda con la última ronda que
@@ -1556,3 +1582,5 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien");
   process.exit(fallos ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

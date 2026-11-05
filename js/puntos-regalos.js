@@ -224,3 +224,5 @@ window.PuntosRegalos = (function () {
 
   return { regalar, montarAjustesBromas };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

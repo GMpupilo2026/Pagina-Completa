@@ -262,3 +262,5 @@ window.MetroMiRonda = (function () {
   recordar();
   return { pintar, deDireccion, abrir, clave, parecido, torneoDe, buscarEn };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -456,3 +456,5 @@
   if (window.Coordenadas) Coordenadas.aplicar($("tablero"));
   requireLoginThenGate();
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

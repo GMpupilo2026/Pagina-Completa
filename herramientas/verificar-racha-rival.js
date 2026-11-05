@@ -44,3 +44,5 @@ banco.forEach((e, i) => {
 
 console.log((fallos ? "❌" : "✅") + " jugada del rival en " + (banco.length - fallos) + " de " + banco.length + " ejercicios");
 if (fallos) process.exit(1);
+
+/*! rev bfb5bbb0d2d82f9f */

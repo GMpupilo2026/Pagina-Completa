@@ -38,3 +38,5 @@ for (const f of archivos) {
 if (!fallos) console.log(`  ✓ ${politicas} política(s) en ${archivos.length} migración(es) posteriores, todas con (select auth.uid())`);
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
+
+/*! rev bfb5bbb0d2d82f9f */

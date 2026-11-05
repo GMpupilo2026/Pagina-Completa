@@ -98,3 +98,5 @@ const CATEGORY_ORDER = ['movimientos','reglas','tacticas','asignaciones'];
 const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas', asignaciones:'Asignaciones'};
 
 if (typeof window !== "undefined") window.AprenderLecciones = { LESSONS, CATEGORY_ORDER, CATEGORY_LABEL };
+
+/*! rev bfb5bbb0d2d82f9f */

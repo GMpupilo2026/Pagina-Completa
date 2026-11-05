@@ -1066,3 +1066,5 @@
 
   window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, el, tabla, jugada, fecha };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */
