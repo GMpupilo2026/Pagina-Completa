@@ -15529,6 +15529,27 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   ronda de cada torneo» baja la última de todas las categorías de un clic, a
   Descargas, y dice cuáles bajó. Chrome puede preguntar una vez si deja bajar
   varios archivos.
+- **La primera cadena de verdad, con el registro (5/11): la memoria llena y
+  la lectura que se moría.** El registro del dueño (6 tableros) mostró la
+  causa real: la búsqueda y los dos primeros tableros contestaban bien (el
+  tablero entero traía la posición inicial), pero el 6445 tenía la memoria
+  llena y a 0x83 contestó un mensaje de **2829 bytes** (`85 16 0d…`), unos 3 s
+  a 9600 baudios. La página esperaba 0,3 s, le volvía a preguntar encima, y a
+  mitad del volcado **no llegó un byte más de ningún tablero durante 10
+  minutos**: la lectura del puerto se había muerto. Web Serial abre con un
+  búfer de 255 bytes, y cuando falla una lectura (el búfer lleno, un byte mal
+  armado) `read()` tira un error y el puerto trae otro `readable`; el bucle de
+  lectura no lo atrapaba y se acababa. Tres arreglos:
+  - el puerto se abre con `bufferSize: 65536`;
+  - un error de lectura se anota en el registro («! BufferOverrunError (se
+    sigue leyendo)») y se sigue con el `readable` nuevo;
+  - mientras sigan llegando bytes de un mensaje a medias (`puerto.recibiendo()`:
+    algo pendiente y un byte hace menos de 0,4 s), `preguntar()` sigue
+    esperando, hasta 15 s, en vez de preguntar encima (`ESPERA_LARGA_MS`).
+  En el registro también había ecos (`83 23 36 5c` antes de la respuesta): el
+  arreglo del flujo del 2/11 hacía falta igual. **Falta confirmarlo con la
+  cadena**: el primer tablero con la memoria llena tarda unos segundos en
+  leerse, una sola vez al conectar.
 - **El rey en e4 dice qué tablero es, y ahí mismo se le da su categoría**
   (lo pidió el dueño: «que cuando se coloque el rey en la casilla e4, salte a
   la vista qué tablero es, con sonido y una luz… en la pantalla, para saber

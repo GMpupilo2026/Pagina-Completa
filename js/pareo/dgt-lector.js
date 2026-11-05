@@ -55,6 +55,7 @@
 (function (raiz) {
   "use strict";
 
+  const ESPERA_LARGA_MS = 15000;   // 8192 bytes, el mensaje más largo que se acepta, son unos 9 s a 9600 baudios
   const CMD = { RELOJ: 0x81, TABLERO: 0x82, CAMBIOS: 0x83, REPETIR: 0x84, PING: 0x87, IGNORAR_PING: 0x8a, VERSION: 0x8b };
   const MSG = { TABLERO: 0x83, RELOJ: 0x84, CAMBIOS: 0x85, PING: 0x87, VERSION: 0x89 };
   const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
@@ -437,10 +438,14 @@
       // (una respuesta tardía, un eco) no se mezcla con esta.
       if (puerto.vaciar) puerto.vaciar();
       await puerto.escribir(pedido(cmd, dir));
-      const hasta = Date.now() + espera;
+      let hasta = Date.now() + espera;
+      const tope = Date.now() + ESPERA_LARGA_MS;
       for (;;) {
         const falta = hasta - Date.now();
         const m = await puerto.esperar(Math.max(1, falta));
+        // Un mensaje largo que sigue llegando (la memoria llena de un tablero:
+        // miles de bytes a 9600 baudios) se espera entero, hasta un tope.
+        if (!m && puerto.recibiendo && puerto.recibiendo() && Date.now() < tope) { hasta = Date.now() + espera; continue; }
         if (!m) return { error: "sin respuesta" };
         const r = leerBus(m);
         if (!r) return { error: "suma" };
