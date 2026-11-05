@@ -493,6 +493,37 @@
         } finally { $("resumen-hojas").disabled = false; }
     }
 
+    // Los códigos cortos en papel: una fila por árbitro (nombre, torneo, mesas, código y hasta cuándo sirve) para entregar o recortar a quien no
+    // puede abrir el QR ni WhatsApp. NUNCA lleva el enlace ni el token: solo el código, que además vence y se apaga con el enlace.
+    async function codigosPdf() {
+        const ahora = new Date();
+        const orden = new Map(torneos.map((t, i) => [t.tnr, i]));
+        const lista = asignaciones.filter((a) => C.estadoAsignacion(a, ahora) === "activo" && C.codigoLindo(a.codigo))
+            .sort((x, y) => (orden.get(x.tnr) ?? 99) - (orden.get(y.tnr) ?? 99) || x.mesa_desde - y.mesa_desde || String(x.arbitro).localeCompare(String(y.arbitro), "es"));
+        if (!lista.length) { avisar("No hay enlaces activos con código.", true); return; }
+        $("codigos-pdf").disabled = true;
+        try {
+            const doc = {
+                titulo: "Códigos de los árbitros",
+                subtitulo: "Centroamericano 2026 · " + window.HoraCR.fechaHora(ahora),
+                pie: "Centroamericano 2026 · ajedrez-integral.com",
+                bloques: [
+                    { tipo: "titulo", texto: "Cómo entrar sin cámara ni WhatsApp" },
+                    { tipo: "lista", items: [
+                        "En la tablet abre el navegador y escribe  " + C.PUERTA_CORTA + "  (o abre esa dirección y escribe el código en la casilla).",
+                        "Escribe tu código de 8 letras y números. Da igual si es en mayúsculas o minúsculas; no lleva 0, 1, O, I ni L.",
+                        "Se abre tu mesa de trabajo, igual que con el QR. Si el código no sirve, pídele a la organización que lo revise.",
+                    ] },
+                    { tipo: "nota", texto: "El código es personal: quien lo tiene entra como tú. No lo publiques ni lo mandes por grupos." },
+                    { tipo: "tabla", altoFila: 34, encabezados: ["Árbitro", "Torneo", "Mesas", "Código", "Sirve hasta"], anchos: [2.6, 2.6, 1.1, 2.4, 2.1], negritas: [3],
+                      filas: lista.map((a) => [a.arbitro, nombreTorneo(a.tnr), a.mesa_desde + " a " + a.mesa_hasta, C.codigoLindo(a.codigo), window.HoraCR.fechaHora(a.vence)]) },
+                ],
+                fotos: [],
+            };
+            await descargarPdf(doc, "codigos-arbitros-centroamericano-2026.pdf");
+        } finally { $("codigos-pdf").disabled = false; }
+    }
+
     async function descargarPdf(doc, nombre) {
         try {
             const blob = await window.ReportePDF.generar(doc);
@@ -836,9 +867,9 @@
         return "Activo hasta el " + window.HoraCR.fechaHora(a.vence);
     }
 
-    async function copiar(texto) {
-        try { await navigator.clipboard.writeText(texto); avisar("Enlace copiado."); }
-        catch (e) { await Avisos.pedir("Copia el enlace:", { titulo: "Enlace del árbitro", valor: texto, aceptar: "Listo", soloLectura: true }); }
+    async function copiar(texto, que = "enlace") {
+        try { await navigator.clipboard.writeText(texto); avisar((que === "código" ? "Código" : "Enlace") + " copiado."); }
+        catch (e) { await Avisos.pedir("Copia el " + que + ":", { titulo: (que === "código" ? "Código" : "Enlace") + " del árbitro", valor: texto, aceptar: "Listo", soloLectura: true }); }
     }
 
     // El QR siempre lleva la marca de Ajedrez Integral al centro.
@@ -853,8 +884,13 @@
             el("p", { class: "font-bold", texto: torneo + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
             qr ? el("div", { class: "cam-qr cam-qr-grande" }, qr) : null,
             el("p", { class: "text-sm", texto: textoEstado(a) }),
+            // Sin cámara ni WhatsApp: el código corto que se escribe a mano en ajedrez-integral.com/m.
+            C.codigoLindo(a.codigo) ? el("div", { class: "cam-codigo-bloque", "data-codigo-bloque": a.id },
+                el("p", { class: "text-sm font-bold", texto: "¿Sin cámara ni WhatsApp? Entra a " + C.PUERTA_CORTA + " y escribe:" }),
+                el("p", { class: "cam-codigo-chip", "data-codigo": a.codigo, "aria-label": "Código: " + C.codigoLindo(a.codigo).split("").join(" "), texto: C.codigoLindo(a.codigo) })) : null,
             el("div", { class: "cam-acciones" },
                 el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "copiar", onclick: () => copiar(enlace) }, "Copiar el enlace"),
+                C.codigoLindo(a.codigo) ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "copiar-codigo", onclick: () => copiar(C.codigoLindo(a.codigo), "código") }, "Copiar el código") : null,
                 el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: wa, target: "_blank", rel: "noopener", "data-accion": "whatsapp" }, "Mandar por WhatsApp"),
                 el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: enlace, target: "_blank", rel: "noopener", "data-accion": "abrir" }, "Abrir")));
     }
@@ -864,7 +900,9 @@
         const linea = C.enLinea(a, new Date());
         const boton = (accion, texto, fn, extra) => el("button", { type: "button", class: "cam-btn cam-btn-chico " + (extra || "cam-btn-claro"), "data-accion": accion, onclick: fn }, texto);
         return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
-            el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
+            el("td", {}, el("strong", { texto: a.arbitro }),
+                C.codigoLindo(a.codigo) ? el("span", { class: "cam-codigo-chip cam-chip-al-lado", "data-codigo": a.codigo, "aria-label": "Código para escribir a mano: " + C.codigoLindo(a.codigo).split("").join(" "), title: "Se escribe en " + C.PUERTA_CORTA, texto: C.codigoLindo(a.codigo) }) : null,
+                a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
                 a.concentracion ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "si", "data-concentracion": "si", texto: "🔒 Concentración" }) : null,
                 a.todas_las_mesas === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "no", "data-sin-todas": "si", texto: "Sin «¿Dónde juega?»" }) : null,
                 otrosEnlaces(a).length ? el("span", { class: "cam-tambien", texto: "También en: " + otrosEnlaces(a).map((x) => nombreTorneo(x.tnr) + " (mesas " + x.mesa_desde + " a " + x.mesa_hasta + ")").join("; ") }) : null),
@@ -1167,7 +1205,9 @@
                 el("p", { texto: nombreTorneo(a.tnr) + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
                 qr ? el("div", { class: "cam-qr cam-qr-grande" }, qr) : null,
                 el("p", { class: "cam-hoja-pie" }, el("img", { src: "img/app/icon-192.png", width: "20", height: "20", alt: "" }), " Ajedrez Integral · Centroamericano 2026"),
-                el("p", { class: "cam-hoja-nota", texto: "Escanea con la cámara del celular o la tablet. Vence el " + window.HoraCR.fechaHora(a.vence) + "." }));
+                el("p", { class: "cam-hoja-nota", texto: "Escanea con la cámara del celular o la tablet. Vence el " + window.HoraCR.fechaHora(a.vence) + "." }),
+                // Sin cámara ni WhatsApp: el código corto, escrito en la misma tarjeta.
+                C.codigoLindo(a.codigo) ? el("p", { class: "cam-hoja-nota", "data-codigo-tarjeta": a.codigo }, "¿Sin cámara? Entra a " + C.PUERTA_CORTA + " y escribe ", el("strong", { class: "cam-codigo-chip", texto: C.codigoLindo(a.codigo) })) : null);
         }));
         document.body.classList.add("cam-imprime-qr");
         window.addEventListener("afterprint", () => document.body.classList.remove("cam-imprime-qr"), { once: true });
@@ -1681,6 +1721,7 @@
         $("resumen-actualizar").addEventListener("click", actualizarResumen);
         $("resumen-pdf").addEventListener("click", reportePdf);
         $("resumen-hojas").addEventListener("click", hojasPapelPdf);
+        $("codigos-pdf").addEventListener("click", codigosPdf);
         $("modo-ensayo").addEventListener("change", cambiarModo);
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);

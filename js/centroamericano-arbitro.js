@@ -2040,11 +2040,77 @@
         return !ocupadas.size && !Object.values(elegido).some((v) => v) && !escribiendo;
     }
 
-    function init() {
-        if (!/^[0-9a-f]{64}$/.test(token())) {
-            problema("Falta tu enlace", "Esta página se abre con el enlace o el QR que te dio la organización. Pídelo de nuevo o escanéalo otra vez.", false);
-            return;
+    // ------------------------------------------------------------- entrar con el código corto
+    // Una tablet sin cámara ni WhatsApp no abre el enlace largo ni su QR: escribe en ajedrez-integral.com/m el código de 8
+    // caracteres de su enlace (o llega con «#c=K7M29QXA» desde /m/K7M2-9QXA). La Edge Function centroamericano-codigo lo canjea por
+    // el token, con su freno de intentos, y la página sigue como si hubiera abierto el enlace. Ver «El código corto del árbitro».
+
+    // Lo escrito, sin espacios ni guiones y en mayúsculas: «k7m2 9qxa» y «K7M2-9QXA» son el mismo código.
+    const limpiarCodigo = (t) => String(t || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const codigoDeLaDireccion = () => { const m = (location.hash || "").match(/^#c=([A-Za-z0-9 -]{1,24})$/); return m ? limpiarCodigo(m[1]) : ""; };
+
+    async function canjearCodigo(codigo) {
+        let reloj;
+        const espera = new Promise((_, no) => { reloj = setTimeout(() => no(new Error("La señal tardó demasiado en contestar. Intenta de nuevo.")), 20000); });
+        let r;
+        try { r = await Promise.race([sb.functions.invoke("centroamericano-codigo", { body: { codigo } }), espera]); }
+        finally { clearTimeout(reloj); }
+        let { data, error } = r;
+        if (error && error.context && typeof error.context.json === "function") {
+            try { data = await error.context.json(); } catch (e) { /* sin cuerpo */ }
         }
+        if (data && data.ok === true && /^[0-9a-f]{64}$/.test(String(data.token))) return data.token;
+        throw new Error((data && typeof data.error === "string" && data.error) || (error && error.message) || "No hubo respuesta. Revisa tu conexión.");
+    }
+
+    function mostrarEntrada(mensaje, codigo) {
+        $("cargando").hidden = true;
+        $("app").hidden = true;
+        $("problema").hidden = true;
+        $("entrada").hidden = false;
+        document.body.dataset.entrada = "si";   // sin enlace todavía: «Todas las mesas» y «¿Dónde juega?» no sirven y se esconden
+        $("entrada-error").textContent = mensaje || "";
+        $("entrada-error").hidden = !mensaje;
+        if (codigo != null) $("entrada-codigo").value = codigo;
+        $("entrada-codigo").setAttribute("aria-invalid", mensaje ? "true" : "false");
+        $("entrada-codigo").focus();
+    }
+
+    async function entrarConCodigo(codigo, vieneDeLaDireccion) {
+        const boton = $("entrada-entrar");
+        boton.disabled = true;
+        boton.textContent = "Comprobando…";
+        try {
+            const t = await canjearCodigo(codigo);
+            // De aquí en adelante la dirección es la de siempre (#t=<token>): recargar o instalar la página sigue funcionando.
+            history.replaceState(null, "", location.pathname + location.search + "#t=" + t);
+            $("entrada").hidden = true;
+            delete document.body.dataset.entrada;
+            $("cargando").hidden = false;
+            arrancar();
+        } catch (e) {
+            if (vieneDeLaDireccion) history.replaceState(null, "", location.pathname + location.search);
+            mostrarEntrada(e.message, codigo);
+        } finally {
+            boton.disabled = false;
+            boton.textContent = "Entrar a mi mesa";
+        }
+    }
+
+    function init() {
+        if (/^[0-9a-f]{64}$/.test(token())) { arrancar(); return; }
+        $("entrada-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const codigo = limpiarCodigo($("entrada-codigo").value);
+            if (!codigo) { mostrarEntrada("Escribe el código que te dio la organización.", ""); return; }
+            entrarConCodigo(codigo, false);
+        });
+        const delEnlace = codigoDeLaDireccion();
+        if (delEnlace) entrarConCodigo(delEnlace, true);
+        else mostrarEntrada("", null);
+    }
+
+    function arrancar() {
         $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));

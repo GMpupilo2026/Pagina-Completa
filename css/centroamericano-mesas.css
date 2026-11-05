@@ -1194,3 +1194,17 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-grupo-ritmo[data-ritmo="blitz"] th { background: var(--cac-morado-hondo); }
 .cam-ritmo-nota { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--cac-morado-hondo); }
 .dark .cam-ritmo-nota { color: #dfe0f7; }
+
+/* El código corto del árbitro (centroamericano-arbitro.html, sin enlace ni QR): grande, de una sola línea y fácil de leer con el dedo. */
+.cam-entrada .cam-codigo-campo {
+  display: block; width: 100%; max-width: 20rem; margin: 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.75rem; font-weight: 700;
+  letter-spacing: 0.18em; text-align: center; text-transform: uppercase; min-height: 56px;
+}
+/* El código que ve la organización, al lado del nombre del árbitro en la tabla de enlaces (y para dictarlo sin confundir letras). */
+.cam-codigo-chip {
+  display: inline-block; margin-top: 0.25rem; padding: 0.1rem 0.5rem; border: 2px solid currentColor; border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 0.12em; font-size: 0.95rem;
+}
+/* Mientras se pide el código no hay enlace: lo que necesita el enlace (las mesas de todas las categorías, «¿Dónde juega?») no se ofrece. */
+body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { display: none !important; }

@@ -211,6 +211,16 @@ function dobleArbitro() {
     auth: { getSession: () => R({ session: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
     functions: { invoke: (f, o) => {
       window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) });
+      // El código corto (otra función): «K7M29QXA» abre el enlace de la prueba; «ZZZZZZZZ» está apagado; lo demás no existe. Responde como la
+      // Edge Function: el error legible va en el cuerpo (error.context.json()), con su estado.
+      if (f === "centroamericano-codigo") {
+        const c = String(o.body.codigo || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        const no = (estado, motivo, error) => Promise.resolve({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ ok: false, motivo, error }) } } });
+        if (c === "K7M29QXA") return Promise.resolve({ data: { ok: true, token: TOKEN }, error: null });
+        if (!/^[A-HJKMNP-Z2-9]{8}$/.test(c)) return no(400, "formato", "El código lleva 8 letras y números (no tiene 0, 1, O, I ni L). Revisa lo que escribiste.");
+        if (c === "ZZZZZZZZ") return no(410, "apagado", "Ese código ya no sirve: la organización apagó tu enlace. Pídele uno nuevo.");
+        return no(404, "no", "Ese código no es de ningún árbitro. Revísalo o pídele a la organización que te lo confirme.");
+      }
       // El traductor (otra función): «[EN] texto». window.__traducirFalla = N hace que falle esa cantidad de veces, como una cuenta sin saldo.
       if (f === "centroamericano-traducir") {
         if (window.__traducirFalla > 0) { window.__traducirFalla--; return Promise.resolve({ data: null, error: { context: { status: 502, json: () => Promise.resolve({ error: "No se pudo traducir ahora. Usa las frases o intenta de nuevo.", codigo: "api_400" }) } } }); }

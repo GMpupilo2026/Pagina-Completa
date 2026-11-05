@@ -67,6 +67,20 @@
 
         <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Entrando a tus mesas…</p></div>
 
+        <!-- Sin enlace ni QR: se entra con el código corto de 8 caracteres (ajedrez-integral.com/m). Lo canjea centroamericano-codigo. -->
+        <section id="entrada" class="cam-tarjeta cam-entrada max-w-xl mx-auto my-10 text-center" aria-labelledby="entrada-titulo" hidden>
+            <p class="text-4xl mb-2" aria-hidden="true">🔑</p>
+            <h2 class="font-serif text-xl font-bold mb-2" id="entrada-titulo">Entra con tu código</h2>
+            <p>Escribe el código de 8 letras y números que te dio la organización.</p>
+            <form id="entrada-form" class="mt-4" novalidate>
+                <label for="entrada-codigo" class="block text-sm font-bold mb-1">Tu código</label>
+                <input id="entrada-codigo" class="cam-campo cam-codigo-campo" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="14" placeholder="K7M2-9QXA" aria-describedby="entrada-ayuda entrada-error">
+                <p id="entrada-ayuda" class="text-sm mt-1">Da igual si escribes mayúsculas o minúsculas. No lleva 0, 1, O, I ni L.</p>
+                <p id="entrada-error" class="cam-fallo text-sm mt-2" aria-live="assertive" hidden></p>
+                <button type="submit" id="entrada-entrar" class="cam-btn mt-3">Entrar a mi mesa</button>
+            </form>
+        </section>
+
         <div id="problema" class="cam-tarjeta max-w-2xl mx-auto my-10 text-center" hidden>
             <p class="text-4xl mb-2" aria-hidden="true">🔒</p>
             <h2 class="font-serif text-xl font-bold mb-2" id="problema-titulo">No se pudo abrir</h2>

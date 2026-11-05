@@ -10178,6 +10178,51 @@ Ahora **los enlaces nunca se esconden** (salen bajo Clásico con el número del 
 pulso vuelve a pedir los torneos mientras la lista esté vacía. Lo revisa `verificar-centroamericano-mesas-pagina.js` con
 `?torneosfallan=1` (la lectura falla, los enlaces igual se ven; vuelve y se reparten por modo).
 
+## El código corto del árbitro: entrar sin cámara ni WhatsApp (Centroamericano, 5/11)
+
+Pedido: si una tablet no tiene cámara (no lee el QR) ni WhatsApp (no recibe el enlace), ¿cómo abre el árbitro su mesa? Y que no haya que
+escribir un código larguísimo. El enlace de siempre es un token de 64 caracteres: imposible de teclear. Cada enlace (asignación) lleva ahora
+**además** un **código de 8 caracteres** que se escribe a mano; el QR y el enlace largo siguen funcionando igual.
+
+- **El código.** `centroamericano_asignaciones.codigo`: 8 símbolos de un alfabeto de **31** (`ABCDEFGHJKMNPQRSTUVWXYZ23456789`: **sin 0, 1, O, I
+  ni L**, que se confunden al leerlos o dictarlos), único, con `check` de formato. 31^8 ≈ 8,5 × 10^11 combinaciones y solo unas decenas
+  vivas. Lo genera `centroamericano_codigo_nuevo()` (con `gen_random_bytes`, no `random()`), que es el `DEFAULT` de la columna: quien crea un
+  enlace no tiene que hacer nada, y los 36 que ya existían se rellenaron en la migración. Se **muestra** «K7M2-9QXA» (con guion, `C.codigoLindo`)
+  pero se guarda y se compara sin guion; al escribirlo da igual mayúsculas, minúsculas, espacios o guiones (`limpiarCodigo`, en la página, en
+  el worker y en la función). Equivale al token: quien lo tiene entra como el árbitro, así que **no se imprime nunca junto al enlace** y vence y se
+  apaga con él (el canje mira `revocada` y `vence` cada vez).
+- **Las puertas.** Tres, todas llegan a lo mismo:
+  1. **`ajedrez-integral.com/m`**: el worker (`run_worker_first` lleva `/m` y `/m/*`, sin eso la ruta no existe y no da ningún error) manda a
+     `centroamericano-arbitro.html` y, sin código en el enlace, la página muestra la casilla «Entra con tu código» (`#entrada`: grande,
+     monoespaciada, sin autocorrector, con el foco puesto, el error en `aria-live`).
+  2. **`ajedrez-integral.com/m/K7M2-9QXA`**: el worker manda a `centroamericano-arbitro.html#c=K7M29QXA` (el código va en el `#`, que el
+     navegador no manda a ningún servidor: después de esa primera visita no queda en ningún registro) y la página entra sola.
+  3. La casilla escrita a mano. En las tres, la página **canjea** el código con la Edge Function **`centroamericano-codigo`** y deja la
+     dirección como la de siempre (`#t=<token>`, sin el código): recargar, instalar o volver a abrir la página sigue funcionando.
+  Con el enlace o el QR de siempre no se pide nada y no se llama a la función.
+- **Quién decide.** `centroamericano_codigo_canjear(p_codigo, p_ip_huella)` (`SECURITY DEFINER`, solo `service_role`) devuelve
+  `{ok, token}` o `{ok:false, motivo}` con motivo `formato`, `no`, `apagado`, `vencido` o `demasiados`. La Edge Function (sin cuenta,
+  `verify_jwt` en false) solo normaliza lo que llega, saca la huella de la dirección (sha-256 con la clave de servicio de sal; **nunca la IP ni el
+  código probado**) y traduce el motivo a un mensaje legible. No imprime códigos ni tokens.
+- **El freno.** `centroamericano_codigo_intentos` (RLS puesta, sin permisos ni políticas: solo la función; se poda a los 2 días) cuenta cada
+  intento. **40 fallos cada 10 minutos por dirección y 400 en total** frenan el canje con «demasiados» (sin mirar ni el código). El 40 es a
+  propósito: 30 tablets en la misma wifi de la sala comparten dirección, y una docena de errores de dedo al empezar la ronda no debe dejar a
+  nadie afuera. Adivinar un código a 240 intentos por hora por dirección llevaría millones de horas. Quien se queda frenado todavía puede usar
+  el QR o el enlace (el mensaje lo dice). «No existe», «se apagó» y «venció» solo salen con un código completo de formato válido.
+- **Lo que ve la organización** (`centroamericano-mesas.html`, «Árbitros y mesas»): el código junto al nombre de cada árbitro en la tabla (con
+  nombre accesible deletreado «K 7 M 2 - 9 Q X A»), en «QR y enlace» (grande, con «Copiar el código» y dónde teclearlo), al final del mensaje de
+  WhatsApp, en cada tarjeta de «Imprimir los QR» («¿Sin cámara? Entra a ajedrez-integral.com/m y escribe…») y el botón **«Códigos en papel
+  (PDF)»**: una fila por árbitro con enlace activo (nombre, torneo, mesas, código y hasta cuándo sirve), con los tres pasos para entrar y la marca
+  de agua, **sin el enlace ni el token**. `select("*")` de las asignaciones ya trae la columna: la tabla da `SELECT` a nivel de tabla, no por
+  columna (ver el 5/11 de «Árbitros y mesas»: si la tabla fuera por columnas, esta habría fallado igual).
+- **Se guardó así**: migración `20261105151009_centroamericano_codigo_corto.sql`, Edge Function `supabase/functions/centroamericano-codigo`
+  (versión 1, probada en vivo con códigos falsos: 404 «no», 400 «formato», 405 con GET), línea en `funciones-desplegadas.txt` y retrato del
+  esquema al día. Lo revisan `verificar-worker.js` (la ruta, las variantes del código, que el worker no pregunta nada a la base) y
+  `verificar-centroamericano-mesas-pagina.js` («entrar con el código corto…», el código en la organización, el PDF).
+- **Sin comprobar contra la base real**: el freno (40/10 min) se escribió y revisó, pero la prueba que lo ejercita con 41 intentos pide
+  aprobación del dueño para escribir en la base y no se corrió. Y quedan 5 filas de la prueba del canje (`ip_huella = 'prueba-huella-1'`) en
+  `centroamericano_codigo_intentos`: inofensivas (se podan solas a los 2 días).
+
 ## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
 
 Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de

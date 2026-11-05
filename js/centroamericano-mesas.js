@@ -97,10 +97,19 @@
 
   const enlaceArbitro = (origen, token) => String(origen).replace(/\/+$/, "") + "/centroamericano-arbitro.html#" + token;
 
-  // El mensaje que se manda por WhatsApp junto con el enlace.
+  // El CÓDIGO CORTO del enlace (8 símbolos, sin 0/1/O/I/L): se escribe en ajedrez-integral.com/m cuando la tablet no tiene cámara ni WhatsApp.
+  // Se muestra «K7M2-9QXA» (la base lo guarda sin guion) y se acepta con espacios, guion o minúsculas. Ver «El código corto del árbitro».
+  const CODIGO_CORTO = /^[A-HJKMNP-Z2-9]{8}$/;
+  const PUERTA_CORTA = "ajedrez-integral.com/m";
+  const limpiarCodigo = (t) => String(t || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const codigoLindo = (c) => { const x = limpiarCodigo(c); return CODIGO_CORTO.test(x) ? x.slice(0, 4) + "-" + x.slice(4) : ""; };
+
+  // El mensaje que se manda por WhatsApp junto con el enlace (y, si la tablet no abre enlaces, el código corto).
   function textoWhatsapp(a, torneo, enlace) {
+    const lindo = codigoLindo(a.codigo);
     return (a.nombrado === false ? "Hola: " : "Hola " + a.arbitro + ": ") + "tus mesas del Centroamericano (" + torneo + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta + "). " +
-      "Abre este enlace para anotar los resultados: " + enlace;
+      "Abre este enlace para anotar los resultados: " + enlace +
+      (lindo ? ". Si tu tablet no abre el enlace, entra a " + PUERTA_CORTA + " y escribe tu código: " + lindo : "");
   }
 
   // Las claves pegadas de una vez: una línea por clave, «código clave» separados por
@@ -595,7 +604,7 @@
     return b && !n ? "blancas" : n && !b ? "negras" : "mesa";
   }
 
-  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, RITMOS, ritmoDe, configDeRitmo, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
+  const api = { fairPlayDeMesa, fairPlayAlcance, ARTICULO_ILEGAL, ritmoRapido, RITMOS, ritmoDe, configDeRitmo, minutosIlegal, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, CODIGO_CORTO, PUERTA_CORTA, limpiarCodigo, codigoLindo, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, textoTipo, listaMesas, rondasPorTorneo, textoRondas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo, ultimasLecturas, RITMO, BONO_ILEGAL, relojApagado, bonosIlegales, ARTICULO_TARDE, leerTarde, llegadasTarde, ultimoControl, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

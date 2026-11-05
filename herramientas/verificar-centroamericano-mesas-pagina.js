@@ -65,15 +65,15 @@ function dobleOrganizacion(licencia) {
     { tnr: "1532448", nombre: "PRUEBA grupo A", categoria: "Sub-8", rama: "Absoluto", orden: 901, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1532448", prueba: true }];
   // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no, pero ya terminó sus 15 mesas.
   const ASIG = [
-    { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
-    { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
-    { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+    { id: "asig-ana", codigo: "K7M29QXA", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
+    { id: "asig-arb1", codigo: "N3P5R7TW", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
+    { id: "asig-ensayo", codigo: "H2J4K6MX", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
   // «?ritmos=1» en la dirección: suma un torneo Rápido y uno Blitz con su enlace cada uno (para ver la página separada por modo).
   if (/[?&]ritmos=1/.test(location.search)) {
     TORNEOS.push({ tnr: "1533951", nombre: "Rápido Sub-10", categoria: "Sub-10", rama: "Mixto", orden: 102, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" },
       { tnr: "1540001", nombre: "Blitz Sub-12", categoria: "Sub-12", rama: "Mixto", orden: 201, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" });
-    ASIG.push({ id: "asig-rapido", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
-      { id: "asig-blitz", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
+    ASIG.push({ id: "asig-rapido", codigo: "R8S9T2UV", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
+      { id: "asig-blitz", codigo: "Z3Y4X5WP", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
   }
   // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
@@ -186,7 +186,7 @@ function dobleOrganizacion(licencia) {
             for (const v of lista) {
               const base = tabla === "centroamericano_avisos"
                 ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
-                : { id: "a" + (++n), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
+                : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
           else if (accion === "update") { filtrar(tabla, f, fin).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
@@ -270,13 +270,61 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== La página del árbitro: el enlace ===");
     let r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro());
-    await r.p.waitForSelector("#problema:not([hidden])");
-    igual("sin enlace no se abre nada y lo dice", [await r.p.textContent("#problema-titulo"), await r.p.$eval("#app", (a) => a.checkVisibility()), await r.p.evaluate(() => window.__llamadas.length)], ["Falta tu enlace", false, 0]);
+    await r.p.waitForSelector("#entrada:not([hidden])");
+    igual("sin enlace no se abre nada y pide el código (o el enlace)", [await r.p.textContent("#entrada-titulo"), await r.p.$eval("#app", (a) => a.checkVisibility()), await r.p.evaluate(() => window.__llamadas.length)], ["Entra con tu código", false, 0]);
     await r.ctx.close();
     r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "f".repeat(64) });
     await r.p.waitForSelector("#problema:not([hidden])");
     igual("con un enlace falso: «ya no sirve», sin botón para reintentar", [await r.p.textContent("#problema-titulo"), (await r.p.textContent("#problema-texto")).includes("no es válido"), await r.p.$eval("#problema-reintentar", (b) => b.checkVisibility())], ["Este enlace ya no sirve", true, false]);
     await r.ctx.close();
+
+    console.log("\n=== La página del árbitro: entrar con el código corto (sin cámara ni WhatsApp) ===");
+    {
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { ancho: 820 });
+        await r.p.waitForSelector("#entrada:not([hidden])");
+        igual("sin enlace aparece la casilla del código (no el aviso de «Falta tu enlace»), con foco, y no se abre la mesa",
+            await r.p.evaluate(() => [document.getElementById("entrada").checkVisibility(), document.getElementById("problema").hidden, document.activeElement.id, document.getElementById("app").checkVisibility(), window.__llamadas.length]), [true, true, "entrada-codigo", false, 0]);
+        igual("la casilla se puede escribir con el teclado de la tablet: mayúsculas sugeridas, sin autocorrector, con etiqueta y ayuda",
+            await r.p.$eval("#entrada-codigo", (i) => [i.autocapitalize, i.getAttribute("autocorrect"), i.spellcheck, i.autocomplete, !!document.querySelector('label[for="entrada-codigo"]'), i.getAttribute("aria-describedby")]), ["characters", "off", false, "off", true, "entrada-ayuda entrada-error"]);
+        igual("mientras se pide el código no se ofrece lo que necesita el enlace («¿Dónde juega?» y «Todas las mesas»)",
+            await r.p.evaluate(() => [document.getElementById("donde-juega").checkVisibility(), document.getElementById("ver-todas-mesas").checkVisibility()]), [false, false]);
+        // Un código que no existe: el error sale escrito (role=alert) y se puede volver a intentar.
+        await r.p.fill("#entrada-codigo", "ZZZZ-2222");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForSelector("#entrada-error:not([hidden])");
+        igual("un código que no existe dice por qué, avisa al lector de pantalla (aria-live) y deja corregir (conserva lo escrito, no abre la mesa)",
+            await r.p.evaluate(() => [document.getElementById("entrada-error").textContent.includes("no es de ningún árbitro"), document.getElementById("entrada-error").getAttribute("aria-live"), document.getElementById("entrada-codigo").value, document.getElementById("entrada-codigo").getAttribute("aria-invalid"), document.getElementById("app").checkVisibility(), location.hash]), [true, "assertive", "ZZZZ2222", "true", false, ""]);
+        await r.p.fill("#entrada-codigo", "ab0");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForFunction(() => document.getElementById("entrada-error").textContent.includes("8 letras y números"));
+        await r.p.fill("#entrada-codigo", "zzzz zzzz");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForFunction(() => document.getElementById("entrada-error").textContent.includes("organización apagó"));
+        igual("el código de un enlace apagado y el mal escrito también se explican", true, true);
+        // El bueno, en minúsculas y con espacio.
+        await r.p.fill("#entrada-codigo", "k7m2 9qxa");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("el código bueno (en minúsculas, con espacio) abre la mesa y la dirección queda como la de siempre (#t=<token>), sin el código",
+            await r.p.evaluate((t) => [location.hash === "#t=" + t, location.hash.includes("K7M2"), document.getElementById("entrada").hidden, document.getElementById("app").checkVisibility(), window.__llamadas.some((l) => l.f === "centroamericano-mesa" && l.body.token === t)], TOKEN), [true, false, true, true, true]);
+        await r.ctx.close();
+        // Desde /m/<código> el worker manda con «#c=…»: entra solo, sin escribir nada.
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "c=K7M29QXA" });
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("ya adentro, «¿Dónde juega?» y «Todas las mesas» vuelven", await r.p.evaluate(() => [document.getElementById("donde-juega").checkVisibility(), document.getElementById("ver-todas-mesas").checkVisibility(), document.body.dataset.entrada === undefined]), [true, true, true]);
+        igual("con «#c=<código>» en la dirección entra solo (sin escribir) y deja la dirección con el token", await r.p.evaluate((t) => [location.hash === "#t=" + t, document.getElementById("entrada").hidden], TOKEN), [true, true]);
+        await r.ctx.close();
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "c=ZZZZ2222" });
+        await r.p.waitForSelector("#entrada-error:not([hidden])");
+        igual("con un «#c=» malo muestra la casilla con el error y el código para corregirlo, y quita el código de la dirección",
+            await r.p.evaluate(() => [document.getElementById("entrada-error").textContent.includes("no es de ningún árbitro"), document.getElementById("entrada-codigo").value, location.hash, document.getElementById("app").checkVisibility()]), [true, "ZZZZ2222", "", false]);
+        await r.ctx.close();
+        // Con el enlace de siempre no aparece la casilla.
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN });
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("con el enlace o el QR de siempre no se pide ningún código y no se llama a la función del código", await r.p.evaluate(() => [document.getElementById("entrada").hidden, window.__llamadas.some((l) => l.f === "centroamericano-codigo")]), [true, false]);
+        await r.ctx.close();
+    }
 
     console.log("\n=== Sus mesas ===");
     let errores;
@@ -1648,17 +1696,34 @@ const CONTRASTE = `(sel) => {
     igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-tiempos", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-tiempos"]);
     await q.keyboard.press("ArrowLeft");
     igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr:not(.cam-grupo-ritmo)", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
-        ["Sub-10 Absoluto — 2 enlaces", ["Ana Árbitra", "1 a 15", "si"], ["Árbitro 1Por definir", "16 a 30", "no"]]);
+        ["Sub-10 Absoluto — 2 enlaces", ["Ana ÁrbitraK7M2-9QXA", "1 a 15", "si"], ["Árbitro 1N3P5-R7TWPor definir", "16 a 30", "no"]]);
     igual("cada uno dice si está conectado ahora o que no ha abierto el enlace", await q.$$eval("#asignaciones .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent.replace("🆘", "").trim().split("\n")[0].slice(0, 40)])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
     await q.click('#asignaciones tr[data-id="asig-ana"] [data-accion="qr"]');
     await q.waitForSelector("dialog.cam-dialogo[open] svg");
     igual("«QR y enlace» abre el QR grande con la marca de Ajedrez Integral al centro, su WhatsApp y su enlace", await q.evaluate(() => { const d = document.querySelector("dialog.cam-dialogo"); return [!!d.querySelector('svg image[data-marca="ajedrez-integral"]'), /centroamericano-arbitro\.html#a{64}$/.test(d.querySelector('[data-accion="abrir"]').href), decodeURIComponent(d.querySelector('[data-accion="whatsapp"]').href).includes("tus mesas del Centroamericano (Sub-10 Absoluto, mesas 1 a 15)")]; }), [true, true, true]);
+    igual("«QR y enlace» también trae el código corto para quien no tiene cámara ni WhatsApp: escrito en grande, con dónde teclearlo, para copiar y en el mensaje de WhatsApp",
+        await q.evaluate(() => { const d = document.querySelector("dialog.cam-dialogo"); return [d.querySelector(".cam-codigo-bloque .cam-codigo-chip").textContent, d.querySelector(".cam-codigo-bloque").textContent.includes("ajedrez-integral.com/m"), d.querySelector(".cam-codigo-chip").getAttribute("aria-label"), !!d.querySelector('[data-accion="copiar-codigo"]'), decodeURIComponent(d.querySelector('[data-accion="whatsapp"]').href).includes("entra a ajedrez-integral.com/m y escribe tu código: K7M2-9QXA")]; }),
+        ["K7M2-9QXA", true, "Código: K 7 M 2 - 9 Q X A", true, true]);
+    await q.evaluate(() => { window.__copiado = null; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t) => { window.__copiado = t; } } }); });
+    await q.click("dialog.cam-dialogo [data-accion='copiar-codigo']");
+    igual("«Copiar el código» copia «K7M2-9QXA» tal cual se escribe", await q.evaluate(() => window.__copiado), "K7M2-9QXA");
+    igual("en la tabla, cada enlace lleva su código junto al nombre, con nombre accesible deletreado y sin repetir uno en dos filas",
+        await q.evaluate(() => { const c = [...document.querySelectorAll("#asignaciones tr.cam-asignacion .cam-codigo-chip")]; return [c.map((x) => x.textContent), c.every((x) => /^Código para escribir a mano: (\S ){8}\S$/.test(x.getAttribute("aria-label"))), new Set(c.map((x) => x.textContent)).size === c.length]; }),
+        [["K7M2-9QXA", "N3P5-R7TW"], true, true]);
     await q.click("dialog.cam-dialogo [data-accion='cerrar']");
     await q.evaluate(() => { window.__imprimio = 0; window.print = () => { window.__imprimio++; }; });
     await q.click("#imprimir-qr");
     igual("«Imprimir los QR» arma una tarjeta por árbitro, cada QR con la marca y el pie de Ajedrez Integral", await q.evaluate(() => [window.__imprimio, document.body.classList.contains("cam-imprime-qr"), [...document.querySelectorAll("#hoja-qr .cam-hoja-tarjeta")].map((t) => [t.querySelector("h3").textContent, !!t.querySelector('svg image[data-marca="ajedrez-integral"]'), t.textContent.includes("Ajedrez Integral · Centroamericano 2026")])]),
         [1, true, [["Ana Árbitra", true, true], ["Árbitro 1", true, true]]]);
+    igual("y la tarjeta impresa de cada árbitro trae también su código corto", await q.$$eval("#hoja-qr .cam-hoja-tarjeta", (l) => l.map((t) => [t.querySelector("h3").textContent, (t.querySelector("[data-codigo-tarjeta] strong") || {}).textContent, t.textContent.includes("ajedrez-integral.com/m")])),
+        [["Ana Árbitra", "K7M2-9QXA", true], ["Árbitro 1", "N3P5-R7TW", true]]);
     await q.evaluate(() => document.body.classList.remove("cam-imprime-qr"));
+    // Los códigos en papel (PDF): una fila por árbitro con enlace activo, con el código y sin el enlace ni el token.
+    {
+        const [descargaC] = await Promise.all([q.waitForEvent("download"), q.click("#codigos-pdf")]);
+        const pdfC = fs.readFileSync(await descargaC.path()).toString("latin1");
+        igual("«Códigos en papel (PDF)»: baja el PDF con la marca de agua, sin ninguna dirección de enlace ni token", [descargaC.suggestedFilename(), pdfC.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfC), /centroamericano-arbitro\.html/.test(pdfC), pdfC.includes("a".repeat(64))], ["codigos-arbitros-centroamericano-2026.pdf", true, true, false, false]);
+    }
     // crear sin nombre
     await q.click("#abrir-nuevo");
     await q.selectOption("#a-torneo", "1529733");
