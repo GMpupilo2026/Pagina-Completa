@@ -24,7 +24,9 @@
      CentroamericanoTransmisionReloj.jugadasDeFen(fen)           → { j_blancas, j_negras, turno }
      CentroamericanoTransmisionReloj.controlDe(partida, opciones)→ la lectura (con la forma de un control) o { error }
      CentroamericanoTransmisionReloj.buscar({ blancas, negras, ronda, inicio }) → Promise de lo mismo, o { error }
-     CentroamericanoTransmisionReloj.buscarPartida({ blancas, negras, ronda })   → la partida en la transmisión, o { error }
+     CentroamericanoTransmisionReloj.buscarPartida({ blancas, negras, ronda, torneo }) → la partida en la transmisión, o { error }
+     CentroamericanoTransmisionReloj.rondaTransmitida({ torneo, ronda }) → { idRonda, url, pgn, partidas } o null
+     CentroamericanoTransmisionReloj.torneoDeCategoria(lista, nombre)     → el torneo de Lichess de esa categoría
 
    Ver «El control de tiempos desde la transmisión» en docs/decisiones/juegos-y-torneos.md. */
 (function (raiz) {
@@ -143,14 +145,42 @@
     return p.datos;
   }
 
+  // El torneo de Lichess de una categoría de chess-results: «Sub-18 Absoluto» es «… Open U18» y «Sub-8 Femenino»,
+  // «… Girls U08». Con el torneo se busca en UNO, no en los doce: buscar en todos pedía dos consultas por categoría
+  // y por foto, y con la tabla de «Planillas y Drive» entera Lichess frenaba («espera un momento») y la fila quedaba
+  // en «No se pudo ver la transmisión». Sin categoría reconocible, se busca en todos, como antes.
+  function torneoDeCategoria(lista, nombre) {
+    const m = String(nombre || "").match(/sub[\s-]*(\d{1,2})\s+(absolut[oa]|femenin[oa])/i);
+    if (!m) return lista;
+    const quiere = (/^f/i.test(m[2]) ? "girls" : "open") + " u" + String(m[1]).padStart(2, "0");
+    const uno = lista.filter((t) => String(t.nombre || "").toLowerCase().trim().endsWith(quiere));
+    return uno.length ? uno : lista;
+  }
+
+  // La ronda transmitida de una categoría: { idRonda, url, pgn, partidas } (pgn: el enlace directo al PGN de todas
+  // sus partidas en Lichess, para recolectarlas), o null si esa categoría o esa ronda no se transmite.
+  async function rondaTransmitida({ torneo, ronda }) {
+    if (!raiz.sb || !raiz.LichessTransmision) return null;
+    const todos = await torneosDeLaSala();
+    const lista = torneoDeCategoria(todos, torneo);
+    if (lista === todos) return null;   // la categoría no se reconoce: no se adivina cuál es
+    const r = await rondaDelTorneo(lista[0].id, ronda);
+    if (!r) return null;
+    const d = await partidasDeLaRonda(r.id);
+    const n = (d.games || []).length;
+    return n ? { idRonda: r.id, url: r.url || LICHESS + "/broadcast/-/-/" + r.id, pgn: LICHESS + "/api/broadcast/round/" + r.id + ".pgn", partidas: n } : null;
+  }
+
   // La partida de ESA mesa (por los dos nombres, con los colores como en chess-results) en la ronda `ronda` de
-  // cualquiera de los torneos clásicos que se transmiten: { g, datos, torneo, idRonda, url } o { error }.
+  // los torneos clásicos que se transmiten (si se dice `torneo`, solo en el de su categoría):
+  // { g, datos, torneo, idRonda, url } o { error }.
   // La usan buscar() (el reloj) y «Generar PGN» de la organización (js/centroamericano-leer-partida.js).
-  async function buscarPartida({ blancas, negras, ronda }) {
+  async function buscarPartida({ blancas, negras, ronda, torneo }) {
     try {
       if (!raiz.sb || !raiz.LichessTransmision) return { error: "Esta página no puede leer la transmisión." };
-      const lista = await torneosDeLaSala();
-      if (!lista.length) return { error: "La sala del Centroamericano no tiene ninguna transmisión de Lichess.", noSeTransmite: true };
+      const todos = await torneosDeLaSala();
+      if (!todos.length) return { error: "La sala del Centroamericano no tiene ninguna transmisión de Lichess.", noSeTransmite: true };
+      const lista = torneoDeCategoria(todos, torneo);
       let alReves = false;
       for (const t of lista) {
         const r = await rondaDelTorneo(t.id, ronda);
@@ -178,7 +208,7 @@
     return Object.assign(c, { torneo: h.torneo, url: h.url });
   }
 
-  const api = { RITMO, CUADRA_S, mismoJugador, jugadasDeFen, controlDe, buscar, buscarPartida };
+  const api = { RITMO, CUADRA_S, mismoJugador, jugadasDeFen, controlDe, buscar, buscarPartida, rondaTransmitida, torneoDeCategoria };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoTransmisionReloj = api;
 })(typeof self !== "undefined" ? self : this);

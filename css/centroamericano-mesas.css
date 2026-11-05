@@ -1085,3 +1085,10 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .dark .cam-lp-corregida { background: #0c4a6e; color: #e0f2fe; border-color: #7dd3fc; }
 .dark .cam-lp-dudosa { background: #78350f; color: #fef3c7; border-color: #fcd34d; }
 .dark .cam-lp-num { color: #c9cbee; }
+
+/* «Planillas y Drive»: un encabezado por torneo y ronda, como las carpetas del Drive. */
+.cam-rejilla tbody tr.cam-pl-grupo th { background: var(--cac-morado-hondo); color: #fff; text-align: left; font-weight: 800; padding: 0.45rem 0.7rem; position: static; }
+.dark .cam-rejilla tbody tr.cam-pl-grupo th { background: #b8bbf2; color: #1e1b4b; }
+.cam-rejilla tbody tr.cam-pl-grupo .cam-pl-tx { font-weight: 600; }
+.cam-pl-tx-enlace { color: inherit; text-decoration: underline; }
+.cam-pl-tx-enlace:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
