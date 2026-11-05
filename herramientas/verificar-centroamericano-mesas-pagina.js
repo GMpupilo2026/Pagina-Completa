@@ -232,7 +232,11 @@ async function simularLichess(pagina, pedidos) {
             { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
             { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] },
             { id: "x3", fen: "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", status: "1-0", players: [{ name: "Hopkins, John", clock: 540000 }, { name: "Baquero Graterol", clock: 538000 }] }] }) });
+        // pedidos.cortar: Lichess no contesta (el «Failed to fetch» de la organización)
+        if (pedidos.cortar && /\.pgn$/.test(u)) return r.abort("connectionreset");
         if (/\/api\/broadcast\/round\/RoNdA003\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION });
+        // la ronda es un estudio y cada partida un capítulo: el PGN de una sola
+        if (/\/api\/study\/RoNdA003\/x3\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION.split(/\n\n(?=\[)/)[0] + "\n" });
         return r.fulfill({ status: 404, body: "{}" });
     });
     await pagina.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
@@ -1176,7 +1180,11 @@ const CONTRASTE = `(sel) => {
     {
         const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
         const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
-        const formas = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        // Igual que «medidas»: si la página se está repintando, las tarjetas miden 0 × 0 un instante; se espera (hasta 8 s) a que tengan tamaño.
+        const formas = async (p) => {
+            await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(() => console.log("      (las tarjetas siguen midiendo 0 después de 8 s)"));
+            return p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+        };
         const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
         await normal.p.waitForSelector(".cam-mesa");
         const altoHoy = await altos(normal.p);
@@ -1434,6 +1442,92 @@ const CONTRASTE = `(sel) => {
     await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
     await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"][data-mesa="2"]', { timeout: 5000 });
     igual("una jugada imposible en la transmisión le llega como posible jugada ilegal, con la jugada y el art. 7.5.5", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'); return [/Posible jugada ilegal · Mesa 2/.test(a.textContent), /jugada imposible \(3\. Re3\)/.test(a.textContent), /7\.5\.5/.test(a.textContent)]; }), [true, true, true]);
+    // Anotar desde el aviso: la ilegal es de las blancas (3. Re3) y el cuadro de siempre llega con lo que dijo la transmisión.
+    igual("el aviso trae «Anotar la ilegal de las blancas»", await pv.$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"] [data-accion="alerta-ilegal"]', (b) => b.textContent), "Anotar la ilegal de las blancas");
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"] [data-accion="alerta-ilegal"]');
+    await pv.waitForSelector('dialog[data-avisos="formulario"] textarea');
+    igual("se abre el cuadro de la ilegal, con lo que dijo la transmisión en el detalle", await pv.evaluate(() => { const d = document.querySelector('dialog[data-avisos="formulario"]'); return [/Jugada ilegal de .* \(mesa 2\)/.test(d.textContent), /^Avisada por la transmisión: .*3\. Re3/.test(d.querySelector("textarea").value)]; }), [true, true]);
+    const anotadasAntes = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar").length);
+    await pv.click('dialog[data-avisos="formulario"] [data-avisos-aceptar]');
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "anotar").length > n, anotadasAntes, { timeout: 5000 });
+    igual("al aceptar, la ilegal queda anotada a las blancas de la mesa 2, con el aviso en la bitácora", await pv.evaluate(() => { const l = window.__llamadas.filter((x) => x.body.action === "anotar").pop().body; return [l.mesa, l.color, l.tipo, /Avisada por la transmisión/.test(l.texto)]; }), [2, "blancas", "ilegal", true]);
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    await pv.keyboard.press("Enter");
+    await pv.waitForFunction(() => !document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'));
+    igual("y el aviso se quita solo", await pv.$$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]', (l) => l.length), 0);
+
+    // El final de la partida: mate en la mesa 2 → el aviso y la tarjeta ofrecen «Guardar 1-0», que pregunta antes.
+    console.log("\n=== El resultado que dice la transmisión ===");
+    for (let i = 0; i < 3; i++) { if (await pv.$("#aprobar-paso")) await pv.click("#aprobar-paso").catch(() => {}); await pv.waitForTimeout(250); }
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke.__antes || window.sb.functions.invoke;
+        const f = (fn, o) => fn !== "centroamericano-mesas-vivo" ? antes(fn, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Bc4 5480+10", "Nc6 5450+20", "Qh5 5470+10", "Nf6 5440+20", "Qxf7# 5460+10"], primera: Date.now() - 100000, en_vivo: true, estado: "*" }] }, error: null });
+        f.__antes = antes;
+        window.sb.functions.invoke = f;
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"][data-mesa="2"]', { timeout: 5000 });
+    igual("el mate llega como «Terminó la partida», con el resultado y su botón", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'); return [/Terminó la partida · Mesa 2/.test(a.textContent), /terminó 1-0 \(jaque mate de las blancas\)/.test(a.textContent), a.querySelector('[data-accion="alerta-resultado"]').textContent]; }), [true, true, "Guardar 1-0"]);
+    await pv.waitForSelector('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]', { timeout: 5000 });
+    igual("la tarjeta de la mesa 2 también lo dice, con «Guardar 1-0» (y la mesa 1 no)", await pv.evaluate(() => [/La transmisión: 1-0 \(jaque mate de las blancas\)/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-tx-resultado').textContent), document.querySelector('.cam-mesa[data-mesa="2"] .cam-tx-resultado').checkVisibility(), !!document.querySelector('.cam-mesa[data-mesa="1"] .cam-tx-resultado')]), [true, true, false]);
+    const guardadosTx = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
+    await pv.click('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]');
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    igual("antes de guardar, pregunta (nunca se guarda solo)", await pv.evaluate((n) => [/¿Guardar 1-0 en la mesa 2\?/.test(document.querySelector('dialog[data-avisos="confirmar"]').textContent), window.__llamadas.filter((l) => l.body.action === "guardar").length === n], guardadosTx), [true, true]);
+    await pv.keyboard.press("Escape");
+    await pv.waitForTimeout(300);
+    igual("si no confirma, no se guarda nada", await pv.evaluate((n) => window.__llamadas.filter((l) => l.body.action === "guardar").length === n, guardadosTx), true);
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"] [data-accion="alerta-resultado"]');
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    await pv.click('dialog[data-avisos="confirmar"] [data-avisos-aceptar]');
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "guardar").length > n, guardadosTx, { timeout: 5000 });
+    igual("al confirmar desde el aviso, guarda 1-0 en la mesa 2 con el guardar de siempre", await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").pop().body.cambios.map((c) => [c.mesa, c.valor])), [[2, "1"]]);
+    await pv.waitForFunction(() => !document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'), null, { timeout: 5000 });
+    igual("con el resultado guardado, se quita el aviso y la tarjeta ya no lo ofrece", await pv.evaluate(() => [!!document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'), !!document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]')]), [false, false]);
+
+    // El reclamo de tablas desde «Mis mesas en vivo».
+    console.log("\n=== El reclamo de tablas ===");
+    await pv.evaluate((sans) => {
+        const antes = window.sb.functions.invoke.__antes;
+        const f = (fn, o) => fn !== "centroamericano-mesas-vivo" ? antes(fn, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 1, fuente: "livechess", jugadas: sans.map((x) => x + " 5000+10"), primera: Date.now() - 900000, en_vivo: true, estado: "*" }] }, error: null });
+        f.__antes = antes;
+        window.sb.functions.invoke = f;
+    }, SANS_REP);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.abrir(1));
+    await pv.waitForSelector('#mesas-en-vivo .cv-mesa[data-mesa="1"] [data-accion="reclamo"]', { timeout: 5000 });
+    await pv.click('#mesas-en-vivo .cv-mesa[data-mesa="1"] [data-accion="reclamo"]');
+    await pv.waitForSelector('dialog[data-avisos="formulario"] input');
+    await pv.keyboard.press("Enter");
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    igual("el reclamo de la triple de ahora: procede, con dónde apareció y la advertencia de las planillas", await pv.evaluate(() => { const d = document.querySelector('dialog[data-avisos="alerta"]'); return [/Procede por triple repetición · mesa 1/.test(d.textContent), /16… Ag7, 18… Ag7 y 20… Ag7/.test(d.textContent), /compáralo con las planillas/.test(d.textContent), /9\.5/.test(d.textContent)]; }), [true, true, true, true]);
+    await pv.keyboard.press("Enter");
+    await pv.evaluate(() => document.getElementById("mesas-en-vivo").close());
+
+    // El ensayo: las mesas que juegan solas, sin anotar nada.
+    console.log("\n=== El ensayo de los avisos ===");
+    const llamadasAntesEnsayo = await pv.evaluate(() => window.__llamadas.filter((l) => ["guardar", "anotar"].includes(l.body.action)).length);
+    await pv.evaluate(() => { document.getElementById("ensayo-vivo").open = true; });
+    await pv.click("#ensayar-vivo");
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    await pv.keyboard.press("Enter");
+    await pv.waitForSelector("#mesas-en-vivo .cv-ensayo", { timeout: 5000 });
+    igual("el ensayo abre «Mis mesas en vivo» con las cinco mesas de ensayo y lo dice escrito", await pv.evaluate(() => [document.querySelectorAll("#mesas-en-vivo .cv-mesa").length, /ENSAYO/.test(document.querySelector("#mesas-en-vivo .cv-ensayo").textContent), /Mesa de ensayo 1/.test(document.querySelector("#mesas-en-vivo").textContent)]), [5, true, true]);
+    // Se adelanta el reloj del ensayo para no esperar 3 minutos.
+    await pv.evaluate(() => { const R = Date; const d = 3 * 60000; window.Date = class extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + d); } static now() { return R.now() + d; } }; });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"][data-tipo="bandera"]', { timeout: 8000 });
+    igual("llegan los avisos del ensayo, marcados «ENSAYO» (triple, mate, bandera, imposible)", await pv.evaluate(() => [...document.querySelectorAll('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"]')].map((a) => a.dataset.tipo + ":" + a.dataset.mesa + ":" + /^ENSAYO · /.test(a.querySelector(".cam-alerta-vivo-titulo").textContent.trim().replace(/^\S+\s/, ""))).sort()),
+        ["bandera:3:true", "fin:2:true", "ilegal:4:true", "triple:1:true"]);
+    await pv.evaluate(() => document.getElementById("mesas-en-vivo").close());
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"][data-tipo="fin"] [data-accion="alerta-resultado"]');
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    igual("un botón del ensayo solo explica qué haría: no guarda ni anota nada", await pv.evaluate((n) => [/En el ensayo no se anota nada/.test(document.querySelector('dialog[data-avisos="alerta"]').textContent), window.__llamadas.filter((l) => ["guardar", "anotar"].includes(l.body.action)).length === n], llamadasAntesEnsayo), [true, true]);
+    await pv.keyboard.press("Enter");
+    igual("durante el ensayo, la tablet no le pide nada a la transmisión real", await pv.evaluate(() => window.CentroamericanoArbitroVivo.enEnsayo() && window.CentroamericanoArbitroVivo.deLaMesa(2) === null), true);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.terminarEnsayo());
+    igual("al terminar, se van los avisos del ensayo", await pv.evaluate(() => [window.CentroamericanoArbitroVivo.enEnsayo(), document.querySelectorAll('#alertas-vivo [data-ensayo="si"]').length]), [false, 0]);
     igual("sin errores en la página", vv.errores, []);
     await vv.ctx.close();
 
@@ -1793,8 +1887,19 @@ const CONTRASTE = `(sel) => {
     await q.waitForTimeout(500);
     igual("la tabla se refresca y la partida abierta sigue ahí, sin volver a leer la foto", [await q.$$eval(".cam-lp-fila .cam-lp-titular", (l) => l.length), lecturasVision, await botonPgn(2).textContent()], [1, 1, "Ocultar la partida"]);
 
+    // Lichess no contesta (se corta la conexión): lo dice en palabras, no «Failed to fetch», y no lee la foto
+    pedidosLichess.cortar = true;
+    await botonPgn(3).click();
+    await q.waitForFunction(() => /Lichess no contestó/.test((document.querySelectorAll(".cam-lp-fila")[1] || {}).textContent || ""), null, { timeout: 20000 });
+    igual("si Lichess no contesta, prueba la partida sola y la ronda (dos veces cada una) y lo dice en palabras, sin leer la foto",
+        [await q.evaluate(() => document.querySelectorAll(".cam-lp-fila")[1].textContent), pedidosLichess.filter((u) => /\/api\/study\/RoNdA003\/x3\.pgn$/.test(u)).length, pedidosLichess.filter((u) => /round\/RoNdA003\.pgn$/.test(u)).length, lecturasVision],
+        ["No se pudo generar el PGN: Lichess no contestó (se cortó la conexión o está frenando por muchas consultas seguidas). Vuelve a intentarlo en un minuto.", 2, 2, 1]);
+    pedidosLichess.cortar = false;
+    await botonPgn(3).click();
+    const pedidosAntes = pedidosLichess.length;
     await botonPgn(3).click();
     await q.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2);
+    igual("con Lichess de vuelta, pide solo el PGN de esa partida (5 KB), no el de la ronda entera", pedidosLichess.slice(pedidosAntes).filter((u) => /\.pgn$/.test(u)).map((u) => u.replace("https://lichess.org", "")), ["/api/study/RoNdA003/x3.pgn"]);
     igual("la mesa que se transmite sale sola de Lichess: sus jugadas y el resultado, sin leer la foto",
         [...await q.evaluate(() => { const f = document.querySelectorAll(".cam-lp-fila")[1]; return [f.querySelector(".cam-lp-titular").textContent, [...f.querySelectorAll(".cam-lp-jugada")].map((b) => b.textContent).join(" "), f.querySelector(".cam-lp-enlace").href, !f.querySelector(".cam-lp-leyenda")]; }), lecturasVision],
         ["De la transmisión en vivo de Lichess: 7 medias jugadas · 1-0.", "e4 e5 Ac4 Cc6 Dh5 Cf6 Dxf7#", "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3", true, 1]);

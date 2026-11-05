@@ -2715,7 +2715,11 @@ async function esperarJugadas(p, n) {
   for (const r of ["/camaras", "/camaras.html"]) {
     igual(r + " (la de los cuadritos) también la tiene: sin eso, ningún cuadrito podría usarla", /camera=\(self\)/.test(pp(r)) && (reglas[r] || []).includes("! Permissions-Policy"), true);
   }
-  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida); la del árbitro del Centroamericano sí, para su guía de planillas", [...conCamara].sort(), ["/camara-tablero", "/camara-tablero.html", "/camaras", "/camaras.html", "/centroamericano-arbitro", "/centroamericano-arbitro.html"]);
+  for (const r of ["/metropolitano-acreditacion", "/metropolitano-acreditacion.html"]) {
+    igual(r + " (el QR del gafete en la entrada) también la tiene, y solo para el sitio", /camera=\(self\)/.test(pp(r)) && !/camera=\(\)/.test(pp(r)) && (reglas[r] || []).includes("! Permissions-Policy"), true);
+  }
+  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida); la del árbitro del Centroamericano sí, para su guía de planillas, y la acreditación del Metropolitano, para el QR del gafete", [...conCamara].sort(),
+    ["/camara-tablero", "/camara-tablero.html", "/camaras", "/camaras.html", "/centroamericano-arbitro", "/centroamericano-arbitro.html", "/metropolitano-acreditacion", "/metropolitano-acreditacion.html"]);
 
   await browser.close();
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa cámara que lee el tablero y la partida en vivo están como se pidió.");

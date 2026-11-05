@@ -152,13 +152,13 @@ def portada(curso):
     # sin corregirlos deja el curso nuevo compartiéndose con la miniatura y la
     # descripción de "Finales Prácticos", sin que nada avise.
     salida = re.sub(r'<link rel="canonical" href="[^"]*">',
-                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s">' % slug, salida)
     salida = re.sub(r'<meta property="og:title" content="[^"]*">',
                     '<meta property="og:title" content="%s — Ajedrez Integral">' % escapar(titulo), salida)
     salida = re.sub(r'<meta property="og:description" content="[^"]*">',
                     '<meta property="og:description" content="%s">' % escapar(descripcion_meta), salida)
     salida = re.sub(r'<meta property="og:url" content="[^"]*">',
-                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s">' % slug, salida)
 
     # Si el curso trae posiciones, la página carga el visor de tableros (el
     # mismo de "Los 100 finales"): chess.js para las reglas, el motor para la

@@ -84,6 +84,21 @@ igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimient
     && /<table[^>]*>\s*<tr><td style="background:#102a43/.test(sola[0].html));
   igual("correo: sin un correo válido no se manda nada", C.correosDeEnvio([{ id: "e", numero: 17, rol: "jugador", nombre: "X", apellidos: "Y", correo: "no-es-correo" }]).length, 0);
   igual("correo: lo pendiente se junta por envío", C.porEnvio([del, { id: "z", numero: 30 }, ana]).map((g) => g.map((x) => x.id).join(",")), ["a,b", "z"]);
+  // El enlace para corregir: solo en el correo de quien mandó el envío.
+  const TOK = "ab".repeat(32);
+  const conEnlace = C.correosDeEnvio([ana, pedro, del], TOK);
+  cierto("correo: la confirmación del delegado trae el enlace para corregir; la de la integrante, no", conEnlace[0].texto.includes("https://ajedrez-integral.com/metropolitano-mi-inscripcion.html#t=" + TOK)
+    && conEnlace[0].html.includes("Corregir mi inscripción") && !conEnlace[1].texto.includes("#t="));
+  const ver = C.correoPago([del, Object.assign({}, ana, { pago_estado: "verificado" }), pedro], "verificado", null, TOK);
+  cierto("correo del pago verificado: a quien mandó el envío, con el total y los códigos", ver.para === "carlos@ejemplo.com" && /verificó el pago de la delegación Club Ajedrez Heredia \(\$87\.00\)/.test(ver.texto)
+    && /MET-0014 · Ana Mora Solís/.test(ver.texto) && /^Pago verificado: delegación/.test(ver.asunto), ver.texto);
+  const rech = C.correoPago([Object.assign({}, ana, { grupo: null, delegacion: null, pago_estado: "rechazado" })], "rechazado", "El comprobante <b>no</b> se lee", TOK);
+  cierto("correo del pago rechazado: el motivo de la nota y el enlace para subir otro comprobante", /no pudo verificar el comprobante de pago MET-0014/.test(rech.texto) && /El motivo: El comprobante <b>no<\/b> se lee/.test(rech.texto)
+    && rech.html.includes("El comprobante &lt;b&gt;no&lt;/b&gt; se lee") && rech.html.includes("Subir otro comprobante") && rech.texto.includes("#t=" + TOK) && rech.para === "ana@ejemplo.com", rech.texto);
+  const enl = C.correoEnlace([del, ana], TOK);
+  cierto("correo del enlace pedido: a quien mandó el envío, con el enlace y el aviso de guardarlo", enl.para === "carlos@ejemplo.com" && enl.texto.includes("#t=" + TOK) && /Guárdalo: es solo tuyo/.test(enl.texto));
+  igual("correo: sin enlace no hay correo del enlace, y sin correo válido tampoco del pago", [C.correoEnlace([del], ""), C.correoPago([Object.assign({}, del, { correo: "x" })], "verificado", null, TOK)], [null, null]);
+  cierto("correo: el árbitro se llama árbitro", /Se inscribe como: Árbitra/.test(C.correosDeEnvio([{ id: "f", numero: 18, rol: "arbitro", sexo: "f", nombre: "Rosa", apellidos: "Vega", correo: "rosa@ejemplo.com", torneos: [], monto_usd: 0 }])[0].texto));
 }
 // Las carpetas del Drive: el mismo código de la Edge Function metropolitano-drive.
 {
@@ -100,6 +115,8 @@ igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimient
       D.carpetasDe({ numero: 14, apellidos: "Mora", nombre: "Andrea", rol: "jugador", clasico: "B", grupo: "g1", delegacion: "Club Ajedrez Heredia" })],
     [["Delegación - Club Ajedrez Heredia", "MET-0013 - Rojas Vega, Carlos (Delegado)"], ["Delegación - Club Ajedrez Heredia", "MET-0014 - Mora, Andrea (Torneo B)"]]);
   igual("un entrenador suelto, aparte", D.carpetasDe({ numero: 20, apellidos: "Solano", nombre: "Pedro", rol: "entrenador" }), ["Entrenadores, acompañantes y delegados", "MET-0020 - Solano, Pedro (Entrenador)"]);
+  igual("un árbitro suelto, en la carpeta de los árbitros", D.carpetasDe({ numero: 21, apellidos: "Vega", nombre: "Rosa", rol: "arbitro" }), ["Árbitros", "MET-0021 - Vega, Rosa"]);
+  igual("y en una delegación, dentro de ella", D.carpetasDe({ numero: 22, apellidos: "Vega", nombre: "Rosa", rol: "arbitro", grupo: "g", delegacion: "Club X" }), ["Delegación - Club X", "MET-0022 - Vega, Rosa (Árbitro)"]);
   cierto("la ficha del Drive trae lo esencial", /inscripción MET-0012[\s\S]*Torneos: Torneo A \+ Torneo Blitz[\s\S]*Código de descuento: MET-ABCD-EFGH \(100 %\)/.test(
     D.fichaDe({ numero: 12, nombre: "Ana", apellidos: "Mora", rol: "jugador", clasico: "A", torneos: ["A", "BLITZ"], codigo_descuento: "MET-ABCD-EFGH", descuento_pct: 100, monto_usd: 0, nacionalidad: "Costa Rica", pais_residencia: "Costa Rica", documento_tipo: "cedula", documento: "1" })));
 }
@@ -184,10 +201,12 @@ const FILAS_FIDE = [
     fs.writeFileSync(FOTO, pngLiso(60, 80, [200, 120, 40]));
     // Una página con el doble de Supabase: lo que busca, sube y manda queda anotado.
     // El parqueo, como lo contesta metropolitano_parqueo_ver (fijo: nunca la base real).
-    async function abrir(parqueo) {
-      const p = await ctx.newPage();
+    async function abrir(parqueo, consulta, contexto, hospedaje) {
+      const p = await (contexto || ctx).newPage();
       await p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json",
         body: JSON.stringify(parqueo || { disponible: false, precio_usd: null, quedan: 0 }) }));
+      // Las camas del hospedaje (metropolitano_hospedaje_ver): sin tope, salvo que la prueba diga otra cosa.
+      await p.route("**/rest/v1/rpc/metropolitano_hospedaje_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(hospedaje || { limite: false }) }));
       const anotado = { errores: [], buscado: [], subidos: [], enviado: null };
       p.on("pageerror", (e) => anotado.errores.push(e.message));
       await p.route("**/functions/v1/pareo-listas-elo**", (r) => { anotado.buscado.push(JSON.parse(r.request().postData())); anotado.urls = (anotado.urls || []).concat(r.request().url());
@@ -197,9 +216,9 @@ const FILAS_FIDE = [
       await p.route("**/rest/v1/rpc/metropolitano_inscribir", (r) => {
         anotado.enviado = JSON.parse(r.request().postData()).p;
         const personas = anotado.enviado.personas.map((x, i) => ({ codigo: "MET-00" + (12 + i), numero: 12 + i, nombre: x.nombre }));
-        r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, personas, codigo: personas[0].codigo, numero: 12, monto_usd: 87, monto_crc: 40020 }) });
+        r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, personas, codigo: personas[0].codigo, numero: 12, monto_usd: 87, monto_crc: 40020, enlace: "cd".repeat(32) }) });
       });
-      await p.goto(BASE + "/inscripcion-metropolitano.html");
+      await p.goto(BASE + "/inscripcion-metropolitano.html" + (consulta || "?todo=1"));
       return { p, anotado };
     }
     const tarjeta = (p, n) => p.locator("#personas > section").nth(n);
@@ -250,7 +269,10 @@ const FILAS_FIDE = [
     await t1.locator('[data-acomp-campo="documento"]').fill("PA123456");
     await t1.locator('[data-acomp-campo="nacimiento"]').fill("1975-02-02");
     await t1.locator('[data-acomp-campo="parentesco"]').fill("Padre");
+    cierto("la alimentación viene plegada y dice que no se pide", !(await t1.locator('[data-comida][value="desayuno"]').isVisible()) && /no requiere/.test(await t1.locator("[data-resumen-comidas]").textContent()));
+    await t1.locator("[data-plegable-comidas] > summary").click();
     await t1.locator('[data-comida][value="desayuno"]').check(); await t1.locator('[data-comida][value="cena"]').check();
+    igual("y al marcar, su título dice qué comidas", await t1.locator("[data-resumen-comidas]").textContent(), "(desayuno, cena)");
     await t1.locator('[data-c="acepta_publicidad"]').check();
     await p.check('input[name="metodo"][value="sinpe"]');
     cierto("el total sale en colones por SINPE", /\$87\.00 = ₡40\s?020/.test(await p.textContent("#total")));
@@ -426,7 +448,7 @@ const FILAS_FIDE = [
     // (en una página recién abierta, cuando ya contestó la base: lleno, no se ofrece)
     const s0p = await ctx.newPage();
     await s0p.route("**/rest/v1/rpc/metropolitano_parqueo_ver", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ disponible: false, precio_usd: null, quedan: 0 }) }));
-    const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html")]);
+    const [s0r] = await Promise.all([s0p.waitForResponse("**/rest/v1/rpc/metropolitano_parqueo_ver"), s0p.goto(BASE + "/inscripcion-metropolitano.html?todo=1")]);
     await s0r.finished(); await s0p.waitForTimeout(300);
     cierto("sin espacios de parqueo, la inscripción no lo ofrece", await s0p.locator("#personas > section [data-c='nombre']").first().isVisible()
       && !(await s0p.locator("#personas > section [data-caja-parqueo]").first().evaluate((x) => x.checkVisibility())));
@@ -480,12 +502,19 @@ const FILAS_FIDE = [
     await d.locator('[data-c="canton"]').selectOption("Barva");
     await llenar(d, { nombre: "Carlos", apellidos: "Rojas Vega", nacimiento: "1980-03-03", sexo: "m", documento: "4-0123-0456", correo: "carlos@ejemplo.com", telefono: "+506 7000 0000", emer_nombre: "Ana Vega", emer_telefono: "88887777" });
     await d.locator('input[name="p2-hosp"][value="si"]').check();
+    await d.locator("[data-plegable-comidas] > summary").click();
     await d.locator('[data-comida][value="almuerzo"]').check();
     await d.locator("[data-foto]").setInputFiles(FOTO);
     await g.p.click('[data-agregar="jugador"]');
     await g.p.click('[data-agregar="entrenador"]');
     igual("se agregaron dos personas", await g.p.locator("#personas > section").count(), 3);
     const j = tarjeta(g.p, 1), en = tarjeta(g.p, 2);
+    // Al agregar, las demás se pliegan, y cada una dice en su título si le falta algo.
+    cierto("al agregar a alguien, las tarjetas de antes se pliegan y se ve la nueva", !(await d.locator('[data-c="nombre"]').isVisible()) && !(await j.locator('[data-c="nombre"]').isVisible())
+      && await en.locator('[data-c="nombre"]').isVisible() && (await d.locator("[data-plegar]").getAttribute("aria-expanded")) === "false");
+    cierto("cada tarjeta dice en su título cuánto le falta", /^Falta/.test(await j.locator("[data-estado]").textContent()) && /^Falta/.test(await d.locator("[data-estado]").textContent()), [await d.locator("[data-estado]").textContent()]);
+    await j.locator("[data-plegar]").click();
+    await d.locator("[data-plegar]").click();
     cierto("a cada persona nueva se le copia de dónde viene, el hospedaje y las comidas del delegado",
       (await j.locator('[data-c="provincia"]').inputValue()) === "Heredia" && (await j.locator('[data-c="canton"]').inputValue()) === "Barva" && await j.locator('input[name="p3-hosp"][value="si"]').isChecked()
       && await j.locator('[data-comida][value="almuerzo"]').isChecked());
@@ -537,6 +566,277 @@ const FILAS_FIDE = [
     const pdfg = fs.readFileSync(await dg.path()).toString("latin1");
     igual("los gafetes del grupo salen en un solo PDF (frente y dorso de cada uno)", (pdfg.match(/\/Type \/Page\b/g) || []).length, 6);
     igual("sin errores en la página del grupo", g.anotado.errores, []);
+
+
+    /* ----- Por pasos y en inglés: los errores en su campo, el borrador y el idioma ----- */
+    console.log("   Por pasos, en inglés y en francés");
+    // Lo que quedó en español con otro idioma puesto: un texto que el idioma no
+    // tocó y no está en su mapa (los datos de prueba, que son nombres, no cuentan).
+    const enEspanol = (pg) => pg.evaluate(() => {
+      const api = window.IdiomaPagina.actual, hechos = api.traducidos();
+      const en = document.documentElement.lang === "en";
+      const mapa = Object.assign({}, (en ? window.MetropolitanoEN : window.MetropolitanoFR).textos, (en ? window.InscripcionMetroEN : window.InscripcionMetroFR).textos);
+      const datos = /Andrea|Mora|Solis|Pedro|Carlos|Rojas|Vega|Solano|San José|Escazú|Costa Rica|Heredia|Barva|MET-|fca-logo|@ejemplo/;
+      const L = (t) => String(t || "").replace(/\s+/g, " ").trim();
+      const sin = [];
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) {
+        if (!n.parentElement || n.parentElement.closest("script, style, [data-no-traducir]")) continue;
+        const t = L(n.nodeValue);
+        if (t && /[a-záéíóúñ]/.test(t) && !hechos.has(n) && !Object.prototype.hasOwnProperty.call(mapa, t) && !datos.test(t)) sin.push(t);
+      }
+      document.querySelectorAll("[aria-label], [placeholder], [title], [alt]").forEach((el) => {
+        if (el.closest("[data-no-traducir]")) return;
+        ["aria-label", "placeholder", "title", "alt"].forEach((a) => { const v = L(el.getAttribute(a)); if (v && api.traducir(v) !== v) sin.push("@" + a + ": " + v); });
+      });
+      return [...new Set(sin)];
+    });
+    const ingles = await abrir(null, "?lang=en");
+    const ip = ingles.p, it = tarjeta(ip, 0);
+    igual("con ?lang=en la página sale en inglés", await ip.evaluate(() => document.documentElement.lang), "en");
+    igual("por pasos: arranca en el primero", await ip.textContent("#paso-titulo"), "Step 1 of 5: Who registers");
+    cierto("en el paso 1 se ve quién es, y no los torneos, la estadía ni el pago", await it.locator('[data-c="nombre"]').isVisible() && !(await it.locator("[data-bloque-torneos]").isVisible())
+      && !(await it.locator('[data-c="provincia"]').isVisible()) && !(await ip.isVisible("#caja-pago")) && !(await ip.isVisible("#atras")));
+    cierto("y abajo, siempre a la vista, el total y «Siguiente»", await ip.isVisible("#barra") && /Total/.test(await ip.textContent("#barra-total")) && await ip.isVisible("#siguiente"));
+    await ip.click("#ver-todo");
+    cierto("«Ver todo en una página» junta los pasos", await ip.isVisible("#caja-pago") && await it.locator("[data-bloque-torneos]").isVisible() && !(await ip.isVisible("#siguiente")));
+    await ip.click("#ver-todo");
+    cierto("y «Ver por pasos» los vuelve a separar", !(await ip.isVisible("#caja-pago")) && await ip.isVisible("#siguiente"));
+    await ip.click("#siguiente");
+    cierto("«Siguiente» con lo del paso a medias no avanza: dice todo lo que falta, junto", (await ip.textContent("#paso-titulo")).startsWith("Step 1") && await ip.isVisible("#errores")
+      && (await ip.locator("#errores-lista li").count()) >= 5 && /The full name is missing\./.test(await ip.textContent("#errores-lista")));
+    cierto("y cada campo dice lo suyo debajo, marcado para el lector de pantalla", await it.locator('[data-c="sexo"]').getAttribute("aria-invalid") === "true"
+      && /The sex is missing\./.test(await ip.textContent("#" + await it.locator('[data-c="sexo"]').getAttribute("aria-describedby").then((x) => x.split(" ").pop()))));
+    const cuantosAntes = await ip.locator("#errores-lista li").count();
+    await it.locator('[data-c="sexo"]').selectOption("f");
+    cierto("al corregirlo, su frase se va, y también de la lista de arriba", (await ip.locator("#errores-lista li").count()) === cuantosAntes - 1 && (await it.locator('[data-c="sexo"]').getAttribute("aria-invalid")) === null);
+    await ip.locator("#errores-lista button").first().click();
+    cierto("cada cosa de la lista lleva a su campo", await ip.evaluate(() => document.activeElement && document.activeElement.matches("#personas input, #personas select")));
+    await it.locator('[data-c="nombre"]').fill("Andrea"); await it.locator('[data-c="apellidos"]').fill("Mora Solis");
+    await it.locator("[data-elegido]:not(.hidden)").waitFor({ timeout: 8000 }).catch(() => {});
+    await ip.waitForFunction(() => /6400099/.test(document.querySelector("[data-estado-nombre]").textContent), null, { timeout: 8000 });
+    await llenar(it, { nacimiento: "1990-07-07", documento: "1-1111-2222", correo: "andrea@ejemplo.com", telefono: "+506 8888 0000", emer_nombre: "Carlos Rojas", emer_telefono: "88887777" });
+    await it.locator("[data-foto]").setInputFiles(FOTO);
+    await ip.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 1);
+    igual("en inglés, nada del paso 1 queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    igual("con el paso completo, «Siguiente» lleva al de los torneos", await ip.textContent("#paso-titulo"), "Step 2 of 5: Tournaments");
+    cierto("donde ya no se ve lo del paso 1, y sí «Atrás»", !(await it.locator('[data-c="nombre"]').isVisible()) && await it.locator("[data-bloque-torneos]").isVisible() && await ip.isVisible("#atras"));
+    cierto("sin Elo y nacida en 1990: el B, elegido solo", await it.locator('input[name="p1-clasico"][value="B"]').isChecked());
+    igual("en inglés, nada de los torneos queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    await ip.click("#siguiente");
+    cierto("en la estadía, sin la provincia no avanza", (await ip.textContent("#paso-titulo")).startsWith("Step 3") && /province or canton/.test(await ip.textContent("#errores-lista")));
+    await it.locator('[data-c="provincia"]').selectOption("San José"); await it.locator('[data-c="canton"]').selectOption("Escazú");
+    await it.locator('input[name="p1-hosp"][value="si"]').check();
+    cierto("las condiciones del hospedaje, en inglés", /The door closes at 10:30 p\.m\./.test(await it.locator("[data-condiciones-texto]").textContent())
+      && /I have read and accept the conditions of the lodging/.test(await it.locator("[data-acepto-hospedaje]").textContent()));
+    await it.locator('[data-c="acepta_compartir"]').check(); await it.locator('[data-c="acepta_hospedaje"]').check();
+    igual("en inglés, nada de la estadía queda en español", await enEspanol(ip), []);
+    await ip.click("#siguiente");
+    igual("después, el pago", await ip.textContent("#paso-titulo"), "Step 4 of 5: Payment");
+    await ip.check('input[name="metodo"][value="sinpe"]');
+    await ip.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await ip.check("#quiere-factura");
+    igual("en inglés, nada del pago queda en español", await enEspanol(ip), []);
+    await ip.uncheck("#quiere-factura");
+    await ip.click("#siguiente");
+    cierto("y al final, confirmar: el seguro corto en la casilla, con su texto entero plegado", (await ip.textContent("#paso-titulo")).startsWith("Step 5")
+      && await ip.isVisible("#acepta-seguro") && !(await ip.isVisible("#acepta-seguro-texto")) && /valid insurance policy/.test(await ip.textContent("#acepta-seguro-texto")));
+    await ip.check("#acepta-reglamento"); await ip.check("#acepta-imagen"); await ip.check("#acepta-seguro"); await ip.check("#acepta-datos");
+    await ip.waitForTimeout(600);
+    cierto("lo llenado se guarda en el aparato, sin las fotos", await ip.evaluate(() => { const b = JSON.parse(localStorage.getItem("metro_borrador_v1") || "null");
+      return !!b && b.personas[0].campos.nombre === "Andrea" && !/blob:|data:image/.test(JSON.stringify(b)) && !("acepta_hospedaje" in b.personas[0].campos); }));
+    await ip.click("#revisar");
+    await ip.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    igual("el resumen, en inglés", await ip.textContent("#resumen-titulo"), "Welcome to the Metropolitano Tournament 2026");
+    igual("en inglés, nada del resumen queda en español", await enEspanol(ip), []);
+    await ip.check("#confirmo");
+    await ip.click("#enviar");
+    await ip.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    igual("lo que se manda va en español, como lo guarda la base", ingles.anotado.enviado.personas[0].torneos, ["B"]);
+    igual("en inglés, nada de la confirmación queda en español", await enEspanol(ip), []);
+    cierto("y al mandarla, el borrador se borra", await ip.evaluate(() => localStorage.getItem("metro_borrador_v1") === null));
+    igual("sin errores en la página en inglés", ingles.anotado.errores, []);
+
+    // El borrador: al volver, se ofrece seguir donde quedó (en un aparato aparte).
+    const ctxB = await nav.newContext({ viewport: { width: 420, height: 900 }, serviceWorkers: "block" });
+    const b1 = await abrir(null, "?todo=1", ctxB);
+    await b1.p.check('input[name="modo"][value="grupo"]');
+    await b1.p.fill("#delegacion", "Club Ajedrez Heredia");
+    await b1.p.click('[data-agregar="acompanante"]');
+    await tarjeta(b1.p, 1).locator('[data-c="nombre"]').fill("Pedro");
+    await tarjeta(b1.p, 1).locator('[data-c="apellidos"]').fill("Solano");
+    await b1.p.waitForTimeout(700);
+    await b1.p.close();
+    const b2 = await abrir(null, "?todo=1", ctxB);
+    cierto("al volver, ofrece seguir donde quedó", await b2.p.isVisible("#borrador") && /Club Ajedrez Heredia.*2 personas/.test(await b2.p.textContent("#borrador-texto"))
+      && /fotos/.test(await b2.p.textContent("#borrador-texto")));
+    await b2.p.click("#borrador-seguir");
+    cierto("y «Seguir donde quedé» vuelve a poner todo", (await b2.p.inputValue("#delegacion")) === "Club Ajedrez Heredia" && (await b2.p.locator("#personas > section").count()) === 2
+      && (await tarjeta(b2.p, 1).locator("[data-rol]").inputValue()) === "acompanante" && (await tarjeta(b2.p, 1).locator('[data-c="apellidos"]').inputValue()) === "Solano"
+      && !(await b2.p.isVisible("#borrador")));
+    await b2.p.close();
+    const b3 = await abrir(null, "?todo=1", ctxB);
+    await b3.p.click("#borrador-nuevo");
+    cierto("«Empezar de nuevo» lo borra", !(await b3.p.isVisible("#borrador")) && await b3.p.evaluate(() => localStorage.getItem("metro_borrador_v1") === null)
+      && (await b3.p.locator("#personas > section").count()) === 1);
+    await ctxB.close();
+
+    // En francés, un grupo a medias: la lista de lo que falta y el aviso de quitar a alguien.
+    const fr = await abrir(null, "?lang=fr&todo=1");
+    await fr.p.check('input[name="modo"][value="grupo"]');
+    await fr.p.click('[data-agregar="jugador"]');
+    await fr.p.click("#revisar");
+    cierto("en francés, lo que falta del grupo, con el número y el nombre de cada uno", /Il manque/.test(await fr.p.textContent("#errores-titulo")) && (await fr.p.locator("#errores-lista li").allTextContents()).some((x) => /^2\. personne sans nom : Il manque/.test(x)), [await fr.p.textContent("#errores-titulo"), await fr.p.locator("#errores-lista li").allTextContents()]);
+    igual("en francés, nada del grupo queda en español", await enEspanol(fr.p), []);
+    await tarjeta(fr.p, 1).locator("[data-quitar]").click();
+    await fr.p.waitForSelector("dialog[open]");
+    cierto("el aviso de quitar a alguien, en francés", /Retirer de l’inscription/.test(await fr.p.textContent("dialog[open]")));
+    igual("en francés, nada del aviso queda en español", await enEspanol(fr.p), []);
+    await fr.p.keyboard.press("Escape");
+    await fr.p.click("#metro-idioma");
+    await fr.p.click("#metro-idiomas [data-idioma='es']");
+    cierto("y de vuelta al español, todo como estaba", /^Faltan \d+ cosas para seguir:$/.test(await fr.p.textContent("#errores-titulo")) && /^Persona sin nombre todavía/.test(await tarjeta(fr.p, 1).locator("[data-titulo]").textContent()) === false
+      && /— Jugador/.test(await tarjeta(fr.p, 1).locator("[data-titulo]").textContent()));
+    igual("sin errores en la página en francés", fr.anotado.errores, []);
+
+
+    /* ----- El árbitro, el cupo de camas y el enlace para corregir ----- */
+    console.log("   El árbitro y el cupo del hospedaje");
+    const ar = await abrir(null, "?todo=1", null, { limite: true, lleno: false, quedan: { "2026-12-25": 0, "2026-12-26": 3, "2026-12-27": 3 } });
+    const at = tarjeta(ar.p, 0);
+    cierto("se puede inscribir un árbitro", (await at.locator("[data-rol] option").evaluateAll((os) => os.map((o) => o.value))).includes("arbitro"));
+    await at.locator("[data-rol]").selectOption("arbitro");
+    cierto("el árbitro pone su ID FIDE si tiene, no elige torneo y pide hospedaje como cualquiera", /si tiene/.test(await at.locator("[data-fide-pregunta]").textContent())
+      && !(await at.locator("[data-bloque-torneos]").isVisible()) && await at.locator('input[name="p1-hosp"][value="si"]').isVisible());
+    await at.locator('input[name="p1-fide"][value="no"]').check();
+    await llenar(at, { nombre: "Rosa", apellidos: "Vega Mora", nacimiento: "1980-04-04", sexo: "f", documento: "1-3333-4444", correo: "rosa@ejemplo.com", telefono: "+506 8888 1111", emer_nombre: "Luis Vega", emer_telefono: "88880000" });
+    await at.locator('[data-c="provincia"]').selectOption("San José"); await at.locator('[data-c="canton"]').selectOption("Escazú");
+    await at.locator('input[name="p1-hosp"][value="si"]').check();
+    await at.locator('[data-c="acepta_compartir"]').check(); await at.locator('[data-c="acepta_hospedaje"]').check();
+    await at.locator("[data-foto]").setInputFiles(FOTO);
+    await ar.p.waitForFunction(() => document.querySelectorAll("[data-foto-lista] img").length === 1);
+    await ar.p.check("#acepta-reglamento"); await ar.p.check("#acepta-imagen"); await ar.p.check("#acepta-seguro"); await ar.p.check("#acepta-datos");
+    await ar.p.click("#revisar");
+    cierto("una noche sin camas no deja seguir, y lo dice", /ya no tiene camas para la noche del 25 de diciembre/.test(await ar.p.textContent("#msg")), await ar.p.textContent("#msg"));
+    await llenar(at, { hospedaje_desde: "2026-12-26", hospedaje_hasta: "2026-12-28" });
+    await ar.p.click("#revisar");
+    await ar.p.waitForSelector("#resumen:not(.hidden)", { timeout: 8000 }).catch(() => {});
+    cierto("con otras noches sí pasa a la revisión", await ar.p.isVisible("#resumen"), await ar.p.textContent("#msg"));
+    await ar.p.check("#confirmo"); await ar.p.click("#enviar");
+    await ar.p.waitForSelector("#listo:not(.hidden)", { timeout: 15000 });
+    igual("se manda como árbitro, sin torneos y con su hospedaje", [ar.anotado.enviado.personas[0].rol, ar.anotado.enviado.personas[0].torneos, ar.anotado.enviado.personas[0].hospedaje], ["arbitro", [], true]);
+    cierto("al terminar, el enlace para corregir la inscripción (con el secreto detrás del #)", await ar.p.isVisible("#listo-enlace-caja")
+      && /\/metropolitano-mi-inscripcion\.html#t=(cd){32}$/.test(await ar.p.getAttribute("#listo-enlace", "href")));
+    igual("sin errores en la inscripción del árbitro", ar.anotado.errores, []);
+    const lleno = await abrir(null, "?todo=1", null, { limite: true, lleno: true, quedan: {} });
+    cierto("con el hospedaje lleno no se ofrece, y lo dice", !(await tarjeta(lleno.p, 0).locator("[data-hosp-pregunta]").isVisible()) && await tarjeta(lleno.p, 0).locator("[data-hosp-lleno]").isVisible());
+    await lleno.p.check('input[name="modo"][value="grupo"]');
+    cierto("en un grupo se agrega un árbitro", await lleno.p.isVisible('[data-agregar="arbitro"]'));
+    await lleno.p.close();
+
+    /* ----- Corregir la inscripción con el enlace ----- */
+    console.log("   Corregir la inscripción");
+    const TOK = "ef".repeat(32);
+    const mia = { ok: true, grupo: false, delegacion: null, puede_corregir: true,
+      pago: { estado: "rechazado", metodo: "sinpe", total: 45, nota: "El comprobante no se lee" },
+      personas: [{ id: "22222222-2222-2222-2222-222222222222", codigo: "MET-0030", nombre: "Ana", apellidos: "Mora Solis", rol: "jugador", es_delegado: false, sexo: "f", torneos: ["B"], estado: "activa",
+        correo: "ana@ejemplo.com", telefono: "+506 8888 1234", emergencia: { nombre: "Luis Mora", telefono: "88880000" }, origen: "fuera", titulado: false, viaje: { llegada: "2026-12-24", salida: "2026-12-31", vuelo: "AV 123", traslado: true },
+        hospedaje: true, hospedaje_desde: "2026-12-25", hospedaje_hasta: "2026-12-31", acompanantes: 0, comidas: ["cena"], comidas_desde: "2026-12-26", comidas_hasta: "2026-12-30", dieta: null,
+        parqueo: true, placa: "BCD123", monto_usd: 45, pago_estado: "rechazado" }] };
+    const mi = await ctx.newPage();
+    const miErr = []; mi.on("pageerror", (e) => miErr.push(e.message));
+    let leidoMi = null, corregido = null, pedido = null, subidosMi = [];
+    await mi.route("**/rest/v1/rpc/metropolitano_mi_inscripcion", (r) => { leidoMi = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: JSON.stringify(leidoMi.p_token === TOK ? mia : { ok: false, error: "Este enlace no es válido. Pide uno nuevo con tu código y tu correo." }) }); });
+    await mi.route("**/rest/v1/rpc/metropolitano_corregir", (r) => { corregido = JSON.parse(r.request().postData());
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign({}, mia, { pago: Object.assign({}, mia.pago, { estado: "por_revisar", nota: null }) })) }); });
+    await mi.route("**/rest/v1/rpc/metropolitano_pedir_enlace", (r) => { pedido = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: '{"ok":true}' }); });
+    await mi.route("**/storage/v1/object/**", (r) => { subidosMi.push(decodeURIComponent(new URL(r.request().url()).pathname)); r.fulfill({ contentType: "application/json", body: '{"Key":"x"}' }); });
+    await mi.goto(BASE + "/metropolitano-mi-inscripcion.html#t=" + TOK);
+    await mi.waitForSelector("#ficha:not(.hidden)", { timeout: 8000 });
+    igual("el enlace se lee del # (no viaja en la dirección)", leidoMi, { p_token: TOK });
+    cierto("dice que el pago se rechazó, con el motivo, y deja subir otro comprobante", /No se pudo verificar el pago\./.test(await mi.textContent("#pago-estado")) && /El comprobante no se lee/.test(await mi.textContent("#pago-estado")) && await mi.isVisible("#pago-nuevo"), await mi.textContent("#pago-estado"));
+    cierto("de quien viene de afuera se corrigen el viaje, el hospedaje, la comida y la placa", await mi.isVisible('[id$="-vuelo"]') && await mi.isVisible('[id$="-hdes"]') && await mi.isVisible('[id$="-placa"]') && await mi.isVisible("[data-comida]"));
+    await mi.fill('[id$="-tel"]', "+506 7000 0000");
+    await mi.fill('[id$="-vuelo"]', "CM 456");
+    await mi.locator('[data-comida="desayuno"]').check();
+    await mi.setInputFiles("#comprobante", path.join(RAIZ, "img", "fca-logo.png"));
+    await mi.click("#guardar");
+    await mi.waitForFunction(() => /Listo: se guardaron los cambios/.test(document.getElementById("msg").textContent), null, { timeout: 10000 });
+    const pc = corregido && corregido.p.personas[0];
+    cierto("guardar manda lo corregido y el comprobante nuevo, ya subido", corregido && corregido.p_token === TOK && pc.telefono === "+506 7000 0000" && pc.viaje.vuelo === "CM 456" && pc.viaje.traslado === true
+      && JSON.stringify(pc.comidas) === '["desayuno","cena"]' && /^comprobante\//.test(corregido.p.comprobante) && subidosMi.some((x) => /\/comprobante\//.test(x)), JSON.stringify(corregido));
+    cierto("y dice que el pago volvió a quedar por revisar", /volvió a quedar por revisar/.test(await mi.textContent("#msg")) && /por revisar/.test(await mi.textContent("#pago-estado")));
+    igual("sin errores al corregir", miErr, []);
+    const sinEnlace = await ctx.newPage();
+    await sinEnlace.route("**/rest/v1/rpc/metropolitano_pedir_enlace", (r) => { pedido = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: '{"ok":true}' }); });
+    await sinEnlace.goto(BASE + "/metropolitano-mi-inscripcion.html");
+    cierto("sin el enlace, se pide con el código y el correo", await sinEnlace.isVisible("#pedir") && !(await sinEnlace.isVisible("#ficha")));
+    await sinEnlace.fill("#pedir-codigo", "MET-0030"); await sinEnlace.fill("#pedir-correo", "ana@ejemplo.com");
+    await sinEnlace.click("#pedir-boton");
+    await sinEnlace.waitForFunction(() => /te llega el enlace/.test(document.getElementById("pedir-msg").textContent));
+    igual("y la base recibe el código y el correo", pedido, { p_codigo: "MET-0030", p_correo: "ana@ejemplo.com" });
+    await sinEnlace.close(); await mi.close();
+
+    /* ----- La acreditación en la entrada ----- */
+    console.log("   La acreditación");
+    const filaAcr = (o) => Object.assign({ estado: "activa", torneos: [], condicion: [], comidas: [], acompanantes: 0, foto: "foto/x/f.png", pago_estado: "verificado", nacimiento: "1990-01-01", sexo: "f", hospedaje: false, parqueo: false }, o);
+    const filasAcr = [filaAcr({ id: "a1", numero: 40, rol: "jugador", nombre: "Ana", apellidos: "Mora Solís", nombre_fide: "Mora Solis, Ana", torneos: ["A"], titulo: "WCM", pago_estado: "por_revisar" }),
+      filaAcr({ id: "a2", numero: 41, rol: "arbitro", nombre: "Rosa", apellidos: "Vega", parqueo: true, placa: "BCD123" })];
+    const ac = await ctx.newPage();
+    const acErr = []; ac.on("pageerror", (e) => acErr.push(e.message));
+    let acreditado = null;
+    await ac.addInitScript(() => {
+      // Un lector de QR de prueba: «lee» el gafete de la jugadora apenas se abre la cámara.
+      window.BarcodeDetector = class { async detect() { return [{ rawValue: "https://ajedrez-integral.com/metropolitano-2026#mi-ronda=" + encodeURIComponent("Mora Solis, Ana") }]; } };
+      navigator.mediaDevices.getUserMedia = async () => { const c = document.createElement("canvas"); c.width = 64; c.height = 64; c.getContext("2d").fillRect(0, 0, 64, 64); return c.captureStream(5); };
+    });
+    await ac.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await ac.route("**/rest/v1/profiles**", (r) => r.fulfill({ contentType: "application/json", body: '{"is_admin":true}' }));
+    await ac.route("**/rest/v1/metropolitano_inscripciones**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(filasAcr) }));
+    await ac.route("**/storage/v1/object/**", (r) => r.fulfill({ contentType: "image/png", body: fs.readFileSync(path.join(RAIZ, "img", "fca-logo.png")) }));
+    await ac.route("**/rest/v1/rpc/metropolitano_acreditar", (r) => { acreditado = JSON.parse(r.request().postData());
+      const x = filasAcr.find((f) => f.id === acreditado.p_id); x.acreditado_en = acreditado.p_llego ? "2026-12-26T13:30:00Z" : null;
+      r.fulfill({ contentType: "application/json", body: JSON.stringify(x) }); });
+    await ac.goto(BASE + "/metropolitano-acreditacion.html");
+    await ac.waitForFunction(() => /0 de 2/.test(document.getElementById("cifras").textContent), null, { timeout: 15000 });
+    await ac.fill("#buscar", "bcd 123");
+    await ac.waitForSelector("#resultados li");
+    cierto("se busca por la placa, y la tarjeta dice el parqueo", /MET-0041 · Rosa Vega/.test(await ac.textContent("#resultados")) && /Parqueo para la placa BCD123/.test(await ac.textContent("#resultados")));
+    await ac.fill("#buscar", "");
+    await ac.click("#escanear");
+    await ac.waitForFunction(() => /Encontrado con el QR/.test(document.getElementById("estado").textContent), null, { timeout: 8000 });
+    cierto("el QR del gafete encuentra a la jugadora, y avisa que su pago está por revisar", /MET-0040 · WCM Ana Mora Solís/.test(await ac.textContent("#resultados")) && /El pago está por revisar/.test(await ac.textContent("#resultados")));
+    await ac.click("#resultados button:has-text('Llegó')");
+    await ac.waitForFunction(() => /✓ Llegó:/.test(document.getElementById("resultados").textContent));
+    igual("«Llegó» lo anota la base", acreditado, { p_id: "a1", p_llego: true });
+    cierto("y cuenta quién llegó y quién falta", /1 de 2/.test(await ac.textContent("#cifras")) && /Árbitros: falta 1 de 1/.test(await ac.textContent("#faltan")));
+    igual("sin errores en la acreditación", acErr, []);
+    await ac.close();
+
+    /* ----- ¿Quién viene? ----- */
+    console.log("   ¿Quién viene?");
+    const qv = await ctx.newPage();
+    const qvErr = []; qv.on("pageerror", (e) => qvErr.push(e.message));
+    await qv.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await qv.route("**/rest/v1/rpc/metropolitano_quien_viene", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({
+      A: { total: 3, lista: [{ nombre: "Luis Brenes", titulo: "IM", fed: "CRC", elo: 2400, delegacion: "Club Heredia" }, { nombre: "Ana <b>Mora</b>", titulo: "WCM", fed: "PAN", elo: 1950, delegacion: null }] },
+      BLITZ: { total: 1, lista: [] } }) }));
+    await qv.goto(BASE + "/metropolitano-2026.html");
+    await qv.click("#ficha-quien-viene a");
+    await qv.waitForFunction(() => { const d = document.getElementById("quien-viene"); return d && d.open && /Luis Brenes/.test(d.textContent); });
+    const tq = await qv.textContent("#quien-viene");
+    cierto("«¿Quién viene?» lista a los del A por Elo y cuenta a los que no autorizaron su nombre", /1\. IM Luis Brenes/.test(tq) && /2\. WCM Ana <b>Mora<\/b>/.test(tq) && /y 1 más que no autorizó publicar su nombre/.test(tq) && /Metropolitano B \(0\)/.test(tq), tq);
+    await qv.click("#quien-viene button:has-text('Metropolitano Blitz')");
+    cierto("y en otro torneo dice cuántos van", /1 jugador inscrito/.test(await qv.textContent("#quien-viene")));
+    await qv.keyboard.press("Escape");
+    await qv.click("#metro-idioma"); await qv.click("#metro-idiomas [data-idioma='en']");
+    cierto("en inglés, la ficha y su ventana", /Who is coming\?/.test(await qv.textContent("#ficha-quien-viene")) && /players registered|player registered/.test(await qv.textContent("#quien-viene")));
+    // (de vuelta al español: el idioma se recuerda, y las pruebas que siguen son en español)
+    await qv.click("#metro-idioma"); await qv.click("#metro-idiomas [data-idioma='es']");
+    igual("sin errores en «¿Quién viene?»", qvErr, []);
+    await qv.close();
 
     // La página de información del torneo (metropolitano-2026.html).
     console.log("   La página de información");
@@ -746,7 +1046,7 @@ const FILAS_FIDE = [
     await sinRes.close();
     // La inscripción: la privacidad y las bases encima, sin perder lo escrito.
     const ins = await ctx.newPage();
-    await ins.goto(BASE + "/inscripcion-metropolitano.html");
+    await ins.goto(BASE + "/inscripcion-metropolitano.html?todo=1");
     await ins.click("#acepta-datos-texto a[data-visor]");
     await ins.waitForFunction(() => { const f = document.querySelector("dialog.visor-doc[open] iframe"); return f && /privacidad\.html$/.test(f.src); });
     cierto("en la inscripción, la política de privacidad se abre encima del formulario", /inscripcion-metropolitano\.html/.test(ins.url()));
@@ -803,8 +1103,26 @@ const FILAS_FIDE = [
       if (b.accion === "enviar") driveEnviado = true;
       r.fulfill({ contentType: "application/json", body: JSON.stringify(b.accion === "enviar" ? { ok: true, enviados: 2, errores: 0, quedan: 0 }
         : { conectado: true, carpeta: "Inscripciones Metropolitano 2026", pendientes: driveEnviado ? 0 : 2, con_error: 0 }) }); });
+    let camasGuardadas = null;
+    await a.route("**/rest/v1/rpc/metropolitano_hospedaje_estado", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ camas: 40, noches: [{ noche: "2026-12-25", ocupadas: 12 }, { noche: "2026-12-26", ocupadas: 40 }] }) }));
+    await a.route("**/rest/v1/rpc/metropolitano_hospedaje_configurar", (r) => { camasGuardadas = JSON.parse(r.request().postData());
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ camas: camasGuardadas.p_camas, noches: [{ noche: "2026-12-26", ocupadas: 40 }] }) }); });
+    await a.route("**/rest/v1/rpc/metropolitano_logistica", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({
+      noches: [{ noche: "2026-12-26", inscritos: 30, acompanantes: 8, titulados: 2 }], comidas: [{ dia: "2026-12-27", desayuno: 25, almuerzo: 31, cena: 28 }],
+      dietas: [{ codigo: "MET-0012", quien: "Ana Mora", delegacion: null, dieta: "Sin <b>gluten</b>", comidas: ["cena"], desde: "2026-12-26", hasta: "2026-12-30" }],
+      accesibilidad: [], traslados: [{ codigo: "MET-0012", quien: "Ana Mora", llegada: "2026-12-24", salida: "2026-12-31", vuelo: "AV 123", telefono: "+506 8888" }], llegadas: [{ dia: "2026-12-24", personas: 3 }] }) }));
     await a.goto(BASE + "/metropolitano-inscritos.html");
     await a.waitForSelector("#filas tr", { timeout: 15000 });
+    await a.waitForFunction(() => /40 camas por noche/.test(document.getElementById("hosp-estado").textContent));
+    cierto("el hospedaje dice las camas por noche y que hay noches llenas", /Hay noches llenas/.test(await a.textContent("#hosp-estado")));
+    await a.fill("#hosp-camas", ""); await a.click("#hosp-guardar");
+    await a.waitForFunction(() => /Sin tope/.test(document.getElementById("hosp-estado").textContent));
+    igual("vacío es sin tope de camas", camasGuardadas, { p_camas: null });
+    await a.waitForFunction(() => /Quién duerme cada noche/.test(document.getElementById("logistica").textContent));
+    const lg = await a.textContent("#logistica");
+    cierto("la logística cuenta las noches, las comidas, las dietas y los traslados", /30.*8.*2.*40/.test(lg) && /25.*31.*28/.test(lg) && /Sin <b>gluten<\/b>/.test(lg) && /AV 123/.test(lg), lg.slice(0, 400));
+    cierto("y la dieta se escribe como texto, no como HTML", (await a.locator("#logistica").innerHTML()).includes("Sin &lt;b&gt;gluten&lt;/b&gt;"));
+    cierto("y se filtra por rol árbitro", (await a.locator("#f-rol option").evaluateAll((os) => os.map((o) => o.value))).includes("arbitro"));
     cierto("el club se escribe como texto, no como HTML", (await a.locator("#filas").innerHTML()).includes("&lt;b&gt;Club&lt;/b&gt;"));
     await a.waitForFunction(() => /Faltan 2 inscripciones/.test(document.getElementById("drive-estado").textContent));
     cierto("el Drive dice si está conectado y cuántas faltan", /Conectado a «Inscripciones Metropolitano 2026»/.test(await a.textContent("#drive-estado")));
@@ -841,6 +1159,11 @@ const FILAS_FIDE = [
     await a.click("#filas button:has-text('Guardar')");
     await a.waitForFunction(() => /Verificado/.test(document.querySelector("#filas td:last-child span").textContent));
     igual("guardar el pago llama a metropolitano_revisar", revisado, { p_id: fila.id, p_pago_estado: "verificado", p_estado: "activa", p_nota: "" });
+    // Swiss-Manager: un Excel con una hoja por torneo (un .xlsx sin comprimir: sus XML se leen tal cual).
+    const [xl] = await Promise.all([a.waitForEvent("download"), a.click("#bajar-chess-results")]);
+    const xlsx = fs.readFileSync(await xl.path()).toString("latin1");
+    cierto("el Excel para Swiss-Manager trae una hoja por torneo y a la jugadora en el A con su ID FIDE y su Elo", /sheet name="Metropolitano A"/.test(xlsx) && /sheet name="Metropolitano Blitz"/.test(xlsx)
+      && /Mora Solis, Ana/.test(xlsx) && /<v>6400000<\/v>/.test(xlsx) && /<v>1950<\/v>/.test(xlsx));
     const [csv] = await Promise.all([a.waitForEvent("download"), a.click("#bajar-gafetes")]);
     const texto = fs.readFileSync(await csv.path(), "utf8");
     cierto("la lista para gafetes trae las columnas de gafetes.html", texto.startsWith("﻿Código;Apellidos;Nombre;FIDE ID;Federación;Elo") && /MET-0012;Mora Solis;Ana;6400000;CRC;1950/.test(texto), texto.slice(0, 200));

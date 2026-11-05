@@ -20,6 +20,11 @@ Disallow: /cursos/academia/
 # El Allow va ANTES y es más específico, que es como se desempata: sin esta
 # línea, quitarle el noindex a la página no habría servido de nada — Google ni
 # siquiera llegaría a leerlo.
+# La dirección final es /entreno/diagnostico (Cloudflare contesta la de .html
+# con un 307 hacia ella): sin el primer Allow, Google seguía la redirección y
+# caía en el Disallow. El $ lo deja exacto, para no abrir otra página de
+# /entreno/ que empiece igual.
+Allow: /entreno/diagnostico$
 Allow: /entreno/diagnostico.html
 Disallow: /entreno/
 Disallow: /admin.html

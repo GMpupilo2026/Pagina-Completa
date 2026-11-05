@@ -201,7 +201,8 @@ ${menu.map(([h, t]) => item(h, t, true)).join("")}            </ul>
 }
 
 function pagina(c) {
-  const url = "https://ajedrez-integral.com/" + c.pagina;
+  // Sin .html: es la dirección final (la que lo lleva contesta con un 307).
+  const url = "https://ajedrez-integral.com/" + c.pagina.replace(/\.html$/, "");
   const p = c.portada;
   const pie = c.pie.map((e) => "<li><a " + atributosEnlace(e) + ' class="hover:text-accent-400 transition-colors">' + esc(e.texto) + "</a></li>").join("");
   const fichas = c.fichas.slice();

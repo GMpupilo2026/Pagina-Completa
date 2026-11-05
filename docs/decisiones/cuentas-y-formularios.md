@@ -1550,6 +1550,220 @@ Pedido del dueño (4/11):
   `metropolitano-2026-v2-con-extranjeros`, según el `origen` de cada
   persona).
 
+### Un formulario más amigable: pasos, errores en su campo, borrador e idiomas
+
+Pedido del dueño: «¿cómo podemos hacer el formulario más amigable?», y las seis
+mejoras de una vez. Era una sola página larguísima que, al fallar, decía solo
+el primer error «(y 12 cosas más)» y llevaba hasta él; una delegación de
+quince personas perdía todo si se cerraba la pestaña, y la inscripción la
+llenan delegaciones de afuera que no leen español.
+
+- **Por pasos** (1 Quién se inscribe, 2 Torneos, 3 Viaje y estadía, 4 Pago,
+  5 Confirmar), con la barra de avance arriba y, abajo y siempre a la vista
+  (`#barra`, `position: sticky`), el total y «Atrás / Siguiente». No hay un
+  formulario por paso: cada bloque lleva `data-paso="N"` (la tarjeta de una
+  persona, `"1 2 3"`, y adentro cada parte el suyo) y el CSS
+  (`.metro-pasos[data-paso-actual]`) esconde lo que no es del paso. Por eso
+  «Ver todo en una página» es solo quitar el atributo: se recuerda en el
+  aparato (`metro_todo_v1`), y `?todo=1` lo abre así sin recordarlo (lo usa
+  el verificador para las pruebas de antes, que llenan todo de corrido).
+- **«Siguiente» revisa solo los pasos que quedan atrás**, con las mismas
+  reglas de siempre (`recogerErrores()`, que junta lo de `armar()` de cada
+  persona, el parqueo y el pago); el paso de cada error es el del bloque
+  donde está su campo (`pasoDe`). Avanzar tocando un paso de arriba revisa
+  igual. «Revisar la inscripción» revisa todo y lleva al paso del primero.
+- **Lo que falta, todo junto y en su campo**: arriba, la lista entera
+  (`#errores`, cada cosa un botón que lleva a su paso, abre su tarjeta y lo
+  plegado y le pone el foco); y debajo de cada campo su frase
+  (`p.metro-error`), con `aria-invalid` y en su `aria-describedby`. Al
+  corregirlo, la frase se va de los dos lados. `#msg` junto al botón sigue
+  diciendo lo mismo de antes («… (y N cosas más)»).
+- **En una delegación, cada tarjeta se pliega** («Plegar / Abrir», con
+  `aria-expanded`) y su título dice «✓ Completa» o «Faltan N datos». Al
+  agregar a alguien, las demás se pliegan solas.
+- **Lo opcional, plegado**: la alimentación y «Condición y accesibilidad» son
+  un `<details>` que dice en su título qué tiene («(no requiere)»,
+  «(desayuno, cena)») y se abre solo si ya tiene algo o si adentro hay un
+  error. El seguro y la responsabilidad: una frase corta en la casilla y el
+  texto entero en «Leer el texto completo» (`#acepta-seguro-texto`, el mismo
+  que arma `pintarSeguro()` y cuya versión guarda la base).
+- **El borrador, en el aparato** (`localStorage`, `metro_borrador_v1`): todo
+  lo escrito de cada persona (`estado()` / `restaurar()` de su tarjeta), la
+  delegación y el pago, **sin las fotos, los documentos ni el comprobante**
+  (no caben y no deben quedar ahí) **ni las casillas de aceptar**, que se
+  vuelven a marcar. Se guarda al escribir y al cerrar la página; al volver,
+  «Tienes una inscripción a medio llenar» ofrece «Seguir donde quedé» o
+  «Empezar de nuevo» (mientras no se elige, no se pisa). Se borra al
+  mandarla; uno de más de 60 días se ignora. No hay aviso del navegador al
+  cerrar (`beforeunload`): con el borrador no se pierde nada, y el sitio no
+  usa los diálogos del navegador. La política de privacidad lo dice.
+- **En el celular**: el correo y el teléfono con su `autocomplete` y su
+  teclado; el nombre sigue con `autocomplete="off"` porque abajo sale la
+  lista de FIDE.
+- **En inglés y en francés**, con el mismo botón de idioma de la página del
+  torneo (`js/idioma-pagina.js`, la misma clave `metro_idioma_v1`: quien lo
+  eligió allá llega con su idioma). Los textos están en
+  `js/inscripcion-metropolitano-en.js` y `-fr.js`, más el encabezado y el pie
+  de `js/metropolitano-en.js` y `-fr.js`. Lo que se arma con datos («Faltan
+  3 datos», «1. Ana Mora: Falta el sexo.», «Paga ₡14 950 por SINPE Móvil:»,
+  las fechas del resumen) se traduce con **patrones**, nuevos en
+  `idioma-pagina.js`: si un texto no está en el mapa, una RegExp que calza
+  con el texto entero arma su traducción, y una función puede traducir un
+  pedazo con `t()`. Para eso cada frase que se junta con otra va en su propio
+  `<span>` (los avisos del total, las frases de un mismo campo). Las fechas y
+  los nombres de los países (`Intl.DisplayNames`) se pintan en el idioma de
+  ahora; las provincias y los cantones son nombres propios
+  (`data-no-traducir`); las condiciones del hospedaje las pinta en cada
+  idioma `js/metropolitano-hospedaje.js`.
+- **Lo que se manda y se acepta sigue en español**: la base guarda las
+  claves de siempre (`B`, `sinpe`…) y la versión del texto en español; el
+  inglés del seguro dice que es una traducción para entenderlo.
+- **El traductor no se traduce a sí mismo**: su propio cambio vuelve por el
+  `MutationObserver`, y un patrón calzaba con el texto ya traducido (salía
+  «personne sans nom  :», con dos espacios, y al volver al español quedaba
+  el francés como «original»). Ahora recuerda lo que puso (`puestos`) y no lo
+  toca otra vez. También anota lo que queda igual en los dos idiomas
+  («PayPal», «Total: $45.00»), y `IdiomaPagina.actual.traducidos()` le dice
+  al verificador qué nodos ya están en el idioma.
+- `verificar-metropolitano.js` llena una inscripción entera **en inglés y por
+  pasos** (Siguiente que no avanza y dice todo, la frase en el campo que se
+  va al corregir, el resumen y la confirmación), revisa en cada paso que nada
+  quede en español (un nodo que el idioma no tocó y no está en el mapa; los
+  datos de prueba no cuentan), prueba el borrador en un aparato aparte y un
+  grupo a medias en francés con el aviso de quitar a alguien. Se rompió a
+  propósito el mapa (una entrada menos) y el guardado del borrador, y saltó.
+
+### Lo que necesita la organización: árbitros, camas, logística, Swiss-Manager, la entrada, el pago y corregir
+
+Pedido del dueño: «hazlos todos de una vez» (las siete mejoras propuestas) y
+«agregar la opción de árbitro también, para saber si necesita hospedaje».
+Migraciones 20261105044741 a 20261105045527.
+
+#### El árbitro
+
+- **Se inscribe como el entrenador**: el ID FIDE si tiene (se busca igual por
+  el nombre), no elige torneo ni paga, y pide hospedaje, alimentación y
+  parqueo como cualquiera. En una delegación, «+ Árbitro», y el delegado puede
+  ser «Delegado y árbitro».
+- La base lo acepta en `rol` (`arbitro`) y en `interno.metropolitano_persona`.
+  En el gafete lleva su franja propia (`#7a2e0e`, blanco encima a 9,4 a 1), en
+  el Drive su carpeta «Árbitros» (fuera de una delegación), en la lista de
+  inscritos su filtro y su cifra, y en los correos «Árbitro» o «Árbitra».
+
+#### El cupo del hospedaje
+
+- **Las camas se cuentan noche por noche**, no por persona: quien se queda dos
+  noches y quien se queda seis ocupan lo mismo la noche en que coinciden.
+  `interno.metropolitano_noches()` cuenta del 20 de diciembre al 2 de enero a
+  quien pidió hospedaje (más sus acompañantes) y a los titulados invitados (del
+  día de llegada al de salida); una inscripción anulada o con el pago
+  rechazado no ocupa cama, igual que en el parqueo.
+- **Administración pone las camas** (`metropolitano_hospedaje`, una fila con
+  su bitácora; `metropolitano_hospedaje_configurar`); vacío es sin tope, que es
+  como estaba. No se pueden poner menos que las ya ocupadas en alguna noche.
+- **La base no deja pasar una noche llena**: `metropolitano_inscribir` bloquea
+  la fila de las camas y suma lo de todo el envío; el mensaje dice qué noche y
+  cuántas quedan. A los titulados invitados no se les niega (los invita la
+  organización), pero ocupan su cama.
+- **La página** lee `metropolitano_hospedaje_ver()` (sin cuenta): cuántas
+  quedan cada noche, y si las noches del torneo (del 25 al 29) están todas
+  llenas. Llenas, deja de ofrecer el hospedaje y lo dice; si no, avisa antes de
+  mandar cuando las fechas elegidas tocan una noche sin camas.
+
+#### La logística en números
+
+- `metropolitano_logistica()` (solo administración) cuenta **en la base**
+  (nunca bajándose la tabla para sumar en el navegador): quién duerme cada
+  noche (inscritos, acompañantes y titulados), los desayunos, almuerzos y cenas
+  de cada día (los titulados invitados, todos los días de su estadía), las
+  dietas, la condición y accesibilidad, los traslados del aeropuerto con su
+  vuelo y las llegadas de otro país por día. En la lista de inscritos, en
+  tablas y en un Excel con una hoja por tabla (`js/tabla-excel.js`).
+- Los acompañantes que no se inscriben aparte duermen, pero sus comidas no se
+  piden: la página lo dice.
+
+#### Swiss-Manager / chess-results
+
+- «Jugadores para Swiss-Manager»: un Excel con una hoja por torneo (A, B, U14
+  y Blitz), las columnas que importa Swiss-Manager (No., Name, FIDE-ID, Fed,
+  Title, Rtg, Sex, Birth, Club) y, aparte, el código MET-… y el estado del
+  pago. El nombre es el de FIDE si lo tiene; el Elo, el estándar en los
+  clásicos y el de blitz en el blitz; el sexo con la «w» de FIDE; ordenado por
+  Elo. Solo las activas con el pago no rechazado.
+
+#### La acreditación
+
+- `metropolitano-acreditacion.html` (solo administración, en el celular de la
+  entrada): se escanea el QR del gafete con la cámara —`BarcodeDetector`, el
+  lector del navegador; el de un jugador lleva su nombre como en FIDE y se
+  busca por él— o se busca a cualquiera por su nombre, su código MET-…, su
+  documento o la placa. La tarjeta dice si el pago está verificado (en grande
+  si no), el hospedaje, el parqueo, el responsable de un menor y la
+  accesibilidad; «Llegó» lo anota la base (`metropolitano_acreditar`, con
+  quién y a qué hora) y se puede deshacer.
+- La lista se vuelve a leer cada 30 segundos: varios celulares en la entrada
+  ven lo mismo. Abajo, «Quién falta por llegar», por torneo y por rol.
+- Es la cuarta página con la cámara encendida en `_headers` (y
+  `verificar-camara-tablero.js` lo sabe). Sin `BarcodeDetector` (Safari en
+  iPhone, por ahora), se busca a mano.
+
+#### Los correos del pago
+
+- **Un envío se paga una sola vez**: verificar o rechazar el pago de alguien de
+  una delegación lo hace para todos los que pagan en ella
+  (`metropolitano_revisar`), con la misma nota.
+- **A quien mandó el envío le llega un correo** cuando el pago queda
+  verificado, o rechazado con el motivo (la nota de la organización) y el
+  botón para subir otro comprobante. Uno por estado: si se rechaza, se corrige
+  y se verifica, llegan los dos. El trigger `metropolitano_pago_avisa` llama a
+  la Edge Function enseguida (y pg_cron reintenta cada 10 minutos); la función
+  toma lo pendiente con `metropolitano_avisos_tomar()`, en un solo update, para
+  que nunca salga dos veces. Las columnas `pago_aviso_*` dicen qué se avisó y
+  si falló; en la lista de inscritos, «Correo del pago».
+
+#### Corregir la inscripción
+
+- **Cada envío tiene un enlace secreto** (`metropolitano_enlaces`: 64 hex, en
+  una tabla que nadie lee desde afuera, ni administración por la RLS). Sale al
+  terminar la inscripción («Guarda este enlace») y en los correos de quien la
+  mandó. El secreto va detrás del `#` (`metropolitano-mi-inscripcion.html#t=…`):
+  no viaja al servidor ni queda en sus registros.
+- **Con él se corrige lo que no cambia el precio ni el torneo**
+  (`metropolitano_corregir`): el correo y el teléfono, la emergencia, el viaje,
+  las fechas del hospedaje (con las camas vueltas a contar) y de la
+  alimentación, la dieta, la foto del gafete, la placa, y se sube otro
+  comprobante (el pago vuelve a «por revisar» y se le vuelve a avisar). Todo o
+  nada. El nombre, el ID FIDE, el torneo y el rol, con la organización.
+- **Sin el enlace**, se pide con el código MET-… y el correo de quien mandó el
+  envío (`metropolitano_pedir_enlace`, con el freno de las solicitudes): la
+  respuesta es la misma coincida o no, para no decir qué correos existen, y el
+  enlace llega por correo.
+- Hasta el 26 de diciembre, cuando cierra la inscripción (después, el bucket
+  ya no recibe archivos). La página va en español.
+
+#### ¿Quién viene?
+
+- Una ficha en la página del torneo con los jugadores de cada torneo, por Elo,
+  con su título, su federación y su delegación o club
+  (`metropolitano_quien_viene()`, sin cuenta). **Con su nombre, solo quienes
+  dieron el permiso de publicidad**; los demás solo se cuentan («y 3 más que
+  no autorizaron publicar su nombre»). Nada de contactos, documentos ni
+  fotos. En español, inglés y francés (`js/metropolitano-quien-viene.js`, que
+  se pinta solo en cada idioma).
+- La política de privacidad dice lo que se publica, el enlace para corregir y
+  la hora de llegada que se anota en la entrada.
+
+`verificar-metropolitano.js` prueba cada una: el árbitro de punta a punta, la
+noche sin camas y el hospedaje lleno, el enlace al terminar, corregir (lo que
+se manda, el comprobante subido, el pago por revisar) y pedir el enlace, la
+acreditación con un lector de QR de prueba, «¿Quién viene?» en español y en
+inglés, las camas, la logística y el Excel de Swiss-Manager en la lista de
+inscritos, y los correos del pago y del enlace con el mismo código de la Edge
+Function. En la base se probó, dentro de transacciones que se deshacen, que una
+noche llena no deja pasar, que el árbitro entra con su enlace, que corregir
+rechaza un correo malo y un comprobante que no existe, y que pedir el enlace
+solo marca el envío cuando el correo coincide.
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la

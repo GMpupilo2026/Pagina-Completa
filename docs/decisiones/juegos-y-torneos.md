@@ -8819,6 +8819,14 @@ transmiten**.
   nombres del encabezado: es para quien organiza y para revisar, **nunca para el repositorio**. Las
   palabras se guardan con la lectura en el navegador, compactas (`[texto, x0, y0, x1, y1]`, unos
   18 KB por foto); si no caben, se borran las lecturas guardadas de las otras fotos.
+- **«Failed to fetch» en una mesa que SÍ se transmite** (Sub-12, R4, M6; 5/11): la fila ya decía «Se
+  transmite: sale de Lichess» y al generar falló el pedido del PGN de la ronda. Desde aquí no se pudo
+  repetir: Lichess contesta 200 con `Access-Control-Allow-Origin: *`, también 40 veces seguidas. Ahora se
+  pide primero el PGN de **esa sola partida** (`/api/study/<ronda>/<partida>.pgn`: la ronda es un estudio y
+  cada partida un capítulo; trae el mismo bloque, con relojes y evaluación, en 5 KB contra 27 KB), si no
+  sale el de la ronda, cada uno dos veces, y si Lichess sigue sin contestar lo dice en palabras («Lichess
+  no contestó… vuelve a intentarlo en un minuto»), sin leer la foto. Lo prueba el verificador con un
+  Lichess que corta la conexión.
 - **La clave de Google Vision no estaba puesta** (4/11): el registro de `ocr-scoresheet` dice
   «GOOGLE_VISION_API_KEY no configurado» y las dos primeras lecturas terminaron en 504 a los 160 s.
   Supabase contesta eso sin el permiso de origen y el navegador solo ve «Failed to fetch»; ahora la
@@ -9321,6 +9329,49 @@ inmediato.
   planilla), saltan. Desplegada y probada contra la base: con la ronda 4 todavía sin cargar en LiveChess, cada mesa dice
   «todavía no tiene el pareo de esta ronda» y el Sub-8 solo pide los tableros 1-4.
 
+### Del aviso a la bitácora: el resultado que dice la transmisión, el reclamo de tablas y el ensayo (Centroamericano)
+
+El 5/11 el dueño pidió, de una lista de mejoras: que el resultado llegue solo para confirmar, anotar desde el aviso, ver
+las alertas de todas las mesas en la organización con su árbitro (ya hecho en #1191), una ayuda para resolver un reclamo de tablas y un modo
+ensayo para practicar. Todo sale de las mismas jugadas de LiveChess de la sección anterior.
+
+- **El resultado nunca se guarda solo.** `CentroamericanoArbitroVivo.sugerencia(m, ahora?)` dice qué terminó según la
+  transmisión: el resultado que trae el tablero electrónico, el **mate**, el **ahogado** (5.2.1) y la **posición
+  muerta** (5.2.2) de chess.js, la quíntuple y las 75 (9.6), y con la hora la **bandera** (6.9; tablas si al rival solo
+  le queda el rey). Con una jugada imposible no dice nada. En la tablet sale de dos formas: el aviso «🏁 Terminó la
+  partida» (solo si chess-results todavía no tiene resultado en esa mesa) y una banda en la tarjeta de la mesa con
+  «Guardar 1-0». Los dos **preguntan antes** («Confírmalo en la mesa y en las planillas firmadas») y guardan con el
+  `guardar()` de siempre, que además vuelve a preguntar si chess-results ya tenía otro. Si chess-results tiene uno
+  distinto del de la transmisión, la banda lo dice («Ojo: … revisa cuál es el bueno»). La tarjeta se repinta solo cuando
+  cambia lo que dice la transmisión (`alActualizar`), no cada 10 s bajo el dedo.
+- **Anotar desde el aviso.** Cada aviso trae su botón: la posible ilegal, «Anotar la ilegal de las blancas» (el color lo
+  da la jugada imposible, o quien apretó el reloj sin que el tablero viera la jugada), que abre el **mismo** cuadro de la
+  ilegal de la mesa (con el 7.5.5, la segunda que pierde y el Rápido de un toque) con lo que dijo la transmisión ya
+  escrito en el detalle de la bitácora; la bandera, la quíntuple y las 75, «Guardar 0-1» / «Guardar ½-½» con la misma
+  confirmación; la triple y las 50, «Revisar el reclamo». Hecho, el aviso se quita.
+- **La organización ve a quién le toca.** Lo resolvió el PR #1191 (otra sesión, el mismo día) en la pestaña
+  «Transmisión»: cada aviso de un tablero trae «Avisar a …» con los árbitros de esa mesa y dice si ya lo leyeron (ver «El
+  encargado de transmisión»). Este cambio no agrega otra copia.
+- **El reclamo de tablas** (`reclamo(legales, anunciada)`, con `js/reclamos-tablas.js`): en «Mis mesas en vivo», «⚖
+  Reclamo de tablas» en cada mesa. Quien reclama tiene el turno: o la posición de ahora ya apareció tres veces (9.2.1.2),
+  o aparece con la jugada que anotó y anuncia sin hacerla (9.2.1.1), que el árbitro escribe en la notación de la planilla
+  («Ag7», «O-O»; se pasa a inglés para chess.js y se rechaza si no es legal ahí). Dice dónde apareció cada vez («después
+  de 16… Ag7, 18… Ag7 y 20… Ag7») y, para las 50, cuántas van y con qué jugada empezó la cuenta. Es una ayuda: dice que
+  se compare con las planillas (el tablero puede haber leído mal) y recuerda el 9.5 (si no procede, 2 minutos al rival
+  y la jugada anunciada se hace).
+- **El ensayo** (`#ensayar-vivo`, al final de la tablet): cinco «mesas de ensayo» juegan solas (una jugada cada 3 s,
+  4 minutos) y terminan en cada aviso: triple repetición, mate, bandera caída, una jugada imposible y una que el tablero
+  no registró. **Ninguna posición se inventa**: las jugadas están en `ESCENARIOS` y el verificador las pasa por chess.js
+  (todas legales, salvo la imposible, que es la única y la que se busca). Todo lo del ensayo dice «ENSAYO» (y el borde
+  va a rayas); sus botones **no anotan nada**, solo explican qué harían en una ronda. Mientras dura, la tablet no lee la
+  transmisión real y `deLaMesa`/`noReconoce` dan null (el control de tiempos y las sugerencias de las mesas reales no se
+  mezclan con el ensayo); por eso la confirmación dice que se haga antes de la ronda. Al terminar, se van sus avisos.
+- Lo prueban `verificar-centroamericano-mesas-vivo.js` (cada sugerencia, que la triple sola no da resultado, el reclamo
+  con y sin jugada anunciada y las 50, la notación de la planilla, los escenarios con chess.js y que el ensayo llega a
+  sus cinco avisos) y `verificar-centroamericano-mesas-pagina.js` (en la tablet: la ilegal desde el aviso con su detalle,
+  el mate con «Guardar 1-0» que pregunta y no guarda si no se confirma, el reclamo en «Mis mesas en vivo» y el ensayo
+  sin anotar nada). Rotos a propósito (el mate sin sugerencia, la triple que pide cuatro), saltan.
+
 ### El sorteo de Fair Play (Centroamericano)
 
 La pestaña «Fair Play» de `centroamericano-mesas.html` (`js/centroamericano-fair-play.js`) es para
@@ -9698,6 +9749,38 @@ cambiar los nombres de un tablero si la organización mueve a un jugador de mesa
   enlace ni sesión (401). Lo comprueba `verificar-centroamericano-transmision.js` (cada aviso con partidas armadas con
   chess.js, una partida normal sin ninguno, la función, la migración y las páginas); roto a propósito (el reloj detenido
   desde los 10 s, sin la regla de la jugada no registrada), salta.
+
+#### Avisar al árbitro, la pantalla grande, el tablero en grande y el informe
+
+Lo pidió el dueño el 5/11, de una lista de mejoras (eligió la 2, la 3, la 4 y la 5).
+
+- **«📨 Avisar al árbitro»** en cada aviso con mesa: la función (`avisar`) busca los árbitros con enlace vigente que
+  tienen esa mesa (`centroamericano_asignaciones`, también los que tienen «todas las mesas»; uno por persona) y les
+  manda **el mismo aviso de la organización** (`centroamericano_avisos`, `de = 'organizacion'`, con «📡 Transmisión, mesa
+  N:» delante). Así no hizo falta tocar la tablet: lo ve arriba con su «Entendido», como cualquier aviso. En el Sub-12
+  tres árbitros comparten todas las mesas: le llega a los tres y el botón lo dice («Avisar a sus 3 árbitros»). La
+  pantalla dice a quién se avisó, a qué hora y si ya lo leyó (el `leido_en` de esos avisos). Sin árbitro con enlace, lo
+  dice («avísale en persona»). La mesa la pone la base (la del tablero), no el navegador.
+- **El historial** (`centroamericano_tx_historial`, migración `20261105053157`): los avisos los calcula la pantalla, así
+  que la base no sabía cuándo apareció cada uno. Cada pantalla abierta registra los que ve por primera vez
+  (`registrar`, una vez por clave y por pantalla); la base se queda con la **primera** hora (`ignoreDuplicates`: una
+  segunda pantalla no la pisa) y con quién lo vio. Ahí se anota también a quién se le avisó y con qué avisos.
+- **«📄 Informe de la transmisión (PDF)»** (`historial`, con `js/reporte-pdf.js` y la marca de agua): el resumen
+  (cuántos, para ir ya y para mirar, revisados con la mediana de lo que se tardó, avisados y leídos), por tipo de aviso
+  y, ronda por ronda, cada aviso con su hora, categoría, tablero y mesa, a quién se avisó y si lo leyó, quién lo revisó
+  y cuánto tardó (desde la primera vez que una pantalla lo vio hasta «Ya lo revisé»).
+- **«📺 Pantalla grande»**: para una pantalla o un proyector en la mesa de transmisión. A pantalla completa, solo los
+  tableros con un problema, en grande, con arriba cuántos avisos hay y la hora; sin problemas, «Todo en orden» en
+  letras grandes. Esc (o «Salir de la pantalla grande») vuelve.
+- **«🔍 Ver en grande»** en cada tablero: el tablero grande con todas las jugadas en una tabla (el reloj de quien jugó
+  después de cada una, lo que pensó y la hora), la jugada imposible marcada, y ◀ ▶ ⏮ ⏭ o las flechas del teclado para ir
+  jugada por jugada y ver dónde se trabó; en la última, sigue sola con las jugadas nuevas. Repintar no le quita el foco
+  a quien recorre con el teclado (se pasaba a la página y las flechas dejaban de andar).
+- Probado contra la base (función en su versión 4) con el torneo de ensayo: el aviso le llegó al árbitro de ensayo, un
+  segundo registro del mismo aviso no pisó el primero, el historial trae a quién se avisó; lo de prueba se borró. En el
+  navegador, con los datos reales de la ronda 5: el botón, la pantalla grande, las flechas y el PDF. Lo comprueba
+  `verificar-centroamericano-transmision.js`; roto a propósito (sin `ignoreDuplicates`, sin mirar si el enlace sigue
+  encendido), salta.
 
 ## El modo concentración de las tablets (Centroamericano)
 

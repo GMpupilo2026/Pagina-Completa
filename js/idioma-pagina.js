@@ -18,11 +18,19 @@
  *
  *   IdiomaPagina.iniciar({
  *     mapas: { en: {…}, fr: {…} },  // «texto en español» → traducción
+ *     patrones: { en: […], fr: […] }, // los textos con datos: [RegExp, reemplazo]
  *     titulos: { en, fr },           // el <title> de cada idioma
  *     clave,                         // localStorage: el que eligió
  *     boton, menu,                   // los id del botón y de su lista
  *     alCambiar(idioma),             // para volver a pintar lo suyo
  *   }) → { idioma() }
+ *
+ * `patrones` es para lo que la página arma con datos («Faltan 3 datos»,
+ * «1. Ana Mora: Falta el sexo.»): si el texto no está en el mapa, se prueba
+ * cada RegExp contra el texto ENTERO y se usa la primera que calza. El
+ * reemplazo es un texto con $1, $2… o una función (calce, t) que arma la
+ * traducción; `t(x)` traduce un pedazo (con el mapa y los patrones) y, si no
+ * lo sabe, lo deja como estaba.
  *
  * `?lang=en` o `?lang=fr` en la dirección lo abre en ese idioma (para
  * compartir el enlace a una delegación).
@@ -43,25 +51,47 @@ window.IdiomaPagina = (function () {
     const atributosOriginales = [];    // [elemento, atributo, su valor en español]
 
     const fuera = (el) => !el || !!el.closest("script, style, [data-no-traducir]");
+    const propio = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    // La traducción de un texto limpio, o null si no se sabe.
+    function traduccion(t) {
+      const mapa = mapas[idioma] || {};
+      if (propio(mapa, t)) return mapa[t];
+      const lista = (op.patrones || {})[idioma] || [];
+      for (let i = 0; i < lista.length; i++) {
+        const re = lista[i][0], rep = lista[i][1];
+        const m = re.exec(t);
+        if (!m || m.index !== 0 || m[0].length !== t.length) continue;
+        return typeof rep === "function" ? rep(m, (x) => { const y = traduccion(limpio(x)); return y == null ? x : y; }) : t.replace(re, rep);
+      }
+      return null;
+    }
 
+    // Lo que puso el traductor: su propio cambio vuelve por el vigía y no se
+    // traduce otra vez (un patrón calzaría con el texto ya traducido).
+    const puestos = new WeakMap();
     function traducirTexto(nodo) {
       if (fuera(nodo.parentElement)) return;
       const original = nodo.nodeValue;
-      const otro = (mapas[idioma] || {})[limpio(original)];
+      if (puestos.get(nodo) === original) return;
+      const otro = traduccion(limpio(original));
       if (otro == null) return;
       const nuevo = original.match(/^\s*/)[0] + otro + original.match(/\s*$/)[0];
-      if (nuevo === original) return;
+      // Se anota aunque quede igual («PayPal», «Total: $45.00»): ya está en el idioma.
       textosOriginales.push([nodo, original]);
-      nodo.nodeValue = nuevo;
+      puestos.set(nodo, nuevo);
+      if (nuevo !== original) nodo.nodeValue = nuevo;
     }
     function traducirAtributos(el) {
       if (fuera(el)) return;
       ATRIBUTOS.forEach((a) => {
         if (!el.hasAttribute(a)) return;
         const v = el.getAttribute(a);
-        const otro = (mapas[idioma] || {})[limpio(v)];
+        const ya = puestos.get(el);
+        if (ya && ya[a] === v) return;
+        const otro = traduccion(limpio(v));
         if (otro == null || otro === v) return;
         atributosOriginales.push([el, a, v]);
+        puestos.set(el, Object.assign({}, ya, { [a]: otro }));
         el.setAttribute(a, otro);
       });
     }
@@ -157,7 +187,11 @@ window.IdiomaPagina = (function () {
     const primero = inicial();
     if (primero !== "es") poner(primero, false);
     else if (menu) { const b = menu.querySelector('[data-idioma="es"]'); if (b) b.setAttribute("aria-current", "true"); }
-    return { idioma: () => idioma, poner };
+    // Para los verificadores: los nodos de texto que se cambiaron al idioma de ahora.
+    const api = { idioma: () => idioma, poner, traducir: (t) => (idioma === "es" ? t : traduccion(limpio(t)) || t),
+      traducidos: () => new Set(textosOriginales.map((x) => x[0])) };
+    window.IdiomaPagina.actual = api;
+    return api;
   }
 
   return { iniciar, NOMBRES };

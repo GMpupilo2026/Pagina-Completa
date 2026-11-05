@@ -40,6 +40,10 @@
     entrenador: { nombre: "Entrenador", femenino: "Entrenadora", color: "#0e7c86" },
     acompanante: { nombre: "Acompañante", femenino: "Acompañante", color: "#5f6604" },
     delegado: { nombre: "Delegado", femenino: "Delegada", color: "#1d134d" },
+    // El árbitro se inscribe como el entrenador (no juega ni paga) para su
+    // gafete y para pedir hospedaje y alimentación. Blanco sobre este
+    // marrón: 9,4 a 1.
+    arbitro: { nombre: "Árbitro", femenino: "Árbitra", color: "#7a2e0e" },
   };
   const rolDe = (rol, sexo) => (ROLES[rol] ? (sexo === "f" ? ROLES[rol].femenino : ROLES[rol].nombre) : "");
   const MAX_GRUPO = 80;
