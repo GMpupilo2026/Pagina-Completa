@@ -2,6 +2,7 @@
  *
  *   img/redes/portada-facebook.png   1640×624   foto de portada de Facebook
  *   img/redes/instagram.png          1080×1350  publicación de Instagram (4:5)
+ *   img/redes/whatsapp/*.png         1080×1920  estados de WhatsApp (9:16), una serie
  *
  * Mismo criterio que og-imagen.js: se dibujan acá y no a mano para que salgan
  * siempre igual y con los colores de la paleta; si cambian, se vuelve a correr.
@@ -20,6 +21,12 @@
  *  - Instagram muestra la publicación 4:5 entera en el inicio, pero en la
  *    cuadrícula del perfil la recorta a 3:4 por el centro: unos 34 px de cada
  *    costado.
+ *  - Los estados de WhatsApp se ven a pantalla completa, pero arriba van la
+ *    barra de avance, el nombre y la hora, y abajo «Responder»: el contenido
+ *    queda entre los 220 px de arriba y los 280 de abajo, con 60 a los
+ *    costados. Llevan la marca de Ajedrez Integral (el caballo sin el nombre
+ *    de Oscar, como todo lo que sale del sitio) y solo dicen lo que ya dice la
+ *    portada: nada de cifras ni promesas que el sitio no haga.
  *
  * PNG y no JPEG: las dos redes recomprimen lo que se les sube, y un JPEG
  * recomprimido ensucia los bordes de las letras.
@@ -31,6 +38,9 @@ const { chromium } = require("playwright");
 const RAIZ = path.join(__dirname, "..");
 const CARPETA = path.join(RAIZ, "img", "redes");
 const logo = fs.readFileSync(path.join(RAIZ, "img", "logo-oscar-angulo.png")).toString("base64");
+const b64 = (...r) => fs.readFileSync(path.join(RAIZ, ...r)).toString("base64");
+const { MARCA_AGUA } = require("./lib/marca-agua");
+const marca = b64(MARCA_AGUA);
 
 // Los mismos tokens que usa el sitio.
 const C = {
@@ -117,8 +127,149 @@ const IMAGENES = [
     },
 ];
 
+
+// --- Estados de WhatsApp (1080×1920) ---------------------------------------
+// Las fuentes del sitio, para que no dependan de lo que tenga instalado la
+// máquina que corre el script.
+const FUENTES = `
+  @font-face { font-family: 'Merriweather'; font-weight: 700;
+               src: url(data:font/woff2;base64,${b64("fonts", "merriweather-700-latin.woff2")}) format('woff2'); }
+  @font-face { font-family: 'Inter'; font-weight: 100 900;
+               src: url(data:font/woff2;base64,${b64("fonts", "inter-variable-latin.woff2")}) format('woff2'); }`;
+const CREMA = "#f7e7c4";
+const ESTADO_CSS = `${FUENTES}
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .lienzo { --casilla: 67.5px; --casilla2: 135px; }
+  .brillo { width: 1300px; height: 1300px; }
+  .contenido { top: 220px; left: 60px; transform: none; width: 960px; height: 1420px;
+               display: flex; flex-direction: column; align-items: center; text-align: center; }
+  /* La marca de Ajedrez Integral, pintada en crema con su propio dibujo de máscara. */
+  .marca { flex: none; width: 300px; height: 223px; background: ${CREMA};
+           -webkit-mask: url(data:image/png;base64,${marca}) center / contain no-repeat;
+                   mask: url(data:image/png;base64,${marca}) center / contain no-repeat;
+           filter: drop-shadow(0 6px 18px rgba(0,0,0,0.35)); }
+  .marca.grande { width: 620px; height: 460px; }
+  .medio { flex: 1; padding: 36px 0; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
+  .etiqueta { display: inline-block; border: 3px solid ${C.accent400}; color: ${C.accent400}; border-radius: 999px;
+              padding: 10px 30px; font-size: 34px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .titulo { font-family: 'Merriweather', Georgia, serif; color: #fff; font-size: 84px; line-height: 1.12;
+            letter-spacing: -1px; margin-top: 34px; }
+  .texto { color: ${C.brand100}; font-size: 42px; line-height: 1.35; margin-top: 34px; }
+  .lista { list-style: none; margin-top: 44px; width: 100%; text-align: left; }
+  .lista li { display: flex; align-items: center; gap: 30px; padding: 22px 34px; margin-top: 18px;
+              border-radius: 26px; background: rgba(10,31,51,0.55); border: 2px solid rgba(240,180,41,0.25); }
+  .lista .num { flex: none; width: 74px; height: 74px; border-radius: 50%; background: ${C.accent400};
+                color: ${C.brand900}; font-size: 40px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .lista.compacta { margin-top: 26px; }
+  .lista.compacta li { padding: 16px 30px; margin-top: 14px; }
+  .lista .punto { flex: none; width: 34px; height: 34px; margin: 0 20px; border-radius: 8px; background: ${C.accent400};
+                  transform: rotate(45deg); }
+  .lista b { display: block; color: #fff; font-size: 40px; line-height: 1.2; }
+  .lista span.d { display: block; color: ${C.brand100}; font-size: 31px; line-height: 1.3; margin-top: 4px; }
+  .datos { display: flex; justify-content: center; gap: 22px; margin-top: 46px; }
+  .datos div { background: rgba(10,31,51,0.55); border: 2px solid rgba(240,180,41,0.25); border-radius: 26px;
+               padding: 24px 26px; min-width: 250px; }
+  .datos b { display: block; color: ${C.accent400}; font-family: 'Merriweather', Georgia, serif; font-size: 66px; line-height: 1.1; }
+  .datos span { display: block; color: ${C.brand100}; font-size: 30px; margin-top: 6px; }
+  .pie { display: flex; flex-direction: column; align-items: center; }
+  .sitio { white-space: nowrap; padding: 20px 46px; font-size: 50px; font-family: 'Inter', system-ui, sans-serif; font-weight: 800; }
+  .sitio.larga { font-size: 40px; padding: 20px 36px; }
+  .ruta { color: ${C.brand100}; font-size: 34px; margin-top: 22px; }
+  .ruta b { color: #fff; }
+  .nombre { font-family: 'Merriweather', Georgia, serif; }
+  .barra { height: 22px; }`;
+
+const PIE = (ruta) => `<div class="pie"><div class="sitio${(ruta || "").length > 10 ? " larga" : ""}">ajedrez-integral.com${ruta || ""}</div>
+  <div class="ruta">WhatsApp <b>+506 8309-2291</b></div></div>`;
+const CABEZA = `<div class="marca"></div>`;
+
+const ESTADOS = [
+    {
+        archivo: "01-clases-en-vivo.png",
+        cuerpo: `<div class="medio"><div class="marca grande"></div>
+            <div class="nombre" style="font-size:112px;margin-top:40px">Ajedrez <em>Integral</em></div>
+            <div class="titulo" style="font-size:66px;color:${C.brand100}">Clases de ajedrez <em>en vivo</em>,<br>no solo videos</div>
+            <div class="texto">Para escuelas, colegios y familias<br>desde Costa Rica</div></div>${PIE()}`,
+    },
+    {
+        archivo: "02-que-recibe.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="titulo" style="margin-top:0;font-size:72px">Qué recibe<br>cada <em>estudiante</em></div>
+            <ul class="lista compacta">
+              <li><span class="punto" aria-hidden="true"></span><div><b>Clases en vivo</b><span class="d">Preguntas y el profe te responde al momento</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Informes para la familia</b><span class="d">El avance con datos, sin adivinar</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Práctica entre clases</b><span class="d">Coordenadas, cálculo a ciegas y táctica</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Una ruta por niveles</b><span class="d">De los fundamentos a los torneos</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Partidas contra el motor</b><span class="d">Tres niveles, sin límite de partidas</span></div></li>
+            </ul></div>${PIE()}`,
+    },
+    {
+        archivo: "03-diagnostico.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Gratis y sin cuenta</div>
+            <div class="titulo">¿En qué nivel<br>estás <em>de verdad</em>?</div>
+            <div class="texto">Al terminar sabes tu fuerza estimada<br>en puntos Elo, qué área mejorar<br>y por dónde empezar.</div>
+            <div class="datos"><div><b>60</b><span>preguntas</span></div><div><b>9</b><span>áreas del juego</span></div><div><b>20</b><span>minutos, más o menos</span></div></div>
+            </div>${PIE("/entreno/diagnostico")}`,
+    },
+    {
+        archivo: "04-accesible.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Ajedrez para todos</div>
+            <div class="titulo">Accesible para<br>estudiantes <em>ciegos</em><br>y con baja visión</div>
+            <div class="texto">El tablero y el entrenamiento funcionan<br>con lector de pantalla y notación hablada.</div>
+            <div class="texto" style="color:#fff">Las mismas clases, el mismo<br>entrenamiento, para todo el grupo.</div>
+            </div>${PIE()}`,
+    },
+    {
+        archivo: "05-tres-pasos.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="titulo" style="margin-top:0">Tres pasos<br>para <em>empezar</em></div>
+            <ul class="lista">
+              <li><span class="num">1</span><div><b>Escríbenos por WhatsApp</b><span class="d">La edad y el nivel del estudiante, o si es para un grupo escolar</span></div></li>
+              <li><span class="num">2</span><div><b>Te damos tu acceso</b><span class="d">Clases en vivo, cursos, entrenamiento e informes en un mismo lugar</span></div></li>
+              <li><span class="num">3</span><div><b>Asiste, practica y mejora</b><span class="d">Y revisas tu avance real en Informes</span></div></li>
+            </ul></div>${PIE()}`,
+    },
+    {
+        archivo: "06-contra-el-profe.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Cuando no hay clase</div>
+            <div class="titulo">Juega contra<br><em>Oscar</em>, nuestro motor</div>
+            <div class="datos"><div><b>3</b><span>niveles de dificultad</span></div><div><b>∞</b><span>partidas, sin límite</span></div></div>
+            <div class="texto">Para seguir practicando<br>entre una clase y otra.</div>
+            </div>${PIE("/bot")}`,
+    },
+    {
+        archivo: "07-pareo-integral.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Para quien arbitra</div>
+            <div class="titulo">¿Organizas<br>un <em>torneo</em>?</div>
+            <div class="texto">Emparéjalo gratis con el<br><b style="color:#fff">Sistema Holandés de FIDE</b><br>en Pareo Integral.</div>
+            <div class="texto">Sin cuenta y en el navegador.</div>
+            </div>${PIE("/pareo")}`,
+    },
+];
+for (const e of ESTADOS) {
+    IMAGENES.push({
+        archivo: "whatsapp/" + e.archivo, ancho: 1080, alto: 1920,
+        seguro: { ancho: 960, alto: 1420, arriba: 220 },
+        css: ESTADO_CSS, cuerpo: e.cuerpo,
+    });
+}
+
+// Ningún color a ojo: cada par de texto y fondo de los estados, medido contra
+// el tono MÁS CLARO del degradado (brand700), que es el peor caso.
+{
+    const lum = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+        .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+        .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
+    const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    for (const [texto, fondo, que] of [
+        ["#ffffff", C.brand700, "títulos"], [C.accent400, C.brand700, "lo resaltado"],
+        [C.brand100, C.brand700, "textos"], [C.brand900, C.accent400, "la dirección y los números"],
+    ]) {
+        const r = contraste(texto, fondo);
+        if (r < 4.5) { console.error(`Contraste insuficiente en ${que}: ${r.toFixed(2)}`); process.exit(1); }
+    }
+}
+
 (async () => {
-    fs.mkdirSync(CARPETA, { recursive: true });
+    fs.mkdirSync(path.join(CARPETA, "whatsapp"), { recursive: true });
     const navegador = await chromium.launch({
         executablePath: process.env.CHROME_PATH || undefined,
     });
@@ -129,10 +280,11 @@ const IMAGENES = [
           <body><div class="lienzo"><div class="tablero"></div><div class="brillo"></div>
           <div class="contenido">${img.cuerpo}</div><div class="barra"></div></div></body></html>`,
             { waitUntil: "load" });
+        await pagina.evaluate(() => document.fonts.ready);
         await pagina.waitForTimeout(400);
         // Nada que se lea puede quedar fuera de la franja que siempre se ve.
         const fuera = await pagina.evaluate((s) => {
-            const izq = (innerWidth - s.ancho) / 2, arr = (innerHeight - s.alto) / 2;
+            const izq = (innerWidth - s.ancho) / 2, arr = s.arriba ?? (innerHeight - s.alto) / 2;
             return [...document.querySelectorAll(".contenido *")]
                 .map((el) => [el.className || el.tagName, el.getBoundingClientRect()])
                 .filter(([, r]) => r.left < izq || r.right > izq + s.ancho
