@@ -13,7 +13,7 @@
    en español; la conversación, con las dos versiones de cada mensaje). Todo texto que escribe una persona o devuelve la traducción va por
    textContent. La traducción es una ayuda, no una traducción oficial, y lo dice en los dos idiomas.
 
-     CentroamericanoHablar.abrir({ mesa, jugadores: [{ color, nombre, fed }], traducir(de, a, texto) → Promise<string>,
+     CentroamericanoHablar.abrir({ mesa, jugadores: [{ color, nombre, fed }], fairPlay (true si la mesa es de Fair Play), traducir(de, a, texto) → Promise<string>,
                                    anotar(texto, color) → Promise, pedirIdioma(id, nombre) → Promise })
 
    Ver «Hablar con el jugador» en docs/decisiones/juegos-y-torneos.md. */
@@ -108,7 +108,9 @@
 
         // ------------------------------------------------------------------------------ Frases
         function pintarFrases() {
-            const grupos = Fr.TEMAS.map((t) => {
+            // Si la mesa fue elegida para Fair Play, ese tema va primero (es lo que el árbitro necesita en ese momento).
+            const temas = o.fairPlay ? [...Fr.TEMAS.filter((t) => t.id === "fairplay"), ...Fr.TEMAS.filter((t) => t.id !== "fairplay")] : Fr.TEMAS;
+            const grupos = temas.map((t) => {
                 const lista = Fr.FRASES.filter((x) => x.tema === t.id);
                 if (!lista.length) return null;
                 return el("section", { class: "cam-hb-tema", "data-tema": t.id },
@@ -118,6 +120,7 @@
                             el("span", { texto: f.es }), f.art ? el("small", { class: "cam-hb-art", texto: "art. " + f.art }) : null))));
             });
             cuerpo.replaceChildren(
+                o.fairPlay ? el("p", { class: "cam-hb-fp-aviso", role: "status", texto: "Esta mesa fue elegida para Fair Play: sus frases van primero." }) : null,
                 el("p", { class: "text-sm", texto: "Toca una frase: se le muestra al jugador en " + enEspanol(idioma) + ", en grande. Son frases fijas, revisadas: funcionan sin internet." }),
                 ...grupos);
         }

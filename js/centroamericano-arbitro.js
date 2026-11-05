@@ -61,6 +61,21 @@
     // El Rápido y el Blitz: «modo rápido» (null en el clásico). Ver ritmoRapido en js/centroamericano-mesas.js y «El Rápido
     // y el Blitz: la mesa en un toque» en docs/decisiones/juegos-y-torneos.md.
     const rapido = () => (estado ? C.ritmoRapido(estado.torneo, estado.ritmo) : null);
+
+    // La ficha nueva de cada mesa («A: tres toques»: más corta, el resultado en tres botones que guardan de un toque y las marcas de los dos
+    // jugadores en una sola franja). POR AHORA SOLO PARA QUIEN ESTÁ EN ESTA LISTA, para probarla en una ronda real antes de darla a todos.
+    // El nombre se compara sin tildes ni mayúsculas y basta con que traiga todas las palabras («Oscar Angulo Camacho» sirve). Para probarla
+    // con otro enlace: «?ficha=a» después de la dirección; para volver a la de siempre aun estando en la lista: «?ficha=hoy».
+    // Ver «La ficha de la mesa, opción A» en docs/decisiones/juegos-y-torneos.md.
+    const FICHA_A = ["oscar angulo"];
+    const sinTildes = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    function fichaA() {
+        const q = location.search || "";
+        if (/[?&]ficha=hoy\b/.test(q)) return false;
+        if (/[?&]ficha=a\b/.test(q)) return true;
+        const n = sinTildes(estado && estado.arbitro);
+        return FICHA_A.some((x) => x.split(" ").every((w) => n.includes(w)));
+    }
     const minutosIlegal = () => C.minutosIlegal(rapido());
     const textoMinutos = () => (minutosIlegal() === 1 ? "1 minuto" : "2 minutos");
     // Los tres resultados de siempre, en botones grandes: un toque y se guarda.
@@ -234,7 +249,7 @@
                 el("div", { class: "cam-jugador-botones" }, bloquePresencia(m, color), acciones)),
             // Lo que cambia (las marcas, «Anular», la guía del tiempo de espera) va en UNA franja de altura reservada: la tarjeta no se mueve.
             el("div", { class: "cam-jugador-extra" },
-                cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
+                cuentaDe(m, color) ? el("p", { class: "cam-cuenta-guia", "data-color": color, hidden: true }, "⏰ Se acabó el tiempo de espera: por reglas pierde por incomparecencia. Tú decides.") : null,
                 marcas, anulares.children.length ? anulares : null));
     }
 
@@ -261,6 +276,21 @@
         return out;
     }
 
+    // Ficha A: saca de cada jugador su franja de marcas y «Anular» y las junta en una sola, con un puntito del color de cada uno (blancas o negras).
+    // Altura reservada UNA vez por tarjeta: anotar una ilegal no la mueve. Un jugador sin marcas no deja ni el puntito.
+    function franjaMarcas(jugadores) {
+        return el("div", { class: "cam-mesa-marcas" }, ...jugadores.map((j) => {
+            const x = j.querySelector(".cam-jugador-extra");
+            if (x) x.remove();
+            const color = j.dataset.color;
+            const hay = !!(x && x.querySelector(".cam-marca, .cam-anulares"));
+            return el("div", { class: "cam-extra-grupo", "data-color": color, "data-vacio": hay || (x && x.querySelector(".cam-cuenta-guia")) ? null : "si" },
+                hay ? el("span", { class: "cam-color", "data-color": color, "aria-hidden": "true" }) : null,
+                hay ? el("span", { class: "sr-only", texto: color === "blancas" ? "Blancas: " : "Negras: " }) : null,
+                ...(x ? [...x.childNodes] : []));
+        }));
+    }
+
     function tarjeta(m) {
         const est = C.estadoMesa(m, estado.marcas, elegido[m.mesa]);
         const ocupada = ocupadas.has(m.mesa);
@@ -279,7 +309,10 @@
         const alcance = C.fairPlayAlcance(fp);
         const jugadores = [bloqueJugador(m, "blancas"), bloqueJugador(m, "negras")];
         jugadores.forEach((j) => { if (alcance && alcance === j.dataset.color) j.setAttribute("data-fair-play", "si"); });
-        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, "data-fp-alcance": alcance, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" + (alcance === "blancas" || alcance === "negras" ? " (" + alcance + ")" : "") : "") },
+        const A = fichaA();
+        // Ficha A: las marcas y los «Anular» de los dos jugadores van juntos en UNA franja (la misma zona reservada de los avisos, y no una por jugador).
+        const marcasJuntas = A ? franjaMarcas(jugadores) : null;
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-ficha": A ? "a" : null, "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, "data-fp-alcance": alcance, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" + (alcance === "blancas" || alcance === "negras" ? " (" + alcance + ")" : "") : "") },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
@@ -290,9 +323,10 @@
                 fpTexto ? el("div", { class: "cam-fp-banda", "data-tipo": fpTexto.tipo },
                     el("p", { role: fpTexto.tipo === "esperando" ? null : "status", texto: fpTexto.texto }),
                     bandaRetener(m, fp)) : null,
-                bandas(m)),
+                bandas(m),
+                marcasJuntas),
             ...jugadores,
-            rapido() ? resultadoRapido(m, sel, pendiente, ocupada, msg) : el("div", { class: "cam-resultado" },
+            rapido() || A ? resultadoRapido(m, sel, pendiente, ocupada, msg, A) : el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
                 el("div", { class: "cam-resultado-fila" }, sel, botonGuardar(m, pendiente, ocupada)),
                 // El «✓ Guardado» o el error ocupa siempre su renglón (reservado): al guardar no se mueve nada.
@@ -307,7 +341,7 @@
     // En el Rápido y el Blitz: 1-0, ½-½ y 0-1 en botones grandes. Un toque GUARDA (sin «Guardar»): no hay tiempo para más.
     // Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace guardar()). Cualquier otro
     // (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
-    function resultadoRapido(m, sel, pendiente, ocupada, msg) {
+    function resultadoRapido(m, sel, pendiente, ocupada, msg, fichaNueva) {
         const bloqueado = ocupada || !listaCompleta();
         const botones = RAPIDOS.map((r) => el("button", {
             type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(m.valor === r.valor),
@@ -316,8 +350,11 @@
             onclick: () => { elegido[m.mesa] = r.valor; guardar(m); },
         }, el("span", { class: "cam-rapido-valor", texto: r.texto }), el("span", { class: "cam-rapido-ayuda", texto: r.ayuda })));
         const otroAbierto = pendiente && !RAPIDOS.some((r) => r.valor === elegido[m.mesa]);
+        // Ficha A: «En chess-results: …» sobra (la cabecera ya dice si hay resultado y el botón guardado se ve); solo sale cuando es un resultado
+        // que no tiene botón (incomparecencia, etc.), para no esconderlo.
+        const sinBoton = m.valor !== "0" && !RAPIDOS.some((r) => r.valor === m.valor);
         return el("div", { class: "cam-resultado cam-resultado-rapido" },
-            el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
+            !fichaNueva || sinBoton ? el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })) : null,
             el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + ": un toque y se guarda" }, ...botones),
             el("details", { class: "cam-rapido-otro", open: otroAbierto },
                 el("summary", { texto: "Otro resultado (a mano)" }),
@@ -734,7 +771,7 @@
             const vencido = resta <= 0;
             if (vencido !== (jug.dataset.vencido === "si")) {
                 jug.dataset.vencido = vencido ? "si" : "no";
-                const guia = jug.querySelector(".cam-cuenta-guia");
+                const guia = jug.querySelector(".cam-cuenta-guia") || (jug.closest(".cam-mesa") || document).querySelector('.cam-cuenta-guia[data-color="' + jug.dataset.color + '"]');
                 if (guia) guia.hidden = !vencido;
             }
         }
@@ -1778,6 +1815,7 @@
         if (!H || !window.CentroamericanoFrases) { avisar("No se pudo abrir «Hablar con el jugador». Recarga la página.", true); return; }
         H.abrir({
             mesa: m.mesa,
+            fairPlay: ((estado && estado.fair_play) || []).some((x) => x.mesa === m.mesa),
             jugadores: [{ color: "blancas", nombre: m.blancas, fed: m.fed_b || "" }, { color: "negras", nombre: m.negras, fed: m.fed_n || "" }],
             traducir: traducirTexto,
             anotar: (texto, color) => anotarComunicado(m, texto, color),
