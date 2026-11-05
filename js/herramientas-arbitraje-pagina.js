@@ -2,11 +2,14 @@
    herramientas de arbitraje.
 
    Sin sesión, todas salen con el candado cerrado y su descripción, menos las
-   gratis (`gratis: true`, Pareo Integral), que salen abiertas para todos. Con
+   gratis (`gratis: true`, las páginas públicas de los torneos), que salen
+   abiertas para todos. Con
    sesión, se pregunta a la base cuáles abre la cuenta (tengo_herramienta(),
    que a quien administra le dice que sí a todas) y se puede activar un código
-   (canjear_licencia()). El candado de verdad está en la base y en la Edge
-   Function seleccion-chess-results: esto solo decide qué se pinta.
+   (canjear_licencia()). El candado de verdad está en la base y en las Edge
+   Functions (seleccion-chess-results…), o, en las herramientas que hacen
+   todo en el navegador, en js/candado-herramienta.js: esto solo decide qué
+   se pinta.
 
    Las herramientas van en fichas por tema (H.TEMAS: arbitraje, JDE, JDN,
    universitarios): arriba, una tarjeta grande por tema, y debajo las
