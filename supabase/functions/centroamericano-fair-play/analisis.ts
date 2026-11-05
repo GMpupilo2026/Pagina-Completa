@@ -187,14 +187,16 @@ export type Resumen = { consideradas: number; t1: number; top3: number; dificile
 //     Lichess: 0 a 100) para quien mueve; delta_jugada, lo mismo para lo que se jugó. Es lo que usa el modelo.
 // «inicio»: desde qué jugada se mide (por omisión, la DESDE_JUGADA de cada uno; con la teoría de la apertura conocida,
 // desde la primera jugada que ya no está en las partidas de maestros, nunca antes de la 5.ª de cada uno).
-export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opcion[] | null)[], levantadas: { color: string; hora: number }[], inicio = (DESDE_JUGADA - 1) * 2) {
+// «saltar»: las jugadas (por su número de media jugada, desde 0) que no se miden: las que la lectura de una planilla
+// dejó dudosas. Una jugada mal leída parecería un error (o un acierto) que nadie hizo.
+export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opcion[] | null)[], levantadas: { color: string; hora: number }[], inicio = (DESDE_JUGADA - 1) * 2, saltar: Set<number> = new Set()) {
   const jugadas: Detalle[] = [];
   const vacio = (): Resumen => ({ consideradas: 0, t1: 0, top3: 0, dificiles: 0, dificiles_ok: 0, seg_dificil: null, seg_resto: null, tras_levantarse: 0, tras_levantarse_t1: 0, momentos: [] });
   const res: Record<string, Resumen> = { blancas: vacio(), negras: vacio() };
   const tiempos: Record<string, { dif: number[]; resto: number[] }> = { blancas: { dif: [], resto: [] }, negras: { dif: [], resto: [] } };
   for (let j = Math.max(1, inicio); j < plies.length; j++) {
     const opts = opciones[j - 1], previa = evals[j - 1], ahora = evals[j], p = plies[j];
-    if (!p || !opts || !opts.length || previa == null || ahora == null || Math.abs(previa) >= DECIDIDA_CP) continue;
+    if (!p || !opts || !opts.length || previa == null || ahora == null || Math.abs(previa) >= DECIDIDA_CP || saltar.has(j)) continue;
     const color = j % 2 === 0 ? "blancas" : "negras", s = color === "blancas" ? 1 : -1;
     const mejor = s * opts[0][1], segunda = opts[1] ? s * opts[1][1] : null, jugado = s * ahora;
     const rango = opts.findIndex((o) => o[0] === p.uci) + 1;
@@ -456,11 +458,137 @@ export function rendimiento(partidas: { eloRival: number | null; puntos: number 
   const dp = p <= 0 ? -800 : p >= 1 ? 800 : Math.max(-800, Math.min(800, -400 * Math.log10(1 / p - 1)));
   return { rp: Math.round(con.reduce((t, x) => t + (x.eloRival as number), 0) / con.length + dp), n: con.length };
 }
-export function eloUsado(elo: number, rend: { rp: number; n: number } | null, joven: boolean): number {
-  if (!rend || rend.rp <= elo || !rend.n) return elo;
+// «tend»: lo que ya se sabe ANTES de jugar, por cómo viene subiendo su Elo en FIDE (tendencia(), abajo). Se parte de
+// su Elo más eso y lo rendido lo corre hacia arriba o hacia abajo con el mismo peso; nunca queda por debajo de su Elo
+// ni más de 200 (100) arriba.
+export function eloUsado(elo: number, rend: { rp: number; n: number } | null, joven: boolean, tend = 0): number {
+  const tope = elo + (joven ? MARGEN_JOVEN : MARGEN_ADULTO);
+  const previo = Math.min(tope, elo + Math.max(0, tend));
+  if (!rend || !rend.n || (rend.rp <= elo && previo === elo)) return Math.round(previo);
   const atraso = (joven ? ATRASO_JOVEN : ATRASO_ADULTO) ** 2, varia = VARIA_RENDIMIENTO ** 2 / rend.n;
-  const credito = (rend.rp - elo) * atraso / (atraso + varia);
-  return Math.round(elo + Math.min(joven ? MARGEN_JOVEN : MARGEN_ADULTO, credito));
+  const credito = (rend.rp - previo) * atraso / (atraso + varia);
+  return Math.round(Math.max(elo, Math.min(tope, previo + credito)));
+}
+
+// ---- Cómo viene su Elo en FIDE (la tendencia)
+// Un niño que subió 30 puntos por mes en el último año seguramente juega hoy por encima de la lista que usa el torneo
+// (las listas salen una vez al mes y se atrasan). De la ficha de FIDE de cada jugador (su ID sale de la lista inicial
+// de chess-results) se toma su Elo de cada mes del último año, se le busca la recta que mejor lo explica y se le
+// reconoce lo que subiría en MESES_ATRASO meses más, con tope (150 a un menor, 75 a los demás) y nunca de menos: quien
+// viene bajando se compara con su Elo. Pocos datos (menos de 4 meses con Elo), nada. NUNCA se inventa un número: si
+// la ficha no se pudo leer, no hay tendencia.
+export const MESES_ATRASO = 3, TOPE_TENDENCIA_JOVEN = 150, TOPE_TENDENCIA_ADULTO = 75, MESES_TENDENCIA = 12;
+const MESES_EN = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+export type MesFide = { periodo: string; std: number | null; rpd: number | null; blz: number | null };
+const mesNumero = (periodo: string) => {
+  const m = String(periodo).trim().match(/^(\d{4})-([A-Za-z]{3})$/);
+  const k = m ? MESES_EN.indexOf(m[2].toLowerCase()) : -1;
+  return m && k >= 0 ? Number(m[1]) * 12 + k : null;
+};
+// La lista inicial de chess-results (art=0): cada jugador con su enlace a la ficha de FIDE.
+export function leerFideIds(html: string): { nombre: string; fide: string }[] {
+  const i = html.indexOf('class="CRs1"');
+  if (i < 0) return [];
+  const tabla = html.slice(i, html.indexOf("</table>", i));
+  const out: { nombre: string; fide: string }[] = [];
+  for (const f of tabla.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) ?? []) {
+    const nombre = (f.match(/<a[^>]*snr=\d+[^>]*>([\s\S]*?)<\/a>/) || [])[1];
+    const fide = (f.match(/ratings\.fide\.com\/profile\/(\d{3,10})/) || [])[1];
+    if (nombre && fide) out.push({ nombre: sinEtiquetas(nombre), fide });
+  }
+  return out;
+}
+// La ficha de FIDE con su historial (ratings.fide.com/profile/<id>/chart): «Period | STD. RATING | STD GMS | RPD |
+// RPD GMS | BLZ | BLZ GMS», un renglón por mes. Una celda vacía o 0 es null.
+export function leerHistorialFide(html: string): MesFide[] {
+  const i = html.indexOf("profile-table_calc");
+  if (i < 0) return [];
+  const tabla = html.slice(i, html.indexOf("</table>", i));
+  const out: MesFide[] = [];
+  for (const f of tabla.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) ?? []) {
+    const c = (f.match(/<td[^>]*>[\s\S]*?<\/td>/g) ?? []).map(sinEtiquetas);
+    if (c.length < 6 || mesNumero(c[0]) == null) continue;
+    const n = (s: string) => (/^\d{3,4}$/.test(s) && Number(s) > 0 ? Number(s) : null);
+    out.push({ periodo: c[0], std: n(c[1]), rpd: n(c[3]), blz: n(c[5]) });
+  }
+  return out;
+}
+export function tendencia(hist: MesFide[] | null | undefined, ritmo: string, hastaMes: number, joven: boolean): { puntos: number; pendiente: number; meses: number } | null {
+  const puntos: [number, number][] = [];
+  for (const h of hist || []) {
+    const m = mesNumero(h.periodo), e = ritmo === "rapido" ? h.rpd : h.std;
+    if (m == null || e == null || m > hastaMes || m <= hastaMes - MESES_TENDENCIA) continue;
+    puntos.push([m, e]);
+  }
+  if (puntos.length < 4) return null;
+  const n = puntos.length, mx = puntos.reduce((t, p) => t + p[0], 0) / n, my = puntos.reduce((t, p) => t + p[1], 0) / n;
+  let sxy = 0, sxx = 0;
+  for (const [x, y] of puntos) { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; }
+  if (!(sxx > 0)) return null;
+  const pendiente = sxy / sxx;
+  const tope = joven ? TOPE_TENDENCIA_JOVEN : TOPE_TENDENCIA_ADULTO;
+  return { puntos: Math.round(Math.max(0, Math.min(tope, pendiente * MESES_ATRASO))), pendiente: Math.round(pendiente * 10) / 10, meses: n };
+}
+// El mes de una fecha para tendencia() (en hora de Costa Rica: el 1.° a las 8 p. m. ya es otro mes en UTC).
+export const mesDe = (fecha: Date) => {
+  const [a, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit" }).format(fecha).split("-").map(Number);
+  return a * 12 + (m - 1);
+};
+
+// ---- Las rachas: el motor solo en el momento decisivo
+// Quien usa el motor a veces no lo usa en todas: lo usa cuando la posición se pone difícil y juega normal el resto.
+// Sumado todo, su índice puede quedar cerca de lo normal. Por eso, aparte, se mide cada jugador en las posiciones
+// difíciles para su nivel (las que, según el modelo, más le cuestan: la mitad más difícil de su ritmo, «umbral») y en
+// las fáciles por separado, y el contraste entre las dos: alguien fuerte de verdad sale alto en las dos; quien se ayuda
+// solo en lo difícil, alto en las difíciles y normal en las fáciles. Y la racha más rara: las jugadas difíciles
+// SEGUIDAS de una partida (sin contar las fáciles de en medio) en que jugó la primera del motor, con lo improbable que
+// es para su nivel (el producto de la probabilidad de cada una). Son señales para explicar, como el tiempo: no entran
+// en el índice.
+export const MIN_RACHA_JUGADAS = 10;
+export function rachas(juegos: MovModelo[][], s: number, c: number, umbral: number, factor = 1, R: Correlaciones = CORR_INICIAL) {
+  const crit: MovModelo[] = [], facil: MovModelo[] = [];
+  let mejor = { largo: 0, log10: 0 };
+  for (const movs of juegos) {
+    let largo = 0, log = 0;
+    for (const m of movs) {
+      if (m.n <= 1 || !m.deltas.length) continue;
+      if (dificultadEsperada(m, s, c) < umbral) { facil.push(m); continue; }
+      crit.push(m);
+      if (m.rango === 1) {
+        largo++; log += Math.log10(Math.max(1e-9, probabilidades(m.deltas, m.n, s, c).p[0]));
+        if (largo >= 3 && log < mejor.log10) mejor = { largo, log10: log };
+      } else { largo = 0; log = 0; }
+    }
+  }
+  const z = (movs: MovModelo[]) => { if (movs.length < MIN_RACHA_JUGADAS) return null; const v = zCruda(esperado(movs, s, c), R); return v == null ? null : v / factor; };
+  const zC = z(crit), zF = z(facil);
+  const r2 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
+  return { largo: mejor.largo, log10: mejor.largo ? Math.round(mejor.log10 * 10) / 10 : null, zCrit: r2(zC), zFacil: r2(zF),
+    contraste: zC != null && zF != null ? r2((zC - zF) / Math.SQRT2) : null, nCrit: crit.length, nFacil: facil.length };
+}
+// La mitad más difícil de un ritmo: la mediana de lo difícil de todas sus jugadas.
+export function mediana(v: number[]): number | null {
+  if (!v.length) return null;
+  const o = [...v].sort((a, b) => a - b);
+  return o.length % 2 ? o[(o.length - 1) / 2] : (o[o.length / 2 - 1] + o[o.length / 2]) / 2;
+}
+
+// ---- Las partidas de las planillas (las mesas sin tablero electrónico)
+// La pantalla de la organización lee la foto de las dos planillas («Generar PGN») y manda lo que salió: las jugadas en
+// SAN, cuáles quedaron dudosas y desde dónde es ilegible. Aquí se comprueba con chess.js (en la función) y se mide como
+// una de LiveChess, sin el tiempo de cada jugada (la planilla no lo tiene) y sin las dudosas. El resultado es el de
+// chess-results: «1 - 0» → «1-0».
+export function resultadoDe(r: unknown): string | null {
+  const x = String(r || "").replace(/\s+/g, "").replace("½-½", "1/2-1/2");
+  return /^(1-0|0-1|1\/2-1\/2)$/.test(x) ? x : null;
+}
+export const MIN_PLANILLA = 20;   // medias jugadas legibles: menos, no hay nada que medir (la apertura se salta)
+export function planillaValida(jugadas: unknown, dudosas: unknown): { jugadas: string[]; dudosas: number[] } | null {
+  if (!Array.isArray(jugadas) || jugadas.length < MIN_PLANILLA || jugadas.length > 600) return null;
+  const js = jugadas.map((j) => String(j ?? "").trim());
+  if (js.some((j) => !/^[A-Za-z0-9+#=\-]{2,8}$/.test(j))) return null;
+  const ds = Array.isArray(dudosas) ? [...new Set(dudosas.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < js.length))].sort((a, b) => a - b) : [];
+  return { jugadas: js, dudosas: ds };
 }
 
 // ---- El tiempo: una persona piensa más donde es más difícil

@@ -195,6 +195,30 @@
         return { fuente: "foto", hojas, metodo, resultado, palabras, leida: new Date().toISOString() };
     }
 
+    /* La partida leída de la foto va también a Fair Play (Edge Function centroamericano-fair-play, «planilla_guardar»): así
+       se miden también las mesas sin tablero electrónico. Las dudosas (?) no se miden. Ver «Las mesas sin tablero
+       electrónico: de la foto de las planillas» en docs/decisiones/juegos-y-torneos.md. */
+    const MIN_FAIR_PLAY = 20;
+    async function mandarAFairPlay(p, datos) {
+        const js = datos.resultado.jugadas;
+        if (js.length < MIN_FAIR_PLAY) return { ok: false, corta: true, texto: "Fair Play: muy corta para medirla (hacen falta " + MIN_FAIR_PLAY + " medias jugadas legibles)." };
+        try {
+            let { data, error } = await window.sb.functions.invoke("centroamericano-fair-play", { body: {
+                action: "planilla_guardar", tnr: p.tnr, ronda: Number(p.ronda), mesa: Number(p.mesa),
+                jugadas: js.map((j) => j.san), dudosas: js.map((j, i) => (j.estado === "dudosa" ? i : -1)).filter((i) => i >= 0) } });
+            if (error && error.context && typeof error.context.json === "function") {
+                try { const j = await error.context.json(); if (j && j.error) error = new Error(j.error); } catch (e) { /* sin cuerpo */ }
+            }
+            if (error) throw error;
+            if (data && data.error) throw new Error(data.error);
+            return { ok: true, texto: data && data.tablero
+                ? "Fair Play: esta mesa es un tablero electrónico, se mide de LiveChess."
+                : "Enviada a Fair Play: se analiza con las demás partidas" + (data && data.dudosas ? " (las " + data.dudosas + " dudosas no se miden)." : ".") };
+        } catch (e) {
+            return { ok: false, texto: "No se pudo mandar a Fair Play: " + (e.message || e) };
+        }
+    }
+
     function pgnDe(p, datos, ctx) {
         if (datos.fuente === "transmision") return datos.pgnTexto;
         const enfrentamiento = ctx.enfrentamiento(p).split(" vs ");
@@ -231,6 +255,15 @@
                     : js.length ? "Leída de la foto: se pudieron salvar " + js.length + " medias jugadas, hasta la " + deQuien(js.length - 1) + "." : "Leída de la foto: no se pudo reproducir ninguna jugada." }),
                 el("p", { texto: cuenta("leida") + " leídas tal cual · " + cuenta("corregida") + " corregidas (*) · " + cuenta("dudosa") + " dudosas (?)" + (r.hojas === 2 ? " · se leyeron las dos planillas" : r.hojas === 1 ? " · se leyó una sola planilla" : "") }),
                 datos.metodo === "filas" ? el("p", { texto: "No se encontraron los números impresos de la planilla: se leyó por filas, que es menos seguro." }) : null);
+            const fp = el("p", { class: "cam-lp-fair-play", "data-ok": datos.fairPlay && datos.fairPlay.ok ? "si" : "no", texto: datos.fairPlay ? datos.fairPlay.texto : "Fair Play todavía no tiene esta partida." });
+            const otraVez = datos.fairPlay && (datos.fairPlay.ok || datos.fairPlay.corta) ? null : el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "mandar-fair-play", onclick: async (e) => {
+                e.currentTarget.disabled = true;
+                fp.textContent = "Mandando la partida a Fair Play…";
+                datos.fairPlay = await mandarAFairPlay(p, datos);
+                guardar(p, datos);
+                pintar(caja, p, datos, ctx, acciones);
+            } }, "Mandar a Fair Play");
+            agregar(fp, otraVez);
         } else {
             agregar(
                 el("p", { class: "cam-lp-titular", texto: "De la transmisión en vivo de Lichess: " + js.length + " medias jugadas" + (datos.enCurso ? "." : " · " + datos.resultadoTxt + ".") }),
@@ -370,6 +403,8 @@
             }
             if (!datos) {
                 datos = await deLaFoto(p, decir);
+                decir("Mandando la partida a Fair Play…");
+                datos.fairPlay = await mandarAFairPlay(p, datos);
                 guardar(p, datos);
             }
             pintar(caja, p, datos, ctx, acciones);
