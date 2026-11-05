@@ -1208,3 +1208,16 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 }
 /* Mientras se pide el código no hay enlace: lo que necesita el enlace (las mesas de todas las categorías, «¿Dónde juega?») no se ofrece. */
 body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { display: none !important; }
+
+/* «Cómo ver mis mesas» (centroamericano-arbitro.html): dos vistas con las mismas funciones, cada árbitro elige la suya. */
+.cam-vista { margin-top: 0.5rem; }
+.cam-vista summary { cursor: pointer; font-weight: 700; padding: 0.4rem 0; min-height: 44px; display: flex; align-items: center; }
+.cam-vista-opciones { border: 0; margin: 0; padding: 0.25rem 0 0.5rem; min-width: 0; }
+.cam-vista-lista { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+.cam-vista-opcion { display: flex; align-items: flex-start; gap: 0.6rem; flex: 1 1 16rem; padding: 0.7rem 0.9rem; border: 2px solid #c9cbee; border-radius: 0.9rem; background: #fff; color: var(--cac-morado-hondo); cursor: pointer; min-height: 56px; }
+.dark .cam-vista-opcion { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.cam-vista-opcion:has(input:checked) { border-color: var(--cac-morado); box-shadow: inset 0 0 0 2px var(--cac-morado); }
+.cam-vista-opcion input { margin-top: 0.2rem; flex: none; }
+.cam-vista-opcion input:focus-visible { outline: 3px solid var(--cac-morado); outline-offset: 2px; }
+.cam-vista-ayuda { display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.15rem; }
+.dark .cam-vista-opcion:has(input:checked) { border-color: #dfe0fb; box-shadow: inset 0 0 0 2px #dfe0fb; }

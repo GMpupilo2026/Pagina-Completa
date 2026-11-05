@@ -10178,6 +10178,30 @@ Ahora **los enlaces nunca se esconden** (salen bajo Clásico con el número del 
 pulso vuelve a pedir los torneos mientras la lista esté vacía. Lo revisa `verificar-centroamericano-mesas-pagina.js` con
 `?torneosfallan=1` (la lectura falla, los enlaces igual se ven; vuelve y se reparten por modo).
 
+## Cada árbitro elige cómo ver sus mesas: «De siempre» o «Tres toques» (Centroamericano, 5/11)
+
+Pedido: que cada árbitro escoja la forma en que le gusta más ver la información de sus partidas, con **las mismas funciones** en todas. Hasta
+ahora la ficha corta «Tres toques» (opción A) solo la tenía Óscar Angulo, por una lista fija. El Rápido no es una vista a elegir (se decide por
+el tipo de torneo, ver «El Rápido y el Blitz»).
+
+- **Dónde.** `centroamericano-arbitro.html`, en la barra de la tablet, un detalle plegado **«Cómo ver mis mesas · De siempre»** con dos
+  opciones (radios con su explicación, 56 px de alto, se alcanzan con el teclado). Elegir otra **vuelve a armar las tarjetas al instante**, sin
+  recargar, y dice «Ves tus mesas con «Tres toques»».
+- **Cómo se decide** (`vistaElegida()`, y `fichaA()` queda como `vistaElegida() === "tres"`): 1) `?ficha=hoy` / `?ficha=a` en la dirección (para
+  probar y comparar); 2) lo que eligió en esta página; 3) lo que la tablet recuerda (`localStorage["cam-vista-mesas"]`, siempre en
+  try/catch: sin almacenamiento la elección vale mientras la página esté abierta); 4) si no hay nada, quien está en `FICHA_A` (Óscar Angulo)
+  arranca con «Tres toques» y todos los demás con «De siempre». **Lo que elige el árbitro manda sobre la lista**: Óscar puede volver a la de
+  siempre. Es por tablet, no por árbitro: otra tablet o un navegador sin datos arranca con el valor de la lista.
+- **En el Blitz no hay nada que elegir**: siempre va la ficha corta (es lo único que hay que tocar); las opciones salen deshabilitadas y una
+  nota lo dice. El Rápido sí puede elegir.
+- **Las mismas funciones.** Lo revisa `verificar-centroamericano-mesas-pagina.js` («Cada árbitro elige cómo ver sus mesas»): todo `data-accion`
+  que tiene una mesa en la ficha de siempre está también en la corta (solo cambia elegir el resultado: la lista contra los tres botones), la
+  elección se recuerda al recargar, Óscar arranca con la corta pero puede cambiarla, y sin `localStorage` no se rompe nada. **Una vista nueva
+  se suma a `VISTAS` y tiene que pasar esa misma prueba.**
+- **Candidatas para sumar** (las dos ya se maquetaron, con las mismas funciones): «Duelo» (las blancas a la izquierda y las negras a la
+  derecha, como en el tablero; el resultado es «gana el de la izquierda · tablas · gana el de la derecha») y «Lista» (una fila por mesa que se
+  abre al tocar: 8 a 10 mesas a la vez; es el cambio grande, lo de uso frecuente pasa a dos toques).
+
 ## El código corto del árbitro: entrar sin cámara ni WhatsApp (Centroamericano, 5/11)
 
 Pedido: si una tablet no tiene cámara (no lee el QR) ni WhatsApp (no recibe el enlace), ¿cómo abre el árbitro su mesa? Y que no haya que

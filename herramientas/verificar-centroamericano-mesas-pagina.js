@@ -1314,6 +1314,71 @@ const CONTRASTE = `(sel) => {
         await forzada.ctx.close();
     }
 
+    console.log("\n=== Cada árbitro elige cómo ver sus mesas (De siempre / Tres toques) ===");
+    {
+        const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
+        const cuantas = (p) => p.evaluate(() => [document.querySelectorAll(".cam-mesa").length, document.querySelectorAll(".cam-mesa[data-ficha='a']").length]);
+        const vista = (p) => p.evaluate(() => [document.getElementById("vista-mesas").dataset.vista, document.getElementById("vista-resumen").textContent, [...document.querySelectorAll("#vista-lista input")].map((i) => [i.value, i.checked, i.disabled])]);
+        // Cualquier árbitro arranca con la ficha de siempre y puede cambiarla.
+        const v = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await v.p.waitForSelector(".cam-mesa");
+        igual("sin elegir nada: la ficha de siempre, y el resumen y las opciones lo dicen", [await cuantas(v.p), await vista(v.p)],
+            [[3, 0], ["clasica", "Cómo ver mis mesas · De siempre", [["clasica", true, false], ["tres", false, false]]]]);
+        igual("las opciones se explican (cada una con su descripción) y se alcanzan con el teclado (radios con etiqueta)",
+            await v.p.evaluate(() => [...document.querySelectorAll("#vista-lista label")].map((l) => [!!l.querySelector("input[type=radio][name=vista-mesas]"), l.querySelector(".cam-vista-ayuda").textContent.length > 30])), [[true, true], [true, true]]);
+        await v.p.evaluate(() => { document.getElementById("vista-mesas").open = true; });
+        await v.p.check('#vista-lista input[value="tres"]');
+        await v.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        igual("elegir «Tres toques» arma otra vez las tarjetas con la ficha corta, de una vez y sin recargar, y lo dice",
+            [await cuantas(v.p), await vista(v.p), await v.p.evaluate(() => [localStorage.getItem("cam-vista-mesas"), !!document.querySelector(".avisos-toast, [data-avisos-aceptar]") || document.body.textContent.includes("Ves tus mesas con «Tres toques»")])],
+            [[3, 3], ["tres", "Cómo ver mis mesas · Tres toques", [["clasica", false, false], ["tres", true, false]]], ["tres", true]]);
+        // Las dos vistas tienen las MISMAS funciones: lo que se puede hacer en una mesa (por «data-accion») en la ficha de siempre se puede
+        // hacer en la corta; solo cambia cómo se elige el resultado (la lista contra los tres botones).
+        const acciones = (p) => p.evaluate(() => [...new Set([...document.querySelectorAll('.cam-mesa[data-mesa="2"] [data-accion]')].map((b) => b.dataset.accion))].sort());
+        const enCorta = await acciones(v.p);
+        await v.p.evaluate(() => { document.getElementById("vista-mesas").open = true; });
+        await v.p.check('#vista-lista input[value="clasica"]');
+        await v.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        const enClasica = await acciones(v.p);
+        console.log("      acciones de la mesa 2, ficha de siempre: " + enClasica.join(", ") + " | corta: " + enCorta.join(", "));
+        igual("la ficha corta conserva todas las funciones de la de siempre (menos elegir el resultado en una lista: ahí van tres botones de un toque)",
+            [enClasica.filter((a) => !enCorta.includes(a)), enCorta.includes("rapido")], [[], true]);
+        await v.p.check('#vista-lista input[value="tres"]');
+        await v.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        // La tablet la recuerda: al volver a abrir sigue siendo «Tres toques».
+        await v.p.reload();
+        await v.p.waitForSelector(".cam-mesa");
+        igual("al volver a abrir la página, la tablet recuerda «Tres toques»", [await cuantas(v.p), (await vista(v.p))[0]], [[3, 3], "tres"]);
+        await v.p.evaluate(() => { document.getElementById("vista-mesas").open = true; });
+        await v.p.check('#vista-lista input[value="clasica"]');
+        await v.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        igual("y se puede volver a «De siempre» (también se recuerda)", [await cuantas(v.p), await v.p.evaluate(() => localStorage.getItem("cam-vista-mesas"))], [[3, 0], "clasica"]);
+        await v.ctx.close();
+
+        // Óscar arranca con «Tres toques» (como hasta ahora), pero ya puede elegir la de siempre; «?ficha=hoy» sigue forzándola.
+        const o = await abrir(browser, "centroamericano-arbitro.html", OSCAR, { hash: TOKEN, ancho: 820 });
+        await o.p.waitForSelector(".cam-mesa");
+        igual("Óscar Angulo arranca con «Tres toques», que es como la tiene hasta ahora", [await cuantas(o.p), (await vista(o.p))[0]], [[3, 3], "tres"]);
+        await o.p.evaluate(() => { document.getElementById("vista-mesas").open = true; });
+        await o.p.check('#vista-lista input[value="clasica"]');
+        await o.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        await o.p.reload();
+        await o.p.waitForSelector(".cam-mesa");
+        igual("y si Óscar elige «De siempre», manda lo que eligió (no la lista de quienes arrancan con la corta)", [await cuantas(o.p), (await vista(o.p))[0]], [[3, 0], "clasica"]);
+        await o.ctx.close();
+
+        // Sin almacenamiento (modo privado, datos bloqueados): la elección vale mientras la página esté abierta y nada se rompe.
+        const sa = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await sa.ctx.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new Error("sin almacenamiento"); } }); });
+        await sa.p.reload();
+        await sa.p.waitForSelector(".cam-mesa");
+        await sa.p.evaluate(() => { document.getElementById("vista-mesas").open = true; });
+        await sa.p.check('#vista-lista input[value="tres"]');
+        await sa.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        igual("sin almacenamiento en el navegador, igual se puede elegir (vale mientras la página esté abierta)", await cuantas(sa.p), [3, 3]);
+        await sa.ctx.close();
+    }
+
     console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
     {
         const fh = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });

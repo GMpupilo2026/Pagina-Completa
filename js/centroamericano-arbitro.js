@@ -62,20 +62,36 @@
     // y el Blitz: la mesa en un toque» en docs/decisiones/juegos-y-torneos.md.
     const rapido = () => (estado ? C.ritmoRapido(estado.torneo, estado.ritmo) : null);
 
-    // La ficha nueva de cada mesa («A: tres toques»: más corta, el resultado en tres botones que guardan de un toque y las marcas de los dos
-    // jugadores en una sola franja). POR AHORA SOLO PARA QUIEN ESTÁ EN ESTA LISTA, para probarla en una ronda real antes de darla a todos.
-    // El nombre se compara sin tildes ni mayúsculas y basta con que traiga todas las palabras («Oscar Angulo Camacho» sirve). Para probarla
-    // con otro enlace: «?ficha=a» después de la dirección; para volver a la de siempre aun estando en la lista: «?ficha=hoy».
-    // Ver «La ficha de la mesa, opción A» en docs/decisiones/juegos-y-torneos.md.
+    // CÓMO VE CADA ÁRBITRO SUS MESAS. Dos vistas con las MISMAS funciones (llegada, ilegal, se levantó, irregularidad, hablar con el jugador,
+    // foto, tiempos, pedir al principal…): «De siempre» (la ficha completa) y «Tres toques» (la ficha corta: el resultado en tres botones que
+    // guardan de un toque y las marcas de los dos jugadores en una sola franja). Cada uno elige la suya en «Cómo ver mis mesas» y la tablet la
+    // recuerda (localStorage; sin él, vale la de la lista de abajo o la de siempre). En el Blitz siempre va la corta (es lo único que hay).
+    // Quien está en FICHA_A arranca con «Tres toques» hasta que elija otra. El nombre se compara sin tildes ni mayúsculas y basta con que
+    // traiga todas las palabras («Oscar Angulo Camacho» sirve). «?ficha=a» y «?ficha=hoy» después de la dirección fuerzan una u otra (pruebas).
+    // Ver «La ficha de la mesa, opción A» y «Cada árbitro elige cómo ver sus mesas» en docs/decisiones/juegos-y-torneos.md.
     const FICHA_A = ["oscar angulo"];
+    const VISTAS = [
+        { id: "clasica", texto: "De siempre", ayuda: "La ficha completa: cada jugador con sus botones y el resultado en una lista." },
+        { id: "tres", texto: "Tres toques", ayuda: "La ficha corta: el resultado en tres botones que guardan de un toque y las marcas de los dos jugadores juntas." },
+    ];
+    const LLAVE_VISTA = "cam-vista-mesas";
     const sinTildes = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    function fichaA() {
-        const q = location.search || "";
-        if (/[?&]ficha=hoy\b/.test(q)) return false;
-        if (/[?&]ficha=a\b/.test(q)) return true;
-        const n = sinTildes(estado && estado.arbitro);
-        return FICHA_A.some((x) => x.split(" ").every((w) => n.includes(w)));
+    function vistaGuardada() {
+        try { const v = localStorage.getItem(LLAVE_VISTA); return VISTAS.some((x) => x.id === v) ? v : null; } catch (e) { return null; }
     }
+    function guardarVista(v) { try { localStorage.setItem(LLAVE_VISTA, v); } catch (e) { /* sin almacenamiento: vale hasta cerrar la página */ } }
+    let vistaDeEstaSesion = null;   // lo que eligió ahora (por si el navegador no deja guardar)
+    function vistaElegida() {
+        const q = location.search || "";
+        if (/[?&]ficha=hoy\b/.test(q)) return "clasica";
+        if (/[?&]ficha=a\b/.test(q)) return "tres";
+        if (vistaDeEstaSesion) return vistaDeEstaSesion;
+        const guardada = vistaGuardada();
+        if (guardada) return guardada;
+        const n = sinTildes(estado && estado.arbitro);
+        return FICHA_A.some((x) => x.split(" ").every((w) => n.includes(w))) ? "tres" : "clasica";
+    }
+    const fichaA = () => vistaElegida() === "tres";
     const minutosIlegal = () => C.minutosIlegal(rapido());
     const textoMinutos = () => (minutosIlegal() === 1 ? "1 minuto" : "2 minutos");
     // Los tres resultados de siempre, en botones grandes: un toque y se guarda.
@@ -1369,6 +1385,34 @@
 
     // La leyenda de los iconos: en el Blitz solo lo que hay en pantalla (Ilegal, Anular y Principal); sin «Llegó», «Irregularidad», «Se levantó», fotos ni tiempos.
     let leyendaCompleta = null;
+    // «Cómo ver mis mesas»: las vistas como botones de opción (radio) con su explicación. El resumen dice cuál está puesta. Elegir otra
+    // vuelve a armar las tarjetas al instante y la tablet la recuerda. En el Blitz no hay nada que elegir.
+    function pintarVista() {
+        const blitz = rapido() === "blitz";
+        const actual = blitz ? "tres" : vistaElegida();
+        const v = VISTAS.find((x) => x.id === actual);
+        $("vista-mesas").dataset.vista = actual;
+        $("vista-resumen").textContent = "Cómo ver mis mesas · " + v.texto;
+        $("vista-blitz").hidden = !blitz;
+        $("vista-ayuda").textContent = blitz ? "" : "Las dos tienen las mismas funciones; solo cambia cómo se ven. La tablet recuerda tu elección.";
+        const lista = $("vista-lista");
+        if (lista.dataset.armada !== (blitz ? "blitz" : "si")) {
+            lista.dataset.armada = blitz ? "blitz" : "si";
+            lista.replaceChildren(...VISTAS.map((x) => el("label", { class: "cam-vista-opcion" },
+                el("input", { type: "radio", name: "vista-mesas", value: x.id, class: "w-5 h-5", onchange: () => elegirVista(x.id) }),
+                el("span", {}, el("strong", { texto: x.texto }), el("span", { class: "cam-vista-ayuda", texto: x.ayuda })))));
+        }
+        for (const r of lista.querySelectorAll("input")) { r.checked = r.value === actual; r.disabled = blitz; }
+    }
+    function elegirVista(id) {
+        if (!VISTAS.some((x) => x.id === id) || id === vistaElegida()) return;
+        vistaDeEstaSesion = id;
+        guardarVista(id);
+        pintarVista();
+        pintar();
+        avisar("Ves tus mesas con «" + VISTAS.find((x) => x.id === id).texto + "».");
+    }
+
     function pintarLeyenda(blitz) {
         const l = document.querySelector(".cam-leyenda");
         if (!l) return;
@@ -1501,6 +1545,7 @@
         $("modo-rapido").hidden = !r;
         if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
         pintarLeyenda(r === "blitz");
+        pintarVista();
         $("d-arbitro").textContent = estado.arbitro;
         $("d-ronda").textContent = "Ronda " + estado.ronda;
         $("d-mesas").textContent = "Mesas " + estado.desde + " a " + estado.hasta;
