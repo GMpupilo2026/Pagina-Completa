@@ -50,6 +50,21 @@ const PLANILLAS_REALES = require("./lib/planillas-reales");
 
 const { dobleOrganizacion } = require("./lib/doble-centroamericano-organizacion");
 
+// Si las tarjetas miden 0 × 0, esto dice POR QUÉ (qué ancestro las esconde, qué panel se ve, si hay un diálogo abierto): el CI solo enseña el mensaje de
+// la comprobación que falló, así que el motivo tiene que ir ahí.
+async function porQueCero(p) {
+    return p.evaluate(() => {
+        const c = document.querySelector(".cam-mesa");
+        const cadena = [];
+        for (let n = c; n && n !== document.documentElement; n = n.parentElement) {
+            const cs = getComputedStyle(n);
+            if (cs.display === "none" || n.hidden || cs.visibility === "hidden" || n.getBoundingClientRect().height === 0) cadena.push((n.tagName + (n.id ? "#" + n.id : "") + (n.className ? "." + String(n.className).split(" ")[0] : "")) + "{display:" + cs.display + ",hidden:" + !!n.hidden + ",h:" + Math.round(n.getBoundingClientRect().height) + "}");
+        }
+        const ver = (id) => { const e = document.getElementById(id); return e ? (e.hidden ? "oculto" : "visible") : "no existe"; };
+        return JSON.stringify({ cadena, app: ver("app"), problema: ver("problema"), entrada: ver("entrada"), cargando: ver("cargando"), problemaTexto: (document.getElementById("problema-texto") || {}).textContent, dialogoAbierto: !!document.querySelector("dialog[open]"), hash: location.hash.slice(0, 12), ocultaDoc: document.hidden, entradaBody: document.body.dataset.entrada || null });
+    });
+}
+
 async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema = "light" } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: ancho, height: 800 }, acceptDownloads: true, colorScheme: esquema });
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
@@ -249,7 +264,8 @@ const CONTRASTE = `(sel) => {
         await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
             console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
         });
-        return p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+        const m = await p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+        return m.length && m.every((x) => x[1] === 0) ? "MIDEN 0: " + await porQueCero(p) : m;
     };
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
@@ -1102,7 +1118,8 @@ const CONTRASTE = `(sel) => {
         // Igual que «medidas»: si la página se está repintando, las tarjetas miden 0 × 0 un instante; se espera (hasta 8 s) a que tengan tamaño.
         const formas = async (p) => {
             await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(() => console.log("      (las tarjetas siguen midiendo 0 después de 8 s)"));
-            return p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+            const m = await p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
+            return m.length && m.every((x) => x[1] === 0) ? "MIDEN 0: " + await porQueCero(p) : m;
         };
         const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
         await normal.p.waitForSelector(".cam-mesa");
