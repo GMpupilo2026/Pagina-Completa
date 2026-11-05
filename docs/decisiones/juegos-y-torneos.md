@@ -8726,6 +8726,98 @@ resultado).
   al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
   sesión (lo prueba el navegador con un doble, no la función desplegada).
 
+### Leer la partida de las planillas (Centroamericano)
+
+En «Planillas y Drive» de la organización (`centroamericano-mesas.html`), cada foto lleva, al lado
+de «Ver», **«Generar PGN»**: la partida de esa mesa **ahí mismo**, en una fila que se abre debajo de
+su foto (sin ventanita), con la vista previa en un tablero (⏮ ◀ ▶ ⏭ y las flechas) y la descarga o
+la copia del PGN. «Ocultar la partida» la cierra; la tabla se refresca sola cada 30 s y la fila
+abierta se conserva tal cual (`detalle()` devuelve la misma fila). Es para revisar: no anota ni
+cambia ningún resultado. Lo pidió así el dueño: la herramienta es **para las partidas que no se
+transmiten**.
+
+- **Si la mesa se transmite en vivo, sale de la transmisión, no de la foto.** Al pintar la tabla se
+  averigua sola, de a una mesa (todas comparten la ronda de Lichess guardada), cuáles están en la
+  transmisión de la sala del Centroamericano —por los dos nombres y la ronda, con
+  `CentroamericanoTransmisionReloj.buscarPartida()`, la misma búsqueda del control de tiempos, que
+  se separó de `buscar()` para no copiarla—, y cada fila lo dice («📡 Se transmite: sale de
+  Lichess» / «📷 Sin transmisión: sale de la foto»). La de la transmisión es el bloque de esa
+  partida en el PGN de la ronda (`/api/broadcast/round/<id>.pgn`, con sus relojes), con sus jugadas
+  del tablero electrónico: no se lee la letra de nadie ni se gasta el lector. Si sigue en juego, se
+  dice (la transmisión va con atraso) y «Actualizar desde la transmisión» trae lo que siga; ya
+  terminada, se guarda. Solo las clásicas: el Rápido y el Blitz no se fotografían. Si no se sabe si
+  se transmite (Lichess no contesta), **no se gasta una lectura sin preguntar**: «Probar otra vez» o
+  «Leer la foto de todos modos». Con los colores al revés en la transmisión, se lee la foto.
+- **Si no se transmite, de la foto.** **Todo lo que se pueda salvar se salva; lo que ya no tiene
+  salida queda «ilegible» y no se le inventa nada.**
+- **Cómo se lee la foto.** Va del bucket privado a Google Vision por `ocr-scoresheet` (la misma del
+  Lector de planilla, con su tope diario: ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md), a **2600 px** de lado (`leerFoto(…, { maxLado })`): a 1600, cada una
+  de las dos hojas quedaba en unos 800 px, poco para la letra a mano. Las celdas salen de
+  **los números impresos de la planilla** (1 a 60, en tres bloques): cada columna de números da la
+  altura de cada renglón y dónde empiezan Blancas y Negras. Ordenar las palabras por filas de toda
+  la foto (lo que hace el Lector de planilla con una hoja de una columna) mezclaba la jugada 1 con la
+  21 y la 41, y las dos hojas entre sí. Los números se encadenan con el que sigue justo debajo, no
+  por «misma x», y la altura de cada palabra se endereza con la inclinación de su columna: con la
+  foto girada 6° la columna se partía en dos y las Negras caían en el renglón de al lado. Aguanta
+  ±12°, números que el lector no vio, jugadas que llegan en dos palabras y los números del
+  encabezado («Ronda 4», «Mesa 11»). Sin ningún número, se lee por filas y lo dice.
+- **Cómo se arma la partida** (`js/planilla-reconstruir.js`, en su propio hilo:
+  `js/planilla-reconstruir-worker.js`, porque tarda de 5 a 30 s y la organización no puede
+  congelarse con pedidos de ayuda llegando). **No decide jugada por jugada.** El Lector de planilla
+  cambia cada texto por la jugada legal más parecida y sigue; se probó con fotos reales del Drive
+  (ronda 4): en la mesa 5, «Nd2» era ambiguo (podían ir los dos caballos), eligió el equivocado y
+  desde ahí «corrigió» 74 de 106 medias jugadas que estaban bien, sin avisar. Aquí se llevan muchas
+  continuaciones a la vez (búsqueda en haz, 150) y gana la que menos se aparta de lo escrito en toda
+  la partida.
+  - **Las dos planillas a la vez**: cada jugada paga lo lejos que está de lo escrito en cada una
+    (hasta 3). Una planilla corrige a la otra: en la mesa 11 la de negras dice 16. The1 The8 (fue
+    Thf1 Thf8) y leída sola ya no llega a la partida; con la de blancas al lado, sí.
+  - **En inglés o en español**, con o sin la letra que desambigua, la «P» de peón del Caribe
+    («Pe4»), el enroque con ceros, la captura escrita solo con la casilla de llegada. «R» se prueba
+    como torre (inglés) y como rey (español). Las confusiones de la letra («5»/«s», «0»/«O»,
+    «c»/«C») cuestan menos que un cambio cualquiera.
+  - **Una planilla que se saltó o repitió un renglón**: cada hoja puede saltarse una celda o no
+    tener la jugada, con un costo (1,5), así que una planilla corrida se vuelve a alinear sola.
+  - **Un borrón** (una celda sin ninguna letra ni número de ajedrez) no castiga ninguna jugada —si
+    no, saltarse jugadas para esquivarlo salía más barato— pero tampoco respalda ninguna: lo que se
+    puso ahí queda dudoso.
+  - **Cuándo se rinde.** Se mira cuánto respalda lo escrito cada jugada (lo que dice la planilla que
+    MEJOR la respalda; un borrón no respalda nada). Si en TODAS las continuaciones las últimas 6
+    medias jugadas promedian más de 1,5, se corta: se vuelve atrás hasta la última jugada bien
+    leída, y de ahí en adelante es «Ilegible desde la jugada N», con lo que dice cada planilla tal
+    cual. No se sigue buscando. Una planilla manchada desde la media jugada 25 da 24 jugadas, no 50
+    inventadas.
+  - **Cada jugada dice cómo se leyó**: tal cual (sin marca), corregida (*: lo escrito no era
+    exacto, o una de las dos planillas decía otra cosa) o dudosa (?: se parece poco, o otra
+    partida casi igual de buena dice otra cosa aquí; por ejemplo «Nd7» escrito en las dos cuando
+    podían ir los dos caballos). La marca va escrita, no solo en color, y al tocarla dice qué
+    estaba escrito en cada planilla.
+- **El PGN** lleva el torneo, la ronda, el día de la foto (en hora de Costa Rica), los jugadores y
+  «Leída de la foto de las planillas (mesa N)»; si se cortó, termina en «*» con el comentario
+  «Desde aquí la planilla es ilegible (jugada N)». El resultado no se lee de la casilla de la
+  planilla: solo se pone si la partida termina en mate. El nombre del archivo va sin tildes (el
+  Chromium de las pruebas cambia «Acuña» por «download»); dentro, los nombres van tal cual.
+- **Privacidad**: la foto va a Google Vision como la del Lector de planilla; `privacidad.html` lo
+  dice en la línea de Google (sin cambiar la versión: se agregó el mismo día de la última).
+- **No se paga dos veces**: lo leído se guarda en ese navegador por foto (`cam-partida-leida:`,
+  con la hora de subida: una foto nueva de la misma mesa se vuelve a leer). «Volver a leer la
+  foto» sí gasta otra lectura.
+- **El tablero** es el de solo mirar (`js/tablero-fen.js`), con las coordenadas por fuera y las
+  piezas y casillas que eligió cada quien (la página entró a `tablero-cabecera.py`).
+- `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
+  `append` no): lo que no va se saca antes; lo comprueba el verificador.
+- Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de
+  verdad de las mesas 5, 7 y 11, en `herramientas/lib/planillas-reales.js`, solo las jugadas y sin
+  nombres; y fotos sintéticas, `herramientas/lib/planilla-sintetica.js`) y
+  `verificar-centroamericano-mesas-pagina.js` (la pantalla: la mesa que se transmite sale de un
+  Lichess de mentira sin leer la foto, con su PGN y sus relojes; la que no, de un Vision de mentira:
+  lo salvado, lo ilegible, las marcas, el tablero, el PGN, que la fila sigue abierta al refrescar,
+  que abrirla otra vez no gasta, y el contraste en claro y en oscuro). **Sin probar de verdad**: Google Vision con estas fotos (la función pide la sesión de
+  una cuenta). Las planillas que se usaron para probar se transcribieron mirando las fotos; lo
+  que Vision lea de la letra a mano puede ser peor, y los costos (1,5, 3, el promedio de 1,5)
+  conviene ajustarlos con las primeras fotos de verdad.
+
 ### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
 
 Lo que pidió el dueño después: que **un árbitro pueda tener mesas de torneos distintos**; que

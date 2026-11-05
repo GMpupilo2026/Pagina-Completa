@@ -1036,3 +1036,39 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .tx-color[data-color="blancas"] { background: #fff; color: var(--cac-morado-hondo); }
 .tx-color[data-color="negras"] { background: var(--cac-morado-hondo); color: #fff; }
 .dark .tx-color[data-color="negras"] { border-color: #fff; }
+
+/* «Generar PGN» (js/centroamericano-leer-partida.js): la partida en una fila debajo de la foto,
+   el tablero de solo mirar (.cine-tablero de styles.css) y las jugadas con su marca escrita
+   (* corregida, ? dudosa): el color ayuda, pero el dato va también en el texto. */
+.cam-lp-fila > td { background: #f6f6fd; padding: 0.8rem; }
+.dark .cam-lp-fila > td { background: rgb(var(--c-brand-900, 10 31 51)); }
+.cam-lp-fuente { display: block; white-space: normal; font-size: 0.8rem; margin-top: 0.25rem; max-width: 16rem; }
+.cam-lp-enlace { text-decoration: underline; font-weight: 700; }
+.cam-lp { width: 100%; display: grid; gap: 0.75rem; text-align: left; justify-items: stretch; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(250 204 21 / 0.45); }
+.cam-lp-estado { font-weight: 700; }
+.cam-lp-titular { font-weight: 800; font-size: 1.05rem; }
+.cam-lp-ilegible { border: 2px solid #b45309; background: #fffbeb; color: #78350f; border-radius: 0.6rem; padding: 0.6rem 0.8rem; }
+.cam-lp-ilegible ul { list-style: disc; padding-left: 1.2rem; margin-top: 0.3rem; overflow-wrap: anywhere; }
+.cam-lp-zona { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 44rem) { .cam-lp-zona { grid-template-columns: minmax(0, 1fr); } }
+.cam-lp-marco { padding: 0 0 18px 18px; max-width: 26rem; margin: 0; }  /* aire para las coordenadas por fuera */
+.cam-lp-controles { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.cam-lp-linea { margin-top: 0.4rem; min-height: 3em; font-size: 0.95rem; }
+.cam-lp-leyenda { font-size: 0.85rem; margin-bottom: 0.3rem; }
+.cam-lp-lista { max-height: 24rem; overflow: auto; border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.4rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.15rem 0.6rem; }
+.cam-lp-lista li { display: flex; align-items: center; gap: 0.25rem; }
+.cam-lp-num { min-width: 2rem; text-align: right; color: #4b4f7a; font-size: 0.85rem; }
+.cam-lp-jugada { border: 1px solid transparent; border-radius: 0.3rem; padding: 0.05rem 0.35rem; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.cam-lp-jugada:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 1px; }
+.cam-lp-corregida { background: #e0f2fe; border-color: #0369a1; color: #0c4a6e; }
+.cam-lp-dudosa { background: #fef3c7; border-color: #b45309; color: #78350f; font-weight: 700; }
+/* la jugada que está en el tablero: gana sobre corregida/dudosa, también en oscuro */
+.cam-lp-lista .cam-lp-jugada[aria-current="true"] { background: var(--cac-morado-hondo); color: #fff; border-color: var(--cac-morado-hondo); outline: 2px solid var(--cac-naranja); outline-offset: 1px; }
+.dark .cam-lp-lista .cam-lp-jugada[aria-current="true"] { background: #fff; color: #1e1b4b; border-color: #fff; }
+.cam-lp-nota { font-size: 0.85rem; }
+.cam-celda-acciones { white-space: nowrap; }
+.cam-celda-acciones > .cam-btn + .cam-btn { margin-left: 0.3rem; }
+.dark .cam-lp-ilegible { background: #451a03; color: #fde68a; border-color: #f59e0b; }
+.dark .cam-lp-corregida { background: #0c4a6e; color: #e0f2fe; border-color: #7dd3fc; }
+.dark .cam-lp-dudosa { background: #78350f; color: #fef3c7; border-color: #fcd34d; }
+.dark .cam-lp-num { color: #c9cbee; }
