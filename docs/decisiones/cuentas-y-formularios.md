@@ -1703,6 +1703,51 @@ un Drive, ordenado por torneo y, si es una delegación, en su carpeta:
 - La forma de las carpetas la decide la función (`carpetasDe`), y
   `verificar-metropolitano.js` la prueba con el mismo código.
 
+#### Los correos de confirmación
+
+Pedido del dueño: al inscribirse, un correo de confirmación.
+
+- **Quién lo recibe**: el correo del envío (la persona sola, o quien inscribe
+  la delegación) recibe uno con todas las personas, el código MET-… de cada
+  una y el total; cada integrante que dejó un correo suyo, distinto, recibe el
+  suyo («… te inscribió»). Una dirección nunca recibe dos del mismo envío. Lo
+  arma `supabase/functions/metropolitano-correo/correo.ts`, sin red, y el
+  verificador lo prueba con el mismo código.
+- **Qué dice**: el rol, los torneos y el ID FIDE, el monto (con el IVA si pidió
+  factura) y que el pago está por revisar, el hospedaje (de la organización
+  para los titulados) con lo esencial de sus condiciones —la puerta a las
+  10:30 p.m. y la ropa de cama— y el enlace a todas, el parqueo con su placa,
+  «Mi ronda y mi mesa» de cada jugador (el mismo enlace del QR del gafete), la
+  página del torneo, el grupo de WhatsApp y a quién escribir para corregir.
+  Lleva la franja de Ajedrez Integral (`marca-correo.ts`, dentro de su tabla:
+  una fila suelta la botan muchos programas de correo). Sale de
+  `informes@ajedrez-integral.com` con el nombre «Metropolitano 2026», y
+  contestarlo le escribe a `metropolitano@fcacostarica.com`.
+- **Cómo sale**: la Edge Function `metropolitano-correo` (verify_jwt en false).
+  La base la llama apenas se guarda una inscripción: el trigger
+  `metropolitano_correo_avisa`, por sentencia y una sola vez por transacción
+  (una marca con `set_config`), encola el pedido en pg_net, que sale solo si la
+  inscripción se guardó. Cada 10 minutos pg_cron vuelve a llamarla para lo que
+  no salió, hasta 3 intentos. Trae el secreto `metropolitano_correo_aviso` de
+  la bóveda.
+- **Nunca dos veces**: la función de inscribir mete a cada persona de una
+  delegación con su propio insert, y dos llamadas (el trigger y pg_cron)
+  pueden coincidir. Por eso la función «toma» lo pendiente en un solo update
+  (`confirmacion_tomado`) antes de mandar: otra llamada que corra a la vez ya
+  no ve esas filas. Una tomada hace más de 5 minutos se puede volver a tomar.
+- **Si no sale**: queda `confirmacion_error` con el motivo (también si Resend
+  lo descartó porque la dirección rebotó antes, `envioFallido`) y se reintenta.
+  Si sale el del envío, se marca toda la delegación (`confirmacion_en`); el
+  correo propio de un integrante que falla se anota y no se reintenta.
+- **En la lista de inscritos**: cada inscripción dice cómo va su correo
+  («Por mandar», «Enviado el …» o el error), las cifras cuentan los que no
+  salieron, y «✉ Reenviar el correo de confirmación» lo vuelve a mandar (a la
+  delegación entera, si es de una), solo para administración.
+- El mensaje final de la inscripción avisa que el correo llega en un momento y
+  que se revise el correo no deseado.
+- Probado: sin sesión ni secreto, la función contesta 401; llamada por la base
+  con el secreto, 200 sin nada pendiente.
+
 #### Las condiciones del hospedaje
 
 Pedido del dueño: el hospedaje es dentro del Estadio Nacional, una
