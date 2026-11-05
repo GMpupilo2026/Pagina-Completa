@@ -9283,6 +9283,23 @@ inmediato.
   en que se cumplieron y dónde empezó la cuenta; si ya van 75, sale solo el aviso de las 75. El verificador arma una
   partida de verdad con chess.js (la primera jugada en orden que no mueve un peón, no captura, no da jaque ni repite)
   y comprueba que se cumplen en la jugada 52, ni una antes.
+  **La bandera caída** (art. 6.9; lo pidió el dueño el 5/11): a quien le corre el reloj se le acabó el tiempo y la
+  partida sigue sin resultado. Con el reloj en vivo de LiveChess (`clock`: `white`/`black` en segundos, `run` true si
+  corre el de las blancas, false si el de las negras, null si está detenido, y `time`, la hora de esa lectura) se usa
+  ese, la misma regla del encargado de transmisión (`js/centroamericano-transmision.js`); detenido (lo paró el árbitro)
+  no hay bandera. Sin reloj en vivo, el último reloj de quien tiene el turno menos lo que pasó desde la jugada del
+  rival, y solo si el tablero sigue transmitiendo. Se mira **cada segundo** (el reloj corre entre lecturas), pero solo
+  con datos de hace menos de 30 s: una tablet sin señal no inventa una bandera. El aviso (⚑) dice el color y la mesa,
+  que lo confirme en el reloj de la mesa, y el 6.9 (pierde, salvo que el rival no pueda dar mate: tablas); si al rival
+  solo le queda el rey, lo dice. Sale una vez por mesa y posición.
+  **La posible jugada ilegal** (lo pidió el dueño el 5/11), con dos señales, las mismas del encargado de transmisión:
+  (1) una **jugada imposible** en la transmisión (chess.js no la acepta: una ilegal, o una pieza mal puesta o mal leída),
+  que avisa enseguida con la jugada en la notación de la planilla («3. Re3»); desde ahí no se sigue la partida (la
+  posición, las tablas y el control salen de lo que sí se jugó); y (2) **el reloj que corre para quien ya jugó** según
+  el tablero: su rival apretó el reloj, pero el tablero no registró su jugada. Esa solo avisa si sigue así **8 s** (un
+  reloj apretado justo cuando se lee no es una jugada perdida) y si la lectura del reloj es de después de la última
+  jugada registrada. El aviso (⚠ «Posible jugada ilegal») no decide nada: pide mirar la mesa y recuerda el 7.5.5 (la
+  primera da 2 minutos al rival, la segunda pierde). Con la partida terminada no avisa.
   «Ver la posición» abre «Mis mesas en vivo» en esa mesa; «Entendido» la quita. Sale una vez por mesa, tipo y jugada.
 - Lo prueban `verificar-centroamericano-mesas-vivo.js` (las jugadas y su hora, el control, la triple en su jugada, la
   quíntuple, que la alerta no se repite, la notación, que la función no devuelve el id y que el enlace no está en el
