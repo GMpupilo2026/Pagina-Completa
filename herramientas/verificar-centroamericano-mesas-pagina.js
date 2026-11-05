@@ -20,7 +20,12 @@
    una casilla por torneo), los pedidos de ayuda que llegan solos con su contador y
    «Atendido», los avisos a un árbitro, a un torneo o a todos con quién ya los leyó, los
    enlaces agrupados por torneo y ordenados por mesa, un árbitro por definir (crearlo,
-   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF.
+   repartir las mesas entre varios, ponerle nombre, cambiarle las mesas), apagarlo y el PDF; y
+   «Generar PGN» de cada foto de planillas, ahí mismo en la tabla: la mesa que se transmite sale
+   de Lichess (simulado) sin leer la foto; la que no, de la foto con un Google Vision de mentira
+   (lo salvado, lo ilegible, las marcas, el tablero, el PGN, «Descargar la lectura» y que abrirla de
+   nuevo no gasta), y la tabla agrupada por torneo y ronda, como el Drive, con el enlace directo al PGN de
+   las partidas transmitidas de cada ronda (la búsqueda, solo en el torneo de Lichess de su categoría).
 
    Ver «Mesas de los árbitros del Centroamericano» en docs/decisiones/juegos-y-torneos.md.
 
@@ -40,6 +45,8 @@ function igual(nombre, hallado, esperado) {
 }
 
 const { MESAS, SERVIDOR_ARBITRO, dobleArbitro } = require("./lib/doble-centroamericano-arbitro");
+const { palabrasDePlanillas } = require("./lib/planilla-sintetica");
+const PLANILLAS_REALES = require("./lib/planillas-reales");
 
 // El programa de la organización: los 12 torneos (3 de muestra), sus enlaces, el avance, los avisos,
 // las planillas, las copias y el registro.
@@ -192,6 +199,43 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema =
     p.on("pageerror", (e) => errores.push(e.message));
     await p.goto(BASE + "/" + pagina + (hash ? "#" + hash : ""), { waitUntil: "load" });
     return { ctx, p, errores };
+}
+
+// Lichess simulado: la sala del Centroamericano transmite «Open U10» (el Sub-10 Absoluto, con el nombre que le pone
+// Lichess), con la ronda 3 en curso (atraso de 1 min).
+// En la transmisión están la mesa 9 (Eli Uno – Fran Dos, para los relojes) y la 3 de la ronda 3 (Hopkins – Baquero,
+// ya terminada, con su PGN: para «Generar PGN», que la saca de ahí sin leer la foto). La mesa 2 no se transmite.
+const PGN_TRANSMISION = `[Event "Centroamericano 2026 | Sub-10 Abs"]
+[Site "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3"]
+[Round "3.3"]
+[White "Hopkins, John"]
+[Black "Baquero Graterol"]
+[Result "1-0"]
+[GameURL "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3"]
+
+1. e4 { [%clk 1:30:10] } 1... e5 { [%clk 1:30:05] } 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Centroamericano 2026 | Sub-10 Abs"]
+[Round "3.9"]
+[White "Uno, Eli"]
+[Black "Dos, Fran"]
+[Result "*"]
+[GameURL "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x2"]
+
+1. d4 d5 *
+`;
+async function simularLichess(pagina, pedidos) {
+    await pagina.context().route(/lichess\.org\/api\//, (r) => {
+        const u = r.request().url(); pedidos.push(u);
+        if (/\/api\/broadcast\/AbCd1234$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ tour: { id: "AbCd1234", name: "Centroamericano 2026 | Open U10" }, rounds: [{ id: "RoNdA002", name: "Round 2", finished: true }, { id: "RoNdA003", name: "Round 3", ongoing: true }] }) });
+        if (/\/api\/broadcast\/-\/-\/RoNdA003$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ round: { id: "RoNdA003", name: "Round 3", delay: 60 }, games: [
+            { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
+            { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] },
+            { id: "x3", fen: "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", status: "1-0", players: [{ name: "Hopkins, John", clock: 540000 }, { name: "Baquero Graterol", clock: 538000 }] }] }) });
+        if (/\/api\/broadcast\/round\/RoNdA003\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION });
+        return r.fulfill({ status: 404, body: "{}" });
+    });
+    await pagina.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
 }
 
 // El contraste de lo que se ve: el color del texto contra el fondo opaco más cercano.
@@ -1369,6 +1413,27 @@ const CONTRASTE = `(sel) => {
     await pv.click("#ver-vivo");
     await pv.waitForSelector('#mesas-en-vivo[open] .cv-mesa[data-repeticion="si"]');
     igual("en «Mis mesas en vivo», la mesa dice la repetición y la que no reconoce, que va a mano", await pv.evaluate(() => [/Triple repetición \(con 20… Ag7\)/.test(document.querySelector('.cv-mesa[data-mesa="2"] .cv-repeticion').textContent), /Mesa 1: En la transmisión, el tablero 1 tiene otros jugadores\. Anota a mano como siempre\./.test(document.getElementById("mesas-en-vivo").textContent)]), [true, true]);
+    // La bandera caída: el reloj en vivo de LiveChess dice que corre el de las negras y ya no les queda tiempo.
+    await pv.click('#mesas-en-vivo .cam-dialogo-titulo button');
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke;
+        window.sb.functions.invoke = (f, o) => f !== "centroamericano-mesas-vivo" ? antes(f, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 1, fuente: "livechess", jugadas: ["e4 5457+5", "c5 40+20", "Nf3 5482+5"], primera: Date.now() - 60000, en_vivo: true, estado: "*", reloj: { white: 5400, black: 2, run: false, time: Date.now() - 5000 } }] }, error: null });
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"][data-mesa="1"]', { timeout: 5000 });
+    igual("la bandera caída le llega al árbitro arriba de todo, con el color, la mesa y el art. 6.9", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]'); return [a.getAttribute("role"), /Bandera caída · Mesa 1/.test(a.textContent), /a las negras de la mesa 1 se les acabó el tiempo/.test(a.textContent), /art\. 6\.9/.test(a.textContent)]; }), ["alert", true, true, true]);
+    await pv.waitForTimeout(1500);
+    igual("y no se repite en los latidos siguientes", await pv.$$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]', (l) => l.length), 1);
+    // La jugada imposible en la transmisión (el rey de e1 a e3): el aviso de posible jugada ilegal.
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke;
+        window.sb.functions.invoke = (f, o) => f !== "centroamericano-mesas-vivo" ? antes(f, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Nf3 5480+10", "Nc6 5450+20", "Ke3 5470+10"], primera: Date.now() - 100000, en_vivo: true, estado: "*" }] }, error: null });
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"][data-mesa="2"]', { timeout: 5000 });
+    igual("una jugada imposible en la transmisión le llega como posible jugada ilegal, con la jugada y el art. 7.5.5", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'); return [/Posible jugada ilegal · Mesa 2/.test(a.textContent), /jugada imposible \(3\. Re3\)/.test(a.textContent), /7\.5\.5/.test(a.textContent)]; }), [true, true, true]);
     igual("sin errores en la página", vv.errores, []);
     await vv.ctx.close();
 
@@ -1638,15 +1703,7 @@ const CONTRASTE = `(sel) => {
     // Los relojes de la transmisión de Lichess como control (js/centroamericano-transmision-reloj.js): la sala dice qué se transmite,
     // la ronda dice su atraso y la partida (por los dos nombres) sus relojes. Lichess, simulado; nada se pide hasta tocar el botón.
     const pedidosLichess = [];
-    await q.context().route(/lichess\.org\/api\//, (r) => {
-        const u = r.request().url(); pedidosLichess.push(u);
-        if (/\/api\/broadcast\/AbCd1234$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ tour: { id: "AbCd1234", name: "Centroamericano 2026 | Sub-10 Abs" }, rounds: [{ id: "RoNdA002", name: "Round 2", finished: true }, { id: "RoNdA003", name: "Round 3", ongoing: true }] }) });
-        if (/\/api\/broadcast\/-\/-\/RoNdA003$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ round: { id: "RoNdA003", name: "Round 3", delay: 60 }, games: [
-            { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
-            { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] }] }) });
-        return r.fulfill({ status: 404, body: "{}" });
-    });
-    await q.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
+    await simularLichess(q, pedidosLichess);
     igual("la calculadora ofrece buscar la mesa en la transmisión, sin pedirle nada a Lichess antes de tocarlo", [await q.$eval("#ct-apagado .ra-tx-buscar", (b) => [b.textContent, b.checkVisibility()]), pedidosLichess.length], [["Buscar esta mesa en la transmisión", true], 0]);
     await q.click("#ct-apagado .ra-tx-buscar");
     await q.waitForSelector("#ct-apagado .ra-tx-usar");
@@ -1675,14 +1732,87 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== La organización: planillas y Drive ===");
     await q.click("#pest-planillas");
     await q.waitForSelector("#planillas tr");
-    igual("las fotos salen ordenadas por torneo, ronda y mesa, con el nombre del enfrentamiento y si ya están en el Drive", await q.$$eval("#planillas tr", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[6].textContent])),
+    igual("como en el Drive: un encabezado por torneo y ronda, con cuántas fotos tiene", await q.$$eval("#planillas tr.cam-pl-grupo th", (l) => l.map((th) => [th.firstChild.textContent, th.getAttribute("colspan")])), [["Sub-10 Absoluto · Ronda 3 · 2 fotos", "8"]]);
+    igual("las fotos salen ordenadas por torneo, ronda y mesa, con el nombre del enfrentamiento y si ya están en el Drive", await q.$$eval("#planillas tr.cam-pl-fila", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[6].textContent])),
         [["3", "2", "Harvey Ian vs Acuña Porras Fabio", "✓ En el Drive"], ["3", "3", "Hopkins John vs Baquero Graterol", "Pendiente"]]);
     await q.waitForFunction(() => document.getElementById("drive-estado").textContent.length > 0);
     igual("dice que el Drive no está conectado y que las fotos están a salvo mientras tanto", [await q.getAttribute("#drive-estado", "data-estado"), (await q.textContent("#drive-estado")).includes("todavía no está conectado")], ["no", true]);
-    await q.click('#planillas tr:first-child [data-accion="ver-foto"]');
+    await q.click('#planillas tr.cam-pl-grupo + tr.cam-pl-fila [data-accion="ver-foto"]');
     await q.waitForSelector("dialog.cam-dialogo[open] img");
     igual("«Ver» abre la foto desde el bucket privado (con un enlace que vence)", await q.evaluate(() => [window.__llamadas.filter((l) => l.foto).map((l) => l.foto), document.querySelector("dialog.cam-dialogo img").alt]), [["centroamericano-planillas/1529733/ronda-3/mesa-2-planillas.jpg"], "Foto de las dos planillas de la mesa 2: Harvey Ian vs Acuña Porras Fabio"]);
     await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+
+    // «Generar PGN»: un Google Vision de mentira que devuelve la foto de las dos planillas de la mesa 11 de la ronda 4
+    // (de verdad, con su desacuerdo en la jugada 16) y, desde la jugada 17, basura en las dos. La mesa 2 no se transmite
+    // (sale de la foto); la 3 sí (sale de Lichess, sin leer la foto).
+    const BASURA = ["qz", "Lw", "m3m", "zz", "uu", "k9", "pp", "XX", "Ww", "yy", "j7", "vv"];
+    const palabrasFoto = palabrasDePlanillas([PLANILLAS_REALES.mesa11.blancas.slice(0, 32).concat(BASURA), PLANILLAS_REALES.mesa11.negras.slice(0, 32).concat(BASURA.slice().reverse())], { giro: 3, partir: true });
+    let lecturasVision = 0;
+    await q.context().route("**/functions/v1/ocr-scoresheet", (rr) => { lecturasVision++; rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }); });
+    const botonPgn = (mesa) => q.locator("#planillas tr.cam-pl-fila").nth(mesa === 2 ? 0 : 1).locator('[data-accion="generar-pgn"]');
+    igual("cada foto tiene su «Generar PGN» ahí mismo, al lado de «Ver»", await q.$$eval("#planillas tr.cam-pl-fila", (l) => l.map((tr) => [...tr.lastElementChild.querySelectorAll("button")].map((b) => b.textContent))), [["Ver", "Generar PGN"], ["Ver", "Generar PGN"]]);
+    await q.waitForFunction(() => [...document.querySelectorAll(".cam-lp-fuente")].every((x) => x.dataset.fuente && x.dataset.fuente !== "buscando"));
+    await q.waitForSelector('.cam-pl-tx [data-accion="pgn-ronda"]');
+    igual("el encabezado del torneo y la ronda trae el enlace directo al PGN de todas sus partidas transmitidas, para recolectarlas", await q.$eval('.cam-pl-tx [data-accion="pgn-ronda"]', (a) => [a.textContent, a.href]),
+        ["📡 PGN de las 3 partidas transmitidas", "https://lichess.org/api/broadcast/round/RoNdA003.pgn"]);
+    igual("la búsqueda va directo al torneo de Lichess de su categoría (Sub-10 Absoluto → Open U10)", await q.evaluate(() => [window.CentroamericanoTransmisionReloj.torneoDeCategoria([{ id: "a", nombre: "X | Girls U10" }, { id: "b", nombre: "X | Open U10" }, { id: "c", nombre: "X | Open U18" }], "Sub-10 Absoluto").map((t) => t.id),
+        window.CentroamericanoTransmisionReloj.torneoDeCategoria([{ id: "a", nombre: "X | Girls U08" }, { id: "b", nombre: "X | Open U08" }], "Sub-8 Femenino").map((t) => t.id)]), [["b"], ["a"]]);
+    igual("la tabla averigua sola cuáles se transmiten y lo dice en cada fila (sin leer ninguna foto)", [await q.$$eval(".cam-lp-fuente", (l) => l.map((x) => x.textContent)), lecturasVision],
+        [["📷 Sin transmisión: sale de la foto", "📡 Se transmite: sale de Lichess"], 0]);
+
+    await botonPgn(2).click();
+    await q.waitForSelector(".cam-lp-fila .cam-lp-titular", { timeout: 120000 });
+    igual("la partida se abre ahí mismo, en la fila de debajo de su foto, sin ventanita", await q.evaluate(() => { const f = document.querySelector(".cam-lp-fila"); const b = document.querySelector('#planillas tr.cam-pl-fila [data-accion="generar-pgn"]');
+        return [f.previousElementSibling === b.closest("tr"), b.getAttribute("aria-expanded"), b.getAttribute("aria-controls") === f.id, b.textContent, !document.querySelector("dialog[open]")]; }), [true, "true", true, "Ocultar la partida", true]);
+    igual("la mesa sin transmisión se lee de la foto (bucket privado y lector) y dice hasta dónde se salvó", [await q.textContent(".cam-lp-fila .cam-lp-titular"), await q.evaluate(() => window.__llamadas.filter((l) => l.foto).length), lecturasVision],
+        ["Leída de la foto: se pudieron salvar 32 medias jugadas, hasta la jugada 16 de las negras.", 2, 1]);
+    igual("desde ahí: «Ilegible», con lo que dicen las planillas, sin inventar jugadas", await q.evaluate(() => { const c = document.querySelector(".cam-lp-ilegible"); return [c.checkVisibility(), c.querySelector("strong").textContent, c.textContent.includes("qz · Lw · m3m")]; }), [true, "⚠ Ilegible desde la jugada 17 de las blancas.", true]);
+    igual("las 32 jugadas, en español; donde las planillas no coincidían (16. Thf1 / The1) sale marcada con * y dice qué decía cada una", await q.evaluate(() => { const b = [...document.querySelectorAll(".cam-lp-fila .cam-lp-jugada")]; return [b.length, b[0].textContent, b[30].textContent, b[30].title]; }),
+        [32, "e4", "Thf1 *", "corregida · escrito: Thf1 | The1"]);
+    igual("la vista previa muestra la última jugada salvada en el tablero y la dice en palabras", await q.evaluate(() => [[...document.querySelectorAll(".cam-lp-tablero .cine-sq > span")].filter((x) => x.checkVisibility()).length > 10, document.querySelector(".cam-lp-linea").textContent.startsWith("16… Thf8"), document.querySelector(".cam-lp-jugada[aria-current='true']").textContent]), [true, true, "Thf8 *"]);
+    await q.click('.cam-lp-controles [aria-label="Al inicio"]');
+    await q.click('.cam-lp-controles [aria-label="Jugada siguiente"]');
+    igual("se recorre con ⏮ ◀ ▶ ⏭ y con las flechas", [await q.textContent(".cam-lp-linea"), await (async () => { await q.keyboard.press("ArrowRight"); return q.textContent(".cam-lp-linea"); })()],
+        ["1. e4 — leída tal cual. En la planilla: «e4» y «e4».", "1… c6 — leída tal cual. En la planilla: «c6» y «c6»."]);
+    const [pgnBajado] = await Promise.all([q.waitForEvent("download"), q.click('.cam-lp-fila [data-accion="bajar-pgn"]')]);
+    const pgnTexto = fs.readFileSync(await pgnBajado.path(), "utf8");
+    igual("el PGN se baja con el torneo, la ronda, el día y los jugadores (con sus tildes), termina en «*» y dice desde dónde es ilegible", [pgnBajado.suggestedFilename(), pgnTexto.includes('[Round "3"]'), pgnTexto.includes('[White "Harvey Ian"]'), pgnTexto.includes('[Black "Acuña Porras Fabio"]'), /\[Date "\d{4}\.\d\d\.\d\d"\]/.test(pgnTexto), /\{Desde aquí la planilla es ilegible \(jugada 17\)\.\}\s+\*\s*$/.test(pgnTexto)],
+        ["Mesa 02 - Ronda 3 - Harvey Ian vs Acuna Porras Fabio.pgn", true, true, true, true, true]);
+    // «Descargar la lectura»: lo que devolvió Vision, tal cual, y lo que salió de eso (para afinar el corrector con datos reales)
+    const [lecturaBajada] = await Promise.all([q.waitForEvent("download"), q.click('.cam-lp-fila [data-accion="bajar-lectura"]')]);
+    const lectura = JSON.parse(fs.readFileSync(await lecturaBajada.path(), "utf8"));
+    const Rec = require("../js/planilla-reconstruir.js");
+    igual("«Descargar la lectura» baja lo que devolvió Vision tal cual (cada palabra con su caja) y lo que salió de eso, sin los nombres en el archivo",
+        [lecturaBajada.suggestedFilename(), lectura.palabras.length === palabrasFoto.length, JSON.stringify(lectura.palabras[0]) === JSON.stringify(palabrasFoto[0]), lectura.metodo, lectura.hojas.length, lectura.partida.jugadas.length, lectura.partida.ilegibleDesde, lectura.partida.jugadas[30].escrito],
+        ["lectura-mesa-02-ronda-3-1529733.json", true, true, "numeros", 2, 32, 32, ["Thf1", "The1"]]);
+    igual("…y sus palabras, pasadas otra vez por el lector, dan las mismas celdas que vio la página", JSON.stringify(Rec.hojasDeLaFoto(lectura.palabras).hojas) === JSON.stringify(lectura.hojas), true);
+    igual("en claro, lo marcado y el aviso de ilegible dan 4,5:1 o más", Math.min(...await q.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota, .cam-lp-titular, .cam-lp-fuente, .cam-lp-fila p") + ")")) >= 4.5, true);
+    const llamadasAntes = await q.evaluate(() => window.__llamadas.length);
+    await q.click("#pl-actualizar");
+    await q.waitForFunction((n) => window.__llamadas.length > n || document.querySelectorAll("#planillas tr").length > 0, llamadasAntes);
+    await q.waitForTimeout(500);
+    igual("la tabla se refresca y la partida abierta sigue ahí, sin volver a leer la foto", [await q.$$eval(".cam-lp-fila .cam-lp-titular", (l) => l.length), lecturasVision, await botonPgn(2).textContent()], [1, 1, "Ocultar la partida"]);
+
+    await botonPgn(3).click();
+    await q.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2);
+    igual("la mesa que se transmite sale sola de Lichess: sus jugadas y el resultado, sin leer la foto",
+        [...await q.evaluate(() => { const f = document.querySelectorAll(".cam-lp-fila")[1]; return [f.querySelector(".cam-lp-titular").textContent, [...f.querySelectorAll(".cam-lp-jugada")].map((b) => b.textContent).join(" "), f.querySelector(".cam-lp-enlace").href, !f.querySelector(".cam-lp-leyenda")]; }), lecturasVision],
+        ["De la transmisión en vivo de Lichess: 7 medias jugadas · 1-0.", "e4 e5 Ac4 Cc6 Dh5 Cf6 Dxf7#", "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3", true, 1]);
+    igual("ninguna de las dos dice «null» ni «undefined» en ningún lado", await q.$$eval(".cam-lp-fila", (l) => l.map((f) => /\bnull\b|undefined/.test(f.textContent))), [false, false]);
+    const [pgnTx] = await Promise.all([q.waitForEvent("download"), q.locator('.cam-lp-fila [data-accion="bajar-pgn"]').nth(1).click()]);
+    const pgnTxTexto = fs.readFileSync(await pgnTx.path(), "utf8");
+    igual("la de la transmisión no tiene «Descargar la lectura» (no se leyó ninguna foto)", await q.locator(".cam-lp-fila").nth(1).locator('[data-accion="bajar-lectura"]').count(), 0);
+    igual("su PGN es el de la transmisión (solo esa partida, con sus relojes)", [pgnTx.suggestedFilename(), pgnTxTexto.includes('[White "Hopkins, John"]'), pgnTxTexto.includes("[%clk 1:30:10]"), pgnTxTexto.includes("Uno, Eli")],
+        ["Mesa 03 - Ronda 3 - Hopkins John vs Baquero Graterol.pgn", true, true, false]);
+    for (const mesa of [2, 3]) await botonPgn(mesa).click();
+    igual("«Ocultar la partida» la cierra", [await q.$$eval(".cam-lp-fila", (l) => l.length), await q.$$eval('[data-accion="generar-pgn"]', (l) => l.map((b) => [b.textContent, b.getAttribute("aria-expanded")]))], [0, [["Generar PGN", "false"], ["Generar PGN", "false"]]]);
+    await botonPgn(2).click();
+    await q.waitForSelector(".cam-lp-fila .cam-lp-titular");
+    igual("abrirla otra vez no gasta otra lectura (quedó guardada en este navegador)", lecturasVision, 1);
+    await q.click('.cam-lp-fila [data-accion="volver-a-leer"]');
+    await q.waitForFunction(() => document.querySelector(".cam-lp-fila .cam-lp-titular"), null, { timeout: 120000 });
+    igual("«Volver a leer la foto» sí la vuelve a leer", lecturasVision, 2);
+    await botonPgn(2).click();
     await q.evaluate(() => { document.getElementById("drive-conectar-caja").open = true; });
     await q.fill("#drive-url", "https://script.google.com/macros/s/" + "A".repeat(30) + "/exec");
     await q.fill("#drive-secreto", "MALOMALOMALOMALOMALOMALOMALOMALOMALO");
@@ -1695,7 +1825,7 @@ const CONTRASTE = `(sel) => {
     igual("conectado: dice la carpeta, vacía las casillas y ya no guarda el secreto en el navegador", [await q.textContent("#drive-conectar-estado"), await q.inputValue("#drive-secreto"), await q.evaluate(() => JSON.stringify(localStorage).includes("BUENOBUENO"))], ["✓ Conectado. Carpeta: «Planillas Centroamericano».", "", false]);
     await q.click("#drive-reintentar");
     await q.waitForFunction(() => document.querySelectorAll('#planillas tr[data-drive="si"]').length === 2);
-    igual("«Mandar al Drive las que faltan» las manda y la tabla lo muestra", await q.$$eval("#planillas tr", (l) => l.map((tr) => tr.children[6].textContent)), ["✓ En el Drive", "✓ En el Drive"]);
+    igual("«Mandar al Drive las que faltan» las manda y la tabla lo muestra", await q.$$eval("#planillas tr.cam-pl-fila", (l) => l.map((tr) => tr.children[6].textContent)), ["✓ En el Drive", "✓ En el Drive"]);
 
     console.log("\n=== La organización: UNA clave para todo el grupo ===");
     await q.click("#pest-claves");
@@ -1838,7 +1968,16 @@ const CONTRASTE = `(sel) => {
     await o.ctx.close();
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100, esquema: "dark" });
     await o.p.waitForSelector(".cam-pedido");
+    // antes de abrir «Planillas y Drive»: la tabla pregunta por la transmisión apenas se pinta
+    await o.ctx.route("**/functions/v1/ocr-scoresheet", (rr) => rr.fulfill({ contentType: "application/json", body: JSON.stringify({ words: palabrasFoto }) }));
+    await simularLichess(o.p, []);
     igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las ocho pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
+    await o.p.click("#pest-planillas");
+    await o.p.waitForSelector("#planillas tr");
+    for (const n of [0, 1]) await o.p.locator("#planillas tr.cam-pl-fila").nth(n).locator('[data-accion="generar-pgn"]').click();
+    await o.p.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2, null, { timeout: 120000 });
+    igual("en oscuro, la partida (de la foto y de la transmisión: lo marcado, el aviso de ilegible, el texto) da 4,5:1 o más", Math.min(...await o.p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(".cam-lp-jugada, .cam-lp-ilegible, .cam-lp-ilegible strong, .cam-lp-linea, .cam-lp-num, .cam-lp-nota, .cam-lp-titular, .cam-lp-leyenda, .cam-lp-fuente, .cam-lp-fila p, .cam-lp-enlace") + ")")) >= 4.5, true);
+    if (process.env.CAPTURA) { await o.p.locator(".cam-lp-fila").first().scrollIntoViewIfNeeded(); await o.p.screenshot({ path: process.env.CAPTURA + "-leer-partida-oscuro.png", fullPage: true }); }
     if (process.env.CAPTURA) { await o.p.click("#pest-ronda"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
     await o.ctx.close();
 

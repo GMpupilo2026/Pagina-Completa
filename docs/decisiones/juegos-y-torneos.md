@@ -8726,6 +8726,134 @@ resultado).
   al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
   sesión (lo prueba el navegador con un doble, no la función desplegada).
 
+### Leer la partida de las planillas (Centroamericano)
+
+En «Planillas y Drive» de la organización (`centroamericano-mesas.html`), cada foto lleva, al lado
+de «Ver», **«Generar PGN»**: la partida de esa mesa **ahí mismo**, en una fila que se abre debajo de
+su foto (sin ventanita), con la vista previa en un tablero (⏮ ◀ ▶ ⏭ y las flechas) y la descarga o
+la copia del PGN. «Ocultar la partida» la cierra; la tabla se refresca sola cada 30 s y la fila
+abierta se conserva tal cual (`detalle()` devuelve la misma fila). Es para revisar: no anota ni
+cambia ningún resultado. Lo pidió así el dueño: la herramienta es **para las partidas que no se
+transmiten**.
+
+- **Si la mesa se transmite en vivo, sale de la transmisión, no de la foto.** Al pintar la tabla se
+  averigua sola, de a una mesa (todas comparten la ronda de Lichess guardada), cuáles están en la
+  transmisión de la sala del Centroamericano —por los dos nombres y la ronda, con
+  `CentroamericanoTransmisionReloj.buscarPartida()`, la misma búsqueda del control de tiempos, que
+  se separó de `buscar()` para no copiarla—, y cada fila lo dice («📡 Se transmite: sale de
+  Lichess» / «📷 Sin transmisión: sale de la foto»). La de la transmisión es el bloque de esa
+  partida en el PGN de la ronda (`/api/broadcast/round/<id>.pgn`, con sus relojes), con sus jugadas
+  del tablero electrónico: no se lee la letra de nadie ni se gasta el lector. Si sigue en juego, se
+  dice (la transmisión va con atraso) y «Actualizar desde la transmisión» trae lo que siga; ya
+  terminada, se guarda. Solo las clásicas: el Rápido y el Blitz no se fotografían. Si no se sabe si
+  se transmite (Lichess no contesta), **no se gasta una lectura sin preguntar**: «Probar otra vez» o
+  «Leer la foto de todos modos». Con los colores al revés en la transmisión, se lee la foto.
+- **La búsqueda va solo al torneo de Lichess de su categoría** (`torneoDeCategoria()`: «Sub-18
+  Absoluto» es «… Open U18», «Sub-8 Femenino» es «… Girls U08»; sin categoría reconocible, en
+  todos). Antes se buscaba en los doce torneos del grupo, dos consultas por categoría y por foto:
+  con la tabla entera, Lichess frenaba («espera un momento») y la fila quedaba en «No se pudo ver la
+  transmisión» aunque la mesa no se transmitiera (pasó el 4/11 con la mesa 14 de la ronda 5 del
+  Sub-18: solo se transmiten sus 5 primeras mesas). Lo averiguado se guarda 10 minutos; si Lichess
+  no contestó, se vuelve a probar al minuto.
+- **La tabla, como el Drive**: un encabezado por torneo y ronda (por el `orden` del torneo, Sub-8,
+  Sub-10…; antes se ordenaba por el código de chess-results), con cuántas fotos tiene y, si esa
+  categoría y esa ronda se transmiten, **el enlace directo al PGN de todas sus partidas
+  transmitidas** (`/api/broadcast/round/<id>.pgn` de Lichess, con el enlace de cada partida en su
+  `GameURL`) y a la ronda en Lichess, para recolectarlas de una vez (`rondaTransmitida()`).
+- **Si no se transmite, de la foto.** **Todo lo que se pueda salvar se salva; lo que ya no tiene
+  salida queda «ilegible» y no se le inventa nada.**
+- **Cómo se lee la foto.** Va del bucket privado a Google Vision por `ocr-scoresheet` (la misma del
+  Lector de planilla, con su tope diario: ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md), a **2600 px** de lado (`leerFoto(…, { maxLado })`): a 1600, cada una
+  de las dos hojas quedaba en unos 800 px, poco para la letra a mano. Las celdas salen de
+  **los números impresos de la planilla** (1 a 60, en tres bloques): cada columna de números da la
+  altura de cada renglón y dónde empiezan Blancas y Negras. Ordenar las palabras por filas de toda
+  la foto (lo que hace el Lector de planilla con una hoja de una columna) mezclaba la jugada 1 con la
+  21 y la 41, y las dos hojas entre sí. Los números se encadenan con el que sigue justo debajo, no
+  por «misma x», y la altura de cada palabra se endereza con la inclinación de su columna: con la
+  foto girada 6° la columna se partía en dos y las Negras caían en el renglón de al lado. Aguanta
+  ±12°, números que el lector no vio, jugadas que llegan en dos palabras y los números del
+  encabezado («Ronda 4», «Mesa 11»). Sin ningún número, se lee por filas y lo dice.
+- **Cómo se arma la partida** (`js/planilla-reconstruir.js`, en su propio hilo:
+  `js/planilla-reconstruir-worker.js`, porque tarda de 5 a 30 s y la organización no puede
+  congelarse con pedidos de ayuda llegando). **No decide jugada por jugada.** El Lector de planilla
+  cambia cada texto por la jugada legal más parecida y sigue; se probó con fotos reales del Drive
+  (ronda 4): en la mesa 5, «Nd2» era ambiguo (podían ir los dos caballos), eligió el equivocado y
+  desde ahí «corrigió» 74 de 106 medias jugadas que estaban bien, sin avisar. Aquí se llevan muchas
+  continuaciones a la vez (búsqueda en haz, 150) y gana la que menos se aparta de lo escrito en toda
+  la partida.
+  - **Las dos planillas a la vez**: cada jugada paga lo lejos que está de lo escrito en cada una
+    (hasta 3). Una planilla corrige a la otra: en la mesa 11 la de negras dice 16. The1 The8 (fue
+    Thf1 Thf8) y leída sola ya no llega a la partida; con la de blancas al lado, sí.
+  - **En inglés o en español**, con o sin la letra que desambigua, la «P» de peón del Caribe
+    («Pe4»), el enroque con ceros, la captura escrita solo con la casilla de llegada. «R» se prueba
+    como torre (inglés) y como rey (español). Las confusiones de la letra («5»/«s», «0»/«O»,
+    «c»/«C») cuestan menos que un cambio cualquiera.
+  - **Una planilla que se saltó o repitió un renglón**: cada hoja puede saltarse una celda o no
+    tener la jugada, con un costo (1,5), así que una planilla corrida se vuelve a alinear sola.
+  - **Un borrón** (una celda sin ninguna letra ni número de ajedrez) no castiga ninguna jugada —si
+    no, saltarse jugadas para esquivarlo salía más barato— pero tampoco respalda ninguna: lo que se
+    puso ahí queda dudoso.
+  - **Cuándo se rinde.** Se mira cuánto respalda lo escrito cada jugada (lo que dice la planilla que
+    MEJOR la respalda; un borrón no respalda nada). Si en TODAS las continuaciones las últimas 6
+    medias jugadas promedian más de 1,5, se corta: se vuelve atrás hasta la última jugada bien
+    leída, y de ahí en adelante es «Ilegible desde la jugada N», con lo que dice cada planilla tal
+    cual. No se sigue buscando. Una planilla manchada desde la media jugada 25 da 24 jugadas, no 50
+    inventadas.
+  - **Cada jugada dice cómo se leyó**: tal cual (sin marca), corregida (*: lo escrito no era
+    exacto, o una de las dos planillas decía otra cosa) o dudosa (?: se parece poco, o otra
+    partida casi igual de buena dice otra cosa aquí; por ejemplo «Nd7» escrito en las dos cuando
+    podían ir los dos caballos). La marca va escrita, no solo en color, y al tocarla dice qué
+    estaba escrito en cada planilla.
+- **El PGN** lleva el torneo, la ronda, el día de la foto (en hora de Costa Rica), los jugadores y
+  «Leída de la foto de las planillas (mesa N)»; si se cortó, termina en «*» con el comentario
+  «Desde aquí la planilla es ilegible (jugada N)». El resultado no se lee de la casilla de la
+  planilla: solo se pone si la partida termina en mate. El nombre del archivo va sin tildes (el
+  Chromium de las pruebas cambia «Acuña» por «download»); dentro, los nombres van tal cual.
+- **Privacidad**: la foto va a Google Vision como la del Lector de planilla; `privacidad.html` lo
+  dice en la línea de Google (sin cambiar la versión: se agregó el mismo día de la última).
+- **«Descargar la lectura»** (solo en las de la foto): un `.json` con lo que devolvió Google Vision tal
+  cual (cada palabra con su caja: se puede pasar de nuevo a `hojasDeLaFoto()`), las celdas de cada
+  planilla y la partida que salió, para afinar el corrector con lecturas de verdad. El nombre del
+  archivo no lleva a los jugadores, pero adentro va lo que está escrito en la planilla, también los
+  nombres del encabezado: es para quien organiza y para revisar, **nunca para el repositorio**. Las
+  palabras se guardan con la lectura en el navegador, compactas (`[texto, x0, y0, x1, y1]`, unos
+  18 KB por foto); si no caben, se borran las lecturas guardadas de las otras fotos.
+- **La clave de Google Vision no estaba puesta** (4/11): el registro de `ocr-scoresheet` dice
+  «GOOGLE_VISION_API_KEY no configurado» y las dos primeras lecturas terminaron en 504 a los 160 s.
+  Supabase contesta eso sin el permiso de origen y el navegador solo ve «Failed to fetch»; ahora la
+  página lo dice en palabras («el lector de planillas no contestó… avísale a administración»). La
+  clave se pone en Supabase, Edge Functions → Secrets, `GOOGLE_VISION_API_KEY`.
+- **No se paga dos veces**: lo leído se guarda en ese navegador por foto (`cam-partida-leida:`,
+  con la hora de subida: una foto nueva de la misma mesa se vuelve a leer). «Volver a leer la
+  foto» sí gasta otra lectura.
+- **El tablero** es el de solo mirar (`js/tablero-fen.js`), con las coordenadas por fuera y las
+  piezas y casillas que eligió cada quien (la página entró a `tablero-cabecera.py`).
+- **Cómo anotan los niños** (lo que salió al leer a mano las 41 planillas del Centroamericano, 5/11):
+  - **Pieza por pieza**: «AxA», «DxA», «cxA», «CxC+» en vez de la casilla. `formasDe()` da también
+    esa forma de cada captura (en inglés y en español; el peón con su columna o con «P»).
+  - **Minúsculas** («cf3», «ac4»): la diferencia de mayúscula cuesta 0,15, no una letra entera.
+  - **El caché de costos** iba por la SAN, y «AxA» puede ser dos capturas distintas con la misma
+    SAN en dos posiciones (o la misma casilla con piezas distintas): ahora va por las formas.
+  - **Sin tope de desfase entre las dos planillas.** Se probó que ninguna se separara más de 4
+    medias jugadas de la partida, por el Sub-12, R4, M8, que se estiraba a 108 con 98 celdas. Con las
+    capturas pieza por pieza y el caché arreglados ya no se estira, y el tope no mejoró ninguna de las
+    41 planillas y empeoró una: el Sub-18 Absoluto, R1, M6, donde la planilla de las negras tiene 10
+    celdas menos (dejó de anotar un tramo) y con el tope salían 23 dudosas en vez de 6. Que una
+    planilla se atrase mucho es normal; se quitó.
+- `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
+  `append` no): lo que no va se saca antes; lo comprueba el verificador.
+- Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de
+  verdad de las mesas 5, 7 y 11, en `herramientas/lib/planillas-reales.js`, solo las jugadas y sin
+  nombres; y fotos sintéticas, `herramientas/lib/planilla-sintetica.js`) y
+  `verificar-centroamericano-mesas-pagina.js` (la pantalla: la mesa que se transmite sale de un
+  Lichess de mentira sin leer la foto, con su PGN y sus relojes; la que no, de un Vision de mentira:
+  lo salvado, lo ilegible, las marcas, el tablero, el PGN, que la fila sigue abierta al refrescar,
+  que abrirla otra vez no gasta, y el contraste en claro y en oscuro). **Sin probar de verdad**: Google Vision con estas fotos (la función pide la sesión de
+  una cuenta). Las planillas que se usaron para probar se transcribieron mirando las fotos; lo
+  que Vision lea de la letra a mano puede ser peor, y los costos (1,5, 3, el promedio de 1,5)
+  conviene ajustarlos con las primeras fotos de verdad.
+
 ### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
 
 Lo que pidió el dueño después: que **un árbitro pueda tener mesas de torneos distintos**; que
@@ -9167,6 +9295,23 @@ inmediato.
   en que se cumplieron y dónde empezó la cuenta; si ya van 75, sale solo el aviso de las 75. El verificador arma una
   partida de verdad con chess.js (la primera jugada en orden que no mueve un peón, no captura, no da jaque ni repite)
   y comprueba que se cumplen en la jugada 52, ni una antes.
+  **La bandera caída** (art. 6.9; lo pidió el dueño el 5/11): a quien le corre el reloj se le acabó el tiempo y la
+  partida sigue sin resultado. Con el reloj en vivo de LiveChess (`clock`: `white`/`black` en segundos, `run` true si
+  corre el de las blancas, false si el de las negras, null si está detenido, y `time`, la hora de esa lectura) se usa
+  ese, la misma regla del encargado de transmisión (`js/centroamericano-transmision.js`); detenido (lo paró el árbitro)
+  no hay bandera. Sin reloj en vivo, el último reloj de quien tiene el turno menos lo que pasó desde la jugada del
+  rival, y solo si el tablero sigue transmitiendo. Se mira **cada segundo** (el reloj corre entre lecturas), pero solo
+  con datos de hace menos de 30 s: una tablet sin señal no inventa una bandera. El aviso (⚑) dice el color y la mesa,
+  que lo confirme en el reloj de la mesa, y el 6.9 (pierde, salvo que el rival no pueda dar mate: tablas); si al rival
+  solo le queda el rey, lo dice. Sale una vez por mesa y posición.
+  **La posible jugada ilegal** (lo pidió el dueño el 5/11), con dos señales, las mismas del encargado de transmisión:
+  (1) una **jugada imposible** en la transmisión (chess.js no la acepta: una ilegal, o una pieza mal puesta o mal leída),
+  que avisa enseguida con la jugada en la notación de la planilla («3. Re3»); desde ahí no se sigue la partida (la
+  posición, las tablas y el control salen de lo que sí se jugó); y (2) **el reloj que corre para quien ya jugó** según
+  el tablero: su rival apretó el reloj, pero el tablero no registró su jugada. Esa solo avisa si sigue así **8 s** (un
+  reloj apretado justo cuando se lee no es una jugada perdida) y si la lectura del reloj es de después de la última
+  jugada registrada. El aviso (⚠ «Posible jugada ilegal») no decide nada: pide mirar la mesa y recuerda el 7.5.5 (la
+  primera da 2 minutos al rival, la segunda pierde). Con la partida terminada no avisa.
   «Ver la posición» abre «Mis mesas en vivo» en esa mesa; «Entendido» la quita. Sale una vez por mesa, tipo y jugada.
 - Lo prueban `verificar-centroamericano-mesas-vivo.js` (las jugadas y su hora, el control, la triple en su jugada, la
   quíntuple, que la alerta no se repite, la notación, que la función no devuelve el id y que el enlace no está en el
@@ -9314,6 +9459,184 @@ Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplic
 Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
 resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
 desplegada.
+#### Las partidas para Fair Play, directo de LiveChess
+
+El 4/11, en la ronda 5, el dueño pidió que las partidas para analizar no salieran de Lichess sino del enlace directo de
+los tableros (LiveChess Cloud, el mismo de «Los tableros por LiveChess, sin atraso»). La transmisión de Lichess va con
+15 minutos de atraso; LiveChess, no (`20261104212407`, función en su versión 8).
+
+- **LiveChess no trae la evaluación del motor** (Lichess sí la ponía en su PGN), y la precisión sale de ella. Una Edge
+  Function no puede correr Stockfish en serio (tiene un tope de tiempo de procesador), y un flujo de GitHub pedía una
+  clave de servicio guardada como secreto. Por eso **la evaluación la hace la pantalla de Fair Play** —la del encargado
+  o la pestaña del principal—, con el Stockfish 16 del sitio (`js/vendor/stockfish/`), en un Worker propio:
+  «vivo_pendientes» da hasta 3 partidas **terminadas** que faltan, con las posiciones ya armadas con chess.js (el
+  enlace de LiveChess nunca sale de la función); la pantalla evalúa cada posición desde la 15 (antes, la apertura no
+  cuenta: van en null) con `go nodes 120000` y manda la evaluación con «vivo_guardar»; la función **vuelve a leer la
+  partida de LiveChess**, comprueba que haya una evaluación por posición (si no, la rechaza entera), mide con la MISMA
+  fórmula de siempre (`analisis.ts`) y calibra. La mesa de chess-results es el tablero de LiveChess y los dos nombres
+  tienen que coincidir (`mismoJugador`, la misma regla de las tablets, comprobada letra por letra por el verificador).
+- **Que no se repita ni se pise**: `centroamericano_fp_partidas.analizada_en` (ya medida, no se vuelve a dar) y
+  `en_analisis` (dada a una pantalla: otra no la recibe en 3 minutos; dos pantallas abiertas se reparten el trabajo).
+  `centroamericano_fp_analisis.fuente` dice de dónde salió cada medición: las de las rondas 1 a 3 venían de Lichess y
+  se vuelven a medir desde LiveChess en la misma fila (lo que decidió el encargado no se pisa), para que la calibración
+  compare a todos con el mismo motor. Primero va la ronda de hoy y después lo de atrás.
+- **El tablero sin limpiar**: en la prueba con los datos reales, LiveChess traía en la ronda 5 del Sub-8 Absoluto
+  (tablero 4) y del Sub-10 Absoluto (tablero 5) **la misma partida** de la ronda 4, jugada por jugada, con los nombres
+  nuevos en el pareo. `copiaDeOtra()` la detecta (la partida entera, o la vieja y lo que siguió, desde 40 jugadas
+  iguales; 20 jugadas iguales de apertura no cuentan) y esa partida no se mide, ni al darla ni al guardarla.
+- **Cuánto tarda**: en el servidor de pruebas, una partida de 40 jugadas en ~45 s; en una computadora común, menos.
+  Mientras la pantalla está abierta (y a la vista) analiza sola y dice qué está analizando y cuántas faltan;
+  «Analizar las partidas en esta computadora» la apaga en un aparato que no conviene cansar (se recuerda en ese
+  aparato). Con la pantalla cerrada no se analiza nada: lo pendiente espera a la próxima que se abra.
+- **Riesgo aceptado**: la evaluación la hace un aparato del equipo de Fair Play, no el servidor; quien tiene el QR
+  podría mandar otra. Es su propia herramienta y la función al menos comprueba que la evaluación sea de esa partida.
+
+Probado contra la base y LiveChess de verdad (con un enlace de prueba de 2 horas): 220 partidas terminadas pendientes de
+las rondas 1 a 5, las primeras analizadas y guardadas en la pantalla real, y las dos copias encontradas así.
+
+#### El detector de Fair Play, jugada por jugada
+
+El mismo 4/11 el dueño pidió «nuestro propio módulo de análisis de trampa», donde cada análisis venga **explicado de forma
+sencilla** para que el encargado entienda por qué se marca a alguien. Se armó en tres fases; la 1 es esta
+(`20261104220853` y su arreglo `20261104221723`, función en su versión 9). La 2 es sacarlo del Centroamericano a una
+herramienta general donde se pega el enlace de las partidas (LiveChess, una transmisión de Lichess aunque tenga atraso,
+chess-results, un PGN). La 3 es una base propia de partidas medidas de todos los eventos, para saber cómo juega de
+verdad cada Elo en Costa Rica.
+
+- **Cada jugada** (`centroamericano_fp_jugadas`, una fila por jugada medida): la pantalla de Fair Play pide a Stockfish
+  las **3 mejores** de cada posición (MultiPV 3, 150 000 nodos) y la función guarda en qué lugar quedó lo jugado
+  (`rango`, 0 = ninguna de las 3), cuánto perdió, si era **forzada** (una sola jugada legal, o la mejor es una captura y la
+  segunda pierde 3 peones: no cuenta), si era **difícil** (una sola jugada buena —la segunda pierde 1 peón o más— y no es
+  jaque ni captura: la que un humano suele no ver), **lo que pensó** (LiveChess lo trae: «Nf3 5482+5» son 5 s) y si la
+  hizo en los **5 minutos después de que el árbitro anotó que se levantó** (el registro de la tablet, sin lo anulado,
+  contra la hora de cada jugada: la primera más lo que pensaron los dos). El cálculo es `detallar()` en `analisis.ts`.
+- **Las señales**, por jugador y partida: la **precisión** (la de siempre), la **primera del motor** (en % de las jugadas
+  que cuentan) y las **difíciles acertadas**. Cada una se compara con **lo esperable para su Elo en el torneo** (una
+  recta contra el Elo, como la precisión) o, **si no tiene Elo** —casi todos en las categorías chicas—, **con su
+  categoría** (con 8 o más medidos); «alta» desde 2 desviaciones. El **tiempo raro** (en las difíciles pensó menos de 6
+  décimos de lo que pensó en las demás) solo suma junto a otra. El nivel: «muy alta» con una señal de 2,5 o más, o dos
+  señales (o una y el tiempo); «a mirar» con una. Con datos inventados en la base de ensayo: un 1400 que juega como un
+  2400 y un niño sin Elo muy por encima de su categoría salen con las 3 señales; de 65 normales, ninguno marcado.
+- **Explicado** (`explicar()` y `resumenAlerta()` en `js/centroamericano-fair-play.js`, una sola copia para la tarjeta y
+  el informe): arriba, cuántas señales salieron altas y cuáles; debajo, una frase por señal con su comparación
+  («Jugó la primera opción de Stockfish en 25 de 30 jugadas (83 %); lo esperable para su Elo en este torneo: 52,0 %
+  (3,1 desviaciones arriba)»), la alta en negrita (y «Señal alta:» para el lector de pantalla), «Pocas jugadas
+  medidas» si son menos de 20, las jugadas más llamativas («Jugada 23. Nxe5: la única buena de la posición, en 8 s») y
+  **«Qué no significa esto»**: que no prueba nada, que alguien puede estar en un gran día, haber preparado la apertura
+  o ser más fuerte que su Elo, que en un torneo grande algunos salen altos por casualidad, y que FIDE pide pruebas
+  físicas o de conducta para sancionar. El informe de Fair Play en PDF trae «Por qué se marcó cada alerta», alerta por
+  alerta.
+- **Lo medido antes se vuelve a medir solo**: `centroamericano_fp_partidas.analisis_version` (y `VERSION_ANALISIS` en
+  `analisis.ts`): una partida medida con una versión anterior vuelve a «pendientes». Al volver a medir, una partida que
+  resulta copia de la ronda anterior **borra** lo que se había medido de ella (así se fueron las dos de la prueba).
+- **El error del 99** (`20261104221723`): en Postgres, `greatest()` y `least()` **saltan los nulos**: `least(99, null)`
+  es 99. Sin con qué comparar (una categoría con pocos medidos), la señal quedaba en 99 desviaciones y todos en «muy
+  alta». Se vio en la base apenas se midieron las primeras partidas; ahora, sin comparación, la señal queda vacía y no
+  cuenta (la base de ensayo tiene el caso). Al aplicarse se volvió a calibrar: 339 normales y 6 «a mirar».
+
+#### El modelo por jugada, al estilo de Regan
+
+El dueño preguntó qué tan preciso era esto contra el modelo de Ken Regan, el que usa FIDE, y pidió armar todas las
+mejoras (4/11, migración `20261104235900`, función en su versión 11). Lo de la fase 1 comparaba porcentajes de la
+partida con una recta contra el Elo; Regan mira **cada posición**: qué tan difícil era, y por eso cuánto habría acertado
+alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
+
+- **El modelo**, en `analisis.ts`: en cada posición, la probabilidad de cada jugada es p ∝ exp(−(δ/s)^c), con δ lo que
+  pierde esa jugada contra la mejor **en puntos de probabilidad de ganar** (la fórmula de Lichess, 0 a 100; con
+  centipeones, una pieza de más en una posición ganada pesaba igual que en una pareja). La sensibilidad sale del Elo,
+  s = exp(a + b·(Elo − 1500)/400); las jugadas que el motor no listó cuentan juntas, un poco peor que la última. a, b y
+  c se ajustan con las jugadas reales de quien tiene Elo (máxima verosimilitud, `ajustar()`, cada 15 min, con una
+  muestra de 3000 para no pasarse del tiempo de la función). Por eso MultiPV pasó de 3 a **5**, a **profundidad fija
+  12**: con nodos, dos computadoras daban opciones distintas.
+- **Sin Elo** (casi todos en las categorías chicas), la sensibilidad de su categoría **sin contarlo a él**
+  (`sSinElJugador()`): si se le contara, el que hace trampa subiría el nivel de su propio grupo y se escondería.
+- **Un solo número**, el índice en la escala de Regan: 50 es lo normal y cada 5 puntos es una desviación. Junta la
+  primera del motor y lo que perdió (que se parecen mucho: van divididas entre √3 para no contarlas dos veces). Se
+  centra con la mediana del torneo y se corrige con cuánto más varía la gente real que el modelo (la desviación mediana,
+  nunca menos de 1): así un tramposo no mueve la regla. Con el índice, **decide el índice**: 62,5 o más es «muy alta» y
+  60 o más «a mirar» (`centroamericano_fp_calibrar`); las señales de la fase 1 quedan para explicarlo. Por partida
+  (`centroamericano_fp_analisis.roi`) y **por jugador, sumando todo el torneo** (`centroamericano_fp_indice`), que es
+  lo que mira FIDE: una partida sola casi nunca alcanza.
+- **¿Qué tan confiable es?** (`validar()`, en `centroamericano_fp_modelo.validacion`): con los jugadores de verdad,
+  cuántos pasan cada umbral (lo esperable por azar es 2,3 % y 0,6 %), y cuántos detectaría si cada uno usara el motor
+  en 1, 2 o 3 de cada 10 jugadas. Con 80 jugadores inventados en el verificador: alarmas falsas «muy alta» 0,8 % y,
+  con 3 de cada 10, 84 % detectados. Se muestra en la pantalla, para que nadie le crea más de lo que da.
+- **La teoría de verdad**: se mide desde la primera jugada que ya no está en las partidas de maestros de Lichess (con 5
+  o más), nunca antes de la 5.ª de cada uno, con el caché `explorador_maestros_cache` y el `LICHESS_TOKEN` que ya tenía
+  el sitio (20 pedidos por vez a lo sumo). El enroque del explorador viene como «e1h1»: se pasa a «e1g1». Si no se
+  sabe, la regla fija de siempre (desde la 9.ª).
+- **Dos pasadas**: toda partida que sale con alerta se vuelve a analizar a **profundidad 16** antes de darla por
+  buena (`centroamericano_fp_partidas.profunda`); a 12 el motor a veces no ve la jugada que el jugador sí jugó.
+- **Partidas de referencia** (`centroamericano_fp_referencia`): el principal carga un PGN de otro torneo con el Elo de
+  cada uno, se analiza con el mismo motor en la pantalla y se guardan **solo las jugadas y el Elo**, sin nombres, para
+  ajustar el modelo con más gente que la del torneo. Al terminar de cargar, la pantalla pide el modelo **forzado**
+  (`modelo` con `forzar`): si no, solo se recalculaba al guardarse la próxima partida del torneo, y quien carga
+  referencias para probarlo no veía nada.
+- **Lo que no es igual a Regan**: él ajusta con millones de jugadas de partidas de maestros analizadas muy hondo; acá el
+  modelo se ajusta con el torneo (y las referencias), a profundidad 12-16. Por eso el centro y el factor salen del
+  mismo torneo y la validación va en la pantalla. Y lo mismo que en la fase 1: el índice **no prueba nada**; es para
+  mirar, y FIDE pide pruebas físicas o de conducta para sancionar.
+- La migración se pegó en el editor SQL (Supabase no llegó a pedir la confirmación de `apply_migration`), y su fila en
+  `supabase_migrations.schema_migrations` se agregó a mano con el mismo nombre.
+
+#### Más precisión: el Elo de los niños, el ritmo, el tiempo y los casos de prueba
+
+El 5/11 el dueño preguntó qué más se podía hacer para que fuera más preciso y pidió hacerlo todo, «para todos los torneos a
+futuro» (migración `20261105050000`, función en su versión 12). Lo que se aprendió primero, con la simulación de
+`verificar-centroamericano-fair-play-modelo.js` (la función entera sobre un torneo inventado): **lo que más limita la
+precisión no es el modelo, es que la gente juega distinto de lo que dice su Elo**. Con un tercio de los jugadores 150
+puntos más fuerte que su Elo (lo normal en categorías de niños), la gente real varía el doble que el modelo (el factor
+sale ~2), el índice se divide por eso para no dar alarmas falsas (siguen en ~2 %), y detecta a quien usa el motor en 3
+de cada 10 jugadas en ~40 % de las veces (con el Elo exacto, ~70 %). Por eso casi todo lo de abajo apunta a eso.
+
+- **El Elo que se le reconoce** (`eloUsado()`): el suyo y su rendimiento en el torneo, juntados con la cuenta de manual
+  de dos medidas inseguras, cada una pesada por lo poco que varía. El rendimiento de n partidas varía ~400/√n (con 4
+  partidas, ±200: casi todo es suerte); el Elo de un menor (por el nombre de la categoría: «Sub-8» … «Sub-18») se
+  atrasa ~150 y el de un adulto ~75. Con 3 partidas, un 30 % de lo rendido de más a un niño, un 10 % a un adulto; con 9,
+  la mitad al niño. Tope de 200 (100 a un adulto), nunca de menos. **La primera versión** reconocía la mitad de lo rendido
+  con 4 partidas: en la simulación el ruido de los resultados subió el factor de 1,3 a 2,1 y la detección cayó a la
+  mitad. Se ve en la pantalla («Se lo comparó como un 1620: su Elo es 1500 y rindió 1800…»). Las incomparecencias
+  («+ - -») no cuentan como partidas.
+- **Cada ritmo con su propio ajuste**: el modelo mezclaba las rápidas con las clásicas, y en una rápida todos juegan peor
+  para su Elo. Ahora se ajusta cada uno por su lado (por el nombre: «Rápido», «Blitz», «Relámpago»), con su centro, su
+  factor y su validación; un ritmo con menos de 600 jugadas usa lo del otro. Las referencias van a la clásica, y al
+  cargarlas se saltan las rápidas (por su `TimeControl`: menos de 60 minutos para 60 jugadas).
+- **Más hondo**: la pantalla pregunta primero a la **nube de Lichess** (`/api/cloud-eval`), que tiene muchas posiciones
+  analizadas a profundidad 20 o más, gratis; solo se acepta a 20 o más y con todas las opciones que se piden (o todas las
+  jugadas legales). Si no está, Stockfish la calcula aquí. Lichess escribe el enroque como «el rey a su torre» (`e1h1`): se
+  pasa al de siempre (`e1g1`) si lo que se mueve es el rey (un `e1h1` de torre es una jugada de verdad). Si Lichess pide
+  calma (429), se deja de preguntar un minuto. La pantalla dice cuántas posiciones salieron de allá. La confirmación de
+  una alerta pasó de profundidad 16 a **20**.
+- **Su historia**: el mismo jugador (por su nombre) medido en otras categorías o eventos, sumado con la sensibilidad de
+  cada vez (`sumar()`), con su propio índice. Para este torneo casi no hay; crece con cada evento. Dos personas con el
+  mismo nombre se juntan, y la pantalla lo dice.
+- **El tiempo**: la correlación (de Spearman) entre lo que pensó en cada jugada y lo difícil de la posición para su nivel
+  (lo que se espera perder ahí, `dificultadEsperada()`). Casi todos piensan más donde es más difícil; quien espera la
+  jugada de afuera tarda parecido en todas. Se compara con la de su ritmo (`tiempo_z`); desde 2 desviaciones por
+  debajo es señal alta. **No entra en el índice**: hay jugadores de ritmo parejo que juegan limpio. Un tiempo siempre
+  igual da correlación 0 (ninguna relación), no «sin dato». Con menos de 20 jugadas con tiempo, no se mide.
+- **Las tres señales juntas, con su correlación de verdad**: antes se sumaban la primera del motor y lo perdido divididas
+  por √3 (una correlación de 0,5 supuesta); ahora entran también las **posiciones con una sola jugada buena** (las que más
+  delatan; solo con 4 o más) y se dividen por la raíz de la suma de su matriz de correlación **medida en la gente del
+  torneo** (`correlaciones()`; sin 8 jugadores para medirla, 0,5 y 0,3). En la simulación salen muy parecidas (0,8-0,95):
+  sumarlas da poco de más, y es lo correcto.
+- **Muchas partidas de referencia** y **casos de prueba**: la carga acepta varios PGN y el enlace de una transmisión de
+  Lichess (de un torneo o de una ronda: se pide su PGN a la API); cada partida tiene un nombre que no cambia entre cargas
+  (la huella de quiénes la jugaron y sus jugadas), y la función dice cuáles de un evento ya están
+  (`centroamericano_fp_referencia_partidas()`), así que una carga larga se corta con «Detener» y sigue donde quedó.
+  Marcadas «De prueba», solo se cargan las que traen `[Trampa "Blancas"]` o `[Trampa "Negras"]`
+  (`centroamericano_fp_referencia.trampa`): ese lado no entra al ajuste, y «¿Qué tan confiable es?» dice cuántos de los
+  que hicieron trampa marcó el índice y cuántos de sus rivales limpios (`casosDePrueba()`).
+- La simulación quedó como verificador (`verificar-centroamericano-fair-play-modelo.js`): arma la función entera con
+  esbuild y un cliente de mentira que filtra como PostgREST, y comprueba que corre en menos de 1,5 s (la función tiene
+  tope de procesador; hoy tarda ~0,6 s con 90 jugadores), que separa los ritmos, el Elo reconocido, la correlación
+  medida, que el tramposo queda primero de su categoría con el tiempo más parejo, y que el lado tramposo de las pruebas no
+  entra al ajuste. Roto a propósito (sin separar los ritmos; con el lado tramposo en el ajuste), salta.
+- **Lo que queda**: la herramienta sigue en las tablas `centroamericano_*` (un torneo de chess-results por categoría y
+  LiveChess). Para usarla en otro evento con el mismo flujo basta cargar sus categorías; sacarla a una herramienta aparte,
+  donde se pegue cualquier enlace de partidas, es lo siguiente. Comparar con sus partidas de Lichess o Chess.com no se
+  hizo: no se sabe la cuenta de cada jugador del torneo.
+
 ### El encargado de transmisión (Centroamericano)
 
 Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de
@@ -9566,34 +9889,6 @@ el sistema las mesas que no traen un rival sino un nombre raro**.
   reciba el módulo, el dibujo decorativo con el código escrito) y `verificar-centroamericano-mesas-pagina.js` (la banderita al final de
   cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
   pareos» y «¿Dónde juega?»).
-
-## Cuántas tablets aguanta la mesa del árbitro (Centroamericano, 5/11)
-
-Pregunta del dueño: ¿cuántos árbitros a la vez? Se simuló con el enlace del torneo de PRUEBA (solo lecturas: «leer» y «avisos» de
-`centroamericano-mesa`, nada que escriba), a su ritmo real —avisos cada 8 s, mesas cada 45 s, con desfase al azar— durante 60 s, de noche y
-sin ronda en curso. Resultado **antes del cambio** (mediana de «leer» / de «avisos»):
-
-| tablets a la vez | «leer» | «avisos» | fallos |
-|---|---|---|---|
-| 30 (la carga de hoy: 28 enlaces activos) | 3,2 s | 0,5 s | 0 |
-| 60 | 12 s | 1,7 s | 0 |
-| 100 | 24 s | 5,3 s | 8 de 199 («leer», a los 30 s) |
-| 100 abriendo la página en el mismo instante | 30 s | 11 s | 70 de 100 |
-
-Una petición suelta tarda 0,7–1,1 s («leer») y 0,3 s («avisos»). Los registros de Supabase (`function_edge_logs`) confirman que la espera está
-DENTRO de la función (hasta 37 s, ningún 5xx): es el servidor, no la red de quien probó.
-
-- **Los avisos eran la mayor parte de los pedidos** (con 28 tablets, ~4 por segundo): ahora `AVISOS_MS` = 20 s (eran 8). El pedido de ayuda de
-  una tablet sigue yendo al instante; lo que tarda hasta 20 s es que le llegue a la tablet un aviso de la organización.
-- **«Ver mis mesas» comparte la lectura** entre las tablets de la misma categoría: `leerCompartidaBreve` (en `centroamericano-mesa`) guarda 5 s la
-  lectura compartida de chess-results (la copia ya puede tener 40 s), incluso mientras todavía se está leyendo, para que un arranque de ronda no
-  haga que cada pedido consulte la copia por su cuenta y todos esperen en fila. Solo la acción «leer»; una lectura que falla no se guarda; las
-  demás acciones siguen leyendo lo suyo.
-- **Para repetir la prueba**: un script que haga `leer`/`avisos` con el token de un enlace del torneo de prueba (no con uno real), con
-  `NODE_USE_ENV_PROXY=1` y `NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt` en el contenedor, y fuera de las rondas. Mirar `function_edge_logs`
-  (`execution_time_ms`) para separar lo que tarda el servidor de lo que tarda la conexión de quien prueba.
-- **Límites de la prueba**: un solo enlace (no 100 distintos) y todo desde un mismo origen. Si hace falta más, el siguiente paso es revisar el
-  tamaño del servidor de Supabase.
 
 ## La ficha de la mesa, opción A «tres toques» (Centroamericano, a prueba con un árbitro)
 

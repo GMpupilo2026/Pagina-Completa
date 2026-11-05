@@ -66,7 +66,7 @@
       ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
       ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
-      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)], ["Con parqueo", n((x) => x.parqueo)],
+      ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)], ["Con parqueo", n((x) => x.parqueo)], ["Correos que no salieron", n((x) => !x.confirmacion_en && !!x.confirmacion_error)],
       ["De otro país", n((x) => !/^costa rica$/i.test(x.pais_residencia))], ["Menores de edad", n((x) => R.edad(x.nacimiento, R.INICIO) < 18)],
     ];
     const caja = $("cifras"); caja.textContent = "";
@@ -124,10 +124,39 @@
         [x.factura.distrito, x.factura.canton, x.factura.provincia].filter(Boolean).join(", "), x.factura.senas].filter(Boolean).join(" · ")],
       ["Referencia del pago", [x.pago_referencia, x.pago_fecha].filter(Boolean).join(" · ")],
       ["Se inscribió", window.HoraCR.fechaHora(x.creado)],
+      ["Correo de confirmación", estadoCorreo(x)],
     ];
     datos.filter(([, v]) => v).forEach(([k, v]) => { const p = document.createElement("div"); const dt = document.createElement("dt"); dt.className = "font-semibold inline"; dt.textContent = k + ": "; const dd = document.createElement("dd"); dd.className = "inline"; dd.textContent = v; p.append(dt, dd); dl.append(p); });
     d.append(dl);
+    // Reenviar el correo de confirmación (a la persona, o a toda su delegación).
+    const re = document.createElement("button"); re.type = "button";
+    re.className = "text-xs underline mt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+    re.textContent = "✉ Reenviar el correo de confirmación" + (x.grupo ? " (a la delegación)" : "");
+    re.addEventListener("click", () => reenviarCorreo(x, re));
+    d.append(re);
     return d;
+  }
+
+  // El correo de confirmación: lo manda la base sola (metropolitano-correo).
+  function estadoCorreo(x) {
+    if (x.confirmacion_en) return "Enviado el " + window.HoraCR.fechaHora(x.confirmacion_en) + (x.confirmacion_error ? " · " + x.confirmacion_error : "");
+    if (x.confirmacion_error) return "No salió (" + (x.confirmacion_intentos || 0) + " de 3 intentos): " + x.confirmacion_error;
+    return "Por mandar (sale solo en un momento)";
+  }
+  async function reenviarCorreo(x, boton) {
+    if (!(await window.Avisos.confirmar("Se vuelve a mandar el correo de confirmación" + (x.grupo ? " a la delegación entera (al delegado y a cada integrante con su correo)" : " a " + x.correo) + ".", { titulo: "¿Reenviar el correo?", aceptar: "Reenviar el correo" }))) return;
+    boton.disabled = true;
+    try {
+      const { data, error } = await window.sb.functions.invoke("metropolitano-correo", { body: { accion: "reenviar", id: x.id } });
+      if (error || !data || !data.ok) {
+        let motivo = data && data.error;
+        try { if (!motivo && error && error.context) motivo = (await error.context.json()).error; } catch (e) { /* sin detalle */ }
+        window.Avisos.avisar("No se pudo reenviar: " + (motivo || (error && error.message) || "error desconocido"), { tipo: "error" });
+        return;
+      }
+      window.Avisos.avisar("Listo: se reenvió a " + data.para.join(", ") + ".");
+      await cargar();
+    } finally { boton.disabled = false; }
   }
 
   function pintar() {

@@ -34,7 +34,7 @@
     // La tablet vieja o lenta (js/modo-liviano.js): algunas consultas van menos seguido. Los avisos de la organización
     // y lo que se anota NO: eso no se demora nunca.
     const liviano = () => !!(window.ModoLiviano && window.ModoLiviano.activo());
-    const AVISOS_MS = 20000; // los avisos (solo la base: liviano). Eran cada 8 s; con 30 tablets eran la mayor parte de los pedidos (ver «Cuántas tablets aguanta»).
+    const AVISOS_MS = 8000; // los avisos (solo la base: liviano)
 
     let estado = null; // lo que contestó «leer»
     let fairPlay = []; // sus mesas elegidas para Fair Play en la ronda (borde dorado), de centroamericano-fair-play
@@ -1002,9 +1002,9 @@
     function alertaDeTablas(a) {
         const caja = $("alertas-vivo");
         if (!caja) return;
-        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas" }[a.tipo] || "Tablas";
+        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas", bandera: "Bandera caída", ilegal: "Posible jugada ilegal" }[a.tipo] || "Tablas";
         const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
-            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
+            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: a.tipo === "bandera" ? "⚑ " : a.tipo === "ilegal" ? "⚠ " : "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
             el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
             el("div", { class: "cam-acciones" },
                 el("button", { type: "button", class: "cam-btn", "data-accion": "ver-posicion", onclick: () => window.CentroamericanoArbitroVivo.abrir(a.mesa) }, "Ver la posición"),

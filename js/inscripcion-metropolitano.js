@@ -1199,9 +1199,11 @@
       const ul = $("listo-codigos"); ul.textContent = "";
       if (varios) envio.personas.forEach((x) => { const li = document.createElement("li"); li.textContent = x.p.codigo + " — " + x.datos.nombre + " " + x.datos.apellidos; ul.append(li); });
       const correo = envio.personas[0].datos.correo;
-      $("listo-pago").textContent = Number(data.monto_usd) > 0
-        ? "La organización revisa el comprobante de " + R.dinero(Number(data.monto_usd)) + " y escribe a " + correo + ". Lleven el gafete (impreso o en el celular) el día del torneo."
-        : "La inscripción no tiene costo. Lleven el gafete (impreso o en el celular) el día del torneo.";
+      // El correo de confirmación lo manda la base sola, en un minuto (metropolitano-correo).
+      $("listo-pago").textContent = (Number(data.monto_usd) > 0
+        ? "La organización revisa el comprobante de " + R.dinero(Number(data.monto_usd)) + " y te avisa cuando quede verificado. "
+        : "La inscripción no tiene costo. ")
+        + "En un momento te llega a " + correo + " el correo de confirmación con " + (varios ? "el código de cada persona" : "tu código") + " (si no lo ves, revisa el correo no deseado). Lleven el gafete (impreso o en el celular) el día del torneo.";
       msg.textContent = "";
       await pintarGafetes();
       $("bajar-gafete").focus();
