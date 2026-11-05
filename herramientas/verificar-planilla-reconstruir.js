@@ -86,11 +86,11 @@ ok("…y sola (es ambigua: «CxP» puede ser más de una captura) da una partida
 const minus = PR.mesa11.blancas.map((t) => t.replace(/^[TCADR]/, (x) => x.toLowerCase()));
 const min = R.reconstruir(Chess, [minus]);
 ok("una planilla con las piezas en minúscula («ad3», «cxe3», «thf1») sale entera y nada como corregido (al final, sin jugadas que desempaten, a lo sumo 3 dudosas)", fenFinal(min) === FIN_MESA11 && cuenta(min, "corregida") === 0 && cuenta(min, "dudosa") <= 3, JSON.stringify([cuenta(min, "corregida"), cuenta(min, "dudosa")]));
-// Dos planillas que desde la media jugada 25 dejan de coincidir (una anota algo que no se entiende): antes, el
-// corrector tomaba una jugada de cada una por turnos y la partida salía más larga que lo escrito (Sub-12 R4 M8: 108 con 98).
+// Dos planillas que desde la media jugada 25 dejan de coincidir (una anota algo que no se entiende): la partida
+// sale de la que sí se entiende, sin estirarse más allá de lo escrito.
 const raras = PR.mesa11.negras.slice(0, 24).concat(PR.mesa11.negras.slice(24).map((t, i) => ["Wq", "Zk", "Yy", "Xj"][i % 4] + t.slice(-1)));
 const desf = R.reconstruir(Chess, [PR.mesa11.blancas, raras]);
-ok("si una planilla deja de coincidir, la partida nunca sale más larga que lo escrito (ninguna hoja se desfasa más de 4)", desf.jugadas.length <= 52 && fenFinal(desf) === FIN_MESA11, JSON.stringify([desf.jugadas.length, desf.ilegibleDesde]));
+ok("si una planilla deja de coincidir, la partida nunca sale más larga que lo escrito", desf.jugadas.length <= 52 && fenFinal(desf) === FIN_MESA11, JSON.stringify([desf.jugadas.length, desf.ilegibleDesde]));
 
 console.log("\n=== Lo que ya no tiene salida queda ilegible ===");
 const BASURA = ["qz", "Lw", "m3m", "zz", "uu", "k9", "pp", "XX", "Ww", "yy", "j7", "vv", "ññ", "rr", "w1", "oz", "gg", "kk", "ll", "ww", "zq", "hh"];

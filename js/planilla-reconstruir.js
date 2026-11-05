@@ -101,10 +101,6 @@
   const VENTANA = 6;         // medias jugadas que se miran para decidir si ya no se puede seguir
   const UMBRAL = 1.5;        // costo medio por media jugada a partir del cual es ilegible
   const ESTADO_LEIDA = 0.2, ESTADO_CORREGIDA = 1.0;
-  // Lo más que una planilla puede ir adelante o atrás de la partida (en medias jugadas). Sin tope, cuando las dos
-  // hojas dejaban de coincidir, salía más barato tomar una jugada de cada una por turnos y la partida se estiraba
-  // más allá de lo escrito (108 medias jugadas con 98 celdas; Centroamericano 2026, Sub-12 R4 M8): eso es inventar.
-  const MAX_DESFASE = 4;
 
   function reconstruir(Chess, hojasCrudas, opciones) {
     const opt = Object.assign({ haz: 150, alProgresar: null }, opciones || {});
@@ -170,9 +166,7 @@
           if (p + 1 < h.length) o.push({ leer: p + 1, ptr: p + 2, extra: SALTO });
           if (p + 2 < h.length) o.push({ leer: p + 2, ptr: p + 3, extra: SALTO * 1.4 });
           o.push({ leer: -1, ptr: p, extra: p < h.length ? FALTA : 0 });
-          // una hoja terminada ya no se desfasa; las demás, a lo sumo MAX_DESFASE de la partida
-          const sirve = o.filter((x) => x.ptr >= h.length || Math.abs(x.ptr - (e.ply + 1)) <= MAX_DESFASE);
-          return sirve.length ? sirve : o.slice(0, 1);
+          return o;
         });
         for (const mov of movimientos(e.fen)) {
           // cada hoja por separado: la mejor de sus opciones y las que quedan cerca

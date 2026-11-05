@@ -8835,10 +8835,12 @@ transmiten**.
   - **Minúsculas** («cf3», «ac4»): la diferencia de mayúscula cuesta 0,15, no una letra entera.
   - **El caché de costos** iba por la SAN, y «AxA» puede ser dos capturas distintas con la misma
     SAN en dos posiciones (o la misma casilla con piezas distintas): ahora va por las formas.
-  - **El desfase entre las dos planillas** no pasa de 4 jugadas (`MAX_DESFASE`): en el Sub-12, R4,
-    M8, cuando el corrector no entendía las capturas pieza por pieza, la partida se estiraba
-    saltando celdas de una planilla y leyendo de más en la otra, hasta pasar las jugadas
-    anotadas. Si ninguna opción respeta el tope, se queda la mejor (no se rompe la búsqueda).
+  - **Sin tope de desfase entre las dos planillas.** Se probó que ninguna se separara más de 4
+    medias jugadas de la partida, por el Sub-12, R4, M8, que se estiraba a 108 con 98 celdas. Con las
+    capturas pieza por pieza y el caché arreglados ya no se estira, y el tope no mejoró ninguna de las
+    41 planillas y empeoró una: el Sub-18 Absoluto, R1, M6, donde la planilla de las negras tiene 10
+    celdas menos (dejó de anotar un tramo) y con el tope salían 23 dudosas en vez de 6. Que una
+    planilla se atrase mucho es normal; se quitó.
 - `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
   `append` no): lo que no va se saca antes; lo comprueba el verificador.
 - Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de
