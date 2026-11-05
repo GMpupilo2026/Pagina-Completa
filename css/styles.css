@@ -2869,6 +2869,7 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .metro-opcion:has(input:focus-visible) { outline: 2px solid #f0b429; outline-offset: 2px; }
 .metro-boton { border: 1px solid #1d134d; color: #1d134d; background: #fff; font-weight: 600; font-size: .875rem; padding: .55rem 1rem; border-radius: .5rem; }
 .metro-boton:hover { background: #f3f2fa; }
+.metro-boton[aria-pressed="true"], .dark .metro-boton[aria-pressed="true"] { background: #1d134d; color: #fff; border-color: #1d134d; }
 .metro-boton:focus-visible, .metro-boton:focus-within { outline: 2px solid #f0b429; outline-offset: 2px; }
 .dark .metro-boton { background: transparent; color: #fff; border-color: #9fb3c8; }
 .dark .metro-boton:hover { background: #243b53; }

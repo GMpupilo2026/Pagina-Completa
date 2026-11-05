@@ -150,6 +150,7 @@
                     <div class="flex flex-wrap gap-2">
                         <button type="button" data-agregar="jugador" class="metro-boton">+ Jugador</button>
                         <button type="button" data-agregar="entrenador" class="metro-boton">+ Entrenador</button>
+                        <button type="button" data-agregar="arbitro" class="metro-boton">+ Árbitro</button>
                         <button type="button" data-agregar="acompanante" class="metro-boton">+ Acompañante</button>
                     </div>
                 </div>
@@ -255,6 +256,12 @@
                     <p class="text-lg font-bold text-brand-800 dark:text-white">✅ <span id="listo-texto"></span></p>
                     <ul id="listo-codigos" class="text-sm space-y-1"></ul>
                     <p id="listo-pago" class="text-sm text-brand-700 dark:text-brand-200"></p>
+                    <!-- El enlace secreto para corregir el envío después (metropolitano-mi-inscripcion.html). -->
+                    <div id="listo-enlace-caja" class="hidden rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 p-4 space-y-2">
+                        <p class="text-sm font-semibold">Guarda este enlace: con él corriges la inscripción después (el teléfono, la emergencia, el viaje, las fechas, la foto o el comprobante). También te llega por correo.</p>
+                        <p class="text-sm break-all"><a id="listo-enlace" class="underline font-semibold" href="metropolitano-mi-inscripcion.html">Corregir mi inscripción</a></p>
+                        <button type="button" id="copiar-enlace" class="metro-boton">Copiar el enlace</button>
+                    </div>
                     <div class="flex flex-wrap gap-3">
                         <button type="button" id="bajar-gafete" class="bg-[#1d134d] hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Descargar los gafetes (PDF)</button>
                         <button type="button" id="otra" class="metro-boton">Hacer otra inscripción</button>

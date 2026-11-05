@@ -8,6 +8,11 @@
  * «metropolitano-2026» y se enseñan como blob: (js/adjuntos.js). El gafete es
  * el mismo que la persona vio y validó (js/metropolitano-gafete.js).
  *
+ * Aquí también: las camas del hospedaje por noche, la logística en números
+ * (metropolitano_logistica: noches, comidas, dietas, accesibilidad y
+ * traslados) y los jugadores de cada torneo en Excel para Swiss-Manager. La
+ * acreditación en la entrada es metropolitano-acreditacion.html.
+ *
  * Ver «La inscripción del Metropolitano 2026» en
  * docs/decisiones/cuentas-y-formularios.md.
  */
@@ -43,13 +48,14 @@
   function visibles() {
     const q = $("f-texto").value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
     const t = $("f-torneo").value, p = $("f-pago").value, anuladas = $("f-anuladas").checked;
-    const rol = $("f-rol").value, pub = $("f-publicidad").value;
+    const rol = $("f-rol").value, pub = $("f-publicidad").value, llegada = $("f-llegada").value;
     return filas.filter((x) => {
       if (!anuladas && x.estado === "anulada") return false;
       if (t && !x.torneos.includes(t)) return false;
       if (p && x.pago_estado !== p) return false;
       if (rol && (rol === "delegado" ? !x.es_delegado && x.rol !== "delegado" : x.rol !== rol)) return false;
       if (pub && (pub === "si") !== !!x.acepta_publicidad) return false;
+      if (llegada && (llegada === "si") !== !!x.acreditado_en) return false;
       if (!q) return true;
       return [x.nombre, x.apellidos, x.fide_id, x.documento, x.correo, codigo(x), x.club, x.delegacion].join(" ")
         .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().includes(q);
@@ -61,11 +67,11 @@
     const n = (f) => act.filter(f).length;
     const usd = act.filter((x) => x.pago_estado === "verificado").reduce((s, x) => s + Number(x.monto_usd), 0);
     const datos = [
-      ["Inscritos", act.length], ["Jugadores", n((x) => x.rol === "jugador")], ["Entrenadores", n((x) => x.rol === "entrenador")],
+      ["Inscritos", act.length], ["Jugadores", n((x) => x.rol === "jugador")], ["Entrenadores", n((x) => x.rol === "entrenador")], ["Árbitros", n((x) => x.rol === "arbitro")],
       ["Acompañantes", n((x) => x.rol === "acompanante")], ["Delegaciones", new Set(act.filter((x) => x.grupo).map((x) => x.grupo)).size],
       ["Autorizan publicidad", n((x) => x.acepta_publicidad)], ["Metropolitano A", n((x) => x.clasico === "A")], ["Metropolitano B", n((x) => x.clasico === "B")],
       ["U14", n((x) => x.clasico === "U14")], ["Blitz", n((x) => x.torneos.includes("BLITZ"))],
-      ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
+      ["Pagos por revisar", n((x) => x.pago_estado === "por_revisar")], ["Pagos rechazados", n((x) => x.pago_estado === "rechazado")], ["Ya llegaron (acreditados)", n((x) => !!x.acreditado_en)], ["Cobrado y verificado", R.dinero(usd)], ["Piden factura", n((x) => !!x.factura)],
       ["Sin ID FIDE", n((x) => x.sin_fide)], ["Piden hospedaje", n((x) => x.hospedaje)], ["Piden alimentación", n((x) => x.comidas.length > 0)], ["Con parqueo", n((x) => x.parqueo)], ["Correos que no salieron", n((x) => !x.confirmacion_en && !!x.confirmacion_error)],
       ["De otro país", n((x) => !/^costa rica$/i.test(x.pais_residencia))], ["Menores de edad", n((x) => R.edad(x.nacimiento, R.INICIO) < 18)],
     ];
@@ -125,6 +131,9 @@
       ["Referencia del pago", [x.pago_referencia, x.pago_fecha].filter(Boolean).join(" · ")],
       ["Se inscribió", window.HoraCR.fechaHora(x.creado)],
       ["Correo de confirmación", estadoCorreo(x)],
+      ["Correo del pago", x.pago_aviso_en ? "Enviado el " + window.HoraCR.fechaHora(x.pago_aviso_en) + " (" + (PAGO[x.pago_aviso_estado] || {}).texto + ")" : x.pago_aviso_error ? "No salió: " + x.pago_aviso_error : ""],
+      ["Llegó", x.acreditado_en ? window.HoraCR.fechaHora(x.acreditado_en) : ""],
+      ["Corrigió su inscripción", x.corregido_en ? window.HoraCR.fechaHora(x.corregido_en) : ""],
     ];
     datos.filter(([, v]) => v).forEach(([k, v]) => { const p = document.createElement("div"); const dt = document.createElement("dt"); dt.className = "font-semibold inline"; dt.textContent = k + ": "; const dd = document.createElement("dd"); dd.className = "inline"; dd.textContent = v; p.append(dt, dd); dl.append(p); });
     d.append(dl);
@@ -224,8 +233,10 @@
     const { data, error } = await window.sb.rpc("metropolitano_revisar", { p_id: x.id, p_pago_estado: pago, p_estado: est, p_nota: nota });
     if (error) { window.Avisos.avisar("No se pudo guardar: " + error.message, { tipo: "error" }); return; }
     Object.assign(x, data);
-    window.Avisos.avisar("Guardado: " + codigo(x) + ", pago " + PAGO[x.pago_estado].texto.toLowerCase() + (x.estado === "anulada" ? ", anulada" : "") + ".");
-    pintar();
+    const aviso = pago !== "por_revisar" && pago !== "no_aplica" && x.estado === "activa" ? " Le llega un correo a quien mandó la inscripción." : "";
+    window.Avisos.avisar("Guardado: " + codigo(x) + ", pago " + PAGO[x.pago_estado].texto.toLowerCase() + (x.estado === "anulada" ? ", anulada" : "") + (x.grupo ? " (para toda la delegación)" : "") + "." + aviso);
+    // En una delegación cambió el pago de todos: se vuelve a leer.
+    if (x.grupo) await cargar(); else pintar();
   }
 
   async function gafete(x, boton) {
@@ -285,7 +296,25 @@
       "Metropolitano 2026 - lista para gafetes y Pareo.csv");
   });
 
-  ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad"].forEach((id) => $(id).addEventListener("input", pintar));
+  ["f-texto", "f-torneo", "f-pago", "f-anuladas", "f-rol", "f-publicidad", "f-llegada"].forEach((id) => $(id).addEventListener("input", pintar));
+
+  /* ===================== Para Swiss-Manager / chess-results ===================== */
+  // Un Excel con una hoja por torneo: lo que importa Swiss-Manager (nombre como
+  // «Apellidos, Nombre», ID FIDE, federación, título, Elo, sexo, nacimiento,
+  // club). El nombre es el de FIDE si lo tiene, que es como lo busca el árbitro.
+  // Solo las inscripciones activas con el pago no rechazado.
+  $("bajar-chess-results").addEventListener("click", () => {
+    const fecha = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); return m ? m[3] + "/" + m[2] + "/" + m[1] : ""; };
+    const hojas = Object.keys(R.TORNEOS).map((t) => {
+      const l = filas.filter((x) => x.estado === "activa" && x.pago_estado !== "rechazado" && x.rol === "jugador" && x.torneos.includes(t))
+        .map((x) => Object.assign({}, x, { elo: t === "BLITZ" ? x.elo_blitz : x.elo_estandar }))
+        .sort((a, b) => (Number(b.elo) || 0) - (Number(a.elo) || 0) || String(a.apellidos).localeCompare(String(b.apellidos), "es"));
+      return { nombre: R.TORNEOS[t].nombre, filas: [["No.", "Name", "FIDE-ID", "Fed", "Title", "Rtg", "Sex", "Birth", "Club", "Code", "Payment"],
+        ...l.map((x, i) => [i + 1, x.nombre_fide || x.apellidos + ", " + x.nombre, x.fide_id || "", x.federacion || (x.origen === "cr" ? "CRC" : ""), x.titulo || "",
+          x.elo || "", x.sexo === "f" ? "w" : "m", fecha(x.nacimiento), x.delegacion || x.club || "", codigo(x), PAGO[x.pago_estado].texto])] };
+    });
+    window.TablaExcel.bajar("Metropolitano 2026 - jugadores para Swiss-Manager.xlsx", hojas);
+  });
 
   /* ===================== El Drive ===================== */
   // La Edge Function metropolitano-drive: estado, conectar y mandar lo que falta.
@@ -436,6 +465,85 @@
       "Metropolitano 2026 - placas del parqueo.csv");
   });
 
+  /* ===================== El hospedaje: camas por noche ===================== */
+  const diaCorto = (d) => window.HoraCR.fecha(d, { day: "numeric", month: "short", weekday: "short" });
+  function pintarHospedaje(d) {
+    $("hosp-camas").value = d.camas == null ? "" : d.camas;
+    const noches = (d.noches || []).filter((n) => n.ocupadas > 0 || (n.noche >= "2026-12-25" && n.noche <= "2026-12-29"));
+    const max = (d.noches || []).reduce((m, n) => Math.max(m, n.ocupadas), 0);
+    $("hosp-estado").textContent = (d.camas == null ? "Sin tope de camas. " : d.camas + " camas por noche. ")
+      + (noches.length ? "Ocupadas: " + noches.map((n) => diaCorto(n.noche) + " " + n.ocupadas + (d.camas != null ? "/" + d.camas : "")).join(" · ") + "." : "")
+      + (d.camas != null && max >= d.camas ? " Hay noches llenas." : "");
+  }
+  async function cargarHospedaje() {
+    const { data, error } = await window.sb.rpc("metropolitano_hospedaje_estado");
+    if (error || !data) { $("hosp-estado").textContent = "No se pudo leer el hospedaje."; return; }
+    pintarHospedaje(data);
+  }
+  $("hosp-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const t = $("hosp-camas").value.trim(), camas = t === "" ? null : Number(t);
+    if (camas !== null && !(Number.isInteger(camas) && camas >= 0 && camas <= 5000)) { $("hosp-msg").textContent = "Las camas van de 0 a 5000, en número entero (vacío: sin tope)."; return; }
+    $("hosp-guardar").disabled = true; $("hosp-msg").textContent = "Guardando…";
+    const { data, error } = await window.sb.rpc("metropolitano_hospedaje_configurar", { p_camas: camas });
+    $("hosp-guardar").disabled = false;
+    if (error) { $("hosp-msg").textContent = "No se pudo guardar: " + error.message; return; }
+    $("hosp-msg").textContent = "Listo: guardado.";
+    pintarHospedaje(data);
+  });
+
+  /* ===================== La logística en números ===================== */
+  let logistica = null;
+  const COMIDA = { desayuno: "desayuno", almuerzo: "almuerzo", cena: "cena" };
+  // Las tablas de la logística: [título, encabezado, filas], para la pantalla y para el Excel.
+  function tablasLogistica(d) {
+    const noches = (d.noches || []).filter((n) => n.inscritos + n.acompanantes + n.titulados > 0);
+    const comidas = (d.comidas || []).filter((c) => c.desayuno + c.almuerzo + c.cena > 0);
+    return [
+      ["Quién duerme cada noche", ["Noche", "Inscritos", "Acompañantes", "Titulados invitados", "Total"],
+        noches.map((n) => [diaCorto(n.noche), n.inscritos, n.acompanantes, n.titulados, n.inscritos + n.acompanantes + n.titulados])],
+      ["Comidas por día", ["Día", "Desayunos", "Almuerzos", "Cenas"], comidas.map((c) => [diaCorto(c.dia), c.desayuno, c.almuerzo, c.cena])],
+      ["Dietas especiales y alergias", ["Código", "Persona", "Delegación", "Dieta", "Comidas"],
+        (d.dietas || []).map((x) => [x.codigo, x.quien, x.delegacion || "", x.dieta, x.titulado ? "todas (titulado invitado)" : (x.comidas || []).map((c) => COMIDA[c] || c).join(", ") + (x.desde ? " del " + x.desde + " al " + x.hasta : "")])],
+      ["Condición y accesibilidad", ["Código", "Persona", "Delegación", "Condición", "Necesita", "Hospedaje"],
+        (d.accesibilidad || []).map((x) => [x.codigo, x.quien, x.delegacion || "", (x.condicion || []).map((c) => ({ sordo: "sordo", ciego: "ciego o baja visión", silla: "silla de ruedas" })[c] || c).join(", "), x.accesibilidad || "", x.hospedaje ? "Sí" : "No"])],
+      ["Traslados del aeropuerto", ["Llega", "Sale", "Vuelo", "Código", "Persona", "Delegación", "Teléfono"],
+        (d.traslados || []).map((x) => [x.llegada || "", x.salida || "", x.vuelo || "", x.codigo, x.quien + (x.titulado ? " (titulado invitado)" : ""), x.delegacion || "", x.telefono || ""])],
+      ["Llegadas de otro país, por día", ["Día", "Personas"], (d.llegadas || []).map((x) => [diaCorto(x.dia), x.personas])],
+    ];
+  }
+  function pintarLogistica() {
+    const caja = $("logistica"); caja.textContent = "";
+    if (!logistica) return;
+    tablasLogistica(logistica).forEach(([titulo, cabeza, cuerpo]) => {
+      const d = document.createElement("div"); d.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 overflow-x-auto";
+      const h = document.createElement("h3"); h.className = "font-semibold text-brand-800 dark:text-white mb-2"; h.textContent = titulo;
+      d.append(h);
+      if (!cuerpo.length) { const p = document.createElement("p"); p.className = "text-sm text-brand-500 dark:text-brand-300"; p.textContent = "Todavía nada."; d.append(p); caja.append(d); return; }
+      const t = document.createElement("table"); t.className = "w-full text-sm";
+      const cap = document.createElement("caption"); cap.className = "sr-only"; cap.textContent = titulo; t.append(cap);
+      const th = document.createElement("thead"); const trh = document.createElement("tr");
+      cabeza.forEach((c) => { const e = document.createElement("th"); e.scope = "col"; e.className = "text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300 p-1"; e.textContent = c; trh.append(e); });
+      th.append(trh); t.append(th);
+      const tb = document.createElement("tbody");
+      cuerpo.forEach((f) => { const tr = document.createElement("tr"); tr.className = "border-t border-brand-100 dark:border-brand-800"; f.forEach((v) => { const td = document.createElement("td"); td.className = "p-1 align-top"; td.textContent = v; tr.append(td); }); tb.append(tr); });
+      t.append(tb); d.append(t); caja.append(d);
+    });
+  }
+  async function cargarLogistica() {
+    $("logistica-estado").textContent = "Contando…";
+    const { data, error } = await window.sb.rpc("metropolitano_logistica");
+    if (error || !data) { $("logistica-estado").textContent = "No se pudo leer la logística" + (error ? ": " + error.message : "."); return; }
+    logistica = data;
+    $("logistica-estado").textContent = "Al " + window.HoraCR.fechaHora(new Date()) + ".";
+    pintarLogistica();
+  }
+  $("logistica-actualizar").addEventListener("click", cargarLogistica);
+  $("logistica-excel").addEventListener("click", () => {
+    if (!logistica) return;
+    window.TablaExcel.bajar("Metropolitano 2026 - logística.xlsx", tablasLogistica(logistica).map(([titulo, cabeza, cuerpo]) => ({ nombre: titulo, filas: [cabeza, ...cuerpo] })));
+  });
+
   async function iniciar() {
     const { data } = await window.sb.auth.getSession();
     const session = data.session;
@@ -447,6 +555,8 @@
     await cargar();
     await cargarCodigos();
     cargarParqueo();
+    cargarHospedaje();
+    cargarLogistica();
     estadoDrive();
   }
   iniciar();

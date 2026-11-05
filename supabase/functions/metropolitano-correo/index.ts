@@ -25,10 +25,18 @@
 // y el intento, y se reintenta en la vuelta siguiente. Lo que Resend descarta
 // (una dirección que rebotó antes) se pregunta con envioFallido y cuenta como
 // error, con su motivo.
+//
+// LOS AVISOS (en la misma vuelta)
+// Después de las confirmaciones, la base le da lo pendiente con
+// metropolitano_avisos_tomar(): los pagos que administración verificó o
+// rechazó (un correo por estado, a quien mandó el envío, con el motivo y el
+// enlace para subir otro comprobante) y los enlaces para corregir pedidos
+// otra vez con el código y el correo. El enlace secreto lo lee de
+// metropolitano_enlaces, que nadie más lee. Ver «Los correos del pago».
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { envioFallido, motivoNoLlego } from "./envio-resend.ts";
-import { CONTACTO, correosDeEnvio, porEnvio, type Fila } from "./correo.ts";
+import { CONTACTO, correoEnlace, correoPago, correosDeEnvio, porEnvio, type Correo, type Fila } from "./correo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -61,11 +69,75 @@ function mismoSecreto(a: string, b: string): boolean {
   return d === 0;
 }
 
-const COLUMNAS = "id, numero, grupo, delegacion, es_delegado, rol, sexo, nombre, apellidos, correo, fide_id, nombre_fide, titulo, torneos, monto_usd, iva_usd, pago_estado, pago_metodo, hospedaje, hospedaje_desde, hospedaje_hasta, acepta_hospedaje, parqueo, placa, comidas, viaje, confirmacion_intentos";
+const COLUMNAS = "id, numero, grupo, delegacion, es_delegado, rol, sexo, nombre, apellidos, correo, fide_id, nombre_fide, titulo, torneos, monto_usd, iva_usd, pago_estado, pago_metodo, hospedaje, hospedaje_desde, hospedaje_hasta, acepta_hospedaje, parqueo, placa, comidas, viaje, confirmacion_intentos, nota_organizacion, pago_aviso_intentos";
+
+// Manda un correo; null si salió, o por qué no.
+async function mandar(apiKey: string, c: Correo): Promise<string | null> {
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: DE, to: [c.para], reply_to: CONTACTO, subject: c.asunto, html: c.html, text: c.texto }),
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok) return "Resend no lo aceptó (" + res.status + "): " + String(r?.message ?? "").slice(0, 160);
+    const fallo = await envioFallido(apiKey, r?.id);
+    return fallo ? motivoNoLlego(fallo, c.para) : null;
+  } catch (e) {
+    return "No se pudo conectar con el servicio de correo: " + String((e as Error)?.message ?? e).slice(0, 120);
+  }
+}
+
+// El enlace secreto para corregir el envío (en la fila de quien lo mandó).
+async function tokenDe(admin: ReturnType<typeof createClient>, filas: Fila[]) {
+  const ids = filas.map((x) => x.id);
+  const { data } = await admin.from("metropolitano_enlaces").select("token").in("inscripcion", ids).limit(1);
+  return (data && data[0] && data[0].token) || null;
+}
+
+// Las filas de un envío, a partir de la de quien lo mandó.
+async function filasDelEnvio(admin: ReturnType<typeof createClient>, id: string) {
+  const { data: una } = await admin.from("metropolitano_inscripciones").select(COLUMNAS).eq("id", id).maybeSingle();
+  if (!una) return [];
+  if (!una.grupo) return [una as Fila];
+  const { data } = await admin.from("metropolitano_inscripciones").select(COLUMNAS).eq("grupo", una.grupo).eq("estado", "activa").order("numero");
+  return (data ?? [una]) as Fila[];
+}
+
+// Los avisos pendientes: los del pago y los enlaces pedidos otra vez.
+async function mandarAvisos(admin: ReturnType<typeof createClient>, apiKey: string) {
+  const { data: pend, error } = await admin.rpc("metropolitano_avisos_tomar");
+  if (error || !pend) return { pagos: 0, enlaces: 0, errores: 0 };
+  let pagos = 0, enlaces = 0, errores = 0;
+  for (const a of (pend.pagos ?? []) as { id: string; estado: "verificado" | "rechazado" }[]) {
+    const filas = await filasDelEnvio(admin, a.id);
+    const nota = (filas.find((x) => x.pago_estado === "rechazado") as Fila & { nota_organizacion?: string | null })?.nota_organizacion ?? null;
+    const c = filas.length ? correoPago(filas, a.estado, nota, await tokenDe(admin, filas)) : null;
+    const err = c ? await mandar(apiKey, c) : "Sin un correo válido al que escribir.";
+    const fila = filas.find((x) => x.id === a.id);
+    if (err) {
+      errores++;
+      await admin.from("metropolitano_inscripciones").update({ pago_aviso_error: err, pago_aviso_intentos: (Number((fila as { pago_aviso_intentos?: number })?.pago_aviso_intentos) || 0) + 1, pago_aviso_tomado: null }).eq("id", a.id);
+    } else {
+      pagos++;
+      await admin.from("metropolitano_inscripciones").update({ pago_aviso_estado: a.estado, pago_aviso_en: new Date().toISOString(), pago_aviso_error: null, pago_aviso_tomado: null }).eq("id", a.id);
+    }
+  }
+  for (const id of (pend.enlaces ?? []) as string[]) {
+    const filas = await filasDelEnvio(admin, id);
+    const token = filas.length ? await tokenDe(admin, filas) : null;
+    const c = token ? correoEnlace(filas, token) : null;
+    const err = c ? await mandar(apiKey, c) : "Sin enlace o sin correo.";
+    if (err) errores++; else enlaces++;
+    // Se marca enviado también si falló: no se reintenta solo (se puede volver a pedir).
+    await admin.from("metropolitano_inscripciones").update({ enlace_enviado_en: new Date().toISOString(), enlace_error: err, enlace_tomado: null }).eq("id", id);
+  }
+  return { pagos, enlaces, errores };
+}
 
 // Manda los correos de un envío; true si salió el principal (el primero).
 async function mandarEnvio(admin: ReturnType<typeof createClient>, apiKey: string, filas: Fila[]) {
-  const correos = correosDeEnvio(filas);
+  const correos = correosDeEnvio(filas, await tokenDe(admin, filas));
   const todos = filas.map((x) => x.id);
   if (!correos.length) {
     await admin.from("metropolitano_inscripciones").update({ confirmacion_en: new Date().toISOString(), confirmacion_error: "Sin un correo válido al que escribir." }).in("id", todos);
@@ -74,22 +146,7 @@ async function mandarEnvio(admin: ReturnType<typeof createClient>, apiKey: strin
   let principalOk = false;
   for (let i = 0; i < correos.length; i++) {
     const c = correos[i];
-    let error: string | null = null;
-    try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: DE, to: [c.para], reply_to: CONTACTO, subject: c.asunto, html: c.html, text: c.texto }),
-      });
-      const r = await res.json().catch(() => ({}));
-      if (!res.ok) error = "Resend no lo aceptó (" + res.status + "): " + String(r?.message ?? "").slice(0, 160);
-      else {
-        const fallo = await envioFallido(apiKey, r?.id);
-        if (fallo) error = motivoNoLlego(fallo, c.para);
-      }
-    } catch (e) {
-      error = "No se pudo conectar con el servicio de correo: " + String((e as Error)?.message ?? e).slice(0, 120);
-    }
+    const error = await mandar(apiKey, c);
     if (i === 0) {
       principalOk = !error;
       if (error) {
@@ -157,5 +214,6 @@ Deno.serve(async (req) => {
   for (const filas of envios) {
     if (await mandarEnvio(admin, apiKey, filas)) enviados++; else errores++;
   }
-  return json({ ok: true, enviados, errores });
+  const avisos = await mandarAvisos(admin, apiKey);
+  return json({ ok: true, enviados, errores, avisos });
 });

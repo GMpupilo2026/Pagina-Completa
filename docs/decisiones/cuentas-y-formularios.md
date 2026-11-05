@@ -1633,6 +1633,137 @@ llenan delegaciones de afuera que no leen español.
   grupo a medias en francés con el aviso de quitar a alguien. Se rompió a
   propósito el mapa (una entrada menos) y el guardado del borrador, y saltó.
 
+### Lo que necesita la organización: árbitros, camas, logística, Swiss-Manager, la entrada, el pago y corregir
+
+Pedido del dueño: «hazlos todos de una vez» (las siete mejoras propuestas) y
+«agregar la opción de árbitro también, para saber si necesita hospedaje».
+Migraciones 20261105044741 a 20261105045527.
+
+#### El árbitro
+
+- **Se inscribe como el entrenador**: el ID FIDE si tiene (se busca igual por
+  el nombre), no elige torneo ni paga, y pide hospedaje, alimentación y
+  parqueo como cualquiera. En una delegación, «+ Árbitro», y el delegado puede
+  ser «Delegado y árbitro».
+- La base lo acepta en `rol` (`arbitro`) y en `interno.metropolitano_persona`.
+  En el gafete lleva su franja propia (`#7a2e0e`, blanco encima a 9,4 a 1), en
+  el Drive su carpeta «Árbitros» (fuera de una delegación), en la lista de
+  inscritos su filtro y su cifra, y en los correos «Árbitro» o «Árbitra».
+
+#### El cupo del hospedaje
+
+- **Las camas se cuentan noche por noche**, no por persona: quien se queda dos
+  noches y quien se queda seis ocupan lo mismo la noche en que coinciden.
+  `interno.metropolitano_noches()` cuenta del 20 de diciembre al 2 de enero a
+  quien pidió hospedaje (más sus acompañantes) y a los titulados invitados (del
+  día de llegada al de salida); una inscripción anulada o con el pago
+  rechazado no ocupa cama, igual que en el parqueo.
+- **Administración pone las camas** (`metropolitano_hospedaje`, una fila con
+  su bitácora; `metropolitano_hospedaje_configurar`); vacío es sin tope, que es
+  como estaba. No se pueden poner menos que las ya ocupadas en alguna noche.
+- **La base no deja pasar una noche llena**: `metropolitano_inscribir` bloquea
+  la fila de las camas y suma lo de todo el envío; el mensaje dice qué noche y
+  cuántas quedan. A los titulados invitados no se les niega (los invita la
+  organización), pero ocupan su cama.
+- **La página** lee `metropolitano_hospedaje_ver()` (sin cuenta): cuántas
+  quedan cada noche, y si las noches del torneo (del 25 al 29) están todas
+  llenas. Llenas, deja de ofrecer el hospedaje y lo dice; si no, avisa antes de
+  mandar cuando las fechas elegidas tocan una noche sin camas.
+
+#### La logística en números
+
+- `metropolitano_logistica()` (solo administración) cuenta **en la base**
+  (nunca bajándose la tabla para sumar en el navegador): quién duerme cada
+  noche (inscritos, acompañantes y titulados), los desayunos, almuerzos y cenas
+  de cada día (los titulados invitados, todos los días de su estadía), las
+  dietas, la condición y accesibilidad, los traslados del aeropuerto con su
+  vuelo y las llegadas de otro país por día. En la lista de inscritos, en
+  tablas y en un Excel con una hoja por tabla (`js/tabla-excel.js`).
+- Los acompañantes que no se inscriben aparte duermen, pero sus comidas no se
+  piden: la página lo dice.
+
+#### Swiss-Manager / chess-results
+
+- «Jugadores para Swiss-Manager»: un Excel con una hoja por torneo (A, B, U14
+  y Blitz), las columnas que importa Swiss-Manager (No., Name, FIDE-ID, Fed,
+  Title, Rtg, Sex, Birth, Club) y, aparte, el código MET-… y el estado del
+  pago. El nombre es el de FIDE si lo tiene; el Elo, el estándar en los
+  clásicos y el de blitz en el blitz; el sexo con la «w» de FIDE; ordenado por
+  Elo. Solo las activas con el pago no rechazado.
+
+#### La acreditación
+
+- `metropolitano-acreditacion.html` (solo administración, en el celular de la
+  entrada): se escanea el QR del gafete con la cámara —`BarcodeDetector`, el
+  lector del navegador; el de un jugador lleva su nombre como en FIDE y se
+  busca por él— o se busca a cualquiera por su nombre, su código MET-…, su
+  documento o la placa. La tarjeta dice si el pago está verificado (en grande
+  si no), el hospedaje, el parqueo, el responsable de un menor y la
+  accesibilidad; «Llegó» lo anota la base (`metropolitano_acreditar`, con
+  quién y a qué hora) y se puede deshacer.
+- La lista se vuelve a leer cada 30 segundos: varios celulares en la entrada
+  ven lo mismo. Abajo, «Quién falta por llegar», por torneo y por rol.
+- Es la cuarta página con la cámara encendida en `_headers` (y
+  `verificar-camara-tablero.js` lo sabe). Sin `BarcodeDetector` (Safari en
+  iPhone, por ahora), se busca a mano.
+
+#### Los correos del pago
+
+- **Un envío se paga una sola vez**: verificar o rechazar el pago de alguien de
+  una delegación lo hace para todos los que pagan en ella
+  (`metropolitano_revisar`), con la misma nota.
+- **A quien mandó el envío le llega un correo** cuando el pago queda
+  verificado, o rechazado con el motivo (la nota de la organización) y el
+  botón para subir otro comprobante. Uno por estado: si se rechaza, se corrige
+  y se verifica, llegan los dos. El trigger `metropolitano_pago_avisa` llama a
+  la Edge Function enseguida (y pg_cron reintenta cada 10 minutos); la función
+  toma lo pendiente con `metropolitano_avisos_tomar()`, en un solo update, para
+  que nunca salga dos veces. Las columnas `pago_aviso_*` dicen qué se avisó y
+  si falló; en la lista de inscritos, «Correo del pago».
+
+#### Corregir la inscripción
+
+- **Cada envío tiene un enlace secreto** (`metropolitano_enlaces`: 64 hex, en
+  una tabla que nadie lee desde afuera, ni administración por la RLS). Sale al
+  terminar la inscripción («Guarda este enlace») y en los correos de quien la
+  mandó. El secreto va detrás del `#` (`metropolitano-mi-inscripcion.html#t=…`):
+  no viaja al servidor ni queda en sus registros.
+- **Con él se corrige lo que no cambia el precio ni el torneo**
+  (`metropolitano_corregir`): el correo y el teléfono, la emergencia, el viaje,
+  las fechas del hospedaje (con las camas vueltas a contar) y de la
+  alimentación, la dieta, la foto del gafete, la placa, y se sube otro
+  comprobante (el pago vuelve a «por revisar» y se le vuelve a avisar). Todo o
+  nada. El nombre, el ID FIDE, el torneo y el rol, con la organización.
+- **Sin el enlace**, se pide con el código MET-… y el correo de quien mandó el
+  envío (`metropolitano_pedir_enlace`, con el freno de las solicitudes): la
+  respuesta es la misma coincida o no, para no decir qué correos existen, y el
+  enlace llega por correo.
+- Hasta el 26 de diciembre, cuando cierra la inscripción (después, el bucket
+  ya no recibe archivos). La página va en español.
+
+#### ¿Quién viene?
+
+- Una ficha en la página del torneo con los jugadores de cada torneo, por Elo,
+  con su título, su federación y su delegación o club
+  (`metropolitano_quien_viene()`, sin cuenta). **Con su nombre, solo quienes
+  dieron el permiso de publicidad**; los demás solo se cuentan («y 3 más que
+  no autorizaron publicar su nombre»). Nada de contactos, documentos ni
+  fotos. En español, inglés y francés (`js/metropolitano-quien-viene.js`, que
+  se pinta solo en cada idioma).
+- La política de privacidad dice lo que se publica, el enlace para corregir y
+  la hora de llegada que se anota en la entrada.
+
+`verificar-metropolitano.js` prueba cada una: el árbitro de punta a punta, la
+noche sin camas y el hospedaje lleno, el enlace al terminar, corregir (lo que
+se manda, el comprobante subido, el pago por revisar) y pedir el enlace, la
+acreditación con un lector de QR de prueba, «¿Quién viene?» en español y en
+inglés, las camas, la logística y el Excel de Swiss-Manager en la lista de
+inscritos, y los correos del pago y del enlace con el mismo código de la Edge
+Function. En la base se probó, dentro de transacciones que se deshacen, que una
+noche llena no deja pasar, que el árbitro entra con su enlace, que corregir
+rechaza un correo malo y un comprobante que no existe, y que pedir el enlace
+solo marca el envío cuando el correo coincide.
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la

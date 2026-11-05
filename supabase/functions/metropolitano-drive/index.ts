@@ -76,7 +76,7 @@ function mismoSecreto(a: string, b: string): boolean {
 }
 
 const TORNEO: Record<string, string> = { A: "Torneo A", B: "Torneo B", U14: "Torneo U14", BLITZ: "Torneo Blitz" };
-const ROL: Record<string, string> = { jugador: "Jugador", entrenador: "Entrenador", acompanante: "Acompañante", delegado: "Delegado" };
+const ROL: Record<string, string> = { jugador: "Jugador", entrenador: "Entrenador", acompanante: "Acompañante", delegado: "Delegado", arbitro: "Árbitro" };
 const TIPO_DE: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", pdf: "application/pdf" };
 
 type Fila = Record<string, any>;
@@ -89,6 +89,8 @@ export function carpetasDe(x: Fila): string[] {
   const persona = codigo(x) + " - " + x.apellidos + ", " + x.nombre;
   if (x.grupo && x.delegacion) return ["Delegación - " + x.delegacion, persona + " (" + quienEs(x) + ")"];
   if (x.rol === "jugador") return [x.clasico ? TORNEO[x.clasico] : "Torneo Blitz", persona];
+  // Los árbitros, en su carpeta: la organización los coordina aparte.
+  if (x.rol === "arbitro") return ["Árbitros", persona];
   return ["Entrenadores, acompañantes y delegados", persona + " (" + quienEs(x) + ")"];
 }
 

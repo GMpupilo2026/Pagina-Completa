@@ -20,6 +20,7 @@ window.InscripcionMetroEN = {
     "+ Acompañante": "+ Companion",
     "+ Entrenador": "+ Coach",
     "+ Jugador": "+ Player",
+    "+ Árbitro": "+ Arbiter",
     ". Al final ves el": ". At the end you see the",
     ". Lee las": ". Read the",
     ". Si inscribo a otra persona o a un grupo, cuento con la autorización de cada una, y si es menor de edad, con la de su madre, padre o persona encargada.": ". If I register another person or a group, I have the authorisation of each of them, and for a minor, that of their mother, father or guardian.",
@@ -82,6 +83,9 @@ window.InscripcionMetroEN = {
     "Confirmar y enviar la inscripción": "Confirm and send the registration",
     "Contacto": "Contact",
     "Contacto para una emergencia": "Emergency contact",
+    "Copiado": "Copied",
+    "Copiar el enlace": "Copy the link",
+    "Corregir mi inscripción": "Correct my registration",
     "Correo de copia": "Copy email",
     "Correo electrónico": "Email",
     "Correo para recibir la factura": "Email to receive the invoice",
@@ -113,6 +117,7 @@ window.InscripcionMetroEN = {
     "Delegado que también juega": "Delegate who also plays",
     "Delegado y entrenador": "Delegate and coach",
     "Delegado y jugador": "Delegate and player",
+    "Delegado y árbitro": "Delegate and arbiter",
     "Desayuno": "Breakfast",
     "Desde": "From",
     "Desde (noche de llegada)": "From (night of arrival)",
@@ -130,6 +135,7 @@ window.InscripcionMetroEN = {
     "Ejemplo: 3500000": "Example: 3500000",
     "Ejemplo: Mora, Ana — o 6400000": "Example: Mora, Ana — or 6400000",
     "El código tiene la forma MET-XXXX-XXXX.": "The code looks like MET-XXXX-XXXX.",
+    "El hospedaje del Estadio Nacional ya está lleno: no quedan camas para las noches del torneo.": "The lodging at the Estadio Nacional is full: there are no beds left for the tournament nights.",
     "El monto de PayPal ya trae su comisión, como dicen las bases.": "The PayPal amount already includes its fee, as the regulations say.",
     "El pago": "Payment",
     "El permiso para usar el nombre y la foto de cada persona en la publicidad del torneo se marca en su tarjeta: es aparte y no es obligatorio.": "Permission to use each person's name and photo in the tournament's publicity is ticked on their card: it is separate and optional.",
@@ -203,6 +209,7 @@ window.InscripcionMetroEN = {
     "Foto tamaño pasaporte": "Passport-size photo",
     "Foto, captura de pantalla o PDF. Con subirlo acá basta: no hace falta mandarlo también por correo.": "Photo, screenshot or PDF. Uploading it here is enough: there is no need to email it as well.",
     "Frente": "Front",
+    "Guarda este enlace: con él corriges la inscripción después (el teléfono, la emergencia, el viaje, las fechas, la foto o el comprobante). También te llega por correo.": "Save this link: with it you can correct the registration later (the phone, the emergency contact, the trip, the dates, the photo or the proof of payment). It also reaches you by email.",
     "Hacer otra inscripción": "Make another registration",
     "Hasta": "Until",
     "Hasta (día de salida)": "Until (day of departure)",
@@ -258,6 +265,7 @@ window.InscripcionMetroEN = {
     "No juega: no elige torneo. Sigue con el paso siguiente.": "Does not play: no tournament to choose. Go on to the next step.",
     "No requiere": "Not needed",
     "No se pudo buscar en FIDE. Revisa la conexión e intenta de nuevo.": "The FIDE search failed. Check the connection and try again.",
+    "No se pudo copiar: mantén presionado el enlace": "It could not be copied: press and hold the link",
     "No se pudo enviar. Revisa la conexión e intenta de nuevo.": "It could not be sent. Check the connection and try again.",
     "No se pudo leer esa foto. Prueba con otra (JPG o PNG).": "That photo could not be read. Try another one (JPG or PNG).",
     "No se pudo revisar el código. Intenta de nuevo.": "The code could not be checked. Try again.",
@@ -390,6 +398,8 @@ window.InscripcionMetroEN = {
     "¿Necesita hospedaje?": "Do they need lodging?",
     "¿No aparece? Búsquelo por el primer apellido o por el ID FIDE": "Not there? Search by the first surname or by the FIDE ID",
     "¿Tiene un código de descuento?": "Do they have a discount code?",
+    "Árbitra": "Arbiter",
+    "Árbitro": "Arbiter",
     "← Atrás": "← Back",
     "✓ Completa": "✓ Complete",
     "⬇ Descargar los gafetes (PDF)": "⬇ Download the badges (PDF)",
@@ -405,7 +415,7 @@ window.InscripcionMetroEN = {
   // Los textos que llevan datos (ver «patrones» en js/idioma-pagina.js).
   const COMIDA = { desayuno: "breakfast", almuerzo: "lunch", cena: "dinner" };
   const comidas = (x) => x.split(", ").map((c) => COMIDA[c] || c).join(", ");
-  const ROL = { delegado: "delegate", delegada: "delegate", jugador: "player", jugadora: "player", entrenador: "coach", entrenadora: "coach", "acompañante": "companion" };
+  const ROL = { delegado: "delegate", delegada: "delegate", jugador: "player", jugadora: "player", entrenador: "coach", entrenadora: "coach", "acompañante": "companion", "árbitro": "arbiter", "árbitra": "arbiter" };
   const elo = (x) => (x === "sin Elo" ? "unrated" : x);
   const plural = (n, uno, varios) => n + " " + (Number(n) === 1 ? uno : varios);
   const NOTA = [[/^\+30 % por inscripción tardía$/, "+30 % late entry"], [/^−10 % senior$/, "−10 % senior"], [/^gratis por título (\w+)$/, "free for the $1 title"]];
@@ -489,6 +499,7 @@ window.InscripcionMetroEN = {
     [/^La placa (\S+) está dos veces: es un espacio por vehículo, que lo pida una sola persona\.$/, "Plate $1 appears twice: it is one space per vehicle, so only one person should ask for it."],
     [/^No se pudo armar el PDF de los gafetes: (.+)$/, "The badges PDF could not be made: $1"],
     [/^Factura: revisa el número de identificación \((.+)\)\.$/, (m, t) => "Invoice: check the identification number (" + t(m[1]) + ")."],
+    [/^El hospedaje ya no tiene camas para la noche del (.+?)(?: \(quedan (\d+)\))?: elige otras fechas\.$/, (m) => "The lodging has no beds left for the night of " + m[1] + (m[2] ? " (" + m[2] + " left)" : "") + ": choose other dates."],
     [/^(atleta sordo|atleta ciego o de baja visión|silla de ruedas)((?:, .+)?)$/, (m) => m[0].split(", ").map((x) => ({ "atleta sordo": "deaf athlete", "atleta ciego o de baja visión": "blind or visually impaired athlete", "silla de ruedas": "wheelchair" })[x] || x).join(", ")],
   ];
 })();

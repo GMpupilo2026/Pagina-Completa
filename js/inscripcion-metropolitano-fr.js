@@ -20,6 +20,7 @@ window.InscripcionMetroFR = {
     "+ Acompañante": "+ Accompagnateur",
     "+ Entrenador": "+ Entraîneur",
     "+ Jugador": "+ Joueur",
+    "+ Árbitro": "+ Arbitre",
     ". Al final ves el": ". À la fin, vous voyez le",
     ". Lee las": ". Lisez le",
     ". Si inscribo a otra persona o a un grupo, cuento con la autorización de cada una, y si es menor de edad, con la de su madre, padre o persona encargada.": ". Si j’inscris une autre personne ou un groupe, j’ai l’autorisation de chacune et, pour un mineur, celle de sa mère, de son père ou de la personne responsable.",
@@ -82,6 +83,9 @@ window.InscripcionMetroFR = {
     "Confirmar y enviar la inscripción": "Confirmer et envoyer l’inscription",
     "Contacto": "Contact",
     "Contacto para una emergencia": "Contact en cas d’urgence",
+    "Copiado": "Copié",
+    "Copiar el enlace": "Copier le lien",
+    "Corregir mi inscripción": "Corriger mon inscription",
     "Correo de copia": "E-mail en copie",
     "Correo electrónico": "E-mail",
     "Correo para recibir la factura": "E-mail pour recevoir la facture",
@@ -113,6 +117,7 @@ window.InscripcionMetroFR = {
     "Delegado que también juega": "Délégué qui joue aussi",
     "Delegado y entrenador": "Délégué et entraîneur",
     "Delegado y jugador": "Délégué et joueur",
+    "Delegado y árbitro": "Délégué et arbitre",
     "Desayuno": "Petit-déjeuner",
     "Desde": "Du",
     "Desde (noche de llegada)": "Du (nuit d’arrivée)",
@@ -130,6 +135,7 @@ window.InscripcionMetroFR = {
     "Ejemplo: 3500000": "Exemple : 3500000",
     "Ejemplo: Mora, Ana — o 6400000": "Exemple : Mora, Ana — ou 6400000",
     "El código tiene la forma MET-XXXX-XXXX.": "Le code a la forme MET-XXXX-XXXX.",
+    "El hospedaje del Estadio Nacional ya está lleno: no quedan camas para las noches del torneo.": "L’hébergement au Stade national est complet : il ne reste plus de lits pour les nuits du tournoi.",
     "El monto de PayPal ya trae su comisión, como dicen las bases.": "Le montant PayPal inclut déjà sa commission, comme le disent les règles.",
     "El pago": "Le paiement",
     "El permiso para usar el nombre y la foto de cada persona en la publicidad del torneo se marca en su tarjeta: es aparte y no es obligatorio.": "L’autorisation d’utiliser le nom et la photo de chaque personne dans la publicité du tournoi se coche sur sa fiche : elle est à part et facultative.",
@@ -203,6 +209,7 @@ window.InscripcionMetroFR = {
     "Foto tamaño pasaporte": "Photo d’identité",
     "Foto, captura de pantalla o PDF. Con subirlo acá basta: no hace falta mandarlo también por correo.": "Photo, capture d’écran ou PDF. Le téléverser ici suffit : inutile de l’envoyer aussi par e-mail.",
     "Frente": "Recto",
+    "Guarda este enlace: con él corriges la inscripción después (el teléfono, la emergencia, el viaje, las fechas, la foto o el comprobante). También te llega por correo.": "Gardez ce lien : il vous permet de corriger l’inscription plus tard (le téléphone, le contact d’urgence, le voyage, les dates, la photo ou le justificatif). Il vous arrive aussi par e-mail.",
     "Hacer otra inscripción": "Faire une autre inscription",
     "Hasta": "Au",
     "Hasta (día de salida)": "Au (jour de départ)",
@@ -258,6 +265,7 @@ window.InscripcionMetroFR = {
     "No juega: no elige torneo. Sigue con el paso siguiente.": "Ne joue pas : pas de tournoi à choisir. Passez à l’étape suivante.",
     "No requiere": "Pas besoin",
     "No se pudo buscar en FIDE. Revisa la conexión e intenta de nuevo.": "La recherche FIDE a échoué. Vérifiez la connexion et réessayez.",
+    "No se pudo copiar: mantén presionado el enlace": "Impossible de copier : appuyez longuement sur le lien",
     "No se pudo enviar. Revisa la conexión e intenta de nuevo.": "L’envoi a échoué. Vérifiez la connexion et réessayez.",
     "No se pudo leer esa foto. Prueba con otra (JPG o PNG).": "Impossible de lire cette photo. Essayez-en une autre (JPG ou PNG).",
     "No se pudo revisar el código. Intenta de nuevo.": "Le code n’a pas pu être vérifié. Réessayez.",
@@ -390,6 +398,8 @@ window.InscripcionMetroFR = {
     "¿Necesita hospedaje?": "A-t-il besoin d’un hébergement ?",
     "¿No aparece? Búsquelo por el primer apellido o por el ID FIDE": "Il n’apparaît pas ? Cherchez par le premier nom de famille ou par l’ID FIDE",
     "¿Tiene un código de descuento?": "A-t-il un code de réduction ?",
+    "Árbitra": "Arbitre",
+    "Árbitro": "Arbitre",
     "← Atrás": "← Retour",
     "✓ Completa": "✓ Complète",
     "⬇ Descargar los gafetes (PDF)": "⬇ Télécharger les badges (PDF)",
@@ -405,7 +415,7 @@ window.InscripcionMetroFR = {
   // Les textes avec des données (voir « patrones » dans js/idioma-pagina.js).
   const COMIDA = { desayuno: "petit-déjeuner", almuerzo: "déjeuner", cena: "dîner" };
   const comidas = (x) => x.split(", ").map((c) => COMIDA[c] || c).join(", ");
-  const ROL = { delegado: "délégué", delegada: "déléguée", jugador: "joueur", jugadora: "joueuse", entrenador: "entraîneur", entrenadora: "entraîneuse", "acompañante": "accompagnateur" };
+  const ROL = { delegado: "délégué", delegada: "déléguée", jugador: "joueur", jugadora: "joueuse", entrenador: "entraîneur", entrenadora: "entraîneuse", "acompañante": "accompagnateur", "árbitro": "arbitre", "árbitra": "arbitre" };
   const elo = (x) => (x === "sin Elo" ? "sans Elo" : x);
   const plural = (n, uno, varios) => n + " " + (Number(n) === 1 ? uno : varios);
   const NOTA = [[/^\+30 % por inscripción tardía$/, "+30 % inscription tardive"], [/^−10 % senior$/, "−10 % senior"], [/^gratis por título (\w+)$/, "gratuit pour le titre de $1"]];
@@ -489,6 +499,7 @@ window.InscripcionMetroFR = {
     [/^La placa (\S+) está dos veces: es un espacio por vehículo, que lo pida una sola persona\.$/, "La plaque $1 figure deux fois : c’est une place par véhicule, qu’une seule personne la demande."],
     [/^No se pudo armar el PDF de los gafetes: (.+)$/, "Le PDF des badges n’a pas pu être créé : $1"],
     [/^Factura: revisa el número de identificación \((.+)\)\.$/, (m, t) => "Facture : vérifiez le numéro d’identification (" + t(m[1]) + ")."],
+    [/^El hospedaje ya no tiene camas para la noche del (.+?)(?: \(quedan (\d+)\))?: elige otras fechas\.$/, (m) => "L’hébergement n’a plus de lits pour la nuit du " + m[1] + (m[2] ? " (il en reste " + m[2] + ")" : "") + " : choisissez d’autres dates."],
     [/^(atleta sordo|atleta ciego o de baja visión|silla de ruedas)((?:, .+)?)$/, (m) => m[0].split(", ").map((x) => ({ "atleta sordo": "athlète sourd", "atleta ciego o de baja visión": "athlète aveugle ou malvoyant", "silla de ruedas": "fauteuil roulant" })[x] || x).join(", ")],
   ];
 })();

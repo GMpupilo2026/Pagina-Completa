@@ -33,19 +33,22 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">♟️</span> Inscritos al Metropolitano 2026</h1>
             <p class="text-brand-600 dark:text-brand-300 mb-1 max-w-3xl">Lo que llega por <a class="underline font-semibold" href="inscripcion-metropolitano.html" target="_blank" rel="noopener">la inscripción pública</a>: los datos de cada jugador, su foto, su comprobante y su gafete. Aquí se da por bueno cada pago.</p>
-            <p class="text-xs text-brand-500 dark:text-brand-300 mb-6 max-w-3xl">El monto es el que se le dijo que pagara al inscribirse (lo calcula la base). Cambiar el estado de un pago queda en la bitácora de auditoría.</p>
+            <p class="text-xs text-brand-500 dark:text-brand-300 mb-3 max-w-3xl">El monto es el que se le dijo que pagara al inscribirse (lo calcula la base). Cambiar el estado de un pago queda en la bitácora de auditoría, y a quien mandó la inscripción le llega un correo cuando su pago queda verificado o rechazado (con el motivo de la nota y el enlace para subir otro comprobante). En una delegación, el pago es uno solo: verificarlo o rechazarlo en una persona lo hace para todos los que pagan.</p>
+            <p class="mb-6"><a href="metropolitano-acreditacion.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎫</span> Acreditación en la entrada →</a></p>
 
             <div id="cifras" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6" aria-live="polite"></div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4 flex flex-wrap items-end gap-3">
                 <div class="grow min-w-[12rem]"><label for="f-texto" class="block text-xs font-semibold mb-1">Buscar</label><input id="f-texto" type="search" placeholder="Nombre, ID FIDE, documento, código, delegación…" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                 <div><label for="f-torneo" class="block text-xs font-semibold mb-1">Torneo</label><select id="f-torneo" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="A">Metropolitano A</option><option value="B">Metropolitano B</option><option value="U14">Metropolitano U14</option><option value="BLITZ">Blitz</option></select></div>
-                <div><label for="f-rol" class="block text-xs font-semibold mb-1">Rol</label><select id="f-rol" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="jugador">Jugadores</option><option value="entrenador">Entrenadores</option><option value="acompanante">Acompañantes</option><option value="delegado">Delegados</option></select></div>
+                <div><label for="f-rol" class="block text-xs font-semibold mb-1">Rol</label><select id="f-rol" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="jugador">Jugadores</option><option value="entrenador">Entrenadores</option><option value="arbitro">Árbitros</option><option value="acompanante">Acompañantes</option><option value="delegado">Delegados</option></select></div>
+                <div><label for="f-llegada" class="block text-xs font-semibold mb-1">En la entrada</label><select id="f-llegada" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="si">Ya llegaron</option><option value="no">Todavía no llegan</option></select></div>
                 <div><label for="f-publicidad" class="block text-xs font-semibold mb-1">Publicidad</label><select id="f-publicidad" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="si">Autorizan nombre y foto</option><option value="no">No autorizan</option></select></div>
                 <div><label for="f-pago" class="block text-xs font-semibold mb-1">Pago</label><select id="f-pago" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"><option value="">Todos</option><option value="por_revisar">Por revisar</option><option value="verificado">Verificado</option><option value="rechazado">Rechazado</option><option value="no_aplica">Sin costo</option></select></div>
                 <label class="flex items-center gap-2 text-sm pb-2"><input type="checkbox" id="f-anuladas"> Ver anuladas</label>
                 <button type="button" id="bajar-csv" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Excel (CSV) de todo</button>
                 <button type="button" id="bajar-gafetes" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Lista para gafetes y Pareo</button>
+                <button type="button" id="bajar-chess-results" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Jugadores para Swiss-Manager (Excel, una hoja por torneo)</button>
             </div>
             <p id="estado" class="text-sm text-brand-500 dark:text-brand-300 mb-2" role="status" aria-live="polite"></p>
             <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
@@ -120,6 +123,31 @@
                     <p id="parq-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
                 </form>
             </section>
+
+            <!-- Las camas del hospedaje: cuántas hay por noche (metropolitano_hospedaje_configurar).
+                 Llena una noche, la base no deja pedirla; llenas las del torneo, la inscripción deja de ofrecerlo. -->
+            <section class="mt-10" aria-labelledby="hosp-titulo">
+                <h2 id="hosp-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🛏️</span> Hospedaje: camas por noche</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Cuenta, noche por noche, a quien pidió hospedaje (con sus acompañantes) y a los titulados invitados según sus días. Si se pone un número, una noche llena ya no se puede pedir, y cuando se llenan todas las del torneo (del 25 al 29 de diciembre) la inscripción deja de ofrecerlo. A los titulados invitados no se les niega: la organización los invita.</p>
+                <form id="hosp-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4 flex flex-wrap items-end gap-3">
+                    <div><label for="hosp-camas" class="block text-xs font-semibold mb-1">Camas por noche (vacío: sin tope)</label><input id="hosp-camas" type="number" min="0" max="5000" step="1" class="w-40 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm"></div>
+                    <button type="submit" id="hosp-guardar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar</button>
+                    <p id="hosp-estado" class="w-full text-sm font-semibold" role="status" aria-live="polite">Leyendo el hospedaje…</p>
+                    <p id="hosp-msg" class="w-full text-sm" role="status" aria-live="polite"></p>
+                </form>
+            </section>
+
+            <!-- La logística en números: lo cuenta la base (metropolitano_logistica). -->
+            <section class="mt-10" aria-labelledby="logistica-titulo">
+                <h2 id="logistica-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📋</span> Logística en números</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4 max-w-3xl text-sm">Lo que piden la cocina, el estadio y el transporte: cuántas personas duermen cada noche, cuántos desayunos, almuerzos y cenas por día (los titulados invitados, del día de llegada al de salida), las dietas, quién necesita algo de accesibilidad y los traslados del aeropuerto por fecha. Cuenta las inscripciones activas con el pago no rechazado. Los acompañantes que no se inscriben aparte duermen, pero sus comidas no están contadas.</p>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <button type="button" id="logistica-actualizar" class="bg-brand-800 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Actualizar</button>
+                    <button type="button" id="logistica-excel" class="border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Excel de la logística</button>
+                </div>
+                <p id="logistica-estado" class="text-sm mb-2" role="status" aria-live="polite"></p>
+                <div id="logistica" class="grid lg:grid-cols-2 gap-4"></div>
+            </section>
         </div>
     </div>
 
@@ -140,6 +168,7 @@
     <script src="js/gafetes-pdf.js"></script>
     <script src="js/metropolitano-reglas.js"></script>
     <script src="js/metropolitano-gafete.js"></script>
+    <script src="js/tabla-excel.js"></script>
     <script src="js/metropolitano-inscritos.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

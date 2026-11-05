@@ -95,12 +95,25 @@
      quedan (metropolitano_parqueo_ver). Mientras no conteste, o si no se
      ofrece o se llenó, no aparece. Lo cuenta y lo cobra la base. */
   let PARQUEO = { disponible: false, precio_usd: null, quedan: null };
+  /* Las camas del hospedaje (metropolitano_hospedaje_ver): si administración
+     puso un tope, cuántas quedan cada noche; con todas las noches del torneo
+     llenas, deja de ofrecerse. Sin respuesta, se ofrece y decide la base. */
+  let HOSPEDAJE = { limite: false };
   async function leerParqueo() {
     try {
-      const { data, error } = await window.sb.rpc("metropolitano_parqueo_ver");
-      if (!error && data && typeof data === "object") PARQUEO = data;
-    } catch (e) { /* sin la base, no se ofrece */ }
+      const [pq, hs] = await Promise.all([window.sb.rpc("metropolitano_parqueo_ver"), window.sb.rpc("metropolitano_hospedaje_ver")]);
+      if (!pq.error && pq.data && typeof pq.data === "object") PARQUEO = pq.data;
+      if (!hs.error && hs.data && typeof hs.data === "object") HOSPEDAJE = hs.data;
+    } catch (e) { /* sin la base, no se ofrece el parqueo y el hospedaje lo decide la base */ }
     personas.forEach((p) => p.recalcular());
+  }
+  // La primera noche del rango [desde, hasta) sin camas para `n` personas, o null.
+  function nocheSinCamas(desde, hasta, n) {
+    if (!HOSPEDAJE.limite || !HOSPEDAJE.quedan || !desde || !hasta) return null;
+    for (const [noche, quedan] of Object.entries(HOSPEDAJE.quedan).sort()) {
+      if (noche >= desde && noche < hasta && Number(quedan) < n) return { noche, quedan: Number(quedan) };
+    }
+    return null;
   }
   const esGrupo = () => document.querySelector('input[name="modo"]:checked').value === "grupo";
 
@@ -216,7 +229,8 @@
           </div>
           </div>
           <div data-caja-hosp-alim class="space-y-4">
-          <div class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">¿Necesita hospedaje?</span><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="si"> Sí</label></div>
+          <p data-hosp-lleno class="hidden text-sm font-semibold rounded-xl bg-brand-50 dark:bg-brand-950 p-3">El hospedaje del Estadio Nacional ya está lleno: no quedan camas para las noches del torneo.</p>
+          <div data-hosp-pregunta class="flex flex-wrap items-center gap-4"><span class="text-sm font-semibold">¿Necesita hospedaje?</span><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="no" checked> No</label><label class="flex items-center gap-2"><input type="radio" name="${id("hosp")}" value="si"> Sí</label></div>
           <div data-caja-hosp class="hidden grid sm:grid-cols-2 gap-4">
             <div><label for="${id("hdes")}" class="block text-sm font-semibold mb-1">Desde (noche de llegada)${AST}</label><input id="${id("hdes")}" data-campo data-c="hospedaje_desde" type="date" min="2026-12-20" max="2027-01-02" value="2026-12-25"></div>
             <div><label for="${id("hhas")}" class="block text-sm font-semibold mb-1">Hasta (día de salida)${AST}</label><input id="${id("hhas")}" data-campo data-c="hospedaje_hasta" type="date" min="2026-12-21" max="2027-01-03" value="2026-12-31"></div>
@@ -294,11 +308,11 @@
     const yo = { el, k, esDelegado: !!opciones.esDelegado, elegido: null, clasico: null, tocado: false, foto: null, fotoImg: null, codigo: null };
 
     // Los roles que puede tener esta tarjeta.
-    const roles = yo.esDelegado ? ["delegado", "jugador", "entrenador"] : ["jugador", "entrenador", "acompanante"];
+    const roles = yo.esDelegado ? ["delegado", "jugador", "entrenador", "arbitro"] : ["jugador", "entrenador", "arbitro", "acompanante"];
     const selRol = q("[data-rol]");
     roles.forEach((r) => {
       const o = document.createElement("option"); o.value = r;
-      o.textContent = r === "delegado" ? "Delegado (no juega)" : r === "jugador" && yo.esDelegado ? "Delegado que también juega" : r === "entrenador" && yo.esDelegado ? "Delegado y entrenador" : R.ROLES[r].nombre;
+      o.textContent = r === "delegado" ? "Delegado (no juega)" : r === "jugador" && yo.esDelegado ? "Delegado que también juega" : r === "entrenador" && yo.esDelegado ? "Delegado y entrenador" : r === "arbitro" && yo.esDelegado ? "Delegado y árbitro" : R.ROLES[r].nombre;
       selRol.append(o);
     });
     selRol.value = roles.includes(opciones.rol) ? opciones.rol : roles[0];
@@ -309,7 +323,9 @@
     // GM, IM y WGM que juegan: la organización les da hospedaje y alimentación (las bases).
     function esTitulado() { return yo.rol() === "jugador" && !sinFide() && !!yo.elegido && R.TITULOS_GRATIS.includes(String(yo.elegido.titulo || "").toUpperCase()); }
     yo.titulado = esTitulado;
-    const hospeda = () => !esTitulado() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
+    // Lleno, no se ofrece (y lo que estaba marcado se quita).
+    const hospedajeLleno = () => !!(HOSPEDAJE.limite && HOSPEDAJE.lleno);
+    const hospeda = () => !esTitulado() && !hospedajeLleno() && el.querySelector('input[name="' + k + '-hosp"]:checked').value === "si";
     const comidas = () => (esTitulado() ? [] : [...el.querySelectorAll("[data-comida]:checked")].map((x) => x.value));
     const condicion = () => [...el.querySelectorAll("[data-condicion]:checked")].map((x) => x.value);
     const parquea = () => PARQUEO.disponible && c("parqueo").checked;
@@ -508,7 +524,7 @@
     const buscarPorNombre = () => {
       clearTimeout(esperaNombre);
       const rol = yo.rol();
-      if (yo.elegido || sinFide() || deAfuera() || (rol !== "jugador" && rol !== "entrenador")) return;
+      if (yo.elegido || sinFide() || deAfuera() || (rol !== "jugador" && rol !== "entrenador" && rol !== "arbitro")) return;
       sinResultadoPorNombre = false;
       const limpio = (x) => v(x).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z ,.'-]+/g, " ").replace(/\s+/g, " ").trim();
       const nom = limpio("nombre"), ape = limpio("apellidos");
@@ -580,7 +596,8 @@
     function recalcular() {
       const rol = yo.rol();
       const juega = rol === "jugador";
-      const fideSi = juega || rol === "entrenador";
+      // El entrenador y el árbitro ponen su ID FIDE si tienen.
+      const fideSi = juega || rol === "entrenador" || rol === "arbitro";
       q("[data-bloque-fide]").classList.toggle("hidden", !fideSi);
       q("[data-fide-pregunta]").textContent = juega ? "ID FIDE" : "ID FIDE (si tiene)";
       if (!fideSi && !sinFide()) el.querySelector('input[name="' + k + '-fide"][value="no"]').checked = true;
@@ -633,6 +650,9 @@
         pintarClasicos(R.elegibles(eloEstandar(), nac || anioFide || null));
         if (!plazo.clasicos) q("[data-blitz]").checked = true;
       }
+      q("[data-hosp-lleno]").classList.toggle("hidden", !hospedajeLleno());
+      q("[data-hosp-pregunta]").classList.toggle("hidden", hospedajeLleno());
+      if (hospedajeLleno()) el.querySelector('input[name="' + k + '-hosp"][value="no"]').checked = true;
       q("[data-caja-hosp]").classList.toggle("hidden", !hospeda());
       pintarAcompanantes();
       q("[data-caja-comidas]").classList.toggle("hidden", !comidas().length);
@@ -673,7 +693,7 @@
       const n = [v("nombre"), v("apellidos")].filter(Boolean).join(" ");
       const i = personas.indexOf(yo) + 1;
       const rol = yo.rol();
-      const queEs = yo.esDelegado ? (rol === "delegado" ? "Delegado" : rol === "jugador" ? "Delegado y jugador" : "Delegado y entrenador")
+      const queEs = yo.esDelegado ? (rol === "delegado" ? "Delegado" : rol === "jugador" ? "Delegado y jugador" : rol === "arbitro" ? "Delegado y árbitro" : "Delegado y entrenador")
         : R.rolDe(rol, v("sexo"));
       const torneo = rol === "jugador" && yo.torneos().length ? " · " + yo.torneos().map((t) => R.TORNEOS[t].corto).join(" + ") : "";
       q("[data-titulo]").textContent = (esGrupo() ? i + ". " : "") + (n || "Persona sin nombre todavía") + " — " + queEs + torneo;
@@ -838,7 +858,7 @@
       const errores = [];
       const contactoObligatorio = !esGrupo() || yo.esDelegado;
       const falta = (campo, texto) => errores.push([campo, texto]);
-      if ((rol === "jugador" || rol === "entrenador") && !sinFide() && !f) falta(deAfuera() ? buscarEl : c("apellidos"), deAfuera()
+      if ((rol === "jugador" || rol === "entrenador" || rol === "arbitro") && !sinFide() && !f) falta(deAfuera() ? buscarEl : c("apellidos"), deAfuera()
         ? "Escribe el ID FIDE para cargar el nombre, o marca «No tiene ID FIDE»."
         : "Escribe el nombre y los apellidos para cargar el ID FIDE y elige a la persona, o marca «No tiene ID FIDE».");
       if (rol === "jugador" && sinFide() && !selFed.value) falta(selFed, "Elige el país de su federación.");
@@ -855,6 +875,8 @@
       if (rol === "jugador" && !yo.torneos().length) falta(q("[data-blitz]"), "Elige al menos un torneo.");
       if (hospeda() && (!v("hospedaje_desde") || !v("hospedaje_hasta") || v("hospedaje_desde") >= v("hospedaje_hasta"))) falta(c("hospedaje_desde"), "Revisa las fechas del hospedaje.");
       if (hospeda() && !c("acepta_compartir").checked) falta(c("acepta_compartir"), "Falta aceptar que la habitación es compartida.");
+      const sinCama = hospeda() && nocheSinCamas(v("hospedaje_desde"), v("hospedaje_hasta"), 1 + (Number(v("acompanantes")) || 0));
+      if (sinCama) falta(c("hospedaje_desde"), "El hospedaje ya no tiene camas para la noche del " + fechaLarga(sinCama.noche) + (sinCama.quedan ? " (quedan " + sinCama.quedan + ")" : "") + ": elige otras fechas.");
       if ((hospeda() || esTitulado()) && !c("acepta_hospedaje").checked) falta(c("acepta_hospedaje"), "Falta aceptar las condiciones del hospedaje en el Estadio Nacional (la puerta se cierra a las 10:30 p.m.).");
       if (hospeda()) yo.acompanantes().forEach((a, i) => {
         if (a.nombre.length < 5 || a.documento.length < 4 || !/^\d{4}-\d{2}-\d{2}$/.test(a.nacimiento || "")) {
@@ -1382,7 +1404,7 @@
 
   function resumenDe(d, p) {
     const filas = [
-      ["Se inscribe como", p.esDelegado ? (d.rol === "delegado" ? "Delegado" : d.rol === "jugador" ? "Delegado y jugador" : "Delegado y entrenador") : R.rolDe(d.rol, d.sexo)],
+      ["Se inscribe como", p.esDelegado ? (d.rol === "delegado" ? "Delegado" : d.rol === "jugador" ? "Delegado y jugador" : d.rol === "arbitro" ? "Delegado y árbitro" : "Delegado y entrenador") : R.rolDe(d.rol, d.sexo)],
       ["ID FIDE", d.sin_fide ? (d.rol !== "jugador" ? "No tiene" : d.federacion === "CRC" ? "No tiene: la FCA lo tramita" : "No tiene: lo tramita su federación (" + d.federacion + ")") : d.fide_id + (d.titulo ? " (" + d.titulo + ")" : "") + " · " + d.federacion],
     ];
     if (d.rol === "jugador") {
@@ -1550,6 +1572,13 @@
         ? "La organización revisa el comprobante de " + R.dinero(Number(data.monto_usd)) + " y te avisa cuando quede verificado. "
         : "La inscripción no tiene costo. ")
         + "En un momento te llega a " + correo + " el correo de confirmación con " + (varios ? "el código de cada persona" : "tu código") + " (si no lo ves, revisa el correo no deseado). Lleven el gafete (impreso o en el celular) el día del torneo.";
+      // El enlace para corregir: el secreto va detrás del #, que no viaja al servidor.
+      if (data.enlace) {
+        const url = new URL("metropolitano-mi-inscripcion.html", location.href);
+        url.hash = "t=" + data.enlace;
+        $("listo-enlace").href = url.href;
+        $("listo-enlace-caja").classList.remove("hidden");
+      }
       msg.textContent = "";
       await pintarGafetes();
       $("bajar-gafete").focus();
@@ -1578,6 +1607,10 @@
     } finally { b.disabled = false; }
   });
   $("otra").addEventListener("click", () => { location.href = location.pathname; });
+  $("copiar-enlace").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("listo-enlace").href); $("copiar-enlace").textContent = "Copiado"; }
+    catch (e) { $("copiar-enlace").textContent = "No se pudo copiar: mantén presionado el enlace"; }
+  });
 
   /* ===================== El idioma ===================== */
   const EN = window.InscripcionMetroEN || {}, FR = window.InscripcionMetroFR || {};
