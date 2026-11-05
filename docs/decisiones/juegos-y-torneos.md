@@ -9430,6 +9430,126 @@ Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplic
 Probado en el Postgres de ensayo (el acumulado y su peso, «mirado» que lo apaga, retener sin resultado, el mismo
 resultado que no borra lo retenido y otro ganador que sí, el rechazo sin permiso) y en la base con la función
 desplegada.
+#### Las partidas para Fair Play, directo de LiveChess
+
+El 4/11, en la ronda 5, el dueño pidió que las partidas para analizar no salieran de Lichess sino del enlace directo de
+los tableros (LiveChess Cloud, el mismo de «Los tableros por LiveChess, sin atraso»). La transmisión de Lichess va con
+15 minutos de atraso; LiveChess, no (`20261104212407`, función en su versión 8).
+
+- **LiveChess no trae la evaluación del motor** (Lichess sí la ponía en su PGN), y la precisión sale de ella. Una Edge
+  Function no puede correr Stockfish en serio (tiene un tope de tiempo de procesador), y un flujo de GitHub pedía una
+  clave de servicio guardada como secreto. Por eso **la evaluación la hace la pantalla de Fair Play** —la del encargado
+  o la pestaña del principal—, con el Stockfish 16 del sitio (`js/vendor/stockfish/`), en un Worker propio:
+  «vivo_pendientes» da hasta 3 partidas **terminadas** que faltan, con las posiciones ya armadas con chess.js (el
+  enlace de LiveChess nunca sale de la función); la pantalla evalúa cada posición desde la 15 (antes, la apertura no
+  cuenta: van en null) con `go nodes 120000` y manda la evaluación con «vivo_guardar»; la función **vuelve a leer la
+  partida de LiveChess**, comprueba que haya una evaluación por posición (si no, la rechaza entera), mide con la MISMA
+  fórmula de siempre (`analisis.ts`) y calibra. La mesa de chess-results es el tablero de LiveChess y los dos nombres
+  tienen que coincidir (`mismoJugador`, la misma regla de las tablets, comprobada letra por letra por el verificador).
+- **Que no se repita ni se pise**: `centroamericano_fp_partidas.analizada_en` (ya medida, no se vuelve a dar) y
+  `en_analisis` (dada a una pantalla: otra no la recibe en 3 minutos; dos pantallas abiertas se reparten el trabajo).
+  `centroamericano_fp_analisis.fuente` dice de dónde salió cada medición: las de las rondas 1 a 3 venían de Lichess y
+  se vuelven a medir desde LiveChess en la misma fila (lo que decidió el encargado no se pisa), para que la calibración
+  compare a todos con el mismo motor. Primero va la ronda de hoy y después lo de atrás.
+- **El tablero sin limpiar**: en la prueba con los datos reales, LiveChess traía en la ronda 5 del Sub-8 Absoluto
+  (tablero 4) y del Sub-10 Absoluto (tablero 5) **la misma partida** de la ronda 4, jugada por jugada, con los nombres
+  nuevos en el pareo. `copiaDeOtra()` la detecta (la partida entera, o la vieja y lo que siguió, desde 40 jugadas
+  iguales; 20 jugadas iguales de apertura no cuentan) y esa partida no se mide, ni al darla ni al guardarla.
+- **Cuánto tarda**: en el servidor de pruebas, una partida de 40 jugadas en ~45 s; en una computadora común, menos.
+  Mientras la pantalla está abierta (y a la vista) analiza sola y dice qué está analizando y cuántas faltan;
+  «Analizar las partidas en esta computadora» la apaga en un aparato que no conviene cansar (se recuerda en ese
+  aparato). Con la pantalla cerrada no se analiza nada: lo pendiente espera a la próxima que se abra.
+- **Riesgo aceptado**: la evaluación la hace un aparato del equipo de Fair Play, no el servidor; quien tiene el QR
+  podría mandar otra. Es su propia herramienta y la función al menos comprueba que la evaluación sea de esa partida.
+
+Probado contra la base y LiveChess de verdad (con un enlace de prueba de 2 horas): 220 partidas terminadas pendientes de
+las rondas 1 a 5, las primeras analizadas y guardadas en la pantalla real, y las dos copias encontradas así.
+
+#### El detector de Fair Play, jugada por jugada
+
+El mismo 4/11 el dueño pidió «nuestro propio módulo de análisis de trampa», donde cada análisis venga **explicado de forma
+sencilla** para que el encargado entienda por qué se marca a alguien. Se armó en tres fases; la 1 es esta
+(`20261104220853` y su arreglo `20261104221723`, función en su versión 9). La 2 es sacarlo del Centroamericano a una
+herramienta general donde se pega el enlace de las partidas (LiveChess, una transmisión de Lichess aunque tenga atraso,
+chess-results, un PGN). La 3 es una base propia de partidas medidas de todos los eventos, para saber cómo juega de
+verdad cada Elo en Costa Rica.
+
+- **Cada jugada** (`centroamericano_fp_jugadas`, una fila por jugada medida): la pantalla de Fair Play pide a Stockfish
+  las **3 mejores** de cada posición (MultiPV 3, 150 000 nodos) y la función guarda en qué lugar quedó lo jugado
+  (`rango`, 0 = ninguna de las 3), cuánto perdió, si era **forzada** (una sola jugada legal, o la mejor es una captura y la
+  segunda pierde 3 peones: no cuenta), si era **difícil** (una sola jugada buena —la segunda pierde 1 peón o más— y no es
+  jaque ni captura: la que un humano suele no ver), **lo que pensó** (LiveChess lo trae: «Nf3 5482+5» son 5 s) y si la
+  hizo en los **5 minutos después de que el árbitro anotó que se levantó** (el registro de la tablet, sin lo anulado,
+  contra la hora de cada jugada: la primera más lo que pensaron los dos). El cálculo es `detallar()` en `analisis.ts`.
+- **Las señales**, por jugador y partida: la **precisión** (la de siempre), la **primera del motor** (en % de las jugadas
+  que cuentan) y las **difíciles acertadas**. Cada una se compara con **lo esperable para su Elo en el torneo** (una
+  recta contra el Elo, como la precisión) o, **si no tiene Elo** —casi todos en las categorías chicas—, **con su
+  categoría** (con 8 o más medidos); «alta» desde 2 desviaciones. El **tiempo raro** (en las difíciles pensó menos de 6
+  décimos de lo que pensó en las demás) solo suma junto a otra. El nivel: «muy alta» con una señal de 2,5 o más, o dos
+  señales (o una y el tiempo); «a mirar» con una. Con datos inventados en la base de ensayo: un 1400 que juega como un
+  2400 y un niño sin Elo muy por encima de su categoría salen con las 3 señales; de 65 normales, ninguno marcado.
+- **Explicado** (`explicar()` y `resumenAlerta()` en `js/centroamericano-fair-play.js`, una sola copia para la tarjeta y
+  el informe): arriba, cuántas señales salieron altas y cuáles; debajo, una frase por señal con su comparación
+  («Jugó la primera opción de Stockfish en 25 de 30 jugadas (83 %); lo esperable para su Elo en este torneo: 52,0 %
+  (3,1 desviaciones arriba)»), la alta en negrita (y «Señal alta:» para el lector de pantalla), «Pocas jugadas
+  medidas» si son menos de 20, las jugadas más llamativas («Jugada 23. Nxe5: la única buena de la posición, en 8 s») y
+  **«Qué no significa esto»**: que no prueba nada, que alguien puede estar en un gran día, haber preparado la apertura
+  o ser más fuerte que su Elo, que en un torneo grande algunos salen altos por casualidad, y que FIDE pide pruebas
+  físicas o de conducta para sancionar. El informe de Fair Play en PDF trae «Por qué se marcó cada alerta», alerta por
+  alerta.
+- **Lo medido antes se vuelve a medir solo**: `centroamericano_fp_partidas.analisis_version` (y `VERSION_ANALISIS` en
+  `analisis.ts`): una partida medida con una versión anterior vuelve a «pendientes». Al volver a medir, una partida que
+  resulta copia de la ronda anterior **borra** lo que se había medido de ella (así se fueron las dos de la prueba).
+- **El error del 99** (`20261104221723`): en Postgres, `greatest()` y `least()` **saltan los nulos**: `least(99, null)`
+  es 99. Sin con qué comparar (una categoría con pocos medidos), la señal quedaba en 99 desviaciones y todos en «muy
+  alta». Se vio en la base apenas se midieron las primeras partidas; ahora, sin comparación, la señal queda vacía y no
+  cuenta (la base de ensayo tiene el caso). Al aplicarse se volvió a calibrar: 339 normales y 6 «a mirar».
+
+#### El modelo por jugada, al estilo de Regan
+
+El dueño preguntó qué tan preciso era esto contra el modelo de Ken Regan, el que usa FIDE, y pidió armar todas las
+mejoras (4/11, migración `20261104235900`, función en su versión 11). Lo de la fase 1 comparaba porcentajes de la
+partida con una recta contra el Elo; Regan mira **cada posición**: qué tan difícil era, y por eso cuánto habría acertado
+alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
+
+- **El modelo**, en `analisis.ts`: en cada posición, la probabilidad de cada jugada es p ∝ exp(−(δ/s)^c), con δ lo que
+  pierde esa jugada contra la mejor **en puntos de probabilidad de ganar** (la fórmula de Lichess, 0 a 100; con
+  centipeones, una pieza de más en una posición ganada pesaba igual que en una pareja). La sensibilidad sale del Elo,
+  s = exp(a + b·(Elo − 1500)/400); las jugadas que el motor no listó cuentan juntas, un poco peor que la última. a, b y
+  c se ajustan con las jugadas reales de quien tiene Elo (máxima verosimilitud, `ajustar()`, cada 15 min, con una
+  muestra de 3000 para no pasarse del tiempo de la función). Por eso MultiPV pasó de 3 a **5**, a **profundidad fija
+  12**: con nodos, dos computadoras daban opciones distintas.
+- **Sin Elo** (casi todos en las categorías chicas), la sensibilidad de su categoría **sin contarlo a él**
+  (`sSinElJugador()`): si se le contara, el que hace trampa subiría el nivel de su propio grupo y se escondería.
+- **Un solo número**, el índice en la escala de Regan: 50 es lo normal y cada 5 puntos es una desviación. Junta la
+  primera del motor y lo que perdió (que se parecen mucho: van divididas entre √3 para no contarlas dos veces). Se
+  centra con la mediana del torneo y se corrige con cuánto más varía la gente real que el modelo (la desviación mediana,
+  nunca menos de 1): así un tramposo no mueve la regla. Con el índice, **decide el índice**: 62,5 o más es «muy alta» y
+  60 o más «a mirar» (`centroamericano_fp_calibrar`); las señales de la fase 1 quedan para explicarlo. Por partida
+  (`centroamericano_fp_analisis.roi`) y **por jugador, sumando todo el torneo** (`centroamericano_fp_indice`), que es
+  lo que mira FIDE: una partida sola casi nunca alcanza.
+- **¿Qué tan confiable es?** (`validar()`, en `centroamericano_fp_modelo.validacion`): con los jugadores de verdad,
+  cuántos pasan cada umbral (lo esperable por azar es 2,3 % y 0,6 %), y cuántos detectaría si cada uno usara el motor
+  en 1, 2 o 3 de cada 10 jugadas. Con 80 jugadores inventados en el verificador: alarmas falsas «muy alta» 0,8 % y,
+  con 3 de cada 10, 84 % detectados. Se muestra en la pantalla, para que nadie le crea más de lo que da.
+- **La teoría de verdad**: se mide desde la primera jugada que ya no está en las partidas de maestros de Lichess (con 5
+  o más), nunca antes de la 5.ª de cada uno, con el caché `explorador_maestros_cache` y el `LICHESS_TOKEN` que ya tenía
+  el sitio (20 pedidos por vez a lo sumo). El enroque del explorador viene como «e1h1»: se pasa a «e1g1». Si no se
+  sabe, la regla fija de siempre (desde la 9.ª).
+- **Dos pasadas**: toda partida que sale con alerta se vuelve a analizar a **profundidad 16** antes de darla por
+  buena (`centroamericano_fp_partidas.profunda`); a 12 el motor a veces no ve la jugada que el jugador sí jugó.
+- **Partidas de referencia** (`centroamericano_fp_referencia`): el principal carga un PGN de otro torneo con el Elo de
+  cada uno, se analiza con el mismo motor en la pantalla y se guardan **solo las jugadas y el Elo**, sin nombres, para
+  ajustar el modelo con más gente que la del torneo. Al terminar de cargar, la pantalla pide el modelo **forzado**
+  (`modelo` con `forzar`): si no, solo se recalculaba al guardarse la próxima partida del torneo, y quien carga
+  referencias para probarlo no veía nada.
+- **Lo que no es igual a Regan**: él ajusta con millones de jugadas de partidas de maestros analizadas muy hondo; acá el
+  modelo se ajusta con el torneo (y las referencias), a profundidad 12-16. Por eso el centro y el factor salen del
+  mismo torneo y la validación va en la pantalla. Y lo mismo que en la fase 1: el índice **no prueba nada**; es para
+  mirar, y FIDE pide pruebas físicas o de conducta para sancionar.
+- La migración se pegó en el editor SQL (Supabase no llegó a pedir la confirmación de `apply_migration`), y su fila en
+  `supabase_migrations.schema_migrations` se agregó a mano con el mismo nombre.
+
 ### El encargado de transmisión (Centroamericano)
 
 Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de
