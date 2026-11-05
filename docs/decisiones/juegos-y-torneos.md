@@ -8829,6 +8829,16 @@ transmiten**.
   foto» sí gasta otra lectura.
 - **El tablero** es el de solo mirar (`js/tablero-fen.js`), con las coordenadas por fuera y las
   piezas y casillas que eligió cada quien (la página entró a `tablero-cabecera.py`).
+- **Cómo anotan los niños** (lo que salió al leer a mano las 41 planillas del Centroamericano, 5/11):
+  - **Pieza por pieza**: «AxA», «DxA», «cxA», «CxC+» en vez de la casilla. `formasDe()` da también
+    esa forma de cada captura (en inglés y en español; el peón con su columna o con «P»).
+  - **Minúsculas** («cf3», «ac4»): la diferencia de mayúscula cuesta 0,15, no una letra entera.
+  - **El caché de costos** iba por la SAN, y «AxA» puede ser dos capturas distintas con la misma
+    SAN en dos posiciones (o la misma casilla con piezas distintas): ahora va por las formas.
+  - **El desfase entre las dos planillas** no pasa de 4 jugadas (`MAX_DESFASE`): en el Sub-12, R4,
+    M8, cuando el corrector no entendía las capturas pieza por pieza, la partida se estiraba
+    saltando celdas de una planilla y leyendo de más en la otra, hasta pasar las jugadas
+    anotadas. Si ninguna opción respeta el tope, se queda la mejor (no se rompe la búsqueda).
 - `append()` del DOM escribe «null» si le llega uno (el ayudante `el()` de la página los filtra,
   `append` no): lo que no va se saca antes; lo comprueba el verificador.
 - Lo prueban `verificar-planilla-reconstruir.js` (sin navegador: lo escrito en las planillas de

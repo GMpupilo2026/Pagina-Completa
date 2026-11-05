@@ -10,6 +10,8 @@
  *   - la mesa 7 (inglés con «P» de peón + español, que no coinciden en varias
  *     jugadas) sale entera, corrigiendo con las dos a la vez;
  *   - a una planilla le falta un renglón: con la otra al lado, la partida es la misma;
+ *   - lo que anotan los niños: las capturas con la pieza capturada («AxA», «fxP») y las piezas en minúscula;
+ *     y si una planilla deja de coincidir, la partida no sale más larga que lo escrito;
  *   - un borrón en medio se cruza sin perder jugadas (y lo que se puso ahí queda dudoso);
  *     una planilla manchada de ahí en adelante no se rellena con jugadas inventadas;
  *   - desde que todo es basura, se corta: «ilegible desde» la jugada justa, con lo que
@@ -70,6 +72,25 @@ ok("un borrón en la jugada 11 no corta la partida ni hace perder jugadas: sigue
 ok("…y lo que se puso en el borrón queda dudoso (nada en la planilla lo respalda)", conBorron.jugadas[20].estado === "dudosa" && conBorron.jugadas[21].estado === "dudosa");
 const manchada = R.reconstruir(Chess, [PR.mesa11.blancas.slice(0, 24).concat(Array(20).fill("~"))]);
 ok("una planilla manchada desde la media jugada 25 no se rellena con jugadas inventadas: ilegible desde ahí", manchada.ilegibleDesde === 24 && manchada.jugadas.length === 24, JSON.stringify([manchada.ilegibleDesde, manchada.jugadas.length]));
+
+console.log("\n=== Cómo anotan los niños (las planillas reales del Centroamericano) ===");
+// La partida de la mesa 11 jugada con chess.js, para reescribir su planilla como la anotaría otro niño.
+const jugada11 = (() => { const g = new Chess(); return dos11.jugadas.map((j) => g.move(j.san)); })();
+const ES_ = { n: "C", b: "A", r: "T", q: "D", k: "R", p: "P" };
+const piezaPorPieza = jugada11.map((m, i) => (m.captured ? (m.piece === "p" ? m.from[0] : ES_[m.piece]) + "x" + ES_[m.captured] + (/[+#]$/.test(m.san) ? "+" : "") : PR.mesa11.blancas[i]));
+// como en la mesa 8 del Sub-12 (ronda 4): una planilla anota «AxA», la otra la casilla
+const ppp = R.reconstruir(Chess, [piezaPorPieza, PR.mesa11.blancas]);
+ok("las capturas anotadas con la pieza capturada («AxA», «DxC», «fxP») se entienden: con la otra planilla al lado, la misma partida y sin correcciones", fenFinal(ppp) === FIN_MESA11 && cuenta(ppp, "corregida") + cuenta(ppp, "dudosa") <= 1, JSON.stringify([fenFinal(ppp), cuenta(ppp, "corregida"), cuenta(ppp, "dudosa")]));
+const pppSola = R.reconstruir(Chess, [piezaPorPieza]);
+ok("…y sola (es ambigua: «CxP» puede ser más de una captura) da una partida legal que no se estira ni se corta", pppSola.jugadas.length === 52 && pppSola.ilegibleDesde === null, JSON.stringify([pppSola.jugadas.length, pppSola.ilegibleDesde]));
+const minus = PR.mesa11.blancas.map((t) => t.replace(/^[TCADR]/, (x) => x.toLowerCase()));
+const min = R.reconstruir(Chess, [minus]);
+ok("una planilla con las piezas en minúscula («ad3», «cxe3», «thf1») sale entera y nada como corregido (al final, sin jugadas que desempaten, a lo sumo 3 dudosas)", fenFinal(min) === FIN_MESA11 && cuenta(min, "corregida") === 0 && cuenta(min, "dudosa") <= 3, JSON.stringify([cuenta(min, "corregida"), cuenta(min, "dudosa")]));
+// Dos planillas que desde la media jugada 25 dejan de coincidir (una anota algo que no se entiende): antes, el
+// corrector tomaba una jugada de cada una por turnos y la partida salía más larga que lo escrito (Sub-12 R4 M8: 108 con 98).
+const raras = PR.mesa11.negras.slice(0, 24).concat(PR.mesa11.negras.slice(24).map((t, i) => ["Wq", "Zk", "Yy", "Xj"][i % 4] + t.slice(-1)));
+const desf = R.reconstruir(Chess, [PR.mesa11.blancas, raras]);
+ok("si una planilla deja de coincidir, la partida nunca sale más larga que lo escrito (ninguna hoja se desfasa más de 4)", desf.jugadas.length <= 52 && fenFinal(desf) === FIN_MESA11, JSON.stringify([desf.jugadas.length, desf.ilegibleDesde]));
 
 console.log("\n=== Lo que ya no tiene salida queda ilegible ===");
 const BASURA = ["qz", "Lw", "m3m", "zz", "uu", "k9", "pp", "XX", "Ww", "yy", "j7", "vv", "ññ", "rr", "w1", "oz", "gg", "kk", "ll", "ww", "zq", "hh"];
