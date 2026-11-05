@@ -9460,6 +9460,95 @@ del reloj que se apaga seguía repartiendo) como si esos 10 minutos fueran de lo
   uno o los dos; rechazos) y `verificar-centroamericano-mesas-pagina.js` (la línea «ahora», la calculadora, la hora que se marca sola al
   leer, el guardado con la hora de ahora y su nota).
 
+## Banderas y mesas sin rival (Centroamericano)
+
+Pedido del 4/11: **la banderita del país al final del nombre de cada jugador** (pequeña, «un poquito de identificación») y **no mostrar en
+el sistema las mesas que no traen un rival sino un nombre raro**.
+
+- **De dónde sale el país.** La pantalla de resultados de chess-results (la que leen las tablets) y los emparejamientos públicos NO traen la
+  federación; la lista de inscritos (`art=0`) sí, en la columna «FED» (CRC, GUA, ESA…). `_compartido/inscritos-fed.ts` (`fedsDe(tnr)`)
+  la lee una vez por torneo y la guarda **en la memoria de la función** 3 horas (los inscritos casi no cambian; sin tabla ni migración).
+  Si chess-results no contesta, no hay banderas, se reintenta al minuto, se sigue con la última lista que hubo y **nada más se retrasa**
+  (`leer` espera la lista a lo más 3 s y en paralelo con lo demás). Se busca por el nombre sin tildes, sin comas y sin mayúsculas
+  (`claveNombre`): «Ramos Rodriguez Daniel» (resultados) = «Ramos Rodríguez, Daniel» (inscritos). Quien no tiene federación o no está en
+  la lista, sin bandera: nunca se inventa una.
+- **Quién la manda.** `centroamericano-mesa`: `leer` (`fed_b`, `fed_n` en cada mesa), `todas_mesas` («¿Dónde juega?», una lista por
+  categoría) y `mis_pareos`. El dibujo es el de `js/gafetes-banderas.js` (tabla FIDE → ISO) y los SVG ya copiados en `img/banderas/`: nada
+  nuevo que mantener. `js/centroamericano-banderas.js` (`de(fed)`, `deMesa(m, color)`) arma un `<span class="cam-bandera">` con la
+  imagen **decorativa** (alt vacío; 1,05 × 0,8 em, sale de la letra del nombre) y el código de FIDE **escrito** para el lector de pantalla
+  y en el `title` (el color nunca va solo). Va al final del nombre en la tarjeta de cada jugador, en la ventana del control de tiempos,
+  en «Mis pareos» y en «¿Dónde juega?» (la tarjeta y la pantalla completa). Las tarjetas no cambian de tamaño. Sin país o sin dibujo, no
+  se pone nada (nunca un cuadro roto: si la imagen falla se esconde).
+- **Las mesas sin rival.** En la pantalla de resultados, quien se retiró deja su mesa con **«ausgeschieden»** (alemán de «retirado»; pasó en
+  el torneo 1529756, mesas 24 a 26 de la ronda 4) en lugar del nombre del rival. No es una partida: el árbitro no tiene qué anotar y
+  contaba en «Han llegado 0 de N jugadores» y en «Con resultado: x de N». `sinRival(nombre)`: vacío, sin letras o una de las palabras de
+  `SIN_RIVAL` (ausgeschieden, bye, spielfrei, freilos, libre, exento, descansa, retirado, withdrawn, sin emparejar, not paired…).
+  **Si aparece otra palabra rara, se agrega ahí** (una sola lista). Se quitan **al leer, en un solo lugar**: `aLectura` y `deFila` de
+  `lecturas-cache.ts` (lo que sirve TODA función que lee la copia compartida: tablets, organización, avance de la ronda), más las tres
+  lecturas que no pasan por ahí: la copia que lee directo «¿Dónde juega?», «Mis pareos» (lo guardado y la copia) y las mesas en vivo
+  (`centroamericano-mesas-vivo`, que si no la contaba como «no reconocida»). **`guardarYComprobar` sigue leyendo la pantalla entera**: lo
+  que se guarda se compara con lo que de verdad hay en chess-results.
+- **«Inició la ronda» que volvía a salir (4/11).** `leer` desestructuraba 9 nombres para 10 peticiones: `inicio_ronda` tomaba el
+  resultado de `guardarAvance` (`{termino}`, sin `data`) y salía **siempre vacío**. La tablet conserva lo que marcó el árbitro solo
+  2 minutos (`conservarInicio`) y después se queda con lo que dice `leer`: pasados esos 2 minutos el aviso «Todavía no marcaste cuándo
+  empezó la ronda» volvía y los cronómetros regresaban al calendario, aunque la hora estaba bien guardada en
+  `centroamericano_inicios_torneo` (la organización, la bitácora y «Llegó tarde» la leen directo de ahí y por eso no fallaban). Arreglado
+  con un nombre por cada petición (`_avance`); comprobado con el torneo de pruebas (marcar → `leer` devuelve la hora → quitar). Lo
+  vigila `verificar-centroamericano-banderas.js` (el doble de las pruebas de la página siempre devolvió bien la hora, así que ahí no se
+  veía; la comprobación mira el código de la función).
+- **Lo que no cambia.** Esas mesas siguen en chess-results con su resultado (el de quien ganó por el retiro): solo dejan de mostrarse y de
+  contarse en el sistema. Los byes de la página pública (el rival sin enlace) ya se trataban como bye en el sorteo de Fair Play.
+- **Para desplegar**: `node herramientas/funciones-armar.js` y subir `centroamericano-mesa`, `centroamericano-clave` y
+  `centroamericano-mesas-vivo` (las tres reciben `inscritos-fed.ts`; está en el mapa del armador).
+- Lo revisan `verificar-centroamericano-banderas.js` (el lector de inscritos, las palabras, que cada lectura filtre y cada función
+  reciba el módulo, el dibujo decorativo con el código escrito) y `verificar-centroamericano-mesas-pagina.js` (la banderita al final de
+  cada nombre, que carga y es pequeña, que sin país no sale nada, que las tarjetas no cambian de tamaño, y en el control de tiempos, «Mis
+  pareos» y «¿Dónde juega?»).
+
+## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
+
+Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de
+diálogo en cada mesa (`centroamericano-arbitro.html`, junto a la cámara y el reloj) abre `js/centroamericano-hablar.js`, con tres cosas:
+
+- **Frases fijas** (pestaña «Frases», `js/centroamericano-frases.js`). Unas 40 frases del arbitraje (al empezar, el reloj, las piezas, la
+  planilla, jugada ilegal, tablas, conducta, tiempo y llegada, al terminar, respuestas rápidas), cada una **escrita una vez en español,
+  inglés y francés** con la regla de las Leyes que la respalda (`art`). El árbitro toca la frase en español y la tablet le muestra al
+  jugador la suya, **en grande y a pantalla completa**, con el original en español debajo «para el árbitro» y «Leer en voz alta»
+  (`speechSynthesis`, con el idioma de la frase). **No pasan por el traductor**: no pueden decir algo distinto de la regla y funcionan sin
+  internet. Nuevas frases: agregar un `f(...)` con los tres idiomas; `verificar-centroamericano-idioma.js` falla si falta un idioma, si se
+  repite un id o si los números (minutos, resultados) no cuadran. **Las revisa una persona que domine inglés y francés antes del torneo**:
+  la terminología sigue la de las Leyes de FIDE, pero no hay un revisor humano todavía.
+- **El idioma se sugiere por el país del jugador**: la federación (la banderita, ver «Banderas y mesas sin rival») decide inglés o francés
+  (`idiomaDeFed`; países de habla francesa, de habla inglesa y el Caribe anglófono). Lo desconocido, la región hispana y Surinam, Aruba y
+  Curazao empiezan en inglés pero el árbitro cambia con un toque. Se cambia siempre a mano también: la sugerencia nunca es la última palabra.
+- **Conversar** (traductor). Dos mitades frente a frente: la del jugador va girada 180° para leerla del otro lado de la mesa, cada uno
+  escribe en su idioma y lee lo del otro en el suyo. El jugador tiene además **nueve botones de respuesta rápida** en su idioma («Quiero
+  reclamar tablas», «Mi rival hizo una jugada ilegal», «Necesito ir al baño»…) que el árbitro lee en español **sin traductor**. La
+  traducción la hace la Edge Function **`centroamericano-traducir`** (sin cuenta, con el token del enlace, `verify_jwt` en false) con Claude
+  (`claude-haiku-4-5`, el secreto `ANTHROPIC_API_KEY`). Se defiende sola: enlace vigente, solo es/en/fr, mensaje de hasta 500 caracteres,
+  **20 por minuto y 500 al día por enlace y 4000 al día en total** (la tabla `centroamericano_traducciones` cuenta cada intento y lo que
+  costó, **sin guardar nunca el texto ni la traducción**; sin permisos ni políticas, solo la escribe la función). Al modelo le llega
+  **solo el mensaje** (entre etiquetas, que el modelo toma como texto por traducir y nunca como instrucciones; no el nombre, la mesa ni el
+  torneo) y nunca se imprime en los registros. Dice en los dos idiomas que es una **traducción automática de ayuda, no oficial**; si falla
+  (sin señal, sin saldo, tope) lo dice, conserva lo escrito y manda a las frases, que siguen sirviendo.
+- **Nada se anota solo.** Lo que se le dijo al jugador queda en la bitácora **solo si el árbitro toca «Anotar en la bitácora»** (o
+  «Anotar la conversación»): una nota de artículo `Comunicado` («Se le comunicó a X (blancas) en inglés: «…» (en español: «…»)»; la
+  conversación con las dos versiones de cada mensaje), con el mismo `anotar` de siempre (misma cola sin señal, mismo rango de mesas). Se ve
+  como «Comunicado» en la tablet, en la bitácora del árbitro (PDF y correo) y en la actividad de la organización.
+- **«Necesito un árbitro que hable inglés / francés»** en la misma ventana: es el pedido de ayuda de siempre a esa mesa (`ayuda`) con el
+  texto «Necesito un árbitro que hable francés en esta mesa.», que le llega a la organización con sonido y «Atendido».
+- **Privacidad.** `privacidad.html` nombra a Anthropic como proveedor del traductor, qué se le manda (solo el mensaje, sin nombres ni
+  mesa) y que no se guarda. Las frases fijas no salen del aparato.
+- **Pendiente de quien tiene la cuenta de Anthropic.** El 4/11 la función respondía `invalid_request_error` («credit balance is too low»):
+  la clave es válida pero la cuenta no tenía saldo. Hay que agregar crédito en la consola de Anthropic (Plans & Billing); hasta entonces
+  «Conversar» dice que no está disponible y las frases y las respuestas rápidas funcionan igual.
+- **Para desplegar**: `centroamericano-traducir` (sin archivos compartidos) y la migración `centroamericano_traducciones`; la página es
+  estática.
+- Lo revisan `verificar-centroamericano-idioma.js` (las frases en los tres idiomas, el idioma por país, el texto de la bitácora, que la
+  función se defienda sola y no mande ni guarde nada de más, la política de privacidad) y `verificar-centroamericano-mesas-pagina.js`
+  («Hablar con el jugador»: el idioma sugerido, la frase en grande y en voz, que nada se anota ni se traduce solo, el traductor de ida y
+  vuelta, la falla del traductor, el pedido por idioma y «Comunicado» en la bitácora).
+
 ## «Mis pareos»: el logo y la «Ronda abierta» abren las rondas anteriores (Centroamericano)
 
 Pedido: que el logo de Ajedrez Integral sirva de enlace, pero **solo para ver los pareos de las mesas de quien

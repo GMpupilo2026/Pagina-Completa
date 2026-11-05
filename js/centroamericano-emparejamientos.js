@@ -47,8 +47,8 @@
         const out = [];
         (categorias || []).forEach((c, orden) => {
             for (const m of c.mesas || []) {
-                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Blancas", nombre: m.blancas, rival: m.negras });
-                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Negras", nombre: m.negras, rival: m.blancas });
+                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Blancas", nombre: m.blancas, rival: m.negras, fed: m.fed_b });
+                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Negras", nombre: m.negras, rival: m.blancas, fed: m.fed_n });
             }
         });
         return out;
@@ -84,6 +84,9 @@
         r.sort((a, b) => b[1] - a[1] || a[0].orden - b[0].orden || a[0].mesa - b[0].mesa || (a[0].color < b[0].color ? -1 : 1));
         return r.map((x) => x[0]);
     }
+
+    // La banderita del país de cada jugador (js/centroamericano-banderas.js), al final de su nombre; sin ella, nada.
+    const bandera = (fed) => (global.CentroamericanoBanderas ? global.CentroamericanoBanderas.de(fed) : null);
 
     function el(tag, atributos, ...hijos) {
         const n = document.createElement(tag);
@@ -166,7 +169,7 @@
             b.append(
                 el("span", { class: "cam-dj-num" }, el("small", { texto: "MESA" }), String(f.mesa)),
                 el("span", { class: "cam-dj-datos" },
-                    el("span", { class: "cam-dj-nombre", texto: f.nombre }),
+                    el("span", { class: "cam-dj-nombre" }, f.nombre, bandera(f.fed)),
                     el("span", { class: "cam-dj-sub" }, el("strong", { texto: f.color }), " · contra " + f.rival + " · Ronda " + f.ronda + (hora ? " · " + hora : "")),
                     el("span", { class: "cam-dj-cat", texto: f.cat })),
                 el("span", { class: "cam-dj-mostrar", texto: "Mostrar al atleta" }));
@@ -178,7 +181,7 @@
             const tabla = el("table", { class: "cam-tabla cam-dj-tabla" },
                 el("caption", { class: "sr-only", texto: "Mesas de " + c.nombre }),
                 el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Blancas" }), el("th", { scope: "col", texto: "Negras" }))),
-                el("tbody", {}, ...(c.mesas || []).map((m) => el("tr", { "data-mesa": String(m.mesa) }, el("th", { scope: "row", texto: String(m.mesa) }), el("td", { texto: m.blancas }), el("td", { texto: m.negras })))));
+                el("tbody", {}, ...(c.mesas || []).map((m) => el("tr", { "data-mesa": String(m.mesa) }, el("th", { scope: "row", texto: String(m.mesa) }), el("td", {}, m.blancas, bandera(m.fed_b)), el("td", {}, m.negras, bandera(m.fed_n))))));
             return el("div", { class: "cam-tabla-envoltura" }, tabla);
         }
 
@@ -225,7 +228,7 @@
                 el("span", { class: "cam-dj-gcat", texto: f.cat }),
                 el("span", { class: "cam-dj-gmesa-t", texto: "MESA" }),
                 el("span", { class: "cam-dj-gmesa", texto: String(f.mesa) }),
-                el("span", { class: "cam-dj-ginfo" }, f.nombre + " · " + f.color, el("small", { texto: "Contra " + f.rival + " · Ronda " + f.ronda + (hora ? " · " + hora : "") })),
+                el("span", { class: "cam-dj-ginfo" }, f.nombre, bandera(f.fed), " · " + f.color, el("small", { texto: "Contra " + f.rival + " · Ronda " + f.ronda + (hora ? " · " + hora : "") })),
                 listo);
             listo.addEventListener("click", () => g.close());
             g.addEventListener("close", () => g.remove());
