@@ -232,7 +232,11 @@ async function simularLichess(pagina, pedidos) {
             { id: "x1", fen: "8/8/8/8/8/8/8/K6k w - - 0 31", status: "*", thinkTime: 10, players: [{ name: "Otro, Juan", clock: 100000 }, { name: "Más, Pedro", clock: 100000 }] },
             { id: "x2", fen: "8/8/8/8/8/8/8/K6k w - - 0 36", status: "*", thinkTime: 10, players: [{ name: "Uno, Eli", clock: 30000 }, { name: "Dos, Fran", clock: 456700 }] },
             { id: "x3", fen: "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", status: "1-0", players: [{ name: "Hopkins, John", clock: 540000 }, { name: "Baquero Graterol", clock: 538000 }] }] }) });
+        // pedidos.cortar: Lichess no contesta (el «Failed to fetch» de la organización)
+        if (pedidos.cortar && /\.pgn$/.test(u)) return r.abort("connectionreset");
         if (/\/api\/broadcast\/round\/RoNdA003\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION });
+        // la ronda es un estudio y cada partida un capítulo: el PGN de una sola
+        if (/\/api\/study\/RoNdA003\/x3\.pgn$/.test(u)) return r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION.split(/\n\n(?=\[)/)[0] + "\n" });
         return r.fulfill({ status: 404, body: "{}" });
     });
     await pagina.evaluate(() => { const viejo = window.sb.from; window.sb.from = (t) => (t === "salas_torneo" ? { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { enlaces: [{ texto: "Partidas", url: "https://lichess.org/broadcast/centroamericano-2026/AbCd1234" }] }, error: null }) }) }) } : viejo(t)); });
@@ -1793,8 +1797,19 @@ const CONTRASTE = `(sel) => {
     await q.waitForTimeout(500);
     igual("la tabla se refresca y la partida abierta sigue ahí, sin volver a leer la foto", [await q.$$eval(".cam-lp-fila .cam-lp-titular", (l) => l.length), lecturasVision, await botonPgn(2).textContent()], [1, 1, "Ocultar la partida"]);
 
+    // Lichess no contesta (se corta la conexión): lo dice en palabras, no «Failed to fetch», y no lee la foto
+    pedidosLichess.cortar = true;
+    await botonPgn(3).click();
+    await q.waitForFunction(() => /Lichess no contestó/.test((document.querySelectorAll(".cam-lp-fila")[1] || {}).textContent || ""), null, { timeout: 20000 });
+    igual("si Lichess no contesta, prueba la partida sola y la ronda (dos veces cada una) y lo dice en palabras, sin leer la foto",
+        [await q.evaluate(() => document.querySelectorAll(".cam-lp-fila")[1].textContent), pedidosLichess.filter((u) => /\/api\/study\/RoNdA003\/x3\.pgn$/.test(u)).length, pedidosLichess.filter((u) => /round\/RoNdA003\.pgn$/.test(u)).length, lecturasVision],
+        ["No se pudo generar el PGN: Lichess no contestó (se cortó la conexión o está frenando por muchas consultas seguidas). Vuelve a intentarlo en un minuto.", 2, 2, 1]);
+    pedidosLichess.cortar = false;
+    await botonPgn(3).click();
+    const pedidosAntes = pedidosLichess.length;
     await botonPgn(3).click();
     await q.waitForFunction(() => document.querySelectorAll(".cam-lp-fila .cam-lp-titular").length === 2);
+    igual("con Lichess de vuelta, pide solo el PGN de esa partida (5 KB), no el de la ronda entera", pedidosLichess.slice(pedidosAntes).filter((u) => /\.pgn$/.test(u)).map((u) => u.replace("https://lichess.org", "")), ["/api/study/RoNdA003/x3.pgn"]);
     igual("la mesa que se transmite sale sola de Lichess: sus jugadas y el resultado, sin leer la foto",
         [...await q.evaluate(() => { const f = document.querySelectorAll(".cam-lp-fila")[1]; return [f.querySelector(".cam-lp-titular").textContent, [...f.querySelectorAll(".cam-lp-jugada")].map((b) => b.textContent).join(" "), f.querySelector(".cam-lp-enlace").href, !f.querySelector(".cam-lp-leyenda")]; }), lecturasVision],
         ["De la transmisión en vivo de Lichess: 7 medias jugadas · 1-0.", "e4 e5 Ac4 Cc6 Dh5 Cf6 Dxf7#", "https://lichess.org/broadcast/centroamericano-2026/round-3/RoNdA003/x3", true, 1]);
