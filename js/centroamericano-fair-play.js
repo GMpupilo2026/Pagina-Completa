@@ -145,11 +145,12 @@
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-sortear" },
                 el("h3", { id: "fp-t-sortear", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "🎲 " }), "Sortear mesas"),
-                el("p", { class: "cam-herramientas-nota" }, "Toda mesa puede salir; algunas salen más seguido (la diferencia de Elo, quien se levantó, una ilegal o irregularidad, quien le ganó a alguien mucho más fuerte, las alertas de los tableros): ninguna señal decide sola y el peso no pasa de 4. De la mesa que sale se revisa al ", el("strong", { texto: "ganador" }), " cuando termina la partida; si es tablas, al color sorteado. Quien se revisó no aplica en las 2 rondas siguientes y nadie pasa de 3 revisiones: si gana quien no aplica, la mesa queda sin efecto y su árbitro recibe el aviso."),
+                el("p", { class: "cam-herramientas-nota" }, "Toda mesa puede salir; algunas salen más seguido (la diferencia de Elo, quien se levantó, una ilegal o irregularidad, quien le ganó a alguien mucho más fuerte, las alertas de los tableros): ninguna señal decide sola y el peso no pasa de 4. De la mesa que sale se revisa al ", el("strong", { texto: "ganador" }), " cuando termina la partida; si es tablas, al color sorteado. Quien se revisó no aplica en las 2 rondas siguientes y nadie pasa de 3 revisiones: si gana quien no aplica, la mesa queda sin efecto y su árbitro recibe el aviso. ", el("strong", { texto: "También se puede elegir una mesa a mano" }), ": la mesa, a quién se revisa (el ganador, el de blancas o el de negras) y el motivo, que queda en el acta."),
                 el("div", { class: "cam-herramientas mt-2", role: "toolbar", "aria-label": "Sortear mesas" },
                     el("label", { class: "cam-herramientas-campo" }, el("span", { texto: "Categoría" }), el("select", { id: "fp-categoria", class: "cam-select", onchange: () => verMesas() })),
                     el("label", { class: "cam-herramientas-campo" }, el("span", { texto: "Mesas por categoría" }), el("select", { id: "fp-cantidad", class: "cam-select" }, [1, 2, 3, 4, 5].map((n) => el("option", { texto: String(n) })))),
                     el("button", { type: "button", id: "fp-sortear", class: "cam-btn cam-btn-chico", onclick: sortear }, el("span", { "aria-hidden": "true", texto: "🎲" }), " Sortear"),
+                    el("button", { type: "button", id: "fp-elegir", class: "cam-btn cam-btn-chico", onclick: elegirAMano }, el("span", { "aria-hidden": "true", texto: "✋" }), " Elegir una mesa a mano"),
                     el("button", { type: "button", id: "fp-ver-mesas", class: "cam-btn cam-btn-claro cam-btn-chico", "aria-expanded": "false", "aria-controls": "fp-mesas-caja", onclick: alternarMesas }, "Ver las mesas y su peso")),
                 el("div", { id: "fp-mesas-caja", hidden: true },
                     el("p", { id: "fp-mesas-nota", class: "cam-herramientas-nota mt-2" }),
@@ -269,9 +270,9 @@
         (d.sorteos || []).forEach((f) => {
             const v = previos.get(f.id);
             if (!v) return;
-            if (f.estado === "aprobada" && f.revisar_color && (v.revisar_color !== f.revisar_color || v.estado !== "aprobada")) out.push({ hora: ahora, fuerte: true, texto: "🛡 " + de(f) + ": terminó (" + (f.resultado_mesa || "") + "). Ve a revisar a " + quien(f) + "." });
+            if (f.estado === "aprobada" && f.revisar_color && f.resultado_mesa && (v.resultado_mesa !== f.resultado_mesa || v.revisar_color !== f.revisar_color || v.estado !== "aprobada")) out.push({ hora: ahora, fuerte: true, texto: "🛡 " + de(f) + ": terminó (" + (f.resultado_mesa || "") + "). Ve a revisar a " + quien(f) + "." });
             if (f.retenido_en && !v.retenido_en) out.push({ hora: f.retenido_en, fuerte: true, texto: "✋ " + (f.retenido_por || "Su árbitro") + " ya retuvo a " + quien(f) + " (" + de(f) + ")." });
-            if (f.estado === "sin_efecto" && v.estado !== "sin_efecto") out.push({ hora: ahora, fuerte: false, texto: "⚪ " + de(f) + ": quedó sin efecto (" + (f.revisar_color ? "ganó " + quien(f) + ", que no aplica" : "no se jugó") + "). Su árbitro ya tiene el aviso." });
+            if (f.estado === "sin_efecto" && v.estado !== "sin_efecto") out.push({ hora: ahora, fuerte: false, texto: "⚪ " + de(f) + ": quedó sin efecto (" + (f.revisar_fijo ? quien(f) + " no se presentó" : f.revisar_color ? "ganó " + quien(f) + ", que no aplica" : "no se jugó") + "). Su árbitro ya tiene el aviso." });
             if (f.aviso_id && d.leidos[f.aviso_id] && !(antes.leidos || {})[f.aviso_id]) out.push({ hora: d.leidos[f.aviso_id], fuerte: false, texto: "✓ " + (f.arbitro || "Su árbitro") + " leyó el aviso de la " + de(f) + "." });
         });
         return out;
@@ -378,13 +379,13 @@
             const leido = f.aviso_id ? datos.leidos[f.aviso_id] : null;
             const quien = f.revisar_color ? ((f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color]) : null;
             const aQuien = f.estado === "revisada" ? (f.jugador || "—")
-                : f.estado === "sin_efecto" ? (quien ? "Ganó " + quien + ", que no aplica" : "Nadie (no se jugó)")
-                    : quien ? quien + " (" + COLOR[f.revisar_color].toLowerCase() + ")"
+                : f.estado === "sin_efecto" ? (f.revisar_fijo ? quien + " no se presentó" : quien ? "Ganó " + quien + ", que no aplica" : "Nadie (no se jugó)")
+                    : quien ? quien + " (" + COLOR[f.revisar_color].toLowerCase() + ")" + (f.revisar_fijo ? ", gane, pierda o empate" : "")
                         : "El ganador · si es tablas: " + COLOR[f.color_si_tablas];
             const detalle = f.estado === "descartada" ? "Motivo: " + (f.motivo || "")
                 : f.estado === "revisada" ? (RESULTADOS[f.resultado] || "") + (f.nota ? " · " + f.nota : "") + (f.revisada_por_nombre ? " · " + f.revisada_por_nombre : "")
                     : f.estado === "aprobada" ? (leido ? "✓ " + (f.arbitro || "Su árbitro") + " lo leyó a las " + hora(leido) : "⏳ " + (f.arbitro || "Su árbitro") + " todavía no lo ha leído")
-                        + (f.revisar_color ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
+                        + (f.revisar_color && f.resultado_mesa ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
                         : f.estado === "sin_efecto" ? "Su árbitro ya recibió el aviso" : "";
             const acciones = f.estado === "sorteada"
                 ? [el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "aprobar", onclick: () => aprobar(f) }, "Aprobar y avisar a su árbitro"),
@@ -397,6 +398,7 @@
                 el("td", { texto: String(f.ronda) }),
                 el("td", {}, el("strong", { texto: "Mesa " + f.mesa }),
                     f.origen === "manual" ? el("span", { class: "cam-fp-detalle", texto: "Anotada a mano por " + (f.sorteada_por || "—") })
+                    : f.origen === "elegida" ? el("span", { class: "cam-fp-detalle", texto: "✋ Elegida a mano por " + (f.sorteada_por || "—") + (f.motivo ? " · " + f.motivo : "") })
                         : [el("span", { class: "cam-fp-de", texto: " (de " + f.mesas_en_sorteo + ", peso " + Number(f.peso || 1).toLocaleString("es-CR") + ")" }),
                             f.motivos && f.motivos.length ? el("span", { class: "cam-fp-detalle", texto: f.motivos.join(" · ") }) : null]),
                 el("td", {}, el("span", { class: "cam-fp-detalle", texto: "Blancas: " + conElo(f.blancas, f.elo_b) }), el("span", { class: "cam-fp-detalle", texto: "Negras: " + conElo(f.negras, f.elo_n) }),
@@ -457,11 +459,62 @@
     }
 
     async function aprobar(f) {
-        const ok = await Avisos.confirmar("Le llega un aviso al árbitro de la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ": que cuando termine la partida retenga al ganador (si es tablas, a quien jugó con " + COLOR[f.color_si_tablas].toLowerCase() + ") y no lo deje salir del local hasta que llegues. Su mesa se le marca con un borde dorado." + (f.no_aplica ? " Ojo: " + f.no_aplica + "; si gana esa persona, la mesa queda sin efecto y su árbitro recibe el aviso." : ""),
+        const ok = await Avisos.confirmar(f.revisar_fijo ? textoAviso(f) : "Le llega un aviso al árbitro de la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ": que cuando termine la partida retenga al ganador (si es tablas, a quien jugó con " + COLOR[f.color_si_tablas].toLowerCase() + ") y no lo deje salir del local hasta que llegues. Su mesa se le marca con un borde dorado." + (f.no_aplica ? " Ojo: " + f.no_aplica + "; si gana esa persona, la mesa queda sin efecto y su árbitro recibe el aviso." : ""),
             { titulo: "Aprobar la mesa " + f.mesa, aceptar: "Aprobar y avisar" });
         if (!ok) return;
         try { await llamar("aprobar", { id: f.id }); avisar("Listo: el árbitro de la mesa " + f.mesa + " ya tiene el aviso."); }
         catch (e) { avisar("No se pudo aprobar: " + (e.message || e), true); }
+        await cargar();
+    }
+
+    // El aviso que le llega al árbitro de una mesa con el jugador fijo (lo escribe la base; esto lo cuenta antes de mandarlo).
+    function textoAviso(f) {
+        const nombre = (f.revisar_fijo === "blancas" ? f.blancas : f.negras) || "quien juega con " + COLOR[f.revisar_fijo].toLowerCase();
+        return "Le llega un aviso al árbitro de la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ": que cuando termine la partida (gane, pierda o empate) retenga a " + nombre + " (" + COLOR[f.revisar_fijo].toLowerCase() + ") y no lo deje salir del local hasta que llegues. Su mesa se le marca con un borde dorado. Si esa persona no se presenta, la mesa queda sin efecto.";
+    }
+
+    // Una mesa elegida a mano, no por sorteo: la categoría, la mesa (de las que tienen árbitro, con sus jugadores), a quién
+    // se revisa, el motivo (va al acta) y si se le avisa ya a su árbitro. Lo que no aplica lo rechaza la base, con su porqué.
+    async function elegirAMano() {
+        if (!datos || !datos.rondas.length) { avisar("No hay categorías con árbitros: primero se crean sus enlaces en «Árbitros y mesas».", true); return; }
+        let tnr = $("fp-categoria").value;
+        if (!tnr) {
+            const a = await Avisos.formulario({ titulo: "Elegir una mesa a mano", texto: "¿De qué categoría?", aceptar: "Ver sus mesas",
+                campos: [{ nombre: "tnr", etiqueta: "Categoría", tipo: "select", valor: datos.rondas[0].tnr, opciones: datos.rondas.map((r) => [r.tnr, r.nombre + " (ronda " + r.ronda + ")"]) }] });
+            if (!a) return;
+            tnr = a.tnr;
+        }
+        const r = datos.rondas.find((x) => x.tnr === tnr);
+        if (!r) return;
+        let mesas;
+        try { mesas = (await llamar("candidatas", { tnr, ronda: r.ronda })).mesas || []; }
+        catch (e) { avisar("No se pudieron leer las mesas: " + (e.message || e), true); return; }
+        const libres = mesas.filter((m) => !m.excluida);   // sin las que ya salieron, los bye y donde ninguno aplica
+        if (!libres.length) { avisar("En " + r.nombre + " no queda ninguna mesa por elegir en la ronda " + r.ronda + ".", true); return; }
+        const b = await Avisos.formulario({
+            titulo: "Elegir una mesa a mano · " + r.nombre + ", ronda " + r.ronda,
+            texto: "No es un sorteo: queda anotado con tu nombre, la hora y el motivo. Quien se revisó hace poco (o ya tuvo 3 revisiones) no se puede elegir.",
+            campos: [
+                { nombre: "mesa", etiqueta: "Mesa", tipo: "select", valor: String(libres[0].mesa),
+                    opciones: libres.map((m) => [String(m.mesa), "Mesa " + m.mesa + " · " + (m.blancas || "¿?") + " – " + (m.negras || "¿?") + (m.no_aplica ? " (⚠ " + m.no_aplica + ")" : "")]) },
+                { nombre: "revisar", etiqueta: "A quién se revisa", tipo: "select", valor: "blancas",
+                    opciones: [["blancas", "Al de blancas (gane, pierda o empate)"], ["negras", "Al de negras (gane, pierda o empate)"], ["ganador", "Al ganador (en tablas, al azar entre los dos)"]] },
+                { nombre: "motivo", etiqueta: "Motivo (va al acta)", tipo: "textarea", valor: "", max: 300 },
+                { nombre: "avisar", etiqueta: "¿Le aviso ya a su árbitro?", tipo: "select", valor: "si",
+                    opciones: [["si", "Sí, mandarle el aviso ya"], ["no", "No, la dejo en la lista para aprobarla después"]] },
+            ],
+            aceptar: "Elegir esta mesa",
+        });
+        if (!b) return;
+        if (!String(b.motivo || "").trim()) { avisar("Una mesa elegida a mano lleva el motivo: queda en el acta.", true); return; }
+        const m = libres.find((x) => String(x.mesa) === String(b.mesa));
+        const nombre = b.revisar === "ganador" ? "el ganador" : ((b.revisar === "blancas" ? m && m.blancas : m && m.negras) || "quien juega con " + b.revisar) + " (" + b.revisar + ")";
+        try {
+            const { sorteo } = await llamar("elegir", { tnr, ronda: r.ronda, mesa: Number(b.mesa), revisar: b.revisar, motivo: String(b.motivo).trim(), avisar: b.avisar === "si" });
+            avisar(sorteo && sorteo.estado === "aprobada"
+                ? "Listo: mesa " + b.mesa + " elegida. Su árbitro (" + (sorteo.arbitro || "el de esa mesa") + ") ya tiene el aviso de retener a " + nombre + "."
+                : "Mesa " + b.mesa + " elegida (se revisa a " + nombre + "). Apruébala en la lista para avisarle a su árbitro.");
+        } catch (e) { avisar("No se pudo elegir la mesa: " + (e.message || e), true); }
         await cargar();
     }
 
@@ -482,7 +535,7 @@
         if (opciones.length) campos.push({ nombre: "color", etiqueta: "A quién se revisó", tipo: "select", valor: f.jugador_color || f.revisar_color || f.color_si_tablas, opciones });
         else campos.push({ nombre: "jugador", etiqueta: "A quién se revisó", tipo: "text", valor: f.jugador || "", max: 120 });
         campos.push({ nombre: "nota", etiqueta: "Qué pasó (obligatorio si no fue «Sin novedad»)", tipo: "textarea", valor: f.nota || "", max: 500 });
-        const r = await Avisos.formulario({ titulo: "Revisión de la mesa " + f.mesa + " (" + nombreDe(f.tnr) + ", ronda " + f.ronda + ")", texto: "Se revisa al ganador; si fue tablas, a quien jugó con " + COLOR[f.color_si_tablas].toLowerCase() + ".", campos, aceptar: "Guardar la revisión" });
+        const r = await Avisos.formulario({ titulo: "Revisión de la mesa " + f.mesa + " (" + nombreDe(f.tnr) + ", ronda " + f.ronda + ")", texto: f.revisar_fijo ? "Se revisa a " + ((f.revisar_fijo === "blancas" ? f.blancas : f.negras) || "quien jugó con " + COLOR[f.revisar_fijo].toLowerCase()) + " (" + COLOR[f.revisar_fijo].toLowerCase() + "), elegido a mano." : "Se revisa al ganador; si fue tablas, a quien jugó con " + COLOR[f.color_si_tablas].toLowerCase() + ".", campos, aceptar: "Guardar la revisión" });
         if (!r) return;
         try { await llamar("revisar", { id: f.id, resultado: r.resultado, color: r.color || null, jugador: r.jugador || null, nota: r.nota }); avisar("Revisión de la mesa " + f.mesa + " guardada."); }
         catch (e) { avisar("No se pudo guardar: " + (e.message || e), true); }
@@ -596,7 +649,7 @@
             { tipo: "titulo", texto: "Resumen" },
             { tipo: "lista", items: [
                 "Mesas sorteadas: " + sorteo.length + " (aprobadas y avisadas a su árbitro: " + sorteo.filter((f) => f.estado !== "sorteada" && f.estado !== "descartada").length + "; descartadas con su motivo: " + cuenta(sorteo, "descartada") + "; por decidir: " + cuenta(sorteo, "sorteada") + ").",
-                "Revisiones hechas: " + revisadas.length + " (" + porResultado.join("; ") + ")" + (todos.some((f) => f.origen === "manual") ? ", de ellas " + todos.filter((f) => f.origen === "manual").length + " anotadas a mano (sin sorteo)" : "") + ".",
+                "Revisiones hechas: " + revisadas.length + " (" + porResultado.join("; ") + ")" + (todos.some((f) => f.origen === "manual") ? ", de ellas " + todos.filter((f) => f.origen === "manual").length + " anotadas a mano (sin sorteo)" : "") + "." + (todos.some((f) => f.origen === "elegida") ? " Mesas elegidas a mano (no por sorteo), con su motivo: " + todos.filter((f) => f.origen === "elegida").map((f) => nombreDe(f.tnr) + ", ronda " + f.ronda + ", mesa " + f.mesa + " (" + (f.motivo || "—") + ", " + (f.sorteada_por || "—") + ")").join("; ") + "." : ""),
                 "Mesas sin efecto (ganó quien no aplicaba, o no se jugó): " + cuenta(todos, "sin_efecto") + ". Por revisar todavía: " + cuenta(todos, "aprobada") + ".",
                 "Alertas de los tableros electrónicos: " + alertas.length + " partidas (" + alertas.filter((a) => a.estado === "vista").length + " miradas, " + alertas.filter((a) => a.estado === "seguir").length + " en seguimiento, " + alertas.filter((a) => a.estado === "nueva").length + " sin mirar)" + ((datos.acumulado || []).length ? "; " + datos.acumulado.length + " jugadores por encima de lo esperable sumando sus partidas" : "") + ".",
             ] },
@@ -605,7 +658,7 @@
                 filas: datos.rondas.map((r) => { const de = todos.filter((f) => f.tnr === r.tnr); return [r.nombre, String(r.ronda), String(de.filter((f) => f.origen !== "manual").length), String(cuenta(de, "revisada")), String(cuenta(de, "sin_efecto")), String(cuenta(de, "descartada")), String(cuenta(de, "aprobada")), String(alertas.filter((a) => a.tnr === r.tnr).length)]; }) },
             { tipo: "titulo", texto: "Las revisiones" },
             revisadas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
-                filas: revisadas.map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa) + (f.origen === "manual" ? " (a mano)" : ""), f.jugador || "—", RESULTADOS[f.resultado] || "", f.nota || "—", f.retenido_por ? f.retenido_por + " · " + hora(f.retenido_en) : "—", f.revisada_por_nombre || "—"]) }
+                filas: revisadas.map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa) + (f.origen === "manual" ? " (a mano)" : f.origen === "elegida" ? " (elegida)" : ""), f.jugador || "—", RESULTADOS[f.resultado] || "", f.nota || "—", f.retenido_por ? f.retenido_por + " · " + hora(f.retenido_en) : "—", f.revisada_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Todavía no se ha revisado a nadie." },
             { tipo: "titulo", texto: "Las mesas que no llegaron a revisión" },
             todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],

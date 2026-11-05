@@ -573,6 +573,17 @@
     const pendiente = elegido != null && elegido !== "" && elegido !== "0" && elegido !== "D" && elegido !== m.valor;
     const valor = pendiente ? elegido : m.valor;
     const antes = pendiente ? "con este resultado, " : "";
+    if (fp.revisar_fijo === "blancas" || fp.revisar_fijo === "negras") {
+      // Elegida a mano con un jugador fijo: se revisa a esa persona gane, pierda o empate; solo si no se presentó, nada.
+      const fijo = fp.revisar_fijo, nombre = (fijo === "blancas" ? m.blancas : m.negras) || (fijo === "blancas" ? "quien juega con blancas" : "quien juega con negras");
+      const noVino = valor === "6" || (fijo === "blancas" && valor === "5") || (fijo === "negras" && valor === "4");
+      if (valor && valor !== "0" && valor !== "D") {
+        return noVino
+          ? { tipo: "no-aplica", texto: "🛡 Fair Play: " + antes + nombre + " no se presentó; la mesa queda sin efecto, no hay que retener a nadie." }
+          : { tipo: "retener", texto: "🛡 FAIR PLAY: " + antes + "retén a " + nombre + " (" + fijo + ") y no lo dejes salir del local: el árbitro de Fair Play pasa a revisarlo." };
+      }
+      return { tipo: "esperando", texto: "🛡 FAIR PLAY: cuando termine la partida (gane, pierda o empate), retén a " + nombre + " (" + fijo + ") y no lo dejes salir del local. No se lo digas a nadie antes." };
+    }
     if (valor && valor !== "0" && valor !== "D") {
       if (valor === "6") return { tipo: "no-aplica", texto: "🛡 Fair Play: " + antes + "no se jugó; la mesa queda sin efecto, no hay que retener a nadie." };
       const color = valor === "2" ? fp.color_si_tablas : GANA[valor];

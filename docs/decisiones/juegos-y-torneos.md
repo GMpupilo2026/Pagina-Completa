@@ -9473,6 +9473,32 @@ la mesa, el reparto de 20 000 sorteos, el aviso al árbitro cuando gana quien no
 rechazo sin permiso y la clave de servicio) y en la base con la función desplegada (717 mesas de chess-results y 95
 jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroamericano-fair-play.js`.
 
+#### Elegir una mesa a mano
+
+Lo pidió el dueño el 5 de noviembre (`20261105170000`, pegada a mano en el editor SQL; función `centroamericano-fair-play`
+en su versión 15): además del sorteo, poder elegir una mesa con todas sus indicaciones, sin sortear y descartar hasta que
+salga la que se quiere.
+
+- **«✋ Elegir una mesa a mano»**, junto a «Sortear», con la categoría desplegada (si está en «Todas», la pregunta): sus
+  mesas libres con los dos jugadores (las que ya salieron en la ronda, los bye y donde ninguno aplica no se ofrecen), **a
+  quién se revisa** —al de blancas o al de negras, gane, pierda o empate, o al ganador como en el sorteo—, **el motivo**
+  (obligatorio: va al acta) y si se le avisa ya a su árbitro o queda en la lista para aprobarla después.
+- `centroamericano_fair_play_elegir()` la guarda como una mesa más de `centroamericano_fair_play`, con `origen` =
+  `'elegida'`, el motivo y quién la eligió; en la lista dice «Elegida a mano por …» y en el informe del torneo va aparte:
+  **no es azar** y el acta lo dice. Una mesa no se elige dos veces en la ronda (el mismo índice único que el sorteo).
+- **La regla contra el acoso vale igual**: a quien se revisó en las 2 rondas anteriores (o ya tuvo 3) no se le puede
+  elegir; la base lo rechaza con el porqué. Elegir no es una vía para saltársela.
+- **Un jugador fijo** (`revisar_fijo`): el aviso al árbitro dice «cuando TERMINE la partida (gane, pierda o empate), retén
+  a …»; el borde dorado va en esa persona desde el principio; el resultado no cambia a quién se revisa
+  (`interno.fp_tras_resultado`), y la mesa queda **sin efecto** solo si esa persona no se presentó (o no se jugó).
+  «Ya retuve a …» se puede marcar solo con el resultado guardado, como en el sorteo: la base lo exige
+  (`centroamericano_fair_play_retener`) y la tablet no muestra el botón antes.
+
+Probado en el Postgres de ensayo, en una transacción que se deshizo: la mesa elegida con el de blancas y el aviso al
+árbitro, «Ya retuve» rechazado antes del resultado, que pierda y se le revise igual, la corrección a 0f-1f (sin efecto) y
+el borrado (vuelve a esperar), la mesa repetida, quien no aplica, sin motivo, sin árbitro, sin permiso, y en tablas el de
+negras fijo. Lo comprueba `verificar-centroamericano-fair-play.js`.
+
 #### Retenido, el acumulado y el informe final
 
 Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):
