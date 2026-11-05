@@ -974,6 +974,34 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-fp-confianza summary { cursor: pointer; font-weight: 700; }
 .cam-fp-confianza p { margin-top: 0.35rem; font-size: 0.93rem; }
 
+/* La ficha de la mesa, opción A («tres toques»; js/centroamericano-arbitro.js, fichaA): más corta que la de siempre. El resultado en tres
+   botones que guardan de un toque (los de Rápido y Blitz), las marcas de los dos jugadores en UNA franja, menos aire. Las alturas reservadas
+   se mantienen (anotar una ilegal no mueve nada), solo se achican. */
+.cam-mesa[data-ficha="a"] .cam-mesa-cabeza { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador { padding-top: 0.5rem; padding-bottom: 0.55rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador-fila { row-gap: 0.3rem; }
+.cam-mesa[data-ficha="a"] .cam-jugador-fila .cam-nombre { height: auto; min-height: 1.7em; }
+/* La franja de marcas vive DENTRO de la zona reservada de los avisos (una sola altura reservada, 3,1 rem: lo que cabe un botón «Anular»).
+   El aviso de la primera ilegal ya no se escribe aparte: la marca «Ilegal» de su jugador y el cuadro que sale al anotar lo dicen (el lector de
+   pantalla lo sigue oyendo: el texto completo va como sr-only). */
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos { min-height: 3.1rem; }
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos .cam-aviso-suave { min-height: 0; padding: 0; }
+.cam-mesa[data-ficha="a"] .cam-mesa-avisos .cam-aviso-suave .cam-aviso-corto { display: none; }
+.cam-mesa[data-ficha="a"] .cam-resultado { padding-top: 0.6rem; padding-bottom: 0.5rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-btn { min-height: 54px; }
+.cam-mesa[data-ficha="a"] .cam-rapido-valor { font-size: 1.5rem; }
+.cam-mesa[data-ficha="a"] .cam-resultado-msg { min-height: 1.3rem; margin-top: 0.25rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-otro { margin-top: 0.15rem; }
+.cam-mesa[data-ficha="a"] .cam-rapido-otro > summary { min-height: 32px; }
+.cam-mesa[data-ficha="a"] .cam-planillas { padding-top: 0.45rem; padding-bottom: 0.5rem; }
+.cam-mesa-marcas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.9rem; padding: 0 0.9rem; }
+.cam-extra-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.cam-extra-grupo[data-vacio="si"] { display: none; }
+.cam-extra-grupo .cam-marcas, .cam-extra-grupo .cam-anulares { margin-top: 0; }
+.cam-extra-grupo .cam-cuenta-guia { flex-basis: 100%; }
+@media (min-width: 768px) { .cam-mesa-marcas { padding-left: 1.1rem; padding-right: 1.1rem; } }
+.cam-hb-fp-aviso { margin: 0; padding: 0.5rem 0.8rem; border: 2px solid #b8860b; border-radius: 0.8rem; background: #fff8e1; color: #3a2a00; font-weight: 800; }
+.dark .cam-hb-fp-aviso { background: rgb(255 193 7 / 0.18); color: #ffe9a8; border-color: #d4a017; }
 /* ===== El encargado de transmisión: todos los tableros en vivo (js/centroamericano-transmision.js) =====
  * Un tablero con un problema BRILLA: rojo si hay que ir ya, ámbar si hay que mirarlo. El brillo nunca va solo: el
  * aviso va escrito en la tarjeta y en la lista de arriba. Con «reducir movimiento» queda quieto, con el borde grueso.
