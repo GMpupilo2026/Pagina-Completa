@@ -69,6 +69,7 @@
         const cola = [];
         let avisar = null;
         const writer = serial.writable.getWriter();
+        let ultimoByte = 0;
         // Lo último que fue y vino por el cable, en hexadecimal, para ver qué
         // contesta un tablero de verdad («Bajar el registro» de cada puerto).
         const registro = [];
@@ -81,6 +82,11 @@
             registro,
             async escribir(bytes) { anotarBytes("→", bytes); await writer.write(Uint8Array.from(bytes)); },
             vaciar() { flujo.vaciar(); cola.length = 0; },
+            // ¿Siguen llegando bytes de un mensaje a medias? Un tablero con la
+            // memoria llena manda miles de bytes (2829 el 6445 en la primera
+            // cadena de verdad, 2/11: 3 s a 9600 baudios): no se le pregunta
+            // encima ni se da por perdido mientras sigue mandando.
+            recibiendo: () => flujo.pendiente() > 0 && performance.now() - ultimoByte < 400,
             esperar(ms) {
                 if (cola.length) return Promise.resolve(cola.shift());
                 return new Promise((resolver) => {
@@ -88,6 +94,10 @@
                     avisar = () => { clearTimeout(t); avisar = null; resolver(cola.shift() || null); };
                 });
             },
+            // Un error de lectura (el búfer de Chrome que se llenó, un byte mal
+            // armado en el cable) no cierra el puerto: Chrome pone otro
+            // `readable` y se sigue leyendo. Antes la lectura se moría ahí y
+            // ningún tablero volvía a contestar (la primera cadena de verdad).
             async leer() {
                 while (serial.readable) {
                     p.reader = serial.readable.getReader();
@@ -95,13 +105,19 @@
                         for (;;) {
                             const { value, done } = await p.reader.read();
                             if (done) return;
+                            ultimoByte = performance.now();
                             anotarBytes("←", value);
                             for (const m of flujo.empujar(value)) cola.push(m);
                             if (cola.length && avisar) avisar();
                         }
+                    } catch (e) {
+                        anotarBytes("! " + ((e && e.name) || "error") + " (se sigue leyendo)", []);
+                        flujo.vaciar();
+                        if (!p.activo) return;
                     } finally { p.reader.releaseLock(); }
                 }
             },
+            activo: true,
         };
         p.leer().catch(() => { /* el puerto se cerró */ });
         return p;
@@ -335,7 +351,9 @@
         if (puertos.some((p) => p.serial === serial)) { $("directo-error").textContent = "Ese puerto ya está conectado aquí."; return; }
         const virtuales = window.PareoDGTVirtual ? window.PareoDGTVirtual.puertos() : [];
         if (virtuales.includes(serial)) { $("directo-error").textContent = "Ese es el puerto del tablero virtual (sección 6): aquí va la otra punta del par de com0com."; return; }
-        try { await serial.open({ baudRate: 9600 }); }
+        // Con el búfer de lectura grande: el de Chrome es de 255 bytes, y el
+        // volcado de la memoria de un tablero puede pasar de 2000.
+        try { await serial.open({ baudRate: 9600, bufferSize: 65536 }); }
         catch (e) {
             $("directo-error").textContent = e && e.name === "InvalidStateError" ? "Ese puerto ya está abierto en esta página." :
                 "No se pudo abrir ese puerto: otro programa lo tiene abierto. " + OCUPADO + " (Detalle: " + (e && e.message) + ")";
@@ -356,6 +374,7 @@
 
     async function desconectar(p) {
         p.activo = false;
+        p.io.activo = false;
         for (const d of p.dirs) tableros.delete(d);
         try { if (p.io.reader) await p.io.reader.cancel(); } catch (_) { /* cerrado */ }
         try { p.io.writer.releaseLock(); } catch (_) { /* nada */ }
