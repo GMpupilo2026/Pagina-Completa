@@ -1176,3 +1176,12 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-lista { gap: 1.4rem; }
 .cam-mesa { border-width: 3px; box-shadow: 0 6px 16px rgb(30 36 83 / 0.16); }
 .dark .cam-mesa { box-shadow: 0 6px 16px rgb(0 0 0 / 0.45); }
+
+/* «Árbitros y mesas» separado por modo: un encabezado por Clásico, Rápido y Blitz con lo que cambia en la tablet del árbitro. */
+.cam-grupo-ritmo th { text-align: left; padding: 0.7rem 0.8rem 0.5rem; background: var(--cac-morado); color: #fff; font-size: 1rem; }
+.cam-ritmo-nombre { font-weight: 900; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.cam-ritmo-cuenta { font-weight: 800; }
+.cam-ritmo-config { display: block; margin-top: 0.15rem; font-weight: 600; font-size: 0.85rem; }
+.cam-grupo-ritmo[data-ritmo="blitz"] th { background: var(--cac-morado-hondo); }
+.cam-ritmo-nota { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--cac-morado-hondo); }
+.dark .cam-ritmo-nota { color: #dfe0f7; }
