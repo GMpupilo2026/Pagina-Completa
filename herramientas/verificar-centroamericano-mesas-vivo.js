@@ -233,7 +233,7 @@ ok("reclamo: las 50 jugadas, con dónde empezó la cuenta", /jugadas de cada uno
 
 // ---- el ensayo: las jugadas son de verdad (chess.js) y cada mesa llega a su aviso
 for (const e of V.ESCENARIOS) {
-  const cc = new Chess(); const sans = e.sans.split(" ");
+  const cc = new Chess(); const sans = e.sans;
   let hasta = sans.length;
   for (let i = 0; i < sans.length; i++) if (!cc.move(sans[i], { sloppy: true })) { hasta = i; break; }
   ok("ensayo, mesa " + e.mesa + " (" + e.que + "): " + (e.que === "imposible" ? "una sola jugada imposible, la que se busca" : "todas las jugadas son legales"), e.que === "imposible" ? hasta === 14 && sans[14] === "Ke3" : hasta === sans.length);

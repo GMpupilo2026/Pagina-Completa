@@ -336,22 +336,23 @@
   // Para que el árbitro vea cada aviso antes del torneo, sin tableros: cinco «mesas de ensayo» que avanzan una jugada
   // cada pocos segundos y terminan en lo que hay que practicar. Las jugadas están comprobadas con chess.js
   // (verificar-centroamericano-mesas-vivo.js): la triple repetición es la de verdad, la imposible lo es de verdad.
+  // Van una por una (y no en un texto): las jugadas en inglés son para chess.js, no para la pantalla.
   // En el ensayo NADA se anota (ni en chess-results ni en la bitácora): los botones dicen qué harían en una ronda.
   const PASO_MS = 3000;   // en segundos enteros: LiveChess manda lo pensado sin decimales
   const ENSAYO_MS = 4 * 60000;
   const ESCENARIOS = [
     { mesa: 1, que: "triple", base: 5400, inc: 30, desde: 30,
-      sans: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Na5 Bc2 c5 d4 Qc7 Nbd2 Bd7 Nf1 Rfe8 Ng3 g6 Bg5 Bf8 Qd2 Bg7 Bh6 Bh8 Bg5 Bg7 Bh6 Bh8 Bg5 Bg7" },
-    { mesa: 2, que: "mate", base: 5400, inc: 30, desde: 2, sans: "e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#" },
-    { mesa: 3, que: "bandera", base: 25, inc: 0, desde: 2, sans: "e4 e5 Nf3 Nc6 Bc4 Bc5" },
-    { mesa: 4, que: "imposible", base: 5400, inc: 30, desde: 8, sans: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 Ke3 h6" },
-    { mesa: 5, que: "noregistrada", base: 5400, inc: 30, desde: 2, sans: "d4 d5 c4 e6 Nc3 Nf6" },
+      sans: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O", "h3", "Na5", "Bc2", "c5", "d4", "Qc7", "Nbd2", "Bd7", "Nf1", "Rfe8", "Ng3", "g6", "Bg5", "Bf8", "Qd2", "Bg7", "Bh6", "Bh8", "Bg5", "Bg7", "Bh6", "Bh8", "Bg5", "Bg7"] },
+    { mesa: 2, que: "mate", base: 5400, inc: 30, desde: 2, sans: ["e4", "e5", "Bc4", "Nc6", "Qh5", "Nf6", "Qxf7#"] },
+    { mesa: 3, que: "bandera", base: 25, inc: 0, desde: 2, sans: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5"] },
+    { mesa: 4, que: "imposible", base: 5400, inc: 30, desde: 8, sans: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "Ke3", "h6"] },
+    { mesa: 5, que: "noregistrada", base: 5400, inc: 30, desde: 2, sans: ["d4", "d5", "c4", "e6", "Nc3", "Nf6"] },
   ];
   // Las mesas del ensayo a la hora `ahora`, con la forma de lo que contesta la función (LiveChess).
   function datosEnsayo(inicio, ahora) {
     const gasto = PASO_MS / 1000;
     const mesas = ESCENARIOS.map((e) => {
-      const todas = e.sans.split(" ");
+      const todas = e.sans;
       const n = Math.min(todas.length, e.desde + Math.max(0, Math.floor((ahora - inicio) / PASO_MS)));
       const primera = inicio - (e.desde - 1) * PASO_MS;
       const rel = { blancas: e.base, negras: e.base };
