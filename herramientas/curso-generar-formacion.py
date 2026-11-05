@@ -181,13 +181,13 @@ def portada(curso):
     salida = re.sub(r'<meta name="description" content="[^"]*">',
                     '<meta name="description" content="%s">' % escapar(descripcion_meta), salida, count=1)
     salida = re.sub(r'<link rel="canonical" href="[^"]*">',
-                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s">' % slug, salida)
     salida = re.sub(r'<meta property="og:title" content="[^"]*">',
                     '<meta property="og:title" content="%s — Ajedrez Integral">' % escapar(titulo), salida)
     salida = re.sub(r'<meta property="og:description" content="[^"]*">',
                     '<meta property="og:description" content="%s">' % escapar(descripcion_meta), salida)
     salida = re.sub(r'<meta property="og:url" content="[^"]*">',
-                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s">' % slug, salida)
     return salida
 
 

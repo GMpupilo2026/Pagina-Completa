@@ -991,10 +991,31 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
   la Academia — si se indexara, competiría con `cursos/` por el mismo contenido.
-- El `canonical` apunta a la dirección **con `.html`**, que es la que usan todos
-  los enlaces internos. Cloudflare sirve además `/cursos` con el mismo
-  contenido; el canonical le dice a Google cuál de las dos vale, sin tocar el
-  enrutamiento.
+- **El canonical va sin .html.** El `canonical`, el `og:url`, el `sitemap.xml`
+  y los datos estructurados nombran la dirección **final**, la que Cloudflare
+  sirve de verdad: `/cursos`, `/articulos/el-centro-del-tablero`, `/` para la
+  portada. Una sola copia de la regla: `herramientas/lib/direccion_publica.py`
+  (`direccion("cursos.html")` → `https://ajedrez-integral.com/cursos`), que usan
+  `sitemap.py`, `datos-estructurados.py`, `verificar-metadatos.py`; los
+  generadores de cursos y `torneo-universitario.js` escriben lo mismo.
+  - **Antes apuntaba a la dirección con `.html`**, con el argumento de que
+    «Cloudflare sirve además `/cursos` con el mismo contenido». Era falso:
+    `/cursos.html` no sirve nada, contesta con un **307** a `/cursos` (ver
+    «Cloudflare sirve las páginas sin .html»). O sea que el canonical, el
+    sitemap y el og:url le decían a Google «la oficial es X» y, al pedir X,
+    «X está **temporalmente** en otro lado». No daba ningún error: se veía en
+    el panel de Cloudflare como miles de 3xx y en Google como un sitemap lleno
+    de direcciones que redirigen. Se encontró el 5/11/2026.
+  - **Los enlaces internos siguen con `.html` a propósito**: el servidor de
+    prueba en la máquina y `verificar-rutas.js` trabajan con el archivo, y
+    cada uno de esos 307 lo resuelve Cloudflare sin tocar el worker. Lo que va
+    sin extensión es solo lo que se le dice a Google y a WhatsApp.
+  - **`robots.txt` deja pasar las dos direcciones del diagnóstico**:
+    `Allow: /entreno/diagnostico$` (la final) y la de `.html`. Con solo la de
+    `.html`, Google seguía el 307 y caía en `Disallow: /entreno/`: el
+    diagnóstico, la puerta de entrada del sitio, no se podía indexar.
+  - `verificar-metadatos.py` falla si un canonical, un og:url o una dirección
+    del sitemap lleva `.html`.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.

@@ -8819,6 +8819,14 @@ transmiten**.
   nombres del encabezado: es para quien organiza y para revisar, **nunca para el repositorio**. Las
   palabras se guardan con la lectura en el navegador, compactas (`[texto, x0, y0, x1, y1]`, unos
   18 KB por foto); si no caben, se borran las lecturas guardadas de las otras fotos.
+- **«Failed to fetch» en una mesa que SÍ se transmite** (Sub-12, R4, M6; 5/11): la fila ya decía «Se
+  transmite: sale de Lichess» y al generar falló el pedido del PGN de la ronda. Desde aquí no se pudo
+  repetir: Lichess contesta 200 con `Access-Control-Allow-Origin: *`, también 40 veces seguidas. Ahora se
+  pide primero el PGN de **esa sola partida** (`/api/study/<ronda>/<partida>.pgn`: la ronda es un estudio y
+  cada partida un capítulo; trae el mismo bloque, con relojes y evaluación, en 5 KB contra 27 KB), si no
+  sale el de la ronda, cada uno dos veces, y si Lichess sigue sin contestar lo dice en palabras («Lichess
+  no contestó… vuelve a intentarlo en un minuto»), sin leer la foto. Lo prueba el verificador con un
+  Lichess que corta la conexión.
 - **La clave de Google Vision no estaba puesta** (4/11): el registro de `ocr-scoresheet` dice
   «GOOGLE_VISION_API_KEY no configurado» y las dos primeras lecturas terminaron en 504 a los 160 s.
   Supabase contesta eso sin el permiso de origen y el navegador solo ve «Failed to fetch»; ahora la
@@ -9622,6 +9630,64 @@ alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
   mirar, y FIDE pide pruebas físicas o de conducta para sancionar.
 - La migración se pegó en el editor SQL (Supabase no llegó a pedir la confirmación de `apply_migration`), y su fila en
   `supabase_migrations.schema_migrations` se agregó a mano con el mismo nombre.
+
+#### Más precisión: el Elo de los niños, el ritmo, el tiempo y los casos de prueba
+
+El 5/11 el dueño preguntó qué más se podía hacer para que fuera más preciso y pidió hacerlo todo, «para todos los torneos a
+futuro» (migración `20261105050000`, función en su versión 12). Lo que se aprendió primero, con la simulación de
+`verificar-centroamericano-fair-play-modelo.js` (la función entera sobre un torneo inventado): **lo que más limita la
+precisión no es el modelo, es que la gente juega distinto de lo que dice su Elo**. Con un tercio de los jugadores 150
+puntos más fuerte que su Elo (lo normal en categorías de niños), la gente real varía el doble que el modelo (el factor
+sale ~2), el índice se divide por eso para no dar alarmas falsas (siguen en ~2 %), y detecta a quien usa el motor en 3
+de cada 10 jugadas en ~40 % de las veces (con el Elo exacto, ~70 %). Por eso casi todo lo de abajo apunta a eso.
+
+- **El Elo que se le reconoce** (`eloUsado()`): el suyo y su rendimiento en el torneo, juntados con la cuenta de manual
+  de dos medidas inseguras, cada una pesada por lo poco que varía. El rendimiento de n partidas varía ~400/√n (con 4
+  partidas, ±200: casi todo es suerte); el Elo de un menor (por el nombre de la categoría: «Sub-8» … «Sub-18») se
+  atrasa ~150 y el de un adulto ~75. Con 3 partidas, un 30 % de lo rendido de más a un niño, un 10 % a un adulto; con 9,
+  la mitad al niño. Tope de 200 (100 a un adulto), nunca de menos. **La primera versión** reconocía la mitad de lo rendido
+  con 4 partidas: en la simulación el ruido de los resultados subió el factor de 1,3 a 2,1 y la detección cayó a la
+  mitad. Se ve en la pantalla («Se lo comparó como un 1620: su Elo es 1500 y rindió 1800…»). Las incomparecencias
+  («+ - -») no cuentan como partidas.
+- **Cada ritmo con su propio ajuste**: el modelo mezclaba las rápidas con las clásicas, y en una rápida todos juegan peor
+  para su Elo. Ahora se ajusta cada uno por su lado (por el nombre: «Rápido», «Blitz», «Relámpago»), con su centro, su
+  factor y su validación; un ritmo con menos de 600 jugadas usa lo del otro. Las referencias van a la clásica, y al
+  cargarlas se saltan las rápidas (por su `TimeControl`: menos de 60 minutos para 60 jugadas).
+- **Más hondo**: la pantalla pregunta primero a la **nube de Lichess** (`/api/cloud-eval`), que tiene muchas posiciones
+  analizadas a profundidad 20 o más, gratis; solo se acepta a 20 o más y con todas las opciones que se piden (o todas las
+  jugadas legales). Si no está, Stockfish la calcula aquí. Lichess escribe el enroque como «el rey a su torre» (`e1h1`): se
+  pasa al de siempre (`e1g1`) si lo que se mueve es el rey (un `e1h1` de torre es una jugada de verdad). Si Lichess pide
+  calma (429), se deja de preguntar un minuto. La pantalla dice cuántas posiciones salieron de allá. La confirmación de
+  una alerta pasó de profundidad 16 a **20**.
+- **Su historia**: el mismo jugador (por su nombre) medido en otras categorías o eventos, sumado con la sensibilidad de
+  cada vez (`sumar()`), con su propio índice. Para este torneo casi no hay; crece con cada evento. Dos personas con el
+  mismo nombre se juntan, y la pantalla lo dice.
+- **El tiempo**: la correlación (de Spearman) entre lo que pensó en cada jugada y lo difícil de la posición para su nivel
+  (lo que se espera perder ahí, `dificultadEsperada()`). Casi todos piensan más donde es más difícil; quien espera la
+  jugada de afuera tarda parecido en todas. Se compara con la de su ritmo (`tiempo_z`); desde 2 desviaciones por
+  debajo es señal alta. **No entra en el índice**: hay jugadores de ritmo parejo que juegan limpio. Un tiempo siempre
+  igual da correlación 0 (ninguna relación), no «sin dato». Con menos de 20 jugadas con tiempo, no se mide.
+- **Las tres señales juntas, con su correlación de verdad**: antes se sumaban la primera del motor y lo perdido divididas
+  por √3 (una correlación de 0,5 supuesta); ahora entran también las **posiciones con una sola jugada buena** (las que más
+  delatan; solo con 4 o más) y se dividen por la raíz de la suma de su matriz de correlación **medida en la gente del
+  torneo** (`correlaciones()`; sin 8 jugadores para medirla, 0,5 y 0,3). En la simulación salen muy parecidas (0,8-0,95):
+  sumarlas da poco de más, y es lo correcto.
+- **Muchas partidas de referencia** y **casos de prueba**: la carga acepta varios PGN y el enlace de una transmisión de
+  Lichess (de un torneo o de una ronda: se pide su PGN a la API); cada partida tiene un nombre que no cambia entre cargas
+  (la huella de quiénes la jugaron y sus jugadas), y la función dice cuáles de un evento ya están
+  (`centroamericano_fp_referencia_partidas()`), así que una carga larga se corta con «Detener» y sigue donde quedó.
+  Marcadas «De prueba», solo se cargan las que traen `[Trampa "Blancas"]` o `[Trampa "Negras"]`
+  (`centroamericano_fp_referencia.trampa`): ese lado no entra al ajuste, y «¿Qué tan confiable es?» dice cuántos de los
+  que hicieron trampa marcó el índice y cuántos de sus rivales limpios (`casosDePrueba()`).
+- La simulación quedó como verificador (`verificar-centroamericano-fair-play-modelo.js`): arma la función entera con
+  esbuild y un cliente de mentira que filtra como PostgREST, y comprueba que corre en menos de 1,5 s (la función tiene
+  tope de procesador; hoy tarda ~0,6 s con 90 jugadores), que separa los ritmos, el Elo reconocido, la correlación
+  medida, que el tramposo queda primero de su categoría con el tiempo más parejo, y que el lado tramposo de las pruebas no
+  entra al ajuste. Roto a propósito (sin separar los ritmos; con el lado tramposo en el ajuste), salta.
+- **Lo que queda**: la herramienta sigue en las tablas `centroamericano_*` (un torneo de chess-results por categoría y
+  LiveChess). Para usarla en otro evento con el mismo flujo basta cargar sus categorías; sacarla a una herramienta aparte,
+  donde se pegue cualquier enlace de partidas, es lo siguiente. Comparar con sus partidas de Lichess o Chess.com no se
+  hizo: no se sabe la cuenta de cada jugador del torneo.
 
 ### El encargado de transmisión (Centroamericano)
 

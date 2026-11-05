@@ -1118,3 +1118,8 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-rejilla tbody tr.cam-pl-grupo .cam-pl-tx { font-weight: 600; }
 .cam-pl-tx-enlace { color: inherit; text-decoration: underline; }
 .cam-pl-tx-enlace:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }
+/* Lo que el índice tuvo en cuenta de cada jugador (Elo reconocido, historia, tiempo): una frase por línea; la señal alta en
+   negrita (y lo dice al lector de pantalla). */
+#fp-indice td .cam-fp-detalle { display: block; font-weight: 400; }
+#fp-indice td .cam-fp-detalle + .cam-fp-detalle { margin-top: 0.2rem; }
+#fp-indice td .cam-fp-detalle[data-alto="si"] { font-weight: 700; }
