@@ -8,8 +8,11 @@
 
    `disponible: false` es una herramienta anunciada que todavía no se puede
    usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
-   una que no lleva licencia (Pareo Integral, pública y sin cuenta): sale
-   abierta para todos y no se ofrece en licencias.html. `licencia` es la de
+   una que no lleva licencia: sale abierta para todos y no se ofrece en
+   licencias.html. Desde que el dueño pidió licencia para todas las
+   herramientas, solo la llevan las páginas que son lo que ve el público
+   (los torneos de Costa Rica, las de cada torneo universitario); las que
+   trabajan en el navegador se cierran con js/candado-herramienta.js. `licencia` es la de
    otra herramienta que también abre esta (el catálogo de torneos
    universitarios va con la de «universidades»): la vitrina pregunta por esa
    y licencias.html no la ofrece aparte. `imagen` (opcional) es la foto de
@@ -43,8 +46,7 @@
             href: "pareo.html",
             manual: "pareo-manual.html",
             disponible: true,
-            gratis: true,
-            resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Gratis, sin cuenta y en tu computadora.",
+            resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Con tu licencia, en tu computadora.",
             puntos: [
                 "El Sistema Holandés vigente (C.04.3, 2026), calculado con bbpPairings, el motor que usan programas avalados por FIDE.",
                 "Byes pedidos, retiros, inscripciones tardías e incomparecencias; aceleración Baku; puntos a elegir.",
@@ -79,8 +81,7 @@
             href: "arbitros.html",
             disponible: true,
             oculta: true,
-            gratis: true,
-            resumen: "La lista de árbitros de la Federación con su título, su categoría nacional y su último torneo, y qué categoría pide tu torneo según el Reglamento para Árbitros. Gratis y sin cuenta.",
+            resumen: "La lista de árbitros de la Federación con su título, su categoría nacional y su último torneo, y qué categoría pide tu torneo según el Reglamento para Árbitros.",
             puntos: [
                 "Dices si tu torneo es de Elo nacional, de FIDE o sin Elo, de qué división son los jugadores y cuántos son.",
                 "Te dice qué categoría pide (arts. 11, 13 y 15) y quiénes la tienen, primero quienes arbitraron hace poco.",
@@ -236,7 +237,6 @@
             corto: "Ajedrez estudiantil",
             href: "ajedrez-estudiantil.html",
             disponible: true,
-            gratis: true,
             resumen: "La participación en los Juegos Deportivos Estudiantiles año por año, por etapa, región y categoría, con todos los torneos estudiantiles de Costa Rica publicados en chess-results.",
             puntos: [
                 "Las etapas institucional o circuital, regional, interregional y nacional, y la internacional (CODICADER).",
@@ -253,7 +253,6 @@
             corto: "Historial de un jugador",
             href: "historial-jugador.html",
             disponible: true,
-            gratis: true,
             resumen: "Busca a un estudiante por su nombre y mira todos sus torneos de los JDE y los estudiantiles internacionales en chess-results: la etapa a la que llegó cada año, su colegio, su puesto y sus puntos.",
             puntos: [
                 "Su camino por las etapas, año por año: institucional, regional, interregional y nacional.",
@@ -270,7 +269,6 @@
             corto: "Estadísticas por colegio",
             href: "estadisticas-colegios.html",
             disponible: true,
-            gratis: true,
             resumen: "Los colegios y escuelas en los JDE: cuántos estudiantes llevó cada uno, sus podios regionales y nacionales, individuales y por equipos, y cuántos llegaron a la final, también región por región.",
             puntos: [
                 "Filtros por región, categoría y año; la tabla se ordena por cualquier columna.",
@@ -287,7 +285,6 @@
             corto: "Ranking por categoría",
             href: "ranking-estudiantil.html",
             disponible: true,
-            gratis: true,
             resumen: "El ranking de los JDE de un año, una categoría y una rama: hasta qué etapa llegó cada estudiante y con qué resultado, de los torneos publicados en chess-results.",
             puntos: [
                 "Primero la etapa más alta (llegar a la final pesa más que ganar la regional), después el mejor puesto en esa etapa y los puntos.",
@@ -304,7 +301,6 @@
             corto: "Inscripción JDE",
             href: "inscripcion-jde.html",
             disponible: true,
-            gratis: true,
             resumen: "Prepara la inscripción de tu centro educativo en el torneo de ajedrez de los Juegos Deportivos Estudiantiles: escoges tu colegio del banco, la categoría sale de la fecha de nacimiento y todo se revisa contra la Normativa 2026 mientras llenas.",
             puntos: [
                 "El colegio se busca en el banco de más de mil centros que ya jugaron los JDE, y propone su Dirección Regional (de las 27), su interregional y cuántos clasifican.",
@@ -357,7 +353,6 @@
             corto: "Notara",
             href: "camara-tablero.html",
             disponible: true,
-            gratis: true,
             imagen: {
                 src: "img/herramientas/notara.jpg", ancho: 1200, alto: 675,
                 alt: "Dos jugadores en un torneo escolar; encima de su tablero, un celular en un soporte muestra Notara: el tablero que lee la cámara, las jugadas anotadas, el reloj de la mesa, «En vivo» y el VAR grabando.",
@@ -413,8 +408,7 @@
             corto: "Reclamos de tablas",
             href: "reclamos-tablas.html",
             disponible: true,
-            gratis: true,
-            resumen: "Pega la partida y te dice si hubo triple repetición o 50 jugadas sin mover un peón ni capturar: en qué jugada, quién podía reclamar las tablas y si un reclamo procedía. Gratis, sin cuenta y en tu computadora.",
+            resumen: "Pega la partida y te dice si hubo triple repetición o 50 jugadas sin mover un peón ni capturar: en qué jugada, quién podía reclamar las tablas y si un reclamo procedía. Con tu licencia, en tu computadora.",
             puntos: [
                 "La misma posición como la define el art. 9.2.2: las mismas piezas, el mismo turno, los mismos enroques y la captura al paso solo si de verdad se puede hacer.",
                 "Quién podía reclamar y cuándo: quien iba a hacer la jugada, anotándola antes, o el rival, en su turno, apenas apareció la posición.",
@@ -431,8 +425,7 @@
             corto: "Bases del torneo",
             href: "bases-torneo.html",
             disponible: true,
-            gratis: true,
-            resumen: "Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar. Gratis, sin cuenta y en tu computadora.",
+            resumen: "Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar. Con tu licencia, en tu computadora.",
             puntos: [
                 "El ritmo con su modalidad (clásico, rápido o relámpago, como dicen las Leyes del Ajedrez) y si vale para el Elo FIDE clásico según el Elo de los jugadores (B.02).",
                 "El calendario de rondas armado solo, con las rondas por día, la hora de inicio y el descanso.",

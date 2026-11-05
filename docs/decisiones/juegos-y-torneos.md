@@ -7936,14 +7936,13 @@ los **desempates explicados** (`desempates.html`, ver «Desempates explicados»)
 **Pareo para DGT** (`pareo-dgt.html`, ver «Pareo para DGT») y
 los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
 comité»).
-**Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
-`gratis: true`: el dueño lo pidió público y para quien lo necesite, así que sale
-abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; la
-vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
-(no hay licencia que vender de algo gratis).
+**Pareo Integral** (`pareo.html`, ver «Pareo Integral») estuvo en la vitrina
+con `gratis: true`, abierto para todos y sin cuenta; desde noviembre de 2026
+lleva licencia, como todas (ver «Todas las herramientas llevan licencia»,
+abajo).
 **Notara** (`camara-tablero.html`, ver «El nombre: Notara») también está, en
-Arbitraje y con `gratis: true`: no lleva licencia; la abre cualquier cuenta, y
-la mesa con su QR, sin cuenta. Es la primera tarjeta con **foto** (`imagen`,
+Arbitraje, y también con licencia desde entonces; la mesa con su QR sigue
+abriendo sin cuenta. Es la primera tarjeta con **foto** (`imagen`,
 con su `alt` y su tamaño para que la página no salte al cargarla): dos
 jugadores de un torneo escolar con el celular encima del tablero, mostrando la
 pantalla real de Notara. La foto la armó una IA a pedido del dueño (nadie real
@@ -7952,7 +7951,7 @@ el tablero de la mesa (1. e4 e5 2. Cf3 Cc6, comprobada con chess.js; las
 piezas que la IA dejó fuera de lugar se movieron a su casilla) y la marca de
 agua de Ajedrez Integral. Lo revisa `verificar-herramientas-vitrina.js` (sin
 navegador): que cada enlace lleve a una página que existe, que cada imagen
-exista, mida lo que dice y tenga su `alt`, y que Notara esté gratis y abra la
+exista, mida lo que dice y tenga su `alt`, y que Notara esté con licencia y abra la
 cámara.
 
 **La vitrina va en fichas por tema** (lo pidió el dueño: «que queden fichas por
@@ -8110,6 +8109,83 @@ prueba el lector de la función con HTML de la forma real y nombres inventados,
 y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
 o el 40 %, saltan.
 
+### Todas las herramientas llevan licencia
+
+El dueño lo pidió en noviembre de 2026: «a todas las herramientas de
+arbitraje colocarle la licencia, a las que le hagan falta; las que están
+libres, colocarle licencia». Dejaron de ser gratis **Pareo Integral** (también
+`jde-arbitro.html`, que es su motor para los JDE y se abre con la misma
+licencia `pareo`), **Notara** (`camara-tablero.html` y `camaras.html`, licencia
+`notara`), los **reclamos de tablas**, el **generador de bases**, la
+**inscripción de los JDE**, **Ajedrez estudiantil**, el **historial de un
+jugador**, las **estadísticas por colegio**, el **ranking estudiantil** y la
+**lista de árbitros** (`arbitros.html`, oculta de la vitrina; la abre quien
+administra o la licencia «todas»). En `js/herramientas-arbitraje.js` ya no
+llevan `gratis: true`, así que la vitrina las pinta con candado y
+`licencias.html` las ofrece. Las licencias valen como siempre: la base acepta
+cualquier id de la lista (`tengo_herramienta()`), sin migración.
+
+**Lo que ve el público de una herramienta sigue abierto** (se le preguntó al
+dueño y lo eligió): la licencia la necesita quien usa la herramienta —quien
+organiza, quien arbitra—, no quien mira. Siguen gratis en la vitrina «Torneos
+de Costa Rica» (`torneos-pareo.html`, donde también se ven los torneos
+publicados con Pareo) y las páginas de los torneos universitarios; y siguen
+abiertos, sin cuenta, el enlace de solo lectura de Pareo Integral y los del
+adjunto, el capitán, la firma, la inscripción tardía, el evento y el «vivo»
+(todo lo que entra por `modoVer()`), el QR de una mesa de Notara (`modoMesa()`),
+`tablero-vivo.html`, `/t/`, `/o/`, `/incrustar/` y el calendario.
+
+**El candado es `js/candado-herramienta.js`.** Esas páginas hacen todo en el
+navegador: no hay servidor que pueda negar nada, así que el candado es el
+mismo de `desempates.html`, preguntarle a la base `tengo_herramienta()` antes
+de mostrar la herramienta, pero sin tocar el código de cada página: va en el
+`<head>`, sin `defer`, con el id de la vitrina
+(`<script src="js/candado-herramienta.js" data-herramienta="pareo">`), tapa
+`#main-content` antes de que se pinte y pone en su lugar qué falta: iniciar
+sesión (con la vuelta a la misma página) o la licencia (con el enlace a la
+vitrina, en la ficha de su tema, donde se pide o se activa). Con la licencia
+—o siendo quien administra— la destapa. La entrada pública de una
+herramienta llama a `CandadoHerramienta.liberar()`. Carga la librería de
+Supabase solo si la página no la trae, como `js/pareo/ver.js`.
+
+- **Sin internet.** Pareo Integral y Notara se usan sin conexión. La última
+  respuesta que dijo que sí se guarda en el aparato, por cuenta y por
+  herramienta (`candado_herramienta_v1`), y vale 7 días mientras la base no
+  conteste; cuando contesta, decide ella (una licencia anulada se cierra en
+  la siguiente carga con red).
+- **Lo que no cierra.** Es un candado de navegador: el código de la página es
+  público y alguien con la consola lo puede saltar, igual que en
+  `desempates.html`. Lo que vive en un servidor sigue como estaba y no se
+  cerró: los datos de los juegos estudiantiles (`data/ajedrez-estudiantil*.json`,
+  que también leen el enlace del evento de Pareo, `torneos-pareo.html`,
+  `acta-jde.html` y `jdn-proyeccion.html`), `arbitros_cr_publico()`, la
+  publicación de los JDE desde `jde-arbitro.html` y la línea de comandos de
+  Pareo (`descargas/pareo-integral-cli.zip`).
+- **Los profes y los alumnos de la Academia** que usaban Notara (la cámara del
+  profe en la clase en vivo, `js/clase-camara.js`, y el alumno que entrena en
+  su tablero) ahora necesitan la licencia `notara` o la de «todas».
+- **La versión de prueba** queda para después (lo dijo el dueño: «dejarlo
+  listo para ofrecer una versión de prueba, pero por ahora no»). Cabe en un
+  solo lugar: que `tengo_herramienta()` diga que sí durante la prueba (por
+  ejemplo, una licencia de pocos días que se genera sola al pedirla), sin
+  tocar las páginas ni este candado.
+
+**Los verificadores.** `verificar-candado-herramienta.js` comprueba, sin
+navegador, que cada herramienta de la vitrina que no es gratis abra una
+página con el candado o con su propio `tengo_herramienta()`, y que gratis
+queden solo las páginas públicas; y en el navegador, con un doble de
+Supabase, que sin sesión o sin licencia la herramienta no se ve (medido con
+`checkVisibility()`), que con licencia sí, lo de sin red, y que el enlace de
+solo lectura de Pareo y el QR de una mesa de Notara se abren sin sesión.
+Rompiendo a propósito el `liberar()` de Pareo o el vencimiento de lo
+guardado, salta. Los más de cuarenta verificadores que prueban esas páginas
+por dentro las abren como alguien con licencia: `verificar-todo.js` les
+carga `lib/candado-de-prueba.js`, que pone un `window.CandadoHerramienta` ya
+abierto antes de que cargue la página (el de verdad no se pisa:
+`if (window.CandadoHerramienta) return;`). El del candado pide el de verdad con
+`CANDADO_DE_VERDAD=1`. Por eso esos verificadores se corren con
+`verificar-todo.js`, no sueltos.
+
 ### El Espacio de consultas: FAQ a la vista, la IA oculta debajo
 
 Arriba de la vitrina, `herramientas-arbitraje.html` tiene una sección aparte,
@@ -8119,9 +8195,9 @@ tablas, la bandera caída, el celular en la mesa, quién reclama…), con
 respuesta fija en el propio HTML (`<details>`/`<summary>`, igual que el FAQ de
 `precios.html`), sin backend ni formulario. No pasa por `tengo_herramienta()`
 ni por `licencias_herramientas`: es la puerta de entrada abierta de la
-vitrina, no una herramienta más de la lista con candado. (La otra que no
-lleva licencia es Pareo Integral, pero ese sí va en la lista, con
-`gratis: true`: ver «Pareo Integral».)
+vitrina, no una herramienta más de la lista con candado. (Pareo Integral
+también era gratis hasta noviembre de 2026: ver «Todas las herramientas llevan
+licencia».)
 
 **Debajo del FAQ, en un `<div class="hidden">`, sigue armado (pero sin
 mostrarse) el formulario de consulta por IA** que este espacio tenía antes:

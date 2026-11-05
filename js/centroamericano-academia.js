@@ -43,7 +43,7 @@
         ["🎓", "Clases en línea con su profe", "Grupos por nivel y clases individuales, desde cualquier país, con tablero en vivo."],
         ["🧩", "Entrenamiento todos los días", "Miles de ejercicios, la prueba de nivel con su Elo estimado y la prueba de estilo de juego."],
         ["⭐", "Para los que empiezan", "«Aprende a jugar» paso a paso y juegos para aprender sin darse cuenta."],
-        ["🏆", "Para árbitros y organizadores", "Pareo Integral, el emparejador de torneos gratis, y Notara, la cámara que anota la partida."],
+        ["🏆", "Para árbitros y organizadores", "Pareo Integral, el emparejador de torneos, y Notara, la cámara que anota la partida."],
       ],
       gratis: "Pruébala gratis 5 días",
       gratisTexto: "Durante el festival, del 1 al 9 de noviembre, te abres tu cuenta tú mismo: sin correo, sin tarjeta y sin pagar nada. Se cierra sola a los 5 días.",
