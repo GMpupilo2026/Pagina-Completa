@@ -106,7 +106,7 @@
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
@@ -123,6 +123,7 @@
         if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
         if (nombre === "registro") cargarRegistro();
         if (nombre === "fairplay") window.CentroamericanoFairPlay.cargar();
+        if (nombre === "transmision") window.CentroamericanoTransmision.cargar();
     }
     function teclaPestana(ev) {
         const i = PANELES.indexOf(ev.currentTarget.dataset.panel);
@@ -1545,6 +1546,8 @@
         $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
         $("copia-archivo").addEventListener("change", restaurarArchivo);
         window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
+        // La transmisión se lee aunque la pestaña no esté abierta (cada 10 s): su contador avisa desde cualquier pestaña.
+        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx") });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);

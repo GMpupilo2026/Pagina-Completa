@@ -9432,6 +9432,68 @@ alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
 - La migración se pegó en el editor SQL (Supabase no llegó a pedir la confirmación de `apply_migration`), y su fila en
   `supabase_migrations.schema_migrations` se agregó a mano con el mismo nombre.
 
+### El encargado de transmisión (Centroamericano)
+
+Lo pidió el dueño el 4/11, en plena ronda 5: que desde la herramienta de mesas se le dé un acceso al **encargado de
+transmisión**, donde vea todas las partidas que se transmiten en vivo, y que cualquier problema de un tablero (que deje
+de transmitir, el reloj detenido, apagado o mal configurado, la triple repetición, las 50 o 75 jugadas, la quíntuple, una
+posición que no es legal…) le llegue como un aviso **muy visual**, «que el tablero empiece a brillar»; y que pueda
+cambiar los nombres de un tablero si la organización mueve a un jugador de mesa, con los datos que ya hay.
+
+- **Dos lugares, una pantalla** (`js/centroamericano-transmision.js`, como Fair Play): la pestaña **«📡 Transmisión»** de
+  `centroamericano-mesas.html` (el principal, con su contador de avisos visible desde cualquier pestaña, y la sección
+  «Encargados de transmisión» para crear y apagar sus QR) y `centroamericano-transmision.html#<token>` (el encargado,
+  sin cuenta; el token después del «#», nunca guardado). Los enlaces son `centroamericano_tx_enlaces`, con auditoría
+  (reparten acceso), la misma forma que los de Fair Play. Migración `20261104232418_centroamericano_transmision`.
+- **Los datos** los junta la Edge Function nueva **`centroamericano-transmision`** (`verify_jwt` en false; token o
+  sesión con `tengo_herramienta('mesa-arbitro')`): de cada categoría con tableros de LiveChess, el pareo, las jugadas
+  con su reloj, el reloj (`clock`) y si transmite; los jugadores de esa mesa en chess-results y el resultado que anotó su
+  árbitro (`centroamericano_registro`, sin los anulados). **Nunca devuelve el id de LiveChess** (sin atraso: no se
+  publica). Los emparejamientos salen de dos lados: `centroamericano_lecturas` trae **solo las mesas sin resultado**
+  (con eso, una categoría terminada quedaba sin nadie) y `centroamericano_fp_partidas` (la lectura completa de Fair Play)
+  el resto. Va aparte de `centroamericano-mesas-vivo` para no tocar lo que usan las tablets en pleno torneo.
+- **El reloj de LiveChess** (comprobado con la ronda 5 real): `clock.run` NO dice «corre o está detenido» sino **de
+  quién es el reloj que corre**: `true` las blancas, `false` las negras (después de cada jugada de las blancas, siempre
+  `false`); se entiende que `null` es detenido. Leído al revés, 13 de 58 tableros salían «detenidos». La función lo pasa
+  como `corre: "blancas" | "negras" | null`. `clock.time` es la hora de esa lectura del reloj, no de ahora.
+- **Las jugadas de LiveChess** a veces traen solo el reloj («Ba6 2912») o solo lo pensado («e4 +152»): ahora
+  `leerJugadas` (en `js/centroamericano-arbitro-vivo.js`, el de la tablet) las lee las dos; antes se perdía el reloj y
+  el control de tiempos desde la transmisión partía de un reloj viejo.
+- **Los avisos se calculan en la pantalla** (chess.js y `js/reclamos-tablas.js`, las mismas reglas de tablas que la
+  tablet). En rojo («Ir ya»): la categoría que no transmite o sin el pareo de la ronda en LiveChess, el tablero que dejó
+  de transmitir con la partida en curso, una jugada imposible (chess.js no la acepta: pieza mal puesta, el tablero leyó
+  mal), jugadas de hace más de 10 h (el tablero no se reinició entre rondas: pasó de verdad el 4/11), el reloj que no
+  llega, detenido más de 5 min, que corre para quien ya jugó según el tablero (**una jugada que el tablero no registró**)
+  o cuyo tiempo bajó sin jugada, el que no suma el incremento (la mediana de lo que suma por jugada, con 3 o más) o
+  empezó con más de lo que da el ritmo (el ritmo sale de `tournament.json` de LiveChess, también escrito en palabras:
+  «Noventa (90) minutos…»), la bandera, la quíntuple y las 75 jugadas, ahogado y posición muerta, otros jugadores o
+  colores al revés, y el resultado del tablero distinto del que anotó el árbitro. En ámbar («Mirar»): la triple y las
+  50 (las reclama un jugador), el reloj detenido más de 1 min, un mate sin resultado, el tablero sin jugadas cuando la
+  mitad de la categoría ya empezó, 25 min sin jugadas con el reloj corriendo, el reloj que empezó con 20 min menos
+  (¿llegó tarde?), la partida que el árbitro cerró y sigue transmitiéndose, y una jugada imposible en una partida ya
+  terminada. Cada aviso dice qué pasa, por qué y qué hacer; el brillo nunca va solo.
+- **El brillo**: la tarjeta del tablero late (rojo rápido, ámbar lento; con «reducir movimiento», el anillo quieto y
+  grueso), arriba la lista «🚨 Avisos para revisar» con «Ver el tablero», y el título de la pestaña lleva cuántos hay.
+  Vibra con lo nuevo (no al abrir). **Sin sonido**, como todo en la sala.
+- **«Ya lo revisé»** (`centroamericano_tx_atendidas`, compartido entre el principal y los encargados, con quién y a
+  qué hora): cada aviso tiene una clave estable (categoría, ronda, tablero, tipo y la jugada o la hora del reloj), así
+  que lo revisado no vuelve a brillar, y algo distinto en el mismo tablero sí.
+- **«Cambiar jugadores»** (`centroamericano_tx_tableros`): se elige de la lista de emparejamientos de esa ronda qué mesa
+  se juega en el tablero (sugiere la que dice LiveChess si está en otra mesa); los nombres los pone la función desde
+  chess-results, el navegador no manda ninguno. Con «Intercambiar», el otro tablero se queda con la mesa de este. Un
+  índice único impide la misma mesa en dos tableros. **Lo que no hace**: la transmisión pública de Lichess y la tablet
+  del árbitro toman los nombres de LiveChess (el pareo lo carga la computadora de los tableros en el local), y el
+  reemplazo de nombres de Lichess es por torneo, no por tablero; por eso «Mensaje para el operador» copia lo que hay que
+  corregir allá. Que la tablet del árbitro use el cambio queda pendiente: `centroamericano-mesas-vivo` tiene una
+  versión desplegada (la 5, con las banderas) que todavía no está en el repositorio, y desplegarla desde acá la pisaría.
+- Probado contra la base con la ronda 5 real (12 categorías, 58 tableros): con `run` bien leído quedaron 5 tableros
+  con avisos, todos de verdad (un tablero del Sub-10 con 31 jugadas en dos horas y el reloj de las blancas 34 min por
+  debajo de lo registrado; tres jugadas imposibles en partidas terminadas; una partida cerrada por el árbitro que seguía
+  transmitiéndose), el intercambio de dos tableros y su vuelta atrás, «Ya lo revisé», un enlace inválido (404) y sin
+  enlace ni sesión (401). Lo comprueba `verificar-centroamericano-transmision.js` (cada aviso con partidas armadas con
+  chess.js, una partida normal sin ninguno, la función, la migración y las páginas); roto a propósito (el reloj detenido
+  desde los 10 s, sin la regla de la jugada no registrada), salta.
+
 ## El modo concentración de las tablets (Centroamericano)
 
 La organización pidió poder «bloquear» las tablets de los árbitros para que se concentren en el torneo.
