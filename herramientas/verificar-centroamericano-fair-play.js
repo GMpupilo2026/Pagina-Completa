@@ -285,6 +285,7 @@ const SERVIDOR_FP = `
     if (b.action === "vivo_pendientes") return ok({ conectada: true, partidas: S.vivo.splice(0, 3), quedan: 0, nodos: 3000 });
     if (b.action === "vivo_guardar") { S.guardados.push(b); return ok({ medidas: [] }); }
     if (b.action === "referencia_guardar") { S.referencias.push(b); return ok({ jugadas: 9 }); }
+    if (b.action === "modelo") { (S.modelos = S.modelos || []).push(b); return ok({ insuficiente: true, movimientos: 420 }); }
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
     if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
@@ -564,11 +565,12 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await q.p.fill("#fp-ref-evento", "Nacional 2025");
         await q.p.setInputFiles("#fp-ref-archivo", { name: "nacional.pgn", mimeType: "text/plain", buffer: Buffer.from(pgn) });
         await q.p.click("#fp-ref-cargar");
-        await q.p.waitForFunction(() => /^Listo/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
-        igual("la referencia: solo la partida con Elo, con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el aviso de que el modelo la usa", await q.p.evaluate(() => {
+        await q.p.waitForFunction(() => /hacen falta 600/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
+        igual("la referencia: solo la partida con Elo, con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
             const r = window.__fp.referencias; const g = r[0] || {};
             return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 5), document.getElementById("fp-ref-estado").textContent]; }),
-            [1, "Nacional 2025", 1800, 1700, 22, false, true, true, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo las usa en su próximo ajuste (a lo sumo en 15 minutos)."]);
+            [1, "Nacional 2025", 1800, 1700, 22, false, true, true, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo todavía no se ajusta: hay 420 jugadas de jugadores con Elo y hacen falta 600."]);
+        igual("al terminar de cargar, el modelo se recalcula ya (forzado), una sola vez", await q.p.evaluate(() => (window.__fp.modelos || []).map((m) => m.forzar)), [true]);
         igual("y sin errores en la página", q.errores, []);
         await q.ctx.close();
 

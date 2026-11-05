@@ -812,7 +812,14 @@
                 hechas++; jugadas += r.jugadas || 0;
                 $("fp-ref-estado").textContent = "Cargadas " + hechas + " de " + partidas.length + " (" + jugadas + " jugadas).";
             }
-            $("fp-ref-estado").textContent = "Listo: " + hechas + (hechas === 1 ? " partida" : " partidas") + " de «" + evento + "» (" + jugadas + " jugadas). El modelo las usa en su próximo ajuste (a lo sumo en 15 minutos).";
+            const listo = "Listo: " + hechas + (hechas === 1 ? " partida" : " partidas") + " de «" + evento + "» (" + jugadas + " jugadas). ";
+            $("fp-ref-estado").textContent = listo + "Recalculando el modelo…";
+            // Se vuelve a ajustar ya (sin esperar a que entre otra partida del torneo), con las referencias nuevas.
+            const m = await llamar("modelo", { forzar: true }).catch((err) => ({ error: err.message || String(err) }));
+            $("fp-ref-estado").textContent = listo + (m.error ? "No se pudo recalcular el modelo ahora (" + m.error + "): se recalcula solo con la próxima partida del torneo."
+                : m.insuficiente ? "El modelo todavía no se ajusta: hay " + (m.movimientos || 0) + " jugadas de jugadores con Elo y hacen falta 600."
+                : "El modelo se recalculó con ellas.");
+            cargar();
         } catch (err) {
             $("fp-ref-estado").textContent = "Se cortó en la partida " + (hechas + 1) + ": " + (err.message || err) + ". Lo cargado hasta ahí quedó guardado; si vuelves a cargar el archivo, no se repite.";
         } finally { analizando = false; $("fp-ref-cargar").disabled = false; }

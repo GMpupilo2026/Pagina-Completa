@@ -9516,7 +9516,9 @@ alguien de ese nivel. Eso es lo que se copió, con lo que se tiene a mano.
   buena (`centroamericano_fp_partidas.profunda`); a 12 el motor a veces no ve la jugada que el jugador sí jugó.
 - **Partidas de referencia** (`centroamericano_fp_referencia`): el principal carga un PGN de otro torneo con el Elo de
   cada uno, se analiza con el mismo motor en la pantalla y se guardan **solo las jugadas y el Elo**, sin nombres, para
-  ajustar el modelo con más gente que la del torneo.
+  ajustar el modelo con más gente que la del torneo. Al terminar de cargar, la pantalla pide el modelo **forzado**
+  (`modelo` con `forzar`): si no, solo se recalculaba al guardarse la próxima partida del torneo, y quien carga
+  referencias para probarlo no veía nada.
 - **Lo que no es igual a Regan**: él ajusta con millones de jugadas de partidas de maestros analizadas muy hondo; acá el
   modelo se ajusta con el torneo (y las referencias), a profundidad 12-16. Por eso el centro y el factor salen del
   mismo torneo y la validación va en la pantalla. Y lo mismo que en la fase 1: el índice **no prueba nada**; es para
