@@ -137,13 +137,21 @@ export function evalsValidas(evals: unknown, posiciones: number): (number | null
 // ---- Fase 1 del detector: cada jugada con las 3 mejores del motor, la dificultad y el tiempo
 // Ver «El detector de Fair Play, jugada por jugada» en docs/decisiones/juegos-y-torneos.md.
 export const VERSION_ANALISIS = 3;   // sube cuando cambia lo que se mide: lo analizado antes se vuelve a analizar
-export const MULTIPV = 5;             // cuántas opciones del motor por posición (el modelo por jugada las necesita)
+export const MULTIPV = 10;            // cuántas opciones del motor por posición (el modelo por jugada las necesita; Regan
+                                      // mira todas: con 10, lo que se espera perder ya casi no depende de las demás)
+export const MAX_OPCIONES = 20;       // lo más que se acepta por posición (las referencias de la computadora pueden traer más)
+export const PROFUNDIDAD_SUPERFICIAL = 5;   // la mirada corta: lo que parece mejor a primera vista (ver «trampas()»)
 export const PROFUNDIDAD = 12, PROFUNDIDAD_HONDA = 20;   // fija, para que dos computadoras den lo mismo; la honda, para confirmar
 export const VENTANA_LEVANTO_MS = 5 * 60_000;   // las jugadas de los 5 minutos después de que el árbitro anotó «se levantó»
 
 // Lo que pensó en una jugada de LiveChess: «Nf3 5482+5» son 5 segundos (5482 es su reloj).
 export function segundosDe(jugada: unknown): number | null {
   const m = String(jugada || "").match(/\s\d+\+(\d+)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+// Lo que le quedaba en el reloj después de esa jugada: «Nf3 5482+5» son 5482 s.
+export function relojDe(jugada: unknown): number | null {
+  const m = String(jugada || "").match(/\s(\d+)\+\d+\s*$/);
   return m ? Number(m[1]) : null;
 }
 
@@ -155,7 +163,7 @@ export function opcionesValidas(opciones: unknown, posiciones: number): (Opcion[
   const out: (Opcion[] | null)[] = [];
   for (const o of opciones) {
     if (o == null) { out.push(null); continue; }
-    if (!Array.isArray(o) || o.length > 5) return null;
+    if (!Array.isArray(o) || o.length > MAX_OPCIONES) return null;
     const lista: Opcion[] = [];
     for (const x of o) {
       if (!Array.isArray(x) || !UCI.test(String(x[0])) || typeof x[1] !== "number" || !Number.isFinite(x[1]) || Math.abs(x[1]) > 10000) return null;
@@ -166,12 +174,25 @@ export function opcionesValidas(opciones: unknown, posiciones: number): (Opcion[
   return out;
 }
 
+// La mirada corta de cada posición (la mejor a PROFUNDIDAD_SUPERFICIAL): [jugada en UCI, centipeones para las blancas] o null.
+export function superficialesValidas(x: unknown, posiciones: number): (Opcion | null)[] | null {
+  if (x == null) return Array.from({ length: posiciones }, () => null);
+  if (!Array.isArray(x) || x.length !== posiciones) return null;
+  const out: (Opcion | null)[] = [];
+  for (const o of x) {
+    if (o == null) { out.push(null); continue; }
+    if (!Array.isArray(o) || !UCI.test(String(o[0])) || typeof o[1] !== "number" || !Number.isFinite(o[1]) || Math.abs(o[1]) > 10000) return null;
+    out.push([String(o[0]), Math.round(o[1])]);
+  }
+  return out;
+}
+
 // Una jugada de la partida, como la arma la función con chess.js: lo jugado, las jugadas que había (con si eran
-// captura o jaque), lo que pensó y a qué hora se hizo.
-export type Ply = { san: string; uci: string; legales: Record<string, { captura: boolean; jaque: boolean }>; segundos: number | null; hora: number | null };
+// captura o jaque), lo que pensó, lo que le quedaba en el reloj y a qué hora se hizo.
+export type Ply = { san: string; uci: string; legales: Record<string, { captura: boolean; jaque: boolean }>; segundos: number | null; hora: number | null; reloj?: number | null };
 export type Detalle = { ply: number; color: "blancas" | "negras"; san: string; uci: string; mejor: string | null; rango: number; perdida: number;
   forzada: boolean; dificil: boolean; segundos: number | null; antes: number; despues: number; tras_levantarse: boolean;
-  deltas: number[]; n_legales: number; delta_jugada: number };
+  deltas: number[]; n_legales: number; delta_jugada: number; reloj: number | null; sup_rango: number | null; cayo: boolean | null };
 export type Resumen = { consideradas: number; t1: number; top3: number; dificiles: number; dificiles_ok: number;
   seg_dificil: number | null; seg_resto: number | null; tras_levantarse: number; tras_levantarse_t1: number;
   momentos: { jugada: number; san: string; segundos: number | null }[] };
@@ -189,7 +210,9 @@ export type Resumen = { consideradas: number; t1: number; top3: number; dificile
 // desde la primera jugada que ya no está en las partidas de maestros, nunca antes de la 5.ª de cada uno).
 // «saltar»: las jugadas (por su número de media jugada, desde 0) que no se miden: las que la lectura de una planilla
 // dejó dudosas. Una jugada mal leída parecería un error (o un acierto) que nadie hizo.
-export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opcion[] | null)[], levantadas: { color: string; hora: number }[], inicio = (DESDE_JUGADA - 1) * 2, saltar: Set<number> = new Set()) {
+// «superficiales»: la mirada corta de cada posición (ver trampas()): dónde quedó esa jugada entre las del motor
+// (sup_rango; 0, ninguna de las listadas) y si fue la que jugó (cayo).
+export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opcion[] | null)[], levantadas: { color: string; hora: number }[], inicio = (DESDE_JUGADA - 1) * 2, saltar: Set<number> = new Set(), superficiales: (Opcion | null)[] = []) {
   const jugadas: Detalle[] = [];
   const vacio = (): Resumen => ({ consideradas: 0, t1: 0, top3: 0, dificiles: 0, dificiles_ok: 0, seg_dificil: null, seg_resto: null, tras_levantarse: 0, tras_levantarse_t1: 0, momentos: [] });
   const res: Record<string, Resumen> = { blancas: vacio(), negras: vacio() };
@@ -207,9 +230,11 @@ export function detallar(plies: Ply[], evals: (number | null)[], opciones: (Opci
     const tras = levantadas.some((l) => l.color === color && p.hora != null && p.hora >= l.hora && p.hora - l.hora <= VENTANA_LEVANTO_MS);
     const wMejor = ganar(mejor);
     const deltas = opts.map((o) => Math.round(Math.max(0, wMejor - ganar(s * o[1])) * 10) / 10);
+    const sup = superficiales[j - 1] || null;
     const d: Detalle = { ply: j, color, san: p.san, uci: p.uci, mejor: opts[0][0], rango, perdida: rango === 1 ? 0 : Math.max(0, Math.min(1000, mejor - jugado)),
       forzada, dificil, segundos: p.segundos, antes: mejor, despues: jugado, tras_levantarse: tras,
-      deltas, n_legales: nLegales, delta_jugada: rango === 1 ? 0 : Math.round(Math.max(0, wMejor - ganar(jugado)) * 10) / 10 };
+      deltas, n_legales: nLegales, delta_jugada: rango === 1 ? 0 : Math.round(Math.max(0, wMejor - ganar(jugado)) * 10) / 10,
+      reloj: p.reloj ?? null, sup_rango: sup ? opts.findIndex((o) => o[0] === sup[0]) + 1 : null, cayo: sup ? p.uci === sup[0] : null };
     jugadas.push(d);
     const r = res[color];
     if (!forzada) {
@@ -261,7 +286,10 @@ export const fenExplorador = (fen: string) => { const p = String(fen).split(" ")
 // una un poco peor que la última listada. Con eso, en cada posición sale lo esperable (cuántas veces jugaría la primera,
 // cuánto perdería) y su variación, y la suma de un jugador dice cuántas desviaciones se aparta de lo normal para su
 // nivel. Ver «El modelo por jugada, al estilo de Regan» en docs/decisiones/juegos-y-torneos.md.
-export type MovModelo = { deltas: number[]; n: number; rango: number; dj: number; dificil?: boolean; seg?: number | null };
+// v y r: el contexto de la jugada (ver «contexto»); f, lo que eso multiplica la sensibilidad (1 sin contexto).
+// sup y cayo: la mirada corta (ver trampas()).
+export type MovModelo = { deltas: number[]; n: number; rango: number; dj: number; dificil?: boolean; seg?: number | null;
+  v?: number; r?: number; f?: number; sup?: number | null; cayo?: boolean | null };
 const OTRAS_EXTRA = 10;
 export function probabilidades(deltas: number[], n: number, s: number, c: number): { p: number[]; otras: number; dOtras: number } {
   const k = Math.max(1, Math.min(deltas.length, n));
@@ -273,8 +301,17 @@ export function probabilidades(deltas: number[], n: number, s: number, c: number
   return { p: w.map((x) => x / tot), otras: wOtras / tot, dOtras };
 }
 export const sDeElo = (a: number, b: number, elo: number) => Math.exp(a + b * ((elo - 1500) / 400));
+// ---- El contexto: en una posición muy desigual o con poco reloj, cualquiera juega distinto
+// Regan mira cada jugada sola. Aquí la sensibilidad de cada jugada se corre según su contexto: v, lo desigual que estaba
+// (de 0, pareja, a 1, seis peones de ventaja para alguien), y r, si le quedaban menos de RELOJ_APURADO segundos. Cuánto
+// pesa cada uno (kv, kr) lo ajusta el modelo con la gente del torneo, como a, b y c; sin datos de reloj, kr no se mueve.
+export const RELOJ_APURADO = 300;
+export const contextoDe = (antes: number | null | undefined, reloj: number | null | undefined) =>
+  ({ v: antes == null ? 0 : Math.min(Math.abs(antes), DECIDIDA_CP) / DECIDIDA_CP, r: reloj != null && reloj < RELOJ_APURADO ? 1 : 0 });
+export const factorContexto = (m: { v?: number; r?: number }, kv: number, kr: number) => Math.exp(kv * (m.v ?? 0) + kr * (m.r ?? 0));
+const sDe = (m: MovModelo, s: number) => s * (m.f ?? 1);
 function logProb(m: MovModelo, s: number, c: number) {
-  const r = probabilidades(m.deltas, m.n, s, c);
+  const r = probabilidades(m.deltas, m.n, sDe(m, s), c);
   if (m.rango >= 1 && m.rango <= r.p.length) return Math.log(Math.max(1e-9, r.p[m.rango - 1]));
   return Math.log(Math.max(1e-9, r.otras / Math.max(1, m.n - r.p.length)));
 }
@@ -291,17 +328,24 @@ function dorada(f: (x: number) => number, a: number, b: number, vueltas = 22) {
 // Ajusta a, b y c con las jugadas de jugadores con Elo (máxima verosimilitud, un parámetro a la vez, tres vueltas). Con
 // muchas jugadas se usa una muestra pareja de MUESTRA_AJUSTE, para no pasarse del tiempo de procesador de la función.
 export const MUESTRA_AJUSTE = 3000;
-export function ajustar(movs: (MovModelo & { elo: number })[]): { a: number; b: number; c: number; movimientos: number } {
+export function ajustar(movs: (MovModelo & { elo: number })[]): { a: number; b: number; c: number; kv: number; kr: number; movimientos: number } {
   const paso = Math.max(1, Math.ceil(movs.length / MUESTRA_AJUSTE));
   const m = movs.filter((_, i) => i % paso === 0);
-  let a = Math.log(6), b = -0.5, c = 0.8;
-  const nll = (aa: number, bb: number, cc: number) => { let t = 0; for (const x of m) t -= logProb(x, sDeElo(aa, bb, x.elo), cc); return t; };
+  let a = Math.log(6), b = -0.5, c = 0.8, kv = 0, kr = 0;
+  const conV = m.some((x) => (x.v ?? 0) > 0), conR = m.filter((x) => x.r).length >= 30;
+  const nll = (aa: number, bb: number, cc: number, vv: number, rr: number) => {
+    let t = 0;
+    for (const x of m) { const pr = probabilidades(x.deltas, x.n, sDeElo(aa, bb, x.elo) * factorContexto(x, vv, rr), cc); t -= x.rango >= 1 && x.rango <= pr.p.length ? Math.log(Math.max(1e-9, pr.p[x.rango - 1])) : Math.log(Math.max(1e-9, pr.otras / Math.max(1, x.n - pr.p.length))); }
+    return t;
+  };
   for (let v = 0; v < 2; v++) {
-    a = dorada((x) => nll(x, b, c), -1, 4.5, 14);
-    b = dorada((x) => nll(a, x, c), -2.5, 1.5, 14);
-    c = dorada((x) => nll(a, b, x), 0.3, 2, 14);
+    a = dorada((x) => nll(x, b, c, kv, kr), -1, 4.5, 14);
+    b = dorada((x) => nll(a, x, c, kv, kr), -2.5, 1.5, 14);
+    c = dorada((x) => nll(a, b, x, kv, kr), 0.3, 2, 14);
+    if (conV) kv = dorada((x) => nll(a, b, c, x, kr), -1.5, 1.5, 12);
+    if (conR) kr = dorada((x) => nll(a, b, c, kv, x), -1.5, 1.5, 12);
   }
-  return { a, b, c, movimientos: m.length };
+  return { a, b, c, kv, kr, movimientos: m.length };
 }
 // Solo «s» (con «c» ya ajustado): para un grupo sin Elo (una categoría). Sin el propio jugador, para que si alguien hace
 // trampa no se esconda subiendo el promedio de su grupo: se arma la verosimilitud de cada uno en una grilla de valores
@@ -333,7 +377,7 @@ export function esperado(movs: MovModelo[], s: number, c: number): Esperado {
   const r: Esperado = { n: 0, t1: 0, eT1: 0, vT1: 0, dj: 0, eDj: 0, vDj: 0, dificiles: 0, t1Dif: 0, eT1Dif: 0, vT1Dif: 0 };
   for (const m of movs) {
     if (m.n <= 1 || !m.deltas.length) continue;
-    const pr = probabilidades(m.deltas, m.n, s, c);
+    const pr = probabilidades(m.deltas, m.n, sDe(m, s), c);
     const p1 = pr.p[0];
     let e = pr.otras * pr.dOtras, e2 = pr.otras * pr.dOtras * pr.dOtras;
     pr.p.forEach((p, i) => { e += p * m.deltas[i]; e2 += p * m.deltas[i] * m.deltas[i]; });
@@ -557,7 +601,7 @@ export function rachas(juegos: MovModelo[][], s: number, c: number, factor = 1, 
       if (dificultadEsperada(m, s, c) < umbral) { facil.push(m); continue; }
       crit.push(m);
       if (m.rango === 1) {
-        largo++; log += Math.log10(Math.max(1e-9, probabilidades(m.deltas, m.n, s, c).p[0]));
+        largo++; log += Math.log10(Math.max(1e-9, probabilidades(m.deltas, m.n, sDe(m, s), c).p[0]));
         if (largo >= 3 && log < mejor.log10) mejor = { largo, log10: log };
       } else { largo = 0; log = 0; }
     }
@@ -599,7 +643,7 @@ export function planillaValida(jugadas: unknown, dudosas: unknown): { jugadas: s
 // donde hay más que pensar. Quien espera la jugada de afuera tarda parecido en una obvia que en una difícil. Es una
 // señal para explicar, no entra en el índice: hay jugadores de ritmo parejo que juegan limpio.
 export function dificultadEsperada(m: MovModelo, s: number, c: number) {
-  const pr = probabilidades(m.deltas, m.n, s, c);
+  const pr = probabilidades(m.deltas, m.n, sDe(m, s), c);
   return pr.p.reduce((t, p, i) => t + p * m.deltas[i], pr.otras * pr.dOtras);
 }
 export const MIN_TIEMPOS = 20;
@@ -629,14 +673,115 @@ export function spearman(pares: [number, number][]): number | null {
 // Partidas de referencia marcadas «de prueba» (con la etiqueta [Trampa "Blancas"] o [Trampa "Negras"]): jugadas a
 // propósito con el motor en algunas jugadas, o de tramposos confirmados que sean públicas. No entran al ajuste; con ellas
 // se mide de verdad cuánto marca el índice a quien hizo trampa y cuánto a su rival, que jugó limpio.
-export function casosDePrueba(casos: { movs: MovModelo[]; s: number; trampa: boolean }[], c: number, factor: number, centro = 0, R: Correlaciones = CORR_INICIAL) {
+// Con cuántos casos se mide, cada cifra lleva su margen (el intervalo de Wilson al 95 %: con 10 casos, «marcó al 80 %»
+// puede ser cualquier cosa entre 49 % y 94 %), lo bien que separa a los que hicieron trampa de los limpios (el AUC: 0,5 es
+// al azar, 1 los separa siempre) y, si las partidas dicen en qué proporción se usó el motor ([TrampaPorcentaje "30"]),
+// cuánto marca en cada proporción.
+export function wilson(n: number, d: number): [number, number] | null {
+  if (!d) return null;
+  const z = 1.96, p = n / d, den = 1 + (z * z) / d, cen = (p + (z * z) / (2 * d)) / den, mar = (z * Math.sqrt((p * (1 - p)) / d + (z * z) / (4 * d * d))) / den;
+  return [Math.round(Math.max(0, cen - mar) * 1000) / 10, Math.round(Math.min(1, cen + mar) * 1000) / 10];
+}
+export function auc(pos: number[], neg: number[]): number | null {
+  if (!pos.length || !neg.length) return null;
+  let t = 0;
+  for (const a of pos) for (const b of neg) t += a > b ? 1 : a === b ? 0.5 : 0;
+  return Math.round((t / (pos.length * neg.length)) * 100) / 100;
+}
+export function casosDePrueba(casos: { movs: MovModelo[]; s: number; trampa: boolean; pct?: number | null }[], c: number, factor: number, centro = 0, R: Correlaciones = CORR_INICIAL) {
   const medibles = casos.filter((x) => x.movs.length >= 15);
   const z = (x: { movs: MovModelo[]; s: number }) => indice(esperado(x.movs, x.s, c), factor, centro, R).z ?? 0;
   const con = medibles.filter((x) => x.trampa).map(z), sin = medibles.filter((x) => !x.trampa).map(z);
   const pct = (n: number, d: number) => (d ? Math.round((1000 * n) / d) / 10 : null);
-  return { con_trampa: con.length, marcados_a_mirar: pct(con.filter((v) => v >= UMBRAL_A_MIRAR).length, con.length),
+  const mira = con.filter((v) => v >= UMBRAL_A_MIRAR).length, falsos = sin.filter((v) => v >= UMBRAL_A_MIRAR).length;
+  const porPct: Record<string, { casos: number; marcados_a_mirar: number | null; ic: [number, number] | null }> = {};
+  for (const x of medibles.filter((y) => y.trampa && y.pct != null)) {
+    const k = String(x.pct);
+    const de = medibles.filter((y) => y.trampa && String(y.pct) === k).map(z);
+    porPct[k] = { casos: de.length, marcados_a_mirar: pct(de.filter((v) => v >= UMBRAL_A_MIRAR).length, de.length), ic: wilson(de.filter((v) => v >= UMBRAL_A_MIRAR).length, de.length) };
+  }
+  return { con_trampa: con.length, marcados_a_mirar: pct(mira, con.length), ic_marcados: wilson(mira, con.length),
     marcados_alta: pct(con.filter((v) => v >= UMBRAL_ALTA).length, con.length),
-    sin_trampa: sin.length, falsos_a_mirar: pct(sin.filter((v) => v >= UMBRAL_A_MIRAR).length, sin.length) };
+    sin_trampa: sin.length, falsos_a_mirar: pct(falsos, sin.length), ic_falsos: wilson(falsos, sin.length), auc: auc(con, sin),
+    por_porcentaje: Object.keys(porPct).length ? porPct : null };
+}
+
+// ---- Las trampas de la mirada corta
+// Hay posiciones donde la jugada que parece mejor a primera vista (a profundidad PROFUNDIDAD_SUPERFICIAL) es mala de
+// verdad (pierde TRAMPA_DELTA puntos o más de probabilidad de ganar a la profundidad del análisis). Una persona cae en
+// esas trampas a menudo; el motor nunca. Para cada una, el modelo dice con qué probabilidad alguien de su nivel jugaría
+// esa jugada; se suma lo esperable y se compara con las veces que de verdad cayó: quien las esquiva todas, muy por
+// encima de lo esperable, juega como no juega nadie a su nivel. Con menos de MIN_TRAMPAS posiciones así, no se mide.
+// El modelo mira la evaluación honda: no sabe cuánto ATRAE una jugada que parece buena. Por eso lo esperable se
+// multiplica por «atraccion»: cuántas veces más cae la gente del torneo de lo que dice el modelo (atraccionDe(), la
+// suma de las caídas de todos contra la suma de lo esperable; casi todos juegan limpio).
+export const TRAMPA_DELTA = 8, MIN_TRAMPAS = 5;
+export function atraccionDe(lista: { n: number; cayo: number; esperado: number }[]): number {
+  const e = lista.reduce((t, x) => t + x.esperado, 0), c = lista.reduce((t, x) => t + x.cayo, 0);
+  return e >= 5 ? Math.round(Math.max(0.5, Math.min(6, c / e)) * 100) / 100 : 1;
+}
+export function trampas(movs: MovModelo[], s: number, c: number, atraccion = 1): { n: number; cayo: number; esperado: number; z: number | null } {
+  let n = 0, cayo = 0, e = 0, v = 0;
+  for (const m of movs) {
+    if (m.sup == null || m.sup === 1 || m.n <= 1 || !m.deltas.length) continue;
+    if (m.sup > 1 && !(m.deltas[m.sup - 1] >= TRAMPA_DELTA)) continue;
+    const pr = probabilidades(m.deltas, m.n, sDe(m, s), c);
+    const p = Math.min(0.95, atraccion * (m.sup > 0 ? pr.p[m.sup - 1] ?? 0 : pr.otras / Math.max(1, m.n - pr.p.length)));
+    n++; e += p; v += p * (1 - p); if (m.cayo) cayo++;
+  }
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  return { n, cayo, esperado: r2(e), z: n >= MIN_TRAMPAS && v > 0 ? r2((e - cayo) / Math.sqrt(v)) : null };
+}
+
+// ---- El umbral según el tamaño del torneo
+// Con muchos jugadores, alguno sale alto por azar: con 300, unos 7 pasan de 2 desviaciones (el 60 de FIDE). Regan sube
+// la vara según cuántos se miran. Aquí, la vara que pasaría por azar UNO solo de cada 20 torneos de ese tamaño (la
+// corrección de Bonferroni con 5 %): con 10 jugadores, 2,6 desviaciones (63); con 300, 3,6 (68). Y para sancionar sin
+// una prueba física, FIDE pide mucho más: alrededor de 4,5 desviaciones (72,5) en el informe del modelo.
+export const UMBRAL_SANCION = 4.5;
+export function normalInversa(p: number): number {
+  // Acklam: el cuantil de la normal, con error menor a 1e-9 entre 0 y 1.
+  const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];
+  const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
+  const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+  const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+  const q = Math.min(Math.max(p, 1e-12), 1 - 1e-12);
+  if (q < 0.02425) { const t = Math.sqrt(-2 * Math.log(q)); return (((((c[0] * t + c[1]) * t + c[2]) * t + c[3]) * t + c[4]) * t + c[5]) / ((((d[0] * t + d[1]) * t + d[2]) * t + d[3]) * t + 1); }
+  if (q > 1 - 0.02425) { const t = Math.sqrt(-2 * Math.log(1 - q)); return -(((((c[0] * t + c[1]) * t + c[2]) * t + c[3]) * t + c[4]) * t + c[5]) / ((((d[0] * t + d[1]) * t + d[2]) * t + d[3]) * t + 1); }
+  const t = q - 0.5, r = t * t;
+  return ((((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * t) / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+export function umbralTorneo(jugadores: number, alfa = 0.05): number {
+  return Math.round(Math.max(UMBRAL_A_MIRAR, normalInversa(1 - alfa / Math.max(1, jugadores))) * 100) / 100;
+}
+
+// ---- Todas las señales en una cuenta
+// El índice (como el de FIDE) sigue siendo el de siempre. Aparte, el índice con todas las señales: el índice, el tiempo
+// (tiempo_z), el contraste de las rachas y las trampas, sumadas como el índice suma las suyas: divididas por la raíz de
+// la suma de su matriz de correlación, MEDIDA en la gente del torneo (correlacionDe; así lo que dicen dos veces lo
+// mismo no se cuenta doble). Cada una pesa igual: para darles pesos distintos hacen falta muchos casos de prueba.
+export function correlacionDe(filas: (number | null)[][]): number[][] {
+  const k = filas.length ? filas[0].length : 0;
+  const M = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => (i === j ? 1 : 0)));
+  for (let i = 0; i < k; i++) for (let j = i + 1; j < k; j++) {
+    const pares = filas.map((f) => [f[i], f[j]]).filter((p) => p[0] != null && p[1] != null) as [number, number][];
+    let r = 0;
+    if (pares.length >= 8) {
+      const n = pares.length, mx = pares.reduce((t, p) => t + p[0], 0) / n, my = pares.reduce((t, p) => t + p[1], 0) / n;
+      let sxy = 0, sxx = 0, syy = 0;
+      for (const [x, y] of pares) { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; syy += (y - my) ** 2; }
+      r = sxx > 0 && syy > 0 ? Math.max(0, Math.min(0.95, sxy / Math.sqrt(sxx * syy))) : 0;
+    }
+    M[i][j] = M[j][i] = Math.round(r * 100) / 100;
+  }
+  return M;
+}
+export function combinada(zs: (number | null)[], M: number[][]): number | null {
+  const i = zs.map((z, k) => (z == null ? -1 : k)).filter((k) => k >= 0);
+  if (!i.length || zs[0] == null) return null;
+  let v = 0;
+  for (const a of i) for (const b of i) v += a === b ? 1 : (M[a]?.[b] ?? 0);
+  return Math.round((i.reduce((t, k) => t + (zs[k] as number), 0) / Math.sqrt(v)) * 100) / 100;
 }
 
 // La clave de un nombre, IGUAL que interno.fp_clave() en la base: minúsculas, sin tildes, sin comas ni puntos.
