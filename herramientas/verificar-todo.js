@@ -117,8 +117,11 @@ function correr(cmd, argv, extraEnv) {
     let salida = "";
     // lib/navegador-local.js: si el Chromium de esta versión de Playwright no
     // está (las sesiones de Claude Code traen otro), usa el de la máquina.
+    // lib/candado-de-prueba.js: las herramientas con licencia se abren como
+    // para alguien que la tiene (el candado lo prueba su propio verificador).
     const env = Object.assign({}, process.env, extraEnv);
-    env.NODE_OPTIONS = ((env.NODE_OPTIONS || "") + " --require " + JSON.stringify(path.join(CARPETA, "lib", "navegador-local.js"))).trim();
+    const requerir = ["navegador-local.js", "candado-de-prueba.js"].map((f) => " --require " + JSON.stringify(path.join(CARPETA, "lib", f))).join("");
+    env.NODE_OPTIONS = ((env.NODE_OPTIONS || "") + requerir).trim();
     const hijo = spawn(cmd, argv, { cwd: RAIZ, env });
     const tope = setTimeout(() => { salida += "\n[verificar-todo] pasó de 10 minutos, se cortó\n"; hijo.kill("SIGKILL"); }, TOPE_MS);
     hijo.stdout.on("data", (d) => { salida += d; });

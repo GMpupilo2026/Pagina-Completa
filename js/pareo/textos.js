@@ -10,7 +10,7 @@
 
   const TEXTOS = {
     tituloPagina: ["Pareo Integral — emparejamientos de torneos de ajedrez (Sistema Holandés de FIDE)", "Pareo Integral — chess tournament pairings (FIDE Dutch System)"],
-    lema: ["Emparejamientos de torneos de ajedrez con el Sistema Holandés de FIDE, resultados y desempates. Gratis, sin cuenta y en tu computadora.", "Chess tournament pairings with the FIDE Dutch System, results and tie-breaks. Free, no account, on your own computer."],
+    lema: ["Emparejamientos de torneos de ajedrez con el Sistema Holandés de FIDE, resultados y desempates. Con tu licencia, en tu computadora.", "Chess tournament pairings with the FIDE Dutch System, results and tie-breaks. With your licence, on your own computer."],
     misTorneos: ["Mis torneos", "My tournaments"],
     filtroEvento: ["Evento", "Event"],
     filtroTodos: ["Todos los torneos", "All tournaments"],
