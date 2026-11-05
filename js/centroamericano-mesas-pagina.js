@@ -613,6 +613,7 @@
             if (usados.length) $("g-codigo").value = usados.sort((a, b) => usados.filter((x) => x === b).length - usados.filter((x) => x === a).length)[0];
         }
         pintarEstadoGeneral();
+        if (asignaciones.length) pintarAsignaciones();
     }
 
     function pintarTorneos() {
@@ -969,7 +970,8 @@
             const deEste = [...grupos].filter(([tnr]) => C.ritmoDe(torneos.find((t) => t.tnr === tnr)) === r.id);
             const hayTorneos = torneos.some((t) => C.ritmoDe(t) === r.id);
             const enlaces = deEste.reduce((n, [, l]) => n + l.length, 0);
-            if (!hayTorneos && r.id !== "blitz") continue;
+            // Los enlaces nunca se esconden: si los torneos no llegaron (la lectura falló o tardó), igual salen, bajo Clásico, con el número del torneo.
+            if (!hayTorneos && !enlaces && r.id !== "blitz") continue;
             filas.push(el("tr", { class: "cam-grupo-ritmo", "data-ritmo": r.id }, el("th", { colspan: "5", scope: "colgroup" },
                 el("span", { class: "cam-ritmo-nombre", texto: r.nombre }), el("span", { class: "cam-ritmo-cuenta", texto: " · " + (enlaces ? enlaces + (enlaces === 1 ? " enlace" : " enlaces") : hayTorneos ? "sin enlaces todavía" : "todavía no hay torneos de Blitz cargados") }),
                 el("span", { class: "cam-ritmo-config", texto: r.config }))));
@@ -1653,6 +1655,7 @@
         if (document.hidden) return;
         tic++;
         const tareas = [cargarAvisos()];
+        if (!torneos.length) tareas.push(cargarTorneos()); // la lectura de los torneos falló o llegó vacía: se vuelve a pedir
         if (tic % 3 === 0) tareas.push(cargarAsignaciones());
         if (tic % 5 === 0 && !$("panel-registro").hidden) tareas.push(cargarRegistro());
         if (tic % 10 === 0) tareas.push(cargarCopias(), cargarDrive());
