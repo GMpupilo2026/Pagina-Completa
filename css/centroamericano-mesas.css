@@ -958,6 +958,21 @@ html[data-liviano="si"] .cam-mesa[data-fp-alcance="mesa"], html[data-liviano="si
 html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[data-estado="abierto"], html[data-liviano="si"] .cam-barra-estado[data-alerta="si"] { box-shadow: 0 0 0 4px rgb(206 19 40 / 0.55); }
 /* El botón «Liviano» encendido se distingue también por el texto («Liviano: sí»), no solo por esto. */
 #modo-liviano[aria-pressed="true"] { outline: 2px solid #fbd38d; outline-offset: 1px; }
+/* Stockfish en la pantalla de Fair Play: encendido o apagado en esta computadora, y qué está analizando. */
+.cam-fp-motor { margin-top: 0.5rem; padding: 0.5rem 0.75rem; border: 1px dashed rgb(127 127 127 / 0.5); border-radius: 0.8rem; display: grid; gap: 0.25rem; }
+.cam-fp-motor-casilla { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; cursor: pointer; }
+.cam-fp-motor-casilla input { width: 1.15rem; height: 1.15rem; }
+/* El porqué de cada alerta: cada señal en una frase; la alta, en negrita (y lo dice al lector de pantalla). */
+.cam-fp-resumen { font-weight: 700; }
+.cam-fp-por-que { list-style: disc; padding-left: 1.3rem; display: grid; gap: 0.2rem; font-size: 0.93rem; }
+.cam-fp-por-que li[data-alto="si"] { font-weight: 700; }
+.cam-fp-por-que li[data-momento="si"] { list-style: "♟ "; }
+.cam-fp-no-significa summary { cursor: pointer; font-size: 0.9rem; text-decoration: underline; }
+.cam-fp-no-significa p { font-size: 0.9rem; margin-top: 0.3rem; }
+/* El índice del torneo (el modelo por jugada) y «¿Qué tan confiable es?». La fila marcada lleva la palabra en su chip. */
+#fp-indice tr[data-nivel="a_mirar"] td, #fp-indice tr[data-nivel="alta"] td { font-weight: 700; }
+.cam-fp-confianza summary { cursor: pointer; font-weight: 700; }
+.cam-fp-confianza p { margin-top: 0.35rem; font-size: 0.93rem; }
 
 /* La ficha de la mesa, opción A («tres toques»; js/centroamericano-arbitro.js, fichaA): más corta que la de siempre. El resultado en tres
    botones que guardan de un toque (los de Rápido y Blitz), las marcas de los dos jugadores en UNA franja, menos aire. Las alturas reservadas
@@ -1085,3 +1100,10 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .dark .cam-lp-corregida { background: #0c4a6e; color: #e0f2fe; border-color: #7dd3fc; }
 .dark .cam-lp-dudosa { background: #78350f; color: #fef3c7; border-color: #fcd34d; }
 .dark .cam-lp-num { color: #c9cbee; }
+
+/* «Planillas y Drive»: un encabezado por torneo y ronda, como las carpetas del Drive. */
+.cam-rejilla tbody tr.cam-pl-grupo th { background: var(--cac-morado-hondo); color: #fff; text-align: left; font-weight: 800; padding: 0.45rem 0.7rem; position: static; }
+.dark .cam-rejilla tbody tr.cam-pl-grupo th { background: #b8bbf2; color: #1e1b4b; }
+.cam-rejilla tbody tr.cam-pl-grupo .cam-pl-tx { font-weight: 600; }
+.cam-pl-tx-enlace { color: inherit; text-decoration: underline; }
+.cam-pl-tx-enlace:focus-visible { outline: 3px solid var(--cac-naranja); outline-offset: 2px; }

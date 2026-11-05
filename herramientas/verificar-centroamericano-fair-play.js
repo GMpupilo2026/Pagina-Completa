@@ -4,8 +4,10 @@
 
    Sin navegador:
    - supabase/functions/centroamericano-fair-play/analisis.ts: los emparejamientos de chess-results (con el número de
-     cada jugador, su Elo y el bye), el PGN de Lichess con sus evaluaciones, la precisión con la fórmula de Lichess
-     (sin la apertura ni lo ya decidido), la categoría de cada torneo de Lichess y la mesa de cada partida;
+     cada jugador, su Elo y el bye), la precisión con la fórmula de Lichess (sin la apertura ni lo ya decidido), lo de
+     LiveChess (los tableros, la regla de los nombres IGUAL a la de centroamericano-mesas-vivo, la partida terminada, la
+     jugada sin el reloj) y la evaluación que manda la pantalla (una por posición, o se rechaza);
+   - el puntaje de Stockfish pasado a las blancas (también los mates);
    - CentroamericanoMesas.fairPlayDeMesa(): lo que dice la banda dorada antes del resultado, con un resultado elegido,
      cuando gana quien no aplica, en tablas y si nadie jugó.
    Con un doble de la Edge Function centroamericano-fair-play que se porta como la base:
@@ -51,25 +53,70 @@ function pruebasDelCalculo() {
         + '<tr><td class="CRc">2</td><td>20</td><td></td><td></td><td><a href="x.aspx?snr=20">Ordonez Ch., Dylan</a></td><td>1609</td><td>1</td> <td></td><td>1</td><td>AIM</td><td><a href="x.aspx?snr=3">Farley, Jeremiah</a></td><td>1874</td><td></td><td>3</td></tr>'
         + '<tr><td class="CRc">3</td><td>45</td><td></td><td></td><td><a href="x.aspx?snr=45">Barrantes, Matias</a></td><td>0</td><td>1</td> <td>1 - -</td><td></td><td></td><td>bye</td><td></td><td></td><td></td></tr>'
         + '<tr><td class="CRc">4</td><td>5</td><td></td><td></td><td><a href="x.aspx?snr=5">Valle, Moises</a></td><td>2094</td><td>0</td> <td>&frac12; - &frac12;</td><td>0</td><td></td><td><a href="x.aspx?snr=25">Esquivel, Jeremy</a></td><td>1842</td><td></td><td>25</td></tr></table>';
-    // Una partida de 40 jugadas: las blancas siempre dejan la evaluación igual (precisión ~100), las negras pierden 50
-    // centipeones cada vez desde la jugada 9, hasta pasar los 6 peones (desde ahí ya no cuenta).
-    let movs = "", ev = 20;
-    for (let i = 1; i <= 40; i++) {
-        movs += i + ". Nf3 { [%eval " + (ev / 100).toFixed(2) + "] } ";
-        if (i >= 9) ev += 50;
-        movs += i + "... Nf6 { [%eval " + (ev / 100).toFixed(2) + "] } ";
-    }
-    const pgn = '[Event "Round 2: A - B"]\n[Round "2.5"]\n[White "A"]\n[Black "B"]\n[Result "1-0"]\n[WhiteElo "1500"]\n[BlackElo "1600"]\n\n' + movs + "1-0\n\n"
-        + '[Event "Round 2: C - D"]\n[Round "2.6"]\n[White "C"]\n[Black "D"]\n[Result "*"]\n\n1. e4 { [%eval #3] } *\n';
+    // Una partida de 40 jugadas (la evaluación después de cada una): las blancas siempre dejan la evaluación igual
+    // (precisión ~100), las negras pierden 50 centipeones cada vez desde la jugada 9, hasta pasar los 6 peones (desde
+    // ahí ya no cuenta).
+    const evals = [];
+    let ev = 20;
+    for (let i = 1; i <= 40; i++) { evals.push(ev); if (i >= 9) ev += 50; evals.push(ev); }
     const codigo = `
       const A = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/centroamericano-fair-play/analisis.ts"))});
       const p = A.leerPareos(${JSON.stringify(html)});
       const P = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/pareos-publicos.ts"))});
       const copia = P.leerPareos(${JSON.stringify(html)});
-      const g = A.leerPgn(${JSON.stringify(pgn)});
-      const m = A.medir(g[0].evals);
-      console.log(JSON.stringify({ p, copia, n: g.length, tags: [g[0].tags.Round, g[1].tags.Result], mate: g[1].evals[0], m,
-        rm: A.rondaYMesa(g[0].tags), cats: ["Open U18", "Girls U08", "Open U10", "Girls U12", "Final"].map(A.categoriaDeLichess) }));`;
+      const m = A.medir(${JSON.stringify(evals)});
+      const conNull = ${JSON.stringify(evals)}.map((e, i) => (i < A.DESDE_POSICION ? null : e));
+      console.log(JSON.stringify({ p, copia, m, mSinApertura: A.medir(conNull),
+        tabs: [A.tablerosDe("1-5"), A.tablerosDe("1-3, 7"), A.tablerosDe("")],
+        nombres: [A.mismoJugador("Guevara Ruiz, Santiago", A.nombreLc({ lname: "Guevara Ruiz", fname: "Santiago", mname: null })), A.mismoJugador("Guevara Ruiz, Santiago", "Clarke Raef")],
+        terminadas: [{ result: "0-1", live: false }, { result: "1/2-1/2", live: false }, { result: "*", live: true }, { result: "1-0", live: true }, null].map(A.terminadaLc),
+        san: [A.sanDe("Nf3 5482+5"), A.sanDe("O-O 5358+48"), A.sanDe("e8=Q+ 10+2")], desde: A.DESDE_POSICION,
+        copias: (() => { const largo = Array.from({ length: 60 }, (_, i) => (i % 2 ? "Nf6 5400+3" : "Nf3 5400+3")), otra = largo.slice(0, 50).concat(["e4"]);
+          return [A.copiaDeOtra(largo, largo.map((x) => x.split(" ")[0] + " 1+1")), A.copiaDeOtra(largo, largo.slice(0, 45)), A.copiaDeOtra(largo.slice(0, 20), largo.slice(0, 30)), A.copiaDeOtra(otra, largo), A.copiaDeOtra(["e4", "e5"], ["d4"]), A.copiaDeOtra([], largo)]; })(),
+        detalle: (() => {
+          const L = (m, c) => Object.fromEntries(m.map((u, i) => [u, { captura: !!(c && c[i]), jaque: false }]));
+          const plies = Array.from({ length: 20 }, (_, j) => ({ san: "x", uci: "a1a2", legales: {}, segundos: 1, hora: 1000 + j }));
+          plies[16] = { san: "e4", uci: "e2e4", legales: L(["e2e4", "d2d4"]), segundos: 5, hora: 2000 };
+          plies[17] = { san: "e5", uci: "e7e5", legales: L(["e7e5"]), segundos: 3, hora: 61000 };
+          plies[18] = { san: "h3", uci: "h2h3", legales: L(["g1f3", "b1c3", "f1c4", "h2h3"]), segundos: 60, hora: 200000 };
+          plies[19] = { san: "dxe4", uci: "d5e4", legales: L(["d5e4", "c7c5"], [true, false]), segundos: 4, hora: 401000 };
+          const evals = Array(20).fill(null); evals[15] = 50; evals[16] = 50; evals[17] = 40; evals[18] = -50; evals[19] = -40;
+          const op = Array(20).fill(null); op[15] = [["e2e4", 50], ["d2d4", -100]]; op[16] = [["e7e5", 40]]; op[17] = [["g1f3", 30], ["b1c3", 20], ["f1c4", 10]]; op[18] = [["d5e4", -40], ["c7c5", 300]];
+          const r = A.detallar(plies, evals, op, [{ color: "negras", hora: 1000 }]);
+          return { jugadas: r.jugadas.map((d) => [d.ply, d.color, d.rango, d.perdida, d.forzada, d.dificil, d.tras_levantarse]), blancas: r.resumen.blancas, negras: r.resumen.negras };
+        })(),
+        segundos: [A.segundosDe("Nf3 5482+5"), A.segundosDe("O-O 10+12"), A.segundosDe("d4 +396"), A.segundosDe("")],
+        opciones: [A.opcionesValidas([null, [["e2e4", 30], ["d2d4", 10.4]]], 2), A.opcionesValidas([null], 2), A.opcionesValidas([[["e9e4", 1]]], 1), A.opcionesValidas([[["e2e4", 99999]]], 1), A.opcionesValidas([[["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1], ["e2e4", 1]]], 1)],
+        deltas16: (() => { const L = { e2e4: { captura: false, jaque: false }, d2d4: { captura: false, jaque: false } };
+          const plies = Array.from({ length: 18 }, () => ({ san: "x", uci: "a1a2", legales: {}, segundos: 1, hora: 1 })); plies[16] = { san: "e4", uci: "e2e4", legales: L, segundos: 5, hora: 1 };
+          const ev = Array(18).fill(null); ev[15] = 50; ev[16] = 50; const op = Array(18).fill(null); op[15] = [["e2e4", 50], ["d2d4", -100]];
+          const d = A.detallar(plies, ev, op, []).jugadas[0]; return [d.deltas, d.n_legales, d.delta_jugada]; })(),
+        modelo: (() => {
+          let t = 7; const rnd = () => { t = (t * 1103515245 + 12345) % 2147483648; return t / 2147483648; };
+          const pos = () => { const d = [0]; for (let i = 1; i < 5; i++) d.push(Math.round((d[i - 1] + rnd() * (i === 1 ? 15 : 8)) * 10) / 10); return d; };
+          const jugar = (d, s, c) => { const pr = A.probabilidades(d, 30, s, c); let x = rnd(); for (let i = 0; i < pr.p.length; i++) { x -= pr.p[i]; if (x <= 0) return { rango: i + 1, dj: d[i] }; } return { rango: 0, dj: pr.dOtras }; };
+          const jug = []; for (let k = 0; k < 80; k++) { const elo = 1000 + Math.floor(rnd() * 1200), s = A.sDeElo(Math.log(8), -0.6, elo); const movs = [];
+            for (let i = 0; i < 80; i++) { const d = pos(), j = jugar(d, s, 0.9); movs.push({ deltas: d, n: 30, rango: j.rango, dj: j.dj, dificil: d[1] >= 10, elo }); } jug.push({ elo, movs }); }
+          const aj = A.ajustar(jug.flatMap((j) => j.movs));
+          const crudas = jug.map((j) => A.zCruda(A.esperado(j.movs, A.sDeElo(aj.a, aj.b, j.elo), aj.c)));
+          const cf = A.centroYFactor(crudas);
+          const v = A.validar(jug.map((j) => ({ movs: j.movs, s: A.sDeElo(aj.a, aj.b, j.elo) })), aj.c, cf.factor, cf.centro);
+          const tramposo = jug[0].movs.map((m) => ({ ...m, rango: 1, dj: 0 }));
+          const pr = A.probabilidades([0, 5, 12], 20, 6, 0.8);
+          return { b: aj.b, honestosAltos: v.falsas_alta, deteccion30: v.deteccion["0.3"].a_mirar, deteccion10: v.deteccion["0.1"].a_mirar,
+            tramposo: A.indice(A.esperado(tramposo, A.sDeElo(aj.a, aj.b, jug[0].elo), aj.c), cf.factor, cf.centro).roi,
+            suma: Math.round((pr.p.reduce((x, y) => x + y, 0) + pr.otras) * 1e9) / 1e9, orden: pr.p[0] > pr.p[1] && pr.p[1] > pr.p[2] && pr.p[2] > pr.otras / 17,
+            pocos: A.centroYFactor([1, 2, 3]) };
+        })(),
+        teoria: (() => {
+          const plies = ["e2e4", "e7e5", "g1f3", "a7a6", "f1c4"].map((u) => ({ san: "x", uci: u, legales: {}, segundos: null, hora: null }));
+          const fens = ["f0", "f1", "f2", "f3", "f4"];
+          const base = { f0: { jugadas: [{ uci: "e2e4", w: 900, d: 800, b: 700 }] }, f1: { jugadas: [{ uci: "e7e5", w: 300, d: 300, b: 300 }] }, f2: { jugadas: [{ uci: "g1f3", w: 100, d: 90, b: 80 }] }, f3: { jugadas: [{ uci: "b8c6", w: 50, d: 40, b: 30 }, { uci: "a7a6", w: 1, d: 1, b: 1 }] } };
+          return [A.finDeTeoria(plies, fens, (f) => base[f]), A.finDeTeoria(plies, fens, (f) => (f === "f2" ? null : base[f])), A.inicioDeMedida({ fin: 3, seguro: true }), A.inicioDeMedida({ fin: 21, seguro: true }), A.inicioDeMedida({ fin: 2, seguro: false }), A.inicioDeMedida(null),
+            A.fenExplorador("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")];
+        })(),
+        clave: [A.claveDe("Pérez Ñuñez,  José."), A.claveDe("  ANA  maría ")],
+        validas: [A.evalsValidas([null, 30, -10000], 3), A.evalsValidas([null, 30], 3), A.evalsValidas([null, "30", 1], 3), A.evalsValidas([null, 99999, 1], 3), A.evalsValidas("x", 1)] }));`;
     const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", codigo], { encoding: "utf8" });
     if (r.status !== 0) { console.log("  ✗ no se pudo correr analisis.ts: " + r.stderr); fallos++; return; }
     const d = JSON.parse(r.stdout);
@@ -78,10 +125,79 @@ function pruebasDelCalculo() {
     igual("una mesa sin resultado todavía queda con el resultado vacío", [d.p[1].mesa, d.p[1].negras, d.p[1].resultado], [2, "Farley, Jeremiah", ""]);
     igual("chess-results escribe las tablas como «&frac12; - &frac12;»: se decodifica y la partida NO queda sin resultado (en los dos lectores)", [d.p[3].resultado, d.copia[3].resultado], ["½ - ½", "½ - ½"]);
     igual("el bye: un solo jugador, negras vacío y sin Elo inventado (un 0 no es un Elo)", [d.p[2].mesa, d.p[2].negras, d.p[2].snr_n, d.p[2].elo_b], [3, "", null, null]);
-    igual("Lichess: cada partida con sus etiquetas, y un mate vale ±10000", [d.n, d.tags, d.mate], [2, ["2.5", "*"], 10000]);
-    igual("«Round 2.5» es la ronda 2, mesa 5", d.rm, { ronda: 2, mesa: 5 });
     igual("la precisión sale sin la apertura (desde la jugada 9) y sin lo ya decidido (6 peones): blancas perfectas y negras bajas, con el mismo número de jugadas medidas", [d.m.blancas.precision > 99, d.m.negras.precision < 90, d.m.blancas.jugadas, d.m.negras.jugadas, d.m.negras.acpl], [true, true, 12, 12, 50]);
-    igual("la categoría de cada torneo de Lichess, como la escribe centroamericano_torneos", d.cats, [{ categoria: "Sub-18", rama: "Absoluto" }, { categoria: "Sub-8", rama: "Femenino" }, { categoria: "Sub-10", rama: "Absoluto" }, { categoria: "Sub-12", rama: "Femenino" }, null]);
+    igual("la pantalla manda null antes de la posición 15 (la apertura): la medida es la misma", d.mSinApertura, d.m);
+    igual("LiveChess: los tableros de cada categoría («1-5», «1-3, 7»)", d.tabs, [[1, 2, 3, 4, 5], [1, 2, 3, 7], []]);
+    igual("LiveChess: el jugador de chess-results contra el de LiveChess (y otro no)", d.nombres, [true, false]);
+    igual("LiveChess: solo las partidas terminadas (con resultado y fuera de vivo)", d.terminadas, [true, true, false, false, false]);
+    igual("LiveChess: la jugada sin el reloj ni lo pensado, y desde qué posición hace falta evaluar", [d.san, d.desde], [["Nf3", "O-O", "e8=Q+"], 15]);
+    igual("jugada por jugada: la primera del motor (rango 1), la que no está entre las 3 (rango 0, con lo que perdió), la única jugada legal y la captura obvia como forzadas, la difícil (una sola buena, sin jaque ni captura) y la hecha en los 5 minutos después de levantarse",
+        d.detalle.jugadas, [[16, "blancas", 1, 0, false, true, false], [17, "negras", 1, 0, true, false, true], [18, "blancas", 0, 80, false, false, false], [19, "negras", 1, 0, true, false, false]]);
+    igual("el resumen de las blancas: 2 que cuentan, 1 primera del motor, 1 difícil acertada en 5 s (la jugada 9), y 60 s en las demás", d.detalle.blancas,
+        { consideradas: 2, t1: 1, top3: 1, dificiles: 1, dificiles_ok: 1, seg_dificil: 5, seg_resto: 60, tras_levantarse: 0, tras_levantarse_t1: 0, momentos: [{ jugada: 9, san: "e4", segundos: 5 }] });
+    igual("el de las negras: sus dos jugadas eran forzadas (no cuentan), y una fue después de levantarse", [d.detalle.negras.consideradas, d.detalle.negras.t1, d.detalle.negras.tras_levantarse, d.detalle.negras.tras_levantarse_t1], [0, 0, 1, 0]);
+    igual("lo que pensó en cada jugada de LiveChess («Nf3 5482+5» son 5 s)", d.segundos, [5, 12, null, null]);
+    igual("las 3 mejores que manda la pantalla: una lista por posición, jugadas UCI y centipeones; si no, se rechaza entera", d.opciones, [[null, [["e2e4", 30], ["d2d4", 10]]], null, null, null, null]);
+    igual("cada jugada con cuánto peor es cada opción que la mejor, en puntos de probabilidad de ganar (la fórmula de Lichess), las jugadas legales y lo que perdió lo jugado", d.deltas16, [[0, 13.7], 2, 0]);
+    igual("el modelo por jugada: las probabilidades suman 1 y van de la mejor a la peor; con menos de 8 jugadores no hay centro ni factor", [d.modelo.suma, d.modelo.orden, d.modelo.pocos], [1, true, { centro: 0, factor: 1 }]);
+    igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 62,5, y quien usa el motor en 3 de cada 10 jugadas sale marcado más de la mitad de las veces (más que con 1 de cada 10)",
+        [d.modelo.b < -0.2, d.modelo.honestosAltos <= 3, d.modelo.deteccion30 > 50, d.modelo.deteccion30 > d.modelo.deteccion10], [true, true, true, true]);
+    igual("y quien juega siempre la del motor sale muy por encima de 62,5", d.modelo.tramposo > 75, true);
+    igual("la teoría: hasta la primera jugada que no está en las partidas de maestros (o con menos de 5); si no se sabe, lo dice; desde ahí se mide (nunca antes de la 5.ª de cada uno), y sin saberlo, desde la 9.ª; el FEN del explorador sin la casilla al paso",
+        d.teoria, [{ fin: 3, seguro: true }, { fin: 2, seguro: false }, 8, 21, 16, 16, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -"]);
+    igual("la clave de un nombre, igual que interno.fp_clave() en la base", d.clave, ["perez nunez jose", "ana maria"]);
+    igual("el tablero sin limpiar: la partida de la ronda anterior (entera, o con lo que siguió, desde 40 jugadas) es copia; 20 jugadas iguales de apertura o una que se aparta, no", d.copias, [true, true, false, false, false, false]);
+    igual("la evaluación de la pantalla: una por posición, números de ±10000 o null; si no, se rechaza entera", d.validas, [[null, 30, -10000], null, null, null, null]);
+    const regla = (t) => {
+        const p = (t.match(/const palabras = [^;]*;/) || [""])[0];
+        const f = (t.match(/function mismoJugador\([^)]*\) \{[\s\S]*?\n\s*\}\n/) || [""])[0];
+        return (p + "\n" + f).replace(/: unknown/g, "").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("//")).join("\n");
+    };
+    const leerArchivo = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
+    const reglaFp = regla(leerArchivo("supabase/functions/centroamericano-fair-play/analisis.ts"));
+    igual("la regla de los nombres es la misma que la de las mesas en vivo (las tablets) letra por letra", !!reglaFp && reglaFp === regla(leerArchivo("supabase/functions/centroamericano-mesas-vivo/index.ts")), true);
+    const fn = leerArchivo("supabase/functions/centroamericano-fair-play/index.ts");
+    igual("la función no mide la copia de la ronda anterior (ni al darla ni al guardarla)", (fn.match(/copiaDeOtra\(g\.moves/g) || []).length, 2);
+    igual("la función ya no lee la transmisión de Lichess (de Lichess solo usa el explorador de maestros, para la teoría), y nunca devuelve el enlace de LiveChess (torneo_id) a la pantalla", [/lichess\.org\/(api|broadcast)/.test(fn) || (fn.match(/lichess\.org\/[a-z]+/g) || []).some((u) => u !== "lichess.org/masters"), (fn.match(/return \{[^;]*\}/g) || []).some((x) => /torneo_id/.test(x)) || /partidas\.push\(\{[^}]*torneo_id/.test(fn)], [false, false]);
+    igual("la función compara los DOS nombres con LiveChess antes de tomar una partida", /mismoJugador\(f\.blancas, nombreLc\(p\.white\)\) && mismoJugador\(f\.negras, nombreLc\(p\.black\)\)/.test(fn), true);
+
+    console.log("\n=== El puntaje de Stockfish, para las blancas ===");
+    global.window = {}; global.document = { getElementById: () => null };
+    require(path.join(RAIZ, "js/centroamericano-fair-play.js"));
+    const P = window.CentroamericanoFairPlay.puntaje;
+    igual("con blancas al turno, igual; con negras, dado vuelta; un mate vale ±10000; «mate 0» es que quien mueve ya está en mate; sin puntaje, null",
+        [P("info depth 12 score cp 35 nodes 9", "8/8/8/8/8/8/8/8 w - - 0 1"), P("info depth 12 score cp 35", "8/8/8/8/8/8/8/8 b - - 0 1"), P("info depth 9 score mate 3", "x w"), P("info depth 9 score mate -2", "x w"), P("info depth 0 score mate 0", "x b - -"), P(null, "x w")],
+        [35, -35, 10000, -10000, 10000, null]);
+    const O = window.CentroamericanoFairPlay.opcionesDe;
+    igual("las 3 mejores de Stockfish (MultiPV), en orden y para las blancas; en una posición terminada, sin opciones",
+        [O({ 2: "info depth 10 multipv 2 score cp 20 nodes 5 pv d2d4 d7d5", 1: "info depth 10 multipv 1 score cp 35 nodes 5 pv e2e4 e7e5", 3: "info depth 10 multipv 3 score mate 2 pv g1f3" }, null, "x b - -"), O({}, "info depth 0 score mate 0", "x w - -")],
+        [{ cp: -35, opciones: [["e2e4", -35], ["d2d4", -20], ["g1f3", -10000]] }, { cp: -10000, opciones: [] }]);
+    const X = window.CentroamericanoFairPlay.explicar, Rz = window.CentroamericanoFairPlay.resumenAlerta;
+    const alerta = { precision: 97.13, jugadas: 36, esperada: 87.5, z: 2.6, comparado: "elo", consideradas: 30, t1: 25, top3: 29, esperada_t1: 52, z_t1: 3.1, dificiles: 5, dificiles_ok: 5, esperada_dif: 30, z_dif: 2.8,
+        seg_dificil: 12, seg_resto: 70, tiempo_raro: true, tras_levantarse: 3, tras_levantarse_t1: 3, momentos: [{ jugada: 23, san: "Nxe5", segundos: 8 }], senales: 3 };
+    igual("el porqué, señal por señal, con su comparación y lo alto marcado", X(alerta).map((x) => [!!x.alto, x.texto]), [
+        [true, "Precisión: 97,1 % en 36 jugadas; lo esperable para su Elo en este torneo: 87,5 % (2,6 desviaciones arriba)."],
+        [true, "Jugó la primera opción de Stockfish en 25 de 30 jugadas (83 %); lo esperable para su Elo en este torneo: 52,0 % (3,1 desviaciones arriba). Una de las tres mejores: 29 de 30."],
+        [true, "Posiciones difíciles (una sola jugada buena, que no es jaque ni captura): 5, y acertó 5; lo esperable para su Elo en este torneo: 30,0 % de acierto (2,8 desviaciones arriba)."],
+        [true, "Tiempo: en las difíciles pensó 12 s en promedio; en las demás, 1 min 10 s. Pensó menos justo donde era más difícil."],
+        [true, "El árbitro anotó que se levantó de la mesa: en las 3 jugadas de los 5 minutos siguientes, jugó la primera del motor 3 veces."],
+        [false, "Jugada 23. Nxe5: la única buena de la posición, en 8 s."]]);
+    igual("sin Elo se compara con su categoría; pocas jugadas, lo avisa; la frase de arriba cuenta las señales altas",
+        [X(Object.assign({}, alerta, { comparado: "categoria", consideradas: 12, t1: 6, top3: 9, z: 0.5, z_t1: 0.4, dificiles: 0, momentos: [] }))[0].texto, X(Object.assign({}, alerta, { consideradas: 12 })).some((x) => /Pocas jugadas medidas \(12\)/.test(x.texto)), Rz(alerta), Rz(Object.assign({}, alerta, { z: 1, z_dif: 1, tiempo_raro: false })), Rz({ precision: 90 })],
+        ["Precisión: 97,1 % en 36 jugadas; el promedio de su categoría (no tiene Elo): 87,5 % (0,5 desviaciones arriba).", true,
+         "3 señales altas de 3: precisión, primera del motor, posiciones difíciles, y el tiempo.", "1 señal alta de 3: primera del motor.", "Solo con la precisión (analizada antes de las señales jugada por jugada)."]);
+    const conIndice = Object.assign({}, alerta, { roi: 66.4, z_modelo: 3.28, m_jugadas: 30, m_t1: 25, m_e_t1: 15.2, m_dj: 36, m_e_dj: 135, m_z_t1: 3.1, m_z_dj: 2.4, desde_jugada: 11, profunda: true });
+    igual("con el modelo: el índice como el de FIDE, lo esperable según lo difícil de cada posición, lo perdido, desde dónde se midió (la teoría) y si se confirmó a fondo",
+        X(conIndice).slice(0, 5).map((x) => [!!x.alto, x.texto]), [
+        [true, "Índice como el de FIDE: 66,4 (lo normal es 50; cada 5 puntos es una desviación; desde 60 se mira)."],
+        [true, "Según lo difícil de cada posición, alguien de su Elo jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."],
+        [true, "Perdió en promedio 1,2 puntos de probabilidad de ganar por jugada; lo esperable para su Elo: 4,5."],
+        [false, "Se midió desde la jugada 11: lo de antes era teoría (partidas de maestros) o apertura."],
+        [false, "Confirmado con el análisis hondo (profundidad 16)."]]);
+    igual("la frase de arriba, con el índice", [Rz(conIndice), Rz(Object.assign({}, conIndice, { roi: 48, z_modelo: -0.4, z: 0, z_t1: 0, z_dif: 0 })), X(Object.assign({}, conIndice, { comparado: "categoria" }))[1].texto],
+        ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel. Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
+         "Según lo difícil de cada posición, alguien de su categoría jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."]);
+    delete global.window; delete global.document;
 
     console.log("\n=== La banda dorada de la tablet (fairPlayDeMesa) ===");
     const C = require(path.join(RAIZ, "js/centroamericano-mesas.js"));
@@ -102,6 +218,13 @@ function pruebasDelCalculo() {
     igual("sorteada, revisada o sin efecto: no se mueve; sin Fair Play, nada", [al({ estado: "sorteada" }), al({ estado: "revisada" }), al({ estado: "sin_efecto", revisar_color: "blancas" }), C.fairPlayAlcance(null)], [null, null, null, null]);
 }
 
+// Una partida de verdad (24 jugadas de una italiana, legales para chess.js) como la da «vivo_pendientes»: sus posiciones.
+const POSICIONES = (() => {
+    const { Chess } = require("chess.js");
+    const j = new Chess();
+    return "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5 exd5 Nxd5 Qb3 Nce7 O-O O-O Rfe1 c6".split(" ").map((m) => { j.move(m); return j.fen(); });
+})();
+
 // ---------------------------------------------------------------- 2. el doble de la Edge Function
 // Lo mismo que hacen la función y la base: el QR, la ronda de cada categoría, las candidatas con su peso y quién no
 // aplica, el sorteo sin repetir, aprobar, descartar con motivo, revisar (con nota si no fue «Sin novedad») y las alertas.
@@ -116,8 +239,13 @@ const SERVIDOR_FP = `
       "200": [{ mesa: 1, blancas: "Ana", negras: "Bea", snr_b: 1, snr_n: 2, elo_b: 1400, elo_n: 1420, peso: 1, motivos: [], aplica_blancas: true, aplica_negras: true, no_aplica: null, excluida: null }],
       "900": [] },
     sorteos: [],
-    alertas: [{ tnr: "100", ronda: 2, mesa: 4, color: "negras", jugador: "Castro, Alana", elo: 1588, rival: "Ruiz, Mia", rival_elo: 1810, resultado: "0-1", jugadas: 36, precision: 97.13, acpl: 7.7, esperada: 87.5, z: 2.6, nivel: "alta", partida_url: "https://lichess.org/broadcast/x/y/z", estado: "nueva", nota: null, vista_por_nombre: null, vista_en: null }],
+    alertas: [{ tnr: "100", ronda: 2, mesa: 4, color: "negras", jugador: "Castro, Alana", elo: 1588, rival: "Ruiz, Mia", rival_elo: 1810, resultado: "0-1", jugadas: 36, precision: 97.13, acpl: 7.7, esperada: 87.5, z: 2.6, nivel: "alta", partida_url: "https://lichess.org/broadcast/x/y/z", estado: "nueva", nota: null, vista_por_nombre: null, vista_en: null , comparado: "elo", consideradas: 30, t1: 25, top3: 29, esperada_t1: 52, z_t1: 3.1, dificiles: 5, dificiles_ok: 5, esperada_dif: 30, z_dif: 2.8, seg_dificil: 12, seg_resto: 70, tiempo_raro: true, tras_levantarse: 3, tras_levantarse_t1: 3, momentos: [{ jugada: 23, san: "Nxe5", segundos: 8 }], senales: 3}],
     avisos: [],
+    vivo: [{ tnr: "100", ronda: 3, mesa: 1, blancas: "Clark, Arty", negras: "Garcia, Alberto", resultado: "1-0", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 12, honda: false },
+           { tnr: "100", ronda: 2, mesa: 4, blancas: "Ruiz, Mia", negras: "Castro, Alana", resultado: "0-1", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 16, honda: true }], guardados: [], referencias: [],
+    indice: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, comparado: "elo", partidas: 3, rondas: "1, 2, 3", jugadas: 90, t1: 70, e_t1: 45.2, z_t1: 3.1, dificiles: 8, t1_dif: 8, e_t1_dif: 3.4, roi: 66.4 },
+             { tnr: "200", clave: "nina sin elo", jugador: "Niña, Sin Elo", elo: null, comparado: "categoria", partidas: 2, rondas: "2, 3", jugadas: 50, t1: 22, e_t1: 21.5, z_t1: 0.1, dificiles: 0, t1_dif: 0, e_t1_dif: 0, roi: 51.2 }],
+    modelo: { movimientos: 9000, referencia: 1200, factor: 1.2, centro: -0.3, ajustado: "2026-11-04T22:00:00Z", validacion: { jugadores: 140, falsas_a_mirar: 3.1, falsas_alta: 0.7, esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion: { "0.1": { a_mirar: 30, alta: 20 }, "0.2": { a_mirar: 62, alta: 50 }, "0.3": { a_mirar: 85, alta: 74 } } } },
     acumulado: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, partidas: 3, rondas: "1, 2, 3", precision_media: 91.2, esperada_media: 84, z: 2.31, nivel: "a_mirar", sin_mirar: 2, seguir: false }] };
   let n = 0;
   window.__fpServidor = (b, conSesion) => {
@@ -129,7 +257,7 @@ const SERVIDOR_FP = `
     if (b.token) { const e = S.enlaces.find((x) => x.token === b.token); if (!e) return err(404, "Este enlace no es válido. Pídele al árbitro principal que te mande el QR de nuevo."); if (e.revocada) return err(410, "El árbitro principal apagó este enlace."); quien = e.nombre + " (Fair Play)"; }
     else if (conSesion) quien = "Oscar Principal"; else return err(401, "Falta el enlace de Fair Play.");
     const rondas = S.rondas.filter((r) => !b.token || !r.prueba);
-    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, rondas, sorteos: JSON.parse(JSON.stringify(S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)))), alertas: JSON.parse(JSON.stringify(S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"))), acumulado: JSON.parse(JSON.stringify(S.acumulado)), leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
+    if (b.action === "leer") return ok({ nombre: quien.replace(" (Fair Play)", ""), principal: !b.token, rondas, sorteos: JSON.parse(JSON.stringify(S.sorteos.filter((f) => rondas.some((r) => r.tnr === f.tnr)))), alertas: JSON.parse(JSON.stringify(S.alertas.filter((a) => a.estado === "seguir" || a.nivel !== "normal"))), acumulado: JSON.parse(JSON.stringify(S.acumulado)), indice: S.indice, modelo: S.modelo, leidos: Object.fromEntries(S.avisos.map((a) => [a.id, a.leido_en])), actualizado: "2026-11-03T16:00:00Z" });
     if (b.action === "candidatas") return ok({ mesas: (S.mesas[b.tnr] || []).map((m) => Object.assign({}, m, { excluida: m.excluida || (S.sorteos.some((f) => f.tnr === b.tnr && f.ronda === b.ronda && f.mesa === m.mesa) ? "Ya salió en esta ronda" : null) })) });
     if (b.action === "sortear") {
       const salen = [];
@@ -154,6 +282,10 @@ const SERVIDOR_FP = `
       Object.assign(f, { estado: "revisada", resultado: b.resultado, jugador_color: b.color, jugador: b.color === "negras" ? f.negras : f.blancas, nota: b.nota || null, revisada_por_nombre: quien }); return ok({ sorteo: f });
     }
     if (b.action === "alerta") { const a = S.alertas.find((x) => x.tnr === b.tnr && x.ronda === b.ronda && x.mesa === b.mesa && x.color === b.color); Object.assign(a, { estado: b.estado, nota: b.nota, vista_por_nombre: quien, vista_en: new Date().toISOString() }); return ok({ alerta: a }); }
+    if (b.action === "vivo_pendientes") return ok({ conectada: true, partidas: S.vivo.splice(0, 3), quedan: 0, nodos: 3000 });
+    if (b.action === "vivo_guardar") { S.guardados.push(b); return ok({ medidas: [] }); }
+    if (b.action === "referencia_guardar") { S.referencias.push(b); return ok({ jugadas: 9 }); }
+    if (b.action === "modelo") { (S.modelos = S.modelos || []).push(b); return ok({ insuficiente: true, movimientos: 420 }); }
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
     if (b.action === "pareo") return ok({ pareo: b.tnr === "100" && b.ronda === 2 && b.mesa === 7 ? { blancas: "Tres, Caro", negras: "Once, Kai", elo_b: 1600, elo_n: 1500, resultado: "1 - 0" } : null });
@@ -246,14 +378,41 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         e = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64) });
         const p = e.p;
         await p.waitForFunction(() => document.getElementById("fp-categoria") && document.getElementById("fp-categoria").options.length > 1);
-        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results y Lichess leídos a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
+        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results leído a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
         igual("las categorías con su ronda, sin las de ensayo", await p.$$eval("#fp-categoria option", (l) => l.map((o) => o.textContent)), ["Todas las categorías (2)", "Sub-12 Absoluto — ronda 3", "Sub-14 Femenino — ronda 3"]);
         igual("el encargado NO ve la sección de los QR de los encargados y no lee ninguna tabla directo: todo pasa por la función", await p.evaluate(() => [!!document.getElementById("fp-t-encargados"), window.__directo]), [false, []]);
         igual("la pantalla no tiene texto suelto («null») de una sección que no va", await p.evaluate(() => [...document.getElementById("fp-app").childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).length), 0);
-        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, la partida en Lichess y sus dos botones", await p.$eval("#fp-alertas .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), /Precisión 97,1 % en 36 jugadas · la esperable para su Elo: 87,5 % · 2,6 desviaciones arriba/.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
-            ["alta", "Muy alta", true, true, true, ["Ya la miré", "Seguirlo en los sorteos"]]);
+        igual("la alerta de los tableros: jugador, Elo, rival, precisión contra la esperable, desviaciones, el enlace a la partida y sus dos botones", await p.$eval("#fp-alertas .cam-fp-alerta", (a) => [a.dataset.nivel, a.querySelector(".cam-chip").textContent, /Castro, Alana \(1588\).*contra Ruiz, Mia \(1810\)/.test(a.textContent), a.querySelector(".cam-fp-resumen").textContent, [...a.querySelectorAll(".cam-fp-por-que li")].map((li) => [li.dataset.alto === "si", getComputedStyle(li).fontWeight >= 700]), /Jugada 23\. Nxe5: la única buena de la posición, en 8 s\./.test(a.textContent), !!a.querySelector('a[href^="https://lichess.org/"]'), [...a.querySelectorAll("button")].map((b) => b.textContent)]),
+            ["alta", "Muy alta", true, "3 señales altas de 3: precisión, primera del motor, posiciones difíciles, y el tiempo.", [[true, true], [true, true], [true, true], [true, true], [true, true], [false, false]], true, true, ["Ya la miré", "Seguirlo en los sorteos"]]);
+        await p.click("#fp-alertas .cam-fp-no-significa summary");
+        igual("«Qué no significa esto» se abre y dice que no prueba nada", await p.$eval("#fp-alertas .cam-fp-no-significa p", (n) => n.checkVisibility() && /no prueba que haya trampa/.test(n.textContent)), true);
         igual("el contador de alertas sin mirar (la de la partida y el acumulado)", await p.evaluate(() => [document.getElementById("fp-alertas-n").checkVisibility(), document.getElementById("fp-alertas-n").textContent]), [true, "2"]);
         igual("al abrir no hay novedades: solo lo que pasa después", await p.evaluate(() => document.getElementById("fp-novedades-caja").checkVisibility()), false);
+        // Stockfish en esta computadora: la partida terminada que da la función (directo de LiveChess) se analiza AQUÍ.
+        await p.waitForFunction(() => window.__fp.guardados.length === 2, null, { timeout: 120000 });
+        igual("la partida terminada se analiza con Stockfish en la pantalla: una evaluación por posición (null antes de la 15, números desde ahí) y vuelve a la función con su categoría, ronda y mesa y el token",
+            await p.evaluate(() => { const g = window.__fp.guardados[0]; return [g.tnr, g.ronda, g.mesa, g.token.length, g.evals.length, g.evals.slice(0, 15).every((x) => x === null), g.evals.slice(15).every((x) => typeof x === "number" && Math.abs(x) < 10000)]; }),
+            ["100", 3, 1, 64, 24, true, true]);
+        igual("y con cada evaluación, las mejores jugadas del motor (las 5 que pide la función, MultiPV 5): en UCI, la primera con la misma evaluación",
+            await p.evaluate(() => { const g = window.__fp.guardados[0]; return [g.opciones.length, g.opciones.slice(0, 15).every((x) => x === null),
+                g.opciones.slice(15).every((o) => Array.isArray(o) && o.length >= 1 && o.length <= 5 && o.every((x) => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(x[0]) && typeof x[1] === "number")),
+                g.opciones.slice(15).filter((o) => o.length === 5).length >= 5, g.opciones.slice(15).every((o, i) => o[0][1] === g.evals[15 + i])]; }),
+            [24, true, true, true, true]);
+        igual("la segunda pasada: la partida con alerta que la función da «honda» vuelve marcada así (y la primera, no)", await p.evaluate(() => window.__fp.guardados.map((g) => [g.mesa, g.honda])), [[1, false], [4, true]]);
+        await p.waitForFunction(() => /Al día/.test(document.getElementById("fp-motor-estado").textContent));
+        igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
+            ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora. Se vuelve a mirar cada 45 s.", true]);
+        igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].map((td) => td.textContent)])),
+            [["alta", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 Muy alta", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
+             ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
+        await p.click("#fp-confianza summary");
+        igual("«¿Qué tan confiable es?»: las alarmas falsas contra las del azar y cuánto detectaría", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(0, 3)), [
+            "Medido con los 140 jugadores que tienen 30 jugadas o más analizadas.",
+            "Alarmas falsas: 3,1 % pasa de 60 y 0,7 % de 62,5. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
+            "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el 30,0 % (20,0 % muy alto) de las veces; en 2 de cada 10, el 62,0 % (50,0 % muy alto); en 3 de cada 10, el 85,0 % (74,0 % muy alto)."]);
+        await p.click("#fp-motor-si");
+        igual("apagado en esta computadora: lo dice y se recuerda", await p.evaluate(() => [/Apagado en esta computadora/.test(document.getElementById("fp-motor-estado").textContent), localStorage.getItem("fp_motor_v1")]), [true, "no"]);
+        await p.click("#fp-motor-si");
         await p.click('#fp-alertas .cam-fp-alerta [data-accion="seguir"]');
         await p.waitForSelector("dialog[open] input, dialog[open] textarea");
         await p.fill("dialog[open] input, dialog[open] textarea", "Muy rápida en el medio juego");
@@ -399,6 +558,19 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await q.p.click("dialog[open] [data-avisos-aceptar]");
         await q.p.waitForFunction(() => document.querySelectorAll("#fp-enlaces .cam-fp-enlace").length === 1);
         igual("«Apagar» lo apaga (no lo borra) y deja de verse", await q.p.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_fp_enlaces").map((l) => [l.valores, l.f])), [[{ revocada: true }, { id: "en-1" }]]);
+        // Las partidas de referencia: un PGN con el Elo (y otra sin Elo, que no se usa), analizadas aquí y mandadas sin nombres.
+        await q.p.waitForFunction(() => /Al día/.test((document.getElementById("fp-motor-estado") || {}).textContent || ""), null, { timeout: 120000 });
+        const pgn = '[Event "Nacional 2025"]\n[White "A"]\n[Black "B"]\n[WhiteElo "1800"]\n[BlackElo "1700"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 7. Bd2 Bxd2+ 8. Nbxd2 d5 9. exd5 Nxd5 10. Qb3 Nce7 11. O-O O-O *\n\n'
+            + '[Event "Nacional 2025"]\n[White "C"]\n[Black "D"]\n[Result "*"]\n\n1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 *\n';
+        await q.p.fill("#fp-ref-evento", "Nacional 2025");
+        await q.p.setInputFiles("#fp-ref-archivo", { name: "nacional.pgn", mimeType: "text/plain", buffer: Buffer.from(pgn) });
+        await q.p.click("#fp-ref-cargar");
+        await q.p.waitForFunction(() => /hacen falta 600/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
+        igual("la referencia: solo la partida con Elo, con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
+            const r = window.__fp.referencias; const g = r[0] || {};
+            return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 5), document.getElementById("fp-ref-estado").textContent]; }),
+            [1, "Nacional 2025", 1800, 1700, 22, false, true, true, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo todavía no se ajusta: hay 420 jugadas de jugadores con Elo y hacen falta 600."]);
+        igual("al terminar de cargar, el modelo se recalcula ya (forzado), una sola vez", await q.p.evaluate(() => (window.__fp.modelos || []).map((m) => m.forzar)), [true]);
         igual("y sin errores en la página", q.errores, []);
         await q.ctx.close();
 

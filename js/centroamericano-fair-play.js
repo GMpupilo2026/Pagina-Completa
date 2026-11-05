@@ -12,6 +12,12 @@
  *     principal  true: también la sección «Encargados de Fair Play»
  *     dentro     (tnr) → si la categoría es del modo que se está mirando (real o ensayo)
  *     visible    () → si la pantalla está a la vista (para no leer de más)
+ *     nodos      cuánto piensa Stockfish en cada posición (por omisión NODOS)
+ *
+ * Las partidas de los tableros electrónicos salen directo de LiveChess (sin atraso), y LiveChess no trae la evaluación:
+ * mientras esta pantalla esté abierta, Stockfish las analiza AQUÍ, en esta computadora, una por una apenas terminan
+ * («vivo_pendientes» → evaluar cada posición → «vivo_guardar»). La precisión la calcula la función con la fórmula de
+ * siempre. Ver «Las partidas para Fair Play, directo de LiveChess» en docs/decisiones/juegos-y-torneos.md.
  *   CentroamericanoFairPlay.cargar()   vuelve a leer
  */
 (function () {
@@ -23,10 +29,17 @@
     const COLOR = { blancas: "Blancas", negras: "Negras" };
     const LEER_MS = 20000, ACTUALIZAR_MS = 120000;
     const VENCE_DEFECTO = "2026-11-10T05:59:59Z";   // el final del torneo, como los enlaces de los árbitros
+    const MOTOR_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";   // las dos pantallas están en la raíz del sitio
+    const NODOS = 150000;              // sin profundidad fija: cuánto piensa en cada posición
+    const TOPE_NODOS = 800000;         // con profundidad fija, el tope por si una posición se complica mucho
+    const NO_SIGNIFICA = "Una alerta no prueba que haya trampa. Un jugador puede estar en un gran día, haber preparado la apertura o ser más fuerte que su Elo (sobre todo un niño que mejora rápido), y en un torneo grande algunos salen altos por pura casualidad. Para sancionar, FIDE pide pruebas físicas o de conducta: esto sirve para decidir a quién mirar con más cuidado y a quién revisar, nunca para acusar.";
+    const MOTOR_CADA_MS = 45000;       // sin nada pendiente, se vuelve a preguntar cada 45 s
+    const MOTOR_GUARDADO = "fp_motor_v1";
 
     let ctx = null, datos = null, primera = true, ultimaActualizacion = 0;
     const vistasAlertas = new Set();
     let novedades = [];                 // lo que pasó desde que se abrió la pantalla (lo más nuevo arriba)
+    let motor = null, motorArranque = null, analizando = false, ultimoMotor = 0, analizadasAqui = 0, multipvActual = 0;
     const $ = (id) => document.getElementById(id);
 
     function el(tag, attrs, ...hijos) {
@@ -64,7 +77,7 @@
         ctx.raiz.replaceChildren(...[ // sin la sección de los QR (solo del principal): un null suelto se pintaría como texto
             el("div", { class: "cam-fp-barra" },
                 el("p", { id: "fp-estado", class: "text-sm", role: "status" }),
-                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results y Lichess ahora")),
+                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results ahora")),
 
             el("section", { id: "fp-novedades-caja", class: "cam-fp-novedades", "aria-labelledby": "fp-t-novedades", hidden: true },
                 el("div", { class: "cam-fp-barra" },
@@ -74,7 +87,12 @@
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-alertas" },
                 el("h3", { id: "fp-t-alertas", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📈 " }), "Alertas de los tableros electrónicos ", el("span", { id: "fp-alertas-n", class: "cam-contador", hidden: true })),
-                el("p", { class: "cam-herramientas-nota", texto: "Las partidas que se transmiten a Lichess, jugada por jugada: la precisión de cada jugador (la fórmula de Lichess, sin la apertura ni las posiciones ya decididas) contra la esperable para su Elo en este mismo torneo. Es una alerta para mirar, nunca una acusación: «Ya la miré» la cierra; «Seguirlo en los sorteos» hace que sus mesas salgan más seguido." }),
+                el("p", { class: "cam-herramientas-nota", texto: "Las partidas de los tableros electrónicos, directo de LiveChess y sin atraso: apenas termina una, Stockfish la analiza en esta computadora y sale la precisión de cada jugador (la fórmula de Lichess, sin la apertura ni las posiciones ya decididas), comparada con la esperable para su Elo en este mismo torneo. Es una alerta para mirar, nunca una acusación: «Ya la miré» la cierra; «Seguirlo en los sorteos» hace que sus mesas salgan más seguido." }),
+                el("div", { class: "cam-fp-motor" },
+                    el("label", { class: "cam-fp-motor-casilla" },
+                        el("input", { type: "checkbox", id: "fp-motor-si", onchange: (e) => { try { localStorage.setItem(MOTOR_GUARDADO, e.target.checked ? "si" : "no"); } catch (x) { /* sin almacenamiento */ } if (e.target.checked) { ultimoMotor = 0; analizar(); } else estadoMotor("Apagado en esta computadora: las partidas las analiza otra pantalla de Fair Play que lo tenga encendido."); } }),
+                        " Analizar las partidas en esta computadora (Stockfish)"),
+                    el("p", { id: "fp-motor-estado", class: "cam-fp-detalle", role: "status", texto: "Preparando Stockfish…" })),
                 el("p", { id: "fp-alertas-vacio", class: "cam-herramientas-nota", texto: "Ninguna partida se sale de lo esperable para el Elo de su jugador." }),
                 el("h4", { id: "fp-t-acumulado", class: "cam-fp-subtitulo", hidden: true }, "Sumadas todas sus partidas del torneo"),
                 el("p", { id: "fp-acumulado-nota", class: "cam-herramientas-nota", hidden: true, texto: "Quien juega un poco por encima de su nivel en cada ronda no salta en ninguna partida sola, pero sí en el conjunto: se suman sus partidas medidas en la categoría (dos partidas a 1,5 desviaciones dan 2,1)." }),
@@ -111,6 +129,28 @@
                         el("caption", { class: "sr-only", texto: "Las mesas sorteadas para Fair Play, con su estado" }),
                         el("thead", {}, el("tr", {}, ["Categoría", "Ronda", "Mesa", "Jugadores", "A quién se revisa", "Estado", "Qué hacer"].map((t) => el("th", { scope: "col", texto: t })))),
                         el("tbody", { id: "fp-lista" })))),
+
+            el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-indice" },
+                el("h3", { id: "fp-t-indice", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📊 " }), "Índice del torneo, jugador por jugador"),
+                el("p", { class: "cam-herramientas-nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): en cada posición, la probabilidad de que alguien de su nivel elija cada jugada según lo que pierde con ella; sumando todas sus partidas, cuánto se aparta de eso. 50 es lo normal y cada 5 puntos es una desviación: desde 60 se mira, desde 62,5 es muy alto. Sin Elo, se compara con su categoría. Nunca es una prueba." }),
+                el("p", { id: "fp-indice-vacio", class: "cam-herramientas-nota", texto: "Todavía no hay suficientes partidas analizadas para ajustar el modelo." }),
+                el("div", { class: "cam-tabla-envoltura mt-2" },
+                    el("table", { id: "fp-indice-tabla", class: "cam-tabla cam-rejilla", hidden: true },
+                        el("caption", { class: "sr-only", texto: "El índice de cada jugador en el torneo, del más alto al más bajo" }),
+                        el("thead", {}, el("tr", {}, ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Posiciones difíciles (acertó / esperable)"].map((t) => el("th", { scope: "col", texto: t })))),
+                        el("tbody", { id: "fp-indice" }))),
+                el("details", { id: "fp-confianza", class: "cam-fp-confianza mt-2", hidden: true },
+                    el("summary", { texto: "¿Qué tan confiable es?" }),
+                    el("div", { id: "fp-confianza-texto" }))),
+
+            ctx.principal ? el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-referencia" },
+                el("h3", { id: "fp-t-referencia", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📚 " }), "Partidas de referencia (para afinar el modelo)"),
+                el("p", { class: "cam-herramientas-nota", texto: "Un PGN de otros torneos clásicos con el Elo de cada jugador (por ejemplo, de torneos anteriores del país). Esta computadora analiza cada partida con el mismo motor y se guardan solo las jugadas y el Elo, sin nombres: así el modelo sabe mejor cómo juega cada nivel. Mientras carga, esta computadora no analiza las partidas del torneo." }),
+                el("form", { id: "fp-form-referencia", class: "cam-herramientas mt-2", onsubmit: cargarReferencia },
+                    el("label", { class: "cam-herramientas-campo" }, el("span", { texto: "Evento" }), el("input", { id: "fp-ref-evento", class: "cam-select", maxlength: "80", required: true, autocomplete: "off" })),
+                    el("label", { class: "cam-herramientas-campo" }, el("span", { texto: "Archivo PGN" }), el("input", { id: "fp-ref-archivo", type: "file", accept: ".pgn,text/plain", required: true })),
+                    el("button", { type: "submit", id: "fp-ref-cargar", class: "cam-btn cam-btn-chico" }, "Analizar y cargar")),
+                el("p", { id: "fp-ref-estado", class: "cam-fp-detalle", role: "status" })) : null,
 
             ctx.principal ? el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-encargados" },
                 el("h3", { id: "fp-t-encargados", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "🛡 " }), "Encargados de Fair Play"),
@@ -202,12 +242,13 @@
 
     function pintar() {
         const d = datos;
-        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results y Lichess leídos a las " + hora(d.actualizado) : "Todavía no se leyeron chess-results ni Lichess");
+        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results leído a las " + hora(d.actualizado) : "Todavía no se leyó chess-results");
         const sel = $("fp-categoria"), antes = sel.value;
         sel.replaceChildren(el("option", { value: "", texto: "Todas las categorías (" + d.rondas.length + ")" }),
             ...d.rondas.map((r) => el("option", { value: r.tnr, texto: r.nombre + " — ronda " + r.ronda })));
         if ([...sel.options].some((o) => o.value === antes)) sel.value = antes;
         pintarAlertas();
+        pintarIndice();
         pintarSorteos();
         if (!$("fp-mesas-caja").hidden) verMesas();
     }
@@ -236,12 +277,39 @@
                 el("span", { class: "cam-chip", "data-estado": "fp-nivel-" + a.nivel, texto: NIVELES[a.nivel] || "Seguimiento" }), " ",
                 el("strong", { texto: conElo(a.jugador, a.elo) }), " (" + COLOR[a.color].toLowerCase() + ") contra " + conElo(a.rival, a.rival_elo)),
             el("p", { texto: nombreDe(a.tnr) + " · ronda " + a.ronda + ", mesa " + a.mesa + " · resultado " + (a.resultado || "—") }),
-            el("p", { texto: "Precisión " + uno(a.precision) + " % en " + a.jugadas + " jugadas" + (a.esperada != null ? " · la esperable para su Elo: " + uno(a.esperada) + " %" : "") + (a.z != null ? " · " + uno(a.z) + " desviaciones arriba" : "") + " · pérdida media " + Math.round(Number(a.acpl)) + " centipeones" }),
+            el("p", { class: "cam-fp-resumen", texto: resumenAlerta(a) }),
+            el("ul", { class: "cam-fp-por-que", "aria-label": "Por qué" }, explicar(a).map((x) => el("li", { "data-alto": x.alto ? "si" : null, "data-momento": x.momento ? "si" : null }, x.alto ? el("span", { class: "sr-only", texto: "Señal alta: " }) : null, x.texto))),
+            el("details", { class: "cam-fp-no-significa" }, el("summary", { texto: "Qué no significa esto" }), el("p", { texto: NO_SIGNIFICA })),
             a.nota || a.vista_por_nombre ? el("p", { class: "cam-fp-detalle", texto: (a.estado === "seguir" ? "En seguimiento" : "Mirada") + (a.vista_por_nombre ? " por " + a.vista_por_nombre : "") + (a.vista_en ? " a las " + hora(a.vista_en) : "") + (a.nota ? ": " + a.nota : "") }) : null,
             el("div", { class: "cam-fp-acciones" },
-                a.partida_url ? el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: a.partida_url, target: "_blank", rel: "noopener" }, "Ver la partida en Lichess") : null,
+                a.partida_url ? el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: a.partida_url, target: "_blank", rel: "noopener" }, "Ver la partida") : null,
                 a.estado !== "vista" ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "vista", onclick: () => decidirAlerta(a, "vista") }, "Ya la miré") : null,
                 a.estado !== "seguir" ? el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "seguir", onclick: () => decidirAlerta(a, "seguir") }, "Seguirlo en los sorteos") : null))));
+    }
+
+    // El índice de cada jugador (todas sus partidas del torneo) y lo que dice la validación.
+    function pintarIndice() {
+        const lista = (datos.indice || []).filter((x) => x.roi != null).sort((a, b) => b.roi - a.roi);
+        $("fp-indice-vacio").hidden = lista.length > 0;
+        $("fp-indice-tabla").hidden = lista.length === 0;
+        const nivel = (r) => (r >= 62.5 ? "alta" : r >= 60 ? "a_mirar" : "normal");
+        $("fp-indice").replaceChildren(...lista.slice(0, 60).map((x) => el("tr", { "data-nivel": nivel(x.roi) },
+            el("td", {}, el("strong", { texto: conElo(x.jugador, x.elo) }), x.comparado === "categoria" ? el("span", { class: "cam-fp-detalle", texto: "Sin Elo: comparado con su categoría" }) : null),
+            el("td", { texto: nombreDe(x.tnr) }),
+            el("td", { texto: x.partidas + " (rondas " + x.rondas + ") · " + x.jugadas + " jugadas" }),
+            el("td", {}, el("strong", { texto: uno(x.roi) }), nivel(x.roi) !== "normal" ? el("span", { class: "cam-chip", "data-estado": "fp-nivel-" + nivel(x.roi), texto: " " + NIVELES[nivel(x.roi)] }) : null),
+            el("td", { texto: x.t1 + " / " + uno(x.e_t1) + (x.z_t1 != null ? " (" + (x.z_t1 >= 0 ? "+" : "") + uno(x.z_t1) + ")" : "") }),
+            el("td", { texto: x.dificiles ? x.t1_dif + " de " + x.dificiles + " / " + uno(x.e_t1_dif) : "—" }))));
+        const m = datos.modelo, v = m && m.validacion;
+        $("fp-confianza").hidden = !v;
+        if (v) {
+            const det = (f) => v.deteccion && v.deteccion[f] ? uno(v.deteccion[f].a_mirar) + " % (" + uno(v.deteccion[f].alta) + " % muy alto)" : "—";
+            $("fp-confianza-texto").replaceChildren(
+                el("p", { texto: "Medido con " + (v.jugadores === 1 ? "el único jugador que tiene" : "los " + v.jugadores + " jugadores que tienen") + " 30 jugadas o más analizadas." }),
+                el("p", { texto: "Alarmas falsas: " + uno(v.falsas_a_mirar) + " % pasa de 60 y " + uno(v.falsas_alta) + " % de 62,5. Por pura casualidad se esperaría " + uno(v.esperadas_a_mirar) + " % y " + uno(v.esperadas_alta) + " %. Como casi todos juegan limpio, esto es lo más que se equivoca." }),
+                el("p", { texto: "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el " + det("0.1") + " de las veces; en 2 de cada 10, el " + det("0.2") + "; en 3 de cada 10, el " + det("0.3") + "." }),
+                el("p", { class: "cam-fp-detalle", texto: "El modelo se ajustó con " + m.movimientos + " jugadas de jugadores con Elo" + (m.referencia ? " (" + m.referencia + " de partidas de referencia)" : "") + (m.ajustado ? " a las " + hora(m.ajustado) : "") + ". La gente real varía " + uno(m.factor) + " veces lo que dice el modelo, y la mitad queda en " + uno(50 + 5 * Number(m.centro)) + " antes de centrarla en 50." }));
+        }
     }
 
     function pintarSorteos() {
@@ -429,7 +497,7 @@
         if (aMano) $("fp-actualizar").disabled = true;
         try {
             const r = await llamar("actualizar");
-            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídos: " + r.pareos + " mesas de chess-results y " + r.analizadas + " jugadores de Lichess." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.analizadas));
+            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de chess-results." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
         } catch (e) { if (aMano) avisar("No se pudo leer: " + (e.message || e), true); }
         finally { if (aMano) $("fp-actualizar").disabled = false; await cargar(); }
     }
@@ -487,6 +555,11 @@
             todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
                 filas: todos.filter((f) => f.estado === "descartada" || f.estado === "sin_efecto").map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa), f.estado === "descartada" ? "Descartada: " + (f.motivo || "") : "Sin efecto: " + (f.revisar_color ? "ganó " + ((f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color]) + ", que no aplicaba (" + (f.no_aplica || "ya se había revisado") + ")" : "no se jugó"), f.decidida_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Ninguna." },
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "titulo", texto: "Índice del torneo, jugador por jugador" } : null,
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): 50 es lo normal y cada 5 puntos es una desviación; desde 60 se mira. Sin Elo, comparado con su categoría." } : null,
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Difíciles (acertó / esperable)"], anchos: [2.2, 1.5, 0.8, 0.8, 1.6, 1.6],
+                filas: [...datos.indice].filter((x) => x.roi != null && x.roi >= 55).sort((a, b) => b.roi - a.roi).map((x) => [conElo(x.jugador, x.elo) + (x.comparado === "categoria" ? " (sin Elo)" : ""), nombreDe(x.tnr), String(x.partidas), uno(x.roi), x.t1 + " / " + uno(x.e_t1), x.dificiles ? x.t1_dif + " de " + x.dificiles + " / " + uno(x.e_t1_dif) : "—"]) } : null,
+            datos.modelo && datos.modelo.validacion ? { tipo: "nota", texto: "Qué tan confiable es (con " + datos.modelo.validacion.jugadores + " jugadores): alarmas falsas " + datos.modelo.validacion.falsas_a_mirar + " % desde 60 (por azar, 2,3 %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((datos.modelo.validacion.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." } : null,
             { tipo: "titulo", texto: "Alertas de los tableros electrónicos" },
             { tipo: "nota", texto: "La precisión de cada jugador en las partidas transmitidas, contra la esperable para su Elo en el mismo torneo. Una alerta es una razón para mirar con más cuidado, nunca una prueba ni una acusación." },
             (datos.acumulado || []).length ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
@@ -494,6 +567,13 @@
             alertas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
                 filas: alertas.map((a) => [String(a.ronda), nombreDe(a.tnr), String(a.mesa), conElo(a.jugador, a.elo) + " (" + COLOR[a.color].toLowerCase() + ")", uno(a.precision) + " %", a.esperada != null ? uno(a.esperada) + " %" : "—", a.z != null ? uno(a.z) : "—", decision(a) + (a.vista_por_nombre ? " (" + a.vista_por_nombre + ")" : "") + (a.nota ? ": " + a.nota : "")]) }
                 : { tipo: "parrafo", texto: "Ninguna partida se salió de lo esperable." },
+            alertas.filter((a) => a.nivel !== "normal" || a.estado === "seguir").length ? { tipo: "titulo", texto: "Por qué se marcó cada alerta" } : null,
+            ...alertas.filter((a) => a.nivel !== "normal" || a.estado === "seguir").flatMap((a) => [
+                { tipo: "subtitulo", texto: conElo(a.jugador, a.elo) + " · " + nombreDe(a.tnr) + ", ronda " + a.ronda + ", mesa " + a.mesa + " · " + (NIVELES[a.nivel] || "Seguimiento") },
+                { tipo: "parrafo", texto: resumenAlerta(a) },
+                { tipo: "lista", items: explicar(a).map((x) => (x.alto ? "[ALTA] " : "") + x.texto) },
+            ]),
+            { tipo: "nota", texto: "Qué no significa una alerta: " + NO_SIGNIFICA },
             { tipo: "separador" },
             { tipo: "nota", texto: "Cómo se trabajó: las mesas se sortean por categoría con un peso que ninguna señal decide sola (tope 4); de la mesa sorteada se revisa al ganador (en tablas, al color sorteado), en privado y por alguien del mismo sexo (Leyes del Ajedrez, art. 11.3.3). Quien se revisó no aplica en las 2 rondas siguientes y nadie pasa de 3 revisiones. Todo queda anotado con quién y cuándo. Documento confidencial del equipo de Fair Play y del árbitro principal." },
         ].filter(Boolean);
@@ -550,16 +630,213 @@
         await cargarEnlaces();
     }
 
+    // ---------------------------------------------------------------- por qué: cada señal en una frase
+    // De una alerta (centroamericano_fp_analisis), lo que la explica, con su comparación: { alto, texto, momento? }.
+    // Una sola copia para la tarjeta y el informe en PDF. Ver «El detector de Fair Play, jugada por jugada».
+    const pct = (a, b) => Math.round((100 * a) / b) + " %";
+    const seg = (n) => { n = Math.round(Number(n)); return n < 60 ? n + " s" : Math.floor(n / 60) + " min" + (n % 60 ? " " + (n % 60) + " s" : ""); };
+    const desv = (z) => (z == null ? "" : " (" + uno(Math.abs(z)) + (Math.abs(Number(z)) === 1 ? " desviación" : " desviaciones") + (z >= 0 ? " arriba" : " abajo") + ")");
+    function explicar(a) {
+        const out = [];
+        const contra = a.comparado === "categoria" ? "el promedio de su categoría (no tiene Elo)" : "lo esperable para su Elo en este torneo";
+        const alto = (z) => z != null && Number(z) >= 2;
+        const nivelDe = a.comparado === "categoria" ? "alguien de su categoría" : "alguien de su Elo";
+        if (a.roi != null) {
+            out.push({ alto: Number(a.roi) >= 60, texto: "Índice como el de FIDE: " + uno(a.roi) + " (lo normal es 50; cada 5 puntos es una desviación; desde 60 se mira)." });
+            if (a.m_jugadas) out.push({ alto: alto(a.m_z_t1), texto: "Según lo difícil de cada posición, " + nivelDe + " jugaría la primera del motor unas " + uno(a.m_e_t1) + " de " + a.m_jugadas + " veces; la jugó " + a.m_t1 + "." });
+            if (a.m_jugadas) out.push({ alto: alto(a.m_z_dj), texto: "Perdió en promedio " + uno(a.m_dj / a.m_jugadas) + " puntos de probabilidad de ganar por jugada; lo esperable para " + nivelDe.replace("alguien de ", "") + ": " + uno(a.m_e_dj / a.m_jugadas) + "." });
+        }
+        if (a.desde_jugada) out.push({ alto: false, texto: "Se midió desde la jugada " + a.desde_jugada + ": lo de antes era teoría (partidas de maestros) o apertura." });
+        if (a.profunda) out.push({ alto: false, texto: "Confirmado con el análisis hondo (profundidad 16)." });
+        out.push({ alto: alto(a.z), texto: "Precisión: " + uno(a.precision) + " % en " + a.jugadas + " jugadas" + (a.esperada != null ? "; " + contra + ": " + uno(a.esperada) + " %" + desv(a.z) : "") + "." });
+        if (a.consideradas) {
+            out.push({ alto: alto(a.z_t1), texto: "Jugó la primera opción de Stockfish en " + a.t1 + " de " + a.consideradas + " jugadas (" + pct(a.t1, a.consideradas) + ")" + (a.esperada_t1 != null ? "; " + contra + ": " + uno(a.esperada_t1) + " %" + desv(a.z_t1) : "") + ". Una de las tres mejores: " + a.top3 + " de " + a.consideradas + "." });
+            out.push(a.dificiles
+                ? { alto: alto(a.z_dif), texto: "Posiciones difíciles (una sola jugada buena, que no es jaque ni captura): " + a.dificiles + ", y acertó " + a.dificiles_ok + (a.esperada_dif != null ? "; " + contra + ": " + uno(a.esperada_dif) + " % de acierto" + desv(a.z_dif) : "") + "." }
+                : { alto: false, texto: "No tuvo posiciones difíciles que medir (de una sola jugada buena)." });
+            if (a.seg_dificil != null && a.seg_resto != null) out.push({ alto: !!a.tiempo_raro, texto: "Tiempo: en las difíciles pensó " + seg(a.seg_dificil) + " en promedio; en las demás, " + seg(a.seg_resto) + "." + (a.tiempo_raro ? " Pensó menos justo donde era más difícil." : "") });
+            if (a.tras_levantarse) out.push({ alto: a.tras_levantarse >= 3 && a.tras_levantarse_t1 === a.tras_levantarse, texto: "El árbitro anotó que se levantó de la mesa: en las " + a.tras_levantarse + (a.tras_levantarse === 1 ? " jugada" : " jugadas") + " de los 5 minutos siguientes, jugó la primera del motor " + a.tras_levantarse_t1 + (a.tras_levantarse_t1 === 1 ? " vez." : " veces.") });
+            if (a.consideradas < 20) out.push({ alto: false, texto: "Pocas jugadas medidas (" + a.consideradas + "): la medida es menos segura." });
+        }
+        (a.momentos || []).forEach((m) => out.push({ alto: false, momento: true, texto: "Jugada " + m.jugada + ". " + m.san + ": la única buena de la posición" + (m.segundos != null ? ", en " + seg(m.segundos) : "") + "." }));
+        return out;
+    }
+    // La frase de arriba: cuántas señales salieron altas y cuáles.
+    function resumenAlerta(a) {
+        const altas = [a.z >= 2 && "precisión", a.z_t1 >= 2 && "primera del motor", a.z_dif >= 2 && "posiciones difíciles"].filter(Boolean);
+        if (a.roi != null) return "Índice " + uno(a.roi) + ": " + (Number(a.z_modelo) > 0 ? uno(a.z_modelo) + (Number(a.z_modelo) === 1 ? " desviación" : " desviaciones") + " arriba de lo normal para su nivel" : "dentro de lo normal para su nivel") + "." + (altas.length ? " Otras señales altas: " + altas.join(", ") + "." : "");
+        if (a.senales == null && a.consideradas == null) return "Solo con la precisión (analizada antes de las señales jugada por jugada).";
+        return (altas.length ? altas.length + (altas.length === 1 ? " señal alta" : " señales altas") + " de 3: " + altas.join(", ") : "Ninguna señal pasa de 2 desviaciones") + (a.tiempo_raro ? ", y el tiempo" : "") + ".";
+    }
+
+    // ---------------------------------------------------------------- Stockfish en esta computadora
+    const motorEncendido = () => { try { return localStorage.getItem(MOTOR_GUARDADO) !== "no"; } catch (e) { return true; } };
+    const estadoMotor = (t) => { const n = $("fp-motor-estado"); if (n) n.textContent = t; };
+
+    function arrancarMotor() {
+        if (motor) return Promise.resolve(motor);
+        if (motorArranque) return motorArranque;
+        motorArranque = new Promise((listo) => {
+            let w;
+            try { w = new Worker(MOTOR_URL); } catch (e) { motorArranque = null; listo(null); return; }
+            const tope = setTimeout(() => { w.terminate(); motorArranque = null; listo(null); }, 30000);
+            w.onerror = () => { clearTimeout(tope); w.terminate(); motor = null; motorArranque = null; listo(null); };
+            w.onmessage = (e) => {
+                if (String(e.data).indexOf("uciok") === -1) return;
+                clearTimeout(tope);
+                motor = w;
+                listo(w);
+            };
+            w.postMessage("uci");
+        });
+        return motorArranque;
+    }
+
+    // La evaluación de una posición en centipeones PARA LAS BLANCAS (un mate, ±10000), de la última línea «info … score»
+    // que dio Stockfish: él la da desde el lado que mueve. «mate 0» es que quien mueve ya está en mate.
+    function puntaje(linea, fen) {
+        const m = String(linea || "").match(/\bscore (cp|mate) (-?\d+)/);
+        if (!m) return null;
+        const n = Number(m[2]);
+        const v = m[1] === "mate" ? (n > 0 ? 10000 : -10000) : Math.max(-10000, Math.min(10000, n));
+        return String(fen).split(" ")[1] === "b" ? -v : v;
+    }
+
+    // Las mejores jugadas de una posición (MultiPV), cada una con su evaluación para las blancas, la mejor primero:
+    // { cp: la de la mejor, opciones: [[jugada UCI, cp], …] }. En una posición terminada (mate o ahogado), sin opciones.
+    function opcionesDe(lineas, ultima, fen) {
+        const opciones = Object.keys(lineas).sort((a, b) => a - b)
+            .map((k) => [(lineas[k].match(/ pv (\S+)/) || [])[1], puntaje(lineas[k], fen)])
+            .filter((o) => o[0] && o[1] != null).slice(0, 9);
+        return { cp: opciones.length ? opciones[0][1] : puntaje(ultima, fen), opciones };
+    }
+
+    // como: { multipv, profundidad, nodos } (lo dice la función: profundidad fija para que dos computadoras den lo mismo,
+    // y la honda para confirmar una alerta). Sin profundidad, por nodos.
+    function evaluar(fen, como) {
+        const c = como || {};
+        const multipv = c.multipv || 3;
+        if (multipv !== multipvActual) { motor.postMessage("setoption name MultiPV value " + multipv); multipvActual = multipv; }
+        return new Promise((listo) => {
+            let ultima = null;
+            const lineas = {};
+            const tope = setTimeout(() => { motor.onmessage = null; listo(null); }, 60000);
+            motor.onmessage = (e) => {
+                const l = String(e.data);
+                if (/^info .*\bscore /.test(l)) {
+                    const k = (l.match(/\bmultipv (\d+)/) || [])[1];
+                    if (k && / pv \S/.test(l)) lineas[k] = l; else ultima = l;
+                } else if (l.startsWith("bestmove")) { clearTimeout(tope); listo(opcionesDe(lineas, ultima, fen)); }
+            };
+            motor.postMessage("position fen " + fen);
+            motor.postMessage(c.profundidad ? "go depth " + c.profundidad + " nodes " + (c.nodos || TOPE_NODOS) : "go nodes " + (c.nodos || ctx.nodos || NODOS));
+        });
+    }
+
+    // Pide las partidas terminadas que faltan y las analiza una por una, hasta que no quede ninguna (o se apague, o se
+    // esconda la pantalla). La función reserva cada partida 3 minutos: dos pantallas abiertas se reparten el trabajo.
+    async function analizar() {
+        if (analizando || !ctx) return;
+        const casilla = $("fp-motor-si");
+        if (casilla) casilla.checked = motorEncendido();
+        if (!motorEncendido()) { estadoMotor("Apagado en esta computadora: las partidas las analiza otra pantalla de Fair Play que lo tenga encendido."); return; }
+        if (ctx.visible && !ctx.visible()) return;
+        if (Date.now() - ultimoMotor < MOTOR_CADA_MS) return;
+        analizando = true;
+        ultimoMotor = Date.now();
+        let hechas = 0;
+        try {
+            if (!(await arrancarMotor())) { estadoMotor("Esta computadora no pudo arrancar Stockfish: las partidas las analiza otra pantalla de Fair Play."); return; }
+            for (let vuelta = 0; vuelta < 40; vuelta++) {
+                const r = await llamar("vivo_pendientes");
+                if (!r.partidas || !r.partidas.length) {
+                    estadoMotor(r.conectada === false ? "No hay tableros electrónicos de LiveChess cargados en «Árbitros y mesas»." : "Al día: ninguna partida terminada por analizar" + (analizadasAqui ? " · " + analizadasAqui + " analizadas en esta computadora" : "") + ". Se vuelve a mirar cada 45 s.");
+                    break;
+                }
+                for (const p of r.partidas) {
+                    const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null);
+                    const total = Math.ceil(p.posiciones.length / 2);
+                    for (let i = p.desde; i < p.posiciones.length; i++) {
+                        if (!motorEncendido() || (ctx.visible && !ctx.visible())) { estadoMotor("En pausa: se sigue cuando vuelvas a esta pantalla."); return; }
+                        if (i % 6 === p.desde % 6) estadoMotor("🤖 " + (p.honda ? "Confirmando a fondo (alerta) " : "Analizando ") + nombreDe(p.tnr) + ", ronda " + p.ronda + ", mesa " + p.mesa + " (" + p.blancas + " – " + p.negras + "): jugada " + (Math.floor(i / 2) + 1) + " de " + total + (r.quedan ? " · faltan " + r.quedan + " partidas más" : "") + ".");
+                        const ev = await evaluar(p.posiciones[i], { multipv: p.multipv || r.multipv, profundidad: p.profundidad, nodos: r.nodos });   // cuánto pensar lo dice la función
+                        if (ev) { evals[i] = ev.cp; opciones[i] = ev.opciones; }
+                    }
+                    await llamar("vivo_guardar", { tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, evals, opciones, honda: !!p.honda });
+                    hechas++;
+                    analizadasAqui++;
+                }
+            }
+        } catch (e) {
+            estadoMotor("No se pudo analizar: " + (e.message || e) + ". Se vuelve a intentar en un momento.");
+        } finally {
+            analizando = false;
+            if (hechas) await cargar();
+        }
+    }
+
+    // ---------------------------------------------------------------- las partidas de referencia
+    // Un PGN con el Elo de cada jugador: cada partida se arma con chess.js (js/vendor/chess.js), se analiza aquí con el
+    // mismo motor que las del torneo y se manda a «referencia_guardar» (que la vuelve a armar y la comprueba).
+    const huella = (t) => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+    function partidasDePgn(texto) {
+        return String(texto || "").split(/\r?\n\s*\r?\n(?=\[Event )/).map((bloque, i) => {
+            const juego = new window.Chess();
+            if (!juego.load_pgn(bloque, { sloppy: true })) return null;
+            const h = juego.header(), jugadas = juego.history();
+            const elo_b = Number(h.WhiteElo) || null, elo_n = Number(h.BlackElo) || null;
+            if ((!elo_b && !elo_n) || jugadas.length < 20) return null;
+            const repaso = new window.Chess(), posiciones = jugadas.map((m) => { repaso.move(m); return repaso.fen(); });
+            return { partida: huella(jugadas.join(" ")) + "-" + i, elo_b, elo_n, jugadas, posiciones };
+        }).filter(Boolean);
+    }
+    async function cargarReferencia(e) {
+        e.preventDefault();
+        const archivo = $("fp-ref-archivo").files[0], evento = $("fp-ref-evento").value.trim();
+        if (!archivo || !evento || !window.Chess) return;
+        if (analizando) { avisar("Esta computadora está analizando partidas del torneo: prueba en un momento.", true); return; }
+        const partidas = partidasDePgn(await archivo.text());
+        if (!partidas.length) { $("fp-ref-estado").textContent = "El archivo no trae partidas con el Elo de los jugadores (WhiteElo, BlackElo) y 20 jugadas o más."; return; }
+        analizando = true;
+        $("fp-ref-cargar").disabled = true;
+        let hechas = 0, jugadas = 0;
+        try {
+            if (!(await arrancarMotor())) throw new Error("esta computadora no pudo arrancar Stockfish");
+            for (const p of partidas) {
+                const evals = p.posiciones.map(() => null), opciones = p.posiciones.map(() => null);
+                for (let i = 15; i < p.posiciones.length; i++) {
+                    const ev = await evaluar(p.posiciones[i], { multipv: 5, profundidad: 12 });
+                    if (ev) { evals[i] = ev.cp; opciones[i] = ev.opciones; }
+                }
+                const r = await llamar("referencia_guardar", { evento, partida: p.partida, elo_b: p.elo_b, elo_n: p.elo_n, jugadas: p.jugadas, evals, opciones });
+                hechas++; jugadas += r.jugadas || 0;
+                $("fp-ref-estado").textContent = "Cargadas " + hechas + " de " + partidas.length + " (" + jugadas + " jugadas).";
+            }
+            const listo = "Listo: " + hechas + (hechas === 1 ? " partida" : " partidas") + " de «" + evento + "» (" + jugadas + " jugadas). ";
+            $("fp-ref-estado").textContent = listo + "Recalculando el modelo…";
+            // Se vuelve a ajustar ya (sin esperar a que entre otra partida del torneo), con las referencias nuevas.
+            const m = await llamar("modelo", { forzar: true }).catch((err) => ({ error: err.message || String(err) }));
+            $("fp-ref-estado").textContent = listo + (m.error ? "No se pudo recalcular el modelo ahora (" + m.error + "): se recalcula solo con la próxima partida del torneo."
+                : m.insuficiente ? "El modelo todavía no se ajusta: hay " + (m.movimientos || 0) + " jugadas de jugadores con Elo y hacen falta 600."
+                : "El modelo se recalculó con ellas.");
+            cargar();
+        } catch (err) {
+            $("fp-ref-estado").textContent = "Se cortó en la partida " + (hechas + 1) + ": " + (err.message || err) + ". Lo cargado hasta ahí quedó guardado; si vuelves a cargar el archivo, no se repite.";
+        } finally { analizando = false; $("fp-ref-cargar").disabled = false; }
+    }
+
     // ---------------------------------------------------------------- arranque
     function iniciar(c) {
         ctx = c;
         armar();
         cargar();
+        analizar();
         setInterval(() => {
             if (ctx.visible && !ctx.visible()) return;
             if (Date.now() - ultimaActualizacion > ACTUALIZAR_MS) actualizar(false); else cargar();
+            analizar();
         }, LEER_MS);
     }
 
-    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS };
+    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn };
 })();
