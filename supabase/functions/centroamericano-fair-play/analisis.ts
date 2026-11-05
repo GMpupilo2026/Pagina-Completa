@@ -341,8 +341,8 @@ export function esperado(movs: MovModelo[], s: number, c: number): Esperado {
   }
   return r;
 }
-// Las desviaciones: de la primera del motor (más es raro), de lo perdido (menos es raro: va dada vuelta) y las dos
-// juntas, que se parecen mucho entre sí, divididas por √3 para no contarlas dos veces. «factor» es cuánto más varía la
+// Las desviaciones: de la primera del motor (más es raro), de lo perdido (menos es raro: va dada vuelta) y, si hay, de
+// las posiciones de una sola jugada buena; juntas como se explica abajo. «factor» es cuánto más varía la
 // gente real que lo que dice el modelo, y «centro», dónde queda la mitad de la gente (salen de los jugadores del
 // torneo: con el modelo ajustado en el mismo torneo, lo normal puede quedar un poco corrido). El índice, en la escala
 // de Regan: 50 es lo normal y cada 5 puntos es una desviación.
