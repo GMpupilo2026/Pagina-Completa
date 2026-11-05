@@ -998,6 +998,30 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   medido contra el tono más claro del fondo. **Solo dicen lo que ya dice la
   portada**: si cambia allá (una cifra, un paso), se cambia acá y se vuelve a
   correr.
+- Dos series más, con el mismo diseño: `img/redes/whatsapp-academia/` (la
+  Academia por dentro: clase en vivo, cuestionarios con podio, entrenamiento,
+  puntos e informes; abajo, «3 días gratis por WhatsApp», la prueba gratis que
+  crea administración) y `img/redes/whatsapp-mesa-arbitro/` (la Mesa del
+  árbitro: qué hace, los tres pasos, lo que comprueba y la bitácora; abajo,
+  «Pide tu licencia por WhatsApp» y la vitrina de herramientas). Los textos
+  salen de la documentación de cada pieza y de la ficha de la vitrina
+  (`js/herramientas-arbitraje.js`); si cambian allá, se cambian acá.
+- **Los estados de la herramienta de mesas llevan pantallas de verdad, de la
+  versión al día: la del Centroamericano** (pedido del dueño: «que la gente
+  vea cómo va a ver el torneo»; la primera tanda, de `mesa-arbitro.html`, «no
+  corresponde a la herramienta actualizada»). Las saca
+  `herramientas/capturas-centroamericano.js`: abre `centroamericano-arbitro.html`
+  en una tableta (820 px, a 2x) y `centroamericano-mesas.html` a 1080 px, con
+  los mismos dobles de Supabase que `verificar-centroamericano-mesas-pagina.js`
+  (`herramientas/lib/doble-centroamericano-arbitro.js` y
+  `-organizacion.js`, una sola copia; el de la organización vivía dentro del
+  verificador) y el reloj en una mañana de ronda; aprueba la revisión previa,
+  marca el inicio y que llegaron todas, guarda dos resultados, y fotografía
+  cada parte en `img/redes/capturas/centroamericano/`. `imagenes-redes.js` las
+  pone en un marco de tableta y falla si faltan. **El torneo es de ejemplo y
+  cada imagen lo dice**; los nombres de las jugadoras son inventados a
+  propósito, para no poner jugadores reales —muchos, menores— en una
+  publicidad sin su permiso. Si la página cambia, se vuelven a sacar.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
