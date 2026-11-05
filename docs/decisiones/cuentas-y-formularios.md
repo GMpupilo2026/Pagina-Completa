@@ -1764,6 +1764,76 @@ noche llena no deja pasar, que el árbitro entra con su enlace, que corregir
 rechaza un correo malo y un comprobante que no existe, y que pedir el enlace
 solo marca el envío cuando el correo coincide.
 
+### Los menús de la alimentación
+
+Antes la alimentación era tres casillas (desayuno, almuerzo, cena) y una
+solicitud: la organización confirmaba el costo por correo. Ahora administración
+arma el menú de cada comida y quien se inscribe elige y paga con la
+inscripción. Migración `20261105162311_metropolitano_menus`.
+
+- **«¿Va a necesitar alimentación durante el torneo?»: Sí, Aún no lo sé o No**
+  (`alimentacion`), y se responde siempre (a los GM, IM y WGM invitados no se
+  les pregunta: la organización se la da).
+  - **Sí**: marca las comidas y los días, y de cada comida que tiene menú
+    elige **el plato y quién se lo prepara**. Se cobra por día con la
+    inscripción.
+  - **Aún no lo sé**: se le pregunta si quiere ver las opciones y sus precios;
+    con «Sí, quiero verlas» se muestran los menús **solo para mirar**, con
+    «Por ahora no» se sigue. Marca las comidas y los días que **podría**
+    necesitar (`tal_vez`), sin pagar ni reservar nada: es lo que alimenta la
+    estimación de los platos de más.
+  - **No**: no se despliega nada.
+- **Quién prepara**: las cocinas (`metropolitano_menu_cocinas`: la soda X, la
+  cocinera Y) las agrega administración. Cada plato (`metropolitano_menu`) es
+  de una cocina (sin cocina, «La organización») y tiene su nombre, su
+  descripción, su foto y su **precio por día**. El mismo plato de dos cocinas
+  son dos filas, cada una con su precio: la inscripción las junta por nombre en
+  una tarjeta y se elige quién lo prepara (`js/metropolitano-menu.js`, una sola
+  copia, en español, inglés y francés como `js/metropolitano-hospedaje.js`).
+- **El costo lo recalcula la base** (`interno.metropolitano_menu_costo`): el
+  plato por los días, del primero al último incluidos, con el precio que tiene
+  la base, nunca el que mandó la página. Se suma después del código de
+  descuento (que es de la inscripción, como el parqueo) y antes del IVA. Se
+  guarda lo elegido **con el precio de ese momento** (`menu`, `comidas_usd`):
+  un precio nuevo vale para las inscripciones que vienen. Una comida sin
+  platos sigue como antes, una solicitud sin costo. Las mismas cuentas en
+  `MetropolitanoReglas.precio()` (líneas `COMIDA`) para el total de la página.
+- **`metropolitano_inscribir` se cambió leyendo su definición vigente** y
+  reemplazando cuatro pedazos exactos (si alguno no estaba tal cual, la
+  migración se detenía sin cambiar nada), en vez de copiar sus 400 líneas a
+  mano: copiar a mano es donde se cuela un cambio sin querer. La definición
+  entera queda en el retrato del esquema.
+- **Las fotos van en el bucket público `metropolitano-menu`** (las ve quien se
+  inscribe sin cuenta; 1 MB, solo JPG, PNG o WebP: un SVG puede llevar
+  código). Las sube, cambia y borra solo administración; una foto de más de 1
+  MB se achica en el navegador antes de subirla.
+- **Un plato que alguien ya eligió no se borra**: deja de ofrecerse (su
+  inscripción lo nombra). Tampoco una cocina con platos. Las dos tablas tienen
+  su bitácora (`auditar`): los precios son dinero.
+- **«Corregir la inscripción» no cambia una alimentación con costo**, ni agrega
+  una comida cuyo menú se cobra: cambiaría el monto ya pagado. Lo hace cumplir
+  un trigger (`metropolitano_menu_fijo`), que compara las comidas como
+  conjunto, y el mensaje manda a escribir a la organización.
+- **La estimación**, en la lista de inscritos (`js/metropolitano-menu-admin.js`
+  con `metropolitano_menu_admin()`): por día y comida, los platos ya pagados
+  de cada cocina, cuántas personas dijeron «Aún no lo sé» y, con el porcentaje
+  que se elija de ellas (50 % de entrada), los platos de más sugeridos y el
+  total a preparar; también en Excel. Cuenta las inscripciones activas con el
+  pago no rechazado.
+- El correo de confirmación dice cada plato con quién lo prepara, los días y lo
+  que cuesta, lo pedido sin menú como solicitud y «Aún no lo sabe» con a quién
+  escribir (Edge Function `metropolitano-correo`, versión 3).
+
+`verificar-metropolitano.js` lo prueba: las tres respuestas, ver los menús sin
+elegir con «Aún no lo sé», el mismo plato de dos cocinas en una tarjeta con su
+foto, el plato que falta elegir, el total por los días (y que cambia con los
+días), el resumen, lo que se manda en cada caso, el menú en inglés, la
+administración (platos, cocinas, la estimación con dos porcentajes) y el
+correo. Rompiendo a propósito la cuenta de los días, saltan tres
+comprobaciones. En la base se probó, en transacciones que se deshacen, cada
+camino de la inscripción (sin plato, con plato, «aún no lo sé» con y sin
+comidas, «sí» sin comidas) y el trigger de corregir en seis casos.
+
 ### La página del Metropolitano 2026
 
 `metropolitano-2026.html` (pública, se indexa) junta todo el torneo, como la
