@@ -987,6 +987,17 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   y la dirección van arriba, y abajo solo hay textos cortos a los costados. Van en PNG porque
   las dos recomprimen lo que se sube y un JPEG recomprimido ensucia las letras.
   No las pide ninguna página, así que `img/redes/` está en `.assetsignore`.
+- `img/redes/whatsapp/` tiene los **estados de WhatsApp** (1080×1920, 9:16),
+  una serie de siete: clases en vivo, qué recibe cada estudiante, el
+  diagnóstico, la accesibilidad, los tres pasos, el motor y Pareo Integral.
+  Los genera el mismo script. WhatsApp pone encima la barra de avance y el
+  nombre (arriba) y «Responder» (abajo), así que el contenido va entre los
+  220 px de arriba y los 280 de abajo, y el script falla si algo se sale.
+  Llevan la marca de Ajedrez Integral (no el logo con el nombre de Oscar),
+  las fuentes del sitio incrustadas, y el contraste de cada par de colores
+  medido contra el tono más claro del fondo. **Solo dicen lo que ya dice la
+  portada**: si cambia allá (una cifra, un paso), se cambia acá y se vuelve a
+  correr.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
