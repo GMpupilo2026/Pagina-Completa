@@ -142,10 +142,9 @@
         const res = await fetch(data.signedUrl);
         if (!res.ok) throw new Error("No se pudo bajar la foto.");
         const foto = await res.blob();
-        const { data: { session } } = await window.sb.auth.getSession();
-        if (!session) throw new Error("Se cerró la sesión. Vuelve a entrar.");
         decir("Leyendo la letra de las planillas…");
-        const { words } = await window.PlanillaOcr.leerFoto(foto, session.access_token, { maxLado: 2600 });
+        // el token se pide en el momento (js/token-sesion.js): el de cuando se abrió la página vence a la hora
+        const { words } = await window.PlanillaOcr.leerFoto(foto, await window.tokenDeSesion(), { maxLado: 2600 });
         const { hojas, metodo } = window.PlanillaReconstruir.hojasDeLaFoto(words);
         if (!hojas.length) throw new Error("No se encontró nada escrito en la foto.");
         decir("Armando la partida… 0 %");
