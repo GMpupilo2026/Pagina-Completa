@@ -14,6 +14,8 @@ curso; el marcado es válido igual, pero queda a medias a propósito hasta que s
 decidan esos números, en vez de inventarlos.
 """
 import glob, json, os, re
+import sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from direccion_publica import direccion
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(RAIZ)
@@ -35,7 +37,7 @@ ORG = {
     "areaServed": "CR",
     "founder": {"@type": "Person", "name": "Oscar Angulo Cubero",
                 "jobTitle": "Entrenador FIDE y Árbitro Internacional",
-                "url": SITIO + "/sobre-oscar.html"},
+                "url": direccion("sobre-oscar.html")},
     "sameAs": ["https://wa.me/50683092291"],
 }
 
@@ -90,8 +92,8 @@ cursos = []
 for i, ruta in enumerate(slugs, 1):
     t = leer(ruta)
     cursos.append({"@type": "ListItem", "position": i, "item": {
-        "@type": "Course", "@id": SITIO + "/" + ruta + "#curso",
-        "name": titulo(t), "description": descripcion(t), "url": SITIO + "/" + ruta,
+        "@type": "Course", "@id": direccion(ruta) + "#curso",
+        "name": titulo(t), "description": descripcion(t), "url": direccion(ruta),
         "inLanguage": "es-CR", "provider": {"@id": SITIO + "/#organizacion"}}})
 
 poner("cursos.html", {"@context": "https://schema.org", "@type": "ItemList",
@@ -103,9 +105,9 @@ poner("cursos.html", {"@context": "https://schema.org", "@type": "ItemList",
 for ruta in slugs:
     t = leer(ruta)
     poner(ruta, {"@context": "https://schema.org", "@type": "Course",
-                 "@id": SITIO + "/" + ruta + "#curso",
+                 "@id": direccion(ruta) + "#curso",
                  "name": titulo(t), "description": descripcion(t),
-                 "url": SITIO + "/" + ruta, "inLanguage": "es-CR",
+                 "url": direccion(ruta), "inLanguage": "es-CR",
                  "image": IMAGEN, "provider": ORG})
 
 # ---- Artículos: con su fecha, que la traen impresa en la página ----
@@ -118,12 +120,12 @@ for ruta in sorted(glob.glob("articulos/*.html")):
     fecha = f"{m.group(3)}-{MESES[m.group(2)]:02d}-{int(m.group(1)):02d}"
     poner(ruta, {"@context": "https://schema.org", "@type": "BlogPosting",
                  "headline": titulo(t), "description": descripcion(t),
-                 "url": SITIO + "/" + ruta, "inLanguage": "es-CR",
+                 "url": direccion(ruta), "inLanguage": "es-CR",
                  "datePublished": fecha, "dateModified": fecha, "image": IMAGEN,
                  "author": {"@type": "Person", "name": "Oscar Angulo Cubero",
-                            "url": SITIO + "/sobre-oscar.html"},
+                            "url": direccion("sobre-oscar.html")},
                  "publisher": {"@id": SITIO + "/#organizacion"},
-                 "mainEntityOfPage": {"@type": "WebPage", "@id": SITIO + "/" + ruta}})
+                 "mainEntityOfPage": {"@type": "WebPage", "@id": direccion(ruta)}})
     articulos += 1
 
 print(f"portada + catálogo · {len(cursos)} cursos · {articulos} artículos")
