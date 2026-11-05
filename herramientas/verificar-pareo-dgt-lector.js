@@ -128,6 +128,22 @@ async function pruebaCadena() {
   const respuesta = T.mensajeBus(0x03, [0x23, 0x36], Array(64).fill(0));
   igual("el eco de un pedido no se toma por el comienzo de un mensaje", f.empujar(L.pedido(0x82, 4534).concat(respuesta)), [respuesta]);
   igual("ni un mensaje con la suma mal: se busca el siguiente", L.crearFlujo().empujar([0x83, 0x00, 0x06, 0x01, 0x02, 0x7f].concat(respuesta)), [respuesta]);
+  // El 6445 de la primera cadena de verdad tenía la memoria llena: 2829 bytes,
+  // unos 3 s a 9600 baudios. La página preguntaba encima a los 0,3 s.
+  const largo = T.mensajeBus(0x05, [0x4e, 0x11], [0x41, 0x34]);
+  const lento = {
+    inicio: 0, entregado: false,
+    async escribir() { this.inicio = Date.now(); this.entregado = false; },
+    recibiendo() { return Date.now() - this.inicio < 150; },
+    async esperar(ms) {
+      const listo = this.inicio + 150;
+      if (Date.now() < listo) await new Promise((r) => setTimeout(r, Math.min(ms, listo - Date.now())));
+      if (Date.now() >= listo && !this.entregado) { this.entregado = true; return largo; }
+      return null;
+    },
+  };
+  const cbLargo = await L.crearCadena(lento, { espera: 20 }).cambios(10001);
+  igual("un mensaje largo que sigue llegando se espera entero (no se le pregunta encima)", [cbLargo.error, (cbLargo.eventos || []).length], [undefined, 1]);
 }
 
 // Las 64 partidas en tableros virtuales de una cadena, leídas por el lector
@@ -328,6 +344,13 @@ function preparar() {
       // Con __abrirFalla, lo que dice Windows cuando otro programa lo tiene.
       open: () => window.__abrirFalla ? (window.__abrirFalla = false, Promise.reject(Object.assign(new Error("Failed to execute 'open' on 'SerialPort': Failed to open serial port."), { name: "NetworkError" }))) : Promise.resolve(),
       close: () => Promise.resolve(), setSignals: () => Promise.resolve(), getInfo: () => ({ usbProductId: 1 }),
+    };
+    // Como Chrome cuando se le llena el búfer de lectura: la lectura de ahora
+    // falla y el puerto trae otro `readable` (pasó con la primera cadena de verdad).
+    window.__romperLectura = () => {
+      const viejo = ctl;
+      puerto.readable = new ReadableStream({ start(c) { ctl = c; } });
+      viejo.error(new DOMException("Buffer overrun", "BufferOverrunError"));
     };
     // Con permiso ya dado (después del primer «Conectar un puerto»), Chrome lo
     // devuelve en getPorts() al recargar. Es USB: trae usbVendorId.
@@ -532,10 +555,17 @@ async function pruebaSala(browser) {
   await p.click("#btn-directo-puerto");
   await p.waitForFunction(() => document.getElementById("directo-error").textContent !== "");
   igual("y el mismo puerto otra vez: ya está conectado", await p.textContent("#directo-error"), "Ese puerto ya está conectado aquí.");
+  // Se rompe la lectura (el búfer de Chrome lleno): todo lo que sigue en esta
+  // prueba lee los tableros, así que si no se recupera, falla todo.
+  await p.evaluate(() => window.__romperLectura());
+  await p.waitForTimeout(1500);
   const [reg] = await Promise.all([p.waitForEvent("download"), p.click("#directo-puertos button:has-text('Bajar el registro')")]);
   const textoReg = fs.readFileSync(await reg.path(), "utf8");
   cierto("«Bajar el registro» baja lo que fue y vino por el cable (el ping general y la respuesta del 10001)",
     reg.suggestedFilename() === "registro-puerto-1-usb.txt" && /→ 87 00 00 07/.test(textoReg) && /← 87 00 06 4e 11/.test(textoReg), reg.suggestedFilename() + " " + textoReg.slice(0, 400));
+  const trasError = textoReg.split("\n").slice(textoReg.split("\n").findIndex((l) => /! BufferOverrunError \(se sigue leyendo\)/.test(l)));
+  cierto("si la lectura falla (el búfer de Chrome lleno), se anota y se sigue leyendo",
+    /! BufferOverrunError/.test(trasError[0] || "") && trasError.slice(1).some((l) => / ← /.test(l)), trasError.slice(0, 4).join(" | "));
   await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Categoría']", "111");
   const avisos = () => p.$$eval("#directo-alertas li", (l) => l.map((x) => x.textContent));
   const esperarAviso = (re) => p.waitForFunction((re) => [...document.querySelectorAll("#directo-alertas li")].some((x) => new RegExp(re).test(x.textContent)), re, { timeout: 20000 });
