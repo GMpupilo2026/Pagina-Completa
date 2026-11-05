@@ -120,6 +120,8 @@ const FUNCIONES = {
   "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts"],
   // El Drive de las inscripciones del Metropolitano 2026: el mismo puente.
   "metropolitano-drive": ["drive-puente.ts"],
+  // El correo de confirmación de las inscripciones del Metropolitano 2026.
+  "metropolitano-correo": ["envio-resend.ts", "marca-correo.ts"],
   "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts"],
 };
 

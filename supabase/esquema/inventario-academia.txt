@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261104214907
+# al-dia-con: 20261105022109
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1541,6 +1541,10 @@ columna  metropolitano_inscripciones.comidas_desde  date
 columna  metropolitano_inscripciones.comidas_hasta  date
 columna  metropolitano_inscripciones.comprobante  text
 columna  metropolitano_inscripciones.condicion  text[]
+columna  metropolitano_inscripciones.confirmacion_en  timestamp with time zone
+columna  metropolitano_inscripciones.confirmacion_error  text
+columna  metropolitano_inscripciones.confirmacion_intentos  integer
+columna  metropolitano_inscripciones.confirmacion_tomado  timestamp with time zone
 columna  metropolitano_inscripciones.correo  text
 columna  metropolitano_inscripciones.creado  timestamp with time zone
 columna  metropolitano_inscripciones.delegacion  text
@@ -2771,6 +2775,8 @@ funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=fal
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
+funcion  interno.metropolitano_correo_avisa()  definer  anon=false  auth=false
+funcion  interno.metropolitano_correo_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_drive_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_parqueo_usados()  definer  anon=false  auth=false
@@ -2863,6 +2869,7 @@ funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  metropolitano_codigo_anular(p_codigo text)  definer  anon=false  auth=true
 funcion  metropolitano_codigo_ver(p_codigo text)  definer  anon=true  auth=true
 funcion  metropolitano_codigos_crear(p_porcentaje integer, p_cantidad integer, p_nota text)  definer  anon=false  auth=true
+funcion  metropolitano_correo_aviso()  definer  anon=false  auth=false
 funcion  metropolitano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  metropolitano_drive_leer()  definer  anon=false  auth=false
 funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
@@ -3693,6 +3700,7 @@ trigger  material_compartido  auditar
 trigger  mensajes_casa  mensajes_casa_al_crear
 trigger  metropolitano_codigos  auditar
 trigger  metropolitano_inscripciones  auditar
+trigger  metropolitano_inscripciones  metropolitano_correo_avisa
 trigger  metropolitano_parqueo  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
@@ -4414,6 +4422,7 @@ cron  cobros-recordatorios-programados  */5 * * * *
 cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
+cron  metropolitano-correo  */10 * * * *
 cron  metropolitano-drive  */10 * * * *
 cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *

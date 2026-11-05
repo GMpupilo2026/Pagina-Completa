@@ -49,6 +49,17 @@ de la bóveda y solo recibe el `id` del diagnóstico: a quién se le escribe y q
 dice sale de la fila. Con `verify_jwt` en true el trigger recibe un 401 y el
 supervisor simplemente no se entera, sin que nada falle a la vista.
 
+## `metropolitano-correo` va con `verify_jwt` en **false**
+
+Manda el correo de confirmación de cada inscripción al Metropolitano 2026. La
+llama la base apenas se guarda una inscripción (el trigger
+`metropolitano_correo_avisa`, por pg_net, una vez por envío) y cada 10 minutos
+para reintentar (`interno.metropolitano_correo_tocar`), sin sesión de persona:
+trae en `x-aviso` el secreto `metropolitano_correo_aviso` de la bóveda y con
+él solo puede «enviar» lo pendiente. Quien administra entra con su sesión, el
+`aal2` e `is_admin`, para «reenviar». Ver «Los correos de confirmación» en
+`docs/decisiones/cuentas-y-formularios.md`.
+
 ## `metropolitano-drive` va con `verify_jwt` en **false**
 
 Pasa al Drive las inscripciones del Metropolitano 2026 (foto, comprobante,
