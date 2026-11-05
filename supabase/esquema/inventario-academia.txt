@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105162311
+# al-dia-con: 20261105170000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -652,6 +652,7 @@ columna  centroamericano_fair_play.revisada_en  timestamp with time zone
 columna  centroamericano_fair_play.revisada_por  uuid
 columna  centroamericano_fair_play.revisada_por_nombre  text
 columna  centroamericano_fair_play.revisar_color  text
+columna  centroamericano_fair_play.revisar_fijo  text
 columna  centroamericano_fair_play.ronda  integer
 columna  centroamericano_fair_play.snr_b  integer
 columna  centroamericano_fair_play.snr_n  integer
@@ -2807,6 +2808,7 @@ funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
 funcion  centroamericano_evento_archivar(p_evento text, p_archivar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_aprobar(p_id uuid, p_quien text)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_descartar(p_id uuid, p_motivo text, p_quien text)  definer  anon=false  auth=true
+funcion  centroamericano_fair_play_elegir(p_tnr text, p_ronda integer, p_mesa integer, p_revisar text, p_motivo text, p_avisar boolean, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_manual(p_tnr text, p_ronda integer, p_mesa integer, p_color text, p_resultado text, p_jugador text, p_nota text, p_quien text, p_enlace uuid)  definer  anon=false  auth=true
 funcion  centroamericano_fair_play_retener(p_tnr text, p_ronda integer, p_mesa integer, p_quien text)  definer  anon=false  auth=false
 funcion  centroamericano_fair_play_revisar(p_id uuid, p_resultado text, p_color text, p_jugador text, p_nota text, p_quien text)  definer  anon=false  auth=true
