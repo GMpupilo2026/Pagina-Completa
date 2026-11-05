@@ -1160,6 +1160,15 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 #fp-indice td .cam-fp-detalle + .cam-fp-detalle { margin-top: 0.2rem; }
 #fp-indice td .cam-fp-detalle[data-alto="si"] { font-weight: 700; }
 
+/* Un evento nuevo: los torneos que abre la clave del grupo y los eventos (archivar). Ver «Un torneo nuevo sin tocar código». */
+.cam-g-nuevos { border: 1px solid #dfe0f7; border-radius: 0.75rem; padding: 0.75rem; }
+.dark .cam-g-nuevos { border-color: rgb(255 255 255 / 0.14); }
+.cam-g-nuevos .cam-tabla-scroll { overflow-x: auto; }
+.cam-g-nuevos td .cam-campo { min-width: 7rem; }
+.cam-eventos p { margin-top: 0.4rem; }
+.cam-eventos .cam-btn { margin-left: 0.4rem; }
+#fp-indice td .cam-fp-informe-jugador { display: inline-flex; margin-top: 0.3rem; }
+.cam-lp-fair-play { font-size: 0.9rem; }
 /* El Blitz (js/centroamericano-arbitro.js): solo «Ilegal» y el resultado. El botón de la ilegal va en la MISMA línea que el nombre del jugador. */
 .cam-mesa[data-modo="blitz"] .cam-jugador-fila { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "c n b"; }
 .cam-mesa[data-modo="blitz"] .cam-jugador-botones { grid-area: b; width: auto; margin: 0; justify-content: flex-end; }
