@@ -2918,6 +2918,22 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .metro-plegable > summary::before { content: "▸"; display: inline-block; transition: transform .15s; }
 .metro-plegable[open] > summary::before { transform: rotate(90deg); }
 .metro-plegable > summary:focus-visible { outline: 2px solid #f0b429; outline-offset: 2px; border-radius: .25rem; }
+/* Los menús de la alimentación (js/metropolitano-menu.js): una tarjeta por
+   plato, con su foto, y una opción por cada cocina que lo prepara. La elegida
+   se marca con el borde y el fondo, y además con el círculo marcado. */
+.metro-plato { display: flex; flex-direction: column; border: 1px solid #d9dbea; border-radius: .75rem; overflow: hidden; background: #fff; color: #1d134d; }
+.metro-plato-foto { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #eef0fb; }
+.metro-plato-cuerpo { padding: .75rem; }
+.metro-plato-nombre { font-weight: 700; }
+.metro-plato-desc { font-size: .875rem; margin-top: .15rem; }
+.metro-plato-opcion { display: flex; align-items: flex-start; gap: .5rem; padding: .4rem .5rem; border: 1px solid #d9dbea; border-radius: .5rem; font-size: .875rem; cursor: pointer; }
+.metro-plato-opcion input { margin-top: .2rem; width: 1rem; height: 1rem; flex-shrink: 0; }
+.metro-plato-opcion:has(input:checked) { border: 2px solid #1d134d; background: #eef0fb; }
+.metro-plato-opcion:has(input:focus-visible) { outline: 3px solid #f0b429; outline-offset: 2px; }
+.dark .metro-plato { background: #102a43; color: #fff; border-color: #486581; }
+.dark .metro-plato-foto { background: #243b53; }
+.dark .metro-plato-opcion { border-color: #486581; }
+.dark .metro-plato-opcion:has(input:checked) { border-color: #f0b429; background: #243b53; }
 
 /* La página del Metropolitano 2026: las fichas (con la franja de color de
    las hojas de las bases a la izquierda; el texto va siempre en el azul
