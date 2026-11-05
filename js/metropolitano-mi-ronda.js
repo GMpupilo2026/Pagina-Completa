@@ -73,7 +73,7 @@ window.MetroMiRonda = (function () {
   // Sin tildes, mayúsculas, signos ni el orden de las palabras: «Solís, Ana
   // Mora» y «MORA SOLIS, ANA» son el mismo nombre.
   function palabras(s) {
-    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9ñ ]+/g, " ").split(/\s+/).filter(Boolean);
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9ñ ]+/g, " ").split(/\s+/).filter(Boolean);
   }
   const clave = (s) => palabras(s).sort().join(" ");
   // Igual, o todas las palabras buscadas están en el nombre (le falta un segundo apellido).

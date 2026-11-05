@@ -55,6 +55,36 @@ igual("sin recargo el 16/12", pr({ torneos: ["B"], metodo: "dolares", hoy: "2026
 igual("senior: 10 % en el clásico, no en el blitz (PayPal)", pr({ torneos: ["B", "BLITZ"], metodo: "paypal", nacimiento: "1958-01-01" }).usd, 55.92);
 igual("senior por año: nacido el 31/12/1961 ya cuenta", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1961-12-31" }).usd, 40.5);
 igual("nacido el 1/1/1962 no", pr({ torneos: ["B"], metodo: "dolares", nacimiento: "1962-01-01" }).usd, 45);
+// El correo de confirmación: el mismo código de la Edge Function metropolitano-correo
+// (correo.ts, con su marca-correo.ts de _compartido, como lo arma funciones-armar.js).
+{
+  const leer = (...p) => fs.readFileSync(path.join(RAIZ, "supabase", "functions", ...p), "utf8");
+  const fuente = leer("_compartido", "marca-correo.ts") + "\n" + leer("metropolitano-correo", "correo.ts").replace(/^import .*$/mg, "");
+  const m = { exports: {} };
+  new Function("module", "exports", require("esbuild").transformSync(fuente, { loader: "ts", format: "cjs" }).code)(m, m.exports);
+  const C = m.exports;
+  const base = { grupo: "g1", delegacion: "Club Ajedrez Heredia", pago_estado: "por_revisar", torneos: [], monto_usd: 0, iva_usd: 0 };
+  const del = Object.assign({}, base, { id: "a", numero: 13, es_delegado: true, rol: "delegado", sexo: "m", nombre: "Carlos", apellidos: "Rojas Vega", correo: "Carlos@Ejemplo.com" });
+  const ana = Object.assign({}, base, { id: "b", numero: 14, rol: "jugador", sexo: "f", nombre: "Ana", apellidos: "Mora Solís", nombre_fide: "Mora Solis, Ana", fide_id: "6400000", titulo: "WCM", correo: "ana@ejemplo.com",
+    torneos: ["A", "BLITZ"], monto_usd: 87, hospedaje: true, hospedaje_desde: "2026-12-25", hospedaje_hasta: "2026-12-31", acepta_hospedaje: true, parqueo: true, placa: "BCD123" });
+  const pedro = Object.assign({}, base, { id: "c", numero: 15, rol: "entrenador", sexo: "m", nombre: "Pedro", apellidos: "Solano", correo: "carlos@ejemplo.com" });
+  const cs = C.correosDeEnvio([ana, pedro, del]);
+  igual("correo: la delegación va al delegado (con todos) y a la integrante con su correo; una dirección repetida no recibe dos",
+    cs.map((c) => [c.para, c.ids.join(",")]), [["carlos@ejemplo.com", "a,b,c"], ["ana@ejemplo.com", "b"]]);
+  cierto("correo: el del delegado trae cada código, los torneos, el total y lo del pago por revisar", /MET-0013 · Carlos Rojas Vega/.test(cs[0].texto) && /MET-0014 · Ana Mora Solís/.test(cs[0].texto)
+    && /Metropolitano A y Metropolitano Blitz/.test(cs[0].texto) && /Total: \$87\.00\. La organización revisa el comprobante/.test(cs[0].texto) && /delegación Club Ajedrez Heredia/.test(cs[0].asunto), cs[0].texto);
+  cierto("correo: el hospedaje recuerda la puerta a las 10:30 p.m. y la ropa de cama, y el parqueo su placa", /10:30 p\.m\./.test(cs[0].texto) && /Trae tu ropa de cama/.test(cs[0].texto) && /placa BCD123/.test(cs[0].texto));
+  cierto("correo: la jugadora trae su enlace a «Mi ronda y mi mesa», el mismo del QR del gafete", cs[1].texto.includes("https://ajedrez-integral.com/metropolitano-2026#mi-ronda=Mora%20Solis%2C%20Ana")
+    && /Carlos Rojas Vega, delegado de Club Ajedrez Heredia, te inscribió/.test(cs[1].texto) && !/Total:/.test(cs[1].texto));
+  const sola = C.correosDeEnvio([{ id: "d", numero: 16, rol: "jugador", nombre: "Luis", apellidos: "Brenes <b>Arias</b>", titulo: "IM", correo: "luis@ejemplo.com", torneos: ["A"], monto_usd: 0, viaje: { llegada: "2026-12-25", salida: "2026-12-30" } }]);
+  cierto("correo: una persona sola recibe el suyo; el IM, sin costo y con su hospedaje de la organización", sola.length === 1 && /Hola, Luis/.test(sola[0].texto) && /Sin costo/.test(sola[0].texto)
+    && /Los da la organización, del 25 de diciembre al 30 de diciembre/.test(sola[0].texto) && /La ropa de cama la da la organización/.test(sola[0].texto) && /MET-0016/.test(sola[0].asunto));
+  cierto("correo: lo que escribe la persona va escapado en el HTML", sola[0].html.includes("Brenes &lt;b&gt;Arias&lt;/b&gt;") && !sola[0].html.includes("<b>Arias</b>"));
+  cierto("correo: lleva la franja de Ajedrez Integral (dentro de su tabla) y a quién escribir para corregir", /logo-marca\.png/.test(sola[0].html) && /metropolitano@fcacostarica\.com/.test(sola[0].html)
+    && /<table[^>]*>\s*<tr><td style="background:#102a43/.test(sola[0].html));
+  igual("correo: sin un correo válido no se manda nada", C.correosDeEnvio([{ id: "e", numero: 17, rol: "jugador", nombre: "X", apellidos: "Y", correo: "no-es-correo" }]).length, 0);
+  igual("correo: lo pendiente se junta por envío", C.porEnvio([del, { id: "z", numero: 30 }, ana]).map((g) => g.map((x) => x.id).join(",")), ["a,b", "z"]);
+}
 // Las carpetas del Drive: el mismo código de la Edge Function metropolitano-drive.
 {
   let fuente = fs.readFileSync(path.join(RAIZ, "supabase", "functions", "metropolitano-drive", "index.ts"), "utf8")
@@ -270,6 +300,7 @@ const FILAS_FIDE = [
       && x1.origen === "fuera" && x1.acepta_compartir === true && x1.habitacion === "organizacion" && x1.acepta_hospedaje === true
       && JSON.stringify(x1.acompanantes_detalle) === JSON.stringify([{ nombre: "Luis Mora Rojas", documento: "PA123456", nacimiento: "1975-02-02", parentesco: "Padre" }]), e1);
     cierto("dice el código", /MET-0012/.test(await p.textContent("#listo-texto")));
+    cierto("y que le llega el correo de confirmación a su correo", /te llega a ana@ejemplo\.com el correo de confirmación con tu código/.test(await p.textContent("#listo-pago")), await p.textContent("#listo-pago"));
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-gafete")]);
     const pdf = fs.readFileSync(await descarga.path());
     cierto("el gafete se descarga en PDF de 10 × 14 cm, con dos páginas y sin fuentes",
@@ -753,6 +784,9 @@ const FILAS_FIDE = [
     await a.route("**/rest/v1/rpc/metropolitano_revisar", (r) => { revisado = JSON.parse(r.request().postData()); r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign({}, fila, { pago_estado: revisado.p_pago_estado })) }); });
     await a.route("**/storage/v1/object/**", (r) => r.fulfill({ contentType: "image/png", body: fs.readFileSync(path.join(RAIZ, "img", "fca-logo.png")) }));
     // (después de la ruta general de rest/v1: en Playwright manda la última que se registró)
+    let reenvio = null;
+    await a.route("**/functions/v1/metropolitano-correo", (rt) => { reenvio = JSON.parse(rt.request().postData());
+      rt.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, para: ["ana@ejemplo.com"] }) }); });
     let parqueoGuardado = null;
     await a.route("**/rest/v1/rpc/metropolitano_parqueo_estado", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ precio_usd: 10, cupos: 1, activo: true, usados: 1 }) }));
     await a.route("**/rest/v1/rpc/metropolitano_parqueo_configurar", (r) => { parqueoGuardado = JSON.parse(r.request().postData());
@@ -780,6 +814,12 @@ const FILAS_FIDE = [
     await a.waitForFunction(() => /No falta ninguna/.test(document.getElementById("drive-estado").textContent), null, { timeout: 5000 }).catch(() => {});
     cierto("«Mandar al Drive las que faltan» las manda y lo dice", driveEnviado && /No falta ninguna/.test(await a.textContent("#drive-estado")));
     await a.waitForSelector("#codigos-filas tr");
+    await a.locator("#filas details summary").first().click();
+    cierto("cada inscripción dice cómo va su correo de confirmación", /Correo de confirmación: Por mandar/.test(await a.locator("#filas details").first().textContent()));
+    await a.locator("#filas details button", { hasText: "Reenviar el correo de confirmación" }).first().click();
+    await a.getByRole("button", { name: "Reenviar el correo", exact: true }).click();
+    await a.waitForFunction(() => /se reenvió a ana@ejemplo\.com/.test(document.body.textContent));
+    igual("«Reenviar el correo de confirmación» le pide a la función esa inscripción", reenvio, { accion: "reenviar", id: "11111111-1111-1111-1111-111111111111" });
     await a.waitForFunction(() => /Lleno/.test(document.getElementById("parq-estado").textContent));
     cierto("el parqueo dice cuántos espacios se tomaron y que ya está lleno", /Lleno: 1 de 1 espacios tomados/.test(await a.textContent("#parq-estado")), await a.textContent("#parq-estado"));
     await a.fill("#parq-precio", "12.5"); await a.fill("#parq-cupos", "40");
