@@ -1434,6 +1434,92 @@ const CONTRASTE = `(sel) => {
     await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
     await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"][data-mesa="2"]', { timeout: 5000 });
     igual("una jugada imposible en la transmisión le llega como posible jugada ilegal, con la jugada y el art. 7.5.5", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'); return [/Posible jugada ilegal · Mesa 2/.test(a.textContent), /jugada imposible \(3\. Re3\)/.test(a.textContent), /7\.5\.5/.test(a.textContent)]; }), [true, true, true]);
+    // Anotar desde el aviso: la ilegal es de las blancas (3. Re3) y el cuadro de siempre llega con lo que dijo la transmisión.
+    igual("el aviso trae «Anotar la ilegal de las blancas»", await pv.$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"] [data-accion="alerta-ilegal"]', (b) => b.textContent), "Anotar la ilegal de las blancas");
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"] [data-accion="alerta-ilegal"]');
+    await pv.waitForSelector('dialog[data-avisos="formulario"] textarea');
+    igual("se abre el cuadro de la ilegal, con lo que dijo la transmisión en el detalle", await pv.evaluate(() => { const d = document.querySelector('dialog[data-avisos="formulario"]'); return [/Jugada ilegal de .* \(mesa 2\)/.test(d.textContent), /^Avisada por la transmisión: .*3\. Re3/.test(d.querySelector("textarea").value)]; }), [true, true]);
+    const anotadasAntes = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar").length);
+    await pv.click('dialog[data-avisos="formulario"] [data-avisos-aceptar]');
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "anotar").length > n, anotadasAntes, { timeout: 5000 });
+    igual("al aceptar, la ilegal queda anotada a las blancas de la mesa 2, con el aviso en la bitácora", await pv.evaluate(() => { const l = window.__llamadas.filter((x) => x.body.action === "anotar").pop().body; return [l.mesa, l.color, l.tipo, /Avisada por la transmisión/.test(l.texto)]; }), [2, "blancas", "ilegal", true]);
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    await pv.keyboard.press("Enter");
+    await pv.waitForFunction(() => !document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]'));
+    igual("y el aviso se quita solo", await pv.$$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="ilegal"]', (l) => l.length), 0);
+
+    // El final de la partida: mate en la mesa 2 → el aviso y la tarjeta ofrecen «Guardar 1-0», que pregunta antes.
+    console.log("\n=== El resultado que dice la transmisión ===");
+    for (let i = 0; i < 3; i++) { if (await pv.$("#aprobar-paso")) await pv.click("#aprobar-paso").catch(() => {}); await pv.waitForTimeout(250); }
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke.__antes || window.sb.functions.invoke;
+        const f = (fn, o) => fn !== "centroamericano-mesas-vivo" ? antes(fn, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 2, fuente: "livechess", jugadas: ["e4 5457+5", "e5 5440+20", "Bc4 5480+10", "Nc6 5450+20", "Qh5 5470+10", "Nf6 5440+20", "Qxf7# 5460+10"], primera: Date.now() - 100000, en_vivo: true, estado: "*" }] }, error: null });
+        f.__antes = antes;
+        window.sb.functions.invoke = f;
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"][data-mesa="2"]', { timeout: 5000 });
+    igual("el mate llega como «Terminó la partida», con el resultado y su botón", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'); return [/Terminó la partida · Mesa 2/.test(a.textContent), /terminó 1-0 \(jaque mate de las blancas\)/.test(a.textContent), a.querySelector('[data-accion="alerta-resultado"]').textContent]; }), [true, true, "Guardar 1-0"]);
+    await pv.waitForSelector('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]', { timeout: 5000 });
+    igual("la tarjeta de la mesa 2 también lo dice, con «Guardar 1-0» (y la mesa 1 no)", await pv.evaluate(() => [/La transmisión: 1-0 \(jaque mate de las blancas\)/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-tx-resultado').textContent), document.querySelector('.cam-mesa[data-mesa="2"] .cam-tx-resultado').checkVisibility(), !!document.querySelector('.cam-mesa[data-mesa="1"] .cam-tx-resultado')]), [true, true, false]);
+    const guardadosTx = await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
+    await pv.click('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]');
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    igual("antes de guardar, pregunta (nunca se guarda solo)", await pv.evaluate((n) => [/¿Guardar 1-0 en la mesa 2\?/.test(document.querySelector('dialog[data-avisos="confirmar"]').textContent), window.__llamadas.filter((l) => l.body.action === "guardar").length === n], guardadosTx), [true, true]);
+    await pv.keyboard.press("Escape");
+    await pv.waitForTimeout(300);
+    igual("si no confirma, no se guarda nada", await pv.evaluate((n) => window.__llamadas.filter((l) => l.body.action === "guardar").length === n, guardadosTx), true);
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"] [data-accion="alerta-resultado"]');
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    await pv.click('dialog[data-avisos="confirmar"] [data-avisos-aceptar]');
+    await pv.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "guardar").length > n, guardadosTx, { timeout: 5000 });
+    igual("al confirmar desde el aviso, guarda 1-0 en la mesa 2 con el guardar de siempre", await pv.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").pop().body.cambios.map((c) => [c.mesa, c.valor])), [[2, "1"]]);
+    await pv.waitForFunction(() => !document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'), null, { timeout: 5000 });
+    igual("con el resultado guardado, se quita el aviso y la tarjeta ya no lo ofrece", await pv.evaluate(() => [!!document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="fin"]'), !!document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="guardar-tx"]')]), [false, false]);
+
+    // El reclamo de tablas desde «Mis mesas en vivo».
+    console.log("\n=== El reclamo de tablas ===");
+    await pv.evaluate((sans) => {
+        const antes = window.sb.functions.invoke.__antes;
+        const f = (fn, o) => fn !== "centroamericano-mesas-vivo" ? antes(fn, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 1, fuente: "livechess", jugadas: sans.map((x) => x + " 5000+10"), primera: Date.now() - 900000, en_vivo: true, estado: "*" }] }, error: null });
+        f.__antes = antes;
+        window.sb.functions.invoke = f;
+    }, SANS_REP);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.abrir(1));
+    await pv.waitForSelector('#mesas-en-vivo .cv-mesa[data-mesa="1"] [data-accion="reclamo"]', { timeout: 5000 });
+    await pv.click('#mesas-en-vivo .cv-mesa[data-mesa="1"] [data-accion="reclamo"]');
+    await pv.waitForSelector('dialog[data-avisos="formulario"] input');
+    await pv.keyboard.press("Enter");
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    igual("el reclamo de la triple de ahora: procede, con dónde apareció y la advertencia de las planillas", await pv.evaluate(() => { const d = document.querySelector('dialog[data-avisos="alerta"]'); return [/Procede por triple repetición · mesa 1/.test(d.textContent), /16… Ag7, 18… Ag7 y 20… Ag7/.test(d.textContent), /compáralo con las planillas/.test(d.textContent), /9\.5/.test(d.textContent)]; }), [true, true, true, true]);
+    await pv.keyboard.press("Enter");
+    await pv.evaluate(() => document.getElementById("mesas-en-vivo").close());
+
+    // El ensayo: las mesas que juegan solas, sin anotar nada.
+    console.log("\n=== El ensayo de los avisos ===");
+    const llamadasAntesEnsayo = await pv.evaluate(() => window.__llamadas.filter((l) => ["guardar", "anotar"].includes(l.body.action)).length);
+    await pv.evaluate(() => { document.getElementById("ensayo-vivo").open = true; });
+    await pv.click("#ensayar-vivo");
+    await pv.waitForSelector('dialog[data-avisos="confirmar"]');
+    await pv.keyboard.press("Enter");
+    await pv.waitForSelector("#mesas-en-vivo .cv-ensayo", { timeout: 5000 });
+    igual("el ensayo abre «Mis mesas en vivo» con las cinco mesas de ensayo y lo dice escrito", await pv.evaluate(() => [document.querySelectorAll("#mesas-en-vivo .cv-mesa").length, /ENSAYO/.test(document.querySelector("#mesas-en-vivo .cv-ensayo").textContent), /Mesa de ensayo 1/.test(document.querySelector("#mesas-en-vivo").textContent)]), [5, true, true]);
+    // Se adelanta el reloj del ensayo para no esperar 3 minutos.
+    await pv.evaluate(() => { const R = Date; const d = 3 * 60000; window.Date = class extends R { constructor(...a) { if (a.length) super(...a); else super(R.now() + d); } static now() { return R.now() + d; } }; });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"][data-tipo="bandera"]', { timeout: 8000 });
+    igual("llegan los avisos del ensayo, marcados «ENSAYO» (triple, mate, bandera, imposible)", await pv.evaluate(() => [...document.querySelectorAll('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"]')].map((a) => a.dataset.tipo + ":" + a.dataset.mesa + ":" + /^ENSAYO · /.test(a.querySelector(".cam-alerta-vivo-titulo").textContent.trim().replace(/^\S+\s/, ""))).sort()),
+        ["bandera:3:true", "fin:2:true", "ilegal:4:true", "triple:1:true"]);
+    await pv.evaluate(() => document.getElementById("mesas-en-vivo").close());
+    await pv.click('#alertas-vivo .cam-alerta-vivo[data-ensayo="si"][data-tipo="fin"] [data-accion="alerta-resultado"]');
+    await pv.waitForSelector('dialog[data-avisos="alerta"]');
+    igual("un botón del ensayo solo explica qué haría: no guarda ni anota nada", await pv.evaluate((n) => [/En el ensayo no se anota nada/.test(document.querySelector('dialog[data-avisos="alerta"]').textContent), window.__llamadas.filter((l) => ["guardar", "anotar"].includes(l.body.action)).length === n], llamadasAntesEnsayo), [true, true]);
+    await pv.keyboard.press("Enter");
+    igual("durante el ensayo, la tablet no le pide nada a la transmisión real", await pv.evaluate(() => window.CentroamericanoArbitroVivo.enEnsayo() && window.CentroamericanoArbitroVivo.deLaMesa(2) === null), true);
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.terminarEnsayo());
+    igual("al terminar, se van los avisos del ensayo", await pv.evaluate(() => [window.CentroamericanoArbitroVivo.enEnsayo(), document.querySelectorAll('#alertas-vivo [data-ensayo="si"]').length]), [false, 0]);
     igual("sin errores en la página", vv.errores, []);
     await vv.ctx.close();
 

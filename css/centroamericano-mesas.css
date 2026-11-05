@@ -875,6 +875,16 @@ body.cam-guia-abierta { overflow: hidden; }
 .dark .cam-tx-control { border-color: #b8bbf2; }
 .cv-repeticion { font-weight: 800; color: #8a1c00; }
 .dark .cv-repeticion { color: #ffb59e; }
+/* El resultado que dice la transmisión (en «Mis mesas en vivo», #1b5e20 sobre blanco 7,9:1; #a5d6a7 sobre el fondo
+   oscuro 10,2:1) y en la tarjeta de la mesa, con su botón (los colores medidos de .cam-aviso-suave). */
+.cv-sugerencia { font-weight: 700; color: #1b5e20; }
+.dark .cv-sugerencia { color: #a5d6a7; }
+.cam-mesa-avisos .cam-tx-resultado { gap: 0.5rem; flex-wrap: wrap; }
+/* El ensayo: lo que no es real se ve distinto (borde a rayas y «ENSAYO» escrito). #4a3500 sobre #fff4cc: 10,6:1;
+   #ffe08a sobre el fondo oscuro: 13:1. */
+.cam-alerta-vivo[data-ensayo="si"] { border-style: dashed; }
+.cv-ensayo { padding: 0.5rem 0.75rem; border: 2px dashed #4a3500; border-radius: 0.6rem; background: #fff4cc; color: #4a3500; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.dark .cv-ensayo { background: rgb(255 224 138 / 0.12); color: #ffe08a; border-color: #ffe08a; }
 
 /* La banderita del país al final del nombre de cada jugador: pequeña, sin mover el texto (sigue la última línea del nombre). */
 .cam-bandera { display: inline-block; margin-inline-start: 0.4em; vertical-align: -0.12em; line-height: 0; white-space: nowrap; }
@@ -1037,6 +1047,7 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .tx-jugador { font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .tx-tablero { width: 100%; --esc-pantalla-borde: var(--cac-morado-hondo); --esc-ultima: rgb(255 196 0 / 0.45); }
 .tx-dato { font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.tx-arbitro { font-size: 0.88rem; font-weight: 700; }
 .tx-nota { font-size: 0.8rem; font-style: italic; }
 .tx-ok { font-weight: 800; color: var(--cac-verde); font-size: 0.9rem; }
 .dark .tx-ok { color: #9be0bb; }

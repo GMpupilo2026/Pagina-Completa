@@ -14,6 +14,8 @@
  *     enlaces   (principal) dónde armar «Encargados de transmisión» con sus QR
  *     contador  un número que lleva cuántos avisos hay pendientes (la pestaña del principal)
  *     alFallar  (texto) → el enlace no sirve (apagado, vencido o inexistente)
+ *     arbitroDe (tnr, mesa) → { id, nombre } o null (principal): el árbitro que tiene esa mesa, para nombrarlo en cada aviso
+ *     avisarArbitro (arbitro, texto) → Promise<boolean> (principal): «Avisarle» le manda el aviso a su tablet
  *   CentroamericanoTransmision.cargar()
  *   Puras (Node): analizar(jugadas, primera), avisos(tablero, categoria, ahora), TIPOS
  */
@@ -383,9 +385,11 @@
         if (ctx.contador) { ctx.contador.textContent = String(pend.length); ctx.contador.hidden = !pend.length; ctx.contador.setAttribute("data-urgente", urg ? "si" : "no"); }
         $("tx-lista").replaceChildren(...pend.map((y) => el("li", { class: "tx-item", "data-nivel": y.x.nivel },
             el("span", { class: "tx-nivel", texto: y.x.nivel === "urgente" ? "Ir ya" : "Mirar" }),
-            el("span", { class: "tx-item-texto" }, el("strong", { texto: y.g.c.nombre + (y.t ? " · tablero " + y.t.tablero + (y.t.cr ? " (mesa " + y.t.cr.mesa + ")" : "") : "") + ": " + y.x.titulo }), " — " + y.x.texto),
+            el("span", { class: "tx-item-texto" }, el("strong", { texto: y.g.c.nombre + (y.t ? " · tablero " + y.t.tablero + (y.t.cr ? " (mesa " + y.t.cr.mesa + ")" : "") : "") + ": " + y.x.titulo }), " — " + y.x.texto,
+                arbitroDe(y.g.c, y.t) ? el("span", { class: "tx-arbitro", texto: " Árbitro de la mesa: " + arbitroDe(y.g.c, y.t).nombre + "." }) : null),
             el("span", { class: "tx-item-botones" },
                 y.t ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => irA(y.g.c.tnr, y.t.tablero) }, "Ver el tablero") : null,
+                y.t ? botonAvisar(y.g.c, y.t, y.x) : null,
                 el("button", { type: "button", class: "cam-btn cam-btn-chico", onclick: () => atender([y.x]) }, "Ya lo revisé")))));
 
         // Las categorías.
@@ -433,7 +437,8 @@
             el("p", { class: "tx-jugador" }, el("span", { class: "tx-color", "data-color": "negras", texto: "Negras" }), el("span", { texto: negras })),
             a ? tab : null,
             a && raiz.TableroFen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(a.fen) }) : null,
-            el("p", { class: "tx-dato", texto: relojTxt }),
+            arbitroDe(c, t) ? el("p", { class: "tx-arbitro", texto: "Árbitro: " + arbitroDe(c, t).nombre }) : null,
+            el("p", { class: "tx-dato tx-reloj", texto: relojTxt }),
             jugTxt ? el("p", { class: "tx-dato", texto: jugTxt }) : null,
             t.cambio ? el("p", { class: "tx-nota", texto: "Cambiado por " + t.cambio.por + " a las " + raiz.HoraCR.hora(t.cambio.actualizado) + (t.lc ? " (LiveChess dice " + t.lc.blancas + " – " + t.lc.negras + ")" : "") }) : null,
             av.length ? el("ul", { class: "tx-avisos" }, ...av.map((x) => {
@@ -452,6 +457,23 @@
         if (sel.value && sel.value !== tnr) { sel.value = ""; pintar(); }
         const x = document.getElementById("tx-" + tnr + "-" + tablero);
         if (x) { x.scrollIntoView({ block: "center", behavior: "smooth" }); x.focus({ preventScroll: true }); }
+    }
+
+    // El árbitro de la mesa de un aviso (solo en la pestaña del principal) y el botón para avisarle.
+    function arbitroDe(c, t) {
+        return t && t.cr && ctx.arbitroDe ? ctx.arbitroDe(c.tnr, t.cr.mesa) : null;
+    }
+    function botonAvisar(c, t, x) {
+        const arb = arbitroDe(c, t);
+        if (!arb || !ctx.avisarArbitro) return null;
+        const b = el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "avisar-arbitro",
+            onclick: async () => {
+                b.disabled = true;
+                const ok = await ctx.avisarArbitro(arb, "Mesa " + t.cr.mesa + " (" + c.nombre + "): " + x.titulo + ". " + x.texto);
+                b.textContent = ok ? "✔ Avisado" : "Avisarle a " + arb.nombre;
+                b.disabled = ok;
+            } }, "Avisarle a " + arb.nombre);
+        return b;
     }
 
     async function atender(lista) {
@@ -588,7 +610,7 @@
             const p = t.partida;
             if (!x || !p || !p.reloj || !p.reloj.corre || resultadoNormal(p.resultado)) continue;
             const r = p.reloj, corre = r.hora ? Math.max(0, Math.round((ahora - r.hora) / 1000)) : 0;
-            const d = x.querySelector(".tx-dato");
+            const d = x.querySelector(".tx-reloj");
             const V = Vivo();
             if (d) d.textContent = "Blancas " + V.hms(r.blancas - (r.corre === "blancas" ? corre : 0)) + " · Negras " + V.hms(r.negras - (r.corre === "negras" ? corre : 0));
         }

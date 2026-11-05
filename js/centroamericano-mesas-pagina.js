@@ -1572,7 +1572,17 @@
         $("copia-archivo").addEventListener("change", restaurarArchivo);
         window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
         // La transmisión se lee aunque la pestaña no esté abierta (cada 10 s): su contador avisa desde cualquier pestaña.
-        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx") });
+        // Cada aviso de un tablero dice qué árbitro tiene esa mesa, con «Avisarle» (le llega a su tablet como un aviso
+        // de la organización: sin sonido, solo se ve y vibra).
+        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx"),
+            arbitroDe: (tnr, mesa) => { const a = asignaciones.find((x) => activa(x) && x.tnr === tnr && mesa >= x.mesa_desde && mesa <= x.mesa_hasta); return a ? { id: a.id, nombre: a.arbitro } : null; },
+            avisarArbitro: async (arb, texto) => {
+                const { error } = await sb.from("centroamericano_avisos").insert([{ de: "organizacion", asignacion_id: arb.id, texto: texto.slice(0, 1000) }]);
+                if (error) { avisar("No se pudo avisar: " + error.message, true); return false; }
+                avisar("Aviso enviado a " + arb.nombre + ".");
+                cargarAvisos();
+                return true;
+            } });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);

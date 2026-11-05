@@ -112,7 +112,7 @@
     // Las jugadas se pasan por chess.js hasta la primera que no es posible (`ilegal`): de ahí en adelante no se sigue
     // (la posición, las tablas y el control salen de lo que sí se jugó).
     const C = raiz.Chess || (enNode ? require("chess.js").Chess : null);
-    let legales = sans, ilegal = null, ultima = "", fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    let legales = sans, ilegal = null, ultima = "", fin = null, fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     if (C && sans.length) {
       const c = new C();
       legales = [];
@@ -124,12 +124,15 @@
         ultima = h.from + h.to;
       }
       fen = c.fen();
+      // Cómo quedó en el tablero (solo si todo lo registrado es legal): mate, ahogado o sin material para dar mate.
+      const f = (n) => (typeof c[n] === "function" ? c[n]() : false);
+      if (!ilegal) fin = f("in_checkmate") ? "mate" : f("in_stalemate") ? "ahogado" : f("insufficient_material") ? "muerta" : null;
     }
     const t = tablas(legales);
     const ultB = relojes.filter((r) => r.color === "blancas").pop(), ultN = relojes.filter((r) => r.color === "negras").pop();
     const ult = relojes[relojes.length - 1];
     return Object.assign({}, m, {
-      fen, ultima, sans, legales, ilegal,
+      fen, ultima, sans, legales, ilegal, fin,
       reloj_b: ultB && ultB.reloj != null ? ultB.reloj * 100 : null, reloj_n: ultN && ultN.reloj != null ? ultN.reloj * 100 : null,
       piensa: m.estado === "*" && ult && ult.ms != null && leida ? Math.max(0, Math.round((leida - ult.ms) / 1000)) : null,
       tablas: t,
@@ -145,7 +148,18 @@
         const clave = ronda + "|" + m.mesa + "|imposible|" + m.ilegal.ply;
         if (!vistas.has(clave)) {
           vistas.add(clave);
-          out.push({ clave, tipo: "ilegal", mesa: m.mesa, jugada: m.ilegal.jugada, texto: "La transmisión de la mesa " + m.mesa + " trae una jugada imposible (" + m.ilegal.jugada + "): puede ser una jugada ilegal, o una pieza mal puesta o mal leída por el tablero. Mira la mesa: si fue una jugada ilegal, la primera le da 2 minutos al rival y la segunda pierde la partida (art. 7.5.5)." });
+          out.push({ clave, tipo: "ilegal", mesa: m.mesa, jugada: m.ilegal.jugada, color: m.ilegal.ply % 2 === 1 ? "blancas" : "negras", texto: "La transmisión de la mesa " + m.mesa + " trae una jugada imposible (" + m.ilegal.jugada + "): puede ser una jugada ilegal, o una pieza mal puesta o mal leída por el tablero. Mira la mesa: si fue una jugada ilegal, la primera le da 2 minutos al rival y la segunda pierde la partida (art. 7.5.5)." });
+        }
+      }
+      // La partida terminó según la transmisión (mate, ahogado, sin material o el resultado que puso el tablero): el
+      // resultado para confirmar. La tablet lo ofrece solo si chess-results todavía no tiene ninguno.
+      // (La quíntuple y las 75 tienen su propio aviso, con «Guardar ½-½».)
+      const s = sugerencia(m);
+      if (s && s.por !== "cinco" && s.por !== "75") {
+        const clave = ronda + "|" + m.mesa + "|fin|" + s.valor;
+        if (!vistas.has(clave)) {
+          vistas.add(clave);
+          out.push({ clave, tipo: "fin", mesa: m.mesa, valor: s.valor, resultado: s.resultado, motivo: s.motivo, texto: "Según la transmisión, la partida de la mesa " + m.mesa + " terminó " + s.resultado + " (" + s.motivo + "). Confírmalo en la mesa y en las planillas firmadas; el resultado lo guardas tú." });
         }
       }
       const t = m.tablas;
@@ -243,6 +257,121 @@
     return out;
   }
 
+  // ---------------------------------------------------------------- el resultado que dice la transmisión
+  // Lo que se puede guardar en chess-results ("1" = 1-0, "2" = ½-½, "3" = 0-1, los valores de js/mesa-arbitro.js), con
+  // por qué. Nunca se guarda solo: la tablet lo ofrece y el árbitro lo confirma. Con una jugada imposible en la
+  // transmisión no se dice nada (lo que sigue no se puede leer). Con `ahora`, también la bandera caída.
+  const VALOR = { "1-0": "1", "½-½": "2", "0-1": "3" };
+  function sugerencia(m, ahora, leida) {
+    if (!m || m.ilegal) return null;
+    const dar = (resultado, motivo, por) => ({ valor: VALOR[resultado], resultado, motivo, por });
+    if (m.estado === "1-0" || m.estado === "0-1" || m.estado === "½-½") return dar(m.estado, "el resultado que tiene el tablero electrónico", "tablero");
+    if (m.estado && m.estado !== "*") return null;
+    if (m.fin === "mate") { const p = String(m.fen || "").split(/\s+/); return p[1] === "w" ? dar("0-1", "jaque mate de las negras", "mate") : dar("1-0", "jaque mate de las blancas", "mate"); }
+    if (m.fin === "ahogado") return dar("½-½", "ahogado, art. 5.2.1", "ahogado");
+    if (m.fin === "muerta") return dar("½-½", "ya nadie puede dar mate: posición muerta, art. 5.2.2", "muerta");
+    const t = m.tablas;
+    if (t && t.cinco) return dar("½-½", "la misma posición cinco veces, art. 9.6.1", "cinco");
+    if (t && t.setentaYCinco) return dar("½-½", "75 jugadas de cada uno sin peón ni captura, art. 9.6.2", "75");
+    if (ahora != null) {
+      const b = bandera(m, ahora, leida);
+      if (b) return b.rivalSoloRey ? dar("½-½", "cayó la bandera de las " + b.color + ", pero al rival solo le queda el rey, art. 6.9", "bandera")
+        : dar(b.color === "blancas" ? "0-1" : "1-0", "cayó la bandera de las " + b.color + ", art. 6.9", "bandera");
+    }
+    return null;
+  }
+
+  // ---------------------------------------------------------------- el reclamo de tablas, con las jugadas del tablero
+  // ¿Procede un reclamo de triple repetición (art. 9.2) o de 50 jugadas (9.3) AHORA? Quien reclama tiene el turno:
+  // o la posición de ahora ya apareció tres veces (9.2.1.2), o va a aparecer con la jugada que anotó y anuncia
+  // (`anunciada`, en la notación de la planilla: «Ag7», «Cf3», «O-O»; 9.2.1.1). Lo mismo con las 50 jugadas. Usa
+  // js/reclamos-tablas.js (la misma «misma posición» que la página de reclamos).
+  const PIEZA_EN = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
+  const aIngles = (j) => String(j || "").trim().replace(/^0-0-0/, "O-O-O").replace(/^0-0/, "O-O").replace(/^[RDTAC]/, (x) => PIEZA_EN[x]).replace(/=([DTAC])/, (_, x) => "=" + PIEZA_EN[x]);
+  function reclamo(legales, anunciada) {
+    const R = RT(), C = raiz.Chess || (enNode ? require("chess.js").Chess : null);
+    if (!R || !C) return { error: "Falta la herramienta de reclamos en esta página." };
+    const sans = (legales || []).slice();
+    let declarada = null;
+    if (anunciada && String(anunciada).trim()) {
+      const c = new C();
+      for (const x of sans) c.move(x, { sloppy: true });
+      let h = null;
+      try { h = c.move(aIngles(anunciada), { sloppy: true }); } catch (e) { h = null; }
+      if (!h) return { error: "«" + String(anunciada).trim() + "» no es una jugada legal en la posición de ahora (según el tablero). Escríbela como en la planilla: Ag7, Cf3, exd5, O-O." };
+      declarada = h.san;
+    }
+    const conTodo = declarada ? sans.concat([declarada]) : sans;
+    if (!conTodo.length) return { error: "Todavía no hay jugadas en esta mesa." };
+    let a;
+    try { a = R.analizar(pgnDe(conTodo)); } catch (e) { a = null; }
+    if (!a || a.error || !a.posiciones) return { error: "No se pudieron leer las jugadas de esta mesa." };
+    const P = a.posiciones, ahora = P[sans.length], despues = declarada ? P[sans.length + 1] : null;
+    const lista = (xs) => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1];
+    // Dónde apareció: «al empezar y después de 12… Ag7 y 14… Ag7».
+    const donde = (ks) => {
+      const tras = ks.filter((k) => k > 0).map((k) => a.jugadas[k - 1].rotulo + " " + esp(a.jugadas[k - 1].san));
+      const t = tras.length ? "después de " + lista(tras) : "";
+      return ks.includes(0) ? "al empezar" + (t ? " y " + t : "") : t;
+    };
+    const turno = ahora.turno === "w" ? "blancas" : "negras";
+    const jugadaTxt = declarada ? a.jugadas[sans.length].rotulo + " " + esp(declarada) : null;
+    const veces = (n) => (n === 1 ? "una vez" : n + " veces");
+    // Triple repetición
+    let triple;
+    if (ahora.vez >= 3) triple = { procede: true, texto: "Procede (art. 9.2.1.2): con las " + turno + " al turno, la posición de ahora ya apareció " + veces(ahora.vez) + ": " + donde(ahora.antes) + "." };
+    else if (despues && despues.vez >= 3) triple = { procede: true, texto: "Procede si las " + turno + " anotaron " + jugadaTxt + " en la planilla y declararon que la van a hacer, sin hacerla (art. 9.2.1.1): con esa jugada la posición aparece por " + ["", "primera", "segunda", "tercera", "cuarta", "quinta"][Math.min(despues.vez, 5)] + " vez: " + donde(despues.antes) + "." };
+    else triple = { procede: false, texto: "No procede: la posición de ahora apareció " + veces(ahora.vez) + (ahora.vez > 1 ? " (" + donde(ahora.antes) + ")" : "") + (despues ? " y la que deja " + jugadaTxt + ", " + veces(despues.vez) : "") + "; hacen falta tres (art. 9.2)." };
+    // 50 jugadas
+    const cuenta = (p) => Math.floor(p.reloj / 2);
+    const desde = (p) => (p.reloj && p.ply - p.reloj + 1 >= 1 ? " (la cuenta empezó con " + a.jugadas[p.ply - p.reloj].rotulo + " " + esp(a.jugadas[p.ply - p.reloj].san) + ")" : "");
+    let cincuenta;
+    if (ahora.reloj >= 100) cincuenta = { procede: true, texto: "Procede (art. 9.3.2): cada jugador lleva " + cuenta(ahora) + " jugadas sin mover un peón ni capturar" + desde(ahora) + "." };
+    else if (despues && despues.reloj >= 100) cincuenta = { procede: true, texto: "Procede si las " + turno + " anotaron " + jugadaTxt + " en la planilla y declararon que la van a hacer (art. 9.3.1): con esa jugada se completan las 50 de cada uno sin peón ni captura" + desde(despues) + "." };
+    else cincuenta = { procede: false, texto: "No procede: llevan " + cuenta(despues && despues.reloj > ahora.reloj ? despues : ahora) + " jugadas de cada uno sin mover un peón ni capturar" + desde(despues && despues.reloj > ahora.reloj ? despues : ahora) + "; hacen falta 50 (art. 9.3)." };
+    return { turno, declarada: jugadaTxt, fen: (despues || ahora).fen, triple, cincuenta };
+  }
+
+  // ---------------------------------------------------------------- el ensayo: partidas que corren solas, para practicar
+  // Para que el árbitro vea cada aviso antes del torneo, sin tableros: cinco «mesas de ensayo» que avanzan una jugada
+  // cada pocos segundos y terminan en lo que hay que practicar. Las jugadas están comprobadas con chess.js
+  // (verificar-centroamericano-mesas-vivo.js): la triple repetición es la de verdad, la imposible lo es de verdad.
+  // En el ensayo NADA se anota (ni en chess-results ni en la bitácora): los botones dicen qué harían en una ronda.
+  const PASO_MS = 3000;   // en segundos enteros: LiveChess manda lo pensado sin decimales
+  const ENSAYO_MS = 4 * 60000;
+  const ESCENARIOS = [
+    { mesa: 1, que: "triple", base: 5400, inc: 30, desde: 30,
+      sans: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Na5 Bc2 c5 d4 Qc7 Nbd2 Bd7 Nf1 Rfe8 Ng3 g6 Bg5 Bf8 Qd2 Bg7 Bh6 Bh8 Bg5 Bg7 Bh6 Bh8 Bg5 Bg7" },
+    { mesa: 2, que: "mate", base: 5400, inc: 30, desde: 2, sans: "e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#" },
+    { mesa: 3, que: "bandera", base: 25, inc: 0, desde: 2, sans: "e4 e5 Nf3 Nc6 Bc4 Bc5" },
+    { mesa: 4, que: "imposible", base: 5400, inc: 30, desde: 8, sans: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 Ke3 h6" },
+    { mesa: 5, que: "noregistrada", base: 5400, inc: 30, desde: 2, sans: "d4 d5 c4 e6 Nc3 Nf6" },
+  ];
+  // Las mesas del ensayo a la hora `ahora`, con la forma de lo que contesta la función (LiveChess).
+  function datosEnsayo(inicio, ahora) {
+    const gasto = PASO_MS / 1000;
+    const mesas = ESCENARIOS.map((e) => {
+      const todas = e.sans.split(" ");
+      const n = Math.min(todas.length, e.desde + Math.max(0, Math.floor((ahora - inicio) / PASO_MS)));
+      const primera = inicio - (e.desde - 1) * PASO_MS;
+      const rel = { blancas: e.base, negras: e.base };
+      const jugadas = todas.slice(0, n).map((s, i) => {
+        const color = i % 2 === 0 ? "blancas" : "negras";
+        if (i > 1) rel[color] = rel[color] - gasto + e.inc;
+        return s + " " + Math.round(rel[color]) + "+" + (i === 0 ? 0 : gasto);
+      });
+      const ultMs = primera + Math.max(0, n - 1) * PASO_MS;
+      const terminada = n === todas.length;
+      // El reloj de la mesa: corre para quien tiene el turno; en «noregistrada», al final corre para quien ya jugó
+      // (su rival apretó el reloj, pero el tablero no vio la jugada).
+      const turnoBlancas = n % 2 === 0;
+      const run = e.que === "noregistrada" && terminada ? !turnoBlancas : turnoBlancas;
+      return { mesa: e.mesa, fuente: "livechess", ensayo: e.que, jugadas, primera, en_vivo: true, estado: "*",
+        reloj: { white: Math.round(rel.blancas), black: Math.round(rel.negras), run, time: e.que === "noregistrada" && terminada ? ultMs + 1000 : ultMs } };
+    });
+    return { ok: true, conectada: true, fuente: "livechess", ronda: "ensayo", delay: 0, ensayo: true, mesas, no_reconoce: [] };
+  }
+
   // Los relojes de ahora: el de quien tiene el turno sigue corriendo desde la lectura (lo que llevaba pensando + lo
   // que pasó desde que se leyó). Los relojes vienen en centésimas.
   function relojes(m, ahora, leida) {
@@ -284,6 +413,7 @@
 
   // ---------------------------------------------------------------- en el navegador
   let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null, ultimaLectura = 0;
+  let ensayo = null;   // { inicio, antes: { datos, leidaMs, conectada } } mientras se ensaya
   const vistas = new Set();
   const pendientesIlegal = new Map();   // las jugadas no registradas que se están esperando (alertasNoRegistrada)
 
@@ -299,12 +429,25 @@
     return n;
   }
 
+  // El ensayo no pide nada: arma sus mesas a esta hora (sin `await`, así que va aparte de `pidiendo`).
+  function leerEnsayo() {
+    if (Date.now() - ensayo.inicio > ENSAYO_MS) { terminarEnsayo(); return datos; }
+    leidaMs = ultimaLectura = preguntado = Date.now();
+    datos = Object.assign({}, datosEnsayo(ensayo.inicio, leidaMs));
+    datos.mesas = datos.mesas.map((m) => normalizar(m, leidaMs));
+    alertasNuevas(datos.mesas, "ensayo", vistas).forEach((a) => o.alAlertar && o.alAlertar(Object.assign(a, { ensayo: true }), {}));
+    pintar();
+    return datos;
+  }
+
   function leer() {
+    if (ensayo) return Promise.resolve(leerEnsayo());
     if (pidiendo) return pidiendo;
     pidiendo = (async () => {
       try {
         const { data, error } = await raiz.sb.functions.invoke("centroamericano-mesas-vivo", { body: { action: "mesas", arbitro_token: o.token() } });
         preguntado = Date.now();
+        if (ensayo) return datos;   // empezó un ensayo mientras se leía: lo real se guarda para después
         if (error || !data || !data.ok) { if (data && data.conectada === false) conectada = false; return datos; }
         conectada = !!data.conectada;
         if (conectada) {
@@ -318,6 +461,7 @@
         }
         if (o.boton) o.boton.hidden = !conectada;
         pintar();
+        if (o.alActualizar) o.alActualizar();
         return datos;
       } catch (e) {
         return datos;   // sin red: se queda con lo último y lo dice la hora
@@ -334,7 +478,7 @@
     const ahora = Date.now();
     if (!datos) { cuerpo.replaceChildren(el("p", { texto: "Leyendo tus mesas…" })); return; }
     const aviso = [];
-    aviso.push(el("p", { class: "text-sm cv-hora", role: "status", texto: "Sin atraso" + (datos.fuente === "livechess" ? " (LiveChess)" : "") + " · leído a las " + raiz.HoraCR.hora(new Date(leidaMs).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + " · se actualiza cada 10 s." }));
+    aviso.push(el("p", { class: "text-sm cv-hora", role: "status", texto: (datos.ensayo ? "Ensayo" : "Sin atraso" + (datos.fuente === "livechess" ? " (LiveChess)" : "")) + " · leído a las " + raiz.HoraCR.hora(new Date(leidaMs).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + " · se actualiza cada " + (datos.ensayo ? PASO_MS / 1000 : 10) + " s." }));
     if (datos.delay > 0) aviso.push(el("p", { class: "text-sm cam-apagado-ojo", texto: "⚠ La transmisión privada tiene un atraso de " + Math.round(datos.delay / 60) + " min: avísale a la organización (debe ir en 0)." }));
     if (!datos.mesas.length) aviso.push(el("p", { texto: "Ninguna de tus mesas está en la transmisión (solo se transmiten las que tienen tablero electrónico)." }));
     for (const x of datos.no_reconoce || []) aviso.push(el("p", { class: "text-sm", texto: "Mesa " + x.mesa + ": " + x.motivo + " Anota a mano como siempre." }));
@@ -348,14 +492,19 @@
         bandera(m, ahora, leidaMs) ? "Bandera caída: a las " + bandera(m, ahora, leidaMs).color + " se les acabó el tiempo." : "",
         m.ilegal ? "Jugada imposible en la transmisión (" + m.ilegal.jugada + "): ¿una jugada ilegal?" : noRegistrada(m) ? "El tablero no registró la última jugada de las " + noRegistrada(m).sospechoso + ": ¿una jugada ilegal?" : "",
       ].filter(Boolean).join(" ");
+      const sug = sugerencia(m, ahora, leidaMs);
       return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa), "data-repeticion": rep ? "si" : null },
-        el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: "Mesa " + m.mesa })),
+        el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: (datos.ensayo ? "Mesa de ensayo " : "Mesa ") + m.mesa })),
         tab,
         el("p", { class: "text-sm cv-texto", texto: texto(m, ahora, leidaMs) }),
         rep ? el("p", { class: "text-sm cv-repeticion", texto: "⚖ " + rep }) : null,
+        sug ? el("p", { class: "text-sm cv-sugerencia", texto: "🏁 Según la transmisión: " + sug.resultado + " (" + sug.motivo + ")." }) : null,
+        (m.legales || []).length ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "reclamo", onclick: () => revisarReclamo(m.mesa) }, "⚖ Reclamo de tablas") : null,
         raiz.TableroFen && m.fen ? el("p", { class: "sr-only", texto: raiz.TableroFen.describir(m.fen) }) : null);
     });
     // No repintar bajo el dedo: lo único que cambia cada segundo es el texto de los relojes.
+    if (datos.ensayo) aviso.unshift(el("p", { class: "cv-ensayo", role: "status" }, el("strong", { texto: "ENSAYO: " }), "estas mesas no existen; corren solas para que veas cada aviso. No se anota nada. Los avisos reales de tus mesas no llegan mientras ensayas. ",
+      el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "terminar-ensayo", onclick: () => terminarEnsayo() }, "Terminar el ensayo")));
     cuerpo.replaceChildren(...aviso, el("div", { class: "cv-mesas" }, ...tarjetas));
   }
 
@@ -384,6 +533,48 @@
     if (mesa) { const t = dialogo.querySelector('.cv-mesa[data-mesa="' + mesa + '"]'); if (t) t.scrollIntoView({ block: "center" }); }
   }
 
+  // El reclamo de tablas de una mesa: el árbitro escribe (si la hay) la jugada que el jugador anotó y anuncia.
+  async function revisarReclamo(mesa) {
+    const A = raiz.Avisos;
+    const m = datos && datos.mesas.find((x) => x.mesa === Number(mesa));
+    if (!A || !m) return;
+    const turno = String(m.fen || "").split(/\s+/)[1] === "b" ? "negras" : "blancas";
+    const r1 = await A.formulario({
+      titulo: "Reclamo de tablas · " + (datos.ensayo ? "mesa de ensayo " : "mesa ") + mesa,
+      texto: "Con las jugadas que registró el tablero (" + (m.legales || []).length + " jugadas a medias). Le toca a las " + turno + ": quien reclama tiene el turno.",
+      campos: [{ nombre: "jugada", etiqueta: "Si reclama con una jugada que anotó y todavía no hizo, escríbela (opcional: Ag7, Cf3, O-O)", max: 10 }],
+      aceptar: "Revisar el reclamo",
+    });
+    if (r1 === null) return;
+    const r = reclamo(m.legales, r1.jugada);
+    if (r.error) { await A.alerta(r.error, { titulo: "No se pudo revisar", aceptar: "Entendido" }); return; }
+    await A.alerta("Triple repetición: " + r.triple.texto + "\n\n50 jugadas: " + r.cincuenta.texto + "\n\nEs una ayuda con lo que registró el tablero: compáralo con las planillas antes de decidir. Si un reclamo no procede, al rival se le suman 2 minutos y, si había una jugada anunciada, hay que hacerla (art. 9.5).",
+      { titulo: (r.triple.procede && r.cincuenta.procede ? "Procede por las dos" : r.triple.procede ? "Procede por triple repetición" : r.cincuenta.procede ? "Procede por las 50 jugadas" : "No procede") + " · mesa " + mesa, aceptar: "Entendido" });
+  }
+
+  // El ensayo: mientras dura, la tablet lee las mesas de ensayo y no la transmisión (lo real vuelve al terminar).
+  function iniciarEnsayo() {
+    if (ensayo) { abrir(); return; }
+    for (const k of [...vistas]) if (k.startsWith("ensayo|")) vistas.delete(k);
+    for (const k of [...pendientesIlegal.keys()]) if (k.startsWith("ensayo|")) pendientesIlegal.delete(k);
+    ensayo = { inicio: Date.now(), antes: { datos, leidaMs, conectada } };
+    conectada = true;
+    datos = null;
+    pidiendo = null;
+    abrir();
+  }
+  function terminarEnsayo() {
+    if (!ensayo) return;
+    const a = ensayo.antes;
+    ensayo = null;
+    datos = a.datos; leidaMs = a.leidaMs; conectada = a.conectada;
+    preguntado = 0; ultimaLectura = 0;
+    if (o && o.boton) o.boton.hidden = !conectada;
+    if (o && o.alTerminarEnsayo) o.alTerminarEnsayo();
+    if (dialogo && dialogo.open) dialogo.close();
+    setTimeout(leer, 0);
+  }
+
   function iniciar(op) {
     o = op;
     if (o.boton) { o.boton.hidden = true; o.boton.addEventListener("click", () => abrir()); }
@@ -396,30 +587,38 @@
       // La bandera se mira cada segundo (el reloj corre entre lecturas), pero solo con datos de hace menos de 30 s:
       // sin señal, una lectura vieja no puede dar una bandera que no cayó.
       if (conectada && datos && o.alAlertar && Date.now() - leidaMs < 30000) {
-        alertasBandera(datos.mesas, datos.ronda, Date.now(), leidaMs, vistas).forEach((a) => o.alAlertar(a, {}));
-        alertasNoRegistrada(datos.mesas, datos.ronda, Date.now(), vistas, pendientesIlegal).forEach((a) => o.alAlertar(a, {}));
+        const marca = (a) => (datos.ensayo ? Object.assign(a, { ensayo: true }) : a);
+        alertasBandera(datos.mesas, datos.ronda, Date.now(), leidaMs, vistas).forEach((a) => o.alAlertar(marca(a), {}));
+        alertasNoRegistrada(datos.mesas, datos.ronda, Date.now(), vistas, pendientesIlegal).forEach((a) => o.alAlertar(marca(a), {}));
       }
       // En el modo liviano (tablet vieja o lenta, js/modo-liviano.js), con transmisión cada 20 s en vez de 10.
       const lenta = raiz.ModoLiviano && raiz.ModoLiviano.activo();
-      const espera = conectada ? (lenta ? 2 * CADA_MS : CADA_MS) : SIN_CONEXION_MS;
+      const espera = ensayo ? PASO_MS : conectada ? (lenta ? 2 * CADA_MS : CADA_MS) : SIN_CONEXION_MS;
       if (Date.now() - Math.max(preguntado, ultimaLectura) >= espera) leer();
     }, 1000);
   }
 
   // La última lectura de una mesa (o null), con la hora en que se leyó: para el control de tiempos y el reloj apagado.
   function deLaMesa(mesa) {
-    if (!conectada || !datos) return null;
+    if (ensayo || !conectada || !datos) return null;
     const m = datos.mesas.find((x) => x.mesa === Number(mesa));
     return m ? { m, leida: leidaMs, delay: datos.delay || 0 } : null;
   }
   function noReconoce(mesa) {
-    if (!conectada || !datos) return null;
+    if (ensayo || !conectada || !datos) return null;
     const x = (datos.no_reconoce || []).find((y) => y.mesa === Number(mesa));
     return x ? x.motivo : null;
   }
 
+  // La sugerencia de resultado de una mesa real (para su tarjeta), con la bandera calculada a esta hora.
+  function sugerenciaDe(mesa) {
+    const v = deLaMesa(mesa);
+    return v && Date.now() - v.leida < 60000 ? sugerencia(v.m, Date.now(), v.leida) : null;
+  }
+
   const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, noRegistrada, alertasNoRegistrada, pgnDe, esp,
-    iniciar, leer, abrir, deLaMesa, noReconoce, conectada: () => conectada };
+    sugerencia, reclamo, aIngles, datosEnsayo, ESCENARIOS, PASO_MS,
+    iniciar, leer, abrir, deLaMesa, noReconoce, sugerenciaDe, revisarReclamo, iniciarEnsayo, terminarEnsayo, enEnsayo: () => !!ensayo, conectada: () => conectada };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoArbitroVivo = api;
 })(typeof self !== "undefined" ? self : this);
