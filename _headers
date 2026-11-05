@@ -80,6 +80,16 @@
   ! Permissions-Policy
   Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
 
+# La acreditación del Metropolitano (metropolitano-acreditacion.html, solo administración)
+# lee el QR del gafete con la cámara del celular en la entrada.
+/metropolitano-acreditacion
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
+/metropolitano-acreditacion.html
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
 # El service worker y el manifest NO se cachean. Si el navegador se queda con
 # un sw.js viejo, la app deja de actualizarse y no hay forma de avisarle a
 # nadie: sigue sirviendo lo de antes sin dar ningún error.

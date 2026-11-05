@@ -159,6 +159,8 @@ tabla  licencias_herramientas  rls=true
 tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
 tabla  metropolitano_codigos  rls=true
+tabla  metropolitano_enlaces  rls=true
+tabla  metropolitano_hospedaje  rls=true
 tabla  metropolitano_inscripciones  rls=true
 tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
@@ -1683,6 +1685,13 @@ columna  metropolitano_codigos.nota  text
 columna  metropolitano_codigos.porcentaje  integer
 columna  metropolitano_codigos.usado_en  timestamp with time zone
 columna  metropolitano_codigos.usado_por  uuid
+columna  metropolitano_enlaces.creado  timestamp with time zone
+columna  metropolitano_enlaces.inscripcion  uuid
+columna  metropolitano_enlaces.token  text
+columna  metropolitano_hospedaje.actualizado  timestamp with time zone
+columna  metropolitano_hospedaje.actualizado_por  uuid
+columna  metropolitano_hospedaje.camas  integer
+columna  metropolitano_hospedaje.id  boolean
 columna  metropolitano_inscripciones.accesibilidad  text
 columna  metropolitano_inscripciones.acepta_compartir  boolean
 columna  metropolitano_inscripciones.acepta_datos  boolean
@@ -1693,6 +1702,8 @@ columna  metropolitano_inscripciones.acepta_reglamento  boolean
 columna  metropolitano_inscripciones.acepta_seguro  boolean
 columna  metropolitano_inscripciones.acompanantes  integer
 columna  metropolitano_inscripciones.acompanantes_detalle  jsonb
+columna  metropolitano_inscripciones.acreditado_en  timestamp with time zone
+columna  metropolitano_inscripciones.acreditado_por  uuid
 columna  metropolitano_inscripciones.apellidos  text
 columna  metropolitano_inscripciones.canton  text
 columna  metropolitano_inscripciones.clasico  text
@@ -1707,6 +1718,7 @@ columna  metropolitano_inscripciones.confirmacion_en  timestamp with time zone
 columna  metropolitano_inscripciones.confirmacion_error  text
 columna  metropolitano_inscripciones.confirmacion_intentos  integer
 columna  metropolitano_inscripciones.confirmacion_tomado  timestamp with time zone
+columna  metropolitano_inscripciones.corregido_en  timestamp with time zone
 columna  metropolitano_inscripciones.correo  text
 columna  metropolitano_inscripciones.creado  timestamp with time zone
 columna  metropolitano_inscripciones.delegacion  text
@@ -1720,6 +1732,10 @@ columna  metropolitano_inscripciones.elo_blitz  integer
 columna  metropolitano_inscripciones.elo_estandar  integer
 columna  metropolitano_inscripciones.elo_rapido  integer
 columna  metropolitano_inscripciones.emergencia  jsonb
+columna  metropolitano_inscripciones.enlace_enviado_en  timestamp with time zone
+columna  metropolitano_inscripciones.enlace_error  text
+columna  metropolitano_inscripciones.enlace_pedido_en  timestamp with time zone
+columna  metropolitano_inscripciones.enlace_tomado  timestamp with time zone
 columna  metropolitano_inscripciones.es_delegado  boolean
 columna  metropolitano_inscripciones.estado  text
 columna  metropolitano_inscripciones.exoneracion_version  text
@@ -1744,6 +1760,11 @@ columna  metropolitano_inscripciones.nombre_fide  text
 columna  metropolitano_inscripciones.nota_organizacion  text
 columna  metropolitano_inscripciones.numero  integer
 columna  metropolitano_inscripciones.origen  text
+columna  metropolitano_inscripciones.pago_aviso_en  timestamp with time zone
+columna  metropolitano_inscripciones.pago_aviso_error  text
+columna  metropolitano_inscripciones.pago_aviso_estado  text
+columna  metropolitano_inscripciones.pago_aviso_intentos  integer
+columna  metropolitano_inscripciones.pago_aviso_tomado  timestamp with time zone
 columna  metropolitano_inscripciones.pago_estado  text
 columna  metropolitano_inscripciones.pago_fecha  date
 columna  metropolitano_inscripciones.pago_metodo  text
@@ -2939,12 +2960,17 @@ funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=fal
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
+funcion  interno.metropolitano_avisos_hay()  definer  anon=false  auth=false
 funcion  interno.metropolitano_correo_avisa()  definer  anon=false  auth=false
 funcion  interno.metropolitano_correo_tocar()  definer  anon=false  auth=false
+funcion  interno.metropolitano_dia(d date)  invoker  anon=false  auth=false
 funcion  interno.metropolitano_drive_tocar()  definer  anon=false  auth=false
 funcion  interno.metropolitano_factura(f jsonb)  invoker  anon=false  auth=false
+funcion  interno.metropolitano_noches()  definer  anon=false  auth=false
+funcion  interno.metropolitano_pago_envio(p_id uuid)  definer  anon=false  auth=false
 funcion  interno.metropolitano_parqueo_usados()  definer  anon=false  auth=false
 funcion  interno.metropolitano_persona(x jsonb, hoy date, v_metodo text, p_correo_obligatorio boolean)  invoker  anon=false  auth=false
+funcion  interno.metropolitano_principal(p_id uuid)  definer  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
@@ -3030,16 +3056,26 @@ funcion  mediciones_de_partidas(p_dias integer)  definer  anon=false  auth=true
 funcion  mensajes_casa_de(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
+funcion  metropolitano_acreditar(p_id uuid, p_llego boolean)  definer  anon=false  auth=true
+funcion  metropolitano_avisos_tomar()  definer  anon=false  auth=false
 funcion  metropolitano_codigo_anular(p_codigo text)  definer  anon=false  auth=true
 funcion  metropolitano_codigo_ver(p_codigo text)  definer  anon=true  auth=true
 funcion  metropolitano_codigos_crear(p_porcentaje integer, p_cantidad integer, p_nota text)  definer  anon=false  auth=true
+funcion  metropolitano_corregir(p_token text, p jsonb)  definer  anon=true  auth=true
 funcion  metropolitano_correo_aviso()  definer  anon=false  auth=false
 funcion  metropolitano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  metropolitano_drive_leer()  definer  anon=false  auth=false
+funcion  metropolitano_hospedaje_configurar(p_camas integer)  definer  anon=false  auth=true
+funcion  metropolitano_hospedaje_estado()  definer  anon=false  auth=true
+funcion  metropolitano_hospedaje_ver()  definer  anon=true  auth=true
 funcion  metropolitano_inscribir(p jsonb)  definer  anon=true  auth=true
+funcion  metropolitano_logistica()  definer  anon=false  auth=true
+funcion  metropolitano_mi_inscripcion(p_token text)  definer  anon=true  auth=true
 funcion  metropolitano_parqueo_configurar(p_precio numeric, p_cupos integer, p_activo boolean)  definer  anon=false  auth=true
 funcion  metropolitano_parqueo_estado()  definer  anon=false  auth=true
 funcion  metropolitano_parqueo_ver()  definer  anon=true  auth=true
+funcion  metropolitano_pedir_enlace(p_codigo text, p_correo text)  definer  anon=true  auth=true
+funcion  metropolitano_quien_viene()  definer  anon=true  auth=true
 funcion  metropolitano_recibe()  invoker  anon=true  auth=true
 funcion  metropolitano_revisar(p_id uuid, p_pago_estado text, p_estado text, p_nota text)  definer  anon=false  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
@@ -3547,6 +3583,7 @@ politica  mensajes_casa  mensajes_casa_delete  DELETE
 politica  mensajes_casa  mensajes_casa_insert  INSERT
 politica  mensajes_casa  mensajes_casa_select  SELECT
 politica  metropolitano_codigos  metropolitano_codigos_ver  SELECT
+politica  metropolitano_hospedaje  metropolitano_hospedaje_ver  SELECT
 politica  metropolitano_inscripciones  metropolitano_ver  SELECT
 politica  metropolitano_parqueo  metropolitano_parqueo_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
@@ -3871,8 +3908,10 @@ trigger  licencias_herramientas  auditar
 trigger  material_compartido  auditar
 trigger  mensajes_casa  mensajes_casa_al_crear
 trigger  metropolitano_codigos  auditar
+trigger  metropolitano_hospedaje  auditar
 trigger  metropolitano_inscripciones  auditar
 trigger  metropolitano_inscripciones  metropolitano_correo_avisa
+trigger  metropolitano_inscripciones  metropolitano_pago_avisa
 trigger  metropolitano_parqueo  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
@@ -4291,6 +4330,9 @@ indice  mensajes_casa  mensajes_casa_autor
 indice  mensajes_casa  mensajes_casa_pkey
 indice  metropolitano_codigos  metropolitano_codigos_pkey
 indice  metropolitano_codigos  metropolitano_codigos_usado_por_key
+indice  metropolitano_enlaces  metropolitano_enlaces_pkey
+indice  metropolitano_enlaces  metropolitano_enlaces_token_key
+indice  metropolitano_hospedaje  metropolitano_hospedaje_pkey
 indice  metropolitano_inscripciones  metropolitano_inscripciones_numero_key
 indice  metropolitano_inscripciones  metropolitano_inscripciones_pkey
 indice  metropolitano_inscripciones  metropolitano_por_correo
@@ -5300,6 +5342,7 @@ grant  mensajes_casa  authenticated  REFERENCES
 grant  mensajes_casa  authenticated  SELECT
 grant  mensajes_casa  authenticated  TRIGGER
 grant  metropolitano_codigos  authenticated  SELECT
+grant  metropolitano_hospedaje  authenticated  SELECT
 grant  metropolitano_inscripciones  authenticated  REFERENCES
 grant  metropolitano_inscripciones  authenticated  SELECT
 grant  metropolitano_inscripciones  authenticated  TRIGGER

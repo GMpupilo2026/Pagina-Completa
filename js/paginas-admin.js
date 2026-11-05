@@ -61,6 +61,7 @@
             { emoji: "📷", label: "Notara: la cámara que lee el tablero", desc: "Prueba: el celular encima de un tablero de verdad lee las casillas y anota las jugadas", href: "camara-tablero.html", zona: "contenido" },
             { emoji: "🔎", label: "Ficha del jugador federado", desc: "Busca a una persona: su historial de torneos de chess-results, su rendimiento y su Elo nacional", href: "admin-jugador.html", zona: "contenido" },
             { emoji: "♟️", label: "Inscritos al Metropolitano 2026", desc: "Las inscripciones al torneo de la FCA: datos, foto, comprobante, pago verificado y gafete de cada jugador", href: "metropolitano-inscritos.html", zona: "contenido" },
+            { emoji: "🎫", label: "Acreditación del Metropolitano 2026", desc: "En la entrada del torneo: escanear el QR del gafete o buscar por nombre, código o placa, y marcar quién llegó", href: "metropolitano-acreditacion.html", zona: "contenido" },
             { emoji: "🪪", label: "Creación de gafetes", desc: "Los gafetes de un evento desde un Excel: diseño con vista previa y PDF listo para la imprenta", href: "gafetes.html", zona: "contenido" },
             { emoji: "🏅", label: "Selección por parámetros", desc: "La selección CODICADER desde chess-results, en vivo ronda a ronda", href: "seleccion-codicader.html", zona: "contenido" },
             { emoji: "🏆", label: "Resultados JDN por comité", desc: "Medallero y ficha de cada comité en los Juegos Deportivos Nacionales, de 2018 a hoy", href: "jdn-comites.html", zona: "contenido" },

@@ -17,6 +17,13 @@
 // y mi mesa» de cada jugador (el mismo del QR del gafete) y a la página del
 // torneo, y el contacto de la organización. Ver «Los correos de confirmación»
 // en docs/decisiones/cuentas-y-formularios.md.
+//
+// LOS OTROS CORREOS (de quien mandó el envío)
+// - El del pago: verificado, o rechazado con el motivo y el enlace para subir
+//   otro comprobante (correoPago).
+// - El enlace para corregir la inscripción, cuando lo pide otra vez con su
+//   código (correoEnlace). El mismo enlace va también en la confirmación.
+//   Ver «Los correos del pago» y «Corregir la inscripción».
 
 import { cabeceraCorreo } from "./marca-correo.ts";
 
@@ -33,12 +40,14 @@ export type Fila = {
 export type Correo = { para: string; asunto: string; html: string; texto: string; ids: string[] };
 
 const PAGINA = "https://ajedrez-integral.com/metropolitano-2026";
+// El enlace para corregir: el secreto va detrás del #, que no viaja al servidor.
+export const enlaceCorregir = (token?: string | null) => (token ? "https://ajedrez-integral.com/metropolitano-mi-inscripcion.html#t=" + token : "");
 export const CONTACTO = "metropolitano@fcacostarica.com";
 const WHATSAPP = "https://chat.whatsapp.com/HMN8sTyhZ8sAayt39m7XIV";
 const TORNEOS: Record<string, string> = { A: "Metropolitano A", B: "Metropolitano B", U14: "Metropolitano U14", BLITZ: "Metropolitano Blitz" };
 const ROLES: Record<string, [string, string]> = {
   jugador: ["Jugador", "Jugadora"], entrenador: ["Entrenador", "Entrenadora"],
-  acompanante: ["Acompañante", "Acompañante"], delegado: ["Delegado", "Delegada"],
+  acompanante: ["Acompañante", "Acompañante"], delegado: ["Delegado", "Delegada"], arbitro: ["Árbitro", "Árbitra"],
 };
 const TITULADOS = ["GM", "IM", "WGM"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -85,7 +94,20 @@ const pagoTexto = (filas: Fila[]) => {
   return "Total: " + dinero(total) + ". La organización revisa el comprobante de pago y te avisa cuando quede verificado.";
 };
 
-function cuerpo(filas: Fila[], intro: string, conTotal: boolean) {
+// El marco de todos los correos: la franja de la marca con su título y el contenido.
+function marco(titulo: string, contenido: string) {
+  return `<!doctype html><html lang="es"><body style="margin:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif">`
+    + `<div style="max-width:600px;margin:0 auto;background:#ffffff">`
+    // (la franja es una fila de tabla: suelta, muchos programas de correo la botan)
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">`
+    + cabeceraCorreo(null, titulo) + `</table>`
+    + `<div style="padding:20px 22px">` + contenido + `</div></div></body></html>`;
+}
+const botonCorregir = (enlace: string, texto: string) => enlace
+  ? `<p style="margin:0 0 14px"><a href="${esc(enlace)}" style="display:inline-block;background:#102a43;color:#ffffff;font-weight:bold;text-decoration:none;padding:10px 16px;border-radius:8px">${esc(texto)}</a></p>`
+  : "";
+
+function cuerpo(filas: Fila[], intro: string, conTotal: boolean, enlace = "") {
   const hosp = filas.filter((x) => x.hospedaje || esTitulado(x));
   const titul = hosp.length > 0 && hosp.every(esTitulado);
   const bloquesHtml = filas.map((x) => {
@@ -105,32 +127,27 @@ function cuerpo(filas: Fila[], intro: string, conTotal: boolean) {
       + (titul ? "La ropa de cama la da la organización." : "Se da solo el espacio y la cama: trae sábanas, almohada, cobija o saco de dormir y toalla (no hay ropa de cama ni cortinas; a los GM, IM y WGM se la da la organización).")
       + ` <a href="${PAGINA}#hospedaje" style="color:#0b5cad">Todas las condiciones →</a></p></div>`
     : "";
-  const html = `<!doctype html><html lang="es"><body style="margin:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif">`
-    + `<div style="max-width:600px;margin:0 auto;background:#ffffff">`
-    // (la franja es una fila de tabla: suelta, muchos programas de correo la botan)
-    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">`
-    + cabeceraCorreo(null, "Inscripción recibida · XLVII Torneo Internacional Metropolitano 2026") + `</table>`
-    + `<div style="padding:20px 22px">`
-    + `<p style="margin:0 0 14px;font-size:15px;color:#243b53">${esc(intro)}</p>`
+  const html = marco("Inscripción recibida · XLVII Torneo Internacional Metropolitano 2026",
+    `<p style="margin:0 0 14px;font-size:15px;color:#243b53">${esc(intro)}</p>`
     + bloquesHtml
     + (conTotal ? `<p style="margin:0 0 14px;font-size:15px;font-weight:bold;color:#102a43">${esc(pagoTexto(filas))}</p>` : "")
     + avisoHosp
     + `<p style="margin:0 0 6px;font-size:14px;color:#243b53">Lleva tu gafete, impreso o en el celular, el día del torneo: del 26 al 30 de diciembre en el Estadio Nacional, La Sabana.</p>`
     + `<p style="margin:0 0 6px;font-size:14px"><a href="${PAGINA}" style="color:#0b5cad">Toda la información del torneo</a> · <a href="${WHATSAPP}" style="color:#0b5cad">Grupo de WhatsApp</a></p>`
-    + `<p style="margin:14px 0 0;font-size:13px;color:#486581">Si algún dato está mal o quieres corregir algo, responde a este correo o escribe a ${CONTACTO}. Organiza la Federación Costarricense de Ajedrez.</p>`
-    + `</div></div></body></html>`;
+    + (enlace ? `<p style="margin:14px 0 6px;font-size:14px;color:#243b53">¿Algún dato está mal? Con este enlace corriges el teléfono, el correo, la emergencia, el viaje, las fechas del hospedaje y la alimentación, la foto o la placa, y subes otro comprobante. Guárdalo: es solo tuyo.</p>` + botonCorregir(enlace, "Corregir mi inscripción") : "")
+    + `<p style="margin:14px 0 0;font-size:13px;color:#486581">Si algún dato está mal o quieres corregir algo, responde a este correo o escribe a ${CONTACTO}. Organiza la Federación Costarricense de Ajedrez.</p>`);
   const texto = [intro, "",
     ...filas.flatMap((x) => [codigoDe(x) + " · " + nombreDe(x), ...lineas(x).map(([k, v]) => "  " + k + ": " + v), ...(enlaceRonda(x) ? ["  Mi ronda y mi mesa: " + enlaceRonda(x)] : []), ""]),
     ...(conTotal ? [pagoTexto(filas), ""] : []),
     ...(hosp.length ? ["Hospedaje en el Estadio Nacional: la puerta se cierra a las 10:30 p.m. y después nadie entra ni sale. " + (titul ? "La ropa de cama la da la organización." : "Trae tu ropa de cama: no hay sábanas ni cortinas.") + " Todas las condiciones: " + PAGINA + "#hospedaje", ""] : []),
-    "Toda la información: " + PAGINA, "Corregir algo: " + CONTACTO].join("\n");
+    "Toda la información: " + PAGINA, ...(enlace ? ["Corregir mi inscripción (guárdalo, es solo tuyo): " + enlace] : []), "Corregir algo: " + CONTACTO].join("\n");
   return { html, texto };
 }
 
 const correoOk = (c: unknown) => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(c || "").trim());
 
 /** Los correos de un envío (las filas de una persona o de una delegación entera). */
-export function correosDeEnvio(filas: Fila[]): Correo[] {
+export function correosDeEnvio(filas: Fila[], token?: string | null): Correo[] {
   if (!filas.length) return [];
   const orden = [...filas].sort((a, b) => a.numero - b.numero);
   const principal = orden.find((x) => x.es_delegado) || orden[0];
@@ -142,7 +159,7 @@ export function correosDeEnvio(filas: Fila[]): Correo[] {
     const intro = grupo
       ? "Recibimos la inscripción de la delegación " + (principal.delegacion || "") + ": " + orden.length + (orden.length === 1 ? " persona" : " personas") + ". Este es el resumen con el código de cada una."
       : "Hola, " + principal.nombre + ": recibimos tu inscripción al XLVII Torneo Internacional Metropolitano 2026. Este es tu resumen.";
-    const { html, texto } = cuerpo(orden, intro, true);
+    const { html, texto } = cuerpo(orden, intro, true, enlaceCorregir(token));
     salida.push({ para: dir(principal), asunto: grupo ? "Inscripción recibida: delegación " + (principal.delegacion || "") + " · Metropolitano 2026" : "Inscripción recibida: " + codigoDe(principal) + " · Metropolitano 2026", html, texto, ids: orden.map((x) => x.id) });
     ya.add(dir(principal));
   }
@@ -161,4 +178,51 @@ export function porEnvio(filas: Fila[]): Fila[][] {
   const m = new Map<string, Fila[]>();
   for (const x of filas) { const k = x.grupo || x.id; m.set(k, (m.get(k) || []).concat(x)); }
   return [...m.values()];
+}
+
+const principalDe = (filas: Fila[]) => { const o = [...filas].sort((a, b) => a.numero - b.numero); return o.find((x) => x.es_delegado) || o[0]; };
+
+/** El correo del pago de un envío: verificado, o rechazado con su motivo y el enlace para subir otro comprobante. */
+export function correoPago(filas: Fila[], estado: "verificado" | "rechazado", nota: string | null, token?: string | null): Correo | null {
+  const p = principalDe(filas);
+  if (!p || !correoOk(p.correo)) return null;
+  const total = filas.filter((x) => (x.pago_estado || "") !== "no_aplica").reduce((s, x) => s + (Number(x.monto_usd) || 0), 0);
+  const quien = p.delegacion ? "de la delegación " + p.delegacion : codigoDe(p);
+  const enlace = enlaceCorregir(token);
+  const codigos = filas.map((x) => codigoDe(x) + " · " + nombreDe(x));
+  let asunto: string, intro: string, mas: string;
+  if (estado === "verificado") {
+    asunto = "Pago verificado: " + (p.delegacion ? "delegación " + p.delegacion : codigoDe(p)) + " · Metropolitano 2026";
+    intro = "Hola, " + p.nombre + ": la organización verificó el pago " + quien + " (" + dinero(total) + "). La inscripción quedó lista.";
+    mas = "Nos vemos del 26 al 30 de diciembre en el Estadio Nacional, La Sabana. Lleva tu gafete, impreso o en el celular.";
+  } else {
+    asunto = "No pudimos verificar el pago: " + (p.delegacion ? "delegación " + p.delegacion : codigoDe(p)) + " · Metropolitano 2026";
+    intro = "Hola, " + p.nombre + ": la organización no pudo verificar el comprobante de pago " + quien + " (" + dinero(total) + ").";
+    mas = (nota ? "El motivo: " + nota.trim().replace(/[.\s]+$/, "") + ". " : "")
+      + (enlace ? "Sube otro comprobante con el botón de abajo: el pago vuelve a quedar por revisar." : "Responde a este correo con otro comprobante.")
+      + " Mientras tanto la inscripción se mantiene, pero no queda confirmada hasta que el pago se verifique.";
+  }
+  const lista = `<ul style="margin:0 0 14px;padding-left:18px;font-size:14px;color:#243b53">` + codigos.map((c) => `<li>${esc(c)}</li>`).join("") + `</ul>`;
+  const html = marco(estado === "verificado" ? "Pago verificado · Metropolitano 2026" : "Pago por corregir · Metropolitano 2026",
+    `<p style="margin:0 0 12px;font-size:15px;color:#243b53">${esc(intro)}</p>` + lista
+    + `<p style="margin:0 0 14px;font-size:15px;color:#243b53">${esc(mas)}</p>`
+    + (estado === "rechazado" ? botonCorregir(enlace, "Subir otro comprobante") : botonCorregir(enlace, "Ver mi inscripción"))
+    + `<p style="margin:14px 0 0;font-size:13px;color:#486581">Cualquier consulta: responde a este correo o escribe a ${CONTACTO}. Organiza la Federación Costarricense de Ajedrez.</p>`);
+  const texto = [intro, "", ...codigos, "", mas, ...(enlace ? ["", (estado === "rechazado" ? "Subir otro comprobante: " : "Ver mi inscripción: ") + enlace] : []), "", "Consultas: " + CONTACTO].join("\n");
+  return { para: String(p.correo).trim().toLowerCase(), asunto, html, texto, ids: [p.id] };
+}
+
+/** El enlace para corregir la inscripción, cuando se pide otra vez con el código y el correo. */
+export function correoEnlace(filas: Fila[], token: string): Correo | null {
+  const p = principalDe(filas);
+  const enlace = enlaceCorregir(token);
+  if (!p || !correoOk(p.correo) || !enlace) return null;
+  const intro = "Hola, " + p.nombre + ": este es el enlace para ver y corregir la inscripción " + (p.delegacion ? "de la delegación " + p.delegacion : codigoDe(p)) + " al Metropolitano 2026.";
+  const mas = "Guárdalo: es solo tuyo, y con él cualquiera puede cambiar los datos de esta inscripción. Si no lo pediste tú, no tienes que hacer nada.";
+  const html = marco("Corregir la inscripción · Metropolitano 2026",
+    `<p style="margin:0 0 12px;font-size:15px;color:#243b53">${esc(intro)}</p>` + botonCorregir(enlace, "Corregir mi inscripción")
+    + `<p style="margin:0 0 14px;font-size:14px;color:#486581">${esc(mas)}</p>`
+    + `<p style="margin:14px 0 0;font-size:13px;color:#486581">Consultas: ${CONTACTO}. Organiza la Federación Costarricense de Ajedrez.</p>`);
+  return { para: String(p.correo).trim().toLowerCase(), asunto: "Tu enlace para corregir la inscripción · Metropolitano 2026", html,
+    texto: [intro, "", enlace, "", mas, "", "Consultas: " + CONTACTO].join("\n"), ids: [p.id] };
 }
