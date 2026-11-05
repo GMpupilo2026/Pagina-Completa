@@ -107,7 +107,7 @@ function dobleOrganizacion(licencia) {
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS, centroamericano_fp_enlaces: [], centroamericano_tx_enlaces: [] };
   // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
   window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
   const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
@@ -827,7 +827,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
     await p.waitForSelector("#donde-juega-grande[open]");
     igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
-        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, g.querySelector(".cam-dj-ginfo").firstChild.textContent, g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
+        await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
         [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
@@ -968,7 +968,7 @@ const CONTRASTE = `(sel) => {
     const colores = ".cam-mesa-cabeza, .cam-nombre, .cam-color, .cam-marca, .cam-btn, .cam-select, .cam-resultado-actual, .cam-aviso-suave, .cam-guardado, .cam-fallo, .cam-estado";
     igual("en claro, todo el texto de las mesas da 4,5:1 o más", (await p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(colores) + ")")).every((x) => x >= 4.5), true);
     if (process.env.CAPTURA) await p.screenshot({ path: process.env.CAPTURA + "-arbitro-claro.png", fullPage: true });
-    igual("sin errores en la página", errores, []);
+    igual("sin errores en la página", errores, []); if (errores.length) console.error("ERRORES:", errores);
     await r.ctx.close();
 
     let o = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, esquema: "dark" });
@@ -1112,6 +1112,137 @@ const CONTRASTE = `(sel) => {
     igual("el tercer pedido lo rechaza la función (429) y la página no dice que se mandó", await pm.evaluate(() => !/Listo: te la mandamos/.test(document.getElementById("concluido-estado").textContent)), true);
     await cm.ctx.close();
 
+    console.log("\n=== La banderita del país al final del nombre de cada jugador (y nada si no hay país) ===");
+    {
+        const fb = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const pb = fb.p;
+        await pb.waitForSelector(".cam-mesa");
+        const alturas = () => pb.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
+        const antes = await alturas();
+        igual("sin país (la función no lo mandó) no sale ninguna banderita y los nombres quedan como siempre", await pb.evaluate(() => [document.querySelectorAll(".cam-bandera").length, document.querySelector('.cam-mesa[data-mesa="1"] .cam-nombre-texto').textContent]), [0, "Muñoz Feliz Alejandro"]);
+        const leidasAntes = await pb.evaluate(() => { window.__feds = true; return window.__llamadas.filter((l) => l.body.action === "leer").length; });
+        await pb.evaluate(() => document.getElementById("actualizar").click());
+        await pb.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        igual("con el país, cada nombre lleva su banderita AL FINAL (blancas de Costa Rica, negras de El Salvador), con el código escrito para el lector de pantalla",
+            await pb.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] .cam-jugador')].map((j) => { const n = j.querySelector(".cam-nombre-texto"), b = n.querySelector(".cam-bandera"); return [n.firstChild.textContent, n.lastElementChild === b, b.dataset.fed, b.title, b.querySelector(".sr-only").textContent, b.querySelector("img").getAttribute("alt"), b.querySelector("img").getAttribute("src")]; })),
+            [["Muñoz Feliz Alejandro", true, "CRC", "CRC", " (CRC)", "", "img/banderas/cr.svg"], ["Gramajo Tovar Marco", true, "ESA", "ESA", " (ESA)", "", "img/banderas/sv.svg"]]);
+        await pb.waitForFunction(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => i.complete && i.naturalWidth > 0));
+        igual("el dibujo carga de verdad (no queda un cuadro roto) y es pequeñito: cabe en 24 × 18 px, al lado del nombre",
+            await pb.evaluate(() => [...document.querySelectorAll(".cam-bandera img")].every((i) => { const r = i.getBoundingClientRect(); return i.naturalWidth > 0 && r.width > 8 && r.width <= 24 && r.height > 6 && r.height <= 18; })), true);
+        igual("una federación sin dibujo no pone nada (ni un cuadro roto): la mesa 2 con «JAM» sí; la de un código inventado, no",
+            await pb.evaluate(() => { const C = window.CentroamericanoBanderas; return [!!C.de("JAM"), C.de("XXX"), C.de(""), C.de(null), C.de("jam").dataset.fed]; }), [true, null, null, null, "JAM"]);
+        igual("las tarjetas no cambian de tamaño por la banderita (siguen todas iguales)", await alturas(), antes);
+        igual("la ventana del control de tiempos también la lleva junto a cada nombre", await (async () => {
+            await pb.evaluate(() => document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]').click());
+            await pb.waitForSelector("#form-tiempos");
+            return pb.evaluate(() => [...document.querySelectorAll("#form-tiempos .cam-tiempo-nombre")].map((n) => [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]));
+        })(), [["Harvey Ian", "JAM"], ["Acuña Porras Fabio", "GUA"]]);
+        await pb.evaluate(() => document.querySelector('#control-tiempos [data-accion="cerrar-tiempos"]').click());
+        // «Mis pareos»: la banderita en cada celda de nombre.
+        await pb.click("#logo-pareos");
+        await pb.waitForSelector("#mis-pareos[open] .cam-mp-torneo tbody tr");
+        igual("«Mis pareos» la lleva al final de cada nombre (blancas y negras) y el resultado sigue en su columna",
+            await pb.evaluate(() => { const f = document.querySelector('#mis-pareos [data-tnr="1529737"] tbody tr[data-mesa="1"]'); return [f.children[1].textContent, f.children[1].querySelector(".cam-bandera").dataset.fed, f.children[2].querySelector(".cam-bandera").dataset.fed, f.children[3].textContent]; }),
+            ["Muñoz Feliz Alejandro (CRC)", "CRC", "ESA", "sin resultado"]);
+        await pb.click('#mis-pareos [data-accion="cerrar-mp"]');
+        // «¿Dónde juega?»: en la tarjeta del jugador que se busca (el botón arranca sin recibir clics: se le devuelven).
+        await pb.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); });
+        await pb.click("#donde-juega");
+        await pb.waitForSelector("#donde-juega-hoja[open]");
+        await pb.fill("#dj-buscar", "hopkins");
+        await pb.waitForSelector("#dj-res .cam-dj-tarj");
+        igual("«¿Dónde juega?» la lleva junto al nombre del atleta buscado", await pb.evaluate(() => { const n = document.querySelector("#dj-res .cam-dj-tarj .cam-dj-nombre"); return [n.firstChild.textContent, n.querySelector(".cam-bandera") && n.querySelector(".cam-bandera").dataset.fed]; }), ["Hopkins John", "TTO"]);
+        igual("sin errores en la página", fb.errores, []);
+        await fb.ctx.close();
+    }
+
+    console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
+    {
+        const fh = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        const ph = fh.p;
+        await ph.waitForSelector(".cam-mesa");
+        await ph.evaluate(() => { window.__feds = true; document.getElementById("actualizar").click(); });
+        await ph.waitForSelector('.cam-mesa[data-mesa="1"] .cam-bandera');
+        await ph.evaluate(() => { const e = document.getElementById("t-sin-fab"); if (e) e.remove(); window.__voz = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { cancel() {}, speak(u) { window.__voz.push([u.text, u.lang]); } } }); Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: function (t) { this.text = t; } }); });
+        const llamadasTraducir = () => ph.evaluate(() => window.__llamadas.filter((l) => l.f === "centroamericano-traducir").length);
+        const filasAnotar = () => ph.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Comunicado").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]));
+        igual("cada mesa tiene su botón «Hablar con el jugador» con nombre accesible", await ph.$$eval('.cam-mesa [data-accion="hablar"]', (l) => l.map((b) => b.getAttribute("aria-label").startsWith("Hablar con el jugador de la mesa "))), [true, true, true]);
+
+        // Mesa 3: Hopkins (TTO, habla inglés) vs Baquero (FRA, francés).
+        await ph.click('.cam-mesa[data-mesa="3"] [data-accion="hablar"]');
+        await ph.waitForSelector("#hablar[open]");
+        igual("se abre sin hablar con nadie todavía y no anota nada solo", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        igual("el idioma se sugiere por el país del primer jugador (TTO → inglés) y al elegir al segundo (FRA) pasa a francés",
+            await (async () => {
+                const a = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (b) => b.dataset.idioma);
+                await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+                const b = await ph.$eval('#hablar [data-accion="elegir-idioma"][aria-pressed="true"]', (x) => x.dataset.idioma);
+                return [a, b];
+            })(), ["en", "fr"]);
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="blancas"]');
+        igual("las banderitas están en los botones de los jugadores", await ph.$$eval("#hablar .cam-hb-jug .cam-bandera", (l) => l.map((b) => b.dataset.fed)), ["TTO", "FRA"]);
+
+        // Una frase: pantalla grande en SU idioma.
+        const frase = await ph.$eval('#hablar [data-frase]', (b) => b.dataset.frase);
+        await ph.click('#hablar [data-frase="' + frase + '"]');
+        await ph.waitForSelector("#hablar-jugador[open]");
+        const pant = await ph.evaluate(() => { const g = document.querySelector("#hablar-jugador .cam-hb-grande"); const r = g.getBoundingClientRect(); return [g.lang, g.textContent.length > 5, parseFloat(getComputedStyle(g).fontSize) >= 32, document.querySelector("#hablar-jugador .cam-hb-original").textContent.startsWith("Para el árbitro: "), r.width > 0]; });
+        igual("la frase sale en grande, en inglés, y el original en español va aparte, para el árbitro", pant, ["en", true, true, true, true]);
+        igual("la frase en pantalla es la misma del módulo de frases (texto fijo, sin pasar por el traductor)", await ph.evaluate((id) => document.querySelector("#hablar-jugador .cam-hb-grande").textContent === window.CentroamericanoFrases.FRASE.get(id).en, frase), true);
+        await ph.click('#hablar-jugador [data-accion="voz"]');
+        igual("«Leer en voz alta» habla en el idioma de la frase", await ph.evaluate(() => window.__voz.map((v) => v[1])), ["en-US"]);
+        igual("nada se anotó solo ni se llamó al traductor", [await llamadasTraducir(), (await filasAnotar()).length], [0, 0]);
+        await ph.click('#hablar-jugador [data-accion="anotar-frase"]');
+        await ph.waitForFunction(() => /Quedó anotado/.test(document.querySelector("#hablar-jugador .cam-hb-estado").textContent));
+        const anot = await filasAnotar();
+        igual("«Anotar en la bitácora» anota UNA nota «Comunicado» con quién, en qué idioma y lo dicho en español", [anot.length, anot[0][0], anot[0][1], anot[0][2], /^Se le comunicó a Hopkins John \(blancas\) en inglés: «/.test(anot[0][3]), /\(en español: «/.test(anot[0][3])], [1, 3, "blancas", "nota", true, true]);
+        await ph.click('#hablar-jugador [data-accion="listo"]');
+        igual("«Listo» cierra la pantalla del jugador y deja la ventana del árbitro", await ph.evaluate(() => [!document.getElementById("hablar-jugador"), !!document.querySelector("#hablar[open]")]), [true, true]);
+
+        // Conversar.
+        await ph.click('#hablar [data-pestana="conversar"]');
+        await ph.fill("#hb-arbitro", "Debe anotar la partida.");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForSelector('#hablar .cam-hb-jugador .cam-hb-mensaje');
+        igual("el árbitro escribe en español y el jugador lo lee en su idioma (la traducción viene del servidor)", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador .cam-hb-mensaje span").textContent, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje span").textContent]), ["[EN] Debe anotar la partida.", "Debe anotar la partida."]);
+        igual("al servidor solo viaja el mensaje y los idiomas con el enlace (ni el nombre del jugador ni la mesa)", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return Object.keys(l.body).sort(); }), ["a", "de", "texto", "token"]);
+        igual("la mitad del jugador está girada para leerse del otro lado y dice que es una traducción de ayuda", await ph.evaluate(() => [document.querySelector(".cam-hb-jugador").classList.contains("cam-hb-girado"), /Automatic translation/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent) || /Traduction automatique/.test(document.querySelector(".cam-hb-jugador .cam-hb-aviso").textContent)]), [true, true]);
+        await ph.click('#hablar .cam-hb-rapida >> nth=0');
+        igual("la respuesta rápida del jugador le llega al árbitro en español, sin traductor", await ph.evaluate(() => [window.__llamadas.filter((x) => x.f === "centroamericano-traducir").length, document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length]), [1, 2]);
+        await ph.fill("#hb-jugador", "I need the toilet please");
+        await ph.click('#hablar [data-accion="enviar-jugador"]');
+        await ph.waitForFunction(() => document.querySelectorAll(".cam-hb-arbitro .cam-hb-mensaje").length === 3);
+        igual("el jugador escribe en su idioma y el árbitro lo lee en español", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.f === "centroamericano-traducir").pop(); return [l.body.de, l.body.a, document.querySelector(".cam-hb-arbitro .cam-hb-mensaje:last-child span").textContent]; }), ["en", "es", "[ES] I need the toilet please"]);
+        igual("la conversación no se anotó sola", (await filasAnotar()).length, 1);
+        await ph.click('#hablar [data-accion="anotar-conversacion"]');
+        await ph.waitForFunction(() => /conversación quedó anotada/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        const conv = (await filasAnotar())[1];
+        igual("al marcarlo, la conversación se anota con las dos versiones de cada mensaje", [conv[0], /^Conversación con Hopkins John \(blancas\) en inglés/.test(conv[3]), /Árbitro: «Debe anotar la partida\.» \(EN: «\[EN\] Debe anotar la partida\.»\)/.test(conv[3]), /Jugador: «I need the toilet please» \(ES: «\[ES\] I need the toilet please»\)/.test(conv[3]), conv[3].length <= 2000], [3, true, true, true, true]);
+
+        // Sin traductor (cuenta sin saldo, sin señal…): lo dice y manda a las frases; las frases siguen.
+        await ph.evaluate(() => { window.__traducirFalla = 1; });
+        await ph.fill("#hb-arbitro", "Otra cosa");
+        await ph.click('#hablar [data-accion="enviar-arbitro"]');
+        await ph.waitForFunction(() => !document.querySelector(".cam-hb-error").hidden);
+        igual("si el traductor falla lo dice, manda a las frases y NO pierde lo escrito ni se anota nada", await ph.evaluate(() => [/Usa las frases/.test(document.querySelector(".cam-hb-error").textContent), document.querySelector(".cam-hb-error").getAttribute("role"), document.getElementById("hb-arbitro").value]), [true, "alert", "Otra cosa"]);
+        await ph.click('#hablar [data-pestana="frases"]');
+        igual("las frases siguen sirviendo", await ph.$$eval("#hablar [data-frase]", (l) => l.length > 30), true);
+
+        // «Necesito un árbitro que hable francés».
+        await ph.click('#hablar [data-accion="elegir-jugador"][data-color="negras"]');
+        await ph.click('#hablar [data-accion="pedir-idioma"]');
+        await ph.waitForFunction(() => /ya sabe que necesitas/.test(document.querySelector("#hablar .cam-hb-estado-general").textContent));
+        igual("el pedido va al árbitro principal, a esa mesa, con el idioma escrito", await ph.evaluate(() => { const l = window.__llamadas.filter((x) => x.body.action === "ayuda").pop(); return [l.body.mesa, l.body.texto]; }), [3, "Necesito un árbitro que hable francés en esta mesa."]);
+        await ph.click('#hablar [data-accion="cerrar-hablar"]');
+        igual("la bitácora de la tablet muestra «Comunicado» (y no «Nota») en las dos anotaciones", await (async () => {
+            await ph.evaluate(() => { document.getElementById("anotado").open = true; });
+            return ph.$$eval("#anotado-filas tr", (l) => l.map((r) => r.children[2].textContent));
+        })(), ["Comunicado", "Comunicado"]);
+        igual("las tres tarjetas siguen iguales de alto entre sí (el botón nuevo no deforma ninguna)", new Set(await ph.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)))).size <= 2, true);
+        igual("sin errores en la página", fh.errores, []);
+        await fh.ctx.close();
+    }
+
     console.log("\n=== La transmisión sin atraso (LiveChess): la triple repetición y el control de tiempos solo ===");
     const vv = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
     const pv = vv.p;
@@ -1198,9 +1329,9 @@ const CONTRASTE = `(sel) => {
     const q = o.p;
     await q.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     await q.waitForSelector(".cam-pedido");
-    igual("se ve como un programa: barra de título, menú con nueve pestañas (la última, Fair Play), contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
-        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"], true, true, true]);
-    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false", "false"]);
+    igual("se ve como un programa: barra de título, menú con diez pestañas (las últimas, Fair Play y Transmisión), contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
+        [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision"], true, true, true]);
+    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false", "false", "false", "false"]);
     igual("el resumen dice cuánto le queda a cada árbitro, con las mesas que faltan", await q.$$eval("#resumen tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[2].textContent, tr.children[3].textContent.replace(/\s+/g, " ").trim(), tr.children[4].textContent, tr.dataset.estado])),
         [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
     igual("el resumen dice cuántos jugadores revisó cada árbitro y cuántos no han llegado", await q.$$eval("#resumen tr", (l) => l.map((tr) => tr.children[6].textContent)), ["2 de 30 · faltan 1", "Sin revisar"]);
@@ -1677,7 +1808,7 @@ const CONTRASTE = `(sel) => {
     const [descargaF] = await Promise.all([q.waitForEvent("download"), q.click("#r-informe")]);
     const pdfF = fs.readFileSync(await descargaF.path());
     igual("el informe final en PDF (resumen por ronda, ilegales, ausentes, rondas finalizadas y planillas), con su nombre y la marca de agua", [descargaF.suggestedFilename(), pdfF.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfF.toString("latin1")), await q.$eval("#r-informe", (b) => b.disabled)], ["informe-final-arbitros-centroamericano-2026.pdf", true, true, false]);
-    igual("sin errores en la página", errores, []);
+    igual("sin errores en la página", errores, []); if (errores.length) console.error("ERRORES:", errores);
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
     const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-barra-estado, .cam-celda-estado, .cam-titulo-ventana, .cam-subtitulo, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion td, .cam-conectado, .cam-clave-grupo, .cam-detalle summary, .cam-estado-drive, .cam-sugerencia, .cam-herramientas, .cam-guardado, .cam-fallo, .cam-rejilla td, .cam-rejilla th, .cam-rejilla thead th";

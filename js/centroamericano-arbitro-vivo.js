@@ -41,7 +41,8 @@
     const sans = [], relojes = [];
     let ms = typeof primera === "number" ? primera : null;
     (jugadas || []).forEach((t, i) => {
-      const m = String(t).trim().match(/^(\S+)(?:\s+(\d+)\+(\d+))?/);
+      // También llega solo el reloj («Ba6 2912») o solo lo pensado («e4 +152»), según lo que alcanzó a leer el tablero.
+      const m = String(t).trim().match(/^(\S+)(?:\s+(\d+)?(?:\+(\d+))?)?/);
       if (!m) return;
       const gasto = m[3] != null ? Number(m[3]) : null;
       if (i > 0 && ms != null && gasto != null) ms += gasto * 1000;

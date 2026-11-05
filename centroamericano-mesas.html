@@ -78,6 +78,7 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-fairplay" data-panel="fairplay" aria-controls="panel-fairplay" aria-selected="false" tabindex="-1"><span aria-hidden="true">🛡</span> Fair Play</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-transmision" data-panel="transmision" aria-controls="panel-transmision" aria-selected="false" tabindex="-1"><span aria-hidden="true">📡</span> Transmisión <span id="contador-tx" class="cam-contador" hidden>0</span></button>
             </div>
 
             <div class="cam-contenido">
@@ -422,6 +423,13 @@
                 <!-- La arma js/centroamericano-fair-play.js: es la misma pantalla del encargado de Fair Play (centroamericano-fair-play.html). -->
                 <div id="fp-app" class="cam-fp-app"></div>
             </section>
+            <section id="panel-transmision" role="tabpanel" aria-labelledby="pest-transmision" class="cam-no-qr" hidden>
+                <h3 class="cam-subtitulo"><span aria-hidden="true">📡</span> Transmisión: todos los tableros electrónicos en vivo</h3>
+                <p class="cam-herramientas-nota">Los tableros de LiveChess sin atraso, con un aviso que brilla cuando uno tiene un problema. Lo mismo ve el encargado de transmisión con su QR (abajo).</p>
+                <!-- La arma js/centroamericano-transmision.js: es la misma pantalla del encargado (centroamericano-transmision.html). -->
+                <div id="tx-app" class="tx-app"></div>
+                <section id="tx-encargados" class="cam-fp-seccion mt-6" aria-labelledby="tx-t-encargados"></section>
+            </section>
             </div>
 
             <!-- La barra de estado: siempre a la vista, como en un programa -->
@@ -470,8 +478,11 @@
     <script src="js/centroamericano-transmision-reloj.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>
     <script src="js/centroamericano-fair-play.js"></script>
-    <script src="js/vendor/chess.js"></script>
     <script src="js/tablero-fen.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/reclamos-tablas.js"></script>
+    <script src="js/centroamericano-arbitro-vivo.js"></script>
+    <script src="js/centroamericano-transmision.js"></script>
     <script src="js/planilla-ocr.js"></script>
     <script src="js/planilla-reconstruir.js"></script>
     <script src="js/centroamericano-leer-partida.js"></script>

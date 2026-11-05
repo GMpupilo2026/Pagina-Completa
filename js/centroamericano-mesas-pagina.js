@@ -108,7 +108,7 @@
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
@@ -125,6 +125,7 @@
         if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
         if (nombre === "registro") cargarRegistro();
         if (nombre === "fairplay") window.CentroamericanoFairPlay.cargar();
+        if (nombre === "transmision") window.CentroamericanoTransmision.cargar();
     }
     function teclaPestana(ev) {
         const i = PANELES.indexOf(ev.currentTarget.dataset.panel);
@@ -1406,7 +1407,7 @@
         const lista = registro.filter((f) => !tipo || f.tipo === tipo);
         $("registro").replaceChildren(...lista.slice(0, 400).map((f) => el("tr", { "data-tipo": f.tipo, "data-anulada": anuladas.has(f.id) ? "si" : null },
             el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }), el("td", { texto: nombreTorneo(f.tnr) }), el("td", { texto: String(f.ronda) }), el("td", { texto: String(f.mesa) }),
-            el("td", { texto: f.arbitro }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : NOMBRE_TIPO[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle(f) }))));
+            el("td", { texto: f.arbitro }), el("td", { texto: (f.tipo === "nota" && f.articulo === "Levantó" ? "Se levantó" : f.tipo === "nota" && f.articulo === "Llegó tarde" ? "Llegó tarde" : f.tipo === "nota" && f.articulo === "Comunicado" ? "Comunicado" : NOMBRE_TIPO[f.tipo] || f.tipo) + (anuladas.has(f.id) ? " (anulada)" : "") }), el("td", { texto: detalle(f) }))));
         $("registro-vacio").hidden = lista.length > 0;
         const marcados = C.jugadoresMarcados(registro);
         $("marcados").replaceChildren(...marcados.map((j) => el("tr", { "data-ilegales": String(j.ilegales) },
@@ -1555,6 +1556,8 @@
         $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
         $("copia-archivo").addEventListener("change", restaurarArchivo);
         window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
+        // La transmisión se lee aunque la pestaña no esté abierta (cada 10 s): su contador avisa desde cualquier pestaña.
+        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx") });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);

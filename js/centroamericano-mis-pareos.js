@@ -25,6 +25,8 @@
     }
 
     const REFRESCO_MS = 30000;
+    // La banderita del país de cada jugador (js/centroamericano-banderas.js), al final de su nombre; sin ella, nada.
+    const bandera = (m, color) => (global.CentroamericanoBanderas ? global.CentroamericanoBanderas.deMesa(m, color) : null);
 
     // Las rondas que hay en algún torneo suyo (1 hasta la más alta emparejada), en orden.
     function rondasDe(torneos) {
@@ -84,7 +86,7 @@
                     el("caption", { class: "sr-only", texto: "Pareos de " + t.nombre + ", ronda " + elegida }),
                     el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Blancas" }), el("th", { scope: "col", texto: "Negras" }), el("th", { scope: "col", texto: "Resultado" }))),
                     el("tbody", {}, ...r.mesas.map((m) => el("tr", { "data-mesa": String(m.mesa) },
-                        el("th", { scope: "row", texto: String(m.mesa) }), el("td", { texto: m.blancas }), el("td", { texto: m.negras }),
+                        el("th", { scope: "row", texto: String(m.mesa) }), el("td", {}, m.blancas, bandera(m, "blancas")), el("td", {}, m.negras, bandera(m, "negras")),
                         el("td", { class: "cam-mp-res", "data-vacio": m.resultado ? null : "si", texto: m.resultado || (r.vivo ? "sin resultado" : "—") })))));
                 return el("section", { class: "cam-mp-torneo", "data-tnr": t.tnr }, titulo, el("div", { class: "cam-tabla-envoltura" }, tabla));
             });
