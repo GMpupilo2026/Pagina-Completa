@@ -2352,7 +2352,7 @@ encuentra la copia de cualquier archivo.
   avisa: `node herramientas/sello-estampar.js` lo vuelve a poner. Los que
   comparan lo que arman con el archivo (el banco de La partida perdida, las
   páginas universitarias, la división territorial, la versión accesible de
-  las fichas y las páginas de Formación Ajedrez) lo ponen ellos mismos con
+  las fichas, las páginas de Formación Ajedrez y los datos de su práctica propia) lo ponen ellos mismos con
   `estampar()`, y la huella de las láminas de Formación se calcula con
   `quitar()`: el sello no es parte de lo que el archivo dice.
 - **Los documentos (PDF, Word, PowerPoint) todavía no lo llevan**: ya

@@ -260,8 +260,9 @@ function sqlDeClaves(claves) {
 }
 
 const aTexto = (o) => JSON.stringify(o, null, 2) + "\n";
-const datosComoModulo = (datos) => "/* Generado por herramientas/formacion-practicas.js: no se edita a mano. */\nmodule.exports = "
-  + JSON.stringify(datos, null, 1) + ";\n";
+// Con el sello escondido (herramientas/lib/sello.js): volver a generar no se lo borra.
+const datosComoModulo = (datos) => require("./lib/sello").estampar("/* Generado por herramientas/formacion-practicas.js: no se edita a mano. */\nmodule.exports = "
+  + JSON.stringify(datos, null, 1) + ";\n", "datos.js");
 
 function archivos() {
   const r = armar();
