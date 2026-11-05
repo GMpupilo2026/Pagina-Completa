@@ -1413,6 +1413,18 @@ const CONTRASTE = `(sel) => {
     await pv.click("#ver-vivo");
     await pv.waitForSelector('#mesas-en-vivo[open] .cv-mesa[data-repeticion="si"]');
     igual("en «Mis mesas en vivo», la mesa dice la repetición y la que no reconoce, que va a mano", await pv.evaluate(() => [/Triple repetición \(con 20… Ag7\)/.test(document.querySelector('.cv-mesa[data-mesa="2"] .cv-repeticion').textContent), /Mesa 1: En la transmisión, el tablero 1 tiene otros jugadores\. Anota a mano como siempre\./.test(document.getElementById("mesas-en-vivo").textContent)]), [true, true]);
+    // La bandera caída: el reloj en vivo de LiveChess dice que corre el de las negras y ya no les queda tiempo.
+    await pv.click('#mesas-en-vivo .cam-dialogo-titulo button');
+    await pv.evaluate(() => {
+        const antes = window.sb.functions.invoke;
+        window.sb.functions.invoke = (f, o) => f !== "centroamericano-mesas-vivo" ? antes(f, o) : Promise.resolve({ data: { ok: true, conectada: true, fuente: "livechess", ronda: 3, delay: 0, leida: new Date().toISOString(),
+            mesas: [{ mesa: 1, fuente: "livechess", jugadas: ["e4 5457+5", "c5 40+20", "Nf3 5482+5"], primera: Date.now() - 60000, en_vivo: true, estado: "*", reloj: { white: 5400, black: 2, run: false, time: Date.now() - 5000 } }] }, error: null });
+    });
+    await pv.evaluate(() => window.CentroamericanoArbitroVivo.leer());
+    await pv.waitForSelector('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"][data-mesa="1"]', { timeout: 5000 });
+    igual("la bandera caída le llega al árbitro arriba de todo, con el color, la mesa y el art. 6.9", await pv.evaluate(() => { const a = document.querySelector('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]'); return [a.getAttribute("role"), /Bandera caída · Mesa 1/.test(a.textContent), /a las negras de la mesa 1 se les acabó el tiempo/.test(a.textContent), /art\. 6\.9/.test(a.textContent)]; }), ["alert", true, true, true]);
+    await pv.waitForTimeout(1500);
+    igual("y no se repite en los latidos siguientes", await pv.$$eval('#alertas-vivo .cam-alerta-vivo[data-tipo="bandera"]', (l) => l.length), 1);
     igual("sin errores en la página", vv.errores, []);
     await vv.ctx.close();
 

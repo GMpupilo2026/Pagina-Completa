@@ -94,6 +94,23 @@ const m50 = V.normalizar({ mesa: 5, fuente: "livechess", jugadas: PRINC.concat(s
 const al50 = V.alertasNuevas([m50], 3, new Set());
 ok("el aviso de las 50: se pueden reclamar (9.3), con la jugada y dónde empezó la cuenta", al50.length === 1 && al50[0].tipo === "50" && /art\. 9\.3/.test(al50[0].texto) && /52… Aa4/.test(al50[0].texto) && /empezó con 3\. Aa6/.test(al50[0].texto), JSON.stringify(al50));
 ok("la tablet le pone su título al aviso de las 50", /"50": "50 jugadas sin peón ni captura"/.test(leer("js/centroamericano-arbitro.js")));
+// La bandera caída (art. 6.9): con el reloj en vivo de LiveChess, o con el último registrado si no llega.
+const TB = Date.UTC(2026, 10, 5, 16, 0, 0);
+const mB = V.normalizar({ mesa: 3, fuente: "livechess", jugadas: ["e4 5457+5", "c5 40+20", "Nf3 5482+5"], primera: TB - 60000, estado: "*", en_vivo: true }, TB);
+ok("sin reloj en vivo: el último registrado de quien tiene el turno menos lo que pasó (todavía le quedan 5 s: nada)", V.bandera(mB, TB, TB) === null);
+const bB = V.bandera(mB, TB + 15000, TB);
+ok("…y 15 s después, la bandera de las negras", bB && bB.color === "negras" && bB.queda === -10 && !bB.rivalSoloRey, JSON.stringify(bB));
+ok("un tablero que dejó de transmitir no da bandera (no se sabe si el reloj sigue corriendo)", V.bandera(Object.assign({}, mB, { en_vivo: false }), TB + 15000, TB) === null);
+const enVivo = Object.assign({}, mB, { reloj: { white: 5400, black: 3, run: false, time: TB } });
+ok("con el reloj en vivo: corre el de las negras, a los 2 s todavía no; a los 4 s, sí", V.bandera(enVivo, TB + 2000, TB) === null && V.bandera(enVivo, TB + 4000, TB).color === "negras");
+ok("con el reloj detenido (lo paró el árbitro) no hay bandera", V.bandera(Object.assign({}, mB, { reloj: { white: 5400, black: 0, run: null, time: TB } }), TB + 9000, TB) === null);
+ok("con la partida terminada no hay bandera", V.bandera(Object.assign({}, enVivo, { estado: "1-0" }), TB + 9000, TB) === null);
+const bSolo = V.bandera(Object.assign({}, mB, { fen: "8/8/8/8/8/8/8/K6k b - - 0 40", reloj: { white: 30, black: 0, run: false, time: TB } }), TB + 1000, TB);
+ok("si al rival solo le queda el rey, se dice (serían tablas)", bSolo && bSolo.rivalSoloRey === true, JSON.stringify(bSolo));
+const vistasB = new Set();
+const alB = V.alertasBandera([enVivo], 5, TB + 4000, TB, vistasB), alB2 = V.alertasBandera([enVivo], 5, TB + 9000, TB, vistasB);
+ok("el aviso de la bandera: una vez, con el color, la mesa y el art. 6.9", alB.length === 1 && alB[0].tipo === "bandera" && /a las negras de la mesa 3 se les acabó el tiempo/.test(alB[0].texto) && /art\. 6\.9/.test(alB[0].texto) && alB2.length === 0, JSON.stringify(alB));
+ok("la tablet le pone su título y mira la bandera solo con datos de hace menos de 30 s", /bandera: "Bandera caída"/.test(leer("js/centroamericano-arbitro.js")) && /Date\.now\(\) - leidaMs < 30000\) alertasBandera\(/.test(leer("js/centroamericano-arbitro-vivo.js")));
 ok("la notación de la planilla", V.esp("Nxe5+") === "Cxe5+" && V.esp("O-O") === "O-O" && V.esp("e8=Q") === "e8=D" && V.esp("Kh1") === "Rh1" && V.esp("Rd1") === "Td1");
 
 // ---- la Edge Function

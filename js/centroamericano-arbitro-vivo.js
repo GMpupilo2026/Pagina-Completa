@@ -145,6 +145,51 @@
     return out;
   }
 
+  // La bandera caída (art. 6.9): a quien le corre el reloj se le acabó el tiempo y la partida sigue sin resultado.
+  // Con el reloj en vivo de LiveChess (`reloj`: white/black en segundos, run = true si corre el de las blancas, false
+  // si el de las negras, null si está detenido, y time = la hora de esa lectura) se usa ese: es lo que marca el reloj
+  // de la mesa, también si el árbitro lo detuvo (detenido no hay bandera que avisar). La misma regla que el encargado de
+  // transmisión (js/centroamericano-transmision.js). Sin reloj en vivo, el último reloj registrado de quien tiene el
+  // turno menos lo que pasó desde la jugada del rival, solo si el tablero sigue transmitiendo.
+  function bandera(m, ahora, leida) {
+    if (!m || (m.estado && m.estado !== "*")) return null;
+    const p = String(m.fen || "").split(/\s+/), n1 = Number(p[5]);
+    const jugadas = Number.isInteger(n1) ? (n1 - 1) * 2 + (p[1] === "b" ? 1 : 0) : 0;
+    if (!jugadas) return null;
+    const r = m.reloj && typeof m.reloj === "object" ? m.reloj : null;
+    let color = null, queda = null;
+    if (r && Number(r.time)) {
+      color = r.run === true ? "blancas" : r.run === false ? "negras" : null;
+      if (!color) return null;
+      queda = Number(color === "blancas" ? r.white : r.black) - Math.max(0, (ahora - Number(r.time)) / 1000);
+    } else {
+      if (m.fuente === "livechess" && !m.en_vivo) return null;
+      const rr = relojes(m, ahora, leida);
+      if (rr.terminada) return null;
+      color = rr.turno;
+      queda = color === "blancas" ? rr.blancas : rr.negras;
+    }
+    if (!Number.isFinite(queda) || queda > 0) return null;
+    // ¿El rival tiene con qué dar mate? Con el rey solo, no: serían tablas (art. 6.9).
+    const piezas = (p[0] || "").replace(/[^a-zA-Z]/g, "");
+    const delRival = color === "blancas" ? piezas.replace(/[^a-z]/g, "") : piezas.replace(/[^A-Z]/g, "");
+    return { color, queda: Math.round(queda), jugadas, rivalSoloRey: delRival.length === 1 };
+  }
+  function alertasBandera(mesas, ronda, ahora, leida, vistas) {
+    const out = [];
+    for (const m of mesas || []) {
+      const b = bandera(m, ahora, leida);
+      if (!b) continue;
+      const clave = ronda + "|" + m.mesa + "|bandera|" + b.jugadas + "|" + b.color;
+      if (vistas.has(clave)) continue;
+      vistas.add(clave);
+      const rival = b.color === "blancas" ? "las negras" : "las blancas";
+      out.push({ clave, tipo: "bandera", mesa: m.mesa, color: b.color, texto: "Según la transmisión, a las " + b.color + " de la mesa " + m.mesa + " se les acabó el tiempo y la partida sigue sin resultado. Míralo en el reloj de la mesa: si cayó la bandera, pierden, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales; entonces son tablas (art. 6.9)."
+        + (b.rivalSoloRey ? " Ojo: " + rival + " solo tienen el rey, así que serían tablas." : "") });
+    }
+    return out;
+  }
+
   // Los relojes de ahora: el de quien tiene el turno sigue corriendo desde la lectura (lo que llevaba pensando + lo
   // que pasó desde que se leyó). Los relojes vienen en centésimas.
   function relojes(m, ahora, leida) {
@@ -246,6 +291,7 @@
       const rep = t && [
         t.cinco ? "Quíntuple repetición (con " + t.cinco.jugada + "): tablas sin reclamo." : t.repeticiones.length ? "Triple repetición (con " + t.repeticiones[t.repeticiones.length - 1].jugada + "): se pueden reclamar tablas." : "",
         t.setentaYCinco ? "75 jugadas sin peón ni captura (con " + t.setentaYCinco.jugada + "): tablas sin reclamo." : t.cincuenta ? "50 jugadas sin peón ni captura (con " + t.cincuenta.jugada + "): se pueden reclamar tablas." : "",
+        bandera(m, ahora, leidaMs) ? "Bandera caída: a las " + bandera(m, ahora, leidaMs).color + " se les acabó el tiempo." : "",
       ].filter(Boolean).join(" ");
       return el("article", { class: "cv-mesa", "data-mesa": String(m.mesa), "data-repeticion": rep ? "si" : null },
         el("p", { class: "cv-mesa-titulo" }, el("strong", { texto: "Mesa " + m.mesa })),
@@ -292,6 +338,9 @@
     setInterval(() => {
       if (document.hidden) return;
       latir();
+      // La bandera se mira cada segundo (el reloj corre entre lecturas), pero solo con datos de hace menos de 30 s:
+      // sin señal, una lectura vieja no puede dar una bandera que no cayó.
+      if (conectada && datos && o.alAlertar && Date.now() - leidaMs < 30000) alertasBandera(datos.mesas, datos.ronda, Date.now(), leidaMs, vistas).forEach((a) => o.alAlertar(a, {}));
       // En el modo liviano (tablet vieja o lenta, js/modo-liviano.js), con transmisión cada 20 s en vez de 10.
       const lenta = raiz.ModoLiviano && raiz.ModoLiviano.activo();
       const espera = conectada ? (lenta ? 2 * CADA_MS : CADA_MS) : SIN_CONEXION_MS;
@@ -311,7 +360,7 @@
     return x ? x.motivo : null;
   }
 
-  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, pgnDe, esp,
+  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, pgnDe, esp,
     iniciar, leer, abrir, deLaMesa, noReconoce, conectada: () => conectada };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoArbitroVivo = api;

@@ -1002,9 +1002,9 @@
     function alertaDeTablas(a) {
         const caja = $("alertas-vivo");
         if (!caja) return;
-        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas" }[a.tipo] || "Tablas";
+        const titulo = { triple: "Triple repetición", cinco: "Quíntuple repetición: tablas", "50": "50 jugadas sin peón ni captura", "75": "75 jugadas: tablas", bandera: "Bandera caída" }[a.tipo] || "Tablas";
         const tarjeta = el("div", { class: "cam-alerta-vivo", role: "alert", "data-tipo": a.tipo, "data-mesa": String(a.mesa) },
-            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
+            el("p", { class: "cam-alerta-vivo-titulo" }, el("span", { "aria-hidden": "true", texto: a.tipo === "bandera" ? "⚑ " : "⚖ " }), el("span", { texto: titulo + " · Mesa " + a.mesa })),
             el("p", { class: "cam-alerta-vivo-texto", texto: a.texto }),
             el("div", { class: "cam-acciones" },
                 el("button", { type: "button", class: "cam-btn", "data-accion": "ver-posicion", onclick: () => window.CentroamericanoArbitroVivo.abrir(a.mesa) }, "Ver la posición"),
