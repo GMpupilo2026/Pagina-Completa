@@ -280,7 +280,14 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las ilegales: la primera avisa, la segunda pierde ===");
     const acc = (m, color, a) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + color + '"] [data-accion="' + a + '"]';
     // Las tarjetas son SIEMPRE del mismo tamaño y de la misma forma: ninguna crece ni se corre cuando le pasa algo.
-    const medidas = () => p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    // En un CI lento a veces la tarjeta se mide en el instante en que la página se está repintando (todas en 0 × 0): se espera, hasta 8 s, a que
+    // tengan tamaño; si de verdad no lo tienen, el fallo dice por qué (la página escondida, el aviso de «no se pudo abrir», etc.).
+    const medidas = async () => {
+        await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
+            console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
+        });
+        return p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
+    };
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
