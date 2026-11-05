@@ -2,7 +2,9 @@
  *
  *   img/redes/portada-facebook.png   1640×624   foto de portada de Facebook
  *   img/redes/instagram.png          1080×1350  publicación de Instagram (4:5)
- *   img/redes/whatsapp/*.png         1080×1920  estados de WhatsApp (9:16), una serie
+ *   img/redes/whatsapp/*.png         1080×1920  estados de WhatsApp (9:16): el sitio
+ *   img/redes/whatsapp-academia/     1080×1920  la Academia por dentro
+ *   img/redes/whatsapp-mesa-arbitro/ 1080×1920  la Mesa del árbitro
  *
  * Mismo criterio que og-imagen.js: se dibujan acá y no a mano para que salgan
  * siempre igual y con los colores de la paleta; si cambian, se vuelve a correr.
@@ -174,13 +176,25 @@ const ESTADO_CSS = `${FUENTES}
   .pie { display: flex; flex-direction: column; align-items: center; }
   .sitio { white-space: nowrap; padding: 20px 46px; font-size: 50px; font-family: 'Inter', system-ui, sans-serif; font-weight: 800; }
   .sitio.larga { font-size: 40px; padding: 20px 36px; }
+  .sitio.muy-larga { font-size: 34px; padding: 20px 30px; }
   .ruta { color: ${C.brand100}; font-size: 34px; margin-top: 22px; }
   .ruta b { color: #fff; }
   .nombre { font-family: 'Merriweather', Georgia, serif; }
-  .barra { height: 22px; }`;
+  .barra { height: 22px; }
+  /* Cuatro tarjetas de dos en dos. */
+  .tarjetas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; margin-top: 44px; text-align: left; }
+  .tarjetas div { background: rgba(10,31,51,0.55); border: 2px solid rgba(240,180,41,0.25); border-radius: 26px; padding: 28px 30px; }
+  .tarjetas b { display: block; color: ${C.accent400}; font-size: 40px; line-height: 1.15; }
+  .tarjetas span { display: block; color: ${C.brand100}; font-size: 30px; line-height: 1.3; margin-top: 10px; }
+  /* Los tres resultados de una mesa, como botones. */
+  .resultados { display: flex; gap: 22px; margin-top: 46px; }
+  .resultados span { min-width: 220px; padding: 26px 0; border-radius: 26px; font-size: 64px; font-weight: 800;
+                     background: rgba(10,31,51,0.55); border: 3px solid ${C.accent400}; color: #fff; }
+  .resultados span.marcado { background: ${C.accent400}; color: ${C.brand900}; }
+  .lista .d b { display: inline; font-size: inherit; color: #fff; }`;
 
-const PIE = (ruta) => `<div class="pie"><div class="sitio${(ruta || "").length > 10 ? " larga" : ""}">ajedrez-integral.com${ruta || ""}</div>
-  <div class="ruta">WhatsApp <b>+506 8309-2291</b></div></div>`;
+const PIE = (ruta, frase) => `<div class="pie"><div class="sitio${(ruta || "").length > 20 ? " muy-larga" : (ruta || "").length > 10 ? " larga" : ""}">ajedrez-integral.com${ruta || ""}</div>
+  <div class="ruta">${frase || "WhatsApp"} <b>+506 8309-2291</b></div></div>`;
 const CABEZA = `<div class="marca"></div>`;
 
 const ESTADOS = [
@@ -244,9 +258,122 @@ const ESTADOS = [
             </div>${PIE("/pareo")}`,
     },
 ];
+
+// La Academia por dentro: lo que dice la documentación de cada pieza
+// (docs/decisiones/), sin cifras que el sitio no tenga.
+const PRUEBA = "3 días gratis por WhatsApp";
+const ACADEMIA = [
+    {
+        archivo: "01-la-academia.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">La Academia por dentro</div>
+            <div class="titulo">Todo tu ajedrez<br>en <em>un solo lugar</em></div>
+            <div class="tarjetas">
+              <div><b>Clases en vivo</b><span>El tablero de la clase, la videollamada y el chat</span></div>
+              <div><b>Entrenamiento</b><span>Ejercicios, finales, aperturas y juegos</span></div>
+              <div><b>Informes</b><span>El avance de cada estudiante, con datos</span></div>
+              <div><b>Puntos y premios</b><span>Se ganan en clase y entrenando</span></div>
+            </div></div>${PIE("", PRUEBA)}`,
+    },
+    {
+        archivo: "02-clase-en-vivo.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Clase en vivo</div>
+            <div class="titulo" style="font-size:72px;margin-top:26px">El profe mueve,<br><em>toda la clase</em> lo ve</div>
+            <ul class="lista compacta">
+              <li><span class="punto" aria-hidden="true"></span><div><b>Un tablero para todos</b><span class="d">Cada alumno sigue lo que mira el profe</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Preguntas con tiempo</b><span class="d">Cada uno contesta moviendo en su tablero</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>La presentación y la pizarra</b><span class="d">El profe raya la diapositiva y todos la ven</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Videollamada y chat</b><span class="d">Sin salir de la página de la clase</span></div></li>
+            </ul></div>${PIE("", PRUEBA)}`,
+    },
+    {
+        archivo: "03-cuestionarios.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">En plena clase</div>
+            <div class="titulo">Cuestionarios<br>con <em>podio</em></div>
+            <div class="texto">Toda la clase contesta a la vez.<br>Más puntos a quien acierta más rápido,<br>y el podio después de cada pregunta.</div>
+            <div class="datos"><div><b>30</b><span>cuestionarios listos<br>por nivel</span></div><div><b>1.º</b><span>quien acierta<br>primero</span></div></div>
+            </div>${PIE("", PRUEBA)}`,
+    },
+    {
+        archivo: "04-entrenamiento.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Entre una clase y otra</div>
+            <div class="titulo" style="font-size:72px;margin-top:26px">Entrena<br><em>a tu ritmo</em></div>
+            <ul class="lista compacta">
+              <li><span class="punto" aria-hidden="true"></span><div><b>El repaso del día</b><span class="d">Lo que te toca repasar, en un recorrido</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Finales contra la máquina</b><span class="d">Juega el final y aprende a ganarlo</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Mi repertorio</b><span class="d">Tus aperturas, en un árbol de jugadas</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Juegos de ajedrez</b><span class="d">Batalla naval, buscaminas y memoria</span></div></li>
+            </ul></div>${PIE("", PRUEBA)}`,
+    },
+    {
+        archivo: "05-puntos.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Puntos Ajedrez</div>
+            <div class="titulo">Cada esfuerzo<br><em>suma</em></div>
+            <div class="texto">Se ganan en la clase, entrenando,<br>con las tareas, los exámenes<br>y la racha de días.</div>
+            <div class="tarjetas">
+              <div><b>Títulos y marcos</b><span>Para tu perfil</span></div>
+              <div><b>Accesorios</b><span>Gorros, lentes, una corona… para tu avatar</span></div>
+            </div></div>${PIE("", PRUEBA)}`,
+    },
+    {
+        archivo: "06-informes.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Para la familia</div>
+            <div class="titulo" style="font-size:72px;margin-top:26px">El avance,<br><em>con datos</em></div>
+            <ul class="lista compacta">
+              <li><span class="punto" aria-hidden="true"></span><div><b>Asistencia</b><span class="d">Y el tiempo conectado a cada clase</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Antes y ahora</b><span class="d">La fuerza en cada diagnóstico</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>El Elo oficial</b><span class="d">FIDE y Nacional, mes a mes</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Unas palabras del profe</b><span class="d">En el informe que llega a la casa</span></div></li>
+            </ul></div>${PIE("", PRUEBA)}`,
+    },
+];
+
+// La Mesa del árbitro (mesa-arbitro.html): lo que dice su ficha en la vitrina
+// (js/herramientas-arbitraje.js). Va con licencia, que se pide por WhatsApp.
+const LICENCIA = "Pide tu licencia por WhatsApp";
+const MESA = [
+    {
+        archivo: "01-mesa-del-arbitro.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Para quien arbitra</div>
+            <div class="titulo">Mesa del<br><em>árbitro</em></div>
+            <div class="texto">Los resultados de tu torneo suizo,<br>mesa por mesa, directo<br>a <b style="color:#fff">chess-results</b>.</div>
+            <div class="resultados" aria-hidden="true"><span>1-0</span><span class="marcado">½-½</span><span>0-1</span></div>
+            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+    },
+    {
+        archivo: "02-como-funciona.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="titulo" style="margin-top:0">Así <em>funciona</em></div>
+            <ul class="lista">
+              <li><span class="num">1</span><div><b>Entra con tus dos claves</b><span class="d">El código y el SID de «Enter Results Online»</span></div></li>
+              <li><span class="num">2</span><div><b>Trae la ronda abierta</b><span class="d">Sus mesas, y también los torneos ligados del grupo</span></div></li>
+              <li><span class="num">3</span><div><b>Anota y manda</b><span class="d">Solo dice «guardado» si el resultado ya está en chess-results</span></div></li>
+            </ul></div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+    },
+    {
+        archivo: "03-sin-errores.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">Sin sorpresas</div>
+            <div class="titulo">Cada resultado,<br><em>comprobado</em></div>
+            <ul class="lista">
+              <li><span class="punto" aria-hidden="true"></span><div><b>Antes de guardar</b><span class="d">Revisa que sea la misma ronda y los mismos jugadores que viste</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Después de guardar</b><span class="d">Vuelve a leer chess-results para confirmarlo</span></div></li>
+              <li><span class="punto" aria-hidden="true"></span><div><b>Tu clave no se guarda</b><span class="d">Se usa para entrar y se olvida</span></div></li>
+            </ul></div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+    },
+    {
+        archivo: "04-bitacora.png",
+        cuerpo: `${CABEZA}<div class="medio"><div class="etiqueta">La bitácora del árbitro</div>
+            <div class="titulo">Todo queda<br><em>anotado</em></div>
+            <div class="texto">Cada resultado y cada corrección,<br>con su hora y el resultado anterior.<br>Las incidencias, con su artículo.</div>
+            <div class="texto" style="color:#fff">Solo se agrega:<br>nada se edita ni se borra.</div>
+            <div class="datos"><div><b>PDF</b><span>con espacio<br>para tu firma</span></div><div><b>Word</b><span>con la marca<br>de agua</span></div></div>
+            </div>${PIE("/herramientas-arbitraje", LICENCIA)}`,
+    },
+];
+for (const e of ACADEMIA) e.carpeta = "whatsapp-academia";
+for (const e of MESA) e.carpeta = "whatsapp-mesa-arbitro";
+ESTADOS.push(...ACADEMIA, ...MESA);
 for (const e of ESTADOS) {
     IMAGENES.push({
-        archivo: "whatsapp/" + e.archivo, ancho: 1080, alto: 1920,
+        archivo: (e.carpeta || "whatsapp") + "/" + e.archivo, ancho: 1080, alto: 1920,
         seguro: { ancho: 960, alto: 1420, arriba: 220 },
         css: ESTADO_CSS, cuerpo: e.cuerpo,
     });
@@ -269,7 +396,7 @@ for (const e of ESTADOS) {
 }
 
 (async () => {
-    fs.mkdirSync(path.join(CARPETA, "whatsapp"), { recursive: true });
+    for (const img of IMAGENES) fs.mkdirSync(path.dirname(path.join(CARPETA, img.archivo)), { recursive: true });
     const navegador = await chromium.launch({
         executablePath: process.env.CHROME_PATH || undefined,
     });
