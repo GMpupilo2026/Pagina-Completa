@@ -170,6 +170,10 @@ function marcasDe(filas: Fila[]): Record<string, Marca> {
 
 const COLUMNAS = "id, ocurrio, arbitro, mesa, color, jugador, tipo, resultado, anterior, articulo, texto, enviado, anula";
 
+// La lectura compartida de «leer» por torneo (ver leerCompartidaBreve): vive lo que viva esta instancia de la función.
+const MEMO_LEER_MS = 5_000;
+const memoLeer = new Map<string, { al: number; p: Promise<Awaited<ReturnType<typeof leerConCache>>> }>();
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Solo POST." }, 405);
@@ -259,10 +263,23 @@ Deno.serve(async (req) => {
   const MAX_LEER_MS = 40_000;   // «ver mis mesas»: hasta 40 s de antigüedad
   const MAX_COMUN_MS = 120_000; // presencia, tiempo, anotar, planilla: solo comprueban ronda, mesa y jugadores
   const leerCompartida = (maxEdadMs: number, fresca = false) => leerConCache(servicio, acceso!, a.tnr, { maxEdadMs, fresca });
+  // «Ver mis mesas» de VARIAS tablets de la misma categoría a la vez (el arranque de una ronda, o muchas abiertas): se comparte la misma lectura
+  // durante unos segundos en esta instancia de la función, también mientras todavía se está leyendo (si no, cada pedido consultaba la copia por su
+  // cuenta y todos esperaban en fila). La copia compartida ya tiene hasta 40 s de antigüedad, así que 5 s más no cambian nada. Solo «leer»; una
+  // lectura que falla no se guarda. Las demás acciones (anotar, guardar…) siguen leyendo lo suyo.
+  const leerCompartidaBreve = (tnr: string) => {
+    const ahora = Date.now();
+    const previa = memoLeer.get(tnr);
+    if (previa && ahora - previa.al < MEMO_LEER_MS) return previa.p;
+    const p = leerCompartida(MAX_LEER_MS);
+    memoLeer.set(tnr, { al: ahora, p });
+    p.then((l) => { if (!l.ok) memoLeer.delete(tnr); }, () => memoLeer.delete(tnr));
+    return p;
+  };
 
   try {
     if (cuerpo.action === "leer") {
-      const lectura = await leerCompartida(MAX_LEER_MS);
+      const lectura = await leerCompartidaBreve(a.tnr);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
       visto();
