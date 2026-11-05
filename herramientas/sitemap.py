@@ -9,6 +9,8 @@ mañana una página se cierra o se abre, basta con volver a correrlo:
     python3 herramientas/sitemap.py
 """
 import glob, os, re, subprocess, datetime
+import sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from direccion_publica import direccion
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITIO = "https://ajedrez-integral.com"
@@ -51,7 +53,8 @@ for ruta in sorted(glob.glob("**/*.html", recursive=True)):
 lineas = ['<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 for ruta in paginas:
-    url = SITIO + "/" if ruta == "index.html" else SITIO + "/" + ruta
+    # La dirección final, sin .html: la que lleva .html contesta con un 307.
+    url = direccion(ruta)
     lineas += ["  <url>",
                f"    <loc>{url}</loc>",
                f"    <lastmod>{fecha(ruta)}</lastmod>",

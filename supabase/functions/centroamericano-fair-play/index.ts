@@ -32,15 +32,18 @@
 //   "modelo"      {forzar?} → el modelo por jugada (al estilo de Regan): ajusta, calcula el índice de cada partida y de
 //                       cada jugador, y la validación (a lo sumo cada 90 s; el ajuste, cada 15 min). Ver «El modelo por
 //                       jugada, al estilo de Regan».
-//   "referencia_guardar" {evento, partida, elo_b, elo_n, jugadas, evals, opciones} → una partida de otro torneo,
-//                       analizada en la pantalla, para ajustar el modelo con más gente (sin nombres).
+//   "referencia_guardar" {evento, partida, elo_b, elo_n, jugadas, evals, opciones, trampa?} → una partida de otro torneo,
+//                       analizada en la pantalla, para ajustar el modelo con más gente (sin nombres); con «trampa», un
+//                       caso de prueba (se sabe quién usó el motor): no entra al ajuste y mide si el índice lo marca.
+//   "referencia_hechas" {evento} → las partidas de ese evento ya cargadas (para seguir donde quedó una carga larga).
 // Ver «Las partidas para Fair Play, directo de LiveChess» en docs/decisiones/juegos-y-torneos.md.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Chess } from "npm:chess.js@0.10.3";
-import { ajustar, centroYFactor, claveDe, copiaDeOtra, DESDE_POSICION, detallar, esperado, evalsValidas, fenExplorador, finDeTeoria, indice, inicioDeMedida,
-  leerPareos, medir, MIN_JUGADAS, mismoJugador, type MovModelo, MULTIPV, nombreLc, opcionesValidas, type Ply, PROFUNDIDAD, PROFUNDIDAD_HONDA,
-  RESULTADO_LC, sanDe, sDeElo, segundosDe, sSinElJugador, tablerosDe, terminadaLc, validar, VERSION_ANALISIS, zCruda } from "./analisis.ts";
+import { ajustar, casosDePrueba, centroYFactor, claveDe, copiaDeOtra, correlaciones, type Correlaciones, DESDE_POSICION, detallar, dificultadEsperada, eloUsado,
+  esJoven, esperado, type Esperado, esRapido, evalsValidas, fenExplorador, finDeTeoria, indice, inicioDeMedida, leerPareos, medir, MIN_JUGADAS, mismoJugador,
+  type MovModelo, MULTIPV, nombreLc, opcionesValidas, type Ply, PROFUNDIDAD, PROFUNDIDAD_HONDA, puntosBlancas, rendimiento, RESULTADO_LC, sanDe, sDeElo,
+  segundosDe, spearman, sSinElJugador, sumar, tablerosDe, terminadaLc, validar, VERSION_ANALISIS, zCruda, zsCrudas } from "./analisis.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -216,6 +219,11 @@ Deno.serve(async (req) => {
     if (accion === "vivo_guardar") return json(await vivoGuardar(servicio, rpc, cuerpo));
     if (accion === "modelo") return json(await modelo(servicio, rpc, cuerpo.forzar === true));
     if (accion === "referencia_guardar") return json(await referenciaGuardar(servicio, rpc, cuerpo, quien));
+    if (accion === "referencia_hechas") {
+      // Las partidas de un evento que ya se cargaron: volver a subir el archivo (o la transmisión) sigue donde quedó.
+      const evento = String(cuerpo.evento ?? "").trim().slice(0, 80);
+      return json({ ok: true, partidas: await rpc("centroamericano_fp_referencia_partidas", { p_evento: evento }) ?? [] });
+    }
     return json({ error: "Acción desconocida." }, 400);
   } catch (e) {
     return json({ error: (e as Error).message || String(e) }, 400);
@@ -457,21 +465,36 @@ async function todas(armar: (desde: number) => any) {
   }
   return out;
 }
-type FilaJugada = { tnr: string; ronda: number; mesa: number; color: string; deltas: number[]; n_legales: number; rango: number; delta_jugada: number; dificil: boolean };
+type FilaJugada = { tnr: string; ronda: number; mesa: number; color: string; deltas: number[]; n_legales: number; rango: number; delta_jugada: number; dificil: boolean; segundos?: number | null };
+type FilaRef = FilaJugada & { evento: string; partida: string; elo: number; trampa: string | null };
+type Parametros = { a: number; b: number; c: number; movimientos: number };
 // deno-lint-ignore no-explicit-any
 async function modelo(servicio: any, rpc: Rpc, forzar: boolean) {
   const { data: m0 } = await servicio.from("centroamericano_fp_modelo").select("*").eq("id", "actual").maybeSingle();
   if (!forzar && m0?.calculado && Date.now() - new Date(m0.calculado).getTime() < MODELO_MS) return { ok: true, saltado: true, modelo: m0 };
-  const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, prueba");
-  const reales = ((torneos ?? []) as { tnr: string; prueba: boolean }[]).filter((t) => !t.prueba).map((t) => t.tnr);
+  const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, nombre, prueba");
+  const reales = ((torneos ?? []) as { tnr: string; nombre: string; prueba: boolean }[]).filter((t) => !t.prueba);
   if (!reales.length) return { ok: true, insuficiente: true };
+  // El ritmo de cada categoría (en una rápida todos juegan peor para su Elo: se ajusta aparte) y si es de menores.
+  const ritmoDe = new Map(reales.map((t) => [t.tnr, esRapido(t.nombre) ? "rapido" : "clasico"]));
+  const jovenDe = new Map(reales.map((t) => [t.tnr, esJoven(t.nombre)]));
+  const tnrs = reales.map((t) => t.tnr);
   const [jugs, parts, refs] = await Promise.all([
-    todas(() => servicio.from("centroamericano_fp_jugadas").select("tnr, ronda, mesa, color, deltas, n_legales, rango, delta_jugada, dificil").in("tnr", reales).not("deltas", "is", null).order("tnr").order("ronda").order("mesa").order("ply")),
-    todas(() => servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, blancas, negras, elo_b, elo_n").in("tnr", reales).order("tnr").order("ronda").order("mesa")),
-    todas(() => servicio.from("centroamericano_fp_referencia").select("elo, deltas, n_legales, rango, delta_jugada, dificil").order("evento").order("partida").order("ply")),
-  ]) as [FilaJugada[], { tnr: string; ronda: number; mesa: number; blancas: string; negras: string; elo_b: number | null; elo_n: number | null }[], (FilaJugada & { elo: number })[]];
-  const mov = (j: FilaJugada): MovModelo => ({ deltas: j.deltas, n: j.n_legales, rango: j.rango, dj: j.delta_jugada, dificil: j.dificil });
+    todas(() => servicio.from("centroamericano_fp_jugadas").select("tnr, ronda, mesa, color, deltas, n_legales, rango, delta_jugada, dificil, segundos").in("tnr", tnrs).not("deltas", "is", null).order("tnr").order("ronda").order("mesa").order("ply")),
+    todas(() => servicio.from("centroamericano_fp_partidas").select("tnr, ronda, mesa, blancas, negras, elo_b, elo_n, resultado").in("tnr", tnrs).order("tnr").order("ronda").order("mesa")),
+    todas(() => servicio.from("centroamericano_fp_referencia").select("evento, partida, color, elo, deltas, n_legales, rango, delta_jugada, dificil, trampa").order("evento").order("partida").order("ply")),
+  ]) as [FilaJugada[], { tnr: string; ronda: number; mesa: number; blancas: string; negras: string; elo_b: number | null; elo_n: number | null; resultado: string | null }[], FilaRef[]];
+  const mov = (j: FilaJugada): MovModelo => ({ deltas: j.deltas, n: j.n_legales, rango: j.rango, dj: j.delta_jugada, dificil: j.dificil, seg: j.segundos ?? null });
   const partidaDeJugada = new Map(parts.map((p) => [p.tnr + "|" + p.ronda + "|" + p.mesa, p]));
+  // Lo que rindió cada uno en su categoría (todas sus partidas jugadas, no solo las de los tableros electrónicos).
+  const resultados = new Map<string, { eloRival: number | null; puntos: number }[]>();
+  const anotar = (k: string, x: { eloRival: number | null; puntos: number }) => { if (!resultados.has(k)) resultados.set(k, []); resultados.get(k)!.push(x); };
+  for (const p of parts) {
+    const pb = puntosBlancas(p.resultado);
+    if (pb == null || !p.negras) continue;
+    anotar(p.tnr + "|" + claveDe(p.blancas), { eloRival: p.elo_n, puntos: pb });
+    anotar(p.tnr + "|" + claveDe(p.negras), { eloRival: p.elo_b, puntos: 1 - pb });
+  }
   // Por partida y color: quién es, su Elo y sus jugadas.
   const juegos = new Map<string, { tnr: string; ronda: number; mesa: number; color: string; jugador: string; clave: string; elo: number | null; movs: MovModelo[] }>();
   for (const j of jugs) {
@@ -484,49 +507,106 @@ async function modelo(servicio: any, rpc: Rpc, forzar: boolean) {
     }
     juegos.get(k)!.movs.push(mov(j));
   }
-  const conElo = [...juegos.values()].filter((g) => g.elo).flatMap((g) => g.movs.map((m) => ({ ...m, elo: g.elo! }))).concat(refs.map((r) => ({ ...mov(r), elo: r.elo })));
-  if (conElo.length < 600) return { ok: true, insuficiente: true, movimientos: conElo.length };
-  // El ajuste: cada 15 min (o la primera vez).
-  let par = m0 && m0.a != null && m0.ajustado && Date.now() - new Date(m0.ajustado).getTime() < AJUSTE_MS && !forzar
-    ? { a: Number(m0.a), b: Number(m0.b), c: Number(m0.c), movimientos: m0.movimientos, ajustado: m0.ajustado }
-    : { ...ajustar(conElo), ajustado: new Date().toISOString() };
-  par = { ...par, a: Math.round(par.a * 1000) / 1000, b: Math.round(par.b * 1000) / 1000, c: Math.round(par.c * 1000) / 1000 };
-  // Cada jugador: todas sus partidas del torneo, con su sensibilidad.
-  const jugadores = new Map<string, { tnr: string; clave: string; jugador: string; elo: number | null; juegos: typeof juegos extends Map<string, infer V> ? V[] : never; movs: MovModelo[] }>();
+  // Cada jugador: todas sus partidas del torneo, su Elo y el que se le reconoce.
+  type Jugador = { tnr: string; ritmo: string; clave: string; jugador: string; elo: number | null; eloUsado: number | null; rend: { rp: number; n: number } | null; juegos: { ronda: number; mesa: number; color: string; movs: MovModelo[] }[]; movs: MovModelo[]; s?: number };
+  const jugadores = new Map<string, Jugador>();
   for (const g of juegos.values()) {
     const k = g.tnr + "|" + g.clave;
-    if (!jugadores.has(k)) jugadores.set(k, { tnr: g.tnr, clave: g.clave, jugador: g.jugador, elo: g.elo, juegos: [], movs: [] });
+    if (!jugadores.has(k)) jugadores.set(k, { tnr: g.tnr, ritmo: ritmoDe.get(g.tnr) || "clasico", clave: g.clave, jugador: g.jugador, elo: g.elo, eloUsado: null, rend: null, juegos: [], movs: [] });
     const j = jugadores.get(k)!;
     j.juegos.push(g); j.movs.push(...g.movs);
     if (!j.elo && g.elo) j.elo = g.elo;
   }
-  const sDe = new Map<string, number>();
-  for (const tnr of new Set([...jugadores.values()].map((j) => j.tnr))) {
-    const sinElo = new Map([...jugadores.values()].filter((j) => j.tnr === tnr && !j.elo).map((j) => [j.tnr + "|" + j.clave, j.movs]));
-    for (const [k, s] of sSinElJugador(sinElo, par.c)) sDe.set(k, s);
+  for (const j of jugadores.values()) {
+    if (!j.elo) continue;
+    j.rend = rendimiento(resultados.get(j.tnr + "|" + j.clave) || []);
+    j.eloUsado = eloUsado(j.elo, j.rend, !!jovenDe.get(j.tnr));
   }
-  for (const j of jugadores.values()) if (j.elo) sDe.set(j.tnr + "|" + j.clave, sDeElo(par.a, par.b, j.elo));
-  // Dónde queda la mitad de la gente y cuánto más varía que el modelo (jugadores con 30 jugadas o más).
-  const crudas = [...jugadores.values()].filter((j) => j.movs.length >= 30).map((j) => zCruda(esperado(j.movs, sDe.get(j.tnr + "|" + j.clave)!, par.c))).filter((z): z is number => z != null);
-  const { centro, factor } = centroYFactor(crudas);
+  // Las jugadas para ajustar, por ritmo: las de quien tiene Elo (con el que se le reconoce) y, en las clásicas, las de
+  // referencia (sin el lado que hizo trampa en las de prueba).
+  const conElo: Record<string, (MovModelo & { elo: number })[]> = { clasico: [], rapido: [] };
+  for (const j of jugadores.values()) if (j.eloUsado) conElo[j.ritmo].push(...j.movs.map((m) => ({ ...m, elo: j.eloUsado! })));
+  const limpias = refs.filter((r) => !r.trampa || r.trampa !== r.color);
+  conElo.clasico.push(...limpias.map((r) => ({ ...mov(r), elo: r.elo })));
+  if (conElo.clasico.length < 600 && conElo.rapido.length < 600) return { ok: true, insuficiente: true, movimientos: conElo.clasico.length + conElo.rapido.length };
+  // El ajuste de cada ritmo: cada 15 min (o la primera vez); un ritmo con menos de 600 jugadas usa los del otro.
+  const guardados = (m0?.validacion?.parametros || {}) as Record<string, Parametros>;
+  const fresco = m0?.ajustado && Date.now() - new Date(m0.ajustado).getTime() < AJUSTE_MS && !forzar;
+  const redondear = (p: Parametros): Parametros => ({ a: Math.round(p.a * 1000) / 1000, b: Math.round(p.b * 1000) / 1000, c: Math.round(p.c * 1000) / 1000, movimientos: p.movimientos });
+  const par: Record<string, Parametros> = {};
+  for (const r of ["clasico", "rapido"]) if (conElo[r].length >= 600) par[r] = fresco && guardados[r] ? guardados[r] : redondear(ajustar(conElo[r]));
+  par.clasico = par.clasico || par.rapido; par.rapido = par.rapido || par.clasico;
+  const ajustado = fresco ? m0.ajustado : new Date().toISOString();
+  // La sensibilidad de cada uno: por su Elo reconocido o, sin Elo, la de su categoría sin él.
+  for (const tnr of new Set([...jugadores.values()].map((j) => j.tnr))) {
+    const c = par[ritmoDe.get(tnr) || "clasico"].c;
+    const sinElo = new Map([...jugadores.values()].filter((j) => j.tnr === tnr && !j.eloUsado).map((j) => [j.tnr + "|" + j.clave, j.movs]));
+    for (const [k, s] of sSinElJugador(sinElo, c)) jugadores.get(k)!.s = s;
+  }
+  for (const j of jugadores.values()) if (j.eloUsado) { const p = par[j.ritmo]; j.s = sDeElo(p.a, p.b, j.eloUsado); }
+  // Por ritmo: cómo se parecen las tres señales, dónde queda la mitad de la gente y cuánto más varía que el modelo
+  // (jugadores con 30 jugadas o más).
+  const grupo: Record<string, { R: Correlaciones; centro: number; factor: number }> = {};
+  for (const r of ["clasico", "rapido"]) {
+    const medidos = [...jugadores.values()].filter((j) => j.ritmo === r && j.movs.length >= 30);
+    const R = correlaciones(medidos.map((j) => zsCrudas(esperado(j.movs, j.s!, par[r].c))));
+    const crudas = medidos.map((j) => zCruda(esperado(j.movs, j.s!, par[r].c), R)).filter((z): z is number => z != null);
+    grupo[r] = { R, ...centroYFactor(crudas) };
+  }
+  // El tiempo: la correlación de cada uno entre lo que pensó y lo difícil de la posición, y cómo es en su ritmo.
+  const rho = new Map<string, { rho: number | null; n: number }>();
+  for (const [k, j] of jugadores) {
+    const pares = j.movs.filter((m) => m.seg != null && m.n > 1).map((m) => [m.seg as number, dificultadEsperada(m, j.s!, par[j.ritmo].c)] as [number, number]);
+    rho.set(k, { rho: spearman(pares), n: pares.length });
+  }
+  const tiempoDe: Record<string, { media: number; desv: number } | null> = {};
+  for (const r of ["clasico", "rapido"]) {
+    const v = [...jugadores.entries()].filter(([, j]) => j.ritmo === r).map(([k]) => rho.get(k)!.rho).filter((x): x is number => x != null);
+    if (v.length < 8) { tiempoDe[r] = null; continue; }
+    const media = v.reduce((t, x) => t + x, 0) / v.length, desv = Math.sqrt(v.reduce((t, x) => t + (x - media) ** 2, 0) / v.length);
+    tiempoDe[r] = desv > 0 ? { media, desv } : null;
+  }
+  // Su historia: el mismo jugador (por su nombre) en otras categorías o eventos ya medidos.
+  const porClave = new Map<string, Jugador[]>();
+  for (const j of jugadores.values()) { if (!porClave.has(j.clave)) porClave.set(j.clave, []); porClave.get(j.clave)!.push(j); }
   const r2 = (x: number) => Math.round(x * 100) / 100, r1 = (x: number) => Math.round(x * 10) / 10;
   const pJuegos = [], pIndice = [];
-  for (const j of jugadores.values()) {
-    const s = sDe.get(j.tnr + "|" + j.clave)!;
-    for (const g of j.juegos) {
-      const e = esperado(g.movs, s, par.c), ix = indice(e, factor, centro);
+  for (const [k, j] of jugadores) {
+    const p = par[j.ritmo], g = grupo[j.ritmo];
+    for (const juego of j.juegos) {
+      const e = esperado(juego.movs, j.s!, p.c), ix = indice(e, g.factor, g.centro, g.R);
       if (!e.n) continue;
-      pJuegos.push({ tnr: g.tnr, ronda: g.ronda, mesa: g.mesa, color: g.color, m_jugadas: e.n, m_t1: e.t1, m_e_t1: r2(e.eT1), m_dj: r1(e.dj), m_e_dj: r1(e.eDj),
+      pJuegos.push({ tnr: j.tnr, ronda: juego.ronda, mesa: juego.mesa, color: juego.color, m_jugadas: e.n, m_t1: e.t1, m_e_t1: r2(e.eT1), m_dj: r1(e.dj), m_e_dj: r1(e.eDj),
         m_z_t1: ix.zT1, m_z_dj: ix.zDj, m_z_dif: ix.zDif, z_modelo: ix.z, roi: ix.roi });
     }
-    const e = esperado(j.movs, s, par.c), ix = indice(e, factor, centro);
+    const e = esperado(j.movs, j.s!, p.c), ix = indice(e, g.factor, g.centro, g.R);
     if (!e.n) continue;
+    const otros = (porClave.get(j.clave) || []).filter((o) => o.tnr !== j.tnr);
+    const eHist = otros.reduce<Esperado | null>((t, o) => { const eo = esperado(o.movs, o.s!, par[o.ritmo].c); return t ? sumar(t, eo) : eo; }, null);
+    const hist = eHist && eHist.n ? indice(eHist, g.factor, g.centro, g.R) : null;
+    const t = rho.get(k)!, td = tiempoDe[j.ritmo];
     pIndice.push({ tnr: j.tnr, clave: j.clave, jugador: j.jugador, elo: j.elo, comparado: j.elo ? "elo" : "categoria", partidas: j.juegos.length, jugadas: e.n,
       t1: e.t1, e_t1: r2(e.eT1), dj: r1(e.dj), e_dj: r1(e.eDj), dificiles: e.dificiles, t1_dif: e.t1Dif, e_t1_dif: r2(e.eT1Dif),
-      z_t1: ix.zT1, z_dj: ix.zDj, z_dif: ix.zDif, z: ix.z, roi: ix.roi, rondas: [...new Set(j.juegos.map((g) => g.ronda))].sort((a, b) => a - b).join(", ") });
+      z_t1: ix.zT1, z_dj: ix.zDj, z_dif: ix.zDif, z: ix.z, roi: ix.roi, rondas: [...new Set(j.juegos.map((x) => x.ronda))].sort((a, b) => a - b).join(", "),
+      ritmo: j.ritmo, elo_usado: j.eloUsado, rendimiento: j.rend ? j.rend.rp : null, rendimiento_partidas: j.rend ? j.rend.n : null,
+      hist_partidas: otros.reduce((n, o) => n + o.juegos.length, 0) || null, hist_roi: hist ? hist.roi : null,
+      tiempo_rho: t.rho, tiempo_z: t.rho != null && td ? r2((td.media - t.rho) / td.desv) : null, tiempo_jugadas: t.n || null });
   }
-  const validacion = validar([...jugadores.values()].map((j) => ({ movs: j.movs, s: sDe.get(j.tnr + "|" + j.clave)! })), par.c, factor, centro);
-  const pModelo = { a: par.a, b: par.b, c: par.c, centro, factor, movimientos: conElo.length, jugadores: jugadores.size, referencia: refs.length, validacion, ajustado: par.ajustado };
+  // Qué tan confiable es: con la gente de verdad de cada ritmo y, si hay, con los casos de prueba.
+  const lista = (r: string) => [...jugadores.values()].filter((j) => j.ritmo === r).map((j) => ({ movs: j.movs, s: j.s! }));
+  const validacion: Record<string, unknown> = validar(lista("clasico"), par.clasico.c, grupo.clasico.factor, grupo.clasico.centro, undefined, grupo.clasico.R);
+  if (lista("rapido").length) validacion.rapido = validar(lista("rapido"), par.rapido.c, grupo.rapido.factor, grupo.rapido.centro, undefined, grupo.rapido.R);
+  const casos = new Map<string, { movs: MovModelo[]; elo: number; trampa: boolean }>();
+  for (const r of refs.filter((x) => x.trampa)) {
+    const k = r.evento + "|" + r.partida + "|" + r.color;
+    if (!casos.has(k)) casos.set(k, { movs: [], elo: r.elo, trampa: r.trampa === r.color });
+    casos.get(k)!.movs.push(mov(r));
+  }
+  if (casos.size) validacion.casos = casosDePrueba([...casos.values()].map((x) => ({ movs: x.movs, s: sDeElo(par.clasico.a, par.clasico.b, x.elo), trampa: x.trampa })), par.clasico.c, grupo.clasico.factor, grupo.clasico.centro, grupo.clasico.R);
+  validacion.parametros = par;
+  validacion.grupos = grupo;
+  const pModelo = { a: par.clasico.a, b: par.clasico.b, c: par.clasico.c, centro: grupo.clasico.centro, factor: grupo.clasico.factor,
+    movimientos: conElo.clasico.length + conElo.rapido.length, jugadores: jugadores.size, referencia: refs.length, validacion, ajustado };
   await rpc("centroamericano_fp_modelo_guardar", { p_juegos: pJuegos, p_indice: pIndice, p_modelo: pModelo });
   return { ok: true, modelo: pModelo, partidas: pJuegos.length, jugadores: pIndice.length };
 }
@@ -544,10 +624,12 @@ async function referenciaGuardar(servicio: any, rpc: Rpc, cuerpo: Record<string,
   const evals = evalsValidas(cuerpo.evals, posiciones.length), opciones = opcionesValidas(cuerpo.opciones, posiciones.length);
   if (!evals || !opciones) throw new Error("La evaluación no corresponde a esa partida.");
   const elo = { blancas: Number(cuerpo.elo_b) || null, negras: Number(cuerpo.elo_n) || null };
+  // De prueba: quién usó el motor (se sabe la respuesta). No entra al ajuste; mide si el índice lo marca.
+  const trampa = cuerpo.trampa === "blancas" || cuerpo.trampa === "negras" ? cuerpo.trampa : null;
   const detalle = detallar(plies, evals, opciones, []);
   const filas = detalle.jugadas.filter((d) => { const e = elo[d.color]; return e && e >= 100 && e <= 3500; })
     .map((d) => ({ evento, partida, ply: d.ply, color: d.color, elo: elo[d.color], deltas: d.deltas, n_legales: d.n_legales, rango: Math.min(9, d.rango),
-      delta_jugada: d.delta_jugada, dificil: d.dificil, cargado_por: quien.slice(0, 120) }));
+      delta_jugada: d.delta_jugada, dificil: d.dificil, trampa, cargado_por: quien.slice(0, 120) }));
   if (filas.length) {
     const { error } = await servicio.from("centroamericano_fp_referencia").upsert(filas, { onConflict: "evento,partida,ply" });
     if (error) throw new Error(error.message);

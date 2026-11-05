@@ -106,7 +106,22 @@ function pruebasDelCalculo() {
           return { b: aj.b, honestosAltos: v.falsas_alta, deteccion30: v.deteccion["0.3"].a_mirar, deteccion10: v.deteccion["0.1"].a_mirar,
             tramposo: A.indice(A.esperado(tramposo, A.sDeElo(aj.a, aj.b, jug[0].elo), aj.c), cf.factor, cf.centro).roi,
             suma: Math.round((pr.p.reduce((x, y) => x + y, 0) + pr.otras) * 1e9) / 1e9, orden: pr.p[0] > pr.p[1] && pr.p[1] > pr.p[2] && pr.p[2] > pr.otras / 17,
-            pocos: A.centroYFactor([1, 2, 3]) };
+            pocos: A.centroYFactor([1, 2, 3]),
+            casos: A.casosDePrueba([{ movs: tramposo, s: A.sDeElo(aj.a, aj.b, jug[0].elo), trampa: true }].concat(jug.slice(1, 21).map((j) => ({ movs: j.movs, s: A.sDeElo(aj.a, aj.b, j.elo), trampa: false }))), aj.c, cf.factor, cf.centro) };
+        })(),
+        precision: (() => {
+          const rp = A.rendimiento([{ eloRival: 1600, puntos: 1 }, { eloRival: 1500, puntos: 1 }, { eloRival: 1700, puntos: 0.5 }, { eloRival: null, puntos: 1 }]);
+          const e = { n: 40, t1: 30, eT1: 20, vT1: 9, dj: 20, eDj: 60, vDj: 400, dificiles: 6, t1Dif: 6, eT1Dif: 2, vT1Dif: 1.5 };
+          const r2 = (x) => Math.round(x * 100) / 100;
+          const R = A.correlaciones(Array.from({ length: 20 }, (_, i) => ({ zT1: i, zDj: i * 2 + 1, zDif: (i * 7) % 5 })));
+          return { rp, res: ["1 - 0", "½ - ½", "0 - 1", "+ - -", ""].map(A.puntosBlancas),
+            usados: [A.eloUsado(1500, rp, true), A.eloUsado(1500, rp, false), A.eloUsado(1500, { rp: 1300, n: 5 }, true), A.eloUsado(1500, null, true), A.eloUsado(1500, { rp: 2500, n: 9 }, true)],
+            ritmo: [A.esJoven("Sub-10 Absoluto"), A.esJoven("Rápido Sub-12"), A.esJoven("Abierto"), A.esRapido("Rápido Sub-12"), A.esRapido("Sub-10 Absoluto"), A.esRapido("Blitz final")],
+            tiempo: [A.spearman(Array.from({ length: 25 }, (_, i) => [i * 3 + 1, i])), A.spearman(Array.from({ length: 25 }, (_, i) => [30 - i, i])), A.spearman(Array.from({ length: 25 }, (_, i) => [30, i])), A.spearman([[1, 2], [3, 4]])],
+            dificultad: A.dificultadEsperada({ deltas: [0, 30, 40], n: 20 }, 6, 0.8) < A.dificultadEsperada({ deltas: [0, 1, 2], n: 20 }, 6, 0.8),
+            z2: r2(A.zCruda({ ...e, dificiles: 2 })), viejo: r2(((30 - 20) / 3 + (60 - 20) / 20) / Math.sqrt(3)),
+            z3: r2(A.zCruda(e)), z3alta: r2(A.zCruda(e, { t1dj: 0.9, t1dif: 0.9, djdif: 0.9 })),
+            R: [R.t1dj, R.t1dif >= 0 && R.t1dif <= 0.95, R.djdif >= 0 && R.djdif <= 0.95], Rpocos: A.correlaciones([{ zT1: 1, zDj: 2, zDif: null }]), suma: A.sumar(e, e) };
         })(),
         teoria: (() => {
           const plies = ["e2e4", "e7e5", "g1f3", "a7a6", "f1c4"].map((u) => ({ san: "x", uci: u, legales: {}, segundos: null, hora: null }));
@@ -143,6 +158,20 @@ function pruebasDelCalculo() {
     igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 62,5, y quien usa el motor en 3 de cada 10 jugadas sale marcado más de la mitad de las veces (más que con 1 de cada 10)",
         [d.modelo.b < -0.2, d.modelo.honestosAltos <= 3, d.modelo.deteccion30 > 50, d.modelo.deteccion30 > d.modelo.deteccion10], [true, true, true, true]);
     igual("y quien juega siempre la del motor sale muy por encima de 62,5", d.modelo.tramposo > 75, true);
+    igual("los casos de prueba: de 21 partidas donde se sabe la respuesta, marca al que usó el motor y casi a ninguno de los 20 que jugaron limpio",
+        [d.modelo.casos.con_trampa, d.modelo.casos.marcados_a_mirar, d.modelo.casos.marcados_alta, d.modelo.casos.sin_trampa, d.modelo.casos.falsos_a_mirar <= 10], [1, 100, 100, 20, true]);
+    console.log("\n=== Más precisión ===");
+    igual("los resultados de chess-results para las blancas («+ - -», una incomparecencia, no cuenta)", d.precision.res, [1, 0.5, 0, null, null]);
+    igual("el rendimiento de FIDE en el torneo: el Elo medio de los rivales con Elo más lo que da su porcentaje (5 de 6: +280)", d.precision.rp, { rp: 1880, n: 3 });
+    igual("el Elo que se le reconoce: parte de lo que rindió según lo inseguro de cada medida (3 partidas: un 30 % a un menor, un 10 % a un adulto), con tope de 200 a un menor y 100 a los demás, y nunca menos que su Elo",
+        d.precision.usados, [1613, 1536, 1500, 1500, 1700]);
+    igual("menores (Sub-8 … Sub-18) y ritmo rápido o relámpago, por el nombre de la categoría", d.precision.ritmo, [true, true, false, true, false, true]);
+    igual("el tiempo: piensa más donde es más difícil (1), al revés (−1), siempre lo mismo (ninguna relación: 0) o con pocas jugadas (no se mide)", d.precision.tiempo, [1, -1, 0, null]);
+    igual("lo difícil de una posición, para alguien de su nivel: donde la mejor es clarísima se espera perder menos que donde muchas jugadas pierden un poco", d.precision.dificultad, true);
+    igual("las señales juntas: sin 4 posiciones difíciles, igual que antes (√3); con ellas suman más; y cuanto más se parecen entre sí, menos pesa sumarlas",
+        [d.precision.z2 === d.precision.viejo, d.precision.z3 > d.precision.z2, d.precision.z3alta < d.precision.z3], [true, true, true]);
+    igual("la correlación medida en la gente (nunca más de 0,95 ni negativa) y, con menos de 8 jugadores, la inicial", [d.precision.R, d.precision.Rpocos], [[0.95, true, true], { t1dj: 0.5, t1dif: 0.3, djdif: 0.3 }]);
+    igual("lo esperable de dos grupos de jugadas se suma campo por campo (la historia en otros eventos)", [d.precision.suma.n, d.precision.suma.t1, d.precision.suma.vT1Dif], [80, 60, 3]);
     igual("la teoría: hasta la primera jugada que no está en las partidas de maestros (o con menos de 5); si no se sabe, lo dice; desde ahí se mide (nunca antes de la 5.ª de cada uno), y sin saberlo, desde la 9.ª; el FEN del explorador sin la casilla al paso",
         d.teoria, [{ fin: 3, seguro: true }, { fin: 2, seguro: false }, 8, 21, 16, 16, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -"]);
     igual("la clave de un nombre, igual que interno.fp_clave() en la base", d.clave, ["perez nunez jose", "ana maria"]);
@@ -193,7 +222,7 @@ function pruebasDelCalculo() {
         [true, "Según lo difícil de cada posición, alguien de su Elo jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."],
         [true, "Perdió en promedio 1,2 puntos de probabilidad de ganar por jugada; lo esperable para su Elo: 4,5."],
         [false, "Se midió desde la jugada 11: lo de antes era teoría (partidas de maestros) o apertura."],
-        [false, "Confirmado con el análisis hondo (profundidad 16)."]]);
+        [false, "Confirmado con el análisis hondo (profundidad 20)."]]);
     igual("la frase de arriba, con el índice", [Rz(conIndice), Rz(Object.assign({}, conIndice, { roi: 48, z_modelo: -0.4, z: 0, z_t1: 0, z_dif: 0 })), X(Object.assign({}, conIndice, { comparado: "categoria" }))[1].texto],
         ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel. Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
          "Según lo difícil de cada posición, alguien de su categoría jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."]);
@@ -225,6 +254,8 @@ const POSICIONES = (() => {
     return "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5 exd5 Nxd5 Qb3 Nce7 O-O O-O Rfe1 c6".split(" ").map((m) => { j.move(m); return j.fen(); });
 })();
 
+const PGN_TRANSMISION = '[Event "Abierto 2025"]\n[White "E"]\n[Black "F"]\n[WhiteElo "2100"]\n[BlackElo "2050"]\n[TimeControl "5400+30"]\n[Result "1/2-1/2"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3 Be7 9. Qd2 O-O 10. O-O-O Nbd7 11. g4 b5 1/2-1/2\n';
+
 // ---------------------------------------------------------------- 2. el doble de la Edge Function
 // Lo mismo que hacen la función y la base: el QR, la ronda de cada categoría, las candidatas con su peso y quién no
 // aplica, el sorteo sin repetir, aprobar, descartar con motivo, revisar (con nota si no fue «Sin novedad») y las alertas.
@@ -243,9 +274,12 @@ const SERVIDOR_FP = `
     avisos: [],
     vivo: [{ tnr: "100", ronda: 3, mesa: 1, blancas: "Clark, Arty", negras: "Garcia, Alberto", resultado: "1-0", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 12, honda: false },
            { tnr: "100", ronda: 2, mesa: 4, blancas: "Ruiz, Mia", negras: "Castro, Alana", resultado: "0-1", posiciones: ${JSON.stringify(POSICIONES)}, desde: 15, multipv: 5, profundidad: 16, honda: true }], guardados: [], referencias: [],
-    indice: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, comparado: "elo", partidas: 3, rondas: "1, 2, 3", jugadas: 90, t1: 70, e_t1: 45.2, z_t1: 3.1, dificiles: 8, t1_dif: 8, e_t1_dif: 3.4, roi: 66.4 },
-             { tnr: "200", clave: "nina sin elo", jugador: "Niña, Sin Elo", elo: null, comparado: "categoria", partidas: 2, rondas: "2, 3", jugadas: 50, t1: 22, e_t1: 21.5, z_t1: 0.1, dificiles: 0, t1_dif: 0, e_t1_dif: 0, roi: 51.2 }],
-    modelo: { movimientos: 9000, referencia: 1200, factor: 1.2, centro: -0.3, ajustado: "2026-11-04T22:00:00Z", validacion: { jugadores: 140, falsas_a_mirar: 3.1, falsas_alta: 0.7, esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion: { "0.1": { a_mirar: 30, alta: 20 }, "0.2": { a_mirar: 62, alta: 50 }, "0.3": { a_mirar: 85, alta: 74 } } } },
+    indice: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, comparado: "elo", partidas: 3, rondas: "1, 2, 3", jugadas: 90, t1: 70, e_t1: 45.2, z_t1: 3.1, dificiles: 8, t1_dif: 8, e_t1_dif: 3.4, roi: 66.4,
+               ritmo: "clasico", elo_usado: 1620, rendimiento: 1800, rendimiento_partidas: 3, hist_partidas: 4, hist_roi: 51.3, tiempo_rho: 0.05, tiempo_z: 2.4, tiempo_jugadas: 40 },
+             { tnr: "200", clave: "nina sin elo", jugador: "Niña, Sin Elo", elo: null, comparado: "categoria", partidas: 2, rondas: "2, 3", jugadas: 50, t1: 22, e_t1: 21.5, z_t1: 0.1, dificiles: 0, t1_dif: 0, e_t1_dif: 0, roi: 51.2,
+               ritmo: "rapido", elo_usado: null, rendimiento: null, hist_partidas: null, tiempo_rho: 0.42, tiempo_z: -0.3, tiempo_jugadas: 30 }],
+    modelo: { movimientos: 9000, referencia: 1200, factor: 1.2, centro: -0.3, ajustado: "2026-11-04T22:00:00Z", validacion: { jugadores: 140, falsas_a_mirar: 3.1, falsas_alta: 0.7, esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion: { "0.1": { a_mirar: 30, alta: 20 }, "0.2": { a_mirar: 62, alta: 50 }, "0.3": { a_mirar: 85, alta: 74 } },
+      casos: { con_trampa: 6, marcados_a_mirar: 83.3, marcados_alta: 66.7, sin_trampa: 6, falsos_a_mirar: 0 }, rapido: { jugadores: 40, falsas_a_mirar: 2.5, falsas_alta: 0 } } },
     acumulado: [{ tnr: "100", clave: "perez luis", jugador: "Pérez, Luis", elo: 1500, partidas: 3, rondas: "1, 2, 3", precision_media: 91.2, esperada_media: 84, z: 2.31, nivel: "a_mirar", sin_mirar: 2, seguir: false }] };
   let n = 0;
   window.__fpServidor = (b, conSesion) => {
@@ -285,6 +319,7 @@ const SERVIDOR_FP = `
     if (b.action === "vivo_pendientes") return ok({ conectada: true, partidas: S.vivo.splice(0, 3), quedan: 0, nodos: 3000 });
     if (b.action === "vivo_guardar") { S.guardados.push(b); return ok({ medidas: [] }); }
     if (b.action === "referencia_guardar") { S.referencias.push(b); return ok({ jugadas: 9 }); }
+    if (b.action === "referencia_hechas") return ok({ partidas: S.referencias.filter((r) => r.evento === b.evento).map((r) => r.partida) });
     if (b.action === "modelo") { (S.modelos = S.modelos || []).push(b); return ok({ insuficiente: true, movimientos: 420 }); }
     if (b.action === "acumulado") { const x = S.acumulado.find((y) => y.tnr === b.tnr && y.clave === b.clave); if (b.estado === "seguir") x.seguir = true; x.sin_mirar = 0; return ok({ marcadas: x.partidas }); }
     if (b.action === "actualizar") return ok({ pareos: 30, analizadas: 4, errores: [] });
@@ -343,6 +378,14 @@ async function abrir(browser, pagina, doble, { hash = "", ancho = 820, esquema =
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager|cloudflareinsights/, (r) => r.abort());
+    // La nube de Lichess: solo conoce una posición (la 19, donde las blancas pueden enrocar), a profundidad 30, con el
+    // enroque escrito como lo escribe Lichess («e1h1»); las demás no las tiene (404) y las calcula Stockfish aquí.
+    await ctx.route("https://lichess.org/api/cloud-eval**", (r) => {
+        const fen = new URL(r.request().url()).searchParams.get("fen");
+        if (fen !== POSICIONES[19]) return r.fulfill({ status: 404, contentType: "application/json", body: '{"error":"No cloud evaluation available for that position"}' });
+        return r.fulfill({ contentType: "application/json", body: JSON.stringify({ fen, knodes: 90000, depth: 30, pvs: [{ moves: "e1h1 g8f8", cp: 40 }, { moves: "a1c1 c7c6", cp: 30 }, { moves: "f3e5 c7c6", cp: 20 }, { moves: "d2e4 c7c6", cp: 10 }, { moves: "b3b7 c8b7", cp: -50 }] }) });
+    });
+    await ctx.route("https://lichess.org/api/broadcast/round/abc123.pgn", (r) => r.fulfill({ contentType: "application/x-chess-pgn", body: PGN_TRANSMISION }));
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
@@ -399,17 +442,27 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
                 g.opciones.slice(15).filter((o) => o.length === 5).length >= 5, g.opciones.slice(15).every((o, i) => o[0][1] === g.evals[15 + i])]; }),
             [24, true, true, true, true]);
         igual("la segunda pasada: la partida con alerta que la función da «honda» vuelve marcada así (y la primera, no)", await p.evaluate(() => window.__fp.guardados.map((g) => [g.mesa, g.honda])), [[1, false], [4, true]]);
+        igual("la posición que ya está en la nube de Lichess (a profundidad 30) sale de allá: sus 5 opciones tal cual, con el enroque «e1h1» pasado a «e1g1»",
+            await p.evaluate(() => { const g = window.__fp.guardados[0]; return [g.evals[19], g.opciones[19]]; }), [40, [["e1g1", 40], ["a1c1", 30], ["f3e5", 20], ["d2e4", 10], ["b3b7", -50]]]);
         await p.waitForFunction(() => /Al día/.test(document.getElementById("fp-motor-estado").textContent));
         igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
-            ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora. Se vuelve a mirar cada 45 s.", true]);
-        igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].map((td) => td.textContent)])),
+            ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora · 2 de 18 posiciones salieron de la nube de Lichess (más hondas). Se vuelve a mirar cada 45 s.", true]);
+        igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].slice(0, 6).map((td) => td.textContent)])),
             [["alta", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 Muy alta", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
              ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
+        igual("y lo que se tuvo en cuenta de cada uno, una frase por línea: el Elo que se le reconoció, su historia en otros eventos, el tiempo (la señal alta en negrita) y el ritmo",
+            await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [...tr.children[6].querySelectorAll(":scope > .cam-fp-detalle")].map((n) => [n.textContent.slice(0, 40), getComputedStyle(n).fontWeight >= 700, getComputedStyle(n).display]))),
+            [[["Se lo comparó como un 1620: su Elo es 15", false, "block"], ["Su historia: en otras categorías o event", false, "block"], ["Señal alta: Tiempo: pensó parecido en la", true, "block"]],
+             [["Partidas rápidas: se compara con lo espe", false, "block"], ["Tiempo: piensa más donde es más difícil,", false, "block"]]]);
+        igual("las cifras van con su coma: la correlación con dos decimales y el índice de su historia con uno", await p.$eval("#fp-indice tr", (tr) => [/correlación 0,05 en 40 jugadas; 2,4 desviaciones/.test(tr.textContent), /su índice fue 51,3\./.test(tr.textContent)]), [true, true]);
         await p.click("#fp-confianza summary");
         igual("«¿Qué tan confiable es?»: las alarmas falsas contra las del azar y cuánto detectaría", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(0, 3)), [
             "Medido con los 140 jugadores que tienen 30 jugadas o más analizadas.",
             "Alarmas falsas: 3,1 % pasa de 60 y 0,7 % de 62,5. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
             "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el 30,0 % (20,0 % muy alto) de las veces; en 2 de cada 10, el 62,0 % (50,0 % muy alto); en 3 de cada 10, el 85,0 % (74,0 % muy alto)."]);
+        igual("y con los casos de prueba (se sabe quién usó el motor) y las rápidas, aparte", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(3, 5)), [
+            "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a 83,3 % de los 6 que hicieron trampa (66,7 % muy alto), y a 0,0 % de sus 6 rivales, que jugaron limpio.",
+            "En las rápidas (con su propio ajuste, 40 jugadores): alarmas falsas 2,5 % y 0,0 %."]);
         await p.click("#fp-motor-si");
         igual("apagado en esta computadora: lo dice y se recuerda", await p.evaluate(() => [/Apagado en esta computadora/.test(document.getElementById("fp-motor-estado").textContent), localStorage.getItem("fp_motor_v1")]), [true, "no"]);
         await p.click("#fp-motor-si");
@@ -558,19 +611,41 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await q.p.click("dialog[open] [data-avisos-aceptar]");
         await q.p.waitForFunction(() => document.querySelectorAll("#fp-enlaces .cam-fp-enlace").length === 1);
         igual("«Apagar» lo apaga (no lo borra) y deja de verse", await q.p.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_fp_enlaces").map((l) => [l.valores, l.f])), [[{ revocada: true }, { id: "en-1" }]]);
-        // Las partidas de referencia: un PGN con el Elo (y otra sin Elo, que no se usa), analizadas aquí y mandadas sin nombres.
+        // Las partidas de referencia: dos PGN (una partida con Elo, otra sin Elo que no se usa, la misma otra vez y una
+        // relámpago que se salta), analizadas aquí y mandadas sin nombres.
         await q.p.waitForFunction(() => /Al día/.test((document.getElementById("fp-motor-estado") || {}).textContent || ""), null, { timeout: 120000 });
-        const pgn = '[Event "Nacional 2025"]\n[White "A"]\n[Black "B"]\n[WhiteElo "1800"]\n[BlackElo "1700"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 7. Bd2 Bxd2+ 8. Nbxd2 d5 9. exd5 Nxd5 10. Qb3 Nce7 11. O-O O-O *\n\n'
-            + '[Event "Nacional 2025"]\n[White "C"]\n[Black "D"]\n[Result "*"]\n\n1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 *\n';
+        const partidaA = '[Event "Nacional 2025"]\n[White "A"]\n[Black "B"]\n[WhiteElo "1800"]\n[BlackElo "1700"]\n[TimeControl "5400+30"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 7. Bd2 Bxd2+ 8. Nbxd2 d5 9. exd5 Nxd5 10. Qb3 Nce7 11. O-O O-O *\n\n';
+        const sinElo = '[Event "Nacional 2025"]\n[White "C"]\n[Black "D"]\n[Result "*"]\n\n1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 *\n\n';
+        const relampago = '[Event "Blitz 2025"]\n[White "G"]\n[Black "H"]\n[WhiteElo "1900"]\n[BlackElo "1850"]\n[TimeControl "180+2"]\n[Result "*"]\n\n1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 *\n';
         await q.p.fill("#fp-ref-evento", "Nacional 2025");
-        await q.p.setInputFiles("#fp-ref-archivo", { name: "nacional.pgn", mimeType: "text/plain", buffer: Buffer.from(pgn) });
+        await q.p.setInputFiles("#fp-ref-archivo", [{ name: "nacional.pgn", mimeType: "text/plain", buffer: Buffer.from(partidaA + sinElo) }, { name: "otra.pgn", mimeType: "text/plain", buffer: Buffer.from(partidaA + relampago) }]);
         await q.p.click("#fp-ref-cargar");
         await q.p.waitForFunction(() => /hacen falta 600/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
-        igual("la referencia: solo la partida con Elo, con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
+        igual("la referencia: de los dos archivos, una sola vez la partida con Elo (la sin Elo, la repetida y la relámpago no), con sus jugadas (sin nombres), una evaluación y las 5 mejores por posición desde la 15, y el modelo recalculado al terminar", await q.p.evaluate(() => {
             const r = window.__fp.referencias; const g = r[0] || {};
-            return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 5), document.getElementById("fp-ref-estado").textContent]; }),
-            [1, "Nacional 2025", 1800, 1700, 22, false, true, true, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo todavía no se ajusta: hay 420 jugadas de jugadores con Elo y hacen falta 600."]);
+            return [r.length, g.evento, g.elo_b, g.elo_n, (g.jugadas || []).length, Object.keys(g).some((k) => /white|black|nombre/i.test(k)), g.evals.slice(15).every((x) => typeof x === "number"), g.opciones.slice(15).every((o) => o.length >= 1 && o.length <= 5), g.trampa, document.getElementById("fp-ref-estado").textContent]; }),
+            [1, "Nacional 2025", 1800, 1700, 22, false, true, true, null, "Listo: 1 partida de «Nacional 2025» (9 jugadas). El modelo todavía no se ajusta: hay 420 jugadas de jugadores con Elo y hacen falta 600."]);
         igual("al terminar de cargar, el modelo se recalcula ya (forzado), una sola vez", await q.p.evaluate(() => (window.__fp.modelos || []).map((m) => m.forzar)), [true]);
+        // Volver a cargar lo mismo sigue donde quedó: no se repite nada.
+        await q.p.click("#fp-ref-cargar");
+        await q.p.waitForFunction(() => /ya estaban cargadas/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 60000 });
+        igual("volver a cargar lo mismo no repite nada (sigue donde quedó una carga cortada)", await q.p.evaluate(() => [window.__fp.referencias.length, document.getElementById("fp-ref-estado").textContent]),
+            [1, "Todas esas partidas de «Nacional 2025» ya estaban cargadas."]);
+        // Una transmisión de Lichess (una ronda), por su enlace.
+        await q.p.fill("#fp-ref-evento", "Abierto 2025");
+        await q.p.setInputFiles("#fp-ref-archivo", []);
+        await q.p.fill("#fp-ref-enlace", "https://lichess.org/broadcast/abierto-2025/ronda-1/abc123");
+        await q.p.click("#fp-ref-cargar");
+        await q.p.waitForFunction(() => window.__fp.referencias.length === 2 && /Listo/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
+        igual("una transmisión de Lichess por su enlace (de una ronda): se pide su PGN y se carga como cualquier otra", await q.p.evaluate(() => { const g = window.__fp.referencias[1]; return [g.evento, g.elo_b, g.elo_n, g.jugadas.length]; }), ["Abierto 2025", 2100, 2050, 22]);
+        // Las de prueba: solo las que dicen quién usó el motor, con ese dato.
+        await q.p.fill("#fp-ref-evento", "Pruebas con motor");
+        await q.p.fill("#fp-ref-enlace", "");
+        await q.p.selectOption("#fp-ref-tipo", "prueba");
+        await q.p.setInputFiles("#fp-ref-archivo", { name: "pruebas.pgn", mimeType: "text/plain", buffer: Buffer.from(partidaA.replace('[Result "*"]', '[Trampa "Negras"]\n[Result "*"]') + partidaA.replace('[White "A"]', '[White "Z"]')) });
+        await q.p.click("#fp-ref-cargar");
+        await q.p.waitForFunction(() => window.__fp.referencias.length === 3 && /Listo/.test(document.getElementById("fp-ref-estado").textContent), null, { timeout: 120000 });
+        igual("las de prueba: solo la que trae [Trampa \"Negras\"] (la otra, sin la etiqueta, no), y va con quién hizo trampa", await q.p.evaluate(() => window.__fp.referencias.slice(2).map((g) => [g.evento, g.trampa])), [["Pruebas con motor", "negras"]]);
         igual("y sin errores en la página", q.errores, []);
         await q.ctx.close();
 
