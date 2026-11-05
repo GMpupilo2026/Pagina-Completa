@@ -10133,6 +10133,36 @@ de pantalla). Antes quedaba un ✓ y un botón «Corregir» siempre.
 - Lo revisa `verificar-centroamericano-mesas-pagina.js`: quien llegó no muestra icono ni botón (solo «Deshacer» y el texto del lector de
   pantalla), a los 15 s no queda nada visible, «Deshacer» lo devuelve a «no ha llegado» con su botón, y el resumen sigue contando bien.
 
+## Blitz: solo resultado e ilegal, y «Árbitros y mesas» separado por modo (Centroamericano, 5/11)
+
+Pedido: en un Blitz el árbitro solo quiere **resultados e ilegales**; lo demás no importa. Y desde el panel de distribución de mesas,
+separar los torneos Clásicos, Rápidos y Blitz para ajustar la configuración según cada caso.
+
+**La tablet en Blitz** (`rapido() === "blitz"`, o sea `ritmoRapido(torneo, ritmo)`; se decide por la base y, si no, por el nombre «Blitz…»):
+
+- La mesa usa la ficha compacta de la opción A (`data-modo="blitz"`): por jugador, solo color, nombre y **un único botón de ilegal**
+  (`botonIlegal`); sin «Se levantó», sin irregularidad, sin anulares de esas marcas. Los resultados (1-0, ½-½, 0-1) siguen siendo un toque.
+- **La primera ilegal no pregunta**: queda anotada y sale un aviso breve de 7 s con «Deshacer» (`avisoIlegalBreve`, `#aviso-ilegal`; deshacer
+  llama a `anular(..., sinPreguntar = true)`). La **segunda** pierde (art. 7.5.5) y esa sí pide confirmar. En Blitz la sanción de tiempo
+  de una ilegal es 1 minuto (`minutosIlegal`), en lo demás 2.
+- La leyenda de la parte alta se acorta (`pintarLeyenda(blitz)`) y cada tarjeta lleva borde grueso y sombra con más separación
+  (`.cam-lista{gap:1.4rem}`, `.cam-mesa{border-width:3px}`) para que **cada mesa se vea como un conjunto** y no se enrede con la de al lado.
+
+**El panel de la organización** (`centroamericano-mesas.html`, pestaña «Árbitros y mesas»):
+
+- `RITMOS` y `ritmoDe(torneo)` (en `js/centroamericano-mesas.js`): el modo sale de `torneo.ritmo` si la base lo trae; si no, del nombre
+  («Rápido…», «Blitz…»); sin pistas es **clásico**. La base manda sobre el nombre. Cada modo trae su texto `config`, que dice qué cambia en la
+  tablet (solo el Blitz habla del aviso que se va solo).
+- La tabla de enlaces va en **tres bloques en orden Clásico → Rápido → Blitz**: una fila de encabezado `tr.cam-grupo-ritmo[data-ritmo]` con el
+  nombre, la cuenta y la configuración, y debajo las filas por torneo de siempre. El bloque de Blitz sale **aunque no haya torneos** y lo dice
+  («todavía no hay torneos de Blitz»): así se sabe dónde van. Los torneos de Blitz hay que **darlos de alta en `centroamericano_torneos`**
+  (con `tnr` y nombre que empiece por «Blitz» o su `ritmo`); sin eso, el bloque queda vacío.
+- Los cinco selectores de torneo (`a-torneo`, `rp-torneo`…) llevan `optgroup` por modo, y debajo de `#a-ritmo-nota` / `#rp-ritmo-nota` una nota
+  con el modo del torneo elegido y lo que cambia en la tablet. No hubo cambios en la base ni en las Edge Functions.
+- Lo revisan `verificar-centroamericano-modo-rapido.js` (ficha, ilegal, aviso y leyenda del Blitz) y `verificar-centroamericano-mesas-pagina.js`
+  («Árbitros y mesas separado por modo»). Ojo: las filas de encabezado `cam-grupo-ritmo` cuentan como `tr` en `#asignaciones`: una prueba que
+  recorra esas filas las excluye con `tr:not(.cam-grupo-ritmo)`.
+
 ## Hablar con el jugador: frases en inglés y francés y un traductor (Centroamericano)
 
 Pedido del 4/11: en el torneo hay jugadores que hablan inglés o francés y árbitros de mesa que solo hablan español. El botón del globo de

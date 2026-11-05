@@ -231,15 +231,18 @@
         // Las veces que se levantó de la mesa (cada toque queda en la bitácora con la hora): «×3».
         if (k.levantadas) marcas.append(el("span", { class: "cam-marca", "data-tipo": "levanto", title: "Se levantó de la mesa " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") },
             icono("levantado"), el("span", { class: "sr-only", texto: "Se levantó " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") }), k.levantadas > 1 ? el("span", { "aria-hidden": "true", texto: " ×" + k.levantadas }) : null));
-        const acciones = el("div", { class: "cam-acciones" },
+        // En el Blitz solo importan los resultados y la ilegal: ni «Se levantó» ni «Irregularidad» (el árbitro no tiene tiempo para eso).
+        const blitz = rapido() === "blitz";
+        const botonIlegal = botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada });
+        const acciones = blitz ? el("div", { class: "cam-acciones" }, botonIlegal) : el("div", { class: "cam-acciones" },
             botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada }),
-            botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada }),
+            botonIlegal,
             botonJugador("irregularidad", "irregularidad", "Irregularidad de " + nombre, "Irregularidad", () => irregularidad(m, color), { deshabilitado: ocupada }));
         // «Anular»: solo aparece cuando hay algo que anular.
         const anulares = el("div", { class: "cam-anulares" });
         if (k.ultima_ilegal) anulares.append(botonJugador("anular-ilegal", "anular", "Anular la última ilegal de " + nombre, "Anular la última ilegal", () => anular(m, color, "ilegal", k.ultima_ilegal), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
-        if (k.ultima_irregularidad) anulares.append(botonJugador("anular-irregularidad", "anular", "Anular la última irregularidad de " + nombre, "Anular la última irregularidad", () => anular(m, color, "irregularidad", k.ultima_irregularidad), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
-        if (k.ultima_levantada) anulares.append(botonJugador("anular-levanto", "anular", "Anular la última vez que se levantó " + nombre, "Anular la última vez que se levantó", () => anular(m, color, "levanto", k.ultima_levantada), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
+        if (k.ultima_irregularidad && !blitz) anulares.append(botonJugador("anular-irregularidad", "anular", "Anular la última irregularidad de " + nombre, "Anular la última irregularidad", () => anular(m, color, "irregularidad", k.ultima_irregularidad), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
+        if (k.ultima_levantada && !blitz) anulares.append(botonJugador("anular-levanto", "anular", "Anular la última vez que se levantó " + nombre, "Anular la última vez que se levantó", () => anular(m, color, "levanto", k.ultima_levantada), { variante: "cam-btn-icono-anular", deshabilitado: ocupada }));
         const gana = gananElegido(m, color);
         return el("div", { class: "cam-jugador", "data-color": color, "data-elegido": gana },
             el("div", { class: "cam-jugador-fila" },
@@ -309,10 +312,10 @@
         const alcance = C.fairPlayAlcance(fp);
         const jugadores = [bloqueJugador(m, "blancas"), bloqueJugador(m, "negras")];
         jugadores.forEach((j) => { if (alcance && alcance === j.dataset.color) j.setAttribute("data-fair-play", "si"); });
-        const A = fichaA();
+        const A = fichaA() || rapido() === "blitz";   // el Blitz siempre lleva la ficha corta
         // Ficha A: las marcas y los «Anular» de los dos jugadores van juntos en UNA franja (la misma zona reservada de los avisos, y no una por jugador).
         const marcasJuntas = A ? franjaMarcas(jugadores) : null;
-        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-ficha": A ? "a" : null, "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, "data-fp-alcance": alcance, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" + (alcance === "blancas" || alcance === "negras" ? " (" + alcance + ")" : "") : "") },
+        return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-ficha": A ? "a" : null, "data-modo": rapido() === "blitz" ? "blitz" : null, "data-mesa": String(m.mesa), "data-estado": est, "data-fair-play": fp ? fp.estado : null, "data-fp-alcance": alcance, tabindex: "-1", "aria-label": "Mesa " + m.mesa + (fp ? ", elegida para Fair Play" + (alcance === "blancas" || alcance === "negras" ? " (" + alcance + ")" : "") : "") },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
                     el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
@@ -1364,6 +1367,23 @@
         $("progreso").textContent = total ? "Con resultado: " + con + " de " + total + (con === total ? " — ¡todas!" : " · faltan " + (total - con)) : "Todavía no hay mesas en esta ronda.";
     }
 
+    // La leyenda de los iconos: en el Blitz solo lo que hay en pantalla (Ilegal, Anular y Principal); sin «Llegó», «Irregularidad», «Se levantó», fotos ni tiempos.
+    let leyendaCompleta = null;
+    function pintarLeyenda(blitz) {
+        const l = document.querySelector(".cam-leyenda");
+        if (!l) return;
+        if (leyendaCompleta === null) leyendaCompleta = l.innerHTML;
+        l.innerHTML = leyendaCompleta;
+        if (!blitz) return;
+        const sobran = /^(Llegó|No ha llegado|Irregularidad|Se levantó|Foto de|Control de tiempos)/;
+        for (const sp of [...l.querySelectorAll("span:not(.cam-color-punto)")]) {
+            if (!sobran.test(sp.textContent.trim())) continue;
+            const ant = sp.previousElementSibling;
+            if (ant && ant.tagName.toLowerCase() === "svg") ant.remove();
+            sp.remove();
+        }
+    }
+
     function pintar() {
         if (!estado) return;
         const visibles = mesasVisibles();
@@ -1480,6 +1500,7 @@
         $("regla-minutos").textContent = textoMinutos();
         $("modo-rapido").hidden = !r;
         if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
+        pintarLeyenda(r === "blitz");
         $("d-arbitro").textContent = estado.arbitro;
         $("d-ronda").textContent = "Ronda " + estado.ronda;
         $("d-mesas").textContent = "Mesas " + estado.desde + " a " + estado.hasta;
@@ -1834,6 +1855,21 @@
     }
 
     // `detalle`: lo que dijo la transmisión, cuando se anota desde su aviso (queda en la bitácora). Devuelve true si se anotó.
+    // El aviso de la primera ilegal del Blitz: una tira abajo con los minutos y «Deshacer», que se va sola a los 7 s. No bloquea nada (el árbitro
+    // sigue anotando resultados) y «Deshacer» la anula sin preguntar, porque se toca apenas pasa.
+    let avisoIlegalTimer = null;
+    function avisoIlegalBreve(m, color, id, nombre) {
+        const previo = document.getElementById("aviso-ilegal"); if (previo) previo.remove();
+        clearTimeout(avisoIlegalTimer);
+        const rival = color === "blancas" ? "negras" : "blancas";
+        const caja = el("div", { id: "aviso-ilegal", class: "cam-toast-ilegal", role: "status", "aria-live": "polite" },
+            el("div", { class: "cam-toast-texto" }, el("strong", { texto: "Ilegal anotada · mesa " + m.mesa }),
+                el("span", { texto: nombre + ": +" + textoMinutos() + " al reloj de las " + rival + "." })),
+            el("button", { type: "button", class: "cam-toast-deshacer", "data-accion": "deshacer-ilegal", onclick: () => { caja.remove(); clearTimeout(avisoIlegalTimer); anular(m, color, "ilegal", id, true); } }, "Deshacer"));
+        document.body.append(caja);
+        avisoIlegalTimer = setTimeout(() => caja.remove(), 7000);
+    }
+
     async function ilegal(m, color, detalle) {
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
@@ -1866,7 +1902,9 @@
             sumarAnotacion(m, color, "ilegal", d.id, d.jugador || nombre, t.texto);
             const a = C.avisoIlegal(d.marca.ilegales, d.jugador || nombre, color, minutosIlegal());
             pintar();
-            // Las dos se avisan con un cuadro que no se pasa por alto: la primera recuerda los minutos (1 en el blitz).
+            // En el Blitz la PRIMERA se avisa abajo, sin tapar nada, y se va sola (con «Deshacer»); la segunda, que hace perder la partida, y todo
+            // lo del Clásico siguen con su cuadro, que no se pasa por alto: la primera recuerda los minutos (1 en el blitz).
+            if (rapido() === "blitz" && a.nivel !== "pierde") { avisoIlegalBreve(m, color, d.marca.ultima_ilegal || d.id, d.jugador || nombre); return true; }
             await Avisos.alerta(a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale " + textoMinutos() + " al rival", aceptar: "Entendido" });
             return true;
         } catch (e) {
@@ -1976,9 +2014,9 @@
         }
     }
 
-    async function anular(m, color, tipo, id) {
+    async function anular(m, color, tipo, id, sinPreguntar) {
         const nombre = nombreDe(m, color);
-        const sigue = await Avisos.confirmar("¿Anular " + (tipo === "levanto" ? "la última vez que se levantó " : "la última " + (tipo === "ilegal" ? "jugada ilegal" : "irregularidad") + " de ") + nombre + "? Queda constancia de las dos anotaciones.", { titulo: "Anular una anotación", aceptar: "Sí, anularla" });
+        const sigue = sinPreguntar || await Avisos.confirmar("¿Anular " + (tipo === "levanto" ? "la última vez que se levantó " : "la última " + (tipo === "ilegal" ? "jugada ilegal" : "irregularidad") + " de ") + nombre + "? Queda constancia de las dos anotaciones.", { titulo: "Anular una anotación", aceptar: "Sí, anularla" });
         if (!sigue) return;
         ocupadas.add(m.mesa);
         pintar();

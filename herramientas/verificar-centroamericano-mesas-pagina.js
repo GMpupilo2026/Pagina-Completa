@@ -67,6 +67,13 @@ function dobleOrganizacion(licencia) {
     { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
     { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
     { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+  // «?ritmos=1» en la dirección: suma un torneo Rápido y uno Blitz con su enlace cada uno (para ver la página separada por modo).
+  if (/[?&]ritmos=1/.test(location.search)) {
+    TORNEOS.push({ tnr: "1533951", nombre: "Rápido Sub-10", categoria: "Sub-10", rama: "Mixto", orden: 102, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" },
+      { tnr: "1540001", nombre: "Blitz Sub-12", categoria: "Sub-12", rama: "Mixto", orden: 201, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" });
+    ASIG.push({ id: "asig-rapido", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
+      { id: "asig-blitz", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
+  }
   // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
     { asignacion_id: "asig-arb1", ronda: 2, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(400) },
@@ -1638,7 +1645,7 @@ const CONTRASTE = `(sel) => {
     await q.keyboard.press("ArrowRight");
     igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-tiempos", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-tiempos"]);
     await q.keyboard.press("ArrowLeft");
-    igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
+    igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr:not(.cam-grupo-ritmo)", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
         ["Sub-10 Absoluto — 2 enlaces", ["Ana Árbitra", "1 a 15", "si"], ["Árbitro 1Por definir", "16 a 30", "no"]]);
     igual("cada uno dice si está conectado ahora o que no ha abierto el enlace", await q.$$eval("#asignaciones .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent.replace("🆘", "").trim().split("\n")[0].slice(0, 40)])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
     await q.click('#asignaciones tr[data-id="asig-ana"] [data-accion="qr"]');
@@ -2086,6 +2093,35 @@ const CONTRASTE = `(sel) => {
     const pdfF = fs.readFileSync(await descargaF.path());
     igual("el informe final en PDF (resumen por ronda, ilegales, ausentes, rondas finalizadas y planillas), con su nombre y la marca de agua", [descargaF.suggestedFilename(), pdfF.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfF.toString("latin1")), await q.$eval("#r-informe", (b) => b.disabled)], ["informe-final-arbitros-centroamericano-2026.pdf", true, true, false]);
     igual("sin errores en la página", errores, []); if (errores.length) console.error("ERRORES:", errores);
+
+    console.log("\n=== «Árbitros y mesas» separado por modo: Clásico, Rápido y Blitz ===");
+    {
+        const M = require("../js/centroamericano-mesas.js");
+        igual("el modo sale de la base o del nombre: sin pistas es clásico; «Rápido…» rápido; «Blitz…» blitz; la base manda sobre el nombre", [M.ritmoDe({ nombre: "Sub-10 Absoluto" }), M.ritmoDe({ nombre: "Rápido Sub-10" }), M.ritmoDe({ nombre: "Blitz Sub-12" }), M.ritmoDe({ nombre: "Sub-12", ritmo: "blitz" }), M.ritmoDe(null)], ["clasico", "rapido", "blitz", "blitz", "clasico"]);
+        igual("cada modo explica qué cambia en la tablet (y solo el Blitz habla del aviso que se va solo)", M.RITMOS.map((r) => [r.id, r.config.length > 40, /se va solo/.test(r.config)]), [["clasico", true, false], ["rapido", true, false], ["blitz", true, true]]);
+        const oc = await abrir(browser, "centroamericano-mesas.html?ritmos=1", dobleOrganizacion(true), { ancho: 1100 });
+        const po = oc.p;
+        await po.click("#pest-arbitros");
+        await po.waitForSelector("#asignaciones .cam-grupo-ritmo");
+        igual("la tabla de enlaces va en tres bloques, en orden Clásico → Rápido → Blitz, cada uno con su configuración y sus torneos adentro",
+            await po.evaluate(() => [...document.querySelectorAll("#asignaciones tr.cam-grupo-ritmo, #asignaciones tr.cam-grupo-torneo")].map((tr) => tr.classList.contains("cam-grupo-ritmo") ? [tr.dataset.ritmo, tr.querySelector(".cam-ritmo-config").textContent.length > 40] : tr.textContent.split(" — ")[0])),
+            [["clasico", true], "Sub-10 Absoluto", ["rapido", true], "Rápido Sub-10", ["blitz", true], "Blitz Sub-12"]);
+        igual("los selectores de torneo también separan por modo (Clásico, Rápido, Blitz) y cada torneo sigue siendo una opción", await po.evaluate(() => ["a-torneo", "rp-torneo"].map((id) => { const s = document.getElementById(id); return [[...s.querySelectorAll("optgroup")].map((g) => g.label), s.querySelectorAll("option").length]; })), [[["Clásico", "Rápido", "Blitz"], 5], [["Clásico", "Rápido", "Blitz"], 5]]);
+        igual("al elegir un torneo, debajo dice su modo y lo que cambia en la tablet", await (async () => {
+            await po.evaluate(() => { document.getElementById("nuevo").open = true; });
+            await po.selectOption("#a-torneo", "1540001");
+            const blitz = await po.$eval("#a-ritmo-nota", (n) => [n.dataset.ritmo, /Blitz.*solo resultado e ilegal/i.test(n.textContent)]);
+            await po.selectOption("#a-torneo", "1529733");
+            const clasico = await po.$eval("#a-ritmo-nota", (n) => [n.dataset.ritmo, /Clásico.*Mesa completa/.test(n.textContent)]);
+            return [blitz, clasico];
+        })(), [["blitz", true], ["clasico", true]]);
+        await oc.ctx.close();
+        const o2 = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100 });
+        await o2.p.click("#pest-arbitros");
+        await o2.p.waitForSelector("#asignaciones .cam-grupo-ritmo");
+        igual("sin torneos de Blitz cargados, el bloque de Blitz sale igual y lo dice (así se sabe dónde van)", await o2.p.evaluate(() => { const b = document.querySelector('#asignaciones tr.cam-grupo-ritmo[data-ritmo="blitz"]'); return [!!b, b && /todavía no hay torneos de Blitz/.test(b.textContent), !document.querySelector('#asignaciones tr.cam-grupo-ritmo[data-ritmo="rapido"]')]; }), [true, true, true]);
+        await o2.ctx.close();
+    }
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
     const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-barra-estado, .cam-celda-estado, .cam-titulo-ventana, .cam-subtitulo, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion td, .cam-conectado, .cam-clave-grupo, .cam-detalle summary, .cam-estado-drive, .cam-sugerencia, .cam-herramientas, .cam-guardado, .cam-fallo, .cam-rejilla td, .cam-rejilla th, .cam-rejilla thead th";
