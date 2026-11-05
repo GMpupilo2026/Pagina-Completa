@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105170000
+# al-dia-con: 20261105203936
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -46,6 +46,7 @@ tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
+tabla  centroamericano_codigo_intentos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_correos_bitacora  rls=true
 tabla  centroamericano_fair_play  rls=true
@@ -577,6 +578,7 @@ columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
 columna  centroamericano_asignaciones.arbitro  text
+columna  centroamericano_asignaciones.codigo  text
 columna  centroamericano_asignaciones.concentracion  boolean
 columna  centroamericano_asignaciones.concluyo_en  timestamp with time zone
 columna  centroamericano_asignaciones.creada  timestamp with time zone
@@ -606,6 +608,10 @@ columna  centroamericano_avisos.mesa  integer
 columna  centroamericano_avisos.ronda  integer
 columna  centroamericano_avisos.texto  text
 columna  centroamericano_avisos.tipo  text
+columna  centroamericano_codigo_intentos.cuando  timestamp with time zone
+columna  centroamericano_codigo_intentos.id  bigint
+columna  centroamericano_codigo_intentos.ip_huella  text
+columna  centroamericano_codigo_intentos.resultado  text
 columna  centroamericano_copias.anillo  text
 columna  centroamericano_copias.contenido  jsonb
 columna  centroamericano_copias.creada  timestamp with time zone
@@ -2802,6 +2808,8 @@ funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
 funcion  centroamericano_actividad(p_tnr text, p_desde timestamp with time zone, p_limite integer)  definer  anon=false  auth=true
 funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
+funcion  centroamericano_codigo_canjear(p_codigo text, p_ip_huella text)  definer  anon=false  auth=false
+funcion  centroamericano_codigo_nuevo()  invoker  anon=false  auth=true
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
@@ -2827,6 +2835,7 @@ funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inici
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
+funcion  centroamericano_torneo_renombrar(p_tnr text, p_nombre text, p_categoria text)  definer  anon=false  auth=true
 funcion  centroamericano_torneos_agregar(p_evento text, p_torneos jsonb)  definer  anon=false  auth=true
 funcion  centroamericano_vivo_guardar(p_enlace text, p_token text)  definer  anon=false  auth=false
 funcion  centroamericano_vivo_leer()  definer  anon=false  auth=false
@@ -4130,6 +4139,7 @@ indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
 indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
+indice  centroamericano_asignaciones  centroamericano_asignaciones_codigo_key
 indice  centroamericano_asignaciones  centroamericano_asignaciones_persona_idx
 indice  centroamericano_asignaciones  centroamericano_asignaciones_pkey
 indice  centroamericano_asignaciones  centroamericano_asignaciones_tnr_idx
@@ -4138,6 +4148,9 @@ indice  centroamericano_avisos  centroamericano_avisos_abiertos_idx
 indice  centroamericano_avisos  centroamericano_avisos_asignacion_idx
 indice  centroamericano_avisos  centroamericano_avisos_pkey
 indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
+indice  centroamericano_codigo_intentos  centroamericano_codigo_intentos_cuando_idx
+indice  centroamericano_codigo_intentos  centroamericano_codigo_intentos_ip_idx
+indice  centroamericano_codigo_intentos  centroamericano_codigo_intentos_pkey
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_asignacion_idx
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_pkey

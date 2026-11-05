@@ -50,6 +50,32 @@ const PLANILLAS_REALES = require("./lib/planillas-reales");
 
 const { dobleOrganizacion } = require("./lib/doble-centroamericano-organizacion");
 
+// Si las tarjetas miden 0 × 0, esto dice POR QUÉ (qué ancestro las esconde, qué panel se ve, si hay un diálogo abierto): el CI solo enseña el mensaje de
+// la comprobación que falló, así que el motivo tiene que ir ahí.
+async function porQueCero(p) {
+    return p.evaluate(() => {
+        const c = document.querySelector(".cam-mesa");
+        const cadena = [];
+        for (let n = c; n && n !== document.documentElement; n = n.parentElement) {
+            const cs = getComputedStyle(n);
+            if (cs.display === "none" || n.hidden || cs.visibility === "hidden" || n.getBoundingClientRect().height === 0) cadena.push((n.tagName + (n.id ? "#" + n.id : "") + (n.className ? "." + String(n.className).split(" ")[0] : "")) + "{display:" + cs.display + ",hidden:" + !!n.hidden + ",h:" + Math.round(n.getBoundingClientRect().height) + "}");
+        }
+        const ver = (id) => { const e = document.getElementById(id); return e ? (e.hidden ? "oculto" : "visible") : "no existe"; };
+        return JSON.stringify({ cadena, app: ver("app"), problema: ver("problema"), entrada: ver("entrada"), cargando: ver("cargando"), problemaTexto: (document.getElementById("problema-texto") || {}).textContent, dialogoAbierto: !!document.querySelector("dialog[open]"), hash: location.hash.slice(0, 12), ocultaDoc: document.hidden, entradaBody: document.body.dataset.entrada || null });
+    });
+}
+
+// Mide las tarjetas EN EL MISMO INSTANTE en que dejan de medir 0: si se esperaba con una llamada y se medía con otra, la página podía repintarse entre las
+// dos (el CI lento lo mostró: la espera pasaba y la medida salía 0 × 0, con la página perfectamente bien un instante después).
+async function medirTarjetas(p) {
+    try {
+        const h = await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; if (!l.length) return null; const m = l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }); return m.every((x) => x[1] > 0) ? m : null; }, null, { timeout: 8000 });
+        return await h.jsonValue();
+    } catch (e) {
+        return "MIDEN 0 (o no hay tarjetas) después de 8 s: " + await porQueCero(p);
+    }
+}
+
 async function abrir(browser, pagina, doble, { hash = "", ancho = 390, esquema = "light" } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: ancho, height: 800 }, acceptDownloads: true, colorScheme: esquema });
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
@@ -122,13 +148,61 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== La página del árbitro: el enlace ===");
     let r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro());
-    await r.p.waitForSelector("#problema:not([hidden])");
-    igual("sin enlace no se abre nada y lo dice", [await r.p.textContent("#problema-titulo"), await r.p.$eval("#app", (a) => a.checkVisibility()), await r.p.evaluate(() => window.__llamadas.length)], ["Falta tu enlace", false, 0]);
+    await r.p.waitForSelector("#entrada:not([hidden])");
+    igual("sin enlace no se abre nada y pide el código (o el enlace)", [await r.p.textContent("#entrada-titulo"), await r.p.$eval("#app", (a) => a.checkVisibility()), await r.p.evaluate(() => window.__llamadas.length)], ["Entra con tu código", false, 0]);
     await r.ctx.close();
     r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "f".repeat(64) });
     await r.p.waitForSelector("#problema:not([hidden])");
     igual("con un enlace falso: «ya no sirve», sin botón para reintentar", [await r.p.textContent("#problema-titulo"), (await r.p.textContent("#problema-texto")).includes("no es válido"), await r.p.$eval("#problema-reintentar", (b) => b.checkVisibility())], ["Este enlace ya no sirve", true, false]);
     await r.ctx.close();
+
+    console.log("\n=== La página del árbitro: entrar con el código corto (sin cámara ni WhatsApp) ===");
+    {
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { ancho: 820 });
+        await r.p.waitForSelector("#entrada:not([hidden])");
+        igual("sin enlace aparece la casilla del código (no el aviso de «Falta tu enlace»), con foco, y no se abre la mesa",
+            await r.p.evaluate(() => [document.getElementById("entrada").checkVisibility(), document.getElementById("problema").hidden, document.activeElement.id, document.getElementById("app").checkVisibility(), window.__llamadas.length]), [true, true, "entrada-codigo", false, 0]);
+        igual("la casilla se puede escribir con el teclado de la tablet: mayúsculas sugeridas, sin autocorrector, con etiqueta y ayuda",
+            await r.p.$eval("#entrada-codigo", (i) => [i.autocapitalize, i.getAttribute("autocorrect"), i.spellcheck, i.autocomplete, !!document.querySelector('label[for="entrada-codigo"]'), i.getAttribute("aria-describedby")]), ["characters", "off", false, "off", true, "entrada-ayuda entrada-error"]);
+        igual("mientras se pide el código no se ofrece lo que necesita el enlace («¿Dónde juega?» y «Todas las mesas»)",
+            await r.p.evaluate(() => [document.getElementById("donde-juega").checkVisibility(), document.getElementById("ver-todas-mesas").checkVisibility()]), [false, false]);
+        // Un código que no existe: el error sale escrito (role=alert) y se puede volver a intentar.
+        await r.p.fill("#entrada-codigo", "ZZZZ-2222");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForSelector("#entrada-error:not([hidden])");
+        igual("un código que no existe dice por qué, avisa al lector de pantalla (aria-live) y deja corregir (conserva lo escrito, no abre la mesa)",
+            await r.p.evaluate(() => [document.getElementById("entrada-error").textContent.includes("no es de ningún árbitro"), document.getElementById("entrada-error").getAttribute("aria-live"), document.getElementById("entrada-codigo").value, document.getElementById("entrada-codigo").getAttribute("aria-invalid"), document.getElementById("app").checkVisibility(), location.hash]), [true, "assertive", "ZZZZ2222", "true", false, ""]);
+        await r.p.fill("#entrada-codigo", "ab0");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForFunction(() => document.getElementById("entrada-error").textContent.includes("8 letras y números"));
+        await r.p.fill("#entrada-codigo", "zzzz zzzz");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForFunction(() => document.getElementById("entrada-error").textContent.includes("organización apagó"));
+        igual("el código de un enlace apagado y el mal escrito también se explican", true, true);
+        // El bueno, en minúsculas y con espacio.
+        await r.p.fill("#entrada-codigo", "k7m2 9qxa");
+        await r.p.click("#entrada-entrar");
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("el código bueno (en minúsculas, con espacio) abre la mesa y la dirección queda como la de siempre (#t=<token>), sin el código",
+            await r.p.evaluate((t) => [location.hash === "#t=" + t, location.hash.includes("K7M2"), document.getElementById("entrada").hidden, document.getElementById("app").checkVisibility(), window.__llamadas.some((l) => l.f === "centroamericano-mesa" && l.body.token === t)], TOKEN), [true, false, true, true, true]);
+        await r.ctx.close();
+        // Desde /m/<código> el worker manda con «#c=…»: entra solo, sin escribir nada.
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "c=K7M29QXA" });
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("ya adentro, «¿Dónde juega?» y «Todas las mesas» vuelven", await r.p.evaluate(() => [document.getElementById("donde-juega").checkVisibility(), document.getElementById("ver-todas-mesas").checkVisibility(), document.body.dataset.entrada === undefined]), [true, true, true]);
+        igual("con «#c=<código>» en la dirección entra solo (sin escribir) y deja la dirección con el token", await r.p.evaluate((t) => [location.hash === "#t=" + t, document.getElementById("entrada").hidden], TOKEN), [true, true]);
+        await r.ctx.close();
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: "c=ZZZZ2222" });
+        await r.p.waitForSelector("#entrada-error:not([hidden])");
+        igual("con un «#c=» malo muestra la casilla con el error y el código para corregirlo, y quita el código de la dirección",
+            await r.p.evaluate(() => [document.getElementById("entrada-error").textContent.includes("no es de ningún árbitro"), document.getElementById("entrada-codigo").value, location.hash, document.getElementById("app").checkVisibility()]), [true, "ZZZZ2222", "", false]);
+        await r.ctx.close();
+        // Con el enlace de siempre no aparece la casilla.
+        r = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN });
+        await r.p.waitForSelector("#app:not([hidden])");
+        igual("con el enlace o el QR de siempre no se pide ningún código y no se llama a la función del código", await r.p.evaluate(() => [document.getElementById("entrada").hidden, window.__llamadas.some((l) => l.f === "centroamericano-codigo")]), [true, false]);
+        await r.ctx.close();
+    }
 
     console.log("\n=== Sus mesas ===");
     let errores;
@@ -197,12 +271,7 @@ const CONTRASTE = `(sel) => {
     // Las tarjetas son SIEMPRE del mismo tamaño y de la misma forma: ninguna crece ni se corre cuando le pasa algo.
     // En un CI lento a veces la tarjeta se mide en el instante en que la página se está repintando (todas en 0 × 0): se espera, hasta 8 s, a que
     // tengan tamaño; si de verdad no lo tienen, el fallo dice por qué (la página escondida, el aviso de «no se pudo abrir», etc.).
-    const medidas = async () => {
-        await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(async () => {
-            console.log("      (las tarjetas miden 0: " + JSON.stringify(await p.evaluate(() => ({ app: !document.getElementById("app").hidden, problema: !document.getElementById("problema").hidden, oculta: document.hidden, liviano: document.documentElement.dataset.liviano || null, inert: document.body.hasAttribute("inert") || [...document.body.children].some((n) => n.hasAttribute("inert")), dialogos: document.querySelectorAll("dialog[open]").length }))) + ")");
-        });
-        return p.$$eval(".cam-mesa", (l) => l.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
-    };
+    const medidas = () => medirTarjetas(p);
     const base = await medidas();
     igual("todas las tarjetas de las mesas miden lo mismo (ancho y alto), sea cual sea su estado", [new Set(base.map((x) => x[0])).size, new Set(base.map((x) => x[1])).size, base.length], [1, 1, 3]);
     igual("los renglones de cada jugador son fijos: el nombre ocupa siempre el mismo alto (hasta 2 líneas) y los botones van en su propio renglón", await p.evaluate(() => { const js = [...document.querySelectorAll(".cam-mesa .cam-jugador")]; return [new Set(js.map((j) => Math.round(j.getBoundingClientRect().height))).size, new Set(js.map((j) => Math.round(j.querySelector(".cam-nombre").getBoundingClientRect().height))).size, js.every((j) => j.querySelector(".cam-jugador-botones").getBoundingClientRect().top >= j.querySelector(".cam-nombre").getBoundingClientRect().bottom)]; }), [1, 1, true]);
@@ -1052,10 +1121,7 @@ const CONTRASTE = `(sel) => {
         const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
         const altos = (p) => p.$$eval(".cam-mesa", (l) => l.map((c) => Math.round(c.getBoundingClientRect().height)));
         // Igual que «medidas»: si la página se está repintando, las tarjetas miden 0 × 0 un instante; se espera (hasta 8 s) a que tengan tamaño.
-        const formas = async (p) => {
-            await p.waitForFunction(() => { const l = [...document.querySelectorAll(".cam-mesa")]; return l.length > 0 && l.every((c) => c.getBoundingClientRect().height > 0); }, null, { timeout: 8000 }).catch(() => console.log("      (las tarjetas siguen midiendo 0 después de 8 s)"));
-            return p.$$eval(".cam-mesa", (l) => l.map((c) => [Math.round(c.getBoundingClientRect().width), Math.round(c.getBoundingClientRect().height)]));
-        };
+        const formas = (p) => medirTarjetas(p);
         const normal = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
         await normal.p.waitForSelector(".cam-mesa");
         const altoHoy = await altos(normal.p);
@@ -1120,6 +1186,80 @@ const CONTRASTE = `(sel) => {
         igual("«?ficha=a» la enciende para otro enlace (para probarla), y en el celular (390 px) no se desplaza a lo ancho",
             await forzada.p.evaluate(() => [document.querySelectorAll(".cam-mesa[data-ficha='a']").length, document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1]), [3, true]);
         await forzada.ctx.close();
+    }
+
+    console.log("\n=== Cada árbitro elige cómo ver sus mesas (De siempre / Tres toques) ===");
+    {
+        const OSCAR = dobleArbitro().replace('window.__avisos = { nombrado: true, arbitro: "Ana Árbitra"', 'window.__avisos = { nombrado: true, arbitro: "Óscar Angulo Camacho"');
+        const cuantas = (p) => p.evaluate(() => [document.querySelectorAll(".cam-mesa").length, document.querySelectorAll(".cam-mesa[data-ficha='a']").length]);
+        const vista = (p) => p.evaluate(() => [document.getElementById("vista-mesas").dataset.vista, document.getElementById("vista-boton").getAttribute("aria-label"), [...document.querySelectorAll("#vista-menu [role=menuitemradio]")].map((i) => [i.dataset.vista, i.getAttribute("aria-checked")])]);
+        // Se abre desde el botón y se elige una opción del menú (como lo hace quien toca la tablet).
+        const elegir = async (p, id) => { await p.click("#vista-boton"); await p.click('#vista-menu [data-vista="' + id + '"]'); };
+        // Cualquier árbitro arranca con la ficha de siempre y puede cambiarla.
+        const v = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await v.p.waitForSelector(".cam-mesa");
+        igual("sin elegir nada: la ficha de siempre, y el botón (en su nombre accesible) y el menú lo dicen", [await cuantas(v.p), await vista(v.p)],
+            [[3, 0], ["clasica", "Cómo ver tus mesas: De siempre", [["clasica", "true"], ["tres", "false"]]]]);
+        igual("sin ruido: lo único visible es un botón chico «Vista», con el menú cerrado y sin bloques ni textos largos",
+            await v.p.evaluate(() => { const bt = document.getElementById("vista-boton"), m = document.getElementById("vista-menu"); return [bt.checkVisibility(), bt.textContent.trim(), bt.getAttribute("aria-haspopup"), bt.getAttribute("aria-expanded"), m.checkVisibility(), Math.round(bt.getBoundingClientRect().height) <= 48]; }),
+            [true, "👁 Vista ▾", "menu", "false", false, true]);
+        await v.p.click("#vista-boton");
+        igual("al tocar el botón se despliegan las dos opciones (una marcada), con el foco en la marcada y sin mover las mesas de lugar",
+            await v.p.evaluate(() => [document.getElementById("vista-menu").checkVisibility(), document.getElementById("vista-boton").getAttribute("aria-expanded"), [...document.querySelectorAll("#vista-menu button")].map((x) => [x.textContent.trim(), x.getAttribute("role"), x.getAttribute("aria-checked")]), document.activeElement.dataset.vista]),
+            [true, "true", [["✓De siempre", "menuitemradio", "true"], ["Tres toques", "menuitemradio", "false"]], "clasica"]);
+        await v.p.keyboard.press("ArrowDown");
+        igual("con el teclado: la flecha pasa a la otra opción y Escape cierra el menú devolviendo el foco al botón",
+            [await v.p.evaluate(() => document.activeElement.dataset.vista), await (async () => { await v.p.keyboard.press("Escape"); return v.p.evaluate(() => [document.getElementById("vista-menu").checkVisibility(), document.activeElement.id]); })()],
+            ["tres", [false, "vista-boton"]]);
+        await v.p.click("#vista-boton");
+        await v.p.mouse.click(5, 300);
+        igual("un toque afuera también lo cierra", await v.p.evaluate(() => document.getElementById("vista-menu").checkVisibility()), false);
+        await elegir(v.p, "tres");
+        await v.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        igual("elegir «Tres toques» arma otra vez las tarjetas con la ficha corta, de una vez y sin recargar, y lo dice",
+            [await cuantas(v.p), await vista(v.p), await v.p.evaluate(() => [localStorage.getItem("cam-vista-mesas"), !!document.querySelector(".avisos-toast, [data-avisos-aceptar]") || document.body.textContent.includes("Ves tus mesas con «Tres toques»")])],
+            [[3, 3], ["tres", "Cómo ver tus mesas: Tres toques", [["clasica", "false"], ["tres", "true"]]], ["tres", true]]);
+        // Las dos vistas tienen las MISMAS funciones: lo que se puede hacer en una mesa (por «data-accion») en la ficha de siempre se puede
+        // hacer en la corta; solo cambia cómo se elige el resultado (la lista contra los tres botones).
+        const acciones = (p) => p.evaluate(() => [...new Set([...document.querySelectorAll('.cam-mesa[data-mesa="2"] [data-accion]')].map((b) => b.dataset.accion))].sort());
+        const enCorta = await acciones(v.p);
+        await elegir(v.p, "clasica");
+        await v.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        const enClasica = await acciones(v.p);
+        console.log("      acciones de la mesa 2, ficha de siempre: " + enClasica.join(", ") + " | corta: " + enCorta.join(", "));
+        igual("la ficha corta conserva todas las funciones de la de siempre (menos elegir el resultado en una lista: ahí van tres botones de un toque)",
+            [enClasica.filter((a) => !enCorta.includes(a)), enCorta.includes("rapido")], [[], true]);
+        await elegir(v.p, "tres");
+        await v.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        // La tablet la recuerda: al volver a abrir sigue siendo «Tres toques».
+        await v.p.reload();
+        await v.p.waitForSelector(".cam-mesa");
+        igual("al volver a abrir la página, la tablet recuerda «Tres toques»", [await cuantas(v.p), (await vista(v.p))[0]], [[3, 3], "tres"]);
+        await elegir(v.p, "clasica");
+        await v.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        igual("y se puede volver a «De siempre» (también se recuerda)", [await cuantas(v.p), await v.p.evaluate(() => localStorage.getItem("cam-vista-mesas"))], [[3, 0], "clasica"]);
+        await v.ctx.close();
+
+        // Óscar arranca con «Tres toques» (como hasta ahora), pero ya puede elegir la de siempre; «?ficha=hoy» sigue forzándola.
+        const o = await abrir(browser, "centroamericano-arbitro.html", OSCAR, { hash: TOKEN, ancho: 820 });
+        await o.p.waitForSelector(".cam-mesa");
+        igual("Óscar Angulo arranca con «Tres toques», que es como la tiene hasta ahora", [await cuantas(o.p), (await vista(o.p))[0]], [[3, 3], "tres"]);
+        await elegir(o.p, "clasica");
+        await o.p.waitForFunction(() => document.querySelectorAll(".cam-mesa[data-ficha='a']").length === 0);
+        await o.p.reload();
+        await o.p.waitForSelector(".cam-mesa");
+        igual("y si Óscar elige «De siempre», manda lo que eligió (no la lista de quienes arrancan con la corta)", [await cuantas(o.p), (await vista(o.p))[0]], [[3, 0], "clasica"]);
+        await o.ctx.close();
+
+        // Sin almacenamiento (modo privado, datos bloqueados): la elección vale mientras la página esté abierta y nada se rompe.
+        const sa = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, ancho: 820 });
+        await sa.ctx.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new Error("sin almacenamiento"); } }); });
+        await sa.p.reload();
+        await sa.p.waitForSelector(".cam-mesa");
+        await elegir(sa.p, "tres");
+        await sa.p.waitForSelector(".cam-mesa[data-ficha='a']");
+        igual("sin almacenamiento en el navegador, igual se puede elegir (vale mientras la página esté abierta)", await cuantas(sa.p), [3, 3]);
+        await sa.ctx.close();
     }
 
     console.log("\n=== Hablar con el jugador: las frases en inglés y francés, el traductor y la bitácora ===");
@@ -1504,17 +1644,34 @@ const CONTRASTE = `(sel) => {
     igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-tiempos", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-tiempos"]);
     await q.keyboard.press("ArrowLeft");
     igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr:not(.cam-grupo-ritmo)", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
-        ["Sub-10 Absoluto — 2 enlaces", ["Ana Árbitra", "1 a 15", "si"], ["Árbitro 1Por definir", "16 a 30", "no"]]);
+        ["Sub-10 Absoluto — 2 enlaces", ["Ana ÁrbitraK7M2-9QXA", "1 a 15", "si"], ["Árbitro 1N3P5-R7TWPor definir", "16 a 30", "no"]]);
     igual("cada uno dice si está conectado ahora o que no ha abierto el enlace", await q.$$eval("#asignaciones .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent.replace("🆘", "").trim().split("\n")[0].slice(0, 40)])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
     await q.click('#asignaciones tr[data-id="asig-ana"] [data-accion="qr"]');
     await q.waitForSelector("dialog.cam-dialogo[open] svg");
     igual("«QR y enlace» abre el QR grande con la marca de Ajedrez Integral al centro, su WhatsApp y su enlace", await q.evaluate(() => { const d = document.querySelector("dialog.cam-dialogo"); return [!!d.querySelector('svg image[data-marca="ajedrez-integral"]'), /centroamericano-arbitro\.html#a{64}$/.test(d.querySelector('[data-accion="abrir"]').href), decodeURIComponent(d.querySelector('[data-accion="whatsapp"]').href).includes("tus mesas del Centroamericano (Sub-10 Absoluto, mesas 1 a 15)")]; }), [true, true, true]);
+    igual("«QR y enlace» también trae el código corto para quien no tiene cámara ni WhatsApp: escrito en grande, con dónde teclearlo, para copiar y en el mensaje de WhatsApp",
+        await q.evaluate(() => { const d = document.querySelector("dialog.cam-dialogo"); return [d.querySelector(".cam-codigo-bloque .cam-codigo-chip").textContent, d.querySelector(".cam-codigo-bloque").textContent.includes("ajedrez-integral.com/m"), d.querySelector(".cam-codigo-chip").getAttribute("aria-label"), !!d.querySelector('[data-accion="copiar-codigo"]'), decodeURIComponent(d.querySelector('[data-accion="whatsapp"]').href).includes("entra a ajedrez-integral.com/m y escribe tu código: K7M2-9QXA")]; }),
+        ["K7M2-9QXA", true, "Código: K 7 M 2 - 9 Q X A", true, true]);
+    await q.evaluate(() => { window.__copiado = null; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t) => { window.__copiado = t; } } }); });
+    await q.click("dialog.cam-dialogo [data-accion='copiar-codigo']");
+    igual("«Copiar el código» copia «K7M2-9QXA» tal cual se escribe", await q.evaluate(() => window.__copiado), "K7M2-9QXA");
+    igual("en la tabla, cada enlace lleva su código junto al nombre, con nombre accesible deletreado y sin repetir uno en dos filas",
+        await q.evaluate(() => { const c = [...document.querySelectorAll("#asignaciones tr.cam-asignacion .cam-codigo-chip")]; return [c.map((x) => x.textContent), c.every((x) => /^Código para escribir a mano: (\S ){8}\S$/.test(x.getAttribute("aria-label"))), new Set(c.map((x) => x.textContent)).size === c.length]; }),
+        [["K7M2-9QXA", "N3P5-R7TW"], true, true]);
     await q.click("dialog.cam-dialogo [data-accion='cerrar']");
     await q.evaluate(() => { window.__imprimio = 0; window.print = () => { window.__imprimio++; }; });
     await q.click("#imprimir-qr");
     igual("«Imprimir los QR» arma una tarjeta por árbitro, cada QR con la marca y el pie de Ajedrez Integral", await q.evaluate(() => [window.__imprimio, document.body.classList.contains("cam-imprime-qr"), [...document.querySelectorAll("#hoja-qr .cam-hoja-tarjeta")].map((t) => [t.querySelector("h3").textContent, !!t.querySelector('svg image[data-marca="ajedrez-integral"]'), t.textContent.includes("Ajedrez Integral · Centroamericano 2026")])]),
         [1, true, [["Ana Árbitra", true, true], ["Árbitro 1", true, true]]]);
+    igual("y la tarjeta impresa de cada árbitro trae también su código corto", await q.$$eval("#hoja-qr .cam-hoja-tarjeta", (l) => l.map((t) => [t.querySelector("h3").textContent, (t.querySelector("[data-codigo-tarjeta] strong") || {}).textContent, t.textContent.includes("ajedrez-integral.com/m")])),
+        [["Ana Árbitra", "K7M2-9QXA", true], ["Árbitro 1", "N3P5-R7TW", true]]);
     await q.evaluate(() => document.body.classList.remove("cam-imprime-qr"));
+    // Los códigos en papel (PDF): una fila por árbitro con enlace activo, con el código y sin el enlace ni el token.
+    {
+        const [descargaC] = await Promise.all([q.waitForEvent("download"), q.click("#codigos-pdf")]);
+        const pdfC = fs.readFileSync(await descargaC.path()).toString("latin1");
+        igual("«Códigos en papel (PDF)»: baja el PDF con la marca de agua, sin ninguna dirección de enlace ni token", [descargaC.suggestedFilename(), pdfC.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfC), /centroamericano-arbitro\.html/.test(pdfC), pdfC.includes("a".repeat(64))], ["codigos-arbitros-centroamericano-2026.pdf", true, true, false, false]);
+    }
     // crear sin nombre
     await q.click("#abrir-nuevo");
     await q.selectOption("#a-torneo", "1529733");
@@ -1992,6 +2149,55 @@ const CONTRASTE = `(sel) => {
         igual("cuando la lectura vuelve, los torneos se piden otra vez y la tabla se reparte por modo",
             await o3.p.evaluate(() => [...document.querySelectorAll("#asignaciones tr.cam-grupo-ritmo")].map((t) => t.dataset.ritmo)), ["clasico", "rapido", "blitz"]);
         await o3.ctx.close();
+    }
+
+    console.log("\n=== Cambiar el nombre de un torneo (el del Blitz quedaba larguísimo) ===");
+    {
+        const oc = await abrir(browser, "centroamericano-mesas.html?ritmos=1", dobleOrganizacion(true), { ancho: 1100 });
+        const po = oc.p;
+        await po.click("#pest-claves");
+        const tarjeta = '.cam-estado-torneo[data-tnr="1540001"]';
+        await po.waitForSelector(tarjeta + ' [data-accion="renombrar"]');
+        igual("cada torneo trae «Cambiar nombre», con un nombre accesible que dice cuál", await po.$eval(tarjeta + ' [data-accion="renombrar"]', (b) => [b.textContent.trim(), b.getAttribute("aria-label")]), ["Cambiar nombre", "Cambiar el nombre de Blitz Sub-12"]);
+        await po.click(tarjeta + ' [data-accion="renombrar"]');
+        await po.waitForSelector("dialog[open] #rn-nombre");
+        igual("se abre con el nombre de ahora y avisa que tiene que seguir diciendo «Blitz» (la tablet reconoce el ritmo por el nombre); tope de 80 y de 40",
+            await po.evaluate(() => [document.getElementById("rn-nombre").value, document.getElementById("rn-nombre").maxLength, document.getElementById("rn-categoria").maxLength, document.getElementById("rn-ayuda").textContent.includes("«Blitz»"), document.activeElement.id]),
+            ["Blitz Sub-12", 80, 40, true, "rn-nombre"]);
+        // Un nombre sin «Blitz» se rechaza en la pantalla (sin molestar a la base).
+        await po.fill("#rn-nombre", "Sub-12 relámpago");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("un nombre que ya no dice «Blitz» se rechaza con su explicación y sin llamar a la base", await po.evaluate(() => [document.getElementById("rn-error").hidden, document.getElementById("rn-error").textContent, (window.__renombrados || []).length, !!document.querySelector("dialog[open]")]),
+            [false, "✗ El nombre de un torneo Blitz tiene que seguir diciendo «Blitz».", 0, true]);
+        await po.fill("#rn-nombre", "   ");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("vacío tampoco", await po.$eval("#rn-error", (e) => e.textContent), "✗ El nombre no puede quedar vacío.");
+        // Si la base lo rechaza (sin licencia, por ejemplo), el mensaje sale en la ventana y no se pierde lo escrito.
+        await po.evaluate(() => { window.__renombrarFalla = "Hace falta la licencia de la Mesa del árbitro"; });
+        await po.fill("#rn-nombre", "Blitz S12");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        await po.waitForFunction(() => document.getElementById("rn-error").textContent.includes("licencia"));
+        igual("si la base lo rechaza, lo dice en la ventana y deja corregir (conserva lo escrito)", await po.evaluate(() => [document.getElementById("rn-error").textContent, document.getElementById("rn-nombre").value, !!document.querySelector("dialog[open]"), document.getElementById("rn-nombre").getAttribute("aria-invalid")]),
+            ["✗ No se pudo cambiar: Hace falta la licencia de la Mesa del árbitro", "Blitz S12", true, "true"]);
+        // El bueno: se manda a la base, la ventana se cierra, y el nombre nuevo sale en todos lados (tarjeta, selectores y tabla de enlaces).
+        await po.evaluate(() => { window.__renombrarFalla = ""; window.__renombrados = []; });
+        await po.fill("#rn-categoria", "Sub-12 B");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        await po.waitForFunction(() => !document.querySelector("dialog[open]"));
+        igual("al guardar, la base recibe el torneo, el nombre y la categoría (todo recortado), y la ventana se cierra", await po.evaluate(() => window.__renombrados), [{ p_tnr: "1540001", p_nombre: "Blitz S12", p_categoria: "Sub-12 B" }]);
+        await po.waitForFunction(() => document.querySelector('.cam-estado-torneo[data-tnr="1540001"] .font-bold').textContent === "Blitz S12");
+        igual("el nombre nuevo se ve en la tarjeta y en los selectores, y el torneo sigue siendo Blitz (sigue en su bloque)",
+            await po.evaluate(() => [[...document.querySelectorAll("#a-torneo option")].map((o) => o.textContent).includes("Blitz S12"), [...document.querySelectorAll("#a-torneo optgroup")].find((g) => g.label === "Blitz").textContent.includes("Blitz S12")]), [true, true]);
+        await po.click("#pest-arbitros");
+        igual("y en la tabla de enlaces, bajo Blitz", await po.evaluate(() => { const h = [...document.querySelectorAll("#asignaciones tr")]; const i = h.findIndex((t) => t.dataset.ritmo === "blitz"); return h[i + 1].textContent.includes("Blitz S12"); }), true);
+        // Un torneo clásico no puede pasar a llevar «Blitz» o «Rápido» en el nombre (la tablet lo vería como de otro ritmo).
+        await po.click("#pest-claves");
+        await po.click('.cam-estado-torneo[data-tnr="1529733"] [data-accion="renombrar"]');
+        await po.waitForSelector("dialog[open] #rn-nombre");
+        await po.fill("#rn-nombre", "Sub-10 Blitz");
+        await po.click('dialog[open] [data-accion="guardar-nombre"]');
+        igual("un torneo clásico no puede pasar a decir «Blitz»", await po.evaluate(() => [document.getElementById("rn-error").textContent, document.getElementById("rn-ayuda").textContent.includes("No puede decir")]), ["✗ Un torneo clásico no puede llevar «Blitz» ni «Rápido» en el nombre.", true]);
+        await oc.ctx.close();
     }
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");

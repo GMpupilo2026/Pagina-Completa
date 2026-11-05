@@ -21,15 +21,15 @@ function dobleOrganizacion(licencia) {
     { tnr: "1532448", nombre: "PRUEBA grupo A", categoria: "Sub-8", rama: "Absoluto", orden: 901, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1532448", prueba: true }];
   // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no, pero ya terminó sus 15 mesas.
   const ASIG = [
-    { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
-    { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
-    { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+    { id: "asig-ana", codigo: "K7M29QXA", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
+    { id: "asig-arb1", codigo: "N3P5R7TW", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
+    { id: "asig-ensayo", codigo: "H2J4K6MX", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
   // «?ritmos=1» en la dirección: suma un torneo Rápido y uno Blitz con su enlace cada uno (para ver la página separada por modo).
   if (/[?&]ritmos=1/.test(location.search)) {
     TORNEOS.push({ tnr: "1533951", nombre: "Rápido Sub-10", categoria: "Sub-10", rama: "Mixto", orden: 102, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" },
       { tnr: "1540001", nombre: "Blitz Sub-12", categoria: "Sub-12", rama: "Mixto", orden: 201, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" });
-    ASIG.push({ id: "asig-rapido", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
-      { id: "asig-blitz", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
+    ASIG.push({ id: "asig-rapido", codigo: "R8S9T2UV", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
+      { id: "asig-blitz", codigo: "Z3Y4X5WP", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
   }
   // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
@@ -85,6 +85,11 @@ function dobleOrganizacion(licencia) {
       // Un evento nuevo: la base agrega los torneos (con la licencia) y archiva un evento.
       if (f === "centroamericano_torneos_agregar") { (window.__agregados = window.__agregados || []).push(JSON.parse(JSON.stringify(a)));
         a.p_torneos.forEach((t, i) => TORNEOS.push(Object.assign({ orden: 200 + i, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null, prueba: false, archivado: false, evento: a.p_evento }, t))); return R(a.p_torneos.length); }
+      // Cambiar el nombre de un torneo: window.__renombrarFalla = «mensaje» hace que la base lo rechace (como sin licencia o con el ritmo cambiado).
+      if (f === "centroamericano_torneo_renombrar") { (window.__renombrados = window.__renombrados || []).push(JSON.parse(JSON.stringify(a)));
+        if (window.__renombrarFalla) return R(null, { message: window.__renombrarFalla });
+        const t = TORNEOS.find((x) => x.tnr === a.p_tnr); if (!t) return R(null, { message: "No existe ese torneo" });
+        t.nombre = a.p_nombre; if (a.p_categoria) t.categoria = a.p_categoria; return R(null); }
       if (f === "centroamericano_evento_archivar") { let n = 0; TORNEOS.forEach((t) => { if (t.evento === a.p_evento && !t.prueba) { t.archivado = a.p_archivar; n++; } }); return R(n); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
@@ -142,7 +147,7 @@ function dobleOrganizacion(licencia) {
             for (const v of lista) {
               const base = tabla === "centroamericano_avisos"
                 ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
-                : { id: "a" + (++n), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
+                : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
           else if (accion === "update") { filtrar(tabla, f, fin).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }

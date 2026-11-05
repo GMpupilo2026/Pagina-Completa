@@ -133,6 +133,10 @@ export default {
     // viaje de más a quien entra y Google lo cuenta como salto extra.
     if (corregida) return Response.redirect(url.toString(), 301);
 
+    // ---- La puerta corta del árbitro del Centroamericano (/m y /m/<código>) ----
+    const corto = url.pathname.match(PUERTA_CORTA);
+    if (corto) return puertaCorta(url.origin, corto[1] || "");
+
     // ---- La tarjeta de un torneo de Pareo Integral (/t/<id>) ----
     const torneo = url.pathname.match(TORNEO);
     if (torneo) return tarjetaTorneo(torneo[1].toLowerCase());
@@ -424,6 +428,28 @@ async function tarjetaOrganizador(id) {
     ? [o.verificado ? "Organizador verificado" : "", cuantos == null ? "" : cuantos === 1 ? "1 torneo publicado" : cuantos + " torneos publicados", "Sus próximos torneos y los resultados en Pareo Integral"].filter(Boolean).join(" · ")
     : "Las rondas, los resultados y la clasificación de los torneos publicados con Pareo Integral.";
   return paginaTarjeta({ titulo, resumen, destino, propia: SITIO + "/o/" + id, alt: "Pareo Integral: torneos de ajedrez en vivo. ajedrez-integral.com" });
+}
+
+// ---- La puerta corta del árbitro del Centroamericano (/m y /m/<código>) ----
+//
+// Una tablet sin cámara ni WhatsApp no puede abrir el enlace largo del árbitro ni su QR. Con esto escribe «ajedrez-integral.com/m»
+// (o «…/m/K7M2-9QXA») y llega a su mesa: el código de 8 caracteres de su enlace, que le da la organización, se canjea por el acceso en la
+// Edge Function centroamericano-codigo (con freno de intentos). El worker NO mira la base: solo manda a la página del árbitro con el código
+// en el «#» (que el navegador no manda a ningún servidor, así que no queda en ningún registro después de esta visita). Ver «El código
+// corto del árbitro» en docs/decisiones/juegos-y-torneos.md.
+const PUERTA_CORTA = /^\/m(?:\/((?:[A-Za-z0-9 -]|%20){0,24}))?\/?$/;
+function puertaCorta(origen, texto) {
+  let codigo = "";
+  try { codigo = decodeURIComponent(texto); } catch (e) { codigo = texto; }
+  codigo = codigo.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: origen + "/centroamericano-arbitro.html" + (codigo ? "#c=" + codigo : ""),
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
+    },
+  });
 }
 
 // ---- El calendario para suscribirse (/calendario/torneos.ics) ----

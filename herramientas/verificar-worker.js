@@ -403,6 +403,22 @@ async function cargarWorker() {
     globalThis.Date = RealDate;
   }
 
+  console.log("\n=== La puerta corta del árbitro del Centroamericano (/m y /m/<código>) ===");
+  {
+    const wr = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
+    igual("wrangler.jsonc hace correr el worker en /m y /m/* (sin esa línea la puerta no existe y no da ningún error)", ["/m", "/m/*"].every((x) => wr.assets.run_worker_first.includes(x)), true);
+    let preguntas = 0;
+    globalThis.fetch = async () => { preguntas++; return new Response("[]"); };
+    const ir = async (url) => { pedido = null; const res = await worker.fetch(new Request(url.startsWith("/") ? "https://ajedrez-integral.com" + url : url, { redirect: "manual" }), env); return { estado: res.status, ubicacion: res.headers.get("location"), cache: res.headers.get("cache-control"), aArchivos: pedido }; };
+    const base = "https://ajedrez-integral.com";
+    const a = await ir(base + "/m/K7M2-9QXA");
+    igual("/m/<código> manda a la página del árbitro con el código en el «#» (no viaja a ningún servidor)", [a.estado, a.ubicacion, a.cache, a.aArchivos], [302, base + "/centroamericano-arbitro.html#c=K7M29QXA", "no-store", null]);
+    igual("en minúsculas, con espacios (%20) o sin guion, el mismo código", (await Promise.all(["/m/k7m2-9qxa", "/m/K7M2%209QXA", "/m/k7m29qxa/", "/m/k7m2--9q-xa"].map(ir))).map((x) => x.ubicacion), Array(4).fill(base + "/centroamericano-arbitro.html#c=K7M29QXA"));
+    igual("/m a secas manda a la página sin código (ahí aparece la casilla para escribirlo)", [(await ir(base + "/m")).ubicacion, (await ir(base + "/m/")).ubicacion], Array(2).fill(base + "/centroamericano-arbitro.html"));
+    igual("el worker no pregunta nada a la base (el código lo canjea la Edge Function, con su freno)", preguntas, 0);
+    igual("lo que no es un código (otra ruta, símbolos raros, larguísimo) pasa a los archivos y no redirige", (await Promise.all(["/mesa", "/m/<script>", "/m/" + "A".repeat(40), "/manual.html"].map(ir))).map((x) => [x.estado, x.aArchivos !== null]), Array(4).fill([200, true]));
+  }
+
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })();

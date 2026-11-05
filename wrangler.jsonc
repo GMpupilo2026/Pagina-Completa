@@ -10,9 +10,10 @@
 		// tarjeta de un torneo y la de un organizador de Pareo Integral para
 		// compartir) y el calendario de torneos para suscribirse
 		// (/calendario/torneos.ics) y la clasificación para incrustar en otra
-		// página (/incrustar/<id>; ver worker.js). Sin
+		// página (/incrustar/<id>; ver worker.js), y la puerta corta del árbitro
+		// del Centroamericano (/m y /m/<código>). Sin
 		// esta línea Cloudflare sirve el archivo directo (o un 404) y nada de
 		// eso existe, sin dar ningún error. Todo lo demás se sirve como siempre.
-		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*", "/o/*", "/calendario/*", "/incrustar/*"]
+		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*", "/o/*", "/calendario/*", "/incrustar/*", "/m", "/m/*"]
 	}
 }

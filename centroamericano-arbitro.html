@@ -67,6 +67,20 @@
 
         <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Entrando a tus mesas…</p></div>
 
+        <!-- Sin enlace ni QR: se entra con el código corto de 8 caracteres (ajedrez-integral.com/m). Lo canjea centroamericano-codigo. -->
+        <section id="entrada" class="cam-tarjeta cam-entrada max-w-xl mx-auto my-10 text-center" aria-labelledby="entrada-titulo" hidden>
+            <p class="text-4xl mb-2" aria-hidden="true">🔑</p>
+            <h2 class="font-serif text-xl font-bold mb-2" id="entrada-titulo">Entra con tu código</h2>
+            <p>Escribe el código de 8 letras y números que te dio la organización.</p>
+            <form id="entrada-form" class="mt-4" novalidate>
+                <label for="entrada-codigo" class="block text-sm font-bold mb-1">Tu código</label>
+                <input id="entrada-codigo" class="cam-campo cam-codigo-campo" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="14" placeholder="K7M2-9QXA" aria-describedby="entrada-ayuda entrada-error">
+                <p id="entrada-ayuda" class="text-sm mt-1">Da igual si escribes mayúsculas o minúsculas. No lleva 0, 1, O, I ni L.</p>
+                <p id="entrada-error" class="cam-fallo text-sm mt-2" aria-live="assertive" hidden></p>
+                <button type="submit" id="entrada-entrar" class="cam-btn mt-3">Entrar a mi mesa</button>
+            </form>
+        </section>
+
         <div id="problema" class="cam-tarjeta max-w-2xl mx-auto my-10 text-center" hidden>
             <p class="text-4xl mb-2" aria-hidden="true">🔒</p>
             <h2 class="font-serif text-xl font-bold mb-2" id="problema-titulo">No se pudo abrir</h2>
@@ -105,6 +119,11 @@
                     <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <!-- Cómo ve cada árbitro sus mesas: un botón chico que despliega las dos opciones (mismas funciones). La tablet recuerda la elegida. -->
+                    <span class="cam-desplegable" id="vista-mesas" data-vista="">
+                        <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
+                        <div id="vista-menu" class="cam-desplegable-lista" role="menu" aria-label="Cómo ver tus mesas" hidden></div>
+                    </span>
                     <button type="button" id="concluir" class="cam-btn cam-btn-claro"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
@@ -216,6 +235,7 @@
     <script src="js/centroamericano-banderas.js"></script>
     <script src="js/centroamericano-frases.js"></script>
     <script src="js/centroamericano-hablar.js"></script>
+    <script src="js/centroamericano-vista.js"></script>
     <script src="js/centroamericano-emparejamientos.js"></script>
     <script src="js/centroamericano-concentracion.js"></script>
     <script src="js/centroamericano-mis-pareos.js"></script>

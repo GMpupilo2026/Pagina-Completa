@@ -1195,4 +1195,32 @@ html[data-liviano="si"] .cam-mensaje, html[data-liviano="si"] .cam-estado-ayuda[
 .cam-ritmo-nota { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--cac-morado-hondo); }
 .dark .cam-ritmo-nota { color: #dfe0f7; }
 
+/* El código corto del árbitro (centroamericano-arbitro.html, sin enlace ni QR): grande, de una sola línea y fácil de leer con el dedo. */
+.cam-entrada .cam-codigo-campo {
+  display: block; width: 100%; max-width: 20rem; margin: 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.75rem; font-weight: 700;
+  letter-spacing: 0.18em; text-align: center; text-transform: uppercase; min-height: 56px;
+}
+/* El código que ve la organización, al lado del nombre del árbitro en la tabla de enlaces (y para dictarlo sin confundir letras). */
+.cam-codigo-chip {
+  display: inline-block; margin-top: 0.25rem; padding: 0.1rem 0.5rem; border: 2px solid currentColor; border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 0.12em; font-size: 0.95rem;
+}
+/* Mientras se pide el código no hay enlace: lo que necesita el enlace (las mesas de todas las categorías, «¿Dónde juega?») no se ofrece. */
+body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { display: none !important; }
+
+/* «Vista» (centroamericano-arbitro.html): un botón chico que despliega las vistas de las mesas (mismas funciones, cada árbitro elige la suya). */
+.cam-desplegable { position: relative; display: inline-block; }
+.cam-desplegable[hidden] { display: none; }
+.cam-desplegable-flecha { font-size: 0.8em; }
+.cam-desplegable-lista { position: absolute; z-index: 30; top: calc(100% + 0.3rem); left: 0; min-width: 11rem; padding: 0.3rem; border: 2px solid #c9cbee; border-radius: 0.8rem; background: #fff; color: var(--cac-morado-hondo); box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); }
+.cam-desplegable-lista[hidden] { display: none; }
+.dark .cam-desplegable-lista { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.cam-desplegable-opcion { display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 44px; padding: 0.4rem 0.7rem; border: 0; border-radius: 0.6rem; background: transparent; color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.cam-desplegable-opcion:hover { background: #eceefc; }
+.dark .cam-desplegable-opcion:hover { background: rgb(255 255 255 / 0.1); }
+.cam-desplegable-opcion[aria-checked="true"] { font-weight: 800; }
+.cam-desplegable-opcion:focus-visible { outline: 3px solid var(--cac-morado); outline-offset: -2px; }
+.dark .cam-desplegable-opcion:focus-visible { outline-color: #dfe0fb; }
+.cam-desplegable-marca { display: inline-block; width: 1.1rem; text-align: center; flex: none; }
 /*! rev bfb5bbb0d2d82f9f */

@@ -62,20 +62,34 @@
     // y el Blitz: la mesa en un toque» en docs/decisiones/juegos-y-torneos.md.
     const rapido = () => (estado ? C.ritmoRapido(estado.torneo, estado.ritmo) : null);
 
-    // La ficha nueva de cada mesa («A: tres toques»: más corta, el resultado en tres botones que guardan de un toque y las marcas de los dos
-    // jugadores en una sola franja). POR AHORA SOLO PARA QUIEN ESTÁ EN ESTA LISTA, para probarla en una ronda real antes de darla a todos.
-    // El nombre se compara sin tildes ni mayúsculas y basta con que traiga todas las palabras («Oscar Angulo Camacho» sirve). Para probarla
-    // con otro enlace: «?ficha=a» después de la dirección; para volver a la de siempre aun estando en la lista: «?ficha=hoy».
-    // Ver «La ficha de la mesa, opción A» en docs/decisiones/juegos-y-torneos.md.
+    // CÓMO VE CADA ÁRBITRO SUS MESAS. Dos vistas con las MISMAS funciones (llegada, ilegal, se levantó, irregularidad, hablar con el jugador,
+    // foto, tiempos, pedir al principal…): «De siempre» (la ficha completa) y «Tres toques» (la ficha corta: el resultado en tres botones que
+    // guardan de un toque y las marcas de los dos jugadores en una sola franja). Cada uno elige la suya en «Cómo ver mis mesas» y la tablet la
+    // recuerda (js/centroamericano-vista.js; sin almacenamiento, vale la de la lista de abajo o la de siempre). En el Blitz siempre va la corta (es lo único que hay).
+    // Quien está en FICHA_A arranca con «Tres toques» hasta que elija otra. El nombre se compara sin tildes ni mayúsculas y basta con que
+    // traiga todas las palabras («Oscar Angulo Camacho» sirve). «?ficha=a» y «?ficha=hoy» después de la dirección fuerzan una u otra (pruebas).
+    // Ver «La ficha de la mesa, opción A» y «Cada árbitro elige cómo ver sus mesas» en docs/decisiones/juegos-y-torneos.md.
     const FICHA_A = ["oscar angulo"];
+    const VISTAS = [
+        { id: "clasica", texto: "De siempre", ayuda: "La ficha completa: cada jugador con sus botones y el resultado en una lista." },
+        { id: "tres", texto: "Tres toques", ayuda: "La ficha corta: el resultado en tres botones que guardan de un toque y las marcas de los dos jugadores juntas." },
+    ];
     const sinTildes = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    function fichaA() {
+    // Lo que la tablet recuerda lo guarda js/centroamericano-vista.js (esta página no toca el almacenamiento: ver su cabecera).
+    const vistaGuardada = () => window.CentroamericanoVista.leer();
+    const guardarVista = (v) => window.CentroamericanoVista.guardar(v);
+    let vistaDeEstaSesion = null;   // lo que eligió ahora (por si el navegador no deja guardar)
+    function vistaElegida() {
         const q = location.search || "";
-        if (/[?&]ficha=hoy\b/.test(q)) return false;
-        if (/[?&]ficha=a\b/.test(q)) return true;
+        if (/[?&]ficha=hoy\b/.test(q)) return "clasica";
+        if (/[?&]ficha=a\b/.test(q)) return "tres";
+        if (vistaDeEstaSesion) return vistaDeEstaSesion;
+        const guardada = vistaGuardada();
+        if (guardada) return guardada;
         const n = sinTildes(estado && estado.arbitro);
-        return FICHA_A.some((x) => x.split(" ").every((w) => n.includes(w)));
+        return FICHA_A.some((x) => x.split(" ").every((w) => n.includes(w))) ? "tres" : "clasica";
     }
+    const fichaA = () => vistaElegida() === "tres";
     const minutosIlegal = () => C.minutosIlegal(rapido());
     const textoMinutos = () => (minutosIlegal() === 1 ? "1 minuto" : "2 minutos");
     // Los tres resultados de siempre, en botones grandes: un toque y se guarda.
@@ -1369,6 +1383,66 @@
 
     // La leyenda de los iconos: en el Blitz solo lo que hay en pantalla (Ilegal, Anular y Principal); sin «Llegó», «Irregularidad», «Se levantó», fotos ni tiempos.
     let leyendaCompleta = null;
+    // «Vista»: un botón chico que despliega las vistas como un menú de una opción marcada (menuitemradio). Elegir otra vuelve a armar las
+    // tarjetas al instante y la tablet la recuerda. En el Blitz no hay nada que elegir y el botón no se ofrece. Sin ruido: nada visible
+    // aparte del botón hasta que se toca.
+    function menuVista() { return $("vista-menu"); }
+    function cerrarMenuVista(devolverFoco) {
+        const m = menuVista();
+        if (m.hidden) return;
+        m.hidden = true;
+        $("vista-boton").setAttribute("aria-expanded", "false");
+        if (devolverFoco) $("vista-boton").focus();
+    }
+    function abrirMenuVista() {
+        const m = menuVista();
+        m.hidden = false;
+        $("vista-boton").setAttribute("aria-expanded", "true");
+        const marcada = m.querySelector('[aria-checked="true"]') || m.querySelector("button");
+        if (marcada) marcada.focus();
+    }
+    function pintarVista() {
+        const blitz = rapido() === "blitz";
+        const actual = blitz ? "tres" : vistaElegida();
+        const v = VISTAS.find((x) => x.id === actual);
+        $("vista-mesas").dataset.vista = actual;
+        $("vista-mesas").hidden = blitz;
+        if (blitz) cerrarMenuVista(false);
+        $("vista-boton").setAttribute("aria-label", "Cómo ver tus mesas: " + v.texto);
+        const m = menuVista();
+        if (!m.dataset.armado) {
+            m.dataset.armado = "si";
+            m.replaceChildren(...VISTAS.map((x) => el("button", { type: "button", role: "menuitemradio", class: "cam-desplegable-opcion", "data-vista": x.id, title: x.ayuda, onclick: () => { elegirVista(x.id); cerrarMenuVista(true); } },
+                el("span", { class: "cam-desplegable-marca", "aria-hidden": "true" }), x.texto)));
+        }
+        for (const b of m.querySelectorAll("button")) {
+            const es = b.dataset.vista === actual;
+            b.setAttribute("aria-checked", es ? "true" : "false");
+            b.querySelector(".cam-desplegable-marca").textContent = es ? "✓" : "";
+        }
+    }
+    function elegirVista(id) {
+        if (!VISTAS.some((x) => x.id === id) || id === vistaElegida()) return;
+        vistaDeEstaSesion = id;
+        guardarVista(id);
+        pintarVista();
+        pintar();
+        avisar("Ves tus mesas con «" + VISTAS.find((x) => x.id === id).texto + "».");
+    }
+    // El menú se cierra con Escape, con un toque afuera y al salir con el teclado; las flechas pasan de una opción a otra.
+    function armarMenuVista() {
+        $("vista-boton").addEventListener("click", () => { if (menuVista().hidden) abrirMenuVista(); else cerrarMenuVista(false); });
+        menuVista().addEventListener("keydown", (e) => {
+            const op = [...menuVista().querySelectorAll("button")];
+            const i = op.indexOf(document.activeElement);
+            if (e.key === "Escape") { e.preventDefault(); cerrarMenuVista(true); }
+            else if (e.key === "ArrowDown") { e.preventDefault(); op[(i + 1) % op.length].focus(); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); op[(i - 1 + op.length) % op.length].focus(); }
+            else if (e.key === "Tab") cerrarMenuVista(false);
+        });
+        document.addEventListener("click", (e) => { if (!menuVista().hidden && !$("vista-mesas").contains(e.target)) cerrarMenuVista(false); });
+    }
+
     function pintarLeyenda(blitz) {
         const l = document.querySelector(".cam-leyenda");
         if (!l) return;
@@ -1501,6 +1575,7 @@
         $("modo-rapido").hidden = !r;
         if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
         pintarLeyenda(r === "blitz");
+        pintarVista();
         $("d-arbitro").textContent = estado.arbitro;
         $("d-ronda").textContent = "Ronda " + estado.ronda;
         $("d-mesas").textContent = "Mesas " + estado.desde + " a " + estado.hasta;
@@ -2046,11 +2121,78 @@
         return !ocupadas.size && !Object.values(elegido).some((v) => v) && !escribiendo;
     }
 
-    function init() {
-        if (!/^[0-9a-f]{64}$/.test(token())) {
-            problema("Falta tu enlace", "Esta página se abre con el enlace o el QR que te dio la organización. Pídelo de nuevo o escanéalo otra vez.", false);
-            return;
+    // ------------------------------------------------------------- entrar con el código corto
+    // Una tablet sin cámara ni WhatsApp no abre el enlace largo ni su QR: escribe en ajedrez-integral.com/m el código de 8
+    // caracteres de su enlace (o llega con «#c=K7M29QXA» desde /m/K7M2-9QXA). La Edge Function centroamericano-codigo lo canjea por
+    // el token, con su freno de intentos, y la página sigue como si hubiera abierto el enlace. Ver «El código corto del árbitro».
+
+    // Lo escrito, sin espacios ni guiones y en mayúsculas: «k7m2 9qxa» y «K7M2-9QXA» son el mismo código.
+    const limpiarCodigo = (t) => String(t || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const codigoDeLaDireccion = () => { const m = (location.hash || "").match(/^#c=([A-Za-z0-9 -]{1,24})$/); return m ? limpiarCodigo(m[1]) : ""; };
+
+    async function canjearCodigo(codigo) {
+        let reloj;
+        const espera = new Promise((_, no) => { reloj = setTimeout(() => no(new Error("La señal tardó demasiado en contestar. Intenta de nuevo.")), 20000); });
+        let r;
+        try { r = await Promise.race([sb.functions.invoke("centroamericano-codigo", { body: { codigo } }), espera]); }
+        finally { clearTimeout(reloj); }
+        let { data, error } = r;
+        if (error && error.context && typeof error.context.json === "function") {
+            try { data = await error.context.json(); } catch (e) { /* sin cuerpo */ }
         }
+        if (data && data.ok === true && /^[0-9a-f]{64}$/.test(String(data.token))) return data.token;
+        throw new Error((data && typeof data.error === "string" && data.error) || (error && error.message) || "No hubo respuesta. Revisa tu conexión.");
+    }
+
+    function mostrarEntrada(mensaje, codigo) {
+        $("cargando").hidden = true;
+        $("app").hidden = true;
+        $("problema").hidden = true;
+        $("entrada").hidden = false;
+        document.body.dataset.entrada = "si";   // sin enlace todavía: «Todas las mesas» y «¿Dónde juega?» no sirven y se esconden
+        $("entrada-error").textContent = mensaje || "";
+        $("entrada-error").hidden = !mensaje;
+        if (codigo != null) $("entrada-codigo").value = codigo;
+        $("entrada-codigo").setAttribute("aria-invalid", mensaje ? "true" : "false");
+        $("entrada-codigo").focus();
+    }
+
+    async function entrarConCodigo(codigo, vieneDeLaDireccion) {
+        const boton = $("entrada-entrar");
+        boton.disabled = true;
+        boton.textContent = "Comprobando…";
+        try {
+            const t = await canjearCodigo(codigo);
+            // De aquí en adelante la dirección es la de siempre (#t=<token>): recargar o instalar la página sigue funcionando.
+            history.replaceState(null, "", location.pathname + location.search + "#t=" + t);
+            $("entrada").hidden = true;
+            delete document.body.dataset.entrada;
+            $("cargando").hidden = false;
+            arrancar();
+        } catch (e) {
+            if (vieneDeLaDireccion) history.replaceState(null, "", location.pathname + location.search);
+            mostrarEntrada(e.message, codigo);
+        } finally {
+            boton.disabled = false;
+            boton.textContent = "Entrar a mi mesa";
+        }
+    }
+
+    function init() {
+        if (/^[0-9a-f]{64}$/.test(token())) { arrancar(); return; }
+        $("entrada-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const codigo = limpiarCodigo($("entrada-codigo").value);
+            if (!codigo) { mostrarEntrada("Escribe el código que te dio la organización.", ""); return; }
+            entrarConCodigo(codigo, false);
+        });
+        const delEnlace = codigoDeLaDireccion();
+        if (delEnlace) entrarConCodigo(delEnlace, true);
+        else mostrarEntrada("", null);
+    }
+
+    function arrancar() {
+        armarMenuVista();
         $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
