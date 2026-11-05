@@ -9483,7 +9483,7 @@ jugadores de Lichess en la primera lectura). Lo comprueba `verificar-centroameri
 
 #### Elegir una mesa a mano
 
-Lo pidió el dueño el 5 de noviembre (`20261105170000`, pegada a mano en el editor SQL; función `centroamericano-fair-play`
+Lo pidió el dueño el 5 de noviembre (`20261105170000`, pegada a mano en el editor SQL y anotada en `schema_migrations`; función `centroamericano-fair-play`
 en su versión 15): además del sorteo, poder elegir una mesa con todas sus indicaciones, sin sortear y descartar hasta que
 salga la que se quiere.
 
