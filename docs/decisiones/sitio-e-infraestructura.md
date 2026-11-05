@@ -2343,7 +2343,9 @@ encuentra la copia de cualquier archivo.
 - **Dónde va**: todo `.html`, `.js`, `.mjs`, `.mts`, `.css`, `.svg`, `.py`,
   `.gs`, `.sh` y `.ps1` que git conoce. **Dónde no**: `supabase/` (cada
   migración y cada función se guarda tal cual se aplicó), `js/vendor/` y
-  `js/pdf*.min.js` (librerías de otros, comparadas con su versión publicada)
+  `js/pdf*.min.js` (librerías de otros, comparadas con su versión publicada),
+  `img/banderas/` (las de flag-icons, que `verificar-gafetes.js` compara con
+  el paquete)
   y `docs/`. El zip de la línea de comandos de Pareo Integral lo lleva solo,
   porque empaqueta los mismos archivos de `js/pareo/`.
 - **Un generador que reescribe un archivo le borra el sello**, y el CI lo

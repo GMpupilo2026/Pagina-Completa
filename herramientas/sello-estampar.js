@@ -13,7 +13,8 @@
  *     aplicó o se desplegó, y después el archivo no se toca (ver «El 21/10,
  *     otra vez: comentarios agregados después de aplicar»).
  *   · js/vendor/, js/pdf*.min.js: son librerías de otros, copiadas tal cual
- *     (verificar-vendor.js las compara con su versión publicada).
+ *     (verificar-vendor.js las compara con su versión publicada); también
+ *     img/banderas/, las de flag-icons (verificar-gafetes.js las compara).
  *   · docs/: no es código ni se publica.
  *
  * Un generador que reescribe un archivo le borra el sello: el CI lo avisa
@@ -27,7 +28,7 @@ const { execFileSync } = require("child_process");
 const { forma, tiene, estampar } = require("./lib/sello");
 
 const RAIZ = path.resolve(__dirname, "..");
-const FUERA = [/^supabase\//, /^js\/vendor\//, /^docs\//, /^node_modules\//, /^js\/pdf(\.worker)?\.min\.js$/];
+const FUERA = [/^supabase\//, /^js\/vendor\//, /^docs\//, /^node_modules\//, /^js\/pdf(\.worker)?\.min\.js$/, /^img\/banderas\//];
 
 function archivos() {
   const salida = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
