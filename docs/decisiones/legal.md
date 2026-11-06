@@ -52,6 +52,19 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
   (`CONDICIONES_TIENDA` en `tienda.html`), con fecha y antes del pago.
 - Plazos de respuesta: cinco días hábiles para los derechos de datos y para las
   quejas.
+- **El software también es obra protegida** (6/11/2026, a pedido del dueño,
+  cuando se vio que el código de las herramientas se podía copiar con
+  «Inspeccionar»): «Propiedad intelectual» dice que las herramientas (Pareo
+  Integral, Notara, las de arbitraje), su código, sus pantallas y sus cálculos
+  son de Ajedrez Integral (la Ley 6683 protege los programas de computadora),
+  que poder ver el código en el navegador no da permiso para usarlo, y prohíbe
+  copiarlo o reproducirlo, descompilarlo para hacer otra herramienta, copiar
+  el sitio con programas automáticos y saltarse un candado o compartir una
+  licencia; que las licencias son personales e intransferibles (la línea de
+  comandos de Pareo se rige por la suya), y que quien no lo respete pierde la
+  cuenta o la licencia, con la Ley 8039 de observancia. **No nombra el sello
+  escondido** (ver «El sello escondido en cada archivo» en
+  sitio-e-infraestructura.md): anunciarlo es invitar a borrarlo.
 
 Al cambiar una promesa, se cambia también la fecha de «Última actualización» y,
 si es importante, se avisa a las familias antes de que empiece a aplicar (así

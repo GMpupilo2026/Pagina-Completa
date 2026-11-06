@@ -70,8 +70,14 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true, nucleos = 8 } = {}) {
+// Los núcleos se fijan siempre, como la tablet que dice ser cada prueba: si no, los
+// pone la máquina que corre el verificador. En el CI de un repositorio privado son
+// 2 —lo que js/modo-liviano.js lee como «procesador de 2 núcleos»— y «una tablet
+// nueva» salía liviana (pasó el 6/11/2026, el día que el repositorio pasó a privado).
+const NUCLEOS = Number(process.env.NUCLEOS_PRUEBA) || 8;
+async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true, nucleos = NUCLEOS } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
+    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
     // las otras pruebas); esta lo pide.
     if (auto) await ctx.addInitScript(() => { window.__modoLivianoAuto = true; });
@@ -81,8 +87,6 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
         // La librería que un navegador viejo no sabe leer: el archivo entero falla y no deja `window.supabase`.
         await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: 'throw new SyntaxError("Unexpected token \'?\'");' }));
     }
-    // Los núcleos se fijan: si no, la prueba depende de la máquina que la corre (un corredor de 2 núcleos enciende el modo liviano solo).
-    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     if (memoria != null) await ctx.addInitScript((m) => Object.defineProperty(Navigator.prototype, "deviceMemory", { configurable: true, get: () => m }), memoria);
     if (lenta) await ctx.addInitScript(() => { window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 150); });
     if (guardado) await ctx.addInitScript((g) => { if (!sessionStorage.getItem("__ya")) { sessionStorage.setItem("__ya", "1"); for (const k in g) localStorage.setItem(k, g[k]); } }, guardado);

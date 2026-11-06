@@ -23,6 +23,10 @@ archivos: `grep -rn "X" docs/decisiones/` la encuentra.
   `main` y mergearlo (squash), sin preguntar.** Es la preferencia del dueño del
   repo. El título del squash lleva el `(#NN)` del PR, como el resto del
   historial.
+- **Un PR en borrador no corre el CI**: hay que marcarlo listo
+  (`draft: false`) para que corra «Verificar», y recién con el verde se
+  mergea. El repositorio es privado y cada minuto de Actions se paga, así que
+  se empuja cuando el cambio está terminado, no a cada paso.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
 - **No se mergea con el CI en rojo.** Mergear sin preguntar solo es seguro
   porque «Verificar» (abajo) corre todas las comprobaciones antes.
@@ -30,8 +34,9 @@ archivos: `grep -rn "X" docs/decisiones/` la encuentra.
 ## El CI: todas las comprobaciones, en cada PR
 
 `.github/workflows/verificar.yml` corre `herramientas/verificar-todo.js` en
-cada PR contra `main`: un trabajo sin navegador y cuatro tandas en paralelo con
-navegador. Antes los más de setenta verificadores corrían solo si alguien se
+cada PR contra `main` que no sea borrador: un trabajo sin navegador y, si pasa,
+cuatro tandas en paralelo con navegador. No corre al entrar a `main` (el PR ya
+lo probó junto con `main`); el porqué y lo que costaba, en la cabecera del flujo. Antes los más de setenta verificadores corrían solo si alguien se
 acordaba del que tocaba, y un verificador que no corre no da ningún error:
 `verificar-alumno-sin-correo.js` estuvo roto en `main` sin que nadie lo viera.
 
@@ -229,7 +234,10 @@ puntos Elo»)
   con el acceso vigente (ver «El candado de los cursos está en el servidor»),
   `/t/` y `/o/`, las tarjetas de un torneo y de un organizador de Pareo
   Integral para compartir, `/calendario/`, el calendario de torneos para
-  suscribirse, e `/incrustar/`, la clasificación para la página de un club. Un candado
+  suscribirse, e `/incrustar/`, la clasificación para la página de un club, y el
+  código de las herramientas con licencia que no tienen nada público
+  (`CODIGO_CON_LICENCIA` en `worker.js`: solo con la licencia; ver «El código de
+  las herramientas con licencia, solo con la licencia»). Un candado
   o una ruta nueva en el worker sin su línea ahí no existe.
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
   `supabase/` tal cual se aplicaron (los comentarios van ANTES de aplicar:

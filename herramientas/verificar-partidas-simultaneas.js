@@ -128,12 +128,22 @@ function turnoDe(f) {
 }
 
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
-const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || "50", 10));
+// Cuántas a la vez, según los núcleos que de verdad tiene la máquina que corre la
+// prueba: cada partida son dos pestañas de Chromium. Con 4 o más núcleos, las 50 de
+// siempre (100 pestañas); con menos, la mitad. Desde el 6/11/2026 el repositorio es
+// privado y GitHub le da al CI máquinas de 2 núcleos: con 100 pestañas, la propia
+// computadora de la prueba atrasaba los relojes hasta 6 s, la base recortaba cientos
+// y la prueba pasaba del tope de 10 minutos. Lo que se prueba es lo mismo (que
+// ninguna partida se pierda ni se trabe con la red mala); con PARTIDAS=50 se fuerzan
+// las 50 en cualquier máquina.
+const NUCLEOS = require("os").availableParallelism ? require("os").availableParallelism() : require("os").cpus().length;
+const POCOS_NUCLEOS = NUCLEOS < 4;
+const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || (POCOS_NUCLEOS ? "25" : "50"), 10));
 // La ronda que mide «al instante»: pocas, para que la computadora que corre la
 // prueba no sea el cuello de botella (ver la cabecera).
 const PARTIDAS_RAPIDAS = Math.min(PARTIDAS, 10);
 const JUGADAS = Math.max(4, parseInt(process.env.JUGADAS || "40", 10)); // medias jugadas por partida
-const MESAS4 = Math.max(1, parseInt(process.env.MESAS4 || "12", 10));     // partidas de Ajedrez para 4
+const MESAS4 = Math.max(1, parseInt(process.env.MESAS4 || (POCOS_NUCLEOS ? "6" : "12"), 10)); // partidas de Ajedrez para 4 (cuatro pestañas cada una)
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const INICIAL_ESTANDAR = INICIAL;
 

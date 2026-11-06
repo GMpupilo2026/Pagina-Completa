@@ -8155,7 +8155,9 @@ Supabase solo si la página no la trae, como `js/pareo/ver.js`.
   la siguiente carga con red).
 - **Lo que no cierra.** Es un candado de navegador: el código de la página es
   público y alguien con la consola lo puede saltar, igual que en
-  `desempates.html`. Lo que vive en un servidor sigue como estaba y no se
+  `desempates.html` (salvo el de tres herramientas, que desde el 6/11/2026 solo
+  lo entrega el worker con la licencia: ver «El código de las herramientas con
+  licencia, solo con la licencia»). Lo que vive en un servidor sigue como estaba y no se
   cerró: los datos de los juegos estudiantiles (`data/ajedrez-estudiantil*.json`,
   que también leen el enlace del evento de Pareo, `torneos-pareo.html`,
   `acta-jde.html` y `jdn-proyeccion.html`), `arbitros_cr_publico()`, la
@@ -8185,6 +8187,69 @@ abierto antes de que cargue la página (el de verdad no se pisa:
 `if (window.CandadoHerramienta) return;`). El del candado pide el de verdad con
 `CANDADO_DE_VERDAD=1`. Por eso esos verificadores se corren con
 `verificar-todo.js`, no sueltos.
+
+### El código de las herramientas con licencia, solo con la licencia
+
+El candado de arriba tapa la pantalla, pero el código de la herramienta lo
+bajaba cualquiera: lo que corre en el navegador, quien lo recibe lo lee. El
+dueño preguntó cómo evitar que se copiaran las herramientas (ver «El sello
+escondido en cada archivo» en sitio-e-infraestructura.md), y se eligió, entre
+las opciones que se le dieron, **cerrar el código de las herramientas que no
+tienen nada público**:
+
+| Archivo | Licencia |
+|---|---|
+| `js/bases-torneo.js`, `js/bases-torneo-pagina.js` | `bases-torneo` |
+| `js/inscripcion-jde.js`, `js/inscripcion-jde-reglas.js` | `inscripcion-jde` |
+| `js/normas-titulo.js` (el motor de B.01) | `normas-titulo` |
+
+**Pareo Integral y Notara quedan abiertas, a propósito**: lo que ve el público
+(el enlace de solo lectura, el del adjunto, el QR de una mesa) usa el mismo
+código, y la línea de comandos de Pareo se descarga gratis con ese código
+adentro. Cerrarlas pide separar lo público del motor; se le ofreció al dueño y
+lo dejó para después. Tampoco se cerraron `js/reclamos-tablas.js` (lo usa la
+mesa del árbitro del Centroamericano, sin cuenta) ni lo de desempates y la
+variación de Elo, cuyo cálculo es el de Pareo (`js/pareo/desempates.js`,
+`js/pareo/elo.js`).
+
+- **El worker los entrega solo con la licencia** (`CODIGO_CON_LICENCIA` en
+  `worker.js`): le pregunta a `tengo_herramienta()` con el token de la cookie
+  `ai_sesion_cursos`, la misma pregunta del candado y las mismas reglas que
+  los cursos (ver «El candado de los cursos está en el servidor»): sin
+  respuesta de Supabase, deja pasar un token de este proyecto que no venció;
+  la respuesta se recuerda 5 minutos por token **y por herramienta**. La
+  cookie ahora también viaja a `/js/` (`RUTAS` de `SesionCursos`).
+- **A quien no la tiene no le contesta un 401 sino un aviso en JavaScript**
+  (200, `no-store`): un `<script>` con error no corre y la página no se
+  enteraría. El aviso anota el archivo en `window.__codigoNegado` y no trae
+  nada del código.
+- **La cookie vencida se arregla sola.** La sesión dura una hora y la cookie se
+  escribe al cargar: el navegador pide los `<script>` antes de que supabase-js
+  renueve el token, y quien tiene la licencia recibiría el aviso. Cuando el
+  candado confirma la licencia, `SesionCursos.recuperarCodigo(sesión)`
+  (`js/supabase-client.js`, la única copia) escribe la cookie con la sesión
+  renovada y recarga **una vez**; si en el minuto siguiente el código sigue sin
+  llegar, la página lo dice y no recarga en bucle. Lo llaman el candado
+  (`js/candado-herramienta.js`, que ahora carga `js/supabase-client.js` aunque
+  la página ya traiga su cliente) y `js/normas-titulo-pagina.js`, que tiene su
+  propio `tengo_herramienta()`.
+- **La lista va en tres lugares, y un verificador los compara**:
+  `CODIGO_CON_LICENCIA` (el worker decide), `run_worker_first` en
+  `wrangler.jsonc` (sin la línea, Cloudflare sirve el archivo directo y el
+  candado no existe, sin ningún error) y `NUNCA` de `sw.js` (ni el aviso ni el
+  código se guardan en el teléfono; por eso esas tres herramientas no abren
+  sin internet).
+- **Un archivo de la lista no lo puede cargar ninguna otra página**: sería una
+  página pública rota. `verificar-worker.js` lo revisa.
+
+`verificar-worker.js` (sin red) prueba el worker: sin sesión, el aviso sin el
+código y sin preguntar; con sesión sin licencia, que pregunta por SU
+herramienta; con ella, el código con `private, no-cache`; que una licencia no
+abre el código de otra, y que el resto de `js/` pasa de largo.
+`verificar-candado-herramienta.js` prueba la página: con la licencia y sin la
+cookie, recarga una sola vez y la segunda vez llega el código; si no llega
+nunca, lo dice sin recargar en bucle. Quitándole a la página
+`recuperarCodigo()`, salta.
 
 ### El Espacio de consultas: FAQ a la vista, la IA oculta debajo
 

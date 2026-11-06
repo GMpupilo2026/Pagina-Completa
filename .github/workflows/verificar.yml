@@ -3,13 +3,23 @@
 # Son más de setenta, y hasta ahora solo corrían si alguien se acordaba de
 # correr la que tocaba. Un verificador que no corre no da ningún error: la
 # página rota se mergea igual. Ver «El CI» en CLAUDE.md.
+#
+# Desde el 6/11/2026 el repositorio es privado y cada minuto se paga: del 1 al
+# 5 de noviembre se gastaron 30 919 (unos 185 dólares, cuando todavía era
+# público y no se cobraba). Por eso:
+#   · no corre al entrar a main: el PR ya probó el código junto con main, y
+#     repetirlo era la mitad del gasto;
+#   · no corre en un PR en borrador: corre al marcarlo listo
+#     (ready_for_review) y en cada push de ahí en adelante;
+#   · las cuatro tandas con navegador esperan a la rápida: si esa falla, no
+#     arrancan (unos 120 minutos que se iban en algo que igual se repite).
+# A mano (workflow_dispatch, lo que piden los flujos de datos) corre siempre.
 name: Verificar
 
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -22,8 +32,11 @@ concurrency:
 jobs:
   rapido:
     name: Sin navegador
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 40 y no 20: con las máquinas de 2 núcleos de un repositorio privado tarda
+    # más del doble que con las de 4 (unos 12 minutos), y a los 20 se cortaba.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -39,6 +52,7 @@ jobs:
 
   navegador:
     name: Con navegador (${{ matrix.parte }}/4)
+    needs: rapido
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
