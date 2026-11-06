@@ -181,7 +181,9 @@
 
   // El SVG del plano. opciones: marca {torneo, tablero} (la mesa del jugador),
   // chico (para la tarjeta: sin rótulos de torneo), editor (con las dudas y
-  // cada mesa tocable: alTocar(fi, gi, mi)), elegida {fi, gi, mi}.
+  // cada mesa tocable: alTocar(fi, gi, mi)), elegida {fi, gi, mi}, zonas
+  // (Map «fi-gi-mi» → número de zona: cada mesa con el color de su zona y
+  // «Z3» escrito encima, para el reparto de los árbitros).
   function dibujar(plano, opciones) {
     const op = opciones || {};
     const p = limpiar(plano);
@@ -217,17 +219,22 @@
           x -= M.ancho;
           const marcada = op.marca && g.torneo === op.marca.torneo && m.t.indexOf(op.marca.tablero) !== -1;
           const elegida = op.elegida && op.elegida.fi === fi && op.elegida.gi === gi && op.elegida.mi === mi;
+          const zona = op.zonas ? op.zonas.get(fi + "-" + gi + "-" + mi) : null;
           const caja = nodo("g", { class: "cac-plano-mesa" + (marcada ? " cac-plano-marcada" : "") });
           caja.appendChild(nodo("rect", {
             x, y, width: M.ancho, height: M.alto, rx: 4,
-            fill: marcada ? TINTA : color(g.torneo),
+            fill: marcada ? TINTA : op.zonas ? (zona ? COLORES[(zona - 1) % COLORES.length] : "#ffffff") : color(g.torneo),
             stroke: marcada ? MARCA : elegida ? MARCA : TINTA,
             "stroke-width": marcada || elegida ? 4 : 1,
             "stroke-dasharray": op.editor && m.duda && !elegida ? "4 3" : "none",
           }));
           // Mirando hacia el fondo, el tablero de la derecha (t[0]) queda a la derecha.
           const rotuloMesa = [m.t[1], m.t[0]].map((n) => (n ? String(n) : "·")).join(" ");
-          caja.appendChild(nodo("text", { x: x + M.ancho / 2, y: y + M.alto / 2 + 5, "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: marcada ? "#ffffff" : TINTA }, rotuloMesa));
+          if (op.zonas) {
+            // La zona escrita (el color nunca va solo) y debajo los dos tableros, más chicos.
+            caja.appendChild(nodo("text", { x: x + M.ancho / 2, y: y + 13, "text-anchor": "middle", "font-size": 12, "font-weight": 700, fill: TINTA }, zona ? "Z" + zona : "—"));
+            caja.appendChild(nodo("text", { x: x + M.ancho / 2, y: y + 26, "text-anchor": "middle", "font-size": 10, fill: TINTA }, rotuloMesa));
+          } else caja.appendChild(nodo("text", { x: x + M.ancho / 2, y: y + M.alto / 2 + 5, "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: marcada ? "#ffffff" : TINTA }, rotuloMesa));
           if (op.editor && m.duda) caja.appendChild(nodo("text", { x: x + M.ancho - 6, y: y + 10, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: MARCA }, "?"));
           if (op.editor && op.alTocar) {
             caja.setAttribute("data-mesa", fi + "-" + gi + "-" + mi);

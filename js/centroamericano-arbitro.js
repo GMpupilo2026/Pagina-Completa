@@ -902,6 +902,23 @@
             ...otras.map((h) => el("button", { type: "button", class: "cam-pestana", "data-accion": "cambiar-torneo", onclick: () => cambiarTorneo(h.token) }, h.torneo + " · mesas " + h.mesa_desde + " a " + h.mesa_hasta)));
     }
 
+    // La organización aprobó un reparto desde el plano y este tramo ya no le toca: la base dice cuál
+    // es su tramo vigente (solo si lo apagó un reparto, no a mano) y la tablet se pasa sola.
+    // Ver «El reparto de los árbitros desde el plano» en docs/decisiones/juegos-y-torneos.md.
+    let seguido = 0;
+    async function seguirAlNuevo() {
+        if (seguido > 3 || !window.sb || !window.sb.rpc) return false;
+        try {
+            const { data, error } = await window.sb.rpc("centroamericano_seguir", { p_token: token() });
+            if (error || !data || data === token()) return false;
+            seguido++;
+            avisar("La organización cambió tus mesas. Ya te pasamos a las nuevas.");
+            // Después de que termine la lectura que falló (su «finally» suelta el candado de leer).
+            setTimeout(() => cambiarTorneo(data), 0);
+            return true;
+        } catch (e) { return false; }
+    }
+
     // Pasar al otro enlace del mismo árbitro: se cambia el «#» y se vuelve a leer todo.
     function cambiarTorneo(nuevo) {
         try { history.replaceState(null, "", "#" + nuevo); } catch (e) { location.hash = nuevo; }
@@ -1890,6 +1907,8 @@
             if (dueno) Cola.guardarEstado(dueno, d);
             $("actualizado").textContent = "Actualizado a las " + hora(d.leido_en);
         } catch (e) {
+            // Un reparto desde el plano le apagó este tramo: si tiene otro vigente, la tablet se pasa sola a ese.
+            if (e.http === 410 && await seguirAlNuevo()) return;
             if (e.http === 404 || e.http === 410) avisosVivo = false;
             const definitivo = e.http === 404 || e.http === 410;
             if (!estado && !definitivo && dueno && Cola.esDeRed(e)) {

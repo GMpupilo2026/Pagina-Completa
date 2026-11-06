@@ -387,12 +387,12 @@
                     : f.estado === "aprobada" ? (leido ? "✓ " + (f.arbitro || "Su árbitro") + " lo leyó a las " + hora(leido) : "⏳ " + (f.arbitro || "Su árbitro") + " todavía no lo ha leído")
                         + (f.revisar_color && f.resultado_mesa ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
                         : f.estado === "sin_efecto" ? "Su árbitro ya recibió el aviso" : "";
-            const acciones = f.estado === "sorteada"
+            const acciones = (f.estado === "sorteada"
                 ? [el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "aprobar", onclick: () => aprobar(f) }, "Aprobar y avisar a su árbitro"),
                     el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "descartar", onclick: () => descartar(f) }, "Descartar")]
                 : f.estado === "aprobada" || f.estado === "revisada"
                     ? [el("button", { type: "button", class: "cam-btn cam-btn-chico" + (f.estado === "revisada" ? " cam-btn-claro" : ""), "data-accion": "revisar", onclick: () => revisar(f) }, f.estado === "revisada" ? "Corregir la revisión" : "Anotar la revisión")]
-                    : [];
+                    : []).concat(el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "borrar", "aria-label": "Borrar la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ", ronda " + f.ronda, onclick: () => borrar(f) }, el("span", { "aria-hidden": "true", texto: "🗑 " }), "Borrar"));
             return el("tr", { "data-id": f.id, "data-estado": f.estado },
                 el("td", { texto: nombreDe(f.tnr) }),
                 el("td", { texto: String(f.ronda) }),
@@ -518,6 +518,18 @@
         await cargar();
     }
 
+    // Borrar: para una mesa de prueba o puesta por error. No es «Descartar» (que queda en el acta): la saca de la lista,
+    // deja de contar para el descanso y el tope, y puede volver a salir. Lo borrado queda copiado en la base con el motivo.
+    async function borrar(f) {
+        const motivo = await Avisos.pedir("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " (ronda " + f.ronda + ") sale de la lista y del registro: deja de contar para el descanso de 2 rondas y el tope de 3 revisiones, y puede volver a salir. Es para las de prueba o las que se pusieron por error; si la revisión fue de verdad, mejor corrígela." + (f.estado === "aprobada" ? " Su árbitro recibe un aviso de que ya no hay que retener a nadie." : "") + " ¿Por qué se borra? (queda anotado)",
+            { titulo: "Borrar la mesa " + f.mesa, etiqueta: "Motivo", aceptar: "🗑 Borrar la mesa" });
+        if (motivo === null) return;
+        if (!String(motivo).trim()) { avisar("Para borrar una mesa hace falta el motivo.", true); return; }
+        try { await llamar("borrar", { id: f.id, motivo: String(motivo).trim() }); avisar("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " ya no está en la lista."); }
+        catch (e) { avisar("No se pudo borrar: " + (e.message || e), true); }
+        await cargar();
+    }
+
     async function descartar(f) {
         const motivo = await Avisos.pedir("La mesa " + f.mesa + " no vuelve a salir en esta ronda. ¿Por qué se descarta? (queda anotado)", { titulo: "Descartar la mesa " + f.mesa, etiqueta: "Motivo", aceptar: "Descartar" });
         if (motivo === null) return;
@@ -619,7 +631,7 @@
                 titulo: "Fair Play: mesas sorteadas — " + evento(),
                 subtitulo: window.HoraCR.fechaHora(new Date()),
                 pie: evento() + " · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
-                bloques: [{ tipo: "tabla", encabezados: ["Categoría", "Ronda", "Mesa", "Peso y por qué", "Jugadores", "Estado", "Sorteó / decidió", "Resultado o motivo"], anchos: [1.4, 0.5, 0.7, 2, 2.2, 1, 1.5, 2.4],
+                bloques: [{ tipo: "tabla", envolver: true, cebra: true, negritas: [2], encabezados: ["Categoría", "Ronda", "Mesa", "Peso y por qué", "Jugadores", "Estado", "Sorteó / decidió", "Resultado o motivo"], anchos: [1.4, 0.5, 0.7, 2, 2.2, 1, 1.5, 2.4],
                     filas: lista.map((f) => [nombreDe(f.tnr), String(f.ronda), f.mesa + " de " + f.mesas_en_sorteo, Number(f.peso || 1) + (f.motivos && f.motivos.length ? ": " + f.motivos.join("; ") : ""),
                         conElo(f.blancas, f.elo_b) + " – " + conElo(f.negras, f.elo_n) + (f.no_aplica ? " (" + f.no_aplica + ")" : ""), ESTADOS[f.estado] || f.estado,
                         (f.sorteada_por || "—") + (f.decidida_por_nombre ? " / " + f.decidida_por_nombre : ""),
@@ -654,26 +666,26 @@
                 "Alertas de los tableros electrónicos: " + alertas.length + " partidas (" + alertas.filter((a) => a.estado === "vista").length + " miradas, " + alertas.filter((a) => a.estado === "seguir").length + " en seguimiento, " + alertas.filter((a) => a.estado === "nueva").length + " sin mirar)" + ((datos.acumulado || []).length ? "; " + datos.acumulado.length + " jugadores por encima de lo esperable sumando sus partidas" : "") + ".",
             ] },
             { tipo: "titulo", texto: "Por categoría" },
-            { tipo: "tabla", encabezados: ["Categoría", "Ronda actual", "Sorteadas", "Revisadas", "Sin efecto", "Descartadas", "Por revisar", "Alertas"], anchos: [2.2, 0.9, 0.9, 0.9, 0.9, 1, 0.9, 0.9],
+            { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Categoría", "Ronda actual", "Sorteadas", "Revisadas", "Sin efecto", "Descartadas", "Por revisar", "Alertas"], anchos: [2.2, 0.9, 0.9, 0.9, 0.9, 1, 0.9, 0.9],
                 filas: datos.rondas.map((r) => { const de = todos.filter((f) => f.tnr === r.tnr); return [r.nombre, String(r.ronda), String(de.filter((f) => f.origen !== "manual").length), String(cuenta(de, "revisada")), String(cuenta(de, "sin_efecto")), String(cuenta(de, "descartada")), String(cuenta(de, "aprobada")), String(alertas.filter((a) => a.tnr === r.tnr).length)]; }) },
             { tipo: "titulo", texto: "Las revisiones" },
-            revisadas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
+            revisadas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
                 filas: revisadas.map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa) + (f.origen === "manual" ? " (a mano)" : f.origen === "elegida" ? " (elegida)" : ""), f.jugador || "—", RESULTADOS[f.resultado] || "", f.nota || "—", f.retenido_por ? f.retenido_por + " · " + hora(f.retenido_en) : "—", f.revisada_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Todavía no se ha revisado a nadie." },
             { tipo: "titulo", texto: "Las mesas que no llegaron a revisión" },
-            todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
+            todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", envolver: true, cebra: true, negritas: [2], encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
                 filas: todos.filter((f) => f.estado === "descartada" || f.estado === "sin_efecto").map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa), f.estado === "descartada" ? "Descartada: " + (f.motivo || "") : "Sin efecto: " + (f.revisar_color ? "ganó " + ((f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color]) + ", que no aplicaba (" + (f.no_aplica || "ya se había revisado") + ")" : "no se jugó"), f.decidida_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Ninguna." },
             (datos.indice || []).some((x) => x.roi != null) ? { tipo: "titulo", texto: "Índice del torneo, jugador por jugador" } : null,
             (datos.indice || []).some((x) => x.roi != null) ? { tipo: "nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): 50 es lo normal y cada 5 puntos es una desviación; desde 60 se mira. Sin Elo, comparado con su categoría." } : null,
-            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Difíciles (acertó / esperable)"], anchos: [2.2, 1.5, 0.8, 0.8, 1.6, 1.6],
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Difíciles (acertó / esperable)"], anchos: [2.2, 1.5, 0.8, 0.8, 1.6, 1.6],
                 filas: [...datos.indice].filter((x) => x.roi != null && x.roi >= 55).sort((a, b) => b.roi - a.roi).map((x) => [conElo(x.jugador, x.elo) + (x.comparado === "categoria" ? " (sin Elo)" : ""), nombreDe(x.tnr), String(x.partidas), uno(x.roi), x.t1 + " / " + uno(x.e_t1), x.dificiles ? x.t1_dif + " de " + x.dificiles + " / " + uno(x.e_t1_dif) : "—"]) } : null,
             datos.modelo && datos.modelo.validacion ? { tipo: "nota", texto: "Qué tan confiable es (con " + datos.modelo.validacion.jugadores + " jugadores): alarmas falsas " + datos.modelo.validacion.falsas_a_mirar + " % desde 60 (por azar, 2,3 %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((datos.modelo.validacion.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." } : null,
             { tipo: "titulo", texto: "Alertas de los tableros electrónicos" },
             { tipo: "nota", texto: "La precisión de cada jugador en las partidas transmitidas, contra la esperable para su Elo en el mismo torneo. Una alerta es una razón para mirar con más cuidado, nunca una prueba ni una acusación." },
-            (datos.acumulado || []).length ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
+            (datos.acumulado || []).length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
                 filas: datos.acumulado.map((x) => [conElo(x.jugador, x.elo), nombreDe(x.tnr), x.partidas + " (" + x.rondas + ")", uno(x.precision_media) + " %", x.esperada_media != null ? uno(x.esperada_media) + " %" : "—", uno(x.z), x.sin_mirar > 0 ? "Sin mirar" : x.seguir ? "En seguimiento" : "Mirado"]) } : null,
-            alertas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
+            alertas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
                 filas: alertas.map((a) => [String(a.ronda), nombreDe(a.tnr), String(a.mesa), conElo(a.jugador, a.elo) + " (" + COLOR[a.color].toLowerCase() + ")", uno(a.precision) + " %", a.esperada != null ? uno(a.esperada) + " %" : "—", a.z != null ? uno(a.z) : "—", decision(a) + (a.vista_por_nombre ? " (" + a.vista_por_nombre + ")" : "") + (a.nota ? ": " + a.nota : "")]) }
                 : { tipo: "parrafo", texto: "Ninguna partida se salió de lo esperable." },
             alertas.filter((a) => a.nivel !== "normal" || a.estado === "seguir").length ? { tipo: "titulo", texto: "Por qué se marcó cada alerta" } : null,
@@ -729,7 +741,7 @@
                 { tipo: "titulo", texto: "Lo que se tuvo en cuenta" },
                 { tipo: "lista", items: notasDe(ix).map((n) => (n.alto ? "[ALTA] " : "") + n.texto).concat(notasDe(ix).length ? [] : ["Nada más que su Elo y sus partidas."]) },
                 { tipo: "titulo", texto: "Partida por partida" },
-                partidas.length ? { tipo: "tabla", encabezados: ["Ronda", "Mesa", "Color", "Rival", "Resultado", "Jugadas", "Primera del motor (jugó / esperable)", "Índice", "De dónde"], anchos: [0.6, 0.6, 0.8, 2, 0.9, 0.8, 1.6, 0.7, 1.6],
+                partidas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Mesa", "Color", "Rival", "Resultado", "Jugadas", "Primera del motor (jugó / esperable)", "Índice", "De dónde"], anchos: [0.6, 0.6, 0.8, 2, 0.9, 0.8, 1.6, 0.7, 1.6],
                     filas: partidas.map((a) => [String(a.ronda), String(a.mesa), COLOR[a.color] || a.color, conElo(a.rival, a.rival_elo), a.resultado || "—", String(a.m_jugadas || a.jugadas), a.m_jugadas ? a.m_t1 + " / " + uno(a.m_e_t1) : "—", a.roi != null ? uno(a.roi) : "—", FUENTE[a.fuente] || a.fuente || "—"]) }
                     : { tipo: "parrafo", texto: "No hay partidas medidas." },
                 ...partidas.filter((a) => a.roi != null && Number(a.roi) >= 55 || a.nivel !== "normal").flatMap((a) => [

@@ -211,7 +211,9 @@ window.ReportePDF = (function () {
   Lienzo.prototype.tabla = function (encabezados, filas, anchos, altoFila, opciones) {
     const tam = 9;
     // `opciones` (todas opcionales; sin ellas la tabla es la de siempre): `envolver` parte las celdas largas en varios renglones en vez de
-    // recortarlas (la fila crece), y `negritas` es la lista de columnas que van en negrita (la que dice «qué» es cada línea).
+    // recortarlas (la fila crece) —también el encabezado, que entonces no pierde ninguna palabra—, `negritas` es la lista de
+    // columnas que van en negrita (la que dice «qué» es cada línea) y `cebra` sombrea una fila sí y otra no, para seguirla
+    // con la vista cuando las filas crecen.
     const op = opciones || {};
     const LINEA = 11;
     // `altoFila`: una tabla para llenar a mano (una hoja de resultados en papel) pide filas más altas.
@@ -219,22 +221,45 @@ window.ReportePDF = (function () {
     const total = anchos.reduce((a, b) => a + b, 0);
     const escala = this.anchoUtil() / total;
     const cols = anchos.map((a) => a * escala);
+    // Con `envolver`, ninguna palabra se parte ni se sale de su columna: cada columna llega al menos a su palabra más
+    // larga (encabezado o celda) y lo que le falta lo ceden las demás, en proporción a lo que les sobra.
+    if (op.envolver) {
+      const minimo = cols.map((_, i) => 8 + Math.max(0, ...[encabezados[i]].concat(filas.map((f) => f[i])).flatMap((t) =>
+        String(t == null ? "" : t).split(/\s+/).map((w) => anchoDe(w, tam, !!(op.negritas && op.negritas.indexOf(i) >= 0) || t === encabezados[i])))));
+      for (let vuelta = 0; vuelta < 6; vuelta++) {
+        const fijas = cols.map((c, i) => c < minimo[i]);
+        if (!fijas.some(Boolean)) break;
+        fijas.forEach((f, i) => { if (f) cols[i] = minimo[i]; });
+        const libres = cols.reduce((t, c, i) => t + (fijas[i] ? 0 : c), 0);
+        const queda = this.anchoUtil() - cols.reduce((t, c, i) => t + (fijas[i] ? c : 0), 0);
+        if (libres <= 0 || queda <= 0) break;
+        cols.forEach((c, i) => { if (!fijas[i]) cols[i] = c * queda / libres; });
+      }
+    }
 
+    const titulos = encabezados.map((h, i) => {
+      const l = op.envolver ? renglones(String(h == null ? "" : h), cols[i] - 8, tam, true).filter((t) => t !== "") : [recortar(h, cols[i] - 8, tam, true)];
+      return l.length ? l : [""];
+    });
+    const extraEnc = (Math.max.apply(null, titulos.map((l) => l.length)) - 1) * LINEA;
     const pintarEncabezado = () => {
-      this.espacio(alto * 2);
+      this.espacio(alto * 2 + extraEnc);
       this.y -= alto;
-      this.ops.push("0.93 0.95 0.97 rg " + MARGEN + " " + (this.y - 4).toFixed(2) + " " +
-        this.anchoUtil().toFixed(2) + " " + alto + " re f");
+      this.ops.push("0.93 0.95 0.97 rg " + MARGEN + " " + (this.y - 4 - extraEnc).toFixed(2) + " " +
+        this.anchoUtil().toFixed(2) + " " + (alto + extraEnc) + " re f");
       let x = MARGEN + 4;
-      encabezados.forEach((h, i) => {
-        this.ops.push("BT /FB " + tam + " Tf 0.10 0.16 0.24 rg 1 0 0 1 " + x.toFixed(2) + " " +
-          this.y.toFixed(2) + " Tm (" + escapar(recortar(h, cols[i] - 8, tam, true)) + ") Tj ET");
+      titulos.forEach((l, i) => {
+        l.forEach((t, k) => {
+          this.ops.push("BT /FB " + tam + " Tf 0.10 0.16 0.24 rg 1 0 0 1 " + x.toFixed(2) + " " +
+            (this.y - k * LINEA).toFixed(2) + " Tm (" + escapar(t) + ") Tj ET");
+        });
         x += cols[i];
       });
-      this.y -= 6;
+      this.y -= 6 + extraEnc;
     };
 
     pintarEncabezado();
+    let n = 0;
     for (const fila of filas) {
       // Los renglones de cada celda: uno solo (recortado) o, con `envolver`, los que haga falta.
       const celdas = fila.map((celda, i) => {
@@ -244,7 +269,12 @@ window.ReportePDF = (function () {
       });
       const extra = (Math.max.apply(null, celdas.map((c) => c.lineas.length)) - 1) * LINEA;
       if (this.y - alto - extra < MARGEN + 30) { this.cerrarPagina(); pintarEncabezado(); }
+      const arriba = this.y;
       this.y -= alto;
+      if (op.cebra && n++ % 2 === 1) {
+        this.ops.push("0.965 0.973 0.984 rg " + MARGEN + " " + (this.y - extra - 5).toFixed(2) + " " +
+          this.anchoUtil().toFixed(2) + " " + (arriba - this.y + extra).toFixed(2) + " re f");
+      }
       let x = MARGEN + 4;
       celdas.forEach((c, i) => {
         c.lineas.forEach((l, k) => {
@@ -485,7 +515,7 @@ window.ReportePDF = (function () {
         for (const item of bloque.items) lienzo.parrafo("- " + item, 10, false, 12);
       } else if (bloque.tipo === "tabla") {
         lienzo.tabla(bloque.encabezados, bloque.filas, bloque.anchos ||
-          bloque.encabezados.map(() => 1), bloque.altoFila, { envolver: bloque.envolver, negritas: bloque.negritas });
+          bloque.encabezados.map(() => 1), bloque.altoFila, { envolver: bloque.envolver, negritas: bloque.negritas, cebra: bloque.cebra });
       } else if (bloque.tipo === "foto") {
         const nombre = idPorFoto.get(bloque.foto);
         if (nombre) {

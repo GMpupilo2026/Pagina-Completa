@@ -387,6 +387,11 @@ const SERVIDOR_FP = `
       const av = { id: "av-" + (++n), leido_en: null, mesa: f.mesa, texto: "🛡 FAIR PLAY · mesa " + f.mesa }; S.avisos.push(av);
       Object.assign(f, { estado: "aprobada", aviso_id: av.id, arbitro: "Ana Árbitra", decidida_por_nombre: quien }); return ok({ sorteo: f });
     }
+    if (b.action === "borrar") {
+      if (!String(b.motivo || "").trim()) return err(400, "Para borrar una mesa hace falta el motivo: queda anotado");
+      if (!f) return err(400, "Esa mesa ya no está en la lista");
+      S.sorteos.splice(S.sorteos.indexOf(f), 1); (S.borrados = S.borrados || []).push({ fila: f, motivo: b.motivo, por: quien }); return ok({ sorteo: f });
+    }
     if (b.action === "descartar") { if (!String(b.motivo || "").trim()) return err(400, "Para descartar una mesa hace falta el motivo"); Object.assign(f, { estado: "descartada", motivo: b.motivo }); return ok({ sorteo: f }); }
     if (b.action === "revisar") {
       if (b.resultado !== "sin_novedad" && !String(b.nota || "").trim()) return err(400, "Con ese resultado hace falta anotar qué pasó");
@@ -702,6 +707,25 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("#fp-elegir");
         await p.waitForFunction(() => /no queda ninguna mesa por elegir/.test(document.body.textContent));
         igual("una mesa ya elegida no se vuelve a ofrecer", await p.evaluate(() => !document.querySelector("dialog[open]")), true);
+        console.log("\n=== Borrar una mesa que no correspondía ===");
+        const filaElegida = '#fp-lista tr[data-id="' + await p.evaluate(() => window.__fp.sorteos.find((f) => f.origen === "elegida").id) + '"]';
+        igual("cada mesa de la lista tiene su «Borrar», con el nombre de la mesa para el lector de pantalla", await p.$$eval("#fp-lista tr", (l) => l.every((tr) => !!tr.querySelector('[data-accion="borrar"]'))), true);
+        await p.click(filaElegida + ' [data-accion="borrar"]');
+        await p.waitForSelector("dialog[open] input:not([type=hidden])");
+        igual("avisa qué pasa al borrar (sale del registro y su árbitro recibe el aviso) y pide el motivo", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/deja de contar para el descanso/.test(t), /ya no hay que retener a nadie/.test(t), /Borrar la mesa/.test(t)]; }), [true, true, true]);
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => /hace falta el motivo/.test(document.body.textContent));
+        igual("sin motivo no se borra", await p.evaluate(() => window.__fp.sorteos.some((f) => f.origen === "elegida")), true);
+        await p.click(filaElegida + ' [data-accion="borrar"]');
+        await p.waitForSelector("dialog[open] input:not([type=hidden])");
+        await p.fill("dialog[open] input:not([type=hidden])", "Era de prueba");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction((s) => !document.querySelector(s), filaElegida);
+        igual("borrada: llega a la función con su motivo y sale de la lista", await p.evaluate(() => [window.__fp.llamadas.filter((l) => l.action === "borrar").map((l) => l.motivo).pop(), window.__fp.sorteos.some((f) => f.origen === "elegida")]), ["Era de prueba", false]);
+        await p.click("#fp-elegir");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /Elegir una mesa a mano/.test(d.textContent); });
+        igual("y la mesa se puede volver a elegir", await p.$$eval("dialog[open] select >> nth=0", (l) => [...l[0].options].map((o) => o.value)), ["1"]);
+        await p.click("dialog[open] [data-avisos-cancelar]");
         await p.selectOption("#fp-categoria", "");
 
         const [bajada] = await Promise.all([p.waitForEvent("download"), p.click("#fp-pdf")]);
@@ -711,6 +735,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const ib = fs.readFileSync(await informe.path()).toString("latin1");
         igual("el informe de Fair Play del torneo en PDF: con la marca de agua, el resumen, las revisiones, el acumulado y las alertas", [informe.suggestedFilename(), ib.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(ib), ...["Resumen", "Por categor", "Las revisiones", "Tenia un papel|Ten\\355a un papel|Ten.a un papel", "P.rez, Luis", "Castro, Alana"].map((x) => new RegExp(x).test(ib))],
             ["informe-fair-play-centroamericano-2026.pdf", true, true, true, true, true, true, true, true]);
+        igual("en el informe ninguna celda ni encabezado sale cortado con «...»: parten en renglones", /\.\.\.\) Tj/.test(ib), false);
         // El informe de UN jugador (para presentar un caso): sus partidas, sus señales y el método.
         const [deJugador] = await Promise.all([p.waitForEvent("download"), p.click("#fp-indice tr >> nth=0 >> [data-accion='informe-jugador']")]);
         const jb = fs.readFileSync(await deJugador.path()).toString("latin1");

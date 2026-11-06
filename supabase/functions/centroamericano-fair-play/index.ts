@@ -15,6 +15,7 @@
 //   "candidatas"  {tnr, ronda}                         → las mesas con su peso, sus motivos y quién no aplica
 //   "sortear"     {ronda, tnrs, cantidad}
 //   "aprobar"     {id}            "descartar" {id, motivo}
+//   "borrar"      {id, motivo}  → saca de la lista una mesa de prueba o puesta por error (queda copiada con el motivo)
 //   "elegir"      {tnr, ronda, mesa, revisar: ganador|blancas|negras, motivo, avisar?} → una mesa elegida a mano, no por
 //                       sorteo, con el motivo; con «avisar», su árbitro recibe el aviso ya (como «aprobar»)
 //   "revisar"     {id, resultado, color?, jugador?, nota?}
@@ -214,6 +215,7 @@ Deno.serve(async (req) => {
         p_revisar: String(cuerpo.revisar ?? ""), p_motivo: String(cuerpo.motivo ?? ""), p_avisar: cuerpo.avisar === true, p_enlace: enlace })) });
     }
     if (accion === "aprobar") return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_aprobar", conQuien({ p_id: String(cuerpo.id) })) });
+    if (accion === "borrar") return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_borrar", conQuien({ p_id: String(cuerpo.id), p_motivo: String(cuerpo.motivo ?? "") })) });
     if (accion === "descartar") return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_descartar", conQuien({ p_id: String(cuerpo.id), p_motivo: String(cuerpo.motivo ?? "") })) });
     if (accion === "revisar") {
       return json({ ok: true, sorteo: await rpc("centroamericano_fair_play_revisar", conQuien({ p_id: String(cuerpo.id), p_resultado: String(cuerpo.resultado), p_color: cuerpo.color ?? null, p_jugador: cuerpo.jugador ?? null, p_nota: cuerpo.nota ?? null })) });
