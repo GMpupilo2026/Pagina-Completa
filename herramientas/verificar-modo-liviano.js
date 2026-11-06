@@ -70,8 +70,14 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true } = {}) {
+// Los núcleos se fijan siempre, como la tablet que dice ser cada prueba: si no, los
+// pone la máquina que corre el verificador. En el CI de un repositorio privado son
+// 2 —lo que js/modo-liviano.js lee como «procesador de 2 núcleos»— y «una tablet
+// nueva» salía liviana (pasó el 6/11/2026, el día que el repositorio pasó a privado).
+const NUCLEOS = Number(process.env.NUCLEOS_PRUEBA) || 8;
+async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true, nucleos = NUCLEOS } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
+    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
     // las otras pruebas); esta lo pide.
     if (auto) await ctx.addInitScript(() => { window.__modoLivianoAuto = true; });
