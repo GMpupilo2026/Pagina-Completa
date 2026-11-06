@@ -116,7 +116,6 @@
                     <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
                     <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
-                    <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
                     <!-- Sin internet también funcionan: la copia la arma esta página en la tablet (js/centroamericano-respaldo.js). -->
@@ -128,7 +127,6 @@
                         <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
                         <div id="vista-menu" class="cam-desplegable-lista" role="menu" aria-label="Cómo ver tus mesas" hidden></div>
                     </span>
-                    <button type="button" id="concluir" class="cam-btn cam-btn-claro"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
                 <p id="espera" class="cam-espera" role="status"></p>
@@ -136,6 +134,10 @@
                 <p id="presencia-resumen" class="cam-espera" role="status"></p>
                 <button type="button" id="presencia-todos" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✓</span> Marcar que llegaron todos</button>
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
+                <!-- «Ya terminé mis labores»: aparte de los demás controles, abajo a la derecha, para no tocarlo por accidente (además pregunta antes). -->
+                <div id="fin-labores" class="cam-fin">
+                    <button type="button" id="concluir" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
+                </div>
             </section>
 
             <!-- La hora REAL en que empezó la ronda en tu categoría (cada categoría puede empezar a una hora distinta): desde ahí corre el tiempo de espera. -->

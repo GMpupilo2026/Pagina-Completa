@@ -417,29 +417,46 @@
         return el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar");
     }
 
-    // En el Rápido y el Blitz: 1-0, ½-½ y 0-1 en botones grandes. Un toque GUARDA (sin «Guardar»): no hay tiempo para más.
-    // Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace guardar()). Cualquier otro
-    // (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
+    // 1-0, ½-½ y 0-1 en botones grandes. En el Rápido y el Blitz un toque GUARDA (sin «Guardar»): no hay tiempo para más. En el CLÁSICO
+    // (la ficha corta de «Vista: tres toques») el toque solo ELIGE y hay que confirmar con «Guardar»: un resultado de clásico no se manda
+    // sin que el árbitro lo vea escrito y lo confirme. Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace
+    // guardar()). Cualquier otro (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
     function resultadoRapido(m, sel, pendiente, ocupada, msg, fichaNueva) {
+        const confirmar = !rapido();   // clásico: elegir y confirmar
         const bloqueado = ocupada || !listaCompleta();
+        const hayElegido = elegido[m.mesa] != null && elegido[m.mesa] !== "";
+        const marcado = (r) => (confirmar && hayElegido ? elegido[m.mesa] === r.valor : m.valor === r.valor);
         const botones = RAPIDOS.map((r) => el("button", {
-            type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(m.valor === r.valor),
+            type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(marcado(r)),
             disabled: bloqueado, title: listaCompleta() ? null : "Primero la revisión previa de la ronda",
-            "aria-label": (m.valor === r.valor ? "Guardado: " : "Guardar ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa,
-            onclick: () => { elegido[m.mesa] = r.valor; guardar(m); },
+            "aria-label": confirmar
+                ? (marcado(r) ? "Elegido: " : "Elegir ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa + ". Falta confirmar con Guardar"
+                : (m.valor === r.valor ? "Guardado: " : "Guardar ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa,
+            onclick: () => {
+                elegido[m.mesa] = r.valor;
+                if (!confirmar) { guardar(m); return; }
+                delete mensajes[m.mesa];
+                pintar();
+                const n = document.querySelector('#mesa-' + m.mesa + ' [data-accion="guardar"]');
+                if (n && !n.disabled) n.focus();   // el siguiente paso, a la mano: confirmar
+            },
         }, el("span", { class: "cam-rapido-valor", texto: r.texto }), el("span", { class: "cam-rapido-ayuda", texto: r.ayuda })));
         const otroAbierto = pendiente && !RAPIDOS.some((r) => r.valor === elegido[m.mesa]);
         // Ficha A: «En chess-results: …» sobra (la cabecera ya dice si hay resultado y el botón guardado se ve); solo sale cuando es un resultado
         // que no tiene botón (incomparecencia, etc.), para no esconderlo.
         const sinBoton = m.valor !== "0" && !RAPIDOS.some((r) => r.valor === m.valor);
-        return el("div", { class: "cam-resultado cam-resultado-rapido" },
+        const textoElegido = pendiente ? (M.RESULTADOS.find((x) => x.valor === elegido[m.mesa]) || { texto: elegido[m.mesa] }).texto : "";
+        return el("div", { class: "cam-resultado cam-resultado-rapido", "data-confirmar": confirmar ? "si" : null },
             !fichaNueva || sinBoton ? el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })) : null,
-            el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + ": un toque y se guarda" }, ...botones),
+            el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + (confirmar ? ": elige y confirma con Guardar" : ": un toque y se guarda") }, ...botones),
+            // Clásico: el «Guardar» queda siempre a la vista, debajo de los tres botones (apagado hasta que se elige algo distinto de lo guardado).
+            confirmar ? el("div", { class: "cam-resultado-fila cam-confirmar" }, botonGuardar(m, pendiente, ocupada)) : null,
             el("details", { class: "cam-rapido-otro", open: otroAbierto },
                 el("summary", { texto: "Otro resultado (a mano)" }),
-                el("div", { class: "cam-resultado-fila mt-2" }, sel, botonGuardar(m, pendiente, ocupada))),
+                el("div", { class: "cam-resultado-fila mt-2" }, sel, confirmar ? null : botonGuardar(m, pendiente, ocupada))),
             ocupada ? el("p", { class: "cam-guardado cam-resultado-msg", role: "status", texto: "Guardando…" })
                 : msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto })
+                : confirmar && pendiente ? el("p", { class: "cam-resultado-msg cam-por-confirmar", role: "status", texto: "Elegiste " + textoElegido + ". Toca Guardar para confirmarlo." })
                 : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" }));
     }
 
@@ -1545,13 +1562,14 @@
         const caja = $("concluido");
         caja.hidden = !cerrada;
         $("concluir").hidden = cerrada;
+        $("fin-labores").hidden = cerrada;
         if (!cerrada) return;
         $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que ya terminaste. Ya no puedes anotar ni guardar resultados en tus mesas. Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste. Si necesitas seguir, pide a la organización que reabra tus labores.";
         tiemposAbierto = false;
         pintarTiempos();
         $("lista-previa").hidden = true; $("revision").hidden = true;   // ya no hay nada que revisar ni finalizar
         // Lo que escribe queda apagado de verdad (no solo en apariencia): ni con el teclado se puede tocar.
-        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #abrir-tiempos, #pedir-ayuda, #nombre-guardar, #nombre-campo")) n.disabled = true;
+        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #pedir-ayuda, #nombre-guardar, #nombre-campo")) n.disabled = true;
     }
 
     async function concluirLabores() {
@@ -1631,7 +1649,6 @@
         $("titulo-torneo").textContent = (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) + (r && estado.categoria ? (r === "blitz" ? " · Blitz" : " · Rápido") : "");
         // Modo rápido: sin control de tiempos (no se anotan en el Rápido ni en el Blitz) y la regla con sus minutos.
         document.body.dataset.ritmo = r || "clasico";
-        $("abrir-tiempos").hidden = !!r;
         $("regla-minutos").textContent = textoMinutos();
         $("modo-rapido").hidden = !r;
         if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
@@ -2282,7 +2299,6 @@
         $("ir-cerrar").addEventListener("click", () => { corrigiendoInicio = false; pintarInicio(); $("ir-corregir").focus(); });
         $("concluir").addEventListener("click", concluirLabores);
         $("bajar-bitacora").addEventListener("click", bajarBitacora);
-        $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         setInterval(() => { if (!document.hidden) latirCuentas(); }, 1000);
         $("nombre-guardar").addEventListener("click", guardarNombre);

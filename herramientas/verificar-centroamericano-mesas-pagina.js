@@ -597,10 +597,12 @@ const CONTRASTE = `(sel) => {
     await p.click('.cam-mesa[data-mesa="2"] [data-accion="tiempo"]');
     await p.waitForSelector("#form-tiempos");
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
-    await p.click("#abrir-tiempos");
-    await p.waitForSelector("#control-tiempos:not([hidden]) #form-tiempos");
-    igual("el botón de arriba también abre el control de tiempos (para elegir cualquier mesa sin terminar)", await p.evaluate(() => [document.querySelector("#control-tiempos .cam-flotante-titulo").textContent, !!document.querySelector("#abrir-tiempos svg")]), ["Mesa 2", true]);
-    await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
+    igual("ya NO hay botón «Control de tiempos» arriba (cada mesa tiene su reloj): la barra no lo trae y las tarjetas sí", await p.evaluate(() => [!!document.getElementById("abrir-tiempos"), [...document.querySelectorAll("#barra, .cam-barra")].some((n) => /Control de tiempos/.test(n.textContent)), document.querySelectorAll('.cam-mesa [data-accion="tiempo"]').length > 0]), [false, false, true]);
+    igual("«Ya terminé mis labores» va APARTE de los demás controles: dentro de la barra pero fuera de su fila de botones, en el rincón de abajo a la derecha y a 24 px o más del botón más cercano (así no se toca por accidente)", await p.evaluate(() => {
+        const b = document.getElementById("concluir"), barra = document.querySelector(".cam-barra"), rb = b.getBoundingClientRect(), rbar = barra.getBoundingClientRect();
+        const otros = [...barra.querySelectorAll("button")].filter((x) => x !== b && x.checkVisibility()).map((x) => x.getBoundingClientRect());
+        return [barra.contains(b), b.checkVisibility(), !b.closest(".cam-barra-controles"), rb.top - Math.max(...otros.map((r) => r.bottom)) >= 24, rbar.right - rb.right < 40, rbar.bottom - rb.bottom < 40];
+    }), [true, true, true, true, true, true]);
     await p.evaluate(() => { window.__avisos.mensajes = [{ id: "m-ct", creado: "2026-11-02T15:58:00Z", texto: "Control de tiempos: anota la jugada y los relojes de las mesas que no han terminado.", control_tiempos: true }]; });
     // La tablet también consulta sola los avisos cada pocos segundos: si llegó antes, el aviso y la ventana tapan el botón.
     await p.evaluate(() => document.getElementById("actualizar").click());
@@ -788,32 +790,62 @@ const CONTRASTE = `(sel) => {
     igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
         await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
         [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
-    // Las banderas de idioma de la pantalla completa: tocar una traduce todo ahí mismo, y empieza siempre en español.
-    const leerGrande = () => p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); return [g.getAttribute("lang") || g.querySelector(".cam-dj-gcat").lang, g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa-t").textContent, g.querySelector(".cam-dj-gmesa").textContent, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent, g.querySelector(".cam-dj-listo").textContent, g.getAttribute("aria-label")]; });
-    igual("la pantalla completa ofrece tres banderas con su nombre escrito (Español, English, Français), empieza en español y la bandera activa lo dice con aria-pressed",
-        await p.evaluate(() => [...document.querySelectorAll("#donde-juega-grande .cam-dj-idioma")].map((b) => [b.dataset.idioma, b.textContent, b.getAttribute("aria-pressed"), b.querySelector("img").getAttribute("src").replace(/^.*\//, ""), b.getBoundingClientRect().height >= 44])),
-        [["es", "Español", "true", "es.svg", true], ["en", "English", "false", "gb-eng.svg", true], ["fr", "Français", "false", "fr.svg", true]]);
-    await p.click('#donde-juega-grande [data-idioma="en"]');
-    igual("tocar English traduce todo: categoría, BOARD, color, «Against», «Round» y la hora en 12 h, «Done»; el nombre, la mesa y la bandera del país no cambian",
-        (await leerGrande()).slice(1).map((x, i) => (i === 4 ? x.replace(/ · \d+:\d\d [AP]M$/, " · <hora>") : x)),
-        ["U12 Open", "BOARD", "15", "Mora Ugalde, Camila · Black", "Against Solano Brenes, Diego · Round 3 · <hora>", "Done", "Board of Mora Ugalde, Camila"]);
-    igual("el idioma queda marcado en la pantalla y en cada texto (lang), para que el lector de pantalla lo pronuncie bien, y English es el único presionado",
-        await p.evaluate(() => [document.querySelector("#donde-juega-grande .cam-dj-gcat").lang, document.querySelector("#donde-juega-grande .cam-dj-listo").lang, [...document.querySelectorAll("#donde-juega-grande .cam-dj-idioma")].map((b) => b.getAttribute("aria-pressed")).join(",")]), ["en", "en", "false,true,false"]);
-    await p.click('#donde-juega-grande [data-idioma="fr"]');
-    igual("tocar Français lo pasa todo al francés: TABLE, «Noirs», «Contre», «Ronde», la hora en 24 h con «h» y «Terminé»",
-        (await leerGrande()).slice(1).map((x, i) => (i === 4 ? x.replace(/ · \d+ h \d\d$/, " · <hora>") : x)),
-        ["U12 Open", "TABLE", "15", "Mora Ugalde, Camila · Noirs", "Contre Solano Brenes, Diego · Ronde 3 · <hora>", "Terminé", "Table de Mora Ugalde, Camila"]);
-    await p.click('#donde-juega-grande [data-idioma="es"]');
-    igual("y volver a Español devuelve la pantalla como estaba (la hora, tal cual la da la página)",
-        (await leerGrande()).slice(1), ["Sub-12 Absoluto", "MESA", "15", "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3 · 9:00 a. m.", "Listo", "Mesa de Mora Ugalde, Camila"]);
-    igual("tocar una bandera no saca el foco de la pantalla (sigue dentro del diálogo, en la bandera tocada)", await p.evaluate(() => document.activeElement && document.activeElement.dataset.idioma), "es");
-    await p.click('#donde-juega-grande [data-idioma="en"]');
+    // La banderita del jugador (y la de su rival) es el botón que traduce la pantalla completa: sin textos de idioma, al idioma de ese país.
+    igual("sin federación en los datos no hay banderas que tocar (y no hay botones de idioma con texto, que ya no existen)", await p.evaluate(() => [document.querySelectorAll("#donde-juega-grande .cam-dj-bandera").length, document.querySelectorAll("#donde-juega-grande .cam-dj-idioma, #donde-juega-grande .cam-dj-idiomas").length]), [0, 0]);
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
-    await p.fill("#dj-buscar", "camila");
-    await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
-    await p.waitForSelector("#donde-juega-grande[open]");
-    igual("para el siguiente atleta la pantalla vuelve a empezar en español (nunca queda el idioma del anterior)", (await leerGrande())[2], "MESA");
+    await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-hoja"));
+    await p.evaluate(() => { window.__feds = true; });
+    await p.click("#donde-juega");
+    await p.waitForSelector("#donde-juega-hoja[open]");
+    await p.waitForFunction(() => window.CentroamericanoEmparejamientos.estado().filas.some((f) => f.fed));
+    const abrirGrande = async (texto, mesa) => {
+        await p.fill("#dj-buscar", texto);
+        await p.click('#dj-res .cam-dj-tarj[data-mesa="' + mesa + '"]');
+        await p.waitForSelector("#donde-juega-grande[open]");
+    };
+    const cerrarGrande = async () => { await p.click('#donde-juega-grande [data-accion="cerrar-grande"]'); await p.waitForFunction(() => !document.getElementById("donde-juega-grande")); };
+    // Lo que se lee en pantalla (sin el texto escondido de las banderas, que es para el lector de pantalla).
+    const leerGrande = () => p.evaluate(() => {
+        const g = document.getElementById("donde-juega-grande");
+        const sinSr = (n) => { const c = n.cloneNode(true); c.querySelectorAll(".sr-only").forEach((x) => x.remove()); return c.textContent; };
+        return [g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa-t").textContent, g.querySelector(".cam-dj-gmesa").textContent,
+            [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), sinSr(g.querySelector(".cam-dj-ginfo small")), g.querySelector(".cam-dj-listo").textContent, g.getAttribute("aria-label")];
+    });
+    const banderas = () => p.evaluate(() => [...document.querySelectorAll("#donde-juega-grande .cam-dj-bandera")].map((b) => [b.dataset.de, b.dataset.fed, b.dataset.idioma, b.getAttribute("aria-pressed"), b.dataset.activa || "", b.getAttribute("aria-label"), b.textContent.replace(/\s*\([A-Z]{3}\)\s*/, "").trim(), b.getBoundingClientRect().width >= 44 && b.getBoundingClientRect().height >= 44]));
+    const ES = ["Sub-12 Absoluto", "MESA", "15", "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3 · 9:00 a. m.", "Listo", "Mesa de Mora Ugalde, Camila"];
+    await abrirGrande("camila", 15);
+    igual("la bandera de la jugadora (FRA) y la de su rival (USA) son botones de 44 px o más, SIN texto, con el idioma de su país en el nombre accesible", await banderas(),
+        [["jugador", "FRA", "fr", "false", "", "Ver esta pantalla en francés (bandera de FRA)", "", true], ["rival", "USA", "en", "false", "", "Ver esta pantalla en inglés (bandera de USA)", "", true]]);
+    igual("la pantalla empieza en español", await leerGrande(), ES);
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="jugador"]');
+    igual("tocar SU bandera (Francia) lo pasa todo al francés: categoría, TABLE, «Noirs», «Contre», «Ronde», la hora en 24 h y «Terminé»", await leerGrande(),
+        ["U12 Open", "TABLE", "15", "Mora Ugalde, Camila · Noirs", "Contre Solano Brenes, Diego · Ronde 3 · 9 h 00", "Terminé", "Table de Mora Ugalde, Camila"]);
+    igual("la bandera tocada queda marcada (llena y aria-pressed), ofrece volver al español y conserva el foco; cada texto dice su idioma (lang)", await p.evaluate(() => { const b = document.querySelector('#donde-juega-grande .cam-dj-bandera[data-de="jugador"]'); return [b.getAttribute("aria-pressed"), b.dataset.activa, b.getAttribute("aria-label"), document.activeElement === b, document.querySelector("#donde-juega-grande .cam-dj-gcat").lang, document.querySelector("#donde-juega-grande .cam-dj-listo").lang]; }),
+        ["true", "si", "Volver al español (bandera de FRA)", true, "fr", "fr"]);
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="jugador"]');
+    igual("tocar la misma bandera otra vez devuelve la pantalla al español, tal cual estaba", await leerGrande(), ES);
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="rival"]');
+    igual("tocar la bandera de su RIVAL (EE. UU.) la pasa al inglés: White/Black, BOARD, «Against», «Round», la hora en 12 h y «Done»", await leerGrande(),
+        ["U12 Open", "BOARD", "15", "Mora Ugalde, Camila · Black", "Against Solano Brenes, Diego · Round 3 · 9:00 AM", "Done", "Board of Mora Ugalde, Camila"]);
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="jugador"]');
+    igual("estando en inglés, tocar la otra bandera (Francia) cambia directo al francés, sin pasar por el español", (await leerGrande())[1], "TABLE");
+    await cerrarGrande();
+    await abrirGrande("camila", 15);
+    igual("para el siguiente atleta la pantalla vuelve a empezar en español (nunca queda el idioma del anterior)", await leerGrande(), ES);
+    await cerrarGrande();
+    // Un país hispano se queda en español; uno sin textos propios (Brasil) cae al inglés, que casi todos entienden.
+    await abrirGrande("maria jose", 1);
+    igual("María José (CRC) y su rival Pedro (BRA): la bandera de Costa Rica deja la pantalla en español y la de Brasil la pasa al inglés", await banderas(),
+        [["jugador", "CRC", "es", "true", "", "Ver esta pantalla en español (bandera de CRC)", "", true], ["rival", "BRA", "en", "false", "", "Ver esta pantalla en inglés (bandera de BRA)", "", true]]);
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="jugador"]');
+    igual("tocar la bandera de Costa Rica no cambia nada: ya está en español", (await leerGrande())[1], "MESA");
+    await p.click('#donde-juega-grande .cam-dj-bandera[data-de="rival"]');
+    igual("tocar la de Brasil (sin textos propios) la pasa al inglés", (await leerGrande())[1], "BOARD");
+    await cerrarGrande();
+    await p.evaluate(() => { window.__feds = false; });
+    await abrirGrande("camila", 15);
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');
@@ -995,7 +1027,7 @@ const CONTRASTE = `(sel) => {
     await pc.click("dialog[open] [data-avisos-aceptar]");
     await pc.waitForFunction(() => !document.getElementById("concluido").hidden);
     igual("al aceptar: la función recibe «concluir», sale el aviso de concluidas con la hora y el botón de la bitácora, y el botón de arriba se esconde", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "concluir").length, document.getElementById("concluido-titulo").textContent.trim(), /^A las \d{1,2}:\d{2} [ap]\. m\./.test(document.getElementById("concluido-texto").textContent), document.getElementById("bajar-bitacora").textContent.trim(), document.getElementById("concluir").hidden]), [1, "✓ Concluiste tus labores", true, "📄 Descargar mi bitácora (PDF)", true]);
-    igual("todo lo que escribe queda apagado de verdad (botones de las mesas, resultado, guardar, control de tiempos, pedir ayuda), no solo apagado a la vista", await pc.evaluate(() => { const sin = [...document.querySelectorAll("#lista button, #lista select, #abrir-tiempos, #pedir-ayuda")]; return [sin.length > 5, sin.every((n) => n.disabled)]; }), [true, true]);
+    igual("todo lo que escribe queda apagado de verdad (botones de las mesas, resultado, guardar, control de tiempos, pedir ayuda), no solo apagado a la vista", await pc.evaluate(() => { const sin = [...document.querySelectorAll("#lista button, #lista select, #pedir-ayuda")]; return [sin.length > 5, sin.every((n) => n.disabled)]; }), [true, true]);
     igual("la función rechaza escribir (409) aunque se manipule la pantalla: guardar, anotar, presencia, tiempo, planilla, lista, finalizar, ayuda y nombre", await pc.evaluate(async () => { const out = []; for (const action of ["guardar", "anotar", "anular", "presencia", "tiempo", "planilla", "lista", "finalizar", "ayuda", "nombre"]) { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action, ronda: 3, mesa: 1 } }); out.push(!!r.error); } return out.every(Boolean); }), true);
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
     const bytesB = fs.readFileSync(await bitacora.path());
@@ -1159,17 +1191,27 @@ const CONTRASTE = `(sel) => {
         await pa.waitForSelector(".cam-mesa");
         igual("para «Óscar Angulo Camacho» (con tilde y apellido de más) las tres mesas llevan la ficha nueva", await pa.$$eval(".cam-mesa", (l) => l.map((c) => c.dataset.ficha)), ["a", "a", "a"]);
         const altoA = await altos(pa);
-        igual("la ficha nueva es más corta que la de siempre (al menos 80 px menos) y las tres miden lo mismo", [altoA.every((x, i) => altoHoy[i] - x >= 80), new Set(altoA).size], [true, 1]);
-        igual("el resultado son tres botones grandes (1-0, ½-½, 0-1), sin selector ni «Guardar» a la vista, y «Otro resultado» sigue ahí", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [[...c.querySelectorAll(".cam-rapido-btn")].map((b) => b.dataset.valor), c.querySelector('details.cam-rapido-otro').open, !!c.querySelector(".cam-rapido-otro summary")]; }), [["1", "2", "3"], false, true]);
+        igual("la ficha nueva es más corta que la de siempre (al menos 40 px menos: sigue llevando el «Guardar» a la vista, que confirma el resultado) y las tres miden lo mismo", [altoA.every((x, i) => altoHoy[i] - x >= 40), new Set(altoA).size], [true, 1]);
+        igual("el resultado son tres botones grandes (1-0, ½-½, 0-1) y «Guardar» queda a la vista (apagado: aún no hay nada que confirmar); «Otro resultado» sigue ahí", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); const g = c.querySelector('[data-accion="guardar"]'); return [[...c.querySelectorAll(".cam-rapido-btn")].map((b) => b.dataset.valor), c.querySelector('details.cam-rapido-otro').open, !!c.querySelector(".cam-rapido-otro summary"), g.checkVisibility(), g.disabled, c.querySelectorAll('[data-accion="guardar"]').length]; }), [["1", "2", "3"], false, true, true, true, 1]);
         igual("las acciones de cada jugador (llegó, se levantó, ilegal, irregularidad) y los tres iconos de la mesa siguen en la tarjeta", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return ["presente", "levanto", "ilegal", "irregularidad"].map((x) => c.querySelectorAll('.cam-jugador [data-accion="' + x + '"]').length).concat(["planilla", "hablar", "tiempo"].map((x) => c.querySelectorAll('[data-accion="' + x + '"]').length)); }), [2, 2, 2, 2, 1, 1, 1]);
-        igual("los botones de la ficha nueva se tocan con el dedo: 46 px o más", await pa.evaluate(() => [...document.querySelectorAll('.cam-mesa[data-mesa="1"] button')].filter((b) => b.checkVisibility() && !b.closest("summary")).every((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; })), true);
-        // La revisión previa de la ronda destraba el guardado de un toque.
+        // La revisión previa de la ronda destraba el guardado.
         await pa.evaluate(() => { window.__lista = ["relojes", "tableros"]; document.getElementById("actualizar").click(); });
         await pa.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn').disabled);
         const guardadasAntes = await pa.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
+        const llamadasGuardar = () => pa.evaluate(() => window.__llamadas.filter((l) => l.body.action === "guardar").length);
         await pa.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"]');
         await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"][aria-pressed="true"]');
-        igual("un toque en ½-½ GUARDA (una sola llamada) y el botón queda marcado", await pa.evaluate((n) => { const g = window.__llamadas.filter((l) => l.body.action === "guardar"); const c = g[g.length - 1].body.cambios; return [g.length - n, c.length, c[0].mesa, c[0].valor]; }, guardadasAntes), [1, 1, 1, "2"]);
+        await pa.waitForTimeout(400);
+        igual("en el CLÁSICO un toque en ½-½ solo lo ELIGE: no se guardó nada, «Guardar» se enciende, y lo dice con palabras", await pa.evaluate((n) => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); const g = c.querySelector('[data-accion="guardar"]'); return [window.__llamadas.filter((l) => l.body.action === "guardar").length - n, g.disabled, g.checkVisibility(), c.querySelector(".cam-por-confirmar").textContent.includes("Toca Guardar"), c.querySelector('.cam-rapido-btn[data-valor="2"]').getAttribute("aria-label").includes("Falta confirmar")]; }, guardadasAntes), [0, false, true, true, true]);
+        await pa.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="3"]');
+        await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="3"][aria-pressed="true"]');
+        igual("cambiar de idea antes de confirmar tampoco guarda: queda elegido 0-1 y el anterior se desmarca", await pa.evaluate((n) => [window.__llamadas.filter((l) => l.body.action === "guardar").length - n, document.querySelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"]').getAttribute("aria-pressed")], guardadasAntes), [0, "false"]);
+        await pa.click('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"]');
+        await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"][aria-pressed="true"]');
+        await pa.click('.cam-mesa[data-mesa="1"] [data-accion="guardar"]');
+        await pa.waitForFunction((n) => window.__llamadas.filter((l) => l.body.action === "guardar").length > n, guardadasAntes);
+        await pa.waitForSelector('.cam-mesa[data-mesa="1"] .cam-rapido-btn[data-valor="2"][aria-pressed="true"]');
+        igual("con «Guardar» SÍ se guarda (una sola llamada, con ½-½) y el botón queda marcado", await pa.evaluate((n) => { const g = window.__llamadas.filter((l) => l.body.action === "guardar"); const c = g[g.length - 1].body.cambios; return [g.length - n, c.length, c[0].mesa, c[0].valor]; }, guardadasAntes), [1, 1, 1, "2"]);
         igual("con un resultado que no tiene botón, no se esconde: se escribe «En chess-results: …»", await pa.evaluate(() => { const c = document.querySelector('.cam-mesa[data-mesa="1"]'); return [!c.querySelector(".cam-resultado-actual")]; }), [true]);
         // La primera ilegal: marca y «Anular» salen en la franja de las marcas y NADA cambia de tamaño.
         const antesIl = await formas(pa);

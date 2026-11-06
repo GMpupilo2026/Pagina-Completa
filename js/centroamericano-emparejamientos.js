@@ -47,8 +47,8 @@
         const out = [];
         (categorias || []).forEach((c, orden) => {
             for (const m of c.mesas || []) {
-                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Blancas", nombre: m.blancas, rival: m.negras, fed: m.fed_b });
-                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Negras", nombre: m.negras, rival: m.blancas, fed: m.fed_n });
+                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Blancas", nombre: m.blancas, rival: m.negras, fed: m.fed_b, fedRival: m.fed_n });
+                out.push({ tnr: c.tnr, cat: c.nombre, categoria: c.categoria, orden, ronda: c.ronda, mesa: m.mesa, color: "Negras", nombre: m.negras, rival: m.blancas, fed: m.fed_n, fedRival: m.fed_b });
             }
         });
         return out;
@@ -103,17 +103,29 @@
 
     /* La pantalla completa del atleta en tres idiomas: textos FIJOS (no se traducen al vuelo), con los mismos términos de js/centroamericano-frases.js.
        Los nombres, la federación, la mesa y la ronda no cambian; cambian las palabras, la categoría («Sub-8 Absoluto» → «U8 Open») y la hora
-       («9:00 a. m.» → «9:00 AM» / «9 h 00»). `iso` es el dibujo de la bandera en img/banderas/. Si una frase se cambia, que la revise quien domine el idioma. */
+       («9:00 a. m.» → «9:00 AM» / «9 h 00»). `enEs` es el nombre del idioma para el nombre accesible del botón de la bandera. Si una frase se cambia, que la revise quien domine el idioma. */
+    /* El idioma de la pantalla según la bandera que se toca: la federación de FIDE del jugador. Los tres que hay (español, inglés y francés)
+       salen de js/centroamericano-frases.js (`idiomaDeFed`: las federaciones francófonas y anglófonas); las hispanohablantes se quedan en español
+       y TODA otra (Brasil, Alemania, la India…) en inglés, que es el idioma que casi todos entienden: no hay textos de más idiomas sin revisar. */
+    const HISPANAS = new Set(["ARG", "BOL", "CHI", "COL", "CRC", "CUB", "DOM", "ECU", "ESA", "ESP", "GEQ", "GUA", "HON", "MEX", "NCA", "PAN", "PAR", "PER", "PUR", "URU", "VEN"]);
+    function idiomaDeBandera(fed) {
+        const c = String(fed || "").trim().toUpperCase();
+        if (HISPANAS.has(c)) return "es";
+        const F = global.CentroamericanoFrases;
+        const x = F && F.idiomaDeFed ? F.idiomaDeFed(c) : "es";
+        return x === "fr" || x === "en" ? x : "en";
+    }
+
     const horaDe12 = (h) => /^(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?$/i.exec(String(h || "").trim());
     function hora24(h) { const m = horaDe12(h); if (!m) return null; return { h: (Number(m[1]) % 12) + (m[3].toLowerCase() === "p" ? 12 : 0), min: m[2] }; }
     const GRANDE = {
-        es: { nombre: "Español", iso: "es", etiqueta: "Mesa de ", mesa: "MESA", contra: "Contra", ronda: "Ronda", listo: "Listo",
+        es: { enEs: "español", etiqueta: "Mesa de ", mesa: "MESA", contra: "Contra", ronda: "Ronda", listo: "Listo",
             color: (c) => c, categoria: (c) => c, hora: (h) => h },
-        en: { nombre: "English", iso: "gb-eng", etiqueta: "Board of ", mesa: "BOARD", contra: "Against", ronda: "Round", listo: "Done",
+        en: { enEs: "inglés", etiqueta: "Board of ", mesa: "BOARD", contra: "Against", ronda: "Round", listo: "Done",
             color: (c) => (c === "Blancas" ? "White" : c === "Negras" ? "Black" : c),
             categoria: (c) => String(c).replace(/\bSub-(\d+)/, "U$1").replace(/\bAbsoluto\b/, "Open").replace(/\bFemenino\b/, "Girls"),
             hora: (h) => { const x = hora24(h); return x ? (((x.h + 11) % 12) + 1) + ":" + x.min + (x.h >= 12 ? " PM" : " AM") : h; } },
-        fr: { nombre: "Français", iso: "fr", etiqueta: "Table de ", mesa: "TABLE", contra: "Contre", ronda: "Ronde", listo: "Terminé",
+        fr: { enEs: "francés", etiqueta: "Table de ", mesa: "TABLE", contra: "Contre", ronda: "Ronde", listo: "Terminé",
             color: (c) => (c === "Blancas" ? "Blancs" : c === "Negras" ? "Noirs" : c),
             categoria: (c) => String(c).replace(/\bSub-(\d+)/, "U$1").replace(/\bAbsoluto\b/, "Open").replace(/\bFemenino\b/, "Filles"),
             hora: (h) => { const x = hora24(h); return x ? x.h + " h " + x.min : h; } },
@@ -235,8 +247,9 @@
             pintarEstado(r.length + (r.length === 1 ? " resultado" : " resultados") + (r.length > MAX_TARJETAS ? " (se muestran " + MAX_TARJETAS + ": escribe más letras)" : ""));
         }
 
-        // La pantalla completa para el atleta: la mesa gigante en el color de su categoría. Arriba, una bandera por idioma: tocarla
-        // traduce toda la pantalla ahí mismo (empieza siempre en español, que es como la lee el árbitro).
+        // La pantalla completa para el atleta: la mesa gigante en el color de su categoría. La banderita del jugador (y la de su rival) es el
+        // botón: tocarla traduce toda la pantalla al idioma de ese país ahí mismo, sin ningún texto de por medio; tocarla otra vez la devuelve
+        // al español, que es como la lee el árbitro y con lo que empieza cada pantalla.
         function mostrar(f) {
             guardarUltima(campo.value.trim());
             const hora = horaDe(f.ronda);
@@ -248,24 +261,34 @@
             const mesa = el("span", { class: "cam-dj-gmesa", texto: String(f.mesa) });
             const info = el("span", { class: "cam-dj-ginfo" });
             const listo = el("button", { type: "button", class: "cam-dj-listo", "data-accion": "cerrar-grande" });
-            const banderas = el("div", { class: "cam-dj-idiomas", role: "group", "aria-label": "Idioma · Language · Langue" },
-                ...Object.keys(GRANDE).map((id) => {
-                    const t = GRANDE[id];
-                    const img = global.GafetesBanderas ? el("img", { src: global.GafetesBanderas.ruta(t.iso), alt: "", width: 28, height: 21, decoding: "async" }) : null;
-                    return el("button", { type: "button", class: "cam-dj-idioma", lang: id, "data-idioma": id, onclick: () => pintarGrande(id) }, img, el("span", { texto: t.nombre }));
-                }));
-            g.append(banderas, cat, mesaT, mesa, info, listo);
+            g.append(cat, mesaT, mesa, info, listo);
 
-            function pintarGrande(id) {
+            // La bandera como botón: sin bandera (sin federación o sin dibujo), nada. El nombre del idioma va solo en el nombre accesible.
+            function botonBandera(fed, de) {
+                const b = bandera(fed);
+                if (!b) return null;
+                const id = idiomaDeBandera(fed);
+                return el("button", {
+                    type: "button", class: "cam-dj-bandera", "data-fed": String(fed).trim().toUpperCase(), "data-idioma": id, "data-de": de,
+                    "data-activa": idioma !== "es" && idioma === id ? "si" : null,
+                    "aria-pressed": String(idioma === id),
+                    "aria-label": (idioma === id && id !== "es" ? "Volver al español" : "Ver esta pantalla en " + GRANDE[id].enEs) + " (bandera de " + String(fed).trim().toUpperCase() + ")",
+                    onclick: () => pintarGrande(idioma === id ? "es" : id, de),
+                }, b);
+            }
+
+            function pintarGrande(id, tocada) {
                 idioma = id;
                 const t = GRANDE[id];
                 g.setAttribute("aria-label", t.etiqueta + f.nombre);
-                for (const b of banderas.children) b.setAttribute("aria-pressed", String(b.dataset.idioma === id));
                 for (const n of [cat, mesaT, mesa, info, listo]) n.setAttribute("lang", id);
                 cat.textContent = t.categoria(f.cat);
                 mesaT.textContent = t.mesa;
-                info.replaceChildren(...[f.nombre, bandera(f.fed), " · " + t.color(f.color), el("small", { texto: t.contra + " " + f.rival + " · " + t.ronda + " " + f.ronda + (hora ? " · " + t.hora(hora) : "") })].filter(Boolean));
+                info.replaceChildren(...[f.nombre, botonBandera(f.fed, "jugador"), " · " + t.color(f.color),
+                    el("small", {}, t.contra + " " + f.rival, botonBandera(f.fedRival, "rival"), " · " + t.ronda + " " + f.ronda + (hora ? " · " + t.hora(hora) : ""))].filter((x) => x != null));
                 listo.textContent = t.listo;
+                // El botón que se tocó se vuelve a armar: el foco se queda en la misma bandera (no se pierde ni salta al principio).
+                if (tocada) { const n = g.querySelector('.cam-dj-bandera[data-de="' + tocada + '"]'); if (n) n.focus(); }
             }
             pintarGrande(idioma);
             listo.addEventListener("click", () => g.close());

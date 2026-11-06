@@ -1223,10 +1223,22 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-desplegable-opcion:focus-visible { outline: 3px solid var(--cac-morado); outline-offset: -2px; }
 .dark .cam-desplegable-opcion:focus-visible { outline-color: #dfe0fb; }
 .cam-desplegable-marca { display: inline-block; width: 1.1rem; text-align: center; flex: none; }
-.cam-dj-idiomas { position: absolute; top: 1rem; left: 0; right: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.6rem; padding: 0 1rem; }
-.cam-dj-idioma { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0.4rem 1rem; border: 3px solid #fff; border-radius: 9999px; background: transparent; color: #fff; font-size: 1.15rem; font-weight: 800; cursor: pointer; }
-.cam-dj-idioma img { width: 28px; height: 21px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
-.cam-dj-idioma[aria-pressed="true"] { background: #fff; color: var(--c); }
-.cam-dj-idioma:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+/* La banderita del jugador (y la del rival) es el botón que traduce la pantalla: grande, con borde para que se vea que se toca, y llena cuando hay un idioma puesto. */
+.cam-dj-bandera { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-inline: 0.5rem 0.25rem; padding: 0.3rem; min-width: 52px; min-height: 52px; border: 3px solid rgba(255, 255, 255, 0.75); border-radius: 0.8rem; background: transparent; cursor: pointer; }
+.cam-dj-bandera .cam-bandera { display: inline-flex; }
+.cam-dj-bandera .cam-bandera img { display: block; width: 40px; height: 30px; object-fit: cover; border-radius: 4px; box-shadow: 0 0 0 2px #fff; }
+.cam-dj-ginfo small .cam-dj-bandera { min-width: 46px; min-height: 46px; margin-inline: 0.4rem 0.2rem; }
+.cam-dj-ginfo small .cam-dj-bandera .cam-bandera img { width: 32px; height: 24px; }
+.cam-dj-bandera[data-activa="si"] { border-color: #fff; background: rgba(255, 255, 255, 0.3); }
+.cam-dj-bandera:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+/* «Ya terminé mis labores»: aparte de los demás controles, en el rincón de abajo a la derecha de la barra (lejos de lo que se toca a cada rato). */
+.cam-fin { display: flex; justify-content: flex-end; margin-top: 1.75rem; padding-top: 0.25rem; }
+.cam-fin[hidden] { display: none; }
+.cam-fin .cam-btn { opacity: 0.85; }
+/* Clásico, ficha corta: el «Guardar» que confirma el resultado elegido va justo debajo de los tres botones, grande y a todo el ancho. */
+.cam-confirmar { margin-top: 0.5rem; }
+.cam-confirmar .cam-btn { width: 100%; min-height: 52px; font-size: 1.05rem; font-weight: 800; justify-content: center; }
+.cam-por-confirmar { font-weight: 700; }
 
 /*! rev bfb5bbb0d2d82f9f */

@@ -10173,18 +10173,25 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
-- **La pantalla completa del atleta se traduce con un toque en la bandera.** Arriba hay tres botones —Español, English,
-  Français— con el dibujo de la bandera (`img/banderas/`) **y el nombre del idioma escrito** (la bandera sola no le dice nada a
-  quien no la reconoce, y el color nunca va solo). Tocar uno traduce ahí mismo la categoría («Sub-12 Absoluto» → «U12 Open» /
-  «Filles»), «MESA» (BOARD en inglés, TABLE en francés), el color (White/Black, Blancs/Noirs), «Contra», «Ronda», la hora (12 h con
-  AM/PM, o 24 h con «h») y «Listo» (Done / Terminé); cada texto lleva su `lang` para que el lector de pantalla lo pronuncie bien.
-  No cambian los nombres, la mesa, la ronda ni la bandera del país del jugador. Los textos son **fijos** (la tabla `GRANDE` de
-  `js/centroamericano-emparejamientos.js`, con los términos de `centroamericano-frases.js`), no se traducen al vuelo: no pueden decir
-  algo distinto de lo revisado y funcionan sin internet. **Empieza siempre en español**, que es como la lee el árbitro, y para el
-  siguiente atleta vuelve a empezar en español: el idioma no se guarda (la página del árbitro no usa almacenamiento) y tampoco se
-  elige solo por la federación del jugador, porque una tablet que cambió de idioma sin avisar confunde al árbitro. Otro idioma se
-  agrega con su entrada en `GRANDE` y su bandera en `img/banderas/`, **con la frase revisada por quien lo domine**. Lo prueba
-  `verificar-centroamericano-mesas-pagina.js` (banderas, los tres idiomas, volver a español, el foco y el reinicio).
+- **La pantalla completa del atleta se traduce tocando la bandera del jugador.** Junto al nombre del jugador (y junto al del rival, en la línea de
+  «Contra …») la banderita es un **botón grande, sin ningún texto de idioma** (pedido: «se ve más bonito, y que reconozca solo el idioma de ese
+  jugador»). Tocarla pasa **toda** la pantalla al idioma de ese país: la categoría («Sub-12 Absoluto» → «U12 Open» / «Filles»), «MESA»
+  (BOARD en inglés, TABLE en francés), el color (White/Black, Blancs/Noirs), «Contra», «Ronda», la hora (12 h con AM/PM, o 24 h con «h») y «Listo»
+  (Done / Terminé); cada texto lleva su `lang` para que el lector de pantalla lo pronuncie bien. **Tocarla otra vez vuelve al español**, y tocar la
+  del rival estando en otro idioma cambia directo a ese. La bandera tocada queda marcada (llena y `aria-pressed`) y conserva el foco. No cambian los
+  nombres, la mesa, la ronda ni las banderas. Sin federación en los datos (o sin dibujo de bandera) no hay botón: nada que tocar.
+  - **Qué idioma sale de cada país** (`idiomaDeBandera`, `js/centroamericano-emparejamientos.js`): las federaciones **francófonas y anglófonas** de
+    `centroamericano-frases.js` (`idiomaDeFed`) dan francés o inglés; las **hispanohablantes** (ARG, BOL, CHI, COL, CRC, CUB, DOM, ECU, ESA, ESP,
+    GEQ, GUA, HON, MEX, NCA, PAN, PAR, PER, PUR, URU, VEN) se quedan en español (tocar su bandera no cambia nada, porque ya está en español); y
+    **todo otro país** (Brasil, Alemania, la India…) cae al **inglés**, que casi todos entienden. **Hay textos de tres idiomas; no se inventó ninguno
+    más**: portugués, alemán o italiano se agregan con su entrada en `GRANDE` **y la frase revisada por quien lo domine**, y su lista de países.
+  - **Los textos son fijos** (la tabla `GRANDE`, con los términos de `centroamericano-frases.js`), no se traducen al vuelo: no pueden decir algo
+    distinto de lo revisado y funcionan sin internet. **Empieza siempre en español**, que es como la lee el árbitro, y para el siguiente atleta vuelve
+    a empezar en español: el idioma no se guarda (la página del árbitro no usa almacenamiento).
+  - Primero se probó con **tres botones con la bandera y el nombre del idioma** (Español, English, Français) arriba de la pantalla; se cambiaron por
+    la bandera del jugador porque pedía menos: sin texto y sin elegir. El nombre del idioma queda solo en el nombre accesible del botón.
+  - Lo prueba `verificar-centroamericano-mesas-pagina.js` (la jugadora con bandera francesa y su rival estadounidense; Costa Rica se queda en español;
+    Brasil cae al inglés; volver al español; el foco; el reinicio para el siguiente atleta; sin federación, sin botones).
 
 ## «Llegó tarde»: la llegada de quien se tarda queda en la bitácora y cuenta en el reloj que se apaga (Centroamericano)
 
@@ -10845,6 +10852,28 @@ respaldo y por HTTP de verdad, enciende el modo sola, abre y cierra un aviso del
 rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mismo NO rearma las tarjetas y un pedido
 de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
 script con sintaxis nueva hace saltar la primera comprobación.
+
+## La tablet del árbitro: el clásico siempre confirma el resultado, sin botón de tiempos arriba y «Ya terminé» aparte
+
+Pedido (noviembre de 2026, con el torneo en juego):
+
+- **En el clásico el resultado SIEMPRE se confirma.** En la ficha corta («Vista: tres toques», la de «tres botones grandes») 1-0, ½-½ y 0-1
+  guardaban de un toque, como en el Rápido y el Blitz. Ahora, **solo en el Rápido y en el Blitz** un toque guarda. En el **clásico** el toque
+  solo **elige**: el botón queda marcado («Elegido»), sale escrito «Elegiste 1-0. Toca Guardar para confirmarlo.» y el **«Guardar»** (siempre a la
+  vista, apagado mientras no haya nada distinto de lo guardado, y grande) es lo que lo manda. Cambiar de idea antes de confirmar tampoco guarda.
+  «Otro resultado (a mano)» (incomparecencia, 0-0, borrar) usa ese mismo «Guardar»: ya no hay dos. Cambiar un resultado que ya estaba en
+  chess-results sigue preguntando antes (lo hace `guardar()`), y el desplegable y «Guardar» de la ficha de siempre no cambiaron.
+  **Por qué:** un resultado de clásico mal puesto es más difícil de arreglar que uno de blitz, y el árbitro quiere verlo escrito y confirmarlo.
+  `resultadoRapido(…)` decide con `rapido()`: si en el futuro hay otra vista con botones de resultado, **en el clásico tiene que confirmar**.
+- **El botón «Control de tiempos» de arriba se quitó.** Cada mesa ya tiene su icono de reloj (`data-accion="tiempo"`); el de arriba solo repetía eso
+  para elegir una mesa cualquiera. Lo que NO cambió: el control de tiempos se sigue abriendo solo cuando la organización lo pide (el aviso con
+  `control_tiempos`), por `abrirTiempos(true)`.
+- **«Ya terminé mis labores» va aparte**, dentro de la misma barra pero fuera de la fila de los demás controles: al final, a la derecha, a más de
+  24 px del botón más cercano y un poco apagado, para no tocarlo por accidente (además pregunta antes de concluir). Conserva su `id="concluir"`;
+  su contenedor es `#fin-labores` y se esconde junto con él cuando las labores ya se concluyeron.
+- **Pruebas:** `verificar-centroamericano-mesas-pagina.js` (un toque elige y no guarda; cambiar de idea; «Guardar» guarda una sola vez con el
+  resultado elegido; el botón de arriba ya no está y las tarjetas conservan el suyo; la posición de «Ya terminé») y
+  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando).
 
 ## Mesa del árbitro: los torneos ligados de un grupo
 
