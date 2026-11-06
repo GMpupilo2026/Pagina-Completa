@@ -88,7 +88,10 @@ function dobleOrganizacion(licencia) {
     { tnr: "1529771", texto: "Sub-16 Femenino", jugadores: inscritos(18), pareo: null }] };
   // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
   window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
-  const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
+  const filtrar = (tabla, f, fin, fgt) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])) && Object.entries(fgt || {}).every(([c, v]) => r[c] > v));
+  // Para que un verificador agregue árbitros o incidencias a la prueba (el reparto desde el plano).
+  window.__asig = ASIG;
+  window.__tasas = [];
   window.sb = {
     auth: { getSession: () => R({ session: { user: { id: "yo" }, access_token: "x" } }), getUser: () => R({ user: { id: "yo" } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) } },
@@ -107,6 +110,19 @@ function dobleOrganizacion(licencia) {
       if (f === "sala_plano_guardar") { (window.__planos = window.__planos || []).push(JSON.parse(JSON.stringify(a.p_plano)));
         ${licencia ? "" : "return R(null, { message: 'Solo la organización del torneo puede cambiar el plano de la sala.' });"}
         TABLAS.salas_torneo[0].plano = JSON.parse(JSON.stringify(a.p_plano)); return R(new Date().toISOString()); }
+      // El reparto de los árbitros desde el plano: las tasas por torneo y aplicar todo o nada.
+      if (f === "centroamericano_reparto_tasas") return R(JSON.parse(JSON.stringify(window.__tasas)));
+      if (f === "centroamericano_reparto_aplicar") { (window.__repartos = window.__repartos || []).push(JSON.parse(JSON.stringify(a.p_acciones)));
+        ${licencia ? "" : "return R(null, { message: 'Hace falta la herramienta de la Mesa del árbitro para cambiar las mesas de los árbitros.' });"}
+        const malo = a.p_acciones.find((x) => (x.tipo === "actualizar" || x.tipo === "apagar") && !ASIG.some((y) => y.id === x.id && !y.revocada));
+        if (malo) return R(null, { message: "Uno de los enlaces ya no está vigente. Vuelve a pedir la sugerencia." });
+        const c = { actualizados: 0, creados: 0, apagados: 0 };
+        a.p_acciones.forEach((x) => {
+          if (x.tipo === "actualizar") { Object.assign(ASIG.find((y) => y.id === x.id), { mesa_desde: x.desde, mesa_hasta: x.hasta }, x.persona ? { persona: x.persona } : {}); c.actualizados++; }
+          if (x.tipo === "apagar") { Object.assign(ASIG.find((y) => y.id === x.id), { revocada: true, reemplazada_en: new Date().toISOString() }); c.apagados++; }
+          if (x.tipo === "crear") { ASIG.push({ id: "a" + (++n), codigo: "T" + (5550000 + n), token: String(3000 + n).repeat(16), tnr: x.tnr, arbitro: x.arbitro, nombrado: x.nombrado, mesa_desde: x.desde, mesa_hasta: x.hasta, persona: x.persona, experiencia: x.experiencia, vence: x.vence || "2026-11-10T05:59:59Z", revocada: false, creada: new Date().toISOString(), ultimo_uso: null }); c.creados++; }
+        });
+        return R(c); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
         { cuando: hace(60), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "finalizo", detalle: "Finalizó la ronda 1" },
@@ -152,9 +168,9 @@ function dobleOrganizacion(licencia) {
         window.__driveOk = true; return Promise.resolve({ data: { ok: true, carpeta: "Planillas Centroamericano" }, error: null }); }
       if (b.action === "drive_reintentar") { PLANILLAS.forEach((x) => { x.drive_ok = true; }); return Promise.resolve({ data: { ok: true, enviadas: 1, fallaron: 0, quedan: 0 }, error: null }); }
       return Promise.resolve(err(400, "Acción desconocida.")); } },
-    from: (tabla) => { const f = {}; const fin = {}; let accion = "select", valores = null;
+    from: (tabla) => { const f = {}; const fin = {}; const fgt = {}; let accion = "select", valores = null;
       let orden = null;
-      const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; }, in: (c, vs) => { fin[c] = vs; return q; },
+      const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; }, gt: (c, v) => { fgt[c] = v; return q; }, in: (c, vs) => { fin[c] = vs; return q; },
         maybeSingle: () => { const x = filtrar(tabla, f)[0]; return Promise.resolve({ data: x ? Object.assign({}, x) : null, error: null }); },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
@@ -167,8 +183,8 @@ function dobleOrganizacion(licencia) {
                 : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
-          else if (accion === "update") { filtrar(tabla, f, fin).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
-          else { const datos = filtrar(tabla, f, fin).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
+          else if (accion === "update") { filtrar(tabla, f, fin, fgt).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
+          else { const datos = filtrar(tabla, f, fin, fgt).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
           return Promise.resolve(r).then(ok, ko); } };
       return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},

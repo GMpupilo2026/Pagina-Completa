@@ -447,6 +447,23 @@
                 </div>
                 <div id="pl-dibujo" class="mt-4 overflow-x-auto"></div>
                 <div id="pl-mesa" class="mt-4"></div>
+                <section id="rs-sala" class="mt-6" aria-labelledby="rs-titulo">
+                    <h3 id="rs-titulo" class="cam-subtitulo"><span aria-hidden="true">👥</span> Los árbitros en la sala</h3>
+                    <p class="cam-herramientas-nota">Con el plano de arriba, el sistema reparte la sala en zonas seguidas que se caminan sin cruzar (fila por fila, entrando a cada una por el lado más cercano a donde terminó la anterior), con la misma carga de trabajo para cada árbitro. La carga cuenta las partidas en juego y las incidencias de cada torneo, y la zona con más incidencias va al árbitro de más experiencia. Revisa la sugerencia, cambia lo que quieras y, al aprobarla, cada árbitro ve sus mesas nuevas en su tablet en unos segundos, sin otro QR.</p>
+                    <!-- Lo arma js/centroamericano-reparto-pagina.js con la cuenta de js/centroamericano-reparto.js. -->
+                    <div id="rs-arbitros" class="mt-3"></div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <button id="rs-sugerir" type="button" class="cam-btn"><span aria-hidden="true">🧭</span> Analizar la sala y sugerir el reparto</button>
+                        <label class="flex items-center gap-2 font-semibold"><input id="rs-seguir" type="checkbox" checked> Dejar a cada uno cerca de donde ya estaba, si da igual</label>
+                    </div>
+                    <p id="rs-estado" class="cam-herramientas-nota mt-2" role="status" aria-live="polite"></p>
+                    <div id="rs-analisis" class="mt-3"></div>
+                    <div id="rs-dibujo" class="mt-3 overflow-x-auto"></div>
+                    <div id="rs-zonas" class="mt-3"></div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <button id="rs-aprobar" type="button" class="cam-btn" disabled><span aria-hidden="true">✅</span> Aprobar y cambiar las mesas de los árbitros</button>
+                    </div>
+                </section>
             </section>
             <section id="panel-transmision" role="tabpanel" aria-labelledby="pest-transmision" class="cam-no-qr" hidden>
                 <h3 class="cam-subtitulo"><span aria-hidden="true">📡</span> Transmisión: todos los tableros electrónicos en vivo</h3>
@@ -513,6 +530,8 @@
     <script src="js/centroamericano-leer-partida.js"></script>
     <script src="js/centroamericano-plano.js"></script>
     <script src="js/centroamericano-plano-editor.js"></script>
+    <script src="js/centroamericano-reparto.js"></script>
+    <script src="js/centroamericano-reparto-pagina.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
     <script src="js/centroamericano-vivo-conectar.js"></script>
 </body>
