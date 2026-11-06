@@ -70,7 +70,7 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true } = {}) {
+async function abrir(browser, { vieja = false, memoria = null, nucleos = 8, lenta = false, guardado = null, auto = true } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
     // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
     // las otras pruebas); esta lo pide.
@@ -82,6 +82,9 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
         await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: 'throw new SyntaxError("Unexpected token \'?\'");' }));
     }
     if (memoria != null) await ctx.addInitScript((m) => Object.defineProperty(Navigator.prototype, "deviceMemory", { configurable: true, get: () => m }), memoria);
+    // Los núcleos también se fijan: la máquina del CI tiene 2, y sin esto «procesador de 2 núcleos» encendía el modo en
+    // todas las pruebas (las que esperaban que no se encendiera, o que se encendiera por otra razón, fallaban allá).
+    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     if (lenta) await ctx.addInitScript(() => { window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 150); });
     if (guardado) await ctx.addInitScript((g) => { if (!sessionStorage.getItem("__ya")) { sessionStorage.setItem("__ya", "1"); for (const k in g) localStorage.setItem(k, g[k]); } }, guardado);
     // La Edge Function, por HTTP de verdad: lo contesta el «servidor» de prueba que vive en la página.
