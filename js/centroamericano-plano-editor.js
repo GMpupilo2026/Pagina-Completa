@@ -245,3 +245,5 @@
   iniciar();
   window.CentroamericanoPlanoEditor = { cargar, armarBorrador, guardar, estado: () => ({ plano, elegida, hayCambios: hayCambios() }) };
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

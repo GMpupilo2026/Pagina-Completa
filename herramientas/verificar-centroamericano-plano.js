@@ -238,3 +238,5 @@ async function buscar(p, q) {
   if (fallos) { console.log("\n✗ " + fallos + (fallos === 1 ? " comprobación falló." : " comprobaciones fallaron.")); process.exit(1); }
   console.log("\n✓ El plano de la sala está bien.");
 })().catch((e) => { console.error(e); process.exit(1); });
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -330,3 +330,5 @@
     document.addEventListener("cac-idioma", () => { if (ventana.open) pintarVentana(); });
   }
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -162,7 +162,7 @@ const pag = leer("centroamericano-transmision.html"), pagJs = leer("js/centroame
 ok("la página del encargado: noindex, chess.js y el módulo", /name="robots" content="noindex"/.test(pag) && /js\/vendor\/chess\.js/.test(pag) && /js\/centroamericano-transmision\.js/.test(pag) && /id="tx-app"/.test(pag));
 ok("el token va después del «#» y no se guarda en el navegador", /location\.hash/.test(pagJs) && !/localStorage|sessionStorage/.test(pagJs));
 const org = leer("centroamericano-mesas.html"), orgJs = leer("js/centroamericano-mesas-pagina.js");
-ok("la pestaña «Transmisión» de la organización", /id="pest-transmision"/.test(org) && /id="panel-transmision"/.test(org) && /"transmision"\]/.test(orgJs) && /CentroamericanoTransmision\.iniciar\(\{ raiz: \$\("tx-app"\), principal: true/.test(orgJs));
+ok("la pestaña «Transmisión» de la organización", /id="pest-transmision"/.test(org) && /id="panel-transmision"/.test(org) && /PANELES = \[[^\]]*"transmision"/.test(orgJs) && /CentroamericanoTransmision\.iniciar\(\{ raiz: \$\("tx-app"\), principal: true/.test(orgJs));
 const mod = leer("js/centroamericano-transmision.js");
 ok("sin sonido (en la sala no hay ruido): ni Audio ni AudioContext", !/new Audio|AudioContext|\.play\(/.test(mod));
 ok("el brillo con «reducir movimiento» queda quieto", /prefers-reduced-motion: reduce\)[\s\S]*tx-tarjeta\[data-brilla="urgente"\][^}]*animation: none/.test(leer("css/centroamericano-mesas.css")));
