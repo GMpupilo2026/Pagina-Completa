@@ -70,7 +70,7 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true } = {}) {
+async function abrir(browser, { vieja = false, memoria = null, nucleos = 8, lenta = false, guardado = null, auto = true } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
     // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
     // las otras pruebas); esta lo pide.
@@ -82,6 +82,9 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
         await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: 'throw new SyntaxError("Unexpected token \'?\'");' }));
     }
     if (memoria != null) await ctx.addInitScript((m) => Object.defineProperty(Navigator.prototype, "deviceMemory", { configurable: true, get: () => m }), memoria);
+    // Los núcleos también se fijan: la máquina del CI tiene 2, y sin esto «procesador de 2 núcleos» encendía el modo en
+    // todas las pruebas (las que esperaban que no se encendiera, o que se encendiera por otra razón, fallaban allá).
+    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     if (lenta) await ctx.addInitScript(() => { window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 150); });
     if (guardado) await ctx.addInitScript((g) => { if (!sessionStorage.getItem("__ya")) { sessionStorage.setItem("__ya", "1"); for (const k in g) localStorage.setItem(k, g[k]); } }, guardado);
     // La Edge Function, por HTTP de verdad: lo contesta el «servidor» de prueba que vive en la página.
@@ -93,13 +96,19 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
         try { body = req.postDataJSON() || {}; } catch (e) { /* sin cuerpo */ }
         const cors = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
         if (nombre !== "centroamericano-mesa") return r.fulfill({ status: 200, headers: cors, body: JSON.stringify({ ok: true, mesas: [] }) });
-        const res = await r.request().frame().page().evaluate(async (b) => {
-            window.__llamadas.push({ f: "centroamericano-mesa", body: b });
-            const x = window.__servidor(b);
-            if (x.error) return { status: x.error.context.status, cuerpo: await x.error.context.json() };
-            return { status: 200, cuerpo: x.data };
-        }, body);
-        return r.fulfill({ status: res.status, headers: cors, body: JSON.stringify(res.cuerpo) });
+        const lento = await r.request().frame().page().evaluate(() => window.__lento === true).catch(() => false);
+        if (lento && ["leer", "avisos"].includes(body.action)) await new Promise((ok) => setTimeout(ok, 6500));
+        // Un pedido «lento» puede seguir esperando cuando la prueba ya cerró la página: entonces no hay a quién contestarle.
+        let res;
+        try {
+            res = await r.request().frame().page().evaluate(async (b) => {
+                window.__llamadas.push({ f: "centroamericano-mesa", body: b });
+                const x = window.__servidor(b);
+                if (x.error) return { status: x.error.context.status, cuerpo: await x.error.context.json() };
+                return { status: 200, cuerpo: x.data };
+            }, body);
+        } catch (e) { return r.abort().catch(() => {}); }
+        return r.fulfill({ status: res.status, headers: cors, body: JSON.stringify(res.cuerpo) }).catch(() => {});
     });
     await ctx.route(/sentry|googletagmanager|lichess\.org|chess-results/, (r) => r.abort());
     const p = await ctx.newPage();
@@ -107,6 +116,13 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
     p.on("pageerror", (e) => errores.push(e.message));
     await p.goto(BASE + "/centroamericano-arbitro.html#" + TOKEN, { waitUntil: "load" });
     return { ctx, p, errores };
+}
+
+{
+    const arb = fs.readFileSync(path.join(RAIZ, "js/centroamericano-arbitro.js"), "utf8");
+    igual("en el modo liviano, las mesas cada 90 s (una de cada dos vueltas de 45 s) y Fair Play cada 60 s", [/if \(liviano\(\) && \(vueltaLeer\+\+ % 2\)\) return;/.test(arb), /if \(liviano\(\) && \(vueltaFp\+\+ % 3\)\) return;/.test(arb)], [true, true]);
+    igual("Fair Play ya no se pide en cada «leer» (tiene su intervalo): solo al abrir y al cambiar de ronda", /if \(primera \|\| cambioRonda\) cargarFairPlay\(\);/.test(arb), true);
+    igual("los avisos de la organización no se demoran en el modo liviano", /setInterval\(\(\) => \{ if \(!document\.hidden\) consultarAvisos\(\); \}, AVISOS_MS\);/.test(arb), true);
 }
 
 const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttribute("data-liviano"), document.getElementById("modo-liviano").getAttribute("aria-pressed"), document.getElementById("modo-liviano").textContent.trim()]);
@@ -168,10 +184,34 @@ const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttri
     await marcar();
     await actualizar();
     igual("«Actualizar» con lo mismo: las tarjetas NO se vuelven a armar", await sigue(), true);
+    // Ahorro de datos: la segunda lectura manda la firma de la primera y la función contesta solo «igual».
+    igual("«Actualizar» manda la firma de lo que ya tiene y, sin cambios, llega solo «igual»", await r.p.evaluate(() => {
+        const ls = window.__llamadas.filter((x) => x.body.action === "leer");
+        return [!ls[0].body.firma, typeof ls[ls.length - 1].body.firma === "string", (window.__iguales || 0) >= 1];
+    }), [true, true, true]);
+    igual("con «igual», la pantalla queda como estaba (las mismas tarjetas, la hora al día)", [await r.p.$$eval("#lista .cam-mesa", (xs) => xs.length), /Actualizado a las/.test(await r.p.textContent("#actualizado"))], [MESAS.length, true]);
     await r.p.evaluate(() => { window.__avisos.abiertas = [2]; });
     await actualizar();
     igual("con un pedido de ayuda nuevo en la mesa 2: sí se vuelve a armar, y lo muestra", [await sigue(), await r.p.evaluate(() => document.querySelectorAll("#lista .cam-mesa")[1].querySelector(".cam-ayuda-mesa").disabled)], [false, true]);
+    igual("con un cambio, la firma ya no coincide y llega todo (no otro «igual»)", await r.p.evaluate(() => window.__iguales), 1);
     igual("sin errores en la página", r.errores, []);
+    await r.ctx.close();
+
+    console.log("\n=== La señal débil (el router lejos) ===");
+    r = await abrir(browser, { memoria: 8 });
+    await r.p.waitForSelector("#app:not([hidden])", { timeout: 15000 });
+    igual("con buena señal no se enciende", (await estadoLiviano(r.p))[0], null);
+    await r.p.evaluate(() => { window.__lento = true; });
+    for (let i = 0; i < 2; i++) { await r.p.click("#actualizar"); await r.p.waitForFunction(() => !document.getElementById("actualizar").disabled, null, { timeout: 30000 }); }
+    await r.p.waitForFunction(() => document.documentElement.getAttribute("data-liviano") === "si", null, { timeout: 20000 }).catch(() => {});
+    igual("si los pedidos tardan más de 6 s, se enciende solo y dice por qué", [(await estadoLiviano(r.p))[0], await r.p.evaluate(() => window.ModoLiviano.motivos())], ["si", ["la señal está débil"]]);
+    igual("y no se recuerda para la próxima visita (la señal cambia de un lugar a otro)", await r.p.evaluate(() => [localStorage.getItem("modo_liviano_v1"), localStorage.getItem("modo_liviano_medido_v1")]), [null, null]);
+    igual("sin errores en la página", r.errores, []);
+    await r.ctx.close();
+    r = await abrir(browser, { memoria: 8, guardado: { modo_liviano_v1: "no" } });
+    await r.p.waitForSelector("#app:not([hidden])", { timeout: 15000 });
+    await r.p.evaluate(() => window.ModoLiviano.senalDebil());
+    igual("si la persona lo apagó con el botón, la señal débil no lo vuelve a encender", (await estadoLiviano(r.p))[0], null);
     await r.ctx.close();
 
     console.log("\n=== En un navegador de pruebas, no decide solo (salvo que se le pida) ===");

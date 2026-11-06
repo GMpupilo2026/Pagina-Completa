@@ -186,7 +186,7 @@ ok("el aviso de las tablas es lo primero de la página", /<div id="app" hidden>\
 ok("el control de tiempos se llena solo con la transmisión y, si no la reconoce, queda a mano", /llenarConTx\(ctlTx\)/.test(arb) && /Anótalo a mano, como siempre\./.test(arb) && /anotarTodasTx/.test(arb));
 ok("el reloj apagado usa primero la transmisión sin atraso", /VIVO\.deLaMesa\(mesa\)/.test(arb) && /atraso: v\.delay/.test(arb));
 const vivo = leer("js/centroamericano-arbitro-vivo.js");
-ok("la tablet le pide a la función nueva, con el token de su enlace", /functions\.invoke\("centroamericano-mesas-vivo", \{ body: \{ action: "mesas", arbitro_token: o\.token\(\) \} \}\)/.test(vivo));
+ok("la tablet le pide a la función nueva, con el token de su enlace", /const cuerpo = \{ action: "mesas", arbitro_token: o\.token\(\) \};/.test(vivo) && /functions\.invoke\("centroamericano-mesas-vivo", \{ body: cuerpo \}\)/.test(vivo));
 const org = leer("centroamericano-mesas.html");
 ok("la organización: la conexión con su clave en un campo de contraseña", /id="vivo-token" type="password"/.test(org) && /id="vivo-enlace"/.test(org) && /src="js\/centroamericano-vivo-conectar\.js"/.test(org));
 ok("la organización: pegar la tabla de LiveChess, que la función prueba y guarda", /id="livechess-texto"/.test(org) && /llamar\("livechess_guardar", \{ texto \}\)/.test(leer("js/centroamericano-vivo-conectar.js")));
@@ -250,6 +250,25 @@ ok("ensayo: al empezar todavía no hay avisos", V.alertasNuevas(V.datosEnsayo(T0
 ok("ensayo: no toca las mesas reales (control de tiempos y sugerencias)", /function deLaMesa\(mesa\) \{\s*if \(ensayo \|\|/.test(vivo) && /function noReconoce\(mesa\) \{\s*if \(ensayo \|\|/.test(vivo));
 ok("ensayo: los botones no anotan nada", /if \(a\.ensayo\) \{ await Avisos\.alerta\("En el ensayo no se anota nada/.test(arb));
 ok("la tablet: el botón del ensayo", /id="ensayar-vivo"/.test(tablet) && /iniciarEnsayo\(\)/.test(arb));
+
+// ---- ahorro de datos: solo las jugadas nuevas (ver «La señal débil: el modo liviano pide menos datos»)
+// La huella de la función, sin los tipos de TypeScript, tiene que dar EXACTAMENTE lo mismo que la de la tablet.
+const bloque = (fn.match(/\/\/ huella-jugadas: inicio\n([\s\S]*?)\/\/ huella-jugadas: fin/) || [])[1] || "";
+const huellaFn = bloque ? new Function(bloque.replace(/: string\[\]/g, "").replace(/: number/g, "").replace(/\): string \{/, ") {") + "\nreturn huellaJugadas;")() : null;
+const jj = ["e4 5400+0", "e5 5398+2", "Nf3 5390+10", "Nc6 5380+18", "Bb5 5370+20", "a6 5300+80"];
+ok("la huella de las jugadas es la misma en la tablet y en la función", !!huellaFn && [0, 1, 3, 6].every((n) => huellaFn(jj, n) === V.huellaJugadas(jj, n)), bloque.slice(0, 80));
+ok("la huella cambia si cambia una jugada de antes (el tablero la corrigió)", V.huellaJugadas(jj, 4) !== V.huellaJugadas(["e4 5400+0", "e5 5398+2", "Nf3 5390+10", "Nf6 5380+18"], 4));
+const crudas0 = { ronda: 3, porMesa: new Map([[5, jj.slice(0, 4)]]) };
+const tengo0 = V.pedidoTengo(crudas0);
+ok("la tablet manda cuántas jugadas tiene de cada mesa y su huella", tengo0.length === 1 && tengo0[0].mesa === 5 && tengo0[0].n === 4 && tengo0[0].h === V.huellaJugadas(jj, 4));
+const u1 = V.unirJugadas(crudas0, { ronda: 3, mesas: [{ mesa: 5, fuente: "livechess", desde: 4, jugadas: jj.slice(4) }] });
+ok("con «desde», las jugadas nuevas se pegan a las que ya tenía", !u1.incompleta && JSON.stringify(u1.mesas[0].jugadas) === JSON.stringify(jj) && u1.mesas[0].desde === undefined && u1.crudas.porMesa.get(5).length === 6);
+const u2 = V.unirJugadas(crudas0, { ronda: 4, mesas: [{ mesa: 5, fuente: "livechess", desde: 4, jugadas: ["x"] }] });
+ok("de otra ronda no se pega nada: falta y la próxima se pide todo", u2.incompleta && u2.crudas.porMesa.size === 0 && u2.mesas.length === 0);
+const u3 = V.unirJugadas(crudas0, { ronda: 3, mesas: [{ mesa: 5, fuente: "livechess", jugadas: jj.slice(0, 2) }, { mesa: 7, fen: "8/8/8/8/8/8/8/8 w - - 0 1" }] });
+ok("sin «desde» llega todo (y lo de Lichess, que trae la posición, pasa igual)", !u3.incompleta && u3.mesas.length === 2 && u3.mesas[0].jugadas.length === 2 && u3.mesas[1].fen);
+ok("la función manda solo lo nuevo si la huella coincide, y todo si no", /function soloLoNuevo[\s\S]*?t\.n > jugadas\.length \|\| huellaJugadas\(jugadas, t\.n\) !== t\.h\) return \{ jugadas \};[\s\S]*?return \{ jugadas: jugadas\.slice\(t\.n\), desde: t\.n \};/.test(fn) && /Number\(cuerpo\.ronda\) === ronda && Array\.isArray\(cuerpo\.tengo\)/.test(fn));
+ok("la función le dice al navegador que guarde el permiso (sin un OPTIONS antes de cada pedido)", /"Access-Control-Max-Age": "7200"/.test(fn));
 
 // ---- anotar desde el aviso, siempre confirmando
 ok("guardar el resultado de la transmisión pregunta antes", /async function guardarDeTransmision[\s\S]*?Avisos\.confirmar\([\s\S]*?if \(!si\) return false;\s*elegido\[m\.mesa\] = valor;\s*await guardar\(m\);/.test(arb));
