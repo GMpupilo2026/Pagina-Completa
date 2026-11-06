@@ -9668,6 +9668,22 @@ Probado en el Postgres de ensayo: sin motivo se rechaza, la aprobada manda el av
 mesa se vuelve a elegir, borrar dos veces y sin permiso se rechazan. Lo comprueba `verificar-centroamericano-fair-play.js`
 (roto a propósito, sin el botón, salta).
 
+#### Los informes de Fair Play, sin nada cortado
+
+Lo pidió el dueño el 6 de noviembre: en los PDF de Fair Play (el registro de las mesas, el informe del torneo y el de cada
+jugador) las celdas largas y los encabezados salían cortados con «...» —el nombre del jugador, «Qué pasó», «Primera del
+motor (jugó / esperable)»—, porque `js/reporte-pdf.js` recorta a un renglón para que la tabla no crezca.
+
+- Las ocho tablas de Fair Play piden `envolver` (la celda larga parte en renglones y la fila crece), `cebra` (una fila
+  sí y otra no, sombreada apenas, para seguirla con la vista) y `negritas` en la columna de quién o qué mesa.
+- En `js/reporte-pdf.js`, con `envolver`: el **encabezado** también parte en renglones (ya no pierde palabras), y cada
+  columna llega al menos al ancho de su palabra más larga —las demás le ceden en proporción a lo que les sobra—, así
+  ninguna palabra («Ronda», «(elegida)») se monta sobre la columna de al lado. `cebra` es nueva y opcional; sin
+  `envolver` la tabla sigue como siempre (recortada a un renglón).
+
+Mirado en una muestra con notas y nombres largos pasada a imagen; `verificar-centroamericano-fair-play.js` comprueba que el
+informe del torneo no tenga ningún «...» (sin `envolver` en una tabla, salta).
+
 #### Retenido, el acumulado y el informe final
 
 Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):

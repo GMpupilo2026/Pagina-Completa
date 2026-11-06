@@ -735,6 +735,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const ib = fs.readFileSync(await informe.path()).toString("latin1");
         igual("el informe de Fair Play del torneo en PDF: con la marca de agua, el resumen, las revisiones, el acumulado y las alertas", [informe.suggestedFilename(), ib.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(ib), ...["Resumen", "Por categor", "Las revisiones", "Tenia un papel|Ten\\355a un papel|Ten.a un papel", "P.rez, Luis", "Castro, Alana"].map((x) => new RegExp(x).test(ib))],
             ["informe-fair-play-centroamericano-2026.pdf", true, true, true, true, true, true, true, true]);
+        igual("en el informe ninguna celda ni encabezado sale cortado con «...»: parten en renglones", /\.\.\.\) Tj/.test(ib), false);
         // El informe de UN jugador (para presentar un caso): sus partidas, sus señales y el método.
         const [deJugador] = await Promise.all([p.waitForEvent("download"), p.click("#fp-indice tr >> nth=0 >> [data-accion='informe-jugador']")]);
         const jb = fs.readFileSync(await deJugador.path()).toString("latin1");
