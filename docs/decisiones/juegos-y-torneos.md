@@ -13704,6 +13704,103 @@ ventana con su lista, el editor con el borrador, «Numerar seguido», el pasillo
 y el guardado. El doble de la organización conoce `salas_torneo` y
 `sala_plano_guardar`.
 
+### El reparto de los árbitros desde el plano
+
+El dueño pidió el 6/11/2026 que el plano de la sala quedara conectado con las
+mesas de los árbitros: que desde el plano se sugiera dónde va cada uno,
+tomando en cuenta dónde hay más incidencias (ahí, quien tiene más
+experiencia), y que al aprobarlo a cada árbitro se le cambien solas las mesas
+en su tablet, aunque le toquen varios torneos. Debajo del plano, en
+`centroamericano-mesas.html`, está «Los árbitros en la sala».
+
+- **La cuenta, en un módulo aparte** (`js/centroamericano-reparto.js`, sin
+  pantalla ni base, para que la pruebe Node):
+  1. **La carga de cada mesa física**: sus tableros en juego en la ronda
+     (sala-jugadores; sin la ronda, todas las del plano), cada uno pesado por
+     `1 + 3 × tasa` de incidencias de su torneo. La tasa se **suaviza** hacia
+     la del evento con 20 partidas de peso: con 5 partidas y 4 incidencias, el
+     Sub-10 Absoluto marcaba 0,80 y parecía un incendio.
+  2. **El recorrido**: fila por fila desde adelante, la 1 de derecha a
+     izquierda y **cada fila siguiente desde el extremo más cercano a donde
+     terminó la anterior**, medido con los anchos de mesas y pasillos. La
+     primera versión iba y volvía a ciegas, y la captura lo mostró: como las
+     filas del Gimnasio van alineadas a la derecha y la 1 es la más corta, la
+     zona 1 juntaba la fila 1 con la otra punta de la fila 2.
+  3. **Las zonas**: el recorrido partido en tantas zonas seguidas como
+     árbitros, por programación dinámica. Primero la carga máxima más baja
+     posible; después, con un 8 % de holgura, lo más parejo, cortado en los
+     pasillos y con pocos torneos por árbitro.
+  4. **Quién va a cada zona**: el algoritmo húngaro (la asignación óptima)
+     con `2 × experiencia × dificultad + 0,08 × lo que ya tenía`. La
+     experiencia va **centrada en la media del grupo** (quien tiene menos que
+     la media resta en una zona difícil; sin centrar, «en formación» × difícil
+     daba 0 y no la evitaba) y la dificultad de 0 (la zona más tranquila) a 1
+     (la de más incidencias). La continuidad pesaba 0,35 y después 0,15: las
+     dos veces dejó a una persona en formación en una zona con más del doble
+     de incidencias que la más tranquila. Con 0,08 solo desempata zonas
+     parecidas (entre rondas los jugadores de cada mesa cambian igual).
+  5. **Lo que cambia** (`cambios()`): para cada árbitro, se reusa el tramo
+     vigente del mismo torneo que más se parece (así su QR sigue sirviendo), se
+     crea lo que falta y se apaga lo que sobra. Los tramos de torneos que no
+     están en el plano (las Rápidas, si el plano es del clásico) no se tocan;
+     los árbitros que se desmarcan pierden sus mesas del plano (nunca dos en
+     una mesa).
+- **La experiencia** la pone la organización en la lista
+  (`centroamericano_asignaciones.experiencia`: 3 internacional, 2 FIDE,
+  1 nacional, 0 en formación; sin dato cuenta como nacional), igual en todos
+  los tramos de la misma persona. Entran por omisión los que tienen mesas en un
+  torneo del plano; quien tocó «Ya terminé mis labores» también, porque desde
+  `centroamericano_labores_por_ronda` eso vale por ronda y el reparto se
+  aprueba justo entre rondas.
+- **El análisis antes de aprobar**: tableros en juego y partidas por
+  árbitro; con los enlaces de hoy, cuántos tableros en juego no tienen
+  árbitro y cuántos tienen dos; la carga por árbitro hoy y con la sugerencia
+  (de cuánto a cuánto); y los torneos con más incidencias por partida. Cada
+  zona dice por qué le tocó a quien le tocó, y se puede cambiar el árbitro de
+  una zona a mano (se intercambia con la que lo tenía). El plano se pinta por
+  zonas con «Z3» escrito en cada mesa: el color nunca va solo.
+- **Aprobar es una transacción**: `centroamericano_reparto_aplicar()`
+  (SECURITY INVOKER a propósito: rigen las mismas políticas y permisos por
+  columna con que la organización ya crea, cambia y apaga enlaces; no se
+  abrió nada). Si una acción falla, no se cambia ninguna: se comprobó en la
+  base con una acción buena seguida de una mala. Las incidencias se cuentan en
+  la base (`centroamericano_reparto_tasas()`, INVOKER), no en el navegador:
+  el registro pasa de mil filas. Después de aplicar, cada árbitro al que le
+  cambió algo recibe un aviso en su tablet con sus mesas nuevas.
+- **La tablet se entera sola**: la función `centroamericano-mesa` lee el
+  rango de la base en cada pedido y devuelve las «hermanas» (los tramos de la
+  misma `persona`), así que las mesas nuevas aparecen en segundos, sin QR
+  nuevo y **sin volver a desplegar la función** (son 86 kB más los archivos
+  compartidos, en pleno torneo). El único hueco era el tramo que se apaga
+  justo cuando el árbitro lo tiene abierto: la función le contesta 410 y se
+  quedaba sin mesas. Para eso:
+  - `reemplazada_en`: la hora en que un **reparto** apagó el tramo (uno
+    apagado a mano no la lleva: puede ser un QR que se filtró);
+  - `centroamericano_seguir(token)`: con un token apagado por un reparto
+    (24 h), devuelve el de un tramo vigente de la misma persona, abierto
+    primero. Es de `anon` a propósito, como la función de la mesa: el token
+    de 64 caracteres al azar es la credencial;
+  - la tablet, ante un 410, la pregunta y se pasa sola (a lo sumo 4 veces);
+  - por eso `cambios()` le pone **persona** a quien se le apaga un tramo y se
+    le crea otro, **y se la pone al tramo viejo antes de apagarlo** (la prueba
+    con un árbitro de un solo tramo que pasaba entero a otro torneo dejó ver
+    que sin eso su tablet no tenía a dónde ir).
+- **Pendiente, como idea**: medir la experiencia también con lo que hizo en
+  el evento (rondas cerradas, tiempo para cerrar, ayudas pedidas) y no solo
+  con lo que declara la organización; que la última mesa de cada torneo quede
+  con un margen por si la ronda siguiente trae más tableros; y el reparto para
+  las Rápidas y el Blitz cuando tengan su plano.
+
+Lo revisa `verificar-centroamericano-reparto.js`: la cuenta (tasas, la
+serpentina con filas de largo distinto, zonas parejas y seguidas, el húngaro,
+la experiencia con la zona difícil, la persona antes de apagar, que después
+cada tablero tenga un árbitro y uno solo, y que volver a aplicar no cambie
+nada), las migraciones, la pantalla con el doble de la organización (lista,
+análisis, zonas, aprobar en una llamada, avisos) y la tablet que salta sola.
+Se rompieron a propósito la experiencia, la persona antes de apagar y el salto
+de la tablet: saltaron las tres. El doble de la organización conoce `gt()`,
+`centroamericano_reparto_tasas` y `centroamericano_reparto_aplicar`.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
