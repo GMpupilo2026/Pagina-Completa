@@ -198,9 +198,9 @@ function pruebasDelCalculo() {
     igual("las 3 mejores que manda la pantalla: una lista por posición, jugadas UCI y centipeones; si no, se rechaza entera", d.opciones, [[null, [["e2e4", 30], ["d2d4", 10]]], null, null, null, null]);
     igual("cada jugada con cuánto peor es cada opción que la mejor, en puntos de probabilidad de ganar (la fórmula de Lichess), las jugadas legales y lo que perdió lo jugado", d.deltas16, [[0, 13.7], 2, 0]);
     igual("el modelo por jugada: las probabilidades suman 1 y van de la mejor a la peor; con menos de 8 jugadores no hay centro ni factor", [d.modelo.suma, d.modelo.orden, d.modelo.pocos], [1, true, { centro: 0, factor: 1 }]);
-    igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 62,5, y quien usa el motor en 3 de cada 10 jugadas sale marcado más de la mitad de las veces (más que con 1 de cada 10)",
-        [d.modelo.b < -0.2, d.modelo.honestosAltos <= 3, d.modelo.deteccion30 > 50, d.modelo.deteccion30 > d.modelo.deteccion10], [true, true, true, true]);
-    igual("y quien juega siempre la del motor sale muy por encima de 62,5", d.modelo.tramposo > 75, true);
+    igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 70 (la vara de FIDE para actuar), y quien usa el motor en 3 de cada 10 jugadas sale desde 65 más de 3 de cada 10 veces (y mucho más que con 1 de cada 10): con las varas de FIDE se marca menos, a cambio de casi no acusar a nadie limpio",
+        [d.modelo.b < -0.2, d.modelo.honestosAltos <= 1, d.modelo.deteccion30 > 30, d.modelo.deteccion30 > 3 * d.modelo.deteccion10], [true, true, true, true]);
+    igual("y quien juega siempre la del motor sale muy por encima de 70", d.modelo.tramposo > 75, true);
     igual("los casos de prueba: de 21 partidas donde se sabe la respuesta, marca al que usó el motor y casi a ninguno de los 20 que jugaron limpio",
         [d.modelo.casos.con_trampa, d.modelo.casos.marcados_a_mirar, d.modelo.casos.marcados_alta, d.modelo.casos.sin_trampa, d.modelo.casos.falsos_a_mirar <= 10], [1, 100, 100, 20, true]);
     console.log("\n=== Más precisión ===");
@@ -241,7 +241,7 @@ function pruebasDelCalculo() {
         c.ctx, [{ v: 0.5, r: 1 }, { v: 1, r: 0 }, { v: 0, r: 0 }, 1.35]);
     igual("las trampas: quien no cae en ninguna, con lo que atraen de verdad, sale alto; cayendo en algunas, menos; con menos de 5 no se mide; la que no es trampa no cuenta; la atracción se mide en la gente (y sin datos, 1)",
         c.trampas, [10, 0, true, true, null, 0, 4, 1]);
-    igual("la vara para el tamaño del torneo (Bonferroni al 5 %): nunca menos de 2; con 10 jugadores, 2,6; con 300, 3,6", c.umbral, [2, 2.58, 3.59, 1.96]);
+    igual("la vara para el tamaño del torneo (Bonferroni al 5 %): nunca menos de «vigilar» (3, el 65 de FIDE); con 10 jugadores, 3; con 300, 3,6", c.umbral, [3, 3, 3.59, 1.96]);
     igual("todas las señales en una cuenta: la correlación medida (nunca negativa; sin datos, 0), independientes suman más, parecidas no cuentan doble, y sin el índice no hay",
         c.combinada, [4, 0.95, 0, 2.83, 2, null]);
     igual("los casos de prueba con su margen (Wilson), cuánto separan (AUC) y por proporción de uso del motor", c.casos, [[49, 94.3], [1, 0.5, null], 2, true, 1]);
@@ -288,13 +288,13 @@ function pruebasDelCalculo() {
     const conIndice = Object.assign({}, alerta, { roi: 66.4, z_modelo: 3.28, m_jugadas: 30, m_t1: 25, m_e_t1: 15.2, m_dj: 36, m_e_dj: 135, m_z_t1: 3.1, m_z_dj: 2.4, desde_jugada: 11, profunda: true });
     igual("con el modelo: el índice como el de FIDE, lo esperable según lo difícil de cada posición, lo perdido, desde dónde se midió (la teoría) y si se confirmó a fondo",
         X(conIndice).slice(0, 5).map((x) => [!!x.alto, x.texto]), [
-        [true, "Índice como el de FIDE: 66,4 (lo normal es 50; cada 5 puntos es una desviación; desde 60 se mira)."],
+        [true, "Índice como el de FIDE: 66,4 (lo normal es 50; cada 5 puntos es una desviación; desde 65 se vigila y desde 70 se actúa)."],
         [true, "Según lo difícil de cada posición, alguien de su Elo jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."],
         [true, "Perdió en promedio 1,2 puntos de probabilidad de ganar por jugada; lo esperable para su Elo: 4,5."],
         [false, "Se midió desde la jugada 11: lo de antes era teoría (partidas de maestros) o apertura."],
         [false, "Confirmado con el análisis hondo (profundidad 20)."]]);
     igual("la frase de arriba, con el índice", [Rz(conIndice), Rz(Object.assign({}, conIndice, { roi: 48, z_modelo: -0.4, z: 0, z_t1: 0, z_dif: 0 })), X(Object.assign({}, conIndice, { comparado: "categoria" }))[1].texto],
-        ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel. Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
+        ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel (por azar, 1 de cada 1\u00a0927 jugadores limpios). Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
          "Según lo difícil de cada posición, alguien de su categoría jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."]);
     delete global.window; delete global.document;
 
@@ -547,7 +547,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
             ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora · 2 de 18 posiciones salieron de la nube de Lichess (más hondas). Se vuelve a mirar cada 45 s.", true]);
         igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].slice(0, 6).map((td) => { const c = td.cloneNode(true); c.querySelectorAll(".cam-fp-informe-jugador").forEach((b) => b.remove()); return c.textContent; })])),
-            [["alta", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 Muy alta", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
+            [["a_mirar", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 A mirar", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
              ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
         igual("y lo que se tuvo en cuenta de cada uno, una frase por línea: el Elo que se le reconoció, su historia en otros eventos, el tiempo (la señal alta en negrita) y el ritmo",
             await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [...tr.children[6].querySelectorAll(":scope > .cam-fp-detalle")].map((n) => [n.textContent.slice(0, 40), getComputedStyle(n).fontWeight >= 700, getComputedStyle(n).display]))),
@@ -560,7 +560,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("#fp-confianza summary");
         igual("«¿Qué tan confiable es?»: las alarmas falsas contra las del azar y cuánto detectaría", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(0, 3)), [
             "Medido con los 140 jugadores que tienen 30 jugadas o más analizadas.",
-            "Alarmas falsas: 3,1 % pasa de 60 y 0,7 % de 62,5. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
+            "Alarmas falsas: 3,1 % pasa de 65 y 0,7 % de 70. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
             "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el 30,0 % (20,0 % muy alto) de las veces; en 2 de cada 10, el 62,0 % (50,0 % muy alto); en 3 de cada 10, el 85,0 % (74,0 % muy alto)."]);
         igual("y con los casos de prueba (se sabe quién usó el motor) y las rápidas, aparte", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(3, 5)), [
             "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a 83,3 % de los 6 que hicieron trampa, 66,7 % muy alto, y a 0,0 % de sus 6 rivales, que jugaron limpio.",
