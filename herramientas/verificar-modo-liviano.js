@@ -70,7 +70,7 @@ const TABLET_VIEJA = () => {
     delete HTMLDialogElement.prototype.showModal; delete HTMLDialogElement.prototype.show; delete HTMLDialogElement.prototype.close; delete HTMLDialogElement.prototype.open;
 };
 
-async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true } = {}) {
+async function abrir(browser, { vieja = false, memoria = null, lenta = false, guardado = null, auto = true, nucleos = 8 } = {}) {
     const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 820, height: 1100 } });
     // En un navegador de pruebas, js/modo-liviano.js no decide solo salvo que se le pida (así no cambia a mitad de
     // las otras pruebas); esta lo pide.
@@ -81,6 +81,8 @@ async function abrir(browser, { vieja = false, memoria = null, lenta = false, gu
         // La librería que un navegador viejo no sabe leer: el archivo entero falla y no deja `window.supabase`.
         await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: 'throw new SyntaxError("Unexpected token \'?\'");' }));
     }
+    // Los núcleos se fijan: si no, la prueba depende de la máquina que la corre (un corredor de 2 núcleos enciende el modo liviano solo).
+    await ctx.addInitScript((n) => Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { configurable: true, get: () => n }), nucleos);
     if (memoria != null) await ctx.addInitScript((m) => Object.defineProperty(Navigator.prototype, "deviceMemory", { configurable: true, get: () => m }), memoria);
     if (lenta) await ctx.addInitScript(() => { window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 150); });
     if (guardado) await ctx.addInitScript((g) => { if (!sessionStorage.getItem("__ya")) { sessionStorage.setItem("__ya", "1"); for (const k in g) localStorage.setItem(k, g[k]); } }, guardado);
@@ -186,6 +188,9 @@ const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttri
     console.log("\n=== Lo que dice la tablet y lo que se mide ===");
     r = await abrir(browser, { memoria: 1 });
     igual("poca memoria (1 GB) lo enciende", [await estadoLiviano(r.p), await r.p.evaluate(() => window.ModoLiviano.motivos())], [["si", "true", "🪶 Liviano: sí"], ["poca memoria (1 GB)"]]);
+    await r.ctx.close();
+    r = await abrir(browser, { memoria: 8, nucleos: 2 });
+    igual("un procesador de 2 núcleos lo enciende", [(await estadoLiviano(r.p))[0], await r.p.evaluate(() => window.ModoLiviano.motivos())], ["si", ["procesador de 2 núcleos"]]);
     await r.ctx.close();
     r = await abrir(browser, { memoria: 8, lenta: true });
     igual("una tablet que dibuja lento: al abrir todavía no", (await estadoLiviano(r.p))[0], null);
