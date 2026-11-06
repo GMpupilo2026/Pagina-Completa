@@ -989,3 +989,12 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
 .cac-cuenta-datos dd[data-dato="hasta"] { font-family: inherit; }
 
 /*! rev bfb5bbb0d2d82f9f */
+
+/* El plano de la sala (js/centroamericano-plano.js): el dibujo trae su propio
+   fondo claro, así se lee igual en el modo oscuro. */
+.cac-plano-svg { display: block; width: 100%; height: auto; }
+.cac-plano-tarjeta { margin-top: 0.5rem; }
+.cac-plano-tarjeta .cac-plano-svg { max-width: 30rem; margin: 0.35rem 0; }
+.cac-plano-donde { font-weight: 700; }
+.cac-plano-lista { margin-top: 0.75rem; padding-left: 1.1rem; list-style: disc; font-size: 0.92rem; }
+.cac-plano-lista li + li { margin-top: 0.2rem; }

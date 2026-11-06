@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105203936
+# al-dia-con: 20261106144102
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2474,6 +2474,7 @@ columna  salas_torneo.lichess_id  text
 columna  salas_torneo.nombre  text
 columna  salas_torneo.orden  integer
 columna  salas_torneo.pizarras  jsonb
+columna  salas_torneo.plano  jsonb
 columna  salas_torneo.quiniela  boolean
 columna  salas_torneo.quiniela_sincronizada_en  timestamp with time zone
 columna  salas_torneo.tema  text
@@ -3336,6 +3337,7 @@ funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  au
 funcion  sala_anuncio_publicar(p_sala text, p_texto text, p_texto_en text, p_horas integer)  definer  anon=false  auth=true
 funcion  sala_anuncio_quitar(p_id bigint)  definer  anon=false  auth=true
 funcion  sala_avisos_frenar(p_ip text)  definer  anon=false  auth=false
+funcion  sala_plano_guardar(p_clave text, p_plano jsonb)  definer  anon=false  auth=true
 funcion  saldo_de_puntos(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true

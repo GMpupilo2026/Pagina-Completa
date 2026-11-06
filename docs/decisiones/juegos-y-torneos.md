@@ -13647,6 +13647,63 @@ Lo revisa `verificar-centroamericano-esperas.js`:
 Rompí a propósito el modo invitado: lo abrí sin mirar el parámetro y lo dejé
 hasta fin de mes. Saltaron las cuatro comprobaciones que lo cuidan.
 
+### El plano de la sala
+
+El dueño preguntó el 6/11/2026, con la foto del Gimnasio Nacional, si se podía
+hacer un plano de dónde está cada mesa. Las familias llegan a la sala sabiendo
+«Mesa 14» y no saben hacia dónde caminar.
+
+- **Cómo es la sala, según el dueño.** Las filas van de lado a lado y se
+  cuentan desde la cancha libre, donde está la mascota, hacia el fondo, donde
+  está la bandera. La fila 1, la más corta, es la del Sub-18 Femenino. Mirando
+  hacia el fondo, tiene una mesa sola a la derecha (tableros 1 y 2), luego un
+  pasillo y luego dos mesas juntas (3 a 6). Las filas siguientes bajan de
+  categoría y se numeran también de derecha a izquierda, dos tableros por mesa
+  y con pasillos entre mesas. El orden exacto y algunas mesas los tiene que
+  confirmar la organización.
+- **No se inventa la ubicación de ninguna mesa.** El primer plano es un
+  borrador: «Armar el borrador» hace una fila por torneo, en el orden de
+  arriba, con los tableros que usa cada uno según sala-jugadores (las mesas
+  de la ronda emparejada o la mitad de los inscritos). Todo lo que no confirmó
+  el dueño sale con `duda`. En la pestaña «Plano de la sala» de
+  `centroamericano-mesas.html`, cada mesa con duda se ve con borde punteado y
+  «?», y quien organiza la revisa en la sala. Ahí se tocan los dos números de
+  cada mesa, el torneo del grupo, los pasillos y las filas, y «Numerar
+  seguido» completa la fila desde la mesa tocada. Nada llega a la página
+  pública hasta «Guardar el plano».
+- **Se guarda en la base, no en el código**, en la columna
+  `salas_torneo.plano`, para que la organización lo corrija sin un PR. La
+  página pública lo lee con la misma política de la sala (`visible`). Solo
+  lo escribe `sala_plano_guardar()`, para quien administra o tiene la
+  herramienta `mesa-arbitro`, con el permiso en `coalesce(…, false)` y
+  revocada para `public` y `anon`. Revisa la forma y el tamaño. Que un
+  tablero no se repita en el mismo torneo lo revisa la página antes de
+  mandar (`problemas()`). La base no lo revisa: lo único que pasa si se
+  cuela es que una mesa sale dos veces.
+- **Una sola copia del dibujo**: `js/centroamericano-plano.js`, que usan las
+  dos páginas. La fila 1 va abajo, del lado del frente, y la mesa 1 a la
+  derecha, como se ve parado en la cancha mirando al fondo. Cada fila dice su
+  torneo, así el color de las mesas nunca va solo: son colores claros con la
+  letra `#102a43`, todos por encima de 7:1. La mesa marcada va en
+  `#102a43` con la letra blanca y el borde rojo. La ventana trae además la
+  lista en texto («Fila 1: Sub-18 Femenino, mesas 1 a 6.») para el lector de
+  pantalla.
+- **En la tarjeta de «Busca a tu jugador»** (solo en el clásico, que es el
+  plano que hay), debajo de su mesa sale «📍 En la sala: fila 3 · la 4.ª mesa
+  desde la derecha» y el plano chico con su mesa marcada. El plano se pide una
+  vez por visita y se guarda en el aparato, por la sala sin internet. Al
+  llegar avisa con `cac-plano` y la tarjeta se vuelve a pintar.
+- **Las Rápidas y el Blitz no tienen plano todavía.** Sus torneos tienen otros
+  nombres y otra numeración. Si la organización quiere uno, se agrega
+  eligiendo esos torneos en las filas: el dibujo y la tarjeta no cambian.
+
+Lo revisa `verificar-centroamericano-plano.js`. Ahí está la mesa que se ubica
+(fila y lugar desde la derecha), el borrador con la forma de la sala, el
+tablero repetido que no se guarda, la tarjeta en español y en inglés, la
+ventana con su lista, el editor con el borrador, «Numerar seguido», el pasillo
+y el guardado. El doble de la organización conoce `salas_torneo` y
+`sala_plano_guardar`.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
