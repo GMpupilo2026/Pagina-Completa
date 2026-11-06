@@ -10108,6 +10108,19 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+- **La pantalla completa del atleta se traduce con un toque en la bandera.** Arriba hay tres botones —Español, English,
+  Français— con el dibujo de la bandera (`img/banderas/`) **y el nombre del idioma escrito** (la bandera sola no le dice nada a
+  quien no la reconoce, y el color nunca va solo). Tocar uno traduce ahí mismo la categoría («Sub-12 Absoluto» → «U12 Open» /
+  «Filles»), «MESA» (BOARD en inglés, TABLE en francés), el color (White/Black, Blancs/Noirs), «Contra», «Ronda», la hora (12 h con
+  AM/PM, o 24 h con «h») y «Listo» (Done / Terminé); cada texto lleva su `lang` para que el lector de pantalla lo pronuncie bien.
+  No cambian los nombres, la mesa, la ronda ni la bandera del país del jugador. Los textos son **fijos** (la tabla `GRANDE` de
+  `js/centroamericano-emparejamientos.js`, con los términos de `centroamericano-frases.js`), no se traducen al vuelo: no pueden decir
+  algo distinto de lo revisado y funcionan sin internet. **Empieza siempre en español**, que es como la lee el árbitro, y para el
+  siguiente atleta vuelve a empezar en español: el idioma no se guarda (la página del árbitro no usa almacenamiento) y tampoco se
+  elige solo por la federación del jugador, porque una tablet que cambió de idioma sin avisar confunde al árbitro. Otro idioma se
+  agrega con su entrada en `GRANDE` y su bandera en `img/banderas/`, **con la frase revisada por quien lo domine**. Lo prueba
+  `verificar-centroamericano-mesas-pagina.js` (banderas, los tres idiomas, volver a español, el foco y el reinicio).
+
 ## «Llegó tarde»: la llegada de quien se tarda queda en la bitácora y cuenta en el reloj que se apaga (Centroamericano)
 
 Pedido (3/11, ronda 4): cuando un jugador llega con el tiempo de espera corriendo y el árbitro marca «Llegó», que quede la hora

@@ -788,6 +788,32 @@ const CONTRASTE = `(sel) => {
     igual("«Mostrar al atleta»: pantalla completa con la categoría, la MESA gigante, el nombre, el color y el rival, en el color de su categoría",
         await p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); const r = g.getBoundingClientRect(); return [g.matches(":modal"), g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa").textContent, parseFloat(getComputedStyle(g.querySelector(".cam-dj-gmesa")).fontSize) >= 100, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent.replace(/ · 9:00.*/, ""), getComputedStyle(g).backgroundColor, r.width === innerWidth && r.height === innerHeight, document.activeElement.textContent]; }),
         [true, "Sub-12 Absoluto", "15", true, "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3", "rgb(143, 82, 0)", true, "Listo"]);
+    // Las banderas de idioma de la pantalla completa: tocar una traduce todo ahí mismo, y empieza siempre en español.
+    const leerGrande = () => p.evaluate(() => { const g = document.getElementById("donde-juega-grande"); return [g.getAttribute("lang") || g.querySelector(".cam-dj-gcat").lang, g.querySelector(".cam-dj-gcat").textContent, g.querySelector(".cam-dj-gmesa-t").textContent, g.querySelector(".cam-dj-gmesa").textContent, [...g.querySelector(".cam-dj-ginfo").childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(""), g.querySelector(".cam-dj-ginfo small").textContent, g.querySelector(".cam-dj-listo").textContent, g.getAttribute("aria-label")]; });
+    igual("la pantalla completa ofrece tres banderas con su nombre escrito (Español, English, Français), empieza en español y la bandera activa lo dice con aria-pressed",
+        await p.evaluate(() => [...document.querySelectorAll("#donde-juega-grande .cam-dj-idioma")].map((b) => [b.dataset.idioma, b.textContent, b.getAttribute("aria-pressed"), b.querySelector("img").getAttribute("src").replace(/^.*\//, ""), b.getBoundingClientRect().height >= 44])),
+        [["es", "Español", "true", "es.svg", true], ["en", "English", "false", "gb-eng.svg", true], ["fr", "Français", "false", "fr.svg", true]]);
+    await p.click('#donde-juega-grande [data-idioma="en"]');
+    igual("tocar English traduce todo: categoría, BOARD, color, «Against», «Round» y la hora en 12 h, «Done»; el nombre, la mesa y la bandera del país no cambian",
+        (await leerGrande()).slice(1).map((x, i) => (i === 4 ? x.replace(/ · \d+:\d\d [AP]M$/, " · <hora>") : x)),
+        ["U12 Open", "BOARD", "15", "Mora Ugalde, Camila · Black", "Against Solano Brenes, Diego · Round 3 · <hora>", "Done", "Board of Mora Ugalde, Camila"]);
+    igual("el idioma queda marcado en la pantalla y en cada texto (lang), para que el lector de pantalla lo pronuncie bien, y English es el único presionado",
+        await p.evaluate(() => [document.querySelector("#donde-juega-grande .cam-dj-gcat").lang, document.querySelector("#donde-juega-grande .cam-dj-listo").lang, [...document.querySelectorAll("#donde-juega-grande .cam-dj-idioma")].map((b) => b.getAttribute("aria-pressed")).join(",")]), ["en", "en", "false,true,false"]);
+    await p.click('#donde-juega-grande [data-idioma="fr"]');
+    igual("tocar Français lo pasa todo al francés: TABLE, «Noirs», «Contre», «Ronde», la hora en 24 h con «h» y «Terminé»",
+        (await leerGrande()).slice(1).map((x, i) => (i === 4 ? x.replace(/ · \d+ h \d\d$/, " · <hora>") : x)),
+        ["U12 Open", "TABLE", "15", "Mora Ugalde, Camila · Noirs", "Contre Solano Brenes, Diego · Ronde 3 · <hora>", "Terminé", "Table de Mora Ugalde, Camila"]);
+    await p.click('#donde-juega-grande [data-idioma="es"]');
+    igual("y volver a Español devuelve la pantalla como estaba (la hora, tal cual la da la página)",
+        (await leerGrande()).slice(1), ["Sub-12 Absoluto", "MESA", "15", "Mora Ugalde, Camila · Negras", "Contra Solano Brenes, Diego · Ronda 3 · 9:00 a. m.", "Listo", "Mesa de Mora Ugalde, Camila"]);
+    igual("tocar una bandera no saca el foco de la pantalla (sigue dentro del diálogo, en la bandera tocada)", await p.evaluate(() => document.activeElement && document.activeElement.dataset.idioma), "es");
+    await p.click('#donde-juega-grande [data-idioma="en"]');
+    await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
+    await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
+    await p.fill("#dj-buscar", "camila");
+    await p.click('#dj-res .cam-dj-tarj[data-mesa="15"]');
+    await p.waitForSelector("#donde-juega-grande[open]");
+    igual("para el siguiente atleta la pantalla vuelve a empezar en español (nunca queda el idioma del anterior)", (await leerGrande())[2], "MESA");
     await p.click('#donde-juega-grande [data-accion="cerrar-grande"]');
     await p.waitForFunction(() => !document.getElementById("donde-juega-grande"));
     await p.click('#donde-juega-hoja [data-accion="cerrar-dj"]');

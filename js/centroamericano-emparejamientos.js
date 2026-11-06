@@ -101,6 +101,24 @@
         return n;
     }
 
+    /* La pantalla completa del atleta en tres idiomas: textos FIJOS (no se traducen al vuelo), con los mismos términos de js/centroamericano-frases.js.
+       Los nombres, la federación, la mesa y la ronda no cambian; cambian las palabras, la categoría («Sub-8 Absoluto» → «U8 Open») y la hora
+       («9:00 a. m.» → «9:00 AM» / «9 h 00»). `iso` es el dibujo de la bandera en img/banderas/. Si una frase se cambia, que la revise quien domine el idioma. */
+    const horaDe12 = (h) => /^(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?$/i.exec(String(h || "").trim());
+    function hora24(h) { const m = horaDe12(h); if (!m) return null; return { h: (Number(m[1]) % 12) + (m[3].toLowerCase() === "p" ? 12 : 0), min: m[2] }; }
+    const GRANDE = {
+        es: { nombre: "Español", iso: "es", etiqueta: "Mesa de ", mesa: "MESA", contra: "Contra", ronda: "Ronda", listo: "Listo",
+            color: (c) => c, categoria: (c) => c, hora: (h) => h },
+        en: { nombre: "English", iso: "gb-eng", etiqueta: "Board of ", mesa: "BOARD", contra: "Against", ronda: "Round", listo: "Done",
+            color: (c) => (c === "Blancas" ? "White" : c === "Negras" ? "Black" : c),
+            categoria: (c) => String(c).replace(/\bSub-(\d+)/, "U$1").replace(/\bAbsoluto\b/, "Open").replace(/\bFemenino\b/, "Girls"),
+            hora: (h) => { const x = hora24(h); return x ? (((x.h + 11) % 12) + 1) + ":" + x.min + (x.h >= 12 ? " PM" : " AM") : h; } },
+        fr: { nombre: "Français", iso: "fr", etiqueta: "Table de ", mesa: "TABLE", contra: "Contre", ronda: "Ronde", listo: "Terminé",
+            color: (c) => (c === "Blancas" ? "Blancs" : c === "Negras" ? "Noirs" : c),
+            categoria: (c) => String(c).replace(/\bSub-(\d+)/, "U$1").replace(/\bAbsoluto\b/, "Open").replace(/\bFemenino\b/, "Filles"),
+            hora: (h) => { const x = hora24(h); return x ? x.h + " h " + x.min : h; } },
+    };
+
     const MAX_TARJETAS = 40;
     const REFRESCO_MS = 30000;
     const CLAVE_ULTIMA = "cam-ultima-busqueda";
@@ -217,19 +235,39 @@
             pintarEstado(r.length + (r.length === 1 ? " resultado" : " resultados") + (r.length > MAX_TARJETAS ? " (se muestran " + MAX_TARJETAS + ": escribe más letras)" : ""));
         }
 
-        // La pantalla completa para el atleta: la mesa gigante en el color de su categoría.
+        // La pantalla completa para el atleta: la mesa gigante en el color de su categoría. Arriba, una bandera por idioma: tocarla
+        // traduce toda la pantalla ahí mismo (empieza siempre en español, que es como la lee el árbitro).
         function mostrar(f) {
             guardarUltima(campo.value.trim());
             const hora = horaDe(f.ronda);
-            const g = el("dialog", { id: "donde-juega-grande", class: "cam-dj-grande", "aria-label": "Mesa de " + f.nombre });
+            let idioma = "es";
+            const g = el("dialog", { id: "donde-juega-grande", class: "cam-dj-grande" });
             g.style.setProperty("--c", colorDe(f.categoria));
-            const listo = el("button", { type: "button", class: "cam-dj-listo", "data-accion": "cerrar-grande" }, "Listo");
-            g.append(
-                el("span", { class: "cam-dj-gcat", texto: f.cat }),
-                el("span", { class: "cam-dj-gmesa-t", texto: "MESA" }),
-                el("span", { class: "cam-dj-gmesa", texto: String(f.mesa) }),
-                el("span", { class: "cam-dj-ginfo" }, f.nombre, bandera(f.fed), " · " + f.color, el("small", { texto: "Contra " + f.rival + " · Ronda " + f.ronda + (hora ? " · " + hora : "") })),
-                listo);
+            const cat = el("span", { class: "cam-dj-gcat" });
+            const mesaT = el("span", { class: "cam-dj-gmesa-t" });
+            const mesa = el("span", { class: "cam-dj-gmesa", texto: String(f.mesa) });
+            const info = el("span", { class: "cam-dj-ginfo" });
+            const listo = el("button", { type: "button", class: "cam-dj-listo", "data-accion": "cerrar-grande" });
+            const banderas = el("div", { class: "cam-dj-idiomas", role: "group", "aria-label": "Idioma · Language · Langue" },
+                ...Object.keys(GRANDE).map((id) => {
+                    const t = GRANDE[id];
+                    const img = global.GafetesBanderas ? el("img", { src: global.GafetesBanderas.ruta(t.iso), alt: "", width: 28, height: 21, decoding: "async" }) : null;
+                    return el("button", { type: "button", class: "cam-dj-idioma", lang: id, "data-idioma": id, onclick: () => pintarGrande(id) }, img, el("span", { texto: t.nombre }));
+                }));
+            g.append(banderas, cat, mesaT, mesa, info, listo);
+
+            function pintarGrande(id) {
+                idioma = id;
+                const t = GRANDE[id];
+                g.setAttribute("aria-label", t.etiqueta + f.nombre);
+                for (const b of banderas.children) b.setAttribute("aria-pressed", String(b.dataset.idioma === id));
+                for (const n of [cat, mesaT, mesa, info, listo]) n.setAttribute("lang", id);
+                cat.textContent = t.categoria(f.cat);
+                mesaT.textContent = t.mesa;
+                info.replaceChildren(...[f.nombre, bandera(f.fed), " · " + t.color(f.color), el("small", { texto: t.contra + " " + f.rival + " · " + t.ronda + " " + f.ronda + (hora ? " · " + t.hora(hora) : "") })].filter(Boolean));
+                listo.textContent = t.listo;
+            }
+            pintarGrande(idioma);
             listo.addEventListener("click", () => g.close());
             g.addEventListener("close", () => g.remove());
             document.body.append(g);

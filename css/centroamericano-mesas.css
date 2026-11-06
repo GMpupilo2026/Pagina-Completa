@@ -1223,4 +1223,10 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-desplegable-opcion:focus-visible { outline: 3px solid var(--cac-morado); outline-offset: -2px; }
 .dark .cam-desplegable-opcion:focus-visible { outline-color: #dfe0fb; }
 .cam-desplegable-marca { display: inline-block; width: 1.1rem; text-align: center; flex: none; }
+.cam-dj-idiomas { position: absolute; top: 1rem; left: 0; right: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.6rem; padding: 0 1rem; }
+.cam-dj-idioma { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0.4rem 1rem; border: 3px solid #fff; border-radius: 9999px; background: transparent; color: #fff; font-size: 1.15rem; font-weight: 800; cursor: pointer; }
+.cam-dj-idioma img { width: 28px; height: 21px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.cam-dj-idioma[aria-pressed="true"] { background: #fff; color: var(--c); }
+.cam-dj-idioma:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
 /*! rev bfb5bbb0d2d82f9f */
