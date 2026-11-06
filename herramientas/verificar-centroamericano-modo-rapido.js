@@ -70,10 +70,10 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
 
     console.log("\n=== El clásico no cambia ===");
     let r = await abrir(browser, doble("Sub-10 Femenino"));
-    igual("sin modo rápido: desplegable con «Guardar», control de tiempos e iconos de cada mesa", await r.p.evaluate(() => [
-        document.querySelectorAll(".cam-rapido-btn").length, !!document.querySelector('.cam-mesa[data-mesa="1"] select'), document.getElementById("abrir-tiempos").checkVisibility(),
+    igual("sin modo rápido: desplegable con «Guardar», sin botón de control de tiempos arriba (cada mesa trae el suyo) e iconos de cada mesa", await r.p.evaluate(() => [
+        document.querySelectorAll(".cam-rapido-btn").length, !!document.querySelector('.cam-mesa[data-mesa="1"] select'), !!document.getElementById("abrir-tiempos"),
         document.getElementById("modo-rapido").checkVisibility(), !!document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="tiempo"]'), !!document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="planilla"]'), document.getElementById("titulo-torneo").textContent]),
-        [0, true, true, false, true, true, "Sub-10 Femenino"]);
+        [0, true, false, false, true, true, "Sub-10 Femenino"]);
     igual("la revisión previa sigue en dos pasos, con el ritmo de las bases", await r.p.evaluate(() => document.querySelector("#lista-previa h2").textContent.includes("paso 1 de 2") && document.getElementById("lista-previa").textContent.includes("90 minutos")), true);
     igual("sin errores en la página", r.errores, []);
     await r.ctx.close();
@@ -83,7 +83,7 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
     const p = r.p;
     igual("la cabecera y el aviso dicen Blitz; sin control de tiempos ni iconos de cámara y reloj", await p.evaluate(() => [
         document.getElementById("titulo-torneo").textContent, document.getElementById("modo-rapido").checkVisibility(), document.getElementById("modo-rapido-ritmo").textContent,
-        document.getElementById("abrir-tiempos").checkVisibility(), document.querySelectorAll('[data-accion="tiempo"], [data-accion="planilla"]').length, document.getElementById("regla-minutos").textContent]),
+        !!document.getElementById("abrir-tiempos"), document.querySelectorAll('[data-accion="tiempo"], [data-accion="planilla"]').length, document.getElementById("regla-minutos").textContent]),
         ["Sub-10 Femenino · Blitz", true, "Blitz", false, 0, "1 minuto"]);
     igual("en el Blitz no se ofrece elegir la vista (siempre va la corta): el botón «Vista» no sale", await p.evaluate(() => [document.getElementById("vista-mesas").checkVisibility(), document.getElementById("vista-mesas").dataset.vista]), [false, "tres"]);
     igual("tres botones por mesa (1-0, ½-½, 0-1), apagados hasta la revisión previa; el guardado se ve marcado", [await rapidos(p, 1), await rapidos(p, 3)],

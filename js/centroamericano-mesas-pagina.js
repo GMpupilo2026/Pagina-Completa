@@ -903,7 +903,7 @@
         const e = C.estadoAsignacion(a, new Date());
         if (e === "apagado") return "Apagado";
         if (e === "vencido") return "Venció";
-        if (a.concluyo_en) return "Concluyó sus labores el " + window.HoraCR.fechaHora(a.concluyo_en);
+        if (a.concluyo_en) return "Concluyó sus labores el " + window.HoraCR.fechaHora(a.concluyo_en) + (a.concluyo_ronda != null ? " (ronda " + a.concluyo_ronda + "; se reabren solas al empezar la siguiente)" : " (solo se reabren a mano)");
         return "Activo hasta el " + window.HoraCR.fechaHora(a.vence);
     }
 
