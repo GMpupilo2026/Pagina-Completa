@@ -9648,6 +9648,26 @@ Probado en el Postgres de ensayo, en una transacción que se deshizo: la mesa el
 el borrado (vuelve a esperar), la mesa repetida, quien no aplica, sin motivo, sin árbitro, sin permiso, y en tablas el de
 negras fijo. Lo comprueba `verificar-centroamericano-fair-play.js`.
 
+#### Borrar una mesa que no correspondía
+
+Lo pidió el dueño el 6 de noviembre (`20261106120000`, pegada a mano en el editor SQL; función `centroamericano-fair-play`
+en su versión 16): las mesas que se sortearon de prueba o se pusieron por error quedaban para siempre en la lista y en el
+informe, y una «revisada» de prueba seguía contando para el descanso de quien no se había revisado de verdad.
+
+- **«🗑 Borrar»** en cada mesa de la lista, en cualquier estado: pide el motivo y avisa lo que pasa — sale de la lista y
+  del registro, deja de contar para el descanso de 2 rondas y el tope de 3, y la mesa puede volver a salir o elegirse.
+  No reemplaza a «Descartar» (que deja la mesa en el acta) ni a «Corregir la revisión»: es para lo de prueba o lo
+  equivocado.
+- `centroamericano_fair_play_borrar()` exige el motivo, copia la fila entera con quién y cuándo en
+  `centroamericano_fp_borrados` (con RLS y sin permisos: nadie la lee ni la escribe desde afuera) y la borra. Si la mesa
+  estaba aprobada, su árbitro recibe el aviso «SE CANCELA. Ya no hay que retener a nadie», y el borde dorado se va solo
+  porque la tablet ya no la recibe.
+- Las 5 mesas de prueba de la ronda 6 (Sub-10 y Sub-18 Absoluto) se borraron con la migración, copiadas igual.
+
+Probado en el Postgres de ensayo: sin motivo se rechaza, la aprobada manda el aviso de cancelación y queda copiada, la
+mesa se vuelve a elegir, borrar dos veces y sin permiso se rechazan. Lo comprueba `verificar-centroamericano-fair-play.js`
+(roto a propósito, sin el botón, salta).
+
 #### Retenido, el acumulado y el informe final
 
 Lo pidió el dueño el 4 de noviembre, en plena ronda 4 (`20261104065440`, aplicada con la función en su versión 6):

@@ -387,12 +387,12 @@
                     : f.estado === "aprobada" ? (leido ? "✓ " + (f.arbitro || "Su árbitro") + " lo leyó a las " + hora(leido) : "⏳ " + (f.arbitro || "Su árbitro") + " todavía no lo ha leído")
                         + (f.revisar_color && f.resultado_mesa ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
                         : f.estado === "sin_efecto" ? "Su árbitro ya recibió el aviso" : "";
-            const acciones = f.estado === "sorteada"
+            const acciones = (f.estado === "sorteada"
                 ? [el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "aprobar", onclick: () => aprobar(f) }, "Aprobar y avisar a su árbitro"),
                     el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "descartar", onclick: () => descartar(f) }, "Descartar")]
                 : f.estado === "aprobada" || f.estado === "revisada"
                     ? [el("button", { type: "button", class: "cam-btn cam-btn-chico" + (f.estado === "revisada" ? " cam-btn-claro" : ""), "data-accion": "revisar", onclick: () => revisar(f) }, f.estado === "revisada" ? "Corregir la revisión" : "Anotar la revisión")]
-                    : [];
+                    : []).concat(el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "borrar", "aria-label": "Borrar la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ", ronda " + f.ronda, onclick: () => borrar(f) }, el("span", { "aria-hidden": "true", texto: "🗑 " }), "Borrar"));
             return el("tr", { "data-id": f.id, "data-estado": f.estado },
                 el("td", { texto: nombreDe(f.tnr) }),
                 el("td", { texto: String(f.ronda) }),
@@ -515,6 +515,18 @@
                 ? "Listo: mesa " + b.mesa + " elegida. Su árbitro (" + (sorteo.arbitro || "el de esa mesa") + ") ya tiene el aviso de retener a " + nombre + "."
                 : "Mesa " + b.mesa + " elegida (se revisa a " + nombre + "). Apruébala en la lista para avisarle a su árbitro.");
         } catch (e) { avisar("No se pudo elegir la mesa: " + (e.message || e), true); }
+        await cargar();
+    }
+
+    // Borrar: para una mesa de prueba o puesta por error. No es «Descartar» (que queda en el acta): la saca de la lista,
+    // deja de contar para el descanso y el tope, y puede volver a salir. Lo borrado queda copiado en la base con el motivo.
+    async function borrar(f) {
+        const motivo = await Avisos.pedir("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " (ronda " + f.ronda + ") sale de la lista y del registro: deja de contar para el descanso de 2 rondas y el tope de 3 revisiones, y puede volver a salir. Es para las de prueba o las que se pusieron por error; si la revisión fue de verdad, mejor corrígela." + (f.estado === "aprobada" ? " Su árbitro recibe un aviso de que ya no hay que retener a nadie." : "") + " ¿Por qué se borra? (queda anotado)",
+            { titulo: "Borrar la mesa " + f.mesa, etiqueta: "Motivo", aceptar: "🗑 Borrar la mesa" });
+        if (motivo === null) return;
+        if (!String(motivo).trim()) { avisar("Para borrar una mesa hace falta el motivo.", true); return; }
+        try { await llamar("borrar", { id: f.id, motivo: String(motivo).trim() }); avisar("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " ya no está en la lista."); }
+        catch (e) { avisar("No se pudo borrar: " + (e.message || e), true); }
         await cargar();
     }
 
