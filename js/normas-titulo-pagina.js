@@ -171,6 +171,15 @@
         if (!session) { location.href = "login.html?next=normas-titulo.html"; return; }
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "normas-titulo" });
         if (error || puede !== true) { $("denegado").classList.remove("hidden"); return; }
+        // El motor (js/normas-titulo.js) lo entrega el worker solo con la
+        // licencia; si la cookie había vencido, se renueva y se recarga una vez
+        // (ver SesionCursos.recuperarCodigo en js/supabase-client.js).
+        const codigo = window.SesionCursos && window.SesionCursos.recuperarCodigo ? window.SesionCursos.recuperarCodigo(session) : "";
+        if (codigo === "recarga") return;
+        if (codigo === "falta" || !window.NormasTitulo) {
+            if (window.Avisos) window.Avisos.avisar("Tu licencia está bien, pero la herramienta no terminó de cargar. Vuelve a cargar la página; si sigue igual, cierra sesión y vuelve a entrar.", { tipo: "error", duracion: 0 });
+            return;
+        }
         $("b-calcular").addEventListener("click", cargarYCalcular);
         $("c-todos").addEventListener("change", calcular);
         $("c-exento").addEventListener("change", calcular);

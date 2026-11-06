@@ -59,6 +59,35 @@ const SUPABASE_ANON_KEY =
 const COOKIE = "ai_sesion_cursos";
 const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
 
+// ---- El código de las herramientas con licencia que no tienen nada público ----
+//
+// Lo que corre en el navegador, quien lo recibe lo lee: el candado de
+// js/candado-herramienta.js tapa la pantalla, pero el código de la herramienta
+// lo bajaba cualquiera (ver «El código de las herramientas con licencia, solo
+// con la licencia» en docs/decisiones/juegos-y-torneos.md). Estos archivos los
+// entrega el worker solo a quien tiene la licencia: tengo_herramienta(), la
+// misma pregunta del candado. Son los de las herramientas SIN nada público;
+// Pareo Integral y Notara usan el mismo código para lo que ve el público (el
+// enlace de solo lectura, el QR de una mesa) y quedan abiertos.
+//
+// A quien no la tiene no le contesta un 401 sino un aviso en JavaScript (200,
+// sin caché): un <script> con error no corre y la página no se enteraría. El
+// aviso anota el archivo en window.__codigoNegado, y la página, cuando confirma
+// la licencia, renueva la cookie y recarga una vez (SesionCursos.recuperarCodigo
+// en js/supabase-client.js): pasa cuando la cookie venció, porque el navegador
+// pide los <script> antes de que supabase-js renueve el token.
+//
+// Esta lista va también, igual, en run_worker_first (wrangler.jsonc) y en NUNCA
+// de sw.js (que no se guarde en el teléfono el aviso ni el código):
+// verificar-worker.js comprueba que no se separen.
+const CODIGO_CON_LICENCIA = {
+  "/js/bases-torneo.js": "bases-torneo",
+  "/js/bases-torneo-pagina.js": "bases-torneo",
+  "/js/inscripcion-jde.js": "inscripcion-jde",
+  "/js/inscripcion-jde-reglas.js": "inscripcion-jde",
+  "/js/normas-titulo.js": "normas-titulo",
+};
+
 // Los cursos escondidos a alumnos y profesores (ver «Los cursos escondidos» en
 // docs/decisiones/cursos-y-material.md). Es la misma lista de
 // js/cursos-ocultos.js, que decide qué se pinta; verificar-worker.js comprueba
@@ -148,6 +177,10 @@ export default {
     const incrustar = url.pathname.match(INCRUSTAR);
     if (incrustar) return incrustarTorneo(incrustar[1].toLowerCase(), url.searchParams.get("tema") === "oscuro");
 
+    // ---- El código de las herramientas con licencia ----
+    const herramienta = Object.prototype.hasOwnProperty.call(CODIGO_CON_LICENCIA, url.pathname) ? CODIGO_CON_LICENCIA[url.pathname] : "";
+    if (herramienta) return codigoConLicencia(request, env, url.pathname, herramienta);
+
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
     // ---- El contenido de los cursos ----
@@ -163,6 +196,29 @@ export default {
     return copia;
   },
 };
+
+async function codigoConLicencia(request, env, ruta, herramienta) {
+  const veredicto = await preguntar(leerCookie(request, COOKIE), Date.now(), { herramienta });
+  if (veredicto === "pasa") {
+    const res = await env.ASSETS.fetch(request);
+    const copia = new Response(res.body, res);
+    copia.headers.set("Cache-Control", "private, no-cache");
+    copia.headers.append("Vary", "Cookie");
+    return copia;
+  }
+  const aviso = "/* " + (veredicto === "sin_acceso" ? "Hace falta la licencia" : "Hace falta iniciar sesión") +
+    " para usar esta herramienta. */\nwindow.__codigoNegado = (window.__codigoNegado || []).concat(" + JSON.stringify(ruta) + ");\n";
+  return new Response(aviso, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Cache-Control": "no-store",
+      Vary: "Cookie",
+      "X-Content-Type-Options": "nosniff",
+      "X-Codigo-Con-Licencia": veredicto,
+    },
+  });
+}
 
 function leerCookie(request, nombre) {
   const todas = request.headers.get("Cookie") || "";
@@ -201,21 +257,22 @@ async function preguntar(token, ahora = Date.now(), que = null) {
   const esDeEsteProyecto = c.iss === SUPABASE_URL + "/auth/v1";
 
   // material/ sin carpeta de producto no es nada que se venda: no se sirve.
-  if (que && !que.producto) return "sin_acceso";
-  const clave = que ? token + "|" + que.producto : token;
+  if (que && !que.producto && !que.herramienta) return "sin_acceso";
+  const clave = que ? token + "|" + (que.herramienta ? "herramienta:" + que.herramienta : que.producto) : token;
   const visto = yaVisto.get(clave);
   if (visto && visto > ahora) return "pasa";
 
   let res;
   try {
-    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + (que ? "puede_bajar" : "acceso_vigente"), {
+    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + (que && que.herramienta ? "tengo_herramienta" : que ? "puede_bajar" : "acceso_vigente"), {
       method: "POST",
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: "Bearer " + token,
         "Content-Type": "application/json",
       },
-      body: que ? JSON.stringify({ p_producto: que.producto, p_basta_acceso: que.bastaAcceso }) : "{}",
+      body: que && que.herramienta ? JSON.stringify({ p_herramienta: que.herramienta })
+        : que ? JSON.stringify({ p_producto: que.producto, p_basta_acceso: que.bastaAcceso }) : "{}",
       signal: AbortSignal.timeout(4000),
     });
   } catch (e) {

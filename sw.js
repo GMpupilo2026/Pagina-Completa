@@ -20,7 +20,7 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-10-2";
+const VERSION = "ai-2026-11-1";
 const CACHE = "ajedrez-integral-" + VERSION;
 /* La de «Ejercicios sin internet» (entreno/sin-internet.html): la llena esa
    página, con ella misma y sus scripts, cuando el alumno guarda una tanda. No
@@ -48,6 +48,10 @@ const NUNCA = [
   // candado es por compra y lo pone el worker; una copia guardada acá se
   // seguiría abriendo después de quitar la compra.
   /^\/material\//,
+  // El código de las herramientas con licencia (CODIGO_CON_LICENCIA en
+  // worker.js): a quien no la tiene el worker le manda un aviso en su lugar, y
+  // ni el aviso ni el código se guardan en el teléfono.
+  /^\/js\/(bases-torneo|bases-torneo-pagina|inscripcion-jde|inscripcion-jde-reglas|normas-titulo)\.js$/,
   /^\/api\//,
   /^\/\.well-known\//,
   // El libro de aperturas (2,9 MB) y la procedencia de cada jugada (4,2 MB).

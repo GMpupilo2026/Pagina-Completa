@@ -49,8 +49,10 @@ window.SesionCursos = (function () {
   // un solo Path el navegador no la manda a la otra. Con solo /cursos/, todo lo
   // de /material/ (los libros y las fichas que se compran o se canjean por
   // puntos) contestaba «Hace falta iniciar sesión» a quien lo tenía pagado.
-  // verificar-worker.js comprueba que las dos listas no se separen.
-  var RUTAS = ["/cursos/", "/material/"];
+  // verificar-worker.js comprueba que las dos listas no se separen. /js/ es
+  // por el código de las herramientas con licencia (CODIGO_CON_LICENCIA en
+  // worker.js): solo lo baja quien tiene la licencia.
+  var RUTAS = ["/cursos/", "/material/", "/js/"];
   var seguro = location.protocol === "https:" ? "; Secure" : "";
   function borrar() {
     try {
@@ -70,7 +72,29 @@ window.SesionCursos = (function () {
       });
     } catch (e) { }
   }
-  return { guardar: guardar, borrar: borrar };
+  /* El código de una herramienta con licencia que el worker no entregó
+     (CODIGO_CON_LICENCIA en worker.js): en su lugar manda un aviso que anota
+     el archivo en window.__codigoNegado. Pasa cuando la cookie no llegó o
+     venció —la sesión dura una hora y la cookie se escribe al cargar—: el
+     navegador pide los <script> de la página antes de que supabase-js
+     renueve el token. Quien ya confirmó la licencia llama a esto con la
+     sesión renovada: escribe la cookie y recarga UNA vez. Devuelve "recarga"
+     (ya está recargando), "falta" (recargó hace poco y el código sigue sin
+     llegar: que la página lo diga) o "" (no faltaba nada). */
+  function recuperarCodigo(session) {
+    guardar(session);
+    var negado = window.__codigoNegado || [];
+    if (!negado.length) return "";
+    var clave = "codigo_con_licencia_recarga:" + location.pathname;
+    try {
+      var antes = Number(sessionStorage.getItem(clave) || 0);
+      if (Date.now() - antes < 60000) return "falta";
+      sessionStorage.setItem(clave, String(Date.now()));
+    } catch (e) { return "falta"; }
+    location.reload();
+    return "recarga";
+  }
+  return { guardar: guardar, borrar: borrar, recuperarCodigo: recuperarCodigo };
 })();
 
 // El perfil propio, UNA lectura por página. En la hora pico del 29 de
