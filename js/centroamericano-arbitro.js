@@ -303,14 +303,11 @@
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ ilegales: k.ilegales }) }), icono("ilegal"), el("span", { class: "sr-only", texto: "Ilegal" }), k.ilegales > 1 ? el("span", { texto: " ×" + k.ilegales }) : null));
         if (k.irregularidades) marcas.append(el("span", { class: "cam-marca", "data-tipo": "irregularidad", title: "Irregularidad" + (k.irregularidades > 1 ? " ×" + k.irregularidades : "") },
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ irregularidades: k.irregularidades }) }), icono("irregularidad"), el("span", { class: "sr-only", texto: "Irregularidad" }), k.irregularidades > 1 ? el("span", { texto: " ×" + k.irregularidades }) : null));
-        // Las veces que se levantó de la mesa (cada toque queda en la bitácora con la hora): «×3».
-        if (k.levantadas) marcas.append(el("span", { class: "cam-marca", "data-tipo": "levanto", title: "Se levantó de la mesa " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") },
-            icono("levantado"), el("span", { class: "sr-only", texto: "Se levantó " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") }), k.levantadas > 1 ? el("span", { "aria-hidden": "true", texto: " ×" + k.levantadas }) : null));
         // En el Blitz solo importan los resultados y la ilegal: ni «Se levantó» ni «Irregularidad» (el árbitro no tiene tiempo para eso).
         const blitz = rapido() === "blitz";
         const botonIlegal = botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada });
         const acciones = blitz ? el("div", { class: "cam-acciones" }, botonIlegal) : el("div", { class: "cam-acciones" },
-            botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada }),
+            botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada, insignia: k.levantadas }),
             botonIlegal,
             botonJugador("irregularidad", "irregularidad", "Irregularidad de " + nombre, "Irregularidad", () => irregularidad(m, color), { deshabilitado: ocupada }));
         // «Anular»: solo aparece cuando hay algo que anular.
@@ -503,9 +500,11 @@
 
     // Un botón de icono de una fila de jugador. El texto va solo para lectores de pantalla y como pista (title): lo que se ve es
     // el icono (la leyenda de arriba los explica). 46 px: se toca con el dedo y con prisa.
-    function botonJugador(accion, nombreIcono, etiqueta, texto, fn, { variante = "", pulsado = null, deshabilitado = false } = {}) {
+    // `insignia`: las veces que se ha tocado (un número chiquito arriba del botón; sin nada si es 0). Lo usa «Se levantó»: sin icono extra en la ficha.
+    function botonJugador(accion, nombreIcono, etiqueta, texto, fn, { variante = "", pulsado = null, deshabilitado = false, insignia = 0 } = {}) {
         return el("button", { type: "button", class: "cam-btn-icono cam-btn-icono-chico " + variante, "data-accion": accion, "aria-pressed": pulsado === null ? null : String(pulsado), "aria-label": etiqueta, title: etiqueta, disabled: deshabilitado, onclick: fn },
-            icono(nombreIcono), el("span", { class: "sr-only", texto }));
+            icono(nombreIcono), el("span", { class: "sr-only", texto: texto + (insignia ? ": " + insignia + (insignia === 1 ? " vez" : " veces") : "") }),
+            insignia ? el("span", { class: "cam-insignia", "data-accion-insignia": accion, "aria-hidden": "true", texto: String(insignia) }) : null);
     }
     function bloqueIconos(m, ocupada) {
         const hecha = tienePlanilla(m.mesa), sube = subiendo.has(m.mesa);

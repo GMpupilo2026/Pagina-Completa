@@ -127,16 +127,21 @@
                         <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
                         <div id="vista-menu" class="cam-desplegable-lista" role="menu" aria-label="Cómo ver tus mesas" hidden></div>
                     </span>
-                    <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
                 <p id="espera" class="cam-espera" role="status"></p>
                 <button type="button" id="ir-corregir" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✎</span> Corregir la hora de inicio de la ronda</button>
                 <p id="presencia-resumen" class="cam-espera" role="status"></p>
                 <button type="button" id="presencia-todos" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✓</span> Marcar que llegaron todos</button>
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
-                <!-- «Ya terminé mis labores»: aparte de los demás controles, abajo a la derecha, para no tocarlo por accidente (además pregunta antes). -->
-                <div id="fin-labores" class="cam-fin">
-                    <button type="button" id="concluir" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
+                <!-- El pie de la barra, aparte de los controles de arriba para no tocar nada por accidente: «Ayuda» (para ti) abajo en el centro, chico y con icono y una
+                     palabra; «Ya terminé mis labores» abajo a la derecha (además pregunta antes). -->
+                <div class="cam-pie-barra">
+                    <div class="cam-pie-centro">
+                        <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo cam-btn-chico" aria-label="Necesito ayuda (para mí)" title="Necesito ayuda (para mí)"><span aria-hidden="true">🆘</span> Ayuda</button>
+                    </div>
+                    <div id="fin-labores" class="cam-fin">
+                        <button type="button" id="concluir" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
+                    </div>
                 </div>
             </section>
 

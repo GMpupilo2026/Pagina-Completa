@@ -10853,7 +10853,7 @@ rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mis
 de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
 script con sintaxis nueva hace saltar la primera comprobación.
 
-## La tablet del árbitro: el clásico siempre confirma el resultado, sin botón de tiempos arriba y «Ya terminé» aparte
+## La tablet del árbitro: el clásico siempre confirma el resultado, sin botón de tiempos arriba, el pie de la barra y el contador de «Se levantó»
 
 Pedido (noviembre de 2026, con el torneo en juego):
 
@@ -10868,12 +10868,20 @@ Pedido (noviembre de 2026, con el torneo en juego):
 - **El botón «Control de tiempos» de arriba se quitó.** Cada mesa ya tiene su icono de reloj (`data-accion="tiempo"`); el de arriba solo repetía eso
   para elegir una mesa cualquiera. Lo que NO cambió: el control de tiempos se sigue abriendo solo cuando la organización lo pide (el aviso con
   `control_tiempos`), por `abrirTiempos(true)`.
-- **«Ya terminé mis labores» va aparte**, dentro de la misma barra pero fuera de la fila de los demás controles: al final, a la derecha, a más de
-  24 px del botón más cercano y un poco apagado, para no tocarlo por accidente (además pregunta antes de concluir). Conserva su `id="concluir"`;
-  su contenedor es `#fin-labores` y se esconde junto con él cuando las labores ya se concluyeron.
+- **El pie de la barra: «Ayuda» al centro y «Ya terminé mis labores» a la derecha**, los dos fuera de la fila de los demás controles y a más de
+  24 px de ellos, para no tocar nada por accidente. **«Ayuda» (`#pedir-ayuda`) pasó de ser un botón rojo grande con «Necesito ayuda (para mí)» a uno
+  chico, abajo en el centro, con el icono y UNA palabra («🆘 Ayuda»)**; su nombre accesible y su `title` siguen diciendo «Necesito ayuda (para mí)»
+  (no es lo mismo que «Principal en esta mesa», que va en cada mesa). **«Ya terminé mis labores» (`#concluir`)** va abajo a la derecha, un poco
+  apagado, y además pregunta antes de concluir; su contenedor es `#fin-labores` y se esconde junto con él cuando las labores ya se concluyeron.
+  Los dos viven en `.cam-pie-barra` (una cuadrícula de tres columnas: vacía, centro, derecha).
+- **«Se levantó» ya no pone un icono nuevo en la ficha: el contador va en el propio botón.** Cada toque anota una vez (con su hora, como siempre) y
+  aparece un número chiquito **arriba a la derecha del botón** (`.cam-insignia`: «1», «2», «3»…, solo el número, sin «×»); el lector de pantalla oye
+  «Se levantó: 2 veces» y el nombre accesible sigue diciendo «(van 2)». Las **ilegales** y las **irregularidades se quedan como estaban** (su marca en la
+  franja de la mesa y su «Anular»). «Anular la última vez que se levantó» sigue ahí, junto a los demás «Anular», solo cuando hay algo que anular: sin
+  él un toque de más no se podría deshacer. La actividad de la organización y la bitácora no cambiaron (los toques siguen siendo `articulo: "Levantó"`).
 - **Pruebas:** `verificar-centroamericano-mesas-pagina.js` (un toque elige y no guarda; cambiar de idea; «Guardar» guarda una sola vez con el
   resultado elegido; el botón de arriba ya no está y las tarjetas conservan el suyo; la posición de «Ya terminé») y
-  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando).
+  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando). También prueban el pie de la barra (la ayuda centrada, chica y con su nombre accesible; «Ya terminé» a la derecha) y el contador de «Se levantó» (1, 2, y que desaparece al anular las dos).
 
 ## Mesa del árbitro: los torneos ligados de un grupo
 

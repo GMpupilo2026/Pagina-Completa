@@ -343,26 +343,26 @@ const CONTRASTE = `(sel) => {
         [["Irregularidad", ""], ["Ilegal (anulada)", "si"], ["Ilegal", ""]]);
 
     console.log("\n=== Se levantó de la mesa ===");
-    igual("cada jugador tiene su botón «Se levantó»: icono, nombre accesible y la palabra solo para el lector; sin marca todavía", await p.evaluate(() => { const b = [...document.querySelectorAll('.cam-mesa[data-mesa="2"] [data-accion="levanto"]')]; return [b.length, b.every((x) => x.querySelector("svg") && x.getAttribute("aria-label").startsWith("Anotar que ") && x.title && x.querySelector(".sr-only").textContent === "Se levantó"), document.querySelectorAll('.cam-marca[data-tipo="levanto"]').length]; }), [2, true, 0]);
+    igual("cada jugador tiene su botón «Se levantó»: icono, nombre accesible y la palabra solo para el lector; sin contador todavía", await p.evaluate(() => { const b = [...document.querySelectorAll('.cam-mesa[data-mesa="2"] [data-accion="levanto"]')]; return [b.length, b.every((x) => x.querySelector("svg") && x.getAttribute("aria-label").startsWith("Anotar que ") && x.title && x.querySelector(".sr-only").textContent === "Se levantó"), document.querySelectorAll(".cam-insignia").length]; }), [2, true, 0]);
     await p.click(acc(2, "negras", "levanto"));
-    await p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]');
-    igual("un toque anota SIN preguntar que se levantó (una nota «Levantó», con la hora del servidor), y marca solo a ese jugador", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Levantó").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent.trim(), document.querySelectorAll('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-marca[data-tipo="levanto"]').length, !!document.querySelector("dialog[open]")]),
-        [[[2, "negras", "nota", "Se levantó de la mesa"]], "Se levantó 1 vez", 0, false]);
+    await p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia');
+    igual("un toque anota SIN preguntar que se levantó (una nota «Levantó», con la hora del servidor), y pone un «1» chiquito en el botón de ESE jugador, sin ningún icono nuevo en la ficha", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.articulo === "Levantó").map((l) => [l.body.mesa, l.body.color, l.body.tipo, l.body.texto]), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia').textContent.trim(), document.querySelectorAll('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] [data-accion="levanto"] .cam-insignia').length, !!document.querySelector("dialog[open]"), document.querySelectorAll('.cam-marca[data-tipo="levanto"]').length]),
+        [[[2, "negras", "nota", "Se levantó de la mesa"]], "1", 0, false, 0]);
     await p.click(acc(2, "negras", "levanto"));
-    await p.waitForFunction(() => /×2/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent));
-    igual("cada toque es una vez: la segunda marca «×2» y el botón dice cuántas van", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]').textContent.replace(/\s+/g, " ").trim(), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"]').getAttribute("aria-label")]), ["Se levantó 2 veces ×2", "Anotar que Acuña Porras Fabio se levantó de la mesa (van 2)"]);
+    await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia')?.textContent === "2");
+    igual("cada toque es una vez: el contador del botón pasa a «2» (sin «×», solo el número) y el nombre accesible dice cuántas van", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia').textContent, document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"]').getAttribute("aria-label"), document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .sr-only').textContent, document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia').getAttribute("aria-hidden")]), ["2", "Anotar que Acuña Porras Fabio se levantó de la mesa (van 2)", "Se levantó: 2 veces", "true"]);
     await p.click("#anotado summary");
     igual("queda en la bitácora de la mesa con su hora, dos veces, y dice QUIÉN se levantó (nombre y color) y que fue «Se levantó», no una nota cualquiera", await p.$$eval("#anotado-filas tr", (l) => l.filter((tr) => /se levantó de la mesa/.test(tr.textContent)).map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent])), [["2", "Se levantó", "Acuña Porras Fabio (negras) se levantó de la mesa"], ["2", "Se levantó", "Acuña Porras Fabio (negras) se levantó de la mesa"]]);
     await p.click(acc(2, "negras", "anular-levanto"));
     await p.waitForSelector("dialog[open]");
     igual("se puede anular la última (por un toque de más): pregunta primero", await p.evaluate(() => /la última vez que se levantó/.test(document.querySelector("dialog[open]").textContent)), true);
     await p.click("dialog[open] [data-avisos-aceptar]");
-    await p.waitForFunction(() => !/×2/.test(document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="levanto"]')?.textContent || ""));
+    await p.waitForFunction(() => (document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia')?.textContent || "") !== "2");
     await p.click(acc(2, "negras", "anular-levanto"));
     await p.waitForSelector("dialog[open]");
     await p.click("dialog[open] [data-avisos-aceptar]");
-    await p.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="levanto"]'));
-    igual("anuladas las dos, vuelve a cero y el botón de anular desaparece", await p.evaluate(() => [document.querySelectorAll('.cam-marca[data-tipo="levanto"]').length, document.querySelectorAll('[data-accion="anular-levanto"]').length]), [0, 0]);
+    await p.waitForFunction(() => !document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] [data-accion="levanto"] .cam-insignia'));
+    igual("anuladas las dos, el contador desaparece del botón y el botón de anular también", await p.evaluate(() => [document.querySelectorAll(".cam-insignia").length, document.querySelectorAll('[data-accion="anular-levanto"]').length]), [0, 0]);
 
     console.log("\n=== Ayuda, avisos y nombre ===");
     igual("el progreso dice cuántas mesas tienen resultado y cuántas faltan", await p.textContent("#progreso"), "Con resultado: 2 de 3 · faltan 1");
@@ -598,11 +598,16 @@ const CONTRASTE = `(sel) => {
     await p.waitForSelector("#form-tiempos");
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     igual("ya NO hay botón «Control de tiempos» arriba (cada mesa tiene su reloj): la barra no lo trae y las tarjetas sí", await p.evaluate(() => [!!document.getElementById("abrir-tiempos"), [...document.querySelectorAll("#barra, .cam-barra")].some((n) => /Control de tiempos/.test(n.textContent)), document.querySelectorAll('.cam-mesa [data-accion="tiempo"]').length > 0]), [false, false, true]);
-    igual("«Ya terminé mis labores» va APARTE de los demás controles: dentro de la barra pero fuera de su fila de botones, en el rincón de abajo a la derecha y a 24 px o más del botón más cercano (así no se toca por accidente)", await p.evaluate(() => {
+    igual("«Ya terminé mis labores» va APARTE de los demás controles: en el pie de la barra, fuera de la fila de botones, abajo a la derecha y a 24 px o más de los de arriba (así no se toca por accidente)", await p.evaluate(() => {
         const b = document.getElementById("concluir"), barra = document.querySelector(".cam-barra"), rb = b.getBoundingClientRect(), rbar = barra.getBoundingClientRect();
-        const otros = [...barra.querySelectorAll("button")].filter((x) => x !== b && x.checkVisibility()).map((x) => x.getBoundingClientRect());
-        return [barra.contains(b), b.checkVisibility(), !b.closest(".cam-barra-controles"), rb.top - Math.max(...otros.map((r) => r.bottom)) >= 24, rbar.right - rb.right < 40, rbar.bottom - rb.bottom < 40];
-    }), [true, true, true, true, true, true]);
+        const otros = [...barra.querySelectorAll("button")].filter((x) => x !== b && !x.closest(".cam-pie-barra") && x.checkVisibility()).map((x) => x.getBoundingClientRect());
+        return [barra.contains(b), b.checkVisibility(), !b.closest(".cam-barra-controles"), !!b.closest(".cam-pie-barra"), rb.top - Math.max(...otros.map((r) => r.bottom)) >= 24, rbar.right - rb.right < 40, rbar.bottom - rb.bottom < 40];
+    }), [true, true, true, true, true, true, true]);
+    igual("el botón rojo de ayuda va ABAJO EN EL CENTRO de la barra (centrado, en el pie), chico (40–46 px de alto), con icono y UNA palabra («Ayuda»), y su nombre accesible sigue diciendo «Necesito ayuda (para mí)»", await p.evaluate(() => {
+        const b = document.getElementById("pedir-ayuda"), c = document.getElementById("concluir"), barra = document.querySelector(".cam-barra"), r = b.getBoundingClientRect(), rbar = barra.getBoundingClientRect(), rc = c.getBoundingClientRect();
+        const arriba = [...barra.querySelectorAll("button")].filter((x) => !x.closest(".cam-pie-barra") && x.checkVisibility()).map((x) => x.getBoundingClientRect());
+        return [!!b.closest(".cam-pie-barra"), !b.closest(".cam-barra-controles"), Math.abs((r.left + r.right) / 2 - (rbar.left + rbar.right) / 2) <= 24, r.height >= 40 && r.height <= 46, b.textContent.replace(/\s+/g, " ").trim(), b.getAttribute("aria-label"), r.right <= rc.left, r.top - Math.max(...arriba.map((x) => x.bottom)) >= 24, getComputedStyle(b).backgroundColor !== "rgba(0, 0, 0, 0)"];
+    }), [true, true, true, true, "🆘 Ayuda", "Necesito ayuda (para mí)", true, true, true]);
     await p.evaluate(() => { window.__avisos.mensajes = [{ id: "m-ct", creado: "2026-11-02T15:58:00Z", texto: "Control de tiempos: anota la jugada y los relojes de las mesas que no han terminado.", control_tiempos: true }]; });
     // La tablet también consulta sola los avisos cada pocos segundos: si llegó antes, el aviso y la ventana tapan el botón.
     await p.evaluate(() => document.getElementById("actualizar").click());
@@ -625,7 +630,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     await p.setViewportSize({ width: 390, height: 800 });
     igual("NADA suena (no se usa el audio) pero la tablet VIBRA cada vez que llega un aviso de la organización (llegaron dos)", await p.evaluate(() => [window.__audio, window.__vib]), [0, 2]);
-    igual("la ayuda tiene dos modos: «Principal en esta mesa» (va directo a la mesa) y «Necesito ayuda (para mí)»", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="ayuda"]').textContent.includes("Principal en esta mesa"), document.getElementById("pedir-ayuda").textContent.includes("Necesito ayuda (para mí)")]), [true, true]);
+    igual("la ayuda tiene dos modos: «Principal en esta mesa» (va directo a la mesa) y «Necesito ayuda (para mí)»", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="ayuda"]').textContent.includes("Principal en esta mesa"), document.getElementById("pedir-ayuda").getAttribute("aria-label").includes("Necesito ayuda (para mí)")]), [true, true]);
 
     console.log("\n=== Un árbitro con mesas de varios torneos ===");
     let v = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro().replace("window.__hermanas = [];", "window.__hermanas = [{ token: " + JSON.stringify(TOKEN_B) + ", tnr: \"1529719\", torneo: \"Sub-8 Absoluto\", arbitro: \"Ana Árbitra\", mesa_desde: 3, mesa_hasta: 8 }];"), { hash: TOKEN });

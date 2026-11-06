@@ -166,7 +166,6 @@ body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
 }
 .cam-marca[data-tipo="ilegal"] { background: var(--cac-rojo); }
 .cam-marca[data-tipo="irregularidad"] { background: var(--cac-morado); }
-.cam-marca[data-tipo="levanto"] { background: #1f774c; }
 
 /* Los botones, grandes: se tocan con el dedo y a veces con prisa. */
 .cam-btn {
@@ -1233,9 +1232,15 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-dj-bandera:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
 /* «Ya terminé mis labores»: aparte de los demás controles, en el rincón de abajo a la derecha de la barra (lejos de lo que se toca a cada rato). */
-.cam-fin { display: flex; justify-content: flex-end; margin-top: 1.75rem; padding-top: 0.25rem; }
+.cam-pie-barra { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.5rem; margin-top: 1.75rem; padding-top: 0.25rem; }
+.cam-pie-centro { grid-column: 2; display: flex; justify-content: center; }
+.cam-fin { grid-column: 3; display: flex; justify-content: flex-end; }
 .cam-fin[hidden] { display: none; }
-.cam-fin .cam-btn { opacity: 0.85; }
+.cam-pie-barra .cam-btn { opacity: 0.9; }
+.cam-pie-centro .cam-btn { min-height: 40px; padding-inline: 0.9rem; }
+/* El contador de «Se levantó» (1, 2, 3…): un numerito chico arriba a la derecha del propio botón, en lugar de un icono más en la ficha. */
+.cam-insignia { position: absolute; top: -0.45rem; right: -0.45rem; min-width: 1.3rem; height: 1.3rem; padding: 0 0.3rem; border-radius: 9999px; background: #1f774c; color: #fff; border: 2px solid #fff; font-size: 0.78rem; font-weight: 800; line-height: 1; display: inline-grid; place-items: center; pointer-events: none; }
+.dark .cam-insignia { background: #9be0bb; color: #0a1f33; border-color: #0a1f33; }
 /* Clásico, ficha corta: el «Guardar» que confirma el resultado elegido va justo debajo de los tres botones, grande y a todo el ancho. */
 .cam-confirmar { margin-top: 0.5rem; }
 .cam-confirmar .cam-btn { width: 100%; min-height: 52px; font-size: 1.05rem; font-weight: 800; justify-content: center; }
