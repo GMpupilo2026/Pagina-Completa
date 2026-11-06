@@ -479,7 +479,7 @@ body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
 .cam-espera { margin-top: 0.5rem; font-weight: 700; }
 .cam-planillas { padding: 0.6rem 0.9rem; border-top: 1px dashed #c9cbee; }
 /* Los dos iconos de cada mesa: la cámara (foto de las dos planillas juntas) y el reloj (control de tiempos). */
-.cam-iconos { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.cam-iconos { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; }   /* la foto de las planillas a la izquierda, el control de tiempos al centro y las traducciones a la derecha */
 .cam-btn-icono { position: relative; display: inline-grid; place-items: center; width: 3.6rem; height: 3.6rem; border-radius: 1rem; border: 2px solid var(--cac-morado); background: #fff; color: var(--cac-morado); cursor: pointer; }
 .cam-btn-icono:hover:not(:disabled) { background: var(--cac-morado); color: #fff; }
 .cam-btn-icono:disabled { opacity: 0.55; cursor: default; }
@@ -1236,8 +1236,30 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-pie-centro { grid-column: 2; display: flex; justify-content: center; }
 .cam-fin { grid-column: 3; display: flex; justify-content: flex-end; }
 .cam-fin[hidden] { display: none; }
-.cam-pie-barra .cam-btn { opacity: 0.9; }
-.cam-btn-fin { font-size: 0.85rem; }
+/* «Terminé mi ronda completa»: turquesa profundo (distinto del morado de la barra, del verde de «llegó» y del rojo de «Ayuda»), con letra blanca (5,5:1). */
+.cam-btn-fin { font-size: 0.85rem; background: #0f766e; border-color: #0f766e; color: #fff; }
+.cam-btn-fin:hover:not(:disabled) { background: #115e59; border-color: #115e59; }
+.dark .cam-btn-fin { background: #2dd4bf; border-color: #2dd4bf; color: #0a1f33; }
+.dark .cam-btn-fin:hover:not(:disabled) { background: #5eead4; border-color: #5eead4; }
+/* El cuadro de confirmación de «Terminé mi ronda completa». */
+.cam-terminar { width: min(94vw, 34rem); max-height: 92vh; overflow: auto; padding: 0; border: 3px solid #0f766e; border-radius: 1.2rem; background: #fff; color: var(--cac-morado-hondo); }
+.cam-terminar::backdrop { background: rgb(10 31 51 / 0.6); }
+.dark .cam-terminar { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #2dd4bf; }
+.cam-terminar-forma { padding: 1.2rem 1.3rem; display: grid; gap: 0.8rem; }
+.cam-terminar-titulo { font-size: 1.3rem; font-weight: 800; }
+.cam-terminar-texto { font-size: 0.98rem; }
+.cam-terminar-aviso { padding: 0.55rem 0.8rem; border-radius: 0.7rem; background: #fdecee; color: #8a0f1d; font-weight: 700; }
+.dark .cam-terminar-aviso { background: #5a1a22; color: #ffd0d5; }
+.cam-terminar-grupo { border: 0; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
+.cam-terminar-grupo[hidden] { display: none; }
+.cam-terminar-legend { font-weight: 800; margin-bottom: 0.2rem; }
+.cam-terminar-opcion { display: flex; align-items: flex-start; gap: 0.7rem; min-height: 48px; padding: 0.45rem 0.6rem; border: 2px solid #dfe0f7; border-radius: 0.8rem; cursor: pointer; font-weight: 600; }
+.dark .cam-terminar-opcion { border-color: rgb(255 255 255 / 0.2); }
+.cam-terminar-opcion:focus-within { outline: 3px solid #0f766e; outline-offset: 2px; }
+.cam-terminar-opcion input { width: 1.4rem; height: 1.4rem; margin-top: 0.1rem; flex: none; accent-color: #0f766e; }
+.cam-terminar-ayuda { font-size: 0.9rem; font-weight: 700; }
+.cam-terminar-botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; }
+.cam-terminar-botones .cam-btn { min-height: 48px; }
 .cam-pie-centro .cam-btn { min-height: 40px; padding-inline: 0.9rem; }
 /* El contador de «Se levantó» (1, 2, 3…): un numerito chico arriba a la derecha del propio botón, en lugar de un icono más en la ficha. */
 .cam-insignia { position: absolute; top: -0.45rem; right: -0.45rem; min-width: 1.3rem; height: 1.3rem; padding: 0 0.3rem; border-radius: 9999px; background: #1f774c; color: #fff; border: 2px solid #fff; font-size: 0.78rem; font-weight: 800; line-height: 1; display: inline-grid; place-items: center; pointer-events: none; }

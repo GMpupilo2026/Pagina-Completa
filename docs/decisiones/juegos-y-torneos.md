@@ -10874,10 +10874,23 @@ Pedido (noviembre de 2026, con el torneo en juego):
   chico, abajo en el centro, con el icono y UNA palabra («🆘 Ayuda»)**; su nombre accesible y su `title` siguen diciendo «Necesito ayuda (para mí)»
   (no es lo mismo que «Principal en esta mesa», que va en cada mesa). Los dos viven en `.cam-pie-barra` (una cuadrícula de tres columnas: vacía,
   centro, derecha).
-- **«Terminé mi ronda completa» (antes «Ya terminé mis labores»; `#concluir`, `#fin-labores`)**: abajo a la derecha, más chico y un poco apagado.
-  **El texto dice a qué se refiere**: es para cuando ya terminó **TODO** lo de la ronda (todas sus mesas, planillas y anotaciones), no una mesa en
-  particular; el aviso de confirmación lo repite («Úsalo solo si ya terminaste TODO lo de esta ronda…») y su nombre accesible y su `title` también.
-  Su contenedor se esconde junto con el botón cuando ya se terminó.
+- **«Terminé mi ronda completa» (antes «Ya terminé mis labores»; `#concluir`, `#fin-labores`)**: abajo a la derecha, más chico y **de un color propio: turquesa
+  profundo** (`#0f766e`, letra blanca a 5,5:1; en oscuro, turquesa claro con letra oscura). Se eligió porque **no se parece a nada de lo que ya hay**: el morado
+  de la barra, el verde de «llegó» y «se levantó», el rojo de «Ayuda» y el naranja de los avisos. Alternativas que se hablaron: dorado con letra oscura
+  (como una medalla), o un morado más vivo; cambiarlo es tocar `.cam-btn-fin` en `css/centroamericano-mesas.css`.
+  **El texto dice a qué se refiere**: es para cuando ya terminó **TODO** lo de la ronda, no una mesa en particular.
+  **Ya no se confirma con un toque**: abre un cuadro propio (`js/centroamericano-terminar.js`, `CentroamericanoTerminar.preguntar`) que pide **el motivo** y
+  que **marque lo que comprobó**; mientras no haya motivo y todas sus casillas marcadas, «Sí, concluir todas mis labores» queda apagado. Motivos y casillas
+  (`MOTIVOS`):
+  - **«Terminé todas mis partidas de la ronda»**: «Ya revisé las planillas de todas mis mesas», «Todas las partidas que tenía en juego ya terminaron y tienen su
+    resultado», «No tengo nada pendiente»;
+  - **«Me enviaron a almorzar o a descansar»**, **«Me reasignaron a otras mesas o a otra tarea»** y **«Otro motivo»**: «No tengo partidas en juego ni nada pendiente
+    por anotar».
+  Cambiar de motivo vuelve a pedir sus casillas desde cero. Si la tablet ve **mesas sin resultado** o la ronda **sin finalizar**, lo avisa en rojo (y el botón de
+  confirmar se vuelve rojo), pero no lo impide: lo de que «ya terminaron» lo dice el árbitro. **Cancelar y Escape cierran sin terminar.** Con cola pendiente de
+  enviar, sigue sin dejar terminar. **El motivo NO se manda al servidor** (la función `centroamericano-mesa` solo cierra el enlace): se muestra en la pantalla de
+  «terminaste» mientras la página siga abierta y se pierde al recargar. Guardarlo en la bitácora y en la actividad de la organización pediría tocar esa función
+  (decisión pendiente: no se redespliega en pleno torneo sin necesidad).
 - **El cierre vale POR RONDA y se reabre SOLO al empezar la ronda siguiente** (pedido: «que automáticamente se vuelva a habilitar cuando venga una
   ronda nueva, y así no estarle buscando tener que encenderlo desde la principal»). Antes, quien tocaba el botón quedaba cerrado hasta que la
   organización lo reabriera a mano, árbitro por árbitro y ronda por ronda. Ahora (migración `20261106170942_centroamericano_labores_por_ronda.sql`,
@@ -10901,6 +10914,10 @@ Pedido (noviembre de 2026, con el torneo en juego):
     `verificar-centroamericano-mesas-pagina.js` (reabierta por la base, la tablet se habilita sola y puede volver a terminar). La lógica de los
     triggers se ensayó contra un Postgres de verdad con 11 escenarios (por torneo, misma ronda o menor sin reabrir, el upsert de la copia compartida,
     y otro trigger roto adentro) antes de aplicarla.
+- **Los tres iconos de cada ficha, en este orden:** la **foto de las planillas a la izquierda, el control de tiempos al centro y las traducciones («Hablar con el
+  jugador») a la derecha**, porque lo que el árbitro más usa es el reloj. `bloqueIconos` los pone en ese orden y `.cam-iconos` usa `justify-content: space-between`:
+  con el control de tiempos (mesa sin resultado) quedan a la izquierda, al centro y a la derecha; sin él (mesa con resultado), planillas a la izquierda y
+  traducciones a la derecha. Lo prueba `verificar-centroamericano-mesas-pagina.js` midiendo las posiciones.
 - **«Se levantó» ya no pone un icono nuevo en la ficha: el contador va en el propio botón.** Cada toque anota una vez (con su hora, como siempre) y
   aparece un número chiquito **arriba a la derecha del botón** (`.cam-insignia`: «1», «2», «3»…, solo el número, sin «×»); el lector de pantalla oye
   «Se levantó: 2 veces» y el nombre accesible sigue diciendo «(van 2)». Las **ilegales** y las **irregularidades se quedan como estaban** (su marca en la
@@ -10908,7 +10925,7 @@ Pedido (noviembre de 2026, con el torneo en juego):
   él un toque de más no se podría deshacer. La actividad de la organización y la bitácora no cambiaron (los toques siguen siendo `articulo: "Levantó"`).
 - **Pruebas:** `verificar-centroamericano-mesas-pagina.js` (un toque elige y no guarda; cambiar de idea; «Guardar» guarda una sola vez con el
   resultado elegido; el botón de arriba ya no está y las tarjetas conservan el suyo; la posición de «Ya terminé») y
-  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando). También prueban el pie de la barra (la ayuda centrada, chica y con su nombre accesible; «Ya terminé» a la derecha) y el contador de «Se levantó» (1, 2, y que desaparece al anular las dos).
+  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando) y `verificar-centroamericano-terminar.js` (los motivos y cuándo se puede confirmar). También prueban el pie de la barra (la ayuda centrada, chica y con su nombre accesible; «Ya terminé» a la derecha) y el contador de «Se levantó» (1, 2, y que desaparece al anular las dos).
 
 ## Mesa del árbitro: los torneos ligados de un grupo
 

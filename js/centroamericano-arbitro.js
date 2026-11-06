@@ -162,6 +162,7 @@
     const CON_ID = { anotar: true, tiempo: true };
     // Con las labores concluidas ya no se escribe nada (la función también lo rechaza): solo se lee y se baja la bitácora.
     const concluida = () => !!(estado && estado.concluyo);
+    let motivoConcluido = "";   // por qué terminó (solo en memoria: la función no lo guarda); se muestra en el aviso de «terminaste»
     async function escribir(accion, cuerpo, etiqueta, meta) {
         if (concluida()) throw new Error("Ya terminaste tu ronda completa: ya no puedes anotar ni guardar hasta la ronda siguiente. Si necesitas seguir antes, pide a la organización que lo reabra.");
         const id = Cola.uuid();
@@ -515,8 +516,8 @@
                 sube ? "Subiendo la foto de las planillas de la mesa " + m.mesa
                     : (hecha ? "Cambiar la foto de las planillas de la mesa " + m.mesa + ": tiene que salir las dos planillas juntas" : "Tomar la foto de las dos planillas de la mesa " + m.mesa + " (las dos juntas)"),
                 () => subirPlanilla(m), { hecho: hecha, ocupado: sube, deshabilitado: ocupada || sube }),
-            botonIcono("hablar", "hablar", "Hablar con el jugador de la mesa " + m.mesa + " (frases en inglés y francés, y traductor)", () => abrirHablar(m), { deshabilitado: ocupada }),
             pendiente ? botonIcono("tiempo", "reloj", "Control de tiempos de la mesa " + m.mesa + (hayLectura ? " (ya hay una lectura)" : ""), () => abrirTiempos(false, m.mesa), { hecho: hayLectura }) : null,
+            botonIcono("hablar", "hablar", "Hablar con el jugador de la mesa " + m.mesa + " (frases en inglés y francés, y traductor)", () => abrirHablar(m), { deshabilitado: ocupada }),
             sube ? el("span", { class: "cam-iconos-estado", role: "status", texto: "Subiendo…" }) : null);
     }
 
@@ -1567,7 +1568,7 @@
             for (const n of document.querySelectorAll("[data-por-concluir]")) { n.disabled = false; n.removeAttribute("data-por-concluir"); }
             return;
         }
-        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que terminaste tu ronda completa. Ya no puedes anotar ni guardar resultados en tus mesas, y se habilitan solos cuando empiece la ronda siguiente (si necesitas seguir antes, pide a la organización que los reabra). Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste.";
+        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que terminaste tu ronda completa" + (motivoConcluido ? " («" + motivoConcluido + "»)" : "") + ". Ya no puedes anotar ni guardar resultados en tus mesas, y se habilitan solos cuando empiece la ronda siguiente (si necesitas seguir antes, pide a la organización que los reabra). Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste.";
         tiemposAbierto = false;
         pintarTiempos();
         $("lista-previa").hidden = true; $("revision").hidden = true;   // ya no hay nada que revisar ni finalizar
@@ -1579,12 +1580,13 @@
         if (concluida()) return;
         const pend = cola ? cola.lista() : [];
         if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Terminé mi ronda completa».", true); return; }
+        // Terminar cierra los resultados de la ronda: no se confirma con un toque. Dice por qué termina y marca lo que comprobó (js/centroamericano-terminar.js).
+        const T = window.CentroamericanoTerminar;
+        if (!T) { avisar("Esta tablet no puede abrir la confirmación: recarga la página.", true); return; }
         const sinResultado = estado.mesas.filter((m) => m.valor === "0").length;
-        const avisos = [];
-        if (sinResultado) avisos.push("Todavía hay " + sinResultado + (sinResultado === 1 ? " mesa" : " mesas") + " sin resultado en la ronda " + estado.ronda + ".");
-        if (!estado.finalizada) avisos.push("No has finalizado la ronda " + estado.ronda + ".");
-        const sigue = await Avisos.confirmar((avisos.length ? avisos.join(" ") + " " : "") + "Úsalo solo si ya terminaste TODO lo de esta ronda: todas tus mesas, planillas y anotaciones. Se te cerrarán los resultados y ya no podrás anotar ni guardar nada hasta que empiece la ronda siguiente (se habilitan solos). Podrás descargar tu bitácora en PDF. Si te equivocas, la organización puede reabrirlos.", { titulo: "Terminé mi ronda completa", aceptar: "Sí, terminé todo", peligro: !!avisos.length });
+        const sigue = await T.preguntar({ ronda: estado.ronda, sinResultado, sinFinalizar: !estado.finalizada });
         if (!sigue) return;
+        motivoConcluido = sigue.texto;
         $("concluir").disabled = true;
         try {
             const d = await invocar("concluir", {});
