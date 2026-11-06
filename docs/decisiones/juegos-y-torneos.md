@@ -9196,6 +9196,7 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   y amarilla, pieza y mano, icono con palabra) y se eligió el de la pieza y la mano; el peón va sólido y sin círculo porque con
   círculo, a 46 px, se perdía. Siguen con su palabra para el lector de pantalla, su `title` y la leyenda de arriba, que usa
   los mismos dibujos; `verificar-centroamericano-mesas-pagina.js` comprueba los dibujos de los botones y de la leyenda.
+- **(El botón hoy se llama «Terminé mi ronda completa» y el cierre vale POR RONDA: se reabre solo al empezar la siguiente; ver «La tablet del árbitro: el clásico siempre confirma el resultado…».)**
 - **«Ya terminé mis labores» y la bitácora del árbitro en PDF.** Al acabar su trabajo, el árbitro toca el botón (con
   confirmación: no se deshace desde la tablet) y su enlace **se cierra**: la columna `centroamericano_asignaciones.concluyo_en`
   guarda la hora (la pone la base) y la Edge Function `centroamericano-mesa` (v13) responde **409** a todo lo que escribe
@@ -10209,6 +10210,26 @@ reemplazó por esta: era lenta y la fila de tabla no se lee bien al decirle la m
 - **Antes de desplegar la función**: `git fetch` de `main` y comparar con lo desplegado (ver «Lección del
   despliegue»): otras sesiones también la tocan.
 
+- **La pantalla completa del atleta se traduce tocando la bandera del jugador.** Junto al nombre del jugador (y junto al del rival, en la línea de
+  «Contra …») la banderita es un **botón grande, sin ningún texto de idioma** (pedido: «se ve más bonito, y que reconozca solo el idioma de ese
+  jugador»). Tocarla pasa **toda** la pantalla al idioma de ese país: la categoría («Sub-12 Absoluto» → «U12 Open» / «Filles»), «MESA»
+  (BOARD en inglés, TABLE en francés), el color (White/Black, Blancs/Noirs), «Contra», «Ronda», la hora (12 h con AM/PM, o 24 h con «h») y «Listo»
+  (Done / Terminé); cada texto lleva su `lang` para que el lector de pantalla lo pronuncie bien. **Tocarla otra vez vuelve al español**, y tocar la
+  del rival estando en otro idioma cambia directo a ese. La bandera tocada queda marcada (llena y `aria-pressed`) y conserva el foco. No cambian los
+  nombres, la mesa, la ronda ni las banderas. Sin federación en los datos (o sin dibujo de bandera) no hay botón: nada que tocar.
+  - **Qué idioma sale de cada país** (`idiomaDeBandera`, `js/centroamericano-emparejamientos.js`): las federaciones **francófonas y anglófonas** de
+    `centroamericano-frases.js` (`idiomaDeFed`) dan francés o inglés; las **hispanohablantes** (ARG, BOL, CHI, COL, CRC, CUB, DOM, ECU, ESA, ESP,
+    GEQ, GUA, HON, MEX, NCA, PAN, PAR, PER, PUR, URU, VEN) se quedan en español (tocar su bandera no cambia nada, porque ya está en español); y
+    **todo otro país** (Brasil, Alemania, la India…) cae al **inglés**, que casi todos entienden. **Hay textos de tres idiomas; no se inventó ninguno
+    más**: portugués, alemán o italiano se agregan con su entrada en `GRANDE` **y la frase revisada por quien lo domine**, y su lista de países.
+  - **Los textos son fijos** (la tabla `GRANDE`, con los términos de `centroamericano-frases.js`), no se traducen al vuelo: no pueden decir algo
+    distinto de lo revisado y funcionan sin internet. **Empieza siempre en español**, que es como la lee el árbitro, y para el siguiente atleta vuelve
+    a empezar en español: el idioma no se guarda (la página del árbitro no usa almacenamiento).
+  - Primero se probó con **tres botones con la bandera y el nombre del idioma** (Español, English, Français) arriba de la pantalla; se cambiaron por
+    la bandera del jugador porque pedía menos: sin texto y sin elegir. El nombre del idioma queda solo en el nombre accesible del botón.
+  - Lo prueba `verificar-centroamericano-mesas-pagina.js` (la jugadora con bandera francesa y su rival estadounidense; Costa Rica se queda en español;
+    Brasil cae al inglés; volver al español; el foco; el reinicio para el siguiente atleta; sin federación, sin botones).
+
 ## «Llegó tarde»: la llegada de quien se tarda queda en la bitácora y cuenta en el reloj que se apaga (Centroamericano)
 
 Pedido (3/11, ronda 4): cuando un jugador llega con el tiempo de espera corriendo y el árbitro marca «Llegó», que quede la hora
@@ -10765,6 +10786,45 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y
   `AbortSignal.timeout` tienen alternativa); la pantalla encendida (`wakeLock`) funciona desde iOS 16.4.
 
+## La copia de seguridad de la tablet: un archivo que se arma sin internet (Centroamericano)
+
+Pedido (noviembre de 2026, tras un corte de luz en pleno torneo): «en caso de que se vaya la luz, nunca tener un inconveniente por la parte
+tecnológica». La cola de la tablet (ver «La lectura de chess-results se comparte y la tablet no pierde nada») ya guardaba
+lo pendiente de enviar, pero **solo dentro del navegador** (IndexedDB): si la tablet se apaga sin batería, se le borran los datos del
+navegador o hay que cambiarla por otra antes de que vuelva la señal, esas anotaciones se perdían. **Bajar un archivo no necesita
+internet** si lo arma la propia página (un `Blob` y un `<a download>`): ese es el respaldo.
+
+- **Dos botones** en la barra de la tablet, chicos y sin ruido: «💾 Copia de seguridad» (baja el archivo) y «📂 Cargar copia» (elige uno).
+  Cuando hay algo pendiente, el aviso fijo de arriba también trae «Descargar copia», y **sin señal recuerda hacerlo** («Por si se apaga la
+  tablet, baja una copia»). No se baja sola: en una tablet, cada descarga automática pide permiso y estorba en pleno torneo.
+- **El archivo es un `.txt`** (`respaldo-mesas-AAAAMMDD-HHMM.txt`) para que cualquier aparato lo abra. Arriba, **en palabras**: qué quedó
+  pendiente de enviar, numerado y con su hora en el orden en que se anotó, y las mesas de la ronda tal como las ve la tablet (el resultado que
+  ya tenían, y el que aún no salió dicho como «1-0 (pendiente de enviar)»): sirve para pasarlo a mano a la organización o a chess-results si
+  hiciera falta. Abajo, tras la línea «=== DATOS PARA VOLVER A CARGAR EN LA TABLET (no los cambies) ===», un JSON con las anotaciones exactas.
+- **Cargar la copia** (en la misma tablet o en otra, con el mismo enlace) las vuelve a poner en la cola y salen solas, en orden, apenas hay
+  señal. **No duplica nada**: cada anotación lleva su `id` (lo reconoce la base, igual que al reenviar por una señal mala); las que la cola
+  ya tenía se saltan, y cargar la misma copia dos veces tampoco suma. Lo dice con palabras («Se cargaron 2 anotaciones…»).
+- **Lo que protege:** el archivo **nunca lleva el token** del enlace: solo la huella corta y no reversible que ya usa la cola, y una copia
+  de **otro enlace** (otro árbitro, otro torneo) se rechaza. Solo se aceptan las acciones que la tablet anota por la cola (`PERMITIDAS`):
+  un archivo cambiado a mano con otra (como «concluir» o una inventada) **se rechaza entero**, sin cargar ni una; uno cortado, ajeno o con
+  ids, etiquetas o cuerpos raros también. La lista `PERMITIDAS` es la de las llamadas a `escribir("…")` de la página: **si se agrega una acción
+  nueva a la cola, va también en `js/centroamericano-respaldo.js`** (el verificador falla si no).
+- **Dónde está el código:** `js/centroamericano-respaldo.js` (armar y leer, sin nada de navegador, en JavaScript sencillo por si la tablet es
+  vieja) y, en `js/centroamericano-arbitro.js`, `bajarCopia()` y `cargarCopia()` (la página de la tablet no usa almacenamiento, `fetch` ni
+  `console`: el módulo tampoco). Sin la hora de Costa Rica que le pasa la página, el módulo escribe UTC y lo dice.
+- **Lo que NO cubre.** La copia guarda lo que **todavía no salió** y las mesas **de la última lectura**: no reemplaza leer chess-results ni la
+  base. Si la tablet se apaga y la copia nunca se bajó, no hay de dónde sacarla (por eso el aviso insiste); y para que la copia sirva en otra
+  tablet hay que **pasarla** (Bluetooth, cable, correo, AirDrop o la nube del aparato). Abrir la página de la tablet con el aparato sin ninguna
+  señal solo funciona si esa tablet **ya la abrió antes** (la copia de la página queda en el aparato; ver `sw.js`): conviene abrir el enlace
+  una vez con señal antes de cada jornada. Pareo Integral tiene su propio respaldo (ver «El respaldo del evento»).
+- **Qué hacer en un corte** (para el instructivo de los árbitros): no cerrar ni recargar la página, tocar «💾 Copia de seguridad» apenas
+  salga el aviso de «Sin señal», mandar el archivo a otro aparato si se puede, cuidar la batería (cargador portátil) y, cuando vuelva la
+  señal, esperar a que «Pendiente de enviar» llegue a 0 («Mandar ahora» a mano).
+- **Pruebas:** `verificar-centroamericano-respaldo.js` (ida y vuelta, lo escrito en palabras, sin token, cada archivo malo que no se carga,
+  `PERMITIDAS` igual a las acciones de la tablet; roto a propósito —una acción de más y sin validar la acción— salta) y, con navegador y
+  sin señal, `verificar-centroamericano-cola.js` (se baja el archivo, la tablet «se apaga», otra lo carga y todo llega una sola vez a la
+  base; la misma copia dos veces no duplica; la de otro enlace, la cambiada, la ajena y la cortada se rechazan sin tocar la base).
+
 ## Las tablets viejas: el modo liviano (Centroamericano)
 
 En el Centroamericano 2026 (4/11, ronda en curso) algunas tablets de los árbitros eran muy viejas y a «Mis mesas»
@@ -10829,6 +10889,79 @@ respaldo y por HTTP de verdad, enciende el modo sola, abre y cierra un aviso del
 rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mismo NO rearma las tarjetas y un pedido
 de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
 script con sintaxis nueva hace saltar la primera comprobación.
+
+## La tablet del árbitro: el clásico siempre confirma el resultado, sin botón de tiempos arriba, el pie de la barra y el contador de «Se levantó»
+
+Pedido (noviembre de 2026, con el torneo en juego):
+
+- **En el clásico el resultado SIEMPRE se confirma.** En la ficha corta («Vista: tres toques», la de «tres botones grandes») 1-0, ½-½ y 0-1
+  guardaban de un toque, como en el Rápido y el Blitz. Ahora, **solo en el Rápido y en el Blitz** un toque guarda. En el **clásico** el toque
+  solo **elige**: el botón queda marcado («Elegido»), sale escrito «Elegiste 1-0. Toca Guardar para confirmarlo.» y el **«Guardar»** (siempre a la
+  vista, apagado mientras no haya nada distinto de lo guardado, y grande) es lo que lo manda. Cambiar de idea antes de confirmar tampoco guarda.
+  «Otro resultado (a mano)» (incomparecencia, 0-0, borrar) usa ese mismo «Guardar»: ya no hay dos. Cambiar un resultado que ya estaba en
+  chess-results sigue preguntando antes (lo hace `guardar()`), y el desplegable y «Guardar» de la ficha de siempre no cambiaron.
+  **Por qué:** un resultado de clásico mal puesto es más difícil de arreglar que uno de blitz, y el árbitro quiere verlo escrito y confirmarlo.
+  `resultadoRapido(…)` decide con `rapido()`: si en el futuro hay otra vista con botones de resultado, **en el clásico tiene que confirmar**.
+- **El botón «Control de tiempos» de arriba se quitó.** Cada mesa ya tiene su icono de reloj (`data-accion="tiempo"`); el de arriba solo repetía eso
+  para elegir una mesa cualquiera. Lo que NO cambió: el control de tiempos se sigue abriendo solo cuando la organización lo pide (el aviso con
+  `control_tiempos`), por `abrirTiempos(true)`.
+- **El pie de la barra: «Ayuda» al centro y «Terminé mi ronda completa» a la derecha**, los dos fuera de la fila de los demás controles y a más de
+  24 px de ellos, para no tocar nada por accidente. **«Ayuda» (`#pedir-ayuda`) pasó de ser un botón rojo grande con «Necesito ayuda (para mí)» a uno
+  chico, abajo en el centro, con el icono y UNA palabra («🆘 Ayuda»)**; su nombre accesible y su `title` siguen diciendo «Necesito ayuda (para mí)»
+  (no es lo mismo que «Principal en esta mesa», que va en cada mesa). Los dos viven en `.cam-pie-barra` (una cuadrícula de tres columnas: vacía,
+  centro, derecha).
+- **«Terminé mi ronda completa» (antes «Ya terminé mis labores»; `#concluir`, `#fin-labores`)**: abajo a la derecha, más chico y **de un color propio: turquesa
+  profundo** (`#0f766e`, letra blanca a 5,5:1; en oscuro, turquesa claro con letra oscura). Se eligió porque **no se parece a nada de lo que ya hay**: el morado
+  de la barra, el verde de «llegó» y «se levantó», el rojo de «Ayuda» y el naranja de los avisos. Alternativas que se hablaron: dorado con letra oscura
+  (como una medalla), o un morado más vivo; cambiarlo es tocar `.cam-btn-fin` en `css/centroamericano-mesas.css`.
+  **El texto dice a qué se refiere**: es para cuando ya terminó **TODO** lo de la ronda, no una mesa en particular.
+  **Ya no se confirma con un toque**: abre un cuadro propio (`js/centroamericano-terminar.js`, `CentroamericanoTerminar.preguntar`) que pide **el motivo** y
+  que **marque lo que comprobó**; mientras no haya motivo y todas sus casillas marcadas, «Sí, concluir todas mis labores» queda apagado. Motivos y casillas
+  (`MOTIVOS`):
+  - **«Terminé todas mis partidas de la ronda»**: «Ya revisé las planillas de todas mis mesas», «Todas las partidas que tenía en juego ya terminaron y tienen su
+    resultado», «No tengo nada pendiente»;
+  - **«Me enviaron a almorzar o a descansar»**, **«Me reasignaron a otras mesas o a otra tarea»** y **«Otro motivo»**: «No tengo partidas en juego ni nada pendiente
+    por anotar».
+  Cambiar de motivo vuelve a pedir sus casillas desde cero. Si la tablet ve **mesas sin resultado** o la ronda **sin finalizar**, lo avisa en rojo (y el botón de
+  confirmar se vuelve rojo), pero no lo impide: lo de que «ya terminaron» lo dice el árbitro. **Cancelar y Escape cierran sin terminar.** Con cola pendiente de
+  enviar, sigue sin dejar terminar. **El motivo NO se manda al servidor** (la función `centroamericano-mesa` solo cierra el enlace): se muestra en la pantalla de
+  «terminaste» mientras la página siga abierta y se pierde al recargar. Guardarlo en la bitácora y en la actividad de la organización pediría tocar esa función
+  (decisión pendiente: no se redespliega en pleno torneo sin necesidad).
+- **El cierre vale POR RONDA y se reabre SOLO al empezar la ronda siguiente** (pedido: «que automáticamente se vuelva a habilitar cuando venga una
+  ronda nueva, y así no estarle buscando tener que encenderlo desde la principal»). Antes, quien tocaba el botón quedaba cerrado hasta que la
+  organización lo reabriera a mano, árbitro por árbitro y ronda por ronda. Ahora (migración `20261106170942_centroamericano_labores_por_ronda.sql`,
+  **todo en la base, sin tocar la Edge Function `centroamericano-mesa`**: ella sigue poniendo `concluyo_en` y rechazando escrituras mientras tenga valor):
+  - al concluir, el trigger `concluyo_ronda` (antes de cambiar `concluyo_en`) anota en `concluyo_ronda` la ronda que tenía **su torneo** en la copia
+    compartida de chess-results (`centroamericano_lecturas.ronda`); al reabrir (a mano o solo) la borra;
+  - cuando esa lectura **cambia a una ronda MAYOR**, el trigger `reabrir_por_ronda` (en `centroamericano_lecturas`) pone `concluyo_en = null` en los
+    enlaces de **ese torneo** (`a.tnr = new.tnr`) que concluyeron en una ronda menor. **Cada enlace mira la ronda de SU torneo**: las categorías no van
+    todas en la misma ronda (en la base había 7, 9, 1 y 0 a la vez). La misma ronda, una **menor** (un tropiezo de chess-results) o una ronda nula
+    **nunca** reabren; el turno de lectura (`leyendo_hasta`) tampoco dispara nada;
+  - **si no se sabía la ronda al concluir** (no había lectura), `concluyo_ronda` queda nula y se reabre solo a mano, como antes (la organización lo ve
+    escrito: «(solo se reabren a mano)» o «(ronda 7; se reabren solas al empezar la siguiente)»);
+  - **el trigger de la lectura NUNCA la estorba**: lo de adentro va en un bloque que, ante cualquier error, solo avisa (`warning`) y sigue; la copia
+    compartida de chess-results es lo que usan todas las tablets, y un trigger roto ahí las tumbaría a todas en pleno torneo;
+  - las dos funciones de trigger son `security definer` con `search_path` vacío y nadie de afuera las ejecuta; a los que ya habían concluido se les
+    anotó la ronda de hoy de su torneo;
+  - **la tablet** solo tiene que leerlo: el `leer` ya devuelve `concluyo: null`, y `pintarConcluido` vuelve a encender lo que se apagó al concluir
+    (`data-por-concluir`: ayuda, nombre…) sin recargar. Mientras estaba cerrado podía bajar su bitácora; al reabrirse sola esa descarga vuelve a
+    pedir terminar otra vez (como al reabrirla a mano).
+  - Lo prueban `verificar-centroamericano-mesas.js` (la migración: los dos triggers, su condición, el bloque que no estorba y los permisos) y
+    `verificar-centroamericano-mesas-pagina.js` (reabierta por la base, la tablet se habilita sola y puede volver a terminar). La lógica de los
+    triggers se ensayó contra un Postgres de verdad con 11 escenarios (por torneo, misma ronda o menor sin reabrir, el upsert de la copia compartida,
+    y otro trigger roto adentro) antes de aplicarla.
+- **Los tres iconos de cada ficha, en este orden:** la **foto de las planillas a la izquierda, el control de tiempos al centro y las traducciones («Hablar con el
+  jugador») a la derecha**, porque lo que el árbitro más usa es el reloj. `bloqueIconos` los pone en ese orden y `.cam-iconos` usa `justify-content: space-between`:
+  con el control de tiempos (mesa sin resultado) quedan a la izquierda, al centro y a la derecha; sin él (mesa con resultado), planillas a la izquierda y
+  traducciones a la derecha. Lo prueba `verificar-centroamericano-mesas-pagina.js` midiendo las posiciones.
+- **«Se levantó» ya no pone un icono nuevo en la ficha: el contador va en el propio botón.** Cada toque anota una vez (con su hora, como siempre) y
+  aparece un número chiquito **arriba a la derecha del botón** (`.cam-insignia`: «1», «2», «3»…, solo el número, sin «×»); el lector de pantalla oye
+  «Se levantó: 2 veces» y el nombre accesible sigue diciendo «(van 2)». Las **ilegales** y las **irregularidades se quedan como estaban** (su marca en la
+  franja de la mesa y su «Anular»). «Anular la última vez que se levantó» sigue ahí, junto a los demás «Anular», solo cuando hay algo que anular: sin
+  él un toque de más no se podría deshacer. La actividad de la organización y la bitácora no cambiaron (los toques siguen siendo `articulo: "Levantó"`).
+- **Pruebas:** `verificar-centroamericano-mesas-pagina.js` (un toque elige y no guarda; cambiar de idea; «Guardar» guarda una sola vez con el
+  resultado elegido; el botón de arriba ya no está y las tarjetas conservan el suyo; la posición de «Ya terminé») y
+  `verificar-centroamericano-modo-rapido.js` (en el Rápido y el Blitz un toque sigue guardando) y `verificar-centroamericano-terminar.js` (los motivos y cuándo se puede confirmar). También prueban el pie de la barra (la ayuda centrada, chica y con su nombre accesible; «Ya terminé» a la derecha) y el contador de «Se levantó» (1, 2, y que desaparece al anular las dos).
 
 ## Mesa del árbitro: los torneos ligados de un grupo
 

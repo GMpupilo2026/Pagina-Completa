@@ -162,8 +162,9 @@
     const CON_ID = { anotar: true, tiempo: true };
     // Con las labores concluidas ya no se escribe nada (la función también lo rechaza): solo se lee y se baja la bitácora.
     const concluida = () => !!(estado && estado.concluyo);
+    let motivoConcluido = "";   // por qué terminó (solo en memoria: la función no lo guarda); se muestra en el aviso de «terminaste»
     async function escribir(accion, cuerpo, etiqueta, meta) {
-        if (concluida()) throw new Error("Ya concluiste tus labores: ya no puedes anotar ni guardar. Si necesitas seguir, pide a la organización que las reabra.");
+        if (concluida()) throw new Error("Ya terminaste tu ronda completa: ya no puedes anotar ni guardar hasta la ronda siguiente. Si necesitas seguir antes, pide a la organización que lo reabra.");
         const id = Cola.uuid();
         const c = CON_ID[accion] ? Object.assign({ id }, cuerpo) : cuerpo;
         try { return { d: await invocar(accion, c) }; }
@@ -183,11 +184,72 @@
         let nivel = "";
         if (sinSenal) { nivel = "mal"; partes.push(estado ? "Sin conexión con el servidor. Ves tus mesas como estaban a las " + hora(estado.leido_en) + "." : "Sin conexión con el servidor."); }
         else if (estado && estado.datos && estado.datos.viejo) { nivel = "ojo"; partes.push("chess-results no está contestando: estas mesas son de las " + hora(estado.datos.desde) + ". Lo que anotes aquí se guarda igual."); }
-        if (pend.length) { nivel = nivel || "ojo"; partes.push("Pendiente de enviar (" + pend.length + "): " + pend.map((x) => x.etiqueta).join(", ") + ". Se manda solo cuando haya señal; no cierres esta página."); }
+        if (pend.length) { nivel = nivel || "ojo"; partes.push("Pendiente de enviar (" + pend.length + "): " + pend.map((x) => x.etiqueta).join(", ") + ". Se manda solo cuando haya señal; no cierres esta página." + (sinSenal ? " Por si se apaga la tablet, baja una copia." : "")); }
         caja.hidden = !partes.length;
         caja.dataset.nivel = nivel;
-        const botones = pend.length ? [el("button", { type: "button", class: "cam-btn", "data-accion": "reintentar-cola", onclick: () => { cola.vaciar(); } }, "Mandar ahora")] : [];
+        const botones = pend.length ? [
+            el("button", { type: "button", class: "cam-btn", "data-accion": "reintentar-cola", onclick: () => { cola.vaciar(); } }, "Mandar ahora"),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "copia-pendientes", onclick: () => { bajarCopia(); } }, "Descargar copia"),
+        ] : [];
         caja.replaceChildren(el("p", { texto: (nivel === "mal" ? "⚠ " : "") + partes.join(" ") }), ...botones);
+    }
+
+    // ------------------------------------------------------------- la copia de seguridad (la arma esta página: no pide internet)
+    // Un archivo de texto con lo que todavía no salió y las mesas como las ve la tablet. Si la tablet se apaga o hay que cambiarla, se vuelve a cargar.
+    // Ver «La copia de seguridad de la tablet» en docs/decisiones/juegos-y-torneos.md.
+    function datosDeCopia() {
+        const pend = cola ? cola.lista() : [];
+        const pendientes = {};
+        for (const x of pend) if (x.accion === "guardar" && x.meta && x.meta.mesa != null && VALOR_RES[x.meta.valor]) pendientes[x.meta.mesa] = VALOR_RES[x.meta.valor];
+        return {
+            items: pend, dueno, ahora: Date.now(),
+            ronda: estado ? estado.ronda : null,
+            categoria: estado ? (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) : "",
+            mesas: estado ? estado.mesas.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: m.valor === "0" ? "sin resultado" : M.textoResultado(m.valor), pendiente: pendientes[m.mesa] || "" })) : [],
+        };
+    }
+
+    function bajarCopia() {
+        const R = window.CentroamericanoRespaldo;
+        if (!R) { avisar("Esta tablet no puede armar la copia.", true); return; }
+        try {
+            const texto = R.armar(datosDeCopia(), {
+                fechaHora: (ms) => window.HoraCR.fechaHora(ms, { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" }),
+                hora: (ms) => hora(ms, { hour: "numeric", minute: "2-digit" }),
+            });
+            const nombre = R.nombreArchivo(Date.now());
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([texto], { type: "text/plain;charset=utf-8" }));
+            a.download = nombre;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+            avisar("Se bajó «" + nombre + "». Déjalo en la tablet; si puedes, mándalo también a otro aparato (Bluetooth, cable o correo).");
+        } catch (e) { avisar("No se pudo armar la copia: " + (e && e.message ? e.message : "inténtalo otra vez."), true); }
+    }
+
+    // Vuelve a poner en la cola lo de una copia. Solo de ESTE enlace; lo que ya estaba (mismo id) no se suma; lo demás se manda solo.
+    async function cargarCopia(archivo) {
+        const R = window.CentroamericanoRespaldo;
+        if (!archivo || !R) return;
+        if (!cola) { avisar("Esta tablet no puede guardar pendientes: no se cargó la copia.", true); return; }
+        let texto;
+        try {
+            texto = await new Promise((ok, mal) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result)); fr.onerror = () => mal(new Error("No se pudo leer el archivo.")); fr.readAsText(archivo); });
+        } catch (e) { avisar(e.message, true); return; }
+        const r = R.leer(texto);
+        if (!r.ok) { avisar(r.error, true); return; }
+        if (r.dueno !== dueno) { avisar("Esta copia es de otro enlace (otro árbitro u otro torneo). Ábrela desde el enlace de quien la bajó. No se cargó nada.", true); return; }
+        const ya = new Set(cola.lista().map((x) => x.id));
+        let sumadas = 0, repetidas = 0;
+        for (const x of r.items) {
+            if (ya.has(x.id)) { repetidas++; continue; }
+            await cola.agregar({ id: x.id, accion: x.accion, cuerpo: x.cuerpo, etiqueta: x.etiqueta, meta: x.meta });
+            sumadas++;
+        }
+        avisar(R.resumenCarga(sumadas, repetidas));
+        if (sumadas) cola.vaciar();
     }
 
     const clave = (mesa, color) => mesa + "|" + color;
@@ -242,14 +304,11 @@
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ ilegales: k.ilegales }) }), icono("ilegal"), el("span", { class: "sr-only", texto: "Ilegal" }), k.ilegales > 1 ? el("span", { texto: " ×" + k.ilegales }) : null));
         if (k.irregularidades) marcas.append(el("span", { class: "cam-marca", "data-tipo": "irregularidad", title: "Irregularidad" + (k.irregularidades > 1 ? " ×" + k.irregularidades : "") },
             el("span", { class: "cam-marca-glifo", "aria-hidden": "true", texto: C.marcasTexto({ irregularidades: k.irregularidades }) }), icono("irregularidad"), el("span", { class: "sr-only", texto: "Irregularidad" }), k.irregularidades > 1 ? el("span", { texto: " ×" + k.irregularidades }) : null));
-        // Las veces que se levantó de la mesa (cada toque queda en la bitácora con la hora): «×3».
-        if (k.levantadas) marcas.append(el("span", { class: "cam-marca", "data-tipo": "levanto", title: "Se levantó de la mesa " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") },
-            icono("levantado"), el("span", { class: "sr-only", texto: "Se levantó " + k.levantadas + (k.levantadas === 1 ? " vez" : " veces") }), k.levantadas > 1 ? el("span", { "aria-hidden": "true", texto: " ×" + k.levantadas }) : null));
         // En el Blitz solo importan los resultados y la ilegal: ni «Se levantó» ni «Irregularidad» (el árbitro no tiene tiempo para eso).
         const blitz = rapido() === "blitz";
         const botonIlegal = botonJugador("ilegal", "ilegal", "Jugada ilegal de " + nombre, "Ilegal", () => ilegal(m, color), { variante: "cam-btn-icono-rojo", deshabilitado: ocupada });
         const acciones = blitz ? el("div", { class: "cam-acciones" }, botonIlegal) : el("div", { class: "cam-acciones" },
-            botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada }),
+            botonJugador("levanto", "levantado", "Anotar que " + nombre + " se levantó de la mesa" + (k.levantadas ? " (van " + k.levantadas + ")" : ""), "Se levantó", () => levanto(m, color), { variante: "cam-btn-icono-levanto", deshabilitado: ocupada, insignia: k.levantadas }),
             botonIlegal,
             botonJugador("irregularidad", "irregularidad", "Irregularidad de " + nombre, "Irregularidad", () => irregularidad(m, color), { deshabilitado: ocupada }));
         // «Anular»: solo aparece cuando hay algo que anular.
@@ -356,29 +415,46 @@
         return el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar");
     }
 
-    // En el Rápido y el Blitz: 1-0, ½-½ y 0-1 en botones grandes. Un toque GUARDA (sin «Guardar»): no hay tiempo para más.
-    // Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace guardar()). Cualquier otro
-    // (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
+    // 1-0, ½-½ y 0-1 en botones grandes. En el Rápido y el Blitz un toque GUARDA (sin «Guardar»): no hay tiempo para más. En el CLÁSICO
+    // (la ficha corta de «Vista: tres toques») el toque solo ELIGE y hay que confirmar con «Guardar»: un resultado de clásico no se manda
+    // sin que el árbitro lo vea escrito y lo confirme. Cambiar un resultado que ya está en chess-results sigue preguntando antes (lo hace
+    // guardar()). Cualquier otro (incomparecencia, 0-0, borrar) va a mano en «Otro resultado», con el desplegable y «Guardar» de siempre.
     function resultadoRapido(m, sel, pendiente, ocupada, msg, fichaNueva) {
+        const confirmar = !rapido();   // clásico: elegir y confirmar
         const bloqueado = ocupada || !listaCompleta();
+        const hayElegido = elegido[m.mesa] != null && elegido[m.mesa] !== "";
+        const marcado = (r) => (confirmar && hayElegido ? elegido[m.mesa] === r.valor : m.valor === r.valor);
         const botones = RAPIDOS.map((r) => el("button", {
-            type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(m.valor === r.valor),
+            type: "button", class: "cam-rapido-btn", "data-accion": "rapido", "data-valor": r.valor, "aria-pressed": String(marcado(r)),
             disabled: bloqueado, title: listaCompleta() ? null : "Primero la revisión previa de la ronda",
-            "aria-label": (m.valor === r.valor ? "Guardado: " : "Guardar ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa,
-            onclick: () => { elegido[m.mesa] = r.valor; guardar(m); },
+            "aria-label": confirmar
+                ? (marcado(r) ? "Elegido: " : "Elegir ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa + ". Falta confirmar con Guardar"
+                : (m.valor === r.valor ? "Guardado: " : "Guardar ") + r.texto + " (" + r.ayuda + ") en la mesa " + m.mesa,
+            onclick: () => {
+                elegido[m.mesa] = r.valor;
+                if (!confirmar) { guardar(m); return; }
+                delete mensajes[m.mesa];
+                pintar();
+                const n = document.querySelector('#mesa-' + m.mesa + ' [data-accion="guardar"]');
+                if (n && !n.disabled) n.focus();   // el siguiente paso, a la mano: confirmar
+            },
         }, el("span", { class: "cam-rapido-valor", texto: r.texto }), el("span", { class: "cam-rapido-ayuda", texto: r.ayuda })));
         const otroAbierto = pendiente && !RAPIDOS.some((r) => r.valor === elegido[m.mesa]);
         // Ficha A: «En chess-results: …» sobra (la cabecera ya dice si hay resultado y el botón guardado se ve); solo sale cuando es un resultado
         // que no tiene botón (incomparecencia, etc.), para no esconderlo.
         const sinBoton = m.valor !== "0" && !RAPIDOS.some((r) => r.valor === m.valor);
-        return el("div", { class: "cam-resultado cam-resultado-rapido" },
+        const textoElegido = pendiente ? (M.RESULTADOS.find((x) => x.valor === elegido[m.mesa]) || { texto: elegido[m.mesa] }).texto : "";
+        return el("div", { class: "cam-resultado cam-resultado-rapido", "data-confirmar": confirmar ? "si" : null },
             !fichaNueva || sinBoton ? el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })) : null,
-            el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + ": un toque y se guarda" }, ...botones),
+            el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + (confirmar ? ": elige y confirma con Guardar" : ": un toque y se guarda") }, ...botones),
+            // Clásico: el «Guardar» queda siempre a la vista, debajo de los tres botones (apagado hasta que se elige algo distinto de lo guardado).
+            confirmar ? el("div", { class: "cam-resultado-fila cam-confirmar" }, botonGuardar(m, pendiente, ocupada)) : null,
             el("details", { class: "cam-rapido-otro", open: otroAbierto },
                 el("summary", { texto: "Otro resultado (a mano)" }),
-                el("div", { class: "cam-resultado-fila mt-2" }, sel, botonGuardar(m, pendiente, ocupada))),
+                el("div", { class: "cam-resultado-fila mt-2" }, sel, confirmar ? null : botonGuardar(m, pendiente, ocupada))),
             ocupada ? el("p", { class: "cam-guardado cam-resultado-msg", role: "status", texto: "Guardando…" })
                 : msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto })
+                : confirmar && pendiente ? el("p", { class: "cam-resultado-msg cam-por-confirmar", role: "status", texto: "Elegiste " + textoElegido + ". Toca Guardar para confirmarlo." })
                 : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" }));
     }
 
@@ -425,9 +501,11 @@
 
     // Un botón de icono de una fila de jugador. El texto va solo para lectores de pantalla y como pista (title): lo que se ve es
     // el icono (la leyenda de arriba los explica). 46 px: se toca con el dedo y con prisa.
-    function botonJugador(accion, nombreIcono, etiqueta, texto, fn, { variante = "", pulsado = null, deshabilitado = false } = {}) {
+    // `insignia`: las veces que se ha tocado (un número chiquito arriba del botón; sin nada si es 0). Lo usa «Se levantó»: sin icono extra en la ficha.
+    function botonJugador(accion, nombreIcono, etiqueta, texto, fn, { variante = "", pulsado = null, deshabilitado = false, insignia = 0 } = {}) {
         return el("button", { type: "button", class: "cam-btn-icono cam-btn-icono-chico " + variante, "data-accion": accion, "aria-pressed": pulsado === null ? null : String(pulsado), "aria-label": etiqueta, title: etiqueta, disabled: deshabilitado, onclick: fn },
-            icono(nombreIcono), el("span", { class: "sr-only", texto }));
+            icono(nombreIcono), el("span", { class: "sr-only", texto: texto + (insignia ? ": " + insignia + (insignia === 1 ? " vez" : " veces") : "") }),
+            insignia ? el("span", { class: "cam-insignia", "data-accion-insignia": accion, "aria-hidden": "true", texto: String(insignia) }) : null);
     }
     function bloqueIconos(m, ocupada) {
         const hecha = tienePlanilla(m.mesa), sube = subiendo.has(m.mesa);
@@ -438,8 +516,8 @@
                 sube ? "Subiendo la foto de las planillas de la mesa " + m.mesa
                     : (hecha ? "Cambiar la foto de las planillas de la mesa " + m.mesa + ": tiene que salir las dos planillas juntas" : "Tomar la foto de las dos planillas de la mesa " + m.mesa + " (las dos juntas)"),
                 () => subirPlanilla(m), { hecho: hecha, ocupado: sube, deshabilitado: ocupada || sube }),
-            botonIcono("hablar", "hablar", "Hablar con el jugador de la mesa " + m.mesa + " (frases en inglés y francés, y traductor)", () => abrirHablar(m), { deshabilitado: ocupada }),
             pendiente ? botonIcono("tiempo", "reloj", "Control de tiempos de la mesa " + m.mesa + (hayLectura ? " (ya hay una lectura)" : ""), () => abrirTiempos(false, m.mesa), { hecho: hayLectura }) : null,
+            botonIcono("hablar", "hablar", "Hablar con el jugador de la mesa " + m.mesa + " (frases en inglés y francés, y traductor)", () => abrirHablar(m), { deshabilitado: ocupada }),
             sube ? el("span", { class: "cam-iconos-estado", role: "status", texto: "Subiendo…" }) : null);
     }
 
@@ -1501,30 +1579,36 @@
         const caja = $("concluido");
         caja.hidden = !cerrada;
         $("concluir").hidden = cerrada;
-        if (!cerrada) return;
-        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que ya terminaste. Ya no puedes anotar ni guardar resultados en tus mesas. Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste. Si necesitas seguir, pide a la organización que reabra tus labores.";
+        $("fin-labores").hidden = cerrada;
+        if (!cerrada) {
+            // La base reabrió sola (empezó la ronda siguiente) o la organización las reabrió: los botones que se apagaron al concluir se encienden otra vez.
+            for (const n of document.querySelectorAll("[data-por-concluir]")) { n.disabled = false; n.removeAttribute("data-por-concluir"); }
+            return;
+        }
+        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que terminaste tu ronda completa" + (motivoConcluido ? " («" + motivoConcluido + "»)" : "") + ". Ya no puedes anotar ni guardar resultados en tus mesas, y se habilitan solos cuando empiece la ronda siguiente (si necesitas seguir antes, pide a la organización que los reabra). Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste.";
         tiemposAbierto = false;
         pintarTiempos();
         $("lista-previa").hidden = true; $("revision").hidden = true;   // ya no hay nada que revisar ni finalizar
         // Lo que escribe queda apagado de verdad (no solo en apariencia): ni con el teclado se puede tocar.
-        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #abrir-tiempos, #pedir-ayuda, #nombre-guardar, #nombre-campo")) n.disabled = true;
+        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #pedir-ayuda, #nombre-guardar, #nombre-campo")) { if (!n.disabled) n.setAttribute("data-por-concluir", "si"); n.disabled = true; }
     }
 
     async function concluirLabores() {
         if (concluida()) return;
         const pend = cola ? cola.lista() : [];
-        if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Ya terminé mis labores».", true); return; }
+        if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Terminé mi ronda completa».", true); return; }
+        // Terminar cierra los resultados de la ronda: no se confirma con un toque. Dice por qué termina y marca lo que comprobó (js/centroamericano-terminar.js).
+        const T = window.CentroamericanoTerminar;
+        if (!T) { avisar("Esta tablet no puede abrir la confirmación: recarga la página.", true); return; }
         const sinResultado = estado.mesas.filter((m) => m.valor === "0").length;
-        const avisos = [];
-        if (sinResultado) avisos.push("Todavía hay " + sinResultado + (sinResultado === 1 ? " mesa" : " mesas") + " sin resultado en la ronda " + estado.ronda + ".");
-        if (!estado.finalizada) avisos.push("No has finalizado la ronda " + estado.ronda + ".");
-        const sigue = await Avisos.confirmar((avisos.length ? avisos.join(" ") + " " : "") + "Se te cerrarán los resultados: ya no podrás anotar ni guardar nada, y podrás descargar tu bitácora en PDF. Si te equivocas, la organización puede reabrir tus labores.", { titulo: "Ya terminé mis labores", aceptar: "Sí, ya terminé", peligro: !!avisos.length });
+        const sigue = await T.preguntar({ ronda: estado.ronda, sinResultado, sinFinalizar: !estado.finalizada });
         if (!sigue) return;
+        motivoConcluido = sigue.texto;
         $("concluir").disabled = true;
         try {
             const d = await invocar("concluir", {});
             estado.concluyo = d.concluyo;
-            avisar("Concluiste tus labores. Ya puedes descargar tu bitácora.");
+            avisar("Listo: terminaste tu ronda completa. Se habilita solo en la ronda siguiente y ya puedes descargar tu bitácora.");
             pintar();
             const b = $("bajar-bitacora"); if (b) b.focus();
         } catch (e) {
@@ -1587,7 +1671,6 @@
         $("titulo-torneo").textContent = (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) + (r && estado.categoria ? (r === "blitz" ? " · Blitz" : " · Rápido") : "");
         // Modo rápido: sin control de tiempos (no se anotan en el Rápido ni en el Blitz) y la regla con sus minutos.
         document.body.dataset.ritmo = r || "clasico";
-        $("abrir-tiempos").hidden = !!r;
         $("regla-minutos").textContent = textoMinutos();
         $("modo-rapido").hidden = !r;
         if (r) $("modo-rapido-ritmo").textContent = r === "blitz" ? "Blitz" : "Rápido";
@@ -2212,6 +2295,9 @@
 
     function arrancar() {
         armarMenuVista();
+        $("bajar-copia").addEventListener("click", bajarCopia);
+        $("cargar-copia").addEventListener("click", () => $("archivo-copia").click());
+        $("archivo-copia").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; cargarCopia(f); });
         $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
@@ -2237,7 +2323,6 @@
         $("ir-cerrar").addEventListener("click", () => { corrigiendoInicio = false; pintarInicio(); $("ir-corregir").focus(); });
         $("concluir").addEventListener("click", concluirLabores);
         $("bajar-bitacora").addEventListener("click", bajarBitacora);
-        $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         setInterval(() => { if (!document.hidden) latirCuentas(); }, 1000);
         $("nombre-guardar").addEventListener("click", guardarNombre);

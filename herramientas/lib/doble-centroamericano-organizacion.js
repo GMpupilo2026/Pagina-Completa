@@ -68,7 +68,8 @@ function dobleOrganizacion(licencia) {
   // Lo que pasaría «afuera» mientras la página está abierta: un árbitro pide ayuda y otro lee un aviso.
   window.__nuevoAviso = (asig, mesa, texto, tipo, ronda) => AVISOS.push({ id: "av-n" + (++n), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: tipo || "ayuda", ronda: ronda || null });
   // Un árbitro toca «Ya terminé mis labores» en su tablet (lo que la organización ve en su lista).
-  window.__concluir = (id) => { const x = ASIG.find((y) => y.id === id); if (x) x.concluyo_en = new Date(Date.now() - 600000).toISOString(); };
+  // ronda: la que anotó la base al concluir (concluyo_ronda; sin ella, solo se reabre a mano).
+  window.__concluir = (id, ronda) => { const x = ASIG.find((y) => y.id === id); if (x) { x.concluyo_en = new Date(Date.now() - 600000).toISOString(); x.concluyo_ronda = ronda == null ? null : ronda; } };
   // Un árbitro toca «Inició la ronda» en su tablet (la función guarda la fila de su categoría y ronda); con minutos = null la quita.
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
@@ -137,7 +138,7 @@ function dobleOrganizacion(licencia) {
         { cuando: hace(100), tnr: "1532448", torneo: "PRUEBA grupo A", arbitro: "Árbitro de ensayo 1", ronda: 1, mesa: 2, tipo: "presencia", detalle: "Jugador de Prueba (blancas): no ha llegado" }]); }
       if (f === "centroamericano_reabrir_labores") { window.__reabrirArgs = (window.__reabrirArgs || []).concat([a.p_id]);
         const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
-        ASIG.filter((y) => y.id === x.id || (x.persona && y.persona === x.persona)).forEach((y) => { y.concluyo_en = null; });
+        ASIG.filter((y) => y.id === x.id || (x.persona && y.persona === x.persona)).forEach((y) => { y.concluyo_en = null; y.concluyo_ronda = null; });
         return R({ arbitro: x.arbitro, reabiertos: 1 }); }
       if (f === "centroamericano_quitar_enlace") { const x = ASIG.find((y) => y.id === a.p_id); if (!x) return R(null, { message: "Ese enlace ya no existe" });
         const hay = REGISTRO.filter((r) => r.asignacion_id === x.id).length;

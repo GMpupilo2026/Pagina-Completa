@@ -193,6 +193,9 @@ const estadoLiviano = (p) => p.evaluate(() => [document.documentElement.getAttri
     r = await abrir(browser, { memoria: 1 });
     igual("poca memoria (1 GB) lo enciende", [await estadoLiviano(r.p), await r.p.evaluate(() => window.ModoLiviano.motivos())], [["si", "true", "🪶 Liviano: sí"], ["poca memoria (1 GB)"]]);
     await r.ctx.close();
+    r = await abrir(browser, { memoria: 8, nucleos: 2 });
+    igual("un procesador de 2 núcleos lo enciende", [(await estadoLiviano(r.p))[0], await r.p.evaluate(() => window.ModoLiviano.motivos())], ["si", ["procesador de 2 núcleos"]]);
+    await r.ctx.close();
     r = await abrir(browser, { memoria: 8, lenta: true });
     igual("una tablet que dibuja lento: al abrir todavía no", (await estadoLiviano(r.p))[0], null);
     await r.p.waitForFunction(() => document.documentElement.getAttribute("data-liviano") === "si", null, { timeout: 12000 }).catch(() => {});
