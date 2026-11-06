@@ -243,7 +243,7 @@
     window.addEventListener("beforeunload", (ev) => { if (hayCambios()) { ev.preventDefault(); ev.returnValue = ""; } });
   }
   iniciar();
-  window.CentroamericanoPlanoEditor = { cargar, armarBorrador, guardar, estado: () => ({ plano, elegida, hayCambios: hayCambios() }) };
+  window.CentroamericanoPlanoEditor = { cargar, armarBorrador, guardar, tablerosPorTorneo, estado: () => ({ plano, elegida, hayCambios: hayCambios(), listo }) };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
