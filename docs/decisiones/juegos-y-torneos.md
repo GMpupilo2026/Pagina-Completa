@@ -10729,6 +10729,68 @@ rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mis
 de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
 script con sintaxis nueva hace saltar la primera comprobación.
 
+## La señal débil: el modo liviano pide menos datos (Centroamericano, 5/11)
+
+Pregunta del dueño, con la ronda en curso: el internet de la sala es muy limitado y el router queda lejos de varias
+mesas; ¿cómo hacer que las tablets gasten muchísimo menos y que todo siga llegando? Se midió primero qué pesaba
+(con la base, no con un pedido real: no se usó el token de un enlace):
+
+- **Las mesas de chess-results pesan poco** (unos 3 KB por categoría). Lo que pesaba era **todo lo demás de «leer»**:
+  las anotaciones de la ronda, los controles de tiempos y la presencia, que al final de una ronda suman **40–80 KB**,
+  y se mandaban enteros cada 45 s aunque nada hubiera cambiado.
+- **«Mis mesas en vivo» mandaba todas las jugadas de todas las mesas cada 10 s** (de LiveChess, cada una con su reloj).
+- **Cada pedido hacía dos viajes.** La función no mandaba `Access-Control-Max-Age`: el navegador guarda el permiso
+  CORS 5 s, así que casi todo pedido de la tablet iba precedido de un `OPTIONS`. Con señal débil eso es el doble de
+  espera y el doble de ocasiones de que algo se pierda.
+- **Fair Play se pedía dos veces**: en cada «leer» y además en su intervalo de 20 s.
+
+Lo que se hizo (sirve a TODAS las tablets; el modo liviano, además, espacia):
+
+- **`Access-Control-Max-Age: 7200`** en `centroamericano-mesas-vivo` (y en `centroamericano-mesa`, pendiente: ver abajo): un solo viaje por pedido
+  (Chrome guarda el permiso hasta 2 h; Safari, 10 min).
+- **«leer» con firma.** La respuesta trae `firma` (SHA-256 de la respuesta sin `leido_en` ni `datos`, que cambian
+  siempre). La tablet la manda la vez siguiente y, si coincide, la función contesta solo `{ igual, firma, leido_en,
+  datos }`: unos pocos bytes en vez de 40–80 KB. La tablet arma la pantalla con una copia de la **última respuesta
+  completa** (no con `estado`, que la página va tocando: un resultado guardado, una foto subida), así que «igual»
+  deja exactamente lo que dejaría la respuesta entera. La función todavía hace todo su trabajo (las consultas a la base
+  y la copia de chess-results): lo que se ahorra es la red, no el servidor. Compatible hacia los dos lados: una tablet
+  sin recargar no manda firma y recibe todo; si la función no manda firma, la tablet pide todo.
+- **«Mis mesas en vivo», solo lo nuevo.** La tablet manda de cada mesa cuántas jugadas tiene y su huella
+  (`tengo: [{mesa, n, h}]`, FNV-1a de las jugadas); si las primeras `n` jugadas de la transmisión siguen siendo esas,
+  la función manda solo las que faltan (`desde: n`). Si el tablero corrigió una jugada de antes, la huella ya no
+  coincide y va todo; de otra ronda, también. Si a la tablet le falta algo para pegarlo (no debería pasar), se queda con
+  lo de antes y la próxima lectura pide todo. La huella está escrita dos veces (la función no puede importar de `js/`):
+  `huellaJugadas` en `js/centroamericano-arbitro-vivo.js` y entre `// huella-jugadas: inicio/fin` en la función, y el
+  verificador ejecuta las dos y exige que den lo mismo. Lo de Lichess (sin LiveChess) ya era solo la posición.
+- **Fair Play**, solo en su intervalo (y al abrir o cambiar de ronda), no en cada «leer».
+- **El modo liviano, más espaciado**: las mesas cada 90 s (eran 45), Fair Play cada 60 s (eran 40) y «Mis mesas en
+  vivo» cada 20 s (ya estaba). **Los avisos de la organización (20 s) y lo que el árbitro anota no se demoran nunca.**
+- **El modo liviano se enciende solo con la señal débil**: si 3 de los últimos 6 pedidos chicos («leer» y «avisos»;
+  la foto no cuenta, tarda por su tamaño) tardaron más de 6 s o se perdieron, la página llama
+  `ModoLiviano.senalDebil()` y avisa «La señal está débil…». También si el navegador ya dice `2g` o menos
+  (`navigator.connection`, que el iPad no tiene). **No se recuerda**: la señal cambia de un lugar de la sala a otro.
+  Si la persona lo apagó con el botón, manda lo que eligió.
+
+**Lo que falta desplegar (6/11): la parte de `centroamericano-mesa`** —su `Access-Control-Max-Age` y la firma de
+«leer» con su respuesta «igual»—. `centroamericano-mesas-vivo` ya está desplegada (versión 7) y la tablet ya manda la
+firma, pero la función de «leer» de hoy la ignora y contesta todo, como siempre: nada se rompe y el ahorro empieza solo
+cuando se despliegue. Se dejó fuera de este cambio porque se despliega copiando sus siete archivos (unos 124 KB) por la
+herramienta de Supabase, y al copiar a mano la de mesas en vivo se coló un error (se volvió a subir bien): en pleno
+torneo, la función que usan todas las tablets no se sube así. El cambio está descrito arriba («leer» con firma) y se
+aplica con la CLI de Supabase (`supabase functions deploy centroamericano-mesa`), que sube los archivos del disco.
+
+Lo que NO se tocó, a propósito:
+
+- **La foto de las planillas** (JPG al 82 %, lado largo de 2600 px, unos cientos de KB): de esa foto se reconstruye la
+  partida («Generar PGN»), y una foto más chica se lee peor. Ya va por la cola: si no sale, espera y se manda sola.
+- **Los avisos cada 20 s**: son pocos bytes y es lo que no se puede atrasar.
+
+Lo revisan `verificar-modo-liviano.js` (la firma que se manda, el «igual» que deja la pantalla igual, un cambio que
+trae todo, la señal débil que lo enciende sin recordarlo, el botón que manda, los intervalos) y
+`verificar-centroamericano-mesas-vivo.js` (las dos huellas iguales, unir lo nuevo, otra ronda y el `Max-Age` de la
+función). El doble de la función (`herramientas/lib/doble-centroamericano-arbitro.js`) firma como la de verdad;
+`window.__sinFirma` imita a la de antes.
+
 ## Mesa del árbitro: los torneos ligados de un grupo
 
 `mesa-arbitro.html` (la Mesa del árbitro general) leía solo el torneo con el que abre la clave: si los torneos

@@ -30,7 +30,7 @@
     const M = window.MesaArbitro;
     const $ = (id) => document.getElementById(id);
     const avisar = (texto, error) => Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
-    const REFRESCO_MS = 45000; // las mesas (hablan con chess-results)
+    const REFRESCO_MS = 45000; // las mesas (hablan con chess-results); en el modo liviano, cada 90 s
     // La tablet vieja o lenta (js/modo-liviano.js): algunas consultas van menos seguido. Los avisos de la organización
     // y lo que se anota NO: eso no se demora nunca.
     const liviano = () => !!(window.ModoLiviano && window.ModoLiviano.activo());
@@ -140,14 +140,30 @@
     // verdad (enlace vencido, mesa fuera de rango…) se devuelve de una vez.
     async function invocar(accion, cuerpo, { intentos = 3, ms } = {}) {
         const tiempo = ms || (accion === "planilla" ? TIEMPO_FOTO_MS : TIEMPO_MS);
+        const inicio = Date.now();
         try {
             const d = await Cola.conReintentos(() => llamar(accion, cuerpo, tiempo), { esperas: Cola.ESPERAS_MS.slice(0, intentos) });
             ponerSenal(true);
+            medirSenal(accion, Date.now() - inicio, false);
             return d;
         } catch (e) {
             ponerSenal(!Cola.esDeRed(e));
+            medirSenal(accion, Date.now() - inicio, Cola.esDeRed(e));
             throw e;
         }
+    }
+
+    // ¿La señal está débil? (el router lejos, mucha gente en la misma red). Se miran los últimos pedidos chicos (leer y
+    // avisos; la foto tarda por su tamaño y no cuenta): si 3 de los últimos 6 tardaron más de 6 s o se perdieron, se
+    // enciende el modo liviano, que pide menos y menos seguido. Solo si la persona no eligió con el botón, y solo por
+    // esta visita (la señal cambia de un lugar a otro: no se recuerda).
+    const SENAL_LENTA_MS = 6000;
+    const ultimosPedidos = [];
+    function medirSenal(accion, ms, perdido) {
+        if (accion !== "leer" && accion !== "avisos") return;
+        ultimosPedidos.push(perdido || ms > SENAL_LENTA_MS);
+        if (ultimosPedidos.length > 6) ultimosPedidos.shift();
+        if (ultimosPedidos.filter(Boolean).length >= 3 && window.ModoLiviano && window.ModoLiviano.senalDebil) window.ModoLiviano.senalDebil();
     }
 
     function ponerSenal(hay) {
@@ -1775,6 +1791,7 @@
         if (cambioRonda) fairPlay = [];
         d.fair_play = fairPlay;
         if (cambioRonda) corrigiendoInicio = false;
+        const primera = !estado;
         conservarInicio(d);
         // Si llegó lo mismo que ya está pintado (lo de siempre al actualizar cada 45 s con la ronda quieta), las
         // tarjetas no se vuelven a armar. `leido_en` cambia siempre y no se ve en ellas.
@@ -1782,7 +1799,9 @@
         const firmaAnuladas = (a) => JSON.stringify(Array.from(a).sort());
         const igual = !!estado && !cambioRonda && firma(estado) === firma(d) && firmaAnuladas(anuladas) === firmaAnuladas(d.anuladas || []);
         estado = d;
-        cargarFairPlay();
+        // Fair Play tiene su propio intervalo: aquí solo al abrir y al cambiar de ronda (antes iba en cada «leer», y con
+        // el intervalo eran dos pedidos donde bastaba uno).
+        if (primera || cambioRonda) cargarFairPlay();
         anuladas = new Set(d.anuladas || []);
         if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
         $("problema").hidden = true;
@@ -1802,7 +1821,7 @@
         const boton = $("actualizar");
         boton.disabled = true;
         try {
-            const d = await invocar("leer");
+            const d = await leerAhorrando();
             mostrar(d);
             if (dueno) Cola.guardarEstado(dueno, d);
             $("actualizado").textContent = "Actualizado a las " + hora(d.leido_en);
@@ -1825,6 +1844,22 @@
             leyendo = false;
             boton.disabled = false;
         }
+    }
+
+    // AHORRO DE DATOS: «leer» trae su `firma`; la siguiente vez se la mandamos y, si nada cambió (lo de siempre con la
+    // ronda quieta), la función contesta solo «igual» con la hora, en vez de los 40–80 KB de un final de ronda. Lo que
+    // se usa entonces es una copia de la ÚLTIMA RESPUESTA COMPLETA (no de `estado`, que la página va tocando), así que
+    // la pantalla queda exactamente como la dejaría la respuesta entera.
+    let ultimaCompleta = null, firmaCompleta = null;
+    async function leerAhorrando() {
+        const d = await invocar("leer", ultimaCompleta && firmaCompleta ? { firma: firmaCompleta } : null);
+        if (d.igual) {
+            if (ultimaCompleta && d.firma === firmaCompleta) return Object.assign(JSON.parse(ultimaCompleta), { leido_en: d.leido_en, datos: d.datos });
+            ultimaCompleta = firmaCompleta = null;   // no debería pasar: se pide entera
+            return leerAhorrando();
+        }
+        if (d.firma) { ultimaCompleta = JSON.stringify(d); firmaCompleta = d.firma; }
+        return d;
     }
 
     // Lo que sale de la cola cuando vuelve la señal.
@@ -2226,11 +2261,12 @@
         $("ir-mesa").addEventListener("change", irAMesa);
         $("ir-mesa").addEventListener("keydown", (e) => { if (e.key === "Enter") irAMesa(); });
         $("solo-faltan").addEventListener("change", pintar);
-        setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
+        let vueltaLeer = 0;
+        setInterval(() => { if (document.hidden) return; if (liviano() && (vueltaLeer++ % 2)) return; if (estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
         // Fair Play: cada 20 s; en el modo liviano, cada 40 s (una vuelta sí y otra no).
         let vueltaFp = 0;
-        setInterval(() => { if (document.hidden) return; if (liviano() && (vueltaFp++ % 2)) return; cargarFairPlay(); }, 20000);
+        setInterval(() => { if (document.hidden) return; if (liviano() && (vueltaFp++ % 3)) return; cargarFairPlay(); }, 20000);
         // «Mis mesas en vivo»: solo aparece si la organización conectó la transmisión privada sin atraso.
         if (window.CentroamericanoArbitroVivo) {
             window.CentroamericanoArbitroVivo.iniciar({ token, boton: $("ver-vivo"), alAlertar: alertaDeTablas, alActualizar: alActualizarVivo,

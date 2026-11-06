@@ -14,7 +14,8 @@
 //
 // Va aparte de centroamericano-mesa para no volver a desplegar esa función en medio del torneo (lo mismo que
 // centroamericano-fair-play). verify_jwt en FALSE: la tablet no trae JWT; la función decide sola:
-//   - "mesas"      {arbitro_token}  → la tablet: sus mesas de la ronda abierta, con la posición y los relojes en vivo
+//   - "mesas"      {arbitro_token, ronda?, tengo?} → la tablet: sus mesas de la ronda abierta, con la posición y los relojes en vivo
+//                                     (con `tengo` = [{mesa, n, h}], de cada mesa de LiveChess solo las jugadas nuevas, `desde` n)
 //   - con el JWT de quien llama y tengo_herramienta('mesa-arbitro') (la organización):
 //     "estado"     {}               → si está conectada, desde cuándo, y qué torneos y rondas ve (nunca la clave)
 //     "conectar"   {enlace, token}  → prueba la clave y la transmisión contra Lichess y solo entonces las guarda.
@@ -45,6 +46,8 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  // Que el navegador recuerde el permiso: sin esto, cada pedido de la tablet (cada 10 s) iba precedido de un OPTIONS.
+  "Access-Control-Max-Age": "7200",
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -138,7 +141,29 @@ function tablerosDe(t: string): Set<number> {
 }
 // Las partidas de SUS mesas en LiveChess: la mesa de chess-results es el tablero de LiveChess, y los dos nombres
 // tienen que coincidir (si no, esa mesa no se da: mejor nada que la partida de otro).
-async function mesasLivechess(lc: { torneo_id: string; tableros: string }, ronda: number, suyas: { mesa: number; blancas: string; negras: string }[]) {
+// AHORRO DE DATOS: la tablet pregunta cada 10 s y antes recibía TODAS las jugadas de todas sus mesas cada vez. Ahora
+// manda, por mesa, cuántas jugadas ya tiene y su huella (`tengo`); si las primeras jugadas de la transmisión siguen
+// siendo esas, se le mandan solo las nuevas (`desde`). Si cambió algo antes (el tablero corrigió una jugada), va todo.
+// La huella es la MISMA en js/centroamericano-arbitro-vivo.js (huellaJugadas): verificar-centroamericano-mesas-vivo.js
+// comprueba que las dos den lo mismo.
+// huella-jugadas: inicio
+function huellaJugadas(jugadas: string[], n: number): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < n && i < jugadas.length; i++) {
+    const t = String(jugadas[i]) + "\n";
+    for (let j = 0; j < t.length; j++) { h ^= t.charCodeAt(j); h = Math.imul(h, 0x01000193) >>> 0; }
+  }
+  return n + ":" + h.toString(16);
+}
+// huella-jugadas: fin
+
+function soloLoNuevo(mesa: number, jugadas: string[], tengo: Map<number, { n: number; h: string }>): { jugadas: string[]; desde?: number } {
+  const t = tengo.get(mesa);
+  if (!t || !(t.n > 0) || t.n > jugadas.length || huellaJugadas(jugadas, t.n) !== t.h) return { jugadas };
+  return { jugadas: jugadas.slice(t.n), desde: t.n };
+}
+
+async function mesasLivechess(lc: { torneo_id: string; tableros: string }, ronda: number, suyas: { mesa: number; blancas: string; negras: string }[], tengo: Map<number, { n: number; h: string }> = new Map()) {
   // deno-lint-ignore no-explicit-any
   const indice: any = await lcPedir(lc.torneo_id + "/round-" + ronda + "/index.json", INDICE_MS);
   const pareos = (indice && indice.pairings) || [];
@@ -156,7 +181,7 @@ async function mesasLivechess(lc: { torneo_id: string; tableros: string }, ronda
     // deno-lint-ignore no-explicit-any
     const g: any = await lcPedir(lc.torneo_id + "/round-" + ronda + "/game-" + m.mesa + ".json?poll", PARTIDA_MS);
     if (!g) { noReconoce.push({ mesa: m.mesa, motivo: "La transmisión no tiene esta partida." }); return; }
-    out.push({ mesa: m.mesa, fuente: "livechess", jugadas: (Array.isArray(g.moves) ? g.moves : []).slice(0, 600).map(String),
+    out.push({ mesa: m.mesa, fuente: "livechess", ...soloLoNuevo(m.mesa, (Array.isArray(g.moves) ? g.moves : []).slice(0, 600).map(String), tengo),
       primera: typeof g.firstMove === "number" ? g.firstMove : null, en_vivo: !!g.live, reloj: g.clock ?? null,
       estado: RESULTADO_LC[String(g.result)] || (p.result && p.result !== "*" ? String(p.result).replace("1/2-1/2", "½-½") : "*") });
   }));
@@ -211,7 +236,15 @@ Deno.serve(async (req) => {
       const suyas = ((l?.mesas ?? []) as { mesa: number; blancas: string; negras: string }[]).filter((m) => m.mesa >= a.mesa_desde && m.mesa <= a.mesa_hasta && !sinRival(m.blancas) && !sinRival(m.negras));
       if (!ronda || !suyas.length) return json({ ok: true, conectada: true, ronda, mesas: [] });
       if (lc) {
-        const r = await mesasLivechess(lc as { torneo_id: string; tableros: string }, ronda, suyas);
+        // Lo que la tablet ya tiene de ESTA ronda (de otra ronda no sirve: va todo).
+        const tengo = new Map<number, { n: number; h: string }>();
+        if (Number(cuerpo.ronda) === ronda && Array.isArray(cuerpo.tengo)) {
+          for (const x of (cuerpo.tengo as { mesa?: unknown; n?: unknown; h?: unknown }[]).slice(0, 200)) {
+            const mesa = Number(x?.mesa), n = Number(x?.n);
+            if (Number.isInteger(mesa) && Number.isInteger(n) && n > 0 && typeof x?.h === "string") tengo.set(mesa, { n, h: x.h.slice(0, 40) });
+          }
+        }
+        const r = await mesasLivechess(lc as { torneo_id: string; tableros: string }, ronda, suyas, tengo);
         return json({ ok: true, conectada: true, fuente: "livechess", ronda, delay: 0, leida: new Date().toISOString(),
           mesas: r.mesas.sort((x, y) => Number(x.mesa) - Number(y.mesa)), no_reconoce: r.noReconoce.sort((x, y) => x.mesa - y.mesa) });
       }
