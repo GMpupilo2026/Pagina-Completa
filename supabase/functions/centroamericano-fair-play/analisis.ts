@@ -452,10 +452,12 @@ export function centroYFactor(zs: number[]): { centro: number; factor: number } 
 
 // ---- La validación: qué tan confiable es, con los jugadores de verdad
 // Alarmas falsas: de los jugadores medidos (casi todos honestos), cuántos pasan cada umbral; lo esperable por azar es
-// 2,3 % desde 2 desviaciones y 0,6 % desde 2,5. Detección: a cada jugador se le «hace trampa» en una parte de sus
+// 0,13 % desde 3 desviaciones y 0,003 % desde 4. Las varas son las del seminario de Fair Play de FIDE (Costa Rica, 2026):
+// el índice de 40 a 64 es normal, de 65 a 69 se vigila al jugador y desde 70 se lo sigue y se prepara para actuar
+// (65 = 3 desviaciones; 70 = 4). Detección: a cada jugador se le «hace trampa» en una parte de sus
 // jugadas (en cada una, con esa probabilidad, la primera del motor en vez de lo que jugó) y se mira si el índice lo marca. Con una semilla fija: el mismo
 // resultado cada vez.
-export const UMBRAL_A_MIRAR = 2, UMBRAL_ALTA = 2.5;
+export const UMBRAL_A_MIRAR = 3, UMBRAL_ALTA = 4;
 function azar(semilla: number) { let t = semilla >>> 0; return () => { t += 0x6d2b79f5; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
 export function validar(jugadores: { movs: MovModelo[]; s: number }[], c: number, factor: number, centro = 0, fracciones = [0.1, 0.2, 0.3], R: Correlaciones = CORR_INICIAL) {
   const medibles = jugadores.filter((j) => j.movs.length >= 30);
@@ -473,7 +475,7 @@ export function validar(jugadores: { movs: MovModelo[]; s: number }[], c: number
     deteccion[String(f)] = { a_mirar: pct(mira, total), alta: pct(alta, total) };
   }
   return { jugadores: medibles.length, falsas_a_mirar: pct(zReal.filter((z) => z >= UMBRAL_A_MIRAR).length, zReal.length),
-    falsas_alta: pct(zReal.filter((z) => z >= UMBRAL_ALTA).length, zReal.length), esperadas_a_mirar: 2.3, esperadas_alta: 0.6, deteccion };
+    falsas_alta: pct(zReal.filter((z) => z >= UMBRAL_ALTA).length, zReal.length), esperadas_a_mirar: 0.13, esperadas_alta: 0.003, deteccion };
 }
 
 // ---- La fuerza que se le reconoce a cada jugador (el Elo atrasado de los niños)
@@ -734,11 +736,12 @@ export function trampas(movs: MovModelo[], s: number, c: number, atraccion = 1):
 }
 
 // ---- El umbral según el tamaño del torneo
-// Con muchos jugadores, alguno sale alto por azar: con 300, unos 7 pasan de 2 desviaciones (el 60 de FIDE). Regan sube
+// Con muchos jugadores, alguno sale alto por azar: con 1000, FIDE espera 22 sobre 2 desviaciones y uno sobre 3. Regan sube
 // la vara según cuántos se miran. Aquí, la vara que pasaría por azar UNO solo de cada 20 torneos de ese tamaño (la
-// corrección de Bonferroni con 5 %): con 10 jugadores, 2,6 desviaciones (63); con 300, 3,6 (68). Y para sancionar sin
-// una prueba física, FIDE pide mucho más: alrededor de 4,5 desviaciones (72,5) en el informe del modelo.
-export const UMBRAL_SANCION = 4.5;
+// corrección de Bonferroni con 5 %), nunca por debajo de «vigilar» (3 desviaciones, 65): con 300 jugadores, 3,6 (68).
+// Para probar la trampa con la estadística sola, el Reglamento de Fair Play de FIDE (art. 1.6) pide 5,00 desviaciones
+// sobre el tablero y 4,25 en línea; con otra prueba (un celular encontrado, lo que se vio), 2,50 sirve de apoyo.
+export const UMBRAL_SANCION = 5, UMBRAL_SANCION_LINEA = 4.25, UMBRAL_APOYO = 2.5;
 export function normalInversa(p: number): number {
   // Acklam: el cuantil de la normal, con error menor a 1e-9 entre 0 y 1.
   const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];

@@ -9669,6 +9669,39 @@ Probado en el Postgres de ensayo: sin motivo se rechaza, la aprobada manda el av
 mesa se vuelve a elegir, borrar dos veces y sin permiso se rechazan. Lo comprueba `verificar-centroamericano-fair-play.js`
 (roto a propósito, sin el botón, salta).
 
+#### Las varas de FIDE
+
+El dueño pasó el 6 de noviembre las presentaciones del seminario de Fair Play de FIDE en Costa Rica (Andy Howie, «Understanding
+Chess Statistics»; «OTB Operations»; GM Colovic, el marco legal) y pidió dejar el sistema como lo pide FIDE
+(`20261106210000`, pegada a mano en el editor SQL; función `centroamericano-fair-play` en su versión 17):
+
+- **El índice (ROI) se lee como FIDE**: de 40 a 64 es normal (de 60 a 64, «normal, en el borde alto»), de 65 a 69 se
+  vigila al jugador mientras juega y desde 70 se lo sigue, se lo revisa y se prepara para actuar. Aquí se marcaba desde
+  60 («a mirar») y desde 62,5 («muy alta»): más estricto que FIDE, y a ese nivel un jugador limpio de cada 44 sale
+  marcado. Ahora 65 es «a mirar» y 70 «muy alta» en la tabla del índice, en el nivel de cada partida
+  (`centroamericano_fp_calibrar`), en el peso del sorteo (+1 desde 65 y +1,5 desde 70, `centroamericano_fp_candidatas`),
+  en la validación (`UMBRAL_A_MIRAR` = 3 y `UMBRAL_ALTA` = 4 desviaciones; por azar, 0,13 % y 0,003 %) y en los PDF. La
+  vara según el tamaño del torneo ya no baja de 65. El precio, medido con los 80 jugadores inventados del verificador:
+  quien usa el motor en 3 de cada 10 jugadas sale marcado el 38 % de las veces (antes, más de la mitad), a cambio de
+  que casi ningún limpio pase de 70.
+- **La vara para probar la trampa estaba mal**: aquí decía «alrededor de 4,5». El Reglamento de Fair Play de FIDE
+  (art. 1.6) pide **5,00 desviaciones sobre el tablero** (índice 75) y **4,25 en línea**; con otra prueba (un aparato
+  encontrado, lo que vio un oficial), **2,50** sirve de apoyo (`UMBRAL_SANCION`, `UMBRAL_SANCION_LINEA`,
+  `UMBRAL_APOYO`). El informe de cada jugador dice a cuál llega.
+- **Lo que pasaría por azar**, como lo dice FIDE: junto al índice de cada jugador, «por azar, 1 de cada N jugadores
+  limpios» (z = 2, 1 de cada 44; 3, 741; 4, 31 574; `porAzar()`, la erfc de Numerical Recipes).
+- **La revisión, como la enseña FIDE** («Lo que pide FIDE para la revisión»): con un menor, nunca a solas (antes, sin
+  tocarlo y pidiendo permiso; después, con su mamá, su papá, su entrenador o su capitán presente); nunca una sola
+  persona, la nota en el momento con la hora, la foto de un aparato donde está antes de tocarlo, y mirar solo la pantalla
+  y las aplicaciones abiertas; la denuncia durante la partida por escrito y los dos jugadores revisados al terminar; lo
+  manda a fairplay@fide.com una sola persona.
+
+Lo que ya hacíamos como FIDE: el índice corregido para que la sala entera dé 50 (su «Average ROI by player»: aquí, el
+«centro»), lo medido hasta la jugada 60 (desde donde termina la teoría, que FIDE pone en la 8), sin las posiciones ya
+decididas, con al menos 30 jugadas para el índice y el rendimiento para quien no tiene Elo. Lo que podría sumarse
+(propuesto, sin hacer): el IPR (la fuerza con que jugó, en Elo y con su margen), no contar las jugadas
+repetidas y «casi la del motor».
+
 #### Los informes de Fair Play, sin nada cortado
 
 Lo pidió el dueño el 6 de noviembre: en los PDF de Fair Play (el registro de las mesas, el informe del torneo y el de cada
@@ -10018,7 +10051,8 @@ cosas y a lo que él no usa.
 - **La vara según el tamaño del torneo** (`umbralTorneo()`): con 300 jugadores, unos 7 pasan de 60 por azar. La vara
   «raro aun para un torneo de este tamaño» es la que pasaría uno solo de cada 20 torneos así (Bonferroni al 5 %): con 10
   jugadores, 2,6 desviaciones (63); con 300, 3,6 (68). Y FIDE pide alrededor de 4,5 (72,5) para sancionar sin prueba
-  física; la pantalla lo dice cuando se llega.
+  física; la pantalla lo dice cuando se llega. (Corregido el 6 de noviembre: son 5,00 sobre el tablero, 4,25 en línea y
+  2,50 como apoyo de otra prueba; ver «Las varas de FIDE».)
 - **Todas las señales en una cuenta** (`combinada()`): el índice de siempre no cambia; aparte, el índice con el tiempo,
   el contraste de las rachas y las trampas, sumadas como el índice suma las suyas: divididas por la raíz de su matriz de
   correlación medida en el torneo (`correlacionDe()`), para no contar dos veces lo mismo. Pesan igual: para darles pesos
