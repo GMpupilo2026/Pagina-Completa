@@ -1622,7 +1622,10 @@ async function esperarJugadas(p, n) {
     // Una partida con todas las piezas en juego (cada jugada, una foto con su posición).
     const partida = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O", "h3", "Nb8", "d4", "Nbd7", "Nbd2", "Bb7", "Bc2", "Re8"];
     for (const m of partida) { j.move(m); await conFormas(j.fen()); await esperarJugadas(pm, j.history().length); }
-    await pm.waitForFunction(() => /^\d+ fotos guardadas\.$/.test(document.getElementById("muestras-cuenta").textContent) && !document.getElementById("btn-modelo-entrenar").disabled, null, { timeout: 8000 }).catch(() => {});
+    // Espera el número EXACTO: cada foto se guarda después de anotar su jugada, y con
+    // «cualquier número» se leía la cuenta mientras la última todavía se guardaba
+    // (23 de 24 en el CI de 2 núcleos, el 6/11/2026).
+    await pm.waitForFunction((n) => document.getElementById("muestras-cuenta").textContent === n + " fotos guardadas." && !document.getElementById("btn-modelo-entrenar").disabled, partida.length, { timeout: 8000 }).catch(() => {});
     igual("cada jugada dejó su foto, y con 10 o más se puede entrenar", [await pm.textContent("#muestras-cuenta"), await pm.isEnabled("#btn-modelo-entrenar")], [partida.length + " fotos guardadas.", true]);
     await pm.click("#btn-modelo-entrenar");
     await pm.waitForFunction(() => /^Hay un modelo de las piezas en este aparato/.test(document.getElementById("modelo-estado").textContent), null, { timeout: 60000 }).catch(() => {});
