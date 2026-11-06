@@ -34,7 +34,9 @@ jobs:
     name: Sin navegador
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 40 y no 20: con las máquinas de 2 núcleos de un repositorio privado tarda
+    # más del doble que con las de 4 (unos 12 minutos), y a los 20 se cortaba.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
