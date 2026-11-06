@@ -36,6 +36,42 @@
       {"categoria":"U08F","fen":"2qr2k1/p4p2/1p3bb1/6p1/8/2P2Q1P/PP2RP2/4R1K1 w - - 4 38","solucion":["f3f6"],"despues":["g8h7","e2e3","g6h5","e3g3"],"tema":"pieza","logro":"Lu"},
       {"categoria":"U14","fen":"2b2rk1/5ppp/6r1/p1B5/Pp2QP1n/1B5P/1q4P1/R4RK1 w - - 1 24","solucion":["b3f7"],"despues":["g8h8","f7g6","h7g6","c5f8"],"tema":"dama","logro":"Jimenez Gamboa"},
       {"categoria":"U10F","fen":"r2q1rk1/ppp3p1/1bn1pn1p/3pp3/4P3/P1NPBN1P/1PP1QPP1/3R1RK1 b - - 1 12","solucion":["d5d4","c3a4","d4e3"],"despues":["f2e3","a7a5","d3d4","d8e8"],"tema":"calidad","logro":"Borrell Espinoza"}
+    ],
+    "4": [
+      {"categoria":"U08","fen":"7k/2p3pp/2N5/8/qp6/P2P4/6PP/5R1K w - - 0 38","solucion":["f1f8"],"despues":[],"tema":"mate","mate":1},
+      {"categoria":"U10","fen":"8/P1R2p2/1R2pkp1/3b4/8/6KP/r5P1/8 b - - 0 40","solucion":["g6g5","g3h2","a2g2"],"despues":["h2h1","g2b2","h1g1","b2b6"],"tema":"torre"},
+      {"categoria":"U14F","fen":"r4rk1/pppq1ppp/2np1n2/2b1p3/2Q1P3/2PP1NN1/PP3PPP/R1B1K2R b KQ - 4 10","solucion":["c6a5","c4c5","d6c5"],"despues":["f3e5","d7e8","e5f3","f6d5"],"tema":"torre","logro":"Poetoe"},
+      {"categoria":"U12","fen":"3n4/1rN3pp/3k4/3P1p2/5P2/7P/2R2KP1/8 w - - 1 37","solucion":["c7e8","d6d5","c2d2"],"despues":["d5e6","d2d8","e6e7","d8a8"],"tema":"calidad","logro":"Humphrey"},
+      {"categoria":"U08F","fen":"5rk1/5pp1/3bpn1p/p7/q2P4/4RN1P/1rPB1PP1/2Q1R1K1 w - - 0 32","solucion":["c1b2"],"despues":["f8a8","g1h1","f6d5","e3b3"],"tema":"torre","logro":"Sorto"},
+      {"categoria":"U10F","fen":"r5k1/ppp2p2/3pr1p1/3N3p/3P4/6P1/PPP1N3/2K1R3 w - - 2 21","solucion":["d5c7"],"despues":["a8e8","c1d2","g8g7","c7e6"],"tema":"torre","logro":"Chacon Hernandez"},
+      {"categoria":"U18","fen":"2b1q1k1/3nrp1p/2p2Pp1/1pbp2Q1/p2P4/P2B1PP1/1P3B1P/2R3K1 w - - 0 27","solucion":["f6e7"],"despues":["c5e7","c1e1","g8f8","g5h6"],"tema":"pieza","logro":"Linares Orellana"},
+      {"categoria":"U12F","fen":"8/5pk1/2p2n1p/R2p2p1/P2p4/1P1P2PP/2r1BKP1/8 b - - 1 33","solucion":["f6e4","d3e4","d4d3","f2e1","c2e2"],"despues":["e1d1","d5e4","a5e5","g7f6"],"tema":"ataque"},
+      {"categoria":"U10","fen":"5k2/4r3/4p3/5p2/5P2/4K2P/1P5R/8 w - - 10 53","solucion":["b2b4","e6e5","h2b2"],"despues":["e5e4","b4b5","e7b7","b5b6"],"tema":"ataque","logro":"Nunez"},
+      {"categoria":"U14F","fen":"2r2rk1/p1q1bppp/1p2pn2/1BPp4/Q2P4/2N1Bb2/PP3PPP/R4RK1 b - - 2 14","solucion":["f6g4"],"despues":["g2g3","b6c5","a1e1","g4e3"],"tema":"pieza","logro":"Loria Molina"}
+    ],
+    "5": [
+      {"categoria":"U08F","fen":"3r3k/pb1q1pbp/1p2p1p1/2p5/4N2Q/1PP3PP/P4PB1/4R1K1 w - - 1 24","solucion":["e4f6","g7f6","h4f6","h8g8","g2b7"],"despues":["d7c7","b7e4","d8d2","h3h4"],"tema":"pieza"},
+      {"categoria":"U08","fen":"3r1rk1/2pq1ppp/p1n2n2/2p1p2b/1P2P3/3PQN1P/PPBB1PP1/3R1RK1 b - - 0 17","solucion":["h5f3","e3f3","c6d4","f3e3","d4c2"],"despues":["e3c5","d7d3","d2g5","d3e4"],"tema":"pieza"},
+      {"categoria":"U10F","fen":"5k2/p7/1p1P4/4R3/2p3K1/P1r5/8/8 w - - 0 44","solucion":["d6d7","c3d3","e5e8"],"despues":["f8f7","d7d8q","d3d8","e8d8"],"tema":"corona","logro":"Herrera Cordoba"},
+      {"categoria":"U16F","fen":"1R6/8/6k1/1p2K3/3n2Np/8/8/8 b - - 0 69","solucion":["d4c6","e5f4","c6b8"],"despues":["g4e3","g6h5","e3d5","b8d7"],"tema":"torre","logro":"Mendez Machado"},
+      {"categoria":"U10","fen":"2r3k1/p4p2/2b1p1p1/8/3q4/1P6/P4PPP/3R1RK1 w - - 0 22","solucion":["d1d4"],"despues":["c6d5","f2f3","c8c2","d4a4"],"tema":"dama","logro":"Cifuentes Lara"},
+      {"categoria":"U16","fen":"8/7p/p2r3k/4Qp2/PP1rpP1P/4K3/8/8 w - - 4 46","solucion":["e5d4"],"despues":["d6g6","e3f2","h6h5","d4d7"],"tema":"torre","logro":"Treminio Umanzor"},
+      {"categoria":"U14","fen":"8/8/5kp1/4R1p1/5p2/1r2PK1P/8/8 b - - 1 68","solucion":["f6e5"],"despues":["f3f2","f4e3","f2e2","e5f4"],"tema":"torre"},
+      {"categoria":"U14F","fen":"2k4r/1pp2q2/2n2rp1/P2pQ3/8/2PP1PNP/6P1/R2R2K1 b - - 0 27","solucion":["c6e5"],"despues":["f3f4","e5f3","g2f3","f6a6"],"tema":"dama"},
+      {"categoria":"U12F","fen":"r1b1k2r/3p1ppp/p1n1pn2/1pb1q3/3N4/2N1B3/PPPQBPPP/2KR3R w kq b6 0 11","solucion":["d4c6"],"despues":["c5e3","c6e5","e3d2","d1d2"],"tema":"pieza","logro":"Duran Araya"},
+      {"categoria":"U18F","fen":"3rr1k1/pp4pp/b1p5/3p4/P2Pnq2/1P2RN2/2QN1PPP/2R3K1 b - - 4 21","solucion":["e4f2","e3e8","d8e8","g1f2","e8e2"],"despues":["f2g1","f4g4","f3e1","g4d4"],"tema":"ataque"}
+    ],
+    "6": [
+      {"categoria":"U08F","fen":"4r1k1/2p2p1p/4qnp1/P1R5/1n2p3/4P1P1/1Q1N1PBP/6K1 b - - 0 32","solucion":["b4d3","b2c2","d3c5"],"despues":["c2c5","e6a2","c5c7","a2d2"],"tema":"pieza","logro":"Ayala Barraza"},
+      {"categoria":"U18F","fen":"r1bq1rk1/1p1nppbp/p2p1npB/2pP4/7P/2N2N2/PPPQPPP1/2KR1B1R b - h3 0 9","solucion":["g7h6","d2h6","f6g4","h6d2","g4f2"],"despues":["h1h2","f2d1","c3d1","f7f6"],"tema":"pieza"},
+      {"categoria":"U10F","fen":"1r6/6p1/P3k3/1R6/6K1/4P3/8/8 b - - 2 40","solucion":["b8b5"],"despues":["g4f4","b5a5","f4e4","a5a6"],"tema":"torre","logro":"Rico"},
+      {"categoria":"U12F","fen":"7R/7P/2p5/3k4/1p6/7r/5K2/8 w - - 0 56","solucion":["h8d8"],"despues":["d5c4","h7h8q","h3h8","d8h8"],"tema":"corona","logro":"Noble"},
+      {"categoria":"U12","fen":"r3k2r/pp3pp1/2nqp3/3p1n1p/1P1P4/2PQ1P2/P5PP/RNN1R1K1 w kq h6 0 16","solucion":["d3f5"],"despues":["a7a5","b4b5","c6e7","f5c2"],"tema":"pieza","logro":"Humphrey"},
+      {"categoria":"U16F","fen":"3rr1k1/1b1n1ppp/ppq1pn2/4N3/2pPN3/2P5/PPB1QPPP/3RR1K1 b - - 1 18","solucion":["d7e5","d4e5","f6e4"],"despues":["f2f3","e4c5","e2c4","g7g6"],"tema":"pieza","logro":"Pride"},
+      {"categoria":"U16","fen":"8/4R3/5k2/4p1Br/r3P2P/5K2/5P2/8 b - - 2 56","solucion":["h5g5"],"despues":["e7b7","a4a3","f3e2","a3a2"],"tema":"pieza","logro":"Perez Quinones"},
+      {"categoria":"U08","fen":"rnb1kb1r/pp2pppp/5n2/2p5/3q4/1P3N2/P1PP1PPP/RNBQKB1R b KQkq - 2 6","solucion":["d4a1"],"despues":["b1c3","a7a6","f1c4","b7b5"],"tema":"torre","logro":"Cordoba Koo"},
+      {"categoria":"U14","fen":"8/8/4kp2/4p3/2p3P1/2Pr1RK1/5PP1/8 w - - 7 38","solucion":["f3d3","c4d3","g3f3","e6d5","f3e3"],"despues":["e5e4","e3d2","d5c4","g2g3"],"tema":"ataque"},
+      {"categoria":"U08F","fen":"2r2rnk/1pq1bpp1/p3p2p/3p4/3n3Q/2NB3P/PPPB1PP1/R3R1K1 w - - 4 18","solucion":["h4d4"],"despues":["e7d6","g1h1","c8e8","d4h4"],"tema":"pieza","logro":"Porter"}
     ]
   }
 }
