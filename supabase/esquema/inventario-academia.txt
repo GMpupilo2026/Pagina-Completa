@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261105203936
+# al-dia-con: 20261106170942
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -581,6 +581,7 @@ columna  centroamericano_asignaciones.arbitro  text
 columna  centroamericano_asignaciones.codigo  text
 columna  centroamericano_asignaciones.concentracion  boolean
 columna  centroamericano_asignaciones.concluyo_en  timestamp with time zone
+columna  centroamericano_asignaciones.concluyo_ronda  integer
 columna  centroamericano_asignaciones.creada  timestamp with time zone
 columna  centroamericano_asignaciones.creada_por  uuid
 columna  centroamericano_asignaciones.id  uuid
@@ -2810,6 +2811,7 @@ funcion  centroamericano_actividad(p_tnr text, p_desde timestamp with time zone,
 funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
 funcion  centroamericano_codigo_canjear(p_codigo text, p_ip_huella text)  definer  anon=false  auth=false
 funcion  centroamericano_codigo_nuevo()  invoker  anon=false  auth=true
+funcion  centroamericano_concluyo_ronda_poner()  definer  anon=false  auth=false
 funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
@@ -2834,6 +2836,7 @@ funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
+funcion  centroamericano_reabrir_por_ronda()  definer  anon=false  auth=false
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  centroamericano_torneo_renombrar(p_tnr text, p_nombre text, p_categoria text)  definer  anon=false  auth=true
 funcion  centroamericano_torneos_agregar(p_evento text, p_torneos jsonb)  definer  anon=false  auth=true
@@ -3951,9 +3954,11 @@ trigger  arbitros_cr_normas_revision  consentimiento_fijo
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
+trigger  centroamericano_asignaciones  concluyo_ronda
 trigger  centroamericano_avisos  atendido
 trigger  centroamericano_finales  auditar
 trigger  centroamericano_fp_enlaces  auditar
+trigger  centroamericano_lecturas  reabrir_por_ronda
 trigger  centroamericano_registro  fair_play_resultado
 trigger  centroamericano_torneos  auditar
 trigger  centroamericano_tx_enlaces  auditar

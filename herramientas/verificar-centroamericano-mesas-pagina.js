@@ -598,7 +598,7 @@ const CONTRASTE = `(sel) => {
     await p.waitForSelector("#form-tiempos");
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
     igual("ya NO hay botón «Control de tiempos» arriba (cada mesa tiene su reloj): la barra no lo trae y las tarjetas sí", await p.evaluate(() => [!!document.getElementById("abrir-tiempos"), [...document.querySelectorAll("#barra, .cam-barra")].some((n) => /Control de tiempos/.test(n.textContent)), document.querySelectorAll('.cam-mesa [data-accion="tiempo"]').length > 0]), [false, false, true]);
-    igual("«Ya terminé mis labores» va APARTE de los demás controles: en el pie de la barra, fuera de la fila de botones, abajo a la derecha y a 24 px o más de los de arriba (así no se toca por accidente)", await p.evaluate(() => {
+    igual("«Terminé mi ronda completa» va APARTE de los demás controles: en el pie de la barra, fuera de la fila de botones, abajo a la derecha y a 24 px o más de los de arriba (así no se toca por accidente)", await p.evaluate(() => {
         const b = document.getElementById("concluir"), barra = document.querySelector(".cam-barra"), rb = b.getBoundingClientRect(), rbar = barra.getBoundingClientRect();
         const otros = [...barra.querySelectorAll("button")].filter((x) => x !== b && !x.closest(".cam-pie-barra") && x.checkVisibility()).map((x) => x.getBoundingClientRect());
         return [barra.contains(b), b.checkVisibility(), !b.closest(".cam-barra-controles"), !!b.closest(".cam-pie-barra"), rb.top - Math.max(...otros.map((r) => r.bottom)) >= 24, rbar.right - rb.right < 40, rbar.bottom - rb.bottom < 40];
@@ -1025,13 +1025,13 @@ const CONTRASTE = `(sel) => {
     let cc = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN });
     await cc.p.waitForSelector(".cam-mesa");
     const pc = cc.p;
-    igual("antes de concluir: está el botón «Ya terminé mis labores», no hay aviso de concluidas y no se puede bajar la bitácora (la función lo rechaza)", await pc.evaluate(async () => [document.getElementById("concluir").textContent.trim(), document.getElementById("concluido").hidden, (await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action: "bitacora" } })).error ? "rechazada" : "entregada"]), ["🏁 Ya terminé mis labores", true, "rechazada"]);
+    igual("antes de concluir: está el botón «Terminé mi ronda completa», no hay aviso de concluidas y no se puede bajar la bitácora (la función lo rechaza)", await pc.evaluate(async () => [document.getElementById("concluir").textContent.trim(), document.getElementById("concluido").hidden, (await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action: "bitacora" } })).error ? "rechazada" : "entregada"]), ["🏁 Terminé mi ronda completa", true, "rechazada"]);
     await pc.click("#concluir");
     await pc.waitForSelector("dialog[open]");
-    igual("pregunta antes (con lo que falta) y dice qué pasa: se cierran los resultados y se baja la bitácora", await pc.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Ya terminé mis labores"), /Todavía hay \d+ mesas? sin resultado/.test(t), t.includes("No has finalizado la ronda"), t.includes("ya no podrás anotar ni guardar"), t.includes("bitácora")]; }), [true, true, true, true, true]);
+    igual("pregunta antes (con lo que falta) y dice qué pasa: es para cuando ya terminó TODO lo de la ronda, se cierran los resultados hasta la ronda siguiente (se habilitan solos) y se baja la bitácora", await pc.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Terminé mi ronda completa"), /Todavía hay \d+ mesas? sin resultado/.test(t), t.includes("No has finalizado la ronda"), t.includes("ya no podrás anotar ni guardar"), t.includes("bitácora"), t.includes("TODO lo de esta ronda"), t.includes("se habilitan solos")]; }), [true, true, true, true, true, true, true]);
     await pc.click("dialog[open] [data-avisos-aceptar]");
     await pc.waitForFunction(() => !document.getElementById("concluido").hidden);
-    igual("al aceptar: la función recibe «concluir», sale el aviso de concluidas con la hora y el botón de la bitácora, y el botón de arriba se esconde", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "concluir").length, document.getElementById("concluido-titulo").textContent.trim(), /^A las \d{1,2}:\d{2} [ap]\. m\./.test(document.getElementById("concluido-texto").textContent), document.getElementById("bajar-bitacora").textContent.trim(), document.getElementById("concluir").hidden]), [1, "✓ Concluiste tus labores", true, "📄 Descargar mi bitácora (PDF)", true]);
+    igual("al aceptar: la función recibe «concluir», sale el aviso de concluidas con la hora y el botón de la bitácora, y el botón de arriba se esconde", await pc.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "concluir").length, document.getElementById("concluido-titulo").textContent.trim(), /^A las \d{1,2}:\d{2} [ap]\. m\./.test(document.getElementById("concluido-texto").textContent), document.getElementById("bajar-bitacora").textContent.trim(), document.getElementById("concluir").hidden]), [1, "✓ Terminaste tu ronda completa", true, "📄 Descargar mi bitácora (PDF)", true]);
     igual("todo lo que escribe queda apagado de verdad (botones de las mesas, resultado, guardar, control de tiempos, pedir ayuda), no solo apagado a la vista", await pc.evaluate(() => { const sin = [...document.querySelectorAll("#lista button, #lista select, #pedir-ayuda")]; return [sin.length > 5, sin.every((n) => n.disabled)]; }), [true, true]);
     igual("la función rechaza escribir (409) aunque se manipule la pantalla: guardar, anotar, presencia, tiempo, planilla, lista, finalizar, ayuda y nombre", await pc.evaluate(async () => { const out = []; for (const action of ["guardar", "anotar", "anular", "presencia", "tiempo", "planilla", "lista", "finalizar", "ayuda", "nombre"]) { const r = await window.sb.functions.invoke("centroamericano-mesa", { body: { token: location.hash.slice(1), action, ronda: 3, mesa: 1 } }); out.push(!!r.error); } return out.every(Boolean); }), true);
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
@@ -1049,6 +1049,16 @@ const CONTRASTE = `(sel) => {
     await pc.click("#actualizar");
     await pc.waitForFunction(() => document.getElementById("actualizado").textContent.includes("Actualizado"));
     igual("al volver a leer sigue concluido (lo dice la base, no la pantalla) y lo apagado sigue apagado", await pc.evaluate(() => [document.getElementById("concluido").hidden, document.getElementById("concluir").hidden, [...document.querySelectorAll("#lista button")].every((n) => n.disabled)]), [false, true, true]);
+    // Empieza la ronda siguiente: la BASE reabre el enlace sola (trigger). La tablet solo tiene que leerlo: sin recargar y sin que la organización haga nada.
+    await pc.evaluate(() => { window.__concluyo = null; });
+    await pc.click("#actualizar");
+    await pc.waitForFunction(() => document.getElementById("concluido").hidden);
+    igual("al empezar la ronda siguiente (la base ya no lo tiene concluido) la tablet se HABILITA sola: sin aviso de concluidas, el botón vuelve y se puede tocar, y todo lo que se había apagado se enciende (ayuda y mesas)", await pc.evaluate(() => [document.getElementById("concluido").hidden, document.getElementById("concluir").checkVisibility(), document.getElementById("concluir").disabled, document.getElementById("pedir-ayuda").disabled, [...document.querySelectorAll("#lista button")].some((n) => !n.disabled), document.querySelectorAll("[data-por-concluir]").length]), [true, true, false, false, true, 0]);
+    await pc.click("#concluir");
+    await pc.waitForSelector("dialog[open]");
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForFunction(() => !document.getElementById("concluido").hidden);
+    igual("y puede volver a terminar en esa ronda: se cierra de nuevo", await pc.evaluate(() => [document.getElementById("concluir").hidden, document.getElementById("pedir-ayuda").disabled]), [true, true]);
     await cc.ctx.close();
 
     console.log("\n=== El cronómetro de espera, llegaron todos y la incomparecencia ===");
@@ -1864,15 +1874,22 @@ const CONTRASTE = `(sel) => {
     igual("habilitarlo en todas deja a ninguna sin «¿Dónde juega?»", await q.evaluate(() => [window.__llamadas.filter((x) => x.update === "centroamericano_asignaciones" && x.en && x.en.id).pop().valores, document.querySelectorAll('[data-sin-todas="si"]').length]), [{ todas_las_mesas: true }, 0]);
 
     console.log("\n=== La organización: árbitros que concluyeron sus labores ===");
-    await q.evaluate(() => window.__concluir("asig-arb1"));
+    await q.evaluate(() => window.__concluir("asig-arb1", 3));
     await q.waitForSelector('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]', { timeout: 30000 });
-    igual("un árbitro que concluyó sale así en la lista: «Concluyó sus labores el …», con «Reabrir sus labores» y solo él (a los demás no se les ofrece)", await q.evaluate(() => [document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("Concluyó sus labores el"), document.querySelectorAll('[data-accion="reabrir-labores"]').length, document.querySelectorAll('.cam-asignacion[data-id="asig-ana"] [data-accion="reabrir-labores"]').length]), [true, 1, 0]);
+    igual("un árbitro que concluyó sale así en la lista: «Concluyó sus labores el …» y dice en qué ronda (y que se reabren solas al empezar la siguiente), con «Reabrir sus labores» y solo él (a los demás no se les ofrece)", await q.evaluate(() => [document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("Concluyó sus labores el"), document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("(ronda 3; se reabren solas al empezar la siguiente)"), document.querySelectorAll('[data-accion="reabrir-labores"]').length, document.querySelectorAll('.cam-asignacion[data-id="asig-ana"] [data-accion="reabrir-labores"]').length]), [true, true, 1, 0]);
     await q.click('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]');
     await q.waitForSelector("dialog[open]");
     igual("reabrir pregunta antes y dice qué pasa", await q.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Reabrir sus labores"), t.includes("ya no puede anotar ni guardar")]; }), [true, true]);
     await q.click("dialog[open] [data-avisos-aceptar]");
     await q.waitForFunction(() => !document.querySelector('[data-accion="reabrir-labores"]'));
     igual("al confirmar llama a la base (con la licencia, centroamericano_reabrir_labores) y el árbitro vuelve a verse activo", await q.evaluate(() => [window.__reabrirArgs, document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent.includes("Activo hasta el")]), [["asig-arb1"], true]);
+    await q.evaluate(() => window.__concluir("asig-arb1"));
+    await q.waitForSelector('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]', { timeout: 30000 });
+    igual("si la base no supo la ronda al concluir, la lista lo dice con palabras: solo se reabren a mano (no promete que se reabran solas)", await q.evaluate(() => { const t = document.querySelector('.cam-asignacion[data-id="asig-arb1"]').textContent; return [t.includes("(solo se reabren a mano)"), t.includes("se reabren solas")]; }), [true, false]);
+    await q.click('.cam-asignacion[data-id="asig-arb1"] [data-accion="reabrir-labores"]');
+    await q.waitForSelector("dialog[open]");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => !document.querySelector('[data-accion="reabrir-labores"]'));
 
     console.log("\n=== La organización: control de tiempos ===");
     await q.click("#pest-tiempos");

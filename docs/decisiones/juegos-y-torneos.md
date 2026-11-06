@@ -9196,6 +9196,7 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   y amarilla, pieza y mano, icono con palabra) y se eligió el de la pieza y la mano; el peón va sólido y sin círculo porque con
   círculo, a 46 px, se perdía. Siguen con su palabra para el lector de pantalla, su `title` y la leyenda de arriba, que usa
   los mismos dibujos; `verificar-centroamericano-mesas-pagina.js` comprueba los dibujos de los botones y de la leyenda.
+- **(El botón hoy se llama «Terminé mi ronda completa» y el cierre vale POR RONDA: se reabre solo al empezar la siguiente; ver «La tablet del árbitro: el clásico siempre confirma el resultado…».)**
 - **«Ya terminé mis labores» y la bitácora del árbitro en PDF.** Al acabar su trabajo, el árbitro toca el botón (con
   confirmación: no se deshace desde la tablet) y su enlace **se cierra**: la columna `centroamericano_asignaciones.concluyo_en`
   guarda la hora (la pone la base) y la Edge Function `centroamericano-mesa` (v13) responde **409** a todo lo que escribe
@@ -10868,12 +10869,38 @@ Pedido (noviembre de 2026, con el torneo en juego):
 - **El botón «Control de tiempos» de arriba se quitó.** Cada mesa ya tiene su icono de reloj (`data-accion="tiempo"`); el de arriba solo repetía eso
   para elegir una mesa cualquiera. Lo que NO cambió: el control de tiempos se sigue abriendo solo cuando la organización lo pide (el aviso con
   `control_tiempos`), por `abrirTiempos(true)`.
-- **El pie de la barra: «Ayuda» al centro y «Ya terminé mis labores» a la derecha**, los dos fuera de la fila de los demás controles y a más de
+- **El pie de la barra: «Ayuda» al centro y «Terminé mi ronda completa» a la derecha**, los dos fuera de la fila de los demás controles y a más de
   24 px de ellos, para no tocar nada por accidente. **«Ayuda» (`#pedir-ayuda`) pasó de ser un botón rojo grande con «Necesito ayuda (para mí)» a uno
   chico, abajo en el centro, con el icono y UNA palabra («🆘 Ayuda»)**; su nombre accesible y su `title` siguen diciendo «Necesito ayuda (para mí)»
-  (no es lo mismo que «Principal en esta mesa», que va en cada mesa). **«Ya terminé mis labores» (`#concluir`)** va abajo a la derecha, un poco
-  apagado, y además pregunta antes de concluir; su contenedor es `#fin-labores` y se esconde junto con él cuando las labores ya se concluyeron.
-  Los dos viven en `.cam-pie-barra` (una cuadrícula de tres columnas: vacía, centro, derecha).
+  (no es lo mismo que «Principal en esta mesa», que va en cada mesa). Los dos viven en `.cam-pie-barra` (una cuadrícula de tres columnas: vacía,
+  centro, derecha).
+- **«Terminé mi ronda completa» (antes «Ya terminé mis labores»; `#concluir`, `#fin-labores`)**: abajo a la derecha, más chico y un poco apagado.
+  **El texto dice a qué se refiere**: es para cuando ya terminó **TODO** lo de la ronda (todas sus mesas, planillas y anotaciones), no una mesa en
+  particular; el aviso de confirmación lo repite («Úsalo solo si ya terminaste TODO lo de esta ronda…») y su nombre accesible y su `title` también.
+  Su contenedor se esconde junto con el botón cuando ya se terminó.
+- **El cierre vale POR RONDA y se reabre SOLO al empezar la ronda siguiente** (pedido: «que automáticamente se vuelva a habilitar cuando venga una
+  ronda nueva, y así no estarle buscando tener que encenderlo desde la principal»). Antes, quien tocaba el botón quedaba cerrado hasta que la
+  organización lo reabriera a mano, árbitro por árbitro y ronda por ronda. Ahora (migración `20261106170942_centroamericano_labores_por_ronda.sql`,
+  **todo en la base, sin tocar la Edge Function `centroamericano-mesa`**: ella sigue poniendo `concluyo_en` y rechazando escrituras mientras tenga valor):
+  - al concluir, el trigger `concluyo_ronda` (antes de cambiar `concluyo_en`) anota en `concluyo_ronda` la ronda que tenía **su torneo** en la copia
+    compartida de chess-results (`centroamericano_lecturas.ronda`); al reabrir (a mano o solo) la borra;
+  - cuando esa lectura **cambia a una ronda MAYOR**, el trigger `reabrir_por_ronda` (en `centroamericano_lecturas`) pone `concluyo_en = null` en los
+    enlaces de **ese torneo** (`a.tnr = new.tnr`) que concluyeron en una ronda menor. **Cada enlace mira la ronda de SU torneo**: las categorías no van
+    todas en la misma ronda (en la base había 7, 9, 1 y 0 a la vez). La misma ronda, una **menor** (un tropiezo de chess-results) o una ronda nula
+    **nunca** reabren; el turno de lectura (`leyendo_hasta`) tampoco dispara nada;
+  - **si no se sabía la ronda al concluir** (no había lectura), `concluyo_ronda` queda nula y se reabre solo a mano, como antes (la organización lo ve
+    escrito: «(solo se reabren a mano)» o «(ronda 7; se reabren solas al empezar la siguiente)»);
+  - **el trigger de la lectura NUNCA la estorba**: lo de adentro va en un bloque que, ante cualquier error, solo avisa (`warning`) y sigue; la copia
+    compartida de chess-results es lo que usan todas las tablets, y un trigger roto ahí las tumbaría a todas en pleno torneo;
+  - las dos funciones de trigger son `security definer` con `search_path` vacío y nadie de afuera las ejecuta; a los que ya habían concluido se les
+    anotó la ronda de hoy de su torneo;
+  - **la tablet** solo tiene que leerlo: el `leer` ya devuelve `concluyo: null`, y `pintarConcluido` vuelve a encender lo que se apagó al concluir
+    (`data-por-concluir`: ayuda, nombre…) sin recargar. Mientras estaba cerrado podía bajar su bitácora; al reabrirse sola esa descarga vuelve a
+    pedir terminar otra vez (como al reabrirla a mano).
+  - Lo prueban `verificar-centroamericano-mesas.js` (la migración: los dos triggers, su condición, el bloque que no estorba y los permisos) y
+    `verificar-centroamericano-mesas-pagina.js` (reabierta por la base, la tablet se habilita sola y puede volver a terminar). La lógica de los
+    triggers se ensayó contra un Postgres de verdad con 11 escenarios (por torneo, misma ronda o menor sin reabrir, el upsert de la copia compartida,
+    y otro trigger roto adentro) antes de aplicarla.
 - **«Se levantó» ya no pone un icono nuevo en la ficha: el contador va en el propio botón.** Cada toque anota una vez (con su hora, como siempre) y
   aparece un número chiquito **arriba a la derecha del botón** (`.cam-insignia`: «1», «2», «3»…, solo el número, sin «×»); el lector de pantalla oye
   «Se levantó: 2 veces» y el nombre accesible sigue diciendo «(van 2)». Las **ilegales** y las **irregularidades se quedan como estaban** (su marca en la

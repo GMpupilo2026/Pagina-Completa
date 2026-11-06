@@ -140,7 +140,7 @@
                         <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo cam-btn-chico" aria-label="Necesito ayuda (para mí)" title="Necesito ayuda (para mí)"><span aria-hidden="true">🆘</span> Ayuda</button>
                     </div>
                     <div id="fin-labores" class="cam-fin">
-                        <button type="button" id="concluir" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
+                        <button type="button" id="concluir" class="cam-btn cam-btn-claro cam-btn-chico cam-btn-fin" aria-label="Terminé mi ronda completa: ya terminé todas mis mesas y todo lo de esta ronda" title="Úsalo solo cuando ya terminaste TODO lo de esta ronda: todas tus mesas, planillas y anotaciones. Se vuelve a habilitar solo en la ronda siguiente."><span aria-hidden="true">🏁</span> Terminé mi ronda completa</button>
                     </div>
                 </div>
             </section>
@@ -166,9 +166,9 @@
             <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
             <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
 
-            <!-- Cuando el árbitro toca «Ya terminé mis labores»: se le cierran los resultados y puede bajar su bitácora en PDF. -->
+            <!-- Cuando el árbitro toca «Terminé mi ronda completa»: se le cierran los resultados (hasta la ronda siguiente) y puede bajar su bitácora en PDF. -->
             <section id="concluido" class="cam-concluido" aria-labelledby="concluido-titulo" hidden>
-                <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Concluiste tus labores</h2>
+                <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Terminaste tu ronda completa</h2>
                 <p id="concluido-texto" class="text-sm mt-1"></p>
                 <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button></div>
                 <div class="cam-bit-correo mt-3">

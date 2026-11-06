@@ -163,7 +163,7 @@
     // Con las labores concluidas ya no se escribe nada (la función también lo rechaza): solo se lee y se baja la bitácora.
     const concluida = () => !!(estado && estado.concluyo);
     async function escribir(accion, cuerpo, etiqueta, meta) {
-        if (concluida()) throw new Error("Ya concluiste tus labores: ya no puedes anotar ni guardar. Si necesitas seguir, pide a la organización que las reabra.");
+        if (concluida()) throw new Error("Ya terminaste tu ronda completa: ya no puedes anotar ni guardar hasta la ronda siguiente. Si necesitas seguir antes, pide a la organización que lo reabra.");
         const id = Cola.uuid();
         const c = CON_ID[accion] ? Object.assign({ id }, cuerpo) : cuerpo;
         try { return { d: await invocar(accion, c) }; }
@@ -1562,30 +1562,34 @@
         caja.hidden = !cerrada;
         $("concluir").hidden = cerrada;
         $("fin-labores").hidden = cerrada;
-        if (!cerrada) return;
-        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que ya terminaste. Ya no puedes anotar ni guardar resultados en tus mesas. Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste. Si necesitas seguir, pide a la organización que reabra tus labores.";
+        if (!cerrada) {
+            // La base reabrió sola (empezó la ronda siguiente) o la organización las reabrió: los botones que se apagaron al concluir se encienden otra vez.
+            for (const n of document.querySelectorAll("[data-por-concluir]")) { n.disabled = false; n.removeAttribute("data-por-concluir"); }
+            return;
+        }
+        $("concluido-texto").textContent = "A las " + hora(estado.concluyo, { hour: "numeric", minute: "2-digit" }) + " dijiste que terminaste tu ronda completa. Ya no puedes anotar ni guardar resultados en tus mesas, y se habilitan solos cuando empiece la ronda siguiente (si necesitas seguir antes, pide a la organización que los reabra). Baja tu bitácora: trae todas tus rondas, los torneos que atendiste y todo lo que anotaste.";
         tiemposAbierto = false;
         pintarTiempos();
         $("lista-previa").hidden = true; $("revision").hidden = true;   // ya no hay nada que revisar ni finalizar
         // Lo que escribe queda apagado de verdad (no solo en apariencia): ni con el teclado se puede tocar.
-        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #pedir-ayuda, #nombre-guardar, #nombre-campo")) n.disabled = true;
+        for (const n of document.querySelectorAll("#lista button, #lista select, #lista input, #lista-previa button, #lista-previa input, #revision button, #revision input, #pedir-ayuda, #nombre-guardar, #nombre-campo")) { if (!n.disabled) n.setAttribute("data-por-concluir", "si"); n.disabled = true; }
     }
 
     async function concluirLabores() {
         if (concluida()) return;
         const pend = cola ? cola.lista() : [];
-        if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Ya terminé mis labores».", true); return; }
+        if (pend.length) { avisar("Tienes " + pend.length + (pend.length === 1 ? " cosa" : " cosas") + " sin enviar (" + pend.map((x) => x.etiqueta).join(", ") + "). Espera a que se manden y vuelve a tocar «Terminé mi ronda completa».", true); return; }
         const sinResultado = estado.mesas.filter((m) => m.valor === "0").length;
         const avisos = [];
         if (sinResultado) avisos.push("Todavía hay " + sinResultado + (sinResultado === 1 ? " mesa" : " mesas") + " sin resultado en la ronda " + estado.ronda + ".");
         if (!estado.finalizada) avisos.push("No has finalizado la ronda " + estado.ronda + ".");
-        const sigue = await Avisos.confirmar((avisos.length ? avisos.join(" ") + " " : "") + "Se te cerrarán los resultados: ya no podrás anotar ni guardar nada, y podrás descargar tu bitácora en PDF. Si te equivocas, la organización puede reabrir tus labores.", { titulo: "Ya terminé mis labores", aceptar: "Sí, ya terminé", peligro: !!avisos.length });
+        const sigue = await Avisos.confirmar((avisos.length ? avisos.join(" ") + " " : "") + "Úsalo solo si ya terminaste TODO lo de esta ronda: todas tus mesas, planillas y anotaciones. Se te cerrarán los resultados y ya no podrás anotar ni guardar nada hasta que empiece la ronda siguiente (se habilitan solos). Podrás descargar tu bitácora en PDF. Si te equivocas, la organización puede reabrirlos.", { titulo: "Terminé mi ronda completa", aceptar: "Sí, terminé todo", peligro: !!avisos.length });
         if (!sigue) return;
         $("concluir").disabled = true;
         try {
             const d = await invocar("concluir", {});
             estado.concluyo = d.concluyo;
-            avisar("Concluiste tus labores. Ya puedes descargar tu bitácora.");
+            avisar("Listo: terminaste tu ronda completa. Se habilita solo en la ronda siguiente y ya puedes descargar tu bitácora.");
             pintar();
             const b = $("bajar-bitacora"); if (b) b.focus();
         } catch (e) {
