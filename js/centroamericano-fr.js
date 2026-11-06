@@ -159,6 +159,8 @@ window.CentroamericanoFR = {
     "Cara a cara →": "Face à face →",
     "Cara a cara": "Face à face",
     "El festival en números →": "Le festival en chiffres →",
+    "Plano de la sala →": "Plan de la salle →",
+    "Plano de la sala": "Plan de la salle",
     "El festival en números": "Le festival en chiffres",
     "Elige dos jugadores y mira su torneo lado a lado, ronda a ronda, y la partida entre ellos si se enfrentaron.": "Choisissez deux joueurs et comparez leur tournoi côte à côte, ronde par ronde, avec leur partie s'ils se sont affrontés.",
     "Primer jugador": "Premier joueur",
@@ -754,6 +756,19 @@ window.CentroamericanoFR = {
     },
   },
   // js/centroamericano-partidas.js: las partidas en vivo de Lichess.
+  // El plano de la sala (js/centroamericano-plano.js).
+  plano: {
+    donde: (f, k) => "📍 Dans la salle : rangée " + f + " · " + k + (k === 1 ? "re" : "e") + " table depuis la droite",
+    ayuda: (frente, fondo) => "Les rangées se comptent depuis " + frente + ", face à " + fondo + ".",
+    fila: (n) => "Rangée " + n,
+    frente: "Devant",
+    fondo: "Fond",
+    dibujo: (n) => "Plan de la salle de jeu : " + n + " rangées de tables.",
+    dibujoMarca: (f, k) => "Plan de la salle avec la table marquée dans la rangée " + f + ", la " + k + (k === 1 ? "re" : "e") + " depuis la droite.",
+    filaTexto: (n, torneos, desde, hasta) => "Rangée " + n + " : " + torneos + (desde ? ", tables " + desde + " à " + hasta : "") + ".",
+    sinPlano: "Le plan de la salle n'est pas encore prêt.",
+    tablero: (n) => "Table " + n,
+  },
   partidas: {
     titulo: "Parties en direct",
     cargando: "Recherche des parties sur Lichess…",

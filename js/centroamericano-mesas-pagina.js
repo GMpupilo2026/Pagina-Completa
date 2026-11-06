@@ -108,7 +108,7 @@
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro", "fairplay", "transmision", "plano"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
