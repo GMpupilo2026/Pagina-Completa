@@ -14,6 +14,10 @@
 		// del Centroamericano (/m y /m/<código>). Sin
 		// esta línea Cloudflare sirve el archivo directo (o un 404) y nada de
 		// eso existe, sin dar ningún error. Todo lo demás se sirve como siempre.
-		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*", "/o/*", "/calendario/*", "/incrustar/*", "/m", "/m/*"]
+		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*", "/o/*", "/calendario/*", "/incrustar/*", "/m", "/m/*",
+			// El código de las herramientas con licencia sin nada público
+			// (CODIGO_CON_LICENCIA en worker.js): solo con la licencia.
+			"/js/bases-torneo.js", "/js/bases-torneo-pagina.js", "/js/inscripcion-jde.js",
+			"/js/inscripcion-jde-reglas.js", "/js/normas-titulo.js"]
 	}
 }

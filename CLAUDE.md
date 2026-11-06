@@ -234,7 +234,10 @@ puntos Elo»)
   con el acceso vigente (ver «El candado de los cursos está en el servidor»),
   `/t/` y `/o/`, las tarjetas de un torneo y de un organizador de Pareo
   Integral para compartir, `/calendario/`, el calendario de torneos para
-  suscribirse, e `/incrustar/`, la clasificación para la página de un club. Un candado
+  suscribirse, e `/incrustar/`, la clasificación para la página de un club, y el
+  código de las herramientas con licencia que no tienen nada público
+  (`CODIGO_CON_LICENCIA` en `worker.js`: solo con la licencia; ver «El código de
+  las herramientas con licencia, solo con la licencia»). Un candado
   o una ruta nueva en el worker sin su línea ahí no existe.
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
   `supabase/` tal cual se aplicaron (los comentarios van ANTES de aplicar:

@@ -419,6 +419,64 @@ async function cargarWorker() {
     igual("lo que no es un código (otra ruta, símbolos raros, larguísimo) pasa a los archivos y no redirige", (await Promise.all(["/mesa", "/m/<script>", "/m/" + "A".repeat(40), "/manual.html"].map(ir))).map((x) => [x.estado, x.aArchivos !== null]), Array(4).fill([200, true]));
   }
 
+  console.log("\n=== El código de las herramientas con licencia, solo con la licencia ===");
+  {
+    const raiz = path.join(__dirname, "..");
+    const fuenteW = fs.readFileSync(path.join(raiz, "worker.js"), "utf8");
+    const lista = JSON.parse("{" + fuenteW.match(/const CODIGO_CON_LICENCIA = \{([^}]*)\}/)[1].replace(/,\s*$/, "") + "}");
+    const rutas = Object.keys(lista);
+    igual("la lista no está vacía", rutas.length > 0, true);
+    // Las tres copias de la lista: el worker decide, run_worker_first hace que
+    // el worker se entere (sin la línea, Cloudflare sirve el archivo directo y
+    // el candado no existe) y sw.js no guarda en el teléfono ni el aviso ni el código.
+    const wr = JSON.parse(fs.readFileSync(path.join(raiz, "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
+    igual("cada archivo está en run_worker_first", rutas.filter((r) => !wr.assets.run_worker_first.includes(r)), []);
+    const sw = fs.readFileSync(path.join(raiz, "sw.js"), "utf8");
+    const nunca = new Function("return [" + sw.match(/const NUNCA = \[([\s\S]*?)\n\];/)[1].replace(/^\s*\/\/[^\n]*$/gm, "") + "]")();
+    igual("y en NUNCA de sw.js", rutas.filter((r) => !nunca.some((re) => re.test(r))), []);
+    igual("la cookie viaja a /js/ (si no, nadie con licencia recibe el código)",
+      /var RUTAS = \[[^\]]*"\/js\/"/.test(fs.readFileSync(path.join(raiz, "js", "supabase-client.js"), "utf8")), true);
+    // Que no se cuele nada que use el público: un archivo de la lista no lo
+    // carga ninguna página fuera de la de su herramienta.
+    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html" };
+    const ajenas = [];
+    const htmls = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      ["node_modules", ".git", "herramientas", "docs", "supabase"].includes(e.name) ? [] :
+      e.isDirectory() ? htmls(path.join(dir, e.name)) : e.name.endsWith(".html") ? [path.join(dir, e.name)] : []);
+    for (const f of htmls(raiz)) {
+      const t = fs.readFileSync(f, "utf8");
+      for (const r of rutas) if (t.includes('src="' + r.slice(1)) && path.relative(raiz, f) !== paginaDe[lista[r]]) ajenas.push(path.relative(raiz, f) + " → " + r);
+    }
+    igual("ninguna otra página carga ese código (sería una página pública rota)", ajenas, []);
+
+    const ASSETS = { fetch: (req) => { pedido = req.url; return new Response("// el código", { status: 200, headers: { "Content-Type": "application/javascript" } }); } };
+    const pedirJs = async (ruta, cookie, contestar) => {
+      pedido = null; const preguntas = [];
+      globalThis.fetch = async (u, o) => { preguntas.push({ u: String(u), cuerpo: o && o.body }); return contestar(); };
+      const headers = cookie ? { Cookie: "ai_sesion_cursos=" + cookie } : {};
+      const res = await worker.fetch(new Request("https://ajedrez-integral.com" + ruta, { headers }), { ASSETS });
+      return { estado: res.status, tipo: res.headers.get("content-type") || "", cache: res.headers.get("cache-control") || "", cuerpo: await res.text(), aArchivos: !!pedido, preguntas };
+    };
+    const si = () => new Response("true", { status: 200 });
+    const no = () => new Response("false", { status: 200 });
+    const r1 = await pedirJs("/js/normas-titulo.js", null, si);
+    igual("sin sesión no entrega el código ni pregunta", [r1.aArchivos, r1.preguntas.length], [false, 0]);
+    igual("en su lugar, un aviso en JavaScript que corre (200) y anota el archivo, sin caché",
+      [r1.estado, /javascript/.test(r1.tipo), /window\.__codigoNegado/.test(r1.cuerpo) && r1.cuerpo.includes('"/js/normas-titulo.js"'), r1.cache], [200, true, true, "no-store"]);
+    igual("el aviso no trae nada del código", r1.cuerpo.includes("el código"), false);
+    const t = token();
+    const r2 = await pedirJs("/js/bases-torneo.js", t, no);
+    igual("con sesión y sin la licencia: le pregunta a tengo_herramienta() por SU herramienta",
+      [/\/rpc\/tengo_herramienta$/.test(r2.preguntas[0] && r2.preguntas[0].u), r2.preguntas[0] && JSON.parse(r2.preguntas[0].cuerpo).p_herramienta], [true, "bases-torneo"]);
+    igual("y no entrega el código", [r2.aArchivos, /__codigoNegado/.test(r2.cuerpo)], [false, true]);
+    const r3 = await pedirJs("/js/bases-torneo.js", t, si);
+    igual("con la licencia, el código, sin que el navegador lo guarde sin volver a preguntar", [r3.aArchivos, r3.cuerpo, r3.cache], [true, "// el código", "private, no-cache"]);
+    const r4 = await pedirJs("/js/inscripcion-jde.js", t, no);
+    igual("la licencia de una herramienta no abre el código de otra (se recuerda por herramienta)", [r4.preguntas.length, r4.aArchivos], [1, false]);
+    const r5 = await pedirJs("/js/main.js", t, si);
+    igual("el resto de js/ pasa de largo, sin preguntar", [r5.aArchivos, r5.preguntas.length], [true, 0]);
+  }
+
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })();

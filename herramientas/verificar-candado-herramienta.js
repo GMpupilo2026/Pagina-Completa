@@ -75,7 +75,7 @@ function doble({ sesion, licencia, sinRed, guardado }) {
         if (guardado) localStorage.setItem("candado_herramienta_v1", JSON.stringify(guardado));
         window.sb = {
             auth: {
-                getSession: async () => ({ data: { session: sesion ? { user: { id: "u-1" }, access_token: "x" } : null } }),
+                getSession: async () => ({ data: { session: sesion ? { user: { id: "u-1" }, access_token: "x", expires_at: Math.floor(Date.now() / 1000) + 3600 } : null } }),
                 onAuthStateChange() { return { data: { subscription: { unsubscribe() { } } } }; },
             },
             rpc: async (fn, args) => {
@@ -152,6 +152,51 @@ function doble({ sesion, licencia, sinRed, guardado }) {
     v = await vista(x.p);
     igual("guardada para otra cuenta, tampoco", v.herramienta, false);
     await x.ctx.close();
+
+    console.log("\n=== El código de la herramienta, solo con la cookie de la sesión ===");
+    /* Lo que hace el worker con CODIGO_CON_LICENCIA (lo prueba
+       verificar-worker.js): sin la cookie, en lugar del código manda un aviso
+       que anota el archivo. Acá se imita eso y se mira qué hace la página: con
+       la licencia confirmada, escribe la cookie y recarga una sola vez. */
+    {
+        const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+        await ctx.route(/supabase\.co|sentry|googletagmanager|cloudflareinsights/, (r) => r.abort());
+        await ctx.addInitScript(doble({}), { sesion: true, licencia: true });
+        const pedidos = [];
+        let siempreSinCookie = false;
+        await ctx.route(/\/js\/bases-torneo(-pagina)?\.js/, async (r) => {
+            const conCookie = /ai_sesion_cursos=x/.test(r.request().headers().cookie || "") && !siempreSinCookie;
+            pedidos.push(conCookie);
+            if (conCookie) return r.continue();
+            const ruta = new URL(r.request().url()).pathname;
+            return r.fulfill({ status: 200, contentType: "application/javascript", headers: { "Cache-Control": "no-store" },
+                body: "window.__codigoNegado = (window.__codigoNegado || []).concat(" + JSON.stringify(ruta) + ");" });
+        });
+        const p = await ctx.newPage();
+        const errores = [];
+        p.on("pageerror", (e) => errores.push(e.message));
+        // Cada carga de la página pide los dos archivos: las cargas se cuentan por ahí
+        // (el evento «load» no sirve: la recarga sale antes de que termine la primera).
+        const cargas = () => pedidos.length / 2;
+        await p.goto(BASE + "/bases-torneo.html", { waitUntil: "load" });
+        await p.waitForFunction(() => window.CandadoHerramienta && window.CandadoHerramienta.estado === "abierta", null, { timeout: 20000 }).catch(() => { });
+        v = await vista(p);
+        igual("sin la cookie llega el aviso; con la licencia, escribe la cookie y recarga: la segunda vez llega el código",
+            [pedidos.slice(0, 2), pedidos.slice(-2)], [[false, false], [true, true]]);
+        igual("recargó una sola vez", cargas(), 2);
+        igual("la herramienta se ve y funciona (su código cargó)", [v.herramienta, v.panel, await p.evaluate(() => typeof window.BasesTorneo)], [true, false, "object"]);
+        igual("sin errores", errores, []);
+        // Si el código sigue sin llegar después de recargar, lo dice y no recarga en bucle.
+        siempreSinCookie = true;
+        await p.evaluate(() => sessionStorage.clear());
+        pedidos.length = 0;
+        await p.goto(BASE + "/bases-torneo.html", { waitUntil: "load" });
+        await p.waitForFunction(() => /No se pudo cargar/.test((document.getElementById("candado-herramienta") || {}).textContent || ""), null, { timeout: 20000 }).catch(() => { });
+        await p.waitForTimeout(1500);
+        v = await vista(p);
+        igual("si el código no llega ni después de recargar: no recarga en bucle y lo dice", [cargas(), v.herramienta, /No se pudo cargar/.test(v.titulo)], [2, false, true]);
+        await ctx.close();
+    }
 
     console.log("\n=== Lo que ve el público sigue abierto ===");
     x = await abrir("pareo.html#ver=nada", { sesion: false });
