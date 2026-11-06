@@ -73,7 +73,19 @@ function dobleOrganizacion(licencia) {
   window.__marcarInicio = (tnr, ronda, minutos, arbitro) => { const k = INICIOS.findIndex((x) => x.tnr === tnr && x.ronda === ronda); if (k >= 0) INICIOS.splice(k, 1);
     if (minutos != null) INICIOS.push({ tnr, ronda, inicio: new Date(Date.now() - minutos * 60000).toISOString(), asignacion_id: null, arbitro: arbitro || "", puesto_en: new Date().toISOString() }); };
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS, centroamericano_fp_enlaces: [], centroamericano_tx_enlaces: [] };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS, centroamericano_presencia: PRESENCIA, centroamericano_tiempos: TIEMPOS, centroamericano_inicios_torneo: INICIOS, centroamericano_fair_play: [], centroamericano_salidas: SALIDAS, centroamericano_fp_enlaces: [], centroamericano_tx_enlaces: [],
+    // La sala pública del torneo, con su plano (vacío hasta que se guarda uno: «Plano de la sala»).
+    salas_torneo: [{ clave: "centroamericano-2026", plano: null, enlaces: [
+      { url: "https://ajedrez-integral.com/centroamericano-2026.html", texto: "Toda la información del torneo" },
+      { url: "https://s3.chess-results.com/tnr1529776.aspx?lan=2", texto: "Sub-18 Femenino" },
+      { url: "https://s3.chess-results.com/tnr1529773.aspx?lan=2", texto: "Sub-18 Absoluto" },
+      { url: "https://s3.chess-results.com/tnr1529771.aspx?lan=2", texto: "Sub-16 Femenino" }] }] };
+  // Los inscritos que devuelve sala-jugadores (para «Armar el borrador»): 12, 39 y 18 jugadores; el Sub-18 Absoluto con su bye (sin tablero).
+  const inscritos = (n) => Array.from({ length: n }, (_, i) => ({ no: i + 1, nombre: "Jugador " + (i + 1) }));
+  const SALA_JUGADORES = { modalidad: "clasico", modalidades: ["clasico"], torneos: [
+    { tnr: "1529773", texto: "Sub-18 Absoluto", jugadores: inscritos(39), pareo: { ronda: 7, mesas: Array.from({ length: 20 }, (_, i) => ({ mesa: i + 1, negras: i < 19 ? { no: 2 } : null })) } },
+    { tnr: "1529776", texto: "Sub-18 Femenino", jugadores: inscritos(12), pareo: { ronda: 7, mesas: Array.from({ length: 6 }, (_, i) => ({ mesa: i + 1, negras: { no: 2 } })) } },
+    { tnr: "1529771", texto: "Sub-16 Femenino", jugadores: inscritos(18), pareo: null }] };
   // Un árbitro con el modo concentración se sale de la pantalla (lo que la función anota en centroamericano_salidas); con minutos = null sigue fuera.
   window.__salida = (asig, hace_min, dura_seg, motivo) => SALIDAS.push({ id: "sa" + (++n), asignacion_id: asig, tnr: "1529733", arbitro: "x", salio: new Date(Date.now() - hace_min * 60000).toISOString(), volvio: dura_seg == null ? null : new Date(Date.now() - hace_min * 60000 + dura_seg * 1000).toISOString(), segundos: dura_seg, motivo: motivo || "oculta", registrada: new Date().toISOString() });
   const filtrar = (tabla, f, fin) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v) && Object.entries(fin || {}).every(([c, vs]) => vs.includes(r[c])));
@@ -91,6 +103,10 @@ function dobleOrganizacion(licencia) {
         const t = TORNEOS.find((x) => x.tnr === a.p_tnr); if (!t) return R(null, { message: "No existe ese torneo" });
         t.nombre = a.p_nombre; if (a.p_categoria) t.categoria = a.p_categoria; return R(null); }
       if (f === "centroamericano_evento_archivar") { let n = 0; TORNEOS.forEach((t) => { if (t.evento === a.p_evento && !t.prueba) { t.archivado = a.p_archivar; n++; } }); return R(n); }
+      // El plano de la sala: sin la licencia, la base lo rechaza como sala_plano_guardar().
+      if (f === "sala_plano_guardar") { (window.__planos = window.__planos || []).push(JSON.parse(JSON.stringify(a.p_plano)));
+        ${licencia ? "" : "return R(null, { message: 'Solo la organización del torneo puede cambiar el plano de la sala.' });"}
+        TABLAS.salas_torneo[0].plano = JSON.parse(JSON.stringify(a.p_plano)); return R(new Date().toISOString()); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
       if (f === "centroamericano_actividad") { window.__actividadPedida = [a.p_tnr, a.p_limite]; return R([
         { cuando: hace(60), tnr: "1529733", torneo: "Sub-10 Absoluto", arbitro: "Beto", ronda: 1, mesa: null, tipo: "finalizo", detalle: "Finalizó la ronda 1" },
@@ -118,6 +134,7 @@ function dobleOrganizacion(licencia) {
       return R(null); },
     storage: { from: (b) => ({ createSignedUrl: (ruta) => { window.__llamadas.push({ foto: b + "/" + ruta }); return R({ signedUrl: "data:image/png;base64," + PNG }); } }) },
     functions: { invoke: (f, o) => { window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) }); const b = o.body;
+      if (f === "sala-jugadores") return Promise.resolve({ data: JSON.parse(JSON.stringify(SALA_JUGADORES)), error: null });
       const err = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
       if (b.action === "poner") {
         if (b.sid === "MALAMALAMALA1234") return Promise.resolve(err(401, "chess-results no aceptó el código o la clave. Revísalos en Swiss-Manager. No se guardó la clave."));

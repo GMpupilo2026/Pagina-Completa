@@ -155,6 +155,8 @@ window.CentroamericanoEN = {
     "Cara a cara →": "Head to head →",
     "Cara a cara": "Head to head",
     "El festival en números →": "The festival in numbers →",
+    "Plano de la sala →": "Map of the hall →",
+    "Plano de la sala": "Map of the hall",
     "El festival en números": "The festival in numbers",
     "Elige dos jugadores y mira su torneo lado a lado, ronda a ronda, y la partida entre ellos si se enfrentaron.": "Choose two players and see their tournaments side by side, round by round, and their game if they met.",
     "Primer jugador": "First player",

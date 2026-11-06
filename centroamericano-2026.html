@@ -245,6 +245,7 @@
                     <a href="#sorpresas" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">⚡ </span>Sorpresas e invictos →</a>
                     <a href="#cara-a-cara" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🆚 </span>Cara a cara →</a>
                     <a href="#numeros" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📈 </span>El festival en números →</a>
+                    <a href="#plano" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🗺️ </span>Plano de la sala →</a>
                 </p>
                 <!-- «Así terminó el día»: la imagen con los líderes de cada categoría, la
                      sorpresa del día y cómo le fue a la delegación elegida
@@ -603,6 +604,20 @@
             <div id="cara-a-cara-contenido" class="mt-4" role="status" aria-live="polite" data-no-traducir>
                 <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
             </div>
+        </div>
+    </dialog>
+
+    <!-- «Plano de la sala»: dónde está cada mesa, como la ve quien entra desde
+         la gradería (js/centroamericano-plano.js; lo corrige la organización en
+         centroamericano-mesas.html). La mesa de cada jugador sale también en su
+         tarjeta de «Busca a tu jugador». -->
+    <dialog id="plano" data-sala="centroamericano-2026" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="plano-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="plano-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🗺️ </span>Plano de la sala</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="plano-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
         </div>
     </dialog>
 
@@ -1033,6 +1048,7 @@
     <script src="js/reporte-pdf.js"></script>
     <script src="js/marca-agua.js"></script>
     <script src="js/calendario-ics.js"></script>
+    <script src="js/centroamericano-plano.js"></script>
     <script src="js/centroamericano-vivo.js"></script>
     <script src="js/centroamericano-tablas.js"></script>
     <script src="js/vendor/chess.js"></script>

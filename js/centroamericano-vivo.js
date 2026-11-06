@@ -844,6 +844,12 @@
       linea = tx.mesa(x.ronda, x.partida.mesa, x.partida.color === "blancas" ? tx.blancas : tx.negras, rival);
     } else linea = tx.sinPareo(x.ronda);
     li.appendChild(el("p", "cac-jugador-ronda", linea));
+    // Dónde queda su mesa en la sala (js/centroamericano-plano.js), solo en
+    // el clásico: el plano es el de sus torneos.
+    if (x.partida && x.partida.rival && modalidad === "clasico" && window.CentroamericanoPlano) {
+      const enSala = window.CentroamericanoPlano.enTarjeta(x.torneo.texto, x.partida.mesa);
+      if (enSala) li.appendChild(enSala);
+    }
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";
     if (res) li.appendChild(el("p", "text-sm", tx.resultado(res)));
     // En las páginas universitarias, cómo le fue en las ediciones anteriores
@@ -1576,6 +1582,7 @@
     sala: () => SALA, seguidos, repintar: () => pintarTodo(),
   };
 
+  document.addEventListener("cac-plano", () => { if (datos) pintarTodo(); });
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
 
   // Mientras la página está a la vista y alguien ya buscó (o sigue a alguien,
