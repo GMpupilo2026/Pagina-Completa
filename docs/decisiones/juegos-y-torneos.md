@@ -10677,6 +10677,45 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y
   `AbortSignal.timeout` tienen alternativa); la pantalla encendida (`wakeLock`) funciona desde iOS 16.4.
 
+## La copia de seguridad de la tablet: un archivo que se arma sin internet (Centroamericano)
+
+Pedido (noviembre de 2026, tras un corte de luz en pleno torneo): «en caso de que se vaya la luz, nunca tener un inconveniente por la parte
+tecnológica». La cola de la tablet (ver «La lectura de chess-results se comparte y la tablet no pierde nada») ya guardaba
+lo pendiente de enviar, pero **solo dentro del navegador** (IndexedDB): si la tablet se apaga sin batería, se le borran los datos del
+navegador o hay que cambiarla por otra antes de que vuelva la señal, esas anotaciones se perdían. **Bajar un archivo no necesita
+internet** si lo arma la propia página (un `Blob` y un `<a download>`): ese es el respaldo.
+
+- **Dos botones** en la barra de la tablet, chicos y sin ruido: «💾 Copia de seguridad» (baja el archivo) y «📂 Cargar copia» (elige uno).
+  Cuando hay algo pendiente, el aviso fijo de arriba también trae «Descargar copia», y **sin señal recuerda hacerlo** («Por si se apaga la
+  tablet, baja una copia»). No se baja sola: en una tablet, cada descarga automática pide permiso y estorba en pleno torneo.
+- **El archivo es un `.txt`** (`respaldo-mesas-AAAAMMDD-HHMM.txt`) para que cualquier aparato lo abra. Arriba, **en palabras**: qué quedó
+  pendiente de enviar, numerado y con su hora en el orden en que se anotó, y las mesas de la ronda tal como las ve la tablet (el resultado que
+  ya tenían, y el que aún no salió dicho como «1-0 (pendiente de enviar)»): sirve para pasarlo a mano a la organización o a chess-results si
+  hiciera falta. Abajo, tras la línea «=== DATOS PARA VOLVER A CARGAR EN LA TABLET (no los cambies) ===», un JSON con las anotaciones exactas.
+- **Cargar la copia** (en la misma tablet o en otra, con el mismo enlace) las vuelve a poner en la cola y salen solas, en orden, apenas hay
+  señal. **No duplica nada**: cada anotación lleva su `id` (lo reconoce la base, igual que al reenviar por una señal mala); las que la cola
+  ya tenía se saltan, y cargar la misma copia dos veces tampoco suma. Lo dice con palabras («Se cargaron 2 anotaciones…»).
+- **Lo que protege:** el archivo **nunca lleva el token** del enlace: solo la huella corta y no reversible que ya usa la cola, y una copia
+  de **otro enlace** (otro árbitro, otro torneo) se rechaza. Solo se aceptan las acciones que la tablet anota por la cola (`PERMITIDAS`):
+  un archivo cambiado a mano con otra (como «concluir» o una inventada) **se rechaza entero**, sin cargar ni una; uno cortado, ajeno o con
+  ids, etiquetas o cuerpos raros también. La lista `PERMITIDAS` es la de las llamadas a `escribir("…")` de la página: **si se agrega una acción
+  nueva a la cola, va también en `js/centroamericano-respaldo.js`** (el verificador falla si no).
+- **Dónde está el código:** `js/centroamericano-respaldo.js` (armar y leer, sin nada de navegador, en JavaScript sencillo por si la tablet es
+  vieja) y, en `js/centroamericano-arbitro.js`, `bajarCopia()` y `cargarCopia()` (la página de la tablet no usa almacenamiento, `fetch` ni
+  `console`: el módulo tampoco). Sin la hora de Costa Rica que le pasa la página, el módulo escribe UTC y lo dice.
+- **Lo que NO cubre.** La copia guarda lo que **todavía no salió** y las mesas **de la última lectura**: no reemplaza leer chess-results ni la
+  base. Si la tablet se apaga y la copia nunca se bajó, no hay de dónde sacarla (por eso el aviso insiste); y para que la copia sirva en otra
+  tablet hay que **pasarla** (Bluetooth, cable, correo, AirDrop o la nube del aparato). Abrir la página de la tablet con el aparato sin ninguna
+  señal solo funciona si esa tablet **ya la abrió antes** (la copia de la página queda en el aparato; ver `sw.js`): conviene abrir el enlace
+  una vez con señal antes de cada jornada. Pareo Integral tiene su propio respaldo (ver «El respaldo del evento»).
+- **Qué hacer en un corte** (para el instructivo de los árbitros): no cerrar ni recargar la página, tocar «💾 Copia de seguridad» apenas
+  salga el aviso de «Sin señal», mandar el archivo a otro aparato si se puede, cuidar la batería (cargador portátil) y, cuando vuelva la
+  señal, esperar a que «Pendiente de enviar» llegue a 0 («Mandar ahora» a mano).
+- **Pruebas:** `verificar-centroamericano-respaldo.js` (ida y vuelta, lo escrito en palabras, sin token, cada archivo malo que no se carga,
+  `PERMITIDAS` igual a las acciones de la tablet; roto a propósito —una acción de más y sin validar la acción— salta) y, con navegador y
+  sin señal, `verificar-centroamericano-cola.js` (se baja el archivo, la tablet «se apaga», otra lo carga y todo llega una sola vez a la
+  base; la misma copia dos veces no duplica; la de otro enlace, la cambiada, la ajena y la cortada se rechazan sin tocar la base).
+
 ## Las tablets viejas: el modo liviano (Centroamericano)
 
 En el Centroamericano 2026 (4/11, ronda en curso) algunas tablets de los árbitros eran muy viejas y a «Mis mesas»

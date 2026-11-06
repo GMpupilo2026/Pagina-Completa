@@ -119,6 +119,10 @@
                     <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <!-- Sin internet también funcionan: la copia la arma esta página en la tablet (js/centroamericano-respaldo.js). -->
+                    <button type="button" id="bajar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">💾</span> Copia de seguridad</button>
+                    <button type="button" id="cargar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📂</span> Cargar copia</button>
+                    <input type="file" id="archivo-copia" accept=".txt,text/plain" class="sr-only" tabindex="-1" aria-hidden="true">
                     <!-- Cómo ve cada árbitro sus mesas: un botón chico que despliega las dos opciones (mismas funciones). La tablet recuerda la elegida. -->
                     <span class="cam-desplegable" id="vista-mesas" data-vista="">
                         <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
@@ -228,6 +232,7 @@
     <script src="js/main.js"></script>
     <script src="js/guia-planillas.js"></script>
     <script src="js/centroamericano-cola.js"></script>
+    <script src="js/centroamericano-respaldo.js"></script>
     <script src="js/lichess-transmision.js"></script>
     <script src="js/centroamericano-transmision-reloj.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>

@@ -17,6 +17,7 @@
 
        node herramientas/verificar-todo.js centroamericano-cola */
 "use strict";
+const fs = require("fs");
 const { chromium } = require("./lib/playwright-con-sesion");
 const { TOKEN, dobleArbitro } = require("./lib/doble-centroamericano-arbitro");
 const Cola = require("../js/centroamericano-cola.js");
@@ -171,6 +172,72 @@ function igual(nombre, hallado, esperado) {
   await p.click('#conexion [data-accion="reintentar-cola"]');
   await p.waitForFunction(() => document.getElementById("conexion").hidden, null, { timeout: 15000 });
   igual("al volver la señal la foto llega una sola vez, la camarita de esa mesa queda marcada y la cola vacía", [await p.evaluate(() => window.__planillas.length), await p.$eval(camarita, (b) => b.dataset.hecho), (await enBD(p)).length], [1, "si", 0]);
+  igual("sin errores de JavaScript", errores, []);
+  await ctx.close();
+
+  // --- 5b. la copia de seguridad: sin señal a un archivo, y de ahí a otra tablet
+  console.log("\n--- La copia de seguridad: un archivo que se arma sin señal y se carga en otra tablet ---");
+  ({ ctx, p, errores } = await abrir());
+  await estaListo(p);
+  await dejarListaAprobada(p);
+  await sinSenal(p);
+  await p.selectOption("#res-1", "1");
+  await p.click('.cam-mesa[data-mesa="1"] [data-accion="guardar"]');
+  await p.waitForFunction(() => document.getElementById("conexion").textContent.includes("Pendiente de enviar (1)"));
+  await p.click(acc(2, "negras", "ilegal"));
+  await p.waitForSelector("dialog[open] select");
+  await p.selectOption("dialog[open] select", "enroque");
+  await p.click("dialog[open] [data-avisos-aceptar]");
+  await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
+  await p.click("dialog[open] [data-avisos-aceptar]");
+  await p.waitForFunction(() => document.getElementById("conexion").textContent.includes("Pendiente de enviar (2)"));
+  igual("sin señal y con algo pendiente, el aviso recuerda bajar una copia y ofrece el botón", await p.evaluate(() => [document.getElementById("conexion").textContent.includes("baja una copia"), !!document.querySelector('#conexion [data-accion="copia-pendientes"]')]), [true, true]);
+  const [bajada] = await Promise.all([p.waitForEvent("download"), p.click('#conexion [data-accion="copia-pendientes"]')]);
+  const archivo = fs.readFileSync(await bajada.path(), "utf8");
+  igual("se baja sin señal un .txt con nombre «respaldo-mesas-FECHA-HORA.txt»", /^respaldo-mesas-\d{8}-\d{4}\.txt$/.test(bajada.suggestedFilename()), true);
+  igual("en palabras trae los 2 pendientes, la mesa 1 con su resultado «pendiente de enviar», una sin resultado y otra con el que ya tenía", [archivo.includes("NO SALIÓ DE ESTA TABLET (2)"), archivo.includes("Resultado de la mesa 1"), /Mesa 1: .* — 1-0 \(pendiente de enviar\)/.test(archivo), /Mesa 2: .* — sin resultado/.test(archivo), /Mesa 3: .* — ½-½ \(tablas\)\n/.test(archivo)], [true, true, true, true, true]);
+  igual("el archivo NUNCA lleva el token del enlace", archivo.includes(TOKEN), false);
+  // también el botón de siempre (arriba), con las mesas
+  const [bajada2] = await Promise.all([p.waitForEvent("download"), p.click("#bajar-copia")]);
+  igual("el botón «Copia de seguridad» de la barra baja lo mismo, sin pedir internet (no hubo ningún pedido nuevo a la base)", [fs.readFileSync(await bajada2.path(), "utf8").includes("NO SALIÓ DE ESTA TABLET (2)"), (await llamadas(p, "bitacora")).length], [true, 0]);
+  igual("sin errores de JavaScript", errores, []);
+  await ctx.close(); // la tablet «se apagó»: se pierde su navegador (y su cola)
+
+  // Otra tablet, con el mismo enlace y ya con señal: carga la copia y todo sale.
+  ({ ctx, p, errores } = await abrir());
+  await estaListo(p);
+  await dejarListaAprobada(p);
+  const cargar = async (contenido) => {
+    const [sel] = await Promise.all([p.waitForEvent("filechooser"), p.click("#cargar-copia")]);
+    await sel.setFiles({ name: "respaldo.txt", mimeType: "text/plain", buffer: Buffer.from(contenido) });
+  };
+  const aviso = () => p.evaluate(() => (document.getElementById("avisos-zona") || { textContent: "" }).textContent);
+  const filas = (pg) => pg.evaluate(() => [window.__filas.filter((f) => f.tipo === "resultado").map((f) => [f.mesa, f.resultado]), window.__filas.filter((f) => f.tipo === "ilegal").length]);
+  await cargar(archivo);
+  await p.waitForFunction(() => window.__filas.some((f) => f.tipo === "ilegal") && window.__filas.some((f) => f.tipo === "resultado"), null, { timeout: 15000 });
+  igual("al cargar la copia en otra tablet con señal, el resultado y la ilegal llegan a la base, una vez cada uno", await filas(p), [[[1, "1-0"]], 1]);
+  igual("y la cola de la tablet nueva queda vacía", (await enBD(p)).length, 0);
+  igual("el aviso dice cuántas anotaciones se cargaron", (await aviso()).includes("Se cargaron 2 anotaciones"), true);
+  await cargar(archivo);
+  await p.waitForTimeout(900);
+  igual("cargar la MISMA copia otra vez no duplica nada: la base reconoce las anotaciones por su id", await filas(p), [[[1, "1-0"]], 1]);
+
+  // lo que NO se carga
+  const cuerpoCopia = JSON.parse(archivo.slice(archivo.indexOf("\n", archivo.indexOf("=== DATOS PARA VOLVER A CARGAR")) + 1));
+  const conCopia = (cambiar) => { const c = JSON.parse(JSON.stringify(cuerpoCopia)); cambiar(c); return archivo.slice(0, archivo.indexOf("=== DATOS PARA VOLVER A CARGAR")) + "=== DATOS PARA VOLVER A CARGAR EN LA TABLET (no los cambies) ===\n" + JSON.stringify(c); };
+  const antes = (await llamadas(p, "anotar")).length + (await llamadas(p, "guardar")).length;
+  await cargar(conCopia((c) => { c.dueno = "otro-enlace-distinto"; }));
+  await p.waitForFunction(() => (document.getElementById("avisos-zona") || { textContent: "" }).textContent.includes("otro enlace"), null, { timeout: 5000 });
+  igual("una copia de OTRO enlace se rechaza con palabras y no carga nada", (await enBD(p)).length, 0);
+  await cargar(conCopia((c) => { c.items[0].accion = "concluir"; }));
+  await p.waitForFunction(() => (document.getElementById("avisos-zona") || { textContent: "" }).textContent.includes("no reconoce"), null, { timeout: 5000 });
+  igual("una copia cambiada a mano con una acción que la tablet no anota (como «concluir») se rechaza ENTERA", [(await enBD(p)).length, (await llamadas(p, "concluir")).length], [0, 0]);
+  await cargar("esto no es una copia");
+  await p.waitForFunction(() => (document.getElementById("avisos-zona") || { textContent: "" }).textContent.includes("no es una copia"), null, { timeout: 5000 });
+  await cargar(archivo.slice(0, archivo.length - 40));
+  await p.waitForFunction(() => (document.getElementById("avisos-zona") || { textContent: "" }).textContent.includes("incompleta"), null, { timeout: 5000 });
+  igual("un archivo ajeno o cortado se rechaza con palabras", (await enBD(p)).length, 0);
+  igual("nada de lo rechazado llegó a la base", (await llamadas(p, "anotar")).length + (await llamadas(p, "guardar")).length, antes);
   igual("sin errores de JavaScript", errores, []);
   await ctx.close();
 

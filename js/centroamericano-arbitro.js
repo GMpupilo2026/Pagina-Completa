@@ -183,11 +183,72 @@
         let nivel = "";
         if (sinSenal) { nivel = "mal"; partes.push(estado ? "Sin conexión con el servidor. Ves tus mesas como estaban a las " + hora(estado.leido_en) + "." : "Sin conexión con el servidor."); }
         else if (estado && estado.datos && estado.datos.viejo) { nivel = "ojo"; partes.push("chess-results no está contestando: estas mesas son de las " + hora(estado.datos.desde) + ". Lo que anotes aquí se guarda igual."); }
-        if (pend.length) { nivel = nivel || "ojo"; partes.push("Pendiente de enviar (" + pend.length + "): " + pend.map((x) => x.etiqueta).join(", ") + ". Se manda solo cuando haya señal; no cierres esta página."); }
+        if (pend.length) { nivel = nivel || "ojo"; partes.push("Pendiente de enviar (" + pend.length + "): " + pend.map((x) => x.etiqueta).join(", ") + ". Se manda solo cuando haya señal; no cierres esta página." + (sinSenal ? " Por si se apaga la tablet, baja una copia." : "")); }
         caja.hidden = !partes.length;
         caja.dataset.nivel = nivel;
-        const botones = pend.length ? [el("button", { type: "button", class: "cam-btn", "data-accion": "reintentar-cola", onclick: () => { cola.vaciar(); } }, "Mandar ahora")] : [];
+        const botones = pend.length ? [
+            el("button", { type: "button", class: "cam-btn", "data-accion": "reintentar-cola", onclick: () => { cola.vaciar(); } }, "Mandar ahora"),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "copia-pendientes", onclick: () => { bajarCopia(); } }, "Descargar copia"),
+        ] : [];
         caja.replaceChildren(el("p", { texto: (nivel === "mal" ? "⚠ " : "") + partes.join(" ") }), ...botones);
+    }
+
+    // ------------------------------------------------------------- la copia de seguridad (la arma esta página: no pide internet)
+    // Un archivo de texto con lo que todavía no salió y las mesas como las ve la tablet. Si la tablet se apaga o hay que cambiarla, se vuelve a cargar.
+    // Ver «La copia de seguridad de la tablet» en docs/decisiones/juegos-y-torneos.md.
+    function datosDeCopia() {
+        const pend = cola ? cola.lista() : [];
+        const pendientes = {};
+        for (const x of pend) if (x.accion === "guardar" && x.meta && x.meta.mesa != null && VALOR_RES[x.meta.valor]) pendientes[x.meta.mesa] = VALOR_RES[x.meta.valor];
+        return {
+            items: pend, dueno, ahora: Date.now(),
+            ronda: estado ? estado.ronda : null,
+            categoria: estado ? (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) : "",
+            mesas: estado ? estado.mesas.map((m) => ({ mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: m.valor === "0" ? "sin resultado" : M.textoResultado(m.valor), pendiente: pendientes[m.mesa] || "" })) : [],
+        };
+    }
+
+    function bajarCopia() {
+        const R = window.CentroamericanoRespaldo;
+        if (!R) { avisar("Esta tablet no puede armar la copia.", true); return; }
+        try {
+            const texto = R.armar(datosDeCopia(), {
+                fechaHora: (ms) => window.HoraCR.fechaHora(ms, { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" }),
+                hora: (ms) => hora(ms, { hour: "numeric", minute: "2-digit" }),
+            });
+            const nombre = R.nombreArchivo(Date.now());
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([texto], { type: "text/plain;charset=utf-8" }));
+            a.download = nombre;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+            avisar("Se bajó «" + nombre + "». Déjalo en la tablet; si puedes, mándalo también a otro aparato (Bluetooth, cable o correo).");
+        } catch (e) { avisar("No se pudo armar la copia: " + (e && e.message ? e.message : "inténtalo otra vez."), true); }
+    }
+
+    // Vuelve a poner en la cola lo de una copia. Solo de ESTE enlace; lo que ya estaba (mismo id) no se suma; lo demás se manda solo.
+    async function cargarCopia(archivo) {
+        const R = window.CentroamericanoRespaldo;
+        if (!archivo || !R) return;
+        if (!cola) { avisar("Esta tablet no puede guardar pendientes: no se cargó la copia.", true); return; }
+        let texto;
+        try {
+            texto = await new Promise((ok, mal) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result)); fr.onerror = () => mal(new Error("No se pudo leer el archivo.")); fr.readAsText(archivo); });
+        } catch (e) { avisar(e.message, true); return; }
+        const r = R.leer(texto);
+        if (!r.ok) { avisar(r.error, true); return; }
+        if (r.dueno !== dueno) { avisar("Esta copia es de otro enlace (otro árbitro u otro torneo). Ábrela desde el enlace de quien la bajó. No se cargó nada.", true); return; }
+        const ya = new Set(cola.lista().map((x) => x.id));
+        let sumadas = 0, repetidas = 0;
+        for (const x of r.items) {
+            if (ya.has(x.id)) { repetidas++; continue; }
+            await cola.agregar({ id: x.id, accion: x.accion, cuerpo: x.cuerpo, etiqueta: x.etiqueta, meta: x.meta });
+            sumadas++;
+        }
+        avisar(R.resumenCarga(sumadas, repetidas));
+        if (sumadas) cola.vaciar();
     }
 
     const clave = (mesa, color) => mesa + "|" + color;
@@ -2193,6 +2254,9 @@
 
     function arrancar() {
         armarMenuVista();
+        $("bajar-copia").addEventListener("click", bajarCopia);
+        $("cargar-copia").addEventListener("click", () => $("archivo-copia").click());
+        $("archivo-copia").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; cargarCopia(f); });
         $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
