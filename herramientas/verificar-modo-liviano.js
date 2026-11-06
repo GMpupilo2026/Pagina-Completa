@@ -98,13 +98,17 @@ async function abrir(browser, { vieja = false, memoria = null, nucleos = 8, lent
         if (nombre !== "centroamericano-mesa") return r.fulfill({ status: 200, headers: cors, body: JSON.stringify({ ok: true, mesas: [] }) });
         const lento = await r.request().frame().page().evaluate(() => window.__lento === true).catch(() => false);
         if (lento && ["leer", "avisos"].includes(body.action)) await new Promise((ok) => setTimeout(ok, 6500));
-        const res = await r.request().frame().page().evaluate(async (b) => {
-            window.__llamadas.push({ f: "centroamericano-mesa", body: b });
-            const x = window.__servidor(b);
-            if (x.error) return { status: x.error.context.status, cuerpo: await x.error.context.json() };
-            return { status: 200, cuerpo: x.data };
-        }, body);
-        return r.fulfill({ status: res.status, headers: cors, body: JSON.stringify(res.cuerpo) });
+        // Un pedido «lento» puede seguir esperando cuando la prueba ya cerró la página: entonces no hay a quién contestarle.
+        let res;
+        try {
+            res = await r.request().frame().page().evaluate(async (b) => {
+                window.__llamadas.push({ f: "centroamericano-mesa", body: b });
+                const x = window.__servidor(b);
+                if (x.error) return { status: x.error.context.status, cuerpo: await x.error.context.json() };
+                return { status: 200, cuerpo: x.data };
+            }, body);
+        } catch (e) { return r.abort().catch(() => {}); }
+        return r.fulfill({ status: res.status, headers: cors, body: JSON.stringify(res.cuerpo) }).catch(() => {});
     });
     await ctx.route(/sentry|googletagmanager|lichess\.org|chess-results/, (r) => r.abort());
     const p = await ctx.newPage();
