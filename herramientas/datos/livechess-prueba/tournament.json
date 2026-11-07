@@ -1,0 +1,55 @@
+{
+ "id": "Prueba",
+ "name": "Torneo de prueba",
+ "location": "Sala de prueba",
+ "country": "CR",
+ "website": null,
+ "rules": "STANDARD",
+ "chess960": "STANDARD",
+ "timecontrol": "90 min + 30 seg add",
+ "rounds": [
+  {
+   "count": 5,
+   "live": 0
+  },
+  {
+   "count": 5,
+   "live": 0
+  },
+  {
+   "count": 5,
+   "live": 1
+  },
+  {
+   "count": 0,
+   "live": 0
+  },
+  {
+   "count": 0,
+   "live": 0
+  },
+  {
+   "count": 0,
+   "live": 0
+  },
+  {
+   "count": 0,
+   "live": 0
+  },
+  {
+   "count": 0,
+   "live": 0
+  },
+  {
+   "count": 0,
+   "live": 0
+  }
+ ],
+ "eboards": [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5"
+ ]
+}

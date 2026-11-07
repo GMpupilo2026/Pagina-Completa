@@ -9425,7 +9425,8 @@ inmediato.
   «Nf3 5482+5»: el reloj de quien jugó justo después (en segundos, como lo marca el DGT 3000: ya con el incremento de la
   jugada siguiente) y los segundos que pensó; `firstMove` es la hora de la primera. La hora de cada jugada sale de sumar
   lo pensado desde ahí (comprobado con la ronda 3 real: empezó a las 9:03).
-- **Por eso el enlace NO se publica**: va en `centroamericano_livechess` (tnr → id y tableros; RLS sin políticas, sin
+- **Por eso el enlace NO se publica** (salvo el Blitz, que el dueño pidió publicar sin atraso el 7/11: ver «El Blitz,
+  directo de LiveChess y sin atraso»): va en `centroamericano_livechess` (tnr → id y tableros; RLS sin políticas, sin
   permisos para `anon` y `authenticated`; migración `centroamericano_livechess`). Lo lee solo `centroamericano-mesas-vivo`
   (v4), que a cada tablet le da **solo sus mesas**: la mesa de chess-results es el tablero de LiveChess, y los **dos**
   nombres tienen que coincidir (`mismoJugador`; LiveChess da `lname fname mname`). Comprobado con la ronda 3 real de las
@@ -13312,6 +13313,60 @@ jugadas y con una barra que diga cómo va la partida.
   cambiados y sin los ID de FIDE** (son jugadoras menores de edad). Rompí a
   propósito que las jugadas nuevas siempre movieran la posición, la barra al
   revés y el botón sin mirar la categoría, y saltaron.
+
+
+### El Blitz, directo de LiveChess y sin atraso
+
+El 7/11 (la víspera del Blitz) el dueño pasó los enlaces de LiveChess del Blitz
+(U08 a U18, tableros 1-8 el U08 y 1-10 los demás) y pidió que la página del
+torneo mostrara el evento **desde LiveChess en vez de Lichess, y que se siguiera
+viendo igual**. Se le preguntó por el atraso, porque contradice «Los tableros por
+LiveChess, sin atraso» (ahí el enlace NO se publica): la transmisión de Lichess
+va con 15 minutos por juego limpio y LiveChess no tiene ninguno. Eligió **sin
+atraso y solo el Blitz** (el clásico sigue con Lichess y su atraso), sabiendo
+el riesgo: alguien afuera puede seguir una partida en vivo, pasarla por un motor
+y soplarle jugadas a un jugador. **No se le pone atraso «por si acaso»**: fue su
+decisión; si un día se quiere, es una pregunta para él.
+
+- **Qué se publica lo dice la base, torneo por torneo**: la columna
+  `centroamericano_livechess.publico` (por omisión `false`, solo se cambia con
+  SQL; migración `centroamericano_livechess_publico`). La organización vuelve a
+  guardar sus enlaces en `centroamericano-mesas.html` sin tocarla (el upsert de
+  `centroamericano-mesas-vivo` no la nombra). `centroamericano_livechess_publico()`
+  la puede llamar cualquiera y da el id de LiveChess y los tableros **solo** de
+  lo marcado, sin los de prueba ni los archivados. Los del clásico siguen sin
+  salir de la base. El id nunca está en el repositorio.
+- **El navegador de quien mira le pide las partidas directo a LiveChess**
+  (`1.pool.livechesscloud.com`, CORS abierto; está en `connect-src` de
+  `_headers` y en la política de privacidad, junto a Lichess).
+  `js/livechess-transmision.js` da **lo mismo que `js/lichess-transmision.js`**
+  (`rondas`, `partidas`, y `juegos` en lugar del PGN: cada partida ya leída con
+  chess.js, como `leerPgn`), así que `js/centroamericano-partidas.js` solo elige
+  de dónde leer cada torneo (`deLiveChess`): la lista, los filtros, el visor,
+  «En vivo ahora», el proyector y «Ver su partida en vivo» salen iguales. Los
+  ids son nuestros: `lc-<tnr>`, `lc-<tnr>-<ronda>`, `lc-<tnr>-<ronda>-<mesa>`.
+- **Una categoría sale una sola vez**: si LiveChess publica una categoría en una
+  modalidad, esa de Lichess no se toma (ni sus rondas se piden). Si Lichess o
+  LiveChess no contesta, el otro igual se muestra.
+- **Lo que LiveChess no trae**: ni la federación ni el Elo (se completan con los
+  de chess-results que ya tiene la página, por el nombre y en su categoría, solo
+  si son de la misma modalidad; sin ellos, la partida se ve sin bandera ni Elo),
+  ni la evaluación (la barra queda apagada y está «Calcular con Stockfish en
+  este aparato», como cuando Lichess no la trae; nada se inventa). Por eso
+  «Lo mejor de la ronda» del Blitz solo puede dar sorpresas de Elo. Los textos
+  de la ventana dejaron de nombrar a Lichess («Leído a las…»).
+- **Lo que se le pide a LiveChess**: el índice de la ronda y cada partida, a lo
+  sumo cada 4 s (la lista y el visor juntos); una partida terminada no se vuelve
+  a pedir. La mesa es el tablero (desde el primero de «tableros»).
+- **No llega al aviso al celular** «… juega en vivo» (`sala-jugadores`, en el
+  servidor, mira solo Lichess) ni al enlace `#partida=<id de Lichess>`.
+- Lo revisa `verificar-livechess-transmision.js`, con la ronda 3 real del Sub-10
+  del clásico **con los nombres cambiados y sin los ID de FIDE**
+  (`herramientas/datos/livechess-prueba/`, con un id de LiveChess inventado y la
+  mesa 5 dejada en juego). Probado también contra LiveChess de verdad (la ronda
+  real: 5 partidas, todas sus jugadas y relojes) y la función con la clave
+  pública (da los 6 del Blitz y ningún clásico). Rompí a propósito que la
+  categoría saliera dos veces y el Elo de chess-results, y saltaron.
 
 
 ### Resultados en vivo, sin salir de la página
