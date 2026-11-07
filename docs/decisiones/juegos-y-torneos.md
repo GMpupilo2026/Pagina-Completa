@@ -9696,6 +9696,18 @@ Chess Statistics»; «OTB Operations»; GM Colovic, el marco legal) y pidió dej
   y las aplicaciones abiertas; la denuncia durante la partida por escrito y los dos jugadores revisados al terminar; lo
   manda a fairplay@fide.com una sola persona.
 
+**Los ejemplos del seminario, también en la pantalla** (pedido el 7 de noviembre). La presentación de estadística trae
+dos salidas reales del programa de Regan, en imágenes (sin las partidas: no sirven para ajustar el modelo, sí para
+comprobar las lecturas): «XXX», 1536, con 67,8 en la prueba rápida y z = −1,78 en la completa (parecía trampa y estaba
+limpia), y «yyy», 1458, con 89,0, 76,9 % de primera del motor, z = 7,11 e IPR 2610 ± 212 (trampa clara). El verificador
+fija que 67,8 es «a mirar» y no «muy alta», 89,0 «muy alta», y que `porAzar(7,11)` da la cifra de FIDE
+(1 de cada 1 723 536 022 721, a menos de 0,01 %); `nivelIndice()` es la única copia de la vara. En «Lo que pide FIDE
+para la revisión» van los dos ejemplos y los casos del marco legal en una línea cada uno, tal como los cuentan las
+diapositivas: Shevchenko (probado por lo que vieron los árbitros, sin estadística), Docx (sin trampa probada, suspendido
+un año por no cooperar), Rausis (no se fotografía a nadie en el baño), Sandu (la «cacería de brujas» sancionada),
+Carlsen y Niemann (denuncia fundada aunque no hubo trampa; multa por retirarse), Kramnik (acusación temeraria y acoso,
+apelado) y la libreta de Toronto.
+
 Lo que ya hacíamos como FIDE: el índice corregido para que la sala entera dé 50 (su «Average ROI by player»: aquí, el
 «centro»), lo medido hasta la jugada 60 (desde donde termina la teoría, que FIDE pone en la 8), sin las posiciones ya
 decididas, con al menos 30 jugadas para el índice y el rendimiento para quien no tiene Elo. Lo que podría sumarse

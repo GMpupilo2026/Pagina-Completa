@@ -70,6 +70,9 @@
     // prueba, 2,5 (62,5) sirve de apoyo. Ver «Las varas de FIDE» en docs/decisiones/juegos-y-torneos.md.
     const fino = (x) => Number(x).toLocaleString("es-CR", { maximumFractionDigits: 3 });
     const ROI_VIGILAR = 65, ROI_ACTUAR = 70, Z_SANCION = 5, Z_APOYO = 2.5;
+    // El nivel de un índice: «a mirar» desde 65, «muy alta» desde 70. Los dos ejemplos del seminario lo fijan en el
+    // verificador: 67,8 (que por la prueba completa jugó peor de lo esperado) es «a mirar», no «muy alta»; 89,0, «muy alta».
+    const nivelIndice = (r) => (r >= ROI_ACTUAR ? "alta" : r >= ROI_VIGILAR ? "a_mirar" : "normal");
     const ESCALA = "De 40 a 64 es normal; de 65 a 69 se vigila al jugador mientras juega; desde 70 se lo sigue y se prepara para actuar (las varas de FIDE).";
     // Cuántas veces pasaría por pura casualidad, a quien juega limpio, estar tantas desviaciones arriba: «1 de cada 44» con 2,
     // como lo dice FIDE. La cola de la normal con la erfc de Chebyshev de Numerical Recipes (error relativo menor a 1,2e-7:
@@ -239,7 +242,16 @@
                     el("li", {}, el("strong", { texto: "Antes o apenas termina la partida" }), "; durante la partida, solo si la sospecha es muy fuerte o se pueden perder las pruebas (Manual del Árbitro de FIDE)."),
                     el("li", {}, el("strong", { texto: "No hace falta darle un motivo al jugador" }), ", pero las revisiones al azar tienen que estar ", el("strong", { texto: "anunciadas antes en las bases" }), " (Guías antitrampas de FIDE). Que se revisa al ganador y que nadie se puede ir sin revisarse también va en las bases: FIDE no lo fija."),
                     el("li", {}, el("strong", { texto: "Si se niega" }), ", o se va sin revisarse, el árbitro aplica el art. 12.9 (de la advertencia a perder la partida o la expulsión). Anótalo como «Se negó» o «Se fue sin revisarse», con lo que pasó."),
-                    el("li", {}, el("strong", { texto: "Una precisión alta no prueba nada" }), ": es una razón para mirar con más cuidado, nunca para acusar. Para FIDE, la estadística sola prueba la trampa desde 5 desviaciones sobre el tablero (índice 75); con otra prueba, desde 2,5 (62,5) sirve de apoyo. Cada revisión va al informe del torneo con su resultado, todo lo de Fair Play es confidencial y lo manda a FIDE una sola persona (el árbitro principal o el encargado), con el formulario de denuncia, a fairplay@fide.com.")))].filter(Boolean));
+                    el("li", {}, el("strong", { texto: "Una precisión alta no prueba nada" }), ": es una razón para mirar con más cuidado, nunca para acusar. Para FIDE, la estadística sola prueba la trampa desde 5 desviaciones sobre el tablero (índice 75); con otra prueba, desde 2,5 (62,5) sirve de apoyo. Cada revisión va al informe del torneo con su resultado, todo lo de Fair Play es confidencial y lo manda a FIDE una sola persona (el árbitro principal o el encargado), con el formulario de denuncia, a fairplay@fide.com."),
+                    el("li", {}, el("strong", { texto: "Dos ejemplos del seminario" }), " (Andy Howie, «Understanding Chess Statistics»): una jugadora de 1536 con 6,5 de 9 sacó 67,8 en la prueba rápida y parecía hacer trampa; la prueba completa dio z = −1,78, peor de lo esperado para su Elo: estaba limpia. Aquí 67,8 sale «a mirar», no «muy alta». Otra de 1458 con 6 de 9 sacó 89,0 (76,9 % de primera del motor) y en la prueba completa z = 7,11 (por azar, 1 de cada 1,7 billones) y una fuerza de juego de 2610 ± 212: trampa clara, y sí sale «muy alta»."),
+                    el("li", {}, el("strong", { texto: "Casos que enseñan" }), " (seminario de FIDE): ",
+                        el("strong", { texto: "Shevchenko" }), " (2024): dos celulares en el mismo baño, al que iba sin permiso, y la estadística sin llegar a la vara (z entre 2 y 2,5). Se habría probado aun sin su confesión, por lo que vieron y anotaron los árbitros. ",
+                        el("strong", { texto: "Docx" }), " (2022): el árbitro vio luz de un celular en el baño, no se encontró ninguno y se negó a la revisión. No se dio por probada la trampa (nadie lo vio con el aparato y su juego no era raro), pero se lo suspendió un año por no cooperar. ",
+                        el("strong", { texto: "Rausis" }), " (2019): no se le toman fotos a nadie en el baño; se espera a que salga y se le pide la revisión. ",
+                        el("strong", { texto: "Sandu" }), " (2015): una rival juntó firmas contra ella sin pruebas, una «cacería de brujas» que se sancionó. Toda denuncia va por escrito al árbitro, nunca en público. ",
+                        el("strong", { texto: "Carlsen y Niemann" }), " (2022): la acusación no se sancionó porque tenía motivos razonables (una denuncia puede estar fundada aunque no haya trampa), pero sí retirarse del torneo sin permiso. ",
+                        el("strong", { texto: "Kramnik" }), " (2026): acusar en redes sin pruebas, también a menores, se sancionó como acusación temeraria y acoso (fallo apelado). ",
+                        el("strong", { texto: "Candidatos de Toronto" }), ": la libreta del encargado, con tres notas en dos rondas y ninguna trampa; las tres valía la pena anotarlas, con la hora.")))].filter(Boolean));
     }
 
     // ---------------------------------------------------------------- leer y pintar
@@ -363,7 +375,7 @@
         const lista = (datos.indice || []).filter((x) => x.roi != null).sort((a, b) => b.roi - a.roi);
         $("fp-indice-vacio").hidden = lista.length > 0;
         $("fp-indice-tabla").hidden = lista.length === 0;
-        const nivel = (r) => (r >= ROI_ACTUAR ? "alta" : r >= ROI_VIGILAR ? "a_mirar" : "normal");
+        const nivel = nivelIndice;
         $("fp-indice").replaceChildren(...lista.slice(0, 60).map((x) => el("tr", { "data-nivel": nivel(x.roi) },
             el("td", {}, el("strong", { texto: conElo(x.jugador, x.elo) }), x.comparado === "categoria" ? el("span", { class: "cam-fp-detalle", texto: "Sin Elo: comparado con su categoría" }) : null,
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico cam-fp-informe-jugador", "data-accion": "informe-jugador", onclick: (e) => informeJugador(x, e.currentTarget) },
@@ -1125,7 +1137,7 @@
         }, LEER_MS);
     }
 
-    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn };
+    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn, nivelIndice, porAzar };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
