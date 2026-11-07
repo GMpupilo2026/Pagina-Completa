@@ -296,6 +296,15 @@ function pruebasDelCalculo() {
     igual("la frase de arriba, con el índice", [Rz(conIndice), Rz(Object.assign({}, conIndice, { roi: 48, z_modelo: -0.4, z: 0, z_t1: 0, z_dif: 0 })), X(Object.assign({}, conIndice, { comparado: "categoria" }))[1].texto],
         ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel (por azar, 1 de cada 1\u00a0927 jugadores limpios). Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
          "Según lo difícil de cada posición, alguien de su categoría jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."]);
+    // Los dos ejemplos del seminario de FIDE (Andy Howie, «Understanding Chess Statistics»): XXX, 67,8 en la prueba rápida y
+    // z = −1,78 en la completa (estaba limpia); yyy, 89,0 y z = 7,11 («1 in 1,723,536,022,721»).
+    const { nivelIndice, porAzar } = window.CentroamericanoFairPlay;
+    const enCifras = (t) => Number((t.match(/1 de cada ([\d\s\u00a0.]+) jugadores/) || [, "0"])[1].replace(/[^\d]/g, ""));
+    igual("los ejemplos de FIDE: 67,8 es «a mirar» (no «muy alta»), 89,0 «muy alta»; las varas justas en 65 y 70",
+        [nivelIndice(67.8), nivelIndice(89), nivelIndice(64.9), nivelIndice(65), nivelIndice(69.9), nivelIndice(70)],
+        ["a_mirar", "alta", "normal", "a_mirar", "a_mirar", "alta"]);
+    igual("lo que pasaría por azar con z = 7,11 da la cifra de FIDE (1 de cada 1 723 536 022 721, a menos de 0,01 %); con z negativo (−1,78, jugó peor de lo esperado) no se dice nada",
+        [Math.abs(enCifras(porAzar(7.11)) / 1723536022721 - 1) < 1e-4, porAzar(-1.78)], [true, ""]);
     delete global.window; delete global.document;
 
     console.log("\n=== La banda dorada de la tablet (fairPlayDeMesa) ===");
@@ -749,6 +758,10 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const o = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64), esquema: "dark" });
         await o.p.waitForSelector(".cam-fp-alerta");
         await o.p.evaluate(() => { document.querySelector(".cam-fp-reglas").open = true; });
+        igual("la guía de FIDE trae los dos ejemplos del seminario y los casos que enseñan", await o.p.evaluate(() => {
+            const t = document.querySelector(".cam-fp-reglas").textContent;
+            return ["Dos ejemplos del seminario", "z = −1,78", "z = 7,11", "2610 ± 212", "Shevchenko", "Docx", "Rausis", "Sandu", "Carlsen y Niemann", "Kramnik", "Toronto"].filter((x) => !t.includes(x));
+        }), []);
         igual("en oscuro, todo el texto da 4,5 o más", await o.p.evaluate(CONTRASTE, TEXTO_PANEL), []);
         await o.ctx.close();
 
