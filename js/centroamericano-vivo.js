@@ -107,6 +107,7 @@
       copaPuesto: (i) => ["1.er lugar", "2.º lugar", "3.er lugar"][i],
       copaTabla: "Todos los países",
       copaPais: "País", copaTotal: "Puntos",
+      copaBoton: "Imagen de la Copa para compartir",
       podios: "Los podios de cada categoría",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, tras la ronda " + r,
@@ -218,6 +219,7 @@
       copaPuesto: (i) => ["1st place", "2nd place", "3rd place"][i],
       copaTabla: "All countries",
       copaPais: "Country", copaTotal: "Points",
+      copaBoton: "Nations Cup image to share",
       podios: "The podium of every section",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, after round " + r,
@@ -1597,6 +1599,19 @@
     tabla.appendChild(tbody);
     envoltura.appendChild(tabla);
     sec.appendChild(envoltura);
+    // La imagen para compartir, con la marca de agua (js/centroamericano-tablas.js).
+    const boton = el("button", "cac-boton mt-4", "");
+    boton.type = "button";
+    boton.id = "copa-imagen";
+    const ico = el("span", "", "📸 "); ico.setAttribute("aria-hidden", "true");
+    boton.append(ico, document.createTextNode(tx.copaBoton));
+    const estado = el("p", "mt-2 text-sm font-semibold");
+    estado.setAttribute("role", "status");
+    const tors = datos ? datos.torneos : [];
+    const final = tors.length > 0 && tors.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
+    const ronda = Math.max(0, ...tors.map((tor) => tor.ronda || 0));
+    boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirCopa(filas, final, ronda, boton, estado); });
+    sec.append(boton, estado);
     caja.appendChild(sec);
   }
 

@@ -5,6 +5,7 @@
  *   - el empate se rompe con más primeros lugares, después más segundos…;
  *   - en el medallero sale el podio de los tres países (el 1.° en el medio)
  *     y la tabla de todos, con el puesto escrito;
+ *   - la imagen para compartir se baja y lleva la marca de agua;
  *   - en Rápidas o Blitz no se calcula: dice que cuenta solo el Clásico.
  *
  * Con el sitio servido (npm run verificar lo levanta solo):
@@ -37,7 +38,7 @@ const DATOS = { modalidad: "clasico", modalidades: ["clasico", "rapidas"], torne
     jugadores: ["PAN", "CRC", "JAM", "PAN", "CUB", "CRC"].map((f, i) => j(i + 1, f, "U18F")), pareo: { ronda: 7, mesas: [] } }] };
 
 async function abrir(nav, modalidad) {
-  const ctx = await nav.newContext({ viewport: { width: 1100, height: 900 }, serviceWorkers: "block" });
+  const ctx = await nav.newContext({ viewport: { width: 1100, height: 900 }, serviceWorkers: "block", acceptDownloads: true });
   await ctx.route(/supabase\.co|lichess\.org|chess-results\.com/, (r) => r.abort());
   await ctx.addInitScript(({ d, m }) => {
     try { localStorage.setItem("cac_modalidad_v1", JSON.stringify(m)); } catch (e) { /* sin lugar */ }
@@ -85,6 +86,13 @@ async function abrir(nav, modalidad) {
       JSON.stringify(m.podio) === JSON.stringify([[2, "Panamá (PAN)", "22 puntos", "2.º lugar"], [1, "Costa Rica (CRC)", "24 puntos", "1.er lugar"], [3, "Jamaica (JAM)", "10 puntos", "3.er lugar"]]), JSON.stringify(m.podio));
     ok("y el 1.° más alto que el 2.°, y el 2.° más que el 3.°", m.alturas[1] > m.alturas[0] && m.alturas[0] > m.alturas[2], JSON.stringify(m.alturas));
     ok("la tabla de todos los países, con cuántos lugares tiene cada uno", m.filas.length === 5 && m.filas[0] === "1 Costa Rica (CRC) 1 1 1 0 0 24" && m.filas[4] === "5 Guatemala (GUA) 0 0 0 0 1 2", JSON.stringify(m.filas));
+    // La imagen para compartir: se baja con su nombre y lleva la marca de agua
+    // de Ajedrez Integral (TablaImagen.marcar, la misma de todas las imágenes).
+    await p.evaluate(() => { const T = window.TablaImagen; const o = T.marcar; window.__marcas = 0; T.marcar = async (c) => { window.__marcas++; return o(c); }; });
+    const [baja] = await Promise.all([p.waitForEvent("download", { timeout: 15000 }).catch(() => null), p.click("#copa-imagen")]);
+    const img = await p.evaluate(() => ({ marcas: window.__marcas, boton: document.getElementById("copa-imagen").textContent }));
+    ok("«Imagen de la Copa para compartir» la baja con su nombre", !!baja && baja.suggestedFilename() === "centroamericano-2026-copa-de-naciones-ronda-7.png" && /Imagen de la Copa/.test(img.boton), baja && baja.suggestedFilename());
+    ok("y la imagen lleva la marca de agua de Ajedrez Integral", img.marcas === 1, JSON.stringify(img));
     ok("sin errores en la página", !errores.length, errores.join(" | "));
     await ctx.close();
 

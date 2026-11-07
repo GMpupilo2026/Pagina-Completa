@@ -433,6 +433,7 @@ window.CentroamericanoFR = {
     copaPuesto: (i) => ["1re place", "2e place", "3e place"][i],
     copaTabla: "Tous les pays",
     copaPais: "Pays", copaTotal: "Points",
+    copaBoton: "Image de la Coupe à partager",
     podios: "Le podium de chaque catégorie",
     podioFinal: "Définitif",
     podioProvisional: (r) => "Provisoire, après la ronde " + r,

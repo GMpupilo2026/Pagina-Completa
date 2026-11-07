@@ -14040,9 +14040,17 @@ festival, con los cinco primeros de cada categoría del Clásico. El 1.° da
   cada uno. Mientras no terminen todas las categorías, es provisional, como
   el resto del medallero.
 
+- **La imagen para compartir** («Imagen de la Copa para compartir», debajo
+  de la tabla): el podio y los que siguen hasta el 10.°, con la mascota, la
+  dirección de la página y la marca de agua de Ajedrez Integral
+  (`TablaImagen.marcar`, la misma de todas las imágenes del sitio). La arma
+  `imagenCopa()` en `js/centroamericano-tablas.js`, como las demás imágenes
+  de la página. El dueño pidió que no se olvidara la marca de agua.
+
 Lo revisa `verificar-centroamericano-copa.js`: la cuenta (el 6.° no suma), el
 desempate (ganado por quien va después por código, así que solo pasa por el
-desempate), el podio con sus alturas, la tabla, el aviso en Rápidas y el
+desempate), el podio con sus alturas, la tabla, la imagen con su marca de
+agua, el aviso en Rápidas y el
 inglés.
 
 ## Las páginas de los torneos universitarios
