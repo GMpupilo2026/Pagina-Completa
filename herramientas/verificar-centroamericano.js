@@ -735,7 +735,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("Escape lo cierra y devuelve el foco al botón", await p6.evaluate(() => document.activeElement.id === "profe-boton" && !document.getElementById("profe-panel").checkVisibility()));
     await p6.click('a[href="#medallero"]');
     await p6.waitForFunction(() => /Provisional/.test(document.getElementById("medallero-contenido").textContent));
-    const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
+    const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido table:not(.cac-copa-tabla) tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
       podios: [...document.querySelectorAll("#medallero-contenido .cac-podio")].map((c) => c.innerText.replace(/\s+/g, " ").trim()) }));
     ok("el medallero cuenta los tres primeros de cada categoría por federación", JSON.stringify(med.filas) === JSON.stringify(["CRC 2 0 0 2", "PAN 1 0 0 1", "CUB 0 1 0 1", "ESA 0 1 0 1", "BAR 0 0 1 1", "GUA 0 0 1 1"]), JSON.stringify(med.filas));
     ok("y los podios van por categoría, de la menor a la mayor", med.podios.length === 3 && /^Sub-8 Absoluto/.test(med.podios[0]) && /^Sub-18 Femenino .*1\. IM Castillo/.test(med.podios[2]), JSON.stringify(med.podios));
