@@ -14016,6 +14016,35 @@ Se rompieron a propósito la experiencia, la persona antes de apagar y el salto
 de la tablet: saltaron las tres. El doble de la organización conoce `gt()`,
 `centroamericano_reparto_tasas` y `centroamericano_reparto_aplicar`.
 
+### La Copa de naciones
+
+El dueño la pidió el 7/11/2026: un podio de los tres mejores países del
+festival, con los cinco primeros de cada categoría del Clásico. El 1.° da
+10 puntos, el 2.° 8, el 3.° 6, el 4.° 4 y el 5.° 2.
+
+- **Va arriba del medallero** (`#medallero`), antes de las medallas. Es la
+  misma ventana y los mismos datos de sala-jugadores, así que no hace falta
+  pedir nada más. La cuenta es `copaDeNaciones()` en
+  `js/centroamericano-vivo.js`, y el puesto de cada jugador sale del orden de
+  la clasificación de su categoría (el grupo «Gr» de chess-results).
+- **Solo el Clásico.** En Rápidas o Blitz, el medallero dice que la Copa
+  cuenta solo el Clásico y no la calcula: sumar otra modalidad cambiaría la
+  regla que dio el dueño.
+- **El empate** se rompe con más primeros lugares, después con más segundos,
+  y así hasta el 5.°. Si siguen iguales, por código. La regla va escrita
+  debajo del título, para que nadie tenga que adivinarla.
+- **El podio** pone al 2.° a la izquierda, al 1.° en el medio y más alto, y
+  al 3.° a la derecha. Cada uno lleva su nombre, sus puntos y el puesto
+  escrito («1.er lugar»), así que ni la altura ni el color van solos. Debajo
+  está la tabla de todos los países, con cuántos 1.°, 2.°… 5.° lugares tiene
+  cada uno. Mientras no terminen todas las categorías, es provisional, como
+  el resto del medallero.
+
+Lo revisa `verificar-centroamericano-copa.js`: la cuenta (el 6.° no suma), el
+desempate (ganado por quien va después por código, así que solo pasa por el
+desempate), el podio con sus alturas, la tabla, el aviso en Rápidas y el
+inglés.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

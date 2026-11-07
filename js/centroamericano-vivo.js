@@ -100,6 +100,13 @@
       termino: (r) => "El torneo terminó, a " + r + " rondas. Toca «Sus rondas» para ver cada una.",
       federacion: "Federación", oro: "Oro", plata: "Plata", bronce: "Bronce", total: "Total",
       medallasDe: "Medallas por federación",
+      copa: "Copa de naciones",
+      copaRegla: "Suma de los cinco primeros de cada categoría del Clásico: el 1.° da 10 puntos, el 2.° 8, el 3.° 6, el 4.° 4 y el 5.° 2. Empate: gana quien tiene más primeros lugares, después más segundos, y así.",
+      copaSoloClasico: "La Copa de naciones cuenta solo el Clásico: elige «Clásico» arriba para verla.",
+      copaPuntos: (n) => n + (n === 1 ? " punto" : " puntos"),
+      copaPuesto: (i) => ["1.er lugar", "2.º lugar", "3.er lugar"][i],
+      copaTabla: "Todos los países",
+      copaPais: "País", copaTotal: "Puntos",
       podios: "Los podios de cada categoría",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, tras la ronda " + r,
@@ -204,6 +211,13 @@
       termino: (r) => "The tournament is over, after " + r + " rounds. Tap “Their rounds” to see each one.",
       federacion: "Federation", oro: "Gold", plata: "Silver", bronce: "Bronze", total: "Total",
       medallasDe: "Medals by federation",
+      copa: "Nations Cup",
+      copaRegla: "Sum of the top five of every Classical section: 1st gets 10 points, 2nd 8, 3rd 6, 4th 4 and 5th 2. Ties: most first places, then most second places, and so on.",
+      copaSoloClasico: "The Nations Cup counts only the Classical: choose «Classical» above to see it.",
+      copaPuntos: (n) => n + (n === 1 ? " point" : " points"),
+      copaPuesto: (i) => ["1st place", "2nd place", "3rd place"][i],
+      copaTabla: "All countries",
+      copaPais: "Country", copaTotal: "Points",
       podios: "The podium of every section",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, after round " + r,
@@ -1463,6 +1477,10 @@
       });
     });
 
+    // La Copa de naciones (la pidió el dueño el 7/11/2026): los cinco primeros
+    // de cada categoría del Clásico dan 10, 8, 6, 4 y 2 puntos a su país.
+    if (!CONFIG.soloPodio) pintarCopa(caja, tx, grupos, nombres);
+
     // Un torneo de un solo país (el de CENFOTEC) no lleva tabla de medallas.
     if (!CONFIG.soloPodio) {
       caja.appendChild(el("h3", "mt-5 font-bold text-lg", tx.medallasDe));
@@ -1512,6 +1530,74 @@
       rejilla.appendChild(c);
     });
     caja.appendChild(rejilla);
+  }
+
+  // Los puntos de la Copa de naciones por federación, con cuántos 1.°, 2.°…
+  // 5.° lugares tiene cada una (para el desempate). grupos: {grupo: jugadores
+  // ordenados por puesto}. Ver «La Copa de naciones» en juegos-y-torneos.md.
+  const PUNTOS_COPA = [10, 8, 6, 4, 2];
+  function copaDeNaciones(grupos) {
+    const por = {};
+    Object.keys(grupos).forEach((g) => {
+      grupos[g].slice().sort((a, b) => a.puesto - b.puesto).slice(0, PUNTOS_COPA.length).forEach((j, i) => {
+        if (!j.fed) return;
+        const x = por[j.fed] = por[j.fed] || { fed: j.fed, puntos: 0, lugares: PUNTOS_COPA.map(() => 0) };
+        x.puntos += PUNTOS_COPA[i];
+        x.lugares[i] += 1;
+      });
+    });
+    return Object.values(por).sort((a, b) => b.puntos - a.puntos
+      || a.lugares.reduce((d, n, i) => d || (b.lugares[i] - n), 0) || a.fed.localeCompare(b.fed));
+  }
+
+  function pintarCopa(caja, tx, grupos, nombres) {
+    const sec = el("section", "cac-copa mt-5");
+    sec.setAttribute("aria-labelledby", "copa-titulo");
+    const h = el("h3", "font-bold text-lg", "");
+    h.id = "copa-titulo";
+    const copa = el("span", "", "🏆 "); copa.setAttribute("aria-hidden", "true");
+    h.append(copa, document.createTextNode(tx.copa));
+    sec.appendChild(h);
+    if (modalidad !== "clasico") {
+      sec.appendChild(el("p", "mt-1 text-sm font-semibold", tx.copaSoloClasico));
+      caja.appendChild(sec);
+      return;
+    }
+    const filas = copaDeNaciones(grupos);
+    sec.appendChild(el("p", "mt-1 text-sm", tx.copaRegla));
+    // El podio: el 2.° a la izquierda, el 1.° en el medio y más alto, el 3.° a la derecha.
+    const podio = el("ol", "cac-copa-podio");
+    [1, 0, 2].forEach((i) => {
+      const x = filas[i];
+      if (!x) return;
+      const li = el("li", "cac-copa-escalon cac-copa-" + (i + 1));
+      li.value = i + 1;
+      const m = el("span", "cac-copa-medalla", ["🥇", "🥈", "🥉"][i]); m.setAttribute("aria-hidden", "true");
+      li.append(m, el("span", "cac-copa-fed", pais(x.fed, idioma()) || x.fed), el("span", "cac-copa-puntos", tx.copaPuntos(x.puntos)), el("span", "cac-copa-lugar", tx.copaPuesto(i)));
+      podio.appendChild(li);
+    });
+    sec.appendChild(podio);
+    // Y la tabla de todos, con cuántos lugares tiene cada uno.
+    const envoltura = el("div", "mt-3 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900");
+    const tabla = el("table", "cac-medallas cac-copa-tabla");
+    const cap = el("caption", "sr-only", tx.copaTabla);
+    tabla.appendChild(cap);
+    const cab = el("tr", "bg-brand-100 dark:bg-brand-800");
+    ["#", tx.copaPais, "1.°", "2.°", "3.°", "4.°", "5.°", tx.copaTotal].forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
+    const thead = el("thead"); thead.appendChild(cab); tabla.appendChild(thead);
+    const tbody = el("tbody", "divide-y divide-brand-100 dark:divide-brand-800");
+    filas.forEach((x, i) => {
+      const tr = el("tr");
+      tr.appendChild(el("td", "", String(i + 1)));
+      const th = el("th", "font-semibold", pais(x.fed, idioma()) || x.fed); th.scope = "row"; tr.appendChild(th);
+      x.lugares.forEach((n) => tr.appendChild(el("td", "", String(n))));
+      tr.appendChild(el("td", "font-bold", String(x.puntos)));
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(tbody);
+    envoltura.appendChild(tabla);
+    sec.appendChild(envoltura);
+    caja.appendChild(sec);
   }
 
   function abrirMedallero() {
@@ -1574,7 +1660,7 @@
   // país, el proyector y la imagen para compartir): una sola copia de los datos.
   window.CentroamericanoVivo = {
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
-    textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
+    textos: t, idioma, copaDeNaciones, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
     modalidad: () => modalidad, conModalidad,
