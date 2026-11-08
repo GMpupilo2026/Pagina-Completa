@@ -998,3 +998,17 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
 .cac-plano-donde { font-weight: 700; }
 .cac-plano-lista { margin-top: 0.75rem; padding-left: 1.1rem; list-style: disc; font-size: 0.92rem; }
 .cac-plano-lista li + li { margin-top: 0.2rem; }
+
+/* La Copa de naciones (js/centroamericano-vivo.js, en el medallero): el podio
+   de los tres países, el 1.° en el medio y más alto. El puesto va escrito,
+   no solo en la altura ni en el color. */
+.cac-copa-podio { margin-top: 0.8rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 0.5rem; list-style: none; padding: 0; }
+.cac-copa-escalon { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.15rem; border-radius: 1rem 1rem 0.4rem 0.4rem; padding: 0.7rem 0.4rem; background: #fff; border: 1px solid #dfe0f7; color: #102a43; }
+.dark .cac-copa-escalon { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); color: #fff; }
+.cac-copa-1 { min-height: 9.5rem; border: 2px solid #b7791f; }
+.cac-copa-2 { min-height: 8rem; }
+.cac-copa-3 { min-height: 6.8rem; }
+.cac-copa-medalla { font-size: 1.8rem; line-height: 1; }
+.cac-copa-fed { font-weight: 800; font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.cac-copa-puntos { font-weight: 800; font-size: 1.1rem; }
+.cac-copa-lugar { font-size: 0.8rem; font-weight: 600; }
