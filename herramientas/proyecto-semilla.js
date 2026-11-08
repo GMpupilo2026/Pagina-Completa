@@ -10,7 +10,10 @@
  * cada posición (un final de «El mapa de los finales», un tema de Ejercicios por
  * tema, un mate del banco, una línea de Aperturas) y acá se busca en ese banco,
  * con las mismas funciones que los planes de arranque (lib/planes-banco.js), y
- * pasa por la regla de la clase en vivo.
+ * pasa por la regla de la clase en vivo. La única FEN escrita es la de una
+ * posición de una partida real (fuente «partida»): sale de la partida, su
+ * jugada buena se confirmó con Stockfish al elegirla y acá se comprueba con
+ * chess.js que la solución sea legal.
  *
  * Las LECCIONES se buscan por su título en el HTML del curso, no por número: el
  * número que abre la clase en vivo es la posición del <details> en la página,
@@ -24,7 +27,7 @@
  * ningún error.
  *
  * Uso:  npm install
- *       node herramientas/proyecto-semilla.js [campeones-colegiales-2026]
+ *       node herramientas/proyecto-semilla.js [luchar-hasta-el-final]   (sin nombre: todos)
  * Escribe herramientas/planes/proyecto-<slug>.json (lo que revisa
  * verificar-planes-semilla.js) y .sql (lo que se aplica). El SQL se puede correr
  * las veces que haga falta: vuelve a sembrar el contenido sin tocar a qué
@@ -43,7 +46,21 @@ const { lecciones: leccionesDeCurso } = require("./lib/leer-curso");
    grupo se le COMPARTEN; no se le copian. */
 const PROFESOR_ID = process.env.PROFESOR_ID || "5fc884eb-5374-4353-9a5d-60454c0be6c9";
 
-const SLUG = process.argv[2] && !process.argv[2].startsWith("-") ? process.argv[2] : "campeones-colegiales-2026";
+/* Sin un proyecto nombrado, se siembran todos los de herramientas/proyectos/,
+   uno por uno: es lo que corre el CI antes de verificar-proyectos.js, que
+   revisa cada uno. Si solo se sembrara uno, el verificador fallaría por los
+   demás (o, peor, un proyecto nuevo nunca se revisaría). */
+if (!(process.argv[2] && !process.argv[2].startsWith("-"))) {
+    const { spawnSync } = require("child_process");
+    const todos = fs.readdirSync(path.join(__dirname, "proyectos")).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5)).sort();
+    let fallo = 0;
+    for (const slug of todos) {
+        const r = spawnSync(process.execPath, [__filename, slug].concat(process.argv.slice(2)), { stdio: "inherit" });
+        if (r.status !== 0) fallo = r.status || 1;
+    }
+    process.exit(fallo);
+}
+const SLUG = process.argv[2];
 const proyecto = leerJSON(path.join("herramientas", "proyectos", SLUG + ".json"));
 
 // --------------------------------------------------------------- el catálogo
@@ -152,6 +169,22 @@ function posicionesDe(spec, contexto) {
         return [conPaso(r, {
             q: remata ? "Llevas " + lleva + ": ¿cómo remata la celada?" : "Llevas " + lleva + ": ¿por qué se juega así y cuál es el plan?",
             min: 3, respuesta: (r && r.pregunta || "").replace(/ · Clave: .*$/, ""), porque: l.clave || "" })];
+    }
+    /* Una posición de una partida real (las del Centroamericano en «Luchar
+       hasta el final»). Trae su FEN escrita, pero no inventada: sale de la
+       partida, y la jugada buena se confirmó con Stockfish al elegirla (el CI
+       no tiene motor). Acá se comprueba lo que sí se puede sin motor: que
+       chess.js cargue la posición y que la solución sea legal jugada a jugada.
+       Una solución mal copiada daría una respuesta imposible en la clase. */
+    if (spec.fuente === "partida") {
+        const c = new banco.Chess();
+        if (!spec.fen || !c.load(spec.fen)) { falla(contexto + ": la FEN de «" + spec.titulo + "» no carga"); return []; }
+        for (const san of spec.solucion || []) {
+            if (!c.move(san)) { falla(contexto + ": en «" + spec.titulo + "», " + san + " no es legal"); return []; }
+        }
+        if (!spec.q || !spec.respuesta) { falla(contexto + ": «" + spec.titulo + "» sin pregunta o sin respuesta"); return []; }
+        return [conPaso(posicion(spec.titulo, spec.fen, banco.turnoDe(spec.fen) + " · " + spec.respuesta),
+            { q: spec.q, min: spec.min || 4, respuesta: spec.respuesta, porque: spec.porque || "" })];
     }
     falla(contexto + ": fuente desconocida «" + spec.fuente + "»");
     return [];
@@ -477,7 +510,7 @@ function armarPlanes() {
                 const sigue = [];
                 if (practica) sigue.push(n++ + ". Práctica (15 min): " + practica);
                 if (micro) sigue.push(n++ + ". Microenseñanza (10 min): " + micro + " Retroalimentación en dos pasos: primero un compañero dice qué funcionó y una sugerencia; después tú, con la rúbrica del anexo B.");
-                if (sigue.length) items.push(...notasDeParte("📘 2. Contenido · práctica y microenseñanza", sigue));
+                if (sigue.length) items.push(...notasDeParte("📘 2. Contenido · práctica" + (micro ? " y microenseñanza" : ""), sigue));
             }
 
             // 3. Actividad recreativa

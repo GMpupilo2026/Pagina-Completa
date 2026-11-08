@@ -3724,6 +3724,37 @@ quien administra y que el alumno no vea nada. La ficha de administración la
 revisa `verificar-admin.js`. Rotos a propósito (sin el +1, con la marca
 codificada, dándole clase a quien administra): saltaron.
 
+### «Luchar hasta el final»: un proyecto con posiciones de partidas reales
+
+El segundo proyecto (`herramientas/proyectos/luchar-hasta-el-final.json`) es una
+unidad de cuatro clases para aprender a pelear una partida peor, armada con ocho
+remontadas del Centroamericano y del Caribe Juvenil 2026: de las 530 partidas
+clásicas de la transmisión de Lichess, las que ganó quien estuvo 1,5 peones abajo
+o más, revisadas jugada por jugada con Stockfish, y de esas las ocho en que la
+vuelta la dio el mérito y no un regalo. Se pidió como «base para clases» y
+asignada al profe Oscar (su cuenta de profesor, no la de administración).
+
+- **Una fuente nueva, «partida».** Las posiciones no salen de un banco del sitio
+  sino de las partidas, así que el JSON trae su FEN, la solución, la pregunta,
+  la respuesta y el porqué. No se inventa: la FEN es la de la partida y la
+  jugada buena se confirmó con Stockfish a profundidad 22 al elegirla (el CI no
+  tiene motor). `proyecto-semilla.js` comprueba lo que se puede sin motor: que
+  chess.js cargue la posición y que la solución sea legal jugada a jugada; una
+  solución mal copiada falla la siembra.
+- **Sin nombre, se siembran todos.** `proyecto-semilla.js` sin argumento
+  sembraba solo Campeones Colegiales, y `verificar-proyectos.js` revisa cada
+  JSON de la carpeta: con un segundo proyecto, el CI habría fallado por un
+  archivo sin generar. Ahora, sin nombre, se vuelve a llamar una vez por
+  proyecto.
+- **La rúbrica es de cada proyecto.** `proyecto.html` tenía escrito el título
+  «Anexo B · Rúbrica de la minilección y la microenseñanza»; ahora la guía
+  puede traer `rubrica_titulo` y `rubrica_nota` (si no, quedan los de
+  Campeones). La nota de práctica dice «y microenseñanza» solo si la clase la
+  tiene.
+- Los jugadores, menores de edad, van con su apellido, como en el resto del
+  sitio. Las fechas (sábados del 14 de noviembre al 5 de diciembre) son una
+  propuesta: la guía lo dice.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
