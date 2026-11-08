@@ -43,7 +43,7 @@
             { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html", zona: "cobros" },
             { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html", zona: "cobros" },
             { emoji: "🔑", label: "Licencias de herramientas", desc: "Genera y controla las licencias de las herramientas", href: "licencias.html", zona: "cobros" },
-            { emoji: "🧑‍⚖️", label: "Mis árbitros", desc: "Crea cuentas de árbitro con usuario y contraseña y elige qué herramientas puede usar cada uno", href: "mis-arbitros.html", zona: "cobros" },
+            { emoji: "🧑‍⚖️", label: "Mis árbitros", desc: "Crea las cuentas de tus árbitros y elige qué herramientas puede usar cada uno", href: "mis-arbitros.html", zona: "cobros" },
             { emoji: "🏷️", label: "Precios", desc: "La tabla para enseñar a una academia o un colegio", href: "precios.html", zona: "cobros" },
             { emoji: "🎁", label: "Prueba gratis", desc: "Crear los 3 días de prueba de quien la pidió por WhatsApp", href: "prueba-gratis.html", zona: "cobros" },
             { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: todavía no está abierta al público", href: "tienda.html", zona: "cobros" },
