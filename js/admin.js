@@ -754,7 +754,7 @@
          * cambió: los mismos callAdmin, rpc y Edge Functions de antes. Ver «La
          * ficha de cada persona» en docs/decisiones/paneles.md.
          */
-        const NOMBRE_ROL = { alumno: "Estudiante", profesor: "Profesor" };
+        const NOMBRE_ROL = { alumno: "Estudiante", profesor: "Profesor", arbitro: "Árbitro" };
 
         function nombreDe(u) {
             return u.full_name || u.email;
@@ -1040,7 +1040,18 @@
                     roleSelect.value = prev;
                 }
             });
-            cargo.appendChild(campoFicha("Rol", roleSelect, "Supervisores, coordinadores y equipos se arman en Organización."));
+            if (u.role === "arbitro") {
+                /* La cuenta de árbitro no es de la Academia y su rol no se
+                   cambia acá: sus herramientas se eligen en «Mis árbitros».
+                   Ver «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md. */
+                const enlaceArb = document.createElement("a");
+                enlaceArb.href = "mis-arbitros.html";
+                enlaceArb.className = "font-semibold underline text-accent-700 dark:text-accent-400";
+                enlaceArb.textContent = "Árbitro: sus herramientas, en Mis árbitros";
+                cargo.appendChild(campoFicha("Rol", enlaceArb));
+            } else {
+                cargo.appendChild(campoFicha("Rol", roleSelect, "Supervisores, coordinadores y equipos se arman en Organización."));
+            }
             if (u.role === "alumno") {
                 cargo.appendChild(campoFicha("Sus profesores", renderProfesoresCelda(u, teachers),
                     "Cada profesor lo ve en sus informes, su clase y sus tareas. Sin ninguno, no sale en los informes de nadie."));

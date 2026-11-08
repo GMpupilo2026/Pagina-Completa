@@ -786,7 +786,12 @@ const FILAS_FIDE = [
     // cargue antes de medirla; en el runner del CI la comprobación llegaba antes.
     await mn.p.waitForFunction(() => { const i = document.querySelector("[data-menus] .metro-plato-foto"); return i && i.complete; });
     cierto("el mismo plato de dos cocinas va en una sola tarjeta, con su foto", (await tm.locator("[data-menus] .metro-plato").first().locator(".metro-plato-nombre").textContent()) === "Gallo pinto"
-      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => i.complete && i.naturalWidth > 0));
+      // La foto se espera (hasta 5 s): recién pintada puede no haber cargado todavía, y en el CI tardaba más.
+      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => (i.complete && i.naturalWidth > 0) || new Promise((ok) => {
+        i.addEventListener("load", () => ok(i.naturalWidth > 0), { once: true });
+        i.addEventListener("error", () => ok(false), { once: true });
+        setTimeout(() => ok(i.complete && i.naturalWidth > 0), 5000);
+      })));
     cierto("y no se cobra nada: el total sigue sin costo, y lo dice", /sin costo/.test(await mn.p.textContent("#total")) && await tm.locator("[data-alim-nota-tal-vez]").isVisible());
     await tm.locator('[data-alim-ver-op][value="no"]').check();
     cierto("con «Por ahora no» se esconden y se sigue", (await tm.locator("[data-menus] .metro-plato").count()) === 0);

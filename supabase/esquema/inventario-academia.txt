@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261107040942
+# al-dia-con: 20261108031912
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -31,6 +31,7 @@ tabla  arbitros_cr_seminario_roles  rls=true
 tabla  arbitros_cr_sin_id  rls=true
 tabla  arbitros_cr_solicitudes_enviadas  rls=true
 tabla  arbitros_cr_torneos  rls=true
+tabla  arbitros_cuentas  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
@@ -512,6 +513,9 @@ columna  arbitros_cr_torneos.sistema  text
 columna  arbitros_cr_torneos.titulados  smallint
 columna  arbitros_cr_torneos.titulados_feds  jsonb
 columna  arbitros_cr_torneos.valorado  text
+columna  arbitros_cuentas.arbitro_id  uuid
+columna  arbitros_cuentas.creada_en  timestamp with time zone
+columna  arbitros_cuentas.organizador_id  uuid
 columna  archivos_pgn.carpeta  text
 columna  archivos_pgn.created_at  timestamp with time zone
 columna  archivos_pgn.fen_final  text
@@ -1725,6 +1729,7 @@ columna  licencias_herramientas.dias  integer
 columna  licencias_herramientas.herramienta  text
 columna  licencias_herramientas.id  uuid
 columna  licencias_herramientas.nota  text
+columna  licencias_herramientas.otorgada_por  uuid
 columna  licencias_herramientas.persona_id  uuid
 columna  licencias_herramientas.revocada  boolean
 columna  licencias_herramientas.vence  timestamp with time zone
@@ -2786,11 +2791,14 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  arbitro_herramientas_fijar(p_arbitro uuid, p_herramientas text[])  definer  anon=false  auth=true
 funcion  arbitro_torneo_ajustar(p_tnr text, p_nombre text, p_archivado boolean)  definer  anon=false  auth=true
 funcion  arbitro_torneo_visto(p_tnr text, p_torneo text)  definer  anon=false  auth=true
 funcion  arbitro_torneos_mis()  definer  anon=false  auth=true
 funcion  arbitros_cr_por_vencer(p_dias integer)  definer  anon=false  auth=true
 funcion  arbitros_cr_publico()  definer  anon=true  auth=true
+funcion  arbitros_mis()  definer  anon=false  auth=true
+funcion  arbitros_puedo_dar()  definer  anon=false  auth=true
 funcion  asesores_grabaciones(p_detalle text)  definer  anon=false  auth=true
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
@@ -3051,6 +3059,7 @@ funcion  interno.fp_tras_resultado()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
+funcion  interno.herramienta_propia(p_persona uuid, p_herramienta text)  definer  anon=false  auth=false
 funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.items_del_tema(p_grupo text, p_tema text)  definer  anon=false  auth=true
 funcion  interno.items_del_tema_conjunto(p_grupo text, p_tema text)  definer  anon=false  auth=true
@@ -3208,6 +3217,7 @@ funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_grabaciones()  definer  anon=false  auth=true
 funcion  mis_grabaciones_apartada()  definer  anon=false  auth=false
+funcion  mis_herramientas()  definer  anon=false  auth=true
 funcion  mis_premios(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  mis_respuestas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
@@ -3460,6 +3470,7 @@ politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_cam
 politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_marcar  INSERT
 politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_ver  SELECT
 politica  arbitros_cr_torneos  arbitros_cr_torneos_con_herramienta  SELECT
+politica  arbitros_cuentas  arbitros_cuentas_ver  SELECT
 politica  archivos_pgn  archivos_pgn_delete  DELETE
 politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
@@ -3967,6 +3978,7 @@ trigger  analisis_partidas_alumno  analisis_partidas_al_guardar
 trigger  arbitraje_consulta_config  auditar
 trigger  arbitros_cr_normas_revision  consentimiento
 trigger  arbitros_cr_normas_revision  consentimiento_fijo
+trigger  arbitros_cuentas  auditar
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
@@ -4138,6 +4150,8 @@ indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_cread
 indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_pkey
 indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_una_por_dia
 indice  arbitros_cr_torneos  arbitros_cr_torneos_pkey
+indice  arbitros_cuentas  arbitros_cuentas_organizador_idx
+indice  arbitros_cuentas  arbitros_cuentas_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
 indice  auditoria  auditoria_cuando
@@ -4442,6 +4456,7 @@ indice  justificaciones_ausencia  justificaciones_revisada_por_fk
 indice  justificaciones_ausencia  justificaciones_una_por_dias
 indice  licencias_herramientas  licencias_herramientas_codigo_key
 indice  licencias_herramientas  licencias_herramientas_creada_por_idx
+indice  licencias_herramientas  licencias_herramientas_otorgada_por_idx
 indice  licencias_herramientas  licencias_herramientas_persona_idx
 indice  licencias_herramientas  licencias_herramientas_pkey
 indice  material_compartido  material_compartido_academia_idx
@@ -4910,6 +4925,7 @@ grant  arbitros_cr_solicitudes_enviadas  authenticated  UPDATE
 grant  arbitros_cr_torneos  authenticated  REFERENCES
 grant  arbitros_cr_torneos  authenticated  SELECT
 grant  arbitros_cr_torneos  authenticated  TRIGGER
+grant  arbitros_cuentas  authenticated  SELECT
 grant  archivos_pgn  anon  DELETE
 grant  archivos_pgn  anon  INSERT
 grant  archivos_pgn  anon  REFERENCES

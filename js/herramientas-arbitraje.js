@@ -498,7 +498,19 @@
         return h ? h.nombre : id;
     }
 
-    window.HerramientasArbitraje = { TEMAS, LISTA, porId, nombre };
+    /* Las que se reparten con su propia licencia (las que se le pueden dar a
+       una cuenta de árbitro): ni las gratis ni las que se abren con la
+       licencia de otra. Las usan mis-arbitros.html y arbitro.html. */
+    function conLicenciaPropia() {
+        return LISTA.filter((h) => !h.gratis && !h.licencia && h.disponible !== false);
+    }
+    /* ¿Esta herramienta la abre esa lista de licencias (la de mis_herramientas())? */
+    function abre(ids, h) {
+        const lista = ids || [];
+        return lista.includes("todas") || lista.includes(h.licencia || h.id);
+    }
+
+    window.HerramientasArbitraje = { TEMAS, LISTA, porId, nombre, conLicenciaPropia, abre };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

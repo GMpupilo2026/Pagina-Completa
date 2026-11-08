@@ -250,6 +250,11 @@
         await revisarAbiertas();
         pintarLista();
         await pintarMisLicencias();
+        // Con una licencia propia, se pueden crear cuentas de árbitro (ver mis-arbitros.html).
+        try {
+            const { data } = await sb.rpc("arbitros_puedo_dar");
+            $("ir-mis-arbitros").hidden = !(Array.isArray(data) && data.length);
+        } catch (e) { /* sin la función, el enlace sigue escondido */ }
     }
     init();
 })();
