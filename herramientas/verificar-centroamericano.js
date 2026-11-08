@@ -71,8 +71,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo, los ejercicios de la ronda, los juegos para los que esperan, la cuenta gratis y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "cuenta-gratis", "delegaciones", "ejercicios", "esperas", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la Copa de naciones, la elección de categoría, las partidas en vivo, los ejercicios de la ronda, los juegos para los que esperan, la cuenta gratis y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "copa", "cuenta-gratis", "delegaciones", "ejercicios", "esperas", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -738,7 +738,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("Escape lo cierra y devuelve el foco al botón", await p6.evaluate(() => document.activeElement.id === "profe-boton" && !document.getElementById("profe-panel").checkVisibility()));
     await p6.click('a[href="#medallero"]');
     await p6.waitForFunction(() => /Provisional/.test(document.getElementById("medallero-contenido").textContent));
-    const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
+    const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido table:not(.cac-copa-tabla) tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
       podios: [...document.querySelectorAll("#medallero-contenido .cac-podio")].map((c) => c.innerText.replace(/\s+/g, " ").trim()) }));
     ok("el medallero cuenta los tres primeros de cada categoría por federación", JSON.stringify(med.filas) === JSON.stringify(["CRC 2 0 0 2", "PAN 1 0 0 1", "CUB 0 1 0 1", "ESA 0 1 0 1", "BAR 0 0 1 1", "GUA 0 0 1 1"]), JSON.stringify(med.filas));
     ok("y los podios van por categoría, de la menor a la mayor", med.podios.length === 3 && /^Sub-8 Absoluto/.test(med.podios[0]) && /^Sub-18 Femenino .*1\. IM Castillo/.test(med.podios[2]), JSON.stringify(med.podios));
@@ -1577,7 +1577,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p5.reload({ waitUntil: "load" }).catch(() => {});
     const sinRed = await p5.evaluate(() => ({ titulo: (document.querySelector("h1") || {}).textContent || "", fichas: document.querySelectorAll("#fichas .cac-ficha").length,
       css: getComputedStyle(document.querySelector(".cac-portada") || document.body).backgroundImage })).catch((e) => ({ error: String(e) }));
-    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 12 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
+    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 13 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
     await ctx5.close();
   } finally {
     await nav.close();

@@ -2025,6 +2025,79 @@
     if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
     return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
   }
+  // La Copa de naciones en imagen (js/centroamericano-vivo.js la calcula): el
+  // podio de los tres países y los que siguen, con la marca de agua de Ajedrez
+  // Integral. filas: [{fed, puntos, lugares}], final: si ya terminaron todas.
+  async function imagenCopa(filas, final, ronda) {
+    const tx = T(), tv = V.textos();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const resto = filas.slice(3, 10);
+    const alto = 1080 + Math.max(0, resto.length - 4) * 52;
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = alto;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, alto);
+    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 230);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 64px " + letra;
+    ctx.fillText("🏆 " + tv.copa, 60, 100);
+    ctx.font = "600 30px " + letra;
+    ctx.fillText(renglones(ctx, tx.imgResumenSub, 760, 1)[0], 60, 155);
+    ctx.fillText(renglones(ctx, final ? tv.podioFinal : tv.podioProvisional(ronda), 760, 1)[0], 60, 197);
+    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
+    if (mascota) {
+      ctx.save(); ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(mascota.width, mascota.height);
+      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 860, 25, 180, 180);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.stroke();
+    }
+    // El podio: el 2.° a la izquierda, el 1.° en el medio y más alto, el 3.° a la derecha.
+    const base = 735, ancho = 300;
+    [[1, 60, 230], [0, 390, 300], [2, 720, 180]].forEach(([i, x, h]) => {
+      const f = filas[i];
+      if (!f) return;
+      ctx.fillStyle = i === 0 ? "#fdf3dc" : "#eef0fb"; ctx.fillRect(x, base - h, ancho, h);
+      ctx.lineWidth = i === 0 ? 6 : 2; ctx.strokeStyle = i === 0 ? "#b7791f" : "#c9cbee"; ctx.strokeRect(x, base - h, ancho, h);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#1e2453"; ctx.font = "800 90px " + letra;
+      ctx.fillText(String(i + 1), x + ancho / 2, base - h + 100);
+      ctx.font = "800 40px " + letra;
+      const nombre = renglones(ctx, V.pais(f.fed), ancho - 30, 2);
+      nombre.forEach((l, k) => ctx.fillText(l, x + ancho / 2, base - h - 30 - (nombre.length - 1 - k) * 46 - 64));
+      ctx.fillStyle = "#40478f"; ctx.font = "700 36px " + letra;
+      ctx.fillText(tv.copaPuntos(f.puntos), x + ancho / 2, base - h - 34);
+      ctx.textAlign = "left";
+    });
+    // Los que siguen.
+    let y = base + 80;
+    ctx.fillStyle = "#1f2937"; ctx.font = "600 34px " + letra;
+    resto.forEach((f, k) => {
+      ctx.fillText((k + 4) + ". " + V.pais(f.fed), 60, y);
+      ctx.textAlign = "right"; ctx.fillText(tv.copaPuntos(f.puntos), 1020, y); ctx.textAlign = "left";
+      y += 52;
+    });
+    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 60, alto - 70);
+    [["#1e4c8a", alto - 40], ["#ffffff", alto - 30], ["#ce1328", alto - 22], ["#ffffff", alto - 14], ["#1e4c8a", alto - 8]].forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : alto) - yy);
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+  async function compartirCopa(filas, final, ronda, boton, estado) {
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      const blob = await imagenCopa(filas, final, ronda);
+      await compartirBlob(blob, "centroamericano-2026-copa-de-naciones" + (final ? "" : "-ronda-" + ronda) + ".png", V.textos().copa + " · https://" + URL_PAGINA);
+    } catch (e) {
+      if (estado) estado.textContent = T().imagenError;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
   async function compartirNumeros(boton, estado) {
     if (boton) boton.disabled = true;
     if (estado) estado.textContent = "";
@@ -2192,7 +2265,7 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { imagenCopa, compartirCopa, compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
