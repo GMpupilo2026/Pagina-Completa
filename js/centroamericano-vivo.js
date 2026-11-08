@@ -102,7 +102,7 @@
       medallasDe: "Medallas por federación",
       copa: "Copa de naciones",
       copaRegla: "Suma de los cinco primeros de cada categoría del Clásico: el 1.° da 10 puntos, el 2.° 8, el 3.° 6, el 4.° 4 y el 5.° 2. Empate: gana quien tiene más primeros lugares, después más segundos, y así.",
-      copaSoloClasico: "La Copa de naciones cuenta solo el Clásico: elige «Clásico» arriba para verla.",
+      copaSoloClasico: "La Copa de naciones cuenta solo el Clásico: toca «Clásico» arriba para verla.",
       copaPuntos: (n) => n + (n === 1 ? " punto" : " puntos"),
       copaPuesto: (i) => ["1.er lugar", "2.º lugar", "3.er lugar"][i],
       copaTabla: "Todos los países",
@@ -516,7 +516,7 @@
     deGuardado = !!datos;
     pintarModalidades();
     anunciar(t().modalidadAhora(m));
-    const alDia = () => { pintarTodo(); if (dialogo && dialogo.open) pintarMedallero(); };
+    const alDia = () => { pintarTodo(); if (dialogo && dialogo.open) pintarMedallero(); if ($("copa") && $("copa").open) pintarCopa(); };
     alDia();
     document.dispatchEvent(new Event("cac-datos"));
     pedir().then(alDia, alDia);
@@ -1479,10 +1479,6 @@
       });
     });
 
-    // La Copa de naciones (la pidió el dueño el 7/11/2026): los cinco primeros
-    // de cada categoría del Clásico dan 10, 8, 6, 4 y 2 puntos a su país.
-    if (!CONFIG.soloPodio) pintarCopa(caja, tx, grupos, nombres);
-
     // Un torneo de un solo país (el de CENFOTEC) no lleva tabla de medallas.
     if (!CONFIG.soloPodio) {
       caja.appendChild(el("h3", "mt-5 font-bold text-lg", tx.medallasDe));
@@ -1552,19 +1548,29 @@
       || a.lugares.reduce((d, n, i) => d || (b.lugares[i] - n), 0) || a.fed.localeCompare(b.fed));
   }
 
-  function pintarCopa(caja, tx, grupos, nombres) {
-    const sec = el("section", "cac-copa mt-5");
-    sec.setAttribute("aria-labelledby", "copa-titulo");
-    const h = el("h3", "font-bold text-lg", "");
-    h.id = "copa-titulo";
-    const copa = el("span", "", "🏆 "); copa.setAttribute("aria-hidden", "true");
-    h.append(copa, document.createTextNode(tx.copa));
-    sec.appendChild(h);
+  // La ventana «Copa de naciones» (la ficha de la página; la pidió el dueño el
+  // 7/11/2026): los cinco primeros de cada categoría del Clásico dan 10, 8, 6,
+  // 4 y 2 puntos a su país.
+  function pintarCopa() {
+    const caja = $("copa-contenido");
+    if (!caja) return;
+    const tx = t();
+    caja.replaceChildren();
+    if (!datos) { caja.appendChild(el("p", "text-brand-600 dark:text-brand-300", tx.cargando)); return; }
+    const torneos = datos.torneos.filter((tor) => Array.isArray(tor.jugadores) && tor.jugadores.length);
+    const ronda = Math.max(0, ...torneos.map((tor) => tor.ronda || 0));
+    const sec = el("section", "cac-copa");
+    caja.appendChild(sec);
     if (modalidad !== "clasico") {
       sec.appendChild(el("p", "mt-1 text-sm font-semibold", tx.copaSoloClasico));
-      caja.appendChild(sec);
       return;
     }
+    if (!ronda) { sec.appendChild(el("p", "font-semibold", tx.medalleroAntes)); return; }
+    const todosTerminaron = torneos.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
+    const rondas = Math.max(0, ...torneos.map((tor) => tor.rondas || 0));
+    sec.appendChild(el("p", "mt-2 font-semibold", todosTerminaron ? tx.final : tx.provisional(ronda, rondas)));
+    const grupos = {};
+    torneos.forEach((tor) => tor.jugadores.forEach((j) => { (grupos[j.grupo || "—"] = grupos[j.grupo || "—"] || []).push(j); }));
     const filas = copaDeNaciones(grupos);
     sec.appendChild(el("p", "mt-1 text-sm", tx.copaRegla));
     // El podio: el 2.° a la izquierda, el 1.° en el medio y más alto, el 3.° a la derecha.
@@ -1607,12 +1613,15 @@
     boton.append(ico, document.createTextNode(tx.copaBoton));
     const estado = el("p", "mt-2 text-sm font-semibold");
     estado.setAttribute("role", "status");
-    const tors = datos ? datos.torneos : [];
-    const final = tors.length > 0 && tors.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
-    const ronda = Math.max(0, ...tors.map((tor) => tor.ronda || 0));
-    boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirCopa(filas, final, ronda, boton, estado); });
+    boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirCopa(filas, todosTerminaron, ronda, boton, estado); });
     sec.append(boton, estado);
-    caja.appendChild(sec);
+  }
+  function abrirCopa() {
+    pintarCopa();
+    pedir().then(pintarCopa, () => {
+      const caja = $("copa-contenido");
+      if (caja && !datos) caja.replaceChildren(el("p", "font-semibold", t().error));
+    });
   }
 
   function abrirMedallero() {
@@ -1670,6 +1679,11 @@
     new MutationObserver(() => { if (dialogo.open) abrirMedallero(); }).observe(dialogo, { attributes: true, attributeFilter: ["open"] });
     if (dialogo.open) abrirMedallero();
   }
+  const ventanaCopa = $("copa");
+  if (ventanaCopa) {
+    new MutationObserver(() => { if (ventanaCopa.open) abrirCopa(); }).observe(ventanaCopa, { attributes: true, attributeFilter: ["open"] });
+    if (ventanaCopa.open) abrirCopa();
+  }
 
   // Lo que usa js/centroamericano-tablas.js (la clasificación, la tabla por
   // país, el proyector y la imagen para compartir): una sola copia de los datos.
@@ -1684,7 +1698,7 @@
   };
 
   document.addEventListener("cac-plano", () => { if (datos) pintarTodo(); });
-  document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
+  document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); if (ventanaCopa && ventanaCopa.open) pintarCopa(); });
 
   // Mientras la página está a la vista y alguien ya buscó (o sigue a alguien,
   // o eligió su país), se pone al día sola.

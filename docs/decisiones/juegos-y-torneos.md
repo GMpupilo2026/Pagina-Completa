@@ -14022,13 +14022,16 @@ El dueño la pidió el 7/11/2026: un podio de los tres mejores países del
 festival, con los cinco primeros de cada categoría del Clásico. El 1.° da
 10 puntos, el 2.° 8, el 3.° 6, el 4.° 4 y el 5.° 2.
 
-- **Va arriba del medallero** (`#medallero`), antes de las medallas. Es la
-  misma ventana y los mismos datos de sala-jugadores, así que no hace falta
-  pedir nada más. La cuenta es `copaDeNaciones()` en
-  `js/centroamericano-vivo.js`, y el puesto de cada jugador sale del orden de
-  la clasificación de su categoría (el grupo «Gr» de chess-results).
-- **Solo el Clásico.** En Rápidas o Blitz, el medallero dice que la Copa
-  cuenta solo el Clásico y no la calcula: sumar otra modalidad cambiaría la
+- **Es una ficha de la página** («🏆 Copa de naciones», entre las fichas, y
+  el enlace «Copa de naciones →» junto a «Ver el medallero»). Abre su propia
+  ventana, `#copa`. Primero iba arriba del medallero, y el dueño pidió el 7/11
+  que fuera una ficha: no se repite en el medallero. Usa los mismos datos de
+  sala-jugadores que el medallero, así que no hace falta pedir nada más. La
+  cuenta es `copaDeNaciones()` en `js/centroamericano-vivo.js`, y el puesto
+  de cada jugador sale del orden de la clasificación de su categoría (el
+  grupo «Gr» de chess-results).
+- **Solo el Clásico.** La ventana trae el selector de modalidad; en Rápidas
+  o Blitz dice que la Copa cuenta solo el Clásico y no la calcula: sumar otra modalidad cambiaría la
   regla que dio el dueño.
 - **El empate** se rompe con más primeros lugares, después con más segundos,
   y así hasta el 5.°. Si siguen iguales, por código. La regla va escrita
@@ -14037,8 +14040,8 @@ festival, con los cinco primeros de cada categoría del Clásico. El 1.° da
   al 3.° a la derecha. Cada uno lleva su nombre, sus puntos y el puesto
   escrito («1.er lugar»), así que ni la altura ni el color van solos. Debajo
   está la tabla de todos los países, con cuántos 1.°, 2.°… 5.° lugares tiene
-  cada uno. Mientras no terminen todas las categorías, es provisional, como
-  el resto del medallero.
+  cada uno. Mientras no terminen todas las categorías dice que es
+  provisional y hasta qué ronda va, como el medallero.
 
 - **La imagen para compartir** («Imagen de la Copa para compartir», debajo
   de la tabla): el podio y los que siguen hasta el 10.°, con la mascota, la
@@ -14047,7 +14050,8 @@ festival, con los cinco primeros de cada categoría del Clásico. El 1.° da
   `imagenCopa()` en `js/centroamericano-tablas.js`, como las demás imágenes
   de la página. El dueño pidió que no se olvidara la marca de agua.
 
-Lo revisa `verificar-centroamericano-copa.js`: la cuenta (el 6.° no suma), el
+Lo revisa `verificar-centroamericano-copa.js`: la ficha que abre su ventana,
+la cuenta (el 6.° no suma), el
 desempate (ganado por quien va después por código, así que solo pasa por el
 desempate), el podio con sus alturas, la tabla, la imagen con su marca de
 agua, el aviso en Rápidas y el

@@ -3,7 +3,7 @@
  *   - los cinco primeros de cada categoría del Clásico dan 10, 8, 6, 4 y 2
  *     puntos a su país; el 6.° no da nada;
  *   - el empate se rompe con más primeros lugares, después más segundos…;
- *   - en el medallero sale el podio de los tres países (el 1.° en el medio)
+ *   - la ficha «Copa de naciones» abre su ventana con el podio de los tres países (el 1.° en el medio)
  *     y la tabla de todos, con el puesto escrito;
  *   - la imagen para compartir se baja y lleva la marca de agua;
  *   - en Rápidas o Blitz no se calcula: dice que cuenta solo el Clásico.
@@ -47,8 +47,10 @@ async function abrir(nav, modalidad) {
   const p = await ctx.newPage();
   const errores = [];
   p.on("pageerror", (e) => errores.push(e.message));
-  await p.goto(BASE + "/centroamericano-2026.html#medallero", { waitUntil: "load" });
-  await p.waitForFunction(() => document.querySelector("#medallero[open] .cac-copa"), null, { timeout: 10000 }).catch(() => {});
+  // Se abre desde su ficha, como la abre una persona.
+  await p.goto(BASE + "/centroamericano-2026.html", { waitUntil: "load" });
+  await p.click("#ficha-copa");
+  await p.waitForFunction(() => document.querySelector("#copa[open] .cac-copa"), null, { timeout: 10000 }).catch(() => {});
   return { ctx, p, errores };
 }
 
@@ -71,17 +73,20 @@ async function abrir(nav, modalidad) {
       JSON.stringify(c.tabla) === JSON.stringify([["CRC", 24, "11100"], ["PAN", 22, "11010"], ["JAM", 10, "00110"], ["CUB", 2, "00001"], ["GUA", 2, "00001"]]), JSON.stringify(c.tabla));
     ok("con los mismos puntos va primero el que tiene más primeros lugares", JSON.stringify(c.empate) === JSON.stringify([["QQQ", 18], ["BBB", 18], ["YYY", 10], ["ZZZ", 10], ["WWW", 8], ["XXX", 8]]), JSON.stringify(c.empate));
 
-    console.log("El medallero, en el Clásico");
+    console.log("La ficha y su ventana, en el Clásico");
     const m = await p.evaluate(() => {
       const s = document.querySelector(".cac-copa");
       const podio = [...s.querySelectorAll(".cac-copa-podio li")];
-      return { titulo: s.querySelector("h3").textContent, se: s.checkVisibility(),
+      const ficha = document.getElementById("ficha-copa");
+      return { ficha: ficha.closest("ul").contains(ficha) && /Copa de naciones/.test(ficha.textContent), abierta: document.getElementById("copa").open,
+        titulo: document.getElementById("copa-titulo").textContent, se: s.checkVisibility(),
         podio: podio.map((li) => [li.value, li.querySelector(".cac-copa-fed").textContent, li.querySelector(".cac-copa-puntos").textContent, li.querySelector(".cac-copa-lugar").textContent]),
         alturas: podio.map((li) => Math.round(li.getBoundingClientRect().height)),
         filas: [...s.querySelectorAll(".cac-copa-tabla tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
-        antesDeMedallas: s.compareDocumentPosition([...document.querySelectorAll("#medallero-contenido h3")].find((h) => /Medallas/.test(h.textContent))) === Node.DOCUMENT_POSITION_FOLLOWING };
+        enMedallero: !!document.querySelector("#medallero .cac-copa") };
     });
-    ok("la Copa de naciones sale en el medallero, antes de las medallas", m.se && /Copa de naciones/.test(m.titulo) && m.antesDeMedallas, JSON.stringify(m));
+    ok("la ficha «Copa de naciones» está entre las fichas y abre su ventana", m.ficha && m.abierta && m.se && /Copa de naciones/.test(m.titulo), JSON.stringify(m));
+    ok("el medallero no la repite", !m.enMedallero);
     ok("el podio: el 2.° a la izquierda, el 1.° en el medio y el 3.° a la derecha, con su nombre, sus puntos y el puesto escrito",
       JSON.stringify(m.podio) === JSON.stringify([[2, "Panamá (PAN)", "22 puntos", "2.º lugar"], [1, "Costa Rica (CRC)", "24 puntos", "1.er lugar"], [3, "Jamaica (JAM)", "10 puntos", "3.er lugar"]]), JSON.stringify(m.podio));
     ok("y el 1.° más alto que el 2.°, y el 2.° más que el 3.°", m.alturas[1] > m.alturas[0] && m.alturas[0] > m.alturas[2], JSON.stringify(m.alturas));
@@ -107,9 +112,9 @@ async function abrir(nav, modalidad) {
     await en.route(/supabase\.co|lichess\.org|chess-results\.com/, (x) => x.abort());
     await en.addInitScript((d) => { window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } }; }, DATOS);
     const pe = await en.newPage();
-    await pe.goto(BASE + "/centroamericano-2026.html?lang=en#medallero", { waitUntil: "load" });
-    await pe.waitForFunction(() => document.querySelector("#medallero[open] .cac-copa-podio li"), null, { timeout: 10000 }).catch(() => {});
-    const ing = await pe.evaluate(() => { const s = document.querySelector(".cac-copa"); return s && [s.querySelector("h3").textContent, s.querySelector(".cac-copa-1 .cac-copa-puntos").textContent]; });
+    await pe.goto(BASE + "/centroamericano-2026.html?lang=en#copa", { waitUntil: "load" });
+    await pe.waitForFunction(() => document.querySelector("#copa[open] .cac-copa-podio li"), null, { timeout: 10000 }).catch(() => {});
+    const ing = await pe.evaluate(() => { const s = document.querySelector(".cac-copa"); return s && [document.getElementById("copa-titulo").textContent + " · " + document.getElementById("ficha-copa").textContent, s.querySelector(".cac-copa-1 .cac-copa-puntos").textContent]; });
     ok("en inglés: «Nations Cup» y «24 points»", ing && /Nations Cup/.test(ing[0]) && ing[1] === "24 points", JSON.stringify(ing));
     await en.close();
   } finally {
