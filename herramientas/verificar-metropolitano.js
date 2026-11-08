@@ -783,7 +783,12 @@ const FILAS_FIDE = [
       (await tm.locator("[data-menus] .metro-plato").count()) === 2 && (await tm.locator("[data-menus] input").count()) === 0
       && /Lo prepara: Soda Tala/.test(vistos) && /Lo prepara: Doña Rosa/.test(vistos) && /\$6\.50 por día/.test(vistos) && /Lo prepara: La organización/.test(vistos), vistos);
     cierto("el mismo plato de dos cocinas va en una sola tarjeta, con su foto", (await tm.locator("[data-menus] .metro-plato").first().locator(".metro-plato-nombre").textContent()) === "Gallo pinto"
-      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => i.complete && i.naturalWidth > 0));
+      // La foto se espera (hasta 5 s): recién pintada puede no haber cargado todavía, y en el CI tardaba más.
+      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => (i.complete && i.naturalWidth > 0) || new Promise((ok) => {
+        i.addEventListener("load", () => ok(i.naturalWidth > 0), { once: true });
+        i.addEventListener("error", () => ok(false), { once: true });
+        setTimeout(() => ok(i.complete && i.naturalWidth > 0), 5000);
+      })));
     cierto("y no se cobra nada: el total sigue sin costo, y lo dice", /sin costo/.test(await mn.p.textContent("#total")) && await tm.locator("[data-alim-nota-tal-vez]").isVisible());
     await tm.locator('[data-alim-ver-op][value="no"]').check();
     cierto("con «Por ahora no» se esconden y se sigue", (await tm.locator("[data-menus] .metro-plato").count()) === 0);
