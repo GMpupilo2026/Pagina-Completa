@@ -274,7 +274,9 @@
 
   async function cargarPartidas(t, ronda, vida) {
     const ya = t.partidasPorRonda[ronda.id];
-    if (ya && Date.now() - ya.leido < vida) return ya.lista;
+    // La lista en caché se vuelve a completar: si LiveChess contestó antes
+    // que chess-results, la federación y el Elo entran en cuanto llegan.
+    if (ya && Date.now() - ya.leido < vida) return deLiveChess(t.id) ? completar(ya.lista, t) : ya.lista;
     try {
       const lista = deLiveChess(t.id) ? completar(await LC.partidas(ronda.id, window.Chess), t) : await L.partidas(ronda.id);
       t.partidasPorRonda[ronda.id] = { lista, leido: Date.now() };
@@ -311,7 +313,7 @@
 
   async function cargarPgn(t, ronda, vida) {
     const ya = t.pgnPorRonda[ronda.id];
-    if (ya && Date.now() - ya.leido < vida) return ya.porId;
+    if (ya && Date.now() - ya.leido < vida) { if (deLiveChess(t.id)) completar(Object.values(ya.porId), t); return ya.porId; }
     try {
       const juegos = deLiveChess(t.id) ? completar(await LC.juegos(ronda.id, window.Chess), t) : L.leerPgn(await L.pgn(ronda.id), window.Chess);
       const porId = {};
