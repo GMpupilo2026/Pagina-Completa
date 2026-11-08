@@ -782,6 +782,9 @@ const FILAS_FIDE = [
     cierto("con «Sí, quiero verlas» se ven todos los menús, solo para mirar (sin elegir), con quién prepara y el precio por día",
       (await tm.locator("[data-menus] .metro-plato").count()) === 2 && (await tm.locator("[data-menus] input").count()) === 0
       && /Lo prepara: Soda Tala/.test(vistos) && /Lo prepara: Doña Rosa/.test(vistos) && /\$6\.50 por día/.test(vistos) && /Lo prepara: La organización/.test(vistos), vistos);
+    // La foto tarda en llegar (la sirve la ruta de arriba): se espera a que
+    // cargue antes de medirla; en el runner del CI la comprobación llegaba antes.
+    await mn.p.waitForFunction(() => { const i = document.querySelector("[data-menus] .metro-plato-foto"); return i && i.complete; });
     cierto("el mismo plato de dos cocinas va en una sola tarjeta, con su foto", (await tm.locator("[data-menus] .metro-plato").first().locator(".metro-plato-nombre").textContent()) === "Gallo pinto"
       && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => i.complete && i.naturalWidth > 0));
     cierto("y no se cobra nada: el total sigue sin costo, y lo dice", /sin costo/.test(await mn.p.textContent("#total")) && await tm.locator("[data-alim-nota-tal-vez]").isVisible());

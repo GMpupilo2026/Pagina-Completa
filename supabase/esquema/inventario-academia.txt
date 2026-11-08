@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261106210000
+# al-dia-con: 20261107040942
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -888,6 +888,7 @@ columna  centroamericano_listas.paso  text
 columna  centroamericano_listas.ronda  integer
 columna  centroamericano_livechess.actualizado  timestamp with time zone
 columna  centroamericano_livechess.por  text
+columna  centroamericano_livechess.publico  boolean
 columna  centroamericano_livechess.tableros  text
 columna  centroamericano_livechess.tnr  text
 columna  centroamericano_livechess.torneo_id  uuid
@@ -2844,6 +2845,7 @@ funcion  centroamericano_fp_rondas()  definer  anon=false  auth=true
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
+funcion  centroamericano_livechess_publico()  definer  anon=true  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_por_ronda()  definer  anon=false  auth=false

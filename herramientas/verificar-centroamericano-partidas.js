@@ -245,7 +245,7 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
     ok("la ventana muestra las 6 partidas de la ronda, cada una con su categoría, su ronda y su mesa", lista.abierto && lista.n === 6 && lista.cabezas[0] === "Sub-15 Femenino · Ronda 7 · Mesa 1" && lista.cabezas[5] === "Sub-15 Femenino · Ronda 7 · Mesa 6", JSON.stringify(lista));
     ok("cada una con su posición en un tablero chico", lista.tableros.length === 6 && lista.tableros.every((n) => n === 64), JSON.stringify(lista.tableros));
     ok("el resultado escrito, y la que se juega dice «En juego» (no solo con color)", lista.vivo.join(",") === "0-1|false,½-½|false,0-1|false,0-1|false,En juego|true,1-0|false", JSON.stringify(lista.vivo));
-    ok("arriba dice la ronda, cuántas se transmiten y cuántas se juegan", /^Ronda 7 · 6 partidas transmitidas · 1 en juego\. Leído en Lichess a las/.test(lista.estado), lista.estado);
+    ok("arriba dice la ronda, cuántas se transmiten y cuántas se juegan", /^Ronda 7 · 6 partidas transmitidas · 1 en juego\. Leído a las/.test(lista.estado), lista.estado);
     ok("los filtros salen de lo que hay: solo la categoría que se transmite", JSON.stringify(lista.cats) === JSON.stringify(["Todas", "Sub-15 Femenino"]), JSON.stringify(lista.cats));
     ok("la página le pidió a Lichess el grupo, las rondas y la ronda (y el PGN solo de la ronda con partidas en juego, para la barra)",
        pedidos.includes("/api/broadcast/" + ID) && pedidos.includes("/api/broadcast/-/-/" + RID) && pedidos.filter((x) => /\.pgn$/.test(x)).every((x) => x === "/api/broadcast/round/" + RID + ".pgn"), JSON.stringify(pedidos));
@@ -382,7 +382,7 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
     await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0);
     e = await estado();
     ok("sin la evaluación de Lichess lo dice y ofrece calcularla en el aparato (no la inventa)",
-       /Lichess no trae la evaluación de esta jugada/.test(e.eval) && /Calcular con Stockfish/.test(e.eval) && await p.evaluate(() => document.querySelector(".cac-visor-barra").classList.contains("cac-visor-barra-sin")), JSON.stringify(e));
+       /La transmisión no trae la evaluación de esta jugada/.test(e.eval) && /Calcular con Stockfish/.test(e.eval) && await p.evaluate(() => document.querySelector(".cac-visor-barra").classList.contains("cac-visor-barra-sin")), JSON.stringify(e));
     await p.setViewportSize({ width: 360, height: 760 });
     await p.waitForTimeout(300);
     ok("en el celular cabe sin scroll de costado", await p.evaluate(() => { const d = document.getElementById("partidas"); return d.scrollWidth <= d.clientWidth + 1 && document.documentElement.scrollWidth <= window.innerWidth; }));
@@ -432,7 +432,7 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
     const p2 = await ctx2.newPage();
     await p2.goto(BASE + "/" + PAGINA + "#partidas", { waitUntil: "load" });
     await p2.waitForFunction(() => /Lichess/.test(document.getElementById("partidas-contenido").textContent) && !/Buscando/.test(document.getElementById("partidas-contenido").textContent), null, { timeout: 8000 }).catch(() => {});
-    ok("si Lichess no contesta, lo dice", /No pudimos leer Lichess ahora mismo/.test(await p2.textContent("#partidas-contenido")), await p2.textContent("#partidas-contenido"));
+    ok("si Lichess no contesta, lo dice", /No pudimos leer la transmisión ahora mismo/.test(await p2.textContent("#partidas-contenido")), await p2.textContent("#partidas-contenido"));
     await ctx2.close();
   } finally {
     await nav.close();

@@ -1,0 +1,115 @@
+{
+ "date": null,
+ "pairings": [
+  {
+   "white": {
+    "fname": "Ana",
+    "mname": "Lucia",
+    "lname": "Mora Vargas",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "black": {
+    "fname": "Sofia",
+    "mname": null,
+    "lname": "Rojas Solano",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "result": "0-1",
+   "live": false
+  },
+  {
+   "white": {
+    "fname": "Laura",
+    "mname": null,
+    "lname": "Campos Ulate",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "black": {
+    "fname": "Elena",
+    "mname": null,
+    "lname": "Salazar Pineda",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "result": "1-0",
+   "live": false
+  },
+  {
+   "white": {
+    "fname": "Julia",
+    "mname": null,
+    "lname": "Vindas Arce",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "black": {
+    "fname": "Ana",
+    "mname": null,
+    "lname": "Brenes Soto",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "result": "0-1",
+   "live": false
+  },
+  {
+   "white": {
+    "fname": "Rosa",
+    "mname": null,
+    "lname": "Leiva Mora",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "black": {
+    "fname": "Eva",
+    "mname": null,
+    "lname": "Quesada Rojas",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "result": "0-1",
+   "live": false
+  },
+  {
+   "white": {
+    "fname": "Andrea",
+    "mname": null,
+    "lname": "Fallas Murillo",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "black": {
+    "fname": "Paula",
+    "mname": "Maria",
+    "lname": "Arias Mena",
+    "title": null,
+    "federation": null,
+    "gender": null,
+    "fideid": null
+   },
+   "result": null,
+   "live": true
+  }
+ ]
+}
