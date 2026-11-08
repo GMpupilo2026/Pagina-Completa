@@ -46,6 +46,10 @@ concurrency:
 jobs:
   actualizar:
     name: Revisar chess-results
+    # Siempre en las máquinas de GitHub, aunque RUNNER diga «self-hosted»:
+    # este trabajo se queda esperando a «Verificar», y con un solo runner propio
+    # lo ocuparía mientras «Verificar» espera ese mismo runner: no terminaría
+    # nunca. Ver «El CI en una máquina propia».
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:

@@ -49,6 +49,9 @@ acordaba del que tocaba, y un verificador que no corre no da ningún error:
   `require("playwright")`. Un verificador nuevo entra al CI solo. Si necesita
   correr algo ANTES (un generador) o encadenar otro DESPUÉS, va en `ANTES` o
   `DESPUES` del corredor.
+- Con la variable del repositorio `RUNNER` = `self-hosted`, «Verificar» y
+  «Dependencias» corren en la máquina propia del dueño, sin cobrar minutos;
+  sin ella, en las de GitHub (ver «El CI en una máquina propia»).
 - En la máquina: `npm run verificar` (todos; levanta el sitio en el 8777 si no
   está), `npm run verificar:rapido` (sin navegador), o
   `node herramientas/verificar-todo.js panel tareas` para unos pocos. Los de
