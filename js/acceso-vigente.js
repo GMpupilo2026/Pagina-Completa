@@ -246,6 +246,54 @@
     } catch (e) { return null; }
   }
 
+  /* Las páginas que una cuenta de árbitro sí abre: su panel y las de las
+     herramientas, que salen de la lista de la vitrina
+     (js/herramientas-arbitraje.js, una sola copia). La lista se baja solo
+     para estas cuentas, que son pocas: las demás no pagan nada por esto. Si
+     no se puede leer, se va al panel: ahí están sus herramientas. */
+  function cargarLista(base) {
+    if (window.HerramientasArbitraje) return Promise.resolve(window.HerramientasArbitraje);
+    return new Promise((ok) => {
+      const s = document.createElement("script");
+      s.src = base + "js/herramientas-arbitraje.js";
+      s.onload = () => ok(window.HerramientasArbitraje || null);
+      s.onerror = () => ok(null);
+      document.head.appendChild(s);
+    });
+  }
+
+  function paginaActual() {
+    return (location.pathname.split("/").pop() || "index.html").replace(/(\.html)?$/, ".html");
+  }
+
+  async function alPanelDelArbitro() {
+    const base = panelHref().replace(/clases\.html$/, "");
+    // Su «Academia» del encabezado y de las migas es su panel.
+    document.querySelectorAll('a[href$="clases.html"]').forEach((a) => {
+      a.setAttribute("href", a.getAttribute("href").replace(/clases\.html$/, "arbitro.html"));
+    });
+    const aqui = paginaActual();
+    // En las migas, su punto de partida se llama como su panel.
+    const migaPanel = document.querySelector('#migas li:first-child a[href$="arbitro.html"]');
+    if (migaPanel) {
+      if (aqui === "arbitro.html") {
+        // En su panel, la miga sería el mismo panel dos veces: queda solo la actual.
+        migaPanel.closest("li").remove();
+        const sep = document.querySelector("#migas li:first-child > span[aria-hidden]");
+        if (sep) sep.remove();
+      } else {
+        migaPanel.textContent = "Mis herramientas";
+      }
+    }
+    if (aqui === "arbitro.html") return;
+    const H = await cargarLista(base);
+    const deHerramientas = new Set(((H && H.LISTA) || [])
+      .map((h) => String(h.href || "").split(/[?#]/)[0].split("/").pop())
+      .filter(Boolean));
+    if (deHerramientas.has(aqui)) return;
+    location.replace(base + "arbitro.html");
+  }
+
   async function arrancar() {
     const sb = window.sb;
     if (!sb || !sb.auth || typeof sb.rpc !== "function") return;
@@ -267,6 +315,13 @@
       return;
     }
     window.AccesoVigente = a;
+
+    // La cuenta de árbitro no es de la Academia: en una página de sus
+    // herramientas se queda; en cualquier otra, va a su panel.
+    if (a.motivo === "arbitro") {
+      await alPanelDelArbitro();
+      return;
+    }
 
     if (a.vigente) {
       if (enPanel() && a.motivo === "prueba" && typeof a.horas === "number") {

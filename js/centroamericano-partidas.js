@@ -13,6 +13,11 @@
  * por categoría). Mientras no haya ninguno, la ficha sigue en «Pronto» y nada
  * de esto le pide nada a Lichess.
  *
+ * El Blitz sale de LiveChess (los tableros DGT), SIN atraso: lo pidió el
+ * dueño el 7/11. js/livechess-transmision.js da lo mismo que Lichess, y qué
+ * torneo se publica lo dice la base. Ver «El Blitz, directo de LiveChess y sin
+ * atraso».
+ *
  * Los datos los lee js/lichess-transmision.js, desde el navegador. Lo que
  * Lichess no trae (la evaluación de la última jugada, mientras se juega) lo
  * calcula Stockfish en este aparato, solo si se pide.
@@ -22,8 +27,13 @@
 
   const V = window.CentroamericanoVivo;
   const L = window.LichessTransmision;
+  // El Blitz, directo de LiveChess y SIN atraso (lo pidió el dueño el 7/11):
+  // js/livechess-transmision.js da lo mismo que Lichess, con los mismos datos.
+  // Ver «El Blitz, directo de LiveChess y sin atraso».
+  const LC = window.LiveChessTransmision || null;
   const F = window.TableroFen;
   if (!V || !L || !F) return;
+  const deLiveChess = (id) => !!(LC && LC.es(id));
   const $ = (id) => document.getElementById(id);
   const el = V.el;
   // Las jugadas se escriben en algebraica española («Cf3»), y quien no ve las
@@ -47,12 +57,12 @@
   const TEXTOS = {
     es: {
       titulo: "Partidas en vivo",
-      cargando: "Buscando las partidas en Lichess…",
-      error: "No pudimos leer Lichess ahora mismo. Vuelve a intentarlo en un rato.",
+      cargando: "Buscando las partidas…",
+      error: "No pudimos leer la transmisión ahora mismo. Vuelve a intentarlo en un rato.",
       sinTransmision: "La transmisión todavía no está publicada: en cuanto la organización la publique, las partidas aparecen aquí.",
       sinModalidad: (m) => "No se transmite ninguna partida de " + m + ".",
       resumen: (r, n, vivo) => (r ? "Ronda " + r + " · " : "") + n + (n === 1 ? " partida transmitida" : " partidas transmitidas") + (vivo ? " · " + vivo + " en juego" : ""),
-      leido: (h) => "Leído en Lichess a las " + String(h).replace(/\.$/, "") + ".",
+      leido: (h) => "Leído a las " + String(h).replace(/\.$/, "") + ".",
       categoria: "Categoría", todas: "Todas", pais: "País", todos: "Todos", ronda: "Ronda", rondaAhora: (n) => "La de ahora (" + n + ")",
       buscar: "Buscar un jugador", soloVivo: "Solo las que se están jugando", soloMios: "Solo mis jugadores",
       ninguna: "Ninguna partida con esos filtros.",
@@ -67,7 +77,7 @@
       jugada: (n, color, san) => "Jugada " + n + ", " + (color === "w" ? "blancas" : "negras") + ": " + san + ".",
       nuevas: (n) => "Ir a la jugada de ahora (" + n + (n === 1 ? " nueva" : " nuevas") + ")",
       siguiendo: "Siguiendo la partida en vivo.",
-      evalNo: "Lichess no trae la evaluación de esta jugada.",
+      evalNo: "La transmisión no trae la evaluación de esta jugada.",
       evalCalcular: "Calcular con Stockfish en este aparato",
       evalCalculando: "Stockfish está evaluando…",
       evalNoPudo: "Stockfish no pudo evaluar esta posición.",
@@ -100,12 +110,12 @@
     },
     en: {
       titulo: "Live games",
-      cargando: "Looking for the games on Lichess…",
-      error: "We couldn't read Lichess right now. Please try again in a while.",
+      cargando: "Looking for the games…",
+      error: "We couldn't read the broadcast right now. Please try again in a while.",
       sinTransmision: "The broadcast is not published yet: as soon as the organizers publish it, the games will show up here.",
       sinModalidad: (m) => "No " + m + " games are being broadcast.",
       resumen: (r, n, vivo) => (r ? "Round " + r + " · " : "") + n + (n === 1 ? " game broadcast" : " games broadcast") + (vivo ? " · " + vivo + " in play" : ""),
-      leido: (h) => "Read from Lichess at " + h + ".",
+      leido: (h) => "Read at " + h + ".",
       categoria: "Section", todas: "All", pais: "Country", todos: "All", ronda: "Round", rondaAhora: (n) => "Current (" + n + ")",
       buscar: "Search for a player", soloVivo: "Only games in play", soloMios: "Only my players",
       ninguna: "No games with those filters.",
@@ -120,7 +130,7 @@
       jugada: (n, color, san) => "Move " + n + ", " + (color === "w" ? "white" : "black") + ": " + san + ".",
       nuevas: (n) => "Go to the current move (" + n + " new)",
       siguiendo: "Following the game live.",
-      evalNo: "Lichess has no evaluation for this move.",
+      evalNo: "The broadcast has no evaluation for this move.",
       evalCalcular: "Calculate with Stockfish on this device",
       evalCalculando: "Stockfish is thinking…",
       evalNoPudo: "Stockfish couldn't evaluate this position.",
@@ -193,20 +203,40 @@
     if (evento && !forzar && Date.now() - leidoEvento < EVENTO_MS) return Promise.resolve(evento);
     pidiendoEvento = (async () => {
       try {
-        const enlaces = await enlacesDeLaSala();
+        // Lichess y LiveChess por separado: si uno no contesta, el otro igual
+        // se muestra (y si fallan los dos, el error de siempre).
+        const [deLichess, deLc] = await Promise.allSettled([
+          (async () => {
+            const out = [];
+            for (const e of await enlacesDeLaSala()) out.push({ e, ev: await L.torneosDelEvento(e.lichess) });
+            return out;
+          })(),
+          LC ? LC.torneos(window.sb) : Promise.resolve([]),
+        ]);
+        const lcs = deLc.status === "fulfilled" ? deLc.value : [];
+        // Lichess no contestó y LiveChess no tiene nada que mostrar: es un
+        // error («No pudimos leer…»), no «todavía no está publicada».
+        if (deLichess.status === "rejected" && !lcs.length) throw deLichess.reason;
         const vistos = new Map();
-        for (const e of enlaces) {
-          const ev = await L.torneosDelEvento(e.lichess);
+        // Lo que transmite LiveChess (una categoría en una modalidad) no se
+        // toma también de Lichess: sale una sola vez, sin atraso.
+        const deLcCat = new Set(lcs.map((t) => modalidadDe(t.nombre) + "|" + codigoCategoria(t.nombre)));
+        lcs.forEach((t) => {
+          const viejo = evento && evento.torneos.find((x) => x.id === t.id);
+          vistos.set(t.id, Object.assign(viejo || { partidasPorRonda: {}, pgnPorRonda: {} }, {
+            id: t.id, nombre: t.nombre, categoria: codigoCategoria(t.nombre), modalidad: modalidadDe(t.nombre), sinAtraso: true,
+          }));
+        });
+        for (const { e, ev } of deLichess.status === "fulfilled" ? deLichess.value : []) {
           // Un torneo suelto (sin grupo) toma la categoría del texto del botón
           // si su nombre no la dice.
           ev.torneos.forEach((t) => {
             if (vistos.has(t.id)) return;
+            const categoria = codigoCategoria(t.nombre) || (ev.torneos.length === 1 ? codigoCategoria(e.texto) : "");
+            const modalidad = modalidadDe(t.nombre + " " + (ev.torneos.length === 1 ? e.texto : ""));
+            if (deLcCat.has(modalidad + "|" + categoria)) return;
             const viejo = evento && evento.torneos.find((x) => x.id === t.id);
-            vistos.set(t.id, Object.assign(viejo || { partidasPorRonda: {}, pgnPorRonda: {} }, {
-              id: t.id, nombre: t.nombre,
-              categoria: codigoCategoria(t.nombre) || (ev.torneos.length === 1 ? codigoCategoria(e.texto) : ""),
-              modalidad: modalidadDe(t.nombre + " " + (ev.torneos.length === 1 ? e.texto : "")),
-            }));
+            vistos.set(t.id, Object.assign(viejo || { partidasPorRonda: {}, pgnPorRonda: {} }, { id: t.id, nombre: t.nombre, categoria, modalidad }));
           });
         }
         evento = { torneos: [...vistos.values()].sort((a, b) => ordenCat(a.categoria) - ordenCat(b.categoria)) };
@@ -230,7 +260,7 @@
 
   async function cargarRondas(t) {
     if (t.rondas && Date.now() - t.leidoRondas < RONDAS_MS) return t.rondas;
-    try { t.rondas = await L.rondas(t.id); t.leidoRondas = Date.now(); }
+    try { t.rondas = await (deLiveChess(t.id) ? LC : L).rondas(t.id); t.leidoRondas = Date.now(); }
     catch (e) { if (!t.rondas) throw e; }
     return t.rondas;
   }
@@ -244,9 +274,11 @@
 
   async function cargarPartidas(t, ronda, vida) {
     const ya = t.partidasPorRonda[ronda.id];
-    if (ya && Date.now() - ya.leido < vida) return ya.lista;
+    // La lista en caché se vuelve a completar: si LiveChess contestó antes
+    // que chess-results, la federación y el Elo entran en cuanto llegan.
+    if (ya && Date.now() - ya.leido < vida) return deLiveChess(t.id) ? completar(ya.lista, t) : ya.lista;
     try {
-      const lista = await L.partidas(ronda.id);
+      const lista = deLiveChess(t.id) ? completar(await LC.partidas(ronda.id, window.Chess), t) : await L.partidas(ronda.id);
       t.partidasPorRonda[ronda.id] = { lista, leido: Date.now() };
       return lista;
     } catch (e) {
@@ -255,11 +287,35 @@
     }
   }
 
+  // LiveChess no trae ni la federación ni el Elo: se completan con los de
+  // chess-results que ya tiene la página (los de la misma modalidad), por el
+  // nombre y en su categoría, como «Ver su partida en vivo». Sin esos datos,
+  // la partida igual se ve, sin bandera ni Elo.
+  function completar(lista, t) {
+    const d = V.datos && V.datos();
+    if (!d || (d.modalidad || "clasico") !== t.modalidad) return lista;
+    const todos = V.jugadores();
+    const buscar = (p) => {
+      if (!p || !p.nombre || (p.fed && p.elo)) return;
+      const mismo = (x) => plano(x.j.nombre) === plano(p.nombre) || corto(x.j.nombre) === corto(p.nombre);
+      const x = todos.find((y) => (!t.categoria || y.j.grupo === t.categoria) && mismo(y)) || todos.find(mismo);
+      if (!x) return;
+      if (!p.fed && x.j.fed) p.fed = x.j.fed;
+      if (!p.elo && x.j.elo) p.elo = Number(x.j.elo) || 0;
+      if (!p.titulo && x.j.titulo) p.titulo = x.j.titulo;
+    };
+    lista.forEach((g) => {
+      buscar(g.blancas); buscar(g.negras);
+      if (g.tags) { if (g.blancas.elo) g.tags.WhiteElo = String(g.blancas.elo); if (g.negras.elo) g.tags.BlackElo = String(g.negras.elo); }
+    });
+    return lista;
+  }
+
   async function cargarPgn(t, ronda, vida) {
     const ya = t.pgnPorRonda[ronda.id];
-    if (ya && Date.now() - ya.leido < vida) return ya.porId;
+    if (ya && Date.now() - ya.leido < vida) { if (deLiveChess(t.id)) completar(Object.values(ya.porId), t); return ya.porId; }
     try {
-      const juegos = L.leerPgn(await L.pgn(ronda.id), window.Chess);
+      const juegos = deLiveChess(t.id) ? completar(await LC.juegos(ronda.id, window.Chess), t) : L.leerPgn(await L.pgn(ronda.id), window.Chess);
       const porId = {};
       juegos.forEach((g) => { if (g.id) porId[g.id] = g; });
       t.pgnPorRonda[ronda.id] = { porId, leido: Date.now() };

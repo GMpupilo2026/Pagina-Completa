@@ -52,3 +52,4 @@ pareo-elo-nacional              false        Pareo Integral busca el Elo Naciona
 pareo-listas-elo                false        Pareo Integral agrega jugadores desde las listas de Elo de FIDE y la nacional, sin cuenta (freno propio pareo_listas_frenar)
 pareo-publicar                  false        Torneos en Pareo Integral: publica un torneo sin cuenta, con su clave secreta y su freno (pareo_frenar)
 torneos-externos                false        los torneos proximos de ajedrezcostarica.com, una vez al dia (pg_cron torneos-externos, secreto de la boveda)
+arbitro-cuentas                true         las cuentas de arbitro: las crea un organizador con licencia propia (o administracion), con usuario y contrasena; las herramientas las fija la base con el token de quien llama

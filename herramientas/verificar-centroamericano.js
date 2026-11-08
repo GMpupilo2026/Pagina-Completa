@@ -331,7 +331,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // vivo» se enciende sola a los pocos segundos y la ficha apagada que se
     // busca con Tab deja de existir (el CI falló así el 4/11, con la sala de
     // producción). La sala sin enlaces deja la página como antes del torneo.
+    // Y lo mismo con LiveChess (el CI falló así el 7/11, con el Blitz ya
+    // publicado en la base): su función también se contesta vacía.
     await p.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+    await p.route(/supabase\.co\/rest\/v1\/rpc\/centroamericano_livechess_publico/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
     await p.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
     const vistas = await p.$$eval("#fichas li", (ls) => ls.filter((l) => l.checkVisibility()).length);
     ok("las fichas se ven", vistas === items.length, vistas + " de " + items.length);

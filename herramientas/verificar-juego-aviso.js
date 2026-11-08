@@ -154,7 +154,9 @@ async function pruebaPaginas() {
     .map((s) => s.slice(1, -1));
 
   igual("la lista de páginas de la Academia no está vacía", paginas.length > 40, "true");
-  igual("solo examen.html se excluye (sesion.html SÍ lo lleva)", sin.slice().sort().join(","), "examen.html");
+  // arbitro.html es el panel de una cuenta de árbitro, que no juega partidas de
+  // la Academia (ver «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md).
+  igual("solo examen.html y arbitro.html se excluyen (sesion.html SÍ lo lleva)", sin.slice().sort().join(","), "arbitro.html,examen.html");
 
   const malas = [], sinScript = [];
   for (const p of paginas) {
@@ -167,7 +169,7 @@ async function pruebaPaginas() {
     if (!fs.existsSync(destino)) malas.push(p + " (la ruta " + src + " no llega al archivo)");
     if (!/\bdefer\b/.test(m[1])) malas.push(p + " (sin defer)");
   }
-  igual("todas las páginas de la Academia la llevan, menos examen.html", sinScript.join(", ") || "(todas)", "(todas)");
+  igual("todas las páginas de la Academia la llevan, menos examen.html y arbitro.html", sinScript.join(", ") || "(todas)", "(todas)");
   igual("ninguna ruta es un 404 y ninguna la lleva donde no debe", malas.join(", ") || "(ninguna)", "(ninguna)");
 }
 

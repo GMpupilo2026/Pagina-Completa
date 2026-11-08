@@ -2356,3 +2356,148 @@ migración termina mirando el catálogo y no entra si queda alguna sin regla.
 
 **Una columna nueva que apunte a una cuenta lleva su `on delete`** en la misma
 migración: `verificar-borrar-cuenta.js` lo revisa en cada migración desde esa.
+
+## Las cuentas de árbitro
+
+El dueño lo pidió el 8/11/2026, al decidir que la Mesa del árbitro del
+Centroamericano será la que se ofrezca en las herramientas: «crear usuarios a
+árbitros y poder elegir qué herramientas pueden usar, al igual que alumnos pero
+que sea exclusivo de árbitros». Se le preguntaron tres cosas y eligió:
+
+- **Quién las crea:** administración **y cada organizador**, es decir, quien
+  tiene una licencia propia de alguna herramienta. El organizador solo le puede
+  dar a sus árbitros **las herramientas que él mismo tiene**, y solo ve a los
+  suyos.
+- **Cómo entran:** con **usuario y contraseña**, sin correo. Es el mismo usuario
+  de la Academia que el de los alumnos sin correo (`alumno.ajedrez-integral.com`,
+  el dominio sin MX) y la misma regla de contraseña (`problemaDeContrasena()`).
+- **Qué ven:** **solo sus herramientas** (`arbitro.html`, «Mis herramientas»),
+  nada de la Academia.
+
+**No se hizo una puerta nueva para cada herramienta: las herramientas de un
+árbitro son licencias de siempre.** Ver «Todas las herramientas llevan
+licencia» en juegos-y-torneos.md. `arbitro_herramientas_fijar()` le pone a la
+cuenta licencias de `licencias_herramientas` con `otorgada_por` = quien se la
+dio. Así, el candado de cada página (`js/candado-herramienta.js`), las Edge
+Functions y el worker (`CODIGO_CON_LICENCIA`), que ya preguntan
+`tengo_herramienta()`, atienden al árbitro sin cambiar una línea.
+
+**Una licencia dada vale solo mientras quien la dio la tenga.**
+`tengo_herramienta()` exige, para una licencia con `otorgada_por`, que
+`interno.herramienta_propia(otorgada_por, herramienta)` diga que sí: que quien
+la dio administre o tenga esa herramienta por una licencia **propia** (sin
+`otorgada_por`) vigente.
+
+- Si al organizador se le vence o se le anula la suya, a sus árbitros se les
+  apaga en el mismo momento, sin que nadie se acuerde de hacerlo. Si la renueva,
+  vuelven a tenerla.
+- Es una sola vuelta: una licencia dada no sostiene a otra. Además,
+  `arbitros_puedo_dar()` le dice «nada» a una cuenta de árbitro, así que un
+  árbitro no crea árbitros.
+- «Mis árbitros» enseña esas licencias como «sin usar por ahora» (`pausadas` de
+  `arbitros_mis()`), y `mis_herramientas()` no las cuenta.
+- Comprobado en la base impersonando roles (8/11, dentro de una transacción que
+  se deshizo): el organizador da la que tiene y no la que no tiene; el árbitro
+  abre esa y ninguna otra, no puede dar ninguna y `acceso_vigente()` le dice que
+  no; otra cuenta no ve al árbitro ni le puede quitar nada; y al anular la
+  licencia del organizador, al árbitro se le cerró la herramienta.
+
+**Fuera de la Academia lo decide la base.** `profiles.role` acepta `'arbitro'`.
+
+- `acceso_vigente()` le dice que no a esa cuenta. Con eso, las políticas
+  restrictivas de la Academia (progreso, clase, exámenes) y el candado de los
+  cursos en el worker la dejan afuera.
+- `mi_acceso()` contesta `motivo: 'arbitro'`, y `js/acceso-vigente.js`, que va
+  en todas las páginas de la Academia, hace dos cosas:
+  - cambia los enlaces a `clases.html` (el «Academia» del encabezado y de las
+    migas) por `arbitro.html`;
+  - si la página no es la de una herramienta, la reemplaza por `arbitro.html`.
+    Cuáles son las páginas de herramientas sale de la lista de la vitrina,
+    `js/herramientas-arbitraje.js`, que se baja solo para estas cuentas.
+- Así, al entrar (el login lleva a `clases.html`), el árbitro llega a su panel.
+- No sale en ninguna lista de alumnos, porque todas filtran por
+  `role = 'alumno'` o por `profile_teachers`.
+- En `admin.html` figura como «Árbitro», y su rol no se cambia desde ahí: la
+  ficha lleva a «Mis árbitros». `admin-manage-users` sigue aceptando solo
+  `profesor` y `alumno`.
+
+**De quién es cada árbitro: `arbitros_cuentas`.**
+
+- Tiene RLS y ninguna política de escritura; el navegador solo la lee, y la
+  política deja ver la fila al organizador, al propio árbitro y a
+  administración.
+- La escribe la Edge Function `arbitro-cuentas`.
+- Lleva el trigger de la bitácora y está en `VIGILADAS`.
+- Si se borra la cuenta del organizador, la fila queda con `organizador_id`
+  nulo y la ve administración. Sus licencias dadas se borran con él
+  (`on delete cascade`): ya no valdrían de todos modos.
+
+**La Edge Function `arbitro-cuentas`** (`verify_jwt` en true) tiene dos
+acciones, `crear` y `contrasena`. Todo permiso se le pregunta a la base **con el
+token de quien llama**, así que pasa por la verificación en dos pasos:
+
+- `arbitros_puedo_dar()` dice si puede crear árbitros;
+- las herramientas las fija `arbitro_herramientas_fijar()` con su identidad,
+  nunca con la clave de servicio, que habría dejado dar cualquier herramienta;
+- `arbitros_mis()` dice si el árbitro de `contrasena` es suyo.
+
+La clave de servicio se usa solo para lo que la base no deja hacer desde
+afuera:
+
+- crear la cuenta en Auth;
+- ponerle el rol (el trigger de identidad no deja que nadie se cambie el rol);
+- anotarla en `arbitros_cuentas`.
+
+**La cuenta nace entera o no nace.** Si después de crearla falla el perfil, la
+fila o las herramientas, se borra: una cuenta suelta con rol de alumno sería un
+alumno más en la Academia. Además:
+
+- Hay un tope de 200 árbitros por organizador.
+- La contraseña solo se le cambia a una cuenta con rol `arbitro`.
+- No hay «olvidé mi contraseña» por correo, porque no tiene buzón: se la cambia
+  su organizador desde «Mis árbitros».
+
+**`arbitro_herramientas_fijar()` deja la lista exactamente como llega**, como
+las funciones `set_*`, **pero solo entre las que quien llama puede dar**:
+
+- Lo que puso administración y el organizador no tiene no se le quita por no
+  aparecer en su pantalla, y la pantalla lo dice («También tiene…»).
+- «Todas las herramientas» solo la da administración.
+- Al final vuelve a **leer** lo que quedó, no devuelve lo pedido.
+
+**Las pantallas:**
+
+- **`mis-arbitros.html`** (sesión; quien no tiene licencia propia ve el aviso):
+  - el formulario lleva nombre, usuario (se propone del nombre con
+    `UsuarioAlumno.base()`, la misma regla del servidor, y se enseña el que
+    devolvió el servidor), contraseña con «Proponer una fácil»
+    (`ContrasenaAlumno.claveFacil()`), las herramientas que puede dar por ficha
+    de la vitrina (`HerramientasArbitraje.conLicenciaPropia()`) y la casilla de
+    consentimiento con su enlace a `privacidad.html`;
+  - al crearla, el mensaje listo para copiar o mandar por WhatsApp, porque no
+    sale ningún correo;
+  - cada árbitro con sus casillas y «Guardar sus herramientas», y «Cambiar su
+    contraseña».
+- Se llega desde la vitrina (`herramientas-arbitraje.html`, debajo de «Mis
+  licencias», solo si `arbitros_puedo_dar()` trae algo) y desde las páginas de
+  administración (`js/paginas-admin.js`).
+- **`arbitro.html`** pinta una tarjeta por herramienta que abre
+  `mis_herramientas()` (`HerramientasArbitraje.abre()`). Va sin la burbuja de
+  conectados, sin el aviso de partida y sin el aviso del profe.
+
+**Lo que falta** (el punto 1 de lo conversado con el dueño): que lo de la Mesa
+del árbitro del Centroamericano (`centroamericano_*`) tenga dueño por evento.
+Hoy cualquiera con la licencia `mesa-arbitro` ve todo lo del Centroamericano,
+así que **dar `mesa-arbitro` a un árbitro le abre `centroamericano-mesas.html`
+entero**. Hasta que eso tenga dueño, no conviene repartir esa licencia.
+
+Lo prueba `verificar-arbitros-cuentas.js`:
+
+- las promesas, leídas en la migración, la función y los scripts;
+- las dos páginas con un Supabase de mentira: solo las herramientas que tiene,
+  lo que se manda al crear y al guardar, el nombre ajeno literal, el panel con
+  sus tarjetas, y el árbitro que va a su panel desde una página de la Academia
+  y se queda en la de una herramienta.
+
+Rompiendo a propósito que lo lleve a su panel o que se ofrezcan todas las
+herramientas, salta.

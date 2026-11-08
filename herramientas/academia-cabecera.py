@@ -66,7 +66,7 @@ PAGINAS = [
     "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html", "camaras.html",
     "tienda.html", "accesos.html",
-    "licencias.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "mesa-arbitro.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
+    "licencias.html", "mis-arbitros.html", "arbitro.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "mesa-arbitro.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
     "justificaciones.html",
     "preparacion-rivales.html", "plan-rival.html", "libreta-torneos.html",
@@ -121,7 +121,10 @@ JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 #     de ella y no se podía apretar. No daba ningún error —se veía perfecto— y
 #     lo habría descubierto quien quisiera comprar. Encima, "0 alumnos en
 #     línea" no tiene nada que decir en una página de venta.
-SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
+SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html", "arbitro.html"}
+# arbitro.html es el panel de una cuenta de árbitro, que no es de la Academia:
+# no tiene profesor a quien anunciarse, ni partidas, ni avisos del profe. Ver
+# «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md.
 
 # Pero en sesion.html el script SÍ va, con `data-solo-anunciar`: no se pinta
 # nada, y el alumno que está en la clase se anuncia a sus profesores. Sin esa
@@ -136,7 +139,7 @@ SOLO_ANUNCIA = {"sesion.html"}
 # te asignó una partida en Juegos" no tiene nada que ver con la clase en vivo
 # que ya ocupa esa pantalla — la única razón por la que sesion.html no lleva
 # burbuja es que YA tiene su propia lista de conectados, y eso no aplica acá.
-SIN_JUEGO_AVISO = {"examen.html"}
+SIN_JUEGO_AVISO = {"examen.html", "arbitro.html"}
 
 # El control del acceso (js/acceso-vigente.js) va en todas menos dos, y las dos
 # por lo mismo: son las que alguien con el acceso vencido TIENE que poder abrir.
@@ -353,7 +356,7 @@ def juego_aviso(ruta):
 # antitrampa evita. El aviso lo ve al salir del examen, en la página que abra.
 AVISO_PROFE_INICIO = "<!-- aviso-profe: inicio -->"
 AVISO_PROFE_FIN = "<!-- aviso-profe: fin -->"
-SIN_AVISO_PROFE = {"examen.html"}
+SIN_AVISO_PROFE = {"examen.html", "arbitro.html"}
 
 
 def poner_aviso_profe(ruta, s):
@@ -694,6 +697,8 @@ NOMBRE_Y_PADRE = {
     "tienda.html": ("Tienda", "clases.html"),
     "accesos.html": ("Accesos y cupos", "clases.html"),
     "licencias.html": ("Licencias de herramientas", "clases.html"),
+    "mis-arbitros.html": ("Mis árbitros", "clases.html"),
+    "arbitro.html": ("Mis herramientas", "clases.html"),
     "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "desempates.html": ("Desempates explicados", "clases.html"),
     "variacion-elo.html": ("Variación de Elo del torneo", "clases.html"),

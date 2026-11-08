@@ -58,6 +58,9 @@ const FUNCIONES = {
   // quien todavía no tiene cuenta; las fechas y el freno los pone la base).
   // Ver su cabecera.
   "cuenta-invitado": ["usuario-alumno.ts"],
+  // Las cuentas de árbitro: usuario y contraseña con el mismo usuario de la
+  // Academia (el dominio sin buzón). Ver su cabecera.
+  "arbitro-cuentas": ["usuario-alumno.ts"],
   // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
   "pizarra-torneo": [],
   // «Busca a tu jugador», el medallero y los avisos de ronda del
