@@ -14,6 +14,14 @@
 #   · las cuatro tandas con navegador esperan a la rápida: si esa falla, no
 #     arrancan (unos 120 minutos que se iban en algo que igual se repite).
 # A mano (workflow_dispatch, lo que piden los flujos de datos) corre siempre.
+#
+# Y para no pagar minutos: si la variable del repositorio RUNNER vale
+# «self-hosted» (Settings → Secrets and variables → Actions → Variables),
+# todo corre en la máquina propia del dueño, donde GitHub no cobra. Sin la
+# variable, o borrándola si esa máquina se apaga por días, vuelve a las de
+# GitHub sin tocar este archivo. Con un solo runner las cuatro tandas van una
+# tras otra (nadie las cobra, solo tardan más). Ver «El CI en una máquina
+# propia» en docs/decisiones/sitio-e-infraestructura.md.
 name: Verificar
 
 on:
@@ -33,7 +41,7 @@ jobs:
   rapido:
     name: Sin navegador
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     # 40 y no 20: con las máquinas de 2 núcleos de un repositorio privado tarda
     # más del doble que con las de 4 (unos 12 minutos), y a los 20 se cortaba.
     timeout-minutes: 40
@@ -48,12 +56,19 @@ jobs:
           python-version: "3.11"
       - run: npm ci
       - run: pip install pypdf cryptography python-docx
+      # En una máquina propia, un sitio que ya esté corriendo en el 8777 (el
+      # de la carpeta de trabajo del dueño) lo usarían los verificadores en
+      # vez de esta copia, y probarían otro código sin dar ningún error.
+      - name: ¿El puerto 8777 está libre?
+        if: runner.environment == 'self-hosted'
+        run: |
+          node -e 'require("net").connect(8777,"127.0.0.1").on("connect",()=>{console.error("::error::Hay algo escuchando en el 8777 de esta máquina: apágalo, o los verificadores probarían ese sitio y no este PR.");process.exit(1)}).on("error",()=>process.exit(0))'
       - run: node herramientas/verificar-todo.js --sin-navegador --paralelo=2
 
   navegador:
     name: Con navegador (${{ matrix.parte }}/4)
     needs: rapido
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -70,9 +85,19 @@ jobs:
           python-version: "3.11"
       - run: npm ci
       - run: pip install pypdf cryptography python-docx
-      - run: npx playwright install --with-deps chromium
+      # --with-deps instala las librerías del sistema con sudo apt: en las
+      # máquinas de GitHub hace falta; en la propia se instalan una vez a mano
+      # (ver «El CI en una máquina propia») y sin sudo no se pide cada vez.
+      - run: npx playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
       # Muchos verificadores traen de respaldo la ruta del Chromium de las
       # sesiones de Claude Code (/opt/pw-browsers/…), que acá no existe; todos
       # leen CHROME_PATH primero.
       - run: echo "CHROME_PATH=$(node -e 'console.log(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
+      # En una máquina propia, un sitio que ya esté corriendo en el 8777 (el
+      # de la carpeta de trabajo del dueño) lo usarían los verificadores en
+      # vez de esta copia, y probarían otro código sin dar ningún error.
+      - name: ¿El puerto 8777 está libre?
+        if: runner.environment == 'self-hosted'
+        run: |
+          node -e 'require("net").connect(8777,"127.0.0.1").on("connect",()=>{console.error("::error::Hay algo escuchando en el 8777 de esta máquina: apágalo, o los verificadores probarían ese sitio y no este PR.");process.exit(1)}).on("error",()=>process.exit(0))'
       - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }}/4

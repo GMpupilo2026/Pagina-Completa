@@ -2362,3 +2362,41 @@ encuentra la copia de cualquier archivo.
 `node herramientas/verificar-sello.js` (sin navegador) revisa que cada
 archivo lo lleve, que vaya al final, que `quitar()` devuelva el texto exacto
 y que sobreviva a un minificador.
+
+## El CI en una máquina propia
+
+Desde que el repositorio es privado, GitHub cobra cada minuto de Actions que
+pase de los gratis del mes, y «Verificar» gasta entre 60 y 150 minutos por PR
+(la rápida y cuatro tandas con navegador). Un *runner autoalojado* —el programa
+de GitHub instalado en una máquina del dueño— corre los mismos flujos sin
+cobrar nada, aunque el repositorio sea privado.
+
+**Cómo se elige dónde corre.** `verificar.yml` y `dependencias.yml` dicen
+`runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}`. Con la variable del
+repositorio `RUNNER` = `self-hosted` (Settings → Secrets and variables →
+Actions → pestaña Variables) corren en la máquina propia; sin ella, en las de
+GitHub. Es una variable y no un cambio del archivo para que, si la máquina se
+apaga por días, baste borrarla para que los PR no se queden esperando.
+
+**Los flujos de datos no se mueven** (`ajedrez-estudiantil.yml`,
+`centroamericano-ejercicios.yml`): abren un PR, piden «Verificar» y se quedan
+esperando que termine. Con un solo runner propio, ese trabajo lo ocuparía
+mientras «Verificar» espera el mismo runner, y ninguno de los dos terminaría
+nunca, sin dar ningún error. Corren poco (uno al mes; el otro solo del 1 al 9
+de noviembre), así que se quedan en las de GitHub.
+
+**Lo que no hay que olvidar en la máquina propia:**
+
+- Linux o macOS. En Windows, el runner va dentro de WSL (Ubuntu): los pasos
+  usan bash, `python3` y `sudo apt`.
+- Una vez, las librerías que necesita Chromium:
+  `sudo npx playwright install-deps chromium` (en las de GitHub lo hace
+  `--with-deps` en cada corrida; en la propia se salta para no pedir sudo).
+- **Un solo runner por máquina**, y nada escuchando en el 8777: los
+  verificadores usan el sitio que encuentren ahí, y con el de la carpeta de
+  trabajo probarían otro código. El paso «¿El puerto 8777 está libre?» lo
+  revisa y frena antes de correr.
+- Con un runner, las cuatro tandas con navegador van una tras otra: el PR tarda
+  más, pero no cuesta.
+- Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
+  hasta que pase. Para salir del apuro, borrar `RUNNER`.
