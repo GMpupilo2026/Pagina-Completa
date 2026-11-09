@@ -35,7 +35,8 @@ archivos: `grep -rn "X" docs/decisiones/` la encuentra.
 
 `.github/workflows/verificar.yml` corre `herramientas/verificar-todo.js` en
 cada PR contra `main` que no sea borrador: un trabajo sin navegador y, si pasa,
-cuatro tandas en paralelo con navegador. No corre al entrar a `main` (el PR ya
+cuatro tandas en paralelo con navegador (en la máquina propia, una sola de a
+cuatro; ninguna si el PR solo cambia `docs/` o un `.md` de la raíz). No corre al entrar a `main` (el PR ya
 lo probó junto con `main`); el porqué y lo que costaba, en la cabecera del flujo. Antes los más de setenta verificadores corrían solo si alguien se
 acordaba del que tocaba, y un verificador que no corre no da ningún error:
 `verificar-alumno-sin-correo.js` estuvo roto en `main` sin que nadie lo viera.
