@@ -65,6 +65,12 @@ const DESPUES = {
   },
 };
 
+/* Los que no aguantan compartir la máquina: con --paralelo corren al final,
+   de a uno y sin nadie más. Probado el 9/11/2026 con los 272 de navegador de
+   a cuatro: estos dos fallaban (cámara: la calibración no llegaba a tiempo;
+   simultáneas: 25 partidas a la vez pasaban de los 10 minutos) y solos pasan. */
+const SOLOS = new Set(["verificar-camara-tablero.js", "verificar-partidas-simultaneas.js"]);
+
 // ------------------------------------------------------------ argumentos
 const args = process.argv.slice(2);
 const bandera = (n) => args.includes(n);
@@ -185,7 +191,8 @@ async function asegurarSitio() {
 
   console.log("Corriendo " + lista.length + " verificador(es)" + (paralelo > 1 ? ", de a " + paralelo : "") + "\n");
   const resultados = [];
-  const cola = lista.slice();
+  const aparte = paralelo > 1 ? lista.filter((v) => SOLOS.has(v.archivo)) : [];
+  const cola = lista.filter((v) => !aparte.includes(v));
   async function obrero() {
     while (cola.length) {
       const res = await uno(cola.shift());
@@ -194,7 +201,12 @@ async function asegurarSitio() {
       console.log((res.codigo === 0 ? "  ✓ " : "  ✗ ") + seg + "  " + res.v.archivo);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(paralelo, lista.length) }, obrero));
+  if (cola.length) await Promise.all(Array.from({ length: Math.min(paralelo, cola.length) }, obrero));
+  if (aparte.length) {
+    console.log("\nLos que corren solos (" + aparte.length + "):");
+    cola.push(...aparte);
+    await obrero();
+  }
   if (servidor) servidor.kill();
 
   const malos = resultados.filter((r) => r.codigo !== 0);

@@ -2402,7 +2402,11 @@ de noviembre), así que se quedan en las de GitHub.
   Chromium y el arranque del sitio: unos 70 minutos por PR. En las de GitHub
   siguen las cuatro, cada una en su máquina, de a una. Los verificadores con
   navegador aguantan correr juntos: ninguno abre un puerto fijo, y el sitio del
-  8777 es solo de lectura.
+  8777 es solo de lectura. Menos dos, los más pesados (`verificar-camara-tablero.js` y
+  `verificar-partidas-simultaneas.js`): de a cuatro se pasaban de tiempo, y
+  solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
+  deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
+  del QR antes de que terminara de armarse; ahora la espera.
 - **Un PR que solo cambia `docs/` o un `.md` de la raíz no corre las tandas con
   navegador** (paso «¿El cambio toca el sitio?» de la rápida): ninguna lee esos
   archivos. La rápida sí corre siempre: `verificar-alumno-sin-correo.js` lee

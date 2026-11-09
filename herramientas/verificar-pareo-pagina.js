@@ -471,7 +471,14 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
 
     await pOrg.check("#pi-ver-en-vivo");
     await pOrg.waitForFunction(() => document.getElementById("pi-ver-en-vivo-estado").textContent === "En vivo.");
-    const direccion1 = await pOrg.textContent("#pi-ver-direccion");
+    // La dirección aparece cuando termina de cargar el QR (PareoQr.cargar):
+    // con la máquina ocupada (el CI de a cuatro) llega después del «En vivo.»,
+    // y leerla antes daba «Generando…».
+    const direccionVivo = async (anterior) => {
+      await pOrg.waitForFunction((a) => { const d = document.getElementById("pi-ver-direccion").textContent; return /#vivo=/.test(d) && d !== a; }, anterior, { timeout: 15000 }).catch(() => {});
+      return pOrg.textContent("#pi-ver-direccion");
+    };
+    const direccion1 = await direccionVivo();
     ok(/#vivo=[a-z0-9]{8}$/.test(direccion1), "la dirección lleva el código del canal, no los datos", direccion1);
     ok(mandados === 1, "al activarlo, manda la foto de ahora una vez", String(mandados));
 
@@ -497,12 +504,11 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
 
     await pOrg.check("#pi-ver-en-vivo");
     await pOrg.waitForFunction(() => document.getElementById("pi-ver-en-vivo-estado").textContent === "En vivo.");
-    const direccion2 = await pOrg.textContent("#pi-ver-direccion");
+    const direccion2 = await direccionVivo();
     ok(direccion1 === direccion2, "el código del torneo no cambia solo con prender y apagar «en vivo»");
 
     await pOrg.click("#pi-ver-en-vivo-nuevo-codigo");
-    await pOrg.waitForFunction((anterior) => document.getElementById("pi-ver-direccion").textContent !== anterior, direccion2);
-    const direccion3 = await pOrg.textContent("#pi-ver-direccion");
+    const direccion3 = await direccionVivo(direccion2);
     ok(direccion3 !== direccion2 && /#vivo=[a-z0-9]{8}$/.test(direccion3), "«Usar un código nuevo» cambia el código", direccion3);
 
     // Un celular sin nadie del otro lado: avisa que está esperando, no se queda en blanco para siempre.
