@@ -287,6 +287,19 @@ const TABLEROS = {
 };
 
 async function tocar(page, puntos) {
+  // Con la cámara todavía sin cuadro el lienzo no escucha los toques (sin
+  // «fuente»), y al llegar el primero cambia de tamaño: medido antes, los
+  // toques caían en otro lado. Pasaba con la máquina ocupada (el CI de a
+  // cuatro) y siempre en la máquina propia del CI. Se espera a que la cámara
+  // esté (el botón de marcar esquinas se habilita con ella) y a que el lienzo
+  // mida lo mismo dos veces seguidas.
+  await page.waitForFunction(() => { const b = document.getElementById("btn-esquinas"); return b && !b.disabled; }, null, { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => {
+    const r = document.getElementById("lienzo").getBoundingClientRect();
+    const ahora = r.width + "x" + r.height, antes = window.__medidaLienzo;
+    window.__medidaLienzo = ahora;
+    return r.width > 0 && ahora === antes;
+  }, null, { timeout: 10000, polling: 150 }).catch(() => {});
   // A la vista entero y lejos del encabezado fijo: un toque fuera no llega.
   await page.locator("#lienzo").evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }));
   const caja = await page.locator("#lienzo").boundingBox();

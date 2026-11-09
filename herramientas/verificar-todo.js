@@ -216,7 +216,7 @@ async function asegurarSitio() {
     // Las líneas que dicen QUÉ falló, aunque queden antes de las últimas 40:
     // con solo la cola, un fallo temprano de un verificador largo no se veía.
     // También el «esperaba:»/«salió:» que algunos ponen en las líneas de abajo.
-    const marcadas = lineas.slice(0, -40).filter((l, i, ls) => /✗|FALLA/.test(l) || (/^\s+(esperaba|salió):/.test(l) && /✗|esperaba:/.test(ls[i - 1] || "")));
+    const marcadas = lineas.slice(0, -40).filter((l, i, ls) => /✗|❌|FALLA/.test(l) || (/^\s+(esperaba|salió):/.test(l) && /✗|esperaba:/.test(ls[i - 1] || "")));
     const antes = marcadas.length ? "(fallos antes del final)\n" + marcadas.join("\n") + "\n…\n" : "";
     console.log("\n──────── " + r.v.archivo + " (salida " + r.codigo + ") ────────\n" + antes + cola);
   }
