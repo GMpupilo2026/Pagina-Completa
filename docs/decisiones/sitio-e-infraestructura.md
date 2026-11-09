@@ -2407,6 +2407,14 @@ de noviembre), así que se quedan en las de GitHub.
   solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
   deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
   del QR antes de que terminara de armarse; ahora la espera.
+- **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
+  primera corrida ahí destapó un error real que en UTC no se veía: el día de
+  cierre de los formularios se leía en UTC y al volver a abrirlo decía el día
+  siguiente. Un verificador que pase en las dos zonas es la prueba de que la
+  página no depende de la de la computadora.
+- `verificar-partidas-simultaneas.js` arma la mitad de partidas con menos de 4
+  núcleos **o menos de 12 GB de memoria**: con los 10 GB de Ubuntu, 100
+  pestañas atrasaban los relojes por la propia computadora, no por la página.
 - **Un PR que solo cambia `docs/` o un `.md` de la raíz no corre las tandas con
   navegador** (paso «¿El cambio toca el sitio?» de la rápida): ninguna lee esos
   archivos. La rápida sí corre siempre: `verificar-alumno-sin-correo.js` lee
