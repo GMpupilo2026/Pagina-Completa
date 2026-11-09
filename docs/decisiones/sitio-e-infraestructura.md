@@ -2396,7 +2396,28 @@ de noviembre), así que se quedan en las de GitHub.
   verificadores usan el sitio que encuentren ahí, y con el de la carpeta de
   trabajo probarían otro código. El paso «¿El puerto 8777 está libre?» lo
   revisa y frena antes de correr.
-- Con un runner, las cuatro tandas con navegador van una tras otra: el PR tarda
-  más, pero no cuesta.
+- **En la máquina propia la tanda con navegador es UNA, de a cuatro a la vez**
+  (`--parte=1/1 --paralelo=4`; desde el 9/11/2026). Con cuatro tandas y un solo
+  runner iban una tras otra, y cada una repetía `npm ci`, la instalación de
+  Chromium y el arranque del sitio: unos 70 minutos por PR. En las de GitHub
+  siguen las cuatro, cada una en su máquina, de a una. Los verificadores con
+  navegador aguantan correr juntos: ninguno abre un puerto fijo, y el sitio del
+  8777 es solo de lectura. Menos dos, los más pesados (`verificar-camara-tablero.js` y
+  `verificar-partidas-simultaneas.js`): de a cuatro se pasaban de tiempo, y
+  solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
+  deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
+  del QR antes de que terminara de armarse; ahora la espera.
+- **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
+  primera corrida ahí destapó un error real que en UTC no se veía: el día de
+  cierre de los formularios se leía en UTC y al volver a abrirlo decía el día
+  siguiente. Un verificador que pase en las dos zonas es la prueba de que la
+  página no depende de la de la computadora.
+- `verificar-partidas-simultaneas.js` arma la mitad de partidas con menos de 4
+  núcleos **o menos de 12 GB de memoria**: con los 10 GB de Ubuntu, 100
+  pestañas atrasaban los relojes por la propia computadora, no por la página.
+- **Un PR que solo cambia `docs/` o un `.md` de la raíz no corre las tandas con
+  navegador** (paso «¿El cambio toca el sitio?» de la rápida): ninguna lee esos
+  archivos. La rápida sí corre siempre: `verificar-alumno-sin-correo.js` lee
+  `CLAUDE.md`. Un `.md` dentro de otra carpeta (un curso) sí cuenta como sitio.
 - Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
   hasta que pase. Para salir del apuro, borrar `RUNNER`.
