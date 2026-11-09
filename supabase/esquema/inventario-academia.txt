@@ -1,9 +1,7 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261108031912
+# al-dia-con: 20261109153806
 tabla  Ejercicios Lichess  rls=true
-tabla  _foto_rls_tmp  rls=false
-tabla  _pedidos_elo  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
 tabla  academias  rls=true
@@ -288,16 +286,8 @@ columna  Ejercicios Lichess.PuzzleId  text
 columna  Ejercicios Lichess.Rating  bigint
 columna  Ejercicios Lichess.RatingDeviation  bigint
 columna  Ejercicios Lichess.Themes  text
-columna  _foto_rls_tmp.ca  bigint
-columna  _foto_rls_tmp.cp  bigint
-columna  _foto_rls_tmp.cs  bigint
-columna  _foto_rls_tmp.cuando  text
-columna  _foto_rls_tmp.persona  uuid
-columna  _foto_rls_tmp.qa  bigint
-columna  _foto_rls_tmp.tr  bigint
-columna  _pedidos_elo.id  bigint
-columna  _pedidos_elo.p  integer
 columna  academia_ia.academia_id  uuid
+columna  academia_ia.alumnos  boolean
 columna  academia_ia.id  uuid
 columna  academia_ia.modelo  text
 columna  academia_ia.tope_mensual_usd  numeric(10,2)
@@ -2992,8 +2982,11 @@ funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  historial_de_puntos(p_alumno uuid, p_limite integer)  invoker  anon=false  auth=true
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  ia_disponible()  definer  anon=false  auth=true
+funcion  ia_explicar_quedan()  definer  anon=false  auth=true
+funcion  ia_guardar_alumnos(p_academia uuid, p_alumnos boolean)  definer  anon=false  auth=true
 funcion  ia_guardar_config(p_academia uuid, p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  ia_inicio_de_mes()  invoker  anon=false  auth=true
+funcion  ia_para_explicar(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_usuario(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_resumen_mes(p_dia date)  definer  anon=false  auth=true
 funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
@@ -4098,7 +4091,6 @@ trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
 indice  Ejercicios Lichess  ejercicios_lichess_pkey
-indice  _pedidos_elo  _pedidos_elo_pkey
 indice  academia_ia  academia_ia_academia_id_fk
 indice  academia_ia  academia_ia_pkey
 indice  academia_ia  academia_ia_una_por_academia
