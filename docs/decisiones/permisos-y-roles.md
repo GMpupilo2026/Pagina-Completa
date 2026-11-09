@@ -1286,6 +1286,11 @@ y el login no puede saberlo: todavía nadie inició sesión.
 
 #### «Mejorar informe»: la IA por academia, y solo quien administra la ve
 
+La misma IA (el mismo modelo y el mismo tope de cada academia) mueve
+también «💬 Explícame esta posición» de Mis estudios, que pueden usar los
+alumnos si quien administra lo marca: ver «Explícame esta posición» en
+`entrenamiento.md`.
+
 Quien da clase tiene un botón **«✨ Mejorar informe»** debajo de «Qué se hizo en
 esta clase» (`asistencia.html`) y del resumen del informe mensual
 (`informe-mensual.html`). Reescribe su texto en un objetivo general, los

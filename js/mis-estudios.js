@@ -595,9 +595,14 @@
     if (trabajador) { try { trabajador.postMessage("stop"); } catch (e) {} }
   }
 
+  // «Explícame esta posición» (js/explicar-posicion.js): solo con las líneas
+  // TERMINADAS de la posición que se ve; cualquier otra cosa lo apaga.
+  const explicar = (d) => { if (window.ExplicarPosicion) ExplicarPosicion.listo(d); };
+
   function analizarActual() {
     const pedido = ++motorPedido;
     const fen = nodoActual.fen;
+    explicar(null);
     const juego = nuevoJuego(fen);
     if (juego.game_over()) {
       $("motor-eval").textContent = juego.in_checkmate() ? "Jaque mate: no hay nada que analizar." : "La partida terminó: no hay nada que analizar.";
@@ -610,7 +615,10 @@
       .then((lineas) => {
         if (pedido !== motorPedido) return;
         if (lineas == null) $("motor-eval").textContent = "No se pudo cargar el motor en este aparato.";
-        else pintarLineas(fen, lineas, true);
+        else {
+          pintarLineas(fen, lineas, true);
+          explicar({ fen, lineas: lineas.map((L) => ({ pv: L.pv, puntaje: L.puntaje })) });
+        }
       });
   }
 
@@ -650,7 +658,7 @@
     motorEncendido = !motorEncendido;
     $("motor-boton").setAttribute("aria-pressed", motorEncendido ? "true" : "false");
     if (motorEncendido) analizarActual();
-    else { detenerMotor(); $("motor-eval").textContent = ""; $("motor-lineas").replaceChildren(); }
+    else { detenerMotor(); explicar(null); $("motor-eval").textContent = ""; $("motor-lineas").replaceChildren(); }
   }
 
   // «Buscar mejoras»: la línea principal desde la jugada elegida (o desde el
@@ -941,6 +949,7 @@
     $("borrar-estudio").addEventListener("click", borrarEstudio);
     $("motor-boton").addEventListener("click", alternarMotor);
     $("revisar-boton").addEventListener("click", revisar);
+    if (window.ExplicarPosicion) ExplicarPosicion.montar({ sb, contenedor: $("motor") });
     document.addEventListener("keydown", teclas);
     window.addEventListener("popstate", () => {
       const id = new URLSearchParams(location.search).get("id");

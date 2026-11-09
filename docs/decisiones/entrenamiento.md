@@ -1432,6 +1432,65 @@ al repertorio, las marcas, importar, el estudio del repertorio, la vista del
 profe y, con el motor de verdad, el mate en uno y «Buscar mejoras». Rompiendo
 «Hacerla la principal», salta.
 
+### Explícame esta posición: la IA cuenta lo que calculó Stockfish
+
+Debajo del motor de Mis estudios, **«💬 Explícame esta posición»** pide a la
+IA que explique con palabras las líneas que el motor ya calculó: qué busca la
+mejor jugada, qué amenaza o evita y por qué las otras valen lo que valen. El
+código es `js/explicar-posicion.js` (una sola copia, para usarlo después en
+otras pantallas con motor) y la Edge Function `explicar-posicion`.
+
+- **El análisis es de Stockfish; la IA solo lo cuenta.** El botón se enciende
+  cuando el motor TERMINÓ de analizar la posición que se ve, y viajan esa
+  posición y sus líneas (en UCI, hasta 3 de 10 jugadas, con el puntaje desde
+  las blancas). Nada más: ni el estudio, ni sus comentarios, ni el nombre.
+- **Ninguna jugada se inventa, tampoco la que escribe la IA.** La función
+  vuelve a jugar cada línea con chess.js (una línea ilegal rechaza el pedido)
+  y **rechaza la explicación entera** si menciona una jugada de pieza, una
+  captura de peón o un enroque que no esté en las líneas, en la notación de
+  acá o en inglés. Las casillas sueltas («el caballo va a f5») no se revisan:
+  no se distinguen de una jugada de peón. La explicación rechazada se anota
+  en `ia_uso` con su motivo y no se muestra; la pantalla dice que no salió
+  bien y deja volver a pedirla. Al modelo se le pasan también las piezas de
+  cada bando escritas, para que no «vea» una que no está.
+- **La explicación es de UNA posición**: moverse a otra (o apagar el motor)
+  la borra y apaga el botón hasta que el motor termine de nuevo. Una
+  respuesta que llega cuando ya se cambió de posición se descarta.
+- **El texto se muestra tal cual**, ya en la notación de acá. No pasa por
+  `ComandosTablero.textoParaMostrar()`, que lee la R como torre inglesa y
+  cambiaría «Re1» (rey) por «Te1».
+- **Es la IA de «Mejorar informe»** (ver «Mejorar informe»: la IA por
+  academia, en `permisos-y-roles.md`): el mismo modelo y el mismo tope
+  mensual de cada academia, y cada llamada en `ia_uso` con
+  `que = 'explicar_posicion'`. Dos cosas nuevas:
+  - **`academia_ia.alumnos`**: los ALUMNOS de una academia lo usan solo si
+    quien administra marca esa casilla en `academias.html` (se guarda con
+    `ia_guardar_alumnos()`, que no toca el modelo ni el tope). Quien da clase
+    lo usa siempre que su academia tenga IA. Por omisión, los alumnos no.
+  - **Un tope por persona y por día** (hora de Costa Rica): 15 para un
+    alumno, 50 para quien da clase. Sin eso, un solo alumno se gasta el
+    presupuesto del mes de toda su academia.
+- **La pantalla pregunta una sola cosa: `ia_explicar_quedan()`**, cuántas le
+  quedan hoy. NULL es «sin IA» y el botón no va; 0 es «ya usaste las de hoy».
+  El modelo y el presupuesto los contesta `ia_para_explicar()`, que solo
+  puede llamar la service role, como `ia_para_usuario()`.
+- **La función comprueba el segundo paso de la verificación** (`aal2`) con el
+  token: mira el permiso con la clave de servicio, así que PostgREST no la
+  cubre (ver «La verificación en dos pasos»).
+- Lo que se manda a Anthropic está en `privacidad.html`.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js explicar-posicion
+mis-estudios mejorar-informe`.** Comprueba que los precios sean los de
+«Mejorar informe», que la migración deje `ia_para_explicar()` solo a la
+service role y que los topes del día sean los que dice la pantalla de quien
+administra; la revisión de jugadas con las mismas expresiones de la función
+(lo que está en las líneas pasa; otra jugada de pieza, en inglés, una captura
+o un enroque, no; las casillas y las palabras no son jugadas); y en la página,
+con el motor de verdad: sin IA no hay botón, se enciende solo con las líneas
+terminadas, viaja solo la posición y las líneas, el texto sale tal cual,
+«Agregar» no la borra pero ir a otra jugada sí, el tope del día y la IA
+apagada. Quitando el `explicar(null)` de `analizarActual()`, salta.
+
 ## Ejercicios sin internet
 
 `entreno/sin-internet.html` (tarjeta «📴 Ejercicios sin internet», en

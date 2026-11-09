@@ -172,7 +172,8 @@ async function pruebaAlumna(browser) {
   const fichas = await page.evaluate(() => [...document.querySelectorAll("#lista .ficha")].map((b) => [b.querySelector(".nombre").textContent, b.querySelector(".detalle").textContent]));
   igual("pinta solo los suyos, con capítulos, fecha y quién lo ve", fichas,
     [["Mi Siciliana", "2 capítulos · cambiado el 3 oct 2026 · lo ve tu profe"], ["Finales", "1 capítulo · creado el 20 sept 2026 · solo tú"]]);
-  igual("la lista no se baja los PGN", await page.evaluate(() => window.__consultas[0].filtros), [["alumno_id", "00000000-0000-4000-8000-0000000000a1"]]);
+  // La primera a `estudios` (antes puede ir la pregunta de si hay IA, ia_explicar_quedan).
+  igual("la lista no se baja los PGN", await page.evaluate(() => window.__consultas.find((c) => c.tabla === "estudios").filtros), [["alumno_id", "00000000-0000-4000-8000-0000000000a1"]]);
 
   // Abrir un estudio.
   await page.click("#lista .ficha");

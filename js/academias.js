@@ -165,7 +165,7 @@ async function pintarIA() {
         h.id = "h-ia";
         h.innerHTML = '<span aria-hidden="true">✨</span> Mejorar informe';
         seccion.append(h, el("p", "text-sm text-brand-500 dark:text-brand-300 mb-4",
-            "Qué modelo usa cada academia para el botón «Mejorar informe», cuánto puede gastar por mes y cuánto lleva. Esto solo lo ves tú: los profesores ven el botón, y si su academia no tiene IA o se quedó sin presupuesto, el botón no aparece. El mes se cuenta en hora de Costa Rica."));
+            "Qué modelo usa cada academia para los botones «Mejorar informe» y «Explícame esta posición» (Mis estudios), cuánto puede gastar por mes y cuánto lleva. Esto solo lo ves tú: los profesores ven los botones, y si su academia no tiene IA o se quedó sin presupuesto, no aparecen. «Explícame esta posición» lo usan los alumnos solo si marcas la casilla de su academia, con un máximo de 15 al día por alumno (50 para quien da clase). El mes y el día se cuentan en hora de Costa Rica."));
         const cuerpo = el("div", "space-y-4");
         cuerpo.id = "ia-filas";
         seccion.appendChild(cuerpo);
@@ -173,7 +173,7 @@ async function pintarIA() {
     }
     const cuerpo = document.getElementById("ia-filas");
     const [conf, gasto] = await Promise.all([
-        sb.from("academia_ia").select("academia_id, modelo, tope_mensual_usd"),
+        sb.from("academia_ia").select("academia_id, modelo, tope_mensual_usd, alumnos"),
         sb.rpc("ia_resumen_mes", { p_dia: null }),
     ]);
     if (conf.error || gasto.error) {
@@ -229,7 +229,23 @@ async function pintarIA() {
             avisar(sel.value ? "Guardado: " + f.nombre + " usa " + sel.options[sel.selectedIndex].text.split(" —")[0] + " con un tope de " + dolares(n) + " al mes." : "Guardado: " + f.nombre + " queda sin IA.");
             await pintarIA();
         });
-        caja.append(grid, lleva, guardar);
+        // Los alumnos y «Explícame esta posición»: se guarda al marcar, aparte
+        // del modelo y el tope (ia_guardar_alumnos no los toca).
+        const filaAl = el("label", "flex items-start gap-2 text-sm mt-3");
+        const marca = el("input", "mt-1 h-4 w-4");
+        marca.type = "checkbox";
+        marca.id = "ia-alumnos-" + clave;
+        marca.checked = !!c.alumnos;
+        filaAl.htmlFor = marca.id;
+        filaAl.append(marca, el("span", null, "Sus alumnos también pueden usar «Explícame esta posición» en Mis estudios (hasta 15 al día cada uno, del mismo tope)"));
+        marca.addEventListener("change", async () => {
+            marca.disabled = true;
+            const { error } = await sb.rpc("ia_guardar_alumnos", { p_academia: f.id || null, p_alumnos: marca.checked });
+            marca.disabled = false;
+            if (error) { marca.checked = !marca.checked; avisar(error.message, true); return; }
+            avisar(marca.checked ? "Guardado: los alumnos de " + f.nombre + " ya pueden pedir que les expliquen una posición." : "Guardado: los alumnos de " + f.nombre + " ya no ven «Explícame esta posición».");
+        });
+        caja.append(grid, filaAl, lleva, guardar);
         cuerpo.appendChild(caja);
     });
     cuerpo.appendChild(el("p", "text-sm font-semibold text-brand-900 dark:text-white", "Total este mes: " + dolares(total)));
