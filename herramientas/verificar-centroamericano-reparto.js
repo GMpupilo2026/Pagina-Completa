@@ -147,7 +147,11 @@ ok("seguir solo lleva desde un tramo apagado por un reparto, a uno vigente de la
     await q.waitForFunction(() => !document.getElementById("app").hidden, null, { timeout: 8000 }).catch(() => {});
     // Tres árbitros en los torneos del plano (Sub-18 F, Sub-18 A y Sub-16 F) y las incidencias de cada torneo.
     await q.evaluate(() => {
-      const fila = (id, tnr, arbitro, d, h, exp) => ({ id, codigo: "X" + id, token: id.repeat(16).slice(0, 64), tnr, arbitro, nombrado: true, mesa_desde: d, mesa_hasta: h, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: null, experiencia: exp });
+      // El vencimiento, una semana después de HOY: la página solo reparte entre
+      // los enlaces vigentes, y con la fecha fija de antes («2026-11-10») la
+      // prueba empezó a fallar sola ese día, sin que nada cambiara.
+      const vence = new Date(Date.now() + 7 * 864e5).toISOString();
+      const fila = (id, tnr, arbitro, d, h, exp) => ({ id, codigo: "X" + id, token: id.repeat(16).slice(0, 64), tnr, arbitro, nombrado: true, mesa_desde: d, mesa_hasta: h, vence, revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: null, experiencia: exp });
       window.__asig.push(fila("lia1", "1529773", "Lía Internacional", 1, 19, 3), fila("mar1", "1529771", "Mario Aprendiz", 1, 9, 0), fila("nor1", "1529776", "Nora Nacional", 1, 6, 1));
       window.__tasas = [{ tnr: "1529776", partidas: 30, incidencias: 3 }, { tnr: "1529773", partidas: 80, incidencias: 4 }, { tnr: "1529771", partidas: 38, incidencias: 14 }];
     });
