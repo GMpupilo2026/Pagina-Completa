@@ -23,6 +23,11 @@
 // servicio, así que pasa por antes_de_cada_pedido() y la verificación en dos
 // pasos la exige la base. Quien administra tiene todas las herramientas.
 //
+// Y SOLO SUS EVENTOS: los torneos se buscan con esa misma sesión, así que la base
+// le da solo los de los eventos que son suyos o de su equipo; el Drive, que es uno
+// solo para todo el sitio, es de la casa (centroamericano_soy_casa). Ver «Cada
+// evento de la Mesa del árbitro tiene dueño» en docs/decisiones/juegos-y-torneos.md.
+//
 // Las acciones (body.action):
 //   "poner"  { tnr, sid }  -> { ok, acceso, torneos[], ronda, mesas }   valida y guarda la clave
 //                             (tnr es el código con el que se entra: el del torneo o el del grupo)
@@ -82,8 +87,15 @@ Deno.serve(async (req) => {
   // Lo que no es de un solo torneo.
   const accion = String(cuerpo.action ?? "");
   if (accion === "resumen" || accion.startsWith("drive_")) {
+    // El Drive es uno solo para todo el sitio: de la casa. El resumen lee solo los torneos de sus eventos.
+    if (accion.startsWith("drive_")) {
+      const { data: casa } = await comoQuienLlama.rpc("centroamericano_soy_casa");
+      if (casa !== true) return json({ error: "El Drive de las planillas es de la organización del Centroamericano." }, 403);
+    }
+    const { data: misTorneos } = await comoQuienLlama.from("centroamericano_torneos").select("tnr");
+    const mios = new Set(((misTorneos ?? []) as { tnr: string }[]).map((t) => t.tnr));
     try {
-      return await accionesGenerales(accion, cuerpo, servicio);
+      return await accionesGenerales(accion, cuerpo, servicio, mios);
     } catch (e) {
       console.error("centroamericano-clave:", accion, e instanceof Error ? e.message : String(e));
       return json({ error: "No se pudo completar: " + (e instanceof Error ? e.message : String(e)) }, 502);
@@ -101,9 +113,10 @@ Deno.serve(async (req) => {
       const { pantalla } = await entrar(tnr, sid);
       if (!pantalla.entro) return json({ error: "chess-results no aceptó el código o la clave. Revísalos en Swiss-Manager. No se guardó la clave." }, 401);
       const abre = pantalla.torneos.length ? pantalla.torneos : [{ tnr: pantalla.tnr, nombre: pantalla.torneo, elegido: true }];
-      const { data: nuestros } = await servicio.from("centroamericano_torneos").select("tnr, nombre").in("tnr", abre.map((t) => t.tnr));
+      // Con la sesión de quien llama: la base le da solo los torneos de SUS eventos (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+      const { data: nuestros } = await comoQuienLlama.from("centroamericano_torneos").select("tnr, nombre").in("tnr", abre.map((t) => t.tnr));
       if (!nuestros || !nuestros.length) {
-        return json({ error: "Esa clave abre " + abre.map((t) => t.tnr + " (" + t.nombre + ")").join(", ") + ", y ninguno es del Centroamericano. No se guardó la clave." }, 404);
+        return json({ error: "Esa clave abre " + abre.map((t) => t.tnr + " (" + t.nombre + ")").join(", ") + ", y ninguno está en tus eventos. No se guardó la clave." }, 404);
       }
       const { error } = await servicio.rpc("centroamericano_guardar_acceso", { p_acceso: tnr, p_sid: sid, p_tnrs: nuestros.map((t) => t.tnr), p_persona: persona });
       if (error) {
@@ -118,8 +131,8 @@ Deno.serve(async (req) => {
 
     if (cuerpo.action === "probar") {
       // Solo los 12 torneos del Centroamericano.
-      const { data: torneo } = await servicio.from("centroamericano_torneos").select("tnr, nombre").eq("tnr", tnr).maybeSingle();
-      if (!torneo) return json({ error: "Ese torneo no es del Centroamericano." }, 404);
+      const { data: torneo } = await comoQuienLlama.from("centroamericano_torneos").select("tnr, nombre").eq("tnr", tnr).maybeSingle();
+      if (!torneo) return json({ error: "Ese torneo no está en tus eventos." }, 404);
       const { data: acc, error } = await servicio.rpc("centroamericano_acceso", { p_tnr: tnr });
       if (error) return json({ error: "No se pudo leer la bóveda." }, 500);
       const a = Array.isArray(acc) ? acc[0] : acc;
@@ -140,12 +153,12 @@ Deno.serve(async (req) => {
 const BUCKET = "centroamericano-planillas";
 
 // deno-lint-ignore no-explicit-any
-async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>, servicio: any): Promise<Response> {
+async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>, servicio: any, mios: Set<string>): Promise<Response> {
   if (accion === "resumen") {
     // Los torneos que tienen enlaces activos: cada uno se lee una vez, en paralelo (de a 4).
     const { data: asig } = await servicio.from("centroamericano_asignaciones").select("id, tnr, mesa_desde, mesa_hasta, vence, revocada").eq("revocada", false).gt("vence", new Date().toISOString());
     const porTorneo = new Map<string, { id: string; mesa_desde: number; mesa_hasta: number }[]>();
-    for (const a of asig ?? []) porTorneo.set(a.tnr, [...(porTorneo.get(a.tnr) ?? []), a]);
+    for (const a of asig ?? []) if (mios.has(a.tnr)) porTorneo.set(a.tnr, [...(porTorneo.get(a.tnr) ?? []), a]);
     const errores: { tnr: string; error: string }[] = [];
     let leidos = 0;
     const cola = [...porTorneo.entries()];
