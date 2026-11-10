@@ -2442,3 +2442,48 @@ de noviembre), así que se quedan en las de GitHub.
   `CLAUDE.md`. Un `.md` dentro de otra carpeta (un curso) sí cuenta como sitio.
 - Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
   hasta que pase. Para salir del apuro, borrar `RUNNER`.
+
+## Las Edge Functions se despliegan solas desde GitHub
+
+Hasta el 10/11/2026 cada Edge Function se desplegaba a mano: a veces desde el
+repositorio y a veces pegando el código en Supabase. Lo que estaba en `main` no
+siempre era lo que corría. Ese día apareció un caso: `centroamericano-mesas-vivo`
+llevaba días corriendo con el ahorro de internet de las tablets, que vivía en una
+rama nunca mergeada (`claude/bandwidth-data-extraction-nyb6vq`), y desplegarla
+desde `main` lo habría borrado. Además, desplegar desde una sesión de Claude
+significaba copiar a mano cientos de KB, y un error de copia rompe una función en
+uso. El dueño eligió que GitHub las despliegue solo.
+
+- **Qué se despliega.** `.github/workflows/funciones.yml` corre al entrar a
+  `main` un cambio en `supabase/functions/`. `herramientas/funciones-desplegar.js`
+  compara el commit de antes con el de después y elige:
+  - las funciones de las carpetas que cambiaron;
+  - las que llevan un archivo de `_compartido/` que cambió, según la lista de
+    `funciones-armar.js`, que es una sola copia.
+
+  Arma cada una con lo compartido y la sube con `supabase functions deploy
+  --use-api`, que no necesita Docker. Una carpeta borrada no se borra en
+  Supabase: eso se hace a mano y a propósito.
+- **El `verify_jwt` sale de `supabase/esquema/funciones-desplegadas.txt`**, no
+  de un valor por omisión. Equivocarse ahí deja una función abierta o rechazando
+  a quien la llama (pg_cron, la tablet sin cuenta, quien perdió la contraseña),
+  y eso no da ningún error. Por eso una función que no esté anotada **no se
+  despliega**: el flujo falla y lo dice.
+  - El 10/11 se comparó la lista con lo que tiene cada función en Supabase y
+    coincidían todas.
+  - `explicar-posicion` corre en Supabase y no está en el repositorio (otra
+    sesión): el flujo no la toca.
+- **A mano**: Actions → Funciones → «Run workflow», con los nombres separados
+  por comas. Lo escrito entra al comando por una variable de entorno, nunca
+  pegado.
+- **La clave** es el secreto del repositorio `SUPABASE_ACCESS_TOKEN`, una clave
+  de acceso personal de supabase.com/dashboard/account/tokens. Sin ella el flujo
+  falla y lo dice; no se escribe en ningún archivo.
+- **La herramienta va fijada** en la 2.122.0, como todo lo demás. Nunca hay dos
+  despliegues a la vez: el segundo espera al primero. Corre en la máquina propia
+  si `RUNNER` lo dice (ver «El CI en una máquina propia»).
+- Lo prueba `verificar-funciones-despliegue.js`, sin red:
+  - cada carpeta de función está anotada con su `verify_jwt`;
+  - un archivo compartido despliega todas las que lo llevan;
+  - el flujo va al proyecto de la Academia, con la versión fijada y la clave del
+    secreto, y nada de afuera entra pegado en un comando.

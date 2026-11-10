@@ -49,6 +49,8 @@ const VIGILADAS = [
   // Las cuentas de árbitro: de qué organizador es cada una (y con eso, qué
   // herramientas le puede dar o quitar).
   "arbitros_cuentas",
+  // De quién es cada evento de la Mesa del árbitro y quién trabaja en él.
+  "centroamericano_eventos", "centroamericano_evento_equipo",
   // El sello «Organizador verificado» de Pareo Integral: lo da (o lo quita)
   // solo administración, y ocultar un torneo o una organización también.
   "pareo_organizadores",

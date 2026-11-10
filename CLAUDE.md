@@ -251,7 +251,9 @@ puntos Elo»)
   (`herramientas/inventario-esquema.sql` → `supabase/esquema/inventario-academia.txt`,
   con su `# al-dia-con:`) y se corre
   `node herramientas/verificar-punto-restauracion.js`. Las funciones se arman
-  con `node herramientas/funciones-armar.js` (copia `_compartido/`). Ver
+  con `node herramientas/funciones-armar.js` (copia `_compartido/`) y **se
+  despliegan solas al entrar a `main`** (`.github/workflows/funciones.yml`, con
+  el `verify_jwt` de `funciones-desplegadas.txt`): no se despliegan a mano. Ver
   `RESTAURAR.md`.
 - Los alumnos sin correo entran con un usuario de
   `alumno.ajedrez-integral.com`, un dominio **sin MX a propósito**: a esa

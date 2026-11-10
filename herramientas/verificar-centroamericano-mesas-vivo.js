@@ -150,7 +150,8 @@ ok("un enlace apagado o vencido no lee nada", /a\.revocada \|\| new Date\(a\.ven
 const respuestas = fn.match(/json\(\{[^;]*\}/g) || [];
 const sinTextos = (x) => x.replace(/"(?:[^"\\]|\\.)*"/g, '""');
 ok("nunca devuelve la clave ni los enlaces privados", respuestas.length > 5 && respuestas.every((x) => !/\btoken\b|\benlace\b|\bids\b/.test(sinTextos(x))), respuestas.filter((x) => /\btoken\b|\benlace\b|\bids\b/.test(sinTextos(x))).join(" | "));
-ok("la organización necesita la herramienta «mesa-arbitro»", /tengo_herramienta", \{ p_herramienta: "mesa-arbitro" \}/.test(fn));
+// LiveChess es uno solo para todo el sitio: de la casa, no basta la licencia (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+ok("la organización tiene que ser de la casa (centroamericano_soy_casa)", /comoQuienLlama\.rpc\("centroamericano_soy_casa"\)/.test(fn) && !/rpc\("tengo_herramienta"/.test(fn));
 ok("la clave se prueba con Lichess y debe poder leer lo privado (study:read)", /\/api\/token\/test/.test(fn) && /includes\("study:read"\)/.test(fn));
 const desplegadas = leer("supabase/esquema/funciones-desplegadas.txt");
 ok("está en la lista de desplegadas, sin JWT (la tablet no tiene sesión)", /^centroamericano-mesas-vivo\s+false\s/m.test(desplegadas));
