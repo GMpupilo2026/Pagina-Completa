@@ -747,7 +747,12 @@ async function main() {
     const soloUno = parseInt(await p.inputValue("#b1-cantidad"), 10);
     await p.click("#e-agregar-bloque");
     await p.waitForSelector("#b2-fuente", { timeout: 4000 });
+    // El banco de arbitraje (387 KB) no viene con la página: se pide al
+    // elegirlo, y con él las preguntas tienen que aparecer igual.
+    ok(await p.evaluate(() => !window.ARBITRAJE_ITEMS && !document.querySelector('script[src*="arbitraje-items"]')),
+      "el banco de arbitraje no debería bajarse antes de elegirlo");
     await p.selectOption("#b2-fuente", "arbitraje");
+    await p.waitForFunction(() => Array.isArray(window.ARBITRAJE_ITEMS), null, { timeout: 5000 }).catch(() => {});
     await p.waitForTimeout(300);
     await p.fill("#b2-cantidad", "4");
     await p.dispatchEvent("#b2-cantidad", "input");

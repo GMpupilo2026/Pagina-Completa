@@ -141,3 +141,12 @@
 # caché no rompe nada (como mucho falta un glifo de un subconjunto nuevo).
 /fonts/*
   Cache-Control: public, max-age=604800
+
+# Las imágenes de la interfaz (img/*: logos, banderas, mascotas, avatares).
+# Sin esto, cada visita volvía a preguntar por cada imagen (un 304 por imagen,
+# una vuelta a Cloudflare cada una). Un día, como los datos del bot: una imagen
+# cambiada se ve vieja hasta mañana como mucho, y eso no rompe nada. js/vendor/
+# NO va acá a propósito: una librería vieja junto al código nuevo de la página
+# es el mismo error callado que el CSS viejo.
+/img/*
+  Cache-Control: public, max-age=86400

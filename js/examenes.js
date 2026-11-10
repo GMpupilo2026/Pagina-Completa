@@ -180,6 +180,26 @@ function fuentesDisponibles() {
 let bloques = [];
 let seqBloque = 0;
 
+/* El banco de arbitraje (387 KB, 200 preguntas) se pide recién cuando un
+   bloque elige «Reglamento (arbitraje)»: casi ningún examen lo usa y antes lo
+   bajaba cada visita a esta página. El del libro sí va en el HTML: que cargue
+   o no (el worker se lo niega a quien no lo compró) es lo que decide si la
+   opción aparece. */
+let pidiendoArbitraje = null;
+function cargarBancoArbitraje() {
+  if (Array.isArray(window.ARBITRAJE_ITEMS)) return Promise.resolve();
+  if (!pidiendoArbitraje) {
+    pidiendoArbitraje = new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = "js/arbitraje-items.js";
+      s.onload = () => (Array.isArray(window.ARBITRAJE_ITEMS) ? ok() : mal(new Error("el banco vino vacío")));
+      s.onerror = () => { pidiendoArbitraje = null; mal(new Error("no se pudo bajar el banco")); };
+      document.head.appendChild(s);
+    });
+  }
+  return pidiendoArbitraje;
+}
+
 function bloqueNuevo() {
   return { id: ++seqBloque, fuente: "curso", cual: "", areas: [], cantidad: 10, difMin: 1, difMax: 5 };
 }
@@ -270,6 +290,14 @@ function pintarBloque(b) {
     const ops = opcionesDeCual(b);
     b.cual = ops.length ? ops[0].valor : "";
     pintarBloques();
+    if (v === "arbitraje" && !Array.isArray(window.ARBITRAJE_ITEMS)) {
+      cargarBancoArbitraje().then(() => {
+        // La previsión se guardó con el banco vacío y su clave (los bloques)
+        // no cambió: sin esto diría «0 preguntas» hasta tocar otra cosa.
+        prevision.clave = null;
+        pintarBloques();
+      }).catch((e) => Avisos.avisar("No se pudo cargar el banco de arbitraje (" + e.message + "). Revisa la conexión y vuelve a elegirlo.", { tipo: "error" }));
+    }
   }));
   const cuales = opcionesDeCual(b);
   if (cuales.length) {
