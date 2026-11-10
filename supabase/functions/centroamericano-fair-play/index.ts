@@ -166,7 +166,8 @@ Deno.serve(async (req) => {
     const autorizacion = req.headers.get("Authorization") ?? "";
     if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Falta el enlace de Fair Play." }, 401);
     const comoQuienLlama = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: autorizacion } } });
-    const { data: puede, error } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: "mesa-arbitro" });
+    // Fair Play es uno solo para todo el sitio: de la casa (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+    const { data: puede, error } = await comoQuienLlama.rpc("centroamericano_soy_casa");
     if (error || puede !== true) return json({ error: "Solo el árbitro principal o un encargado de Fair Play." }, 403);
     // Con la clave de servicio la base no sabe quién es: el nombre de su perfil va al acta.
     const { data: u } = await comoQuienLlama.auth.getUser(autorizacion.replace(/^Bearer\s+/i, "").trim());

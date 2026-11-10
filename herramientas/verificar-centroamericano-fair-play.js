@@ -258,6 +258,8 @@ function pruebasDelCalculo() {
     const fn = leerArchivo("supabase/functions/centroamericano-fair-play/index.ts");
     igual("la función no mide la copia de la ronda anterior (ni al darla ni al guardarla)", (fn.match(/copiaDeOtra\(g\.moves/g) || []).length, 2);
     igual("la función ya no lee la transmisión de Lichess (de Lichess solo usa el explorador de maestros, para la teoría), y nunca devuelve el enlace de LiveChess (torneo_id) a la pantalla", [/lichess\.org\/(api|broadcast)/.test(fn) || (fn.match(/lichess\.org\/[a-z]+/g) || []).some((u) => u !== "lichess.org/masters"), (fn.match(/return \{[^;]*\}/g) || []).some((x) => /torneo_id/.test(x)) || /partidas\.push\(\{[^}]*torneo_id/.test(fn)], [false, false]);
+    // Fair Play es uno solo para todo el sitio: sin enlace, de la casa; no basta la licencia (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+    igual("sin enlace, hace falta ser de la casa (centroamericano_soy_casa), no solo la licencia", /comoQuienLlama\.rpc\("centroamericano_soy_casa"\)/.test(fn) && !/rpc\("tengo_herramienta"/.test(fn), true);
     igual("la función compara los DOS nombres con LiveChess antes de tomar una partida", /mismoJugador\(f\.blancas, nombreLc\(p\.white\)\) && mismoJugador\(f\.negras, nombreLc\(p\.black\)\)/.test(fn), true);
 
     console.log("\n=== El puntaje de Stockfish, para las blancas ===");
