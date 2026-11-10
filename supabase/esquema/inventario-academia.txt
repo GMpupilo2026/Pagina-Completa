@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261110000103
+# al-dia-con: 20261110190000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -50,6 +50,8 @@ tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_codigo_intentos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_correos_bitacora  rls=true
+tabla  centroamericano_evento_equipo  rls=true
+tabla  centroamericano_eventos  rls=true
 tabla  centroamericano_fair_play  rls=true
 tabla  centroamericano_finales  rls=true
 tabla  centroamericano_fp_analisis  rls=true
@@ -629,6 +631,13 @@ columna  centroamericano_copias.resumen  jsonb
 columna  centroamericano_correos_bitacora.asignacion_id  uuid
 columna  centroamericano_correos_bitacora.enviado_en  timestamp with time zone
 columna  centroamericano_correos_bitacora.id  uuid
+columna  centroamericano_evento_equipo.agregado_en  timestamp with time zone
+columna  centroamericano_evento_equipo.agregado_por  uuid
+columna  centroamericano_evento_equipo.evento  text
+columna  centroamericano_evento_equipo.persona_id  uuid
+columna  centroamericano_eventos.creado_en  timestamp with time zone
+columna  centroamericano_eventos.dueno_id  uuid
+columna  centroamericano_eventos.evento  text
 columna  centroamericano_fair_play.aplica_blancas  boolean
 columna  centroamericano_fair_play.aplica_negras  boolean
 columna  centroamericano_fair_play.arbitro  text
@@ -2855,6 +2864,7 @@ funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[]
 funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
 funcion  centroamericano_livechess_publico()  definer  anon=true  auth=true
+funcion  centroamericano_mis_eventos()  definer  anon=false  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_por_ronda()  definer  anon=false  auth=false
@@ -2862,6 +2872,7 @@ funcion  centroamericano_reparto_aplicar(p_acciones jsonb)  invoker  anon=false 
 funcion  centroamericano_reparto_tasas()  invoker  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  centroamericano_seguir(p_token text)  definer  anon=true  auth=true
+funcion  centroamericano_soy_casa()  definer  anon=false  auth=true
 funcion  centroamericano_torneo_renombrar(p_tnr text, p_nombre text, p_categoria text)  definer  anon=false  auth=true
 funcion  centroamericano_torneos_agregar(p_evento text, p_torneos jsonb)  definer  anon=false  auth=true
 funcion  centroamericano_vivo_guardar(p_enlace text, p_token text)  definer  anon=false  auth=false
@@ -3022,6 +3033,11 @@ funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp wi
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
 funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.ca_casa()  definer  anon=false  auth=true
+funcion  interno.ca_mis_asignaciones()  definer  anon=false  auth=true
+funcion  interno.ca_mis_eventos()  definer  anon=false  auth=true
+funcion  interno.ca_mis_tnr()  definer  anon=false  auth=true
+funcion  interno.ca_puede_tnr(p_tnr text)  definer  anon=false  auth=true
 funcion  interno.centroamericano_calentar()  definer  anon=false  auth=false
 funcion  interno.centroamericano_copia_a_drive()  definer  anon=false  auth=false
 funcion  interno.centroamericano_hacer_copia(p_anillo text, p_forzar boolean)  definer  anon=false  auth=false
@@ -3493,6 +3509,8 @@ politica  centroamericano_avisos  centroamericano_avisos_atender  UPDATE
 politica  centroamericano_avisos  centroamericano_avisos_enviar  INSERT
 politica  centroamericano_avisos  centroamericano_avisos_ver  SELECT
 politica  centroamericano_copias  centroamericano_copias_ver  SELECT
+politica  centroamericano_evento_equipo  centroamericano_evento_equipo_ver  SELECT
+politica  centroamericano_eventos  centroamericano_eventos_ver  SELECT
 politica  centroamericano_fair_play  centroamericano_fair_play_ver  SELECT
 politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
 politica  centroamericano_finales  centroamericano_finales_ver  SELECT
@@ -3985,6 +4003,8 @@ trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
 trigger  centroamericano_asignaciones  concluyo_ronda
 trigger  centroamericano_avisos  atendido
+trigger  centroamericano_evento_equipo  auditar
+trigger  centroamericano_eventos  auditar
 trigger  centroamericano_finales  auditar
 trigger  centroamericano_fp_enlaces  auditar
 trigger  centroamericano_lecturas  reabrir_por_ronda
@@ -4190,6 +4210,10 @@ indice  centroamericano_codigo_intentos  centroamericano_codigo_intentos_pkey
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_asignacion_idx
 indice  centroamericano_correos_bitacora  centroamericano_correos_bitacora_pkey
+indice  centroamericano_evento_equipo  centroamericano_evento_equipo_persona_idx
+indice  centroamericano_evento_equipo  centroamericano_evento_equipo_pkey
+indice  centroamericano_eventos  centroamericano_eventos_dueno_idx
+indice  centroamericano_eventos  centroamericano_eventos_pkey
 indice  centroamericano_fair_play  centroamericano_fair_play_enlace_idx
 indice  centroamericano_fair_play  centroamericano_fair_play_pkey
 indice  centroamericano_fair_play  centroamericano_fair_play_una_vez
@@ -4963,6 +4987,8 @@ grant  bromas_preferencias  authenticated  SELECT
 grant  centroamericano_asignaciones  authenticated  SELECT
 grant  centroamericano_avisos  authenticated  SELECT
 grant  centroamericano_copias  authenticated  SELECT
+grant  centroamericano_evento_equipo  authenticated  SELECT
+grant  centroamericano_eventos  authenticated  SELECT
 grant  centroamericano_fair_play  authenticated  SELECT
 grant  centroamericano_finales  authenticated  SELECT
 grant  centroamericano_fp_analisis  authenticated  SELECT

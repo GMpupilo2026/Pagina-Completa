@@ -115,9 +115,13 @@ const igual = (que, salio, esperaba) => {
         return q;
     };
     let guardado = null;
-    const inicio = process.hrtime.bigint();
+    // El tope de la Edge Function es de TIEMPO DE PROCESADOR: se mide ese (process.cpuUsage), no el reloj.
+    // Con el reloj, en una máquina cargada (el CI corre más de 160 verificadores a la vez) el proceso
+    // esperando su turno contaba como trabajo y fallaba sin que el modelo fuera más lento.
+    const inicio = process.cpuUsage();
     const r = await modelo({ from: consulta }, async (fn, args) => { if (fn === "centroamericano_fp_modelo_guardar") guardado = args; return 1; }, true);
-    const ms = Number(process.hrtime.bigint() - inicio) / 1e6;
+    const gasto = process.cpuUsage(inicio);
+    const ms = (gasto.user + gasto.system) / 1000;
 
     console.log("=== El modelo de la función, sobre un torneo inventado ===");
     igual("corre y guarda el índice de los 90 jugadores y de cada partida medida, en menos de 1,5 s (la función tiene un tope de tiempo de procesador)",

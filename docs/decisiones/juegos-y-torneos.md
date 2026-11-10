@@ -16310,3 +16310,87 @@ sala-base` (con el sitio en localhost:8777 y playwright):
   constancia, devolver también, y una partida en juego no se anula. `sala`,
   que la arena avisa del juego limpio y que esconder la pestaña en medio de
   una partida (y solo entonces) llama a `arena_anotar_salida`.
+
+## Cada evento de la Mesa del árbitro tiene dueño
+
+La versión del Centroamericano de la Mesa del árbitro se armó para **un** evento.
+Todas sus políticas decían solo «tiene la licencia `mesa-arbitro`», así que
+cualquiera con esa licencia veía los torneos, los enlaces de los árbitros, lo
+anotado, los avisos y el Fair Play de **todos** los eventos. Eso alcanzaba a un
+organizador cualquiera y a un árbitro al que se le diera la licencia (ver «Las
+cuentas de árbitro» en permisos-y-roles.md). Además podía archivar el evento de
+otro y quitarle un torneo: `centroamericano_torneos_agregar()` cambiaba el evento
+en su `on conflict`. El dueño lo pidió el 10/11/2026 para poder ofrecer la
+herramienta a cualquier organizador. Migración `…_centroamericano_eventos_con_dueno`;
+el dueño la corrió en el editor SQL y se anotó a mano en `schema_migrations`.
+
+- **Cada evento con su dueño y su equipo.** `centroamericano_eventos` guarda el
+  dueño (quien lo creó) y `centroamericano_evento_equipo`, sus colegas.
+  - No tienen política de escritura y llevan la bitácora (`VIGILADAS`).
+  - `centroamericano_torneos.evento` apunta al evento.
+  - Lo que había quedó así: «Centroamericano 2026» y «Blitz» son de
+    administración, y su equipo es quien tenía una licencia **propia** de
+    `mesa-arbitro` o de «todas» (las dos cuentas de profesor del
+    Centroamericano). Nadie perdió lo que veía.
+- **«Mis eventos» lo dice la base.** `interno.ca_mis_eventos()` da todos a
+  administración y a la clave de servicio; a los demás, con la licencia, los
+  suyos y los de su equipo. De ahí salen `ca_mis_tnr()`,
+  `ca_mis_asignaciones()` y `ca_puede_tnr()`. Cada política arma el conjunto una
+  vez (`tnr in (select interno.ca_mis_tnr())`). Para la página está
+  `centroamericano_mis_eventos()`.
+- **Lo que hoy es uno solo para todo el sitio es «de la casa»**:
+  `interno.ca_casa()`, que también responde la RPC
+  `centroamericano_soy_casa()`. Es administración o quien está en el equipo de
+  un evento cuyo dueño administra.
+  - Entra Fair Play entero (`interno.fp_puede()` ahora pregunta eso) con su
+    modelo y sus referencias, más la transmisión, el Drive, LiveChess, la copia
+    de seguridad, el inicio de ronda y los enlaces de los encargados.
+  - Partirlo por evento es el paso siguiente. Hasta entonces, un organizador de
+    afuera tiene su evento, sus árbitros y lo que anotan, pero no Fair Play ni
+    transmisión.
+- **Las funciones que decidían solas ahora miran de quién es.** Son
+  `actividad`, `hojas`, `quitar_enlace`, `reabrir_labores` (también al reabrir a
+  la misma persona en otros enlaces), `torneo_renombrar` y `evento_archivar`.
+  - `torneos_agregar` crea el evento a nombre de quien lo crea.
+  - No deja ampliar el evento de otro usando su mismo nombre, ni tomar un torneo
+    que ya está en un evento ajeno.
+  - `copia_manual`, `inicio_ronda` y `restaurar` son de la casa.
+  - Se armaron desde su texto vigente (el md5 de cada una se comparó contra la
+    base) cambiando solo el permiso o el filtro.
+- **Comprobado impersonando cuentas**, el 10/11, en una transacción que se
+  deshizo:
+  - Un organizador nuevo con licencia crea su evento y ve solo ese torneo: ni
+    enlaces, ni anotaciones, ni avisos, ni actividad del Centroamericano.
+  - No toma un torneo ajeno, ni amplía, archiva o renombra lo ajeno, ni hace la
+    copia de seguridad.
+  - Su árbitro con la licencia dada no ve nada: no está en el equipo.
+  - El equipo de la casa sigue viendo los 26 torneos y el Fair Play, y no ve el
+    evento del otro.
+- **Las Edge Functions de la organización** antes miraban solo la licencia y
+  después trabajaban con la clave de servicio sobre todo.
+  - `centroamericano-fair-play`, `-transmision` y `-mesas-vivo` ahora preguntan
+    `centroamericano_soy_casa`. Lo exigen `verificar-centroamericano-fair-play.js`,
+    `-transmision.js` y `-mesas-vivo.js`.
+  - `centroamericano-clave` busca los torneos con la sesión de quien llama, así
+    que la base le da solo los suyos al poner o probar una clave, y su
+    «Actualizar» lee solo esos. El Drive es de la casa.
+  - **Ojo, `centroamericano-mesas-vivo`:** lo que corre en Supabase vino de la
+    rama `claude/bandwidth-data-extraction-nyb6vq` (el ahorro de internet de las
+    tablets, del 6/11), que se desplegó pero nunca se mergeó. Para no borrarlo,
+    su archivo se tomó de esa rama, con solo el cambio del permiso encima. Así lo
+    que está en `main` es lo que corre, y el resto de esa rama (sus scripts y su
+    verificador) sigue pendiente de mergear.
+- **Lo que falta:**
+  1. Desplegar las cuatro Edge Functions. Mientras no estén desplegadas, **no se
+     le da la licencia `mesa-arbitro` a nadie de afuera**: con la versión vieja,
+     un organizador con licencia todavía puede, por esas funciones, poner la
+     clave de un torneo ajeno o leer el Fair Play de todos.
+  2. «¿Dónde juega?» de la tablet (`centroamericano-mesa`) todavía muestra las
+     categorías de todos los eventos. Son emparejamientos públicos de
+     chess-results, pero el cambio (filtrar por el evento de su enlace) espera al
+     próximo despliegue de esa función, que pesa 123 KB.
+  3. En `centroamericano-mesas.html`: elegir el evento, invitar colegas al
+     equipo, y que a un organizador de afuera no le salgan las pestañas de la
+     casa.
+  4. Partir por evento lo que hoy es de la casa. Luego, la mascota o el logo de
+     cada evento.
