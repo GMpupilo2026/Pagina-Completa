@@ -277,7 +277,10 @@
            NO justificó. Una sola copia, porque la asistencia sale en cinco
            lugares de esta página y cada uno la contaba a su manera. */
         const justificadasTexto = (n) => n ? " · " + n + (n === 1 ? " falta justificada" : " faltas justificadas") : "";
+        // cerradas === null: no se pudo contar las clases. «3/0» o «0 %» se
+        // leerían como un dato; un «—» dice que falta.
         function tarjetaAsistencia(a, cerradas) {
+            if (cerradas === null) return statCard("🏫", "—", "Asistencia (no se pudo cargar)");
             return statCard("🏫", a.fue + "/" + (cerradas || 0), "Asistencia (" + a.tasa + "%)" + justificadasTexto(a.just));
         }
 
@@ -469,14 +472,14 @@
             const calificadas = fila.calificadas || 0;
             const accuracy = calificadas ? Math.round((correct / calificadas) * 100) : 0;
 
-            const { data: totales } = await sb.rpc("informes_totales").maybeSingle();
-            const closedCount = (totales && totales.clases_cerradas) || 0;
+            const { data: totales, error: errTotales } = await sb.rpc("informes_totales").maybeSingle();
+            const closedCount = errTotales ? null : ((totales && totales.clases_cerradas) || 0);
             const asistencia = asistenciaDe(fila, closedCount);
             const totalMinutes = fila.minutos_clase || 0;
             const exerciseMinutesStudent = fila.minutos_ejercicios || 0;
 
             // El historial enseña las últimas quince respuestas: se piden quince.
-            const { data: answers } = await sb.from("question_answers")
+            const { data: answers, error: errRespuestas } = await sb.from("question_answers")
                 .select("created_at, is_correct").eq("student_id", profile.id)
                 .order("created_at", { ascending: false }).limit(15);
             const list = answers || [];
@@ -517,7 +520,9 @@
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
-            if (!list.length) {
+            if (errRespuestas) {
+                historyEl.innerHTML = '<li class="text-red-600 dark:text-red-400">No se pudieron cargar tus asignaciones. Recarga la página.</li>';
+            } else if (!list.length) {
                 historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no has respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
@@ -1141,7 +1146,16 @@
         // (loadStudentReport más arriba). Los totales ya vienen contados en teacherData,
         // así que cambiar de alumno en el filtro no vuelve a consultar la base; lo único
         // que se pide aparte es su historial, y son quince filas.
+        /* Cada repintado del informe tiene su turno. Recorriendo la lista de
+           alumnos con las flechas, cada flecha pide su alumno; sin el turno,
+           la respuesta que llegaba tarde sumaba sus tarjetas a las del alumno
+           nuevo y pintaba sus asignaciones bajo el nombre del otro. La que
+           llega con un turno viejo no pinta nada (como clases.js y
+           coordinacion.js con sus buscadores). */
+        var turnoDetalle = 0;   // var: applyTeacherFilters está más abajo
+
         async function renderStudentDetail(studentId) {
+            const mio = turnoDetalle;
             const student = teacherData.resumenPorAlumno[studentId];
             const name = student ? (student.full_name || student.email) : "el alumno";
             tituloConEmoji("student-report-title", "🚩", "Últimas asignaciones de " + name);
@@ -1158,12 +1172,13 @@
             const exerciseMinutesDetail = fila.minutos_ejercicios || 0;
             const entreno = entrenoDeAlumno(studentId);
 
-            const { data: answers } = await sb.from("question_answers")
+            const { data: answers, error: errRespuestas } = await sb.from("question_answers")
                 .select("created_at, is_correct").eq("student_id", studentId)
                 .order("created_at", { ascending: false }).limit(15);
             const list = answers || [];
 
             const { data: unlocks } = await sb.from("course_unlocks").select("curso, hasta_leccion").eq("student_id", studentId);
+            if (mio !== turnoDetalle) return;   // ya se eligió otro alumno (u otra vista)
             const unlocksPorCurso = {};
             (unlocks || []).forEach((u) => { unlocksPorCurso[u.curso] = u.hasta_leccion; });
 
@@ -1221,7 +1236,9 @@
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
-            if (!list.length) {
+            if (errRespuestas) {
+                historyEl.innerHTML = '<li class="text-red-600 dark:text-red-400">No se pudieron cargar sus asignaciones. Recarga la página.</li>';
+            } else if (!list.length) {
                 historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no ha respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
@@ -2641,6 +2658,7 @@
                 b.setAttribute("aria-pressed", String(!studentId && b.dataset.tema === topic));
             });
             pintarPendientesDePreguntas();
+            turnoDetalle++;
             hideAllReportPanels();
             if (studentId) await renderStudentDetail(studentId);
             else if (topic) renderTopicReport(topic);

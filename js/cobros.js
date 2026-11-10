@@ -1292,7 +1292,8 @@ async function pintarContactoAlumno() {
 
 async function vistaAlumno() {
     await pintarContactoAlumno();
-    const { data, error } = await sb.from("cobros_vista").select("*").order("vence", { ascending: false });
+    // «Mis pagos» son los de quien entra, aunque la RLS le deje ver más.
+    const { data, error } = await sb.from("cobros_vista").select("*").eq("student_id", session.user.id).order("vence", { ascending: false });
     const caja = document.getElementById("alumno-lista");
     if (error) {
         caja.appendChild(el("p", "text-sm text-red-500", "No se pudieron cargar tus cobros: " + error.message));
@@ -1694,7 +1695,15 @@ async function init() {
         document.getElementById("denegado").classList.remove("hidden");
         return;
     }
-    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+    const { data: p, error: errPerfil } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+    /* Sin el perfil no se sabe si la cuenta coordina: seguir abría «Mis pagos»
+       a quien administra, con la suma de los cobros de otros como si fueran
+       suyos. Mejor decir que falló. */
+    if (errPerfil) {
+        document.getElementById("loading").classList.add("hidden");
+        avisar("No se pudo cargar tu cuenta: " + errPerfil.message + ". Recarga la página.", true);
+        return;
+    }
     perfil = p;
     coordina = !!(perfil && (perfil.es_coordinador || perfil.es_supervisor || perfil.is_admin));
     corrige = !!(perfil && (perfil.es_supervisor || perfil.is_admin));
@@ -1725,7 +1734,13 @@ async function init() {
     }
     // Los alumnos que uno ve: la misma función de Informes, así que el filtro
     // de quién sale es el de la RLS y no está escrito dos veces.
-    const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos").order("id"));
+    const { data: gente, error: errGente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos").order("id"));
+    /* Sin este corte, un error dejaba los selectores de alumno vacíos (o con
+       solo los primeros mil, si fallaba la segunda página) y la página se veía
+       normal: nadie se enteraba de que faltaba gente. */
+    if (errGente) {
+        avisar("No se pudo cargar la lista de alumnos: " + errGente.message + ". Recarga la página.", true);
+    }
     alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email, grupo: a.grupo || "" }))
         .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || "", "es"));
     const opciones = (vacio) => '<option value="">' + vacio + "</option>"
@@ -1756,16 +1771,21 @@ async function init() {
 }
 
 document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
-document.getElementById("p-guardar").addEventListener("click", crearPlan);
 /* Mientras guarda, el botón no se puede volver a apretar: con un cobro
    personalizado cada clic crea SU PROPIO plan, así que un doble clic dejaba
-   dos planes y dos suscripciones, y el índice único (alumno, plan) no lo ve. */
-document.getElementById("s-guardar").addEventListener("click", async (ev) => {
-    const btn = ev.currentTarget;
-    if (btn.disabled) return;
-    btn.disabled = true;
-    try { await crearSuscripcion(); } finally { btn.disabled = false; }
-});
+   dos planes y dos suscripciones, y el índice único (alumno, plan) no lo ve.
+   Lo mismo con el plan suelto (dos planes iguales en el catálogo) y con el
+   recordatorio programado (dos filas: la familia recibía DOS correos). */
+function unaVezPorClic(id, accion) {
+    document.getElementById(id).addEventListener("click", async (ev) => {
+        const btn = ev.currentTarget;
+        if (btn.disabled) return;
+        btn.disabled = true;
+        try { await accion(); } finally { btn.disabled = false; }
+    });
+}
+unaVezPorClic("p-guardar", crearPlan);
+unaVezPorClic("s-guardar", crearSuscripcion);
 ["s-buscar", "s-grupo", "s-sin-plan"].forEach((id) => {
     document.getElementById(id).addEventListener(id === "s-buscar" ? "input" : "change", pintarListaAlumnos);
 });
@@ -1794,7 +1814,7 @@ document.getElementById("s-personalizado").addEventListener("change", (e) => {
 document.getElementById("s-primero").addEventListener("change", (e) => {
     document.getElementById("s-pagado-cell").classList.toggle("hidden", e.target.value !== "pagado");
 });
-document.getElementById("rp-guardar").addEventListener("click", programarRecordatorio);
+unaVezPorClic("rp-guardar", programarRecordatorio);
 llenarMeses("f-mes");
 document.getElementById("f-situacion").addEventListener("change", () => cargarCobros(true));
 ["f-mes", "f-vista"].forEach((id) => document.getElementById(id).addEventListener("change", () => cargarCobros(true)));
