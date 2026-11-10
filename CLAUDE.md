@@ -106,7 +106,8 @@ y hace otra cosa. Estas reglas existen por eso.
   informe se cayó por statement timeout con 7000 filas (ver «La RLS de las
   tablas de actividad arma el conjunto UNA vez»). Y en una política
   `auth.uid()` va siempre envuelto, `(select auth.uid())`: suelto se evalúa
-  por fila (`verificar-rls-auth-uid.js` lo revisa en cada migración nueva).
+  por fila (`verificar-rls-auth-uid.js` lo revisa en cada migración nueva, y
+  `verificar-rls-conjunto.js` que una tabla que crece no pregunte por fila).
 - **La verificación en dos pasos la exige la base**: PostgREST corre
   `public.antes_de_cada_pedido()` antes de cada pedido, y cada tabla de
   Realtime lleva la política restrictiva `verificacion_en_dos_pasos` (una

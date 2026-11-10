@@ -941,6 +941,23 @@ cero diferencias. Leer `profiles` pasó de ~200 ms a menos de 10 ms, y con eso
 `informes_inactivos()` bajó a 27 ms y `mis_clases()` a 14 ms. Quedan con
 función por fila solo tablas chicas que no crecen con cada alumno.
 
+**Cobros se había quedado afuera** hasta el 10/11/2026: `cobros`, `recibos`,
+`pagos`, `avisos_cobro`, `suscripciones`, `cobros_contacto`,
+`datos_facturacion` y `cobros_recordatorios_programados` preguntaban
+`bajo_mi_coordinacion(student_id)` fila por fila, y las cinco primeras crecen
+cada mes con cada alumno. La migración `cobros_rls_conjunto_una_vez` pasó sus
+22 políticas a `student_id in (select interno.bajo_mi_coordinacion_conjunto())`
+y `(select coordinador_puede('cobros'))` (y de `public` a `authenticated`: anon
+no tiene permisos en esas tablas). Comprobado igual que `profiles`: la función
+y el conjunto, pareja por pareja (81 510, más sin sesión), cero diferencias; la
+vista de cada una de las 286 cuentas en las ocho tablas, con la RLS de verdad,
+dio la misma huella antes y después; y 125 inserciones de prueba (las cuentas
+que coordinan y dos alumnos, sobre 25 personas) dieron lo mismo que la regla
+vieja. Leer las ocho tablas con todas las cuentas pasó de ~20 s a ~2 s
+(`cobros`, de 5,3 s a 0,35 s). **Para que no vuelva:**
+`verificar-rls-conjunto.js` falla si una política nueva sobre una tabla que
+crece llama a una función de permiso con una columna adentro.
+
 **«Tablas chicas» no quería decir «baratas»** (30 de setiembre). Con una
 cuenta de coordinación que también supervisa, `panel_profesor()` seguía en
 ~530 ms. Medido parte por parte con `EXPLAIN ANALYZE`, no eran
