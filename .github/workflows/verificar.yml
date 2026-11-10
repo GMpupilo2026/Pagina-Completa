@@ -19,9 +19,15 @@
 # «self-hosted» (Settings → Secrets and variables → Actions → Variables),
 # todo corre en la máquina propia del dueño, donde GitHub no cobra. Sin la
 # variable, o borrándola si esa máquina se apaga por días, vuelve a las de
-# GitHub sin tocar este archivo. Con un solo runner las cuatro tandas van una
-# tras otra (nadie las cobra, solo tardan más). Ver «El CI en una máquina
-# propia» en docs/decisiones/sitio-e-infraestructura.md.
+# GitHub sin tocar este archivo. En la máquina propia hay un solo runner: las
+# cuatro tandas irían una tras otra, cada una repitiendo npm ci, Chromium y el
+# arranque del sitio (unos 70 minutos). Ahí corre UNA sola, con los
+# verificadores de a cuatro a la vez. Ver «El CI en una máquina propia» en
+# docs/decisiones/sitio-e-infraestructura.md.
+#
+# Un PR que solo cambia docs/ o un .md de la raíz (CLAUDE.md, RESTAURAR.md…)
+# no corre las tandas con navegador: ninguna lee esos archivos, y la rápida sí
+# corre (verificar-alumno-sin-correo.js lee CLAUDE.md).
 name: Verificar
 
 on:
@@ -45,8 +51,24 @@ jobs:
     # 40 y no 20: con las máquinas de 2 núcleos de un repositorio privado tarda
     # más del doble que con las de 4 (unos 12 minutos), y a los 20 se cortaba.
     timeout-minutes: 40
+    outputs:
+      sitio: ${{ steps.sitio.outputs.toca }}
     steps:
       - uses: actions/checkout@v7
+      # Lo que cambió el PR contra main: el checkout de un PR es el commit de
+      # la unión, y comparar su árbol con el de main no necesita historia.
+      - name: ¿El cambio toca el sitio?
+        id: sitio
+        env:
+          EVENTO: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENTO" != pull_request ]; then echo "toca=si" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git fetch -q --depth=1 origin "$BASE_SHA"
+          git diff --name-only FETCH_HEAD HEAD
+          if git diff --name-only FETCH_HEAD HEAD | grep -qvE '^(docs/|[^/]+\.md$)'; then toca=si; else toca=no; fi
+          echo "toca=$toca" >> "$GITHUB_OUTPUT"
+          [ "$toca" = si ] || echo "::notice::Solo cambia docs/ o un .md de la raíz: no corren las tandas con navegador."
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -66,14 +88,16 @@ jobs:
       - run: node herramientas/verificar-todo.js --sin-navegador --paralelo=2
 
   navegador:
-    name: Con navegador (${{ matrix.parte }}/4)
+    name: Con navegador (${{ matrix.parte }})
     needs: rapido
+    if: needs.rapido.outputs.sitio == 'si'
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 45
+    # En la máquina propia la tanda es una sola y lleva todo: más margen.
+    timeout-minutes: ${{ vars.RUNNER == 'self-hosted' && 75 || 45 }}
     strategy:
       fail-fast: false
       matrix:
-        parte: [1, 2, 3, 4]
+        parte: ${{ fromJSON(vars.RUNNER == 'self-hosted' && '["1/1"]' || '["1/4","2/4","3/4","4/4"]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -100,4 +124,4 @@ jobs:
         if: runner.environment == 'self-hosted'
         run: |
           node -e 'require("net").connect(8777,"127.0.0.1").on("connect",()=>{console.error("::error::Hay algo escuchando en el 8777 de esta máquina: apágalo, o los verificadores probarían ese sitio y no este PR.");process.exit(1)}).on("error",()=>process.exit(0))'
-      - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }}/4
+      - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }} --paralelo=${{ vars.RUNNER == 'self-hosted' && 4 || 1 }}

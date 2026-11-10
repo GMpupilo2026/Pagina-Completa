@@ -136,8 +136,12 @@ const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777"
 // y la prueba pasaba del tope de 10 minutos. Lo que se prueba es lo mismo (que
 // ninguna partida se pierda ni se trabe con la red mala); con PARTIDAS=50 se fuerzan
 // las 50 en cualquier máquina.
+// Y también la mitad con poca memoria: la máquina propia del CI (10 núcleos, pero
+// 10 GB para Ubuntu) con 100 pestañas tardaba 6,1 s en mostrar alguna jugada y
+// recortaba 47 relojes que habían llegado a tiempo; con 15 GB pasaba holgada.
 const NUCLEOS = require("os").availableParallelism ? require("os").availableParallelism() : require("os").cpus().length;
-const POCOS_NUCLEOS = NUCLEOS < 4;
+const MEMORIA_GB = require("os").totalmem() / 2 ** 30;
+const POCOS_NUCLEOS = NUCLEOS < 4 || MEMORIA_GB < 12;
 const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || (POCOS_NUCLEOS ? "25" : "50"), 10));
 // La ronda que mide «al instante»: pocas, para que la computadora que corre la
 // prueba no sea el cuello de botella (ver la cabecera).
