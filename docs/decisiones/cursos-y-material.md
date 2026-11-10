@@ -717,6 +717,12 @@ los nombres, los correos y el progreso de **menores de edad**, y eso no se
 arregla después: el video ya salió. Por eso el generador **no sabe abrir el
 sitio**; solo sabe leer esa carpeta.
 
+**`img/guia/` se publica a propósito** (3,6 MB, 28 JPG) aunque ninguna página
+la pida con un `<img>`: la usa la pantalla «Archivos» de administración (por
+`data/archivos.json`), además de los generadores. No va a `.assetsignore`:
+confirmado con el dueño el 10/11/2026, en una revisión que la había marcado
+como peso que nadie pide.
+
 - **La salida no se commitea.** `promo/` está en `.gitignore` **y** en
   `.assetsignore`: el worker sirve todo el directorio, así que un mp4 suelto
   quedaría publicado en el sitio sin que nadie lo pidiera. Es el mismo par de
