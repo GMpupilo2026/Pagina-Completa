@@ -296,6 +296,62 @@ cuestionario-tarea tareas`.** Está probado que falla de verdad: sin el
 `&item=` en el enlace, sin escribir cuál era la correcta, con «— todo —» en
 la lista de cuestionarios o mandando 0 en vez de `null` por una en blanco.
 
+## Las direcciones del entrenamiento: en qué se reparte el trabajo
+
+La idea es de la escuela cubana. Allí la preparación del ajedrecista se baja a
+«direcciones» concretas (aperturas, medio juego, finales, solución de
+ejercicios, análisis de partidas, práctica de partidas…) para repartir el
+tiempo, dosificarlo y controlar el plan. La fuente es Dorges Heredia
+Guilarte, «Los componentes y direcciones del entrenamiento ajedrecístico»,
+EFDeportes n.º 144 (2010), que parte de los planes de las EIDE y ESPA.
+
+`js/direcciones-entrenamiento.js` dice a qué dirección va cada cosa, y se ve
+en dos lugares:
+
+- **Informes, debajo de «En qué usó su tiempo»:** el mismo tiempo de
+  `tiempo_por_seccion()`, sumado por dirección y con su porcentaje escrito (no
+  solo la barra). Lo pinta `js/tiempo-secciones.js` cuando la página carga el
+  módulo; hoy solo Informes lo carga (Logros usa la misma tabla y no lo
+  muestra).
+- **El armado de una tarea:** cada renglón dice su dirección y, con más de
+  un renglón, se escribe el reparto de la tarea entera («Solución de
+  ejercicios: 2 · Finales: 1»).
+
+Las decisiones:
+
+- **La dirección no se guarda: se deduce.** De un renglón, por su material y
+  su recorte; del tiempo, por la sección. Una columna aparte sería una
+  segunda copia que el profesor tendría que mantener y que podría
+  contradecir al material. No hubo migración.
+- **El reparto es por contenido, no por herramienta.** Un ejercicio de
+  «Final de torres» en Ejercicios por tema es Finales, no Solución de
+  ejercicios; «Tus propios errores» es Análisis de partidas, porque sale de
+  sus partidas. Los recortes que cambian la dirección están en
+  `POR_RECORTE`; las fichas de Estudio van por su grupo de `metas.json`.
+- **Lo que mezcla no se reparte a la fuerza.** La clase en vivo, los cursos y
+  el tiempo en Estudio (la sección no dice qué ficha) quedan aparte y se
+  nombran debajo del reparto, con su tiempo. Si no se nombraran, un alumno
+  con mucha clase parecería entrenar poco. Las pruebas (diagnóstico, prueba
+  de estilo, exámenes, cuestionarios) tampoco entran: miden, no entrenan.
+- **Dos cambios a la lista cubana.** «Visión del tablero» va aparte (allí es
+  una habilidad práctica), porque la plataforma tiene ocho herramientas para
+  eso y metidas en Ejercicios esconderían ese tiempo. «Historia» y «Cultura
+  integral» no están: ningún material de la plataforma es de eso; llegan por
+  la clase o por un curso.
+- **Con la granularidad que hay.** `tiempo_por_seccion()` da el tiempo por
+  sección, no por tema: todo el tiempo de Ejercicios por tema cuenta como
+  Solución de ejercicios aunque haya sido de finales. El renglón de una tarea
+  sí distingue el recorte. Afinarlo pediría que la función devolviera el
+  tema, y eso es otro cambio.
+- **El correo a la casa no lo trae todavía.** `informe-html.ts` tiene su
+  propia tabla de secciones; sumarle el reparto es un paso aparte.
+
+`verificar-direcciones.js` (sin navegador) exige que toda herramienta de
+`MaterialPlataforma` y toda sección de `TiempoSecciones` estén en las tablas,
+aunque sea con `null`, y que cada recorte nombrado exista en `metas.json`: una
+herramienta nueva sin dirección hace fallar el CI. Lo que se ve en pantalla lo
+miran `verificar-informes.js` y `verificar-tareas.js`.
+
 ## El plan de clase: preparar la clase antes de darla
 
 `sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,

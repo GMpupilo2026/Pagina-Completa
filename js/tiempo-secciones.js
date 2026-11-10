@@ -143,7 +143,7 @@ window.TiempoSecciones = (function () {
         }
         const max = Math.max(...filas.map((f) => Number(f.minutos) || 0), 1);
         const tabla = document.createElement("table");
-        tabla.className = "w-full text-sm";
+        tabla.className = "tiempo-tabla w-full text-sm";
         const cap = document.createElement("caption");
         cap.className = "sr-only";
         cap.textContent = "Tiempo y ejercicios por sección";
@@ -196,6 +196,14 @@ window.TiempoSecciones = (function () {
         });
         tabla.append(cap, thead, tbody);
         cuerpo.appendChild(tabla);
+
+        /* El mismo tiempo, por dirección del entrenamiento (aperturas, finales,
+           ejercicios…). Solo en las páginas que cargan
+           js/direcciones-entrenamiento.js: hoy, Informes. */
+        if (window.DireccionesEntrenamiento) {
+            const bloque = DireccionesEntrenamiento.bloqueReparto(filas, (s) => describir(s, titulos), duracion, propio);
+            if (bloque) cuerpo.appendChild(bloque);
+        }
 
         const nota = document.createElement("p");
         nota.className = "text-xs text-brand-450 dark:text-brand-350 mt-3";
