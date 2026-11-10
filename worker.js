@@ -21,8 +21,11 @@
 // Tres reglas, y el porqué de cada una:
 //   · Si Supabase NO CONTESTA (caído, lento, un 5xx), se deja pasar. Es la
 //     regla de js/acceso-vigente.js: una red caída no puede dejar sin su
-//     material a todos los que sí pagaron. Solo pasa un token que dice ser
-//     de este proyecto y no venció: una cookie cualquiera no se cuela.
+//     material a todos los que sí pagaron. Solo pasa un token de este
+//     proyecto, sin vencer y CON SU FIRMA COMPROBADA acá mismo con la clave
+//     pública de Supabase (CLAVES_PUBLICAS, abajo): una cookie inventada no se
+//     cuela. Hasta el 10/11/2026 solo se miraba lo que el token decía de sí
+//     mismo, y con Supabase caído un JSON escrito a mano abría todo.
 //   · Sin cookie, o con un token que Supabase rechaza: 401. Si era una página
 //     (abrir un PDF, un enlace), se explica y se ofrece iniciar sesión.
 //   · Con sesión pero sin acceso vigente: 403, y se dice por qué.
@@ -229,6 +232,53 @@ function leerCookie(request, nombre) {
   return "";
 }
 
+// ---- La firma, comprobada acá, para cuando Supabase no contesta ----
+//
+// Supabase firma los tokens con ES256 (clave asimétrica): la clave PÚBLICA
+// la publica en /auth/v1/.well-known/jwks.json y alcanza para comprobar una
+// firma sin preguntarle nada. Va escrita acá porque el caso que importa es
+// justamente Supabase caído, y ahí tampoco contestaría el jwks.json.
+//
+// SI SUPABASE ROTA LA CLAVE, esto se actualiza (copiar las claves de ese
+// jwks.json, por su "kid"). Mientras no se haga, con Supabase ARRIBA no cambia
+// nada (decide Supabase); solo con Supabase caído un token firmado con la
+// clave nueva no pasaría, y queda anotado en el registro del worker.
+const CLAVES_PUBLICAS = {
+  "31c4acf3-cac0-42b3-89ac-2f0701023673": { kty: "EC", crv: "P-256", x: "XoxM5SLmcDoMneyCtksROdfDre9sTGxvI9bJSlm5d6o", y: "tZ3XGEd_o2RLjb3BuTH4rURK1v2uJjL9eLHzbWal6Pg" },
+};
+const clavesImportadas = new Map();
+
+function bytesDe(b64url) {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+
+// ¿La firma del token es de verdad de Supabase? Cualquier cosa rara: no.
+async function firmaValida(token) {
+  try {
+    const [cab, cuerpo, firma] = token.split(".");
+    const h = JSON.parse(new TextDecoder().decode(bytesDe(cab)));
+    if (h.alg !== "ES256") return false;
+    const jwk = CLAVES_PUBLICAS[h.kid];
+    if (!jwk) {
+      console.error("cursos: token con una clave que el worker no conoce (kid " + h.kid + "): ¿rotó la clave de Supabase?");
+      return false;
+    }
+    let clave = clavesImportadas.get(h.kid);
+    if (!clave) {
+      clave = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+      clavesImportadas.set(h.kid, clave);
+    }
+    // La firma de un JWT ES256 son r y s pegados (64 bytes): el formato que
+    // espera WebCrypto, sin convertir.
+    return await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, clave,
+      bytesDe(firma), new TextEncoder().encode(cab + "." + cuerpo));
+  } catch {
+    return false;
+  }
+}
+
 // Lo que dice el token de sí mismo. NO prueba nada (cualquiera escribe un
 // JSON): solo sirve para descartar sin ir a Supabase lo que ni siquiera
 // parece un token de este proyecto, o ya venció.
@@ -255,6 +305,9 @@ async function preguntar(token, ahora = Date.now(), que = null) {
   // más — si el formato de "iss" cambiara algún día, este chequeo no puede
   // dejar afuera a todo el mundo, que es lo que hizo el candado anterior.
   const esDeEsteProyecto = c.iss === SUPABASE_URL + "/auth/v1";
+  // Lo único que se mira cuando Supabase no contesta: que sea de este
+  // proyecto Y que la firma sea de verdad.
+  const siNoContesta = async () => (esDeEsteProyecto && await firmaValida(token)) ? "pasa" : "sin_sesion";
 
   // material/ sin carpeta de producto no es nada que se venda: no se sirve.
   if (que && !que.producto && !que.herramienta) return "sin_acceso";
@@ -277,11 +330,11 @@ async function preguntar(token, ahora = Date.now(), que = null) {
     });
   } catch (e) {
     console.error("cursos: Supabase no contestó", String(e));
-    return esDeEsteProyecto ? "pasa" : "sin_sesion";
+    return siNoContesta();
   }
   if (res.status >= 500) {
     console.error("cursos: Supabase respondió " + res.status);
-    return esDeEsteProyecto ? "pasa" : "sin_sesion";
+    return siNoContesta();
   }
   // PostgREST contesta 401 a un token vencido, mal firmado o de otro proyecto.
   if (!res.ok) return "sin_sesion";
@@ -290,7 +343,7 @@ async function preguntar(token, ahora = Date.now(), que = null) {
   if (vigente === false) return "sin_acceso";
   // Un 200 que no es ni true ni false no debería pasar nunca; si pasa, es
   // Supabase contestando algo raro, y vale la misma regla que si no contesta.
-  if (vigente !== true) return esDeEsteProyecto ? "pasa" : "sin_sesion";
+  if (vigente !== true) return siNoContesta();
 
   if (yaVisto.size > 2000) yaVisto.clear();
   yaVisto.set(clave, Math.min(ahora + VALE_MS, c.exp * 1000));

@@ -58,10 +58,23 @@ Cuando la variable se perdió, dejó afuera a **todos**, incluido el profesor.
   propias cabeceras de seguridad.
 - **Si Supabase no contesta (red, 5xx), se deja pasar**, la misma regla que
   `acceso-vigente.js`: una caída no puede dejar sin su material a todos los que
-  pagaron. En ese caso solo pasa un token que dice ser de este proyecto y no
-  venció; una cookie cualquiera no se cuela. **Cuando Supabase contesta, decide
+  pagaron. En ese caso solo pasa un token de este proyecto, sin vencer y **con
+  su firma comprobada en el worker** (`firmaValida()`, con la clave pública ES256
+  de Supabase escrita en `CLAVES_PUBLICAS`). **Cuando Supabase contesta, decide
   solo Supabase**: si el formato del token cambiara algún día, el worker no
   puede repetir el error del candado anterior y dejar afuera a todo el mundo.
+- **Hasta el 10/11/2026 la firma no se miraba**: con Supabase caído o lento
+  (más de 4 s), un JSON escrito a mano con el `iss` del proyecto, `role`
+  y `exp` abría `cursos/protegido/`, `material/` y el código con licencia. La
+  clave pública va escrita en el worker y no se pide al `jwks.json` porque el
+  caso que importa es Supabase caído, y ahí tampoco contestaría. Comprobado en
+  los registros de Supabase: los 44 476 pedidos con sesión de un día venían
+  firmados con ES256 y esa clave. **Si Supabase rota la clave**, se copia la
+  nueva de `/auth/v1/.well-known/jwks.json` a `CLAVES_PUBLICAS`; mientras no,
+  con Supabase arriba no cambia nada, y caído un token con la clave nueva no
+  pasa (queda anotado en el registro del worker). `verificar-worker.js` firma
+  tokens de verdad con una clave de prueba y comprueba que uno inventado, uno
+  alterado o uno con otra clave no pasen.
 - **`run_worker_first` en `wrangler.jsonc` es la mitad del candado.** Con
   Workers Assets, un archivo que existe se sirve directo, **sin pasar por el
   worker**: sin esa línea el código está perfecto y el candado no existe, sin

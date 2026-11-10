@@ -1,5 +1,11 @@
 # cdn.jsdelivr.net está en script-src SOLO por la transcripción de reportes.html
-# (importa @huggingface/transformers@3.3.3 desde ahí). La librería de Supabase ya
+# (importa @huggingface/transformers@3.3.3 desde ahí), y SOLO con esa ruta: la
+# dirección exacta (el worker la importa sin barra final) y su carpeta (los
+# .wasm y .mjs de onnxruntime los pide de .../transformers@3.3.3/dist/). Con el
+# dominio entero, cualquier paquete de npm servido por jsDelivr pasaba la CSP:
+# es la forma conocida de saltársela si alguien logra meter HTML en una página.
+# Si se cambia la versión en js/reporte-transcribir.js, se cambia acá también
+# (verificar-csp.js lo compara). La librería de Supabase ya
 # NO sale de ahí: vive en js/vendor/supabase.js, dentro del repositorio — pedida
 # a un CDN por rango y sin integrity, cada visita ejecutaba lo que hubiera
 # publicado ahí en ese momento, con la sesión de quien entrara.
@@ -43,7 +49,7 @@
 # adelanta» en docs/decisiones/sitio-e-infraestructura.md).
 /*
   Speculation-Rules: "/anticipar.json"
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-5loDewmE4LA64seJEWe9o2H3f07zYJ5a5nghkR1MWzI=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; media-src 'self' blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://1.pool.livechesscloud.com https://api.chess.com https://cloudflareinsights.com; frame-src 'self' https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv https://forms.gle https://docs.google.com https://chess-results.com https://*.chess-results.com; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-5loDewmE4LA64seJEWe9o2H3f07zYJ5a5nghkR1MWzI=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; media-src 'self' blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://1.pool.livechesscloud.com https://api.chess.com https://cloudflareinsights.com; frame-src 'self' https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv https://forms.gle https://docs.google.com https://chess-results.com https://*.chess-results.com; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

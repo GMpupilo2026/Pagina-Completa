@@ -2022,9 +2022,12 @@ cuenta que la activó no lee ni escribe nada**, llame como llame.
   cliente con `Authorization: Bearer <jwt>`) pasan por PostgREST y quedan
   cubiertas solas. **Las que lo miran con la clave de servicio no**:
   `prueba-gratis` (solo administración) comprueba a mano el `aal` del token
-  (`sesionAMedias`). `mejorar-informe` también usa la clave de servicio, pero
-  lo peor que hace con una contraseña robada es gastar el tope de la IA: queda
-  pendiente.
+  (`sesionAMedias`). `mejorar-informe` también usa la clave de servicio y se
+  había quedado sin él (con una contraseña robada se podía gastar el tope de la
+  IA de la academia); lo lleva desde el 10/11/2026, versión 5.
+  `verificar-funciones-dos-pasos.js` falla si una función valida la sesión con
+  `auth.getUser` y la clave de servicio sin llamar a `sesionAMedias` (las que
+  arman un cliente con el token de quien llama ya pasan por PostgREST).
 - `interno.verificacion_al_dia()` es la única pregunta: sí si no hay sesión, si
   el token dice `aal2` o si la cuenta no tiene ningún factor verificado.
   Comprobado impersonando roles en SQL: sin factor pasa; con factor y `aal1`

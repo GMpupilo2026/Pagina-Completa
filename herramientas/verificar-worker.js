@@ -25,8 +25,20 @@ function igual(nombre, hallado, esperado) {
 /* worker.js es un módulo ES y este archivo no lo es, así que se carga por una
    dirección `data:`. Es el camino más corto para importarlo tal cual está, sin
    tener que cambiar el worker ni agregarle un package.json al repositorio. */
+/* Para probar la firma (lo único que cuenta cuando Supabase no contesta), la
+   clave pública de Supabase se cambia por una de prueba, cuya privada tiene
+   este archivo: así se firman tokens de verdad y se ve que uno inventado no
+   pasa. El resto del worker queda tal cual. */
+const { webcrypto } = require("crypto");
+let clavePrueba = null;
 async function cargarWorker() {
-  const fuente = fs.readFileSync(path.join(__dirname, "..", "worker.js"), "utf8");
+  clavePrueba = await webcrypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const pub = await webcrypto.subtle.exportKey("jwk", clavePrueba.publicKey);
+  let fuente = fs.readFileSync(path.join(__dirname, "..", "worker.js"), "utf8");
+  const antes = fuente;
+  fuente = fuente.replace(/const CLAVES_PUBLICAS = \{[\s\S]*?\n\};/,
+    "const CLAVES_PUBLICAS = { prueba: " + JSON.stringify({ kty: pub.kty, crv: pub.crv, x: pub.x, y: pub.y }) + " };");
+  if (fuente === antes) throw new Error("no encontré CLAVES_PUBLICAS en worker.js");
   const mod = await import("data:text/javascript;base64," + Buffer.from(fuente).toString("base64"));
   return mod.default;
 }
@@ -124,6 +136,16 @@ async function cargarWorker() {
   const token = (extra = {}) => b64({ alg: "HS256", typ: "JWT" }) + "." + b64({
     iss: URL_SB + "/auth/v1", role: "authenticated", sub: "u-" + Math.random(),
     exp: Math.floor(Date.now() / 1000) + 3600, ...extra }) + ".firma";
+
+  // Un token firmado de verdad (ES256, con la clave de prueba), como los de Supabase.
+  const tokenFirmado = async (extra = {}, kid = "prueba") => {
+    const cab = b64({ alg: "ES256", typ: "JWT", kid });
+    const cuerpo = b64({ iss: URL_SB + "/auth/v1", role: "authenticated", sub: "u-" + Math.random(),
+      exp: Math.floor(Date.now() / 1000) + 3600, ...extra });
+    const firma = await webcrypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, clavePrueba.privateKey,
+      new TextEncoder().encode(cab + "." + cuerpo));
+    return cab + "." + cuerpo + "." + Buffer.from(firma).toString("base64url");
+  };
 
   let preguntas = [];
   let contesta = () => new Response("true", { status: 200 });
@@ -229,13 +251,27 @@ async function cargarWorker() {
     /* Si Supabase no contesta, se deja pasar: una red caída no puede dejar sin
        su material a todos los que pagaron (la regla de acceso-vigente.js). */
     contesta = () => { throw new Error("red caída"); };
-    const r = await abrir(PDF, { cookie: token() });
-    igual("Supabase sin red: pasa", r.estado, 200);
+    const r = await abrir(PDF, { cookie: await tokenFirmado() });
+    igual("Supabase sin red: pasa un token firmado de verdad", r.estado, 200);
     contesta = () => new Response("", { status: 503 });
-    const r2 = await abrir(PDF, { cookie: token() });
-    igual("Supabase con un 5xx: pasa", r2.estado, 200);
-    const r3 = await abrir(PDF, { cookie: token({ iss: "https://otro.supabase.co/auth/v1" }) });
+    const r2 = await abrir(PDF, { cookie: await tokenFirmado() });
+    igual("Supabase con un 5xx: pasa un token firmado de verdad", r2.estado, 200);
+    const r3 = await abrir(PDF, { cookie: await tokenFirmado({ iss: "https://otro.supabase.co/auth/v1" }) });
     igual("pero ni así pasa un token que no es de este proyecto", r3.estado, 401);
+    // Antes pasaba: con Supabase caído solo se miraba lo que el token decía de
+    // sí mismo, y un JSON escrito a mano abría el material y el código con licencia.
+    const r4 = await abrir(PDF, { cookie: token() });
+    igual("ni un token inventado (bien formado, firma falsa)", r4.estado, 401);
+    const bueno = await tokenFirmado();
+    const [c5, , f5] = bueno.split(".");
+    const otroCuerpo = b64({ iss: URL_SB + "/auth/v1", role: "authenticated", sub: "otra-persona", exp: Math.floor(Date.now() / 1000) + 3600 });
+    const r5 = await abrir(PDF, { cookie: c5 + "." + otroCuerpo + "." + f5 });
+    igual("ni uno de verdad con el contenido cambiado", r5.estado, 401);
+    const r6 = await abrir(PDF, { cookie: await tokenFirmado({}, "otra-clave") });
+    igual("ni uno firmado con una clave que el worker no conoce", r6.estado, 401);
+    contesta = () => { throw new Error("red caída"); };
+    const r7 = await abrir(PDF, { cookie: token() });
+    igual("y con la red caída, el inventado tampoco", r7.estado, 401);
   }
   {
     // Los cursos escondidos: la lista del worker es la de js/cursos-ocultos.js.
