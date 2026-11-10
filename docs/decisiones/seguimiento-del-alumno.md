@@ -352,6 +352,65 @@ aunque sea con `null`, y que cada recorte nombrado exista en `metas.json`: una
 herramienta nueva sin dirección hace fallar el CI. Lo que se ve en pantalla lo
 miran `verificar-informes.js` y `verificar-tareas.js`.
 
+## El plan de temporada: de hoy a la competencia, por etapas
+
+`temporada.html` es la planificación por etapas de la escuela cubana
+(macrociclo y mesociclos): de una fecha a una competencia, el trabajo pasa por
+etapas, y cada una reparte el tiempo entre las direcciones del entrenamiento
+(ver la sección de arriba) de otra manera. Quien da clase la arma; el alumno
+ve en qué etapa va y cómo va. Se llega desde Tareas.
+
+- **Una fila por alumno** en `temporadas` (migración `20261110150638`), como
+  `tareas` y `notas_alumno`: la RLS es la de siempre y no hace falta una
+  tabla de alumnos por temporada. Los alumnos que comparten el plan (un grupo
+  que va al mismo torneo) llevan el mismo `lote`, y la página guarda el lote
+  entero de una vez: cambia los datos de todos, crea las filas de los que se
+  suman y borra (con confirmación) las de los que se sacan.
+- **Las etapas van en `etapas` (jsonb)**: nombre, desde, hasta, énfasis
+  (`{ dirección: porcentaje }`) y nota. La base exige solo que sea una lista
+  de hasta 12; la forma la revisa `Temporada.problemas()` antes de guardar
+  (fechas seguidas sin encimarse, cada etapa suma 100, direcciones que
+  existen, nada después de la competencia) y la página dice qué falta.
+- **«Proponer etapas»** reparte las fechas en cuatro: preparación general
+  (≈45 % de los días antes de la última semana), específica (≈35 %),
+  precompetitiva (lo que queda) y competitiva (la última semana). Con menos de
+  cuatro semanas, solo específica y competitiva; con menos de 14 días, nada.
+  **Los porcentajes de cada etapa NO salen de una fuente**: son un punto de
+  partida, y la página lo dice. Lo que sí sale de la fuente es la forma: de lo
+  general a lo específico.
+- **«Cómo va» se calcula, no se guarda**: el tiempo del alumno en la etapa en
+  curso (`tiempo_por_seccion()` del primer día de la etapa a hoy, con la hora
+  de Costa Rica en los límites: sin ella el día se cortaría a las 6 de la
+  tarde), repartido por dirección y comparado con lo planeado. El veredicto
+  va escrito («por debajo», «en línea», «por encima», con 10 puntos de
+  margen), no solo en color. **Con menos de una hora repartida no se juzga**:
+  tres ejercicios no son un reparto, y decir «en línea» de quien no hizo nada
+  sería mentirle. Lo que hizo sin estar en el plan también sale.
+- La clase en vivo, los cursos y Estudio no entran en el reparto (mezclan
+  direcciones), y se dice debajo de la tabla.
+- El alumno ve las temporadas que vencen desde hace un mes en adelante; las
+  más viejas ya no guían nada.
+
+**Permisos** (las mismas reglas que `tareas`): leen el profesor que la
+escribió, el alumno, los demás profesores del alumno (el conjunto
+`interno.alumnos_de`, armado una vez) y quien administra. Crea solo un
+profesor, a su nombre y para un alumno suyo (o quien administra). Cambia y
+borra solo quien la escribió, y el `with check` vuelve a pedir que el alumno
+sea suyo: si no, se podría pasar una temporada a un alumno ajeno cambiando
+`alumno_id`. **Comprobado impersonando roles en SQL, 14 casos** (10/11/2026):
+el profe crea para su alumno y no para uno ajeno, no firma por otro, no pasa
+la temporada a un ajeno, la base rechaza etapas que no son lista; el alumno
+la ve pero no la edita ni crea; otro profe y un alumno ajeno no la ven; anon
+no tiene permiso; el profe la borra. No reparte permisos ni dinero: no lleva
+auditoría.
+
+`verificar-temporada.js`: la cuenta sin navegador (300 temporadas al azar sin
+huecos ni días encimados, la revisión, la situación y la comparación) y la
+pantalla con un doble que filtra en el resolver: la lista por lote, el tiempo
+pedido con la hora de Costa Rica, el veredicto escrito, que no se guarde lo
+que no suma 100, que un nombre no se lea como HTML y que el celular no se
+desborde. Lo que falta: atar los planes de clase a cada etapa.
+
 ## El plan de clase: preparar la clase antes de darla
 
 `sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,
