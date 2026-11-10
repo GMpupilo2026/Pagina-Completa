@@ -1920,7 +1920,11 @@ con el rol `public` NO se tocaron** (`bajo_mi_coordinacion`,
 evalúa también para `anon`, y sin el execute la consulta de una página pública
 tronaría con un error de permisos en vez de dar «0 filas». Esas se arreglan
 moviéndolas fuera de `public` o reescribiendo la política `to authenticated`,
-que es un cambio aparte. (`equipo_docente()` sí se cerró, en
+que es un cambio aparte. (`es_del_equipo_docente` ya se cerró así, el
+10/11/2026: `plan_compartidos_insert` pasó a `to authenticated` —anon no tiene
+insert en esa tabla, no cambió nada para nadie— y se le revocó a `public, anon`.
+Quedan las otras cuatro, que contestan sobre quien llama: sin sesión dan falso
+y no dicen nada de nadie.) (`equipo_docente()` sí se cerró, en
 `equipo_docente_solo_con_sesion`: ninguna política la usa —la de
 `plan_compartidos` usa `es_del_equipo_docente()`, que se parece en el nombre—,
 solo `js/plan-clase.js`, en páginas con sesión.) Las que quedan a propósito para
@@ -2102,6 +2106,13 @@ Una bitácora que alguien puede escribir o borrar no prueba nada.
 - **Se guarda dos años.** `interno.purgar_auditoria()` corre el día 1 de cada
   mes (pg_cron `auditoria-purga`) y es lo único que puede borrar: levanta la
   marca local `ajedrez.purgando_auditoria`, que solo vive en su transacción.
+- **`compras_tienda` y `course_unlocks` se habían quedado afuera** hasta el
+  10/11/2026 (`revision_auditoria_indices_y_equipo_docente`): abren material
+  de pago y cursos antes de tiempo, y nadie podía contestar «¿quién le abrió
+  esto?». `verificar-auditoria.js` solo revisa las tablas de su lista, así que
+  una tabla que reparte acceso y no está en `VIGILADAS` pasa sin aviso: al
+  crear una, la pregunta es si abre algo, no si se llama «acceso». En
+  `compras_tienda` la persona queda en la fila (`profile_id`), no en `sobre`.
 - Comprobado impersonando roles en SQL: el cambio de `teacher_id` se anota
   con quién y sobre quién; uno que no cambió nada, no; el profesor lee 0 filas
   y administración todas; insertar como `authenticated` o `service_role` se

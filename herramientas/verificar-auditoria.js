@@ -64,6 +64,9 @@ const VIGILADAS = [
   "metropolitano_hospedaje",
   "metropolitano_menu",
   "metropolitano_menu_cocinas",
+  // Lo que se vende suelto (quién compró qué material de pago) y el curso que
+  // el profesor le abre a un alumno antes de tiempo: los dos abren contenido.
+  "compras_tienda", "course_unlocks",
 ];
 
 let fallos = 0;

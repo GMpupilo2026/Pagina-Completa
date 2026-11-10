@@ -1196,6 +1196,8 @@ async function programarRecordatorio() {
     const { error } = await sb.from("cobros_recordatorios_programados").insert({
         student_id: studentId, programado_para: momento.toISOString(), correos, creado_por: session.user.id,
     });
+    // El índice único de la base: ese alumno ya tiene uno pendiente a esa hora.
+    if (error && error.code === "23505") return avisar("Ya hay un recordatorio pendiente para ese alumno a esa misma hora.", true);
     if (error) return avisar("No se pudo programar: " + error.message, true);
     avisar("Recordatorio programado para " + fechaHora(momento.toISOString()) + ".");
     document.getElementById("rp-correos").value = "";

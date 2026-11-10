@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261108031912
+# al-dia-con: 20261110135153
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2955,7 +2955,7 @@ funcion  errores_temas_del_grupo(p_alumnos uuid[])  invoker  anon=false  auth=tr
 funcion  es_companero(p_otro uuid)  definer  anon=false  auth=true
 funcion  es_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  es_correo_interno(p_email text)  invoker  anon=true  auth=true
-funcion  es_del_equipo_docente(p_persona uuid)  definer  anon=true  auth=true
+funcion  es_del_equipo_docente(p_persona uuid)  definer  anon=false  auth=true
 funcion  es_mi_profesor(p_profe uuid)  definer  anon=false  auth=true
 funcion  estilo_salud(p_primero jsonb)  invoker  anon=false  auth=true
 funcion  estoy_inscrito_en(p_torneo uuid)  definer  anon=true  auth=true
@@ -3997,8 +3997,10 @@ trigger  class_sessions  otorgar_puntos_de_clase
 trigger  cobros  auditar
 trigger  cobros  cobros_corrige_supervision
 trigger  cobros_contacto  cobros_contacto_protegido
+trigger  compras_tienda  auditar
 trigger  coordinador_funciones_quitadas  auditar
 trigger  coordinador_profesores  auditar
+trigger  course_unlocks  auditar
 trigger  cuaderno  cuaderno_al_cambiar
 trigger  cuaderno  cuaderno_tope
 trigger  cuentas_temporales  auditar
@@ -4213,16 +4215,20 @@ indice  centroamericano_inicios_torneo  centroamericano_inicios_torneo_pkey
 indice  centroamericano_lecturas  centroamericano_lecturas_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_livechess  centroamericano_livechess_pkey
+indice  centroamericano_planillas  centroamericano_planillas_asignacion_id_fk
 indice  centroamericano_planillas  centroamericano_planillas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_tnr_ronda_mesa_lado_key
+indice  centroamericano_presencia  centroamericano_presencia_asignacion_id_fk
 indice  centroamericano_presencia  centroamericano_presencia_pkey
 indice  centroamericano_presencia  centroamericano_presencia_tnr_ronda_mesa_color_key
 indice  centroamericano_progreso  centroamericano_progreso_pkey
 indice  centroamericano_registro  centroamericano_registro_anula_idx
+indice  centroamericano_registro  centroamericano_registro_asignacion_id_fk
 indice  centroamericano_registro  centroamericano_registro_partida_idx
 indice  centroamericano_registro  centroamericano_registro_pkey
 indice  centroamericano_salidas  centroamericano_salidas_asignacion_idx
 indice  centroamericano_salidas  centroamericano_salidas_pkey
+indice  centroamericano_tiempos  centroamericano_tiempos_asignacion_id_fk
 indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
 indice  centroamericano_tiempos  centroamericano_tiempos_pkey
 indice  centroamericano_torneos  centroamericano_torneos_pkey
@@ -4282,6 +4288,7 @@ indice  cobros_recordatorios_programados  cobros_recordatorios_programados_cread
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pendientes_idx
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pkey
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_student_id_fk
+indice  cobros_recordatorios_programados  cobros_recordatorios_programados_una_vez
 indice  compras_tienda  compras_tienda_otorgado_por_fk
 indice  compras_tienda  compras_tienda_pkey
 indice  consultas_arbitraje  consultas_arbitraje_pendientes
@@ -4531,8 +4538,10 @@ indice  pareo_suscripciones_push  pareo_suscripciones_push_ident_idx
 indice  pareo_suscripciones_push  pareo_suscripciones_push_pkey
 indice  pareo_suscripciones_push  pareo_suscripciones_push_una
 indice  partida_latidos  partida_latidos_pkey
+indice  partida_latidos  partida_latidos_user_id_fk
 indice  partida_mediciones  partida_mediciones_actualizado_en
 indice  partida_mediciones  partida_mediciones_pkey
+indice  partida_mediciones  partida_mediciones_user_id_fk
 indice  partidas_revision  partidas_revision_pkey
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
@@ -4650,6 +4659,7 @@ indice  relevos  relevos_created_by
 indice  relevos  relevos_pkey
 indice  reloj_recortes  reloj_recortes_en
 indice  reloj_recortes  reloj_recortes_pkey
+indice  reloj_recortes  reloj_recortes_room_id_fk
 indice  repertorio  repertorio_alumno
 indice  repertorio  repertorio_alumno_id_color_jugadas_key
 indice  repertorio  repertorio_pkey
