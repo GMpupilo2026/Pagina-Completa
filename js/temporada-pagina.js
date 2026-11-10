@@ -26,7 +26,25 @@
     D.DIRECCIONES.forEach((d) => { NOMBRES[d.clave] = d.nombre; });
     const CLAVES = D.DIRECCIONES.map((d) => d.clave);
 
-    const estado = { yo: null, alumnos: [], temporadas: [], editando: null };
+    const estado = { yo: null, alumnos: [], temporadas: [], editando: null, planes: [] };
+
+    /* Los planes de clase que se pueden atar a una etapa: los propios y los
+       que otros le comparten (PlanClase, la misma lectura que planes.html).
+       Si falla, la temporada se arma igual, sin planes: es un extra. */
+    async function cargarPlanes() {
+        if (!window.PlanClase) return;
+        const mios = await PlanClase.listarPlanes(sb, estado.yo).catch(() => []);
+        const compartidos = await PlanClase.planesCompartidosConmigo(sb).catch(() => []);
+        const ya = new Set(mios.map((p) => p.id));
+        estado.planes = mios.map((p) => ({ id: p.id, titulo: PlanClase.tituloVisible(p.titulo), autor: null }))
+            .concat(compartidos.filter((p) => !ya.has(p.id))
+                .map((p) => ({ id: p.id, titulo: PlanClase.tituloVisible(p.titulo), autor: p.autor || "otro profe" })));
+    }
+    const planDe = (id) => estado.planes.find((p) => p.id === id) || null;
+    /* Un plan que ya no se ve (lo borraron o dejaron de compartirlo) se dice
+       así, y no se borra solo de la etapa: lo quita el profe si quiere. */
+    const NO_SE_VE = "Un plan que ya no ves (lo borraron o dejaron de compartirlo)";
+    const tituloPlan = (id) => { const p = planDe(id); return p ? p.titulo : NO_SE_VE; };
 
     function el(tag, clases, texto) {
         const n = document.createElement(tag);
@@ -255,6 +273,7 @@
         const nota = inp("text", "tp-e-nota", e.nota, { maxLength: 200 });
         const wn = campo("Nota de la etapa (opcional)", nota); wn.className = "mt-2";
         fs.appendChild(wn);
+        fs.appendChild(cajaPlanes(e.planes || [], n));
         const quitar = el("button", "mt-2 text-xs font-semibold text-red-700 dark:text-red-300 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Quitar esta etapa");
         quitar.type = "button";
         quitar.addEventListener("click", () => { fs.remove(); numerarEtapas(); });
@@ -263,6 +282,56 @@
         sumar(fs);
         return fs;
     }
+    /* Los planes de clase de la etapa: una lista para marcar, con un filtro
+       (los de arranque son más de cincuenta). Los propios primero. */
+    function cajaPlanes(elegidos, n) {
+        const det = el("details", "tp-e-planes mt-3 rounded-lg bg-brand-50 dark:bg-brand-800/40 px-3 py-2");
+        const sum = el("summary", "cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        det.appendChild(sum);
+        const marcados = new Set(elegidos);
+        const contar = () => {
+            const k = det.querySelectorAll(".tp-e-plan:checked").length;
+            sum.textContent = "Planes de clase de esta etapa (" + (k === 1 ? "1 elegido" : k + " elegidos") + ")";
+        };
+        const lista = estado.planes.slice();
+        // Los que están atados pero ya no se ven, también: para poder quitarlos.
+        elegidos.filter((id) => !planDe(id)).forEach((id) => lista.push({ id, titulo: NO_SE_VE, autor: null, perdido: true }));
+        if (!lista.length) {
+            det.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2", "Todavía no tienes planes de clase. Ármalos en «Planes» y vuelve a elegirlos aquí."));
+            contar();
+            return det;
+        }
+        const filtro = el("input", "tp-e-planes-filtro mt-2 w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        filtro.type = "search";
+        filtro.id = "tp-e-planes-filtro-" + n;
+        filtro.placeholder = "Buscar un plan…";
+        const lf = el("label", "sr-only", "Buscar un plan de clase");
+        lf.htmlFor = filtro.id;
+        det.append(lf, filtro);
+        const ul = el("ul", "mt-2 grid gap-1 max-h-48 overflow-y-auto list-none p-0");
+        lista.forEach((p) => {
+            const li = el("li");
+            const label = el("label", "flex items-start gap-2 text-xs cursor-pointer");
+            const cb = el("input", "tp-e-plan mt-0.5 rounded border-brand-300 text-accent-500 focus:ring-accent-400");
+            cb.type = "checkbox";
+            cb.value = p.id;
+            cb.checked = marcados.has(p.id);
+            label.append(cb, el("span", p.perdido ? "italic text-brand-500 dark:text-brand-300" : "text-brand-700 dark:text-brand-200",
+                p.titulo + (p.autor ? " · de " + p.autor : "")));
+            li.dataset.texto = (p.titulo + " " + (p.autor || "")).toLowerCase();
+            li.appendChild(label);
+            ul.appendChild(li);
+        });
+        det.appendChild(ul);
+        filtro.addEventListener("input", () => {
+            const q = filtro.value.trim().toLowerCase();
+            ul.querySelectorAll("li").forEach((li) => { li.hidden = !!q && !li.dataset.texto.includes(q); });
+        });
+        det.addEventListener("change", contar);
+        contar();
+        return det;
+    }
+
     function sumar(fs) {
         const total = [...fs.querySelectorAll(".tp-e-pct")].reduce((s, i) => s + (parseInt(i.value, 10) || 0), 0);
         const p = fs.querySelector(".tp-e-suma");
@@ -292,6 +361,8 @@
             const e = { nombre: fs.querySelector(".tp-e-nombre").value.trim(),
                         desde: fs.querySelector(".tp-e-desde").value, hasta: fs.querySelector(".tp-e-hasta").value, enfasis };
             if (nota) e.nota = nota;
+            const planes = [...fs.querySelectorAll(".tp-e-plan:checked")].map((c) => c.value);
+            if (planes.length) e.planes = planes;
             return e;
         });
     }
@@ -434,6 +505,7 @@
         }
         $("tp-como-va-sub").textContent = "Etapa en curso: " + s.etapa.nombre + ", del " + fecha(s.etapa.desde) + " al " + fecha(s.etapa.hasta)
             + ". Se compara lo planeado con su tiempo en la plataforma desde que empezó la etapa (con " + T.TOLERANCIA + " puntos de margen).";
+        cuerpo.appendChild(planesDeLaEtapa(s.etapa));
         for (const f of filas) {
             const caja = el("div", "tp-alumno-como-va");
             caja.dataset.alumno = f.alumno_id;
@@ -446,6 +518,32 @@
                 caja.appendChild(el("p", "text-sm text-red-700 dark:text-red-300", "No se pudo leer su tiempo. Vuelve a intentarlo en un rato."));
             }
         }
+    }
+
+    /* Los planes de clase de la etapa en curso, para abrirlos en «Planes» y
+       darlos en la clase. Solo los ve quien da clase: son su material. */
+    function planesDeLaEtapa(etapa) {
+        const caja = el("div", "tp-planes-etapa");
+        caja.appendChild(el("h3", "font-semibold text-brand-800 dark:text-white", "Planes de clase de esta etapa"));
+        const ids = etapa.planes || [];
+        if (!ids.length) {
+            caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Esta etapa no tiene planes de clase atados. Elígelos en la etapa, arriba."));
+            return caja;
+        }
+        const ul = el("ul", "mt-1 grid gap-1 list-none p-0 text-sm");
+        ids.forEach((id) => {
+            const li = el("li");
+            if (planDe(id)) {
+                const a = el("a", "font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", tituloPlan(id));
+                a.href = "planes.html?plan=" + encodeURIComponent(id);
+                li.appendChild(a);
+            } else {
+                li.appendChild(el("span", "italic text-brand-500 dark:text-brand-300", NO_SE_VE));
+            }
+            ul.appendChild(li);
+        });
+        caja.appendChild(ul);
+        return caja;
     }
 
     // ---------- Vista del alumno ----------
@@ -521,6 +619,7 @@
                 $("tp-cancelar").addEventListener("click", cerrarEditor);
                 $("tp-borrar").addEventListener("click", borrar);
                 await cargarAlumnosDelProfe();
+                await cargarPlanes();
                 await cargarProfe();
                 $("tp-estado").hidden = true;
             } else {

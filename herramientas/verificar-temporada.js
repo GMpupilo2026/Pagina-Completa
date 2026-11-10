@@ -77,6 +77,13 @@ igual("una dirección que no existe", plano(T.problemas([etapa({ enfasis: { "mag
 igual("la última etapa después de la competencia", plano(T.problemas([etapa()], "2026-11-15", CLAVES)),
   ["La última etapa termina después de la competencia."]);
 
+console.log("-- Los planes de clase de una etapa");
+igual("ids de planes válidos y sin repetir: bien", plano(T.problemas([etapa({ planes: ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"] })], "2026-12-01", CLAVES)), []);
+igual("un plan repetido", plano(T.problemas([etapa({ planes: ["11111111-1111-4111-8111-111111111111", "11111111-1111-4111-8111-111111111111"] })], "2026-12-01", CLAVES)),
+  ["La etapa 1 («Uno») tiene un plan de clase repetido."]);
+igual("algo que no es un id", plano(T.problemas([etapa({ planes: ["<script>"] })], "2026-12-01", CLAVES)),
+  ["La etapa 1 («Uno») tiene planes de clase que no se pueden leer."]);
+
 console.log("-- En qué etapa va, y cómo va");
 const s = plano(T.situacion(p, "2027-01-10", "2026-12-10"));
 igual("el 10 de diciembre va en la específica, con 13 días por delante y 31 para la competencia",
@@ -98,7 +105,7 @@ igual("lo que hizo sin estar en el plan también sale", fuera.filas.map((f) => [
 // ---------------- La pantalla ----------------
 const ETAPAS = [
   { nombre: "Preparación general", desde: "2026-10-01", hasta: "2026-11-05", enfasis: { "ejercicios": 40, "finales": 30, "medio-juego": 30 } },
-  { nombre: "Preparación específica", desde: "2026-11-06", hasta: "2026-12-13", enfasis: { "aperturas": 25, "ejercicios": 25, "finales": 15, "medio-juego": 15, "analisis": 10, "partidas": 10 }, nota: "El repertorio que se va a jugar." },
+  { nombre: "Preparación específica", desde: "2026-11-06", hasta: "2026-12-13", enfasis: { "aperturas": 25, "ejercicios": 25, "finales": 15, "medio-juego": 15, "analisis": 10, "partidas": 10 }, nota: "El repertorio que se va a jugar.", planes: ["11111111-1111-4111-8111-111111111111", "33333333-3333-4333-8333-333333333333"] },
   { nombre: "Competitiva", desde: "2026-12-14", hasta: "2026-12-20", enfasis: { "aperturas": 50, "partidas": 50 } },
 ];
 const DATOS = {
@@ -112,6 +119,11 @@ const DATOS = {
     { id: "t1", lote: "L1", profesor_id: "u-profe", alumno_id: "u-ana", titulo: "Camino al Nacional", competencia: "Nacional Juvenil", inicio: "2026-10-01", fecha_competencia: "2026-12-20", etapas: ETAPAS, nota: null },
     { id: "t2", lote: "L1", profesor_id: "u-profe", alumno_id: "u-beto", titulo: "Camino al Nacional", competencia: "Nacional Juvenil", inicio: "2026-10-01", fecha_competencia: "2026-12-20", etapas: ETAPAS, nota: null },
   ],
+  planes: [
+    { id: "11111111-1111-4111-8111-111111111111", profesor_id: "u-profe", titulo: "Finales de torres: Lucena", notas: null, compartido_todos: false },
+    { id: "44444444-4444-4444-8444-444444444444", profesor_id: "u-profe", titulo: "Repertorio con blancas · AI", notas: null, compartido_todos: false },
+  ],
+  compartidos: [{ id: "22222222-2222-4222-8222-222222222222", profesor_id: "u-karla", autor: "Karla Mora", titulo: "La italiana en 10 jugadas", notas: null, compartido_todos: true }],
   tiempo: {
     "u-ana": [{ seccion: "temas", minutos: 60, ejercicios: 30 }, { seccion: "aperturas", minutos: 30, ejercicios: 4 }, { seccion: "finales", minutos: 10, ejercicios: 2 }, { seccion: "clase", minutos: 90, ejercicios: 0 }],
     "u-beto": [{ seccion: "temas", minutos: 20, ejercicios: 8 }],
@@ -135,6 +147,8 @@ function clienteFalso(yo) {
     if (nombre === "temporadas") return visibles().filter((t) => cumple(t, filtros));
     if (nombre === "tiempo_por_seccion") return D.tiempo[args.p_alumno] || [];
     if (nombre === "profesores_que_estudian_conmigo") return [];
+    if (nombre === "planes_clase") return ${JSON.stringify(yo)} === "u-profe" ? D.planes.filter((p) => cumple(p, filtros)) : [];
+    if (nombre === "planes_compartidos_conmigo") return ${JSON.stringify(yo)} === "u-profe" ? D.compartidos : [];
     return [];
   }
   function consulta(nombre, args) {
@@ -213,6 +227,32 @@ async function pruebaProfe(browser) {
     "En esta etapa lleva 20 min de entrenamiento que se puede repartir. El reparto se compara desde los 60 minutos: con menos, no dice nada.");
   igual("ni un veredicto para Beto", await textos(page, '[data-alumno="u-beto"] .tp-veredicto'), ["", "", "", "", "", ""]);
 
+  console.log("-- Los planes de clase de la etapa en curso");
+  igual("salen con su enlace a «Planes», y el que ya no se ve lo dice", await page.$$eval(".tp-planes-etapa li", (ns) =>
+    ns.map((n) => [n.innerText.trim(), (n.querySelector("a") || {}).getAttribute ? n.querySelector("a").getAttribute("href") : null])), [
+    ["Finales de torres: Lucena", "planes.html?plan=11111111-1111-4111-8111-111111111111"],
+    ["Un plan que ya no ves (lo borraron o dejaron de compartirlo)", null]]);
+  const det = '#tp-etapas .tp-etapa:nth-child(2) .tp-e-planes';
+  igual("la etapa dice cuántos tiene, y ofrece los propios y los compartidos (sin la marca de arranque)", [
+    await page.textContent(det + " summary"),
+    await page.$$eval(det + " li", (ns) => ns.map((n) => n.textContent.trim()))], [
+    "Planes de clase de esta etapa (2 elegidos)",
+    ["Finales de torres: Lucena", "Repertorio con blancas", "La italiana en 10 jugadas · de Karla Mora",
+     "Un plan que ya no ves (lo borraron o dejaron de compartirlo)"]]);
+  await page.click(det + " summary");
+  await page.fill(det + " .tp-e-planes-filtro", "italiana");
+  igual("el filtro deja ver solo lo que se busca", await page.$$eval(det + " li", (ns) =>
+    ns.filter((n) => n.checkVisibility()).map((n) => n.innerText.trim())), ["La italiana en 10 jugadas · de Karla Mora"]);
+  await page.check(det + ' .tp-e-plan[value="22222222-2222-4222-8222-222222222222"]');
+  await page.fill(det + " .tp-e-planes-filtro", "");
+  await page.uncheck(det + ' .tp-e-plan[value="33333333-3333-4333-8333-333333333333"]');
+  igual("la cuenta sigue lo que se marca", await page.textContent(det + " summary"), "Planes de clase de esta etapa (2 elegidos)");
+  await page.click("#tp-guardar");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "update"));
+  const upd = await page.evaluate(() => window.__escrituras.find((e) => e.accion === "update"));
+  igual("guarda la lista como queda, para todo el lote", [upd.filtros, upd.cuerpo.etapas[1].planes, upd.cuerpo.etapas[0].planes || null],
+    [[["lote", "L1"], ["profesor_id", "u-profe"]], ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"], null]);
+
   console.log("-- Armar una nueva");
   await page.click("#tp-nueva");
   igual("el armador se ve y lleva el foco a su título", [await seVe(page, "#tp-editor"),
@@ -235,8 +275,8 @@ async function pruebaProfe(browser) {
   await page.fill("#tp-e-pct-ejercicios-" + (await page.$eval(".tp-etapa .tp-e-pct", (i) => i.id.split("-").pop())), "30");
   await page.check('.tp-alumno[value="u-ceci"]');
   await page.click("#tp-guardar");
-  await page.waitForFunction(() => window.__escrituras.length > 0);
-  const esc = await page.evaluate(() => window.__escrituras[0]);
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "insert"));
+  const esc = await page.evaluate(() => window.__escrituras.find((e) => e.accion === "insert"));
   igual("guarda una fila por alumno, a su nombre, con las cuatro etapas", [esc.accion, esc.cuerpo.length, esc.cuerpo[0].alumno_id,
     esc.cuerpo[0].profesor_id, esc.cuerpo[0].titulo, esc.cuerpo[0].etapas.length, typeof esc.cuerpo[0].lote],
     ["insert", 1, "u-ceci", "u-profe", "Rumbo al Abierto", 4, "string"]);
@@ -263,6 +303,7 @@ async function pruebaAlumna(browser) {
     "2. Preparación específica 6 nov al 13 dic En curso Aperturas 25 % · Solución de ejercicios 25 % · Finales 15 % · Medio juego y estrategia 15 % · Análisis de partidas 10 % · Práctica de partidas 10 % El repertorio que se va a jugar."]);
   igual("ve cómo va ella", (await textos(page, "#tp-mias tbody tr"))[0], "Aperturas 25 % 30 % en línea");
   igual("no ve el armador", await seVe(page, "#tp-editor"), false);
+  igual("ni los planes de clase de su profe (son material del profe)", await page.$$eval(".tp-planes-etapa", (ns) => ns.length), 0);
   igual("sin errores en la consola", errores, []);
   await c.close();
 

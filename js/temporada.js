@@ -9,13 +9,16 @@
  * navegador (herramientas/verificar-temporada.js). La página
  * (js/temporada-pagina.js) pide los datos y pinta.
  *
- * Una etapa es { nombre, desde, hasta, enfasis: { <dirección>: <porcentaje> }, nota }.
+ * Una etapa es { nombre, desde, hasta, enfasis: { <dirección>: <porcentaje> }, nota,
+ * planes: [<id de planes_clase>, …] }.
  * Las fechas son días de calendario de Costa Rica, «2026-11-10», y se cuentan
  * en UTC por sus partes: un día no se lee con new Date("AAAA-MM-DD").
  */
 window.Temporada = (function () {
     const MAX_ETAPAS = 12;
+    const MAX_PLANES = 30;
     const SOLO_DIA = /^\d{4}-\d{2}-\d{2}$/;
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function numeroDeDia(d) {
         if (!SOLO_DIA.test(String(d || ""))) return NaN;
@@ -102,6 +105,13 @@ window.Temporada = (function () {
             if (valores.some((v) => !Number.isInteger(v) || v < 0 || v > 100)) p.push(`${n}: cada porcentaje va de 0 a 100, sin decimales.`);
             const suma = valores.reduce((s, v) => s + (Number(v) || 0), 0);
             if (suma !== 100) p.push(`${n}: los porcentajes suman ${suma} y tienen que sumar 100.`);
+            /* Los planes de clase atados a la etapa: ids de `planes_clase`. */
+            if (e.planes != null) {
+                const lista = Array.isArray(e.planes) ? e.planes : null;
+                if (!lista || lista.some((id) => !UUID.test(String(id)))) p.push(`${n} tiene planes de clase que no se pueden leer.`);
+                else if (lista.length > MAX_PLANES) p.push(`${n} tiene ${lista.length} planes de clase; el máximo es ${MAX_PLANES}.`);
+                else if (new Set(lista).size !== lista.length) p.push(`${n} tiene un plan de clase repetido.`);
+            }
         });
         const ultima = etapas[etapas.length - 1];
         if (competencia && ultima && numeroDeDia(ultima.hasta) > numeroDeDia(competencia)) {
@@ -152,7 +162,7 @@ window.Temporada = (function () {
         };
     }
 
-    return { MAX_ETAPAS, MIN_DIAS, PLANTILLA, TOLERANCIA, MINUTOS_PARA_JUZGAR,
+    return { MAX_ETAPAS, MAX_PLANES, MIN_DIAS, PLANTILLA, TOLERANCIA, MINUTOS_PARA_JUZGAR,
              numeroDeDia, diaDeNumero, diasEntre, proponer, problemas, situacion, comparar };
 })();
 

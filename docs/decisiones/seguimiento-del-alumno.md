@@ -390,6 +390,19 @@ ve en qué etapa va y cómo va. Se llega desde Tareas.
   direcciones), y se dice debajo de la tabla.
 - El alumno ve las temporadas que vencen desde hace un mes en adelante; las
   más viejas ya no guían nada.
+- **Cada etapa lleva sus planes de clase** (`planes`: ids de `planes_clase`,
+  hasta 30, sin repetir; lo revisa `problemas()`). Se eligen de los que el
+  profe puede ver: los suyos y los que le comparten (`PlanClase`, la misma
+  lectura de `planes.html`), con un filtro, porque los de arranque son más de
+  cincuenta. En «Cómo va» salen los de la etapa en curso, con su enlace a
+  `planes.html?plan=`. No hizo falta migración: van dentro de la etapa, en el
+  mismo jsonb.
+  - **Un plan que ya no se ve** (lo borraron o dejaron de compartirlo) se
+    dice con esas palabras y **no se saca solo de la etapa**: guardar la
+    temporada por otra cosa no puede borrar en silencio lo que el profe
+    eligió. Lo quita él, desmarcándolo.
+  - **El alumno no ve los planes**: son el material del profe (y la RLS de
+    `planes_clase` tampoco se los deja leer).
 
 **Permisos** (las mismas reglas que `tareas`): leen el profesor que la
 escribió, el alumno, los demás profesores del alumno (el conjunto
@@ -409,7 +422,7 @@ huecos ni días encimados, la revisión, la situación y la comparación) y la
 pantalla con un doble que filtra en el resolver: la lista por lote, el tiempo
 pedido con la hora de Costa Rica, el veredicto escrito, que no se guarde lo
 que no suma 100, que un nombre no se lea como HTML y que el celular no se
-desborde. Lo que falta: atar los planes de clase a cada etapa.
+desborde.
 
 ## El plan de clase: preparar la clase antes de darla
 
