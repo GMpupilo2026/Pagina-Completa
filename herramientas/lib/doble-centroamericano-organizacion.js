@@ -12,6 +12,10 @@ function dobleOrganizacion(licencia) {
   window.__torneosFallan = /[?&]torneosfallan=1/.test(location.search);
   const R = (data, error) => Promise.resolve({ data, error: error || null });
   const hace = (seg) => new Date(Date.now() - seg * 1000).toISOString();
+  // Las credenciales vencen dentro de una semana, contando desde HOY: con una fecha escrita fija («el 9 de
+  // noviembre»), al pasar ese día la página (que pide solo las vigentes, vence > ahora) se quedaba sin árbitros y el
+  // reparto fallaba sin que nada estuviera roto.
+  const VENCE = new Date(Date.now() + 7 * 86400000).toISOString();
   const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   const TORNEOS = [
     { tnr: "1529719", nombre: "Sub-8 Absoluto", categoria: "Sub-8", rama: "Absoluto", orden: 1, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
@@ -21,15 +25,15 @@ function dobleOrganizacion(licencia) {
     { tnr: "1532448", nombre: "PRUEBA grupo A", categoria: "Sub-8", rama: "Absoluto", orden: 901, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1532448", prueba: true }];
   // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no, pero ya terminó sus 15 mesas.
   const ASIG = [
-    { id: "asig-ana", codigo: "K7M29QXA", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
-    { id: "asig-arb1", codigo: "N3P5R7TW", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
-    { id: "asig-ensayo", codigo: "H2J4K6MX", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
+    { id: "asig-ana", codigo: "K7M29QXA", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: VENCE, revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
+    { id: "asig-arb1", codigo: "N3P5R7TW", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: VENCE, revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
+    { id: "asig-ensayo", codigo: "H2J4K6MX", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: VENCE, revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
   // «?ritmos=1» en la dirección: suma un torneo Rápido y uno Blitz con su enlace cada uno (para ver la página separada por modo).
   if (/[?&]ritmos=1/.test(location.search)) {
     TORNEOS.push({ tnr: "1533951", nombre: "Rápido Sub-10", categoria: "Sub-10", rama: "Mixto", orden: 102, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" },
       { tnr: "1540001", nombre: "Blitz Sub-12", categoria: "Sub-12", rama: "Mixto", orden: 201, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" });
-    ASIG.push({ id: "asig-rapido", codigo: "R8S9T2UV", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
-      { id: "asig-blitz", codigo: "Z3Y4X5WP", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
+    ASIG.push({ id: "asig-rapido", codigo: "R8S9T2UV", token: "r".repeat(64), tnr: "1533951", arbitro: "Rita Rápida", nombrado: true, mesa_desde: 1, mesa_hasta: 10, vence: VENCE, revocada: false, creada: "2026-11-02T10:03:00Z", ultimo_uso: null },
+      { id: "asig-blitz", codigo: "Z3Y4X5WP", token: "z".repeat(64), tnr: "1540001", arbitro: "Blas Blitz", nombrado: true, mesa_desde: 1, mesa_hasta: 12, vence: VENCE, revocada: false, creada: "2026-11-02T10:04:00Z", ultimo_uso: null });
   }
   // El avance guarda TODAS las rondas: la vieja va primero, como la devolvía la base el 3/11 (y «Cuándo inició» decía «Ronda 2»).
   const PROGRESO = [
@@ -121,7 +125,7 @@ function dobleOrganizacion(licencia) {
         a.p_acciones.forEach((x) => {
           if (x.tipo === "actualizar") { Object.assign(ASIG.find((y) => y.id === x.id), { mesa_desde: x.desde, mesa_hasta: x.hasta }, x.persona ? { persona: x.persona } : {}); c.actualizados++; }
           if (x.tipo === "apagar") { Object.assign(ASIG.find((y) => y.id === x.id), { revocada: true, reemplazada_en: new Date().toISOString() }); c.apagados++; }
-          if (x.tipo === "crear") { ASIG.push({ id: "a" + (++n), codigo: "T" + (5550000 + n), token: String(3000 + n).repeat(16), tnr: x.tnr, arbitro: x.arbitro, nombrado: x.nombrado, mesa_desde: x.desde, mesa_hasta: x.hasta, persona: x.persona, experiencia: x.experiencia, vence: x.vence || "2026-11-10T05:59:59Z", revocada: false, creada: new Date().toISOString(), ultimo_uso: null }); c.creados++; }
+          if (x.tipo === "crear") { ASIG.push({ id: "a" + (++n), codigo: "T" + (5550000 + n), token: String(3000 + n).repeat(16), tnr: x.tnr, arbitro: x.arbitro, nombrado: x.nombrado, mesa_desde: x.desde, mesa_hasta: x.hasta, persona: x.persona, experiencia: x.experiencia, vence: x.vence || VENCE, revocada: false, creada: new Date().toISOString(), ultimo_uso: null }); c.creados++; }
         });
         return R(c); }
       if (f === "centroamericano_copia_manual") return R(COPIA(0));

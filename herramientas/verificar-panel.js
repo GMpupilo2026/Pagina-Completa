@@ -581,6 +581,12 @@ async function pruebaRecorrido(browser) {
   }), ["dialog", "Busca lo que necesites"]);
   igual("señala el buscador, con el aro a la vista", await page.evaluate(() =>
     [...document.querySelectorAll(".buscar-resaltado")].map((el) => el.id + ":" + el.checkVisibility())), ["buscar-panel:true"]);
+  /* El «?» de la guía (js/ayuda-guia.js) aparece recién cuando leyó la sesión y
+     el perfil. Con la máquina cargada (cuatro verificadores a la vez en el CI),
+     el recorrido llegaba al último paso antes que él y señalaba, con razón, la
+     ficha de la guía, que es su alternativa. Se espera a que esté, como lo vería
+     cualquiera que no recorre los pasos en un segundo. */
+  await page.waitForSelector("#ayuda-guia", { state: "visible", timeout: 10000 }).catch(() => {});
   const pasos = [];
   for (let n = 0; n < 6; n++) {
     pasos.push(await page.evaluate(() => {
