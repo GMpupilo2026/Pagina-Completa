@@ -1070,6 +1070,11 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.
+- **Una página sin enlaces ni sitemap no es necesariamente huérfana.**
+  `ruta-a-la-beca.html` (Club Cenfotec, con `noindex`) no la nombra ninguna
+  página a propósito: el enlace se comparte a mano. Confirmado con el dueño el
+  10/11/2026, en una revisión que la había marcado para sacarla del sitio. Antes
+  de mandar a `.assetsignore` algo que «nadie pide», preguntar.
   - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
     `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
     está en `.gitignore` la falla solo aparece en la máquina de quien siguió las
