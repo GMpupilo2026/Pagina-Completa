@@ -139,7 +139,9 @@ function armar(nombre) {
     archivos.push({ name: f, content: fs.readFileSync(path.join(dir, f), "utf8") });
   }
 
-  for (const compartido of FUNCIONES[nombre]) {
+  // Una función sin nada compartido no necesita estar en la lista: va con sus archivos.
+  const compartidos = FUNCIONES[nombre] || [];
+  for (const compartido of compartidos) {
     const origen = path.join(COMPARTIDO, compartido);
     if (!fs.existsSync(origen)) throw new Error(`Falta el compartido ${compartido}`);
     if (archivos.some((a) => a.name === compartido)) {
@@ -157,7 +159,7 @@ function armar(nombre) {
   // bienvenida (invitacion-email.ts) trae la franja de marca-correo.ts.
   const index = archivos.find((a) => a.name === "index.ts");
   if (!index) throw new Error(`${nombre} no tiene index.ts`);
-  for (const compartido of FUNCIONES[nombre]) {
+  for (const compartido of compartidos) {
     const loImporta = archivos.some((a) => a.name !== compartido && a.content.includes(`./${compartido}`));
     if (!loImporta) {
       throw new Error(`Ningún archivo de ${nombre} importa "./${compartido}"`);
@@ -166,6 +168,10 @@ function armar(nombre) {
 
   return archivos;
 }
+
+// Lo usa también herramientas/funciones-desplegar.js (el despliegue desde GitHub).
+module.exports = { FUNCIONES, armar };
+if (require.main !== module) return;
 
 const todo = {};
 for (const nombre of Object.keys(FUNCIONES)) todo[nombre] = armar(nombre);

@@ -189,6 +189,10 @@ node herramientas/funciones-armar.js     # copia los archivos de _compartido
 supabase functions deploy <nombre>
 ```
 
+O desde GitHub, sin instalar nada: Actions → Funciones → «Run workflow», con
+los nombres separados por comas (`.github/workflows/funciones.yml`; necesita el
+secreto `SUPABASE_ACCESS_TOKEN`). Pone el `verify_jwt` de cada una solo.
+
 `supabase/esquema/funciones-desplegadas.txt` dice cuáles son y —lo que importa—
 **cuál va con `verify_jwt` en false**: `informes-encargados`,
 `cobros-recordatorios`, `notificar` y `recuperar-acceso`. Desplegar una de esas

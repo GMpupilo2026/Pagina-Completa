@@ -18,6 +18,15 @@ carpeta es la fuente; lo que corre en Supabase es su despliegue.
 > de esta carpeta — justo donde vive el texto que solo aparece en la bandeja de
 > alguien. Ahora los barre.
 
+## Se despliegan solas al entrar a `main`
+
+Desde el 10/11/2026, `.github/workflows/funciones.yml` despliega en Supabase las
+funciones que cambiaron en cada merge a `main`, con su `verify_jwt` de
+`supabase/esquema/funciones-desplegadas.txt` (una función sin anotar ahí no se
+despliega). A mano: Actions → Funciones → «Run workflow», con los nombres. Ver
+«Las Edge Functions se despliegan solas desde GitHub» en
+`docs/decisiones/sitio-e-infraestructura.md`.
+
 ## Cómo se arma un despliegue
 
 Cada función se despliega con SUS archivos y no puede importar de una carpeta
