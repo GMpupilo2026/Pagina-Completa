@@ -2518,6 +2518,23 @@ Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller
 tiene acceso a la Academia, así que a los alumnos de la clase les llegan las
 diapositivas que el profe muestra.
 
+### El fondo para grabar el curso con OBS
+
+Para grabar las clases de Formación Ajedrez (la pantalla de la clase, como en
+los videos de YouTube del curso) sin que el video flote sobre negro,
+`node herramientas/obs-fondo.js` dibuja en `img/obs/` un fondo de 1920 × 1080
+con la paleta del sitio y la marca de Ajedrez Integral (la copia única de
+`herramientas/lib/marca-agua.js`, en blanco):
+
+- `formacion-ajedrez-fondo.png` va como la capa de abajo en OBS, y la pantalla
+  encima, en el recuadro: **X = 200, Y = 136, 1520 × 855** (16:9 exacto).
+- `formacion-ajedrez-marco.png` es opcional y va arriba de todo: la misma
+  imagen con el recuadro transparente, que le redondea las esquinas al video y
+  tapa el borde si no calza al píxel.
+
+Se dibuja con un script y no a mano por lo mismo que `og-imagen.js`: si cambia
+la paleta o el recuadro (`RECUADRO`), se vuelve a correr y sale igual.
+
 ## La sección Archivos
 
 `admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
