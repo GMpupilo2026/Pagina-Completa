@@ -900,6 +900,15 @@ async function pruebaAsesores(browser) {
   igual("la presentación se abre en la vista previa, desde la primera", true, true);
   await page.keyboard.press("Escape");
 
+  // Los ejercicios de una sesión (sesiones.json → ejercicios): solo en la suya.
+  igual("la sesión 1 ofrece el ejercicio del tablero mal colocado, y la 2 ninguno", await page.evaluate(() =>
+    [1, 2].map((k) => Array.from(document.querySelectorAll("#ase-lista article:nth-child(" + k + ") button")).filter((b) => /^🧩/.test(b.textContent)).map((b) => b.textContent))),
+    [["🧩 Ejercicio del tablero mal colocado"], []]);
+  await page.click("#ase-lista article:nth-child(1) button[aria-label^='Ver la presentación del ejercicio']");
+  await page.waitForFunction(() => Array.from(document.querySelectorAll("img")).some((i) => i.checkVisibility() && /ejercicio-tablero\/01\.webp$/.test(i.getAttribute("src") || "") && i.naturalWidth > 0), null, { timeout: 8000 });
+  igual("y se abre en la vista previa, con sus láminas", true, true);
+  await page.keyboard.press("Escape");
+
   // Con quién lo compartes: el bloque de Materiales, con este curso.
   await page.waitForSelector("#mat-formacion-ajedrez-buscar", { timeout: 5000 });
   igual("dice que por ahora solo lo tienes tú", await page.textContent("#ase-compartir [role=status]"), "Por ahora solo lo tienes tú.");

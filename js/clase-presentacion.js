@@ -46,6 +46,8 @@ window.PresentacionClase = (function () {
         // La práctica individual de la Sesión 1 (herramientas/formacion-practicas.js): la que se manda a la
         // clase en «Preguntar» y que el profe también puede proyectar para analizar los casos.
         { deck: "formacion-ajedrez/practica-01", titulo: "Formación Ajedrez · Sesión 1: la práctica (posiciones, dictado y reclamos)" },
+        // Los ejercicios de un tema (herramientas/datos/formacion-laminas-ejercicio-*.js): se proyectan en la clase.
+        { deck: "formacion-ajedrez/ejercicio-tablero", titulo: "Formación Ajedrez · Sesión 1: ejercicio del tablero mal colocado" },
         { deck: "formacion-ajedrez/clase-02", titulo: "Formación Ajedrez · Sesión 2: Reglas de competición" },
         { deck: "formacion-ajedrez/clase-03", titulo: "Formación Ajedrez · Sesión 3: Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento" },
         { deck: "formacion-ajedrez/clase-04", titulo: "Formación Ajedrez · Sesión 4: Uso, configuración y control del reloj de ajedrez" },

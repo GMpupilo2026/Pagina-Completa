@@ -2511,6 +2511,13 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   presentaciones (`herramientas/formacion-practicas.js`); la Sesión 1 tiene la
   suya (`presentaciones/practica-01/`, dibujada con `formacion-laminas.js`).
 
+- **Los ejercicios de un tema**: una sesión puede traer, además de su
+  presentación, presentaciones cortas de ejercicios (`presentaciones/ejercicio-*/`,
+  con `"sesion": N` en su `diapositivas.json`), que `sesiones.json` lista en
+  `ejercicios` y la ficha ofrece con «🧩». Hoy, el del tablero mal colocado en
+  la Sesión 1 (ver «El ejercicio del tablero mal colocado» en
+  `clase-en-vivo.md`).
+
 El curso en sí **no** se esconde: se vende en la tienda y el proyecto Campeones
 Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller
 (las presentaciones para la clase y los cuestionarios). Los archivos de

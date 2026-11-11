@@ -1,0 +1,91 @@
+{
+  "titulo": "Formación Ajedrez · Sesión 1: ejercicio del tablero mal colocado",
+  "curso": "formacion-ajedrez",
+  "sesion": 1,
+  "diapositivas": [
+    {
+      "titulo": "Tablero mal colocado",
+      "texto": "Formación Ajedrez, Sesión 1. Ejercicio: el tablero mal colocado. ¿Qué hace la persona árbitra si la casilla oscura queda a la derecha de los jugadores?",
+      "notas": "Ejercicio corto para el tema «El tablero y el inicio de la partida». Primero la regla, después el caso y al final la decisión con los dos tableros lado a lado.",
+      "imagen": "01.webp"
+    },
+    {
+      "titulo": "Clara a la derecha",
+      "texto": "Clara a la derecha. A la izquierda, un tablero mal colocado: la casilla de la esquina derecha de cada jugador es oscura. A la derecha, el tablero bien colocado: la esquina derecha es clara, h1 y a8 son casillas claras. La regla es el artículo 2.1: cada jugador tiene una casilla clara en su esquina derecha.",
+      "notas": "Pregunta a la sala cuál de los dos está bien antes de decirlo. Las piezas están en las mismas casillas en los dos: lo único que cambia es el color de las casillas, porque el tablero está girado un cuarto de vuelta.",
+      "imagen": "02.webp",
+      "posiciones": [
+        {
+          "nombre": "Tablero mal colocado (oscura a la derecha), posición inicial",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        },
+        {
+          "nombre": "Tablero bien colocado (clara a la derecha), posición inicial",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        }
+      ]
+    },
+    {
+      "titulo": "¿Cómo se nota?",
+      "texto": "¿Cómo se nota que el tablero está girado? Tres señales. Uno: la esquina derecha de cada jugador es oscura, y h1 y a8 tienen que ser claras. Dos: la dama blanca queda en una casilla oscura y la negra en una clara, cuando cada dama empieza en su color. Tres: si el tablero trae letras y números impresos, quedan de costado: los números donde van las letras. Por eso conviene revisar los tableros antes de cada ronda.",
+      "notas": "En los JDE los tableros los arman muchas veces los propios estudiantes o el personal de apoyo: la revisión antes de la ronda es la que evita el problema.",
+      "imagen": "03.webp"
+    },
+    {
+      "titulo": "Ejercicio: ronda 2",
+      "texto": "Ejercicio, ronda 2. Van 10 jugadas de cada bando y le toca a las blancas. Un jugador avisa a la persona árbitra: la esquina derecha es oscura. El tablero está mal colocado. ¿Qué decides? A: anular la partida y jugar otra. B: seguir en ese mismo tablero. C: pasar la posición a un tablero bien colocado y seguir. D: seguir solo si van 10 jugadas o más.",
+      "notas": "Deja que voten antes de pasar a la respuesta. La D es la tentación: mezcla la regla de los colores cambiados (art. 7.3), que sí cuenta las 10 jugadas. La A mezcla la de la posición inicial mal armada (7.2.1). La estrella marca la casilla h1.",
+      "imagen": "04.webp",
+      "posiciones": [
+        {
+          "nombre": "Ronda 2, juegan las blancas, en un tablero mal colocado",
+          "fen": "r1bqr1k1/bpp2pp1/p1np1n1p/4p3/4P3/1BPP1N1P/PP1N1PP1/R1BQR1K1 w - - 2 11"
+        }
+      ]
+    },
+    {
+      "titulo": "La solución, lado a lado",
+      "texto": "La solución, lado a lado. Respuesta C: la partida sigue, artículo 7.2.2. A la izquierda, así estaba: el tablero mal colocado, con la esquina derecha oscura. A la derecha, así sigue: un tablero bien colocado con las mismas piezas en las mismas casillas. Solo cambia el tablero: la posición y los tiempos no.",
+      "notas": "Muestra que cada pieza está en la misma casilla en los dos tableros (la estrella marca h1: oscura a la izquierda, clara a la derecha). Si quieres, manda la posición al tablero de la clase y que cada asesor la arme en uno bien colocado.",
+      "imagen": "05.webp",
+      "posiciones": [
+        {
+          "nombre": "Así estaba: tablero mal colocado",
+          "fen": "r1bqr1k1/bpp2pp1/p1np1n1p/4p3/4P3/1BPP1N1P/PP1N1PP1/R1BQR1K1 w - - 2 11"
+        },
+        {
+          "nombre": "Así sigue: la misma posición en un tablero bien colocado",
+          "fen": "r1bqr1k1/bpp2pp1/p1np1n1p/4p3/4P3/1BPP1N1P/PP1N1PP1/R1BQR1K1 w - - 2 11"
+        }
+      ]
+    },
+    {
+      "titulo": "Cómo se pasa la posición",
+      "texto": "Cómo se pasa la posición, paso a paso y sin cambiar nada de la partida. Uno: detén los relojes; los tiempos no se tocan. Dos: arma al lado un tablero bien colocado, con la clara a la derecha de cada jugador. Tres: pasa pieza por pieza, cada una a la misma casilla, contando desde cada jugador: a1 queda a la izquierda de las blancas. Cuatro: comprueba la posición con la planilla y con los dos jugadores. Cinco: pon en marcha el reloj de quien tenía el turno.",
+      "notas": "Lo más seguro es armar el tablero nuevo al lado y pasar las piezas de a una, no girar el tablero con las piezas encima. Si hay duda sobre alguna casilla, la planilla de los dos jugadores la resuelve.",
+      "imagen": "06.webp"
+    },
+    {
+      "titulo": "Ojo: dama en su color",
+      "texto": "Ojo: la regla de la dama en su color engaña en un tablero girado. Si los jugadores arman las piezas en un tablero con la oscura a la derecha y ponen cada dama en su color, el rey y la dama quedan cambiados: la dama en e1 y el rey en d1. Eso ya no es solo el tablero: la posición inicial estaba mal, y la partida se anula y se juega otra, artículo 7.2.1. Lo correcto: dama en d1 y d8, rey en e1 y e8.",
+      "notas": "Es la diferencia que más se confunde: tablero girado con las piezas en su casilla (7.2.2, sigue) contra posición inicial mal armada (7.2.1, se anula). Pregunta en qué casilla quedó cada rey.",
+      "imagen": "07.webp",
+      "posiciones": [
+        {
+          "nombre": "Tablero mal colocado con el rey y la dama cambiados",
+          "fen": "rnbkqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBKQBNR w - - 0 1"
+        },
+        {
+          "nombre": "Posición inicial correcta en un tablero bien colocado",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        }
+      ]
+    },
+    {
+      "titulo": "No confundir",
+      "texto": "No confundir tres irregularidades. Solo el tablero girado: la partida sigue y se pasa la posición a un tablero bien colocado, artículo 7.2.2. Posición inicial mal armada: se anula y se juega otra partida, artículo 7.2.1. Colores cambiados con menos de 10 jugadas de cada bando: se anula y se juega otra con los colores correctos; con 10 jugadas o más, la partida continúa, artículo 7.3.",
+      "notas": "Cierre del ejercicio. Las tres reglas están en el tema «El tablero y el inicio de la partida» de la Sesión 1 (Leyes del Ajedrez 2023, art. 2.1, 7.2 y 7.3).",
+      "imagen": "08.webp"
+    }
+  ]
+}

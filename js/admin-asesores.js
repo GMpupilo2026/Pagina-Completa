@@ -189,6 +189,14 @@
       b.addEventListener("click", () => verPresentacion(s.presentacion, "Sesión " + s.n, b));
       cosas.appendChild(b);
     }
+    // Los ejercicios de la sesión (presentaciones/ejercicio-*/), para proyectar en la clase.
+    (s.ejercicios || []).forEach((e) => {
+      const b = el("button", ENLACE, "🧩 " + e.titulo);
+      b.type = "button";
+      b.setAttribute("aria-label", "Ver la presentación del " + e.titulo.toLowerCase() + " (sesión " + s.n + ")");
+      b.addEventListener("click", () => verPresentacion(e.presentacion, "Sesión " + s.n + " · " + e.titulo, b));
+      cosas.appendChild(b);
+    });
     const q = cuestionarioDe(s.n);
     if (q) {
       enlacesDe(cosas, q, "🎯 Cuestionario Kahoot", "el cuestionario de la sesión " + s.n);

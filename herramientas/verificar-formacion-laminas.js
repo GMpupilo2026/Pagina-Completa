@@ -46,7 +46,7 @@ function texto(o, clave) {
 const palabras = (t) => t.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
 
 const clases = fs.readdirSync(path.join(__dirname, "datos"))
-  .map((f) => /^formacion-laminas-(clase-\d+)\.js$/.exec(f)).filter(Boolean).map((m) => m[1]);
+  .map((f) => /^formacion-laminas-(clase-\d+|ejercicio-[a-z0-9-]+)\.js$/.exec(f)).filter(Boolean).map((m) => m[1]);
 cierto("hay al menos una clase con láminas generadas", clases.length > 0);
 
 for (const clase of clases) {

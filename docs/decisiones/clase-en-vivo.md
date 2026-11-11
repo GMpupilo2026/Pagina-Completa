@@ -4370,6 +4370,58 @@ claves quedaron en las láminas 47 a 55. Para agregar
 o quitar láminas en una sesión con práctica: los datos, el curso, la práctica
 y las claves, juntos.
 
+#### El ejercicio del tablero mal colocado
+
+Pedido del dueño (11/11/2026): un ejercicio para el tema «El tablero y el
+inicio de la partida» de la Sesión 1 que muestre qué pasa cuando el tablero se
+coloca con la casilla **oscura** a la derecha, con los dos tableros en una
+misma pantalla: el mal colocado y la misma posición en uno bien colocado. Es
+una presentación aparte, `presentaciones/ejercicio-tablero/` (8 láminas: la
+regla, cómo se nota, el caso con cuatro opciones, la solución lado a lado, cómo
+se pasa la posición, el rey y la dama cambiados y el cuadro de las tres
+irregularidades del art. 7), y no láminas nuevas en la Clase 1: una lámina de
+más corre las de atrás, y la clase en vivo y su verificador las nombran por
+número.
+
+- **Se dibuja como las demás** (`node herramientas/formacion-laminas.js
+  ejercicio-tablero`, datos en `herramientas/datos/formacion-laminas-ejercicio-tablero.js`),
+  pero su `diapositivas.json` se escribe a mano, como el de la Clase 1: no lo
+  arma el generador del curso. Lleva `"sesion": 1`, y con eso
+  `curso-generar-formacion.py` (`ejercicios_de()`) lo pone en `ejercicios` de
+  la Sesión 1 de `sesiones.json`, y la ficha Asesores lo ofrece al lado de la
+  presentación de la sesión («🧩 Ejercicio del tablero mal colocado»). Un
+  ejercicio nuevo de otro tema es otra carpeta `ejercicio-*` con su `sesion`,
+  sus datos y una línea en `LISTA` de `js/clase-presentacion.js` (así se
+  proyecta en la clase en vivo). No tiene `.pptx` ni práctica con claves.
+- **El tablero mal colocado es el mismo dibujo con los colores de las
+  casillas cambiados** (`MAL` en los datos): girado un cuarto de vuelta, cada
+  pieza sigue en la misma casilla contando desde cada jugador, y solo cambia el
+  color de debajo. Por eso la solución (art. 7.2.2) es pasar la posición tal
+  cual, y los dos tableros de esa lámina tienen la MISMA FEN. La estrella
+  marca h1: oscura en uno, clara en el otro; la marca de cada tablero lo dice
+  escrito («✗ Mal colocado», «✓ Bien colocado»).
+- **La posición del caso no se inventó**: sale de jugar `PARTIDA` (una
+  italiana de 10 jugadas por bando) con chess.js, y la lámina dice «van 10
+  jugadas de cada bando» porque la opción D (la regla de las 10 jugadas de los
+  colores cambiados, art. 7.3) es la que tienta.
+- **«Dama en su color» engaña en un tablero girado** (lámina 7): con la oscura
+  a la derecha, cada dama en la casilla de su color deja el rey y la dama
+  cambiados (dama en e1, rey en d1). Eso ya no es solo el tablero: la posición
+  inicial estaba mal (art. 7.2.1) y la partida se anula. Es la diferencia que
+  más se confunde, y la que dice el banco de `js/arbitraje-items.js`.
+- `node herramientas/verificar-formacion-ejercicio-tablero.js` comprueba que la
+  posición sea la de la partida, que el tablero mal colocado tenga h1 y a8
+  oscuras (mirando el color que pinta el SVG, no la opción) y el bien colocado
+  claras, que los dos de la solución tengan la misma posición, que la
+  respuesta dada sea la opción de pasar la posición con el 7.2.2 y que ninguna
+  lámina anterior la adelante, que el rey y la dama cambiados sean lo que da
+  «dama en su color» en ese tablero, y que esté en `LISTA` y en la Sesión 1 de
+  `sesiones.json`. Probado que salta con el tablero de la solución sin los
+  colores cambiados, con una pieza corrida entre los dos tableros y con la
+  lámina 7 con solo el rey y la dama blancos cambiados.
+  `verificar-formacion-laminas.js` también cuenta sus palabras y su huella
+  (lee las `ejercicio-*` además de las `clase-NN`).
+
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 
 Las dos listas de material del profesor —los PGN de Archivos y los ejercicios de

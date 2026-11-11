@@ -322,6 +322,22 @@ def archivos_de(leccion):
             + [(x["archivo"], x.get("emoji", "") + " " + x["texto"]) for x in l.get("extras", [])])
 
 
+def ejercicios_de(carpeta, slug, n):
+    """Las presentaciones de ejercicios de una sesión: las carpetas
+    presentaciones/ejercicio-*/ cuyo diapositivas.json dice "sesion": n. Las
+    dibuja formacion-laminas.js y la ficha Asesores las ofrece con la sesión."""
+    raiz = os.path.join(carpeta, "presentaciones")
+    hay = []
+    for nombre in sorted(os.listdir(raiz)) if os.path.isdir(raiz) else []:
+        ruta = os.path.join(raiz, nombre, "diapositivas.json")
+        if not nombre.startswith("ejercicio-") or not os.path.isfile(ruta):
+            continue
+        j = json.load(open(ruta, encoding="utf-8"))
+        if j.get("sesion") == n:
+            hay.append({"presentacion": "%s/%s" % (slug, nombre), "titulo": (lambda t: t[:1].upper() + t[1:])(j["titulo"].split(": ", 1)[-1])})
+    return hay
+
+
 def sesiones_datos(curso, carpeta):
     """Lo que va en cursos/recursos/<slug>/sesiones.json: las sesiones en orden,
     con sus archivos y su presentación para la clase (si la tiene). Lo lee la
@@ -339,6 +355,7 @@ def sesiones_datos(curso, carpeta):
                 "presencial": bool(l.get("presencial")),
                 "archivos": [{"archivo": a, "texto": t} for a, t in archivos_de(l)],
                 "presentacion": deck if hay else None,
+                "ejercicios": ejercicios_de(carpeta, curso["slug"], l["n"]),
             })
     return {"_comentario": "Generado por herramientas/curso-generar-formacion.py: no se edita a mano.",
             "curso": curso["slug"], "titulo": curso["titulo"], "sesiones": sesiones}
