@@ -193,6 +193,7 @@ const CARPETAS = {
   "img/app": ["Íconos de la app", "El sitio"],
   "img/banderas": ["Banderas de los gafetes (flag-icons)", "El sitio"],
   "img/avatar-profe-oscar": ["El avatar del profe Oscar (los stickers de la clase en vivo y más)", "El sitio"],
+  "img/avatar-profe-pame": ["El avatar de la profe Pame (lo ve CCDR POCOCI en vez del profe Oscar)", "El sitio"],
   "img/jdn": ["Ejemplos del formulario de los JDN", "El sitio"],
   ".": ["En la raíz del sitio", "Carpetas"],
 };

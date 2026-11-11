@@ -5202,6 +5202,45 @@ Integral en la camisa (salvo de espalda, de lado o con la mochila).
 - **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
   esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
 
+### La profe Pame: el avatar de CCDR POCOCI
+
+Pedido del dueño el 11/11/2026: la academia nueva **CCDR POCOCI** (su
+entrenadora es Pamela Salas, de la Comisión de Ajedrez Femenino) ve a la
+**profe Pame** donde las demás ven al profe Oscar.
+
+- **Los mismos 44 dibujos**, con los mismos id y las mismas frases, en
+  `herramientas/avatar-profe-pame/originales/` (sin publicar) e
+  `img/avatar-profe-pame/` (los arma `herramientas/avatar-profe-oscar.py`,
+  que ahora recorre los dos profes). Hechos en Canva a partir de dos fotos
+  suyas y con un dibujo del profe Oscar de guía de estilo: pelo largo
+  castaño, polo azul con el logo de Ajedrez Integral, pantalón deportivo negro
+  y tenis. Se exportaron desde el diseño «Avatar profe Pame — originales»
+  y el fondo blanco se les quitó con un relleno desde el borde.
+- **Los tableros**: en «tablero-italiana» se movieron las piezas del mismo
+  dibujo hasta la Italiana (1.e4 e5 2.Cf3 Cc6 3.Ac4 Ac5, comprobada con
+  chess.js); el de la pantalla de «clase-en-linea» estaba inventado y se
+  redibujó entero con esa posición. «jugando» y «ensenando» son de adorno,
+  como los del profe Oscar.
+- **Quién la ve lo decide la academia, no la pantalla de cada página**:
+  `js/avatar-profe-oscar.js` (la lista única) lee la marca que
+  `js/marca-academia.js` guarda en el navegador (`academia_marca_v1`, con el
+  `academia_id` de `mi_marca_academia()`) y, si es de la cuenta con sesión,
+  busca su profe en `PROFE_DE_ACADEMIA` (por id: el nombre puede cambiar).
+  `ruta()`, `porId()` y `conFrase()` ya devuelven el dibujo y el texto
+  alternativo de ese profe, así que los stickers, el calendario del taller,
+  Herramientas y el Centroamericano cambian solos.
+- **Lo de siempre es el profe Oscar**: sin sesión, de dos o más academias,
+  con la marca de OTRA cuenta guardada en la computadora, o en la primera
+  página antes de que llegue la marca. Se lee síncrono porque los dibujos se
+  pintan apenas abre la página; preguntarle a la base por cada dibujo sería
+  otra consulta en cada página.
+- **El texto alternativo** es el del profe Oscar con su nombre, salvo los
+  que dicen algo que en su dibujo no está (`ALT_PAME`: la barba, el árbitro,
+  el niño). Un profe nuevo es: sus originales, su carpeta en `PROFES`, su
+  línea en `PROFE_DE_ACADEMIA` y correr el script.
+- Lo revisa `verificar-clase-stickers.js` («Los otros profes» y «Quién ve a
+  qué profe»).
+
 ## La cámara en la clase en vivo
 
 Pedido del dueño el 29/10/2026 (de las mejoras de la cámara que lee el
