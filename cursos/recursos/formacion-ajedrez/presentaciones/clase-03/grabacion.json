@@ -373,5 +373,127 @@
    "texto": "Ojo: en rápidas o relámpago SIN supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admite el reclamo por el tablero mal orientado. Corregirlo en cualquier momento vale con supervisión adecuada.",
    "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
   }
+ ],
+ "preguntas": [
+  {
+   "t": 553,
+   "n": 1,
+   "texto": "Un torneo se juega a 10 minutos, sin incremento. ¿Qué ritmo es?",
+   "opciones": [
+    "Relámpago: 10 minutos o menos",
+    "Clásico",
+    "Depende de lo que diga la Normativa JDE",
+    "Rápidas: desde 10 minutos ya es rápidas"
+   ],
+   "fuente": "Criterio del curso para los 10 minutos justos"
+  },
+  {
+   "t": 966,
+   "n": 2,
+   "texto": "Relámpago: un jugador da mate y un instante después cae su propia bandera. ¿Resultado?",
+   "opciones": [
+    "Pierde quien dio mate: cayó su bandera",
+    "Tablas: pasaron las dos cosas",
+    "Gana quien dio mate",
+    "Se juega de nuevo la partida"
+   ],
+   "fuente": "FIDE 5.1.1 y B.3"
+  },
+  {
+   "t": 2578,
+   "n": 3,
+   "texto": "El primer lugar da el cupo a la etapa siguiente y dos jugadores empatan. ¿Qué se propone como primer desempate?",
+   "opciones": [
+    "El Buchholz con corte 1",
+    "Un desempate jugado: dos rápidas y, si hace falta, un armagedón",
+    "El número de victorias",
+    "El jugador con el rating más alto"
+   ],
+   "fuente": "Propuesta del curso; las bases lo anuncian (FIDE C.07)"
+  },
+  {
+   "t": 2946,
+   "n": 4,
+   "texto": "Mismo caso: rivales con 3, 2½, 4, 1 y 2 puntos. ¿Cuál es su Buchholz con corte 1?",
+   "opciones": [
+    "11½ (se quita el 1)",
+    "8½ (se quita el 4)",
+    "12½ (no cambia)",
+    "9½ (se quitan el 1 y el 2)"
+   ],
+   "fuente": "FIDE C.07"
+  },
+  {
+   "t": 4965,
+   "n": 5,
+   "texto": "Normativa JDE 2026: ¿cuántos criterios de desempate se fijan como mínimo?",
+   "opciones": [
+    "Uno",
+    "Dos",
+    "Tres",
+    "Cinco"
+   ],
+   "fuente": "Normativa 66.4"
+  },
+  {
+   "t": 5746,
+   "n": 6,
+   "texto": "Mismo suizo de 12 (el 1 con blancas). ¿Quién lleva blancas en el tablero 2 de la ronda 1?",
+   "opciones": [
+    "El 8, contra el 2",
+    "El 2, contra el 8",
+    "El 2, contra el 11",
+    "El 8, contra el 3"
+   ],
+   "fuente": "FIDE C.04.3"
+  },
+  {
+   "t": 6642,
+   "n": 7,
+   "texto": "Se inscriben 7 estudiantes para un todos contra todos. ¿Qué se hace?",
+   "opciones": [
+    "Se agrega un descanso: 7 rondas y uno libre por ronda",
+    "Se juegan 6 rondas y uno queda sin un rival",
+    "Se pasa a suizo de 5 rondas, porque la cantidad es impar",
+    "Se juega a doble vuelta"
+   ],
+   "fuente": "Tablas de Berger"
+  },
+  {
+   "t": 10685,
+   "n": 8,
+   "texto": "¿Qué sistema conviene con muchos participantes y pocas rondas posibles?",
+   "opciones": [
+    "Todos contra todos",
+    "Eliminación directa",
+    "Todos contra todos a doble vuelta",
+    "Suizo"
+   ],
+   "fuente": "FIDE C.04.1"
+  },
+  {
+   "t": 12712,
+   "n": 9,
+   "texto": "Tabla de Berger de 4 jugadores, ronda 1 (el primero de cada pareja lleva blancas). ¿Cuáles son las parejas?",
+   "opciones": [
+    "4–1 y 3–2",
+    "1–4 y 2–3",
+    "1–2 y 3–4",
+    "1–3 y 2–4"
+   ],
+   "fuente": "Tablas de Berger"
+  },
+  {
+   "t": 13639,
+   "n": 10,
+   "texto": "¿Por qué en un todos contra todos se usa el Sonneborn-Berger y no el Buchholz?",
+   "opciones": [
+    "El Buchholz solo existe con rating",
+    "Todos enfrentan a los mismos: el Buchholz no separa",
+    "El Sonneborn-Berger es más fácil de calcular",
+    "La FIDE prohíbe usar el Buchholz en los torneos de todos contra todos"
+   ],
+   "fuente": "FIDE C.07"
+  }
  ]
 }

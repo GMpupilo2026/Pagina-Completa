@@ -329,5 +329,127 @@
    "texto": "Salir de la zona de juego sin permiso está prohibido, pero no hace perder la partida por sí solo: la sanción la decide la persona árbitra o la fija el reglamento del torneo.",
    "fuente": "Leyes de la FIDE, art. 11.2.3 y 12.9"
   }
+ ],
+ "preguntas": [
+  {
+   "t": 1148,
+   "n": 1,
+   "texto": "Un jugador ofrece tablas una y otra vez, pese a las negativas del rival. ¿Qué es?",
+   "opciones": [
+    "Su derecho: puede ofrecerlas cuantas veces quiera",
+    "Una molestia al rival, que se puede sancionar",
+    "Una jugada ilegal",
+    "Motivo para declarar tablas"
+   ],
+   "fuente": "FIDE 11.5 y 12.9"
+  },
+  {
+   "t": 5277,
+   "n": 2,
+   "texto": "Un jugador toca a propósito su caballo, que tiene jugada legal, y después quiere mover el alfil. ¿Qué corresponde?",
+   "opciones": [
+    "Puede mover el alfil si no soltó el caballo",
+    "Puede mover el alfil, con una advertencia",
+    "Debe mover el caballo solo si el rival lo exige",
+    "Debe mover el caballo: pieza tocada"
+   ],
+   "fuente": "FIDE 4.3.1"
+  },
+  {
+   "t": 9745,
+   "n": 3,
+   "texto": "Durante su partida, ¿puede un jugador salir del recinto de juego (sala, baños y zona de descanso)?",
+   "opciones": [
+    "Solo con permiso del árbitro",
+    "Sí, si su reloj no está en marcha",
+    "Sí, si le avisa a su rival",
+    "Nunca, ni con permiso"
+   ],
+   "fuente": "FIDE 11.2"
+  },
+  {
+   "t": 9993,
+   "n": 4,
+   "texto": "¿En qué momento queda completada una jugada ilegal, a efectos de sanción?",
+   "opciones": [
+    "Cuando suelta la pieza en la casilla",
+    "Cuando el rival hace su jugada siguiente",
+    "Cuando la persona árbitra la ve",
+    "Cuando el jugador presiona el reloj"
+   ],
+   "fuente": "FIDE 7.5.1"
+  },
+  {
+   "t": 10200,
+   "n": 5,
+   "texto": "¿Cuál es la sanción más leve de la lista del art. 12.9?",
+   "opciones": [
+    "Sumarle tiempo al rival",
+    "Quitarle medio punto",
+    "La advertencia",
+    "Declarar perdida la partida"
+   ],
+   "fuente": "FIDE 12.9"
+  },
+  {
+   "t": 10382,
+   "n": 6,
+   "texto": "Un jugador firmó la planilla con el resultado y después quiere apelar una decisión. ¿Puede?",
+   "opciones": [
+    "No: al firmar aceptó el resultado",
+    "Sí: firmar no quita el derecho a apelar",
+    "Solo si el rival firma la apelación",
+    "Solo si no había árbitro presente"
+   ],
+   "fuente": "FIDE 8.7 y 11.10"
+  },
+  {
+   "t": 10898,
+   "n": 7,
+   "texto": "En apuro de tiempo, un jugador vuelca varias piezas al mover. ¿Con qué tiempo las repone?",
+   "opciones": [
+    "Con el tiempo del rival",
+    "Con los relojes detenidos por el árbitro",
+    "Con su propio tiempo",
+    "Las repone el árbitro, sin parar el reloj"
+   ],
+   "fuente": "FIDE 7.4"
+  },
+  {
+   "t": 12905,
+   "n": 8,
+   "texto": "Segunda jugada ilegal completada de un jugador, pero a su rival solo le queda el rey. ¿Resultado?",
+   "opciones": [
+    "Tablas: el rival no puede dar mate",
+    "Pierde quien hizo la segunda ilegal",
+    "El rival recibe dos minutos y sigue",
+    "La partida se juega de nuevo"
+   ],
+   "fuente": "FIDE 7.5.5"
+  },
+  {
+   "t": 13229,
+   "n": 9,
+   "texto": "El reglamento permite el celular completamente apagado en el bolso. Durante la partida vibra dentro del bolso. ¿Qué corresponde?",
+   "opciones": [
+    "Nada: estaba en el bolso, como se permite",
+    "La sanción del reglamento o, si no prevé otra, perder",
+    "Una advertencia: no sonó, solo vibró",
+    "Dos minutos más para el rival"
+   ],
+   "fuente": "FIDE 11.3.2"
+  },
+  {
+   "t": 13558,
+   "n": 10,
+   "texto": "A las 12 jugadas de cada bando se descubre que los colores estaban invertidos. ¿Qué se hace?",
+   "opciones": [
+    "La partida sigue con esos colores",
+    "Se juega de nuevo con los colores correctos",
+    "Se cambian los colores y se sigue",
+    "Se declaran tablas"
+   ],
+   "fuente": "FIDE 7.3"
+  }
  ]
 }
