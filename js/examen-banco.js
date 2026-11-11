@@ -27,6 +27,13 @@
  *    trae dos preguntas (cómo queda y cuál es la jugada) con crédito
  *    parcial para el papel; acá se toma la de la jugada, que es la que
  *    tiene una sola respuesta buena.
+ *  - `entreno/data/temas.json` — los ejercicios de táctica de Entrenamiento
+ *    («Ejercicios por tema»), de la base abierta de Lichess, tema por tema:
+ *    clavada, tenedor, desviación, mate del pasillo… Se pide la PRIMERA
+ *    jugada de la solución, que en un ejercicio de Lichess es la única que
+ *    gana (ver «La táctica de Entrenamiento como fuente de examen» en
+ *    docs/decisiones/seguimiento-del-alumno.md). Pesa casi 2 MB, así que se
+ *    baja recién cuando el profesor elige esa fuente (`cargarTactica()`).
  *
  * Estos tres últimos SÍ viajan enteros al navegador de quien da clase,
  * con su respuesta: es la misma fuga que tenía el diagnóstico, pendiente
@@ -116,6 +123,142 @@ window.ExamenBanco = (function () {
   function lineas() {
     const A = window.AperturasLineas;
     return (A && A.LINEAS) ? A.LINEAS.slice() : [];
+  }
+
+  /* ---------- La táctica de Entrenamiento ---------- */
+
+  /* Qué grupos de «Ejercicios por tema» entran. Son los de táctica y mate;
+     quedan fuera las fases, los objetivos, la duración y el origen, que no
+     son un tema que se examine sino otra forma de cortar los mismos
+     ejercicios. Y queda fuera el grupo `tactica` («Táctica de ataque»):
+     esos 148 son de la casa, no traen rating y su dificultad habría que
+     ponerla a ojo. */
+  const TACTICA_GRUPOS = ["recommended", "motifs", "advanced", "mates", "mateThemes"];
+
+  let tactica = null;          // { temas: [{key, nombre, grupo, ids}], ejercicios: {id: {...}} }
+  let tacticaPromesa = null;
+
+  /* El rating de Lichess pasado a la dificultad 1-5 del examen, en tramos
+     de 400 desde 1000. No es un número a ojo: es el rating del ejercicio
+     (lo calcula Lichess con quienes lo resolvieron), solo agrupado en los
+     cinco escalones que el profesor elige y que ponderan la nota. */
+  function pesoDeRating(r) {
+    if (!r) return 0;
+    if (r < 1000) return 1;
+    if (r < 1400) return 2;
+    if (r < 1800) return 3;
+    if (r < 2200) return 4;
+    return 5;
+  }
+
+  function cargarScript(src) {
+    return new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = () => ok();
+      s.onerror = () => mal(new Error("No se pudo cargar " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  /* Baja los ejercicios y lo que hace falta para pasarlos a pregunta
+     (chess.js para la jugada, ComandosTablero para escribirla en español).
+     `datos` es para la comprobación, que ya los tiene en la mano. */
+  function cargarTactica(datos) {
+    if (datos) { tactica = prepararTactica(datos); return Promise.resolve(tactica); }
+    if (tactica) return Promise.resolve(tactica);
+    if (!tacticaPromesa) {
+      tacticaPromesa = Promise.all([
+        window.Chess ? null : cargarScript("js/vendor/chess.js"),
+        window.ComandosTablero ? null : cargarScript("js/comandos-tablero.js"),
+        fetch("entreno/data/temas.json").then((r) => {
+          if (!r.ok) throw new Error("No se pudieron bajar los ejercicios de táctica (" + r.status + ").");
+          return r.json();
+        }),
+      ]).then(([, , d]) => { tactica = prepararTactica(d); return tactica; })
+        .catch((e) => { tacticaPromesa = null; throw e; });
+    }
+    return tacticaPromesa;
+  }
+
+  function prepararTactica(d) {
+    const temas = [];
+    (d.groups || []).forEach((g) => {
+      const grupo = g.id.replace(/^puzzle:/, "");
+      if (!TACTICA_GRUPOS.includes(grupo)) return;
+      (g.themes || []).forEach((t) => {
+        // «Jaque mate» está en dos grupos (Mates y Objetivos): una vez basta.
+        if (temas.some((x) => x.key === t.key)) return;
+        const ids = ((d.themes || {})[t.key] || []).filter((id) => {
+          const e = (d.puzzles || {})[id];
+          // Una subpromoción no entra: la base califica la jugada por su
+          // casilla de salida y de llegada, así que coronar dama donde había
+          // que coronar caballo contaría como buena.
+          return e && e.fen && e.solution && e.solution.length && pesoDeRating(e.rating) &&
+                 !/=[RBN]/.test(e.solution[0]);
+        });
+        if (ids.length) temas.push({ key: t.key, nombre: t.name, grupo: g.title.replace(/M[aá]s »$/, "").trim(), ids });
+      });
+    });
+    return { temas, ejercicios: d.puzzles || {} };
+  }
+
+  function tacticaCargada() { return !!tactica; }
+
+  /* Los temas para el selector: [{valor, texto, grupo}]. Vacío mientras no
+     se cargó. */
+  function temasDeTactica() {
+    return tactica ? tactica.temas.map((t) => ({ valor: t.key, texto: `${t.nombre} (${t.ids.length})`, grupo: t.grupo })) : [];
+  }
+
+  function nombreDeTema(key) {
+    const t = tactica && tactica.temas.find((x) => x.key === key);
+    return t ? t.nombre : key;
+  }
+
+  function candidatosTactica(op, min, max) {
+    if (!tactica) return [];
+    const t = tactica.temas.find((x) => x.key === op.tema) || tactica.temas[0];
+    if (!t) return [];
+    return t.ids.map((id) => ({ id, peso: pesoDeRating(tactica.ejercicios[id].rating), tema: t }))
+      .filter((c) => c.peso >= min && c.peso <= max);
+  }
+
+  /* Un ejercicio de Entrenamiento como pregunta de jugada. Vale la primera
+     jugada de la solución y, además, cualquier jugada que dé mate: un mate
+     nunca es una respuesta mala, y en Entrenamiento también se acepta
+     (EjercicioTablero.esAcierto). Si la jugada guardada no fuera legal en
+     su posición, el ejercicio no entra (devuelve null) en vez de entrar con
+     una clave que nadie puede acertar. */
+  function deTactica(c) {
+    const e = tactica.ejercicios[c.id];
+    const g = new window.Chess(e.fen);
+    const mov = g.move(e.solution[0], { sloppy: true });
+    if (!mov) return null;
+    g.undo();
+    const jugadas = [{ from: mov.from, to: mov.to }];
+    g.moves({ verbose: true }).forEach((m) => {
+      g.move(m);
+      const mate = g.in_checkmate();
+      g.undo();
+      if (mate && !jugadas.some((j) => j.from === m.from && j.to === m.to)) jugadas.push({ from: m.from, to: m.to });
+    });
+    const color = g.turn() === "w" ? "blancas" : "negras";
+    const es = (window.ComandosTablero && window.ComandosTablero.sanEspanol) || ((x) => x);
+    return {
+      tipo: "jugada",
+      banco: "tactica",
+      item_id: c.id,
+      area: c.tema.nombre,
+      peso: c.peso,
+      visible: {
+        enunciado: `Juegan las ${color}: ${e.mate ? "encuentra el mate" : "encuentra la mejor jugada"}.`,
+        fen: e.fen,
+        explica: `${c.tema.nombre}. La solución: ${e.solution.map(es).join(" ")}` +
+                 ` — Ejercicio de Lichess de dificultad ${e.rating}.`,
+      },
+      clave: { jugadas },
+    };
   }
 
   /* ---------- Pasar una pregunta del banco al examen ---------- */
@@ -238,9 +381,10 @@ window.ExamenBanco = (function () {
   }
 
   /* opciones:
-       { fuente: 'curso' | 'areas' | 'arbitraje' | 'linea' | 'libro',
-         curso, areas: [], linea_id, prueba, cantidad, dificultad: {min, max}, semilla }
-     `prueba` (1 a 6) es solo del libro; vacía, las seis. */
+       { fuente: 'curso' | 'areas' | 'arbitraje' | 'linea' | 'libro' | 'tactica',
+         curso, areas: [], linea_id, prueba, tema, cantidad, dificultad: {min, max}, semilla }
+     `prueba` (1 a 6) es solo del libro; vacía, las seis. `tema` es solo de
+     la táctica, y exige haber llamado antes a cargarTactica(). */
   function armar(op) {
     const rnd = azar(op.semilla || Math.floor(Math.random() * 1e9));
     const min = Math.max(1, (op.dificultad && op.dificultad.min) || 1);
@@ -263,6 +407,11 @@ window.ExamenBanco = (function () {
 
     if (op.fuente === "libro") {
       return sortear(candidatosLibro(op, min, max), cantidad, rnd).map((it) => deLibro(it, rnd));
+    }
+
+    if (op.fuente === "tactica") {
+      if (!tactica) throw new Error("Los ejercicios de táctica todavía se están cargando.");
+      return sortear(candidatosTactica(op, min, max), cantidad, rnd).map(deTactica).filter(Boolean);
     }
 
     let areas = op.areas || [];
@@ -321,6 +470,7 @@ window.ExamenBanco = (function () {
       }).length;
     }
     if (op.fuente === "libro") return candidatosLibro(op, min, max).length;
+    if (op.fuente === "tactica") return candidatosTactica(op, min, max).length;
     let areas = op.areas || [];
     if (op.fuente === "curso") areas = AREAS_DEL_CURSO[op.curso] || [];
     return items().filter((it) =>
@@ -411,6 +561,7 @@ window.ExamenBanco = (function () {
   }
 
   return { AREAS_DEL_CURSO, armar, completar, disponibles, cursosConPreguntas, minutosRecomendados,
+           cargarTactica, tacticaCargada, temasDeTactica, nombreDeTema,
            _barajar: barajar, _azar: azar };
 })();
 

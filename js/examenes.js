@@ -166,6 +166,7 @@ const FUENTES = [
   { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
   { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
   { valor: "libro",     texto: "Libro «Ponte a prueba»" },
+  { valor: "tactica",   texto: "Táctica de Entrenamiento (por tema)" },
 ];
 
 /* El libro se ofrece solo si su banco cargó: vive en material/ponte-a-prueba/,
@@ -218,6 +219,7 @@ function opcionesDeCual(b) {
     return [{ valor: "", texto: "Las seis pruebas" }].concat(
       Array.from({ length: n }, (_, i) => ({ valor: String(i + 1), texto: "Prueba " + (i + 1) })));
   }
+  if (b.fuente === "tactica") return ExamenBanco.temasDeTactica();
   if (b.fuente === "linea") {
     return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
       valor: l.id,
@@ -233,6 +235,7 @@ function opcionesDelBloque(b) {
     curso: b.fuente === "curso" ? b.cual : null,
     linea_id: b.fuente === "linea" ? b.cual : null,
     prueba: b.fuente === "libro" ? b.cual : null,
+    tema: b.fuente === "tactica" ? b.cual : null,
     areas: b.fuente === "areas" ? b.areas.slice() : [],
     cantidad: Math.max(1, b.cantidad || 1),
     dificultad: { min: b.difMin, max: b.difMax },
@@ -250,6 +253,7 @@ function nombreDeBloque(b) {
   if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
   if (b.fuente === "arbitraje") return "reglamento";
   if (b.fuente === "libro") return "Ponte a prueba" + (b.cual ? ", prueba " + b.cual : "");
+  if (b.fuente === "tactica") return b.cual ? "táctica: " + ExamenBanco.nombreDeTema(b.cual).toLowerCase() : "táctica";
   return b.areas.length ? b.areas.join(", ") : "todas las áreas";
 }
 
@@ -271,11 +275,20 @@ function pintarBloque(b) {
     lab.className = ETIQUETA; lab.setAttribute("for", id); lab.textContent = etiqueta;
     const s = document.createElement("select");
     s.id = id; s.className = CAMPO;
+    // Si las opciones traen `grupo` (los temas de táctica), van en
+    // <optgroup>: setenta temas en una lista corrida no se encuentran.
+    let grupoActual = null, destino = s;
     opciones.forEach((o) => {
+      if (o.grupo && o.grupo !== grupoActual) {
+        grupoActual = o.grupo;
+        destino = document.createElement("optgroup");
+        destino.label = o.grupo;
+        s.appendChild(destino);
+      }
       const opt = document.createElement("option");
       opt.value = o.valor; opt.textContent = o.texto;
       if (String(o.valor) === String(valor)) opt.selected = true;
-      s.appendChild(opt);
+      destino.appendChild(opt);
     });
     s.addEventListener("change", () => { alCambiar(s.value); refrescarMedida(); });
     wrap.append(lab, s);
@@ -298,6 +311,7 @@ function pintarBloque(b) {
         pintarBloques();
       }).catch((e) => Avisos.avisar("No se pudo cargar el banco de arbitraje (" + e.message + "). Revisa la conexión y vuelve a elegirlo.", { tipo: "error" }));
     }
+    if (v === "tactica" && !ExamenBanco.tacticaCargada()) cargarTactica();
   }));
   const cuales = opcionesDeCual(b);
   if (cuales.length) {
@@ -385,6 +399,27 @@ function pintarBloque(b) {
   return caja;
 }
 
+/* Los ejercicios de táctica de Entrenamiento pesan casi 2 MB: se bajan
+   recién cuando alguien elige esa fuente, no cada vez que se abre la
+   página. Mientras tanto el bloque dice que está cargando (no «no hay
+   preguntas», que sería mentira), y al llegar se repinta y se vuelve a
+   sortear: la previsión guardada se calculó sin ellos. */
+function cargarTactica() {
+  ExamenBanco.cargarTactica().then(() => {
+    prevision.clave = null;
+    pintarBloques();
+    refrescarMedida();
+  }).catch((e) => {
+    bloques.filter((b) => b.fuente === "tactica").forEach((b) => {
+      const aviso = document.getElementById(`b${b.id}-hay`);
+      if (aviso) {
+        aviso.textContent = e.message || "No se pudieron cargar los ejercicios de táctica.";
+        aviso.className = "text-xs mt-1 text-red-600 dark:text-red-400";
+      }
+    });
+  });
+}
+
 /* Cuántas preguntas hay de verdad en cada bloque, y cuántos minutos hacen
    falta como mínimo. Las dos cosas se dicen ANTES de mandar: enterarse de
    que el examen salió más corto de lo pedido cuando el alumno ya lo rindió
@@ -397,6 +432,14 @@ function refrescarMedida() {
       if (s) s.value = String(b.difMax);
     }
     if (b.fuente === "linea") return;
+    if (b.fuente === "tactica" && !ExamenBanco.tacticaCargada()) {
+      const aviso = document.getElementById(`b${b.id}-hay`);
+      if (aviso && !/No se pudo/.test(aviso.textContent)) {
+        aviso.textContent = "Cargando los ejercicios de táctica…";
+        aviso.className = "text-xs mt-1 text-brand-450 dark:text-brand-350";
+      }
+      return;
+    }
     const hay = hayEnBloque(b);
     if (b.cantidad > hay && hay > 0) {
       b.cantidad = hay;

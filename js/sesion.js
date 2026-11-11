@@ -643,7 +643,8 @@
             pintarPlanilla(row.planilla || null);
             pintarFormacion(row.practica || null);
             pintarSticker(row.sticker || null);
-            if (isTeacher) cargarPracticasDeFormacion();
+            pintarReloj(row.reloj || null);
+            if (isTeacher) { cargarPracticasDeFormacion(); cargarRelojProfe(); }
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1671,7 +1672,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null, sticker: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null, sticker: null, reloj: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1688,6 +1689,7 @@
             pintarPlanilla(null, true);
             pintarFormacion(null);
             pintarSticker(null);
+            pintarReloj(null);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector

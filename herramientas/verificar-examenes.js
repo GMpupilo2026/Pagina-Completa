@@ -296,6 +296,68 @@ async function main() {
     const duras = B.armar({ fuente: "areas", areas: [], cantidad: 10, dificultad: { min: 4, max: 5 }, semilla: 3 });
     ok(duras.every((d) => d.peso >= 4), `pidiendo dificultad 4-5 salieron pesos ${duras.map((d) => d.peso).join(",")}`);
 
+    // ---- La táctica de Entrenamiento ----
+    // Cada ejercicio de «Ejercicios por tema» pasa a pregunta de jugada.
+    // Lo que no puede pasar, y no avisaría: que la clave no lleve la
+    // primera jugada de la solución (el alumno acierta y le sale mal), que
+    // la jugada no sea legal en su posición, que lo visible traiga la
+    // solución, o que el examen salga más corto de lo pedido.
+    {
+      win.Chess = require(path.join(RAIZ, "js/vendor/chess.js")).Chess;
+      const datos = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/temas.json"), "utf8"));
+      await B.cargarTactica(datos);
+      const temas = B.temasDeTactica();
+      ok(temas.length >= 40, `esperaba más de 40 temas de táctica, hay ${temas.length}`);
+      ok(temas.some((t) => t.valor === "pin") && temas.some((t) => t.valor === "fork"),
+        "entre los temas de táctica faltan la clavada o el tenedor");
+      ok(!temas.some((t) => ["opening", "endgame", "short", "master"].includes(t.valor)),
+        "entre los temas de táctica se colaron fases, duraciones u orígenes");
+      let revisadasT = 0, malT = 0, ilegales = 0, visiblesT = 0, cortos = 0, fueraDeTema = 0;
+      for (const t of temas) {
+        const hay = B.disponibles({ fuente: "tactica", tema: t.valor, dificultad: { min: 1, max: 5 } });
+        const ex = B.armar({ fuente: "tactica", tema: t.valor, cantidad: hay, dificultad: { min: 1, max: 5 }, semilla: 5 });
+        if (ex.length !== hay) cortos++;
+        ex.forEach((e) => {
+          revisadasT++;
+          const orig = datos.puzzles[e.item_id];
+          if (!(datos.themes[t.valor] || []).includes(e.item_id)) fueraDeTema++;
+          const g = new win.Chess(orig.fen);
+          const m = g.move(orig.solution[0], { sloppy: true });
+          if (!m) { ilegales++; return; }
+          if (!e.clave.jugadas.some((j) => j.from === m.from && j.to === m.to)) malT++;
+          // Ninguna jugada de la clave puede ser ilegal: sería una respuesta
+          // que nadie puede dar.
+          g.undo();
+          const legales = g.moves({ verbose: true });
+          if (!e.clave.jugadas.every((j) => legales.some((l) => l.from === j.from && l.to === j.to))) ilegales++;
+          if (/"jugadas"|"solution"|"correcta"/.test(JSON.stringify(e.visible))) visiblesT++;
+          if (e.tipo !== "jugada" || e.banco !== "tactica" || !(e.peso >= 1 && e.peso <= 5)) malT++;
+        });
+      }
+      ok(revisadasT > 5000, `esperaba revisar más de 5000 ejercicios de táctica, revisé ${revisadasT}`);
+      ok(malT === 0, `${malT} preguntas de táctica no llevan en la clave la primera jugada de la solución`);
+      ok(ilegales === 0, `${ilegales} preguntas de táctica tienen una jugada ilegal en la clave`);
+      ok(visiblesT === 0, `${visiblesT} preguntas de táctica llevan la solución en lo que ve el alumno`);
+      ok(cortos === 0, `en ${cortos} temas el examen salió más corto de lo que decía «Hay N para elegir»`);
+      ok(fueraDeTema === 0, `${fueraDeTema} preguntas de táctica no son del tema pedido`);
+      // La dificultad pedida se respeta.
+      const durasT = B.armar({ fuente: "tactica", tema: "pin", cantidad: 10, dificultad: { min: 4, max: 5 }, semilla: 2 });
+      ok(durasT.length > 0 && durasT.every((d) => d.peso >= 4),
+        `pidiendo clavadas de dificultad 4-5 salieron pesos ${durasT.map((d) => d.peso).join(",")}`);
+      // Un mate en uno acepta cualquier mate: marcar mal un mate sería
+      // marcar mal una respuesta perfecta.
+      const m1 = B.armar({ fuente: "tactica", tema: "mateIn1", cantidad: 200, dificultad: { min: 1, max: 5 }, semilla: 3 });
+      let mateMal = 0;
+      m1.forEach((e) => {
+        const g = new win.Chess(e.visible.fen);
+        g.moves({ verbose: true }).forEach((mv) => {
+          g.move(mv); const mate = g.in_checkmate(); g.undo();
+          if (mate && !e.clave.jugadas.some((j) => j.from === mv.from && j.to === mv.to)) mateMal++;
+        });
+      });
+      ok(m1.length > 50 && mateMal === 0, `en los mates en uno, ${mateMal} jugadas que dan mate se marcarían mal`);
+    }
+
     // ---- El tiempo recomendado ----
     // LO QUE MÁS IMPORTA: nunca puede quedar por debajo del minuto por
     // pregunta que exige crear_examen(). Si quedara, el sitio le estaría
@@ -828,6 +890,35 @@ async function main() {
       `del libro se pidieron 6 de la prueba 4 y salieron de ${JSON.stringify(delLibro)}`);
     await p.evaluate(() => {
       document.querySelector('[data-bloque="4"] .quitar-bloque').click();
+    });
+    await p.waitForTimeout(200);
+
+    // LA TÁCTICA DE ENTRENAMIENTO, tema por tema. Se baja al elegirla (pesa
+    // casi 2 MB) y, con «Clavada», todas las preguntas tienen que ser
+    // clavadas de verdad: si el tema se perdiera, el examen saldría igual
+    // de largo con ejercicios de cualquier cosa.
+    await p.click("#e-agregar-bloque");
+    await p.waitForSelector("#b5-fuente", { timeout: 4000 });
+    await p.selectOption("#b5-fuente", "tactica");
+    await p.waitForSelector("#b5-cual option[value='pin']", { state: "attached", timeout: 15000 });
+    await p.selectOption("#b5-cual", "pin");
+    await p.waitForTimeout(300);
+    ok(/Hay \d+ para elegir/.test(await p.textContent("#b5-hay")),
+      `con «Clavada» debería decir cuántas hay y dice "${await p.textContent("#b5-hay")}"`);
+    ok(await p.evaluate(() => document.querySelectorAll("#b5-cual optgroup").length >= 4),
+      "los temas de táctica deberían ir agrupados (táctica, mates…)");
+    await p.fill("#b5-cantidad", "7");
+    await p.dispatchEvent("#b5-cantidad", "input");
+    await p.waitForTimeout(300);
+    const deTactica = await p.evaluate(async () => {
+      const d = await (await fetch("entreno/data/temas.json")).json();
+      return prevision.items.filter((i) => i.banco === "tactica")
+        .map((i) => ({ enTema: d.themes.pin.includes(i.item_id), tipo: i.tipo, area: i.area }));
+    });
+    ok(deTactica.length === 7 && deTactica.every((i) => i.enTema && i.tipo === "jugada" && i.area === "Clavada"),
+      `se pidieron 7 clavadas y salieron ${JSON.stringify(deTactica)}`);
+    await p.evaluate(() => {
+      document.querySelector('[data-bloque="5"] .quitar-bloque').click();
     });
     await p.waitForTimeout(200);
 

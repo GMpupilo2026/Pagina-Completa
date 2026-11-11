@@ -1533,6 +1533,7 @@ columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
 columna  game_state.sticker  jsonb
+columna  game_state.reloj  jsonb
 columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
