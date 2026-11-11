@@ -1092,10 +1092,14 @@
             if (!(await tallerP)) return;
             document.getElementById("progreso-alumno").hidden = true;
             // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
-            const [proximas, grabadas, vistas] = await Promise.all([
+            // Las sesiones del curso dicen qué presentación va con cada grabación;
+            // el worker las da solo a quien tiene acceso (si no, sin presentaciones).
+            const [proximas, grabadas, vistas, curso] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
                 sb.from("grabaciones_vistas").select("horario_id, fecha, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
+                fetch("cursos/recursos/formacion-ajedrez/sesiones.json", { credentials: "same-origin" })
+                    .then((r) => (r.ok ? r.json() : null)).catch(() => null),
             ]);
             const sesiones = !proximas.error && Array.isArray(proximas.data) ? proximas.data : [];
             const grabaciones = !grabadas.error && Array.isArray(grabadas.data) ? grabadas.data : [];
@@ -1105,6 +1109,7 @@
                 grabaciones,
                 vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
                 alVer: anotarLoVisto,
+                presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
