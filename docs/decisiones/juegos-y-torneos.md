@@ -170,7 +170,7 @@ y no contra Oscar. Es solo para esa academia.
   puntaje medio) × 10, y entra la jugada que hizo dos veces o más. El PGN no
   se sube al repositorio. Son livianos, así que el service worker no tiene
   regla para ellos.
-- **Los textos dicen su nombre** (`NOMBRE_BOT` en `js/tablero-board.js`), y
+- **Los textos dicen su nombre** (`NOMBRE_BOT` en `js/tablero-board.js`, y la tarjeta «Juega contra mí» del panel en `js/clases.js`), y
   arriba se ve su cara del avatar. El **Modo Desafío sigue siendo de partidas
   de Oscar**, y ahí el nombre no cambia: son posiciones de partidas suyas.
 - `tablero.html` e `index.html` cargan `js/avatar-profe-oscar.js` y
