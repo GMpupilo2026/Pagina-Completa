@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261111140000
+# al-dia-con: 20261111195552
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -31,6 +31,7 @@ tabla  arbitros_cr_solicitudes_enviadas  rls=true
 tabla  arbitros_cr_torneos  rls=true
 tabla  arbitros_cuentas  rls=true
 tabla  archivos_pgn  rls=true
+tabla  audios_clase  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
 tabla  avisos_cobro  rls=true
@@ -521,6 +522,18 @@ columna  archivos_pgn.nombre_archivo  text
 columna  archivos_pgn.pgn  text
 columna  archivos_pgn.profesor_id  uuid
 columna  archivos_pgn.titulo  text
+columna  audios_clase.academia_id  uuid
+columna  audios_clase.archivo  text
+columna  audios_clase.bytes  bigint
+columna  audios_clase.con_transcripcion  boolean
+columna  audios_clase.duracion_seg  integer
+columna  audios_clase.fecha  date
+columna  audios_clase.hora  time without time zone
+columna  audios_clase.id  uuid
+columna  audios_clase.puesto_en  timestamp with time zone
+columna  audios_clase.puesto_por  uuid
+columna  audios_clase.titulo  text
+columna  audios_clase.transcripcion  text
 columna  auditoria.antes  jsonb
 columna  auditoria.cuando  timestamp with time zone
 columna  auditoria.despues  jsonb
@@ -3158,6 +3171,7 @@ funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
+funcion  interno.puedo_poner_audios(p_academia uuid)  definer  anon=false  auth=true
 funcion  interno.puedo_sacar_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
@@ -3253,6 +3267,7 @@ funcion  mi_panel_taller()  definer  anon=false  auth=true
 funcion  mi_proxima_clase()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
+funcion  mis_academias_audios()  definer  anon=false  auth=true
 funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
@@ -3523,6 +3538,10 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  archivos_pgn  verificacion_en_dos_pasos  ALL  restrictiva
+politica  audios_clase  audios_clase_delete  DELETE
+politica  audios_clase  audios_clase_insert  INSERT
+politica  audios_clase  audios_clase_select  SELECT
+politica  audios_clase  audios_clase_update  UPDATE
 politica  auditoria  auditoria_select_admin  SELECT
 politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
@@ -4213,6 +4232,10 @@ indice  arbitros_cuentas  arbitros_cuentas_organizador_idx
 indice  arbitros_cuentas  arbitros_cuentas_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
+indice  audios_clase  audios_clase_academia_fecha
+indice  audios_clase  audios_clase_archivo_key
+indice  audios_clase  audios_clase_pkey
+indice  audios_clase  audios_clase_una_por_clase
 indice  auditoria  auditoria_cuando
 indice  auditoria  auditoria_pkey
 indice  auditoria  auditoria_sobre
@@ -5022,6 +5045,13 @@ grant  archivos_pgn  authenticated  SELECT
 grant  archivos_pgn  authenticated  TRIGGER
 grant  archivos_pgn  authenticated  TRUNCATE
 grant  archivos_pgn  authenticated  UPDATE
+grant  audios_clase  authenticated  DELETE
+grant  audios_clase  authenticated  INSERT
+grant  audios_clase  authenticated  REFERENCES
+grant  audios_clase  authenticated  SELECT
+grant  audios_clase  authenticated  TRIGGER
+grant  audios_clase  authenticated  TRUNCATE
+grant  audios_clase  authenticated  UPDATE
 grant  auditoria  authenticated  SELECT
 grant  aviso_destinatarios  authenticated  REFERENCES
 grant  aviso_destinatarios  authenticated  SELECT

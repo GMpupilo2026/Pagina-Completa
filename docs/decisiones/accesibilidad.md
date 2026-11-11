@@ -1227,3 +1227,78 @@ casillas entre los botones de arriba y los de abajo.
 
 Lo mide `verificar-piezas-ciego.js` (con la marca y sin ella). Probado que
 falla con el `tablero-board.js` de antes: saltan las dos comprobaciones.
+
+## Los audios de las clases
+
+El dueño pidió que cada clase del grupo de ADAES (alumnos ciegos) quedara
+para volver a escucharla, «ordenada en la página, porque al ser ciegos les
+cuesta más entrar». Las clases se graban en Meet; en la computadora del dueño
+el audio se saca a MP3 y Whisper lo transcribe. Acá se suben y se oyen en
+**`audios-clases.html`** («🎧 Audios de las clases»), una tarjeta en
+«Estudiar» del panel, en «Aprender y estudiar» del panel adaptado y en «Tus
+clases» del de quien da clase.
+
+**Un audio es de una academia y de un día, no del horario.** ADAES no tenía
+ninguna fila en `horario_clases` y son clases pasadas: la fecha y la hora
+salen del nombre del archivo como lo deja Meet («Clase Selección ADAES -
+2026_11_10 19_25 CST - Recording.mp3»; también acepta 2026-11-10 y 19:25), y
+el título es lo que va antes de la fecha. Sin fecha en el nombre no se sube.
+Por eso no se reusa `grabaciones_clase`, que es de YouTube y de una fila del
+horario. Dos audios de la misma clase (academia, día y hora) no entran: lo
+garantiza un índice único.
+
+**Cómo se oye, pensado para el lector de pantalla:**
+
+- Cada clase es un `<h3>` con el día dicho completo («Martes 10 de noviembre
+  de 2026», sin la coma que pone el navegador después del día: se lee como
+  pausa), así que se pasa de una a otra con la H. El `<article>` se nombra por
+  ese encabezado. Debajo: el título, la hora y la duración dicha («1 hora y 15
+  minutos»), no «1:15:27».
+- El reproductor es el del navegador (`<audio controls>`), que el lector
+  conoce y se maneja con el teclado, con `aria-label` «Audio de la clase del…».
+  `preload="none"`: no se baja nada hasta que se da play.
+- **La velocidad** se elige en una lista con su `<label>` («Velocidad»:
+  Normal, 1,25 veces…), porque el menú del reproductor no es igual en todos los
+  navegadores; se recuerda para todos los audios.
+- **Sigue donde quedó**: la posición se guarda en el navegador cada 5 segundos
+  y al volver arranca ahí (salvo en el primer o el último medio minuto), y lo
+  dice en un `role="status"` («Sigue donde lo dejaste: minuto 23»). Una clase
+  dura más de una hora; empezar de cero cada vez la hacía inútil.
+- **Lo que se dijo, escrito**: la transcripción de Whisper va en un
+  `<details>` («Leer lo que se dijo en la clase») y se pide al abrirlo (unos 35
+  KB por clase: la lista pide solo `con_transcripcion`). Los renglones
+  repetidos seguidos se juntan (Whisper escribe «no», «no», «no»… en el
+  ruido), y avisa que la escribió una computadora y puede equivocarse en las
+  jugadas.
+- «Descargar el audio (32 MB)», para oírlo sin conexión.
+
+**Quién ve y quién sube lo decide la base** (migración `20261111195552`):
+
+- `audios_clase` y el bucket privado `audios-clase` (solo MP3, hasta 50 MB,
+  en `<academia>/<archivo>.mp3`) los lee la gente de la academia
+  (`interno.academias_de`: miembros y su supervisor) y quien administra. Las
+  academias son privadas: otra academia no ve nada. El navegador pide enlaces
+  firmados de 6 horas.
+- Los sube, cambia o quita quien administra, el supervisor de la academia o un
+  profesor miembro de ella: `interno.puedo_poner_audios(academia)`, la misma
+  regla para la tabla y el bucket. En el bucket la carpeta se convierte a uuid
+  dentro de un `CASE`, no con `AND`: Postgres no promete el orden de un `AND` y
+  una carpeta que no es uuid daría un error en vez de un no.
+- La página pide `mis_academias_audios()` (solo sobre quien pregunta): si
+  devuelve alguna, sale «Subir audios» con su selector y «Quitar este audio»
+  en cada tarjeta. Si el archivo sube y la fila no entra (repetida), el archivo
+  se borra.
+- No reparte permisos, accesos ni dinero: no lleva bitácora.
+
+**El tamaño**: el MP3 que deja la computadora (calidad alta, ~190 kbps) pesa
+unos 100 MB por clase y no entra. Para voz alcanza con 48 kbps mono, unos
+27 MB por hora y cuarto:
+`ffmpeg -i clase.mp4 -vn -ac 1 -b:a 48k clase.mp3`.
+
+`verificar-audios-clases.js` lo prueba con el doble (el almacenamiento
+contesta un WAV de silencio por tramos, para poder saltar dentro): el nombre
+del archivo (Meet, solo la fecha, sin fecha, fecha imposible), los encabezados
+con el día, el detalle, el título como texto, el nombre del reproductor y del
+artículo, la descarga, la velocidad que cambia y se recuerda, que arranque en
+el segundo guardado y lo diga, la transcripción sin repetidos, que el alumno no
+vea subir ni quitar y quien puede sí, y la lista vacía.

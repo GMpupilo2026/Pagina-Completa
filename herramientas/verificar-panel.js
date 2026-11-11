@@ -400,7 +400,7 @@ async function pruebaAlumna(browser) {
      "entreno/aprende-a-jugar.html", "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
   igual("Estudiar: lo que se estudia con el profe",
     grupo(grupos, "Estudiar").tiles.map((t) => t.enlace),
-    ["cursos/academia/index.html", "repasar-clases.html"]);
+    ["cursos/academia/index.html", "repasar-clases.html", "audios-clases.html"]);
   igual("Entrenamiento básico",
     grupo(grupos, "Entrenamiento básico").tiles.map((t) => t.enlace),
     ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
@@ -521,7 +521,7 @@ async function pruebaProfesora(browser) {
      quiere decir es que no es suyo. */
   igual("«Tus clases»: su calendario, prepararlas (planes y cuestionarios), darlas, repasarlas e informarlas",
     grupo(grupos, "Tus clases").tiles.map((t) => t.enlace),
-    ["calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
+    ["calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "informe-mensual.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima

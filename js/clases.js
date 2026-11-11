@@ -110,6 +110,7 @@
             { title: "Estudiar", plegable: true, tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
+                { emoji: "🎧", label: "Audios de las clases", desc: "El audio de cada clase, para volver a escucharla, con lo que se dijo escrito", descProfe: "Sube el audio de cada clase para que tus alumnos la vuelvan a escuchar", href: "audios-clases.html" },
             ] },
             /* `escalon`: en la computadora se abre solo el del nivel del alumno
                (por su diagnóstico) y los otros dos arrancan plegados. Ver
@@ -419,7 +420,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
@@ -481,7 +482,7 @@
         const PANEL_ADAPTADO = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
-            { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
+            { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "audios-clases.html", "articulos.html"] },
             { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
             { title: "Jugar", id: "jugar", hrefs: ["te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
