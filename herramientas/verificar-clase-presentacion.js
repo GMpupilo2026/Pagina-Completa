@@ -149,12 +149,13 @@ const ultimaPresentacion = (page) => page.evaluate(() => {
 const seVe = (page, sel) => page.evaluate((s) => { const el = document.querySelector(s); return !!(el && el.checkVisibility()); }, sel);
 const imagen = (page) => page.evaluate(() => {
   const i = document.getElementById("presentacion-img");
-  return { src: (i.getAttribute("src") || "").split("/").pop(), cargada: i.complete && i.naturalWidth > 0, alt: i.alt };
+  // Las del curso se muestran como blob: (bajadas con la sesión en el encabezado): cuál es lo dice data-archivo.
+  return { src: i.dataset.archivo || (i.getAttribute("src") || "").split("/").pop(), cargada: i.complete && i.naturalWidth > 0, alt: i.alt };
 });
 async function esperarImagen(page, archivo) {
   await page.waitForFunction((a) => {
     const i = document.getElementById("presentacion-img");
-    return (i.getAttribute("src") || "").endsWith("/" + a) && i.complete && i.naturalWidth > 0;
+    return (i.dataset.archivo === a || (i.getAttribute("src") || "").endsWith("/" + a)) && i.complete && i.naturalWidth > 0;
   }, archivo, { timeout: 8000 });
 }
 
@@ -522,6 +523,95 @@ async function pruebaProyector(browser) {
     cajas.lamina[1] <= cajas.tablero[0] && cajas.tablero[2] < 400 && cajas.lamina[2] < 400 && cajas.tablero[1] <= cajas.ancho, JSON.stringify(cajas));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
   await ctx.close();
+}
+
+/* La cookie del candado vencida (el 10/11: la tarjeta en blanco con «Revisa tu
+   conexión» y la conexión bien). El doble no trae SesionCursos ni
+   refreshSession: se los pone este código, y un fetch que contesta 401 (o se
+   cae) las veces que diga __json401 / __jsonRed. */
+const CANDADO = `
+  window.__cookies = [];
+  // Como el de verdad (js/supabase-client.js): renovar() pide la sesión a
+  // supabase-js, la guarda en la cookie y la devuelve.
+  window.SesionCursos = {
+    guardar: (s) => window.__cookies.push(s && s.access_token),
+    renovar: (forzar) => (forzar ? window.sb.auth.refreshSession() : window.sb.auth.getSession()).then((r) => {
+      const s = r && r.data && r.data.session;
+      if (s) window.SesionCursos.guardar(s);
+      return s || null;
+    }),
+  };
+  window.sb.auth.refreshSession = () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "renovado" } } });
+  window.__json401 = Number(sessionStorage.getItem("json401") || 0);
+  window.__jsonRed = Number(sessionStorage.getItem("jsonRed") || 0);
+  window.__pedidosJson = 0;
+  const fetchDeVerdad = window.fetch;
+  window.__conEncabezado = [];
+  window.fetch = function (u, o) {
+    if (/diapositivas\\.json$/.test(String(u))) {
+      window.__pedidosJson += 1;
+      window.__conEncabezado.push(((o && o.headers) || {}).Authorization || "");
+      if (window.__jsonRed > 0) { window.__jsonRed -= 1; return Promise.reject(new TypeError("Failed to fetch")); }
+      if (window.__json401 > 0) { window.__json401 -= 1; return Promise.resolve(new Response("Hace falta iniciar sesión", { status: 401 })); }
+    }
+    return fetchDeVerdad.apply(this, arguments);
+  };
+`;
+async function abrirConCandado(browser, n, json401, jsonRed) {
+  return abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n } })] },
+    { extra: `try { sessionStorage.setItem("json401", "${json401}"); sessionStorage.setItem("jsonRed", "${jsonRed}"); } catch (e) {}` + CANDADO });
+}
+const avisoDeLaTarjeta = (page) => page.evaluate(() => {
+  const m = document.getElementById("presentacion-msg");
+  return m.checkVisibility() ? m.textContent : "";
+});
+
+async function pruebaCookieVencida(browser) {
+  console.log("\n6b. La cookie del candado vencida o la red caída: la diapositiva llega igual");
+  let a = await abrirConCandado(browser, 5, 1, 0);
+  await esperarImagen(a.page, "05.webp").catch(() => {});
+  cierto("un 401 del worker: se renueva la sesión, se pide otra vez y se ve sin aviso",
+    !(await avisoDeLaTarjeta(a.page)) && (await a.page.evaluate(() => window.__pedidosJson)) === 2);
+  cierto("la cookie se escribió antes de pedir y otra vez con el token renovado",
+    JSON.stringify(await a.page.evaluate(() => window.__cookies)).includes('"t","renovado"'),
+    JSON.stringify(await a.page.evaluate(() => window.__cookies)));
+  cierto("y la sesión va también en el encabezado (la cookie no llegaba en un perfil de Chrome), renovada al reintentar",
+    JSON.stringify(await a.page.evaluate(() => window.__conEncabezado)) === JSON.stringify(["Bearer t", "Bearer renovado"]),
+    JSON.stringify(await a.page.evaluate(() => window.__conEncabezado)));
+  await a.ctx.close();
+
+  a = await abrirConCandado(browser, 5, 2, 0);
+  await a.page.waitForFunction(() => document.getElementById("presentacion-msg").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+  const aviso = await avisoDeLaTarjeta(a.page);
+  cierto("si sigue en 401, dice que se venció la sesión (no «revisa tu conexión») y que se reintenta sola",
+    /venció tu sesión/.test(aviso) && /Se vuelve a intentar sola en 3 segundos/.test(aviso) && !/conexión/.test(aviso), aviso);
+  await esperarImagen(a.page, "05.webp").catch(() => {});
+  cierto("y a los segundos aparece sola, sin que nadie recargue ni pase de lámina",
+    !(await avisoDeLaTarjeta(a.page)) && (await a.page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 51");
+  await a.ctx.close();
+
+  a = await abrirConCandado(browser, 7, 0, 2);
+  await a.page.waitForFunction(() => document.getElementById("presentacion-msg").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+  cierto("sin red: avisa y se reintenta sola", /Se vuelve a intentar sola en 3 segundos/.test(await avisoDeLaTarjeta(a.page)), await avisoDeLaTarjeta(a.page));
+  await a.page.waitForFunction(() => /6 segundos/.test(document.getElementById("presentacion-msg").textContent), null, { timeout: 8000 }).catch(() => {});
+  cierto("si vuelve a fallar, espera más (6 segundos)", /6 segundos/.test(await avisoDeLaTarjeta(a.page)), await avisoDeLaTarjeta(a.page));
+  await a.page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await esperarImagen(a.page, "07.webp").catch(() => {});
+  cierto("y al volver la conexión la pide en el acto", !(await avisoDeLaTarjeta(a.page)));
+
+  // La imagen también pasa por el candado: un 401 en la lámina siguiente.
+  let veces = 0;
+  await a.ctx.route("**/presentaciones/clase-01/08.webp*", (r) => { veces += 1; return veces === 1 ? r.fulfill({ status: 401, body: "no" }) : r.continue(); });
+  await a.page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 8 } }));
+  await a.page.waitForFunction(() => {
+    const i = document.getElementById("presentacion-img");
+    return i.dataset.archivo === "08.webp" && /^blob:/.test(i.getAttribute("src") || "") && i.complete && i.naturalWidth > 0;
+  }, null, { timeout: 8000 }).catch(() => {});
+  cierto("una imagen en 401: se renueva la sesión y se vuelve a pedir, y se ve",
+    veces === 2 && (await imagen(a.page)).cargada && (await a.page.evaluate(() => window.__cookies.includes("renovado"))) && !(await avisoDeLaTarjeta(a.page)),
+    "pedidas: " + veces + ", " + JSON.stringify(await imagen(a.page)));
+  cierto("sin errores de la página", a.errores.filter((e) => !/^console:/.test(e)).length === 0, a.errores.join(" | "));
+  await a.ctx.close();
 }
 
 
@@ -960,6 +1050,7 @@ async function pruebaPantallaCompletaTodos(browser) {
     await pruebaPizarraClase(browser);
     await pruebaAlumna(browser);
     await pruebaProyector(browser);
+    await pruebaCookieVencida(browser);
     await pruebaSubida(browser);
     await pruebaSubidaAlumna(browser);
     await pruebaVistaLimpia(browser);

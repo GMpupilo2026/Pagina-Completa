@@ -309,6 +309,9 @@ async function pintarLaminaDeFormacion() {
         const src = await PresentacionClase.url(p.deck, d);
         if (turno !== formacionPintando) return;
         msg.hidden = true;
+        // Las láminas del curso llegan como blob: (bajadas con la sesión en el
+        // encabezado, ver PresentacionClase): cuál es lo dice data-archivo.
+        img.dataset.archivo = PresentacionClase.carpeta(p.deck) + d.imagen;
         img.src = src;
         img.alt = "Lámina " + (i + 1) + " de la práctica: " + d.titulo;
         document.getElementById("formacion-texto").textContent = d.texto || "";
@@ -319,6 +322,7 @@ async function pintarLaminaDeFormacion() {
     } catch (e) {
         if (turno !== formacionPintando) return;
         img.removeAttribute("src");
+        delete img.dataset.archivo;
         msg.textContent = e && e.message === "sin_acceso" ? "Tu cuenta no tiene acceso a las láminas de esta práctica. Avísale a tu profe."
             : "No se pudo abrir la lámina. Revisa tu conexión y vuelve a tocar el número de la lámina.";
         msg.hidden = false;

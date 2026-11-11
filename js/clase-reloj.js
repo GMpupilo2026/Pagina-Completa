@@ -44,7 +44,10 @@ window.RelojPractica = (function () {
         { nombre: "10 + 2", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "3 + 2", sub: "Relámpago · Fischer", control: { modo: "fischer", base: 180, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "5 + 0", sub: "Relámpago · sin incremento", control: { modo: "sin", base: 300, inc: 0, dly: 0, mv: 40, add: 0 } },
+        { nombre: "90 · d5", sub: "Clásica · demora 5 s", control: { modo: "demora", base: 5400, inc: 0, dly: 5, mv: 40, add: 0 } },
         { nombre: "25 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 1500, inc: 0, dly: 5, mv: 40, add: 0 } },
+        { nombre: "10 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 600, inc: 0, dly: 5, mv: 40, add: 0 } },
+        { nombre: "5 · d3", sub: "Relámpago · demora 3 s", control: { modo: "demora", base: 300, inc: 0, dly: 3, mv: 40, add: 0 } },
     ];
     const RETOS = [
         { texto: "Clásica: 90 minutos con incremento de 30 segundos por jugada.", ok: (c) => c.modo === "fischer" && c.base === 5400 && c.inc === 30 },
@@ -131,10 +134,16 @@ window.RelojPractica = (function () {
     }
     function valido(r) {
         return !!(r && typeof r === "object" && !Array.isArray(r)
-            && typeof r.id === "string" && /^[a-z0-9-]{4,40}$/.test(r.id) && validoControl(r.control));
+            && typeof r.id === "string" && /^[a-z0-9-]{4,40}$/.test(r.id) && validoControl(r.control)
+            && (r.situacion === undefined || r.situacion === null || entero(r.situacion, 0, ILEGALES.length - 1)));
     }
-    function paraMandar(control) {
-        return { id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), control: Object.assign({}, control) };
+    /* situacion (opcional): el índice de una situación de ILEGALES. Con ella, a
+       cada alumno le sale SOLO el reloj y esa situación (el profe las pone de a
+       una); sin ella, el reloj libre con todo. */
+    function paraMandar(control, situacion) {
+        const r = { id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), control: Object.assign({}, control) };
+        if (Number.isInteger(situacion)) r.situacion = situacion;
+        return r;
     }
     // Fórmula de 60 jugadas: tiempo base (+ el 2.º período si llega antes de la jugada 60) + 60 × incremento.
     function clasificar(c) {
@@ -171,6 +180,8 @@ window.RelojPractica = (function () {
 :host([data-oscuro]){--fondo:#1c2029;--tinta:#e8ebf1;--suave:#9aa3b3;--linea:#2e3441;--acento:#93a5ff;--acento-tinta:#10142a;--ok:#5fd394;--alerta:#f0a85a;--panel:#252c3f}
 *{box-sizing:border-box}
 .raiz{display:flex;flex-direction:column;gap:12px;outline:none}
+.raiz.solo .barra,.raiz.solo .mesa>.tarjeta:not(.ancha),.raiz.solo .solo-no{display:none}
+.raiz:not(.solo) .solo-si{display:none}
 .raiz:focus-visible{box-shadow:0 0 0 3px var(--acento);border-radius:12px}
 .aparato{width:100%;max-width:760px;margin:0 auto;position:relative;padding-top:clamp(28px,6vw,50px)}
 .atras{position:absolute;top:clamp(14px,3vw,28px);left:3.5%;right:3.5%;height:clamp(56px,10vw,92px);z-index:0;background:linear-gradient(180deg,#4a1518,#5e2025);border-radius:clamp(20px,4vw,34px) clamp(20px,4vw,34px) 0 0}
@@ -323,12 +334,13 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
       <ul data-r="retos"></ul>
     </div>
     <div class="tarjeta ancha">
-      <h3>Situaciones de árbitro: ajusta el reloj</h3>
-      <p class="teclado" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de lo que pasó (una ilegal, un reclamo, un reloj mal programado), y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
-      <ul data-r="ilegales"></ul>
+      <h3 data-r="tituloI">Situaciones de árbitro: ajusta el reloj</h3>
+      <p class="teclado solo-si" style="margin:0">Presiona «Empezar»: el reloj arranca corriendo, justo después de lo que pasó. Detenlo con ▶‖, entra a corrección con ✓, deja los tiempos como dicen las Leyes y presiona «Comprobar el reloj».</p>
+      <p class="teclado solo-no" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de lo que pasó (una ilegal, un reclamo, un reloj mal programado), y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
+      <ul data-r="ilegales" class="solo-no"></ul>
       <div class="situacion" data-r="situacion" hidden>
         <p data-r="sitTexto"></p>
-        <div class="fila"><button class="boton" type="button" data-r="comprobar">Comprobar el reloj</button></div>
+        <div class="fila"><button class="boton solo-si" type="button" data-r="soloEmpezar">Empezar</button><button class="boton" type="button" data-r="comprobar">Comprobar el reloj</button></div>
         <p class="veredicto-i" data-r="veredictoI" role="status" aria-live="polite"></p>
       </div>
     </div>
@@ -374,7 +386,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
 
         let cfg = null; // en milisegundos
         const S = { estado: "listo", t: [0, 0], mv: [0, 0], corre: null, dl: 0, bandera: null, blancas: 0, paso: 0, previo: "listo",
-            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set(), hechosI: new Set(), reto: null };
+            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set(), hechosI: new Set(), reto: null, solo: null };
         const desdeControl = (c) => ({ modo: c.modo, base: c.base * 1000, inc: c.inc, dly: c.dly, mv: c.mv, add: c.add * 1000 });
         const aControl = (k) => ({ modo: k.modo, base: Math.round(k.base / 1000), inc: k.inc, dly: k.dly, mv: k.mv, add: Math.round(k.add / 1000) });
         function reiniciar() { S.t = [cfg.base, cfg.base]; S.mv = [0, 0]; S.corre = null; S.dl = 0; S.bandera = null; S.estado = "listo"; S.reto = null; }
@@ -691,8 +703,13 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
                 li.append(c, t, b); ul.appendChild(li);
             });
             const caja = $("situacion");
-            caja.hidden = !S.reto;
-            if (S.reto) $("sitTexto").textContent = "Situación " + (S.reto.i + 1) + ": " + ILEGALES[S.reto.i].situacion + " Las blancas están a la izquierda.";
+            const i = S.solo !== null ? S.solo : (S.reto ? S.reto.i : null);
+            caja.hidden = i === null;
+            if (i !== null) $("sitTexto").textContent = "Situación " + (i + 1) + ": " + ILEGALES[i].situacion + " Las blancas están a la izquierda.";
+            $("tituloI").textContent = S.solo !== null ? ILEGALES[S.solo].titulo : "Situaciones de árbitro: ajusta el reloj";
+            const b = $("soloEmpezar");
+            b.textContent = S.reto ? "Empezar de nuevo" : "Empezar";
+            b.setAttribute("aria-label", b.textContent + (S.solo !== null ? ": " + ILEGALES[S.solo].titulo : ""));
         }
         function empezarIlegal(i) {
             if (!cfg) return;
@@ -707,8 +724,13 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             aviso(r.aviso || "¡Jugada ilegal! El reloj de " + nombreLado(r.corre) + " está corriendo: actúa como árbitro.", "alerta");
         }
         const reloj = (s) => { const a = Math.abs(s); return (s < 0 ? "−" : "+") + Math.floor(a / 60) + ":" + pad(a % 60); };
+        // Solo con la situación que puso el profe: lo que se comprueba se le cuenta (opciones.alComprobar).
+        function avisarIntento(i, logrado) {
+            if (S.solo === i && typeof opciones.alComprobar === "function") opciones.alComprobar(i, logrado);
+        }
         function comprobarIlegal() {
-            const R = S.reto; if (!R) return;
+            const R = S.reto;
+            if (!R) { if (S.solo !== null) veredictoI("Primero presiona «Empezar»: el reloj arranca corriendo.", "alerta"); return; }
             const r = ILEGALES[R.i];
             if (S.estado === "corregir") { veredictoI("Termina la corrección: sigue confirmando con ✓ hasta el último dato (las jugadas de la derecha).", "alerta"); return; }
             if (!R.foto) {
@@ -725,9 +747,11 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             const malMv = !r.mv2 && (fin.mv[0] !== R.foto.mv[0] || fin.mv[1] !== R.foto.mv[1]);
             if (bienT && bienM && !malMv) {
                 S.hechosI.add(R.i); guardarHechos(); pintarIlegales();
-                veredictoI("¡Bien! " + r.regla, "ok");
+                veredictoI("¡Bien! " + r.regla + (S.solo !== null ? " Espera la siguiente situación de tu profe." : ""), "ok");
+                avisarIntento(R.i, true);
                 return;
             }
+            avisarIntento(R.i, false);
             const infractor = 1 - r.corre, rival = r.corre;
             const quien = (k) => (k === 0 ? "las blancas" : "las negras");
             let msg;
@@ -772,6 +796,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
         segmentado("sonido", (v) => { S.sonido = v === "1"; });
         $("reiniciar").addEventListener("click", () => { if (!cfg) return; reiniciar(); pintarIlegales(); aviso("Partida reiniciada con el mismo control."); });
         $("comprobar").addEventListener("click", comprobarIlegal);
+        $("soloEmpezar").addEventListener("click", () => { if (S.solo !== null) empezarIlegal(S.solo); });
         // Tocar el reloj lo selecciona: así sus teclas funcionan sin pisar las del tablero.
         raiz.addEventListener("pointerdown", (e) => { if (!e.target.closest("button")) raiz.focus({ preventScroll: true }); });
         raiz.addEventListener("keydown", (e) => {
@@ -815,10 +840,28 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             reiniciar(); leerHechos(); pintarRetos(); pintarIlegales(); marcarEscenario();
             $("aviso").textContent = "";
         }
+        /* Una sola situación (la que puso el profe): se esconde todo lo demás y el
+           reloj espera parado con su control hasta que el alumno presiona
+           «Empezar», para que no le caiga la bandera mientras lee. null: el
+           reloj libre, con todo. */
+        function situacion(i) {
+            S.solo = Number.isInteger(i) && ILEGALES[i] ? i : null;
+            raiz.classList.toggle("solo", S.solo !== null);
+            if (S.solo !== null) {
+                cfg = desdeControl(ILEGALES[S.solo].control); reiniciar();
+                S.blancas = 0;
+                $("blancas").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === "0")));
+                S.vel = 1;
+                $("velocidad").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === "1")));
+                aviso("Lee lo que pasó y presiona «Empezar».");
+            }
+            veredictoI(""); pintarIlegales(); marcarEscenario();
+        }
         pintarEscenarios(); pintarRetos(); pintarIlegales();
         ciclo = setInterval(cuadro, 50);
         return {
             cargar,
+            situacion,
             destruir() { vivo = false; clearInterval(ciclo); observador.disconnect(); clearTimeout(avisoTimer); },
         };
     }
@@ -846,11 +889,25 @@ function pintarReloj(r) {
     tarjeta.hidden = false;
     if (antes && antes.id === relojActual.id && relojMontado) return; // el mismo envío: el reloj de cada uno sigue como va
     const clave = "clase_reloj_v1:" + (boardOwnerId || "") + ":" + relojActual.id;
-    if (!relojMontado) relojMontado = RelojPractica.montar(document.getElementById("reloj-host"), { clave });
+    if (!relojMontado) relojMontado = RelojPractica.montar(document.getElementById("reloj-host"), { clave, alComprobar: anotarIntento });
     relojMontado.cargar(relojActual.control, clave);
+    const sit = Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
+    relojMontado.situacion(sit);
     if (!isTeacher) {
-        anunciarALaClase("reloj", relojActual.id, "Tu profe puso el reloj de práctica en tu pantalla, arriba del tablero. Es tuyo: configúralo con sus botones y ponlo en marcha con la palanca.");
+        anunciarALaClase("reloj", relojActual.id, sit !== null
+            ? "Tu profe te puso una situación de árbitro arriba del tablero: lee qué pasó, presiona «Empezar» y ajusta el reloj."
+            : "Tu profe puso el reloj de práctica en tu pantalla, arriba del tablero. Es tuyo: configúralo con sus botones y ponlo en marcha con la palanca.");
     }
+}
+
+/* Cada «Comprobar» del alumno en la situación que puso el profe queda anotado
+   (reloj_situaciones): con eso el profe ve quién lleva cuáles. La base exige
+   que la situación siga puesta en la clase de un profe suyo. Si falla, la
+   práctica sigue igual: solo no se cuenta. */
+function anotarIntento(i, logrado) {
+    if (isTeacher || esObservador || !relojActual || relojActual.situacion !== i) return;
+    sb.rpc("reloj_situacion_intento", { p_envio: relojActual.id, p_situacion: i, p_logrado: !!logrado })
+        .then(({ error }) => { if (error) console.error("No se pudo anotar el intento del reloj:", error); });
 }
 
 /* ---------- El profe ---------- */
@@ -877,6 +934,27 @@ async function cargarRelojProfe() {
             o.textContent = e.nombre + " · " + e.sub;
             sel.appendChild(o);
         });
+        const o = document.createElement("option");
+        o.value = "manual";
+        o.textContent = "Personalizado: elige tú el modo y los tiempos";
+        sel.appendChild(o);
+        const modo = document.getElementById("reloj-m-modo");
+        RelojPractica.MODOS.forEach((m) => {
+            const x = document.createElement("option");
+            x.value = m.id; x.textContent = m.nombre;
+            modo.appendChild(x);
+        });
+        modo.value = "fischer";
+        pintarManual();
+    }
+    const selS = document.getElementById("reloj-sit-select");
+    if (selS && !selS.options.length) {
+        RelojPractica.ILEGALES.forEach((r, k) => {
+            const o = document.createElement("option");
+            o.value = String(k);
+            o.textContent = (k + 1) + ". " + r.titulo;
+            selS.appendChild(o);
+        });
     }
     caja.hidden = false;
     pintarRelojProfe();
@@ -886,19 +964,78 @@ function pintarRelojProfe() {
     const quitar = document.getElementById("reloj-quitar-btn");
     if (!quitar) return;
     const hay = isTeacher && !!relojActual;
+    const sit = hay && Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
     quitar.hidden = !hay;
-    document.getElementById("reloj-mandar-btn").textContent = hay ? "Ponerlo de nuevo con este control (todos arrancan de cero)" : "Poner el reloj en la clase";
-    document.getElementById("reloj-enviado").textContent = hay
-        ? "Puesto en la clase: " + RelojPractica.clasificar(relojActual.control).ritmo + " · cada alumno lo ve arriba del tablero y maneja el suyo."
-        : "";
+    document.getElementById("reloj-mandar-btn").textContent = !hay ? "Poner el reloj en la clase"
+        : (sit !== null ? "Poner el reloj libre con este control" : "Ponerlo de nuevo con este control (todos arrancan de cero)");
+    document.getElementById("reloj-enviado").textContent = !hay ? ""
+        : sit !== null
+            ? "Puesta en la clase: situación " + (sit + 1) + " de " + RelojPractica.ILEGALES.length + " · " + RelojPractica.ILEGALES[sit].titulo + ". Cada alumno ve solo el reloj y esa situación."
+            : "Puesto en la clase: " + RelojPractica.clasificar(relojActual.control).ritmo + " · cada alumno lo ve arriba del tablero y maneja el suyo.";
+    const btnS = document.getElementById("reloj-sit-btn");
+    if (btnS) btnS.textContent = sit !== null ? "Poner esta situación (cambia la de todos)" : "Poner esta situación a todos";
+}
+
+/* Personalizado: el profe elige el modo (sin incremento, Fischer, demora o por
+   períodos) y los tiempos. Se ven solo los campos de ese modo (los mismos que
+   pide el reloj al configurarlo: MODOS[].campos) y abajo cómo queda, con la
+   fórmula de 60 jugadas. Devuelve el control, o null si no sirve. */
+const CAMPOS_MANUAL = { bH: "reloj-m-bh", bM: "reloj-m-bm", bS: "reloj-m-bs", inc: "reloj-m-inc", dly: "reloj-m-dly", mv: "reloj-m-mv", aH: "reloj-m-ah", aM: "reloj-m-am" };
+function numeroManual(id, min, max) {
+    const el = document.getElementById(id);
+    const v = el && el.value.trim() !== "" ? Number(el.value) : 0;
+    return Number.isInteger(v) && v >= min && v <= max ? v : NaN;
+}
+function leerManual() {
+    const modo = document.getElementById("reloj-m-modo").value;
+    const m = RelojPractica.MODOS.find((x) => x.id === modo);
+    if (!m) return null;
+    const usa = (k) => m.campos.includes(k);
+    const n = (k, max) => (usa(k) ? numeroManual(CAMPOS_MANUAL[k], 0, max) : 0);
+    const bH = n("bH", 9), bM = n("bM", 59), bS = n("bS", 59), inc = n("inc", 60), dly = n("dly", 60);
+    const aH = n("aH", 9), aM = n("aM", 59);
+    const mv = usa("mv") ? numeroManual(CAMPOS_MANUAL.mv, 1, 99) : 40;
+    const c = { modo, base: bH * 3600 + bM * 60 + bS, inc, dly, mv, add: (aH * 60 + aM) * 60 };
+    return RelojPractica.validoControl(c) ? c : null;
+}
+function describirManual(c) {
+    const reloj = (s) => (s >= 3600 ? Math.floor(s / 3600) + " h " : "") + (s % 3600 >= 60 ? Math.floor(s % 3600 / 60) + " min" : "") + (s % 60 ? " " + (s % 60) + " s" : "");
+    const partes = [reloj(c.base).trim()];
+    if (c.modo === "fischer") partes.push("+ " + c.inc + " s por jugada (Fischer)");
+    if (c.modo === "demora") partes.push("con demora de " + c.dly + " s por jugada");
+    if (c.modo === "periodos") partes.push("por " + c.mv + " jugadas, luego " + reloj(c.add).trim() + " más" + (c.inc ? ", + " + c.inc + " s por jugada" : ""));
+    if (c.modo === "sin") partes.push("sin incremento");
+    const k = RelojPractica.clasificar(c);
+    return k.ritmo + ": " + partes.join(" ") + ". Fórmula de 60 jugadas: " + Math.round(k.minutos * 10) / 10 + " min.";
+}
+function pintarManual() {
+    const caja = document.getElementById("reloj-manual");
+    if (!caja) return;
+    caja.hidden = document.getElementById("reloj-select").value !== "manual";
+    const m = RelojPractica.MODOS.find((x) => x.id === document.getElementById("reloj-m-modo").value);
+    const usa = (k) => !!m && m.campos.includes(k);
+    document.getElementById("reloj-m-bs-fila").hidden = !usa("bS");
+    document.getElementById("reloj-m-inc-fila").hidden = !usa("inc");
+    document.getElementById("reloj-m-dly-fila").hidden = !usa("dly");
+    document.getElementById("reloj-m-per-fila").hidden = !usa("mv");
+    const c = leerManual();
+    document.getElementById("reloj-m-resumen").textContent = c ? describirManual(c)
+        : "Revisa los tiempos: el tiempo base no puede ser cero y cada dato tiene que estar dentro de su rango.";
 }
 
 async function mandarReloj() {
     const aviso = document.getElementById("reloj-aviso");
-    const k = parseInt(document.getElementById("reloj-select").value, 10);
-    const esc = RelojPractica.ESCENARIOS[k];
-    if (!esc || !myGameStateId) return;
-    const nuevo = RelojPractica.paraMandar(esc.control);
+    const valor = document.getElementById("reloj-select").value;
+    let control;
+    if (valor === "manual") {
+        control = leerManual();
+        if (!control) { aviso.textContent = "Revisa los tiempos del reloj personalizado antes de ponerlo."; return; }
+    } else {
+        const esc = RelojPractica.ESCENARIOS[parseInt(valor, 10)];
+        control = esc && esc.control;
+    }
+    if (!control || !myGameStateId) return;
+    const nuevo = RelojPractica.paraMandar(control);
     if (!RelojPractica.valido(nuevo)) { aviso.textContent = "Ese control no tiene la forma que la base acepta."; return; }
     aviso.textContent = "Poniendo el reloj…";
     const { data, error } = await sb.from("game_state").update({ reloj: nuevo }).eq("id", myGameStateId).select("reloj").single();
@@ -906,6 +1043,116 @@ async function mandarReloj() {
     aviso.textContent = "";
     pintarReloj(data && data.reloj ? data.reloj : nuevo);
 }
+
+/* Una situación de árbitro para todos: el reloj con su control y nada más.
+   Después de ponerla, la lista pasa a la siguiente: para seguir, basta volver
+   a presionar. */
+async function mandarSituacion() {
+    const aviso = document.getElementById("reloj-aviso");
+    const sel = document.getElementById("reloj-sit-select");
+    const k = parseInt(sel.value, 10);
+    const r = RelojPractica.ILEGALES[k];
+    if (!r || !myGameStateId) return;
+    const nuevo = RelojPractica.paraMandar(r.control, k);
+    if (!RelojPractica.valido(nuevo)) { aviso.textContent = "Esa situación no tiene la forma que la base acepta."; return; }
+    aviso.textContent = "Poniendo la situación…";
+    const { data, error } = await sb.from("game_state").update({ reloj: nuevo }).eq("id", myGameStateId).select("reloj").single();
+    if (error) { console.error(error); aviso.textContent = "No se pudo poner la situación. Vuelve a intentarlo."; return; }
+    aviso.textContent = "";
+    if (k + 1 < sel.options.length) sel.value = String(k + 1);
+    pintarReloj(data && data.reloj ? data.reloj : nuevo);
+    cargarAvanceReloj();
+}
+
+/* Cómo van: un cuadro de alumno × situación con lo de las últimas 12 horas
+   (una clase entra de sobra). Se pone al día solo mientras haya una situación
+   puesta y la caja esté abierta. */
+const RELOJ_VENTANA_MS = 12 * 3600 * 1000;
+let relojAvanceTurno = 0;
+function celdaDeAvance(x) {
+    if (!x) return "—";
+    if (x.logrado) return "✓ " + (x.logradoEn === 1 ? "a la primera" : "en el intento " + x.logradoEn);
+    return "✗ " + x.intentos + (x.intentos === 1 ? " intento" : " intentos");
+}
+async function cargarAvanceReloj() {
+    const cont = document.getElementById("reloj-avance");
+    if (!cont || !isTeacher || !relojPermiso) return;
+    const turno = ++relojAvanceTurno;
+    const desde = new Date(Date.now() - RELOJ_VENTANA_MS).toISOString();
+    const { data: filas, error } = await sb.from("reloj_situaciones")
+        .select("student_id, situacion, intentos, logrado_en")
+        .eq("owner_id", boardOwnerId).gte("created_at", desde).limit(1000);
+    if (turno !== relojAvanceTurno) return;
+    if (error) { console.error(error); cont.replaceChildren(); cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs text-brand-700 dark:text-brand-200", textContent: "No se pudo cargar cómo van. Vuelve a intentarlo." })); return; }
+    // Si la misma situación se puso dos veces, cuenta lo de las dos.
+    const tabla = new Map();
+    (filas || []).forEach((f) => {
+        const k = f.student_id + "|" + f.situacion;
+        const x = tabla.get(k) || { intentos: 0, logrado: false, logradoEn: null };
+        if (f.logrado_en && !x.logrado) { x.logrado = true; x.logradoEn = x.intentos + f.logrado_en; }
+        x.intentos += f.intentos;
+        tabla.set(k, x);
+    });
+    const actual = relojActual && Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
+    const sits = [...new Set((filas || []).map((f) => f.situacion).concat(actual !== null ? [actual] : []))].sort((a, b) => a - b);
+    const ids = [...new Set((filas || []).map((f) => f.student_id))];
+    const nombres = new Map();
+    if (ids.length) {
+        const { data } = await sb.from("profiles").select("id, full_name, email").in("id", ids);
+        (data || []).forEach((p) => nombres.set(p.id, p.full_name || p.email || "Alumno"));
+        if (turno !== relojAvanceTurno) return;
+    }
+    cont.replaceChildren();
+    if (!ids.length) {
+        cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs text-brand-600 dark:text-brand-300",
+            textContent: actual !== null ? "Todavía nadie presionó «Comprobar» en esta situación." : "Todavía no hay situaciones resueltas en esta clase." }));
+        return;
+    }
+    if (actual !== null) {
+        const logrados = ids.filter((id) => (tabla.get(id + "|" + actual) || {}).logrado).length;
+        cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs font-semibold text-brand-700 dark:text-brand-200",
+            textContent: "Situación " + (actual + 1) + ": " + logrados + " de " + ids.length + " ya la resolvieron." }));
+    }
+    const envoltura = document.createElement("div");
+    envoltura.className = "overflow-x-auto";
+    const t = document.createElement("table");
+    t.className = "w-full text-xs text-brand-700 dark:text-brand-200 border-collapse";
+    const cap = document.createElement("caption");
+    cap.className = "sr-only";
+    cap.textContent = "Cómo van los alumnos en las situaciones de árbitro";
+    const cab = document.createElement("tr");
+    const th0 = document.createElement("th"); th0.scope = "col"; th0.className = "text-left font-semibold py-1 pr-2"; th0.textContent = "Alumno";
+    cab.appendChild(th0);
+    sits.forEach((k) => {
+        const th = document.createElement("th"); th.scope = "col"; th.className = "text-left font-semibold py-1 pr-2";
+        th.textContent = "Sit. " + (k + 1) + (k === actual ? " (puesta)" : "");
+        th.title = RelojPractica.ILEGALES[k] ? RelojPractica.ILEGALES[k].titulo : "";
+        cab.appendChild(th);
+    });
+    const thead = document.createElement("thead"); thead.appendChild(cab);
+    const tbody = document.createElement("tbody");
+    ids.map((id) => ({ id, nombre: nombres.get(id) || "Alumno" })).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")).forEach(({ id, nombre }) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t border-brand-100 dark:border-brand-800";
+        const th = document.createElement("th"); th.scope = "row"; th.className = "text-left font-normal py-1 pr-2 break-words";
+        th.textContent = nombre; // lo escribió una persona: por textContent
+        tr.appendChild(th);
+        sits.forEach((k) => {
+            const td = document.createElement("td"); td.className = "py-1 pr-2 whitespace-nowrap";
+            td.textContent = celdaDeAvance(tabla.get(id + "|" + k));
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    t.append(cap, thead, tbody);
+    envoltura.appendChild(t);
+    cont.appendChild(envoltura);
+}
+setInterval(() => {
+    const caja = document.getElementById("reloj-caja");
+    if (caja && caja.open && !caja.hidden && document.visibilityState === "visible"
+        && relojActual && Number.isInteger(relojActual.situacion)) cargarAvanceReloj();
+}, 10000);
 
 async function quitarReloj() {
     const aviso = document.getElementById("reloj-aviso");
@@ -919,6 +1166,13 @@ if (document.getElementById("reloj-tarjeta")) {
     const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
     on("reloj-mandar-btn", () => mandarReloj());
     on("reloj-quitar-btn", () => quitarReloj());
+    on("reloj-sit-btn", () => mandarSituacion());
+    on("reloj-avance-btn", () => cargarAvanceReloj());
+    ["reloj-select", "reloj-m-modo"].forEach((id) => { const el = document.getElementById(id); if (el) el.addEventListener("change", pintarManual); });
+    const manual = document.getElementById("reloj-manual");
+    if (manual) manual.addEventListener("input", pintarManual);
+    const caja = document.getElementById("reloj-caja");
+    if (caja) caja.addEventListener("toggle", () => { if (caja.open) cargarAvanceReloj(); });
 }
 
 /*! rev bfb5bbb0d2d82f9f */

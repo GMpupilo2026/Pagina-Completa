@@ -2366,6 +2366,61 @@ en otra página.
   quita con lo demás (`limpiarLoDeLaClase`).
 - **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
   `reloj: null`, y sin la columna ese update fallaría entero.
+- **El control con que arranca: de la lista o personalizado.** La lista
+  (`ESCENARIOS`) trae también demora (delay) en los tres ritmos: 90 · d5,
+  25 · d5, 10 · d5 y 5 · d3. Al final, «Personalizado»: el profe elige el
+  modo (sin incremento, Fischer, demora o por períodos) y los tiempos; se ven
+  solo los campos de ese modo (los mismos de `MODOS[].campos`, que pide el
+  reloj al configurarlo) y abajo cómo queda, con el ritmo y la fórmula de 60
+  jugadas. Con tiempo base cero, o un dato fuera de rango, lo dice y no manda
+  nada. Las filas que se esconden no llevan la clase `flex`: en Tailwind una
+  clase de `display` le gana al atributo `hidden`, y la fila seguiría ahí
+  (por eso `verificar-reloj-situaciones-profe.js` monta la caja real de
+  `sesion.html` con el CSS de verdad y mide con `checkVisibility()`).
+- **Una situación de árbitro a la vez** («Situación» y «Poner esta situación a
+  todos», en la misma caja del reloj): el profe las pone de a una y a cada
+  alumno le sale **solo el reloj y esa situación**, sin la barra, la guía, los
+  escenarios, los retos ni la lista, para que no se enrede. Va en el mismo
+  `game_state.reloj`, con una llave más: `{id, control, situacion}`, el índice
+  en `ILEGALES`. El CHECK no pide nada sobre llaves de más, así que no hizo
+  falta migración; `RelojPractica.valido` la acepta solo si la situación
+  existe.
+  - **El reloj espera parado hasta «Empezar»**: si arrancara corriendo al
+    llegar, en un relámpago con 26 segundos le caería la bandera mientras lee.
+  - Después de ponerla, la lista del profe pasa sola a la siguiente: para
+    seguir basta volver a presionar.
+  - «Poner el reloj libre con este control» vuelve al reloj con todo.
+  - Lo mide `verificar-reloj-practica.js` con `checkVisibility()`: con la clase
+    puesta en el contenedor, el `display` de los hijos sigue diciendo que se
+    ven.
+- **Cómo van** (debajo de «Poner esta situación a todos»): un cuadro alumno ×
+  situación con lo de las últimas 12 horas de esta clase: «✓ a la primera»,
+  «✓ en el intento N», «✗ N intentos» o «—», y arriba cuántos ya resolvieron
+  la que está puesta. Se pone al día solo cada 10 s mientras haya una
+  situación puesta y la caja esté abierta (sin `aria-live`: un lector de
+  pantalla lo leería entero cada vez), y con «Actualizar».
+  - **Cada «Comprobar» del alumno se anota** en `reloj_situaciones` con
+    `reloj_situacion_intento(envío, situación, logrado)`: una fila por alumno
+    y envío, con los intentos y en cuál salió (`logrado_en`). La función exige
+    que la situación siga puesta en `game_state.reloj` de un profe suyo
+    (`es_mi_profesor`) y que quien anota sea alumno; nadie escribe la tabla
+    directo, y la lee el dueño de la clase o administración, como
+    `practica_respuestas`. Migración `20261111055900_reloj_situaciones.sql`;
+    se comprobó impersonando en SQL: el alumno anota solo en la situación
+    puesta, no lee la tabla, el profe la lee y no anota, sin sesión nada.
+  - **Lo juzga el navegador del alumno**, a propósito: la respuesta de cada
+    situación ya viaja en `js/clase-reloj.js` (no hay clave que esconder, como
+    en `practica_claves`), así que comprobarla en la base no le quitaría nada a
+    quien haga trampa desde la consola; solo se engañaría a sí mismo.
+  - Solo se cuenta lo comprobado en la situación que puso el profe y después
+    de «Empezar»; en el reloj libre, nada (`alComprobar` de `montar`).
+  - Si la misma situación se puso dos veces, el cuadro suma los intentos de
+    los dos envíos: falló 2 en el primero y salió al 1.º del segundo es «en el
+    intento 3».
+  - Lo revisa `verificar-reloj-situaciones-profe.js`, con un doble de Supabase
+    que filtra en el resolver: lo que manda el profe, que el alumno anote con
+    el envío y la situación de la clase (y el profe y quien observa no), y el
+    cuadro, con los nombres por `textContent`.
 - **Jugada ilegal: el asesor ajusta el reloj como árbitro** (tarjeta de abajo,
   `RelojPractica.ILEGALES`). Seis situaciones:
   - primera ilegal en clásica: +2 min al rival (art. 7.5.5);
@@ -3921,19 +3976,33 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
-- **La cookie del worker, con la sesión de ahora**: una clase dura horas y el
-  token una. `sesion.js` guarda la sesión al arrancar y no la actualiza, y
-  escribir la cookie con esa sesión vencida (`SesionCursos.guardar`) la
-  BORRA: el worker contestaba 401 al `diapositivas.json` y el profe leía «No
-  se pudo abrir la presentación. Revisa tu conexión» (la Sesión 4 de los
-  asesores, 11/11/2026). Ahora, antes de pedir el `diapositivas.json` y cada
-  lámina del curso, `SesionCursos.renovar()` (`js/supabase-client.js`) pide la
-  sesión a supabase-js —que renueva el token si venció— y escribe la cookie
-  con ella; si el worker igual dice 401, `renovar(true)` pide un token nuevo
-  y se intenta una vez más. Si tampoco, el aviso dice que se venció la
-  sesión y que hay que recargar, no que falló la conexión. Lo mismo hacen las
-  lecciones del curso en la clase. Lo prueba `verificar-clase-presentacion.js`
-  (4a) con el `SesionCursos` de verdad sobre el doble.
+- **La sesión de AHORA, y en el encabezado, no solo en la cookie.** El
+  10/11 y el 11/11 la tarjeta quedó en blanco con «No se pudo abrir la
+  presentación. Revisa tu conexión», con la conexión bien. El worker
+  contestaba 401 al `diapositivas.json`, por dos causas:
+  - una clase dura horas y el token una: `sesion.js` guarda la sesión al
+    arrancar y no la actualiza, y escribir la cookie con esa sesión vencida
+    (`SesionCursos.guardar`) la BORRA (la Sesión 4 de los asesores);
+  - en un perfil de Chrome la cookie no llegaba NUNCA, ni recargando ni
+    abriendo la dirección a mano, a un profe con el acceso vigente. En los
+    registros de Supabase se veía: el worker no le preguntaba nada por esa
+    cuenta.
+
+  Ahora, antes de pedir el `diapositivas.json` y cada lámina del curso,
+  `pedirDelCurso` pide la sesión con `SesionCursos.renovar()`
+  (`js/supabase-client.js`), que la renueva si venció y escribe la cookie, y
+  manda el token también en `Authorization: Bearer` (el worker lo acepta
+  igual que la cookie y, si vienen los dos, gana el encabezado: `tokenDe` en
+  `worker.js`). Si el worker igual dice 401, `renovar(true)` pide un token
+  nuevo y se intenta una vez más. Las imágenes del curso se bajan igual y se
+  muestran como `blob:` (un `<img src>` solo puede llevar la cookie); cuál es
+  lo dice `data-archivo`. Lo que siga fallando (salvo «sin acceso» o «ya no
+  existe») se reintenta solo a los 3, 6, 12, 24 y después cada 30 segundos, y
+  en el acto al volver la conexión (`online`); el aviso dice que se venció la
+  sesión, no que falló la conexión. Las lecciones del curso en la clase
+  también renuevan la cookie. Lo prueban `verificar-clase-presentacion.js`
+  (4a, con el `SesionCursos` de verdad sobre el doble, y 6b) y
+  `verificar-worker.js`.
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.
