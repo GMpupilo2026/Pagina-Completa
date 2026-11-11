@@ -14,7 +14,10 @@
    en el resolver (eq, gte, in) y anota cada update y cada rpc.
 
    Lo que revisa:
-   1. El profe con permiso ve la lista de las 12 situaciones.
+   1. El profe con permiso ve la lista de las 12 situaciones, y el reloj
+      personalizado: solo los campos del modo elegido (medido con
+      checkVisibility, con el CSS de verdad), cómo queda con la fórmula de 60
+      jugadas, lo que manda, y que con tiempo base cero no mande nada.
    2. «Poner esta situación a todos» manda {id, control, situacion} con el
       control de esa situación, y la lista pasa a la siguiente.
    3. El alumno con esa situación puesta anota cada «Comprobar» con el envío y
@@ -36,20 +39,14 @@ const OTRO_PROFE = "99999999-9999-9999-9999-999999999999";
 const ANA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const BETO = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
-const HTML = `<!doctype html><meta charset="utf-8">
-<section id="reloj-tarjeta" hidden><div id="reloj-host"></div></section>
-<details id="reloj-caja" hidden open>
-  <summary>Reloj</summary>
-  <select id="reloj-select"></select>
-  <button id="reloj-mandar-btn" type="button">Poner el reloj en la clase</button>
-  <p id="reloj-enviado"></p>
-  <select id="reloj-sit-select"></select>
-  <button id="reloj-sit-btn" type="button">Poner esta situación a todos</button>
-  <button id="reloj-avance-btn" type="button">Actualizar</button>
-  <div id="reloj-avance"></div>
-  <button id="reloj-quitar-btn" type="button" hidden>Quitar</button>
-  <p id="reloj-aviso"></p>
-</details>`;
+// La caja y la tarjeta REALES de sesion.html (no una copia), con su CSS: así
+// también se ve si algo que debía esconderse no se esconde (en Tailwind, una
+// clase como «flex» le gana al atributo hidden).
+const SESION = fs.readFileSync(path.join(__dirname, "..", "sesion.html"), "utf8");
+const trozo = (re) => { const m = SESION.match(re); if (!m) throw new Error("No encontré en sesion.html: " + re); return m[0]; };
+const HTML = `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/tw.css"><body>
+${trozo(/<section id="reloj-tarjeta"[\s\S]*?<\/section>/)}
+${trozo(/<details id="reloj-caja"[\s\S]*?<\/details>/)}`;
 
 /* El doble: los filtros se aplican en el resolver (al hacer await), de verdad. */
 const DOBLE = `
@@ -96,16 +93,49 @@ function anunciarALaClase(tipo, id, texto) { window.__anuncios.push([tipo, id, t
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message));
   await page.route("http://reloj.test/", (r) => r.fulfill({ contentType: "text/html; charset=utf-8", body: HTML }));
+  await page.route("http://reloj.test/tw.css", (r) => r.fulfill({ contentType: "text/css", body: fs.readFileSync(path.join(__dirname, "..", "css", "tailwind.css"), "utf8") }));
   await page.goto("http://reloj.test/");
   await page.addScriptTag({ content: DOBLE });
   await page.addScriptTag({ content: CODIGO });
 
   // 1. El profe con permiso ve la lista.
   await page.evaluate(() => cargarRelojProfe());
+  await page.evaluate(() => { document.getElementById("reloj-caja").open = true; });
   const opciones = await page.evaluate(() => [...document.querySelectorAll("#reloj-sit-select option")].map((o) => o.textContent));
   const N = await page.evaluate(() => RelojPractica.ILEGALES.length);
   ok(opciones.length === N && /^1\. /.test(opciones[0]) && opciones[N - 1].startsWith(N + ". "), `la lista trae las ${N} situaciones, numeradas (${opciones.length})`);
   ok(await page.evaluate(() => document.getElementById("reloj-caja").checkVisibility()), "la caja del reloj se ve para el profe con permiso");
+
+  // 1b. El reloj personalizado: el modo y los tiempos los elige el profe.
+  const ve = (id) => page.evaluate((x) => document.getElementById(x).checkVisibility(), id);
+  ok(!(await ve("reloj-manual")), "el reloj personalizado no se ve hasta elegirlo");
+  await page.selectOption("#reloj-select", "manual");
+  ok(await ve("reloj-manual"), "al elegir «Personalizado» aparece");
+  ok(await page.evaluate(() => document.getElementById("reloj-m-modo").value) === "fischer" && await ve("reloj-m-inc-fila") && !(await ve("reloj-m-dly-fila")) && !(await ve("reloj-m-per-fila")),
+    "arranca en Fischer: se ve el incremento y no la demora ni los períodos");
+  await page.selectOption("#reloj-m-modo", "demora");
+  await page.fill("#reloj-m-bm", "25");
+  await page.fill("#reloj-m-dly", "5");
+  ok(await ve("reloj-m-dly-fila") && !(await ve("reloj-m-inc-fila")), "con demora: se ve la demora y no el incremento");
+  let resumen = await page.evaluate(() => document.getElementById("reloj-m-resumen").textContent);
+  ok(/^Rápida: 25 min con demora de 5 s/.test(resumen) && /30 min/.test(resumen), `dice cómo queda: «${resumen}»`);
+  await page.click("#reloj-mandar-btn");
+  await page.waitForTimeout(200);
+  let u = await page.evaluate(() => window.__llamadas.updates.slice(-1)[0]);
+  ok(u && JSON.stringify(u.cambios.reloj.control) === JSON.stringify({ modo: "demora", base: 1500, inc: 0, dly: 5, mv: 40, add: 0 }) && u.cambios.reloj.situacion === undefined,
+    `«Poner el reloj» manda ese control (${JSON.stringify(u && u.cambios.reloj.control)})`);
+  await page.selectOption("#reloj-m-modo", "periodos");
+  await page.fill("#reloj-m-bh", "1"); await page.fill("#reloj-m-bm", "30"); await page.fill("#reloj-m-inc", "30");
+  ok(await ve("reloj-m-per-fila") && await ve("reloj-m-inc-fila") && !(await ve("reloj-m-bs-fila")), "por períodos: jugadas y lo que se suma, con incremento y sin segundos");
+  resumen = await page.evaluate(() => document.getElementById("reloj-m-resumen").textContent);
+  ok(/^Clásica: 1 h 30 min por 40 jugadas, luego 30 min más, \+ 30 s/.test(resumen), `«${resumen}»`);
+  await page.selectOption("#reloj-m-modo", "sin");
+  await page.fill("#reloj-m-bh", "0"); await page.fill("#reloj-m-bm", "0"); await page.fill("#reloj-m-bs", "0");
+  const antes = await page.evaluate(() => window.__llamadas.updates.length);
+  await page.click("#reloj-mandar-btn");
+  await page.waitForTimeout(150);
+  ok(/Revisa/.test(await page.evaluate(() => document.getElementById("reloj-m-resumen").textContent))
+    && await page.evaluate((n) => window.__llamadas.updates.length === n, antes), "con tiempo base cero lo dice y no manda nada");
 
   // 2. Poner la situación 7 (índice 6).
   await page.selectOption("#reloj-sit-select", "6");

@@ -92,6 +92,11 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   ok(ILEGALES.length >= 6, `hay al menos seis situaciones de jugada ilegal (${ILEGALES.length})`);
   ok(await r("ilegales") && await r("comprobar"), "la tarjeta de jugada ilegal está en el reloj");
 
+  // Cada escenario dice el ritmo que le da la fórmula de 60 jugadas.
+  const malRitmo = await page.evaluate(() => RelojPractica.ESCENARIOS.filter((e) => !e.sub.startsWith(RelojPractica.clasificar(e.control).ritmo) || !RelojPractica.validoControl(e.control)).map((e) => e.nombre));
+  ok(malRitmo.length === 0, "cada escenario es válido y dice el ritmo que le da la fórmula" + (malRitmo.length ? ": " + malRitmo.join(", ") : ""));
+  ok(await page.evaluate(() => new Set(RelojPractica.ESCENARIOS.filter((e) => e.control.modo === "demora").map((e) => RelojPractica.clasificar(e.control).ritmo)).size === 3), "hay escenarios con demora (delay) en los tres ritmos");
+
   // 8. Forma de los datos.
   const formas = await page.evaluate(() => RelojPractica.ILEGALES.every((x) => RelojPractica.validoControl(x.control)
     && x.t.length === 2 && x.mv.length === 2 && (x.corre === 0 || x.corre === 1) && x.delta.length === 2

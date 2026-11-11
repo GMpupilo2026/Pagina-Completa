@@ -2366,6 +2366,17 @@ en otra página.
   quita con lo demás (`limpiarLoDeLaClase`).
 - **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
   `reloj: null`, y sin la columna ese update fallaría entero.
+- **El control con que arranca: de la lista o personalizado.** La lista
+  (`ESCENARIOS`) trae también demora (delay) en los tres ritmos: 90 · d5,
+  25 · d5, 10 · d5 y 5 · d3. Al final, «Personalizado»: el profe elige el
+  modo (sin incremento, Fischer, demora o por períodos) y los tiempos; se ven
+  solo los campos de ese modo (los mismos de `MODOS[].campos`, que pide el
+  reloj al configurarlo) y abajo cómo queda, con el ritmo y la fórmula de 60
+  jugadas. Con tiempo base cero, o un dato fuera de rango, lo dice y no manda
+  nada. Las filas que se esconden no llevan la clase `flex`: en Tailwind una
+  clase de `display` le gana al atributo `hidden`, y la fila seguiría ahí
+  (por eso `verificar-reloj-situaciones-profe.js` monta la caja real de
+  `sesion.html` con el CSS de verdad y mide con `checkVisibility()`).
 - **Una situación de árbitro a la vez** («Situación» y «Poner esta situación a
   todos», en la misma caja del reloj): el profe las pone de a una y a cada
   alumno le sale **solo el reloj y esa situación**, sin la barra, la guía, los

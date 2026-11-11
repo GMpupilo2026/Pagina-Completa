@@ -44,7 +44,10 @@ window.RelojPractica = (function () {
         { nombre: "10 + 2", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "3 + 2", sub: "Relámpago · Fischer", control: { modo: "fischer", base: 180, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "5 + 0", sub: "Relámpago · sin incremento", control: { modo: "sin", base: 300, inc: 0, dly: 0, mv: 40, add: 0 } },
+        { nombre: "90 · d5", sub: "Clásica · demora 5 s", control: { modo: "demora", base: 5400, inc: 0, dly: 5, mv: 40, add: 0 } },
         { nombre: "25 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 1500, inc: 0, dly: 5, mv: 40, add: 0 } },
+        { nombre: "10 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 600, inc: 0, dly: 5, mv: 40, add: 0 } },
+        { nombre: "5 · d3", sub: "Relámpago · demora 3 s", control: { modo: "demora", base: 300, inc: 0, dly: 3, mv: 40, add: 0 } },
     ];
     const RETOS = [
         { texto: "Clásica: 90 minutos con incremento de 30 segundos por jugada.", ok: (c) => c.modo === "fischer" && c.base === 5400 && c.inc === 30 },
@@ -931,6 +934,18 @@ async function cargarRelojProfe() {
             o.textContent = e.nombre + " · " + e.sub;
             sel.appendChild(o);
         });
+        const o = document.createElement("option");
+        o.value = "manual";
+        o.textContent = "Personalizado: elige tú el modo y los tiempos";
+        sel.appendChild(o);
+        const modo = document.getElementById("reloj-m-modo");
+        RelojPractica.MODOS.forEach((m) => {
+            const x = document.createElement("option");
+            x.value = m.id; x.textContent = m.nombre;
+            modo.appendChild(x);
+        });
+        modo.value = "fischer";
+        pintarManual();
     }
     const selS = document.getElementById("reloj-sit-select");
     if (selS && !selS.options.length) {
@@ -961,12 +976,66 @@ function pintarRelojProfe() {
     if (btnS) btnS.textContent = sit !== null ? "Poner esta situación (cambia la de todos)" : "Poner esta situación a todos";
 }
 
+/* Personalizado: el profe elige el modo (sin incremento, Fischer, demora o por
+   períodos) y los tiempos. Se ven solo los campos de ese modo (los mismos que
+   pide el reloj al configurarlo: MODOS[].campos) y abajo cómo queda, con la
+   fórmula de 60 jugadas. Devuelve el control, o null si no sirve. */
+const CAMPOS_MANUAL = { bH: "reloj-m-bh", bM: "reloj-m-bm", bS: "reloj-m-bs", inc: "reloj-m-inc", dly: "reloj-m-dly", mv: "reloj-m-mv", aH: "reloj-m-ah", aM: "reloj-m-am" };
+function numeroManual(id, min, max) {
+    const el = document.getElementById(id);
+    const v = el && el.value.trim() !== "" ? Number(el.value) : 0;
+    return Number.isInteger(v) && v >= min && v <= max ? v : NaN;
+}
+function leerManual() {
+    const modo = document.getElementById("reloj-m-modo").value;
+    const m = RelojPractica.MODOS.find((x) => x.id === modo);
+    if (!m) return null;
+    const usa = (k) => m.campos.includes(k);
+    const n = (k, max) => (usa(k) ? numeroManual(CAMPOS_MANUAL[k], 0, max) : 0);
+    const bH = n("bH", 9), bM = n("bM", 59), bS = n("bS", 59), inc = n("inc", 60), dly = n("dly", 60);
+    const aH = n("aH", 9), aM = n("aM", 59);
+    const mv = usa("mv") ? numeroManual(CAMPOS_MANUAL.mv, 1, 99) : 40;
+    const c = { modo, base: bH * 3600 + bM * 60 + bS, inc, dly, mv, add: (aH * 60 + aM) * 60 };
+    return RelojPractica.validoControl(c) ? c : null;
+}
+function describirManual(c) {
+    const reloj = (s) => (s >= 3600 ? Math.floor(s / 3600) + " h " : "") + (s % 3600 >= 60 ? Math.floor(s % 3600 / 60) + " min" : "") + (s % 60 ? " " + (s % 60) + " s" : "");
+    const partes = [reloj(c.base).trim()];
+    if (c.modo === "fischer") partes.push("+ " + c.inc + " s por jugada (Fischer)");
+    if (c.modo === "demora") partes.push("con demora de " + c.dly + " s por jugada");
+    if (c.modo === "periodos") partes.push("por " + c.mv + " jugadas, luego " + reloj(c.add).trim() + " más" + (c.inc ? ", + " + c.inc + " s por jugada" : ""));
+    if (c.modo === "sin") partes.push("sin incremento");
+    const k = RelojPractica.clasificar(c);
+    return k.ritmo + ": " + partes.join(" ") + ". Fórmula de 60 jugadas: " + Math.round(k.minutos * 10) / 10 + " min.";
+}
+function pintarManual() {
+    const caja = document.getElementById("reloj-manual");
+    if (!caja) return;
+    caja.hidden = document.getElementById("reloj-select").value !== "manual";
+    const m = RelojPractica.MODOS.find((x) => x.id === document.getElementById("reloj-m-modo").value);
+    const usa = (k) => !!m && m.campos.includes(k);
+    document.getElementById("reloj-m-bs-fila").hidden = !usa("bS");
+    document.getElementById("reloj-m-inc-fila").hidden = !usa("inc");
+    document.getElementById("reloj-m-dly-fila").hidden = !usa("dly");
+    document.getElementById("reloj-m-per-fila").hidden = !usa("mv");
+    const c = leerManual();
+    document.getElementById("reloj-m-resumen").textContent = c ? describirManual(c)
+        : "Revisa los tiempos: el tiempo base no puede ser cero y cada dato tiene que estar dentro de su rango.";
+}
+
 async function mandarReloj() {
     const aviso = document.getElementById("reloj-aviso");
-    const k = parseInt(document.getElementById("reloj-select").value, 10);
-    const esc = RelojPractica.ESCENARIOS[k];
-    if (!esc || !myGameStateId) return;
-    const nuevo = RelojPractica.paraMandar(esc.control);
+    const valor = document.getElementById("reloj-select").value;
+    let control;
+    if (valor === "manual") {
+        control = leerManual();
+        if (!control) { aviso.textContent = "Revisa los tiempos del reloj personalizado antes de ponerlo."; return; }
+    } else {
+        const esc = RelojPractica.ESCENARIOS[parseInt(valor, 10)];
+        control = esc && esc.control;
+    }
+    if (!control || !myGameStateId) return;
+    const nuevo = RelojPractica.paraMandar(control);
     if (!RelojPractica.valido(nuevo)) { aviso.textContent = "Ese control no tiene la forma que la base acepta."; return; }
     aviso.textContent = "Poniendo el reloj…";
     const { data, error } = await sb.from("game_state").update({ reloj: nuevo }).eq("id", myGameStateId).select("reloj").single();
@@ -1099,6 +1168,9 @@ if (document.getElementById("reloj-tarjeta")) {
     on("reloj-quitar-btn", () => quitarReloj());
     on("reloj-sit-btn", () => mandarSituacion());
     on("reloj-avance-btn", () => cargarAvanceReloj());
+    ["reloj-select", "reloj-m-modo"].forEach((id) => { const el = document.getElementById(id); if (el) el.addEventListener("change", pintarManual); });
+    const manual = document.getElementById("reloj-manual");
+    if (manual) manual.addEventListener("input", pintarManual);
     const caja = document.getElementById("reloj-caja");
     if (caja) caja.addEventListener("toggle", () => { if (caja.open) cargarAvanceReloj(); });
 }
