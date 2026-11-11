@@ -1,0 +1,224 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 11508,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Bienvenida, objetivos y mapa del curso"
+  },
+  {
+   "t": 687,
+   "titulo": "Las Leyes del Ajedrez: prólogo y sus partes"
+  },
+  {
+   "t": 959,
+   "titulo": "Deberes y roles de la persona árbitra"
+  },
+  {
+   "t": 1444,
+   "titulo": "Estructura del equipo arbitral e imparcialidad"
+  },
+  {
+   "t": 2031,
+   "titulo": "Preguntas: el público y la gradería"
+  },
+  {
+   "t": 2781,
+   "titulo": "Límites de la intervención y sanciones (art. 12)"
+  },
+  {
+   "t": 3418,
+   "titulo": "Pruebas, asistentes, prohibiciones y derechos"
+  },
+  {
+   "t": 4239,
+   "titulo": "El tablero y el movimiento de las piezas"
+  },
+  {
+   "t": 5508,
+   "titulo": "El peón: captura al paso y coronación"
+  },
+  {
+   "t": 6567,
+   "titulo": "El enroque y sus condiciones"
+  },
+  {
+   "t": 7247,
+   "titulo": "¿Cuándo cuenta una jugada? Pieza tocada"
+  },
+  {
+   "t": 7913,
+   "titulo": "Receso"
+  },
+  {
+   "t": 8861,
+   "titulo": "Jugadas ilegales, irregularidades y «compongo»"
+  },
+  {
+   "t": 9341,
+   "titulo": "Laboratorio de casos con los participantes"
+  },
+  {
+   "t": 10323,
+   "titulo": "¿Cómo termina una partida?"
+  },
+  {
+   "t": 10981,
+   "titulo": "Cierre, asistencia y preguntas finales"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 1
+  },
+  {
+   "t": 237,
+   "lamina": 2
+  },
+  {
+   "t": 313,
+   "lamina": 3
+  },
+  {
+   "t": 396,
+   "lamina": 4
+  },
+  {
+   "t": 506,
+   "lamina": 5
+  },
+  {
+   "t": 687,
+   "lamina": 6
+  },
+  {
+   "t": 779,
+   "lamina": 7
+  },
+  {
+   "t": 959,
+   "lamina": 8
+  },
+  {
+   "t": 1350,
+   "lamina": 9
+  },
+  {
+   "t": 1444,
+   "lamina": 10
+  },
+  {
+   "t": 1935,
+   "lamina": 11
+  },
+  {
+   "t": 2781,
+   "lamina": 12
+  },
+  {
+   "t": 2925,
+   "lamina": 13
+  },
+  {
+   "t": 3418,
+   "lamina": 14
+  },
+  {
+   "t": 3635,
+   "lamina": 15
+  },
+  {
+   "t": 3706,
+   "lamina": 16
+  },
+  {
+   "t": 3849,
+   "lamina": 17
+  },
+  {
+   "t": 4345,
+   "lamina": 18
+  },
+  {
+   "t": 4387,
+   "lamina": 19
+  },
+  {
+   "t": 5671,
+   "lamina": 21
+  },
+  {
+   "t": 6278,
+   "lamina": 22
+  },
+  {
+   "t": 6567,
+   "lamina": 20
+  },
+  {
+   "t": 7247,
+   "lamina": 21
+  },
+  {
+   "t": 7255,
+   "lamina": 22
+  },
+  {
+   "t": 7326,
+   "lamina": 23
+  },
+  {
+   "t": 7511,
+   "lamina": 24
+  },
+  {
+   "t": 7913,
+   "lamina": 28
+  },
+  {
+   "t": 8861,
+   "lamina": 24
+  },
+  {
+   "t": 9149,
+   "lamina": 25
+  },
+  {
+   "t": 9341,
+   "lamina": 26
+  },
+  {
+   "t": 10231,
+   "lamina": 27
+  },
+  {
+   "t": 10323,
+   "lamina": 28
+  },
+  {
+   "t": 10329,
+   "lamina": 29
+  },
+  {
+   "t": 10792,
+   "lamina": 30
+  },
+  {
+   "t": 10829,
+   "lamina": 31
+  },
+  {
+   "t": 10885,
+   "lamina": 32
+  },
+  {
+   "t": 10946,
+   "lamina": 33
+  },
+  {
+   "t": 10981,
+   "lamina": 51
+  }
+ ]
+}

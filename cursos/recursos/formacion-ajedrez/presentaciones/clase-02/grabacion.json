@@ -1,0 +1,310 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 14518,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Bienvenida y pendiente de la Sesión 1: anotación"
+  },
+  {
+   "t": 2466,
+   "titulo": "Práctica: dictado de la planilla"
+  },
+  {
+   "t": 3210,
+   "titulo": "Trabajo en salas: posiciones y casos de árbitro"
+  },
+  {
+   "t": 6594,
+   "titulo": "Receso"
+  },
+  {
+   "t": 7445,
+   "titulo": "Revisión: mate, ahogado, dictado y casos"
+  },
+  {
+   "t": 8939,
+   "titulo": "Errores frecuentes y quiz de repaso"
+  },
+  {
+   "t": 9432,
+   "titulo": "Sesión 2: objetivos, conducta y zona de juego"
+  },
+  {
+   "t": 9746,
+   "titulo": "Dispositivos electrónicos"
+  },
+  {
+   "t": 9906,
+   "titulo": "Irregularidades: jugada ilegal y piezas desplazadas"
+  },
+  {
+   "t": 10020,
+   "titulo": "Sanciones: de menor a mayor"
+  },
+  {
+   "t": 10201,
+   "titulo": "Reclamos y apelaciones"
+  },
+  {
+   "t": 10383,
+   "titulo": "Casos: ¿qué decide la persona árbitra?"
+  },
+  {
+   "t": 10899,
+   "titulo": "Receso"
+  },
+  {
+   "t": 11244,
+   "titulo": "Práctica: simulación de reclamos en salas"
+  },
+  {
+   "t": 12727,
+   "titulo": "Revisión de los ejercicios y preguntas"
+  },
+  {
+   "t": 13776,
+   "titulo": "Quiz de la sesión y cierre"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 33,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1148,
+   "lamina": 34,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1505,
+   "lamina": 35,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1759,
+   "lamina": 36,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1856,
+   "lamina": 37,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1906,
+   "lamina": 38,
+   "clase": "clase-01"
+  },
+  {
+   "t": 2460,
+   "lamina": 41,
+   "clase": "clase-01"
+  },
+  {
+   "t": 2500,
+   "lamina": 45,
+   "clase": "clase-01"
+  },
+  {
+   "t": 3929,
+   "lamina": 42,
+   "clase": "clase-01"
+  },
+  {
+   "t": 4713,
+   "lamina": 43,
+   "clase": "clase-01"
+  },
+  {
+   "t": 5146,
+   "lamina": 46,
+   "clase": "clase-01"
+  },
+  {
+   "t": 6064,
+   "lamina": 47,
+   "clase": "clase-01"
+  },
+  {
+   "t": 7445,
+   "lamina": 44,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8066,
+   "lamina": 45,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8358,
+   "lamina": 46,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8554,
+   "lamina": 47,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8939,
+   "lamina": 48,
+   "clase": "clase-01"
+  },
+  {
+   "t": 9341,
+   "lamina": 49,
+   "clase": "clase-01"
+  },
+  {
+   "t": 9432,
+   "lamina": 2
+  },
+  {
+   "t": 9460,
+   "lamina": 3
+  },
+  {
+   "t": 9467,
+   "lamina": 4
+  },
+  {
+   "t": 9746,
+   "lamina": 5
+  },
+  {
+   "t": 9906,
+   "lamina": 6
+  },
+  {
+   "t": 9993,
+   "lamina": 7
+  },
+  {
+   "t": 10035,
+   "lamina": 9
+  },
+  {
+   "t": 10201,
+   "lamina": 10
+  },
+  {
+   "t": 10383,
+   "lamina": 11
+  },
+  {
+   "t": 10472,
+   "lamina": 12
+  },
+  {
+   "t": 10487,
+   "lamina": 13
+  },
+  {
+   "t": 10495,
+   "lamina": 14
+  },
+  {
+   "t": 10683,
+   "lamina": 17
+  },
+  {
+   "t": 10727,
+   "lamina": 18
+  },
+  {
+   "t": 10759,
+   "lamina": 19
+  },
+  {
+   "t": 10838,
+   "lamina": 20
+  },
+  {
+   "t": 10851,
+   "lamina": 21
+  },
+  {
+   "t": 10861,
+   "lamina": 22
+  },
+  {
+   "t": 10899,
+   "lamina": 23
+  },
+  {
+   "t": 11257,
+   "lamina": 24
+  },
+  {
+   "t": 11574,
+   "lamina": 25
+  },
+  {
+   "t": 11715,
+   "lamina": 26
+  },
+  {
+   "t": 11826,
+   "lamina": 27
+  },
+  {
+   "t": 11920,
+   "lamina": 28
+  },
+  {
+   "t": 12029,
+   "lamina": 29
+  },
+  {
+   "t": 12421,
+   "lamina": 30
+  },
+  {
+   "t": 12727,
+   "lamina": 25
+  },
+  {
+   "t": 12805,
+   "lamina": 26
+  },
+  {
+   "t": 12906,
+   "lamina": 27
+  },
+  {
+   "t": 13010,
+   "lamina": 28
+  },
+  {
+   "t": 13525,
+   "lamina": 29
+  },
+  {
+   "t": 13559,
+   "lamina": 30
+  },
+  {
+   "t": 13776,
+   "lamina": 31
+  },
+  {
+   "t": 13784,
+   "lamina": 32
+  },
+  {
+   "t": 13791,
+   "lamina": 33
+  },
+  {
+   "t": 14119,
+   "lamina": 34
+  },
+  {
+   "t": 14252,
+   "lamina": 37
+  }
+ ]
+}
