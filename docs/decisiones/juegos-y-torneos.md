@@ -14117,6 +14117,64 @@ Se rompieron a propósito la experiencia, la persona antes de apagar y el salto
 de la tablet: saltaron las tres. El doble de la organización conoce `gt()`,
 `centroamericano_reparto_tasas` y `centroamericano_reparto_aplicar`.
 
+### La logística de la sala: medidas, borrador y material
+
+El dueño lo pidió el 11/11/2026. Antes armó en una lluvia de ideas una
+calculadora aparte (mesas, tableros, relojes, árbitros y el plano según los
+inscritos) y preguntó si eso ya estaba en las herramientas de los árbitros.
+Estaba a medias: el plano y el reparto existían, pero el borrador ponía una fila
+por torneo sin mirar el salón y nada contaba el material. Eligió meterlo en
+«Plano de la sala» y no en una pestaña aparte. La mesa, según el dueño, es la
+plegable de 180 × 74 cm: dos tableros y cuatro sillas, dos de cada lado.
+
+- **La cuenta, en un módulo aparte** (`js/plano-logistica.js`, sin pantalla ni
+  base, como el reparto):
+  - `capacidad()`: las mesas por fila, en tramos de «Mesas pegadas por tramo»
+    con un pasillo entre tramos, sobre el ancho menos el margen de las paredes.
+    Las filas van del frente (menos la zona de la mesa principal) al fondo.
+    Cada fila ocupa la mesa más una silla de cada lado (0,74 + 2 × 0,6 m)
+    más el pasillo entre filas.
+  - `borrador()`: cada torneo empieza en una fila nueva (o, sin eso, en el
+    tramo siguiente). Las filas se parten donde se acaba el ancho. Todo sale
+    con `duda`, para revisarlo en la sala como el borrador de antes. Lo que no
+    cabe se dibuja igual y se avisa cuántas mesas quedan afuera, para que se
+    vea cuánto falta.
+  - `medir()`: si el plano que se ve, con lo corregido a mano, cabe. Compara la
+    fila más ancha contra el ancho útil y el fondo de todas las filas contra el
+    largo útil. Dice cuál fila se sale.
+  - `inventario()`: se cuenta **del plano**, no de los inscritos, para que lo
+    corregido a mano cuente. Lleva un tablero, un juego de piezas y un reloj por
+    partida, y las planillas son las partidas por las rondas. Todo eso con el
+    % de reserva. Las sillas son dos por partida, más el equipo arbitral y las
+    de más. Va un árbitro de sector cada «Partidas por árbitro» **por torneo**
+    (una partida con un jugador con discapacidad visual pesa dos), más el
+    principal y, desde tres de sector, un adjunto.
+- **Las medidas viajan con el plano**, en `plano.salon`. `limpiar()` del plano
+  las pasa por `limpiarSalon()` y no hizo falta tocar la base:
+  `sala_plano_guardar()` ya acepta cualquier objeto con filas, de hasta 200 KB.
+  Si no se tocaron, el plano se guarda como antes, sin `salon`. El borrador
+  con medidas se usa solo con «Armar el borrador con estas medidas»: sin eso,
+  sale el de antes, con la forma del Gimnasio Nacional.
+- **Jugadores con discapacidad visual**: cada uno juega en una mesa propia,
+  porque van los dos tableros, el normal y el adaptado, y lleva un reloj
+  parlante. Sus mesas van al final de su torneo, una partida por mesa. **En el
+  plano no se marcan**: el plano es público (la misma política de la sala) y,
+  con el pareo de chess-results, una marca en la mesa diría quién es. Solo se
+  guarda cuántos hay por torneo (`salon.dv`), que es un número sin nombres. La
+  primera versión ponía `dv: true` en la mesa, y se quitó por eso. `limpiar()`
+  la bota igual, si llegara.
+- **Pendiente, como idea**: poner las medidas sin ningún torneo en la sala
+  (antes de abrir chess-results), un plano a escala con la zona de la mesa
+  principal y la entrada, y el inventario propio de la casa para avisar si
+  faltan relojes.
+
+Lo revisa `verificar-plano-logistica.js`. Revisa la cuenta (capacidad,
+borrador partido, las mesas de discapacidad visual al final y sin marca, cabe
+o no, material y árbitros) y la pantalla con el doble de la organización: el
+borrador con medidas, si cabe, el material, guardar con `salon` y volver a
+abrir con los campos llenos. Se rompieron a propósito la marca de la mesa y el
+fondo en `medir()`, y saltaron.
+
 ### La Copa de naciones
 
 El dueño la pidió el 7/11/2026: un podio de los tres mejores países del
