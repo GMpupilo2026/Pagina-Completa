@@ -8686,8 +8686,9 @@ resultados, ilegales e irregularidades desde el celular, sin cuenta.
   `delete from centroamericano_registro where tnr in ('1532448','1532486'); delete from
   centroamericano_asignaciones where tnr in ('1532448','1532486'); delete from
   centroamericano_torneos where tnr in ('1532448','1532486');` y su clave en la bóveda
-  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` NO tiene todavía el
-  «Guardar» por mesa, las ilegales ni los grupos: son solo de la versión del Centroamericano.
+  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` recibió después los
+  grupos (ver «Mesa del árbitro: los torneos ligados de un grupo») y el «Guardar» por mesa con las
+  ilegales e irregularidades (ver «Mesa del árbitro: ilegales, irregularidades y guardar por mesa»).
   La página del árbitro no está en francés ni en inglés.
 - Lo prueban `verificar-centroamericano-mesas.js` (sin navegador: las reglas, las promesas de
   seguridad leídas del código de las funciones y las migraciones, y el contraste de cada par
@@ -11053,6 +11054,50 @@ anterior a corregir o agregar una nota. La bitácora (`arbitro_bitacora`) ya gua
   La bitácora es **personal**: dos árbitros del mismo torneo llevan cada uno la suya (una bitácora compartida por
   torneo sería otro diseño). Al borrar una cuenta, sus torneos se borran con ella (`on delete cascade`).
 - Lo prueba `verificar-mesa-arbitro-pagina.js` (sección «Mis torneos»).
+
+## Mesa del árbitro: ilegales, irregularidades y guardar por mesa
+
+El dueño pidió el 11/11/2026 pasar a la Mesa del árbitro general (`mesa-arbitro.html`) lo de la versión del
+Centroamericano que le sirve a **un árbitro solo con su torneo**. Era la etapa 1 de un plan de tres: la 2 son los
+ritmos (blitz con solo resultado e ilegal, «Llegó tarde», banderas y mesas sin rival) y la 3, las frases en inglés
+y francés. Lo que necesita varios árbitros (enlaces y QR, tablets, transmisión, Fair Play) sigue solo en la versión
+de eventos.
+
+- **«Guardar» en la fila de cada mesa.** Manda solo esa mesa y no pregunta: el botón está en la fila y dice qué
+  guarda. El de abajo sigue mandando todas las pendientes y pregunta antes. Es la misma acción `guardar` de la
+  función, con un solo cambio: la función ya manda todas las filas de la pantalla con su valor (ver «Mesa del
+  árbitro: resultados y bitácora»), así que guardar una no toca las demás.
+- **Una sola copia de la regla.** `avisoIlegal`, `minutosIlegal`, `marcasTexto`, `TIPOS_ILEGAL`,
+  `TIPOS_IRREGULARIDAD` y `textoTipo` se mudaron de `js/centroamericano-mesas.js` a `js/mesa-arbitro.js`, que las
+  dos páginas del Centroamericano ya cargaban antes. `centroamericano-mesas.js` las toma de ahí y las sigue
+  exportando con el mismo nombre, así que nada del Centroamericano cambió. `verificar-mesa-arbitro.js` comprueba
+  que sean las MISMAS funciones (`===`), no una copia.
+- **Ilegales por partida (art. 7.5.5).** «Ilegal» e «Irregularidad» de cada jugador, con la lista de tipos y
+  «Otra» elegida por defecto, como en el Centroamericano:
+  - La primera ilegal avisa «2 minutos más a su rival».
+  - La segunda avisa antes de anotarla, con el botón «Anotar la SEGUNDA ilegal». Después dice que pierde la
+    partida, salvo que el rival no pueda dar mate (tablas). **Propone** el resultado en el desplegable sin
+    guardarlo, y la mesa lleva una banda roja con «Segunda ilegal: decide el resultado» escrito: el color nunca
+    va solo.
+  - La cuenta sale de la bitácora (`MesaArbitro.marcas`, por ronda + mesa + color), no de un contador de la
+    página. Así, lo que se anotó en otra pestaña cuenta igual.
+- **Anular no borra.** Un toque por error se anula con otra línea, `tipo = 'anulacion'`, que apunta a la anulada
+  (`anula`). La anulada sigue en la tabla y en el PDF, pero deja de contar en las marcas y en el resumen
+  («Anuladas por error: N»).
+- **La base, no la pantalla** (migración `20261111180000_mesa_arbitro_ilegales.sql`):
+  - `arbitro_bitacora` suma las columnas `color`, `jugador` y `anula`, y los tipos `ilegal`, `irregularidad` y
+    `anulacion`. Una ilegal o irregularidad exige color, ronda y mesa.
+  - El permiso de insert por columna suma esas tres columnas, pero no la hora ni el autor.
+  - La política de insert deja anular solo una ilegal o irregularidad **propia** de la misma partida y el mismo
+    jugador.
+  - Un índice único sobre `anula` impide anular dos veces.
+  - Sigue sin update ni delete.
+- **Lo que no se probó:** la migración contra la base de verdad impersonando una cuenta (solo su texto, con
+  `verificar-mesa-arbitro.js`), ni guardar una mesa con la función desplegada y una sesión con licencia (la
+  página se probó con un doble).
+- Lo prueban `verificar-mesa-arbitro.js` (la regla, las marcas, el resumen sin lo anulado y las promesas de la
+  migración) y `verificar-mesa-arbitro-pagina.js` (sección «Ilegales, irregularidades y "Guardar" en la fila»).
+  Si se cuenta lo anulado, las dos saltan.
 
 ## La ficha del jugador federado
 

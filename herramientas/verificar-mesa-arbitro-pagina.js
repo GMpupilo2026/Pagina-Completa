@@ -90,7 +90,14 @@ function doble(licencia) {
     from: (t) => {
       if (t !== "arbitro_bitacora") { const q = {}; ["select","eq","order","range","in","single","maybeSingle","limit","update","insert"].forEach((m) => q[m] = () => q); q.then = (ok) => Promise.resolve({ data: [], error: null }).then(ok); return q; }
       return {
-        insert: (rows) => { window.__insertados.push(...rows); rows.forEach((r) => FILAS.push(Object.assign({ id: "id" + FILAS.length, creada_por: "yo", ocurrio: new Date(Date.UTC(2026, 10, 1, 20, FILAS.length)).toISOString() }, r))); return R(null); },
+        insert: (rows) => {
+          // Como la política y el índice único: una anulación apunta a una ilegal o irregularidad de la misma partida y jugador, una sola vez.
+          for (const r of rows) if (r.anula != null) {
+            const b = FILAS.find((x) => x.id === r.anula);
+            if (r.tipo !== "anulacion" || !b || !["ilegal", "irregularidad"].includes(b.tipo) || b.tnr !== r.tnr || b.ronda !== r.ronda || b.mesa !== r.mesa || b.color !== r.color || FILAS.some((x) => x.anula === r.anula))
+              return R(null, { message: "new row violates row-level security policy" });
+          }
+          window.__insertados.push(...rows); rows.forEach((r) => FILAS.push(Object.assign({ id: "id" + FILAS.length, creada_por: "yo", ocurrio: new Date(Date.UTC(2026, 10, 1, 20, FILAS.length)).toISOString() }, r))); return R(null); },
         select: () => { const f = {}; const q = { eq: (c, v) => { f[c] = v; return q; }, order: () => q, range: () => q,
           then: (ok, ko) => Promise.resolve({ data: FILAS.filter((r) => Object.entries(f).every(([c, v]) => r[c] === v)), error: null }).then(ok, ko) }; return q; },
       };
@@ -167,7 +174,7 @@ async function abrir(browser, licencia) {
     await p.click("#m-leer");
     await p.waitForSelector("#m-mesas tr");
     igual("le manda a la función la acción, el código y la clave", await p.evaluate(() => { const b = window.__ultimo; return [b.action, b.tnr, b.sid]; }), ["leer", "1532448", SID]);
-    igual("las tres mesas, con lo que ya tienen en chess-results", await p.$$eval("#m-mesas tr", (l) => l.map((tr) => [...tr.children].slice(0, 4).map((td) => td.textContent))),
+    igual("las tres mesas, con lo que ya tienen en chess-results", await p.$$eval("#m-mesas tr", (l) => l.map((tr) => [...tr.children].slice(0, 4).map((td) => td.dataset.jugador ? td.querySelector("p").textContent : td.textContent))),
         [["1", "Muñoz Feliz Alejandro", "Gramajo Tovar Marco", "Sin resultado"], ["2", "Harvey Ian", "Acuña Porras Fabio", "Sin resultado"], ["3", "Hopkins John", "Baquero Graterol", "½-½ (tablas)"]]);
     igual("al leer una ronda, el torneo queda en «Mis torneos» (con el nombre de chess-results)", await p.evaluate(() => window.__vistos), [["1532448", "Torneo de Prueba"]]);
     igual("dice el torneo y la ronda abierta", [await p.textContent("#m-torneo"), await p.textContent("#t-mesas")], ["Torneo de Prueba · ronda 3", "Mesas de la ronda 3"]);
@@ -250,18 +257,85 @@ async function abrir(browser, licencia) {
         await p.evaluate((g) => { const r = window.__insertados[2]; return [r.tipo, r.resultado, r.enviado, window.__guardados.length === g]; }, guardadosAntes), ["resultado", "0f-0f", false, true]);
     igual("en la tabla de la bitácora se lee «solo anotado»", await p.$$eval("#b-lineas tr", (l) => l[l.length - 1].children[4].textContent.includes("solo anotado")), true);
 
+    console.log("\n=== Ilegales, irregularidades y «Guardar» en la fila ===");
+    const n0 = await p.evaluate(() => window.__insertados.length);
+    const guardados0 = await p.evaluate(() => window.__guardados.length);
+    const fila2 = '#m-mesas tr[data-mesa="2"]';
+    igual("cada jugador tiene «Ilegal» e «Irregularidad», con su nombre y la mesa para el lector de pantalla",
+        await p.$$eval(fila2 + ' [data-jugador="negras"] button', (b) => b.map((x) => [x.dataset.accion, x.getAttribute("aria-label")])),
+        [["ilegal", "Jugada ilegal de Acuña Porras Fabio (mesa 2)"], ["irregularidad", "Irregularidad de Acuña Porras Fabio (mesa 2)"]]);
+    igual("el «Guardar» de la fila está apagado si en esa mesa no hay nada elegido", await p.$eval(fila2 + ' [data-accion="guardar-mesa"]', (b) => b.disabled), true);
+    await p.click(fila2 + ' [data-jugador="negras"] [data-accion="ilegal"]');
+    await p.waitForSelector("dialog[open] select[name=tipo]");
+    igual("la primera ilegal dice que se le dan 2 minutos al rival y ofrece la lista de tipos", await p.evaluate(() => { const d = document.querySelector("dialog[open]"); return [d.textContent.includes("2 minutos más a su rival"), d.querySelector("select[name=tipo]").value, d.querySelector("[data-avisos-aceptar]").textContent]; }), [true, "otra", "Anotar la ilegal"]);
+    await p.selectOption("dialog[open] select[name=tipo]", "enroque");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction((n) => window.__insertados.length === n + 1, n0);
+    igual("queda en la bitácora como «ilegal», con la partida, el jugador, su color y el art. 7.5.5",
+        await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.tnr, r.ronda, r.mesa, r.color, r.jugador, r.articulo, r.texto, r.enviado]; }),
+        ["ilegal", "1532448", 3, 2, "negras", "Acuña Porras Fabio", "7.5.5", "Enroque ilegal", false]);
+    await p.waitForFunction((f) => document.querySelector(f + ' [data-jugador="negras"] [data-marca="ilegal"]'), fila2);
+    igual("la mesa muestra la marca escrita («1 ilegal») y ofrece anularla", await p.evaluate((f) => [document.querySelector(f + ' [data-jugador="negras"] [data-marca="ilegal"]').textContent, !!document.querySelector(f + ' [data-jugador="negras"] [data-accion="anular-ilegal"]'), document.querySelector(f).dataset.estado], fila2), ["1 ilegal", true, "libre"]);
+    await p.click(fila2 + ' [data-jugador="negras"] [data-accion="ilegal"]');
+    await p.waitForSelector("dialog[open] select[name=tipo]");
+    igual("la segunda avisa ANTES que pierde la partida, con el botón que lo dice", await p.evaluate(() => { const d = document.querySelector("dialog[open]"); return [d.textContent.includes("SEGUNDA jugada ilegal"), d.querySelector("[data-avisos-aceptar]").textContent]; }), [true, "Anotar la SEGUNDA ilegal"]);
+    await p.selectOption("dialog[open] select[name=tipo]", "rey-jaque");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => document.querySelector("dialog[open]") && document.querySelector("dialog[open]").textContent.includes("pierde la partida"));
+    igual("con la segunda: avisa que pierde (salvo que el rival no pueda dar mate), PROPONE el 1-0 sin guardarlo y pinta la mesa con su aviso escrito",
+        await p.evaluate((f) => { const d = document.querySelector("dialog[open]").textContent, tr = document.querySelector(f); return [d.includes("art. 7.5.5"), d.includes("no puede dar mate"), document.getElementById("m-sel-2").value, tr.dataset.estado, (tr.querySelector("[data-pierde]") || {}).textContent, getComputedStyle(tr.children[0]).borderLeftWidth]; }, fila2),
+        [true, true, "1", "pierde", "Segunda ilegal: decide el resultado", "4px"]);
+    igual("y no le mandó nada a chess-results", await p.evaluate((g) => window.__guardados.length === g, guardados0), true);
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    if (process.env.CAPTURA_ILEGAL) { await p.waitForFunction(() => !document.querySelector("dialog[open]")); await p.locator("#zona-mesas").screenshot({ path: process.env.CAPTURA_ILEGAL }); } // la mesa con la segunda ilegal, para mirarla
+    await p.click(fila2 + ' [data-jugador="negras"] [data-accion="anular-ilegal"]');
+    await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction((n) => window.__insertados.length === n + 3, n0);
+    igual("«Anular» no borra: agrega una «anulacion» que apunta a la última ilegal, de la misma partida y jugador",
+        await p.evaluate(() => { const l = window.__insertados, r = l[l.length - 1], ultima = l[l.length - 2]; return [r.tipo, r.mesa, r.color, r.ronda, ultima.tipo, r.anula != null]; }), ["anulacion", 2, "negras", 3, "ilegal", true]);
+    await p.waitForFunction((f) => document.querySelector(f).dataset.estado !== "pierde", fila2);
+    igual("la anulada deja de contar: vuelve a «1 ilegal» y la mesa sale de la banda roja", await p.evaluate((f) => [document.querySelector(f + ' [data-jugador="negras"] [data-marca="ilegal"]').textContent, document.querySelector(f).dataset.estado, getComputedStyle(document.querySelector(f).children[0]).borderLeftWidth], fila2), ["1 ilegal", "libre", "0px"]);
+    igual("la misma línea no se anula dos veces (el doble se porta como el índice único)",
+        await p.evaluate(async () => { const a = window.__insertados[window.__insertados.length - 1]; const r = await sb.from("arbitro_bitacora").insert([Object.assign({}, a)]); return !!r.error; }), true);
+
+    await p.click(fila2 + ' [data-jugador="blancas"] [data-accion="irregularidad"]');
+    await p.waitForSelector("dialog[open] select[name=tipo]");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction(() => document.querySelector("dialog[open]") && document.querySelector("dialog[open]").textContent.includes("con «Otra» es obligatorio"));
+    igual("con «Otra» y sin escribir, el cuadro vuelve a abrirse y pide qué pasó (no anota nada)", await p.evaluate((n) => window.__insertados.length === n + 3, n0), true);
+    await p.fill("dialog[open] textarea[name=nota]", "Comió durante la partida en la mesa");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForFunction((n) => window.__insertados.length === n + 4, n0);
+    igual("la irregularidad queda con su jugador, su color y lo escrito", await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.mesa, r.color, r.jugador, r.texto]; }),
+        ["irregularidad", 2, "blancas", "Harvey Ian", "Otra: Comió durante la partida en la mesa"]);
+    igual("en la tabla de la bitácora se lee quién, con qué color y qué fue", await p.$$eval("#b-lineas tr", (l) => l[l.length - 1].children[4].textContent), "Harvey Ian (blancas): Otra: Comió durante la partida en la mesa");
+
+    // El 1-0 propuesto sigue elegido en la mesa 2; se elige además otro en la 3: el «Guardar» de la fila 2 manda SOLO la 2, sin preguntar.
+    await p.selectOption("#m-sel-3", "3");
+    await p.click(fila2 + ' [data-accion="guardar-mesa"]');
+    await p.waitForFunction((g) => window.__guardados.length === g + 1, guardados0);
+    igual("el «Guardar» de la fila manda solo esa mesa, sin el cuadro de confirmar",
+        await p.evaluate(() => [window.__guardados[window.__guardados.length - 1].cambios, !!document.querySelector("dialog[open]")]),
+        [[{ mesa: 2, blancas: "Harvey Ian", negras: "Acuña Porras Fabio", valor: "1" }], false]);
+    await p.waitForFunction((n) => window.__insertados.length === n + 5, n0);
+    igual("queda como resultado enviado, y la mesa 3 sigue esperando con lo suyo elegido",
+        await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.mesa, r.resultado, r.enviado, document.getElementById("m-sel-3").value, document.getElementById("m-guardar").textContent]; }),
+        ["resultado", 2, "1-0", true, "3", "Guardar 1 resultado en chess-results"]);
+    await p.selectOption("#m-sel-3", "");
+
     console.log("\n=== Incidencias ===");
     await p.fill("#b-mesa", "2");
     await p.selectOption("#b-tipo", "incidencia");
     await p.fill("#b-articulo", "art. 11.3.2");
     await p.fill("#b-texto", "Sonó un celular; el jugador perdió la partida.");
     await p.click("#b-agregar");
-    await p.waitForFunction(() => window.__insertados.length === 4);
-    igual("la incidencia queda con su ronda, mesa, artículo y texto", await p.evaluate(() => { const r = window.__insertados[3]; return [r.tipo, r.ronda, r.mesa, r.articulo, r.texto, r.enviado]; }),
+    await p.waitForFunction((n) => window.__insertados.length === n + 6, n0);
+    igual("la incidencia queda con su ronda, mesa, artículo y texto", await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.ronda, r.mesa, r.articulo, r.texto, r.enviado]; }),
         ["incidencia", 3, 2, "art. 11.3.2", "Sonó un celular; el jugador perdió la partida.", false]);
     await p.fill("#b-texto", "   ");
     await p.click("#b-agregar");
-    igual("sin texto no se anota", await p.evaluate(() => window.__insertados.length), 4);
+    igual("sin texto no se anota", await p.evaluate((n) => window.__insertados.length === n + 6, n0), true);
 
     console.log("\n=== La clave ===");
     igual("la clave no está en la bitácora", await p.evaluate((s) => JSON.stringify(window.__insertados).includes(s), SID), false);

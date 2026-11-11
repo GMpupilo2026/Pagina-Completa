@@ -15,36 +15,12 @@
   "use strict";
   const enNode = typeof module !== "undefined" && module.exports;
 
-  const ARTICULO_ILEGAL = "7.5.5";
+  // Las reglas de las ilegales y los tipos de ilegal e irregularidad son UNA sola copia, en js/mesa-arbitro.js
+  // (la Mesa del árbitro general las usa igual): acá se toman de ahí y se siguen exportando con el mismo nombre.
+  const MA = enNode ? require("./mesa-arbitro.js") : raiz.MesaArbitro;
+  const { ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo } = MA;
   const FIN_DEL_TORNEO = "2026-11-09T23:59:59-06:00"; // última jornada, hora de Costa Rica
 
-  // «i» por cada ilegal y «!» por cada irregularidad: el mismo código de Pareo.
-  const marcasTexto = (m) => (m ? "i".repeat(m.ilegales || 0) + "!".repeat(m.irregularidades || 0) : "");
-
-  // Lo que se le dice al árbitro al anotar una ilegal. `n` es la cuenta de ESA
-  // partida y ESE jugador, ya con la que acaba de anotar.
-  // `minutos`: los que se le dan al rival por la primera (2; 1 en el blitz, Leyes del Ajedrez, apéndice B.3).
-  function avisoIlegal(n, nombre, color, minutos) {
-    const min = minutos === 1 ? "1 minuto" : "2 minutos";
-    const quien = nombre || (color === "negras" ? "Las negras" : "Las blancas");
-    if (n >= 2) {
-      return {
-        nivel: "pierde",
-        titulo: "Segunda jugada ilegal: pierde la partida",
-        texto: quien + " ya hizo " + n + " jugadas ilegales en esta partida: pierde la partida (art. " + ARTICULO_ILEGAL + "). " +
-          "Excepción: si su rival no puede dar mate con ninguna serie de jugadas legales, la partida es tablas. " +
-          "Tú decides el resultado: no se guarda solo.",
-        // Pierde quien la hizo: si son las blancas, gana el negro (0-1), y al revés.
-        resultado: color === "blancas" ? "3" : "1",
-      };
-    }
-    return {
-      nivel: "primera",
-      titulo: "Primera jugada ilegal",
-      texto: quien + " hizo una jugada ilegal: dale " + min + " más a su rival (art. " + ARTICULO_ILEGAL + "). Con otra, pierde la partida.",
-      resultado: null,
-    };
-  }
 
   // El Rápido y el Blitz se juegan con la misma página, pero en «modo rápido» (ver «El Rápido y el Blitz: la
   // mesa en un toque» en docs/decisiones/juegos-y-torneos.md). El ritmo lo dice la base si lo trae (`ritmo`) y,
@@ -68,8 +44,6 @@
   ];
   const ritmoDe = (t) => ritmoRapido(t && t.nombre, t && t.ritmo) || "clasico";
   const configDeRitmo = (id) => (RITMOS.find((r) => r.id === id) || RITMOS[0]).config;
-  // La primera ilegal: 2 minutos para el rival; en el blitz, 1 (apéndice B.3).
-  const minutosIlegal = (ritmo) => (ritmo === "blitz" ? 1 : 2);
 
   // Cómo se pinta una mesa: pierde (segunda ilegal sin resultado todavía), con
   // resultado en chess-results, con algo sin guardar o sin nada.
@@ -217,35 +191,6 @@
     return [...por.values()].sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
   }
 
-  // ---- Los tipos de jugada ilegal y de irregularidad, para elegirlos de una lista y que
-  // queden en la bitácora sin escribir. Son los casos de siempre de un torneo; el artículo
-  // solo va donde el reglamento de FIDE lo dice sin duda (si falta uno, el árbitro puede
-  // elegir «Otra» y escribirlo). La ilegal es siempre el 7.5.5 (dos minutos al rival la
-  // primera; la segunda pierde la partida). «Otra» va PRIMERO y es la que viene elegida: si el
-  // árbitro escribe lo que pasó y no toca la lista, queda anotado tal cual en «Otra», y no
-  // con una frase de la lista que no eligió (pasó en el Centroamericano 2026).
-  const TIPOS_ILEGAL = [
-    { id: "otra", texto: "Otra (escribir qué pasó)" },
-    { id: "pieza", texto: "Movió una pieza como esa pieza no puede moverse" },
-    { id: "rey-jaque", texto: "Dejó o puso su propio rey en jaque" },
-    { id: "no-salio-jaque", texto: "No salió de un jaque" },
-    { id: "enroque", texto: "Enroque ilegal" },
-    { id: "captura", texto: "Captura ilegal (de su propia pieza o de una casilla que no corresponde)" },
-    { id: "promocion", texto: "Peón en la última fila sin promover a una pieza válida" },
-    { id: "turno", texto: "Jugó fuera de turno o dos jugadas seguidas" },
-  ];
-  const TIPOS_IRREGULARIDAD = [
-    { id: "otra", texto: "Otra (escribir qué pasó)" },
-    { id: "toque", texto: "Tocó una pieza y no la movió (pieza tocada)", articulo: "4.3" },
-    { id: "componer", texto: "Arregló piezas sin decir «compongo»", articulo: "4.2" },
-    { id: "planilla", texto: "No anota la partida en la planilla", articulo: "8.1" },
-    { id: "tablas", texto: "Ofreció tablas de forma incorrecta", articulo: "9.2" },
-    { id: "celular", texto: "Celular o aparato electrónico sonó o lo tenía encendido", articulo: "11.3.2" },
-    { id: "ruido", texto: "Molestó al rival o hizo ruido" },
-    { id: "salio", texto: "Salió del área de juego sin permiso" },
-    { id: "ayuda", texto: "Recibió ayuda o habló con otras personas durante la partida" },
-    { id: "reloj", texto: "Usó mal el reloj (con la otra mano, golpeándolo, sin soltar la pieza)" },
-  ];
   // La sanción de tiempo de una irregularidad (art. 12.9: quitarle tiempo a quien la cometió o dárselo a su rival).
   // Va escrita al final del texto de la irregularidad, siempre con esta forma, y se vuelve a leer de ahí para el reloj
   // que se apaga: una sola copia del formato (sancionTexto escribe, leerSancion lee).
@@ -269,14 +214,6 @@
     return { segundos: m[1] === "+" ? seg : -seg, a: m[4] === "su rival" ? "rival" : "suyo" };
   }
 
-  // Lo que se anota en el registro de una ilegal o irregularidad elegida de la lista.
-  function textoTipo(lista, id, nota) {
-    const t = lista.find((x) => x.id === id);
-    if (!t) return null;
-    const n = String(nota || "").trim();
-    if (id === "otra" && !n) return null;
-    return { texto: (id === "otra" ? "Otra: " + n : t.texto + (n ? ". " + n : "")), articulo: t.articulo || "" };
-  }
 
   // «22, 24 a 26, 30»: las mesas juntas en rangos para leerlas de un vistazo.
   function listaMesas(mesas) {
