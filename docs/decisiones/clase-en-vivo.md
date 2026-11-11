@@ -2366,6 +2366,30 @@ en otra página.
   quita con lo demás (`limpiarLoDeLaClase`).
 - **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
   `reloj: null`, y sin la columna ese update fallaría entero.
+- **Jugada ilegal: el asesor ajusta el reloj como árbitro** (tarjeta de abajo,
+  `RelojPractica.ILEGALES`). Seis situaciones:
+  - primera ilegal en clásica: +2 min al rival (art. 7.5.5);
+  - primera ilegal en rápida: +1 min (Anexo A.4.2);
+  - en relámpago, presionar sin mover: cuenta como ilegal (art. 7.5.3) y da
+    +1 min;
+  - enrocar con dos manos: cuenta como ilegal (art. 7.5.4);
+  - por períodos, quitarle la ilegal al contador de jugadas;
+  - la segunda ilegal: no se suma tiempo, la partida termina.
+  Cada una arranca con el reloj **corriendo** justo después de la ilegal y las
+  blancas a la izquierda. El asesor lo detiene con ▶‖, entra a corrección con ✓
+  y presiona «Comprobar».
+  - **Contra qué se compara:** con lo que marcaba el reloj al detenerlo (se
+    vuelve a tomar en cada pausa hasta que se corrige) y con lo que dejó la
+    corrección. Así no importa que después lo reanude y siga corriendo.
+  - **El tiempo de quien hizo la ilegal no se toca.**
+  - **El contador de jugadas solo se exige donde importa** (por períodos). En
+    las demás, cambiarlo está mal.
+  - **Cada error tiene su propio aviso:** no lo detuvo, no sumó nada, le sumó
+    al infractor, sumó lo de clásica en una rápida, o sumó en la segunda
+    ilegal.
+  - Las logradas se guardan en el aparato (`<clave>:ilegal`). Lo revisa
+    `verificar-reloj-practica.js`, que monta el reloj solo, lo maneja con sus
+    botones y comprueba que cada error se rechace con su aviso.
 
 ### La participación pareja
 
