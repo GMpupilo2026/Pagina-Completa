@@ -96,29 +96,40 @@ window.PresentacionClase = (function () {
         };
     }
 
-    /* La cookie con que el worker deja pasar lo del curso (window.SesionCursos,
-       en js/supabase-client.js) dura lo mismo que la sesión: una hora. Si la
-       computadora se durmió o la pestaña quedó atrás, nadie la renovó y el
-       worker contesta 401 aunque la cuenta siga adentro: la tarjeta se quedaba
-       en blanco con «Revisa tu conexión» y la conexión no tenía nada. Antes de
-       pedir, se escribe con la sesión que haya (getSession la renueva si
-       venció); si aun así contesta 401, se fuerza la renovación y se pide UNA
-       vez más. El doble de los verificadores no trae SesionCursos: no pasa nada. */
-    async function ponerCookie(forzar) {
-        if (!window.SesionCursos || !window.sb || !sb.auth) return;
+    /* Lo del curso pasa por el candado del worker, que necesita ver la sesión.
+       Se la mandaba solo la cookie de window.SesionCursos (js/supabase-client.js),
+       y el 10/11 eso falló dos veces, sin ningún error a la vista: la tarjeta en
+       blanco con «Revisa tu conexión» y la conexión bien.
+       - La cookie dura lo mismo que la sesión, una hora: si la computadora se
+         durmió, nadie la renovaba y el worker contestaba 401.
+       - En un perfil de Chrome la cookie no llegaba NUNCA, ni recargando, a un
+         profe con el acceso vigente.
+       Ahora la página manda el token también en Authorization: Bearer (el
+       worker lo acepta igual que la cookie, ver tokenDe en worker.js), y las
+       imágenes se bajan con ese encabezado, no con un <img src> que solo puede
+       llevar la cookie. getSession() renueva la sesión si venció; ante un 401
+       se fuerza la renovación y se pide UNA vez más. La cookie se sigue
+       escribiendo, para lo demás del sitio. El doble de los verificadores no
+       trae SesionCursos ni refreshSession: no pasa nada. */
+    async function sesionActual(forzar) {
+        if (!window.sb || !sb.auth) return "";
         try {
             const pedido = forzar && sb.auth.refreshSession ? sb.auth.refreshSession() : sb.auth.getSession();
             const { data } = (await pedido) || {};
-            if (data && data.session) SesionCursos.guardar(data.session);
-        } catch (e) { console.error(e); }
+            const s = data && data.session;
+            if (s && window.SesionCursos) SesionCursos.guardar(s);
+            return (s && s.access_token) || "";
+        } catch (e) { console.error(e); return ""; }
+    }
+    async function pedirDelCurso(ruta) {
+        const pedir = (token) => fetch(ruta, { credentials: "same-origin", headers: token ? { Authorization: "Bearer " + token } : {} });
+        let r = await pedir(await sesionActual(false));
+        if (r.status === 401) r = await pedir(await sesionActual(true));
+        if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
+        return r;
     }
     async function bajarDelCurso(deck) {
-        const pedir = () => fetch(carpeta(deck) + "diapositivas.json", { credentials: "same-origin" });
-        await ponerCookie(false);
-        let r = await pedir();
-        if (r.status === 401) { await ponerCookie(true); r = await pedir(); }
-        if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
-        return r.json();
+        return (await pedirDelCurso(carpeta(deck) + "diapositivas.json")).json();
     }
 
     const pedidas = {};
@@ -140,12 +151,23 @@ window.PresentacionClase = (function () {
     }
     function olvidar(deck) { delete pedidas[deck]; }
 
-    /* La dirección de la imagen. Las del curso, directa (el worker pone el
-       candado); las subidas, firmada por una hora, y solo si la política del
-       bucket deja: al alumno, solo la que se está mostrando. */
+    /* La dirección de la imagen. Las del curso, bajada con el encabezado (ver
+       arriba) y servida como blob: una vez bajada, ya no depende de la sesión;
+       las subidas, firmada por una hora, y solo si la política del bucket deja:
+       al alumno, solo la que se está mostrando. */
     const firmadas = {};
+    const bajadas = {};    // ruta → promesa del blob: URL
     async function url(deck, d) {
-        if (!esSubida(deck)) return carpeta(deck) + d.imagen;
+        if (!esSubida(deck)) {
+            const ruta = carpeta(deck) + d.imagen;
+            if (!bajadas[ruta]) {
+                bajadas[ruta] = pedirDelCurso(ruta)
+                    .then((r) => r.blob())
+                    .then((b) => URL.createObjectURL(b))
+                    .catch((e) => { delete bajadas[ruta]; throw e.message === "error" ? new Error("sin_imagen") : e; });
+            }
+            return bajadas[ruta];
+        }
         const ya = firmadas[d.imagen];
         if (ya && ya.vence > Date.now()) return ya.url;
         const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(d.imagen, 3600);
@@ -153,8 +175,13 @@ window.PresentacionClase = (function () {
         firmadas[d.imagen] = { url: data.signedUrl, vence: Date.now() + 50 * 60 * 1000 };
         return data.signedUrl;
     }
+    // Que una imagen que no se pudo mostrar se vuelva a pedir de cero.
+    function olvidarImagen(deck, d) {
+        if (esSubida(deck)) delete firmadas[d.imagen];
+        else delete bajadas[carpeta(deck) + d.imagen];
+    }
 
-    return { LISTA, BUCKET, carpeta, valida, cargar, olvidar, url, esSubida, tituloDeTexto, renovarCookie: () => ponerCookie(true) };
+    return { LISTA, BUCKET, carpeta, valida, cargar, olvidar, url, olvidarImagen, esSubida, tituloDeTexto };
 })();
 
 let presentacionActual = null;     // {deck, n} tal como vino de la base (o null)
@@ -218,6 +245,7 @@ function presentacionFalla(turno, e) {
     msg.textContent = texto;
     msg.hidden = false;
     img.removeAttribute("src");
+    delete img.dataset.archivo;
     document.getElementById("presentacion-pizarra").replaceChildren();
     // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
     document.documentElement.classList.remove("vista-limpia");
@@ -231,27 +259,16 @@ function reintentarPresentacion() {
     pintarPresentacion(presentacionActual, true);
 }
 
-document.getElementById("presentacion-img").addEventListener("load", () => { presentacionImagenReintentada = ""; });
 window.addEventListener("online", () => { if (presentacionReintento) reintentarPresentacion(); });
 
-/* La imagen también pasa por el candado del worker: si la cookie venció entre
-   el diapositivas.json y la imagen, contesta 401 y el <img> queda vacío. Se
-   renueva la cookie y se pide otra vez UNA vez; si tampoco, se reintenta como
-   todo lo demás. */
-let presentacionImagenReintentada = "";
-document.getElementById("presentacion-img").addEventListener("error", async (ev) => {
+/* Una imagen que el navegador no pudo mostrar (una firmada que venció, un blob
+   dañado): se olvida y se vuelve a pedir como todo lo demás. Cuál es lo dice
+   data-archivo, que pone pintarPresentacion. */
+document.getElementById("presentacion-img").addEventListener("error", (ev) => {
     const img = ev.currentTarget;
-    const src = img.getAttribute("src");
-    if (!src || !presentacionActual) return;
-    const turno = presentacionPintando;
-    const base = src.replace(/\?r=\d+$/, "");
-    if (!PresentacionClase.esSubida(presentacionActual.deck) && presentacionImagenReintentada !== base) {
-        presentacionImagenReintentada = base;
-        await PresentacionClase.renovarCookie();
-        if (turno === presentacionPintando && img.getAttribute("src") === src) img.src = base + "?r=" + Date.now();
-        return;
-    }
-    presentacionFalla(turno, new Error("sin_imagen"));
+    if (!img.getAttribute("src") || !presentacionActual) return;
+    if (img.dataset.archivo) PresentacionClase.olvidarImagen(presentacionActual.deck, { imagen: img.dataset.archivo });
+    presentacionFalla(presentacionPintando, new Error("sin_imagen"));
 });
 
 /* Lo que llega de la base (applyGameStateRow) y lo que pone el profe. */
@@ -325,6 +342,7 @@ async function pintarPresentacion(p, propia) {
     presentacionReintentos = 0;
     msg.hidden = true;
     const total = datos.diapositivas.length;
+    img.dataset.archivo = d.imagen;
     img.src = src;
     pintarPizarra(nueva.trazos);
     img.alt = /^Diapositiva \d+$/.test(d.titulo) ? d.titulo : "Diapositiva " + n + ": " + d.titulo;

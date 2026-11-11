@@ -150,10 +150,11 @@ async function cargarWorker() {
   let preguntas = [];
   let contesta = () => new Response("true", { status: 200 });
   globalThis.fetch = async (u, opciones) => { preguntas.push({ u: String(u), opciones }); return contesta(); };
-  const abrir = async (ruta, { cookie, pagina } = {}) => {
+  const abrir = async (ruta, { cookie, pagina, bearer } = {}) => {
     pedido = null; preguntas = [];
     const headers = {};
     if (cookie) headers.Cookie = "otra=1; ai_sesion_cursos=" + cookie + "; y=2";
+    if (bearer) headers.Authorization = "Bearer " + bearer;
     if (pagina) { headers["Sec-Fetch-Mode"] = "navigate"; headers.Accept = "text/html"; }
     const res = await worker.fetch(new Request("https://ajedrez-integral.com" + ruta, { headers }), env);
     return { estado: res.status, aArchivos: !!pedido, preguntas, cuerpo: await res.text(), cache: res.headers.get("cache-control"),
@@ -191,6 +192,25 @@ async function cargarWorker() {
     igual("y una cookie que no es un token", r.estado + "/" + r.preguntas.length, "401/0");
   }
   const bueno = token();
+  {
+    // Sin la cookie (un perfil de Chrome que no la mandaba, el 10/11), la
+    // página manda el mismo token en Authorization: pasa por las mismas preguntas.
+    contesta = () => new Response("true", { status: 200 });
+    const r = await abrir(PDF, { bearer: token() });
+    igual("sin cookie pero con Authorization: Bearer, se sirve", r.estado + "/" + r.aArchivos, "200/true");
+    igual("y también se le preguntó a Supabase", r.preguntas.length, 1);
+    contesta = () => new Response("false", { status: 200 });
+    const n = await abrir(PDF, { bearer: token({ sub: "otra-cuenta" }) });
+    igual("con el encabezado y sin acceso, no", n.estado + "/" + n.aArchivos, "403/false");
+    const v = await abrir(PDF, { bearer: token({ exp: Math.floor(Date.now() / 1000) - 10 }) });
+    igual("y un token vencido en el encabezado tampoco", v.estado + "/" + v.preguntas.length, "401/0");
+    const raro = await abrir(PDF, { bearer: "esto-no-es-un-token" });
+    igual("ni algo que no es un token", raro.estado, 401);
+    contesta = () => new Response("true", { status: 200 });
+    const ambos = await abrir(PDF, { cookie: token({ exp: Math.floor(Date.now() / 1000) - 10 }), bearer: token() });
+    igual("con una cookie vieja y el encabezado al día, gana el encabezado", ambos.estado, 200);
+    contesta = () => new Response("true", { status: 200 });
+  }
   {
     contesta = () => new Response("true", { status: 200 });
     const r = await abrir(PDF, { cookie: bueno });

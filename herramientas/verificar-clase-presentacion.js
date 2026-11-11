@@ -149,12 +149,13 @@ const ultimaPresentacion = (page) => page.evaluate(() => {
 const seVe = (page, sel) => page.evaluate((s) => { const el = document.querySelector(s); return !!(el && el.checkVisibility()); }, sel);
 const imagen = (page) => page.evaluate(() => {
   const i = document.getElementById("presentacion-img");
-  return { src: (i.getAttribute("src") || "").split("/").pop(), cargada: i.complete && i.naturalWidth > 0, alt: i.alt };
+  // Las del curso se muestran como blob: (bajadas con la sesión en el encabezado): cuál es lo dice data-archivo.
+  return { src: i.dataset.archivo || (i.getAttribute("src") || "").split("/").pop(), cargada: i.complete && i.naturalWidth > 0, alt: i.alt };
 });
 async function esperarImagen(page, archivo) {
   await page.waitForFunction((a) => {
     const i = document.getElementById("presentacion-img");
-    return (i.getAttribute("src") || "").endsWith("/" + a) && i.complete && i.naturalWidth > 0;
+    return (i.dataset.archivo === a || (i.getAttribute("src") || "").endsWith("/" + a)) && i.complete && i.naturalWidth > 0;
   }, archivo, { timeout: 8000 });
 }
 
@@ -475,9 +476,11 @@ const CANDADO = `
   window.__jsonRed = Number(sessionStorage.getItem("jsonRed") || 0);
   window.__pedidosJson = 0;
   const fetchDeVerdad = window.fetch;
-  window.fetch = function (u) {
+  window.__conEncabezado = [];
+  window.fetch = function (u, o) {
     if (/diapositivas\\.json$/.test(String(u))) {
       window.__pedidosJson += 1;
+      window.__conEncabezado.push(((o && o.headers) || {}).Authorization || "");
       if (window.__jsonRed > 0) { window.__jsonRed -= 1; return Promise.reject(new TypeError("Failed to fetch")); }
       if (window.__json401 > 0) { window.__json401 -= 1; return Promise.resolve(new Response("Hace falta iniciar sesión", { status: 401 })); }
     }
@@ -502,6 +505,9 @@ async function pruebaCookieVencida(browser) {
   cierto("la cookie se escribió antes de pedir y otra vez con el token renovado",
     JSON.stringify(await a.page.evaluate(() => window.__cookies)).includes('"t","renovado"'),
     JSON.stringify(await a.page.evaluate(() => window.__cookies)));
+  cierto("y la sesión va también en el encabezado (la cookie no llegaba en un perfil de Chrome), renovada al reintentar",
+    JSON.stringify(await a.page.evaluate(() => window.__conEncabezado)) === JSON.stringify(["Bearer t", "Bearer renovado"]),
+    JSON.stringify(await a.page.evaluate(() => window.__conEncabezado)));
   await a.ctx.close();
 
   a = await abrirConCandado(browser, 5, 2, 0);
@@ -529,9 +535,9 @@ async function pruebaCookieVencida(browser) {
   await a.page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 8 } }));
   await a.page.waitForFunction(() => {
     const i = document.getElementById("presentacion-img");
-    return /\/08\.webp\?r=\d+$/.test(i.getAttribute("src") || "") && i.complete && i.naturalWidth > 0;
+    return i.dataset.archivo === "08.webp" && /^blob:/.test(i.getAttribute("src") || "") && i.complete && i.naturalWidth > 0;
   }, null, { timeout: 8000 }).catch(() => {});
-  cierto("una imagen en 401: se renueva la cookie y se vuelve a pedir, y se ve",
+  cierto("una imagen en 401: se renueva la sesión y se vuelve a pedir, y se ve",
     veces === 2 && (await imagen(a.page)).cargada && (await a.page.evaluate(() => window.__cookies.includes("renovado"))) && !(await avisoDeLaTarjeta(a.page)),
     "pedidas: " + veces + ", " + JSON.stringify(await imagen(a.page)));
   cierto("sin errores de la página", a.errores.filter((e) => !/^console:/.test(e)).length === 0, a.errores.join(" | "));
