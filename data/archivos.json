@@ -19087,7 +19087,7 @@
   ]
  },
  "imagenes": {
-  "total": 1149,
+  "total": 1151,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26142,6 +26142,25 @@
       "titulo": "Logo",
       "tipo": "otro",
       "kb": 100
+     }
+    ]
+   },
+   {
+    "carpeta": "img/obs",
+    "titulo": "Obs",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/obs/formacion-ajedrez-fondo.png",
+      "titulo": "Formacion ajedrez fondo",
+      "tipo": "otro",
+      "kb": 466
+     },
+     {
+      "ruta": "img/obs/formacion-ajedrez-marco.png",
+      "titulo": "Formacion ajedrez marco",
+      "tipo": "otro",
+      "kb": 505
      }
     ]
    },

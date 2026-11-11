@@ -23,7 +23,12 @@
    9. Hay dos situaciones por ritmo (clásica, rápida, relámpago) además de
       las primeras; en un reloj mal programado se le suma a los DOS, y si no,
       la pista lo dice sin hablar de una ilegal; en un reclamo de tablas
-      equivocado, la pista habla del rival de quien reclamó. */
+      equivocado, la pista habla del rival de quien reclamó.
+  10. Una sola situación (la que pone el profe): se ve solo el reloj y esa
+      situación (medido con checkVisibility), el reloj espera parado hasta
+      «Empezar», se resuelve igual (cada «Comprobar» se le cuenta al profe por
+      alComprobar, y solo esos), y al volver al reloj libre vuelve todo.
+      `valido` acepta la situación solo si existe. */
 const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
@@ -51,7 +56,8 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
     if (window.__reloj) window.__reloj.destruir();
     host.replaceChildren();
     const nuevo = document.createElement("div"); host.appendChild(nuevo);
-    window.__reloj = RelojPractica.montar(nuevo, { clave: "prueba-reloj" });
+    window.__intentos = [];
+    window.__reloj = RelojPractica.montar(nuevo, { clave: "prueba-reloj", alComprobar: (i, ok) => window.__intentos.push([i, ok]) });
     window.__reloj.cargar({ modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 });
     window.__raiz = nuevo.shadowRoot;
   });
@@ -85,6 +91,11 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   const ILEGALES = await page.evaluate(() => RelojPractica.ILEGALES);
   ok(ILEGALES.length >= 6, `hay al menos seis situaciones de jugada ilegal (${ILEGALES.length})`);
   ok(await r("ilegales") && await r("comprobar"), "la tarjeta de jugada ilegal está en el reloj");
+
+  // Cada escenario dice el ritmo que le da la fórmula de 60 jugadas.
+  const malRitmo = await page.evaluate(() => RelojPractica.ESCENARIOS.filter((e) => !e.sub.startsWith(RelojPractica.clasificar(e.control).ritmo) || !RelojPractica.validoControl(e.control)).map((e) => e.nombre));
+  ok(malRitmo.length === 0, "cada escenario es válido y dice el ritmo que le da la fórmula" + (malRitmo.length ? ": " + malRitmo.join(", ") : ""));
+  ok(await page.evaluate(() => new Set(RelojPractica.ESCENARIOS.filter((e) => e.control.modo === "demora").map((e) => RelojPractica.clasificar(e.control).ritmo)).size === 3), "hay escenarios con demora (delay) en los tres ritmos");
 
   // 8. Forma de los datos.
   const formas = await page.evaluate(() => RelojPractica.ILEGALES.every((x) => RelojPractica.validoControl(x.control)
@@ -199,6 +210,33 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   await corregir({ [P.LM]: 2 });
   v = await comprobar();
   ok(/^¡Bien!/.test(v.texto) && /9\.5\.3/.test(v.texto), `+2:00 a las blancas, sí: «${v.texto.slice(0, 60)}…»`);
+
+  // 10. Una sola situación, la que puso el profe.
+  const ve = (sel) => page.evaluate((q) => { const el = window.__raiz.querySelector(q); return !!el && el.checkVisibility(); }, sel);
+  const iSolo = ILEGALES.findIndex((x) => /reclamo de tablas/.test(x.titulo));
+  ok(await page.evaluate((k) => RelojPractica.valido(RelojPractica.paraMandar(RelojPractica.ILEGALES[k].control, k)), iSolo), "un envío con situación es válido");
+  ok(await page.evaluate(() => !RelojPractica.valido(Object.assign(RelojPractica.paraMandar(RelojPractica.ESCENARIOS[0].control), { situacion: 99 }))), "con una situación que no existe, no");
+  await page.evaluate((k) => window.__reloj.situacion(k), iSolo);
+  ok(await ve(".aparato") && await ve('[data-r="situacion"]') && await ve('[data-r="soloEmpezar"]'), "se ven el reloj, la situación y «Empezar»");
+  ok(!(await ve(".barra")) && !(await ve('[data-r="escenarios"]')) && !(await ve('[data-r="retos"]')) && !(await ve('[data-r="pasos"]')) && !(await ve('[data-r="ilegales"]')),
+    "y nada más: ni la barra, ni la guía, ni escenarios, retos o la lista de situaciones");
+  ok(await page.evaluate((t) => window.__raiz.querySelector('[data-r="tituloI"]').textContent === t, ILEGALES[iSolo].titulo), "el título es el de la situación");
+  ok((await estado()).startsWith("Listo"), `el reloj espera parado hasta «Empezar» (${await estado()})`);
+  v = await comprobar();
+  ok(/Empezar/.test(v.texto) && /alerta/.test(v.clase), `«Comprobar» antes de empezar lo pide: «${v.texto}»`);
+  ok(await page.evaluate(() => window.__intentos.length === 0), "lo comprobado fuera de la situación del profe, o antes de empezar, no se cuenta");
+  await clic("soloEmpezar");
+  ok((await estado()).startsWith("En marcha"), `con «Empezar» arranca corriendo (${await estado()})`);
+  await clic("marcha");
+  v = await comprobar();
+  ok(/alerta/.test(v.clase), "detenerlo sin corregir, no");
+  await corregir({ [P.LM]: 2 });
+  v = await comprobar();
+  ok(/^¡Bien!/.test(v.texto) && /siguiente situación/.test(v.texto), `se resuelve igual, y le dice que espere la siguiente: «${v.texto.slice(-60)}»`);
+  const intentos = await page.evaluate(() => JSON.stringify(window.__intentos));
+  ok(intentos === JSON.stringify([[iSolo, false], [iSolo, true]]), `cada «Comprobar» de la situación se cuenta, con si salió (${intentos})`);
+  await page.evaluate(() => window.__reloj.situacion(null));
+  ok(await ve(".barra") && await ve('[data-r="ilegales"]') && !(await ve('[data-r="soloEmpezar"]')), "al volver al reloj libre, vuelve todo");
 
   // Cargar un escenario quita la situación en curso.
   await empezar(2);
