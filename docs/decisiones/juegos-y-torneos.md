@@ -16325,6 +16325,30 @@ sala-base` (con el sitio en localhost:8777 y playwright):
   que la arena avisa del juego limpio y que esconder la pestaña en medio de
   una partida (y solo entonces) llama a `arena_anotar_salida`.
 
+### Cada jugada se dice: la del rival y la propia, en palabras
+
+Con la voz del sitio (🔇 del encabezado) o con lector de pantalla, la sala
+decía solo la jugada del rival, y en notación («Bruno Mena jugó e4.»), y
+**después** de «Es tu turno». La propia no se decía nunca: al mover se oía
+«Es el turno de Bruno Mena.» y nada más, así que quien no ve no sabía si su
+jugada había salido ni cuál quedó. El tablero no la cubría: la voz de
+`js/voz-pagina.js` compara las casillas, pero las de la sala dicen «e7, peón
+negro» con la selección encima, y en la prueba no dijo nada.
+
+- `#anuncio` dice cada jugada nueva: «Bruno Mena jugó peón eva 4.»,
+  «Jugaste caballo felix 3.». En palabras con `BlindNotation.sanSpoken`
+  (`sala.html` carga ahora `js/blind-notation.js`), y el peón se nombra: «eva
+  4» a secas no dice qué se movió.
+- Primero la jugada, después el turno: `anunciar` corre antes de
+  `pintarPartida`, y `#anuncio` está en la página antes que `#turno` (la voz
+  del sitio lee las regiones en el orden de la página).
+- La jugada que cierra la partida se dice antes del resultado: el texto del
+  final pisaba `#anuncio` antes de que se oyera.
+
+`verificar-sala.js` mira los textos (rival, propia, pieza, la del final) y el
+orden en la página. Probado con la voz encendida y el doble de la base: antes
+no salía «Jugaste…» y la del rival llegaba después del turno.
+
 ## Cada evento de la Mesa del árbitro tiene dueño
 
 La versión del Centroamericano de la Mesa del árbitro se armó para **un** evento.
