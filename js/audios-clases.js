@@ -8,7 +8,7 @@
    vez anterior y lo que se dijo está escrito al lado, para leerlo o buscarlo.
 
    Quién ve qué lo decide la base (public.audios_clase y el bucket audios-clase,
-   migración 20261111183000): la gente de la academia y quien administra. Quien
+   migración 20261111195552): la gente de la academia y quien administra. Quien
    puede subir (administración, el supervisor o un profe de esa academia) ve
    además «Subir audios»; la base lo vuelve a comprobar al subir.
 

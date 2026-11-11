@@ -1272,7 +1272,7 @@ garantiza un índice único.
   jugadas.
 - «Descargar el audio (32 MB)», para oírlo sin conexión.
 
-**Quién ve y quién sube lo decide la base** (migración `20261111183000`):
+**Quién ve y quién sube lo decide la base** (migración `20261111195552`):
 
 - `audios_clase` y el bucket privado `audios-clase` (solo MP3, hasta 50 MB,
   en `<academia>/<archivo>.mp3`) los lee la gente de la academia
