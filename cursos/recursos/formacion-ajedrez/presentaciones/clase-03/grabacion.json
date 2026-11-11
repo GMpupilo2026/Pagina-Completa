@@ -1,0 +1,377 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 13766,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Bienvenida y objetivos de la sesión"
+  },
+  {
+   "t": 336,
+   "titulo": "Ritmos de juego y reglas de rápidas y relámpago"
+  },
+  {
+   "t": 970,
+   "titulo": "Desempates: Buchholz, Sonneborn-Berger y encuentro directo"
+  },
+  {
+   "t": 1407,
+   "titulo": "Preguntas: desempate jugado, armagedón y matemáticos"
+  },
+  {
+   "t": 2580,
+   "titulo": "Ejemplos resueltos: Buchholz y Sonneborn-Berger"
+  },
+  {
+   "t": 3543,
+   "titulo": "Receso"
+  },
+  {
+   "t": 4117,
+   "titulo": "Preguntas al regreso: otros desempates"
+  },
+  {
+   "t": 4458,
+   "titulo": "La Normativa JDE 2026: equipos, puntos y presentación"
+  },
+  {
+   "t": 5335,
+   "titulo": "Sistemas y ritmos de la JDE, etapa por etapa"
+  },
+  {
+   "t": 5479,
+   "titulo": "Sistema suizo y todos contra todos"
+  },
+  {
+   "t": 5942,
+   "titulo": "Casos: ¿qué decide la persona árbitra?"
+  },
+  {
+   "t": 6650,
+   "titulo": "Demostración: Pareo Integral y otras herramientas"
+  },
+  {
+   "t": 9456,
+   "titulo": "Ejercicios: ritmos, JDE y duración de un torneo"
+  },
+  {
+   "t": 10690,
+   "titulo": "Comentarios de participantes: material y Federación"
+  },
+  {
+   "t": 11772,
+   "titulo": "Ejercicios: rondas y tabla de Berger"
+  },
+  {
+   "t": 12813,
+   "titulo": "Quiz de la sesión en vivo"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 1
+  },
+  {
+   "t": 101,
+   "lamina": 2
+  },
+  {
+   "t": 245,
+   "lamina": 3
+  },
+  {
+   "t": 320,
+   "lamina": 4
+  },
+  {
+   "t": 336,
+   "lamina": 5
+  },
+  {
+   "t": 554,
+   "lamina": 6
+  },
+  {
+   "t": 870,
+   "lamina": 7
+  },
+  {
+   "t": 970,
+   "lamina": 8
+  },
+  {
+   "t": 1310,
+   "lamina": 9
+  },
+  {
+   "t": 2580,
+   "lamina": 10
+  },
+  {
+   "t": 2782,
+   "lamina": 11
+  },
+  {
+   "t": 2927,
+   "lamina": 10
+  },
+  {
+   "t": 2947,
+   "lamina": 11
+  },
+  {
+   "t": 3098,
+   "lamina": 12
+  },
+  {
+   "t": 3126,
+   "lamina": 13
+  },
+  {
+   "t": 3213,
+   "lamina": 14
+  },
+  {
+   "t": 3543,
+   "lamina": 15
+  },
+  {
+   "t": 4458,
+   "lamina": 16
+  },
+  {
+   "t": 4967,
+   "lamina": 17
+  },
+  {
+   "t": 5335,
+   "lamina": 18
+  },
+  {
+   "t": 5449,
+   "lamina": 19
+  },
+  {
+   "t": 5479,
+   "lamina": 20
+  },
+  {
+   "t": 5655,
+   "lamina": 21
+  },
+  {
+   "t": 5747,
+   "lamina": 22
+  },
+  {
+   "t": 5776,
+   "lamina": 23
+  },
+  {
+   "t": 5813,
+   "lamina": 24
+  },
+  {
+   "t": 5872,
+   "lamina": 25
+  },
+  {
+   "t": 5905,
+   "lamina": 26
+  },
+  {
+   "t": 5942,
+   "lamina": 27
+  },
+  {
+   "t": 5973,
+   "lamina": 28
+  },
+  {
+   "t": 5994,
+   "lamina": 29
+  },
+  {
+   "t": 6009,
+   "lamina": 30
+  },
+  {
+   "t": 6038,
+   "lamina": 31
+  },
+  {
+   "t": 6152,
+   "lamina": 32
+  },
+  {
+   "t": 6168,
+   "lamina": 33
+  },
+  {
+   "t": 6210,
+   "lamina": 34
+  },
+  {
+   "t": 6294,
+   "lamina": 35
+  },
+  {
+   "t": 6307,
+   "lamina": 36
+  },
+  {
+   "t": 6340,
+   "lamina": 37
+  },
+  {
+   "t": 6394,
+   "lamina": 38
+  },
+  {
+   "t": 6413,
+   "lamina": 39
+  },
+  {
+   "t": 6471,
+   "lamina": 41
+  },
+  {
+   "t": 6532,
+   "lamina": 42
+  },
+  {
+   "t": 6606,
+   "lamina": 43
+  },
+  {
+   "t": 6618,
+   "lamina": 44
+  },
+  {
+   "t": 6650,
+   "lamina": 46
+  },
+  {
+   "t": 9513,
+   "lamina": 47
+  },
+  {
+   "t": 9539,
+   "lamina": 48
+  },
+  {
+   "t": 9618,
+   "lamina": 49
+  },
+  {
+   "t": 9624,
+   "lamina": 50
+  },
+  {
+   "t": 9773,
+   "lamina": 51
+  },
+  {
+   "t": 11772,
+   "lamina": 53
+  },
+  {
+   "t": 11840,
+   "lamina": 54
+  },
+  {
+   "t": 12312,
+   "lamina": 55
+  },
+  {
+   "t": 12478,
+   "lamina": 56
+  },
+  {
+   "t": 12584,
+   "lamina": 57
+  },
+  {
+   "t": 12630,
+   "lamina": 58
+  },
+  {
+   "t": 12671,
+   "lamina": 59
+  },
+  {
+   "t": 12713,
+   "lamina": 60
+  },
+  {
+   "t": 12772,
+   "lamina": 63
+  },
+  {
+   "t": 12799,
+   "lamina": 64
+  },
+  {
+   "t": 12813,
+   "lamina": 67
+  },
+  {
+   "t": 13013,
+   "lamina": 68
+  },
+  {
+   "t": 13292,
+   "lamina": 69
+  },
+  {
+   "t": 13485,
+   "lamina": 70
+  },
+  {
+   "t": 13552,
+   "lamina": 71
+  },
+  {
+   "t": 13640,
+   "lamina": 74
+  }
+ ],
+ "aclaraciones": [
+  {
+   "t": 2737,
+   "avatar": "atencion",
+   "titulo": "La tabla cruzada sí está bien",
+   "texto": "La tabla de la lámina está bien puesta: en cada ronda, el número es el número inicial del rival (5 = Lucía), no su puesto en la clasificación.",
+   "fuente": "Lámina 10"
+  },
+  {
+   "t": 5380,
+   "avatar": "arbitro",
+   "titulo": "Etapa Nacional: suizo o todos contra todos",
+   "texto": "La Normativa dice suizo con más de siete y todos contra todos con seis o menos. Con siete exactos no dice nada: se acuerda en el congresillo y queda en el acta.",
+   "fuente": "Normativa JDE 66.2.d, 66.2.e y art. 34; lámina 18"
+  },
+  {
+   "t": 10630,
+   "avatar": "atencion",
+   "titulo": "Rondas de un suizo con 100 jugadores",
+   "texto": "Con 100 jugadores, la regla de la lámina 25 da al menos 7 rondas (2 elevado a 7 es 128, que ya pasa de 100), y conviene sumar una o dos más para separar bien los primeros puestos.",
+   "fuente": "Lámina 25"
+  },
+  {
+   "t": 11772,
+   "avatar": "atencion",
+   "titulo": "El ejercicio 7 es de todos contra todos",
+   "texto": "El ejercicio 7 es de todos contra todos, no de suizo: con 10 jugadores son 9 rondas y 45 partidas; con 9, también 9 rondas (en cada una descansa alguien) y 36 partidas.",
+   "fuente": "Lámina 65"
+  },
+  {
+   "t": 13038,
+   "avatar": "arbitro",
+   "titulo": "Tablero mal orientado en rápidas",
+   "texto": "Ojo: en rápidas o relámpago SIN supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admite el reclamo por el tablero mal orientado. Corregirlo en cualquier momento vale con supervisión adecuada.",
+   "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
+  }
+ ]
+}
