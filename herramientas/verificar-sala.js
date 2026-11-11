@@ -333,7 +333,9 @@ async function pruebaPartida(browser) {
   igual("la jugada del rival llega sola y dice el plazo de la primera jugada", await texto(page, "#turno"), "Es tu turno: tienes 30 segundos para esta jugada.");
   ok("el peón aparece en e4", (await casilla(page, "e4").locator("span").count()) === 1);
   ok("la casilla de la última jugada se marca", (await page.$$("#tablero .last")).length === 2);
-  igual("se anuncia para quien no ve el tablero", await texto(page, "#anuncio"), "Bruno Mena jugó e4.");
+  igual("la jugada del rival se anuncia en palabras para quien no ve el tablero", await texto(page, "#anuncio"), "Bruno Mena jugó peón eva 4.");
+  ok("y se dice antes que el turno (#anuncio va antes que #turno en la página)", await page.evaluate(() =>
+    !!(document.getElementById("anuncio").compareDocumentPosition(document.getElementById("turno")) & Node.DOCUMENT_POSITION_FOLLOWING)));
   igual("la lista de jugadas", await texto(page, "#lista-jugadas"), "1. e4");
   const etiqueta = await casilla(page, "e4").getAttribute("aria-label");
   ok("cada casilla se lee con su pieza y su estado", etiqueta === "e4, peón blanco, de la última jugada", etiqueta);
@@ -354,12 +356,14 @@ async function pruebaPartida(browser) {
     mover, { p_partida: "p1", p_desde: "e7", p_hasta: "e5", p_san: "e5", p_fen: FEN.e5, p_fin: null });
   await page.waitForFunction(() => document.getElementById("turno").textContent.indexOf("Es el turno de") === 0);
   igual("tras mover, el turno pasa al rival", await texto(page, "#turno"), "Es el turno de Bruno Mena.");
+  igual("la jugada propia también se anuncia: salió, y cuál fue", await texto(page, "#anuncio"), "Jugaste peón eva 5.");
   igual("las jugadas, en español", await texto(page, "#lista-jugadas"), "1. e4 e5");
 
   // La jugada escrita, en español: Cc6 (caballo).
   await jugarRival(page, { san: "Nf3", desde: "g1", hasta: "f3", fen: FEN.cf3 });
   await page.waitForFunction(() => document.getElementById("turno").textContent.indexOf("Es tu turno") === 0, null, { timeout: 8000 });
   igual("el SAN del rival se lee en español (Cf3, no Nf3)", await texto(page, "#lista-jugadas"), "1. e4 e5 2. Cf3");
+  igual("una pieza se nombra con su casilla dicha", await texto(page, "#anuncio"), "Bruno Mena jugó caballo felix 3.");
   await page.fill("#jugada", "Zz9");
   await page.click("#form-jugada button");
   ok("una jugada que no se entiende lo dice y no manda nada", (await visible(page, "#jugada-error")) && (await llamadas(page, "arena_mover")).length === 1);
@@ -385,10 +389,11 @@ async function pruebaPartida(browser) {
   // El final: el rival se rinde y suma puntos.
   await cambiar(page, () => {
     const p = window.__base.partidas[0];
-    p.estado = "terminada"; p.resultado = "0-1"; p.motivo = "abandono"; p.puntos_negras = 2; p.jugadas.push({ s: "Cg1", f: "f3", t: "g1" });
+    p.estado = "terminada"; p.resultado = "0-1"; p.motivo = "abandono"; p.puntos_negras = 2; p.jugadas.push({ s: "Ng1", f: "f3", t: "g1" });
   });
   await page.waitForSelector("#resultado:not([hidden])", { timeout: 8000 });
   igual("al terminar dice quién ganó, cómo y los puntos", [await texto(page, "#resultado-titulo"), await texto(page, "#resultado-detalle")], ["¡Ganaste!", "Ganaste por abandono. Sumaste 2 puntos."]);
+  igual("la jugada que cierra la partida se dice antes del resultado", await texto(page, "#anuncio"), "Bruno Mena jugó caballo gustav 1. ¡Ganaste! Ganaste por abandono. Sumaste 2 puntos.");
   ok("los controles de la partida se esconden", !(await visible(page, "#controles")));
   ok("el foco va al resultado", await page.evaluate(() => document.activeElement.id === "resultado-titulo"));
   ok("el tablero ya no responde", await page.$eval("#tablero", (t) => t.classList.contains("sin-turno")));

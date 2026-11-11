@@ -426,8 +426,8 @@
     S.enviando = false;
     S.juego = reconstruir(fila);
     S.seleccionada = null;
-    pintarPartida();
     anunciar(previa, fila);
+    pintarPartida();
     if (fila.estado === "terminada") finDePartida(previa);
   }
 
@@ -673,14 +673,31 @@
     pintarControles();
   }
 
+  /* La jugada dicha en palabras, como en el resto del sitio: «peón eva 4»,
+     «caballo captura felix 3, jaque»… y no «e4» o «Cxf3+», que el lector y la
+     voz deletrean. El peón se nombra: «eva 4» a secas no dice qué se movió. */
+  function jugadaEnPalabras(san) {
+    const s = String(san || "");
+    if (!window.BlindNotation || !BlindNotation.sanSpoken) return sanEs(s);
+    const dicha = BlindNotation.sanSpoken(s);
+    return /^[a-h]/.test(s) ? "peón " + dicha : dicha;
+  }
+
+  /* Cada jugada nueva se dice, la del rival Y la propia: quien no ve el tablero
+     tiene que saber que su jugada salió y cuál fue, no solo que ahora le toca
+     al otro. Se escribe ANTES de pintar el turno (ver aplicarFila) y #anuncio va
+     antes que #turno en la página: lector y voz dicen primero la jugada y
+     después de quién es el turno. */
   function anunciar(previa, fila) {
+    S.jugadaAnunciada = "";
     const antes = previa ? (previa.jugadas || []).length : (fila.jugadas || []).length;
     const ahora = (fila.jugadas || []).length;
-    if (ahora > antes) {
-      const u = fila.jugadas[ahora - 1];
-      const delRival = (ahora % 2 === 1) === (S.color === "b");
-      if (delRival) $("anuncio").textContent = S.rival.nombre + " jugó " + sanEs(u.s) + ".";
-    }
+    if (ahora <= antes) return;
+    const u = fila.jugadas[ahora - 1];
+    const delRival = (ahora % 2 === 1) === (S.color === "b");
+    const texto = (delRival ? S.rival.nombre + " jugó " : "Jugaste ") + jugadaEnPalabras(u.s) + ".";
+    S.jugadaAnunciada = texto;
+    $("anuncio").textContent = texto;
   }
 
   const MOTIVO = {
@@ -720,7 +737,9 @@
     $("oferta").hidden = true;
     const abierta = S.torneo && estadoDe(S.torneo) === "en_curso";
     $("otra-partida").hidden = !abierta;
-    $("anuncio").textContent = titulo + ". " + detalle;
+    // La jugada que terminó la partida (el mate) se dice antes del resultado: si
+    // no, este texto la pisaba antes de que nadie la oyera.
+    $("anuncio").textContent = (S.jugadaAnunciada ? S.jugadaAnunciada + " " : "") + titulo + (/[.!?]$/.test(titulo) ? " " : ". ") + detalle;
     // Solo se le quita el foco a quien estaba jugando: no a quien abre una partida ya terminada.
     if (previa && previa.estado === "en_juego") $("resultado-titulo").focus();
     pintarTurno();
