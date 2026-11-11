@@ -2542,6 +2542,31 @@ con la paleta del sitio y la marca de Ajedrez Integral (la copia única de
 Se dibuja con un script y no a mano por lo mismo que `og-imagen.js`: si cambia
 la paleta o el recuadro (`RECUADRO`), se vuelve a correr y sale igual.
 
+**A las grabaciones que ya se subieron sin él** (las sesiones 1, 2 y 3) se lo
+pone `node herramientas/video-con-fondo.js <grabación> [salida.mp4]`, en la
+computadora del dueño: desde el contenedor no se llega a YouTube (ni bajar ni
+subir) y los originales de Teams pesan varios GB. Solo pide ffmpeg.
+
+- **El video es la entrada principal y el marco va encima**: el marco ya es el
+  fondo entero con el recuadro transparente. Con las imágenes en bucle como
+  entrada principal (fondo, video, marco), ffmpeg no escribía ni un cuadro.
+- **La duración no cambia, a propósito**, y el script la compara al terminar.
+  Los capítulos (`herramientas/datos/formacion-grabaciones.json`) son segundos
+  del video, y lo que vio cada asesor (`grabaciones_vistas`) se guarda por
+  clase (horario + fecha), no por id de video: con la misma duración siguen
+  valiendo los dos. Probado con un video 16:9 con audio y uno 4:3 sin audio:
+  la misma duración al milésimo, los mismos cuadros por segundo, y el 4:3 con
+  franjas del azul del recuadro, no negras.
+- **Para cambiar el video de una sesión**: YouTube no deja reemplazar el
+  archivo de un video, así que el nuevo se sube aparte («No listado», con
+  «Permitir inserción») y se pone con `grabacion_clase_poner()` con el enlace
+  nuevo. Esa función hace `on conflict … do update` y no borra la fila, así
+  que lo visto se conserva; **nunca mandar antes el enlace vacío**: eso borra
+  la grabación y, en cascada, lo que vio cada uno. Después se cambia el
+  `youtube_id` en `formacion-grabaciones.json` y se corre
+  `node herramientas/formacion-grabaciones.js`. El video viejo se puede dejar
+  como privado.
+
 ## La sección Archivos
 
 `admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
