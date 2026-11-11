@@ -147,6 +147,38 @@ que el motor no respondía.
   los tres niveles de práctica y las tres dificultades del bot de Oscar. Sin el
   tope de profundidad saltan cuatro comprobaciones.
 
+## El bot de la profe Pame
+
+Pedido del dueño el 11/11/2026: en «Juega contra mí» (`tablero.html` y el
+tablero de la portada), **quien es de CCDR POCOCI juega contra la profe Pame**
+y no contra Oscar. Es solo para esa academia.
+
+- **El mismo bot, con su libro y su fuerza.** `js/chess-bot.js` tiene un
+  perfil por profe (`PERFILES`): el libro, la procedencia, la calibración y el
+  nombre. Cuál toca lo decide `js/avatar-profe-oscar.js` (`PROFE`, por la
+  academia de la marca guardada: ver «La profe Pame: el avatar de CCDR
+  POCOCI» en clase-en-vivo.md). Sin el avatar cargado o de otra academia,
+  Oscar como siempre. El libro bajado vive en `window.OSCAR_BOOK` o
+  `window.PAME_BOOK`: el de un profe nunca se le cuela al otro.
+- **El libro sale de sus partidas en Lichess** (pame17, 5011 de ajedrez normal
+  desde la posición inicial) con `herramientas/libro-profe-pame.js`, en el
+  formato del de Oscar: `data/pame-book.json` (hash FNV-1a-64 de la FEN de
+  chess.js sin contadores → `[uci, peso, …]`, ~2500 posiciones, 84 KB),
+  `data/pame-book-provenance.json` (de qué partida suya salió cada jugada) y
+  `js/pame-book.js` (`PAME_ELO_CALIB`, la mediana de su Elo reciente por
+  ritmo: con el de bala, 2210, juega «Difícil»). Peso = veces × (0,5 +
+  puntaje medio) × 10, y entra la jugada que hizo dos veces o más. El PGN no
+  se sube al repositorio. Son livianos, así que el service worker no tiene
+  regla para ellos.
+- **Los textos dicen su nombre** (`NOMBRE_BOT` en `js/tablero-board.js`), y
+  arriba se ve su cara del avatar. El **Modo Desafío sigue siendo de partidas
+  de Oscar**, y ahí el nombre no cambia: son posiciones de partidas suyas.
+- `tablero.html` e `index.html` cargan `js/avatar-profe-oscar.js` y
+  `js/pame-book.js` **antes** que `chess-bot.js`: el perfil se elige al
+  definirse el bot. Lo revisa `verificar-libro-profe-pame.js`, que además
+  recorre el libro desde la posición inicial y juega cada entrada con
+  chess.js (ninguna jugada inventada).
+
 ## El bot siempre contesta, y su tiempo no se le cobra al alumno
 
 Contra el bot, el reloj del alumno baja **solo mientras le toca pensar a él**,
