@@ -4365,6 +4365,102 @@ contraste (11,5:1 en claro y 12,76:1 en oscuro), el celular y el worker que
 contesta 403. Se rompieron a propósito las dos reglas (el tema y «ya
 terminó») y el foco, y saltaron.
 
+### La grabación con capítulos y su lámina
+
+El dueño pidió que las grabaciones del taller no fueran «solo ver la
+pantalla». Primera parte (la segunda, preguntas que pausan el video, viene
+aparte): en el modo cine, al lado del video (debajo en el celular) van
+**«📊 La lámina de este momento»**, la imagen nítida de la lámina que se está
+explicando, con «Lámina 7 de 37: …» escrito y «◀ Lámina anterior» /
+«Lámina siguiente ▶», y **«📑 Capítulos»**, una lista de temas con su hora:
+tocar uno lleva el video a ese minuto. El capítulo que corre va con
+`aria-current` y «Viendo» escrito (no solo resaltado), y la lista se desplaza
+sola para que se vea.
+
+- **De dónde salen los minutos.** De los subtítulos automáticos de cada video
+  (`yt-dlp --write-auto-subs`), leídos de punta a punta: la frase en que se
+  pasa a la lámina («pasamos a la siguiente», que lean su título) o empieza el
+  tema. Se intentó comparar cuadros del video con las láminas, que sería más
+  exacto, pero YouTube contesta 403 a la descarga del video desde el
+  contenedor (los subtítulos sí bajan). Los recesos, el trabajo en salas y los
+  quiz en vivo son capítulos propios, para poder saltarlos.
+- **La fuente** es `herramientas/datos/formacion-grabaciones.json` (no se
+  publica: trae el id de cada video, las preguntas elegidas para la segunda
+  parte y los avisos de lo que se notó en el video) y
+  `node herramientas/formacion-grabaciones.js` escribe
+  `cursos/recursos/formacion-ajedrez/presentaciones/clase-NN/grabacion.json`
+  con **solo** la duración, los capítulos y la línea de láminas. El archivo va
+  por presentación y no por video: la carpeta del curso la sirve el worker a
+  toda cuenta con acceso a la Academia, y el id de un video no listado es la
+  llave (ver «Las grabaciones de las sesiones»). El generador se planta ante
+  un capítulo fuera del video o de orden, una lámina que no existe o un
+  `grabacion.json` sin fuente.
+- **Una lámina puede ser de otra sesión** (`"clase": "clase-01"` en la
+  entrada): la Sesión II dedicó sus primeras 2 h 37 min a lo que quedó
+  pendiente de la I (anotación, planilla, estaciones), con la presentación de
+  la I. Ahí la página pide también ese `diapositivas.json` y dice «Lámina 40
+  de 51 de la Sesión 1».
+- **Los minutos son de ESE video.** `grabacion.json` lleva la duración y la
+  página la compara con la de la grabación (`duracion_seg`, ±2 s): si se sube
+  otro video, no se pinta nada en vez de mandar a la gente a cualquier parte.
+  Al cambiar una grabación, rehacer sus minutos.
+- **Cómo se mueve el video**: con los mismos mensajes con que se mide lo visto
+  (`seekTo` y `playVideo`, como la librería de YouTube, sin cargarla). Lo que
+  se salta así no cuenta como visto, igual que adelantar. **No se pudo probar
+  contra el YouTube de verdad** (como lo medido, ver «Cuánto vio cada uno»):
+  la primera vez, mirar que tocar un capítulo mueva el video.
+- Sin `grabacion.json`, sin acceso (403) o con la duración distinta, el modo
+  cine queda como antes, en su ancho de siempre.
+
+#### Las aclaraciones del profe
+
+El dueño pidió agregar el avatar del profe Oscar. Va donde hacía falta: en los
+minutos en que el video **dice algo que no es así** (lo encontrado al leer
+los subtítulos, abajo), sale arriba de la lámina una tarjeta clara con un
+dibujo del avatar (`js/avatar-profe-oscar.js`: «arbitro» para una regla,
+«atencion» para una cuenta o una tabla), «Aclaración del profe: …», la regla
+buena y **su fuente** (el artículo o la lámina). Dura 2 minutos de video desde
+que se dice (`DURA_ACLARACION`) y se lee en voz por una región viva aparte.
+Debajo de los capítulos, «Aclaraciones del profe» las lista todas: tocar una
+lleva el video 10 segundos antes, para oír lo que se aclara.
+
+- **Ninguna se inventa**: cada una sale de una lámina del curso o del banco ya
+  revisado (`formacion-ajedrez-kahoot.json`), y se comprobaron una por una el
+  11/11/2026 (la tabla cruzada de la lámina 10 se leyó en la imagen: «5n ½»
+  de Mateo es el número inicial 5, Lucía). El generador exige fuente, texto de
+  20 a 320 caracteres y un avatar que exista.
+- **Lo que el mismo video corrige después también lleva aclaración** (los
+  minutos de la jugada ilegal): quien salta a ese capítulo no oye la
+  corrección, que viene media hora más tarde.
+- Hoy son 10: 2 en la Sesión I, 3 en la II y 5 en la III.
+
+**Lo que se notó en los videos** (está completo en `avisos` de la fuente):
+
+- Sesión I: en 2:59:01 se dice que la triple repetición y las 50 jugadas son
+  tablas aunque nadie las reclame si el árbitro las ve; contradice la FIDE
+  (9.2, 9.3, 9.6) y la lámina 29. Los 2 minutos de la jugada ilegal se dicen
+  primero «para el que la hizo» y se corrigen en el mismo video (2:39:31).
+- Sesión III: de 1:51 a 2:37 se comparte un Excel real de inscripciones con
+  cédulas y fechas de nacimiento, y se leen nombres de estudiantes menores.
+  Se le avisó al dueño el 11/11/2026; el capítulo de ese tramo
+  («Demostración: Pareo Integral…») no se quitó porque el problema es el
+  video, no el índice.
+- Sesión III: en 3:37:18 se dice que un tablero mal orientado se corrige en
+  cualquier momento, y en 3:16:12 el ejercicio 7 se resuelve como suizo; las
+  dos cosas contradicen las láminas. Estas y las de la Sesión I llevan su
+  aclaración del profe (arriba).
+
+`node herramientas/verificar-grabacion-interactiva.js` comprueba que los
+archivos publicados son los de la fuente y no traen ids de YouTube, que el
+generador se niega a lo que no cuadra, y en el navegador (con un reproductor
+falso que contesta y anota las órdenes): la lámina que sigue al video, el
+capítulo marcado, que tocar un capítulo y «Lámina siguiente/anterior» manden
+`seekTo` al segundo justo, la aclaración con su avatar en su minuto (y que se
+va a los 2 minutos, y se dice en voz), la lámina de otra sesión, la duración distinta, la
+grabación sin presentación, el 403, el contraste (de 6,22:1 a 16,3:1, contra
+el fondo real) y el celular. Se rompieron a propósito el salto y la
+comparación de la duración, y saltaron; también que la aclaración no se fuera.
+
 ### Cuánto vio cada uno
 
 El dueño pidió saber cuánto vio cada asesor de cada grabación. Se mide **qué

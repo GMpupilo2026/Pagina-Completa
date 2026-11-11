@@ -3976,19 +3976,33 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
-- **La cookie del worker, con la sesión de ahora**: una clase dura horas y el
-  token una. `sesion.js` guarda la sesión al arrancar y no la actualiza, y
-  escribir la cookie con esa sesión vencida (`SesionCursos.guardar`) la
-  BORRA: el worker contestaba 401 al `diapositivas.json` y el profe leía «No
-  se pudo abrir la presentación. Revisa tu conexión» (la Sesión 4 de los
-  asesores, 11/11/2026). Ahora, antes de pedir el `diapositivas.json` y cada
-  lámina del curso, `SesionCursos.renovar()` (`js/supabase-client.js`) pide la
-  sesión a supabase-js —que renueva el token si venció— y escribe la cookie
-  con ella; si el worker igual dice 401, `renovar(true)` pide un token nuevo
-  y se intenta una vez más. Si tampoco, el aviso dice que se venció la
-  sesión y que hay que recargar, no que falló la conexión. Lo mismo hacen las
-  lecciones del curso en la clase. Lo prueba `verificar-clase-presentacion.js`
-  (4a) con el `SesionCursos` de verdad sobre el doble.
+- **La sesión de AHORA, y en el encabezado, no solo en la cookie.** El
+  10/11 y el 11/11 la tarjeta quedó en blanco con «No se pudo abrir la
+  presentación. Revisa tu conexión», con la conexión bien. El worker
+  contestaba 401 al `diapositivas.json`, por dos causas:
+  - una clase dura horas y el token una: `sesion.js` guarda la sesión al
+    arrancar y no la actualiza, y escribir la cookie con esa sesión vencida
+    (`SesionCursos.guardar`) la BORRA (la Sesión 4 de los asesores);
+  - en un perfil de Chrome la cookie no llegaba NUNCA, ni recargando ni
+    abriendo la dirección a mano, a un profe con el acceso vigente. En los
+    registros de Supabase se veía: el worker no le preguntaba nada por esa
+    cuenta.
+
+  Ahora, antes de pedir el `diapositivas.json` y cada lámina del curso,
+  `pedirDelCurso` pide la sesión con `SesionCursos.renovar()`
+  (`js/supabase-client.js`), que la renueva si venció y escribe la cookie, y
+  manda el token también en `Authorization: Bearer` (el worker lo acepta
+  igual que la cookie y, si vienen los dos, gana el encabezado: `tokenDe` en
+  `worker.js`). Si el worker igual dice 401, `renovar(true)` pide un token
+  nuevo y se intenta una vez más. Las imágenes del curso se bajan igual y se
+  muestran como `blob:` (un `<img src>` solo puede llevar la cookie); cuál es
+  lo dice `data-archivo`. Lo que siga fallando (salvo «sin acceso» o «ya no
+  existe») se reintenta solo a los 3, 6, 12, 24 y después cada 30 segundos, y
+  en el acto al volver la conexión (`online`); el aviso dice que se venció la
+  sesión, no que falló la conexión. Las lecciones del curso en la clase
+  también renuevan la cookie. Lo prueban `verificar-clase-presentacion.js`
+  (4a, con el `SesionCursos` de verdad sobre el doble, y 6b) y
+  `verificar-worker.js`.
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.
@@ -4424,6 +4438,86 @@ figura en la lista de migraciones de Supabase; el archivo de
 claves quedaron en las láminas 47 a 55. Para agregar
 o quitar láminas en una sesión con práctica: los datos, el curso, la práctica
 y las claves, juntos.
+
+#### El ejercicio del tablero mal colocado
+
+Pedido del dueño (11/11/2026): un ejercicio para el tema «El tablero y el
+inicio de la partida» de la Sesión 1 que muestre qué pasa cuando el tablero se
+coloca con la casilla **oscura** a la derecha, con los dos tableros en una
+misma pantalla: el mal colocado y la misma posición en uno bien colocado. Es
+una presentación aparte, `presentaciones/ejercicio-tablero/` (9 láminas: la
+regla, cómo se nota, el caso con cuatro opciones, la solución lado a lado, el
+caso completo con la planilla, cómo se pasa la posición, el rey y la dama cambiados y el cuadro de las tres
+irregularidades del art. 7), y no láminas nuevas en la Clase 1: una lámina de
+más corre las de atrás, y la clase en vivo y su verificador las nombran por
+número.
+
+- **Se dibuja como las demás** (`node herramientas/formacion-laminas.js
+  ejercicio-tablero`, datos en `herramientas/datos/formacion-laminas-ejercicio-tablero.js`),
+  pero su `diapositivas.json` se escribe a mano, como el de la Clase 1: no lo
+  arma el generador del curso. Lleva `"sesion": 1`, y con eso
+  `curso-generar-formacion.py` (`ejercicios_de()`) lo pone en `ejercicios` de
+  la Sesión 1 de `sesiones.json`, y la ficha Asesores lo ofrece al lado de la
+  presentación de la sesión («🧩 Ejercicio del tablero mal colocado»). Un
+  ejercicio nuevo de otro tema es otra carpeta `ejercicio-*` con su `sesion`,
+  sus datos y una línea en `LISTA` de `js/clase-presentacion.js` (así se
+  proyecta en la clase en vivo). No tiene `.pptx` ni práctica con claves.
+- **El tablero mal colocado es el mismo dibujo con los colores de las
+  casillas cambiados** (`MAL` en los datos): girado un cuarto de vuelta, cada
+  pieza sigue en la misma casilla contando desde cada jugador, y solo cambia el
+  color de debajo. Por eso la solución (art. 7.2.2) es pasar la posición tal
+  cual, y los dos tableros de esa lámina tienen la MISMA FEN. La estrella
+  marca h1: oscura en uno, clara en el otro; la marca de cada tablero lo dice
+  escrito («✗ Mal colocado», «✓ Bien colocado»).
+- **El caso completo, con la planilla al lado** (lámina 6, pedido del dueño
+  el mismo día): «qué pasa si ya se hicieron 10 jugadas en el tablero mal
+  colocado». A la izquierda, el tablero mal colocado con la planilla de las
+  10 jugadas de cada bando; a la derecha, la misma posición en uno bien
+  colocado con la misma planilla, y una flecha entre los dos. La clave dice
+  lo que se quiere que quede: con 10 jugadas o con 40, la partida sigue (el
+  7.2.2 no cuenta jugadas, a diferencia del 7.3). Lo dibuja el tipo
+  `traslado` de `formacion-laminas.js` (`jugadas` es la planilla, una vez para
+  los dos tableros), y la planilla no se escribe a mano: los datos la arman
+  desde `PARTIDA` en notación española. En el conteo de palabras la planilla
+  no cuenta (son datos, como las casillas de un cuadro cruzado).
+  **Cambiar el dibujador invalida la huella de TODAS las presentaciones**:
+  se volvieron a dibujar las siete en una carpeta aparte y salieron idénticas,
+  píxel por píxel, a las del dibujador anterior (seis difieren en ~0,01 % de
+  los píxeles de las guardadas, también con el dibujador viejo: es de la
+  máquina, no del cambio). Por eso se dejaron las imágenes guardadas y solo
+  se escribió la huella nueva, y los .pptx no cambian.
+- **La posición del caso no se inventó**: sale de jugar `PARTIDA` (una
+  italiana de 10 jugadas por bando) con chess.js, y la lámina dice «van 10
+  jugadas de cada bando» porque la opción D (la regla de las 10 jugadas de los
+  colores cambiados, art. 7.3) es la que tienta.
+- **«Dama en su color» engaña en un tablero girado** (lámina 8): con la oscura
+  a la derecha, cada dama en la casilla de su color deja el rey y la dama
+  cambiados (dama en e1, rey en d1). Eso ya no es solo el tablero: la posición
+  inicial estaba mal (art. 7.2.1) y la partida se anula. Es la diferencia que
+  más se confunde, y la que dice el banco de `js/arbitraje-items.js`.
+- **Revisado contra el texto oficial de la FIDE** (handbook.fide.com, E.I.01,
+  vigente desde el 1/1/2023, pedido del dueño): 2.1 («the near corner square
+  to the right of the player is white»), 7.2.1, 7.2.2 («the game shall
+  continue but the position reached must be transferred to a correctly placed
+  chessboard»), 7.3 y, para detener y reanudar los relojes, 6.11.1 y 6.11.3.
+  «La dama en su color» no está escrito en las Leyes: es la regla para
+  recordar el diagrama del art. 2.3.
+- `node herramientas/verificar-formacion-ejercicio-tablero.js` comprueba que la
+  posición sea la de la partida, que la planilla del traslado sea esa misma
+  partida en notación española (sacada aparte de la historia de chess.js) y
+  sus dos tableros tengan su posición, que el tablero mal colocado tenga h1 y a8
+  oscuras (mirando el color que pinta el SVG, no la opción) y el bien colocado
+  claras, que los dos de la solución tengan la misma posición, que la
+  respuesta dada sea la opción de pasar la posición con el 7.2.2 y que ninguna
+  lámina anterior la adelante, que el rey y la dama cambiados sean lo que da
+  «dama en su color» en ese tablero, y que esté en `LISTA` y en la Sesión 1 de
+  `sesiones.json`. Probado que salta con el tablero de la solución sin los
+  colores cambiados, con una pieza corrida entre los dos tableros y con la
+  lámina 8 con solo el rey y la dama blancos cambiados; y en el traslado,
+  con la planilla en otra notación (el alfil como «B») y con el tablero de la
+  izquierda sin los colores cambiados.
+  `verificar-formacion-laminas.js` también cuenta sus palabras y su huella
+  (lee las `ejercicio-*` además de las `clase-NN`).
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 
@@ -5102,6 +5196,9 @@ Integral en la camisa (salvo de espalda, de lado o con la mochila).
   la posición comprobada con chess.js, puesta encima del dibujo). Los de
   «jugando» y «ensenando» son de adorno, en perspectiva y sin una posición que
   se lea: si alguno se usa donde importe la posición, se le pone una real.
+- **Dónde se usa**: los stickers de la clase en vivo, la invitación de la
+  vitrina de Herramientas y las «Aclaraciones del profe» de las grabaciones
+  del taller (ver «Las aclaraciones del profe» en `paneles.md`).
 - **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
   esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
 

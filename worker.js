@@ -187,7 +187,7 @@ export default {
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
     // ---- El contenido de los cursos ----
-    const veredicto = await preguntar(leerCookie(request, COOKIE), Date.now(), queSePregunta(url.pathname));
+    const veredicto = await preguntar(tokenDe(request), Date.now(), queSePregunta(url.pathname));
     if (veredicto !== "pasa") return negar(request, url, veredicto);
 
     const res = await env.ASSETS.fetch(request);
@@ -201,7 +201,7 @@ export default {
 };
 
 async function codigoConLicencia(request, env, ruta, herramienta) {
-  const veredicto = await preguntar(leerCookie(request, COOKIE), Date.now(), { herramienta });
+  const veredicto = await preguntar(tokenDe(request), Date.now(), { herramienta });
   if (veredicto === "pasa") {
     const res = await env.ASSETS.fetch(request);
     const copia = new Response(res.body, res);
@@ -221,6 +221,19 @@ async function codigoConLicencia(request, env, ruta, herramienta) {
       "X-Codigo-Con-Licencia": veredicto,
     },
   });
+}
+
+/* La sesión, de la cookie que escribe js/supabase-client.js o, si no llegó, del
+   encabezado Authorization: Bearer que manda la página (js/clase-presentacion.js).
+   El 10/11, en un perfil de Chrome la cookie no llegaba nunca —ni recargando,
+   ni abriendo la dirección a mano— y la presentación de la clase quedaba en
+   blanco para un profe con el acceso vigente. Es el MISMO token y pasa por las
+   MISMAS preguntas: no abre nada que la cookie no abriera. Si vienen los dos,
+   gana el encabezado: la página lo acaba de leer de la sesión, y una cookie
+   vieja que quedó por ahí no puede dejarla afuera. */
+function tokenDe(request) {
+  const m = (request.headers.get("Authorization") || "").match(/^Bearer\s+(\S+)$/i);
+  return m ? m[1] : leerCookie(request, COOKIE);
 }
 
 function leerCookie(request, nombre) {

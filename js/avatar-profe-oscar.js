@@ -3,7 +3,9 @@
  * La caricatura del profe Oscar, en todas sus poses y caras: UNA lista para
  * todo el sitio. Hoy la usan los stickers de la clase en vivo
  * (js/clase-stickers.js) y la invitación a elegir un tema de la vitrina de
- * Herramientas (js/herramientas-arbitraje-pagina.js, «a-repasar»); lo que
+ * Herramientas (js/herramientas-arbitraje-pagina.js, «a-repasar») y las
+ * aclaraciones del profe en las grabaciones del taller (js/calendario-taller.js,
+ * «arbitro» y «atencion»); lo que
  * venga después (el panel, los avisos, los documentos) la toma de acá.
  *
  * - Los originales, en alta resolución y sin fondo, viven en

@@ -19087,7 +19087,7 @@
   ]
  },
  "imagenes": {
-  "total": 1143,
+  "total": 1152,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -25853,6 +25853,67 @@
       "titulo": "23",
       "tipo": "otro",
       "kb": 48
+     }
+    ]
+   },
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero",
+    "titulo": "Ejercicio tablero",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/01.webp",
+      "titulo": "01",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/02.webp",
+      "titulo": "02",
+      "tipo": "otro",
+      "kb": 77
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/03.webp",
+      "titulo": "03",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/04.webp",
+      "titulo": "04",
+      "tipo": "otro",
+      "kb": 84
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/05.webp",
+      "titulo": "05",
+      "tipo": "otro",
+      "kb": 81
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/06.webp",
+      "titulo": "06",
+      "tipo": "otro",
+      "kb": 109
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/07.webp",
+      "titulo": "07",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/08.webp",
+      "titulo": "08",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/09.webp",
+      "titulo": "09",
+      "tipo": "otro",
+      "kb": 68
      }
     ]
    },
