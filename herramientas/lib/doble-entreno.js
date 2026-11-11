@@ -81,6 +81,17 @@ function clienteFalso(tablas) {
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel() {},
+    // El almacenamiento: un enlace firmado es /doble-storage/<bucket>/<ruta>
+    // (con ?download si se pidió para bajar), que el verificador contesta con
+    // ctx.route. Lo que se sube o se quita queda en window.__storage.
+    storage: {
+      from: (bucket) => ({
+        createSignedUrls: (rutas, _exp, op) => Promise.resolve({ data: rutas.map((p) => ({ path: p, error: null,
+          signedUrl: "/doble-storage/" + bucket + "/" + p + (op && op.download ? "?download" : "") })), error: null }),
+        upload: (ruta) => { (window.__storage = window.__storage || []).push(["subir", bucket, ruta]); return Promise.resolve({ data: { path: ruta }, error: null }); },
+        remove: (rutas) => { (window.__storage = window.__storage || []).push(["quitar", bucket, rutas]); return Promise.resolve({ data: [], error: null }); },
+      }),
+    },
   };
 })();
 `;

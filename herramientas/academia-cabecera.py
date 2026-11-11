@@ -64,7 +64,7 @@ PAGINAS = [
     "planes.html", "proyecto.html", "cuestionarios.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html", "temporada.html",
     "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
-    "novedades.html", "repasar-clases.html", "camaras.html",
+    "novedades.html", "repasar-clases.html", "audios-clases.html", "camaras.html",
     "tienda.html", "accesos.html",
     "licencias.html", "mis-arbitros.html", "arbitro.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "mesa-arbitro.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
@@ -225,6 +225,7 @@ AYUDA_GUIA = {
     "calendario.html": "tareas",
     "preparacion-rivales.html": "juegos",
     "repasar-clases.html": "archivos",
+    "audios-clases.html": "archivos",
 }
 AYUDA_CARPETAS = {"entreno/": "entrenamiento", "cursos/academia/": "cursos"}
 AYUDA_INICIO = "<!-- ayuda: inicio -->"
@@ -677,6 +678,7 @@ NOMBRE_Y_PADRE = {
     "reto-ejercicios.html": ("Retos de ejercicios", "competir.html"),
     "partidas.html": ("Archivos", "clases.html"),
     "repasar-clases.html": ("Repasar mis clases", "clases.html"),
+    "audios-clases.html": ("Audios de las clases", "clases.html"),
     "examenes.html": ("Exámenes", "clases.html"),
     "examen.html": ("Examen", "examenes.html"),
     "planes.html": ("Planes de clase", "clases.html"),
