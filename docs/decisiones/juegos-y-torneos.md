@@ -11084,17 +11084,30 @@ de eventos.
 - **Anular no borra.** Un toque por error se anula con otra línea, `tipo = 'anulacion'`, que apunta a la anulada
   (`anula`). La anulada sigue en la tabla y en el PDF, pero deja de contar en las marcas y en el resumen
   («Anuladas por error: N»).
-- **La base, no la pantalla** (migración `20261111180000_mesa_arbitro_ilegales.sql`):
+- **La base, no la pantalla** (migraciones `20261111224043_mesa_arbitro_ilegales.sql` y su arreglo,
+  `20261111224156_mesa_arbitro_anular_sin_recursion.sql`):
   - `arbitro_bitacora` suma las columnas `color`, `jugador` y `anula`, y los tipos `ilegal`, `irregularidad` y
     `anulacion`. Una ilegal o irregularidad exige color, ronda y mesa.
   - El permiso de insert por columna suma esas tres columnas, pero no la hora ni el autor.
   - La política de insert deja anular solo una ilegal o irregularidad **propia** de la misma partida y el mismo
-    jugador.
+    jugador. Lo pregunta `interno.arbitro_puede_anular()` (`security definer`).
   - Un índice único sobre `anula` impide anular dos veces.
   - Sigue sin update ni delete.
-- **Lo que no se probó:** la migración contra la base de verdad impersonando una cuenta (solo su texto, con
-  `verificar-mesa-arbitro.js`), ni guardar una mesa con la función desplegada y una sesión con licencia (la
-  página se probó con un doble).
+- **Una política no puede mirar su propia tabla.** La primera versión preguntaba por la anulada con un
+  `exists (select … from public.arbitro_bitacora b …)` dentro de la misma política de insert. Postgres la rechazó
+  con «infinite recursion detected in policy» (42P17) en **todo** insert, también en los resultados de siempre.
+  Así estuvo unos 73 segundos en producción (22:40:43 a 22:41:56 UTC del 11/11), sin ninguna línea anotada en
+  ese rato. Se vio al impersonar una cuenta apenas aplicada, y el arreglo pasó la pregunta a la función
+  `security definer`. `verificar-mesa-arbitro.js` ahora revisa que la política vigente no nombre su tabla.
+- **Comprobado impersonando cuentas**, el 11/11, con dos profesores con licencia «todas», en una transacción que
+  se deshizo (no quedó ninguna fila):
+  - Un resultado de siempre, una ilegal propia y su anulación se anotan.
+  - Se rechazan: anular dos veces (23505), anular con otro color o desde otra mesa (42501), una ilegal sin color
+    (23514), una nota con `anula` (42501), poner el autor (42501), un update (42501) y que otra cuenta anule lo
+    ajeno (42501).
+  - La otra cuenta no ve ninguna de esas líneas.
+- **Lo que no se probó:** guardar una mesa con la función desplegada y una sesión con licencia (la página se
+  probó con un doble).
 - Lo prueban `verificar-mesa-arbitro.js` (la regla, las marcas, el resumen sin lo anulado y las promesas de la
   migración) y `verificar-mesa-arbitro-pagina.js` (sección «Ilegales, irregularidades y "Guardar" en la fila»).
   Si se cuenta lo anulado, las dos saltan.

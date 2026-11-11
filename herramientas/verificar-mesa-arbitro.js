@@ -187,12 +187,20 @@ igual("el resumen del documento no cuenta lo anulado, y dice cuántas se anularo
   docIl.bloques.find((b) => b.tipo === "lista").items[3], "Jugadas ilegales: 2. Irregularidades: 1. Anuladas por error: 1.");
 igual("el detalle de una ilegal dice quién y con qué color", M.detalle({ tipo: "ilegal", jugador: "Ana", color: "negras", texto: "Enroque ilegal" }), "Ana (negras): Enroque ilegal");
 
-const sqlIl = fs.readFileSync(path.join(RAIZ, "supabase", "migraciones", fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).filter((f) => /mesa_arbitro_ilegales/.test(f))[0]), "utf8").replace(/--[^\n]*/g, "");
+// Las dos migraciones juntas: la de las ilegales y su arreglo (la política sin recursión), en orden.
+const archivosIl = fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).filter((f) => /mesa_arbitro_(ilegales|anular_sin_recursion)/.test(f)).sort();
+const sqlIl = archivosIl.map((f) => fs.readFileSync(path.join(RAIZ, "supabase", "migraciones", f), "utf8")).join("\n").replace(/--[^\n]*/g, "");
+// La política que vale es la ÚLTIMA que se creó.
+const politicaIl = (sqlIl.match(/create policy arbitro_bitacora_anotar[\s\S]*?\);\s*$/gm) || []).pop() || "";
 const insertableIl = (sqlIl.match(/grant insert \(([^)]*)\)/) || [])[1] || "";
 igual("la migración: se suman color, jugador y anula al insert, y no la hora ni el autor",
   ["color", "jugador", "anula"].every((c) => insertableIl.includes(c)) && !/ocurrio|creada_por/.test(insertableIl), true);
 igual("una línea se anula una sola vez: lo garantiza un índice único, no un «if»", /create unique index[^;]*\(anula\)\s*where anula is not null/i.test(sqlIl), true);
-igual("la anulación solo vale sobre una ilegal o irregularidad PROPIA de la misma partida y jugador (en la política)",
+igual("la política vigente no mira su propia tabla (Postgres la rechaza con «infinite recursion», 42P17, en TODO insert): lo pregunta una función SECURITY DEFINER",
+  [archivosIl.length, politicaIl.length > 0, /arbitro_bitacora\s+b\b|from public\.arbitro_bitacora/.test(politicaIl), /interno\.arbitro_puede_anular\(/.test(politicaIl),
+   /function interno\.arbitro_puede_anular[\s\S]*?security definer/.test(sqlIl), /revoke execute on function interno\.arbitro_puede_anular[^;]*from public, anon/.test(sqlIl)],
+  [2, true, false, true, true, true]);
+igual("la anulación solo vale sobre una ilegal o irregularidad PROPIA de la misma partida y jugador",
   [/b\.creada_por = \(select auth\.uid\(\)\)/.test(sqlIl), /b\.tipo in \('ilegal', 'irregularidad'\)/.test(sqlIl), /b\.mesa is not distinct from arbitro_bitacora\.mesa/.test(sqlIl), /b\.color is not distinct from arbitro_bitacora\.color/.test(sqlIl)], [true, true, true, true]);
 igual("sigue sin update ni delete", [/for update|for delete/i.test(sqlIl), /grant[^;]*\b(update|delete)\b/i.test(sqlIl)], [false, false]);
 igual("auth.uid() envuelto en (select …) en la política nueva", (sqlIl.match(/auth\.uid\(\)/g) || []).length, (sqlIl.match(/\(select auth\.uid\(\)\)/g) || []).length);
