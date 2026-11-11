@@ -14558,7 +14558,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14918,7 +14918,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -14930,7 +14930,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -15002,7 +15002,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -15154,7 +15154,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/02-defensa-siciliana-variante-najdorf-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -15238,7 +15238,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/09-apertura-italiana-y-variantes-modernas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -16442,7 +16442,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/12-torre-contra-dos-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -16866,7 +16866,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/04-alfiles-de-distinto-color-iniciativa-y-complejo-de-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 16
+        "kb": 17
        }
       ]
      },
@@ -17126,7 +17126,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/05-lo-basico-que-falta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -17378,7 +17378,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/26-amenazas-cuales-son-reales-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -17474,7 +17474,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/34-el-primer-error-no-es-el-ultimo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -18345,7 +18345,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -18417,7 +18417,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -18489,7 +18489,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -19087,7 +19087,7 @@
   ]
  },
  "imagenes": {
-  "total": 1140,
+  "total": 1149,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22486,7 +22486,7 @@
       "ruta": "img/cursos/arbitro-nacional.svg",
       "titulo": "Portada: Árbitro Nacional",
       "tipo": "otro",
-      "kb": 6
+      "kb": 7
      },
      {
       "ruta": "img/cursos/calculo-y-visualizacion.svg",
@@ -25847,6 +25847,67 @@
       "titulo": "23",
       "tipo": "otro",
       "kb": 48
+     }
+    ]
+   },
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero",
+    "titulo": "Ejercicio tablero",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/01.webp",
+      "titulo": "01",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/02.webp",
+      "titulo": "02",
+      "tipo": "otro",
+      "kb": 77
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/03.webp",
+      "titulo": "03",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/04.webp",
+      "titulo": "04",
+      "tipo": "otro",
+      "kb": 84
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/05.webp",
+      "titulo": "05",
+      "tipo": "otro",
+      "kb": 81
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/06.webp",
+      "titulo": "06",
+      "tipo": "otro",
+      "kb": 109
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/07.webp",
+      "titulo": "07",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/08.webp",
+      "titulo": "08",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/ejercicio-tablero/09.webp",
+      "titulo": "09",
+      "tipo": "otro",
+      "kb": 68
      }
     ]
    },
