@@ -3907,6 +3907,19 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
+- **La cookie del candado se renueva antes de pedir la lámina, y lo que falla
+  se vuelve a pedir solo.** El 10/11 la tarjeta quedó en blanco con «No se
+  pudo abrir la presentación. Revisa tu conexión», con la conexión bien: la
+  cookie que mira el worker (`SesionCursos`) dura lo que la sesión, una hora,
+  y si la computadora se durmió o la pestaña quedó atrás nadie la renovó. El
+  worker contestaba 401, ese caso no tenía aviso propio y solo se volvía a
+  intentar al pasar de lámina. Ahora `bajarDelCurso` escribe la cookie con
+  `getSession()` antes de pedir el `diapositivas.json` y, ante un 401, la
+  renueva con `refreshSession()` y pide UNA vez más; la imagen hace lo mismo
+  si contesta 401. Lo que siga fallando (salvo «sin acceso» o «ya no
+  existe») se reintenta a los 3, 6, 12, 24 y después cada 30 segundos, y en
+  el acto al volver la conexión (`online`). Lo prueba
+  `verificar-clase-presentacion.js` (6b).
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.

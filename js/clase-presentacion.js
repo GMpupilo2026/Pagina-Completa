@@ -96,6 +96,31 @@ window.PresentacionClase = (function () {
         };
     }
 
+    /* La cookie con que el worker deja pasar lo del curso (window.SesionCursos,
+       en js/supabase-client.js) dura lo mismo que la sesión: una hora. Si la
+       computadora se durmió o la pestaña quedó atrás, nadie la renovó y el
+       worker contesta 401 aunque la cuenta siga adentro: la tarjeta se quedaba
+       en blanco con «Revisa tu conexión» y la conexión no tenía nada. Antes de
+       pedir, se escribe con la sesión que haya (getSession la renueva si
+       venció); si aun así contesta 401, se fuerza la renovación y se pide UNA
+       vez más. El doble de los verificadores no trae SesionCursos: no pasa nada. */
+    async function ponerCookie(forzar) {
+        if (!window.SesionCursos || !window.sb || !sb.auth) return;
+        try {
+            const pedido = forzar && sb.auth.refreshSession ? sb.auth.refreshSession() : sb.auth.getSession();
+            const { data } = (await pedido) || {};
+            if (data && data.session) SesionCursos.guardar(data.session);
+        } catch (e) { console.error(e); }
+    }
+    async function bajarDelCurso(deck) {
+        const pedir = () => fetch(carpeta(deck) + "diapositivas.json", { credentials: "same-origin" });
+        await ponerCookie(false);
+        let r = await pedir();
+        if (r.status === 401) { await ponerCookie(true); r = await pedir(); }
+        if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
+        return r.json();
+    }
+
     const pedidas = {};
     function cargar(deck) {
         if (!pedidas[deck]) {
@@ -106,10 +131,7 @@ window.PresentacionClase = (function () {
                         if (!data) throw new Error("no_disponible");
                         return armarSubida(data);
                     })
-                : fetch(carpeta(deck) + "diapositivas.json", { credentials: "same-origin" }).then((r) => {
-                    if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
-                    return r.json();
-                }))
+                : bajarDelCurso(deck))
                 // Sin acceso no cambia con reintentar: se recuerda, y cada eco de
                 // Realtime (cada jugada) no vuelve a pedirla. Lo demás, sí.
                 .catch((e) => { if (e.message !== "sin_acceso") delete pedidas[deck]; throw e; });
@@ -132,7 +154,7 @@ window.PresentacionClase = (function () {
         return data.signedUrl;
     }
 
-    return { LISTA, BUCKET, carpeta, valida, cargar, olvidar, url, esSubida, tituloDeTexto };
+    return { LISTA, BUCKET, carpeta, valida, cargar, olvidar, url, esSubida, tituloDeTexto, renovarCookie: () => ponerCookie(true) };
 })();
 
 let presentacionActual = null;     // {deck, n} tal como vino de la base (o null)
@@ -164,8 +186,73 @@ function presentacionBoton(texto, titulo, fuerte) {
 const PRESENTACION_ERRORES = {
     sin_acceso: "Tu profe está mostrando una presentación, pero tu cuenta no tiene el acceso a la Academia activo para verla.",
     no_disponible: "Esta presentación ya no está disponible (puede que se haya borrado).",
-    sin_imagen: "No se pudo abrir esta diapositiva. Si tu profe acaba de pasarla, espera un momento.",
+    sin_imagen: "No se pudo abrir esta diapositiva.",
+    sin_sesion: "Tu sesión se cerró, así que el sitio no te deja ver la presentación. Si no aparece sola, recarga la página o vuelve a entrar.",
 };
+// Lo que no se arregla con volver a pedir: ahí no se reintenta.
+const PRESENTACION_SIN_REINTENTO = { sin_acceso: true, no_disponible: true };
+
+/* Si la diapositiva no llega, se vuelve a pedir sola: a los 3, 6, 12, 24 y
+   después cada 30 segundos, y en el acto cuando vuelve la conexión. Antes solo
+   se reintentaba al pasar de lámina, y si el profe se quedaba explicando en la
+   misma, la tarjeta seguía en blanco hasta que alguien recargara. */
+let presentacionReintentos = 0;
+let presentacionReintento = null;
+
+function presentacionFalla(turno, e) {
+    if (turno !== presentacionPintando) return;
+    presentacionDatos = null;
+    const codigo = e && e.message;
+    if (e && !PRESENTACION_ERRORES[codigo]) console.error(e);
+    const msg = document.getElementById("presentacion-msg");
+    const img = document.getElementById("presentacion-img");
+    let texto = PRESENTACION_ERRORES[codigo] || "No se pudo abrir la presentación.";
+    clearTimeout(presentacionReintento);
+    presentacionReintento = null;
+    if (!PRESENTACION_SIN_REINTENTO[codigo]) {
+        const segundos = Math.min(30, 3 * Math.pow(2, presentacionReintentos));
+        presentacionReintentos += 1;
+        presentacionReintento = setTimeout(reintentarPresentacion, segundos * 1000);
+        texto += " Se vuelve a intentar sola en " + segundos + " segundos.";
+    }
+    msg.textContent = texto;
+    msg.hidden = false;
+    img.removeAttribute("src");
+    document.getElementById("presentacion-pizarra").replaceChildren();
+    // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
+    document.documentElement.classList.remove("vista-limpia");
+    pintarPantallaCompletaForzada(null);
+}
+
+function reintentarPresentacion() {
+    clearTimeout(presentacionReintento);
+    presentacionReintento = null;
+    if (!presentacionActual || presentacionDatos) return;
+    pintarPresentacion(presentacionActual, true);
+}
+
+document.getElementById("presentacion-img").addEventListener("load", () => { presentacionImagenReintentada = ""; });
+window.addEventListener("online", () => { if (presentacionReintento) reintentarPresentacion(); });
+
+/* La imagen también pasa por el candado del worker: si la cookie venció entre
+   el diapositivas.json y la imagen, contesta 401 y el <img> queda vacío. Se
+   renueva la cookie y se pide otra vez UNA vez; si tampoco, se reintenta como
+   todo lo demás. */
+let presentacionImagenReintentada = "";
+document.getElementById("presentacion-img").addEventListener("error", async (ev) => {
+    const img = ev.currentTarget;
+    const src = img.getAttribute("src");
+    if (!src || !presentacionActual) return;
+    const turno = presentacionPintando;
+    const base = src.replace(/\?r=\d+$/, "");
+    if (!PresentacionClase.esSubida(presentacionActual.deck) && presentacionImagenReintentada !== base) {
+        presentacionImagenReintentada = base;
+        await PresentacionClase.renovarCookie();
+        if (turno === presentacionPintando && img.getAttribute("src") === src) img.src = base + "?r=" + Date.now();
+        return;
+    }
+    presentacionFalla(turno, new Error("sin_imagen"));
+});
 
 /* Lo que llega de la base (applyGameStateRow) y lo que pone el profe. */
 /* La forma única de una presentación, con las claves siempre en el mismo orden:
@@ -206,7 +293,10 @@ async function pintarPresentacion(p, propia) {
     pintarVistaLimpia(nueva);
     pintarPantallaCompletaForzada(nueva);
     const turno = ++presentacionPintando;
+    clearTimeout(presentacionReintento);
+    presentacionReintento = null;
     if (!nueva) {
+        presentacionReintentos = 0;
         caja.hidden = true;
         presentacionDatos = null;
         ponerPizarraActiva(false);
@@ -217,17 +307,7 @@ async function pintarPresentacion(p, propia) {
     caja.hidden = false;
     const msg = document.getElementById("presentacion-msg");
     const img = document.getElementById("presentacion-img");
-    const fallo = (e) => {
-        if (turno !== presentacionPintando) return;
-        msg.textContent = PRESENTACION_ERRORES[e && e.message]
-            || "No se pudo abrir la presentación. Revisa tu conexión: se vuelve a intentar con la siguiente diapositiva.";
-        msg.hidden = false;
-        img.removeAttribute("src");
-        document.getElementById("presentacion-pizarra").replaceChildren();
-        // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
-        document.documentElement.classList.remove("vista-limpia");
-        pintarPantallaCompletaForzada(null);
-    };
+    const fallo = (e) => presentacionFalla(turno, e);
     let datos, d, src, n;
     try {
         datos = await PresentacionClase.cargar(nueva.deck);
@@ -242,6 +322,7 @@ async function pintarPresentacion(p, propia) {
     }
     if (turno !== presentacionPintando) return;
     presentacionDatos = datos;
+    presentacionReintentos = 0;
     msg.hidden = true;
     const total = datos.diapositivas.length;
     img.src = src;
