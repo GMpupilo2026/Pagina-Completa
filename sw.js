@@ -20,7 +20,7 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-11-1";
+const VERSION = "ai-2026-11-2";
 const CACHE = "ajedrez-integral-" + VERSION;
 /* La de «Ejercicios sin internet» (entreno/sin-internet.html): la llena esa
    página, con ella misma y sus scripts, cuando el alumno guarda una tanda. No
@@ -62,6 +62,23 @@ const NUNCA = [
   /^\/data\/oscar-book/,
 ];
 
+/* Lo que pasa por acá pero NO se suma a la caché general. Sin esta lista, la
+   caché guardaba toda respuesta que llegara bien y crecía sin tope hasta el
+   próximo cambio de VERSION: el visor de PDF (1,5 MB), three.js (0,6 MB), los
+   bancos de entreno/data (4 MB), cada PDF que se abría y las tarjetas que arma
+   el worker. No va en NUNCA porque sin señal TIENE que seguir buscando en las
+   cachés: Pareo Integral y el Centroamericano guardan PDF y scripts así en
+   «ajedrez-integral-sin-red», y si el pedido no pasara por acá no los
+   encontraría. */
+const NO_GUARDAR = [
+  /^\/entreno\/data\//,
+  /\.pdf$/i,
+  /^\/js\/(vendor\/)?(pdf|pdf\.worker|three)\.min\.js$/,
+  // Las que arma el worker (tarjetas, calendario, la tabla para incrustar):
+  // cambian con cada ronda y no sirven guardadas.
+  /^\/(t|o|calendario|incrustar)\//,
+];
+
 self.addEventListener("install", (evento) => {
   evento.waitUntil((async () => {
     const cache = await caches.open(CACHE);
@@ -100,6 +117,10 @@ function seGuarda(url) {
   return !NUNCA.some((re) => re.test(url.pathname));
 }
 
+function vaALaCache(url) {
+  return !NO_GUARDAR.some((re) => re.test(url.pathname));
+}
+
 self.addEventListener("fetch", (evento) => {
   const pedido = evento.request;
   if (pedido.method !== "GET") return;
@@ -118,7 +139,7 @@ self.addEventListener("fetch", (evento) => {
       const adelantada = pedido.mode === "navigate" ? await Promise.resolve(evento.preloadResponse).catch(() => null) : null;
       const respuesta = adelantada || await fetch(pedido);
       // Solo se guardan respuestas propias y buenas.
-      if (respuesta && respuesta.ok && respuesta.type === "basic") {
+      if (respuesta && respuesta.ok && respuesta.type === "basic" && vaALaCache(url)) {
         const cache = await caches.open(CACHE);
         cache.put(pedido, respuesta.clone());
       }

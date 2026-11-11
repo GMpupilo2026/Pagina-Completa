@@ -20,7 +20,9 @@
    Abajo van las grabaciones de las sesiones que ya pasaron (mis_grabaciones(),
    que pone el profe o quien administra con grabacion_clase_poner()), cada una
    con su reproductor a pedido y cuánto lleva visto (grabaciones_vistas, que
-   se anota mientras la mira: ver «Cuánto vio cada uno»).
+   se anota mientras la mira: ver «Cuánto vio cada uno»). Debajo de cada
+   grabación va la presentación que se vio en esa sesión, para repasarla
+   (ver «La presentación junto a la grabación»).
 
    Va aparte de js/clases.js para que se pueda probar sin la base: pintar()
    recibe las filas tal cual las devuelven mis_clases_proximas(),
@@ -159,9 +161,11 @@ window.CalendarioTaller = (function () {
        `alBajar` es lo que hace «Agregar a mi calendario»; `entrada`, si la
        clase está abierta (ver pintarEntrada); `grabaciones`, las filas de
        mis_grabaciones() (ver pintarGrabaciones); `vistas`, las de
-       grabaciones_vistas de quien mira, y `alVer(g, tramos)`, lo que anota lo
-       que vio y devuelve el total (ver «Cuánto vio»). */
-    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null } = {}) {
+       grabaciones_vistas de quien mira; `alVer(g, tramos)`, lo que anota lo
+       que vio y devuelve el total (ver «Cuánto vio»), y `presentaciones`, las
+       sesiones del curso (sesiones.json de Formación Ajedrez), para poner la
+       presentación junto a su grabación (ver presentacionDe). */
+    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null, presentaciones = null } = {}) {
         caja.replaceChildren();
         const lista = (sesiones || []).filter((s) => s && s.inicio && s.fin && new Date(s.fin) > ahora);
 
@@ -200,7 +204,7 @@ window.CalendarioTaller = (function () {
             boton.addEventListener("click", () => alBajar(boton, estado));
             caja.append(boton, estado);
         }
-        pintarGrabaciones(caja, grabaciones, lista[0], vistas, alVer);
+        pintarGrabaciones(caja, grabaciones, lista[0], vistas, alVer, presentaciones, ahora);
         caja.hidden = false;
         return lista.length;
     }
@@ -226,6 +230,35 @@ window.CalendarioTaller = (function () {
     function numero(titulo) {
         const m = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(titulo || "");
         return m ? m[1] : "";
+    }
+
+    /* La presentación que se vio en la sesión de esa grabación: la de la sesión
+       del curso con el mismo número («Sesión III» → la 3) y cuyo título empieza
+       con el tema de la grabación (o al revés), sin mayúsculas, tildes ni
+       signos: el tema «Encuadre del curso y reglas básicas» es la sesión 1,
+       «Encuadre del curso y reglas básicas del ajedrez». El número solo no
+       basta: otro taller con sus «Sesión I, II…» mostraría las láminas de este.
+       Solo de una sesión que ya terminó (que tenga grabación ya dice que se
+       dio). Devuelve el deck («formacion-ajedrez/clase-03») o "". */
+    const ROMANO = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+    function aEntero(n) {
+        if (/^\d+$/.test(n)) return Number(n);
+        let total = 0;
+        for (let i = 0; i < n.length; i++) {
+            const v = ROMANO[n[i]], sig = ROMANO[n[i + 1]] || 0;
+            total += v < sig ? -v : v;
+        }
+        return total;
+    }
+    const llano = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ").trim();
+    function presentacionDe(g, presentaciones, ahora) {
+        const n = numero(g.titulo), tema = llano(g.tema);
+        if (!n || !tema || !(new Date(g.fin) <= ahora)) return "";
+        const s = (presentaciones || []).find((x) => x && x.n === aEntero(n));
+        const titulo = s && llano(s.titulo);
+        if (!titulo || !(titulo.startsWith(tema) || tema.startsWith(titulo))) return "";
+        return /^[a-z0-9-]+\/[a-z0-9-]+$/.test(s.presentacion || "") ? s.presentacion : "";
     }
 
     function el(tag, clase, texto) {
@@ -262,7 +295,7 @@ window.CalendarioTaller = (function () {
     }
 
     function tarjetaGrabacion(g, abrir) {
-        const b = el("button", "group block h-full w-full overflow-hidden rounded-2xl bg-brand-50 text-left ring-1 ring-brand-100 transition hover:ring-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 dark:bg-brand-950 dark:ring-brand-800");
+        const b = el("button", "group block w-full flex-1 overflow-hidden rounded-2xl bg-brand-50 text-left ring-1 ring-brand-100 transition hover:ring-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 dark:bg-brand-950 dark:ring-brand-800");
         b.type = "button";
         b.dataset.grabacion = g.youtube_id;
         b.setAttribute("aria-haspopup", "dialog");
@@ -319,7 +352,7 @@ window.CalendarioTaller = (function () {
     // La próxima sesión, en gris: todavía no tiene grabación. Apagada: sin
     // acción, pero se alcanza con Tab para leer cuándo llega.
     function tarjetaProxima(s) {
-        const t = el("div", "h-full overflow-hidden rounded-2xl bg-brand-50 ring-1 ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 dark:bg-brand-950 dark:ring-brand-800");
+        const t = el("div", "flex-1 overflow-hidden rounded-2xl bg-brand-50 ring-1 ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 dark:bg-brand-950 dark:ring-brand-800");
         t.tabIndex = 0;
         t.setAttribute("role", "link");
         t.setAttribute("aria-disabled", "true");
@@ -332,6 +365,23 @@ window.CalendarioTaller = (function () {
             el("p", "mt-1 text-xs text-brand-600 dark:text-brand-300", dia(s.inicio)));
         t.appendChild(texto);
         return t;
+    }
+
+    /* «📊 Ver la presentación», debajo de la tarjeta (un botón no puede ir
+       dentro de otro). Se abre en la vista previa de js/vista-previa.js,
+       lámina por lámina; las imágenes las sirve el worker solo a quien tiene
+       acceso al curso. */
+    function botonPresentacion(g, deck) {
+        const b = el("button", "inline-flex items-center gap-1 self-start rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-sm font-semibold text-brand-700 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60 dark:border-brand-700 dark:bg-brand-900 dark:text-brand-100");
+        b.type = "button";
+        b.dataset.presentacion = deck;
+        b.setAttribute("aria-haspopup", "dialog");
+        const emoji = el("span", null, "📊");
+        emoji.setAttribute("aria-hidden", "true");
+        b.append(emoji, " Ver la presentación", el("span", "sr-only", " de la " + (g.titulo || "clase")));   // del profe: textContent
+        const titulo = (g.titulo || "Clase") + (g.tema ? " · " + g.tema : "");
+        b.addEventListener("click", () => window.VistaPrevia && VistaPrevia.abrirPresentacion(deck, titulo, b));
+        return b;
     }
 
     // El modo cine: uno solo por página, armado la primera vez que se usa.
@@ -511,7 +561,7 @@ window.CalendarioTaller = (function () {
         d.querySelector("#grabacion-cine-cerrar").focus();
     }
 
-    function pintarGrabaciones(caja, grabaciones, proxima, vistas, alVer) {
+    function pintarGrabaciones(caja, grabaciones, proxima, vistas, alVer, presentaciones, ahora) {
         // Lo que ya vio va con su grabación (la fila de grabaciones_vistas de ese día).
         const visto = new Map((vistas || []).filter(Boolean).map((v) => [v.horario_id + "|" + v.fecha, Number(v.visto_seg) || 0]));
         const lista = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")))
@@ -525,12 +575,16 @@ window.CalendarioTaller = (function () {
         emoji.setAttribute("aria-hidden", "true");
         titulo.append(emoji, "Grabaciones de las sesiones");
         const sub = el("p", "mt-1 mb-3 text-sm text-brand-500 dark:text-brand-300",
-            "Para repasar una sesión o ver la que te perdiste. Se abre en grande aquí mismo.");
+            "Para repasar una sesión o ver la que te perdiste, con la presentación que se vio. Se abre en grande aquí mismo.");
         const rejilla = el("div", "grid gap-4 sm:grid-cols-2 lg:grid-cols-3");
         rejilla.setAttribute("role", "list");
         rejilla.setAttribute("aria-label", "Grabaciones");
-        const item = (hijo) => { const li = el("div"); li.setAttribute("role", "listitem"); li.appendChild(hijo); return li; };
-        lista.forEach((g) => rejilla.appendChild(item(tarjetaGrabacion(g, (x, b) => abrirCine(x, b, alVer)))));
+        const item = (...hijos) => { const li = el("div", "flex flex-col gap-2"); li.setAttribute("role", "listitem"); li.append(...hijos); return li; };
+        lista.forEach((g) => {
+            const deck = presentacionDe(g, presentaciones, ahora || new Date());
+            const tarjeta = tarjetaGrabacion(g, (x, b) => abrirCine(x, b, alVer));
+            rejilla.appendChild(deck ? item(tarjeta, botonPresentacion(g, deck)) : item(tarjeta));
+        });
         if (proxima) rejilla.appendChild(item(tarjetaProxima(proxima)));
         seccion.append(titulo, sub, rejilla);
         caja.appendChild(seccion);

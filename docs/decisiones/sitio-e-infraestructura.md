@@ -144,6 +144,17 @@ Lo que el service worker no toca nunca:
   de cerrar sesión;
 - las respuestas que no vengan bien: un 404 no se guarda.
 
+**Lo pesado pasa, pero no se suma a la caché (`NO_GUARDAR`).** Hasta el
+10/11/2026 la caché general guardaba toda respuesta que llegara bien y crecía
+sin tope hasta el próximo cambio de `VERSION`: el visor de PDF (1,5 MB),
+three.js, los bancos de `entreno/data/` (4 MB), cada PDF que se abría y las
+tarjetas que arma el worker (`/t/`, `/o/`, `/calendario/`, `/incrustar/`).
+Eso no va en `NUNCA` porque `NUNCA` ni siquiera pasa por el service worker, y
+sin señal hay que seguir buscando en las cachés: Pareo Integral y el
+Centroamericano guardan PDF y scripts en `ajedrez-integral-sin-red`, y un
+pedido que no pasara por acá no los encontraría. `verificar-pwa.js` comprueba
+que esas cuatro no queden guardadas y que un script común sí.
+
 **La única caché que sobrevive a un cambio de versión es la de «Ejercicios sin
 internet»** (`ajedrez-integral-sin-red`): la llena esa página con ella misma y
 sus scripts cuando el alumno guarda una tanda, y la renueva cada vez que se
@@ -153,6 +164,11 @@ ahí solo, con su motor, para emparejar sin conexión el día del torneo (ver
 `juegos-y-torneos.md`). Sin red, `sw.js` busca una página también con el otro
 nombre (con o sin `.html`) y rearma una respuesta que llegó redirigida. Ver
 «Ejercicios sin internet» en `entrenamiento.md`.
+
+**`img/*` lleva un día de caché en `_headers`** (`max-age=86400`): sin eso
+cada visita volvía a preguntar por cada imagen. `js/vendor/` NO, a propósito:
+una librería vieja junto al código nuevo de la página es el mismo error callado
+que el CSS viejo.
 
 **`sw.js` y `manifest.json` llevan `Cache-Control: no-cache` en `_headers`.** Si
 el navegador se queda con un `sw.js` viejo, la app deja de actualizarse y no hay
@@ -1054,6 +1070,11 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.
+- **Una página sin enlaces ni sitemap no es necesariamente huérfana.**
+  `ruta-a-la-beca.html` (Club Cenfotec, con `noindex`) no la nombra ninguna
+  página a propósito: el enlace se comparte a mano. Confirmado con el dueño el
+  10/11/2026, en una revisión que la había marcado para sacarla del sitio. Antes
+  de mandar a `.assetsignore` algo que «nadie pide», preguntar.
   - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
     `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
     está en `.gitignore` la falla solo aparece en la máquina de quien siguió las

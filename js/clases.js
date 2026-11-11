@@ -278,15 +278,16 @@
         async function cargarPanelAdmin() {
             document.getElementById("progreso-supervisor-titulo").textContent = "Toda la plataforma";
             const conteo = async (rol) => {
-                const { data } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
+                const { data, error } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
+                if (error) return null;   // «—», no «0»: un cero se lee como dato
                 return data && data.length ? Number(data[0].total) : 0;
             };
             const [nAlumnos, nProfes, inacRes] = await Promise.all([
                 conteo("alumno"), conteo("profesor"),
                 sb.rpc("informes_inactivos", { p_dias: 4 }, { count: "exact", head: true }),
             ]);
-            document.getElementById("sup-alumnos").textContent = String(nAlumnos);
-            document.getElementById("sup-profes").textContent = String(nProfes);
+            document.getElementById("sup-alumnos").textContent = nAlumnos === null ? "—" : String(nAlumnos);
+            document.getElementById("sup-profes").textContent = nProfes === null ? "—" : String(nProfes);
             const inac = document.getElementById("sup-inactivos");
             const inactivos = inacRes.error ? null : Number(inacRes.count || 0);
             inac.textContent = inactivos === null ? "—" : String(inactivos);
@@ -1091,10 +1092,14 @@
             if (!(await tallerP)) return;
             document.getElementById("progreso-alumno").hidden = true;
             // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
-            const [proximas, grabadas, vistas] = await Promise.all([
+            // Las sesiones del curso dicen qué presentación va con cada grabación;
+            // el worker las da solo a quien tiene acceso (si no, sin presentaciones).
+            const [proximas, grabadas, vistas, curso] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
                 sb.from("grabaciones_vistas").select("horario_id, fecha, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
+                fetch("cursos/recursos/formacion-ajedrez/sesiones.json", { credentials: "same-origin" })
+                    .then((r) => (r.ok ? r.json() : null)).catch(() => null),
             ]);
             const sesiones = !proximas.error && Array.isArray(proximas.data) ? proximas.data : [];
             const grabaciones = !grabadas.error && Array.isArray(grabadas.data) ? grabadas.data : [];
@@ -1104,6 +1109,7 @@
                 grabaciones,
                 vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
                 alVer: anotarLoVisto,
+                presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
@@ -1191,12 +1197,15 @@
            llegó: el alumno puede tener varios profesores y la clase la puede
            abrir cualquiera de ellos. */
         async function refrescarVideollamada() {
+            /* Si la consulta falla se queda lo que ya había: vaciarlo ponía
+               el candado en el botón de la videollamada en plena clase, por un
+               refresco de Realtime que no llegó. */
             if (esEquipoDocente()) {
-                const { data } = await sb.from("profesor_videollamada").select("grupo, enlace").eq("profesor_id", profile.id);
-                misSalas = data || [];
+                const { data, error } = await sb.from("profesor_videollamada").select("grupo, enlace").eq("profesor_id", profile.id);
+                if (!error) misSalas = data || [];
             } else {
-                const { data } = await sb.rpc("mis_clases");
-                misClases = data || [];
+                const { data, error } = await sb.rpc("mis_clases");
+                if (!error) misClases = data || [];
             }
             videollamadaLista = true;
             pintarClaseEnVivo();

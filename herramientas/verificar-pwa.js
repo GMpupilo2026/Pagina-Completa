@@ -302,6 +302,25 @@ function servidorPropio() {
     guardadas.filter((u) => /^https?:/.test(u)).length, 0);
   igual("sí guarda la página de sin conexión", guardadas.includes("/offline.html"), "true");
 
+  // --- lo pesado pasa por el service worker pero no se suma a la caché
+  // (NO_GUARDAR): sin eso crecía sin tope hasta el próximo cambio de VERSION.
+  const pesadas = ["/js/vendor/three.min.js", "/js/pdf.min.js", "/entreno/data/desafios.json",
+    "/documentos/centroamericano-2026/cartel-centroamericano-2026.pdf"];
+  for (const ruta of [...pesadas, "/js/avisos.js"]) {
+    await pagina.evaluate(async (u) => { try { await fetch(u); } catch (e) {} }, ruta);
+  }
+  await pagina.waitForTimeout(600);
+  const guardadas2 = await pagina.evaluate(async () => {
+    const todo = [];
+    for (const n of await caches.keys()) {
+      (await (await caches.open(n)).keys()).forEach((r) => todo.push(new URL(r.url).pathname));
+    }
+    return todo;
+  });
+  igual("no guarda el visor de PDF, three.js, los bancos de entreno ni los PDF",
+    pesadas.filter((u) => guardadas2.includes(u)), []);
+  igual("pero sí guarda un script común", guardadas2.includes("/js/avisos.js"), "true");
+
   // --- sin red, una página del sitio cae en offline.html
   console.log("\n=== Sin red ===");
   /* La red se corta DE VERDAD: se levanta un servidor propio, el service worker

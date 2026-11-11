@@ -157,24 +157,8 @@
   }
 
   /* ---------------------------------------------------------- pintar */
-  async function verPresentacion(deck, titulo, boton) {
-    boton.disabled = true;
-    try {
-      const carpeta = "cursos/recursos/" + deck.split("/")[0] + "/presentaciones/" + deck.split("/")[1] + "/";
-      const r = await fetch(carpeta + "diapositivas.json", { cache: "no-cache" });
-      if (!r.ok) throw new Error("no se encontró la presentación");
-      const d = await r.json();
-      VistaPrevia.abrir(d.diapositivas.map((x, i) => ({
-        ruta: carpeta + x.imagen, ext: "webp",
-        titulo: titulo + " · " + (i + 1) + " de " + d.diapositivas.length + ": " + x.titulo,
-      })), 0);
-    } catch (err) {
-      console.error(err);
-      Avisos.avisar("No se pudo abrir la presentación: " + (err.message || err), { tipo: "error" });
-    } finally {
-      boton.disabled = false;
-    }
-  }
+  // La misma vista de las grabaciones del panel de taller (js/vista-previa.js).
+  const verPresentacion = (deck, titulo, boton) => VistaPrevia.abrirPresentacion(deck, titulo, boton);
 
   function pintarSesion(s) {
     const st = estadoDe(s.n);

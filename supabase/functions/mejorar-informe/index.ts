@@ -97,6 +97,21 @@ Reglas:
   },
 };
 
+// Tiene la verificación en dos pasos y el token todavía no la pasó (aal1).
+// Esta función mira el permiso con la clave de servicio, así que no pasa por
+// antes_de_cada_pedido(): sin esto, una contraseña robada sin el segundo paso
+// podía gastar el tope de IA de la academia. El token ya lo validó getUser();
+// acá solo se lee su «aal». La misma de prueba-gratis.
+function sesionAMedias(factores: { status: string }[] | undefined, jwt: string): boolean {
+  if (!(factores ?? []).some((f) => f.status === "verified")) return false;
+  try {
+    const b = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(b + "=".repeat((4 - (b.length % 4)) % 4))).aal !== "aal2";
+  } catch {
+    return true;
+  }
+}
+
 async function anotar(fila: Record<string, unknown>) {
   const { error } = await admin.from("ia_uso").insert(fila);
   if (error) console.error("No se pudo anotar el uso de la IA:", error.message);
@@ -113,6 +128,9 @@ Deno.serve(async (req) => {
   if (!jwt) return json({ error: "Falta token de autorización" }, 401);
   const { data: userData, error: userError } = await admin.auth.getUser(jwt);
   if (userError || !userData?.user) return json({ error: "Tu sesión venció: vuelve a entrar." }, 401);
+  if (sesionAMedias(userData.user.factors, jwt)) {
+    return json({ error: "Falta el segundo paso de la verificación: vuelve a entrar y escribe el código de tu app." }, 401);
+  }
   const usuario = userData.user.id;
 
   const tipo = (body.tipo === "informe_mensual" ? "informe_mensual" : "clase") as Tipo;

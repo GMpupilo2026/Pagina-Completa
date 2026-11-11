@@ -205,6 +205,14 @@ siempre — el fijado a mano, si hay; si no sus encargados; si no, su cuenta).
   operaciones, así que no hace falta una Edge Function solo para guardar el
   dato — la misma razón por la que `anularCobro()` escribe directo
   (`registrarPago()` ya no: ver «Recibos por academia»). Cancelar es la misma fila con `estado: 'cancelado'`.
+- **Dos iguales no se pueden programar.** Un doble clic en «Programar»
+  dejaba dos filas y la familia recibía DOS correos. El botón se deshabilita
+  mientras guarda, y además el índice único
+  `cobros_recordatorios_programados_una_vez` (alumno, momento) **entre los
+  `pendiente`** lo garantiza en la base: uno cancelado o ya enviado no impide
+  volver a programar el mismo momento. El 23505 se explica en la pantalla
+  («Ya hay un recordatorio pendiente…»). `verificar-cobros.js` prueba el doble
+  clic con la red lenta.
 - **Mandarlo sí necesita la service role**, porque el correo tiene que salir
   aunque quien lo programó no tenga la pestaña abierta esa hora: eso es
   `"tanda_programados"`, una acción más de la Edge Function
