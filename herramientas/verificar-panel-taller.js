@@ -22,6 +22,9 @@
  *  - Lo que vio de una grabación se cuenta mal: suma lo que adelantó o lo que
  *    repitió, le cree a un mensaje que no es del reproductor, se pierde si no
  *    había red, o se le muestra el avance de otra persona.
+ *  - La presentación de una sesión no sale junto a su grabación, sale la de
+ *    otra sesión (o la de este curso en otro taller con «Sesión II»), sale la
+ *    de una sesión que todavía no se dio, o se rompe todo sin acceso al curso.
  *
  * Lo de la base se mira leyendo supabase/ (sin red ni base); se comprobó además
  * impersonando roles en SQL (ver «El panel de taller» y «Las grabaciones de
@@ -179,7 +182,7 @@ window.__rpc = [];
 `;
 }
 
-async function abrir(browser, cfg, ancho) {
+async function abrir(browser, cfg, ancho, rutas) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: ancho || 1200, height: 900 }, acceptDownloads: true });
   const page = await ctx.newPage();
   const errores = [];
@@ -188,6 +191,7 @@ async function abrir(browser, cfg, ancho) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(cfg) }));
+  if (rutas) await rutas(page);
   await page.goto(BASE + "/clases.html", { waitUntil: "networkidle" });
   // El panel se destapa cuando llegan sus partes; la tarjeta, cuando contesta la base.
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "mi_panel_taller"), null, { timeout: 15000 }).catch(() => {});
@@ -665,12 +669,99 @@ async function pruebaTarjeta(browser) {
   await cerrar();
 }
 
+/* Las grabaciones como están en la base (título «Sesión I», el tema de la
+   sesión del curso, a veces más corto), y tres que NO llevan presentación: una
+   de otro taller (mismo número, otro tema), una que no tiene tema y una de una
+   sesión que todavía no termina. Las sesiones del curso son las de verdad
+   (cursos/recursos/formacion-ajedrez/sesiones.json, que sirve el servidor de
+   la prueba). */
+function grabacionesDelCurso() {
+  const f = (dias) => diaCR(dias * DIA);
+  const g = (id, dia, titulo, tema, extra) => Object.assign({ horario_id: id, fecha: dia, titulo, modalidad: "en_linea", youtube_id: "AbCdEfGhIj" + id.slice(-1),
+    inicio: enCR(dia, "08:00"), fin: enCR(dia, "12:00"), tema, duracion_seg: 11520 }, extra || {});
+  return [
+    g("p1", f(-29), "Sesión I", "Encuadre del curso y reglas básicas"),
+    g("p2", f(-21), "Sesión II", "Reglas de competición"),
+    g("p3", f(-12), "Sesión III", "Pareo suizo en la escuela"),
+    g("p4", f(-5), "Sesión IV", null),
+    g("p5", f(0), "Sesión V", "Resolución de casos en grupos", { inicio: new Date(Date.now() - HORA).toISOString(), fin: new Date(Date.now() + HORA).toISOString() }),
+  ];
+}
+
+async function pruebaPresentaciones(browser) {
+  console.log("\n=== La presentación junto a la grabación ===");
+  const { page, errores, cerrar } = await abrir(browser, cfg({ grabaciones: grabacionesDelCurso() }));
+  igual("se ven las cinco grabaciones", await page.$$eval("[data-grabacion]", (bs) => bs.length), 5);
+  const decks = await page.$$eval("#calendario-taller [role=listitem]", (ls) => ls.map((l) => {
+    const b = l.querySelector("[data-presentacion]");
+    return (l.querySelector("[data-grabacion] .font-semibold") || {}).textContent + " → " + (b && b.checkVisibility() ? b.dataset.presentacion : "nada");
+  }));
+  igual("las sesiones I y II llevan su presentación; la de otro tema, la sin tema y la que no terminó, no", decks.slice(0, 5), [
+    "Sesión I → formacion-ajedrez/clase-01", "Sesión II → formacion-ajedrez/clase-02",
+    "Sesión III → nada", "Sesión IV → nada", "Sesión V → nada"]);
+  igual("la próxima sesión (sin grabación) tampoco", await page.$$eval("[data-grabacion-proxima]", (ts) => ts.map((t) => !!t.parentElement.querySelector("[data-presentacion]"))), [false]);
+  igual("el lector de pantalla oye de qué sesión es y que abre una ventana",
+    [await page.getByRole("button", { name: "Ver la presentación de la Sesión II", exact: true }).count(),
+      await page.$eval('[data-presentacion$="clase-02"]', (b) => b.getAttribute("aria-haspopup"))], [1, "dialog"]);
+  igual("el emoji no se lee", await page.$eval('[data-presentacion$="clase-02"] span', (e) => [e.textContent, e.getAttribute("aria-hidden")]), ["📊", "true"]);
+
+  const d2 = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/recursos/formacion-ajedrez/presentaciones/clase-02/diapositivas.json"), "utf8")).diapositivas;
+  await page.click('[data-presentacion$="clase-02"]');
+  await page.waitForFunction(() => { const i = document.querySelector("#vista-previa-cuerpo img"); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 8000 }).catch(() => {});
+  const vista = await page.evaluate(() => {
+    const d = document.querySelector("dialog[open]"), i = d && d.querySelector("#vista-previa-cuerpo img");
+    return { modal: !!d && d.matches(":modal"), titulo: (document.getElementById("vista-previa-titulo") || {}).textContent,
+      src: i && i.getAttribute("src"), alt: i && i.alt,
+      carga: !!i && i.naturalWidth > 0, foco: document.activeElement && document.activeElement.id, texto: d ? d.innerText : "" };
+  });
+  igual("al tocarla se abre la vista previa, como ventana sobre la página", [vista.modal, vista.foco], [true, "vista-previa-cerrar"]);
+  igual("con la primera lámina de la Sesión II, que sí se ve", [vista.src, vista.carga], ["cursos/recursos/formacion-ajedrez/presentaciones/clase-02/" + d2[0].imagen, true]);
+  igual("el título dice la sesión, el tema y la lámina", vista.titulo, "Sesión II · Reglas de competición · 1 de " + d2.length + ": " + d2[0].titulo);
+  igual("la lámina lleva su texto para el lector de pantalla", vista.alt, d2[0].texto || d2[0].titulo);
+  const conNotas = d2.find((x) => x.notas);
+  cierto("las notas del profe no se muestran", !conNotas || !vista.texto.includes(String(conNotas.notas).slice(0, 40)));
+  await page.click("#vista-previa-siguiente");
+  await page.waitForTimeout(200);
+  igual("«Siguiente» pasa a la lámina 2", await page.$eval("#vista-previa-cuerpo img", (i) => i.getAttribute("src")),
+    "cursos/recursos/formacion-ajedrez/presentaciones/clase-02/" + d2[1].imagen);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  igual("al cerrarla el foco vuelve al botón", await page.evaluate(() => [!!document.querySelector("dialog[open]"), document.activeElement && document.activeElement.dataset.presentacion]),
+    [false, "formacion-ajedrez/clase-02"]);
+
+  const medir = () => page.evaluate(contrasteEnPagina, '[data-presentacion$="clase-02"]');
+  const claro = await medir();
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(600);
+  const oscuro = await medir();
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  cierto(`contraste del botón ≥ 4,5 en claro y en oscuro (${claro}, ${oscuro})`, claro >= 4.5 && oscuro >= 4.5);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.waitForTimeout(200);
+  igual("en el celular el botón va debajo de su tarjeta y la página no se desborda", await page.evaluate(() => {
+    const b = document.querySelector('[data-presentacion$="clase-01"]').getBoundingClientRect();
+    const t = document.querySelector("[data-grabacion]").getBoundingClientRect();
+    return [b.top >= t.bottom, b.right <= window.innerWidth, document.documentElement.scrollWidth > window.innerWidth];
+  }), [true, true, false]);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  console.log("\n=== Sin acceso al curso (el worker contesta 403) ===");
+  const sin = await abrir(browser, cfg({ grabaciones: grabacionesDelCurso() }), 1200,
+    (pg) => pg.route("**/cursos/recursos/formacion-ajedrez/sesiones.json", (r) => r.fulfill({ status: 403, contentType: "text/plain", body: "sin acceso" })));
+  igual("las grabaciones salen igual, sin presentaciones", [await sin.page.$$eval("[data-grabacion]", (bs) => bs.length),
+    await sin.page.$$eval("[data-presentacion]", (bs) => bs.length)], [5, 0]);
+  cierto("sin errores en la página", sin.errores.length === 0, sin.errores.join(" | "));
+  await sin.cerrar();
+}
+
 (async () => {
   pruebaBase();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaTaller(browser);
     await pruebaGrabaciones(browser);
+    await pruebaPresentaciones(browser);
     await pruebaLoVisto(browser);
     await pruebaSinTaller(browser);
     await pruebaTarjeta(browser);

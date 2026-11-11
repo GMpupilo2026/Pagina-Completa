@@ -4312,6 +4312,59 @@ horario>', '<fecha>', '<enlace de YouTube>', '<tema>', <segundos>);`. La
 duración exacta la da `ffprobe` sobre el archivo. El video tiene que estar «No
 listado» (uno privado no se ve incrustado) y con «Permitir inserción».
 
+### La presentación junto a la grabación
+
+El dueño pidió que, junto al video de cada sesión de Formación Ajedrez que ya
+se dio, estuviera la presentación de esa clase, para que los asesores la
+repasen. Debajo de cada tarjeta de grabación va **«📊 Ver la presentación»**
+(un botón no puede ir dentro de otro, y la tarjeta entera ya es el botón del
+video); abre la vista previa de `js/vista-previa.js` lámina por lámina, con
+«Anterior» y «Siguiente».
+
+- **Qué cuenta como «ya se dio»: que tenga grabación**, el criterio que ya
+  usaba la galería (la próxima sesión va en gris, «Su grabación sale después
+  de la clase»). No se inventó otro: una sesión sin video todavía no lleva
+  presentación, y por si acaso la grabación de una sesión que no ha terminado
+  (`fin` después de ahora) tampoco.
+- **Cuál presentación**: la de la sesión de
+  `cursos/recursos/formacion-ajedrez/sesiones.json` (el mismo archivo de la
+  ficha Asesores, que arma `curso-generar-formacion.py`) con el número del
+  título («Sesión III» → la 3; acepta romanos y cifras) **y** cuyo título
+  empieza con el tema de la grabación, o al revés, sin mayúsculas, tildes ni
+  signos (`presentacionDe()` de `js/calendario-taller.js`). Las tres de hoy
+  cumplen: «Encuadre del curso y reglas básicas» es el comienzo de «Encuadre
+  del curso y reglas básicas del ajedrez», y las otras dos son iguales. El
+  número solo no basta: el panel de taller es de cualquier academia, y otro
+  taller con sus «Sesión I, II…» mostraría las láminas de este. **Al poner la
+  grabación de una sesión nueva, el tema va como el título de la sesión del
+  curso** (o su comienzo); si no, el video sale sin presentación, sin ningún
+  error.
+- **El candado es el del worker**: `sesiones.json`, el `diapositivas.json` y
+  las imágenes están en `cursos/recursos/formacion-ajedrez/`, que se le dan a
+  quien tiene el acceso vigente o el material (`puede_bajar(…, true)`). El
+  panel pide `sesiones.json` y, si el worker dice que no (401/403), las
+  grabaciones salen igual, sin presentaciones. Lo de adentro se pide solo al
+  tocar el botón.
+- **Lo que se ve es lo que se proyectó**: las mismas imágenes de la clase en
+  vivo. El `texto` de cada lámina va como texto de la imagen (para el lector
+  de pantalla) y las `notas`, que son del profe, no se muestran.
+- **Una sola copia**: abrir una presentación del curso es
+  `VistaPrevia.abrirPresentacion(deck, titulo, boton)`, que usan también la
+  ficha Asesores (antes tenía su copia). Como el botón se apaga mientras
+  carga, y un botón apagado pierde el foco, la vista previa guarda a quién
+  devolvérselo antes de apagarlo: antes el foco caía al principio de la
+  página al cerrarla, también en la ficha Asesores.
+
+`verificar-panel-taller.js` lo prueba con las sesiones de verdad del curso:
+las sesiones I y II llevan la suya y no la de otro tema, la que no tiene tema,
+la que no ha terminado ni la próxima; el nombre para el lector de pantalla
+(«Ver la presentación de la Sesión II»), que se abre como ventana con la
+primera lámina de la Sesión II cargada, su título y su texto, sin las notas,
+que «Siguiente» pasa a la 2, que al cerrar el foco vuelve al botón, el
+contraste (11,5:1 en claro y 12,76:1 en oscuro), el celular y el worker que
+contesta 403. Se rompieron a propósito las dos reglas (el tema y «ya
+terminó») y el foco, y saltaron.
+
 ### Cuánto vio cada uno
 
 El dueño pidió saber cuánto vio cada asesor de cada grabación. Se mide **qué

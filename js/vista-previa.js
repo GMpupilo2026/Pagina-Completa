@@ -18,9 +18,20 @@
  * cualquier cosa. Las imágenes van como blob: (img-src lo permite) y se
  * sueltan al cerrar.
  *
- *   VistaPrevia.abrir(lista, indice)  lista: [{ ruta, titulo, ext? }]; con
- *                                     «Anterior» y «Siguiente» se recorre la
- *                                     lista. `ext` manda sobre la de la ruta.
+ *   VistaPrevia.abrir(lista, indice)  lista: [{ ruta, titulo, ext?, alt? }];
+ *                                     con «Anterior» y «Siguiente» se recorre
+ *                                     la lista. `ext` manda sobre la de la
+ *                                     ruta; `alt` es el texto de una imagen.
+ *   VistaPrevia.abrirPresentacion(deck, titulo, boton)
+ *                                     una presentación del curso
+ *                                     («<curso>/<clase>»: las imágenes y el
+ *                                     diapositivas.json de cursos/recursos/
+ *                                     <curso>/presentaciones/<clase>/, detrás
+ *                                     del candado del worker), lámina por
+ *                                     lámina, con el texto de cada una para
+ *                                     el lector de pantalla. La usan la ficha
+ *                                     Asesores y las grabaciones del panel de
+ *                                     taller.
  *
  * Ver «La vista previa» en docs/decisiones/cursos-y-material.md.
  */
@@ -474,7 +485,7 @@
       marco.style.background = "repeating-conic-gradient(#d9e2ec 0% 25%, #f0f4f8 0% 50%) 50% / 24px 24px";
       const img = el("img", "max-w-full max-h-[75vh] object-contain");
       img.src = a.ruta;
-      img.alt = a.titulo || nombreArchivo(a.ruta);
+      img.alt = a.alt || a.titulo || nombreArchivo(a.ruta);
       marco.append(img);
       caja.append(marco);
       estado.textContent = "Vista previa de " + (a.titulo || nombreArchivo(a.ruta)) + ".";
@@ -528,7 +539,39 @@
     $("vista-previa-cerrar").focus();
   }
 
-  window.VistaPrevia = { abrir, leerZip };
+  /* Una presentación del curso, lámina por lámina. Las `notas` del
+     diapositivas.json son del profe y no se muestran; el `texto` de cada
+     lámina va como texto de la imagen. Si no se puede (sin acceso, el worker
+     contesta 401 o 403), se dice con un aviso de la página. */
+  async function abrirPresentacion(deck, titulo, boton) {
+    const [curso, clase] = String(deck || "").split("/");
+    if (!/^[a-z0-9-]+$/.test(curso || "") || !/^[a-z0-9-]+$/.test(clase || "")) return;
+    // El botón se apaga mientras carga y un botón apagado pierde el foco: al
+    // cerrar, el foco vuelve a lo que lo tenía antes (el botón).
+    const antes = document.activeElement;
+    if (boton) boton.disabled = true;
+    try {
+      const carpeta = "cursos/recursos/" + curso + "/presentaciones/" + clase + "/";
+      const r = await fetch(carpeta + "diapositivas.json", { cache: "no-cache", credentials: "same-origin" });
+      if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? "no tienes acceso a ella" : "no se encontró");
+      const d = await r.json();
+      const laminas = (d && Array.isArray(d.diapositivas) ? d.diapositivas : []).filter((x) => x && /^[\w.-]+\.webp$/.test(x.imagen || ""));
+      if (!laminas.length) throw new Error("no tiene láminas");
+      abrir(laminas.map((x, i) => ({
+        ruta: carpeta + x.imagen, ext: "webp",
+        titulo: titulo + " · " + (i + 1) + " de " + laminas.length + (x.titulo ? ": " + x.titulo : ""),
+        alt: x.texto || x.titulo || "",
+      })), 0);
+      volverA = antes;
+    } catch (err) {
+      console.error(err);
+      if (window.Avisos) Avisos.avisar("No se pudo abrir la presentación: " + (err.message || err) + ".", { tipo: "error" });
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
+  window.VistaPrevia = { abrir, abrirPresentacion, leerZip };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
