@@ -1097,7 +1097,7 @@
             const [proximas, grabadas, vistas, curso] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
-                sb.from("grabaciones_vistas").select("horario_id, fecha, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
+                sb.from("grabaciones_vistas").select("horario_id, fecha, parte, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
                 fetch("cursos/recursos/formacion-ajedrez/sesiones.json", { credentials: "same-origin" })
                     .then((r) => (r.ok ? r.json() : null)).catch(() => null),
             ]);
@@ -1129,13 +1129,13 @@
            las suyas, y al profe que también es alumno, las de sus clases). Ver
            «Las preguntas dentro del video» en docs/decisiones/paneles.md. */
         async function responderPreguntaVideo(g, n, opcion) {
-            const { data, error } = await sb.rpc("grabacion_pregunta_responder", { p_horario: g.horario_id, p_fecha: g.fecha, p_n: n, p_opcion: opcion });
+            const { data, error } = await sb.rpc("grabacion_pregunta_responder", { p_horario: g.horario_id, p_fecha: g.fecha, p_n: n, p_opcion: opcion, p_parte: g.parte || 1 });
             if (error) throw error;
             return data;
         }
         async function misRespuestasVideo(g) {
             const { data, error } = await sb.from("grabacion_respuestas").select("n, elegida, acerto")
-                .eq("horario_id", g.horario_id).eq("fecha", g.fecha).eq("persona_id", profile.id).range(0, 99);
+                .eq("horario_id", g.horario_id).eq("fecha", g.fecha).eq("parte", g.parte || 1).eq("persona_id", profile.id).range(0, 99);
             if (error) throw error;
             return data || [];
         }
@@ -1145,7 +1145,7 @@
            mandar; si no hubo red, se manda con lo que venga después. Ver
            «Cuánto vio cada uno» en docs/decisiones/paneles.md. */
         async function anotarLoVisto(g, tramos) {
-            const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos });
+            const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos, p_parte: g.parte || 1 });
             if (error) throw Object.assign(new Error(error.message || "No se pudo anotar"), { descartar: error.code === "22023" || error.code === "42501" });
             return data;
         }
