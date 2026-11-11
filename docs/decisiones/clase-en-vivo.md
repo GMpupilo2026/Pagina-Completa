@@ -3976,19 +3976,33 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
-- **La cookie del worker, con la sesión de ahora**: una clase dura horas y el
-  token una. `sesion.js` guarda la sesión al arrancar y no la actualiza, y
-  escribir la cookie con esa sesión vencida (`SesionCursos.guardar`) la
-  BORRA: el worker contestaba 401 al `diapositivas.json` y el profe leía «No
-  se pudo abrir la presentación. Revisa tu conexión» (la Sesión 4 de los
-  asesores, 11/11/2026). Ahora, antes de pedir el `diapositivas.json` y cada
-  lámina del curso, `SesionCursos.renovar()` (`js/supabase-client.js`) pide la
-  sesión a supabase-js —que renueva el token si venció— y escribe la cookie
-  con ella; si el worker igual dice 401, `renovar(true)` pide un token nuevo
-  y se intenta una vez más. Si tampoco, el aviso dice que se venció la
-  sesión y que hay que recargar, no que falló la conexión. Lo mismo hacen las
-  lecciones del curso en la clase. Lo prueba `verificar-clase-presentacion.js`
-  (4a) con el `SesionCursos` de verdad sobre el doble.
+- **La sesión de AHORA, y en el encabezado, no solo en la cookie.** El
+  10/11 y el 11/11 la tarjeta quedó en blanco con «No se pudo abrir la
+  presentación. Revisa tu conexión», con la conexión bien. El worker
+  contestaba 401 al `diapositivas.json`, por dos causas:
+  - una clase dura horas y el token una: `sesion.js` guarda la sesión al
+    arrancar y no la actualiza, y escribir la cookie con esa sesión vencida
+    (`SesionCursos.guardar`) la BORRA (la Sesión 4 de los asesores);
+  - en un perfil de Chrome la cookie no llegaba NUNCA, ni recargando ni
+    abriendo la dirección a mano, a un profe con el acceso vigente. En los
+    registros de Supabase se veía: el worker no le preguntaba nada por esa
+    cuenta.
+
+  Ahora, antes de pedir el `diapositivas.json` y cada lámina del curso,
+  `pedirDelCurso` pide la sesión con `SesionCursos.renovar()`
+  (`js/supabase-client.js`), que la renueva si venció y escribe la cookie, y
+  manda el token también en `Authorization: Bearer` (el worker lo acepta
+  igual que la cookie y, si vienen los dos, gana el encabezado: `tokenDe` en
+  `worker.js`). Si el worker igual dice 401, `renovar(true)` pide un token
+  nuevo y se intenta una vez más. Las imágenes del curso se bajan igual y se
+  muestran como `blob:` (un `<img src>` solo puede llevar la cookie); cuál es
+  lo dice `data-archivo`. Lo que siga fallando (salvo «sin acceso» o «ya no
+  existe») se reintenta solo a los 3, 6, 12, 24 y después cada 30 segundos, y
+  en el acto al volver la conexión (`online`); el aviso dice que se venció la
+  sesión, no que falló la conexión. Las lecciones del curso en la clase
+  también renuevan la cookie. Lo prueban `verificar-clase-presentacion.js`
+  (4a, con el `SesionCursos` de verdad sobre el doble, y 6b) y
+  `verificar-worker.js`.
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.
