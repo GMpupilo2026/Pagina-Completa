@@ -48,11 +48,11 @@ const LAMINAS = [
     clave: "Solo cambia el tablero: la posición y los tiempos no." },
   // 6
   { tipo: "filas", k: "Paso a paso, sin tocar la partida", numerar: true, items: [
-    { ic: "⏸️", t: "Detén los relojes", s: "los tiempos no se tocan" },
+    { ic: "⏸️", t: "Detén los relojes", s: "los tiempos no se tocan", a: "6.11.1" },
     { ic: "♟️", t: "Arma al lado un tablero bien colocado", s: "clara a la derecha de cada jugador" },
     { ic: "🔁", t: "Pasa pieza por pieza, a la misma casilla", s: "a1 queda a la izquierda de las blancas" },
     { ic: "📝", t: "Comprueba con las planillas" },
-    { ic: "▶️", t: "Reanuda el reloj de quien juega" } ] },
+    { ic: "▶️", t: "Reanuda el reloj de quien juega", a: "6.11.3" } ] },
   // 7
   { tipo: "tableros", k: "En un tablero girado, esta regla engaña", items: [
     { pos: 0, opciones: MAL, t: "Rey y dama cambiados", tono: "no", marca: "Se anula", s: "La posición inicial ya estaba mal · art. 7.2.1" },

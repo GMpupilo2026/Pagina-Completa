@@ -61,7 +61,7 @@
     },
     {
       "titulo": "Cómo se pasa la posición",
-      "texto": "Cómo se pasa la posición, paso a paso y sin cambiar nada de la partida. Uno: detén los relojes; los tiempos no se tocan. Dos: arma al lado un tablero bien colocado, con la clara a la derecha de cada jugador. Tres: pasa pieza por pieza, cada una a la misma casilla, contando desde cada jugador: a1 queda a la izquierda de las blancas. Cuatro: comprueba la posición con la planilla y con los dos jugadores. Cinco: pon en marcha el reloj de quien tenía el turno.",
+      "texto": "Cómo se pasa la posición, paso a paso y sin cambiar nada de la partida. Uno: detén los relojes, artículo 6.11.1; los tiempos no se tocan. Dos: arma al lado un tablero bien colocado, con la clara a la derecha de cada jugador. Tres: pasa pieza por pieza, cada una a la misma casilla, contando desde cada jugador: a1 queda a la izquierda de las blancas. Cuatro: comprueba la posición con la planilla y con los dos jugadores. Cinco: reanuda el reloj de quien tenía el turno; cuándo se reanuda lo decide la persona árbitra, artículo 6.11.3.",
       "notas": "Lo más seguro es armar el tablero nuevo al lado y pasar las piezas de a una, no girar el tablero con las piezas encima. Si hay duda sobre alguna casilla, la planilla de los dos jugadores la resuelve.",
       "imagen": "06.webp"
     },
@@ -84,7 +84,7 @@
     {
       "titulo": "No confundir",
       "texto": "No confundir tres irregularidades. Solo el tablero girado: la partida sigue y se pasa la posición a un tablero bien colocado, artículo 7.2.2. Posición inicial mal armada: se anula y se juega otra partida, artículo 7.2.1. Colores cambiados con menos de 10 jugadas de cada bando: se anula y se juega otra con los colores correctos; con 10 jugadas o más, la partida continúa, artículo 7.3.",
-      "notas": "Cierre del ejercicio. Las tres reglas están en el tema «El tablero y el inicio de la partida» de la Sesión 1 (Leyes del Ajedrez 2023, art. 2.1, 7.2 y 7.3).",
+      "notas": "Cierre del ejercicio. Las tres reglas están en el tema «El tablero y el inicio de la partida» de la Sesión 1 (Leyes del Ajedrez 2023, art. 2.1, 7.2 y 7.3; los relojes, 6.11).",
       "imagen": "08.webp"
     }
   ]

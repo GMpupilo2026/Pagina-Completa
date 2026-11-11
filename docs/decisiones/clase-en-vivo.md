@@ -4409,6 +4409,13 @@ número.
   cambiados (dama en e1, rey en d1). Eso ya no es solo el tablero: la posición
   inicial estaba mal (art. 7.2.1) y la partida se anula. Es la diferencia que
   más se confunde, y la que dice el banco de `js/arbitraje-items.js`.
+- **Revisado contra el texto oficial de la FIDE** (handbook.fide.com, E.I.01,
+  vigente desde el 1/1/2023, pedido del dueño): 2.1 («the near corner square
+  to the right of the player is white»), 7.2.1, 7.2.2 («the game shall
+  continue but the position reached must be transferred to a correctly placed
+  chessboard»), 7.3 y, para detener y reanudar los relojes, 6.11.1 y 6.11.3.
+  «La dama en su color» no está escrito en las Leyes: es la regla para
+  recordar el diagrama del art. 2.3.
 - `node herramientas/verificar-formacion-ejercicio-tablero.js` comprueba que la
   posición sea la de la partida, que el tablero mal colocado tenga h1 y a8
   oscuras (mirando el color que pinta el SVG, no la opción) y el bien colocado
