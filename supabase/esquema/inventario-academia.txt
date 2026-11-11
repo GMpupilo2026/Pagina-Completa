@@ -261,6 +261,7 @@ tabla  suscripciones  rls=true
 tabla  tanda_resultados  rls=true
 tabla  tarea_items  rls=true
 tabla  tareas  rls=true
+tabla  temporadas  rls=true
 tabla  torneos_externos  rls=true
 tabla  tournament_pairings  rls=true
 tabla  tournament_registrations  rls=true
@@ -2609,6 +2610,17 @@ columna  tareas.material_tipo  text
 columna  tareas.profesor_id  uuid
 columna  tareas.titulo  text
 columna  tareas.vence_at  timestamp with time zone
+columna  temporadas.alumno_id  uuid
+columna  temporadas.competencia  text
+columna  temporadas.created_at  timestamp with time zone
+columna  temporadas.etapas  jsonb
+columna  temporadas.fecha_competencia  date
+columna  temporadas.id  uuid
+columna  temporadas.inicio  date
+columna  temporadas.lote  uuid
+columna  temporadas.nota  text
+columna  temporadas.profesor_id  uuid
+columna  temporadas.titulo  text
 columna  torneos_externos.chess_results  text
 columna  torneos_externos.elo  text
 columna  torneos_externos.fin  timestamp with time zone
@@ -3937,6 +3949,10 @@ politica  tareas  tareas_delete  DELETE
 politica  tareas  tareas_insert  INSERT
 politica  tareas  tareas_select  SELECT
 politica  tareas  tareas_update  UPDATE
+politica  temporadas  temporadas_delete  DELETE
+politica  temporadas  temporadas_insert  INSERT
+politica  temporadas  temporadas_select  SELECT
+politica  temporadas  temporadas_update  UPDATE
 politica  torneos_externos  torneos_externos_lectura  SELECT
 politica  tournament_pairings  tournament_pairings_insert  INSERT
 politica  tournament_pairings  tournament_pairings_select  SELECT
@@ -4727,6 +4743,10 @@ indice  tarea_items  tarea_items_tarea_idx
 indice  tareas  tareas_alumno_idx
 indice  tareas  tareas_pkey
 indice  tareas  tareas_profesor_idx
+indice  temporadas  temporadas_alumno_idx
+indice  temporadas  temporadas_lote_idx
+indice  temporadas  temporadas_pkey
+indice  temporadas  temporadas_profesor_idx
 indice  torneos_externos  torneos_externos_inicio_idx
 indice  torneos_externos  torneos_externos_pkey
 indice  tournament_pairings  tournament_pairings_advance_id_fk
@@ -6015,6 +6035,13 @@ grant  tareas  authenticated  SELECT
 grant  tareas  authenticated  TRIGGER
 grant  tareas  authenticated  TRUNCATE
 grant  tareas  authenticated  UPDATE
+grant  temporadas  authenticated  DELETE
+grant  temporadas  authenticated  INSERT
+grant  temporadas  authenticated  REFERENCES
+grant  temporadas  authenticated  SELECT
+grant  temporadas  authenticated  TRIGGER
+grant  temporadas  authenticated  TRUNCATE
+grant  temporadas  authenticated  UPDATE
 grant  torneos_externos  anon  SELECT
 grant  torneos_externos  authenticated  SELECT
 grant  tournament_pairings  anon  DELETE

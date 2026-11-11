@@ -795,16 +795,30 @@ async function pruebaProfesor(browser) {
      conteo inventado sobre una sección de contenido, o el nombre del curso
      escrito como su dirección. */
   console.log("-- En qué usó su tiempo");
-  await page.waitForFunction(() => document.querySelectorAll("#tiempo-body tbody tr").length > 0);
+  await page.waitForFunction(() => document.querySelectorAll("#tiempo-body table.tiempo-tabla tbody tr").length > 0);
   igual("se ve de verdad", await page.evaluate(() =>
     getComputedStyle(document.getElementById("tiempo-report")).display === "none" ? "no" : "sí"), "sí");
   igual("una fila por sección usada, y la de paso no", await page.evaluate(() =>
-    [...document.querySelectorAll("#tiempo-body tbody tr")].map((tr) =>
+    [...document.querySelectorAll("#tiempo-body table.tiempo-tabla tbody tr")].map((tr) =>
       [...tr.children].map((c) => c.textContent.replace(/\s+/g, " ").trim()).join(" | "))),
     ["🧩 Ejercicios 4×4 | 1 h 2 min | 12 ejercicios",
      "🏛️ Curso: El mapa de los finales | 25 min | Estudió el contenido",
      "📚 Estudio (fichas) | 8 min | —",
      "♚ Mates | menos de 1 min | 1 mate"]);
+  /* El mismo tiempo, por dirección del entrenamiento (js/direcciones-entrenamiento.js).
+     Lo que se rompe callado: el curso y el tiempo de Estudio, que mezclan
+     direcciones, metidos en el porcentaje (inflan lo que no saben), o
+     desaparecidos sin decirlo (el alumno parecería entrenar menos). */
+  igual("el reparto por dirección se ve", await page.evaluate(() => {
+    const b = document.querySelector("#tiempo-body .direcciones-reparto");
+    return b && b.checkVisibility() ? "sí" : "no";
+  }), "sí");
+  igual("los ejercicios van a «Solución de ejercicios», con el porcentaje escrito", await page.evaluate(() =>
+    [...document.querySelectorAll("#tiempo-body .direcciones-reparto tbody tr")].map((tr) =>
+      [...tr.children].map((c) => c.textContent.replace(/\s+/g, " ").trim()).join(" | "))),
+    ["Solución de ejercicios | 100 % | 1 h 3 min"]);
+  igual("el curso y Estudio quedan aparte, con su nombre", await page.textContent("#tiempo-body .direcciones-aparte"),
+    "Mezclan varias direcciones y no entran en el reparto: Curso: El mapa de los finales (25 min), Estudio (fichas) (8 min).");
   igual("pide el periodo de siempre al abrir y lo marca", await page.evaluate(() =>
     document.querySelector('#tiempo-body button[aria-pressed="true"]').textContent), "Desde siempre");
   // Se cuenta antes y después, sin vaciar la lista: lo que viene más abajo

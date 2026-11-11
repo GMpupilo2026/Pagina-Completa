@@ -467,6 +467,25 @@ async function main() {
     ok(String(cursoElegido.lecciones) === topeLec,
       `el tope de lección debería ser ${cursoElegido.lecciones}, salió ${topeLec}`);
 
+    /* La dirección del entrenamiento de cada renglón y el reparto de la tarea
+       (js/direcciones-entrenamiento.js). Lo que se rompe callado: el recorte
+       que no cambia la dirección («Final de torres» contado como ejercicios
+       sueltos) o un curso, que mezcla, metido en una dirección cualquiera. */
+    const direccionDe = (n) => pagina.textContent(`#renglones .renglon:nth-of-type(${n}) .r-direccion`);
+    ok(await direccionDe(1) === "Dirección: Solución de ejercicios", `un tema de táctica es solución de ejercicios, salió ${JSON.stringify(await direccionDe(1))}`);
+    ok(await direccionDe(2) === "Dirección: Visión del tablero", `Coordenadas es visión del tablero, salió ${JSON.stringify(await direccionDe(2))}`);
+    ok(await direccionDe(3) === "Dirección: varias (no entra en el reparto)", `un curso mezcla direcciones, salió ${JSON.stringify(await direccionDe(3))}`);
+    const reparto = await pagina.evaluate(() => {
+      const p = document.getElementById("reparto-tarea");
+      return p.checkVisibility() ? p.textContent : "(no se ve)";
+    });
+    ok(reparto === "Reparto de esta tarea por dirección del entrenamiento: Solución de ejercicios: 1 · Visión del tablero: 1 · varias: 1.",
+      `el reparto de la tarea no cuenta bien: ${JSON.stringify(reparto)}`);
+    await pagina.selectOption("#renglones .renglon:nth-of-type(1) .r-recorte", "rookEndgame");
+    ok(await direccionDe(1) === "Dirección: Finales", `un tema de final de torres es finales, salió ${JSON.stringify(await direccionDe(1))}`);
+    await pagina.selectOption("#renglones .renglon:nth-of-type(1) .r-recorte", "ultima-linea");
+    await pagina.fill("#renglones .renglon:nth-of-type(1) .r-cantidad", "10");
+
     const checks = await pagina.$$(".alumno-check");
     for (const c of checks) await c.check();
     await pagina.fill("#t-vence", new Date(Date.now() + 4 * 86400000).toISOString().slice(0, 16));
