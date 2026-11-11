@@ -281,6 +281,28 @@ recuadro o con la tecla `z` sobre el tablero. **En `tablero.html` ese bloque sí
 sigue siendo región viva, y está bien**: ahí solo se rellena cuando se pide con
 el comando "T", nunca solo.
 
+#### Quién jugó y qué jugó, dicho como en la sala de arena
+
+`js/juegos-blind.js` decía la jugada propia como «eva 4» a secas —sin
+«Jugaste» y sin la pieza: sonaba igual que cualquier otro aviso— y la del
+rival como «El rival jugó: eva 4», sin su nombre. En Niebla de Guerra no
+decía nada, y con la voz del sitio (que en estas páginas es la del botón
+propio, así que `js/voz-pagina.js` no lee el `#status-banner`) quien no ve no
+se enteraba de que el rival ya había jugado.
+
+- Ahora, igual que la sala de arena: «Jugaste peón eva 4.», «Bruno Mena jugó
+  caballo felix 6.», «Jugaste enroque corto.» (en minúscula: va a media
+  frase). El nombre lo da la página con `quienJugo()`, por el largo de la
+  lista de jugadas, así que quien solo mira la partida oye quién movió.
+- En la niebla: «Bruno Mena jugó. Con la niebla no se ve qué jugada hizo.»
+  Se dice QUE jugó, nunca qué.
+- La jugada escrita en el recuadro se dice al jugarla; cuando la base la
+  confirma (`announceOwnMove`) no se repite.
+
+Lo mide `verificar-juegos-accesible.js` («se dice quién jugó y qué jugó»):
+la jugada del rival llega por el canal del doble, que ahora guarda sus
+oyentes, y se mira el recuadro.
+
 #### La niebla no se puede escapar por el modo adaptado
 
 Es lo que hacía falta mirar con más cuidado, porque una fuga acá no se ve: la

@@ -679,7 +679,7 @@
   function jugadaEnPalabras(san) {
     const s = String(san || "");
     if (!window.BlindNotation || !BlindNotation.sanSpoken) return sanEs(s);
-    const dicha = BlindNotation.sanSpoken(s);
+    const dicha = BlindNotation.sanSpoken(s).replace(/^Enroque/, "enroque");   // va en medio de la frase
     return /^[a-h]/.test(s) ? "peón " + dicha : dicha;
   }
 

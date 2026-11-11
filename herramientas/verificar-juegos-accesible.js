@@ -118,9 +118,11 @@ window.__escrituras = [];
     },
     channel: () => {
       const c = {
-        on() { return c; }, subscribe(cb) { if (cb) cb("SUBSCRIBED"); return c; },
+        _oyentes: [],
+        on(tipo, filtro, cb) { c._oyentes.push({ tipo, cb }); return c; }, subscribe(cb) { if (cb) cb("SUBSCRIBED"); return c; },
         track() { return Promise.resolve(); }, presenceState() { return {}; },
       };
+      (window.__canales = window.__canales || []).push(c);
       return c;
     },
     removeChannel: () => {},
@@ -769,6 +771,7 @@ async function pruebaElEnroqueDichoYLosMensajes(browser) {
   d = await loQueDijoElRecuadro(a.page);
   const rey = await a.page.evaluate(() => (document.querySelector('#board [data-square="g1"]') || {}).getAttribute("aria-label"));
   ok("estandar: «enroque corto» enroca", /rey blanco/.test(rey || "") && !/legal|no entend/i.test(d), { rey, d });
+  igual("estandar: la jugada propia se confirma con «Jugaste», en minúscula a media frase", d, "Jugaste enroque corto.");
   await a.ctx.close();
 
   a = await abrir(browser, "/tablero.html", null, "u-ana", true);
@@ -831,6 +834,38 @@ async function pruebaSiguienteContraOscar(browser) {
   ok("«nueva partida» empieza otra", /^Partida nueva contra Oscar/.test(d), d);
   igual("sin errores de la página", errores.length, 0);
   await ctx.close();
+}
+
+// ===================== 9b. cuándo jugó el rival y qué jugó (estandar y niebla)
+/* La jugada del rival llega por Realtime: el doble guarda los oyentes del canal
+   y acá se le manda la fila nueva, como la mandaría la base. Lo que se mide es
+   lo que queda en el recuadro (lo que oye el lector y dice la voz). Antes se
+   oía «El rival jugó: eva 4» (sin nombre ni pieza) y en la niebla nada: quien
+   no ve no se enteraba de que el rival ya había jugado. */
+async function pruebaJugadaDelRival(browser) {
+  console.log("\n▶ Partidas: se dice quién jugó y qué jugó");
+  const remoto = (page, fila) => page.evaluate((fila) => {
+    (window.__canales || []).forEach((c) => c._oyentes.forEach((o) => { if (o.tipo === "postgres_changes") o.cb({ new: fila }); }));
+  }, fila);
+  const TRAS_E4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+  const TRAS_CF6 = "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2";
+  for (const variant of ["estandar", "niebla"]) {
+    const fila = Object.assign(sala("r1", variant, INICIAL), { white_ready: true, black_ready: true });
+    const a = await abrir(browser, "/" + variant + ".html?room=r1", { tablas: { game_rooms: [fila], profiles: PERFILES } }, "u-bruno", true);
+    await remoto(a.page, Object.assign({}, fila, { moves: ["e4"], fen: TRAS_E4, clock_updated_at: new Date().toISOString() }));
+    await a.page.waitForTimeout(400);
+    const d = await loQueDijoElRecuadro(a.page);
+    if (variant === "estandar") igual("estandar: la del rival, con su nombre y la pieza", d, "Ana Rojas jugó peón eva 4.");
+    else igual("niebla: se dice que jugó, no qué", d, "Ana Rojas jugó. Con la niebla no se ve qué jugada hizo.");
+    ok(variant + ": sin errores de la página", a.errores.length === 0, a.errores);
+    await a.ctx.close();
+  }
+  const fila = Object.assign(sala("r1", "estandar", TRAS_E4), { moves: ["e4"], white_ready: true, black_ready: true });
+  const b = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [fila], profiles: PERFILES } }, "u-ana", true);
+  await remoto(b.page, Object.assign({}, fila, { moves: ["e4", "Nf6"], fen: TRAS_CF6, clock_updated_at: new Date().toISOString() }));
+  await b.page.waitForTimeout(400);
+  igual("estandar: una pieza se dice por su nombre", await loQueDijoElRecuadro(b.page), "Bruno Mena jugó caballo felix 6.");
+  await b.ctx.close();
 }
 
 // ======================= 10. estandar y niebla: turno, reloj, última jugada, coronar
@@ -1104,6 +1139,7 @@ async function pruebaListoYRendirse(browser) {
     pruebaElRelojHablado();
     await pruebaElEnroqueDichoYLosMensajes(browser);
     await pruebaSiguienteContraOscar(browser);
+    await pruebaJugadaDelRival(browser);
     await pruebaElTurnoElRelojYLaUltima(browser);
     await pruebaListoYRendirse(browser);
     await pruebaLoQueQuedaEscritoYLoQueSeDice(browser);

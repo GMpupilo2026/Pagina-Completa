@@ -316,6 +316,9 @@
                     tablero: document.getElementById("board"),
                     nombreTablero: "Tablero de la partida",
                     tryMove: (text) => board.tryMove(text),
+                    // Quién hizo la última jugada: con la lista desde la posición inicial,
+                    // un largo impar terminó en una de blancas.
+                    quienJugo: () => nameFor(((room && room.moves) || []).length % 2 === 1 ? room.white_id : room.black_id),
                     miColor: () => myColor,
                     // "reloj" / "tiempo" en el recuadro, y los avisos de 30 y 10 segundos.
                     reloj: () => {
