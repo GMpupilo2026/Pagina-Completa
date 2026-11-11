@@ -229,6 +229,9 @@ window.CalendarioTaller = (function () {
         return h ? h + ":" + dos(m) + ":" + dos(s) : m + ":" + dos(s);
     }
     const duracion = (seg) => HoraCR.duracion(seg);
+    // «Sesión IV · Parte 2» cuando la sesión quedó en varios videos; si no,
+    // el título solo. El título lo escribió el profe: va por textContent.
+    const nombreDe = (g) => (g.titulo || "Clase") + (g.partes > 1 ? " · Parte " + g.parte : "");
     // El número de la sesión, del final del título: «Sesión II» → «II».
     function numero(titulo) {
         const m = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(titulo || "");
@@ -272,15 +275,18 @@ window.CalendarioTaller = (function () {
     }
 
     // La miniatura: sin imagen de YouTube (la CSP no la deja y no hace falta).
-    function miniatura(titulo, abajo, apagada) {
+    function miniatura(titulo, abajo, apagada, parte) {
         const m = el("div", "relative aspect-video w-full overflow-hidden" + (apagada ? " grayscale opacity-60" : ""));
         m.style.background = "radial-gradient(120% 90% at 85% 10%, rgba(255,255,255,.12), transparent 60%),"
             + " repeating-conic-gradient(rgba(255,255,255,.05) 0 25%, transparent 0 50%) 0 0 / 28px 28px,"
             + " linear-gradient(135deg, rgb(var(--c-brand-900)), rgb(var(--c-brand-700)))";
         const n = numero(titulo);
         if (n) {
-            const num = el("span", "absolute left-3 top-1 font-serif text-4xl font-bold text-white/90", n);
+            const num = el("span", "absolute left-3 top-1 flex flex-col font-serif text-4xl font-bold text-white/90");
             num.setAttribute("aria-hidden", "true");
+            num.appendChild(el("span", null, n));
+            // La parte, debajo del número: el texto de la tarjeta ya la dice.
+            if (parte) num.appendChild(el("span", "font-sans text-xs uppercase tracking-wide", "Parte " + parte));
             m.appendChild(num);
         }
         if (!apagada) {
@@ -303,10 +309,11 @@ window.CalendarioTaller = (function () {
         b.dataset.grabacion = g.youtube_id;
         b.setAttribute("aria-haspopup", "dialog");
         const seg = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
-        b.appendChild(miniatura(g.titulo, seg ? reloj(seg) : ""));
+        if (g.partes > 1) b.dataset.parte = String(g.parte);
+        b.appendChild(miniatura(g.titulo, seg ? reloj(seg) : "", false, g.partes > 1 ? g.parte : 0));
         const texto = el("span", "block p-3");
         texto.append(el("span", "sr-only", "Ver la grabación: "),
-            el("span", "block font-semibold text-brand-800 dark:text-white", g.titulo || "Clase"));   // del profe: textContent
+            el("span", "block font-semibold text-brand-800 dark:text-white", nombreDe(g)));   // del profe: textContent
         if (g.tema) texto.appendChild(el("span", "block text-sm text-brand-700 dark:text-brand-200", g.tema));
         texto.appendChild(el("span", "mt-1 block text-xs text-brand-600 dark:text-brand-300", dia(g.inicio) + (seg ? " · " + duracion(seg) : "")));
         b.appendChild(texto);
@@ -381,7 +388,7 @@ window.CalendarioTaller = (function () {
         b.setAttribute("aria-haspopup", "dialog");
         const emoji = el("span", null, "📊");
         emoji.setAttribute("aria-hidden", "true");
-        b.append(emoji, " Ver la presentación", el("span", "sr-only", " de la " + (g.titulo || "clase")));   // del profe: textContent
+        b.append(emoji, " Ver la presentación", el("span", "sr-only", " de la " + nombreDe(g)));   // del profe: textContent
         const titulo = (g.titulo || "Clase") + (g.tema ? " · " + g.tema : "");
         b.addEventListener("click", () => window.VistaPrevia && VistaPrevia.abrirPresentacion(deck, titulo, b));
         return b;
@@ -571,13 +578,13 @@ window.CalendarioTaller = (function () {
         const d = armarCine();
         quitarGuia();
         volverA = desde;
-        d.querySelector("#grabacion-cine-titulo").textContent = (g.titulo || "Clase") + (g.tema ? " · " + g.tema : "");
+        d.querySelector("#grabacion-cine-titulo").textContent = nombreDe(g) + (g.tema ? " · " + g.tema : "");
         d.querySelector("#grabacion-cine-youtube").href = "https://youtu.be/" + encodeURIComponent(g.youtube_id);
         const video = document.createElement("iframe");
         // `origin` es a quién le contesta el reproductor sus mensajes.
         video.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(g.youtube_id) + "?rel=0&autoplay=1&enablejsapi=1"
             + (location.origin && location.origin !== "null" ? "&origin=" + encodeURIComponent(location.origin) : "");
-        video.title = "Grabación de la " + (g.titulo || "clase");
+        video.title = "Grabación de la " + nombreDe(g);
         video.className = "h-full w-full";
         video.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
         video.allowFullscreen = true;
@@ -1043,9 +1050,18 @@ window.CalendarioTaller = (function () {
 
     function pintarGrabaciones(caja, grabaciones, proxima, vistas, alVer, presentaciones, ahora) {
         // Lo que ya vio va con su grabación (la fila de grabaciones_vistas de ese día).
-        const visto = new Map((vistas || []).filter(Boolean).map((v) => [v.horario_id + "|" + v.fecha, Number(v.visto_seg) || 0]));
-        const lista = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")))
-            .map((g) => Object.assign({}, g, { visto_seg: visto.get(g.horario_id + "|" + g.fecha) || 0 }));
+        // Una sesión puede estar en varias partes, cada una su video: la llave
+        // es la clase, el día y la parte (1 si no la trae).
+        const clave = (x) => x.horario_id + "|" + x.fecha + "|" + (Number(x.parte) || 1);
+        const visto = new Map((vistas || []).filter(Boolean).map((v) => [clave(v), Number(v.visto_seg) || 0]));
+        const validas = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")));
+        const partesDe = new Map();
+        validas.forEach((g) => { const k = g.horario_id + "|" + g.fecha; partesDe.set(k, (partesDe.get(k) || 0) + 1); });
+        const lista = validas.map((g) => Object.assign({}, g, {
+            parte: Number(g.parte) || 1,
+            partes: partesDe.get(g.horario_id + "|" + g.fecha),
+            visto_seg: visto.get(clave(g)) || 0,
+        }));
         if (!lista.length) return 0;
         const seccion = el("section", "mt-6");
         seccion.setAttribute("aria-labelledby", "grabaciones-taller-titulo");

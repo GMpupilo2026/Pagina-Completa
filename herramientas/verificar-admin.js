@@ -262,13 +262,15 @@ window.__consultas = [];
         ], error: null });
       }
       /* Cuánto vio cada uno de cada grabación del taller: una fila por
-         persona y video, también los que no vio. Ana vio la mitad de la I y
-         45 segundos de la II; Beto, nada. */
+         persona y video, también los que no vio. La II quedó en dos partes
+         (cada una su video). Ana vio la mitad de la I y 45 segundos de la
+         parte 1 de la II; Beto, 10 minutos de la parte 2. */
       if (n === "asesores_grabaciones") {
         window.__grabaciones = (window.__grabaciones || []).concat([args]);
-        const v = (persona_id, horario_id, fecha, titulo, duracion_seg, visto_seg) =>
-          ({ persona_id, horario_id, fecha, titulo, inicio: fecha + "T14:00:00Z", duracion_seg, visto_seg, ultima_vez: visto_seg ? fecha + "T20:00:00Z" : null });
+        const v = (persona_id, horario_id, fecha, titulo, duracion_seg, visto_seg, parte) =>
+          ({ persona_id, horario_id, fecha, parte: parte || 1, titulo, inicio: fecha + "T14:00:00Z", duracion_seg, visto_seg, ultima_vez: visto_seg ? fecha + "T20:00:00Z" : null });
         return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
+          v("u-ase1", "hs2", "2026-10-20", "Sesión II", 3000, 0, 2), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 3000, 600, 2),
           v("u-ase1", "hs2", "2026-10-20", "Sesión II", 14518, 45), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 14518, 0),
           v("u-ase1", "hs1", "2026-10-12", "Sesión I", 11520, 5760), v("u-ase2", "hs1", "2026-10-12", "Sesión I", 11520, 0),
         ], error: null });
@@ -278,8 +280,8 @@ window.__consultas = [];
       if (n === "asesores_preguntas_video") {
         window.__preguntasVideo = (window.__preguntasVideo || []).concat([args]);
         return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
-          { persona_id: "u-ase1", horario_id: "hs1", fecha: "2026-10-12", total: 10, respondidas: 3, aciertos: 2 },
-          { persona_id: "u-ase2", horario_id: "hs1", fecha: "2026-10-12", total: 10, respondidas: 0, aciertos: 0 },
+          { persona_id: "u-ase1", horario_id: "hs1", fecha: "2026-10-12", parte: 1, total: 10, respondidas: 3, aciertos: 2 },
+          { persona_id: "u-ase2", horario_id: "hs1", fecha: "2026-10-12", parte: 1, total: 10, respondidas: 0, aciertos: 0 },
         ], error: null });
       }
       if (n === "activar_preparacion_rivales") {
@@ -859,7 +861,7 @@ async function pruebaAsesores(browser) {
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
      ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
-  igual("una columna por sesión, una por tarea inicial y una por grabación", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7 + 1 + 2);
+  igual("una columna por sesión, una por tarea inicial y una por grabación (cada parte, la suya)", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7 + 1 + 3);
   igual("la tarea inicial va después de las sesiones, con su nombre para el lector de pantalla", await page.evaluate(() => {
     const th = document.querySelectorAll("#ase-grupo thead th")[10];
     return [th.textContent, th.getAttribute("aria-label")];
@@ -873,14 +875,16 @@ async function pruebaAsesores(browser) {
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
   igual("las grabaciones, en orden de la sesión y con su nombre para el lector de pantalla", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo thead th")).slice(11).map((th) => [th.textContent, th.getAttribute("aria-label")])),
-    [["▶ I", "Grabación de la Sesión I: cuánto la vio y cuántas preguntas acertó"], ["▶ II", "Grabación de la Sesión II: cuánto la vio"]]);
+    [["▶ I", "Grabación de la Sesión I: cuánto la vio y cuántas preguntas acertó"],
+     ["▶ II·1", "Grabación de la Sesión II, parte 1: cuánto la vio"], ["▶ II·2", "Grabación de la Sesión II, parte 2: cuánto la vio"]]);
   igual("las preguntas dentro del video se piden a la base, por taller", await page.evaluate(() => window.__preguntasVideo),
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
   igual("cuánto vio cada uno (el porcentaje y el tiempo, y lo que no vio lo dice escrito) y, debajo, cuántas preguntas acertó", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(11).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
-    [["50 %1 h 36 min✓ 2/10, acertó 2 de 10 preguntas (contestó 3)", "<1 %45 s"], ["—No la vio❓ 0/10, no contestó ninguna de sus 10 preguntas", "—No la vio"]]);
+    [["50 %1 h 36 min✓ 2/10, acertó 2 de 10 preguntas (contestó 3)", "<1 %45 s", "—No la vio"],
+     ["—No la vio❓ 0/10, no contestó ninguna de sus 10 preguntas", "—No la vio", "20 %10 min"]]);
   igual("y arriba, cuántos empezaron a ver cada una y qué quiere decir lo de las preguntas", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[2].textContent),
-    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó, y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10). Sesión I: 1 de 2 empezó a verla; Sesión II: 1 de 2.");
+    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó, y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10). Sesión I: 1 de 2 empezó a verla; Sesión II, parte 1: 1 de 2; Sesión II, parte 2: 1 de 2.");
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);

@@ -261,18 +261,25 @@
      (una por persona y grabación): cada una con su título y su duración, y
      cuánto vio cada persona. */
   function grabacionesDe(filas, preguntas) {
+    // Una sesión puede estar en varias partes, cada una su video y su columna:
+    // la llave es la clase, el día y la parte (1 si no la trae).
+    const llave = (f) => f.horario_id + "|" + f.fecha + "|" + (Number(f.parte) || 1);
     const porVideo = new Map();
     (filas || []).forEach((f) => {
-      const clave = f.horario_id + "|" + f.fecha;
-      if (!porVideo.has(clave)) porVideo.set(clave, { clave, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
+      const clave = llave(f);
+      if (!porVideo.has(clave)) porVideo.set(clave, { clave, sesion: f.horario_id + "|" + f.fecha, parte: Number(f.parte) || 1, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
       porVideo.get(clave).vio.set(f.persona_id, Number(f.visto_seg) || 0);
     });
     // Las preguntas dentro del video (asesores_preguntas_video): cuántas tiene, contestó y acertó.
     (preguntas || []).forEach((f) => {
-      const v = porVideo.get(f.horario_id + "|" + f.fecha);
+      const v = porVideo.get(llave(f));
       if (v) v.preguntas.set(f.persona_id, { total: Number(f.total) || 0, respondidas: Number(f.respondidas) || 0, aciertos: Number(f.aciertos) || 0 });
     });
-    return [...porVideo.values()].sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+    const videos = [...porVideo.values()].sort((a, b) => (new Date(a.inicio) - new Date(b.inicio)) || (a.parte - b.parte));
+    const partes = new Map();
+    videos.forEach((v) => partes.set(v.sesion, (partes.get(v.sesion) || 0) + 1));
+    videos.forEach((v) => { v.partes = partes.get(v.sesion); });
+    return videos;
   }
 
   // «50 %» y debajo «1 h 36 min»: lo que vio, sin contar lo repetido.
@@ -327,8 +334,9 @@
     });
     videos.forEach((v, i) => {
       const n = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(v.titulo);
-      const c = th("▶ " + (n ? n[1] : i + 1), "text-center whitespace-nowrap");
-      c.setAttribute("aria-label", "Grabación de la " + v.titulo + ": cuánto la vio" + (v.preguntas.size ? " y cuántas preguntas acertó" : ""));
+      const enPartes = v.partes > 1;
+      const c = th("▶ " + (n ? n[1] : i + 1) + (enPartes ? "·" + v.parte : ""), "text-center whitespace-nowrap");
+      c.setAttribute("aria-label", "Grabación de la " + v.titulo + (enPartes ? ", parte " + v.parte : "") + ": cuánto la vio" + (v.preguntas.size ? " y cuántas preguntas acertó" : ""));
       cab.appendChild(c);
     });
     t.appendChild(el("thead")).appendChild(cab);
@@ -404,7 +412,7 @@
           + (conPreguntas ? ", y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10)" : "") + ". "
           + videos.map((v, i) => {
             const n = [...v.vio.values()].filter((x) => x > 0).length;
-            return v.titulo + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));
+            return v.titulo + (v.partes > 1 ? ", parte " + v.parte : "") + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));
           }).join("; ") + "."));
       }
       cont.appendChild(tablaDelGrupo(filas, sesiones, tareas, videos));

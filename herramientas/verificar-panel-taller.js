@@ -118,6 +118,47 @@ function pruebaBase() {
   cierto("asesores_grabaciones() le da todo a quien administra y a cualquier otro solo lo suyo, con coalesce",
     /function\s+public\.asesores_grabaciones[\s\S]{0,900}coalesce\(public\.soy_admin\(\)\s+or\s+ct\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\),\s*false\)/i.test(sql));
 
+  console.log("\n=== Una sesión en varias partes (supabase/migraciones) ===");
+  // La última definición de cada función es la que vale.
+  const ultima = (f) => {
+    const todas = [...sql.matchAll(new RegExp("create\\s+(?:or\\s+replace\\s+)?function\\s+public\\." + f + "\\(", "gi"))];
+    return todas.length ? sql.slice(todas[todas.length - 1].index, todas[todas.length - 1].index + 6000) : "";
+  };
+  cierto("la grabación lleva su parte, de 1 a 9 y 1 por omisión (lo de antes queda como la parte 1)",
+    /alter\s+table\s+public\.grabaciones_clase\s+add\s+column\s+parte\s+smallint\s+not\s+null\s+default\s+1\s+check\s+\(parte\s+between\s+1\s+and\s+9\)/i.test(sql));
+  cierto("la llave es (horario, fecha, parte), también en lo que vio y en lo que contestó",
+    /grabaciones_clase\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte\)/i.test(sql)
+    && /grabaciones_vistas\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte,\s*persona_id\)/i.test(sql)
+    && /grabacion_respuestas\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte,\s*persona_id,\s*n\)/i.test(sql));
+  cierto("y lo que vio y contestó se va con SU parte (llave foránea de tres columnas)",
+    ["grabaciones_vistas", "grabacion_respuestas"].every((t) => new RegExp("alter\\s+table\\s+public\\." + t + "\\s+add\\s+foreign\\s+key\\s+\\(horario_id,\\s*fecha,\\s*parte\\)\\s+references\\s+public\\.grabaciones_clase\\(horario_id,\\s*fecha,\\s*parte\\)\\s+on\\s+delete\\s+cascade", "i").test(sql)));
+  const APARTADAS2 = ["mis_grabaciones()", "grabacion_clase_poner(uuid, date, text, text, integer)",
+    "grabacion_vista_anotar(uuid, date, jsonb)", "grabacion_pregunta_responder(uuid, date, integer, integer)", "asesores_grabaciones(text)", "asesores_preguntas_video(text)"];
+  cierto("las seis de antes quedaron apartadas y sin permiso para nadie",
+    APARTADAS2.every((f) => {
+      const nombre = f.slice(0, f.indexOf("(")), args = f.slice(f.indexOf("("));
+      const esc = (s) => s.replace(/[()]/g, "\\$&").replace(/,\s*/g, ",\\s*");
+      return new RegExp("revoke\\s+execute\\s+on\\s+function\\s+public\\." + nombre + "_apartada2" + esc(args) + "\\s+from\\s+public,\\s*anon,\\s*authenticated", "i").test(sql);
+    }));
+  cierto("las nuevas piden la parte (1 si no viene) y se les quita el execute a public y anon",
+    [["grabacion_clase_poner", "uuid, date, text, text, integer, integer"], ["grabacion_vista_anotar", "uuid, date, jsonb, integer"],
+      ["grabacion_pregunta_responder", "uuid, date, integer, integer, integer"]].every(([f, args]) =>
+      /p_parte\s+integer\s+default\s+1\)/i.test(ultima(f).slice(0, 300))
+      && new RegExp("revoke\\s+execute\\s+on\\s+function\\s+public\\." + f + "\\(" + args.replace(/,\s*/g, ",\\s*") + "\\)\\s+from\\s+public,\\s*anon", "i").test(sql)));
+  cierto("y siguen pidiendo permiso como antes, con coalesce",
+    /if\s+not\s+coalesce\(\s*public\.soy_admin\(\)\s+or\s+\(v_profesor\s+is\s+not\s+null\s+and\s+v_profesor\s+=\s+\(select\s+auth\.uid\(\)\)\)\s*,\s*false\s*\)/i.test(ultima("grabacion_clase_poner"))
+    && /if\s+not\s+coalesce\(v_yo\s+is\s+not\s+null\s+and\s+p_horario\s+in\s+\(select\s+interno\.horarios_del_alumno\(v_yo\)\),\s*false\)/i.test(ultima("grabacion_vista_anotar"))
+    && /coalesce\(v_yo\s+is\s+not\s+null\s+and\s+p_horario\s+in\s+\(select\s+interno\.horarios_del_alumno\(v_yo\)\),\s*false\)/i.test(ultima("grabacion_pregunta_responder"))
+    && ["asesores_grabaciones", "asesores_preguntas_video"].every((f) => /coalesce\(public\.soy_admin\(\)\s+or\s+ct\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\),\s*false\)/i.test(ultima(f)))
+    && /interno\.horarios_del_alumno\(\(select\s+auth\.uid\(\)\)\)/i.test(ultima("mis_grabaciones")));
+  cierto("cada una busca SU parte, no la primera que encuentre",
+    /and\s+g\.parte\s*=\s*v_parte/i.test(ultima("grabacion_clase_poner"))
+    && /and\s+v\.parte\s*=\s*p_parte/i.test(ultima("grabacion_vista_anotar"))
+    && /and\s+g\.parte\s*=\s*p_parte/i.test(ultima("grabacion_pregunta_responder"))
+    && /v\.parte\s*=\s*gr\.parte/i.test(ultima("asesores_grabaciones"))
+    && /r\.parte\s*=\s*gr\.parte/i.test(ultima("asesores_preguntas_video"))
+    && /returns\s+table\([^)]*fecha\s+date,\s*parte\s+smallint/i.test(ultima("mis_grabaciones")));
+
   console.log("\n=== Las páginas ===");
   const html = fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8");
   const cal = html.search(/<section id="calendario-taller" hidden/);
@@ -605,6 +646,50 @@ async function pruebaLoVisto(browser) {
   await completa.cerrar();
 }
 
+/* Una sesión que quedó en dos videos: una tarjeta por parte, cada una con su
+   avance, y lo que se ve de la parte 2 se anota en la parte 2. */
+async function pruebaPartes(browser) {
+  console.log("\n=== Una sesión en dos partes ===");
+  const ayer = diaCR(-DIA);
+  const parte = (n, id, seg) => ({ horario_id: "h0", fecha: ayer, parte: n, titulo: "Sesión IV", modalidad: "en_linea", youtube_id: id,
+    inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"), tema: "Uso del reloj", duracion_seg: seg });
+  const grabadas = [parte(1, "BuN8MirmKB4", 5162), parte(2, "AbCdEfGhIj2", 6000),
+    { horario_id: "h9", fecha: ayer, titulo: "Sesión III", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"), tema: "Otra", duracion_seg: 11520 }];
+  // Vio media parte 2 y nada de la 1; la fila de la 1 de otra persona no cuenta.
+  const vistas = [{ persona_id: YO, horario_id: "h0", fecha: ayer, parte: 2, visto_seg: 3000 },
+    { persona_id: "u-otra", horario_id: "h0", fecha: ayer, parte: 1, visto_seg: 5000 }];
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabadas, vistas, anotar: 3010 }), REPRODUCTOR);
+  const tarjetas = await page.$$eval("[data-grabacion]", (bs) => bs.map((b) => {
+    const v = b.querySelector("[data-visto]");
+    return [b.querySelector(".p-3 .font-semibold").textContent, b.dataset.parte || "", v ? v.textContent : ""];
+  }));
+  igual("una tarjeta por parte, en orden, que dice cuál es; la sesión de un solo video no dice «Parte»", tarjetas,
+    [["Sesión IV · Parte 1", "1", ""], ["Sesión IV · Parte 2", "2", "Viste 50 min (50 %)"], ["Sesión III", "", ""]]);
+  igual("la miniatura lo dice también (de adorno: el texto ya lo dice)",
+    await page.$$eval("[data-grabacion]", (bs) => bs.map((b) => {
+      const s = [...b.querySelectorAll("[aria-hidden=true] span")].find((e) => /^Parte \d$/.test(e.textContent));
+      if (!s) return "";
+      // Debajo del número, no encima: no se tocan.
+      const num = s.previousElementSibling.getBoundingClientRect(), p = s.getBoundingClientRect();
+      return s.textContent + (s.closest("[aria-hidden=true]") && p.top >= num.bottom - 1 ? "" : " (encima del número)");
+    })),
+    ["Parte 1", "Parte 2", ""]);
+  igual("y el lector de pantalla oye la parte",
+    await page.getByRole("button", { name: /^Ver la grabación: Sesión IV · Parte 2 Uso del reloj/ }).count(), 1);
+  await page.click('[data-grabacion][data-parte="2"]');
+  igual("la ventana dice la parte", await page.$eval("#grabacion-cine-titulo", (h) => h.textContent), "Sesión IV · Parte 2 · Uso del reloj");
+  igual("y abre SU video", await page.$eval("#grabacion-cine-video iframe", (f) => /\/embed\/AbCdEfGhIj2\?/.test(f.src)), true);
+  await esperarFin(page);
+  await page.click("#grabacion-cine-cerrar");
+  await page.waitForTimeout(300);
+  const envios = await llamadas(page, "grabacion_vista_anotar");
+  igual("lo visto se anota en la parte 2 de esa clase", [...new Set(envios.map((a) => a.p_horario + " " + a.p_fecha + " parte " + a.p_parte))], ["h0 " + ayer + " parte 2"]);
+  igual("en el celular no se desborda", await page.setViewportSize({ width: 390, height: 900 }).then(() => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), false);
+  if (process.env.CAPTURAS) await page.locator('section[aria-labelledby="grabaciones-taller-titulo"]').screenshot({ path: path.join(process.env.CAPTURAS, "panel-taller-partes.png") });
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+}
+
 async function pruebaSinTaller(browser) {
   console.log("\n=== Un alumno de una academia sin panel de taller ===");
   const { page, errores, cerrar } = await abrir(browser, cfg({ taller: false }));
@@ -763,6 +848,7 @@ async function pruebaPresentaciones(browser) {
     await pruebaGrabaciones(browser);
     await pruebaPresentaciones(browser);
     await pruebaLoVisto(browser);
+    await pruebaPartes(browser);
     await pruebaSinTaller(browser);
     await pruebaTarjeta(browser);
   } catch (e) {
