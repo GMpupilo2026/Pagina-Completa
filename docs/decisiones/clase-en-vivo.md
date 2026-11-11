@@ -2375,6 +2375,20 @@ en otra página.
   - enrocar con dos manos: cuenta como ilegal (art. 7.5.4);
   - por períodos, quitarle la ilegal al contador de jugadas;
   - la segunda ilegal: no se suma tiempo, la partida termina.
+  Y seis más, **dos por ritmo**, donde el árbitro resuelve y ajusta el reloj
+  (la tarjeta se llama ahora «Situaciones de árbitro»):
+  - clásica: reclamo de tablas equivocado, +2 min al rival de quien reclamó
+    (art. 9.5.3); reloj programado 90 + 0 en vez de 90 + 30, +10 min a cada
+    uno por las 20 jugadas sin incremento (art. 6.10.2);
+  - rápida: 10 + 2, el rey queda en jaque, +1 min; 15 + 10, la ilegal se
+    reclama después de haber jugado: ya no se corrige ni se suma nada
+    (Anexo A.4.2);
+  - relámpago: 5 + 0, enroque por una casilla atacada, +1 min; 3 + 2
+    programado 3 + 0, +30 s a cada uno (art. 6.10.2).
+  Las que no son una ilegal traen su `aviso` (lo que dice al empezar) y su
+  `pista` (lo que contesta si los tiempos quedan mal), porque los mensajes de
+  siempre dan por hecho que alguien hizo una ilegal y que el tiempo es para el
+  rival. Van al final de la lista: las logradas se guardan por su posición.
   Cada una arranca con el reloj **corriendo** justo después de la ilegal y las
   blancas a la izquierda. El asesor lo detiene con ▶‖, entra a corrección con ✓
   y presiona «Comprobar».
