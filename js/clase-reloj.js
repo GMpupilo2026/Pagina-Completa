@@ -14,7 +14,8 @@
      game_state_reloj_forma rechaza otra forma. `id` cambia con cada envío:
      «Poner de nuevo» hace que todos arranquen de cero con el control nuevo.
    - Lo que hace cada alumno con su reloj NO va a ningún lado: es de ese rato y
-     de su pantalla. Los retos cumplidos se guardan en su aparato por envío.
+     de su pantalla. Los retos cumplidos (los de configurar y los de jugada
+     ilegal) se guardan en su aparato por envío.
    - El reloj vive en un Shadow DOM: su CSS (la caja, la pantalla de 7
      segmentos, los botones) no choca con el Tailwind de la clase, y sus teclas
      (A / L, Espacio, Enter, ↑ ↓) solo cuentan con el foco dentro del reloj, para
@@ -49,6 +50,39 @@ window.RelojPractica = (function () {
         { texto: "Rápida: 15 minutos con incremento de 10 segundos.", ok: (c) => c.modo === "fischer" && c.base === 900 && c.inc === 10 },
         { texto: "Relámpago: 3 minutos con incremento de 2 segundos.", ok: (c) => c.modo === "fischer" && c.base === 180 && c.inc === 2 },
         { texto: "Por períodos: 40 jugadas en 90 min, luego 30 min más, con 30 s por jugada.", ok: (c) => c.modo === "periodos" && c.base === 5400 && c.mv === 40 && c.add === 1800 && c.inc === 30 },
+    ];
+    /* Jugada ilegal: el reloj arranca CORRIENDO justo después de la ilegal (las
+       blancas a la izquierda) y el asesor hace lo que haría el árbitro: lo
+       detiene, entra a corrección y deja tiempos y jugadas como dicen las Leyes
+       (FIDE, vigentes desde 2023). t y mv: [blancas, negras], en segundos;
+       corre: el lado que corre (0 blancas, 1 negras); delta: lo que debe cambiar
+       el tiempo de cada uno desde que se detuvo; mv2: los contadores que deben
+       quedar, si importan. */
+    const ILEGALES = [
+        { titulo: "Clásica 90 + 30: primera ilegal de las negras",
+            situacion: "Las negras hacen una jugada ilegal y presionan el reloj: ya corre el de las blancas. Es su primera ilegal.",
+            control: { modo: "fischer", base: 5400, inc: 30, dly: 0, mv: 40, add: 0 }, t: [3130, 2855], mv: [24, 24], corre: 0, delta: [120, 0],
+            regla: "Primera ilegal en clásica: se le dan 2 minutos más al rival (art. 7.5.5). Las blancas suman 2:00; el tiempo de las negras queda como estaba." },
+        { titulo: "Rápida 15 + 10: primera ilegal de las blancas",
+            situacion: "Las blancas hacen su primera jugada ilegal y presionan el reloj: ya corre el de las negras.",
+            control: { modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 }, t: [402, 485], mv: [18, 17], corre: 1, delta: [0, 60],
+            regla: "En rápidas, la primera ilegal le da 1 minuto más al rival (Anexo A.4.2), no 2. Las negras suman 1:00." },
+        { titulo: "Relámpago 3 + 2: presionar sin mover",
+            situacion: "Las negras presionan el reloj sin haber hecho ninguna jugada. Es lo primero que les pasa en la partida.",
+            control: { modo: "fischer", base: 180, inc: 2, dly: 0, mv: 40, add: 0 }, t: [72, 58], mv: [20, 20], corre: 0, delta: [60, 0],
+            regla: "Presionar el reloj sin mover se castiga como una jugada ilegal (art. 7.5.3). En relámpago, igual que en rápidas, el rival recibe 1 minuto más (Anexos A.4.2 y B): las blancas suman 1:00." },
+        { titulo: "Clásica con dos manos: el enroque",
+            situacion: "Las blancas enrocan usando las dos manos (rey con una, torre con la otra) y presionan el reloj. Es su primera infracción de este tipo.",
+            control: { modo: "fischer", base: 5400, inc: 30, dly: 0, mv: 40, add: 0 }, t: [4310, 4975], mv: [9, 8], corre: 1, delta: [0, 120],
+            regla: "Mover con las dos manos (un enroque, una captura, una coronación) y presionar el reloj se castiga como una jugada ilegal (art. 7.5.4): en clásica, las negras suman 2:00." },
+        { titulo: "Por períodos 40/90 + 30: el contador de jugadas",
+            situacion: "En la jugada 38, las negras hacen una ilegal y presionan. El reloj ya la contó: su contador marca 38 y corre el reloj de las blancas.",
+            control: { modo: "periodos", base: 5400, inc: 30, dly: 0, mv: 40, add: 1800 }, t: [750, 588], mv: [38, 38], corre: 0, delta: [120, 0], mv2: [38, 37],
+            regla: "Las blancas suman 2:00 (art. 7.5.5) y, además, al contador de las negras hay que quitarle la ilegal (38 → 37): el reloj cuenta presiones, no jugadas. Si no se corrige, los 30 minutos del 2.º período les llegan una jugada antes de la 40." },
+        { titulo: "Rápida 10 + 5: segunda ilegal",
+            situacion: "Las blancas ya habían hecho una ilegal en esta partida. Ahora hacen otra y presionan el reloj.",
+            control: { modo: "fischer", base: 600, inc: 5, dly: 0, mv: 40, add: 0 }, t: [200, 242], mv: [27, 26], corre: 1, delta: [0, 0],
+            regla: "La segunda ilegal del mismo jugador pierde la partida (art. 7.5.5 y Anexo A.4.2), salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: entonces son tablas. No se suma tiempo: se detiene el reloj y se deja como está." },
     ];
     const entero = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 
@@ -187,6 +221,14 @@ ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px
 ul li{display:grid;grid-template-columns:20px 1fr;gap:8px;font-size:13px}
 .casilla{width:18px;height:18px;border-radius:4px;border:2px solid var(--linea);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
 ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:var(--suave)}
+.tarjeta.ancha{grid-column:1/-1}
+ul li.con-boton{grid-template-columns:20px 1fr auto;align-items:center}
+ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weight:600;color:var(--tinta)}
+.situacion{background:var(--fondo);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.situacion p{margin:0}
+.situacion .fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.veredicto-i{font-weight:600} .veredicto-i.alerta{color:var(--alerta)} .veredicto-i.ok{color:var(--ok)}
+.boton:disabled{opacity:.55;cursor:default}
 @media (prefers-reduced-motion:reduce){.palanca{transition:none}.parpadea{animation-duration:2s}}
 `;
 
@@ -244,6 +286,16 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
       <p class="teclado" style="margin:0">Configúralos con los botones del reloj. Se marcan solos al confirmar con ✓.</p>
       <ul data-r="retos"></ul>
     </div>
+    <div class="tarjeta ancha">
+      <h3>Jugada ilegal: ajusta el reloj como árbitro</h3>
+      <p class="teclado" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de la ilegal, y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
+      <ul data-r="ilegales"></ul>
+      <div class="situacion" data-r="situacion" hidden>
+        <p data-r="sitTexto"></p>
+        <div class="fila"><button class="boton" type="button" data-r="comprobar">Comprobar el reloj</button></div>
+        <p class="veredicto-i" data-r="veredictoI" role="status" aria-live="polite"></p>
+      </div>
+    </div>
   </div>
 </div>`;
 
@@ -286,19 +338,26 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
 
         let cfg = null; // en milisegundos
         const S = { estado: "listo", t: [0, 0], mv: [0, 0], corre: null, dl: 0, bandera: null, blancas: 0, paso: 0, previo: "listo",
-            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set() };
+            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set(), hechosI: new Set(), reto: null };
         const desdeControl = (c) => ({ modo: c.modo, base: c.base * 1000, inc: c.inc, dly: c.dly, mv: c.mv, add: c.add * 1000 });
         const aControl = (k) => ({ modo: k.modo, base: Math.round(k.base / 1000), inc: k.inc, dly: k.dly, mv: k.mv, add: Math.round(k.add / 1000) });
-        function reiniciar() { S.t = [cfg.base, cfg.base]; S.mv = [0, 0]; S.corre = null; S.dl = 0; S.bandera = null; S.estado = "listo"; }
+        function reiniciar() { S.t = [cfg.base, cfg.base]; S.mv = [0, 0]; S.corre = null; S.dl = 0; S.bandera = null; S.estado = "listo"; S.reto = null; }
 
         function leerHechos() {
-            S.hechos = new Set();
+            S.hechos = new Set(); S.hechosI = new Set();
             if (!opciones.clave) return;
-            try { (JSON.parse(localStorage.getItem(opciones.clave) || "[]") || []).forEach((i) => { if (Number.isInteger(i) && RETOS[i]) S.hechos.add(i); }); } catch (e) { /* sin almacenamiento */ }
+            const leer = (clave, lista, set) => {
+                try { (JSON.parse(localStorage.getItem(clave) || "[]") || []).forEach((i) => { if (Number.isInteger(i) && lista[i]) set.add(i); }); } catch (e) { /* sin almacenamiento */ }
+            };
+            leer(opciones.clave, RETOS, S.hechos);
+            leer(opciones.clave + ":ilegal", ILEGALES, S.hechosI);
         }
         function guardarHechos() {
             if (!opciones.clave) return;
-            try { localStorage.setItem(opciones.clave, JSON.stringify([...S.hechos])); } catch (e) { /* sin almacenamiento */ }
+            try {
+                localStorage.setItem(opciones.clave, JSON.stringify([...S.hechos]));
+                localStorage.setItem(opciones.clave + ":ilegal", JSON.stringify([...S.hechosI]));
+            } catch (e) { /* sin almacenamiento */ }
         }
 
         const nombreLado = (s) => (s === S.blancas ? "las blancas" : "las negras");
@@ -349,7 +408,11 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
             if (!cfg) return;
             if (S.estado === "config") { S.estado = S.previo; aviso("Configuración cancelada. El reloj quedó como estaba."); return; }
             if (S.estado === "corregir") { S.estado = "pausa"; aviso("Corrección cancelada."); return; }
-            if (S.estado === "marcha") { S.estado = "pausa"; pitido(40, 1600); aviso("Pausa. Así se detiene el reloj para llamar al árbitro (art. 6.11)."); return; }
+            if (S.estado === "marcha") {
+                // En una situación de ilegal, lo que marcaba al detenerlo es contra lo que se comprueba
+                // (hasta que se corrige: después ya no se vuelve a tomar).
+                if (S.reto && !S.reto.corr) S.reto.foto = { t: S.t.slice(), mv: S.mv.slice() };
+                S.estado = "pausa"; pitido(40, 1600); aviso("Pausa. Así se detiene el reloj para llamar al árbitro (art. 6.11)."); return; }
             if (S.estado === "pausa") { S.estado = "marcha"; pitido(40, 1600); aviso("Partida reanudada.", "ok"); return; }
             if (S.estado === "listo") { aviso("Para arrancar, las negras presionan su lado de la palanca: así empieza a correr el reloj de las blancas."); return; }
             aviso("La partida terminó por tiempo. Reinicia o presiona ✓ para configurar.");
@@ -381,7 +444,7 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
                 if (S.paso >= lista.length) {
                     const nuevo = juntar(S.E);
                     if (nuevo.base <= 0) { S.paso = lista.indexOf("bM"); aviso("El tiempo base no puede ser cero. Sube los minutos.", "alerta"); return; }
-                    cfg = nuevo; reiniciar(); marcarEscenario();
+                    cfg = nuevo; reiniciar(); marcarEscenario(); pintarIlegales();
                     const c = aControl(cfg);
                     const logro = RETOS.findIndex((r, i) => !S.hechos.has(i) && r.ok(c));
                     if (logro >= 0) { S.hechos.add(logro); guardarHechos(); pintarRetos(); aviso("¡Reto " + (logro + 1) + " logrado! El reloj quedó listo: las negras presionan su lado para arrancar.", "ok"); }
@@ -394,6 +457,7 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
                 if (S.paso >= CORREGIR.length) {
                     const C = S.C;
                     S.t = [(C.LH * 3600 + C.LM * 60 + C.LS) * 1000, (C.RH * 3600 + C.RM * 60 + C.RS) * 1000]; S.mv = [C.Lmv, C.Rmv];
+                    if (S.reto && S.reto.foto) S.reto.corr = { t: S.t.slice(), mv: S.mv.slice() };
                     S.estado = "pausa"; aviso("Tiempos corregidos. Reanuda con ▶‖ cuando el árbitro lo indique.", "ok");
                 }
             }
@@ -546,7 +610,7 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
                 b.append(t, s);
                 b.addEventListener("click", () => {
                     if (S.estado === "marcha") { aviso("Pausa o termina la partida antes de cambiar el control.", "alerta"); return; }
-                    cfg = desdeControl(e.control); reiniciar(); marcarEscenario();
+                    cfg = desdeControl(e.control); reiniciar(); marcarEscenario(); pintarIlegales();
                     aviso("Cargado " + e.nombre + " (" + e.sub + "). La guía muestra los pasos para dejarlo así con los botones.", "ok");
                 });
                 caja.appendChild(b);
@@ -569,6 +633,79 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
                 const t = document.createElement("span"); t.textContent = r.texto + (S.hechos.has(i) ? " (logrado)" : "");
                 li.append(c, t); ul.appendChild(li);
             });
+        }
+
+        /* ---------- Jugada ilegal ---------- */
+        function veredictoI(texto, tipo) {
+            const el = $("veredictoI");
+            el.textContent = texto; el.className = "veredicto-i" + (tipo ? " " + tipo : "");
+        }
+        function pintarIlegales() {
+            const ul = $("ilegales"); ul.replaceChildren();
+            ILEGALES.forEach((r, i) => {
+                const hecho = S.hechosI.has(i), activa = !!S.reto && S.reto.i === i;
+                const li = document.createElement("li");
+                li.className = "con-boton" + (hecho ? " ok" : "") + (activa ? " activa" : "");
+                const c = document.createElement("span"); c.className = "casilla"; c.textContent = hecho ? "✓" : "";
+                const t = document.createElement("span"); t.textContent = (i + 1) + ". " + r.titulo + (hecho ? " (logrado)" : "");
+                const b = document.createElement("button");
+                b.type = "button"; b.className = "boton"; b.textContent = activa ? "Empezar de nuevo" : (hecho ? "Repetir" : "Empezar");
+                b.setAttribute("aria-label", b.textContent + ": " + r.titulo);
+                b.addEventListener("click", () => empezarIlegal(i));
+                li.append(c, t, b); ul.appendChild(li);
+            });
+            const caja = $("situacion");
+            caja.hidden = !S.reto;
+            if (S.reto) $("sitTexto").textContent = "Situación " + (S.reto.i + 1) + ": " + ILEGALES[S.reto.i].situacion + " Las blancas están a la izquierda.";
+        }
+        function empezarIlegal(i) {
+            if (!cfg) return;
+            if (S.estado === "config" || S.estado === "corregir") { aviso("Estás configurando. Termina con ✓ o cancela con ▶‖ antes de empezar una situación.", "alerta"); return; }
+            const r = ILEGALES[i];
+            cfg = desdeControl(r.control); reiniciar(); marcarEscenario();
+            S.blancas = 0;
+            $("blancas").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === "0")));
+            S.t = [r.t[0] * 1000, r.t[1] * 1000]; S.mv = r.mv.slice(); S.corre = r.corre; S.dl = cfg.dly * 1000;
+            S.estado = "marcha"; S.reto = { i, foto: null, corr: null };
+            pintarIlegales(); veredictoI("");
+            aviso("¡Jugada ilegal! El reloj de " + nombreLado(r.corre) + " está corriendo: actúa como árbitro.", "alerta");
+        }
+        const reloj = (s) => { const a = Math.abs(s); return (s < 0 ? "−" : "+") + Math.floor(a / 60) + ":" + pad(a % 60); };
+        function comprobarIlegal() {
+            const R = S.reto; if (!R) return;
+            const r = ILEGALES[R.i];
+            if (S.estado === "corregir") { veredictoI("Termina la corrección: sigue confirmando con ✓ hasta el último dato (las jugadas de la derecha).", "alerta"); return; }
+            if (!R.foto) {
+                veredictoI(S.estado === "bandera"
+                    ? "Cayó la bandera antes de detener el reloj. Presiona «Empezar de nuevo» y detén el reloj enseguida con ▶‖."
+                    : "Primero detén el reloj con ▶‖: es lo primero que hace el árbitro (art. 6.11).", "alerta");
+                return;
+            }
+            const fin = R.corr || R.foto;
+            const sg = (ms) => Math.ceil(Math.max(0, ms) / 1000);
+            const d = [sg(fin.t[0]) - sg(R.foto.t[0]), sg(fin.t[1]) - sg(R.foto.t[1])];
+            const bienT = d.every((x, k) => Math.abs(x - r.delta[k]) <= 1);
+            const bienM = !r.mv2 || (fin.mv[0] === r.mv2[0] && fin.mv[1] === r.mv2[1]);
+            const malMv = !r.mv2 && (fin.mv[0] !== R.foto.mv[0] || fin.mv[1] !== R.foto.mv[1]);
+            if (bienT && bienM && !malMv) {
+                S.hechosI.add(R.i); guardarHechos(); pintarIlegales();
+                veredictoI("¡Bien! " + r.regla, "ok");
+                return;
+            }
+            const infractor = 1 - r.corre, rival = r.corre;
+            const quien = (k) => (k === 0 ? "las blancas" : "las negras");
+            let msg;
+            if (!bienT) {
+                if (r.delta[rival] === 0 && (d[0] || d[1])) msg = "No hay que sumar tiempo en esta situación. Piensa qué pasa con la partida y deja el reloj como estaba al detenerlo.";
+                else if (d[0] === 0 && d[1] === 0) msg = "El reloj quedó igual que cuando lo detuviste. Entra a corrección con ✓ (con el reloj en pausa) y ajusta el tiempo que corresponde.";
+                else if (d[infractor] > 1 && d[rival] <= 1) msg = "Le sumaste tiempo a " + quien(infractor) + ", que hicieron la ilegal. El tiempo extra es para el rival.";
+                else msg = "Cambiaste " + reloj(d[0]) + " a las blancas y " + reloj(d[1]) + " a las negras. Revisa cuánto le toca al rival en este ritmo y que el tiempo de quien hizo la ilegal quede igual.";
+            } else if (!bienM) {
+                msg = "Los tiempos están bien, pero falta el contador de jugadas: el reloj contó la ilegal como si fuera una jugada. Corrígelo para que el 2.º período llegue en la jugada correcta.";
+            } else {
+                msg = "Los tiempos están bien, pero cambiaste el contador de jugadas. En esta situación no hace falta tocarlo: déjalo como estaba.";
+            }
+            veredictoI(msg, "alerta");
         }
 
         /* ---------- Enganchar ---------- */
@@ -596,7 +733,8 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
         segmentado("formato", (v) => { S.formato = v; if (v === "real") aviso("Como el reloj real: con 20 minutos o más muestra horas y minutos; por debajo de 20 minutos, minutos y segundos."); });
         segmentado("blancas", (v) => { S.blancas = +v; });
         segmentado("sonido", (v) => { S.sonido = v === "1"; });
-        $("reiniciar").addEventListener("click", () => { if (!cfg) return; reiniciar(); aviso("Partida reiniciada con el mismo control."); });
+        $("reiniciar").addEventListener("click", () => { if (!cfg) return; reiniciar(); pintarIlegales(); aviso("Partida reiniciada con el mismo control."); });
+        $("comprobar").addEventListener("click", comprobarIlegal);
         // Tocar el reloj lo selecciona: así sus teclas funcionan sin pisar las del tablero.
         raiz.addEventListener("pointerdown", (e) => { if (!e.target.closest("button")) raiz.focus({ preventScroll: true }); });
         raiz.addEventListener("keydown", (e) => {
@@ -637,10 +775,10 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
             if (!validoControl(control)) return;
             if (clave !== undefined) opciones.clave = clave;
             cfg = desdeControl(control);
-            reiniciar(); leerHechos(); pintarRetos(); marcarEscenario();
+            reiniciar(); leerHechos(); pintarRetos(); pintarIlegales(); marcarEscenario();
             $("aviso").textContent = "";
         }
-        pintarEscenarios(); pintarRetos();
+        pintarEscenarios(); pintarRetos(); pintarIlegales();
         ciclo = setInterval(cuadro, 50);
         return {
             cargar,
@@ -648,7 +786,7 @@ ul li.ok .casilla{background:var(--ok);border-color:var(--ok)} ul li.ok{color:va
         };
     }
 
-    return { MODOS, ESCENARIOS, RETOS, valido, validoControl, paraMandar, clasificar, montar };
+    return { MODOS, ESCENARIOS, RETOS, ILEGALES, valido, validoControl, paraMandar, clasificar, montar };
 })();
 
 /* ---------- La clase: lo que llega de game_state ---------- */
