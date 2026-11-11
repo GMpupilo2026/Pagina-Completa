@@ -174,6 +174,19 @@ table.cruzado tr.emp td{background:#fdf3d7;font-weight:700}
 .planilla .tarj .ic{font-size:70px}
 .planilla .tarj div{display:flex;flex-direction:column;gap:6px}
 .planilla .ej{font-size:46px}
+/* traslado: un tablero con su planilla al lado, dos veces (el mal colocado → el bien colocado) */
+.tras{flex:1;min-height:0;display:flex;gap:12px;align-items:stretch}
+.trasc{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding:14px 18px 16px}
+.trasc .cab{display:flex;gap:14px;align-items:center;white-space:nowrap}.trasc .cab b{font-size:32px}
+.trasc .marca{font-size:26px;padding:2px 14px}
+.trasf{flex:1;min-height:0;display:flex;gap:14px;align-items:center}
+.trasf svg.tablero{height:100%;width:auto;flex:none;max-width:62%}
+.trasc span.s{font-size:24px;color:var(--gris);line-height:1.2}
+table.mini{border-spacing:0;font-size:22px;width:auto;flex:1}
+table.mini th{font-size:18px;padding:2px 8px;border-bottom:3px solid var(--azul)}
+table.mini td{padding:2px 8px;border-bottom:1px solid #e3e9f1;background:none;border-radius:0!important;color:var(--tinta)!important;font-weight:400;white-space:nowrap}
+table.mini td:first-child{color:var(--gris)!important;font-weight:400}
+.tras-f{align-self:center;font-size:56px;color:var(--azul);font-weight:700;flex:none}
 /* ciclo */
 .ciclo{display:flex;align-items:center;gap:12px;flex:none}
 .paso{flex:1;padding:26px 14px;text-align:center;font-size:34px;font-weight:700;line-height:1.15}
@@ -275,6 +288,16 @@ function cuerpo(d, diapo, usadas) {
         "</tbody></table><p>" + esc(d.pie) + '</p></div><div class="grid">' +
         d.items.map((x) => '<div class="caja tarj' + tono(x.tono) + '">' + ic(x.ic) + "<div><b>" + esc(x.t) + '</b><span class="ej">' + esc(x.ej) + '</span><span class="s">' + esc(x.s) + "</span></div></div>").join("") +
         "</div></div>";
+    case "traslado":
+      // `jugadas`: [[blancas, negras], …], la misma planilla al lado de cada tablero.
+      return '<div class="tras">' + d.items.map((x, k) => (k ? '<span class="tras-f" aria-hidden="true">→</span>' : "") +
+        '<div class="caja trasc"><div class="cab"><b>' + esc(x.t) + "</b>" +
+        (x.marca ? '<span class="marca ' + x.tono + '">' + MARCA[x.tono] + " " + esc(x.marca) + "</span>" : "") + "</div>" +
+        '<div class="trasf">' + tableroDe(diapo, x.pos, x.opciones) +
+        '<table class="mini"><thead><tr><th>N.º</th><th>Blancas</th><th>Negras</th></tr></thead><tbody>' +
+        d.jugadas.map(([b, n], j) => "<tr><td>" + (j + 1) + "</td><td>" + esc(b) + "</td><td>" + esc(n) + "</td></tr>").join("") +
+        "</tbody></table></div>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div>").join("") + "</div>" +
+        (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
     case "ciclo":
       return '<div class="ciclo">' + d.pasos.map((p, k) => (k ? '<span class="flecha" aria-hidden="true">→</span>' : "") +
         '<div class="caja paso' + (k === d.pasos.length - 1 ? " final" : "") + '">' + esc(p) + "</div>").join("") + "</div>" +

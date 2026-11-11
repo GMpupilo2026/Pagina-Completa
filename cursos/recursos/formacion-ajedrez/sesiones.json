@@ -26,7 +26,13 @@
      "texto": "📋 Guía rápida del árbitro JDE (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-01"
+   "presentacion": "formacion-ajedrez/clase-01",
+   "ejercicios": [
+    {
+     "presentacion": "formacion-ajedrez/ejercicio-tablero",
+     "titulo": "Ejercicio del tablero mal colocado"
+    }
+   ]
   },
   {
    "n": 2,
@@ -47,7 +53,8 @@
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-02"
+   "presentacion": "formacion-ajedrez/clase-02",
+   "ejercicios": []
   },
   {
    "n": 3,
@@ -68,7 +75,8 @@
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-03"
+   "presentacion": "formacion-ajedrez/clase-03",
+   "ejercicios": []
   },
   {
    "n": 4,
@@ -89,7 +97,8 @@
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-04"
+   "presentacion": "formacion-ajedrez/clase-04",
+   "ejercicios": []
   },
   {
    "n": 5,
@@ -110,7 +119,8 @@
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-05"
+   "presentacion": "formacion-ajedrez/clase-05",
+   "ejercicios": []
   },
   {
    "n": 6,
@@ -131,7 +141,8 @@
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
-   "presentacion": "formacion-ajedrez/clase-06"
+   "presentacion": "formacion-ajedrez/clase-06",
+   "ejercicios": []
   },
   {
    "n": 7,
@@ -148,7 +159,8 @@
      "texto": "📄 Prueba final teórica (PDF)"
     }
    ],
-   "presentacion": null
+   "presentacion": null,
+   "ejercicios": []
   }
  ]
 }
