@@ -164,9 +164,12 @@ window.CalendarioTaller = (function () {
        grabaciones_vistas de quien mira; `alVer(g, tramos)`, lo que anota lo
        que vio y devuelve el total (ver «Cuánto vio»), y `presentaciones`, las
        sesiones del curso (sesiones.json de Formación Ajedrez), para poner la
-       presentación junto a su grabación (ver presentacionDe). */
-    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null, presentaciones = null } = {}) {
+       presentación junto a su grabación (ver presentacionDe); `responder(g, n,
+       opcion)` corrige una pregunta del video en la base y `respuestas(g)` trae
+       las que ya contestó (ver «Las preguntas dentro del video»). */
+    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null, presentaciones = null, responder = null, respuestas = null } = {}) {
         caja.replaceChildren();
+        preguntar = { responder, respuestas };
         const lista = (sesiones || []).filter((s) => s && s.inicio && s.fin && new Date(s.fin) > ahora);
 
         const titulo = document.createElement("h2");
@@ -405,10 +408,17 @@ window.CalendarioTaller = (function () {
         cuerpo.id = "grabacion-cine-cuerpo";
         const marco = el("div", "aspect-video overflow-hidden rounded-xl bg-black");
         marco.id = "grabacion-cine-video";
+        // Debajo del video, la pregunta que lo pausó (ver «Las preguntas dentro del video»).
+        const pregunta = el("section", "mt-4 rounded-xl bg-white p-4 text-brand-900 shadow-lg ring-2 ring-accent-400 sm:p-5");
+        pregunta.id = "grabacion-cine-pregunta";
+        pregunta.setAttribute("aria-labelledby", "grabacion-cine-pregunta-titulo");
+        pregunta.hidden = true;
+        const izquierda = el("div", "min-w-0");
+        izquierda.append(marco, pregunta);
         const guia = el("div", "min-w-0");
         guia.id = "grabacion-cine-guia";
         guia.hidden = true;
-        cuerpo.append(marco, guia);
+        cuerpo.append(izquierda, guia);
         const pie = el("p", "px-4 pb-4 pt-3 text-sm sm:px-6");
         const afuera = el("a", "font-semibold text-white underline", "Abrir en YouTube (para verla en el celular o en pantalla completa)");
         afuera.id = "grabacion-cine-youtube";
@@ -498,7 +508,10 @@ window.CalendarioTaller = (function () {
         if (typeof info.playerState === "number") cambiaEstado(m, info.playerState);
         if (typeof info.currentTime === "number" && Number.isFinite(info.currentTime)) {
             avanzar(m, info.currentTime);
-            if (guiaActual && guiaActual.medidor === m) seguirVideo(guiaActual, info.currentTime);
+            if (guiaActual && guiaActual.medidor === m) {
+                seguirVideo(guiaActual, info.currentTime);
+                if (guiaActual.datos.preguntas.length) revisarPausa(guiaActual, info.currentTime);
+            }
         }
     }
 
@@ -592,7 +605,7 @@ window.CalendarioTaller = (function () {
        que no es así, sale arriba una tarjeta con el avatar del profe Oscar
        (js/avatar-profe-oscar.js), la regla buena y su fuente, y se dice en
        voz; abajo, la lista de todas para ir directo. */
-    let guiaActual = null;
+    let guiaActual = null, preguntar = null;
     // La aclaración se ve 2 minutos de video desde que se dice; desde la
     // lista, el video arranca 10 segundos antes, para oír lo que se aclara.
     const DURA_ACLARACION = 120, ANTES_ACLARACION = 10;
@@ -602,6 +615,9 @@ window.CalendarioTaller = (function () {
         if (!guia) return;
         guia.replaceChildren();
         guia.hidden = true;
+        const pregunta = cine.querySelector("#grabacion-cine-pregunta");
+        pregunta.replaceChildren();
+        pregunta.hidden = true;
         cine.classList.remove("max-w-7xl");
         cine.classList.add("max-w-5xl");
         cine.querySelector("#grabacion-cine-cuerpo").classList.remove("lg:grid-cols-[minmax(0,1fr)_20rem]");
@@ -635,8 +651,14 @@ window.CalendarioTaller = (function () {
         const aclaraciones = (Array.isArray(gj.aclaraciones) ? gj.aclaraciones : [])
             .filter((a) => a && entero(a.t) && a.t < gj.duracion && /^[a-z0-9-]+$/.test(a.avatar || "")
                 && typeof a.titulo === "string" && typeof a.texto === "string" && typeof a.fuente === "string");
+        // Las preguntas que pausan el video: el texto y las opciones; la
+        // correcta la sabe la base, que corrige.
+        const preguntas = (Array.isArray(gj.preguntas) ? gj.preguntas : [])
+            .filter((q) => q && entero(q.t) && q.t < gj.duracion && Number.isInteger(q.n) && q.n >= 1 && typeof q.texto === "string"
+                && Array.isArray(q.opciones) && q.opciones.length === 4 && q.opciones.every((o) => typeof o === "string")
+                && (q.fen == null || /^[1-8pnbrqkPNBRQK/]+ [wb] /.test(q.fen)));
         if (!capitulos.length && !linea.length) return null;
-        return { capitulos, linea, aclaraciones };
+        return { capitulos, linea, aclaraciones, preguntas };
     }
 
     // El último de la lista que ya empezó en el segundo `t` (van en orden).
@@ -644,6 +666,11 @@ window.CalendarioTaller = (function () {
         let i = -1;
         for (let k = 0; k < lista.length && lista[k].t <= t + 0.5; k++) i = k;
         return i;
+    }
+
+    function pausar(m) {
+        const w = m && m.iframe && m.iframe.contentWindow;
+        if (w) w.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [], id: 1, channel: "widget" }), YT);
     }
 
     function irA(m, t) {
@@ -658,7 +685,15 @@ window.CalendarioTaller = (function () {
         try { datos = await leerGuia(deck, g.duracion_seg); } catch (e) { datos = null; }
         if (!datos || !cine || !cine.open || medidor !== m) return;
         const guia = cine.querySelector("#grabacion-cine-guia");
-        const G = { medidor: m, datos, lam: -2, cap: -2, ac: -2 };
+        const G = { medidor: m, datos, g, lam: -2, cap: -2, ac: -2, antes: null, res: new Map(), vistas: new Set(), abierta: null };
+        // Sin quién corrija (o sin red para leer lo contestado), sin preguntas.
+        if (!(preguntar && preguntar.responder && preguntar.respuestas)) datos.preguntas = [];
+        if (datos.preguntas.length) {
+            try {
+                (await preguntar.respuestas(g) || []).forEach((r) => G.res.set(Number(r.n), { elegida: Number(r.elegida), acerto: !!r.acerto }));
+            } catch (e) { datos.preguntas = []; }
+            if (!cine || !cine.open || medidor !== m) return;
+        }
         guiaActual = G;
         cine.classList.remove("max-w-5xl");
         cine.classList.add("max-w-7xl");
@@ -779,8 +814,175 @@ window.CalendarioTaller = (function () {
             caja.append(cab, ayuda, ol);
             guia.appendChild(caja);
         }
+        if (datos.preguntas.length) {
+            // Todas a la mano, con cómo le fue: tocar una la abre (y lleva el video ahí).
+            const caja = el("section", "mt-4 rounded-xl bg-white/5 p-3 ring-1 ring-white/10");
+            caja.setAttribute("aria-labelledby", "grabacion-cine-preguntas-titulo");
+            const h = el("h3", "text-sm font-semibold text-brand-100");
+            h.id = "grabacion-cine-preguntas-titulo";
+            const emoji = el("span", null, "❓ ");
+            emoji.setAttribute("aria-hidden", "true");
+            h.append(emoji, "Preguntas del video");
+            const resumen = el("p", "mt-1 text-xs text-brand-200");
+            resumen.id = "grabacion-cine-preguntas-resumen";
+            const ol = el("ol", "mt-2 space-y-1");
+            ol.id = "grabacion-cine-preguntas";
+            datos.preguntas.forEach((q) => {
+                const li = el("li");
+                const b = el("button", "flex w-full items-baseline gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+                b.type = "button";
+                b.dataset.pregunta = String(q.n);
+                const hora = el("span", "w-14 shrink-0 text-right font-mono text-xs text-brand-200", reloj(q.t));
+                hora.setAttribute("aria-hidden", "true");
+                b.append(hora, el("span", "min-w-0 flex-1", "Pregunta " + q.n), el("span", "shrink-0 text-xs font-bold"));
+                b.addEventListener("click", () => { irA(m, q.t); pausar(m); seguirVideo(G, q.t); mostrarPregunta(G, q); });
+                li.appendChild(b);
+                ol.appendChild(li);
+            });
+            caja.append(h, resumen, ol);
+            guia.appendChild(caja);
+            pintarListaPreguntas(G);
+        }
         guia.hidden = false;
         seguirVideo(G, 0);
+    }
+
+    /* Las preguntas dentro del video. Cuando el video, CORRIENDO, pasa por el
+       segundo de una pregunta que todavía no contestó (y que no saltó en esta
+       vista), se pausa y la pregunta sale debajo del video, con el foco en ella.
+       Si adelantó por encima, no se le atraviesa: queda en la lista. Al tocar
+       una opción, la base corrige (grabacion_pregunta_responder: la correcta
+       solo la sabe ella) y anota la primera vez; se dice si estuvo bien, cuál
+       era y su fuente, y «Seguir viendo» lo pone a correr otra vez. */
+    const LETRA = ["A", "B", "C", "D"];
+    function pintarListaPreguntas(G) {
+        const qs = G.datos.preguntas;
+        const bien = qs.filter((q) => (G.res.get(q.n) || {}).acerto).length, hechas = qs.filter((q) => G.res.has(q.n)).length;
+        const r = cine.querySelector("#grabacion-cine-preguntas-resumen");
+        if (r) r.textContent = hechas
+            ? "Contestaste " + hechas + " de " + qs.length + " y acertaste " + bien + ". Cuenta la primera vez."
+            : "El video se detiene en cada una (" + qs.length + "). Cuenta la primera vez que la contestas.";
+        cine.querySelectorAll("#grabacion-cine-preguntas button").forEach((b) => {
+            const x = G.res.get(Number(b.dataset.pregunta)), marca = b.lastElementChild;
+            marca.textContent = !x ? "Sin contestar" : x.acerto ? "✓ Bien" : "✗ No";
+            marca.className = "shrink-0 text-xs font-bold " + (!x ? "text-brand-200" : x.acerto ? "text-green-300" : "text-red-300");
+        });
+    }
+
+    function revisarPausa(G, t) {
+        const m = G.medidor, antes = G.antes;
+        G.antes = t;
+        if (antes == null || G.abierta || m.estado !== CORRIENDO || !(t > antes) || t - antes > 5) return;
+        const q = G.datos.preguntas.find((x) => antes < x.t && x.t <= t && !G.res.has(x.n) && !G.vistas.has(x.n));
+        if (!q) return;
+        pausar(m);
+        mostrarPregunta(G, q);
+    }
+
+    function mostrarPregunta(G, q) {
+        const caja = cine.querySelector("#grabacion-cine-pregunta");
+        G.abierta = q;
+        G.vistas.add(q.n);
+        const qs = G.datos.preguntas;
+        const h = el("h3", "font-serif text-lg font-bold text-brand-800", "Pregunta " + q.n + " de " + qs.length);
+        h.id = "grabacion-cine-pregunta-titulo";
+        h.tabIndex = -1;
+        const nota = el("p", "text-xs text-brand-700", "El video se detuvo: contesta y sigue viendo.");
+        const texto = el("p", "mt-2 font-semibold", q.texto);
+        caja.replaceChildren(h, nota, texto);
+        if (q.fen && window.TableroFen) {
+            const marcoT = el("div", "mx-auto mt-3 w-full max-w-[16rem]");
+            const tablero = el("div", "cine-tablero cine-tablero-mini");
+            tablero.setAttribute("aria-hidden", "true");
+            marcoT.appendChild(tablero);
+            caja.append(marcoT, el("p", "sr-only", "La posición: " + TableroFen.describir(q.fen)));
+            TableroFen.dibujar(tablero, q.fen, null, { miniatura: true });
+        }
+        const ol = el("ol", "mt-3 grid gap-2 sm:grid-cols-2");
+        ol.id = "grabacion-cine-opciones";
+        q.opciones.forEach((o, i) => {
+            const li = el("li");
+            const b = el("button", "flex h-full w-full items-start gap-2 rounded-lg border-2 border-brand-200 bg-white px-3 py-2 text-left text-sm text-brand-900 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:cursor-default");
+            b.type = "button";
+            b.dataset.opcion = String(i);
+            // Los espacios son para el lector de pantalla («A. Detener…»); en el flex no ocupan lugar.
+            b.append(el("span", "font-bold", LETRA[i] + "."), " ", el("span", "min-w-0 flex-1", o), " ", el("span", "shrink-0 text-xs font-bold"));
+            b.addEventListener("click", () => contestar(G, q, i));
+            li.appendChild(b);
+            ol.appendChild(li);
+        });
+        const estado = el("p", "mt-3 text-sm font-semibold");
+        estado.id = "grabacion-cine-pregunta-estado";
+        estado.setAttribute("role", "status");
+        const botones = el("div", "mt-3 flex flex-wrap gap-2");
+        const seguir = el("button", "rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-brand-900 hover:bg-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2", "Seguir viendo ▶");
+        seguir.type = "button";
+        seguir.id = "grabacion-cine-pregunta-seguir";
+        seguir.addEventListener("click", () => cerrarPregunta(G, true));
+        const despues = el("button", "rounded-xl border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-800 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Contestar después");
+        despues.type = "button";
+        despues.id = "grabacion-cine-pregunta-despues";
+        despues.addEventListener("click", () => cerrarPregunta(G, true));
+        botones.append(seguir, despues);
+        caja.append(ol, estado, botones);
+        caja.hidden = false;
+        seguir.hidden = true;
+        // Si ya la contestó (la abre desde la lista), se le muestra cómo le fue.
+        const ya = G.res.get(q.n);
+        if (ya) contestar(G, q, ya.elegida);
+        caja.scrollIntoView({ block: "nearest" });
+        h.focus({ preventScroll: true });
+    }
+
+    async function contestar(G, q, i) {
+        const caja = cine.querySelector("#grabacion-cine-pregunta");
+        const botones = [...caja.querySelectorAll("#grabacion-cine-opciones button")];
+        const estado = caja.querySelector("#grabacion-cine-pregunta-estado");
+        botones.forEach((b) => { b.disabled = true; });
+        estado.textContent = "Revisando…";
+        let r;
+        try {
+            r = await preguntar.responder(G.g, q.n, i);
+        } catch (e) {
+            if (G.abierta !== q) return;
+            estado.textContent = "No se pudo revisar tu respuesta. Revisa tu conexión e inténtalo otra vez.";
+            botones.forEach((b) => { b.disabled = false; });
+            return;
+        }
+        if (G.abierta !== q || !r || !Number.isInteger(r.correcta)) return;
+        // Lo que vale es la primera vez: la base devuelve lo que contestó entonces.
+        const elegida = Number.isInteger(r.elegida) ? r.elegida : i, acerto = elegida === r.correcta;
+        if (r.anotada) G.res.set(q.n, { elegida, acerto });
+        botones.forEach((b, k) => {
+            const marca = b.lastElementChild;
+            b.classList.remove("border-brand-200");
+            if (k === r.correcta) { b.classList.add("border-green-600", "bg-green-50"); marca.textContent = "✓ Correcta"; marca.className = "shrink-0 text-xs font-bold text-green-800"; }
+            else if (k === elegida) { b.classList.add("border-red-600", "bg-red-50"); marca.textContent = "✗ Tu respuesta"; marca.className = "shrink-0 text-xs font-bold text-red-800"; }
+            else b.classList.add("border-brand-200", "opacity-70");
+        });
+        const partes = [acerto ? "✓ ¡Bien!" : "✗ No era esa. La correcta es la " + LETRA[r.correcta] + ": " + q.opciones[r.correcta] + "."];
+        if (r.anotada && elegida !== i) partes.push("Ya la habías contestado: cuenta la primera vez (" + LETRA[elegida] + ").");
+        if (r.anotada === false) partes.push("Como no eres del taller, tu respuesta no se guarda.");
+        if (q.fuente) partes.push("Fuente: " + q.fuente + ".");
+        estado.textContent = partes.join(" ");
+        estado.className = "mt-3 text-sm font-semibold " + (acerto ? "text-green-800" : "text-red-800");
+        caja.querySelector("#grabacion-cine-pregunta-despues").hidden = true;
+        const seguir = caja.querySelector("#grabacion-cine-pregunta-seguir");
+        seguir.hidden = false;
+        seguir.focus({ preventScroll: true });
+        seguir.scrollIntoView({ block: "nearest" });
+        pintarListaPreguntas(G);
+    }
+
+    function cerrarPregunta(G, seguir) {
+        const caja = cine && cine.querySelector("#grabacion-cine-pregunta");
+        if (!caja) return;
+        G.abierta = null;
+        caja.hidden = true;
+        caja.replaceChildren();
+        const w = G.medidor.iframe;
+        if (seguir && w && w.contentWindow) w.contentWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [], id: 1, channel: "widget" }), YT);
+        if (w) w.focus();
     }
 
     // Pone la lámina y marca el capítulo del segundo `t` (solo si cambiaron).

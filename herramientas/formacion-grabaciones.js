@@ -30,14 +30,17 @@
  *
  *   node herramientas/formacion-grabaciones.js            escribe los archivos
  *   node herramientas/formacion-grabaciones.js --comprobar  falla si no están al día
+ *   node herramientas/formacion-grabaciones.js --sql        las correctas, para la base
  */
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const RAIZ = path.join(__dirname, "..");
 const FUENTE = path.join(__dirname, "datos", "formacion-grabaciones.json");
 const PRESENTACIONES = path.join(RAIZ, "cursos", "recursos", "formacion-ajedrez", "presentaciones");
+const BANCO = path.join(__dirname, "cursos", "formacion-ajedrez-kahoot.json");
 const COMENTARIO = "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.";
 
 function fallar(msg) {
@@ -98,13 +101,75 @@ function armar(s) {
     if (typeof a.texto !== "string" || a.texto.length < 20 || a.texto.length > 320) fallar(`${n} necesita un texto de 20 a 320 caracteres`);
     if (typeof a.fuente !== "string" || !a.fuente.trim() || a.fuente.length > 80) fallar(`${n} necesita su fuente (hasta 80 caracteres): ninguna se inventa`);
   });
+  const preguntas = preguntasDe(s, donde, enOrden);
   return {
     _comentario: COMENTARIO,
     duracion: s.duracion,
     capitulos: s.capitulos.map((c) => ({ t: c.t, titulo: c.titulo.trim() })),
     laminas: s.laminas.map((x) => (x.clase ? { t: x.t, lamina: x.lamina, clase: x.clase } : { t: x.t, lamina: x.lamina })),
     aclaraciones: aclaraciones.map((a) => ({ t: a.t, avatar: a.avatar, titulo: a.titulo.trim(), texto: a.texto.trim(), fuente: a.fuente.trim() })),
+    preguntas: preguntas.map((p) => Object.assign({ t: p.t, n: p.n, texto: p.texto, opciones: p.opciones }, p.fen ? { fen: p.fen } : {}, { fuente: p.fuente })),
   };
+}
+
+/* Las preguntas que pausan el video. Salen del banco ya revisado
+   (herramientas/cursos/formacion-ajedrez-kahoot.json, que no se publica): la
+   fuente solo dice en qué segundo va cada una y cuál del banco es. El lugar de
+   la correcta se reparte parejo entre A, B, C y D (ordenadas por la huella del
+   texto, como formacion-cuestionarios.js), y la correcta NO va en el archivo
+   publicado: la sabe la base (grabacion_preguntas), que corrige. `n` es el
+   número de la pregunta en su video (1, 2, 3… en orden de tiempo). */
+let banco = null;
+const huella = (t) => crypto.createHash("sha1").update(t).digest("hex");
+function preguntasDe(s, donde, enOrden) {
+  const lista = s.preguntas || [];
+  if (!lista.length) return [];
+  enOrden(lista, "pregunta");
+  banco = banco || JSON.parse(fs.readFileSync(BANCO, "utf8"));
+  const vistas = new Set();
+  const desdeBanco = lista.map((q, i) => {
+    const n = `${donde}: la pregunta n.º ${i + 1}`;
+    const grupo = banco[q.banco] && banco[q.banco][q.k];
+    const p = grupo && grupo.preguntas[q.i];
+    if (!p) fallar(`${n} no existe en el banco (${q.banco}[${q.k}].preguntas[${q.i}])`);
+    const clave = q.banco + "/" + q.k + "/" + q.i;
+    if (vistas.has(clave)) fallar(`${n} se repite (${clave})`);
+    vistas.add(clave);
+    if (!Array.isArray(p.distractores) || p.distractores.length !== 3) fallar(`${n} necesita tres distractores en el banco`);
+    const todas = [p.correcta].concat(p.distractores);
+    if (new Set(todas).size !== 4) fallar(`${n} tiene opciones repetidas`);
+    return { t: q.t, n: i + 1, p };
+  });
+  const lugar = new Map();
+  desdeBanco.map((x) => x.p.texto).sort((a, b) => (huella(a) < huella(b) ? -1 : 1)).forEach((t, i) => lugar.set(t, i % 4));
+  return desdeBanco.map(({ t, n, p }) => {
+    const correcta = lugar.get(p.texto);
+    const opciones = p.distractores.slice();
+    opciones.splice(correcta, 0, p.correcta);
+    return { t, n, texto: p.texto, opciones, correcta, fen: p.fen || null, fuente: p.fuente || "" };
+  });
+}
+
+/* Lo que sabe la base: en qué lugar está la correcta de cada pregunta de cada
+   video. Se aplica como migración (supabase/migraciones/) y
+   verificar-grabacion-interactiva.js compara que la última diga esto mismo. */
+function claves(fuente) {
+  const filas = [];
+  for (const s of fuente.sesiones || []) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(s.youtube_id || "")) fallar(`${s.presentacion}: falta el id de YouTube en la fuente`);
+    preguntasDe(s, "la grabación de " + s.presentacion, () => {}).forEach((p) => filas.push({ youtube_id: s.youtube_id, n: p.n, correcta: p.correcta }));
+  }
+  return filas;
+}
+
+function sql(fuente) {
+  const filas = claves(fuente);
+  const ids = [...new Set(filas.map((f) => f.youtube_id))];
+  return "-- Generado por node herramientas/formacion-grabaciones.js --sql: no se edita a mano.\n"
+    + "insert into public.grabacion_preguntas (youtube_id, n, correcta) values\n"
+    + filas.map((f) => `  ('${f.youtube_id}', ${f.n}, ${f.correcta})`).join(",\n")
+    + "\non conflict (youtube_id, n) do update set correcta = excluded.correcta;\n"
+    + ids.map((id) => `delete from public.grabacion_preguntas where youtube_id = '${id}' and n > ${filas.filter((f) => f.youtube_id === id).length};`).join("\n") + "\n";
 }
 
 function texto(obj) {
@@ -114,6 +179,7 @@ function texto(obj) {
 function main() {
   const comprobar = process.argv.includes("--comprobar");
   const fuente = JSON.parse(fs.readFileSync(FUENTE, "utf8"));
+  if (process.argv.includes("--sql")) { process.stdout.write(sql(fuente)); return; }
   const vistas = new Set();
   let viejos = 0;
   for (const s of fuente.sesiones || []) {
@@ -138,6 +204,6 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { armar };
+module.exports = { armar, claves, sql };
 
 /*! rev bfb5bbb0d2d82f9f */

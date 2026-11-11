@@ -42,7 +42,7 @@
   let estados = [];          // filas de preparacion_sesiones
   let cuestionarios = [];    // { id, titulo, preguntas }
   let talleres = [];         // [detalle, cuántas cuentas temporales abiertas]
-  let grupos = [];           // [detalle, filas de asesores_tablero(), filas de asesores_grabaciones()]
+  let grupos = [];           // [detalle, filas de asesores_tablero(), de asesores_grabaciones() y de asesores_preguntas_video()]
   let pedido = null;
 
   function el(tag, clase, texto) {
@@ -75,13 +75,16 @@
     talleres = [...cuenta.entries()];
     grupos = await Promise.all(talleres.map(async ([detalle]) => {
       // Lo de las grabaciones va aparte: si falla, la tabla sale sin esas columnas.
-      const [t, g] = await Promise.all([
+      const [t, g, q] = await Promise.all([
         sb.rpc("asesores_tablero", { p_detalle: detalle }),
         sb.rpc("asesores_grabaciones", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
+        // Las preguntas dentro del video: si falla, las columnas salen sin ellas.
+        sb.rpc("asesores_preguntas_video", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
       ]);
       if (t.error) console.error(t.error);
       if (g.error) console.error(g.error);
-      return [detalle, t.error ? null : (t.data || []), g.error ? null : (g.data || [])];
+      if (q.error) console.error(q.error);
+      return [detalle, t.error ? null : (t.data || []), g.error ? null : (g.data || []), q.error ? [] : (q.data || [])];
     }));
   }
 
@@ -257,12 +260,17 @@
   /* Las grabaciones del taller, en orden, de las filas de asesores_grabaciones()
      (una por persona y grabación): cada una con su título y su duración, y
      cuánto vio cada persona. */
-  function grabacionesDe(filas) {
+  function grabacionesDe(filas, preguntas) {
     const porVideo = new Map();
     (filas || []).forEach((f) => {
       const clave = f.horario_id + "|" + f.fecha;
-      if (!porVideo.has(clave)) porVideo.set(clave, { clave, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map() });
+      if (!porVideo.has(clave)) porVideo.set(clave, { clave, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
       porVideo.get(clave).vio.set(f.persona_id, Number(f.visto_seg) || 0);
+    });
+    // Las preguntas dentro del video (asesores_preguntas_video): cuántas tiene, contestó y acertó.
+    (preguntas || []).forEach((f) => {
+      const v = porVideo.get(f.horario_id + "|" + f.fecha);
+      if (v) v.preguntas.set(f.persona_id, { total: Number(f.total) || 0, respondidas: Number(f.respondidas) || 0, aciertos: Number(f.aciertos) || 0 });
     });
     return [...porVideo.values()].sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
   }
@@ -281,6 +289,21 @@
     } else {
       td.textContent = HoraCR.duracion(visto);
     }
+  }
+
+  // Debajo de cuánto vio: «✓ 8/10» (acertó 8 de las 10 preguntas del video, la primera vez).
+  function celdaPreguntas(td, p) {
+    if (!p || !p.total) return;
+    const linea = el("span", "mt-0.5 block text-xs font-semibold text-brand-700 dark:text-brand-200");
+    if (!p.respondidas) {
+      linea.appendChild(el("span", null, "❓ 0/" + p.total)).setAttribute("aria-hidden", "true");
+      linea.appendChild(el("span", "sr-only", ", no contestó ninguna de sus " + p.total + " preguntas"));
+    } else {
+      linea.appendChild(el("span", null, "✓ " + p.aciertos + "/" + p.total)).setAttribute("aria-hidden", "true");
+      linea.appendChild(el("span", "sr-only", ", acertó " + p.aciertos + " de " + p.total + " preguntas"
+        + (p.respondidas < p.total ? " (contestó " + p.respondidas + ")" : "")));
+    }
+    td.appendChild(linea);
   }
 
   function tablaDelGrupo(filas, sesiones, tareas, videos) {
@@ -305,7 +328,7 @@
     videos.forEach((v, i) => {
       const n = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(v.titulo);
       const c = th("▶ " + (n ? n[1] : i + 1), "text-center whitespace-nowrap");
-      c.setAttribute("aria-label", "Grabación de la " + v.titulo + ": cuánto la vio");
+      c.setAttribute("aria-label", "Grabación de la " + v.titulo + ": cuánto la vio" + (v.preguntas.size ? " y cuántas preguntas acertó" : ""));
       cab.appendChild(c);
     });
     t.appendChild(el("thead")).appendChild(cab);
@@ -331,6 +354,7 @@
       videos.forEach((v) => {
         const td = el("td", "px-2 py-2 text-center tabular-nums");
         celdaVisto(td, v.vio.get(f.persona_id), v.duracion);
+        celdaPreguntas(td, v.preguntas.get(f.persona_id));
         tr.appendChild(td);
       });
       cuerpo.appendChild(tr);
@@ -351,7 +375,7 @@
     const sesiones = datos.sesiones.map((s) => ({ n: s.n, q: cuestionarioDe(s.n) }));
     // Las tareas de nivel inicial: una columna solo para las sesiones que la tienen.
     const tareas = datos.sesiones.map((s) => ({ n: s.n, q: tareaInicialDe(s.n) })).filter((s) => s.q);
-    grupos.forEach(([detalle, filas, vistas]) => {
+    grupos.forEach(([detalle, filas, vistas, preguntas]) => {
       if (grupos.length > 1) cont.appendChild(el("h4", "font-semibold text-brand-800 dark:text-white mt-4 mb-1", detalle));
       if (!filas) {
         cont.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300",
@@ -372,10 +396,12 @@
             return "T" + s.n + ", " + n + " de " + filas.length + (i ? "" : (n === 1 ? " la contestó" : " la contestaron"));
           }).join("; ") + "."));
       }
-      const videos = grabacionesDe(vistas);
+      const videos = grabacionesDe(vistas, preguntas);
       if (videos.length) {
+        const conPreguntas = videos.some((v) => v.preguntas.size);
         cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
-          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó. "
+          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó"
+          + (conPreguntas ? ", y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10)" : "") + ". "
           + videos.map((v, i) => {
             const n = [...v.vio.values()].filter((x) => x > 0).length;
             return v.titulo + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));

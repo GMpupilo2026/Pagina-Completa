@@ -1,9 +1,7 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261111055900
+# al-dia-con: 20261111140000
 tabla  Ejercicios Lichess  rls=true
-tabla  _foto_rls_tmp  rls=false
-tabla  _pedidos_elo  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
 tabla  academias  rls=true
@@ -139,6 +137,8 @@ tabla  fourplayer_games  rls=true
 tabla  frases_regalo  rls=true
 tabla  game_rooms  rls=true
 tabla  game_state  rls=true
+tabla  grabacion_preguntas  rls=true
+tabla  grabacion_respuestas  rls=true
 tabla  grabaciones_clase  rls=true
 tabla  grabaciones_vistas  rls=true
 tabla  habilidad_resultados  rls=true
@@ -292,16 +292,8 @@ columna  Ejercicios Lichess.PuzzleId  text
 columna  Ejercicios Lichess.Rating  bigint
 columna  Ejercicios Lichess.RatingDeviation  bigint
 columna  Ejercicios Lichess.Themes  text
-columna  _foto_rls_tmp.ca  bigint
-columna  _foto_rls_tmp.cp  bigint
-columna  _foto_rls_tmp.cs  bigint
-columna  _foto_rls_tmp.cuando  text
-columna  _foto_rls_tmp.persona  uuid
-columna  _foto_rls_tmp.qa  bigint
-columna  _foto_rls_tmp.tr  bigint
-columna  _pedidos_elo.id  bigint
-columna  _pedidos_elo.p  integer
 columna  academia_ia.academia_id  uuid
+columna  academia_ia.alumnos  boolean
 columna  academia_ia.id  uuid
 columna  academia_ia.modelo  text
 columna  academia_ia.tope_mensual_usd  numeric(10,2)
@@ -1530,16 +1522,26 @@ columna  game_state.planilla  jsonb
 columna  game_state.podio  jsonb
 columna  game_state.practica  jsonb
 columna  game_state.presentacion  jsonb
+columna  game_state.reloj  jsonb
 columna  game_state.rival_id  uuid
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
 columna  game_state.sticker  jsonb
-columna  game_state.reloj  jsonb
 columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
 columna  game_state.vista  jsonb
+columna  grabacion_preguntas.correcta  smallint
+columna  grabacion_preguntas.n  smallint
+columna  grabacion_preguntas.youtube_id  text
+columna  grabacion_respuestas.acerto  boolean
+columna  grabacion_respuestas.elegida  smallint
+columna  grabacion_respuestas.fecha  date
+columna  grabacion_respuestas.horario_id  uuid
+columna  grabacion_respuestas.n  smallint
+columna  grabacion_respuestas.persona_id  uuid
+columna  grabacion_respuestas.respondida_en  timestamp with time zone
 columna  grabaciones_clase.duracion_seg  integer
 columna  grabaciones_clase.fecha  date
 columna  grabaciones_clase.horario_id  uuid
@@ -2832,6 +2834,7 @@ funcion  arbitros_cr_publico()  definer  anon=true  auth=true
 funcion  arbitros_mis()  definer  anon=false  auth=true
 funcion  arbitros_puedo_dar()  definer  anon=false  auth=true
 funcion  asesores_grabaciones(p_detalle text)  definer  anon=false  auth=true
+funcion  asesores_preguntas_video(p_detalle text)  definer  anon=false  auth=true
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
@@ -3012,6 +3015,7 @@ funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=false  auth=true
 funcion  grabacion_clase_poner(p_horario uuid, p_fecha date, p_video text, p_tema text, p_duracion_seg integer)  definer  anon=false  auth=true
 funcion  grabacion_clase_poner_apartada(p_horario uuid, p_fecha date, p_video text)  definer  anon=false  auth=false
+funcion  grabacion_pregunta_responder(p_horario uuid, p_fecha date, p_n integer, p_opcion integer)  definer  anon=false  auth=true
 funcion  grabacion_vista_anotar(p_horario uuid, p_fecha date, p_tramos jsonb)  definer  anon=false  auth=true
 funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
@@ -3026,8 +3030,11 @@ funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  historial_de_puntos(p_alumno uuid, p_limite integer)  invoker  anon=false  auth=true
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  ia_disponible()  definer  anon=false  auth=true
+funcion  ia_explicar_quedan()  definer  anon=false  auth=true
+funcion  ia_guardar_alumnos(p_academia uuid, p_alumnos boolean)  definer  anon=false  auth=true
 funcion  ia_guardar_config(p_academia uuid, p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  ia_inicio_de_mes()  invoker  anon=false  auth=true
+funcion  ia_para_explicar(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_usuario(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_resumen_mes(p_dia date)  definer  anon=false  auth=true
 funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
@@ -3714,6 +3721,8 @@ politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  game_state  verificacion_en_dos_pasos  ALL  restrictiva
+politica  grabacion_preguntas  grabacion_preguntas_ver  SELECT
+politica  grabacion_respuestas  grabacion_respuestas_ver  SELECT
 politica  grabaciones_clase  grabaciones_clase_ver  SELECT
 politica  grabaciones_vistas  grabaciones_vistas_ver  SELECT
 politica  habilidad_resultados  habilidad_resultados_exige_acceso_ins  INSERT  restrictiva
@@ -4149,7 +4158,6 @@ trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
 indice  Ejercicios Lichess  ejercicios_lichess_pkey
-indice  _pedidos_elo  _pedidos_elo_pkey
 indice  academia_ia  academia_ia_academia_id_fk
 indice  academia_ia  academia_ia_pkey
 indice  academia_ia  academia_ia_una_por_academia
@@ -4457,6 +4465,9 @@ indice  game_state  game_state_owner_id_uidx
 indice  game_state  game_state_pkey
 indice  game_state  game_state_rival_id_idx
 indice  game_state  game_state_updated_by_fk
+indice  grabacion_preguntas  grabacion_preguntas_pkey
+indice  grabacion_respuestas  grabacion_respuestas_persona_idx
+indice  grabacion_respuestas  grabacion_respuestas_pkey
 indice  grabaciones_clase  grabaciones_clase_pkey
 indice  grabaciones_clase  grabaciones_clase_puesta_por_idx
 indice  grabaciones_vistas  grabaciones_vistas_persona_idx
@@ -5491,6 +5502,8 @@ grant  game_state  authenticated  SELECT
 grant  game_state  authenticated  TRIGGER
 grant  game_state  authenticated  TRUNCATE
 grant  game_state  authenticated  UPDATE
+grant  grabacion_preguntas  authenticated  SELECT
+grant  grabacion_respuestas  authenticated  SELECT
 grant  grabaciones_clase  authenticated  SELECT
 grant  grabaciones_vistas  authenticated  SELECT
 grant  habilidad_resultados  anon  DELETE

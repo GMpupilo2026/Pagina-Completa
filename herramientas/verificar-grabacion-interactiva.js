@@ -18,6 +18,10 @@
  *  - Una aclaración del profe (lo que el video dice mal) no sale en su minuto,
  *    sale sin su fuente o con un dibujo del avatar que no existe, se queda
  *    pegada, o no se dice en voz.
+ *  - Una pregunta del video publica cuál es la correcta, o la base corrige con
+ *    otras correctas que las del generador; el video no se detiene en la
+ *    pregunta, se detiene aunque ya la contestó o aunque adelantó por encima,
+ *    o no dice cuál era la correcta.
  *  - Sin el archivo o sin acceso al curso (el worker contesta 403), el video
  *    deja de verse.
  *
@@ -58,12 +62,31 @@ function pruebaArchivos() {
   igual("las tres sesiones grabadas tienen capítulos", fuente.sesiones.map((s) => s.presentacion), ["clase-01", "clase-02", "clase-03"]);
   for (const s of fuente.sesiones) {
     const publicado = fs.readFileSync(path.join(PRES, s.presentacion, "grabacion.json"), "utf8");
-    cierto(`${s.presentacion}: el archivo publicado no trae ningún id de YouTube`, !/youtube|youtu\.be|"[A-Za-z0-9_-]{11}"/.test(publicado.replace(/"(_comentario|duracion|capitulos|laminas|aclaraciones|titulo|lamina|avatar|texto|fuente)"/g, "")));
+    cierto(`${s.presentacion}: el archivo publicado no trae ningún id de YouTube`, !/youtube|youtu\.be/i.test(publicado) && fuente.sesiones.every((x) => !publicado.includes(x.youtube_id)));
     const g = JSON.parse(publicado);
-    igual(`${s.presentacion}: lleva solo duración, capítulos, láminas y aclaraciones`, Object.keys(g), ["_comentario", "duracion", "capitulos", "laminas", "aclaraciones"]);
+    igual(`${s.presentacion}: lleva solo duración, capítulos, láminas, aclaraciones y preguntas`, Object.keys(g), ["_comentario", "duracion", "capitulos", "laminas", "aclaraciones", "preguntas"]);
+    igual(`${s.presentacion}: de cada pregunta, solo el segundo, el número, el texto, las opciones, la posición y la fuente: la correcta no`,
+      [...new Set(g.preguntas.flatMap((q) => Object.keys(q)))].sort(), ["fen", "fuente", "n", "opciones", "t", "texto"].filter((k) => k !== "fen" || g.preguntas.some((q) => q.fen)).sort());
+    const banco = JSON.parse(fs.readFileSync(path.join(__dirname, "cursos/formacion-ajedrez-kahoot.json"), "utf8"));
+    cierto(`${s.presentacion}: ${g.preguntas.length} preguntas, cada una igual a la del banco revisado (texto, sus cuatro opciones y su posición)`, g.preguntas.length === s.preguntas.length && g.preguntas.every((q, i) => {
+      const r = s.preguntas[i], p = banco[r.banco][r.k].preguntas[r.i];
+      return q.texto === p.texto && q.n === i + 1 && q.t === r.t && JSON.stringify([...q.opciones].sort()) === JSON.stringify([p.correcta, ...p.distractores].sort()) && (q.fen || null) === (p.fen || null);
+    }));
     cierto(`${s.presentacion}: cada aclaración del profe trae su fuente y un dibujo que existe`, g.aclaraciones.length > 0 && g.aclaraciones.every((a) => a.fuente && fs.existsSync(path.join(RAIZ, "img/avatar-profe-oscar", a.avatar + ".webp"))));
     cierto(`${s.presentacion}: entre 6 y 20 capítulos (${g.capitulos.length}) y una lámina cada tanto (${g.laminas.length})`, g.capitulos.length >= 6 && g.capitulos.length <= 20 && g.laminas.length >= 10);
   }
+
+  // Lo que sabe la base: la última migración que carga las correctas dice lo mismo que el generador.
+  const { claves } = require("./formacion-grabaciones.js");
+  const MIG = path.join(RAIZ, "supabase/migraciones");
+  const conClaves = fs.readdirSync(MIG).filter((f) => fs.readFileSync(path.join(MIG, f), "utf8").includes("insert into public.grabacion_preguntas (youtube_id, n, correcta)")).sort();
+  const ultima = conClaves.length ? fs.readFileSync(path.join(MIG, conClaves[conClaves.length - 1]), "utf8") : "";
+  const filas = claves(fuente);
+  const enMig = [...ultima.matchAll(/\('([A-Za-z0-9_-]{11})', (\d+), ([0-3])\)/g)].map((m) => m[1] + "/" + m[2] + "/" + m[3]).sort();
+  igual("las correctas de la base (la última migración que las carga) son las del generador: si no, la base corrige con otra",
+    enMig, filas.map((f) => f.youtube_id + "/" + f.n + "/" + f.correcta).sort());
+  const lugares = [0, 1, 2, 3].map((c) => filas.filter((f) => f.correcta === c).length);
+  cierto("la correcta está repartida entre A, B, C y D (" + lugares.join(", ") + "): no siempre en el mismo lugar", Math.max(...lugares) - Math.min(...lugares) <= 3);
 
   // El armador se planta ante lo que no cuadra (se corre en un hijo: sale con
   // exit). El `node -e` solo recibe la sesión de prueba armada aquí mismo, como
@@ -84,6 +107,8 @@ function pruebaArchivos() {
   rompe("el primer capítulo que no empieza en 0", (s) => { s.capitulos[0].t = 30; });
   rompe("una aclaración con un avatar que no existe", (s) => { s.aclaraciones[0].avatar = "no-existe"; });
   rompe("una aclaración sin fuente", (s) => { s.aclaraciones[0].fuente = ""; });
+  rompe("una pregunta que no está en el banco", (s) => { s.preguntas[0].i = 999; });
+  rompe("una pregunta repetida", (s) => { s.preguntas[1] = Object.assign({}, s.preguntas[0], { t: s.preguntas[1].t }); });
 }
 
 /* El doble de Supabase: lo justo para que el panel pinte las grabaciones. */
@@ -94,7 +119,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 window.__rpc = [];
 (function () {
   const CFG = ${JSON.stringify(cfg)};
-  function b(filas) {
+  function b(filas, error) {
     let datos = Array.isArray(filas) ? filas.slice() : filas, unica = false;
     const q = {
       select() { return q; }, eq(c, v) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[c]) === String(v)); return q; },
@@ -102,6 +127,7 @@ window.__rpc = [];
       is() { return q; }, not() { return q; }, ilike() { return q; }, gt() { return q; }, lt() { return q; }, range() { return q; },
       maybeSingle() { unica = true; return q; }, single() { unica = true; return q; },
       then(res, rej) {
+        if (error) return Promise.resolve({ data: null, error: { message: error } }).then(res, rej);
         let d = datos;
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null, count: Array.isArray(d) ? d.length : 0 }).then(res, rej);
@@ -116,8 +142,22 @@ window.__rpc = [];
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: () => Promise.resolve({}),
     },
-    from: (t) => b((CFG.tablas || {})[t] || []),
-    rpc: (n, args) => { window.__rpc.push({ n, args: args || null }); const r = (CFG.rpc || {})[n]; return b(r === undefined ? null : r); },
+    from: (t) => ((CFG.fallan || []).includes(t) ? b(null, "falló " + t) : b((CFG.tablas || {})[t] || [])),
+    rpc: (n, args) => {
+      window.__rpc.push({ n, args: args || null });
+      if ((CFG.fallan || []).includes(n)) return b(null, "falló " + n);
+      // Corrige como la base: la primera respuesta es la que vale.
+      if (n === "grabacion_pregunta_responder" && CFG.correctas) {
+        const c = CFG.correctas[args.p_n];
+        window.__primera = window.__primera || {};
+        const k = args.p_horario + "|" + args.p_n;
+        if (!(k in window.__primera)) window.__primera[k] = args.p_opcion;
+        const elegida = CFG.anotada === false ? args.p_opcion : window.__primera[k];
+        return b({ correcta: c, elegida, acerto: elegida === c, anotada: CFG.anotada !== false });
+      }
+      const r = (CFG.rpc || {})[n];
+      return b(r === undefined ? null : r);
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -129,8 +169,8 @@ const HORA = 3600000, DIA = 24 * HORA;
 const diaCR = (ms) => new Date(Date.now() - 6 * HORA + ms).toISOString().slice(0, 10);
 const enCR = (dia, hhmm) => new Date(dia + "T" + hhmm + ":00-06:00").toISOString();
 const YO = "u-asesor";
-function cfg(grabaciones) {
-  return {
+function cfg(grabaciones, extra) {
+  return Object.assign({
     yo: YO,
     tablas: { profiles: [{ id: YO, full_name: "Asesora de prueba", role: "alumno", is_admin: false, grupo: "MEP" }] },
     rpc: {
@@ -142,7 +182,7 @@ function cfg(grabaciones) {
       mis_grabaciones: grabaciones,
       grabacion_vista_anotar: 0,
     },
-  };
+  }, extra || {});
 }
 function grabacion(id, dias, titulo, tema, duracion) {
   const dia = diaCR(dias * DIA);
@@ -172,7 +212,7 @@ addEventListener("message", function (e) {
 window.ponerEn = function (x) { t = x; decir(); };
 </script></body>`;
 
-async function abrir(browser, grabaciones, { ancho = 1300, rutas } = {}) {
+async function abrir(browser, grabaciones, { ancho = 1300, rutas, extra } = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: ancho, height: 950 } });
   const page = await ctx.newPage();
   const errores = [];
@@ -181,7 +221,7 @@ async function abrir(browser, grabaciones, { ancho = 1300, rutas } = {}) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route(/youtube/, (r) => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: REPRODUCTOR }));
-  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(cfg(grabaciones)) }));
+  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(cfg(grabaciones, extra)) }));
   if (rutas) await rutas(page);
   await page.goto(BASE + "/clases.html", { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "mis_grabaciones"), null, { timeout: 15000 }).catch(() => {});
@@ -390,11 +430,139 @@ async function pruebaCine(browser) {
   await sin.cerrar();
 }
 
+/* Las preguntas dentro del video, con el doble que corrige como la base (las
+   correctas que da el generador para el video de la Sesión I). */
+async function pruebaPreguntas(browser) {
+  console.log("\n=== Las preguntas dentro del video ===");
+  const g1 = JSON.parse(fs.readFileSync(path.join(PRES, "clase-01/grabacion.json"), "utf8"));
+  const { claves } = require("./formacion-grabaciones.js");
+  const fuente = JSON.parse(fs.readFileSync(path.join(__dirname, "datos/formacion-grabaciones.json"), "utf8"));
+  const id1 = fuente.sesiones[0].youtube_id;
+  const correctas = {};
+  claves(fuente).filter((f) => f.youtube_id === id1).forEach((f) => { correctas[f.n] = f.correcta; });
+  const lista = [grabacion("p1", -29, "Sesión I", "Encuadre del curso y reglas básicas", g1.duracion)];
+  const q1 = g1.preguntas[0], q2 = g1.preguntas[1], qFen = g1.preguntas.find((q) => q.fen);
+  // La 2 ya la contestó (bien) otra vez: no lo vuelve a detener.
+  const ya = [{ horario_id: "p1", fecha: lista[0].fecha, persona_id: YO, n: 2, elegida: correctas[2], acerto: true }];
+  const { page, errores, cerrar } = await abrir(browser, lista, { extra: { correctas, tablas: {
+    profiles: [{ id: YO, full_name: "Asesora de prueba", role: "alumno", is_admin: false, grupo: "MEP" }], grabacion_respuestas: ya } } });
+  await abrirCine(page, "Sesión I");
+  const panel = () => page.evaluate(() => {
+    const c = document.getElementById("grabacion-cine-pregunta");
+    return { ve: !!c && c.checkVisibility(), titulo: (document.getElementById("grabacion-cine-pregunta-titulo") || {}).textContent,
+      texto: c ? c.innerText : "", foco: document.activeElement && (document.activeElement.id || document.activeElement.dataset.opcion),
+      opciones: [...document.querySelectorAll("#grabacion-cine-opciones button")].map((b) => b.textContent.replace(/\s+/g, " ").trim()),
+      estado: (document.getElementById("grabacion-cine-pregunta-estado") || {}).textContent };
+  });
+  const ordenes = () => reproductor(page).evaluate(() => window.__ordenes.slice());
+  igual("se pidió a la base lo que ya contestó de esta grabación", await page.evaluate(() => window.__rpc.filter((r) => r.n === "grabacion_pregunta_responder").length), 0);
+  igual("la lista de preguntas: una por cada una, con cómo le fue (la 2 ya estaba bien)",
+    await page.$$eval("#grabacion-cine-preguntas button", (bs) => bs.slice(0, 3).map((b) => b.lastElementChild.textContent)), ["Sin contestar", "✓ Bien", "Sin contestar"]);
+  igual("y arriba lo que lleva", await page.textContent("#grabacion-cine-preguntas-resumen"), "Contestaste 1 de " + g1.preguntas.length + " y acertaste 1. Cuenta la primera vez.");
+
+  // Adelantar por encima de una pregunta no la hace saltar.
+  await ponerEn(page, q1.t - 200);
+  await ponerEn(page, q1.t + 200);
+  igual("si adelanta por encima de una pregunta, no se le atraviesa", (await panel()).ve, false);
+  // Verla correr por el segundo de la pregunta sí la detiene.
+  await ponerEn(page, q1.t - 2);
+  await ponerEn(page, q1.t + 1);
+  let p = await panel();
+  igual("al pasar el video por su segundo, se detiene (pauseVideo) y sale la pregunta, con el foco en ella",
+    [(await ordenes()).slice(-1)[0], p.ve, p.titulo, p.foco], ["pauseVideo:", true, "Pregunta 1 de " + g1.preguntas.length, "grabacion-cine-pregunta-titulo"]);
+  cierto("con su texto y sus cuatro opciones, A a D", p.texto.includes(q1.texto) && p.opciones.length === 4 && p.opciones.every((o, i) => o.startsWith("ABCD"[i] + ". " + q1.opciones[i])), JSON.stringify(p.opciones));
+  igual("la pregunta va debajo del video", await page.evaluate(() =>
+    document.getElementById("grabacion-cine-pregunta").getBoundingClientRect().top >= document.getElementById("grabacion-cine-video").getBoundingClientRect().bottom - 1), true);
+  const cP = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-pregunta-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-pregunta p:nth-of-type(2)"),
+    await page.evaluate(contrasteEnPagina, '#grabacion-cine-opciones button[data-opcion="0"]')];
+  // Contesta mal: la que no es.
+  const mala = (correctas[1] + 1) % 4;
+  await page.click(`#grabacion-cine-opciones button[data-opcion="${mala}"]`);
+  await page.waitForTimeout(250);
+  p = await panel();
+  igual("contestar llama a la base con la pregunta y la opción", await page.evaluate(() => window.__rpc.filter((r) => r.n === "grabacion_pregunta_responder").map((r) => [r.args.p_horario, r.args.p_n, r.args.p_opcion])),
+    [["p1", 1, mala]]);
+  cierto("dice que no era esa y cuál era, con la fuente: " + p.estado, p.estado.startsWith("✗ No era esa. La correcta es la " + "ABCD"[correctas[1]] + ": " + q1.opciones[correctas[1]] + ".") && p.estado.includes("Fuente: " + q1.fuente));
+  igual("marca la correcta y la suya, escrito (no solo de color)", [p.opciones[correctas[1]].endsWith("✓ Correcta"), p.opciones[mala].endsWith("✗ Tu respuesta")], [true, true]);
+  igual("y el foco va a «Seguir viendo»", p.foco, "grabacion-cine-pregunta-seguir");
+  cP.push(await page.evaluate(contrasteEnPagina, "#grabacion-cine-pregunta-estado"), await page.evaluate(contrasteEnPagina, `#grabacion-cine-opciones button[data-opcion="${correctas[1]}"] > span:last-child`));
+  cierto("contraste de la pregunta ≥ 4,5: " + cP.join(", "), cP.every((v) => v >= 4.5));
+  igual("la lista lo dice", await page.$eval('#grabacion-cine-preguntas button[data-pregunta="1"]', (b) => b.lastElementChild.textContent), "✗ No");
+  await page.click("#grabacion-cine-pregunta-seguir");
+  await page.waitForTimeout(200);
+  igual("«Seguir viendo» lo pone a correr y quita la pregunta", [(await ordenes()).slice(-1)[0], (await panel()).ve], ["playVideo:", false]);
+  // La 2 ya estaba contestada: pasar por ella no lo detiene.
+  await ponerEn(page, q2.t - 2);
+  await ponerEn(page, q2.t + 1);
+  igual("una pregunta que ya contestó no lo vuelve a detener", (await panel()).ve, false);
+
+  // Desde la lista: la vuelve a abrir y le muestra cómo le fue; contestar otra cosa no cambia la nota.
+  await page.click('#grabacion-cine-preguntas button[data-pregunta="1"]');
+  await page.waitForTimeout(300);
+  p = await panel();
+  cierto("desde la lista se abre con lo que contestó la primera vez", p.ve && p.estado.startsWith("✗ No era esa"), p.estado);
+  igual("y lleva el video a su segundo, detenido", (await ordenes()).slice(-3), ["seekTo:" + q1.t + ",true", "playVideo:", "pauseVideo:"]);
+
+  // La pregunta con posición: el diagrama y la posición escrita.
+  if (qFen) {
+    await page.click(`#grabacion-cine-preguntas button[data-pregunta="${qFen.n}"]`);
+    await page.waitForTimeout(300);
+    const t = await page.evaluate(() => ({ casillas: document.querySelectorAll("#grabacion-cine-pregunta .cine-sq").length,
+      piezas: document.querySelectorAll("#grabacion-cine-pregunta .cine-sq > span").length,
+      escrita: [...document.querySelectorAll("#grabacion-cine-pregunta .sr-only")].map((e) => e.textContent).join(" ") }));
+    const piezas = qFen.fen.split(" ")[0].replace(/[^a-zA-Z]/g, "").length;
+    igual("una pregunta con posición la dibuja (64 casillas, sus piezas) y la dice escrita para quien no la ve",
+      [t.casillas, t.piezas, t.escrita.startsWith("La posición: Blancas: ")], [64, piezas, true]);
+  }
+
+  // Sin red al contestar: lo dice y deja volver a intentar.
+  await page.evaluate(() => { window.sb.rpc = () => ({ then: (res) => Promise.resolve({ data: null, error: { message: "sin red" } }).then(res) }); });
+  await page.click('#grabacion-cine-preguntas button[data-pregunta="3"]');
+  await page.waitForTimeout(250);
+  await page.click('#grabacion-cine-opciones button[data-opcion="0"]');
+  await page.waitForTimeout(250);
+  p = await panel();
+  igual("sin red: lo dice y las opciones se pueden volver a tocar", [p.estado, await page.$$eval("#grabacion-cine-opciones button", (bs) => bs.every((b) => !b.disabled))],
+    ["No se pudo revisar tu respuesta. Revisa tu conexión e inténtalo otra vez.", true]);
+  await page.setViewportSize({ width: 390, height: 850 });
+  await page.waitForTimeout(250);
+  igual("en el celular la pregunta cabe y no se desborda", await page.evaluate(() => {
+    const d = document.getElementById("grabacion-cine"), c = document.getElementById("grabacion-cine-pregunta").getBoundingClientRect();
+    return [c.width > 0, c.right <= window.innerWidth + 1, d.scrollWidth <= d.clientWidth + 1];
+  }), [true, true, true]);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  console.log("\n=== Quien administra o el profe prueba la pregunta ===");
+  const adm = await abrir(browser, lista, { extra: { correctas, anotada: false } });
+  await abrirCine(adm.page, "Sesión I");
+  await adm.page.click('#grabacion-cine-preguntas button[data-pregunta="1"]');
+  await adm.page.waitForTimeout(250);
+  await adm.page.click(`#grabacion-cine-opciones button[data-opcion="${correctas[1]}"]`);
+  await adm.page.waitForTimeout(250);
+  const e2 = await adm.page.textContent("#grabacion-cine-pregunta-estado");
+  cierto("le dice que estuvo bien y que no se guarda: " + e2, e2.startsWith("✓ ¡Bien!") && e2.includes("Como no eres del taller, tu respuesta no se guarda."));
+  igual("y la lista no la cuenta como contestada", await adm.page.$eval('#grabacion-cine-preguntas button[data-pregunta="1"]', (b) => b.lastElementChild.textContent), "Sin contestar");
+  await adm.cerrar();
+
+  console.log("\n=== Si no se puede leer lo que ya contestó ===");
+  const sin = await abrir(browser, lista, { extra: { correctas, fallan: ["grabacion_respuestas"] } });
+  await abrirCine(sin.page, "Sesión I");
+  igual("no salen preguntas (no se le preguntaría otra vez lo ya contestado), y lo demás sí",
+    [await sin.page.$$eval("#grabacion-cine-preguntas", (x) => x.length), await sin.page.$$eval("#grabacion-cine-capitulos button", (x) => x.length > 0)], [0, true]);
+  await ponerEn(sin.page, q1.t - 2);
+  await ponerEn(sin.page, q1.t + 1);
+  igual("y el video no se detiene", await sin.page.$eval("#grabacion-cine-pregunta", (c) => c.hidden), true);
+  cierto("sin errores en la página", sin.errores.length === 0, sin.errores.join(" | "));
+  await sin.cerrar();
+}
+
 (async () => {
   pruebaArchivos();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaCine(browser);
+    await pruebaPreguntas(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e.stack || e));
     fallos += 1;

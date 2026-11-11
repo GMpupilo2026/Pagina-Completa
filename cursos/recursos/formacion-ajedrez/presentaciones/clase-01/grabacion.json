@@ -236,5 +236,131 @@
    "texto": "La triple repetición y las 50 jugadas no terminan solas la partida: las reclama el jugador que tiene el turno. La persona árbitra interviene por su cuenta solo con la quíntuple repetición o las 75 jugadas.",
    "fuente": "Leyes de la FIDE, art. 9.2, 9.3 y 9.6; lámina 29"
   }
+ ],
+ "preguntas": [
+  {
+   "t": 2922,
+   "n": 1,
+   "texto": "Durante la partida, ¿qué NO debe hacer la persona árbitra?",
+   "opciones": [
+    "Detener los relojes para resolver un reclamo",
+    "Intervenir ante una jugada ilegal",
+    "Avisar a un jugador que su rival ya jugó",
+    "Pedir silencio en la sala"
+   ],
+   "fuente": "FIDE 12.6"
+  },
+  {
+   "t": 3848,
+   "n": 2,
+   "texto": "Un estudiante tiene el celular en el bolsillo durante la partida. Según la FIDE:",
+   "opciones": [
+    "Se le advierte la primera vez",
+    "Se le restan 2 minutos",
+    "Pierde la partida, salvo que el reglamento fije algo menos severo",
+    "Nada, si no lo usó"
+   ],
+   "fuente": "FIDE 11.3.2.2"
+  },
+  {
+   "t": 4385,
+   "n": 3,
+   "texto": "Al armar el tablero, ¿de qué color es la casilla de la esquina derecha de cada jugador?",
+   "opciones": [
+    "Negra",
+    "Blanca",
+    "Depende del color de las piezas",
+    "Da igual, no hay regla"
+   ],
+   "fuente": "FIDE 2.1"
+  },
+  {
+   "t": 6278,
+   "n": 4,
+   "texto": "Juegan las blancas. Las negras acaban de jugar su peón de d7 a d5. ¿Puede el peón de e5 capturarlo?",
+   "opciones": [
+    "No: el peón negro ya pasó de largo",
+    "Sí, al paso, en cualquier momento de la partida",
+    "Solo si el árbitro lo autoriza",
+    "Sí, al paso (exd6), pero solo en esta jugada"
+   ],
+   "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+   "fuente": "FIDE 3.7.3"
+  },
+  {
+   "t": 6565,
+   "n": 5,
+   "texto": "Un peón llega a la última fila. ¿Qué pasa?",
+   "opciones": [
+    "Solo puede ser una dama, la pieza más fuerte",
+    "Se cambia por dama, torre, alfil o caballo, a elección",
+    "Solo puede ser una pieza que el rival le haya capturado",
+    "Solo por una pieza que ya fue capturada en la partida"
+   ],
+   "fuente": "FIDE 3.7.5"
+  },
+  {
+   "t": 6870,
+   "n": 6,
+   "texto": "Juegan las blancas. El rey y la torre de h1 no se han movido. ¿Pueden enrocar corto?",
+   "opciones": [
+    "No: el rey pasaría por f1, que ataca el alfil",
+    "Sí: el rey no está en jaque",
+    "Sí: es la primera vez que enrocan",
+    "Sí, mientras la torre de h1 no esté atacada por nada"
+   ],
+   "fen": "4k3/8/8/8/2b5/8/8/4K2R w K - 0 1",
+   "fuente": "FIDE 3.8.2.2"
+  },
+  {
+   "t": 9146,
+   "n": 7,
+   "texto": "Primera jugada ilegal completada en una partida RÁPIDA. ¿Qué hace la persona árbitra?",
+   "opciones": [
+    "Restablece la posición y suma 1 minuto al rival",
+    "Restablece la posición y suma 2 minutos al rival",
+    "Declara perdida la partida",
+    "Solo le llama la atención"
+   ],
+   "fuente": "FIDE 7.5.5 y A.3"
+  },
+  {
+   "t": 9527,
+   "n": 8,
+   "texto": "Un jugador toca primero la torre de h1 y después el rey para enrocar corto. ¿Qué corresponde?",
+   "opciones": [
+    "Mover la torre; pierde el enroque por ese lado",
+    "Enrocar corto",
+    "Mover el rey",
+    "Cualquier jugada legal"
+   ],
+   "fuente": "FIDE 4.4.2"
+  },
+  {
+   "t": 10623,
+   "n": 9,
+   "texto": "Juegan las negras. ¿Cómo termina esta partida?",
+   "opciones": [
+    "Jaque mate: ganan las blancas",
+    "La partida sigue",
+    "Posición muerta: tablas",
+    "Ahogado: tablas"
+   ],
+   "fen": "k7/8/1Q6/2K5/8/8/8/8 b - - 0 1",
+   "fuente": "FIDE 5.2.1"
+  },
+  {
+   "t": 10882,
+   "n": 10,
+   "texto": "Quedan rey y alfil contra rey. ¿Qué corresponde?",
+   "opciones": [
+    "Gana quien tiene el alfil, si le queda tiempo en el reloj",
+    "Tablas en el acto: posición muerta",
+    "Tablas solo si alguien las reclama",
+    "La partida sigue 50 jugadas más"
+   ],
+   "fen": "8/8/3k4/8/8/2B5/8/4K3 w - - 0 1",
+   "fuente": "FIDE 5.2.2"
+  }
  ]
 }
