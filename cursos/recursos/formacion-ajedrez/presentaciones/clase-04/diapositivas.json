@@ -93,66 +93,71 @@
   },
   {
    "titulo": "Práctica · Configuración de un reloj según escenario",
-   "texto": "Práctica: Configuración de un reloj según escenario. Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a tres escenarios: partida clásica, rápida y relámpago.",
+   "texto": "Práctica: Configuración de un reloj según escenario. Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a cuatro escenarios: partida clásica, rápida, relámpago y el ritmo mínimo de la Etapa Regional de los JDE.",
    "imagen": "18.webp"
   },
   {
-   "titulo": "Ejercicio 1 de 5",
+   "titulo": "Ejercicio 1 de 6",
    "texto": "Ejercicio 1: Configura el reloj para una partida clásica de 90 minutos con 30 segundos de incremento desde la jugada 1. ¿Deben anotar los jugadores toda la partida?",
    "imagen": "19.webp"
   },
   {
-   "titulo": "Ejercicio 2 de 5",
+   "titulo": "Ejercicio 2 de 6",
    "texto": "Ejercicio 2: Configura el reloj para rápidas a 15 minutos más 10 segundos. ¿Qué ritmo es según la fórmula?",
    "imagen": "20.webp"
   },
   {
-   "titulo": "Ejercicio 3 de 5",
+   "titulo": "Ejercicio 3 de 6",
    "texto": "Ejercicio 3: Configura el reloj para relámpago a 3 minutos más 2 segundos. ¿Qué ritmo es?",
    "imagen": "21.webp"
   },
   {
-   "titulo": "Ejercicio 4 de 5",
-   "texto": "Ejercicio 4: Cae la bandera de un jugador. Su rival solo tiene el rey. ¿Resultado?",
+   "titulo": "Ejercicio 4 de 6",
+   "texto": "Ejercicio 4: Configura el reloj con el ritmo mínimo de la Etapa Regional de los JDE: 10 minutos más 2 segundos por jugada. ¿Qué ritmo es según la fórmula y qué apéndice de las Leyes rige?",
    "imagen": "22.webp"
   },
   {
-   "titulo": "Ejercicio 5 de 5",
-   "texto": "Ejercicio 5: El reglamento no dice nada sobre la tolerancia. Un jugador llega 3 minutos tarde. ¿Qué pasa?",
+   "titulo": "Ejercicio 5 de 6",
+   "texto": "Ejercicio 5: Cae la bandera de un jugador. Su rival solo tiene el rey. ¿Resultado?",
    "imagen": "23.webp"
   },
   {
+   "titulo": "Ejercicio 6 de 6",
+   "texto": "Ejercicio 6: El reglamento no dice nada sobre la tolerancia. Un jugador llega 3 minutos tarde. ¿Qué pasa?",
+   "imagen": "24.webp"
+  },
+  {
    "titulo": "Ejercicios: respuestas",
-   "texto": "1. Tiempo base 90:00 e incremento de 30 s por jugada, en ambos lados. Sí: con incremento de 30 segundos o más no se puede dejar de anotar (art. 8.4). 2. Tiempo base 15:00 e incremento de 10 s. 15 + 10 = 25 minutos: rápidas. 3. Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago. 4. Tablas: el rival no puede dar mate por ninguna serie de jugadas legales (art. 6.9). 5. El tiempo de incomparecencia es cero: pierde, salvo que el árbitro decida otra cosa en ese caso puntual (art. 6.7).",
-   "imagen": "24.webp",
+   "texto": "1. Tiempo base 90:00 e incremento de 30 s por jugada, en ambos lados. Sí: con incremento de 30 segundos o más no se puede dejar de anotar (art. 8.4). 2. Tiempo base 15:00 e incremento de 10 s. 15 + 10 = 25 minutos: rápidas. 3. Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago. Es el blitz de la Etapa Nacional de los JDE (Normativa JDE 2026, art. 66.2). 4. Tiempo base 10:00 e incremento de 2 s, en ambos lados. 10 + 2 = 12 minutos: rápidas, así que rige el apéndice A; por ejemplo, la primera jugada ilegal le suma 1 minuto al rival, no 2 (Normativa JDE 2026, art. 66.2.a; Leyes del Ajedrez, A.3). 5. Tablas: el rival no puede dar mate por ninguna serie de jugadas legales (art. 6.9). 6. El tiempo de incomparecencia es cero: pierde, salvo que el árbitro decida otra cosa en ese caso puntual (art. 6.7).",
+   "imagen": "25.webp",
    "notas": "Repasar en plenaria; cada respuesta con su artículo."
   },
   {
    "titulo": "Quiz de la sesión",
    "texto": "1. ¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez? 2. Si a un jugador se le agota el tiempo, ¿qué debe verificar primero la persona árbitra? 3. ¿Qué reloj se pone en marcha al empezar la ronda? 4. ¿Con qué mano se presiona el reloj? 5. En el modo de demora, ¿cuándo empieza a descontarse el tiempo principal? 6. Si el reglamento no fija tiempo de incomparecencia, ¿cuál es? 7. ¿Puede un jugador acomodar sus propias piezas mientras el reloj del rival está en marcha?",
-   "imagen": "25.webp",
+   "imagen": "26.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz de la sesión (continuación)",
    "texto": "8. Con menos de 5 minutos y sin incremento de al menos 30 segundos, ¿está obligado el jugador a seguir anotando? 9. En ritmo clásico con árbitro presente, ¿quién declara la caída de una bandera? 10. Si a mitad de partida se descubre que un reloj estaba mal configurado o tiene un defecto evidente, ¿qué hace el árbitro? 11. ¿Cuándo queda hecha una jugada y cuándo queda completada?",
-   "imagen": "26.webp",
+   "imagen": "27.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz: respuestas",
    "texto": "1. Un tiempo adicional que se suma después de cada jugada. 2. Si el rival tiene material suficiente para dar mate. 3. El de las blancas, esté o no el jugador en la mesa. 4. Con la misma mano con la que se hizo la jugada. 5. Cuando se agota el tiempo fijo de esa jugada. 6. Cero. 7. No, solo puede hacerlo cuando su propio reloj está en marcha. 8. No, puede dejar de anotar. 9. El árbitro, de oficio. 10. Lo corrige o lo reemplaza, y fija los tiempos del reloj con su propio criterio.",
-   "imagen": "27.webp"
+   "imagen": "28.webp"
   },
   {
    "titulo": "Quiz: respuestas (continuación)",
    "texto": "11. Hecha al soltar la pieza; completada al presionar el reloj.",
-   "imagen": "28.webp"
+   "imagen": "29.webp"
   },
   {
    "titulo": "Tarea y cierre",
    "texto": "Tarea para la próxima sesión: Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE. ¿Dudas? Este es el momento. Gracias por tu participación.",
-   "imagen": "29.webp"
+   "imagen": "30.webp"
   }
  ]
 }

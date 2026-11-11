@@ -1331,7 +1331,7 @@
             "Penalizaciones e incidencias relacionadas con el manejo del tiempo."
           ],
           "practica_titulo": "Configuración de un reloj según escenario",
-          "practica": "Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a tres escenarios: partida clásica, rápida y relámpago.",
+          "practica": "Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a cuatro escenarios: partida clásica, rápida, relámpago y el ritmo mínimo de la Etapa Regional de los JDE.",
           "quiz": [
             {
               "pregunta": "¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez?",
@@ -1424,7 +1424,7 @@
             [
               35,
               "Práctica: configurar el reloj por escenario",
-              "Cada participante configura en el simulador los tres escenarios de los ejercicios y resuelve los casos de tiempo. Plenaria."
+              "Cada participante configura en el simulador los cuatro escenarios de los ejercicios y resuelve los casos de tiempo. Plenaria."
             ],
             [
               30,
@@ -1521,7 +1521,11 @@
             },
             {
               "enunciado": "Configura el reloj para relámpago a 3 minutos más 2 segundos. ¿Qué ritmo es?",
-              "respuesta": "Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago."
+              "respuesta": "Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago. Es el blitz de la Etapa Nacional de los JDE (Normativa JDE 2026, art. 66.2)."
+            },
+            {
+              "enunciado": "Configura el reloj con el ritmo mínimo de la Etapa Regional de los JDE: 10 minutos más 2 segundos por jugada. ¿Qué ritmo es según la fórmula y qué apéndice de las Leyes rige?",
+              "respuesta": "Tiempo base 10:00 e incremento de 2 s, en ambos lados. 10 + 2 = 12 minutos: rápidas, así que rige el apéndice A; por ejemplo, la primera jugada ilegal le suma 1 minuto al rival, no 2 (Normativa JDE 2026, art. 66.2.a; Leyes del Ajedrez, A.3)."
             },
             {
               "enunciado": "Cae la bandera de un jugador. Su rival solo tiene el rey. ¿Resultado?",
