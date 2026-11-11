@@ -4434,6 +4434,83 @@ lleva el video 10 segundos antes, para oír lo que se aclara.
   corrección, que viene media hora más tarde.
 - Hoy son 10: 2 en la Sesión I, 3 en la II y 5 en la III.
 
+#### Las preguntas dentro del video
+
+La segunda parte del pedido. Al terminar un tema, **el video se detiene solo**
+y debajo sale una pregunta (`#grabacion-cine-pregunta`, con el foco en ella):
+el texto, el diagrama si trae posición (`js/tablero-fen.js`, con la posición
+escrita para quien no la ve) y las cuatro opciones, A a D. Al tocar una, se
+dice si estuvo bien, cuál era la correcta (escrito: «✓ Correcta» y «✗ Tu
+respuesta», no solo de color) y su fuente; «Seguir viendo ▶» lo pone a correr
+otra vez y «Contestar después» la deja para luego. Debajo de las aclaraciones,
+«❓ Preguntas del video» las lista todas con cómo le fue («✓ Bien», «✗ No»,
+«Sin contestar»): tocar una lleva el video a su segundo, detenido, y la abre.
+
+- **Diez por sesión, del banco ya revisado** (`formacion-ajedrez-kahoot.json`:
+  el Kahoot y las tareas iniciales), sin repetir, cada una puesta DESPUÉS de
+  que el video explicó lo que pregunta (lo comprobó quien leyó cada
+  transcripción; el `por_que` de cada una dice en qué minuto). Ninguna toca lo
+  que el video dice mal (ver arriba). La fuente solo dice el segundo y cuál del
+  banco es; `formacion-grabaciones.js` copia el texto, las opciones y la
+  posición, y reparte el lugar de la correcta entre A, B, C y D.
+- **La correcta no se publica.** `grabacion.json` la sirve el worker a toda
+  cuenta de la Academia; la correcta va a la base (`grabacion_preguntas`, por
+  id de video y número, que solo lee administración) y la corrige
+  `grabacion_pregunta_responder()`, que anota en `grabacion_respuestas`
+  **solo la primera vez** (lo garantiza la llave primaria, no un `if`) y
+  devuelve lo de esa primera vez: volver a contestar no cambia la nota. Por
+  id de video: si se sube otro video, sus preguntas no se le pegan.
+  `node herramientas/formacion-grabaciones.js --sql` escribe las correctas, y
+  verificar-grabacion-interactiva.js compara que la última migración que las
+  carga diga lo mismo que el generador: si alguien cambia una pregunta y no
+  aplica la migración, la base corregiría con la vieja.
+- **Cuándo se detiene**: cuando el video, CORRIENDO, pasa por el segundo de
+  una pregunta que no contestó y que no saltó en esa vista (de una muestra a
+  la siguiente, menos de 5 segundos). Si adelantó por encima, no se le
+  atraviesa: queda en la lista. Lo que ya contestó lo lee de
+  `grabacion_respuestas` al abrir; si esa lectura falla, no salen preguntas
+  (no se le preguntaría otra vez lo ya contestado), y lo demás sí.
+- **Quien administra y el profe de la clase** pueden probarlas: la base les
+  contesta pero no les anota nada, y la página lo dice («Como no eres del
+  taller, tu respuesta no se guarda»).
+- **La ficha Asesores**, debajo de cuánto vio de cada grabación, pone «✓ 8/10»
+  (acertó 8 de las 10, la primera vez) o «❓ 0/10»; el lector de pantalla oye
+  «acertó 8 de 10 preguntas (contestó 9)». Lo arma
+  `asesores_preguntas_video(taller)` (`SECURITY DEFINER`, como
+  `asesores_grabaciones()`); si falla, la ficha sale sin esa línea.
+- La página de privacidad lo dice en «Lo que haces en la plataforma»
+  (versión 2026-11-11). No reparte permisos, accesos ni dinero: sin bitácora.
+
+Migración `20261111140000_grabacion_preguntas` (se pegó en el editor de SQL de
+Supabase porque la confirmación de `apply_migration` no llegó a tiempo; lleva
+su fila en `supabase_migrations.schema_migrations`). Comprobado impersonando
+roles en un bloque que se deshace: la asesora contesta y se anota la primera;
+contestar otra cosa devuelve la primera (`primera_vez: false`); una pregunta
+que no existe, una opción 4 y un día sin grabación dan 22023; no lee las
+correctas (0 filas) y escribir directo da 42501; en la ficha solo ve sus 3
+filas. Un alumno de otra academia no puede contestar (42501) ni lee nada. El
+profe de la clase y quien administra reciben la corrección con `anotada:
+false` y no se les anota nada; administración lee las 30 correctas y la ficha
+entera (93 filas: 31 personas por 3 videos). `anon` no puede llamar ni leer.
+
+Al rehacer el retrato del esquema aparecieron cambios en la base que no están
+en ninguna migración del repositorio (11/11/2026): `academia_ia.alumnos` y
+`ia_para_explicar()`, `ia_explicar_quedan()` e `ia_guardar_alumnos()`, y ya no
+existen las tablas temporales `_foto_rls_tmp` ni `_pedidos_elo`. El retrato
+los refleja (es la base tal cual); su migración la tiene que guardar quien
+los aplicó. Además, `game_state.reloj` estaba fuera de orden en el retrato
+(agregada a mano): quedó donde la pone el script.
+
+`verificar-grabacion-interactiva.js` lo prueba: que el archivo publicado no
+traiga la correcta y que cada pregunta sea igual a la del banco; que la
+migración tenga las correctas del generador; que el video se detenga al pasar
+por su segundo y no si adelantó por encima o ya la contestó; el llamado a la
+base, «no era esa» con la correcta y la fuente, las marcas escritas, el foco,
+«Seguir viendo»; abrirla desde la lista; el diagrama con la posición escrita;
+sin red; quien administra; la lectura que falla; el contraste (de 7,13:1 a
+16,71:1) y el celular. Se rompieron a propósito publicar la correcta y
+detenerse aunque adelantó, y saltaron. La ficha la prueba `verificar-admin.js`.
+
 **Lo que se notó en los videos** (está completo en `avisos` de la fuente):
 
 - Sesión I: en 2:59:01 se dice que la triple repetición y las 50 jugadas son

@@ -1110,6 +1110,8 @@
                 vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
                 alVer: anotarLoVisto,
                 presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
+                responder: responderPreguntaVideo,
+                respuestas: misRespuestasVideo,
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
@@ -1118,6 +1120,24 @@
                     ? "Tu sesión es ahora, hasta las " + T.hora(s.fin)
                     : "Tu próxima sesión es el " + T.dia(s.inicio).toLowerCase() + " a las " + T.hora(s.inicio));
             }
+        }
+
+        /* Las preguntas dentro del video: la base corrige (la correcta solo
+           la sabe ella) y anota la primera vez; devuelve la correcta, lo que
+           contestó esa primera vez y si se anotó. Lo que ya contestó de una
+           grabación se lee de grabacion_respuestas (sus filas: la RLS le da
+           las suyas, y al profe que también es alumno, las de sus clases). Ver
+           «Las preguntas dentro del video» en docs/decisiones/paneles.md. */
+        async function responderPreguntaVideo(g, n, opcion) {
+            const { data, error } = await sb.rpc("grabacion_pregunta_responder", { p_horario: g.horario_id, p_fecha: g.fecha, p_n: n, p_opcion: opcion });
+            if (error) throw error;
+            return data;
+        }
+        async function misRespuestasVideo(g) {
+            const { data, error } = await sb.from("grabacion_respuestas").select("n, elegida, acerto")
+                .eq("horario_id", g.horario_id).eq("fecha", g.fecha).eq("persona_id", profile.id).range(0, 99);
+            if (error) throw error;
+            return data || [];
         }
 
         /* Lo que vio de una grabación: la base lo junta con lo de antes y

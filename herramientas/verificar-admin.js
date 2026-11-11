@@ -273,6 +273,15 @@ window.__consultas = [];
           v("u-ase1", "hs1", "2026-10-12", "Sesión I", 11520, 5760), v("u-ase2", "hs1", "2026-10-12", "Sesión I", 11520, 0),
         ], error: null });
       }
+      /* Las preguntas dentro del video: solo la Sesión I tiene. Ana contestó
+         3 de las 10 y acertó 2; Beto, ninguna. */
+      if (n === "asesores_preguntas_video") {
+        window.__preguntasVideo = (window.__preguntasVideo || []).concat([args]);
+        return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
+          { persona_id: "u-ase1", horario_id: "hs1", fecha: "2026-10-12", total: 10, respondidas: 3, aciertos: 2 },
+          { persona_id: "u-ase2", horario_id: "hs1", fecha: "2026-10-12", total: 10, respondidas: 0, aciertos: 0 },
+        ], error: null });
+      }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
         return Promise.resolve({ data: !!(args && args.p_activa), error: null });
@@ -864,12 +873,14 @@ async function pruebaAsesores(browser) {
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
   igual("las grabaciones, en orden de la sesión y con su nombre para el lector de pantalla", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo thead th")).slice(11).map((th) => [th.textContent, th.getAttribute("aria-label")])),
-    [["▶ I", "Grabación de la Sesión I: cuánto la vio"], ["▶ II", "Grabación de la Sesión II: cuánto la vio"]]);
-  igual("cuánto vio cada uno: el porcentaje y el tiempo, y lo que no vio lo dice escrito", await page.evaluate(() =>
+    [["▶ I", "Grabación de la Sesión I: cuánto la vio y cuántas preguntas acertó"], ["▶ II", "Grabación de la Sesión II: cuánto la vio"]]);
+  igual("las preguntas dentro del video se piden a la base, por taller", await page.evaluate(() => window.__preguntasVideo),
+    [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
+  igual("cuánto vio cada uno (el porcentaje y el tiempo, y lo que no vio lo dice escrito) y, debajo, cuántas preguntas acertó", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(11).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
-    [["50 %1 h 36 min", "<1 %45 s"], ["—No la vio", "—No la vio"]]);
-  igual("y arriba, cuántos empezaron a ver cada una", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[2].textContent),
-    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó. Sesión I: 1 de 2 empezó a verla; Sesión II: 1 de 2.");
+    [["50 %1 h 36 min✓ 2/10, acertó 2 de 10 preguntas (contestó 3)", "<1 %45 s"], ["—No la vio❓ 0/10, no contestó ninguna de sus 10 preguntas", "—No la vio"]]);
+  igual("y arriba, cuántos empezaron a ver cada una y qué quiere decir lo de las preguntas", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[2].textContent),
+    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó, y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10). Sesión I: 1 de 2 empezó a verla; Sesión II: 1 de 2.");
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);
