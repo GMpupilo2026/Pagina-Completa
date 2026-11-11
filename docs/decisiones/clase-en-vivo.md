@@ -2366,6 +2366,22 @@ en otra página.
   quita con lo demás (`limpiarLoDeLaClase`).
 - **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
   `reloj: null`, y sin la columna ese update fallaría entero.
+- **Una situación de árbitro a la vez** («Situación» y «Poner esta situación a
+  todos», en la misma caja del reloj): el profe las pone de a una y a cada
+  alumno le sale **solo el reloj y esa situación**, sin la barra, la guía, los
+  escenarios, los retos ni la lista, para que no se enrede. Va en el mismo
+  `game_state.reloj`, con una llave más: `{id, control, situacion}`, el índice
+  en `ILEGALES`. El CHECK no pide nada sobre llaves de más, así que no hizo
+  falta migración; `RelojPractica.valido` la acepta solo si la situación
+  existe.
+  - **El reloj espera parado hasta «Empezar»**: si arrancara corriendo al
+    llegar, en un relámpago con 26 segundos le caería la bandera mientras lee.
+  - Después de ponerla, la lista del profe pasa sola a la siguiente: para
+    seguir basta volver a presionar.
+  - «Poner el reloj libre con este control» vuelve al reloj con todo.
+  - Lo mide `verificar-reloj-practica.js` con `checkVisibility()`: con la clase
+    puesta en el contenedor, el `display` de los hijos sigue diciendo que se
+    ven.
 - **Jugada ilegal: el asesor ajusta el reloj como árbitro** (tarjeta de abajo,
   `RelojPractica.ILEGALES`). Seis situaciones:
   - primera ilegal en clásica: +2 min al rival (art. 7.5.5);

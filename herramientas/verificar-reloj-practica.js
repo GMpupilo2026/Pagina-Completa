@@ -23,7 +23,11 @@
    9. Hay dos situaciones por ritmo (clásica, rápida, relámpago) además de
       las primeras; en un reloj mal programado se le suma a los DOS, y si no,
       la pista lo dice sin hablar de una ilegal; en un reclamo de tablas
-      equivocado, la pista habla del rival de quien reclamó. */
+      equivocado, la pista habla del rival de quien reclamó.
+  10. Una sola situación (la que pone el profe): se ve solo el reloj y esa
+      situación (medido con checkVisibility), el reloj espera parado hasta
+      «Empezar», se resuelve igual, y al volver al reloj libre vuelve todo.
+      `valido` acepta la situación solo si existe. */
 const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
@@ -199,6 +203,28 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   await corregir({ [P.LM]: 2 });
   v = await comprobar();
   ok(/^¡Bien!/.test(v.texto) && /9\.5\.3/.test(v.texto), `+2:00 a las blancas, sí: «${v.texto.slice(0, 60)}…»`);
+
+  // 10. Una sola situación, la que puso el profe.
+  const ve = (sel) => page.evaluate((q) => { const el = window.__raiz.querySelector(q); return !!el && el.checkVisibility(); }, sel);
+  const iSolo = ILEGALES.findIndex((x) => /reclamo de tablas/.test(x.titulo));
+  ok(await page.evaluate((k) => RelojPractica.valido(RelojPractica.paraMandar(RelojPractica.ILEGALES[k].control, k)), iSolo), "un envío con situación es válido");
+  ok(await page.evaluate(() => !RelojPractica.valido(Object.assign(RelojPractica.paraMandar(RelojPractica.ESCENARIOS[0].control), { situacion: 99 }))), "con una situación que no existe, no");
+  await page.evaluate((k) => window.__reloj.situacion(k), iSolo);
+  ok(await ve(".aparato") && await ve('[data-r="situacion"]') && await ve('[data-r="soloEmpezar"]'), "se ven el reloj, la situación y «Empezar»");
+  ok(!(await ve(".barra")) && !(await ve('[data-r="escenarios"]')) && !(await ve('[data-r="retos"]')) && !(await ve('[data-r="pasos"]')) && !(await ve('[data-r="ilegales"]')),
+    "y nada más: ni la barra, ni la guía, ni escenarios, retos o la lista de situaciones");
+  ok(await page.evaluate((t) => window.__raiz.querySelector('[data-r="tituloI"]').textContent === t, ILEGALES[iSolo].titulo), "el título es el de la situación");
+  ok((await estado()).startsWith("Listo"), `el reloj espera parado hasta «Empezar» (${await estado()})`);
+  v = await comprobar();
+  ok(/Empezar/.test(v.texto) && /alerta/.test(v.clase), `«Comprobar» antes de empezar lo pide: «${v.texto}»`);
+  await clic("soloEmpezar");
+  ok((await estado()).startsWith("En marcha"), `con «Empezar» arranca corriendo (${await estado()})`);
+  await clic("marcha");
+  await corregir({ [P.LM]: 2 });
+  v = await comprobar();
+  ok(/^¡Bien!/.test(v.texto) && /siguiente situación/.test(v.texto), `se resuelve igual, y le dice que espere la siguiente: «${v.texto.slice(-60)}»`);
+  await page.evaluate(() => window.__reloj.situacion(null));
+  ok(await ve(".barra") && await ve('[data-r="ilegales"]') && !(await ve('[data-r="soloEmpezar"]')), "al volver al reloj libre, vuelve todo");
 
   // Cargar un escenario quita la situación en curso.
   await empezar(2);

@@ -131,10 +131,16 @@ window.RelojPractica = (function () {
     }
     function valido(r) {
         return !!(r && typeof r === "object" && !Array.isArray(r)
-            && typeof r.id === "string" && /^[a-z0-9-]{4,40}$/.test(r.id) && validoControl(r.control));
+            && typeof r.id === "string" && /^[a-z0-9-]{4,40}$/.test(r.id) && validoControl(r.control)
+            && (r.situacion === undefined || r.situacion === null || entero(r.situacion, 0, ILEGALES.length - 1)));
     }
-    function paraMandar(control) {
-        return { id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), control: Object.assign({}, control) };
+    /* situacion (opcional): el índice de una situación de ILEGALES. Con ella, a
+       cada alumno le sale SOLO el reloj y esa situación (el profe las pone de a
+       una); sin ella, el reloj libre con todo. */
+    function paraMandar(control, situacion) {
+        const r = { id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), control: Object.assign({}, control) };
+        if (Number.isInteger(situacion)) r.situacion = situacion;
+        return r;
     }
     // Fórmula de 60 jugadas: tiempo base (+ el 2.º período si llega antes de la jugada 60) + 60 × incremento.
     function clasificar(c) {
@@ -171,6 +177,8 @@ window.RelojPractica = (function () {
 :host([data-oscuro]){--fondo:#1c2029;--tinta:#e8ebf1;--suave:#9aa3b3;--linea:#2e3441;--acento:#93a5ff;--acento-tinta:#10142a;--ok:#5fd394;--alerta:#f0a85a;--panel:#252c3f}
 *{box-sizing:border-box}
 .raiz{display:flex;flex-direction:column;gap:12px;outline:none}
+.raiz.solo .barra,.raiz.solo .mesa>.tarjeta:not(.ancha),.raiz.solo .solo-no{display:none}
+.raiz:not(.solo) .solo-si{display:none}
 .raiz:focus-visible{box-shadow:0 0 0 3px var(--acento);border-radius:12px}
 .aparato{width:100%;max-width:760px;margin:0 auto;position:relative;padding-top:clamp(28px,6vw,50px)}
 .atras{position:absolute;top:clamp(14px,3vw,28px);left:3.5%;right:3.5%;height:clamp(56px,10vw,92px);z-index:0;background:linear-gradient(180deg,#4a1518,#5e2025);border-radius:clamp(20px,4vw,34px) clamp(20px,4vw,34px) 0 0}
@@ -323,12 +331,13 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
       <ul data-r="retos"></ul>
     </div>
     <div class="tarjeta ancha">
-      <h3>Situaciones de árbitro: ajusta el reloj</h3>
-      <p class="teclado" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de lo que pasó (una ilegal, un reclamo, un reloj mal programado), y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
-      <ul data-r="ilegales"></ul>
+      <h3 data-r="tituloI">Situaciones de árbitro: ajusta el reloj</h3>
+      <p class="teclado solo-si" style="margin:0">Presiona «Empezar»: el reloj arranca corriendo, justo después de lo que pasó. Detenlo con ▶‖, entra a corrección con ✓, deja los tiempos como dicen las Leyes y presiona «Comprobar el reloj».</p>
+      <p class="teclado solo-no" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de lo que pasó (una ilegal, un reclamo, un reloj mal programado), y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
+      <ul data-r="ilegales" class="solo-no"></ul>
       <div class="situacion" data-r="situacion" hidden>
         <p data-r="sitTexto"></p>
-        <div class="fila"><button class="boton" type="button" data-r="comprobar">Comprobar el reloj</button></div>
+        <div class="fila"><button class="boton solo-si" type="button" data-r="soloEmpezar">Empezar</button><button class="boton" type="button" data-r="comprobar">Comprobar el reloj</button></div>
         <p class="veredicto-i" data-r="veredictoI" role="status" aria-live="polite"></p>
       </div>
     </div>
@@ -374,7 +383,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
 
         let cfg = null; // en milisegundos
         const S = { estado: "listo", t: [0, 0], mv: [0, 0], corre: null, dl: 0, bandera: null, blancas: 0, paso: 0, previo: "listo",
-            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set(), hechosI: new Set(), reto: null };
+            vel: 1, formato: "seg", sonido: false, E: null, C: null, hechos: new Set(), hechosI: new Set(), reto: null, solo: null };
         const desdeControl = (c) => ({ modo: c.modo, base: c.base * 1000, inc: c.inc, dly: c.dly, mv: c.mv, add: c.add * 1000 });
         const aControl = (k) => ({ modo: k.modo, base: Math.round(k.base / 1000), inc: k.inc, dly: k.dly, mv: k.mv, add: Math.round(k.add / 1000) });
         function reiniciar() { S.t = [cfg.base, cfg.base]; S.mv = [0, 0]; S.corre = null; S.dl = 0; S.bandera = null; S.estado = "listo"; S.reto = null; }
@@ -691,8 +700,13 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
                 li.append(c, t, b); ul.appendChild(li);
             });
             const caja = $("situacion");
-            caja.hidden = !S.reto;
-            if (S.reto) $("sitTexto").textContent = "Situación " + (S.reto.i + 1) + ": " + ILEGALES[S.reto.i].situacion + " Las blancas están a la izquierda.";
+            const i = S.solo !== null ? S.solo : (S.reto ? S.reto.i : null);
+            caja.hidden = i === null;
+            if (i !== null) $("sitTexto").textContent = "Situación " + (i + 1) + ": " + ILEGALES[i].situacion + " Las blancas están a la izquierda.";
+            $("tituloI").textContent = S.solo !== null ? ILEGALES[S.solo].titulo : "Situaciones de árbitro: ajusta el reloj";
+            const b = $("soloEmpezar");
+            b.textContent = S.reto ? "Empezar de nuevo" : "Empezar";
+            b.setAttribute("aria-label", b.textContent + (S.solo !== null ? ": " + ILEGALES[S.solo].titulo : ""));
         }
         function empezarIlegal(i) {
             if (!cfg) return;
@@ -708,7 +722,8 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
         }
         const reloj = (s) => { const a = Math.abs(s); return (s < 0 ? "−" : "+") + Math.floor(a / 60) + ":" + pad(a % 60); };
         function comprobarIlegal() {
-            const R = S.reto; if (!R) return;
+            const R = S.reto;
+            if (!R) { if (S.solo !== null) veredictoI("Primero presiona «Empezar»: el reloj arranca corriendo.", "alerta"); return; }
             const r = ILEGALES[R.i];
             if (S.estado === "corregir") { veredictoI("Termina la corrección: sigue confirmando con ✓ hasta el último dato (las jugadas de la derecha).", "alerta"); return; }
             if (!R.foto) {
@@ -725,7 +740,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             const malMv = !r.mv2 && (fin.mv[0] !== R.foto.mv[0] || fin.mv[1] !== R.foto.mv[1]);
             if (bienT && bienM && !malMv) {
                 S.hechosI.add(R.i); guardarHechos(); pintarIlegales();
-                veredictoI("¡Bien! " + r.regla, "ok");
+                veredictoI("¡Bien! " + r.regla + (S.solo !== null ? " Espera la siguiente situación de tu profe." : ""), "ok");
                 return;
             }
             const infractor = 1 - r.corre, rival = r.corre;
@@ -772,6 +787,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
         segmentado("sonido", (v) => { S.sonido = v === "1"; });
         $("reiniciar").addEventListener("click", () => { if (!cfg) return; reiniciar(); pintarIlegales(); aviso("Partida reiniciada con el mismo control."); });
         $("comprobar").addEventListener("click", comprobarIlegal);
+        $("soloEmpezar").addEventListener("click", () => { if (S.solo !== null) empezarIlegal(S.solo); });
         // Tocar el reloj lo selecciona: así sus teclas funcionan sin pisar las del tablero.
         raiz.addEventListener("pointerdown", (e) => { if (!e.target.closest("button")) raiz.focus({ preventScroll: true }); });
         raiz.addEventListener("keydown", (e) => {
@@ -815,10 +831,28 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             reiniciar(); leerHechos(); pintarRetos(); pintarIlegales(); marcarEscenario();
             $("aviso").textContent = "";
         }
+        /* Una sola situación (la que puso el profe): se esconde todo lo demás y el
+           reloj espera parado con su control hasta que el alumno presiona
+           «Empezar», para que no le caiga la bandera mientras lee. null: el
+           reloj libre, con todo. */
+        function situacion(i) {
+            S.solo = Number.isInteger(i) && ILEGALES[i] ? i : null;
+            raiz.classList.toggle("solo", S.solo !== null);
+            if (S.solo !== null) {
+                cfg = desdeControl(ILEGALES[S.solo].control); reiniciar();
+                S.blancas = 0;
+                $("blancas").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === "0")));
+                S.vel = 1;
+                $("velocidad").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === "1")));
+                aviso("Lee lo que pasó y presiona «Empezar».");
+            }
+            veredictoI(""); pintarIlegales(); marcarEscenario();
+        }
         pintarEscenarios(); pintarRetos(); pintarIlegales();
         ciclo = setInterval(cuadro, 50);
         return {
             cargar,
+            situacion,
             destruir() { vivo = false; clearInterval(ciclo); observador.disconnect(); clearTimeout(avisoTimer); },
         };
     }
@@ -848,8 +882,12 @@ function pintarReloj(r) {
     const clave = "clase_reloj_v1:" + (boardOwnerId || "") + ":" + relojActual.id;
     if (!relojMontado) relojMontado = RelojPractica.montar(document.getElementById("reloj-host"), { clave });
     relojMontado.cargar(relojActual.control, clave);
+    const sit = Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
+    relojMontado.situacion(sit);
     if (!isTeacher) {
-        anunciarALaClase("reloj", relojActual.id, "Tu profe puso el reloj de práctica en tu pantalla, arriba del tablero. Es tuyo: configúralo con sus botones y ponlo en marcha con la palanca.");
+        anunciarALaClase("reloj", relojActual.id, sit !== null
+            ? "Tu profe te puso una situación de árbitro arriba del tablero: lee qué pasó, presiona «Empezar» y ajusta el reloj."
+            : "Tu profe puso el reloj de práctica en tu pantalla, arriba del tablero. Es tuyo: configúralo con sus botones y ponlo en marcha con la palanca.");
     }
 }
 
@@ -878,6 +916,15 @@ async function cargarRelojProfe() {
             sel.appendChild(o);
         });
     }
+    const selS = document.getElementById("reloj-sit-select");
+    if (selS && !selS.options.length) {
+        RelojPractica.ILEGALES.forEach((r, k) => {
+            const o = document.createElement("option");
+            o.value = String(k);
+            o.textContent = (k + 1) + ". " + r.titulo;
+            selS.appendChild(o);
+        });
+    }
     caja.hidden = false;
     pintarRelojProfe();
 }
@@ -886,11 +933,16 @@ function pintarRelojProfe() {
     const quitar = document.getElementById("reloj-quitar-btn");
     if (!quitar) return;
     const hay = isTeacher && !!relojActual;
+    const sit = hay && Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
     quitar.hidden = !hay;
-    document.getElementById("reloj-mandar-btn").textContent = hay ? "Ponerlo de nuevo con este control (todos arrancan de cero)" : "Poner el reloj en la clase";
-    document.getElementById("reloj-enviado").textContent = hay
-        ? "Puesto en la clase: " + RelojPractica.clasificar(relojActual.control).ritmo + " · cada alumno lo ve arriba del tablero y maneja el suyo."
-        : "";
+    document.getElementById("reloj-mandar-btn").textContent = !hay ? "Poner el reloj en la clase"
+        : (sit !== null ? "Poner el reloj libre con este control" : "Ponerlo de nuevo con este control (todos arrancan de cero)");
+    document.getElementById("reloj-enviado").textContent = !hay ? ""
+        : sit !== null
+            ? "Puesta en la clase: situación " + (sit + 1) + " de " + RelojPractica.ILEGALES.length + " · " + RelojPractica.ILEGALES[sit].titulo + ". Cada alumno ve solo el reloj y esa situación."
+            : "Puesto en la clase: " + RelojPractica.clasificar(relojActual.control).ritmo + " · cada alumno lo ve arriba del tablero y maneja el suyo.";
+    const btnS = document.getElementById("reloj-sit-btn");
+    if (btnS) btnS.textContent = sit !== null ? "Poner esta situación (cambia la de todos)" : "Poner esta situación a todos";
 }
 
 async function mandarReloj() {
@@ -907,6 +959,25 @@ async function mandarReloj() {
     pintarReloj(data && data.reloj ? data.reloj : nuevo);
 }
 
+/* Una situación de árbitro para todos: el reloj con su control y nada más.
+   Después de ponerla, la lista pasa a la siguiente: para seguir, basta volver
+   a presionar. */
+async function mandarSituacion() {
+    const aviso = document.getElementById("reloj-aviso");
+    const sel = document.getElementById("reloj-sit-select");
+    const k = parseInt(sel.value, 10);
+    const r = RelojPractica.ILEGALES[k];
+    if (!r || !myGameStateId) return;
+    const nuevo = RelojPractica.paraMandar(r.control, k);
+    if (!RelojPractica.valido(nuevo)) { aviso.textContent = "Esa situación no tiene la forma que la base acepta."; return; }
+    aviso.textContent = "Poniendo la situación…";
+    const { data, error } = await sb.from("game_state").update({ reloj: nuevo }).eq("id", myGameStateId).select("reloj").single();
+    if (error) { console.error(error); aviso.textContent = "No se pudo poner la situación. Vuelve a intentarlo."; return; }
+    aviso.textContent = "";
+    if (k + 1 < sel.options.length) sel.value = String(k + 1);
+    pintarReloj(data && data.reloj ? data.reloj : nuevo);
+}
+
 async function quitarReloj() {
     const aviso = document.getElementById("reloj-aviso");
     const { error } = await sb.from("game_state").update({ reloj: null }).eq("id", myGameStateId);
@@ -919,6 +990,7 @@ if (document.getElementById("reloj-tarjeta")) {
     const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
     on("reloj-mandar-btn", () => mandarReloj());
     on("reloj-quitar-btn", () => quitarReloj());
+    on("reloj-sit-btn", () => mandarSituacion());
 }
 
 /*! rev bfb5bbb0d2d82f9f */
