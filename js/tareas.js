@@ -118,11 +118,14 @@ async function traerTodo(consulta) {
 }
 // ---------- Vista profesor: los alumnos ----------
 async function cargarAlumnos() {
-    const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
+    const { data, error } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
+    /* Con un error, «Todavía no tienes alumnos» mentía (o salían solo los
+       primeros mil, si falló la segunda página): se dice que falló. */
+    if (error) Avisos.avisar("No se pudo cargar la lista completa de alumnos: " + error.message + ". Recarga la página.", { tipo: "error" });
     alumnosDisponibles = window.AlumnosMios ? await AlumnosMios.sumarProfesores(sb, data || []) : (data || []);
     const cont = document.getElementById("lista-alumnos");
     cont.innerHTML = "";
-    document.getElementById("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);
+    document.getElementById("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length || !!error);
     alumnosDisponibles.forEach((a) => {
         const label = document.createElement("label");
         label.className = "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white dark:hover:bg-brand-900 cursor-pointer";

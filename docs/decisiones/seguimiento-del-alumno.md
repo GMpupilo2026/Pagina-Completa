@@ -1039,7 +1039,11 @@ Salen de bancos que ya estaban verificados, vía `js/examen-banco.js`:
   preguntas "sobre un tema de un curso": `AREAS_DEL_CURSO` dice qué áreas cubre
   cada curso, y es una decisión editorial escrita, no deducida. Un curso que no
   esté ahí **lo dice** en vez de devolver un examen vacío.
-- **`js/arbitraje-items.js`** — 200 de reglamento.
+- **`js/arbitraje-items.js`** — 200 de reglamento. `examenes.html` no lo trae
+  en el HTML: lo pide al elegir «Reglamento (arbitraje)» en un bloque
+  (387 KB que antes bajaba cada visita) y, al llegar, borra la previsión,
+  cuya clave son los bloques y no cambió. `verificar-examenes.js` comprueba
+  que no venga antes y que las preguntas aparezcan igual.
 - **`js/aperturas-lineas.js`** — las 40 líneas, para "ejecuta la italiana de
   una vez": el rival contesta solo y el alumno da sus jugadas **sin pistas y
   sin deshacer**. Es la misma línea que en `entreno/aperturas.html` se practica

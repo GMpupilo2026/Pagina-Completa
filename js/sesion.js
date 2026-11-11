@@ -1813,7 +1813,21 @@
         }
 
         async function checkOpenClassSession() {
-            const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+            /* Un error NO es «no hay clase»: tratarlo así no marcaba la
+               asistencia ni empezaba a contar la presencia, y el aviso de
+               Realtime de que se abrió no vuelve a llegar porque la clase ya
+               estaba abierta. Se reintenta unas veces, y si sigue fallando se
+               dice, para que recargue. */
+            let data = null, error = null;
+            for (let intento = 0; intento < 4; intento++) {
+                if (intento) await new Promise((listo) => setTimeout(listo, 2000 * 2 ** (intento - 1)));
+                ({ data, error } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1));
+                if (!error) break;
+            }
+            if (error) {
+                Avisos.avisar("No se pudo saber si la clase está abierta, así que tu asistencia todavía no quedó registrada. Recarga la página.", { tipo: "error" });
+                return;
+            }
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
             currentOpenSessionStartedAt = openSession ? openSession.started_at || null : null;
