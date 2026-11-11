@@ -2366,6 +2366,61 @@ en otra página.
   quita con lo demás (`limpiarLoDeLaClase`).
 - **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
   `reloj: null`, y sin la columna ese update fallaría entero.
+- **El control con que arranca: de la lista o personalizado.** La lista
+  (`ESCENARIOS`) trae también demora (delay) en los tres ritmos: 90 · d5,
+  25 · d5, 10 · d5 y 5 · d3. Al final, «Personalizado»: el profe elige el
+  modo (sin incremento, Fischer, demora o por períodos) y los tiempos; se ven
+  solo los campos de ese modo (los mismos de `MODOS[].campos`, que pide el
+  reloj al configurarlo) y abajo cómo queda, con el ritmo y la fórmula de 60
+  jugadas. Con tiempo base cero, o un dato fuera de rango, lo dice y no manda
+  nada. Las filas que se esconden no llevan la clase `flex`: en Tailwind una
+  clase de `display` le gana al atributo `hidden`, y la fila seguiría ahí
+  (por eso `verificar-reloj-situaciones-profe.js` monta la caja real de
+  `sesion.html` con el CSS de verdad y mide con `checkVisibility()`).
+- **Una situación de árbitro a la vez** («Situación» y «Poner esta situación a
+  todos», en la misma caja del reloj): el profe las pone de a una y a cada
+  alumno le sale **solo el reloj y esa situación**, sin la barra, la guía, los
+  escenarios, los retos ni la lista, para que no se enrede. Va en el mismo
+  `game_state.reloj`, con una llave más: `{id, control, situacion}`, el índice
+  en `ILEGALES`. El CHECK no pide nada sobre llaves de más, así que no hizo
+  falta migración; `RelojPractica.valido` la acepta solo si la situación
+  existe.
+  - **El reloj espera parado hasta «Empezar»**: si arrancara corriendo al
+    llegar, en un relámpago con 26 segundos le caería la bandera mientras lee.
+  - Después de ponerla, la lista del profe pasa sola a la siguiente: para
+    seguir basta volver a presionar.
+  - «Poner el reloj libre con este control» vuelve al reloj con todo.
+  - Lo mide `verificar-reloj-practica.js` con `checkVisibility()`: con la clase
+    puesta en el contenedor, el `display` de los hijos sigue diciendo que se
+    ven.
+- **Cómo van** (debajo de «Poner esta situación a todos»): un cuadro alumno ×
+  situación con lo de las últimas 12 horas de esta clase: «✓ a la primera»,
+  «✓ en el intento N», «✗ N intentos» o «—», y arriba cuántos ya resolvieron
+  la que está puesta. Se pone al día solo cada 10 s mientras haya una
+  situación puesta y la caja esté abierta (sin `aria-live`: un lector de
+  pantalla lo leería entero cada vez), y con «Actualizar».
+  - **Cada «Comprobar» del alumno se anota** en `reloj_situaciones` con
+    `reloj_situacion_intento(envío, situación, logrado)`: una fila por alumno
+    y envío, con los intentos y en cuál salió (`logrado_en`). La función exige
+    que la situación siga puesta en `game_state.reloj` de un profe suyo
+    (`es_mi_profesor`) y que quien anota sea alumno; nadie escribe la tabla
+    directo, y la lee el dueño de la clase o administración, como
+    `practica_respuestas`. Migración `20261111055900_reloj_situaciones.sql`;
+    se comprobó impersonando en SQL: el alumno anota solo en la situación
+    puesta, no lee la tabla, el profe la lee y no anota, sin sesión nada.
+  - **Lo juzga el navegador del alumno**, a propósito: la respuesta de cada
+    situación ya viaja en `js/clase-reloj.js` (no hay clave que esconder, como
+    en `practica_claves`), así que comprobarla en la base no le quitaría nada a
+    quien haga trampa desde la consola; solo se engañaría a sí mismo.
+  - Solo se cuenta lo comprobado en la situación que puso el profe y después
+    de «Empezar»; en el reloj libre, nada (`alComprobar` de `montar`).
+  - Si la misma situación se puso dos veces, el cuadro suma los intentos de
+    los dos envíos: falló 2 en el primero y salió al 1.º del segundo es «en el
+    intento 3».
+  - Lo revisa `verificar-reloj-situaciones-profe.js`, con un doble de Supabase
+    que filtra en el resolver: lo que manda el profe, que el alumno anote con
+    el envío y la situación de la clase (y el profe y quien observa no), y el
+    cuadro, con los nombres por `textContent`.
 - **Jugada ilegal: el asesor ajusta el reloj como árbitro** (tarjeta de abajo,
   `RelojPractica.ILEGALES`). Seis situaciones:
   - primera ilegal en clásica: +2 min al rival (art. 7.5.5);
