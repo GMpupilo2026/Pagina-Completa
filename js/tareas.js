@@ -294,6 +294,7 @@ function agregarRenglon() {
         div.remove();
         actualizarQuitar();
         proponerTitulo();
+        pintarDirecciones();
     });
 
     document.getElementById("renglones").appendChild(div);
@@ -360,6 +361,7 @@ async function refrescarRenglon(div, cambioMaterial) {
                     o.textContent = r.detalle ? `${r.label} (${r.detalle})` : r.total > 1 ? `${r.label} (${r.total})` : r.label;
                     o.dataset.total = String(r.total || 0);
                     o.dataset.label = r.label;
+                    o.dataset.grupo = r.grupo || "";
                     o.dataset.actividades = JSON.stringify(r.actividades || []);
                     cont.appendChild(o);
                 });
@@ -425,6 +427,36 @@ async function refrescarRenglon(div, cambioMaterial) {
 function pintarFrase(div) {
     const r = leerRenglon(div);
     div.querySelector(".r-frase").textContent = r ? fraseDe(r) : "";
+    pintarDirecciones();
+}
+
+/* A qué dirección del entrenamiento va cada renglón (aperturas, finales,
+   ejercicios…) y cómo queda repartida la tarea entera, mientras se arma. No
+   se guarda: se deduce del material y el recorte (js/direcciones-entrenamiento.js).
+   Las fichas de Estudio la sacan del grupo de la ficha. */
+function grupoDelRecorte(div) {
+    const opc = div.querySelector(".r-recorte").selectedOptions[0];
+    return opc ? (opc.dataset.grupo || "") : "";
+}
+function pintarDirecciones() {
+    if (!window.DireccionesEntrenamiento) return;
+    const lista = [];
+    document.querySelectorAll("#renglones .renglon").forEach((div) => {
+        const r = leerRenglon(div);
+        const grupo = grupoDelRecorte(div);
+        const d = r ? DireccionesEntrenamiento.deRenglon(r, grupo) : null;
+        const p = div.querySelector(".r-direccion");
+        if (p) p.textContent = !r ? "" : d ? "Dirección: " + d.nombre : "Dirección: varias (no entra en el reparto)";
+        if (r) lista.push({ renglon: r, grupo });
+    });
+    const caja = document.getElementById("reparto-tarea");
+    if (!caja) return;
+    const c = DireccionesEntrenamiento.contarRenglones(lista);
+    const partes = c.direcciones.map((d) => `${d.nombre}: ${d.renglones}`);
+    if (c.sin) partes.push(`varias: ${c.sin}`);
+    // Con un solo renglón el reparto es el renglón mismo: no se repite.
+    caja.textContent = lista.length > 1 && partes.length ? "Reparto de esta tarea por dirección del entrenamiento: " + partes.join(" · ") + "." : "";
+    caja.classList.toggle("hidden", !caja.textContent);
 }
 
 function leerRenglon(div) {
