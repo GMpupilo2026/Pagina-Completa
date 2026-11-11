@@ -313,6 +313,22 @@
     "En 1:01:01 se dice que el asistente de un jugador puede ser «alguien del público» o cualquier persona de confianza del árbitro; la FIDE dice que lo aporta el jugador y debe ser aceptable para el árbitro (lámina 15). Matiz menor.",
     "La pregunta sesiones[0][15] (celular en el bolsillo) agrega «salvo que el reglamento fije algo menos severo», que no se dijo en el video; no lo contradice.",
     "La pregunta sobre árbitros de juego limpio (0:29:31) y la respuesta «todo tiene que llegar al principal» no tienen pregunta en el banco; tampoco la parte de público y gradería (0:33:51-0:46:00)."
+   ],
+   "aclaraciones": [
+    {
+     "t": 7021,
+     "avatar": "arbitro",
+     "titulo": "La jugada ilegal: el tiempo es para el rival",
+     "texto": "La jugada ilegal no se castiga sumándole tiempo a quien la hizo: se restablece la posición y se le suman 2 minutos al RIVAL (1 minuto en rápidas y relámpago). Se corrige más adelante en este mismo video.",
+     "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+    },
+    {
+     "t": 10741,
+     "avatar": "arbitro",
+     "titulo": "Triple repetición y 50 jugadas: se reclaman",
+     "texto": "La triple repetición y las 50 jugadas no terminan solas la partida: las reclama el jugador que tiene el turno. La persona árbitra interviene por su cuenta solo con la quíntuple repetición o las 75 jugadas.",
+     "fuente": "Leyes de la FIDE, art. 9.2, 9.3 y 9.6; lámina 29"
+    }
    ]
   },
   {
@@ -709,6 +725,29 @@
     "Imprecisión (1:25:20): «si usted dura 50 movimientos sin ganar es un empate». La regla de las 50 jugadas cuenta jugadas sin captura ni movimiento de peón y las tablas hay que reclamarlas (son automáticas a las 75).",
     "Imprecisión (2:20:10): el ritmo mínimo de la fase regional se dice como «10 minutos con 2 segundos» y enseguida como «10 minutos 10 segundos».",
     "Caso 5 (2:59:30): el expositor agrega que, si no hay partidas en juego cerca, el árbitro puede permitir el análisis en orden y en silencio. No contradice la lámina ni sesiones[1][14], que hablan de mesas que siguen jugando."
+   ],
+   "aclaraciones": [
+    {
+     "t": 5120,
+     "avatar": "arbitro",
+     "titulo": "Las 50 jugadas: cómo se cuentan",
+     "texto": "Son 50 jugadas de cada jugador sin ninguna captura ni movimiento de peón, no «50 movimientos sin ganar». Y esas tablas hay que reclamarlas; son automáticas recién a las 75.",
+     "fuente": "Leyes de la FIDE, art. 9.3 y 9.6"
+    },
+    {
+     "t": 6240,
+     "avatar": "arbitro",
+     "titulo": "La jugada ilegal: 2 minutos o 1",
+     "texto": "Los 2 minutos para el rival son del ritmo clásico. En rápidas y relámpago, como en las etapas regional e interregional de los JDE, es 1 minuto. Se aclara más adelante en este video.",
+     "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+    },
+    {
+     "t": 9510,
+     "avatar": "arbitro",
+     "titulo": "Salir de la zona de juego",
+     "texto": "Salir de la zona de juego sin permiso está prohibido, pero no hace perder la partida por sí solo: la sanción la decide la persona árbitra o la fija el reglamento del torneo.",
+     "fuente": "Leyes de la FIDE, art. 11.2.3 y 12.9"
+    }
    ]
   },
   {
@@ -1138,6 +1177,43 @@
     "Receso de 0:59:30 a 1:08:37 sin exposición (se anunciaron 7 minutos y fueron unos 9).",
     "Solo se oye el micrófono del expositor: las preguntas y respuestas de los participantes no quedaron en el audio (silencios largos, por ejemplo 0:23:33-0:24:31, 0:27:37-0:29:06, 0:36:55-0:38:48, 3:03:30-3:04:19 y 3:12:37-3:13:56), así que en el quiz en vivo no se oye qué contestaron.",
     "El orden real no sigue el cronograma de la lámina 4: un solo receso, la normativa JDE empieza a la 1:14:18, la práctica integradora se reemplazó en buena parte por la demostración de herramientas y la sesión termina a las 3:49 sin la tarea leída (la lámina 74 aparece a las 3:47:20)."
+   ],
+   "aclaraciones": [
+    {
+     "t": 2737,
+     "avatar": "atencion",
+     "titulo": "La tabla cruzada sí está bien",
+     "texto": "La tabla de la lámina está bien puesta: en cada ronda, el número es el número inicial del rival (5 = Lucía), no su puesto en la clasificación.",
+     "fuente": "Lámina 10"
+    },
+    {
+     "t": 5380,
+     "avatar": "arbitro",
+     "titulo": "Etapa Nacional: suizo o todos contra todos",
+     "texto": "La Normativa dice suizo con más de siete y todos contra todos con seis o menos. Con siete exactos no dice nada: se acuerda en el congresillo y queda en el acta.",
+     "fuente": "Normativa JDE 66.2.d, 66.2.e y art. 34; lámina 18"
+    },
+    {
+     "t": 10630,
+     "avatar": "atencion",
+     "titulo": "Rondas de un suizo con 100 jugadores",
+     "texto": "Con 100 jugadores, la regla de la lámina 25 da al menos 7 rondas (2 elevado a 7 es 128, que ya pasa de 100), y conviene sumar una o dos más para separar bien los primeros puestos.",
+     "fuente": "Lámina 25"
+    },
+    {
+     "t": 11772,
+     "avatar": "atencion",
+     "titulo": "El ejercicio 7 es de todos contra todos",
+     "texto": "El ejercicio 7 es de todos contra todos, no de suizo: con 10 jugadores son 9 rondas y 45 partidas; con 9, también 9 rondas (en cada una descansa alguien) y 36 partidas.",
+     "fuente": "Lámina 65"
+    },
+    {
+     "t": 13038,
+     "avatar": "arbitro",
+     "titulo": "Tablero mal orientado en rápidas",
+     "texto": "Ojo: en rápidas o relámpago SIN supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admite el reclamo por el tablero mal orientado. Corregirlo en cualquier momento vale con supervisión adecuada.",
+     "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
+    }
    ]
   }
  ]

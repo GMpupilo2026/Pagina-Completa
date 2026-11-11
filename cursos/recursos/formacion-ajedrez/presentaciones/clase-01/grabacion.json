@@ -220,5 +220,21 @@
    "t": 10981,
    "lamina": 51
   }
+ ],
+ "aclaraciones": [
+  {
+   "t": 7021,
+   "avatar": "arbitro",
+   "titulo": "La jugada ilegal: el tiempo es para el rival",
+   "texto": "La jugada ilegal no se castiga sumándole tiempo a quien la hizo: se restablece la posición y se le suman 2 minutos al RIVAL (1 minuto en rápidas y relámpago). Se corrige más adelante en este mismo video.",
+   "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+  },
+  {
+   "t": 10741,
+   "avatar": "arbitro",
+   "titulo": "Triple repetición y 50 jugadas: se reclaman",
+   "texto": "La triple repetición y las 50 jugadas no terminan solas la partida: las reclama el jugador que tiene el turno. La persona árbitra interviene por su cuenta solo con la quíntuple repetición o las 75 jugadas.",
+   "fuente": "Leyes de la FIDE, art. 9.2, 9.3 y 9.6; lámina 29"
+  }
  ]
 }

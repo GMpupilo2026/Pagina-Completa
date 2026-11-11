@@ -306,5 +306,28 @@
    "t": 14252,
    "lamina": 37
   }
+ ],
+ "aclaraciones": [
+  {
+   "t": 5120,
+   "avatar": "arbitro",
+   "titulo": "Las 50 jugadas: cómo se cuentan",
+   "texto": "Son 50 jugadas de cada jugador sin ninguna captura ni movimiento de peón, no «50 movimientos sin ganar». Y esas tablas hay que reclamarlas; son automáticas recién a las 75.",
+   "fuente": "Leyes de la FIDE, art. 9.3 y 9.6"
+  },
+  {
+   "t": 6240,
+   "avatar": "arbitro",
+   "titulo": "La jugada ilegal: 2 minutos o 1",
+   "texto": "Los 2 minutos para el rival son del ritmo clásico. En rápidas y relámpago, como en las etapas regional e interregional de los JDE, es 1 minuto. Se aclara más adelante en este video.",
+   "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+  },
+  {
+   "t": 9510,
+   "avatar": "arbitro",
+   "titulo": "Salir de la zona de juego",
+   "texto": "Salir de la zona de juego sin permiso está prohibido, pero no hace perder la partida por sí solo: la sanción la decide la persona árbitra o la fija el reglamento del torneo.",
+   "fuente": "Leyes de la FIDE, art. 11.2.3 y 12.9"
+  }
  ]
 }

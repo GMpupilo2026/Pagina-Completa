@@ -336,5 +336,42 @@
    "t": 13640,
    "lamina": 74
   }
+ ],
+ "aclaraciones": [
+  {
+   "t": 2737,
+   "avatar": "atencion",
+   "titulo": "La tabla cruzada sí está bien",
+   "texto": "La tabla de la lámina está bien puesta: en cada ronda, el número es el número inicial del rival (5 = Lucía), no su puesto en la clasificación.",
+   "fuente": "Lámina 10"
+  },
+  {
+   "t": 5380,
+   "avatar": "arbitro",
+   "titulo": "Etapa Nacional: suizo o todos contra todos",
+   "texto": "La Normativa dice suizo con más de siete y todos contra todos con seis o menos. Con siete exactos no dice nada: se acuerda en el congresillo y queda en el acta.",
+   "fuente": "Normativa JDE 66.2.d, 66.2.e y art. 34; lámina 18"
+  },
+  {
+   "t": 10630,
+   "avatar": "atencion",
+   "titulo": "Rondas de un suizo con 100 jugadores",
+   "texto": "Con 100 jugadores, la regla de la lámina 25 da al menos 7 rondas (2 elevado a 7 es 128, que ya pasa de 100), y conviene sumar una o dos más para separar bien los primeros puestos.",
+   "fuente": "Lámina 25"
+  },
+  {
+   "t": 11772,
+   "avatar": "atencion",
+   "titulo": "El ejercicio 7 es de todos contra todos",
+   "texto": "El ejercicio 7 es de todos contra todos, no de suizo: con 10 jugadores son 9 rondas y 45 partidas; con 9, también 9 rondas (en cada una descansa alguien) y 36 partidas.",
+   "fuente": "Lámina 65"
+  },
+  {
+   "t": 13038,
+   "avatar": "arbitro",
+   "titulo": "Tablero mal orientado en rápidas",
+   "texto": "Ojo: en rápidas o relámpago SIN supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admite el reclamo por el tablero mal orientado. Corregirlo en cualquier momento vale con supervisión adecuada.",
+   "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
+  }
  ]
 }

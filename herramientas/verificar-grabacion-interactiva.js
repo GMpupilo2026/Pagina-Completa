@@ -15,6 +15,9 @@
  *    siguen pintando sobre la nueva.
  *  - La lámina no sigue al video, el capítulo marcado no es el que corre, o
  *    tocar un capítulo no mueve el video.
+ *  - Una aclaración del profe (lo que el video dice mal) no sale en su minuto,
+ *    sale sin su fuente o con un dibujo del avatar que no existe, se queda
+ *    pegada, o no se dice en voz.
  *  - Sin el archivo o sin acceso al curso (el worker contesta 403), el video
  *    deja de verse.
  *
@@ -55,9 +58,10 @@ function pruebaArchivos() {
   igual("las tres sesiones grabadas tienen capítulos", fuente.sesiones.map((s) => s.presentacion), ["clase-01", "clase-02", "clase-03"]);
   for (const s of fuente.sesiones) {
     const publicado = fs.readFileSync(path.join(PRES, s.presentacion, "grabacion.json"), "utf8");
-    cierto(`${s.presentacion}: el archivo publicado no trae ningún id de YouTube`, !/youtube|youtu\.be|"[A-Za-z0-9_-]{11}"/.test(publicado.replace(/"(_comentario|duracion|capitulos|laminas|titulo|lamina)"/g, "")));
+    cierto(`${s.presentacion}: el archivo publicado no trae ningún id de YouTube`, !/youtube|youtu\.be|"[A-Za-z0-9_-]{11}"/.test(publicado.replace(/"(_comentario|duracion|capitulos|laminas|aclaraciones|titulo|lamina|avatar|texto|fuente)"/g, "")));
     const g = JSON.parse(publicado);
-    igual(`${s.presentacion}: lleva solo duración, capítulos y láminas`, Object.keys(g), ["_comentario", "duracion", "capitulos", "laminas"]);
+    igual(`${s.presentacion}: lleva solo duración, capítulos, láminas y aclaraciones`, Object.keys(g), ["_comentario", "duracion", "capitulos", "laminas", "aclaraciones"]);
+    cierto(`${s.presentacion}: cada aclaración del profe trae su fuente y un dibujo que existe`, g.aclaraciones.length > 0 && g.aclaraciones.every((a) => a.fuente && fs.existsSync(path.join(RAIZ, "img/avatar-profe-oscar", a.avatar + ".webp"))));
     cierto(`${s.presentacion}: entre 6 y 20 capítulos (${g.capitulos.length}) y una lámina cada tanto (${g.laminas.length})`, g.capitulos.length >= 6 && g.capitulos.length <= 20 && g.laminas.length >= 10);
   }
 
@@ -78,6 +82,8 @@ function pruebaArchivos() {
   rompe("capítulos fuera de orden", (s) => { s.capitulos[2].t = s.capitulos[1].t; });
   rompe("una lámina que no existe", (s) => { s.laminas[3].lamina = 999; });
   rompe("el primer capítulo que no empieza en 0", (s) => { s.capitulos[0].t = 30; });
+  rompe("una aclaración con un avatar que no existe", (s) => { s.aclaraciones[0].avatar = "no-existe"; });
+  rompe("una aclaración sin fuente", (s) => { s.aclaraciones[0].fuente = ""; });
 }
 
 /* El doble de Supabase: lo justo para que el panel pinte las grabaciones. */
@@ -285,10 +291,42 @@ async function pruebaCine(browser) {
   await ponerEn(page, 0);
   igual("al principio, «Lámina anterior» va apagada", await page.$eval("#grabacion-cine-lamina-antes", (b) => b.disabled), true);
 
+  // Las aclaraciones del profe: la tarjeta con el avatar en el minuto justo.
+  const a = g1.aclaraciones[0];
+  const tarjeta = () => page.evaluate(() => {
+    const t = document.getElementById("grabacion-cine-aclaracion"), i = document.getElementById("grabacion-cine-aclaracion-avatar");
+    return { ve: !!t && t.checkVisibility(), avatar: i && i.getAttribute("src"), alt: i && i.alt, texto: t ? t.innerText : "",
+      voz: (document.getElementById("grabacion-cine-aclaracion-voz") || {}).textContent, vivo: (document.getElementById("grabacion-cine-aclaracion-voz") || { getAttribute() {} }).getAttribute("aria-live") };
+  });
+  await ponerEn(page, a.t - 20);
+  igual("antes del minuto, la aclaración no sale", (await tarjeta()).ve, false);
+  await ponerEn(page, a.t + 5);
+  let ta = await tarjeta();
+  const av = await page.evaluate((id) => AvatarProfeOscar.porId(id), a.avatar);
+  igual("en el minuto en que el video lo dice, sale con el avatar del profe", [ta.ve, ta.avatar, ta.alt], [true, "img/avatar-profe-oscar/" + a.avatar + ".webp", av.alt]);
+  cierto("con la regla buena y su fuente, escritas", ta.texto.includes(a.titulo) && ta.texto.includes(a.texto) && ta.texto.includes("Fuente: " + a.fuente), ta.texto);
+  igual("y se dice en voz (región viva)", [ta.vivo, ta.voz], ["polite", "Aclaración del profe: " + a.titulo + ". " + a.texto]);
+  await page.waitForFunction(() => { const i = document.getElementById("grabacion-cine-aclaracion-avatar"); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
+  cierto("el dibujo carga de verdad", await page.$eval("#grabacion-cine-aclaracion-avatar", (i) => i.naturalWidth > 0));
+  const cA = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-aclaracion-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-aclaracion p"),
+    await page.evaluate(contrasteEnPagina, "#grabacion-cine-aclaracion p:last-child")];
+  cierto("contraste de la tarjeta ≥ 4,5: " + cA.join(", "), cA.every((v) => v >= 4.5));
+  await ponerEn(page, a.t + 125);
+  igual("dos minutos después se va", (await tarjeta()).ve, false);
+  igual("abajo, la lista de todas las aclaraciones de la sesión", await page.$$eval("#grabacion-cine-aclaraciones button", (bs) => bs.map((b) => Number(b.dataset.aclaracion))), g1.aclaraciones.map((x) => x.t));
+  const a2 = g1.aclaraciones[1];
+  await page.click(`#grabacion-cine-aclaraciones button[data-aclaracion="${a2.t}"]`);
+  await page.waitForTimeout(250);
+  igual("tocar una lleva el video 10 segundos antes, para oír lo que se aclara", (await reproductor(page).evaluate(() => window.__ordenes.slice())).slice(-2)[0], "seekTo:" + (a2.t - 10) + ",true");
+  await ponerEn(page, a2.t + 1);
+  igual("y ahí sale su tarjeta", (await tarjeta()).texto.includes(a2.titulo), true);
+  await ponerEn(page, 0);
+
   // Contraste, medido contra el fondo real (el modo cine es oscuro siempre).
   const medidas = {};
   for (const sel of ["#grabacion-cine-lamina-cual", "#grabacion-cine-capitulos-titulo", '#grabacion-cine-capitulos button[aria-current="true"] > span:first-child',
-    '#grabacion-cine-capitulos button[aria-current="true"] > span:last-child', "#grabacion-cine-capitulos li:last-child button > span:nth-child(3)", "#grabacion-cine-lamina-despues"]) {
+    '#grabacion-cine-capitulos button[aria-current="true"] > span:last-child', "#grabacion-cine-capitulos li:last-child button > span:nth-child(3)", "#grabacion-cine-lamina-despues",
+    "#grabacion-cine-aclaraciones-titulo", "#grabacion-cine-aclaraciones li button > span:nth-child(3)"]) {
     medidas[sel] = await page.evaluate(contrasteEnPagina, sel);
   }
   cierto("contraste ≥ 4,5 de todo el texto nuevo: " + Object.values(medidas).join(", "), Object.values(medidas).every((v) => v >= 4.5), JSON.stringify(medidas));

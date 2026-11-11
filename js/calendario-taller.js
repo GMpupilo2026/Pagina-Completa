@@ -587,8 +587,15 @@ window.CalendarioTaller = (function () {
        como visto, igual que adelantar. Los minutos son de ESE video: si la
        duración de la grabación no es la del archivo (se subió otra), no se
        pone nada, porque los capítulos caerían en cualquier parte. Sin el
-       archivo o sin acceso, el video se ve igual que siempre. */
+       archivo o sin acceso, el video se ve igual que siempre.
+       Las aclaraciones del profe: en el minuto en que el video dice algo
+       que no es así, sale arriba una tarjeta con el avatar del profe Oscar
+       (js/avatar-profe-oscar.js), la regla buena y su fuente, y se dice en
+       voz; abajo, la lista de todas para ir directo. */
     let guiaActual = null;
+    // La aclaración se ve 2 minutos de video desde que se dice; desde la
+    // lista, el video arranca 10 segundos antes, para oír lo que se aclara.
+    const DURA_ACLARACION = 120, ANTES_ACLARACION = 10;
     function quitarGuia() {
         guiaActual = null;
         const guia = cine && cine.querySelector("#grabacion-cine-guia");
@@ -623,8 +630,13 @@ window.CalendarioTaller = (function () {
         }).filter(Boolean);
         const capitulos = (Array.isArray(gj.capitulos) ? gj.capitulos : [])
             .filter((c) => c && entero(c.t) && c.t < gj.duracion && typeof c.titulo === "string" && c.titulo.trim());
+        // Lo que el video dice mal, con la regla buena y su fuente (ver «Las
+        // aclaraciones del profe»).
+        const aclaraciones = (Array.isArray(gj.aclaraciones) ? gj.aclaraciones : [])
+            .filter((a) => a && entero(a.t) && a.t < gj.duracion && /^[a-z0-9-]+$/.test(a.avatar || "")
+                && typeof a.titulo === "string" && typeof a.texto === "string" && typeof a.fuente === "string");
         if (!capitulos.length && !linea.length) return null;
-        return { capitulos, linea };
+        return { capitulos, linea, aclaraciones };
     }
 
     // El último de la lista que ya empezó en el segundo `t` (van en orden).
@@ -646,11 +658,32 @@ window.CalendarioTaller = (function () {
         try { datos = await leerGuia(deck, g.duracion_seg); } catch (e) { datos = null; }
         if (!datos || !cine || !cine.open || medidor !== m) return;
         const guia = cine.querySelector("#grabacion-cine-guia");
-        const G = { medidor: m, datos, lam: -2, cap: -2 };
+        const G = { medidor: m, datos, lam: -2, cap: -2, ac: -2 };
         guiaActual = G;
         cine.classList.remove("max-w-5xl");
         cine.classList.add("max-w-7xl");
         cine.querySelector("#grabacion-cine-cuerpo").classList.add("lg:grid-cols-[minmax(0,1fr)_20rem]");
+
+        if (datos.aclaraciones.length) {
+            // La tarjeta sale arriba de la lámina mientras dura (DURA_ACLARACION
+            // segundos de video desde que se dice), y se lee en voz.
+            const tarjeta = el("aside", "mb-4 flex gap-3 rounded-xl bg-white p-3 text-brand-900 shadow-lg ring-2 ring-accent-400");
+            tarjeta.id = "grabacion-cine-aclaracion";
+            tarjeta.setAttribute("aria-labelledby", "grabacion-cine-aclaracion-titulo");
+            tarjeta.hidden = true;
+            const img = el("img", "h-24 w-auto shrink-0 self-end");
+            img.id = "grabacion-cine-aclaracion-avatar";
+            img.decoding = "async";
+            const texto = el("div", "min-w-0");
+            const h = el("h3", "text-sm font-bold text-brand-800");
+            h.id = "grabacion-cine-aclaracion-titulo";
+            texto.append(h, el("p", "mt-1 text-sm"), el("p", "mt-1 text-xs text-brand-700"));
+            tarjeta.append(img, texto);
+            const voz = el("p", "sr-only");
+            voz.id = "grabacion-cine-aclaracion-voz";
+            voz.setAttribute("aria-live", "polite");
+            guia.append(tarjeta, voz);
+        }
 
         if (datos.linea.length) {
             const caja = el("section", "rounded-xl bg-white/5 p-3 ring-1 ring-white/10");
@@ -710,6 +743,42 @@ window.CalendarioTaller = (function () {
             caja.append(h, ayuda, ol);
             guia.appendChild(caja);
         }
+
+        if (datos.aclaraciones.length) {
+            // Todas a la mano: cada una lleva el video un poco antes de donde se dice.
+            const caja = el("section", "mt-4 rounded-xl bg-white/5 p-3 ring-1 ring-white/10");
+            caja.setAttribute("aria-labelledby", "grabacion-cine-aclaraciones-titulo");
+            const cab = el("div", "flex items-center gap-2");
+            const av = window.AvatarProfeOscar && AvatarProfeOscar.porId("arbitro");
+            if (av) {
+                const cara = el("img", "h-10 w-auto shrink-0");
+                cara.src = AvatarProfeOscar.ruta(av.id);
+                cara.alt = "";
+                cab.appendChild(cara);
+            }
+            const h = el("h3", "text-sm font-semibold text-brand-100", "Aclaraciones del profe");
+            h.id = "grabacion-cine-aclaraciones-titulo";
+            cab.appendChild(h);
+            const ayuda = el("p", "mt-1 text-xs text-brand-200",
+                datos.aclaraciones.length === 1 ? "En un momento el video dice algo que no es así. Toca para ir ahí." : "En " + datos.aclaraciones.length + " momentos el video dice algo que no es así. Toca una para ir ahí.");
+            const ol = el("ol", "mt-2 space-y-1");
+            ol.id = "grabacion-cine-aclaraciones";
+            datos.aclaraciones.forEach((a) => {
+                const li = el("li");
+                const b = el("button", "flex w-full items-baseline gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+                b.type = "button";
+                b.dataset.aclaracion = String(a.t);
+                const hora = el("span", "w-14 shrink-0 text-right font-mono text-xs text-brand-200", reloj(a.t));
+                hora.setAttribute("aria-hidden", "true");
+                b.append(hora, el("span", "sr-only", "Ir al minuto " + Math.floor(a.t / 60) + ": "), el("span", "min-w-0 flex-1", a.titulo));
+                const ir = Math.max(0, a.t - ANTES_ACLARACION);
+                b.addEventListener("click", () => { irA(m, ir); seguirVideo(G, ir); });
+                li.appendChild(b);
+                ol.appendChild(li);
+            });
+            caja.append(cab, ayuda, ol);
+            guia.appendChild(caja);
+        }
         guia.hidden = false;
         seguirVideo(G, 0);
     }
@@ -730,6 +799,26 @@ window.CalendarioTaller = (function () {
             cine.querySelector("#grabacion-cine-lamina-cual").textContent = "Lámina " + x.lamina + " de " + x.total + deOtra + (d.titulo ? ": " + d.titulo : "");
             cine.querySelector("#grabacion-cine-lamina-antes").disabled = lam <= 0;
             cine.querySelector("#grabacion-cine-lamina-despues").disabled = lam >= datos.linea.length - 1;
+        }
+        if (datos.aclaraciones.length) {
+            const i = vigente(datos.aclaraciones, t), a = datos.aclaraciones[i];
+            const ac = a && t < a.t + DURA_ACLARACION ? i : -1;
+            if (ac !== G.ac) {
+                G.ac = ac;
+                const tarjeta = cine.querySelector("#grabacion-cine-aclaracion");
+                tarjeta.hidden = ac < 0;
+                if (ac >= 0) {
+                    const av = window.AvatarProfeOscar && AvatarProfeOscar.porId(a.avatar);
+                    const img = cine.querySelector("#grabacion-cine-aclaracion-avatar");
+                    img.hidden = !av;
+                    if (av) { img.src = AvatarProfeOscar.ruta(av.id); img.alt = av.alt; }
+                    const [h, p, f] = tarjeta.lastElementChild.children;
+                    h.textContent = "Aclaración del profe: " + a.titulo;
+                    p.textContent = a.texto;
+                    f.textContent = "Fuente: " + a.fuente;
+                    cine.querySelector("#grabacion-cine-aclaracion-voz").textContent = "Aclaración del profe: " + a.titulo + ". " + a.texto;
+                }
+            }
         }
         const cap = vigente(datos.capitulos, t);
         if (cap !== G.cap && datos.capitulos.length) {

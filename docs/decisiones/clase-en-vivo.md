@@ -5047,6 +5047,9 @@ Integral en la camisa (salvo de espalda, de lado o con la mochila).
   la posición comprobada con chess.js, puesta encima del dibujo). Los de
   «jugando» y «ensenando» son de adorno, en perspectiva y sin una posición que
   se lea: si alguno se usa donde importe la posición, se le pone una real.
+- **Dónde se usa**: los stickers de la clase en vivo, la invitación de la
+  vitrina de Herramientas y las «Aclaraciones del profe» de las grabaciones
+  del taller (ver «Las aclaraciones del profe» en `paneles.md`).
 - **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
   esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
 

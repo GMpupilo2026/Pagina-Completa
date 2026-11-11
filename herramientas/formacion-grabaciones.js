@@ -20,6 +20,10 @@
  *   · La duración va en el archivo y la página la compara con la de la
  *     grabación: si se sube otro video, los minutos ya no le sirven y no se
  *     pinta nada, en vez de mandar a la gente a cualquier parte.
+ *   · Las aclaraciones del profe (lo que el video dice mal, con la regla
+ *     buena y su fuente) salen con el avatar del profe Oscar en el minuto en
+ *     que se dice; cada una lleva su fuente, que se comprobó contra las
+ *     láminas y el banco ya revisado.
  *   · Falla si algo no cuadra (un capítulo fuera del video, fuera de orden,
  *     una lámina que no existe) en vez de escribir un archivo que se ve bien y
  *     lleva a otro lado.
@@ -82,11 +86,24 @@ function armar(s) {
     const prev = s.laminas[i - 1];
     if (prev && x.lamina === prev.lamina && (x.clase || "") === (prev.clase || "")) fallar(`${donde}: la lámina ${x.lamina} se repite seguida en ${x.t}: sobra una entrada`);
   });
+  // Las aclaraciones del profe: lo que el video dice mal, corregido con su
+  // fuente, con un dibujo del avatar del profe Oscar (js/avatar-profe-oscar.js).
+  const avatares = new Set([...fs.readFileSync(path.join(RAIZ, "js", "avatar-profe-oscar.js"), "utf8").matchAll(/\{ id: "([a-z0-9-]+)"/g)].map((m) => m[1]));
+  const aclaraciones = s.aclaraciones || [];
+  if (aclaraciones.length) enOrden(aclaraciones, "aclaración");
+  aclaraciones.forEach((a, i) => {
+    const n = `${donde}: la aclaración n.º ${i + 1}`;
+    if (!avatares.has(a.avatar)) fallar(`${n} usa un avatar que no existe: ${a.avatar}`);
+    if (typeof a.titulo !== "string" || !a.titulo.trim() || a.titulo.length > 60) fallar(`${n} necesita un título de hasta 60 caracteres`);
+    if (typeof a.texto !== "string" || a.texto.length < 20 || a.texto.length > 320) fallar(`${n} necesita un texto de 20 a 320 caracteres`);
+    if (typeof a.fuente !== "string" || !a.fuente.trim() || a.fuente.length > 80) fallar(`${n} necesita su fuente (hasta 80 caracteres): ninguna se inventa`);
+  });
   return {
     _comentario: COMENTARIO,
     duracion: s.duracion,
     capitulos: s.capitulos.map((c) => ({ t: c.t, titulo: c.titulo.trim() })),
     laminas: s.laminas.map((x) => (x.clase ? { t: x.t, lamina: x.lamina, clase: x.clase } : { t: x.t, lamina: x.lamina })),
+    aclaraciones: aclaraciones.map((a) => ({ t: a.t, avatar: a.avatar, titulo: a.titulo.trim(), texto: a.texto.trim(), fuente: a.fuente.trim() })),
   };
 }
 

@@ -4412,6 +4412,28 @@ sola para que se vea.
 - Sin `grabacion.json`, sin acceso (403) o con la duración distinta, el modo
   cine queda como antes, en su ancho de siempre.
 
+#### Las aclaraciones del profe
+
+El dueño pidió agregar el avatar del profe Oscar. Va donde hacía falta: en los
+minutos en que el video **dice algo que no es así** (lo encontrado al leer
+los subtítulos, abajo), sale arriba de la lámina una tarjeta clara con un
+dibujo del avatar (`js/avatar-profe-oscar.js`: «arbitro» para una regla,
+«atencion» para una cuenta o una tabla), «Aclaración del profe: …», la regla
+buena y **su fuente** (el artículo o la lámina). Dura 2 minutos de video desde
+que se dice (`DURA_ACLARACION`) y se lee en voz por una región viva aparte.
+Debajo de los capítulos, «Aclaraciones del profe» las lista todas: tocar una
+lleva el video 10 segundos antes, para oír lo que se aclara.
+
+- **Ninguna se inventa**: cada una sale de una lámina del curso o del banco ya
+  revisado (`formacion-ajedrez-kahoot.json`), y se comprobaron una por una el
+  11/11/2026 (la tabla cruzada de la lámina 10 se leyó en la imagen: «5n ½»
+  de Mateo es el número inicial 5, Lucía). El generador exige fuente, texto de
+  20 a 320 caracteres y un avatar que exista.
+- **Lo que el mismo video corrige después también lleva aclaración** (los
+  minutos de la jugada ilegal): quien salta a ese capítulo no oye la
+  corrección, que viene media hora más tarde.
+- Hoy son 10: 2 en la Sesión I, 3 en la II y 5 en la III.
+
 **Lo que se notó en los videos** (está completo en `avisos` de la fuente):
 
 - Sesión I: en 2:59:01 se dice que la triple repetición y las 50 jugadas son
@@ -4425,17 +4447,19 @@ sola para que se vea.
   video, no el índice.
 - Sesión III: en 3:37:18 se dice que un tablero mal orientado se corrige en
   cualquier momento, y en 3:16:12 el ejercicio 7 se resuelve como suizo; las
-  dos cosas contradicen las láminas.
+  dos cosas contradicen las láminas. Estas y las de la Sesión I llevan su
+  aclaración del profe (arriba).
 
 `node herramientas/verificar-grabacion-interactiva.js` comprueba que los
 archivos publicados son los de la fuente y no traen ids de YouTube, que el
 generador se niega a lo que no cuadra, y en el navegador (con un reproductor
 falso que contesta y anota las órdenes): la lámina que sigue al video, el
 capítulo marcado, que tocar un capítulo y «Lámina siguiente/anterior» manden
-`seekTo` al segundo justo, la lámina de otra sesión, la duración distinta, la
+`seekTo` al segundo justo, la aclaración con su avatar en su minuto (y que se
+va a los 2 minutos, y se dice en voz), la lámina de otra sesión, la duración distinta, la
 grabación sin presentación, el 403, el contraste (de 6,22:1 a 16,3:1, contra
 el fondo real) y el celular. Se rompieron a propósito el salto y la
-comparación de la duración, y saltaron.
+comparación de la duración, y saltaron; también que la aclaración no se fuera.
 
 ### Cuánto vio cada uno
 
