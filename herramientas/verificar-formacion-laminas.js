@@ -59,11 +59,13 @@ for (const clase of clases) {
   const largas = [], sinPos = [], sinImagen = [], tonos = [];
   datos.forEach((d, i) => {
     const n = i + 1, dia = diapos[i] || {};
-    const cuenta = palabras((dia.titulo || "") + " " + (d.tipo === "cruzado" ? textoCruzado(d) : texto(d)));
+    // En un traslado, la planilla son datos (las jugadas de la partida), como las casillas de un cuadro cruzado.
+    const visible = d.tipo === "cruzado" ? textoCruzado(d) : d.tipo === "traslado" ? texto(Object.assign({}, d, { jugadas: [] })) : texto(d);
+    const cuenta = palabras((dia.titulo || "") + " " + visible);
     if (cuenta > (d.tipo === "tabla" || d.tipo === "cruzado" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
     const pide = [];
     if (d.tipo === "tablero") pide.push(d.pos);
-    if (d.tipo === "tableros") d.items.forEach((x) => pide.push(x.pos));
+    if (d.tipo === "tableros" || d.tipo === "traslado") d.items.forEach((x) => pide.push(x.pos));
     pide.forEach((p) => { if (!(dia.posiciones || [])[p]) sinPos.push(n + "#" + p); });
     const img = path.join(carpeta, dia.imagen || "");
     const cab = fs.existsSync(img) ? fs.readFileSync(img).subarray(0, 12).toString("latin1") : "";

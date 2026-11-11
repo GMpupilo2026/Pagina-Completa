@@ -16,6 +16,14 @@
  * PARTIDA son las jugadas que llevan a la posición del ejercicio:
  * verificar-formacion-ejercicio-tablero.js las juega con chess.js y compara.
  */
+const PARTIDA = "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6 Bb3 Ba7 h3 h6 Nbd2 Re8";
+// La planilla, en notación algebraica española (C caballo, A alfil, T torre,
+// D dama, R rey), de a dos jugadas por renglón.
+const ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+const enEspanol = (san) => (ES[san[0]] || san[0]) + san.slice(1);
+const jugadas = PARTIDA.split(" ").map(enEspanol);
+const PLANILLA = jugadas.filter((_, i) => i % 2 === 0).map((b, i) => [b, jugadas[2 * i + 1] || ""]);
+
 const MAL = { colores: { clara: "#627d98", oscura: "#f0f4f8" } };
 const conEstrella = (o) => Object.assign({ estrellas: ["h1"] }, o);
 
@@ -47,18 +55,23 @@ const LAMINAS = [
     { pos: 1, opciones: conEstrella(), t: "Así sigue", tono: "si", marca: "Bien colocado", s: "Las mismas piezas, en las mismas casillas" } ],
     clave: "Solo cambia el tablero: la posición y los tiempos no." },
   // 6
+  { tipo: "traslado", k: "El traslado completo, con la planilla al lado", jugadas: PLANILLA, items: [
+    { pos: 0, opciones: conEstrella(MAL), t: "Así se jugó", tono: "no", marca: "Mal colocado", s: "Oscura a la derecha" },
+    { pos: 1, opciones: conEstrella(), t: "Así sigue", tono: "si", marca: "Bien colocado", s: "La misma planilla, las mismas casillas" } ],
+    clave: "Con 10 jugadas o con 40, la partida sigue: el 7.2.2 no cuenta jugadas." },
+  // 7
   { tipo: "filas", k: "Paso a paso, sin tocar la partida", numerar: true, items: [
     { ic: "⏸️", t: "Detén los relojes", s: "los tiempos no se tocan", a: "6.11.1" },
     { ic: "♟️", t: "Arma al lado un tablero bien colocado", s: "clara a la derecha de cada jugador" },
     { ic: "🔁", t: "Pasa pieza por pieza, a la misma casilla", s: "a1 queda a la izquierda de las blancas" },
     { ic: "📝", t: "Comprueba con las planillas" },
     { ic: "▶️", t: "Reanuda el reloj de quien juega", a: "6.11.3" } ] },
-  // 7
+  // 8
   { tipo: "tableros", k: "En un tablero girado, esta regla engaña", items: [
     { pos: 0, opciones: MAL, t: "Rey y dama cambiados", tono: "no", marca: "Se anula", s: "La posición inicial ya estaba mal · art. 7.2.1" },
     { pos: 1, t: "Lo correcto", tono: "si", marca: "Dama en d1", s: "Dama en d1 y d8, rey en e1 y e8" } ],
     clave: "Si el rey y la dama están cambiados, no basta con cambiar el tablero." },
-  // 8
+  // 9
   { tipo: "tabla", k: "Tres irregularidades que no son lo mismo", cab: ["Qué pasó", "Decisión", "Qué se hace"], filas: [
     ["Solo el tablero girado", "7.2.2", "Sigue", "si", "Se pasa la posición a un tablero bien colocado"],
     ["Posición inicial mal armada", "7.2.1", "Anulada", "no", "Se juega otra partida"],
@@ -68,6 +81,7 @@ const LAMINAS = [
 
 module.exports = LAMINAS;
 module.exports.MAL = MAL;
-module.exports.PARTIDA = "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6 Bb3 Ba7 h3 h6 Nbd2 Re8";
+module.exports.PARTIDA = PARTIDA;
+module.exports.PLANILLA = PLANILLA;
 
 /*! rev bfb5bbb0d2d82f9f */

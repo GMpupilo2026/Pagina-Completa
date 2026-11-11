@@ -18,6 +18,8 @@
  *   casilla de su color en ese tablero, y el rey en la otra;
  * - la respuesta que se da (C) es la opción que dice «pasar la posición», con
  *   el art. 7.2.2, y ninguna lámina antes de la solución la adelanta;
+ * - la lámina del traslado tiene, al lado de cada tablero, la planilla de esa
+ *   misma partida en notación española, y los dos tableros, su posición;
  * - está en la lista de la clase en vivo y en la Sesión 1 de sesiones.json.
  */
 const fs = require("fs");
@@ -38,7 +40,7 @@ const cierto = (nombre, ok, detalle) => {
   console.log((ok ? "  ✓ " : "  ✗ ") + nombre + (ok || !detalle ? "" : "  → " + detalle));
   if (!ok) fallas++;
 };
-const tableros = (d) => (d.tipo === "tableros" ? d.items.map((x) => ({ pos: x.pos, opciones: x.opciones || {} }))
+const tableros = (d) => (d.tipo === "tableros" || d.tipo === "traslado" ? d.items.map((x) => ({ pos: x.pos, opciones: x.opciones || {} }))
   : d.tipo === "tablero" ? [{ pos: d.pos, opciones: d.opciones || {} }] : []);
 const tipoDe = (i) => DATOS[i].tipo;
 const piezas = (fen) => fen.split(" ")[0];
@@ -77,7 +79,7 @@ DATOS.forEach((d, i) => tableros(d).forEach((t, k) => {
   const h1 = colorDe(t.opciones, "h1"), a8 = colorDe(t.opciones, "a8");
   cierto("lámina " + (i + 1) + ", «" + nombre + "»: h1 y a8 " + (mal ? "oscuras" : "claras"),
     h1 === (mal ? OSCURA : CLARA) && a8 === h1, h1 + " " + a8);
-  if (d.tipo === "tableros") {
+  if (d.tipo === "tableros" || d.tipo === "traslado") {
     const x = d.items[k];
     cierto("  y su marca lo dice escrito (" + x.tono + ")", mal ? x.tono === "no" : x.tono === "si");
   }
@@ -97,6 +99,25 @@ if (iSol > 0) {
   cierto("con el artículo 7.2.2", /7\.2\.2/.test(DATOS[iSol].k) && /7\.2\.2/.test(DIAPOS[iSol].texto));
   const antes = DIAPOS.slice(0, iSol).map((x) => x.titulo + " " + x.texto).join(" ") + JSON.stringify(DATOS.slice(0, iSol));
   cierto("ninguna lámina antes de la solución dice la respuesta", !/7\.2\.2|Respuesta/.test(antes));
+}
+
+console.log("4b. El traslado completo: los dos tableros con la planilla de la partida al lado");
+const iTr = DATOS.findIndex((d) => d.tipo === "traslado");
+cierto("está la lámina del traslado, después de la solución", iTr > iSol && iSol > 0);
+if (iTr > 0) {
+  const T = DATOS[iTr];
+  // La planilla en notación española, sacada aparte de la historia de chess.js.
+  const ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+  const h = g.history().map((m) => (ES[m[0]] || m[0]) + m.slice(1));
+  const esperada = [];
+  for (let i = 0; i < h.length; i += 2) esperada.push([h[i], h[i + 1] || ""]);
+  cierto("la planilla es la partida jugada, en notación española (10 renglones)", JSON.stringify(T.jugadas) === JSON.stringify(esperada) && esperada.length === 10,
+    JSON.stringify(T.jugadas));
+  const [a, b] = T.items.map((x) => DIAPOS[iTr].posiciones[x.pos].fen);
+  cierto("los dos tableros tienen la posición a la que lleva la planilla", a === fenEj && b === fenEj, a + " / " + b);
+  cierto("el de la izquierda mal colocado y el de la derecha bien", colorDe(T.items[0].opciones, "h1") === OSCURA && colorDe(T.items[1].opciones || {}, "h1") === CLARA);
+  cierto("la voz dice la planilla entera", h.every((m) => DIAPOS[iTr].texto.includes(m)));
+  cierto("y que la partida sigue con el 7.2.2", /7\.2\.2/.test(T.clave) && /7\.2\.2/.test(DIAPOS[iTr].texto));
 }
 
 console.log("5. Rey y dama cambiados: lo que da «dama en su color» en un tablero girado");
