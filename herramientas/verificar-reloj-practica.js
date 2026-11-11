@@ -19,7 +19,11 @@
       marcada como lograda y guardada en el aparato.
    6. Por períodos: con los tiempos bien pero el contador sin corregir, no.
    7. Segunda ilegal: sumar tiempo está mal; dejarlo como está, bien.
-   8. Los datos de las situaciones cumplen la forma que exige la base. */
+   8. Los datos de las situaciones cumplen la forma que exige la base.
+   9. Hay dos situaciones por ritmo (clásica, rápida, relámpago) además de
+      las primeras; en un reloj mal programado se le suma a los DOS, y si no,
+      la pista lo dice sin hablar de una ilegal; en un reclamo de tablas
+      equivocado, la pista habla del rival de quien reclamó. */
 const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
@@ -161,6 +165,40 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   await clic("marcha");
   v = await comprobar();
   ok(/^¡Bien!/.test(v.texto) && /pierde/.test(v.texto), `detener y dejarlo como está, sí (y dice que pierde): «${v.texto.slice(0, 60)}…»`);
+
+  // 9. Las situaciones de árbitro que no son una ilegal.
+  const ritmos = await page.evaluate(() => RelojPractica.ILEGALES.slice(6).map((x) => {
+    const c = Object.assign({}, x.control);
+    if (x.delta[0] && x.delta[1]) c.inc = Math.round(x.delta[0] / x.mv[0]);   // el control correcto, no el mal programado
+    if (c.inc && c.modo === "sin") c.modo = "fischer";
+    return RelojPractica.clasificar(c).ritmo;
+  }));
+  const cuenta = (r) => ritmos.filter((x) => x === r).length;
+  ok(cuenta("Clásica") === 2 && cuenta("Rápida") === 2 && cuenta("Relámpago") === 2, `las seis nuevas son dos por ritmo (${ritmos.join(", ")})`);
+  const iMal = ILEGALES.findIndex((x) => x.delta[0] && x.delta[1] && x.control.base === 180);
+  ok(iMal >= 0, "hay un relámpago con el reloj mal programado");
+  await empezar(iMal);
+  await clic("marcha");
+  await corregir({ [P.LS]: 30 });
+  v = await comprobar();
+  ok(/incremento/.test(v.texto) && !/ilegal/.test(v.texto) && /alerta/.test(v.clase), `sumarle solo a uno no es bueno, y la pista no habla de ilegal: «${v.texto}»`);
+  await empezar(iMal);
+  await clic("marcha");
+  await corregir({ [P.LS]: 30, [P.RS]: 30 });
+  v = await comprobar();
+  ok(/^¡Bien!/.test(v.texto) && /6\.10\.2/.test(v.texto), `+0:30 a cada uno, sí: «${v.texto.slice(0, 60)}…»`);
+  const iRec = ILEGALES.findIndex((x) => /reclamo de tablas/.test(x.titulo));
+  ok(iRec >= 0, "hay un reclamo de tablas equivocado");
+  await empezar(iRec);
+  await clic("marcha");
+  await corregir({ [P.RM]: 2 });
+  v = await comprobar();
+  ok(/rival de quien reclamó/.test(v.texto) && /alerta/.test(v.clase), `sumarle a quien reclamó no es bueno: «${v.texto}»`);
+  await empezar(iRec);
+  await clic("marcha");
+  await corregir({ [P.LM]: 2 });
+  v = await comprobar();
+  ok(/^¡Bien!/.test(v.texto) && /9\.5\.3/.test(v.texto), `+2:00 a las blancas, sí: «${v.texto.slice(0, 60)}…»`);
 
   // Cargar un escenario quita la situación en curso.
   await empezar(2);

@@ -41,6 +41,7 @@ window.RelojPractica = (function () {
         { nombre: "40/90 + 30", sub: "Clásica · períodos, +30 s", control: { modo: "periodos", base: 5400, inc: 30, dly: 0, mv: 40, add: 1800 } },
         { nombre: "15 + 10", sub: "Rápida · Fischer", control: { modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 } },
         { nombre: "10 + 5", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 5, dly: 0, mv: 40, add: 0 } },
+        { nombre: "10 + 2", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "3 + 2", sub: "Relámpago · Fischer", control: { modo: "fischer", base: 180, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "5 + 0", sub: "Relámpago · sin incremento", control: { modo: "sin", base: 300, inc: 0, dly: 0, mv: 40, add: 0 } },
         { nombre: "25 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 1500, inc: 0, dly: 5, mv: 40, add: 0 } },
@@ -83,6 +84,41 @@ window.RelojPractica = (function () {
             situacion: "Las blancas ya habían hecho una ilegal en esta partida. Ahora hacen otra y presionan el reloj.",
             control: { modo: "fischer", base: 600, inc: 5, dly: 0, mv: 40, add: 0 }, t: [200, 242], mv: [27, 26], corre: 1, delta: [0, 0],
             regla: "La segunda ilegal del mismo jugador pierde la partida (art. 7.5.5 y Anexo A.4.2), salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: entonces son tablas. No se suma tiempo: se detiene el reloj y se deja como está." },
+        /* Seis casos más, dos por ritmo, donde el árbitro resuelve y ajusta el
+           reloj: no todos son una ilegal. aviso: lo que dice al empezar (si no,
+           «¡Jugada ilegal!»); pista: lo que contesta si los tiempos quedan mal
+           (si no, el mensaje de siempre, que da por hecho una ilegal). */
+        { titulo: "Clásica 90 + 30: reclamo de tablas equivocado",
+            situacion: "Las negras detienen el reloj y reclaman tablas por triple repetición. Con la planilla, el árbitro comprueba que la posición se repitió solo dos veces: el reclamo no vale. Vuelve a poner el reloj de las negras en marcha.",
+            control: { modo: "fischer", base: 5400, inc: 30, dly: 0, mv: 40, add: 0 }, t: [2410, 1985], mv: [33, 32], corre: 1, delta: [120, 0],
+            aviso: "Las negras reclaman tablas y el reclamo no vale. El reloj de las negras está corriendo: actúa como árbitro.",
+            pista: "Un reclamo de tablas equivocado se castiga dándole tiempo al rival de quien reclamó, no a quien reclamó. Revisa cuánto es en clásica.",
+            regla: "Si el reclamo de tablas resulta incorrecto, el árbitro le suma 2 minutos al rival (art. 9.5.3) y la partida sigue: las blancas suman 2:00." },
+        { titulo: "Clásica 90 + 30: el reloj quedó sin incremento",
+            situacion: "Después de la jugada 20 de las negras, las blancas avisan que su reloj no suma los 30 segundos: alguien lo programó 90 + 0. Cada uno ya hizo 20 jugadas sin incremento.",
+            control: { modo: "sin", base: 5400, inc: 0, dly: 0, mv: 40, add: 0 }, t: [3900, 4300], mv: [20, 20], corre: 0, delta: [600, 600],
+            aviso: "¡El reloj está mal programado! El reloj de las blancas está corriendo: actúa como árbitro.",
+            pista: "No es un castigo: hay que devolverle a cada uno el incremento que el reloj no le sumó. Cuenta las jugadas de cada uno por 30 segundos.",
+            regla: "Si el reloj estaba mal programado, el árbitro lo detiene, pone el control correcto y ajusta tiempos y contadores con su mejor criterio (art. 6.10.2): 20 jugadas × 30 s = 10:00 más para cada uno. En un reloj de verdad, además, se programa el incremento de 30 s para lo que queda." },
+        { titulo: "Rápida 10 + 2: el rey queda en jaque",
+            situacion: "Las negras hacen una jugada que deja a su propio rey en jaque y presionan el reloj. Las blancas lo reclaman enseguida, antes de jugar. Es la primera ilegal de las negras.",
+            control: { modo: "fischer", base: 600, inc: 2, dly: 0, mv: 40, add: 0 }, t: [318, 274], mv: [22, 22], corre: 0, delta: [60, 0],
+            regla: "Dejar el rey en jaque es una jugada ilegal. En rápidas, la primera le da 1 minuto más al rival (Anexo A.4.2): las blancas suman 1:00, se vuelve a la posición anterior y las negras juegan otra jugada, con la misma pieza si la tocaron (art. 7.5.1)." },
+        { titulo: "Rápida 15 + 10: la ilegal que llegó tarde",
+            situacion: "Las blancas hicieron una jugada ilegal y presionaron. Las negras no dijeron nada: jugaron su respuesta y presionaron. Ahora, con el reloj de las blancas corriendo, las negras reclaman la ilegal.",
+            control: { modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 }, t: [356, 412], mv: [31, 31], corre: 0, delta: [0, 0],
+            aviso: "Las negras reclaman una ilegal de la jugada anterior. El reloj de las blancas está corriendo: actúa como árbitro.",
+            regla: "En rápidas y relámpago, la ilegal se reclama antes de hacer la jugada siguiente (Anexo A.4.2). Las negras ya jugaron: la ilegal queda y la partida sigue. No se suma tiempo: se detiene el reloj, se deja como está y se vuelve a poner en marcha." },
+        { titulo: "Relámpago 5 + 0: enroque por una casilla atacada",
+            situacion: "Las blancas enrocan corto pasando el rey por f1, que ataca un alfil negro, y presionan el reloj. Las negras lo reclaman antes de jugar. Es la primera ilegal de las blancas.",
+            control: { modo: "sin", base: 300, inc: 0, dly: 0, mv: 40, add: 0 }, t: [96, 131], mv: [17, 16], corre: 1, delta: [0, 60],
+            regla: "El rey no puede enrocar pasando por una casilla atacada: es una ilegal. En relámpago, igual que en rápidas, la primera le da 1 minuto más al rival (Anexos A.4.2 y B): las negras suman 1:00 y las blancas juegan otra jugada con el rey, que fue la pieza que tocaron (art. 7.5.1)." },
+        { titulo: "Relámpago 3 + 2: el reloj quedó en 3 + 0",
+            situacion: "Después de la jugada 15 de las negras, el árbitro ve que el reloj no suma los 2 segundos: lo programaron 3 + 0. Cada uno ya hizo 15 jugadas sin incremento.",
+            control: { modo: "sin", base: 180, inc: 0, dly: 0, mv: 40, add: 0 }, t: [26, 63], mv: [15, 15], corre: 0, delta: [30, 30],
+            aviso: "¡El reloj está mal programado! El reloj de las blancas está corriendo: actúa como árbitro.",
+            pista: "No es un castigo: hay que devolverle a cada uno el incremento que el reloj no le sumó. Cuenta las jugadas de cada uno por 2 segundos.",
+            regla: "Si el reloj estaba mal programado, el árbitro pone el control correcto y ajusta los tiempos con su mejor criterio (art. 6.10.2): 15 jugadas × 2 s = 30 segundos más para cada uno. En un reloj de verdad, además, se programa el incremento de 2 s." },
     ];
     const entero = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 
@@ -287,8 +323,8 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
       <ul data-r="retos"></ul>
     </div>
     <div class="tarjeta ancha">
-      <h3>Jugada ilegal: ajusta el reloj como árbitro</h3>
-      <p class="teclado" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de la ilegal, y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
+      <h3>Situaciones de árbitro: ajusta el reloj</h3>
+      <p class="teclado" style="margin:0">Cada situación arranca con el reloj corriendo, justo después de lo que pasó (una ilegal, un reclamo, un reloj mal programado), y las blancas a la izquierda. Detén el reloj con ▶‖, entra a corrección con ✓, deja tiempos y jugadas como dicen las Leyes y presiona «Comprobar».</p>
       <ul data-r="ilegales"></ul>
       <div class="situacion" data-r="situacion" hidden>
         <p data-r="sitTexto"></p>
@@ -668,7 +704,7 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             S.t = [r.t[0] * 1000, r.t[1] * 1000]; S.mv = r.mv.slice(); S.corre = r.corre; S.dl = cfg.dly * 1000;
             S.estado = "marcha"; S.reto = { i, foto: null, corr: null };
             pintarIlegales(); veredictoI("");
-            aviso("¡Jugada ilegal! El reloj de " + nombreLado(r.corre) + " está corriendo: actúa como árbitro.", "alerta");
+            aviso(r.aviso || "¡Jugada ilegal! El reloj de " + nombreLado(r.corre) + " está corriendo: actúa como árbitro.", "alerta");
         }
         const reloj = (s) => { const a = Math.abs(s); return (s < 0 ? "−" : "+") + Math.floor(a / 60) + ":" + pad(a % 60); };
         function comprobarIlegal() {
@@ -696,7 +732,8 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             const quien = (k) => (k === 0 ? "las blancas" : "las negras");
             let msg;
             if (!bienT) {
-                if (r.delta[rival] === 0 && (d[0] || d[1])) msg = "No hay que sumar tiempo en esta situación. Piensa qué pasa con la partida y deja el reloj como estaba al detenerlo.";
+                if (r.pista && (d[0] || d[1])) msg = r.pista;
+                else if (r.delta[rival] === 0 && (d[0] || d[1])) msg = "No hay que sumar tiempo en esta situación. Piensa qué pasa con la partida y deja el reloj como estaba al detenerlo.";
                 else if (d[0] === 0 && d[1] === 0) msg = "El reloj quedó igual que cuando lo detuviste. Entra a corrección con ✓ (con el reloj en pausa) y ajusta el tiempo que corresponde.";
                 else if (d[infractor] > 1 && d[rival] <= 1) msg = "Le sumaste tiempo a " + quien(infractor) + ", que hicieron la ilegal. El tiempo extra es para el rival.";
                 else msg = "Cambiaste " + reloj(d[0]) + " a las blancas y " + reloj(d[1]) + " a las negras. Revisa cuánto le toca al rival en este ritmo y que el tiempo de quien hizo la ilegal quede igual.";
