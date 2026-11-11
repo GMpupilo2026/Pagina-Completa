@@ -3921,6 +3921,19 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
+- **La cookie del worker, con la sesión de ahora**: una clase dura horas y el
+  token una. `sesion.js` guarda la sesión al arrancar y no la actualiza, y
+  escribir la cookie con esa sesión vencida (`SesionCursos.guardar`) la
+  BORRA: el worker contestaba 401 al `diapositivas.json` y el profe leía «No
+  se pudo abrir la presentación. Revisa tu conexión» (la Sesión 4 de los
+  asesores, 11/11/2026). Ahora, antes de pedir el `diapositivas.json` y cada
+  lámina del curso, `SesionCursos.renovar()` (`js/supabase-client.js`) pide la
+  sesión a supabase-js —que renueva el token si venció— y escribe la cookie
+  con ella; si el worker igual dice 401, `renovar(true)` pide un token nuevo
+  y se intenta una vez más. Si tampoco, el aviso dice que se venció la
+  sesión y que hay que recargar, no que falló la conexión. Lo mismo hacen las
+  lecciones del curso en la clase. Lo prueba `verificar-clase-presentacion.js`
+  (4a) con el `SesionCursos` de verdad sobre el doble.
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.
