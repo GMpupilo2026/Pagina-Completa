@@ -96,6 +96,19 @@ window.PresentacionClase = (function () {
         };
     }
 
+    /* La cookie que mira el worker, escrita con la sesión de ahora (la clase
+       dura más que el token: ver SesionCursos.renovar). Si igual contesta 401,
+       se pide un token nuevo y se intenta UNA vez más. */
+    const renovar = (forzar) => (window.SesionCursos && SesionCursos.renovar ? SesionCursos.renovar(forzar) : Promise.resolve(null));
+    async function pedirDelCurso(deck) {
+        const pedir = () => fetch(carpeta(deck) + "diapositivas.json", { credentials: "same-origin" });
+        await renovar();
+        let r = await pedir();
+        if (r.status === 401 && await renovar(true)) r = await pedir();
+        if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
+        return r.json();
+    }
+
     const pedidas = {};
     function cargar(deck) {
         if (!pedidas[deck]) {
@@ -106,10 +119,7 @@ window.PresentacionClase = (function () {
                         if (!data) throw new Error("no_disponible");
                         return armarSubida(data);
                     })
-                : fetch(carpeta(deck) + "diapositivas.json", { credentials: "same-origin" }).then((r) => {
-                    if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
-                    return r.json();
-                }))
+                : pedirDelCurso(deck))
                 // Sin acceso no cambia con reintentar: se recuerda, y cada eco de
                 // Realtime (cada jugada) no vuelve a pedirla. Lo demás, sí.
                 .catch((e) => { if (e.message !== "sin_acceso") delete pedidas[deck]; throw e; });
@@ -123,7 +133,8 @@ window.PresentacionClase = (function () {
        bucket deja: al alumno, solo la que se está mostrando. */
     const firmadas = {};
     async function url(deck, d) {
-        if (!esSubida(deck)) return carpeta(deck) + d.imagen;
+        // La imagen también la cuida el worker: la cookie, al día antes de pedirla.
+        if (!esSubida(deck)) { await renovar(); return carpeta(deck) + d.imagen; }
         const ya = firmadas[d.imagen];
         if (ya && ya.vence > Date.now()) return ya.url;
         const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(d.imagen, 3600);
@@ -163,6 +174,7 @@ function presentacionBoton(texto, titulo, fuerte) {
 
 const PRESENTACION_ERRORES = {
     sin_acceso: "Tu profe está mostrando una presentación, pero tu cuenta no tiene el acceso a la Academia activo para verla.",
+    sin_sesion: "Se venció tu sesión y no se pudo renovar sola. Recarga la página para seguir viendo la presentación.",
     no_disponible: "Esta presentación ya no está disponible (puede que se haya borrado).",
     sin_imagen: "No se pudo abrir esta diapositiva. Si tu profe acaba de pasarla, espera un momento.",
 };

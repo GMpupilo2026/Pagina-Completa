@@ -743,7 +743,7 @@
 
         async function fetchLeccionesDeCurso(slug) {
             if (leccionesPorCurso[slug]) return leccionesPorCurso[slug];
-            if (window.SesionCursos) SesionCursos.guardar(session); // la cookie que mira worker.js
+            if (window.SesionCursos) await SesionCursos.renovar(); // la cookie que mira worker.js, con la sesión de ahora (no la del arranque, que vence en una hora)
             const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
             if (!r.ok) throw new Error("no_content");
             const html = await r.text();
@@ -1185,7 +1185,7 @@
             titleEl.textContent = "📚 " + (catalogEntry ? catalogEntry.titulo : slug);
             msgEl.textContent = "Cargando…";
             try {
-                if (window.SesionCursos) SesionCursos.guardar(session); // la cookie que mira worker.js
+                if (window.SesionCursos) await SesionCursos.renovar(); // la cookie que mira worker.js, con la sesión de ahora (no la del arranque, que vence en una hora)
                 const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
                 if (!r.ok) throw new Error("no_content");
                 const html = await r.text();

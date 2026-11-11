@@ -41,8 +41,10 @@ if (!window.sb && window.supabase) {
 // válida sin su material y sin ningún error a la vista:
 //   · al cargar, con lo que haya guardado (si no venció);
 //   · en cada cambio de sesión (entrar, renovar el token, salir);
-//   · justo antes de pedir un fragmento (SesionCursos.guardar(session)), para
-//     no depender del orden en que Supabase avisa de la renovación.
+//   · justo antes de pedir un fragmento (SesionCursos.renovar(), con la sesión
+//     de AHORA: una guardada al cargar la página vence en una hora y borra
+//     la cookie), para no depender del orden en que Supabase avisa de la
+//     renovación.
 window.SesionCursos = (function () {
   var NOMBRE = "ai_sesion_cursos";
   // Una cookie por carpeta que cuida el worker (PROTEGIDO en worker.js): con
@@ -94,7 +96,26 @@ window.SesionCursos = (function () {
     location.reload();
     return "recarga";
   }
-  return { guardar: guardar, borrar: borrar, recuperarCodigo: recuperarCodigo };
+  /* La cookie escrita con la sesión de AHORA, no con una guardada al cargar
+     la página. Una clase en vivo dura horas y el token una: guardar() con la
+     sesión del arranque, ya vencida, BORRA la cookie, y el worker contesta 401
+     a la presentación del curso («Revisa tu conexión», en la clase de los
+     asesores). getSession() renueva el token si venció; con `forzar` (el
+     worker ya dijo 401), refreshSession() pide uno nuevo sí o sí. Devuelve la
+     sesión, o null. */
+  function renovar(forzar) {
+    try {
+      var auth = window.sb && window.sb.auth;
+      if (!auth || typeof auth.getSession !== "function") return Promise.resolve(null);
+      var pedido = forzar && typeof auth.refreshSession === "function" ? auth.refreshSession() : auth.getSession();
+      return Promise.resolve(pedido).then(function (r) {
+        var s = r && r.data && r.data.session;
+        if (s) guardar(s);
+        return s || null;
+      }, function () { return null; });
+    } catch (e) { return Promise.resolve(null); }
+  }
+  return { guardar: guardar, borrar: borrar, renovar: renovar, recuperarCodigo: recuperarCodigo };
 })();
 
 // El perfil propio, UNA lectura por página. En la hora pico del 29 de
