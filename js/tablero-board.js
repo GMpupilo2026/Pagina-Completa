@@ -6,6 +6,12 @@
 (function () {
   "use strict";
 
+  // Contra quién se juega: Oscar, o la profe Pame para quien es de CCDR POCOCI
+  // (lo decide js/chess-bot.js con js/avatar-profe-oscar.js). El Modo Desafío
+  // sigue con posiciones de partidas de Oscar, y ahí el nombre no cambia.
+  const NOMBRE_BOT = (typeof OscarBot !== "undefined" && OscarBot.NOMBRE) || "Oscar";
+  const NOMBRE_BOT_M = NOMBRE_BOT.charAt(0).toUpperCase() + NOMBRE_BOT.slice(1);
+
   const boardEl = document.getElementById("chessboard");
   const turnEl = document.getElementById("turn-indicator");
   const statusEl = document.getElementById("status-msg");
@@ -225,14 +231,14 @@
   // ---------- Sistema de logros e insignias ----------
   const ACHIEVEMENTS_KEY = "oscarChessAchievements_v1";
   const ACHIEVEMENTS = {
-    first_game: { title: "¡Primera partida completa!", desc: "Jugaste tu primera partida completa contra Oscar." },
-    first_win: { title: "Ganaste tu primera partida", desc: "Le ganaste a Oscar por primera vez." },
+    first_game: { title: "¡Primera partida completa!", desc: `Jugaste tu primera partida completa contra ${NOMBRE_BOT}.` },
+    first_win: { title: "Ganaste tu primera partida", desc: `Le ganaste a ${NOMBRE_BOT} por primera vez.` },
     perfect_defense: {
       title: "Defensa perfecta",
       desc: "Terminaste una partida sin imprecisiones ni errores, según el análisis.",
     },
-    hard_level: { title: "Jugaste contra el nivel Difícil", desc: "Te atreviste a enfrentar a Oscar en modo Difícil." },
-    win_streak_3: { title: "Racha de 3 victorias", desc: "Le ganaste a Oscar tres veces seguidas." },
+    hard_level: { title: "Jugaste contra el nivel Difícil", desc: `Te atreviste a enfrentar a ${NOMBRE_BOT} en modo Difícil.` },
+    win_streak_3: { title: "Racha de 3 victorias", desc: `Le ganaste a ${NOMBRE_BOT} tres veces seguidas.` },
   };
 
   function loadUnlockedAchievements() {
@@ -748,7 +754,7 @@
     if (!originsPanelEl) return;
     if (!botBookMoves.length) {
       originsPanelEl.innerHTML =
-        '<p class="text-brand-400 dark:text-brand-500">Cuando Oscar (el bot) juegue una jugada tomada de una de sus partidas reales, aparecerá aquí.</p>';
+        `<p class="text-brand-400 dark:text-brand-500">Cuando ${NOMBRE_BOT} (el bot) juegue una jugada tomada de una de sus partidas reales, aparecerá aquí.</p>`;
       return;
     }
     const bm = botBookMoves[botBookMoves.length - 1];
@@ -756,9 +762,9 @@
       typeof OscarBot !== "undefined" && OscarBot.getMoveOrigin ? OscarBot.getMoveOrigin(bm.hash, bm.uci) : null;
     let html;
     if (!origin) {
-      html = `<p>Última jugada de Oscar tomada del libro: ${bm.moveNum}. ${escapeHtml(bm.san)} — buscando la partida de origen…</p>`;
+      html = `<p>Última jugada de ${NOMBRE_BOT} tomada del libro: ${bm.moveNum}. ${escapeHtml(bm.san)} — buscando la partida de origen…</p>`;
     } else {
-      html = `<p>Última jugada de Oscar tomada de una partida real: ${bm.moveNum}. ${escapeHtml(
+      html = `<p>Última jugada de ${NOMBRE_BOT} tomada de una partida real: ${bm.moveNum}. ${escapeHtml(
         bm.san
       )}, de su partida contra <strong>${escapeHtml(origin.opponent)}</strong> el ${escapeHtml(
         origin.date.replace(/\./g, "-")
@@ -820,9 +826,9 @@
 
   function getGameOverMessage(info) {
     if (!info.over) return null;
-    if (info.resigned) return "Te rendiste — ¡Oscar gana! ♟️";
+    if (info.resigned) return `Te rendiste — ¡${NOMBRE_BOT_M} gana! ♟️`;
     if (!info.draw) {
-      return info.winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : "Jaque mate — ¡Oscar gana! ♟️";
+      return info.winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : `Jaque mate — ¡${NOMBRE_BOT_M} gana! ♟️`;
     }
     if (info.reason === "ahogado") return "Tablas por ahogado";
     if (info.reason === "repetición") return "Tablas por repetición";
@@ -878,16 +884,16 @@
       return;
     }
     const turn = game.turn();
-    const whoLabel = turn === userColor ? "(tú)" : "(Oscar)";
+    const whoLabel = turn === userColor ? "(tú)" : `(${NOMBRE_BOT})`;
     if (turnEl) turnEl.textContent = `Turno: ${colorLabel(turn)} ${whoLabel}`;
     if (!statusEl) {
       // nada más que hacer si esta página no incluye el panel de estado
     } else if (isBotThinking) {
-      statusEl.textContent = "Oscar está pensando…";
+      statusEl.textContent = `${NOMBRE_BOT_M} está pensando…`;
     } else if (turn === userColor) {
       statusEl.textContent = game.in_check() ? "¡Jaque! Tu turno" : "¡Tu turno!";
     } else {
-      statusEl.textContent = "Oscar está pensando…";
+      statusEl.textContent = `${NOMBRE_BOT_M} está pensando…`;
     }
   }
 
@@ -1646,7 +1652,7 @@
         return true;
       }
       resign();
-      announceMoveInput("Te rendiste — Oscar gana.");
+      announceMoveInput(`Te rendiste — ${NOMBRE_BOT_M} gana.`);
       return true;
     }
     const tokens = trimmed.split(/\s+/);
@@ -1700,7 +1706,7 @@
     }
 
     if (isBotThinking) {
-      announceMoveInput("Espera a que Oscar termine de pensar.");
+      announceMoveInput(`Espera a que ${NOMBRE_BOT} termine de pensar.`);
       moveInputEl.select();
       return true;
     }
@@ -1777,7 +1783,7 @@
       const color = () => (userColor === "w" ? "blancas" : "negras");
       if (pideRendirse) {
         if (isGameOver()) announceMoveInput("La partida ya terminó. Escribe «nueva partida» para jugar otra.");
-        else { resign(); announceMoveInput("Te rendiste: Oscar gana. Escribe «nueva partida» para jugar otra."); }
+        else { resign(); announceMoveInput(`Te rendiste: ${NOMBRE_BOT_M} gana. Escribe «nueva partida» para jugar otra.`); }
       } else if (pideSiguiente && startFen && hasChallengePositions()) {
         challengeShuffleBtn.click();
         startChallenge(currentPositionIndex);
@@ -1786,9 +1792,9 @@
           + ". Juegas con las " + color() + ". Escribe «posición» para oírla.");
       } else if (isGameOver()) {
         resetGame();
-        announceMoveInput("Partida nueva contra Oscar. Juegas con las " + color() + ".");
+        announceMoveInput(`Partida nueva contra ${NOMBRE_BOT}. Juegas con las ` + color() + ".");
       } else if (pideSiguiente && t === "siguiente") {
-        announceMoveInput("En una partida no hay «siguiente»: sigue jugando contra Oscar. Para empezar otra, escribe «rendirse» y después «nueva partida». Para el Modo Desafío, escribe «jugar esta posición».");
+        announceMoveInput(`En una partida no hay «siguiente»: sigue jugando contra ${NOMBRE_BOT}. Para empezar otra, escribe «rendirse» y después «nueva partida». Para el Modo Desafío, escribe «jugar esta posición».`);
       } else if (pideSiguiente) {
         announceMoveInput("El Modo Desafío no está activo: escribe «jugar esta posición» para empezarlo.");
       } else {
@@ -1993,7 +1999,7 @@
   function showEndGameModal(info) {
     if (closeEndGameModal) closeEndGameModal();
     const isWin = !info.draw && info.winner === userColor;
-    const title = info.draw ? "Tablas 🤝" : isWin ? "¡Ganaste! 🎉" : info.resigned ? "Te rendiste" : "Oscar gana ♟️";
+    const title = info.draw ? "Tablas 🤝" : isWin ? "¡Ganaste! 🎉" : info.resigned ? "Te rendiste" : `${NOMBRE_BOT_M} gana ♟️`;
 
     const overlay = document.createElement("div");
     overlay.className = "fixed inset-0 bg-brand-900/60 z-[65] flex items-center justify-center p-4";
@@ -2244,7 +2250,7 @@
       `Posición real tomada de la jugada ${escapeHtml(String(entry.moveNum))} de una partida de Oscar contra ` +
       `<strong>${escapeHtml(entry.opponent)}</strong> (${escapeHtml(entry.date.replace(/\./g, "-"))}, ${escapeHtml(
         resultTxt
-      )}). Retoma la partida desde ahí y trata de ganarle a Oscar.`;
+      )}). Retoma la partida desde ahí y trata de ganarle a ${NOMBRE_BOT}.`;
   }
 
   function startChallenge(index) {
@@ -2456,7 +2462,30 @@
     boardEl.addEventListener("pointerdown", precalentar, { once: true, passive: true });
     boardEl.addEventListener("keydown", precalentar, { once: true });
   }
+  presentarProfe();
   maybeTriggerBot().then(updateEvalBar);
+
+  /* Quien juega contra la profe Pame la ve a ella arriba: su cara (del avatar),
+     su nombre y lo que hace su bot. Todo lo demás de la página es igual. */
+  function presentarProfe() {
+    if (typeof OscarBot === "undefined" || OscarBot.PROFE !== "pame") return;
+    const foto = document.getElementById("bot-foto");
+    if (foto && window.AvatarProfeOscar) { foto.src = AvatarProfeOscar.ruta("cara"); foto.alt = "La profe Pame"; }
+    const titulo = document.getElementById("bot-titulo");
+    if (titulo && titulo.firstChild) titulo.firstChild.textContent = "Juega contra la profe Pame ";
+    const jugando = document.getElementById("bot-jugando");
+    if (jugando) jugando.textContent = "Estás jugando contra la profe Pame";
+    const origen = document.getElementById("bot-origen-titulo");
+    if (origen && origen.firstChild) origen.firstChild.textContent = "¿De dónde salen las jugadas de la profe Pame? ";
+    const pres = document.getElementById("bot-presentacion");
+    if (pres) {
+      const fuerte = document.createElement("strong");
+      fuerte.className = "text-brand-800 dark:text-white";
+      fuerte.textContent = "No es un bot cualquiera:";
+      pres.replaceChildren(fuerte, " juega las aperturas que la profe Pame jugó en sus propias partidas, y cuando sale de lo que ella conoce, piensa con su fuerza. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarle?");
+    }
+    document.title = document.title.replace(/Oscar/, "la profe Pame");
+  }
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

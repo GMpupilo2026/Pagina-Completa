@@ -79,6 +79,50 @@ function pruebaCatalogo() {
   const dir = path.join(RAIZ, "img", "avatar-profe-oscar");
   igual("ninguna pasa de 60 KB", web.filter((a) => fs.statSync(path.join(dir, a + ".webp")).size > 60 * 1024), []);
 
+  console.log("\n=== Los otros profes: los mismos dibujos, cada uno en su carpeta ===");
+  for (const profe of Object.keys(A.PROFES).filter((p) => p !== "oscar")) {
+    const webP = enCarpeta(path.join(RAIZ, "img", "avatar-profe-" + profe), ".webp");
+    const origP = enCarpeta(path.join(RAIZ, "herramientas", "avatar-profe-" + profe, "originales"), ".png");
+    igual(profe + ": cada avatar tiene su original", ids.filter((id) => !origP.includes(id)), []);
+    igual(profe + ": ningún original fuera del catálogo", origP.filter((o) => !ids.includes(o)), []);
+    igual(profe + ": cada avatar tiene su versión para la página", ids.filter((id) => !webP.includes(id)), []);
+    igual(profe + ": ninguna versión para la página sin su avatar", webP.filter((w) => !ids.includes(w)), []);
+    igual(profe + ": la carpeta es la que dice el catálogo", A.PROFES[profe].carpeta, "img/avatar-profe-" + profe);
+    igual(profe + ": el generador la arma", new RegExp('"' + profe + '"').test(py), true);
+    igual(profe + ": los originales están en .assetsignore",
+      new RegExp("^herramientas/avatar-profe-" + profe + "$", "m").test(fs.readFileSync(path.join(RAIZ, ".assetsignore"), "utf8")), true);
+    igual(profe + ": ninguna pasa de 60 KB", webP.filter((a) => fs.statSync(path.join(RAIZ, "img", "avatar-profe-" + profe, a + ".webp")).size > 60 * 1024), []);
+  }
+  igual("cada academia apunta a un profe que existe",
+    Object.values(A.PROFE_DE_ACADEMIA).filter((p) => !A.PROFES[p]), []);
+  igual("el texto de la profe Pame no nombra al profe Oscar",
+    A.LISTA.map((a) => A.altDe(a, "pame")).filter((t) => /Oscar|barba/.test(t)), []);
+
+  console.log("\n=== Quién ve a qué profe ===");
+  const POCOCI = Object.keys(A.PROFE_DE_ACADEMIA).find((k) => A.PROFE_DE_ACADEMIA[k] === "pame");
+  // El módulo, cargado con lo que la página tiene guardado en el navegador.
+  const conGuardado = (guardado) => {
+    const datos = Object.assign({}, guardado);
+    const ls = { get length() { return Object.keys(datos).length; }, key: (i) => Object.keys(datos)[i],
+      getItem: (k) => (k in datos ? datos[k] : null) };
+    const w = { localStorage: ls };
+    new Function("window", fs.readFileSync(path.join(RAIZ, "js", "avatar-profe-oscar.js"), "utf8"))(w);
+    return w.AvatarProfeOscar;
+  };
+  const sesion = (uid) => ({ "sb-proyecto-auth-token": JSON.stringify({ user: { id: uid } }) });
+  const marca = (uid, academia) => ({ academia_marca_v1: JSON.stringify({ uid, marca: academia ? { academia_id: academia, nombre: "X" } : null }) });
+  const deP = conGuardado(Object.assign(sesion("u-1"), marca("u-1", POCOCI)));
+  igual("un alumno de CCDR POCOCI ve a la profe Pame", [deP.PROFE, deP.ruta("muy-bien")], ["pame", "img/avatar-profe-pame/muy-bien.webp"]);
+  igual("con su texto alternativo", deP.porId("muy-bien").alt.startsWith("La profe Pame"), true);
+  igual("y sus stickers también", deP.conFrase().every((a) => !/Oscar/.test(a.alt)), true);
+  igual("otra academia ve al profe Oscar", conGuardado(Object.assign(sesion("u-1"), marca("u-1", "otra-academia"))).ruta("muy-bien"),
+    "img/avatar-profe-oscar/muy-bien.webp");
+  igual("sin academia (o de varias), el profe Oscar", conGuardado(Object.assign(sesion("u-1"), marca("u-1", null))).PROFE, "oscar");
+  igual("sin sesión, el profe Oscar", conGuardado(marca("u-1", POCOCI)).PROFE, "oscar");
+  igual("la marca de OTRA cuenta en la misma computadora no cuenta",
+    conGuardado(Object.assign(sesion("u-2"), marca("u-1", POCOCI))).PROFE, "oscar");
+  igual("sin nada guardado, el profe Oscar", conGuardado({}).PROFE, "oscar");
+
   console.log("\n=== Los stickers: los avatares con frase ===");
   igual("los stickers son los avatares con frase", S.CATALOGO.map((s) => s.id), A.conFrase().map((a) => a.id));
   igual("hay de sobra para elegir", S.CATALOGO.length >= 20, true);
