@@ -759,7 +759,7 @@
         },
         {
           "n": 19,
-          "titulo": "Ejercicio 1 de 5",
+          "titulo": "Ejercicio 1 de 6",
           "preguntas": [
             {
               "id": "respuesta",
@@ -770,7 +770,7 @@
         },
         {
           "n": 20,
-          "titulo": "Ejercicio 2 de 5",
+          "titulo": "Ejercicio 2 de 6",
           "preguntas": [
             {
               "id": "respuesta",
@@ -781,7 +781,7 @@
         },
         {
           "n": 21,
-          "titulo": "Ejercicio 3 de 5",
+          "titulo": "Ejercicio 3 de 6",
           "preguntas": [
             {
               "id": "respuesta",
@@ -792,7 +792,7 @@
         },
         {
           "n": 22,
-          "titulo": "Ejercicio 4 de 5",
+          "titulo": "Ejercicio 4 de 6",
           "preguntas": [
             {
               "id": "respuesta",
@@ -803,7 +803,18 @@
         },
         {
           "n": 23,
-          "titulo": "Ejercicio 5 de 5",
+          "titulo": "Ejercicio 5 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
+        },
+        {
+          "n": 24,
+          "titulo": "Ejercicio 6 de 6",
           "preguntas": [
             {
               "id": "respuesta",

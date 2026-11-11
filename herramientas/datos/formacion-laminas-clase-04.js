@@ -100,8 +100,9 @@ module.exports = [
   { tipo: "tarjetas", k: "Con un simulador de reloj digital en línea", items: [
     { ic: "♟️", t: "Clásica" },
     { ic: "⏩", t: "Rápida" },
-    { ic: "⚡", t: "Relámpago" } ],
-    clave: "Cada participante configura los tres escenarios." },
+    { ic: "⚡", t: "Relámpago" },
+    { ic: "🏫", t: "JDE Regional" } ],
+    clave: "Cada participante configura los cuatro escenarios." },
   // 19
   { tipo: "frase", k: "Configura el reloj", ic: "♟️",
     t: "Clásica: 90 minutos + 30 segundos desde la jugada 1.",
@@ -115,21 +116,26 @@ module.exports = [
     t: "Relámpago: 3 minutos + 2 segundos.",
     s: "¿Qué ritmo es?" },
   // 22
+  { tipo: "frase", k: "Configura el reloj · Normativa JDE", ic: "🏫",
+    t: "Etapa Regional: 10 minutos + 2 segundos.",
+    s: "¿Qué ritmo es según la fórmula? ¿Qué apéndice rige?" },
+  // 23
   { tipo: "frase", k: "¿Resultado?", ic: "🚩",
     t: "Cae la bandera de un jugador.",
     s: "Su rival solo tiene el rey." },
-  // 23
+  // 24
   { tipo: "frase", k: "¿Qué pasa?", ic: "⏰",
     t: "Un jugador llega 3 minutos tarde.",
     s: "El reglamento no dice nada sobre la tolerancia." },
-  // 24
+  // 25
   { tipo: "tabla", k: "Cada respuesta, con su artículo", cab: ["Ejercicio", "Respuesta", "Por qué"], filas: [
     ["1 · 90 min + 30 s", "8.4", "Sí, anotan", "si", "con 30 s o más no se deja de anotar"],
     ["2 · 15 min + 10 s", "", "Rápidas", "", "15 + 10 = 25 minutos"],
     ["3 · 3 min + 2 s", "", "Relámpago", "", "3 + 2 = 5 minutos"],
-    ["4 · Rival con rey solo", "6.9", "Tablas", "ojo", "no puede dar mate de ninguna forma"],
-    ["5 · 3 minutos tarde", "6.7", "Pierde", "no", "salvo que el árbitro decida otra cosa"] ] },
-  // 25
+    ["4 · JDE 10 min + 2 s", "", "Rápidas", "", "12 minutos: apéndice A"],
+    ["5 · Rival con rey solo", "6.9", "Tablas", "ojo", "no puede dar mate de ninguna forma"],
+    ["6 · 3 minutos tarde", "6.7", "Pierde", "no", "salvo que el árbitro decida otra cosa"] ] },
+  // 26
   { tipo: "tarjetas", k: "Un minuto por pregunta", cols: 4, compacto: true, numerar: true, items: [
     { t: "¿Qué es el «tiempo Fischer»?" },
     { t: "Se agota el tiempo: ¿qué se verifica primero?" },
@@ -138,13 +144,13 @@ module.exports = [
     { t: "Demora: ¿cuándo baja el tiempo principal?" },
     { t: "Sin tiempo de incomparecencia fijado: ¿cuál es?" },
     { t: "¿Acomoda piezas con el reloj rival en marcha?" } ] },
-  // 26
+  // 27
   { tipo: "filas", k: "Un minuto por pregunta", items: [
     { ic: "✍️", t: "8 · Menos de 5 min, sin incremento de 30 s: ¿sigue anotando?" },
     { ic: "🚩", t: "9 · Clásico con árbitro: ¿quién declara la bandera?" },
     { ic: "🔧", t: "10 · Reloj mal configurado a mitad de partida: ¿qué hace el árbitro?" },
     { ic: "✋", t: "11 · ¿Cuándo queda hecha una jugada y cuándo completada?" } ] },
-  // 27
+  // 28
   { tipo: "tarjetas", cols: 5, compacto: true, numerar: true, items: [
     { t: "Tiempo extra tras cada jugada" },
     { t: "Si el rival puede dar mate" },
@@ -156,11 +162,11 @@ module.exports = [
     { t: "No", s: "puede dejar de anotar" },
     { t: "El árbitro", s: "de oficio" },
     { t: "Lo corrige o reemplaza", s: "y fija los tiempos" } ] },
-  // 28
+  // 29
   { tipo: "tarjetas", k: "11 · ¿Cuándo queda hecha y cuándo completada?", items: [
     { ic: "✋", t: "Hecha", s: "al soltar la pieza" },
     { ic: "⏱️", t: "Completada", s: "al presionar el reloj" } ] },
-  // 29
+  // 30
   { tipo: "tarjetas", k: "Para la próxima sesión", items: [
     { ic: "📚", t: "Tarea", s: "una ficha con tiempo base e incremento para tres modalidades, según la normativa JDE" },
     { ic: "💬", t: "¿Dudas?", s: "este es el momento" },
