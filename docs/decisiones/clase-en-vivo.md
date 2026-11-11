@@ -2326,6 +2326,47 @@ anuncia lo que lleva, la falla de red se dice) y el profe (manda, ve quién falt
 quién terminó, qué contestó cada uno, la respuesta modelo, la calificación; lo
 escrito por una persona no se interpreta como HTML, la quita).
 
+### El reloj de práctica
+
+Para la Sesión 4 de Formación Ajedrez (uso, configuración y control del reloj):
+en «Preguntar», debajo de las prácticas, «⏱️ Reloj de práctica»
+(`js/clase-reloj.js`, `game_state.reloj`). El profe elige con qué control
+arranca y lo pone en la clase; a cada alumno le aparece **arriba del tablero un
+reloj digital que funciona como uno real**: la palanca, la pantalla de 7
+segmentos y los botones − + ▶‖ ✓. Lo configura paso a paso (modo, tiempo
+base, incremento, demora o períodos), lo pone en marcha, ve sumarse el
+incremento, cambiar de período y caer la bandera, y corrige los tiempos en
+pausa como el árbitro. Al lado van la guía de los pasos, la clasificación con
+la fórmula de 60 jugadas (y si es obligatorio anotar), escenarios de un clic y
+cuatro retos que se marcan solos al confirmar con ✓. Es para que los asesores
+practiquen **sin salir de la clase**: antes había que mandarlos a un simulador
+en otra página.
+
+- **Qué va en la base**: solo que el reloj está puesto y con qué control
+  arranca (`{id, control: {modo, base, inc, dly, mv, add}}`, en segundos). Solo
+  el profe lo pone (`protect_game_state_teacher_columns`) y el CHECK
+  `game_state_reloj_forma` (envuelto en `coalesce`, los números con jsonpath)
+  rechaza otra forma. `id` cambia con cada envío: «Ponerlo de nuevo» hace que
+  todos arranquen de cero. Migración `20261110000103_game_state_reloj.sql`,
+  con la función entera copiada de la que estaba en la base.
+- **Lo que hace cada alumno con su reloj no va a ningún lado**: es suyo y de
+  ese rato. Los retos cumplidos se guardan en su aparato
+  (`clase_reloj_v1:<profe>:<id>`).
+- **El reloj vive en un Shadow DOM** (`#reloj-host`): su CSS no choca con el
+  Tailwind de la clase, y sus teclas (A / L la palanca, Espacio ▶‖, Enter ✓,
+  ↑ ↓ − +) solo cuentan con el foco dentro del reloj, para no pisar los
+  atajos del tablero. Sigue el modo oscuro de la clase (`class="dark"`).
+- **Corre con un temporizador, no con `requestAnimationFrame`**: con la
+  pestaña de atrás el tiempo sigue bajando y la bandera cae a su hora.
+- **El diseño imita un reloj digital de torneo** (la caja, la palanca con su
+  eje, la franja azul de botones con sus íconos), sin logos de marcas ni de la
+  FIDE: en su lugar dice «Formación Ajedrez JDE».
+- **Quién lo ve para ponerlo**: quien `puede_bajar('formacion-ajedrez', false)`,
+  como las prácticas. Quien observa la clase no lo ve. Al cerrar la clase se
+  quita con lo demás (`limpiarLoDeLaClase`).
+- **La migración va ANTES que el código**: `limpiarLoDeLaClase` manda
+  `reloj: null`, y sin la columna ese update fallaría entero.
+
 ### La participación pareja
 
 Arriba de las pestañas del profe, y solo para él (nunca lo ve la clase):

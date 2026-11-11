@@ -143,7 +143,8 @@ const respuestas = fn.match(/json\(\{[^;]*\}/g) || [];
 const sinTextos = (x) => x.replace(/"(?:[^"\\]|\\.)*"/g, '""');
 ok("nunca devuelve el id de LiveChess ni un token", respuestas.length > 5 && respuestas.every((x) => !/torneo_id|\btoken\b/.test(sinTextos(x))) && !/\.\.\.lc\b/.test(fn));
 ok("un enlace apagado o vencido no lee nada", /e\.revocada\) return json/.test(fn) && /new Date\(e\.vence\)\.getTime\(\) <= Date\.now\(\)/.test(fn));
-ok("sin enlace, hace falta la herramienta «mesa-arbitro»", /tengo_herramienta", \{ p_herramienta: "mesa-arbitro" \}/.test(fn));
+// La transmisión es una sola para todo el sitio: de la casa, no basta la licencia (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+ok("sin enlace, hace falta ser de la casa (centroamericano_soy_casa)", /comoQuienLlama\.rpc\("centroamericano_soy_casa"\)/.test(fn) && !/rpc\("tengo_herramienta"/.test(fn));
 ok("los nombres del cambio salen de los emparejamientos de chess-results, no del navegador", /const m = mesas\.find\(\(x\) => Number\(x\.mesa\) === mesa\)/.test(fn) && !/cuerpo\.blancas|cuerpo\.negras/.test(fn));
 ok("las mesas son todas: la lectura compartida y los emparejamientos completos", /centroamericano_fp_partidas/.test(fn) && /unirMesas\(/.test(fn));
 const desplegadas = leer("supabase/esquema/funciones-desplegadas.txt");

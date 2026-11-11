@@ -731,6 +731,15 @@
                         <p id="formacion-fin" hidden role="status" class="text-sm font-semibold text-green-800 dark:text-green-200 mt-2"></p>
                     </section>
 
+                    <!-- El reloj de práctica (game_state.reloj, js/clase-reloj.js): el profe lo pone para la
+                         Sesión 4 de Formación Ajedrez y cada alumno maneja SU reloj aquí, sin salir de la clase.
+                         Lo que hace cada uno no va a la base. El reloj va en un Shadow DOM (#reloj-host). -->
+                    <section id="reloj-tarjeta" hidden aria-labelledby="reloj-titulo" class="max-w-[820px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-3 sm:px-4 py-3">
+                        <h2 id="reloj-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏱️ </span>Reloj de práctica</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-0.5">Es tuyo: configúralo con − + ▶‖ ✓ y ponlo en marcha con la palanca. Lo que hagas aquí no lo ve nadie más.</p>
+                        <div id="reloj-host" class="mt-2"></div>
+                    </section>
+
                     <!-- El podio de la clase (game_state.podio): una foto de los puntos que manda el
                          profe. Con o sin nombres; cada uno ve igual su propio lugar. -->
                     <!-- Los equipos (game_state.equipos): los ve toda la clase. El nombre del equipo es su
@@ -1501,6 +1510,22 @@
                                 </div>
                             </div>
                         </details>
+                        <!-- El reloj de práctica (js/clase-reloj.js): lo pone arriba del tablero de todos. Solo lo
+                             ve quien puede mandar lo de Formación Ajedrez (puede_bajar). -->
+                        <details id="reloj-caja" hidden class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏱️ </span>Reloj de práctica: cada alumno configura y maneja un reloj digital en su pantalla</summary>
+                            <div class="px-3 pb-3 space-y-2">
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Para la sesión del reloj. A cada alumno le aparece arriba del tablero un reloj digital que funciona como uno real, con la guía paso a paso y los retos de la práctica. Elige con qué control arranca; después cada uno lo puede cambiar con los botones del reloj.</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="reloj-select" class="text-xs text-brand-700 dark:text-brand-200">Arranca con</label>
+                                    <select id="reloj-select" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                </div>
+                                <button id="reloj-mandar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Poner el reloj en la clase</button>
+                                <p id="reloj-enviado" class="text-xs text-brand-600 dark:text-brand-300"></p>
+                                <button id="reloj-quitar-btn" type="button" hidden class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el reloj de la clase</button>
+                                <p id="reloj-aviso" class="text-xs font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                            </div>
+                        </details>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa <span id="question-tiempo-profe" class="font-semibold text-brand-700 dark:text-brand-200"></span></p>
@@ -1797,6 +1822,7 @@
     <script src="js/clase-tanda.js"></script>
     <script src="js/clase-formacion.js"></script>
     <script src="js/clase-formacion-respuestas.js"></script>
+    <script src="js/clase-reloj.js"></script>
     <script src="js/clase-entrenamientos.js"></script>
     <script src="js/clase-puntos.js"></script>
     <script src="js/clase-ronda.js"></script>

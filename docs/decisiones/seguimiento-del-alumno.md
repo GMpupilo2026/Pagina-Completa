@@ -1045,6 +1045,9 @@ Salen de bancos que ya estaban verificados, vía `js/examen-banco.js`:
   sin deshacer**. Es la misma línea que en `entreno/aperturas.html` se practica
   con ayuda y repaso espaciado; acá se demuestra.
 
+- **`entreno/data/temas.json`** — los ejercicios de táctica de Entrenamiento
+  («Ejercicios por tema»), tema por tema. Ver la sección siguiente.
+
 **Las opciones se barajan al armar el examen** y la clave guarda el índice ya
 barajado, así que el número que queda en la base no dice nada por sí solo. Eso
 tiene una trampa que el verificador vigila sobre 1.600 preguntas: si el
@@ -1054,6 +1057,46 @@ nadie se entera — los alumnos reprueban y no hay ningún error.
 Y `clave.correcta` se guarda como **texto**, no como número: en la base se
 compara con `->>'opcion'`, que también es texto. Un número contra un texto en
 jsonb da `false` siempre.
+
+### La táctica de Entrenamiento como fuente de examen
+
+«Táctica de Entrenamiento (por tema)» deja armar «10 de clavadas» o «5 de
+mate del pasillo» con los mismos ejercicios de Lichess que el alumno practica
+en `entreno/temas.html`. Antes, la táctica solo entraba como un área entera
+del diagnóstico (96 preguntas, mezcladas), sin poder elegir el tema.
+
+- **Se pide la primera jugada de la solución**, como pregunta `jugada`. En un
+  ejercicio de Lichess esa jugada es la única que gana; la base ya calificaba
+  este tipo (`clave.jugadas`, por casilla de salida y de llegada), así que no
+  hizo falta ninguna migración. **Además vale cualquier jugada que dé mate**,
+  igual que en Entrenamiento (`EjercicioTablero.esAcierto`): un mate nunca es
+  una respuesta mala.
+- **Qué temas entran**: los grupos Recomendado, Temas, Avanzado, Mates y Temas
+  de mate. Las fases, los objetivos, la duración y el origen quedan fuera: no
+  son un tema que se examine sino otra forma de cortar los mismos ejercicios.
+  También queda fuera «Táctica de ataque» (los 148 de la casa): no traen
+  rating y su dificultad habría que ponerla a ojo.
+- **La dificultad sale del rating de Lichess**, en tramos de 400 (menos de
+  1000 → 1; 1000-1399 → 2; 1400-1799 → 3; 1800-2199 → 4; 2200 o más → 5).
+- **Una subpromoción no entra**: como la base califica por casillas, coronar
+  dama donde había que coronar caballo contaría como buena.
+- **El archivo pesa casi 2 MB** y se baja recién cuando el profesor elige esa
+  fuente (`ExamenBanco.cargarTactica()`, que trae también chess.js y
+  `comandos-tablero.js`). Mientras carga, el bloque dice «Cargando…», no «no
+  hay preguntas». Al llegar se tira la previsión: se había calculado sin ellos.
+- **El área del informe es el nombre del tema** («Clavada»), así que el
+  desglose por áreas dice tema por tema cómo le fue.
+- **La misma fuga que el libro y el reglamento, un poco más ancha**: las
+  soluciones están en un archivo público (el alumno las usa para practicar).
+  Un alumno podría buscar la posición dentro de ese archivo durante el examen,
+  a pantalla completa, con el reloj corriendo y las salidas contadas. Queda
+  anotado; esconderlo exigiría servir el banco desde la base como el del
+  diagnóstico.
+- `verificar-examenes.js` pasa a pregunta **cada uno** de los más de 5000
+  ejercicios de esos temas y comprueba que la clave lleve la primera jugada,
+  que toda jugada de la clave sea legal, que lo visible no traiga la solución,
+  que el tema y la dificultad pedidos se respeten y que en un mate en uno
+  valga cualquier mate. En la pantalla, que «Clavada» dé siete clavadas.
 
 ### Un examen se arma sumando bloques, como los renglones de una tarea
 
