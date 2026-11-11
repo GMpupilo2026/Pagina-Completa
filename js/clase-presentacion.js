@@ -100,31 +100,26 @@ window.PresentacionClase = (function () {
        Se la mandaba solo la cookie de window.SesionCursos (js/supabase-client.js),
        y el 10/11 eso falló dos veces, sin ningún error a la vista: la tarjeta en
        blanco con «Revisa tu conexión» y la conexión bien.
-       - La cookie dura lo mismo que la sesión, una hora: si la computadora se
-         durmió, nadie la renovaba y el worker contestaba 401.
+       - La cookie dura lo mismo que la sesión, una hora: escrita con una sesión
+         vencida, se borraba y el worker contestaba 401.
        - En un perfil de Chrome la cookie no llegaba NUNCA, ni recargando, a un
          profe con el acceso vigente.
-       Ahora la página manda el token también en Authorization: Bearer (el
-       worker lo acepta igual que la cookie, ver tokenDe en worker.js), y las
-       imágenes se bajan con ese encabezado, no con un <img src> que solo puede
-       llevar la cookie. getSession() renueva la sesión si venció; ante un 401
-       se fuerza la renovación y se pide UNA vez más. La cookie se sigue
-       escribiendo, para lo demás del sitio. El doble de los verificadores no
-       trae SesionCursos ni refreshSession: no pasa nada. */
-    async function sesionActual(forzar) {
-        if (!window.sb || !sb.auth) return "";
-        try {
-            const pedido = forzar && sb.auth.refreshSession ? sb.auth.refreshSession() : sb.auth.getSession();
-            const { data } = (await pedido) || {};
-            const s = data && data.session;
-            if (s && window.SesionCursos) SesionCursos.guardar(s);
-            return (s && s.access_token) || "";
-        } catch (e) { console.error(e); return ""; }
-    }
+       Ahora se pide la sesión de AHORA (SesionCursos.renovar, que de paso
+       escribe la cookie para lo demás del sitio) y el token va también en
+       Authorization: Bearer (el worker lo acepta igual que la cookie, ver
+       tokenDe en worker.js); las imágenes se bajan con ese encabezado, no con un
+       <img src> que solo puede llevar la cookie. Ante un 401 se pide un token
+       nuevo (renovar(true)) y se intenta UNA vez más. El doble de los
+       verificadores no trae SesionCursos: se pide sin encabezado. */
+    const renovar = (forzar) => (window.SesionCursos && SesionCursos.renovar ? SesionCursos.renovar(forzar) : Promise.resolve(null));
     async function pedirDelCurso(ruta) {
-        const pedir = (token) => fetch(ruta, { credentials: "same-origin", headers: token ? { Authorization: "Bearer " + token } : {} });
-        let r = await pedir(await sesionActual(false));
-        if (r.status === 401) r = await pedir(await sesionActual(true));
+        const pedir = (s) => fetch(ruta, { credentials: "same-origin",
+            headers: s && s.access_token ? { Authorization: "Bearer " + s.access_token } : {} });
+        let r = await pedir(await renovar());
+        if (r.status === 401) {
+            const nueva = await renovar(true);
+            if (nueva) r = await pedir(nueva);
+        }
         if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : r.status === 401 ? "sin_sesion" : "error");
         return r;
     }
@@ -214,7 +209,7 @@ const PRESENTACION_ERRORES = {
     sin_acceso: "Tu profe está mostrando una presentación, pero tu cuenta no tiene el acceso a la Academia activo para verla.",
     no_disponible: "Esta presentación ya no está disponible (puede que se haya borrado).",
     sin_imagen: "No se pudo abrir esta diapositiva.",
-    sin_sesion: "Tu sesión se cerró, así que el sitio no te deja ver la presentación. Si no aparece sola, recarga la página o vuelve a entrar.",
+    sin_sesion: "Se venció tu sesión y no se pudo renovar. Si la diapositiva no aparece, recarga la página o vuelve a entrar.",
 };
 // Lo que no se arregla con volver a pedir: ahí no se reintenta.
 const PRESENTACION_SIN_REINTENTO = { sin_acceso: true, no_disponible: true };

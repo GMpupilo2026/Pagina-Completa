@@ -2375,6 +2375,20 @@ en otra página.
   - enrocar con dos manos: cuenta como ilegal (art. 7.5.4);
   - por períodos, quitarle la ilegal al contador de jugadas;
   - la segunda ilegal: no se suma tiempo, la partida termina.
+  Y seis más, **dos por ritmo**, donde el árbitro resuelve y ajusta el reloj
+  (la tarjeta se llama ahora «Situaciones de árbitro»):
+  - clásica: reclamo de tablas equivocado, +2 min al rival de quien reclamó
+    (art. 9.5.3); reloj programado 90 + 0 en vez de 90 + 30, +10 min a cada
+    uno por las 20 jugadas sin incremento (art. 6.10.2);
+  - rápida: 10 + 2, el rey queda en jaque, +1 min; 15 + 10, la ilegal se
+    reclama después de haber jugado: ya no se corrige ni se suma nada
+    (Anexo A.4.2);
+  - relámpago: 5 + 0, enroque por una casilla atacada, +1 min; 3 + 2
+    programado 3 + 0, +30 s a cada uno (art. 6.10.2).
+  Las que no son una ilegal traen su `aviso` (lo que dice al empezar) y su
+  `pista` (lo que contesta si los tiempos quedan mal), porque los mensajes de
+  siempre dan por hecho que alguien hizo una ilegal y que el tiempo es para el
+  rival. Van al final de la lista: las logradas se guardan por su posición.
   Cada una arranca con el reloj **corriendo** justo después de la ilegal y las
   blancas a la izquierda. El asesor lo detiene con ▶‖, entra a corrección con ✓
   y presiona «Comprobar».
@@ -3907,28 +3921,33 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
-- **La sesión va en el encabezado, no solo en la cookie, y lo que falla se
-  vuelve a pedir solo.** El 10/11 la tarjeta quedó en blanco con «No se pudo
-  abrir la presentación. Revisa tu conexión», con la conexión bien, por dos
-  causas:
-  - la cookie que mira el worker (`SesionCursos`) dura lo que la sesión, una
-    hora, y si la computadora se durmió nadie la renovaba;
+- **La sesión de AHORA, y en el encabezado, no solo en la cookie.** El
+  10/11 y el 11/11 la tarjeta quedó en blanco con «No se pudo abrir la
+  presentación. Revisa tu conexión», con la conexión bien. El worker
+  contestaba 401 al `diapositivas.json`, por dos causas:
+  - una clase dura horas y el token una: `sesion.js` guarda la sesión al
+    arrancar y no la actualiza, y escribir la cookie con esa sesión vencida
+    (`SesionCursos.guardar`) la BORRA (la Sesión 4 de los asesores);
   - en un perfil de Chrome la cookie no llegaba NUNCA, ni recargando ni
     abriendo la dirección a mano, a un profe con el acceso vigente. En los
     registros de Supabase se veía: el worker no le preguntaba nada por esa
     cuenta.
 
-  El worker contestaba 401, ese caso no tenía aviso propio y solo se
-  reintentaba al pasar de lámina. Ahora `pedirDelCurso` manda el token en
-  `Authorization: Bearer` (el worker lo acepta igual que la cookie y, si
-  vienen los dos, gana el encabezado: `tokenDe` en `worker.js`), con la
-  sesión de `getSession()`; ante un 401 la renueva con `refreshSession()` y
-  pide UNA vez más. Las imágenes del curso se bajan igual y se muestran como
-  `blob:` (un `<img src>` solo puede llevar la cookie); cuál es lo dice
-  `data-archivo`. Lo que siga fallando (salvo «sin acceso» o «ya no existe»)
-  se reintenta a los 3, 6, 12, 24 y después cada 30 segundos, y en el acto al
-  volver la conexión (`online`). Lo prueban `verificar-clase-presentacion.js`
-  (6b) y `verificar-worker.js`.
+  Ahora, antes de pedir el `diapositivas.json` y cada lámina del curso,
+  `pedirDelCurso` pide la sesión con `SesionCursos.renovar()`
+  (`js/supabase-client.js`), que la renueva si venció y escribe la cookie, y
+  manda el token también en `Authorization: Bearer` (el worker lo acepta
+  igual que la cookie y, si vienen los dos, gana el encabezado: `tokenDe` en
+  `worker.js`). Si el worker igual dice 401, `renovar(true)` pide un token
+  nuevo y se intenta una vez más. Las imágenes del curso se bajan igual y se
+  muestran como `blob:` (un `<img src>` solo puede llevar la cookie); cuál es
+  lo dice `data-archivo`. Lo que siga fallando (salvo «sin acceso» o «ya no
+  existe») se reintenta solo a los 3, 6, 12, 24 y después cada 30 segundos, y
+  en el acto al volver la conexión (`online`); el aviso dice que se venció la
+  sesión, no que falló la conexión. Las lecciones del curso en la clase
+  también renuevan la cookie. Lo prueban `verificar-clase-presentacion.js`
+  (4a, con el `SesionCursos` de verdad sobre el doble, y 6b) y
+  `verificar-worker.js`.
 - **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
   siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
   respuestas de la práctica y del quiz.

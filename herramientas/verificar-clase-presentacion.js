@@ -231,6 +231,67 @@ async function pruebaProfesor(browser) {
   await ctx.close();
 }
 
+/* La clase en vivo dura horas y el token una. La sesión que sesion.js guardó al
+   arrancar ya venció, y escribir con ella la cookie que mira el worker la
+   BORRA: el worker contestaba 401 al diapositivas.json y el profe leía «Revisa
+   tu conexión» (la clase de los asesores, 11/11). Aquí corre el SesionCursos
+   de verdad (el de js/supabase-client.js) sobre el doble: la sesión del
+   arranque no trae expires_at, como una vencida, y el «worker» solo deja pasar
+   con la cookie del token renovado. */
+const SESION_CURSOS = (() => {
+  const cliente = fs.readFileSync(path.join(RAIZ, "js", "supabase-client.js"), "utf8");
+  const m = cliente.match(/window\.SesionCursos = \(function \(\) \{[\s\S]*?\n\}\)\(\);/);
+  if (!m) throw new Error("no se encontró SesionCursos en js/supabase-client.js");
+  return m[0];
+})();
+function conTokenVencido(renueva) {
+  return `
+    window.__renovaciones = 0;
+    (function () {
+      var renovada = null, getSession = window.sb.auth.getSession;
+      window.sb.auth.getSession = function () { return renovada ? Promise.resolve({ data: { session: renovada } }) : getSession(); };
+      window.sb.auth.refreshSession = function () {
+        window.__renovaciones += 1;
+        if (!${renueva}) return Promise.resolve({ data: { session: null }, error: { message: "sin red" } });
+        renovada = { user: { id: "u-profe" }, access_token: "renovado", expires_at: Math.floor(Date.now() / 1000) + 3600 };
+        return Promise.resolve({ data: { session: renovada }, error: null });
+      };
+    })();
+    ${SESION_CURSOS}
+  `;
+}
+async function pruebaTokenVencido(browser) {
+  console.log("\n4a. Con el token del arranque vencido, la del curso se abre igual");
+  for (const renueva of [true, false]) {
+    const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE,
+      { game_state: [fila()], puede_bajar: ["formacion-ajedrez"] }, { extra: conTokenVencido(renueva) });
+    await ctx.route(/\/cursos\/recursos\//, (r) => (/ai_sesion_cursos=renovado/.test(r.request().headers().cookie || "")
+      ? r.continue() : r.fulfill({ status: 401, contentType: "text/plain", body: "Hace falta iniciar sesión" })));
+    await page.waitForSelector("#toggle-presentacion-btn", { state: "visible", timeout: 10000 });
+    await page.click("#toggle-presentacion-btn");
+    await page.click("#presentacion-panel-lista button:has-text('Mostrar a la clase')");
+    if (renueva) {
+      await esperarImagen(page, "01.webp").catch(() => {});
+      const img = await imagen(page);
+      cierto("el worker dijo 401: se renovó el token una vez y se ve la diapositiva",
+        img.src === "01.webp" && img.cargada && (await page.evaluate(() => window.__renovaciones)) === 1,
+        JSON.stringify(img) + " renovaciones=" + (await page.evaluate(() => window.__renovaciones)));
+      await page.click("#presentacion-siguiente");
+      await esperarImagen(page, "02.webp").catch(() => {});
+      cierto("y la siguiente también carga (la cookie quedó al día)", (await imagen(page)).cargada && (await imagen(page)).src === "02.webp");
+      // El 401 del primer pedido lo anota el navegador: es el que se esperaba.
+      const otros = errores.filter((e) => !/status of 401/.test(e));
+      cierto("sin otros errores en consola", otros.length === 0, otros.join(" | "));
+    } else {
+      await page.waitForFunction(() => !document.getElementById("presentacion-msg").hidden, null, { timeout: 8000 }).catch(() => {});
+      const msg = await page.textContent("#presentacion-msg");
+      cierto("si no se puede renovar, dice que se venció la sesión, no que falló la conexión",
+        /venció tu sesión/.test(msg) && !/conexión/.test(msg), msg);
+    }
+    await ctx.close();
+  }
+}
+
 /* Hacer algo y esperar a que la presentación se mande (no un tiempo fijo: con
    la máquina cargada, como en el CI, 350 ms no alcanzan). Si no se manda nada
    —un toque que no deja marca—, sigue a los 3 segundos. */
@@ -470,7 +531,16 @@ async function pruebaProyector(browser) {
    cae) las veces que diga __json401 / __jsonRed. */
 const CANDADO = `
   window.__cookies = [];
-  window.SesionCursos = { guardar: (s) => window.__cookies.push(s && s.access_token) };
+  // Como el de verdad (js/supabase-client.js): renovar() pide la sesión a
+  // supabase-js, la guarda en la cookie y la devuelve.
+  window.SesionCursos = {
+    guardar: (s) => window.__cookies.push(s && s.access_token),
+    renovar: (forzar) => (forzar ? window.sb.auth.refreshSession() : window.sb.auth.getSession()).then((r) => {
+      const s = r && r.data && r.data.session;
+      if (s) window.SesionCursos.guardar(s);
+      return s || null;
+    }),
+  };
   window.sb.auth.refreshSession = () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "renovado" } } });
   window.__json401 = Number(sessionStorage.getItem("json401") || 0);
   window.__jsonRed = Number(sessionStorage.getItem("jsonRed") || 0);
@@ -513,8 +583,8 @@ async function pruebaCookieVencida(browser) {
   a = await abrirConCandado(browser, 5, 2, 0);
   await a.page.waitForFunction(() => document.getElementById("presentacion-msg").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
   const aviso = await avisoDeLaTarjeta(a.page);
-  cierto("si sigue en 401, dice que la sesión se cerró (no «revisa tu conexión») y que se reintenta sola",
-    /sesión se cerró/.test(aviso) && /Se vuelve a intentar sola en 3 segundos/.test(aviso) && !/conexión/.test(aviso), aviso);
+  cierto("si sigue en 401, dice que se venció la sesión (no «revisa tu conexión») y que se reintenta sola",
+    /venció tu sesión/.test(aviso) && /Se vuelve a intentar sola en 3 segundos/.test(aviso) && !/conexión/.test(aviso), aviso);
   await esperarImagen(a.page, "05.webp").catch(() => {});
   cierto("y a los segundos aparece sola, sin que nadie recargue ni pase de lámina",
     !(await avisoDeLaTarjeta(a.page)) && (await a.page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 51");
@@ -975,6 +1045,7 @@ async function pruebaPantallaCompletaTodos(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
+    await pruebaTokenVencido(browser);
     await pruebaPizarra(browser);
     await pruebaPizarraClase(browser);
     await pruebaAlumna(browser);
