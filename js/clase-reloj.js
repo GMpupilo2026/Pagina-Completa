@@ -41,6 +41,7 @@ window.RelojPractica = (function () {
         { nombre: "40/90 + 30", sub: "Clásica · períodos, +30 s", control: { modo: "periodos", base: 5400, inc: 30, dly: 0, mv: 40, add: 1800 } },
         { nombre: "15 + 10", sub: "Rápida · Fischer", control: { modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 } },
         { nombre: "10 + 5", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 5, dly: 0, mv: 40, add: 0 } },
+        { nombre: "10 + 2", sub: "Rápida · Fischer", control: { modo: "fischer", base: 600, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "3 + 2", sub: "Relámpago · Fischer", control: { modo: "fischer", base: 180, inc: 2, dly: 0, mv: 40, add: 0 } },
         { nombre: "5 + 0", sub: "Relámpago · sin incremento", control: { modo: "sin", base: 300, inc: 0, dly: 0, mv: 40, add: 0 } },
         { nombre: "25 · d5", sub: "Rápida · demora 5 s", control: { modo: "demora", base: 1500, inc: 0, dly: 5, mv: 40, add: 0 } },
