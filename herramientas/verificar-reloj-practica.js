@@ -26,7 +26,8 @@
       equivocado, la pista habla del rival de quien reclamó.
   10. Una sola situación (la que pone el profe): se ve solo el reloj y esa
       situación (medido con checkVisibility), el reloj espera parado hasta
-      «Empezar», se resuelve igual, y al volver al reloj libre vuelve todo.
+      «Empezar», se resuelve igual (cada «Comprobar» se le cuenta al profe por
+      alComprobar, y solo esos), y al volver al reloj libre vuelve todo.
       `valido` acepta la situación solo si existe. */
 const path = require("path");
 const fs = require("fs");
@@ -55,7 +56,8 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
     if (window.__reloj) window.__reloj.destruir();
     host.replaceChildren();
     const nuevo = document.createElement("div"); host.appendChild(nuevo);
-    window.__reloj = RelojPractica.montar(nuevo, { clave: "prueba-reloj" });
+    window.__intentos = [];
+    window.__reloj = RelojPractica.montar(nuevo, { clave: "prueba-reloj", alComprobar: (i, ok) => window.__intentos.push([i, ok]) });
     window.__reloj.cargar({ modo: "fischer", base: 900, inc: 10, dly: 0, mv: 40, add: 0 });
     window.__raiz = nuevo.shadowRoot;
   });
@@ -217,12 +219,17 @@ const CODIGO = fs.readFileSync(path.join(__dirname, "..", "js", "clase-reloj.js"
   ok((await estado()).startsWith("Listo"), `el reloj espera parado hasta «Empezar» (${await estado()})`);
   v = await comprobar();
   ok(/Empezar/.test(v.texto) && /alerta/.test(v.clase), `«Comprobar» antes de empezar lo pide: «${v.texto}»`);
+  ok(await page.evaluate(() => window.__intentos.length === 0), "lo comprobado fuera de la situación del profe, o antes de empezar, no se cuenta");
   await clic("soloEmpezar");
   ok((await estado()).startsWith("En marcha"), `con «Empezar» arranca corriendo (${await estado()})`);
   await clic("marcha");
+  v = await comprobar();
+  ok(/alerta/.test(v.clase), "detenerlo sin corregir, no");
   await corregir({ [P.LM]: 2 });
   v = await comprobar();
   ok(/^¡Bien!/.test(v.texto) && /siguiente situación/.test(v.texto), `se resuelve igual, y le dice que espere la siguiente: «${v.texto.slice(-60)}»`);
+  const intentos = await page.evaluate(() => JSON.stringify(window.__intentos));
+  ok(intentos === JSON.stringify([[iSolo, false], [iSolo, true]]), `cada «Comprobar» de la situación se cuenta, con si salió (${intentos})`);
   await page.evaluate(() => window.__reloj.situacion(null));
   ok(await ve(".barra") && await ve('[data-r="ilegales"]') && !(await ve('[data-r="soloEmpezar"]')), "al volver al reloj libre, vuelve todo");
 

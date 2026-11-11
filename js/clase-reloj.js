@@ -721,6 +721,10 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             aviso(r.aviso || "¡Jugada ilegal! El reloj de " + nombreLado(r.corre) + " está corriendo: actúa como árbitro.", "alerta");
         }
         const reloj = (s) => { const a = Math.abs(s); return (s < 0 ? "−" : "+") + Math.floor(a / 60) + ":" + pad(a % 60); };
+        // Solo con la situación que puso el profe: lo que se comprueba se le cuenta (opciones.alComprobar).
+        function avisarIntento(i, logrado) {
+            if (S.solo === i && typeof opciones.alComprobar === "function") opciones.alComprobar(i, logrado);
+        }
         function comprobarIlegal() {
             const R = S.reto;
             if (!R) { if (S.solo !== null) veredictoI("Primero presiona «Empezar»: el reloj arranca corriendo.", "alerta"); return; }
@@ -741,8 +745,10 @@ ul li.activa{background:var(--fondo);border-radius:8px;padding:4px 6px;font-weig
             if (bienT && bienM && !malMv) {
                 S.hechosI.add(R.i); guardarHechos(); pintarIlegales();
                 veredictoI("¡Bien! " + r.regla + (S.solo !== null ? " Espera la siguiente situación de tu profe." : ""), "ok");
+                avisarIntento(R.i, true);
                 return;
             }
+            avisarIntento(R.i, false);
             const infractor = 1 - r.corre, rival = r.corre;
             const quien = (k) => (k === 0 ? "las blancas" : "las negras");
             let msg;
@@ -880,7 +886,7 @@ function pintarReloj(r) {
     tarjeta.hidden = false;
     if (antes && antes.id === relojActual.id && relojMontado) return; // el mismo envío: el reloj de cada uno sigue como va
     const clave = "clase_reloj_v1:" + (boardOwnerId || "") + ":" + relojActual.id;
-    if (!relojMontado) relojMontado = RelojPractica.montar(document.getElementById("reloj-host"), { clave });
+    if (!relojMontado) relojMontado = RelojPractica.montar(document.getElementById("reloj-host"), { clave, alComprobar: anotarIntento });
     relojMontado.cargar(relojActual.control, clave);
     const sit = Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
     relojMontado.situacion(sit);
@@ -889,6 +895,16 @@ function pintarReloj(r) {
             ? "Tu profe te puso una situación de árbitro arriba del tablero: lee qué pasó, presiona «Empezar» y ajusta el reloj."
             : "Tu profe puso el reloj de práctica en tu pantalla, arriba del tablero. Es tuyo: configúralo con sus botones y ponlo en marcha con la palanca.");
     }
+}
+
+/* Cada «Comprobar» del alumno en la situación que puso el profe queda anotado
+   (reloj_situaciones): con eso el profe ve quién lleva cuáles. La base exige
+   que la situación siga puesta en la clase de un profe suyo. Si falla, la
+   práctica sigue igual: solo no se cuenta. */
+function anotarIntento(i, logrado) {
+    if (isTeacher || esObservador || !relojActual || relojActual.situacion !== i) return;
+    sb.rpc("reloj_situacion_intento", { p_envio: relojActual.id, p_situacion: i, p_logrado: !!logrado })
+        .then(({ error }) => { if (error) console.error("No se pudo anotar el intento del reloj:", error); });
 }
 
 /* ---------- El profe ---------- */
@@ -976,7 +992,98 @@ async function mandarSituacion() {
     aviso.textContent = "";
     if (k + 1 < sel.options.length) sel.value = String(k + 1);
     pintarReloj(data && data.reloj ? data.reloj : nuevo);
+    cargarAvanceReloj();
 }
+
+/* Cómo van: un cuadro de alumno × situación con lo de las últimas 12 horas
+   (una clase entra de sobra). Se pone al día solo mientras haya una situación
+   puesta y la caja esté abierta. */
+const RELOJ_VENTANA_MS = 12 * 3600 * 1000;
+let relojAvanceTurno = 0;
+function celdaDeAvance(x) {
+    if (!x) return "—";
+    if (x.logrado) return "✓ " + (x.logradoEn === 1 ? "a la primera" : "en el intento " + x.logradoEn);
+    return "✗ " + x.intentos + (x.intentos === 1 ? " intento" : " intentos");
+}
+async function cargarAvanceReloj() {
+    const cont = document.getElementById("reloj-avance");
+    if (!cont || !isTeacher || !relojPermiso) return;
+    const turno = ++relojAvanceTurno;
+    const desde = new Date(Date.now() - RELOJ_VENTANA_MS).toISOString();
+    const { data: filas, error } = await sb.from("reloj_situaciones")
+        .select("student_id, situacion, intentos, logrado_en")
+        .eq("owner_id", boardOwnerId).gte("created_at", desde).limit(1000);
+    if (turno !== relojAvanceTurno) return;
+    if (error) { console.error(error); cont.replaceChildren(); cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs text-brand-700 dark:text-brand-200", textContent: "No se pudo cargar cómo van. Vuelve a intentarlo." })); return; }
+    // Si la misma situación se puso dos veces, cuenta lo de las dos.
+    const tabla = new Map();
+    (filas || []).forEach((f) => {
+        const k = f.student_id + "|" + f.situacion;
+        const x = tabla.get(k) || { intentos: 0, logrado: false, logradoEn: null };
+        if (f.logrado_en && !x.logrado) { x.logrado = true; x.logradoEn = x.intentos + f.logrado_en; }
+        x.intentos += f.intentos;
+        tabla.set(k, x);
+    });
+    const actual = relojActual && Number.isInteger(relojActual.situacion) ? relojActual.situacion : null;
+    const sits = [...new Set((filas || []).map((f) => f.situacion).concat(actual !== null ? [actual] : []))].sort((a, b) => a - b);
+    const ids = [...new Set((filas || []).map((f) => f.student_id))];
+    const nombres = new Map();
+    if (ids.length) {
+        const { data } = await sb.from("profiles").select("id, full_name, email").in("id", ids);
+        (data || []).forEach((p) => nombres.set(p.id, p.full_name || p.email || "Alumno"));
+        if (turno !== relojAvanceTurno) return;
+    }
+    cont.replaceChildren();
+    if (!ids.length) {
+        cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs text-brand-600 dark:text-brand-300",
+            textContent: actual !== null ? "Todavía nadie presionó «Comprobar» en esta situación." : "Todavía no hay situaciones resueltas en esta clase." }));
+        return;
+    }
+    if (actual !== null) {
+        const logrados = ids.filter((id) => (tabla.get(id + "|" + actual) || {}).logrado).length;
+        cont.appendChild(Object.assign(document.createElement("p"), { className: "text-xs font-semibold text-brand-700 dark:text-brand-200",
+            textContent: "Situación " + (actual + 1) + ": " + logrados + " de " + ids.length + " ya la resolvieron." }));
+    }
+    const envoltura = document.createElement("div");
+    envoltura.className = "overflow-x-auto";
+    const t = document.createElement("table");
+    t.className = "w-full text-xs text-brand-700 dark:text-brand-200 border-collapse";
+    const cap = document.createElement("caption");
+    cap.className = "sr-only";
+    cap.textContent = "Cómo van los alumnos en las situaciones de árbitro";
+    const cab = document.createElement("tr");
+    const th0 = document.createElement("th"); th0.scope = "col"; th0.className = "text-left font-semibold py-1 pr-2"; th0.textContent = "Alumno";
+    cab.appendChild(th0);
+    sits.forEach((k) => {
+        const th = document.createElement("th"); th.scope = "col"; th.className = "text-left font-semibold py-1 pr-2";
+        th.textContent = "Sit. " + (k + 1) + (k === actual ? " (puesta)" : "");
+        th.title = RelojPractica.ILEGALES[k] ? RelojPractica.ILEGALES[k].titulo : "";
+        cab.appendChild(th);
+    });
+    const thead = document.createElement("thead"); thead.appendChild(cab);
+    const tbody = document.createElement("tbody");
+    ids.map((id) => ({ id, nombre: nombres.get(id) || "Alumno" })).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")).forEach(({ id, nombre }) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t border-brand-100 dark:border-brand-800";
+        const th = document.createElement("th"); th.scope = "row"; th.className = "text-left font-normal py-1 pr-2 break-words";
+        th.textContent = nombre; // lo escribió una persona: por textContent
+        tr.appendChild(th);
+        sits.forEach((k) => {
+            const td = document.createElement("td"); td.className = "py-1 pr-2 whitespace-nowrap";
+            td.textContent = celdaDeAvance(tabla.get(id + "|" + k));
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    t.append(cap, thead, tbody);
+    envoltura.appendChild(t);
+    cont.appendChild(envoltura);
+}
+setInterval(() => {
+    const caja = document.getElementById("reloj-caja");
+    if (caja && caja.open && !caja.hidden && document.visibilityState === "visible"
+        && relojActual && Number.isInteger(relojActual.situacion)) cargarAvanceReloj();
+}, 10000);
 
 async function quitarReloj() {
     const aviso = document.getElementById("reloj-aviso");
@@ -991,6 +1098,9 @@ if (document.getElementById("reloj-tarjeta")) {
     on("reloj-mandar-btn", () => mandarReloj());
     on("reloj-quitar-btn", () => quitarReloj());
     on("reloj-sit-btn", () => mandarSituacion());
+    on("reloj-avance-btn", () => cargarAvanceReloj());
+    const caja = document.getElementById("reloj-caja");
+    if (caja) caja.addEventListener("toggle", () => { if (caja.open) cargarAvanceReloj(); });
 }
 
 /*! rev bfb5bbb0d2d82f9f */
