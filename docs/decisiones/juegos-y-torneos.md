@@ -371,6 +371,20 @@ el control.
   sigue quien de verdad los cerró. El eco de la última partida le llega a la vez
   a los dos jugadores y a quien esté mirando, y cada uno insertaba al campeón:
   quedaba dos o tres veces en el salón de la fama público.
+- **Una lectura que falla no es «no hay nada», y los campeones se calculan
+  ANTES de cerrar la última ronda** (11/11/2026). Antes la ronda se cerraba
+  primero y `standingsAndWinners()` no miraba el `error`: sin los cruces todos
+  quedaban con 0 puntos, empataban, y entraban **todos los inscritos** al salón
+  de la fama; sin los inscritos no salía ninguno y el torneo quedaba «en curso»
+  para siempre, con la ronda ya cerrada y nadie que lo reintentara. Ahora cada
+  lectura lanza (`leido()`) y no se cierra nada; `torneo.js`, al cargar, ve una
+  ronda abierta con todos sus cruces resueltos y reintenta el cierre una vez.
+  Por lo mismo, `loadAll()` ya no sigue con listas vacías si falla una lectura
+  («Generar ronda» armaba una ronda sin cruces, imposible de borrar o cerrar) y
+  el historial del suizo que falla frena la ronda en vez de parear como en la 1.
+  «Resuelto» es `result != null`: un cruce recién creado puede no traer la
+  columna. `verificar-torneo-rondas.js` corta a propósito la lectura de los
+  inscritos al cerrar la última ronda (`window.__fallar`).
 - **`generateRound()` crea primero TODAS las salas y recién después la ronda.**
   Al revés, un cruce cuya sala fallaba desaparecía: la ronda se daba por
   completa sin esos dos jugadores y en eliminación la llave se corría. Una
