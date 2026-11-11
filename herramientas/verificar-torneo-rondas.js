@@ -74,9 +74,9 @@ function doble(datos, usuarioId) {
      que de verdad cumple, como en la base. */
   function constructor(tabla) {
     const filtros = [];
-    let op = "select", carga = null, unica = false, devolver = false, orden = null;
+    let op = "select", carga = null, unica = false, devolver = false, orden = null, columnas = "*";
     const b = {
-      select() { devolver = true; return b; },
+      select(c) { devolver = true; if (c) columnas = c; return b; },
       eq(c, v) { filtros.push((r) => cmp(r[c], v)); return b; },
       neq(c, v) { filtros.push((r) => !cmp(r[c], v)); return b; },
       in(c, vs) { filtros.push((r) => (vs || []).some((v) => cmp(r[c], v))); return b; },
@@ -96,6 +96,15 @@ function doble(datos, usuarioId) {
       return r;
     }
     async function resolver2() {
+      // window.__fallar = { "tabla|columnas": n }: las próximas n lecturas de
+      // esa tabla con esas columnas contestan con error, como cuando la red se
+      // corta a la mitad. Con las columnas se apunta a UNA lectura (la página
+      // lee la misma tabla con "*" al pintar).
+      const clave = tabla + "|" + columnas;
+      if (op === "select" && window.__fallar && window.__fallar[clave] > 0) {
+        window.__fallar[clave]--;
+        return { data: null, error: { message: "lectura cortada (prueba): " + tabla } };
+      }
       const filas = T[tabla] || (T[tabla] = []);
       const pasa = (r) => filtros.every((f) => f(r));
       if (op === "insert") {
@@ -455,6 +464,51 @@ async function esperarRondaPintada(page, k) {
     k, { timeout: 15000 }).catch(() => {});
 }
 
+/* Una lectura que falla al cerrar la última ronda. Antes la ronda se cerraba
+   PRIMERO y los campeones se calculaban después: sin los cruces todos
+   empataban en 0 y entraban TODOS al salón de la fama; sin los inscritos no
+   salía ninguno y el torneo quedaba «en curso» para siempre, con la ronda ya
+   cerrada. Ahora no se cierra nada, y al abrir el torneo se reintenta. */
+async function pruebaCierreConLecturaQueFalla(browser) {
+  console.log("\n▶ Al cerrar la última ronda falla una lectura: no se cierra nada, y se reintenta");
+  const jugadores = NOMBRES.slice(0, 4).map(alumno);
+  const { ctx, page } = await abrir(browser, datosBase(
+    { status: "registration", current_round: 0, total_rounds: null, format: "round_robin" }, [], jugadores));
+  await page.click("#start-btn");
+  await esperarRondaPintada(page, 1);
+  const total = await page.evaluate(() => window.__T.tournaments[0].total_rounds);
+  for (let n = 1; n < total; n++) {
+    await jugarRonda(page, n);
+    await recargar(page);
+    await page.locator("#generate-round-btn").click();
+    await esperarRondaPintada(page, n + 1);
+  }
+  // La última: falla la lectura de los inscritos al calcular el campeón.
+  await page.evaluate(() => { window.__fallar = { "tournament_registrations|player_id, registered_at": 1 }; });
+  // El cierre lanza el error (no cierra a medias): se mira lo que quedó guardado.
+  const lanzo = await jugarRonda(page, total).then(() => "", (e) => String(e));
+  const antes = await page.evaluate((total) => ({
+    ronda: window.__T.tournament_rounds.find((r) => r.round_number === total).status,
+    torneo: window.__T.tournaments[0].status,
+    campeones: window.__T.public_tournament_champions.length,
+  }), total);
+  ok("con la lectura cortada la última ronda queda abierta (no se cierra a medias)", antes.ronda !== "finished" && /inscritos/.test(lanzo), { ronda: antes.ronda, lanzo: lanzo.slice(0, 120) });
+  ok("y el torneo no termina ni entra nadie al salón de la fama", antes.torneo !== "finished" && antes.campeones === 0, antes);
+  // Abrir el torneo otra vez reintenta el cierre, ya con la lectura sana.
+  await recargar(page);
+  await page.waitForFunction(() => window.__T.tournaments[0].status === "finished" && window.__T.public_tournament_champions.length > 0,
+    null, { timeout: 10000 }).catch(() => {});
+  const despues = await page.evaluate(() => ({
+    torneo: window.__T.tournaments[0].status,
+    ganadores: (window.__T.tournaments[0].winner_ids || []).length,
+    campeones: window.__T.public_tournament_champions.length,
+  }));
+  ok("al abrir el torneo se reintenta y cierra, con su campeón", despues.torneo === "finished" && despues.ganadores > 0, despues);
+  ok("y al salón de la fama entran solo los campeones, no los " + jugadores.length + " inscritos",
+    despues.campeones === despues.ganadores && despues.campeones < jugadores.length, despues);
+  await ctx.close();
+}
+
 /* Un torneo entero, de la ronda 1 a la última, por la página: empezarlo
    (escribiendo las rondas en el campo si es Suizo), y ronda por ronda jugar
    sus partidas, recargar y generar la siguiente, hasta que el torneo cierre. */
@@ -589,6 +643,7 @@ async function correr(prueba, ...args) {
     await correr(pruebaTrabado, browser);
     await correr(pruebaGenerarDosVeces, browser);
     await correr(pruebaCampoDeRondas, browser);
+    await correr(pruebaCierreConLecturaQueFalla, browser);
     await correr(pruebaTorneoEntero, browser, "swiss", NOMBRES.map(alumno), 7);
     await correr(pruebaTorneoEntero, browser, "round_robin", NOMBRES.slice(0, 8).map(alumno), 7);
     // 20, el máximo del campo, con 24 inscritos: alcanzan para no repetir.
