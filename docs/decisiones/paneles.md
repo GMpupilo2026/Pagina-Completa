@@ -4645,6 +4645,51 @@ no se pudo mandar, pedir las vistas de todos, no mandar al cerrar y no pintar
 lo visto en la ficha) y saltaron todas; la de cerrar no saltaba hasta que se
 agregó el caso del video que sigue corriendo.
 
+### Una sesión en varias partes
+
+La Sesión IV del taller se subió a YouTube en dos videos («Sesión 4 Parte 1»
+y «Parte 2»), y la tabla guardaba **un** video por clase (horario + fecha):
+poner la parte 2 habría borrado la 1. Desde la migración `20261111204219` la
+grabación es de **(horario, fecha, parte)**:
+
+- **`parte` va de 1 a 9 y es 1 por omisión.** Todo lo que ya estaba (las
+  sesiones I a III, sus vistas y sus respuestas) quedó como la parte 1 sin
+  tocar una fila, y quien llama sin parte sigue hablando de la parte 1.
+- **Lo que cuelga de una grabación también lleva su parte**, porque cada parte
+  es otro video: `grabaciones_vistas` y `grabacion_respuestas` tienen la
+  columna y su llave foránea de tres columnas hacia `grabaciones_clase`. Las
+  correctas de las preguntas siguen siendo por video (`grabacion_preguntas`,
+  por `youtube_id`): no cambian.
+- **Las seis funciones cambiaron de forma** (`p_parte integer default 1` en
+  `grabacion_clase_poner`, `grabacion_vista_anotar` y
+  `grabacion_pregunta_responder`; la columna `parte` en `mis_grabaciones`,
+  `asesores_grabaciones` y `asesores_preguntas_video`). Con el parámetro nuevo
+  con valor por omisión, la vieja y la nueva serían dos funciones y una
+  llamada sin parte no sabría a cuál ir, así que las viejas se apartaron como
+  en la vez anterior («_apartada2», sin permiso para nadie): se pueden borrar
+  en cualquier migración posterior.
+- **El panel**: una tarjeta por parte, en orden; si la sesión tiene más de
+  una, el título dice «Sesión IV · Parte 2» (también en el modo cine y en el
+  nombre del reproductor) y la miniatura lleva «PARTE 2» debajo del número, de
+  adorno. Lo visto, las respuestas y lo ya contestado se piden y se anotan con
+  la parte de esa tarjeta. Una sesión de un solo video no dice «Parte».
+- **La ficha Asesores**: una columna por parte («▶ II·1», «▶ II·2», con «parte
+  1» en el nombre para el lector de pantalla) y el resumen de arriba las
+  cuenta por separado.
+- **El tema va sin «Parte N»**: lo dice la tarjeta. Con «· Parte 1» pegado,
+  el tema ya no empieza como el título de la sesión del curso y la tarjeta se
+  quedaba sin «Ver la presentación».
+- **Los capítulos y las láminas** (`grabacion.json`) son de UN video por
+  sesión y la página los compara con la duración: una parte no los tiene
+  hasta que se armen los suyos, y el video se ve igual, sin guía.
+
+`verificar-panel-taller.js` revisa la migración (la columna, las tres llaves,
+las seis apartadas, los permisos y que cada función busque SU parte) y abre
+una sesión en dos partes: dos tarjetas que dicen cuál es, la miniatura sin
+encimarse, el avance de cada una, el video correcto y lo visto anotado en la
+parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
+`verificar-admin.js` prueba las columnas por parte de la ficha.
+
 ## `verificar-panel.js` no puede colgar la tanda del CI
 
 Es el verificador más largo de la tanda 2/4 (unos 200 s), y en el CI se quedó
