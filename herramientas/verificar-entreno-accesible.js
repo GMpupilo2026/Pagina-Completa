@@ -651,11 +651,25 @@ async function pruebaRecorridaCiega(browser) {
     const n = await page.evaluate(() => currentSet.rounds.length);
     let espero = false, enPalabras = false;
     for (let i = 0; i < n; i++) {
-      const uci = await page.evaluate(() => currentRound().moves[0]);
-      await escribirEn(page, "#q-comandos .cc-input", uci.slice(0, 2) + " " + uci.slice(2, 4));
-      await page.waitForTimeout(150);
-      const st = await page.textContent("#round-status");
-      if (/Correcto! [a-zñ]/.test(st) && !/Correcto! [KQRBN]?[a-h]?x?[a-h][1-8]/.test(st)) enPalabras = true;
+      /* Cada desafío se juega hasta el final de su variante: después de la
+         jugada del alumno contesta el rival (a los 0,8 s) y vuelve a tocarle,
+         hasta que se cumple la idea. Se escribe siempre la jugada que toca
+         (jugadaDelDesafio: la primera aceptada, o la de la variante). */
+      const ronda = await page.evaluate(() => currentRoundIndex);
+      let st = "";
+      for (let k = 0; k < 10; k++) {
+        const j = await page.evaluate(() => jugadaDelDesafio());
+        await escribirEn(page, "#q-comandos .cc-input", j.from + " " + j.to);
+        await page.waitForTimeout(150);
+        st = await page.textContent("#round-status");
+        if (/Ahora juega el rival/.test(st)) {
+          await page.waitForFunction(() => !roundLocked, null, { timeout: 4000 });
+          continue;
+        }
+        break;
+      }
+      igual(`Desafíos: el desafío ${i + 1} se resolvió jugando su variante`, /(Correcto|Variante completa)!/.test(st) && (await page.evaluate(() => currentRoundIndex)) === ronda, true);
+      if (/(Correcto|Variante completa)! [a-zñ]/.test(st) && !/(Correcto|Variante completa)! [KQRBN]?[a-h]?x?[a-h][1-8]/.test(st)) enPalabras = true;
       if (await page.evaluate(() => esperandoSiguiente)) {
         // La primera vez se espera más de los 3,2 s de antes: tiene que seguir esperando.
         if (!espero) {
