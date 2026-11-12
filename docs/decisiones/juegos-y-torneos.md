@@ -8762,11 +8762,51 @@ dice). Las pruebas de Pareo ya no hablan con la función de verdad
 (`herramientas/lib/pareo-pruebas.js` la corta, salvo que la prueba ponga su
 doble). Rotos a propósito el borrado de la cola y el envío a la base, saltan.
 
-**Lo que falta para el 22/11** (en orden): el «Centro del evento» (los árbitros
-conectados con su `visto`, los resultados pendientes, los códigos en papel y
-los QR de Notara de todas las mesas en una pantalla), Notara en la mesa del
-adjunto (ver sus tableros y que la propuesta de resultado de la cámara le
-llegue a él), y el ensayo general con un torneo de prueba.
+**Lo que falta para el 22/11** (en orden): Notara en la mesa del adjunto (ver
+sus tableros y que la propuesta de resultado de la cámara le llegue a él) y el
+ensayo general con un torneo de prueba. El Centro del evento, abajo.
+
+### Pareo Integral: el Centro del evento
+
+Pedido del dueño el 12/11/2026, después de ver las maquetas: una ficha nueva
+de Pareo, **«Centro del evento»** (entre Rondas y Clasificación;
+`pintarCentro` en `js/pareo/pagina.js`), con todo el torneo de un vistazo para
+el árbitro principal. **No guarda nada propio**: muestra lo que la pestaña ya
+sabe y cada botón es una acción que ya existía.
+
+- **La ronda en juego**: «k de n mesas terminadas», escrito y con un
+  `<progress>` (el color nunca va solo). Si está completa, el botón lleva a
+  emparejar la siguiente (en la ficha Rondas: emparejar sigue siendo uno solo).
+- **Para confirmar**: la MISMA lista de la ficha Rondas (`pintarConfirmar`,
+  con otro `idBase` para no repetir ids y repintando la ficha abierta) —
+  sorpresas de Elo, lo que un adjunto anotó distinto, lo que leyó la cámara,
+  que se anota desde aquí— más **las segundas ilegales de una mesa sin
+  resultado** (`V.marcasIncidencias`, art. 7.5.5), con «Ir a la mesa».
+- **Los árbitros adjuntos**: nombre, mesas, el código (deletreado para el
+  lector de pantalla), cuánto anotó en esta ronda y **la última vez que la
+  base supo de él** (`visto` de `pareo_adjuntos`, que llega con cada lectura de
+  la cola). «+ Agregar árbitro» es `enlaceAdjunto`, y **«Códigos en papel»**
+  imprime nombre, mesas y código con dónde se escribe, **sin el enlace**, en la
+  hoja de la plantilla de la pared (misma marca de agua). Si el torneo no está
+  publicado, lo dice: hasta entonces lo de los adjuntos no pasa por la base.
+- **Las cámaras de Notara**, mesa por mesa: «Transmite» (noticias en los
+  últimos 90 s, `SIN_NOTICIAS_MS`), «Terminó» (la mesa tiene resultado),
+  «Necesita ayuda» (una alerta sin atender), «Sin señal» y «Sin rival». En
+  equipos no (se ven tablero por tablero en la ronda).
+- **Los enlaces**: el torneo público y la Mesa del árbitro, con «Copiar».
+- **Abrir la ficha conecta los adjuntos y las cámaras** aunque no se haya
+  abierto la ronda (los dos son idempotentes).
+- **Se pone al día sola**: cada 4 s compara el modelo que pinta
+  (`modeloCentro`) con el último pintado y solo vuelve a pintar si cambió, y
+  **nunca con el foco adentro** (no se le quita el lugar a quien navega con
+  teclado).
+
+Lo prueba `verificar-pareo-centro.js`: sin rondas; la ronda escrita; la
+segunda ilegal; lo de la cámara anotado desde aquí; los adjuntos con su código
+deletreado, lo que anotaron y su `visto`; las cámaras con un latido por el
+canal; que un resultado de la cola lo cambie sin tocar nada; los códigos en
+papel sin el enlace; sin ids repetidos; a 390 px. Roto a propósito el
+repintado, saltan tres.
 
 ## Mesas de los árbitros del Centroamericano
 
