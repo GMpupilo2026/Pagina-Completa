@@ -31,14 +31,17 @@ function igual(nombre, hallado, esperado) {
    pasa. El resto del worker queda tal cual. */
 const { webcrypto } = require("crypto");
 let clavePrueba = null;
-async function cargarWorker() {
-  clavePrueba = await webcrypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+// `real`: con FUENTES_OCULTAS tal cual está. Sin él, la lista se vacía para
+// probar cómo entran los de ajedrezcostarica.com cuando están prendidos.
+async function cargarWorker(real) {
+  clavePrueba = clavePrueba || await webcrypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   const pub = await webcrypto.subtle.exportKey("jwk", clavePrueba.publicKey);
   let fuente = fs.readFileSync(path.join(__dirname, "..", "worker.js"), "utf8");
   const antes = fuente;
   fuente = fuente.replace(/const CLAVES_PUBLICAS = \{[\s\S]*?\n\};/,
     "const CLAVES_PUBLICAS = { prueba: " + JSON.stringify({ kty: pub.kty, crv: pub.crv, x: pub.x, y: pub.y }) + " };");
   if (fuente === antes) throw new Error("no encontré CLAVES_PUBLICAS en worker.js");
+  if (!real) fuente = require("./lib/fuentes-ocultas").sinOcultas(fuente, "worker.js");
   const mod = await import("data:text/javascript;base64," + Buffer.from(fuente).toString("base64"));
   return mod.default;
 }
@@ -448,6 +451,14 @@ async function cargarWorker() {
     ] }).texto;
     const sinSuscripcion = (t) => t.replace(/^(REFRESH-INTERVAL|X-PUBLISHED-TTL)[^\r\n]*\r\n/gm, "");
     igual("el texto es línea por línea el de js/calendario-ics.js (escapes, líneas dobladas, días enteros)", sinSuscripcion(r.texto) === esperado, true);
+    {
+      // worker.js tal cual: los de ajedrezcostarica.com están apagados por ahora.
+      const real = await cargarWorker(true);
+      globalThis.fetch = async (u) => contesta(String(u));
+      const t = await (await real.fetch(new Request("https://ajedrez-integral.com/calendario/torneos.ics"), env)).text();
+      igual("con FUENTES_OCULTAS tal cual, ningún torneo de ajedrezcostarica.com entra al calendario; los de chess-results sí",
+        uids(t).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com chess-results-1234567@ajedrez-integral.com");
+    }
     if (sinSuscripcion(r.texto) !== esperado) console.log(sinSuscripcion(r.texto).split("\r\n").filter((l, i) => l !== esperado.split("\r\n")[i]).slice(0, 5));
     const rO = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics?o=" + ORG);
     igual("con ?o=, solo los de ese organizador y sin los de afuera", preguntas.some((u) => u.includes("organizador_id=eq." + ORG)) && !preguntas.some((u) => /torneos_externos/.test(u)), true);

@@ -4461,6 +4461,19 @@ se anuncian en ajedrezcostarica.com (`/es/tournaments`), no solo los que se
 organizan con Pareo Integral. Salen en «También en Costa Rica», entre
 «Próximos torneos» y «Resultados».
 
+- **Apagados por ahora (12/11/2026).** El dueño pidió que no se vea ninguno
+  de ajedrezcostarica.com hasta nuevo aviso. La función los sigue leyendo y
+  la tabla los guarda; lo que se apaga es mostrarlos, con
+  `FUENTES_OCULTAS = ["ajedrezcostarica"]` en `js/torneos-pareo-pagina.js`
+  (la lista, el calendario de la lista y la nota «También anunciado en
+  ajedrezcostarica.com») y la misma lista en `worker.js` (el calendario para
+  suscribirse). Los de chess-results siguen saliendo. Se decide por la
+  `fuente` de la fila y, si no la trae, por su enlace. Para volver a
+  mostrarlos se vacían las dos listas. Las pruebas de cómo se pinta uno de
+  allá corren con la lista vaciada solo dentro de la prueba
+  (`herramientas/lib/fuentes-ocultas.js`), y
+  `verificar-torneos-externos-pagina.js` y `verificar-worker.js` comprueban
+  con el archivo tal cual que hoy no salen.
 - **Quién los lee.** La Edge Function `torneos-externos`, una vez al día
   (pg_cron `torneos-externos`, 5:13 de Costa Rica). Lee la portada de allá y
   la ficha de cada torneo, con calma: una a la vez, medio segundo entre una

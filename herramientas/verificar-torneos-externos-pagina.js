@@ -64,6 +64,9 @@ async function abrir(browser, viewport, opciones) {
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(filas) });
   });
   await dobleListaPareo(page, PROPIO, { hoy: "2026-10-23" });
+  // Los de ajedrezcostarica.com están apagados por ahora (FUENTES_OCULTAS):
+  // todo lo de abajo prueba cómo se ven prendidos, salvo `real: true`.
+  if (!o.real) await require("./lib/fuentes-ocultas").mostrarTodasEnPagina(page);
   await page.goto(BASE + "/torneos-pareo.html" + (o.hash || ""), { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista .tp-dia");
   return { ctx, page, errores, pedidos };
@@ -163,6 +166,25 @@ async function igualLuego(page, m, f, b) {
     const [descarga] = await Promise.all([r.page.waitForEvent("download"), r.page.click("#tp-externos-calendario")]);
     const ics = require("fs").readFileSync(await descarga.path(), "utf8");
     ok(/UID:chess-results-1524022@ajedrez-integral\.com/.test(ics) && /DTSTART;VALUE=DATE:20261107/.test(ics), "al calendario, con su propio UID y su día");
+    ok(!r.errores.length, "sin errores en la consola", r.errores.join(" | "));
+    await r.ctx.close();
+  }
+
+  console.log("\n=== Los de ajedrezcostarica.com, apagados por ahora (FUENTES_OCULTAS) ===");
+  {
+    // El archivo tal cual: los de ajedrezcostarica.com no salen (ni la nota de
+    // «también anunciado allá» en el torneo de Pareo Integral que es el mismo),
+    // y los de chess-results sí.
+    const cr = { fuente: "chess-results", id_externo: 1524022, titulo: "PRUEBA Recreativo de Cartago", inicio: "2026-11-07T06:00:00+00:00", fin: null, provincia: "Cartago",
+      lugar: "Polideportivo", ritmo: "", minutos: null, incremento: null, elo: "", precio: null, moneda: "", modalidad: "", formato: "", organizador: "ADAC",
+      inscripcion_abierta: false, url: "https://chess-results.com/tnr1524022.aspx?lan=2", rondas: 7, jugadores: 39 };
+    const sinFuente = ext(905, { titulo: "PRUEBA sin fuente escrita", fuente: undefined });
+    const repetido = ext(906, { titulo: "PRUEBA el mismo que el de acá", repetido_de: "p1" });
+    const r = await abrir(browser, { width: 1400, height: 900 }, { real: true, externos: EXTERNOS.concat([cr, sinFuente, repetido]) });
+    await r.page.waitForSelector('[data-externo="1524022"]');
+    igual("solo el de chess-results; ninguno de ajedrezcostarica.com (tampoco el que no dice su fuente pero su enlace es de allá)", await visibles(r.page), [1524022]);
+    igual("el botón del calendario cuenta solo ese", (await r.page.textContent("#tp-externos-calendario")).trim(), "📅 Agregar este torneo a mi calendario");
+    igual("y el torneo de Pareo Integral no dice «También anunciado en ajedrezcostarica.com»", await r.page.$$eval("[data-tambien]", (l) => l.length), 0);
     ok(!r.errores.length, "sin errores en la consola", r.errores.join(" | "));
     await r.ctx.close();
   }
