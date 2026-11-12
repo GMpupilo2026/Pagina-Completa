@@ -14860,9 +14860,12 @@ plantilla que la de Pérez Zeledón (`herramientas/torneos-universitarios/tacho-
 → `js/tacho-chess.js`), con «Hoy en el torneo» y `resultados: "pareo"` (sin
 chess-results).
 
-- **Todo sale del afiche**, menos el ritmo y las rondas, que los dio el dueño
-  (5 rondas a 10 minutos + 2 segundos). Del afiche: sábado 14 de noviembre de
-  2026, «a partir de 8:30 a.m.» (se toma como la ronda 1), el Gimnasio del
+- **Todo sale del afiche**, menos lo que dio el dueño: 5 rondas a 10 minutos
+  + 2 segundos, la ronda 1 a las 9:00 y el árbitro principal, el FA Jean
+  Carlo Quesada Arauz (dijo «Jan Quesada Arauz»; se le preguntó y es el mismo
+  de las bases de Pérez Zeledón). Del afiche: sábado 14 de noviembre de
+  2026, «a partir de 8:30 a.m.» (la llegada y la confirmación de los
+  inscritos, hasta las 9:00; lo eligió el dueño), el Gimnasio del
   Centro del Liceo Anastasio Alfaro, la inscripción gratuita, la premiación
   («los mejores de cada nivel, de primer grado a undécimo año»: once niveles,
   grado en primaria y año en secundaria, con «sétimo») y lo que hay además
@@ -14871,7 +14874,7 @@ chess-results).
   igual al texto impreso); es de la organización (Google Forms) y lo dice la
   política de privacidad.
 - **Lo que el afiche no trae no se pone**: ni teléfono ni correo (no hay ficha
-  de contacto), ni árbitro, ni cierre de la inscripción, ni dónde salen los
+  de contacto), ni cierre de la inscripción, ni dónde salen los
   resultados: la ficha «Resultados» va «Pronto» hasta que la organización lo
   diga. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
   inventar una dirección.
@@ -14887,8 +14890,8 @@ chess-results).
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
   PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
   tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
-  hora siguiente) da 8:30, 9:00, 9:30, 10:00 y 10:30, y la premiación cerca de
-  las 11:00. Las rondas 2 a 5 y la premiación dicen «(aprox.)», en la página y
+  hora siguiente) da 9:00, 9:30, 10:00, 10:30 y 11:00, y la premiación cerca de
+  las 11:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 5 y la premiación dicen «(aprox.)», en la página y
   en las bases.
 - **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
   azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
@@ -14904,8 +14907,8 @@ chess-results).
   `PORTADAS` de `js/salas-torneo.js`.
 
 `herramientas/verificar-tacho-chess.js` lo revisa: los datos del afiche en la
-página y en el PDF, el calendario igual al horario de las bases, el formulario
-del QR que se abre encima, «Resultados» «Pronto», «Hoy en el torneo» en tres
+página y en el PDF, el árbitro, la llegada a las 8:30 y el calendario igual al horario de las bases, el formulario
+del QR que se abre encima, «Resultados» «Pronto», «Hoy en el torneo» en cuatro
 momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
 si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
 

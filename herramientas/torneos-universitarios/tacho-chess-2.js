@@ -17,11 +17,13 @@
  * - Una sola copia de los datos: `bases` (abajo) la leen el calendario de la
  *   página y el PDF de las bases (BasesTorneo de js/bases-torneo.js, el del
  *   «Generador de bases del torneo»).
- * - El afiche dice «A PARTIR DE 8:30 A.M.»: es la ronda 1. Las otras horas
- *   no las dice: salen del horario de BasesTorneo (cada ronda dura el tiempo
+ * - El afiche dice «A PARTIR DE 8:30 A.M.»: es la llegada y la
+ *   confirmación; la ronda 1 es a las 9:00 y el árbitro principal es el FA
+ *   Jean Carlo Quesada Arauz (los dos datos los dio el dueño después). Las
+ *   otras horas no las dice nadie: salen del horario de BasesTorneo (cada ronda dura el tiempo
  *   de los dos jugadores más 40 jugadas de incremento, y la siguiente
  *   empieza a la media hora siguiente) y se escriben «aprox.».
- * - Lo que el afiche no trae (teléfono, correo, árbitro, cierre de la
+ * - Lo que el afiche no trae (teléfono, correo, cierre de la
  *   inscripción, dónde se publican los resultados) no se pone: «Resultados»
  *   va «Pronto» hasta que la organización diga dónde.
  */
@@ -46,13 +48,14 @@ const bases = {
   participantes: "Estudiantes de centros educativos, de primer grado a undécimo año. Cada participante juega por su centro educativo.",
   categorias: NIVELES.join("\n"),
   costo: 0,
+  arbitro: "FA Jean Carlo Quesada Arauz",
   comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
-  sistema: "suizo", rondas: 5, rondasPorDia: 5, horaInicio: "08:30", descanso: 5,
+  sistema: "suizo", rondas: 5, rondasPorDia: 5, horaInicio: "09:00", descanso: 5,
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
   desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
   byes: 0,
-  calendarioNota: "Las horas son de Costa Rica. La ronda 1 empieza a las 8:30 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
+  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
   premios: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.",
   otras: [
     "La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.",
@@ -68,7 +71,7 @@ const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + Stri
 const horaTexto = (min) => { const h = Math.floor(min / 60); return (h % 12 || 12) + ":" + String(min % 60).padStart(2, "0") + (h < 12 ? " a. m." : " p. m."); };
 const CICLO = HORARIO.length > 1 ? HORARIO[1].min - HORARIO[0].min : 30;
 // [actividad, data-inicio (hora de Costa Rica), minutos, ronda, hora escrita]
-const CALENDARIO = HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")])
+const CALENDARIO = [["Llegada y confirmación", bases.fechaInicio + "T08:30", HORARIO[0].min - 8 * 60 - 30, 0, "8:30 a. m."]].concat(HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")]))
   .concat([["Premiación", bases.fechaInicio + "T" + hhmm(PREMIACION), 60, 0, horaTexto(PREMIACION) + " (aprox.)"]]);
 
 const filas = CALENDARIO.map(([actividad, inicio, minutos, ronda, hora]) =>
@@ -85,7 +88,7 @@ module.exports = {
   clase: "tacho",
   foco: "#064ca7",
   titulo: "Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro",
-  descripcion: "El Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026 desde las 8:30 a.m. en el Gimnasio del Centro, 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios para los mejores de cada nivel, de primer grado a undécimo año.",
+  descripcion: "El Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026 desde las 8:30 a.m. en el Gimnasio del Centro (la ronda 1, a las 9:00), 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios para los mejores de cada nivel, de primer grado a undécimo año.",
   nombrePie: "Tacho Chess 2",
   grupoNombre: "Nivel",
   comentario: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
@@ -107,9 +110,10 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
       ["📍", "Sede", "Gimnasio del Centro, Liceo Anastasio Alfaro"],
     ],
   },
-  textoOrganiza: "Quién organiza, como lo dice el afiche.",
+  textoOrganiza: "Quién organiza (el afiche) y quién arbitra (lo dio el dueño).",
   organiza: "Liceo Anastasio Alfaro (San José, 1952)",
   equipo: [
+    ["Árbitro principal", "FA Jean Carlo Quesada Arauz"],
     ["Ritmo", "5 rondas a 10 minutos + 2 segundos"],
   ],
   resultados: "pareo",
@@ -117,7 +121,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   hoy: {
     etiqueta: "El torneo",
     principal: "Sábado 14 de noviembre de 2026",
-    detalle: "La ronda 1 se juega a las 8:30 a.m., hora de Costa Rica, en el Gimnasio del Centro del Liceo Anastasio Alfaro.",
+    detalle: "La llegada es a las 8:30 a.m. y la ronda 1 se juega a las 9:00 a.m., hora de Costa Rica, en el Gimnasio del Centro del Liceo Anastasio Alfaro.",
     enlaces: [["#calendario", "Ver el calendario completo"], ["#inscribirme", "Inscribirme gratis", "📝"]],
     termino: "Tacho Chess 2 terminó",
     gracias: "¡Gracias por jugar!",
@@ -179,7 +183,7 @@ ${NIVELES.slice(6).map((n) => "            <li>" + n + "</li>").join("\n")}
       {
         id: "calendario", icono: "🗓️", titulo: "Calendario", ancho: "max-w-3xl",
         comentario: "El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de\nCosta Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del\nhorario de las bases (BasesTorneo.horario), el mismo del PDF.",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. La ronda 1 empieza a las 8:30 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
     <table class="w-full text-sm">
         <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>
@@ -203,6 +207,7 @@ ${filas}
         <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
             <li>Sistema suizo a 5 rondas, con el Sistema Holandés de la FIDE.</li>
             <li>10 minutos por jugador para toda la partida, con 2 segundos de incremento por jugada desde la primera: ajedrez rápido (Apéndice A de las Leyes del Ajedrez).</li>
+            <li>Árbitro principal: FA Jean Carlo Quesada Arauz.</li>
             <li>Tolerancia de 10 minutos desde la hora de inicio de la ronda.</li>
             <li>Ganada, 1 punto; tablas, ½; perdida, 0. El bye del emparejamiento vale 1 punto.</li>
         </ul>

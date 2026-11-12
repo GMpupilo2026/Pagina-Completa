@@ -3,9 +3,10 @@
  * dice otra cosa que el afiche.
  *
  *   1. EL HTML, leído: los datos del afiche (sábado 14 de noviembre, 8:30
- *      a.m., Gimnasio del Centro, gratis, de primer grado a undécimo año) y el
- *      ritmo que dio el dueño (5 rondas, 10 minutos + 2 segundos); el
- *      calendario con sus cinco rondas, la primera a las 8:30 y las demás
+ *      a.m., Gimnasio del Centro, gratis, de primer grado a undécimo año) y
+ *      lo que dio el dueño (5 rondas a 10 minutos + 2 segundos, la ronda 1 a
+ *      las 9:00 y el árbitro principal); el calendario con la llegada a las
+ *      8:30 y sus cinco rondas, la primera a las 9:00 y las demás
  *      del mismo horario que las bases (BasesTorneo.horario); el formulario
  *      del código QR del afiche, que se abre encima; «Resultados» va
  *      «Pronto»; sin chess-results ni teléfonos (el afiche no trae); la
@@ -13,7 +14,8 @@
  *   2. LAS BASES EN PDF dicen lo mismo: la fecha, la sede, el ritmo, las 5
  *      rondas, la inscripción gratuita con el formulario y los once niveles.
  *   3. «HOY EN EL TORNEO», con el reloj fijo y el navegador en Madrid: dos
- *      días antes (la cuenta regresiva), en la ronda 2 y de tarde (terminó).
+ *      días antes (la cuenta regresiva), en la llegada, en la ronda 2 y de
+ *      tarde (terminó).
  *   4. La cara: el azul del afiche, la píldora roja con letra blanca, Tacho
  *      a la vista, la ficha «Inscribirme» abre el formulario encima y en el
  *      celular no hay scroll de costado.
@@ -51,8 +53,9 @@ ok("el ritmo que dio el dueño: 5 rondas a 10 minutos + 2 segundos", /5 rondas a
 const filas = [...html.matchAll(/<tr data-inicio="([^"]+)" data-minutos="(\d+)"([^>]*)><th scope="row"[^>]*>([^<]+)<\/th>/g)]
   .map((m) => [m[4], m[1], (m[3].match(/data-ronda="(\d+)"/) || [])[1] || ""]);
 const esperado = B.horario(bases).map((x) => ["Ronda " + x.ronda, "2026-11-14T" + String(Math.floor(x.min / 60)).padStart(2, "0") + ":" + String(x.min % 60).padStart(2, "0"), String(x.ronda)]);
-ok("el calendario trae las 5 rondas con el horario de las bases y después la premiación", JSON.stringify(filas.slice(0, 5)) === JSON.stringify(esperado) && filas.length === 6 && filas[5][0] === "Premiación", JSON.stringify(filas));
-ok("la ronda 1 es a las 8:30 del sábado 14, y es la única marcada como la primera", filas[0][1] === "2026-11-14T08:30" && (html.match(/data-primera-ronda/g) || []).length === 1);
+ok("el calendario trae la llegada a las 8:30, las 5 rondas con el horario de las bases y la premiación", filas.length === 7 && JSON.stringify(filas[0]) === JSON.stringify(["Llegada y confirmación", "2026-11-14T08:30", ""]) && JSON.stringify(filas.slice(1, 6)) === JSON.stringify(esperado) && filas[6][0] === "Premiación", JSON.stringify(filas));
+ok("la ronda 1 es a las 9:00 del sábado 14, y es la única marcada como la primera", filas[1][1] === "2026-11-14T09:00" && /<tr data-inicio="2026-11-14T09:00"[^>]*data-primera-ronda/.test(html) && (html.match(/data-primera-ronda/g) || []).length === 1);
+ok("el árbitro principal que dio el dueño", /Árbitro principal: FA Jean Carlo Quesada Arauz/.test(visible));
 ok("las horas de las rondas 2 a 5 dicen que son aproximadas", (html.match(/\(aprox\.\)<\/td><\/tr>/g) || []).length === 5);
 ok("el formulario es el del código QR del afiche y se abre encima", new RegExp('<a href="' + FORMULARIO.replace(/[./]/g, "\\$&") + '"[^>]*data-ventana=').test(html));
 ok("«Resultados» va «Pronto» (sin enlace, con tabindex)", /<div id="ficha-resultados" tabindex="0" aria-disabled="true"/.test(html));
@@ -72,12 +75,14 @@ if (textoPdf) {
   ok("el ritmo y las rondas: 10 minutos + 2 segundos, suizo a 5 rondas, ajedrez rápido", /10 minutos para toda la partida, con un incremento de 2 segundos/.test(textoPdf) && /Sistema suizo, a 5 rondas/.test(textoPdf) && /ajedrez rápido/.test(textoPdf));
   ok("la inscripción gratuita con el formulario del afiche", /La inscripción es gratuita/.test(textoPdf) && textoPdf.includes(FORMULARIO.replace("https://", "")));
   ok("los once niveles, de primer grado a undécimo año", ["Primer grado", "Sexto grado", "Sétimo año", "Undécimo año"].every((n) => textoPdf.includes(n)));
-  ok("la ronda 1 a las 8:30 a. m.", /1 sábado, 14 de noviembre de 2026 8:30 a\. m\./.test(textoPdf));
+  ok("la ronda 1 a las 9:00 a. m., con la llegada a las 8:30", /1 sábado, 14 de noviembre de 2026 9:00 a\. m\./.test(textoPdf) && /De 8:30 a 9:00 a\. m\., llegada y confirmación/.test(textoPdf));
+  ok("el árbitro principal", /Árbitro principal: FA Jean Carlo Quesada Arauz\./.test(textoPdf));
 }
 
 const MOMENTOS = [
   { cuando: "2026-11-12T15:00:00-06:00", etiqueta: "Cuenta regresiva", principal: /^Faltan \d+ horas$/, detalle: /el sábado 14 de noviembre a las 8:30 a\. ?m\. \(hora de Costa Rica\)/, reloj: true },
-  { cuando: "2026-11-14T09:10:00-06:00", etiqueta: "Hoy en el torneo", principal: /^Ahora: Ronda 2$/, detalle: /Después: Ronda 3, hoy a las 9:30 a\. ?m\./, reloj: true },
+  { cuando: "2026-11-14T08:40:00-06:00", etiqueta: "Hoy en el torneo", principal: /^Ahora: Llegada y confirmación$/, detalle: /Después: Ronda 1, hoy a las 9:00 a\. ?m\./, reloj: true },
+  { cuando: "2026-11-14T09:40:00-06:00", etiqueta: "Hoy en el torneo", principal: /^Ahora: Ronda 2$/, detalle: /Después: Ronda 3, hoy a las 10:00 a\. ?m\./, reloj: true },
   { cuando: "2026-11-14T16:00:00-06:00", etiqueta: "Tacho Chess 2 terminó", principal: /^¡Gracias por jugar!$/, detalle: /mejores de cada nivel/, reloj: false },
 ];
 
