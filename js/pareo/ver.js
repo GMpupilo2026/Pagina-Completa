@@ -825,6 +825,43 @@ window.PareoVer = (function () {
     return b;
   }
 
+  // #codigo (o #codigo=K7M2-9QXA): el adjunto escribe el código de 8 letras
+  // que le dio el principal, sin el enlace ni el QR y sin cuenta. La base
+  // (pareo-publicar, «adjunto_entrar») dice si existe y cuáles son sus mesas,
+  // y sigue en su página de siempre (#adjunto=<código>&m=…). Ver «Pareo
+  // Integral: entrar con el código en el celular del adjunto».
+  function entrarConCodigo(cadena, idioma) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const cont = document.getElementById("pi-ver");
+    cont.hidden = false;
+    const campo = el("input", { id: "pi-adj-codigo", type: "text", autocomplete: "off", autocapitalize: "characters", spellcheck: "false", maxlength: "12",
+      "aria-describedby": "pi-adj-codigo-ayuda", class: "w-full rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-800 text-brand-900 dark:text-white px-4 py-3 text-2xl font-mono text-center tracking-widest uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" });
+    const estado = el("p", { id: "pi-adj-codigo-estado", class: "text-base mt-3", role: "status", "aria-live": "polite" });
+    const boton = el("button", { type: "submit", id: "pi-adj-codigo-entrar", class: "w-full mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-3 rounded-xl text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 disabled:opacity-50" }, tx("codigoEntrar"));
+    const form = el("form", { class: "max-w-sm" },
+      el("label", { for: "pi-adj-codigo", class: "block text-sm font-semibold mb-1" }, tx("codigoEtiqueta")), campo, boton, estado);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const codigo = campo.value.replace(/[\s-]/g, "").toLowerCase();
+      if (!/^[a-hjkmnp-z2-9]{8}$/.test(codigo)) { estado.textContent = tx("codigoFormato"); campo.focus(); return; }
+      boton.disabled = true;
+      estado.textContent = tx("codigoBuscando");
+      const r = window.PareoPublicar ? await PareoPublicar.entrarAdjunto(codigo) : { ok: false };
+      boton.disabled = false;
+      if (!r.ok) { estado.textContent = r.error || tx("codigoSinRed"); campo.focus(); return; }
+      const cadenaAdj = codigo + "&m=" + r.desde + "-" + r.hasta;
+      history.replaceState(null, "", "#adjunto=" + cadenaAdj);
+      iniciarAdjunto(cadenaAdj, idioma);
+    });
+    cont.replaceChildren(
+      el("h1", { class: "font-serif text-3xl font-bold mb-2" }, tx("codigoTitulo")),
+      el("p", { id: "pi-adj-codigo-ayuda", class: "text-base mb-4" }, tx("codigoTexto")),
+      form);
+    const previo = String(cadena || "").trim();
+    if (previo) { campo.value = decodeURIComponent(previo).toUpperCase(); form.requestSubmit(); }
+    else campo.focus();
+  }
+
   async function iniciarAdjunto(cadena, idioma) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const [codigo, ...opciones] = String(cadena).split("&");
@@ -1360,7 +1397,7 @@ window.PareoVer = (function () {
     setTimeout(() => { if (!pintado) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("inscribirEsperando"))); }, 8000);
   }
 
-  return { irAMesa, iniciarInscribir, paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
+  return { irAMesa, iniciarInscribir, paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, entrarConCodigo, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

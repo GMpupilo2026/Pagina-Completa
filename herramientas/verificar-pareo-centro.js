@@ -127,7 +127,7 @@ const sembrar = (t) => (page) => page.addInitScript((x) => {
     console.log("\n=== Los códigos en papel y lo demás ===");
     await page.click("#pi-centro-codigos");
     const hoja = await page.textContent("#pi-plantilla");
-    ok(/Códigos de los árbitros adjuntos/.test(hoja) && /PRUEBA ADJUNTA/.test(hoja) && /PRUE-BA23/.test(hoja) && /mesa-arbitro\.html/.test(hoja) && !/#adjunto=/.test(hoja), "la hoja trae nombre, mesas y código, sin el enlace", hoja);
+    ok(/Códigos de los árbitros adjuntos/.test(hoja) && /PRUEBA ADJUNTA/.test(hoja) && /PRUE-BA23/.test(hoja) && /pareo\.html#codigo/.test(hoja) && !/#adjunto=/.test(hoja), "la hoja trae nombre, mesas y código, sin el enlace", hoja);
     await page.evaluate(() => document.body.classList.remove("pi-imprimiendo-plantilla"));
     igual("sin ids repetidos con la ficha Rondas", await page.evaluate(() => { const ids = [...document.querySelectorAll("[id]")].map((n) => n.id); return ids.filter((x, k) => ids.indexOf(x) !== k); }), []);
     await page.setViewportSize({ width: 390, height: 844 });
