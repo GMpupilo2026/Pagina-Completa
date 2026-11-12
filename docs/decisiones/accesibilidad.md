@@ -1539,3 +1539,29 @@ clase en vivo cada una trae «Practicar» (cada alumno la juega contra el motor,
   armada (`parsePgnChunk` de `js/partidas.js` lo rechazaba siempre, con razón
   para las partidas). La lista y el visor dicen «Posición» en vez de
   «0 jugadas».
+
+### Y para jugarlas en casa, de tarea
+
+El dueño pidió además poder mandarlas de tarea, para que el alumno las juegue
+solo contra el motor. Ya existía la página para eso, «Finales contra la
+máquina» (`entreno/finales.html`: contra Stockfish a toda su fuerza, con
+tablero por teclado, cuadro de comandos y voz, y juzga ganar o salvar), así
+que no se hizo otra: **con `?banco=clases` carga las posiciones de las clases**
+(`entreno/data/finales-clases.json`, que arma
+`herramientas/finales-clases-generar.js` desde
+`herramientas/datos/posiciones-clases/`).
+
+- Entran las de «ganar» y «tablas» (30); la de «jugar» no tiene resultado que
+  juzgar y queda solo en Archivos. Los umbrales son los del dictado (+1,5 y
+  ±1), no los de los finales de libro (+4 y ±0,5): son las posiciones como el
+  profe las enseñó. `verificar-finales.js` revisa los dos bancos, cada uno
+  con los suyos, y que los ids no choquen (comparten lo logrado).
+- **Su propia actividad**, `finales_clases` (migración
+  `20261112201131_training_progress_finales_clases`), con la posición en
+  `detail.theme`: así Tareas («Posiciones de las clases» en
+  `js/material-plataforma.js`) manda una posición puntual —cada una es un
+  recorte de `metas.json`— y no se cuenta junto con los finales de libro.
+  Solo meta de cantidad: los minutos de la página se apuntan como `finales`.
+- Sin pista escrita: la pista va directo a «¿Qué jugaría la máquina?».
+- Se llega desde Tareas, desde la portada de Entrenamiento y con «Jugar las
+  posiciones contra el motor» en `audios-clases.html`.

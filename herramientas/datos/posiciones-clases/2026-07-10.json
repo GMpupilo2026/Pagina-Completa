@@ -1,0 +1,26 @@
+{
+ "fecha": "2026-07-10",
+ "posiciones": [
+  {
+   "seg": 371,
+   "titulo": "Alfiles del mismo color con un peón de más",
+   "fen": "3k4/8/4Kp2/5P2/1B1b4/8/8/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Las negras van a perder el peón de f6, pero importa cómo te lo ganas: de una forma es tablas y de otra hay chances de ganar. Antes de capturar, piensa dónde quieres tener tu rey."
+  },
+  {
+   "seg": 848,
+   "titulo": "Defender el final de alfiles con el rey delante",
+   "fen": "3k4/4B3/4Kp2/5P2/3b4/8/8/8 b - - 1 1",
+   "objetivo": "tablas",
+   "nota": "Te van a ganar el peón, pero con el rey bien colocado y sin cambiar los alfiles la partida no se pierde: con el peón pasado de la mitad del tablero, cambiar alfiles es perder."
+  },
+  {
+   "seg": 1312,
+   "titulo": "Cuidar las dos diagonales hacia la coronación",
+   "fen": "4k3/8/4KB2/5P2/3b4/8/8/8 b - - 0 2",
+   "objetivo": "tablas",
+   "nota": "No te comas el alfil. Como no sabes por cuál diagonal va a intentar el rival sacarte de la casilla de coronación, coloca tu alfil donde pueda llegar a las dos."
+  }
+ ]
+}
