@@ -845,7 +845,8 @@ window.PareoVer = (function () {
     // Primero a la base (queda guardado aunque el principal no esté
     // conectado) y, si no se puede, por el canal en vivo como antes
     // (PareoPublicar.mandarAdjunto). `ronda` es la que se ve en pantalla.
-    const mandar = async (evento, ronda, payload) => {
+    // (No se llama «mandar»: así se llama el botón de la nota, más abajo.)
+    const aLaBase = async (evento, ronda, payload) => {
       if (!window.PareoPublicar) { canal.send({ type: "broadcast", event: evento, payload }); return { texto: tx("adjuntoEnviando") }; }
       const r = await PareoPublicar.mandarAdjunto(canal, codigo, evento, ronda, payload);
       if (r === "base") return { texto: tx(evento === "nota" ? "adjuntoNotaGuardada" : "adjuntoGuardado") };
@@ -874,7 +875,7 @@ window.PareoVer = (function () {
         sel.disabled = true;
         for (const b of rapidos.children) b.disabled = true;
         estadoMesa.textContent = tx("adjuntoEnviando");
-        mandar("resultado", d.ronda, Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {})).then((x) => {
+        aLaBase("resultado", d.ronda, Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {})).then((x) => {
           if (x.rechazo) {
             // No se tomó por una regla: se puede volver a elegir.
             enviadas.delete(clave);
@@ -905,7 +906,7 @@ window.PareoVer = (function () {
           if (!sel.value) return;
           si.disabled = true;
           pregunta.textContent = tx("adjuntoEnviando");
-          mandar("resultado", d.ronda, { ronda: d.ronda, mesa: m.m, r: sel.value, corrige: true }).then((x) => {
+          aLaBase("resultado", d.ronda, { ronda: d.ronda, mesa: m.m, r: sel.value, corrige: true }).then((x) => {
             pregunta.textContent = x.texto;
             if (x.rechazo) si.disabled = false;
           });
@@ -1112,7 +1113,7 @@ window.PareoVer = (function () {
         if (!texto.value.trim()) { estadoNota.textContent = tx("incFalta"); texto.focus(); return; }
         try { localStorage.setItem(CLAVE_AUTOR, nombre.value.trim()); } catch (e) { /* sin espacio */ }
         estadoNota.textContent = tx("adjuntoEnviando");
-        mandar("nota", rondaVista || 0, { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null,
+        aLaBase("nota", rondaVista || 0, { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null,
           lado: quien.value || null, tipo: tipo.value, articulo: articulo.value || null }).then((x) => {
           estadoNota.textContent = x.texto;
           if (!x.rechazo && x.texto !== tx("adjuntoEnviando")) texto.value = "";

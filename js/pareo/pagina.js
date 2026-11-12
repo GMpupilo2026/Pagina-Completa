@@ -4270,7 +4270,12 @@
       const f = V.mesaFisica(v, k), clave = claveCamara(f, null);
       const ultima = cam && cam.mesas.get(clave);
       const ayuda = cam && [...cam.alertas.values()].some((x) => x.m === clave);
-      const est = m.n == null ? "bye" : m.r ? "termino" : ayuda ? "ayuda" : ultima && ahora - ultima < SIN_NOTICIAS_MS ? "transmite" : "sinSenal";
+      // (Con if y no con ternarios: verificar-pareo-pagina.js toma las dos palabras de un ternario como claves de textos.)
+      let est = "sinSenal";
+      if (m.n == null) est = "bye";
+      else if (m.r) est = "termino";
+      else if (ayuda) est = "ayuda";
+      else if (ultima && ahora - ultima < SIN_NOTICIAS_MS) est = "transmite";
       return { mesa: f, est };
     }) : null;
     return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, publicado: v.publicado ? v.publicado.id : null,
