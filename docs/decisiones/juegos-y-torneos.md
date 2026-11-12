@@ -8893,6 +8893,33 @@ proponerlo, «No es así» lo esconde sin mandar nada),
 `verificar-pareo-centro.js` (que el principal manda el código y el torneo). La
 partida de prueba es el mate del pastor (comprobado con chess.js). Roto a
 propósito el filtro de torneo y ronda, salta.
+
+### Pareo Integral: entrar con el código en el celular del adjunto
+
+Pedido del dueño el 12/11/2026, al armar el guion del ensayo: escribir el
+código de 8 letras solo funcionaba en la Mesa del árbitro, que pide la
+licencia `mesa-arbitro`; un adjunto sin licencia dependía del enlace o del QR.
+
+- **`pareo.html#codigo`**: una casilla «Entra con tu código», sin cuenta ni
+  licencia (entra por `modoVer()`, como el enlace del adjunto: el candado se
+  libera y el editor queda escondido). `PareoVer.entrarConCodigo` en
+  `js/pareo/ver.js`.
+- El código se escribe como venga (mayúsculas, espacios, guion). Si no tiene
+  la forma de un código (8 símbolos del alfabeto sin 0, 1, i, l ni o) se dice
+  sin preguntarle a la base; si la tiene, `adjunto_entrar` dice si existe y
+  cuáles son sus mesas, y sigue en su página de siempre
+  (`#adjunto=<código>&m=<rango de la base>`, que se queda en la dirección: al
+  recargar sigue ahí). Lo que contesta la base (no existe, se apagó, demasiados
+  intentos) se dice tal cual.
+- **`#codigo=K7M2-9QXA`** entra solo, para un enlace corto o un QR que lleve
+  el código.
+- El Centro del evento, los códigos en papel y sus enlaces mandan ahí (la
+  Mesa del árbitro sigue, para los adjuntos con licencia).
+
+Lo prueban `verificar-pareo-adjuntos.js` (la forma equivocada sin preguntar
+a la base, el que no existe, el bueno escrito como venga con el rango de la
+base, `#codigo=…` solo) y `verificar-candado-herramienta.js` (la casilla se ve
+sin sesión y sin el editor; quitada la entrada `#codigo`, salta).
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de

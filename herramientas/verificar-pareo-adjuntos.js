@@ -17,7 +17,10 @@
  *     el principal, cada mesa suya con su tablero en vivo (lo de otro torneo u
  *     otra ronda no entra), «La cámara dice» con «Confirmar» (manda ese
  *     resultado, como tocarlo a mano) y «No es así» (lo esconde). La partida
- *     de prueba es el mate del pastor, comprobado con chess.js.
+ *     de prueba es el mate del pastor, comprobado con chess.js;
+ *   - entrar con el código, sin enlace ni cuenta (#codigo): un código mal
+ *     escrito o que no existe se dice; el bueno, escrito como venga, lleva a
+ *     sus mesas con el rango que dice la base; #codigo=… entra solo.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-adjuntos.js
@@ -278,6 +281,39 @@ async function pruebaCamaras(browser) {
   await ctx.close();
 }
 
+async function pruebaCodigo(browser) {
+  console.log("\n=== Entrar con el código, sin enlace ni cuenta ===");
+  const pedidos = [];
+  const doble = (p) => p.route("**/functions/v1/pareo-publicar", (r) => {
+    const b = JSON.parse(r.request().postData() || "{}");
+    pedidos.push(b);
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(b.codigo === "prueba23"
+      ? { ok: true, id: "11111111-2222-3333-4444-555555555555", nombre: "PRUEBA", arbitro: "PRUEBA ADJUNTA", desde: 1, hasta: 2 }
+      : { ok: false, motivo: "no", error: "Ese código no es de ningún árbitro de un torneo publicado." }) });
+  });
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "#codigo", doble);
+  await page.waitForSelector("#pi-adj-codigo");
+  ok(await page.evaluate(() => document.activeElement && document.activeElement.id === "pi-adj-codigo") && await P.vis(page, "#pi-adj-codigo"), "se ve la casilla, con el foco puesto, sin pedir cuenta");
+  await page.fill("#pi-adj-codigo", "abc");
+  await page.click("#pi-adj-codigo-entrar");
+  ok(/Son 8 letras y números/.test(await page.textContent("#pi-adj-codigo-estado")) && !pedidos.length, "un código con forma equivocada se dice, sin preguntarle a la base");
+  await page.fill("#pi-adj-codigo", "ZZZZ-9999");
+  await page.click("#pi-adj-codigo-entrar");
+  await page.waitForFunction(() => /no es de ningún árbitro/.test(document.getElementById("pi-adj-codigo-estado").textContent), null, { timeout: 5000 }).catch(() => {});
+  ok(/no es de ningún árbitro/.test(await page.textContent("#pi-adj-codigo-estado")), "uno que no existe, con lo que dice la base");
+  await page.fill("#pi-adj-codigo", " prue-ba23 ");
+  await page.click("#pi-adj-codigo-entrar");
+  await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "pareo-adjunto-prueba23" && x.evento === "pedir"), null, { timeout: 5000 }).catch(() => {});
+  igual("el bueno, escrito como venga, entra a sus mesas con el rango de la base", [await page.evaluate(() => location.hash), pedidos.pop()], ["#adjunto=prueba23&m=1-2", { accion: "adjunto_entrar", codigo: "prueba23" }]);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+  const { ctx: c2, page: p2, errores: e2 } = await P.abrirPagina(browser, BASE, "#codigo=PRUE-BA23", doble);
+  await p2.waitForFunction(() => location.hash.startsWith("#adjunto="), null, { timeout: 5000 }).catch(() => {});
+  igual("con #codigo=… entra solo", await p2.evaluate(() => location.hash), "#adjunto=prueba23&m=1-2");
+  ok(!e2.length, "sin errores en la página", e2.join(" | "));
+  await c2.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -285,6 +321,7 @@ async function pruebaCamaras(browser) {
     await pruebaCelular(browser);
     await pruebaBase(browser);
     await pruebaCamaras(browser);
+    await pruebaCodigo(browser);
   } finally {
     await browser.close();
   }

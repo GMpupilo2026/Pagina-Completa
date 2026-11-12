@@ -4334,7 +4334,7 @@
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-centro-agregar", class: C.botonSec, onclick: async () => { await enlaceAdjunto(M.r); if (estado.ficha === "centro") pintarCentro(); } }, tx("centroAgregar")),
         M.adjuntos.length ? el("button", { type: "button", id: "pi-centro-codigos", class: C.botonSec, onclick: () => imprimirCodigos(v) }, tx("centroCodigosPapel")) : null),
-      el("p", { class: C.nota + " mt-2" }, tx("centroDondeEntran"), " ", el("span", { class: "font-mono", texto: location.origin + "/mesa-arbitro.html" })));
+      el("p", { class: C.nota + " mt-2" }, tx("centroDondeEntran"), " ", el("span", { class: "font-mono break-all", texto: location.origin + "/pareo.html#codigo" })));
 
     // Las cámaras de Notara.
     const EST = { transmite: ["centroCamTransmite", "text-green-800 dark:text-green-300"], termino: ["centroCamTermino", "text-brand-600 dark:text-brand-300"],
@@ -4356,6 +4356,7 @@
       el("button", { type: "button", class: C.mini, onclick: copiar(url) }, tx("copiarEnlace")));
     const enlaces = tarjeta("pi-centro-enlaces", tx("centroEnlaces"), el("ul", {},
       M.publicado ? enlace(tx("centroEnlacePublico"), PareoPublicar.enlace(M.publicado)) : null,
+      enlace(tx("centroEnlaceCodigo"), location.origin + "/pareo.html#codigo"),
       enlace(tx("centroEnlaceMesa"), location.origin + "/mesa-arbitro.html")));
 
     cont.replaceChildren(
@@ -4380,7 +4381,7 @@
     empezarHoja(cont, el("div", { class: "pi-plantilla-hoja" },
       el("h1", { class: "pi-plantilla-titulo", texto: tx("centroCodigosTitulo") }),
       v.nombre ? el("p", { class: "pi-plantilla-torneo", texto: v.nombre }) : null,
-      el("p", { texto: tx("centroCodigosComo", { u: location.host + "/mesa-arbitro.html" }) }),
+      el("p", { texto: tx("centroCodigosComo", { u: location.host + "/pareo.html#codigo" }) }),
       el("table", { class: "pi-plantilla-tabla" },
         el("thead", {}, el("tr", {}, el("th", { texto: tx("centroArbitro") }), el("th", { texto: tx("centroMesasCol") }), el("th", { texto: tx("centroCodigo") }))),
         el("tbody", {}, activos.map((a) => el("tr", {}, el("td", { texto: a.nombre || "—" }), el("td", { texto: a.rango }), el("td", { class: "font-mono", texto: codigoLindo(a.codigo) })))))));
@@ -7432,6 +7433,12 @@
     if (location.hash.startsWith("#ver=")) {
       modoVer();
       PareoVer.iniciar(location.hash.slice(5), idioma);
+      return;
+    }
+    // El adjunto que entra escribiendo su código (sin enlace, sin cuenta).
+    if (location.hash === "#codigo" || location.hash.startsWith("#codigo=")) {
+      modoVer();
+      PareoVer.entrarConCodigo(location.hash.slice(8), idioma);
       return;
     }
     if (location.hash.startsWith("#adjunto=")) {
