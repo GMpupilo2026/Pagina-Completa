@@ -694,3 +694,101 @@ export function invitarPracticarHtml(
 </td></tr></table>
 </body></html>`;
 }
+
+/* Cuándo llega el informe, dicho como se dice en la casa: «todos los lunes a
+   la 1 p. m.». Con la hora y el día de Costa Rica que eligió quien da clase
+   (`encargados.hora_envio` y `dia_semana`). */
+const DIAS = ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"];
+export function cuandoLlega(frecuencia: Frecuencia, dia: number | null | undefined, hora: number | null | undefined): string {
+  const h = Number.isInteger(hora) ? Number(hora) : null;
+  const aLas = h == null ? ""
+    : h === 12 ? " al mediodía"
+    : h === 0 ? " a la medianoche"
+    : ` a la${h % 12 === 1 ? "" : "s"} ${h % 12} ${h < 12 ? "a. m." : "p. m."}`;
+  if (frecuencia === "diario") return "todos los días" + aLas;
+  if (frecuencia === "mensual") return "una vez al mes";
+  if (frecuencia === "anual") return "una vez al año";
+  return Number.isInteger(dia) && DIAS[Number(dia)] ? `todos los ${DIAS[Number(dia)]}${aLas}` : "una vez por semana";
+}
+
+/* El PRIMER correo que recibe una persona encargada no es un informe: es la
+   bienvenida. Lo pidió el dueño para CCDR POCOCI, cuyas cuentas recién se
+   habían creado: un primer informe habría llegado vacío para casi todos, y
+   lo primero que lee una familia no puede ser «no entró a practicar». Cuenta
+   qué va a traer cada informe (lo que de verdad trae `informeHtml`: si
+   practicó, el tiempo, en qué trabajó, tareas y exámenes, la comparación, los
+   mensajes de su profe, el Elo, los premios y el plan) y cuándo llega. */
+export function bienvenidaHtml(
+  nombreCompleto: string, frecuencia: Frecuencia, cuando: string, sitio: string,
+  contacto: Contacto | null | undefined, cabecera: Cabecera,
+) {
+  const nombre = String(nombreCompleto || "").trim() || "Tu hijo o hija";
+  const primerNombre = nombre.split(" ")[0];
+  const periodo = { diario: "el día", semanal: "la semana", mensual: "el mes", anual: "el año" }[frecuencia] ?? "la semana";
+  const anterior = { diario: "el día anterior", semanal: "la semana anterior", mensual: "el mes anterior", anual: "el año anterior" }[frecuencia] ?? "la semana anterior";
+  const punto = (emoji: string, titulo: string, texto: string) => `<tr>
+      <td style="padding:8px 10px 8px 0;vertical-align:top;font-size:18px;line-height:1.3">${emoji}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #eef2f6;font-size:14px;color:#243b53;line-height:1.5"><strong style="color:#102a43">${titulo}</strong> ${texto}</td>
+    </tr>`;
+
+  return `<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bienvenidos a los informes de ${escapar(primerNombre)} — Ajedrez Integral</title></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:24px 12px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
+
+  ${cabecera(`¡Bienvenidos! Los informes de ${escapar(primerNombre)}`)}
+
+  <tr><td style="padding:24px">
+    <p style="margin:0 0 16px;font-size:14px;color:#243b53;line-height:1.6">Hola,</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#243b53;line-height:1.6">
+      ${escapar(primerNombre)} ya tiene su cuenta en la plataforma de ajedrez. Desde ahora, <strong>${escapar(cuando)}</strong>
+      les va a llegar a este correo un informe de cómo va, para que puedan acompañarlo desde la casa.
+    </p>
+
+    <div style="margin:0 0 8px;font-size:13px;font-weight:700;color:#243b53">Esto es lo que van a ver en cada informe</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">
+      ${punto("✅", "Si practicó lo suficiente:", `cuántos días se sentó a practicar en ${periodo} y si va bien o le está costando.`)}
+      ${punto("⏱️", "Cuánto entrenó y en qué:", "el tiempo en clase y con ejercicios, y en qué temas trabajó.")}
+      ${punto("📋", "Sus tareas y exámenes:", "cuántas le pusieron, cuántas terminó y si se le pasó alguna fecha.")}
+      ${punto("📈", "Cómo va comparado:", `si practicó más o menos que ${anterior}.`)}
+      ${punto("💬", "Los mensajes de su profe,", "cuando le quiera contar algo a la familia.")}
+      ${punto("🏆", "Sus premios en clase y su Elo oficial,", "cuando los tenga.")}
+      ${punto("🧭", "Su nivel y su plan de entrenamiento,", "cuando haga el diagnóstico de nivel.")}
+    </table>
+
+    <div style="margin:0 0 20px;padding:14px 16px;background:#f0f4f8;border-left:4px solid #334e68;border-radius:8px">
+      <div style="font-size:14px;font-weight:700;color:#102a43">Para empezar con el pie derecho</div>
+      <div style="font-size:14px;color:#243b53;line-height:1.6;margin-top:4px">
+        Que ${escapar(primerNombre)} entre con su usuario y haga el <strong>«Diagnóstico de nivel»</strong>: es una prueba
+        corta que mide su nivel y le arma un plan. Diez o quince minutos casi todos los días rinden mucho más que un rato largo de vez en cuando.
+      </div>
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="background:#f0b429;border-radius:10px">
+        <a href="${sitio}/login.html" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#102a43;text-decoration:none">Entrar a la plataforma →</a>
+      </td></tr>
+    </table>
+
+    ${contacto ? `
+    <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
+      Cualquier consulta, respondemos por WhatsApp al
+      <a href="${contacto.enlace}" style="color:#a85a0d">${escapar(contacto.texto)}</a>.
+    </p>` : `
+    <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
+      Cualquier consulta, respóndenos este mismo correo.
+    </p>`}
+  </td></tr>
+
+  <tr><td style="background:#f0f4f8;padding:16px 24px;font-size:11px;color:#55708a;line-height:1.6">
+    Recibes este correo porque en la Academia figuras como persona encargada de ${escapar(nombre)}. Lo manda quien le da clase.
+    <br><a href="${sitio}" style="color:#55708a">${sitio.replace(/^https:\/\//, "")}</a>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}

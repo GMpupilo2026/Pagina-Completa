@@ -32,7 +32,7 @@
 // dominio verificado del sitio.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { informeHtml, invitarPracticarHtml, PERIODOS, situacionParaPlantillas, type Frecuencia } from "./informe-html.ts";
+import { bienvenidaHtml, cuandoLlega, informeHtml, invitarPracticarHtml, PERIODOS, situacionParaPlantillas, type Frecuencia } from "./informe-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
@@ -152,6 +152,21 @@ async function mandar(para: string, asunto: string, html: string, remite?: Remit
   return { ok: true };
 }
 
+/* La bienvenida a una persona encargada nueva (ver bienvenidaHtml). El nombre
+   del alumno se lee con la service role: la tanda no trae sesión, y solo se
+   usa para saludar. */
+async function mandarBienvenida(e: { student_id: string; email: string; frecuencia: string; dia_semana: number | null; hora_envio: number | null }) {
+  const frecuencia = (PERIODOS[e.frecuencia as Frecuencia] ? e.frecuencia : "semanal") as Frecuencia;
+  const { data: alumno } = await admin.from("profiles").select("full_name").eq("id", e.student_id).maybeSingle();
+  const nombre = alumno?.full_name || "tu hijo o hija";
+  const contacto = await contactoDeConsultas(admin);
+  const remite = await remitenteDe(admin, e.student_id, DE);
+  const html = bienvenidaHtml(nombre, frecuencia, cuandoLlega(frecuencia, e.dia_semana, e.hora_envio), SITE_URL, contacto,
+    (t, c) => cabeceraCorreo(remite.marca, t, c));
+  const asunto = `Bienvenidos: los informes de ${String(nombre).split(" ")[0]} — ${firmaDe(remite.marca)}`;
+  return mandar(e.email, asunto, html, remite);
+}
+
 function asuntoDe(nombre: string, frecuencia: Frecuencia, remite: Remitente) {
   return `${PERIODOS[frecuencia]?.asunto ?? "Informe"} de ${nombre} — ${firmaDe(remite.marca)}`;
 }
@@ -184,7 +199,7 @@ Deno.serve(async (req) => {
     const diaCR = diaSemanaCostaRica(ahora);
     const { data: encargados, error } = await admin
       .from("encargados")
-      .select("id, student_id, nombre, email, frecuencia, ultimo_envio_at, dia_semana")
+      .select("id, student_id, nombre, email, frecuencia, ultimo_envio_at, dia_semana, hora_envio")
       .eq("activo", true)
       .eq("hora_envio", horaCR)
       .limit(MAX_POR_TANDA);
@@ -205,6 +220,16 @@ Deno.serve(async (req) => {
         if (dias < cada - 0.5) { saltados += 1; continue; }
       }
       try {
+        // El primer correo es la bienvenida, no un informe: cuenta qué va a
+        // traer cada uno y cuándo llega. Cuenta para la cadencia como un envío
+        // más, así el primer informe de verdad llega un periodo después.
+        if (!e.ultimo_envio_at) {
+          const r = await mandarBienvenida(e);
+          if (!r.ok) { fallos.push(`${e.email}: ${r.error}`); continue; }
+          await admin.from("encargados").update({ ultimo_envio_at: ahora.toISOString() }).eq("id", e.id);
+          mandados += 1;
+          continue;
+        }
         const { datos, html, remite, adjuntos } = await armar(e.student_id, e.frecuencia as Frecuencia);
         const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia, remite), html, remite, adjuntos);
         if (!r.ok) { fallos.push(`${e.email}: ${r.error}`); continue; }
