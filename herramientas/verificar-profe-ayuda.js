@@ -92,6 +92,37 @@ igual("clases.js la monta con el perfil", /ProfeAyuda\.montar\(profile\)/.test(l
 const css = leer("css/styles.css");
 igual("styles.css la aparta cuando hay una ventana abierta", /body:has\(dialog\[open\]\) \.profe-ayuda-boton/.test(css), true);
 
+console.log("\n=== La profe Pame en el resto de la plataforma ===");
+{
+  // vestirPagina() de js/avatar-profe-oscar.js con un documento de mentira.
+  function vestir(profe) {
+    const textos = [{ dataset: { profePame: "Jugar contra el bot de la profe Pame" }, textContent: "Jugar contra el bot de Oscar" }];
+    const clases = new Set(["object-cover"]);
+    const imagenes = [{ dataset: { profePameSrc: "cara" }, src: "img/oscar-avatar-160.jpg", removeAttribute() {},
+      classList: { add: (...c) => c.forEach((x) => clases.add(x)), remove: (c) => clases.delete(c) } }];
+    const uid = "u1";
+    const ls = { "academia_marca_v1": JSON.stringify({ uid, marca: { academia_id: profe === "pame" ? "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4" : "otra" } }),
+      "sb-bgtijpimpcokxatxxbki-auth-token": JSON.stringify({ user: { id: uid } }) };
+    const localStorage = { getItem: (k) => (k in ls ? ls[k] : null), key: (i) => Object.keys(ls)[i], get length() { return Object.keys(ls).length; } };
+    const document = { readyState: "complete", querySelectorAll: (sel) => (sel.startsWith("img") ? imagenes : textos), addEventListener() {} };
+    const window = { localStorage };
+    new Function("window", "document", leer("js/avatar-profe-oscar.js"))(window, document);
+    return [window.AvatarProfeOscar.PROFE, textos[0].textContent, imagenes[0].src, clases.has("object-contain")];
+  }
+  igual("a quien es de CCDR POCOCI le cambia el texto y el dibujo", vestir("pame"),
+    ["pame", "Jugar contra el bot de la profe Pame", "img/avatar-profe-pame/cara.webp", true]);
+  igual("al resto no le toca nada", vestir("otra"), ["oscar", "Jugar contra el bot de Oscar", "img/oscar-avatar-160.jpg", false]);
+  for (const pag of ["juegos.html", "bot.html"]) {
+    const h = leer(pag);
+    igual(pag + ": dice el bot de la profe Pame y carga el avatar",
+      /data-profe-pame="Jugar contra el bot de la profe Pame"/.test(h) && h.includes('src="js/avatar-profe-oscar.js"'), true);
+  }
+  const comp = leer("competir.html");
+  igual("competir.html carga el avatar antes que competir.js",
+    comp.indexOf("js/avatar-profe-oscar.js") > 0 && comp.indexOf("js/avatar-profe-oscar.js") < comp.indexOf('src="js/competir.js"'), true);
+  igual("Competir ofrece el bot de quien le toca", /el bot de ' \+ BOT \+ '/.test(leer("js/competir.js")), true);
+}
+
 console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
 

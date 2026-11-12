@@ -158,6 +158,27 @@
   const conFrase = () => LISTA.filter((a) => a.frase).map(conSuAlt);
 
   window.AvatarProfeOscar = { LISTA, ALTO, PROFES, PROFE_DE_ACADEMIA, PROFE, altDe, ruta, rutaDe, porId, conFrase };
+
+  /* Lo que una página escrita a mano dice del profe Oscar, a quien ve a la
+     profe Pame: un elemento con data-profe-pame="…" cambia su texto por ese
+     (también el <title>), y una imagen con data-profe-pame-src="cara" pasa a
+     ese dibujo de ella. Así la página sigue siendo HTML de siempre y el cambio
+     vive en un solo lugar. Ver «La profe Pame en el resto de la plataforma»
+     en docs/decisiones/clase-en-vivo.md. */
+  function vestirPagina() {
+    if (PROFE !== "pame") return;
+    document.querySelectorAll("[data-profe-pame]").forEach((e) => { e.textContent = e.dataset.profePame; });
+    document.querySelectorAll("img[data-profe-pame-src]").forEach((i) => {
+      i.removeAttribute("srcset");
+      i.src = ruta(i.dataset.profePameSrc);
+      i.classList.remove("object-cover");
+      i.classList.add("object-contain", "bg-white");
+    });
+  }
+  if (typeof document !== "undefined" && document.querySelectorAll) {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", vestirPagina);
+    else vestirPagina();
+  }
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
