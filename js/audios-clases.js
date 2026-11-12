@@ -116,7 +116,7 @@
         data.forEach((a) => lista.append(tarjeta(a, url(oir, a.archivo), url(bajar, a.archivo))));
     }
 
-    function tarjeta(a, urlOir, urlBajar, estudio) {
+    function tarjeta(a, urlOir, urlBajar, estudio, sinRecordar) {
         const art = el("article", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
         const idTitulo = "clase-" + a.id;
         art.setAttribute("aria-labelledby", idTitulo);
@@ -138,7 +138,7 @@
         audio.className = "w-full mt-4";
         audio.setAttribute("aria-label", "Audio de la clase del " + dia);
         art.append(audio);
-        recordarPosicion(audio, a.id, art);
+        if (!sinRecordar) recordarPosicion(audio, a.id, art);
         art.append(AudiosGuia.controles(audio, { indice: a.indice }));
 
         const fila = el("div", "flex flex-wrap items-center gap-x-5 gap-y-3 mt-3");
@@ -336,17 +336,20 @@
         if (!d) return f.name + ": el nombre no trae la fecha.";
         let obj;
         try { obj = JSON.parse(await f.text()); } catch (e) { return f.name + ": no es un archivo de guía válido."; }
-        const g = AudiosGuia.leerGuia(obj);
-        let q = sb.from("audios_clase").select("id").eq("academia_id", academia).eq("fecha", d.fecha);
+        let q = sb.from("audios_clase").select("id, duracion_seg, indice").eq("academia_id", academia).eq("fecha", d.fecha);
         q = d.hora ? q.eq("hora", d.hora) : q.is("hora", null);
         const { data: filas, error } = await q.range(0, 1);
         if (error) return f.name + ": no se pudo buscar la clase.";
         if (!filas || !filas.length) return f.name + ": todavía no hay audio de esa clase; sube primero el MP3.";
         const id = filas[0].id;
+        const whisper = AudiosGuia.deWhisper(obj);
+        if (whisper) return ponerMinutos(f.name, filas[0], whisper);
+        const g = AudiosGuia.leerGuia(obj);
         const cambios = { resumen: g.resumen, indice: g.indice.length ? g.indice : null };
         if (g.segmentos.length) {
             cambios.segmentos = g.segmentos;
             cambios.transcripcion = g.segmentos.map((s) => s[1]).join("\n").slice(0, 300000);
+            cambios.minutos_aproximados = false;
         }
         const up = await sb.from("audios_clase").update(cambios).eq("id", id);
         if (up.error) return f.name + ": no se pudo guardar la guía.";
@@ -363,9 +366,73 @@
         return f.name + ": guía lista (" + g.indice.length + " temas, " + g.preguntas.length + " preguntas, " + g.partidas.length + " partidas sin publicar).";
     }
 
+    /* La transcripción de Whisper con sus minutos (el .json que deja
+       «whisper --output_format json», con el mismo nombre que el MP3): cambia
+       el texto y los minutos aproximados de la clase por los exactos, y vuelve
+       a encontrar el minuto de cada tema por su cita (lo que se dijo ahí). Las
+       partidas se mueven lo mismo que el tema más cercano. */
+    async function ponerMinutos(nombre, clase, segmentos) {
+        if (!segmentos.length) return nombre + ": la transcripción viene vacía.";
+        const r = AudiosGuia.reanclar(clase.indice, segmentos, clase.duracion_seg);
+        const up = await sb.from("audios_clase").update({
+            segmentos, transcripcion: segmentos.map((x) => x[1]).join("\n").slice(0, 300000),
+            indice: r.indice.length ? r.indice : null, minutos_aproximados: false,
+        }).eq("id", clase.id);
+        if (up.error) return nombre + ": no se pudieron guardar los minutos.";
+        const { data: ps } = await sb.from("audios_clase_partidas").select("id, seg").eq("audio_id", clase.id).range(0, 49);
+        for (const p of ps || []) {
+            const nuevo = AudiosGuia.moverSeg(p.seg, r.movidas);
+            if (nuevo !== p.seg) await sb.from("audios_clase_partidas").update({ seg: nuevo }).eq("id", p.id);
+        }
+        const total = (clase.indice || []).length;
+        return nombre + ": minutos exactos puestos" + (total ? " (" + r.encontrados + " de " + total + " temas encontrados en su minuto)" : "") + ".";
+    }
+
+    /* ---------- Los conceptos de todas las clases ---------- */
+    async function verConceptos() {
+        document.getElementById("subir").classList.add("hidden");
+        document.getElementById("lista-titulo").textContent = "Conceptos de todas las clases";
+        document.getElementById("lista-titulo").className = "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2";
+        document.title = "Conceptos de todas las clases · Audios de las clases";
+        const lista = document.getElementById("lista");
+        const volver = el("a", "inline-block mb-4 text-sm font-semibold text-brand-700 dark:text-accent-300 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "← Todas las clases");
+        volver.href = "audios-clases.html";
+        document.getElementById("lista-titulo").before(volver);
+        const { data, error } = await sb.from("audios_clase").select("id, fecha, indice, minutos_aproximados")
+            .order("fecha", { ascending: true }).range(0, 499);
+        if (error) { avisar("No se pudieron leer las clases. Vuelve a intentarlo en un momento.", "error"); return; }
+        const grupos = AudiosGuia.conceptos(data);
+        if (!grupos.length) { avisar("Todavía ninguna clase tiene sus temas. Cuando tu profe suba las guías, aparecen acá."); return; }
+        lista.before(el("p", "text-brand-600 dark:text-brand-300 mb-6",
+            grupos.length + " conceptos, cada uno con las clases en que se vio, de la más vieja a la más reciente. Con el lector de pantalla, cada concepto es un encabezado (tecla H). Toca un tema para abrir esa clase en ese minuto."
+            + (data.some((c) => c.minutos_aproximados) ? " Algunos minutos son aproximados." : "")));
+        grupos.forEach((g) => {
+            const sec = el("section", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
+            const idH = "concepto-" + AudiosGuia.normal(g.concepto).replace(/[^a-z0-9]+/g, "-");
+            const h = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white", g.concepto);
+            h.id = idH;
+            sec.setAttribute("aria-labelledby", idH);
+            const n = new Set(g.temas.map((t) => t.audio)).size;
+            sec.append(h, el("p", "text-sm text-brand-600 dark:text-brand-300 mt-1", n === 1 ? "En 1 clase." : "En " + n + " clases."));
+            const ul = el("ul", "space-y-2 mt-3");
+            g.temas.forEach((t) => {
+                const li = el("li");
+                const dia = diaLargo(t.fecha);
+                const a = el("a", "text-brand-700 dark:text-accent-300 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+                    dia + ", " + AudiosGuia.reloj(t.seg) + ": " + t.titulo);
+                a.href = "audios-clases.html?clase=" + encodeURIComponent(t.audio) + "&t=" + t.seg;
+                a.setAttribute("aria-label", dia + ", " + AudiosGuia.relojDicho(t.seg) + ": " + t.titulo);
+                li.append(a);
+                ul.append(li);
+            });
+            sec.append(ul);
+            lista.append(sec);
+        });
+    }
+
     /* ---------- Estudiar una clase ---------- */
     let anuncio = () => {};
-    async function estudiar(id) {
+    async function estudiar(id, desde) {
         document.getElementById("subir").classList.add("hidden");
         document.getElementById("lista-titulo").textContent = "La clase";
         const volver = el("a", "inline-block mb-4 text-sm font-semibold text-brand-700 dark:text-accent-300 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "← Todas las clases");
@@ -373,7 +440,7 @@
         document.getElementById("lista").before(volver);
         const lista = document.getElementById("lista");
         const { data: a, error } = await sb.from("audios_clase")
-            .select("id, academia_id, fecha, hora, titulo, archivo, duracion_seg, bytes, con_transcripcion, resumen, indice, segmentos")
+            .select("id, academia_id, fecha, hora, titulo, archivo, duracion_seg, bytes, con_transcripcion, resumen, indice, segmentos, minutos_aproximados")
             .eq("id", id).maybeSingle();
         if (error || !a) { avisar("No se encontró esa clase. Vuelve a la lista de clases.", "error"); return; }
         document.getElementById("aviso").className = "hidden";
@@ -382,7 +449,7 @@
             sb.storage.from(BUCKET).createSignedUrls([a.archivo], 6 * 3600, { download: true }),
         ]);
         const url = (r) => { const x = r && r.data && r.data[0]; return x && !x.error ? x.signedUrl : null; };
-        const art = tarjeta(a, url(oir), url(bajar), true);
+        const art = tarjeta(a, url(oir), url(bajar), true, desde != null);
         lista.append(art);
         document.title = "Clase del " + diaLargo(a.fecha) + " · Audios de las clases";
         const audio = art.querySelector("audio");
@@ -401,6 +468,15 @@
             if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
         } };
         await AudiosGuia.montar(guia, a, audio, opciones);
+        /* Desde el índice de conceptos: la clase queda lista en ese minuto. */
+        if (desde != null) {
+            AudiosGuia.ir(audio, desde, false);
+            const t = AudiosGuia.temaEn(a.indice, desde);
+            const aviso = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mt-2",
+                "Listo para escuchar desde el " + AudiosGuia.relojDicho(desde) + (t ? ": " + t.titulo : "") + ". Dale play al audio.");
+            aviso.setAttribute("role", "status");
+            audio.after(aviso);
+        }
     }
 
     async function init() {
@@ -415,8 +491,20 @@
         AudiosGuia.anunciarCon(anuncio);
         await prepararSubir();
         const id = new URLSearchParams(location.search).get("clase");
-        if (id && /^[0-9a-z-]{1,64}$/i.test(id)) { await estudiar(id); return; }
+        const params = new URLSearchParams(location.search);
+        const t = params.get("t");
+        if (id && /^[0-9a-z-]{1,64}$/i.test(id)) { await estudiar(id, /^\d{1,5}$/.test(t || "") ? +t : null); return; }
+        if (params.has("conceptos")) { await verConceptos(); return; }
         AudiosGuia.atajos({});
+        const repaso = document.getElementById("repaso");
+        const ir = el("p", "mb-6");
+        const conc = el("a", "inline-block bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            "Conceptos de todas las clases");
+        conc.href = "audios-clases.html?conceptos";
+        conc.setAttribute("aria-label", "Conceptos de todas las clases: cada concepto con las clases y el minuto en que se vio");
+        ir.append(conc);
+        repaso.append(ir);
+        await AudiosGuia.repasoDeHoy(repaso);
         await cargarLista();
     }
 
