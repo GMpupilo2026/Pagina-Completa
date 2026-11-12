@@ -1,10 +1,11 @@
-/* «¿Te ayudo?»: el profe en la página del Torneo Intereducativo Tacho Chess 2
- * (tacho-chess-2.html). Un botón con su cara abajo a la derecha; al tocarlo,
- * lo que más preguntan las familias, y cada respuesta lleva a su lugar de la
- * página. Lo pidió el dueño el 12/11/2026 («agrega el avatar del profe Oscar
- * para el torneo, para que pueda ayudar a la gente»). Como en el
- * Centroamericano, dice «el profe», nada más: sin el nombre en el texto, en la
- * etiqueta del botón ni en los dibujos (alt vacío).
+/* «¿Te ayudo?»: el profe Oscar en la página del Torneo Intereducativo Tacho
+ * Chess 2 (tacho-chess-2.html). Un botón con su cara abajo a la derecha; al
+ * tocarlo, lo que más preguntan las familias, y cada respuesta lleva a su
+ * lugar de la página. Lo pidió el dueño el 12/11/2026 («agrega el avatar del
+ * profe Oscar para el torneo, para que pueda ayudar a la gente»). A
+ * diferencia del Centroamericano (donde dice «el profe», nada más), aquí se
+ * presenta como «el profe Oscar»: lo pidió el dueño después. Los dibujos van
+ * de adorno (alt vacío).
  *
  * NINGUNA RESPUESTA ESTÁ ESCRITA AQUÍ CON SUS DATOS (como la de la profe
  * Karina, js/jdn-pz-profe.js): cada una se arma al abrirla, leyendo lo que la
@@ -175,7 +176,7 @@
   boton.id = "profe-boton";
   boton.setAttribute("aria-expanded", "false");
   boton.setAttribute("aria-controls", "profe-panel");
-  boton.setAttribute("aria-label", "¿Te ayudo? El profe contesta lo que más se pregunta del torneo");
+  boton.setAttribute("aria-label", "¿Te ayudo? El profe Oscar contesta lo que más se pregunta del torneo");
   const globo = el("span", "cac-profe-globo", "¿Te ayudo?");
   const cara = el("span", "cac-profe-cara");
   const img = el("img", "");
@@ -232,7 +233,7 @@
       li.appendChild(b);
       ul.appendChild(li);
     });
-    panel.replaceChildren(cerrarX(), cabeza("presentando", "¡Hola! Soy el profe", "Te ayudo a encontrar lo que buscas de Tacho Chess 2. ¿Qué necesitas?"), ul);
+    panel.replaceChildren(cerrarX(), cabeza("presentando", "¡Hola! Soy el profe Oscar", "Te ayudo a encontrar lo que buscas de Tacho Chess 2. ¿Qué necesitas?"), ul);
     delete panel.dataset.respuesta;
     const f = foco ? panel.querySelector('[data-pregunta="' + foco + '"]') : panel.querySelector("[data-pregunta]");
     if (f) f.focus();

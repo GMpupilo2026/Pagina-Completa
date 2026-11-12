@@ -15002,9 +15002,11 @@ profe Karina (ver «La profe Karina ayuda en la página»): `js/tacho-chess-prof
 después de `js/tacho-chess-resultados.js` y `js/avatar-profe-oscar.js` en
 `scripts` de la configuración.
 
-- **Dice «el profe», nada más**, como pidió el dueño para el Centroamericano:
-  sin el nombre en el texto, en la etiqueta del botón ni en los dibujos (alt
-  vacío). Los dibujos son los del profe Oscar (`rutaDe("oscar", …)`, sin mirar
+- **Se presenta como «el profe Oscar»** (en el saludo y en la etiqueta del
+  botón). La primera versión decía «el profe», nada más, como pidió el dueño
+  para el Centroamericano; para esta página pidió después que dijera su
+  nombre. El Centroamericano sigue sin él. Los dibujos van con alt vacío y son
+  los del profe Oscar (`rutaDe("oscar", …)`, sin mirar
   la academia de quien mira).
 - **Ocho preguntas**: cómo inscribir, la próxima ronda, quién juega y qué se
   premia, contra quién juega, dónde y cuándo, cuánto dura y si se llega tarde,
@@ -15021,7 +15023,7 @@ después de `js/tacho-chess-resultados.js` y `js/avatar-profe-oscar.js` en
   `.cac-profe-*` de `css/centroamericano.css`.
 
 Lo revisa `verificar-tacho-chess.js`: el botón y su cara, las ocho preguntas,
-que no diga «Oscar», cada respuesta (la ronda dos días antes, en la llegada y
+que se presente como «el profe Oscar», cada respuesta (la ronda dos días antes, en la llegada y
 en la ronda 2 con el navegador en Madrid; el contacto, el ritmo, los niveles,
 lo de además y los resultados con y sin el torneo en Pareo), «Ver el
 contacto», y Escape con el foco de vuelta. Con la hora tomada de Madrid en vez

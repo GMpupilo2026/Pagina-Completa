@@ -23,8 +23,8 @@
  *      de Pareo y se abre encima; con varios (los niveles en varios
  *      torneos), abre la ventana con uno por torneo.
  *   5. EL PROFE AYUDA (js/tacho-chess-profe.js): el botón «¿Te ayudo?» con
- *      su cara, el panel con las ocho preguntas y ni un «Oscar» (dice «el
- *      profe», como en el Centroamericano); cada respuesta sale de lo que dice
+ *      su cara, el panel con las ocho preguntas y su nombre, «el profe Oscar»
+ *      (en el saludo y en la etiqueta del botón); cada respuesta sale de lo que dice
  *      la página: la próxima ronda según la hora (antes, en la llegada y en
  *      la ronda 2, con «hoy»), el contacto, el árbitro y la tolerancia, los
  *      once niveles sin emojis, y los resultados según la ficha; sus botones
@@ -218,7 +218,7 @@ async function fichaResultados(nav, publicados) {
       await r.p.click("#profe-boton");
       const panel = await r.p.evaluate(() => { const x = document.getElementById("profe-panel"); return { visible: x.checkVisibility(), preguntas: x.querySelectorAll("[data-pregunta]").length, texto: x.textContent, foco: document.activeElement && document.activeElement.dataset.pregunta }; });
       ok("el panel abre con las ocho preguntas y el foco en la primera", panel.visible && panel.preguntas === 8 && panel.foco === "inscribir", JSON.stringify([panel.visible, panel.preguntas, panel.foco]));
-      ok("dice «el profe», sin el nombre (como en el Centroamericano)", /Soy el profe/.test(panel.texto) && !/Oscar/i.test(panel.texto + b.etiqueta), panel.texto.slice(0, 80));
+      ok("se presenta como «el profe Oscar», en el saludo y en la etiqueta del botón", /¡Hola! Soy el profe Oscar/.test(panel.texto) && /El profe Oscar contesta/.test(b.etiqueta), panel.texto.slice(0, 80) + " · " + b.etiqueta);
       ok("dos días antes: la próxima es la ronda 1, el sábado 14 a las 9:00", /^La próxima es la ronda 1: sábado 14 de noviembre a las 9:00 a\. ?m\./.test(r.t.hora || ""), r.t.hora);
       ok("el contacto, de su ventana: Adriana y su teléfono", /Adriana.*\+506 8912-2033/.test(r.t.contacto || ""), r.t.contacto);
       ok("el ritmo, la tolerancia y el árbitro, de la página", /5 rondas a 10 minutos \+ 2 segundos/.test(r.t.ritmo || "") && /Tolerancia de 10 minutos/.test(r.t.ritmo) && /FA Jean Carlo Quesada Arauz/.test(r.t.ritmo), r.t.ritmo);
