@@ -1515,3 +1515,27 @@ posición, igual que en todo Entrenamiento.
   legal no llega a la base: la página lo dice y deja volver a escribir.
 - Las posiciones de partidas reales (la de Turín 2006 del 3 de julio) salen del
   PGN verificado con chess.js en el ply del momento, no del dictado.
+
+## Las posiciones de las clases, para practicarlas contra el motor
+
+El dueño pidió todas las posiciones que el profe **armó** en las clases de ADAES
+(finales, medio juego, tareas; **no** las partidas completas que se siguieron
+jugada a jugada) para usarlas como práctica contra el motor. Van a sus
+«Archivos» (`archivos_pgn`, carpeta «ADAES · posiciones de las clases»): en la
+clase en vivo cada una trae «Practicar» (cada alumno la juega contra el motor,
+`crearPractica()`), «Preguntar» y «Cargar». También quedan en un PGN para bajar.
+
+- Las arma `herramientas/audios-posiciones-pgn.js`, una partida PGN por
+  posición (`[SetUp "1"]`, `[FEN …]`, sin jugadas, con un comentario: quién
+  juega, qué se busca y qué enseñó el profe). Como con los ejercicios, la
+  posición sale del dictado y Whisper confunde piezas, así que entra solo si
+  chess.js la acepta (un rey por bando, sin jaque al que no juega, la partida
+  no terminada) y **Stockfish confirma lo que el profe dijo de ella**: «ganar»
+  al menos +1,5 para el que juega, «tablas» entre −1 y +1, «perder» −1,5 o
+  menos; «jugar» (medio juego sin promesa) solo pide que sea legal. A
+  diferencia de los ejercicios, aquí no hace falta una única jugada buena:
+  para jugarla contra el motor no importa.
+- **Un PGN sin jugadas ahora se puede subir** si trae `[FEN]`: es una posición
+  armada (`parsePgnChunk` de `js/partidas.js` lo rechazaba siempre, con razón
+  para las partidas). La lista y el visor dicen «Posición» en vez de
+  «0 jugadas».
