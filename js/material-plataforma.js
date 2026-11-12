@@ -119,6 +119,16 @@ window.MaterialPlataforma = (function () {
       // Ese final, en su página (la clase en vivo lo pide así).
       hrefRecorte: (c) => `entreno/finales.html?final=${encodeURIComponent(c)}` },
 
+    /* Las posiciones que el profe armó en las clases de ADAES, en la misma
+       página con otro banco. Su propia actividad ('finales_clases') para no
+       contarse con los finales de libro, y la posición en detail.theme: ese es
+       el recorte, así se le manda a un alumno UNA posición puntual. Solo
+       cantidad: los minutos de la página se apuntan como 'finales'. */
+    { slug: "finales-clases", label: "Posiciones de las clases", href: "entreno/finales.html?banco=clases",
+      actividades: ["finales_clases"], metas: ["cantidad"], unidad: "posiciones",
+      recortes: "finales-clases", recorteLabel: "Posición",
+      hrefRecorte: (c) => `entreno/finales.html?banco=clases&final=${encodeURIComponent(c)}` },
+
     /* Cada ejercicio resuelto se registra una vez como 'tipos', con el tipo en
        detail.category: ese es el recorte («10 de Detective»), y el enlace
        abre la ficha de ese tipo. */

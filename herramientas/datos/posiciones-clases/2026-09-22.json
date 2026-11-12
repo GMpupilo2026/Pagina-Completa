@@ -1,0 +1,12 @@
+{
+ "fecha": "2026-09-22",
+ "posiciones": [
+  {
+   "seg": 1361,
+   "titulo": "Desequilibrios: torre y caballo contra dama",
+   "fen": "8/R7/6k1/7p/5P2/3qP1P1/4NK2/8 w - - 0 1",
+   "objetivo": "tablas",
+   "nota": "Si la torre blanca llega a e5 arma una fortaleza: la dama sola no da mate. Con negras es muy fácil perder por un ataque doble de caballo; pon tus piezas en casillas de colores distintos."
+  }
+ ]
+}

@@ -26,20 +26,30 @@ let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos++; };
 const bien = (m) => console.log("  ✓ " + m);
 
-console.log("\n=== El banco ===");
-const banco = JSON.parse(leer("entreno/data/finales.json"));
+/* Dos bancos: los finales de libro (+4 para ganar, 0,5 para salvar, con
+   pista) y las posiciones de las clases de ADAES (?banco=clases), que se
+   comprobaron como el profe las enseñó: +1,5 para ganar, 1 para salvar, y sin
+   pista escrita (la pista es la jugada del motor). */
+const BANCOS = [
+  { archivo: "entreno/data/finales.json", minimo: 8, ganaDesde: 400, tablasHasta: 50, campos: ["titulo", "idea", "pista"] },
+  { archivo: "entreno/data/finales-clases.json", minimo: 10, ganaDesde: 150, tablasHasta: 100, campos: ["titulo", "idea"], prefijo: "clase-" },
+];
+const ids = new Set();
+for (const B of BANCOS) {
+console.log("\n=== El banco " + B.archivo + " ===");
+const banco = JSON.parse(leer(B.archivo));
 const finales = banco.finales || [];
-if (finales.length >= 8) bien(`${finales.length} finales`); else mal(`solo ${finales.length} finales`);
+if (finales.length >= B.minimo) bien(`${finales.length} posiciones`); else mal(`solo ${finales.length} posiciones`);
 if (Number.isInteger(banco.aguantar) && banco.aguantar >= 10) bien(`salvar pide aguantar ${banco.aguantar} jugadas`);
 else mal(`«aguantar» tiene que ser un entero de 10 o más (hay ${banco.aguantar})`);
 
-const ids = new Set();
 for (const f of finales) {
   const q = f.id || "(sin id)";
   if (!/^[a-z0-9-]+$/.test(f.id || "")) mal(`${q}: el id tiene que ser minúsculas, números y guiones`);
-  if (ids.has(f.id)) mal(`${q}: id repetido`);
+  if (ids.has(f.id)) mal(`${q}: id repetido (también entre los dos bancos: comparten lo logrado)`);
+  if (B.prefijo && !String(f.id).startsWith(B.prefijo)) mal(`${q}: el id tiene que empezar con «${B.prefijo}»`);
   ids.add(f.id);
-  for (const campo of ["titulo", "idea", "pista"]) if (!f[campo] || !String(f[campo]).trim()) mal(`${q}: falta «${campo}»`);
+  for (const campo of B.campos) if (!f[campo] || !String(f[campo]).trim()) mal(`${q}: falta «${campo}»`);
   if (!["ganar", "tablas"].includes(f.meta)) { mal(`${q}: meta «${f.meta}»`); continue; }
   if (!["w", "b"].includes(f.alumno)) { mal(`${q}: alumno «${f.alumno}»`); continue; }
 
@@ -53,10 +63,12 @@ for (const f of finales) {
 
   const m = f.motor || {};
   const ok = f.meta === "ganar"
-    ? ((typeof m.mate === "number" && m.mate > 0) || (typeof m.cp === "number" && m.cp >= 400))
-    : (m.mate === undefined && typeof m.cp === "number" && Math.abs(m.cp) <= 50);
+    ? ((typeof m.mate === "number" && m.mate > 0) || (typeof m.cp === "number" && m.cp >= B.ganaDesde))
+    : (m.mate === undefined && typeof m.cp === "number" && Math.abs(m.cp) <= B.tablasHasta);
   if (!ok) mal(`${q}: lo que dijo el motor (${JSON.stringify(m)}) no cuadra con la meta «${f.meta}»`);
   else bien(`${f.id}: ${f.meta}, juega con ${f.alumno === "w" ? "blancas" : "negras"}${c.turn() !== f.alumno ? " (empieza la máquina)" : ""}, motor ${m.mate ? "mate en " + m.mate : (m.cp / 100).toFixed(2)}`);
+}
+
 }
 
 console.log("\n=== La base acepta cada actividad que se registra ===");
@@ -114,6 +126,23 @@ if (/clave: "entreno_finales_solved",\s*fusion: "unionObjeto"/.test(pu)) bien("l
 else mal("entreno_finales_solved no está en js/progreso-usuario.js (unionObjeto)");
 if (/href="finales\.html"/.test(leer("entreno/index.html"))) bien("el hub de Entrenamiento la ofrece");
 else mal("el hub de Entrenamiento no enlaza finales.html");
+
+console.log("\n=== 'finales_clases' (las posiciones de las clases) conectada ===");
+const hc = ((g.window.MaterialPlataforma || {}).HERRAMIENTAS || []).find((t) => t.slug === "finales-clases");
+if (hc && (hc.actividades || []).join() === "finales_clases" && hc.recortes === "finales-clases" && hc.hrefRecorte("clase-0716-1") === "entreno/finales.html?banco=clases&final=clase-0716-1")
+  bien("en el catálogo de Tareas, con su actividad y una posición por recorte que abre esa posición");
+else mal("«Posiciones de las clases» no está bien en js/material-plataforma.js (actividad 'finales_clases', recortes, enlace)");
+const metasJson = JSON.parse(leer("entreno/data/metas.json"));
+const clases = JSON.parse(leer("entreno/data/finales-clases.json")).finales || [];
+const rec = metasJson["finales-clases"] || [];
+if (rec.length === clases.length && rec.every((r, i) => r.clave === clases[i].id && (r.actividades || []).join() === "finales_clases"))
+  bien(`metas.json trae las ${rec.length} posiciones como recortes`);
+else mal("entreno/data/metas.json no está al día con finales-clases.json: corre python3 herramientas/metas-indice.py");
+const ef = leer("js/entreno-finales.js");
+if (/EntrenoProgress\.log\('finales_clases', Object\.assign\(\{ theme: f\.id \}/.test(ef)) bien("la página guarda la posición en detail.theme (el recorte de la tarea)");
+else mal("js/entreno-finales.js no guarda la posición en detail.theme con la actividad 'finales_clases'");
+if (/href="finales\.html\?banco=clases"/.test(leer("entreno/index.html"))) bien("el hub de Entrenamiento la ofrece");
+else mal("el hub de Entrenamiento no enlaza finales.html?banco=clases");
 
 console.log(fallos ? `\n✗ ${fallos} problema(s).` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);

@@ -502,7 +502,11 @@
             "Conceptos de todas las clases");
         conc.href = "audios-clases.html?conceptos";
         conc.setAttribute("aria-label", "Conceptos de todas las clases: cada concepto con las clases y el minuto en que se vio");
-        ir.append(conc);
+        const pos = el("a", "inline-block ml-2 mt-2 sm:mt-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            "Jugar las posiciones contra el motor");
+        pos.href = "entreno/finales.html?banco=clases";
+        pos.setAttribute("aria-label", "Jugar contra el motor las posiciones que armó el profe en las clases");
+        ir.append(conc, pos);
         repaso.append(ir);
         await AudiosGuia.repasoDeHoy(repaso);
         await cargarLista();

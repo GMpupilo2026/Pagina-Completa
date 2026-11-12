@@ -1,0 +1,12 @@
+{
+ "fecha": "2026-09-18",
+ "posiciones": [
+  {
+   "seg": 82,
+   "titulo": "Desequilibrios: dos alfiles y caballo contra dama",
+   "fen": "8/5pkp/4bb2/6p1/3p1nP1/2p4P/2Q2P2/5BK1 b - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Con un punto menos, las piezas negras coordinadas valen más que la dama sola. Busca la posición ideal, atacar c1 en buenas condiciones, y no regales tus peones de la fila g."
+  }
+ ]
+}

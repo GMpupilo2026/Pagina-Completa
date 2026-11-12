@@ -3085,5 +3085,247 @@
     "tipos"
    ]
   }
+ ],
+ "finales-clases": [
+  {
+   "clave": "clase-0710-1",
+   "label": "10/07 · Alfiles del mismo color con un peón de más",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0710-2",
+   "label": "10/07 · Defender el final de alfiles con el rey delante",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0710-3",
+   "label": "10/07 · Cuidar las dos diagonales hacia la coronación",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0716-1",
+   "label": "16/07 · Dos peones contra uno: la oposición",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0721-1",
+   "label": "21/07 · Rey y peón contra torre: salvar las tablas",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0807-1",
+   "label": "07/08 · Final de peones: oposición y el peón que viene",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0807-2",
+   "label": "07/08 · Dos peones contra uno, con el rey lejos",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0818-1",
+   "label": "18/08 · Rey y peón contra rey y peón: la oposición",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0818-2",
+   "label": "18/08 · Torre contra peón peligroso: salvar las tablas",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0818-3",
+   "label": "18/08 · Torre contra peones: el rey sin tapar a su torre",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0821-1",
+   "label": "21/08 · Peón de más contra peón lejano de Ana",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0821-2",
+   "label": "21/08 · Dos peones ligados contra un peón lejano",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0821-3",
+   "label": "21/08 · Peones a una casilla de distancia: la carnada",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0821-4",
+   "label": "21/08 · Peones a dos casillas de distancia: hay que traer al rey",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0821-5",
+   "label": "21/08 · Tarea: peones ligados contra tres peones",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0901-1",
+   "label": "01/09 · Cuando las casillas conjugadas se rompen",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0901-2",
+   "label": "01/09 · Oposición lateral: una sola jugada gana",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0901-3",
+   "label": "01/09 · La misma estructura, ahora defiendes con negras",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0904-1",
+   "label": "04/09 · Final de peones: el rey blanco puede entrar",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0904-2",
+   "label": "04/09 · Dama contra peón de alfil, con el rey cerca",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0904-3",
+   "label": "04/09 · Tarea: dama contra peones de a5 y h2",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0908-1",
+   "label": "08/09 · Dama contra peón de torre: sin el peón de a no se gana",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0908-2",
+   "label": "08/09 · Dama contra dos peones, con el rey blanco lejos",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0908-3",
+   "label": "08/09 · Dama contra dos peones, con el rey blanco cerca",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0908-4",
+   "label": "08/09 · Dama contra dama: rey activo contra rey escondido",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0918-1",
+   "label": "18/09 · Desequilibrios: dos alfiles y caballo contra dama",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-0922-1",
+   "label": "22/09 · Desequilibrios: torre y caballo contra dama",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1103-1",
+   "label": "03/11 · Piezas negras pasivas: ¿es hora de atacar?",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1103-2",
+   "label": "03/11 · Dama por dos torres y el golpe en g5",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1106-1",
+   "label": "06/11 · El sacrificio griego",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  }
  ]
 }
