@@ -56,6 +56,9 @@ const VIGILADAS = [
   "pareo_organizadores",
   // Pedir el sello: aprobar una solicitud le da el sello a la organización.
   "pareo_solicitudes_sello",
+  // Los enlaces de árbitro adjunto de Pareo Integral: quién puede anotar en
+  // qué mesas de un torneo (sin el código, que equivale a una contraseña).
+  "pareo_adjuntos",
   // Los árbitros del Centroamericano: el enlace (QR) de cada uno da acceso a sus mesas, y
   // cargar o cambiar la clave de un torneo deja anotado quién y cuándo (nunca la clave).
   "centroamericano_asignaciones", "centroamericano_finales", "centroamericano_torneos", "centroamericano_fp_enlaces", "centroamericano_tx_enlaces",

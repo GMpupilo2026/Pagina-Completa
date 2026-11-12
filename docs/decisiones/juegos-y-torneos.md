@@ -8682,6 +8682,92 @@ la anulación desde otro enlace; «Mis torneos» no trae filas sin número.
 árbitro principal que contesta como `js/pareo/pagina.js`. Rompiendo a
 propósito la regla de «enviado», saltan tres comprobaciones.
 
+### Pareo Integral: lo que anotan los adjuntos queda en la base
+
+Pedido del dueño el 12/11/2026, para la Eliminatoria Cantonal JDN de Pérez
+Zeledón (22/11, unas 20 mesas, la prueba de fuego): «que todo sea uno solo»
+—la inscripción, Pareo, la mesa del árbitro y las cámaras de Notara—, y que
+los adjuntos entren con un código corto. Se le planteó y eligió: **unir la
+pantalla y los datos, no meter Pareo dentro de la mesa** (Pareo son ~24 000
+líneas que también andan sin cuenta, sin internet y como programa; meterlo
+adentro daría dos copias), y que el torneo deje de depender de que la pestaña
+del principal esté abierta. Esta es la primera pieza.
+
+**El problema.** Hasta acá el resultado de un adjunto viajaba SOLO por el
+canal de Broadcast `pareo-adjunto-<código>` hasta la pestaña del principal. Si
+esa pestaña estaba cerrada, sin internet o en otra computadora en ese momento,
+el resultado se perdía: el adjunto veía «Enviando…» para siempre.
+
+- **Dos tablas sin cuenta** (migraciones `20261112050229_pareo_cola_adjuntos.sql`
+  y `20261112052848_pareo_adjuntos_trigger_auditar.sql`, que le pone al
+  trigger de auditoría el nombre `auditar` que busca su verificador), RLS puesta, sin permisos ni políticas: solo la Edge Function `pareo-publicar`.
+  - `pareo_adjuntos`: los enlaces de adjunto de cada torneo publicado (el mismo
+    código de 8 letras que Pareo ya generaba, su nombre y sus mesas), con
+    `visto` (la última vez que entró o anotó). El principal los manda con la
+    clave de su torneo: apenas crea o apaga uno (`sincronizarAdjuntos` en
+    `js/pareo/pagina.js`) y dentro de cada «crear» y «actualizar» de la
+    publicación (`adjuntos`, aparte del torneo: no son públicos). La lista queda
+    **exactamente como llega** (los que no vienen se apagan), y un código que ya
+    es de otro torneo no se toma. Un Pareo viejo que no manda `adjuntos` no
+    apaga nada. Lleva la auditoría (`VIGILADAS`) con nombre, mesas y si está
+    activo, **nunca el código**: equivale a una contraseña.
+  - `pareo_cola`: lo que mandó cada adjunto (`resultado` o `nota`), en orden
+    (`id` creciente). **Se borra cuando el principal lo pasa a su torneo**
+    (`cola_borrar` hasta el último que leyó): no queda una copia aparte. Las dos
+    se borran con el torneo publicado. Lo dice la política de privacidad.
+- **El adjunto manda primero a la base** (`PareoPublicar.mandarAdjunto`, una
+  sola copia en `js/pareo/publicar.js`, que usan el celular —`js/pareo/ver.js`—
+  y la Mesa del árbitro —`js/mesa-arbitro-pareo.js`, que ahora carga
+  `publicar.js`—): `adjunto_anotar` con su código y, si la base lo tomó, un
+  toque `cola` por el canal (sin el resultado) para que el principal lo lea ya.
+  **Si la base no contesta** (sin internet hacia la función, el torneo sin
+  publicar, o el Pareo del principal todavía no subió la lista), **por el canal
+  como antes**. Lo que la base rechaza por una regla (`ronda`, `mesa`,
+  `apagado`, `forma`) no se manda por el canal: se dice, y la mesa se puede
+  volver a anotar. La pantalla dice «Guardado. El árbitro principal lo recibe
+  en cuanto se conecte» en vez de quedarse en «Enviando…».
+- **Quien decide sigue siendo el principal, con las mismas reglas.** Su pestaña
+  lee la cola (`leerCola`) al abrir el torneo **en cualquier ficha** (antes los
+  adjuntos se conectaban solo al pintar la ronda), con el toque `cola` y cada
+  15 segundos, y pasa cada fila por `recibirDeAdjunto` / `recibirNotaDeAdjunto`
+  (solo la última ronda, una mesa de su rango, nunca pisa lo que ya está). Por
+  eso lo que llega por las dos vías no se duplica: el segundo es un no-op. El
+  rango y la ronda que mira la función son gruesos a propósito (`rondas` cuenta
+  las COMPLETAS publicadas: se aceptan de esa a dos más); la regla fina la pone
+  el principal.
+- **Entrar con el código solo.** En la Mesa del árbitro se escribe «ABCD-2345»
+  (da igual mayúsculas, espacios o guion) sin el enlace: `adjunto_entrar` dice
+  de qué torneo es y cuáles son sus mesas. La tarjeta de cada adjunto en Pareo
+  muestra el código, deletreado para el lector de pantalla. Con el enlace, la
+  base igual se consulta: el rango que vale es el de la base.
+- **Con el principal callado, las mesas del torneo publicado.** Si a los 8
+  segundos el principal no contestó (y no contesta a un «pedir» más), la Mesa
+  del árbitro arma la ronda desde `pareo_publicados` (lectura pública), cada 20
+  segundos, y lo dice: «El árbitro principal no está conectado…». Un resultado
+  que ya sale publicado es uno que el principal aceptó, así que también cuenta
+  como «enviado» en la bitácora. Sin las marcas de incidencias (no se
+  publican); en equipos no se hace (los tableros salen del principal).
+- **El freno**: entrar y anotar pasan por `pareo_frenar` (el de «actualizar»,
+  1500 por conexión y hora). Adivinar un código de 31⁸ con decenas vivos no es
+  práctico a ese ritmo.
+
+Lo prueban `verificar-mesa-arbitro-pareo.js` (con un doble de la función: sin
+ella todo por el canal; con ella, entrar con el código solo, el resultado y la
+nota a la cola con solo el toque por el canal, «Guardado…», enviado cuando el
+principal lo trae, el rechazo que se dice y las mesas del torneo publicado con
+el principal callado) y `verificar-pareo-adjuntos.js` (el principal lee la cola
+al abrir en otra ficha y con el toque, aplica las reglas, borra hasta lo último
+leído, sube la lista apenas cambia; el celular manda a la base y el rechazo se
+dice). Las pruebas de Pareo ya no hablan con la función de verdad
+(`herramientas/lib/pareo-pruebas.js` la corta, salvo que la prueba ponga su
+doble). Rotos a propósito el borrado de la cola y el envío a la base, saltan.
+
+**Lo que falta para el 22/11** (en orden): el «Centro del evento» (los árbitros
+conectados con su `visto`, los resultados pendientes, los códigos en papel y
+los QR de Notara de todas las mesas en una pantalla), Notara en la mesa del
+adjunto (ver sus tableros y que la propuesta de resultado de la cámara le
+llegue a él), y el ensayo general con un torneo de prueba.
+
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de

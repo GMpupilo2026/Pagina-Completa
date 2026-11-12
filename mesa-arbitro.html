@@ -47,9 +47,9 @@
                  del árbitro con los torneos de Pareo Integral» en docs/decisiones/juegos-y-torneos.md. -->
             <section id="zona-pareo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-pareo">
                 <h2 id="t-pareo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Torneo de Pareo Integral</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Pega el enlace de árbitro que te mandó el árbitro principal (en Pareo Integral: «Enlace para un árbitro adjunto», con tus mesas). Lo que anotas le llega a su computadora al instante, y él lo acepta en el torneo. Su Pareo Integral tiene que estar abierto.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Pega el enlace de árbitro que te mandó el árbitro principal (en Pareo Integral: «Enlace para un árbitro adjunto», con tus mesas) o escribe su código de 8 letras. Lo que anotas queda guardado y le llega a su computadora; él lo acepta en el torneo. Si su Pareo Integral está cerrado, ves las mesas del torneo publicado y lo recibe en cuanto lo abra.</p>
                 <div class="flex flex-wrap items-end gap-3 mt-3">
-                    <div class="flex-1 min-w-[16rem]"><label for="p-enlace" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Enlace de árbitro</label><input id="p-enlace" type="text" autocomplete="off" spellcheck="false" placeholder="https://ajedrez-integral.com/pareo.html#adjunto=…" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    <div class="flex-1 min-w-[16rem]"><label for="p-enlace" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Enlace o código de árbitro</label><input id="p-enlace" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enlace de árbitro o código (ABCD-2345)" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
                     <button type="button" id="p-conectar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Conectar</button>
                 </div>
                 <p id="p-estado" class="text-sm mt-2" role="status" aria-live="polite"></p>
@@ -175,6 +175,7 @@
     <script src="js/mesa-arbitro.js"></script>
     <script src="js/main.js"></script>
     <script src="js/mesa-arbitro-pagina.js"></script>
+    <script src="js/pareo/publicar.js"></script>
     <script src="js/mesa-arbitro-pareo.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

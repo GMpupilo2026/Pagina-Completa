@@ -7,7 +7,12 @@
  *     celular, el adjunto en lo que él mismo anotó (lo de otro nunca se pisa);
  *   - el chat entre el principal y los adjuntos, a todos o a uno;
  *   - «Necesito al principal en esta mesa»: le llega al principal arriba de
- *     la ronda, con «Voy», y el adjunto ve que va en camino.
+ *     la ronda, con «Voy», y el adjunto ve que va en camino;
+ *   - lo que los adjuntos dejaron en la base (pareo_cola, con un doble de la
+ *     función pareo-publicar): el principal lo lee al abrir el torneo en
+ *     cualquier ficha y con el toque «cola», lo pasa por las mismas reglas,
+ *     lo borra de la base, y la lista de enlaces sube apenas cambia; el
+ *     celular manda a la base y, sin ella, por el canal.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-adjuntos.js
@@ -139,6 +144,8 @@ async function pruebaCelular(browser) {
   await page.selectOption('[data-corregir="1"] select', "0-1");
   ok(/¿Cambiar el resultado de la mesa 1 de 1-0 a 0-1\?/.test(await page.textContent('[data-corregir="1"]')), "pide confirmarlo antes de mandarlo");
   await page.click('[data-corregir="1"] button:has-text("Sí, cambiarlo")');
+  // Sin la base (la función no contesta en las pruebas), por el canal como antes.
+  await page.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.evento === "resultado"), canal, { timeout: 5000 }).catch(() => {});
   const corr = await page.evaluate((c) => window.__enviados.filter((x) => x.canal === c && x.evento === "resultado").pop(), canal);
   igual("y lo manda como corrección", corr && [corr.payload.mesa, corr.payload.r, corr.payload.corrige], [1, "0-1", true]);
   await page.selectOption("#pi-adj-llamar-mesa", "2");
@@ -156,11 +163,86 @@ async function pruebaCelular(browser) {
   await ctx.close();
 }
 
+async function pruebaBase(browser) {
+  console.log("\n=== Lo que los adjuntos dejaron en la base ===");
+  const CODIGO = "prueba23";
+  const pedidos = [];
+  let cola = [{ id: 7, codigo: CODIGO, evento: "resultado", ronda: 1, datos: { mesa: 1, r: "1-0" } },
+    { id: 8, codigo: CODIGO, evento: "nota", ronda: 1, datos: { texto: "PRUEBA nota que quedó en la base", autor: "PRUEBA ADJUNTA", mesa: 2, tipo: "reclamo" } },
+    // De una mesa que no es suya: las reglas de siempre no la dejan entrar.
+    { id: 9, codigo: CODIGO, evento: "resultado", ronda: 1, datos: { mesa: 3, r: "0-1" } }];
+  const t = torneo();
+  t.publicado = { id: "11111111-2222-3333-4444-555555555555", clave: "PRUEBA-CLAVE", hora: 1 };
+  t.adjuntos = [{ codigo: CODIGO, rango: "1-2", activo: true, nombre: "PRUEBA ADJUNTA" }];
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    await sembrar(t)(p);
+    await p.route("**/functions/v1/pareo-publicar", (r) => {
+      const b = JSON.parse(r.request().postData() || "{}");
+      pedidos.push(b);
+      const responder = (x) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(x) });
+      if (b.clave !== "PRUEBA-CLAVE") return responder({ ok: false, error: "La clave no es la de este torneo." });
+      if (b.accion === "cola") return responder({ ok: true, cola, vistos: [{ codigo: CODIGO, visto: "2026-11-22T15:00:00Z" }] });
+      if (b.accion === "cola_borrar") { cola = cola.filter((x) => x.id > b.hasta); return responder({ ok: true }); }
+      return responder({ ok: true });
+    });
+  });
+  // Abre en la ficha de jugadores (no en la de rondas): igual la lee.
+  let [g] = await P.esperarGuardado(page, (l) => l[0].rondas[0].mesas[0].r === "1-0");
+  ok(g.rondas[0].mesas[0].porAdjunto === "PRUEBA ADJUNTA", "al abrir el torneo, el resultado guardado en la base entra a la mesa, como del adjunto");
+  ok((g.rondas[0].incidencias || []).some((x) => x.tipo === "reclamo" && x.texto === "PRUEBA nota que quedó en la base" && x.mesa === 2 && x.porAdjunto), "y la incidencia también", JSON.stringify(g.rondas[0].incidencias));
+  ok(g.rondas[0].mesas[2].r === null, "lo de una mesa que no es suya no entra");
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(300);
+  igual("y se borra de la base hasta lo último que se leyó", pedidos.filter((x) => x.accion === "cola_borrar").map((x) => [x.id, x.hasta]), [["11111111-2222-3333-4444-555555555555", 9]]);
+  cola = [{ id: 10, codigo: CODIGO, evento: "resultado", ronda: 1, datos: { mesa: 2, r: "=" } }];
+  await page.evaluate((c) => window.__llega(c, "cola", {}), "pareo-adjunto-" + CODIGO);
+  [g] = await P.esperarGuardado(page, (l) => l[0].rondas[0].mesas[1].r === "=");
+  bien("con el toque «cola» del canal, lo lee ya");
+  await page.click('[data-ficha="rondas"]');
+  await page.waitForSelector(".pi-adjunto-codigo");
+  igual("la tarjeta del adjunto muestra su código para escribirlo a mano", await page.textContent(".pi-adjunto-codigo strong"), "PRUE-BA23");
+  await page.click("#pi-adjunto");
+  await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA SEGUNDA");
+  await page.fill(dialogo + ' [name="desde"]', "3");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction(() => document.querySelectorAll("[data-adjunto]").length === 2);
+  await page.waitForTimeout(300);
+  const subida = pedidos.filter((x) => x.accion === "adjuntos").pop();
+  igual("un enlace nuevo sube a la base apenas se crea, con la lista entera", subida && subida.adjuntos.map((a) => [a.nombre, a.rango, a.activo]), [["PRUEBA ADJUNTA", "1-2", true], ["PRUEBA SEGUNDA", "3-3", true]]);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+
+  console.log("\n=== El celular del adjunto, con la base ===");
+  const anotados = [];
+  const { ctx: c2, page: cel, errores: err2 } = await P.abrirPagina(browser, BASE, "#adjunto=" + CODIGO + "&m=1-3", async (p) => {
+    await p.route("**/functions/v1/pareo-publicar", (r) => {
+      const b = JSON.parse(r.request().postData() || "{}");
+      anotados.push(b);
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(b.datos && b.datos.mesa === 2 ? { ok: false, motivo: "ronda", error: "Esa ronda ya no está en juego." } : { ok: true, id: 1 }) });
+    });
+  });
+  await cel.waitForFunction(() => window.__enviados.some((x) => x.evento === "pedir"));
+  await cel.evaluate((c) => window.__llega(c, "estado", { nombre: "PRUEBA", ronda: 4, arbitro: "PRUEBA ADJUNTA", principal: "", chat: [], llamadas: [],
+    mesas: [{ m: 1, f: 1, b: "PRUEBA A", n: "PRUEBA D", r: null }, { m: 2, f: 2, b: "PRUEBA E", n: "PRUEBA B", r: null }] }), "pareo-adjunto-" + CODIGO);
+  await cel.waitForSelector("#pi-adj-1");
+  await cel.selectOption("#pi-adj-1", "1-0");
+  await cel.waitForFunction(() => /Guardado\./.test(document.querySelector('[data-mesa="1"]').textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("el resultado va a la base con su código y la ronda", anotados.map((b) => [b.accion, b.codigo, b.evento, b.ronda, b.datos]), [["adjunto_anotar", CODIGO, "resultado", 4, { mesa: 1, r: "1-0" }]]);
+  igual("y por el canal va solo el toque «cola»", await cel.evaluate(() => window.__enviados.filter((x) => x.evento !== "pedir").map((x) => x.evento)), ["cola"]);
+  await cel.selectOption("#pi-adj-2", "=");
+  await cel.waitForFunction(() => /Esa ronda ya no está en juego/.test(document.querySelector('[data-mesa="2"]').textContent), null, { timeout: 5000 }).catch(() => {});
+  ok(await cel.$eval("#pi-adj-2", (s) => !s.disabled && s.value === ""), "lo que la base rechaza se dice, y se puede volver a elegir");
+  ok(!err2.length, "sin errores en la página", err2.join(" | "));
+  await c2.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaPrincipal(browser);
     await pruebaCelular(browser);
+    await pruebaBase(browser);
   } finally {
     await browser.close();
   }

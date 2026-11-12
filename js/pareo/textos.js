@@ -977,6 +977,10 @@
     adjuntoLeyenda: ["Ronda {r} · mesas {a} a {b}", "Round {r} · tables {a} to {b}"],
     adjuntoAnotada: ["Anotada: {r}", "Entered: {r}"],
     adjuntoEnviando: ["Enviando al árbitro principal…", "Sending to the chief arbiter…"],
+    adjuntoGuardado: ["Guardado. El árbitro principal lo recibe en cuanto se conecte.", "Saved. The chief arbiter gets it as soon as they connect."],
+    adjuntoNotaGuardada: ["Nota guardada. El árbitro principal la recibe en cuanto se conecte.", "Note saved. The chief arbiter gets it as soon as they connect."],
+    adjuntoCodigo: ["Código para la Mesa del árbitro:", "Code for the Arbiter's desk:"],
+    adjuntoNoSeTomo: ["No se pudo mandar. Intenta de nuevo.", "It could not be sent. Try again."],
     adjuntoSinMesas: ["Esta ronda no tiene mesas en ese rango.", "This round has no tables in that range."],
     // La corrección y las apelaciones
     correccionTitulo: ["Corregir la ronda {r}, mesa {m}", "Correct round {r}, table {m}"],

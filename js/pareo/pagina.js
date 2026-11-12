@@ -188,6 +188,9 @@
     estado.marcados = new Set();
     estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
+    // Lo que los adjuntos dejaron guardado mientras esta pestaña estaba
+    // cerrada se lee apenas se abre el torneo, en cualquier ficha.
+    if (estado.t.publicado && (estado.t.adjuntos || []).some((a) => a.activo)) setTimeout(() => { if (estado.id === id) conectarAdjuntos(); }, 0);
     return true;
   }
 
@@ -3230,6 +3233,7 @@
     if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
     v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true, nombre: arbitro });
     guardar();
+    sincronizarAdjuntos(v);
     await conectarAdjuntos();
     pintarRondas();
   }
@@ -3253,6 +3257,8 @@
       canal.on("broadcast", { event: "nota" }, (msg) => recibirNotaDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "chat" }, (msg) => recibirChatDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "llamada" }, (msg) => recibirLlamada(a.codigo, msg.payload || {}));
+      // «Te dejé algo en la base»: se lee la cola ya, sin esperar la vuelta.
+      canal.on("broadcast", { event: "cola" }, () => leerCola());
       canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
       estado.adjuntos.canales.set(a.codigo, canal);
     }
@@ -3263,11 +3269,53 @@
       canal.unsubscribe();
       estado.adjuntos.canales.delete(c);
     }
+    if (activos.length && !estado.adjuntos.reloj) estado.adjuntos.reloj = setInterval(leerCola, ESPERA_COLA);
+    leerCola();
     return true;
   }
   function desconectarAdjuntos() {
-    if (estado.adjuntos) for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+    if (estado.adjuntos) {
+      for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+      clearInterval(estado.adjuntos.reloj);
+    }
     estado.adjuntos = null;
+  }
+  // ---------- Lo que los adjuntos dejan en la base ----------
+  // Cada resultado o incidencia que manda un adjunto queda primero en la
+  // base (pareo_cola, por la Edge Function pareo-publicar con su código),
+  // así que nada se pierde si esta pestaña estaba cerrada o sin internet.
+  // Esta pestaña la lee —al abrir el torneo, con el toque «cola» del canal y
+  // cada 15 segundos—, la pasa en orden por las MISMAS reglas de siempre
+  // (recibirDeAdjunto, recibirNotaDeAdjunto) y la borra de la base. Necesita
+  // el torneo publicado: es su clave la que la lee. Ver «Pareo Integral: lo
+  // que anotan los adjuntos queda en la base».
+  const ESPERA_COLA = 15000;
+  let leyendoCola = false;
+  async function leerCola() {
+    if (leyendoCola || !estado.adjuntos || !window.PareoPublicar) return;
+    const idT = estado.adjuntos.idTorneo;
+    const v0 = torneoDelAdjunto();
+    if (!v0 || !v0.publicado) return;
+    leyendoCola = true;
+    try {
+      const r = await PareoPublicar.cola(v0.publicado);
+      if (!r.ok || !Array.isArray(r.cola) || !estado.adjuntos || estado.adjuntos.idTorneo !== idT) return;
+      estado.adjuntos.vistos = new Map((r.vistos || []).map((x) => [x.codigo, x.visto]));
+      let ultimo = 0;
+      for (const x of r.cola) {
+        if (!estado.adjuntos || estado.adjuntos.idTorneo !== idT) break;
+        const d = Object.assign({}, x.datos || {}, { ronda: x.ronda });
+        if (x.evento === "resultado") recibirDeAdjunto(x.codigo, d);
+        else if (x.evento === "nota") recibirNotaDeAdjunto(x.codigo, d);
+        ultimo = x.id;
+      }
+      if (ultimo) await PareoPublicar.colaBorrar(v0.publicado, ultimo);
+    } finally { leyendoCola = false; }
+  }
+  // La lista de enlaces de adjunto, a la base apenas cambia (sin esperar los
+  // 30 segundos de la publicación): un enlace nuevo ya anota por la base.
+  function sincronizarAdjuntos(v) {
+    if (v && v.publicado && window.PareoPublicar) PareoPublicar.adjuntos(v).catch(() => {});
   }
   const torneoDelAdjunto = () => estado.adjuntos && (estado.adjuntos.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.adjuntos.idTorneo, null));
   const adjuntoActivo = (v, codigo) => (v.adjuntos || []).find((a) => a.codigo === codigo && a.activo);
@@ -4189,12 +4237,16 @@
         if (!ok) return;
         a.activo = false;
         guardar();
+        sincronizarAdjuntos(v);
         await conectarAdjuntos();
         pintarRondas();
         Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
       });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
         el("h4", { class: "font-semibold", texto: (a.nombre ? a.nombre + " · " : "") + tx("adjuntoListo", { r: a.rango }) }),
+        // El código para escribir a mano en la Mesa del árbitro (sin cámara para el QR).
+        el("p", { class: "pi-adjunto-codigo text-sm mt-1" }, tx("adjuntoCodigo"), " ",
+          el("strong", { class: "font-mono text-base", "aria-label": a.codigo.toUpperCase().split("").join(" ") }, a.codigo.slice(0, 4).toUpperCase() + "-" + a.codigo.slice(4).toUpperCase())),
         el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
         el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
         el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
