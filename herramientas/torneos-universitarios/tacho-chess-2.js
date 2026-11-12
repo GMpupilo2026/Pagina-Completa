@@ -23,8 +23,9 @@
  *   otras horas no las dice nadie: salen del horario de BasesTorneo (cada ronda dura el tiempo
  *   de los dos jugadores más 40 jugadas de incremento, y la siguiente
  *   empieza a la media hora siguiente) y se escriben «aprox.».
- * - Lo que el afiche no trae (teléfono, correo, cierre de la inscripción)
- *   no se pone.
+ * - El contacto de la organización es Adriana, +506 8912-2033 (lo dio el
+ *   dueño; el afiche no trae teléfono). Lo que nadie dio (correo, cierre de
+ *   la inscripción) no se pone.
  * - Los resultados van en Pareo Integral (lo dijo el dueño): la ficha
  *   «Resultados» va «Pronto» hasta que el torneo está publicado, y
  *   js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
@@ -50,6 +51,7 @@ const bases = {
   participantes: "Estudiantes de centros educativos, de primer grado a undécimo año. Cada participante juega por su centro educativo.",
   categorias: NIVELES.join("\n"),
   costo: 0,
+  contacto: "Adriana, +506 8912-2033 (teléfono y WhatsApp)",
   arbitro: "FA Jean Carlo Quesada Arauz",
   comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
   sistema: "suizo", rondas: 5, rondasPorDia: 5, horaInicio: "09:00", descanso: 5,
@@ -141,6 +143,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     // js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
     { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Resultados", texto: "En Pareo Integral: los emparejamientos de cada ronda, los resultados y la clasificación." },
     { href: "#ademas", color: "verde", icono: "🎉", titulo: "Además disfruta de", texto: "Feria de comerciantes de la comunidad, open house del liceo y venta de comida.", accion: "Ver qué hay" },
+    { href: "#contacto", color: "rojo", icono: "📞", titulo: "Contacta a la organización", texto: "Adriana, de la organización: llámala o escríbele por WhatsApp.", accion: "Ver el contacto" },
     { href: "https://www.google.com/maps/search/?api=1&query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).", accion: "Abrir el mapa" },
   ],
   despedida: { href: "#inscribirme", titulo: "¡Te esperamos, haz tu mejor jugada!", texto: "Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.", accion: "Inscribirme" },
@@ -250,6 +253,19 @@ niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
 por torneo (con uno solo, la ficha lleva directo a él).`,
         cuerpo: `<p id="resultados-estado" class="text-brand-600 dark:text-brand-300 mt-2">Los resultados se publican en Pareo Integral cuando empieza el torneo.</p>
 <ul id="resultados-lista" class="mt-4 grid gap-3"></ul>
+`,
+      },
+      {
+        id: "contacto", icono: "📞", titulo: "Contacta a la organización",
+        comentario: "El contacto de la organización: Adriana (lo dio el dueño). Sin foto, sus\niniciales; WhatsApp y el teléfono se van afuera (no se dejan enmarcar).",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">¿Tienes alguna pregunta sobre el torneo o la inscripción? Llama o escribe por WhatsApp.</p>
+<div class="mt-6 flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6 max-w-sm mx-auto">
+    <span class="tacho-iniciales" aria-hidden="true">A</span>
+    <h3 class="mt-4 font-bold text-lg text-brand-800 dark:text-white">Adriana</h3>
+    <p class="tacho-cargo text-sm font-semibold uppercase tracking-wide">Organización</p>
+    <p class="mt-3 text-sm text-brand-600 dark:text-brand-300"><a href="tel:+50689122033" class="tacho-enlace font-semibold underline underline-offset-2 hover:no-underline rounded">+506 8912-2033</a></p>
+    <a href="https://wa.me/50689122033" target="_blank" rel="noopener" class="tacho-boton mt-4 w-full">WhatsApp<span class="sr-only"> de Adriana (se abre en otra pestaña)</span></a>
+</div>
 `,
       },
       {

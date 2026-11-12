@@ -110,6 +110,14 @@
 .tacho-boton:hover { background: #b80f1c; }
 .tacho-boton:focus { outline: none; }
 .tacho-boton:focus-visible { outline: 3px solid #064ca7; outline-offset: 2px; }
+/* El contacto (Adriana): sus iniciales en un círculo azul (blanco sobre
+ * #064CA7, 8,08), el cargo en el rojo oscuro (#B80F1C sobre blanco 6,72; en
+ * oscuro #FF8A94 sobre brand-900 7,41) y el foco del teléfono en azul. */
+.tacho-iniciales { display: flex; align-items: center; justify-content: center; width: 7rem; height: 7rem; border-radius: 9999px; background: #064ca7; color: #fff; font-size: 2.5rem; font-weight: 800; box-shadow: 0 0 0 4px #dc0d19; }
+.tacho-cargo { color: #b80f1c; }
+.dark .tacho-cargo { color: #ff8a94; }
+.tacho-enlace:focus { outline: none; }
+.tacho-enlace:focus-visible { outline: 3px solid #064ca7; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .tacho .u-logo { animation: none; }
 }

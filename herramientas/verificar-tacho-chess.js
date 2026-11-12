@@ -9,7 +9,7 @@
  *      8:30 y sus cinco rondas, la primera a las 9:00 y las demás
  *      del mismo horario que las bases (BasesTorneo.horario); el formulario
  *      del código QR del afiche, que se abre encima; «Resultados» va
- *      «Pronto»; sin chess-results ni teléfonos (el afiche no trae); la
+ *      «Pronto»; sin chess-results; el contacto, solo el de Adriana; la
  *      mascota, el escudo y las bases existen.
  *   2. LAS BASES EN PDF dicen lo mismo: la fecha, la sede, el ritmo, las 5
  *      rondas, la inscripción gratuita con el formulario y los once niveles.
@@ -65,7 +65,8 @@ ok("el árbitro principal que dio el dueño", /Árbitro principal: FA Jean Carlo
 ok("las horas de las rondas 2 a 5 dicen que son aproximadas", (html.match(/\(aprox\.\)<\/td><\/tr>/g) || []).length === 5);
 ok("el formulario es el del código QR del afiche y se abre encima", new RegExp('<a href="' + FORMULARIO.replace(/[./]/g, "\\$&") + '"[^>]*data-ventana=').test(html));
 ok("«Resultados» va «Pronto» (sin enlace, con tabindex) hasta que el torneo esté en Pareo", /<div id="ficha-resultados" tabindex="0" aria-disabled="true"/.test(html));
-ok("sin chess-results ni teléfonos (el afiche no trae)", !/chess-results\.com|href="tel:|wa\.me\//.test(html));
+ok("sin chess-results", !/chess-results\.com/.test(html));
+ok("el contacto de la organización: Adriana, con su teléfono y su WhatsApp (los únicos)", /<dialog id="contacto"/.test(html) && /<a href="#contacto"/.test(html) && JSON.stringify([...html.matchAll(/href="(tel:[^"]+|https:\/\/wa\.me\/[^"]+)"/g)].map((m) => m[1])) === JSON.stringify(["tel:+50689122033", "https://wa.me/50689122033"]) && /Adriana/.test(visible));
 const locales = [...html.matchAll(/(?:href|src)="((?:documentos|img)\/[^"#?]+)"/g)].map((m) => m[1]);
 const faltan = [...new Set(locales)].filter((f) => !fs.existsSync(path.join(RAIZ, f)));
 ok("las bases, la mascota y el escudo que enlaza existen", locales.includes(PDF) && locales.includes("img/tacho-chess-2/mascota.png") && !faltan.length, faltan.join(", "));
@@ -83,6 +84,7 @@ if (textoPdf) {
   ok("los once niveles, de primer grado a undécimo año", ["Primer grado", "Sexto grado", "Sétimo año", "Undécimo año"].every((n) => textoPdf.includes(n)));
   ok("la ronda 1 a las 9:00 a. m., con la llegada a las 8:30", /1 sábado, 14 de noviembre de 2026 9:00 a\. m\./.test(textoPdf) && /De 8:30 a 9:00 a\. m\., llegada y confirmación/.test(textoPdf));
   ok("los resultados, en Pareo Integral", /se publican en Pareo Integral/.test(textoPdf));
+  ok("el contacto: Adriana, +506 8912-2033", /Información: Adriana, \+506 8912-2033/.test(textoPdf));
   ok("el árbitro principal", /Árbitro principal: FA Jean Carlo Quesada Arauz\./.test(textoPdf));
 }
 

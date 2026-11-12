@@ -14873,8 +14873,12 @@ chess-results).
   del código QR del afiche** con jsQR (`https://forms.gle/bLTnu979f2aj7kUUA`,
   igual al texto impreso); es de la organización (Google Forms) y lo dice la
   política de privacidad.
-- **Lo que el afiche no trae no se pone**: ni teléfono ni correo (no hay ficha
-  de contacto) ni cierre de la inscripción.
+- **El contacto es Adriana, de la organización** (+506 8912-2033, lo dio el
+  dueño): la ficha «Contacta a la organización» abre `#contacto` con su
+  teléfono y su WhatsApp, como en el Centroamericano; sin foto, va su inicial.
+  Las bases lo dicen en «Organización». La tolerancia de 10 minutos y los
+  desempates, decididos al armar las bases, los confirmó el dueño. Lo que
+  nadie dio (correo, cierre de la inscripción) no se pone.
 - **Los resultados van en Pareo Integral** (lo dijo el dueño): la ficha
   «Resultados» va «Pronto» y `js/tacho-chess-resultados.js` la cambia por el
   enlace a la página pública del torneo (`torneos-pareo.html#t=<id>`, encima).
