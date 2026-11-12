@@ -72,6 +72,48 @@
   --u-claro: #9fd0f3;
 }
 
+/* El Torneo Intereducativo Tacho Chess 2 (tacho-chess-2.html): el azul y el
+ * rojo de su afiche, medidos de la imagen (la mediana de sus píxeles azules y
+ * rojos), no a ojo. A diferencia de las demás, el acento es el rojo y lleva
+ * letra blanca, como la píldora «TE INVITA AL» del afiche.
+ * Contraste: blanco sobre #064CA7 8,08 y sobre #042A69 13,63; blanco sobre
+ * el rojo #DC0D19 5,10 y sobre #B80F1C 6,72; #B80F1C sobre blanco 6,72 y
+ * sobre #EEF3FB 6,10; #064CA7 sobre #EEF3FB 7,25; #042A69 sobre #EEF3FB
+ * 12,24; #DFE7F5 sobre #064CA7 6,50; en oscuro, #FF8A94 sobre brand-950 8,13
+ * y sobre brand-900 7,41. */
+.u-sala-tacho, .tacho {
+  --u-1: #064ca7;
+  --u-2: #042a69;
+  --u-tinta: #042a69;
+  --u-celeste: #dc0d19;
+  --u-celeste-2: #b80f1c;
+  --u-luz: #ffd2d6;
+  --u-suave: #e8eef8;
+  --u-fondo: #eef3fb;
+  --u-fuerte: #b80f1c;
+  --u-claro: #ff8a94;
+}
+/* El rojo lleva letra blanca (la tinta azul sobre el rojo no alcanza). */
+.cac-u.tacho .cac-pildora, .u-sala.u-sala-tacho a.u-sala-principal { color: #fff; }
+/* Tacho, la mascota, recortado del afiche: más alto que un logo, y flota
+ * como el pizote del Centroamericano (quieto con «menos movimiento»). */
+.tacho .u-logo { max-height: 22rem; filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.35)); animation: tacho-flota 4s ease-in-out infinite; }
+@keyframes tacho-flota {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.u-sala-tacho .u-sala-imagen { max-height: 9rem; width: auto; }
+/* El escudo del liceo es redondo: va sin el recuadro blanco. */
+.tacho .u-aliado { background: transparent; border-radius: 9999px; }
+/* «Abrir el formulario de inscripción», el botón rojo del afiche. */
+.tacho-boton { display: inline-block; background: #dc0d19; color: #fff; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 0.5rem; }
+.tacho-boton:hover { background: #b80f1c; }
+.tacho-boton:focus { outline: none; }
+.tacho-boton:focus-visible { outline: 3px solid #064ca7; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .tacho .u-logo { animation: none; }
+}
+
 /* ------------------------------------------------------------------
  * La ficha de la sala en Torneos.
  * ------------------------------------------------------------------ */

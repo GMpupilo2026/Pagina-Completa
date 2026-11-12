@@ -14850,6 +14850,65 @@ consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
 el navegador y el celular. Rompiendo a propósito el filtro del sello,
 saltan tres comprobaciones; el de la federación de FIDE, dos.
 
+### La del Tacho Chess 2
+
+`tacho-chess-2.html` es la página del Torneo Intereducativo Tacho Chess 2 del
+Liceo Anastasio Alfaro (lo pidió el dueño el 12/11/2026: «crear este torneo
+igual siguiendo todas las características del torneo centroamericano […] las
+bases todas tienen que ser interpretadas de este afiche»). Sale de la misma
+plantilla que la de Pérez Zeledón (`herramientas/torneos-universitarios/tacho-chess-2.js`
+→ `js/tacho-chess.js`), con «Hoy en el torneo» y `resultados: "pareo"` (sin
+chess-results).
+
+- **Todo sale del afiche**, menos el ritmo y las rondas, que los dio el dueño
+  (5 rondas a 10 minutos + 2 segundos). Del afiche: sábado 14 de noviembre de
+  2026, «a partir de 8:30 a.m.» (se toma como la ronda 1), el Gimnasio del
+  Centro del Liceo Anastasio Alfaro, la inscripción gratuita, la premiación
+  («los mejores de cada nivel, de primer grado a undécimo año»: once niveles,
+  grado en primaria y año en secundaria, con «sétimo») y lo que hay además
+  (feria de comerciantes, open house, venta de comida). **El formulario se leyó
+  del código QR del afiche** con jsQR (`https://forms.gle/bLTnu979f2aj7kUUA`,
+  igual al texto impreso); es de la organización (Google Forms) y lo dice la
+  política de privacidad.
+- **Lo que el afiche no trae no se pone**: ni teléfono ni correo (no hay ficha
+  de contacto), ni árbitro, ni cierre de la inscripción, ni dónde salen los
+  resultados: la ficha «Resultados» va «Pronto» hasta que la organización lo
+  diga. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
+  inventar una dirección.
+- **Las bases son un PDF propio** (`documentos/tacho-chess-2/bases-tacho-chess-2.pdf`),
+  porque el afiche no trae bases: las arma `herramientas/tacho-chess-2-bases.js`
+  con `BasesTorneo` (el texto del «Generador de bases del torneo», que cita las
+  Leyes del Ajedrez) y `ReportePDF`, con la marca de agua de Ajedrez Integral
+  (está en `LIBROS` de `verificar-marca-agua.js`). Lo que se decidió sin estar
+  en el afiche, para que las bases estén completas: suizo con el Sistema
+  Holandés, los desempates de Pareo Integral para el suizo, tolerancia de 10
+  minutos (lo mismo que el reloj), sin Elo, y que la organización puede jugar
+  los niveles juntos o en varios torneos (la premiación es siempre por nivel).
+- **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
+  PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
+  tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
+  hora siguiente) da 8:30, 9:00, 9:30, 10:00 y 10:30, y la premiación cerca de
+  las 11:00. Las rondas 2 a 5 y la premiación dicen «(aprox.)», en la página y
+  en las bases.
+- **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
+  azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
+  `css/universidades.css`. A diferencia de las demás, el acento es rojo y lleva
+  letra blanca (5,1), como la píldora «TE INVITA AL». **Tacho**, el mapache de
+  la camiseta 52, está recortado del afiche con su fondo quitado (rembg, modelo
+  u2net, y a mano los restos azules), sin redibujarlo; flota como el pizote,
+  quieto con «menos movimiento». El escudo del liceo, recortado en su círculo,
+  va en la franja de quién organiza.
+- **La sala en Torneos** (`salas_torneo`, clave `tacho-chess-2`, tipo
+  «enlaces», orden 1) se creó el 12/11/2026 con tres enlaces: la página, `#inscribirme`
+  y las bases (que la portada lleva a `#ficha-bases`). Su portada está en
+  `PORTADAS` de `js/salas-torneo.js`.
+
+`herramientas/verificar-tacho-chess.js` lo revisa: los datos del afiche en la
+página y en el PDF, el calendario igual al horario de las bases, el formulario
+del QR que se abre encima, «Resultados» «Pronto», «Hoy en el torneo» en tres
+momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
+si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
+
 ### Una ficha de Torneos que todavía no se abre
 
 Pedido del dueño: el Metropolitano «no dejar ingresar aún, dejarlo como

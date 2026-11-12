@@ -1,0 +1,276 @@
+/* La configuración de tacho-chess-2.html, la página del Torneo Intereducativo
+ * Tacho Chess 2 del Liceo Anastasio Alfaro (sábado 14 de noviembre de 2026).
+ * De aquí salen la página y js/tacho-chess.js con
+ * herramientas/torneo-universitario.js (ver su cabecera), y las bases en PDF
+ * con herramientas/tacho-chess-2-bases.js. No es un torneo universitario,
+ * pero es la misma página (la del Centroamericano) y la misma plantilla.
+ *
+ * Lo pidió el dueño el 12/11/2026: «crear este torneo igual siguiendo todas
+ * las características del torneo centroamericano […] las bases todas tienen
+ * que ser interpretadas de este afiche», con el ritmo de 10 minutos + 2
+ * segundos y 5 partidas (eso lo dijo él; no viene en el afiche). Todo lo
+ * demás sale del afiche: la fecha, la hora, la sede, que es gratis, el
+ * formulario (leído del código QR), la premiación por nivel y lo que hay
+ * además del torneo. La mascota (Tacho, el mapache con la camiseta 52) y el
+ * escudo del liceo están recortados del afiche, sin redibujarlos.
+ *
+ * - Una sola copia de los datos: `bases` (abajo) la leen el calendario de la
+ *   página y el PDF de las bases (BasesTorneo de js/bases-torneo.js, el del
+ *   «Generador de bases del torneo»).
+ * - El afiche dice «A PARTIR DE 8:30 A.M.»: es la ronda 1. Las otras horas
+ *   no las dice: salen del horario de BasesTorneo (cada ronda dura el tiempo
+ *   de los dos jugadores más 40 jugadas de incremento, y la siguiente
+ *   empieza a la media hora siguiente) y se escriben «aprox.».
+ * - Lo que el afiche no trae (teléfono, correo, árbitro, cierre de la
+ *   inscripción, dónde se publican los resultados) no se pone: «Resultados»
+ *   va «Pronto» hasta que la organización diga dónde.
+ */
+const B = require("../../js/bases-torneo.js");
+
+const tarjeta = "rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6";
+const h3 = '<h3 class="font-bold text-brand-800 dark:text-white">';
+const texto = "mt-2 text-sm text-brand-600 dark:text-brand-300";
+const FORMULARIO = "https://forms.gle/bLTnu979f2aj7kUUA";
+const BASES_PDF = "documentos/tacho-chess-2/bases-tacho-chess-2.pdf";
+
+// Los niveles que se premian: «de primer grado a undécimo año».
+const NIVELES = ["Primer grado", "Segundo grado", "Tercer grado", "Cuarto grado", "Quinto grado", "Sexto grado",
+  "Sétimo año", "Octavo año", "Noveno año", "Décimo año", "Undécimo año"];
+
+// Los datos del torneo, como los lee BasesTorneo.documento().
+const bases = {
+  nombre: "Torneo Intereducativo Tacho Chess 2",
+  organizador: "el Liceo Anastasio Alfaro (San José)",
+  fechaInicio: "2026-11-14",
+  lugar: "el Gimnasio del Centro, Liceo Anastasio Alfaro, San José",
+  participantes: "Estudiantes de centros educativos, de primer grado a undécimo año. Cada participante juega por su centro educativo.",
+  categorias: NIVELES.join("\n"),
+  costo: 0,
+  comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
+  sistema: "suizo", rondas: 5, rondasPorDia: 5, horaInicio: "08:30", descanso: 5,
+  ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
+  eloFide: false, eloNacional: false,
+  desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
+  byes: 0,
+  calendarioNota: "Las horas son de Costa Rica. La ronda 1 empieza a las 8:30 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
+  premios: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.",
+  otras: [
+    "La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.",
+    "Durante el torneo hay feria de comerciantes de la comunidad, open house del Liceo Anastasio Alfaro y venta de comida.",
+  ].join("\n"),
+};
+
+// El calendario de la página sale del mismo horario que el de las bases.
+const HORARIO = B.horario(bases);
+const ULTIMA = HORARIO[HORARIO.length - 1];
+const PREMIACION = Math.ceil((ULTIMA.min + Math.ceil(2 * (bases.ritmoMin + 40 * bases.ritmoInc / 60)) + bases.descanso) / 30) * 30;
+const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
+const horaTexto = (min) => { const h = Math.floor(min / 60); return (h % 12 || 12) + ":" + String(min % 60).padStart(2, "0") + (h < 12 ? " a. m." : " p. m."); };
+const CICLO = HORARIO.length > 1 ? HORARIO[1].min - HORARIO[0].min : 30;
+// [actividad, data-inicio (hora de Costa Rica), minutos, ronda, hora escrita]
+const CALENDARIO = HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")])
+  .concat([["Premiación", bases.fechaInicio + "T" + hhmm(PREMIACION), 60, 0, horaTexto(PREMIACION) + " (aprox.)"]]);
+
+const filas = CALENDARIO.map(([actividad, inicio, minutos, ronda, hora]) =>
+  '            <tr data-inicio="' + inicio + '" data-minutos="' + minutos + '"' + (ronda ? ' data-ronda="' + ronda + '"' : "") + (ronda === 1 ? " data-primera-ronda" : "") + ">"
+  + '<th scope="row" class="text-left font-semibold px-4 py-2">' + actividad + "</th>"
+  + '<td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">' + hora + "</td></tr>").join("\n");
+
+const desempates = bases.desempates.map((c) => "            <li>" + B.NOMBRE_DESEMPATE[c] + "</li>").join("\n");
+
+module.exports = {
+  bases,
+  pagina: "tacho-chess-2.html",
+  config: "js/tacho-chess.js",
+  clase: "tacho",
+  foco: "#064ca7",
+  titulo: "Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro",
+  descripcion: "El Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026 desde las 8:30 a.m. en el Gimnasio del Centro, 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios para los mejores de cada nivel, de primer grado a undécimo año.",
+  nombrePie: "Tacho Chess 2",
+  grupoNombre: "Nivel",
+  comentario: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
+Alfaro: la misma que la del Centroamericano (css/centroamericano.css y
+css/universidades.css), con el azul y el rojo del afiche y Tacho, su
+mascota. Todo sale del afiche, salvo el ritmo y las rondas, que dio el
+dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
+2» en docs/decisiones/juegos-y-torneos.md.`,
+  logo: { src: "img/tacho-chess-2/mascota.png", ancho: 450, alto: 755, alt: "Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" },
+  aliados: [{ src: "img/tacho-chess-2/logo-liceo.png", ancho: 276, alto: 276, alt: "Liceo Anastasio Alfaro, San José, 1952" }],
+  portada: {
+    pildora: "El Liceo Anastasio Alfaro te invita al",
+    titulo: "Torneo Intereducativo",
+    subtitulo: "Tacho Chess 2",
+    caja: ["¡Inscripción gratuita!", "De primer grado a undécimo año"],
+    datos: [
+      ["📅", "Fecha", "Sábado 14 de noviembre de 2026"],
+      ["🕣", "Hora", "A partir de las 8:30 a.m."],
+      ["📍", "Sede", "Gimnasio del Centro, Liceo Anastasio Alfaro"],
+    ],
+  },
+  textoOrganiza: "Quién organiza, como lo dice el afiche.",
+  organiza: "Liceo Anastasio Alfaro (San José, 1952)",
+  equipo: [
+    ["Ritmo", "5 rondas a 10 minutos + 2 segundos"],
+  ],
+  resultados: "pareo",
+  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
+  hoy: {
+    etiqueta: "El torneo",
+    principal: "Sábado 14 de noviembre de 2026",
+    detalle: "La ronda 1 se juega a las 8:30 a.m., hora de Costa Rica, en el Gimnasio del Centro del Liceo Anastasio Alfaro.",
+    enlaces: [["#calendario", "Ver el calendario completo"], ["#inscribirme", "Inscribirme gratis", "📝"]],
+    termino: "Tacho Chess 2 terminó",
+    gracias: "¡Gracias por jugar!",
+    final: "Los mejores de cada nivel, de primer grado a undécimo año, reciben su premio.",
+  },
+  fichas: [
+    { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
+    { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
+    { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas y de la premiación.", accion: "Ver el calendario" },
+    { href: "#premios", color: "rojo", icono: "🏆", titulo: "Niveles y premios", texto: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.", accion: "Ver los niveles" },
+    { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
+    { id: "ficha-resultados", pronto: "la organización dirá dónde se publican", color: "azul", icono: "♟️", titulo: "Resultados", texto: "Los emparejamientos de cada ronda, los resultados y la clasificación de cada nivel." },
+    { href: "#ademas", color: "verde", icono: "🎉", titulo: "Además disfruta de", texto: "Feria de comerciantes de la comunidad, open house del liceo y venta de comida.", accion: "Ver qué hay" },
+    { href: "https://www.google.com/maps/search/?api=1&query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).", accion: "Abrir el mapa" },
+  ],
+  despedida: { href: "#inscribirme", titulo: "¡Te esperamos, haz tu mejor jugada!", texto: "Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.", accion: "Inscribirme" },
+  dialogos: {
+    propios: [
+      {
+        id: "inscribirme", icono: "📝", titulo: "Inscribirme",
+        comentario: `La inscripción: el formulario es de la organización (Google Forms), el del
+código QR del afiche. Se abre encima con js/ventana-enlace.js; la página no
+guarda nada.`,
+        cuerpo: `<div class="mt-6 grid gap-5">
+    <div class="${tarjeta}">
+        ${h3}Es gratis</h3>
+        <p class="${texto}">La inscripción no cuesta nada. Se hace con el formulario en línea de la organización del Liceo Anastasio Alfaro: es el mismo del código QR del afiche.</p>
+        <p class="mt-4"><a href="${FORMULARIO}" target="_blank" rel="noopener" data-ventana="Inscripción a Tacho Chess 2" class="tacho-boton">Abrir el formulario de inscripción</a></p>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}Quién puede jugar</h3>
+        <p class="${texto}">Estudiantes de centros educativos, de primer grado a undécimo año. Se premia a los mejores de cada nivel.</p>
+    </div>
+</div>
+<p class="mt-4 text-sm">El formulario es de la organización: lo que se escribe ahí lo recibe el liceo, no Ajedrez Integral (ver la <a href="privacidad.html" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">política de privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>).</p>
+`,
+      },
+      {
+        id: "premios", icono: "🏆", titulo: "Niveles y premios",
+        comentario: "Los niveles que se premian, como los dice el afiche: «de primer grado a\nundécimo año».",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Se premia a los mejores de cada nivel. Son once niveles:</p>
+<div class="mt-6 grid sm:grid-cols-2 gap-5">
+    <div class="${tarjeta}">
+        ${h3}Primaria</h3>
+        <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+${NIVELES.slice(0, 6).map((n) => "            <li>" + n + "</li>").join("\n")}
+        </ul>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}Secundaria</h3>
+        <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+${NIVELES.slice(6).map((n) => "            <li>" + n + "</li>").join("\n")}
+        </ul>
+    </div>
+</div>
+<p class="mt-4 text-sm">La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.</p>
+`,
+      },
+      {
+        id: "calendario", icono: "🗓️", titulo: "Calendario", ancho: "max-w-3xl",
+        comentario: "El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de\nCosta Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del\nhorario de las bases (BasesTorneo.horario), el mismo del PDF.",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. La ronda 1 empieza a las 8:30 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+<div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
+    <table class="w-full text-sm">
+        <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>
+        <thead class="bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white">
+            <tr><th scope="col" class="text-left px-4 py-3">Actividad</th><th scope="col" class="text-left px-4 py-3">Día</th><th scope="col" class="text-left px-4 py-3">Hora</th></tr>
+        </thead>
+        <tbody class="divide-y divide-brand-100 dark:divide-brand-800">
+${filas}
+        </tbody>
+    </table>
+</div>
+<p class="mt-4 text-sm">Cada partida dura como mucho unos 25 minutos: 10 minutos por jugador, más 2 segundos por cada jugada.</p>
+`,
+      },
+      {
+        id: "reglamento", icono: "📋", titulo: "Lo esencial del reglamento", ancho: "max-w-5xl",
+        comentario: "Lo esencial de las bases (el PDF sale de los mismos datos).",
+        cuerpo: `<div class="mt-6 grid sm:grid-cols-2 gap-5">
+    <div class="${tarjeta}">
+        ${h3}Sistema y ritmo</h3>
+        <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+            <li>Sistema suizo a 5 rondas, con el Sistema Holandés de la FIDE.</li>
+            <li>10 minutos por jugador para toda la partida, con 2 segundos de incremento por jugada desde la primera: ajedrez rápido (Apéndice A de las Leyes del Ajedrez).</li>
+            <li>Tolerancia de 10 minutos desde la hora de inicio de la ronda.</li>
+            <li>Ganada, 1 punto; tablas, ½; perdida, 0. El bye del emparejamiento vale 1 punto.</li>
+        </ul>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}Desempates, en orden</h3>
+        <ol class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-decimal pl-5">
+${desempates}
+        </ol>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}Celulares</h3>
+        <p class="${texto}">Durante la partida, el celular va completamente apagado y guardado en el bolso (Leyes del Ajedrez, 11.3.2). Quien lo tenga encendido pierde la partida.</p>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}Premiación</h3>
+        <p class="${texto}">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</p>
+    </div>
+    <div class="${tarjeta} sm:col-span-2">
+        ${h3}Lo que no esté en las bases</h3>
+        <p class="${texto}">Se resuelve con las Leyes del Ajedrez de la FIDE vigentes. Participar en el torneo es aceptar las bases.</p>
+    </div>
+</div>
+`,
+      },
+      {
+        id: "ademas", icono: "🎉", titulo: "Además disfruta de",
+        comentario: "Lo que el afiche anuncia además del torneo.",
+        cuerpo: `<div class="mt-6 grid sm:grid-cols-3 gap-5">
+    <div class="${tarjeta}">
+        ${h3}<span aria-hidden="true">🏪 </span>Feria de comerciantes de la comunidad</h3>
+        <p class="${texto}">Apoyemos lo nuestro.</p>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}<span aria-hidden="true">🚪 </span>Open house</h3>
+        <p class="${texto}">Conoce nuestro centro educativo.</p>
+    </div>
+    <div class="${tarjeta}">
+        ${h3}<span aria-hidden="true">🍴 </span>Venta de comida</h3>
+        <p class="${texto}">Deliciosas opciones para todos.</p>
+    </div>
+</div>
+<p class="mt-4 text-sm font-semibold">Estrategia · Disciplina · Respeto · Pasión · Comunidad</p>
+`,
+      },
+    ],
+  },
+  pie: [
+    { href: BASES_PDF, externo: true, ventana: "Bases de Tacho Chess 2", texto: "Bases del torneo" },
+    { href: "#calendario", texto: "Calendario" },
+    { href: "#reglamento", texto: "Reglamento" },
+    { href: "#inscribirme", texto: "Inscribirme" },
+  ],
+  cabeceraJs: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
+Alfaro (tacho-chess-2.html). La misma que la del Centroamericano: la cuenta
+regresiva la arma js/torneo-hoy.js. Lo propio:
+
+- La cara de la imagen para compartir: el azul y el rojo del afiche y Tacho.
+- Los textos de «Hoy en el torneo» cuando el torneo ya terminó (\`hoy\`).`,
+  contraste: "blanco sobre #064CA7 8,08 y sobre #042A69 13,63; blanco sobre el rojo #DC0D19 5,1; #B80F1C sobre #EEF3FB 6,1.",
+  torneoPagina: {
+    sala: "tacho-chess-2",
+    guardado: "tacho",
+    nombreCorto: "Tacho Chess 2",
+    imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",
+    compartir: "en el Torneo Intereducativo Tacho Chess 2:",
+    imagen: { banda: "#042a69", tinta: "#042a69", acento: "#dc0d19", suave: "#eef3fb", archivo: "tacho-chess-2", franjas: [["#dc0d19", 1046], ["#042a69", 1060]] },
+  },
+};
+
+/*! rev bfb5bbb0d2d82f9f */
