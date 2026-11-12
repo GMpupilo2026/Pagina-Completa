@@ -36,8 +36,8 @@
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="#fichas" class="hover:text-accent-400 transition-colors">Fichas</a></li>
-                    <li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación</a></li>
-                    <li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li>
+                    <li><a href="#inscribirme" class="hover:text-accent-400 transition-colors">Inscribirme</a></li>
+                    <li><a href="torneos-pareo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
@@ -54,8 +54,8 @@
             <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="#fichas" class="block py-2 hover:text-accent-400">Fichas</a></li>
-                <li><a href="#clasificacion" class="block py-2 hover:text-accent-400">Clasificación</a></li>
-                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="#inscribirme" class="block py-2 hover:text-accent-400">Inscribirme</a></li>
+                <li><a href="torneos-pareo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
             </ul>
         </div>
     </header>
@@ -118,7 +118,7 @@
                 </div>
                 <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
                     <a href="#calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">Ver el calendario completo →</a>
-                    <a href="#inscripciones" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]"><span aria-hidden="true">📝 </span>Cómo inscribirse →</a>
+                    <a href="#inscribirme" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]"><span aria-hidden="true">📝 </span>Inscribirme →</a>
                 </p>
             </div>
         </div>
@@ -128,29 +128,15 @@
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página.</p>
-            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
-                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
-            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
-                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
-                     en este aparato (sin cuenta). Se esconde mientras no haya
-                     ninguno. Sin avisos al celular: son del Centroamericano. -->
-                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
-                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
-                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
-                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
-                </div>
-                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
-                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Escribe su nombre o su apellido: en cuanto la organización publique el torneo en chess-results, te decimos su categoría, su mesa y su rival en cada ronda y cómo va.</p>
-                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: Quesada" class="cac-buscador-campo">
-                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
-                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
-                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
-                    <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]"><span aria-hidden="true">🥇 </span>Ver el podio →</a>
-                    <a href="#clasificacion" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]"><span aria-hidden="true">📊 </span>Clasificación completa →</a>
-                    <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]"><span aria-hidden="true">📺 </span>Clasificación para proyectar →</a>
-                </p>
-            </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+                <li>
+                    <a href="#inscribirme" id="ficha-inscribirme" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                        <span class="cac-icono" aria-hidden="true">📝</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Inscribirme</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El formulario de inscripción: con el año de nacimiento va solo al torneo de su categoría, y el árbitro lo aprueba.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Inscribirme →</span>
+                    </a>
+                </li>
                 <li>
                     <a href="documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf" id="ficha-bases" target="_blank" rel="noopener" data-ventana="Bases de la eliminatoria" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                         <span class="cac-icono" aria-hidden="true">📄</span>
@@ -160,24 +146,32 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#inscripciones" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">📝</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Inscripciones</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Quién puede jugar, cuánto cuesta y hasta cuándo hay tiempo de inscribirse.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver las inscripciones →</span>
+                    <a href="torneos-pareo.html" id="ficha-resultados-u12" data-ventana="Resultados U12" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                        <span class="cac-icono" aria-hidden="true">♟️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados U12</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El torneo U12 en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el torneo U12 →</span>
                     </a>
                 </li>
                 <li>
-                    <div id="ficha-resultados" tabindex="0" aria-disabled="true" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">📊</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en vivo</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Inscritos, emparejamientos, resultados y clasificación de cada ronda en chess-results.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: la organización publica el torneo en chess-results</span></span>
-                    </div>
+                    <a href="torneos-pareo.html" id="ficha-resultados-u20" data-ventana="Resultados U20" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                        <span class="cac-icono" aria-hidden="true">♞</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados U20</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El torneo U20 (con la U16) en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el torneo U20 →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#inscripciones" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                        <span class="cac-icono" aria-hidden="true">✅</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Quién puede jugar</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Quién puede inscribirse, cuánto cuesta y hasta cuándo hay tiempo.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver las condiciones →</span>
+                    </a>
                 </li>
                 <li>
                     <a href="#categorias" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">♟️</span>
+                        <span class="cac-icono" aria-hidden="true">🎂</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Categorías</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">U12, U16 y U20, en Absoluto y Femenino, con los años de nacimiento de cada una.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver las categorías →</span>
@@ -199,31 +193,7 @@
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el reglamento →</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#clasificacion" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">🏆</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Clasificación</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Cada categoría en su orden de chess-results, con los puntos y el rendimiento de cada jugador.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver la clasificación →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#medallero" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">🥇</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">El podio</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los tres primeros lugares de cada categoría, con sus puntos.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el podio →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#proyector" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
-                        <span class="cac-icono" aria-hidden="true">📺</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Para proyectar</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El pareo y la clasificación en letra grande, para una pantalla en la sala o la premiación.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir en grande →</span>
-                    </a>
-                </li>
-                <li>
+                <li class="col-span-2 lg:col-span-1">
                     <a href="https://maps.app.goo.gl/VhAZtamiKgvUeNp86" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                         <span class="cac-icono" aria-hidden="true">📍</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar</span>
@@ -232,17 +202,82 @@
                     </a>
                 </li>
             </ul>
-            <a href="torneos-en-vivo.html" data-ventana="Más torneos" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+            <a href="torneos-pareo.html" data-ventana="Más torneos" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                 <span class="u-despedida-logo u-despedida-redondo" aria-hidden="true"><img src="img/adapz/logo.jpg" width="349" height="349" alt=""></span>
                 <span class="cac-globo">
                     <span class="block font-extrabold text-lg sm:text-xl">¡Nos vemos en el Hotel del Sur!</span>
-                    <span class="block mt-1 text-sm sm:text-base">¿Quieres ver más? Aquí están los demás torneos que se transmiten en Ajedrez Integral.</span>
+                    <span class="block mt-1 text-sm sm:text-base">¿Quieres ver más? Aquí están los demás torneos de Costa Rica en Pareo Integral.</span>
                     <span class="block mt-2 text-sm font-bold cac-accion">Ver los torneos →</span>
                 </span>
             </a>
         </div>
     </section>
 
+    <!-- El formulario de inscripción (js/jdn-pz-inscripcion.js): busca los dos torneos
+         de Pareo Integral de la ADAPZ, elige el de la categoría por el año de
+         nacimiento y manda la inscripción a pareo-publicar («inscribir»). Queda
+         pendiente hasta que el árbitro la acepta en Pareo: entonces entra sola al
+         torneo. Los datos personales no se guardan en el navegador. -->
+    <dialog id="inscribirme" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="inscribirme-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="inscribirme-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📝 </span>Inscribirme</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p id="insc-estado-torneos" class="mt-2 text-sm font-semibold" role="status">Buscando los torneos de la eliminatoria en Pareo Integral…</p>
+            <form id="insc-form" class="mt-4 grid gap-4" novalidate>
+                <fieldset class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6 grid gap-4 sm:grid-cols-2">
+                    <legend class="font-bold text-brand-800 dark:text-white px-1">Quién juega</legend>
+                    <label class="block text-sm font-semibold">Apellidos
+                        <input id="insc-apellidos" name="apellidos" required maxlength="60" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                    <label class="block text-sm font-semibold">Nombre
+                        <input id="insc-nombre" name="nombre" required maxlength="40" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                    <label class="block text-sm font-semibold">Fecha de nacimiento
+                        <input id="insc-nacimiento" name="nacimiento" type="date" required min="2007-01-01" max="2020-12-31" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                    <fieldset class="text-sm">
+                        <legend class="font-semibold">Rama</legend>
+                        <div class="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+                            <label class="inline-flex items-center gap-2"><input type="radio" name="sexo" value="M" required class="w-5 h-5"> Absoluto (masculino)</label>
+                            <label class="inline-flex items-center gap-2"><input type="radio" name="sexo" value="F" class="w-5 h-5"> Femenino</label>
+                        </div>
+                    </fieldset>
+                    <p id="insc-categoria" class="sm:col-span-2 text-sm font-bold" role="status" aria-live="polite"></p>
+                    <label class="block text-sm font-semibold">Club, colegio o escuela
+                        <input id="insc-institucion" name="institucion" maxlength="100" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="block text-sm font-semibold">ID FIDE <span class="font-normal">(si tiene)</span>
+                            <input id="insc-fide" name="fide" inputmode="numeric" maxlength="12" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                        </label>
+                        <label class="block text-sm font-semibold">Elo <span class="font-normal">(si tiene)</span>
+                            <input id="insc-elo" name="elo" inputmode="numeric" maxlength="4" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                        </label>
+                    </div>
+                </fieldset>
+                <fieldset class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6 grid gap-4 sm:grid-cols-2">
+                    <legend class="font-bold text-brand-800 dark:text-white px-1">Quién inscribe</legend>
+                    <label class="block text-sm font-semibold">Nombre de quien inscribe
+                        <input id="insc-responsable" name="responsable" required maxlength="100" autocomplete="name" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                    <label class="block text-sm font-semibold">Correo o teléfono
+                        <input id="insc-contacto" name="contacto" required maxlength="120" autocomplete="email" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                    </label>
+                </fieldset>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6 grid gap-3 text-sm">
+                    <label class="flex items-start gap-2"><input id="insc-afiliado" type="checkbox" required class="mt-0.5 w-5 h-5 shrink-0"> <span>Quien juega está afiliado a la ADAPZ y al día con la asociación (el torneo es cerrado: las bases lo piden).</span></label>
+                    <label class="flex items-start gap-2"><input id="insc-consentimiento" type="checkbox" required class="mt-0.5 w-5 h-5 shrink-0"> <span>Soy quien juega, su encargado o tengo su permiso, y acepto que estos datos se usen para inscribirlo en el torneo, como dice la <a href="privacidad.html" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">política de privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>.</span></label>
+                </div>
+                <div>
+                    <button id="insc-enviar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Mandar la inscripción</button>
+                    <p id="insc-estado" class="mt-3 text-sm font-semibold" role="status" aria-live="polite"></p>
+                </div>
+            </form>
+            <p class="mt-4 text-sm">La inscripción queda pendiente hasta que el árbitro la revisa; cuando la aprueba, el jugador aparece en «Resultados U12» o «Resultados U20». Las inscripciones cierran a las 10:00 p.m. del sábado 21 de noviembre.</p>
+        </div>
+    </dialog>
     <!-- Las inscripciones, como las dicen las bases. -->
     <dialog id="inscripciones" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="inscripciones-titulo">
         <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
@@ -349,7 +384,7 @@
                 </div>
                 <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-brand-800 dark:text-white">Resultados y objeciones</h3>
-                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Los pareos y resultados se publican en chess-results durante el torneo. Cada jugador revisa que su resultado quede bien anotado: no se aceptan objeciones después de publicada la ronda siguiente. En la última ronda hay cinco minutos para objetar, desde que termina la categoría.</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Los pareos y resultados se publican durante el torneo, en Pareo Integral (las fichas «Resultados U12» y «Resultados U20» de esta página). Cada jugador revisa que su resultado quede bien anotado: no se aceptan objeciones después de publicada la ronda siguiente. En la última ronda hay cinco minutos para objetar, desde que termina la categoría.</p>
                 </div>
                 <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-brand-800 dark:text-white">Implementos</h3>
@@ -362,72 +397,13 @@
             </div>
         </div>
     </dialog>
-    <!-- El podio: los tres primeros, según la clasificación de chess-results.
-         Lo arma js/centroamericano-vivo.js (soloPodio: sin tabla de medallas). -->
-    <dialog id="medallero" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="medallero-titulo">
-        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
-            <h2 id="medallero-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🥇 </span>El podio</h2>
-            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
-        </div>
-        <div class="px-4 sm:px-6 pt-2 pb-6">
-            <p class="text-brand-600 dark:text-brand-300 mt-2">Los tres primeros lugares de cada categoría, según la clasificación de chess-results.</p>
-            <div id="medallero-contenido" class="mt-4">
-                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
-            </div>
-        </div>
-    </dialog>
-    <!-- La clasificación completa, con el rendimiento de cada jugador. La arma
-         js/centroamericano-tablas.js; con un solo grupo, el selector se esconde solo. -->
-    <dialog id="clasificacion" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="clasificacion-titulo">
-        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
-            <h2 id="clasificacion-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Clasificación</h2>
-            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
-        </div>
-        <div class="px-4 sm:px-6 pt-2 pb-6">
-            <p class="text-brand-600 dark:text-brand-300 mt-2">Cada categoría entera, en el orden de chess-results, con los puntos y el rendimiento de cada jugador.</p>
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <label class="block text-sm font-bold">Categoría
-                    <select id="clasificacion-categoria" class="cac-buscador-campo !mt-1"></select>
-                </label>
-                <label class="block text-sm font-bold">Buscar en la tabla
-                    <input id="clasificacion-buscar" type="search" autocomplete="off" spellcheck="false" class="cac-buscador-campo !mt-1">
-                </label>
-            </div>
-            <div id="clasificacion-contenido" class="mt-4">
-                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
-            </div>
-        </div>
-    </dialog>
-    <!-- Para una pantalla: con el torneo terminado, los podios y la
-         clasificación final en letra grande, que pasan solos, y el QR de la
-         página. El de js/centroamericano-tablas.js, igual que en el
-         Centroamericano. Se abre con #proyector en la dirección. -->
-    <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
-        <div class="cac-proyector-barra">
-            <h2 id="proyector-titulo" class="cac-proyector-titulo"></h2>
-            <p id="proyector-reloj" class="cac-proyector-reloj"></p>
-            <div class="cac-proyector-botones">
-                <button type="button" id="proyector-anterior" class="cac-proyector-boton"><span aria-hidden="true">◀ </span>Anterior</button>
-                <button type="button" id="proyector-pausa" class="cac-proyector-boton" aria-pressed="false"></button>
-                <button type="button" id="proyector-siguiente" class="cac-proyector-boton">Siguiente<span aria-hidden="true"> ▶</span></button>
-                <label class="cac-proyector-modo"><span class="sr-only">Qué mostrar</span>
-                    <select id="proyector-modo" class="cac-proyector-boton"></select>
-                </label>
-                <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
-                <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
-            </div>
-        </div>
-        <p id="proyector-progreso" class="cac-proyector-progreso" hidden></p>
-        <div id="proyector-contenido" class="cac-proyector-contenido" aria-live="off"></div>
-        <div class="cac-proyector-qr" aria-hidden="true"><div id="proyector-qr"></div><p>Ábrela en tu celular</p></div>
-    </dialog>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-2 gap-8 mb-12">
                 <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Eliminatoria JDN Pérez Zeledón</h3><ul class="space-y-2 text-sm"><li><a href="documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases de la eliminatoria" class="hover:text-accent-400 transition-colors">Bases de la eliminatoria</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#reglamento" class="hover:text-accent-400 transition-colors">Reglamento</a></li><li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Eliminatoria JDN Pérez Zeledón</h3><ul class="space-y-2 text-sm"><li><a href="documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases de la eliminatoria" class="hover:text-accent-400 transition-colors">Bases de la eliminatoria</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#reglamento" class="hover:text-accent-400 transition-colors">Reglamento</a></li><li><a href="#inscribirme" class="hover:text-accent-400 transition-colors">Inscribirme</a></li></ul></div>
             </div>
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
@@ -437,14 +413,9 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/jdn-pz.js"></script>
-    <script src="js/pareo/torneo.js"></script>
-    <script src="js/pareo/desempates.js"></script>
-    <script src="js/tabla-imagen.js"></script>
-    <script src="js/vendor/qrcode.js"></script>
-    <script src="js/qr-svg.js"></script>
-    <script src="js/centroamericano-vivo.js"></script>
-    <script src="js/centroamericano-tablas.js"></script>
     <script src="js/torneo-hoy.js"></script>
+    <script src="js/pareo/publicar.js"></script>
+    <script src="js/jdn-pz-inscripcion.js"></script>
 </body>
 </html>
 

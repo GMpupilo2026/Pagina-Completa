@@ -1,7 +1,7 @@
 /* La página de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026
  * (jdn-pz-2026.html). La misma que la del Centroamericano: todo lo arman
  * js/centroamericano-vivo.js, js/centroamericano-tablas.js y
- * js/torneo-hoy.js con la sala «jdn-pz-2026» de Torneos. Lo propio:
+ * js/torneo-hoy.js; los resultados, Pareo Integral. Lo propio:
  *
  * - La cara de la imagen para compartir: el azul y el logo de la ADAPZ,
  *   redondo (el logo es un JPG con su fondo blanco).
@@ -22,7 +22,7 @@
     guardado: "jdnpz",
     soloPodio: true,
     // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.
-    hoy: { termino: "La eliminatoria terminó", gracias: "¡Gracias por jugar!", final: "La clasificación final de cada categoría está en «Clasificación» y «El podio»." },
+    hoy: { termino: "La eliminatoria terminó", gracias: "¡Gracias por jugar!", final: "La clasificación final de cada categoría está en «Resultados U12» y «Resultados U20»." },
     url: "ajedrez-integral.com/jdn-pz-2026.html",
     nombreCorto: "Eliminatoria JDN Pérez Zeledón 2026",
     imgSub: "Eliminatoria Cantonal JDN · CCDR Pérez Zeledón · ADAPZ",
