@@ -122,7 +122,9 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     ["Ritmo", "5 rondas a 10 minutos + 2 segundos"],
   ],
   resultados: "pareo",
-  scripts: ["js/tacho-chess-resultados.js"],
+  // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
+  // resultados, porque lee lo que esos pintan; sus dibujos, de js/avatar-profe-oscar.js.
+  scripts: ["js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",

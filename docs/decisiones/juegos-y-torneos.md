@@ -14993,6 +14993,40 @@ ventana con varios; quitando el filtro del sello, saltan cuatro), «Hoy en el to
 momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
 si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
 
+### El profe ayuda en Tacho Chess 2
+
+Pedido del dueño el 12/11/2026: «agrega el avatar del profe Oscar para el
+torneo, para que pueda ayudar a la gente». Es el «¿Te ayudo?» del
+Centroamericano (ver «El profe ayuda en la página») con la maquinaria de la
+profe Karina (ver «La profe Karina ayuda en la página»): `js/tacho-chess-profe.js`,
+después de `js/tacho-chess-resultados.js` y `js/avatar-profe-oscar.js` en
+`scripts` de la configuración.
+
+- **Dice «el profe», nada más**, como pidió el dueño para el Centroamericano:
+  sin el nombre en el texto, en la etiqueta del botón ni en los dibujos (alt
+  vacío). Los dibujos son los del profe Oscar (`rutaDe("oscar", …)`, sin mirar
+  la academia de quien mira).
+- **Ocho preguntas**: cómo inscribir, la próxima ronda, quién juega y qué se
+  premia, contra quién juega, dónde y cuándo, cuánto dura y si se llega tarde,
+  qué más hay ese día y a quién preguntar.
+- **Ninguna respuesta tiene datos escritos en el código**: cada una se arma
+  con lo que la página dice al abrirla. La próxima ronda, del calendario
+  contra la hora de Costa Rica (el mismo día dice «hoy»; las horas «aprox.»
+  dicen «aproximadamente»); la sede y la fecha, de la portada; el ritmo y el
+  árbitro, de la franja de quién organiza; la tolerancia, del reglamento; los
+  niveles, de la ventana «Niveles y premios» (cuántos por grupo); lo que hay
+  además, de su ventana sin los emojis de adorno; el contacto, de la de
+  Adriana; y los resultados, de si la ficha ya apunta al torneo en Pareo.
+- Sus botones tocan la ficha que ya hace eso, y el aspecto es el de
+  `.cac-profe-*` de `css/centroamericano.css`.
+
+Lo revisa `verificar-tacho-chess.js`: el botón y su cara, las ocho preguntas,
+que no diga «Oscar», cada respuesta (la ronda dos días antes, en la llegada y
+en la ronda 2 con el navegador en Madrid; el contacto, el ritmo, los niveles,
+lo de además y los resultados con y sin el torneo en Pareo), «Ver el
+contacto», y Escape con el foco de vuelta. Con la hora tomada de Madrid en vez
+de Costa Rica, saltan dos.
+
 ### Una ficha de Torneos que todavía no se abre
 
 Pedido del dueño: el Metropolitano «no dejar ingresar aún, dejarlo como

@@ -22,11 +22,19 @@
  *      edición anterior, la ficha sigue «Pronto»; con uno, lleva a SU página
  *      de Pareo y se abre encima; con varios (los niveles en varios
  *      torneos), abre la ventana con uno por torneo.
- *   5. La cara: el azul del afiche, la píldora roja con letra blanca, Tacho
+ *   5. EL PROFE AYUDA (js/tacho-chess-profe.js): el botón «¿Te ayudo?» con
+ *      su cara, el panel con las ocho preguntas y ni un «Oscar» (dice «el
+ *      profe», como en el Centroamericano); cada respuesta sale de lo que dice
+ *      la página: la próxima ronda según la hora (antes, en la llegada y en
+ *      la ronda 2, con «hoy»), el contacto, el árbitro y la tolerancia, los
+ *      once niveles sin emojis, y los resultados según la ficha; sus botones
+ *      abren la ventana que toca; Escape lo cierra y el foco vuelve.
+ *   6. La cara: el azul del afiche, la píldora roja con letra blanca, Tacho
  *      a la vista, la ficha «Inscribirme» abre el formulario encima y en el
  *      celular no hay scroll de costado.
  *
- * Ver «La del Tacho Chess 2» en docs/decisiones/juegos-y-torneos.md.
+ * Ver «La del Tacho Chess 2» y «El profe ayuda en Tacho Chess 2» en
+ * docs/decisiones/juegos-y-torneos.md.
  *
  *   python3 -m http.server 8777     (desde la raíz del sitio)
  *   node herramientas/verificar-tacho-chess.js
@@ -185,6 +193,61 @@ async function fichaResultados(nav, publicados) {
     {
       const r = await fichaResultados(nav, [T2, T1, FALSO]);
       ok("con dos torneos (los niveles separados): la ficha abre la ventana con uno por torneo, en orden", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html#t=" + T1.id, "torneos-pareo.html#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
+      await r.ctx.close();
+    }
+
+    console.log("\nEl profe ayuda (js/tacho-chess-profe.js)");
+    const textos = async (cuando, publicados) => {
+      const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block", timezoneId: "Europe/Madrid" });
+      await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble({ pareo_organizadores: ORGS, pareo_publicados: publicados || [] }) }));
+      await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
+      const p = await ctx.newPage();
+      const errores = [];
+      p.on("pageerror", (e) => errores.push(String(e)));
+      await p.clock.setFixedTime(new Date(cuando));
+      await p.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+      await p.waitForTimeout(400);
+      const t = await p.evaluate(() => window.TachoProfe && Object.fromEntries(window.TachoProfe.PREGUNTAS.map((q) => [q.k, window.TachoProfe.texto(q.k)])));
+      return { ctx, p, t: t || {}, errores };
+    };
+    {
+      const r = await textos("2026-11-12T16:00:00-06:00");
+      const b = await r.p.evaluate(() => { const x = document.getElementById("profe-boton"); const i = x && x.querySelector("img");
+        return x && { visible: x.checkVisibility(), etiqueta: x.getAttribute("aria-label"), expandido: x.getAttribute("aria-expanded"), cara: !!(i && i.complete && i.naturalWidth > 0), alt: i.getAttribute("alt") }; });
+      ok("el botón «¿Te ayudo?» se ve, con su cara (alt vacío) y aria-expanded", b && b.visible && /¿Te ayudo\?/.test(b.etiqueta) && b.expandido === "false" && b.cara && b.alt === "", JSON.stringify(b));
+      await r.p.click("#profe-boton");
+      const panel = await r.p.evaluate(() => { const x = document.getElementById("profe-panel"); return { visible: x.checkVisibility(), preguntas: x.querySelectorAll("[data-pregunta]").length, texto: x.textContent, foco: document.activeElement && document.activeElement.dataset.pregunta }; });
+      ok("el panel abre con las ocho preguntas y el foco en la primera", panel.visible && panel.preguntas === 8 && panel.foco === "inscribir", JSON.stringify([panel.visible, panel.preguntas, panel.foco]));
+      ok("dice «el profe», sin el nombre (como en el Centroamericano)", /Soy el profe/.test(panel.texto) && !/Oscar/i.test(panel.texto + b.etiqueta), panel.texto.slice(0, 80));
+      ok("dos días antes: la próxima es la ronda 1, el sábado 14 a las 9:00", /^La próxima es la ronda 1: sábado 14 de noviembre a las 9:00 a\. ?m\./.test(r.t.hora || ""), r.t.hora);
+      ok("el contacto, de su ventana: Adriana y su teléfono", /Adriana.*\+506 8912-2033/.test(r.t.contacto || ""), r.t.contacto);
+      ok("el ritmo, la tolerancia y el árbitro, de la página", /5 rondas a 10 minutos \+ 2 segundos/.test(r.t.ritmo || "") && /Tolerancia de 10 minutos/.test(r.t.ritmo) && /FA Jean Carlo Quesada Arauz/.test(r.t.ritmo), r.t.ritmo);
+      ok("los niveles: once, seis de primaria y cinco de secundaria", /Son 11 niveles: 6 de primaria y 5 de secundaria\./.test(r.t.niveles || ""), r.t.niveles);
+      ok("lo que hay además, sin los emojis de adorno", /^Además del torneo: feria de comerciantes de la comunidad, open house y venta de comida\.$/.test(r.t.ademas || ""), r.t.ademas);
+      ok("sin torneo en Pareo, los resultados «se encienden cuando esté publicado»", /cuando el torneo esté publicado/.test(r.t.resultados || ""), r.t.resultados);
+      await r.p.click('[data-pregunta="contacto"]');
+      await r.p.click('#profe-panel [data-accion="contacto"]');
+      const abierto = await r.p.evaluate(() => [document.getElementById("contacto").open, document.getElementById("profe-panel").hidden]);
+      ok("«Ver el contacto» cierra el panel y abre la ventana del contacto", abierto[0] === true && abierto[1] === true, JSON.stringify(abierto));
+      await r.p.keyboard.press("Escape");
+      await r.p.click("#profe-boton");
+      await r.p.keyboard.press("Escape");
+      const cerro = await r.p.evaluate(() => [document.getElementById("profe-panel").hidden, document.activeElement && document.activeElement.id]);
+      ok("Escape cierra el panel y el foco vuelve al botón", cerro[0] === true && cerro[1] === "profe-boton", JSON.stringify(cerro));
+      ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
+      await r.ctx.close();
+    }
+    for (const [cuando, patron, que] of [
+      ["2026-11-14T08:40:00-06:00", /^Ahora: Llegada y confirmación, desde las 8:30 a\. ?m\. Después viene la ronda 1: hoy a las 9:00 a\. ?m\./, "en la llegada: lo de ahora y la ronda 1, hoy a las 9:00"],
+      ["2026-11-14T09:40:00-06:00", /^Ahora: ronda 2, desde las 9:30 a\. ?m\. \(aproximadamente\)\. Después viene la ronda 3: hoy a las 10:00/, "en la ronda 2: la que se juega y la ronda 3, hoy a las 10:00"],
+    ]) {
+      const r = await textos(cuando);
+      ok(cuando.slice(11, 16) + " (con el navegador en Madrid), " + que, patron.test(r.t.hora || ""), r.t.hora);
+      await r.ctx.close();
+    }
+    {
+      const r = await textos("2026-11-14T09:40:00-06:00", [T1]);
+      ok("con el torneo en Pareo, los resultados dicen que ya están y su botón abre el torneo", /^Están en Pareo Integral/.test(r.t.resultados || ""), r.t.resultados);
       await r.ctx.close();
     }
 
