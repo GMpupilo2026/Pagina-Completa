@@ -21,6 +21,19 @@
 //   { accion: "seguir_correo", nombre, ident, correo, consentimiento } → { ok } (siempre)
 //   { accion: "seguir_confirmar", id, token } → { ok, nombre }
 //   { accion: "seguir_baja", id, token }       → { ok }
+//   { accion: "adjuntos", id, clave, adjuntos } → { ok }   (los enlaces de árbitro adjunto del torneo)
+//   { accion: "cola", id, clave }              → { ok, cola, vistos }
+//   { accion: "cola_borrar", id, clave, hasta } → { ok }
+//   { accion: "adjunto_entrar", codigo }       → { ok, id, nombre, arbitro, desde, hasta }
+//   { accion: "adjunto_anotar", codigo, evento, ronda, datos } → { ok, id }
+//
+// Los árbitros adjuntos: el principal manda la lista de sus enlaces
+// (pareo_adjuntos) con la clave del torneo, también dentro de «crear» y
+// «actualizar» (`adjuntos`). Con su código, el adjunto entra y anota; lo que
+// anota queda en pareo_cola hasta que el principal lo lee y lo pasa a su
+// torneo, y ahí se borra. Así nada se pierde si la pestaña del principal
+// está cerrada. Ver «Pareo Integral: lo que anotan los adjuntos queda en la
+// base».
 //
 // Seguir a un jugador por correo: quien mira un torneo deja su correo y,
 // después de confirmarlo, le llega un aviso cuando ese jugador queda
@@ -78,6 +91,7 @@ import {
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
+import { type Adjunto, limpiarAdjuntos, limpiarCodigo, limpiarEnvio } from "./adjuntos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -313,6 +327,34 @@ async function sha256(s: string) {
 }
 const claveNueva = () => [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
+// La lista de enlaces de árbitro adjunto de un torneo queda exactamente como
+// llega: los que vienen se crean o se ponen al día, y los de este torneo que
+// ya no vienen se apagan. Un código que ya es de OTRO torneo no se toma.
+async function sincronizarAdjuntos(pid: string, lista: Adjunto[]) {
+  const codigos = lista.map((a) => a.codigo);
+  const { data: ajenos } = codigos.length
+    ? await admin.from("pareo_adjuntos").select("codigo").in("codigo", codigos).neq("publicado_id", pid)
+    : { data: [] };
+  const fuera = new Set((ajenos ?? []).map((x: { codigo: string }) => x.codigo));
+  const filas = lista.filter((a) => !fuera.has(a.codigo)).map((a) => ({ ...a, publicado_id: pid }));
+  if (filas.length) {
+    const { error } = await admin.from("pareo_adjuntos").upsert(filas, { onConflict: "codigo" });
+    if (error) return false;
+  }
+  let apagar = admin.from("pareo_adjuntos").update({ activo: false }).eq("publicado_id", pid).eq("activo", true);
+  if (filas.length) apagar = apagar.not("codigo", "in", "(" + filas.map((f) => f.codigo).join(",") + ")");
+  const { error } = await apagar;
+  return !error;
+}
+// La clave de un torneo publicado: null si sirve; si no, la respuesta.
+async function sinClave(pid: string, clave: string): Promise<Response | null> {
+  if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
+  const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+  if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
+  if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
+  return null;
+}
+
 // Las columnas que se leen sin abrir el JSON (la lista del espacio público).
 function columnas(t: NonNullable<ReturnType<typeof limpiar>>) {
   const completas = t.rondas.filter((R) => R.mesas.length && R.mesas.every((m) => m.r || m.n === null)).length;
@@ -457,6 +499,9 @@ Deno.serve(async (req) => {
       if (esObj(body.organizador)) { const oid = await organizadorDe(body.organizador); if (oid) cambio.organizador_id = oid; }
       const { error } = await admin.from("pareo_publicados").update(cambio).eq("id", pid);
       if (error) return json({ ok: false, error: "No se pudo actualizar. Intenta de nuevo." }, 502);
+      // Los enlaces de los adjuntos, si vinieron (un Pareo viejo no los manda: se quedan como estaban).
+      const adjuntos = limpiarAdjuntos(body.adjuntos);
+      if (adjuntos) await sincronizarAdjuntos(pid, adjuntos);
       enSegundoPlano(avisarSeguidores(pid, fila.datos, t as unknown as TorneoAviso));
       return json({ ok: true, id: pid });
     }
@@ -468,6 +513,8 @@ Deno.serve(async (req) => {
     const organizador_id = await organizadorDe(body.organizador);
     const { data, error } = await admin.from("pareo_publicados").insert({ ...columnas(t), datos: t, clave_hash: await sha256(clave), organizador_id }).select("id").single();
     if (error || !data) return json({ ok: false, error: "No se pudo publicar. Intenta de nuevo." }, 502);
+    const adjuntos = limpiarAdjuntos(body.adjuntos);
+    if (adjuntos) await sincronizarAdjuntos(data.id, adjuntos);
     enSegundoPlano(avisarSeguidores(data.id, null, t as unknown as TorneoAviso));
     return json({ ok: true, id: data.id, clave });
   }
@@ -693,6 +740,71 @@ Deno.serve(async (req) => {
     const { error } = await admin.from("pareo_preinscripciones").update({ estado }).eq("publicado_id", pid).in("id", cuales);
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     return json({ ok: true });
+  }
+
+  // ---------- Los árbitros adjuntos ----------
+  // El principal, con la clave de su torneo: la lista de sus enlaces, leer lo
+  // que mandaron y borrar lo que ya pasó a su torneo.
+  if (accion === "adjuntos" || accion === "cola" || accion === "cola_borrar") {
+    const pid = texto(body.id, 40);
+    const falla = await sinClave(pid, texto(body.clave, 100));
+    if (falla) return falla;
+    if (accion === "adjuntos") {
+      const lista = limpiarAdjuntos(body.adjuntos);
+      if (!lista) return json({ ok: false, error: "Falta la lista de árbitros." }, 400);
+      if (!await sincronizarAdjuntos(pid, lista)) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+      return json({ ok: true });
+    }
+    if (accion === "cola") {
+      const [{ data: cola, error }, { data: vistos }] = await Promise.all([
+        admin.from("pareo_cola").select("id, codigo, evento, ronda, datos, creado").eq("publicado_id", pid).order("id").range(0, 499),
+        admin.from("pareo_adjuntos").select("codigo, visto").eq("publicado_id", pid).eq("activo", true),
+      ]);
+      if (error) return json({ ok: false, error: "No se pudo leer lo que mandaron los árbitros." }, 502);
+      return json({ ok: true, cola: cola ?? [], vistos: vistos ?? [] });
+    }
+    const hasta = Number(body.hasta);
+    if (!Number.isSafeInteger(hasta) || hasta < 1) return json({ ok: false, error: "Falta hasta dónde borrar." }, 400);
+    const { error } = await admin.from("pareo_cola").delete().eq("publicado_id", pid).lte("id", hasta);
+    if (error) return json({ ok: false, error: "No se pudo borrar. Intenta de nuevo." }, 502);
+    return json({ ok: true });
+  }
+
+  // El adjunto, sin cuenta, con el código de su enlace: entrar (saber de qué
+  // torneo es y cuáles son sus mesas) y anotar.
+  if (accion === "adjunto_entrar" || accion === "adjunto_anotar") {
+    const codigo = limpiarCodigo(body.codigo);
+    if (!codigo) return json({ ok: false, motivo: "formato", error: "Ese código no es válido: son 8 letras y números." }, 400);
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: false });
+    if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, motivo: "demasiados", error: freno }, 429);
+    const { data: a } = await admin.from("pareo_adjuntos").select("publicado_id, nombre, desde, hasta, activo").eq("codigo", codigo).maybeSingle();
+    if (!a) return json({ ok: false, motivo: "no", error: "Ese código no es de ningún árbitro de un torneo publicado." }, 404);
+    if (!a.activo) return json({ ok: false, motivo: "apagado", error: "Este enlace de árbitro se apagó. Pídele uno nuevo al árbitro principal." }, 403);
+    const { data: pub } = await admin.from("pareo_publicados").select("nombre, rondas").eq("id", a.publicado_id).maybeSingle();
+    if (!pub) return json({ ok: false, motivo: "no", error: "Ese torneo ya no está publicado." }, 404);
+    const visto = () => admin.from("pareo_adjuntos").update({ visto: new Date().toISOString() }).eq("codigo", codigo);
+    if (accion === "adjunto_entrar") {
+      await visto();
+      return json({ ok: true, id: a.publicado_id, nombre: pub.nombre, arbitro: a.nombre, desde: a.desde, hasta: a.hasta });
+    }
+    const evento = texto(body.evento, 20);
+    const ronda = Number(body.ronda);
+    const datos = limpiarEnvio(evento, body.datos);
+    if (!datos || !Number.isInteger(ronda)) return json({ ok: false, motivo: "forma", error: "Lo que mandaste llegó incompleto." }, 400);
+    // La ronda en juego, a grandes rasgos: `rondas` cuenta las rondas
+    // COMPLETAS publicadas, así que la que se juega es la siguiente (o la de
+    // después, si el principal la emparejó hace menos de lo que tarda en
+    // publicarse sola); una corrección puede ser de la última completa. La
+    // regla fina (solo la última ronda) la pone el principal al leerla.
+    if (ronda < Math.max(1, pub.rondas) || ronda > pub.rondas + 2) return json({ ok: false, motivo: "ronda", error: "Esa ronda ya no está en juego." }, 409);
+    if (evento === "resultado" && ((datos.mesa as number) < a.desde || (datos.mesa as number) > a.hasta)) {
+      return json({ ok: false, motivo: "mesa", error: "Esa mesa no es de las tuyas." }, 403);
+    }
+    const { data: fila, error } = await admin.from("pareo_cola").insert({ publicado_id: a.publicado_id, codigo, evento, ronda, datos }).select("id").single();
+    if (error || !fila) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    await visto();
+    return json({ ok: true, id: fila.id });
   }
 
   // ---------- Seguir a un jugador por correo ----------

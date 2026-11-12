@@ -316,7 +316,7 @@ window.AudiosGuia = (function () {
             pos.textContent = decir ? t : "";
             texto.textContent = "";
             jugadas.forEach((j, k) => {
-                const sp = el("span", k === i - 1 ? "font-bold text-brand-900 dark:text-white bg-accent-200 dark:bg-accent-700 rounded px-0.5" : null,
+                const sp = el("span", k === i - 1 ? "font-bold text-brand-900 dark:text-white bg-accent-100 dark:bg-accent-700 rounded px-0.5" : null,
                     (k % 2 ? "" : (Math.floor(k / 2) + 1) + ". ") + sanEspanol(j) + " ");
                 texto.append(sp);
             });

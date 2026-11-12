@@ -188,6 +188,9 @@
     estado.marcados = new Set();
     estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
+    // Lo que los adjuntos dejaron guardado mientras esta pestaña estaba
+    // cerrada se lee apenas se abre el torneo, en cualquier ficha.
+    if (estado.t.publicado && (estado.t.adjuntos || []).some((a) => a.activo)) setTimeout(() => { if (estado.id === id) conectarAdjuntos(); }, 0);
     return true;
   }
 
@@ -246,7 +249,7 @@
     document.title = tx("tituloPagina");
   }
 
-  const FICHAS = ["torneo", "jugadores", "rondas", "clasificacion", "cruzada", "archivos"];
+  const FICHAS = ["torneo", "jugadores", "rondas", "centro", "clasificacion", "cruzada", "archivos"];
   function pintarFichas() {
     for (const f of FICHAS) {
       const b = $("pi-f-" + f);
@@ -431,7 +434,7 @@
   }
 
   function pintarPanel() {
-    ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas,
+    ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas, centro: pintarCentro,
       clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento })[estado.ficha]();
   }
 
@@ -3230,6 +3233,7 @@
     if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
     v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true, nombre: arbitro });
     guardar();
+    sincronizarAdjuntos(v);
     await conectarAdjuntos();
     pintarRondas();
   }
@@ -3253,6 +3257,8 @@
       canal.on("broadcast", { event: "nota" }, (msg) => recibirNotaDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "chat" }, (msg) => recibirChatDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "llamada" }, (msg) => recibirLlamada(a.codigo, msg.payload || {}));
+      // «Te dejé algo en la base»: se lee la cola ya, sin esperar la vuelta.
+      canal.on("broadcast", { event: "cola" }, () => leerCola());
       canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
       estado.adjuntos.canales.set(a.codigo, canal);
     }
@@ -3263,11 +3269,53 @@
       canal.unsubscribe();
       estado.adjuntos.canales.delete(c);
     }
+    if (activos.length && !estado.adjuntos.reloj) estado.adjuntos.reloj = setInterval(leerCola, ESPERA_COLA);
+    leerCola();
     return true;
   }
   function desconectarAdjuntos() {
-    if (estado.adjuntos) for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+    if (estado.adjuntos) {
+      for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+      clearInterval(estado.adjuntos.reloj);
+    }
     estado.adjuntos = null;
+  }
+  // ---------- Lo que los adjuntos dejan en la base ----------
+  // Cada resultado o incidencia que manda un adjunto queda primero en la
+  // base (pareo_cola, por la Edge Function pareo-publicar con su código),
+  // así que nada se pierde si esta pestaña estaba cerrada o sin internet.
+  // Esta pestaña la lee —al abrir el torneo, con el toque «cola» del canal y
+  // cada 15 segundos—, la pasa en orden por las MISMAS reglas de siempre
+  // (recibirDeAdjunto, recibirNotaDeAdjunto) y la borra de la base. Necesita
+  // el torneo publicado: es su clave la que la lee. Ver «Pareo Integral: lo
+  // que anotan los adjuntos queda en la base».
+  const ESPERA_COLA = 15000;
+  let leyendoCola = false;
+  async function leerCola() {
+    if (leyendoCola || !estado.adjuntos || !window.PareoPublicar) return;
+    const idT = estado.adjuntos.idTorneo;
+    const v0 = torneoDelAdjunto();
+    if (!v0 || !v0.publicado) return;
+    leyendoCola = true;
+    try {
+      const r = await PareoPublicar.cola(v0.publicado);
+      if (!r.ok || !Array.isArray(r.cola) || !estado.adjuntos || estado.adjuntos.idTorneo !== idT) return;
+      estado.adjuntos.vistos = new Map((r.vistos || []).map((x) => [x.codigo, x.visto]));
+      let ultimo = 0;
+      for (const x of r.cola) {
+        if (!estado.adjuntos || estado.adjuntos.idTorneo !== idT) break;
+        const d = Object.assign({}, x.datos || {}, { ronda: x.ronda });
+        if (x.evento === "resultado") recibirDeAdjunto(x.codigo, d);
+        else if (x.evento === "nota") recibirNotaDeAdjunto(x.codigo, d);
+        ultimo = x.id;
+      }
+      if (ultimo) await PareoPublicar.colaBorrar(v0.publicado, ultimo);
+    } finally { leyendoCola = false; }
+  }
+  // La lista de enlaces de adjunto, a la base apenas cambia (sin esperar los
+  // 30 segundos de la publicación): un enlace nuevo ya anota por la base.
+  function sincronizarAdjuntos(v) {
+    if (v && v.publicado && window.PareoPublicar) PareoPublicar.adjuntos(v).catch(() => {});
   }
   const torneoDelAdjunto = () => estado.adjuntos && (estado.adjuntos.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.adjuntos.idTorneo, null));
   const adjuntoActivo = (v, codigo) => (v.adjuntos || []).find((a) => a.codigo === codigo && a.activo);
@@ -4107,7 +4155,11 @@
   // ---------- Los resultados para confirmar ----------
   // Las sorpresas de Elo (V.sorpresas) y lo que un adjunto anotó distinto.
   // No bloquea nada: cada uno se confirma con un botón, o se cambia.
-  function pintarConfirmar(caja, r) {
+  // También en el Centro del evento (`idBase` distinto, para no repetir ids
+  // con la ficha Rondas): cada botón vuelve a pintar la ficha abierta.
+  function pintarConfirmar(caja, r, idBase) {
+    const base = idBase || "pi-confirmar";
+    const repintar = () => (estado.ficha === "centro" ? pintarCentro() : pintarRondas());
     const v = t();
     const R = v.rondas[r];
     const vistas = new Set(R.confirmadas || []);
@@ -4118,21 +4170,21 @@
     const lista = el("ul", { class: "mt-2 space-y-2 text-sm" });
     for (const x of sorpresas) {
       const bien = el("button", { type: "button", class: C.mini, "data-confirmar": String(x.mesa) }, tx("confirmarBien"));
-      bien.addEventListener("click", () => { R.confirmadas = (R.confirmadas || []).concat(x.mesa + "|" + x.r); guardar(); pintarRondas(); });
+      bien.addEventListener("click", () => { R.confirmadas = (R.confirmadas || []).concat(x.mesa + "|" + x.r); guardar(); repintar(); });
       lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
         el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
           tx("sorpresaTexto", { m: x.mesa + 1, g: x.gana, p: x.pierde, d: x.dif })), bien));
     }
     for (const x of discrepancias) {
       const dejar = el("button", { type: "button", class: C.mini, "data-discrepancia": String(x.k) }, tx("discrepanciaDejar", { r: tx("corto_" + x.ya) }));
-      dejar.addEventListener("click", () => { R.discrepancias[x.k].resuelta = "dejar"; guardar(); pintarRondas(); });
+      dejar.addEventListener("click", () => { R.discrepancias[x.k].resuelta = "dejar"; guardar(); repintar(); });
       const poner = el("button", { type: "button", class: C.mini, "data-poner": String(x.k) }, tx("discrepanciaPoner", { r: tx("corto_" + x.r) }));
       poner.addEventListener("click", () => {
         const m = R.mesas[x.mesa - 1];
         if (x.tablero) { E.prepararMesa(v, m); m.partidas[x.tablero - 1].r = x.r; m.r = E.resultadoEncuentro(v, m); }
         else m.r = x.r;
         R.discrepancias[x.k].resuelta = "poner";
-        guardar(); pintarRondas();
+        guardar(); repintar();
       });
       lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
         el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
@@ -4154,19 +4206,182 @@
         if (x.tablero) { m.partidas[x.tablero - 1].r = x.r; m.r = E.resultadoEncuentro(v, m); }
         else m.r = x.r;
         R.deCamaras[x.k].resuelta = "anotado";
-        guardar(); pintarRondas();
+        guardar(); repintar();
       });
       const descartar = el("button", { type: "button", class: C.mini, "data-camara-descartar": String(x.k) }, tx("camaraDescartar"));
-      descartar.addEventListener("click", () => { R.deCamaras[x.k].resuelta = "descartado"; guardar(); pintarRondas(); });
+      descartar.addEventListener("click", () => { R.deCamaras[x.k].resuelta = "descartado"; guardar(); repintar(); });
       lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
         el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
           tx(ya && ya !== x.r ? "camaraDistinto" : "camaraConfirmar", { m: verLugar(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero)), r: tx("corto_" + x.r), y: ya ? tx("corto_" + ya) : "" })),
         r === v.rondas.length - 1 ? anotar : null, descartar,
         fotoDe(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero), x.hora) ? botonFoto(fotoDe(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero), x.hora)) : null));
     }
-    caja.append(el("section", { id: "pi-confirmar", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-confirmar-titulo" },
-      el("h3", { id: "pi-confirmar-titulo", class: "font-semibold", texto: tx("confirmarTitulo") }),
+    caja.append(el("section", { id: base, class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": base + "-titulo" },
+      el("h3", { id: base + "-titulo", class: "font-semibold", texto: tx("confirmarTitulo") }),
       el("p", { class: C.nota, texto: tx("confirmarTexto", { d: V.DIFERENCIA_SORPRESA }) }), lista));
+  }
+
+  // ---------- El Centro del evento ----------
+  // Todo el torneo de un vistazo para el árbitro principal, con lo que esta
+  // pestaña ya sabe: la ronda en juego y cuántas mesas faltan, lo que espera
+  // confirmación (la misma lista de la ficha Rondas, pintarConfirmar, más las
+  // segundas ilegales sin resultado), los árbitros adjuntos (su código, sus
+  // mesas, cuánto anotaron y la última vez que la base supo de ellos), las
+  // cámaras de Notara mesa por mesa y los enlaces para compartir. No guarda
+  // nada propio: cada acción es la de siempre (crear un enlace de adjunto,
+  // anotar lo de la cámara, ir a la ronda). Se vuelve a pintar sola cuando
+  // cambia lo que muestra (centroFirma), nunca con el foco adentro. Ver
+  // «Pareo Integral: el Centro del evento».
+  const ESPERA_CENTRO = 4000;
+  let relojCentro = null;
+  let firmaCentro = "";
+  const codigoLindo = (c) => String(c || "").slice(0, 4).toUpperCase() + "-" + String(c || "").slice(4).toUpperCase();
+  const deletreado = (c) => String(c || "").toUpperCase().split("").join(" ");
+  function haceCuanto(iso) {
+    const ms = Date.now() - new Date(iso).getTime();
+    if (!(ms >= 0)) return "";
+    const min = Math.floor(ms / 60000);
+    return min < 1 ? tx("centroHaceSeg") : min < 60 ? tx("centroHaceMin", { n: min }) : tx("centroHaceHoras", { n: Math.floor(min / 60) });
+  }
+  // Lo que pinta el Centro, en datos: si cambia, se vuelve a pintar.
+  function modeloCentro(v) {
+    const r = v.rondas.length - 1;
+    const R = v.rondas[r];
+    const nombre = (id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?";
+    const conRival = R.mesas.filter((m) => m.n != null);
+    const hechas = conRival.filter((m) => m.r).length;
+    // Las segundas ilegales de una mesa todavía sin resultado (art. 7.5.5).
+    const marcas = V.marcasIncidencias(R);
+    const ilegales = [];
+    R.mesas.forEach((m, k) => {
+      if (m.r || m.n == null) return;
+      for (const id of [m.b, m.n]) { const x = marcas.get(id); if (x && x.ilegales >= 2) ilegales.push({ mesa: V.mesaFisica(v, k), nombre: nombre(id) }); }
+    });
+    const vistos = (estado.adjuntos && estado.adjuntos.idTorneo === estado.id && estado.adjuntos.vistos) || new Map();
+    const adjuntos = (v.adjuntos || []).filter((a) => a.activo).map((a) => {
+      const [desde, hasta] = a.rango.split("-").map(Number);
+      const suyas = R.mesas.filter((m, k) => k + 1 >= desde && k + 1 <= hasta && m.n != null);
+      return { codigo: a.codigo, nombre: a.nombre || "", rango: a.rango, visto: vistos.get(a.codigo) || null,
+        anoto: suyas.filter((m) => m.adjunto === a.codigo && m.r).length, hechas: suyas.filter((m) => m.r).length, total: suyas.length };
+    });
+    const cam = estado.camaras && estado.camaras.idTorneo === estado.id ? estado.camaras : null;
+    const ahora = Date.now();
+    const camaras = !E.esDeEquipos(v) && v.camaras && v.camaras.activo ? R.mesas.map((m, k) => {
+      const f = V.mesaFisica(v, k), clave = claveCamara(f, null);
+      const ultima = cam && cam.mesas.get(clave);
+      const ayuda = cam && [...cam.alertas.values()].some((x) => x.m === clave);
+      // (Con if y no con ternarios: verificar-pareo-pagina.js toma las dos palabras de un ternario como claves de textos.)
+      let est = "sinSenal";
+      if (m.n == null) est = "bye";
+      else if (m.r) est = "termino";
+      else if (ayuda) est = "ayuda";
+      else if (ultima && ahora - ultima < SIN_NOTICIAS_MS) est = "transmite";
+      return { mesa: f, est };
+    }) : null;
+    return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, publicado: v.publicado ? v.publicado.id : null,
+      confirmar: JSON.stringify([R.discrepancias, R.deCamaras, R.confirmadas]) };
+  }
+  function pintarCentro() {
+    const cont = $("pi-centro");
+    clearInterval(relojCentro);
+    relojCentro = null;
+    if (!cont) return;
+    const v = t();
+    if (!v.rondas.length) {
+      firmaCentro = "";
+      cont.replaceChildren(el("h2", { class: "font-serif text-xl font-bold mb-2", texto: tx("fCentro") }),
+        el("p", { class: C.nota, texto: tx("centroSinRondas") }),
+        el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => irA("rondas", true) }, tx("centroIrRondas")));
+      return;
+    }
+    // Lo que alimenta esta ficha se conecta aunque no se haya abierto la ronda.
+    if ((v.adjuntos || []).some((a) => a.activo)) conectarAdjuntos();
+    if (!E.esDeEquipos(v) && v.camaras && v.camaras.activo) conectarCamaras();
+    const M = modeloCentro(v);
+    firmaCentro = JSON.stringify(M);
+    const tarjeta = (id, titulo, ...hijos) => el("section", { id, class: "rounded-xl border border-brand-100 dark:border-brand-800 p-4", "aria-labelledby": id + "-t" },
+      el("h3", { id: id + "-t", class: "font-semibold mb-2", texto: titulo }), ...hijos);
+    const terminada = M.hechas === M.total;
+    const ronda = el("section", { id: "pi-centro-ronda", class: "rounded-xl bg-brand-50 dark:bg-brand-800 p-4", "aria-labelledby": "pi-centro-ronda-t" },
+      el("p", { class: "text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-300", texto: tx(terminada ? "centroRondaTerminada" : "centroRondaEnJuego", { r: M.r + 1, n: T.rondasDelTorneo(v) }) }),
+      el("h3", { id: "pi-centro-ronda-t", class: "text-2xl font-bold", texto: tx("centroMesas", { k: M.hechas, n: M.total }) }),
+      el("progress", { class: "pi-centro-avance w-full max-w-md mt-2", max: String(Math.max(1, M.total)), value: String(M.total ? M.hechas : 1), "aria-label": tx("centroMesas", { k: M.hechas, n: M.total }) }),
+      el("div", { class: "flex flex-wrap gap-2 mt-3" },
+        el("button", { type: "button", id: "pi-centro-ir-ronda", class: terminada ? C.boton : C.botonSec, onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx(terminada ? "centroIrEmparejar" : "centroIrRonda"))));
+
+    // Lo que espera al árbitro principal.
+    const espera = el("div");
+    pintarConfirmar(espera, M.r, "pi-centro-confirmar");
+    const ilegales = M.ilegales.map((x) => el("li", { class: "flex flex-wrap items-center gap-2" },
+      el("span", { class: "font-semibold text-red-800 dark:text-red-200", texto: tx("centroSegundaIlegal", { m: x.mesa, n: x.nombre }) }),
+      el("button", { type: "button", class: C.mini, onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroDecidir"))));
+    const pendientes = tarjeta("pi-centro-pendientes", tx("centroPendientes"),
+      espera.childNodes.length || ilegales.length ? null : el("p", { class: C.nota, texto: tx("centroNadaEspera") }),
+      ilegales.length ? el("ul", { class: "space-y-2 text-sm mb-3" }, ilegales) : null, ...espera.childNodes);
+
+    // Los árbitros adjuntos.
+    const filasAdj = M.adjuntos.map((a) => el("li", { class: "flex flex-wrap items-center gap-3 py-2 border-t border-brand-100 dark:border-brand-800", "data-centro-adjunto": a.codigo },
+      el("div", { class: "flex-1 min-w-0" },
+        el("p", { class: "font-semibold" }, a.nombre || "—", el("span", { class: C.nota + " font-normal", texto: " · " + tx("centroSusMesas", { r: a.rango }) })),
+        el("p", { class: C.nota, texto: (a.visto ? tx("centroVisto", { h: haceCuanto(a.visto) }) : tx(M.publicado ? "centroNoEntro" : "centroSinBase")) + " · " + tx("centroAnoto", { k: a.anoto, h: a.hechas, n: a.total }) })),
+      el("strong", { class: "font-mono text-base bg-brand-50 dark:bg-brand-800 rounded-md px-2 py-1", "aria-label": tx("adjuntoCodigo") + " " + deletreado(a.codigo) }, codigoLindo(a.codigo))));
+    const adjuntos = tarjeta("pi-centro-adjuntos", tx("centroAdjuntos"),
+      M.adjuntos.length ? el("ul", {}, filasAdj) : el("p", { class: C.nota, texto: tx("centroSinAdjuntos") }),
+      M.publicado ? null : el("p", { class: C.nota + " mt-2", texto: tx("centroSinPublicar") }),
+      el("div", { class: "flex flex-wrap gap-2 mt-3" },
+        el("button", { type: "button", id: "pi-centro-agregar", class: C.botonSec, onclick: async () => { await enlaceAdjunto(M.r); if (estado.ficha === "centro") pintarCentro(); } }, tx("centroAgregar")),
+        M.adjuntos.length ? el("button", { type: "button", id: "pi-centro-codigos", class: C.botonSec, onclick: () => imprimirCodigos(v) }, tx("centroCodigosPapel")) : null),
+      el("p", { class: C.nota + " mt-2" }, tx("centroDondeEntran"), " ", el("span", { class: "font-mono", texto: location.origin + "/mesa-arbitro.html" })));
+
+    // Las cámaras de Notara.
+    const EST = { transmite: ["centroCamTransmite", "text-green-800 dark:text-green-300"], termino: ["centroCamTermino", "text-brand-600 dark:text-brand-300"],
+      ayuda: ["centroCamAyuda", "text-red-800 dark:text-red-200"], sinSenal: ["centroCamSinSenal", "text-accent-700 dark:text-accent-300"], bye: ["centroCamBye", "text-brand-600 dark:text-brand-300"] };
+    const camaras = tarjeta("pi-centro-camaras", tx("centroCamaras"),
+      M.camaras ? el("ul", { class: "grid grid-cols-3 sm:grid-cols-5 gap-2" }, M.camaras.map((c) => el("li", { class: "rounded-lg border border-brand-100 dark:border-brand-800 p-2 text-center", "data-centro-camara": String(c.mesa), "data-estado": c.est },
+        el("p", { class: "font-bold", texto: tx("mesa") + " " + c.mesa }),
+        el("p", { class: "text-xs font-semibold " + EST[c.est][1], texto: tx(EST[c.est][0]) }))))
+        : el("p", { class: C.nota, texto: tx(E.esDeEquipos(v) ? "centroCamEquipos" : "centroSinCamaras") }),
+      M.camaras ? null : el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroIrRonda")));
+
+    // Los enlaces para compartir.
+    const copiar = (url) => async () => {
+      try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
+      catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+    };
+    const enlace = (titulo, url) => el("li", { class: "flex flex-wrap items-center gap-2 py-2 border-t border-brand-100 dark:border-brand-800" },
+      el("div", { class: "flex-1 min-w-0" }, el("p", { class: "font-semibold text-sm", texto: titulo }), el("p", { class: C.nota + " break-all", texto: url })),
+      el("button", { type: "button", class: C.mini, onclick: copiar(url) }, tx("copiarEnlace")));
+    const enlaces = tarjeta("pi-centro-enlaces", tx("centroEnlaces"), el("ul", {},
+      M.publicado ? enlace(tx("centroEnlacePublico"), PareoPublicar.enlace(M.publicado)) : null,
+      enlace(tx("centroEnlaceMesa"), location.origin + "/mesa-arbitro.html")));
+
+    cont.replaceChildren(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("fCentro") + (v.nombre ? " · " + v.nombre : "") }),
+      el("p", { class: C.nota + " mb-4", texto: tx("centroTexto") }),
+      el("div", { class: "grid lg:grid-cols-2 gap-4" },
+        el("div", { class: "space-y-4" }, ronda, pendientes),
+        el("div", { class: "space-y-4" }, adjuntos, camaras, enlaces)));
+    // Se pone al día sola mientras está abierta, sin quitarle el foco a nadie.
+    relojCentro = setInterval(() => {
+      if (estado.ficha !== "centro" || !estado.t || !estado.t.rondas.length) return;
+      if (cont.contains(document.activeElement) && document.activeElement !== document.body) return;
+      if (JSON.stringify(modeloCentro(t())) !== firmaCentro) pintarCentro();
+    }, ESPERA_CENTRO);
+  }
+  // Los códigos de los adjuntos en papel: una fila por árbitro (nombre, mesas
+  // y código) y dónde se escriben, sin el enlace. Con la plantilla de la
+  // pared (misma hoja y marca de agua).
+  function imprimirCodigos(v) {
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    const cont = $("pi-plantilla");
+    empezarHoja(cont, el("div", { class: "pi-plantilla-hoja" },
+      el("h1", { class: "pi-plantilla-titulo", texto: tx("centroCodigosTitulo") }),
+      v.nombre ? el("p", { class: "pi-plantilla-torneo", texto: v.nombre }) : null,
+      el("p", { texto: tx("centroCodigosComo", { u: location.host + "/mesa-arbitro.html" }) }),
+      el("table", { class: "pi-plantilla-tabla" },
+        el("thead", {}, el("tr", {}, el("th", { texto: tx("centroArbitro") }), el("th", { texto: tx("centroMesasCol") }), el("th", { texto: tx("centroCodigo") }))),
+        el("tbody", {}, activos.map((a) => el("tr", {}, el("td", { texto: a.nombre || "—" }), el("td", { texto: a.rango }), el("td", { class: "font-mono", texto: codigoLindo(a.codigo) })))))));
+    imprimirCon("pi-imprimiendo-plantilla");
   }
 
   async function mostrarAdjuntos(cont) {
@@ -4189,12 +4404,16 @@
         if (!ok) return;
         a.activo = false;
         guardar();
+        sincronizarAdjuntos(v);
         await conectarAdjuntos();
         pintarRondas();
         Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
       });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
         el("h4", { class: "font-semibold", texto: (a.nombre ? a.nombre + " · " : "") + tx("adjuntoListo", { r: a.rango }) }),
+        // El código para escribir a mano en la Mesa del árbitro (sin cámara para el QR).
+        el("p", { class: "pi-adjunto-codigo text-sm mt-1" }, tx("adjuntoCodigo"), " ",
+          el("strong", { class: "font-mono text-base", "aria-label": a.codigo.toUpperCase().split("").join(" ") }, a.codigo.slice(0, 4).toUpperCase() + "-" + a.codigo.slice(4).toUpperCase())),
         el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
         el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
         el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));

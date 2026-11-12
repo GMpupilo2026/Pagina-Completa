@@ -296,6 +296,8 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
 
       console.log("\n=== Todo lo que se dijo ===");
       await page.click("text=Todo lo que se dijo, minuto a minuto");
+      // El evento toggle llega después del clic: se espera a que estén dibujados.
+      await page.waitForSelector("#lista details p button", { timeout: 3000 }).catch(() => {});
       igual("minuto a minuto, cada uno con su botón", await page.$$eval("#lista details p button", (b) => b.map((x) => x.textContent)), ["0:00", "1:00", "2:00"]);
       igual("sin errores en la página", errores, []);
       await ctx.close();

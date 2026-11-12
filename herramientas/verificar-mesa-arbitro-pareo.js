@@ -19,6 +19,13 @@
      «Segunda ilegal: decide el resultado»;
    - la irregularidad y la nota libre le llegan y quedan en la bitácora;
    - el enlace no queda guardado en el navegador;
+   - SIN la base (la función caída), todo va por el canal como antes; CON
+     ella: se entra con el código solo («ABCD-2345») y la base da las mesas,
+     un resultado y una nota van a la cola de la base (no por el canal: solo
+     el toque «cola»), la mesa dice «Guardado…» y queda enviado cuando el
+     principal lo trae; lo que la base rechaza por una regla se dice y la
+     mesa se puede volver a anotar; y con el principal callado, las mesas
+     salen del torneo publicado;
    - el documento de la bitácora dice Pareo Integral, no chess-results;
    - a 390 px no se desplaza a lo ancho, y no hay errores en la página.
 
@@ -50,7 +57,11 @@ const doble = `(function(){
     mesas: [{ m: 1, f: 1, b: "Rojas Mora, Ana", n: "Vargas Solis, Bruno", r: null }, { m: 2, f: 2, b: "Diaz Ulate, Daniel", n: "Esquivel Brenes, Elena", r: null },
             { m: 3, f: 3, b: "Fallas Arce, Fabio", n: "Herrera Quiros, Hugo", r: "0-1" }, { m: 4, f: 4, b: "Ibarra Loria, Ines", n: null, r: "bye" }] };
   const ilegales = {};
-  window.__principal = { otroEnLaMesa: null };
+  window.__principal = { otroEnLaMesa: null, mudo: false,
+    // Lo que hace su Pareo al leer la cola: acepta y manda su estado.
+    aceptar: (mesa, r) => { T.mesas[mesa - 1].r = r; (window.__oyentesAdjunto.estado || []).forEach((cb) => cb({ payload: estado() })); },
+    limpiar: () => { T.mesas[0].r = null; T.mesas[1].r = null; } };
+  window.__oyentesAdjunto = {};
   function estado() {
     const marca = (m, lado) => { const n = ilegales[m.m + lado] || 0; return n ? { t: "i".repeat(n), pierde: n >= 2 } : null; };
     return { nombre: T.nombre, ronda: T.ronda, principal: T.principal, arbitro: T.arbitro,
@@ -66,6 +77,10 @@ const doble = `(function(){
     rpc: (f, a) => R(f === "tengo_herramienta" ? a.p_herramienta === "mesa-arbitro" : f === "arbitro_torneos_mis" ? [] : null),
     functions: { invoke: () => R({ error: "no se usa" }) },
     from: (t) => {
+      // El torneo publicado (de lectura pública): la ronda 2 con la mesa 1 ya en 1-0.
+      if (t === "pareo_publicados") { const q = {}; ["select","eq"].forEach((m) => q[m] = () => q); q.maybeSingle = () => R({ nombre: "U12", datos: { nombre: "Eliminatoria JDN PZ · U12",
+        jugadores: [["a","Rojas Mora, Ana"],["b","Vargas Solis, Bruno"],["c","Diaz Ulate, Daniel"],["d","Esquivel Brenes, Elena"]].map(([id, nombre]) => ({ id, nombre })),
+        rondas: [{ mesas: [{ b: "a", n: "c", r: "1-0" }] }, { mesas: [{ b: "c", n: "a", r: "1-0" }, { b: "b", n: "d", r: null }] }] } }); return q; }
       if (t !== "arbitro_bitacora") { const q = {}; ["select","eq","order","range","in","single","maybeSingle","limit","update","insert"].forEach((m) => q[m] = () => q); q.then = (ok) => Promise.resolve({ data: [], error: null }).then(ok); return q; }
       return {
         insert: (rows) => { for (const r of rows) if ((r.tnr == null) === (r.pareo == null)) return R(null, { message: "violates check constraint arbitro_bitacora_un_torneo" });
@@ -77,6 +92,7 @@ const doble = `(function(){
     channel: (nombre) => {
       window.__canales.push(nombre);
       const oyentes = {};
+      if (nombre === "pareo-adjunto-${CODIGO}") window.__oyentesAdjunto = oyentes;
       const emitir = (ev, payload) => setTimeout(() => (oyentes[ev] || []).forEach((cb) => cb({ payload })), 30);
       const c = {
         on(tipo, filtro, cb) { (oyentes[filtro.event] = oyentes[filtro.event] || []).push(cb); return c; },
@@ -84,7 +100,7 @@ const doble = `(function(){
         unsubscribe() {},
         send(msg) {
           window.__mandados.push([msg.event, msg.payload]);
-          if (nombre !== "pareo-adjunto-${CODIGO}") return;
+          if (nombre !== "pareo-adjunto-${CODIGO}" || window.__principal.mudo) return;
           const p = msg.payload || {};
           if (msg.event === "pedir") emitir("estado", estado());
           if (msg.event === "resultado") {
@@ -113,9 +129,26 @@ const doble = `(function(){
     await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
+    // Un doble de la Edge Function pareo-publicar: «caida» (como sin
+    // internet hacia ella, o una versión vieja: todo por el canal) o «base».
+    const fn = { modo: "caida", entradas: [], cola: [], rechazar: false };
+    await ctx.route("**/functions/v1/pareo-publicar", (r) => {
+        if (fn.modo === "caida") return r.abort();
+        const b = JSON.parse(r.request().postData() || "{}");
+        const responder = (x) => r.fulfill({ contentType: "application/json", body: JSON.stringify(x) });
+        if (b.codigo !== CODIGO) return responder({ ok: false, motivo: "no", error: "Ese código no es de ningún árbitro de un torneo publicado." });
+        if (b.accion === "adjunto_entrar") { fn.entradas.push(b.codigo); return responder({ ok: true, id: "11111111-2222-3333-4444-555555555555", nombre: "U12", arbitro: "Adjunta de prueba", desde: 1, hasta: 3 }); }
+        if (b.accion === "adjunto_anotar") {
+            if (fn.rechazar) return responder({ ok: false, motivo: "mesa", error: "Esa mesa no es de las tuyas." });
+            fn.cola.push({ evento: b.evento, ronda: b.ronda, datos: b.datos });
+            return responder({ ok: true, id: fn.cola.length });
+        }
+        return responder({ ok: false, error: "Acción desconocida." });
+    });
     const p = await ctx.newPage();
     const errores = [];
-    p.on("pageerror", (e) => errores.push(e.message));
+    p.on("pageerror", (e) => { errores.push(e.message); if (process.env.DBG) console.log("   [error]", e.message); });
+    if (process.env.DBG) p.on("console", (m) => console.log("   [consola]", m.text()));
     await p.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
 
@@ -163,7 +196,7 @@ const doble = `(function(){
     };
     // La ilegal se prueba en la mesa 1 (ya con resultado: los botones de los jugadores siguen).
     await anotarIlegal().catch((e) => console.log("      (no se pudo tocar el cuadro: " + e.message + ")"));
-    await p.waitForFunction(() => window.__insertados.some((r) => r.tipo === "ilegal"), null, { timeout: 5000 }).catch(() => {});
+    await p.waitForFunction(() => window.__insertados.some((r) => r.tipo === "ilegal") && window.__mandados.some((x) => x[0] === "nota"), null, { timeout: 5000 }).catch(() => {});
     igual("la ilegal le llega al principal como sanción, con el artículo «ilegal» y el lado del jugador",
         await p.evaluate(() => { const n = window.__mandados.find((x) => x[0] === "nota"); return n && [n[1].mesa, n[1].lado, n[1].tipo, n[1].articulo, n[1].autor]; }), [1, "n", "sancion", "ilegal", "Adjunta de prueba"]);
     igual("y queda en la bitácora con el jugador, el color y el art. 7.5.5", await p.evaluate(() => { const r = window.__insertados.find((x) => x.tipo === "ilegal"); return r && [r.pareo, r.mesa, r.color, r.jugador, r.articulo]; }),
@@ -174,13 +207,58 @@ const doble = `(function(){
     await p.fill("#p-nota-texto", "Sonó un celular en la sala, cerca de la mesa 2.");
     await p.selectOption("#p-nota-mesa", "2");
     await p.click("#p-nota-agregar");
-    await p.waitForFunction(() => window.__insertados.some((r) => r.tipo === "incidencia"), null, { timeout: 5000 }).catch(() => {});
+    await p.waitForFunction(() => window.__insertados.some((r) => r.tipo === "incidencia") && window.__mandados.filter((x) => x[0] === "nota").length >= 2, null, { timeout: 5000 }).catch(() => {});
     igual("la nota libre le llega al principal y queda en la bitácora", await p.evaluate(() => {
         const n = window.__mandados.filter((x) => x[0] === "nota").pop()[1]; const r = window.__insertados.find((x) => x.tipo === "incidencia");
         return [n.tipo, n.mesa, n.texto, r && r.pareo, r && r.mesa];
     }), ["otra", 2, "Sonó un celular en la sala, cerca de la mesa 2.", "abcd2345", 2]);
     igual("la bitácora de la página muestra lo anotado", await p.$$eval("#p-lineas tr", (f) => f.map((tr) => tr.dataset.tipo)), ["resultado", "ilegal", "incidencia"]);
     igual("el enlace no queda guardado en el navegador", await p.evaluate(() => Object.keys(localStorage).some((k) => (localStorage.getItem(k) || "").includes("abcd2345"))), false);
+
+    console.log("\n=== Lo que se anota queda en la base ===");
+    fn.modo = "base";
+    await p.evaluate(() => { window.__principal.limpiar(); window.__mandados.length = 0; });
+    await p.fill("#p-enlace", "ABCD-2345");
+    await p.click("#p-conectar");
+    await p.waitForFunction(() => document.querySelectorAll("#p-mesas tr").length > 0 && window.__mandados.some((x) => x[0] === "pedir"), null, { timeout: 5000 }).catch(() => {});
+    igual("se entra con el código solo, escrito como venga, y la base da las mesas (1 a 3)", [fn.entradas, await p.evaluate(() => [...document.querySelectorAll("#p-mesas tr")].map((tr) => tr.dataset.mesa))],
+        [[CODIGO], ["1", "2", "3"]]);
+    const enBitacora = await p.evaluate(() => window.__insertados.length);
+    await p.click('#p-mesas tr[data-mesa="1"] button[data-r="="]');
+    await p.waitForFunction(() => window.__mandados.some((x) => x[0] === "cola"), null, { timeout: 5000 }).catch(() => {});
+    igual("el resultado va a la cola de la base con la ronda y la mesa", fn.cola, [{ evento: "resultado", ronda: 2, datos: { mesa: 1, r: "=" } }]);
+    igual("por el canal va solo el toque «cola», no el resultado", await p.evaluate(() => window.__mandados.filter((x) => x[0] !== "pedir").map((x) => x[0])), ["cola"]);
+    igual("la mesa dice que quedó guardado", await p.$eval('#p-mesas tr[data-mesa="1"]', (tr) => tr.textContent.includes("Guardado: el principal lo recibe en cuanto se conecte.")), true);
+    igual("y todavía no queda como enviado", await p.evaluate((n) => window.__insertados.length - n, enBitacora), 0);
+    await p.evaluate(() => window.__principal.aceptar(1, "="));
+    await p.waitForFunction((n) => window.__insertados.length > n, enBitacora, { timeout: 5000 }).catch(() => {});
+    igual("queda enviado cuando el principal lo trae", await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.mesa, r.resultado, r.enviado]; }), ["resultado", 1, "1/2", true]);
+
+    fn.rechazar = true;
+    await p.click('#p-mesas tr[data-mesa="2"] button[data-r="1-0"]');
+    await p.waitForFunction(() => document.body.innerText.includes("no se tomó"), null, { timeout: 5000 }).catch(() => {});
+    igual("lo que la base rechaza por una regla se dice, y la mesa se puede volver a anotar",
+        [await p.evaluate(() => document.body.innerText.includes("La mesa 2 no se tomó: Esa mesa no es de las tuyas.")), await p.$eval('#p-mesas tr[data-mesa="2"] button[data-r="1-0"]', (b) => b.disabled)], [true, false]);
+    fn.rechazar = false;
+
+    await p.fill("#p-nota-texto", "El reloj de la mesa 2 se apagó.");
+    await p.selectOption("#p-nota-mesa", "2");
+    await p.click("#p-nota-agregar");
+    await p.waitForFunction(() => window.__mandados.filter((x) => x[0] === "cola").length >= 2, null, { timeout: 5000 }).catch(() => {});
+    igual("la nota también va a la cola de la base", fn.cola.slice(1).map((x) => [x.evento, x.ronda, x.datos.mesa, x.datos.texto]), [["nota", 2, 2, "El reloj de la mesa 2 se apagó."]]);
+
+    // Con el principal callado (su Pareo cerrado): las mesas del torneo publicado.
+    await p.evaluate(() => { window.__principal.mudo = true; });
+    await p.fill("#p-enlace", CODIGO);
+    await p.click("#p-conectar");
+    await p.waitForFunction(() => /no está conectado/.test(document.getElementById("p-estado").textContent), null, { timeout: 15000 }).catch(() => {});
+    igual("con el principal callado, las mesas salen del torneo publicado y se dice por qué",
+        await p.evaluate(() => [document.getElementById("p-estado").textContent.startsWith("El árbitro principal no está conectado"), document.getElementById("p-torneo").textContent,
+            [...document.querySelectorAll("#p-mesas tr")].map((tr) => [tr.dataset.mesa, tr.dataset.estado, tr.children[1].textContent.trim()])]),
+        [true, "Eliminatoria JDN PZ · U12 · ronda 2 · tus mesas: 1 a 3", [["1", "con-resultado", "Diaz Ulate, DanielIlegalIrregularidad"], ["2", "libre", "Vargas Solis, BrunoIlegalIrregularidad"]]]);
+    await p.click('#p-mesas tr[data-mesa="2"] button[data-r="0-1"]');
+    await p.waitForFunction(() => window.__mandados.filter((x) => x[0] === "cola").length >= 3, null, { timeout: 5000 }).catch(() => {});
+    igual("y lo que se anota igual queda en la base", fn.cola[fn.cola.length - 1], { evento: "resultado", ronda: 2, datos: { mesa: 2, r: "0-1" } });
 
     console.log("\n=== El documento y el celular ===");
     const doc = M.documento({ pareo: CODIGO, torneo: "U12" }, [{ tipo: "resultado", resultado: "1-0", enviado: true, pareo: CODIGO, ocurrio: "x" }], "Adjunta", String);

@@ -307,6 +307,8 @@ async function pruebaCelulares(browser) {
   await page.fill("#pi-adj-autor", "PRUEBA ADJUNTO");
   await page.selectOption("#pi-adj-nota-mesa", "1");
   await page.click("#pi-adj-nota-mandar");
+  // Primero prueba la base (en las pruebas no contesta) y después va por el canal.
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "nota"), null, { timeout: 5000 }).catch(() => {});
   const mandada = await page.evaluate(() => window.__enviados.filter((x) => x.evento === "nota").pop());
   igual("manda la nota con su nombre y su mesa", mandada && mandada.payload, { autor: "PRUEBA ADJUNTO", texto: "Reclamo de tablas por repetición.", mesa: 1, lado: null, tipo: "reclamo", articulo: null });
   // Llega un resultado nuevo: lo escrito no se pierde.

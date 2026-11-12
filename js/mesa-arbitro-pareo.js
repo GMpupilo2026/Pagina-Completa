@@ -16,6 +16,17 @@
      ronda (una ilegal va con el artículo «ilegal»: Pareo la cuenta para la
      marca de la partida y avisa de la segunda).
 
+   LO QUE SE MANDA QUEDA EN LA BASE: cada resultado y cada incidencia van
+   primero a la Edge Function pareo-publicar con el código del enlace
+   (PareoPublicar.mandarAdjunto, en js/pareo/publicar.js), que los deja en
+   pareo_cola hasta que el Pareo del principal los lee; si eso no se puede,
+   por el canal como antes. Y si el principal no contesta, las mesas se leen
+   del torneo publicado (pareo_publicados, de lectura pública): se puede
+   trabajar con su computadora cerrada, y un resultado que ya sale publicado
+   es uno que el principal aceptó. Se entra también con el código de 8 letras
+   solo, sin el enlace (sin cámara para el QR). Ver «Pareo Integral: lo que
+   anotan los adjuntos queda en la base».
+
    LA BITÁCORA (arbitro_bitacora, con la columna `pareo` = el código del
    enlace): un resultado queda «enviado» SOLO cuando el estado que contesta el
    principal ya lo trae en esa mesa, nunca por haberlo mandado (la misma
@@ -43,7 +54,10 @@
     let rango = [1, 999];
     let estado = null; // el último «estado» del principal
     let lineas = [];
-    const esperando = new Map(); // mesa → { r, ronda, hora }: mandado y sin confirmar
+    const esperando = new Map(); // mesa → { r, ronda, hora, enBase }: mandado y sin confirmar
+    let torneoId = null; // el torneo publicado de este enlace (lo dice la base al entrar con el código)
+    let ultimoEnVivo = 0; // la hora del último «estado» que mandó el principal por el canal
+    let relojPublicado = null;
 
     function el(tag, attrs, ...hijos) {
         const n = document.createElement(tag);
@@ -58,12 +72,14 @@
         return n;
     }
 
-    // «…#adjunto=abcd2345&m=1-10», «adjunto=…» o solo el código.
+    // «…#adjunto=abcd2345&m=1-10», «adjunto=…» o solo el código, escrito como
+    // venga («ABCD-2345», con espacios): el rango, si no viene, lo dice la base.
     function leerEnlace(texto) {
         const s = String(texto || "").trim();
-        const m = s.match(/adjunto=([a-z2-9]{8})(?:&m=(\d+)-(\d+))?/) || s.match(/^([a-z2-9]{8})$/);
-        if (!m) return null;
-        return { codigo: m[1], rango: m[2] ? [Number(m[2]), Number(m[3])] : [1, 999] };
+        const m = s.match(/adjunto=([a-z2-9]{8})(?:&m=(\d+)-(\d+))?/);
+        if (m) return { codigo: m[1], rango: m[2] ? [Number(m[2]), Number(m[3])] : [1, 999], conRango: !!m[2] };
+        const solo = s.replace(/[\s-]/g, "").toLowerCase();
+        return /^[a-hjkmnp-z2-9]{8}$/.test(solo) ? { codigo: solo, rango: [1, 999], conRango: false } : null;
     }
 
     const misMesas = () => ((estado && estado.mesas) || []).filter((m) => m.m >= rango[0] && m.m <= rango[1]);
@@ -126,7 +142,7 @@
                     RAPIDOS.map(([r, t]) => el("button", { type: "button", "data-r": r, disabled: !!espera, class: BTN + " border border-brand-300 dark:border-brand-600", "aria-label": "Mesa " + (m.f || m.m) + ": " + M.textoResultado(M.valorDePareo(r)), onclick: () => mandar(m, r) }, t)),
                     el("select", { "data-otros": String(m.m), disabled: !!espera, "aria-label": "Otro resultado de la mesa " + (m.f || m.m), class: "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm", onchange: (e) => { if (e.target.value) mandar(m, e.target.value); } },
                         el("option", { value: "", texto: "Otro…" }), OTROS.map(([r, t]) => el("option", { value: r, texto: t }))),
-                    espera ? el("span", { class: "text-sm", role: "status", texto: "Mandado: esperando al principal…" }) : null);
+                    espera ? el("span", { class: "text-sm", role: "status", texto: espera.enBase ? "Guardado: el principal lo recibe en cuanto se conecte." : "Mandado: esperando al principal…" }) : null);
             return el("tr", { "data-mesa": String(m.m), "data-estado": pierde ? "pierde" : m.r ? "con-resultado" : "libre", class: "border-t border-brand-100 dark:border-brand-800" },
                 el("td", { class: "py-2 pr-3 align-top font-semibold" + (pierde ? " border-l-4 border-red-600 pl-3" : "") }, String(m.f || m.m),
                     pierde ? el("p", { "data-pierde": "si", class: "text-xs font-semibold text-red-700 dark:text-red-300 mt-1", texto: "Segunda ilegal: decide el resultado" }) : null),
@@ -139,15 +155,37 @@
         if ([...sel.options].some((o) => o.value === antes)) sel.value = antes;
     }
 
-    function mandar(m, r) {
+    // Primero a la base (queda guardado aunque el principal no esté) y, si no
+    // se puede, por el canal en vivo como antes.
+    async function aLaBase(evento, ronda, payload) {
+        if (!window.PareoPublicar) { canal.send({ type: "broadcast", event: evento, payload }); return "canal"; }
+        return window.PareoPublicar.mandarAdjunto(canal, codigo, evento, ronda, payload);
+    }
+
+    async function mandar(m, r) {
         if (!canal || !estado) return;
-        esperando.set(m.m, { r, ronda: estado.ronda, hora: Date.now() });
-        canal.send({ type: "broadcast", event: "resultado", payload: { ronda: estado.ronda, mesa: m.m, r } });
+        const ronda = estado.ronda;
+        esperando.set(m.m, { r, ronda, hora: Date.now() });
         pintarMesas();
-        // Si el principal no contesta (su Pareo cerrado), se dice y se puede volver a mandar.
+        const via = await aLaBase("resultado", ronda, { ronda, mesa: m.m, r });
+        const e0 = esperando.get(m.m);
+        if (via && via.rechazo) {
+            if (e0 && e0.r === r) esperando.delete(m.m);
+            pintarMesas();
+            avisar("La mesa " + (m.f || m.m) + " no se tomó: " + (via.error || "inténtalo de nuevo."), true);
+            return;
+        }
+        if (via === "base") {
+            // Guardado: el principal lo recibe al conectarse; se confirma cuando
+            // él lo trae (por el canal o en el torneo publicado).
+            if (e0 && e0.r === r) e0.enBase = true;
+            pintarMesas();
+            return;
+        }
+        // Solo por el canal: si el principal no contesta (su Pareo cerrado), se dice y se puede volver a mandar.
         setTimeout(() => {
             const e = esperando.get(m.m);
-            if (e && e.r === r && Date.now() - e.hora >= 9000) {
+            if (e && e.r === r && !e.enBase && Date.now() - e.hora >= 9000) {
                 esperando.delete(m.m);
                 pintarMesas();
                 avisar("El árbitro principal no contestó por la mesa " + (m.f || m.m) + ": ¿tiene abierto su Pareo Integral? Vuelve a mandarlo.", true);
@@ -156,8 +194,9 @@
     }
 
     // Un estado nuevo: lo que se mandó y ya está en la mesa queda en la bitácora como enviado.
-    async function alLlegar(d) {
+    async function alLlegar(d, delPublicado) {
         if (d.apagado) { $("p-estado").textContent = "El árbitro principal apagó este enlace."; desconectar(); return; }
+        if (!delPublicado) ultimoEnVivo = Date.now();
         estado = d;
         const confirmadas = [];
         for (const [mesa, e] of esperando) {
@@ -166,7 +205,9 @@
             if (m.r === e.r) { confirmadas.push({ ronda: e.ronda, mesa, tipo: "resultado", resultado: M.nombreBitacora(M.valorDePareo(e.r)), enviado: true, texto: (m.b || "") + " – " + (m.n || "") }); esperando.delete(mesa); }
             else if (m.r) { esperando.delete(mesa); avisar("La mesa " + (m.f || m.m) + " ya tenía otro resultado en Pareo («" + textoR(m.r) + "»): no se cambió.", true); }
         }
-        $("p-estado").textContent = "Conectado con el árbitro principal" + (d.principal ? " (" + d.principal + ")" : "") + ".";
+        $("p-estado").textContent = delPublicado
+            ? "El árbitro principal no está conectado: estas son las mesas del torneo publicado. Lo que anotes queda guardado y él lo recibe en cuanto abra su Pareo Integral."
+            : "Conectado con el árbitro principal" + (d.principal ? " (" + d.principal + ")" : "") + ".";
         pintarMesas();
         if (confirmadas.length) {
             try { await escribir(confirmadas); await cargarBitacora(); avisar(confirmadas.length === 1 ? "Resultado aceptado por el árbitro principal." : confirmadas.length + " resultados aceptados por el árbitro principal."); }
@@ -189,7 +230,8 @@
     }
 
     function avisarPrincipal(m, lado, tipo, articulo, texto) {
-        canal.send({ type: "broadcast", event: "nota", payload: Object.assign({ mesa: m ? m.m : null, tipo, texto: texto.slice(0, 500), autor: autor().slice(0, 60) }, lado ? { lado } : {}, articulo ? { articulo } : {}) });
+        aLaBase("nota", estado ? estado.ronda : 0, Object.assign({ mesa: m ? m.m : null, tipo, texto: texto.slice(0, 500), autor: autor().slice(0, 60) }, lado ? { lado } : {}, articulo ? { articulo } : {}))
+            .then((via) => { if (via && via.rechazo) avisar("No le llegó al principal: " + (via.error || "inténtalo de nuevo."), true); });
     }
 
     async function ilegal(m, lado) {
@@ -237,14 +279,48 @@
     function desconectar() {
         if (canal) canal.unsubscribe();
         canal = null;
+        clearInterval(relojPublicado);
+        relojPublicado = null;
     }
+
+    // Las mesas de la ronda en juego, del torneo publicado: lo que se ve
+    // cuando el principal no contesta por el canal. Sin las marcas de las
+    // incidencias (no se publican); en equipos, no (los tableros salen del
+    // principal).
+    async function leerPublicado() {
+        if (!torneoId || !canal || Date.now() - ultimoEnVivo < 30000) return;
+        // El principal solo manda su estado cuando algo cambia: antes de dar
+        // por hecho que no está, se le pregunta.
+        const antes = ultimoEnVivo;
+        canal.send({ type: "broadcast", event: "pedir", payload: {} });
+        await new Promise((listo) => setTimeout(listo, 3000));
+        if (ultimoEnVivo !== antes || !canal) return;
+        const { data, error } = await window.sb.from("pareo_publicados").select("nombre, datos").eq("id", torneoId).maybeSingle();
+        if (error || !data || !data.datos || data.datos.tipo === "equipos" || Date.now() - ultimoEnVivo < 30000) return;
+        const t = data.datos, R = (t.rondas || [])[(t.rondas || []).length - 1];
+        if (!R) return;
+        const nombre = new Map((t.jugadores || []).map((j) => [j.id, j.nombre]));
+        alLlegar({
+            nombre: t.grupo || t.nombre || data.nombre || "", ronda: t.rondas.length, arbitro: (estado && estado.arbitro) || arbitroBase,
+            mesas: (R.mesas || []).map((m, i) => ({ m: i + 1, f: i + 1, b: nombre.get(m.b) || "?", n: m.n == null ? null : nombre.get(m.n) || "?", r: m.r || null })),
+        }, true);
+    }
+    let arbitroBase = "";
 
     async function conectar() {
         const x = leerEnlace($("p-enlace").value);
         if (!x) { avisar("Ese no es un enlace de árbitro de Pareo Integral: tiene que traer «#adjunto=» y un código de 8 letras.", true); return; }
         desconectar();
         codigo = x.codigo; rango = x.rango; estado = null; esperando.clear();
+        torneoId = null; ultimoEnVivo = 0; arbitroBase = "";
         pintarMesas();
+        // La base dice de qué torneo es el código y cuáles son sus mesas (si no
+        // contesta, se sigue con el enlace, como antes).
+        if (window.PareoPublicar) {
+            const r = await window.PareoPublicar.entrarAdjunto(codigo);
+            if (r.ok) { torneoId = r.id; rango = [r.desde, r.hasta]; arbitroBase = r.arbitro || ""; }
+            else if (r.motivo === "apagado" || (r.motivo === "no" && !x.conRango)) { $("p-estado").textContent = r.error; avisar(r.error, true); return; }
+        } else if (!x.conRango) { avisar("Con solo el código no se pudo entrar: pega el enlace completo.", true); return; }
         $("p-estado").textContent = "Conectando con el Pareo Integral del árbitro principal…";
         canal = window.sb.channel("pareo-adjunto-" + codigo);
         canal.on("broadcast", { event: "estado" }, (msg) => { alLlegar(msg.payload || {}); });
@@ -252,7 +328,13 @@
             if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} });
             else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT") $("p-estado").textContent = "No se pudo conectar. Revisa la conexión y vuelve a tocar «Conectar».";
         });
-        setTimeout(() => { if (canal && !estado) $("p-estado").textContent = "Conectado, pero el árbitro principal no contesta: ¿tiene abierto su Pareo Integral con este torneo?"; }, 8000);
+        setTimeout(() => {
+            if (!canal || estado) return;
+            if (torneoId) leerPublicado();
+            else $("p-estado").textContent = "Conectado, pero el árbitro principal no contesta: ¿tiene abierto su Pareo Integral con este torneo?";
+        }, 8000);
+        // Mientras el principal no conteste, el torneo publicado cada 20 segundos.
+        if (torneoId) relojPublicado = setInterval(leerPublicado, 20000);
         await cargarBitacora();
     }
 
