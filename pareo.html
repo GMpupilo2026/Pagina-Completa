@@ -122,6 +122,7 @@
                 <button type="button" role="tab" id="pi-f-torneo" aria-controls="pi-p-torneo" data-ficha="torneo" class="pi-ficha" data-t="fTorneo">Torneo</button>
                 <button type="button" role="tab" id="pi-f-jugadores" aria-controls="pi-p-jugadores" data-ficha="jugadores" class="pi-ficha" data-t="fJugadores">Jugadores</button>
                 <button type="button" role="tab" id="pi-f-rondas" aria-controls="pi-p-rondas" data-ficha="rondas" class="pi-ficha" data-t="fRondas">Rondas</button>
+                <button type="button" role="tab" id="pi-f-centro" aria-controls="pi-p-centro" data-ficha="centro" class="pi-ficha" data-t="fCentro">Centro del evento</button>
                 <button type="button" role="tab" id="pi-f-clasificacion" aria-controls="pi-p-clasificacion" data-ficha="clasificacion" class="pi-ficha" data-t="fClasificacion">Clasificación</button>
                 <button type="button" role="tab" id="pi-f-cruzada" aria-controls="pi-p-cruzada" data-ficha="cruzada" class="pi-ficha" data-t="fCruzada">Tabla cruzada</button>
                 <button type="button" role="tab" id="pi-f-archivos" aria-controls="pi-p-archivos" data-ficha="archivos" class="pi-ficha" data-t="fArchivos">Archivos y comprobador</button>
@@ -264,6 +265,11 @@
                         <ul id="pi-elo-pendientes" class="mt-3 space-y-1 text-sm" hidden></ul>
                     </div>
                 </div>
+            </section>
+
+            <!-- ===== Centro del evento (pintarCentro en js/pareo/pagina.js) ===== -->
+            <section id="pi-p-centro" role="tabpanel" aria-labelledby="pi-f-centro" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 no-imprimir" hidden>
+                <div id="pi-centro"></div>
             </section>
 
             <!-- ===== Rondas ===== -->

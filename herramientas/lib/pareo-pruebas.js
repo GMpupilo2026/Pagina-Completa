@@ -47,6 +47,11 @@ async function abrirPagina(browser, BASE, hash, antes) {
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.addInitScript(dobleSupabase);
   await page.addInitScript(autoConfirmarCambios);
+  // Las pruebas no hablan con la función de verdad (pareo-publicar): sin
+  // ella, Pareo se porta como sin internet hacia la base, y el celular del
+  // adjunto manda por el canal como antes. La prueba que la necesita pone
+  // su doble en `antes` (la ruta de la página que se pone después gana).
+  await page.route("**/functions/v1/pareo-publicar", (r) => r.abort());
   if (antes) await antes(page);
   await page.goto(BASE + "/pareo.html" + (hash || ""), { waitUntil: "networkidle" });
   await page.evaluate(() => { window.print = () => {}; });
