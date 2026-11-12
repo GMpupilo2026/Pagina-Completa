@@ -293,6 +293,8 @@ async function pruebaPagina(browser) {
   ok(despues >= 22 && despues > antesTam, "«Letra grande» agranda la letra de verdad", antesTam + " → " + despues);
   igual("y dice que está puesta", await page.getAttribute("#pi-adj-grande", "aria-pressed"), "true");
   await page.click('[data-mesa="2"] [data-r="="]');
+  // Primero prueba la base (en las pruebas no contesta) y después va por el canal.
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "resultado"), null, { timeout: 5000 }).catch(() => {});
   const mandado = await page.evaluate(() => window.__enviados.filter((x) => x.evento === "resultado").pop());
   igual("un toque en ½-½ manda las tablas de su mesa", mandado && mandado.payload, { ronda: 1, mesa: 2, r: "=" });
   ok(await page.$eval('[data-mesa="2"] [data-r="1-0"]', (b) => b.disabled), "y apaga los botones hasta que conteste el principal");
