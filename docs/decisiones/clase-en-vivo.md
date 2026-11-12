@@ -5271,6 +5271,31 @@ existe, que cada dibujo sea de la profe Pame, a quién le sale (con un
 documento de mentira) y el orden de los scripts. Roto a propósito (quitando la
 condición de alumno), salta.
 
+### La profe Pame en el resto de la plataforma
+
+Además del avatar, el bot, la tarjeta «Juega contra mí» y el «¿Te ayudo?», lo
+que el alumno de CCDR POCOCI leía del profe Oscar en las páginas escritas a
+mano: la tarjeta del bot en Juegos (`juegos.html`), el título de `bot.html` y
+el «está el bot de Oscar» de Competir cuando no hay nadie en línea.
+
+- **Las páginas no se duplican**: el elemento lleva `data-profe-pame="…"` con
+  el texto de ella (también el `<title>`), y la imagen
+  `data-profe-pame-src="cara"`; `js/avatar-profe-oscar.js` los cambia al cargar
+  (`vestirPagina()`) solo a quien ve a la profe Pame. Quien no, ve la página
+  tal cual está escrita. Lo que arma el código (Competir) pregunta
+  `AvatarProfeOscar.PROFE`.
+- `bot.html` es el bot de niveles para las variantes, no el que juega con el
+  libro de cada profe (`tablero.html`): se le cambia el nombre porque en la
+  plataforma es «el bot del profe», y para un alumno de Pococi el profe es ella.
+- Sin cambiar: el nombre de la sección en Informes y en el informe a la casa
+  («El bot de Oscar», `js/tiempo-secciones.js` y `SECCIONES` de la función),
+  que lee un profesor o una familia, y las páginas sobre Oscar mismo
+  (`sobre-oscar.html`, la portada).
+
+Lo prueba `verificar-profe-ayuda.js` («La profe Pame en el resto de la
+plataforma»: `vestirPagina()` con un documento de mentira para las dos
+academias, y que cada página lo cargue). Roto a propósito, salta.
+
 ## La cámara en la clase en vivo
 
 Pedido del dueño el 29/10/2026 (de las mejoras de la cámara que lee el
