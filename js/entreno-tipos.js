@@ -50,17 +50,82 @@
      («10 de Detective»). Los ya registrados se anotan aparte
      (CLAVE_REGISTRADOS, viaja con la cuenta) y no por las estrellas: lo resuelto
      antes de que existiera el registro se registra la próxima vez que se
-     resuelve, en vez de quedar fuera para siempre y dejar imposible una tarea. */
-  function registrar(tipo, item, estrellas) {
+     resuelve, en vez de quedar fuera para siempre y dejar imposible una tarea.
+
+     Se anota como registrado SOLO cuando la base dijo que sí. Antes se anotaba
+     antes de mandarlo y sin mirar el resultado: si el pedido no salía (la red
+     se cae un momento), el ejercicio quedaba «registrado» en la cuenta y no se
+     volvía a mandar nunca. Así un alumno terminó los 69 de Con lo justo y su
+     tarea decía 51/69 (el 11/11: 18 pedidos que nunca llegaron, ninguno
+     rechazado). Lo que ya quedó así lo repara ponerAlDiaRegistros(), abajo. */
+  const enVuelo = new Set();
+  async function registrar(tipo, item, estrellas, extra) {
     const k = C.clave(tipo, item.id);
+    if (leer(CLAVE_REGISTRADOS)[k] || enVuelo.has(k) || !window.EntrenoProgress) return false;
+    enVuelo.add(k);
+    let r = null;
+    try {
+      // `limpio`: tres estrellas, que en todos los tipos es sin error y sin
+      // pista (o, en Con lo justo y Fotografía, perfecto). Es la primera vez que
+      // se resuelve, como en Mates: lo que dice si ya se domina.
+      r = await EntrenoProgress.log("tipos", Object.assign({ puzzle_id: k, category: tipo, nivel: item.nivel, estrellas, limpio: estrellas === 3 }, extra || {}));
+    } catch (e) { r = null; }
+    enVuelo.delete(k);
+    if (!r || !r.ok) return false;
     const hechos = leer(CLAVE_REGISTRADOS);
-    if (hechos[k] || !window.EntrenoProgress) return;
     hechos[k] = true;
     escribir(CLAVE_REGISTRADOS, hechos);
-    // `limpio`: tres estrellas, que en todos los tipos es sin error y sin
-    // pista (o, en Con lo justo y Fotografía, perfecto). Es la primera vez que
-    // se resuelve, como en Mates: lo que dice si ya se domina.
-    EntrenoProgress.log("tipos", { puzzle_id: k, category: tipo, nivel: item.nivel, estrellas, limpio: estrellas === 3 });
+    return true;
+  }
+  function cuentaParaTareas(tipo, estrellas) {
+    const t = C.tipo(tipo);
+    return estrellas >= (t && t.pistaNoCuenta ? 2 : 1);
+  }
+
+  /* Al abrir la página: lo resuelto (las estrellas, que viajan con la cuenta)
+     contra lo que la base de verdad tiene en training_progress, que es lo que
+     cuentan las tareas. Lo que falta se manda ahora, con `recuperado: true`.
+     No se confía en tipos_registrados_v1: es justo la marca que mentía. Si la
+     lista no se puede leer, no se manda nada (mejor tarde que repetido). */
+  async function ponerAlDiaRegistros() {
+    if (!window.EntrenoProgress || !DATOS) return;
+    const estrellas = leer(CLAVE_ESTRELLAS);
+    const pendientes = Object.keys(estrellas).filter((k) => {
+      const i = k.indexOf(":");
+      return i > 0 && cuentaParaTareas(k.slice(0, i), estrellas[k]);
+    });
+    if (!pendientes.length) return;
+    let uid = null;
+    try { uid = await EntrenoProgress.init(); } catch (e) { uid = null; }
+    if (!uid) return;
+    const enLaBase = new Set();
+    try {
+      // De mil en mil: PostgREST corta a ~1000 filas sin avisar.
+      for (let desde = 0; ; desde += 1000) {
+        const { data, error } = await window.sb.from("training_progress").select("detail->>puzzle_id")
+          .eq("student_id", uid).eq("activity", "tipos").range(desde, desde + 999);
+        if (error || !Array.isArray(data)) return;
+        data.forEach((f) => { if (f && f.puzzle_id) enLaBase.add(f.puzzle_id); });
+        if (data.length < 1000) break;
+      }
+    } catch (e) { return; }
+    const hechos = leer(CLAVE_REGISTRADOS);
+    let cambio = false;
+    const faltan = [];
+    pendientes.forEach((k) => {
+      if (enLaBase.has(k)) { if (!hechos[k]) { hechos[k] = true; cambio = true; } return; }
+      if (hechos[k]) { delete hechos[k]; cambio = true; }
+      const i = k.indexOf(":");
+      const tipo = k.slice(0, i), id = k.slice(i + 1);
+      const item = ((DATOS && DATOS[tipo]) || []).find((x) => x.id === id);
+      if (item) faltan.push({ tipo, item, estrellas: estrellas[k] });
+    });
+    if (cambio) escribir(CLAVE_REGISTRADOS, hechos);
+    // Uno por uno: si la red se cae a la mitad, lo que no entró sigue
+    // pendiente para la próxima vez que se abra la página.
+    for (const f of faltan) {
+      if (!(await registrar(f.tipo, f.item, f.estrellas, { recuperado: true }))) break;
+    }
   }
 
   /* «Repasar fallados» (js/repaso-fallados.js, la misma cola de Temas y
@@ -798,8 +863,7 @@
     avisarALaClase(partida.tipo, item, estrellas);
     anotarEstrellas(partida.tipo, item.id, estrellas);
     // Un tipo con `pistaNoCuenta` (Remata la ventaja) solo cuenta sin pista: con ella da una estrella.
-    const t = C.tipo(partida.tipo);
-    if (estrellas >= (t && t.pistaNoCuenta ? 2 : 1)) registrar(partida.tipo, item, estrellas);
+    if (cuentaParaTareas(partida.tipo, estrellas)) registrar(partida.tipo, item, estrellas);
     const repaso = anotarRepaso(partida.tipo, item, estrellas);
     anotarUltimo();
     const e = estrellasDe(partida.tipo, item.id);
@@ -1518,6 +1582,8 @@
     // («JUEGOS[partida.tipo] is not a function», en el CI el 5/11).
     if (document.readyState === "loading") await new Promise((r) => document.addEventListener("DOMContentLoaded", r, { once: true }));
     rutear();
+    // Sin esperar: la página ya se puede usar mientras se pone al día.
+    ponerAlDiaRegistros();
   }
   /* Los tipos `propio` (Tus propios errores) no vienen en tipos.json: sus
      ejercicios son de cada alumno (js/errores-propios.js) y ya bajaron con la
