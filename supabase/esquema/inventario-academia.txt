@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261111224156
+# al-dia-con: 20261112023718
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -374,6 +374,7 @@ columna  arbitro_bitacora.id  uuid
 columna  arbitro_bitacora.jugador  text
 columna  arbitro_bitacora.mesa  integer
 columna  arbitro_bitacora.ocurrio  timestamp with time zone
+columna  arbitro_bitacora.pareo  text
 columna  arbitro_bitacora.resultado  text
 columna  arbitro_bitacora.ronda  integer
 columna  arbitro_bitacora.texto  text
@@ -1997,10 +1998,12 @@ columna  pareo_preinscripciones.estado  text
 columna  pareo_preinscripciones.fide_id  text
 columna  pareo_preinscripciones.id  uuid
 columna  pareo_preinscripciones.institucion  text
+columna  pareo_preinscripciones.nacimiento  date
 columna  pareo_preinscripciones.nombre  text
 columna  pareo_preinscripciones.nota  text
 columna  pareo_preinscripciones.publicado_id  uuid
 columna  pareo_preinscripciones.responsable  text
+columna  pareo_preinscripciones.sexo  text
 columna  pareo_publicados.actualizado  timestamp with time zone
 columna  pareo_publicados.clave_hash  text
 columna  pareo_publicados.creado  timestamp with time zone
@@ -3077,7 +3080,7 @@ funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
-funcion  interno.arbitro_puede_anular(p_anula uuid, p_tnr text, p_ronda integer, p_mesa integer, p_color text)  definer  anon=false  auth=true
+funcion  interno.arbitro_puede_anular_en(p_anula uuid, p_tnr text, p_pareo text, p_ronda integer, p_mesa integer, p_color text)  definer  anon=false  auth=true
 funcion  interno.arbitros_cr_normas_revision_consentimiento()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
@@ -4215,6 +4218,7 @@ indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
 indice  arbitro_bitacora  arbitro_bitacora_anula_unico
+indice  arbitro_bitacora  arbitro_bitacora_persona_pareo_idx
 indice  arbitro_bitacora  arbitro_bitacora_persona_torneo_idx
 indice  arbitro_bitacora  arbitro_bitacora_pkey
 indice  arbitro_torneos  arbitro_torneos_pkey

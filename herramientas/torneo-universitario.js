@@ -183,11 +183,11 @@ const PROYECTOR = `    <!-- Para una pantalla: con el torneo terminado, los podi
     </dialog>
 `;
 
-function cabecera() {
+function cabecera(propio) {
   const item = (href, texto, movil) => movil
     ? '                <li><a href="' + href + '" class="block py-2 hover:text-accent-400">' + texto + "</a></li>\n"
     : '                    <li><a href="' + href + '" class="hover:text-accent-400 transition-colors">' + texto + "</a></li>\n";
-  const menu = [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["torneos-en-vivo.html", "Torneos"]];
+  const menu = propio || [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["torneos-en-vivo.html", "Torneos"]];
   return `    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
@@ -211,6 +211,32 @@ ${menu.map(([h, t]) => item(h, t, false)).join("")}                </ul>
 ${menu.map(([h, t]) => item(h, t, true)).join("")}            </ul>
         </div>
     </header>
+`;
+}
+
+function buscador(c) {
+  return `            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
+                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
+            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
+                     en este aparato (sin cuenta). Se esconde mientras no haya
+                     ninguno. ${c.hoy ? "Sin avisos al celular: son del Centroamericano." : "Sin avisos al celular: el torneo ya terminó."} -->
+                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
+                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
+                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
+                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
+                </div>
+                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
+                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">${esc(c.buscador.texto)}</p>
+                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: ${esc(c.buscador.ejemplo)}" class="cac-buscador-campo">
+                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
+                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    ${accion(c, "#medallero", "Ver el podio", "🥇")}
+                    ${accion(c, "#clasificacion", "Clasificación completa", "📊")}
+                    ${accion(c, "#proyector", "Clasificación para proyectar", "📺")}
+                </p>
+            </div>
 `;
 }
 
@@ -285,9 +311,17 @@ function pagina(c) {
   }
   // Un torneo por jugarse (`hoy`) lleva arriba «Hoy en el torneo», con la
   // cuenta regresiva de js/torneo-hoy.js, en lugar de «El podio».
-  const scripts = ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
-    "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
-    "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js"];
+  // Con los resultados en Pareo Integral (`resultados: "pareo"`), sin
+  // chess-results: no van el buscador, la clasificación, el podio ni el
+  // proyector de js/centroamericano-vivo.js (leen chess-results por
+  // sala-jugadores); los resultados los muestran las fichas de Pareo, y la
+  // página suma sus propios scripts (`scripts`).
+  const enPareo = c.resultados === "pareo";
+  const scripts = enPareo
+    ? ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config].concat(c.hoy ? ["js/torneo-hoy.js"] : [], c.scripts || [])
+    : ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
+      "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
+      "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js"];
   if (c.ediciones && c.ediciones.length) scripts.push("js/torneo-ediciones.js");
   // El logo con fondo blanco (el de una asociación, en JPG) va en un círculo blanco.
   const claseLogo = c.logo.redondo ? "u-logo u-logo-redondo" : "u-logo";
@@ -323,7 +357,7 @@ function pagina(c) {
     <script src="js/adaptive-mode.js"></script>
 ${bloque("app")}${bloque("tema")}${bloque("fuentes")}</head>
 <body class="cac cac-u ${c.clase} font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
-${cabecera()}    <main id="main-content">
+${cabecera(c.menu)}    <main id="main-content">
 ${comentario(c.comentario, "    ")}    <section class="cac-portada">
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
             <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
@@ -353,29 +387,7 @@ ${arriba}
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página.</p>
-            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
-                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
-            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
-                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
-                     en este aparato (sin cuenta). Se esconde mientras no haya
-                     ninguno. ${c.hoy ? "Sin avisos al celular: son del Centroamericano." : "Sin avisos al celular: el torneo ya terminó."} -->
-                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
-                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
-                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
-                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
-                </div>
-                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
-                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">${esc(c.buscador.texto)}</p>
-                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: ${esc(c.buscador.ejemplo)}" class="cac-buscador-campo">
-                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
-                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
-                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
-                    ${accion(c, "#medallero", "Ver el podio", "🥇")}
-                    ${accion(c, "#clasificacion", "Clasificación completa", "📊")}
-                    ${accion(c, "#proyector", "Clasificación para proyectar", "📺")}
-                </p>
-            </div>
-            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+${enPareo ? "" : buscador(c)}            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
 ${fichas.map((f, i) => ficha(c, f, fichas.length % 2 === 1 && i === fichas.length - 1)).join("")}            </ul>
             <a ${atributosEnlace(c.despedida)} class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl ${anillo(c, 4)}">
                 <span class="u-despedida-logo${c.logo.redondo ? " u-despedida-redondo" : ""}" aria-hidden="true"><img src="${esc(c.logo.src)}" width="${c.logo.ancho}" height="${c.logo.alto}" alt=""></span>
@@ -388,7 +400,7 @@ ${fichas.map((f, i) => ficha(c, f, fichas.length % 2 === 1 && i === fichas.lengt
         </div>
     </section>
 
-${dialogos(c)}${PROYECTOR}    </main>
+${enPareo ? (c.dialogos.propios || []).map(dialogo).join("") : dialogos(c) + PROYECTOR}    </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

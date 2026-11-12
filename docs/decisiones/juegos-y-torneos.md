@@ -8629,6 +8629,59 @@ bitácora del árbitro, que se baja en PDF o en Word.
   mesas que no se tocan, la clave en un `console` o el «enviado» de lo que
   chess-results no confirmó, saltan.
 
+### La mesa del árbitro con los torneos de Pareo Integral
+
+Pedido del dueño, para la Eliminatoria Cantonal JDN de Pérez Zeledón: que
+los torneos de Pareo Integral «se conecten con la mesa del árbitro para hacer
+los eventos», sin chess-results. Eligió que `mesa-arbitro.html` trabaje
+también con Pareo.
+
+- **La puerta es la que Pareo ya da a los adjuntos**: el árbitro principal
+  crea en Pareo un «Enlace para un árbitro adjunto» con un rango de mesas
+  (`#adjunto=<código>&m=1-10`), y la sección «Torneo de Pareo Integral» de la
+  mesa del árbitro (`js/mesa-arbitro-pareo.js`, aparte del código de
+  chess-results) habla por el MISMO canal en vivo que el celular del adjunto
+  (`pareo-adjunto-<código>`), con los mismos mensajes: «pedir» y «estado»,
+  «resultado» y «nota». **Decide la pestaña del principal**
+  (`recibirDeAdjunto`): solo la última ronda, una mesa del rango con rival y
+  sin resultado. Por eso su Pareo Integral tiene que estar abierto, como con
+  cualquier adjunto (la página lo dice si no contesta).
+- **«Enviado» solo si el principal lo trae**: un resultado queda en la
+  bitácora como enviado cuando el «estado» que contesta el principal ya lo
+  tiene en esa mesa (la misma regla que con chess-results: nunca por haber
+  mandado). Si la mesa ya tenía otro resultado, se avisa y no queda.
+- **Las ilegales e irregularidades le llegan al principal** como incidencia
+  («sanción»; la ilegal con el artículo `ilegal`, que es lo que cuenta
+  `marcasIncidencias` para la marca de la partida y la segunda ilegal), y la
+  marca que devuelve Pareo se ve escrita en el jugador; con la segunda, la
+  mesa dice «Segunda ilegal: decide el resultado». Una irregularidad con un
+  artículo que Pareo conoce (4.3, 11.3.2, 11.5, 6.7) lleva su clave. La nota
+  libre va como «Otra», con el artículo en el texto.
+- **La bitácora es la misma tabla** (migración
+  `20261112023718_mesa_arbitro_pareo.sql`): una línea lleva `tnr` (un torneo
+  de chess-results) **o** `pareo` (el código del enlace), nunca las dos ni
+  ninguna (`arbitro_bitacora_un_torneo`). Anular sigue pidiendo la misma
+  partida, ahora con el mismo `tnr` o el mismo `pareo`
+  (`interno.arbitro_puede_anular_en`, que reemplaza a
+  `arbitro_puede_anular`). «Mis torneos» sigue siendo de chess-results: sin
+  el filtro `tnr is not null`, las líneas de Pareo salían como un torneo sin
+  número. El documento (PDF y Word) dice «Pareo Integral, enlace de árbitro
+  …» y «aceptados por el árbitro principal», no chess-results
+  (`MesaArbitro.fuente`, `valorDePareo` en `js/mesa-arbitro.js`).
+- **Se construyó encima del PR de ilegales e irregularidades**
+  (`feat/mesa-arbitro-ilegales`, #1252), que ya tenía sus migraciones
+  aplicadas: usa sus listas y su regla de las ilegales.
+- **No se guarda el enlace** en el navegador: si se recarga, se vuelve a
+  pegar (o se abre `mesa-arbitro.html#adjunto=…`).
+
+La migración se probó en la base impersonando una cuenta con licencia, en
+una transacción que se deshizo: un resultado, una ilegal y su anulación con
+`pareo`; se rechazaron la línea sin torneo, con los dos, con un código malo y
+la anulación desde otro enlace; «Mis torneos» no trae filas sin número.
+`herramientas/verificar-mesa-arbitro-pareo.js` lo revisa con un doble del
+árbitro principal que contesta como `js/pareo/pagina.js`. Rompiendo a
+propósito la regla de «enviado», saltan tres comprobaciones.
+
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
@@ -14535,21 +14588,84 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
   errata (el torneo es en noviembre; el 20 de noviembre de 2026 sí es
   viernes). Hasta que la organización lo confirme, el calendario solo dice
   que es virtual y que el enlace llega por el chat oficial.
-- **«Resultados en vivo» va «Pronto»** hasta que la organización publique el
-  torneo en chess-results. Entonces: crear la sala `jdn-pz-2026` en
-  `admin.html#torneos` con sus enlaces de chess-results (de ahí leen el
-  buscador, la clasificación, el podio y el proyector, por `sala-jugadores`)
-  y cambiar la ficha de `pronto` a su `href`. La portada de la sala en
-  Torneos (`PORTADAS`) ya está: chess-results lleva a la clasificación de la
-  página y las bases a su ficha.
+- **Sin chess-results** (lo decidió el dueño después de la primera versión,
+  que leía chess-results como el Centroamericano): el torneo se dirige en
+  Pareo Integral. Con `resultados: "pareo"` la plantilla no pone el
+  buscador, la clasificación, el podio ni el proyector de
+  `js/centroamericano-vivo.js` (leen chess-results por `sala-jugadores`), ni
+  sus scripts; la página suma los suyos (`scripts`) y su propio menú
+  (`menu`). «Resultados U12» y «Resultados U20» abren encima la página
+  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`; sin el
+  torneo encontrado, la lista de Pareo, que es cierta siempre), y la ficha
+  «Inscribirme» abre el formulario (ver «La inscripción de la Eliminatoria
+  Cantonal JDN de Pérez Zeledón», abajo). La portada de Torneos
+  (`PORTADAS`) lleva un enlace a Pareo a las fichas, las bases a su ficha y
+  la inscripción al formulario. CENFOTEC y UTN siguen saliendo iguales.
 
 `herramientas/verificar-torneo-hoy.js` lo revisa: el HTML (arriba «Hoy», el
-calendario con sus siete filas, la ficha «Pronto», que existan las bases y
-los logos, ningún teléfono) y «Hoy en el torneo» con el reloj fijo en cuatro
+calendario con sus siete filas, sin chess-results, las fichas de resultados
+a Pareo, la de inscribirse, que existan las bases y los logos, ningún
+teléfono) y «Hoy en el torneo» con el reloj fijo en cuatro
 momentos (diez días antes, en la ronda 1, en el almuerzo y de noche), con el
 navegador en Madrid para ver que las horas son de Costa Rica; la cara y el
 celular sin scroll de costado. Rompiendo a propósito la zona de
 `torneo-hoy.js`, saltan seis comprobaciones.
+
+### La inscripción de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+Pedido del dueño: «un formulario de inscripción, donde los jugadores, una vez
+aprobada la inscripción, vayan entrando al torneo generado en Pareo Integral
+de forma automática; hay 2 categorías». Eligió: el formulario en la página
+del torneo, las categorías de las bases (U12, y U16 con U20), y que la
+apruebe el árbitro.
+
+- **Se usa la inscripción que Pareo Integral ya tenía**, no una nueva: el
+  formulario manda con `PareoPublicar.inscribir` (`js/pareo/publicar.js`, la
+  misma de `torneos-pareo.html`) a `pareo-publicar` («inscribir»), que
+  comprueba que la inscripción del torneo esté abierta y no vencida y pasa
+  por su freno. Queda en `pareo_preinscripciones` (que nadie lee desde
+  afuera) hasta que el árbitro la acepta en Pareo: **en ese momento entra
+  sola a la lista de jugadores** (`agregarJugadores`, como cualquier alta;
+  con rondas jugadas, como inscripción tardía). Nadie entra sin que el
+  árbitro la acepte: las bases piden ser afiliado al día a la ADAPZ, y eso
+  no se puede comprobar desde la página (la casilla es una declaración, que
+  va en la nota).
+- **Los dos torneos se encuentran solos** (`js/jdn-pz-inscripcion.js`), sin
+  tocar el código: la organización de Pareo que se llama como la ADAPZ **y
+  tiene el sello «Organizador verificado»** (lo pone solo administración;
+  sin el sello, cualquiera crearía otra «ADAPZ» y recibiría las
+  inscripciones), y de sus torneos, el más nuevo con «U12» en el nombre y
+  el más nuevo con «U20» (o «U16»). Se lee con la clave anónima:
+  `pareo_organizadores` y `pareo_publicados` son de lectura pública.
+- **La categoría por el año de nacimiento**, como las bases: U12 de 2015 a
+  2020, U16 de 2011 a 2014 y U20 de 2007 a 2010; la U16 juega en el torneo
+  U20. La categoría va con la rama («U16 Femenino»), para los premios por
+  categoría de Pareo.
+- **El sexo y la fecha de nacimiento llegan a Pareo** (migración
+  `20261112023035_pareo_preinscripciones_sexo_nacimiento.sql`, dos columnas
+  opcionales; la función valida M/F y una fecha que exista, entre 1900 y hoy
+  en Costa Rica): sin ellos no había clasificación femenina ni la revisión
+  de la categoría por el año. Al aceptar, el jugador entra con los dos, y la
+  lista de inscripciones de Pareo los muestra. **En lo publicado no salen**
+  (`limpiar` de la función y `datosPublicos` siguen sin el sexo ni la
+  fecha). La política de privacidad lo dice. La función se despliega sola al
+  entrar a `main`: hasta entonces, la de producción ignora los dos campos.
+- **El cierre**: el de las bases (10:00 p.m. del 21 de noviembre, hora de
+  Costa Rica) en la página, y el «hasta» de Pareo (un día) en la función.
+- **Lo que tiene que hacer la organización**: crear en Pareo Integral la
+  organización ADAPZ (y que administración le ponga el sello), los dos
+  torneos con «U12» y «U20» en el nombre, publicados a su nombre, y en cada
+  uno «Recibir inscripciones desde la página pública» hasta el 21 de
+  noviembre.
+
+`herramientas/verificar-jdn-pz-inscripcion.js` lo revisa con un doble de la
+base (que filtra de verdad) y de la función: sin la organización verificada
+no abre (y una «ADAPZ» sin sello no cuenta), las fichas a cada torneo, las
+categorías por el año, lo que falta no se manda, lo que se manda (al torneo
+U20 la U16, con «Apellidos, Nombre», el sexo, la fecha y el
+consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
+el navegador y el celular. Rompiendo a propósito el filtro del sello,
+saltan tres comprobaciones.
 
 ## La cámara que lee el tablero
 

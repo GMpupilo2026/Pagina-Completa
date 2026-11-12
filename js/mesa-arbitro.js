@@ -31,6 +31,14 @@
   const TIPOS = { resultado: "Resultado", correccion: "Corrección", ilegal: "Ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota", anulacion: "Anulación" };
 
   const textoResultado = (valor) => (POR_VALOR.get(String(valor)) || { texto: "—" }).texto;
+
+  // Los resultados de Pareo Integral (los del canal del árbitro adjunto, js/pareo/ver.js) → el valor de
+  // chess-results de esta lista, para escribirlos y leerlos con lo mismo. Ver «La mesa del árbitro con
+  // los torneos de Pareo Integral».
+  const DE_PAREO = { "1-0": "1", "=": "2", "0-1": "3", "+-": "4", "-+": "5", "--": "6" };
+  const valorDePareo = (r) => DE_PAREO[r] || "0";
+  // De dónde es una línea: «Pareo Integral» o «chess-results».
+  const fuente = (l) => (l && l.pareo ? "Pareo Integral" : "chess-results");
   const nombreBitacora = (valor) => (POR_VALOR.get(String(valor)) || {}).bitacora || null;
 
   // ---- Las jugadas ilegales y las irregularidades. Las comparten esta Mesa y la del Centroamericano
@@ -171,8 +179,9 @@
   }
 
   function detalle(l) {
-    if (l.tipo === "resultado") return textoResultado(valorDeBitacora(l.resultado)) + (l.texto ? " — " + l.texto : "") + (l.enviado ? " · enviado a chess-results" : " · solo anotado");
-    if (l.tipo === "correccion") return "De «" + textoResultado(valorDeBitacora(l.anterior)) + "» a «" + textoResultado(valorDeBitacora(l.resultado)) + "»" + (l.texto ? " — " + l.texto : "") + (l.enviado ? " · enviado a chess-results" : " · solo anotado");
+    const enviado = l.pareo ? " · aceptado por el árbitro principal en Pareo Integral" : " · enviado a chess-results";
+    if (l.tipo === "resultado") return textoResultado(valorDeBitacora(l.resultado)) + (l.texto ? " — " + l.texto : "") + (l.enviado ? enviado : " · solo anotado");
+    if (l.tipo === "correccion") return "De «" + textoResultado(valorDeBitacora(l.anterior)) + "» a «" + textoResultado(valorDeBitacora(l.resultado)) + "»" + (l.texto ? " — " + l.texto : "") + (l.enviado ? enviado : " · solo anotado");
     if (l.tipo === "ilegal" || l.tipo === "irregularidad") return (l.jugador || "Jugador") + " (" + (l.color === "negras" ? "negras" : "blancas") + ")" + (l.texto ? ": " + l.texto : "");
     if (l.tipo === "anulacion") return "Anula una anotación anterior de " + (l.jugador || (l.color === "negras" ? "las negras" : "las blancas")) + (l.texto ? ": " + l.texto : "") + ".";
     return l.texto || "";
@@ -197,7 +206,7 @@
     b.push({
       tipo: "lista",
       items: [
-        "Resultados anotados: " + cuenta("resultado") + " (" + enviados + " enviados a chess-results, contando las correcciones).",
+        "Resultados anotados: " + cuenta("resultado") + " (" + enviados + (torneo.pareo ? " aceptados por el árbitro principal en Pareo Integral" : " enviados a chess-results") + ", contando las correcciones).",
         "Correcciones de un resultado: " + cuenta("correccion") + ".",
         "Incidencias: " + cuenta("incidencia") + ". Notas: " + cuenta("nota") + ".",
         "Jugadas ilegales: " + cuenta("ilegal") + ". Irregularidades: " + cuenta("irregularidad") + "." + (anuladas.size ? " Anuladas por error: " + anuladas.size + "." : ""),
@@ -217,7 +226,7 @@
     b.push({ tipo: "parrafo", texto: "______________________________   Árbitro: " + (arbitro || "") });
     return {
       titulo: "Bitácora del árbitro",
-      subtitulo: (torneo.torneo || "Torneo") + " · chess-results " + torneo.tnr,
+      subtitulo: (torneo.torneo || "Torneo") + (torneo.pareo ? " · Pareo Integral, enlace de árbitro " + torneo.pareo : " · chess-results " + torneo.tnr),
       pie: "Mesa del árbitro · ajedrez-integral.com",
       bloques: b,
       fotos: [],
@@ -225,7 +234,8 @@
   }
 
   const api = { RESULTADOS, TIPOS, textoResultado, nombreBitacora, cambios, lineasDeCambios, listaParaTeclear, detalle, documento,
-    ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, claveMarca, marcas };
+    ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, claveMarca, marcas,
+    DE_PAREO, valorDePareo, fuente };
   if (enNode) module.exports = api;
   else raiz.MesaArbitro = api;
 })(typeof self !== "undefined" ? self : this);

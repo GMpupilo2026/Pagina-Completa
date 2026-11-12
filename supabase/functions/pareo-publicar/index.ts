@@ -8,7 +8,7 @@
 //   { accion: "crear", torneo }              → { ok, id, clave }
 //   { accion: "actualizar", id, clave, torneo } → { ok }
 //   { accion: "borrar", id, clave }           → { ok }
-//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }
+//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
 //   { accion: "marcar", id, clave, ids, estado } → { ok }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
@@ -408,6 +408,18 @@ function enSegundoPlano(p: Promise<unknown>) {
   if (rt && typeof rt.waitUntil === "function") rt.waitUntil(seguro);
 }
 
+// Una fecha de nacimiento AAAA-MM-DD que existe (no el 31 de febrero), entre
+// 1900 y hoy en Costa Rica; si no, null.
+function fechaValida(s: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  // Que el día exista: el 31 de febrero se corre a marzo y deja de ser el mismo.
+  const [a, m, dia] = s.split("-").map(Number);
+  const d = new Date(Date.UTC(a, m - 1, dia));
+  if (d.getUTCFullYear() !== a || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== dia) return null;
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+  return s >= "1900-01-01" && s <= hoy ? s : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Método no permitido" }, 405);
@@ -635,6 +647,10 @@ Deno.serve(async (req) => {
       elo: Number(x.elo) > 0 ? Math.min(3500, Math.round(Number(x.elo))) : null,
       fide_id: /^[0-9]{1,12}$/.test(texto(x.fideId, 12)) ? texto(x.fideId, 12) : "",
       responsable: texto(x.responsable, 100), contacto: texto(x.contacto, 120), nota: texto(x.nota, 300),
+      // El sexo y la fecha de nacimiento, si el formulario los pide (el de la
+      // Eliminatoria Cantonal JDN de Pérez Zeledón): M o F, y AAAA-MM-DD de verdad.
+      sexo: ["M", "F"].includes(texto(x.sexo, 1)) ? texto(x.sexo, 1) : "",
+      nacimiento: fechaValida(texto(x.nacimiento, 10)),
       consentimiento: new Date().toISOString(),
     };
     if (fila.nombre.length < 2) return json({ ok: false, error: "Escribe el nombre de quien juega." }, 400);
@@ -665,7 +681,7 @@ Deno.serve(async (req) => {
     if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
     if (accion === "inscripciones") {
       const { data, error } = await admin.from("pareo_preinscripciones")
-        .select("id, nombre, institucion, categoria, elo, fide_id, responsable, contacto, nota, estado, creado")
+        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, creado")
         .eq("publicado_id", pid).order("creado").range(0, 999);
       if (error) return json({ ok: false, error: "No se pudieron leer las inscripciones." }, 502);
       return json({ ok: true, inscripciones: data || [] });

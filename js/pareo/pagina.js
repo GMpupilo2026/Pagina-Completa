@@ -6167,7 +6167,11 @@
     const marcar = async (cuales, estadoNuevo, boton) => {
       if (boton) boton.disabled = true;
       if (estadoNuevo === "aceptada") {
-        agregarJugadores(cuales.map((x) => ({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" })));
+        // El sexo y la fecha de nacimiento, si la inscripción los trae (el
+        // formulario de la Eliminatoria Cantonal JDN de Pérez Zeledón): sin
+        // ellos no hay clasificación femenina ni revisión del año.
+        agregarJugadores(cuales.map((x) => Object.assign({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" },
+          x.sexo === "M" || x.sexo === "F" ? { sexo: x.sexo } : {}, /^\d{4}-\d{2}-\d{2}$/.test(x.nacimiento || "") ? { nacimiento: x.nacimiento } : {})));
       }
       const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo);
       if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
@@ -6186,7 +6190,7 @@
         : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
       return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
         el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
-        el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),
+        el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.sexo === "F" ? "Femenino" : x.sexo === "M" ? "Masculino" : "", x.nacimiento ? "Nació " + x.nacimiento.split("-").reverse().join("/") : "", x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),
         el("p", { class: "text-xs mt-1", texto: tx("inscQuien", { r: x.responsable, c: x.contacto }) }),
         x.nota ? el("p", { class: "text-xs mt-1 italic", texto: x.nota }) : null,
         el("div", { class: "mt-2 flex flex-wrap gap-2" }, acciones));
