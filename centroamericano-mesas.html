@@ -445,8 +445,43 @@
                     <div><label for="pl-frente" class="block text-sm font-bold">Adelante (la fila 1) está…</label><input id="pl-frente" type="text" maxlength="80" class="cam-campo" autocomplete="off"></div>
                     <div><label for="pl-fondo" class="block text-sm font-bold">Al fondo está…</label><input id="pl-fondo" type="text" maxlength="80" class="cam-campo" autocomplete="off"></div>
                 </div>
+                <details id="pl-salon-caja" class="mt-4">
+                    <summary class="font-bold cursor-pointer"><span aria-hidden="true">📐</span> Medidas del salón y material</summary>
+                    <!-- La cuenta está en js/plano-logistica.js; los campos los lee js/centroamericano-plano-editor.js y se guardan con el plano. -->
+                    <p class="cam-herramientas-nota mt-2">La mesa de la casa es la plegable de 180 × 74 cm: dos tableros y cuatro sillas, dos de cada lado. Con el largo y el ancho del salón, el borrador parte las filas donde se acaba el ancho y abajo se ve si el plano cabe y qué material hay que llevar.</p>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div><label for="pl-s-largo" class="block text-sm font-bold">Largo del salón, del frente al fondo (m)</label><input id="pl-s-largo" data-salon="largo" type="number" inputmode="decimal" min="0" step="0.5" value="" class="cam-campo"></div>
+                        <div><label for="pl-s-ancho" class="block text-sm font-bold">Ancho del salón, de lado a lado (m)</label><input id="pl-s-ancho" data-salon="ancho" type="number" inputmode="decimal" min="0" step="0.5" value="" class="cam-campo"></div>
+                        <div><label for="pl-s-mesaLargo" class="block text-sm font-bold">Largo de la mesa (m)</label><input id="pl-s-mesaLargo" data-salon="mesaLargo" type="number" inputmode="decimal" min="0.5" step="0.01" value="1.8" class="cam-campo"></div>
+                        <div><label for="pl-s-mesaFondo" class="block text-sm font-bold">Fondo de la mesa (m)</label><input id="pl-s-mesaFondo" data-salon="mesaFondo" type="number" inputmode="decimal" min="0.3" step="0.01" value="0.74" class="cam-campo"></div>
+                        <div><label for="pl-s-silla" class="block text-sm font-bold">Espacio de cada silla (m)</label><input id="pl-s-silla" data-salon="silla" type="number" inputmode="decimal" min="0.2" step="0.05" value="0.6" class="cam-campo"></div>
+                        <div><label for="pl-s-pasilloFila" class="block text-sm font-bold">Pasillo entre filas (m)</label><input id="pl-s-pasilloFila" data-salon="pasilloFila" type="number" inputmode="decimal" min="0.3" step="0.1" value="1" class="cam-campo"></div>
+                        <div><label for="pl-s-mesasPorTramo" class="block text-sm font-bold">Mesas pegadas por tramo</label><input id="pl-s-mesasPorTramo" data-salon="mesasPorTramo" type="number" inputmode="decimal" min="1" step="1" value="5" class="cam-campo"></div>
+                        <div><label for="pl-s-pasilloTramo" class="block text-sm font-bold">Pasillo entre tramos (m)</label><input id="pl-s-pasilloTramo" data-salon="pasilloTramo" type="number" inputmode="decimal" min="0.3" step="0.1" value="1.5" class="cam-campo"></div>
+                        <div><label for="pl-s-margen" class="block text-sm font-bold">Libre contra las paredes (m)</label><input id="pl-s-margen" data-salon="margen" type="number" inputmode="decimal" min="0" step="0.1" value="1.5" class="cam-campo"></div>
+                        <div><label for="pl-s-frente" class="block text-sm font-bold">Zona de la mesa principal, adelante (m)</label><input id="pl-s-frente" data-salon="frente" type="number" inputmode="decimal" min="0" step="0.5" value="4" class="cam-campo"></div>
+                    </div>
+                    <h4 class="font-bold mt-4">Material y árbitros</h4>
+                    <div class="mt-2 grid gap-3 sm:grid-cols-3">
+                        <div><label for="pl-s-rondas" class="block text-sm font-bold">Rondas</label><input id="pl-s-rondas" data-salon="rondas" type="number" inputmode="decimal" min="1" step="1" value="7" class="cam-campo"></div>
+                        <div><label for="pl-s-porArbitro" class="block text-sm font-bold">Partidas por árbitro de sector</label><input id="pl-s-porArbitro" data-salon="porArbitro" type="number" inputmode="decimal" min="1" step="1" value="25" class="cam-campo"></div>
+                        <div><label for="pl-s-reserva" class="block text-sm font-bold">Material de reserva (%)</label><input id="pl-s-reserva" data-salon="reserva" type="number" inputmode="decimal" min="0" step="1" value="10" class="cam-campo"></div>
+                        <div><label for="pl-s-sillasExtra" class="block text-sm font-bold">Sillas de más</label><input id="pl-s-sillasExtra" data-salon="sillasExtra" type="number" inputmode="decimal" min="0" step="1" value="10" class="cam-campo"></div>
+                    </div>
+                    <h4 class="font-bold mt-4">Jugadores con discapacidad visual</h4>
+                    <p class="cam-herramientas-nota">Cada uno juega en una mesa propia, con un tablero adaptado de más y un reloj parlante. Sus mesas van al final de su torneo. En el plano público no se marcan: solo se guarda cuántos hay en cada torneo.</p>
+                    <div id="pl-s-dv" class="mt-2 grid gap-3 sm:grid-cols-3"></div>
+                    <div class="mt-3 flex flex-col gap-2">
+                        <label class="flex items-center gap-2 font-semibold"><input id="pl-s-separar" type="checkbox" checked> Cada torneo empieza en una fila nueva</label>
+                        <label class="flex items-center gap-2 font-semibold"><input id="pl-s-usar" type="checkbox"> Armar el borrador con estas medidas</label>
+                    </div>
+                </details>
                 <div id="pl-dibujo" class="mt-4 overflow-x-auto"></div>
                 <div id="pl-mesa" class="mt-4"></div>
+                <section id="pl-logistica" class="mt-6" aria-labelledby="pl-log-titulo">
+                    <h3 id="pl-log-titulo" class="cam-subtitulo"><span aria-hidden="true">📦</span> Material y árbitros para este plano</h3>
+                    <div id="pl-log-contenido"></div>
+                </section>
                 <section id="rs-sala" class="mt-6" aria-labelledby="rs-titulo">
                     <h3 id="rs-titulo" class="cam-subtitulo"><span aria-hidden="true">👥</span> Los árbitros en la sala</h3>
                     <p class="cam-herramientas-nota">Con el plano de arriba, el sistema reparte la sala en zonas seguidas que se caminan sin cruzar (fila por fila, entrando a cada una por el lado más cercano a donde terminó la anterior), con la misma carga de trabajo para cada árbitro. La carga cuenta las partidas en juego y las incidencias de cada torneo, y la zona con más incidencias va al árbitro de más experiencia. Revisa la sugerencia, cambia lo que quieras y, al aprobarla, cada árbitro ve sus mesas nuevas en su tablet en unos segundos, sin otro QR.</p>
@@ -528,6 +563,7 @@
     <script src="js/planilla-ocr.js"></script>
     <script src="js/planilla-reconstruir.js"></script>
     <script src="js/centroamericano-leer-partida.js"></script>
+    <script src="js/plano-logistica.js"></script>
     <script src="js/centroamericano-plano.js"></script>
     <script src="js/centroamericano-plano-editor.js"></script>
     <script src="js/centroamericano-reparto.js"></script>
