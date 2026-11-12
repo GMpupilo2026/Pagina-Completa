@@ -8751,6 +8751,13 @@ el resultado se perdía: el adjunto veía «Enviando…» para siempre.
   1500 por conexión y hora). Adivinar un código de 31⁸ con decenas vivos no es
   práctico a ese ritmo.
 
+**Comprobado en la base** el 12/11, en una transacción que terminaba con
+`raise` (se deshizo; la corrió el dueño en el editor SQL): se rechazan el
+código con una letra que no va (`l`), el rango al revés, un `evento` raro y
+`datos` que no son un objeto; la auditoría anota el alta sin el código y no
+anota `visto`; `anon` no lee la cola ni los adjuntos, `authenticated` no
+escribe la cola, y borrar el torneo borra su cola.
+
 Lo prueban `verificar-mesa-arbitro-pareo.js` (con un doble de la función: sin
 ella todo por el canal; con ella, entrar con el código solo, el resultado y la
 nota a la cola con solo el toque por el canal, «Guardado…», enviado cuando el
