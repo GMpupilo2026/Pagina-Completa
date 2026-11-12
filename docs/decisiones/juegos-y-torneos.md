@@ -14856,6 +14856,47 @@ sigue abierta** para quien tenga su dirección: lo que se bloquea es la
 entrada desde Torneos. Lo revisa `verificar-metropolitano.js` (Playwright no
 toca un botón con `aria-disabled`: la prueba lo toca directo).
 
+### La profe Karina ayuda en la página
+
+Pedido del dueño el 11/11/2026: la profe Karina (Itzel Karina Rojas, la
+directora del torneo; su avatar en «La profe Karina: el avatar de ADAPZ», en
+`clase-en-vivo.md`) en `jdn-pz-2026.html` «para ayudar, conforme vayan
+saliendo más cosas del torneo, que ella se actualice». Es el «¿Te ayudo?» del
+Centroamericano (ver «El profe ayuda en la página»), con su cara:
+`js/jdn-pz-profe.js`, después de la inscripción y de `js/avatar-profe-oscar.js`
+en `scripts` de la configuración de la página.
+
+- **Ninguna respuesta tiene sus datos escritos en el código.** Cada una se
+  arma al abrirla, con lo que la página dice en ese momento: la próxima ronda
+  sale del calendario (las filas `data-inicio`, las mismas que lee
+  `js/torneo-hoy.js`) contra la hora de Costa Rica, y dice cuál se juega y
+  cuál sigue; el congresillo, de lo que el calendario dice de él (y si un día
+  la configuración le agrega su fila, dice su día y su hora); las
+  categorías, de su tabla; la sede, el ritmo y quién dirige, de la portada;
+  la tolerancia, del reglamento. La inscripción y los resultados dicen lo que
+  ya pintó `js/jdn-pz-inscripcion.js`: el aviso de la ventana «Inscribirme» y
+  si las fichas «Resultados U12/U20» ya apuntan a su torneo en Pareo. Así,
+  cuando se regenera la página con algo nuevo o la organización publica los
+  torneos, ella lo dice sin tocar su archivo.
+- **Sus botones tocan la ficha que ya hace eso** (el calendario, «Inscribirme»,
+  los resultados, el mapa, las bases): si una ficha cambia de destino, la
+  profe la sigue.
+- **Su cara se ve aunque nadie haya entrado**: `AvatarProfeOscar.rutaDe("karina", …)`
+  pide su dibujo sin mirar la academia de quien mira (`ruta()` daría el del
+  profe Oscar a quien no tiene sesión).
+- Dice «Dirijo la eliminatoria» solo si la portada dice que la dirección del
+  torneo es de Karina. El aspecto es el del Centroamericano (`.cac-profe-*`
+  de `css/centroamericano.css`, que la página ya carga); no se tocó
+  `js/jdn-pz-inscripcion.js`.
+
+`herramientas/verificar-jdn-pz-profe.js` lo revisa con el doble de la base y
+el reloj fijo: su cara, la próxima ronda antes del torneo, durante la ronda 2,
+después de la 5 y al terminar; que al cambiar la página (una fila
+«Congresillo», otra sede, otra categoría) la respuesta cambia; sin los
+torneos en Pareo y con ellos; que «Ver el calendario» lo abre, Escape y el
+celular; y que en su código no hay horas, fechas ni la sede. Escribiendo las
+categorías fijas en el código, saltan dos comprobaciones.
+
 ## La cámara que lee el tablero
 
 `camara-tablero.html` (`js/camara-tablero.js`) empezó como una **prueba** de

@@ -4593,7 +4593,7 @@
             if (!profile._persona) subscribeSessions();
             mostrarPanel();
             montarRecorrido();
-            // La profe Pame contesta lo que más preguntan (js/profe-ayuda.js): solo
+            // La profe de la academia (Pame, Karina) contesta lo que más preguntan (js/profe-ayuda.js): solo
             // a los alumnos de su academia, en su propio panel.
             if (window.ProfeAyuda) window.ProfeAyuda.montar(profile);
         }

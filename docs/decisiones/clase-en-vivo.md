@@ -5241,6 +5241,38 @@ entrenadora es Pamela Salas, de la Comisión de Ajedrez Femenino) ve a la
 - Lo revisa `verificar-clase-stickers.js` («Los otros profes» y «Quién ve a
   qué profe»).
 
+### La profe Karina: el avatar de ADAPZ
+
+Pedido del dueño el 11/11/2026: la profe Karina (Itzel Karina Rojas, la
+directora de la Eliminatoria Cantonal JDN de Pérez Zeledón) para **ADAPZ**
+(`e036444a-27ca-44b7-a18e-635c3d906e10` en `PROFE_DE_ACADEMIA`), como la
+profe Pame para CCDR POCOCI.
+
+- **Los mismos 44 dibujos**, en `herramientas/avatar-profe-karina/originales/`
+  e `img/avatar-profe-karina/`. Hechos con la generación de imágenes de Canva
+  desde una foto suya y aprobados por el dueño: piel morena, delgada, lentes,
+  pelo largo con mechas, los tatuajes de los antebrazos, camisa blanca con el
+  logo de Ajedrez Integral en el pecho, pantaloneta azul marino con el logo
+  en un solo lado y tenis blancos con «ALE». Se exportaron al doble desde el
+  diseño de Canva «Lienzo vertical en blanco», se bajaron al tamaño nativo y
+  el fondo blanco se quitó con un relleno desde el borde (como los de la
+  profe Pame).
+- **Los tableros**: Canva los dibujó con posiciones imposibles (9 columnas
+  en el mural, piezas inventadas en la pantalla). En «tablero-italiana» se
+  pidió el mural vacío, con la mano afuera, y en los dos se pegó la Italiana
+  (1.e4 e5 2.Cf3 Cc6 3.Ac4 Ac5, comprobada con chess.js) dibujada con
+  `herramientas/lib/tablero-svg.js`, las piezas del sitio; en el mural se
+  devolvió encima la mano de la profe. «jugando» y «ensenando» son de adorno.
+- **El texto alternativo**: `altDe()` toma el del profe Oscar con el nombre
+  de la profe (`PROFES[…].nombre`), salvo lo que su dibujo cambia
+  (`ALT_PROPIO`: la barba, la árbitra, la niña, y en Karina «esa-no-es», que
+  dice que no con la mano y no con el dedo).
+- **Su bot no existe**: `js/chess-bot.js` solo tiene libro de Oscar y de la
+  profe Pame, así que en ADAPZ se sigue jugando contra Oscar (lo que ya dice
+  su tarjeta).
+- **En la página del torneo** la ve todo el que entra, con o sin sesión:
+  ver «La profe Karina ayuda en la página» en `juegos-y-torneos.md`.
+
 ### La profe Pame ayuda en el panel
 
 El dueño pidió el «¿Te ayudo?» del Centroamericano (`js/centroamericano-profe.js`)
@@ -5266,10 +5298,18 @@ resuelve (`js/profe-ayuda.js`).
 - El globito «¿Te ayudo?» sale solo la primera vez en cada aparato
   (`profe_ayuda_visto`); con una ventana abierta, la profe se aparta.
 
+- **También la profe Karina, en ADAPZ** (11/11/2026). El mismo módulo sirve a
+  cualquier profe que no sea el profe Oscar y habla con su nombre
+  (`PROFES` de `js/avatar-profe-oscar.js`). «¿Puedo jugar contra ti?» solo
+  la contesta la profe con bot propio (`CON_BOT`); las demás dicen que se
+  practica contra Oscar. Cada profe puede tener preguntas suyas (`PROPIAS`):
+  la profe Karina lleva a la página de la eliminatoria JDN, sin fechas (las
+  dice la página).
+
 Lo prueba `verificar-profe-ayuda.js`: que cada respuesta lleve a una página que
-existe, que cada dibujo sea de la profe Pame, a quién le sale (con un
-documento de mentira) y el orden de los scripts. Roto a propósito (quitando la
-condición de alumno), salta.
+existe, que cada dibujo sea de esa profe, a quién le sale (con un
+documento de mentira), quién contesta lo del bot y el orden de los scripts.
+Roto a propósito (quitando la condición de alumno), salta.
 
 ### La profe Pame en el resto de la plataforma
 
