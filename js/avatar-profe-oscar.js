@@ -81,7 +81,8 @@
      Los mismos 44 dibujos (los mismos id y las mismas frases) existen para
      cada profe, cada uno en su carpeta. Quien es de una academia con su
      propio profe lo ve a él en vez del profe Oscar: hoy, CCDR POCOCI ve a la
-     profe Pame. Se decide por el id de la academia (el nombre puede cambiar).
+     profe Pame y ADAPZ a la profe Karina. Se decide por el id de la academia
+     (el nombre puede cambiar).
 
      La academia sale de la marca que js/marca-academia.js guarda en el
      navegador (academia_marca_v1, con el id de la cuenta que la recibió):
@@ -92,17 +93,28 @@
   const PROFES = {
     oscar: { carpeta: "img/avatar-profe-oscar", nombre: "El profe Oscar" },
     pame: { carpeta: "img/avatar-profe-pame", nombre: "La profe Pame" },
+    karina: { carpeta: "img/avatar-profe-karina", nombre: "La profe Karina" },
   };
   const PROFE_DE_ACADEMIA = {
-    "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4": "pame",   // CCDR POCOCI
+    "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4": "pame",     // CCDR POCOCI
+    "e036444a-27ca-44b7-a18e-635c3d906e10": "karina",   // ADAPZ
   };
-  // El texto alternativo de la profe Pame: el del profe Oscar con su nombre,
-  // salvo donde el dibujo es distinto (ella no tiene barba, es árbitra…).
-  const ALT_PAME = {
-    mmm: "La profe Pame pensativa, con la mano en la barbilla",
-    arbitro: "La profe Pame de árbitra, con su gafete y una tabla de planillas",
-    ensenando: "La profe Pame enseñándole ajedrez a una niña",
-    "lo-lograron": "La profe Pame aplaudiendo entre confeti",
+  // El texto alternativo de las profes: el del profe Oscar con su nombre,
+  // salvo donde el dibujo es distinto (ellas no tienen barba, son árbitras…).
+  const ALT_PROPIO = {
+    pame: {
+      mmm: "La profe Pame pensativa, con la mano en la barbilla",
+      arbitro: "La profe Pame de árbitra, con su gafete y una tabla de planillas",
+      ensenando: "La profe Pame enseñándole ajedrez a una niña",
+      "lo-lograron": "La profe Pame aplaudiendo entre confeti",
+    },
+    karina: {
+      mmm: "La profe Karina pensativa, con la mano en la barbilla",
+      arbitro: "La profe Karina de árbitra, con su gafete y una tabla de planillas",
+      ensenando: "La profe Karina enseñándole ajedrez a una niña",
+      "lo-lograron": "La profe Karina aplaudiendo entre confeti",
+      "esa-no-es": "La profe Karina diciendo que no con la mano",
+    },
   };
 
   function uidDeLaSesion(ls) {
@@ -115,7 +127,7 @@
     return null;
   }
 
-  /* El profe que le toca a quien mira ("oscar" o "pame"). */
+  /* El profe que le toca a quien mira ("oscar", "pame" o "karina"). */
   function profeQueSeVe() {
     try {
       const ls = window.localStorage;
@@ -129,16 +141,23 @@
   }
 
   const PROFE = profeQueSeVe();
-  const altDe = (a, profe) => profe === "pame"
-    ? ALT_PAME[a.id] || a.alt.replace("El profe Oscar", "La profe Pame").replace("del profe Oscar", "de la profe Pame")
-    : a.alt;
+  const altDe = (a, profe) => {
+    if (!PROFES[profe] || profe === "oscar") return a.alt;
+    const nombre = PROFES[profe].nombre;   // «La profe Pame»
+    return (ALT_PROPIO[profe] || {})[a.id]
+      || a.alt.replace("El profe Oscar", nombre).replace("del profe Oscar", "de " + nombre.charAt(0).toLowerCase() + nombre.slice(1));
+  };
   const conSuAlt = (a) => (a ? Object.assign({}, a, { alt: altDe(a, PROFE) }) : null);
 
   const ruta = (id) => PROFES[PROFE].carpeta + "/" + id + ".webp";
+  // El dibujo de un profe en particular, sin mirar la academia de quien entró:
+  // la página de un torneo muestra a su profe a todo el que la abre (la de la
+  // eliminatoria JDN de Pérez Zeledón, a la profe Karina; js/jdn-pz-profe.js).
+  const rutaDe = (profe, id) => (PROFES[profe] || PROFES.oscar).carpeta + "/" + id + ".webp";
   const porId = (id) => conSuAlt(LISTA.find((a) => a.id === id));
   const conFrase = () => LISTA.filter((a) => a.frase).map(conSuAlt);
 
-  window.AvatarProfeOscar = { LISTA, ALTO, PROFES, PROFE_DE_ACADEMIA, PROFE, altDe, ruta, porId, conFrase };
+  window.AvatarProfeOscar = { LISTA, ALTO, PROFES, PROFE_DE_ACADEMIA, PROFE, altDe, ruta, rutaDe, porId, conFrase };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

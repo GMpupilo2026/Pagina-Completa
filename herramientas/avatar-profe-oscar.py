@@ -2,7 +2,8 @@
 """Los avatares de los profes: de los originales a la versión para la página.
 
 Cada profe tiene los mismos dibujos (los mismos id que la lista de
-js/avatar-profe-oscar.js): el profe Oscar y la profe Pame. Los originales
+js/avatar-profe-oscar.js): el profe Oscar, la profe Pame y la profe
+Karina. Los originales
 (herramientas/avatar-profe-<profe>/originales/<id>.png, en alta resolución y
 sin fondo) son la copia buena y no se publican. Este script saca de cada uno
 img/avatar-profe-<profe>/<id>.webp, de 480 px de alto (lo mismo que
@@ -17,7 +18,7 @@ from pathlib import Path
 from PIL import Image
 
 RAIZ = Path(__file__).resolve().parent.parent
-PROFES = ["oscar", "pame"]
+PROFES = ["oscar", "pame", "karina"]
 ALTO = 480
 
 for profe in PROFES:

@@ -1,4 +1,5 @@
-/* «¿Te ayudo?»: la profe Pame en el panel de los alumnos de CCDR POCOCI.
+/* «¿Te ayudo?»: la profe de la academia en el panel de sus alumnos (la profe
+ * Pame en CCDR POCOCI, la profe Karina en ADAPZ).
  * Un botón con su cara abajo a la derecha; al tocarlo, un panel con lo que
  * más preguntan los alumnos, y cada respuesta lleva a su página. Es el mismo
  * asistente del Centroamericano (js/centroamericano-profe.js), con las
@@ -6,9 +7,15 @@
  * de la profe Pamela», para la Academia. Ver «La profe Pame ayuda en el
  * panel» en docs/decisiones/clase-en-vivo.md.
  *
- * - Sale solo a quien ve a la profe Pame (js/avatar-profe-oscar.js decide por
- *   la academia), es alumno y mira su propio panel: lo monta js/clases.js con
- *   ProfeAyuda.montar() cuando ya sabe quién entró.
+ * - Sale solo a quien ve a una profe que no es el profe Oscar
+ *   (js/avatar-profe-oscar.js decide por la academia), es alumno y mira su
+ *   propio panel: lo monta js/clases.js con ProfeAyuda.montar() cuando ya sabe
+ *   quién entró. Habla con el nombre de esa profe (PROFES de ese archivo).
+ * - «¿Puedo jugar contra ti?» solo la contesta la profe que tiene su propio
+ *   bot (CON_BOT, ver js/chess-bot.js); las demás dicen que se practica contra
+ *   Oscar, que es lo que dice su tarjeta. Cada profe puede tener preguntas
+ *   suyas (PROPIAS: la profe Karina lleva a la página de la eliminatoria JDN
+ *   de Pérez Zeledón, que ella dirige).
  * - Las respuestas son fijas y dicen lo que ya dice el panel (las tarjetas de
  *   js/clases.js): nada inventado, sin inteligencia artificial.
  * - Los dibujos van de adorno (alt vacío): lo que dice va escrito al lado.
@@ -27,10 +34,32 @@
     tareas: ["📋", "¿Dónde están mis tareas?", "En «Tareas» están las que te mando, con su fecha límite. Se llenan solas con lo que entrenas en la plataforma.", "Ver mis tareas", "tareas.html", "a-repasar"],
     empezar: ["🧭", "¿Por dónde empiezo a entrenar?", "Empieza por el «Diagnóstico de nivel»: es una prueba que ubica tu nivel y te arma un plan de entrenamiento.", "Hacer el diagnóstico", "entreno/diagnostico.html", "idea"],
     jugar: ["⚔️", "¿Puedo jugar contra ti?", "¡Claro! En «Juega contra mí» juegas contra mi bot: abre como yo, con las jugadas de mis partidas.", "Jugar contra la profe", "tablero.html", "jugando"],
+    practicar: ["⚔️", "¿Contra quién puedo practicar?", "En «Juega contra mí» practicas contra Oscar, nuestro motor: eliges la dificultad y el color.", "Ir a practicar", "tablero.html", "jugando"],
     repasar: ["🎞️", "¿Cómo repaso una clase?", "En «Repasar mis clases» está la partida de cada clase, jugada por jugada, con mis comentarios.", "Repasar mis clases", "repasar-clases.html", "ensenando"],
     clave: ["🔑", "¿Cómo cambio mi contraseña?", "En «Configuración» cambias tu perfil y tu contraseña. Ponle una tuya: la que te dimos al empezar es provisional.", "Ir a Configuración", "configuracion.html", "atencion"],
     medallas: ["🏅", "¿Cómo gano medallas?", "En «Logros» ves tu racha de días entrenando y las medallas que has ganado. Entrena un poquito cada día para que no se corte la racha.", "Ver mis logros", "logros.html", "felicidades"],
   };
+  // La profe que tiene su propio bot (js/chess-bot.js, PERFILES).
+  const CON_BOT = ["pame"];
+  // Las preguntas que son solo de una profe. Sin fechas: lo del torneo lo dice
+  // su página, que se mantiene al día.
+  const PROPIAS = {
+    karina: {
+      torneo: ["🏆", "¿Dónde veo todo de la eliminatoria JDN?", "En la página de la Eliminatoria Cantonal JDN de Pérez Zeledón: la inscripción, las categorías, el calendario y, el día del torneo, los pareos y los resultados. Ahí también te ayudo.", "Ir a la página del torneo", "jdn-pz-2026.html", "campeones"],
+    },
+  };
+  const nombre = () => (A() && A().PROFES[A().PROFE] ? A().PROFES[A().PROFE].nombre : "La profe");
+  // Las preguntas de la profe que le toca a quien entró.
+  function preguntasDe(profe) {
+    const p = {};
+    Object.keys(PREGUNTAS).forEach((k) => {
+      if (k === "jugar" && CON_BOT.indexOf(profe) < 0) return;
+      if (k === "practicar" && CON_BOT.indexOf(profe) >= 0) return;
+      p[k] = PREGUNTAS[k];
+    });
+    return Object.assign(p, PROPIAS[profe] || {});
+  }
+  let MIAS = {};
 
   function el(tag, cls, texto) {
     const e = document.createElement(tag);
@@ -67,8 +96,8 @@
 
   function pintarLista(foco) {
     const ul = el("ul", "profe-ayuda-lista");
-    Object.keys(PREGUNTAS).forEach((k) => {
-      const [icono, pregunta] = PREGUNTAS[k];
+    Object.keys(MIAS).forEach((k) => {
+      const [icono, pregunta] = MIAS[k];
       const li = el("li", "");
       const b = el("button", "profe-ayuda-pregunta");
       b.type = "button";
@@ -79,14 +108,14 @@
       li.appendChild(b);
       ul.appendChild(li);
     });
-    panel.replaceChildren(cerrarX(), cabeza("presentando", "¡Hola! Soy la profe Pame", "Te ayudo a encontrar lo que buscas en la plataforma. ¿Qué necesitas?"), ul);
+    panel.replaceChildren(cerrarX(), cabeza("presentando", "¡Hola! Soy " + nombre().charAt(0).toLowerCase() + nombre().slice(1), "Te ayudo a encontrar lo que buscas en la plataforma. ¿Qué necesitas?"), ul);
     delete panel.dataset.respuesta;
     const f = foco ? panel.querySelector('[data-pregunta="' + foco + '"]') : panel.querySelector("[data-pregunta]");
     if (f) f.focus();
   }
 
   function pintarRespuesta(k) {
-    const [, pregunta, respuesta, accion, href, pose] = PREGUNTAS[k];
+    const [, pregunta, respuesta, accion, href, pose] = MIAS[k];
     const fila = el("div", "profe-ayuda-acciones");
     const ir = el("a", "profe-ayuda-ir", accion);
     ir.href = href;
@@ -115,15 +144,16 @@
 
   // Lo llama js/clases.js con el perfil de quien entró.
   function montar(perfil) {
-    if (boton || !A() || A().PROFE !== "pame") return false;
+    if (boton || !A() || !A().PROFES[A().PROFE] || A().PROFE === "oscar") return false;
     if (!perfil || perfil.role !== "alumno" || perfil._persona) return false;
+    MIAS = preguntasDe(A().PROFE);
 
     boton = el("button", "profe-ayuda-boton");
     boton.type = "button";
     boton.id = "profe-ayuda-boton";
     boton.setAttribute("aria-expanded", "false");
     boton.setAttribute("aria-controls", "profe-ayuda-panel");
-    boton.setAttribute("aria-label", "¿Te ayudo? La profe Pame contesta lo que más se pregunta");
+    boton.setAttribute("aria-label", "¿Te ayudo? " + nombre() + " contesta lo que más se pregunta");
     globo = el("span", "profe-ayuda-globo", "¿Te ayudo?");
     try { visto = localStorage.getItem(CLAVE_VISTO) === "1"; } catch (e) { visto = false; }
     globo.hidden = visto;
@@ -151,7 +181,7 @@
     return true;
   }
 
-  window.ProfeAyuda = { PREGUNTAS, montar, abrir: () => panel && abrir(), cerrar: () => panel && cerrar(false) };
+  window.ProfeAyuda = { PREGUNTAS, PROPIAS, preguntasDe, montar, abrir: () => panel && abrir(), cerrar: () => panel && cerrar(false) };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

@@ -84,7 +84,9 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
     ["Árbitro principal", "FA Jean Carlo Quesada Arauz"],
   ],
   resultados: "pareo",
-  scripts: ["js/pareo/publicar.js", "js/jdn-pz-inscripcion.js"],
+  // La profe Karina ayuda en la página (js/jdn-pz-profe.js): va después de la
+  // inscripción, porque lee lo que esa pinta; sus dibujos, de js/avatar-profe-oscar.js.
+  scripts: ["js/pareo/publicar.js", "js/jdn-pz-inscripcion.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["torneos-pareo.html", "Torneos"]],
   hoy: {
     etiqueta: "La eliminatoria",

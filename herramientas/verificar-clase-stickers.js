@@ -95,8 +95,13 @@ function pruebaCatalogo() {
   }
   igual("cada academia apunta a un profe que existe",
     Object.values(A.PROFE_DE_ACADEMIA).filter((p) => !A.PROFES[p]), []);
-  igual("el texto de la profe Pame no nombra al profe Oscar",
-    A.LISTA.map((a) => A.altDe(a, "pame")).filter((t) => /Oscar|barba/.test(t)), []);
+  for (const profe of Object.keys(A.PROFES).filter((p) => p !== "oscar")) {
+    igual("el texto de " + A.PROFES[profe].nombre.replace(/^La/, "la") + " no nombra al profe Oscar",
+      A.LISTA.map((a) => A.altDe(a, profe)).filter((t) => /Oscar|barba/.test(t)), []);
+    igual("y dice su nombre", A.LISTA.map((a) => A.altDe(a, profe)).filter((t) => t.indexOf(A.PROFES[profe].nombre.replace(/^La /, "")) < 0), []);
+  }
+  igual("rutaDe: el dibujo de un profe sin mirar la academia", [A.rutaDe("karina", "hola"), A.rutaDe("nadie", "hola")],
+    ["img/avatar-profe-karina/hola.webp", "img/avatar-profe-oscar/hola.webp"]);
 
   console.log("\n=== Quién ve a qué profe ===");
   const POCOCI = Object.keys(A.PROFE_DE_ACADEMIA).find((k) => A.PROFE_DE_ACADEMIA[k] === "pame");
@@ -115,6 +120,11 @@ function pruebaCatalogo() {
   igual("un alumno de CCDR POCOCI ve a la profe Pame", [deP.PROFE, deP.ruta("muy-bien")], ["pame", "img/avatar-profe-pame/muy-bien.webp"]);
   igual("con su texto alternativo", deP.porId("muy-bien").alt.startsWith("La profe Pame"), true);
   igual("y sus stickers también", deP.conFrase().every((a) => !/Oscar/.test(a.alt)), true);
+  const ADAPZ = Object.keys(A.PROFE_DE_ACADEMIA).find((k) => A.PROFE_DE_ACADEMIA[k] === "karina");
+  igual("ADAPZ es la academia de la profe Karina", ADAPZ, "e036444a-27ca-44b7-a18e-635c3d906e10");
+  const deK = conGuardado(Object.assign(sesion("u-3"), marca("u-3", ADAPZ)));
+  igual("un alumno de ADAPZ ve a la profe Karina", [deK.PROFE, deK.ruta("muy-bien"), deK.porId("esa-no-es").alt],
+    ["karina", "img/avatar-profe-karina/muy-bien.webp", "La profe Karina diciendo que no con la mano"]);
   igual("otra academia ve al profe Oscar", conGuardado(Object.assign(sesion("u-1"), marca("u-1", "otra-academia"))).ruta("muy-bien"),
     "img/avatar-profe-oscar/muy-bien.webp");
   igual("sin academia (o de varias), el profe Oscar", conGuardado(Object.assign(sesion("u-1"), marca("u-1", null))).PROFE, "oscar");
