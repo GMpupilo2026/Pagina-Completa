@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261112023718
+# al-dia-con: 20261112060425
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -32,6 +32,10 @@ tabla  arbitros_cr_torneos  rls=true
 tabla  arbitros_cuentas  rls=true
 tabla  archivos_pgn  rls=true
 tabla  audios_clase  rls=true
+tabla  audios_clase_marcas  rls=true
+tabla  audios_clase_partidas  rls=true
+tabla  audios_clase_preguntas  rls=true
+tabla  audios_clase_repasos  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
 tabla  avisos_cobro  rls=true
@@ -534,10 +538,38 @@ columna  audios_clase.duracion_seg  integer
 columna  audios_clase.fecha  date
 columna  audios_clase.hora  time without time zone
 columna  audios_clase.id  uuid
+columna  audios_clase.indice  jsonb
 columna  audios_clase.puesto_en  timestamp with time zone
 columna  audios_clase.puesto_por  uuid
+columna  audios_clase.resumen  text
+columna  audios_clase.segmentos  jsonb
 columna  audios_clase.titulo  text
 columna  audios_clase.transcripcion  text
+columna  audios_clase_marcas.audio_id  uuid
+columna  audios_clase_marcas.creada_en  timestamp with time zone
+columna  audios_clase_marcas.id  uuid
+columna  audios_clase_marcas.nota  text
+columna  audios_clase_marcas.persona_id  uuid
+columna  audios_clase_marcas.seg  integer
+columna  audios_clase_partidas.audio_id  uuid
+columna  audios_clase_partidas.id  uuid
+columna  audios_clase_partidas.jugadas  text
+columna  audios_clase_partidas.orden  smallint
+columna  audios_clase_partidas.revisada  boolean
+columna  audios_clase_partidas.seg  integer
+columna  audios_clase_partidas.titulo  text
+columna  audios_clase_preguntas.audio_id  uuid
+columna  audios_clase_preguntas.correcta  smallint
+columna  audios_clase_preguntas.explicacion  text
+columna  audios_clase_preguntas.n  smallint
+columna  audios_clase_preguntas.opciones  text[]
+columna  audios_clase_preguntas.pregunta  text
+columna  audios_clase_repasos.acerto  boolean
+columna  audios_clase_repasos.audio_id  uuid
+columna  audios_clase_repasos.en  timestamp with time zone
+columna  audios_clase_repasos.n  smallint
+columna  audios_clase_repasos.opcion  smallint
+columna  audios_clase_repasos.persona_id  uuid
 columna  auditoria.antes  jsonb
 columna  auditoria.cuando  timestamp with time zone
 columna  auditoria.despues  jsonb
@@ -3423,6 +3455,7 @@ funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  d
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  definer  anon=false  auth=true
 funcion  responder_practica(p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)  definer  anon=false  auth=true
+funcion  responder_repaso(p_audio uuid, p_n integer, p_opcion integer)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
 funcion  respuestas_reveladas_practica(p_envio text)  definer  anon=false  auth=true
@@ -3558,6 +3591,18 @@ politica  audios_clase  audios_clase_delete  DELETE
 politica  audios_clase  audios_clase_insert  INSERT
 politica  audios_clase  audios_clase_select  SELECT
 politica  audios_clase  audios_clase_update  UPDATE
+politica  audios_clase_marcas  audios_clase_marcas_delete  DELETE
+politica  audios_clase_marcas  audios_clase_marcas_insert  INSERT
+politica  audios_clase_marcas  audios_clase_marcas_select  SELECT
+politica  audios_clase_marcas  audios_clase_marcas_update  UPDATE
+politica  audios_clase_partidas  audios_clase_partidas_delete  DELETE
+politica  audios_clase_partidas  audios_clase_partidas_insert  INSERT
+politica  audios_clase_partidas  audios_clase_partidas_select  SELECT
+politica  audios_clase_partidas  audios_clase_partidas_update  UPDATE
+politica  audios_clase_preguntas  audios_clase_preguntas_delete  DELETE
+politica  audios_clase_preguntas  audios_clase_preguntas_insert  INSERT
+politica  audios_clase_preguntas  audios_clase_preguntas_select  SELECT
+politica  audios_clase_repasos  audios_clase_repasos_select  SELECT
 politica  auditoria  auditoria_select_admin  SELECT
 politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
@@ -4254,6 +4299,12 @@ indice  audios_clase  audios_clase_academia_fecha
 indice  audios_clase  audios_clase_archivo_key
 indice  audios_clase  audios_clase_pkey
 indice  audios_clase  audios_clase_una_por_clase
+indice  audios_clase_marcas  audios_clase_marcas_persona
+indice  audios_clase_marcas  audios_clase_marcas_pkey
+indice  audios_clase_partidas  audios_clase_partidas_audio_id_orden_key
+indice  audios_clase_partidas  audios_clase_partidas_pkey
+indice  audios_clase_preguntas  audios_clase_preguntas_pkey
+indice  audios_clase_repasos  audios_clase_repasos_pkey
 indice  auditoria  auditoria_cuando
 indice  auditoria  auditoria_pkey
 indice  auditoria  auditoria_sobre
@@ -5070,6 +5121,23 @@ grant  audios_clase  authenticated  SELECT
 grant  audios_clase  authenticated  TRIGGER
 grant  audios_clase  authenticated  TRUNCATE
 grant  audios_clase  authenticated  UPDATE
+grant  audios_clase_marcas  authenticated  DELETE
+grant  audios_clase_marcas  authenticated  INSERT
+grant  audios_clase_marcas  authenticated  REFERENCES
+grant  audios_clase_marcas  authenticated  SELECT
+grant  audios_clase_marcas  authenticated  TRIGGER
+grant  audios_clase_marcas  authenticated  TRUNCATE
+grant  audios_clase_marcas  authenticated  UPDATE
+grant  audios_clase_partidas  authenticated  DELETE
+grant  audios_clase_partidas  authenticated  INSERT
+grant  audios_clase_partidas  authenticated  REFERENCES
+grant  audios_clase_partidas  authenticated  SELECT
+grant  audios_clase_partidas  authenticated  TRIGGER
+grant  audios_clase_partidas  authenticated  TRUNCATE
+grant  audios_clase_partidas  authenticated  UPDATE
+grant  audios_clase_preguntas  authenticated  DELETE
+grant  audios_clase_preguntas  authenticated  INSERT
+grant  audios_clase_repasos  authenticated  SELECT
 grant  auditoria  authenticated  SELECT
 grant  aviso_destinatarios  authenticated  REFERENCES
 grant  aviso_destinatarios  authenticated  SELECT
