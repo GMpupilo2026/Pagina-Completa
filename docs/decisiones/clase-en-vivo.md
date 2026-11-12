@@ -5241,6 +5241,36 @@ entrenadora es Pamela Salas, de la Comisión de Ajedrez Femenino) ve a la
 - Lo revisa `verificar-clase-stickers.js` («Los otros profes» y «Quién ve a
   qué profe»).
 
+### La profe Pame ayuda en el panel
+
+El dueño pidió el «¿Te ayudo?» del Centroamericano (`js/centroamericano-profe.js`)
+«pero con los avatares de la profe Pamela», y lo quiso en la Academia: a los
+alumnos de CCDR POCOCI les sale en su panel (`clases.html`) un botón con la
+cara de la profe Pame abajo a la derecha, y al tocarlo, las preguntas que más
+hacen, cada una con su respuesta, su dibujo y un botón a la página que la
+resuelve (`js/profe-ayuda.js`).
+
+- **Solo a quien ve a la profe Pame, es alumno y mira su propio panel.** Lo
+  monta `js/clases.js` con `ProfeAyuda.montar(profile)` cuando ya sabe quién
+  entró; la academia la decide `js/avatar-profe-oscar.js`, como el avatar y el
+  bot. Un profesor de la academia no la ve (su panel es otro), ni quien mira
+  el panel de otra persona.
+- **Las respuestas dicen lo que ya dice el panel** (las tarjetas de
+  `js/clases.js`): nada inventado, sin inteligencia artificial. Al cambiar una
+  tarjeta de nombre, se cambia también su respuesta.
+- Es un módulo aparte y no una copia del del Centroamericano: aquel depende de
+  `CentroamericanoVivo` (idiomas, diálogos de esa página) y sus respuestas
+  mueven la página en vez de llevar a otra. El aspecto sí es el mismo, con los
+  colores de la plataforma (`css/styles.css`, `.profe-ayuda-*`): texto
+  #102a43 sobre blanco, y en oscuro blanco sobre `--c-brand-900`.
+- El globito «¿Te ayudo?» sale solo la primera vez en cada aparato
+  (`profe_ayuda_visto`); con una ventana abierta, la profe se aparta.
+
+Lo prueba `verificar-profe-ayuda.js`: que cada respuesta lleve a una página que
+existe, que cada dibujo sea de la profe Pame, a quién le sale (con un
+documento de mentira) y el orden de los scripts. Roto a propósito (quitando la
+condición de alumno), salta.
+
 ## La cámara en la clase en vivo
 
 Pedido del dueño el 29/10/2026 (de las mejoras de la cámara que lee el
