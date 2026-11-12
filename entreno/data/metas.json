@@ -3326,6 +3326,182 @@
    "actividades": [
     "finales_clases"
    ]
+  },
+  {
+   "clave": "clase-1112-1",
+   "label": "12/11 · Ventaja 1: un alfil de más",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-2",
+   "label": "12/11 · Ventaja 2: torre contra alfil",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-3",
+   "label": "12/11 · Ventaja 3: dos peones de más en el final de peones",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-4",
+   "label": "12/11 · Gana por oposición 1: peón en segunda",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-5",
+   "label": "12/11 · Gana por oposición 2: el rey delante del peón",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-6",
+   "label": "12/11 · Gana por oposición 3: peón de caballo",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-7",
+   "label": "12/11 · Gana por oposición 4: peón en sexta",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-8",
+   "label": "12/11 · Gana por oposición 5: la oposición de lado",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-9",
+   "label": "12/11 · Tablas por oposición 1: rey delante del peón",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-10",
+   "label": "12/11 · Tablas por oposición 2: frena al rey blanco",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-11",
+   "label": "12/11 · Tablas por oposición 3: en la última fila",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-12",
+   "label": "12/11 · Tablas por oposición 4: la oposición a distancia",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-13",
+   "label": "12/11 · Tablas por oposición 5: peón de alfil",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-14",
+   "label": "12/11 · Mate de dama 1: el rey en el centro",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-15",
+   "label": "12/11 · Mate de dama 2: la dama lejos",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-16",
+   "label": "12/11 · Mate de dama 3: el rey en el flanco",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-17",
+   "label": "12/11 · Mate de torre 1: el rey en el centro",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-18",
+   "label": "12/11 · Mate de torre 2: la torre en la esquina",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-19",
+   "label": "12/11 · Mate de torre 3: el rey cerca del borde",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-20",
+   "label": "12/11 · Mate de alfil y caballo 1: ya en la esquina buena",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-21",
+   "label": "12/11 · Mate de alfil y caballo 2: desde la esquina equivocada",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
+  },
+  {
+   "clave": "clase-1112-22",
+   "label": "12/11 · Mate de alfil y caballo 3: desde el centro",
+   "total": 1,
+   "actividades": [
+    "finales_clases"
+   ]
   }
  ]
 }

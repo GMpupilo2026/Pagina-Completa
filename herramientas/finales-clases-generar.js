@@ -7,8 +7,9 @@
  *
  * La fuente es herramientas/datos/posiciones-clases/<fecha>.json, sacada de las
  * transcripciones de las clases (ver «Las posiciones de las clases, para
- * practicarlas contra el motor» en docs/decisiones/accesibilidad.md). Como la
- * posición sale de lo que Whisper oyó, no se cree a ciegas:
+ * practicarlas contra el motor» en docs/decisiones/accesibilidad.md), o
+ * escrita a mano para el entrenamiento de un día (con `origen`, que lo dice).
+ * Venga de donde venga, la posición no se cree a ciegas:
  *   - chess.js: la FEN carga, hay un rey por bando y el que no juega no está
  *     en jaque (con eso Stockfish se cuelga sin avisar).
  *   - Stockfish, a profundidad PROFUNDIDAD y desde el lado que juega (que es
