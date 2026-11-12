@@ -156,6 +156,16 @@
       pagina: "/jdn-pz-2026.html",
       fichas: [[/torneos-pareo\.html/i, "fichas", "Resultados en Pareo Integral"], [/bases-eliminatoria-cantonal-jdn-pz-2026\.pdf$/i, "ficha-bases"], [/inscrib/i, "inscribirme"]],
     },
+    // El Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio Alfaro: la
+    // misma cara, con el azul y el rojo de su afiche y Tacho, su mascota. Las
+    // bases llevan a su ficha; el formulario de inscripción (forms.gle) y lo
+    // que diga «inscrib», a la ventana «Inscribirme» de la página; Pareo
+    // Integral (los resultados), a las fichas.
+    "tacho-chess-2": {
+      clase: "u-sala", tema: "u-sala-tacho", imagen: "/img/tacho-chess-2/mascota.png", ancho: 450, alto: 755,
+      pagina: "/tacho-chess-2.html",
+      fichas: [[/torneos-pareo\.html/i, "fichas", "Resultados en Pareo Integral"], [/bases-tacho-chess-2\.pdf$/i, "ficha-bases"], [/forms\.gle\/|inscrib/i, "inscribirme"]],
+    },
   };
 
   // Con un torneo por categoría, la sala tiene un enlace de chess-results por

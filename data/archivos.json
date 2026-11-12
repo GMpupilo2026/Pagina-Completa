@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 894,
+  "total": 895,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8178,6 +8178,12 @@
     "titulo": "Bases metropolitano 2026",
     "tipo": "otro",
     "kb": 3086
+   },
+   {
+    "ruta": "documentos/tacho-chess-2/bases-tacho-chess-2.pdf",
+    "titulo": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
+    "tipo": "otro",
+    "kb": 64
    },
    {
     "ruta": "instrucciones-adaptadas.pdf",
@@ -19093,7 +19099,7 @@
   ]
  },
  "imagenes": {
-  "total": 1241,
+  "total": 1243,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26728,6 +26734,25 @@
       "titulo": "Formacion ajedrez marco",
       "tipo": "otro",
       "kb": 505
+     }
+    ]
+   },
+   {
+    "carpeta": "img/tacho-chess-2",
+    "titulo": "Tacho chess 2",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/tacho-chess-2/logo-liceo.png",
+      "titulo": "Tacho Chess 2: el escudo del Liceo Anastasio Alfaro, recortado del afiche",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "img/tacho-chess-2/mascota.png",
+      "titulo": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
+      "tipo": "otro",
+      "kb": 73
      }
     ]
    },
