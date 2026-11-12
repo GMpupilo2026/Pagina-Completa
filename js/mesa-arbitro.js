@@ -28,10 +28,105 @@
     { valor: "D", bitacora: "borrado", texto: "Borrar el resultado" },
   ];
   const POR_VALOR = new Map(RESULTADOS.map((r) => [r.valor, r]));
-  const TIPOS = { resultado: "Resultado", correccion: "Corrección", ilegal: "Ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota" };
+  const TIPOS = { resultado: "Resultado", correccion: "Corrección", ilegal: "Ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota", anulacion: "Anulación" };
 
   const textoResultado = (valor) => (POR_VALOR.get(String(valor)) || { texto: "—" }).texto;
   const nombreBitacora = (valor) => (POR_VALOR.get(String(valor)) || {}).bitacora || null;
+
+  // ---- Las jugadas ilegales y las irregularidades. Las comparten esta Mesa y la del Centroamericano
+  // (js/centroamericano-mesas.js las toma de acá): una sola copia de la regla.
+  // LAS REGLAS DE LAS ILEGALES son las de Pareo Integral (js/pareo/textos.js, marcasIncidencias en
+  // js/pareo/evento.js): se cuentan por partida, es decir por ronda + mesa + color; la primera le da dos
+  // minutos más al rival y la segunda hace perder la partida (art. 7.5.5), salvo que el rival no pueda dar
+  // mate con ninguna serie de jugadas legales (tablas). Solo se escribe lo que se le avisa al árbitro: el
+  // resultado lo decide y lo guarda él.
+  const ARTICULO_ILEGAL = "7.5.5";
+
+  // «i» por cada ilegal y «!» por cada irregularidad: el mismo código de Pareo.
+  const marcasTexto = (m) => (m ? "i".repeat(m.ilegales || 0) + "!".repeat(m.irregularidades || 0) : "");
+
+  // Lo que se le dice al árbitro al anotar una ilegal. `n` es la cuenta de ESA
+  // partida y ESE jugador, ya con la que acaba de anotar.
+  // `minutos`: los que se le dan al rival por la primera (2; 1 en el blitz, Leyes del Ajedrez, apéndice B.3).
+  function avisoIlegal(n, nombre, color, minutos) {
+    const min = minutos === 1 ? "1 minuto" : "2 minutos";
+    const quien = nombre || (color === "negras" ? "Las negras" : "Las blancas");
+    if (n >= 2) {
+      return {
+        nivel: "pierde",
+        titulo: "Segunda jugada ilegal: pierde la partida",
+        texto: quien + " ya hizo " + n + " jugadas ilegales en esta partida: pierde la partida (art. " + ARTICULO_ILEGAL + "). " +
+          "Excepción: si su rival no puede dar mate con ninguna serie de jugadas legales, la partida es tablas. " +
+          "Tú decides el resultado: no se guarda solo.",
+        // Pierde quien la hizo: si son las blancas, gana el negro (0-1), y al revés.
+        resultado: color === "blancas" ? "3" : "1",
+      };
+    }
+    return {
+      nivel: "primera",
+      titulo: "Primera jugada ilegal",
+      texto: quien + " hizo una jugada ilegal: dale " + min + " más a su rival (art. " + ARTICULO_ILEGAL + "). Con otra, pierde la partida.",
+      resultado: null,
+    };
+  }
+
+  // La primera ilegal: 2 minutos para el rival; en el blitz, 1 (apéndice B.3).
+  const minutosIlegal = (ritmo) => (ritmo === "blitz" ? 1 : 2);
+
+  // ---- Los tipos de jugada ilegal y de irregularidad, para elegirlos de una lista y que
+  // queden en la bitácora sin escribir. Son los casos de siempre de un torneo; el artículo
+  // solo va donde el reglamento de FIDE lo dice sin duda (si falta uno, el árbitro puede
+  // elegir «Otra» y escribirlo). La ilegal es siempre el 7.5.5 (dos minutos al rival la
+  // primera; la segunda pierde la partida). «Otra» va PRIMERO y es la que viene elegida: si el
+  // árbitro escribe lo que pasó y no toca la lista, queda anotado tal cual en «Otra», y no
+  // con una frase de la lista que no eligió (pasó en el Centroamericano 2026).
+  const TIPOS_ILEGAL = [
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
+    { id: "pieza", texto: "Movió una pieza como esa pieza no puede moverse" },
+    { id: "rey-jaque", texto: "Dejó o puso su propio rey en jaque" },
+    { id: "no-salio-jaque", texto: "No salió de un jaque" },
+    { id: "enroque", texto: "Enroque ilegal" },
+    { id: "captura", texto: "Captura ilegal (de su propia pieza o de una casilla que no corresponde)" },
+    { id: "promocion", texto: "Peón en la última fila sin promover a una pieza válida" },
+    { id: "turno", texto: "Jugó fuera de turno o dos jugadas seguidas" },
+  ];
+  const TIPOS_IRREGULARIDAD = [
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
+    { id: "toque", texto: "Tocó una pieza y no la movió (pieza tocada)", articulo: "4.3" },
+    { id: "componer", texto: "Arregló piezas sin decir «compongo»", articulo: "4.2" },
+    { id: "planilla", texto: "No anota la partida en la planilla", articulo: "8.1" },
+    { id: "tablas", texto: "Ofreció tablas de forma incorrecta", articulo: "9.2" },
+    { id: "celular", texto: "Celular o aparato electrónico sonó o lo tenía encendido", articulo: "11.3.2" },
+    { id: "ruido", texto: "Molestó al rival o hizo ruido" },
+    { id: "salio", texto: "Salió del área de juego sin permiso" },
+    { id: "ayuda", texto: "Recibió ayuda o habló con otras personas durante la partida" },
+    { id: "reloj", texto: "Usó mal el reloj (con la otra mano, golpeándolo, sin soltar la pieza)" },
+  ];
+
+  // Lo que se anota en el registro de una ilegal o irregularidad elegida de la lista.
+  function textoTipo(lista, id, nota) {
+    const t = lista.find((x) => x.id === id);
+    if (!t) return null;
+    const n = String(nota || "").trim();
+    if (id === "otra" && !n) return null;
+    return { texto: (id === "otra" ? "Otra: " + n : t.texto + (n ? ". " + n : "")), articulo: t.articulo || "" };
+  }
+
+  // Las marcas de cada partida a partir de las líneas de la bitácora: { "ronda|mesa|color": { ilegales,
+  // irregularidades, ultima_ilegal, ultima_irregularidad } }, sin lo anulado (una anulación es otra línea que
+  // apunta a la anulada con `anula`). Las líneas vienen en orden de hora: la «última» es la más reciente.
+  const claveMarca = (ronda, mesa, color) => [ronda, mesa, color].join("|");
+  function marcas(lineas) {
+    const anuladas = new Set((lineas || []).filter((l) => l.tipo === "anulacion" && l.anula).map((l) => l.anula));
+    const out = {};
+    for (const l of lineas || []) {
+      if ((l.tipo !== "ilegal" && l.tipo !== "irregularidad") || anuladas.has(l.id) || !l.color) continue;
+      const k = claveMarca(l.ronda, l.mesa, l.color);
+      const x = out[k] || (out[k] = { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null });
+      if (l.tipo === "ilegal") { x.ilegales++; x.ultima_ilegal = l.id; } else { x.irregularidades++; x.ultima_irregularidad = l.id; }
+    }
+    return out;
+  }
 
   // Las mesas donde el árbitro eligió algo distinto de lo que ya hay en
   // chess-results. `elegido` es { [mesa]: valor }; una mesa sin elegir queda
@@ -78,6 +173,8 @@
   function detalle(l) {
     if (l.tipo === "resultado") return textoResultado(valorDeBitacora(l.resultado)) + (l.texto ? " — " + l.texto : "") + (l.enviado ? " · enviado a chess-results" : " · solo anotado");
     if (l.tipo === "correccion") return "De «" + textoResultado(valorDeBitacora(l.anterior)) + "» a «" + textoResultado(valorDeBitacora(l.resultado)) + "»" + (l.texto ? " — " + l.texto : "") + (l.enviado ? " · enviado a chess-results" : " · solo anotado");
+    if (l.tipo === "ilegal" || l.tipo === "irregularidad") return (l.jugador || "Jugador") + " (" + (l.color === "negras" ? "negras" : "blancas") + ")" + (l.texto ? ": " + l.texto : "");
+    if (l.tipo === "anulacion") return "Anula una anotación anterior de " + (l.jugador || (l.color === "negras" ? "las negras" : "las blancas")) + (l.texto ? ": " + l.texto : "") + ".";
     return l.texto || "";
   }
   function valorDeBitacora(nombre) {
@@ -91,7 +188,9 @@
   function documento(torneo, lineas, arbitro, hora) {
     const formato = hora || ((x) => String(x));
     const orden = lineas.slice().sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)));
-    const cuenta = (t) => orden.filter((l) => l.tipo === t).length;
+    // Lo anulado sigue en la tabla (la bitácora no se borra), pero no se cuenta en el resumen.
+    const anuladas = new Set(orden.filter((l) => l.tipo === "anulacion" && l.anula).map((l) => l.anula));
+    const cuenta = (t) => orden.filter((l) => l.tipo === t && !anuladas.has(l.id)).length;
     const enviados = orden.filter((l) => (l.tipo === "resultado" || l.tipo === "correccion") && l.enviado).length;
     const b = [];
     b.push({ tipo: "titulo", texto: "Resumen" });
@@ -101,7 +200,7 @@
         "Resultados anotados: " + cuenta("resultado") + " (" + enviados + " enviados a chess-results, contando las correcciones).",
         "Correcciones de un resultado: " + cuenta("correccion") + ".",
         "Incidencias: " + cuenta("incidencia") + ". Notas: " + cuenta("nota") + ".",
-        "Jugadas ilegales: " + cuenta("ilegal") + ". Irregularidades: " + cuenta("irregularidad") + ".",
+        "Jugadas ilegales: " + cuenta("ilegal") + ". Irregularidades: " + cuenta("irregularidad") + "." + (anuladas.size ? " Anuladas por error: " + anuladas.size + "." : ""),
       ],
     });
     b.push({ tipo: "titulo", texto: "Bitácora" });
@@ -125,7 +224,8 @@
     };
   }
 
-  const api = { RESULTADOS, TIPOS, textoResultado, nombreBitacora, cambios, lineasDeCambios, listaParaTeclear, detalle, documento };
+  const api = { RESULTADOS, TIPOS, textoResultado, nombreBitacora, cambios, lineasDeCambios, listaParaTeclear, detalle, documento,
+    ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, claveMarca, marcas };
   if (enNode) module.exports = api;
   else raiz.MesaArbitro = api;
 })(typeof self !== "undefined" ? self : this);

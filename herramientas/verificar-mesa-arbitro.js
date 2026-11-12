@@ -164,6 +164,47 @@ igual("ver y anotar piden la licencia «mesa-arbitro» (y ver, también quien ad
 igual("auth.uid() siempre envuelto en (select …)", (sinComentarios.match(/auth\.uid\(\)/g) || []).length, (sinComentarios.match(/\(select auth\.uid\(\)\)/g) || []).length + 1 /* el default de la columna */);
 igual("la tabla no tiene dónde guardar la clave", /\b(sid|clave|password|secret)/i.test(sinComentarios.replace(/comment on table[^;]*;/i, "")), false);
 
+console.log("\n=== Ilegales e irregularidades (una sola copia de la regla) ===");
+const C = require(path.join(RAIZ, "js", "centroamericano-mesas.js"));
+igual("la Mesa del Centroamericano usa la MISMA regla y las mismas listas que esta (no una copia)",
+  [C.avisoIlegal === M.avisoIlegal, C.minutosIlegal === M.minutosIlegal, C.TIPOS_ILEGAL === M.TIPOS_ILEGAL, C.TIPOS_IRREGULARIDAD === M.TIPOS_IRREGULARIDAD, C.textoTipo === M.textoTipo, C.ARTICULO_ILEGAL], [true, true, true, true, true, "7.5.5"]);
+igual("la primera ilegal: 2 minutos al rival y ningún resultado; la segunda: pierde quien la hizo",
+  [M.avisoIlegal(1, "Ana", "blancas", 2).resultado, M.avisoIlegal(2, "Ana", "blancas", 2).resultado, M.avisoIlegal(2, "Beto", "negras", 2).resultado, /2 minutos/.test(M.avisoIlegal(1, "Ana", "blancas", 2).texto)], [null, "3", "1", true]);
+const lineasIl = [
+  { id: "a", tipo: "ilegal", ronda: 3, mesa: 2, color: "negras" },
+  { id: "b", tipo: "ilegal", ronda: 3, mesa: 2, color: "negras" },
+  { id: "c", tipo: "anulacion", ronda: 3, mesa: 2, color: "negras", anula: "b" },
+  { id: "d", tipo: "irregularidad", ronda: 3, mesa: 2, color: "blancas" },
+  { id: "e", tipo: "ilegal", ronda: 4, mesa: 2, color: "negras" },
+  { id: "f", tipo: "nota", ronda: 3, mesa: 2, texto: "x" },
+];
+const mk = M.marcas(lineasIl);
+igual("las marcas se cuentan por partida (ronda + mesa + color) y lo anulado no cuenta",
+  [mk["3|2|negras"], mk["3|2|blancas"], mk["4|2|negras"].ilegales, Object.keys(mk).length],
+  [{ ilegales: 1, irregularidades: 0, ultima_ilegal: "a", ultima_irregularidad: null }, { ilegales: 0, irregularidades: 1, ultima_ilegal: null, ultima_irregularidad: "d" }, 1, 3]);
+const docIl = M.documento({ tnr: "1" }, lineasIl.map((l, i) => Object.assign({ ocurrio: "2026-11-11T20:0" + i + ":00Z", jugador: "Ana" }, l)), "");
+igual("el resumen del documento no cuenta lo anulado, y dice cuántas se anularon",
+  docIl.bloques.find((b) => b.tipo === "lista").items[3], "Jugadas ilegales: 2. Irregularidades: 1. Anuladas por error: 1.");
+igual("el detalle de una ilegal dice quién y con qué color", M.detalle({ tipo: "ilegal", jugador: "Ana", color: "negras", texto: "Enroque ilegal" }), "Ana (negras): Enroque ilegal");
+
+// Las dos migraciones juntas: la de las ilegales y su arreglo (la política sin recursión), en orden.
+const archivosIl = fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).filter((f) => /mesa_arbitro_(ilegales|anular_sin_recursion)/.test(f)).sort();
+const sqlIl = archivosIl.map((f) => fs.readFileSync(path.join(RAIZ, "supabase", "migraciones", f), "utf8")).join("\n").replace(/--[^\n]*/g, "");
+// La política que vale es la ÚLTIMA que se creó.
+const politicaIl = (sqlIl.match(/create policy arbitro_bitacora_anotar[\s\S]*?\);\s*$/gm) || []).pop() || "";
+const insertableIl = (sqlIl.match(/grant insert \(([^)]*)\)/) || [])[1] || "";
+igual("la migración: se suman color, jugador y anula al insert, y no la hora ni el autor",
+  ["color", "jugador", "anula"].every((c) => insertableIl.includes(c)) && !/ocurrio|creada_por/.test(insertableIl), true);
+igual("una línea se anula una sola vez: lo garantiza un índice único, no un «if»", /create unique index[^;]*\(anula\)\s*where anula is not null/i.test(sqlIl), true);
+igual("la política vigente no mira su propia tabla (Postgres la rechaza con «infinite recursion», 42P17, en TODO insert): lo pregunta una función SECURITY DEFINER",
+  [archivosIl.length, politicaIl.length > 0, /arbitro_bitacora\s+b\b|from public\.arbitro_bitacora/.test(politicaIl), /interno\.arbitro_puede_anular\(/.test(politicaIl),
+   /function interno\.arbitro_puede_anular[\s\S]*?security definer/.test(sqlIl), /revoke execute on function interno\.arbitro_puede_anular[^;]*from public, anon/.test(sqlIl)],
+  [2, true, false, true, true, true]);
+igual("la anulación solo vale sobre una ilegal o irregularidad PROPIA de la misma partida y jugador",
+  [/b\.creada_por = \(select auth\.uid\(\)\)/.test(sqlIl), /b\.tipo in \('ilegal', 'irregularidad'\)/.test(sqlIl), /b\.mesa is not distinct from arbitro_bitacora\.mesa/.test(sqlIl), /b\.color is not distinct from arbitro_bitacora\.color/.test(sqlIl)], [true, true, true, true]);
+igual("sigue sin update ni delete", [/for update|for delete/i.test(sqlIl), /grant[^;]*\b(update|delete)\b/i.test(sqlIl)], [false, false]);
+igual("auth.uid() envuelto en (select …) en la política nueva", (sqlIl.match(/auth\.uid\(\)/g) || []).length, (sqlIl.match(/\(select auth\.uid\(\)\)/g) || []).length);
+
 
 (async () => {
 console.log("\n=== Torneos ligados en un grupo: una clave abre todos ===");
