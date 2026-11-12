@@ -172,8 +172,8 @@
                     <div id="ficha-resultados" tabindex="0" aria-disabled="true" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
                         <span class="cac-icono" aria-hidden="true">♟️</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los emparejamientos de cada ronda, los resultados y la clasificación de cada nivel.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: la organización dirá dónde se publican</span></span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">En Pareo Integral: los emparejamientos de cada ronda, los resultados y la clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparece cuando el torneo se publique en Pareo Integral</span></span>
                     </div>
                 </li>
                 <li>
@@ -321,6 +321,10 @@
                     </ol>
                 </div>
                 <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Resultados</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral: la ficha «Resultados» de esta página los abre.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-brand-800 dark:text-white">Celulares</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Durante la partida, el celular va completamente apagado y guardado en el bolso (Leyes del Ajedrez, 11.3.2). Quien lo tenga encendido pierde la partida.</p>
                 </div>
@@ -328,11 +332,24 @@
                     <h3 class="font-bold text-brand-800 dark:text-white">Premiación</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</p>
                 </div>
-                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6 sm:col-span-2">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-brand-800 dark:text-white">Lo que no esté en las bases</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Se resuelve con las Leyes del Ajedrez de la FIDE vigentes. Participar en el torneo es aceptar las bases.</p>
                 </div>
             </div>
+        </div>
+    </dialog>
+    <!-- Los resultados, en Pareo Integral. Solo se abre si la organización juega los
+         niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
+         por torneo (con uno solo, la ficha lleva directo a él). -->
+    <dialog id="resultados" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="resultados-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="resultados-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">♟️ </span>Resultados</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p id="resultados-estado" class="text-brand-600 dark:text-brand-300 mt-2">Los resultados se publican en Pareo Integral cuando empieza el torneo.</p>
+            <ul id="resultados-lista" class="mt-4 grid gap-3"></ul>
         </div>
     </dialog>
     <!-- Lo que el afiche anuncia además del torneo. -->
@@ -376,6 +393,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/tacho-chess.js"></script>
     <script src="js/torneo-hoy.js"></script>
+    <script src="js/tacho-chess-resultados.js"></script>
 </body>
 </html>
 

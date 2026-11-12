@@ -14874,9 +14874,17 @@ chess-results).
   igual al texto impreso); es de la organización (Google Forms) y lo dice la
   política de privacidad.
 - **Lo que el afiche no trae no se pone**: ni teléfono ni correo (no hay ficha
-  de contacto), ni cierre de la inscripción, ni dónde salen los
-  resultados: la ficha «Resultados» va «Pronto» hasta que la organización lo
-  diga. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
+  de contacto) ni cierre de la inscripción.
+- **Los resultados van en Pareo Integral** (lo dijo el dueño): la ficha
+  «Resultados» va «Pronto» y `js/tacho-chess-resultados.js` la cambia por el
+  enlace a la página pública del torneo (`torneos-pareo.html#t=<id>`, encima).
+  Lo encuentra solo, como en Pérez Zeledón: un torneo con «Tacho» en el nombre,
+  creado desde octubre de 2026 (no la edición 1), de una organización de Pareo
+  **con el sello «Organizador verificado»** (sin el sello, cualquiera
+  publicaría un «Tacho Chess» y la ficha llevaría a él). El 12/11/2026 solo las
+  dos «ADAPZ» tenían el sello: quien publique el torneo tiene que pedírselo a
+  administración. Si los niveles se juegan en varios torneos, la ficha abre
+  `#resultados` con un enlace por torneo. Nunca lleva a la lista de Pareo. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
   inventar una dirección.
 - **Las bases son un PDF propio** (`documentos/tacho-chess-2/bases-tacho-chess-2.pdf`),
   porque el afiche no trae bases: las arma `herramientas/tacho-chess-2-bases.js`
@@ -14903,12 +14911,15 @@ chess-results).
   va en la franja de quién organiza.
 - **La sala en Torneos** (`salas_torneo`, clave `tacho-chess-2`, tipo
   «enlaces», orden 1) se creó el 12/11/2026 con tres enlaces: la página, `#inscribirme`
-  y las bases (que la portada lleva a `#ficha-bases`). Su portada está en
+  y las bases (que la portada lleva a `#ficha-bases`); después, «Resultados en
+  Pareo Integral» (a `#fichas`). Su portada está en
   `PORTADAS` de `js/salas-torneo.js`.
 
 `herramientas/verificar-tacho-chess.js` lo revisa: los datos del afiche en la
 página y en el PDF, el árbitro, la llegada a las 8:30 y el calendario igual al horario de las bases, el formulario
-del QR que se abre encima, «Resultados» «Pronto», «Hoy en el torneo» en cuatro
+del QR que se abre encima, «Resultados» (con un doble de la base: «Pronto» sin
+torneo, sin el sello o con la edición anterior; el torneo encima con uno; la
+ventana con varios; quitando el filtro del sello, saltan cuatro), «Hoy en el torneo» en cuatro
 momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
 si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
 

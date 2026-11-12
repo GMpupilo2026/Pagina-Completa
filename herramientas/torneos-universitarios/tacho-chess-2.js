@@ -23,9 +23,11 @@
  *   otras horas no las dice nadie: salen del horario de BasesTorneo (cada ronda dura el tiempo
  *   de los dos jugadores más 40 jugadas de incremento, y la siguiente
  *   empieza a la media hora siguiente) y se escriben «aprox.».
- * - Lo que el afiche no trae (teléfono, correo, cierre de la
- *   inscripción, dónde se publican los resultados) no se pone: «Resultados»
- *   va «Pronto» hasta que la organización diga dónde.
+ * - Lo que el afiche no trae (teléfono, correo, cierre de la inscripción)
+ *   no se pone.
+ * - Los resultados van en Pareo Integral (lo dijo el dueño): la ficha
+ *   «Resultados» va «Pronto» hasta que el torneo está publicado, y
+ *   js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
  */
 const B = require("../../js/bases-torneo.js");
 
@@ -59,6 +61,7 @@ const bases = {
   premios: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.",
   otras: [
     "La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.",
+    "Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral, en la página del torneo (ajedrez-integral.com/tacho-chess-2, ficha «Resultados»).",
     "Durante el torneo hay feria de comerciantes de la comunidad, open house del Liceo Anastasio Alfaro y venta de comida.",
   ].join("\n"),
 };
@@ -117,6 +120,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     ["Ritmo", "5 rondas a 10 minutos + 2 segundos"],
   ],
   resultados: "pareo",
+  scripts: ["js/tacho-chess-resultados.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",
@@ -133,7 +137,9 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas y de la premiación.", accion: "Ver el calendario" },
     { href: "#premios", color: "rojo", icono: "🏆", titulo: "Niveles y premios", texto: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.", accion: "Ver los niveles" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
-    { id: "ficha-resultados", pronto: "la organización dirá dónde se publican", color: "azul", icono: "♟️", titulo: "Resultados", texto: "Los emparejamientos de cada ronda, los resultados y la clasificación de cada nivel." },
+    // «Pronto» hasta que el torneo esté publicado en Pareo Integral: entonces
+    // js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
+    { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Resultados", texto: "En Pareo Integral: los emparejamientos de cada ronda, los resultados y la clasificación." },
     { href: "#ademas", color: "verde", icono: "🎉", titulo: "Además disfruta de", texto: "Feria de comerciantes de la comunidad, open house del liceo y venta de comida.", accion: "Ver qué hay" },
     { href: "https://www.google.com/maps/search/?api=1&query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).", accion: "Abrir el mapa" },
   ],
@@ -219,6 +225,10 @@ ${desempates}
         </ol>
     </div>
     <div class="${tarjeta}">
+        ${h3}Resultados</h3>
+        <p class="${texto}">Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral: la ficha «Resultados» de esta página los abre.</p>
+    </div>
+    <div class="${tarjeta}">
         ${h3}Celulares</h3>
         <p class="${texto}">Durante la partida, el celular va completamente apagado y guardado en el bolso (Leyes del Ajedrez, 11.3.2). Quien lo tenga encendido pierde la partida.</p>
     </div>
@@ -226,11 +236,20 @@ ${desempates}
         ${h3}Premiación</h3>
         <p class="${texto}">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</p>
     </div>
-    <div class="${tarjeta} sm:col-span-2">
+    <div class="${tarjeta}">
         ${h3}Lo que no esté en las bases</h3>
         <p class="${texto}">Se resuelve con las Leyes del Ajedrez de la FIDE vigentes. Participar en el torneo es aceptar las bases.</p>
     </div>
 </div>
+`,
+      },
+      {
+        id: "resultados", icono: "♟️", titulo: "Resultados",
+        comentario: `Los resultados, en Pareo Integral. Solo se abre si la organización juega los
+niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
+por torneo (con uno solo, la ficha lleva directo a él).`,
+        cuerpo: `<p id="resultados-estado" class="text-brand-600 dark:text-brand-300 mt-2">Los resultados se publican en Pareo Integral cuando empieza el torneo.</p>
+<ul id="resultados-lista" class="mt-4 grid gap-3"></ul>
 `,
       },
       {
