@@ -324,6 +324,9 @@
                     tablero: document.getElementById("board"),
                     nombreTablero: "Tablero de Niebla de Guerra",
                     tryMove: (text) => board.tryMove(text),
+                    // Quién hizo la última jugada: con la lista desde la posición inicial,
+                    // un largo impar terminó en una de blancas.
+                    quienJugo: () => nameFor(((room && room.moves) || []).length % 2 === 1 ? room.white_id : room.black_id),
                     miColor: () => myColor,
                     // "reloj" / "tiempo" en el recuadro, y los avisos de 30 y 10 segundos.
                     reloj: () => {
@@ -397,10 +400,11 @@
                         return vista;
                     },
                     // La niebla oculta la jugada del rival igual que oculta el panel de
-                    // jugadas visual (ver renderMovesPanel) — no se anuncia qué jugó ni
-                    // adónde, solo que ya jugó (el status "Es tu turno" ya lo dice, por el
-                    // aria-live del status-banner).
-                    describeOpponentMove: () => null,
+                    // jugadas visual (ver renderMovesPanel): se dice QUE jugó, no qué ni
+                    // adónde. Antes no se decía nada y, con la voz del sitio, quien no ve
+                    // no se enteraba de que el rival ya había jugado.
+                    describeOpponentMove: () => nameFor(((room && room.moves) || []).length % 2 === 1 ? room.white_id : room.black_id)
+                        + " jugó. Con la niebla no se ve qué jugada hizo.",
                 });
             }
 
