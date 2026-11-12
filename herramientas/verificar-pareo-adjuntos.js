@@ -12,7 +12,12 @@
  *     función pareo-publicar): el principal lo lee al abrir el torneo en
  *     cualquier ficha y con el toque «cola», lo pasa por las mismas reglas,
  *     lo borra de la base, y la lista de enlaces sube apenas cambia; el
- *     celular manda a la base y, sin ella, por el canal.
+ *     celular manda a la base y, sin ella, por el canal;
+ *   - las cámaras de Notara en el celular del adjunto: con el código que manda
+ *     el principal, cada mesa suya con su tablero en vivo (lo de otro torneo u
+ *     otra ronda no entra), «La cámara dice» con «Confirmar» (manda ese
+ *     resultado, como tocarlo a mano) y «No es así» (lo esconde). La partida
+ *     de prueba es el mate del pastor, comprobado con chess.js.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-adjuntos.js
@@ -237,12 +242,49 @@ async function pruebaBase(browser) {
   await c2.close();
 }
 
+async function pruebaCamaras(browser) {
+  console.log("\n=== Las cámaras en el celular del adjunto ===");
+  const PUB = "11111111-2222-3333-4444-555555555555";
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "#adjunto=prueba23&m=1-3");
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "pedir"));
+  await page.evaluate((pub) => window.__llega("pareo-adjunto-prueba23", "estado", { nombre: "PRUEBA", ronda: 2, arbitro: "PRUEBA ADJUNTA", principal: "", chat: [], llamadas: [],
+    camaras: "camprue2", torneo: pub,
+    mesas: [{ m: 1, f: 1, b: "PRUEBA A", n: "PRUEBA D", r: null }, { m: 2, f: 2, b: "PRUEBA E", n: "PRUEBA B", r: null }] }), PUB);
+  await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir"), null, { timeout: 8000 }).catch(() => {});
+  ok(await page.evaluate(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir")), "con el código del principal, escucha las cámaras y les pide lo que tienen");
+  ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "antes de que llegue algo, lo dice escrito");
+  const camara = (mesa, pgn, resultado, extra) => page.evaluate(([x]) => window.__llega("tablero-vivo-camprue2", "estado", x),
+    [Object.assign({ v: 1, pgn, torneo: PUB, ronda: 2, mesa, t: Date.now(), resultado }, extra || {})]);
+  // Lo de otro torneo y lo de otra ronda no entran.
+  await camara(1, "1. d4", null, { torneo: "99999999-2222-3333-4444-555555555555" });
+  await camara(1, "1. c4", null, { ronda: 1 });
+  await page.waitForTimeout(200);
+  ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "lo de otro torneo o de otra ronda no entra");
+  await camara(1, "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", "1-0");
+  await page.waitForSelector('[data-cam="1"] [data-camara-dice]', { timeout: 8000 }).catch(() => {});
+  igual("el tablero de su mesa, con las jugadas y cómo va, escritas", await page.$eval('[data-cam="1"]', (n) => [n.querySelectorAll('[aria-hidden="true"] > div').length, /En vivo · 7 jugadas/.test(n.textContent), /Jaque mate/.test(n.textContent)]), [64, true, true]);
+  ok(/La cámara dice: 1-0/.test(await page.textContent('[data-cam="1"]')), "y la propuesta de la cámara, escrita");
+  await page.click('[data-cam="1"] [data-camara-confirmar]');
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "resultado"), null, { timeout: 5000 }).catch(() => {});
+  igual("«Confirmar» manda ese resultado, como tocarlo a mano", await page.evaluate(() => (window.__enviados.filter((x) => x.evento === "resultado").pop() || {}).payload), { ronda: 2, mesa: 1, r: "1-0" });
+  ok(!(await page.$('[data-cam="1"] [data-camara-confirmar]')), "y deja de proponerlo");
+  await camara(2, "1. e4 e5 2. Nf3 Nc6", "=");
+  await page.waitForSelector('[data-cam="2"] [data-camara-descartar]', { timeout: 8000 }).catch(() => {});
+  await page.click('[data-cam="2"] [data-camara-descartar]');
+  ok(!(await page.$('[data-cam="2"] [data-camara-dice]')) && /En vivo · 4 jugadas/.test(await page.textContent('[data-cam="2"]')), "«No es así» esconde la propuesta, y el tablero sigue");
+  igual("y no manda nada de esa mesa", await page.evaluate(() => window.__enviados.filter((x) => x.evento === "resultado" && x.payload.mesa === 2).length), 0);
+  ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "sin correrse de lado");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaPrincipal(browser);
     await pruebaCelular(browser);
     await pruebaBase(browser);
+    await pruebaCamaras(browser);
   } finally {
     await browser.close();
   }

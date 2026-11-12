@@ -26,6 +26,9 @@
      principal lo trae; lo que la base rechaza por una regla se dice y la
      mesa se puede volver a anotar; y con el principal callado, las mesas
      salen del torneo publicado;
+   - las cámaras de Notara: con el código que manda el principal, cada mesa
+     con su tablero en vivo y «La cámara dice» con «Confirmar» (manda el
+     resultado como tocarlo a mano) y «No es así»;
    - el documento de la bitácora dice Pareo Integral, no chess-results;
    - a 390 px no se desplaza a lo ancho, y no hay errores en la página.
 
@@ -64,7 +67,7 @@ const doble = `(function(){
   window.__oyentesAdjunto = {};
   function estado() {
     const marca = (m, lado) => { const n = ilegales[m.m + lado] || 0; return n ? { t: "i".repeat(n), pierde: n >= 2 } : null; };
-    return { nombre: T.nombre, ronda: T.ronda, principal: T.principal, arbitro: T.arbitro,
+    return { nombre: T.nombre, ronda: T.ronda, principal: T.principal, arbitro: T.arbitro, camaras: "camprue2", torneo: "11111111-2222-3333-4444-555555555555",
       mesas: T.mesas.map((m) => Object.assign({}, m, { mia: false, mb: marca(m, "b"), mn: m.n == null ? null : marca(m, "n") })) };
   }
   window.sb = {
@@ -92,6 +95,8 @@ const doble = `(function(){
     channel: (nombre) => {
       window.__canales.push(nombre);
       const oyentes = {};
+      window.__oyentesPorCanal = window.__oyentesPorCanal || {};
+      window.__oyentesPorCanal[nombre] = oyentes;
       if (nombre === "pareo-adjunto-${CODIGO}") window.__oyentesAdjunto = oyentes;
       const emitir = (ev, payload) => setTimeout(() => (oyentes[ev] || []).forEach((cb) => cb({ payload })), 30);
       const c = {
@@ -259,6 +264,28 @@ const doble = `(function(){
     await p.click('#p-mesas tr[data-mesa="2"] button[data-r="0-1"]');
     await p.waitForFunction(() => window.__mandados.filter((x) => x[0] === "cola").length >= 3, null, { timeout: 5000 }).catch(() => {});
     igual("y lo que se anota igual queda en la base", fn.cola[fn.cola.length - 1], { evento: "resultado", ronda: 2, datos: { mesa: 2, r: "0-1" } });
+
+    console.log("\n=== Las cámaras de Notara ===");
+    fn.modo = "caida";
+    const pc = await ctx.newPage();
+    pc.on("pageerror", (e) => errores.push(e.message));
+    await pc.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await pc.waitForFunction(() => document.getElementById("app").checkVisibility());
+    await pc.fill("#p-enlace", "https://ajedrez-integral.com/pareo.html#adjunto=" + CODIGO + "&m=1-3");
+    await pc.click("#p-conectar");
+    await pc.waitForFunction(() => (window.__oyentesPorCanal || {})["tablero-vivo-camprue2"] && document.querySelector('#p-mesas [data-cam="1"]'), null, { timeout: 8000 }).catch(() => {});
+    igual("con el código del principal, escucha las cámaras y cada mesa sin resultado tiene su lugar", await pc.$$eval("#p-mesas [data-cam]", (l) => l.map((x) => x.dataset.cam)), ["1", "2"]);
+    await pc.evaluate(() => (window.__oyentesPorCanal["tablero-vivo-camprue2"].estado || []).forEach((cb) => cb({ payload: { v: 1, pgn: "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", torneo: "11111111-2222-3333-4444-555555555555", ronda: 2, mesa: 1, t: Date.now(), resultado: "1-0" } })));
+    await pc.waitForSelector('#p-mesas [data-cam="1"] [data-camara-confirmar]', { timeout: 8000 }).catch(() => {});
+    igual("el tablero de la mesa 1 y lo que dice la cámara, escrito", await pc.$eval('#p-mesas [data-cam="1"]', (n) => [n.querySelectorAll('[aria-hidden="true"] > div').length, /La cámara dice: 1-0 \(ganan blancas\)/.test(n.textContent)]).catch((e) => String(e)), [64, true]);
+    await pc.click('#p-mesas [data-cam="1"] [data-camara-confirmar]');
+    await pc.waitForFunction(() => window.__mandados.some((x) => x[0] === "resultado"), null, { timeout: 5000 }).catch(() => {});
+    igual("«Confirmar» manda el resultado como tocarlo a mano", await pc.evaluate(() => (window.__mandados.filter((x) => x[0] === "resultado").pop() || [])[1]), { ronda: 2, mesa: 1, r: "1-0" });
+    await pc.evaluate(() => (window.__oyentesPorCanal["tablero-vivo-camprue2"].estado || []).forEach((cb) => cb({ payload: { v: 1, pgn: "1. d4 d5", torneo: "11111111-2222-3333-4444-555555555555", ronda: 2, mesa: 2, t: Date.now(), resultado: "=" } })));
+    await pc.waitForSelector('#p-mesas [data-cam="2"] [data-camara-descartar]', { timeout: 8000 }).catch(() => {});
+    await pc.click('#p-mesas [data-cam="2"] [data-camara-descartar]').catch(() => {});
+    igual("«No es así» esconde la propuesta, y el tablero sigue", !(await pc.$('#p-mesas [data-cam="2"] [data-camara-dice]')) && /En vivo · 2 jugadas/.test(await pc.textContent('#p-mesas [data-cam="2"]')), true);
+    await pc.close();
 
     console.log("\n=== El documento y el celular ===");
     const doc = M.documento({ pareo: CODIGO, torneo: "U12" }, [{ tipo: "resultado", resultado: "1-0", enviado: true, pareo: CODIGO, ocurrio: "x" }], "Adjunta", String);

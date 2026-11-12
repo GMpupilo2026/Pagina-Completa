@@ -58,6 +58,11 @@
     let torneoId = null; // el torneo publicado de este enlace (lo dice la base al entrar con el código)
     let ultimoEnVivo = 0; // la hora del último «estado» que mandó el principal por el canal
     let relojPublicado = null;
+    // Las cámaras de Notara de sus mesas (js/pareo/camaras-adjunto.js), con el
+    // código que manda el principal en su estado. Ver «Pareo Integral: las
+    // cámaras en la mesa del adjunto».
+    let camaras = null, conectandoCam = null;
+    const descartadas = new Set();
 
     function el(tag, attrs, ...hijos) {
         const n = document.createElement(tag);
@@ -128,6 +133,29 @@
 
     const textoR = (r) => (r ? M.textoResultado(M.valorDePareo(r)) : "Sin resultado");
 
+    function pintarCamara(f) {
+        const caja = document.querySelector('#p-mesas [data-cam="' + f + '"]');
+        const m = misMesas().find((x) => (x.f || x.m) === f);
+        if (!caja || !m || !window.PareoCamarasAdjunto) return;
+        const dc = camaras && camaras.mesa(f);
+        window.PareoCamarasAdjunto.pintar(caja, dc, { tam: 120, textoResultado: textoR,
+            conResultado: !m.r && !esperando.has(m.m), descartada: !!dc && descartadas.has(f + "|" + dc.resultado),
+            confirmar: (r) => { mandar(m, r); pintarCamara(f); },
+            descartar: (r) => { descartadas.add(f + "|" + r); pintarCamara(f); } });
+    }
+    function sincronizarCamaras(d) {
+        const quiere = d && d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda : "";
+        const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda : conectandoCam || "";
+        if (quiere === tiene) return;
+        if (camaras) camaras.cerrar();
+        camaras = null;
+        conectandoCam = quiere || null;
+        if (!quiere) return;
+        window.PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, alCambiar: pintarCamara })
+            .then((c) => { if (conectandoCam !== quiere) { c.cerrar(); return; } camaras = c; conectandoCam = null; misMesas().forEach((x) => pintarCamara(x.f || x.m)); })
+            .catch(() => { conectandoCam = null; });
+    }
+
     function pintarMesas() {
         const mesas = misMesas();
         $("p-zona-mesas").classList.toggle("hidden", !estado);
@@ -142,7 +170,8 @@
                     RAPIDOS.map(([r, t]) => el("button", { type: "button", "data-r": r, disabled: !!espera, class: BTN + " border border-brand-300 dark:border-brand-600", "aria-label": "Mesa " + (m.f || m.m) + ": " + M.textoResultado(M.valorDePareo(r)), onclick: () => mandar(m, r) }, t)),
                     el("select", { "data-otros": String(m.m), disabled: !!espera, "aria-label": "Otro resultado de la mesa " + (m.f || m.m), class: "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm", onchange: (e) => { if (e.target.value) mandar(m, e.target.value); } },
                         el("option", { value: "", texto: "Otro…" }), OTROS.map(([r, t]) => el("option", { value: r, texto: t }))),
-                    espera ? el("span", { class: "text-sm", role: "status", texto: espera.enBase ? "Guardado: el principal lo recibe en cuanto se conecte." : "Mandado: esperando al principal…" }) : null);
+                    espera ? el("span", { class: "text-sm", role: "status", texto: espera.enBase ? "Guardado: el principal lo recibe en cuanto se conecte." : "Mandado: esperando al principal…" }) : null,
+                    estado.camaras && estado.torneo ? el("div", { class: "basis-full mt-2", "data-cam": String(m.f || m.m) }) : null);
             return el("tr", { "data-mesa": String(m.m), "data-estado": pierde ? "pierde" : m.r ? "con-resultado" : "libre", class: "border-t border-brand-100 dark:border-brand-800" },
                 el("td", { class: "py-2 pr-3 align-top font-semibold" + (pierde ? " border-l-4 border-red-600 pl-3" : "") }, String(m.f || m.m),
                     pierde ? el("p", { "data-pierde": "si", class: "text-xs font-semibold text-red-700 dark:text-red-300 mt-1", texto: "Segunda ilegal: decide el resultado" }) : null),
@@ -153,6 +182,8 @@
         const sel = $("p-nota-mesa"), antes = sel.value;
         sel.replaceChildren(el("option", { value: "", texto: "—" }), ...mesas.map((m) => el("option", { value: String(m.m), texto: "Mesa " + (m.f || m.m) })));
         if ([...sel.options].some((o) => o.value === antes)) sel.value = antes;
+        sincronizarCamaras(estado);
+        mesas.forEach((m) => pintarCamara(m.f || m.m));
     }
 
     // Primero a la base (queda guardado aunque el principal no esté) y, si no
@@ -281,6 +312,7 @@
         canal = null;
         clearInterval(relojPublicado);
         relojPublicado = null;
+        sincronizarCamaras(null);
     }
 
     // Las mesas de la ronda en juego, del torneo publicado: lo que se ve

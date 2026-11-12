@@ -3334,6 +3334,9 @@
     const a = adjuntoActivo(v, codigo) || {};
     canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", ronda: v.rondas.length,
+      // Las cámaras de Notara del torneo (su código y el id publicado): el
+      // adjunto ve sus mesas en vivo (js/pareo/camaras-adjunto.js). En equipos, no.
+      camaras: v.camaras && v.camaras.activo && v.publicado && !deEquipos ? v.camaras.codigo : null, torneo: v.publicado ? v.publicado.id : null,
       // Quién es él, quién es el principal, su chat y sus llamadas.
       arbitro: a.nombre || "", principal: v.arbitro || "",
       chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? x.de : QUIEN_CHAT[x.de === codigo], nombre: x.nombre, texto: x.texto })),
