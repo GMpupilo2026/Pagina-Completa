@@ -68,7 +68,7 @@
       // `limpio`: tres estrellas, que en todos los tipos es sin error y sin
       // pista (o, en Con lo justo y Fotografía, perfecto). Es la primera vez que
       // se resuelve, como en Mates: lo que dice si ya se domina.
-      r = await EntrenoProgress.log("tipos", Object.assign({ puzzle_id: k, category: tipo, nivel: item.nivel, estrellas, limpio: estrellas === 3 }, extra || {}));
+      r = await EntrenoProgress.log("tipos", { puzzle_id: k, category: tipo, nivel: item.nivel, estrellas, limpio: estrellas === 3, ...(extra || {}) });
     } catch (e) { r = null; }
     enVuelo.delete(k);
     if (!r || !r.ok) return false;
