@@ -91,7 +91,7 @@ module.exports = {
   clase: "tacho",
   foco: "#064ca7",
   titulo: "Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro",
-  descripcion: "El Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026 desde las 8:30 a.m. en el Gimnasio del Centro (la ronda 1, a las 9:00), 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios para los mejores de cada nivel, de primer grado a undécimo año.",
+  descripcion: "Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro; 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.",
   nombrePie: "Tacho Chess 2",
   grupoNombre: "Nivel",
   comentario: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
