@@ -1906,6 +1906,25 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
   contraste y el permiso perdido a mitad de camino. Quitando la comprobación
   de «no se guardó», salta.
 
+### Las salas, la más reciente primero
+
+Pedido del dueño el 12/11/2026: en Torneos, «ir colocando siempre en orden, el
+más reciente de primero», entendido (lo eligió él) como **la última sala que se
+crea va arriba**, sin ordenar nada a mano.
+
+- `SalasTorneo.listar()` pide `created_at` de la más nueva a la más vieja (la
+  pone el trigger de la tabla, no el navegador), y después `orden` y el
+  nombre. CENFOTEC y UTN se crearon en el mismo instante (la migración): las
+  desempata su `orden` de antes, y así `transmision.js` sigue abriendo por
+  defecto la misma sala de Lichess.
+- **Ya no se reordena en `admin.html#torneos`**: se quitaron los botones ↑ ↓
+  (moverían `orden`, que ya no decide nada visible). La columna sigue y una
+  sala nueva le pone el siguiente número, que solo desempata.
+- `lib/doble-salas-torneo.js` ahora ordena como le piden (`order()`), y una
+  sala que inserta lleva su `created_at`; `verificar-salas-torneo.js` prueba
+  que la recién creada queda primera y que no hay botones para subir o bajar.
+  Volviendo a ordenar por `orden`, saltan tres comprobaciones.
+
 ## Las posiciones oficiales vienen de chess-results
 
 Una transmisión de Lichess puede traer solo algunas mesas: la del
@@ -14751,10 +14770,11 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
 - **La sala en Torneos** (`torneos-en-vivo.html`): la portada estaba en el
   código, pero la fila de `salas_torneo` no se había creado (el paso 5 de la
   lista de arriba), y el torneo no salía. Se creó el 12/11/2026, a pedido del
-  dueño: clave `jdn-pz-2026`, tipo «enlaces», orden 1, con cuatro enlaces
+  dueño: clave `jdn-pz-2026`, tipo «enlaces», con cuatro enlaces
   que la portada lleva adentro de la página (la página, `#inscribirme`, Pareo
   → `#fichas` y las bases → `#ficha-bases`). Se edita en
-  `admin.html#torneos`.
+  `admin.html#torneos`. Se llama «Eliminatoria JDN Pérez Zeledón 2026-2027»
+  (el nombre que pidió el dueño; la página sigue con el suyo).
 
 `herramientas/verificar-torneo-hoy.js` lo revisa: el HTML (arriba «Hoy», el
 calendario con sus siete filas, sin chess-results, las fichas de resultados

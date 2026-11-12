@@ -3,7 +3,8 @@
  * (la sala de cine busca su torneo por la clave) y admin.html#torneos (el
  * editor, que muestra la misma ficha como vista previa).
  *
- * Las salas viven en la tabla salas_torneo: la lee cualquiera (las visibles)
+ * Las salas viven en la tabla salas_torneo, la más reciente primero (ver
+ * «Las salas, la más reciente primero»): la lee cualquiera (las visibles)
  * y la escribe solo quien administra. Ver «Las salas de torneos se editan en
  * administración» en docs/decisiones/juegos-y-torneos.md.
  *
@@ -17,11 +18,16 @@
 (function () {
   "use strict";
 
-  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, pizarras, video_url, quiniela, tema, visible, orden";
+  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, pizarras, video_url, quiniela, tema, visible, orden, created_at";
 
+  // La más reciente primero: la sala que se acaba de crear va arriba, sin
+  // ordenar nada a mano (lo pidió el dueño el 12/11/2026). Dos creadas en el
+  // mismo instante (CENFOTEC y UTN) desempatan por su `orden` de antes, y eso
+  // deja igual la sala que transmision.js abre por defecto (la primera de
+  // Lichess). Ver «Las salas, la más reciente primero».
   async function listar() {
     const { data, error } = await sb.from("salas_torneo").select(COLUMNAS)
-      .order("orden", { ascending: true }).order("nombre", { ascending: true });
+      .order("created_at", { ascending: false }).order("orden", { ascending: true }).order("nombre", { ascending: true });
     if (error) throw error;
     return data || [];
   }
