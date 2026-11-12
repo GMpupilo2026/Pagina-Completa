@@ -14748,6 +14748,13 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
   Cantonal JDN de Pérez Zeledón», abajo). La portada de Torneos
   (`PORTADAS`) lleva un enlace a Pareo a las fichas, las bases a su ficha y
   la inscripción al formulario. CENFOTEC y UTN siguen saliendo iguales.
+- **La sala en Torneos** (`torneos-en-vivo.html`): la portada estaba en el
+  código, pero la fila de `salas_torneo` no se había creado (el paso 5 de la
+  lista de arriba), y el torneo no salía. Se creó el 12/11/2026, a pedido del
+  dueño: clave `jdn-pz-2026`, tipo «enlaces», orden 1, con cuatro enlaces
+  que la portada lleva adentro de la página (la página, `#inscribirme`, Pareo
+  → `#fichas` y las bases → `#ficha-bases`). Se edita en
+  `admin.html#torneos`.
 
 `herramientas/verificar-torneo-hoy.js` lo revisa: el HTML (arriba «Hoy», el
 calendario con sus siete filas, sin chess-results, las fichas de resultados
