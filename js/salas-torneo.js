@@ -121,6 +121,10 @@
       clase: "metro-sala", imagen: "/img/metropolitano-2026/logo.png", ancho: 900, alto: 397,
       pagina: "/metropolitano-2026.html",
       marca: true,
+      // Todavía no se entra (lo pidió el dueño el 12/11/2026): la ficha se ve
+      // con el candado y sus botones dicen «Próximamente» al tocarlos. Se
+      // quita esta línea para abrirla.
+      proximamente: true,
       fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-metropolitano-2026(-2)?\.pdf$/i, "bases"]],
     },
     // Las universidades, con su azul y su logo (css/universidades.css). Lo
@@ -219,7 +223,36 @@
       enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre, portada)));
       li.appendChild(caja);
     }
+    if (portada && portada.proximamente) bloquear(li, sala.nombre);
     return li;
+  }
+
+  // Una ficha que todavía no se abre (`proximamente` en su portada): se ve
+  // entera, con «🔒 Próximamente» escrito arriba, y cada enlace pasa a ser un
+  // botón que no lleva a ningún lado y, al tocarlo, dice «Próximamente» (en el
+  // botón y para el lector de pantalla). Sigue alcanzándose con Tab: una
+  // ficha apagada no lleva href, pero se puede llegar a ella.
+  function bloquear(li, nombre) {
+    li.dataset.bloqueada = "si";
+    const aviso = el("p", "sala-proximamente", "🔒 Próximamente");
+    li.insertBefore(aviso, li.querySelector("h2"));
+    const estado = el("p", "sr-only");
+    estado.setAttribute("role", "status");
+    li.querySelectorAll("a").forEach((a) => {
+      const b = el("button", a.className + " sala-bloqueada", a.textContent.replace(/\s*[→↗]\s*$/, "").replace(" de " + nombre, "").replace(/ \(se abre en otra pestaña\)/, "").trim());
+      b.type = "button";
+      b.setAttribute("aria-disabled", "true");
+      b.setAttribute("aria-label", b.textContent + " de " + nombre + ": todavía no está disponible");
+      const texto = b.textContent;
+      b.addEventListener("click", () => {
+        b.textContent = "Próximamente";
+        estado.textContent = texto + ": próximamente.";
+        clearTimeout(b._vuelta);
+        b._vuelta = setTimeout(() => { b.textContent = texto; }, 2500);
+      });
+      a.replaceWith(b);
+    });
+    li.appendChild(estado);
   }
 
   window.SalasTorneo = { listar, porClave, ficha, idDeLichess };

@@ -8,8 +8,9 @@
  *      carga js/torneo-hoy.js y no js/torneo-podio.js; el calendario trae
  *      las cinco rondas, el almuerzo y la clausura con su hora de Costa Rica
  *      (data-inicio), y una sola marcada como la primera; sin chess-results:
- *      ni el buscador ni la clasificación que lo leían, y «Resultados U12»
- *      y «Resultados U20» llevan a Pareo Integral; las bases que enlaza
+ *      ni el buscador ni la clasificación que lo leían; «Resultados U12» y
+ *      «Resultados U20» van «Pronto» hasta que exista su torneo, y nada
+ *      lleva a la lista de Pareo, que trae los torneos de otros; las bases que enlaza
  *      existen; el logo y el del CCDR existen.
  *   2. «HOY EN EL TORNEO», en un navegador con el reloj fijo (page.clock),
  *      en cuatro momentos: diez días antes (la cuenta regresiva a la ronda
@@ -54,7 +55,8 @@ ok("el calendario trae las cinco rondas, el almuerzo y la clausura, el domingo 2
   ["Clausura", "2026-11-22T19:30", 60, ""]]), JSON.stringify(filas));
 ok("una sola fila es la primera ronda", (html.match(/data-primera-ronda/g) || []).length === 1);
 ok("sin chess-results: ni el enlace, ni el buscador, ni sus scripts", !/chess-results\.com|id="buscador"|centroamericano-vivo\.js/.test(html));
-ok("«Resultados U12» y «Resultados U20» llevan a Pareo Integral y se abren encima", ["u12", "u20"].every((k) => new RegExp('<a href="torneos-pareo\\.html" id="ficha-resultados-' + k + '" data-ventana=').test(html)));
+ok("«Resultados U12» y «Resultados U20» van «Pronto» (sin enlace, con tabindex) hasta que exista su torneo", ["u12", "u20"].every((k) => new RegExp('<div id="ficha-resultados-' + k + '" tabindex="0" aria-disabled="true"').test(html)));
+ok("nada lleva a la lista de torneos de Pareo (trae los de otros)", !html.includes('href="torneos-pareo.html"'));
 ok("la ficha «Inscribirme» abre el formulario", /<a href="#inscribirme" id="ficha-inscribirme"/.test(html) && html.includes('<dialog id="inscribirme"'));
 const locales = [...html.matchAll(/(?:href|src)="((?:documentos|img)\/[^"#?]+)"/g)].map((m) => m[1]);
 const faltan = [...new Set(locales)].filter((f) => !fs.existsSync(path.join(RAIZ, f)));

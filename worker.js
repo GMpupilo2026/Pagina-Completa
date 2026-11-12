@@ -612,6 +612,10 @@ function diaSiguienteCal(dia) {
   return x.getUTCFullYear() + "-" + dos(x.getUTCMonth() + 1) + "-" + dos(x.getUTCDate());
 }
 const DIA_CAL = /^\d{4}-\d{2}-\d{2}$/;
+// Fuentes de afuera apagadas por ahora (la misma lista que en
+// js/torneos-pareo-pagina.js): desde el 12/11/2026, los de
+// ajedrezcostarica.com no entran al calendario hasta nuevo aviso.
+const FUENTES_OCULTAS = ["ajedrezcostarica"];
 function armarCalendario(nombre, eventos, ahora) {
   const stamp = (ahora || new Date()).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const l = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ajedrez Integral//Mi calendario//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
@@ -666,7 +670,7 @@ async function eventosCalendario(org, ahora) {
     // Solo direcciones de las dos fuentes, nunca otra que llegue en la fila.
     const fuente = /^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "") ? "ajedrezcostarica"
       : /^https:\/\/chess-results\.com\/tnr\d+\.aspx\?lan=2$/.test(x.url || "") ? "chess-results" : "";
-    if (!fuente) continue;
+    if (!fuente || FUENTES_OCULTAS.includes(fuente)) continue;
     eventos.push({ uid: fuente + "-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
       lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
       descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),
