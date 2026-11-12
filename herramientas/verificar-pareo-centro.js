@@ -11,6 +11,8 @@
  *   - las cámaras de Notara mesa por mesa: transmite, terminó y sin señal,
  *     con el latido que llega por el canal de las cámaras;
  *   - los códigos en papel, sin el enlace;
+ *   - al adjunto le manda el código de las cámaras y el torneo publicado (para
+ *     que vea sus mesas en vivo: js/pareo/camaras-adjunto.js);
  *   - se pone al día sola cuando llega un resultado de la cola, sin ids
  *     repetidos con la ficha Rondas, y a 390 px no se desplaza a lo ancho.
  *
@@ -104,6 +106,9 @@ const sembrar = (t) => (page) => page.addInitScript((x) => {
     await page.waitForFunction(() => (document.querySelector('[data-centro-camara="3"]') || {}).dataset?.estado === "transmite", null, { timeout: 8000 }).catch(() => {});
     igual("las cámaras mesa por mesa, con el estado escrito", await page.$$eval("[data-centro-camara]", (l) => l.map((x) => [x.dataset.centroCamara, x.dataset.estado, x.textContent])),
       [["1", "termino", "Mesa 1Terminó"], ["2", "sinSenal", "Mesa 2Sin señal"], ["3", "transmite", "Mesa 3Transmite"], ["4", "sinSenal", "Mesa 4Sin señal"]]);
+
+    await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "pareo-adjunto-prueba23" && x.evento === "estado"), null, { timeout: 8000 }).catch(() => {});
+    igual("al adjunto le manda el código de las cámaras y el torneo publicado", await page.evaluate(() => { const x = window.__enviados.filter((y) => y.canal === "pareo-adjunto-prueba23" && y.evento === "estado").pop(); return x && [x.payload.camaras, x.payload.torneo]; }), ["camprue2", PUB]);
 
     console.log("\n=== Se pone al día sola ===");
     cola = [{ id: 5, codigo: "otra2345", evento: "resultado", ronda: 1, datos: { mesa: 4, r: "=" } }];

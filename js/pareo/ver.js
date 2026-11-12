@@ -970,6 +970,36 @@ window.PareoVer = (function () {
     // el adjunto toque «Listo», para que no tenga que estar mirándolo.
     let rondaVista = null;
     let avisoRonda = "";
+    // Las cámaras de Notara de sus mesas (js/pareo/camaras-adjunto.js): el
+    // principal manda su código y el torneo publicado con el estado. El
+    // tablero de cada mesa se pinta en su lugar, sin rehacer la lista (no se
+    // le mueve nada a quien está anotando). «No es así» esconde esa propuesta.
+    let camaras = null, conectandoCam = null, mesasCam = [];
+    const descartadas = new Set();
+    const textosCam = { sinNoticias: tx("camAdjSinNoticias"), enVivo: (n) => (n === 1 ? tx("camAdjEnVivoUna") : tx("camAdjEnVivo", { n })),
+      dice: (r) => tx("camAdjDice", { r }), confirmar: (r) => tx("camAdjConfirmar", { r }), noEs: tx("camAdjNoEs") };
+    function pintarCamara(f) {
+      const caja = cont.querySelector('[data-cam="' + f + '"]');
+      const m = mesasCam.find((x) => (x.f || x.m) === f);
+      if (!caja || !m || !window.PareoCamarasAdjunto) return;
+      const dc = camaras && camaras.mesa(f);
+      PareoCamarasAdjunto.pintar(caja, dc, { tam: 136, textos: textosCam, textoResultado: (r) => tx("corto_" + r),
+        conResultado: !m.r && !enviadas.has(m.m), descartada: !!dc && descartadas.has(f + "|" + dc.resultado),
+        confirmar: (r) => { const sel = document.getElementById("pi-adj-" + m.m); if (sel && !sel.disabled) { sel.value = r; sel.dispatchEvent(new Event("change")); } pintarCamara(f); },
+        descartar: (r) => { descartadas.add(f + "|" + r); pintarCamara(f); } });
+    }
+    function sincronizarCamaras(d) {
+      const quiere = d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda : "";
+      const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda : conectandoCam || "";
+      if (quiere === tiene) return;
+      if (camaras) camaras.cerrar();
+      camaras = null;
+      conectandoCam = quiere || null;
+      if (!quiere) return;
+      PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, alCambiar: pintarCamara })
+        .then((c) => { if (conectandoCam !== quiere) { c.cerrar(); return; } camaras = c; conectandoCam = null; mesasCam.forEach((x) => pintarCamara(x.f || x.m)); })
+        .catch(() => { conectandoCam = null; });
+    }
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
       if (d.apagado) { cont.replaceChildren(el("p", { class: "text-base font-semibold" }, tx("adjuntoEnlaceApagado"))); canal.unsubscribe(); return; }
@@ -979,6 +1009,8 @@ window.PareoVer = (function () {
         try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) { /* sin vibración */ }
       }
       rondaVista = d.ronda;
+      mesasCam = d.camaras && d.torneo ? mesas.filter((m) => m.n && !m.tableros) : [];
+      sincronizarCamaras(d);
       const lista = el("ul", { class: "space-y-3" });
       for (const m of mesas) {
         const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m), "data-fisica": String(m.f || m.m) });
@@ -1020,6 +1052,7 @@ window.PareoVer = (function () {
           continue;
         }
         li.append(selector(d, m.m, null, m.m, tx("resultadoMesa", { m: m.f || m.m, b: m.b, n: m.n })));
+        if (mesasCam.includes(m)) li.append(el("div", { class: "pi-adj-cam mt-3", "data-cam": String(m.f || m.m) }));
         lista.append(li);
       }
       // Letra grande, para anotar desde una tableta en la sala; se recuerda.
@@ -1057,6 +1090,7 @@ window.PareoVer = (function () {
         mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")),
         hablar(d, mesas),
         notaInforme(d, mesas));
+      mesasCam.forEach((x) => pintarCamara(x.f || x.m));
       if (irA) { const n = irA; irA = 0; llevarAMesa(n); }
     });
     // Lleva a la mesa con ese número (el que está pegado en ella): la marca,

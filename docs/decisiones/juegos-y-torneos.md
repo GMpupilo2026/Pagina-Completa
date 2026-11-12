@@ -8782,9 +8782,15 @@ dice). Las pruebas de Pareo ya no hablan con la función de verdad
 (`herramientas/lib/pareo-pruebas.js` la corta, salvo que la prueba ponga su
 doble). Rotos a propósito el borrado de la cola y el envío a la base, saltan.
 
-**Lo que falta para el 22/11** (en orden): Notara en la mesa del adjunto (ver
-sus tableros y que la propuesta de resultado de la cámara le llegue a él) y el
-ensayo general con un torneo de prueba. El Centro del evento, abajo.
+**Probado en vivo** el 12/11, con la función ya desplegada (un torneo
+«PRUEBA» creado y borrado enseguida): crear con su adjunto, entrar con el
+código escrito con guion, anotar, el rechazo de una mesa ajena (403 `mesa`),
+de otra ronda (409 `ronda`) y de un código que no existe (404 `no`), leer la
+cola (no con una clave mala), borrarla, apagar el adjunto (entrar da 403
+`apagado`) y borrar el torneo; en la base no quedó nada.
+
+**Lo que falta para el 22/11**: el ensayo general con un torneo de prueba. El
+Centro del evento y las cámaras en la mesa del adjunto, abajo.
 
 ### Pareo Integral: el Centro del evento
 
@@ -8828,6 +8834,46 @@ canal; que un resultado de la cola lo cambie sin tocar nada; los códigos en
 papel sin el enlace; sin ids repetidos; a 390 px. Roto a propósito el
 repintado, saltan tres.
 
+
+### Pareo Integral: las cámaras en la mesa del adjunto
+
+Pedido del dueño el 12/11/2026 (la tercera pieza para la Eliminatoria): que
+el árbitro adjunto vea en su celular lo que leen las cámaras de Notara de SUS
+mesas y que la propuesta de resultado de la cámara le llegue a él, que está al
+lado del tablero.
+
+- **Una sola copia**, `js/pareo/camaras-adjunto.js` (`PareoCamarasAdjunto`),
+  que usan el celular (`js/pareo/ver.js`) y la Mesa del árbitro
+  (`js/mesa-arbitro-pareo.js`). Escucha el mismo canal que el principal y
+  `tablero-vivo.html` (`tablero-vivo-<código>`) y lee con
+  `PartidaEnVivo.leer` (si falta un pedazo, lo pide entero, como el principal).
+- **El código de las cámaras lo manda el principal** con su estado
+  (`camaras` y `torneo` en `enviarAdjunto`): el adjunto no escribe nada. Solo
+  entra lo de ese torneo publicado y esa ronda; en equipos no se manda (se ve
+  tablero por tablero en la ronda del principal). Sin el retraso de la
+  transmisión pública: es para el árbitro.
+- **Cada mesa suya, con su tablero en vivo** (oculto para el lector de
+  pantalla y con «cómo va» escrito al lado: `PartidaEnVivo.comoVa`) y las
+  jugadas contadas. Se pinta en su lugar (`data-cam`), sin rehacer la lista:
+  no se le mueve nada a quien está anotando.
+- **«La cámara dice: 1-0»**, con «Confirmar 1-0» y «No es así», solo en una
+  mesa sin resultado y sin un envío pendiente. **Confirmar es lo mismo que
+  tocar el resultado a mano** (pasa por la base, `PareoPublicar.mandarAdjunto`,
+  y lo decide el principal con sus reglas de siempre): nada se anota solo.
+  «No es así» esconde esa propuesta (la de ese resultado) y el tablero sigue.
+- **Las piezas**: el módulo carga también `js/pieza-preferida.js`. Sin él,
+  `PartidaEnVivo.pintar` usa el mismo glifo para blancas y negras y no se
+  distinguen (`pareo.html` y `mesa-arbitro.html` no lo cargaban: se vio en la
+  foto de prueba).
+
+Lo prueban `verificar-pareo-adjuntos.js` (el celular: escucha y pide, «sin
+noticias» escrito, lo de otro torneo u otra ronda no entra, el tablero con sus
+jugadas y el mate escritos, «Confirmar» manda ese resultado y deja de
+proponerlo, «No es así» lo esconde sin mandar nada),
+`verificar-mesa-arbitro-pareo.js` (lo mismo en la Mesa del árbitro) y
+`verificar-pareo-centro.js` (que el principal manda el código y el torneo). La
+partida de prueba es el mate del pastor (comprobado con chess.js). Roto a
+propósito el filtro de torneo y ronda, salta.
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
