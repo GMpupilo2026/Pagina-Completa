@@ -1324,3 +1324,81 @@ con el día, el detalle, el título como texto, el nombre del reproductor y del
 artículo, la descarga, la velocidad que cambia y se recuerda, que arranque en
 el segundo guardado y lo diga, la transcripción sin repetidos, que el alumno no
 vea subir ni quitar y quien puede sí, y la lista vacía.
+
+## La guía de estudio de cada clase
+
+Después de subir los audios, el dueño pidió mejorar el repaso de ADAES y
+aceptó las siete ideas juntas («hacer todas»). El problema de fondo: una
+clase de hora y media no se repasa escuchándola entera, y quien no ve no
+puede ojear. Hay que poder **moverse dentro de la clase**. Cada tarjeta de la
+lista lleva «Estudiar esta clase» (`audios-clases.html?clase=<id>`), y esa
+vista arma la guía con `js/audios-clase-guia.js` (`AudiosGuia`). Las columnas
+y tablas nuevas, sus permisos y `responder_repaso()` están en la migración
+`20261112060425_audios_clase_guia`:
+
+- **Saltar**: «Atrás 1 min», «Atrás 15 s», «Adelante 15 s», «Adelante 1 min»
+  y «¿En qué minuto voy?», que dice el minuto y el tema que va sonando. Van
+  debajo de cada reproductor, también en la lista. El reproductor del
+  navegador es incómodo con lector de pantalla y no deja saltar una cantidad
+  fija. Los atajos son con **Alt+Mayúscula** (flechas: 15 s, con Control 1
+  min; flecha abajo: pausa; T: dónde voy; M: marcar), porque el lector en
+  modo exploración se come las letras sueltas (la K de NVDA es «siguiente
+  enlace»). Cada salto se anuncia en un `aria-live` oculto (`#anuncio`), que
+  se vacía antes de escribir para que el mismo aviso dos veces se repita.
+- **De qué se trató y los temas**: un resumen y de 6 a 12 temas con su
+  segundo (`audios_clase.resumen` e `indice`). Cada tema es un botón que lleva
+  el audio ahí. Cada sección es un `<h3>` bajo el `<h2>` del día, así que con
+  la H se salta entre «Temas», «Partidas», «Preguntas»…
+- **Buscar en lo que se dijo**: la transcripción con el segundo de cada frase
+  (`audios_clase.segmentos`, `[[segundo, "texto"], …]`). La búsqueda no mira
+  tildes ni mayúsculas, dice cuántas frases encontró y cada una lleva al audio
+  3 segundos antes. «Todo lo que se dijo, minuto a minuto» la deja leer
+  entera, con un botón por minuto.
+- **Las partidas**: las que se dictaron desde la posición inicial
+  (`audios_clase_partidas`), para recorrerlas con «Siguiente» / «Anterior»,
+  la jugada dicha como en el resto del sitio («Jugada 1, negras: peón eva
+  5», `BlindNotation.sanSpoken`) y «Leer la posición». **Ninguna posición se
+  inventa**: las jugadas se comprueban con chess.js al armar la guía, otra vez
+  al subirla y otra al mostrarla, y se cortan en la primera ilegal. Además
+  llegan **sin publicar** (`revisada = false`): Whisper confunde la notación
+  dicha («al fin» por «alfil»), así que el profe las oye y las publica. La RLS
+  se las esconde a los alumnos hasta entonces, no la pantalla.
+- **Preguntas de repaso** (`audios_clase_preguntas`), de opción múltiple con
+  radios. **La respuesta buena no se puede leer desde afuera**: el permiso de
+  lectura es por columna (`grant select (audio_id, n, pregunta, opciones)`).
+  La da `responder_repaso()` después de contestar, con la explicación. Paga
+  **2 Puntos Ajedrez solo si se acierta en la primera respuesta**: si pagara
+  cualquier acierto, bastaría con fallar a propósito para ver la buena y
+  cobrarla. La primera respuesta queda en `audios_clase_repasos` (también dice
+  cuáles ya se contestaron), y la referencia `repaso:<audio>:<n>` de
+  `otorgar_puntos` impide cobrar dos veces. Va con origen `entrenamiento`:
+  repasar es entrenar, y así no hubo que cambiar el `check` de orígenes. Solo
+  cobra quien es `alumno`.
+- **Mis marcas** (`audios_clase_marcas`): «Marcar este momento» guarda el
+  segundo con una nota corta. Cada quien ve y toca solo las suyas.
+
+**Cómo se arma una guía** (en la computadora del dueño, no en el sitio):
+
+1. Whisper vuelve a transcribir con `--output_format json` (los segmentos
+   traen su segundo), `--condition_on_previous_text False` (sin arrastrar el
+   texto anterior: muchos menos bucles de «no», «no», «no») y un
+   `--initial_prompt` con vocabulario de ajedrez (alfil, enroque, Caro-Kann,
+   tenedor…), que corrige los nombres de piezas y aperturas.
+2. Claude lee cada transcripción y escribe el resumen, los temas, las
+   preguntas y las partidas. Se revisan las partidas con chess.js, los minutos
+   (dentro de la clase), el voseo y «horquilla».
+3. Queda un `.json` por clase con el mismo nombre que su MP3, y se sube en
+   «Subir audios» junto con los MP3 o solo. La página saca la fecha y la hora
+   del nombre, busca la clase ya subida, guarda el texto (y reemplaza la
+   transcripción por la nueva) y cambia sus preguntas y partidas. Las partidas
+   quedan sin publicar.
+
+Lo prueba `verificar-audios-clases.js`: las piezas sueltas (frases sin
+repetidas, búsqueda, minuto escrito y dicho, jugada en español, el corte en la
+primera ilegal, qué entra de una guía), la vista de estudio como alumno (los
+encabezados, los temas que llevan al minuto, los saltos con botón y con atajo
+y su aviso, la búsqueda, la partida recorrida y leída, la pregunta contestada
+en la base con sus puntos, la ya contestada, la marca guardada y borrada) y
+como profe (la partida sin revisar, avisada y publicada), y la subida de una
+guía (lo que se guarda, que la partida imposible no entre y que ninguna llegue
+publicada).

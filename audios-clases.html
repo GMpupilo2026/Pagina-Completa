@@ -25,11 +25,11 @@
 
         <div id="app" class="hidden">
             <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🎧</span> Audios de las clases</h1>
-            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">El audio de cada clase de tu grupo, para volver a escucharla, con lo que se dijo escrito. La más reciente va primero. Con el lector de pantalla, cada clase es un encabezado: pasa de una a otra con la tecla H. Si dejas un audio a la mitad, la próxima vez sigue donde quedó.</p>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">El audio de cada clase de tu grupo, para volver a escucharla, con lo que se dijo escrito. La más reciente va primero. Con el lector de pantalla, cada clase es un encabezado: pasa de una a otra con la tecla H. Si dejas un audio a la mitad, la próxima vez sigue donde quedó. Con «Estudiar esta clase» encuentras los temas con su minuto, puedes buscar una palabra, recorrer las partidas, contestar preguntas y guardar marcas.</p>
 
             <section id="subir" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8" aria-labelledby="subir-titulo">
                 <h2 id="subir-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Subir audios</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Elige el MP3 de cada clase y, si la tienes, su transcripción (el .txt con el mismo nombre). La fecha y la hora salen del nombre del archivo, como lo deja Meet: «Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.mp3». Cada audio puede pesar hasta 50 MB.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Elige el MP3 de cada clase y, si la tienes, su transcripción (el .txt con el mismo nombre). La fecha y la hora salen del nombre del archivo, como lo deja Meet: «Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.mp3». Cada audio puede pesar hasta 50 MB. La guía de estudio de una clase que ya está subida (resumen, temas, preguntas y partidas) va en un .json con el mismo nombre; las partidas llegan sin publicar, para que las revises.</p>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="subir-academia" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Para quién</label>
@@ -37,13 +37,14 @@
                     </div>
                     <div>
                         <label for="subir-archivos" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Los archivos</label>
-                        <input id="subir-archivos" type="file" multiple accept=".mp3,audio/mpeg,.txt,text/plain" class="w-full text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-100 dark:file:bg-brand-800 file:px-3 file:py-2 file:font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-lg">
+                        <input id="subir-archivos" type="file" multiple accept=".mp3,audio/mpeg,.txt,text/plain,.json,application/json" class="w-full text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-100 dark:file:bg-brand-800 file:px-3 file:py-2 file:font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-lg">
                     </div>
                 </div>
                 <button id="subir-boton" type="button" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60">Subir los audios</button>
                 <p id="subir-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-3"></p>
             </section>
 
+            <p id="anuncio" class="sr-only" aria-live="polite" aria-atomic="true"></p>
             <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
             <h2 id="lista-titulo" class="sr-only">Las clases</h2>
             <div id="lista" class="space-y-5" aria-labelledby="lista-titulo"></div>
@@ -55,6 +56,9 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/avisos.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/audios-clase-guia.js"></script>
     <script src="js/audios-clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
