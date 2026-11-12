@@ -131,7 +131,16 @@ for (const pag of ["tablero.html", "index.html"]) {
     i("js/avatar-profe-oscar.js") > 0 && i("js/pame-book.js") > 0 && i("js/avatar-profe-oscar.js") < i("js/chess-bot.js") && i("js/pame-book.js") < i("js/chess-bot.js"), true);
 }
 
-console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
+console.log("\n=== La tarjeta «Juega contra mí» del panel ===");
+{
+  const clases = leer("js/clases.js"), html = leer("clases.html");
+  igual("dice «la profe Pame» con su cara a quien juega contra ella",
+    /CONTRA_PAME\s*\?\s*\{ photo: window\.AvatarProfeOscar\.ruta\("cara"\)[^}]*Practica contra la profe Pame/.test(clases), true);
+  igual("clases.html carga el avatar antes que clases.js",
+    html.indexOf("js/avatar-profe-oscar.js") > 0 && html.indexOf("js/avatar-profe-oscar.js") < html.indexOf('src="js/clases.js"'), true);
+}
+
+console.log(fallos ?`\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
 
 /*! rev bfb5bbb0d2d82f9f */

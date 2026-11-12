@@ -18,6 +18,8 @@
         // más rápido de un vistazo (antes eran 14 accesos sueltos en una sola grilla,
         // sin ningún criterio de orden). Un solo lugar para agregar o mover destinos:
         // basta con cambiar de grupo el objeto del tile, el resto se acomoda solo. ----------
+        // ¿Juega contra la profe Pame? Lo decide js/avatar-profe-oscar.js (solo CCDR POCOCI).
+        const CONTRA_PAME = !!(window.AvatarProfeOscar && window.AvatarProfeOscar.PROFE === "pame");
         const TILE_GROUPS = [
             /* "Sesión en vivo" va sola y de primera: es lo único del panel que
                pasa AHORA MISMO, y mezclada entre Juegos y Torneos costaba
@@ -177,7 +179,12 @@
             { title: "Jugar y competir", tiles: [
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
                 { emoji: "⚔️", label: "Competir", desc: "Torneos, TV en vivo, retos a quien esté en línea y tus partidas", descProfe: "Torneos para tus alumnos, TV en vivo, retos a quien esté en línea y sus partidas", href: "competir.html" },
-                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+                /* Quien es de CCDR POCOCI juega contra la profe Pame (su cara del
+                   avatar y su nombre): ver «El bot de la profe Pame» en
+                   docs/decisiones/juegos-y-torneos.md. */
+                CONTRA_PAME
+                    ? { photo: window.AvatarProfeOscar.ruta("cara"), label: "Juega contra mí", desc: "Practica contra la profe Pame", href: "tablero.html" }
+                    : { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 /* Los mismos 5 ejercicios para dos compañeros, cada uno cuando
                    puede. Solo del alumnado: se reta a un compañero de clase.
                    Ver «Retos de ejercicios entre compañeros» en
