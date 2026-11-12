@@ -412,8 +412,10 @@ function enSegundoPlano(p: Promise<unknown>) {
 // 1900 y hoy en Costa Rica; si no, null.
 function fechaValida(s: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-  const d = new Date(s + "T12:00:00Z");
-  if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) return null;
+  // Que el día exista: el 31 de febrero se corre a marzo y deja de ser el mismo.
+  const [a, m, dia] = s.split("-").map(Number);
+  const d = new Date(Date.UTC(a, m - 1, dia));
+  if (d.getUTCFullYear() !== a || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== dia) return null;
   const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
   return s >= "1900-01-01" && s <= hoy ? s : null;
 }

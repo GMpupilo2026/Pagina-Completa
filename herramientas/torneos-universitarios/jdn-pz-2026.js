@@ -58,11 +58,12 @@ module.exports = {
   grupoNombre: "Categoría",
   comentario: `La página de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026: la
 misma que la del Centroamericano (css/centroamericano.css y
-css/universidades.css; js/centroamericano-vivo.js, -tablas.js y
-js/torneo-hoy.js, configurados por js/jdn-pz.js), con el azul y el logo
-de la Asociación Deportiva de Ajedrez de Pérez Zeledón. Los datos salen de
-las bases (documentos/jdn-pz-2026/). Ver «La de la Eliminatoria Cantonal
-JDN de Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
+css/universidades.css), con el azul y el logo de la Asociación Deportiva
+de Ajedrez de Pérez Zeledón. Sin chess-results: los resultados y la
+inscripción son de Pareo Integral (js/jdn-pz-inscripcion.js); la cuenta
+regresiva, de js/torneo-hoy.js. Los datos salen de las bases
+(documentos/jdn-pz-2026/). Ver «La de la Eliminatoria Cantonal JDN de
+Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
   logo: { src: "img/adapz/logo.jpg", ancho: 349, alto: 349, alt: "Asociación Deportiva de Ajedrez de Pérez Zeledón", redondo: true },
   aliados: [{ src: "img/adapz/ccdr-pz.jpg", ancho: 404, alto: 404, alt: "CCDR Pérez Zeledón" }],
   portada: {

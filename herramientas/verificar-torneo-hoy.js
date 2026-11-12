@@ -7,9 +7,10 @@
  *   1. EL HTML, leído: arriba va «Hoy en el torneo» (#hoy), no «El podio»;
  *      carga js/torneo-hoy.js y no js/torneo-podio.js; el calendario trae
  *      las cinco rondas, el almuerzo y la clausura con su hora de Costa Rica
- *      (data-inicio), y una sola marcada como la primera; «Resultados en
- *      vivo» va «Pronto», sin href pero alcanzable con Tab; las bases que
- *      enlaza existen; el logo y el del CCDR existen.
+ *      (data-inicio), y una sola marcada como la primera; sin chess-results:
+ *      ni el buscador ni la clasificación que lo leían, y «Resultados U12»
+ *      y «Resultados U20» llevan a Pareo Integral; las bases que enlaza
+ *      existen; el logo y el del CCDR existen.
  *   2. «HOY EN EL TORNEO», en un navegador con el reloj fijo (page.clock),
  *      en cuatro momentos: diez días antes (la cuenta regresiva a la ronda
  *      1), en plena ronda 1 (lo que se juega y el reloj a la ronda 2), en el
@@ -52,8 +53,9 @@ ok("el calendario trae las cinco rondas, el almuerzo y la clausura, el domingo 2
   ["Ronda 3", "2026-11-22T13:00", 120, "3"], ["Ronda 4", "2026-11-22T15:00", 120, "4"], ["Ronda 5", "2026-11-22T17:00", 120, "5"],
   ["Clausura", "2026-11-22T19:30", 60, ""]]), JSON.stringify(filas));
 ok("una sola fila es la primera ronda", (html.match(/data-primera-ronda/g) || []).length === 1);
-const pronto = html.match(/<div id="ficha-resultados"[^>]*>/);
-ok("«Resultados en vivo» va «Pronto»: sin href, con tabindex y aria-disabled", !!pronto && pronto[0].includes('tabindex="0"') && pronto[0].includes('aria-disabled="true"') && !pronto[0].includes("href"), pronto && pronto[0]);
+ok("sin chess-results: ni el enlace, ni el buscador, ni sus scripts", !/chess-results\.com|id="buscador"|centroamericano-vivo\.js/.test(html));
+ok("«Resultados U12» y «Resultados U20» llevan a Pareo Integral y se abren encima", ["u12", "u20"].every((k) => new RegExp('<a href="torneos-pareo\\.html" id="ficha-resultados-' + k + '" data-ventana=').test(html)));
+ok("la ficha «Inscribirme» abre el formulario", /<a href="#inscribirme" id="ficha-inscribirme"/.test(html) && html.includes('<dialog id="inscribirme"'));
 const locales = [...html.matchAll(/(?:href|src)="((?:documentos|img)\/[^"#?]+)"/g)].map((m) => m[1]);
 const faltan = [...new Set(locales)].filter((f) => !fs.existsSync(path.join(RAIZ, f)));
 ok("las bases y los logos que enlaza existen", locales.some((f) => f.endsWith(".pdf")) && !faltan.length, faltan.join(", "));
@@ -63,7 +65,7 @@ const MOMENTOS = [
   { cuando: "2026-11-11T20:00:00-06:00", etiqueta: "Cuenta regresiva", principal: "Faltan 10 días", detalle: /^Empieza con «Ronda 1», el domingo 22 de noviembre a las 8:00 a\. ?m\. \(hora de Costa Rica\)\.$/, reloj: /^Faltan para la ronda 1 \(el domingo 22 de noviembre a las 8:00 a\. ?m\.\):$/ },
   { cuando: "2026-11-22T09:10:00-06:00", etiqueta: "Hoy en el torneo", principal: "Ahora: Ronda 1", detalle: /^Empezó a las 8:00 a\. ?m\. Después: Ronda 2, hoy a las 10:00 a\. ?m\.$/, reloj: /^Faltan para la ronda 2 \(hoy a las 10:00 a\. ?m\.\):$/ },
   { cuando: "2026-11-22T12:20:00-06:00", etiqueta: "Hoy en el torneo", principal: "Ahora: Almuerzo", detalle: /Después: Ronda 3, hoy a las 1:00 p\. ?m\./, reloj: /^Faltan para la ronda 3 \(hoy a las 1:00 p\. ?m\.\):$/ },
-  { cuando: "2026-11-22T21:00:00-06:00", etiqueta: "La eliminatoria terminó", principal: "¡Gracias por jugar!", detalle: /«Clasificación» y «El podio»/, reloj: null },
+  { cuando: "2026-11-22T21:00:00-06:00", etiqueta: "La eliminatoria terminó", principal: "¡Gracias por jugar!", detalle: /«Resultados U12» y «Resultados U20»/, reloj: null },
 ];
 
 (async () => {
