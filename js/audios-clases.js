@@ -116,12 +116,12 @@
         data.forEach((a) => lista.append(tarjeta(a, url(oir, a.archivo), url(bajar, a.archivo))));
     }
 
-    function tarjeta(a, urlOir, urlBajar) {
+    function tarjeta(a, urlOir, urlBajar, estudio) {
         const art = el("article", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
         const idTitulo = "clase-" + a.id;
         art.setAttribute("aria-labelledby", idTitulo);
         const dia = diaLargo(a.fecha);
-        const h = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white", dia);
+        const h = el(estudio ? "h2" : "h3", "font-serif text-xl font-bold text-brand-800 dark:text-white", dia);
         h.id = idTitulo;
         art.append(h);
         const detalle = [a.titulo, horaLarga(a.hora), duracionDicha(a.duracion_seg)].filter(Boolean).join(" · ");
@@ -139,6 +139,7 @@
         audio.setAttribute("aria-label", "Audio de la clase del " + dia);
         art.append(audio);
         recordarPosicion(audio, a.id, art);
+        art.append(AudiosGuia.controles(audio, { indice: a.indice }));
 
         const fila = el("div", "flex flex-wrap items-center gap-x-5 gap-y-3 mt-3");
         const idVel = "vel-" + a.id;
@@ -167,9 +168,15 @@
             d.setAttribute("aria-label", "Descargar el audio de la clase del " + dia + (a.bytes ? ", " + megas(a.bytes) : ""));
             fila.append(d);
         }
-        if (puedeSubir) fila.append(botonQuitar(a, dia));
+        if (puedeSubir && !estudio) fila.append(botonQuitar(a, dia));
         art.append(fila);
 
+        if (estudio) return art;
+        const est = el("a", "inline-block mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            "Estudiar esta clase");
+        est.href = "audios-clases.html?clase=" + encodeURIComponent(a.id);
+        est.setAttribute("aria-label", "Estudiar la clase del " + dia + ": temas, buscar, partidas, preguntas y marcas");
+        art.append(est);
         if (a.con_transcripcion) art.append(transcripcion(a, dia));
         return art;
     }
@@ -281,7 +288,8 @@
         const archivos = Array.from(document.getElementById("subir-archivos").files || []);
         const mp3 = archivos.filter((f) => /\.mp3$/i.test(f.name));
         const txt = new Map(archivos.filter((f) => /\.txt$/i.test(f.name)).map((f) => [f.name.replace(/\.txt$/i, "").toLowerCase(), f]));
-        if (!mp3.length) { estado.textContent = "Elige al menos un archivo MP3."; return; }
+        const guias = archivos.filter((f) => /\.json$/i.test(f.name));
+        if (!mp3.length && !guias.length) { estado.textContent = "Elige al menos un archivo MP3 o una guía (.json)."; return; }
         boton.disabled = true;
         const informe = [];
         for (let i = 0; i < mp3.length; i++) {
@@ -308,10 +316,91 @@
             }
             informe.push(f.name + ": listo (" + diaLargo(d.fecha) + (texto ? ", con transcripción" : "") + ").");
         }
+        for (let i = 0; i < guias.length; i++) {
+            estado.textContent = "Poniendo la guía " + (i + 1) + " de " + guias.length + ": " + guias[i].name + "…";
+            informe.push(await ponerGuia(academia, guias[i]));
+        }
         boton.disabled = false;
         document.getElementById("subir-archivos").value = "";
         estado.textContent = informe.join(" ");
         await cargarLista();
+    }
+
+    /* ---------- Las guías de estudio ---------- */
+    /* Un .json por clase, con el mismo nombre que su MP3 (de ahí salen la fecha
+       y la hora): las frases con su segundo, el resumen, los temas, las
+       preguntas y las partidas. Se guardan en la clase que ya está subida. Las
+       partidas se vuelven a comprobar con chess.js y llegan sin publicar. */
+    async function ponerGuia(academia, f) {
+        const d = datosDelNombre(f.name);
+        if (!d) return f.name + ": el nombre no trae la fecha.";
+        let obj;
+        try { obj = JSON.parse(await f.text()); } catch (e) { return f.name + ": no es un archivo de guía válido."; }
+        const g = AudiosGuia.leerGuia(obj);
+        let q = sb.from("audios_clase").select("id").eq("academia_id", academia).eq("fecha", d.fecha);
+        q = d.hora ? q.eq("hora", d.hora) : q.is("hora", null);
+        const { data: filas, error } = await q.range(0, 1);
+        if (error) return f.name + ": no se pudo buscar la clase.";
+        if (!filas || !filas.length) return f.name + ": todavía no hay audio de esa clase; sube primero el MP3.";
+        const id = filas[0].id;
+        const cambios = { resumen: g.resumen, indice: g.indice.length ? g.indice : null };
+        if (g.segmentos.length) {
+            cambios.segmentos = g.segmentos;
+            cambios.transcripcion = g.segmentos.map((s) => s[1]).join("\n").slice(0, 300000);
+        }
+        const up = await sb.from("audios_clase").update(cambios).eq("id", id);
+        if (up.error) return f.name + ": no se pudo guardar la guía.";
+        const del = await Promise.all([
+            sb.from("audios_clase_preguntas").delete().eq("audio_id", id),
+            sb.from("audios_clase_partidas").delete().eq("audio_id", id),
+        ]);
+        if (del.some((r) => r.error)) return f.name + ": se guardó el texto, pero no se pudieron cambiar las preguntas ni las partidas.";
+        const ins = await Promise.all([
+            g.preguntas.length ? sb.from("audios_clase_preguntas").insert(g.preguntas.map((x) => Object.assign({ audio_id: id }, x))) : { error: null },
+            g.partidas.length ? sb.from("audios_clase_partidas").insert(g.partidas.map((x) => Object.assign({ audio_id: id }, x))) : { error: null },
+        ]);
+        if (ins.some((r) => r.error)) return f.name + ": se guardó el texto, pero faltaron preguntas o partidas.";
+        return f.name + ": guía lista (" + g.indice.length + " temas, " + g.preguntas.length + " preguntas, " + g.partidas.length + " partidas sin publicar).";
+    }
+
+    /* ---------- Estudiar una clase ---------- */
+    let anuncio = () => {};
+    async function estudiar(id) {
+        document.getElementById("subir").classList.add("hidden");
+        document.getElementById("lista-titulo").textContent = "La clase";
+        const volver = el("a", "inline-block mb-4 text-sm font-semibold text-brand-700 dark:text-accent-300 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "← Todas las clases");
+        volver.href = "audios-clases.html";
+        document.getElementById("lista").before(volver);
+        const lista = document.getElementById("lista");
+        const { data: a, error } = await sb.from("audios_clase")
+            .select("id, academia_id, fecha, hora, titulo, archivo, duracion_seg, bytes, con_transcripcion, resumen, indice, segmentos")
+            .eq("id", id).maybeSingle();
+        if (error || !a) { avisar("No se encontró esa clase. Vuelve a la lista de clases.", "error"); return; }
+        document.getElementById("aviso").className = "hidden";
+        const [oir, bajar] = await Promise.all([
+            sb.storage.from(BUCKET).createSignedUrls([a.archivo], 6 * 3600),
+            sb.storage.from(BUCKET).createSignedUrls([a.archivo], 6 * 3600, { download: true }),
+        ]);
+        const url = (r) => { const x = r && r.data && r.data[0]; return x && !x.error ? x.signedUrl : null; };
+        const art = tarjeta(a, url(oir), url(bajar), true);
+        lista.append(art);
+        document.title = "Clase del " + diaLargo(a.fecha) + " · Audios de las clases";
+        const audio = art.querySelector("audio");
+        if (!audio) return;
+        const ayuda = el("p", "text-sm text-brand-600 dark:text-brand-300 mt-3",
+            "Atajos: Alt+Mayúscula+flecha izquierda o derecha salta 15 segundos (con Control, 1 minuto); Alt+Mayúscula+flecha abajo pausa o sigue; Alt+Mayúscula+T dice en qué minuto vas; Alt+Mayúscula+M marca el momento.");
+        art.append(ayuda);
+        const guia = el("div");
+        lista.append(guia);
+        /* Al publicar o quitar una partida se vuelve a armar la guía, y el foco
+           va al título de las partidas: el botón tocado ya no existe. */
+        const opciones = { puedeSubir, anunciar: anuncio, recargar: async () => {
+            guia.textContent = "";
+            await AudiosGuia.montar(guia, a, audio, opciones);
+            const h = document.getElementById("partidas");
+            if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
+        } };
+        await AudiosGuia.montar(guia, a, audio, opciones);
     }
 
     async function init() {
@@ -319,7 +408,15 @@
         if (!data.session) { location.href = "login.html?next=audios-clases.html"; return; }
         document.getElementById("loading").classList.add("hidden");
         document.getElementById("app").classList.remove("hidden");
+        const voz = document.getElementById("anuncio");
+        /* Se vacía y se vuelve a escribir: el mismo texto dos veces seguidas
+           («Atrás 15 segundos») el lector no lo repite si no cambia. */
+        anuncio = (t) => { voz.textContent = ""; setTimeout(() => { voz.textContent = t; }, 50); };
+        AudiosGuia.anunciarCon(anuncio);
         await prepararSubir();
+        const id = new URLSearchParams(location.search).get("clase");
+        if (id && /^[0-9a-z-]{1,64}$/i.test(id)) { await estudiar(id); return; }
+        AudiosGuia.atajos({});
         await cargarLista();
     }
 

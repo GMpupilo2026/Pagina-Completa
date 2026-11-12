@@ -7,6 +7,8 @@
  *   verdad las filas que pasan los filtros.
  * - Cada tabla devuelve las filas que se le pasen en `tablas`, filtradas de
  *   verdad en el RESOLVER: .eq() solo anota el filtro.
+ * - Cada delete queda en window.__deletes ({ tabla, filtros, filas }) y quita
+ *   las filas de verdad, con el filtro también en el RESOLVER.
  * - sb.rpc("x") devuelve lo que traiga tablas["rpc:x"] (lista vacía si no).
  *
  * abrir(browser, ruta, tablas, local) abre la página en un contexto nuevo
@@ -25,6 +27,7 @@ function clienteFalso(tablas) {
   function consulta(tabla) {
     const filtros = [];
     let porActualizar = null;
+    let porBorrar = false;
     const q = {
       select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; },
       // .in(c, valores): filtra de verdad, como los demás.
@@ -46,12 +49,22 @@ function clienteFalso(tablas) {
       // El filtro se apunta al RESOLVER: .update(x).eq(...) encadena, y acá
       // todavía no hay ninguno. Se anota en window.__updates y cambia las filas.
       update(campos) { porActualizar = campos; return q; },
+      // .delete().eq(...): el filtro también va al RESOLVER. Se anota en
+      // window.__deletes y las filas se quitan de verdad.
+      delete() { porBorrar = true; return q; },
       filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "nulo" ? f[c] == null : modo === "en" ? v.includes(String(f[c])) : modo === "distinto" ? f[c] !== v : modo === "o" ? v.some(([k, x]) => String(f[k]) === x) : f[c] === v)); },
       // Con un update pendiente (.update().eq().select().maybeSingle()),
       // primero se escribe y se devuelve la fila ya cambiada, como la base.
       maybeSingle() { if (porActualizar) return q.then((r) => ({ data: (r.data || [])[0] || null, error: null })); return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       single() { if (porActualizar) return q.then((r) => ({ data: (r.data || [])[0] || null, error: null })); return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       then(r) {
+        if (porBorrar) {
+          const quitar = q.filas();
+          (window.__deletes = window.__deletes || []).push({ tabla, filtros: filtros.slice(), filas: quitar.length });
+          TABLAS[tabla] = (TABLAS[tabla] || []).filter((f) => !quitar.includes(f));
+          porBorrar = false;
+          return Promise.resolve({ data: null, error: null }).then(r);
+        }
         if (porActualizar) {
           const cambiadas = q.filas();
           (window.__updates = window.__updates || []).push({ tabla, campos: porActualizar, filtros: filtros.slice(), filas: cambiadas.length });
