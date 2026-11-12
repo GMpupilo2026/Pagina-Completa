@@ -1565,3 +1565,18 @@ que no se hizo otra: **con `?banco=clases` carga las posiciones de las clases**
 - Sin pista escrita: la pista va directo a «¿Qué jugaría la máquina?».
 - Se llega desde Tareas, desde la portada de Entrenamiento y con «Jugar las
   posiciones contra el motor» en `audios-clases.html`.
+- **También en la clase en vivo**: Entrenamientos → «🏫 Posiciones de las
+  clases», un grupo por día con el más reciente arriba, y en cada posición
+  «🤖 Que lo jueguen contra la máquina» (la práctica de la clase, con el reloj
+  elegido en Practicar). Ver «Las posiciones de las clases, en la clase» en
+  clase-en-vivo.md.
+- **Un entrenamiento del día también entra por aquí.** El 12/11 el profe pidió
+  uno armado (3 de ventaja de al menos 2 puntos, 5 que se ganan por oposición,
+  5 que se empatan por oposición y los mates de dama, de torre y de alfil y
+  caballo, 3 posiciones de cada uno): va como
+  `herramientas/datos/posiciones-clases/2026-11-12.json`, escrito a mano, con
+  `origen` diciendo que no sale de una transcripción, y pasa por el mismo
+  generador y los mismos umbrales. Las de oposición no se eligieron a ojo:
+  salen de la tabla exacta de rey y peón contra rey (`herramientas/lib/kpk.js`)
+  con una sola jugada buena —la que toma la oposición— y todas las demás
+  pierden el resultado (o lo dejan escapar), y Stockfish lo confirma.

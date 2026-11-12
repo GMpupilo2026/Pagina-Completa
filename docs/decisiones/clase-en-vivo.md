@@ -489,7 +489,7 @@ Tres herramientas de entrenamiento que faltaban en la clase. Lo que cuenta
 está en la base (migración `partidas_y_reloj_de_la_clase`), comprobado
 impersonando roles.
 
-- **La práctica contra el motor puede llevar reloj** (1 a 10 minutos, con o
+- **La práctica contra el motor puede llevar reloj** (30 segundos a 10 minutos, con o
   sin incremento): `practice_sessions.reloj_segundos` / `incremento_segundos`.
   El reloj es del alumno —el motor juega al instante— y **lo lleva su
   navegador**, a propósito: es entrenamiento contra una máquina, no una
@@ -4695,6 +4695,24 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   blanca. Esos van solo a su página, que hace mover primero a la máquina.
   Todos los finales llevan «🪟 Que la practiquen» (`finales.html?final=<id>`,
   con su meta y sus pistas).
+- **Las posiciones de las clases, en la clase.** «Posiciones de las clases»
+  (`entreno/data/finales-clases.json`) estaba en la lista del sitio pero sin
+  adaptador: en la clase solo se podía abrir la página. Ahora va con el
+  tablero de la clase, **un grupo por día y el más reciente arriba** (el
+  entrenamiento preparado para hoy es lo primero), con las mismas puertas de
+  Finales: «Al tablero», «🤖 Que lo jueguen contra la máquina», «🪟 Que la
+  practiquen» (esa posición en `finales.html?banco=clases&final=…`) y
+  «Guion». La fila de los dos bancos sale de una sola función,
+  `filaDeFinal`. Para abrirla, `enlaceDe` acepta ahora una consulta fija en
+  la dirección de la lista (`?banco=clases`), solo de letras, números, «=»,
+  «&», «_» y «-»: antes pedía `.html` pelado y devolvía null.
+  `verificar-clase-entrenamientos.js` revisa que estén todas, el orden de los
+  días y el enlace; probado que salta con los días al revés.
+- **El reloj de la práctica tiene 30 segundos** (`RELOJES_PRACTICA` de
+  `js/partidas-clase.js`): lo pidió el profe para los mates básicos. La base
+  ya lo permitía (`reloj_segundos between 30 and 3600`). Se elige en
+  Practicar ANTES de mandar la posición: «Que lo jueguen contra la máquina»
+  pasa por `crearPractica()`, que lee el reloj de ahí.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
