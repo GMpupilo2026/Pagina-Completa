@@ -137,6 +137,14 @@
       pagina: "/utn-2026.html",
       fichas: [[/chess-results\.com\/tnr1498221\b/i, "ficha-femenino"], [/chess-results\.com\/tnr1498218\b/i, "ficha-masculino"], [/lichess\.org\//i, "ficha-partidas"]],
     },
+    // La Eliminatoria Cantonal JDN de Pérez Zeledón: la misma cara, con el
+    // azul y el logo redondo de la ADAPZ. chess-results lleva a la
+    // clasificación de la página (su ficha está «Pronto» hasta que se publique).
+    "jdn-pz-2026": {
+      clase: "u-sala", tema: "u-sala-pz", imagen: "/img/adapz/logo.jpg", ancho: 349, alto: 349,
+      pagina: "/jdn-pz-2026.html",
+      fichas: [[/chess-results\.com\//i, "clasificacion", "Resultados en vivo"], [/bases-eliminatoria-cantonal-jdn-pz-2026\.pdf$/i, "ficha-bases"]],
+    },
   };
 
   // Con un torneo por categoría, la sala tiene un enlace de chess-results por

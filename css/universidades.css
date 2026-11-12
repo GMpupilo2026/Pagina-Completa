@@ -52,6 +52,26 @@
   --u-claro: #bfcfe8;
 }
 
+/* La Eliminatoria Cantonal JDN de Pérez Zeledón (jdn-pz-2026.html): el azul
+ * marino y el celeste del logo de ADAPZ y de los cuadros de sus bases.
+ * Contraste: blanco sobre #1F3A7A 10,80 y sobre #142A5C 13,86; #0F2147 sobre
+ * el celeste #4AA3E3 5,75 (con letra blanca da 2,75: no); blanco sobre
+ * #1D64B0 6,00; #1D64B0 sobre blanco 6,00 y sobre #EEF6FD 5,49; #1F3A7A
+ * sobre #EEF6FD 9,89; #DFE7F5 sobre #1F3A7A 8,68; en oscuro, #9FD0F3 sobre
+ * brand-950 11,17 y sobre brand-900 10,18. */
+.u-sala-pz, .pz {
+  --u-1: #1f3a7a;
+  --u-2: #142a5c;
+  --u-tinta: #0f2147;
+  --u-celeste: #4aa3e3;
+  --u-celeste-2: #7cbdec;
+  --u-luz: #d6ecfa;
+  --u-suave: #e6f3fc;
+  --u-fondo: #eef6fd;
+  --u-fuerte: #1d64b0;
+  --u-claro: #9fd0f3;
+}
+
 /* ------------------------------------------------------------------
  * La ficha de la sala en Torneos.
  * ------------------------------------------------------------------ */
@@ -103,6 +123,8 @@
   margin-bottom: 1rem;
   pointer-events: none;
 }
+/* El logo de la ADAPZ es un JPG con su fondo blanco: va en un círculo. */
+.u-sala-pz .u-sala-imagen { width: 6.5rem; height: 6.5rem; max-height: none; border-radius: 9999px; background: #fff; border: 4px solid var(--u-celeste); object-fit: cover; }
 .u-sala h2 { color: #fff; }
 .u-sala h2 + p { color: #fff; }
 .u-sala a.u-sala-boton { background: #fff; color: var(--u-1); font-weight: 700; box-shadow: 0 4px 0 rgb(0 0 0 / 0.3); }
@@ -141,6 +163,23 @@
 .cac-u .cac-titulo { text-shadow: 0 3px 0 rgb(0 0 0 / 0.3); }
 /* El logo, entero y sin pasar de 12rem de alto (el de la UTN es casi cuadrado). */
 .u-logo { display: block; width: 100%; height: auto; max-height: 12rem; object-fit: contain; }
+/* Un logo con su fondo blanco (el de ADAPZ, en JPG): en un círculo blanco,
+ * con el borde del acento, en lugar de recortarlo. */
+.u-logo-redondo {
+  width: min(100%, 15rem);
+  max-height: none;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 9999px;
+  background: #fff;
+  border: 6px solid var(--u-celeste);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.55);
+}
+/* Los logos de quien acompaña (el CCDR), en la franja de quién organiza. */
+.u-aliado { height: 4rem; width: auto; border-radius: 0.5rem; background: #fff; }
+/* Las casillas de la cuenta regresiva (js/torneo-hoy.js), en el azul de la
+ * página en lugar del morado del Centroamericano: blanco sobre --u-1. */
+.cac-u .cac-hoy-reloj-casilla { background: var(--cac-morado); }
 .cac-u .cac-dato { background: rgb(0 0 0 / 0.28); }
 .cac-u .cac-dato dt { color: #dfe7f5; }
 .cac-u .cac-organiza { border-bottom-color: var(--u-celeste); }
@@ -220,6 +259,8 @@
   box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--u-1) 60%, transparent);
 }
 .u-despedida-logo img { width: 78%; max-height: 70%; object-fit: contain; }
+.u-despedida-redondo { background: #fff; border-color: var(--u-celeste); overflow: hidden; }
+.u-despedida-redondo img { width: 100%; max-height: none; }
 .dark .cac-u .cac-globo { border-color: var(--u-claro); box-shadow: 0 6px 0 var(--u-claro); }
 .dark .cac-u .cac-globo::before { border-color: var(--u-claro); }
 .dark .cac-u .cac-globo .cac-accion { color: var(--u-claro); }

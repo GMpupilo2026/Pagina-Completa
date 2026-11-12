@@ -14437,6 +14437,62 @@ estaban, y las diferencias eran solo lo nuevo.
   6. correr `sitemap.py` y `archivos-catalogo.js`;
   7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.
 
+### La de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+`jdn-pz-2026.html` es la página de la Eliminatoria Cantonal JDN CCDRPZ –
+ADAPZ 2026 (lo pidió el dueño: «hacer igual a la página de torneos del
+Centroamericano el torneo de PZ»), con el azul marino y el celeste del logo
+de la Asociación Deportiva de Ajedrez de Pérez Zeledón y de los cuadros de
+sus bases. No es universitaria, pero es la misma página y sale de la misma
+plantilla (`herramientas/torneos-universitarios/jdn-pz-2026.js` →
+`js/jdn-pz.js`). Domingo 22 de noviembre de 2026 en el Hotel del Sur,
+suizo a 5 rondas a 30 minutos + 30 segundos.
+
+- **Un torneo por jugarse**, no terminado: con `hoy` en la configuración,
+  arriba va «Hoy en el torneo», como en el Centroamericano, en lugar de «El
+  podio». Lo arma `js/torneo-hoy.js`: el de `js/centroamericano.js` solo en
+  español, que lee las horas del calendario (las filas con `data-inicio` y
+  `data-minutos` de `#calendario`, un recuadro propio de la configuración):
+  la cuenta regresiva antes, lo que se juega ahora y el reloj a la próxima
+  ronda durante, y el cierre después (sus textos, `hoy` en
+  `window.TorneoPagina`). Cuando el Centroamericano pase a una sola copia,
+  se juntan.
+- **Lo nuevo de la plantilla es opcional** y no cambia CENFOTEC ni UTN (se
+  comprobó: siguen saliendo iguales): `hoy`; la ficha con `pronto` (sin
+  href, con tabindex y «Pronto: …», como «Partidas en vivo» del
+  Centroamericano); `despedida.titulo`; `dialogos.tituloClasificacion`;
+  `aliados` (otros logos en la franja de quién organiza: el del CCDR); y
+  `logo.redondo`, para un logo con su fondo blanco (el de la ADAPZ es un
+  JPG): va en un círculo blanco en la portada, en la despedida, en la ficha
+  de Torneos y en la imagen para compartir. `verificar-plantilla-universitaria.js`
+  mide también los JPG.
+- **Todo sale de las bases** (`documentos/jdn-pz-2026/`, firmadas por el
+  árbitro principal el 11/11/2026): inscripciones (cerrado, sin costo para
+  los afiliados al día, hasta las 10:00 p.m. del 21 de noviembre),
+  categorías (U12, U16 y U20, Absoluto y Femenino; dos torneos), calendario,
+  sistema, desempates, objeciones y derechos de imagen. **Lo que no traen no
+  se pone**: no hay teléfono ni correo de la organización (no hay ficha de
+  contacto) ni transmisión.
+- **El congresillo, sin fecha**: las bases dicen «viernes 20 de junio», una
+  errata (el torneo es en noviembre; el 20 de noviembre de 2026 sí es
+  viernes). Hasta que la organización lo confirme, el calendario solo dice
+  que es virtual y que el enlace llega por el chat oficial.
+- **«Resultados en vivo» va «Pronto»** hasta que la organización publique el
+  torneo en chess-results. Entonces: crear la sala `jdn-pz-2026` en
+  `admin.html#torneos` con sus enlaces de chess-results (de ahí leen el
+  buscador, la clasificación, el podio y el proyector, por `sala-jugadores`)
+  y cambiar la ficha de `pronto` a su `href`. La portada de la sala en
+  Torneos (`PORTADAS`) ya está: chess-results lleva a la clasificación de la
+  página y las bases a su ficha.
+
+`herramientas/verificar-torneo-hoy.js` lo revisa: el HTML (arriba «Hoy», el
+calendario con sus siete filas, la ficha «Pronto», que existan las bases y
+los logos, ningún teléfono) y «Hoy en el torneo» con el reloj fijo en cuatro
+momentos (diez días antes, en la ronda 1, en el almuerzo y de noche), con el
+navegador en Madrid para ver que las horas son de Costa Rica; la cara y el
+celular sin scroll de costado. Rompiendo a propósito la zona de
+`torneo-hoy.js`, saltan seis comprobaciones.
+
 ## La cámara que lee el tablero
 
 `camara-tablero.html` (`js/camara-tablero.js`) empezó como una **prueba** de

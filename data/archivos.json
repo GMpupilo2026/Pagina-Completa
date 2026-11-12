@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 893,
+  "total": 894,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8166,6 +8166,12 @@
     "titulo": "Normativa pjde 2026",
     "tipo": "otro",
     "kb": 1695
+   },
+   {
+    "ruta": "documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf",
+    "titulo": "Bases de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026 (Pérez Zeledón)",
+    "tipo": "otro",
+    "kb": 943
    },
    {
     "ruta": "documentos/metropolitano-2026/bases-metropolitano-2026.pdf",
@@ -19087,7 +19093,7 @@
   ]
  },
  "imagenes": {
-  "total": 1195,
+  "total": 1197,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26246,6 +26252,25 @@
       "titulo": "10",
       "tipo": "otro",
       "kb": 47
+     }
+    ]
+   },
+   {
+    "carpeta": "img/adapz",
+    "titulo": "Adapz",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/adapz/ccdr-pz.jpg",
+      "titulo": "Ccdr pz",
+      "tipo": "otro",
+      "kb": 11
+     },
+     {
+      "ruta": "img/adapz/logo.jpg",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 15
      }
     ]
    },
