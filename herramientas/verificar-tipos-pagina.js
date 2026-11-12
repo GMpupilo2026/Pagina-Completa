@@ -52,9 +52,10 @@ function clienteFalso(conSesion) {
   function tabla(nombre) {
     let filas = ((window.__filas || {})[nombre] || []).slice();
     const filtros = [];
-    let orden = null, desde = 0, hasta = Infinity, borrar = false;
+    let orden = null, desde = 0, hasta = Infinity, borrar = false, campo = null;
     const api = {
-      select() { return api; }, limit() { return api; },
+      /* «detail->>puzzle_id» devuelve solo esa llave, como PostgREST. */
+      select(cols) { const m = /^(\\w+)->>(\\w+)$/.exec(cols || ""); if (m) campo = m; return api; }, limit() { return api; },
       eq(c, v) { filtros.push((f) => f[c] === v); return api; },
       neq(c, v) { filtros.push((f) => f[c] !== v); return api; },
       in(c, vs) { filtros.push((f) => vs.indexOf(f[c]) >= 0); return api; },
@@ -79,8 +80,10 @@ function clienteFalso(conSesion) {
           nueva = Object.assign({ id: "00000000-0000-4000-8000-" + String(window.__nId).padStart(12, "0"), student_id: "u-1", created_at: new Date().toISOString() }, fila);
           ((window.__filas = window.__filas || {})[nombre] = window.__filas[nombre] || []).push(nueva);
         }
-        const r = { select() { return r; }, single() { return Promise.resolve({ data: nueva, error: null }); },
-          then(res, rej) { return Promise.resolve({ error: null }).then(res, rej); } };
+        // window.__fallaInsert: la base dice que no (o el pedido no llegó).
+        const err = window.__fallaInsert ? { message: "sin red" } : null;
+        const r = { select() { return r; }, single() { return Promise.resolve({ data: err ? null : nueva, error: err }); },
+          then(res, rej) { return Promise.resolve({ error: err }).then(res, rej); } };
         return r;
       },
       delete() { borrar = true; return api; },
@@ -94,6 +97,7 @@ function clienteFalso(conSesion) {
         let d = filas.filter((f) => filtros.every((fn) => fn(f)));
         if (orden) d.sort((a, b) => (a[orden.c] < b[orden.c] ? -1 : a[orden.c] > b[orden.c] ? 1 : 0) * (orden.asc ? 1 : -1));
         d = d.slice(desde, hasta + 1);
+        if (campo) d = d.map((f) => ({ [campo[2]]: f[campo[1]] == null ? null : (f[campo[1]][campo[2]] == null ? null : String(f[campo[1]][campo[2]])) }));
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
     };
@@ -1417,8 +1421,14 @@ window.PreparacionMotor = {
     await esperarEstado(page, /Eso es lo que quiere/);
     ok("repasar un nivel ya completo no vuelve a festejar", (await aviso()) === "");
     const registros = () => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0].detail.puzzle_id));
-    ok("resolver otra vez el mismo ejercicio no lo registra dos veces", JSON.stringify(await registros()) === JSON.stringify(["amenaza:" + ultimo.id]), JSON.stringify(await registros()));
-    // El primero tenía estrellas de antes del registro: al resolverlo ahora, entra (una vez).
+    const cuantas = (lista, k) => lista.filter((x) => x === k).length;
+    // Las once de antes tenían estrellas pero no estaban en la base: al abrir
+    // la página se mandan solas (ver ponerAlDiaRegistros en js/entreno-tipos.js).
+    const r1 = await registros();
+    ok("lo resuelto antes que no está en la base entra al abrir la página, una vez cada uno",
+      nivel.slice(0, -1).every((x) => cuantas(r1, "amenaza:" + x.id) === 1), JSON.stringify(r1));
+    ok("resolver otra vez el mismo ejercicio no lo registra dos veces", cuantas(r1, "amenaza:" + ultimo.id) === 1, JSON.stringify(r1));
+    // El primero ya entró al abrir: resolverlo de nuevo no lo repite.
     const primero = nivel[0];
     await page.evaluate((id) => { location.hash = "#amenaza/1/" + id; }, primero.id);
     await page.waitForFunction((id) => /Ejercicio 1 de/.test(document.getElementById("juego-progreso").textContent), primero.id, { timeout: 8000 });
@@ -1426,10 +1436,64 @@ window.PreparacionMotor = {
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Eso es lo que quiere/);
     await page.waitForTimeout(300);
-    ok("lo resuelto antes de que existiera el registro entra la próxima vez que se resuelve",
-      (await registros()).includes("amenaza:" + primero.id), JSON.stringify(await registros()));
+    ok("y uno recuperado no se vuelve a registrar al resolverlo", cuantas(await registros(), "amenaza:" + primero.id) === 1, JSON.stringify(await registros()));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
+  }
+
+  console.log("\n=== Lo que no llegó a la base se recupera ===");
+  {
+    /* El caso real del 11/11: Con lo justo con estrellas en los 69 y la marca
+       de «registrado» puesta en todos, pero 18 que nunca llegaron a
+       training_progress (la red). La tarea decía 51/69 para siempre. */
+    const items = DATOS["con-lo-justo"].filter((x) => x.nivel === 5).slice(0, 3);
+    const k = (x) => "con-lo-justo:" + x.id;
+    const estrellas = {}, marcados = {};
+    items.forEach((x) => { estrellas[k(x)] = 2; marcados[k(x)] = true; });
+    const enLaBase = [{ student_id: "u-1", activity: "tipos", detail: { puzzle_id: k(items[0]), category: "con-lo-justo", nivel: 5 } },
+      // De otra persona: no cuenta como suyo.
+      { student_id: "u-2", activity: "tipos", detail: { puzzle_id: k(items[1]), category: "con-lo-justo", nivel: 5 } }];
+    const preparar = (fallar) => async (c) => {
+      await c.addInitScript((v) => {
+        window.__filas = { training_progress: v.enLaBase };
+        if (v.fallar) window.__fallaInsert = true;
+        if (!sessionStorage.getItem("__puesto")) {
+          localStorage.setItem("tipos_estrellas_v1", v.estrellas);
+          localStorage.setItem("tipos_registrados_v1", v.marcados);
+          sessionStorage.setItem("__puesto", "1");
+        }
+      }, { enLaBase, estrellas: JSON.stringify(estrellas), marcados: JSON.stringify(marcados), fallar });
+    };
+    const leerTodo = (page) => page.evaluate(() => ({
+      filas: window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0]),
+      marcados: JSON.parse(localStorage.getItem("tipos_registrados_v1") || "{}"),
+    }));
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "", preparar(false));
+      await page.waitForSelector("#vista-fichas:not(.hidden)");
+      await page.waitForFunction(() => window.__escrituras.filter((e) => e.tabla === "training_progress").length >= 2, null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const r = await leerTodo(page);
+      const ids = r.filas.map((f) => f.detail.puzzle_id).sort();
+      ok("manda solo los que faltan en la base, aunque la marca dijera «registrado»",
+        JSON.stringify(ids) === JSON.stringify([k(items[1]), k(items[2])].sort()), JSON.stringify(ids));
+      ok("con su tipo, su nivel, sus estrellas y `recuperado`",
+        r.filas.every((f) => f.activity === "tipos" && f.detail.category === "con-lo-justo" && f.detail.nivel === 5 && f.detail.estrellas === 2 && f.detail.recuperado === true), JSON.stringify(r.filas));
+      ok("y los deja marcados", items.every((x) => r.marcados[k(x)] === true), JSON.stringify(r.marcados));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // Si la base no lo guarda, NO queda marcado: la próxima vez se vuelve a intentar.
+      const { page, ctx } = await abrir(browser, true, "", preparar(true));
+      await page.waitForSelector("#vista-fichas:not(.hidden)");
+      await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "training_progress"), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const r = await leerTodo(page);
+      ok("si la base dice que no, intenta uno y para (no insiste con el resto)", r.filas.length === 1, JSON.stringify(r.filas.map((f) => f.detail.puzzle_id)));
+      ok("y lo que no entró queda SIN marcar, para la próxima", !r.marcados[k(items[1])] && !r.marcados[k(items[2])] && r.marcados[k(items[0])] === true, JSON.stringify(r.marcados));
+      await ctx.close();
+    }
   }
 
   /* ======================= todo desde el recuadro =======================

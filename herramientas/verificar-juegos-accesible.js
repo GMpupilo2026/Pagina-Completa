@@ -906,7 +906,11 @@ async function pruebaElTurnoElRelojYLaUltima(browser) {
   a = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [apurada], profiles: PERFILES } }, "u-ana", true);
   let aviso = "";
   for (let i = 0; i < 20 && !/te quedan/i.test(aviso); i++) { await a.page.waitForTimeout(250); aviso = await loQueDijoElRecuadro(a.page); }
-  ok("a los 30 segundos se avisa solo", /te quedan (30|29|28) segundos/i.test(aviso), aviso);
+  /* El reloj ya corre desde antes de abrir la página: con la máquina lenta (el
+     CI, el 12/11) cargar se comió 7 segundos y el primer aviso dijo 25. Lo que
+     se prueba es que avise solo al cruzar los 30, no cuánto tardó en cargar. */
+  const quedan = +((/te quedan (\d+) segundos/i.exec(aviso) || [])[1] || 0);
+  ok("a los 30 segundos se avisa solo", quedan >= 1 && quedan <= 30, aviso);
   await a.ctx.close();
 
   /* La coronación: el diálogo de todo el sitio (js/coronacion.js), con el foco
