@@ -1332,7 +1332,9 @@ aceptó las siete ideas juntas («hacer todas»). El problema de fondo: una
 clase de hora y media no se repasa escuchándola entera, y quien no ve no
 puede ojear. Hay que poder **moverse dentro de la clase**. Cada tarjeta de la
 lista lleva «Estudiar esta clase» (`audios-clases.html?clase=<id>`), y esa
-vista arma la guía con `js/audios-clase-guia.js` (`AudiosGuia`):
+vista arma la guía con `js/audios-clase-guia.js` (`AudiosGuia`). Las columnas
+y tablas nuevas, sus permisos y `responder_repaso()` están en la migración
+`20261112060425_audios_clase_guia`:
 
 - **Saltar**: «Atrás 1 min», «Atrás 15 s», «Adelante 15 s», «Adelante 1 min»
   y «¿En qué minuto voy?», que dice el minuto y el tema que va sonando. Van

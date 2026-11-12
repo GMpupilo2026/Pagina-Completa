@@ -18,6 +18,8 @@
      (lo decide la base, en responder_repaso()).
    - Marcas propias: «volver a este minuto», con una nota.
 
+   Las tablas y sus permisos: migración 20261112060425_audios_clase_guia.
+
    Ver «La guía de estudio de cada clase» en docs/decisiones/accesibilidad.md. */
 window.AudiosGuia = (function () {
     let audioActivo = null;
