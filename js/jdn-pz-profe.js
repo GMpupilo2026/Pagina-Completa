@@ -119,7 +119,7 @@
     const listos = ["u12", "u20"].filter(torneoListo).map((k) => "«Resultados " + k.toUpperCase() + "»");
     const filas = calendario();
     const terminado = filas.length && ahoraCR() >= filas[filas.length - 1].fin;
-    if (!listos.length) return "Los pareos y los resultados se publican en Pareo Integral cuando la organización arme los torneos. Mientras tanto, en «Resultados U12» y «Resultados U20» ves los torneos de Costa Rica en Pareo.";
+    if (!listos.length) return "Los pareos y los resultados se publican en Pareo Integral cuando la organización arme los torneos: entonces se encienden las fichas «Resultados U12» y «Resultados U20».";
     return (terminado ? "La clasificación final está en " : "Los inscritos, los pareos de cada ronda, los resultados y la clasificación están en ")
       + listos.join(" y ") + ", en Pareo Integral. Cada jugador revisa que su resultado quede bien anotado antes de la ronda siguiente.";
   }

@@ -429,13 +429,20 @@
   // Ese no se muestra dos veces: su fila de Pareo Integral dice que también
   // está anunciado allá, y su ficha lleva el enlace.
   const repetidos = new Map(); // id del torneo de Pareo Integral → la ficha de allá
+  // Fuentes apagadas por ahora: sus torneos no se muestran (ni la nota de
+  // «también anunciado allá»). Lo pidió el dueño el 12/11/2026: los de
+  // ajedrezcostarica.com no se ven hasta nuevo aviso. Para volver a
+  // mostrarlos, se vacía la lista (y FUENTES_OCULTAS de worker.js).
+  const FUENTES_OCULTAS = ["ajedrezcostarica"];
+  const fuenteDe = (x) => x.fuente || (/^https:\/\/ajedrezcostarica\.com\//.test(x.url || "") ? "ajedrezcostarica" : "");
   async function cargarExternos() {
     if (externos) return;
     try {
       const { data, error } = await window.sb.rpc("torneos_externos_lista");
       if (error) throw error;
-      externos = (data || []).filter((x) => !x.repetido_de);
-      for (const x of data || []) if (x.repetido_de) repetidos.set(x.repetido_de, x.url);
+      const visibles = (data || []).filter((x) => !FUENTES_OCULTAS.includes(fuenteDe(x)));
+      externos = visibles.filter((x) => !x.repetido_de);
+      for (const x of visibles) if (x.repetido_de) repetidos.set(x.repetido_de, x.url);
     } catch (e) { externos = []; }
   }
   // El día en Costa Rica de cada punta, como los de Pareo Integral.

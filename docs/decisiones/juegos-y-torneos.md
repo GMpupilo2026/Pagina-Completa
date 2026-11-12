@@ -4461,6 +4461,19 @@ se anuncian en ajedrezcostarica.com (`/es/tournaments`), no solo los que se
 organizan con Pareo Integral. Salen en «También en Costa Rica», entre
 «Próximos torneos» y «Resultados».
 
+- **Apagados por ahora (12/11/2026).** El dueño pidió que no se vea ninguno
+  de ajedrezcostarica.com hasta nuevo aviso. La función los sigue leyendo y
+  la tabla los guarda; lo que se apaga es mostrarlos, con
+  `FUENTES_OCULTAS = ["ajedrezcostarica"]` en `js/torneos-pareo-pagina.js`
+  (la lista, el calendario de la lista y la nota «También anunciado en
+  ajedrezcostarica.com») y la misma lista en `worker.js` (el calendario para
+  suscribirse). Los de chess-results siguen saliendo. Se decide por la
+  `fuente` de la fila y, si no la trae, por su enlace. Para volver a
+  mostrarlos se vacían las dos listas. Las pruebas de cómo se pinta uno de
+  allá corren con la lista vaciada solo dentro de la prueba
+  (`herramientas/lib/fuentes-ocultas.js`), y
+  `verificar-torneos-externos-pagina.js` y `verificar-worker.js` comprueban
+  con el archivo tal cual que hoy no salen.
 - **Quién los lee.** La Edge Function `torneos-externos`, una vez al día
   (pg_cron `torneos-externos`, 5:13 de Costa Rica). Lee la portada de allá y
   la ficha de cada torneo, con calma: una a la vez, medio segundo entre una
@@ -14579,7 +14592,8 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
   mide también los JPG.
 - **Todo sale de las bases** (`documentos/jdn-pz-2026/`, firmadas por el
   árbitro principal el 11/11/2026): inscripciones (cerrado, sin costo para
-  los afiliados al día, hasta las 10:00 p.m. del 21 de noviembre),
+  los afiliados al día; el cierre lo adelantó la organización al viernes 20 de
+  noviembre a las 10:00 p.m., ver abajo),
   categorías (U12, U16 y U20, Absoluto y Femenino; dos torneos), calendario,
   sistema, desempates, objeciones y derechos de imagen. **Lo que no traen no
   se pone**: no hay teléfono ni correo de la organización (no hay ficha de
@@ -14650,22 +14664,64 @@ apruebe el árbitro.
   (`limpiar` de la función y `datosPublicos` siguen sin el sexo ni la
   fecha). La política de privacidad lo dice. La función se despliega sola al
   entrar a `main`: hasta entonces, la de producción ignora los dos campos.
-- **El cierre**: el de las bases (10:00 p.m. del 21 de noviembre, hora de
-  Costa Rica) en la página, y el «hasta» de Pareo (un día) en la función.
+- **El cierre**: las bases decían el sábado 21 a las 10:00 p.m.; la
+  organización lo adelantó al **viernes 20 de noviembre a las 10:00 p.m.**
+  (hora de Costa Rica), que es lo que dice y cumple la página (`CIERRE`).
+  En la función manda el «hasta» de Pareo, que es un día: en los dos
+  torneos va el 20/11.
 - **Lo que tiene que hacer la organización**: crear en Pareo Integral la
   organización ADAPZ (y que administración le ponga el sello), los dos
   torneos con «U12» y «U20» en el nombre, publicados a su nombre, y en cada
   uno «Recibir inscripciones desde la página pública» hasta el 21 de
   noviembre.
 
+- **«Resultados U12» y «Resultados U20» nunca llevan a torneos de otros**
+  (lo pidió el dueño al ver la lista de Pareo abierta encima): van «Pronto»
+  (sin enlace, alcanzables con Tab) hasta que existe el torneo de la ADAPZ,
+  y entonces el módulo las cambia por el enlace a ESE torneo. El menú y la
+  despedida tampoco llevan a la lista de Pareo.
+- **El club viene «ADAPZ»** (casi todos son sus afiliados; se puede cambiar),
+  y vuelve a «ADAPZ» al inscribir al siguiente.
+- **El ID FIDE y el Elo, solos** (pedido del dueño): al salir de los
+  apellidos o del nombre se busca en la lista de FIDE con
+  `PareoEloNacional.buscarEnLista("fide", "Apellidos, Nombre")`
+  (`js/pareo/elo-nacional.js`: la Edge Function `pareo-listas-elo`, la misma
+  de Pareo, fijada en us-west-1, con su freno de 60 búsquedas por hora por
+  conexión; por eso se busca al salir del campo y no a cada letra, y lo
+  buscado queda en la memoria de la página). Se manda solo el nombre y no se
+  guarda nada. Cuentan los de Costa Rica que traen todos los apellidos y el
+  primer nombre escritos (y si alguno trae todos los nombres, solo esos);
+  sin resultados con el nombre, se prueba solo con los apellidos. Con
+  varios, el año de nacimiento desempata (también si la fecha se pone
+  después) y, si siguen varios, se elige de una lista. El Elo es el
+  **estándar** de FIDE: 30 minutos + 30 segundos es ritmo clásico para FIDE;
+  sin Elo estándar queda vacío, nunca el rápido. Lo que la persona escriba a
+  mano en el ID o el Elo no se pisa. FIDE ya está en la lista de proveedores
+  de la política de privacidad (por Pareo).
+
 `herramientas/verificar-jdn-pz-inscripcion.js` lo revisa con un doble de la
-base (que filtra de verdad) y de la función: sin la organización verificada
-no abre (y una «ADAPZ» sin sello no cuenta), las fichas a cada torneo, las
-categorías por el año, lo que falta no se manda, lo que se manda (al torneo
+base (que filtra de verdad), de la búsqueda de FIDE y de la función: sin la organización verificada
+no abre (y una «ADAPZ» sin sello no cuenta) y las fichas se quedan
+«Pronto»; con ella, cada ficha a su torneo; el club «ADAPZ»; el ID FIDE y el
+Elo (uno, varios, el año que desempata, ninguno, el de otra federación que no
+cuenta, lo escrito a mano que no se pisa); las categorías por el año, lo que falta no se manda, lo que se manda (al torneo
 U20 la U16, con «Apellidos, Nombre», el sexo, la fecha y el
 consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
 el navegador y el celular. Rompiendo a propósito el filtro del sello,
-saltan tres comprobaciones.
+saltan tres comprobaciones; el de la federación de FIDE, dos.
+
+### Una ficha de Torneos que todavía no se abre
+
+Pedido del dueño: el Metropolitano «no dejar ingresar aún, dejarlo como
+bloqueado y los botones que digan próximamente cuando se les toque». Con
+`proximamente: true` en su portada (`PORTADAS` de `js/salas-torneo.js`), la
+ficha se ve entera, con «🔒 Próximamente» escrito arriba, y cada enlace pasa
+a ser un botón sin destino (`aria-disabled`, alcanzable con Tab) que al
+tocarlo dice «Próximamente» en el botón y para el lector de pantalla (un
+`role="status"`). Se quita esa línea para abrirla. **La página del torneo
+sigue abierta** para quien tenga su dirección: lo que se bloquea es la
+entrada desde Torneos. Lo revisa `verificar-metropolitano.js` (Playwright no
+toca un botón con `aria-disabled`: la prueba lo toca directo).
 
 ### La profe Karina ayuda en la página
 

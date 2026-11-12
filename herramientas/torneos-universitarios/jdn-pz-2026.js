@@ -86,8 +86,9 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
   resultados: "pareo",
   // La profe Karina ayuda en la página (js/jdn-pz-profe.js): va después de la
   // inscripción, porque lee lo que esa pinta; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/pareo/publicar.js", "js/jdn-pz-inscripcion.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
-  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["torneos-pareo.html", "Torneos"]],
+  scripts: ["js/pareo/publicar.js", "js/pareo/elo-nacional.js", "js/jdn-pz-inscripcion.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
+  // Nada lleva a los torneos de otros (lo pidió el dueño): ni el menú ni la despedida.
+  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "La eliminatoria",
     principal: "Domingo 22 de noviembre de 2026",
@@ -100,15 +101,18 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
   fichas: [
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "El formulario de inscripción: con el año de nacimiento va solo al torneo de su categoría, y el árbitro lo aprueba.", accion: "Inscribirme" },
     { href: "documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf", id: "ficha-bases", externo: true, ventana: "Bases de la eliminatoria", color: "morado", icono: "📄", titulo: "Bases de la eliminatoria", texto: "Las bases oficiales completas: inscripciones, categorías, sistema, horario, desempates y organización.", accion: "Abrir el PDF" },
-    { href: "torneos-pareo.html", id: "ficha-resultados-u12", ventana: "Resultados U12", color: "morado", icono: "♟️", titulo: "Resultados U12", texto: "El torneo U12 en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.", accion: "Ver el torneo U12" },
-    { href: "torneos-pareo.html", id: "ficha-resultados-u20", ventana: "Resultados U20", color: "azul", icono: "♞", titulo: "Resultados U20", texto: "El torneo U20 (con la U16) en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.", accion: "Ver el torneo U20" },
+    // «Pronto» hasta que la organización publique el torneo: entonces
+    // js/jdn-pz-inscripcion.js la cambia por el enlace a ESE torneo (nunca a la
+    // lista de Pareo, que trae los torneos de otros).
+    { id: "ficha-resultados-u12", pronto: "aparece cuando la organización publique el torneo", color: "morado", icono: "♟️", titulo: "Resultados U12", texto: "El torneo U12 en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación." },
+    { id: "ficha-resultados-u20", pronto: "aparece cuando la organización publique el torneo", color: "azul", icono: "♞", titulo: "Resultados U20", texto: "El torneo U20 (con la U16) en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación." },
     { href: "#inscripciones", color: "rojo", icono: "✅", titulo: "Quién puede jugar", texto: "Quién puede inscribirse, cuánto cuesta y hasta cuándo hay tiempo.", accion: "Ver las condiciones" },
     { href: "#categorias", color: "naranja", icono: "🎂", titulo: "Categorías", texto: "U12, U16 y U20, en Absoluto y Femenino, con los años de nacimiento de cada una.", accion: "Ver las categorías" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas, el almuerzo y la clausura.", accion: "Ver el calendario" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y lo que dicen las bases al final.", accion: "Ver el reglamento" },
     { href: "https://maps.app.goo.gl/VhAZtamiKgvUeNp86", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Hotel del Sur, en Pérez Zeledón: la ubicación que dan las bases.", accion: "Abrir el mapa" },
   ],
-  despedida: { href: "torneos-pareo.html", ventana: "Más torneos", titulo: "¡Nos vemos en el Hotel del Sur!", texto: "¿Quieres ver más? Aquí están los demás torneos de Costa Rica en Pareo Integral.", accion: "Ver los torneos" },
+  despedida: { href: "#inscribirme", titulo: "¡Nos vemos en el Hotel del Sur!", texto: "¿Ya inscribiste a tu jugador? Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre.", accion: "Inscribirme" },
   dialogos: {
     propios: [
       {
@@ -128,6 +132,10 @@ torneo. Los datos personales no se guardan en el navegador.`,
         <label class="block text-sm font-semibold">Nombre
             <input id="insc-nombre" name="nombre" required maxlength="40" autocomplete="off" class="${campo}">
         </label>
+        <div class="sm:col-span-2">
+            <p id="insc-fide-estado" class="text-sm" role="status" aria-live="polite"></p>
+            <ul id="insc-fide-opciones" class="mt-2 grid gap-2"></ul>
+        </div>
         <label class="block text-sm font-semibold">Fecha de nacimiento
             <input id="insc-nacimiento" name="nacimiento" type="date" required min="2007-01-01" max="2020-12-31" class="${campo}">
         </label>
@@ -140,13 +148,13 @@ torneo. Los datos personales no se guardan en el navegador.`,
         </fieldset>
         <p id="insc-categoria" class="sm:col-span-2 text-sm font-bold" role="status" aria-live="polite"></p>
         <label class="block text-sm font-semibold">Club, colegio o escuela
-            <input id="insc-institucion" name="institucion" maxlength="100" autocomplete="off" class="${campo}">
+            <input id="insc-institucion" name="institucion" maxlength="100" autocomplete="off" value="ADAPZ" class="${campo}">
         </label>
         <div class="grid grid-cols-2 gap-3">
-            <label class="block text-sm font-semibold">ID FIDE <span class="font-normal">(si tiene)</span>
+            <label class="block text-sm font-semibold">ID FIDE <span class="font-normal">(se busca solo)</span>
                 <input id="insc-fide" name="fide" inputmode="numeric" maxlength="12" autocomplete="off" class="${campo}">
             </label>
-            <label class="block text-sm font-semibold">Elo <span class="font-normal">(si tiene)</span>
+            <label class="block text-sm font-semibold">Elo FIDE <span class="font-normal">(se busca solo)</span>
                 <input id="insc-elo" name="elo" inputmode="numeric" maxlength="4" autocomplete="off" class="${campo}">
             </label>
         </div>
@@ -169,7 +177,7 @@ torneo. Los datos personales no se guardan en el navegador.`,
         <p id="insc-estado" class="mt-3 text-sm font-semibold" role="status" aria-live="polite"></p>
     </div>
 </form>
-<p class="mt-4 text-sm">La inscripción queda pendiente hasta que el árbitro la revisa; cuando la aprueba, el jugador aparece en «Resultados U12» o «Resultados U20». Las inscripciones cierran a las 10:00 p.m. del sábado 21 de noviembre.</p>
+<p class="mt-4 text-sm">La inscripción queda pendiente hasta que el árbitro la revisa; cuando la aprueba, el jugador aparece en «Resultados U12» o «Resultados U20». Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre.</p>
 `,
       },
       {
@@ -186,7 +194,7 @@ torneo. Los datos personales no se guardan en el navegador.`,
     </div>
     <div class="${tarjeta} sm:col-span-2">
         ${h3}Hasta cuándo</h3>
-        <p class="${texto}">Las inscripciones cierran a las 10:00 p.m. del sábado 21 de noviembre de 2026.</p>
+        <p class="${texto}">Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre de 2026.</p>
     </div>
 </div>
 `,

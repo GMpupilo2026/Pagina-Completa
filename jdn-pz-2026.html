@@ -37,7 +37,7 @@
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="#fichas" class="hover:text-accent-400 transition-colors">Fichas</a></li>
                     <li><a href="#inscribirme" class="hover:text-accent-400 transition-colors">Inscribirme</a></li>
-                    <li><a href="torneos-pareo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li>
+                    <li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
@@ -55,7 +55,7 @@
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="#fichas" class="block py-2 hover:text-accent-400">Fichas</a></li>
                 <li><a href="#inscribirme" class="block py-2 hover:text-accent-400">Inscribirme</a></li>
-                <li><a href="torneos-pareo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="#calendario" class="block py-2 hover:text-accent-400">Calendario</a></li>
             </ul>
         </div>
     </header>
@@ -147,20 +147,20 @@
                     </a>
                 </li>
                 <li>
-                    <a href="torneos-pareo.html" id="ficha-resultados-u12" data-ventana="Resultados U12" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                    <div id="ficha-resultados-u12" tabindex="0" aria-disabled="true" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                         <span class="cac-icono" aria-hidden="true">♟️</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados U12</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El torneo U12 en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el torneo U12 →</span>
-                    </a>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparece cuando la organización publique el torneo</span></span>
+                    </div>
                 </li>
                 <li>
-                    <a href="torneos-pareo.html" id="ficha-resultados-u20" data-ventana="Resultados U20" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+                    <div id="ficha-resultados-u20" tabindex="0" aria-disabled="true" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                         <span class="cac-icono" aria-hidden="true">♞</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados U20</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El torneo U20 (con la U16) en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el torneo U20 →</span>
-                    </a>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparece cuando la organización publique el torneo</span></span>
+                    </div>
                 </li>
                 <li>
                     <a href="#inscripciones" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
@@ -203,12 +203,12 @@
                     </a>
                 </li>
             </ul>
-            <a href="torneos-pareo.html" data-ventana="Más torneos" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
+            <a href="#inscribirme" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#1d64b0]">
                 <span class="u-despedida-logo u-despedida-redondo" aria-hidden="true"><img src="img/adapz/logo.jpg" width="349" height="349" alt=""></span>
                 <span class="cac-globo">
                     <span class="block font-extrabold text-lg sm:text-xl">¡Nos vemos en el Hotel del Sur!</span>
-                    <span class="block mt-1 text-sm sm:text-base">¿Quieres ver más? Aquí están los demás torneos de Costa Rica en Pareo Integral.</span>
-                    <span class="block mt-2 text-sm font-bold cac-accion">Ver los torneos →</span>
+                    <span class="block mt-1 text-sm sm:text-base">¿Ya inscribiste a tu jugador? Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre.</span>
+                    <span class="block mt-2 text-sm font-bold cac-accion">Inscribirme →</span>
                 </span>
             </a>
         </div>
@@ -235,6 +235,10 @@
                     <label class="block text-sm font-semibold">Nombre
                         <input id="insc-nombre" name="nombre" required maxlength="40" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
                     </label>
+                    <div class="sm:col-span-2">
+                        <p id="insc-fide-estado" class="text-sm" role="status" aria-live="polite"></p>
+                        <ul id="insc-fide-opciones" class="mt-2 grid gap-2"></ul>
+                    </div>
                     <label class="block text-sm font-semibold">Fecha de nacimiento
                         <input id="insc-nacimiento" name="nacimiento" type="date" required min="2007-01-01" max="2020-12-31" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
                     </label>
@@ -247,13 +251,13 @@
                     </fieldset>
                     <p id="insc-categoria" class="sm:col-span-2 text-sm font-bold" role="status" aria-live="polite"></p>
                     <label class="block text-sm font-semibold">Club, colegio o escuela
-                        <input id="insc-institucion" name="institucion" maxlength="100" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
+                        <input id="insc-institucion" name="institucion" maxlength="100" autocomplete="off" value="ADAPZ" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
                     </label>
                     <div class="grid grid-cols-2 gap-3">
-                        <label class="block text-sm font-semibold">ID FIDE <span class="font-normal">(si tiene)</span>
+                        <label class="block text-sm font-semibold">ID FIDE <span class="font-normal">(se busca solo)</span>
                             <input id="insc-fide" name="fide" inputmode="numeric" maxlength="12" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
                         </label>
-                        <label class="block text-sm font-semibold">Elo <span class="font-normal">(si tiene)</span>
+                        <label class="block text-sm font-semibold">Elo FIDE <span class="font-normal">(se busca solo)</span>
                             <input id="insc-elo" name="elo" inputmode="numeric" maxlength="4" autocomplete="off" class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-950 px-3 py-2 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d64b0]">
                         </label>
                     </div>
@@ -276,7 +280,7 @@
                     <p id="insc-estado" class="mt-3 text-sm font-semibold" role="status" aria-live="polite"></p>
                 </div>
             </form>
-            <p class="mt-4 text-sm">La inscripción queda pendiente hasta que el árbitro la revisa; cuando la aprueba, el jugador aparece en «Resultados U12» o «Resultados U20». Las inscripciones cierran a las 10:00 p.m. del sábado 21 de noviembre.</p>
+            <p class="mt-4 text-sm">La inscripción queda pendiente hasta que el árbitro la revisa; cuando la aprueba, el jugador aparece en «Resultados U12» o «Resultados U20». Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre.</p>
         </div>
     </dialog>
     <!-- Las inscripciones, como las dicen las bases. -->
@@ -297,7 +301,7 @@
                 </div>
                 <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6 sm:col-span-2">
                     <h3 class="font-bold text-brand-800 dark:text-white">Hasta cuándo</h3>
-                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Las inscripciones cierran a las 10:00 p.m. del sábado 21 de noviembre de 2026.</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre de 2026.</p>
                 </div>
             </div>
         </div>
@@ -416,6 +420,7 @@
     <script src="js/jdn-pz.js"></script>
     <script src="js/torneo-hoy.js"></script>
     <script src="js/pareo/publicar.js"></script>
+    <script src="js/pareo/elo-nacional.js"></script>
     <script src="js/jdn-pz-inscripcion.js"></script>
     <script src="js/avatar-profe-oscar.js"></script>
     <script src="js/jdn-pz-profe.js"></script>

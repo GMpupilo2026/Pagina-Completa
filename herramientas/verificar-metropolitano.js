@@ -1115,10 +1115,18 @@ const FILAS_FIDE = [
       const img = li.querySelector(".metro-sala-imagen");
       return { tema: li.classList.contains("metro-sala"), hojas: getComputedStyle(li, "::before").backgroundImage.includes("hojas-arriba"),
         logo: !!img && img.complete && img.naturalWidth > 0 && img.checkVisibility(), enlaces: [...li.querySelectorAll("a")].map((a) => a.getAttribute("href")),
-        afuera: li.querySelectorAll("a[target]").length };
+        afuera: li.querySelectorAll("a[target]").length,
+        // Todavía no se entra (`proximamente` en js/salas-torneo.js): el candado escrito y botones sin destino.
+        aviso: (li.querySelector(".sala-proximamente") || {}).textContent || "", botones: [...li.querySelectorAll("button[aria-disabled='true']")].map((b) => b.textContent) };
     });
-    igual("la tarjeta de «Torneos» lleva el diseño del Metropolitano y no saca a nadie del sitio", fichaSala,
-      { tema: true, hojas: true, logo: true, enlaces: ["/metropolitano-2026.html", "/inscripcion-metropolitano.html", "/metropolitano-2026.html#bases"], afuera: 0 });
+    igual("la tarjeta de «Torneos» lleva el diseño del Metropolitano, bloqueada: «🔒 Próximamente» y sus botones sin llevar a ningún lado", fichaSala,
+      { tema: true, hojas: true, logo: true, enlaces: [], afuera: 0, aviso: "🔒 Próximamente", botones: ["Toda la información", "Inscripción", "Bases del torneo"] });
+    // Playwright no toca un botón con aria-disabled (lo toma por apagado); una persona sí puede: se toca directo.
+    await tv.$eval('li[data-sala="metropolitano-2026"] button:nth-of-type(2)', (b) => b.click());
+    igual("al tocar un botón dice «Próximamente» (en el botón y para el lector de pantalla)", await tv.evaluate(() => {
+      const li = document.querySelector('li[data-sala="metropolitano-2026"]');
+      return [li.querySelectorAll("button")[1].textContent, li.querySelector('[role="status"]').textContent];
+    }), ["Próximamente", "Inscripción: próximamente."]);
     await tv.close();
     const pb = await ctx.newPage();
     await pb.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
