@@ -992,7 +992,7 @@
             title.textContent = a.titulo;
             const meta = document.createElement("p");
             meta.className = "text-xs text-brand-450 dark:text-brand-350";
-            meta.textContent = a.move_count + " jugadas · " + a.nombre_archivo;
+            meta.textContent = (a.move_count ? a.move_count + " jugadas" : "Posición") + " · " + a.nombre_archivo;
             info.append(title, meta);
             li.appendChild(info);
 

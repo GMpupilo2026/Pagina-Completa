@@ -121,6 +121,50 @@ window.AudiosGuia = (function () {
         return salida;
     }
 
+    /* ---------- Los minutos exactos de Whisper ---------- */
+    /* La transcripción de Whisper con sus minutos (whisper --output_format
+       json): {"segments": [{"start": 12.3, "text": " …"}, …]}. */
+    function deWhisper(obj) {
+        if (!obj || !Array.isArray(obj.segments)) return null;
+        return frases(obj.segments.map((s) => [s && s.start, s && String(s.text || "").trim()]));
+    }
+    function palabras(t) {
+        return normal(t).replace(/[^a-z0-9ñ]+/g, " ").split(" ").filter((w) => w.length >= 3);
+    }
+    /* Vuelve a encontrar el minuto de cada tema en la transcripción nueva:
+       busca la cita del tema (lo que se dijo justo ahí) cerca del minuto
+       aproximado, en ventanas de cuatro frases. Si no la encuentra (menos de
+       6 de cada 10 palabras), el tema se queda con su minuto. Devuelve también
+       cuánto se movió cada tema encontrado, para mover las partidas igual. */
+    function reanclar(indice, nuevos, duracion) {
+        const lista = frases(nuevos);
+        const ventanas = lista.map((f, i) => new Set(palabras(lista.slice(i, i + 4).map((x) => x[1]).join(" "))));
+        const margen = Math.max(600, (+duracion || 0) * 0.2);
+        const movidas = [];
+        const salida = (Array.isArray(indice) ? indice : []).map((t) => {
+            const x = Object.assign({}, t);
+            const ps = Array.from(new Set(palabras(t.cita)));
+            if (ps.length < 3) return x;
+            let mejor = null, mejorP = 0, mejorD = Infinity;
+            lista.forEach((f, i) => {
+                const d = Math.abs(f[0] - t.seg);
+                if (d > margen) return;
+                const p = ps.filter((w) => ventanas[i].has(w)).length / ps.length;
+                if (p > mejorP + 1e-9 || (Math.abs(p - mejorP) < 1e-9 && d < mejorD)) { mejor = f[0]; mejorP = p; mejorD = d; }
+            });
+            if (mejor != null && mejorP >= 0.6) { movidas.push([t.seg, mejor - t.seg]); x.seg = mejor; }
+            return x;
+        }).sort((a, b) => a.seg - b.seg);
+        return { indice: salida, movidas, encontrados: movidas.length };
+    }
+    /* Una partida se mueve lo mismo que el tema encontrado más cercano. */
+    function moverSeg(seg, movidas) {
+        if (seg == null || !movidas || !movidas.length) return seg;
+        let cerca = movidas[0];
+        movidas.forEach((m) => { if (Math.abs(m[0] - seg) < Math.abs(cerca[0] - seg)) cerca = m; });
+        return Math.max(0, seg + cerca[1]);
+    }
+
     /* ---------- Moverse en el audio ---------- */
     function ir(audio, seg, reproducir) {
         if (!audio) return;
@@ -201,8 +245,10 @@ window.AudiosGuia = (function () {
         return s;
     }
 
+    const AVISO_APROX = "Los minutos son aproximados: pueden caer uno o dos minutos antes o después. Si no oyes el tema, avanza o retrocede un minuto.";
     function temas(a, audio) {
         const s = seccion("Temas de la clase", "temas");
+        if (a.minutos_aproximados) s.append(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-2", AVISO_APROX));
         const ol = el("ol", "space-y-2");
         a.indice.forEach((t) => {
             const li = el("li");
@@ -215,8 +261,9 @@ window.AudiosGuia = (function () {
         return s;
     }
 
-    function buscador(lista, audio) {
+    function buscador(lista, audio, aproximados) {
         const s = seccion("Buscar en lo que se dijo", "buscar");
+        if (aproximados) s.append(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-2", AVISO_APROX));
         const form = el("form", "flex flex-wrap gap-2 items-end");
         form.setAttribute("role", "search");
         const caja = el("div", "flex-1 min-w-[12rem]");
@@ -376,11 +423,15 @@ window.AudiosGuia = (function () {
         return s;
     }
 
-    function pregunta(a, q, total, hecha) {
+    /* Una pregunta con sus radios. Con «extra.vuelta» es una vuelta del repaso
+       de hoy (responder_vuelta, que dice cuándo vuelve); si no, la primera
+       respuesta (responder_repaso, que paga la primera vez). */
+    function pregunta(a, q, total, hecha, extra) {
+        extra = extra || {};
         const fs = el("fieldset", "border-t border-brand-100 dark:border-brand-800 pt-4 mt-4");
-        const lg = el("legend", "font-semibold text-brand-800 dark:text-white", "Pregunta " + q.n + " de " + total + ": " + q.pregunta);
+        const lg = el("legend", "font-semibold text-brand-800 dark:text-white", (extra.leyenda || "Pregunta " + q.n + " de " + total) + ": " + q.pregunta);
         fs.append(lg);
-        const nombre = "preg-" + q.n;
+        const nombre = extra.nombre || "preg-" + q.n;
         const radios = q.opciones.map((op, k) => {
             const lab = el("label", "flex items-start gap-2 mt-2 text-brand-800 dark:text-brand-100 cursor-pointer");
             const r = el("input", "mt-1 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
@@ -396,15 +447,17 @@ window.AudiosGuia = (function () {
 
         async function contestar(opcion, primeraVez) {
             b.disabled = true;
-            const { data, error } = await sb.rpc("responder_repaso", { p_audio: a.id, p_n: q.n, p_opcion: opcion });
+            const { data, error } = await sb.rpc(extra.vuelta ? "responder_vuelta" : "responder_repaso", { p_audio: a.id, p_n: q.n, p_opcion: opcion });
             const r = Array.isArray(data) ? data[0] : data;
             if (error || !r) { b.disabled = false; res.textContent = "No se pudo revisar la respuesta. Vuelve a intentarlo."; return; }
             radios.forEach((x) => { x.disabled = true; });
             const buena = q.opciones[r.correcta - 1];
             let t = r.acerto ? "¡Correcto!" : "No era esa. La buena es: «" + buena + "».";
-            if (r.puntos > 0) t += " Ganaste " + r.puntos + " Puntos Ajedrez.";
+            if (r.puntos > 0) t += " Ganaste " + r.puntos + (r.puntos === 1 ? " Punto Ajedrez." : " Puntos Ajedrez.");
             else if (r.acerto && !r.primera && primeraVez) t += " Ya la habías contestado antes: los puntos se dan solo la primera vez.";
             if (r.explicacion) t += " " + r.explicacion;
+            if (extra.vuelta) t += r.proxima ? " Vuelve el " + diaDicho(r.proxima) + "." : " Ya la aprendiste: no vuelve más.";
+            else if (r.primera) t += " Vuelve dentro de " + (r.acerto ? "dos días" : "un día") + ", para que no se te olvide.";
             res.className = "mt-3 text-sm " + (r.acerto ? "text-green-800 dark:text-green-300" : "text-brand-800 dark:text-brand-100");
             res.textContent = t;
             b.hidden = true;
@@ -423,6 +476,121 @@ window.AudiosGuia = (function () {
             });
         }
         return fs;
+    }
+
+    /* ---------- Los ejercicios de las posiciones de la clase ---------- */
+    /* Las posiciones que el profe dictó, para contestarlas escribiendo la
+       jugada («Cf3», «Txe6», «e4»). La jugada se entiende con
+       ComandosTablero.jugadaEscrita (la misma de todo Entrenamiento) entre las
+       legales de la posición, y la revisa la base (responder_ejercicio): la
+       buena no se puede leer desde afuera. El profe ve además la respuesta
+       para revisarla antes de publicar. */
+    function jugadaDe(fen, texto) {
+        const g = new Chess(fen);
+        let mv = null;
+        if (window.ComandosTablero && ComandosTablero.jugadaEscrita) {
+            const x = ComandosTablero.jugadaEscrita(g, texto);
+            if (x) mv = g.move({ from: x.from, to: x.to, promotion: x.promotion || undefined });
+        } else {
+            mv = g.move(String(texto || "").trim(), { sloppy: true });
+        }
+        return mv ? mv.san : null;
+    }
+
+    function ejercicios(a, lista, hechos, audio, opciones, respuestas) {
+        const s = seccion("Ejercicios de la clase", "ejercicios");
+        s.append(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-2",
+            "Las posiciones que dictó el profe. Escribe tu jugada como se anota (por ejemplo «Cf3», «Txe6» o «e4»). Si aciertas al primer intento, ganas 2 Puntos Ajedrez."));
+        if (opciones.puedeSubir && lista.some((e) => !e.revisado)) {
+            s.append(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-2",
+                "Las posiciones salen de lo que se dictó y Stockfish confirmó que la jugada es la única buena, pero revísalas contra el audio antes de publicarlas. Los alumnos solo ven las publicadas."));
+        }
+        lista.forEach((e) => s.append(ejercicio(a, e, hechos.get(e.id), audio, opciones, respuestas.get(e.id))));
+        return s;
+    }
+
+    function ejercicio(a, e, hecho, audio, opciones, respuesta) {
+        const caja = el("div", "border-t border-brand-100 dark:border-brand-800 pt-4 mt-4");
+        const idT = "ejercicio-" + e.id;
+        const h = el("h4", "font-semibold text-lg text-brand-800 dark:text-white", "Ejercicio " + e.n);
+        h.id = idT;
+        caja.setAttribute("role", "group");
+        caja.setAttribute("aria-labelledby", idT);
+        caja.append(h, el("p", "mt-1 text-brand-800 dark:text-brand-100", e.enunciado));
+        if (!e.revisado) caja.append(el("p", "text-sm font-semibold text-amber-800 dark:text-amber-300", "Sin revisar: los alumnos todavía no lo ven."));
+        const g = new Chess(e.fen);
+        caja.append(el("p", "mt-2 text-sm text-brand-700 dark:text-brand-200", window.BlindNotation ? BlindNotation.positionSentence(g) : e.fen));
+        const fila = el("div", "flex flex-wrap gap-2 mt-3");
+        if (e.seg != null) {
+            const oir = boton("Escucharlo en la clase", null, "Escuchar el ejercicio " + e.n + " en la clase, desde el " + relojDicho(e.seg));
+            oir.addEventListener("click", () => ir(audio, e.seg, true));
+            fila.append(oir);
+        }
+        caja.append(fila);
+
+        const form = el("form", "flex flex-wrap gap-2 items-end mt-3");
+        const cajaInp = el("div", "flex-1 min-w-[10rem]");
+        const idI = "jugada-" + e.id;
+        const lab = el("label", "block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1", "Tu jugada en el ejercicio " + e.n);
+        lab.htmlFor = idI;
+        const inp = el("input", "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        inp.id = idI; inp.autocomplete = "off"; inp.maxLength = 30; inp.setAttribute("autocapitalize", "off");
+        cajaInp.append(lab, inp);
+        const b = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60", "Contestar");
+        b.type = "submit";
+        b.setAttribute("aria-label", "Contestar el ejercicio " + e.n);
+        form.append(cajaInp, b);
+        const res = el("p", "mt-3 text-sm");
+        res.setAttribute("role", "status");
+        caja.append(form, res);
+
+        async function contestar(san, primeraVez) {
+            b.disabled = true;
+            const { data, error } = await sb.rpc("responder_ejercicio", { p_id: e.id, p_jugada: san });
+            const r = Array.isArray(data) ? data[0] : data;
+            if (error || !r) { b.disabled = false; res.textContent = "No se pudo revisar la jugada. Vuelve a intentarlo."; return; }
+            inp.disabled = true;
+            let t = r.acerto ? "¡Correcto! " + sanEspanol(r.buena) + "." : "No era esa. La buena es " + sanEspanol(r.buena) + " (" + sanDicha(r.buena) + ").";
+            if (r.puntos > 0) t += " Ganaste " + r.puntos + (r.puntos === 1 ? " Punto Ajedrez." : " Puntos Ajedrez.");
+            else if (r.acerto && !r.primera && primeraVez) t += " Ya lo habías contestado: los puntos se dan solo la primera vez.";
+            if (r.explicacion) t += " " + r.explicacion;
+            res.className = "mt-3 text-sm " + (r.acerto ? "text-green-800 dark:text-green-300" : "text-brand-800 dark:text-brand-100");
+            res.textContent = t;
+            b.hidden = true;
+        }
+        if (hecho) {
+            inp.value = sanEspanol(hecho.jugada);
+            inp.disabled = true;
+            res.textContent = "Ya lo contestaste con " + sanEspanol(hecho.jugada) + (hecho.acerto ? " y acertaste." : " y no acertaste.");
+            b.textContent = "Ver la solución";
+            b.setAttribute("aria-label", "Ver la solución del ejercicio " + e.n);
+            b.type = "button";
+            b.addEventListener("click", () => contestar(hecho.jugada, false));
+        } else {
+            form.addEventListener("submit", (ev) => {
+                ev.preventDefault();
+                if (!inp.value.trim()) { res.textContent = "Escribe una jugada."; return; }
+                const san = jugadaDe(e.fen, inp.value);
+                if (!san) { res.textContent = "No entendí «" + inp.value.trim() + "» o no es legal en esta posición. Escríbela como se anota, por ejemplo «Cf3»."; return; }
+                contestar(san, true);
+            });
+        }
+        if (opciones.puedeSubir) {
+            if (respuesta) caja.append(el("p", "mt-3 text-sm text-brand-700 dark:text-brand-200",
+                "Para revisar: la buena es " + sanEspanol(respuesta.buena) + "." + (respuesta.explicacion ? " " + respuesta.explicacion : "")));
+            const pub = boton(e.revisado ? "Ocultarlo a los alumnos" : "Publicarlo para los alumnos", null,
+                (e.revisado ? "Ocultar a los alumnos el ejercicio " : "Publicar para los alumnos el ejercicio ") + e.n);
+            pub.classList.add("mt-3");
+            pub.addEventListener("click", async () => {
+                pub.disabled = true;
+                const { error } = await sb.from("audios_clase_ejercicios").update({ revisado: !e.revisado }).eq("id", e.id);
+                if (error) { pub.disabled = false; Avisos.avisar("No se pudo guardar.", { tipo: "error" }); return; }
+                Avisos.avisar(e.revisado ? "El ejercicio ya no se ve." : "Publicado: los alumnos ya lo ven.");
+                opciones.recargar();
+            });
+            caja.append(pub);
+        }
+        return caja;
     }
 
     /* ---------- Mis marcas ---------- */
@@ -496,25 +664,87 @@ window.AudiosGuia = (function () {
         anunciar = opciones.anunciar || anunciar;
         audioActivo = audio;
         const lista = frases(a.segmentos);
-        const [part, preg, hechas] = await Promise.all([
+        const [part, preg, hechas, ejs] = await Promise.all([
             sb.from("audios_clase_partidas").select("id, orden, seg, titulo, jugadas, revisada").eq("audio_id", a.id).order("orden").range(0, 49),
             sb.from("audios_clase_preguntas").select("audio_id, n, pregunta, opciones").eq("audio_id", a.id).order("n").range(0, 19),
             sb.from("audios_clase_repasos").select("n, opcion, acerto").eq("audio_id", a.id).range(0, 19),
+            sb.from("audios_clase_ejercicios").select("id, n, seg, enunciado, fen, revisado").eq("audio_id", a.id).order("n").range(0, 29),
         ]);
+        /* Solo los de FEN válido: una posición rota no se muestra. */
+        const listaEj = (ejs.data || []).filter((e) => { try { return new Chess().validate_fen(e.fen).valid; } catch (x) { return false; } });
+        let hechosEj = new Map(), respuestas = new Map();
+        if (listaEj.length) {
+            const [int, rev] = await Promise.all([
+                sb.from("audios_clase_ejercicio_intentos").select("ejercicio_id, jugada, acerto").in("ejercicio_id", listaEj.map((e) => e.id)).range(0, 29),
+                opciones.puedeSubir ? sb.rpc("ejercicios_para_revisar", { p_audio: a.id }) : { data: [] },
+            ]);
+            hechosEj = new Map((int.data || []).map((x) => [x.ejercicio_id, x]));
+            respuestas = new Map((rev.data || []).map((x) => [x.id, x]));
+        }
         if (a.resumen) {
             const s = seccion("De qué se trató", "resumen");
             String(a.resumen).split(/\n+/).filter(Boolean).forEach((t) => s.append(el("p", "text-brand-800 dark:text-brand-100 leading-relaxed mt-2", t)));
             destino.append(s);
         }
         if (Array.isArray(a.indice) && a.indice.length) destino.append(temas(a, audio));
-        if (lista.length) destino.append(buscador(lista, audio));
+        if (lista.length) destino.append(buscador(lista, audio, a.minutos_aproximados));
         const ps = (part.data || []).filter((p) => jugadasLegales(p.jugadas).length);
         if (ps.length) destino.append(partidas(a, ps, audio, opciones));
+        if (listaEj.length) destino.append(ejercicios(a, listaEj, hechosEj, audio, opciones, respuestas));
         if (preg.data && preg.data.length) destino.append(preguntas(a, preg.data, new Map((hechas.data || []).map((h) => [h.n, h]))));
         const m = marcas(a, audio);
         destino.append(m.seccion);
         if (lista.length) destino.append(todoLoDicho(lista, audio));
         atajos({ indice: a.indice, marcar: m.abrir });
+    }
+
+    /* ---------- El repaso de hoy ---------- */
+    /* «Martes 10 de noviembre», en hora de Costa Rica. */
+    function diaDicho(fecha) {
+        const t = HoraCR.fecha(fecha, { weekday: "long", day: "numeric", month: "long" }).replace(/^([^\s,]+),/, "$1");
+        return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+    /* Las preguntas que tocan hoy (repaso_de_hoy): las vueltas de las que ya
+       se contestaron (a los 2, 7 y 21 días) y las nuevas de las clases de las
+       últimas dos semanas. Si no toca ninguna, la sección no sale. */
+    async function repasoDeHoy(destino) {
+        const { data, error } = await sb.rpc("repaso_de_hoy");
+        if (error || !Array.isArray(data) || !data.length) return 0;
+        const s = el("section", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8");
+        const h = el("h2", "font-serif text-xl font-bold text-brand-800 dark:text-white", "Repaso de hoy");
+        h.id = "repaso-hoy";
+        s.setAttribute("aria-labelledby", "repaso-hoy");
+        s.append(h);
+        const vueltas = data.filter((q) => q.vuelta > 0).length;
+        s.append(el("p", "text-sm text-brand-600 dark:text-brand-300 mt-1",
+            (data.length === 1 ? "Te toca una pregunta" : "Te tocan " + data.length + " preguntas") + " de tus clases. "
+            + (vueltas ? "Las que ya contestaste vuelven a los 2, 7 y 21 días, para que no se te olviden; cada acierto da 1 Punto Ajedrez. " : "")
+            + (data.length > vueltas ? "Las nuevas dan 2 Puntos Ajedrez si aciertas a la primera." : "")));
+        data.forEach((q) => {
+            const leyenda = "Clase del " + diaDicho(q.fecha) + (q.vuelta > 0 ? " (repaso " + q.vuelta + " de 3)" : " (nueva)");
+            s.append(pregunta({ id: q.audio_id }, q, data.length, null, { leyenda, vuelta: q.vuelta > 0, nombre: "rep-" + q.audio_id + "-" + q.n }));
+        });
+        destino.append(s);
+        return data.length;
+    }
+
+    /* ---------- Los conceptos de todas las clases ---------- */
+    /* Cada tema de cada guía trae su concepto («Contrajuego», «Final de
+       torres»…): juntos arman un índice para estudiar un concepto a lo largo
+       del curso. Devuelve [{concepto, temas: [{audio, fecha, seg, titulo}]}],
+       por orden alfabético y cada concepto de la clase más vieja a la nueva. */
+    function conceptos(clases) {
+        const m = new Map();
+        (clases || []).forEach((c) => (Array.isArray(c.indice) ? c.indice : []).forEach((t) => {
+            const nombre = String((t && t.concepto) || "").trim();
+            if (!nombre) return;
+            const k = normal(nombre);
+            if (!m.has(k)) m.set(k, { concepto: nombre, temas: [] });
+            m.get(k).temas.push({ audio: c.id, fecha: c.fecha, seg: Math.max(0, Math.floor(+t.seg || 0)), titulo: String(t.titulo || "") });
+        }));
+        const lista = Array.from(m.values());
+        lista.forEach((x) => x.temas.sort((p, q) => (p.fecha < q.fecha ? -1 : p.fecha > q.fecha ? 1 : p.seg - q.seg)));
+        return lista.sort((x, y) => x.concepto.localeCompare(y.concepto, "es"));
     }
 
     /* Lo que trae un archivo de guía (.json), revisado antes de guardarlo. */
@@ -523,7 +753,15 @@ window.AudiosGuia = (function () {
         const segmentos = frases(o.segmentos).map(([s, t]) => [s, t.slice(0, 2000)]);
         const indice = (Array.isArray(o.indice) ? o.indice : [])
             .filter((t) => t && isFinite(+t.seg) && String(t.titulo || "").trim())
-            .map((t) => ({ seg: Math.max(0, Math.floor(+t.seg)), titulo: String(t.titulo).trim().slice(0, 160) }))
+            .map((t) => {
+                /* El concepto arma el índice de todas las clases; la cita (lo
+                   que se dijo justo ahí) deja volver a encontrar el minuto
+                   cuando llega la transcripción de Whisper con sus minutos. */
+                const x = { seg: Math.max(0, Math.floor(+t.seg)), titulo: String(t.titulo).trim().slice(0, 160) };
+                if (String(t.concepto || "").trim()) x.concepto = String(t.concepto).trim().slice(0, 60);
+                if (String(t.cita || "").trim()) x.cita = String(t.cita).trim().slice(0, 240);
+                return x;
+            })
             .sort((x, y) => x.seg - y.seg).slice(0, 40);
         const preguntas = (Array.isArray(o.preguntas) ? o.preguntas : [])
             .filter((q) => q && String(q.pregunta || "").trim() && Array.isArray(q.opciones) && q.opciones.length >= 2 && q.opciones.length <= 5
@@ -540,7 +778,8 @@ window.AudiosGuia = (function () {
         return { segmentos, resumen: o.resumen ? String(o.resumen).trim().slice(0, 3000) : null, indice, preguntas, partidas };
     }
 
-    return { anunciarCon: (f) => { anunciar = f; }, montar, controles, atajos, leerGuia, reloj, relojDicho, frases, buscar, porMinuto, temaEn, sanEspanol, sanDicha, jugadasLegales };
+    return { anunciarCon: (f) => { anunciar = f; }, montar, controles, atajos, leerGuia, reloj, relojDicho, frases, buscar, porMinuto, temaEn, sanEspanol, sanDicha, jugadasLegales,
+        ir, deWhisper, reanclar, moverSeg, repasoDeHoy, conceptos, normal };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
