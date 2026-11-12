@@ -52,11 +52,16 @@
       .formatToParts(new Date()).forEach((x) => { p[x.type] = x.value; });
     return p.year + "-" + p.month + "-" + p.day + "T" + p.hour + ":" + p.minute;
   }
-  // Suma minutos a «AAAA-MM-DDTHH:MM» sin pasar por la zona del aparato.
+  // Suma minutos a «AAAA-MM-DDTHH:MM» (hora de Costa Rica, escrita): se hace
+  // con la cuenta en un Date de UTC solo para que el reloj pase de día bien, y
+  // se vuelve a escribir igual. Ninguna zona horaria entra en juego.
+  const dos = (n) => String(n).padStart(2, "0");
   function mas(inicio, minutos) {
-    const d = new Date(inicio + ":00Z");
-    d.setUTCMinutes(d.getUTCMinutes() + minutos);
-    return d.toISOString().slice(0, 16);
+    const [f, h] = inicio.split("T");
+    const [a, m, d] = f.split("-").map(Number);
+    const [hh, mm] = h.split(":").map(Number);
+    const x = new Date(Date.UTC(a, m - 1, d, hh, mm + minutos));
+    return x.getUTCFullYear() + "-" + dos(x.getUTCMonth() + 1) + "-" + dos(x.getUTCDate()) + "T" + dos(x.getUTCHours()) + ":" + dos(x.getUTCMinutes());
   }
   // Las filas del calendario: [actividad, día, hora escrita, inicio, fin].
   function calendario() {
