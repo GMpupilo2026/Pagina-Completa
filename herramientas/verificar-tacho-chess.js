@@ -231,7 +231,7 @@ async function fichaResultados(nav, publicados) {
       ok("el ritmo, la tolerancia y el árbitro, de la página", /7 rondas a 10 minutos \+ 2 segundos/.test(r.t.ritmo || "") && /Tolerancia de 10 minutos/.test(r.t.ritmo) && /FA Jean Carlo Quesada Arauz/.test(r.t.ritmo), r.t.ritmo);
       ok("los torneos: los cuatro, y el 1.º, 2.º y 3.º lugar de cada nivel por separado", /Juegan en 4 torneos: primero a tercer grado, cuarto a sexto grado, sétimo y octavo año y noveno a undécimo año\. Aunque jueguen mezclados, se premia por separado el 1\.er, 2\.º y 3\.er lugar de cada nivel/.test(r.t.niveles || ""), r.t.niveles);
       ok("lo que hay además, sin los emojis de adorno", /^Además del torneo: feria de comerciantes de la comunidad, open house y venta de comida\.$/.test(r.t.ademas || ""), r.t.ademas);
-      ok("sin torneo en Pareo, los resultados «se encienden cuando esté publicado»", /cuando el torneo esté publicado/.test(r.t.resultados || ""), r.t.resultados);
+      ok("«¿Contra quién juega?» lleva al buscador de la página, con los datos de Pareo Integral", /^Escribe su nombre en «Busca a tu jugador», aquí mismo/.test(r.t.resultados || "") && /Pareo Integral/.test(r.t.resultados), r.t.resultados);
       await r.p.click('[data-pregunta="contacto"]');
       await r.p.click('#profe-panel [data-accion="contacto"]');
       const abierto = await r.p.evaluate(() => [document.getElementById("contacto").open, document.getElementById("profe-panel").hidden]);
@@ -253,8 +253,49 @@ async function fichaResultados(nav, publicados) {
       await r.ctx.close();
     }
     {
-      const r = await textos("2026-11-14T09:40:00-06:00", [T1]);
-      ok("con el torneo en Pareo, los resultados dicen que ya están y su botón abre el torneo", /^Están en Pareo Integral/.test(r.t.resultados || ""), r.t.resultados);
+      const r = await textos("2026-11-14T09:40:00-06:00");
+      await r.p.click("#profe-boton");
+      await r.p.click('[data-pregunta="resultados"]');
+      await r.p.click('#profe-panel [data-accion="resultados"]');
+      const foco = await r.p.evaluate(() => document.activeElement && document.activeElement.id);
+      ok("«Buscar a mi jugador» cierra el panel y pone el foco en el buscador", foco === "buscador-nombre", String(foco));
+      await r.ctx.close();
+    }
+
+    console.log("\nLos resultados de Pareo, como en el Centroamericano (js/torneo-pareo-datos.js)");
+    {
+      // Un torneo de Pareo que va por la ronda 2: la 1 completa (con el
+      // resumen que calcula Pareo al publicar) y la 2 a medias, con un bye.
+      const J = (id, nombre, cat) => ({ id, nombre, institucion: "", elo: 0, titulo: "", fed: "", categoria: cat, retiradoDespuesDe: null });
+      const datos = { nombre: "Tacho Chess 2 · Primer ciclo", rondasTotales: 7, puntos: { victoria: 1, tablas: 0.5, derrota: 0, bye: 1 }, mesaInicial: 3,
+        jugadores: [J("a", "Ana Uno", "Primer grado"), J("b", "Beto Dos", "Primer grado"), J("c", "Caro Tres", "Primer grado"),
+          J("d", "Dani Cuatro", "Segundo grado"), J("e", "Eva Cinco", "Segundo grado"), J("f", "Fer Seis", "Segundo grado"), J("g", "Gabo Siete", "Segundo grado")],
+        numeracion: ["a", "b", "c", "d", "e", "f", "g"],
+        rondas: [{ mesas: [{ b: "a", n: "d", r: "1-0" }, { b: "e", n: "b", r: "=" }, { b: "c", n: "f", r: "0-1" }, { b: "g", n: null, r: null }], ausencias: {} },
+          { mesas: [{ b: "f", n: "a", r: null }, { b: "b", n: "g", r: "1-0" }, { b: "d", n: "c", r: null }, { b: "e", n: null, r: null }], ausencias: {} }],
+        resumen: [["a", 1, 1], ["f", 2, 1], ["g", 3, 1], ["b", 4, 0.5], ["e", 5, 0.5], ["c", 6, 0], ["d", 7, 0]].map(([id, puesto, puntos]) => ({ id, puesto, puntos, rondas: 1 })) };
+      const r = await fichaResultados(nav, [Object.assign({}, T1, { datos }), Object.assign({}, FALSO, { datos })]);
+      const buscar = async (n) => { await r.p.fill("#buscador-nombre", n); await r.p.waitForTimeout(500);
+        return r.p.evaluate(() => ({ estado: document.getElementById("buscador-estado").textContent, tarjetas: [...document.querySelectorAll("#buscador-resultados > li")].map((l) => l.innerText.replace(/\s+/g, " ")) })); };
+      const ana = await buscar("Ana");
+      ok("«Busca a tu jugador» lee Pareo Integral (no chess-results) y solo el torneo de la organización con el sello", /Leído en Pareo Integral/.test(ana.estado) && !/chess-results/.test(ana.estado) && ana.tarjetas.length === 1, JSON.stringify(ana));
+      ok("su tarjeta: el nivel, el puesto EN SU NIVEL, los puntos y la mesa de la sala (la primera del torneo + su lugar), el color y el rival",
+        /Primer grado · Puesto 1 de 3 en Primer grado · 1 punto/.test(ana.tarjetas[0] || "") && /Ronda 2 · Mesa 3 · Juega con negras contra Fer Seis/.test(ana.tarjetas[0]), ana.tarjetas[0]);
+      const eva = await buscar("Eva");
+      ok("los puntos son los de las rondas completas (la ronda en juego no suma todavía) y el bye se dice", /Puesto 3 de 4 en Segundo grado · ½ puntos/.test(eva.tarjetas[0] || "") && /Ronda 2: tiene bye/.test(eva.tarjetas[0]), eva.tarjetas[0]);
+      await r.p.click('a.cac-ficha[href="#medallero"]');
+      await r.p.waitForTimeout(400);
+      const podio = await r.p.evaluate(() => document.getElementById("medallero-contenido").innerText.replace(/\s+/g, " "));
+      ok("el podio va por nivel, en el orden de los niveles, con el 1.º, 2.º y 3.º de cada uno",
+        /Primer grado .*1\. Ana Uno · 1 punto .*2\. Beto Dos · ½ puntos .*3\. Caro Tres · 0 puntos .*Segundo grado .*1\. Fer Seis · 1 punto .*2\. Gabo Siete · 1 punto .*3\. Eva Cinco · ½ puntos/.test(podio), podio);
+      await r.p.keyboard.press("Escape");
+      await r.p.click('a.cac-ficha[href="#clasificacion"]');
+      await r.p.waitForTimeout(400);
+      const cl = await r.p.evaluate(() => ({ niveles: [...document.querySelectorAll("#clasificacion-categoria option")].map((o) => o.textContent),
+        cabeza: [...document.querySelectorAll("#clasificacion-contenido th[scope=col]")].map((t) => t.textContent) }));
+      ok("la clasificación se elige por nivel, de primer grado en adelante, y sin la columna «FED» (vacía en un torneo de Costa Rica)",
+        JSON.stringify(cl.niveles) === JSON.stringify(["Primer grado", "Segundo grado"]) && !cl.cabeza.includes("FED"), JSON.stringify(cl));
+      ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }
 

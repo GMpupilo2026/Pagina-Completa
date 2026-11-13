@@ -321,7 +321,7 @@ function pagina(c) {
     ? ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config].concat(c.hoy ? ["js/torneo-hoy.js"] : [], c.scripts || [])
     : ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
       "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
-      "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js"];
+      ...(c.scriptsAntes || []), "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js", ...(c.scripts || [])];
   if (c.ediciones && c.ediciones.length) scripts.push("js/torneo-ediciones.js");
   // El logo con fondo blanco (el de una asociación, en JPG) va en un círculo blanco.
   const claseLogo = c.logo.redondo ? "u-logo u-logo-redondo" : "u-logo";
@@ -442,6 +442,14 @@ function configJs(c) {
   lineas.push("    guardado: " + JSON.stringify(t.guardado) + ",");
   lineas.push("    soloPodio: true,");
   if (t.grupos) lineas.push("    grupos: { " + Object.entries(t.grupos).map(([k, v]) => k + ": " + JSON.stringify(v)).join(", ") + " },");
+  // Un torneo dirigido en Pareo Integral: los datos salen de ahí
+  // (js/torneo-pareo-datos.js), no de chess-results.
+  if (t.fuente) {
+    lineas.push("    // Los datos, de Pareo Integral (js/torneo-pareo-datos.js), no de chess-results.");
+    lineas.push("    fuente: " + JSON.stringify(t.fuente) + ", fuenteNombre: " + JSON.stringify(t.fuenteNombre) + ",");
+    lineas.push("    pareo: { nombre: " + JSON.stringify(t.pareo.nombre) + ", desde: " + JSON.stringify(t.pareo.desde) + " },");
+  }
+  if (t.ordenGrupos) lineas.push("    ordenGrupos: " + lista1(t.ordenGrupos) + ",");
   if (c.hoy) {
     lineas.push("    // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.");
     lineas.push("    hoy: { termino: " + JSON.stringify(c.hoy.termino) + ", gracias: " + JSON.stringify(c.hoy.gracias) + ", final: " + JSON.stringify(c.hoy.final) + " },");

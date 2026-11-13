@@ -19,6 +19,10 @@
     sala: "tacho-chess-2",
     guardado: "tacho",
     soloPodio: true,
+    // Los datos, de Pareo Integral (js/torneo-pareo-datos.js), no de chess-results.
+    fuente: "pareo", fuenteNombre: "Pareo Integral",
+    pareo: { nombre: "tacho", desde: "2026-10-01" },
+    ordenGrupos: ["Primer grado", "Segundo grado", "Tercer grado", "Cuarto grado", "Quinto grado", "Sexto grado", "Sétimo año", "Octavo año", "Noveno año", "Décimo año", "Undécimo año"],
     // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.
     hoy: { termino: "Tacho Chess 2 terminó", gracias: "¡Gracias por jugar!", final: "Los mejores de cada nivel, de primer grado a undécimo año, reciben su premio." },
     url: "ajedrez-integral.com/tacho-chess-2.html",
