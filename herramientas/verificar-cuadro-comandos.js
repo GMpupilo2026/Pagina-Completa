@@ -625,6 +625,58 @@ async function pruebaFueraDelModo(browser) {
   await ctx.close();
 }
 
+/* Con lector de pantalla pero SIN el cuadro (VoiceOver en el celular, donde no
+   hay Tab que encienda el Modo Adaptado): se contesta con los botones, y nada
+   anunciaba la pregunta nueva. El foco se quedaba en «Empezar», ya escondido,
+   o en «Siguiente», ya deshabilitado. Ver «El diagnóstico con lector y sin el
+   cuadro» en docs/decisiones/accesibilidad.md. */
+async function pruebaLectorSinCuadro(browser) {
+  console.log("\n=== El diagnóstico con lector, sin el cuadro ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/diagnostico.html", false);
+  await saltarPortada(page);
+  const foco = () => page.evaluate(() => (document.activeElement && document.activeElement.id) || document.activeElement.tagName);
+  igual("al empezar, el foco va al título de la pregunta", await foco(), "q-text");
+  igual("la pista es una región viva",
+    await page.evaluate(() => document.getElementById("q-hint").getAttribute("aria-live")), "polite");
+  const noSe = () => page.evaluate(() => document.getElementById("no-se-btn").getAttribute("aria-pressed"));
+  igual("«No lo sé» dice que no está marcado", await noSe(), "false");
+  await page.click("#no-se-btn");
+  igual("y al marcarlo dice que sí", await noSe(), "true");
+  igual("su emoji no se lee",
+    await page.evaluate(() => !!document.querySelector("#no-se-btn span[aria-hidden=true]")), "true");
+  igual("el emoji del área tampoco",
+    await page.evaluate(() => !!document.querySelector("#q-area span[aria-hidden=true]")), "true");
+  await page.click("#next-btn");
+  await page.waitForFunction(() => /^Pregunta 2 /.test(document.getElementById("q-counter").textContent), null, { timeout: 10000 });
+  igual("con «Siguiente», el foco va a la pregunta nueva, no se queda en el botón", await foco(), "q-text");
+  // Elegir una opción desmarca «No lo sé» también para el lector.
+  if (await irHasta(page, "opcion")) {
+    await page.click("#no-se-btn");
+    await page.click("#q-options button:not(#no-se-btn)");
+    igual("elegir una opción desmarca «No lo sé» (aria-pressed)", await noSe(), "false");
+  }
+  /* La corrección de una pregunta de mover decía «e1–g1»: el banco guarda
+     salida y llegada. Se dice como toda jugada del sitio. */
+  const enroque = "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5";
+  igual("la jugada correcta de la corrección va en algebraica española",
+    await page.evaluate((f) => jugadaDeLaSolucion(f, { from: "g1", to: "e1" }) + " | " + jugadaDeLaSolucion(f, { from: "f3", to: "g5" }), enroque),
+    "g1–e1 | Cg5");
+  igual("y el enroque se escribe como enroque, no «e1–g1»",
+    await page.evaluate((f) => jugadaDeLaSolucion(f, { from: "e1", to: "g1" }), enroque), "O-O");
+  igual("sin errores en la página", errores.join(" | "), "");
+  await ctx.close();
+
+  // En Modo Adaptado, al empezar el foco va al cuadro: ahí se contesta y su
+  // región viva ya dice la pregunta (ir al título la diría dos veces).
+  const a = await abrir(browser, "/entreno/diagnostico.html", true);
+  await saltarPortada(a.page);
+  igual("en Modo Adaptado, al empezar el foco va al cuadro de comandos",
+    await a.page.evaluate(() => document.activeElement && document.activeElement.classList.contains("cc-input")), "true");
+  igual("y en palabras el enroque es «enroque corto»",
+    await a.page.evaluate((f) => jugadaDeLaSolucion(f, { from: "e1", to: "g1" }), enroque), "enroque corto");
+  await a.ctx.close();
+}
+
 /* ============ 4. Los exámenes de arbitraje ============ */
 
 async function pruebaArbitraje(browser, ruta, nombre) {
@@ -966,6 +1018,7 @@ async function prueba4x4Normal(browser) {
     await pruebaCasilla(browser);
     await pruebaUltimaPregunta(browser);
     await pruebaFueraDelModo(browser);
+    await pruebaLectorSinCuadro(browser);
     await pruebaArbitraje(browser, "/arbitraje.html", "Examen de arbitraje (docente)");
     await pruebaArbitraje(browser, "/nivel-de-arbitraje.html", "Examen de arbitraje (público)");
     await pruebaTemas(browser);
