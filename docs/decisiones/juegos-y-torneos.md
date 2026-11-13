@@ -17327,3 +17327,26 @@ Lo prueba `verificar-mesa-pareo-fuente.js` (sin navegador: `fuente-pareo.ts` con
 el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que con Pareo no se llame a
 `guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
 propósito el paso de mesa física a índice o el virtual por el canal, salta.
+
+### La portada de "Mis mesas" según el torneo
+
+La página del árbitro de mesa (`centroamericano-arbitro.html`) nació para el
+Centroamericano y su portada traía dos cosas de ese evento: la píldora roja «XXI
+Campeonato» y el pizote de las bases. Desde que la mesa del árbitro también sirve
+torneos de Pareo Integral, eso salía en cualquier torneo (el dueño lo vio en un
+torneo de Tacho Chess y pidió quitarlo). Ahora:
+
+- La píldora **nace escondida** en el HTML y `pintarMarca()` la muestra solo con
+  el enlace del Centroamericano (fuente chess-results); con `fuente: "pareo"` no
+  va. Nace escondida para que no aparezca un instante mientras carga un torneo
+  de Pareo.
+- La mascota sigue siendo el botón de «Todas las mesas». Un torneo de Pareo cuyo
+  nombre coincide con una entrada de `MASCOTAS` (hoy, `/tacho\s*chess/i` → Tacho,
+  `img/tacho-chess-2/mascota.png`) trae su mascota; cualquier otro, el pizote.
+  Tacho es de pie (450 × 755) y se mide por el alto (`.cam-mascota-alta`), para
+  no estirar la franja.
+- La imagen de Tacho tenía el zapato izquierdo deformado (sin punta, salido así
+  del afiche): se rehízo con el zapato derecho en espejo, a pedido del dueño.
+
+Lo comprueba `verificar-centroamericano-arbitro-marca.js` (los tres casos y el
+celular, con capturas).

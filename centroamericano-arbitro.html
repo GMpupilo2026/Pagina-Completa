@@ -35,20 +35,22 @@
     <!-- La portada es la de las bases (morado, hojas de monstera, pildora roja),
          más baja: en el celular lo que importa son las mesas. La mascota es una de
          las dos imágenes de las bases, sin tocar. Lo que dice cada dato lo pone
-         js/centroamericano-arbitro.js al leer el enlace. -->
+         js/centroamericano-arbitro.js al leer el enlace. La píldora «XXI Campeonato»
+         es del Centroamericano: nace escondida y solo se muestra con su enlace de
+         chess-results; en un torneo de Pareo no va, y uno de Tacho Chess trae su mascota. -->
     <section class="cac-portada cam-portada" aria-labelledby="titulo-pagina">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
             <div class="cam-cabeza-fila">
                 <div class="min-w-0">
-                    <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
+                    <p id="pildora-evento" hidden><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
                     <h1 id="titulo-pagina" class="cac-titulo text-2xl sm:text-3xl md:text-4xl mt-3">Mis mesas<span id="titulo-torneo" class="block text-lg sm:text-xl md:text-2xl mt-1"></span></h1>
                 </div>
                 <div class="cam-logo-centro" role="img" aria-label="Ajedrez Integral"><img src="img/logo-marca.png" width="155" height="96" alt=""><span aria-hidden="true">Ajedrez <span>Integral</span></span></div>
                 <!-- El pizote es un botón: abre los emparejamientos de TODAS las categorías, para decirle a un atleta dónde sentarse. -->
                 <button type="button" id="ver-todas-mesas" class="cam-mascota-boton shrink-0" aria-haspopup="dialog" aria-label="Buscar dónde juega un atleta, en todas las categorías">
-                    <img src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota">
+                    <img id="mascota-evento" src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota">
                     <span class="cam-mascota-pista" aria-hidden="true">Todas las mesas</span>
                 </button>
             </div>
