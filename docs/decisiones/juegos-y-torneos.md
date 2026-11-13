@@ -15049,8 +15049,12 @@ chess-results).
   inscritos a la vista: tercer grado tenía uno solo): primero a tercer grado,
   cuarto a sexto, sétimo y octavo, y noveno a undécimo (`TORNEOS` en la
   configuración, de donde salen la ventana «Niveles y premios», la tarjeta del
-  reglamento y la línea de las bases). Se sigue premiando por nivel, como dice
-  el afiche, dentro de cada torneo. La lista de inscritos que pasó el dueño
+  reglamento y la línea de las bases). **Los torneos son para jugar; la
+  premiación es por nivel, por separado** (lo aclaró el dueño): 1.º, 2.º y
+  3.er lugar de cada uno de los once niveles (33 premios), según el puesto de
+  cada jugador en la clasificación final de su torneo, aunque haya jugado
+  mezclado con otros niveles (`PREMIO_TEXTO`, que repiten la ventana, el
+  reglamento, las bases y el profe Oscar). La lista de inscritos que pasó el dueño
   (83 filas, con fechas de nacimiento de menores) no se guardó en el
   repositorio ni se publica.
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
