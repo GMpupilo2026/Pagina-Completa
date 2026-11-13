@@ -962,7 +962,9 @@ Desafíos y Visualización vive ahora en `js/ejercicio-tablero.js`:
   `data-estado` («seleccionada», «de la última jugada», «pista: la pieza que se
   mueve»), que es lo que `js/tablero-accesible.js` le suma a lo que oye el
   lector de pantalla. Con eso, **Practicar y Desafíos también se miran desde el
-  bando que juega** (hay series con negras que se veían al revés) y **Mates
+  bando que juega** (hay series con negras que se veían al revés; Desafíos
+  volvió después a las blancas siempre, ver «Desafíos: la variante hasta el
+  final, y el tablero sin girar») y **Mates
   marca la respuesta del rival**, como ya hacía Temas. Desafíos dejaba su
   propio `aria-label` en cada casilla; ahora lo escribe `tablero-accesible.js`,
   igual que en las demás.
@@ -4807,3 +4809,49 @@ editar a mano una medida y la calibración sin el paso de gradiente.
 las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+## Desafíos: la variante hasta el final, y el tablero sin girar
+
+Antes cada desafío terminaba en la primera jugada buena: «¿A qué casilla
+llevas el alfil para capturar el peón?» se contestaba con Ac5 y ahí se
+cortaba, sin ver nunca al alfil comerse el peón. Ahora **el rival contesta y
+el alumno sigue jugando hasta que la idea se cumple**: Ac5 a7 Axa7; Cd6+ Rc7
+Cxf5; b8=D Txb8 cxb8=D.
+
+- **Las variantes no se inventan ni se escriben a mano**: las saca
+  `herramientas/desafios-variantes.js` (negamax con poda alfa-beta y búsqueda
+  de capturas, 6 medias jugadas) sobre `js/mini-chess.js`, el mismo motor sin
+  reyes de la página, y las escribe en `solution.lineas` de
+  `entreno/data/desafios.json`: por cada primera jugada aceptada, la variante
+  entera en origen-destino. Al cambiar un desafío, se vuelve a correr.
+- **Dónde termina**: con un mate a la vista, hasta darlo. Si no, en cuanto el
+  buscador no ve nada más que cambie el material, o el alumno ya ganó
+  material y el rival no lo recupera. La excepción es la recaptura en la
+  casilla de la última jugada, que se juega porque es parte de la idea («si
+  la torre come la dama, el otro peón corona»). Una primera versión seguía
+  mientras el buscador viera algo más que comer, y la dama recién coronada se
+  pasaba veinte jugadas cazando peones. Otra acercaba el valor a cero en cada
+  media jugada (para preferir lo más corto) y, mezclado con la poda, daba
+  valores falsos; lo corto sale del orden de las jugadas (capturas y
+  coronaciones primero, a igual valor la primera).
+- Solo se guardan las de más de una jugada, y no se guarda la que no cumple
+  la idea en ocho jugadas del alumno: los mates en una, las defensas y los
+  desafíos cuya ganancia queda más allá de lo que ve el buscador siguen como
+  antes, de una jugada.
+- En la página, la primera jugada puede ser cualquiera de las aceptadas (y
+  elige la variante); las siguientes, la de la variante, o cualquier mate. Un
+  error vuelve a la posición de ese turno, no al principio. Las pistas son de
+  la jugada que toca (la escrita del desafío, solo para la primera) y se
+  suman para las estrellas. **«Ver solución» juega la variante entera sola**
+  y no cuenta como resuelto: pedirla jugada por jugada era pedirla cinco
+  veces. Lo que espera en un `setTimeout` (la respuesta del rival) mira que
+  siga siendo la misma vuelta (`vuelta`): si no, «Reiniciar» o «Saltar»
+  mientras el rival pensaba dejaba caer su jugada en el desafío siguiente.
+- **El tablero de Desafíos ya no se gira**: siempre desde las blancas, aunque
+  jueguen las negras. Girarlo enredaba (la «h» a la izquierda y la fila 1
+  arriba en un ejercicio, y al revés en el siguiente).
+- Lo prueban `verificar-desafios-variantes.js` (cada variante legal en
+  MiniChess, empieza por una jugada aceptada y termina en el alumno o en la
+  recaptura que cierra la idea) y el recorrido de Modo Adaptado de
+  `verificar-entreno-accesible.js`, que juega cada desafío de una serie hasta
+  el final de su variante.
