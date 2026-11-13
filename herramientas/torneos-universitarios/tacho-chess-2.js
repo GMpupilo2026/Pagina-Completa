@@ -8,7 +8,8 @@
  * Lo pidió el dueño el 12/11/2026: «crear este torneo igual siguiendo todas
  * las características del torneo centroamericano […] las bases todas tienen
  * que ser interpretadas de este afiche», con el ritmo de 10 minutos + 2
- * segundos y 5 partidas (eso lo dijo él; no viene en el afiche). Todo lo
+ * segundos y 5 partidas (eso lo dijo él; no viene en el afiche; el 13/11
+ * corrigió: son 7 rondas). Todo lo
  * demás sale del afiche: la fecha, la hora, la sede, que es gratis, el
  * formulario (leído del código QR), la premiación por nivel y lo que hay
  * además del torneo. La mascota (Tacho, el mapache con la camiseta 52) y el
@@ -54,7 +55,7 @@ const bases = {
   contacto: "Adriana, +506 8912-2033 (teléfono y WhatsApp)",
   arbitro: "FA Jean Carlo Quesada Arauz",
   comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
-  sistema: "suizo", rondas: 5, rondasPorDia: 5, horaInicio: "09:00", descanso: 5,
+  sistema: "suizo", rondas: 7, rondasPorDia: 7, horaInicio: "09:00", descanso: 5,
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
   desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
@@ -93,7 +94,7 @@ module.exports = {
   clase: "tacho",
   foco: "#064ca7",
   titulo: "Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro",
-  descripcion: "Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro; 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.",
+  descripcion: "Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro;7 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.",
   nombrePie: "Tacho Chess 2",
   grupoNombre: "Nivel",
   comentario: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
@@ -119,7 +120,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   organiza: "Liceo Anastasio Alfaro (San José, 1952)",
   equipo: [
     ["Árbitro principal", "FA Jean Carlo Quesada Arauz"],
-    ["Ritmo", "5 rondas a 10 minutos + 2 segundos"],
+    ["Ritmo", "7 rondas a 10 minutos + 2 segundos"],
   ],
   resultados: "pareo",
   // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
@@ -138,7 +139,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   fichas: [
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
-    { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas y de la premiación.", accion: "Ver el calendario" },
+    { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
     { href: "#premios", color: "rojo", icono: "🏆", titulo: "Niveles y premios", texto: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.", accion: "Ver los niveles" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
     // «Pronto» hasta que el torneo esté publicado en Pareo Integral: entonces
@@ -216,7 +217,7 @@ ${filas}
     <div class="${tarjeta}">
         ${h3}Sistema y ritmo</h3>
         <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
-            <li>Sistema suizo a 5 rondas, con el Sistema Holandés de la FIDE.</li>
+            <li>Sistema suizo a 7 rondas, con el Sistema Holandés de la FIDE.</li>
             <li>10 minutos por jugador para toda la partida, con 2 segundos de incremento por jugada desde la primera: ajedrez rápido (Apéndice A de las Leyes del Ajedrez).</li>
             <li>Árbitro principal: FA Jean Carlo Quesada Arauz.</li>
             <li>Tolerancia de 10 minutos desde la hora de inicio de la ronda.</li>

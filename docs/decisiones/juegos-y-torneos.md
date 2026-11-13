@@ -14953,7 +14953,7 @@ plantilla que la de Pérez Zeledón (`herramientas/torneos-universitarios/tacho-
 → `js/tacho-chess.js`), con «Hoy en el torneo» y `resultados: "pareo"` (sin
 chess-results).
 
-- **Todo sale del afiche**, menos lo que dio el dueño: 5 rondas a 10 minutos
+- **Todo sale del afiche**, menos lo que dio el dueño: 7 rondas a 10 minutos
   + 2 segundos, la ronda 1 a las 9:00 y el árbitro principal, el FA Jean
   Carlo Quesada Arauz (dijo «Jan Quesada Arauz»; se le preguntó y es el mismo
   de las bases de Pérez Zeledón). Del afiche: sábado 14 de noviembre de
@@ -14966,6 +14966,7 @@ chess-results).
   del código QR del afiche** con jsQR (`https://forms.gle/bLTnu979f2aj7kUUA`,
   igual al texto impreso); es de la organización (Google Forms) y lo dice la
   política de privacidad.
+  Al principio dijo 5 rondas («5 partidas»); el 13/11 corrigió: son 7.
 - **El contacto es Adriana, de la organización** (+506 8912-2033, lo dio el
   dueño): la ficha «Contacta a la organización» abre `#contacto` con su
   teléfono y su WhatsApp, como en el Centroamericano; sin foto, va su inicial.
@@ -14995,8 +14996,8 @@ chess-results).
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
   PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
   tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
-  hora siguiente) da 9:00, 9:30, 10:00, 10:30 y 11:00, y la premiación cerca de
-  las 11:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 5 y la premiación dicen «(aprox.)», en la página y
+  hora siguiente) da 9:00, 9:30, 10:00, 10:30, 11:00, 11:30 y 12:00, y la premiación cerca de
+  las 12:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 7 y la premiación dicen «(aprox.)», en la página y
   en las bases.
 - **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
   azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
