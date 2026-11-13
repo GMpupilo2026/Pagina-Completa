@@ -45,6 +45,9 @@ function doble(licencia) {
     return `(function(){
   window.__pedidos = [];
   window.__insertados = [];
+  window.__subidas = [];
+  window.__planillas = [];
+  window.__archivos = {};
   window.__modo = "bien";
   const R = (data, error) => Promise.resolve({ data, error: error || null });
   const MESAS = ${JSON.stringify(MESAS)};
@@ -88,6 +91,14 @@ function doble(licencia) {
       return R({ ok: resultados.every((r) => r.ok) && !diferencias.length, ronda: b.ronda, resultados, diferencias });
     } },
     from: (t) => {
+      if (t === "arbitro_planillas") return {
+        insert: (rows) => {
+          // Como la base: la ruta es de la carpeta de quien sube y del mismo torneo; la hora y el id los pone ella.
+          for (const r of rows) if (!r.ruta.startsWith("yo/" + r.tnr + "/") || !/[.]jpg$/.test(r.ruta) || !(r.bytes > 0) || r.creada_por || r.subida) return R(null, { message: "new row violates row-level security policy" });
+          rows.forEach((r) => window.__planillas.push(Object.assign({ id: "p" + window.__planillas.length, subida: new Date(Date.UTC(2026, 10, 3, 16, window.__planillas.length)).toISOString() }, r))); return R(null); },
+        select: () => { const f = {}; const q = { eq: (c, v) => { f[c] = v; return q; }, order: () => q, range: () => q,
+          then: (ok, ko) => Promise.resolve({ data: window.__planillas.filter((r) => Object.entries(f).every(([c, v]) => r[c] === v)), error: null }).then(ok, ko) }; return q; },
+      };
       if (t !== "arbitro_bitacora") { const q = {}; ["select","eq","order","range","in","single","maybeSingle","limit","update","insert"].forEach((m) => q[m] = () => q); q.then = (ok) => Promise.resolve({ data: [], error: null }).then(ok); return q; }
       return {
         insert: (rows) => {
@@ -102,6 +113,13 @@ function doble(licencia) {
           then: (ok, ko) => Promise.resolve({ data: FILAS.filter((r) => Object.entries(f).every(([c, v]) => r[c] === v)), error: null }).then(ok, ko) }; return q; },
       };
     },
+    storage: { from: (bucket) => ({
+      upload: (ruta, blob, op) => {
+        if (window.__modo === "subida") return R(null, { message: "el servidor de archivos no contesta" });
+        window.__subidas.push({ bucket, ruta, tipo: op && op.contentType, upsert: op && op.upsert, bytes: blob.size, tipoBlob: blob.type }); window.__archivos[ruta] = blob; return R({ path: ruta }); },
+      createSignedUrl: (ruta) => R({ signedUrl: "https://bgtijpimpcokxatxxbki.supabase.co/storage/v1/object/sign/" + bucket + "/" + ruta + "?token=t" }),
+      download: (ruta) => R(window.__archivos[ruta] || null, window.__archivos[ruta] ? null : { message: "no está" }),
+    }) },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},
   };
 })();`;
@@ -341,6 +359,71 @@ async function abrir(browser, licencia) {
     igual("la clave no está en la bitácora", await p.evaluate((s) => JSON.stringify(window.__insertados).includes(s), SID), false);
     igual("ni en el almacenamiento del navegador", await p.evaluate((s) => { try { return JSON.stringify(localStorage).includes(s) || JSON.stringify(sessionStorage).includes(s); } catch (e) { return false; } }, SID), false);
 
+    console.log("\n=== La foto de las planillas ===");
+    const n1 = await p.evaluate(() => window.__insertados.length);
+    // Un JPEG de verdad, hecho en la página (lo que daría la cámara guiada) y un PNG para la cámara de siempre.
+    const dataJpeg = await p.evaluate(() => { const c = document.createElement("canvas"); c.width = 120; c.height = 80; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 120, 80); x.fillStyle = "#123"; x.fillRect(10, 10, 40, 60); return c.toDataURL("image/jpeg", 0.8); });
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    igual("cada mesa tiene su botón de la foto de las planillas, escrito", await p.$$eval('tr[data-mesa] [data-accion="planilla"]', (b) => b.map((x) => x.textContent.trim())), ["📷 Foto de las planillas", "📷 Foto de las planillas", "📷 Foto de las planillas"]);
+    igual("sin fotos todavía no hay «Ver», ni la casilla del documento", await p.evaluate(() => [document.querySelectorAll('[data-accion="ver-planilla"]').length, document.getElementById("b-fotos-zona").checkVisibility()]), [0, false]);
+
+    // Cerrar la cámara sin sacar la foto no sube nada.
+    await p.evaluate(() => { window.GuiaPlanillas.disponible = () => true; window.GuiaPlanillas.abrir = () => Promise.resolve({ cancelado: true }); });
+    await p.click('tr[data-mesa="1"] [data-accion="planilla"]');
+    await p.waitForTimeout(150);
+    igual("cerrar la cámara no sube nada", await p.evaluate(() => [window.__subidas.length, window.__planillas.length]), [0, 0]);
+
+    // La cámara con guía: la foto sale del cuadro de revisión, se sube al bucket privado, a la carpeta de quien la toma, y se registra.
+    await p.evaluate((d) => { window.__pidio = null; window.GuiaPlanillas.abrir = (o) => { window.__pidio = o; return Promise.resolve({ imagen: d }); }; }, dataJpeg);
+    await p.click('tr[data-mesa="1"] [data-accion="planilla"]');
+    await p.waitForFunction(() => window.__planillas.length === 1);
+    igual("la cámara con guía recibe los dos nombres y la mesa", await p.evaluate(() => window.__pidio), { titulo: "Foto de las planillas · Mesa 1", rotulos: ["Blancas · Muñoz Feliz Alejandro", "Negras · Gramajo Tovar Marco"] });
+    igual("sube un JPEG al bucket privado, a <autor>/<torneo>/<id>.jpg, sin pisar nada",
+        await p.evaluate(() => { const u = window.__subidas[0]; return [u.bucket, /^yo\/1532448\/[0-9a-f-]{36}[.]jpg$/.test(u.ruta), u.tipo, u.tipoBlob, u.upsert, u.bytes > 100]; }),
+        ["mesa-arbitro-planillas", true, "image/jpeg", "image/jpeg", false, true]);
+    igual("la fila dice de qué torneo, ronda y mesa es, y quiénes juegan; no manda la hora ni el autor",
+        await p.evaluate(() => { const r = window.__planillas[0]; return [r.tnr, r.ronda, r.mesa, r.blancas, r.negras, r.ruta === window.__subidas[0].ruta, r.bytes === window.__subidas[0].bytes, "subida" in r && r.subida.length > 0, "creada_por" in r]; }),
+        ["1532448", 3, 1, "Muñoz Feliz Alejandro", "Gramajo Tovar Marco", true, true, true, false]);
+    await p.waitForFunction((n) => window.__insertados.length === n + 1, n1);
+    igual("queda una nota en la bitácora, con su ronda y su mesa", await p.evaluate(() => { const r = window.__insertados[window.__insertados.length - 1]; return [r.tipo, r.ronda, r.mesa, r.texto, r.enviado]; }), ["nota", 3, 1, "Foto de las dos planillas guardada.", false]);
+    await p.waitForSelector('tr[data-mesa="1"] [data-accion="ver-planilla"]');
+    igual("la fila lo dice con palabras y ofrece «Ver la foto» y otra foto",
+        await p.evaluate(() => { const f = document.querySelector('tr[data-mesa="1"] [data-fotos]'); return [f.getAttribute("data-fotos"), [...f.children].map((x) => x.textContent.trim())]; }), ["1", ["📷 Otra foto de las planillas", "Ver la foto", "Foto guardada"]]);
+    igual("las otras mesas no cambian", await p.evaluate(() => document.querySelector('tr[data-mesa="2"] [data-fotos]').getAttribute("data-fotos")), "0");
+
+    // Sin la cámara con guía: la cámara de siempre del aparato (un campo de archivo). Un PNG se vuelve JPEG.
+    await p.evaluate(() => { window.GuiaPlanillas.abrir = () => Promise.resolve({ sin_camara: true, motivo: "Este navegador no deja usar la cámara dentro de la página." }); });
+    const [elegir] = await Promise.all([p.waitForEvent("filechooser"), p.click('tr[data-mesa="1"] [data-accion="planilla"]')]);
+    await elegir.setFiles({ name: "planillas.png", mimeType: "image/png", buffer: png });
+    await p.waitForFunction(() => window.__planillas.length === 2);
+    igual("la foto de la cámara del aparato también sube, y siempre como JPEG", await p.evaluate(() => [window.__subidas[1].tipo, window.__subidas[1].tipoBlob, window.__planillas[1].mesa]), ["image/jpeg", "image/jpeg", 1]);
+    await p.waitForSelector('tr[data-mesa="1"] [data-accion="ver-planilla"]');
+    igual("con dos fotos, la fila dice cuántas", await p.evaluate(() => [document.querySelector('tr[data-mesa="1"] [data-accion="ver-planilla"]').textContent, document.querySelector('tr[data-mesa="1"] [data-fotos]').getAttribute("data-fotos")]), ["Ver las 2 fotos", "2"]);
+
+    // Si el servidor de archivos falla: se avisa, no queda registrada ninguna foto ni nota.
+    const n2 = await p.evaluate(() => { window.__modo = "subida"; return [window.__insertados.length, window.__planillas.length]; });
+    const [elegir2] = await Promise.all([p.waitForEvent("filechooser"), p.click('tr[data-mesa="2"] [data-accion="planilla"]')]);
+    await elegir2.setFiles({ name: "planillas.png", mimeType: "image/png", buffer: png });
+    await p.waitForFunction(() => /No se pudo subir la foto/.test(document.body.textContent));
+    igual("si no sube, no queda la fila ni la nota, y el botón vuelve a servir",
+        await p.evaluate((n) => [window.__insertados.length === n[0], window.__planillas.length === n[1], document.querySelector('tr[data-mesa="2"] [data-accion="planilla"]').disabled], n2), [true, true, false]);
+    await p.evaluate(() => { window.__modo = "bien"; });
+
+    // Ver las fotos: una ventana con la dirección firmada de cada una.
+    await p.click('tr[data-mesa="1"] [data-accion="ver-planilla"]');
+    await p.waitForSelector("dialog#m-fotos-ventana[open] img");
+    igual("la ventana muestra las dos con dirección firmada del bucket privado y su pie escrito",
+        await p.evaluate(() => [[...document.querySelectorAll("#m-fotos-ventana img")].map((i) => /\/object\/sign\/mesa-arbitro-planillas\/yo\/1532448\//.test(i.src) && i.alt.startsWith("Foto de las planillas de la mesa 1")),
+            [...document.querySelectorAll("#m-fotos-ventana figcaption")].map((c) => c.textContent.startsWith("Ronda 3 · mesa 1 · Muñoz Feliz Alejandro – Gramajo Tovar Marco · foto del "))]), [[true, true], [true, true]]);
+    igual("el foco entra a la ventana y se cierra con su botón, devolviendo el foco", await p.evaluate(() => document.activeElement.getAttribute("data-accion")), "cerrar-fotos");
+    await p.click('[data-accion="cerrar-fotos"]');
+    await p.waitForFunction(() => !document.getElementById("m-fotos-ventana"));
+    igual("al cerrar, la ventana se va y el foco vuelve al botón «Ver las 2 fotos»", await p.evaluate(() => [!!document.getElementById("m-fotos-ventana"), document.activeElement.getAttribute("data-accion")]), [false, "ver-planilla"]);
+
+    // Otro torneo: las fotos son de cada torneo.
+    igual("la casilla del documento cuenta las fotos y viene marcada", await p.evaluate(() => [document.getElementById("b-fotos-zona").checkVisibility(), document.getElementById("b-fotos").checked, document.getElementById("b-fotos-texto").textContent]),
+        [true, true, "Incluir las 2 fotos de planillas en el PDF y el Word (el archivo pesa más)"]);
+
     console.log("\n=== Bajar la bitácora ===");
     await p.fill("#b-arbitro", "Ana Árbitra");
     const bajar = async (boton) => {
@@ -351,6 +434,14 @@ async function abrir(browser, licencia) {
     igual("el PDF, con su nombre y la marca de agua", [pdf.nombre, pdf.bytes.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdf.bytes.toString("latin1"))], ["bitacora-arbitro-1532448.pdf", true, true]);
     const docx = await bajar("#b-docx");
     igual("el Word, con la marca en el encabezado y el título", [docx.nombre, docx.bytes.includes("word/media/marca.png"), docx.bytes.includes("Bit")], ["bitacora-arbitro-1532448.docx", true, true]);
+    const imagenes = (b) => (b.toString("latin1").match(/\/Subtype \/Image/g) || []).length;
+    igual("con la casilla marcada, el PDF lleva las dos fotos (además de la marca) y el Word también",
+        [imagenes(pdf.bytes), docx.bytes.includes("word/media/foto1.jpeg"), docx.bytes.includes("word/media/foto2.jpeg")], [4, true, true]);
+    await p.uncheck("#b-fotos");
+    const pdfSin = await bajar("#b-pdf");
+    const docxSin = await bajar("#b-docx");
+    igual("sin la casilla, el PDF sale solo con la marca y el Word sin fotos", [imagenes(pdfSin.bytes) < imagenes(pdf.bytes), imagenes(pdfSin.bytes), docxSin.bytes.includes("word/media/foto1.jpeg")], [true, 2, false]);
+    await p.check("#b-fotos");
 
     console.log("\n=== En el celular ===");
     await p.setViewportSize({ width: 390, height: 800 });
