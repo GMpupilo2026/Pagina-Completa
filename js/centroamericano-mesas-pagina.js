@@ -44,6 +44,16 @@
     const PASOS_LISTA = 2; // relojes y tableros (centroamericano-mesa)
 
     let torneos = [], archivados = [];
+    // Un torneo está LISTO para sus árbitros si es de Pareo Integral y sigue publicado, o si es de chess-results y tiene su clave
+    // (ver «La Mesa del árbitro con torneos de Pareo Integral»).
+    const listo = (t) => !!t && (t.fuente === "pareo" ? !!t.pareo_id : !!t.sid_en_boveda);
+    const faltaQue = (t) => (t && t.fuente === "pareo" ? "ya no está publicado en Pareo Integral (vuelve a vincularlo)" : "todavía no tiene la clave cargada");
+    // La cara de la página: la del Centroamericano solo si algún torneo a la vista es de un evento suyo; si no, la de Ajedrez Integral.
+    let marcas = new Map();   // evento → marca
+    let vincular = null;
+    // (Un torneo sin evento es de antes de los eventos: el Centroamericano.)
+    const caraNeutra = () => !torneos.some((t) => !t.evento || marcas.get(t.evento) === "centroamericano");
+    const hayPareo = () => torneos.some((t) => t.fuente === "pareo");
     let asignaciones = [];
     let avisos = [];
     let progreso = [];
@@ -145,10 +155,11 @@
         const n = abiertosDeArbitros().length;
         const act = asignaciones.filter(activa);
         const en = act.filter((a) => C.enLinea(a, new Date())).length;
-        const con = torneos.filter((t) => t.sid_en_boveda).length;
+        const con = torneos.filter(listo).length;
         $("eg-pedidos").replaceChildren(el("strong", { texto: n ? n + (n === 1 ? " aviso de árbitros abierto" : " avisos de árbitros abiertos") : "Sin pedidos de ayuda" }));
         $("eg-enlinea").textContent = act.length ? en + " de " + act.length + " árbitros conectados" : "Sin enlaces activos";
-        $("eg-claves").textContent = torneos.length ? (con === torneos.length ? "Clave cargada en los " + torneos.length + " torneos" : "Clave en " + con + " de " + torneos.length + " torneos") : "";
+        $("eg-claves").textContent = torneos.length ? (hayPareo() ? (con === torneos.length ? "Los " + torneos.length + " torneos están listos" : con + " de " + torneos.length + " torneos listos")
+            : (con === torneos.length ? "Clave cargada en los " + torneos.length + " torneos" : "Clave en " + con + " de " + torneos.length + " torneos")) : "";
         $("eg-drive").textContent = drive ? (drive.conectado ? "Drive conectado" + (drive.pendientes ? " · " + drive.pendientes + " planillas sin enviar" : "") : "Drive sin conectar") : "";
         const ultima = copias.filter((c) => c.anillo !== "d").map((c) => c.creada).sort().pop();
         $("eg-copia").textContent = ultima ? "Última copia: " + C.hace(ultima, new Date()) : "Sin copias todavía";
@@ -620,18 +631,38 @@
         }
     }
 
+    // La cara neutra (Ajedrez Integral) cuando ningún torneo a la vista es del Centroamericano: el CSS cambia los colores y esconde
+    // las hojas y la mascota (html[data-marca]); aquí se esconde lo que es solo de ese evento: Fair Play, la transmisión por
+    // LiveChess y el vencimiento «al terminar el torneo (9 de noviembre)». El vencimiento por omisión pasa a «hasta el día…».
+    function ponerCara() {
+        const neutra = caraNeutra();
+        if (neutra) document.documentElement.setAttribute("data-marca", "ajedrez-integral");
+        else document.documentElement.removeAttribute("data-marca");
+        for (const id of ["pest-fairplay", "pest-transmision"]) $(id).hidden = neutra;
+        for (const o of document.querySelectorAll("#a-vence option[data-solo-marca]")) { o.hidden = neutra; o.disabled = neutra; }
+        const vence = $("a-vence");
+        if (!vence.dataset.tocado) { vence.value = neutra ? "fecha" : "torneo"; vence.dispatchEvent(new Event("cara")); }
+        if (!$("a-vence-fecha").value) $("a-vence-fecha").value = window.HoraCR.hoy();
+        $("a-vence-fecha").min = window.HoraCR.hoy();
+        document.title = neutra ? "Mesas de los árbitros — Organización | Ajedrez Integral" : "Mesas de los árbitros — Centroamericano 2026 | Ajedrez Integral";
+    }
+
     async function cargarTorneos() {
-        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba, evento, archivado, ritmo").order("orden");
+        const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba, evento, archivado, ritmo, fuente, pareo_id").order("orden");
         if (error) { avisar("No se pudieron leer los torneos: " + error.message, true); return; }
         pruebas = new Set((data || []).filter((t) => t.prueba).map((t) => t.tnr));
         // Un evento archivado (ya terminó) no se ve: lo medido queda de historia para Fair Play.
         torneos = (data || []).filter((t) => dentro(t.tnr) && !t.archivado);
         archivados = (data || []).filter((t) => !t.prueba && t.archivado);
+        const { data: evs } = await sb.from("centroamericano_eventos").select("evento, marca");
+        marcas = new Map((evs || []).map((e) => [e.evento, e.marca]));
+        ponerCara();
         pintarTorneos();
+        if (vincular) vincular.pintar();
         pintarEventos();
         // Los torneos van separados por modo (Clásico, Rápido, Blitz): cada uno trae una configuración distinta en la tablet del árbitro.
         const opciones = () => C.RITMOS.map((r) => ({ r, lista: torneos.filter((t) => C.ritmoDe(t) === r.id) })).filter((g) => g.lista.length)
-            .map((g) => el("optgroup", { label: g.r.nombre }, ...g.lista.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }))));
+            .map((g) => el("optgroup", { label: g.r.nombre }, ...g.lista.map((t) => el("option", { value: t.tnr, texto: t.nombre + (listo(t) ? "" : t.fuente === "pareo" ? " (sin publicar)" : " (sin clave)") }))));
         for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo", "ct-torneo"]) {
             const s = $(id), antes = s.value;
             s.replaceChildren(...(id === "r-torneo" || id === "pl-torneo" || id === "ct-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
@@ -648,15 +679,26 @@
     }
 
     function pintarTorneos() {
-        const con = torneos.filter((t) => t.sid_en_boveda).length;
-        $("resumen-claves").textContent = !torneos.length ? "" : con === torneos.length
-            ? "✓ Los " + torneos.length + " torneos tienen la clave cargada."
-            : con + " de " + torneos.length + " torneos tienen la clave. Faltan: " + torneos.filter((t) => !t.sid_en_boveda).map((t) => t.nombre).join(", ") + ".";
+        const deCr = torneos.filter((t) => t.fuente !== "pareo");
+        const deQue = hayPareo() ? " torneos de chess-results" : " torneos";
+        const con = deCr.filter((t) => t.sid_en_boveda).length;
+        $("resumen-claves").textContent = !deCr.length ? "" : con === deCr.length
+            ? "✓ Los " + deCr.length + deQue + " tienen la clave cargada."
+            : con + " de " + deCr.length + deQue + " tienen la clave. Faltan: " + deCr.filter((t) => !t.sid_en_boveda).map((t) => t.nombre).join(", ") + ".";
         const previo = {};
         document.querySelectorAll("#torneos [role='status']").forEach((p) => { previo[p.id] = [p.textContent, p.className]; });
         $("torneos").replaceChildren(...torneos.map((t) => {
             const estado = el("p", { class: "text-sm mt-1", id: "est-" + t.tnr, role: "status" });
             if (previo["est-" + t.tnr]) { estado.textContent = previo["est-" + t.tnr][0]; estado.className = previo["est-" + t.tnr][1]; }
+            if (t.fuente === "pareo") {
+                return el("div", { class: "cam-estado-torneo", "data-tnr": t.tnr, "data-fuente": "pareo", "data-clave": t.pareo_id ? "si" : "no" },
+                    el("p", { class: "font-bold", texto: t.nombre }),
+                    el("p", { class: "mt-1" }, el("span", { class: "cam-chip", "data-clave": t.pareo_id ? "si" : "no", texto: t.pareo_id ? "Pareo Integral" : "Ya no está publicado" })),
+                    el("p", { class: "text-sm mt-1", texto: "Evento «" + t.evento + "»" }),
+                    el("div", { class: "cam-acciones" },
+                        el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "renombrar", "aria-label": "Cambiar el nombre de " + t.nombre, onclick: () => renombrarTorneo(t) }, "Cambiar nombre")),
+                    estado);
+            }
             return el("div", { class: "cam-estado-torneo", "data-tnr": t.tnr, "data-clave": t.sid_en_boveda ? "si" : "no" },
                 el("p", { class: "font-bold", texto: t.nombre }),
                 el("p", { class: "mt-1" }, el("span", { class: "cam-chip", "data-clave": t.sid_en_boveda ? "si" : "no", texto: t.sid_en_boveda ? "Con clave" : "Sin clave" })),
@@ -918,7 +960,7 @@
     function verQr(a) {
         const enlace = C.enlaceArbitro(location.origin, a.token);
         const torneo = nombreTorneo(a.tnr);
-        const wa = "https://wa.me/?text=" + encodeURIComponent(C.textoWhatsapp(a, torneo, enlace));
+        const wa = "https://wa.me/?text=" + encodeURIComponent(C.textoWhatsapp(a, torneo, enlace, caraNeutra() ? (torneos.find((x) => x.tnr === a.tnr) || {}).evento : undefined));
         const qr = qrDe(a, enlace);
         ventanita("Enlace de " + a.arbitro,
             el("p", { class: "font-bold", texto: torneo + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
@@ -1155,7 +1197,7 @@
         const t = torneos.find((x) => x.tnr === tnr);
         const traslapa = traslapan(tnr, desde, hasta);
         const avisos2 = [];
-        if (t && !t.sid_en_boveda) avisos2.push("«" + t.nombre + "» todavía no tiene la clave cargada: el enlace no va a funcionar hasta que la pongas.");
+        if (t && !listo(t)) avisos2.push("«" + t.nombre + "» " + faltaQue(t) + ": el enlace no va a funcionar hasta que lo arregles.");
         if (traslapa.length) avisos2.push("Esas mesas ya las tiene " + traslapa.map((a) => a.arbitro + " (" + a.mesa_desde + " a " + a.mesa_hasta + ")").join(", ") + ".");
         if (avisos2.length) {
             const sigue = await Avisos.confirmar(avisos2.join(" ") + " ¿Crear el enlace igual?", { titulo: "Revisa esto", aceptar: "Sí, crearlo" });
@@ -1167,7 +1209,9 @@
         const persona = base ? (base.persona || crypto.randomUUID()) : null;
         const nombrado = base ? base.nombrado !== false : !!escrito;
         const arbitro = base ? base.arbitro : nombrado ? escrito : C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr));
-        const vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy());
+        let vence;
+        try { vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy(), $("a-vence-fecha").value); }
+        catch (e) { avisar(e.message, true); $("a-vence-fecha").focus(); return; }
         $("a-crear").disabled = true;
         if (base && !base.persona) {
             const { error: e1 } = await sb.from("centroamericano_asignaciones").update({ persona }).eq("id", base.id);
@@ -1185,9 +1229,12 @@
     }
 
     // El reparto entre árbitros por definir.
+    // La primera mesa física de cada torneo de Pareo (su mesaInicial), leída con «Leer las mesas»: el reparto empieza ahí.
+    const primeraMesa = new Map();
     function vistaReparto() {
-        const rangos = C.repartirMesas(entero("rp-mesas") || 0, entero("rp-arbitros") || 0);
         const tnr = $("rp-torneo").value;
+        const corrida = (primeraMesa.get(tnr) || 1) - 1;
+        const rangos = C.repartirMesas(entero("rp-mesas") || 0, entero("rp-arbitros") || 0).map((r) => Object.assign({}, r, { desde: r.desde + corrida, hasta: r.hasta + corrida }));
         const sig = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
         $("rp-vista").textContent = rangos.length ? rangos.map((r, i) => "Árbitro " + (sig + i) + ": mesas " + r.desde + " a " + r.hasta).join(" · ") : "";
         $("rp-crear").disabled = rangos.length === 0;
@@ -1197,8 +1244,32 @@
     async function leerMesas() {
         const tnr = $("rp-torneo").value;
         const estado = $("rp-estado");
-        estado.textContent = "Leyendo chess-results…";
+        const t = torneos.find((x) => x.tnr === tnr);
         $("rp-leer").disabled = true;
+        if (t && t.fuente === "pareo") {
+            estado.textContent = "Leyendo el torneo de Pareo Integral…";
+            try {
+                if (!t.pareo_id) throw new Error("Ese torneo ya no está publicado en Pareo Integral: vuelve a vincularlo.");
+                const { data: pub, error: e1 } = await sb.from("pareo_publicados").select("datos").eq("id", t.pareo_id).maybeSingle();
+                if (e1 || !pub) throw new Error("No se pudo leer el torneo publicado.");
+                const d = pub.datos || {};
+                const rondas = Array.isArray(d.rondas) ? d.rondas : [];
+                const ultima = rondas[rondas.length - 1];
+                const inicial = Number(d.mesaInicial) > 1 ? Math.floor(Number(d.mesaInicial)) : 1;
+                primeraMesa.set(tnr, inicial);
+                const n = ultima && Array.isArray(ultima.mesas) && ultima.mesas.length ? ultima.mesas.length : Math.max(1, Math.ceil((Array.isArray(d.jugadores) ? d.jugadores.length : 0) / 2));
+                $("rp-mesas").value = String(n);
+                estado.textContent = (ultima ? "La ronda " + rondas.length + " tiene " + n + " mesas" : "Todavía sin ronda: con " + (d.jugadores || []).length + " jugadores serán " + n + " mesas") +
+                    (inicial > 1 ? ", de la " + inicial + " a la " + (inicial + n - 1) + "." : ".");
+                vistaReparto();
+            } catch (e) {
+                estado.textContent = "✗ " + e.message;
+            } finally {
+                $("rp-leer").disabled = false;
+            }
+            return;
+        }
+        estado.textContent = "Leyendo chess-results…";
         try {
             const d = await invocar({ action: "probar", tnr });
             if (d.mesas) { $("rp-mesas").value = String(d.mesas); estado.textContent = "La ronda " + d.ronda + " tiene " + d.mesas + " mesas."; }
@@ -1218,11 +1289,13 @@
         const t = torneos.find((x) => x.tnr === tnr);
         const previos = asignaciones.filter((a) => a.tnr === tnr && activa(a));
         const avisos2 = [];
-        if (t && !t.sid_en_boveda) avisos2.push("«" + t.nombre + "» todavía no tiene la clave cargada: los enlaces no van a funcionar hasta que la pongas.");
+        if (t && !listo(t)) avisos2.push("«" + t.nombre + "» " + faltaQue(t) + ": los enlaces no van a funcionar hasta que lo arregles.");
         if (previos.length) avisos2.push("Este torneo ya tiene " + previos.length + (previos.length === 1 ? " enlace activo" : " enlaces activos") + "; los nuevos se suman a ellos.");
         const sigue = await Avisos.confirmar(avisos2.concat(["Se crean " + rangos.length + " enlaces. ¿Seguir?"]).join(" "), { titulo: "Crear los enlaces", aceptar: "Sí, crearlos" });
         if (!sigue) return;
-        const vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy()).toISOString();
+        let vence;
+        try { vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy(), $("a-vence-fecha").value).toISOString(); }
+        catch (e) { avisar(e.message, true); return; }
         const n = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
         $("rp-crear").disabled = true;
         const { error } = await sb.from("centroamericano_asignaciones").insert(rangos.map((r, i) => ({ tnr, arbitro: "Árbitro " + (n + i), nombrado: false, mesa_desde: r.desde, mesa_hasta: r.hasta, vence })));
@@ -1766,6 +1839,11 @@
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);
         $("form-asignar").addEventListener("submit", crear);
+        // «Hasta el día…»: el día solo se pide con esa opción; si la organización elige otra, ya no se cambia sola.
+        const verFecha = () => { const f = $("a-vence").value === "fecha"; for (const id of ["a-vence-fecha", "a-vence-fecha-ayuda"]) $(id).hidden = !f; document.querySelector('label[for="a-vence-fecha"]').hidden = !f; };
+        $("a-vence").addEventListener("change", (e) => { e.target.dataset.tocado = "1"; verFecha(); });
+        $("a-vence").addEventListener("cara", verFecha);
+        verFecha();
         $("abrir-nuevo").addEventListener("click", () => { $("nuevo").open = true; $("a-arbitro").focus(); });
         $("abrir-reparto").addEventListener("click", () => { $("reparto").open = true; $("rp-mesas").focus(); });
         for (const id of ["rp-mesas", "rp-arbitros"]) $(id).addEventListener("input", vistaReparto);
@@ -1799,12 +1877,18 @@
         $("act-tipo").addEventListener("change", pintarActividad);
         $("r-pdf").addEventListener("click", bajarPdf);
         $("r-informe").addEventListener("click", informeFinalPdf);
+        vincular = window.MesaPareoVincular ? window.MesaPareoVincular.iniciar({
+            raiz: $("pareo-vincular"), sb, C, el, ensayo: () => ensayo, torneos: () => torneos,
+            eventos: () => [...new Set(torneos.map((t) => t.evento).filter((e) => marcas.get(e) !== "centroamericano"))],
+            alVincular: async () => { await cargarTorneos(); },
+        }) : null;
         await cargarTorneos();
         await cargarAsignaciones();
         await Promise.all([cargarAvisos(), cargarCopias(), cargarDrive()]);
         // Sin clave todavía: lo primero que hay que hacer es ponerla.
-        const hash = location.hash.replace("#", "");
-        abrirPanel(PANELES.includes(hash) ? hash : torneos.some((t) => t.sid_en_boveda) ? "ronda" : "claves");
+        // «#torneos» (desde la Mesa del árbitro: «Pareo Integral») abre la pestaña Torneos, con los de Pareo arriba.
+        const hash = location.hash.replace("#", "") === "torneos" ? "claves" : location.hash.replace("#", "");
+        abrirPanel(PANELES.includes(hash) ? hash : torneos.some(listo) ? "ronda" : "claves");
         setInterval(pulso, TIC_MS);
         setInterval(() => { if (rondaDeFaltan) pintarFaltan(rondaDeFaltan); }, 15000); // el tiempo de espera corre solo
     }

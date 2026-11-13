@@ -376,7 +376,7 @@
             id: "res-" + m.mesa, class: "cam-select", "data-mesa": String(m.mesa), "aria-label": "Resultado de la mesa " + m.mesa, disabled: ocupada,
             onchange: (e) => { elegido[m.mesa] = e.target.value; delete mensajes[m.mesa]; pintar(); const n = $("res-" + m.mesa); if (n) n.focus(); },
         }, el("option", { value: "", texto: "— elige el resultado —" }),
-            M.RESULTADOS.filter((r) => r.valor !== "0" && !(r.valor === "D" && m.valor === "0")).map((r) => el("option", { value: r.valor, texto: r.texto })));
+            M.RESULTADOS.filter((r) => r.valor !== "0" && !(r.valor === "D" && (m.valor === "0" || esPareo()))).map((r) => el("option", { value: r.valor, texto: r.texto })));
         sel.value = elegido[m.mesa] || "";
         const pendiente = elegido[m.mesa] != null && elegido[m.mesa] !== "" && elegido[m.mesa] !== m.valor;
         // Fair Play: la mesa elegida lleva un borde dorado que brilla y una banda que dice a quién retener (o que no aplica).
@@ -404,7 +404,8 @@
                 marcasJuntas),
             ...jugadores,
             rapido() || A ? resultadoRapido(m, sel, pendiente, ocupada, msg, A) : el("div", { class: "cam-resultado" },
-                el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
+                el("p", { class: "cam-resultado-actual" }, "En " + DONDE() + ": ", el("strong", { texto: M.textoResultado(m.valor) })),
+                lineaMandado(m),
                 el("div", { class: "cam-resultado-fila" }, sel, botonGuardar(m, pendiente, ocupada)),
                 // El «✓ Guardado» o el error ocupa siempre su renglón (reservado): al guardar no se mueve nada.
                 msg ? el("p", { class: (msg.ok ? "cam-guardado" : "cam-fallo") + " cam-resultado-msg", role: msg.ok ? "status" : "alert", texto: msg.texto }) : el("p", { class: "cam-resultado-msg", "aria-hidden": "true", texto: "\u00a0" })),
@@ -445,7 +446,8 @@
         const sinBoton = m.valor !== "0" && !RAPIDOS.some((r) => r.valor === m.valor);
         const textoElegido = pendiente ? (M.RESULTADOS.find((x) => x.valor === elegido[m.mesa]) || { texto: elegido[m.mesa] }).texto : "";
         return el("div", { class: "cam-resultado cam-resultado-rapido", "data-confirmar": confirmar ? "si" : null },
-            !fichaNueva || sinBoton ? el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })) : null,
+            !fichaNueva || sinBoton ? el("p", { class: "cam-resultado-actual" }, "En " + DONDE() + ": ", el("strong", { texto: M.textoResultado(m.valor) })) : null,
+            lineaMandado(m),
             el("div", { class: "cam-rapido-fila", role: "group", "aria-label": "Resultado de la mesa " + m.mesa + (confirmar ? ": elige y confirma con Guardar" : ": un toque y se guarda") }, ...botones),
             // Clásico: el «Guardar» queda siempre a la vista, debajo de los tres botones (apagado hasta que se elige algo distinto de lo guardado).
             confirmar ? el("div", { class: "cam-resultado-fila cam-confirmar" }, botonGuardar(m, pendiente, ocupada)) : null,
@@ -1147,7 +1149,7 @@
     function accionDeAlerta(a) {
         const V = window.CentroamericanoArbitroVivo;
         const sinResultado = (m) => m.valor === "0";
-        const guardarRes = (valor, motivo) => ({ id: "resultado", texto: "Guardar " + VALOR_RES[valor], real: "guarda " + VALOR_RES[valor] + " en chess-results después de que lo confirmes", puede: sinResultado,
+        const guardarRes = (valor, motivo) => ({ id: "resultado", texto: "Guardar " + VALOR_RES[valor], real: "guarda " + VALOR_RES[valor] + " en " + DONDE() + " después de que lo confirmes", puede: sinResultado,
             hacer: (m) => guardarDeTransmision(m, valor, motivo) });
         if (a.tipo === "ilegal" && a.color) return { id: "ilegal", texto: "Anotar la ilegal de las " + a.color, real: "anota la jugada ilegal de las " + a.color + " en la bitácora (con el aviso de los 2 minutos o de la partida perdida)", puede: () => true,
             hacer: (m) => ilegal(m, a.color, "Avisada por la transmisión: " + a.texto.replace(/ Mira la mesa:.*$/, "")) };
@@ -1558,6 +1560,10 @@
         const visibles = mesasVisibles();
         $("lista").replaceChildren(...visibles.map(tarjeta));
         $("sin-mesas").hidden = estado.mesas.length > 0;
+        // Con Pareo Integral, antes de emparejar la ronda 1 (ronda 0): las mesas aparecen solas al emparejar.
+        if (!$("sin-mesas").dataset.original) $("sin-mesas").dataset.original = $("sin-mesas").textContent;
+        $("sin-mesas").textContent = esPareo() && !estado.ronda ? "Todavía no hay ronda emparejada. Cuando el árbitro principal empareje en Pareo Integral, tus mesas aparecen aquí solas."
+            : esPareo() ? "Todavía no hay mesas tuyas en esta ronda. Cuando el árbitro principal empareje en Pareo Integral, toca «Actualizar»." : $("sin-mesas").dataset.original;
         pintarProgreso();
         pintarHermanas();
         pintarPresenciaResumen();
@@ -1677,7 +1683,7 @@
         pintarLeyenda(r === "blitz");
         pintarVista();
         $("d-arbitro").textContent = estado.arbitro;
-        $("d-ronda").textContent = "Ronda " + estado.ronda;
+        $("d-ronda").textContent = estado.ronda ? "Ronda " + estado.ronda : "Sin ronda emparejada";
         $("d-mesas").textContent = "Mesas " + estado.desde + " a " + estado.hasta;
         $("datos").hidden = false;
     }
@@ -1869,8 +1875,22 @@
 
     // ------------------------------------------------------------- leer
 
+    // La FUENTE del torneo (ver «La Mesa del árbitro con torneos de Pareo Integral»): con Pareo Integral lo que se guarda va al
+    // árbitro principal, que lo acepta en su Pareo; aquí queda «Mandado» hasta que aparece publicado. Y la cara de la página.
+    const esPareo = () => !!estado && estado.fuente === "pareo";
+    const DONDE = () => (esPareo() ? "Pareo Integral" : "chess-results");
+    const mandadoDe = (m) => (esPareo() && (estado.mandados || []).find((x) => x.mesa === m.mesa && x.valor !== m.valor)) || null;
+    const lineaMandado = (m) => { const x = mandadoDe(m); return x ? el("p", { class: "cam-resultado-actual", "data-mandado": x.valor, role: "status", texto: "⏳ Mandado (" + M.textoResultado(x.valor) + "): espera al árbitro principal." }) : null; };
+    function ponerMarca(d) {
+        if (d.marca === "ajedrez-integral") document.documentElement.setAttribute("data-marca", "ajedrez-integral");
+        else document.documentElement.removeAttribute("data-marca");
+        // Los horarios son los del Centroamericano (js/centroamericano-horario.js): en otro evento no se ofrecen.
+        $("horarios").hidden = d.marca === "ajedrez-integral";
+    }
+
     // Pone en pantalla lo que contestó «leer» (o la última lectura guardada en la tablet).
     function mostrar(d) {
+        ponerMarca(d);
         const cambioRonda = estado && estado.ronda !== d.ronda;
         if (cambioRonda) fairPlay = [];
         d.fair_play = fairPlay;
@@ -1968,14 +1988,23 @@
     // Lo que contestó «guardar»: lo que chess-results tiene de verdad (también cuando sale de la cola).
     function resultadoGuardado(m, d, antes, valor) {
         const r = d.resultados[0];
+        // Con Pareo Integral no queda puesto: va al árbitro principal (su Pareo lo acepta) y aquí se ve «Mandado» hasta que aparece.
+        if (r && r.ok && r.pendiente) {
+            delete elegido[m.mesa];
+            (estado.mandados = (estado.mandados || []).filter((x) => x.mesa !== m.mesa)).push({ mesa: m.mesa, valor, creado: d.leido_en });
+            mensajes[m.mesa] = { ok: true, texto: "✓ Mandado a las " + hora(d.leido_en) + ": lo acepta el árbitro principal en su Pareo Integral." + (d.registro_error ? " Ojo: no quedó en el registro; avisa a la organización." : "") };
+            const nombreDe = (v) => (M.RESULTADOS.find((x) => x.valor === v) || {}).bitacora || null;
+            (estado.anotaciones = estado.anotaciones || []).push({ id: "local-" + Date.now(), ocurrio: d.leido_en, mesa: m.mesa, color: null, jugador: m.blancas + " – " + m.negras, tipo: antes !== "0" ? "correccion" : "resultado", resultado: nombreDe(valor), anterior: antes !== "0" ? nombreDe(antes) : null, texto: "", articulo: "", enviado: false });
+            return;
+        }
         if (r && r.quedo != null) m.valor = r.quedo;
         if (r && r.ok) {
             delete elegido[m.mesa];
-            mensajes[m.mesa] = { ok: true, texto: "✓ Guardado en chess-results a las " + hora(d.leido_en) + (d.registro_error ? " Ojo: no quedó en el registro; avisa a la organización." : "") };
+            mensajes[m.mesa] = { ok: true, texto: "✓ Guardado en " + DONDE() + " a las " + hora(d.leido_en) + (d.registro_error ? " Ojo: no quedó en el registro; avisa a la organización." : "") };
             const nombreDe = (v) => (M.RESULTADOS.find((x) => x.valor === v) || {}).bitacora || null;
             (estado.anotaciones = estado.anotaciones || []).push({ id: "local-" + Date.now(), ocurrio: d.leido_en, mesa: m.mesa, color: null, jugador: m.blancas + " – " + m.negras, tipo: antes !== "0" ? "correccion" : "resultado", resultado: nombreDe(valor), anterior: antes !== "0" ? nombreDe(antes) : null, texto: "", articulo: "", enviado: true });
         } else {
-            mensajes[m.mesa] = { ok: false, texto: "✗ No quedó guardado: chess-results tiene «" + (r && r.quedo != null ? M.textoResultado(r.quedo) : "nada") + "». Intenta de nuevo." };
+            mensajes[m.mesa] = { ok: false, texto: r && r.error ? "✗ No se mandó: " + r.error : "✗ No quedó guardado: " + DONDE() + " tiene «" + (r && r.quedo != null ? M.textoResultado(r.quedo) : "nada") + "». Intenta de nuevo." };
         }
         for (const x of d.diferencias || []) { const o = estado.mesas.find((y) => y.mesa === x.mesa); if (o) o.valor = x.ahora; }
         if ((d.diferencias || []).length) avisar("Otra mesa cambió sin que la tocaras (" + d.diferencias.map((x) => x.mesa).join(", ") + "). Revisa chess-results.", true);
@@ -1985,7 +2014,7 @@
         const valor = elegido[m.mesa];
         if (!valor || valor === m.valor) return;
         if (m.valor !== "0") {
-            const sigue = await Avisos.confirmar("La mesa " + m.mesa + " ya tiene «" + M.textoResultado(m.valor) + "» en chess-results. ¿Cambiarlo a «" + M.textoResultado(valor) + "»?", { titulo: "Cambiar un resultado", aceptar: "Sí, cambiarlo" });
+            const sigue = await Avisos.confirmar("La mesa " + m.mesa + " ya tiene «" + M.textoResultado(m.valor) + "» en " + DONDE() + ". ¿Cambiarlo a «" + M.textoResultado(valor) + "»?", { titulo: "Cambiar un resultado", aceptar: "Sí, cambiarlo" });
             if (!sigue) { if (rapido()) { delete elegido[m.mesa]; pintar(); } return; }
         }
         const antes = m.valor;

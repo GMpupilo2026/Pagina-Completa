@@ -65,7 +65,7 @@ console.log("\n=== Una sola copia de webpush.ts ===");
 ok(fs.existsSync(path.join(RAIZ, "supabase/functions/_compartido/webpush.ts")) && !fs.existsSync(path.join(RAIZ, "supabase/functions/notificar/webpush.ts"))
   && !fs.existsSync(path.join(RAIZ, "supabase/functions/pareo-publicar/webpush.ts")), "vive en _compartido, y ninguna función tiene la suya");
 const armar = fs.readFileSync(path.join(RAIZ, "herramientas/funciones-armar.js"), "utf8");
-ok(/"pareo-publicar": \["marca-correo\.ts", "webpush\.ts"\]/.test(armar) && /"notificar": \["webpush\.ts"\]/.test(armar), "y funciones-armar.js la copia a las dos");
+ok(/"pareo-publicar": \[[^\]]*"webpush\.ts"[^\]]*\]/.test(armar) && /"notificar": \["webpush\.ts"\]/.test(armar), "y funciones-armar.js la copia a las dos");
 
 console.log("\n=== La base ===");
 const sql = fs.readFileSync(path.join(RAIZ, "supabase/migraciones/20261023220000_pareo_seguir_push.sql"), "utf8");
