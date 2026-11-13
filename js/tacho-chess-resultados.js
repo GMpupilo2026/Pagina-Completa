@@ -42,7 +42,7 @@
 
   const enlaceTorneo = (t, titulo) => {
     const a = document.createElement("a");
-    a.href = "torneos-pareo.html#t=" + encodeURIComponent(t.id);
+    a.href = "torneos-pareo.html?en-ventana=1#t=" + encodeURIComponent(t.id);
     a.dataset.ventana = titulo;
     return a;
   };

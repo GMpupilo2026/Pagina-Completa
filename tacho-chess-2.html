@@ -77,7 +77,7 @@
                     <p class="mt-5"><span class="cac-caja text-sm md:text-base">¡Inscripción gratuita!<br>De primer grado a undécimo año</span></p>
                 </div>
                 <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
-                    <img src="img/tacho-chess-2/mascota.png" width="450" height="755" alt="Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" class="u-logo">
+                    <img src="img/tacho-chess-2/mascota.png" width="450" height="751" alt="Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" class="u-logo">
                 </div>
             </div>
             <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
@@ -153,6 +153,22 @@
             </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
+                    <a href="#pareos" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">♟️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Pareos de la ronda</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La ronda que se juega en cada torneo, mesa por mesa: blancas, negras y el resultado.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los pareos →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#clasificacion" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">🏆</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Clasificaciones</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver las clasificaciones →</span>
+                    </a>
+                </li>
+                <li>
                     <a href="#inscribirme" id="ficha-inscribirme" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
                         <span class="cac-icono" aria-hidden="true">📝</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Inscribirme</span>
@@ -190,14 +206,6 @@
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el reglamento →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#clasificacion" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
-                        <span class="cac-icono" aria-hidden="true">🏆</span>
-                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Clasificación por nivel</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver la clasificación →</span>
                     </a>
                 </li>
                 <li>
@@ -240,7 +248,7 @@
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el contacto →</span>
                     </a>
                 </li>
-                <li>
+                <li class="col-span-2 lg:col-span-1">
                     <a href="https://www.google.com/maps/search/?api=1&amp;query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
                         <span class="cac-icono" aria-hidden="true">📍</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar</span>
@@ -250,7 +258,7 @@
                 </li>
             </ul>
             <a href="#inscribirme" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
-                <span class="u-despedida-logo" aria-hidden="true"><img src="img/tacho-chess-2/mascota.png" width="450" height="755" alt=""></span>
+                <span class="u-despedida-logo" aria-hidden="true"><img src="img/tacho-chess-2/mascota.png" width="450" height="751" alt=""></span>
                 <span class="cac-globo">
                     <span class="block font-extrabold text-lg sm:text-xl">¡Te esperamos, haz tu mejor jugada!</span>
                     <span class="block mt-1 text-sm sm:text-base">Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.</span>
@@ -407,6 +415,23 @@
             </div>
         </div>
     </dialog>
+    <!-- Solo el pareo de la ronda en juego de cada torneo (js/torneo-pareos.js), con los
+         mismos datos de Pareo Integral que el buscador. -->
+    <dialog id="pareos" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="pareos-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="pareos-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">♟️ </span>Pareos de la ronda</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Elige el torneo: sale la ronda que se está jugando, con la mesa de cada partida y el nivel de cada jugador.</p>
+            <label class="block text-sm font-bold mt-4">Torneo
+                <select id="pareos-torneo" class="cac-buscador-campo !mt-1"></select>
+            </label>
+            <div id="pareos-contenido" class="mt-4" aria-live="polite">
+                <p>Cargando…</p>
+            </div>
+        </div>
+    </dialog>
     <!-- Los resultados, en Pareo Integral. Solo se abre si la organización juega los
          niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
          por torneo (con uno solo, la ficha lleva directo a él). -->
@@ -546,6 +571,7 @@
     <script src="js/centroamericano-vivo.js"></script>
     <script src="js/centroamericano-tablas.js"></script>
     <script src="js/torneo-hoy.js"></script>
+    <script src="js/torneo-pareos.js"></script>
     <script src="js/tacho-chess-resultados.js"></script>
     <script src="js/avatar-profe-oscar.js"></script>
     <script src="js/tacho-chess-profe.js"></script>

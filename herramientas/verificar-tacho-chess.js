@@ -191,15 +191,15 @@ async function fichaResultados(nav, publicados) {
     }
     {
       const r = await fichaResultados(nav, [T1, FALSO, VIEJO, OTRO]);
-      ok("con un torneo: la ficha lleva a SU página de Pareo y se abre encima", r.f.tag === "A" && r.f.href === "torneos-pareo.html#t=" + T1.id && r.f.ventana && /Ver el torneo/.test(r.f.texto) && !/Pronto/.test(r.f.texto), JSON.stringify(r.f));
+      ok("con un torneo: la ficha lleva a SU página de Pareo y se abre encima", r.f.tag === "A" && r.f.href === "torneos-pareo.html?en-ventana=1#t=" + T1.id && r.f.ventana && /Ver el torneo/.test(r.f.texto) && !/Pronto/.test(r.f.texto), JSON.stringify(r.f));
       await r.p.click("#ficha-resultados");
       const marco = await r.p.waitForFunction(() => { const f = [...document.querySelectorAll("dialog[open] iframe")].find((x) => x.checkVisibility()); return f && f.src; }, null, { timeout: 5000 }).then((x) => x.jsonValue()).catch(() => "");
-      ok("con un torneo: tocarla abre el torneo encima, sin salir de la página", marco.includes("torneos-pareo.html#t=" + T1.id) && r.p.url().includes(PAGINA), marco);
+      ok("con un torneo: tocarla abre el torneo encima, sin salir de la página", marco.includes("torneos-pareo.html?en-ventana=1#t=" + T1.id) && r.p.url().includes(PAGINA), marco);
       await r.ctx.close();
     }
     {
       const r = await fichaResultados(nav, [T2, T1, FALSO]);
-      ok("con dos torneos (los niveles separados): la ficha abre la ventana con uno por torneo, en orden", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html#t=" + T1.id, "torneos-pareo.html#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
+      ok("con dos torneos (los niveles separados): la ficha abre la ventana con uno por torneo, en orden", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html?en-ventana=1#t=" + T1.id, "torneos-pareo.html?en-ventana=1#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
       await r.ctx.close();
     }
 
@@ -295,6 +295,14 @@ async function fichaResultados(nav, publicados) {
         cabeza: [...document.querySelectorAll("#clasificacion-contenido th[scope=col]")].map((t) => t.textContent) }));
       ok("la clasificación se elige por nivel, de primer grado en adelante, y sin la columna «FED» (vacía en un torneo de Costa Rica)",
         JSON.stringify(cl.niveles) === JSON.stringify(["Primer grado", "Segundo grado"]) && !cl.cabeza.includes("FED"), JSON.stringify(cl));
+      await r.p.keyboard.press("Escape");
+      await r.p.click('a.cac-ficha[href="#pareos"]');
+      await r.p.waitForTimeout(400);
+      const pa = await r.p.evaluate(() => ({ abierta: document.getElementById("pareos").open, estado: (document.querySelector("#pareos-contenido > p") || {}).textContent || "",
+        mesas: [...document.querySelectorAll("#pareos-contenido .cac-pareo-mesa")].map((li) => li.innerText.replace(/\s+/g, " ").trim()) }));
+      ok("«Pareos de la ronda» abre solo el pareo: cuántas van terminadas, sin el punto doble", pa.abierta && /^Ronda 2 de 7: 1 de 3 partidas terminadas\. Leído en Pareo Integral: .+ [ap]\. m\.$/.test(pa.estado) && !/\.\.$/.test(pa.estado), pa.estado);
+      ok("cada mesa: la de la sala, blancas y negras escritas con su nivel, y el resultado o «Se juega»; el bye dice que descansa",
+        pa.mesas.length === 4 && /^Mesa 3 BLANCAS Fer Seis Segundo grado NEGRAS Ana Uno Primer grado Se juega$/i.test(pa.mesas[0]) && /1 - 0$/.test(pa.mesas[1]) && /^Mesa 6 BLANCAS Eva Cinco Segundo grado Descansa: bye de un punto\. Bye$/i.test(pa.mesas[3]), JSON.stringify(pa.mesas));
       ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }

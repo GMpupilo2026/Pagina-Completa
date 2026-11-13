@@ -111,7 +111,7 @@
     const rondas = Number(d.rondasTotales) || t.rondas.length;
     const terminado = completas > 0 && completas >= rondas;
     return {
-      tnr: p.id, texto: p.nombre, url: "torneos-pareo.html#t=" + p.id, leido_en: new Date().toISOString(),
+      tnr: p.id, texto: p.nombre, url: "torneos-pareo.html?en-ventana=1#t=" + p.id, leido_en: new Date().toISOString(),
       ronda: completas, rondas, jugadores, pareo: terminado ? null : pareo, ...(terminado ? { terminado: true } : {}),
     };
   }

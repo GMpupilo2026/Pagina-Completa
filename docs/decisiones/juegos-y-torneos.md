@@ -15172,6 +15172,48 @@ bye, los puntos de las rondas completas, el podio por nivel, la clasificación
 por nivel sin «FED» y que un torneo de una organización sin sello no entre.
 Quitando el filtro del sello, saltan dos.
 
+### Los pareos de la ronda
+
+Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos
+únicamente y otra para las clasificaciones». En `tacho-chess-2.html` son las
+dos primeras fichas: «Pareos de la ronda» (`#pareos`) y «Clasificaciones»
+(`#clasificacion`, la de `js/centroamericano-tablas.js`).
+
+- **`js/torneo-pareos.js`** pinta la ventana `#pareos` con los mismos datos que
+  ya leyó el buscador (`window.CentroamericanoVivo`), sin pedir nada aparte: se
+  elige el torneo (se esconde el selector con uno solo) y sale su ronda en
+  juego, cuántas partidas van terminadas y cada mesa. Sirve en cualquier
+  página de torneo que lleve esa ventana.
+- **Una mesa por renglón, no una tabla**: en el celular la tabla de cuatro
+  columnas se cortaba (no se veía el resultado). Cada mesa es el número de la
+  sala, «Blancas» y «Negras» escritas (el color nunca va solo) con el nivel de
+  cada jugador, y a la derecha el resultado, «Se juega» o «Bye». Su estilo,
+  `.cac-pareo-*` en `css/centroamericano.css`.
+- La línea de arriba termina en la hora («… p. m.»): sin quitar el punto
+  doble decía «p. m..»; lo revisa el verificador.
+
+### Pareo abierto dentro de la página de un torneo
+
+Pedido del dueño el 13/11/2026, viendo la página pública de Pareo abierta
+encima de la del torneo: que ahí no salgan «Agregar a mi calendario»,
+«Reportar este torneo» ni «Ponerlo en tu página» (llevan afuera o no son para
+las familias). Con `?en-ventana=1` en la dirección, `js/torneos-pareo-pagina.js`
+no los pone, ni «← Todos los torneos» (que lleva a los torneos de otros);
+quedan «Compartir por WhatsApp» y «Copiar el enlace». Lo ponen los enlaces que
+abren Pareo desde la página del torneo (`js/tacho-chess-resultados.js` y el
+`url` de cada torneo en `js/torneo-pareo-datos.js`). La página de Pareo abierta
+sola no cambia. Lo revisa `verificar-pareo-organizador.js`.
+
+### Tacho, con el zapato entero
+
+El dueño vio que a Tacho le faltaba parte del zapato izquierdo: en el afiche
+ese zapato queda sobre la franja azul de «GIMNASIO» y los cuadros blancos, y el
+recorte automático (rembg) lo dejó medio transparente. Se recuperó siguiendo
+su contorno negro (todo lo que, dentro de una caja alrededor del zapato, un
+relleno desde el borde no alcanza sin cruzar el contorno) y se quitaron los
+restos azules de abajo. El dibujo quedó de 450 × 751 (antes 755): así dice en
+la configuración y en `PORTADAS`.
+
 ### Una ficha de Torneos que todavía no se abre
 
 Pedido del dueño: el Metropolitano «no dejar ingresar aún, dejarlo como

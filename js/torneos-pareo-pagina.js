@@ -586,6 +586,12 @@
       el("p", { class: C.nota + " w-full", texto: "Tu calendario lo vuelve a leer solo: los torneos nuevos aparecen sin hacer nada. En Google Calendar: «Otros calendarios», «Desde URL», y pega la dirección copiada." }));
   }
   const terminado = (t) => t.rondasTotales > 0 && rondasCompletas(t) >= t.rondasTotales;
+  // Abierta encima de la página de un torneo (?en-ventana=1, la pone
+  // js/tacho-chess-resultados.js): sin lo que saca de esa página o no es
+  // para las familias —agregar al calendario, reportar, ponerlo en otra
+  // página— ni «Todos los torneos», que lleva a los torneos de otros. Lo
+  // pidió el dueño el 13/11/2026. Ver «Pareo abierto dentro de la página de un torneo».
+  const EN_VENTANA = new URLSearchParams(location.search).get("en-ventana") === "1";
   function acciones(fila, t) {
     const boton = C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2";
     const estado = el("span", { id: "tp-compartir-estado", class: "sr-only", role: "status" });
@@ -599,6 +605,7 @@
         el("span", { "aria-hidden": "true", texto: "💬" }), "Compartir por WhatsApp", el("span", { class: "sr-only", texto: " (se abre en otra pestaña)" })),
       copiar,
     ];
+    if (EN_VENTANA) return el("div", {}, el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado));
     if ((t.fechaInicio || fila.fecha) && !terminado(t)) {
       const cal = el("button", { type: "button", id: "tp-calendario", class: boton }, el("span", { "aria-hidden": "true", texto: "📅" }), "Agregar a mi calendario");
       cal.addEventListener("click", () => agregarAlCalendario(fila, t));
@@ -676,7 +683,7 @@
     const partes = [t.evento && t.evento.nombre, t.ciudad, [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")].filter(Boolean);
     const datos = [t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "Eliminación directa" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
     return el("div", { class: "mb-6" },
-      el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
+      EN_VENTANA ? null : el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
       el("h1", { id: "tp-titulo", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", tabindex: "-1", texto: fila.nombre }),
       partes.length ? el("p", { class: "text-brand-600 dark:text-brand-300 mt-1", texto: partes.join(" · ") }) : null,
       el("p", { class: C.nota + " mt-1", texto: datos.join(" · ") }),

@@ -112,7 +112,7 @@ css/universidades.css), con el azul y el rojo del afiche y Tacho, su
 mascota. Todo sale del afiche, salvo el ritmo y las rondas, que dio el
 dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
 2» en docs/decisiones/juegos-y-torneos.md.`,
-  logo: { src: "img/tacho-chess-2/mascota.png", ancho: 450, alto: 755, alt: "Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" },
+  logo: { src: "img/tacho-chess-2/mascota.png", ancho: 450, alto: 751, alt: "Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" },
   aliados: [{ src: "img/tacho-chess-2/logo-liceo.png", ancho: 276, alto: 276, alt: "Liceo Anastasio Alfaro, San José, 1952" }],
   portada: {
     pildora: "El Liceo Anastasio Alfaro te invita al",
@@ -141,7 +141,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   },
   // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
   // resultados, porque lee lo que esos pintan; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
+  scripts: ["js/torneo-pareos.js", "js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",
@@ -153,6 +153,10 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     final: "Los mejores de cada nivel, de primer grado a undécimo año, reciben su premio.",
   },
   fichas: [
+    // Lo que más se busca el día del torneo, primero (lo pidió el dueño: una
+    // ficha solo para los pareos y otra para las clasificaciones).
+    { href: "#pareos", color: "rojo", icono: "♟️", titulo: "Pareos de la ronda", texto: "La ronda que se juega en cada torneo, mesa por mesa: blancas, negras y el resultado.", accion: "Ver los pareos" },
+    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.", accion: "Ver las clasificaciones" },
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
@@ -160,7 +164,6 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
     // «Pronto» hasta que el torneo esté publicado en Pareo Integral: entonces
     // js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
-    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificación por nivel", texto: "Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.", accion: "Ver la clasificación" },
     { href: "#medallero", color: "naranja", icono: "🥇", titulo: "El podio de cada nivel", texto: "El 1.º, 2.º y 3.º lugar de cada nivel, con sus puntos.", accion: "Ver el podio" },
     { href: "#proyector", color: "azul", icono: "📺", titulo: "Para proyectar", texto: "Los pareos y la clasificación en letra grande, para una pantalla en el gimnasio.", accion: "Abrir en grande" },
     { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Los torneos en Pareo Integral", texto: "Cada torneo completo en Pareo Integral: los emparejamientos de cada ronda y la clasificación general." },
@@ -262,6 +265,18 @@ ${desempates}
         ${h3}Lo que no esté en las bases</h3>
         <p class="${texto}">Se resuelve con las Leyes del Ajedrez de la FIDE vigentes. Participar en el torneo es aceptar las bases.</p>
     </div>
+</div>
+`,
+      },
+      {
+        id: "pareos", icono: "♟️", titulo: "Pareos de la ronda", ancho: "max-w-4xl",
+        comentario: "Solo el pareo de la ronda en juego de cada torneo (js/torneo-pareos.js), con los\nmismos datos de Pareo Integral que el buscador.",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Elige el torneo: sale la ronda que se está jugando, con la mesa de cada partida y el nivel de cada jugador.</p>
+<label class="block text-sm font-bold mt-4">Torneo
+    <select id="pareos-torneo" class="cac-buscador-campo !mt-1"></select>
+</label>
+<div id="pareos-contenido" class="mt-4" aria-live="polite">
+    <p>Cargando…</p>
 </div>
 `,
       },
