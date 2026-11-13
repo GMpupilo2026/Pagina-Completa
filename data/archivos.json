@@ -8183,7 +8183,7 @@
     "ruta": "documentos/tacho-chess-2/bases-tacho-chess-2.pdf",
     "titulo": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
     "tipo": "otro",
-    "kb": 64
+    "kb": 67
    },
    {
     "ruta": "instrucciones-adaptadas.pdf",
@@ -19099,7 +19099,7 @@
   ]
  },
  "imagenes": {
-  "total": 1243,
+  "total": 1244,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26752,7 +26752,13 @@
       "ruta": "img/tacho-chess-2/mascota.png",
       "titulo": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
       "tipo": "otro",
-      "kb": 73
+      "kb": 76
+     },
+     {
+      "ruta": "img/tacho-chess-2/sala.jpg",
+      "titulo": "Tacho Chess 2: la sala de juego, el Gimnasio del Centro del Liceo Anastasio Alfaro con las mesas listas",
+      "tipo": "otro",
+      "kb": 149
      }
     ]
    },

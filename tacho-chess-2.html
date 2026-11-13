@@ -248,7 +248,15 @@
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el contacto →</span>
                     </a>
                 </li>
-                <li class="col-span-2 lg:col-span-1">
+                <li>
+                    <a href="#sala" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">🏟️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">La sala de juego</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La foto del gimnasio y qué mesas son de cada torneo, para saber hacia dónde caminar.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver la sala →</span>
+                    </a>
+                </li>
+                <li>
                     <a href="https://www.google.com/maps/search/?api=1&amp;query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
                         <span class="cac-icono" aria-hidden="true">📍</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar</span>
@@ -432,6 +440,22 @@
             </div>
         </div>
     </dialog>
+    <!-- La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,
+         que arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí). -->
+    <dialog id="sala" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="sala-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="sala-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🏟️ </span>La sala de juego</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+            <img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
+            <h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
+            <div id="sala-mesas" aria-live="polite">
+                <p>Cargando las mesas…</p>
+            </div>
+        </div>
+    </dialog>
     <!-- Los resultados, en Pareo Integral. Solo se abre si la organización juega los
          niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
          por torneo (con uno solo, la ficha lleva directo a él). -->
@@ -572,6 +596,7 @@
     <script src="js/centroamericano-tablas.js"></script>
     <script src="js/torneo-hoy.js"></script>
     <script src="js/torneo-pareos.js"></script>
+    <script src="js/torneo-sala.js"></script>
     <script src="js/tacho-chess-resultados.js"></script>
     <script src="js/avatar-profe-oscar.js"></script>
     <script src="js/tacho-chess-profe.js"></script>

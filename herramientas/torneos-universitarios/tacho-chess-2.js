@@ -141,7 +141,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   },
   // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
   // resultados, porque lee lo que esos pintan; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/torneo-pareos.js", "js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
+  scripts: ["js/torneo-pareos.js", "js/torneo-sala.js", "js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",
@@ -169,6 +169,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Los torneos en Pareo Integral", texto: "Cada torneo completo en Pareo Integral: los emparejamientos de cada ronda y la clasificación general." },
     { href: "#ademas", color: "verde", icono: "🎉", titulo: "Además disfruta de", texto: "Feria de comerciantes de la comunidad, open house del liceo y venta de comida.", accion: "Ver qué hay" },
     { href: "#contacto", color: "rojo", icono: "📞", titulo: "Contacta a la organización", texto: "Adriana, de la organización: llámala o escríbele por WhatsApp.", accion: "Ver el contacto" },
+    { href: "#sala", color: "azul", icono: "🏟️", titulo: "La sala de juego", texto: "La foto del gimnasio y qué mesas son de cada torneo, para saber hacia dónde caminar.", accion: "Ver la sala" },
     { href: "https://www.google.com/maps/search/?api=1&query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).", accion: "Abrir el mapa" },
   ],
   despedida: { href: "#inscribirme", titulo: "¡Te esperamos, haz tu mejor jugada!", texto: "Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.", accion: "Inscribirme" },
@@ -277,6 +278,17 @@ ${desempates}
 </label>
 <div id="pareos-contenido" class="mt-4" aria-live="polite">
     <p>Cargando…</p>
+</div>
+`,
+      },
+      {
+        id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
+        comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+<img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
+<h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
+<div id="sala-mesas" aria-live="polite">
+    <p>Cargando las mesas…</p>
 </div>
 `,
       },

@@ -205,6 +205,14 @@ async function fichaResultados(nav, publicados) {
     {
       const r = await fichaResultados(nav, [T2_REPETIDO, T2, T1, FALSO]);
       ok("con dos torneos (uno publicado dos veces): la ficha abre la ventana con uno por torneo, sin el repetido y en el orden de los niveles", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html?en-ventana=1#t=" + T1.id, "torneos-pareo.html?en-ventana=1#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
+      // «La sala de juego» con dos torneos que empiezan los dos en la mesa 1 (la
+      // sala todavía no se numeró seguida en Pareo): sin números, que confundirían.
+      await r.p.click('a.cac-ficha[href="#sala"]');
+      await r.p.waitForTimeout(500);
+      const sala = await r.p.evaluate(() => ({ texto: document.getElementById("sala-mesas").innerText.replace(/\s+/g, " "), numeros: document.querySelectorAll("#sala-mesas .cac-sala-mesas").length,
+        foto: (() => { const i = document.querySelector("#sala img.cac-sala-foto"); return !!(i && i.alt && i.getAttribute("src") === "img/tacho-chess-2/sala.jpg"); })() }));
+      ok("«La sala de juego» trae la foto del gimnasio, con su texto alternativo", sala.foto);
+      ok("con dos torneos en la mesa 1 (sin numerar seguido), no da números de mesa: avisa y dice dónde ver la mesa", sala.numeros === 0 && /aparecen aquí cuando la organización termine de acomodar la sala/.test(sala.texto) && /Primer grado/.test(sala.texto) && /Sétimo año/.test(sala.texto), JSON.stringify(sala));
       await r.ctx.close();
     }
 
@@ -308,6 +316,12 @@ async function fichaResultados(nav, publicados) {
       ok("«Pareos de la ronda» abre solo el pareo: cuántas van terminadas, sin el punto doble", pa.abierta && /^Ronda 2 de 7: 1 de 3 partidas terminadas\. Leído en Pareo Integral: .+ [ap]\. m\.$/.test(pa.estado) && !/\.\.$/.test(pa.estado), pa.estado);
       ok("cada mesa: la de la sala, blancas y negras escritas con su nivel, y el resultado o «Se juega»; el bye dice que descansa",
         pa.mesas.length === 4 && /^Mesa 3 BLANCAS Fer Seis Segundo grado NEGRAS Ana Uno Primer grado Se juega$/i.test(pa.mesas[0]) && /1 - 0$/.test(pa.mesas[1]) && /^Mesa 6 BLANCAS Eva Cinco Segundo grado Descansa: bye de un punto\. Bye$/i.test(pa.mesas[3]), JSON.stringify(pa.mesas));
+      await r.p.keyboard.press("Escape");
+      await r.p.click('a.cac-ficha[href="#sala"]');
+      await r.p.waitForTimeout(400);
+      const mesasSala = await r.p.evaluate(() => [...document.querySelectorAll("#sala-mesas .cac-sala-torneo")].map((li) => li.innerText.replace(/\s+/g, " ").trim()));
+      ok("«La sala de juego»: las mesas del torneo salen de Pareo (desde su primera mesa, una por cada dos jugadores) con sus niveles",
+        JSON.stringify(mesasSala) === JSON.stringify(["Mesas 3 a 6 Tacho Chess 2 · Primaria Primer grado · Segundo grado 7 jugadores"]), JSON.stringify(mesasSala));
       ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }

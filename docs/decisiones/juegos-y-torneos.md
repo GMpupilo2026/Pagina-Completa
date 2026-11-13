@@ -15189,6 +15189,27 @@ los mismos 25 jugadores. Pareo pone al día solo el segundo (el que guarda en
 - `js/tacho-chess-resultados.js` usa esa misma búsqueda (`TorneoPareoDatos.buscar`),
   así la ficha de Pareo y los pareos muestran los mismos torneos.
 
+### La sala de juego
+
+Pedido del dueño el 13/11/2026, con la foto del gimnasio armado: «sí, ambas»
+(la foto en la página y el plano de las mesas). La ficha «La sala de juego»
+abre `#sala`: la foto (`img/tacho-chess-2/sala.jpg`, achicada a 1200 de ancho
+y sin sus datos EXIF; las personas salen de lejos y de espaldas) y «Las mesas
+de cada torneo», que arma `js/torneo-sala.js`.
+
+- **Las mesas no se escriben**: cada torneo trae en `mesas` su primera mesa de
+  la sala y la última que usa (una por cada dos jugadores), que pone
+  `js/torneo-pareo-datos.js` con la cuenta de Pareo (`mesaInicial` y
+  `V.mesasQueNecesita`). Si el árbitro numera la sala seguida en Pareo, el
+  plano cambia solo y coincide con los pareos («Mesa 12»).
+- **Sin números mientras chocan**: el 13/11 los cuatro torneos empezaban en la
+  mesa 1 (todavía sin «Numerar seguido» en Pareo). Cuatro «Mesas 1 a…»
+  mandaban a cuatro lugares distintos con el mismo número, así que mientras
+  dos torneos usen los mismos números no se dan: sale cada torneo con sus
+  niveles y un aviso de que la mesa sale en «Pareos de la ronda» y en «Busca
+  a tu jugador». No es un plano dibujado: dónde queda cada columna de mesas
+  en el gimnasio no lo dijo nadie y no se inventa.
+
 ### Los pareos de la ronda
 
 Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos

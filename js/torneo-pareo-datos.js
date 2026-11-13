@@ -134,6 +134,10 @@
     const terminado = completas > 0 && completas >= rondas;
     return {
       tnr: p.id, texto: p.nombre, url: "torneos-pareo.html?en-ventana=1#t=" + p.id, leido_en: new Date().toISOString(),
+      // Las mesas de la sala que usa este torneo: desde su primera mesa, una
+      // por cada dos jugadores (como V.mesasQueNecesita de Pareo). Para el
+      // plano de la sala (js/torneo-sala.js).
+      mesas: { desde: primera, hasta: primera + Math.max(1, Math.ceil(t.jugadores.length / 2)) - 1 },
       ronda: completas, rondas, jugadores, pareo: terminado ? null : pareo, ...(terminado ? { terminado: true } : {}),
     };
   }
