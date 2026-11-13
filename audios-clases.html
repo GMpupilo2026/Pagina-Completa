@@ -29,7 +29,7 @@
 
             <section id="subir" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8" aria-labelledby="subir-titulo">
                 <h2 id="subir-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Subir audios</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Elige el MP3 de cada clase y, si la tienes, su transcripción (el .txt con el mismo nombre). La fecha y la hora salen del nombre del archivo, como lo deja Meet: «Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.mp3». Cada audio puede pesar hasta 50 MB. La guía de estudio de una clase que ya está subida (resumen, temas, preguntas y partidas) va en un .json con el mismo nombre; las partidas llegan sin publicar, para que las revises.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Elige el MP3 de cada clase y, si la tienes, su transcripción (el .txt con el mismo nombre). La fecha y la hora salen del nombre del archivo, como lo deja Meet: «Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.mp3». Cada audio puede pesar hasta 50 MB. La guía de estudio de una clase que ya está subida (resumen, temas, preguntas y partidas) va en un .json con el mismo nombre; las partidas llegan sin publicar, para que las revises. Y la transcripción de Whisper con sus minutos (el .json que deja <code>herramientas/whisper-minutos.py</code>, también con el mismo nombre) cambia los minutos aproximados de esa clase por los exactos.</p>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="subir-academia" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Para quién</label>
@@ -46,6 +46,7 @@
 
             <p id="anuncio" class="sr-only" aria-live="polite" aria-atomic="true"></p>
             <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+            <div id="repaso"></div>
             <h2 id="lista-titulo" class="sr-only">Las clases</h2>
             <div id="lista" class="space-y-5" aria-labelledby="lista-titulo"></div>
         </div>
@@ -58,6 +59,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/blind-notation.js"></script>
+    <script src="js/comandos-tablero.js"></script>
     <script src="js/audios-clase-guia.js"></script>
     <script src="js/audios-clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>

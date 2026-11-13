@@ -1,0 +1,26 @@
+{
+ "fecha": "2026-09-01",
+ "posiciones": [
+  {
+   "seg": 1659,
+   "titulo": "Cuando las casillas conjugadas se rompen",
+   "fen": "8/2k5/p1P5/P1K5/8/8/8/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "El negro tiene que cubrir a la vez las conjugadas de César 5 y de David 6. Busca cómo dejarlo sin poder cubrir las dos; la triangulación te ayuda a pasarle el turno."
+  },
+  {
+   "seg": 2133,
+   "titulo": "Oposición lateral: una sola jugada gana",
+   "fen": "8/8/2p5/k1p1K3/p1P5/P7/8/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Tienes seis jugadas de rey y solo una gana. Descarta las que le permiten al rey negro tomar la oposición desde Bela 6."
+  },
+  {
+   "seg": 3547,
+   "titulo": "La misma estructura, ahora defiendes con negras",
+   "fen": "8/8/1kp5/2p1K3/p1P5/P7/8/8 b - - 0 1",
+   "objetivo": "tablas",
+   "nota": "Con negras hay que aprender a eliminar jugadas: revisa una por una cuáles pierden la oposición y quédate con las que la mantienen."
+  }
+ ]
+}

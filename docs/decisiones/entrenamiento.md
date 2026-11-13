@@ -4800,3 +4800,10 @@ Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,
 editar a mano una medida y la calibración sin el paso de gradiente.
 
+
+## Finales contra la máquina con las posiciones de las clases
+
+`entreno/finales.html?banco=clases` juega las posiciones que el profe armó en
+las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
+en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
+casa, de tarea» en `docs/decisiones/accesibilidad.md`.

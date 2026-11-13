@@ -1402,3 +1402,181 @@ en la base con sus puntos, la ya contestada, la marca guardada y borrada) y
 como profe (la partida sin revisar, avisada y publicada), y la subida de una
 guía (lo que se guarda, que la partida imposible no entre y que ninguna llegue
 publicada).
+
+## Las guías armadas sin los minutos de Whisper
+
+Las 19 clases de ADAES se subieron con su transcripción en `.txt`: texto
+corrido, sin el segundo de cada frase. El dueño pidió las guías ya, sin esperar
+a volver a transcribir, y dejar lista la segunda pasada con los minutos
+exactos. Por eso hay **minutos aproximados** (`audios_clase.minutos_aproximados`,
+migración `20261112181030_audios_clase_repaso_espaciado`):
+
+- `segmentos` se armó en la base desde la transcripción: cada renglón (un
+  segmento de Whisper) recibe el segundo proporcional a cuánto texto va antes
+  (`duración × caracteres antes / caracteres totales`). Los silencios con
+  «no», «no», «no» se dejan a propósito: también es tiempo que pasó. El error
+  esperable es de uno o dos minutos, y la página lo avisa en «Temas» y en
+  «Buscar» («Los minutos son aproximados…»), y en los conceptos.
+- Cada tema de la guía guarda, además de su título, **su concepto** (para el
+  índice de todas las clases) y **su cita**: lo que se dijo justo ahí, copiado
+  literal de la transcripción. La cita es lo que permite la segunda pasada.
+- **La segunda pasada**: `herramientas/whisper-minutos.py`, en la computadora
+  donde están las grabaciones, deja un `.json` de Whisper por MP3 (si Whisper
+  ya lo había dejado al lado del `.txt`, lo copia sin transcribir). Esos
+  `.json` se suben en «Subir audios» como una guía; la página los reconoce por
+  `segments` (`AudiosGuia.deWhisper`), cambia el texto y los minutos,
+  **vuelve a encontrar el minuto de cada tema por su cita**
+  (`AudiosGuia.reanclar`: ventanas de cuatro frases a no más de 10 minutos o
+  un 20 % de la clase del minuto viejo, con al menos 6 de cada 10 palabras de
+  la cita; si no la halla, el tema se queda donde estaba) y mueve cada partida
+  lo mismo que el tema encontrado más cercano. No toca el resumen, las
+  preguntas ni las partidas, y pone `minutos_aproximados = false`.
+- Las guías las escribió Claude leyendo cada transcripción entera, con
+  `herramientas/audios-guia-sql.js` como revisor antes de cargar: el mismo
+  `leerGuia` de la página, más que ningún minuto caiga fuera de la clase, que
+  cada tema traiga concepto y cita, que ninguna partida se corte (si chess.js
+  no acepta una jugada, se rechaza la guía entera, no se corta callada), sin
+  voseo (`verificar-voseo.py`) y sin «horquilla». El SQL que escribe **no
+  lleva `delete`**: la herramienta de Supabase pide confirmar cada `delete` y
+  una carga desatendida se queda esperando. Reemplaza por número
+  (`on conflict`).
+- **Las partidas, casi ninguna**: en estas clases el profe dicta posiciones
+  sueltas (finales, ejercicios) o revisa partidas de la propia selección, que
+  no tienen PGN publicado. Una partida entra solo si se identificó y su PGN
+  real coincide con lo dictado; si no, no se inventa.
+
+## El repaso de hoy
+
+«Repaso de hoy» va arriba de la lista de `audios-clases.html` cuando hay algo
+que contestar: **la misma pregunta de repaso vuelve a los 2 días, luego a los 7
+y luego a los 21** (contados desde la vuelta anterior; si se falla, vuelve al
+día siguiente), y las preguntas todavía sin contestar de las clases de las
+últimas dos semanas entran como «nuevas». Lo pidió el dueño para que lo de una
+clase no se olvide a la semana.
+
+- Lo decide la base, no la pantalla: `repaso_de_hoy()` arma la lista (hasta
+  15, primero las vueltas) con `interno.vuelta_que_toca()`, que mira la
+  primera respuesta (`audios_clase_repasos`, vuelta 0) y las vueltas
+  (`audios_clase_vueltas`). Los días se cuentan en hora de Costa Rica.
+- Una nueva se contesta con `responder_repaso()` (paga 2 la primera vez, como
+  en la guía); una vuelta con `responder_vuelta()`, que **rechaza la que
+  todavía no toca** (si no, se podrían hacer las tres vueltas el mismo día y
+  cobrarlas), paga **1 Punto Ajedrez** por acierto (referencia
+  `repaso:<audio>:<n>:v<vuelta>`, una vez) y dice cuándo vuelve. La respuesta
+  buena sigue sin poder leerse desde afuera.
+- Contestar en la guía de la clase también arranca las vueltas, y la página lo
+  dice («Vuelve dentro de dos días…»).
+
+## Los conceptos de todas las clases
+
+`audios-clases.html?conceptos` («Conceptos de todas las clases», enlace arriba
+de la lista) junta los temas de todas las guías por su concepto
+(`AudiosGuia.conceptos`: sin mirar mayúsculas ni tildes, por orden
+alfabético, cada concepto de la clase más vieja a la más reciente). Cada
+concepto es un `<h3>` y cada tema un enlace a `?clase=<id>&t=<segundo>`, que
+abre la clase **lista en ese minuto** (sin el «sigue donde quedó», que lo
+pisaría) y lo dice. Sirve para estudiar un tema a lo largo del curso: la
+oposición se vio en tres clases distintas. Los conceptos salen de una lista
+cerrada que se les dio a quienes escribieron las guías, para que el mismo
+concepto no aparezca con dos nombres.
+
+## Los ejercicios de las posiciones de la clase
+
+En las clases de ADAES el profe dicta posiciones pieza por pieza («blancas: rey
+Félix 4, peones Gustavo 4…») y explica la jugada buena. El dueño pidió poder
+resolverlas después. Van en la guía, en «Ejercicios de la clase»
+(`audios_clase_ejercicios`, migración `20261112182804_audios_clase_ejercicios`):
+el enunciado, la posición en palabras (`BlindNotation.positionSentence`),
+«Escucharlo en la clase» y un campo para **escribir la jugada** («Cf3», «Txe6»,
+«e4»), que entiende `ComandosTablero.jugadaEscrita` entre las legales de la
+posición, igual que en todo Entrenamiento.
+
+- **Ninguna posición se inventa, y aquí el riesgo es real**: la posición sale
+  de lo que Whisper oyó, y una pieza mal oída da otra posición, legal y todo.
+  `herramientas/audios-ejercicios-revisar.js` deja entrar un ejercicio solo si
+  chess.js acepta el FEN (con los dos reyes: el `validate_fen` de chess.js
+  0.10.3 no los pide), la jugada que explicó el profe es legal y **Stockfish
+  (profundidad 22) la da como la única**: su primera opción, con la segunda al
+  menos 1,5 peones por debajo, o la única que da mate, o la única que gana. Si
+  la posición quedó mal dictada, casi nunca la jugada del profe sale única: se
+  rechaza sola. De 35 posiciones encontradas en las 19 clases pasaron 24. Las
+  que cayeron: jugadas que no eran únicas (Kg3 y Kh3 dan lo mismo), una donde
+  Stockfish halló un mate más rápido que la jugada del profe, y posiciones que
+  la transcripción no dejaba armar con certeza. Varias se corrigieron con lo
+  que se jugó después («Ana por Bela 3» decía que el peón estaba en a2).
+- Aun así **llegan sin publicar** (`revisado = false`, la RLS se los esconde a
+  los alumnos): el profe ve «Para revisar: la buena es…»
+  (`ejercicios_para_revisar()`, solo a quien puede poner audios) y los publica.
+- **La jugada buena no se puede leer desde afuera** (permiso por columna, como
+  las preguntas). `responder_ejercicio()` compara la jugada en SAN sin `+#!?`,
+  guarda el primer intento (`audios_clase_ejercicio_intentos`), paga **2 Puntos
+  Ajedrez solo si se acierta al primer intento** (referencia `ejercicio:<id>`)
+  y devuelve la buena con su explicación. Una jugada que no se entiende o no es
+  legal no llega a la base: la página lo dice y deja volver a escribir.
+- Las posiciones de partidas reales (la de Turín 2006 del 3 de julio) salen del
+  PGN verificado con chess.js en el ply del momento, no del dictado.
+
+## Las posiciones de las clases, para practicarlas contra el motor
+
+El dueño pidió todas las posiciones que el profe **armó** en las clases de ADAES
+(finales, medio juego, tareas; **no** las partidas completas que se siguieron
+jugada a jugada) para usarlas como práctica contra el motor. Van a sus
+«Archivos» (`archivos_pgn`, carpeta «ADAES · posiciones de las clases»): en la
+clase en vivo cada una trae «Practicar» (cada alumno la juega contra el motor,
+`crearPractica()`), «Preguntar» y «Cargar». También quedan en un PGN para bajar.
+
+- Las arma `herramientas/audios-posiciones-pgn.js`, una partida PGN por
+  posición (`[SetUp "1"]`, `[FEN …]`, sin jugadas, con un comentario: quién
+  juega, qué se busca y qué enseñó el profe). Como con los ejercicios, la
+  posición sale del dictado y Whisper confunde piezas, así que entra solo si
+  chess.js la acepta (un rey por bando, sin jaque al que no juega, la partida
+  no terminada) y **Stockfish confirma lo que el profe dijo de ella**: «ganar»
+  al menos +1,5 para el que juega, «tablas» entre −1 y +1, «perder» −1,5 o
+  menos; «jugar» (medio juego sin promesa) solo pide que sea legal. A
+  diferencia de los ejercicios, aquí no hace falta una única jugada buena:
+  para jugarla contra el motor no importa.
+- **Un PGN sin jugadas ahora se puede subir** si trae `[FEN]`: es una posición
+  armada (`parsePgnChunk` de `js/partidas.js` lo rechazaba siempre, con razón
+  para las partidas). La lista y el visor dicen «Posición» en vez de
+  «0 jugadas».
+
+### Y para jugarlas en casa, de tarea
+
+El dueño pidió además poder mandarlas de tarea, para que el alumno las juegue
+solo contra el motor. Ya existía la página para eso, «Finales contra la
+máquina» (`entreno/finales.html`: contra Stockfish a toda su fuerza, con
+tablero por teclado, cuadro de comandos y voz, y juzga ganar o salvar), así
+que no se hizo otra: **con `?banco=clases` carga las posiciones de las clases**
+(`entreno/data/finales-clases.json`, que arma
+`herramientas/finales-clases-generar.js` desde
+`herramientas/datos/posiciones-clases/`).
+
+- Entran las de «ganar» y «tablas» (30); la de «jugar» no tiene resultado que
+  juzgar y queda solo en Archivos. Los umbrales son los del dictado (+1,5 y
+  ±1), no los de los finales de libro (+4 y ±0,5): son las posiciones como el
+  profe las enseñó. `verificar-finales.js` revisa los dos bancos, cada uno
+  con los suyos, y que los ids no choquen (comparten lo logrado).
+- **Su propia actividad**, `finales_clases` (migración
+  `20261112201131_training_progress_finales_clases`), con la posición en
+  `detail.theme`: así Tareas («Posiciones de las clases» en
+  `js/material-plataforma.js`) manda una posición puntual —cada una es un
+  recorte de `metas.json`— y no se cuenta junto con los finales de libro.
+  Solo meta de cantidad: los minutos de la página se apuntan como `finales`.
+- Sin pista escrita: la pista va directo a «¿Qué jugaría la máquina?».
+- Se llega desde Tareas, desde la portada de Entrenamiento y con «Jugar las
+  posiciones contra el motor» en `audios-clases.html`.
+- **También en la clase en vivo**: Entrenamientos → «🏫 Posiciones de las
+  clases», un grupo por día con el más reciente arriba, y en cada posición
+  «🤖 Que lo jueguen contra la máquina» (la práctica de la clase, con el reloj
+  elegido en Practicar). Ver «Las posiciones de las clases, en la clase» en
+  clase-en-vivo.md.
+- **Un entrenamiento del día también entra por aquí.** El 12/11 el profe pidió
+  uno armado (3 de ventaja de al menos 2 puntos, 5 que se ganan por oposición,
+  5 que se empatan por oposición y los mates de dama, de torre y de alfil y
+  caballo, 3 posiciones de cada uno): va como
+  `herramientas/datos/posiciones-clases/2026-11-12.json`, escrito a mano, con
+  `origen` diciendo que no sale de una transcripción, y pasa por el mismo
+  generador y los mismos umbrales. Las de oposición no se eligieron a ojo:
+  salen de la tabla exacta de rey y peón contra rey (`herramientas/lib/kpk.js`)
+  con una sola jugada buena —la que toma la oposición— y todas las demás
+  pierden el resultado (o lo dejan escapar), y Stockfish lo confirma.

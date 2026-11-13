@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- Generada por herramientas/torneo-universitario.js desde
+     herramientas/torneos-universitarios/tacho-chess-2.js: no se edita a mano. -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro | Ajedrez Integral</title>
+    <meta name="description" content="Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro; 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.">
+    <link rel="canonical" href="https://ajedrez-integral.com/tacho-chess-2">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro">
+    <meta property="og:description" content="Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro; 5 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.">
+    <meta property="og:url" content="https://ajedrez-integral.com/tacho-chess-2">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/centroamericano.css">
+    <link rel="stylesheet" href="css/universidades.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --></head>
+<body class="cac cac-u tacho font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="#fichas" class="hover:text-accent-400 transition-colors">Fichas</a></li>
+                    <li><a href="#inscribirme" class="hover:text-accent-400 transition-colors">Inscribirme</a></li>
+                    <li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="#fichas" class="block py-2 hover:text-accent-400">Fichas</a></li>
+                <li><a href="#inscribirme" class="block py-2 hover:text-accent-400">Inscribirme</a></li>
+                <li><a href="#calendario" class="block py-2 hover:text-accent-400">Calendario</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+    <!-- La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
+         Alfaro: la misma que la del Centroamericano (css/centroamericano.css y
+         css/universidades.css), con el azul y el rojo del afiche y Tacho, su
+         mascota. Todo sale del afiche, salvo el ritmo y las rondas, que dio el
+         dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
+         2» en docs/decisiones/juegos-y-torneos.md. -->
+    <section class="cac-portada">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
+            <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
+                <div class="text-center md:text-left">
+                    <p><span class="cac-pildora text-base md:text-lg">El Liceo Anastasio Alfaro te invita al</span></p>
+                    <h1 class="cac-titulo text-3xl sm:text-4xl md:text-5xl mt-4">Torneo Intereducativo<span class="block text-2xl sm:text-3xl md:text-4xl mt-2">Tacho Chess 2</span></h1>
+                    <p class="mt-5"><span class="cac-caja text-sm md:text-base">¡Inscripción gratuita!<br>De primer grado a undécimo año</span></p>
+                </div>
+                <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
+                    <img src="img/tacho-chess-2/mascota.png" width="450" height="755" alt="Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" class="u-logo">
+                </div>
+            </div>
+            <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
+                <div class="cac-dato"><dt><span aria-hidden="true">📅 </span>Fecha</dt><dd class="font-bold text-lg">Sábado 14 de noviembre de 2026</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">🕣 </span>Hora</dt><dd class="font-bold text-lg">A partir de las 8:30 a.m.</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">📍 </span>Sede</dt><dd class="font-bold text-lg">Gimnasio del Centro, Liceo Anastasio Alfaro</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- Quién organiza (el afiche) y quién arbitra (lo dio el dueño). -->
+    <section class="cac-organiza" aria-label="Quién organiza">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm">
+            <img src="img/tacho-chess-2/logo-liceo.png" width="276" height="276" alt="Liceo Anastasio Alfaro, San José, 1952" class="u-aliado">
+            <p><strong class="font-extrabold uppercase tracking-wide">Organiza</strong> Liceo Anastasio Alfaro (San José, 1952)</p>
+            <p><strong class="font-extrabold">Árbitro principal:</strong> FA Jean Carlo Quesada Arauz</p>
+            <p><strong class="font-extrabold">Ritmo:</strong> 5 rondas a 10 minutos + 2 segundos</p>
+        </div>
+    </section>
+
+    <!-- «Hoy en el torneo»: lo arma js/torneo-hoy.js con las horas del
+         calendario (data-inicio de cada fila de #calendario, hora de Costa
+         Rica): la cuenta regresiva antes, lo que se juega ahora y lo que
+         sigue durante, y el cierre después. Sin JavaScript queda lo de abajo,
+         que es cierto siempre. -->
+    <section id="hoy" class="pt-8" aria-labelledby="hoy-etiqueta">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cac-hoy">
+                <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">El torneo</h2>
+                <p id="hoy-principal" class="cac-hoy-principal">Sábado 14 de noviembre de 2026</p>
+                <p id="hoy-detalle" class="cac-hoy-detalle">La llegada es a las 8:30 a.m. y la ronda 1 se juega a las 9:00 a.m., hora de Costa Rica, en el Gimnasio del Centro del Liceo Anastasio Alfaro.</p>
+                <!-- La cuenta regresiva a la próxima ronda: los números cambian
+                     cada segundo y no se leen; el texto para el lector de
+                     pantalla cambia cada minuto. -->
+                <div id="hoy-reloj" class="cac-hoy-reloj" hidden>
+                    <p class="cac-hoy-reloj-etiqueta" data-reloj-etiqueta></p>
+                    <div class="cac-hoy-reloj-cifras" data-reloj-cifras aria-hidden="true"></div>
+                    <p class="sr-only" data-reloj-texto></p>
+                </div>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#064ca7]">Ver el calendario completo →</a>
+                    <a href="#inscribirme" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#064ca7]"><span aria-hidden="true">📝 </span>Inscribirme gratis →</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+            <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página.</p>
+            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+                <li>
+                    <a href="#inscribirme" id="ficha-inscribirme" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">📝</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Inscribirme</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Inscribirme →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="documentos/tacho-chess-2/bases-tacho-chess-2.pdf" id="ficha-bases" target="_blank" rel="noopener" data-ventana="Bases de Tacho Chess 2" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">📄</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Bases del torneo</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el PDF →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#calendario" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">🗓️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Calendario de rondas</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La hora de cada una de las cinco rondas y de la premiación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el calendario →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#premios" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">🏆</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Niveles y premios</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los niveles →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#reglamento" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">📋</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el reglamento →</span>
+                    </a>
+                </li>
+                <li>
+                    <div id="ficha-resultados" tabindex="0" aria-disabled="true" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">♟️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">En Pareo Integral: los emparejamientos de cada ronda, los resultados y la clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparece cuando el torneo se publique en Pareo Integral</span></span>
+                    </div>
+                </li>
+                <li>
+                    <a href="#ademas" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">🎉</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Además disfruta de</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Feria de comerciantes de la comunidad, open house del liceo y venta de comida.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver qué hay →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#contacto" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">📞</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Contacta a la organización</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Adriana, de la organización: llámala o escríbele por WhatsApp.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el contacto →</span>
+                    </a>
+                </li>
+                <li class="col-span-2 lg:col-span-1">
+                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                        <span class="cac-icono" aria-hidden="true">📍</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el mapa →</span>
+                    </a>
+                </li>
+            </ul>
+            <a href="#inscribirme" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#064ca7]">
+                <span class="u-despedida-logo" aria-hidden="true"><img src="img/tacho-chess-2/mascota.png" width="450" height="755" alt=""></span>
+                <span class="cac-globo">
+                    <span class="block font-extrabold text-lg sm:text-xl">¡Te esperamos, haz tu mejor jugada!</span>
+                    <span class="block mt-1 text-sm sm:text-base">Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.</span>
+                    <span class="block mt-2 text-sm font-bold cac-accion">Inscribirme →</span>
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <!-- La inscripción: el formulario es de la organización (Google Forms), el del
+         código QR del afiche. Se abre encima con js/ventana-enlace.js; la página no
+         guarda nada. -->
+    <dialog id="inscribirme" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="inscribirme-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="inscribirme-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📝 </span>Inscribirme</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <div class="mt-6 grid gap-5">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Es gratis</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">La inscripción no cuesta nada. Se hace con el formulario en línea de la organización del Liceo Anastasio Alfaro: es el mismo del código QR del afiche.</p>
+                    <p class="mt-4"><a href="https://forms.gle/bLTnu979f2aj7kUUA" target="_blank" rel="noopener" data-ventana="Inscripción a Tacho Chess 2" class="tacho-boton">Abrir el formulario de inscripción</a></p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Quién puede jugar</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Estudiantes de centros educativos, de primer grado a undécimo año. Se premia a los mejores de cada nivel.</p>
+                </div>
+            </div>
+            <p class="mt-4 text-sm">El formulario es de la organización: lo que se escribe ahí lo recibe el liceo, no Ajedrez Integral (ver la <a href="privacidad.html" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">política de privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>).</p>
+        </div>
+    </dialog>
+    <!-- Los niveles que se premian, como los dice el afiche: «de primer grado a
+         undécimo año». -->
+    <dialog id="premios" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="premios-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="premios-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🏆 </span>Niveles y premios</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Se premia a los mejores de cada nivel. Son once niveles:</p>
+            <div class="mt-6 grid sm:grid-cols-2 gap-5">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Primaria</h3>
+                    <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                        <li>Primer grado</li>
+                        <li>Segundo grado</li>
+                        <li>Tercer grado</li>
+                        <li>Cuarto grado</li>
+                        <li>Quinto grado</li>
+                        <li>Sexto grado</li>
+                    </ul>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Secundaria</h3>
+                    <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                        <li>Sétimo año</li>
+                        <li>Octavo año</li>
+                        <li>Noveno año</li>
+                        <li>Décimo año</li>
+                        <li>Undécimo año</li>
+                    </ul>
+                </div>
+            </div>
+            <p class="mt-4 text-sm">La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.</p>
+        </div>
+    </dialog>
+    <!-- El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de
+         Costa Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del
+         horario de las bases (BasesTorneo.horario), el mismo del PDF. -->
+    <dialog id="calendario" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="calendario-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="calendario-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🗓️ </span>Calendario</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+            <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
+                <table class="w-full text-sm">
+                    <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>
+                    <thead class="bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white">
+                        <tr><th scope="col" class="text-left px-4 py-3">Actividad</th><th scope="col" class="text-left px-4 py-3">Día</th><th scope="col" class="text-left px-4 py-3">Hora</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-100 dark:divide-brand-800">
+                        <tr data-inicio="2026-11-14T08:30" data-minutos="30"><th scope="row" class="text-left font-semibold px-4 py-2">Llegada y confirmación</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">8:30 a. m.</td></tr>
+                        <tr data-inicio="2026-11-14T09:00" data-minutos="30" data-ronda="1" data-primera-ronda><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 1</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">9:00 a. m.</td></tr>
+                        <tr data-inicio="2026-11-14T09:30" data-minutos="30" data-ronda="2"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 2</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">9:30 a. m. (aprox.)</td></tr>
+                        <tr data-inicio="2026-11-14T10:00" data-minutos="30" data-ronda="3"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 3</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">10:00 a. m. (aprox.)</td></tr>
+                        <tr data-inicio="2026-11-14T10:30" data-minutos="30" data-ronda="4"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 4</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">10:30 a. m. (aprox.)</td></tr>
+                        <tr data-inicio="2026-11-14T11:00" data-minutos="30" data-ronda="5"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 5</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">11:00 a. m. (aprox.)</td></tr>
+                        <tr data-inicio="2026-11-14T11:30" data-minutos="60"><th scope="row" class="text-left font-semibold px-4 py-2">Premiación</th><td class="px-4 py-2">Sábado 14 de noviembre</td><td class="px-4 py-2">11:30 a. m. (aprox.)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="mt-4 text-sm">Cada partida dura como mucho unos 25 minutos: 10 minutos por jugador, más 2 segundos por cada jugada.</p>
+        </div>
+    </dialog>
+    <!-- Lo esencial de las bases (el PDF sale de los mismos datos). -->
+    <dialog id="reglamento" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="reglamento-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="reglamento-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📋 </span>Lo esencial del reglamento</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <div class="mt-6 grid sm:grid-cols-2 gap-5">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Sistema y ritmo</h3>
+                    <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                        <li>Sistema suizo a 5 rondas, con el Sistema Holandés de la FIDE.</li>
+                        <li>10 minutos por jugador para toda la partida, con 2 segundos de incremento por jugada desde la primera: ajedrez rápido (Apéndice A de las Leyes del Ajedrez).</li>
+                        <li>Árbitro principal: FA Jean Carlo Quesada Arauz.</li>
+                        <li>Tolerancia de 10 minutos desde la hora de inicio de la ronda.</li>
+                        <li>Ganada, 1 punto; tablas, ½; perdida, 0. El bye del emparejamiento vale 1 punto.</li>
+                    </ul>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Desempates, en orden</h3>
+                    <ol class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-decimal pl-5">
+                        <li>Buchholz sin el peor</li>
+                        <li>Buchholz</li>
+                        <li>Sonneborn-Berger</li>
+                        <li>Encuentro directo</li>
+                        <li>Rondas ganadas</li>
+                    </ol>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Resultados</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral: la ficha «Resultados» de esta página los abre.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Celulares</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Durante la partida, el celular va completamente apagado y guardado en el bolso (Leyes del Ajedrez, 11.3.2). Quien lo tenga encendido pierde la partida.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Premiación</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white">Lo que no esté en las bases</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Se resuelve con las Leyes del Ajedrez de la FIDE vigentes. Participar en el torneo es aceptar las bases.</p>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!-- Los resultados, en Pareo Integral. Solo se abre si la organización juega los
+         niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
+         por torneo (con uno solo, la ficha lleva directo a él). -->
+    <dialog id="resultados" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="resultados-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="resultados-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">♟️ </span>Resultados</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p id="resultados-estado" class="text-brand-600 dark:text-brand-300 mt-2">Los resultados se publican en Pareo Integral cuando empieza el torneo.</p>
+            <ul id="resultados-lista" class="mt-4 grid gap-3"></ul>
+        </div>
+    </dialog>
+    <!-- El contacto de la organización: Adriana (lo dio el dueño). Sin foto, sus
+         iniciales; WhatsApp y el teléfono se van afuera (no se dejan enmarcar). -->
+    <dialog id="contacto" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="contacto-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="contacto-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📞 </span>Contacta a la organización</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">¿Tienes alguna pregunta sobre el torneo o la inscripción? Llama o escribe por WhatsApp.</p>
+            <div class="mt-6 flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6 max-w-sm mx-auto">
+                <span class="tacho-iniciales" aria-hidden="true">A</span>
+                <h3 class="mt-4 font-bold text-lg text-brand-800 dark:text-white">Adriana</h3>
+                <p class="tacho-cargo text-sm font-semibold uppercase tracking-wide">Organización</p>
+                <p class="mt-3 text-sm text-brand-600 dark:text-brand-300"><a href="tel:+50689122033" class="tacho-enlace font-semibold underline underline-offset-2 hover:no-underline rounded">+506 8912-2033</a></p>
+                <a href="https://wa.me/50689122033" target="_blank" rel="noopener" class="tacho-boton mt-4 w-full">WhatsApp<span class="sr-only"> de Adriana (se abre en otra pestaña)</span></a>
+            </div>
+        </div>
+    </dialog>
+    <!-- Lo que el afiche anuncia además del torneo. -->
+    <dialog id="ademas" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="ademas-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="ademas-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🎉 </span>Además disfruta de</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <div class="mt-6 grid sm:grid-cols-3 gap-5">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏪 </span>Feria de comerciantes de la comunidad</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Apoyemos lo nuestro.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🚪 </span>Open house</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Conoce nuestro centro educativo.</p>
+                </div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
+                    <h3 class="font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🍴 </span>Venta de comida</h3>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Deliciosas opciones para todos.</p>
+                </div>
+            </div>
+            <p class="mt-4 text-sm font-semibold">Estrategia · Disciplina · Respeto · Pasión · Comunidad</p>
+        </div>
+    </dialog>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Tacho Chess 2</h3><ul class="space-y-2 text-sm"><li><a href="documentos/tacho-chess-2/bases-tacho-chess-2.pdf" target="_blank" rel="noopener" data-ventana="Bases de Tacho Chess 2" class="hover:text-accent-400 transition-colors">Bases del torneo</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#reglamento" class="hover:text-accent-400 transition-colors">Reglamento</a></li><li><a href="#inscribirme" class="hover:text-accent-400 transition-colors">Inscribirme</a></li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/ventana-enlace.js"></script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tacho-chess.js"></script>
+    <script src="js/torneo-hoy.js"></script>
+    <script src="js/tacho-chess-resultados.js"></script>
+    <script src="js/avatar-profe-oscar.js"></script>
+    <script src="js/tacho-chess-profe.js"></script>
+</body>
+</html>
+
+<!-- rev bfb5bbb0d2d82f9f -->

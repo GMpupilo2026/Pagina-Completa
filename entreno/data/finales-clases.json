@@ -1,0 +1,840 @@
+{
+ "aguantar": 25,
+ "profundidad": 22,
+ "ganaDesde": 150,
+ "tablasHasta": 100,
+ "finales": [
+  {
+   "id": "clase-0710-1",
+   "titulo": "10/07 · Alfiles del mismo color con un peón de más",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "3k4/8/4Kp2/5P2/1B1b4/8/8/8 w - - 0 1",
+   "idea": "Las negras van a perder el peón de f6, pero importa cómo te lo ganas: de una forma es tablas y de otra hay chances de ganar. Antes de capturar, piensa dónde quieres tener tu rey.",
+   "pista": null,
+   "motor": {
+    "cp": 411
+   },
+   "clase": {
+    "fecha": "2026-07-10",
+    "seg": 371
+   }
+  },
+  {
+   "id": "clase-0710-2",
+   "titulo": "10/07 · Defender el final de alfiles con el rey delante",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "3k4/4B3/4Kp2/5P2/3b4/8/8/8 b - - 1 1",
+   "idea": "Te van a ganar el peón, pero con el rey bien colocado y sin cambiar los alfiles la partida no se pierde: con el peón pasado de la mitad del tablero, cambiar alfiles es perder.",
+   "pista": null,
+   "motor": {
+    "cp": -35
+   },
+   "clase": {
+    "fecha": "2026-07-10",
+    "seg": 848
+   }
+  },
+  {
+   "id": "clase-0710-3",
+   "titulo": "10/07 · Cuidar las dos diagonales hacia la coronación",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "4k3/8/4KB2/5P2/3b4/8/8/8 b - - 0 2",
+   "idea": "No te comas el alfil. Como no sabes por cuál diagonal va a intentar el rival sacarte de la casilla de coronación, coloca tu alfil donde pueda llegar a las dos.",
+   "pista": null,
+   "motor": {
+    "cp": -37
+   },
+   "clase": {
+    "fecha": "2026-07-10",
+    "seg": 1312
+   }
+  },
+  {
+   "id": "clase-0716-1",
+   "titulo": "16/07 · Dos peones contra uno: la oposición",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "6k1/8/6p1/8/5PPK/8/8/8 w - - 0 1",
+   "idea": "Avanzar el rey de una vez choca con la oposición y lleva a tablas. Busca un camino más paciente para el rey y guarda las jugadas de peón para cuando hagan falta.",
+   "pista": null,
+   "motor": {
+    "cp": 707
+   },
+   "clase": {
+    "fecha": "2026-07-16",
+    "seg": 196
+   }
+  },
+  {
+   "id": "clase-0721-1",
+   "titulo": "21/07 · Rey y peón contra torre: salvar las tablas",
+   "meta": "tablas",
+   "alumno": "w",
+   "fen": "8/8/8/2P5/3K2k1/8/7r/8 w - - 0 1",
+   "idea": "Tu rey tiene dos funciones: no alejarse del peón y, sobre todo, no dejar pasar al rey rival. Controlar al rey contrario vale más que correr a coronar.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-07-21",
+    "seg": 47
+   }
+  },
+  {
+   "id": "clase-0807-1",
+   "titulo": "07/08 · Final de peones: oposición y el peón que viene",
+   "meta": "ganar",
+   "alumno": "b",
+   "fen": "8/4p2p/2K5/7p/1k6/6P1/1P6/8 b - - 0 1",
+   "idea": "Gana la oposición y no dejes entrar al rey blanco. No hace falta correr por el peón de vela, y entre dos caminos iguales elige el que además frena al rey rival.",
+   "pista": null,
+   "motor": {
+    "cp": 678
+   },
+   "clase": {
+    "fecha": "2026-08-07",
+    "seg": 19
+   }
+  },
+  {
+   "id": "clase-0807-2",
+   "titulo": "07/08 · Dos peones contra uno, con el rey lejos",
+   "meta": "ganar",
+   "alumno": "b",
+   "fen": "5K2/1p6/8/5k2/1p6/8/P7/8 b - - 0 1",
+   "idea": "Acerca tu rey a los peones dominando al rey blanco. Uno de los peones habrá que entregarlo, pero solo en el momento justo.",
+   "pista": null,
+   "motor": {
+    "cp": 3571
+   },
+   "clase": {
+    "fecha": "2026-08-07",
+    "seg": 1263
+   }
+  },
+  {
+   "id": "clase-0818-1",
+   "titulo": "18/08 · Rey y peón contra rey y peón: la oposición",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/5p2/8/8/1k2K3/8/5P2/8 w - - 0 1",
+   "idea": "Cuando solo hay reyes y peones, la oposición es poder. Fíjate en cómo cortarle al rey negro el camino hacia tu peón sin dejar tu peón a la deriva.",
+   "pista": null,
+   "motor": {
+    "cp": 3576
+   },
+   "clase": {
+    "fecha": "2026-08-18",
+    "seg": 0
+   }
+  },
+  {
+   "id": "clase-0818-2",
+   "titulo": "18/08 · Torre contra peón peligroso: salvar las tablas",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "5K2/3R3P/7r/4p3/8/3Pk3/8/8 b - - 0 1",
+   "idea": "Las blancas amenazan rey Gustavo 7 y cualquier jugada de rey es perder el tiempo. Piensa cuándo conviene entregar la torre y cómo llega tu rey con el peón de Eva.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-08-18",
+    "seg": 572
+   }
+  },
+  {
+   "id": "clase-0818-3",
+   "titulo": "18/08 · Torre contra peones: el rey sin tapar a su torre",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/RK3p1p/6p1/8/6P1/3pkP2/7P/8 w - - 0 1",
+   "idea": "Primero se mueve el rey y la torre espera. La torre detiene el peón desde atrás, el rey camina sin estorbarle y el plan para ganar es el peón de Héctor.",
+   "pista": null,
+   "motor": {
+    "cp": 474
+   },
+   "clase": {
+    "fecha": "2026-08-18",
+    "seg": 1092
+   }
+  },
+  {
+   "id": "clase-0821-1",
+   "titulo": "21/08 · Peón de más contra peón lejano de Ana",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/1p2k1p1/1P6/p6P/6P1/8/4PK2/8 w - - 0 1",
+   "idea": "Cualquier jugada que no sea de rey pierde por el peón de Ana. Busca la jugada de rey que defiende sin estorbar a tus peones y deja al rival sin jugadas buenas.",
+   "pista": null,
+   "motor": {
+    "cp": 549
+   },
+   "clase": {
+    "fecha": "2026-08-21",
+    "seg": 0
+   }
+  },
+  {
+   "id": "clase-0821-2",
+   "titulo": "21/08 · Dos peones ligados contra un peón lejano",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/7p/8/Pk6/8/8/1P6/7K w - - 0 1",
+   "idea": "Los peones ligados se defienden solos: si el rey se come el de atrás, el de adelante corona. Ten paciencia: tu rey va por el peón negro y después vuelve.",
+   "pista": null,
+   "motor": {
+    "cp": 719
+   },
+   "clase": {
+    "fecha": "2026-08-21",
+    "seg": 1492
+   }
+  },
+  {
+   "id": "clase-0821-3",
+   "titulo": "21/08 · Peones a una casilla de distancia: la carnada",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/p7/6k1/8/5P2/8/7P/K7 w - - 0 1",
+   "idea": "A una casilla de distancia y en la misma fila, los peones se defienden solos. No los muevas sin necesidad mientras tu rey va por el peón de Ana.",
+   "pista": null,
+   "motor": {
+    "cp": 622
+   },
+   "clase": {
+    "fecha": "2026-08-21",
+    "seg": 1721
+   }
+  },
+  {
+   "id": "clase-0821-4",
+   "titulo": "21/08 · Peones a dos casillas de distancia: hay que traer al rey",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/2k5/8/P2P4/8/8/7K w - - 0 1",
+   "idea": "A dos casillas de distancia los peones no se defienden solos. Trae tu rey, y usa un peón como carnada solo cuando el rey negro ataque.",
+   "pista": null,
+   "motor": {
+    "cp": 3510
+   },
+   "clase": {
+    "fecha": "2026-08-21",
+    "seg": 3708
+   }
+  },
+  {
+   "id": "clase-0821-5",
+   "titulo": "21/08 · Tarea: peones ligados contra tres peones",
+   "meta": "tablas",
+   "alumno": "w",
+   "fen": "8/7k/p3p1pP/6P1/8/2K5/8/8 w - - 0 1",
+   "idea": "La tarea que dejó el profe: juegan blancas y empatan. Mezcla dos ideas de la clase, los peones ligados de las blancas contra los peones negros.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-08-21",
+    "seg": 5033
+   }
+  },
+  {
+   "id": "clase-0901-1",
+   "titulo": "01/09 · Cuando las casillas conjugadas se rompen",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/2k5/p1P5/P1K5/8/8/8/8 w - - 0 1",
+   "idea": "El negro tiene que cubrir a la vez las conjugadas de César 5 y de David 6. Busca cómo dejarlo sin poder cubrir las dos; la triangulación te ayuda a pasarle el turno.",
+   "pista": null,
+   "motor": {
+    "cp": 3592
+   },
+   "clase": {
+    "fecha": "2026-09-01",
+    "seg": 1659
+   }
+  },
+  {
+   "id": "clase-0901-2",
+   "titulo": "01/09 · Oposición lateral: una sola jugada gana",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/2p5/k1p1K3/p1P5/P7/8/8 w - - 0 1",
+   "idea": "Tienes seis jugadas de rey y solo una gana. Descarta las que le permiten al rey negro tomar la oposición desde Bela 6.",
+   "pista": null,
+   "motor": {
+    "cp": 615
+   },
+   "clase": {
+    "fecha": "2026-09-01",
+    "seg": 2133
+   }
+  },
+  {
+   "id": "clase-0901-3",
+   "titulo": "01/09 · La misma estructura, ahora defiendes con negras",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "8/8/1kp5/2p1K3/p1P5/P7/8/8 b - - 0 1",
+   "idea": "Con negras hay que aprender a eliminar jugadas: revisa una por una cuáles pierden la oposición y quédate con las que la mantienen.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-09-01",
+    "seg": 3547
+   }
+  },
+  {
+   "id": "clase-0904-1",
+   "titulo": "04/09 · Final de peones: el rey blanco puede entrar",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/1k6/p7/p2p2K1/P2P4/8/8/8 w - - 0 1",
+   "idea": "Antes de calcular, descarta las jugadas de rey que pierden la oposición y las que van en contra del avance. Cuando te comas un peón, fíjate si el rey rival llega a la casilla conjugada.",
+   "pista": null,
+   "motor": {
+    "cp": 453
+   },
+   "clase": {
+    "fecha": "2026-09-04",
+    "seg": 141
+   }
+  },
+  {
+   "id": "clase-0904-2",
+   "titulo": "04/09 · Dama contra peón de alfil, con el rey cerca",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "6Q1/8/8/8/K7/8/1kp5/8 w - - 0 1",
+   "idea": "Con peón de alfil el rey defensor se esconde en la esquina y comerse el peón puede ser ahogado. Pero con tu rey cerca puedes dejar que corone, porque tienes mate.",
+   "pista": null,
+   "motor": {
+    "mate": 7
+   },
+   "clase": {
+    "fecha": "2026-09-04",
+    "seg": 2042
+   }
+  },
+  {
+   "id": "clase-0904-3",
+   "titulo": "04/09 · Tarea: dama contra peones de a5 y h2",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "7Q/8/8/p7/K7/8/6kp/8 w - - 0 1",
+   "idea": "Fíjate en qué cambia el peón negro de a5: sin él, el rey negro se mete en h1 y queda ahogado; con él, ya no hay ahogado.",
+   "pista": null,
+   "motor": {
+    "cp": 3484
+   },
+   "clase": {
+    "fecha": "2026-09-04",
+    "seg": 3689
+   }
+  },
+  {
+   "id": "clase-0908-1",
+   "titulo": "08/09 · Dama contra peón de torre: sin el peón de a no se gana",
+   "meta": "tablas",
+   "alumno": "w",
+   "fen": "7Q/8/8/8/K7/8/6kp/8 w - - 0 1",
+   "idea": "Cada vez que la dama se acerca, el rey negro se mete en h1 y, si traes tu rey, queda ahogado. La dama sola no da mate.",
+   "pista": null,
+   "motor": {
+    "cp": 5
+   },
+   "clase": {
+    "fecha": "2026-09-08",
+    "seg": 889
+   }
+  },
+  {
+   "id": "clase-0908-2",
+   "titulo": "08/09 · Dama contra dos peones, con el rey blanco lejos",
+   "meta": "tablas",
+   "alumno": "w",
+   "fen": "K7/1Q6/8/8/7p/8/6p1/7k w - - 0 1",
+   "idea": "Con el rey blanco tan lejos, el negro se salva con trucos de ahogado. Juega las blancas y comprueba cómo se defiende el negro.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-09-08",
+    "seg": 1367
+   }
+  },
+  {
+   "id": "clase-0908-3",
+   "titulo": "08/09 · Dama contra dos peones, con el rey blanco cerca",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/1Q6/5K2/8/7p/8/6p1/7k w - - 0 1",
+   "idea": "Es casi la misma posición, pero con tu rey cerca aparecen los mates. Usa la dama para que el rey negro no pueda subir.",
+   "pista": null,
+   "motor": {
+    "cp": 3481
+   },
+   "clase": {
+    "fecha": "2026-09-08",
+    "seg": 1848
+   }
+  },
+  {
+   "id": "clase-0908-4",
+   "titulo": "08/09 · Dama contra dama: rey activo contra rey escondido",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/8/8/k2K4/2Q5/q7 w - - 0 1",
+   "idea": "El material es igual, pero el rey negro está arrinconado. Con jaques en zigzag no lo dejas salir, y acercas tu rey solo cuando la dama negra ya no tiene jaques útiles.",
+   "pista": null,
+   "motor": {
+    "mate": 12
+   },
+   "clase": {
+    "fecha": "2026-09-08",
+    "seg": 2327
+   }
+  },
+  {
+   "id": "clase-0918-1",
+   "titulo": "18/09 · Desequilibrios: dos alfiles y caballo contra dama",
+   "meta": "ganar",
+   "alumno": "b",
+   "fen": "8/5pkp/4bb2/6p1/3p1nP1/2p4P/2Q2P2/5BK1 b - - 0 1",
+   "idea": "Con un punto menos, las piezas negras coordinadas valen más que la dama sola. Busca la posición ideal, atacar c1 en buenas condiciones, y no regales tus peones de la fila g.",
+   "pista": null,
+   "motor": {
+    "cp": 356
+   },
+   "clase": {
+    "fecha": "2026-09-18",
+    "seg": 82
+   }
+  },
+  {
+   "id": "clase-0922-1",
+   "titulo": "22/09 · Desequilibrios: torre y caballo contra dama",
+   "meta": "tablas",
+   "alumno": "w",
+   "fen": "8/R7/6k1/7p/5P2/3qP1P1/4NK2/8 w - - 0 1",
+   "idea": "Si la torre blanca llega a e5 arma una fortaleza: la dama sola no da mate. Con negras es muy fácil perder por un ataque doble de caballo; pon tus piezas en casillas de colores distintos.",
+   "pista": null,
+   "motor": {
+    "cp": 36
+   },
+   "clase": {
+    "fecha": "2026-09-22",
+    "seg": 1361
+   }
+  },
+  {
+   "id": "clase-1103-1",
+   "titulo": "03/11 · Piezas negras pasivas: ¿es hora de atacar?",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "3b2k1/ppp2rpp/3pR3/3P4/2P2B2/8/PP4PP/5RK1 w - - 0 1",
+   "idea": "Las negras tienen sus piezas metidas en la octava y la séptima fila. Busca cómo aprovechar esa pasividad con un tema de atracción y descubierta, sin dejarlas activarse.",
+   "pista": null,
+   "motor": {
+    "cp": 646
+   },
+   "clase": {
+    "fecha": "2026-11-03",
+    "seg": 40
+   }
+  },
+  {
+   "id": "clase-1103-2",
+   "titulo": "03/11 · Dama por dos torres y el golpe en g5",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "3r1rk1/pp3pp1/1n2q2p/2p1P3/7P/5N2/PP1Q1PP1/1K1R3R w - - 0 1",
+   "idea": "El profe recomendó cambiar la dama por las dos torres en la columna d. Fíjate en lo que puede hacer después el caballo con la torre en la columna h.",
+   "pista": null,
+   "motor": {
+    "cp": 473
+   },
+   "clase": {
+    "fecha": "2026-11-03",
+    "seg": 4454
+   }
+  },
+  {
+   "id": "clase-1106-1",
+   "titulo": "06/11 · El sacrificio griego",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "r1bq1rk1/pp2nppp/1bn1p3/3pP3/3P4/2PB1N2/P4PPP/RNBQK2R w KQ - 0 1",
+   "idea": "Se cumplen todas las condiciones del sacrificio en h7: diagonal libre, g5 defendida, peón en e5 y la dama negra a un salto de e6. Juega el ataque sin desesperarte y trae las piezas que falten.",
+   "pista": null,
+   "motor": {
+    "cp": 527
+   },
+   "clase": {
+    "fecha": "2026-11-06",
+    "seg": 731
+   }
+  },
+  {
+   "id": "clase-1112-1",
+   "titulo": "12/11 · Ventaja 1: un alfil de más",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/5kpp/5p2/8/8/8/3B1PPP/6K1 w - - 0 1",
+   "idea": "Tienes una pieza de más (3 puntos). Acerca tu rey al centro, no cambies tus peones sin necesidad y usa el alfil para ganar los peones negros o crear un peón pasado.",
+   "pista": null,
+   "motor": {
+    "cp": 482
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-2",
+   "titulo": "12/11 · Ventaja 2: torre contra alfil",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/pp3pk1/6p1/8/2b5/6P1/PP3P1P/3R2K1 w - - 0 1",
+   "idea": "Tienes la calidad (2 puntos de más). Activa la torre en la séptima fila, ataca los peones que el alfil no puede defender y trae tu rey.",
+   "pista": null,
+   "motor": {
+    "cp": 558
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-3",
+   "titulo": "12/11 · Ventaja 3: dos peones de más en el final de peones",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/5kpp/8/8/8/8/PP3KPP/8 w - - 0 1",
+   "idea": "Dos peones de más en el flanco de dama. Centraliza el rey, empuja los peones pasados juntos y no dejes que el rey negro se coma tus peones del flanco de rey.",
+   "pista": null,
+   "motor": {
+    "cp": 675
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-4",
+   "titulo": "12/11 · Gana por oposición 1: peón en segunda",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/4k3/8/8/4PK2/8 w - - 0 1",
+   "idea": "Antes de empujar el peón, toma la oposición con el rey: ponlo frente al rey negro con una casilla en medio, y que sea el rival quien tenga que ceder el paso.",
+   "pista": null,
+   "motor": {
+    "cp": 3557
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-5",
+   "titulo": "12/11 · Gana por oposición 2: el rey delante del peón",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/4k3/8/3K4/4P3/8/8/8 w - - 0 1",
+   "idea": "Tu rey ya está delante del peón. Ponlo frente al rey negro, con una casilla en medio: cuando él se haga a un lado, avanzas por el otro lado.",
+   "pista": null,
+   "motor": {
+    "cp": 3519
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-6",
+   "titulo": "12/11 · Gana por oposición 3: peón de caballo",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/2k5/8/3K4/1P6/8/8 w - - 0 1",
+   "idea": "No empujes el peón todavía. Primero el rey: colócalo delante del peón y frente al rey negro, y que mueva él.",
+   "pista": null,
+   "motor": {
+    "cp": 3571
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-7",
+   "titulo": "12/11 · Gana por oposición 4: peón en sexta",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "6k1/8/5P2/6K1/8/8/8/8 w - - 0 1",
+   "idea": "El peón está cerca de coronar, pero solo no pasa. Pon tu rey en la sexta fila frente al rey negro: con la oposición, el rey rival tiene que dejarte paso.",
+   "pista": null,
+   "motor": {
+    "cp": 3381
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-8",
+   "titulo": "12/11 · Gana por oposición 5: la oposición de lado",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/5k2/3K4/4P3/8/8/8 w - - 0 1",
+   "idea": "Los reyes también se oponen en la misma fila. Avanza tu rey a la sexta, frente al rey negro con una casilla en medio, y gana el camino del peón.",
+   "pista": null,
+   "motor": {
+    "cp": 3472
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-9",
+   "titulo": "12/11 · Tablas por oposición 1: rey delante del peón",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "8/3k4/8/4K3/4P3/8/8/8 b - - 0 1",
+   "idea": "Defiendes con negras. Ponte delante del peón y frente al rey blanco, con una casilla en medio. Si te alejas de esa columna, el blanco gana la oposición y corona.",
+   "pista": null,
+   "motor": {
+    "cp": -3
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-10",
+   "titulo": "12/11 · Tablas por oposición 2: frena al rey blanco",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "8/8/8/4k3/8/3K4/1P6/8 b - - 0 1",
+   "idea": "Defiendes con negras. El rey blanco quiere ponerse delante de su peón. Toma tú la oposición, frente a él con una casilla en medio, y no lo dejes avanzar.",
+   "pista": null,
+   "motor": {
+    "cp": -5
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-11",
+   "titulo": "12/11 · Tablas por oposición 3: en la última fila",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "2k5/8/3KP3/8/8/8/8/8 b - - 0 1",
+   "idea": "Defiendes con negras. Ve justo delante del peón, frente al rey blanco. Cuando el peón llegue a séptima con jaque, retrocede a la casilla de enfrente y el blanco solo puede ahogarte o perder el peón.",
+   "pista": null,
+   "motor": {
+    "cp": -3
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-12",
+   "titulo": "12/11 · Tablas por oposición 4: la oposición a distancia",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "4k3/8/2P5/8/3K4/8/8/8 b - - 0 1",
+   "idea": "Defiendes con negras. Los reyes también se oponen de lejos: en la misma columna con tres casillas en medio. Tómala ahora y mantenla mientras el rey blanco se acerca.",
+   "pista": null,
+   "motor": {
+    "cp": 0
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-13",
+   "titulo": "12/11 · Tablas por oposición 5: peón de alfil",
+   "meta": "tablas",
+   "alumno": "b",
+   "fen": "8/8/5k2/8/4KP2/8/8/8 b - - 0 1",
+   "idea": "Defiendes con negras. Pon tu rey frente al rey blanco, con una casilla en medio, delante de su peón. Cada vez que él se mueva de lado, tú lo sigues.",
+   "pista": null,
+   "motor": {
+    "cp": -4
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-14",
+   "titulo": "12/11 · Mate de dama 1: el rey en el centro",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1",
+   "idea": "Encierra al rey con la dama a salto de caballo, achica la caja sin darle jaques sueltos, trae tu rey y da el mate en el borde. Cuidado con el ahogado.",
+   "pista": null,
+   "motor": {
+    "mate": 9
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-15",
+   "titulo": "12/11 · Mate de dama 2: la dama lejos",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/8/2k5/8/1Q6/6K1 w - - 0 1",
+   "idea": "Primero corta al rey negro con la dama para dejarle poco espacio. Luego acerca tu rey: sin él, la dama sola no da mate.",
+   "pista": null,
+   "motor": {
+    "mate": 9
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-16",
+   "titulo": "12/11 · Mate de dama 3: el rey en el flanco",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/6k1/8/8/8/8/8/K2Q4 w - - 0 1",
+   "idea": "Tu rey está en la otra esquina. Encierra al rey negro con la dama y tráelo rápido: el mate lo dan los dos juntos. No lo dejes ahogado.",
+   "pista": null,
+   "motor": {
+    "mate": 10
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-17",
+   "titulo": "12/11 · Mate de torre 1: el rey en el centro",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/4k3/8/8/8/R3K3 w - - 0 1",
+   "idea": "Corta al rey con la torre, acerca tu rey en oposición y, cada vez que estén frente a frente, da el jaque con la torre para empujarlo una fila hacia el borde.",
+   "pista": null,
+   "motor": {
+    "cp": 476
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-18",
+   "titulo": "12/11 · Mate de torre 2: la torre en la esquina",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/3k4/8/8/8/8/6RK w - - 0 1",
+   "idea": "Usa la torre para cortar al rey por una columna o una fila, y camina con tu rey hacia él. Si te ataca la torre, aléjala hacia el otro lado.",
+   "pista": null,
+   "motor": {
+    "cp": 476
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-19",
+   "titulo": "12/11 · Mate de torre 3: el rey cerca del borde",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/2k5/8/8/8/4K3/8/7R w - - 0 1",
+   "idea": "El rey negro ya está cerca del borde. Encuéntralo en oposición con tu rey y da el jaque con la torre por la fila: así lo llevas a la última y das mate.",
+   "pista": null,
+   "motor": {
+    "mate": 16
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-20",
+   "titulo": "12/11 · Mate de alfil y caballo 1: ya en la esquina buena",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "k7/8/1K6/8/8/8/8/3BN3 w - - 0 1",
+   "idea": "El alfil es de casillas blancas y el rey negro está en a8, la esquina de ese color: ahí se da el mate. Acerca el caballo para quitarle casillas y termina con el alfil.",
+   "pista": null,
+   "motor": {
+    "mate": 5
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-21",
+   "titulo": "12/11 · Mate de alfil y caballo 2: desde la esquina equivocada",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "7k/8/6K1/8/8/8/8/3BN3 w - - 0 1",
+   "idea": "El rey negro está en h8, una esquina oscura, y tu alfil es de casillas blancas: ahí no hay mate. Llévalo por la última fila hasta a8 con la maniobra en W del caballo.",
+   "pista": null,
+   "motor": {
+    "cp": 271
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  },
+  {
+   "id": "clase-1112-22",
+   "titulo": "12/11 · Mate de alfil y caballo 3: desde el centro",
+   "meta": "ganar",
+   "alumno": "w",
+   "fen": "8/8/8/4k3/8/8/8/2B1KN2 w - - 0 1",
+   "idea": "El alfil es de casillas negras: el mate se da en a1 o en h8. Primero lleva el rey negro al borde con tus tres piezas juntas y después empújalo a una de esas esquinas.",
+   "pista": null,
+   "motor": {
+    "cp": 276
+   },
+   "clase": {
+    "fecha": "2026-11-12",
+    "seg": null
+   }
+  }
+ ]
+}

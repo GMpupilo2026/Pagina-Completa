@@ -11,6 +11,10 @@
    - La transcripción se pide al abrirla, sin los renglones repetidos.
    - El alumno no ve «Subir audios»; quien puede subir, sí.
    - Sin audios, lo dice.
+   - La guía: los minutos aproximados se avisan; un tema abre su clase en su
+     minuto desde «Conceptos de todas las clases»; el repaso de hoy contesta
+     las vueltas con responder_vuelta y dice cuándo vuelven; la transcripción
+     de Whisper con sus minutos vuelve a encontrar cada tema por su cita.
 
    Uso:  npm install; node herramientas/verificar-todo.js audios-clases        */
 const { chromium } = require("./lib/playwright-con-sesion");
@@ -186,12 +190,44 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
         preguntas: [{ n: 1, pregunta: "¿?", opciones: ["x", "y"], correcta: 2, explicacion: "porque sí" }],
         partidas: [{ orden: 1, titulo: "Italiana", seg: 30, jugadas: "e4 e5 Nf3 Nc6 Bc4" }, { orden: 2, titulo: "Cortada", seg: null, jugadas: "d4 d5 c4" }],
       });
+      const n = await page.evaluate(() => {
+        const G = AudiosGuia;
+        const indice = [
+          { seg: 300, titulo: "Saludo", concepto: "Torneos", cita: "Muy buenas noches a todos, hoy vemos el contrajuego" },
+          { seg: 1500, titulo: "La partida", concepto: "Contrajuego", cita: "aquí las negras buscan el contrajuego en el flanco de rey" },
+          { seg: 2000, titulo: "Sin cita" },
+          { seg: 2500, titulo: "No está", concepto: "Final", cita: "esta frase no se dijo nunca en ninguna parte" },
+        ];
+        const nuevos = [[10, "Muy buenas noches a todos,"], [14, "hoy vemos el contrajuego."], [900, "Otra cosa."],
+          [1380, "Bueno, aquí las negras"], [1383, "buscan el contrajuego en el flanco de rey."], [2600, "Final."]];
+        const r = G.reanclar(indice, nuevos, 3600);
+        return [
+          G.deWhisper({ segments: [{ start: 1.6, text: " Hola." }, { start: 2, text: " Hola." }, { start: 9.2, text: "Peón." }] }), G.deWhisper({ resumen: "x" }),
+          r.indice.map((t) => [t.titulo, t.seg]), r.encontrados, G.moverSeg(1600, r.movidas), G.moverSeg(null, r.movidas),
+          G.leerGuia({ indice: [{ seg: 5, titulo: "A", concepto: " Táctica ", cita: "dijo esto" }] }).indice,
+          G.conceptos([
+            { id: "b", fecha: "2026-11-03", indice: [{ seg: 50, titulo: "Uno", concepto: "Contrajuego" }, { seg: 9, titulo: "Sin" }] },
+            { id: "a", fecha: "2026-07-03", indice: [{ seg: 70, titulo: "Dos", concepto: "contrajuego" }, { seg: 10, titulo: "Tres", concepto: "Apertura" }] },
+            { id: "c", fecha: "2026-08-01", indice: null }]),
+        ];
+      });
+      igual("la transcripción de Whisper con sus minutos", n[0], [[1, "Hola."], [9, "Peón."]]);
+      igual("un .json sin «segments» no es de Whisper", n[1], null);
+      igual("cada tema vuelve a encontrar su minuto por su cita; sin cita o sin hallarla, se queda", n[2],
+        [["Saludo", 10], ["La partida", 1380], ["Sin cita", 2000], ["No está", 2500]]);
+      igual("dice cuántos encontró", n[3], 2);
+      igual("la partida se mueve como el tema más cercano", [n[4], n[5]], [1480, null]);
+      igual("la guía guarda el concepto y la cita", n[6], [{ seg: 5, titulo: "A", concepto: "Táctica", cita: "dijo esto" }]);
+      igual("los conceptos de todas las clases: juntos sin mirar mayúsculas, por orden alfabético y de la clase más vieja a la nueva", n[7], [
+        { concepto: "Apertura", temas: [{ audio: "a", fecha: "2026-07-03", seg: 10, titulo: "Tres" }] },
+        { concepto: "Contrajuego", temas: [{ audio: "a", fecha: "2026-07-03", seg: 70, titulo: "Dos" }, { audio: "b", fecha: "2026-11-03", seg: 50, titulo: "Uno" }] }]);
       await ctx.close();
     }
 
     const GUIA = Object.assign({}, AUDIOS[0], {
       resumen: "Se repasó la apertura italiana.\nY el mate del pasillo.",
       indice: [{ seg: 0, titulo: "Saludo" }, { seg: 60, titulo: "La italiana" }, { seg: 120, titulo: "Mate del <b>pasillo</b>" }],
+      minutos_aproximados: true,
       segmentos: [[2, "Muy buenas noches."], [61, "El peón va a e4."], [62, "El peón va a e4."], [125, "Mate del pasillo."]],
     });
     const TABLAS_GUIA = {
@@ -205,6 +241,12 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       audios_clase_repasos: [{ audio_id: "a2", n: 2, opcion: 1, acerto: true }],
       audios_clase_marcas: [{ id: "m1", audio_id: "a2", seg: 61, nota: "repasar la italiana" }],
       "rpc:responder_repaso": [{ acerto: true, correcta: 2, explicacion: "La torre entra por la fila de atrás.", puntos: 2, primera: true }],
+      audios_clase_ejercicios: [
+        { id: "e1", audio_id: "a2", n: 1, seg: 125, enunciado: "Juegan blancas y dan mate.", fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", revisado: true },
+        { id: "e2", audio_id: "a2", n: 2, seg: null, enunciado: "Roto.", fen: "esto no es un fen", revisado: true }],
+      audios_clase_ejercicio_intentos: [],
+      "rpc:responder_ejercicio": [{ acerto: true, buena: "Ra8#", explicacion: "Mate del pasillo.", puntos: 2, primera: true }],
+      "rpc:ejercicios_para_revisar": [{ id: "e1", buena: "Ra8#", explicacion: "Mate del pasillo." }],
     };
 
     console.log("\n=== Estudiar una clase, como alumno ===");
@@ -216,15 +258,17 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       igual("la clase es el encabezado h2, y vuelve a la lista", [await texto(page, "#lista h2"), await page.$eval('a[href="audios-clases.html"]', (a) => a.textContent)],
         ["Martes 10 de noviembre de 2026", "← Todas las clases"]);
       igual("las secciones, cada una con su h3", await page.$$eval("#lista section h3", (hs) => hs.map((h) => h.textContent)),
-        ["De qué se trató", "Temas de la clase", "Buscar en lo que se dijo", "Partidas de la clase", "Preguntas de repaso", "Mis marcas"]);
+        ["De qué se trató", "Temas de la clase", "Buscar en lo que se dijo", "Partidas de la clase", "Ejercicios de la clase", "Preguntas de repaso", "Mis marcas"]);
       igual("el resumen, en párrafos", await page.$$eval('[aria-labelledby="resumen"] p', (ps) => ps.map((p) => p.textContent)), ["Se repasó la apertura italiana.", "Y el mate del pasillo."]);
-      igual("el tema va como texto, con su minuto dicho", await page.$$eval("#temas + ol button", (bs) => bs.map((b) => [b.textContent, b.getAttribute("aria-label")])),
+      igual("el tema va como texto, con su minuto dicho", await page.$$eval('[aria-labelledby="temas"] ol button', (bs) => bs.map((b) => [b.textContent, b.getAttribute("aria-label")])),
         [["0:00 · Saludo", "Escuchar desde el minuto 0: Saludo"], ["1:00 · La italiana", "Escuchar desde el minuto 1: La italiana"], ["2:00 · Mate del <b>pasillo</b>", "Escuchar desde el minuto 2: Mate del <b>pasillo</b>"]]);
       igual("el alumno no ve «Subir audios» ni «Quitar»", [await visible(page, "#subir"), await page.$$eval("#lista button", (b) => b.some((x) => /Quitar/.test(x.textContent)))], [false, false]);
+      igual("con minutos aproximados, los temas y la búsqueda lo avisan", await page.$$eval('[aria-labelledby="temas"] > p, [aria-labelledby="buscar"] > p:not([role])', (ps) => ps.map((p) => p.textContent)),
+        Array(2).fill("Los minutos son aproximados: pueden caer uno o dos minutos antes o después. Si no oyes el tema, avanza o retrocede un minuto."));
 
       console.log("\n=== Moverse en el audio ===");
       const t = () => page.$eval("#lista audio", (a) => Math.round(a.currentTime));
-      await page.click("#temas + ol li:nth-child(2) button");
+      await page.click('[aria-labelledby="temas"] ol li:nth-child(2) button');
       await page.waitForFunction(() => Math.round(document.querySelector("#lista audio").currentTime) >= 60, null, { timeout: 5000 });
       await page.$eval("#lista audio", (a) => a.pause());
       await page.$eval("#lista audio", (a) => { a.currentTime = 60; });
@@ -265,6 +309,24 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       await page.click("text=Leer la posición");
       igual("lee la posición", (await texto(page, '[aria-labelledby="partidas"] [aria-live="polite"]')).slice(0, 40), "Blancas: rey en eva 1; dama en david 1; ");
 
+      console.log("\n=== Los ejercicios de la clase ===");
+      igual("solo el de posición válida, con su enunciado y la posición en palabras, sin la respuesta",
+        [await page.$$eval('[aria-labelledby="ejercicios"] h4', (h) => h.map((x) => x.textContent)),
+          (await texto(page, '[aria-labelledby="ejercicios"] [role="group"] p:nth-of-type(2)')).slice(0, 22),
+          await page.$$eval('[aria-labelledby="ejercicios"] p', (ps) => ps.some((p) => /Para revisar|Ra8|Ta8/.test(p.textContent)))],
+        [["Ejercicio 1"], "Blancas: rey en gustav", false]);
+      await page.fill("#jugada-e1", "Tz9");
+      await page.click('button[aria-label="Contestar el ejercicio 1"]');
+      igual("una jugada que no se entiende no va a la base", [await texto(page, '[aria-labelledby="ejercicios"] [role="status"]'),
+        await page.evaluate(() => window.__rpcArgs.filter((x) => x[0] === "responder_ejercicio").length)],
+        ["No entendí «Tz9» o no es legal en esta posición. Escríbela como se anota, por ejemplo «Cf3».", 0]);
+      await page.fill("#jugada-e1", "Ta8");
+      await page.click('button[aria-label="Contestar el ejercicio 1"]');
+      await page.waitForFunction(() => /Correcto/.test(document.querySelector('[aria-labelledby="ejercicios"] [role="status"]').textContent), null, { timeout: 3000 });
+      igual("«Ta8» (en español) se manda como la jugada de chess.js, y dice los puntos y por qué",
+        [await page.evaluate(() => window.__rpcArgs.filter((x) => x[0] === "responder_ejercicio")), await texto(page, '[aria-labelledby="ejercicios"] [role="status"]')],
+        [[["responder_ejercicio", { p_id: "e1", p_jugada: "Ra8#" }]], "¡Correcto! Ta8#. Ganaste 2 Puntos Ajedrez. Mate del pasillo."]);
+
       console.log("\n=== Las preguntas de repaso ===");
       await page.click('[aria-labelledby="preguntas"] button[aria-label="Contestar la pregunta 1"]');
       igual("sin elegir, lo pide", await texto(page, '[aria-labelledby="preguntas"] fieldset:first-of-type [role="status"]'), "Elige una opción.");
@@ -273,7 +335,7 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       await page.waitForFunction(() => /Correcto/.test(document.querySelector('[aria-labelledby="preguntas"] fieldset [role="status"]').textContent), null, { timeout: 3000 });
       igual("contesta en la base y dice los puntos y por qué",
         [await page.evaluate(() => window.__rpcArgs.filter((x) => x[0] === "responder_repaso")), await texto(page, '[aria-labelledby="preguntas"] fieldset [role="status"]')],
-        [[["responder_repaso", { p_audio: "a2", p_n: 1, p_opcion: 2 }]], "¡Correcto! Ganaste 2 Puntos Ajedrez. La torre entra por la fila de atrás."]);
+        [[["responder_repaso", { p_audio: "a2", p_n: 1, p_opcion: 2 }]], "¡Correcto! Ganaste 2 Puntos Ajedrez. La torre entra por la fila de atrás. Vuelve dentro de dos días, para que no se te olvide."]);
       igual("la ya contestada lo dice y no deja cambiarla",
         [await page.$$eval('input[name="preg-2"]', (rs) => rs.map((r) => [r.disabled, r.checked])), await texto(page, '[aria-labelledby="preguntas"] fieldset:nth-of-type(2) [role="status"]')],
         [[[true, true], [true, false]], "Ya la contestaste y acertaste."]);
@@ -311,6 +373,10 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       igual("ve las dos partidas, la sin revisar avisada", [await page.$$eval('[aria-labelledby="partidas"] h4', (h) => h.map((x) => x.textContent)),
         await page.$$eval('[aria-labelledby="partidas"] p', (p) => p.filter((x) => /Sin revisar: los alumnos/.test(x.textContent)).length)], [["La italiana", "Sin revisar"], 1]);
       igual("y no ve «Subir audios» dentro de la clase", await visible(page, "#subir"), false);
+      igual("ve la respuesta del ejercicio para revisarlo, y puede ocultarlo",
+        [await page.$$eval('[aria-labelledby="ejercicios"] p', (ps) => ps.filter((p) => /^Para revisar/.test(p.textContent)).map((p) => p.textContent)),
+          await page.$$eval('[aria-labelledby="ejercicios"] button', (b) => b.map((x) => x.getAttribute("aria-label")).filter((x) => /alumnos/.test(x || "")))],
+        [["Para revisar: la buena es Ta8#. Mate del pasillo."], ["Ocultar a los alumnos el ejercicio 1"]]);
       await page.click('button[aria-label="Publicar para los alumnos la partida Sin revisar"]');
       await page.waitForFunction(() => (window.__updates || []).length > 0, null, { timeout: 3000 });
       igual("publicarla la marca revisada en la base", await page.evaluate(() => window.__updates.map((u) => [u.tabla, u.campos, u.filas])), [["audios_clase_partidas", { revisada: true }, 1]]);
@@ -338,11 +404,101 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       const r = await page.evaluate(() => [window.__updates.map((u) => [u.tabla, u.campos, u.filas]), window.__deletes.map((d) => [d.tabla, d.filas]),
         window.__inserts.map((i) => [i.tabla, i.rows])]);
       igual("guarda el texto con su minuto en esa clase", r[0], [["audios_clase", { resumen: "Repaso.", indice: [{ seg: 70, titulo: "Italiana" }],
-        segmentos: [[3, "Hola."], [70, "Peón e4."]], transcripcion: "Hola.\nPeón e4." }, 1]]);
+        segmentos: [[3, "Hola."], [70, "Peón e4."]], transcripcion: "Hola.\nPeón e4.", minutos_aproximados: false }, 1]]);
       igual("cambia las preguntas y las partidas viejas", r[1], [["audios_clase_preguntas", 1], ["audios_clase_partidas", 1]]);
       igual("y pone las nuevas: la partida imposible no entra y ninguna llega publicada", r[2], [
         ["audios_clase_preguntas", [{ audio_id: "a2", n: 1, pregunta: "¿Cuál?", opciones: ["a", "b"], correcta: 1, explicacion: "Por a." }]],
         ["audios_clase_partidas", [{ audio_id: "a2", orden: 1, titulo: "Italiana", seg: 70, jugadas: "e4 e5 Nf3 Nc6 Bc4" }]]]);
+      igual("sin errores en la página", errores, []);
+      await ctx.close();
+    }
+
+    console.log("\n=== Con los minutos exactos, sin aviso ===");
+    {
+      const tablas = Object.assign({}, TABLAS_GUIA, { audios_clase: [Object.assign({}, GUIA, { minutos_aproximados: false })] });
+      const { page, ctx } = await abrir(browser, "/audios-clases.html?clase=a2", tablas, null, preparar);
+      await page.waitForSelector("#marcas-lista li", { timeout: 20000 });
+      igual("no dice que son aproximados", await page.$$eval("#lista p", (ps) => ps.some((p) => /aproximados/.test(p.textContent))), false);
+      await ctx.close();
+    }
+
+    console.log("\n=== Abrir una clase en un minuto (desde los conceptos) ===");
+    {
+      const { page, ctx, errores } = await abrir(browser, "/audios-clases.html?clase=a2&t=120", TABLAS_GUIA,
+        { audios_clase_pos_v1: JSON.stringify({ a2: 30 }) }, preparar);
+      await page.waitForSelector("#marcas-lista li", { timeout: 20000 });
+      await page.waitForFunction(() => Math.round(document.querySelector("#lista audio").currentTime) === 120, null, { timeout: 5000 }).catch(() => {});
+      igual("queda en ese minuto (no donde quedó la otra vez) y lo dice con el tema",
+        [await page.$eval("#lista audio", (a) => Math.round(a.currentTime)), await texto(page, '#lista article [role="status"]')],
+        [120, "Listo para escuchar desde el minuto 2: Mate del <b>pasillo</b>. Dale play al audio."]);
+      igual("sin errores en la página", errores, []);
+      await ctx.close();
+    }
+
+    console.log("\n=== Los conceptos de todas las clases ===");
+    {
+      const clases = [Object.assign({}, AUDIOS[0], { indice: [{ seg: 75, titulo: "El <i>contrajuego</i>", concepto: "Contrajuego" }], minutos_aproximados: true }),
+        Object.assign({}, AUDIOS[1], { indice: [{ seg: 600, titulo: "Buscar el contrajuego", concepto: "Contrajuego" }, { seg: 30, titulo: "La italiana", concepto: "Apertura" }] })];
+      const { page, ctx, errores } = await abrir(browser, "/audios-clases.html?conceptos", { audios_clase: clases }, null, preparar);
+      await page.waitForSelector("#lista section h3", { timeout: 20000 });
+      igual("un encabezado por concepto, por orden alfabético, con en cuántas clases", await page.$$eval("#lista section", (ss) => ss.map((x) => [x.querySelector("h3").textContent, x.querySelector("p").textContent])),
+        [["Apertura", "En 1 clase."], ["Contrajuego", "En 2 clases."]]);
+      igual("cada tema abre su clase en su minuto, de la más vieja a la nueva, como texto",
+        await page.$$eval("#lista section:nth-child(2) a", (as) => as.map((a) => [a.textContent, a.getAttribute("href"), a.getAttribute("aria-label")])),
+        [["Martes 3 de noviembre de 2026, 10:00: Buscar el contrajuego", "audios-clases.html?clase=a1&t=600", "Martes 3 de noviembre de 2026, minuto 10: Buscar el contrajuego"],
+          ["Martes 10 de noviembre de 2026, 1:15: El <i>contrajuego</i>", "audios-clases.html?clase=a2&t=75", "Martes 10 de noviembre de 2026, minuto 1 con 15 segundos: El <i>contrajuego</i>"]]);
+      igual("avisa que hay minutos aproximados y vuelve a la lista", [await page.$$eval("#app p", (ps) => ps.some((p) => /Algunos minutos son aproximados/.test(p.textContent))),
+        await page.$eval('a[href="audios-clases.html"]', (a) => a.textContent)], [true, "← Todas las clases"]);
+      igual("sin errores en la página", errores, []);
+      await ctx.close();
+    }
+
+    console.log("\n=== El repaso de hoy ===");
+    {
+      const tablas = { audios_clase: AUDIOS,
+        "rpc:repaso_de_hoy": [
+          { audio_id: "a1", fecha: "2026-11-03", n: 2, pregunta: "¿Qué es el contrajuego?", opciones: ["Atacar donde ataca el rival", "Atacar en otro lado"], vuelta: 1 },
+          { audio_id: "a2", fecha: "2026-11-10", n: 1, pregunta: "¿Qué pieza da el mate del pasillo?", opciones: ["El rey", "La torre"], vuelta: 0 }],
+        "rpc:responder_vuelta": [{ acerto: true, correcta: 2, explicacion: "Se ataca en otro lado.", puntos: 1, vuelta: 1, proxima: "2026-11-19" }] };
+      const { page, ctx, errores } = await abrir(browser, "/audios-clases.html", tablas, null, preparar);
+      await page.waitForSelector("#repaso-hoy", { timeout: 20000 });
+      igual("va antes de la lista, con el enlace a los conceptos", [await texto(page, "#repaso-hoy"),
+        await page.$eval('#repaso a[href="audios-clases.html?conceptos"]', (a) => a.textContent)], ["Repaso de hoy", "Conceptos de todas las clases"]);
+      igual("dice cuántas y cómo funciona", await texto(page, '[aria-labelledby="repaso-hoy"] > p'),
+        "Te tocan 2 preguntas de tus clases. Las que ya contestaste vuelven a los 2, 7 y 21 días, para que no se te olviden; cada acierto da 1 Punto Ajedrez. Las nuevas dan 2 Puntos Ajedrez si aciertas a la primera.");
+      igual("cada pregunta dice de qué clase es y si es repaso o nueva", await page.$$eval('[aria-labelledby="repaso-hoy"] legend', (ls) => ls.map((l) => l.textContent)),
+        ["Clase del Martes 3 de noviembre (repaso 1 de 3): ¿Qué es el contrajuego?", "Clase del Martes 10 de noviembre (nueva): ¿Qué pieza da el mate del pasillo?"]);
+      await page.check('input[name="rep-a1-2"][value="2"]');
+      await page.click('[aria-labelledby="repaso-hoy"] fieldset:first-of-type button');
+      await page.waitForFunction(() => /Correcto/.test(document.querySelector('[aria-labelledby="repaso-hoy"] fieldset [role="status"]').textContent), null, { timeout: 3000 });
+      igual("la vuelta se contesta con responder_vuelta y dice cuándo vuelve",
+        [await page.evaluate(() => window.__rpcArgs.filter((x) => /responder/.test(x[0]))), await texto(page, '[aria-labelledby="repaso-hoy"] fieldset [role="status"]')],
+        [[["responder_vuelta", { p_audio: "a1", p_n: 2, p_opcion: 2 }]], "¡Correcto! Ganaste 1 Punto Ajedrez. Se ataca en otro lado. Vuelve el Jueves 19 de noviembre."]);
+      igual("sin errores en la página", errores, []);
+      await ctx.close();
+    }
+
+    console.log("\n=== Subir la transcripción de Whisper con sus minutos ===");
+    {
+      const clase = Object.assign({}, AUDIOS[0], { minutos_aproximados: true,
+        indice: [{ seg: 100, titulo: "La italiana", concepto: "Apertura", cita: "ahora vamos con la apertura italiana clásica" }] });
+      const tablas = { audios_clase: [clase], audios_clase_partidas: [{ id: "p1", audio_id: "a2", orden: 1, seg: 130, titulo: "Italiana", jugadas: "e4 e5", revisada: false }],
+        "rpc:mis_academias_audios": [{ id: ADAES, nombre: "ADAES" }] };
+      const { page, ctx, errores } = await abrir(browser, "/audios-clases.html", tablas, null, preparar);
+      await page.waitForSelector("#lista article", { timeout: 20000 });
+      const whisper = { text: "…", language: "es", segments: [{ id: 0, start: 2.4, end: 5, text: " Muy buenas noches." },
+        { id: 1, start: 160.2, end: 163, text: " Ahora vamos con la apertura italiana clásica." }] };
+      await page.setInputFiles("#subir-archivos", [{ name: "Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(whisper)) }]);
+      await page.click("#subir-boton");
+      await page.waitForFunction(() => /minutos exactos/.test(document.getElementById("subir-estado").textContent) && !document.getElementById("subir-boton").disabled, null, { timeout: 5000 });
+      igual("lo dice, con cuántos temas encontró", await texto(page, "#subir-estado"),
+        "Clase Selección ADAES - 2026_11_10 19_25 CST - Recording.json: minutos exactos puestos (1 de 1 temas encontrados en su minuto).");
+      igual("cambia el texto, mueve el tema y la partida, y ya no son aproximados", await page.evaluate(() => window.__updates.map((u) => [u.tabla, u.campos, u.filas])), [
+        ["audios_clase", { segmentos: [[2, "Muy buenas noches."], [160, "Ahora vamos con la apertura italiana clásica."]],
+          transcripcion: "Muy buenas noches.\nAhora vamos con la apertura italiana clásica.",
+          indice: [{ seg: 160, titulo: "La italiana", concepto: "Apertura", cita: "ahora vamos con la apertura italiana clásica" }], minutos_aproximados: false }, 1],
+        ["audios_clase_partidas", { seg: 190 }, 1]]);
+      igual("no toca el resumen, las preguntas ni las partidas", await page.evaluate(() => [(window.__deletes || []).length, (window.__inserts || []).length]), [0, 0]);
       igual("sin errores en la página", errores, []);
       await ctx.close();
     }

@@ -1,0 +1,19 @@
+{
+ "fecha": "2026-11-03",
+ "posiciones": [
+  {
+   "seg": 40,
+   "titulo": "Piezas negras pasivas: ¿es hora de atacar?",
+   "fen": "3b2k1/ppp2rpp/3pR3/3P4/2P2B2/8/PP4PP/5RK1 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Las negras tienen sus piezas metidas en la octava y la séptima fila. Busca cómo aprovechar esa pasividad con un tema de atracción y descubierta, sin dejarlas activarse."
+  },
+  {
+   "seg": 4454,
+   "titulo": "Dama por dos torres y el golpe en g5",
+   "fen": "3r1rk1/pp3pp1/1n2q2p/2p1P3/7P/5N2/PP1Q1PP1/1K1R3R w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "El profe recomendó cambiar la dama por las dos torres en la columna d. Fíjate en lo que puede hacer después el caballo con la torre en la columna h."
+  }
+ ]
+}

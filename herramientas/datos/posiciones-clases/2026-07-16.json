@@ -1,0 +1,12 @@
+{
+ "fecha": "2026-07-16",
+ "posiciones": [
+  {
+   "seg": 196,
+   "titulo": "Dos peones contra uno: la oposición",
+   "fen": "6k1/8/6p1/8/5PPK/8/8/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Avanzar el rey de una vez choca con la oposición y lleva a tablas. Busca un camino más paciente para el rey y guarda las jugadas de peón para cuando hagan falta."
+  }
+ ]
+}

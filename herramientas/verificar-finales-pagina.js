@@ -58,7 +58,7 @@ const BANCO_PRUEBA = {
   ],
 };
 
-async function abrir(browser, banco, local) {
+async function abrir(browser, banco, local, consulta) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   if (local) await ctx.addInitScript((l) => { for (const k in l) localStorage.setItem(k, l[k]); }, local);
   const page = await ctx.newPage();
@@ -70,8 +70,8 @@ async function abrir(browser, banco, local) {
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso({}) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/practice-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
-  if (banco) await ctx.route("**/entreno/data/finales.json", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(banco) }));
-  await page.goto(BASE + "/entreno/finales.html", { waitUntil: "networkidle" });
+  if (banco) await ctx.route(/\/entreno\/data\/finales(-clases)?\.json$/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(banco) }));
+  await page.goto(BASE + "/entreno/finales.html" + (consulta || ""), { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   await page.waitForFunction(() => document.querySelectorAll("#tabs .tab").length > 0, { timeout: 10000 });
   return { page, ctx, errores };
@@ -189,9 +189,37 @@ const inserts = (page) => page.evaluate(() => window.__inserts.filter((i) => i.t
       igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
       await ctx.close();
     }
+    console.log("\n=== Las posiciones de las clases (?banco=clases) ===");
+    {
+      const { page, ctx, errores } = await abrir(browser, null, null, "?banco=clases");
+      const real = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "entreno/data/finales-clases.json"), "utf8")).finales;
+      igual("carga su banco entero, con su título", [await page.evaluate(() => document.querySelectorAll("#tabs .tab").length),
+        await page.evaluate(() => document.getElementById("titulo-pagina").textContent.trim()), await page.evaluate(() => document.title)],
+        [real.length, "Posiciones de las clases 🏁", "Posiciones de las clases · Ajedrez Integral"]);
+      igual("el progreso habla de posiciones", (await page.evaluate(() => document.getElementById("progress-label").textContent)).replace(/^\d+/, "N"), "N de " + real.length + " posiciones logradas");
+      igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
+      await ctx.close();
+    }
+    {
+      const banco = { aguantar: 2, finales: [{ id: "clase-0101-1", titulo: "01/01 · Mate en uno", meta: "ganar", alumno: "w", fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", idea: "La fila de atrás.", pista: null },
+        { id: "clase-0101-2", titulo: "01/01 · Otra", meta: "ganar", alumno: "w", fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", idea: "Otra.", pista: null }] };
+      const { page, ctx, errores } = await abrir(browser, banco, null, "?banco=clases&final=clase-0101-2");
+      igual("el enlace de la tarea abre esa posición", await page.evaluate(() => document.getElementById("final-titulo").textContent), "01/01 · Otra");
+      await page.click("#hint-btn");
+      await page.waitForFunction(() => !/busca/.test(document.getElementById("round-status").textContent), null, { timeout: 5000 }).catch(() => {});
+      igual("sin pista escrita, la pista va directo a la jugada del motor (nunca «Pista: null»)", /null/.test(await estado(page)), "false");
+      await page.click("#celebration-retry-btn").catch(() => {});
+      await clic(page, "a1"); await clic(page, "a8");
+      await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), null, { timeout: 5000 });
+      igual("se registra como 'finales_clases', con la posición en theme (el recorte de la tarea)",
+        (await inserts(page)).map((f) => [f.activity, f.detail.theme, f.detail.final_id, f.detail.con_pista]), [["finales_clases", "clase-0101-2", "clase-0101-2", true]]);
+      igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
+      await ctx.close();
+    }
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;
+
   } finally {
     await browser.close();
   }

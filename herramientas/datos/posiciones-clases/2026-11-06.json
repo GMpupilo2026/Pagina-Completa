@@ -1,0 +1,12 @@
+{
+ "fecha": "2026-11-06",
+ "posiciones": [
+  {
+   "seg": 731,
+   "titulo": "El sacrificio griego",
+   "fen": "r1bq1rk1/pp2nppp/1bn1p3/3pP3/3P4/2PB1N2/P4PPP/RNBQK2R w KQ - 0 1",
+   "objetivo": "ganar",
+   "nota": "Se cumplen todas las condiciones del sacrificio en h7: diagonal libre, g5 defendida, peón en e5 y la dama negra a un salto de e6. Juega el ataque sin desesperarte y trae las piezas que falten."
+  }
+ ]
+}

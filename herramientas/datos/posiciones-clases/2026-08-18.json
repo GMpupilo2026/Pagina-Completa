@@ -1,0 +1,26 @@
+{
+ "fecha": "2026-08-18",
+ "posiciones": [
+  {
+   "seg": 0,
+   "titulo": "Rey y peón contra rey y peón: la oposición",
+   "fen": "8/5p2/8/8/1k2K3/8/5P2/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Cuando solo hay reyes y peones, la oposición es poder. Fíjate en cómo cortarle al rey negro el camino hacia tu peón sin dejar tu peón a la deriva."
+  },
+  {
+   "seg": 572,
+   "titulo": "Torre contra peón peligroso: salvar las tablas",
+   "fen": "5K2/3R3P/7r/4p3/8/3Pk3/8/8 b - - 0 1",
+   "objetivo": "tablas",
+   "nota": "Las blancas amenazan rey Gustavo 7 y cualquier jugada de rey es perder el tiempo. Piensa cuándo conviene entregar la torre y cómo llega tu rey con el peón de Eva."
+  },
+  {
+   "seg": 1092,
+   "titulo": "Torre contra peones: el rey sin tapar a su torre",
+   "fen": "8/RK3p1p/6p1/8/6P1/3pkP2/7P/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Primero se mueve el rey y la torre espera. La torre detiene el peón desde atrás, el rey camina sin estorbarle y el plan para ganar es el peón de Héctor."
+  }
+ ]
+}

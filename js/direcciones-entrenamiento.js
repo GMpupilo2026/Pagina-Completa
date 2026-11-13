@@ -96,6 +96,7 @@ window.DireccionesEntrenamiento = (function () {
         "plan-rival": "aperturas",
         "precision-posicional": "medio-juego",
         "finales": "finales",
+        "finales-clases": "finales",   // las posiciones de las clases: casi todas finales
         "coordenadas": "vision",
         "visualizacion": "vision",
         "memoria": "vision",
