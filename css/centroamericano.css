@@ -1051,6 +1051,5 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
   min-width: 6.2rem; text-align: center; font-weight: 800; font-size: 0.9rem; line-height: 1.2;
   padding: 0.45rem 0.55rem; border-radius: 0.6rem; background: var(--cac-morado); color: #fff;
 }
-.cac-sala-sin { grid-template-columns: 1fr; }
 .cac-sala-quien { min-width: 0; overflow-wrap: anywhere; }
 .cac-sala-quien p { margin: 0; }

@@ -15202,13 +15202,16 @@ de cada torneo», que arma `js/torneo-sala.js`.
   `js/torneo-pareo-datos.js` con la cuenta de Pareo (`mesaInicial` y
   `V.mesasQueNecesita`). Si el árbitro numera la sala seguida en Pareo, el
   plano cambia solo y coincide con los pareos («Mesa 12»).
-- **Sin números mientras chocan**: el 13/11 los cuatro torneos empezaban en la
-  mesa 1 (todavía sin «Numerar seguido» en Pareo). Cuatro «Mesas 1 a…»
-  mandaban a cuatro lugares distintos con el mismo número, así que mientras
-  dos torneos usen los mismos números no se dan: sale cada torneo con sus
-  niveles y un aviso de que la mesa sale en «Pareos de la ronda» y en «Busca
-  a tu jugador». No es un plano dibujado: dónde queda cada columna de mesas
-  en el gimnasio no lo dijo nadie y no se inventa.
+- **Una zona por torneo, con sus mesas desde la 1** (lo eligió el dueño el
+  13/11/2026). En Pareo, «Numerar seguido» y «Primera mesa» solo existen en un
+  *evento* (varios torneos creados juntos desde una misma lista), y los cuatro
+  torneos se crearon por separado. Se le ofreció agregar «Primera mesa» a cada
+  torneo en Pareo, y prefirió numerar por zona: en el gimnasio, un cartel por
+  torneo. Cuando dos torneos comparten números, `js/torneo-sala.js` muestra cada
+  uno como «Zona de …», en el orden de los niveles, con sus mesas y un aviso
+  de que primero se busca la zona y después la mesa; con la sala numerada
+  seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
+  dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
 
 ### Los pareos de la ronda
 

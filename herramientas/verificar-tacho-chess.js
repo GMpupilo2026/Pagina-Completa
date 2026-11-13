@@ -205,14 +205,16 @@ async function fichaResultados(nav, publicados) {
     {
       const r = await fichaResultados(nav, [T2_REPETIDO, T2, T1, FALSO]);
       ok("con dos torneos (uno publicado dos veces): la ficha abre la ventana con uno por torneo, sin el repetido y en el orden de los niveles", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html?en-ventana=1#t=" + T1.id, "torneos-pareo.html?en-ventana=1#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
-      // «La sala de juego» con dos torneos que empiezan los dos en la mesa 1 (la
-      // sala todavía no se numeró seguida en Pareo): sin números, que confundirían.
+      // «La sala de juego» con dos torneos que empiezan los dos en la mesa 1 (sin
+      // evento en Pareo no hay «Numerar seguido»): cada torneo es una zona.
       await r.p.click('a.cac-ficha[href="#sala"]');
       await r.p.waitForTimeout(500);
       const sala = await r.p.evaluate(() => ({ texto: document.getElementById("sala-mesas").innerText.replace(/\s+/g, " "), numeros: document.querySelectorAll("#sala-mesas .cac-sala-mesas").length,
         foto: (() => { const i = document.querySelector("#sala img.cac-sala-foto"); return !!(i && i.alt && i.getAttribute("src") === "img/tacho-chess-2/sala.jpg"); })() }));
       ok("«La sala de juego» trae la foto del gimnasio, con su texto alternativo", sala.foto);
-      ok("con dos torneos en la mesa 1 (sin numerar seguido), no da números de mesa: avisa y dice dónde ver la mesa", sala.numeros === 0 && /aparecen aquí cuando la organización termine de acomodar la sala/.test(sala.texto) && /Primer grado/.test(sala.texto) && /Sétimo año/.test(sala.texto), JSON.stringify(sala));
+      ok("con dos torneos que empiezan en la mesa 1 (sin evento en Pareo), cada uno es una zona con sus mesas desde la 1, en el orden de los niveles, y se explica",
+        sala.numeros === 2 && /Cada torneo juega en su propia zona del gimnasio, con sus mesas numeradas desde la 1/.test(sala.texto)
+        && /Mesa 1 Zona de Tacho Chess 2 · Primaria Primer grado 2 jugadores Mesa 1 Zona de Tacho Chess 2 · Secundaria Sétimo año 2 jugadores/.test(sala.texto), JSON.stringify(sala));
       await r.ctx.close();
     }
 
