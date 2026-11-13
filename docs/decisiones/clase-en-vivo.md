@@ -489,7 +489,7 @@ Tres herramientas de entrenamiento que faltaban en la clase. Lo que cuenta
 está en la base (migración `partidas_y_reloj_de_la_clase`), comprobado
 impersonando roles.
 
-- **La práctica contra el motor puede llevar reloj** (1 a 10 minutos, con o
+- **La práctica contra el motor puede llevar reloj** (30 segundos a 10 minutos, con o
   sin incremento): `practice_sessions.reloj_segundos` / `incremento_segundos`.
   El reloj es del alumno —el motor juega al instante— y **lo lleva su
   navegador**, a propósito: es entrenamiento contra una máquina, no una
@@ -4695,6 +4695,24 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   blanca. Esos van solo a su página, que hace mover primero a la máquina.
   Todos los finales llevan «🪟 Que la practiquen» (`finales.html?final=<id>`,
   con su meta y sus pistas).
+- **Las posiciones de las clases, en la clase.** «Posiciones de las clases»
+  (`entreno/data/finales-clases.json`) estaba en la lista del sitio pero sin
+  adaptador: en la clase solo se podía abrir la página. Ahora va con el
+  tablero de la clase, **un grupo por día y el más reciente arriba** (el
+  entrenamiento preparado para hoy es lo primero), con las mismas puertas de
+  Finales: «Al tablero», «🤖 Que lo jueguen contra la máquina», «🪟 Que la
+  practiquen» (esa posición en `finales.html?banco=clases&final=…`) y
+  «Guion». La fila de los dos bancos sale de una sola función,
+  `filaDeFinal`. Para abrirla, `enlaceDe` acepta ahora una consulta fija en
+  la dirección de la lista (`?banco=clases`), solo de letras, números, «=»,
+  «&», «_» y «-»: antes pedía `.html` pelado y devolvía null.
+  `verificar-clase-entrenamientos.js` revisa que estén todas, el orden de los
+  días y el enlace; probado que salta con los días al revés.
+- **El reloj de la práctica tiene 30 segundos** (`RELOJES_PRACTICA` de
+  `js/partidas-clase.js`): lo pidió el profe para los mates básicos. La base
+  ya lo permitía (`reloj_segundos between 30 and 3600`). Se elige en
+  Practicar ANTES de mandar la posición: «Que lo jueguen contra la máquina»
+  pasa por `crearPractica()`, que lee el reloj de ahí.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
@@ -5201,6 +5219,140 @@ Integral en la camisa (salvo de espalda, de lado o con la mochila).
   del taller (ver «Las aclaraciones del profe» en `paneles.md`).
 - **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
   esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
+
+### La profe Pame: el avatar de CCDR POCOCI
+
+Pedido del dueño el 11/11/2026: la academia nueva **CCDR POCOCI** (su
+entrenadora es Pamela Salas, de la Comisión de Ajedrez Femenino) ve a la
+**profe Pame** donde las demás ven al profe Oscar.
+
+- **Los mismos 44 dibujos**, con los mismos id y las mismas frases, en
+  `herramientas/avatar-profe-pame/originales/` (sin publicar) e
+  `img/avatar-profe-pame/` (los arma `herramientas/avatar-profe-oscar.py`,
+  que ahora recorre los dos profes). Hechos en Canva a partir de dos fotos
+  suyas y con un dibujo del profe Oscar de guía de estilo: pelo largo
+  castaño, polo azul con el logo de Ajedrez Integral, pantalón deportivo negro
+  y tenis. Se exportaron desde el diseño «Avatar profe Pame — originales»
+  y el fondo blanco se les quitó con un relleno desde el borde.
+- **Los tableros**: en «tablero-italiana» se movieron las piezas del mismo
+  dibujo hasta la Italiana (1.e4 e5 2.Cf3 Cc6 3.Ac4 Ac5, comprobada con
+  chess.js); el de la pantalla de «clase-en-linea» estaba inventado y se
+  redibujó entero con esa posición. «jugando» y «ensenando» son de adorno,
+  como los del profe Oscar.
+- **Quién la ve lo decide la academia, no la pantalla de cada página**:
+  `js/avatar-profe-oscar.js` (la lista única) lee la marca que
+  `js/marca-academia.js` guarda en el navegador (`academia_marca_v1`, con el
+  `academia_id` de `mi_marca_academia()`) y, si es de la cuenta con sesión,
+  busca su profe en `PROFE_DE_ACADEMIA` (por id: el nombre puede cambiar).
+  `ruta()`, `porId()` y `conFrase()` ya devuelven el dibujo y el texto
+  alternativo de ese profe, así que los stickers, el calendario del taller,
+  Herramientas y el Centroamericano cambian solos.
+- **Lo de siempre es el profe Oscar**: sin sesión, de dos o más academias,
+  con la marca de OTRA cuenta guardada en la computadora, o en la primera
+  página antes de que llegue la marca. Se lee síncrono porque los dibujos se
+  pintan apenas abre la página; preguntarle a la base por cada dibujo sería
+  otra consulta en cada página.
+- **El texto alternativo** es el del profe Oscar con su nombre, salvo los
+  que dicen algo que en su dibujo no está (`ALT_PAME`: la barba, el árbitro,
+  el niño). Un profe nuevo es: sus originales, su carpeta en `PROFES`, su
+  línea en `PROFE_DE_ACADEMIA` y correr el script.
+- Lo revisa `verificar-clase-stickers.js` («Los otros profes» y «Quién ve a
+  qué profe»).
+
+### La profe Karina: el avatar de ADAPZ
+
+Pedido del dueño el 11/11/2026: la profe Karina (Itzel Karina Rojas, la
+directora de la Eliminatoria Cantonal JDN de Pérez Zeledón) para **ADAPZ**
+(`e036444a-27ca-44b7-a18e-635c3d906e10` en `PROFE_DE_ACADEMIA`), como la
+profe Pame para CCDR POCOCI.
+
+- **Los mismos 44 dibujos**, en `herramientas/avatar-profe-karina/originales/`
+  e `img/avatar-profe-karina/`. Hechos con la generación de imágenes de Canva
+  desde una foto suya y aprobados por el dueño: piel morena, delgada, lentes,
+  pelo largo con mechas, los tatuajes de los antebrazos, camisa blanca con el
+  logo de Ajedrez Integral en el pecho, pantaloneta azul marino con el logo
+  en un solo lado y tenis blancos con «ALE». Se exportaron al doble desde el
+  diseño de Canva «Lienzo vertical en blanco», se bajaron al tamaño nativo y
+  el fondo blanco se quitó con un relleno desde el borde (como los de la
+  profe Pame).
+- **Los tableros**: Canva los dibujó con posiciones imposibles (9 columnas
+  en el mural, piezas inventadas en la pantalla). En «tablero-italiana» se
+  pidió el mural vacío, con la mano afuera, y en los dos se pegó la Italiana
+  (1.e4 e5 2.Cf3 Cc6 3.Ac4 Ac5, comprobada con chess.js) dibujada con
+  `herramientas/lib/tablero-svg.js`, las piezas del sitio; en el mural se
+  devolvió encima la mano de la profe. «jugando» y «ensenando» son de adorno.
+- **El texto alternativo**: `altDe()` toma el del profe Oscar con el nombre
+  de la profe (`PROFES[…].nombre`), salvo lo que su dibujo cambia
+  (`ALT_PROPIO`: la barba, la árbitra, la niña, y en Karina «esa-no-es», que
+  dice que no con la mano y no con el dedo).
+- **Su bot no existe**: `js/chess-bot.js` solo tiene libro de Oscar y de la
+  profe Pame, así que en ADAPZ se sigue jugando contra Oscar (lo que ya dice
+  su tarjeta).
+- **En la página del torneo** la ve todo el que entra, con o sin sesión:
+  ver «La profe Karina ayuda en la página» en `juegos-y-torneos.md`.
+
+### La profe Pame ayuda en el panel
+
+El dueño pidió el «¿Te ayudo?» del Centroamericano (`js/centroamericano-profe.js`)
+«pero con los avatares de la profe Pamela», y lo quiso en la Academia: a los
+alumnos de CCDR POCOCI les sale en su panel (`clases.html`) un botón con la
+cara de la profe Pame abajo a la derecha, y al tocarlo, las preguntas que más
+hacen, cada una con su respuesta, su dibujo y un botón a la página que la
+resuelve (`js/profe-ayuda.js`).
+
+- **Solo a quien ve a la profe Pame, es alumno y mira su propio panel.** Lo
+  monta `js/clases.js` con `ProfeAyuda.montar(profile)` cuando ya sabe quién
+  entró; la academia la decide `js/avatar-profe-oscar.js`, como el avatar y el
+  bot. Un profesor de la academia no la ve (su panel es otro), ni quien mira
+  el panel de otra persona.
+- **Las respuestas dicen lo que ya dice el panel** (las tarjetas de
+  `js/clases.js`): nada inventado, sin inteligencia artificial. Al cambiar una
+  tarjeta de nombre, se cambia también su respuesta.
+- Es un módulo aparte y no una copia del del Centroamericano: aquel depende de
+  `CentroamericanoVivo` (idiomas, diálogos de esa página) y sus respuestas
+  mueven la página en vez de llevar a otra. El aspecto sí es el mismo, con los
+  colores de la plataforma (`css/styles.css`, `.profe-ayuda-*`): texto
+  #102a43 sobre blanco, y en oscuro blanco sobre `--c-brand-900`.
+- El globito «¿Te ayudo?» sale solo la primera vez en cada aparato
+  (`profe_ayuda_visto`); con una ventana abierta, la profe se aparta.
+
+- **También la profe Karina, en ADAPZ** (11/11/2026). El mismo módulo sirve a
+  cualquier profe que no sea el profe Oscar y habla con su nombre
+  (`PROFES` de `js/avatar-profe-oscar.js`). «¿Puedo jugar contra ti?» solo
+  la contesta la profe con bot propio (`CON_BOT`); las demás dicen que se
+  practica contra Oscar. Cada profe puede tener preguntas suyas (`PROPIAS`):
+  la profe Karina lleva a la página de la eliminatoria JDN, sin fechas (las
+  dice la página).
+
+Lo prueba `verificar-profe-ayuda.js`: que cada respuesta lleve a una página que
+existe, que cada dibujo sea de esa profe, a quién le sale (con un
+documento de mentira), quién contesta lo del bot y el orden de los scripts.
+Roto a propósito (quitando la condición de alumno), salta.
+
+### La profe Pame en el resto de la plataforma
+
+Además del avatar, el bot, la tarjeta «Juega contra mí» y el «¿Te ayudo?», lo
+que el alumno de CCDR POCOCI leía del profe Oscar en las páginas escritas a
+mano: la tarjeta del bot en Juegos (`juegos.html`), el título de `bot.html` y
+el «está el bot de Oscar» de Competir cuando no hay nadie en línea.
+
+- **Las páginas no se duplican**: el elemento lleva `data-profe-pame="…"` con
+  el texto de ella (también el `<title>`), y la imagen
+  `data-profe-pame-src="cara"`; `js/avatar-profe-oscar.js` los cambia al cargar
+  (`vestirPagina()`) solo a quien ve a la profe Pame. Quien no, ve la página
+  tal cual está escrita. Lo que arma el código (Competir) pregunta
+  `AvatarProfeOscar.PROFE`.
+- `bot.html` es el bot de niveles para las variantes, no el que juega con el
+  libro de cada profe (`tablero.html`): se le cambia el nombre porque en la
+  plataforma es «el bot del profe», y para un alumno de Pococi el profe es ella.
+- Sin cambiar: el nombre de la sección en Informes y en el informe a la casa
+  («El bot de Oscar», `js/tiempo-secciones.js` y `SECCIONES` de la función),
+  que lee un profesor o una familia, y las páginas sobre Oscar mismo
+  (`sobre-oscar.html`, la portada).
+
+Lo prueba `verificar-profe-ayuda.js` («La profe Pame en el resto de la
+plataforma»: `vestirPagina()` con un documento de mentira para las dos
+academias, y que cada página lo cargue). Roto a propósito, salta.
 
 ## La cámara en la clase en vivo
 

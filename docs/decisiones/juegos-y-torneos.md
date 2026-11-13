@@ -147,6 +147,38 @@ que el motor no respondía.
   los tres niveles de práctica y las tres dificultades del bot de Oscar. Sin el
   tope de profundidad saltan cuatro comprobaciones.
 
+## El bot de la profe Pame
+
+Pedido del dueño el 11/11/2026: en «Juega contra mí» (`tablero.html` y el
+tablero de la portada), **quien es de CCDR POCOCI juega contra la profe Pame**
+y no contra Oscar. Es solo para esa academia.
+
+- **El mismo bot, con su libro y su fuerza.** `js/chess-bot.js` tiene un
+  perfil por profe (`PERFILES`): el libro, la procedencia, la calibración y el
+  nombre. Cuál toca lo decide `js/avatar-profe-oscar.js` (`PROFE`, por la
+  academia de la marca guardada: ver «La profe Pame: el avatar de CCDR
+  POCOCI» en clase-en-vivo.md). Sin el avatar cargado o de otra academia,
+  Oscar como siempre. El libro bajado vive en `window.OSCAR_BOOK` o
+  `window.PAME_BOOK`: el de un profe nunca se le cuela al otro.
+- **El libro sale de sus partidas en Lichess** (pame17, 5011 de ajedrez normal
+  desde la posición inicial) con `herramientas/libro-profe-pame.js`, en el
+  formato del de Oscar: `data/pame-book.json` (hash FNV-1a-64 de la FEN de
+  chess.js sin contadores → `[uci, peso, …]`, ~2500 posiciones, 84 KB),
+  `data/pame-book-provenance.json` (de qué partida suya salió cada jugada) y
+  `js/pame-book.js` (`PAME_ELO_CALIB`, la mediana de su Elo reciente por
+  ritmo: con el de bala, 2210, juega «Difícil»). Peso = veces × (0,5 +
+  puntaje medio) × 10, y entra la jugada que hizo dos veces o más. El PGN no
+  se sube al repositorio. Son livianos, así que el service worker no tiene
+  regla para ellos.
+- **Los textos dicen su nombre** (`NOMBRE_BOT` en `js/tablero-board.js`, y la tarjeta «Juega contra mí» del panel en `js/clases.js`), y
+  arriba se ve su cara del avatar. El **Modo Desafío sigue siendo de partidas
+  de Oscar**, y ahí el nombre no cambia: son posiciones de partidas suyas.
+- `tablero.html` e `index.html` cargan `js/avatar-profe-oscar.js` y
+  `js/pame-book.js` **antes** que `chess-bot.js`: el perfil se elige al
+  definirse el bot. Lo revisa `verificar-libro-profe-pame.js`, que además
+  recorre el libro desde la posición inicial y juega cada entrada con
+  chess.js (ninguna jugada inventada).
+
 ## El bot siempre contesta, y su tiempo no se le cobra al alumno
 
 Contra el bot, el reloj del alumno baja **solo mientras le toca pensar a él**,
@@ -1873,6 +1905,25 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
   ronda de Lichess, editar, ocultar, reordenar, borrar con su confirmación, el
   contraste y el permiso perdido a mitad de camino. Quitando la comprobación
   de «no se guardó», salta.
+
+### Las salas, la más reciente primero
+
+Pedido del dueño el 12/11/2026: en Torneos, «ir colocando siempre en orden, el
+más reciente de primero», entendido (lo eligió él) como **la última sala que se
+crea va arriba**, sin ordenar nada a mano.
+
+- `SalasTorneo.listar()` pide `created_at` de la más nueva a la más vieja (la
+  pone el trigger de la tabla, no el navegador), y después `orden` y el
+  nombre. CENFOTEC y UTN se crearon en el mismo instante (la migración): las
+  desempata su `orden` de antes, y así `transmision.js` sigue abriendo por
+  defecto la misma sala de Lichess.
+- **Ya no se reordena en `admin.html#torneos`**: se quitaron los botones ↑ ↓
+  (moverían `orden`, que ya no decide nada visible). La columna sigue y una
+  sala nueva le pone el siguiente número, que solo desempata.
+- `lib/doble-salas-torneo.js` ahora ordena como le piden (`order()`), y una
+  sala que inserta lleva su `created_at`; `verificar-salas-torneo.js` prueba
+  que la recién creada queda primera y que no hay botones para subir o bajar.
+  Volviendo a ordenar por `orden`, saltan tres comprobaciones.
 
 ## Las posiciones oficiales vienen de chess-results
 
@@ -4429,6 +4480,19 @@ se anuncian en ajedrezcostarica.com (`/es/tournaments`), no solo los que se
 organizan con Pareo Integral. Salen en «También en Costa Rica», entre
 «Próximos torneos» y «Resultados».
 
+- **Apagados por ahora (12/11/2026).** El dueño pidió que no se vea ninguno
+  de ajedrezcostarica.com hasta nuevo aviso. La función los sigue leyendo y
+  la tabla los guarda; lo que se apaga es mostrarlos, con
+  `FUENTES_OCULTAS = ["ajedrezcostarica"]` en `js/torneos-pareo-pagina.js`
+  (la lista, el calendario de la lista y la nota «También anunciado en
+  ajedrezcostarica.com») y la misma lista en `worker.js` (el calendario para
+  suscribirse). Los de chess-results siguen saliendo. Se decide por la
+  `fuente` de la fila y, si no la trae, por su enlace. Para volver a
+  mostrarlos se vacían las dos listas. Las pruebas de cómo se pinta uno de
+  allá corren con la lista vaciada solo dentro de la prueba
+  (`herramientas/lib/fuentes-ocultas.js`), y
+  `verificar-torneos-externos-pagina.js` y `verificar-worker.js` comprueban
+  con el archivo tal cual que hoy no salen.
 - **Quién los lee.** La Edge Function `torneos-externos`, una vez al día
   (pg_cron `torneos-externos`, 5:13 de Costa Rica). Lee la portada de allá y
   la ficha de cada torneo, con calma: una a la vez, medio segundo entre una
@@ -8597,6 +8661,265 @@ bitácora del árbitro, que se baja en PDF o en Word.
   mesas que no se tocan, la clave en un `console` o el «enviado» de lo que
   chess-results no confirmó, saltan.
 
+### La mesa del árbitro con los torneos de Pareo Integral
+
+Pedido del dueño, para la Eliminatoria Cantonal JDN de Pérez Zeledón: que
+los torneos de Pareo Integral «se conecten con la mesa del árbitro para hacer
+los eventos», sin chess-results. Eligió que `mesa-arbitro.html` trabaje
+también con Pareo.
+
+- **La puerta es la que Pareo ya da a los adjuntos**: el árbitro principal
+  crea en Pareo un «Enlace para un árbitro adjunto» con un rango de mesas
+  (`#adjunto=<código>&m=1-10`), y la sección «Torneo de Pareo Integral» de la
+  mesa del árbitro (`js/mesa-arbitro-pareo.js`, aparte del código de
+  chess-results) habla por el MISMO canal en vivo que el celular del adjunto
+  (`pareo-adjunto-<código>`), con los mismos mensajes: «pedir» y «estado»,
+  «resultado» y «nota». **Decide la pestaña del principal**
+  (`recibirDeAdjunto`): solo la última ronda, una mesa del rango con rival y
+  sin resultado. Por eso su Pareo Integral tiene que estar abierto, como con
+  cualquier adjunto (la página lo dice si no contesta).
+- **«Enviado» solo si el principal lo trae**: un resultado queda en la
+  bitácora como enviado cuando el «estado» que contesta el principal ya lo
+  tiene en esa mesa (la misma regla que con chess-results: nunca por haber
+  mandado). Si la mesa ya tenía otro resultado, se avisa y no queda.
+- **Las ilegales e irregularidades le llegan al principal** como incidencia
+  («sanción»; la ilegal con el artículo `ilegal`, que es lo que cuenta
+  `marcasIncidencias` para la marca de la partida y la segunda ilegal), y la
+  marca que devuelve Pareo se ve escrita en el jugador; con la segunda, la
+  mesa dice «Segunda ilegal: decide el resultado». Una irregularidad con un
+  artículo que Pareo conoce (4.3, 11.3.2, 11.5, 6.7) lleva su clave. La nota
+  libre va como «Otra», con el artículo en el texto.
+- **La bitácora es la misma tabla** (migración
+  `20261112023718_mesa_arbitro_pareo.sql`): una línea lleva `tnr` (un torneo
+  de chess-results) **o** `pareo` (el código del enlace), nunca las dos ni
+  ninguna (`arbitro_bitacora_un_torneo`). Anular sigue pidiendo la misma
+  partida, ahora con el mismo `tnr` o el mismo `pareo`
+  (`interno.arbitro_puede_anular_en`, que reemplaza a
+  `arbitro_puede_anular`). «Mis torneos» sigue siendo de chess-results: sin
+  el filtro `tnr is not null`, las líneas de Pareo salían como un torneo sin
+  número. El documento (PDF y Word) dice «Pareo Integral, enlace de árbitro
+  …» y «aceptados por el árbitro principal», no chess-results
+  (`MesaArbitro.fuente`, `valorDePareo` en `js/mesa-arbitro.js`).
+- **Se construyó encima del PR de ilegales e irregularidades**
+  (`feat/mesa-arbitro-ilegales`, #1252), que ya tenía sus migraciones
+  aplicadas: usa sus listas y su regla de las ilegales.
+- **No se guarda el enlace** en el navegador: si se recarga, se vuelve a
+  pegar (o se abre `mesa-arbitro.html#adjunto=…`).
+
+La migración se probó en la base impersonando una cuenta con licencia, en
+una transacción que se deshizo: un resultado, una ilegal y su anulación con
+`pareo`; se rechazaron la línea sin torneo, con los dos, con un código malo y
+la anulación desde otro enlace; «Mis torneos» no trae filas sin número.
+`herramientas/verificar-mesa-arbitro-pareo.js` lo revisa con un doble del
+árbitro principal que contesta como `js/pareo/pagina.js`. Rompiendo a
+propósito la regla de «enviado», saltan tres comprobaciones.
+
+### Pareo Integral: lo que anotan los adjuntos queda en la base
+
+Pedido del dueño el 12/11/2026, para la Eliminatoria Cantonal JDN de Pérez
+Zeledón (22/11, unas 20 mesas, la prueba de fuego): «que todo sea uno solo»
+—la inscripción, Pareo, la mesa del árbitro y las cámaras de Notara—, y que
+los adjuntos entren con un código corto. Se le planteó y eligió: **unir la
+pantalla y los datos, no meter Pareo dentro de la mesa** (Pareo son ~24 000
+líneas que también andan sin cuenta, sin internet y como programa; meterlo
+adentro daría dos copias), y que el torneo deje de depender de que la pestaña
+del principal esté abierta. Esta es la primera pieza.
+
+**El problema.** Hasta acá el resultado de un adjunto viajaba SOLO por el
+canal de Broadcast `pareo-adjunto-<código>` hasta la pestaña del principal. Si
+esa pestaña estaba cerrada, sin internet o en otra computadora en ese momento,
+el resultado se perdía: el adjunto veía «Enviando…» para siempre.
+
+- **Dos tablas sin cuenta** (migraciones `20261112050229_pareo_cola_adjuntos.sql`
+  y `20261112052848_pareo_adjuntos_trigger_auditar.sql`, que le pone al
+  trigger de auditoría el nombre `auditar` que busca su verificador), RLS puesta, sin permisos ni políticas: solo la Edge Function `pareo-publicar`.
+  - `pareo_adjuntos`: los enlaces de adjunto de cada torneo publicado (el mismo
+    código de 8 letras que Pareo ya generaba, su nombre y sus mesas), con
+    `visto` (la última vez que entró o anotó). El principal los manda con la
+    clave de su torneo: apenas crea o apaga uno (`sincronizarAdjuntos` en
+    `js/pareo/pagina.js`) y dentro de cada «crear» y «actualizar» de la
+    publicación (`adjuntos`, aparte del torneo: no son públicos). La lista queda
+    **exactamente como llega** (los que no vienen se apagan), y un código que ya
+    es de otro torneo no se toma. Un Pareo viejo que no manda `adjuntos` no
+    apaga nada. Lleva la auditoría (`VIGILADAS`) con nombre, mesas y si está
+    activo, **nunca el código**: equivale a una contraseña.
+  - `pareo_cola`: lo que mandó cada adjunto (`resultado` o `nota`), en orden
+    (`id` creciente). **Se borra cuando el principal lo pasa a su torneo**
+    (`cola_borrar` hasta el último que leyó): no queda una copia aparte. Las dos
+    se borran con el torneo publicado. Lo dice la política de privacidad.
+- **El adjunto manda primero a la base** (`PareoPublicar.mandarAdjunto`, una
+  sola copia en `js/pareo/publicar.js`, que usan el celular —`js/pareo/ver.js`—
+  y la Mesa del árbitro —`js/mesa-arbitro-pareo.js`, que ahora carga
+  `publicar.js`—): `adjunto_anotar` con su código y, si la base lo tomó, un
+  toque `cola` por el canal (sin el resultado) para que el principal lo lea ya.
+  **Si la base no contesta** (sin internet hacia la función, el torneo sin
+  publicar, o el Pareo del principal todavía no subió la lista), **por el canal
+  como antes**. Lo que la base rechaza por una regla (`ronda`, `mesa`,
+  `apagado`, `forma`) no se manda por el canal: se dice, y la mesa se puede
+  volver a anotar. La pantalla dice «Guardado. El árbitro principal lo recibe
+  en cuanto se conecte» en vez de quedarse en «Enviando…».
+- **Quien decide sigue siendo el principal, con las mismas reglas.** Su pestaña
+  lee la cola (`leerCola`) al abrir el torneo **en cualquier ficha** (antes los
+  adjuntos se conectaban solo al pintar la ronda), con el toque `cola` y cada
+  15 segundos, y pasa cada fila por `recibirDeAdjunto` / `recibirNotaDeAdjunto`
+  (solo la última ronda, una mesa de su rango, nunca pisa lo que ya está). Por
+  eso lo que llega por las dos vías no se duplica: el segundo es un no-op. El
+  rango y la ronda que mira la función son gruesos a propósito (`rondas` cuenta
+  las COMPLETAS publicadas: se aceptan de esa a dos más); la regla fina la pone
+  el principal.
+- **Entrar con el código solo.** En la Mesa del árbitro se escribe «ABCD-2345»
+  (da igual mayúsculas, espacios o guion) sin el enlace: `adjunto_entrar` dice
+  de qué torneo es y cuáles son sus mesas. La tarjeta de cada adjunto en Pareo
+  muestra el código, deletreado para el lector de pantalla. Con el enlace, la
+  base igual se consulta: el rango que vale es el de la base.
+- **Con el principal callado, las mesas del torneo publicado.** Si a los 8
+  segundos el principal no contestó (y no contesta a un «pedir» más), la Mesa
+  del árbitro arma la ronda desde `pareo_publicados` (lectura pública), cada 20
+  segundos, y lo dice: «El árbitro principal no está conectado…». Un resultado
+  que ya sale publicado es uno que el principal aceptó, así que también cuenta
+  como «enviado» en la bitácora. Sin las marcas de incidencias (no se
+  publican); en equipos no se hace (los tableros salen del principal).
+- **El freno**: entrar y anotar pasan por `pareo_frenar` (el de «actualizar»,
+  1500 por conexión y hora). Adivinar un código de 31⁸ con decenas vivos no es
+  práctico a ese ritmo.
+
+**Comprobado en la base** el 12/11, en una transacción que terminaba con
+`raise` (se deshizo; la corrió el dueño en el editor SQL): se rechazan el
+código con una letra que no va (`l`), el rango al revés, un `evento` raro y
+`datos` que no son un objeto; la auditoría anota el alta sin el código y no
+anota `visto`; `anon` no lee la cola ni los adjuntos, `authenticated` no
+escribe la cola, y borrar el torneo borra su cola.
+
+Lo prueban `verificar-mesa-arbitro-pareo.js` (con un doble de la función: sin
+ella todo por el canal; con ella, entrar con el código solo, el resultado y la
+nota a la cola con solo el toque por el canal, «Guardado…», enviado cuando el
+principal lo trae, el rechazo que se dice y las mesas del torneo publicado con
+el principal callado) y `verificar-pareo-adjuntos.js` (el principal lee la cola
+al abrir en otra ficha y con el toque, aplica las reglas, borra hasta lo último
+leído, sube la lista apenas cambia; el celular manda a la base y el rechazo se
+dice). Las pruebas de Pareo ya no hablan con la función de verdad
+(`herramientas/lib/pareo-pruebas.js` la corta, salvo que la prueba ponga su
+doble). Rotos a propósito el borrado de la cola y el envío a la base, saltan.
+
+**Probado en vivo** el 12/11, con la función ya desplegada (un torneo
+«PRUEBA» creado y borrado enseguida): crear con su adjunto, entrar con el
+código escrito con guion, anotar, el rechazo de una mesa ajena (403 `mesa`),
+de otra ronda (409 `ronda`) y de un código que no existe (404 `no`), leer la
+cola (no con una clave mala), borrarla, apagar el adjunto (entrar da 403
+`apagado`) y borrar el torneo; en la base no quedó nada.
+
+**Lo que falta para el 22/11**: el ensayo general con un torneo de prueba. El
+Centro del evento y las cámaras en la mesa del adjunto, abajo.
+
+### Pareo Integral: el Centro del evento
+
+Pedido del dueño el 12/11/2026, después de ver las maquetas: una ficha nueva
+de Pareo, **«Centro del evento»** (entre Rondas y Clasificación;
+`pintarCentro` en `js/pareo/pagina.js`), con todo el torneo de un vistazo para
+el árbitro principal. **No guarda nada propio**: muestra lo que la pestaña ya
+sabe y cada botón es una acción que ya existía.
+
+- **La ronda en juego**: «k de n mesas terminadas», escrito y con un
+  `<progress>` (el color nunca va solo). Si está completa, el botón lleva a
+  emparejar la siguiente (en la ficha Rondas: emparejar sigue siendo uno solo).
+- **Para confirmar**: la MISMA lista de la ficha Rondas (`pintarConfirmar`,
+  con otro `idBase` para no repetir ids y repintando la ficha abierta) —
+  sorpresas de Elo, lo que un adjunto anotó distinto, lo que leyó la cámara,
+  que se anota desde aquí— más **las segundas ilegales de una mesa sin
+  resultado** (`V.marcasIncidencias`, art. 7.5.5), con «Ir a la mesa».
+- **Los árbitros adjuntos**: nombre, mesas, el código (deletreado para el
+  lector de pantalla), cuánto anotó en esta ronda y **la última vez que la
+  base supo de él** (`visto` de `pareo_adjuntos`, que llega con cada lectura de
+  la cola). «+ Agregar árbitro» es `enlaceAdjunto`, y **«Códigos en papel»**
+  imprime nombre, mesas y código con dónde se escribe, **sin el enlace**, en la
+  hoja de la plantilla de la pared (misma marca de agua). Si el torneo no está
+  publicado, lo dice: hasta entonces lo de los adjuntos no pasa por la base.
+- **Las cámaras de Notara**, mesa por mesa: «Transmite» (noticias en los
+  últimos 90 s, `SIN_NOTICIAS_MS`), «Terminó» (la mesa tiene resultado),
+  «Necesita ayuda» (una alerta sin atender), «Sin señal» y «Sin rival». En
+  equipos no (se ven tablero por tablero en la ronda).
+- **Los enlaces**: el torneo público y la Mesa del árbitro, con «Copiar».
+- **Abrir la ficha conecta los adjuntos y las cámaras** aunque no se haya
+  abierto la ronda (los dos son idempotentes).
+- **Se pone al día sola**: cada 4 s compara el modelo que pinta
+  (`modeloCentro`) con el último pintado y solo vuelve a pintar si cambió, y
+  **nunca con el foco adentro** (no se le quita el lugar a quien navega con
+  teclado).
+
+Lo prueba `verificar-pareo-centro.js`: sin rondas; la ronda escrita; la
+segunda ilegal; lo de la cámara anotado desde aquí; los adjuntos con su código
+deletreado, lo que anotaron y su `visto`; las cámaras con un latido por el
+canal; que un resultado de la cola lo cambie sin tocar nada; los códigos en
+papel sin el enlace; sin ids repetidos; a 390 px. Roto a propósito el
+repintado, saltan tres.
+
+
+### Pareo Integral: las cámaras en la mesa del adjunto
+
+Pedido del dueño el 12/11/2026 (la tercera pieza para la Eliminatoria): que
+el árbitro adjunto vea en su celular lo que leen las cámaras de Notara de SUS
+mesas y que la propuesta de resultado de la cámara le llegue a él, que está al
+lado del tablero.
+
+- **Una sola copia**, `js/pareo/camaras-adjunto.js` (`PareoCamarasAdjunto`),
+  que usan el celular (`js/pareo/ver.js`) y la Mesa del árbitro
+  (`js/mesa-arbitro-pareo.js`). Escucha el mismo canal que el principal y
+  `tablero-vivo.html` (`tablero-vivo-<código>`) y lee con
+  `PartidaEnVivo.leer` (si falta un pedazo, lo pide entero, como el principal).
+- **El código de las cámaras lo manda el principal** con su estado
+  (`camaras` y `torneo` en `enviarAdjunto`): el adjunto no escribe nada. Solo
+  entra lo de ese torneo publicado y esa ronda; en equipos no se manda (se ve
+  tablero por tablero en la ronda del principal). Sin el retraso de la
+  transmisión pública: es para el árbitro.
+- **Cada mesa suya, con su tablero en vivo** (oculto para el lector de
+  pantalla y con «cómo va» escrito al lado: `PartidaEnVivo.comoVa`) y las
+  jugadas contadas. Se pinta en su lugar (`data-cam`), sin rehacer la lista:
+  no se le mueve nada a quien está anotando.
+- **«La cámara dice: 1-0»**, con «Confirmar 1-0» y «No es así», solo en una
+  mesa sin resultado y sin un envío pendiente. **Confirmar es lo mismo que
+  tocar el resultado a mano** (pasa por la base, `PareoPublicar.mandarAdjunto`,
+  y lo decide el principal con sus reglas de siempre): nada se anota solo.
+  «No es así» esconde esa propuesta (la de ese resultado) y el tablero sigue.
+- **Las piezas**: el módulo carga también `js/pieza-preferida.js`. Sin él,
+  `PartidaEnVivo.pintar` usa el mismo glifo para blancas y negras y no se
+  distinguen (`pareo.html` y `mesa-arbitro.html` no lo cargaban: se vio en la
+  foto de prueba).
+
+Lo prueban `verificar-pareo-adjuntos.js` (el celular: escucha y pide, «sin
+noticias» escrito, lo de otro torneo u otra ronda no entra, el tablero con sus
+jugadas y el mate escritos, «Confirmar» manda ese resultado y deja de
+proponerlo, «No es así» lo esconde sin mandar nada),
+`verificar-mesa-arbitro-pareo.js` (lo mismo en la Mesa del árbitro) y
+`verificar-pareo-centro.js` (que el principal manda el código y el torneo). La
+partida de prueba es el mate del pastor (comprobado con chess.js). Roto a
+propósito el filtro de torneo y ronda, salta.
+
+### Pareo Integral: entrar con el código en el celular del adjunto
+
+Pedido del dueño el 12/11/2026, al armar el guion del ensayo: escribir el
+código de 8 letras solo funcionaba en la Mesa del árbitro, que pide la
+licencia `mesa-arbitro`; un adjunto sin licencia dependía del enlace o del QR.
+
+- **`pareo.html#codigo`**: una casilla «Entra con tu código», sin cuenta ni
+  licencia (entra por `modoVer()`, como el enlace del adjunto: el candado se
+  libera y el editor queda escondido). `PareoVer.entrarConCodigo` en
+  `js/pareo/ver.js`.
+- El código se escribe como venga (mayúsculas, espacios, guion). Si no tiene
+  la forma de un código (8 símbolos del alfabeto sin 0, 1, i, l ni o) se dice
+  sin preguntarle a la base; si la tiene, `adjunto_entrar` dice si existe y
+  cuáles son sus mesas, y sigue en su página de siempre
+  (`#adjunto=<código>&m=<rango de la base>`, que se queda en la dirección: al
+  recargar sigue ahí). Lo que contesta la base (no existe, se apagó, demasiados
+  intentos) se dice tal cual.
+- **`#codigo=K7M2-9QXA`** entra solo, para un enlace corto o un QR que lleve
+  el código.
+- El Centro del evento, los códigos en papel y sus enlaces mandan ahí (la
+  Mesa del árbitro sigue, para los adjuntos con licencia).
+
+Lo prueban `verificar-pareo-adjuntos.js` (la forma equivocada sin preguntar
+a la base, el que no existe, el bueno escrito como venga con el rango de la
+base, `#codigo=…` solo) y `verificar-candado-herramienta.js` (la casilla se ve
+sin sesión y sin el editor; quitada la entrada `#codigo`, salta).
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
@@ -8686,8 +9009,9 @@ resultados, ilegales e irregularidades desde el celular, sin cuenta.
   `delete from centroamericano_registro where tnr in ('1532448','1532486'); delete from
   centroamericano_asignaciones where tnr in ('1532448','1532486'); delete from
   centroamericano_torneos where tnr in ('1532448','1532486');` y su clave en la bóveda
-  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` NO tiene todavía el
-  «Guardar» por mesa, las ilegales ni los grupos: son solo de la versión del Centroamericano.
+  (`centroamericano_sid_1532448`). La página genérica `mesa-arbitro.html` recibió después los
+  grupos (ver «Mesa del árbitro: los torneos ligados de un grupo») y el «Guardar» por mesa con las
+  ilegales e irregularidades (ver «Mesa del árbitro: ilegales, irregularidades y guardar por mesa»).
   La página del árbitro no está en francés ni en inglés.
 - Lo prueban `verificar-centroamericano-mesas.js` (sin navegador: las reglas, las promesas de
   seguridad leídas del código de las funciones y las migraciones, y el contraste de cada par
@@ -11053,6 +11377,63 @@ anterior a corregir o agregar una nota. La bitácora (`arbitro_bitacora`) ya gua
   La bitácora es **personal**: dos árbitros del mismo torneo llevan cada uno la suya (una bitácora compartida por
   torneo sería otro diseño). Al borrar una cuenta, sus torneos se borran con ella (`on delete cascade`).
 - Lo prueba `verificar-mesa-arbitro-pagina.js` (sección «Mis torneos»).
+
+## Mesa del árbitro: ilegales, irregularidades y guardar por mesa
+
+El dueño pidió el 11/11/2026 pasar a la Mesa del árbitro general (`mesa-arbitro.html`) lo de la versión del
+Centroamericano que le sirve a **un árbitro solo con su torneo**. Era la etapa 1 de un plan de tres: la 2 son los
+ritmos (blitz con solo resultado e ilegal, «Llegó tarde», banderas y mesas sin rival) y la 3, las frases en inglés
+y francés. Lo que necesita varios árbitros (enlaces y QR, tablets, transmisión, Fair Play) sigue solo en la versión
+de eventos.
+
+- **«Guardar» en la fila de cada mesa.** Manda solo esa mesa y no pregunta: el botón está en la fila y dice qué
+  guarda. El de abajo sigue mandando todas las pendientes y pregunta antes. Es la misma acción `guardar` de la
+  función, con un solo cambio: la función ya manda todas las filas de la pantalla con su valor (ver «Mesa del
+  árbitro: resultados y bitácora»), así que guardar una no toca las demás.
+- **Una sola copia de la regla.** `avisoIlegal`, `minutosIlegal`, `marcasTexto`, `TIPOS_ILEGAL`,
+  `TIPOS_IRREGULARIDAD` y `textoTipo` se mudaron de `js/centroamericano-mesas.js` a `js/mesa-arbitro.js`, que las
+  dos páginas del Centroamericano ya cargaban antes. `centroamericano-mesas.js` las toma de ahí y las sigue
+  exportando con el mismo nombre, así que nada del Centroamericano cambió. `verificar-mesa-arbitro.js` comprueba
+  que sean las MISMAS funciones (`===`), no una copia.
+- **Ilegales por partida (art. 7.5.5).** «Ilegal» e «Irregularidad» de cada jugador, con la lista de tipos y
+  «Otra» elegida por defecto, como en el Centroamericano:
+  - La primera ilegal avisa «2 minutos más a su rival».
+  - La segunda avisa antes de anotarla, con el botón «Anotar la SEGUNDA ilegal». Después dice que pierde la
+    partida, salvo que el rival no pueda dar mate (tablas). **Propone** el resultado en el desplegable sin
+    guardarlo, y la mesa lleva una banda roja con «Segunda ilegal: decide el resultado» escrito: el color nunca
+    va solo.
+  - La cuenta sale de la bitácora (`MesaArbitro.marcas`, por ronda + mesa + color), no de un contador de la
+    página. Así, lo que se anotó en otra pestaña cuenta igual.
+- **Anular no borra.** Un toque por error se anula con otra línea, `tipo = 'anulacion'`, que apunta a la anulada
+  (`anula`). La anulada sigue en la tabla y en el PDF, pero deja de contar en las marcas y en el resumen
+  («Anuladas por error: N»).
+- **La base, no la pantalla** (migraciones `20261111224043_mesa_arbitro_ilegales.sql` y su arreglo,
+  `20261111224156_mesa_arbitro_anular_sin_recursion.sql`):
+  - `arbitro_bitacora` suma las columnas `color`, `jugador` y `anula`, y los tipos `ilegal`, `irregularidad` y
+    `anulacion`. Una ilegal o irregularidad exige color, ronda y mesa.
+  - El permiso de insert por columna suma esas tres columnas, pero no la hora ni el autor.
+  - La política de insert deja anular solo una ilegal o irregularidad **propia** de la misma partida y el mismo
+    jugador. Lo pregunta `interno.arbitro_puede_anular()` (`security definer`).
+  - Un índice único sobre `anula` impide anular dos veces.
+  - Sigue sin update ni delete.
+- **Una política no puede mirar su propia tabla.** La primera versión preguntaba por la anulada con un
+  `exists (select … from public.arbitro_bitacora b …)` dentro de la misma política de insert. Postgres la rechazó
+  con «infinite recursion detected in policy» (42P17) en **todo** insert, también en los resultados de siempre.
+  Así estuvo unos 73 segundos en producción (22:40:43 a 22:41:56 UTC del 11/11), sin ninguna línea anotada en
+  ese rato. Se vio al impersonar una cuenta apenas aplicada, y el arreglo pasó la pregunta a la función
+  `security definer`. `verificar-mesa-arbitro.js` ahora revisa que la política vigente no nombre su tabla.
+- **Comprobado impersonando cuentas**, el 11/11, con dos profesores con licencia «todas», en una transacción que
+  se deshizo (no quedó ninguna fila):
+  - Un resultado de siempre, una ilegal propia y su anulación se anotan.
+  - Se rechazan: anular dos veces (23505), anular con otro color o desde otra mesa (42501), una ilegal sin color
+    (23514), una nota con `anula` (42501), poner el autor (42501), un update (42501) y que otra cuenta anule lo
+    ajeno (42501).
+  - La otra cuenta no ve ninguna de esas líneas.
+- **Lo que no se probó:** guardar una mesa con la función desplegada y una sesión con licencia (la página se
+  probó con un doble).
+- Lo prueban `verificar-mesa-arbitro.js` (la regla, las marcas, el resumen sin lo anulado y las promesas de la
+  migración) y `verificar-mesa-arbitro-pagina.js` (sección «Ilegales, irregularidades y "Guardar" en la fila»).
+  Si se cuenta lo anulado, las dos saltan.
 
 ## La ficha del jugador federado
 
@@ -14085,6 +14466,64 @@ Se rompieron a propósito la experiencia, la persona antes de apagar y el salto
 de la tablet: saltaron las tres. El doble de la organización conoce `gt()`,
 `centroamericano_reparto_tasas` y `centroamericano_reparto_aplicar`.
 
+### La logística de la sala: medidas, borrador y material
+
+El dueño lo pidió el 11/11/2026. Antes armó en una lluvia de ideas una
+calculadora aparte (mesas, tableros, relojes, árbitros y el plano según los
+inscritos) y preguntó si eso ya estaba en las herramientas de los árbitros.
+Estaba a medias: el plano y el reparto existían, pero el borrador ponía una fila
+por torneo sin mirar el salón y nada contaba el material. Eligió meterlo en
+«Plano de la sala» y no en una pestaña aparte. La mesa, según el dueño, es la
+plegable de 180 × 74 cm: dos tableros y cuatro sillas, dos de cada lado.
+
+- **La cuenta, en un módulo aparte** (`js/plano-logistica.js`, sin pantalla ni
+  base, como el reparto):
+  - `capacidad()`: las mesas por fila, en tramos de «Mesas pegadas por tramo»
+    con un pasillo entre tramos, sobre el ancho menos el margen de las paredes.
+    Las filas van del frente (menos la zona de la mesa principal) al fondo.
+    Cada fila ocupa la mesa más una silla de cada lado (0,74 + 2 × 0,6 m)
+    más el pasillo entre filas.
+  - `borrador()`: cada torneo empieza en una fila nueva (o, sin eso, en el
+    tramo siguiente). Las filas se parten donde se acaba el ancho. Todo sale
+    con `duda`, para revisarlo en la sala como el borrador de antes. Lo que no
+    cabe se dibuja igual y se avisa cuántas mesas quedan afuera, para que se
+    vea cuánto falta.
+  - `medir()`: si el plano que se ve, con lo corregido a mano, cabe. Compara la
+    fila más ancha contra el ancho útil y el fondo de todas las filas contra el
+    largo útil. Dice cuál fila se sale.
+  - `inventario()`: se cuenta **del plano**, no de los inscritos, para que lo
+    corregido a mano cuente. Lleva un tablero, un juego de piezas y un reloj por
+    partida, y las planillas son las partidas por las rondas. Todo eso con el
+    % de reserva. Las sillas son dos por partida, más el equipo arbitral y las
+    de más. Va un árbitro de sector cada «Partidas por árbitro» **por torneo**
+    (una partida con un jugador con discapacidad visual pesa dos), más el
+    principal y, desde tres de sector, un adjunto.
+- **Las medidas viajan con el plano**, en `plano.salon`. `limpiar()` del plano
+  las pasa por `limpiarSalon()` y no hizo falta tocar la base:
+  `sala_plano_guardar()` ya acepta cualquier objeto con filas, de hasta 200 KB.
+  Si no se tocaron, el plano se guarda como antes, sin `salon`. El borrador
+  con medidas se usa solo con «Armar el borrador con estas medidas»: sin eso,
+  sale el de antes, con la forma del Gimnasio Nacional.
+- **Jugadores con discapacidad visual**: cada uno juega en una mesa propia,
+  porque van los dos tableros, el normal y el adaptado, y lleva un reloj
+  parlante. Sus mesas van al final de su torneo, una partida por mesa. **En el
+  plano no se marcan**: el plano es público (la misma política de la sala) y,
+  con el pareo de chess-results, una marca en la mesa diría quién es. Solo se
+  guarda cuántos hay por torneo (`salon.dv`), que es un número sin nombres. La
+  primera versión ponía `dv: true` en la mesa, y se quitó por eso. `limpiar()`
+  la bota igual, si llegara.
+- **Pendiente, como idea**: poner las medidas sin ningún torneo en la sala
+  (antes de abrir chess-results), un plano a escala con la zona de la mesa
+  principal y la entrada, y el inventario propio de la casa para avisar si
+  faltan relojes.
+
+Lo revisa `verificar-plano-logistica.js`. Revisa la cuenta (capacidad,
+borrador partido, las mesas de discapacidad visual al final y sin marca, cabe
+o no, material y árbitros) y la pantalla con el doble de la organización: el
+borrador con medidas, si cabe, el material, guardar con `salon` y volver a
+abrir con los campos llenos. Se rompieron a propósito la marca de la mesa y el
+fondo en `medir()`, y saltaron.
+
 ### La Copa de naciones
 
 El dueño la pidió el 7/11/2026: un podio de los tres mejores países del
@@ -14346,6 +14785,330 @@ estaban, y las diferencias eran solo lo nuevo.
   5. crear la sala en `admin.html#torneos`, con los enlaces de chess-results;
   6. correr `sitemap.py` y `archivos-catalogo.js`;
   7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.
+
+### La de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+`jdn-pz-2026.html` es la página de la Eliminatoria Cantonal JDN CCDRPZ –
+ADAPZ 2026 (lo pidió el dueño: «hacer igual a la página de torneos del
+Centroamericano el torneo de PZ»), con el azul marino y el celeste del logo
+de la Asociación Deportiva de Ajedrez de Pérez Zeledón y de los cuadros de
+sus bases. No es universitaria, pero es la misma página y sale de la misma
+plantilla (`herramientas/torneos-universitarios/jdn-pz-2026.js` →
+`js/jdn-pz.js`). Domingo 22 de noviembre de 2026 en el Hotel del Sur,
+suizo a 5 rondas a 30 minutos + 30 segundos.
+
+- **Un torneo por jugarse**, no terminado: con `hoy` en la configuración,
+  arriba va «Hoy en el torneo», como en el Centroamericano, en lugar de «El
+  podio». Lo arma `js/torneo-hoy.js`: el de `js/centroamericano.js` solo en
+  español, que lee las horas del calendario (las filas con `data-inicio` y
+  `data-minutos` de `#calendario`, un recuadro propio de la configuración):
+  la cuenta regresiva antes, lo que se juega ahora y el reloj a la próxima
+  ronda durante, y el cierre después (sus textos, `hoy` en
+  `window.TorneoPagina`). Cuando el Centroamericano pase a una sola copia,
+  se juntan.
+- **Lo nuevo de la plantilla es opcional** y no cambia CENFOTEC ni UTN (se
+  comprobó: siguen saliendo iguales): `hoy`; la ficha con `pronto` (sin
+  href, con tabindex y «Pronto: …», como «Partidas en vivo» del
+  Centroamericano); `despedida.titulo`; `dialogos.tituloClasificacion`;
+  `aliados` (otros logos en la franja de quién organiza: el del CCDR); y
+  `logo.redondo`, para un logo con su fondo blanco (el de la ADAPZ es un
+  JPG): va en un círculo blanco en la portada, en la despedida, en la ficha
+  de Torneos y en la imagen para compartir. `verificar-plantilla-universitaria.js`
+  mide también los JPG.
+- **Todo sale de las bases** (`documentos/jdn-pz-2026/`, firmadas por el
+  árbitro principal el 11/11/2026): inscripciones (cerrado, sin costo para
+  los afiliados al día; el cierre lo adelantó la organización al viernes 20 de
+  noviembre a las 10:00 p.m., ver abajo),
+  categorías (U12, U16 y U20, Absoluto y Femenino; dos torneos), calendario,
+  sistema, desempates, objeciones y derechos de imagen. **Lo que no traen no
+  se pone**: no hay teléfono ni correo de la organización (no hay ficha de
+  contacto) ni transmisión.
+- **El congresillo, sin fecha**: las bases dicen «viernes 20 de junio», una
+  errata (el torneo es en noviembre; el 20 de noviembre de 2026 sí es
+  viernes). Hasta que la organización lo confirme, el calendario solo dice
+  que es virtual y que el enlace llega por el chat oficial.
+- **Sin chess-results** (lo decidió el dueño después de la primera versión,
+  que leía chess-results como el Centroamericano): el torneo se dirige en
+  Pareo Integral. Con `resultados: "pareo"` la plantilla no pone el
+  buscador, la clasificación, el podio ni el proyector de
+  `js/centroamericano-vivo.js` (leen chess-results por `sala-jugadores`), ni
+  sus scripts; la página suma los suyos (`scripts`) y su propio menú
+  (`menu`). «Resultados U12» y «Resultados U20» abren encima la página
+  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`; sin el
+  torneo encontrado, la lista de Pareo, que es cierta siempre), y la ficha
+  «Inscribirme» abre el formulario (ver «La inscripción de la Eliminatoria
+  Cantonal JDN de Pérez Zeledón», abajo). La portada de Torneos
+  (`PORTADAS`) lleva un enlace a Pareo a las fichas, las bases a su ficha y
+  la inscripción al formulario. CENFOTEC y UTN siguen saliendo iguales.
+- **La sala en Torneos** (`torneos-en-vivo.html`): la portada estaba en el
+  código, pero la fila de `salas_torneo` no se había creado (el paso 5 de la
+  lista de arriba), y el torneo no salía. Se creó el 12/11/2026, a pedido del
+  dueño: clave `jdn-pz-2026`, tipo «enlaces», con cuatro enlaces
+  que la portada lleva adentro de la página (la página, `#inscribirme`, Pareo
+  → `#fichas` y las bases → `#ficha-bases`). Se edita en
+  `admin.html#torneos`. Se llama «Eliminatoria JDN Pérez Zeledón 2026-2027»
+  (el nombre que pidió el dueño; la página sigue con el suyo).
+
+`herramientas/verificar-torneo-hoy.js` lo revisa: el HTML (arriba «Hoy», el
+calendario con sus siete filas, sin chess-results, las fichas de resultados
+a Pareo, la de inscribirse, que existan las bases y los logos, ningún
+teléfono) y «Hoy en el torneo» con el reloj fijo en cuatro
+momentos (diez días antes, en la ronda 1, en el almuerzo y de noche), con el
+navegador en Madrid para ver que las horas son de Costa Rica; la cara y el
+celular sin scroll de costado. Rompiendo a propósito la zona de
+`torneo-hoy.js`, saltan seis comprobaciones.
+
+### La inscripción de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+Pedido del dueño: «un formulario de inscripción, donde los jugadores, una vez
+aprobada la inscripción, vayan entrando al torneo generado en Pareo Integral
+de forma automática; hay 2 categorías». Eligió: el formulario en la página
+del torneo, las categorías de las bases (U12, y U16 con U20), y que la
+apruebe el árbitro.
+
+- **Se usa la inscripción que Pareo Integral ya tenía**, no una nueva: el
+  formulario manda con `PareoPublicar.inscribir` (`js/pareo/publicar.js`, la
+  misma de `torneos-pareo.html`) a `pareo-publicar` («inscribir»), que
+  comprueba que la inscripción del torneo esté abierta y no vencida y pasa
+  por su freno. Queda en `pareo_preinscripciones` (que nadie lee desde
+  afuera) hasta que el árbitro la acepta en Pareo: **en ese momento entra
+  sola a la lista de jugadores** (`agregarJugadores`, como cualquier alta;
+  con rondas jugadas, como inscripción tardía). Nadie entra sin que el
+  árbitro la acepte: las bases piden ser afiliado al día a la ADAPZ, y eso
+  no se puede comprobar desde la página (la casilla es una declaración, que
+  va en la nota).
+- **Los dos torneos se encuentran solos** (`js/jdn-pz-inscripcion.js`), sin
+  tocar el código: la organización de Pareo que se llama como la ADAPZ **y
+  tiene el sello «Organizador verificado»** (lo pone solo administración;
+  sin el sello, cualquiera crearía otra «ADAPZ» y recibiría las
+  inscripciones), y de sus torneos, el más nuevo con «U12» en el nombre y
+  el más nuevo con «U20» (o «U16»). Se lee con la clave anónima:
+  `pareo_organizadores` y `pareo_publicados` son de lectura pública.
+- **La categoría por el año de nacimiento**, como las bases: U12 de 2015 a
+  2020, U16 de 2011 a 2014 y U20 de 2007 a 2010; la U16 juega en el torneo
+  U20. La categoría va con la rama («U16 Femenino»), para los premios por
+  categoría de Pareo.
+- **El sexo y la fecha de nacimiento llegan a Pareo** (migración
+  `20261112023035_pareo_preinscripciones_sexo_nacimiento.sql`, dos columnas
+  opcionales; la función valida M/F y una fecha que exista, entre 1900 y hoy
+  en Costa Rica): sin ellos no había clasificación femenina ni la revisión
+  de la categoría por el año. Al aceptar, el jugador entra con los dos, y la
+  lista de inscripciones de Pareo los muestra. **En lo publicado no salen**
+  (`limpiar` de la función y `datosPublicos` siguen sin el sexo ni la
+  fecha). La política de privacidad lo dice. La función se despliega sola al
+  entrar a `main`: hasta entonces, la de producción ignora los dos campos.
+- **El cierre**: las bases decían el sábado 21 a las 10:00 p.m.; la
+  organización lo adelantó al **viernes 20 de noviembre a las 10:00 p.m.**
+  (hora de Costa Rica), que es lo que dice y cumple la página (`CIERRE`).
+  En la función manda el «hasta» de Pareo, que es un día: en los dos
+  torneos va el 20/11.
+- **Lo que tiene que hacer la organización**: crear en Pareo Integral la
+  organización ADAPZ (y que administración le ponga el sello), los dos
+  torneos con «U12» y «U20» en el nombre, publicados a su nombre, y en cada
+  uno «Recibir inscripciones desde la página pública» hasta el 21 de
+  noviembre.
+
+- **«Resultados U12» y «Resultados U20» nunca llevan a torneos de otros**
+  (lo pidió el dueño al ver la lista de Pareo abierta encima): van «Pronto»
+  (sin enlace, alcanzables con Tab) hasta que existe el torneo de la ADAPZ,
+  y entonces el módulo las cambia por el enlace a ESE torneo. El menú y la
+  despedida tampoco llevan a la lista de Pareo.
+- **El club viene «ADAPZ»** (casi todos son sus afiliados; se puede cambiar),
+  y vuelve a «ADAPZ» al inscribir al siguiente.
+- **El ID FIDE y el Elo, solos** (pedido del dueño): al salir de los
+  apellidos o del nombre se busca en la lista de FIDE con
+  `PareoEloNacional.buscarEnLista("fide", "Apellidos, Nombre")`
+  (`js/pareo/elo-nacional.js`: la Edge Function `pareo-listas-elo`, la misma
+  de Pareo, fijada en us-west-1, con su freno de 60 búsquedas por hora por
+  conexión; por eso se busca al salir del campo y no a cada letra, y lo
+  buscado queda en la memoria de la página). Se manda solo el nombre y no se
+  guarda nada. Cuentan los de Costa Rica que traen todos los apellidos y el
+  primer nombre escritos (y si alguno trae todos los nombres, solo esos);
+  sin resultados con el nombre, se prueba solo con los apellidos. Con
+  varios, el año de nacimiento desempata (también si la fecha se pone
+  después) y, si siguen varios, se elige de una lista. El Elo es el
+  **estándar** de FIDE: 30 minutos + 30 segundos es ritmo clásico para FIDE;
+  sin Elo estándar queda vacío, nunca el rápido. Lo que la persona escriba a
+  mano en el ID o el Elo no se pisa. FIDE ya está en la lista de proveedores
+  de la política de privacidad (por Pareo).
+
+`herramientas/verificar-jdn-pz-inscripcion.js` lo revisa con un doble de la
+base (que filtra de verdad), de la búsqueda de FIDE y de la función: sin la organización verificada
+no abre (y una «ADAPZ» sin sello no cuenta) y las fichas se quedan
+«Pronto»; con ella, cada ficha a su torneo; el club «ADAPZ»; el ID FIDE y el
+Elo (uno, varios, el año que desempata, ninguno, el de otra federación que no
+cuenta, lo escrito a mano que no se pisa); las categorías por el año, lo que falta no se manda, lo que se manda (al torneo
+U20 la U16, con «Apellidos, Nombre», el sexo, la fecha y el
+consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
+el navegador y el celular. Rompiendo a propósito el filtro del sello,
+saltan tres comprobaciones; el de la federación de FIDE, dos.
+
+### La del Tacho Chess 2
+
+`tacho-chess-2.html` es la página del Torneo Intereducativo Tacho Chess 2 del
+Liceo Anastasio Alfaro (lo pidió el dueño el 12/11/2026: «crear este torneo
+igual siguiendo todas las características del torneo centroamericano […] las
+bases todas tienen que ser interpretadas de este afiche»). Sale de la misma
+plantilla que la de Pérez Zeledón (`herramientas/torneos-universitarios/tacho-chess-2.js`
+→ `js/tacho-chess.js`), con «Hoy en el torneo» y `resultados: "pareo"` (sin
+chess-results).
+
+- **Todo sale del afiche**, menos lo que dio el dueño: 5 rondas a 10 minutos
+  + 2 segundos, la ronda 1 a las 9:00 y el árbitro principal, el FA Jean
+  Carlo Quesada Arauz (dijo «Jan Quesada Arauz»; se le preguntó y es el mismo
+  de las bases de Pérez Zeledón). Del afiche: sábado 14 de noviembre de
+  2026, «a partir de 8:30 a.m.» (la llegada y la confirmación de los
+  inscritos, hasta las 9:00; lo eligió el dueño), el Gimnasio del
+  Centro del Liceo Anastasio Alfaro, la inscripción gratuita, la premiación
+  («los mejores de cada nivel, de primer grado a undécimo año»: once niveles,
+  grado en primaria y año en secundaria, con «sétimo») y lo que hay además
+  (feria de comerciantes, open house, venta de comida). **El formulario se leyó
+  del código QR del afiche** con jsQR (`https://forms.gle/bLTnu979f2aj7kUUA`,
+  igual al texto impreso); es de la organización (Google Forms) y lo dice la
+  política de privacidad.
+- **El contacto es Adriana, de la organización** (+506 8912-2033, lo dio el
+  dueño): la ficha «Contacta a la organización» abre `#contacto` con su
+  teléfono y su WhatsApp, como en el Centroamericano; sin foto, va su inicial.
+  Las bases lo dicen en «Organización». La tolerancia de 10 minutos y los
+  desempates, decididos al armar las bases, los confirmó el dueño. Lo que
+  nadie dio (correo, cierre de la inscripción) no se pone.
+- **Los resultados van en Pareo Integral** (lo dijo el dueño): la ficha
+  «Resultados» va «Pronto» y `js/tacho-chess-resultados.js` la cambia por el
+  enlace a la página pública del torneo (`torneos-pareo.html#t=<id>`, encima).
+  Lo encuentra solo, como en Pérez Zeledón: un torneo con «Tacho» en el nombre,
+  creado desde octubre de 2026 (no la edición 1), de una organización de Pareo
+  **con el sello «Organizador verificado»** (sin el sello, cualquiera
+  publicaría un «Tacho Chess» y la ficha llevaría a él). El 12/11/2026 solo las
+  dos «ADAPZ» tenían el sello: quien publique el torneo tiene que pedírselo a
+  administración. Si los niveles se juegan en varios torneos, la ficha abre
+  `#resultados` con un enlace por torneo. Nunca lleva a la lista de Pareo. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
+  inventar una dirección.
+- **Las bases son un PDF propio** (`documentos/tacho-chess-2/bases-tacho-chess-2.pdf`),
+  porque el afiche no trae bases: las arma `herramientas/tacho-chess-2-bases.js`
+  con `BasesTorneo` (el texto del «Generador de bases del torneo», que cita las
+  Leyes del Ajedrez) y `ReportePDF`, con la marca de agua de Ajedrez Integral
+  (está en `LIBROS` de `verificar-marca-agua.js`). Lo que se decidió sin estar
+  en el afiche, para que las bases estén completas: suizo con el Sistema
+  Holandés, los desempates de Pareo Integral para el suizo, tolerancia de 10
+  minutos (lo mismo que el reloj), sin Elo, y que la organización puede jugar
+  los niveles juntos o en varios torneos (la premiación es siempre por nivel).
+- **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
+  PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
+  tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
+  hora siguiente) da 9:00, 9:30, 10:00, 10:30 y 11:00, y la premiación cerca de
+  las 11:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 5 y la premiación dicen «(aprox.)», en la página y
+  en las bases.
+- **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
+  azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
+  `css/universidades.css`. A diferencia de las demás, el acento es rojo y lleva
+  letra blanca (5,1), como la píldora «TE INVITA AL». **Tacho**, el mapache de
+  la camiseta 52, está recortado del afiche con su fondo quitado (rembg, modelo
+  u2net, y a mano los restos azules), sin redibujarlo; flota como el pizote,
+  quieto con «menos movimiento». El escudo del liceo, recortado en su círculo,
+  va en la franja de quién organiza.
+- **La sala en Torneos** (`salas_torneo`, clave `tacho-chess-2`, tipo
+  «enlaces», orden 1) se creó el 12/11/2026 con tres enlaces: la página, `#inscribirme`
+  y las bases (que la portada lleva a `#ficha-bases`); después, «Resultados en
+  Pareo Integral» (a `#fichas`). Su portada está en
+  `PORTADAS` de `js/salas-torneo.js`.
+
+`herramientas/verificar-tacho-chess.js` lo revisa: los datos del afiche en la
+página y en el PDF, el árbitro, la llegada a las 8:30 y el calendario igual al horario de las bases, el formulario
+del QR que se abre encima, «Resultados» (con un doble de la base: «Pronto» sin
+torneo, sin el sello o con la edición anterior; el torneo encima con uno; la
+ventana con varios; quitando el filtro del sello, saltan cuatro), «Hoy en el torneo» en cuatro
+momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
+si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
+
+### El profe ayuda en Tacho Chess 2
+
+Pedido del dueño el 12/11/2026: «agrega el avatar del profe Oscar para el
+torneo, para que pueda ayudar a la gente». Es el «¿Te ayudo?» del
+Centroamericano (ver «El profe ayuda en la página») con la maquinaria de la
+profe Karina (ver «La profe Karina ayuda en la página»): `js/tacho-chess-profe.js`,
+después de `js/tacho-chess-resultados.js` y `js/avatar-profe-oscar.js` en
+`scripts` de la configuración.
+
+- **Se presenta como «el profe Oscar»** (en el saludo y en la etiqueta del
+  botón). La primera versión decía «el profe», nada más, como pidió el dueño
+  para el Centroamericano; para esta página pidió después que dijera su
+  nombre. El Centroamericano sigue sin él. Los dibujos van con alt vacío y son
+  los del profe Oscar (`rutaDe("oscar", …)`, sin mirar
+  la academia de quien mira).
+- **Ocho preguntas**: cómo inscribir, la próxima ronda, quién juega y qué se
+  premia, contra quién juega, dónde y cuándo, cuánto dura y si se llega tarde,
+  qué más hay ese día y a quién preguntar.
+- **Ninguna respuesta tiene datos escritos en el código**: cada una se arma
+  con lo que la página dice al abrirla. La próxima ronda, del calendario
+  contra la hora de Costa Rica (el mismo día dice «hoy»; las horas «aprox.»
+  dicen «aproximadamente»); la sede y la fecha, de la portada; el ritmo y el
+  árbitro, de la franja de quién organiza; la tolerancia, del reglamento; los
+  niveles, de la ventana «Niveles y premios» (cuántos por grupo); lo que hay
+  además, de su ventana sin los emojis de adorno; el contacto, de la de
+  Adriana; y los resultados, de si la ficha ya apunta al torneo en Pareo.
+- Sus botones tocan la ficha que ya hace eso, y el aspecto es el de
+  `.cac-profe-*` de `css/centroamericano.css`.
+
+Lo revisa `verificar-tacho-chess.js`: el botón y su cara, las ocho preguntas,
+que se presente como «el profe Oscar», cada respuesta (la ronda dos días antes, en la llegada y
+en la ronda 2 con el navegador en Madrid; el contacto, el ritmo, los niveles,
+lo de además y los resultados con y sin el torneo en Pareo), «Ver el
+contacto», y Escape con el foco de vuelta. Con la hora tomada de Madrid en vez
+de Costa Rica, saltan dos.
+
+### Una ficha de Torneos que todavía no se abre
+
+Pedido del dueño: el Metropolitano «no dejar ingresar aún, dejarlo como
+bloqueado y los botones que digan próximamente cuando se les toque». Con
+`proximamente: true` en su portada (`PORTADAS` de `js/salas-torneo.js`), la
+ficha se ve entera, con «🔒 Próximamente» escrito arriba, y cada enlace pasa
+a ser un botón sin destino (`aria-disabled`, alcanzable con Tab) que al
+tocarlo dice «Próximamente» en el botón y para el lector de pantalla (un
+`role="status"`). Se quita esa línea para abrirla. **La página del torneo
+sigue abierta** para quien tenga su dirección: lo que se bloquea es la
+entrada desde Torneos. Lo revisa `verificar-metropolitano.js` (Playwright no
+toca un botón con `aria-disabled`: la prueba lo toca directo).
+
+### La profe Karina ayuda en la página
+
+Pedido del dueño el 11/11/2026: la profe Karina (Itzel Karina Rojas, la
+directora del torneo; su avatar en «La profe Karina: el avatar de ADAPZ», en
+`clase-en-vivo.md`) en `jdn-pz-2026.html` «para ayudar, conforme vayan
+saliendo más cosas del torneo, que ella se actualice». Es el «¿Te ayudo?» del
+Centroamericano (ver «El profe ayuda en la página»), con su cara:
+`js/jdn-pz-profe.js`, después de la inscripción y de `js/avatar-profe-oscar.js`
+en `scripts` de la configuración de la página.
+
+- **Ninguna respuesta tiene sus datos escritos en el código.** Cada una se
+  arma al abrirla, con lo que la página dice en ese momento: la próxima ronda
+  sale del calendario (las filas `data-inicio`, las mismas que lee
+  `js/torneo-hoy.js`) contra la hora de Costa Rica, y dice cuál se juega y
+  cuál sigue; el congresillo, de lo que el calendario dice de él (y si un día
+  la configuración le agrega su fila, dice su día y su hora); las
+  categorías, de su tabla; la sede, el ritmo y quién dirige, de la portada;
+  la tolerancia, del reglamento. La inscripción y los resultados dicen lo que
+  ya pintó `js/jdn-pz-inscripcion.js`: el aviso de la ventana «Inscribirme» y
+  si las fichas «Resultados U12/U20» ya apuntan a su torneo en Pareo. Así,
+  cuando se regenera la página con algo nuevo o la organización publica los
+  torneos, ella lo dice sin tocar su archivo.
+- **Sus botones tocan la ficha que ya hace eso** (el calendario, «Inscribirme»,
+  los resultados, el mapa, las bases): si una ficha cambia de destino, la
+  profe la sigue.
+- **Su cara se ve aunque nadie haya entrado**: `AvatarProfeOscar.rutaDe("karina", …)`
+  pide su dibujo sin mirar la academia de quien mira (`ruta()` daría el del
+  profe Oscar a quien no tiene sesión).
+- Dice «Dirijo la eliminatoria» solo si la portada dice que la dirección del
+  torneo es de Karina. El aspecto es el del Centroamericano (`.cac-profe-*`
+  de `css/centroamericano.css`, que la página ya carga); no se tocó
+  `js/jdn-pz-inscripcion.js`.
+
+`herramientas/verificar-jdn-pz-profe.js` lo revisa con el doble de la base y
+el reloj fijo: su cara, la próxima ronda antes del torneo, durante la ronda 2,
+después de la 5 y al terminar; que al cambiar la página (una fila
+«Congresillo», otra sede, otra categoría) la respuesta cambia; sin los
+torneos en Pareo y con ellos; que «Ver el calendario» lo abre, Escape y el
+celular; y que en su código no hay horas, fechas ni la sede. Escribiendo las
+categorías fijas en el código, saltan dos comprobaciones.
 
 ## La cámara que lee el tablero
 

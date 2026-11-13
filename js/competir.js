@@ -340,9 +340,11 @@
                    está adaptado), así que la frase se quedaba con un enlace que
                    no lleva a ningún lado. A ella se le ofrece jugar contra
                    Oscar en el Tablero, que sí se juega escribiendo. */
+                // Quien es de CCDR POCOCI juega contra la profe Pame (js/avatar-profe-oscar.js).
+                const BOT = window.AvatarProfeOscar && window.AvatarProfeOscar.PROFE === "pame" ? "la profe Pame" : "Oscar";
                 lista.innerHTML = document.documentElement.classList.contains("modo-ciego")
-                    ? '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, puedes <a href="tablero.html" class="underline">jugar contra Oscar en el Tablero</a>.</p>'
-                    : '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
+                    ? '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, puedes <a href="tablero.html" class="underline">jugar contra ' + BOT + ' en el Tablero</a>.</p>'
+                    : '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de ' + BOT + '</a>.</p>';
                 return;
             }
             disponibles.forEach((p) => {

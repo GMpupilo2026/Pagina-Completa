@@ -6,6 +6,7 @@
  * Lo usan las dos páginas, por eso está acá una sola vez:
  *
  *   { v: 1, frente: "…", fondo: "…",
+ *     salon: { largo, ancho, … },   // opcional: las medidas (js/plano-logistica.js)
  *     filas: [                      // la 1 es la de adelante (la más cerca de la gradería)
  *       { grupos: [                 // de derecha a izquierda, mirando hacia el fondo
  *           { torneo: "Sub-18 Femenino",              // el texto del enlace de la sala
@@ -88,6 +89,8 @@
           })),
         })),
       })),
+      // Las medidas del salón y del material (js/plano-logistica.js), si se pusieron.
+      ...(p.salon && typeof p.salon === "object" && window.PlanoLogistica ? { salon: window.PlanoLogistica.limpiarSalon(p.salon) } : {}),
     };
   }
 

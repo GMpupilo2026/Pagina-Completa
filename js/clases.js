@@ -18,6 +18,8 @@
         // más rápido de un vistazo (antes eran 14 accesos sueltos en una sola grilla,
         // sin ningún criterio de orden). Un solo lugar para agregar o mover destinos:
         // basta con cambiar de grupo el objeto del tile, el resto se acomoda solo. ----------
+        // ¿Juega contra la profe Pame? Lo decide js/avatar-profe-oscar.js (solo CCDR POCOCI).
+        const CONTRA_PAME = !!(window.AvatarProfeOscar && window.AvatarProfeOscar.PROFE === "pame");
         const TILE_GROUPS = [
             /* "Sesión en vivo" va sola y de primera: es lo único del panel que
                pasa AHORA MISMO, y mezclada entre Juegos y Torneos costaba
@@ -110,6 +112,7 @@
             { title: "Estudiar", plegable: true, tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
+                { emoji: "🎧", label: "Audios de las clases", desc: "El audio de cada clase, para volver a escucharla, con lo que se dijo escrito", descProfe: "Sube el audio de cada clase para que tus alumnos la vuelvan a escuchar", href: "audios-clases.html" },
             ] },
             /* `escalon`: en la computadora se abre solo el del nivel del alumno
                (por su diagnóstico) y los otros dos arrancan plegados. Ver
@@ -176,7 +179,12 @@
             { title: "Jugar y competir", tiles: [
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
                 { emoji: "⚔️", label: "Competir", desc: "Torneos, TV en vivo, retos a quien esté en línea y tus partidas", descProfe: "Torneos para tus alumnos, TV en vivo, retos a quien esté en línea y sus partidas", href: "competir.html" },
-                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+                /* Quien es de CCDR POCOCI juega contra la profe Pame (su cara del
+                   avatar y su nombre): ver «El bot de la profe Pame» en
+                   docs/decisiones/juegos-y-torneos.md. */
+                CONTRA_PAME
+                    ? { photo: window.AvatarProfeOscar.ruta("cara"), label: "Juega contra mí", desc: "Practica contra la profe Pame", href: "tablero.html" }
+                    : { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 /* Los mismos 5 ejercicios para dos compañeros, cada uno cuando
                    puede. Solo del alumnado: se reta a un compañero de clase.
                    Ver «Retos de ejercicios entre compañeros» en
@@ -419,7 +427,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
@@ -481,7 +489,7 @@
         const PANEL_ADAPTADO = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
-            { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
+            { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "audios-clases.html", "articulos.html"] },
             { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
             { title: "Jugar", id: "jugar", hrefs: ["te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
@@ -4585,6 +4593,9 @@
             if (!profile._persona) subscribeSessions();
             mostrarPanel();
             montarRecorrido();
+            // La profe de la academia (Pame, Karina) contesta lo que más preguntan (js/profe-ayuda.js): solo
+            // a los alumnos de su academia, en su propio panel.
+            if (window.ProfeAyuda) window.ProfeAyuda.montar(profile);
         }
 
         /* El recorrido del profesor nuevo (js/recorrido-profe.js): a quien da

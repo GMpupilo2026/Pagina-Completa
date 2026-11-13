@@ -1,20 +1,22 @@
 /* Comprueba las salas de torneos de punta a punta, con un Supabase de mentira
    (lib/doble-salas-torneo.js) que aplica la RLS y los check de la tabla:
 
-   1. torneos-en-vivo.html pinta una ficha por sala VISIBLE, en su orden, con
+   1. torneos-en-vivo.html pinta una ficha por sala VISIBLE, la más reciente
+      primero (las creadas a la vez, por su `orden`), con
       el botón que le toca (la sala de cine o los enlaces aparte), y dice algo
       cuando no hay ninguna o no se pudieron leer.
    2. admin.html#torneos: crear una sala de cada tipo, que la dirección se arme
       con el nombre, que un enlace sin https o sin botones no se mande, que la
       dirección de UNA ronda de Lichess se guarde con el torneo entero,
-      editar, ocultar, reordenar y borrar (con su confirmación).
+      editar, ocultar y borrar (con su confirmación); la sala recién creada
+      queda primera y no hay botones para reordenar.
    3. Sin ser admin, la RLS no deja escribir y la página lo dice en vez de
       decir «guardada».
 
    Lo que se rompe callado acá: un formulario que manda un enlace
    «javascript:» a una página pública (lo frena la base, pero la persona se
-   quedaría sin saber por qué), una sala oculta que igual se ve, o un orden
-   que no cambia.
+   quedaría sin saber por qué), una sala oculta que igual se ve, o una sala
+   nueva que no queda arriba.
 
    Ver «Las salas de torneos se editan en administración» en
    docs/decisiones/juegos-y-torneos.md.
@@ -106,8 +108,8 @@ async function editor(browser) {
   console.log("\n=== admin.html#torneos: la lista ===");
   const { page, ctx, errores } = await abrir(browser, "/admin.html#torneos", { salas: SALAS, admin: true });
   await page.waitForSelector("#salas-admin > li");
-  igual("están todas, también la oculta, y lo dice", await lista(page), [
-    "Desafío Mentes Maestras CENFOTEC 2026 · Publicada", "Torneo UTN 2026 · Publicada", "Copa en preparación · Oculta"]);
+  igual("están todas, también la oculta, y lo dice (la más reciente primero)", await lista(page), [
+    "Copa en preparación · Oculta", "Desafío Mentes Maestras CENFOTEC 2026 · Publicada", "Torneo UTN 2026 · Publicada"]);
   igual("la sección se ve", await page.$eval('section[data-seccion="torneos"]', (s) => s.checkVisibility()), true);
   igual("el menú la marca", await page.getAttribute('a[data-ir="torneos"]', "aria-current"), "page");
 
@@ -150,9 +152,9 @@ async function editor(browser) {
   await page.click("#sala-guardar");
   await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
   const ins = (await escrituras(page)).pop();
-  igual("se inserta lo del formulario, al final de la lista", [ins.op, ins.datos.clave, ins.datos.tipo, ins.datos.lichess_id, ins.datos.enlaces, ins.datos.orden],
+  igual("se inserta lo del formulario", [ins.op, ins.datos.clave, ins.datos.tipo, ins.datos.lichess_id, ins.datos.enlaces, ins.datos.orden],
     ["insert", "copa-invierno-arbitros-2026", "enlaces", null, [{ texto: "Sala A", url: "https://www.youtube.com/watch?v=abc123" }], 4]);
-  igual("y aparece en la lista", (await lista(page)).pop(), "Copa Invierno Árbitros 2026 · Publicada");
+  igual("y aparece primera en la lista (la más reciente)", (await lista(page))[0], "Copa Invierno Árbitros 2026 · Publicada");
 
   // El Centroamericano lleva un botón por torneo de chess-results (12
   // categorías y las de rápidas y blitz): el editor deja hasta 40, como la base.
@@ -249,7 +251,7 @@ async function editor(browser) {
   igual("una dirección con mayúsculas o espacios, antes de mandar", await mensaje(page), "La dirección de la sala lleva solo minúsculas, números y guiones (por ejemplo «copa-2026»).");
   await page.click("#sala-cancelar");
 
-  console.log("\n=== Editar, ocultar, ordenar, borrar ===");
+  console.log("\n=== Editar, ocultar, borrar ===");
   await page.click('#salas-admin li[data-sala="utn"] button[aria-label="Editar Torneo UTN 2026"]');
   igual("el editor trae la sala", [await page.inputValue("#sala-nombre"), await page.$$eval("#sala-enlaces li", (l) => l.length), await page.isChecked('input[name="sala-tipo"][value="enlaces"]')], ["Torneo UTN 2026", 2, true]);
   await escribir(page, "#sala-nombre", "Torneo UTN 2026 · Final");
@@ -263,10 +265,10 @@ async function editor(browser) {
   await page.waitForFunction(() => document.querySelector('#salas-admin li[data-sala="cenfotec"] span.rounded-full').textContent === "Oculta");
   igual("ocultar la deja oculta", (await escrituras(page)).pop().datos, { visible: false });
 
-  await page.click('#salas-admin li[data-sala="utn"] button[aria-label="Subir Torneo UTN 2026 · Final"]');
-  await page.waitForFunction(() => document.querySelector("#salas-admin > li").dataset.sala === "utn");
-  igual("subir la pone primera", await page.$$eval("#salas-admin > li", (l) => l.slice(0, 2).map((x) => x.dataset.sala)), ["utn", "cenfotec"]);
-  igual("la primera no se puede subir más", await page.$eval('#salas-admin li[data-sala="utn"] button[aria-label^="Subir"]', (b) => b.disabled), true);
+  igual("la más reciente primero: las dos nuevas arriba, la última creada antes; CENFOTEC antes que UTN (creadas a la vez)",
+    await page.$$eval("#salas-admin > li", (l) => l.map((x) => x.dataset.sala)),
+    ["copa-nacional-2026", "copa-invierno-arbitros-2026", "copa-secreta", "cenfotec", "utn"]);
+  igual("sin botones para subir o bajar", await page.$$eval('#salas-admin button[aria-label^="Subir"], #salas-admin button[aria-label^="Bajar"]', (b) => b.length), 0);
 
   await page.click('#salas-admin li[data-sala="copa-secreta"] button[aria-label="Borrar Copa en preparación"]');
   await page.waitForFunction(() => !document.querySelector('#salas-admin li[data-sala="copa-secreta"]'));

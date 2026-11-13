@@ -41,9 +41,12 @@
  *     tryMove: (texto) => ({ ok, san } | { ok:false }),
  *     getVisibleGame: () => objeto con .get(casilla)/.turn()/.in_check(), y
  *       opcionalmente .moves({square,verbose}) y .oculta(casilla),
- *     describeOpponentMove: (san) => texto a anunciar, o null para no decir
- *       nada más que "es tu turno" (usar null en variantes que ocultan la
- *       jugada del rival, como Niebla de Guerra).
+ *     describeOpponentMove: (san) => texto a anunciar, o null para usar el de
+ *       siempre («Bruno Mena jugó caballo felix 3.»). En las variantes que
+ *       ocultan la jugada del rival (Niebla de Guerra) la página devuelve un
+ *       texto que dice QUE jugó, no qué.
+ *     quienJugo: () => nombre de quien hizo la última jugada (la página lo
+ *       sabe por el largo de la lista). Sin él, «El rival».
  *   });
  *   Opcionales, para dos preguntas que el tablero no sabe contestar:
  *     reloj: () => null (partida sin reloj) o
@@ -92,9 +95,22 @@ window.JuegosBlind = (function () {
     const getVisibleGame = opts.getVisibleGame;
     const leerReloj = typeof opts.reloj === "function" ? opts.reloj : null;
     const leerUltima = typeof opts.ultimaJugada === "function" ? opts.ultimaJugada : null;
+    const quienJugo = typeof opts.quienJugo === "function" ? opts.quienJugo : function () { return "El rival"; };
     const describeOpponentMove = opts.describeOpponentMove || function (san) {
-      return typeof BlindNotation !== "undefined" ? "El rival jugó: " + BlindNotation.sanSpoken(san) : null;
+      return (quienJugo() || "El rival") + " jugó " + jugadaDicha(san) + ".";
     };
+
+    /* La jugada en palabras, igual que en la sala de arena: «peón eva 4»,
+       «caballo captura felix 3, jaque». Con «eva 4» a secas no se sabe qué se
+       movió, y sin «Jugaste» la confirmación de la jugada propia sonaba igual
+       que cualquier otro aviso. */
+    function jugadaDicha(san) {
+      const s = String(san || "");
+      if (typeof BlindNotation === "undefined") return s;
+      const dicha = BlindNotation.sanSpoken(s).replace(/^Enroque/, "enroque");   // va en medio de la frase
+      return /^[a-h]/.test(s) ? "peón " + dicha : dicha;
+    }
+    function jugadaPropia(san) { return "Jugaste " + jugadaDicha(san) + "."; }
 
     const modeNormalBtn = document.getElementById("mode-normal-btn");
     const modeBlindBtn = document.getElementById("mode-blind-btn");
@@ -181,7 +197,9 @@ window.JuegosBlind = (function () {
     // Vacía primero y repuebla con un pequeño retraso: así, si se repite el mismo texto
     // (por ejemplo, dos jugadas seguidas del rival con el mismo resultado aparente), el
     // lector de pantalla lo anuncia de nuevo aunque el contenido no haya cambiado.
+    let ultimoDicho = { texto: "", en: 0 };
     function announce(text) {
+      ultimoDicho = { texto: text, en: Date.now() };
       if (typeof BlindNotation !== "undefined") BlindNotation.speak(text);
       if (!moveInputStatusEl) return;
       moveInputStatusEl.textContent = "";
@@ -423,7 +441,7 @@ window.JuegosBlind = (function () {
         const result = tryMove(aJugar);
         if (result && result.ok) {
           moveInputEl.value = "";
-          announce(typeof BlindNotation !== "undefined" ? BlindNotation.sanSpoken(result.san) : result.san);
+          announce(jugadaPropia(result.san));
           renderPositionReadout();
         } else if (result && result.reason === "no_turn") {
           /* Fuera de turno la jugada no es "no válida": puede ser perfecta y
@@ -453,7 +471,10 @@ window.JuegosBlind = (function () {
     return {
       isOn: function () { return blindMode; },
       announceOwnMove: function (san) {
-        announce(typeof BlindNotation !== "undefined" ? BlindNotation.sanSpoken(san) : san);
+        /* La jugada escrita en el recuadro ya se dijo al jugarla; cuando la base
+           la confirma no se repite. La hecha con el tablero se dice acá. */
+        const texto = jugadaPropia(san);
+        if (!(ultimoDicho.texto === texto && Date.now() - ultimoDicho.en < 5000)) announce(texto);
         renderPositionReadout();
       },
       announceOpponentMove: function (san) {

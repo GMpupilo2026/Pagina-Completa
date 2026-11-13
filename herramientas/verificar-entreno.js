@@ -162,7 +162,7 @@ async function pruebaHub(browser) {
   igual("Practicar", grupos[1].accesos.map((a) => a.nombre),
     ["Ejercicios por tema", "Practicar"]);
   igual("Entreno", grupos[2].accesos.map((a) => a.nombre),
-    ["Aperturas y celadas", "Mis estudios", "4×4", "Visualización", "Precisión posicional", "Finales contra la máquina", "Memoria"]);
+    ["Aperturas y celadas", "Mis estudios", "4×4", "Visualización", "Precisión posicional", "Finales contra la máquina", "Posiciones de las clases", "Memoria"]);
   igual("Habilidades (los Tipos de entrenamiento): una sola tarjeta, que abre su ficha", grupos[3].accesos.map((a) => a.nombre + " → " + a.destino),
     ["Habilidades → tipos.html"]);
   igual("la táctica ya no es un acceso suelto: se fue dentro de Ejercicios por tema",
@@ -171,7 +171,7 @@ async function pruebaHub(browser) {
   const todos = grupos.flatMap((g) => g.accesos);
   const sinDestino = todos.filter((a) => !a.destino);
   igual("cada acceso es un encabezado CON su enlace", sinDestino.length, "0");
-  const rotos = todos.filter((a) => !fs.existsSync(path.join(RAIZ, "entreno", a.destino)));
+  const rotos = todos.filter((a) => !fs.existsSync(path.join(RAIZ, "entreno", a.destino.split(/[?#]/)[0])));
   igual("y todos llevan a una página que existe", rotos.map((a) => a.destino).join(", ") || "ninguno roto", "ninguno roto");
   igual("un solo enlace por tarjeta",
     grupos.flatMap((g) => g.enlacesPorTarjeta).every((n) => n === 1), "true");
@@ -193,8 +193,8 @@ async function pruebaEncabezados(browser) {
 
   igual("un solo h1, y es el título de la página",
     niveles.filter((h) => h.nivel === 1).map((h) => h.texto), ["Entrenamiento 🏋️"]);
-  igual("los dieciséis accesos son encabezados de verdad (Estudio incluido)",
-    niveles.filter((h) => h.nivel === 3).length, "16");
+  igual("los diecisiete accesos son encabezados de verdad (Estudio incluido)",
+    niveles.filter((h) => h.nivel === 3).length, "17");
 
   // Sin saltos de nivel: de un h1 no se pasa a un h3.
   let salto = null;

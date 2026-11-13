@@ -34,12 +34,29 @@ const OscarBot = (function () {
 
   // Rutas relativas: funcionan tanto desde tablero.html como desde index.html (ambos en la raíz).
   const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
-  const PROVENANCE_URL = "data/oscar-book-provenance.json";
-  const BOOK_URL = "data/oscar-book.json";
+  // De quién es el bot. Quien es de CCDR POCOCI juega contra la profe Pame, con
+  // SU libro y SU Elo (herramientas/libro-profe-pame.js); el resto, contra
+  // Oscar. Quién ve a qué profe lo decide js/avatar-profe-oscar.js (cargado
+  // antes que este archivo). Ver «El bot de la profe Pame» en
+  // docs/decisiones/juegos-y-torneos.md.
+  const PERFILES = {
+    oscar: { nombre: "Oscar", libro: "data/oscar-book.json", procedencia: "data/oscar-book-provenance.json",
+      global: "OSCAR_BOOK", calib: () => window.OSCAR_ELO_CALIB, eloPorDefecto: 2400 },
+    pame: { nombre: "la profe Pame", libro: "data/pame-book.json", procedencia: "data/pame-book-provenance.json",
+      global: "PAME_BOOK", calib: () => window.PAME_ELO_CALIB, eloPorDefecto: 2000 },
+  };
+  const PROFE = (window.AvatarProfeOscar && PERFILES[window.AvatarProfeOscar.PROFE]) ? window.AvatarProfeOscar.PROFE : "oscar";
+  const PERFIL = PERFILES[PROFE];
+  const PROVENANCE_URL = PERFIL.procedencia;
+  const BOOK_URL = PERFIL.libro;
+  // El libro ya bajado vive en window[PERFIL.global] (OSCAR_BOOK o PAME_BOOK): así
+  // el libro de un profe nunca se le cuela al otro.
+  const libroBajado = () => window[PERFIL.global];
 
-  // ELO real de Oscar tomado de sus partidas (bullet, que es la mayoría de su historial).
-  // window.OSCAR_ELO_CALIB llega desde oscar-book.js; si no está disponible, usamos un valor por defecto razonable.
-  const REAL_ELO = (window.OSCAR_ELO_CALIB && window.OSCAR_ELO_CALIB.bullet && window.OSCAR_ELO_CALIB.bullet.recent_median_elo) || 2400;
+  // ELO real del profe tomado de sus partidas (bullet, que es la mayoría de su historial).
+  // La calibración llega desde oscar-book.js / pame-book.js; si no está disponible, un valor por defecto razonable.
+  const CALIB = PERFIL.calib();
+  const REAL_ELO = (CALIB && CALIB.bullet && CALIB.bullet.recent_median_elo) || PERFIL.eloPorDefecto;
 
   // bookBias: exponente aplicado al peso de cada jugada del libro antes de sortear
   // (peso = frecuencia·resultado). >1 hace que las jugadas que Oscar más repitió en esa
@@ -113,11 +130,11 @@ const OscarBot = (function () {
 
   function cargarLibro() {
     if (bookPromise) return bookPromise;
-    if (window.OSCAR_BOOK) return (bookPromise = Promise.resolve(window.OSCAR_BOOK));
+    if (libroBajado()) return (bookPromise = Promise.resolve(libroBajado()));
     bookPromise = fetch(BOOK_URL)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) window.OSCAR_BOOK = data;
+        if (data) window[PERFIL.global] = data;
         return data;
       })
       .catch(() => null);
@@ -128,7 +145,7 @@ const OscarBot = (function () {
   // (peso_final = peso_guardado ^ biasPower), así el bot se parece más a "lo que Oscar
   // realmente suele jugar ahí" en vez de tratar todas las alternativas casi por igual.
   function getBookMoveForHash(hash, biasPower) {
-    const book = window.OSCAR_BOOK;
+    const book = libroBajado();
     if (!book) return null;
     const entry = book[hash];
     if (!entry || entry.length === 0) return null;
@@ -164,7 +181,8 @@ const OscarBot = (function () {
     return provenancePromise;
   }
 
-  const RESULT_LABEL_ES = { W: "Oscar ganó", L: "Oscar perdió", D: "Tablas", "?": "resultado no registrado" };
+  const NOMBRE_MAYUSCULA = PERFIL.nombre.charAt(0).toUpperCase() + PERFIL.nombre.slice(1);
+  const RESULT_LABEL_ES = { W: NOMBRE_MAYUSCULA + " ganó", L: NOMBRE_MAYUSCULA + " perdió", D: "Tablas", "?": "resultado no registrado" };
   const BUCKET_LABEL_ES = {
     bullet: "bullet",
     blitz: "blitz",
@@ -177,7 +195,7 @@ const OscarBot = (function () {
   // Si aún no cargaron (o la jugada no vino del libro), devuelve null sin lanzar error.
   function getMoveOrigin(hash, uci) {
     if (!provenanceData || !hash || !uci) return null;
-    const flatMoves = window.OSCAR_BOOK && window.OSCAR_BOOK[hash];
+    const flatMoves = libroBajado() && libroBajado()[hash];
     const provArr = provenanceData.moves && provenanceData.moves[hash];
     if (!flatMoves || !provArr) return null;
     for (let i = 0; i < flatMoves.length; i += 2) {
@@ -439,6 +457,8 @@ const OscarBot = (function () {
     preloadProvenance,
     cargarLibro,
     positionHash,
+    PROFE,
+    NOMBRE: PERFIL.nombre,
     difficultyLabels: {
       easy: "Fácil",
       medium: "Medio",

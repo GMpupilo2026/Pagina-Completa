@@ -81,8 +81,22 @@ function atributosEnlace(f) {
 }
 
 // En el celular van de a dos: con un número impar, la última ocupa la fila.
+// Una ficha con `pronto` todavía no tiene enlace (chess-results antes de que
+// la organización publique el torneo): va como en el Centroamericano, sin
+// href pero con tabindex para que se alcance con Tab, y dice por qué.
 function ficha(c, f, ultimaSola) {
-  return '                <li' + (ultimaSola ? ' class="col-span-2 lg:col-span-1"' : "") + ">\n"
+  const li = '                <li' + (ultimaSola ? ' class="col-span-2 lg:col-span-1"' : "") + ">\n";
+  if (f.pronto) {
+    return li
+      + '                    <div' + (f.id ? ' id="' + esc(f.id) + '"' : "") + ' tabindex="0" aria-disabled="true" data-color="' + esc(f.color) + '" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 ' + anillo(c, 4) + '">\n'
+      + '                        <span class="cac-icono" aria-hidden="true">' + f.icono + "</span>\n"
+      + '                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">' + esc(f.titulo) + "</span>\n"
+      + '                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">' + esc(f.texto) + "</span>\n"
+      + '                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: ' + esc(f.pronto) + "</span></span>\n"
+      + "                    </div>\n"
+      + "                </li>\n";
+  }
+  return li
     + "                    <a " + atributosEnlace(f) + ' data-color="' + esc(f.color) + '" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 ' + anillo(c, 4) + '">\n'
     + '                        <span class="cac-icono" aria-hidden="true">' + f.icono + "</span>\n"
     + '                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">' + esc(f.titulo) + "</span>\n"
@@ -120,7 +134,7 @@ function dialogos(c) {
       + '<div id="medallero-contenido" class="mt-4">\n    ' + cargando + "\n</div>\n",
   }));
   out.push(dialogo({
-    id: "clasificacion", icono: "📊", titulo: "Clasificación final", ancho: "max-w-5xl",
+    id: "clasificacion", icono: "📊", titulo: d.tituloClasificacion || "Clasificación final", ancho: "max-w-5xl",
     comentario: "La clasificación completa, con el rendimiento de cada jugador. La arma\njs/centroamericano-tablas.js; con un solo grupo, el selector se esconde solo.",
     cuerpo: '<p class="text-brand-600 dark:text-brand-300 mt-2">' + esc(d.clasificacion) + "</p>\n"
       + '<div class="mt-4 grid gap-3 sm:grid-cols-2">\n'
@@ -169,11 +183,11 @@ const PROYECTOR = `    <!-- Para una pantalla: con el torneo terminado, los podi
     </dialog>
 `;
 
-function cabecera() {
+function cabecera(propio) {
   const item = (href, texto, movil) => movil
     ? '                <li><a href="' + href + '" class="block py-2 hover:text-accent-400">' + texto + "</a></li>\n"
     : '                    <li><a href="' + href + '" class="hover:text-accent-400 transition-colors">' + texto + "</a></li>\n";
-  const menu = [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["torneos-en-vivo.html", "Torneos"]];
+  const menu = propio || [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["torneos-en-vivo.html", "Torneos"]];
   return `    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
@@ -200,6 +214,86 @@ ${menu.map(([h, t]) => item(h, t, true)).join("")}            </ul>
 `;
 }
 
+function buscador(c) {
+  return `            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
+                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
+            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
+                     en este aparato (sin cuenta). Se esconde mientras no haya
+                     ninguno. ${c.hoy ? "Sin avisos al celular: son del Centroamericano." : "Sin avisos al celular: el torneo ya terminó."} -->
+                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
+                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
+                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
+                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
+                </div>
+                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
+                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">${esc(c.buscador.texto)}</p>
+                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: ${esc(c.buscador.ejemplo)}" class="cac-buscador-campo">
+                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
+                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    ${accion(c, "#medallero", "Ver el podio", "🥇")}
+                    ${accion(c, "#clasificacion", "Clasificación completa", "📊")}
+                    ${accion(c, "#proyector", "Clasificación para proyectar", "📺")}
+                </p>
+            </div>
+`;
+}
+
+// Lo de arriba de las fichas en un torneo que ya terminó: «El podio».
+function seccionPodio(c) {
+  return `    <!-- «El podio»: lo llena js/torneo-podio.js con la clasificación final de
+         chess-results. Sin JavaScript queda el enlace, que es cierto siempre. -->
+    <section id="podio" class="pt-8" aria-labelledby="podio-titulo">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cac-hoy">
+                <h2 id="podio-titulo" class="cac-hoy-etiqueta">El podio</h2>
+                <div id="podio-lista">
+                    <p class="u-podio-vacio">Buscando la clasificación final en chess-results…</p>
+                </div>
+                <p id="podio-estado" class="mt-3 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    ${accion(c, "#clasificacion", "Ver la clasificación completa")}${c.ediciones && c.ediciones.length ? "\n                    " + accion(c, "#ediciones", "Comparar con las ediciones anteriores") : ""}
+                </p>
+            </div>
+        </div>
+    </section>
+`;
+}
+
+// Lo de arriba en un torneo por jugarse: «Hoy en el torneo», como en el
+// Centroamericano. Lo arma js/torneo-hoy.js con las horas del calendario
+// (las filas con data-inicio de #calendario, un diálogo propio de la
+// configuración); sin JavaScript quedan los textos de `hoy`, ciertos siempre.
+function seccionHoy(c) {
+  const h = c.hoy;
+  return `    <!-- «Hoy en el torneo»: lo arma js/torneo-hoy.js con las horas del
+         calendario (data-inicio de cada fila de #calendario, hora de Costa
+         Rica): la cuenta regresiva antes, lo que se juega ahora y lo que
+         sigue durante, y el cierre después. Sin JavaScript queda lo de abajo,
+         que es cierto siempre. -->
+    <section id="hoy" class="pt-8" aria-labelledby="hoy-etiqueta">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cac-hoy">
+                <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">${esc(h.etiqueta)}</h2>
+                <p id="hoy-principal" class="cac-hoy-principal">${esc(h.principal)}</p>
+                <p id="hoy-detalle" class="cac-hoy-detalle">${esc(h.detalle)}</p>
+                <!-- La cuenta regresiva a la próxima ronda: los números cambian
+                     cada segundo y no se leen; el texto para el lector de
+                     pantalla cambia cada minuto. -->
+                <div id="hoy-reloj" class="cac-hoy-reloj" hidden>
+                    <p class="cac-hoy-reloj-etiqueta" data-reloj-etiqueta></p>
+                    <div class="cac-hoy-reloj-cifras" data-reloj-cifras aria-hidden="true"></div>
+                    <p class="sr-only" data-reloj-texto></p>
+                </div>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+${h.enlaces.map(([href, texto, emoji]) => "                    " + accion(c, href, texto, emoji) + "\n").join("")}                </p>
+            </div>
+        </div>
+    </section>
+`;
+}
+
 function pagina(c) {
   // Sin .html: es la dirección final (la que lo lleva contesta con un 307).
   const url = "https://ajedrez-integral.com/" + c.pagina.replace(/\.html$/, "");
@@ -215,10 +309,23 @@ function pagina(c) {
       texto: c.textoEdiciones, accion: "Comparar las ediciones",
     });
   }
-  const scripts = ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
-    "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
-    "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", "js/torneo-podio.js"];
+  // Un torneo por jugarse (`hoy`) lleva arriba «Hoy en el torneo», con la
+  // cuenta regresiva de js/torneo-hoy.js, en lugar de «El podio».
+  // Con los resultados en Pareo Integral (`resultados: "pareo"`), sin
+  // chess-results: no van el buscador, la clasificación, el podio ni el
+  // proyector de js/centroamericano-vivo.js (leen chess-results por
+  // sala-jugadores); los resultados los muestran las fichas de Pareo, y la
+  // página suma sus propios scripts (`scripts`).
+  const enPareo = c.resultados === "pareo";
+  const scripts = enPareo
+    ? ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config].concat(c.hoy ? ["js/torneo-hoy.js"] : [], c.scripts || [])
+    : ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
+      "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
+      "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js"];
   if (c.ediciones && c.ediciones.length) scripts.push("js/torneo-ediciones.js");
+  // El logo con fondo blanco (el de una asociación, en JPG) va en un círculo blanco.
+  const claseLogo = c.logo.redondo ? "u-logo u-logo-redondo" : "u-logo";
+  const arriba = c.hoy ? seccionHoy(c) : seccionPodio(c);
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -250,7 +357,7 @@ function pagina(c) {
     <script src="js/adaptive-mode.js"></script>
 ${bloque("app")}${bloque("tema")}${bloque("fuentes")}</head>
 <body class="cac cac-u ${c.clase} font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
-${cabecera()}    <main id="main-content">
+${cabecera(c.menu)}    <main id="main-content">
 ${comentario(c.comentario, "    ")}    <section class="cac-portada">
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
             <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
@@ -260,7 +367,7 @@ ${comentario(c.comentario, "    ")}    <section class="cac-portada">
                     <p class="mt-5"><span class="cac-caja text-sm md:text-base">${p.caja.map(esc).join("<br>")}</span></p>
                 </div>
                 <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
-                    <img src="${esc(c.logo.src)}" width="${c.logo.ancho}" height="${c.logo.alto}" alt="${esc(c.logo.alt)}" class="u-logo">
+                    <img src="${esc(c.logo.src)}" width="${c.logo.ancho}" height="${c.logo.alto}" alt="${esc(c.logo.alt)}" class="${claseLogo}">
                 </div>
             </div>
             <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
@@ -268,62 +375,24 @@ ${p.datos.map(([emoji, dt, dd]) => '                <div class="cac-dato"><dt><s
         </div>
     </section>
 
-    <!-- Quién organiza y quién arbitró, como lo dice la ficha de chess-results. -->
+    <!-- ${esc(c.textoOrganiza || "Quién organiza y quién arbitró, como lo dice la ficha de chess-results.")} -->
     <section class="cac-organiza" aria-label="Quién organiza">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm">
-            <p><strong class="font-extrabold uppercase tracking-wide">Organiza</strong> ${esc(c.organiza)}</p>
+${(c.aliados || []).map((a) => '            <img src="' + esc(a.src) + '" width="' + a.ancho + '" height="' + a.alto + '" alt="' + esc(a.alt) + '" class="u-aliado">\n').join("")}            <p><strong class="font-extrabold uppercase tracking-wide">Organiza</strong> ${esc(c.organiza)}</p>
 ${c.equipo.map(([cargo, nombre]) => '            <p><strong class="font-extrabold">' + esc(cargo) + ":</strong> " + esc(nombre) + "</p>\n").join("")}        </div>
     </section>
 
-    <!-- «El podio»: lo llena js/torneo-podio.js con la clasificación final de
-         chess-results. Sin JavaScript queda el enlace, que es cierto siempre. -->
-    <section id="podio" class="pt-8" aria-labelledby="podio-titulo">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="cac-hoy">
-                <h2 id="podio-titulo" class="cac-hoy-etiqueta">El podio</h2>
-                <div id="podio-lista">
-                    <p class="u-podio-vacio">Buscando la clasificación final en chess-results…</p>
-                </div>
-                <p id="podio-estado" class="mt-3 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
-                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
-                    ${accion(c, "#clasificacion", "Ver la clasificación completa")}${c.ediciones && c.ediciones.length ? "\n                    " + accion(c, "#ediciones", "Comparar con las ediciones anteriores") : ""}
-                </p>
-            </div>
-        </div>
-    </section>
-
+${arriba}
     <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página.</p>
-            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
-                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
-            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
-                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
-                     en este aparato (sin cuenta). Se esconde mientras no haya
-                     ninguno. Sin avisos al celular: el torneo ya terminó. -->
-                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
-                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
-                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
-                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
-                </div>
-                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
-                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">${esc(c.buscador.texto)}</p>
-                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: ${esc(c.buscador.ejemplo)}" class="cac-buscador-campo">
-                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
-                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
-                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
-                    ${accion(c, "#medallero", "Ver el podio", "🥇")}
-                    ${accion(c, "#clasificacion", "Clasificación completa", "📊")}
-                    ${accion(c, "#proyector", "Clasificación para proyectar", "📺")}
-                </p>
-            </div>
-            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+${enPareo ? "" : buscador(c)}            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
 ${fichas.map((f, i) => ficha(c, f, fichas.length % 2 === 1 && i === fichas.length - 1)).join("")}            </ul>
             <a ${atributosEnlace(c.despedida)} class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl ${anillo(c, 4)}">
-                <span class="u-despedida-logo" aria-hidden="true"><img src="${esc(c.logo.src)}" width="${c.logo.ancho}" height="${c.logo.alto}" alt=""></span>
+                <span class="u-despedida-logo${c.logo.redondo ? " u-despedida-redondo" : ""}" aria-hidden="true"><img src="${esc(c.logo.src)}" width="${c.logo.ancho}" height="${c.logo.alto}" alt=""></span>
                 <span class="cac-globo">
-                    <span class="block font-extrabold text-lg sm:text-xl">¡Gracias por jugar!</span>
+                    <span class="block font-extrabold text-lg sm:text-xl">${esc(c.despedida.titulo || "¡Gracias por jugar!")}</span>
                     <span class="block mt-1 text-sm sm:text-base">${esc(c.despedida.texto)}</span>
                     <span class="block mt-2 text-sm font-bold cac-accion">${esc(c.despedida.accion)} →</span>
                 </span>
@@ -331,7 +400,7 @@ ${fichas.map((f, i) => ficha(c, f, fichas.length % 2 === 1 && i === fichas.lengt
         </div>
     </section>
 
-${dialogos(c)}${PROYECTOR}    </main>
+${enPareo ? (c.dialogos.propios || []).map(dialogo).join("") : dialogos(c) + PROYECTOR}    </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -373,6 +442,10 @@ function configJs(c) {
   lineas.push("    guardado: " + JSON.stringify(t.guardado) + ",");
   lineas.push("    soloPodio: true,");
   if (t.grupos) lineas.push("    grupos: { " + Object.entries(t.grupos).map(([k, v]) => k + ": " + JSON.stringify(v)).join(", ") + " },");
+  if (c.hoy) {
+    lineas.push("    // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.");
+    lineas.push("    hoy: { termino: " + JSON.stringify(c.hoy.termino) + ", gracias: " + JSON.stringify(c.hoy.gracias) + ", final: " + JSON.stringify(c.hoy.final) + " },");
+  }
   lineas.push('    url: "ajedrez-integral.com/' + c.pagina + '",');
   lineas.push("    nombreCorto: " + JSON.stringify(t.nombreCorto) + ",");
   lineas.push("    imgSub: " + JSON.stringify(t.imgSub) + ",");
@@ -380,7 +453,7 @@ function configJs(c) {
   const im = t.imagen;
   lineas.push("    imagen: {");
   lineas.push("      banda: " + JSON.stringify(im.banda) + ", tinta: " + JSON.stringify(im.tinta) + ", acento: " + JSON.stringify(im.acento) + ", suave: " + JSON.stringify(im.suave) + ",");
-  lineas.push("      dibujo: " + JSON.stringify(c.logo.src) + ", redondo: false, archivo: " + JSON.stringify(im.archivo) + ",");
+  lineas.push("      dibujo: " + JSON.stringify(c.logo.src) + ", redondo: " + !!c.logo.redondo + ", archivo: " + JSON.stringify(im.archivo) + ",");
   lineas.push("      franjas: [" + im.franjas.map(lista1).join(", ") + "],");
   lineas.push("    },");
   if (c.ediciones && c.ediciones.length) {

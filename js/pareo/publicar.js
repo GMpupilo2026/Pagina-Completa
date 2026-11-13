@@ -124,8 +124,12 @@
   // (guardarOrganizador): el torneo queda a su nombre.
   const conOrganizador = (cuerpo, extra) => (extra && extra.organizador && extra.organizador.id
     ? Object.assign(cuerpo, { organizador: { id: extra.organizador.id, clave: extra.organizador.clave } }) : cuerpo);
-  const crear = (t, extra) => llamar(conOrganizador({ accion: "crear", torneo: datosPublicos(t, extra) }, extra));
-  const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) }, extra));
+  // Los enlaces de los árbitros adjuntos viajan aparte del torneo (no son
+  // públicos): la función los guarda en pareo_adjuntos para que cada adjunto
+  // anote con su código aunque esta pestaña esté cerrada.
+  const listaAdjuntos = (t) => (t.adjuntos || []).map((a) => ({ codigo: a.codigo, rango: a.rango, nombre: a.nombre || "", activo: !!a.activo }));
+  const crear = (t, extra) => llamar(conOrganizador({ accion: "crear", torneo: datosPublicos(t, extra), adjuntos: listaAdjuntos(t) }, extra));
+  const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra), adjuntos: listaAdjuntos(t) }, extra));
   // La organización: { nombre, logo } nueva, o con { id, clave } para
   // cambiarla. `logo` en null la quita; sin `logo`, se queda la que tenía.
   // `correo` en "" lo quita; un correo nuevo va con su `consentimiento`.
@@ -161,10 +165,37 @@
   const pushLlave = () => llamar({ accion: "push_llave" });
   const seguirPush = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push", nombre, ident: ident || "", suscripcion });
   const seguirPushBaja = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push_baja", nombre, ident: ident || "", suscripcion });
+  // Los árbitros adjuntos (ver «Pareo Integral: lo que anotan los adjuntos
+  // queda en la base»). El principal, con la clave: su lista de enlaces, lo
+  // que mandaron y borrar lo que ya pasó a su torneo.
+  const adjuntos = (t) => llamar({ accion: "adjuntos", id: t.publicado.id, clave: t.publicado.clave, adjuntos: listaAdjuntos(t) });
+  const cola = (p) => llamar({ accion: "cola", id: p.id, clave: p.clave });
+  const colaBorrar = (p, hasta) => llamar({ accion: "cola_borrar", id: p.id, clave: p.clave, hasta });
+  // El adjunto, con el código de su enlace: entrar y anotar.
+  const entrarAdjunto = (codigo) => llamar({ accion: "adjunto_entrar", codigo });
+  const anotarAdjunto = (codigo, evento, ronda, datos) => llamar({ accion: "adjunto_anotar", codigo, evento, ronda, datos });
+  // Mandar un resultado o una incidencia desde el celular del adjunto: primero
+  // a la base (queda guardado aunque el principal no esté conectado) y un
+  // toque por el canal para que lo lea ya; si la base no lo toma (sin
+  // internet hacia la función, un torneo sin publicar, un Pareo viejo del
+  // principal que todavía no mandó la lista), por el canal en vivo como
+  // antes. Devuelve "base" o "canal". Lo que la base rechaza por una regla
+  // (otra ronda, una mesa que no es suya, el enlace apagado) no se manda.
+  const RECHAZOS = new Set(["ronda", "mesa", "apagado", "forma"]);
+  // `ronda`: la que el adjunto tiene en pantalla (sin ella, solo el canal).
+  async function mandarAdjunto(canal, codigo, evento, ronda, payload) {
+    const datos = Object.assign({}, payload);
+    delete datos.ronda;
+    const r = ronda > 0 ? await anotarAdjunto(codigo, evento, ronda, datos) : { ok: false };
+    if (r.ok) { canal.send({ type: "broadcast", event: "cola", payload: {} }); return "base"; }
+    if (RECHAZOS.has(r.motivo)) return { rechazo: r.motivo, error: r.error || "" };
+    canal.send({ type: "broadcast", event: evento, payload });
+    return "canal";
+  }
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, pushLlave, seguirPush, seguirPushBaja, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, pushLlave, seguirPush, seguirPushBaja, enlace, adjuntos, cola, colaBorrar, entrarAdjunto, anotarAdjunto, mandarAdjunto, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

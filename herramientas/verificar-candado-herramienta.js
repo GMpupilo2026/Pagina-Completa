@@ -16,7 +16,8 @@
      - con licencia, se ve y el panel se va; sin red después, vale la última
        respuesta guardada en el aparato; sin red y sin nada guardado, no;
      - lo que ve el público sigue abierto: el enlace de solo lectura de Pareo
-       Integral (#ver=…) y el QR de una mesa de Notara, sin sesión.
+       Integral (#ver=…), la casilla del adjunto para entrar con su código
+       (#codigo) y el QR de una mesa de Notara, sin sesión.
 
    Necesita el candado de verdad: pone CANDADO_DE_VERDAD=1 (ver
    lib/candado-de-prueba.js). Ver «Todas las herramientas llevan licencia» en
@@ -203,6 +204,11 @@ function doble({ sesion, licencia, sinRed, guardado }) {
     v = await vista(x.p);
     igual("el enlace de solo lectura de Pareo Integral se ve sin sesión, sin el editor",
         [v.herramienta, v.panel, await x.p.$eval("#pi-editor", (e) => e.checkVisibility())], [true, false, false]);
+    await x.ctx.close();
+    x = await abrir("pareo.html#codigo", { sesion: false });
+    v = await vista(x.p);
+    igual("la casilla del adjunto para entrar con su código se ve sin sesión, sin el editor",
+        [v.herramienta, v.panel, await x.p.$eval("#pi-editor", (e) => e.checkVisibility()), await x.p.$eval("#pi-adj-codigo", (e) => e.checkVisibility()).catch(() => false)], [true, false, false, true]);
     await x.ctx.close();
     x = await abrir("camara-tablero.html#t=11111111-2222-3333-4444-555555555555&c=abcdefgh&m=3", { sesion: false });
     v = await vista(x.p);

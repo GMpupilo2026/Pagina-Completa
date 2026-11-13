@@ -115,9 +115,22 @@ function dobleSalas(opciones) {
   const error = (code, message) => ({ data: null, error: { code, message } });
 
   function orden(a, b) { return (a.orden - b.orden) || a.nombre.localeCompare(b.nombre); }
+  // El orden que pide la consulta, como PostgREST: las columnas en el orden en
+  // que se encadenaron. Sin order(), el de siempre.
+  function ordenar(filas, pedido) {
+    if (!pedido.length) return filas.sort(orden);
+    return filas.sort((a, b) => {
+      for (const [col, asc] of pedido) {
+        const x = a[col], y = b[col];
+        const c = typeof x === "number" && typeof y === "number" ? x - y : String(x == null ? "" : x).localeCompare(String(y == null ? "" : y));
+        if (c) return asc ? c : -c;
+      }
+      return 0;
+    });
+  }
 
   function consulta(tabla, params) {
-    const q = { tabla, op: "select", filtros: [], unica: false, devolver: false, datos: null, params: params || null };
+    const q = { tabla, op: "select", filtros: [], orden: [], unica: false, devolver: false, datos: null, params: params || null };
     const b = {
       select() { if (q.op !== "select") q.devolver = true; return b; },
       insert(d) { q.op = "insert"; q.datos = d; return b; },
@@ -125,7 +138,7 @@ function dobleSalas(opciones) {
       delete() { q.op = "delete"; return b; },
       eq(col, val) { q.filtros.push([col, val]); return b; },
       in() { return b; }, neq() { return b; }, is() { return b; }, or() { return b; }, gte() { return b; }, lte() { return b; },
-      order() { return b; }, range() { return b; }, limit() { return b; },
+      order(col, o) { q.orden.push([col, !(o && o.ascending === false)]); return b; }, range() { return b; }, limit() { return b; },
       single() { q.unica = true; return b; },
       maybeSingle() { q.unica = true; return b; },
       then(res, rej) { return Promise.resolve(resolver(q)).then(res, rej); },
@@ -175,12 +188,12 @@ function dobleSalas(opciones) {
     if (q.tabla !== "salas_torneo") return { data: q.unica ? null : [], error: null };
     if (q.op === "select") {
       if (FALLA) return error("PGRST000", "caída de prueba");
-      const filas = salas.filter((s) => (ADMIN || s.visible) && pasa(s, q.filtros)).sort(orden).map((s) => ({ ...s }));
+      const filas = ordenar(salas.filter((s) => (ADMIN || s.visible) && pasa(s, q.filtros)), q.orden).map((s) => ({ ...s }));
       return { data: q.unica ? (filas[0] || null) : filas, error: null };
     }
     if (q.op === "insert") {
       if (!ADMIN) return error("42501", "new row violates row-level security policy");
-      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, quiniela: false, tema: "cine", lichess_id: null, ...d, id: "s-" + (serie++) }));
+      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, quiniela: false, tema: "cine", lichess_id: null, ...d, id: "s-" + (serie++), created_at: new Date(Date.now() + serie).toISOString() }));
       for (const n of nuevas) {
         const p = problema(n); if (p) return error("23514", "check " + p);
         if (salas.some((s) => s.clave === n.clave)) return error("23505", "duplicate key salas_torneo_clave_key");
@@ -244,14 +257,16 @@ function dobleSalas(opciones) {
 }
 
 // Las salas con las que arrancan las pruebas: las dos de verdad y una oculta.
+// CENFOTEC y UTN se crearon en el mismo instante (como en la base): las
+// desempata su `orden`.
 const SALAS = [
   { id: "s-1", clave: "cenfotec", nombre: "Desafío Mentes Maestras CENFOTEC 2026", descripcion: "Las partidas del torneo de CENFOTEC.",
-    emoji: "🎓", tipo: "lichess", lichess_id: "s7NfNv6H", visible: true, orden: 1, pizarras: [],
+    emoji: "🎓", tipo: "lichess", lichess_id: "s7NfNv6H", visible: true, orden: 1, pizarras: [], created_at: "2026-09-27T04:38:56.342Z",
     enlaces: [{ texto: "Verlo directo en Lichess", url: "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H" }] },
-  { id: "s-2", clave: "utn", nombre: "Torneo UTN 2026", descripcion: "Se transmite en idchess.", emoji: "🎓", tipo: "enlaces", lichess_id: null, visible: true, orden: 2, pizarras: [],
+  { id: "s-2", clave: "utn", nombre: "Torneo UTN 2026", descripcion: "Se transmite en idchess.", emoji: "🎓", tipo: "enlaces", lichess_id: null, visible: true, orden: 2, pizarras: [], created_at: "2026-09-27T04:38:56.342Z",
     enlaces: [{ texto: "Partida masculina", url: "https://media.idchess.com/en/tournaments/kYfhVJ/utn-2026/desk/eyJpZCI6OTY1OTU2LCJwYXNzd29yZCI6bnVsbH0=" },
               { texto: "Partida femenina", url: "https://media.idchess.com/en/tournaments/b0fhVJ/utn-2026/desk/eyJpZCI6OTY1OTYxLCJwYXNzd29yZCI6bnVsbH0=" }] },
-  { id: "s-3", clave: "copa-secreta", nombre: "Copa en preparación", descripcion: "", emoji: "🏆", tipo: "lichess", lichess_id: "Abcd1234", visible: false, orden: 3, enlaces: [], pizarras: [] },
+  { id: "s-3", clave: "copa-secreta", nombre: "Copa en preparación", descripcion: "", emoji: "🏆", tipo: "lichess", lichess_id: "Abcd1234", visible: false, orden: 3, enlaces: [], pizarras: [], created_at: "2026-09-27T05:34:12.810Z" },
 ];
 
 module.exports = { dobleSalas, SALAS };

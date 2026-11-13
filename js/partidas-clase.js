@@ -20,6 +20,7 @@ window.PartidasClase = (function () {
 
     const RELOJES_PRACTICA = [
         { segundos: null, texto: "Sin reloj" },
+        { segundos: 30, texto: "30 segundos" },
         { segundos: 60, texto: "1 minuto" },
         { segundos: 180, texto: "3 minutos" },
         { segundos: 300, texto: "5 minutos" },

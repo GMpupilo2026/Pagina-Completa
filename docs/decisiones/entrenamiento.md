@@ -462,6 +462,23 @@ logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso
   se mirara «¿ya tenía estrellas?», eso quedaría fuera para siempre, y una
   tarea de «10 de Detective» podía quedar imposible para quien ya lo había
   hecho todo.
+- **La marca se pone cuando la base dijo que sí, y la verdad es la base.**
+  Hasta el 11/11 `registrar()` ponía la marca ANTES de mandar el ejercicio y
+  sin mirar lo que contestaba `EntrenoProgress.log`. Un alumno terminó los 69
+  de Con lo justo (los cinco niveles «completo ✓») y su tarea decía 51/69: en
+  los niveles 4 y 5, 18 ejercicios tenían estrellas y la marca, pero nunca
+  llegaron a `training_progress`. En los registros del servidor no había ni un
+  POST rechazado: los pedidos no salieron del aparato (la red), y con la marca
+  ya puesta no se volvían a mandar nunca. Ahora la marca se pone solo con
+  `{ ok: true }`, y al abrir `tipos.html` `ponerAlDiaRegistros()` compara lo
+  que tiene estrellas (lo que cuenta para tareas: dos con `pistaNoCuenta`)
+  contra lo que la base de verdad tiene (`detail->>puzzle_id`, de mil en mil)
+  y manda lo que falta con `recuperado: true`, uno por uno, parando al primer
+  fallo. No mira `tipos_registrados_v1` para decidir: era justo la marca que
+  mentía. Si la lista no se puede leer, no manda nada (repetir daría puntos
+  dos veces). Así se reparan solas las tareas que ya quedaron cortas, la
+  próxima vez que el alumno abre Habilidades. Los tipos cuyos datos se cargan
+  aparte (Maestro) no están en `DATOS` al abrir: se recuperan al resolverlos.
 - **Tareas**: «Tipos de entrenamiento» está en `js/material-plataforma.js`, con
   cantidad y minutos, y un recorte por tipo (`metas.json` → `tipos`, que arma
   `herramientas/metas-indice.py` leyendo `tipos.json` y el catálogo). El
@@ -4785,6 +4802,13 @@ Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,
 editar a mano una medida y la calibración sin el paso de gradiente.
 
+
+## Finales contra la máquina con las posiciones de las clases
+
+`entreno/finales.html?banco=clases` juega las posiciones que el profe armó en
+las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
+en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
+casa, de tarea» en `docs/decisiones/accesibilidad.md`.
 
 ## Desafíos: la variante hasta el final, y el tablero sin girar
 

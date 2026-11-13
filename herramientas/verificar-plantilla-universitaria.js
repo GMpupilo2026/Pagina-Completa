@@ -31,9 +31,19 @@ function ok(nombre, cond, detalle) {
 }
 
 // El ancho y el alto de un PNG, de su cabecera.
+// El ancho y el alto de un PNG o de un JPG (el logo de la ADAPZ es un JPG con
+// su fondo blanco): en el JPG, del primer marcador SOF (C0–CF, sin C4, C8 ni CC).
 function tamPng(ruta) {
   const b = fs.readFileSync(ruta);
-  return b.toString("ascii", 1, 4) === "PNG" ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null;
+  if (b.toString("ascii", 1, 4) === "PNG") return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null;
+  for (let i = 2; i + 9 < b.length;) {
+    if (b[i] !== 0xff) return null;
+    const m = b[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)];
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
 }
 
 const salas = fs.readFileSync(path.join(RAIZ, "js", "salas-torneo.js"), "utf8");

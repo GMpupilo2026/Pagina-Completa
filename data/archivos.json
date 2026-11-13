@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 893,
+  "total": 895,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8168,10 +8168,22 @@
     "kb": 1695
    },
    {
+    "ruta": "documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf",
+    "titulo": "Bases de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026 (Pérez Zeledón)",
+    "tipo": "otro",
+    "kb": 943
+   },
+   {
     "ruta": "documentos/metropolitano-2026/bases-metropolitano-2026.pdf",
     "titulo": "Bases metropolitano 2026",
     "tipo": "otro",
     "kb": 3086
+   },
+   {
+    "ruta": "documentos/tacho-chess-2/bases-tacho-chess-2.pdf",
+    "titulo": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
+    "tipo": "otro",
+    "kb": 64
    },
    {
     "ruta": "instrucciones-adaptadas.pdf",
@@ -19087,7 +19099,7 @@
   ]
  },
  "imagenes": {
-  "total": 1151,
+  "total": 1243,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24350,6 +24362,277 @@
     ]
    },
    {
+    "carpeta": "img/avatar-profe-pame",
+    "titulo": "El avatar de la profe Pame (lo ve CCDR POCOCI en vez del profe Oscar)",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/avatar-profe-pame/a-repasar.webp",
+      "titulo": "A repasar",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/arbitro.webp",
+      "titulo": "Arbitro",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/atencion.webp",
+      "titulo": "Atencion",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/bien-hecho.webp",
+      "titulo": "Bien hecho",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/bienvenidos.webp",
+      "titulo": "Bienvenidos",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/avatar-profe-pame/brazos-cruzados.webp",
+      "titulo": "Brazos cruzados",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-pame/burlon.webp",
+      "titulo": "Burlon",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/caballo.webp",
+      "titulo": "Caballo",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/avatar-profe-pame/campeones.webp",
+      "titulo": "Campeones",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/avatar-profe-pame/cara.webp",
+      "titulo": "Cara",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/avatar-profe-pame/casi.webp",
+      "titulo": "Casi",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/avatar-profe-pame/clase-en-linea.webp",
+      "titulo": "Clase en linea",
+      "tipo": "otro",
+      "kb": 57
+     },
+     {
+      "ruta": "img/avatar-profe-pame/dormidos.webp",
+      "titulo": "Dormidos",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/avatar-profe-pame/ensenando.webp",
+      "titulo": "Ensenando",
+      "tipo": "otro",
+      "kb": 52
+     },
+     {
+      "ruta": "img/avatar-profe-pame/esa-no-es.webp",
+      "titulo": "Esa no es",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/avatar-profe-pame/esa-vara.webp",
+      "titulo": "Esa vara",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/avatar-profe-pame/esfuerzate.webp",
+      "titulo": "Esfuerzate",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/espalda.webp",
+      "titulo": "Espalda",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-pame/excelente.webp",
+      "titulo": "Excelente",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "img/avatar-profe-pame/felicidades.webp",
+      "titulo": "Felicidades",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/avatar-profe-pame/frente.webp",
+      "titulo": "Frente",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-pame/gracias.webp",
+      "titulo": "Gracias",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-pame/hola.webp",
+      "titulo": "Hola",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/avatar-profe-pame/idea.webp",
+      "titulo": "Idea",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/jugando.webp",
+      "titulo": "Jugando",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "img/avatar-profe-pame/laptop.webp",
+      "titulo": "Laptop",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/avatar-profe-pame/lo-lograron.webp",
+      "titulo": "Lo lograron",
+      "tipo": "otro",
+      "kb": 41
+     },
+     {
+      "ruta": "img/avatar-profe-pame/mmm.webp",
+      "titulo": "Mmm",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-pame/muy-bien.webp",
+      "titulo": "Muy bien",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/no-puede-ser.webp",
+      "titulo": "No puede ser",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/nos-vemos.webp",
+      "titulo": "Nos vemos",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/pobrecillo.webp",
+      "titulo": "Pobrecillo",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/presentando.webp",
+      "titulo": "Presentando",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/que-jugadon.webp",
+      "titulo": "Que jugadon",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/avatar-profe-pame/reloj-de-ajedrez.webp",
+      "titulo": "Reloj de ajedrez",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/avatar-profe-pame/risa.webp",
+      "titulo": "Risa",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/avatar-profe-pame/silencio.webp",
+      "titulo": "Silencio",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/tablero-italiana.webp",
+      "titulo": "Tablero italiana",
+      "tipo": "otro",
+      "kb": 39
+     },
+     {
+      "ruta": "img/avatar-profe-pame/te-toca.webp",
+      "titulo": "Te toca",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/tiempo.webp",
+      "titulo": "Tiempo",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/tres-cuartos.webp",
+      "titulo": "Tres cuartos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-pame/tu-puedes.webp",
+      "titulo": "Tu puedes",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-pame/vagabundo.webp",
+      "titulo": "Vagabundo",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-pame/wow.webp",
+      "titulo": "Wow",
+      "tipo": "otro",
+      "kb": 22
+     }
+    ]
+   },
+   {
     "carpeta": "img/jdn",
     "titulo": "Ejemplos del formulario de los JDN",
     "grupo": "El sitio",
@@ -25979,6 +26262,296 @@
     ]
    },
    {
+    "carpeta": "img/adapz",
+    "titulo": "Adapz",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/adapz/ccdr-pz.jpg",
+      "titulo": "Ccdr pz",
+      "tipo": "otro",
+      "kb": 11
+     },
+     {
+      "ruta": "img/adapz/logo.jpg",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 15
+     }
+    ]
+   },
+   {
+    "carpeta": "img/avatar-profe-karina",
+    "titulo": "Avatar profe karina",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/avatar-profe-karina/a-repasar.webp",
+      "titulo": "A repasar",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/arbitro.webp",
+      "titulo": "Arbitro",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/atencion.webp",
+      "titulo": "Atencion",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-karina/bien-hecho.webp",
+      "titulo": "Bien hecho",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/bienvenidos.webp",
+      "titulo": "Bienvenidos",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-karina/brazos-cruzados.webp",
+      "titulo": "Brazos cruzados",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/burlon.webp",
+      "titulo": "Burlon",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/caballo.webp",
+      "titulo": "Caballo",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-karina/campeones.webp",
+      "titulo": "Campeones",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/cara.webp",
+      "titulo": "Cara",
+      "tipo": "otro",
+      "kb": 37
+     },
+     {
+      "ruta": "img/avatar-profe-karina/casi.webp",
+      "titulo": "Casi",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/clase-en-linea.webp",
+      "titulo": "Clase en linea",
+      "tipo": "otro",
+      "kb": 41
+     },
+     {
+      "ruta": "img/avatar-profe-karina/dormidos.webp",
+      "titulo": "Dormidos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/ensenando.webp",
+      "titulo": "Ensenando",
+      "tipo": "otro",
+      "kb": 49
+     },
+     {
+      "ruta": "img/avatar-profe-karina/esa-no-es.webp",
+      "titulo": "Esa no es",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/esa-vara.webp",
+      "titulo": "Esa vara",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-karina/esfuerzate.webp",
+      "titulo": "Esfuerzate",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/espalda.webp",
+      "titulo": "Espalda",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/avatar-profe-karina/excelente.webp",
+      "titulo": "Excelente",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/avatar-profe-karina/felicidades.webp",
+      "titulo": "Felicidades",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/frente.webp",
+      "titulo": "Frente",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/gracias.webp",
+      "titulo": "Gracias",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/hola.webp",
+      "titulo": "Hola",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/avatar-profe-karina/idea.webp",
+      "titulo": "Idea",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/jugando.webp",
+      "titulo": "Jugando",
+      "tipo": "otro",
+      "kb": 37
+     },
+     {
+      "ruta": "img/avatar-profe-karina/laptop.webp",
+      "titulo": "Laptop",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "img/avatar-profe-karina/lo-lograron.webp",
+      "titulo": "Lo lograron",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "img/avatar-profe-karina/mmm.webp",
+      "titulo": "Mmm",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/muy-bien.webp",
+      "titulo": "Muy bien",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/no-puede-ser.webp",
+      "titulo": "No puede ser",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-karina/nos-vemos.webp",
+      "titulo": "Nos vemos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/pobrecillo.webp",
+      "titulo": "Pobrecillo",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/presentando.webp",
+      "titulo": "Presentando",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-karina/que-jugadon.webp",
+      "titulo": "Que jugadon",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "img/avatar-profe-karina/reloj-de-ajedrez.webp",
+      "titulo": "Reloj de ajedrez",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/risa.webp",
+      "titulo": "Risa",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/silencio.webp",
+      "titulo": "Silencio",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/tablero-italiana.webp",
+      "titulo": "Tablero italiana",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "img/avatar-profe-karina/te-toca.webp",
+      "titulo": "Te toca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/tiempo.webp",
+      "titulo": "Tiempo",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-karina/tres-cuartos.webp",
+      "titulo": "Tres cuartos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/tu-puedes.webp",
+      "titulo": "Tu puedes",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-karina/vagabundo.webp",
+      "titulo": "Vagabundo",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-karina/wow.webp",
+      "titulo": "Wow",
+      "tipo": "otro",
+      "kb": 19
+     }
+    ]
+   },
+   {
     "carpeta": "img/cenfotec",
     "titulo": "Cenfotec",
     "grupo": "Carpetas",
@@ -26161,6 +26734,25 @@
       "titulo": "Formacion ajedrez marco",
       "tipo": "otro",
       "kb": 505
+     }
+    ]
+   },
+   {
+    "carpeta": "img/tacho-chess-2",
+    "titulo": "Tacho chess 2",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/tacho-chess-2/logo-liceo.png",
+      "titulo": "Tacho Chess 2: el escudo del Liceo Anastasio Alfaro, recortado del afiche",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "img/tacho-chess-2/mascota.png",
+      "titulo": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
+      "tipo": "otro",
+      "kb": 73
      }
     ]
    },

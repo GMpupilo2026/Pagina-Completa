@@ -69,12 +69,46 @@
         return o;
     }
 
+    const BTN_CHICO = "bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-2.5 py-1 rounded-lg text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50";
+    let ocupada = null; // la mesa que se está guardando o anotando: sus botones se apagan mientras tanto
+
+    // Las marcas de la ronda en pantalla (sin lo anulado), leídas de la bitácora de ESE torneo: al cambiar de
+    // torneo, la bitácora del anterior puede seguir cargada un momento y no debe contar.
+    const marcasDeAhora = () => (pantalla ? M.marcas(lineas.filter((l) => l.tnr === String(pantalla.tnr))) : {});
+    function marcaDe(mesa, color) {
+        const t = pantalla ? marcasDeAhora()[M.claveMarca(pantalla.ronda, mesa, color)] : null;
+        return t || { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
+    }
+    const nombreDe = (m, color) => (color === "negras" ? m.negras : m.blancas) || (color === "negras" ? "Las negras" : "Las blancas");
+
+    // La celda de un jugador: su nombre, sus marcas escritas (nunca solo con color) y sus botones.
+    function celdaJugador(m, color) {
+        const k = marcaDe(m.mesa, color);
+        const nombre = nombreDe(m, color);
+        const apagar = ocupada === m.mesa;
+        const marcas = [];
+        if (k.ilegales) marcas.push(el("span", { "data-marca": "ilegal", class: "font-semibold text-red-700 dark:text-red-300", texto: k.ilegales === 1 ? "1 ilegal" : k.ilegales + " ilegales" }));
+        if (k.irregularidades) marcas.push(el("span", { "data-marca": "irregularidad", class: "font-semibold", texto: k.irregularidades === 1 ? "1 irregularidad" : k.irregularidades + " irregularidades" }));
+        const boton = (accion, texto, etiqueta, fn) => el("button", { type: "button", "data-accion": accion, "data-color": color, class: BTN_CHICO, "aria-label": etiqueta, disabled: apagar, onclick: fn }, texto);
+        const botones = [
+            boton("ilegal", "Ilegal", "Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")", () => ilegal(m, color)),
+            boton("irregularidad", "Irregularidad", "Irregularidad de " + nombre + " (mesa " + m.mesa + ")", () => irregularidad(m, color)),
+        ];
+        if (k.ultima_ilegal) botones.push(boton("anular-ilegal", "Anular la última ilegal", "Anular la última jugada ilegal de " + nombre, () => anular(m, color, "ilegal", k.ultima_ilegal)));
+        if (k.ultima_irregularidad) botones.push(boton("anular-irregularidad", "Anular la última irregularidad", "Anular la última irregularidad de " + nombre, () => anular(m, color, "irregularidad", k.ultima_irregularidad)));
+        return el("td", { class: "py-2 pr-3 align-top", "data-jugador": color },
+            el("p", { texto: nombre }),
+            marcas.length ? el("p", { class: "text-xs mt-0.5 flex flex-wrap gap-x-2" }, marcas) : null,
+            el("div", { class: "flex flex-wrap gap-1 mt-1" }, botones));
+    }
+
     function pintarMesas() {
         const cuerpo = $("m-mesas");
         cuerpo.replaceChildren();
         if (!pantalla) return;
         const q = sinTildes($("m-buscar").value).trim();
         const faltan = $("m-faltan").checked;
+        const todas = marcasDeAhora();
         let vistas = 0;
         for (const m of pantalla.mesas) {
             if (faltan && m.valor !== "0") continue;
@@ -83,15 +117,111 @@
             const sel = el("select", {
                 id: "m-sel-" + m.mesa, "data-mesa": String(m.mesa), "aria-label": "Resultado de la mesa " + m.mesa + ": " + m.blancas + " contra " + m.negras,
                 class: "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none",
-                onchange: (e) => { elegido[m.mesa] = e.target.value; actualizarBotones(); },
+                onchange: (e) => { elegido[m.mesa] = e.target.value; pintarMesas(); },
             }, opcionesDe(m));
             sel.value = elegido[m.mesa] || "";
-            cuerpo.append(el("tr", { "data-mesa": String(m.mesa), class: "border-t border-brand-100 dark:border-brand-800" },
-                celda(String(m.mesa), "font-semibold"), celda(m.blancas), celda(m.negras), celda(M.textoResultado(m.valor), m.valor === "0" ? "text-brand-500 dark:text-brand-300" : "font-semibold"),
-                el("td", { class: "py-2 align-top" }, sel)));
+            // «Guardar» en la misma fila: manda solo esta mesa (pedido del dueño en el Centroamericano: no al final de la página).
+            const cambio = M.cambios([m], elegido);
+            const guardarFila = el("button", {
+                type: "button", "data-accion": "guardar-mesa", disabled: !cambio.length || ocupada === m.mesa,
+                "aria-label": "Guardar en chess-results el resultado de la mesa " + m.mesa,
+                class: "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50",
+                onclick: () => guardar(cambio),
+            }, "Guardar");
+            // Banda roja y aviso escrito: un jugador lleva dos ilegales en esta partida y la mesa no tiene resultado.
+            const b = todas[M.claveMarca(pantalla.ronda, m.mesa, "blancas")], n = todas[M.claveMarca(pantalla.ronda, m.mesa, "negras")];
+            const pierde = m.valor === "0" && ((b && b.ilegales >= 2) || (n && n.ilegales >= 2));
+            const celdaMesa = el("td", { class: "py-2 pr-3 align-top font-semibold" + (pierde ? " border-l-4 border-red-600 pl-3" : "") }, String(m.mesa),
+                pierde ? el("p", { "data-pierde": "si", class: "text-xs font-semibold text-red-700 dark:text-red-300 mt-1", texto: "Segunda ilegal: decide el resultado" }) : null);
+            cuerpo.append(el("tr", { "data-mesa": String(m.mesa), "data-estado": pierde ? "pierde" : (m.valor !== "0" ? "con-resultado" : "libre"), class: "border-t border-brand-100 dark:border-brand-800" },
+                celdaMesa, celdaJugador(m, "blancas"), celdaJugador(m, "negras"), celda(M.textoResultado(m.valor), m.valor === "0" ? "text-brand-500 dark:text-brand-300" : "font-semibold"),
+                el("td", { class: "py-2 align-top" }, el("div", { class: "flex flex-wrap items-center gap-2" }, sel, guardarFila))));
         }
         $("m-cuenta").textContent = "Se ven " + vistas + " de " + pantalla.mesas.length + " mesas.";
         actualizarBotones();
+    }
+
+    // ------------------------------------------------------------- ilegales e irregularidades
+
+    // Ilegal e irregularidad se eligen de una lista (la misma del Centroamericano) y la bitácora queda sola: el
+    // tipo, el artículo si lo hay y lo que quiera agregar el árbitro. «Otra» viene elegida: lo que se escriba
+    // queda tal cual. Con «Otra» y sin escribir nada, el cuadro vuelve a abrirse con lo que ya tenía.
+    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro) {
+        let previo = { tipo: lista[0].id, nota: null };
+        for (;;) {
+            const r = await Avisos.formulario({
+                titulo, aceptar, peligro,
+                texto: previo.falta ? "Escribe qué pasó: con «Otra» es obligatorio. " + texto : texto,
+                campos: [
+                    { nombre: "tipo", etiqueta, tipo: "select", valor: previo.tipo, opciones: lista.map((t) => [t.id, t.texto]) },
+                    { nombre: "nota", etiqueta: "Qué pasó (obligatorio con «Otra»; opcional si eliges uno de la lista)", tipo: "textarea", max: 500, valor: previo.nota },
+                ],
+            });
+            if (r === null) return null;
+            const t = M.textoTipo(lista, r.tipo, r.nota);
+            if (t) return t;
+            previo = { tipo: r.tipo, nota: r.nota || null, falta: true };
+        }
+    }
+
+    function lineaDeJugador(m, color, tipo, extra) {
+        return Object.assign({
+            tnr: String(pantalla.tnr), torneo: pantalla.torneo || "", ronda: pantalla.ronda, mesa: m.mesa, tipo, color, jugador: nombreDe(m, color).slice(0, 120),
+            resultado: null, anterior: null, articulo: "", texto: "", enviado: false,
+        }, extra);
+    }
+
+    async function anotarDeJugador(m, linea) {
+        ocupada = m.mesa;
+        pintarMesas();
+        try {
+            await escribirBitacora([linea]);
+            await cargarBitacora(pantalla.tnr);
+            return true;
+        } catch (e) {
+            avisar(e.message || String(e), true);
+            return false;
+        } finally {
+            ocupada = null;
+            pintarMesas();
+        }
+    }
+
+    async function ilegal(m, color) {
+        if (!pantalla) return;
+        const nombre = nombreDe(m, color);
+        const segunda = marcaDe(m.mesa, color).ilegales >= 1;
+        const t = await elegirTipo("Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")",
+            segunda
+                ? "Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. " + M.ARTICULO_ILEGAL + ")."
+                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan 2 minutos más a su rival (art. " + M.ARTICULO_ILEGAL + ").",
+            M.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda);
+        if (!t) return;
+        if (!await anotarDeJugador(m, lineaDeJugador(m, color, "ilegal", { texto: t.texto, articulo: M.ARTICULO_ILEGAL }))) return;
+        // La cuenta sale de lo que la base tiene ahora (otra pestaña pudo anotar también), no de un contador de la página.
+        const a = M.avisoIlegal(marcaDe(m.mesa, color).ilegales, nombre, color, 2);
+        if (a.nivel === "pierde") {
+            // Se PROPONE el resultado en el desplegable; no se guarda solo: el árbitro lo revisa (puede ser tablas) y toca «Guardar».
+            if (m.valor === "0") { elegido[m.mesa] = a.resultado; pintarMesas(); }
+            await Avisos.alerta(a.texto + (m.valor === "0" ? " Dejé propuesto «" + M.textoResultado(a.resultado) + "» en la mesa " + m.mesa + "; toca «Guardar» si es lo que corresponde." : ""), { titulo: a.titulo });
+            const s = $("m-sel-" + m.mesa); if (s) s.focus();
+        } else avisar(a.texto);
+    }
+
+    async function irregularidad(m, color) {
+        if (!pantalla) return;
+        const nombre = nombreDe(m, color);
+        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora.", M.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false);
+        if (!t) return;
+        if (await anotarDeJugador(m, lineaDeJugador(m, color, "irregularidad", { texto: t.texto, articulo: t.articulo || "" }))) avisar("Irregularidad de " + nombre + " anotada en la bitácora.");
+    }
+
+    // Un toque por error no se borra: se anula con otra línea que apunta a la anulada (la base comprueba que sea tuya y de esta partida).
+    async function anular(m, color, tipo, id) {
+        const nombre = nombreDe(m, color);
+        const sigue = await Avisos.confirmar("¿Anular la última " + (tipo === "ilegal" ? "jugada ilegal" : "irregularidad") + " de " + nombre + " en la mesa " + m.mesa + "? Quedan las dos anotaciones en la bitácora, y la anulada deja de contar.", { titulo: "Anular una anotación", aceptar: "Sí, anularla" });
+        if (!sigue) return;
+        if (await anotarDeJugador(m, lineaDeJugador(m, color, "anulacion", { anula: id, texto: tipo === "ilegal" ? "jugada ilegal anotada por error" : "irregularidad anotada por error" }))) avisar("Anulada. Sigue en la bitácora, pero ya no cuenta.");
     }
 
     function pendientes() {
@@ -233,16 +363,22 @@
         if (error) throw new Error("No se pudo escribir en la bitácora: " + error.message);
     }
 
-    async function guardar() {
-        const cs = pendientes();
+    // `deUna`: el «Guardar» de una fila manda solo esa mesa (y no pregunta: el botón está en la fila y dice qué guarda).
+    // El de abajo manda todas las pendientes y pregunta antes.
+    async function guardar(deUna) {
+        const fila = Array.isArray(deUna);
+        const cs = fila ? deUna : pendientes();
         if (!cs.length || !pantalla) return;
         const sid = $("m-sid").value.trim();
-        if (!sid) { avisar("Falta el SID (la clave del torneo).", true); return; }
+        if (!sid) { avisar("Falta el SID (la clave del torneo). Escríbela arriba: no se guarda en ningún lado.", true); $("m-sid").focus(); return; }
         const n = cs.length;
-        const sigue = await Avisos.confirmar(
-            "Vas a mandar " + n + (n === 1 ? " resultado" : " resultados") + " de la ronda " + pantalla.ronda + " de «" + (pantalla.torneo || pantalla.tnr) + "» a chess-results. Se ven al instante en la página pública del torneo.",
-            { titulo: "Guardar en chess-results", aceptar: "Guardar " + n + (n === 1 ? " resultado" : " resultados") });
-        if (!sigue) return;
+        if (!fila) {
+            const sigue = await Avisos.confirmar(
+                "Vas a mandar " + n + (n === 1 ? " resultado" : " resultados") + " de la ronda " + pantalla.ronda + " de «" + (pantalla.torneo || pantalla.tnr) + "» a chess-results. Se ven al instante en la página pública del torneo.",
+                { titulo: "Guardar en chess-results", aceptar: "Guardar " + n + (n === 1 ? " resultado" : " resultados") });
+            if (!sigue) return;
+        }
+        if (fila) { ocupada = cs[0].mesa; pintarMesas(); }
         $("m-guardar").disabled = true;
         $("m-guardar-estado").textContent = "Guardando en chess-results y comprobando lo que quedó…";
         try {
@@ -272,7 +408,7 @@
             $("m-guardar-estado").textContent = "";
             avisar(e.message || String(e), true);
         } finally {
-            actualizarBotones();
+            if (fila) { ocupada = null; pintarMesas(); } else actualizarBotones();
         }
     }
 
@@ -329,6 +465,8 @@
         }
         lineas = todas;
         pintarBitacora();
+        // Las marcas de cada jugador salen de la bitácora: al leerla, las mesas se vuelven a pintar.
+        if (pantalla && pantalla.tnr === tnr) pintarMesas();
     }
 
     async function agregar() {

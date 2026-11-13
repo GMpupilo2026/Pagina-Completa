@@ -77,11 +77,108 @@
   ];
   const ALTO = 480;   // alto de la versión para la página, en píxeles
 
-  const ruta = (id) => "img/avatar-profe-oscar/" + id + ".webp";
-  const porId = (id) => LISTA.find((a) => a.id === id) || null;
-  const conFrase = () => LISTA.filter((a) => a.frase);
+  /* ── Qué profe se ve ─────────────────────────────────────────────────────
+     Los mismos 44 dibujos (los mismos id y las mismas frases) existen para
+     cada profe, cada uno en su carpeta. Quien es de una academia con su
+     propio profe lo ve a él en vez del profe Oscar: hoy, CCDR POCOCI ve a la
+     profe Pame y ADAPZ a la profe Karina. Se decide por el id de la academia
+     (el nombre puede cambiar).
 
-  window.AvatarProfeOscar = { LISTA, ALTO, ruta, porId, conFrase };
+     La academia sale de la marca que js/marca-academia.js guarda en el
+     navegador (academia_marca_v1, con el id de la cuenta que la recibió):
+     se lee de forma síncrona, porque los dibujos se pintan apenas carga la
+     página. La marca solo existe para quien es de UNA academia; quien es de
+     varias, quien no tiene sesión o quien abre la primera página antes de que
+     llegue la marca ve al profe Oscar, que es lo de siempre. */
+  const PROFES = {
+    oscar: { carpeta: "img/avatar-profe-oscar", nombre: "El profe Oscar" },
+    pame: { carpeta: "img/avatar-profe-pame", nombre: "La profe Pame" },
+    karina: { carpeta: "img/avatar-profe-karina", nombre: "La profe Karina" },
+  };
+  const PROFE_DE_ACADEMIA = {
+    "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4": "pame",     // CCDR POCOCI
+    "e036444a-27ca-44b7-a18e-635c3d906e10": "karina",   // ADAPZ
+  };
+  // El texto alternativo de las profes: el del profe Oscar con su nombre,
+  // salvo donde el dibujo es distinto (ellas no tienen barba, son árbitras…).
+  const ALT_PROPIO = {
+    pame: {
+      mmm: "La profe Pame pensativa, con la mano en la barbilla",
+      arbitro: "La profe Pame de árbitra, con su gafete y una tabla de planillas",
+      ensenando: "La profe Pame enseñándole ajedrez a una niña",
+      "lo-lograron": "La profe Pame aplaudiendo entre confeti",
+    },
+    karina: {
+      mmm: "La profe Karina pensativa, con la mano en la barbilla",
+      arbitro: "La profe Karina de árbitra, con su gafete y una tabla de planillas",
+      ensenando: "La profe Karina enseñándole ajedrez a una niña",
+      "lo-lograron": "La profe Karina aplaudiendo entre confeti",
+      "esa-no-es": "La profe Karina diciendo que no con la mano",
+    },
+  };
+
+  function uidDeLaSesion(ls) {
+    for (let i = 0; i < ls.length; i++) {
+      const k = ls.key(i);
+      if (!/^sb-.*-auth-token$/.test(k || "")) continue;
+      const s = JSON.parse(ls.getItem(k) || "null");
+      return (s && s.user && s.user.id) || null;
+    }
+    return null;
+  }
+
+  /* El profe que le toca a quien mira ("oscar", "pame" o "karina"). */
+  function profeQueSeVe() {
+    try {
+      const ls = window.localStorage;
+      const g = JSON.parse(ls.getItem("academia_marca_v1") || "null");
+      const academia = g && g.marca && g.marca.academia_id;
+      // La marca guardada es de la cuenta que la recibió: otra cuenta en la
+      // misma computadora no hereda el profe de la anterior.
+      if (!academia || g.uid !== uidDeLaSesion(ls)) return "oscar";
+      return PROFE_DE_ACADEMIA[academia] || "oscar";
+    } catch (e) { return "oscar"; }
+  }
+
+  const PROFE = profeQueSeVe();
+  const altDe = (a, profe) => {
+    if (!PROFES[profe] || profe === "oscar") return a.alt;
+    const nombre = PROFES[profe].nombre;   // «La profe Pame»
+    return (ALT_PROPIO[profe] || {})[a.id]
+      || a.alt.replace("El profe Oscar", nombre).replace("del profe Oscar", "de " + nombre.charAt(0).toLowerCase() + nombre.slice(1));
+  };
+  const conSuAlt = (a) => (a ? Object.assign({}, a, { alt: altDe(a, PROFE) }) : null);
+
+  const ruta = (id) => PROFES[PROFE].carpeta + "/" + id + ".webp";
+  // El dibujo de un profe en particular, sin mirar la academia de quien entró:
+  // la página de un torneo muestra a su profe a todo el que la abre (la de la
+  // eliminatoria JDN de Pérez Zeledón, a la profe Karina; js/jdn-pz-profe.js).
+  const rutaDe = (profe, id) => (PROFES[profe] || PROFES.oscar).carpeta + "/" + id + ".webp";
+  const porId = (id) => conSuAlt(LISTA.find((a) => a.id === id));
+  const conFrase = () => LISTA.filter((a) => a.frase).map(conSuAlt);
+
+  window.AvatarProfeOscar = { LISTA, ALTO, PROFES, PROFE_DE_ACADEMIA, PROFE, altDe, ruta, rutaDe, porId, conFrase };
+
+  /* Lo que una página escrita a mano dice del profe Oscar, a quien ve a la
+     profe Pame: un elemento con data-profe-pame="…" cambia su texto por ese
+     (también el <title>), y una imagen con data-profe-pame-src="cara" pasa a
+     ese dibujo de ella. Así la página sigue siendo HTML de siempre y el cambio
+     vive en un solo lugar. Ver «La profe Pame en el resto de la plataforma»
+     en docs/decisiones/clase-en-vivo.md. */
+  function vestirPagina() {
+    if (PROFE !== "pame") return;
+    document.querySelectorAll("[data-profe-pame]").forEach((e) => { e.textContent = e.dataset.profePame; });
+    document.querySelectorAll("img[data-profe-pame-src]").forEach((i) => {
+      i.removeAttribute("srcset");
+      i.src = ruta(i.dataset.profePameSrc);
+      i.classList.remove("object-cover");
+      i.classList.add("object-contain", "bg-white");
+    });
+  }
+  if (typeof document !== "undefined" && document.querySelectorAll) {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", vestirPagina);
+    else vestirPagina();
+  }
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

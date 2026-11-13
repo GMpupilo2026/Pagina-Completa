@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261111140000
+# al-dia-con: 20261112201131
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -31,6 +31,14 @@ tabla  arbitros_cr_solicitudes_enviadas  rls=true
 tabla  arbitros_cr_torneos  rls=true
 tabla  arbitros_cuentas  rls=true
 tabla  archivos_pgn  rls=true
+tabla  audios_clase  rls=true
+tabla  audios_clase_ejercicio_intentos  rls=true
+tabla  audios_clase_ejercicios  rls=true
+tabla  audios_clase_marcas  rls=true
+tabla  audios_clase_partidas  rls=true
+tabla  audios_clase_preguntas  rls=true
+tabla  audios_clase_repasos  rls=true
+tabla  audios_clase_vueltas  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
 tabla  avisos_cobro  rls=true
@@ -178,8 +186,10 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pareo_adjuntos  rls=true
 tabla  pareo_avisos_enviados  rls=true
 tabla  pareo_avisos_push_enviados  rls=true
+tabla  pareo_cola  rls=true
 tabla  pareo_moderaciones  rls=true
 tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
@@ -364,12 +374,16 @@ columna  arbitrajes_publicos.revisado  boolean
 columna  arbitrajes_publicos.revisado_at  timestamp with time zone
 columna  arbitrajes_publicos.revisado_por  uuid
 columna  arbitro_bitacora.anterior  text
+columna  arbitro_bitacora.anula  uuid
 columna  arbitro_bitacora.articulo  text
+columna  arbitro_bitacora.color  text
 columna  arbitro_bitacora.creada_por  uuid
 columna  arbitro_bitacora.enviado  boolean
 columna  arbitro_bitacora.id  uuid
+columna  arbitro_bitacora.jugador  text
 columna  arbitro_bitacora.mesa  integer
 columna  arbitro_bitacora.ocurrio  timestamp with time zone
+columna  arbitro_bitacora.pareo  text
 columna  arbitro_bitacora.resultado  text
 columna  arbitro_bitacora.ronda  integer
 columna  arbitro_bitacora.texto  text
@@ -521,6 +535,68 @@ columna  archivos_pgn.nombre_archivo  text
 columna  archivos_pgn.pgn  text
 columna  archivos_pgn.profesor_id  uuid
 columna  archivos_pgn.titulo  text
+columna  audios_clase.academia_id  uuid
+columna  audios_clase.archivo  text
+columna  audios_clase.bytes  bigint
+columna  audios_clase.con_transcripcion  boolean
+columna  audios_clase.duracion_seg  integer
+columna  audios_clase.fecha  date
+columna  audios_clase.hora  time without time zone
+columna  audios_clase.id  uuid
+columna  audios_clase.indice  jsonb
+columna  audios_clase.minutos_aproximados  boolean
+columna  audios_clase.puesto_en  timestamp with time zone
+columna  audios_clase.puesto_por  uuid
+columna  audios_clase.resumen  text
+columna  audios_clase.segmentos  jsonb
+columna  audios_clase.titulo  text
+columna  audios_clase.transcripcion  text
+columna  audios_clase_ejercicio_intentos.acerto  boolean
+columna  audios_clase_ejercicio_intentos.ejercicio_id  uuid
+columna  audios_clase_ejercicio_intentos.en  timestamp with time zone
+columna  audios_clase_ejercicio_intentos.jugada  text
+columna  audios_clase_ejercicio_intentos.persona_id  uuid
+columna  audios_clase_ejercicios.audio_id  uuid
+columna  audios_clase_ejercicios.buena  text
+columna  audios_clase_ejercicios.enunciado  text
+columna  audios_clase_ejercicios.explicacion  text
+columna  audios_clase_ejercicios.fen  text
+columna  audios_clase_ejercicios.id  uuid
+columna  audios_clase_ejercicios.n  smallint
+columna  audios_clase_ejercicios.revisado  boolean
+columna  audios_clase_ejercicios.seg  integer
+columna  audios_clase_marcas.audio_id  uuid
+columna  audios_clase_marcas.creada_en  timestamp with time zone
+columna  audios_clase_marcas.id  uuid
+columna  audios_clase_marcas.nota  text
+columna  audios_clase_marcas.persona_id  uuid
+columna  audios_clase_marcas.seg  integer
+columna  audios_clase_partidas.audio_id  uuid
+columna  audios_clase_partidas.id  uuid
+columna  audios_clase_partidas.jugadas  text
+columna  audios_clase_partidas.orden  smallint
+columna  audios_clase_partidas.revisada  boolean
+columna  audios_clase_partidas.seg  integer
+columna  audios_clase_partidas.titulo  text
+columna  audios_clase_preguntas.audio_id  uuid
+columna  audios_clase_preguntas.correcta  smallint
+columna  audios_clase_preguntas.explicacion  text
+columna  audios_clase_preguntas.n  smallint
+columna  audios_clase_preguntas.opciones  text[]
+columna  audios_clase_preguntas.pregunta  text
+columna  audios_clase_repasos.acerto  boolean
+columna  audios_clase_repasos.audio_id  uuid
+columna  audios_clase_repasos.en  timestamp with time zone
+columna  audios_clase_repasos.n  smallint
+columna  audios_clase_repasos.opcion  smallint
+columna  audios_clase_repasos.persona_id  uuid
+columna  audios_clase_vueltas.acerto  boolean
+columna  audios_clase_vueltas.audio_id  uuid
+columna  audios_clase_vueltas.en  timestamp with time zone
+columna  audios_clase_vueltas.n  smallint
+columna  audios_clase_vueltas.opcion  smallint
+columna  audios_clase_vueltas.persona_id  uuid
+columna  audios_clase_vueltas.vuelta  smallint
 columna  auditoria.antes  jsonb
 columna  auditoria.cuando  timestamp with time zone
 columna  auditoria.despues  jsonb
@@ -1540,17 +1616,20 @@ columna  grabacion_respuestas.elegida  smallint
 columna  grabacion_respuestas.fecha  date
 columna  grabacion_respuestas.horario_id  uuid
 columna  grabacion_respuestas.n  smallint
+columna  grabacion_respuestas.parte  smallint
 columna  grabacion_respuestas.persona_id  uuid
 columna  grabacion_respuestas.respondida_en  timestamp with time zone
 columna  grabaciones_clase.duracion_seg  integer
 columna  grabaciones_clase.fecha  date
 columna  grabaciones_clase.horario_id  uuid
+columna  grabaciones_clase.parte  smallint
 columna  grabaciones_clase.puesta_en  timestamp with time zone
 columna  grabaciones_clase.puesta_por  uuid
 columna  grabaciones_clase.tema  text
 columna  grabaciones_clase.youtube_id  text
 columna  grabaciones_vistas.fecha  date
 columna  grabaciones_vistas.horario_id  uuid
+columna  grabaciones_vistas.parte  smallint
 columna  grabaciones_vistas.persona_id  uuid
 columna  grabaciones_vistas.primera_vez  timestamp with time zone
 columna  grabaciones_vistas.ultima_vez  timestamp with time zone
@@ -1939,6 +2018,14 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pareo_adjuntos.activo  boolean
+columna  pareo_adjuntos.codigo  text
+columna  pareo_adjuntos.creado  timestamp with time zone
+columna  pareo_adjuntos.desde  smallint
+columna  pareo_adjuntos.hasta  smallint
+columna  pareo_adjuntos.nombre  text
+columna  pareo_adjuntos.publicado_id  uuid
+columna  pareo_adjuntos.visto  timestamp with time zone
 columna  pareo_avisos_enviados.cuando  timestamp with time zone
 columna  pareo_avisos_enviados.que  text
 columna  pareo_avisos_enviados.suscripcion_id  uuid
@@ -1947,6 +2034,13 @@ columna  pareo_avisos_push_enviados.cuando  timestamp with time zone
 columna  pareo_avisos_push_enviados.que  text
 columna  pareo_avisos_push_enviados.suscripcion_id  uuid
 columna  pareo_avisos_push_enviados.torneo_id  uuid
+columna  pareo_cola.codigo  text
+columna  pareo_cola.creado  timestamp with time zone
+columna  pareo_cola.datos  jsonb
+columna  pareo_cola.evento  text
+columna  pareo_cola.id  bigint
+columna  pareo_cola.publicado_id  uuid
+columna  pareo_cola.ronda  smallint
 columna  pareo_moderaciones.cuando  timestamp with time zone
 columna  pareo_moderaciones.id  bigint
 columna  pareo_moderaciones.motivo  text
@@ -1978,10 +2072,12 @@ columna  pareo_preinscripciones.estado  text
 columna  pareo_preinscripciones.fide_id  text
 columna  pareo_preinscripciones.id  uuid
 columna  pareo_preinscripciones.institucion  text
+columna  pareo_preinscripciones.nacimiento  date
 columna  pareo_preinscripciones.nombre  text
 columna  pareo_preinscripciones.nota  text
 columna  pareo_preinscripciones.publicado_id  uuid
 columna  pareo_preinscripciones.responsable  text
+columna  pareo_preinscripciones.sexo  text
 columna  pareo_publicados.actualizado  timestamp with time zone
 columna  pareo_publicados.clave_hash  text
 columna  pareo_publicados.creado  timestamp with time zone
@@ -2834,7 +2930,9 @@ funcion  arbitros_cr_publico()  definer  anon=true  auth=true
 funcion  arbitros_mis()  definer  anon=false  auth=true
 funcion  arbitros_puedo_dar()  definer  anon=false  auth=true
 funcion  asesores_grabaciones(p_detalle text)  definer  anon=false  auth=true
+funcion  asesores_grabaciones_apartada2(p_detalle text)  definer  anon=false  auth=false
 funcion  asesores_preguntas_video(p_detalle text)  definer  anon=false  auth=true
+funcion  asesores_preguntas_video_apartada2(p_detalle text)  definer  anon=false  auth=false
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
@@ -2965,6 +3063,7 @@ funcion  disparar_sala_avisos()  definer  anon=false  auth=false
 funcion  disparar_tanda_elo()  definer  anon=false  auth=false
 funcion  disparar_torneos_externos()  definer  anon=false  auth=false
 funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb, p_tiempo numeric)  invoker  anon=false  auth=true
+funcion  ejercicios_para_revisar(p_audio uuid)  definer  anon=false  auth=true
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean)  definer  anon=false  auth=true
@@ -3013,10 +3112,13 @@ funcion  funciones_coordinacion()  invoker  anon=true  auth=true
 funcion  funciones_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=false  auth=true
-funcion  grabacion_clase_poner(p_horario uuid, p_fecha date, p_video text, p_tema text, p_duracion_seg integer)  definer  anon=false  auth=true
+funcion  grabacion_clase_poner(p_horario uuid, p_fecha date, p_video text, p_tema text, p_duracion_seg integer, p_parte integer)  definer  anon=false  auth=true
 funcion  grabacion_clase_poner_apartada(p_horario uuid, p_fecha date, p_video text)  definer  anon=false  auth=false
-funcion  grabacion_pregunta_responder(p_horario uuid, p_fecha date, p_n integer, p_opcion integer)  definer  anon=false  auth=true
-funcion  grabacion_vista_anotar(p_horario uuid, p_fecha date, p_tramos jsonb)  definer  anon=false  auth=true
+funcion  grabacion_clase_poner_apartada2(p_horario uuid, p_fecha date, p_video text, p_tema text, p_duracion_seg integer)  definer  anon=false  auth=false
+funcion  grabacion_pregunta_responder(p_horario uuid, p_fecha date, p_n integer, p_opcion integer, p_parte integer)  definer  anon=false  auth=true
+funcion  grabacion_pregunta_responder_apartada2(p_horario uuid, p_fecha date, p_n integer, p_opcion integer)  definer  anon=false  auth=false
+funcion  grabacion_vista_anotar(p_horario uuid, p_fecha date, p_tramos jsonb, p_parte integer)  definer  anon=false  auth=true
+funcion  grabacion_vista_anotar_apartada2(p_horario uuid, p_fecha date, p_tramos jsonb)  definer  anon=false  auth=false
 funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
 funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid, p_tarde jsonb)  invoker  anon=false  auth=true
@@ -3053,6 +3155,7 @@ funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
+funcion  interno.arbitro_puede_anular_en(p_anula uuid, p_tnr text, p_pareo text, p_ronda integer, p_mesa integer, p_color text)  definer  anon=false  auth=true
 funcion  interno.arbitros_cr_normas_revision_consentimiento()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
@@ -3158,6 +3261,7 @@ funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
+funcion  interno.puedo_poner_audios(p_academia uuid)  definer  anon=false  auth=true
 funcion  interno.puedo_sacar_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
@@ -3182,6 +3286,7 @@ funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  a
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
+funcion  interno.vuelta_que_toca(p_persona uuid, p_audio uuid, p_n integer)  definer  anon=false  auth=true
 funcion  jde_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
 funcion  jdn_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  jdn_drive_leer()  definer  anon=false  auth=false
@@ -3253,6 +3358,7 @@ funcion  mi_panel_taller()  definer  anon=false  auth=true
 funcion  mi_proxima_clase()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
+funcion  mis_academias_audios()  definer  anon=false  auth=true
 funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
@@ -3263,6 +3369,7 @@ funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_grabaciones()  definer  anon=false  auth=true
 funcion  mis_grabaciones_apartada()  definer  anon=false  auth=false
+funcion  mis_grabaciones_apartada2()  definer  anon=false  auth=false
 funcion  mis_herramientas()  definer  anon=false  auth=true
 funcion  mis_premios(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  mis_respuestas_practica(p_envio text)  definer  anon=false  auth=true
@@ -3385,13 +3492,17 @@ funcion  relevo_senal(p_relevo uuid, p_senal text)  definer  anon=false  auth=tr
 funcion  relevo_terminar(p_relevo uuid, p_resultado text)  definer  anon=false  auth=true
 funcion  reloj_situacion_intento(p_envio text, p_situacion integer, p_logrado boolean)  definer  anon=false  auth=true
 funcion  repartir_misiones(p_sala uuid)  definer  anon=false  auth=true
+funcion  repaso_de_hoy()  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
+funcion  responder_ejercicio(p_id uuid, p_jugada text)  definer  anon=false  auth=true
 funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_aprende integer, p_claridad integer, p_creatividad integer, p_resuelve integer, p_contento integer, p_seguir text, p_comentario text)  definer  anon=false  auth=true
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  definer  anon=false  auth=true
 funcion  responder_practica(p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)  definer  anon=false  auth=true
+funcion  responder_repaso(p_audio uuid, p_n integer, p_opcion integer)  definer  anon=false  auth=true
+funcion  responder_vuelta(p_audio uuid, p_n integer, p_opcion integer)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
 funcion  respuestas_reveladas_practica(p_envio text)  definer  anon=false  auth=true
@@ -3523,6 +3634,28 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  archivos_pgn  verificacion_en_dos_pasos  ALL  restrictiva
+politica  audios_clase  audios_clase_delete  DELETE
+politica  audios_clase  audios_clase_insert  INSERT
+politica  audios_clase  audios_clase_select  SELECT
+politica  audios_clase  audios_clase_update  UPDATE
+politica  audios_clase_ejercicio_intentos  audios_clase_ejercicio_intentos_select  SELECT
+politica  audios_clase_ejercicios  audios_clase_ejercicios_delete  DELETE
+politica  audios_clase_ejercicios  audios_clase_ejercicios_insert  INSERT
+politica  audios_clase_ejercicios  audios_clase_ejercicios_select  SELECT
+politica  audios_clase_ejercicios  audios_clase_ejercicios_update  UPDATE
+politica  audios_clase_marcas  audios_clase_marcas_delete  DELETE
+politica  audios_clase_marcas  audios_clase_marcas_insert  INSERT
+politica  audios_clase_marcas  audios_clase_marcas_select  SELECT
+politica  audios_clase_marcas  audios_clase_marcas_update  UPDATE
+politica  audios_clase_partidas  audios_clase_partidas_delete  DELETE
+politica  audios_clase_partidas  audios_clase_partidas_insert  INSERT
+politica  audios_clase_partidas  audios_clase_partidas_select  SELECT
+politica  audios_clase_partidas  audios_clase_partidas_update  UPDATE
+politica  audios_clase_preguntas  audios_clase_preguntas_delete  DELETE
+politica  audios_clase_preguntas  audios_clase_preguntas_insert  INSERT
+politica  audios_clase_preguntas  audios_clase_preguntas_select  SELECT
+politica  audios_clase_repasos  audios_clase_repasos_select  SELECT
+politica  audios_clase_vueltas  audios_clase_vueltas_select  SELECT
 politica  auditoria  auditoria_select_admin  SELECT
 politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
@@ -4108,6 +4241,7 @@ trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
 trigger  paquete_alumnos  auditar
 trigger  paquetes_acceso  auditar
+trigger  pareo_adjuntos  auditar
 trigger  pareo_organizadores  auditar
 trigger  pareo_publicados  auditar_oculto
 trigger  pareo_solicitudes_sello  auditar
@@ -4182,6 +4316,8 @@ indice  arbitraje_consulta_config  arbitraje_consulta_config_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
+indice  arbitro_bitacora  arbitro_bitacora_anula_unico
+indice  arbitro_bitacora  arbitro_bitacora_persona_pareo_idx
 indice  arbitro_bitacora  arbitro_bitacora_persona_torneo_idx
 indice  arbitro_bitacora  arbitro_bitacora_pkey
 indice  arbitro_torneos  arbitro_torneos_pkey
@@ -4213,6 +4349,20 @@ indice  arbitros_cuentas  arbitros_cuentas_organizador_idx
 indice  arbitros_cuentas  arbitros_cuentas_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
+indice  audios_clase  audios_clase_academia_fecha
+indice  audios_clase  audios_clase_archivo_key
+indice  audios_clase  audios_clase_pkey
+indice  audios_clase  audios_clase_una_por_clase
+indice  audios_clase_ejercicio_intentos  audios_clase_ejercicio_intentos_pkey
+indice  audios_clase_ejercicios  audios_clase_ejercicios_audio_id_n_key
+indice  audios_clase_ejercicios  audios_clase_ejercicios_pkey
+indice  audios_clase_marcas  audios_clase_marcas_persona
+indice  audios_clase_marcas  audios_clase_marcas_pkey
+indice  audios_clase_partidas  audios_clase_partidas_audio_id_orden_key
+indice  audios_clase_partidas  audios_clase_partidas_pkey
+indice  audios_clase_preguntas  audios_clase_preguntas_pkey
+indice  audios_clase_repasos  audios_clase_repasos_pkey
+indice  audios_clase_vueltas  audios_clase_vueltas_pkey
 indice  auditoria  auditoria_cuando
 indice  auditoria  auditoria_pkey
 indice  auditoria  auditoria_sobre
@@ -4573,10 +4723,15 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pareo_adjuntos  pareo_adjuntos_pkey
+indice  pareo_adjuntos  pareo_adjuntos_publicado_idx
 indice  pareo_avisos_enviados  pareo_avisos_enviados_pkey
 indice  pareo_avisos_enviados  pareo_avisos_enviados_torneo_idx
 indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_pkey
 indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_torneo_idx
+indice  pareo_cola  pareo_cola_codigo_idx
+indice  pareo_cola  pareo_cola_pkey
+indice  pareo_cola  pareo_cola_publicado_idx
 indice  pareo_moderaciones  pareo_moderaciones_cuando_idx
 indice  pareo_moderaciones  pareo_moderaciones_pkey
 indice  pareo_organizadores  pareo_organizadores_correo_idx
@@ -5022,6 +5177,34 @@ grant  archivos_pgn  authenticated  SELECT
 grant  archivos_pgn  authenticated  TRIGGER
 grant  archivos_pgn  authenticated  TRUNCATE
 grant  archivos_pgn  authenticated  UPDATE
+grant  audios_clase  authenticated  DELETE
+grant  audios_clase  authenticated  INSERT
+grant  audios_clase  authenticated  REFERENCES
+grant  audios_clase  authenticated  SELECT
+grant  audios_clase  authenticated  TRIGGER
+grant  audios_clase  authenticated  TRUNCATE
+grant  audios_clase  authenticated  UPDATE
+grant  audios_clase_ejercicio_intentos  authenticated  SELECT
+grant  audios_clase_ejercicios  authenticated  DELETE
+grant  audios_clase_ejercicios  authenticated  INSERT
+grant  audios_clase_marcas  authenticated  DELETE
+grant  audios_clase_marcas  authenticated  INSERT
+grant  audios_clase_marcas  authenticated  REFERENCES
+grant  audios_clase_marcas  authenticated  SELECT
+grant  audios_clase_marcas  authenticated  TRIGGER
+grant  audios_clase_marcas  authenticated  TRUNCATE
+grant  audios_clase_marcas  authenticated  UPDATE
+grant  audios_clase_partidas  authenticated  DELETE
+grant  audios_clase_partidas  authenticated  INSERT
+grant  audios_clase_partidas  authenticated  REFERENCES
+grant  audios_clase_partidas  authenticated  SELECT
+grant  audios_clase_partidas  authenticated  TRIGGER
+grant  audios_clase_partidas  authenticated  TRUNCATE
+grant  audios_clase_partidas  authenticated  UPDATE
+grant  audios_clase_preguntas  authenticated  DELETE
+grant  audios_clase_preguntas  authenticated  INSERT
+grant  audios_clase_repasos  authenticated  SELECT
+grant  audios_clase_vueltas  authenticated  SELECT
 grant  auditoria  authenticated  SELECT
 grant  aviso_destinatarios  authenticated  REFERENCES
 grant  aviso_destinatarios  authenticated  SELECT

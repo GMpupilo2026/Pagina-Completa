@@ -1376,6 +1376,35 @@ de arbitraje).
   bajarla, editarla a ciegas y volver a subirla, sin que quedara rastro de qué
   cambió ni cuándo.
 
+### La bienvenida, antes del primer informe
+
+**El primer correo que recibe una persona encargada es una bienvenida, no un
+informe.** Lo pidió el dueño para CCDR POCOCI: las 22 cuentas se acababan de
+crear, solo un alumno había entrado, y el primer informe semanal iba a salir
+al día siguiente diciéndoles a casi todas las familias que su hijo «no entró a
+practicar». Lo primero que lee una familia no puede ser eso.
+
+- La tanda (`informes-encargados`) manda `bienvenidaHtml()` cuando
+  `ultimo_envio_at` está vacío, y lo marca como un envío más: el primer informe
+  de verdad llega un periodo después, ya con algo que contar. «Enviar ahora»
+  desde Informes sigue mandando el informe: ahí lo pidió una persona.
+- **Cuenta lo que de verdad trae cada informe** (si practicó lo suficiente, el
+  tiempo y en qué, tareas y exámenes, la comparación, los mensajes de su profe,
+  los premios y el Elo, el nivel y el plan) **y cuándo llega**, dicho como en la
+  casa (`cuandoLlega()`: «todos los lunes a la 1 p. m.»), con el día y la hora
+  que tiene puestos esa persona encargada. Si se agrega o se quita una sección
+  del informe, se cambia también aquí.
+- Va con la marca de la academia (la misma cabecera del informe) y sin la foto
+  del alumno: no hay nada que mostrar todavía.
+- Vale para todas las academias: cualquier encargado nuevo la recibe primero.
+- Los de CCDR POCOCI quedaron todos los lunes a la 1 p. m. (`dia_semana` 1,
+  `hora_envio` 13), a pedido del dueño; la profe lo puede cambiar en Informes.
+
+Lo prueba `verificar-bienvenida-casa.js` (la plantilla con Node, sin red: el
+texto que lee la familia, la hora bien dicha, la marca, el nombre escapado, y
+que la tanda la mande solo la primera vez). Roto a propósito (sin la
+bienvenida en la tanda), salta.
+
 ### Lo que la casa de verdad quiere saber: si está trabajando o no
 
 Ninguna de las cifras que el informe traía contestaba eso. Media hora puede ser

@@ -825,6 +825,43 @@ window.PareoVer = (function () {
     return b;
   }
 
+  // #codigo (o #codigo=K7M2-9QXA): el adjunto escribe el código de 8 letras
+  // que le dio el principal, sin el enlace ni el QR y sin cuenta. La base
+  // (pareo-publicar, «adjunto_entrar») dice si existe y cuáles son sus mesas,
+  // y sigue en su página de siempre (#adjunto=<código>&m=…). Ver «Pareo
+  // Integral: entrar con el código en el celular del adjunto».
+  function entrarConCodigo(cadena, idioma) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const cont = document.getElementById("pi-ver");
+    cont.hidden = false;
+    const campo = el("input", { id: "pi-adj-codigo", type: "text", autocomplete: "off", autocapitalize: "characters", spellcheck: "false", maxlength: "12",
+      "aria-describedby": "pi-adj-codigo-ayuda", class: "w-full rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-800 text-brand-900 dark:text-white px-4 py-3 text-2xl font-mono text-center tracking-widest uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" });
+    const estado = el("p", { id: "pi-adj-codigo-estado", class: "text-base mt-3", role: "status", "aria-live": "polite" });
+    const boton = el("button", { type: "submit", id: "pi-adj-codigo-entrar", class: "w-full mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-3 rounded-xl text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 disabled:opacity-50" }, tx("codigoEntrar"));
+    const form = el("form", { class: "max-w-sm" },
+      el("label", { for: "pi-adj-codigo", class: "block text-sm font-semibold mb-1" }, tx("codigoEtiqueta")), campo, boton, estado);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const codigo = campo.value.replace(/[\s-]/g, "").toLowerCase();
+      if (!/^[a-hjkmnp-z2-9]{8}$/.test(codigo)) { estado.textContent = tx("codigoFormato"); campo.focus(); return; }
+      boton.disabled = true;
+      estado.textContent = tx("codigoBuscando");
+      const r = window.PareoPublicar ? await PareoPublicar.entrarAdjunto(codigo) : { ok: false };
+      boton.disabled = false;
+      if (!r.ok) { estado.textContent = r.error || tx("codigoSinRed"); campo.focus(); return; }
+      const cadenaAdj = codigo + "&m=" + r.desde + "-" + r.hasta;
+      history.replaceState(null, "", "#adjunto=" + cadenaAdj);
+      iniciarAdjunto(cadenaAdj, idioma);
+    });
+    cont.replaceChildren(
+      el("h1", { class: "font-serif text-3xl font-bold mb-2" }, tx("codigoTitulo")),
+      el("p", { id: "pi-adj-codigo-ayuda", class: "text-base mb-4" }, tx("codigoTexto")),
+      form);
+    const previo = String(cadena || "").trim();
+    if (previo) { campo.value = decodeURIComponent(previo).toUpperCase(); form.requestSubmit(); }
+    else campo.focus();
+  }
+
   async function iniciarAdjunto(cadena, idioma) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const [codigo, ...opciones] = String(cadena).split("&");
@@ -839,7 +876,20 @@ window.PareoVer = (function () {
     try { await cargarSupabase(); }
     catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
     const canal = window.sb.channel("pareo-adjunto-" + codigo);
-    const enviadas = new Set();
+    // Lo mandado y todavía sin anotar: mesa (o mesa-tablero) → lo que se dice
+    // debajo («Enviando…», «Guardado…» o por qué no se tomó).
+    const enviadas = new Map();
+    // Primero a la base (queda guardado aunque el principal no esté
+    // conectado) y, si no se puede, por el canal en vivo como antes
+    // (PareoPublicar.mandarAdjunto). `ronda` es la que se ve en pantalla.
+    // (No se llama «mandar»: así se llama el botón de la nota, más abajo.)
+    const aLaBase = async (evento, ronda, payload) => {
+      if (!window.PareoPublicar) { canal.send({ type: "broadcast", event: evento, payload }); return { texto: tx("adjuntoEnviando") }; }
+      const r = await PareoPublicar.mandarAdjunto(canal, codigo, evento, ronda, payload);
+      if (r === "base") return { texto: tx(evento === "nota" ? "adjuntoNotaGuardada" : "adjuntoGuardado") };
+      if (r === "canal") return { texto: tx("adjuntoEnviando") };
+      return { texto: r.error || tx("adjuntoNoSeTomo"), rechazo: true };
+    };
     try { if (localStorage.getItem(CLAVE_GRANDE) === "1") cont.classList.add("pi-grande"); } catch (e) { /* sin almacenamiento */ }
     // Un selector de resultado (de una mesa o de un tablero), que se apaga al
     // mandar hasta que el árbitro principal conteste.
@@ -847,7 +897,7 @@ window.PareoVer = (function () {
       const sel = el("select", { id: "pi-adj-" + mesa + (tablero ? "-" + tablero : ""), class: "mt-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-base", "aria-label": etiqueta });
       sel.append(el("option", { value: "" }, tx("resSin")));
       for (const [v, k] of Object.entries(RESULTADOS)) sel.append(el("option", { value: v }, tx(k)));
-      const estadoMesa = el("p", { class: "text-sm mt-1", role: "status" }, enviadas.has(clave) ? tx("adjuntoEnviando") : "");
+      const estadoMesa = el("p", { class: "text-sm mt-1", role: "status" }, enviadas.get(clave) || "");
       // Los tres resultados de siempre, a un toque (en una tableta, sin
       // abrir la lista); los demás, en el selector.
       const rapidos = el("div", { class: "flex flex-wrap gap-2 mt-2" });
@@ -858,11 +908,20 @@ window.PareoVer = (function () {
       }
       sel.addEventListener("change", () => {
         if (!sel.value) return;
-        enviadas.add(clave);
+        enviadas.set(clave, tx("adjuntoEnviando"));
         sel.disabled = true;
         for (const b of rapidos.children) b.disabled = true;
         estadoMesa.textContent = tx("adjuntoEnviando");
-        canal.send({ type: "broadcast", event: "resultado", payload: Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {}) });
+        aLaBase("resultado", d.ronda, Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {})).then((x) => {
+          if (x.rechazo) {
+            // No se tomó por una regla: se puede volver a elegir.
+            enviadas.delete(clave);
+            sel.disabled = false;
+            sel.value = "";
+            for (const b of rapidos.children) b.disabled = false;
+          } else if (enviadas.has(clave)) enviadas.set(clave, x.texto);
+          estadoMesa.textContent = x.texto;
+        });
       });
       return el("div", {}, rapidos, sel, estadoMesa);
     };
@@ -884,7 +943,10 @@ window.PareoVer = (function () {
           if (!sel.value) return;
           si.disabled = true;
           pregunta.textContent = tx("adjuntoEnviando");
-          canal.send({ type: "broadcast", event: "resultado", payload: { ronda: d.ronda, mesa: m.m, r: sel.value, corrige: true } });
+          aLaBase("resultado", d.ronda, { ronda: d.ronda, mesa: m.m, r: sel.value, corrige: true }).then((x) => {
+            pregunta.textContent = x.texto;
+            if (x.rechazo) si.disabled = false;
+          });
         });
         no.addEventListener("click", () => caja.replaceChildren(abrir));
         caja.replaceChildren(sel, pregunta, el("div", {}, si, no));
@@ -945,6 +1007,36 @@ window.PareoVer = (function () {
     // el adjunto toque «Listo», para que no tenga que estar mirándolo.
     let rondaVista = null;
     let avisoRonda = "";
+    // Las cámaras de Notara de sus mesas (js/pareo/camaras-adjunto.js): el
+    // principal manda su código y el torneo publicado con el estado. El
+    // tablero de cada mesa se pinta en su lugar, sin rehacer la lista (no se
+    // le mueve nada a quien está anotando). «No es así» esconde esa propuesta.
+    let camaras = null, conectandoCam = null, mesasCam = [];
+    const descartadas = new Set();
+    const textosCam = { sinNoticias: tx("camAdjSinNoticias"), enVivo: (n) => (n === 1 ? tx("camAdjEnVivoUna") : tx("camAdjEnVivo", { n })),
+      dice: (r) => tx("camAdjDice", { r }), confirmar: (r) => tx("camAdjConfirmar", { r }), noEs: tx("camAdjNoEs") };
+    function pintarCamara(f) {
+      const caja = cont.querySelector('[data-cam="' + f + '"]');
+      const m = mesasCam.find((x) => (x.f || x.m) === f);
+      if (!caja || !m || !window.PareoCamarasAdjunto) return;
+      const dc = camaras && camaras.mesa(f);
+      PareoCamarasAdjunto.pintar(caja, dc, { tam: 136, textos: textosCam, textoResultado: (r) => tx("corto_" + r),
+        conResultado: !m.r && !enviadas.has(m.m), descartada: !!dc && descartadas.has(f + "|" + dc.resultado),
+        confirmar: (r) => { const sel = document.getElementById("pi-adj-" + m.m); if (sel && !sel.disabled) { sel.value = r; sel.dispatchEvent(new Event("change")); } pintarCamara(f); },
+        descartar: (r) => { descartadas.add(f + "|" + r); pintarCamara(f); } });
+    }
+    function sincronizarCamaras(d) {
+      const quiere = d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda : "";
+      const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda : conectandoCam || "";
+      if (quiere === tiene) return;
+      if (camaras) camaras.cerrar();
+      camaras = null;
+      conectandoCam = quiere || null;
+      if (!quiere) return;
+      PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, alCambiar: pintarCamara })
+        .then((c) => { if (conectandoCam !== quiere) { c.cerrar(); return; } camaras = c; conectandoCam = null; mesasCam.forEach((x) => pintarCamara(x.f || x.m)); })
+        .catch(() => { conectandoCam = null; });
+    }
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
       if (d.apagado) { cont.replaceChildren(el("p", { class: "text-base font-semibold" }, tx("adjuntoEnlaceApagado"))); canal.unsubscribe(); return; }
@@ -954,6 +1046,8 @@ window.PareoVer = (function () {
         try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) { /* sin vibración */ }
       }
       rondaVista = d.ronda;
+      mesasCam = d.camaras && d.torneo ? mesas.filter((m) => m.n && !m.tableros) : [];
+      sincronizarCamaras(d);
       const lista = el("ul", { class: "space-y-3" });
       for (const m of mesas) {
         const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m), "data-fisica": String(m.f || m.m) });
@@ -995,6 +1089,7 @@ window.PareoVer = (function () {
           continue;
         }
         li.append(selector(d, m.m, null, m.m, tx("resultadoMesa", { m: m.f || m.m, b: m.b, n: m.n })));
+        if (mesasCam.includes(m)) li.append(el("div", { class: "pi-adj-cam mt-3", "data-cam": String(m.f || m.m) }));
         lista.append(li);
       }
       // Letra grande, para anotar desde una tableta en la sala; se recuerda.
@@ -1032,6 +1127,7 @@ window.PareoVer = (function () {
         mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")),
         hablar(d, mesas),
         notaInforme(d, mesas));
+      mesasCam.forEach((x) => pintarCamara(x.f || x.m));
       if (irA) { const n = irA; irA = 0; llevarAMesa(n); }
     });
     // Lleva a la mesa con ese número (el que está pegado en ella): la marca,
@@ -1088,8 +1184,11 @@ window.PareoVer = (function () {
         if (!texto.value.trim()) { estadoNota.textContent = tx("incFalta"); texto.focus(); return; }
         try { localStorage.setItem(CLAVE_AUTOR, nombre.value.trim()); } catch (e) { /* sin espacio */ }
         estadoNota.textContent = tx("adjuntoEnviando");
-        canal.send({ type: "broadcast", event: "nota", payload: { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null,
-          lado: quien.value || null, tipo: tipo.value, articulo: articulo.value || null } });
+        aLaBase("nota", rondaVista || 0, { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null,
+          lado: quien.value || null, tipo: tipo.value, articulo: articulo.value || null }).then((x) => {
+          estadoNota.textContent = x.texto;
+          if (!x.rechazo && x.texto !== tx("adjuntoEnviando")) texto.value = "";
+        });
       });
       cajaNota = el("section", { class: "mt-6 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-adj-nota-t" },
         el("h2", { id: "pi-adj-nota-t", class: "font-semibold" }, tx("adjuntoNotaTitulo")),
@@ -1298,7 +1397,7 @@ window.PareoVer = (function () {
     setTimeout(() => { if (!pintado) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("inscribirEsperando"))); }, 8000);
   }
 
-  return { irAMesa, iniciarInscribir, paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
+  return { irAMesa, iniciarInscribir, paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, entrarConCodigo, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
