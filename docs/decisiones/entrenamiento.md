@@ -1500,7 +1500,7 @@ atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 198 fichas de estudio: 29 aperturas, 35 defensas, 29 temas
+"Aprender") son 199 fichas de estudio: 30 aperturas, 35 defensas, 29 temas
 tácticos, 27 mates, 52 conceptos y 26 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
@@ -1788,7 +1788,7 @@ primero de los tres).
   (`fichas-estudio-pdf.js`; `--solo-accesible` la rehace sin sitio ni PDF), así
   que dice lo mismo que el papel. `verificar-fichas-pdf.py` comprueba que esté al
   día, sin imágenes ni scripts, con un solo h1 y sin saltos de nivel, con todos
-  los enlaces internos llevando a algo que existe y las 198 fichas en orden, en
+  los enlaces internos llevando a algo que existe y las 199 fichas en orden, en
   los dos índices, numeradas, con su posición y su «Volver al índice». Se rompió
   a propósito (una imagen, un h6, un enlace roto) y salta.
 - Los colores están medidos: texto 16,6:1 y enlaces 8,4:1 en claro; 14,8:1 y
@@ -1817,6 +1817,37 @@ nuevas, 76 en total).
 - **La portadilla de Conceptos (52) se iba a una segunda hoja**: con más de 44
   fichas, la lista de la portadilla va con la letra más chica. El libro tiene
   210 páginas y las cartas, 22 hojas.
+
+### La ficha 199: el Colle-Zukertort
+
+El dueño la pidió para una alumna ciega que está estudiando el Colle con b3:
+la ficha «Sistema Colle» que ya existía es la del Colle clásico (c3 y e4), y
+el plan con b3 es otro (Ab2, Ce5, f4 y la torre por f3). Entró con su línea
+`colle-zukertort` (77 en total), y la respuesta a 3…Af5 —el alfil negro sale
+antes de e6 y se ofrece a cambiar el de d3— va escrita en los bloques, sin
+posición propia: una segunda línea para eso habría entrado a la prueba de
+estilo como si fuera otra apertura para recomendar.
+
+- **Una línea nueva mueve la medición de su vecina.** La posición propia del
+  Colle pasó de 3.e3 a 5.c3 (hasta c5 la comparte con el Zukertort), y con las
+  partidas que había no llegaba al mínimo de 15: el Colle quedó sin medir, sin
+  dar ningún error en la ficha. Se completó como dice «Las 7 que faltaban, de
+  KingBase», con `KingBase2017-D00-D29_part_01.pgn`: 109 partidas para el
+  Colle y 292 para el Zukertort, y las 65 aperturas quedaron medidas. Su
+  partida modelo también cambió: la del curso ya no llega a 5.c3, y la nueva
+  sale de KingBase.
+- **`estilo-modelos.js` leía mal las partidas guardadas**: las pasaba por
+  `.map(leerPgn)`, y `map` le da el índice como segundo argumento, que es
+  `hasta`. La partida número *i* se leía solo hasta la media jugada *i*, y
+  casi ninguna llegaba a su apertura: correrlo de nuevo dejaba 42 partidas
+  modelo de 64 sin avisar. El verificador las leía bien (`(t) =>
+  Gen.leerPgn(t)`), por eso `main` estaba en verde. Ahora es
+  `.map((t) => leerPgn(t))`.
+- **En Windows, los generadores de KingBase se corren con LF.** Con
+  `core.autocrlf=true`, el `.pgn` guardado sale con CRLF y la separación por
+  `\n\n` no encuentra ninguna partida. En el CI (Linux) no pasa, pero lo que se
+  genera en la máquina tiene que dar lo mismo que allá.
+- El libro tiene 211 páginas y las cartas, 23 hojas.
 
 ### Los mates, en una pestaña propia
 
@@ -4541,7 +4572,7 @@ a +1, contra las demás aperturas del mismo color.
   cada medida sin necesidad), hasta 300 por apertura, las que llegan a su
   posición propia, también por transposición, y lo mismo que se guarda de
   las de torneos (40 medias jugadas en UCI, sin nombres). Quedan en
-  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **64 de 64
+  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **65 de 65
   medidas**, y `verificar-estilo-aperturas.js` falla si una queda sin medir.
 - La primera versión del extractor miraba, como la medición, si la partida
   pasaba por la posición en sus primeras 30 medias jugadas, y a los 45
