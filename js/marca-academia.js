@@ -146,6 +146,26 @@
     } catch (e) { }
   }
 
+  /* El profe de la academia (la profe Pame en CCDR POCOCI…, ver
+     js/avatar-profe-oscar.js) se decide al cargar la página con la marca
+     GUARDADA, porque se dibuja antes de que llegue la sesión. Si la guardada
+     estaba vacía o vieja (la primera vez en ese aparato, o después de un
+     cambio de academia), la página pintó al profe que no era y el alumno veía
+     «Juega contra Oscar» hasta recargar él mismo. Con la marca recién pedida
+     se compara: si le toca otro profe, se recarga UNA vez (sessionStorage lo
+     impide dos veces seguidas con el mismo profe). */
+  function profeAlDia(marca) {
+    var A = window.AvatarProfeOscar;
+    if (!A || !A.PROFE_DE_ACADEMIA) return;
+    var debe = (marca && A.PROFE_DE_ACADEMIA[marca.academia_id]) || "oscar";
+    if (debe === A.PROFE) return;
+    try {
+      if (sessionStorage.getItem("profe_recargado") === debe) return;
+      sessionStorage.setItem("profe_recargado", debe);
+    } catch (e) { return; }
+    location.reload();
+  }
+
   async function init() {
     var sb = window.sb;
     if (!sb || !sb.auth || !document.getElementById("marca-enlace")) return;
@@ -174,6 +194,7 @@
       // quien supervisa varias se quedaría sin su franja por diez minutos.
       if (academias) guardar(uid, marca, academias);
       if (marca || antes) aplicar(marca);
+      if (academias) profeAlDia(marca);
     }
     if (academias && academias.length > 1) montarSelectorAcademia(sb, uid, academias);
   }
@@ -262,7 +283,7 @@
     });
   }
 
-  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, pintarLogin: pintarLogin, olvidar: olvidar, BUCKET: BUCKET };
+  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, pintarLogin: pintarLogin, olvidar: olvidar, profeAlDia: profeAlDia, BUCKET: BUCKET };
   if (typeof window !== "undefined") {
     window.MarcaAcademia = api;
     if (typeof document !== "undefined" && !window.__marcaAcademiaSinArranque) {

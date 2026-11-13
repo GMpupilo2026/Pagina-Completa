@@ -5329,6 +5329,26 @@ existe, que cada dibujo sea de esa profe, a quién le sale (con un
 documento de mentira), quién contesta lo del bot y el orden de los scripts.
 Roto a propósito (quitando la condición de alumno), salta.
 
+### Si la marca guardada estaba vieja, la página se corrige sola
+
+El dueño vio que a los alumnos de CCDR POCOCI les seguía saliendo «Juega contra
+Oscar». El código estaba bien: el profe se decide **al cargar la página** con
+la marca guardada en el aparato (`academia_marca_v1`), porque se dibuja antes
+de que llegue la sesión, y esa marca estaba vacía (los alumnos habían quedado
+en dos academias por un rato, y con dos `mi_marca_academia()` no devuelve
+nada). Lo mismo le pasa a cualquiera la primera vez que entra en un aparato: la
+página pinta a Oscar y lo corrige recién en la siguiente.
+
+- `js/marca-academia.js`, cuando pide la marca fresca, la compara con el profe
+  que se pintó (`profeAlDia()`): si le toca otro, **recarga la página una vez**.
+  `sessionStorage` impide recargar dos veces seguidas por el mismo profe, así
+  que no hay bucle aunque la marca vuelva a cambiar.
+- Solo pasa cuando la marca guardada no era la de verdad: con la marca al día,
+  el profe pintado ya es el que toca y no se recarga nada.
+
+Lo prueba `verificar-profe-ayuda.js` («Si la marca guardada estaba vieja…»: los
+cinco casos, con el módulo cargado en Node). Roto a propósito, salta.
+
 ### La profe Pame en el resto de la plataforma
 
 Además del avatar, el bot, la tarjeta «Juega contra mí» y el «¿Te ayudo?», lo
@@ -5345,10 +5365,12 @@ el «está el bot de Oscar» de Competir cuando no hay nadie en línea.
 - `bot.html` es el bot de niveles para las variantes, no el que juega con el
   libro de cada profe (`tablero.html`): se le cambia el nombre porque en la
   plataforma es «el bot del profe», y para un alumno de Pococi el profe es ella.
-- Sin cambiar: el nombre de la sección en Informes y en el informe a la casa
-  («El bot de Oscar», `js/tiempo-secciones.js` y `SECCIONES` de la función),
-  que lee un profesor o una familia, y las páginas sobre Oscar mismo
-  (`sobre-oscar.html`, la portada).
+- La sección del bot en Informes y en el informe a la casa
+  (`js/tiempo-secciones.js` y `SECCIONES` de la función) dejó de decir «El bot
+  de Oscar» y dice **«Partidas contra el bot»**, para todas las academias: la
+  función que manda el correo no sabe qué profe le toca a cada academia (eso
+  vive en `js/avatar-profe-oscar.js`) y un nombre neutro no miente en ninguna.
+- Sin cambiar: las páginas sobre Oscar mismo (`sobre-oscar.html`, la portada).
 
 Lo prueba `verificar-profe-ayuda.js` («La profe Pame en el resto de la
 plataforma»: `vestirPagina()` con un documento de mentira para las dos
