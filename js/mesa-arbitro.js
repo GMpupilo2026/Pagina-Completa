@@ -194,13 +194,27 @@
   // El documento neutro que consumen ReportePDF y ReporteDOCX (como el del
   // acta de los JDE). `hora` formatea un momento en hora de Costa Rica
   // (HoraCR.fechaHora): se recibe para que este módulo corra también en Node.
-  function documento(torneo, lineas, arbitro, hora) {
+  /* La foto de las dos planillas (ver «Mesa del árbitro: la foto de las planillas» en docs/decisiones/juegos-y-torneos.md).
+     El bucket es privado y la imagen se guarda en la carpeta de quien la sube: <autor>/<tnr>/<id de la foto>.jpg. */
+  const BUCKET_PLANILLAS = "mesa-arbitro-planillas";
+  const LADO_PLANILLA = 2600; // el lado largo de la foto, en píxeles: dos planillas en una foto, y aun así sube rápido con mala señal
+  const rutaPlanilla = (autor, tnr, id) => autor + "/" + tnr + "/" + id + ".jpg";
+  // Las fotos de una mesa de una ronda, la más nueva primero (una foto mejor es otra foto: no se borra la anterior).
+  function planillasDeMesa(planillas, ronda, mesa) {
+    return (planillas || []).filter((p) => p.ronda === ronda && p.mesa === mesa).sort((x, y) => String(y.subida).localeCompare(String(x.subida)));
+  }
+  const pieDePlanilla = (p, formato) => "Ronda " + p.ronda + " · mesa " + p.mesa + (p.blancas || p.negras ? " · " + (p.blancas || "Blancas") + " – " + (p.negras || "Negras") : "") + " · foto del " + formato(p.subida);
+
+  // `planillas`: las fotos que van en el documento, [{ ronda, mesa, subida, blancas, negras, foto: { jpeg, ancho, alto } }]
+  // (la página las baja y las achica). Sin ellas el documento sale como siempre.
+  function documento(torneo, lineas, arbitro, hora, planillas) {
     const formato = hora || ((x) => String(x));
     const orden = lineas.slice().sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)));
     // Lo anulado sigue en la tabla (la bitácora no se borra), pero no se cuenta en el resumen.
     const anuladas = new Set(orden.filter((l) => l.tipo === "anulacion" && l.anula).map((l) => l.anula));
     const cuenta = (t) => orden.filter((l) => l.tipo === t && !anuladas.has(l.id)).length;
     const enviados = orden.filter((l) => (l.tipo === "resultado" || l.tipo === "correccion") && l.enviado).length;
+    const fotos = (planillas || []).slice().sort((x, y) => (x.ronda - y.ronda) || (x.mesa - y.mesa) || String(x.subida).localeCompare(String(y.subida)));
     const b = [];
     b.push({ tipo: "titulo", texto: "Resumen" });
     b.push({
@@ -210,7 +224,7 @@
         "Correcciones de un resultado: " + cuenta("correccion") + ".",
         "Incidencias: " + cuenta("incidencia") + ". Notas: " + cuenta("nota") + ".",
         "Jugadas ilegales: " + cuenta("ilegal") + ". Irregularidades: " + cuenta("irregularidad") + "." + (anuladas.size ? " Anuladas por error: " + anuladas.size + "." : ""),
-      ],
+      ].concat(fotos.length ? ["Fotos de las planillas: " + fotos.length + " (al final del documento)."] : []),
     });
     b.push({ tipo: "titulo", texto: "Bitácora" });
     if (!orden.length) b.push({ tipo: "parrafo", texto: "No se anotó nada en este torneo." });
@@ -222,6 +236,10 @@
         filas: orden.map((l) => [formato(l.ocurrio), l.ronda == null ? "" : String(l.ronda), l.mesa == null ? "" : String(l.mesa), TIPOS[l.tipo] || l.tipo, detalle(l), l.articulo || ""]),
       });
     }
+    if (fotos.length) {
+      b.push({ tipo: "titulo", texto: "Planillas fotografiadas" });
+      for (const f of fotos) b.push({ tipo: "foto", foto: f.foto, anchoMax: 420, pie: pieDePlanilla(f, formato) });
+    }
     b.push({ tipo: "titulo", texto: "Firma" });
     b.push({ tipo: "parrafo", texto: "______________________________   Árbitro: " + (arbitro || "") });
     return {
@@ -229,12 +247,12 @@
       subtitulo: (torneo.torneo || "Torneo") + (torneo.pareo ? " · Pareo Integral, enlace de árbitro " + torneo.pareo : " · chess-results " + torneo.tnr),
       pie: "Mesa del árbitro · ajedrez-integral.com",
       bloques: b,
-      fotos: [],
+      fotos: fotos.map((f) => f.foto),
     };
   }
 
   const api = { RESULTADOS, TIPOS, textoResultado, nombreBitacora, cambios, lineasDeCambios, listaParaTeclear, detalle, documento,
-    ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, claveMarca, marcas,
+    ARTICULO_ILEGAL, BUCKET_PLANILLAS, LADO_PLANILLA, rutaPlanilla, planillasDeMesa, pieDePlanilla, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, claveMarca, marcas,
     DE_PAREO, valorDePareo, fuente };
   if (enNode) module.exports = api;
   else raiz.MesaArbitro = api;

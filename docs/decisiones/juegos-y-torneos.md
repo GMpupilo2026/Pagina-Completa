@@ -11435,6 +11435,58 @@ de eventos.
   migración) y `verificar-mesa-arbitro-pagina.js` (sección «Ilegales, irregularidades y "Guardar" en la fila»).
   Si se cuenta lo anulado, las dos saltan.
 
+## Mesa del árbitro: la foto de las planillas
+
+El dueño lo pidió el 13/11/2026, al comparar la Mesa del árbitro con chess-results («Enter Results Online»): chess-results solo recibe
+el resultado de cada mesa y **no tiene dónde adjuntar nada**, y la foto de las dos planillas que ya sacaba la tablet del Centroamericano
+no existía en la Mesa general (`mesa-arbitro.html`). Ahora la Mesa general la tiene, para quien la usa con su cuenta y su licencia.
+
+- **Una camarita por mesa**, con texto («📷 Foto de las planillas»; el emoji va en un `span aria-hidden`) en la fila de cada mesa de la
+  ronda leída. Abre la cámara con guía de la tablet (`js/guia-planillas.js`, la MISMA: dos marcos, revisión antes de usar la foto); si el
+  aparato no la da, o la persona elige la suya, un campo de archivo que pide la cámara de atrás. **Nunca se queda sin poder subir**: es la
+  misma regla de la tablet. Cerrar la cámara sin sacar la foto no sube nada.
+- **Una sola copia de lo compartido.** Los estilos de la cámara con guía salieron de `css/centroamericano-mesas.css` a su propio
+  `css/guia-planillas.css`, que cargan las dos páginas. Lo que NO se compartió: la función que achica la foto (la tablet la manda como
+  data URL a su Edge Function; esta página la sube directo a Storage como Blob), por eso `achicar()` vive en `js/mesa-arbitro-pagina.js`.
+- **Sube directo a Storage, sin Edge Function ni Drive.** A diferencia de la tablet (que no tiene cuenta y pasa por `centroamericano-mesa`
+  y el Drive ordenado), quien usa la Mesa general tiene sesión, así que la foto va con su propia cuenta y la RLS decide. El bucket
+  `mesa-arbitro-planillas` es **privado**, solo JPEG y hasta 8 MB; la página achica a 2600 px de lado largo (calidad 0,82: ~0,5 MB) y la
+  sube a `<id del árbitro>/<tnr>/<id de la foto>.jpg` **sin `upsert`**. La tabla `arbitro_planillas` dice de qué torneo, ronda y mesa es,
+  quiénes juegan y cuántos bytes pesa. Son hojas de partidas de menores con sus nombres: se ven con una dirección firmada de 5 minutos.
+- **Lo que garantiza la base** (migración `20261113152246_mesa_arbitro_planillas.sql`), como la bitácora:
+  - solo quien tiene la licencia `mesa-arbitro` sube, y solo a su carpeta; la ven quien la subió (con la licencia vigente) y quien
+    administra;
+  - **solo se agrega**: ni la tabla ni el bucket tienen política de update ni de delete. Una foto mejor es otra foto (la fila nueva
+    se muestra y la anterior sigue ahí);
+  - la hora y el autor los pone ella (el insert es por columna: `tnr, ronda, mesa, blancas, negras, ruta, bytes`); la ruta tiene que
+    estar en la carpeta del autor, en la del mismo torneo, y es única.
+- **Comprobado impersonando cuentas** (13/11, en una transacción que se deshizo, ninguna fila quedó): una cuenta con licencia sube a su
+  carpeta (fila y archivo); se rechazan la carpeta de otra persona, la ruta de otro torneo, poner la hora o el autor, un update y un
+  delete; otra cuenta CON licencia no ve ni la fila ni el archivo; una cuenta sin licencia no sube ni la fila ni el archivo;
+  administración ve las dos. **Ojo con lo que parece un fallo:** administración veía la fila pero NO el archivo hasta poner `aal2` en el
+  token: no es esta política, es la restrictiva `verificacion_en_dos_pasos` que ya tiene `storage.objects` (ver «La verificación en dos
+  pasos»); con el token de una cuenta con la verificación hecha lo ve.
+- **La foto deja huella en la bitácora**: una línea `nota` con la ronda y la mesa («Foto de las dos planillas guardada.»), con la hora
+  que pone la base. Si la foto subió y la nota no, se avisa sin perder la foto; si la foto no sube, no queda ni fila ni nota, y el botón
+  vuelve a servir. Si el archivo sube y su fila no se registra, se dice («La foto subió, pero no quedó registrada»): el archivo queda
+  huérfano en el bucket (no se puede borrar desde la página, a propósito) y se repite la foto.
+- **Ver las fotos**: «Ver la foto» / «Ver las N fotos» abre una ventana (`dialog`, foco adentro, «Cerrar» devuelve el foco al botón) con
+  cada una y su pie escrito («Ronda 3 · mesa 1 · Blancas – Negras · foto del …»). Lo de la fila se lee en palabras: «Foto guardada (2)».
+- **En el PDF y el Word**: una casilla «Incluir las N fotos de planillas… (el archivo pesa más)», marcada de entrada y solo visible si hay
+  fotos. Las baja con la cuenta de quien las pide, las achica a 1400 px (calidad 0,78: sin esto, 100 fotos eran un PDF de 40 MB) y las
+  pone al final, en «Planillas fotografiadas», con su pie, en orden de ronda y mesa; el resumen las cuenta. `MesaArbitro.documento()`
+  recibe las fotos como 5.º argumento: sin ellas, el documento sale igual que antes. Si alguna no se puede bajar, se dice cuántas faltaron.
+- **Lo que NO hace** (a propósito o todavía): no manda la foto al Drive (la tablet sí); no admite capturas de pantalla (tablero, reloj);
+  no la manda a chess-results (no tiene dónde); y solo está en la sección de chess-results, no en la de torneos de Pareo Integral
+  (`js/mesa-arbitro-pareo.js`), cuyas mesas llegan por el enlace del árbitro principal.
+- **Lo que no se probó:** subir con la cuenta de una persona real y la Storage de verdad desde el navegador (la página se probó con un
+  doble de `sb.storage`; las políticas, impersonando la base); el aviso de la RLS de Storage con un token real.
+- Lo prueban `verificar-mesa-arbitro.js` (la migración: bucket privado, JPEG, el insert por columna, sin update ni delete, la carpeta del
+  autor, `auth.uid()` envuelto; la ruta, el orden de las fotos y el documento con y sin ellas) y `verificar-mesa-arbitro-pagina.js`
+  («La foto de las planillas»: cerrar sin foto, la cámara con guía, la cámara del aparato con un PNG que sale JPEG, el fallo de subida, la
+  ventana, la casilla y las fotos dentro del PDF y del Word). Rompiendo a propósito el `upsert`, la carpeta, el campo de archivo, la
+  hora enviada por la página, el bucket público, un permiso de insert de más o una política de delete, saltan.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
