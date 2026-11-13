@@ -22,8 +22,11 @@
     }
 
     function tarjeta(h) {
-        const li = el("li");
-        const a = el("a", "block h-full bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 border-2 border-transparent hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        /* La tarjeta estira para igualar la fila de la cuadrícula y el «Ver su
+           manual» va debajo, dentro del mismo li: con `h-full` en la tarjeta,
+           el enlace quedaba fuera del li y lo tapaba la tarjeta de abajo. */
+        const li = el("li", "flex flex-col");
+        const a = el("a", "block flex-1 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 border-2 border-transparent hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
         a.href = h.href;
         const titulo = el("h3", "font-serif text-lg font-bold text-brand-800 dark:text-white");
         const emoji = el("span", null, (h.emoji || "♟️") + " ");
@@ -32,14 +35,25 @@
         a.append(titulo, el("p", "text-sm text-brand-600 dark:text-brand-300 mt-2", h.resumen || ""));
         li.appendChild(a);
         if (h.manual) {
-            const m = el("a", "inline-block mt-2 ml-1 text-sm font-semibold underline text-accent-700 dark:text-accent-400", "Ver su manual");
+            const m = el("a", "self-start mt-2 ml-1 text-sm font-semibold underline text-accent-700 dark:text-accent-400", "Ver su manual");
             m.href = h.manual;
             li.appendChild(m);
         }
         return li;
     }
 
+    /* La cuenta de árbitro no tiene el panel de la Academia (donde está el
+       «Cerrar sesión» de todos), así que su salida va acá. */
+    async function cerrarSesion() {
+        const b = $("logout-btn");
+        b.disabled = true;
+        b.textContent = "Cerrando sesión…";
+        try { await sb.auth.signOut(); } catch (e) { /* igual se va al inicio */ }
+        location.href = "index.html";
+    }
+
     async function iniciar() {
+        $("logout-btn").addEventListener("click", cerrarSesion);
         try {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { location.replace("login.html?next=arbitro.html"); return; }
