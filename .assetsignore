@@ -98,3 +98,9 @@ entreno/data/finales_dificiles.json
 herramientas/avatar-profe-oscar
 herramientas/avatar-profe-pame
 herramientas/avatar-profe-karina
+
+# El programa para Windows (escritorio/): su código y, si alguien lo arma en
+# esta carpeta, node_modules/ y dist/ (cientos de MB, el instalador incluido).
+# Nada de eso lo pide ninguna página. Ver «El programa para Windows» en
+# docs/decisiones/sitio-e-infraestructura.md.
+escritorio
