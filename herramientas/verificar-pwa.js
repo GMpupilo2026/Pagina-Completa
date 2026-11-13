@@ -231,7 +231,8 @@ function servidorPropio() {
       const p = path.join(dir, e.name);
       const rel = path.relative(RAIZ, p).replace(/\\/g, "/");
       if (e.isDirectory()) {
-        if (/^(node_modules|\.git|herramientas)$/.test(e.name)) continue;
+        // escritorio: el programa para Windows, que no se publica (.assetsignore).
+        if (/^(node_modules|\.git|herramientas|escritorio)$/.test(e.name)) continue;
         if (rel.startsWith("cursos/recursos") || rel.startsWith("cursos/protegido") || rel.startsWith("material")) continue;
         recorrer(p);
       } else if (e.name.endsWith(".html")) {
