@@ -4,14 +4,14 @@
  *
  *   1. EL HTML, leído: los datos del afiche (sábado 14 de noviembre, 8:30
  *      a.m., Gimnasio del Centro, gratis, de primer grado a undécimo año) y
- *      lo que dio el dueño (5 rondas a 10 minutos + 2 segundos, la ronda 1 a
+ *      lo que dio el dueño (7 rondas a 10 minutos + 2 segundos, la ronda 1 a
  *      las 9:00 y el árbitro principal); el calendario con la llegada a las
- *      8:30 y sus cinco rondas, la primera a las 9:00 y las demás
+ *      8:30 y sus siete rondas, la primera a las 9:00 y las demás
  *      del mismo horario que las bases (BasesTorneo.horario); el formulario
  *      del código QR del afiche, que se abre encima; «Resultados» va
  *      «Pronto»; sin chess-results; el contacto, solo el de Adriana; la
  *      mascota, el escudo y las bases existen.
- *   2. LAS BASES EN PDF dicen lo mismo: la fecha, la sede, el ritmo, las 5
+ *   2. LAS BASES EN PDF dicen lo mismo: la fecha, la sede, el ritmo, las 7
  *      rondas, la inscripción gratuita con el formulario y los once niveles.
  *   3. «HOY EN EL TORNEO», con el reloj fijo y el navegador en Madrid: dos
  *      días antes (la cuenta regresiva), en la llegada, en la ronda 2 y de
@@ -63,14 +63,15 @@ const html = fs.readFileSync(path.join(RAIZ, PAGINA), "utf8");
 const visible = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 ok("la fecha, la hora y la sede del afiche", /Sábado 14 de noviembre de 2026/.test(visible) && /A partir de las 8:30 a\.m\./.test(visible) && /Gimnasio del Centro, Liceo Anastasio Alfaro/.test(visible));
 ok("la inscripción gratuita y los niveles, de primer grado a undécimo año", /¡Inscripción gratuita!/.test(visible) && /de primer grado a undécimo año/i.test(visible));
-ok("el ritmo que dio el dueño: 5 rondas a 10 minutos + 2 segundos", /5 rondas a 10 minutos \+ 2 segundos/.test(visible));
+ok("el ritmo que dio el dueño: 7 rondas a 10 minutos + 2 segundos", /7 rondas a 10 minutos \+ 2 segundos/.test(visible));
 const filas = [...html.matchAll(/<tr data-inicio="([^"]+)" data-minutos="(\d+)"([^>]*)><th scope="row"[^>]*>([^<]+)<\/th>/g)]
   .map((m) => [m[4], m[1], (m[3].match(/data-ronda="(\d+)"/) || [])[1] || ""]);
 const esperado = B.horario(bases).map((x) => ["Ronda " + x.ronda, "2026-11-14T" + String(Math.floor(x.min / 60)).padStart(2, "0") + ":" + String(x.min % 60).padStart(2, "0"), String(x.ronda)]);
-ok("el calendario trae la llegada a las 8:30, las 5 rondas con el horario de las bases y la premiación", filas.length === 7 && JSON.stringify(filas[0]) === JSON.stringify(["Llegada y confirmación", "2026-11-14T08:30", ""]) && JSON.stringify(filas.slice(1, 6)) === JSON.stringify(esperado) && filas[6][0] === "Premiación", JSON.stringify(filas));
+ok("el calendario trae la llegada a las 8:30, las 7 rondas con el horario de las bases y la premiación", filas.length === 9 && JSON.stringify(filas[0]) === JSON.stringify(["Llegada y confirmación", "2026-11-14T08:30", ""]) && esperado.length === 7 && JSON.stringify(filas.slice(1, 8)) === JSON.stringify(esperado) && filas[8][0] === "Premiación", JSON.stringify(filas));
 ok("la ronda 1 es a las 9:00 del sábado 14, y es la única marcada como la primera", filas[1][1] === "2026-11-14T09:00" && /<tr data-inicio="2026-11-14T09:00"[^>]*data-primera-ronda/.test(html) && (html.match(/data-primera-ronda/g) || []).length === 1);
 ok("el árbitro principal que dio el dueño", /Árbitro principal: FA Jean Carlo Quesada Arauz/.test(visible));
-ok("las horas de las rondas 2 a 5 dicen que son aproximadas", (html.match(/\(aprox\.\)<\/td><\/tr>/g) || []).length === 5);
+ok("las horas de las rondas 2 a 7 y de la premiación dicen que son aproximadas", (html.match(/\(aprox\.\)<\/td><\/tr>/g) || []).length === 7);
+ok("la ronda 7 queda a las 12:00 y la premiación a las 12:30", filas[7] && filas[7][0] === "Ronda 7" && filas[7][1] === "2026-11-14T12:00" && filas[8][1] === "2026-11-14T12:30", JSON.stringify(filas.slice(7)));
 ok("el formulario es el del código QR del afiche y se abre encima", new RegExp('<a href="' + FORMULARIO.replace(/[./]/g, "\\$&") + '"[^>]*data-ventana=').test(html));
 ok("«Resultados» va «Pronto» (sin enlace, con tabindex) hasta que el torneo esté en Pareo", /<div id="ficha-resultados" tabindex="0" aria-disabled="true"/.test(html));
 ok("sin chess-results", !/chess-results\.com/.test(html));
@@ -87,7 +88,7 @@ try {
 if (textoPdf) {
   ok("el título y la fecha", /Bases del Torneo Intereducativo Tacho Chess 2/.test(textoPdf) && /14 de noviembre de 2026/.test(textoPdf));
   ok("la sede: el Gimnasio del Centro del Liceo Anastasio Alfaro", /Gimnasio del Centro, Liceo Anastasio Alfaro/.test(textoPdf));
-  ok("el ritmo y las rondas: 10 minutos + 2 segundos, suizo a 5 rondas, ajedrez rápido", /10 minutos para toda la partida, con un incremento de 2 segundos/.test(textoPdf) && /Sistema suizo, a 5 rondas/.test(textoPdf) && /ajedrez rápido/.test(textoPdf));
+  ok("el ritmo y las rondas: 10 minutos + 2 segundos, suizo a 7 rondas, ajedrez rápido", /10 minutos para toda la partida, con un incremento de 2 segundos/.test(textoPdf) && /Sistema suizo, a 7 rondas/.test(textoPdf) && /ajedrez rápido/.test(textoPdf));
   ok("la inscripción gratuita con el formulario del afiche", /La inscripción es gratuita/.test(textoPdf) && textoPdf.includes(FORMULARIO.replace("https://", "")));
   ok("los once niveles, de primer grado a undécimo año", ["Primer grado", "Sexto grado", "Sétimo año", "Undécimo año"].every((n) => textoPdf.includes(n)));
   ok("la ronda 1 a las 9:00 a. m., con la llegada a las 8:30", /1 sábado, 14 de noviembre de 2026 9:00 a\. m\./.test(textoPdf) && /De 8:30 a 9:00 a\. m\., llegada y confirmación/.test(textoPdf));
@@ -221,7 +222,7 @@ async function fichaResultados(nav, publicados) {
       ok("se presenta como «el profe Oscar», en el saludo y en la etiqueta del botón", /¡Hola! Soy el profe Oscar/.test(panel.texto) && /El profe Oscar contesta/.test(b.etiqueta), panel.texto.slice(0, 80) + " · " + b.etiqueta);
       ok("dos días antes: la próxima es la ronda 1, el sábado 14 a las 9:00", /^La próxima es la ronda 1: sábado 14 de noviembre a las 9:00 a\. ?m\./.test(r.t.hora || ""), r.t.hora);
       ok("el contacto, de su ventana: Adriana y su teléfono", /Adriana.*\+506 8912-2033/.test(r.t.contacto || ""), r.t.contacto);
-      ok("el ritmo, la tolerancia y el árbitro, de la página", /5 rondas a 10 minutos \+ 2 segundos/.test(r.t.ritmo || "") && /Tolerancia de 10 minutos/.test(r.t.ritmo) && /FA Jean Carlo Quesada Arauz/.test(r.t.ritmo), r.t.ritmo);
+      ok("el ritmo, la tolerancia y el árbitro, de la página", /7 rondas a 10 minutos \+ 2 segundos/.test(r.t.ritmo || "") && /Tolerancia de 10 minutos/.test(r.t.ritmo) && /FA Jean Carlo Quesada Arauz/.test(r.t.ritmo), r.t.ritmo);
       ok("los niveles: once, seis de primaria y cinco de secundaria", /Son 11 niveles: 6 de primaria y 5 de secundaria\./.test(r.t.niveles || ""), r.t.niveles);
       ok("lo que hay además, sin los emojis de adorno", /^Además del torneo: feria de comerciantes de la comunidad, open house y venta de comida\.$/.test(r.t.ademas || ""), r.t.ademas);
       ok("sin torneo en Pareo, los resultados «se encienden cuando esté publicado»", /cuando el torneo esté publicado/.test(r.t.resultados || ""), r.t.resultados);
