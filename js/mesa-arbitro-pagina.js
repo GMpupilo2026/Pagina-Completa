@@ -25,6 +25,9 @@
     let elegido = {}; // mesa → valor elegido por el árbitro
     let lineas = []; // la bitácora del torneo que se mira
     let tnrBitacora = "";
+    let planillas = []; // las fotos de las planillas del torneo que se mira (arbitro_planillas)
+    let tnrPlanillas = "";
+    const subiendo = new Set(); // las mesas con una foto subiendo
 
     function el(tag, attrs, ...hijos) {
         const n = document.createElement(tag);
@@ -102,6 +105,20 @@
             el("div", { class: "flex flex-wrap gap-1 mt-1" }, botones));
     }
 
+    // La foto de las dos planillas de la mesa: tomarla y, si ya hay, verlas. chess-results no tiene dónde adjuntar nada: la foto queda
+    // en la Mesa del árbitro (privada) y, si se quiere, en el PDF y el Word de la bitácora. El estado va escrito, no solo con color.
+    function filaDeFotos(m) {
+        const fotos = M.planillasDeMesa(planillas, pantalla.ronda, m.mesa);
+        const sube = subiendo.has(m.mesa);
+        return el("div", { class: "flex flex-wrap items-center gap-2 mt-2", "data-fotos": String(fotos.length) },
+            el("button", {
+                type: "button", "data-accion": "planilla", class: BTN_CHICO, disabled: sube || ocupada === m.mesa,
+                "aria-label": (fotos.length ? "Tomar otra foto" : "Tomar la foto") + " de las dos planillas de la mesa " + m.mesa + " (las dos juntas)",
+            }, el("span", { "aria-hidden": "true", texto: "📷 " }), sube ? "Subiendo…" : (fotos.length ? "Otra foto de las planillas" : "Foto de las planillas")),
+            fotos.length ? el("button", { type: "button", "data-accion": "ver-planilla", class: BTN_CHICO, "aria-label": "Ver " + (fotos.length === 1 ? "la foto" : "las " + fotos.length + " fotos") + " de las planillas de la mesa " + m.mesa }, fotos.length === 1 ? "Ver la foto" : "Ver las " + fotos.length + " fotos") : null,
+            fotos.length ? el("span", { class: "text-xs text-emerald-800 dark:text-emerald-300 font-semibold", texto: "Foto guardada" + (fotos.length > 1 ? " (" + fotos.length + ")" : "") }) : null);
+    }
+
     function pintarMesas() {
         const cuerpo = $("m-mesas");
         cuerpo.replaceChildren();
@@ -135,10 +152,153 @@
                 pierde ? el("p", { "data-pierde": "si", class: "text-xs font-semibold text-red-700 dark:text-red-300 mt-1", texto: "Segunda ilegal: decide el resultado" }) : null);
             cuerpo.append(el("tr", { "data-mesa": String(m.mesa), "data-estado": pierde ? "pierde" : (m.valor !== "0" ? "con-resultado" : "libre"), class: "border-t border-brand-100 dark:border-brand-800" },
                 celdaMesa, celdaJugador(m, "blancas"), celdaJugador(m, "negras"), celda(M.textoResultado(m.valor), m.valor === "0" ? "text-brand-500 dark:text-brand-300" : "font-semibold"),
-                el("td", { class: "py-2 align-top" }, el("div", { class: "flex flex-wrap items-center gap-2" }, sel, guardarFila))));
+                el("td", { class: "py-2 align-top" }, el("div", { class: "flex flex-wrap items-center gap-2" }, sel, guardarFila), filaDeFotos(m))));
+        }
+        for (const fila of cuerpo.querySelectorAll("tr[data-mesa]")) {
+            const m = pantalla.mesas.find((x) => String(x.mesa) === fila.getAttribute("data-mesa"));
+            const bf = fila.querySelector('[data-accion="planilla"]'), bv = fila.querySelector('[data-accion="ver-planilla"]');
+            if (bf) bf.addEventListener("click", () => fotografiar(m));
+            if (bv) bv.addEventListener("click", () => verFotos(m));
         }
         $("m-cuenta").textContent = "Se ven " + vistas + " de " + pantalla.mesas.length + " mesas.";
         actualizarBotones();
+    }
+
+    // ------------------------------------------------------------- las fotos de las planillas
+
+    async function cargarPlanillas(tnr) {
+        tnrPlanillas = tnr;
+        const todas = [];
+        for (let desde = 0; ; desde += 1000) {
+            const { data, error } = await sb.from("arbitro_planillas").select("*").eq("tnr", tnr).order("subida", { ascending: true }).range(desde, desde + 999);
+            if (error) { avisar("No se pudieron leer las fotos de las planillas: " + error.message, true); break; }
+            todas.push(...(data || []));
+            if (!data || data.length < 1000) break;
+        }
+        if (tnrPlanillas !== tnr) return; // el árbitro ya abrió otro torneo
+        planillas = todas;
+        $("b-fotos-zona").classList.toggle("hidden", !planillas.length);
+        $("b-fotos-texto").textContent = "Incluir las " + planillas.length + (planillas.length === 1 ? " foto de planilla" : " fotos de planillas") + " en el PDF y el Word (el archivo pesa más)";
+        pintarMesas();
+    }
+
+    // Una foto de data: a un Blob sin pasar por fetch (la política de la página no deja pedir data:).
+    function dataUrlABlob(url) {
+        const m = /^data:([^;,]+);base64,(.*)$/.exec(url || "");
+        if (!m) return null;
+        const bin = atob(m[2]);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: m[1] });
+    }
+
+    // La foto se pasa a JPG y se achica en el aparato: sube rápido aunque la señal del salón sea mala.
+    async function achicar(archivo, ladoMax, calidad) {
+        const bmp = await createImageBitmap(archivo);
+        const esc = Math.min(1, ladoMax / Math.max(bmp.width, bmp.height));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(bmp.width * esc));
+        c.height = Math.max(1, Math.round(bmp.height * esc));
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        if (bmp.close) bmp.close();
+        const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", calidad));
+        if (!blob) throw new Error("No se pudo preparar la foto.");
+        return { blob, ancho: c.width, alto: c.height };
+    }
+
+    // La cámara de siempre del aparato (o una foto ya hecha): un campo de archivo que pide la cámara de atrás.
+    function elegirFoto() {
+        return new Promise((resolver) => {
+            const campo = el("input", { type: "file", accept: "image/*", capture: "environment", class: "sr-only", "aria-hidden": "true", tabindex: "-1" });
+            let listo = false;
+            const fin = (v) => { if (!listo) { listo = true; campo.remove(); resolver(v); } };
+            campo.addEventListener("change", () => fin(campo.files && campo.files[0] ? campo.files[0] : null));
+            campo.addEventListener("cancel", () => fin(null));
+            document.body.append(campo);
+            campo.click();
+        });
+    }
+
+    async function fotografiar(m) {
+        if (!pantalla || subiendo.has(m.mesa)) return;
+        let foto = null;
+        const G = window.GuiaPlanillas;
+        // Primero la cámara CON GUÍA (dos marcos para acomodar las planillas; js/guia-planillas.js); si el aparato no la da, o prefieres la
+        // tuya, la cámara de siempre. Nunca se queda sin poder subir la foto.
+        if (G && G.disponible()) {
+            const r = await G.abrir({ titulo: "Foto de las planillas · Mesa " + m.mesa, rotulos: ["Blancas · " + (m.blancas || ""), "Negras · " + (m.negras || "")] });
+            if (r.imagen) foto = dataUrlABlob(r.imagen);
+            else if (r.cancelado) return;
+            else if (!r.elegida && r.motivo) avisar(r.motivo + " Se usa la cámara del aparato.", true);
+        }
+        if (!foto) foto = await elegirFoto();
+        if (!foto) return;
+        await subirPlanilla(m, foto);
+    }
+
+    async function subirPlanilla(m, original) {
+        subiendo.add(m.mesa);
+        pintarMesas();
+        const tnr = String(pantalla.tnr), ronda = pantalla.ronda, torneo = pantalla.torneo || "";
+        try {
+            const { blob } = await achicar(original, M.LADO_PLANILLA, 0.82);
+            const { data: { session } } = await sb.auth.getSession();
+            const ruta = M.rutaPlanilla(session.user.id, tnr, crypto.randomUUID());
+            const arriba = await sb.storage.from(M.BUCKET_PLANILLAS).upload(ruta, blob, { contentType: "image/jpeg", upsert: false });
+            if (arriba.error) throw new Error("No se pudo subir la foto: " + arriba.error.message);
+            const fila = await sb.from("arbitro_planillas").insert([{ tnr, ronda, mesa: m.mesa, blancas: (m.blancas || "").slice(0, 120), negras: (m.negras || "").slice(0, 120), ruta, bytes: blob.size }]);
+            if (fila.error) throw new Error("La foto subió, pero no quedó registrada: " + fila.error.message);
+            // Queda también una línea en la bitácora, con su hora: el documento dice cuándo se fotografió la planilla.
+            try { await escribirBitacora([{ tnr, torneo, ronda, mesa: m.mesa, tipo: "nota", resultado: null, anterior: null, articulo: "", texto: "Foto de las dos planillas guardada.", enviado: false }]); }
+            catch (e) { avisar("La foto quedó guardada, pero " + e.message, true); }
+            await cargarPlanillas(tnr);
+            await cargarBitacora(tnr);
+            avisar("Foto de las planillas de la mesa " + m.mesa + " guardada.");
+        } catch (e) {
+            avisar(e.message || String(e), true);
+        } finally {
+            subiendo.delete(m.mesa);
+            pintarMesas();
+        }
+    }
+
+    // Ver las fotos de una mesa en una ventana: la dirección firmada dura pocos minutos (la foto es privada).
+    async function verFotos(m) {
+        const fotos = M.planillasDeMesa(planillas, pantalla.ronda, m.mesa);
+        if (!fotos.length) return;
+        const antes = document.activeElement;
+        const cerrar = el("button", { type: "button", "data-accion": "cerrar-fotos", class: "bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, "Cerrar");
+        const cuerpo = el("div", { class: "space-y-4 mt-3" });
+        const dlg = el("dialog", { id: "m-fotos-ventana", "aria-labelledby": "m-fotos-titulo", class: "w-[95vw] max-w-4xl rounded-2xl p-5 bg-white dark:bg-brand-900 text-brand-900 dark:text-white backdrop:bg-black/60" },
+            el("div", { class: "flex items-start justify-between gap-3" },
+                el("h2", { id: "m-fotos-titulo", class: "font-serif text-lg font-bold", texto: "Planillas de la mesa " + m.mesa + " · ronda " + pantalla.ronda }), cerrar),
+            cuerpo);
+        cerrar.addEventListener("click", () => dlg.close());
+        dlg.addEventListener("close", () => { dlg.remove(); if (antes && antes.focus && document.contains(antes)) antes.focus(); });
+        document.body.append(dlg);
+        try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); }
+        cerrar.focus();
+        for (const f of fotos) {
+            const { data, error } = await sb.storage.from(M.BUCKET_PLANILLAS).createSignedUrl(f.ruta, 300);
+            cuerpo.append(el("figure", { "data-foto": f.id },
+                error || !data ? el("p", { class: "text-sm text-red-700 dark:text-red-300 font-semibold", texto: "No se pudo abrir esta foto: " + (error ? error.message : "sin dirección") }) : el("img", { src: data.signedUrl, alt: "Foto de las planillas de la mesa " + m.mesa + ", subida el " + window.HoraCR.fechaHora(f.subida), class: "w-full h-auto rounded-lg border border-brand-200 dark:border-brand-700" }),
+                el("figcaption", { class: "text-xs text-brand-500 dark:text-brand-300 mt-1", texto: M.pieDePlanilla(f, (x) => window.HoraCR.fechaHora(x)) })));
+        }
+    }
+
+    // Las fotos que van al PDF y al Word: se bajan (son privadas) y se achican más, para que el archivo no pese 50 MB.
+    async function fotosDelDocumento() {
+        const lista = [];
+        let faltan = 0;
+        for (const p of planillas) {
+            try {
+                const { data, error } = await sb.storage.from(M.BUCKET_PLANILLAS).download(p.ruta);
+                if (error || !data) throw new Error("sin foto");
+                const r = await achicar(data, 1400, 0.78);
+                lista.push(Object.assign({}, p, { foto: { jpeg: new Uint8Array(await r.blob.arrayBuffer()), ancho: r.ancho, alto: r.alto } }));
+            } catch (e) { faltan++; }
+        }
+        return { lista, faltan };
     }
 
     // ------------------------------------------------------------- ilegales e irregularidades
@@ -465,6 +625,7 @@
         }
         lineas = todas;
         pintarBitacora();
+        if (tnrPlanillas !== tnr) await cargarPlanillas(tnr);
         // Las marcas de cada jugador salen de la bitácora: al leerla, las mesas se vuelven a pintar.
         if (pantalla && pantalla.tnr === tnr) pintarMesas();
     }
@@ -509,14 +670,19 @@
         if (!lineas.length) return;
         const torneo = { tnr: tnrBitacora, torneo: (pantalla && pantalla.tnr === tnrBitacora && pantalla.torneo) || (lineas.find((l) => l.torneo) || {}).torneo || "" };
         try {
-            const doc = M.documento(torneo, lineas, $("b-arbitro").value.trim(), (x) => window.HoraCR.fechaHora(x));
+            let fotos = [], faltan = 0;
+            if (planillas.length && tnrPlanillas === tnrBitacora && $("b-fotos").checked) {
+                $("b-estado").textContent = "Preparando las fotos de las planillas…";
+                ({ lista: fotos, faltan } = await fotosDelDocumento());
+            }
+            const doc = M.documento(torneo, lineas, $("b-arbitro").value.trim(), (x) => window.HoraCR.fechaHora(x), fotos);
             let blob;
             if (cual === "docx") {
                 try { doc.marca = await window.MarcaAgua.preparar(); } catch (e) { /* sin conexión: sin marca */ }
                 blob = window.ReporteDOCX.generar(doc);
             } else blob = await window.ReportePDF.generar(doc);
             bajarBlob(blob, nombreArchivo(cual));
-            $("b-estado").textContent = "Listo, se bajó en " + (cual === "docx" ? "Word" : "PDF") + ".";
+            $("b-estado").textContent = "Listo, se bajó en " + (cual === "docx" ? "Word" : "PDF") + (fotos.length ? " con " + fotos.length + (fotos.length === 1 ? " foto de planilla" : " fotos de planillas") : "") + "." + (faltan ? " No se pudieron bajar " + faltan + (faltan === 1 ? " foto" : " fotos") + "." : "");
         } catch (e) {
             avisar("No se pudo armar el archivo: " + (e.message || e), true);
         }

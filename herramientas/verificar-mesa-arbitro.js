@@ -286,6 +286,39 @@ function chessResultsFalso(ignorar = false) {
   igual("y leer tampoco da por bueno el torneo equivocado", [leida.estado, /No se pudo abrir el torneo 200 dentro del grupo/.test(leida.error)], [502, true]);
 }
 
+console.log("\n=== La foto de las planillas ===");
+{
+  const dir = path.join(RAIZ, "supabase", "migraciones");
+  const sqlFoto = fs.readdirSync(dir).filter((f) => /mesa_arbitro_planillas/.test(f)).map((f) => fs.readFileSync(path.join(dir, f), "utf8")).join("\n").replace(/--[^\n]*/g, "");
+  igual("la migración: el bucket es PRIVADO y solo acepta JPEG, hasta 8 MB",
+    [/'mesa-arbitro-planillas', 'mesa-arbitro-planillas', false, 8388608, array\['image\/jpeg'\]/.test(sqlFoto)], [true]);
+  igual("la migración: el permiso de insert es por columna y no incluye la hora ni el autor",
+    [/grant insert \(tnr, ronda, mesa, blancas, negras, ruta, bytes\)\s+on public\.arbitro_planillas/.test(sqlFoto), /grant insert \([^)]*(subida|creada_por|id)\b/.test(sqlFoto)], [true, false]);
+  igual("la migración: no hay política de update ni de delete (solo se agrega), ni en la tabla ni en el bucket",
+    [(sqlFoto.match(/create policy/g) || []).length, /for (update|delete|all)\b/i.test(sqlFoto), /grant (update|delete)/i.test(sqlFoto)], [4, false, false]);
+  igual("la migración: la foto es de la carpeta de quien la sube y del mismo torneo; la ruta es única",
+    [/split_part\(ruta, '\/', 1\) = creada_por::text and split_part\(ruta, '\/', 2\) = tnr/.test(sqlFoto), /ruta text not null unique/.test(sqlFoto)], [true, true]);
+  igual("la migración: subir pide la licencia y su propia carpeta; ver, lo mismo o administración (y auth.uid va envuelto)",
+    [(sqlFoto.match(/tengo_herramienta\('mesa-arbitro'\)/g) || []).length, (sqlFoto.match(/soy_admin\(\)/g) || []).length, /[^(]auth\.uid\(\)/.test(sqlFoto.replace(/\(select auth\.uid\(\)\)/g, "").replace(/default auth\.uid\(\)/g, ""))], [4, 2, false]);
+  igual("la migración: borrar una cuenta borra sus filas (on delete cascade)", /references public\.profiles \(id\) on delete cascade/.test(sqlFoto), true);
+
+  igual("la ruta de la foto: <autor>/<torneo>/<id>.jpg", M.rutaPlanilla("a1", "1532448", "f9"), "a1/1532448/f9.jpg");
+  const filas = [
+    { id: "a", ronda: 3, mesa: 1, subida: "2026-11-03T16:00:00Z" }, { id: "b", ronda: 3, mesa: 1, subida: "2026-11-03T16:05:00Z" },
+    { id: "c", ronda: 3, mesa: 2, subida: "2026-11-03T16:01:00Z" }, { id: "d", ronda: 4, mesa: 1, subida: "2026-11-04T09:00:00Z" },
+  ];
+  igual("las fotos de una mesa son las de ESA ronda y esa mesa, la más nueva primero", M.planillasDeMesa(filas, 3, 1).map((f) => f.id), ["b", "a"]);
+  const foto = (n) => ({ jpeg: new Uint8Array([255, 216, n, 255, 217]), ancho: 120, alto: 80 });
+  const dos = [Object.assign({ blancas: "Ana", negras: "Beto", foto: foto(1) }, filas[3]), Object.assign({ blancas: "Cleo", negras: "Dani", foto: foto(2) }, filas[2])];
+  const con = M.documento({ tnr: "1532448", torneo: "Prueba" }, [], "Ana", (x) => "HORA " + x, dos);
+  igual("el documento con fotos: las trae todas en el orden de ronda y mesa, cada una con su pie, y las cuenta en el resumen",
+    [con.fotos.length, con.fotos[0] === dos[1].foto, con.bloques.filter((b) => b.tipo === "foto").map((b) => b.pie),
+      con.bloques.find((b) => b.tipo === "lista").items.some((i) => /Fotos de las planillas: 2/.test(i)), con.bloques.every((b) => b.tipo !== "foto" || con.fotos.includes(b.foto))],
+    [2, true, ["Ronda 3 · mesa 2 · Cleo – Dani · foto del HORA 2026-11-03T16:01:00Z", "Ronda 4 · mesa 1 · Ana – Beto · foto del HORA 2026-11-04T09:00:00Z"], true, true]);
+  const sin = M.documento({ tnr: "1532448", torneo: "Prueba" }, [], "Ana", (x) => x);
+  igual("sin fotos el documento sale como siempre: sin imágenes ni la sección", [sin.fotos.length, sin.bloques.some((b) => b.tipo === "foto"), sin.bloques.some((b) => b.texto === "Planillas fotografiadas"), sin.bloques.find((b) => b.tipo === "lista").items.length], [0, false, false, 4]);
+}
+
 console.log("\n=== La clave (SID) nunca se imprime ni se guarda ===");
 const fn = fuente.replace(/\/\/[^\n]*/g, "");
 const fnCompartida = compartido.replace(/\/\/[^\n]*/g, "");
