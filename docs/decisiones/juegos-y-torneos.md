@@ -15172,6 +15172,23 @@ bye, los puntos de las rondas completas, el podio por nivel, la clasificación
 por nivel sin «FED» y que un torneo de una organización sin sello no entre.
 Quitando el filtro del sello, saltan dos.
 
+### El torneo publicado dos veces
+
+El 13/11/2026 la ficha mostraba dos «Tacho Chess 2»: el torneo de noveno a
+undécimo se publicó dos veces, a 4 segundos (19:15:05 y 19:15:09 UTC), con
+los mismos 25 jugadores. Pareo pone al día solo el segundo (el que guarda en
+`t.publicado`); el primero quedó huérfano y nadie puede quitarlo desde Pareo
+(su clave se perdió), solo administración con «Ocultar» en `admin-pareo.html`.
+
+- `js/torneo-pareo-datos.js` (`sinRepetidos`) deja uno solo de los publicados
+  con el **mismo nombre y los mismos jugadores**: el que se actualizó último.
+  Dos torneos distintos con el mismo nombre no se tocan (sus jugadores cambian).
+- **El orden es el de los niveles** (`ordenar`, con `ordenGrupos`): el torneo
+  de primer grado primero, no el que se publicó primero (el de noveno a
+  undécimo salía antes que el de cuarto a sexto).
+- `js/tacho-chess-resultados.js` usa esa misma búsqueda (`TorneoPareoDatos.buscar`),
+  así la ficha de Pareo y los pareos muestran los mismos torneos.
+
 ### Los pareos de la ronda
 
 Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos

@@ -138,11 +138,16 @@ function doble(datos) {
 })();`;
 }
 const ORGS = [{ id: "org-liceo", nombre: "Liceo Anastasio Alfaro", verificado: true }, { id: "org-falsa", nombre: "Tacho Chess", verificado: false }];
-const T1 = { id: "11111111-1111-4111-8111-111111111111", nombre: "Tacho Chess 2 · Primaria", creado: "2026-11-13T15:00:00Z", organizador_id: "org-liceo" };
-const T2 = { id: "22222222-2222-4222-8222-222222222222", nombre: "Tacho Chess 2 · Secundaria", creado: "2026-11-13T15:05:00Z", organizador_id: "org-liceo" };
-const VIEJO = { id: "33333333-3333-4333-8333-333333333333", nombre: "Tacho Chess 1", creado: "2025-11-10T15:00:00Z", organizador_id: "org-liceo" };
-const FALSO = { id: "44444444-4444-4444-8444-444444444444", nombre: "Tacho Chess 2 (falso)", creado: "2026-11-13T16:00:00Z", organizador_id: "org-falsa" };
-const OTRO = { id: "55555555-5555-4555-8555-555555555555", nombre: "Abierto de Noviembre", creado: "2026-11-13T16:00:00Z", organizador_id: "org-liceo" };
+// Cada torneo publicado trae sus jugadores (con su nivel en «categoria»), como los publica Pareo.
+const conJugadores = (nombres, cat) => ({ jugadores: nombres.map((n, i) => ({ id: "j" + i + n, nombre: n, categoria: cat, elo: 0, titulo: "", fed: "" })), rondas: [] });
+// T2 se publicó antes que T1 pero es de un nivel más alto: la ficha los pone en el orden de los niveles.
+const T1 = { id: "11111111-1111-4111-8111-111111111111", nombre: "Tacho Chess 2 · Primaria", creado: "2026-11-13T15:05:00Z", organizador_id: "org-liceo", datos: conJugadores(["Ana Uno", "Beto Dos"], "Primer grado") };
+const T2 = { id: "22222222-2222-4222-8222-222222222222", nombre: "Tacho Chess 2 · Secundaria", creado: "2026-11-13T15:00:00Z", organizador_id: "org-liceo", datos: conJugadores(["Caro Tres", "Dani Cuatro"], "Sétimo año") };
+// T2 publicado dos veces («Publicar» tocado dos veces): el huérfano, con otro id y sin actualizar.
+const T2_REPETIDO = Object.assign({}, T2, { id: "66666666-6666-4666-8666-666666666666", creado: "2026-11-13T14:59:56Z", actualizado: "2026-11-13T14:59:56Z" });
+const VIEJO = { id: "33333333-3333-4333-8333-333333333333", nombre: "Tacho Chess 1", creado: "2025-11-10T15:00:00Z", organizador_id: "org-liceo", datos: conJugadores(["Ana Uno"], "Primer grado") };
+const FALSO = { id: "44444444-4444-4444-8444-444444444444", nombre: "Tacho Chess 2 (falso)", creado: "2026-11-13T16:00:00Z", organizador_id: "org-falsa", datos: conJugadores(["Eva Cinco"], "Primer grado") };
+const OTRO = { id: "55555555-5555-4555-8555-555555555555", nombre: "Abierto de Noviembre", creado: "2026-11-13T16:00:00Z", organizador_id: "org-liceo", datos: conJugadores(["Fer Seis"], "Primer grado") };
 
 async function fichaResultados(nav, publicados) {
   const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
@@ -198,8 +203,8 @@ async function fichaResultados(nav, publicados) {
       await r.ctx.close();
     }
     {
-      const r = await fichaResultados(nav, [T2, T1, FALSO]);
-      ok("con dos torneos (los niveles separados): la ficha abre la ventana con uno por torneo, en orden", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html?en-ventana=1#t=" + T1.id, "torneos-pareo.html?en-ventana=1#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
+      const r = await fichaResultados(nav, [T2_REPETIDO, T2, T1, FALSO]);
+      ok("con dos torneos (uno publicado dos veces): la ficha abre la ventana con uno por torneo, sin el repetido y en el orden de los niveles", r.f.href === "#resultados" && JSON.stringify(r.f.lista.map((x) => x[0])) === JSON.stringify(["torneos-pareo.html?en-ventana=1#t=" + T1.id, "torneos-pareo.html?en-ventana=1#t=" + T2.id]) && r.f.lista.every((x) => x[1]), JSON.stringify(r.f));
       await r.ctx.close();
     }
 

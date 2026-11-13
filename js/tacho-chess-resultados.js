@@ -27,6 +27,9 @@
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
   async function buscar() {
+    // Con js/torneo-pareo-datos.js en la página, su búsqueda: sin el torneo
+    // publicado dos veces y en el orden de los niveles.
+    if (window.TorneoPareoDatos && window.TorneoPareoDatos.buscar) return window.TorneoPareoDatos.buscar();
     const sb = window.sb;
     if (!sb) throw new Error("sin cliente");
     const { data: orgs, error: e1 } = await sb.from("pareo_organizadores").select("id").eq("verificado", true);

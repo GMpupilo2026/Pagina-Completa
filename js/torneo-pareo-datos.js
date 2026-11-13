@@ -53,11 +53,33 @@
     if (e1) throw e1;
     const ids = (orgs || []).map((o) => o.id);
     if (!ids.length || !CONFIG.nombre) return [];
-    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, datos")
+    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, actualizado, datos")
       .in("organizador_id", ids).ilike("nombre", "%" + CONFIG.nombre + "%").gte("creado", CONFIG.desde || "2000-01-01")
       .order("creado", { ascending: true }).range(0, 19);
     if (error) throw error;
-    return (data || []).filter((p) => NOMBRE.test(sinTildes(p.nombre)) && p.datos && Array.isArray(p.datos.jugadores));
+    return ordenar(sinRepetidos((data || []).filter((p) => NOMBRE.test(sinTildes(p.nombre)) && p.datos && Array.isArray(p.datos.jugadores))));
+  }
+
+  // El mismo torneo publicado dos veces (pasó el 13/11/2026: «Publicar»
+  // tocado dos veces, a 4 segundos, y la ficha mostraba dos «Tacho Chess 2»):
+  // mismo nombre y mismos jugadores. Queda el que se actualizó último, que es
+  // el que Pareo sigue poniendo al día; el otro quedó huérfano.
+  function sinRepetidos(lista) {
+    const clave = (p) => sinTildes(p.nombre).trim() + "|" + p.datos.jugadores.map((j) => sinTildes(j.nombre)).sort().join(",");
+    const mejor = new Map();
+    lista.forEach((p) => {
+      const k = clave(p), antes = mejor.get(k);
+      if (!antes || String(p.actualizado || p.creado) > String(antes.actualizado || antes.creado)) mejor.set(k, p);
+    });
+    return lista.filter((p) => mejor.get(clave(p)) === p);
+  }
+
+  // En el orden de los niveles (`TorneoPagina.ordenGrupos`): el torneo de
+  // primer grado primero, no el que se publicó primero.
+  function ordenar(lista) {
+    const orden = (window.TorneoPagina && window.TorneoPagina.ordenGrupos) || [];
+    const primero = (p) => Math.min(999, ...p.datos.jugadores.map((j) => { const i = orden.indexOf(j.categoria); return i < 0 ? 999 : i; }));
+    return lista.slice().sort((a, b) => primero(a) - primero(b));
   }
 
   // Un torneo de Pareo, como lo devuelve sala-jugadores para uno de chess-results.
@@ -121,7 +143,9 @@
     return { torneos, modalidades: ["clasico"], modalidad: "clasico" };
   }
 
-  window.TorneoPareoDatos = { leer, convertir, _buscar: buscar };
+  // `buscar` también la usa js/tacho-chess-resultados.js (la ficha de Pareo):
+  // los mismos torneos, sin repetidos y en el mismo orden.
+  window.TorneoPareoDatos = { leer, convertir, buscar };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
