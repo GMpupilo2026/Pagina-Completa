@@ -74,7 +74,7 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-arbitros" data-panel="arbitros" aria-controls="panel-arbitros" aria-selected="false" tabindex="-1">Árbitros y mesas</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-tiempos" data-panel="tiempos" aria-controls="panel-tiempos" aria-selected="false" tabindex="-1">Control de tiempos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-planillas" data-panel="planillas" aria-controls="panel-planillas" aria-selected="false" tabindex="-1">Planillas y Drive</button>
-                <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Torneos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-fairplay" data-panel="fairplay" aria-controls="panel-fairplay" aria-selected="false" tabindex="-1"><span aria-hidden="true">🛡</span> Fair Play</button>
@@ -174,7 +174,8 @@
                             <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div class="lg:col-span-2"><label for="a-vence" class="block text-sm font-bold">El enlace vence</label>
-                                <select id="a-vence" class="cam-select"><option value="torneo">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select></div>
+                                <select id="a-vence" class="cam-select" aria-describedby="a-vence-fecha-ayuda"><option value="fecha">Hasta el día que elijas</option><option value="torneo" data-solo-marca="centroamericano">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select>
+                                <label for="a-vence-fecha" class="block text-sm font-bold mt-2">Día en que vence (a las 11:59 p. m.)</label><input id="a-vence-fecha" type="date" class="cam-campo"><p id="a-vence-fecha-ayuda" class="text-sm mt-1">Con «Hasta el día que elijas», el enlace sirve hasta ese día. Ponle el último día del torneo.</p></div>
                         </div>
                         <p id="a-aviso" class="cam-aviso-suave mt-3" hidden></p>
                         <div class="cam-acciones"><button type="submit" id="a-crear" class="cam-btn">Crear el enlace y el QR</button></div>
@@ -289,7 +290,9 @@
 
             <!-- 5. La clave -->
             <section id="panel-claves" role="tabpanel" aria-labelledby="pest-claves" class="cam-no-qr" hidden>
-                <h2 id="t-claves" class="cam-subtitulo">Una sola clave para todo el torneo</h2>
+                <!-- Los torneos de Pareo Integral de este navegador: «Vincular» los lleva al evento (js/mesa-pareo-vincular.js). Ver «La Mesa del árbitro con torneos de Pareo Integral». -->
+                <div id="pareo-vincular" class="cam-clave-grupo" role="region" aria-labelledby="t-pareo-vincular"></div>
+                <h2 id="t-claves" class="cam-subtitulo mt-6">Torneos de chess-results: una sola clave para todo el torneo</h2>
                 <div class="cam-clave-grupo mt-3" id="clave-grupo">
                     <p>Los torneos del Centroamericano están <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
                     <div class="grid sm:grid-cols-2 gap-3 mt-3">
@@ -568,6 +571,8 @@
     <script src="js/centroamericano-plano-editor.js"></script>
     <script src="js/centroamericano-reparto.js"></script>
     <script src="js/centroamericano-reparto-pagina.js"></script>
+    <script src="js/ritmo-control.js"></script>
+    <script src="js/mesa-pareo-vincular.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
     <script src="js/centroamericano-vivo-conectar.js"></script>
 </body>

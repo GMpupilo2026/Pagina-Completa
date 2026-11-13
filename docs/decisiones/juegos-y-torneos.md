@@ -17196,3 +17196,70 @@ el dueño la corrió en el editor SQL y se anotó a mano en `schema_migrations`.
      casa.
   4. Partir por evento lo que hoy es de la casa. Luego, la mascota o el logo de
      cada evento.
+
+## La Mesa del árbitro con torneos de Pareo Integral
+
+Pedido del dueño el 12/11/2026, para la Eliminatoria Cantonal JDN de Pérez Zeledón (22/11): quien entra a la Mesa
+del árbitro es el **árbitro principal**, y desde ahí configura a sus asistentes, como en el Centroamericano. Pero
+conectado directo a **Pareo Integral**, no solo a chess-results: «que desde la mesa del árbitro se pueda elegir sobre
+qué se va a trabajar, si Pareo Integral o chess-results, y de ahí la configuración quede lista». Decidió además que
+lo que anotan los adjuntos lo **acepte el Pareo del principal** (como hoy con los adjuntos de Pareo) y que los
+árbitros se puedan configurar **antes de la ronda 1**, para coordinar el evento con tiempo.
+
+- **`mesa-arbitro.html` es la entrada del principal** (`js/mesa-arbitro-entrada.js`): «¿Sobre qué vas a trabajar?»
+  con dos tarjetas, *Pareo Integral* (`centroamericano-mesas.html#torneos`) y *chess-results* (`#claves`). La mesa
+  de antes, la de un árbitro que anota él mismo o entra con el código que le dio otro principal, quedó como
+  «Dirijo solo» (`#solo`); `#adjunto=…` y `#codigo=…` entran directo ahí, para no romper lo ya repartido.
+- **Cada torneo de la Mesa tiene su fuente** (`centroamericano_torneos.fuente`: `chess-results` o `pareo`, más
+  `pareo_id`). La organización y la tablet son las del Centroamericano; con Pareo solo cambia de dónde salen las
+  mesas (lo publicado, `pareo_publicados.datos`) y adónde va lo anotado (`pareo_cola`). Todo lo demás de la tablet
+  no depende de chess-results y sirve igual: presencia, llegó tarde, ilegales, concentración, avisos, tres toques,
+  frases, modo liviano, la cola sin señal.
+- **El `tnr` de un torneo de Pareo es inventado**: `'p'` + el uuid publicado sin guiones. El check de la tabla exige
+  que la forma coincida con la fuente, y `leerConCache`, `fedsDe` y `pareosPublicos` rechazan todo `tnr` que no sea
+  numérico: nada le pregunta a chess-results por un torneo de Pareo.
+- **Vincular prueba que el torneo es de quien lo vincula** (`centroamericano_pareo_vincular`, `security definer`):
+  la página lee la clave del torneo del localStorage de Pareo **en esta computadora** (`js/mesa-pareo-vincular.js`,
+  con las mismas claves `pareo_lista_v1` / `pareo_torneo_v1_<id>` de `js/pareo/pagina.js`, y **nunca escribe ahí**:
+  si Pareo está abierto, su próximo guardado lo pisaría) y la base la compara con `clave_hash`. La clave no se
+  guarda. Sin publicar no hay clave: Pareo publica solo al emparejar la ronda 1, así que para configurar antes el
+  principal toca «Publicar» en Archivos (la página se lo dice). Por equipos, todavía no.
+- **Las mesas son las físicas.** Con `mesaInicial` (una sala con varias categorías) la mesa i de la ronda es
+  `mesaInicial + i`, como `mesaFisica` de `js/pareo/evento.js`. Los rangos de los enlaces, la tablet y el registro
+  hablan de la física; solo al escribir en la cola se pasa al índice de Pareo (`indiceDe` en
+  `_compartido/fuente-pareo.ts`), que es lo que entiende `recibirDeAdjunto`. «Leer las mesas» del reparto empieza
+  en la primera mesa del torneo.
+- **La cola tiene dos vías** (`pareo_cola_una_via`): el código de un adjunto de Pareo, como hasta hoy, o el enlace de
+  la Mesa (`asignacion_id`, con el nombre y el rango en índices que comprobó `centroamericano-mesa`). El Pareo del
+  principal acepta la segunda como un adjunto «virtual» (`a:<id>`) sin tenerlo en su lista. **Ese virtual SOLO sale
+  de una fila de la cola**, leída con la clave del torneo: los manejadores del canal en vivo nunca lo pasan. Un
+  torneo publicado lee la cola aunque no tenga adjuntos propios (cada 15 s si está en un evento de la Mesa, si no
+  cada minuto; lo dice `mesa` en la acción `cola` de `pareo-publicar`).
+- **«Mandado» y después «enviado».** Con Pareo nada queda puesto en el momento: la tablet dice «Mandado: lo acepta el
+  árbitro principal» y, por mesa, «⏳ Mandado (1-0): espera al árbitro principal» mientras siga en la cola. La línea
+  del registro nace con `enviado = false` y `leer` la pasa a `true` cuando el resultado ya aparece publicado. **Es la
+  única excepción a «el registro solo se agrega»**: solo esa columna, de false a true. Borrar un resultado («D») no
+  se ofrece: lo borra el principal en su Pareo. Una ilegal o irregularidad llega también a las incidencias de la
+  ronda en Pareo (`nota`); una anulación llega como nota para que el principal quite la incidencia (Pareo no la borra
+  solo, todavía).
+- **La cara neutra**: las mismas páginas con `html[data-marca="ajedrez-integral"]` (colores de la marca, sin hojas,
+  mascota ni píldora; `css/centroamericano.css`). La pone la organización cuando ningún torneo a la vista es de un
+  evento con `centroamericano_eventos.marca = 'centroamericano'`, y la tablet con la `marca` que le da `leer`. En
+  esa cara no salen Fair Play, la transmisión ni los horarios del Centroamericano, y el vencimiento por omisión es
+  «Hasta el día…» (el viejo «al terminar el torneo» era el 9/11: un enlace nuevo nacía vencido).
+- «Todas las mesas» y «¿Dónde juega?» muestran ahora solo las categorías del **evento del enlace** (lo pendiente de
+  «Cada evento de la Mesa del árbitro tiene dueño»).
+- **Orden de despliegue**: la migración `…_mesa_arbitro_fuente_pareo.sql` se aplica en producción **antes** de
+  mergear; si la función llega primero, pide columnas que no existen y se caen las tablets y la cola de los adjuntos
+  de hoy. Se probó en una transacción que se deshizo (12/11): la clave buena vincula y la mala no, vincular dos veces
+  no duplica, una fila de la cola sin vía se rechaza, dejar de publicar deja `pareo_id` en null, y la auditoría lo
+  anota.
+- **Lo que falta** (fase 2): los árbitros de la Mesa en el Centro del evento de Pareo; un toque del servidor (hoy
+  entra en 15 s o menos); leer la cola de todas las categorías del evento sin abrir cada torneo; la anulación
+  completa en Pareo; publicar al emparejar si está vinculado; filtrar por fuente en Fair Play, LiveChess y
+  Transmisión; equipos; las cámaras de Notara en la tablet.
+
+Lo prueba `verificar-mesa-pareo-fuente.js` (sin navegador: `fuente-pareo.ts` con node, la mesa física y el índice,
+el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que con Pareo no se llame a
+`guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
+propósito el paso de mesa física a índice o el virtual por el canal, salta.

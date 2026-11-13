@@ -95,12 +95,14 @@
 // verify_jwt en false.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { guardarYComprobar, MAX_CAMBIOS } from "./chess-results-ingreso.ts";
+import { guardarYComprobar, MAX_CAMBIOS, mismoNombre } from "./chess-results-ingreso.ts";
 import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, deBase64, llamarPuente } from "./drive-puente.ts";
 import { aLectura, leerConCache, ponerLectura } from "./lecturas-cache.ts";
 import { pareosPublicos } from "./pareos-publicos.ts";
 import { conRival, fedDe, fedsDe, sinRival } from "./inscritos-fed.ts";
+import { A_PAREO, ARTICULO_PAREO, DE_PAREO, filaCola, leerPareo, type LecturaPareo } from "./fuente-pareo.ts";
+import { limpiarEnvio } from "./pareo-adjuntos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -191,7 +193,7 @@ Deno.serve(async (req) => {
   // La asignación: de quién es el token, qué torneo y qué mesas.
   const { data: a } = await servicio
     .from("centroamericano_asignaciones")
-    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, concluyo_en, concentracion, todas_las_mesas, centroamericano_torneos(nombre, categoria, rama, prueba)")
+    .select("id, tnr, arbitro, nombrado, persona, mesa_desde, mesa_hasta, vence, revocada, ultimo_uso, concluyo_en, concentracion, todas_las_mesas, centroamericano_torneos(nombre, categoria, rama, prueba, evento, fuente, pareo_id, centroamericano_eventos(marca))")
     .eq("token", token)
     .maybeSingle();
   if (!a) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
@@ -206,7 +208,17 @@ Deno.serve(async (req) => {
   }
 
   const enRango = (mesa: number) => Number.isInteger(mesa) && mesa >= a.mesa_desde && mesa <= a.mesa_hasta;
-  const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string; prueba: boolean } | null;
+  const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as
+    { nombre: string; categoria: string; rama: string; prueba: boolean; evento?: string; fuente?: string; pareo_id?: string | null; centroamericano_eventos?: { marca?: string } | { marca?: string }[] | null } | null;
+  // La FUENTE del torneo (ver fuente-pareo.ts): con Pareo Integral las mesas salen del torneo publicado, no se pide la clave de
+  // chess-results y lo anotado va a pareo_cola (lo acepta el Pareo del árbitro principal). Todo lo demás es igual.
+  const esPareo = torneoInfo?.fuente === "pareo";
+  const DONDE = esPareo ? "en Pareo Integral" : "en chess-results";
+  // «Todas las mesas» y «¿Dónde juega?» muestran solo las categorías del evento de este enlace (antes, todas las de la tabla).
+  // deno-lint-ignore no-explicit-any
+  const delMismoEvento = (q: any) => (torneoInfo?.evento ? q.eq("evento", torneoInfo.evento) : q);
+  const eventoInfo = torneoInfo?.centroamericano_eventos;
+  const marca = (Array.isArray(eventoInfo) ? eventoInfo[0]?.marca : eventoInfo?.marca) || "centroamericano";
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
   const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista", "concluir", "bitacora", "bitacora_correo", "emparejamientos", "todas_mesas", "mis_pareos", "salida"];
@@ -214,7 +226,7 @@ Deno.serve(async (req) => {
   // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
   // con 15 tablets pidiendo `leer` cada pocos segundos).
   const [{ data: acc }, { data: hermanasData }] = await Promise.all([
-    DE_AVISOS.includes(String(cuerpo.action)) ? Promise.resolve({ data: null }) : servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr }),
+    DE_AVISOS.includes(String(cuerpo.action)) || esPareo ? Promise.resolve({ data: null }) : servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr }),
     // Los otros enlaces del MISMO árbitro (otros torneos u otros tramos), si la organización los juntó.
     a.persona
       ? servicio.from("centroamericano_asignaciones").select("id, token, tnr, arbitro, mesa_desde, mesa_hasta")
@@ -222,7 +234,7 @@ Deno.serve(async (req) => {
       : Promise.resolve({ data: null }),
   ]);
   const acceso = (Array.isArray(acc) ? acc[0] : acc) as { acceso: string; sid: string } | null;
-  if (!acceso && !DE_AVISOS.includes(String(cuerpo.action))) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
+  if (!acceso && !esPareo && !DE_AVISOS.includes(String(cuerpo.action))) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
   const hermanasFilas = (hermanasData ?? []) as Hermana[];
   const idsDe = [a.id, ...hermanasFilas.map((x) => x.id)];
 
@@ -258,11 +270,84 @@ Deno.serve(async (req) => {
     return (data ?? []) as Fila[];
   };
 
+  // ---------- Pareo Integral (ver fuente-pareo.ts) ----------
+  // Lo que se anota NO se guarda en el torneo: va a pareo_cola por la vía de la Mesa (asignacion_id, con el nombre y el rango en
+  // índices de Pareo) y lo acepta el Pareo del árbitro principal con sus reglas. Por eso un resultado queda «enviado» después,
+  // cuando aparece en el torneo publicado (`mandadosPareo`), y no en el momento.
+  const aCola = async (p: LecturaPareo, datosTorneo: Parameters<typeof filaCola>[2], evento: "resultado" | "nota", datos: Record<string, unknown> | null) => {
+    if (!datos || !torneoInfo?.pareo_id) return false;
+    const { error } = await servicio.from("pareo_cola").insert(filaCola(a, torneoInfo.pareo_id, datosTorneo, evento, p.ronda, datos));
+    if (error) console.error("centroamericano-mesa: pareo_cola", a.tnr, error.code);
+    return !error;
+  };
+  const leerPareoFresco = () => leerPareo(servicio, torneoInfo?.pareo_id, a.tnr, torneoInfo?.nombre ?? "");
+  const ladoPareo = (color: string | null) => (color === "blancas" ? "b" : color === "negras" ? "n" : undefined);
+
+  // Lo que este árbitro mandó y sigue en la cola (el principal todavía no lo tomó), en mesas físicas; y el registro al día.
+  async function mandadosPareo(p: LecturaPareo, filas: Fila[]) {
+    const fisica: Record<number, number> = {};
+    for (const [f, i] of Object.entries(p.indices)) fisica[i] = Number(f);
+    const { data } = await servicio.from("pareo_cola").select("datos, creado").eq("asignacion_id", a.id).eq("evento", "resultado").eq("ronda", p.ronda).order("id").range(0, 199);
+    const mandados = ((data ?? []) as { datos: { mesa?: number; r?: string }; creado: string }[])
+      .map((x) => ({ mesa: fisica[Number(x.datos.mesa)] ?? 0, valor: DE_PAREO[String(x.datos.r)] ?? "0", creado: x.creado }))
+      .filter((x) => x.mesa && x.valor !== "0");
+    // «Enviado»: el resultado que se mandó ya está en el torneo publicado. Es la única vez que esta función cambia una línea
+    // del registro (solo `enviado`, de false a true): con Pareo la confirmación llega después (ver la cabecera de fuente-pareo.ts).
+    const porConfirmar = filas.filter((f) => !f.enviado && (f.tipo === "resultado" || f.tipo === "correccion"));
+    for (const f of porConfirmar) {
+      const m = p.mesas.find((x) => x.mesa === f.mesa);
+      if (!m || m.valor === "0" || NOMBRE_RESULTADO[m.valor] !== f.resultado) continue;
+      await servicio.from("centroamericano_registro").update({ enviado: true }).eq("id", f.id).eq("asignacion_id", a.id).eq("enviado", false);
+      f.enviado = true;
+    }
+    return mandados;
+  }
+
+  // «Guardar» con Pareo: comprueba la ronda y los jugadores de cada mesa contra lo publicado y lo deja en la cola.
+  async function guardarPareo(ronda: number, cambios: { mesa: number; blancas: string; negras: string; valor: string }[]) {
+    const l = await leerPareoFresco();
+    if (!l.ok) return json({ error: l.error }, l.estado);
+    const p = l.lectura;
+    if (p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + ronda + ". Actualiza la página." }, 409);
+    if (cambios.some((c) => c.valor === "D")) return json({ error: "Para borrar un resultado, pídeselo al árbitro principal: en Pareo Integral lo borra él. No se mandó nada." }, 400);
+    const resultados: { mesa: number; pedido: string; quedo: string | null; ok: boolean; pendiente?: boolean; error?: string }[] = [];
+    const registro: Record<string, unknown>[] = [];
+    for (const c of cambios) {
+      const m = p.mesas.find((x) => x.mesa === c.mesa);
+      const r = A_PAREO[c.valor];
+      if (!m || !r) { resultados.push({ mesa: c.mesa, pedido: c.valor, quedo: m ? m.valor : null, ok: false, error: !m ? "Esa mesa no está en la ronda." : "Resultado no válido." }); continue; }
+      if (!mismoNombre(m.blancas, c.blancas) || !mismoNombre(m.negras, c.negras)) {
+        resultados.push({ mesa: c.mesa, pedido: c.valor, quedo: m.valor, ok: false, error: "En esa mesa ahora juegan otros: actualiza la página." });
+        continue;
+      }
+      if (m.valor === c.valor) { resultados.push({ mesa: c.mesa, pedido: c.valor, quedo: m.valor, ok: true }); continue; }
+      const indice = p.indices[c.mesa];
+      // Si ya había uno de este árbitro esperando para esa mesa, el nuevo lo reemplaza (el principal ve uno solo).
+      await servicio.from("pareo_cola").delete().eq("asignacion_id", a.id).eq("evento", "resultado").eq("ronda", ronda).eq("datos->>mesa", String(indice));
+      const ok = await aCola(p, l.datos, "resultado", limpiarEnvio("resultado", { mesa: indice, r, corrige: m.valor !== "0" }));
+      resultados.push({ mesa: c.mesa, pedido: c.valor, quedo: m.valor, ok, pendiente: ok });
+      if (ok) {
+        registro.push({
+          asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda, mesa: c.mesa, jugador: (m.blancas + " – " + m.negras).slice(0, 120),
+          tipo: m.valor !== "0" ? "correccion" : "resultado", resultado: NOMBRE_RESULTADO[c.valor], anterior: m.valor !== "0" ? NOMBRE_RESULTADO[m.valor] : null, enviado: false,
+        });
+      }
+    }
+    let registroError = false;
+    if (registro.length) {
+      const { error } = await servicio.from("centroamericano_registro").insert(registro);
+      if (error) { registroError = true; console.error("centroamericano-mesa: registro (pareo)", a.tnr, error.code); }
+    }
+    return json({ ok: resultados.every((r) => r.ok), ronda, resultados, diferencias: [], leido_en: new Date().toISOString(), pendiente: true, registro_error: registroError });
+  }
+
   // La lectura de chess-results es COMPARTIDA entre los árbitros (ver lecturas-cache.ts): la copia
   // reciente se reutiliza, y si chess-results no contesta se sirve la última que hubo.
   const MAX_LEER_MS = 40_000;   // «ver mis mesas»: hasta 40 s de antigüedad
   const MAX_COMUN_MS = 120_000; // presencia, tiempo, anotar, planilla: solo comprueban ronda, mesa y jugadores
-  const leerCompartida = (maxEdadMs: number, fresca = false) => leerConCache(servicio, acceso!, a.tnr, { maxEdadMs, fresca });
+  // Con Pareo Integral se lee el torneo publicado (leer la base es barato: no hay copia que esperar).
+  const leerCompartida = (maxEdadMs: number, fresca = false): Promise<Awaited<ReturnType<typeof leerConCache>>> =>
+    esPareo ? leerPareo(servicio, torneoInfo?.pareo_id, a.tnr, torneoInfo?.nombre ?? "") : leerConCache(servicio, acceso!, a.tnr, { maxEdadMs, fresca });
   // «Ver mis mesas» de VARIAS tablets de la misma categoría a la vez (el arranque de una ronda, o muchas abiertas): se comparte la misma lectura
   // durante unos segundos en esta instancia de la función, también mientras todavía se está leyendo (si no, cada pedido consultaba la copia por su
   // cuenta y todos esperaban en fila). La copia compartida ya tiene hasta 40 s de antigüedad, así que 5 s más no cambian nada. Solo «leer»; una
@@ -298,12 +383,17 @@ Deno.serve(async (req) => {
           return hermanasFilas.map((x) => ({ token: x.token, tnr: x.tnr, torneo: (nombres ?? []).find((n: { tnr: string }) => n.tnr === x.tnr)?.nombre ?? x.tnr, arbitro: x.arbitro, mesa_desde: x.mesa_desde, mesa_hasta: x.mesa_hasta }));
         })(),
         // El avance de la ronda (lo ve la organización) no espera a nadie ni retrasa la respuesta.
-        guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
+        // (Con Pareo, antes de emparejar la ronda 1 la ronda es 0: no hay avance que guardar.)
+        p.ronda > 0 ? guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })) : Promise.resolve({ termino: false }),
         // La hora real en que el árbitro de esta categoría marcó que empezó la ronda (la tolerancia corre desde ahí); sin marca, null.
         servicio.from("centroamericano_inicios_torneo").select("ronda, inicio, arbitro").eq("tnr", a.tnr).eq("ronda", p.ronda).maybeSingle(),
         // La federación de cada jugador, para su banderita (de la lista de inscritos, guardada en memoria; sin ella no hay banderas y nada más cambia).
-        fedsDe(a.tnr, 3000).catch(() => new Map<string, string>()),
+        // (Con Pareo, la federación viene en el torneo publicado.)
+        esPareo ? Promise.resolve((p as LecturaPareo).feds ?? new Map<string, string>()) : fedsDe(a.tnr, 3000).catch(() => new Map<string, string>()),
       ]);
+      // Con Pareo, lo que este árbitro mandó y el principal todavía no tiene (sigue en la cola), y el registro al día:
+      // un resultado mandado queda «enviado» cuando ya aparece en el torneo publicado.
+      const mandados = esPareo && p.ronda > 0 ? await mandadosPareo(p as LecturaPareo, filas) : [];
       return json({
         ...avisos,
         hermanas,
@@ -327,6 +417,9 @@ Deno.serve(async (req) => {
         leido_en: new Date().toISOString(),
         // De cuándo son las mesas: si chess-results no contestó, son las últimas que se leyeron (`viejo`).
         datos: { desde: lectura.desde, viejo: lectura.viejo, motivo: lectura.motivo ?? null },
+        // De dónde salen las mesas y la cara de la tablet (ver fuente-pareo.ts).
+        fuente: esPareo ? "pareo" : "chess-results", marca,
+        mandados,
       });
     }
 
@@ -345,6 +438,9 @@ Deno.serve(async (req) => {
       const { data: aprobados } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", ronda);
       const faltan = PASOS.filter((x) => !(aprobados ?? []).some((f: { paso: string }) => f.paso === x));
       if (faltan.length) return json({ error: "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda " + ronda + " (relojes y tableros). No se guardó nada." }, 409);
+
+      // Con Pareo Integral no se escribe en ningún torneo: va a la cola y lo acepta el principal (nunca guardarYComprobar).
+      if (esPareo) return await guardarPareo(ronda, cambios);
 
       const res = await guardarYComprobar(acceso!.acceso, acceso!.sid, a.tnr, ronda, cambios);
       if (res.estado !== 200 || !("cuerpo" in res)) return json({ error: (res as { error: string }).error }, res.estado);
@@ -391,7 +487,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = color === "blancas" ? m.blancas : color === "negras" ? m.negras : "";
@@ -402,6 +498,7 @@ Deno.serve(async (req) => {
       // `id` lo pone la tablet: si reenvía la misma anotación (no supo si llegó), la base la reconoce y
       // NO la cuenta dos veces (una ilegal de más cambiaría el resultado de la partida).
       const idCliente = typeof cuerpo.id === "string" && /^[0-9a-f-]{36}$/.test(cuerpo.id) ? cuerpo.id : null;
+      let reintento = false;
       let { data: nueva, error } = await servicio.from("centroamericano_registro").insert({
         ...(idCliente ? { id: idCliente } : {}),
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), tipo,
@@ -409,9 +506,19 @@ Deno.serve(async (req) => {
       }).select("id").single();
       if (error && error.code === "23505" && idCliente) {
         const { data: ya } = await servicio.from("centroamericano_registro").select("id").eq("id", idCliente).eq("asignacion_id", a.id).maybeSingle();
-        if (ya) { nueva = ya; error = null; }
+        if (ya) { nueva = ya; error = null; reintento = true; }
       }
       if (error || !nueva) { console.error("centroamericano-mesa: anotar", a.tnr, error?.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+      // Con Pareo, también le llega al principal (a sus incidencias de la ronda), una sola vez aunque la tablet la reenvíe.
+      if (esPareo && !reintento && "datos" in lectura) {
+        const lp = p as LecturaPareo;
+        const textoPareo = tipo === "ilegal" ? "Jugada ilegal: " + (texto || "sin detalle") : tipo === "irregularidad" ? "Irregularidad: " + (texto || articulo || "sin detalle") : textoFinal;
+        await aCola(lp, lectura.datos as Parameters<typeof filaCola>[2], "nota", limpiarEnvio("nota", {
+          texto: textoPareo, autor: a.arbitro, mesa: lp.indices[mesa], lado: ladoPareo(color),
+          tipo: tipo === "ilegal" || tipo === "irregularidad" ? "sancion" : "otra",
+          articulo: tipo === "ilegal" ? "ilegal" : tipo === "irregularidad" ? (ARTICULO_PAREO[articulo] ?? "") : "",
+        }));
+      }
 
       const marca = marcasDe(await registroDe(p.ronda, mesa))[mesa + "|" + color] ?? marcaVacia();
       const aviso = tipo === "ilegal" ? (marca.ilegales >= 2 ? "segunda" : "primera") : null;
@@ -430,6 +537,16 @@ Deno.serve(async (req) => {
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: f.ronda, mesa: f.mesa, color: f.color, jugador: f.jugador, tipo: "anulacion", anula: id,
       });
       if (error) { console.error("centroamericano-mesa: anular", a.tnr, error.code); return json({ error: "No se pudo anular. Intenta de nuevo." }, 500); }
+      // Con Pareo, el principal se entera: la incidencia que llegó la quita él (Pareo no la borra solo).
+      if (esPareo) {
+        const l = await leerPareoFresco();
+        if (l.ok && l.lectura.ronda === f.ronda) {
+          await aCola(l.lectura, l.datos, "nota", limpiarEnvio("nota", {
+            texto: "Anulada por error: " + (f.tipo === "ilegal" ? "la jugada ilegal" : f.tipo === "irregularidad" ? "la irregularidad" : "«se levantó»") + " de " + (f.jugador || "—") + ". Quítala de las incidencias.",
+            autor: a.arbitro, mesa: l.lectura.indices[f.mesa], tipo: "otra",
+          }));
+        }
+      }
       const marca = marcasDe(await registroDe(f.ronda, f.mesa))[f.mesa + "|" + f.color] ?? marcaVacia();
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
     }
@@ -444,7 +561,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       if (cuerpo.quitar === true) {
         const { error } = await servicio.from("centroamericano_inicios_torneo").delete().eq("tnr", a.tnr).eq("ronda", ronda);
         if (error) { console.error("centroamericano-mesa: inicio (quitar)", a.tnr, error.code); return json({ error: "No se pudo quitar la hora. Intenta de nuevo." }, 500); }
@@ -475,7 +592,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = color === "blancas" ? m.blancas : m.negras;
@@ -534,7 +651,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const ahora = new Date().toISOString();
       const mesasMias = p.mesas.filter((m) => enRango(m.mesa));
       if (!mesasMias.length) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
@@ -567,11 +684,11 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       // Es para una partida SIN terminar: si ya tiene resultado, no hay nada que corregir.
-      if (m.valor !== "0") return json({ error: "La mesa " + mesa + " ya tiene resultado en chess-results." }, 409);
+      if (m.valor !== "0") return json({ error: "La mesa " + mesa + " ya tiene resultado " + DONDE + "." }, 409);
       const idCliente = typeof cuerpo.id === "string" && /^[0-9a-f-]{36}$/.test(cuerpo.id) ? cuerpo.id : null;
       // La hora que el árbitro marcó al leer los relojes (botón «Marcar la hora ahora»): se acepta si es de hace poco
       // (hasta 6 h: una tablet sin señal la manda cuando vuelve) y no es del futuro (con 1 min de margen por el reloj
@@ -634,7 +751,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(MAX_COMUN_MS);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = m.blancas, rival = m.negras;
@@ -668,7 +785,7 @@ Deno.serve(async (req) => {
       const lectura = await leerCompartida(0, true);
       if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
       const p = lectura.lectura;
-      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta " + DONDE + " es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const av = avance(p.mesas, a.mesa_desde, a.mesa_hasta);
       await guardarAvance(servicio, a.id, p.ronda, av);
       if (av.total === 0) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
@@ -694,13 +811,19 @@ Deno.serve(async (req) => {
     if (cuerpo.action === "emparejamientos") {
       visto();
       if (a.todas_las_mesas === false) return json({ error: "La organización no habilitó «Todas las mesas» en tu enlace." }, 403);
-      const { data: ts } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden")
+      const { data: ts } = await delMismoEvento(servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, fuente, pareo_id"))
         .eq("prueba", torneoInfo?.prueba === true).order("orden", { ascending: true }).range(0, 99);
-      const categorias = (ts ?? []).map((t: { tnr: string; nombre: string; categoria: string; rama: string }) => ({ tnr: t.tnr, nombre: t.nombre, categoria: t.categoria, rama: t.rama }));
+      const categorias = (ts ?? []).map((t: { tnr: string; nombre: string; categoria: string; rama: string; fuente?: string; pareo_id?: string | null }) => ({ tnr: t.tnr, nombre: t.nombre, categoria: t.categoria, rama: t.rama, fuente: t.fuente, pareo_id: t.pareo_id }));
       const pedido = cuerpo.tnr == null || cuerpo.tnr === "" ? "" : String(cuerpo.tnr);
       if (!pedido) return json({ ok: true, actual: a.tnr, categorias });
       const cat = categorias.find((c) => c.tnr === pedido);
       if (!cat) return json({ error: "Esa categoría no es de este torneo." }, 404);
+      if (cat.fuente === "pareo") {
+        const lp = await leerPareo(servicio, cat.pareo_id, cat.tnr, cat.nombre);
+        if (!lp.ok) return json({ error: lp.error }, lp.estado);
+        return json({ ok: true, tnr: pedido, nombre: cat.nombre, categoria: cat.categoria, rama: cat.rama, ronda: lp.lectura.ronda,
+          mesas: lp.lectura.mesas.map(({ mesa, blancas, negras }) => ({ mesa, blancas, negras })), datos: { desde: lp.desde, viejo: false } });
+      }
       const { data: acc2 } = await servicio.rpc("centroamericano_acceso", { p_tnr: pedido });
       const acceso2 = (Array.isArray(acc2) ? acc2[0] : acc2) as { acceso: string; sid: string } | null;
       if (!acceso2) return json({ error: "La organización todavía no cargó la clave de " + cat.nombre + ". Avísale." }, 409);
@@ -722,9 +845,9 @@ Deno.serve(async (req) => {
       visto();
       if (a.todas_las_mesas === false) return json({ error: "La organización no habilitó «¿Dónde juega?» en tu enlace." }, 403);
       const MAX_TODAS_MS = 120_000;
-      const { data: ts } = await servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden")
+      const { data: ts } = await delMismoEvento(servicio.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, fuente, pareo_id"))
         .eq("prueba", torneoInfo?.prueba === true).order("orden", { ascending: true }).range(0, 99);
-      const cats = (ts ?? []) as { tnr: string; nombre: string; categoria: string; rama: string }[];
+      const cats = (ts ?? []) as { tnr: string; nombre: string; categoria: string; rama: string; fuente?: string; pareo_id?: string | null }[];
       const { data: filasCopia } = await servicio.from("centroamericano_lecturas").select("tnr, ronda, torneo, mesas, leida").in("tnr", cats.map((c) => c.tnr));
       type Copia = { ronda: number; mesas: { mesa: number; blancas: string; negras: string }[]; desde: string; viejo: boolean; error?: string };
       const copias = new Map<string, Copia>();
@@ -732,7 +855,13 @@ Deno.serve(async (req) => {
         if (f.ronda > 0 && new Date(f.leida).getTime() > 86_400_000) copias.set(f.tnr, { ronda: f.ronda, mesas: conRival(f.mesas), desde: f.leida, viejo: Date.now() - new Date(f.leida).getTime() > MAX_TODAS_MS });
       }
       const porLeer = cats.filter((c) => !copias.has(c.tnr) || copias.get(c.tnr)!.viejo);
-      const leer1 = async (c: { tnr: string; nombre: string }) => {
+      const leer1 = async (c: { tnr: string; nombre: string; fuente?: string; pareo_id?: string | null }) => {
+        if (c.fuente === "pareo") {
+          const lp = await leerPareo(servicio, c.pareo_id, c.tnr, c.nombre);
+          if (lp.ok) copias.set(c.tnr, { ronda: lp.lectura.ronda, mesas: lp.lectura.mesas, desde: lp.desde, viejo: false });
+          else if (!copias.has(c.tnr)) copias.set(c.tnr, { ronda: 0, mesas: [], desde: "", viejo: true, error: lp.error });
+          return;
+        }
         const { data: acc2 } = await servicio.rpc("centroamericano_acceso", { p_tnr: c.tnr });
         const acceso2 = (Array.isArray(acc2) ? acc2[0] : acc2) as { acceso: string; sid: string } | null;
         if (!acceso2) { if (!copias.has(c.tnr)) copias.set(c.tnr, { ronda: 0, mesas: [], desde: "", viejo: true, error: "Todavía no tiene la clave cargada." }); return; }
@@ -768,6 +897,23 @@ Deno.serve(async (req) => {
     // Una ronda que no se pudo leer sale con lo último que había. No escribe nada más. El enlace concluido también puede verlo.
     if (cuerpo.action === "mis_pareos") {
       visto();
+      // Con Pareo Integral: todas las rondas del torneo publicado, sin chess-results.
+      if (esPareo) {
+      const l = await leerPareoFresco();
+      if (!l.ok) return json({ error: l.error }, l.estado);
+      const RES: Record<string, string> = { "0": "", "1": "1-0", "2": "½-½", "3": "0-1", "4": "1-0 (inc.)", "5": "0-1 (inc.)", "6": "0-0 (inc.)" };
+      const dentro = (m: number) => m >= a.mesa_desde && m <= a.mesa_hasta;
+      const abierta = l.lectura.rondas.length;
+      return json({
+        ok: true, generado: new Date().toISOString(),
+        torneos: [{
+          tnr: a.tnr, nombre: torneoInfo?.nombre ?? "", categoria: torneoInfo?.categoria ?? "", rama: torneoInfo?.rama ?? "", desde: a.mesa_desde, hasta: a.mesa_hasta,
+          abierta, leida: l.desde,
+          rondas: l.lectura.rondas.map((mesas, i) => ({ ronda: i + 1, vivo: i + 1 === abierta, mesas: mesas.filter((m) => dentro(m.mesa)).map((m) => ({
+            mesa: m.mesa, blancas: m.blancas, negras: m.negras, resultado: RES[m.valor] ?? "", fed_b: fedDe(l.lectura.feds, m.blancas), fed_n: fedDe(l.lectura.feds, m.negras) })) })).filter((r) => r.mesas.length),
+        }],
+      });
+      }
       const MAX_PAGINAS = 12, REVISAR_MS = 120_000, COPIA_VIEJA_MS = 180_000;
       const enlaces = [{ tnr: a.tnr, desde: a.mesa_desde, hasta: a.mesa_hasta }, ...hermanasFilas.map((x) => ({ tnr: x.tnr, desde: x.mesa_desde, hasta: x.mesa_hasta }))];
       const tnrs = [...new Set(enlaces.map((e) => e.tnr))];

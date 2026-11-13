@@ -1012,3 +1012,23 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
 .cac-copa-fed { font-weight: 800; font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
 .cac-copa-puntos { font-weight: 800; font-size: 1.1rem; }
 .cac-copa-lugar { font-size: 0.8rem; font-weight: 600; }
+
+/* La cara de AJEDREZ INTEGRAL de las mismas páginas (la Mesa del árbitro de cualquier evento: la organización y la
+ * tablet, con torneos de Pareo Integral o de chess-results). La pone la página en <html data-marca="ajedrez-integral">
+ * cuando el evento no es el Centroamericano; sin el atributo, todo queda como arriba. Son los colores de la marca
+ * (los de Tailwind, ya medidos en el sitio): blanco sobre brand-800 #102A43 14,6; sobre brand-700 #243B53 11,2;
+ * sobre brand-600 #334E68 8,6; brand-800 sobre brand-50 #F0F4F8 13,5; en oscuro, brand-200 #BCCCDC sobre
+ * brand-950 12,4. Ver «La Mesa del árbitro con torneos de Pareo Integral» en docs/decisiones/juegos-y-torneos.md. */
+html[data-marca="ajedrez-integral"] .cac {
+  --cac-morado: rgb(var(--c-brand-700, 36 59 83));
+  --cac-morado-2: rgb(var(--c-brand-600, 51 78 104));
+  --cac-morado-hondo: rgb(var(--c-brand-800, 16 42 67));
+  --cac-fondo: rgb(var(--c-brand-50, 240 244 248));
+}
+html.dark[data-marca="ajedrez-integral"] .cac {
+  --cac-fondo: rgb(var(--c-brand-950, 7 21 39));
+  --cac-acento: rgb(var(--c-brand-200, 188 204 220));
+}
+html[data-marca="ajedrez-integral"] .cac-hojas,
+html[data-marca="ajedrez-integral"] .cac-pildora,
+html[data-marca="ajedrez-integral"] .cam-portada .cam-mascota { display: none; }

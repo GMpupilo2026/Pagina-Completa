@@ -115,7 +115,7 @@ async function abrir(browser, licencia) {
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
-    await p.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await p.goto(BASE + "/mesa-arbitro.html#solo", { waitUntil: "load" });
     return { ctx, p, errores };
 }
 

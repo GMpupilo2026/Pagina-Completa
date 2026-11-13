@@ -189,8 +189,10 @@
     estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
     // Lo que los adjuntos dejaron guardado mientras esta pestaña estaba
-    // cerrada se lee apenas se abre el torneo, en cualquier ficha.
-    if (estado.t.publicado && (estado.t.adjuntos || []).some((a) => a.activo)) setTimeout(() => { if (estado.id === id) conectarAdjuntos(); }, 0);
+    // cerrada se lee apenas se abre el torneo, en cualquier ficha. También
+    // sin adjuntos propios: los árbitros de la Mesa del árbitro (un evento
+    // con este torneo vinculado) dejan lo suyo en la misma cola.
+    if (estado.t.publicado) setTimeout(() => { if (estado.id === id) conectarAdjuntos(); }, 0);
     return true;
   }
 
@@ -3241,7 +3243,7 @@
     const v = t();
     const activos = (v.adjuntos || []).filter((a) => a.activo);
     if (!estado.adjuntos || estado.adjuntos.idTorneo !== estado.id) {
-      if (!activos.length) return true;
+      if (!activos.length && !v.publicado) return true;
       desconectarAdjuntos();
       estado.adjuntos = { idTorneo: estado.id, canales: new Map() };
     }
@@ -3269,7 +3271,10 @@
       canal.unsubscribe();
       estado.adjuntos.canales.delete(c);
     }
-    if (activos.length && !estado.adjuntos.reloj) estado.adjuntos.reloj = setInterval(leerCola, ESPERA_COLA);
+    // La cola se lee cada 15 s con adjuntos propios o con árbitros de la Mesa;
+    // si no hay ni lo uno ni lo otro, cada minuto (por si la organización
+    // vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
+    cadaCola(activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
     leerCola();
     return true;
   }
@@ -3289,7 +3294,19 @@
   // (recibirDeAdjunto, recibirNotaDeAdjunto) y la borra de la base. Necesita
   // el torneo publicado: es su clave la que la lee. Ver «Pareo Integral: lo
   // que anotan los adjuntos queda en la base».
-  const ESPERA_COLA = 15000;
+  const ESPERA_COLA = 15000, ESPERA_COLA_LENTA = 60000;
+  function cadaCola(ms) {
+    if (!estado.adjuntos || estado.adjuntos.cada === ms) return;
+    clearInterval(estado.adjuntos.reloj);
+    estado.adjuntos.cada = ms;
+    estado.adjuntos.reloj = setInterval(leerCola, ms);
+  }
+  // Una fila de un árbitro de la Mesa del árbitro (asignacion_id): un adjunto
+  // «virtual» con su nombre y su rango (en índices de Pareo), que la función
+  // ya comprobó. SOLO sale de una fila de la cola, leída con la clave del
+  // torneo: un mensaje del canal en vivo nunca lo trae (ver «La Mesa del
+  // árbitro con torneos de Pareo Integral»).
+  const adjuntoDeMesa = (x) => ({ codigo: "a:" + x.asignacion_id, nombre: String(x.nombre || "").slice(0, 80), rango: x.desde + "-" + x.hasta, activo: true, mesa: true });
   let leyendoCola = false;
   async function leerCola() {
     if (leyendoCola || !estado.adjuntos || !window.PareoPublicar) return;
@@ -3301,12 +3318,16 @@
       const r = await PareoPublicar.cola(v0.publicado);
       if (!r.ok || !Array.isArray(r.cola) || !estado.adjuntos || estado.adjuntos.idTorneo !== idT) return;
       estado.adjuntos.vistos = new Map((r.vistos || []).map((x) => [x.codigo, x.visto]));
+      estado.adjuntos.mesa = !!r.mesa;
+      cadaCola((v0.adjuntos || []).some((a) => a.activo) || r.mesa ? ESPERA_COLA : ESPERA_COLA_LENTA);
       let ultimo = 0;
       for (const x of r.cola) {
         if (!estado.adjuntos || estado.adjuntos.idTorneo !== idT) break;
         const d = Object.assign({}, x.datos || {}, { ronda: x.ronda });
-        if (x.evento === "resultado") recibirDeAdjunto(x.codigo, d);
-        else if (x.evento === "nota") recibirNotaDeAdjunto(x.codigo, d);
+        const virtual = x.asignacion_id && Number(x.desde) >= 1 && Number(x.hasta) >= Number(x.desde) ? adjuntoDeMesa(x) : null;
+        const quien = virtual ? virtual.codigo : x.codigo;
+        if (x.evento === "resultado") recibirDeAdjunto(quien, d, virtual);
+        else if (x.evento === "nota") recibirNotaDeAdjunto(quien, d, virtual);
         ultimo = x.id;
       }
       if (ultimo) await PareoPublicar.colaBorrar(v0.publicado, ultimo);
@@ -3355,9 +3376,11 @@
     } });
   }
   function enviarAdjuntos() { if (estado.adjuntos) for (const c of estado.adjuntos.canales.keys()) enviarAdjunto(c); }
-  function recibirDeAdjunto(codigo, p) {
+  // `virtual`: un árbitro de la Mesa del árbitro, solo desde leerCola (los
+  // manejadores del canal nunca lo pasan).
+  function recibirDeAdjunto(codigo, p, virtual) {
     const v = torneoDelAdjunto();
-    const a = v && adjuntoActivo(v, codigo);
+    const a = v && (virtual || adjuntoActivo(v, codigo));
     if (!a) return;
     const [desde, hasta] = a.rango.split("-").map(Number);
     const mesa = Number(p.mesa);
@@ -4047,9 +4070,9 @@
 
   // Una nota de un adjunto para el informe: va a las incidencias de la
   // última ronda, con su nombre y, si la dice, la mesa (de su rango).
-  function recibirNotaDeAdjunto(codigo, p) {
+  function recibirNotaDeAdjunto(codigo, p, virtual) {
     const v = torneoDelAdjunto();
-    const a = v && adjuntoActivo(v, codigo);
+    const a = v && (virtual || adjuntoActivo(v, codigo));
     const R = v && v.rondas[v.rondas.length - 1];
     const texto = typeof p.texto === "string" ? p.texto.trim().slice(0, 500) : "";
     const autor = typeof p.autor === "string" ? p.autor.trim().slice(0, 60) : "";

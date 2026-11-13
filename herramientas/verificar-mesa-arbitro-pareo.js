@@ -154,7 +154,7 @@ const doble = `(function(){
     const errores = [];
     p.on("pageerror", (e) => { errores.push(e.message); if (process.env.DBG) console.log("   [error]", e.message); });
     if (process.env.DBG) p.on("console", (m) => console.log("   [consola]", m.text()));
-    await p.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await p.goto(BASE + "/mesa-arbitro.html#solo", { waitUntil: "load" });
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
 
     console.log("\n=== Conectar con el enlace de árbitro ===");
@@ -269,7 +269,7 @@ const doble = `(function(){
     fn.modo = "caida";
     const pc = await ctx.newPage();
     pc.on("pageerror", (e) => errores.push(e.message));
-    await pc.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await pc.goto(BASE + "/mesa-arbitro.html#solo", { waitUntil: "load" });
     await pc.waitForFunction(() => document.getElementById("app").checkVisibility());
     await pc.fill("#p-enlace", "https://ajedrez-integral.com/pareo.html#adjunto=" + CODIGO + "&m=1-3");
     await pc.click("#p-conectar");
