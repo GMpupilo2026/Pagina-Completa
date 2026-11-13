@@ -96,7 +96,8 @@ function cliente(c) {
     window.sb = {
       auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "yo" }, access_token: "t" } } }),
               getUser: () => Promise.resolve({ data: { user: { id: "yo" } } }),
-              onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
+              onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+              signOut: () => { window.__salio = true; try { sessionStorage.setItem("__salio", "1"); } catch (e) {} return Promise.resolve({ error: null }); } },
       from: (t) => chain(t === "profiles" ? C.perfil : null),
       rpc: (nombre, args) => { window.__rpc.push([nombre, args || null]);
         if (nombre === "arbitro_herramientas_fijar") return Promise.resolve({ data: (args.p_herramientas || []).slice().sort(), error: null });
@@ -192,6 +193,19 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
     await page.waitForFunction(() => document.querySelector('#header a[href$="arbitro.html"]'), null, { timeout: 10000 });
     igual("su «Academia» del encabezado es su panel", await page.$$eval('#header a[href$="clases.html"]', (as) => as.length), 0);
     igual("en sus migas no dice «Academia»", (await page.textContent("#migas")).includes("Academia"), false);
+    // «Ver su manual» queda dentro de su li, no debajo de la tarjeta de la fila siguiente.
+    igual("«Ver su manual» se ve entero, dentro de su tarjeta", await page.evaluate(() => {
+      const m = [...document.querySelectorAll("#lista > li > a")].find((a) => a.textContent === "Ver su manual");
+      if (!m) return "no hay manual";
+      const r = m.getBoundingClientRect(), li = m.parentElement.getBoundingClientRect();
+      return m.checkVisibility() && r.bottom <= li.bottom + 0.5 && r.height > 0;
+    }), true);
+    // La cuenta de árbitro no tiene el panel de la Academia: su salida está acá.
+    igual("tiene «Cerrar sesión» a la vista", await visible(page, "#logout-btn"), true);
+    await page.click("#logout-btn");
+    await page.waitForURL("**/index.html", { timeout: 10000 }).catch(() => {});
+    igual("«Cerrar sesión» cierra la sesión y lleva al inicio",
+      [await page.evaluate(() => sessionStorage.getItem("__salio")), new URL(page.url()).pathname], ["1", "/index.html"]);
     igual("sin errores en la consola", errores, []);
     await ctx.close();
   }
