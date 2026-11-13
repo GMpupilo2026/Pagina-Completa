@@ -105,12 +105,14 @@
     return (p ? fin(p) + " " : "") + "Toca «Abrir el formulario» y llena los datos de quien juega.";
   }
 
+  // La línea de la premiación de la ventana «Niveles y premios», tal cual.
+  const premio = () => $$("#premios p").map(limpio).find((t) => /lugar de cada nivel/.test(t)) || "Se premia a los mejores de cada nivel.";
   function textoNiveles() {
     const quien = $$("#inscribirme p").map(limpio).find((x) => /Estudiantes/i.test(x)) || "";
-    // Cada grupo de niveles de la ventana (Primaria, Secundaria) con cuántos trae.
-    const grupos = $$("#premios h3").map((h) => [leido(h).toLowerCase(), $$("li", h.parentElement).length]).filter((g) => g[1]);
-    const total = grupos.reduce((n, g) => n + g[1], 0);
-    return (quien ? fin(quien) + " " : "") + (total ? "Son " + total + " niveles: " + grupos.map((g) => g[1] + " de " + g[0]).join(" y ") + "." : "");
+    // Los torneos de la ventana «Niveles y premios» (cada tarjeta, su título).
+    const torneos = $$("#premios [data-torneo] h3").map((h) => leido(h).toLowerCase());
+    const y = (xs) => (xs.length > 1 ? xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1] : xs[0]);
+    return (quien ? fin(quien) + " " : "") + (torneos.length ? "Juegan en " + torneos.length + " torneos: " + y(torneos) + ". " + premio() : "");
   }
 
   // ¿Ya está el torneo en Pareo Integral? La ficha deja de ser «Pronto».

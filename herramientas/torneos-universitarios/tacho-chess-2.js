@@ -42,6 +42,15 @@ const BASES_PDF = "documentos/tacho-chess-2/bases-tacho-chess-2.pdf";
 // Los niveles que se premian: «de primer grado a undécimo año».
 const NIVELES = ["Primer grado", "Segundo grado", "Tercer grado", "Cuarto grado", "Quinto grado", "Sexto grado",
   "Sétimo año", "Octavo año", "Noveno año", "Décimo año", "Undécimo año"];
+// Los cuatro torneos en que se juntan los niveles (lo dijo el dueño el 13/11,
+// con los inscritos a la vista): [nombre, primer nivel, último nivel] (índices de NIVELES).
+const TORNEOS = [["Primero a tercer grado", 0, 2], ["Cuarto a sexto grado", 3, 5], ["Sétimo y octavo año", 6, 7], ["Noveno a undécimo año", 8, 10]];
+const nivelesDe = ([, desde, hasta]) => NIVELES.slice(desde, hasta + 1);
+const listaY = (xs) => xs.length > 1 ? xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1] : xs[0];
+// La premiación (lo aclaró el dueño el 13/11): cada nivel por separado, con
+// su 1.º, 2.º y 3.º lugar, aunque se juegue mezclado con otros niveles.
+const PREMIO_TEXTO = "Aunque jueguen mezclados, se premia por separado el 1.er, 2.º y 3.er lugar de cada nivel (primer grado, segundo grado, tercer grado y así hasta undécimo año), según su puesto en la clasificación final de su torneo.";
+const TORNEOS_TEXTO = "Se juegan cuatro torneos, cada uno con sus niveles: " + TORNEOS.map((t) => t[0].toLowerCase() + " (" + listaY(nivelesDe(t).map((n) => n.toLowerCase())) + ")").join("; ") + ". " + PREMIO_TEXTO;
 
 // Los datos del torneo, como los lee BasesTorneo.documento().
 const bases = {
@@ -61,9 +70,9 @@ const bases = {
   desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
   byes: 0,
   calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
-  premios: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.",
+  premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
   otras: [
-    "La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.",
+    TORNEOS_TEXTO,
     "Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral, en la página del torneo (ajedrez-integral.com/tacho-chess-2, ficha «Resultados»).",
     "Durante el torneo hay feria de comerciantes de la comunidad, open house del Liceo Anastasio Alfaro y venta de comida.",
   ].join("\n"),
@@ -94,7 +103,7 @@ module.exports = {
   clase: "tacho",
   foco: "#064ca7",
   titulo: "Torneo Intereducativo Tacho Chess 2 — Liceo Anastasio Alfaro",
-  descripcion: "Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro;7 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.",
+  descripcion: "Torneo Intereducativo de ajedrez Tacho Chess 2 del Liceo Anastasio Alfaro: sábado 14 de noviembre de 2026, ronda 1 a las 9:00 a.m. en el Gimnasio del Centro; 7 rondas a 10 minutos + 2 segundos, inscripción gratuita y premios por nivel, de primer grado a undécimo año.",
   nombrePie: "Tacho Chess 2",
   grupoNombre: "Nivel",
   comentario: `La página del Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio
@@ -140,7 +149,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
-    { href: "#premios", color: "rojo", icono: "🏆", titulo: "Niveles y premios", texto: "Se premia a los mejores de cada nivel, de primer grado a undécimo año.", accion: "Ver los niveles" },
+    { href: "#premios", color: "rojo", icono: "🏆", titulo: "Niveles y premios", texto: "Cuatro torneos: de primero a tercer grado, de cuarto a sexto, sétimo y octavo, y de noveno a undécimo. 1.º, 2.º y 3.º lugar de cada nivel.", accion: "Ver los torneos" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
     // «Pronto» hasta que el torneo esté publicado en Pareo Integral: entonces
     // js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
@@ -173,23 +182,17 @@ guarda nada.`,
       },
       {
         id: "premios", icono: "🏆", titulo: "Niveles y premios",
-        comentario: "Los niveles que se premian, como los dice el afiche: «de primer grado a\nundécimo año».",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Se premia a los mejores de cada nivel. Son once niveles:</p>
+        comentario: "Los cuatro torneos y sus niveles (TORNEOS, arriba). Se premia por nivel, como\ndice el afiche: «los mejores de cada nivel de primer grado a undécimo año».",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Los once niveles se juntan en cuatro torneos para jugar.</p>
+<p class="mt-2 font-semibold">${PREMIO_TEXTO}</p>
 <div class="mt-6 grid sm:grid-cols-2 gap-5">
-    <div class="${tarjeta}">
-        ${h3}Primaria</h3>
+${TORNEOS.map((t) => `    <div class="${tarjeta}" data-torneo>
+        ${h3}${t[0]}</h3>
         <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
-${NIVELES.slice(0, 6).map((n) => "            <li>" + n + "</li>").join("\n")}
+${nivelesDe(t).map((n) => "            <li>" + n + "</li>").join("\n")}
         </ul>
-    </div>
-    <div class="${tarjeta}">
-        ${h3}Secundaria</h3>
-        <ul class="mt-2 space-y-1 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
-${NIVELES.slice(6).map((n) => "            <li>" + n + "</li>").join("\n")}
-        </ul>
-    </div>
+    </div>`).join("\n")}
 </div>
-<p class="mt-4 text-sm">La organización puede jugar los niveles juntos o en varios torneos, según la cantidad de inscritos; la premiación es siempre por nivel.</p>
 `,
       },
       {
@@ -239,8 +242,8 @@ ${desempates}
         <p class="${texto}">Durante la partida, el celular va completamente apagado y guardado en el bolso (Leyes del Ajedrez, 11.3.2). Quien lo tenga encendido pierde la partida.</p>
     </div>
     <div class="${tarjeta}">
-        ${h3}Premiación</h3>
-        <p class="${texto}">Se premia a los mejores de cada nivel, de primer grado a undécimo año.</p>
+        ${h3}Cuatro torneos y premiación</h3>
+        <p class="${texto}">${TORNEOS_TEXTO}</p>
     </div>
     <div class="${tarjeta}">
         ${h3}Lo que no esté en las bases</h3>

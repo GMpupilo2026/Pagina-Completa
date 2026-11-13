@@ -15033,8 +15033,9 @@ chess-results).
   **con el sello «Organizador verificado»** (sin el sello, cualquiera
   publicaría un «Tacho Chess» y la ficha llevaría a él). El 12/11/2026 solo las
   dos «ADAPZ» tenían el sello: quien publique el torneo tiene que pedírselo a
-  administración. Si los niveles se juegan en varios torneos, la ficha abre
-  `#resultados` con un enlace por torneo. Nunca lleva a la lista de Pareo. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
+  administración. Como se juegan cuatro torneos (abajo), cada uno tiene que
+  llevar «Tacho» en el nombre: con varios, la ficha abre `#resultados` con un
+  enlace por torneo. Nunca lleva a la lista de Pareo. «Cómo llegar» busca al liceo por su nombre en Google Maps, sin
   inventar una dirección.
 - **Las bases son un PDF propio** (`documentos/tacho-chess-2/bases-tacho-chess-2.pdf`),
   porque el afiche no trae bases: las arma `herramientas/tacho-chess-2-bases.js`
@@ -15043,8 +15044,19 @@ chess-results).
   (está en `LIBROS` de `verificar-marca-agua.js`). Lo que se decidió sin estar
   en el afiche, para que las bases estén completas: suizo con el Sistema
   Holandés, los desempates de Pareo Integral para el suizo, tolerancia de 10
-  minutos (lo mismo que el reloj), sin Elo, y que la organización puede jugar
-  los niveles juntos o en varios torneos (la premiación es siempre por nivel).
+  minutos (lo mismo que el reloj) y sin Elo.
+- **Cuatro torneos, premio por nivel** (lo dijo el dueño el 13/11, con los
+  inscritos a la vista: tercer grado tenía uno solo): primero a tercer grado,
+  cuarto a sexto, sétimo y octavo, y noveno a undécimo (`TORNEOS` en la
+  configuración, de donde salen la ventana «Niveles y premios», la tarjeta del
+  reglamento y la línea de las bases). **Los torneos son para jugar; la
+  premiación es por nivel, por separado** (lo aclaró el dueño): 1.º, 2.º y
+  3.er lugar de cada uno de los once niveles (33 premios), según el puesto de
+  cada jugador en la clasificación final de su torneo, aunque haya jugado
+  mezclado con otros niveles (`PREMIO_TEXTO`, que repiten la ventana, el
+  reglamento, las bases y el profe Oscar). La lista de inscritos que pasó el dueño
+  (83 filas, con fechas de nacimiento de menores) no se guardó en el
+  repositorio ni se publica.
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
   PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
   tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
