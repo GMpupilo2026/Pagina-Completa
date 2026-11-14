@@ -131,7 +131,9 @@ async function pruebaMotorColgadoEnLaClase(browser) {
   const jugo = await r.page.waitForFunction(() => practiceBoard.game.history().length === 2 && practiceBoard.interactive, null, { timeout: 9000 })
     .then(() => true, () => false);
   igual("el bot contestó y le vuelve a tocar al alumno", jugo, true);
-  igual("se le dice que le toca", await r.page.textContent("#practice-card-status"), "Es tu turno.");
+  // La de respaldo puede ser cualquiera: se dice cuál jugó y que le toca.
+  igual("se le dice qué jugó el bot y que le toca",
+    /^El motor jugó \S+\. Es tu turno\.$/.test(await r.page.textContent("#practice-card-status")), true);
   igual("la jugada del bot quedó guardada", await r.page.evaluate(() =>
     (window.__updates.filter((u) => u.tabla === "practice_games" && u.campos.moves).pop() || { campos: {} }).campos.moves.length), 2);
   igual("sin errores en consola", r.errores, []);
