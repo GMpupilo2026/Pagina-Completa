@@ -17488,3 +17488,20 @@ torneo de Tacho Chess y pidió quitarlo). Ahora:
 
 Lo comprueba `verificar-centroamericano-arbitro-marca.js` (los tres casos y el
 celular, con capturas).
+
+### La organización nombra la fuente que eligió
+
+En la Mesa del árbitro de la organización (`centroamericano-mesas.html`), el botón
+«Actualizar desde chess-results» seguía diciendo chess-results aunque el principal
+hubiera elegido Pareo Integral (el dueño lo vio en Tacho Chess). La función
+`resumen` ya leía de Pareo; solo el texto estaba mal. Ahora `fuenteNombre()` lo
+decide por los torneos a la vista: todos de Pareo → «Pareo Integral»; ninguno →
+«chess-results»; mezclados → «chess-results y Pareo Integral». Lo usan el botón y
+su nota (`[data-fuente-nombre]`), el «Leyendo…», la sugerencia de ayuda y las
+hojas en papel (estas, torneo por torneo, con `fuenteDe()`).
+
+De paso, la barra de la ventana decía «Mesa del árbitro — Centroamericano 2026»
+en cualquier evento: con la cara neutra lleva el nombre del evento (si los
+torneos son de uno solo) o solo «Mesa del árbitro».
+
+Lo comprueba `verificar-centroamericano-mesas-fuente-nombre.js`.

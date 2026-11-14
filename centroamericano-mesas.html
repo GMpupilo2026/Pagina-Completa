@@ -64,7 +64,7 @@
           <div class="cam-ventana">
             <div class="cam-titulo-ventana">
                 <img src="img/app/icon-192.png" width="22" height="22" alt="" aria-hidden="true">
-                <span class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
+                <span id="titulo-ventana" class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
                 <span id="eg-reloj" class="cam-titulo-reloj" aria-hidden="true"></span>
             </div>
 
@@ -93,7 +93,7 @@
                     <ul id="ir-lista" class="cam-inicio-lista"></ul>
                 </div>
                 <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
-                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
+                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde <span data-fuente-nombre>chess-results</span></button>
                     <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>
                     <button type="button" id="resumen-hojas" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Hojas en papel (plan B)</button>
                     <span id="resumen-total" class="cam-herramientas-nota" role="status"></span>
@@ -107,7 +107,7 @@
                     </table>
                 </div>
                 <p id="resumen-vacio" class="cam-nota-vacia">Todavía no hay enlaces activos. Créalos en «Árbitros y mesas».</p>
-                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde chess-results» lo lee de todos los torneos de una vez.</p>
+                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde <span data-fuente-nombre>chess-results</span>» lo lee de todos los torneos de una vez.</p>
 
                 <h2 id="t-faltan" class="cam-subtitulo mt-6">Jugadores que no han llegado<span id="faltan-nota" class="cam-subtitulo-nota"></span></h2>
                 <p class="cam-herramientas-nota">Cada árbitro marca en su tablet, mesa por mesa, si el jugador llegó. Aquí salen los que marcó «No ha llegado»; si el jugador llega, el árbitro lo cambia y desaparece de la lista.</p>

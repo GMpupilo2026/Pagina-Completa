@@ -54,6 +54,9 @@
     // (Un torneo sin evento es de antes de los eventos: el Centroamericano.)
     const caraNeutra = () => !torneos.some((t) => !t.evento || marcas.get(t.evento) === "centroamericano");
     const hayPareo = () => torneos.some((t) => t.fuente === "pareo");
+    // De dónde salen las mesas: lo que el principal eligió para sus torneos. Con todos en Pareo Integral, la página no nombra chess-results.
+    const fuenteNombre = () => !hayPareo() ? "chess-results" : torneos.every((t) => t.fuente === "pareo") ? "Pareo Integral" : "chess-results y Pareo Integral";
+    const fuenteDe = (tnr) => ((torneos.find((t) => t.tnr === tnr) || {}).fuente === "pareo" ? "Pareo Integral" : "chess-results");
     let asignaciones = [];
     let avisos = [];
     let progreso = [];
@@ -357,7 +360,7 @@
             const yo = filas.find((x) => x.id === f.asignacion_id);
             const lista = yo && yo.ronda === f.ronda ? C.sugerirAyuda(yo, filas) : [];
             sugerencias.push(el("p", { class: "mt-2 font-bold", texto: "Sugerencia: a dónde puede ir a ayudar" }));
-            if (!lista.length) sugerencias.push(el("p", { class: "cam-herramientas-nota", texto: "Nadie más tiene mesas pendientes según el último avance. Toca «Actualizar desde chess-results» para estar seguro." }));
+            if (!lista.length) sugerencias.push(el("p", { class: "cam-herramientas-nota", texto: "Nadie más tiene mesas pendientes según el último avance. Toca «Actualizar desde " + fuenteNombre() + "» para estar seguro." }));
             for (const s of lista) {
                 sugerencias.push(el("div", { class: "cam-sugerencia", "data-id": s.id },
                     el("span", { texto: s.arbitro + " (" + nombreTorneo(s.tnr) + (s.mismoTorneo ? ", su mismo torneo" : "") + "): le quedan " + s.quedan + (s.quedan === 1 ? " mesa" : " mesas") + "; podría tomar " + (s.mesas.length === 1 ? "la mesa " : "las mesas ") + C.listaMesas(s.mesas) + "." }),
@@ -434,7 +437,7 @@
     async function actualizarResumen() {
         const b = $("resumen-actualizar");
         b.disabled = true;
-        $("resumen-total").textContent = "Leyendo chess-results…";
+        $("resumen-total").textContent = "Leyendo " + fuenteNombre() + "…";
         try {
             const d = await invocar({ action: "resumen" });
             await cargarAvance();
@@ -479,16 +482,16 @@
             const { data, error } = await sb.rpc("centroamericano_hojas");
             if (error) throw new Error(error.message);
             const hojas = (data || []).filter((h) => h.mesas && h.mesas.length && dentro(h.tnr));
-            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde chess-results» y vuelve a intentar.", true); return; }
+            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde " + fuenteNombre() + "» y vuelve a intentar.", true); return; }
             const bloques = [];
             hojas.forEach((h, i) => {
                 if (i) bloques.push({ tipo: "salto" });
                 bloques.push({ tipo: "titulo", texto: h.arbitro + " — mesas " + h.mesa_desde + " a " + h.mesa_hasta });
-                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de chess-results a las " + window.HoraCR.hora(new Date(h.leida)) });
+                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de " + fuenteDe(h.tnr) + " a las " + window.HoraCR.hora(new Date(h.leida)) });
                 bloques.push({ tipo: "nota", texto: "Marca con una X el resultado de cada partida y anota al lado lo que haga falta (ilegales, control de tiempos, incidencias). Cuando vuelva la señal, pasa los resultados a la tablet." });
                 bloques.push({
                     tipo: "tabla", altoFila: 30, encabezados: ["Mesa", "Blancas", "Negras", "Resultado", "Notas"], anchos: [1.1, 3, 3, 3.6, 2.2],
-                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en chess-results: " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
+                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en " + fuenteDe(h.tnr) + ": " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
                 });
                 bloques.push({ tipo: "parrafo", texto: "Firma del árbitro: ______________________________" });
             });
@@ -645,6 +648,10 @@
         if (!$("a-vence-fecha").value) $("a-vence-fecha").value = window.HoraCR.hoy();
         $("a-vence-fecha").min = window.HoraCR.hoy();
         document.title = neutra ? "Mesas de los árbitros — Organización | Ajedrez Integral" : "Mesas de los árbitros — Centroamericano 2026 | Ajedrez Integral";
+        // La barra de la ventana: con la cara neutra, el evento de los torneos (si son de uno solo), no el Centroamericano.
+        const eventos = [...new Set(torneos.map((t) => t.evento).filter(Boolean))];
+        $("titulo-ventana").textContent = "Mesa del árbitro" + (!neutra ? " — Centroamericano 2026" : eventos.length === 1 ? " — " + eventos[0] : "");
+        for (const n of document.querySelectorAll("[data-fuente-nombre]")) n.textContent = fuenteNombre();
     }
 
     async function cargarTorneos() {
