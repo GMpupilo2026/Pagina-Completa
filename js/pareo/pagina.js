@@ -3384,10 +3384,10 @@
       canal.unsubscribe();
       estado.adjuntos.canales.delete(c);
     }
-    // La cola se lee cada 15 s con adjuntos propios o con árbitros de la Mesa;
-    // si no hay ni lo uno ni lo otro, cada minuto (por si la organización
-    // vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
-    cadaCola(activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
+    // La cola se lee cada 5 s en un evento de la Mesa, cada 15 s con adjuntos
+    // propios y, si no hay ni lo uno ni lo otro, cada minuto (por si la
+    // organización vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
+    cadaCola(estado.adjuntos.mesa ? ESPERA_COLA_MESA : activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
     leerCola();
     return true;
   }
@@ -3407,7 +3407,10 @@
   // (recibirDeAdjunto, recibirNotaDeAdjunto) y la borra de la base. Necesita
   // el torneo publicado: es su clave la que la lee. Ver «Pareo Integral: lo
   // que anotan los adjuntos queda en la base».
-  const ESPERA_COLA = 15000, ESPERA_COLA_LENTA = 60000;
+  // En un evento de la Mesa del árbitro, cada 5 s: lo que guarda un árbitro
+  // en su tablet tiene que llegar pronto a las demás (ver «El resultado del
+  // principal llega solo a las tablets»). Leer la cola no pasa por el freno.
+  const ESPERA_COLA = 15000, ESPERA_COLA_LENTA = 60000, ESPERA_COLA_MESA = 5000;
   function cadaCola(ms) {
     if (!estado.adjuntos || estado.adjuntos.cada === ms) return;
     clearInterval(estado.adjuntos.reloj);
@@ -3432,7 +3435,7 @@
       if (!r.ok || !Array.isArray(r.cola) || !estado.adjuntos || estado.adjuntos.idTorneo !== idT) return;
       estado.adjuntos.vistos = new Map((r.vistos || []).map((x) => [x.codigo, x.visto]));
       estado.adjuntos.mesa = !!r.mesa;
-      cadaCola((v0.adjuntos || []).some((a) => a.activo) || r.mesa ? ESPERA_COLA : ESPERA_COLA_LENTA);
+      cadaCola(r.mesa ? ESPERA_COLA_MESA : (v0.adjuntos || []).some((a) => a.activo) ? ESPERA_COLA : ESPERA_COLA_LENTA);
       let ultimo = 0;
       for (const x of r.cola) {
         if (!estado.adjuntos || estado.adjuntos.idTorneo !== idT) break;
@@ -6529,6 +6532,12 @@
   // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
   // y entra a la lista solo si se acepta.
   const ESPERA_PUBLICAR = 30000;
+  // En un evento de la Mesa del árbitro las tablets leen las mesas de lo
+  // publicado: lo que pone el principal tiene que llegarles en segundos
+  // (ver «El resultado del principal llega solo a las tablets»). Sigue siendo
+  // una publicación por espera, no una por cambio: varios resultados
+  // seguidos salen juntos.
+  const ESPERA_PUBLICAR_MESA = 4000;
   const publicando = new Map();
   // Lo que va con el torneo y no vive en él: el código del enlace en vivo de
   // su evento (en este navegador).
@@ -6536,7 +6545,8 @@
   function programarPublicacion() {
     const id = estado.id;
     if (publicando.has(id)) return;
-    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, ESPERA_PUBLICAR));
+    const deLaMesa = !!(estado.adjuntos && estado.adjuntos.idTorneo === id && estado.adjuntos.mesa);
+    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, deLaMesa ? ESPERA_PUBLICAR_MESA : ESPERA_PUBLICAR));
   }
   async function actualizarPublicado(id, boton) {
     const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);

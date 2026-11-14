@@ -17898,3 +17898,45 @@ en cualquier evento: con la cara neutra lleva el nombre del evento (si los
 torneos son de uno solo) o solo «Mesa del árbitro».
 
 Lo comprueba `verificar-centroamericano-mesas-fuente-nombre.js`.
+
+### El resultado del principal llega solo a las tablets
+
+Pedido del dueño el 14/11/2026, en el Tacho Chess 2: «si coloco un resultado en Pareo Integral, que se actualice en
+las tablets de los árbitros también». Llegaba, pero tarde: el Pareo del principal publica 30 s después del cambio
+(`ESPERA_PUBLICAR`) y la tablet (`centroamericano-arbitro.html`) vuelve a leer sus mesas cada 45 s (`REFRESCO_MS`),
+así que un resultado podía tardar más de un minuto en verse, y el «⏳ Mandado» de un árbitro de mesa tardaba lo mismo
+en pasar a resultado.
+
+- **Pareo publica a los 4 s en un evento de la Mesa** (`ESPERA_PUBLICAR_MESA` en `js/pareo/pagina.js`): cuando la
+  cola dice que el torneo está en un evento de la Mesa del árbitro (`estado.adjuntos.mesa`, la misma marca que ya
+  apuraba la lectura de la cola). Sigue siendo una publicación por espera, no una por cambio: los resultados seguidos
+  salen juntos, a lo sumo una publicación cada 4 s por torneo, muy por debajo del freno de `pareo_frenar`. Fuera de
+  la Mesa sigue en 30 s.
+- **La tablet pregunta liviano cada 8 s** (`revisarPareo`, `PAREO_MS`; en el modo liviano, cada 16 s): con un torneo
+  de Pareo pide solo `actualizado` de `pareo_publicados` (lectura pública de unos bytes, con el id que sale del `tnr`
+  inventado) y, si la hora cambió, hace la lectura entera de siempre. Es la misma pregunta liviana de «Los pareos de la
+  ronda se ponen al día solos», y por las mismas razones no es Realtime. Con chess-results no se pregunta nada.
+- **No pisa lo que el árbitro está anotando**: con algo a medio elegir (`sinNadaPendiente()`), no lee y vuelve a
+  mirar en la vuelta siguiente.
+- Con las dos cosas, lo que pone el principal se ve en la tablet en unos 12 s o menos (4 s de Pareo, hasta 8 s de la
+  pregunta, más lo que tarde «leer»). El gasto: con 30 tablets, unas 4 lecturas diminutas por segundo a PostgREST,
+  ninguna a la Edge Function; «leer» solo corre cuando hay algo nuevo.
+
+**Y lo que guarda otro árbitro en otra tablet** (lo pidió el dueño enseguida):
+
+- **Con Pareo** ya pasa por el mismo camino: lo de la otra tablet va a `pareo_cola`, el Pareo del principal lo acepta
+  y publica, y las demás tablets lo ven con la pregunta liviana. Para que no espere los 15 s de la cola, en un evento
+  de la Mesa el Pareo del principal la lee **cada 5 s** (`ESPERA_COLA_MESA`; leer la cola va con la clave del torneo y
+  no pasa por `pareo_frenar`). De punta a punta, unos 20 s o menos.
+- **Con chess-results** la otra tablet guarda directo allá y deja la lectura en la copia compartida, pero las demás no
+  se enteraban hasta su lectura de los 45 s. Ahora «avisos» (que ya se pide cada 20 s y solo toca la base) trae
+  `ajeno`: la última línea de resultado o corrección del registro que **otro enlace** anotó en **las mesas de este
+  enlace**. Si cambia, la tablet vuelve a leer sus mesas (`revisarAjeno`), con la misma regla de no pisar lo que se
+  está anotando. Sin pedidos nuevos: una consulta más dentro de «avisos», sobre el índice de la partida. Con Pareo no
+  se arma (lo de otra tablet es solo «mandado» hasta que el principal lo publica).
+
+Lo prueba `verificar-arbitro-pareo-al-dia.js` con el reloj de Playwright: la pregunta es solo `actualizado` con el
+uuid bien armado; sin cambios no lee; con una publicación nueva la mesa cambia sin tocar nada; con el foco en una mesa
+espera; con chess-results no pregunta a `pareo_publicados`, y con otro `ajeno` en «avisos» la mesa cambia antes de los
+45 s; las esperas cortas de Pareo y que la función arme `ajeno` solo con chess-results, sin lo propio y en las mesas
+del enlace. Rotos a propósito el repintado, la espera del foco o `revisarAjeno`, salta.
