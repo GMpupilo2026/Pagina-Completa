@@ -8811,6 +8811,69 @@ cola (no con una clave mala), borrarla, apagar el adjunto (entrar da 403
 **Lo que falta para el 22/11**: el ensayo general con un torneo de prueba. El
 Centro del evento y las cámaras en la mesa del adjunto, abajo.
 
+### El resultado de la mesa, al público al instante
+
+Pedido del dueño el 13/11/2026, en el Tacho Chess 2 (1er Ciclo): «cómo hago
+para que Pareo Integral anote el resultado de la mesa del árbitro, y de paso
+que en tiempo real lo vea el público» y «que se vea de una ahí».
+
+**Lo que pasó.** Un árbitro anotó 1-0 en la mesa 1 desde
+`centroamericano-arbitro.html` a las 5:19 p. m.; a las 5:26 el Pareo del
+principal seguía «sin resultado». En la base: la línea del registro decía
+`enviado: false`, **la cola estaba vacía** y el torneo publicado sin
+resultados. Es decir: un Pareo leyó la fila y la borró sin anotarla. Era un
+Pareo de antes de #1276 (ese mismo día a la 1:26 p. m.): su `leerCola`
+llamaba `recibirDeAdjunto(x.codigo, d)`, y una fila de la Mesa del árbitro no
+trae código (`codigo: null`, trae `asignacion_id`). No encontraba al adjunto,
+la descartaba, y después `cola_borrar` borraba hasta lo último leído. Sin
+ningún error. Un Pareo viejo es lo normal: la pestaña queda abierta horas, la
+página se guarda en caché y Pareo también anda como programa.
+
+- **La función ya no se las da a un Pareo que no las entiende.** `cola` y
+  `cola_borrar` de `pareo-publicar` filtran `codigo is not null` salvo que el
+  pedido traiga `mesa: true`, y `js/pareo/publicar.js` lo manda. Un Pareo
+  viejo sigue leyendo (y borrando) solo lo de sus adjuntos propios; lo de la
+  Mesa queda esperando a que se abra un Pareo al día. **Lo que ya se perdió
+  no vuelve**: esa mesa se anota otra vez (desde la Mesa o en Pareo).
+- **Cuánto tardaba un resultado en verse en `torneos-pareo.html`**: hasta
+  15 s en que el principal leyera la cola, 30 s de espera para publicar y
+  hasta 60 s en que la página pública volviera a leer: **hasta minuto y
+  medio**. Ahora:
+  - `centroamericano-mesa`, al dejar algo en `pareo_cola`, **toca** el canal
+    `pareo-cola-<id publicado>` y el Pareo del principal (que lo escucha
+    desde `conectarAdjuntos`, `escucharCola`) lee la cola en el momento. Un
+    toque que llega mientras ya está leyendo hace otra lectura 1,5 s
+    después, no se pierde. La vuelta de 15 s sigue, por si el toque no llega.
+  - Pareo publica **a los 5 segundos** de un cambio (`ESPERA_PUBLICAR`, eran
+    30): sigue juntando varios resultados en una sola llamada. El freno de
+    `actualizar` (1500 por conexión y hora) solo cuenta cuando algo cambia.
+  - `pareo-publicar`, al poner al día un torneo, toca `pareo-publico-<id>` y
+    la página pública que lo tiene abierto lo vuelve a leer ya
+    (`escucharTorneo` en `js/torneos-pareo-pagina.js`): como mucho una
+    relectura cada 3 s aunque lleguen muchos toques, y con la pestaña
+    escondida, una sola al volver. La vuelta de cada minuto sigue, por si el
+    toque no llega. El texto dice «se pone al día solo, en vivo».
+  - Total: unos pocos segundos desde que el árbitro toca el resultado.
+- **El toque es Broadcast y no lleva el dato** (`_compartido/toque-vivo.ts`,
+  por la API REST de Realtime: no hace falta suscribirse para mandar). Con
+  `postgres_changes`, Realtime revisaría la RLS de cada cambio una vez por
+  cada persona mirando (ver «Realtime escucha solo lo que la pantalla
+  muestra»). Los canales son públicos: un toque falso solo provoca una
+  relectura (por eso se juntan) y lo que se lee sale por la vía de siempre,
+  con sus permisos. Si el toque falla, la función no tira.
+
+**Probado**: la API de Broadcast con un canal de prueba de verdad (202, y la
+página suscrita lo recibió en menos de 1,5 s); `verificar-pareo-adjuntos.js`
+(el canal `pareo-cola-<id>` se escucha, el toque lee la cola en el momento,
+la fila de la Mesa entra a nombre de su árbitro, y cada `cola`/`cola_borrar`
+lleva `mesa: true`) y `verificar-pareo-publicar.js` (el canal del torneo
+abierto se abre y se cierra al cambiar de torneo, cinco toques dan una sola
+relectura, un toque enseguida espera, el de otro torneo no hace nada; y sin
+navegador, los toques y el filtro en las dos funciones). Rotos a propósito
+el nombre del canal, la escucha de la página y el `mesa: true`, saltan.
+**No probado**: las funciones desplegadas mandando el toque con la clave de
+servicio (se despliegan solas al entrar a `main`).
+
 ### Pareo Integral: el Centro del evento
 
 Pedido del dueño el 12/11/2026, después de ver las maquetas: una ficha nueva

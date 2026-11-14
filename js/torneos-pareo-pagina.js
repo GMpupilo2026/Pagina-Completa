@@ -11,8 +11,11 @@
    columna no tiene permiso de lectura.
 
    - #t=<id> abre un torneo; &j=<id> abre a un jugador; &r=<n> una ronda.
-   - El torneo abierto se vuelve a leer cada minuto mientras la pestaña está
-     a la vista (el árbitro lo pone al día mientras juegan).
+   - El torneo abierto se vuelve a leer apenas el árbitro lo pone al día: la
+     Edge Function toca el canal `pareo-publico-<id>` (Broadcast, sin el
+     dato) y la página lo vuelve a leer, como mucho una vez cada pocos
+     segundos. Y por si el toque no llega, cada minuto mientras la pestaña
+     está a la vista. Ver «El resultado de la mesa, al público al instante».
    - La ficha del jugador trae los otros torneos publicados con el mismo
      nombre escrito igual.
    - Un torneo que todavía no empieza sale como anuncio («Próximos torneos»),
@@ -687,7 +690,7 @@
       el("h1", { id: "tp-titulo", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", tabindex: "-1", texto: fila.nombre }),
       partes.length ? el("p", { class: "text-brand-600 dark:text-brand-300 mt-1", texto: partes.join(" · ") }) : null,
       el("p", { class: C.nota + " mt-1", texto: datos.join(" · ") }),
-      el("p", { id: "tp-actualizado", class: "text-xs text-brand-600 dark:text-brand-300 mt-2", role: "status", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto" }),
+      el("p", { id: "tp-actualizado", class: "text-xs text-brand-600 dark:text-brand-300 mt-2", role: "status", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se pone al día solo, en vivo" }),
       fila.organizador_id && conLogo.get(fila.organizador_id) ? bloqueOrganizador(conLogo.get(fila.organizador_id), true) : null,
       acciones(fila, t));
   }
@@ -1137,7 +1140,7 @@
       return;
     }
     if (silencioso && abierto && abierto.fila.actualizado === fila.actualizado) {
-      const a = $("tp-actualizado"); if (a) a.textContent = "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto";
+      const a = $("tp-actualizado"); if (a) a.textContent = "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se pone al día solo, en vivo";
       return;
     }
     if (fila.organizador_id) await organizadorCompleto(fila.organizador_id);
@@ -1894,8 +1897,43 @@
     $("tp-titulo").focus();
   }
 
+  // El toque de la función al poner al día el torneo abierto (ver la
+  // cabecera). Los toques se juntan: una relectura cada TOQUE_MS como mucho,
+  // y con la pestaña escondida, una sola al volver a la vista.
+  const TOQUE_MS = 3000;
+  let canalVivo = null, toqueEspera = null, toqueUltimo = 0, toquePendiente = false;
+  function releerPorToque(idT) {
+    if (leerRuta().t !== idT) return;
+    if (document.visibilityState !== "visible") { toquePendiente = true; return; }
+    if (toqueEspera) return;
+    toqueEspera = setTimeout(() => {
+      toqueEspera = null; toqueUltimo = Date.now();
+      if (leerRuta().t === idT) pintarTorneo(leerRuta(), true);
+    }, Math.max(0, toqueUltimo + TOQUE_MS - Date.now()));
+  }
+  function escucharTorneo(idT) {
+    if (canalVivo && canalVivo.idT === idT) return;
+    dejarDeEscuchar();
+    if (!window.sb || !window.sb.channel) return;
+    try {
+      const canal = window.sb.channel("pareo-publico-" + idT);
+      canal.on("broadcast", { event: "actualizado" }, () => releerPorToque(idT));
+      canal.subscribe();
+      canalVivo = { idT, canal };
+    } catch (e) { canalVivo = null; /* sin Realtime: queda la vuelta de cada minuto */ }
+  }
+  function dejarDeEscuchar() {
+    if (canalVivo) { try { window.sb.removeChannel(canalVivo.canal); } catch (e) { /* ya estaba cerrado */ } }
+    canalVivo = null; toquePendiente = false;
+    if (toqueEspera) { clearTimeout(toqueEspera); toqueEspera = null; }
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && toquePendiente && canalVivo) { toquePendiente = false; releerPorToque(canalVivo.idT); }
+  });
+
   async function pintar() {
     if (refresco) { clearInterval(refresco); refresco = null; }
+    if (!leerRuta().t) dejarDeEscuchar();
     const ruta = leerRuta();
     if (ruta.o && !ruta.t) { abierto = null; await pintarOrganizador(ruta.o); return; }
     await cargarExternos();
@@ -1926,6 +1964,7 @@
       return;
     }
     await pintarTorneo(ruta, false);
+    escucharTorneo(ruta.t);
     refresco = setInterval(() => {
       if (document.visibilityState === "visible" && leerRuta().t === ruta.t) pintarTorneo(leerRuta(), true);
     }, REFRESCO_MS);

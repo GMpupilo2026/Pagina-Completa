@@ -238,7 +238,7 @@
     publicadoUno: ["Torneo publicado.", "Tournament published."],
     publicadosVarios: ["{n} torneos publicados.", "{n} tournaments published."],
     publicadoEstado: ["Publicado · al día a las {h}", "Published · up to date at {h}"],
-    publicadoAyuda: ["Se pone al día solo cada vez que guardas algo (a los 30 segundos), mientras tengas esta página abierta.", "It updates itself each time you save something (after 30 seconds), while this page is open."],
+    publicadoAyuda: ["Se pone al día solo cada vez que guardas algo (a los pocos segundos), mientras tengas esta página abierta.", "It updates itself a few seconds after you save something, while this page is open."],
     publicarAhora: ["Actualizar ahora", "Update now"],
     publicarAlDia: ["El torneo publicado está al día.", "The published tournament is up to date."],
     publicarQuitar: ["Dejar de publicar", "Stop publishing"],
