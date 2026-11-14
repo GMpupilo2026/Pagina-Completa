@@ -15246,6 +15246,37 @@ dos primeras fichas: «Pareos de la ronda» (`#pareos`) y «Clasificaciones»
 - La línea de arriba termina en la hora («… p. m.»): sin quitar el punto
   doble decía «p. m..»; lo revisa el verificador.
 
+### Los pareos de la ronda se ponen al día solos
+
+Pedido del dueño el 14/11/2026, mirando la ventana «Pareos de la ronda» en el
+celular durante el Tacho Chess 2: «que se actualice en tiempo real». Antes la
+ventana solo volvía a leer al abrirla, y como mucho cada 2 minutos.
+
+- **Mientras la ventana está abierta y la pestaña a la vista**, cada 15 s
+  `js/torneo-pareos.js` pregunta `TorneoPareoDatos.cambio()`: pide de
+  `pareo_publicados` solo `id, actualizado` de los torneos ya leídos (unos
+  bytes) y, si alguna hora cambió, `CentroamericanoVivo.pedir(true)` los lee
+  enteros (el `true` se salta la espera de 2 minutos). Cada 2 minutos la
+  lectura es entera igual, por si se publicó otro torneo. Al volver a la
+  pestaña (el celular desbloqueado) revisa en el acto.
+- **Por qué no Realtime**: Pareo publica 30 s después de anotar el resultado
+  (`ESPERA_PUBLICAR` en `js/pareo/pagina.js`), así que un aviso al instante no
+  gana casi nada; meter `pareo_publicados` a Realtime pedía migración, su
+  política de dos pasos y que Realtime revise la RLS por cada familia
+  conectada (ver «Realtime escucha solo lo que la pantalla muestra» en
+  `sitio-e-infraestructura.md`). La pregunta liviana es una lectura pública
+  diminuta, y solo con la ventana abierta.
+- Sin Pareo (los torneos de chess-results, por la Edge Function) no hay
+  pregunta liviana: solo la lectura entera cada 2 minutos, como antes, para no
+  martillar chess-results.
+- Debajo de las mesas: «Se pone al día sola mientras la tienes abierta:
+  revisado a las …», fuera de la región `aria-live` para que el lector de
+  pantalla no repita todo el pareo cada 15 s. Las mesas se vuelven a pintar
+  (y se anuncian) solo cuando llegan datos nuevos.
+- `verificar-tacho-chess.js` lo prueba con el reloj de Playwright: sin cambios
+  pide solo `id, actualizado`; con un resultado nuevo en el doble, la mesa
+  cambia sin tocar nada.
+
 ### Pareo abierto dentro de la página de un torneo
 
 Pedido del dueño el 13/11/2026, viendo la página pública de Pareo abierta

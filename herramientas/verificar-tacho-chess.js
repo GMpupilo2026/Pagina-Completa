@@ -120,12 +120,15 @@ const MOMENTOS = [
 function doble(datos) {
   return `(function(){
   const D = ${JSON.stringify(datos)};
+  // Para que la prueba cambie un torneo «en Pareo» y vea qué se pidió.
+  window.__dobleDatos = D;
+  window.__pedidos = [];
   window.sb = { from(tabla) {
     const filas = (D[tabla] || []).slice();
     const f = [];
     let orden = null;
     const q = {
-      select() { return q; },
+      select(cols) { window.__pedidos.push(tabla + ": " + cols); return q; },
       eq(c, v) { f.push((r) => r[c] === v); return q; },
       in(c, vs) { f.push((r) => vs.includes(r[c])); return q; },
       gte(c, v) { f.push((r) => r[c] >= v); return q; },
@@ -155,7 +158,7 @@ const VIEJO = { id: "33333333-3333-4333-8333-333333333333", nombre: "Tacho Chess
 const FALSO = { id: "44444444-4444-4444-8444-444444444444", nombre: "Tacho Chess 2 (falso)", creado: "2026-11-13T16:00:00Z", organizador_id: "org-falsa", datos: conJugadores(["Eva Cinco"], "Primer grado") };
 const OTRO = { id: "55555555-5555-4555-8555-555555555555", nombre: "Abierto de Noviembre", creado: "2026-11-13T16:00:00Z", organizador_id: "org-liceo", datos: conJugadores(["Fer Seis"], "Primer grado") };
 
-async function fichaResultados(nav, publicados) {
+async function fichaResultados(nav, publicados, reloj) {
   const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble({ pareo_organizadores: ORGS, pareo_publicados: publicados }) }));
   await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
@@ -163,6 +166,7 @@ async function fichaResultados(nav, publicados) {
   const p = await ctx.newPage();
   const errores = [];
   p.on("pageerror", (e) => errores.push(String(e)));
+  if (reloj) await p.clock.install();
   await p.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
   await p.waitForTimeout(400);
   const f = await p.evaluate(() => { const e = document.getElementById("ficha-resultados"); return { tag: e.tagName, href: e.getAttribute("href"), ventana: e.dataset.ventana || "", texto: e.textContent.replace(/\s+/g, " ").trim(),
@@ -295,7 +299,7 @@ async function fichaResultados(nav, publicados) {
         rondas: [{ mesas: [{ b: "a", n: "d", r: "1-0" }, { b: "e", n: "b", r: "=" }, { b: "c", n: "f", r: "0-1" }, { b: "g", n: null, r: null }], ausencias: {} },
           { mesas: [{ b: "f", n: "a", r: null }, { b: "b", n: "g", r: "1-0" }, { b: "d", n: "c", r: null }, { b: "e", n: null, r: null }], ausencias: {} }],
         resumen: [["a", 1, 1], ["f", 2, 1], ["g", 3, 1], ["b", 4, 0.5], ["e", 5, 0.5], ["c", 6, 0], ["d", 7, 0]].map(([id, puesto, puntos]) => ({ id, puesto, puntos, rondas: 1 })) };
-      const r = await fichaResultados(nav, [Object.assign({}, T1, { datos }), Object.assign({}, FALSO, { datos })]);
+      const r = await fichaResultados(nav, [Object.assign({}, T1, { datos, actualizado: "2026-11-14T15:00:00Z" }), Object.assign({}, FALSO, { datos })], true);
       const buscar = async (n) => { await r.p.fill("#buscador-nombre", n); await r.p.waitForTimeout(500);
         return r.p.evaluate(() => ({ estado: document.getElementById("buscador-estado").textContent, tarjetas: [...document.querySelectorAll("#buscador-resultados > li")].map((l) => l.innerText.replace(/\s+/g, " ")) })); };
       const ana = await buscar("Ana");
@@ -324,6 +328,21 @@ async function fichaResultados(nav, publicados) {
       ok("«Pareos de la ronda» abre solo el pareo: cuántas van terminadas, sin el punto doble", pa.abierta && /^Ronda 2 de 7: 1 de 3 partidas terminadas\. Leído en Pareo Integral: .+ [ap]\. m\.$/.test(pa.estado) && !/\.\.$/.test(pa.estado), pa.estado);
       ok("cada mesa: la de la sala, blancas y negras escritas con su nivel, y el resultado o «Se juega»; el bye dice que descansa",
         pa.mesas.length === 4 && /^Mesa 3 BLANCAS Fer Seis Segundo grado NEGRAS Ana Uno Primer grado Se juega$/i.test(pa.mesas[0]) && /1 - 0$/.test(pa.mesas[1]) && /^Mesa 6 BLANCAS Eva Cinco Segundo grado Descansa: bye de un punto\. Bye$/i.test(pa.mesas[3]), JSON.stringify(pa.mesas));
+      // Se pone al día sola con la ventana abierta: sin cambios en Pareo, solo
+      // la pregunta liviana (la hora de actualización, sin los datos); con un
+      // resultado nuevo, la mesa cambia sin tocar nada.
+      const mesa1 = () => r.p.evaluate(() => (document.querySelector("#pareos-contenido .cac-pareo-mesa") || {}).innerText.replace(/\s+/g, " ").trim());
+      await r.p.evaluate(() => { window.__pedidos.length = 0; });
+      await r.p.clock.fastForward(16000);
+      await r.p.waitForTimeout(300);
+      const quieto = await r.p.evaluate(() => ({ pedidos: window.__pedidos.slice(), aldia: (document.querySelector("#pareos .cac-pareo-aldia") || {}).textContent || "" }));
+      ok("con la ventana abierta y nada nuevo en Pareo, cada 15 s pregunta solo la hora de actualización (no se baja los datos) y dice cuándo revisó",
+        JSON.stringify(quieto.pedidos) === JSON.stringify(["pareo_publicados: id, actualizado"]) && /^Se pone al día sola mientras la tienes abierta: revisado a las .+ [ap]\. m\.$/.test(quieto.aldia) && /Se juega$/.test(await mesa1()), JSON.stringify(quieto));
+      await r.p.evaluate(() => { const t = window.__dobleDatos.pareo_publicados[0]; t.datos.rondas[1].mesas[0].r = "0-1"; t.actualizado = "2026-11-14T15:05:00Z"; });
+      await r.p.clock.fastForward(16000);
+      await r.p.waitForTimeout(300);
+      const m1 = await mesa1();
+      ok("cuando el árbitro anota un resultado en Pareo, la mesa se pone al día sola en la ventana abierta", /^Mesa 3 BLANCAS Fer Seis .* 0 - 1$/i.test(m1), m1);
       await r.p.keyboard.press("Escape");
       await r.p.click('a.cac-ficha[href="#sala"]');
       await r.p.waitForTimeout(400);
