@@ -14936,6 +14936,14 @@ apruebe el árbitro.
   inscripciones), y de sus torneos, el más nuevo con «U12» en el nombre y
   el más nuevo con «U20» (o «U16»). Se lee con la clave anónima:
   `pareo_organizadores` y `pareo_publicados` son de lectura pública.
+- **También cuenta la organización Ajedrez Integral** (verificada): los dos
+  torneos se publicaron ahí («Eliminatoria Cantonal JDN CCDRPZ – U12» y
+  «– U20-U16», el 12/11/2026), no en la ADAPZ, y la ventana decía que la
+  inscripción «todavía no está abierta» con los torneos ya recibiendo
+  inscripciones. El dueño eligió aceptarla en el código antes que mover los
+  torneos. Como Ajedrez Integral publica otros torneos (Tacho Chess…), de
+  ella cuentan solo los que dicen «JDN» y «PZ», «CCDRPZ» o «Pérez Zeledón»
+  (`ES_JDN_PZ`): un «U12» más nuevo de otro torneo no se cuela.
 - **La categoría por el año de nacimiento**, como las bases: U12 de 2015 a
   2020, U16 de 2011 a 2014 y U20 de 2007 a 2010; la U16 juega en el torneo
   U20. La categoría va con la rama («U16 Femenino»), para los premios por

@@ -5,7 +5,9 @@
  * y U20 (con la U16), publicados por la organización ADAPZ. Este módulo:
  *
  * 1. ENCUENTRA LOS DOS TORNEOS SOLO, sin tocar el código: la organización
- *    de Pareo Integral que se llama como la ADAPZ y tiene el sello
+ *    de Pareo Integral que se llama como la ADAPZ (o la de Ajedrez Integral,
+ *    y de ella solo los torneos que dicen «JDN» y «PZ», «CCDRPZ» o «Pérez
+ *    Zeledón») y tiene el sello
  *    «Organizador verificado» (lo pone solo administración: así nadie la
  *    suplanta creando otra con el mismo nombre), y de sus torneos, el más
  *    nuevo con «U12» en el nombre y el más nuevo con «U20» (o «U16»). Lo lee
@@ -37,6 +39,11 @@
   const $ = (id) => document.getElementById(id);
   // La organización: su nombre en Pareo, sin tildes ni mayúsculas.
   const ORGANIZACION = /\badapz\b|asociacion deportiva de ajedrez de perez zeledon/;
+  // La de Ajedrez Integral (también verificada): ahí se publicaron los dos
+  // torneos de la eliminatoria (el 12/11/2026). Como publica otros torneos
+  // (Tacho Chess…), de ella cuentan solo los que dicen JDN y Pérez Zeledón.
+  const PROPIA = /^ajedrez integral$/;
+  const ES_JDN_PZ = (n) => /\bjdn\b/.test(n) && /\b(ccdrpz|pz|perez zeledon)\b/.test(n);
   // Las categorías de las bases: [nombre, año desde, año hasta, torneo].
   const CATEGORIAS = [["U12", 2015, 2020, "U12"], ["U16", 2011, 2014, "U20"], ["U20", 2007, 2010, "U20"]];
   const TORNEOS = { U12: /\b(u|sub)[\s-]?12\b/, U20: /\b(u|sub)[\s-]?(20|16)\b/ };
@@ -64,13 +71,16 @@
     if (!sb) throw new Error("sin cliente");
     const { data: orgs, error: e1 } = await sb.from("pareo_organizadores").select("id, nombre").eq("verificado", true);
     if (e1) throw e1;
-    const ids = (orgs || []).filter((o) => ORGANIZACION.test(sinTildes(o.nombre))).map((o) => o.id);
+    const adapz = (orgs || []).filter((o) => ORGANIZACION.test(sinTildes(o.nombre))).map((o) => o.id);
+    const propia = (orgs || []).filter((o) => PROPIA.test(sinTildes(o.nombre).trim())).map((o) => o.id);
+    const ids = adapz.concat(propia);
     if (!ids.length) return;
-    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, inscripcion:datos->inscripcion")
+    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, organizador_id, inscripcion:datos->inscripcion")
       .in("organizador_id", ids).order("creado", { ascending: false }).range(0, 199);
     if (error) throw error;
     for (const t of data || []) {
       const n = sinTildes(t.nombre);
+      if (!adapz.includes(t.organizador_id) && !ES_JDN_PZ(n)) continue;
       for (const k of Object.keys(TORNEOS)) if (!torneos[k] && TORNEOS[k].test(n)) torneos[k] = t;
     }
   }
