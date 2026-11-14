@@ -2524,16 +2524,94 @@ simplificado para grupos de clase y no se tocó.
 - El Elo de un rival sin Elo cuenta como 0 en ARO, TPR y compañía: la ayuda de
   la página pide el Elo de todos para usarlos.
 
-### Nada sale del navegador
+### Nada sale del navegador (salvo lo que se activa)
 
 El torneo vive en `localStorage` (`pareo_lista_v1`, `pareo_torneo_v1_<id>`) y
-en los archivos que baja quien organiza (`.json` y TRF). No hay cuenta, ni
-base, ni consentimiento que pedir: los datos de los jugadores no salen de la
-computadora (el verificador lo comprueba: ni una petición a otro origen). **El
-día que se publique un torneo en línea** (emparejamientos y resultados con un
-enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
-de quien organiza), la casilla de consentimiento y su mención en
-`privacidad.html`.
+en los archivos que baja quien organiza (`.json` y TRF). Sin activar nada, los
+datos de los jugadores no salen de la computadora (el verificador lo
+comprueba: ni una petición a otro origen, salvo la publicación). Lo que sí
+sale se activa aparte, con su consentimiento y su mención en
+`privacidad.html`: la publicación en «Torneos en Pareo Integral» y, desde
+noviembre de 2026, guardar los torneos en la cuenta (abajo).
+
+### Pareo Integral: los torneos en la cuenta
+
+El dueño lo pidió en noviembre de 2026: «todo lo que haga dentro de mi usuario
+en las herramientas… si yo me meto en otra computadora, se carga toda esa
+información». No era así: el usuario solo abría el candado de la licencia, y
+en otra computadora (u otro navegador) «Mis torneos» salía vacío. Las vías
+que había (el `.json`, «Pasar el evento a otra computadora», el código de la
+organización) son a mano.
+
+**Es opcional y pide consentimiento.** Los torneos traen nombres y fechas de
+nacimiento de menores, y hasta ahora no salían de la computadora. En «Mis
+torneos», `#pi-nube` ofrece «Guardar mis torneos en mi cuenta» (botón con
+`aria-expanded`), explica qué se guarda y pide la casilla con el enlace a
+`privacidad.html`; sin marcarla no se activa. La aceptación queda en
+`pareo_nube_cuentas` (`consentido_en`), una vez por cuenta: en otra
+computadora ya no se vuelve a preguntar.
+
+**La base** (migración `pareo_nube`):
+- `pareo_nube_torneos (dueno, id)`: el mismo id del navegador y el torneo
+  entero en `datos` (el mismo JSON de `localStorage`). Solo la cuenta dueña lo
+  lee y escribe (RLS con `(select auth.uid())`); **tampoco administración**:
+  son datos de terceros que esa persona organiza, como lo que tenía en su
+  computadora. Escribir pide además la fila de consentimiento y la licencia
+  (`tengo_herramienta('pareo')`); leer lo propio, no: si la licencia vence, sus
+  torneos se le siguen pudiendo bajar.
+- Las funciones (`pareo_nube_estado`, `_activar`, `_apagar(p_borrar)`,
+  `_lista`, `_traer(ids)` de a 20, `_guardar`, `_borrar`) son SECURITY
+  INVOKER: decide la RLS. `_lista` devuelve un solo `jsonb` (sin los torneos):
+  PostgREST no lo corta en 1000.
+- **Cada torneo lleva `version`.** Quien guarda dice sobre cuál trabajó; si otra
+  computadora guardó antes, la base contesta `conflicto` en vez de pisarla.
+- **Quitar un torneo deja la marca `borrado`** (sin datos): las demás
+  computadoras lo quitan también y no lo vuelven a subir. «Archivar torneos»
+  es quitar: también se quitan de la cuenta (quedan en el archivo bajado).
+- No va en la bitácora de auditoría (no reparte permisos, accesos ni dinero) y
+  se borra con la cuenta.
+
+**La página** (`js/pareo/nube.js`):
+- Todo lo que toca un torneo pasa por `escribir()`/`quitar()` de `pagina.js`, y
+  ahí se avisa a la nube (`avisarNube`): un solo enganche, no uno por cada
+  lugar que guarda (son más de veinte). Se anota «por subir» y se sube todo
+  junto 3 segundos después. Lo que llega de la cuenta se escribe por otro
+  lado (`nubeLocal`), para no volver a subirlo.
+- Al abrir la página, al volver a la pestaña (como mucho cada 20 s), al
+  recuperar la conexión y con «Revisar ahora» se compara la lista de la cuenta
+  con la del navegador: lo más nuevo de la cuenta se baja, lo de aquí se sube y
+  lo quitado en otra computadora se quita.
+- **Nunca se pierde lo anotado.** Si un torneo se cambió aquí y en otra
+  computadora a la vez, queda la versión de la cuenta y lo de aquí se guarda
+  como otro torneo, «(copia de esta computadora)», que también sube. Si las
+  dos versiones son iguales (dos pestañas que subieron lo mismo), no hay
+  copia: se comparan con las claves en orden, porque `jsonb` las reordena.
+- **El torneo abierto se pone al día sin `abrir()`**: `abrir()` apaga el
+  enlace en vivo, y un torneo que se está compartiendo no puede cortarse
+  porque otra computadora anotó un resultado.
+- **El torneo vacío** que la página crea sola al arrancar no se sube (cada
+  computadora nueva llenaría la cuenta de vacíos), y se quita cuando llegan
+  los de la cuenta.
+- **Cada navegador queda unido a una cuenta** (`pareo_nube_v1`: cuenta,
+  versión conocida de cada torneo, lo que falta subir o quitar, y los
+  excluidos). Una computadora que ya tenía torneos pregunta antes de subirlos
+  («Guardarlos en mi cuenta» / «Dejarlos solo aquí»): puede ser compartida.
+  Si entra otra cuenta, no se le suben los torneos de la primera: lo dice y
+  ofrece pasar el navegador a la suya.
+- Sin internet, lo cambiado queda anotado y sube al volver. Apagarlo deja de
+  subir y pregunta si se borran las copias de la cuenta; las de cada
+  navegador se quedan. Al apagarlo se guarda la versión que se conocía, para
+  que al volver a activarlo lo cambiado mientras tanto suba sin chocar.
+- Sin `window.sb` con `auth` y `rpc` (el doble de Realtime de las demás
+  pruebas) no hace nada.
+
+Lo prueba `verificar-pareo-nube.js` (con un doble de la base en Node que
+comparten varias «computadoras», cada una un contexto con su `localStorage`):
+consentimiento, subir, bajar en otra computadora, conflicto con copia,
+borrado, la computadora que pregunta, otra cuenta y apagar. Rompiendo el
+aviso de `escribir()` a la nube, salta. Lo que hace cumplir la base (solo la
+dueña ve lo suyo; sin consentimiento o sin licencia no acepta torneos) se
+comprobó impersonando roles en SQL.
 
 ### El manual y la línea de comandos
 
