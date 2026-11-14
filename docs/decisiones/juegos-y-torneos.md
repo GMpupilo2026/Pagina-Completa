@@ -11601,6 +11601,70 @@ no existía en la Mesa general (`mesa-arbitro.html`). Ahora la Mesa general la t
   ventana, la casilla y las fotos dentro del PDF y del Word). Rompiendo a propósito el `upsert`, la carpeta, el campo de archivo, la
   hora enviada por la página, el bucket público, un permiso de insert de más o una política de delete, saltan.
 
+## Mesa del árbitro: el reloj y lo que dice el reglamento
+
+El dueño lo pidió el 14/11/2026: dos herramientas nuevas para los árbitros, el **corrector del reloj** y el **asistente
+de incidencias**, dentro de la Mesa del árbitro general (`mesa-arbitro.html`, sección de chess-results) y no en
+páginas aparte. Cada artículo citado se leyó en el texto vigente de las Leyes del Ajedrez de la FIDE (2023,
+`handbook.fide.com/chapter/E012023`), no de memoria.
+
+- **El ritmo del torneo**, arriba de las mesas («Ritmo del torneo: … · Cambiar el ritmo»): tiempo inicial,
+  incremento y, si hay, el segundo período (en la jugada N se suman M minutos). chess-results no lo da en «Enter
+  Results Online», así que lo escribe el árbitro y queda en `localStorage` de ese aparato, por código de torneo
+  (`mesa_arbitro_ritmo_v1`): es una comodidad, no un dato que deba durar. Sin ritmo escrito vale 90 min + 30 s y
+  la página dice «sin confirmar». Si el aparato no deja guardar, vale mientras la página esté abierta.
+  - **La modalidad sale del ritmo, como en las Leyes**: tiempo + 60 × incremento; 10 minutos o menos es blitz
+    (B.1), más de 10 y menos de 60 es rápidas (A.1), y 60 o más, clásico (`MesaArbitro.modalidad`).
+- **La ilegal en rápidas es de 1 minuto, no de 2.** El apéndice A.3 dice que en rápidas «las penalizaciones de los
+  artículos 7 y 9 serán de un minuto en vez de dos», y el B.3 manda el blitz al A.3. `minutosIlegal()` decía 1
+  solo en el blitz (citando el B.3) y 2 en rápidas; se corrigió para las dos. Lo usan también la Mesa del
+  Centroamericano (su Rápido ya terminó) y su texto de configuración. La Mesa general ya no dice «2 minutos» fijo:
+  sale del ritmo. En rápidas y blitz, el aviso recuerda el A.5.2 (sin un árbitro cada pocas mesas, solo se
+  corrige si el rival todavía no hizo la jugada siguiente). **Lo que no se cubrió**: un blitz jugado con el B.2
+  (un árbitro por partida), donde no rige el A.3 y serían 2 minutos.
+- **«⏱ Reloj» en cada mesa** (`corregirReloj` en la página, `MesaArbitro.corregirReloj` en el módulo). Las Leyes no
+  dan una fórmula: el árbitro pone los tiempos «según su mejor criterio» (6.10.1 con un reloj que falla, 6.10.2
+  con uno mal programado). La página da un número con las cuentas a la vista, y el árbitro lo cambia si su criterio
+  es otro. Cuatro casos:
+  - **No sumó el segundo período**: se suma solo a quien ya completó esa jugada; si nadie la completó, se dice.
+    Avisa corregir también el contador de jugadas.
+  - **El incremento no estaba puesto**: el incremento por cada jugada completada de cada uno.
+  - **Se programó otro ritmo**: la diferencia del tiempo inicial más la del incremento por las jugadas de cada uno.
+    Si con el ritmo correcto el tiempo quedaría en negativo, se dice que lo decide el árbitro (sale 0:00).
+  - **Se apagó o no se puede leer**: lo hace `relojApagado` (el mismo del Centroamericano) desde la hora de inicio
+    de la ronda: el total es exacto (mientras se juega siempre anda un reloj) y se reparte mitad y mitad, o se
+    respeta lo que todavía se lee en un reloj. Las primeras ilegales y las sanciones de tiempo de esa mesa, de la
+    bitácora (`bonosDeMesa`), y el segundo período entran como tiempo sumado.
+  - Lo que se pone se anota como **`incidencia`** de la mesa, con el artículo (6.10.1 o 6.10.2) y el texto «Reloj
+    corregido (…): blancas …, negras …, con N y M jugadas completadas.»; si el árbitro cambió el número, dice
+    también lo que daba el cálculo. **No se tocó la base**: `incidencia` ya existía y no pide color.
+- **La irregularidad orienta antes de anotar.** Al elegir el tipo, un segundo cuadro muestra lo que dicen las Leyes
+  de ESA irregularidad (`REGLAS_IRREGULARIDAD`), si es la primera de ese jugador en la partida o cuántas lleva (con
+  una anterior recuerda el 11.7: negarse una y otra vez a cumplir las Leyes hace perder), y la sanción ya elegida:
+  la que dicen las Leyes (el celular: pierde, 11.3.2.2) o la más suave cuando la dejan al árbitro. La lista de
+  sanciones sigue el 12.9: sin sanción, advertencia, ±1 o ±2 minutos (las del Centroamericano, escritas con
+  `sancionTexto` para que el reloj que se apaga las vuelva a leer), pierde la partida y «Otra» (la de las bases).
+  - **Si pierde**, propone el resultado en el desplegable sin guardarlo, como la segunda ilegal, y lo dice. Si la
+    mesa ya tiene resultado, no lo toca.
+  - **Con una sanción de tiempo**, avisa ajustar el reloj en ese momento.
+  - La planilla en rápidas o blitz dice que no es irregularidad (A.2) y viene «Sin sanción».
+  - **«Ofreció tablas» llevaba el artículo 9.2**, que es la triple repetición; ofrecer tablas es el 9.1.2.1. Se
+    corrigió en `TIPOS_IRREGULARIDAD` (lo comparten las dos Mesas; la clave de Pareo no usaba el 9.2).
+- **«Consultar sin anotar»**, en la bitácora: «Corregir un reloj» (los mismos cálculos, con un solo botón «Listo»)
+  y «Lo que dice el reglamento». Sirve a un árbitro auxiliar que solo quiere confirmar una regla.
+- **Una sola copia.** El control de tiempos (`leerTiempo`, `ponerDosPuntos`, `formatoTiempo`, `tiempoEnPalabras`),
+  el reloj que se apaga (`relojApagado` y sus ayudantes) y la sanción de tiempo (`SANCIONES_TIEMPO`,
+  `sancionTexto`, `leerSancion`) se mudaron de `js/centroamericano-mesas.js` a `js/mesa-arbitro.js`, como antes las
+  ilegales; el Centroamericano los toma de ahí con el mismo nombre. `verificar-mesa-arbitro.js` comprueba que sean
+  las MISMAS funciones (`===`).
+- **Lo que NO hace**: no está en la sección de Pareo Integral (`js/mesa-arbitro-pareo.js`), cuyas incidencias van
+  al árbitro principal con la clave de Pareo; no lee el ritmo de chess-results; y no corrige un reloj sin la hora
+  de inicio cuando se apagó.
+- Lo prueban `verificar-mesa-arbitro.js` (los cuatro casos con sus cuentas, la modalidad, los minutos de la ilegal,
+  `bonosDeMesa`, las reglas y las sanciones escritas) y `verificar-mesa-arbitro-pagina.js` («El ritmo, el reloj y lo
+  que dice el reglamento», con la hora fija). Rompiendo a propósito el minuto de rápidas o la propuesta del
+  resultado al perder, saltan; también `verificar-centroamericano-modo-rapido.js` con el minuto.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

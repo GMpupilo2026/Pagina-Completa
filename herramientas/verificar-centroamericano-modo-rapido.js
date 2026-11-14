@@ -64,7 +64,7 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
     igual("por el nombre: Rápido, Rápidas, Rapid y Blitz; el clásico, no", ["Rápido Sub-10 Absoluto", "Rápidas Sub-12 Femenino", "Rapid Sub-8 Absoluto", "Blitz Sub-14 Femenino", "BLITZ sub-16", "Sub-10 Absoluto", "PRUEBA grupo A", "Sub-18 Femenino"].map((n) => C.ritmoRapido(n)),
         ["rapido", "rapido", "rapido", "blitz", "blitz", null, null, null]);
     igual("el `ritmo` de la base manda sobre el nombre", [C.ritmoRapido("Sub-10 Absoluto", "blitz"), C.ritmoRapido("Sub-10 Absoluto", "rapido"), C.ritmoRapido("Sub-10 Absoluto", "clasico")], ["blitz", "rapido", null]);
-    igual("la primera ilegal: 2 minutos; en el blitz, 1 (apéndice B.3)", [C.minutosIlegal(null), C.minutosIlegal("rapido"), C.minutosIlegal("blitz"), C.avisoIlegal(1, "Ana", "blancas", 1).texto.includes("dale 1 minuto más"), C.avisoIlegal(1, "Ana", "blancas").texto.includes("dale 2 minutos más")], [2, 2, 1, true, true]);
+    igual("la primera ilegal: 2 minutos en clásico; en rápidas y blitz, 1 (apéndice A.3, y B.3 lo manda al A.3)", [C.minutosIlegal(null), C.minutosIlegal("rapido"), C.minutosIlegal("blitz"), C.avisoIlegal(1, "Ana", "blancas", 1).texto.includes("dale 1 minuto más"), C.avisoIlegal(1, "Ana", "blancas").texto.includes("dale 2 minutos más")], [2, 1, 1, true, true]);
 
     const browser = await chromium.launch();
 
@@ -169,7 +169,7 @@ const rapidos = (p, mesa) => p.$$eval('.cam-mesa[data-mesa="' + mesa + '"] .cam-
     await r.ctx.close();
 
     r = await abrir(browser, doble("Sub-10 Femenino", "rapido"), "dark");
-    igual("con `ritmo: rapido` de la base también se enciende (Rápido, 2 minutos)", await r.p.evaluate(() => [document.getElementById("titulo-torneo").textContent, document.getElementById("regla-minutos").textContent, document.querySelectorAll(".cam-rapido-btn").length]), ["Sub-10 Femenino · Rápido", "2 minutos", 9]);
+    igual("con `ritmo: rapido` de la base también se enciende (Rápido, 1 minuto: apéndice A.3)", await r.p.evaluate(() => [document.getElementById("titulo-torneo").textContent, document.getElementById("regla-minutos").textContent, document.querySelectorAll(".cam-rapido-btn").length]), ["Sub-10 Femenino · Rápido", "1 minuto", 9]);
     await r.p.click("#aprobar-paso");
     await r.p.waitForFunction(() => document.getElementById("lista-previa").hidden);
     if (process.env.CAPTURA) await r.p.screenshot({ path: process.env.CAPTURA + "-rapido-oscuro.png", fullPage: true });
