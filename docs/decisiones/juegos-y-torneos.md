@@ -17575,8 +17575,9 @@ lo que anotan los adjuntos lo **acepte el Pareo del principal** (como hoy con lo
 - **La cara neutra**: las mismas páginas con `html[data-marca="ajedrez-integral"]` (colores de la marca, sin hojas,
   mascota ni píldora; `css/centroamericano.css`). La pone la organización cuando ningún torneo a la vista es de un
   evento con `centroamericano_eventos.marca = 'centroamericano'`, y la tablet con la `marca` que le da `leer`. En
-  esa cara no salen Fair Play, la transmisión ni los horarios del Centroamericano, y el vencimiento por omisión es
-  «Hasta el día…» (el viejo «al terminar el torneo» era el 9/11: un enlace nuevo nacía vencido).
+  esa cara no salen los horarios del Centroamericano, y el vencimiento por omisión es
+  «Hasta el día…» (el viejo «al terminar el torneo» era el 9/11: un enlace nuevo nacía vencido). Fair Play y la
+  transmisión sí salen desde el 14/11 (ver «Fair Play y Transmisión en cualquier evento»).
 - «Todas las mesas» y «¿Dónde juega?» muestran ahora solo las categorías del **evento del enlace** (lo pendiente de
   «Cada evento de la Mesa del árbitro tiene dueño»).
 - **Orden de despliegue**: la migración `…_mesa_arbitro_fuente_pareo.sql` se aplica en producción **antes** de
@@ -17586,13 +17587,53 @@ lo que anotan los adjuntos lo **acepte el Pareo del principal** (como hoy con lo
   anota.
 - **Lo que falta** (fase 2): los árbitros de la Mesa en el Centro del evento de Pareo; un toque del servidor (hoy
   entra en 15 s o menos); leer la cola de todas las categorías del evento sin abrir cada torneo; la anulación
-  completa en Pareo; publicar al emparejar si está vinculado; filtrar por fuente en Fair Play, LiveChess y
-  Transmisión; equipos; las cámaras de Notara en la tablet.
+  completa en Pareo; publicar al emparejar si está vinculado; equipos; las cámaras de Notara en la tablet. (Fair Play
+  y Transmisión con la fuente de cada torneo quedaron el 14/11: ver «Fair Play y Transmisión en cualquier evento».)
 
 Lo prueba `verificar-mesa-pareo-fuente.js` (sin navegador: `fuente-pareo.ts` con node, la mesa física y el índice,
 el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que con Pareo no se llame a
 `guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
 propósito el paso de mesa física a índice o el virtual por el canal, salta.
+
+### Fair Play y Transmisión en cualquier evento
+
+Lo pidió el dueño el 14/11/2026, en pleno Tacho Chess 2: en la Mesa del árbitro de un evento que no es el
+Centroamericano (la cara neutra) no salían las pestañas «Fair Play» ni «Transmisión». Se escondían a propósito desde el
+12/11, porque las dos leían solo chess-results y LiveChess y no separaban los eventos. Ahora salen en las dos caras, y
+cada una lee cada torneo de **su fuente**:
+
+- **Fair Play** (`centroamericano-fair-play`, acción `actualizar`): un torneo de Pareo Integral (`esTnrPareo`) no se
+  le pide a chess-results. Sus partidas salen enteras del torneo publicado con `partidasDePareo` de
+  `_compartido/fuente-pareo.ts`, con la forma de las filas de `centroamericano_fp_partidas`: la mesa **física** (la de
+  los enlaces), el resultado escrito como chess-results (`TEXTO_PAREO`: «1 - 0», «½ - ½»…, que es lo que entienden
+  `resultadoDe` y `centroamericano_fp_candidatas`), el Elo (menor que 100 = sin Elo) y el número inicial, que es el
+  puesto en `numeracion` (Pareo lo fija al emparejar la ronda 1; sin numeración queda en null y Fair Play junta por
+  el nombre). Como en Pareo una ronda se puede deshacer, la mesa que ya no está en lo publicado sale de
+  `centroamericano_fp_partidas`. La lista inicial de chess-results (el ID FIDE, para la tendencia) tampoco se pide:
+  Pareo no guarda el ID FIDE (lo cambia por una huella al publicar), así que esos jugadores quedan sin tendencia, sin
+  inventarla. Las partidas para medir siguen saliendo de LiveChess (si la categoría tiene tableros) o de la foto de
+  las planillas.
+- **La ronda de cada categoría** (`centroamericano_fp_rondas`, migración `…_fair_play_rondas_por_evento.sql`): antes
+  era la más alta de TODAS las categorías (en el Centroamericano iban a la par y así una lectura atrasada no dejaba a
+  una en la ronda anterior); con dos eventos a la vez uno le prestaba su ronda al otro. Ahora el máximo es dentro de
+  cada evento, y un torneo de Pareo lleva **su** ronda (cada categoría de una sala empareja a su ritmo). Una
+  categoría sin ninguna ronda emparejada no sale en la pantalla de Fair Play (la ronda 0 no se sortea).
+- **Transmisión** (`centroamericano-transmision`): entran solo las categorías con tableros, **sin archivar y con algún
+  árbitro con enlace vigente**, como en Fair Play. Antes entraba toda categoría con tableros cargados, y el
+  Centroamericano (que no está archivado y tiene sus tableros) se habría mezclado con el evento de hoy. Los
+  emparejamientos ya salían de la lectura compartida, que con Pareo llena el torneo publicado. La función devuelve
+  el `evento` (el de la mayoría de las categorías) y la pantalla lo pone en el informe en PDF y en el mensaje del QR,
+  que decían «Centroamericano 2026».
+- **El QR del encargado de transmisión nacía vencido**: vencía el 10/11 (el final del Centroamericano), escrito en el
+  código. Ahora dura 10 días desde que se crea, como el de Fair Play.
+- Los textos de Fair Play que nombraban chess-results («Leer chess-results ahora», «chess-results leído a las…») dicen
+  «los emparejamientos», que vale para las dos fuentes.
+
+Las páginas sueltas de los encargados (`centroamericano-fair-play.html`, `centroamericano-transmision.html`) siguen con
+la cara del Centroamericano: lo que cambia es lo que leen, no cómo se ven. Lo prueban `verificar-mesa-pareo-fuente.js`
+(`partidasDePareo` con node y que las funciones no le pregunten a chess-results por un torneo de Pareo) y
+`verificar-centroamericano-mesas-fuente-nombre.js` (las dos pestañas se ven en las dos caras, medido con
+`checkVisibility()`). Roto a propósito el `hidden` de la cara neutra, salta.
 
 ### La portada de "Mis mesas" según el torneo
 

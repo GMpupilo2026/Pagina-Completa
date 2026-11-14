@@ -51,6 +51,20 @@ ok(/"centroamericano-mesa": \[[^\]]*"fuente-pareo\.ts"[^\]]*"pareo-adjuntos\.ts"
 ok(/"pareo-publicar": \[[^\]]*"pareo-adjuntos\.ts"/.test(armar), "pareo-publicar lleva pareo-adjuntos.ts (una sola copia de limpiarEnvio)");
 ok(!fs.existsSync(path.join(RAIZ, "supabase/functions/pareo-publicar/adjuntos.ts")), "no quedó la copia vieja de adjuntos.ts");
 
+console.log("Fair Play y Transmisión con torneos de Pareo:");
+const fpFn = leer("supabase/functions/centroamericano-fair-play/index.ts");
+const actualizar = (fpFn.match(/async function actualizar[\s\S]*?\n}\n/) || [""])[0];
+ok(/partidasDePareo\(pub\.datos\)/.test(actualizar) && /esTnrPareo\(r\.tnr\)/.test(actualizar), "Fair Play lee los torneos de Pareo desde lo publicado (partidasDePareo)");
+ok(/for \(const r of rondas\.filter\(\(x\) => !esTnrPareo\(x\.tnr\)\)\)/.test(actualizar), "Fair Play nunca le pide a chess-results un torneo de Pareo");
+ok(/leerFide\(servicio, rondas\.filter\(\(r\) => !r\.prueba && !esTnrPareo\(r\.tnr\)\)/.test(actualizar), "ni la lista inicial de chess-results (el ID FIDE)");
+ok(/"centroamericano-fair-play": \[[^\]]*"fuente-pareo\.ts"[^\]]*\]/.test(armar), "centroamericano-fair-play lleva fuente-pareo.ts");
+const txFn = leer("supabase/functions/centroamericano-transmision/index.ts");
+ok(/!t\.prueba && !t\.archivado/.test(txFn) && /conTableros\.filter\(\(t\) => enJuego\.has\(t\.tnr\)\)/.test(txFn), "Transmisión solo trae categorías sin archivar y con árbitros (no mezcla otro evento)");
+const migFp = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => f.endsWith("_fair_play_rondas_por_evento.sql"));
+ok(migFp.length === 1 && /case when c\.de_pareo then c\.r else max\(c\.r\) over \(partition by c\.prueba, c\.evento\) end/.test(leer("supabase/migraciones/" + migFp[0])), "la ronda de Fair Play es la de cada evento, y la de cada torneo de Pareo");
+const tx = leer("js/centroamericano-transmision.js");
+ok(!/2026-11-10T05:59:59Z/.test(tx) && /VENCE_DIAS \* 864e5/.test(tx), "el QR del encargado de transmisión no nace vencido (10 días desde hoy)");
+
 console.log("El Pareo del principal:");
 const pagina = leer("js/pareo/pagina.js");
 ok(/recibirDeAdjunto\(quien, d, virtual\)/.test(pagina) && /recibirNotaDeAdjunto\(quien, d, virtual\)/.test(pagina), "leerCola pasa el adjunto virtual de las filas de la Mesa");

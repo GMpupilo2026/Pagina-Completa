@@ -141,7 +141,7 @@
         ctx.raiz.replaceChildren(...[ // sin la sección de los QR (solo del principal): un null suelto se pintaría como texto
             el("div", { class: "cam-fp-barra" },
                 el("p", { id: "fp-estado", class: "text-sm", role: "status" }),
-                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results ahora")),
+                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer los emparejamientos ahora")),
 
             el("section", { id: "fp-novedades-caja", class: "cam-fp-novedades", "aria-labelledby": "fp-t-novedades", hidden: true },
                 el("div", { class: "cam-fp-barra" },
@@ -325,7 +325,7 @@
 
     function pintar() {
         const d = datos;
-        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results leído a las " + hora(d.actualizado) : "Todavía no se leyó chess-results");
+        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "emparejamientos leídos a las " + hora(d.actualizado) : "Todavía no se leyeron los emparejamientos");
         const sel = $("fp-categoria"), antes = sel.value;
         sel.replaceChildren(el("option", { value: "", texto: "Todas las categorías (" + d.rondas.length + ")" }),
             ...d.rondas.map((r) => el("option", { value: r.tnr, texto: r.nombre + " — ronda " + r.ronda })));
@@ -588,7 +588,7 @@
     }
 
     // Una revisión ya hecha sin sorteo (las de las rondas 1 y 2): primero la categoría, la ronda y la mesa; después, con
-    // los dos jugadores de esa mesa leídos de chess-results, a quién se revisó, cómo terminó y qué pasó.
+    // los dos jugadores de esa mesa leídos de los emparejamientos (chess-results o Pareo Integral), a quién se revisó, cómo terminó y qué pasó.
     async function anotarAMano() {
         if (!datos || !datos.rondas.length) { avisar("No hay categorías con árbitros.", true); return; }
         const tope = Math.max(...datos.rondas.map((r) => r.ronda));
@@ -619,7 +619,7 @@
             { nombre: "nota", etiqueta: "Qué pasó (obligatorio si no fue «Sin novedad»)", tipo: "textarea", valor: "", max: 500 });
         const b = await Avisos.formulario({
             titulo: nombreDe(a.tnr) + ", ronda " + ronda + ", mesa " + mesa,
-            texto: pareo ? "Los jugadores salen de los emparejamientos de chess-results." : "No se encontraron los emparejamientos de esa mesa: escribe el nombre como aparece en chess-results.",
+            texto: pareo ? "Los jugadores salen de los emparejamientos." : "No se encontraron los emparejamientos de esa mesa: escribe el nombre como aparece en los emparejamientos.",
             campos, aceptar: "Guardar la revisión",
         });
         if (!b) return;
@@ -651,7 +651,7 @@
         if (aMano) $("fp-actualizar").disabled = true;
         try {
             const r = await llamar("actualizar");
-            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de chess-results." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
+            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de los emparejamientos." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
         } catch (e) { if (aMano) avisar("No se pudo leer: " + (e.message || e), true); }
         finally { if (aMano) $("fp-actualizar").disabled = false; await cargar(); }
     }

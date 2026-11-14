@@ -7,6 +7,11 @@
 // (js/centroamericano-transmision.js, con chess.js): acá solo se juntan los datos.
 // Ver «El encargado de transmisión (Centroamericano)» en docs/decisiones/juegos-y-torneos.md.
 //
+// Sirve a cualquier evento de la Mesa del árbitro: entran las categorías con tableros, sin archivar y con algún árbitro
+// con enlace vigente. Los emparejamientos son los de la lectura compartida (centroamericano_lecturas), que llena
+// chess-results o, en un torneo de Pareo Integral, el torneo publicado (fuente-pareo.ts). Ver «Fair Play y Transmisión
+// en cualquier evento».
+//
 // verify_jwt en FALSE (como centroamericano-fair-play): el encargado no trae JWT. La función decide sola:
 //   - con {token}: un enlace de centroamericano_tx_enlaces que no se apagó ni venció; o
 //   - sin token: el JWT de quien llama y tengo_herramienta('mesa-arbitro') (la pestaña «Transmisión» del principal).
@@ -176,11 +181,20 @@ Deno.serve(async (req) => {
     if (accion === "leer") {
       const [{ data: lcs }, { data: torneos }, { data: lecturas }] = await Promise.all([
         servicio.from("centroamericano_livechess").select("tnr, torneo_id, tableros"),
-        servicio.from("centroamericano_torneos").select("tnr, nombre, orden, prueba").order("orden"),
+        servicio.from("centroamericano_torneos").select("tnr, nombre, orden, prueba, archivado, evento").order("orden"),
         servicio.from("centroamericano_lecturas").select("tnr, ronda, mesas, leida"),
       ]);
-      const conLc = (torneos ?? []).filter((t: { tnr: string; prueba: boolean }) => !t.prueba && (lcs ?? []).some((l: { tnr: string }) => l.tnr === t.tnr));
+      // Las categorías que se juegan AHORA: con tableros, sin archivar y con algún árbitro con enlace vigente (como Fair Play).
+      // Así un evento que ya terminó (el Centroamericano, con sus tableros todavía cargados) no se mezcla con el de hoy.
+      type T = { tnr: string; nombre: string; prueba: boolean; archivado: boolean | null; evento: string | null };
+      const conTableros = ((torneos ?? []) as T[]).filter((t) => !t.prueba && !t.archivado && (lcs ?? []).some((l: { tnr: string }) => l.tnr === t.tnr));
+      const enJuego = new Set((await asignacionesVigentes(servicio, conTableros.map((t) => t.tnr))).map((a) => a.tnr));
+      const conLc = conTableros.filter((t) => enJuego.has(t.tnr));
       const tnrs = conLc.map((t: { tnr: string }) => t.tnr);
+      // El evento (el de la mayoría de las categorías): el informe en PDF y el mensaje del QR lo nombran.
+      const cuenta = new Map<string, number>();
+      for (const t of conLc) if (t.evento) cuenta.set(t.evento, (cuenta.get(t.evento) ?? 0) + 1);
+      const evento = [...cuenta].sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
       const rondas = [...new Set((lecturas ?? []).filter((l: { tnr: string }) => tnrs.includes(l.tnr)).map((l: { ronda: number }) => Number(l.ronda) || 0))];
       const [{ data: cambios }, { data: registro }, { data: atendidas }, { data: completas }, asigs, { data: historial }] = await Promise.all([
         servicio.from("centroamericano_tx_tableros").select("*").in("tnr", tnrs.length ? tnrs : ["-"]).in("ronda", rondas.length ? rondas : [0]),
@@ -204,7 +218,7 @@ Deno.serve(async (req) => {
         const mesasCr = unirMesas((l?.mesas ?? []) as MesaCr[], (completas ?? []).filter((x: { tnr: string; ronda: number }) => x.tnr === t.tnr && x.ronda === ronda));
         const susCambios = ((cambios ?? []) as Cambio[]).filter((c) => c.tnr === t.tnr && c.ronda === ronda);
         const base = { tnr: t.tnr, nombre: t.nombre, ronda, leida_cr: l?.leida ?? null, mesas_cr: mesasCr };
-        if (!ronda) return { ...base, error: "Todavía no se ha leído la ronda de chess-results.", tableros: [] };
+        if (!ronda) return { ...base, error: "Todavía no se ha leído la ronda (de chess-results o de Pareo Integral).", tableros: [] };
         try {
           // deno-lint-ignore no-explicit-any
           const [tor, indice]: any = await Promise.all([lcPedir(lc.torneo_id + "/tournament.json", TORNEO_MS), lcPedir(lc.torneo_id + "/round-" + ronda + "/index.json", INDICE_MS)]);
@@ -241,7 +255,7 @@ Deno.serve(async (req) => {
           return { ...base, error: "No se pudo leer LiveChess: " + ((e as Error).message || e), tableros: [] };
         }
       }));
-      return json({ ok: true, nombre: quien.replace(/ \(transmisión\)$/, ""), principal: !token, leida: Date.now(), categorias,
+      return json({ ok: true, nombre: quien.replace(/ \(transmisión\)$/, ""), principal: !token, leida: Date.now(), evento, categorias,
         atendidas: (atendidas ?? []).map((a: { clave: string; quien: string; en: string }) => a),
         avisados: (historial ?? []).map((h: { clave: string; avisado_en: string; avisado_por: string; avisado_a: string; avisos: string[] }) => ({
           clave: h.clave, en: h.avisado_en, por: h.avisado_por, a: h.avisado_a,
