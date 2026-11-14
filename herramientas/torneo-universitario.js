@@ -450,6 +450,22 @@ function configJs(c) {
     lineas.push("    pareo: { nombre: " + JSON.stringify(t.pareo.nombre) + ", desde: " + JSON.stringify(t.pareo.desde) + " },");
   }
   if (t.ordenGrupos) lineas.push("    ordenGrupos: " + lista1(t.ordenGrupos) + ",");
+  // Dónde está cada mesa en la foto de la sala (js/torneo-sala-foto.js).
+  if (t.mesasSala) {
+    lineas.push("    // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): [número, x, y] en los píxeles de la foto.");
+    lineas.push("    mesasSala: {");
+    lineas.push("      foto: [" + t.mesasSala.foto.join(", ") + "],");
+    lineas.push("      torneos: [");
+    t.mesasSala.torneos.forEach((z) => {
+      lineas.push("        {");
+      lineas.push("          nombre: " + JSON.stringify(z.nombre) + ", color: " + JSON.stringify(z.color) + ", fondo: " + JSON.stringify(z.fondo) + ",");
+      lineas.push("          niveles: " + lista1(z.niveles) + ",");
+      lineas.push("          mesas: [" + z.mesas.map(lista1).join(", ") + "],");
+      lineas.push("        },");
+    });
+    lineas.push("      ],");
+    lineas.push("    },");
+  }
   if (c.hoy) {
     lineas.push("    // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.");
     lineas.push("    hoy: { termino: " + JSON.stringify(c.hoy.termino) + ", gracias: " + JSON.stringify(c.hoy.gracias) + ", final: " + JSON.stringify(c.hoy.final) + " },");
