@@ -1,6 +1,6 @@
 // Lo corre herramientas/verificar-mesa-pareo-fuente.js con `node --experimental-strip-types`: prueba
 // supabase/functions/_compartido/fuente-pareo.ts (la Mesa del árbitro con torneos de Pareo Integral).
-import { lecturaDePareo, indiceDe, fisicaDe, baseDe, filaCola, DE_PAREO, A_PAREO, ARTICULO_PAREO, esTnrPareo } from "../../supabase/functions/_compartido/fuente-pareo.ts";
+import { lecturaDePareo, indiceDe, fisicaDe, baseDe, filaCola, DE_PAREO, A_PAREO, ARTICULO_PAREO, esTnrPareo, partidasDePareo, TEXTO_PAREO } from "../../supabase/functions/_compartido/fuente-pareo.ts";
 import { limpiarEnvio } from "../../supabase/functions/_compartido/pareo-adjuntos.ts";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -46,6 +46,17 @@ const fs = require("node:fs");
 const fuenteMesa = fs.readFileSync(new URL("../../js/mesa-arbitro-pareo.js", import.meta.url), "utf8");
 const enMesa = fuenteMesa.match(/ARTICULO_PAREO = (\{[^}]*\})/);
 igual("ARTICULO_PAREO igual a js/mesa-arbitro-pareo.js", enMesa && JSON.parse(enMesa[1].replace(/'/g, '"')), ARTICULO_PAREO);
+
+console.log("Las partidas para Fair Play (centroamericano_fp_partidas):");
+const conElo = jugadores.map((j, i) => ({ ...j, elo: [1850, 0, 1500, 99, 2100][i] }));
+const fp = partidasDePareo({ jugadores: conElo, mesaInicial: 21, numeracion: ["e", "a", "b", "c", "d"], rondas: [ronda1, { mesas: [{ b: "b", n: "c", r: "=" }, { b: "d", n: "a", r: null }] }] });
+igual("todas las rondas, sin el bye", fp.map((p) => p.ronda + "/" + p.mesa), ["1/21", "1/22", "2/21", "2/22"]);
+igual("la primera, entera", fp[0], { ronda: 1, mesa: 21, snr_b: 2, snr_n: 3, blancas: "Ana Mora", negras: "Beto Solís", elo_b: 1850, elo_n: null, resultado: "1 - 0" });
+igual("tablas como chess-results y sin resultado vacío", [fp[2].resultado, fp[1].resultado], ["½ - ½", ""]);
+igual("Elo menor que 100: sin Elo", fp[1].elo_n, null);
+igual("sin numeración fija: sin número inicial", partidasDePareo({ jugadores, rondas: [ronda1] })[0].snr_b, null);
+igual("por equipos o sin datos: nada", [partidasDePareo({ tipo: "equipos", jugadores, rondas: [ronda1] }).length, partidasDePareo(null).length], [0, 0]);
+igual("TEXTO_PAREO cubre los mismos resultados que DE_PAREO", Object.keys(TEXTO_PAREO).sort(), Object.keys(DE_PAREO).sort());
 
 console.log("La fila de la cola (vía de la Mesa):");
 const a = { id: "00000000-0000-0000-0000-000000000001", arbitro: "Árbitro 1", mesa_desde: 21, mesa_hasta: 25 };

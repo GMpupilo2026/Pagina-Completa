@@ -24,7 +24,7 @@
     const ChessCtor = () => raiz.Chess || (enNode ? require("chess.js").Chess : null);
 
     const LEER_MS = 10000;
-    const VENCE_DEFECTO = "2026-11-10T05:59:59Z";   // el final del torneo, como los enlaces de los árbitros
+    const VENCE_DIAS = 10;                           // un QR de encargado dura 10 días (lo que dura un evento), como el de Fair Play
     const MARGEN_RELOJ = 20;                         // s: lo que el reloj puede no cuadrar con lo registrado
     const DETENIDO_S = 60, DETENIDO_URGENTE_S = 300; // el reloj detenido: a mirar al minuto, urgente a los 5
     const QUIETO_S = 25 * 60;                        // nadie mueve en 25 min
@@ -272,6 +272,8 @@
         return n;
     }
     const avisar = (texto, error) => raiz.Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
+    // El evento de las categorías a la vista (lo dice la función): el informe y el mensaje del QR lo nombran.
+    const eventoTx = () => (datos && datos.evento) || "";
     const horaS = (ms) => raiz.HoraCR.hora(new Date(ms).toISOString(), { hour: "numeric", minute: "2-digit", second: "2-digit" });
 
     async function llamar(accion, cuerpo) {
@@ -581,9 +583,9 @@
             if (!lista.length) bloques.push({ tipo: "parrafo", texto: "Todavía no hubo ningún aviso." });
             bloques.push({ tipo: "nota", texto: "La hora de cada aviso es la primera vez que lo vio una pantalla de transmisión (se lee cada 10 s). «Tardó» va desde ahí hasta «Ya lo revisé»." });
             const blob = await raiz.ReportePDF.generar({
-                titulo: "Informe de la transmisión — Centroamericano 2026",
+                titulo: "Informe de la transmisión" + (eventoTx() ? " — " + eventoTx() : ""),
                 subtitulo: "Al " + raiz.HoraCR.fechaHora(new Date()) + (datos && datos.nombre ? " · lo bajó " + datos.nombre : ""),
-                pie: "Centroamericano 2026 · ajedrez-integral.com · Los tableros electrónicos (LiveChess)",
+                pie: (eventoTx() ? eventoTx() + " · " : "") + "ajedrez-integral.com · Los tableros electrónicos (LiveChess)",
                 bloques, fotos: [],
             });
             const enl = document.createElement("a");
@@ -777,7 +779,7 @@
                     el("p", { class: "cam-fp-detalle", texto: x.ultimo_uso ? "Entró por última vez a las " + raiz.HoraCR.hora(x.ultimo_uso) : "Todavía no ha entrado" }),
                     el("div", { class: "cam-fp-acciones mt-1" },
                         el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => { navigator.clipboard.writeText(url).then(() => avisar("Enlace de " + x.nombre + " copiado.")).catch(() => avisar(url)); } }, "Copiar el enlace"),
-                        el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: "https://wa.me/?text=" + encodeURIComponent("Tu pantalla de transmisión del Centroamericano 2026 (no la compartas): " + url), target: "_blank", rel: "noopener" }, "Mandar por WhatsApp"),
+                        el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: "https://wa.me/?text=" + encodeURIComponent("Tu pantalla de transmisión" + (eventoTx() ? " de " + eventoTx() : "") + " (no la compartas): " + url), target: "_blank", rel: "noopener" }, "Mandar por WhatsApp"),
                         el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "apagar", onclick: () => apagarEnlace(x) }, "Apagar"))),
                 raiz.QrSvg ? raiz.QrSvg.dibujar(url, "QR de transmisión de " + x.nombre, { marca: true }) : null);
         }));
@@ -786,7 +788,7 @@
         e.preventDefault();
         const nombre = $("tx-enlace-nombre").value.trim();
         if (!nombre) return;
-        const { error } = await raiz.sb.from("centroamericano_tx_enlaces").insert({ nombre, vence: VENCE_DEFECTO });
+        const { error } = await raiz.sb.from("centroamericano_tx_enlaces").insert({ nombre, vence: new Date(Date.now() + VENCE_DIAS * 864e5).toISOString() });
         if (error) { avisar("No se pudo crear: " + error.message, true); return; }
         $("tx-enlace-nombre").value = "";
         avisar("Listo: el QR de " + nombre + " está abajo. Con él entra a su pantalla de transmisión, sin cuenta.");

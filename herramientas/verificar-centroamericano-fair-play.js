@@ -531,7 +531,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         e = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64) });
         const p = e.p;
         await p.waitForFunction(() => document.getElementById("fp-categoria") && document.getElementById("fp-categoria").options.length > 1);
-        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results leído a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
+        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · emparejamientos leídos a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
         igual("las categorías con su ronda, sin las de ensayo", await p.$$eval("#fp-categoria option", (l) => l.map((o) => o.textContent)), ["Todas las categorías (2)", "Sub-12 Absoluto — ronda 3", "Sub-14 Femenino — ronda 3"]);
         igual("el encargado NO ve la sección de los QR de los encargados y no lee ninguna tabla directo: todo pasa por la función", await p.evaluate(() => [!!document.getElementById("fp-t-encargados"), window.__directo]), [false, []]);
         igual("la pantalla no tiene texto suelto («null») de una sección que no va", await p.evaluate(() => [...document.getElementById("fp-app").childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).length), 0);
@@ -689,7 +689,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.fill('dialog[open] input:not([type="hidden"])', "3");
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /ronda 1, mesa 3/.test(d.textContent); });
-        igual("sin los emparejamientos de esa mesa, pide escribir el nombre (y con qué color jugaba)", await p.evaluate(() => [/escribe el nombre como aparece en chess-results/.test(document.querySelector("dialog[open]").textContent), !!document.querySelector('dialog[open] input:not([type="hidden"])')]), [true, true]);
+        igual("sin los emparejamientos de esa mesa, pide escribir el nombre (y con qué color jugaba)", await p.evaluate(() => [/escribe el nombre como aparece en los emparejamientos/.test(document.querySelector("dialog[open]").textContent), !!document.querySelector('dialog[open] input:not([type="hidden"])')]), [true, true]);
         await p.fill('dialog[open] input:not([type="hidden"])', "Ana Pérez");
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction(() => document.querySelectorAll("#fp-lista tr").length === 4);

@@ -90,6 +90,50 @@ export function lecturaDePareo(datos: unknown, nombreTorneo: string): LecturaPar
   };
 }
 
+// Los resultados de Pareo como los escribe chess-results en sus emparejamientos (lo que lee Fair Play:
+// resultadoDe de centroamericano-fair-play/analisis.ts y las cuentas de centroamericano_fp_candidatas).
+export const TEXTO_PAREO: Record<string, string> = { "1-0": "1 - 0", "=": "½ - ½", "0-1": "0 - 1", "+-": "+ - -", "-+": "- - +", "--": "- - -" };
+
+export type PartidaPareo = { ronda: number; mesa: number; snr_b: number | null; snr_n: number | null; blancas: string; negras: string;
+  elo_b: number | null; elo_n: number | null; resultado: string };
+
+// Todas las partidas de todas las rondas de un torneo publicado, con la forma de las filas de
+// centroamericano_fp_partidas (lo que Fair Play lee de chess-results en un torneo de chess-results).
+// La mesa es la FÍSICA (la de los enlaces de los árbitros). El número inicial (snr) es el puesto en
+// `numeracion`, que Pareo deja fijo al emparejar la ronda 1; sin él no se inventa (null: Fair Play
+// junta por el nombre). El Elo 0 es «sin Elo». Un bye no es una partida.
+export function partidasDePareo(datos: unknown): PartidaPareo[] {
+  if (typeof datos !== "object" || datos === null) return [];
+  const d = datos as DatosPareo & { numeracion?: unknown; jugadores?: (Jugador & { elo?: unknown })[] };
+  if (d.tipo === "equipos") return [];
+  const porId = new Map<string, Jugador & { elo?: unknown }>();
+  for (const j of d.jugadores || []) porId.set(String(j.id), j);
+  const snr = new Map<string, number>();
+  if (Array.isArray(d.numeracion)) d.numeracion.forEach((id, i) => { if (!snr.has(String(id))) snr.set(String(id), i + 1); });
+  const nombre = (id: unknown) => {
+    const j = id == null ? null : porId.get(String(id));
+    return j && typeof j.nombre === "string" ? j.nombre.trim().slice(0, 120) : "";
+  };
+  const elo = (id: unknown) => {
+    const n = Number(id == null ? 0 : porId.get(String(id))?.elo);
+    return Number.isFinite(n) && n >= 100 && n <= 3500 ? Math.round(n) : null;
+  };
+  const base = baseDe(d), out: PartidaPareo[] = [];
+  (Array.isArray(d.rondas) ? d.rondas : []).forEach((R, k) => {
+    (Array.isArray(R && R.mesas) ? R.mesas! : []).forEach((m, i) => {
+      const blancas = nombre(m.b), negras = m.n == null ? "" : nombre(m.n);
+      if (!blancas || !negras) return;
+      out.push({
+        ronda: k + 1, mesa: base + i,
+        snr_b: snr.get(String(m.b)) ?? null, snr_n: snr.get(String(m.n)) ?? null,
+        blancas, negras, elo_b: elo(m.b), elo_n: elo(m.n),
+        resultado: (typeof m.r === "string" && TEXTO_PAREO[m.r]) || "",
+      });
+    });
+  });
+  return out;
+}
+
 // deno-lint-ignore no-explicit-any
 type Servicio = any;
 export type ResultadoPareo =

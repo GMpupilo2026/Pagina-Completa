@@ -1,6 +1,6 @@
 /* La Mesa del árbitro de la organización (centroamericano-mesas.html) dice de dónde lee las mesas:
    - con todos los torneos en Pareo Integral (el principal eligió Pareo): el botón dice «Actualizar
-     desde Pareo Integral», la nota de abajo igual, la barra de la ventana trae el nombre del evento
+     desde Pareo Integral», la nota de abajo igual, las pestañas «Fair Play» y «Transmisión» se ven, la barra de la ventana trae el nombre del evento
      y en ningún lado de la «Ronda en curso» se nombra chess-results;
    - al tocarlo, mientras lee, dice «Leyendo Pareo Integral…»;
    - con los torneos del Centroamericano (chess-results): todo sigue diciendo chess-results y la
@@ -47,6 +47,10 @@ async function abrir(browser, d) {
     return { ctx, p, errores };
 }
 
+// «Fair Play» y «Transmisión» salen en las dos caras: se mide si se ven, no el atributo (ver «Fair Play y Transmisión en
+// cualquier evento»).
+const pestanas = (p) => p.evaluate(() => ["pest-fairplay", "pest-transmision"].map((id) => document.getElementById(id).checkVisibility()));
+
 const leer = (p) => p.evaluate(() => ({
     boton: document.getElementById("resumen-actualizar").textContent.trim(),
     barra: document.getElementById("titulo-ventana").textContent,
@@ -63,6 +67,7 @@ const leer = (p) => p.evaluate(() => ({
         igual("el botón dice «Actualizar desde Pareo Integral»", v.boton, "🔄 Actualizar desde Pareo Integral");
         igual("la barra de la ventana trae el evento, no el Centroamericano", v.barra, "Mesa del árbitro — " + EVENTO);
         igual("la nota de abajo nombra Pareo Integral", v.nota.includes("«Actualizar desde Pareo Integral»"), true);
+        igual("con la cara neutra se ven «Fair Play» y «Transmisión»", await pestanas(p), [true, true]);
         igual("la «Ronda en curso» no nombra chess-results en ningún lado que se vea", await p.evaluate(() => document.getElementById("panel-ronda").innerText.includes("chess-results")), false);
         // Mientras lee: el resumen no contesta todavía.
         await p.evaluate(() => { const sb = window.sb, antes = sb.functions.invoke; sb.functions.invoke = (f, o) => (o && o.body && o.body.action === "resumen" ? new Promise(() => {}) : antes(f, o)); });
@@ -78,6 +83,7 @@ const leer = (p) => p.evaluate(() => ({
         igual("el botón sigue diciendo «Actualizar desde chess-results»", v.boton, "🔄 Actualizar desde chess-results");
         igual("la barra sigue diciendo «Mesa del árbitro — Centroamericano 2026»", v.barra, "Mesa del árbitro — Centroamericano 2026");
         igual("la nota de abajo nombra chess-results", v.nota.includes("«Actualizar desde chess-results»"), true);
+        igual("con la cara del Centroamericano también se ven «Fair Play» y «Transmisión»", await pestanas(p), [true, true]);
         igual("sin errores de la página", errores, []);
         await ctx.close();
     } finally { await browser.close(); }
