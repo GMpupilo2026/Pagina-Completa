@@ -6,9 +6,13 @@
      con el resultado nuevo cambia sin tocar nada;
    - si la hora no cambió, no se vuelve a leer nada;
    - con algo a medio anotar (el foco en una mesa), espera: no le pisa lo que está eligiendo;
-   - con un torneo de chess-results, no pregunta nada a pareo_publicados;
+   - con un torneo de chess-results, no pregunta nada a pareo_publicados; pero cuando «avisos» (cada 20 s) trae otro
+     `ajeno` —lo último que guardó OTRO árbitro en otra tablet en una de sus mesas—, vuelve a leer y la mesa cambia;
    - del lado de Pareo, un torneo de un evento de la Mesa publica a los pocos segundos de cada cambio
-     (ESPERA_PUBLICAR_MESA), no a los 30 s de siempre.
+     (ESPERA_PUBLICAR_MESA), no a los 30 s de siempre, y lee la cola de las tablets cada 5 s (ESPERA_COLA_MESA), así lo
+     que guarda un árbitro llega pronto a las demás tablets;
+   - la función `centroamericano-mesa` arma `ajeno` en «avisos» solo con chess-results, sin las líneas propias y solo en
+     las mesas del enlace.
 
    El reloj es el de Playwright. Ver «El resultado del principal llega solo a las tablets» en
    docs/decisiones/juegos-y-torneos.md.
@@ -39,13 +43,12 @@ const ORIGINAL_MESAS = "mesas: MESAS.map((m) => conFed(Object.assign({}, m)))";
 function doble(pareo) {
     let d = dobleArbitro();
     if (!d.includes(ORIGINAL_LEER) || !d.includes(ORIGINAL_MESAS)) throw new Error("El doble del árbitro cambió: no se encontró «leer».");
-    if (pareo) {
-        d = d.replace(ORIGINAL_LEER, 'fuente: "pareo", marca: "ajedrez-integral", tnr: "' + TNR + '", torneo: "Abierto de prueba", categoria: "Abierto", rama: "Mixto"')
-            .replace(ORIGINAL_MESAS, "mesas: (window.__mesasPareo || MESAS).map((m) => conFed(Object.assign({}, m)))");
-    }
+    d = d.replace(ORIGINAL_MESAS, "mesas: (window.__mesasPareo || MESAS).map((m) => conFed(Object.assign({}, m)))");
+    if (pareo) d = d.replace(ORIGINAL_LEER, 'fuente: "pareo", marca: "ajedrez-integral", tnr: "' + TNR + '", torneo: "Abierto de prueba", categoria: "Abierto", rama: "Mixto"');
     return d + `
 (function(){
   window.__desde = [];
+  if (!${pareo ? "true" : "false"}) window.__avisos.ajeno = "2026-11-14T14:59:00Z|l1";
   window.__actualizado = "2026-11-14T15:00:00.000Z";
   window.__mesasPareo = [
     { mesa: 1, blancas: "Muñoz Feliz Alejandro", negras: "Gramajo Tovar Marco", valor: "0" },
@@ -124,8 +127,16 @@ const correr = async (p, ms) => { await p.clock.runFor(ms); await p.waitForTimeo
         console.log("\nUn torneo de chess-results:");
         {
             const { ctx, p, errores } = await abrir(browser, doble(false));
-            await correr(p, 20000);
+            const l0 = await lecturas(p);
+            await correr(p, 21000);
             igual("no le pregunta nada a pareo_publicados", (await preguntas(p)).length, 0);
+            igual("si nadie más guardó nada, no vuelve a leer", await lecturas(p), l0);
+            // Otro árbitro guarda 0-1 en la mesa 2 desde su tablet: «avisos» trae otro `ajeno`.
+            await p.evaluate(() => { window.__mesasPareo[1].valor = "3"; window.__avisos.ajeno = "2026-11-14T15:00:30Z|l2"; });
+            await correr(p, 20000);
+            igual("lo que guardó otro árbitro se ve sin tocar nada (antes de los 45 s de la lectura entera)",
+                [await lecturas(p), await p.evaluate(() => { const x = document.querySelector("#mesa-2 .cam-resultado-actual:not([data-mandado])"); return x && x.textContent.trim(); })],
+                [l0 + 1, "En chess-results: 0-1 (ganan negras)"]);
             igual("sin errores de la página", errores, []);
             await ctx.close();
         }
@@ -137,6 +148,15 @@ const correr = async (p, ms) => { await p.clock.runFor(ms); await p.waitForTimeo
     igual("en un evento de la Mesa publica a los pocos segundos (10 s o menos)", !!espera && Number(espera[1]) > 0 && Number(espera[1]) <= 10000, true);
     igual("y es la espera que usa programarPublicacion cuando el torneo es de la Mesa",
         /estado\.adjuntos\.mesa[\s\S]{0,200}deLaMesa \? ESPERA_PUBLICAR_MESA : ESPERA_PUBLICAR/.test(pagina), true);
+
+    igual("y lee la cola de las tablets cada 5 s o menos en un evento de la Mesa",
+        /ESPERA_COLA_MESA = (\d+)/.test(pagina) && Number(/ESPERA_COLA_MESA = (\d+)/.exec(pagina)[1]) <= 5000 && /cadaCola\(r\.mesa \? ESPERA_COLA_MESA/.test(pagina), true);
+
+    console.log("\nLa función centroamericano-mesa:");
+    const fn = fs.readFileSync(path.join(__dirname, "..", "supabase", "functions", "centroamericano-mesa", "index.ts"), "utf8");
+    const avisos = (/if \(cuerpo\.action === "avisos"\) \{[\s\S]*?\n    \}/.exec(fn) || [""])[0];
+    igual("«avisos» trae `ajeno`: solo con chess-results, de otros enlaces, en las mesas del enlace",
+        ["esPareo ?", '.neq("asignacion_id", a.id)', '.gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta)', "ajeno:"].every((x) => avisos.includes(x)), true);
 
     console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
     process.exit(fallos ? 1 : 0);

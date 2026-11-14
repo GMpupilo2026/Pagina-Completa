@@ -1797,7 +1797,7 @@
 
     async function consultarAvisos() {
         if (!avisosVivo) return;
-        try { aplicarAvisos(await invocar("avisos", null, { intentos: 1 })); }
+        try { const d = await invocar("avisos", null, { intentos: 1 }); aplicarAvisos(d); revisarAjeno(d); }
         catch (e) { if (e.http === 404 || e.http === 410) avisosVivo = false; /* sin red: se vuelve a intentar */ }
     }
 
@@ -1987,6 +1987,15 @@
             // Con algo a medio anotar no se lee (pisaría lo elegido): queda para la próxima vuelta.
             if (pareoVisto !== visto && sinNadaPendiente()) { pareoVisto = visto; leer(true); }
         } catch (e) { /* sin red: la próxima vuelta */ } finally { pareoPreguntando = false; }
+    }
+
+    // Lo que otro árbitro guardó en otra tablet en una de estas mesas (chess-results): «avisos» trae `ajeno`, la última línea
+    // de resultado de otro enlace; si cambió, se vuelven a leer las mesas. Con algo a medio anotar, en la vuelta siguiente.
+    let ajenoVisto;
+    function revisarAjeno(d) {
+        if (!d || !("ajeno" in d) || !estado) return;
+        if (ajenoVisto === undefined) { ajenoVisto = d.ajeno; return; }
+        if (d.ajeno !== ajenoVisto && sinNadaPendiente() && !leyendo) { ajenoVisto = d.ajeno; leer(true); }
     }
 
     // Lo que sale de la cola cuando vuelve la señal.

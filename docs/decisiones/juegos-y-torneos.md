@@ -17880,7 +17880,21 @@ en pasar a resultado.
   pregunta, más lo que tarde «leer»). El gasto: con 30 tablets, unas 4 lecturas diminutas por segundo a PostgREST,
   ninguna a la Edge Function; «leer» solo corre cuando hay algo nuevo.
 
+**Y lo que guarda otro árbitro en otra tablet** (lo pidió el dueño enseguida):
+
+- **Con Pareo** ya pasa por el mismo camino: lo de la otra tablet va a `pareo_cola`, el Pareo del principal lo acepta
+  y publica, y las demás tablets lo ven con la pregunta liviana. Para que no espere los 15 s de la cola, en un evento
+  de la Mesa el Pareo del principal la lee **cada 5 s** (`ESPERA_COLA_MESA`; leer la cola va con la clave del torneo y
+  no pasa por `pareo_frenar`). De punta a punta, unos 20 s o menos.
+- **Con chess-results** la otra tablet guarda directo allá y deja la lectura en la copia compartida, pero las demás no
+  se enteraban hasta su lectura de los 45 s. Ahora «avisos» (que ya se pide cada 20 s y solo toca la base) trae
+  `ajeno`: la última línea de resultado o corrección del registro que **otro enlace** anotó en **las mesas de este
+  enlace**. Si cambia, la tablet vuelve a leer sus mesas (`revisarAjeno`), con la misma regla de no pisar lo que se
+  está anotando. Sin pedidos nuevos: una consulta más dentro de «avisos», sobre el índice de la partida. Con Pareo no
+  se arma (lo de otra tablet es solo «mandado» hasta que el principal lo publica).
+
 Lo prueba `verificar-arbitro-pareo-al-dia.js` con el reloj de Playwright: la pregunta es solo `actualizado` con el
 uuid bien armado; sin cambios no lee; con una publicación nueva la mesa cambia sin tocar nada; con el foco en una mesa
-espera; con chess-results no pregunta; y la espera corta de Pareo. Rotos a propósito el repintado o la espera del foco,
-salta.
+espera; con chess-results no pregunta a `pareo_publicados`, y con otro `ajeno` en «avisos» la mesa cambia antes de los
+45 s; las esperas cortas de Pareo y que la función arme `ajeno` solo con chess-results, sin lo propio y en las mesas
+del enlace. Rotos a propósito el repintado, la espera del foco o `revisarAjeno`, salta.
