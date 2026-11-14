@@ -86,7 +86,9 @@
   /* El horario: las rondas en orden, `rondasPorDia` cada día desde la fecha de
      inicio; cada ronda dura el tiempo de los dos jugadores más 40 jugadas de
      incremento (como el horario de Pareo Integral), y la siguiente empieza
-     después del descanso, a la media hora siguiente. */
+     después del descanso, a la media hora siguiente. `pausas` (opcional):
+     [{ desde: "12:00", hasta: "13:00" }]; una ronda que caería adentro (el
+     almuerzo) empieza cuando termina la pausa. */
   function horario(d) {
     const rondas = Math.max(0, Math.floor(num(d.rondas)));
     const porDia = Math.max(1, Math.floor(num(d.rondasPorDia)) || 1);
@@ -94,11 +96,14 @@
     const inicio = (hh || 0) * 60 + (mm || 0);
     const dura = Math.ceil(2 * (num(d.ritmoMin) + (40 * num(d.ritmoInc)) / 60));
     const descanso = num(d.descanso);
+    const aMin = (t) => { const [h, m] = String(t || "").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+    const pausas = (d.pausas || []).map((p) => [aMin(p.desde), aMin(p.hasta)]).filter(([a, b]) => b > a);
     const fuera = [];
     for (let r = 0; r < rondas; r++) {
       const enElDia = r % porDia;
       const dia = SOLO_DIA.test(d.fechaInicio || "") ? sumarDias(d.fechaInicio, Math.floor(r / porDia)) : "";
-      const min = enElDia === 0 ? inicio : Math.ceil((fuera[r - 1].min + dura + descanso) / 30) * 30;
+      let min = enElDia === 0 ? inicio : Math.ceil((fuera[r - 1].min + dura + descanso) / 30) * 30;
+      pausas.forEach(([a, b]) => { if (min >= a && min < b) min = b; });
       fuera.push({ ronda: r + 1, dia, min, hora: horaTexto(min) });
     }
     return fuera;
