@@ -1187,10 +1187,10 @@
     const campo = f.elements.categoria;
     const op = categoriasParaInscribir(v, f.elements.nacimiento.value);
     $("pi-categorias").replaceChildren(...op.lista.map((c) => el("option", { value: c })));
-    // Con una sola posible, se pone sola (si el campo está vacío o con una
-    // que no le toca).
-    const actual = campo.value.trim().toUpperCase();
-    if (rellenar && op.jde && op.nace && op.lista.length === 1 && (!actual || !op.lista.includes(actual))) campo.value = op.lista[0];
+    // Con una sola posible, se pone sola, pero solo en un campo vacío: lo que
+    // el árbitro escribió no se cambia en silencio (si no le toca, la nota lo
+    // dice y al agregar salta el aviso de siempre).
+    if (rellenar && op.jde && op.nace && op.lista.length === 1 && !campo.value.trim()) campo.value = op.lista[0];
     const nota = $("pi-categoria-nota");
     let texto = "";
     if (op.jde && op.nace) {

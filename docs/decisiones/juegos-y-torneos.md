@@ -4441,7 +4441,7 @@ Dos pedidos del dueño el 14/11/2026, en el Tacho Chess 2:
   despliega una lista (`<datalist id="pi-categorias">`, `categoriasParaInscribir` y `pintarCategorias`): en un
   torneo de los JDE (con el evento de los JDE o «Categoría X» en el nombre), solo las que permite el año de
   nacimiento según la Normativa (art. 17, la misma `G.categoriasDeNacimiento` de la inscripción de los JDE; en
-  individual no se sube, art. 18). Sin fecha salen las cinco; con una sola posible se pone sola; nacido en 2013 o
+  individual no se sube, art. 18). Sin fecha salen las cinco; con una sola posible se pone sola, solo si el campo está vacío (lo escrito a mano no se cambia en silencio); nacido en 2013 o
   2014 salen B y C, la del torneo primero; una que no le toca, o una fecha que no entra en ninguna, se dice debajo
   (`#pi-categoria-nota`, que lleva el campo en `aria-describedby`). En cualquier otro torneo la lista son las
   categorías que ya tienen sus jugadores, como la inscripción pública. Se puede seguir escribiendo una nueva: el

@@ -3,7 +3,8 @@
  *
  *   - en un torneo de los JDE, sin fecha de nacimiento salen las cinco (A–E) y
  *     la nota pide elegirla; con la fecha, solo las que le permite su año
- *     (Normativa, art. 17): una sola se pone sola, nacido en 2013 salen B y C
+ *     (Normativa, art. 17): una sola se pone sola en el campo vacío (lo escrito
+ *     a mano no se cambia), nacido en 2013 salen B y C
  *     (la del torneo primero), una que no le toca se dice, y quien no entra en
  *     ninguna también;
  *   - en otro torneo, las categorías que ya tienen sus jugadores, sin nota.
@@ -83,6 +84,11 @@ async function nacio(p, fecha) {
       await p.fill("#pi-form-jugador input[name=categoria]", "D");
       v = await leer(p);
       igual("si escribe una que no le toca, se dice", v.nota, "Nació en 2013: le corresponde la categoría B o C, no la D (art. 17 y 18; en individual no se sube de categoría).");
+      // Una escrita a mano no se cambia sola al poner la fecha: la nota dice que no le toca.
+      await p.fill("#pi-form-jugador input[name=categoria]", "C");
+      await nacio(p, "2005-03-03");
+      v = await leer(p);
+      igual("lo que escribió el árbitro no se cambia solo (nació en 2005, escribió C)", [v.valor, v.nota], ["C", "Nació en 2005: le corresponde la categoría E, no la C (art. 17 y 18; en individual no se sube de categoría)."]);
       await nacio(p, "2022-01-10");
       v = await leer(p);
       igual("quien no entra en ninguna: lista vacía y se dice", [v.opciones, v.nota], [[], "Nació en 2022: no entra en ninguna categoría de los JDE de 2026. Revisa la fecha."]);
