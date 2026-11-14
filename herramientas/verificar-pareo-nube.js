@@ -148,7 +148,10 @@ async function aceptarDialogo(page, texto, boton) {
   const t = await d.textContent();
   if (texto && !texto.test(t)) mal("el diálogo dice lo esperado", t.slice(0, 200));
   await d.$(boton === "cancelar" ? "[data-avisos-cancelar]" : "[data-avisos-aceptar]").then((b) => b.click());
-  await page.waitForFunction(() => !document.querySelector("dialog[data-avisos][open]"));
+  // Se espera a que se vaya ESTE diálogo, no a que no quede ninguno: cuando
+  // detrás viene otro (apagar pregunta dos veces), el segundo se abre antes
+  // del primer sondeo y «ninguno abierto» no llega nunca.
+  await page.waitForFunction((el) => !el.isConnected, d);
 }
 
 (async () => {
