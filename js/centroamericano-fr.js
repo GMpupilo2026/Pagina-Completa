@@ -547,7 +547,7 @@ window.CentroamericanoFR = {
     finTitulo: "Comment s'est terminé mon tournoi",
     finPuesto: (p, de) => "Place " + p + " sur " + de,
     finPuntos: "Points", finDe: (r) => "sur " + r,
-    finRend: "Performance", finElo: "Elo FIDE", finEloSin: "sans Elo FIDE",
+    finRend: "Performance", finGanadas: "Gagnées", finTablas: "Nulles · Perdues", finElo: "Elo FIDE", finEloSin: "sans Elo FIDE",
     finColores: "Blancs · Noirs",
     finRondas: "Ronde par ronde",
     finMejor: (r, rival, n) => "Meilleure victoire : " + rival + ", ronde " + n + ".",

@@ -474,6 +474,22 @@ function configJs(c) {
   lineas.push("    nombreCorto: " + JSON.stringify(t.nombreCorto) + ",");
   lineas.push("    imgSub: " + JSON.stringify(t.imgSub) + ",");
   lineas.push('    compartirTexto: (n) => n + " ' + t.compartir.replace(/["\\]/g, "\\$&") + '",');
+  // Los textos propios (en español) que reemplazan los del Centroamericano
+  // en js/centroamericano-vivo.js y -tablas.js; una función va tal cual.
+  const valorJs = (v) => (typeof v === "function" ? v.toString() : JSON.stringify(v));
+  if (t.textos) {
+    lineas.push("    // Los textos propios, en lugar de los del Centroamericano (el certificado, «Así terminó mi torneo», «¡Hoy juega!», el calendario).");
+    lineas.push("    textos: {");
+    Object.entries(t.textos).forEach(([k, v]) => lineas.push("      " + k + ": " + valorJs(v) + ","));
+    lineas.push("    },");
+  }
+  // La cara del certificado (diploma() de js/centroamericano-tablas.js).
+  if (t.diploma) {
+    lineas.push("    // La cara del certificado: el evento, la sede, los colores, la mascota, el marco y el escudo.");
+    lineas.push("    diploma: {");
+    Object.entries(t.diploma).forEach(([k, v]) => lineas.push("      " + k + ": " + valorJs(v) + ","));
+    lineas.push("    },");
+  }
   const im = t.imagen;
   lineas.push("    imagen: {");
   lineas.push("      banda: " + JSON.stringify(im.banda) + ", tinta: " + JSON.stringify(im.tinta) + ", acento: " + JSON.stringify(im.acento) + ", suave: " + JSON.stringify(im.suave) + ",");

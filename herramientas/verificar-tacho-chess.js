@@ -34,6 +34,10 @@
  *   6. La cara: el azul del afiche, la píldora roja con letra blanca, Tacho
  *      a la vista, la ficha «Inscribirme» abre el formulario encima y en el
  *      celular no hay scroll de costado.
+ *   7. NADA DEL CENTROAMERICANO en lo que se dibuja: el certificado (el
+ *      evento, la sede, la fecha, Tacho y el escudo, sin el pizote ni las
+ *      hojas), «Así terminó mi torneo» sin Elo, la clasificación sin «Elo» ni
+ *      «Rend.» y el proyector en el azul del afiche.
  *
  * Ver «La del Tacho Chess 2» y «El profe ayuda en Tacho Chess 2» en
  * docs/decisiones/juegos-y-torneos.md.
@@ -486,6 +490,64 @@ async function fichaResultados(nav, publicados, reloj) {
     const marco = await p.waitForFunction(() => { const f = [...document.querySelectorAll("dialog[open] iframe")].find((x) => x.checkVisibility()); return f && f.src; }, null, { timeout: 5000 }).then((x) => x.jsonValue()).catch(() => "");
     ok("«Inscribirme» → «Abrir el formulario» lo abre encima, sin salir de la página", marco.startsWith(FORMULARIO) && p.url().includes(PAGINA), marco + " · " + p.url());
     await ctx.close();
+
+    console.log("\nEl certificado y las imágenes dicen el Tacho, no el Centroamericano");
+    {
+      // Un torneo terminado (2 de 2 rondas, sin Elo): la tarjeta trae el
+      // certificado y «Así terminó mi torneo». Se anota lo que se escribe y se
+      // dibuja en el lienzo, y lo que se manda a compartir.
+      const J = (id, nombre, cat) => ({ id, nombre, institucion: "", elo: 0, titulo: "", fed: "", categoria: cat, retiradoDespuesDe: null });
+      const datos = { nombre: "Tacho Chess 2 · Primer ciclo", rondasTotales: 2, puntos: { victoria: 1, tablas: 0.5, derrota: 0, bye: 1 }, mesaInicial: 1,
+        jugadores: [J("a", "Ana Uno", "Primer grado"), J("b", "Beto Dos", "Primer grado"), J("c", "Caro Tres", "Primer grado"), J("d", "Dani Cuatro", "Segundo grado")],
+        numeracion: ["a", "b", "c", "d"],
+        rondas: [{ mesas: [{ b: "a", n: "c", r: "1-0" }, { b: "b", n: "d", r: "1-0" }], ausencias: {} }, { mesas: [{ b: "b", n: "a", r: "0-1" }, { b: "d", n: "c", r: "=" }], ausencias: {} }],
+        resumen: [["a", 1, 2], ["b", 2, 1], ["c", 3, 0.5], ["d", 4, 0.5]].map(([id, puesto, puntos]) => ({ id, puesto, puntos, rondas: 2 })) };
+      const cx = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+      await cx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble({ pareo_organizadores: ORGS, pareo_publicados: [Object.assign({}, T1, { datos, actualizado: "2026-11-14T20:00:00Z" })] }) }));
+      await cx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
+      await cx.addInitScript(() => {
+        window.__lienzo = []; window.__compartido = [];
+        const f = CanvasRenderingContext2D.prototype.fillText;
+        CanvasRenderingContext2D.prototype.fillText = function (t, ...r) { window.__lienzo.push(String(t)); return f.call(this, t, ...r); };
+        const d = CanvasRenderingContext2D.prototype.drawImage;
+        CanvasRenderingContext2D.prototype.drawImage = function (img, ...r) { if (img && img.src) window.__lienzo.push("[imagen] " + img.src); return d.call(this, img, ...r); };
+        navigator.canShare = () => true;
+        navigator.share = (x) => { window.__compartido.push(x.text || ""); return Promise.resolve(); };
+      });
+      const pg = await cx.newPage();
+      await pg.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+      await pg.waitForTimeout(500);
+      await pg.fill("#buscador-nombre", "Ana");
+      await pg.waitForTimeout(600);
+      const lienzoDe = async (selector) => {
+        await pg.evaluate(() => { window.__lienzo.length = 0; });
+        await pg.click("#buscador-resultados " + selector);
+        await pg.waitForFunction(() => window.__compartido.length && window.__lienzo.length > 5, null, { timeout: 8000 }).catch(() => {});
+        await pg.waitForTimeout(300);
+        return pg.evaluate(() => window.__lienzo.join("\n"));
+      };
+      const cac = /centroamerican|festival|caribe|gimnasio nacional|sabana|pizote|centroamericano-2026/i;
+      const dip = await lienzoDe('[data-accion="diploma-imagen"]');
+      ok("el certificado lleva el nombre del torneo, la sede y la fecha del Tacho, y el lugar en su nivel (sin «categoría»)",
+        /TORNEO INTEREDUCATIVO TACHO CHESS 2/.test(dip) && /Gimnasio del Centro, Liceo Anastasio Alfaro/.test(dip) && /14 de noviembre de 2026/.test(dip) && /por obtener el 1\.er lugar en Primer grado/.test(dip) && !/categoría/i.test(dip), dip);
+      ok("el certificado dibuja a Tacho y el escudo del liceo, sin el pizote ni las hojas del Centroamericano, y sin decir nada del Centroamericano",
+        /\[imagen\] .*img\/tacho-chess-2\/mascota\.png/.test(dip) && /\[imagen\] .*img\/tacho-chess-2\/logo-liceo\.png/.test(dip) && !cac.test(dip), dip);
+      await pg.evaluate(() => { window.__compartido.length = 0; });
+      const fin = await lienzoDe('button:has-text("Así terminó")');
+      const texto = await pg.evaluate(() => window.__compartido.join("\n"));
+      ok("«Así terminó mi torneo»: con Tacho, sin Elo FIDE ni rendimiento (no hay Elo), y el mensaje dice el Tacho Chess 2",
+        /Así terminó mi torneo/.test(fin) && /\[imagen\] .*mascota\.png/.test(fin) && /Ganadas/.test(fin) && !/Elo|Rendimiento/.test(fin) && !cac.test(fin) && /^Así terminó el Tacho Chess 2 para Ana Uno:/.test(texto), fin + " · " + texto);
+      await pg.click('a.cac-ficha[href="#clasificacion"]');
+      await pg.waitForTimeout(500);
+      const cab = await pg.evaluate(() => [...document.querySelectorAll("#clasificacion-contenido th[scope=col]")].map((t) => t.textContent));
+      ok("la clasificación no trae «Elo» ni «Rend.» cuando nadie tiene Elo (saldrían con rayas)", !cab.includes("Elo") && !cab.includes("Rend.") && cab.includes("Puntos"), JSON.stringify(cab));
+      await pg.keyboard.press("Escape");
+      await pg.evaluate(() => { location.hash = "proyector"; });
+      await pg.waitForTimeout(500);
+      const fondo = await pg.evaluate(() => getComputedStyle(document.getElementById("proyector")).backgroundColor);
+      ok("el proyector va en el azul hondo del afiche, no en el morado del Centroamericano", fondo === "rgb(4, 42, 105)", fondo);
+      await cx.close();
+    }
 
     const cel = await nav.newContext({ viewport: { width: 375, height: 800 }, serviceWorkers: "block" });
     const pc = await cel.newPage();

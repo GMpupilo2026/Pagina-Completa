@@ -309,6 +309,10 @@
   // Con los datos de otra fuente (`fuenteNombre`: «Pareo Integral»), los
   // textos dicen esa en lugar de «chess-results», también los que se arman.
   if (CONFIG.fuenteNombre) ["es", "en"].forEach((k) => cambiarFuente(TEXTOS[k], CONFIG.fuenteNombre));
+  // Los textos propios de otra página (`textos`, en español): el nombre del
+  // torneo, la sede, «nivel» en lugar de «categoría»… Sin esto se colaba el
+  // Centroamericano en el calendario de un jugador o en «¡Hoy juega!».
+  if (CONFIG.textos) Object.keys(CONFIG.textos).forEach((k) => { if (k in TEXTOS.es) TEXTOS.es[k] = CONFIG.textos[k]; });
 
   // El idioma de la página: «es», «en» o «fr» (lo pone js/centroamericano.js).
   const IDIOMAS = ["es", "en", "fr"];
@@ -1056,7 +1060,7 @@
     const eventos = eventosDelCalendario(x);
     if (!eventos.length) { anunciar(tx.calendarioSin); return; }
     const { texto, eventos: n } = window.CalendarioIcs.armarHoras({ nombre: tx.calNombre(nombreCorto(x.j)), eventos });
-    window.CalendarioIcs.bajar(texto, "centroamericano-2026-rondas-" + slugDe(x.j.nombre) + ".ics");
+    window.CalendarioIcs.bajar(texto, ((CONFIG.imagen && CONFIG.imagen.archivo) || "centroamericano-2026") + "-rondas-" + slugDe(x.j.nombre) + ".ics");
     anunciar(tx.calendarioListo(n));
   }
 
@@ -1266,7 +1270,7 @@
     const c = porColor(deCada.flatMap((d) => d.rondas));
     if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores-pais text-sm", tx.coloresPais(c)));
     const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
-      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
+      .concat(lineas, ["", "https://" + (CONFIG.url || "ajedrez-integral.com/centroamericano-2026.html") + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
     const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
     boton.type = "button";
     const aviso = el("p", "mt-2 text-sm font-semibold");
