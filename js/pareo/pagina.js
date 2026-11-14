@@ -5661,6 +5661,9 @@
   function datosLecturaActual(r) {
     const v = t();
     const R = v.rondas[r];
+    // Sin rondas todavía: va la lista de inscritos (V.inscritosVista).
+    if (!R) return { v: 1, nombre: v.nombre || "", ronda: null, hasta: 0, clasificacion: [], ...V.inscritosVista(v),
+      evento: enlacesDelEvento(v), pub: v.publicado && v.publicado.id ? v.publicado.id : undefined };
     const k = rondasCompletas();
     const filas = filasFiltradas(E.clasificacion(hasta(k), v.desempates));
     return {
@@ -5695,9 +5698,10 @@
   // docs/decisiones/juegos-y-torneos.md.
   function difundirEnVivo() {
     const v = t();
-    if (!estado.enVivo || !estado.canalVivo || !v.rondas.length) return;
+    // Antes de la ronda 1 también: se ven los inscritos.
+    if (!estado.enVivo || !estado.canalVivo) return;
     const canal = estado.canalVivo;
-    PareoVer.paraMandar(datosLecturaActual(v.rondas.length - 1)).then((payload) => canal.send({ type: "broadcast", event: "estado", payload }));
+    PareoVer.paraMandar(datosLecturaActual(Math.max(0, v.rondas.length - 1))).then((payload) => canal.send({ type: "broadcast", event: "estado", payload }));
   }
 
   async function activarEnVivo() {
@@ -5717,7 +5721,10 @@
     // mira este torneo puede pasar a los demás (enlacesDelEvento).
     if (v.evento && !estado.eventoVivo) await prenderEventoVivo(v.evento);
     estado.canalVivo = window.sb.channel("pareo-vivo-" + v.liveCodigo);
-    estado.canalVivo.subscribe();
+    // Quien abre el enlace pide el estado al entrar: así no espera al
+    // próximo cambio (antes de la ronda 1 puede tardar mucho).
+    estado.canalVivo.on("broadcast", { event: "pedir" }, () => difundirEnVivo());
+    estado.canalVivo.subscribe((st) => { if (st === "SUBSCRIBED") difundirEnVivo(); });
     estado.enVivo = true;
     estadoTxt.textContent = tx("enVivoActivo");
     $("pi-ver-en-vivo-nuevo-codigo").hidden = false;

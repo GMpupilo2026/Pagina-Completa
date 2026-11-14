@@ -161,9 +161,51 @@ window.PareoVer = (function () {
   const encuentrosAbiertos = new Set();
   const resultadoCorto = (tx, r) => (r && r !== "bye" ? tx("corto_" + r) : "");
 
+  // La lista de inscritos antes de la ronda 1, en orden alfabético o por
+  // Elo. El orden elegido se recuerda aparte (como los encuentros abiertos):
+  // la vista se vuelve a pintar entera con cada novedad que llega.
+  let ordenInscritos = "alfa";
+  function bloqueInscritos(idioma, inscritos, h) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const lista = inscritos.filter((x) => x && typeof x.n === "string");
+    const conElo = lista.some((x) => Number(x.e) > 0);
+    const porElo = conElo && ordenInscritos === "elo";
+    if (porElo) lista.sort((a, b) => (Number(b.e) || 0) - (Number(a.e) || 0) || a.n.localeCompare(b.n, "es"));
+    else lista.sort((a, b) => a.n.localeCompare(b.n, "es"));
+    const bloque = el("div", { "data-bloque-inscritos": "" },
+      el(h, { class: "font-serif text-xl font-bold mb-1", "data-inscritos": "" }, tx("verInscritos", { n: lista.length })),
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-3" }, tx("verInscritosNota")));
+    if (conElo) {
+      const sel = el("select", { class: "ml-1 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm", "data-orden-inscritos": "" },
+        el("option", { value: "alfa" }, tx("verInscritosAlfa")), el("option", { value: "elo" }, tx("verInscritosElo")));
+      sel.value = porElo ? "elo" : "alfa";
+      sel.addEventListener("change", () => {
+        ordenInscritos = sel.value;
+        const nuevo = bloqueInscritos(idioma, inscritos, h);
+        bloque.replaceWith(nuevo);
+        const s = nuevo.querySelector("[data-orden-inscritos]");
+        if (s) s.focus();
+      });
+      bloque.append(el("label", { class: "block text-sm font-semibold mb-3" }, tx("verInscritosOrden"), sel));
+    }
+    if (!lista.length) bloque.append(el("p", { class: "text-sm mb-8" }, tx("verInscritosNadie")));
+    else bloque.append(el("div", { class: "overflow-x-auto mb-8" },
+      el("table", { class: "pi-tabla" },
+        el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col" }, "#"), el("th", { scope: "col" }, tx("nombre")),
+          conElo ? el("th", { class: "num", scope: "col" }, "Elo") : null)),
+        el("tbody", {}, lista.map((x, k) => el("tr", {},
+          el("td", { class: "num" }, String(k + 1)),
+          el("td", {}, el("span", { class: "font-semibold" }, x.n),
+            typeof x.i === "string" && x.i ? el("span", { class: "block text-xs text-brand-600 dark:text-brand-300" }, x.i) : null),
+          conElo ? el("td", { class: "num" }, Number(x.e) > 0 ? String(Number(x.e)) : "") : null))))));
+    return bloque;
+  }
+
   function tablas(idioma, datos, h, alTocar) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const nodos = [];
+    // Antes de la ronda 1: la lista de inscritos (llega solo entonces).
+    if (!datos.ronda && Array.isArray(datos.inscritos)) nodos.push(bloqueInscritos(idioma, datos.inscritos, h));
     if (datos.ronda) {
       nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("rondaN", { r: datos.ronda.n })));
       const cuerpo = el("tbody");
@@ -416,7 +458,7 @@ window.PareoVer = (function () {
     const nodos = [];
     cont.__elegidas = cont.__elegidas || new Map();
     for (const x of datos.torneos || []) {
-      const resumen = x.nombre + (x.ronda ? " · " + tx("rondaN", { r: x.ronda.n }) : "");
+      const resumen = x.nombre + (x.ronda ? " · " + tx("rondaN", { r: x.ronda.n }) : Array.isArray(x.inscritos) ? " · " + tx("verInscritos", { n: x.inscritos.length }) : "");
       // Ver una ronda anterior: la elegida se queda aunque llegue un resultado.
       const anteriores = x.anteriores || [];
       const elegida = cont.__elegidas.get(x.nombre);
@@ -615,7 +657,7 @@ window.PareoVer = (function () {
 
   function pintarProyector(cont, idioma, datos, vuelta) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
-    const torneos = (datos.torneos || []).filter((x) => x.ronda || (x.clasificacion && x.clasificacion.length));
+    const torneos = (datos.torneos || []).filter((x) => x.ronda || (x.clasificacion && x.clasificacion.length) || (x.inscritos && x.inscritos.length));
     if (!torneos.length) { cont.replaceChildren(el("p", { class: "text-2xl" }, datos.nombre || ""), el("p", { class: "text-xl mt-4" }, tx("clasificadosSinRondas"))); return; }
     // Un llamado pendiente va primero.
     const c = llamadoActual(cont);
@@ -684,7 +726,9 @@ window.PareoVer = (function () {
       llego = true;
       pintar(cont, idioma, datos, true);
     });
-    canal.subscribe();
+    // Pide el estado al entrar (antes de la ronda 1 puede no haber cambios
+    // en mucho rato, y la pantalla quedaría en «Conectando…»).
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
     setTimeout(() => {
       if (llego) return;
       cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo")));

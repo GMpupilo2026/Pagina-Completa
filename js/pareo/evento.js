@@ -742,9 +742,24 @@
         // En equipos, los puntos de tablero (el primer desempate).
         ...(E.esDeEquipos(t) ? { pt: E.puntosTablero(t, f.id, k) } : {}) })) : [],
       ...mejoresVista(t, k),
+      ...inscritosVista(t),
       // Terminado: el podio, para la pantalla de premiación del proyector.
       ...(k && terminado(t) ? { terminado: true, podio: podio(t).filas.map((f) => ({ p: f.puesto, n: nombre(f.id), i: String((f.participante || {}).institucion || "").trim() })) } : {}),
     };
+  }
+  // Antes de la ronda 1: quiénes están inscritos (nombre, centro y Elo), en
+  // orden alfabético, para que el enlace en vivo no quede vacío mientras se
+  // inscribe. Con la primera ronda ya no van: las mesas los muestran.
+  function inscritosVista(t) {
+    if ((t.rondas || []).length) return {};
+    const inscritos = (t.jugadores || []).map((j) => {
+      const x = { n: String(j.nombre || "").trim() };
+      const i = String(j.institucion || "").trim();
+      if (i && i !== x.n) x.i = i;
+      if (Number(j.elo) > 0) x.e = Number(j.elo);
+      return x;
+    }).filter((x) => x.n).sort((a, b) => a.n.localeCompare(b.n, "es"));
+    return { inscritos };
   }
   // En equipos, los mejores de cada tablero hasta ahora (los tres primeros),
   // para el celular: { mejores: [{ t, filas: [{ p, n, e, pts, j }] }] }.
@@ -1232,7 +1247,7 @@
     aplicarDesempate, resolverDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
-    lugarTexto, siguienteDe, podio, especialesDe, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,
+    lugarTexto, siguienteDe, podio, especialesDe, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, inscritosVista, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEvento = api;

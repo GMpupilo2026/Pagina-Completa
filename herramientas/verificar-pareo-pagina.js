@@ -418,8 +418,9 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     // Nunca se habla con el Supabase de verdad: dos páginas aparte, cada una
     // con su propio `window.sb` falso, y Node en el medio relevando los
     // mensajes de una a la otra — lo mismo que hace un canal de Broadcast,
-    // sin que nada salga a internet. El organizador solo manda (nunca
-    // escucha); quien mira solo escucha.
+    // sin que nada salga a internet. El organizador manda el estado y
+    // escucha «pedir»; quien mira escucha el estado y manda «pedir» al
+    // entrar.
     const ctxOrg = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
     const pOrg = await ctxOrg.newPage();
     const erroresVivo = [];
@@ -436,17 +437,31 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     });
     await pOrg.addInitScript(require("./lib/pareo-pruebas").autoConfirmarCambios);
     await pOrg.addInitScript(() => {
-      window.sb = { channel: (nombre) => ({ subscribe() { return this; }, unsubscribe() {}, send(msg) { window.__enviarAlCanal(nombre, msg); return Promise.resolve("ok"); } }) };
+      window.__oyentesOrg = {};
+      window.sb = { channel: (nombre) => ({ on(tipo, filtro, cb) { if (tipo === "broadcast") window.__oyentesOrg[nombre + ":" + filtro.event] = cb; return this; },
+        subscribe() { return this; }, unsubscribe() {}, send(msg) { window.__enviarAlCanal(nombre, msg); return Promise.resolve("ok"); } }) };
     });
     let pVerActual = null;
+    let pedidos = 0;
     function nuevoCelular() {
       return (async () => {
         const ctxVer = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
         const pVer = await ctxVer.newPage();
         pVer.on("pageerror", (e) => erroresVivo.push("celular: " + e));
+        // Lo que manda el celular («pedir») le llega al organizador, si
+        // escucha ese canal.
+        await pVer.exposeFunction("__pedirAlCanal", (nombre, msg) => {
+          pedidos++;
+          return pOrg.evaluate(({ nombre, msg }) => {
+            const cb = (window.__oyentesOrg || {})[nombre + ":" + msg.event];
+            if (cb) cb({ payload: msg.payload });
+          }, { nombre, msg }).catch(() => { /* el organizador ya no está */ });
+        });
         await pVer.addInitScript(() => {
           window.__oyentes = {};
-          window.sb = { channel: (nombre) => ({ on(tipo, filtro, cb) { if (tipo === "broadcast") window.__oyentes[nombre + ":" + filtro.event] = cb; return this; }, subscribe() { return this; }, unsubscribe() {} }) };
+          window.sb = { channel: (nombre) => ({ on(tipo, filtro, cb) { if (tipo === "broadcast") window.__oyentes[nombre + ":" + filtro.event] = cb; return this; },
+            subscribe(cb) { if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return this; }, unsubscribe() {},
+            send(msg) { window.__pedirAlCanal(nombre, msg); return Promise.resolve("ok"); } }) };
         });
         return { ctxVer, pVer };
       })();
@@ -487,9 +502,11 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     await pVer.goto(direccion1);
     await pVer.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.trim().length > 0, null, { timeout: 10000 });
 
-    // Lo primero que manda el organizador se pierde (el celular todavía no
-    // estaba escuchando) — a propósito, igual que en la vida real: hace
-    // falta otro cambio para que le llegue algo.
+    // Lo primero que mandó el organizador se perdió (el celular todavía no
+    // estaba escuchando): el celular lo pide al entrar y el organizador se
+    // lo vuelve a mandar, sin esperar otro cambio.
+    await pVer.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.includes("Uno, A"), null, { timeout: 10000 }).catch(() => {});
+    ok(pedidos >= 1 && (await pVer.textContent("#pi-ver")).includes("Uno, A"), "el celular pide el estado al entrar y le llega sin esperar otro cambio", (await pVer.textContent("#pi-ver")) + " · pedidos: " + pedidos);
     await pOrg.selectOption('#pi-ronda table select', "1-0");
     await pVer.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.includes("1-0"), null, { timeout: 10000 });
     const textoVer = await pVer.textContent("#pi-ver");
