@@ -7,6 +7,9 @@
  *   - sin la organización ADAPZ verificada, dice que todavía no está abierta
  *     y el botón no se toca; una organización que se llama igual pero SIN el
  *     sello no cuenta (nadie la suplanta);
+ *   - con los torneos en la organización Ajedrez Integral (donde se
+ *     publicaron de verdad) también se abre, y de ella cuentan solo los que
+ *     dicen JDN y PZ/CCDRPZ (no un «Tacho Chess U12» más nuevo);
  *   - con la verificada, encuentra el torneo U12 y el U20 por el nombre (el
  *     más nuevo) y las fichas «Resultados U12/U20» llevan a cada uno;
  *   - la categoría por el año de nacimiento: U12 (2015-2020), U16 (2011-2014,
@@ -126,6 +129,26 @@ const leer = (p) => p.evaluate(() => ({ torneos: document.getElementById("insc-e
       JSON.stringify(await x.p.evaluate(() => ["u12", "u20"].map((k) => { const f = document.getElementById("ficha-resultados-" + k); return [f.tagName, f.getAttribute("href"), f.getAttribute("aria-disabled")]; })))
         === JSON.stringify([["DIV", null, "true"], ["DIV", null, "true"]]));
     await x.ctx.close();
+
+    console.log("\nCon los torneos en Ajedrez Integral (como se publicaron de verdad)");
+    {
+      const AI = [{ id: "org-ai", nombre: "Ajedrez Integral", verificado: true }, { id: "org-ai-falsa", nombre: "Ajedrez Integral", verificado: false }];
+      const ENAI = [
+        { id: U12, nombre: "Eliminatoria Cantonal JDN CCDRPZ – U12", creado: "2026-11-12T04:31:54Z", organizador_id: "org-ai", inscripcion: abierta },
+        { id: U20, nombre: "Eliminatoria Cantonal JDN CCDRPZ – U20-U16", creado: "2026-11-12T04:32:06Z", organizador_id: "org-ai", inscripcion: abierta },
+        { id: VIEJO, nombre: "Tacho Chess U12", creado: "2026-11-13T19:00:00Z", organizador_id: "org-ai", inscripcion: abierta },
+        { id: FALSO, nombre: "JDN PZ U20 (falsa)", creado: "2026-11-14T10:00:00Z", organizador_id: "org-ai-falsa", inscripcion: abierta },
+      ];
+      const y = await abrir(nav, { pareo_organizadores: AI, pareo_publicados: ENAI });
+      const ey = await leer(y.p);
+      ok("la inscripción se abre con los torneos de Ajedrez Integral", /abierta hasta las 10:00 p\.m\./.test(ey.torneos), ey.torneos);
+      ok("toma los dos de la eliminatoria: no un U12 más nuevo que no dice JDN y PZ, ni el de una «Ajedrez Integral» sin sello",
+        JSON.stringify(await y.p.evaluate(() => ["u12", "u20"].map((k) => document.getElementById("ficha-resultados-" + k).getAttribute("href"))))
+          === JSON.stringify(["torneos-pareo.html#t=" + U12, "torneos-pareo.html#t=" + U20]));
+      await y.p.fill("#insc-nacimiento", "2013-01-10");
+      ok("y se puede mandar (U16 al torneo U20-U16)", !(await leer(y.p)).boton);
+      await y.ctx.close();
+    }
 
     console.log("\nCon la ADAPZ verificada");
     x = await abrir(nav, { pareo_organizadores: ORGS, pareo_publicados: TORNEOS });
