@@ -2501,6 +2501,48 @@ simplificado para grupos de clase y no se tocó.
   siguientes (la página lo avisa). Deshacer el emparejamiento solo se puede en
   la última ronda, y al volver a emparejarla sale la misma.
 
+### Modificar la ronda en juego sin deshacerla
+
+El dueño lo pidió en noviembre de 2026: «poder modificar rondas en Pareo
+Integral, o agregar a la ronda a jugadores nuevos, agregar o quitar, poder
+cambiar sin borrar la ronda». Antes la única salida era deshacer el
+emparejamiento entero, y con partidas ya empezadas eso no sirve.
+
+- **Debajo de las mesas de la ronda en juego** va «Modificar la ronda sin
+  deshacerla» (`pintarModificarRonda` en `js/pareo/pagina.js`): cambiar a dos
+  de lugar, invertir colores, sacar a alguien, armar una mesa con quienes no
+  juegan (o darle a uno el bye del pareo) y agregar un jugador nuevo ahí
+  mismo, sin ir a la ficha Jugadores. Quien llegó tarde entra **cambiándolo
+  de lugar con el que no vino** o en una mesa nueva; el que sale queda en «No
+  juegan esta ronda» como ausente, y ahí el árbitro le pone el bye que toque.
+- **Lo que se puede lo decide `V.modificarRonda`** (`js/pareo/evento.js`,
+  funciones puras): solo la última ronda (la siguiente sale de ella), solo un
+  suizo individual (en todos contra todos, Scheveningen y eliminación el
+  calendario es fijo; por equipos, la alineación tiene su propio camino), y
+  **nunca una mesa con resultado, partida o lo que anotó un adjunto**: lo que
+  ya se jugó no se toca. Tampoco entra un retirado ni hay dos byes del pareo.
+- **El bye del pareo va siempre al final**: una mesa nueva entra antes que él.
+- **Las mesas se cuentan por su lugar en la lista**, y varias cosas de la
+  ronda apuntan a una mesa por su número (`incidencias`, `discrepancias`,
+  `deCamaras` de 1 en adelante, `confirmadas` de 0). Al irse o entrar una
+  mesa, `correrMesas` las corre con ella; lo de la mesa que se va se borra,
+  salvo la incidencia, que queda sin número de mesa.
+- **El historial cuenta «se modificaron los emparejamientos»** y no mesa por
+  mesa: con las mesas corridas, comparar resultados por posición inventaba
+  cambios. Antes de esto, un cambio solo de parejas no entraba al historial
+  (la comparación de «datos del torneo» deja las rondas afuera), así que
+  «Deshacer el último cambio» no lo habría podido deshacer.
+- Cada cambio queda como **decisión del árbitro** en las incidencias (va al
+  informe oficial), y avisa si la pareja nueva ya jugó entre sí: no lo
+  impide, porque a veces el árbitro no tiene otra.
+- Quien se inscribe tarde con evento queda en el acta desde «la ronda
+  siguiente»; si entra en la que está en juego, se corrige a esa.
+- **El comprobador de FIDE va a marcar esa ronda como distinta** de la del
+  Sistema Holandés: es lo esperado, y el manual lo dice.
+- `verificar-pareo-modificar.js` prueba las reglas sin navegador y la página
+  de punta a punta (agregar a alguien, meterlo, invertir, armar con el bye,
+  una mesa con resultado que no se deja tocar y deshacer).
+
 ### Los desempates: C.07:2026, traducido de chesspairing y comparado con él
 
 - `js/pareo/desempates.js` es la traducción de `chesspairing` (Gert Nutterts,

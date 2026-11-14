@@ -3284,6 +3284,7 @@
     else pintarMesasIndividuales(caja, r);
     pintarReimprimirMesa(caja, r);
     pintarNoJuegan(caja, r);
+    if (ultima && V.sePuedeModificar(v, r)) pintarModificarRonda(caja, r);
     pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
@@ -5153,6 +5154,143 @@
       }
       caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("noJuegan") }), ul);
     }
+  }
+
+  // ---------- Modificar la ronda en juego, sin deshacerla ----------
+  // Cambiar a dos de lugar (también a uno que no juega por uno que sí),
+  // invertir colores, sacar a alguien, armar una mesa con quienes no juegan y
+  // agregar un jugador nuevo ahí mismo. Lo que se puede y lo que no lo decide
+  // V.modificarRonda (js/pareo/evento.js); cada cambio queda en las
+  // incidencias y en el historial («Deshacer el último cambio»).
+  const ERROR_MODIFICAR = { noSePuede: "modErr_noSePuede", sinRival: "modErr_sinRival", conResultado: "modErr_conResultado", mismo: "modErr_mismo", retirado: "modErr_retirado",
+    ningunoJuega: "modErr_ningunoJuega", noJuega: "modErr_noJuega", yaJuega: "modErr_yaJuega", yaHayBye: "modErr_yaHayBye" };
+  function pintarModificarRonda(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const lado = (l) => tx(l === "b" ? "blancas" : "negras").toLowerCase();
+    // Cada jugador con su lugar en la ronda, para elegirlo.
+    const lugarDe = (id) => {
+      const p = V.dondeJuega(R, id);
+      if (!p) return tx("modSinMesa", { n: nombreDe(id) });
+      if (R.mesas[p.i].n == null) return tx("modEnBye", { n: nombreDe(id) });
+      return tx("modEnMesa", { m: V.mesaFisica(v, p.i), c: lado(p.lado), n: nombreDe(id) });
+    };
+    const enRonda = [];
+    R.mesas.forEach((m) => { enRonda.push(m.b); if (m.n != null) enRonda.push(m.n); });
+    const fuera = V.sinMesa(v, r);
+    const todos = enRonda.concat(fuera);
+    const opciones = (ids) => ids.map((id) => el("option", { value: id, texto: lugarDe(id) }));
+    const libres = R.mesas.map((m, i) => [m, i]).filter(([m]) => m.n != null && !m.r && !m.pgn);
+    const fila = (...hijos) => el("div", { class: "flex flex-wrap items-end gap-2 mt-1" }, ...hijos);
+    const campo = (id, etiqueta, control) => el("div", {}, el("label", { for: id, class: "block text-xs font-semibold mb-0.5", texto: etiqueta }), control);
+    const bloque = (id, titulo, ayuda, ...hijos) => el("section", { id, class: "mt-3", "aria-labelledby": id + "-titulo" },
+      el("h4", { id: id + "-titulo", class: "font-semibold text-sm", texto: titulo }),
+      ayuda ? el("p", { class: C.nota, texto: ayuda }) : null, ...hijos);
+
+    // Hace el cambio, lo anota y vuelve a pintar con el panel abierto.
+    function hacer(op, incidencia, focoId) {
+      const res = V.modificarRonda(v, r, op);
+      if (res.error) {
+        Avisos.avisar(tx(ERROR_MODIFICAR[res.error] || "modErr_noSePuede", { m: res.mesa != null ? V.mesaFisica(v, res.mesa) : "" }), { tipo: "error" });
+        return;
+      }
+      R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), tipo: "decision", texto: incidencia(res) });
+      delete R.pareoVisto;
+      // Quien se inscribió tarde y entra en esta misma ronda: en el acta, su
+      // inscripción vale desde esta ronda y no desde la siguiente.
+      for (const id of [op.a, op.b, op.n]) {
+        const x = id && V.dondeJuega(R, id) && (v.tardios || []).find((y) => y.ronda === r + 2 && y.nombre === nombreDe(id));
+        if (x) x.ronda = r + 1;
+      }
+      guardar();
+      estado.modificarAbierto = true;
+      pintarRondas();
+      const avisos = [tx("modListo", { r: r + 1 })];
+      for (const x of res.repetidas || []) avisos.push(tx("modRepetida", { b: nombreDe(x.b), n: nombreDe(x.n), r: x.ronda }));
+      if (res.sinRival) avisos.push(tx("modSinRivalAviso", { n: nombreDe(res.sinRival) }));
+      Avisos.avisar(avisos.join(" "), { tipo: (res.repetidas || []).length || res.sinRival ? "info" : undefined });
+      const f = $(focoId);
+      if (f) f.focus();
+    }
+
+    const det = el("details", { id: "pi-modificar", class: "no-imprimir mt-5 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!estado.modificarAbierto });
+    det.addEventListener("toggle", () => { estado.modificarAbierto = det.open; });
+    det.append(el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("modTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx("modTexto") }));
+
+    // Cambiar a dos de lugar.
+    const selA = el("select", { id: "pi-mod-a", class: C.campoChico }, opciones(todos));
+    const selB = el("select", { id: "pi-mod-b", class: C.campoChico }, opciones(todos));
+    // El recién agregado (abajo) queda elegido para entrar.
+    const preferido = fuera.includes(estado.modNuevo) ? estado.modNuevo : fuera[0];
+    if (todos.length > 1) selB.value = fuera.length ? preferido : todos[1];
+    det.append(bloque("pi-mod-cambio", tx("modIntercambiarTitulo"), tx("modIntercambiarAyuda"),
+      fila(campo("pi-mod-a", tx("modJugadorA"), selA), campo("pi-mod-b", tx("modJugadorB"), selB),
+        el("button", { type: "button", id: "pi-mod-intercambiar", class: C.mini, onclick: () => {
+          const a = selA.value, b = selB.value;
+          hacer({ tipo: "intercambiar", a, b }, () => tx("modIncCambio", { a: nombreDe(a), b: nombreDe(b) }), "pi-mod-intercambiar");
+        } }, tx("modIntercambiar")))));
+
+    // Invertir los colores.
+    if (libres.length) {
+      const selM = el("select", { id: "pi-mod-mesa", class: C.campoChico },
+        libres.map(([m, i]) => el("option", { value: String(i), texto: tx("modMesaOpcion", { m: V.mesaFisica(v, i), b: nombreDe(m.b), n: nombreDe(m.n) }) })));
+      det.append(bloque("pi-mod-colores", tx("modColoresTitulo"), null,
+        fila(campo("pi-mod-mesa", tx("mesa"), selM),
+          el("button", { type: "button", id: "pi-mod-invertir", class: C.mini, onclick: () => {
+            const m = R.mesas[Number(selM.value)];
+            hacer({ tipo: "colores", mesa: Number(selM.value) }, () => tx("modIncColores", { b: nombreDe(m.n), n: nombreDe(m.b) }), "pi-mod-invertir");
+          } }, tx("modColores")))));
+    }
+
+    // Sacar a alguien de la ronda.
+    if (enRonda.length) {
+      const selS = el("select", { id: "pi-mod-sacar", class: C.campoChico }, opciones(enRonda));
+      det.append(bloque("pi-mod-salir", tx("modSacarTitulo"), tx("modSacarAyuda"),
+        fila(campo("pi-mod-sacar", tx("nombre"), selS),
+          el("button", { type: "button", id: "pi-mod-sacar-boton", class: C.mini, onclick: () => {
+            const id = selS.value;
+            hacer({ tipo: "sacar", id }, (res) => res.sinRival ? tx("modIncSacarRival", { n: nombreDe(id), o: nombreDe(res.sinRival) }) : tx("modIncSacar", { n: nombreDe(id) }), "pi-mod-sacar-boton");
+          } }, tx("modSacar")))));
+    }
+
+    // Armar una mesa con quienes no juegan (o darle a uno el bye del pareo).
+    const hayBye = R.mesas.some((m) => m.n == null);
+    if (fuera.length >= (hayBye ? 2 : 1)) {
+      const selBl = el("select", { id: "pi-mod-blancas", class: C.campoChico }, fuera.map((id) => el("option", { value: id, texto: nombreDe(id) })));
+      const selNe = el("select", { id: "pi-mod-negras", class: C.campoChico }, fuera.map((id) => el("option", { value: id, texto: nombreDe(id) })),
+        hayBye ? null : el("option", { value: "", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) }));
+      selBl.value = preferido;
+      selNe.value = fuera.find((id) => id !== preferido) || "";
+      det.append(bloque("pi-mod-armar", tx("modArmarTitulo"), null,
+        fila(campo("pi-mod-blancas", tx("blancas"), selBl), campo("pi-mod-negras", tx("negras"), selNe),
+          el("button", { type: "button", id: "pi-mod-armar-boton", class: C.mini, onclick: () => {
+            const b = selBl.value, n = selNe.value || null;
+            hacer({ tipo: "mesa", b, n }, () => n ? tx("modIncMesa", { b: nombreDe(b), n: nombreDe(n) }) : tx("modIncBye", { n: nombreDe(b) }), "pi-mod-armar-boton");
+          } }, tx("modArmar")))));
+    } else if (!fuera.length) det.append(el("p", { class: C.nota + " mt-3", texto: tx("modNadieSinMesa") }));
+
+    // Un jugador nuevo, sin salir de la ronda.
+    const fNombre = el("input", { id: "pi-mod-nuevo-nombre", type: "text", maxlength: "33", autocomplete: "off", class: C.campoChico });
+    const fInst = el("input", { id: "pi-mod-nuevo-inst", type: "text", maxlength: "80", autocomplete: "off", class: C.campoChico });
+    const fElo = el("input", { id: "pi-mod-nuevo-elo", type: "number", min: "0", max: "3500", inputmode: "numeric", class: C.campoChico + " w-24" });
+    const form = el("form", { class: "flex flex-wrap items-end gap-2 mt-1" },
+      campo("pi-mod-nuevo-nombre", tx("nombre"), fNombre), campo("pi-mod-nuevo-inst", tx("institucion"), fInst), campo("pi-mod-nuevo-elo", tx("modElo"), fElo),
+      el("button", { type: "submit", id: "pi-mod-nuevo-agregar", class: C.mini }, tx("modNuevoAgregar")));
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const d = datosJugador({ nombre: fNombre.value, institucion: fInst.value, elo: fElo.value });
+      if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); fNombre.focus(); return; }
+      if (!agregarJugadores([d])) return;
+      estado.modNuevo = v.jugadores[v.jugadores.length - 1].id;
+      estado.modificarAbierto = true;
+      pintarRondas();
+      Avisos.avisar(tx("modNuevoListo", { n: d.nombre }));
+      const sig = $("pi-mod-blancas") || $("pi-mod-b");
+      if (sig) sig.focus();
+    });
+    det.append(bloque("pi-mod-nuevo", tx("modNuevoTitulo"), tx("modNuevoAyuda"), form));
+    caja.append(det);
   }
 
   // ---------- Los encuentros de un torneo por equipos ----------
