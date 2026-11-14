@@ -15218,6 +15218,46 @@ de cada torneo», que arma `js/torneo-sala.js`.
   seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
   dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
 
+### La mesa iluminada en la foto
+
+Pedido del dueño el 14/11/2026, la víspera del torneo: «que pueda identificar y
+numerar las mesas para que la gente, cuando ocupe saber en cuál va, dependiendo
+del torneo, […] que se le ilumine o se le marque como más notable en cuál es la
+mesa donde tiene que ir a sentarse». Antes se probó dibujar sobre la foto solo
+las cuatro zonas que él marcó con círculos de colores (PR #1289, cerrado sin
+mergear): no le gustó, porque no decía en qué mesa sentarse.
+
+- **Dónde está cada mesa lo marcó el dueño, mesa por mesa**, en una página
+  aparte sobre la misma foto (un artefacto de claude.ai con su propia base: se
+  elige el torneo y se toca cada tablero en el orden de su número). No se
+  adivina: depende de cómo numeró el gimnasio. Lo marcado se copió a
+  `torneoPagina.mesasSala` de la configuración, en los píxeles de
+  `img/tacho-chess-2/sala.jpg` (1200 × 675; la foto marcada era la misma a
+  1600 × 900, así que se multiplicó por 0,75). Cada torneo con su nombre, su
+  color (el de los círculos del dueño: morada de primero a tercero, azul de
+  cuarto a sexto, naranja sétimo y octavo, turquesa de noveno a undécimo), el
+  fondo de la letra blanca (6,11 a 8,72) y sus niveles.
+- **`js/torneo-sala-foto.js`** (una sola copia, para cualquier torneo con
+  `mesasSala`): un torneo de Pareo cae en el de la configuración con más
+  jugadores de sus niveles, así no depende de cómo se escriba su nombre en
+  Pareo. Hace tres cosas:
+  - En la tarjeta de «Busca a tu jugador» (`js/centroamericano-vivo.js` le
+    pide `enTarjeta` en vez del plano del Centroamericano): «📍 Tu mesa en la
+    sala: Mesa 5 de la zona morada (1er Ciclo)» y la foto **acercada** a su
+    mesa (2,6 veces, sin dejar bordes vacíos) con un anillo que late en el color
+    de su torneo. Con el movimiento reducido, el anillo queda quieto y más
+    grueso.
+  - En «Pareos de la ronda», cada partida trae «Ver dónde queda la mesa N»,
+    que abre la misma foto acercada (y dice si está abierta).
+  - En «La sala de juego», la foto entera con todas las mesas numeradas y,
+    escrito debajo, qué color es cada torneo (el color nunca va solo). En el
+    celular la foto se agranda y se desliza de lado dentro de su marco, centrada
+    en las mesas al abrir la ventana: 41 números en 360 píxeles no se leen.
+- Lo revisa `verificar-tacho-chess.js`: las mesas de cada torneo de la 1 a la
+  última sin huecos, dentro de la foto y con el color medido; el anillo de la
+  tarjeta cae (a 1 % de la foto) donde la configuración dice que está esa mesa;
+  el botón de los pareos; y todas las mesas sobre la foto de la sala.
+
 ### Los pareos de la ronda
 
 Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos

@@ -137,7 +137,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   // Los resultados, como en el Centroamericano (el buscador, la clasificación
   // y el podio por nivel, el proyector), con los datos de Pareo Integral:
   // js/torneo-pareo-datos.js los lee y los entrega a js/centroamericano-vivo.js.
-  scriptsAntes: ["js/torneo-pareo-datos.js"],
+  scriptsAntes: ["js/torneo-pareo-datos.js", "js/torneo-sala-foto.js"],
   buscador: {
     texto: "Escribe su nombre o su apellido: te decimos su nivel, su puesto en el nivel, sus puntos, su mesa y su rival en la ronda que se juega, y contra quién jugó cada ronda.",
     ejemplo: "Solano",
@@ -287,7 +287,7 @@ ${desempates}
       {
         id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
         comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar, visto desde la gradería. Cada mesa lleva su número en el color de su torneo: es el mismo de los pareos, y en «Busca a tu jugador» tu mesa sale iluminada.</p>
 <img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
 <h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
 <div id="sala-mesas" aria-live="polite">

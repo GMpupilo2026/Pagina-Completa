@@ -86,6 +86,9 @@
       else quienes.appendChild(el("p", "cac-pareo-descansa", "Descansa: bye de un punto."));
       li.appendChild(quienes);
       li.appendChild(el("span", "cac-pareo-res", m.negras ? (m.resultado || "Se juega") : "Bye"));
+      // Dónde queda la mesa en la foto de la sala (js/torneo-sala-foto.js).
+      const donde = m.negras && window.TorneoSalaFoto && window.TorneoSalaFoto.boton(t, m.mesa);
+      if (donde) li.appendChild(donde);
       ul.appendChild(li);
     });
     caja.replaceChildren(estado, ul);
