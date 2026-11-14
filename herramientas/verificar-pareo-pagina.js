@@ -12,7 +12,8 @@
  *      clasificación y la cruzada se VEN, el TRF que baja la página pasa el
  *      comprobador, y el torneo sigue ahí al recargar.
  *   3. Un nombre con HTML adentro se muestra como texto.
- *   4. Deshacer el emparejamiento de la última ronda la saca, y se vuelve a emparejar igual.
+ *   4. Deshacer el emparejamiento de la última ronda la saca (lo marcado antes de
+ *      emparejarla, ausentes y byes pedidos, sigue marcado) y se vuelve a emparejar igual.
  *   5. El comprobador de la página marca un TRF alterado y da por bueno el propio.
  *   6. El generador al azar abre un torneo entero.
  *   7. Un todos contra todos de 5 (con ronda libre): cada uno juega con todos una vez.
@@ -21,6 +22,7 @@
  *  10. El manual (pareo-manual.html) se ve en el idioma elegido, explica todos
  *      los desempates en los dos idiomas, y la descarga de la línea de comandos está.
  *
+ *      Lo marcado antes de emparejar (ausentes, byes pedidos) sigue marcado al deshacer.
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-pagina.js                         */
 const { chromium } = require("playwright");
@@ -38,6 +40,7 @@ let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
 const bien = (m) => console.log("  ✓ " + m);
 const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detalle : "")));
+const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esperaba " + JSON.stringify(b) + ", salió " + JSON.stringify(a));
 
 (async () => {
   console.log("=== 1. Los textos ===");
@@ -207,6 +210,21 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     await p.click('dialog.avisos-dialogo[open] button:has-text("Deshacer el emparejamiento")');
     await p.waitForFunction(() => /Emparejar la ronda 5/.test(document.querySelector("#pi-ronda").textContent));
     ok((await leerTorneo()).rondas.length === 4, "la ronda 5 se va");
+    // Lo marcado antes de emparejar no se pierde al deshacer: Diego no viene a
+    // la ronda 5; se empareja, se deshace (para agregar a alguien que faltaba)
+    // y sigue marcado.
+    await p.click('#pi-ronda button[aria-label="Marcar que Paz, Diego no viene a esta ronda"]');
+    await emparejar(5);
+    await p.click('#pi-ronda button:has-text("Deshacer el emparejamiento")');
+    await p.click('dialog.avisos-dialogo[open] button:has-text("Deshacer el emparejamiento")');
+    await p.waitForFunction(() => /Emparejar la ronda 5/.test(document.querySelector("#pi-ronda").textContent));
+    igual("al deshacer, el ausente marcado antes sigue marcado (Diego «no viene»)",
+      await p.$eval('#pi-ronda select[aria-label^="Paz, Diego"]', (x) => x.value), "Z");
+    await p.reload();
+    await ficha("rondas");
+    await p.click('#pi-rondas-nav button:has-text("Ronda 5")');
+    igual("y sigue después de recargar", await p.$eval('#pi-ronda select[aria-label^="Paz, Diego"]', (x) => x.value), "Z");
+    await p.click('#pi-ronda button[aria-label="Deshacer que Paz, Diego no viene a esta ronda"]');
     await emparejar(5);
     const despues = await leerTorneo();
     const mesas = (R) => R.mesas.map((m) => m.b + "-" + m.n).join(" ");
