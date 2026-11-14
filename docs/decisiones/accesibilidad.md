@@ -1580,3 +1580,33 @@ que no se hizo otra: **con `?banco=clases` carga las posiciones de las clases**
   salen de la tabla exacta de rey y peón contra rey (`herramientas/lib/kpk.js`)
   con una sola jugada buena —la que toma la oposición— y todas las demás
   pierden el resultado (o lo dejan escapar), y Stockfish lo confirma.
+
+## El diagnóstico con lector y sin el cuadro
+
+El cuadro de comandos resolvía el diagnóstico para quien contesta escribiendo,
+pero **con lector de pantalla y SIN el cuadro** —VoiceOver en el celular, donde
+no hay Tab que encienda el Modo Adaptado, o quien prefiere los botones— la
+prueba se contestaba a ciegas, y nada daba error:
+
+- **El foco se quedaba en el botón que traía la pregunta**: «Empezar», que se
+  escondía, o «Siguiente», que quedaba deshabilitado. El lector no decía la
+  pregunta nueva. Ahora `enfocarPregunta()` lleva el foco al título de la
+  pregunta (`#q-text`, `tabindex="-1"`). **Con el cuadro a la vista, va al
+  cuadro**: ahí se contesta y su región viva ya dice la pregunta, así que ir al
+  título la diría dos veces. Contestar POR el cuadro no pasa por ahí (el foco
+  sigue en el cuadro, como antes).
+- **La pista (`#q-hint`) es región viva**: «Elegiste eva 4», «Anotado: no lo
+  sabías» y «No se pudo enviar tu respuesta» cambiaban en silencio.
+- **«No lo sé todavía» lleva `aria-pressed`**, como las opciones, y se desmarca
+  también para el lector al elegir una opción, una casilla o una jugada.
+- **La corrección dice la jugada como todo el sitio**: el banco guarda solo
+  salida y llegada, y se mostraba «e1–g1». `jugadaDeLaSolucion()` la saca de
+  la posición con chess.js: «O-O», o «enroque corto» en Modo Adaptado.
+- **Los emojis y las barras no se leen**: ✅/❌/🤔 del repaso van con
+  «Correcta.», «Incorrecta.» o «No la sabías.» para el lector; las ★ de los
+  escalones, con «Escalón 3 de 5»; «7/10 · 70%», con «7 de 10 correctas,
+  70 %»; los emojis de área, escondidos. Las barras de color son
+  `aria-hidden`: el dato ya va escrito al lado.
+
+Lo revisa `pruebaLectorSinCuadro` en `verificar-cuadro-comandos.js` (se rompió
+a propósito el foco y el `aria-pressed`, y saltó).

@@ -112,7 +112,7 @@ css/universidades.css), con el azul y el rojo del afiche y Tacho, su
 mascota. Todo sale del afiche, salvo el ritmo y las rondas, que dio el
 dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
 2» en docs/decisiones/juegos-y-torneos.md.`,
-  logo: { src: "img/tacho-chess-2/mascota.png", ancho: 450, alto: 751, alt: "Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" },
+  logo: { src: "img/tacho-chess-2/mascota.png", ancho: 450, alto: 755, alt: "Tacho, la mascota del torneo: un mapache con la camiseta del número 52 y un rey negro en la mano" },
   aliados: [{ src: "img/tacho-chess-2/logo-liceo.png", ancho: 276, alto: 276, alt: "Liceo Anastasio Alfaro, San José, 1952" }],
   portada: {
     pildora: "El Liceo Anastasio Alfaro te invita al",

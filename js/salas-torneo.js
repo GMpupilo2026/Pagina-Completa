@@ -162,7 +162,7 @@
     // que diga «inscrib», a la ventana «Inscribirme» de la página; Pareo
     // Integral (los resultados), a las fichas.
     "tacho-chess-2": {
-      clase: "u-sala", tema: "u-sala-tacho", imagen: "/img/tacho-chess-2/mascota.png", ancho: 450, alto: 751,
+      clase: "u-sala", tema: "u-sala-tacho", imagen: "/img/tacho-chess-2/mascota.png", ancho: 450, alto: 755,
       pagina: "/tacho-chess-2.html",
       fichas: [[/torneos-pareo\.html/i, "fichas", "Resultados en Pareo Integral"], [/bases-tacho-chess-2\.pdf$/i, "ficha-bases"], [/forms\.gle\/|inscrib/i, "inscribirme"]],
     },

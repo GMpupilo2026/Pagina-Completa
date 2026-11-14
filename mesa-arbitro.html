@@ -31,7 +31,25 @@
 
         <div id="app" class="hidden">
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️ </span>Mesa del árbitro</h1>
-            <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para un torneo de Pareo Integral (con el enlace de árbitro que te da el árbitro principal) o un suizo individual publicado en chess-results: anota los resultados de tus mesas, las ilegales y las irregularidades. Cada cosa que haces queda en tu bitácora, con su hora, para entregarla en PDF o Word.</p>
+            <!-- La entrada del árbitro principal: elige sobre qué va a trabajar y la organización del evento queda lista (árbitros, mesas,
+                 QR y códigos, avisos, lo anotado). «Dirijo solo» (#solo) es la mesa de siempre. Ver «La Mesa del árbitro con torneos de Pareo Integral». -->
+            <section id="entrada" aria-labelledby="t-entrada">
+                <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para el árbitro principal: elige el torneo con que vas a trabajar y desde ahí configura a tus árbitros. A cada uno le das sus mesas con un QR o un código, y anotan en su tablet los resultados, las ilegales y las irregularidades.</p>
+                <h2 id="t-entrada" class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-6">¿Sobre qué vas a trabajar?</h2>
+                <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                    <a id="entrada-pareo" href="centroamericano-mesas.html#torneos" class="block rounded-2xl border-2 border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 p-5 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 transition-colors">
+                        <span class="block font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️ </span>Pareo Integral</span>
+                        <span class="block text-sm text-brand-600 dark:text-brand-300 mt-1">Tu torneo de Pareo Integral, en esta computadora. Lo que anotan tus árbitros le llega a tu Pareo, que lo acepta. Sirve desde antes de la ronda 1.</span>
+                    </a>
+                    <a id="entrada-chess" href="centroamericano-mesas.html#claves" class="block rounded-2xl border-2 border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 p-5 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 transition-colors">
+                        <span class="block font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🌐 </span>chess-results</span>
+                        <span class="block text-sm text-brand-600 dark:text-brand-300 mt-1">Un torneo dirigido con Swiss-Manager y publicado en chess-results. Pones su clave (SID) una vez y tus árbitros guardan los resultados ahí.</span>
+                    </a>
+                </div>
+                <p class="text-sm mt-4"><a id="entrada-solo" href="#solo" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dirijo solo, sin árbitros adjuntos</a> <span class="text-brand-500 dark:text-brand-300">(anotas tú mismo; o entras con el código de árbitro que te dio otro árbitro principal).</span></p>
+            </section>
+            <div id="solo" hidden>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para un torneo de Pareo Integral (con el enlace de árbitro que te da el árbitro principal) o un suizo individual publicado en chess-results: anota los resultados de tus mesas, las ilegales y las irregularidades. Cada cosa que haces queda en tu bitácora, con su hora, para entregarla en PDF o Word. <a href="#" id="volver-entrada" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a elegir</a></p>
 
             <section id="zona-mis-torneos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6" aria-labelledby="t-mis-torneos">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -162,6 +180,7 @@
                     <button type="button" id="b-docx" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled>Bajar en Word</button>
                 </div>
             </section>
+            </div>
         </div>
     </main>
 
@@ -181,6 +200,7 @@
     <script src="js/pareo/publicar.js"></script>
     <script src="js/pareo/camaras-adjunto.js"></script>
     <script src="js/mesa-arbitro-pareo.js"></script>
+    <script src="js/mesa-arbitro-entrada.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
 

@@ -302,6 +302,22 @@ async function empezar() {
   guardarEstado();
   irA('test-view');
   pintarItem();
+  enfocarPregunta();
+}
+
+/* Adónde va el foco al aparecer una pregunta (al empezar o con «Siguiente»).
+   Se quedaba en el botón que la trajo —«Empezar», ya escondido, o «Siguiente»,
+   ya deshabilitado— y el lector no decía nada: quien no ve no sabía que había
+   una pregunta nueva. Con el cuadro de comandos a la vista, al cuadro: ahí se
+   contesta, y su región viva ya dice la pregunta (prepararComandos); ir al
+   título la haría decir dos veces. Sin el cuadro, al título de la pregunta.
+   Contestar POR el cuadro no pasa por acá: avanzarEscribiendo deja el foco en
+   el cuadro. */
+function enfocarPregunta() {
+  if (document.getElementById('test-view').classList.contains('hidden')) return;
+  if (comandos && window.CuadroComandos && CuadroComandos.activo()) { comandos.enfocar(); return; }
+  const titulo = document.getElementById('q-text');
+  if (titulo) titulo.focus({ preventScroll: true });
 }
 
 function pintarItem() {
@@ -310,7 +326,13 @@ function pintarItem() {
   origenElegido = null;
   const area = PE.AREA_POR_ID[itemActual.area];
   document.getElementById('q-counter').textContent = `Pregunta ${estado.idx + 1} de ${ITEMS.length}`;
-  document.getElementById('q-area').textContent = `${area.emoji} ${area.nombre}`;
+  // El emoji, escondido del lector: decía «brújula» o «espadas cruzadas» antes del área.
+  const qArea = document.getElementById('q-area');
+  qArea.textContent = '';
+  const emojiArea = document.createElement('span');
+  emojiArea.setAttribute('aria-hidden', 'true');
+  emojiArea.textContent = area.emoji + ' ';
+  qArea.append(emojiArea, area.nombre);
   document.getElementById('q-bar').style.width = ((estado.idx / ITEMS.length) * 100) + '%';
   document.getElementById('q-text').textContent = itemActual.enunciado;
   document.getElementById('next-btn').disabled = true;
@@ -371,7 +393,7 @@ function elegirOpcion(posicion) {
   const opciones = document.getElementById('q-options');
   seleccion = ordenOpciones[posicion];
   [...opciones.children].forEach((b, j) => {
-    if (b.id === 'no-se-btn') b.className = claseNoSe(false);
+    if (b.id === 'no-se-btn') { b.className = claseNoSe(false); b.setAttribute('aria-pressed', 'false'); }
     else {
       b.className = claseOpcion(j === posicion);
       // La elegida se DICE, no solo se pinta de otro color.
@@ -507,7 +529,7 @@ function responderEscribiendo(texto, api) {
     seleccion = sq;
     pintarTablero(new Chess(itemActual.fen), [sq]);
     const noSe = document.getElementById('no-se-btn');
-    if (noSe) noSe.className = claseNoSe(false);
+    if (noSe) { noSe.className = claseNoSe(false); noSe.setAttribute('aria-pressed', 'false'); }
     document.getElementById('q-hint').textContent = `Elegiste ${casillaDicha(sq)}.`;
     document.getElementById('next-btn').disabled = false;
     api.limpiar();
@@ -527,7 +549,7 @@ function responderEscribiendo(texto, api) {
     origenElegido = null;
     pintarTablero(juego, [mv.from, mv.to]);
     const noSe = document.getElementById('no-se-btn');
-    if (noSe) noSe.className = claseNoSe(false);
+    if (noSe) { noSe.className = claseNoSe(false); noSe.setAttribute('aria-pressed', 'false'); }
     document.getElementById('q-hint').textContent = `Jugaste ${jugadaDicha(mv.san)}: esa es tu respuesta y no hace falta jugar más.`;
     document.getElementById('next-btn').disabled = false;
     api.limpiar();
@@ -551,13 +573,16 @@ function botonNoSe() {
   btn.type = 'button';
   btn.id = 'no-se-btn';
   btn.className = claseNoSe(false);
-  btn.textContent = '🤔 No lo sé todavía';
+  btn.innerHTML = '<span aria-hidden="true">🤔</span> No lo sé todavía';
+  // Como las opciones: si está marcado se DICE, no solo cambia de color.
+  btn.setAttribute('aria-pressed', 'false');
   btn.addEventListener('click', () => {
     seleccion = NO_SE;
     origenElegido = null;
     const caja = document.getElementById('q-options');
     [...caja.children].forEach((b) => { if (b !== btn) { b.className = claseOpcion(false); b.setAttribute('aria-pressed', 'false'); } });
     btn.className = claseNoSe(true);
+    btn.setAttribute('aria-pressed', 'true');
     if (itemActual.fen) pintarTablero(new Chess(itemActual.fen));
     document.getElementById('q-hint').textContent = 'Anotado: no lo sabías. Al final te explicamos esta.';
     document.getElementById('next-btn').disabled = false;
@@ -648,7 +673,7 @@ function clicEnCasilla(square) {
   const juego = new Chess(itemActual.fen);
   // Tocar el tablero cancela un "no lo sé" marcado antes.
   const noSe = document.getElementById('no-se-btn');
-  if (noSe) noSe.className = claseNoSe(false);
+  if (noSe) { noSe.className = claseNoSe(false); noSe.setAttribute('aria-pressed', 'false'); }
   if (itemActual.tipo === 'casilla') {
     seleccion = square;
     pintarTablero(juego, [square]);
@@ -898,17 +923,17 @@ function pintarEscalones(resumen) {
     <div class="space-y-1.5">
       ${escalones.map((e) => `
         <div class="flex items-center gap-2 text-sm">
-          <span class="w-20 shrink-0 text-brand-500 dark:text-brand-300">${'★'.repeat(e.peso)}</span>
-          <div class="flex-1 h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
+          <span class="w-20 shrink-0 text-brand-500 dark:text-brand-300"><span aria-hidden="true">${'★'.repeat(e.peso)}</span><span class="sr-only">Escalón ${e.peso} de 5:</span></span>
+          <div class="flex-1 h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden" aria-hidden="true">
             <div class="h-full ${e.peso <= alcanzado ? 'bg-green-500' : 'bg-brand-300 dark:bg-brand-700'}" style="width:${e.porcentaje}%"></div>
           </div>
-          <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-300">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+          <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-300"><span aria-hidden="true">${e.aciertos}/${e.total} · ${e.porcentaje}%</span><span class="sr-only">${e.aciertos} de ${e.total} correctas, ${e.porcentaje} %,</span></span>
           <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-450 dark:text-brand-350'}">${e.peso <= alcanzado ? (resumen.modelo === 'elo' ? 'a tu alcance' : 'superado') : 'todavía no'}</span>
         </div>`).join('')}
     </div>
     <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${alcanzado >= 5
       ? 'Superaste los cinco escalones: la prueba ya no te mide, el siguiente paso es la competencia y el análisis de tus propias partidas.'
-      : `El próximo escalón es el de ${'★'.repeat(alcanzado + 1)}: ahí está lo que te falta para subir de nivel, y de ahí sale tu plan.`}</p>`;
+      : `El próximo escalón es el de <span aria-hidden="true">${'★'.repeat(alcanzado + 1)}</span><span class="sr-only">${alcanzado + 1} estrellas</span>: ahí está lo que te falta para subir de nivel, y de ahí sale tu plan.`}</p>`;
 }
 
 /* El plan de cuatro semanas. Antes se pintaban solo las tres primeras y sin la
@@ -1097,10 +1122,10 @@ function mostrarResultado(detalle, reciente) {
     fila.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
     fila.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-1">
-        <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${a.nombre}</p>
-        <p class="text-sm text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}% · ${PE.bandaDeNota(nota).etiqueta}${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
+        <p class="font-semibold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">${a.emoji}</span> ${a.nombre}</p>
+        <p class="text-sm text-brand-500 dark:text-brand-300"><span aria-hidden="true">${a.aciertos}/${a.total} · ${a.porcentaje}% · ${PE.bandaDeNota(nota).etiqueta}${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</span><span class="sr-only">${a.aciertos} de ${a.total} correctas, ${a.porcentaje} %, ${PE.bandaDeNota(nota).etiqueta}${a.nosabe ? `, ${a.nosabe} que dijiste no saber` : ''}.</span></p>
       </div>
-      <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2">
+      <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2" aria-hidden="true">
         <div class="h-full ${color}" style="width:${a.porcentaje}%"></div>
       </div>
       <p class="text-xs text-brand-450 dark:text-brand-350">${typeof a.esperado === 'number' ? `Con tu fuerza, lo esperable era un ${a.esperado}%. ` : ''}${a.mide}</p>`;
@@ -1132,10 +1157,13 @@ function mostrarResultado(detalle, reciente) {
     const det = document.createElement('details');
     det.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md px-4 py-3';
     const correcta = item.tipo === 'jugada'
-      ? [item.solucion].concat(item.alternas || []).map((j) => `${j.from}–${j.to}`).join(' o ')
+      ? [item.solucion].concat(item.alternas || []).map((j) => jugadaDeLaSolucion(item.fen, j)).join(' o ')
       : item.tipo === 'casilla' ? item.solucion : item.opciones[item.correcta];
+    // El resultado de cada una va ESCRITO para el lector: el emoji solo se oía
+    // como «marca de verificación» o «cruz» antes de cada enunciado.
+    const marca = ok ? ['✅', 'Correcta.'] : dijoNoSaber ? ['🤔', 'No la sabías.'] : ['❌', 'Incorrecta.'];
     det.innerHTML = `
-      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : (dijoNoSaber ? '🤔' : '❌')} ${i + 1}. ${item.enunciado}</summary>
+      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200"><span aria-hidden="true">${marca[0]}</span><span class="sr-only">${marca[1]}</span> ${i + 1}. ${item.enunciado}</summary>
       <p class="text-sm text-brand-600 dark:text-brand-300 mt-2"><strong>Respuesta correcta:</strong> ${correcta}</p>
       <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${item.explica}</p>
       ${dijoNoSaber ? '<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Dijiste que no la sabías: por eso está en tu plan, no en tu lista de errores.</p>' : ''}`;
@@ -1143,9 +1171,29 @@ function mostrarResultado(detalle, reciente) {
   });
 }
 
+/* La jugada correcta de la corrección, como se muestran todas en el sitio: en
+   algebraica española («Cf3», «O-O») y, en Modo Adaptado, en palabras
+   («enroque corto»). El banco guarda solo salida y llegada, y se mostraba
+   «e1–g1», que el lector dice «e uno guion g uno». La jugada sale de la
+   posición con chess.js; si no sale (no debería: el banco está verificado),
+   queda salida–llegada como antes. */
+function jugadaDeLaSolucion(fen, j) {
+  try {
+    const mv = new Chess(fen).move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
+    if (mv) return jugadaDicha(mv.san);
+  } catch (e) {}
+  return `${j.from}–${j.to}`;
+}
+
 /* ---------------- Arranque ---------------- */
 document.getElementById('start-btn').addEventListener('click', empezar);
-document.getElementById('next-btn').addEventListener('click', siguiente);
+// Con el botón, el foco va a la pregunta nueva (enfocarPregunta); al terminar
+// la prueba ya lo lleva anunciarResultado al título del resultado.
+document.getElementById('next-btn').addEventListener('click', async () => {
+  const antes = estado.idx;
+  await siguiente();
+  if (estado.idx !== antes && estado.idx < ITEMS.length) enfocarPregunta();
+});
 document.getElementById('abandon-btn').addEventListener('click', () => { guardarEstado(); irA('intro-view'); });
 document.getElementById('repeat-btn').addEventListener('click', () => { borrarEstado(); pintarPerfil(); irA('intro-view'); });
 

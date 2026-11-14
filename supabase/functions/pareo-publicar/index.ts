@@ -22,7 +22,8 @@
 //   { accion: "seguir_confirmar", id, token } → { ok, nombre }
 //   { accion: "seguir_baja", id, token }       → { ok }
 //   { accion: "adjuntos", id, clave, adjuntos } → { ok }   (los enlaces de árbitro adjunto del torneo)
-//   { accion: "cola", id, clave }              → { ok, cola, vistos }
+//   { accion: "cola", id, clave }              → { ok, cola, vistos, mesa }   (mesa: está en un evento de la Mesa del árbitro;
+//                                                  sus filas traen asignacion_id, nombre, desde y hasta en vez de codigo)
 //   { accion: "cola_borrar", id, clave, hasta } → { ok }
 //   { accion: "adjunto_entrar", codigo }       → { ok, id, nombre, arbitro, desde, hasta }
 //   { accion: "adjunto_anotar", codigo, evento, ronda, datos } → { ok, id }
@@ -91,7 +92,7 @@ import {
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
-import { type Adjunto, limpiarAdjuntos, limpiarCodigo, limpiarEnvio } from "./adjuntos.ts";
+import { type Adjunto, limpiarAdjuntos, limpiarCodigo, limpiarEnvio } from "./pareo-adjuntos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -756,12 +757,14 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
     if (accion === "cola") {
-      const [{ data: cola, error }, { data: vistos }] = await Promise.all([
-        admin.from("pareo_cola").select("id, codigo, evento, ronda, datos, creado").eq("publicado_id", pid).order("id").range(0, 499),
+      const [{ data: cola, error }, { data: vistos }, { data: enMesa }] = await Promise.all([
+        admin.from("pareo_cola").select("id, codigo, asignacion_id, nombre, desde, hasta, evento, ronda, datos, creado").eq("publicado_id", pid).order("id").range(0, 499),
         admin.from("pareo_adjuntos").select("codigo, visto").eq("publicado_id", pid).eq("activo", true),
+        // ¿Está en un evento de la Mesa del árbitro? Entonces su Pareo lee la cola aunque no tenga adjuntos propios.
+        admin.from("centroamericano_torneos").select("tnr").eq("pareo_id", pid).eq("archivado", false).limit(1),
       ]);
       if (error) return json({ ok: false, error: "No se pudo leer lo que mandaron los árbitros." }, 502);
-      return json({ ok: true, cola: cola ?? [], vistos: vistos ?? [] });
+      return json({ ok: true, cola: cola ?? [], vistos: vistos ?? [], mesa: !!(enMesa && enMesa.length) });
     }
     const hasta = Number(body.hasta);
     if (!Number.isSafeInteger(hasta) || hasta < 1) return json({ ok: false, error: "Falta hasta dónde borrar." }, 400);

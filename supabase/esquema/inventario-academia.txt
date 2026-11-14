@@ -719,6 +719,7 @@ columna  centroamericano_evento_equipo.persona_id  uuid
 columna  centroamericano_eventos.creado_en  timestamp with time zone
 columna  centroamericano_eventos.dueno_id  uuid
 columna  centroamericano_eventos.evento  text
+columna  centroamericano_eventos.marca  text
 columna  centroamericano_fair_play.aplica_blancas  boolean
 columna  centroamericano_fair_play.aplica_negras  boolean
 columna  centroamericano_fair_play.arbitro  text
@@ -1064,9 +1065,11 @@ columna  centroamericano_torneos.categoria  text
 columna  centroamericano_torneos.clave_puesta  timestamp with time zone
 columna  centroamericano_torneos.clave_puesta_por  uuid
 columna  centroamericano_torneos.evento  text
+columna  centroamericano_torneos.fuente  text
 columna  centroamericano_torneos.menores  boolean
 columna  centroamericano_torneos.nombre  text
 columna  centroamericano_torneos.orden  integer
+columna  centroamericano_torneos.pareo_id  uuid
 columna  centroamericano_torneos.prueba  boolean
 columna  centroamericano_torneos.rama  text
 columna  centroamericano_torneos.ritmo  text
@@ -2045,11 +2048,15 @@ columna  pareo_avisos_push_enviados.cuando  timestamp with time zone
 columna  pareo_avisos_push_enviados.que  text
 columna  pareo_avisos_push_enviados.suscripcion_id  uuid
 columna  pareo_avisos_push_enviados.torneo_id  uuid
+columna  pareo_cola.asignacion_id  uuid
 columna  pareo_cola.codigo  text
 columna  pareo_cola.creado  timestamp with time zone
 columna  pareo_cola.datos  jsonb
+columna  pareo_cola.desde  smallint
 columna  pareo_cola.evento  text
+columna  pareo_cola.hasta  smallint
 columna  pareo_cola.id  bigint
+columna  pareo_cola.nombre  text
 columna  pareo_cola.publicado_id  uuid
 columna  pareo_cola.ronda  smallint
 columna  pareo_moderaciones.cuando  timestamp with time zone
@@ -2999,6 +3006,7 @@ funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_inicio_ronda(p_ronda integer, p_prueba boolean, p_inicio timestamp with time zone)  definer  anon=false  auth=true
 funcion  centroamericano_livechess_publico()  definer  anon=true  auth=true
 funcion  centroamericano_mis_eventos()  definer  anon=false  auth=true
+funcion  centroamericano_pareo_vincular(p_evento text, p_pareo uuid, p_clave text, p_nombre text, p_categoria text, p_rama text, p_ritmo text, p_prueba boolean)  definer  anon=false  auth=true
 funcion  centroamericano_quitar_enlace(p_id uuid, p_borrar boolean)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_labores(p_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_reabrir_por_ronda()  definer  anon=false  auth=false
@@ -4458,6 +4466,7 @@ indice  centroamericano_salidas  centroamericano_salidas_pkey
 indice  centroamericano_tiempos  centroamericano_tiempos_asignacion_id_fk
 indice  centroamericano_tiempos  centroamericano_tiempos_partida_idx
 indice  centroamericano_tiempos  centroamericano_tiempos_pkey
+indice  centroamericano_torneos  centroamericano_torneos_pareo_id_idx
 indice  centroamericano_torneos  centroamericano_torneos_pkey
 indice  centroamericano_traducciones  centroamericano_traducciones_asignacion_idx
 indice  centroamericano_traducciones  centroamericano_traducciones_creada_idx
@@ -4745,6 +4754,7 @@ indice  pareo_avisos_enviados  pareo_avisos_enviados_pkey
 indice  pareo_avisos_enviados  pareo_avisos_enviados_torneo_idx
 indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_pkey
 indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_torneo_idx
+indice  pareo_cola  pareo_cola_asignacion_idx
 indice  pareo_cola  pareo_cola_codigo_idx
 indice  pareo_cola  pareo_cola_pkey
 indice  pareo_cola  pareo_cola_publicado_idx

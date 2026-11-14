@@ -61,8 +61,15 @@
     return new Date(a.vence).getTime() <= (ahora instanceof Date ? ahora : new Date(ahora)).getTime() ? "vencido" : "activo";
   }
 
-  // Cuándo vence un enlace nuevo. `hoy` es «AAAA-MM-DD» en hora de Costa Rica (HoraCR.hoy()).
-  function vencimiento(opcion, ahora, hoy) {
+  // Cuándo vence un enlace nuevo. `hoy` es «AAAA-MM-DD» en hora de Costa Rica (HoraCR.hoy()). «fecha»: hasta las 11:59 p. m. de
+  // `dia` («AAAA-MM-DD», hora de Costa Rica), el que elige la organización (el último día de SU torneo); un día que ya pasó no sirve.
+  function vencimiento(opcion, ahora, hoy, dia) {
+    if (opcion === "fecha") {
+      if (!/^d{4}-d{2}-d{2}$/.test(String(dia || ""))) throw new Error("Elige el día en que vence el enlace.");
+      const d = new Date(dia + "T23:59:59-06:00");
+      if (isNaN(d.getTime()) || d.getTime() <= ahora.getTime()) throw new Error("El día en que vence el enlace ya pasó: elige otro.");
+      return d;
+    }
     if (opcion === "torneo") return new Date(FIN_DEL_TORNEO);
     if (opcion === "hoy") return new Date(hoy + "T23:59:59-06:00");
     if (opcion === "12h") return new Date(ahora.getTime() + 12 * 3600 * 1000);
@@ -79,9 +86,10 @@
   const codigoLindo = (c) => { const x = limpiarCodigo(c); return CODIGO_CORTO.test(x) ? x.slice(0, 4) + "-" + x.slice(4) : ""; };
 
   // El mensaje que se manda por WhatsApp junto con el enlace (y, si la tablet no abre enlaces, el código corto).
-  function textoWhatsapp(a, torneo, enlace) {
+  // `evento`: el nombre del evento (sin él, el del Centroamericano, como siempre).
+  function textoWhatsapp(a, torneo, enlace, evento) {
     const lindo = codigoLindo(a.codigo);
-    return (a.nombrado === false ? "Hola: " : "Hola " + a.arbitro + ": ") + "tus mesas del Centroamericano (" + torneo + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta + "). " +
+    return (a.nombrado === false ? "Hola: " : "Hola " + a.arbitro + ": ") + (evento ? "tus mesas de " + evento : "tus mesas del Centroamericano") + " (" + torneo + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta + "). " +
       "Abre este enlace para anotar los resultados: " + enlace +
       (lindo ? ". Si tu tablet no abre el enlace, entra a " + PUERTA_CORTA + " y escribe tu código: " + lindo : "");
   }

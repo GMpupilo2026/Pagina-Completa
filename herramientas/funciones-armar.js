@@ -110,7 +110,7 @@ const FUNCIONES = {
   // arriba de los correos es la de siempre. Ver su cabecera.
   // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
   // los de la Academia (notificar): una sola copia en _compartido.
-  "pareo-publicar": ["marca-correo.ts", "webpush.ts"],
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts"],
   "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
@@ -120,13 +120,13 @@ const FUNCIONES = {
   // compartida. «mesa-arbitro» y «centroamericano-clave» exigen sesión y licencia;
   // «centroamericano-mesa» es pública (verify_jwt en false): ver su cabecera.
   "mesa-arbitro": ["chess-results-ingreso.ts"],
-  "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "inscritos-fed.ts"],
+  "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "inscritos-fed.ts", "fuente-pareo.ts"],
   "centroamericano-mesas-vivo": ["inscritos-fed.ts"],
   // El Drive de las inscripciones del Metropolitano 2026: el mismo puente.
   "metropolitano-drive": ["drive-puente.ts"],
   // El correo de confirmación de las inscripciones del Metropolitano 2026.
   "metropolitano-correo": ["envio-resend.ts", "marca-correo.ts"],
-  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts"],
 };
 
 function armar(nombre) {
