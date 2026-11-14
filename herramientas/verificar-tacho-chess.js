@@ -99,6 +99,12 @@ if (textoPdf) {
   ok("los once niveles, de primer grado a undécimo año", ["Primer grado", "Sexto grado", "Sétimo año", "Undécimo año"].every((n) => textoPdf.includes(n)));
   ok("los cuatro torneos, cada uno con sus niveles, y el 1.º, 2.º y 3.º lugar de cada nivel por separado", /Se juegan cuatro torneos, cada uno con sus niveles: primero a tercer grado \(primer grado, segundo grado y tercer grado\); cuarto a sexto grado \(cuarto grado, quinto grado y sexto grado\); sétimo y octavo año \(sétimo año y octavo año\); noveno a undécimo año \(noveno año, décimo año y undécimo año\)\. Aunque jueguen mezclados, se premia por separado el 1\.er, 2\.º y 3\.er lugar de cada nivel/.test(textoPdf) && /Primero, segundo y tercer lugar de cada uno de los once niveles/.test(textoPdf), (textoPdf.match(/Se juegan cuatro[^]*?torneo\./) || [""])[0]);  ok("la ronda 1 a las 9:00 a. m., con la llegada a las 8:30", /1 sábado, 14 de noviembre de 2026 9:00 a\. m\./.test(textoPdf) && /De 8:30 a 9:00 a\. m\., llegada y confirmación/.test(textoPdf));
   ok("los resultados, en Pareo Integral", /se publican en Pareo Integral/.test(textoPdf));
+  // Los desempates, los mismos de los torneos en Pareo y en su orden (el podio
+  // de cada nivel sale de esa clasificación).
+  ok("los desempates de Pareo, en su orden: encuentro directo, Buchholz −1, Buchholz, Sonneborn-Berger y rondas ganadas",
+    /1\. Encuentro directo \(DE\) - 2\. Buchholz sin el peor \(BH-C1\) - 3\. Buchholz \(BH\) - 4\. Sonneborn-Berger \(SB\) - 5\. Rondas ganadas \(WIN\)/.test(textoPdf)
+    && /<li>Encuentro directo<\/li>\s*<li>Buchholz sin el peor<\/li>\s*<li>Buchholz<\/li>\s*<li>Sonneborn-Berger<\/li>\s*<li>Rondas ganadas<\/li>/.test(html),
+    (textoPdf.match(/1\. Encuentro[^]{0,200}/) || textoPdf.match(/1\. Buchholz[^]{0,200}/) || [""])[0]);
   ok("el contacto: Adriana, +506 8912-2033", /Información: Adriana, \+506 8912-2033/.test(textoPdf));
   ok("el árbitro principal", /Árbitro principal: FA Jean Carlo Quesada Arauz\./.test(textoPdf));
 }

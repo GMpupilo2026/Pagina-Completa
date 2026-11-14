@@ -15043,8 +15043,13 @@ chess-results).
   Leyes del Ajedrez) y `ReportePDF`, con la marca de agua de Ajedrez Integral
   (está en `LIBROS` de `verificar-marca-agua.js`). Lo que se decidió sin estar
   en el afiche, para que las bases estén completas: suizo con el Sistema
-  Holandés, los desempates de Pareo Integral para el suizo, tolerancia de 10
-  minutos (lo mismo que el reloj) y sin Elo.
+  Holandés, tolerancia de 10 minutos (lo mismo que el reloj) y sin Elo.
+- **Los desempates son los de los torneos en Pareo**, en su orden: encuentro
+  directo, Buchholz −1, Buchholz, Sonneborn-Berger y rondas ganadas (lo pidió
+  el dueño el 13/11/2026: «que sean igual a las de Pareo»). Las bases decían al
+  principio los sugeridos para el suizo (Buchholz −1 primero), y el podio de
+  cada nivel sale de la clasificación de Pareo: tenían que decir lo mismo. Lo
+  revisa `verificar-tacho-chess.js`, en la página y en el PDF.
 - **Cuatro torneos, premio por nivel** (lo dijo el dueño el 13/11, con los
   inscritos a la vista: tercer grado tenía uno solo): primero a tercer grado,
   cuarto a sexto, sétimo y octavo, y noveno a undécimo (`TORNEOS` en la

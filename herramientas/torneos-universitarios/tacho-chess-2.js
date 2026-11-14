@@ -67,7 +67,10 @@ const bases = {
   sistema: "suizo", rondas: 7, rondasPorDia: 7, horaInicio: "09:00", descanso: 5,
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
-  desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
+  // Los de los torneos en Pareo Integral (lo pidió el dueño el 13/11/2026:
+  // «que sean igual a las de Pareo»), en su orden: el podio de cada nivel sale
+  // de la clasificación de Pareo, y las bases tienen que decir lo mismo.
+  desempates: ["DE", "BH-C1", "BH", "SB", "WIN"],
   byes: 0,
   calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
   premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
