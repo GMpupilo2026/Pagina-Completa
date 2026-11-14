@@ -6391,6 +6391,12 @@
   // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
   // y entra a la lista solo si se acepta.
   const ESPERA_PUBLICAR = 30000;
+  // En un evento de la Mesa del árbitro las tablets leen las mesas de lo
+  // publicado: lo que pone el principal tiene que llegarles en segundos
+  // (ver «El resultado del principal llega solo a las tablets»). Sigue siendo
+  // una publicación por espera, no una por cambio: varios resultados
+  // seguidos salen juntos.
+  const ESPERA_PUBLICAR_MESA = 4000;
   const publicando = new Map();
   // Lo que va con el torneo y no vive en él: el código del enlace en vivo de
   // su evento (en este navegador).
@@ -6398,7 +6404,8 @@
   function programarPublicacion() {
     const id = estado.id;
     if (publicando.has(id)) return;
-    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, ESPERA_PUBLICAR));
+    const deLaMesa = !!(estado.adjuntos && estado.adjuntos.idTorneo === id && estado.adjuntos.mesa);
+    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, deLaMesa ? ESPERA_PUBLICAR_MESA : ESPERA_PUBLICAR));
   }
   async function actualizarPublicado(id, boton) {
     const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
