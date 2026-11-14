@@ -363,6 +363,8 @@
     // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.tablas({ NOMBRE_CORTO }) : null,
   };
+  // Con los datos de Pareo Integral, «Pareo Integral» donde dice «chess-results».
+  if (CONFIG.fuenteNombre && V.cambiarFuente) ["es", "en"].forEach((k) => V.cambiarFuente(TEXTOS[k], CONFIG.fuenteNombre));
   const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
   const decir = (nodo, s) => { nodo.textContent = String(s).replace(/\.\./g, "."); };
   const nombreCompleto = (j) => (j.titulo ? j.titulo + " " : "") + j.nombre;
@@ -437,6 +439,13 @@
     decir(estado, (ronda ? comoVa(ronda) : tx.antes) + V.cuandoSeLeyo());
     caja.replaceChildren(estado);
     if (!filas.length) { caja.appendChild(el("p", "mt-3", tx.nadie)); return; }
+    // Sin federación en nadie (un torneo de un solo país, como los de Pareo
+    // Integral en Costa Rica), la columna «FED» no va: saldría vacía.
+    if (!lista.some((x) => x.j.fed)) {
+      filas.forEach((f) => f.splice(2, 1));
+      caja.appendChild(tabla([tx.colPuesto, tx.colJugador, tx.colElo, tx.colPuntos, tx.colRend], filas, [0, 2, 3, 4], 1));
+      return;
+    }
     caja.appendChild(tabla([tx.colPuesto, tx.colJugador, tx.colFed, tx.colElo, tx.colPuntos, tx.colRend], filas, [0, 3, 4, 5], 1));
   }
 

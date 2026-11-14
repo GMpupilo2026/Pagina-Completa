@@ -116,11 +116,21 @@
   }
 
   // ¿Ya está el torneo en Pareo Integral? La ficha deja de ser «Pronto».
+  // Con el buscador en la página (los datos de Pareo Integral, como en el
+  // Centroamericano), se contesta con él; la ficha de Pareo, para el torneo entero.
   function textoResultados() {
+    if ($("#buscador-nombre")) return "Escribe su nombre en «Busca a tu jugador», aquí mismo: te digo su mesa, su color y su rival en la ronda que se juega, su puesto en su nivel y cómo le fue en cada ronda. Los resultados salen de Pareo Integral.";
     const f = $("#ficha-resultados");
     const listo = f && f.tagName === "A";
     if (!listo) return "Los emparejamientos de cada ronda, los resultados y la clasificación se publican en Pareo Integral. La ficha «Resultados» se enciende cuando el torneo esté publicado.";
     return "Están en Pareo Integral: toca «Resultados» y busca a tu jugador en los emparejamientos de la ronda y en la clasificación.";
+  }
+  // Lleva al buscador y le pone el foco.
+  function alBuscador() {
+    const campo = $("#buscador-nombre");
+    if (!campo) { tocar("#ficha-resultados"); return; }
+    campo.scrollIntoView({ block: "center" });
+    campo.focus();
   }
 
   function datoPortada(nombre) {
@@ -163,7 +173,7 @@
     { k: "inscribir", icono: "📝", pregunta: "¿Cómo inscribo a mi hijo o hija?", texto: textoInscripcion, pose: "te-toca", acciones: [["Inscribirme", () => tocar("#ficha-inscribirme")]] },
     { k: "hora", icono: "🗓️", pregunta: "¿A qué hora es la próxima ronda?", texto: textoHora, pose: "reloj-de-ajedrez", acciones: [["Ver el calendario", () => tocar('a.cac-ficha[href="#calendario"]')]] },
     { k: "niveles", icono: "🏆", pregunta: "¿Quién puede jugar y qué se premia?", texto: textoNiveles, pose: "campeones", acciones: [["Ver los niveles", () => tocar('a.cac-ficha[href="#premios"]')]] },
-    { k: "resultados", icono: "♟️", pregunta: "¿Contra quién juega y cómo va?", texto: textoResultados, pose: "tablero-italiana", acciones: [["Ver los resultados", () => tocar("#ficha-resultados")]] },
+    { k: "resultados", icono: "♟️", pregunta: "¿Contra quién juega y cómo va?", texto: textoResultados, pose: "tablero-italiana", acciones: [["Buscar a mi jugador", alBuscador], ["Ver la clasificación", () => tocar('a.cac-ficha[href="#clasificacion"]')]] },
     { k: "llegar", icono: "📍", pregunta: "¿Dónde y cuándo es el torneo?", texto: textoLlegar, pose: "nos-vemos", acciones: [["Abrir el mapa", () => tocar('a.cac-ficha[href*="maps"]')]] },
     { k: "ritmo", icono: "⏱️", pregunta: "¿Cuánto dura cada partida y si llegamos tarde?", texto: textoRitmo, pose: "tiempo", acciones: [["Ver el reglamento", () => tocar('a.cac-ficha[href="#reglamento"]')], ["Abrir las bases", () => tocar("#ficha-bases")]] },
     { k: "ademas", icono: "🎉", pregunta: "¿Qué más hay ese día?", texto: textoAdemas, pose: "bienvenidos", acciones: [["Ver qué hay", () => tocar('a.cac-ficha[href="#ademas"]')]] },

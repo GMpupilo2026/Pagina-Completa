@@ -89,6 +89,7 @@ const TITULOS = {
   "documentos/tacho-chess-2/bases-tacho-chess-2.pdf": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
   "img/tacho-chess-2/mascota.png": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
   "img/tacho-chess-2/logo-liceo.png": "Tacho Chess 2: el escudo del Liceo Anastasio Alfaro, recortado del afiche",
+  "img/tacho-chess-2/sala.jpg": "Tacho Chess 2: la sala de juego, el Gimnasio del Centro del Liceo Anastasio Alfaro con las mesas listas",
   "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
   "img/fca-logo.png": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",

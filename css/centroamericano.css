@@ -1032,3 +1032,44 @@ html.dark[data-marca="ajedrez-integral"] .cac {
 html[data-marca="ajedrez-integral"] .cac-hojas,
 html[data-marca="ajedrez-integral"] .cac-pildora,
 html[data-marca="ajedrez-integral"] .cam-portada .cam-mascota { display: none; }
+
+/* «Pareos de la ronda» (js/torneo-pareos.js): una mesa por renglón, que cabe
+ * en el celular. El número en el color de la página con letra blanca (8,08 en
+ * Tacho Chess 2 y 8,35 con el morado del Centroamericano), blancas y negras
+ * escritas (el color nunca va solo) y el resultado a la derecha. */
+.cac-pareo-lista { display: grid; gap: 0.6rem; margin-top: 0.75rem; }
+.cac-pareo-mesa {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.55rem;
+  padding: 0.65rem 0.8rem; border-radius: 0.9rem; background: #fff;
+  border: 1px solid rgb(var(--c-brand-100, 217 226 236));
+}
+.dark .cac-pareo-mesa { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(255 255 255 / 0.14); }
+.cac-pareo-n {
+  min-width: 3.2rem; text-align: center; font-weight: 800; font-size: 0.8rem; line-height: 1.15;
+  padding: 0.35rem 0.45rem; border-radius: 0.6rem; background: var(--cac-morado); color: #fff;
+}
+.cac-pareo-quienes { min-width: 0; display: grid; gap: 0.25rem; }
+.cac-pareo-jugador { margin: 0; line-height: 1.25; overflow-wrap: anywhere; display: grid; grid-template-columns: 3.9rem 1fr; column-gap: 0.3rem; align-items: baseline; }
+.cac-pareo-color { grid-column: 1; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+.cac-pareo-nombre { grid-column: 2; font-weight: 700; }
+.cac-pareo-nivel { grid-column: 2; font-size: 0.75rem; }
+.cac-pareo-descansa { margin: 0; font-size: 0.85rem; }
+.cac-pareo-res { font-weight: 800; font-size: 0.9rem; white-space: nowrap; text-align: right; }
+
+/* «La sala de juego» (js/torneo-sala.js): la foto del gimnasio y, debajo,
+ * las mesas de cada torneo. El número en el color de la página con letra
+ * blanca (8,08 en Tacho Chess 2), como el de los pareos. */
+.cac-sala-foto { display: block; width: 100%; height: auto; border-radius: 1rem; margin-top: 0.75rem; }
+.cac-sala-lista { display: grid; gap: 0.6rem; margin-top: 0.75rem; }
+.cac-sala-torneo {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 0.85rem; border-radius: 0.9rem; background: #fff;
+  border: 1px solid rgb(var(--c-brand-100, 217 226 236));
+}
+.dark .cac-sala-torneo { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(255 255 255 / 0.14); }
+.cac-sala-mesas {
+  min-width: 6.2rem; text-align: center; font-weight: 800; font-size: 0.9rem; line-height: 1.2;
+  padding: 0.45rem 0.55rem; border-radius: 0.6rem; background: var(--cac-morado); color: #fff;
+}
+.cac-sala-quien { min-width: 0; overflow-wrap: anywhere; }
+.cac-sala-quien p { margin: 0; }

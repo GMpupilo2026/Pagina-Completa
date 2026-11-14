@@ -67,7 +67,10 @@ const bases = {
   sistema: "suizo", rondas: 7, rondasPorDia: 7, horaInicio: "09:00", descanso: 5,
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
-  desempates: B.DESEMPATES_SUGERIDOS.suizo.slice(),
+  // Los de los torneos en Pareo Integral (lo pidió el dueño el 13/11/2026:
+  // «que sean igual a las de Pareo»), en su orden: el podio de cada nivel sale
+  // de la clasificación de Pareo, y las bases tienen que decir lo mismo.
+  desempates: ["DE", "BH-C1", "BH", "SB", "WIN"],
   byes: 0,
   calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
   premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
@@ -131,11 +134,18 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     ["Árbitro principal", "FA Jean Carlo Quesada Arauz"],
     ["Ritmo", "7 rondas a 10 minutos + 2 segundos"],
   ],
-  resultados: "pareo",
+  // Los resultados, como en el Centroamericano (el buscador, la clasificación
+  // y el podio por nivel, el proyector), con los datos de Pareo Integral:
+  // js/torneo-pareo-datos.js los lee y los entrega a js/centroamericano-vivo.js.
+  scriptsAntes: ["js/torneo-pareo-datos.js"],
+  buscador: {
+    texto: "Escribe su nombre o su apellido: te decimos su nivel, su puesto en el nivel, sus puntos, su mesa y su rival en la ronda que se juega, y contra quién jugó cada ronda.",
+    ejemplo: "Solano",
+  },
   // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
   // resultados, porque lee lo que esos pintan; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
-  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
+  scripts: ["js/torneo-pareos.js", "js/torneo-sala.js", "js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
+  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",
     principal: "Sábado 14 de noviembre de 2026",
@@ -146,6 +156,10 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     final: "Los mejores de cada nivel, de primer grado a undécimo año, reciben su premio.",
   },
   fichas: [
+    // Lo que más se busca el día del torneo, primero (lo pidió el dueño: una
+    // ficha solo para los pareos y otra para las clasificaciones).
+    { href: "#pareos", color: "rojo", icono: "♟️", titulo: "Pareos de la ronda", texto: "La ronda que se juega en cada torneo, mesa por mesa: blancas, negras y el resultado.", accion: "Ver los pareos" },
+    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.", accion: "Ver las clasificaciones" },
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
@@ -153,13 +167,19 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y los celulares.", accion: "Ver el reglamento" },
     // «Pronto» hasta que el torneo esté publicado en Pareo Integral: entonces
     // js/tacho-chess-resultados.js la cambia por el enlace a ESE torneo.
-    { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Resultados", texto: "En Pareo Integral: los emparejamientos de cada ronda, los resultados y la clasificación." },
+    { href: "#medallero", color: "naranja", icono: "🥇", titulo: "El podio de cada nivel", texto: "El 1.º, 2.º y 3.º lugar de cada nivel, con sus puntos.", accion: "Ver el podio" },
+    { href: "#proyector", color: "azul", icono: "📺", titulo: "Para proyectar", texto: "Los pareos y la clasificación en letra grande, para una pantalla en el gimnasio.", accion: "Abrir en grande" },
+    { id: "ficha-resultados", pronto: "aparece cuando el torneo se publique en Pareo Integral", color: "azul", icono: "♟️", titulo: "Los torneos en Pareo Integral", texto: "Cada torneo completo en Pareo Integral: los emparejamientos de cada ronda y la clasificación general." },
     { href: "#ademas", color: "verde", icono: "🎉", titulo: "Además disfruta de", texto: "Feria de comerciantes de la comunidad, open house del liceo y venta de comida.", accion: "Ver qué hay" },
     { href: "#contacto", color: "rojo", icono: "📞", titulo: "Contacta a la organización", texto: "Adriana, de la organización: llámala o escríbele por WhatsApp.", accion: "Ver el contacto" },
+    { href: "#sala", color: "azul", icono: "🏟️", titulo: "La sala de juego", texto: "La foto del gimnasio y qué mesas son de cada torneo, para saber hacia dónde caminar.", accion: "Ver la sala" },
     { href: "https://www.google.com/maps/search/?api=1&query=Liceo+Anastasio+Alfaro+San+Jos%C3%A9+Costa+Rica", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Gimnasio del Centro, en el Liceo Anastasio Alfaro (San José).", accion: "Abrir el mapa" },
   ],
   despedida: { href: "#inscribirme", titulo: "¡Te esperamos, haz tu mejor jugada!", texto: "Ven, juega y diviértete el sábado 14 de noviembre. La inscripción es gratuita.", accion: "Inscribirme" },
   dialogos: {
+    tituloClasificacion: "Clasificación por nivel",
+    podio: "El 1.º, 2.º y 3.º lugar de cada nivel, según la clasificación de su torneo en Pareo Integral. Es provisional hasta la última ronda.",
+    clasificacion: "Cada nivel por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con los puntos y el rendimiento.",
     propios: [
       {
         id: "inscribirme", icono: "📝", titulo: "Inscribirme",
@@ -253,6 +273,29 @@ ${desempates}
 `,
       },
       {
+        id: "pareos", icono: "♟️", titulo: "Pareos de la ronda", ancho: "max-w-4xl",
+        comentario: "Solo el pareo de la ronda en juego de cada torneo (js/torneo-pareos.js), con los\nmismos datos de Pareo Integral que el buscador.",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Elige el torneo: sale la ronda que se está jugando, con la mesa de cada partida y el nivel de cada jugador.</p>
+<label class="block text-sm font-bold mt-4">Torneo
+    <select id="pareos-torneo" class="cac-buscador-campo !mt-1"></select>
+</label>
+<div id="pareos-contenido" class="mt-4" aria-live="polite">
+    <p>Cargando…</p>
+</div>
+`,
+      },
+      {
+        id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
+        comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+<img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
+<h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
+<div id="sala-mesas" aria-live="polite">
+    <p>Cargando las mesas…</p>
+</div>
+`,
+      },
+      {
         id: "resultados", icono: "♟️", titulo: "Resultados",
         comentario: `Los resultados, en Pareo Integral. Solo se abre si la organización juega los
 niveles en varios torneos: js/tacho-chess-resultados.js pone aquí un enlace
@@ -311,6 +354,10 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
   contraste: "blanco sobre #064CA7 8,08 y sobre #042A69 13,63; blanco sobre el rojo #DC0D19 5,1; #B80F1C sobre #EEF3FB 6,1.",
   torneoPagina: {
     sala: "tacho-chess-2",
+    fuente: "pareo",
+    fuenteNombre: "Pareo Integral",
+    pareo: { nombre: "tacho", desde: "2026-10-01" },
+    ordenGrupos: NIVELES,
     guardado: "tacho",
     nombreCorto: "Tacho Chess 2",
     imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",

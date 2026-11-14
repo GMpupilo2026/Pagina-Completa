@@ -15043,8 +15043,13 @@ chess-results).
   Leyes del Ajedrez) y `ReportePDF`, con la marca de agua de Ajedrez Integral
   (está en `LIBROS` de `verificar-marca-agua.js`). Lo que se decidió sin estar
   en el afiche, para que las bases estén completas: suizo con el Sistema
-  Holandés, los desempates de Pareo Integral para el suizo, tolerancia de 10
-  minutos (lo mismo que el reloj) y sin Elo.
+  Holandés, tolerancia de 10 minutos (lo mismo que el reloj) y sin Elo.
+- **Los desempates son los de los torneos en Pareo**, en su orden: encuentro
+  directo, Buchholz −1, Buchholz, Sonneborn-Berger y rondas ganadas (lo pidió
+  el dueño el 13/11/2026: «que sean igual a las de Pareo»). Las bases decían al
+  principio los sugeridos para el suizo (Buchholz −1 primero), y el podio de
+  cada nivel sale de la clasificación de Pareo: tenían que decir lo mismo. Lo
+  revisa `verificar-tacho-chess.js`, en la página y en el PDF.
 - **Cuatro torneos, premio por nivel** (lo dijo el dueño el 13/11, con los
   inscritos a la vista: tercer grado tenía uno solo): primero a tercer grado,
   cuarto a sexto, sétimo y octavo, y noveno a undécimo (`TORNEOS` en la
@@ -15120,6 +15125,139 @@ en la ronda 2 con el navegador en Madrid; el contacto, el ritmo, los niveles,
 lo de además y los resultados con y sin el torneo en Pareo), «Ver el
 contacto», y Escape con el foco de vuelta. Con la hora tomada de Madrid en vez
 de Costa Rica, saltan dos.
+
+### Los resultados de Pareo, como en el Centroamericano
+
+Pedido del dueño el 13/11/2026, con el primer torneo ya publicado en Pareo
+(«Tacho Chess 2 (1er Ciclo)»): la ficha «Resultados» abría la página pública
+de Pareo encima, y quería que se viera «como la del Centroamericano». Ahora
+`tacho-chess-2.html` tiene «Busca a tu jugador» (con «Mis jugadores», sus
+rondas, su mesa, color y rival, el enlace y la imagen para compartir), la
+clasificación, el podio y el proyector de `js/centroamericano-vivo.js` y
+`js/centroamericano-tablas.js`, **con los datos de Pareo Integral** en lugar
+de chess-results.
+
+- **Un adaptador, no otra copia del buscador**: `js/torneo-pareo-datos.js`
+  lee los torneos publicados en Pareo y los entrega con la misma forma que la
+  Edge Function `sala-jugadores` entrega los de chess-results (jugadores con
+  puesto, número inicial, puntos y su cuadro cruzado en `r`; la ronda en juego
+  en `pareo`). Con `fuente: "pareo"` en `window.TorneoPagina`,
+  `centroamericano-vivo.js` le pide a él en lugar de a la función; sin eso,
+  todo sigue igual (el Centroamericano y las universidades no cambian: lo
+  revisan sus verificadores). Con `fuenteNombre`, los textos dicen «Pareo
+  Integral» donde decían «chess-results» (`cambiarFuente`, una sola copia en
+  `centroamericano-vivo.js`, que usa también `centroamericano-tablas.js`).
+- **Qué torneos**: los de `TorneoPagina.pareo` (con «tacho» en el nombre,
+  creados desde octubre de 2026) publicados por una organización con el sello
+  «Organizador verificado», como `js/tacho-chess-resultados.js`.
+- **Por nivel, como se premia**: el grupo de cada jugador es su categoría de
+  Pareo (su nivel), y `ordenGrupos` (los once niveles) da el orden. El puesto
+  «3 de 4 en Segundo grado» sale del orden de la clasificación de su torneo
+  (con los desempates de Pareo), así que el podio de cada nivel es su 1.º, 2.º
+  y 3.º lugar aunque el torneo se juegue mezclado.
+- **Puntos y rondas, hasta la última ronda completa**: el puesto es el del
+  `resumen` que Pareo calcula al publicar, que cuenta solo las rondas
+  completas. La primera versión sumaba también lo que ya había terminado de
+  la ronda en juego, y el podio mostraba a alguien con 1½ debajo de alguien
+  con 1. La ronda en juego va en el pareo («Ronda 2 · Mesa 3 · Juega con
+  negras contra…»). La mesa es la de la sala (la primera mesa del torneo +
+  su lugar, como `V.mesaFisica` de Pareo).
+- **Sin la columna «FED»** en la clasificación cuando nadie trae federación
+  (un torneo de Costa Rica): salía vacía.
+- La plantilla suma `scriptsAntes` (lo que tiene que cargar antes del
+  buscador) y `scripts` también en este modo, y pasa a la configuración
+  `fuente`, `fuenteNombre`, `pareo` y `ordenGrupos`. El profe Oscar contesta
+  «¿Contra quién juega?» con el buscador. La ficha de Pareo queda, como «Los
+  torneos en Pareo Integral», para ver cada torneo entero.
+
+Lo revisa `verificar-tacho-chess.js` con un doble de la base y un torneo que va
+por la ronda 2 (una completa con su `resumen`, otra a medias con un bye): la
+tarjeta (nivel, puesto en el nivel, puntos, mesa de la sala, color, rival), el
+bye, los puntos de las rondas completas, el podio por nivel, la clasificación
+por nivel sin «FED» y que un torneo de una organización sin sello no entre.
+Quitando el filtro del sello, saltan dos.
+
+### El torneo publicado dos veces
+
+El 13/11/2026 la ficha mostraba dos «Tacho Chess 2»: el torneo de noveno a
+undécimo se publicó dos veces, a 4 segundos (19:15:05 y 19:15:09 UTC), con
+los mismos 25 jugadores. Pareo pone al día solo el segundo (el que guarda en
+`t.publicado`); el primero quedó huérfano y nadie puede quitarlo desde Pareo
+(su clave se perdió), solo administración con «Ocultar» en `admin-pareo.html`.
+
+- `js/torneo-pareo-datos.js` (`sinRepetidos`) deja uno solo de los publicados
+  con el **mismo nombre y los mismos jugadores**: el que se actualizó último.
+  Dos torneos distintos con el mismo nombre no se tocan (sus jugadores cambian).
+- **El orden es el de los niveles** (`ordenar`, con `ordenGrupos`): el torneo
+  de primer grado primero, no el que se publicó primero (el de noveno a
+  undécimo salía antes que el de cuarto a sexto).
+- `js/tacho-chess-resultados.js` usa esa misma búsqueda (`TorneoPareoDatos.buscar`),
+  así la ficha de Pareo y los pareos muestran los mismos torneos.
+
+### La sala de juego
+
+Pedido del dueño el 13/11/2026, con la foto del gimnasio armado: «sí, ambas»
+(la foto en la página y el plano de las mesas). La ficha «La sala de juego»
+abre `#sala`: la foto (`img/tacho-chess-2/sala.jpg`, achicada a 1200 de ancho
+y sin sus datos EXIF; las personas salen de lejos y de espaldas) y «Las mesas
+de cada torneo», que arma `js/torneo-sala.js`.
+
+- **Las mesas no se escriben**: cada torneo trae en `mesas` su primera mesa de
+  la sala y la última que usa (una por cada dos jugadores), que pone
+  `js/torneo-pareo-datos.js` con la cuenta de Pareo (`mesaInicial` y
+  `V.mesasQueNecesita`). Si el árbitro numera la sala seguida en Pareo, el
+  plano cambia solo y coincide con los pareos («Mesa 12»).
+- **Una zona por torneo, con sus mesas desde la 1** (lo eligió el dueño el
+  13/11/2026). En Pareo, «Numerar seguido» y «Primera mesa» solo existen en un
+  *evento* (varios torneos creados juntos desde una misma lista), y los cuatro
+  torneos se crearon por separado. Se le ofreció agregar «Primera mesa» a cada
+  torneo en Pareo, y prefirió numerar por zona: en el gimnasio, un cartel por
+  torneo. Cuando dos torneos comparten números, `js/torneo-sala.js` muestra cada
+  uno como «Zona de …», en el orden de los niveles, con sus mesas y un aviso
+  de que primero se busca la zona y después la mesa; con la sala numerada
+  seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
+  dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
+
+### Los pareos de la ronda
+
+Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos
+únicamente y otra para las clasificaciones». En `tacho-chess-2.html` son las
+dos primeras fichas: «Pareos de la ronda» (`#pareos`) y «Clasificaciones»
+(`#clasificacion`, la de `js/centroamericano-tablas.js`).
+
+- **`js/torneo-pareos.js`** pinta la ventana `#pareos` con los mismos datos que
+  ya leyó el buscador (`window.CentroamericanoVivo`), sin pedir nada aparte: se
+  elige el torneo (se esconde el selector con uno solo) y sale su ronda en
+  juego, cuántas partidas van terminadas y cada mesa. Sirve en cualquier
+  página de torneo que lleve esa ventana.
+- **Una mesa por renglón, no una tabla**: en el celular la tabla de cuatro
+  columnas se cortaba (no se veía el resultado). Cada mesa es el número de la
+  sala, «Blancas» y «Negras» escritas (el color nunca va solo) con el nivel de
+  cada jugador, y a la derecha el resultado, «Se juega» o «Bye». Su estilo,
+  `.cac-pareo-*` en `css/centroamericano.css`.
+- La línea de arriba termina en la hora («… p. m.»): sin quitar el punto
+  doble decía «p. m..»; lo revisa el verificador.
+
+### Pareo abierto dentro de la página de un torneo
+
+Pedido del dueño el 13/11/2026, viendo la página pública de Pareo abierta
+encima de la del torneo: que ahí no salgan «Agregar a mi calendario»,
+«Reportar este torneo» ni «Ponerlo en tu página» (llevan afuera o no son para
+las familias). Con `?en-ventana=1` en la dirección, `js/torneos-pareo-pagina.js`
+no los pone, ni «← Todos los torneos» (que lleva a los torneos de otros);
+quedan «Compartir por WhatsApp» y «Copiar el enlace». Lo ponen los enlaces que
+abren Pareo desde la página del torneo (`js/tacho-chess-resultados.js` y el
+`url` de cada torneo en `js/torneo-pareo-datos.js`). La página de Pareo abierta
+sola no cambia. Lo revisa `verificar-pareo-organizador.js`.
+
+### Tacho, con el zapato entero
+
+El dueño vio que a Tacho le faltaba parte del zapato izquierdo: en el afiche
+ese zapato queda sobre la franja azul de «GIMNASIO» y los cuadros blancos, y el
+recorte automático (rembg) lo dejó medio transparente. Se arregló dos veces a
+la vez, en dos sesiones: queda la de `main` (#1285, «Mis mesas … con Tacho en
+Tacho Chess»), que salió más limpia y conserva el tamaño de 450 × 755 que usan
+la configuración, `PORTADAS` y `js/centroamericano-arbitro.js`.
 
 ### Una ficha de Torneos que todavía no se abre
 
