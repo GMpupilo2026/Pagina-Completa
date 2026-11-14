@@ -286,6 +286,54 @@ function chessResultsFalso(ignorar = false) {
   igual("y leer tampoco da por bueno el torneo equivocado", [leida.estado, /No se pudo abrir el torneo 200 dentro del grupo/.test(leida.error)], [502, true]);
 }
 
+console.log("\n=== El ritmo, el reloj y lo que dice el reglamento ===");
+igual("el control de tiempos, el reloj que se apaga y la sanción de tiempo: UNA copia, la de este módulo (el Centroamericano la toma de acá)",
+  [C.relojApagado === M.relojApagado, C.formatoTiempo === M.formatoTiempo, C.leerTiempo === M.leerTiempo, C.sancionTexto === M.sancionTexto, C.leerSancion === M.leerSancion, C.SANCIONES_TIEMPO === M.SANCIONES_TIEMPO],
+  [true, true, true, true, true, true]);
+igual("la ilegal: 2 minutos en clásico, 1 en rápidas y en blitz (apéndice A.3; el B.3 lo manda al A.3)", [M.minutosIlegal("clasico"), M.minutosIlegal(null), M.minutosIlegal("rapido"), M.minutosIlegal("blitz")], [2, 2, 1, 1]);
+igual("la modalidad sale de tiempo + 60 × incremento: ≤ 10 min blitz (B.1), < 60 rápidas (A.1), 60 o más clásico",
+  [[180, 2], [600, 0], [480, 2], [600, 5], [900, 10], [2400, 10], [3000, 10], [3600, 0], [5400, 30]].map(([i, c]) => M.modalidad({ inicial: i, incremento: c })),
+  ["blitz", "blitz", "blitz", "rapido", "rapido", "rapido", "clasico", "clasico", "clasico"]);
+const R90 = { inicial: 5400, incremento: 30, control: { jugada: 40, agrega: 1800 } };
+igual("el ritmo se escribe con palabras", M.textoRitmo(R90), "90 min + 30 s por jugada; al completar la jugada 40 se suman 30 min · Clásico");
+igual("un ritmo imposible no vale", [M.ritmoValido({ inicial: 0, incremento: 0 }), M.ritmoValido({ inicial: 600, incremento: 2, control: { jugada: 40 } }), M.ritmoValido(null)], [null, null, null]);
+let x = M.corregirReloj("control", { ritmo: R90, jBlancas: 40, jNegras: 39, tBlancas: 600, tNegras: 300 });
+igual("no sumó la jugada 40: se suma SOLO a quien la completó (las negras van en la 39)", [x.blancas, x.negras, x.articulo], [600 + 1800, 300, "6.10.2"]);
+igual("y si nadie la completó, no hay nada que corregir", /Ninguno de los dos completó/.test(M.corregirReloj("control", { ritmo: R90, jBlancas: 39, jNegras: 39, tBlancas: 600, tNegras: 300 }).error || ""), true);
+igual("sin segundo período en el ritmo, el caso «control» lo dice", /no tiene un segundo período/.test(M.corregirReloj("control", { ritmo: { inicial: 5400, incremento: 30 }, jBlancas: 41, jNegras: 41, tBlancas: 1, tNegras: 1 }).error || ""), true);
+x = M.corregirReloj("incremento", { ritmo: R90, jBlancas: 21, jNegras: 20, tBlancas: 1000, tNegras: 2000 });
+igual("sin el incremento: 30 s por cada jugada completada de cada uno", [x.blancas, x.negras], [1000 + 630, 2000 + 600]);
+x = M.corregirReloj("programado", { ritmo: R90, jBlancas: 10, jNegras: 10, tBlancas: 100, tNegras: 200, programado: { inicial: 5400, incremento: 60 } });
+igual("programado con 60 s de incremento en vez de 30: se le resta lo que sobró, y si queda en negativo se dice (a tu criterio)",
+  [x.blancas, x.negras, x.avisos.some((a) => /ya se les habría acabado/.test(a))], [0, 0, true]);
+igual("jugadas imposibles se rechazan (las blancas, las mismas o una más)", [!!M.corregirReloj("incremento", { ritmo: R90, jBlancas: 10, jNegras: 12, tBlancas: 1, tNegras: 1 }).error, !!M.corregirReloj("incremento", { ritmo: R90, jBlancas: 12, jNegras: 10, tBlancas: 1, tNegras: 1 }).error], [true, true]);
+const ini = Date.parse("2026-11-14T14:00:00-06:00");
+x = M.corregirReloj("apagado", { ritmo: R90, jBlancas: 41, jNegras: 40, inicioMs: ini, ahoraMs: ini + 3 * 3600e3, bonos: [] });
+igual("el reloj que se apagó, desde la hora de inicio: el total es exacto y el segundo período entra a quien pasó la 40 (6.10.1)",
+  [x.blancas + x.negras, x.articulo], [2 * 5400 - 3 * 3600 + 81 * 30 + 2 * 1800, "6.10.1"]);
+x = M.corregirReloj("apagado", { ritmo: R90, jBlancas: 25, jNegras: 25, inicioMs: ini, ahoraMs: ini + 3600e3, bonos: [], visto: { blancas: 3000, negras: NaN } });
+igual("si un reloj todavía se lee, se respeta, y el otro se lleva lo que sobra", [x.blancas, x.negras], [3000, 2 * 5400 - 3600 + 50 * 30 - 3000]);
+const lineasB = [
+  { id: "1", tipo: "ilegal", ronda: 3, mesa: 4, color: "blancas", ocurrio: "2026-11-14T20:10:00Z" },
+  { id: "2", tipo: "ilegal", ronda: 3, mesa: 4, color: "blancas", ocurrio: "2026-11-14T20:20:00Z" },
+  { id: "3", tipo: "ilegal", ronda: 3, mesa: 4, color: "negras", ocurrio: "2026-11-14T20:25:00Z" },
+  { id: "4", tipo: "anulacion", ronda: 3, mesa: 4, color: "negras", anula: "3", ocurrio: "2026-11-14T20:26:00Z" },
+  { id: "5", tipo: "irregularidad", ronda: 3, mesa: 4, color: "negras", texto: "Molestó al rival · Sanción de tiempo: −1:00 a quien la cometió (art. 12.9)", ocurrio: "2026-11-14T20:30:00Z" },
+  { id: "6", tipo: "ilegal", ronda: 3, mesa: 5, color: "negras", ocurrio: "2026-11-14T20:30:00Z" },
+];
+igual("de la bitácora: la primera ilegal de cada uno le da tiempo al rival (la segunda no, la anulada no, la de otra mesa no) y la sanción de tiempo se lee",
+  M.bonosDeMesa(lineasB, 3, 4, 1).map((b) => [b.color, b.segundos]), [["negras", 60], ["negras", -60]]);
+igual("cada irregularidad de la lista tiene su regla, con el artículo que dicen las Leyes", M.TIPOS_IRREGULARIDAD.map((t) => [t.id, !!(M.REGLAS_IRREGULARIDAD[t.id] && M.REGLAS_IRREGULARIDAD[t.id].regla)]).filter((t) => !t[1]), []);
+igual("ofrecer tablas es el 9.1.2.1 (el 9.2 es la triple repetición); el celular, el 11.3.2.2", [M.TIPOS_IRREGULARIDAD.find((t) => t.id === "tablas").articulo, M.REGLAS_IRREGULARIDAD.tablas.articulo, M.REGLAS_IRREGULARIDAD.celular.pierde], ["9.1.2.1", "9.1.2.1", "11.3.2.2"]);
+igual("la sanción sugerida: pierde con el celular (11.3.2.2), y la más suave donde las Leyes lo dejan al árbitro",
+  ["celular", "toque", "ayuda", "ruido"].map((id) => M.reglaIrregularidad(id, { modalidad: "clasico", previas: 0 }).sugerida), ["pierde", "ninguna", "ninguna", "advertencia"]);
+igual("la planilla en rápidas no es irregularidad (A.2); con una anterior, recuerda el 11.7; sin `previas`, no cuenta",
+  [M.reglaIrregularidad("planilla", { modalidad: "rapido", previas: 0 }).sugerida, /A\.2/.test(M.reglaIrregularidad("planilla", { modalidad: "rapido" }).texto), /11\.7/.test(M.reglaIrregularidad("ruido", { previas: 1 }).texto), /primera/.test(M.reglaIrregularidad("ruido", {}).texto)],
+  ["ninguna", true, true, false]);
+igual("la sanción escrita: advertencia, pierde con su artículo, tiempo en el formato que el reloj vuelve a leer, «Otra» sin escribir no vale",
+  [M.textoSancion("ruido", "advertencia").texto, M.textoSancion("celular", "pierde").texto, M.textoSancion("ayuda", "pierde").texto, M.textoSancion("ruido", "suyo-60").tiempo, M.textoSancion("ruido", "otra", "  "), M.textoSancion("ruido", "ninguna").texto],
+  [" · Sanción: advertencia (art. 12.9.1)", " · Sanción: pierde la partida (art. 11.3.2.2)", " · Sanción: pierde la partida (art. 12.9.6)", { segundos: -60, a: "suyo" }, null, ""]);
+
 console.log("\n=== La foto de las planillas ===");
 {
   const dir = path.join(RAIZ, "supabase", "migraciones");
