@@ -95,6 +95,18 @@
 }
 /* El rojo lleva letra blanca (la tinta azul sobre el rojo no alcanza). */
 .cac-u.tacho .cac-pildora, .u-sala.u-sala-tacho a.u-sala-principal { color: #fff; }
+/* El proyector, con el azul hondo del afiche y no el morado del
+ * Centroamericano: blanco sobre #042A69 13,63 y sobre la fila par #0A3A85
+ * 10,73; los títulos #E6E7F8 11,13 y 8,76; el amarillo de los podios #FFD66B
+ * 9,79; la letra de los botones y del QR, #042A69 sobre blanco 13,63. */
+.cac-u.tacho .cac-proyector { background: #042a69; }
+.cac-u.tacho .cac-proyector-tabla tbody tr:nth-child(even), .cac-u.tacho .cac-proyector-progreso { background: #0a3a85; }
+.cac-u.tacho .cac-proyector-boton, .cac-u.tacho .cac-proyector-qr { color: #042a69; }
+/* En oscuro, los botones de la tarjeta del jugador, con el rojo claro y no el
+ * lila del Centroamericano: #FF8A94 sobre brand-950 8,13 y sobre brand-900
+ * 7,41; abierto, #042A69 sobre #FF8A94 6,05. */
+.dark .cac-u.tacho .cac-jugador-boton { border-color: #ff8a94; color: #ff8a94; }
+.dark .cac-u.tacho .cac-jugador-boton[aria-expanded="true"] { background: #ff8a94; color: #042a69; }
 /* Tacho, la mascota, recortado del afiche: más alto que un logo, y flota
  * como el pizote del Centroamericano (quieto con «menos movimiento»). */
 .tacho .u-logo { max-height: 22rem; filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.35)); animation: tacho-flota 4s ease-in-out infinite; }

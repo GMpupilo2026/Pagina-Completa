@@ -165,7 +165,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     // Lo que más se busca el día del torneo, primero (lo pidió el dueño: una
     // ficha solo para los pareos y otra para las clasificaciones).
     { href: "#pareos", color: "rojo", icono: "♟️", titulo: "Pareos de la ronda", texto: "La ronda que se juega en cada torneo, mesa por mesa: blancas, negras y el resultado.", accion: "Ver los pareos" },
-    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.", accion: "Ver las clasificaciones" },
+    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto y sus puntos, como se premia.", accion: "Ver las clasificaciones" },
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
@@ -185,7 +185,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   dialogos: {
     tituloClasificacion: "Clasificación por nivel",
     podio: "El 1.º, 2.º y 3.º lugar de cada nivel, según la clasificación de su torneo en Pareo Integral. Es provisional hasta la última ronda.",
-    clasificacion: "Cada nivel por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con los puntos y el rendimiento.",
+    clasificacion: "Cada nivel por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con sus puntos.",
     propios: [
       {
         id: "inscribirme", icono: "📝", titulo: "Inscribirme",
@@ -380,6 +380,40 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
     imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",
     compartir: "en el Torneo Intereducativo Tacho Chess 2:",
     imagen: { banda: "#042a69", tinta: "#042a69", acento: "#dc0d19", suave: "#eef3fb", archivo: "tacho-chess-2", franjas: [["#dc0d19", 1046], ["#042a69", 1060]] },
+    // Los textos del Centroamericano que se colaban (lo vio el dueño el
+    // 14/11/2026, el día del torneo: «los diplomas y algunas partes […] sigue
+    // saliendo información o con nombres del centroamericano»). Se premia por
+    // nivel, no por categoría, y no hay Elo. Las funciones van tal cual a
+    // js/tacho-chess.js: no pueden usar nada de este archivo.
+    textos: {
+      finTexto: (n) => "Así terminó el Tacho Chess 2 para " + n + ":",
+      dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar en " + cat,
+      dipParticipa: (cat) => "por su participación en " + cat,
+      hjLugar: "Gimnasio del Centro, Liceo Anastasio Alfaro",
+      hjMensaje: (n, r, m, cuando, dias) => "📣 ¡" + (dias === 0 ? "Hoy juega " : dias === 1 ? "Mañana juega " : "Juega ") + n + "! Ronda " + r + ", mesa " + m + (cuando ? ", " + cuando.charAt(0).toLowerCase() + cuando.slice(1) : "") + ", en el Tacho Chess 2.",
+      imgAntes: "El torneo es el sábado 14 de noviembre",
+      diaTexto: (titulo) => titulo + " en el Tacho Chess 2:",
+      numTitulo: "El torneo en números",
+      numTexto: "El Tacho Chess 2 en números:",
+      imgResumenSub: "Tacho Chess 2 · Liceo Anastasio Alfaro",
+      invictos: "Invictos de cada nivel",
+      podios: "Los podios de cada nivel",
+      puestosTitulo: "Su puesto en su nivel después de cada ronda:",
+      calRonda: (r, nombre) => "Ronda " + r + " · " + nombre + " — Tacho Chess 2",
+      calCategoria: (cat) => "Nivel: " + cat + ".",
+      calLugar: "Gimnasio del Centro, Liceo Anastasio Alfaro, San José, Costa Rica",
+      calNombre: (nombre) => "Rondas de " + nombre + " · Tacho Chess 2",
+    },
+    // El certificado con la cara del afiche: el azul degradado (blanco encima,
+    // 8,08 y 13,63), la píldora roja con letra blanca (5,1), Tacho arriba, el
+    // marco rojo y blanco, el escudo del liceo y sin las hojas del Centroamericano.
+    diploma: {
+      evento: "Torneo Intereducativo Tacho Chess 2",
+      lugar: "Gimnasio del Centro, Liceo Anastasio Alfaro · San José · 14 de noviembre de 2026",
+      fondo: ["#064ca7", "#042a69"], pildora: "#dc0d19", sombra: "rgba(2, 18, 48, 0.5)",
+      dibujo: "img/tacho-chess-2/mascota.png", hojas: null, escudo: "img/tacho-chess-2/logo-liceo.png",
+      marco: [["#dc0d19", 22, 44], ["#ffffff", 6, 74]],
+    },
   },
 };
 

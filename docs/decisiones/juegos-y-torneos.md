@@ -15346,6 +15346,52 @@ ventana con varios; quitando el filtro del sello, saltan cuatro), «Hoy en el to
 momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
 si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
 
+### El certificado y las imágenes del Tacho, sin el Centroamericano
+
+Lo vio el dueño el 14/11/2026, el día del torneo: «los diplomas y algunas partes
+de la información de la página […] sigue saliendo información o con nombres del
+centroamericano». La página sale de la plantilla del Centroamericano, y lo que
+dibujan `js/centroamericano-tablas.js` y `js/centroamericano-vivo.js` en un
+lienzo o en un mensaje tenía textos fijos que la configuración no cambiaba. Se
+encontró abriendo la página con un doble de Pareo (torneo en juego y
+terminado), tocando cada botón y anotando todo lo escrito en los lienzos, lo
+compartido y los colores calculados:
+
+- **El certificado** salía entero del Centroamericano: el morado, las hojas, el
+  pizote del trofeo, «XXI Festival Centroamericano y del Caribe de la Juventud»
+  y «Gimnasio Nacional, La Sabana · del 1 al 8 de noviembre». Ahora
+  `torneoPagina.diploma` (la configuración) le da el evento, la sede y la fecha
+  del Tacho, el azul degradado del afiche, la píldora roja, Tacho arriba, el
+  escudo del liceo arriba a la izquierda y un marco rojo y blanco, sin hojas.
+  `diploma()` acepta para eso `sombra`, `marco` y `escudo` (sin ellos, el del
+  Centroamericano no cambia). Dice «1.er lugar en Primer grado»: se premia por
+  nivel, no por «categoría».
+- **Los textos fijos**: `torneoPagina.textos` reemplaza, en español, los que
+  se colaban (`finTexto` «Así terminó el Centroamericano 2026…», el lugar y el
+  mensaje de «¡Hoy juega!», el calendario de un jugador, «Su puesto en la
+  categoría», «Invictos/Los podios de cada categoría»…). El generador
+  (`herramientas/torneo-universitario.js`) los escribe en `js/tacho-chess.js`;
+  una función va tal cual, así que no puede usar nada del archivo de la
+  configuración. Los dos módulos solo cambian las claves que ya tienen.
+- **Sin Elo, sin columnas de Elo**: un torneo escolar no tiene Elo. «Así terminó
+  mi torneo» mostraba «Elo FIDE: sin Elo FIDE» y un rendimiento en raya: sin Elo
+  en el jugador ni en sus rivales, van sus ganadas y sus tablas · perdidas. La
+  clasificación quita «Elo» y «Rend.» si saldrían en raya en todos (como ya
+  quitaba «FED»), y el proyector, «Rend.».
+- **Tacho entero**: en «Así terminó mi torneo» un dibujo que no es redondo no se
+  dibujaba (la banda quedaba vacía), y en «¡Hoy juega!» se recortaba para llenar
+  el recuadro (le cortaba la cabeza). Ahora entra completo.
+- **Los colores**: el proyector tenía el fondo #1E2453 del Centroamericano, y
+  en modo oscuro los botones de la tarjeta del jugador, el lila #B8BBF2. Van en
+  el azul hondo del afiche y el rojo claro (medidos en `css/universidades.css`).
+- El nombre del `.ics` de un jugador y el enlace del resumen de una delegación
+  ya no dicen `centroamericano-2026` en otra página.
+
+Lo revisa `verificar-tacho-chess.js` («El certificado y las imágenes dicen el
+Tacho»): el texto y los dibujos del certificado, «Así terminó mi torneo» y su
+mensaje, la clasificación sin «Elo» ni «Rend.» y el fondo del proyector. Sin
+`textos` y `diploma` en `js/tacho-chess.js`, saltan.
+
 ### El profe ayuda en Tacho Chess 2
 
 Pedido del dueño el 12/11/2026: «agrega el avatar del profe Oscar para el
