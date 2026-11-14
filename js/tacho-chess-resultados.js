@@ -82,7 +82,70 @@
     vieja.replaceWith(a);
   }
 
-  buscar().then(pintar).catch(() => { /* sin conexión: la ficha sigue «Pronto» */ });
+  // «Partidas en vivo»: un torneo con las cámaras de Notara conectadas en
+  // Pareo (el código que publica en `datos.camaras`, el mismo del QR de cada
+  // mesa) lleva a tablero-vivo.html#<código>&t=<id>, que muestra todas las
+  // mesas de la ronda, jugada por jugada. El árbitro conecta las cámaras con
+  // el torneo ya empezado, así que se vuelve a preguntar cada minuto, solo
+  // por el código y las rondas (unos bytes, no el torneo entero). Un torneo
+  // terminado ya no lo muestra.
+  const CODIGO = /^[a-hjkmnp-z2-9]{8}$/;
+  const CADA = 60000;
+  const corto = (nombre) => { const m = /\(([^)]+)\)/.exec(nombre || ""); return m ? m[1] : nombre; };
+
+  async function leerVivo(torneos) {
+    const { data, error } = await window.sb.from("pareo_publicados").select("id, rondas, rondas_total, camaras:datos->>camaras")
+      .in("id", torneos.map((t) => t.id));
+    if (error) throw error;
+    const porId = new Map((data || []).map((x) => [x.id, x]));
+    return torneos.map((t) => ({ t, x: porId.get(t.id) }))
+      .filter(({ x }) => x && CODIGO.test(x.camaras || "") && !(x.rondas_total > 0 && x.rondas >= x.rondas_total))
+      .map(({ t, x }) => ({ id: t.id, nombre: t.nombre, codigo: x.camaras }));
+  }
+
+  function pintarVivo(conCamaras) {
+    const caja = document.querySelector("#hoy .cac-hoy");
+    if (!caja) return;
+    let zona = $("hoy-vivo");
+    const clave = conCamaras.map((v) => v.id + ":" + v.codigo).join(",");
+    if (zona && zona.dataset.clave === clave) return; // igual que antes: no se rearma (ni se pierde el foco)
+    if (!conCamaras.length) { if (zona) zona.remove(); return; }
+    if (!zona) {
+      zona = document.createElement("div");
+      zona.id = "hoy-vivo";
+      zona.className = "mt-4";
+      caja.append(zona);
+    }
+    zona.dataset.clave = clave;
+    const p = document.createElement("p");
+    p.className = "text-sm font-bold";
+    p.textContent = "Partidas en vivo, jugada por jugada, desde las cámaras de las mesas:";
+    const ul = document.createElement("ul");
+    ul.className = "mt-2 flex flex-wrap gap-2";
+    conCamaras.forEach((v) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.className = "tacho-boton";
+      a.href = "tablero-vivo.html#" + v.codigo + "&t=" + encodeURIComponent(v.id);
+      const ico = document.createElement("span");
+      ico.setAttribute("aria-hidden", "true");
+      ico.textContent = "📺 ";
+      a.append(ico, conCamaras.length === 1 ? "Ver las partidas en vivo →" : "En vivo: " + corto(v.nombre) + " →");
+      li.append(a);
+      ul.append(li);
+    });
+    zona.replaceChildren(p, ul);
+  }
+
+  function vigilarVivo(torneos) {
+    if (!torneos.length || !window.sb) return;
+    const una = () => leerVivo(torneos).then(pintarVivo).catch(() => { /* sin conexión: queda lo último que se vio */ });
+    una();
+    setInterval(() => { if (!document.hidden) una(); }, CADA);
+  }
+
+  buscar().then((torneos) => { pintar(torneos); vigilarVivo(torneos); })
+    .catch(() => { /* sin conexión: la ficha sigue «Pronto» */ });
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

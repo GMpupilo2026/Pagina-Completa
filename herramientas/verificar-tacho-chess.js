@@ -137,8 +137,10 @@ function doble(datos) {
     const filas = (D[tabla] || []).slice();
     const f = [];
     let orden = null;
+    // «alias:datos->>campo», como PostgREST: un campo de los datos, en texto.
+    let alias = [];
     const q = {
-      select(cols) { window.__pedidos.push(tabla + ": " + cols); return q; },
+      select(cols) { window.__pedidos.push(tabla + ": " + cols); alias = [...cols.matchAll(/(\\w+):datos->>(\\w+)/g)].map((m) => [m[1], m[2]]); return q; },
       eq(c, v) { f.push((r) => r[c] === v); return q; },
       in(c, vs) { f.push((r) => vs.includes(r[c])); return q; },
       gte(c, v) { f.push((r) => r[c] >= v); return q; },
@@ -148,6 +150,7 @@ function doble(datos) {
       range() { return q; },
       then(okf, ko) {
         let out = filas.filter((r) => f.every((g) => g(r)));
+        if (alias.length) out = out.map((r) => { const x = Object.assign({}, r); alias.forEach(([a, c]) => { const v = r.datos && r.datos[c]; x[a] = v == null ? null : String(v); }); return x; });
         if (orden) out.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * orden[1]);
         return Promise.resolve({ data: out, error: null }).then(okf, ko);
       },
@@ -220,6 +223,33 @@ async function fichaResultados(nav, publicados, reloj) {
       await r.p.click("#ficha-resultados");
       const marco = await r.p.waitForFunction(() => { const f = [...document.querySelectorAll("dialog[open] iframe")].find((x) => x.checkVisibility()); return f && f.src; }, null, { timeout: 5000 }).then((x) => x.jsonValue()).catch(() => "");
       ok("con un torneo: tocarla abre el torneo encima, sin salir de la página", marco.includes("torneos-pareo.html?en-ventana=1#t=" + T1.id) && r.p.url().includes(PAGINA), marco);
+      await r.ctx.close();
+    }
+    {
+      // «Partidas en vivo»: el código de las cámaras que Pareo publica lleva a
+      // tablero-vivo.html; se vuelve a preguntar cada minuto (el árbitro conecta
+      // las cámaras con el torneo empezado) y un torneo terminado ya no lo muestra.
+      const A = Object.assign({}, T1, { rondas: 1, rondas_total: 7, datos: Object.assign({}, T1.datos, { camaras: "abcd2345" }) });
+      const B = Object.assign({}, T2, { rondas: 1, rondas_total: 7, datos: Object.assign({}, T2.datos, { camaras: "NO VALE" }) });
+      const r = await fichaResultados(nav, [A, B, FALSO], true);
+      const vivo = () => r.p.evaluate(() => { const z = document.getElementById("hoy-vivo"); return z ? { dentro: !!z.closest("#hoy"), visible: z.checkVisibility(),
+        enlaces: [...z.querySelectorAll("a")].map((a) => [a.getAttribute("href"), a.textContent.trim(), a.checkVisibility(), getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } : null; });
+      let v = await vivo();
+      ok("«Partidas en vivo»: con las cámaras de un torneo conectadas, sale en «El torneo» y lleva a todas sus mesas en tablero-vivo.html (un código que no es de cámaras no cuenta)",
+        v && v.dentro && v.visible && JSON.stringify(v.enlaces.map((e) => e.slice(0, 3))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + T1.id, "📺 Ver las partidas en vivo →", true]]), JSON.stringify(v));
+      ok("y el botón va en el rojo del afiche con letra blanca", v && v.enlaces[0] && v.enlaces[0][3] === "rgb(220, 13, 25)" && v.enlaces[0][4] === "rgb(255, 255, 255)", JSON.stringify(v && v.enlaces));
+      ok("y lo pregunta liviano: el código y las rondas, sin los datos del torneo", (await r.p.evaluate(() => window.__pedidos)).includes("pareo_publicados: id, rondas, rondas_total, camaras:datos->>camaras"), JSON.stringify(await r.p.evaluate(() => window.__pedidos)));
+      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[1].datos.camaras = "wxyz6789"; });
+      await r.p.clock.fastForward(61000);
+      await r.p.waitForTimeout(300);
+      v = await vivo();
+      ok("si el árbitro conecta las cámaras de otro torneo, al minuto salen las dos, cada una con su torneo",
+        v && JSON.stringify(v.enlaces.map((e) => e.slice(0, 2))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + T1.id, "📺 En vivo: " + T1.nombre + " →"], ["tablero-vivo.html#wxyz6789&t=" + T2.id, "📺 En vivo: " + T2.nombre + " →"]]), JSON.stringify(v));
+      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[0].rondas = 7; window.__dobleDatos.pareo_publicados[1].datos.camaras = null; });
+      await r.p.clock.fastForward(61000);
+      await r.p.waitForTimeout(300);
+      ok("y cuando los torneos terminan o se desconectan las cámaras, se quita", (await vivo()) === null, JSON.stringify(await vivo()));
+      ok("«Partidas en vivo»: sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }
     {

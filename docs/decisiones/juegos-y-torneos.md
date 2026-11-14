@@ -15445,6 +15445,41 @@ abren Pareo desde la página del torneo (`js/tacho-chess-resultados.js` y el
 `url` de cada torneo en `js/torneo-pareo-datos.js`). La página de Pareo abierta
 sola no cambia. Lo revisa `verificar-pareo-organizador.js`.
 
+### Las partidas en vivo de Notara en la página del Tacho
+
+Lo pidió el dueño el 13/11/2026, la noche antes del torneo, al preguntar si lo
+que leen las cámaras de Notara se veía en la página del Tacho: no se veía.
+Las partidas entraban a la clasificación de Pareo (el botón de cada mesa, al
+ponerse al día), pero jugada por jugada solo en `tablero-vivo.html`, y la
+página no llevaba ahí.
+
+- **Pareo publica el código de las cámaras** (`camaras` en `datosPublicos` de
+  `js/pareo/publicar.js`, solo con las cámaras conectadas; la función
+  `pareo-publicar` lo deja pasar con `codigo()`, como `vivo`). No es un
+  secreto nuevo: va en el QR de cada mesa, y ver la partida es justo para lo
+  que se comparte. Quien lo tenga puede mandar mensajes falsos al canal, el
+  mismo riesgo aceptado en «La partida en vivo desde la cámara»; Pareo vuelve
+  a jugar lo que llega con chess.js, nunca pisa una partida escrita a mano y
+  el resultado no se anota sin confirmarlo.
+- **«Partidas en vivo» en «El torneo»** (`#hoy-vivo`, lo pone
+  `js/tacho-chess-resultados.js`, que ya encuentra los torneos del Tacho): un
+  botón por torneo con cámaras, a `tablero-vivo.html#<código>&t=<id>`, que
+  muestra todas las mesas de la ronda. Con un solo torneo dice «Ver las
+  partidas en vivo»; con varios, el nivel de cada uno (lo que va entre
+  paréntesis en el nombre). En `.tacho-boton`, el rojo del afiche con letra
+  blanca (5,1 : 1).
+- **Se vuelve a preguntar cada minuto**, solo por el código y las rondas
+  (`id, rondas, rondas_total, camaras:datos->>camaras`, unos bytes): el
+  árbitro conecta las cámaras con el torneo empezado. Un torneo terminado
+  (todas sus rondas completas) o sin cámaras no lo muestra. No usa
+  `TorneoPareoDatos.buscar()` para eso: volver a leer con él mueve las horas
+  de `cambio()`, y la ventana de los pareos dejaría de ponerse al día.
+
+Lo revisan `verificar-tacho-chess.js` (el botón, su enlace, que un código que
+no es de cámaras no cuenta, el segundo torneo que aparece al minuto y que se
+quita al terminar) y `verificar-pareo-publicar.js` (el código va solo con las
+cámaras conectadas, y la función lo guarda). Rotos a propósito, saltan.
+
 ### Tacho, con el zapato entero
 
 El dueño vio que a Tacho le faltaba parte del zapato izquierdo: en el afiche
