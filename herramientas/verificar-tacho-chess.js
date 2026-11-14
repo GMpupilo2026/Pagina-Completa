@@ -133,7 +133,17 @@ function doble(datos) {
   // Para que la prueba cambie un torneo «en Pareo» y vea qué se pidió.
   window.__dobleDatos = D;
   window.__pedidos = [];
-  window.sb = { from(tabla) {
+  // Los canales de Broadcast: la prueba hace de cámara con __emitir, y ve
+  // qué se pidió en __enviados.
+  window.__canales = new Map();
+  window.__enviados = [];
+  window.__emitir = (nombre, payload) => { const c = window.__canales.get(nombre); if (c) c.oyentes.forEach((f) => f({ payload })); };
+  window.sb = { channel(nombre) {
+    const c = { oyentes: [], on(tipo, filtro, f) { if (filtro.event === "estado") c.oyentes.push(f); return c; },
+      subscribe(cb) { setTimeout(() => cb("SUBSCRIBED"), 0); return c; }, send(m) { window.__enviados.push(nombre + ": " + m.event); return Promise.resolve(); } };
+    window.__canales.set(nombre, c);
+    return c;
+  }, removeChannel(c) { for (const [k, v] of window.__canales) if (v === c) window.__canales.delete(k); }, from(tabla) {
     const filas = (D[tabla] || []).slice();
     const f = [];
     let orden = null;
@@ -226,30 +236,43 @@ async function fichaResultados(nav, publicados, reloj) {
       await r.ctx.close();
     }
     {
-      // «Partidas en vivo»: el código de las cámaras que Pareo publica lleva a
-      // tablero-vivo.html; se vuelve a preguntar cada minuto (el árbitro conecta
-      // las cámaras con el torneo empezado) y un torneo terminado ya no lo muestra.
-      const A = Object.assign({}, T1, { rondas: 1, rondas_total: 7, datos: Object.assign({}, T1.datos, { camaras: "abcd2345" }) });
-      const B = Object.assign({}, T2, { rondas: 1, rondas_total: 7, datos: Object.assign({}, T2.datos, { camaras: "NO VALE" }) });
-      const r = await fichaResultados(nav, [A, B, FALSO], true);
-      const vivo = () => r.p.evaluate(() => { const z = document.getElementById("hoy-vivo"); return z ? { dentro: !!z.closest("#hoy"), visible: z.checkVisibility(),
-        enlaces: [...z.querySelectorAll("a")].map((a) => [a.getAttribute("href"), a.textContent.trim(), a.checkVisibility(), getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } : null; });
+      // «En vivo»: UNA partida. Sin cámara, «Próximamente»; con el código que
+      // publica Pareo, se escucha el canal de las cámaras y, apenas una
+      // contesta, sale esa partida; si deja de contestar, vuelve a
+      // «Próximamente». Lo de otro torneo no cuenta.
+      const A = Object.assign({}, T1, { datos: Object.assign({}, T1.datos, { camaras: "NO VALE" }) });
+      const r = await fichaResultados(nav, [A, T2, FALSO], true);
+      const vivo = () => r.p.evaluate(() => { const z = document.getElementById("hoy-vivo"); return z ? { dentro: !!z.closest("#hoy"), visible: z.checkVisibility(), estado: z.dataset.estado, texto: z.innerText.replace(/\s+/g, " ").trim(),
+        enlaces: [...z.querySelectorAll("a")].map((a) => [a.getAttribute("href"), a.textContent.trim(), a.dataset.ventana || "", a.checkVisibility(), getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } : null; });
       let v = await vivo();
-      ok("«Partidas en vivo»: con las cámaras de un torneo conectadas, sale en «El torneo» y lleva a todas sus mesas en tablero-vivo.html (un código que no es de cámaras no cuenta)",
-        v && v.dentro && v.visible && JSON.stringify(v.enlaces.map((e) => e.slice(0, 3))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + T1.id, "📺 Ver las partidas en vivo →", true]]), JSON.stringify(v));
-      ok("y el botón va en el rojo del afiche con letra blanca", v && v.enlaces[0] && v.enlaces[0][3] === "rgb(220, 13, 25)" && v.enlaces[0][4] === "rgb(255, 255, 255)", JSON.stringify(v && v.enlaces));
-      ok("y lo pregunta liviano: el código y las rondas, sin los datos del torneo", (await r.p.evaluate(() => window.__pedidos)).includes("pareo_publicados: id, rondas, rondas_total, camaras:datos->>camaras"), JSON.stringify(await r.p.evaluate(() => window.__pedidos)));
-      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[1].datos.camaras = "wxyz6789"; });
+      ok("«En vivo»: sin cámaras, en «El torneo» dice «Próximamente» (un código que no es de cámaras no cuenta)",
+        v && v.dentro && v.visible && v.estado === "pronto" && /En vivo: próximamente/.test(v.texto) && !v.enlaces.length && !(await r.p.evaluate(() => window.__canales.size)), JSON.stringify(v));
+      ok("y pregunta liviano: solo el código, sin los datos del torneo", (await r.p.evaluate(() => window.__pedidos)).includes("pareo_publicados: id, camaras:datos->>camaras"), JSON.stringify(await r.p.evaluate(() => window.__pedidos)));
+      // El árbitro conecta las cámaras en Pareo: al minuto, la página escucha su canal y les pide la partida.
+      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[0].datos.camaras = "abcd2345"; });
       await r.p.clock.fastForward(61000);
+      await r.p.waitForTimeout(300);
+      ok("al conectar las cámaras en Pareo, al minuto escucha su canal y les pide la partida (y sigue en «Próximamente» mientras nadie contesta)",
+        (await r.p.evaluate(() => window.__enviados)).includes("tablero-vivo-abcd2345: pedir") && (await vivo()).estado === "pronto", JSON.stringify(await r.p.evaluate(() => window.__enviados)));
+      await r.p.evaluate((id) => window.__emitir("tablero-vivo-abcd2345", { v: 1, pgn: "1. e4", torneo: "99999999-9999-4999-8999-999999999999", mesa: 2, blancas: "Otro", negras: "Torneo", t: Date.now() }), T1.id);
+      await r.p.waitForTimeout(100);
+      ok("una partida de otro torneo no cuenta", (await vivo()).estado === "pronto", JSON.stringify(await vivo()));
+      await r.p.evaluate((id) => window.__emitir("tablero-vivo-abcd2345", { v: 1, pgn: "1. e4 e5", torneo: id, mesa: 3, blancas: "Ana Uno", negras: "<b>Beto</b> Dos", t: Date.now() }), T1.id);
+      await r.p.waitForTimeout(100);
+      v = await vivo();
+      ok("cuando la cámara transmite, sale ESA partida: su mesa, quién juega (texto, no HTML) y «Ver la partida», que abre tablero-vivo.html encima en esa mesa",
+        v.estado === "vivo" && /En vivo ahora Mesa 3: Ana Uno – <b>Beto<\/b> Dos/.test(v.texto) && JSON.stringify(v.enlaces.map((e) => e.slice(0, 4))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + T1.id + "&m=3", "Ver la partida en vivo →", "En vivo: Mesa 3", true]]), JSON.stringify(v));
+      ok("y el botón va en el rojo del afiche con letra blanca", v.enlaces[0] && v.enlaces[0][4] === "rgb(220, 13, 25)" && v.enlaces[0][5] === "rgb(255, 255, 255)", JSON.stringify(v.enlaces));
+      // Sigue pidiendo cada 20 s; si la cámara deja de contestar, en menos de un minuto vuelve a «Próximamente».
+      await r.p.evaluate(() => { window.__enviados.length = 0; });
+      await r.p.clock.fastForward(21000);
+      await r.p.waitForTimeout(100);
+      ok("cada 20 s vuelve a pedirle la partida a la cámara", (await r.p.evaluate(() => window.__enviados)).includes("tablero-vivo-abcd2345: pedir"), JSON.stringify(await r.p.evaluate(() => window.__enviados)));
+      await r.p.clock.fastForward(40000);
       await r.p.waitForTimeout(300);
       v = await vivo();
-      ok("si el árbitro conecta las cámaras de otro torneo, al minuto salen las dos, cada una con su torneo",
-        v && JSON.stringify(v.enlaces.map((e) => e.slice(0, 2))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + T1.id, "📺 En vivo: " + T1.nombre + " →"], ["tablero-vivo.html#wxyz6789&t=" + T2.id, "📺 En vivo: " + T2.nombre + " →"]]), JSON.stringify(v));
-      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[0].rondas = 7; window.__dobleDatos.pareo_publicados[1].datos.camaras = null; });
-      await r.p.clock.fastForward(61000);
-      await r.p.waitForTimeout(300);
-      ok("y cuando los torneos terminan o se desconectan las cámaras, se quita", (await vivo()) === null, JSON.stringify(await vivo()));
-      ok("«Partidas en vivo»: sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
+      ok("si la cámara deja de transmitir, vuelve a «Próximamente»", v.estado === "pronto" && !v.enlaces.length, JSON.stringify(v));
+      ok("«En vivo»: sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }
     {
