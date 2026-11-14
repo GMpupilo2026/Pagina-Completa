@@ -9,9 +9,10 @@
 // guarda nada acá ni del lado de quien llama: ni cuenta, ni tabla, ni
 // bitácora de qué se buscó.
 //
-// NUNCA SE INVENTA UN NÚMERO NI SE ADIVINA UN HOMÓNIMO: si la búsqueda trae
-// más de una persona con el mismo nombre normalizado, se devuelve «ambiguo»
-// en vez de elegir cualquiera.
+// NUNCA SE INVENTA UN NÚMERO NI SE ADIVINA UN HOMÓNIMO: solo un nombre igual
+// (las mismas palabras) se da por «encontrado». Un nombre que solo se parece
+// (le falta el segundo apellido, por ejemplo) vuelve como «parecido» o
+// «ambiguo», con los candidatos, y quien organiza elige (emparejar.ts).
 //
 // Reusa el mismo lector de ajedrezcostarica.com que ya prueba
 // herramientas/verificar-elo-fide.js (`_compartido/ajedrezcostarica.ts`,
@@ -22,6 +23,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { busquedasPorNombre, leerListaNacional, type FilaNacional } from "./ajedrezcostarica.ts";
+import { emparejar, type Candidato, type Estado } from "./emparejar.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -64,32 +66,39 @@ async function traer(url: string): Promise<string | null> {
   }
 }
 
-// El bolsillo de palabras, sin tildes ni comas: "Angulo Cubero, Oscar" y
-// "Oscar Angulo Cubero" dan el mismo bolsillo, así que da igual el orden.
-function bolsillo(nombre: string): string {
-  const limpio = nombre.normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toUpperCase().replace(/[^A-Z ,]/g, " ").replace(/,/g, " ");
-  return limpio.split(/\s+/).filter(Boolean).sort().join(" ");
+type Resultado = {
+  nombre: string; estado: Estado; nacional: number | null; fideEstandar: number | null; fideId: string | null;
+  candidatos: Candidato[]; totalCandidatos: number;
+};
+
+// Primero el nombre tal como está escrito, con todas sus palabras: el buscador
+// de ajedrezcostarica.com trae a quien tenga TODAS, en cualquier orden, así
+// que esa búsqueda ya incluye a cualquier candidato. Solo si no trae a nadie
+// se prueba con los apellidos y el primer apellido (busquedasPorNombre). Antes
+// se empezaba por los apellidos: con «Rodriguez, Jose», la búsqueda
+// «Rodriguez» trae 372 y la página muestra solo los 50 de más Elo, así que un
+// alumno nunca salía.
+function busquedas(nombre: string): string[] {
+  const completo = nombre.replace(/,/g, " ").replace(/\s+/g, " ").trim();
+  return [...new Set([completo, ...busquedasPorNombre(nombre)].filter((x) => x.length >= 3))];
 }
 
-type Estado = "encontrado" | "no_encontrado" | "ambiguo";
-type Resultado = { nombre: string; estado: Estado; nacional: number | null; fideEstandar: number | null; fideId: string | null };
-
 async function buscarUno(nombreOriginal: string): Promise<Resultado> {
-  const buscado = bolsillo(nombreOriginal);
-  const vistos = new Map<string, FilaNacional>();
-  for (const q of busquedasPorNombre(nombreOriginal)) {
+  const filas: FilaNacional[] = [];
+  let r = emparejar(nombreOriginal, filas);
+  for (const q of busquedas(nombreOriginal)) {
     const html = await traer(`${NACIONAL}?name=${encodeURIComponent(q)}`);
     if (!html) continue;
-    for (const fila of leerListaNacional(html)) {
-      if (bolsillo(fila.nombre) === buscado) vistos.set(fila.fideId, fila);
-    }
-    if (vistos.size) break;   // ya encontró con esta búsqueda; no hace falta la siguiente
+    filas.push(...leerListaNacional(html));
+    r = emparejar(nombreOriginal, filas);
+    if (r.estado !== "no_encontrado") break;   // ya hay a quién mostrar; no hace falta la siguiente
   }
-  if (vistos.size === 0) return { nombre: nombreOriginal, estado: "no_encontrado", nacional: null, fideEstandar: null, fideId: null };
-  if (vistos.size > 1) return { nombre: nombreOriginal, estado: "ambiguo", nacional: null, fideEstandar: null, fideId: null };
-  const fila = [...vistos.values()][0];
-  return { nombre: nombreOriginal, estado: "encontrado", nacional: fila.nacional, fideEstandar: fila.fideEstandar, fideId: fila.fideId };
+  const f = r.fila;
+  return {
+    nombre: nombreOriginal, estado: r.estado,
+    nacional: f ? f.nacional : null, fideEstandar: f ? f.fideEstandar : null, fideId: f ? f.fideId : null,
+    candidatos: r.candidatos, totalCandidatos: r.totalCandidatos,
+  };
 }
 
 async function enTandas<T, R>(items: T[], tamano: number, hacer: (x: T) => Promise<R>): Promise<R[]> {
