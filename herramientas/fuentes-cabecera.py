@@ -64,7 +64,8 @@ FIN = "<!-- fuentes: fin -->"
 # inscripcion.html tiene su propio diseño y su propio CSS, pero usa las MISMAS
 # dos fuentes, así que también se le cambian: es la página del formulario
 # público de torneos, o sea de las que más se abren desde un celular ajeno.
-CARPETAS_FUERA = ("cursos/recursos/", "herramientas/", "node_modules/")
+# escritorio/: el programa para Windows, que no se publica (.assetsignore).
+CARPETAS_FUERA = ("cursos/recursos/", "herramientas/", "node_modules/", "escritorio/")
 
 # Lo que hay que sacar. Tres formas, porque no todas las páginas lo escriben
 # igual (algunas traen el preconnect en otro orden, otras sin el crossorigin).

@@ -2487,3 +2487,73 @@ uso. El dueño eligió que GitHub las despliegue solo.
   - un archivo compartido despliega todas las que lo llevan;
   - el flujo va al proyecto de la Academia, con la versión fijada y la clave del
     secreto, y nada de afuera entra pegado en un comando.
+
+## El programa para Windows
+
+Pedido del dueño el 12/11/2026: un programa para Windows (`.exe`) con todas
+las herramientas para organizar un torneo, que funcione sin internet, que él
+use y que después venda a otros organizadores (por evento y por año, en Costa
+Rica y afuera). El plan completo, por etapas, está en el documento «Plan del
+programa para organizar torneos»; esta es la **etapa 1**: el programa en sí.
+
+- **El programa abre el sitio, no lleva una copia.** Es Electron
+  (`escritorio/`) con una ventana que carga `ajedrez-integral.com`. Así la
+  sesión, la licencia (el candado y `tengo_herramienta()`), la base, la
+  publicación de los torneos (que `pareo-publicar` acepta solo desde el
+  dominio del sitio) y los cambios de cada día son los de siempre, y el
+  programa casi nunca necesita una versión nueva. Llevar los archivos adentro
+  rompía esas tres cosas y obligaba a sacar una versión con cada cambio.
+- **Sin internet: lo que el sitio ya guarda.** `sw.js` va siempre primero a la
+  red y guarda lo que pasa; Pareo guarda lo suyo en `ajedrez-integral-sin-red`.
+  El programa agrega **«Archivo → Preparar para usar sin internet»**, que abre
+  cada herramienta en una ventana escondida, **dos vueltas** (en una
+  computadora nueva, la primera página instala `sw.js`). Probado con una
+  computadora nueva: después, sin red, Pareo abrió desde lo guardado. Sin
+  internet y sin nada guardado, el programa muestra su propia
+  `sin-conexion.html` con los pasos y «Volver a intentar». La licencia sin red
+  vale lo que ya vale el candado (7 días desde la última respuesta de la
+  base); para un programa en venta eso cambia en la etapa 5.
+- **Las reglas, aparte y probadas** (`escritorio/reglas.js`): solo el dominio
+  exacto con https es «el sitio»; lo demás se abre en el navegador de la
+  computadora y solo si es https (nunca `file:`, `javascript:`, `data:` ni un
+  programa); el sitio puede pedir la cámara (Notara), los avisos, el
+  portapapeles y la pantalla completa, y nada más; nadie más recibe permisos.
+- **La seguridad de la ventana** (`escritorio/main.js`): `contextIsolation`,
+  `sandbox`, sin Node y `webSecurity` en toda ventana (la principal, las que
+  abre el sitio y la escondida); navegar fuera del sitio se corta; se niegan
+  los `webview`; una sola copia abierta. El agente de usuario lleva
+  `AjedrezIntegralEscritorio/<versión>` para que el sitio lo reconozca más
+  adelante.
+- **El menú**, en español: Archivo (Inicio, Preparar para usar sin internet,
+  Imprimir, Salir), Herramientas (Pareo Integral y el Centro del evento, Mesa
+  del árbitro, Mesas y árbitros de un evento, Cámaras de Notara, Fair Play,
+  Torneos publicados; Ctrl+1 a Ctrl+6), Ver y Ayuda. El plano de la sala sigue
+  dentro de la página del Centroamericano: no tiene página propia todavía.
+- **Las versiones van fijas** (Electron 45.1.0, electron-builder 26.18.1, con
+  su `package-lock.json`) y `escritorio/` tiene su propio `package.json`: el
+  `npm install` de la raíz y del CI no baja Electron (cientos de MB).
+  `escritorio/` va en `.assetsignore` y su `node_modules/` y `dist/` en su
+  `.gitignore`. `verificar-voseo.py` salta todo `node_modules` y todo
+  `package-lock.json`.
+- **Se arma en GitHub, a mano** (`.github/workflows/escritorio.yml`, «Programa
+  para Windows» → «Run workflow»): una máquina Windows corre
+  `verificar-escritorio.js`, arma el instalador NSIS en español y lo deja en
+  «Artifacts» 30 días. No corre en los PR: una máquina Windows cobra el doble
+  de minutos y el programa casi no cambia. En Linux no se puede terminar el
+  instalador (NSIS y el ícono piden Wine); se comprobó que el empaquetado para
+  Windows lleva sus siete archivos.
+- **Sin firma digital todavía**: Windows avisa «Windows protegió su PC» al
+  instalarlo. El certificado de firma de código es un trámite del dueño; se
+  agrega al flujo cuando lo tenga.
+- **Dónde se baja**: todavía no hay lugar público. El instalador pesa ~100 MB
+  y Cloudflare Workers Assets no sirve archivos de más de 25 MB; el repositorio
+  es privado. Para venderlo hace falta un lugar (por ejemplo, un espacio de
+  Cloudflare R2) y, con él, las actualizaciones solas del programa.
+
+Lo prueba `verificar-escritorio.js` (sin Electron: las reglas con direcciones
+de verdad y engañosas, la seguridad de `main.js`, las versiones fijas, lo que
+se empaqueta, `.assetsignore` y la CSP de `sin-conexion.html`). Rotos a
+propósito el `sandbox` y el dominio exacto, salta. El programa se abrió de
+verdad con Electron en una pantalla virtual: el menú, el sitio, la página sin
+conexión y Pareo sin red.
+

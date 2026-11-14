@@ -76,7 +76,9 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "peonita-trucos-accesible.html",
          "peonita-rey-accesible.html",
          "coachess-resumen-accesible.html"}
-CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
+# escritorio/: el programa para Windows; su sin-conexion.html va dentro del
+# programa y no se publica (.assetsignore).
+CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/", "escritorio/")
 
 
 def paginas():

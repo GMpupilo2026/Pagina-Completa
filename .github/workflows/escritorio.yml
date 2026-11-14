@@ -1,0 +1,46 @@
+# Arma el instalador del programa para Windows (escritorio/) en una máquina con
+# Windows de GitHub y lo deja para bajar en la página de la corrida
+# («Artifacts»), durante 30 días.
+#
+# SOLO A MANO («Run workflow»): no corre en cada PR ni al entrar a main. Una
+# máquina Windows de GitHub cobra el doble de minutos que una Linux, y el
+# programa casi nunca cambia (lo que cambia todos los días es el sitio, que el
+# programa abre). Se arma cuando sube la versión de escritorio/package.json.
+#
+# Sin firma digital todavía: Windows avisará «Windows protegió su PC» al
+# instalarlo (Más información → Ejecutar de todas formas). Cuando el dueño
+# tenga el certificado de firma de código, se agrega aquí.
+#
+# Ver «El programa para Windows» en docs/decisiones/sitio-e-infraestructura.md.
+name: Programa para Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  armar:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: escritorio
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: escritorio/package-lock.json
+      - run: npm ci
+      # Las reglas y la seguridad del programa, antes de armarlo.
+      - run: node ../herramientas/verificar-escritorio.js
+      - run: npm run armar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: programa-para-windows
+          path: escritorio/dist/*.exe
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,37 @@
+{
+  "name": "ajedrez-integral-torneos",
+  "productName": "Ajedrez Integral Torneos",
+  "version": "0.1.0",
+  "description": "Todas las herramientas para organizar un torneo de ajedrez en una sola ventana.",
+  "author": "Ajedrez Integral",
+  "homepage": "https://ajedrez-integral.com",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "abrir": "electron .",
+    "armar": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.1"
+  },
+  "build": {
+    "appId": "com.ajedrezintegral.torneos",
+    "productName": "Ajedrez Integral Torneos",
+    "copyright": "Ajedrez Integral",
+    "files": ["main.js", "reglas.js", "sin-conexion.html", "sin-conexion.js", "sin-conexion.css", "icono.png"],
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis", "icon": "icono.png" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ajedrez Integral Torneos",
+      "installerLanguages": ["es_ES"],
+      "language": "3082",
+      "artifactName": "Ajedrez-Integral-Torneos-${version}.exe"
+    }
+  }
+}

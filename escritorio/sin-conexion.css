@@ -1,0 +1,12 @@
+/* Los colores del sitio (brand y accent de Tailwind); el contraste del texto
+   sobre el fondo pasa AA en claro y en oscuro. */
+:root { color-scheme: light dark; --fondo: #f0f4f8; --texto: #102a43; --suave: #334e68; --boton: #f0b429; --boton-texto: #0a1f33; }
+@media (prefers-color-scheme: dark) { :root { --fondo: #0a1f33; --texto: #f0f4f8; --suave: #d9e2ec; } }
+body { margin: 0; background: var(--fondo); color: var(--texto); font: 17px/1.5 system-ui, "Segoe UI", sans-serif; }
+main { max-width: 34rem; margin: 10vh auto; padding: 0 1.5rem; }
+h1 { font-family: Georgia, serif; font-size: 1.8rem; margin: 1rem 0 .5rem; }
+p, li { color: var(--suave); }
+a#volver { display: inline-block; margin-top: .5rem; background: var(--boton); color: var(--boton-texto); font-weight: 700; padding: .6rem 1.1rem; border-radius: .6rem; text-decoration: none; }
+a#volver:focus-visible { outline: 3px solid var(--texto); outline-offset: 3px; }
+
+/*! rev bfb5bbb0d2d82f9f */

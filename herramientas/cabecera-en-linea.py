@@ -31,7 +31,8 @@ import re
 import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FUERA_DIRS = {"node_modules", ".git", "herramientas", "docs", "supabase"}
+# escritorio: el programa para Windows, que no se publica (.assetsignore).
+FUERA_DIRS = {"node_modules", ".git", "herramientas", "docs", "supabase", "escritorio"}
 
 OSCURO_INICIO, OSCURO_FIN = "<!-- oscuro: inicio -->", "<!-- oscuro: fin -->"
 OSCURO = ("(function(){try{var t=localStorage.getItem('theme');"

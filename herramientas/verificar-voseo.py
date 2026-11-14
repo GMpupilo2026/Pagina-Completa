@@ -200,6 +200,12 @@ def archivos():
             # borrarlas, así que sin esto la revisión falla o no según lo que
             # uno tenga instalado en ese momento.
             and not f.startswith("node_modules" + os.sep)
+            # Lo mismo con el node_modules del programa para Windows
+            # (escritorio/), y los package-lock.json: no tienen prosa, solo
+            # nombres de paquetes y huellas en base64 («…SOs…» no es «sos»).
+            # El de la raíz se salta además por su tamaño.
+            and (os.sep + "node_modules" + os.sep) not in (os.sep + f)
+            and os.path.basename(f) != "package-lock.json"
             and not f.endswith(".min.js")
             # La lista de provincias, cantones y distritos del TSE (generada
             # por herramientas/division-territorial-generar.js): son nombres
