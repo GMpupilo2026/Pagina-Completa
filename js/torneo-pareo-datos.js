@@ -46,6 +46,9 @@
   const RESULTADO = { "1-0": "1 - 0", "0-1": "0 - 1", "=": "½ - ½", "+-": "+ - -", "-+": "- - +", "--": "- - -" };
   const VALOR = { 1: "1", 0.5: "½", 0: "0" };
 
+  // Los torneos de la última lectura, con su hora de actualización (para cambio()).
+  let vistos = null;
+
   async function buscar() {
     const sb = window.sb;
     if (!sb) throw new Error("sin cliente");
@@ -57,7 +60,25 @@
       .in("organizador_id", ids).ilike("nombre", "%" + CONFIG.nombre + "%").gte("creado", CONFIG.desde || "2000-01-01")
       .order("creado", { ascending: true }).range(0, 19);
     if (error) throw error;
-    return ordenar(sinRepetidos((data || []).filter((p) => NOMBRE.test(sinTildes(p.nombre)) && p.datos && Array.isArray(p.datos.jugadores))));
+    const lista = ordenar(sinRepetidos((data || []).filter((p) => NOMBRE.test(sinTildes(p.nombre)) && p.datos && Array.isArray(p.datos.jugadores))));
+    vistos = lista.map((p) => ({ id: p.id, actualizado: p.actualizado }));
+    return lista;
+  }
+
+  // ¿Cambió algo desde la última lectura? Pide solo la hora de actualización
+  // de los torneos que ya se leyeron (unos bytes, no los datos enteros): así
+  // la ventana de pareos puede preguntar cada pocos segundos sin bajarse todo.
+  // Un torneo nuevo no se ve aquí: lo trae la lectura completa de cada tanto.
+  // Ver «Los pareos de la ronda se ponen al día solos».
+  async function cambio() {
+    const sb = window.sb;
+    if (!sb) throw new Error("sin cliente");
+    if (!vistos) return true;
+    if (!vistos.length) return false;
+    const { data, error } = await sb.from("pareo_publicados").select("id, actualizado").in("id", vistos.map((v) => v.id));
+    if (error) throw error;
+    const ahora = new Map((data || []).map((x) => [x.id, x.actualizado]));
+    return vistos.some((v) => ahora.get(v.id) !== v.actualizado);
   }
 
   // El mismo torneo publicado dos veces (pasó el 13/11/2026: «Publicar»
@@ -149,7 +170,7 @@
 
   // `buscar` también la usa js/tacho-chess-resultados.js (la ficha de Pareo):
   // los mismos torneos, sin repetidos y en el mismo orden.
-  window.TorneoPareoDatos = { leer, convertir, buscar };
+  window.TorneoPareoDatos = { leer, convertir, buscar, cambio };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

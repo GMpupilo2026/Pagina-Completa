@@ -456,9 +456,11 @@
   // Cada pedido lleva su número: si se cambia de modalidad mientras uno va en
   // camino, lo que trae ya no se pinta ni se guarda como de la otra.
   let pedidos = 0;
-  function pedir() {
+  // forzar: vuelve a leer aunque la última lectura sea reciente (la ventana de
+  // pareos, cuando sabe que el torneo cambió).
+  function pedir(forzar) {
     if (pidiendo) return pidiendo;
-    if (datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
+    if (forzar !== true && datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
     ultimoPedido = Date.now();
     const n = ++pedidos, pidio = modalidad;
     const p = (async () => {

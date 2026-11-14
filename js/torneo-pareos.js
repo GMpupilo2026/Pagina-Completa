@@ -11,6 +11,13 @@
  * Integral con js/torneo-pareo-datos.js, o de chess-results): no pide nada
  * aparte. Se vuelve a pintar cuando llegan datos nuevos («cac-datos»).
  *
+ * Mientras la ventana está abierta y a la vista, se pone al día sola: cada
+ * 15 s pregunta si el torneo cambió en Pareo Integral (TorneoPareoDatos.cambio,
+ * solo la hora de actualización) y, si cambió, vuelve a leerlo; cada 2 min lo
+ * lee entero igual (por si se publicó otro torneo). Pedido del dueño el
+ * 14/11/2026: «que se actualice en tiempo real». Ver «Los pareos de la ronda
+ * se ponen al día solos» en docs/decisiones/juegos-y-torneos.md.
+ *
  * Todo lo que viene de afuera (los nombres) va por textContent.
  * Ver «Los pareos de la ronda» en docs/decisiones/juegos-y-torneos.md.
  */
@@ -21,7 +28,13 @@
   const sel = document.getElementById("pareos-torneo");
   if (!V || !caja || !sel) return;
   const el = V.el;
+  const ventana = document.getElementById("pareos");
+  const D = window.TorneoPareoDatos;
   let elegido = "";
+  const REVISAR_MS = 15000;
+  const COMPLETA_MS = 120000;
+  let revisado = 0;
+  const horaCorta = (ms) => new Date(ms).toLocaleTimeString("es-CR", { timeZone: V.ZONA, hour: "numeric", minute: "2-digit", second: "2-digit" });
 
   // Los torneos con sus jugadores, en el orden en que llegaron.
   const torneos = () => (((V.datos() || {}).torneos) || []).filter((t) => Array.isArray(t.jugadores) && t.jugadores.length);
@@ -92,6 +105,40 @@
       ul.appendChild(li);
     });
     caja.replaceChildren(estado, ul);
+    pintarRevisado();
+  }
+
+  // «Se pone al día sola: revisado a las 10:15:30 a. m.», debajo de las mesas.
+  // Va fuera de la región que se anuncia, para que el lector de pantalla no
+  // repita todo el pareo cada 15 segundos.
+  let aviso = null;
+  function pintarRevisado() {
+    if (!ventana || !revisado) return;
+    if (!aviso || !aviso.isConnected) {
+      aviso = el("p", "cac-pareo-aldia text-sm text-brand-600 dark:text-brand-300 mt-3");
+      caja.after(aviso);
+    }
+    decir(aviso, "Se pone al día sola mientras la tienes abierta: revisado a las " + horaCorta(revisado) + ".");
+  }
+
+  // Revisar: si cambió algo, leer de nuevo; si no, solo anotar la hora.
+  let revisando = false, ultimaCompleta = Date.now();
+  async function revisar() {
+    if (revisando || !ventana || !ventana.open || document.hidden) return;
+    revisando = true;
+    try {
+      const toca = Date.now() - ultimaCompleta >= COMPLETA_MS;
+      // Sin Pareo (chess-results, por la Edge Function) no hay pregunta
+      // liviana: solo la lectura entera, cada 2 minutos como hasta ahora.
+      const cambio = toca ? true : (D && D.cambio ? await D.cambio() : false);
+      if (cambio) { await V.pedir(true); ultimaCompleta = Date.now(); }
+      revisado = Date.now();
+      pintarRevisado();
+    } catch (e) {
+      // Sin conexión: se queda lo que había y se vuelve a probar en 15 s.
+    } finally {
+      revisando = false;
+    }
   }
 
   sel.addEventListener("change", () => { elegido = sel.value; pintar(); });
@@ -99,9 +146,14 @@
   // Al abrir la ventana, los datos al día (pedir() no vuelve a leer si son recientes).
   document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest('a[href="#pareos"]');
-    if (a) { pintar(); V.pedir().then(pintar, pintar); }
+    if (a) { pintar(); V.pedir().then(pintar, pintar).then(() => setTimeout(revisar, 0)); }
   });
   if (location.hash === "#pareos") V.pedir().then(pintar, pintar);
+  if (ventana) {
+    setInterval(revisar, REVISAR_MS);
+    // Al volver a la pestaña (el celular bloqueado, otra app), en el acto.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) revisar(); });
+  }
   pintar();
 })();
 
