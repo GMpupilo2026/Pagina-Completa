@@ -23,6 +23,16 @@
     fuente: "pareo", fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: ["Primer grado", "Segundo grado", "Tercer grado", "Cuarto grado", "Quinto grado", "Sexto grado", "Sétimo año", "Octavo año", "Noveno año", "Décimo año", "Undécimo año"],
+    // Las zonas de la sala sobre su foto (js/torneo-sala.js): elipse = [cx, cy, rx, ry] en los píxeles de la foto.
+    zonasSala: {
+      foto: [1200, 675],
+      zonas: [
+        { letra: "A", color: "turquesa", trazo: "#19d3b0", fondo: "#0b6e66", elipse: [285, 382, 150, 62], niveles: ["Noveno año", "Décimo año", "Undécimo año", "Duodécimo año"] },
+        { letra: "B", color: "naranja", trazo: "#ff8a1f", fondo: "#a84a00", elipse: [495, 385, 98, 60], niveles: ["Sétimo año", "Octavo año"] },
+        { letra: "C", color: "azul", trazo: "#2f8cff", fondo: "#1d4ed8", elipse: [690, 380, 82, 58], niveles: ["Cuarto grado", "Quinto grado", "Sexto grado"] },
+        { letra: "D", color: "morado", trazo: "#8b3dff", fondo: "#6b21a8", elipse: [848, 365, 80, 45], niveles: ["Primer grado", "Segundo grado", "Tercer grado"] },
+      ],
+    },
     // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.
     hoy: { termino: "Tacho Chess 2 terminó", gracias: "¡Gracias por jugar!", final: "Los mejores de cada nivel, de primer grado a undécimo año, reciben su premio." },
     url: "ajedrez-integral.com/tacho-chess-2.html",

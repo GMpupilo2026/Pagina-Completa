@@ -216,11 +216,29 @@ async function fichaResultados(nav, publicados) {
       await r.p.click('a.cac-ficha[href="#sala"]');
       await r.p.waitForTimeout(500);
       const sala = await r.p.evaluate(() => ({ texto: document.getElementById("sala-mesas").innerText.replace(/\s+/g, " "), numeros: document.querySelectorAll("#sala-mesas .cac-sala-mesas").length,
-        foto: (() => { const i = document.querySelector("#sala img.cac-sala-foto"); return !!(i && i.alt && i.getAttribute("src") === "img/tacho-chess-2/sala.jpg"); })() }));
+        foto: (() => { const i = document.querySelector("#sala img.cac-sala-foto"); return !!(i && i.alt && i.getAttribute("src") === "img/tacho-chess-2/sala.jpg"); })(),
+        // Las zonas que marcó el dueño sobre la foto: cuatro elipses visibles
+        // dentro de la foto, su letra encima y la leyenda escrita debajo.
+        zonas: (() => {
+          const f = document.querySelector("#sala .cac-sala-plano img.cac-sala-foto"), svg = document.querySelector("#sala .cac-sala-plano svg.cac-sala-zonas");
+          if (!f || !svg) return null;
+          const rf = f.getBoundingClientRect(), rs = svg.getBoundingClientRect();
+          const letras = [...document.querySelectorAll("#sala .cac-sala-letra")].filter((x) => x.checkVisibility()).map((x) => {
+            const r = x.getBoundingClientRect(); return [x.textContent, r.left + r.width / 2 > rf.left && r.right - r.width / 2 < rf.right && r.top > rf.top && r.bottom < rf.bottom];
+          });
+          return { encima: Math.abs(rf.width - rs.width) < 2 && Math.abs(rf.height - rs.height) < 2, elipses: svg.querySelectorAll("ellipse").length,
+            letras, leyenda: [...document.querySelectorAll("#sala .cac-sala-leyenda li")].map((li) => li.innerText.replace(/\s+/g, " ").trim()) };
+        })() }));
       ok("«La sala de juego» trae la foto del gimnasio, con su texto alternativo", sala.foto);
+      ok("las cuatro zonas del gimnasio sobre la foto: sus elipses del tamaño de la foto, la letra de cada una dentro de ella y la leyenda con los niveles escritos",
+        sala.zonas && sala.zonas.encima && sala.zonas.elipses === 8 && JSON.stringify(sala.zonas.letras) === JSON.stringify([["A", true], ["B", true], ["C", true], ["D", true]])
+        && sala.zonas.leyenda.length === 4 && sala.zonas.leyenda[0] === "A Zona A (turquesa): Noveno año, Décimo año, Undécimo año"
+        && sala.zonas.leyenda[3] === "D Zona D (morado): Primer grado, Segundo grado, Tercer grado", JSON.stringify(sala.zonas));
       ok("con dos torneos que empiezan en la mesa 1 (sin evento en Pareo), cada uno es una zona con sus mesas desde la 1, en el orden de los niveles, y se explica",
-        sala.numeros === 2 && /Cada torneo juega en su propia zona del gimnasio, con sus mesas numeradas desde la 1/.test(sala.texto)
-        && /Mesa 1 Zona de Tacho Chess 2 · Primaria Primer grado 2 jugadores Mesa 1 Zona de Tacho Chess 2 · Secundaria Sétimo año 2 jugadores/.test(sala.texto), JSON.stringify(sala));
+        sala.numeros === 2 && /Cada torneo juega en su propia zona del gimnasio \(las letras de la foto\), con sus mesas numeradas desde la 1/.test(sala.texto)
+        && /Mesa 1 Zona D \(morado\) · Tacho Chess 2 · Primaria Primer grado 2 jugadores Mesa 1 Zona B \(naranja\) · Tacho Chess 2 · Secundaria Sétimo año 2 jugadores/.test(sala.texto), JSON.stringify(sala));
+      const fondos = await r.p.evaluate(() => [...document.querySelectorAll("#sala-mesas .cac-sala-mesas")].map((x) => getComputedStyle(x).backgroundColor));
+      ok("el número de mesas de cada torneo, con el color de su zona (morado y naranja oscuros, letra blanca)", JSON.stringify(fondos) === JSON.stringify(["rgb(107, 33, 168)", "rgb(168, 74, 0)"]), JSON.stringify(fondos));
       await r.ctx.close();
     }
 
@@ -329,7 +347,7 @@ async function fichaResultados(nav, publicados) {
       await r.p.waitForTimeout(400);
       const mesasSala = await r.p.evaluate(() => [...document.querySelectorAll("#sala-mesas .cac-sala-torneo")].map((li) => li.innerText.replace(/\s+/g, " ").trim()));
       ok("«La sala de juego»: las mesas del torneo salen de Pareo (desde su primera mesa, una por cada dos jugadores) con sus niveles",
-        JSON.stringify(mesasSala) === JSON.stringify(["Mesas 3 a 6 Tacho Chess 2 · Primaria Primer grado · Segundo grado 7 jugadores"]), JSON.stringify(mesasSala));
+        JSON.stringify(mesasSala) === JSON.stringify(["Mesas 3 a 6 Zona D (morado) · Tacho Chess 2 · Primaria Primer grado · Segundo grado 7 jugadores"]), JSON.stringify(mesasSala));
       ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }

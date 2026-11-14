@@ -287,7 +287,7 @@ ${desempates}
       {
         id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
         comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar, visto desde la gradería. Cada torneo juega en su zona, marcada en la foto con su letra y su color; dentro de la zona, cada mesa lleva su número, el mismo de los pareos.</p>
 <img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
 <h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
 <div id="sala-mesas" aria-live="polite">
@@ -358,6 +358,22 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
     fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: NIVELES,
+    // Las zonas del gimnasio: las marcó el dueño sobre la foto el 14/11/2026
+    // (turquesa de noveno a duodécimo, naranja sétimo y octavo, azul de cuarto
+    // a sexto y morado de primero a tercero), de izquierda a derecha vistas
+    // desde la gradería. «Duodécimo año» no es un nivel que se premie (no hay
+    // inscritos), pero si aparece en Pareo juega en la zona turquesa.
+    // El trazo va sobre la foto con un borde blanco; el fondo, detrás de la
+    // letra blanca: 6,11 / 5,76 / 6,70 / 8,72.
+    zonasSala: {
+      foto: [1200, 675],
+      zonas: [
+        { letra: "A", color: "turquesa", trazo: "#19d3b0", fondo: "#0b6e66", elipse: [285, 382, 150, 62], niveles: [...NIVELES.slice(8, 11), "Duodécimo año"] },
+        { letra: "B", color: "naranja", trazo: "#ff8a1f", fondo: "#a84a00", elipse: [495, 385, 98, 60], niveles: NIVELES.slice(6, 8) },
+        { letra: "C", color: "azul", trazo: "#2f8cff", fondo: "#1d4ed8", elipse: [690, 380, 82, 58], niveles: NIVELES.slice(3, 6) },
+        { letra: "D", color: "morado", trazo: "#8b3dff", fondo: "#6b21a8", elipse: [848, 365, 80, 45], niveles: NIVELES.slice(0, 3) },
+      ],
+    },
     guardado: "tacho",
     nombreCorto: "Tacho Chess 2",
     imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",

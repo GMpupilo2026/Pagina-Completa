@@ -450,6 +450,16 @@ function configJs(c) {
     lineas.push("    pareo: { nombre: " + JSON.stringify(t.pareo.nombre) + ", desde: " + JSON.stringify(t.pareo.desde) + " },");
   }
   if (t.ordenGrupos) lineas.push("    ordenGrupos: " + lista1(t.ordenGrupos) + ",");
+  // Las zonas del gimnasio sobre la foto de «La sala de juego» (js/torneo-sala.js).
+  if (t.zonasSala) {
+    lineas.push("    // Las zonas de la sala sobre su foto (js/torneo-sala.js): elipse = [cx, cy, rx, ry] en los píxeles de la foto.");
+    lineas.push("    zonasSala: {");
+    lineas.push("      foto: [" + t.zonasSala.foto.join(", ") + "],");
+    lineas.push("      zonas: [");
+    t.zonasSala.zonas.forEach((z) => lineas.push("        { letra: " + JSON.stringify(z.letra) + ", color: " + JSON.stringify(z.color) + ", trazo: " + JSON.stringify(z.trazo) + ", fondo: " + JSON.stringify(z.fondo) + ", elipse: [" + z.elipse.join(", ") + "], niveles: " + lista1(z.niveles) + " },"));
+    lineas.push("      ],");
+    lineas.push("    },");
+  }
   if (c.hoy) {
     lineas.push("    // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.");
     lineas.push("    hoy: { termino: " + JSON.stringify(c.hoy.termino) + ", gracias: " + JSON.stringify(c.hoy.gracias) + ", final: " + JSON.stringify(c.hoy.final) + " },");

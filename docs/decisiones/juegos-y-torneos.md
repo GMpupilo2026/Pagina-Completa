@@ -15215,8 +15215,25 @@ de cada torneo», que arma `js/torneo-sala.js`.
   torneo. Cuando dos torneos comparten números, `js/torneo-sala.js` muestra cada
   uno como «Zona de …», en el orden de los niveles, con sus mesas y un aviso
   de que primero se busca la zona y después la mesa; con la sala numerada
-  seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
-  dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
+  seguida, va sin zonas y en el orden de las mesas.
+- **Las zonas, dibujadas sobre la foto** (14/11/2026, el día del torneo). Se
+  le armó al dueño una página aparte para marcar cada mesa sobre la foto; en
+  vez de eso mandó la foto con cuatro círculos de colores: turquesa de noveno
+  a duodécimo, naranja sétimo y octavo, azul de cuarto a sexto y morado de
+  primero a tercero. Van en `torneoPagina.zonasSala` de la configuración (el
+  generador las pasa a `window.TorneoPagina`): cada zona con su letra (A a D,
+  de izquierda a derecha vistas desde la gradería), su color, su elipse en los
+  píxeles de la foto y sus niveles. `js/torneo-sala.js` envuelve la foto en
+  `.cac-sala-plano` y le pone encima un SVG con las elipses (borde blanco para
+  que se vean sobre cualquier parte de la foto) y la letra de cada zona; debajo,
+  la leyenda escrita («Zona A (turquesa): Noveno año…»), porque el color nunca
+  va solo. Cada torneo de la lista cae en la zona con más jugadores de sus
+  niveles y lleva «Zona D (morado) ·» y el fondo de su zona en el número de
+  mesas (letra blanca: 6,11 / 5,76 / 6,70 / 8,72). «Duodécimo año» está en la
+  zona turquesa aunque no es un nivel que se premie: si aparece en Pareo, ya
+  sabe dónde jugar. Una página sin `zonasSala` queda como antes. Lo revisa
+  `verificar-tacho-chess.js`: las cuatro elipses del tamaño de la foto, cada
+  letra dentro de ella, la leyenda y el color de cada torneo.
 
 ### Los pareos de la ronda
 
