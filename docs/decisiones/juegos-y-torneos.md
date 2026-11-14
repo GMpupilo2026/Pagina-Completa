@@ -2524,16 +2524,94 @@ simplificado para grupos de clase y no se tocó.
 - El Elo de un rival sin Elo cuenta como 0 en ARO, TPR y compañía: la ayuda de
   la página pide el Elo de todos para usarlos.
 
-### Nada sale del navegador
+### Nada sale del navegador (salvo lo que se activa)
 
 El torneo vive en `localStorage` (`pareo_lista_v1`, `pareo_torneo_v1_<id>`) y
-en los archivos que baja quien organiza (`.json` y TRF). No hay cuenta, ni
-base, ni consentimiento que pedir: los datos de los jugadores no salen de la
-computadora (el verificador lo comprueba: ni una petición a otro origen). **El
-día que se publique un torneo en línea** (emparejamientos y resultados con un
-enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
-de quien organiza), la casilla de consentimiento y su mención en
-`privacidad.html`.
+en los archivos que baja quien organiza (`.json` y TRF). Sin activar nada, los
+datos de los jugadores no salen de la computadora (el verificador lo
+comprueba: ni una petición a otro origen, salvo la publicación). Lo que sí
+sale se activa aparte, con su consentimiento y su mención en
+`privacidad.html`: la publicación en «Torneos en Pareo Integral» y, desde
+noviembre de 2026, guardar los torneos en la cuenta (abajo).
+
+### Pareo Integral: los torneos en la cuenta
+
+El dueño lo pidió en noviembre de 2026: «todo lo que haga dentro de mi usuario
+en las herramientas… si yo me meto en otra computadora, se carga toda esa
+información». No era así: el usuario solo abría el candado de la licencia, y
+en otra computadora (u otro navegador) «Mis torneos» salía vacío. Las vías
+que había (el `.json`, «Pasar el evento a otra computadora», el código de la
+organización) son a mano.
+
+**Es opcional y pide consentimiento.** Los torneos traen nombres y fechas de
+nacimiento de menores, y hasta ahora no salían de la computadora. En «Mis
+torneos», `#pi-nube` ofrece «Guardar mis torneos en mi cuenta» (botón con
+`aria-expanded`), explica qué se guarda y pide la casilla con el enlace a
+`privacidad.html`; sin marcarla no se activa. La aceptación queda en
+`pareo_nube_cuentas` (`consentido_en`), una vez por cuenta: en otra
+computadora ya no se vuelve a preguntar.
+
+**La base** (migración `pareo_nube`):
+- `pareo_nube_torneos (dueno, id)`: el mismo id del navegador y el torneo
+  entero en `datos` (el mismo JSON de `localStorage`). Solo la cuenta dueña lo
+  lee y escribe (RLS con `(select auth.uid())`); **tampoco administración**:
+  son datos de terceros que esa persona organiza, como lo que tenía en su
+  computadora. Escribir pide además la fila de consentimiento y la licencia
+  (`tengo_herramienta('pareo')`); leer lo propio, no: si la licencia vence, sus
+  torneos se le siguen pudiendo bajar.
+- Las funciones (`pareo_nube_estado`, `_activar`, `_apagar(p_borrar)`,
+  `_lista`, `_traer(ids)` de a 20, `_guardar`, `_borrar`) son SECURITY
+  INVOKER: decide la RLS. `_lista` devuelve un solo `jsonb` (sin los torneos):
+  PostgREST no lo corta en 1000.
+- **Cada torneo lleva `version`.** Quien guarda dice sobre cuál trabajó; si otra
+  computadora guardó antes, la base contesta `conflicto` en vez de pisarla.
+- **Quitar un torneo deja la marca `borrado`** (sin datos): las demás
+  computadoras lo quitan también y no lo vuelven a subir. «Archivar torneos»
+  es quitar: también se quitan de la cuenta (quedan en el archivo bajado).
+- No va en la bitácora de auditoría (no reparte permisos, accesos ni dinero) y
+  se borra con la cuenta.
+
+**La página** (`js/pareo/nube.js`):
+- Todo lo que toca un torneo pasa por `escribir()`/`quitar()` de `pagina.js`, y
+  ahí se avisa a la nube (`avisarNube`): un solo enganche, no uno por cada
+  lugar que guarda (son más de veinte). Se anota «por subir» y se sube todo
+  junto 3 segundos después. Lo que llega de la cuenta se escribe por otro
+  lado (`nubeLocal`), para no volver a subirlo.
+- Al abrir la página, al volver a la pestaña (como mucho cada 20 s), al
+  recuperar la conexión y con «Revisar ahora» se compara la lista de la cuenta
+  con la del navegador: lo más nuevo de la cuenta se baja, lo de aquí se sube y
+  lo quitado en otra computadora se quita.
+- **Nunca se pierde lo anotado.** Si un torneo se cambió aquí y en otra
+  computadora a la vez, queda la versión de la cuenta y lo de aquí se guarda
+  como otro torneo, «(copia de esta computadora)», que también sube. Si las
+  dos versiones son iguales (dos pestañas que subieron lo mismo), no hay
+  copia: se comparan con las claves en orden, porque `jsonb` las reordena.
+- **El torneo abierto se pone al día sin `abrir()`**: `abrir()` apaga el
+  enlace en vivo, y un torneo que se está compartiendo no puede cortarse
+  porque otra computadora anotó un resultado.
+- **El torneo vacío** que la página crea sola al arrancar no se sube (cada
+  computadora nueva llenaría la cuenta de vacíos), y se quita cuando llegan
+  los de la cuenta.
+- **Cada navegador queda unido a una cuenta** (`pareo_nube_v1`: cuenta,
+  versión conocida de cada torneo, lo que falta subir o quitar, y los
+  excluidos). Una computadora que ya tenía torneos pregunta antes de subirlos
+  («Guardarlos en mi cuenta» / «Dejarlos solo aquí»): puede ser compartida.
+  Si entra otra cuenta, no se le suben los torneos de la primera: lo dice y
+  ofrece pasar el navegador a la suya.
+- Sin internet, lo cambiado queda anotado y sube al volver. Apagarlo deja de
+  subir y pregunta si se borran las copias de la cuenta; las de cada
+  navegador se quedan. Al apagarlo se guarda la versión que se conocía, para
+  que al volver a activarlo lo cambiado mientras tanto suba sin chocar.
+- Sin `window.sb` con `auth` y `rpc` (el doble de Realtime de las demás
+  pruebas) no hace nada.
+
+Lo prueba `verificar-pareo-nube.js` (con un doble de la base en Node que
+comparten varias «computadoras», cada una un contexto con su `localStorage`):
+consentimiento, subir, bajar en otra computadora, conflicto con copia,
+borrado, la computadora que pregunta, otra cuenta y apagar. Rompiendo el
+aviso de `escribir()` a la nube, salta. Lo que hace cumplir la base (solo la
+dueña ve lo suyo; sin consentimiento o sin licencia no acepta torneos) se
+comprobó impersonando roles en SQL.
 
 ### El manual y la línea de comandos
 
@@ -15225,6 +15303,48 @@ de cada torneo», que arma `js/torneo-sala.js`.
   de que primero se busca la zona y después la mesa; con la sala numerada
   seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
   dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
+
+### La mesa iluminada en la foto
+
+Pedido del dueño el 14/11/2026, la víspera del torneo: «que pueda identificar y
+numerar las mesas para que la gente, cuando ocupe saber en cuál va, dependiendo
+del torneo, […] que se le ilumine o se le marque como más notable en cuál es la
+mesa donde tiene que ir a sentarse». Antes se probó dibujar sobre la foto solo
+las cuatro zonas que él marcó con círculos de colores (PR #1289, cerrado sin
+mergear): no le gustó, porque no decía en qué mesa sentarse.
+
+- **Dónde está cada mesa lo marcó el dueño, mesa por mesa**, en una página
+  aparte sobre la misma foto (un artefacto de claude.ai con su propia base: se
+  elige el torneo y se toca cada tablero en el orden de su número). No se
+  adivina: depende de cómo numeró el gimnasio. Lo marcado se copió a
+  `torneoPagina.mesasSala` de la configuración, en los píxeles de
+  `img/tacho-chess-2/sala.jpg` (1200 × 675; se marcó sobre la misma foto a
+  1600 × 900, guardando cada punto como fracción de la foto, así que vale para
+  las dos). Son 49 mesas: 10, 12, 12 y 15, más que una por cada dos jugadores,
+  porque son todos los tableros armados en el gimnasio. Cada torneo con su nombre, su
+  color (el de los círculos del dueño: morada de primero a tercero, azul de
+  cuarto a sexto, naranja sétimo y octavo, turquesa de noveno a undécimo), el
+  fondo de la letra blanca (6,11 a 8,72) y sus niveles.
+- **`js/torneo-sala-foto.js`** (una sola copia, para cualquier torneo con
+  `mesasSala`): un torneo de Pareo cae en el de la configuración con más
+  jugadores de sus niveles, así no depende de cómo se escriba su nombre en
+  Pareo. Hace tres cosas:
+  - En la tarjeta de «Busca a tu jugador» (`js/centroamericano-vivo.js` le
+    pide `enTarjeta` en vez del plano del Centroamericano): «📍 Tu mesa en la
+    sala: Mesa 5 de la zona morada (1er Ciclo)» y la foto **acercada** a su
+    mesa (2,6 veces, sin dejar bordes vacíos) con un anillo que late en el color
+    de su torneo. Con el movimiento reducido, el anillo queda quieto y más
+    grueso.
+  - En «Pareos de la ronda», cada partida trae «Ver dónde queda la mesa N»,
+    que abre la misma foto acercada (y dice si está abierta).
+  - En «La sala de juego», la foto entera con todas las mesas numeradas y,
+    escrito debajo, qué color es cada torneo (el color nunca va solo). En el
+    celular la foto se agranda y se desliza de lado dentro de su marco, centrada
+    en las mesas al abrir la ventana: 49 números en 360 píxeles no se leen.
+- Lo revisa `verificar-tacho-chess.js`: las mesas de cada torneo de la 1 a la
+  última sin huecos, dentro de la foto y con el color medido; el anillo de la
+  tarjeta cae (a 1 % de la foto) donde la configuración dice que está esa mesa;
+  el botón de los pareos; y todas las mesas sobre la foto de la sala.
 
 ### Los pareos de la ronda
 

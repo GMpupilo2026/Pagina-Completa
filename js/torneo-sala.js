@@ -11,6 +11,10 @@
  * niveles de cada torneo (las categorías de sus jugadores, en el orden de
  * `ordenGrupos`), quien llega sabe hacia dónde caminar.
  *
+ * Con las mesas marcadas sobre la foto (`TorneoPagina.mesasSala`,
+ * js/torneo-sala-foto.js), la foto lleva cada mesa numerada y cada torneo de
+ * la lista, el color de su zona.
+ *
  * Todo lo que viene de afuera (los nombres de los torneos) va por textContent.
  * Ver «La sala de juego» en docs/decisiones/juegos-y-torneos.md.
  */
@@ -20,6 +24,7 @@
   const caja = document.getElementById("sala-mesas");
   if (!V || !caja) return;
   const el = V.el;
+  const FOTO = window.TorneoSalaFoto || null;
 
   function pintar() {
     const lista = (((V.datos() || {}).torneos) || []).filter((t) => t.mesas && Array.isArray(t.jugadores) && t.jugadores.length);
@@ -39,9 +44,14 @@
     orden.forEach((t) => {
       const niveles = [...new Set(t.jugadores.map((j) => j.grupo).filter(Boolean))].sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b));
       const li = el("li", "cac-sala-torneo");
-      li.appendChild(el("span", "cac-sala-mesas", t.mesas.desde === t.mesas.hasta ? "Mesa " + t.mesas.desde : "Mesas " + t.mesas.desde + " a " + t.mesas.hasta));
+      // Con las mesas marcadas en la foto (js/torneo-sala-foto.js), la zona
+      // dice su color y el número lleva el fondo de su torneo.
+      const zona = FOTO && FOTO.torneoDe(t);
+      const mesas = el("span", "cac-sala-mesas", t.mesas.desde === t.mesas.hasta ? "Mesa " + t.mesas.desde : "Mesas " + t.mesas.desde + " a " + t.mesas.hasta);
+      if (zona) mesas.style.background = zona.fondo;
+      li.appendChild(mesas);
       const quien = el("div", "cac-sala-quien");
-      quien.appendChild(el("p", "font-bold", (chocan ? "Zona de " : "") + (t.texto || "")));
+      quien.appendChild(el("p", "font-bold", (zona ? "Zona " + zona.color + " · " : chocan ? "Zona de " : "") + (t.texto || "")));
       if (niveles.length) quien.appendChild(el("p", "text-sm", niveles.map((g) => V.categoria(g)).join(" · ")));
       quien.appendChild(el("p", "text-sm", t.jugadores.length + (t.jugadores.length === 1 ? " jugador" : " jugadores")));
       li.appendChild(quien);
@@ -57,6 +67,8 @@
     if (a) { pintar(); V.pedir().then(pintar, pintar); }
   });
   if (location.hash === "#sala") V.pedir().then(pintar, pintar);
+  // La foto con todas las mesas numeradas (si el torneo las tiene marcadas).
+  if (FOTO) FOTO.enSala();
   pintar();
 })();
 

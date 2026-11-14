@@ -46,7 +46,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { chromium } = require("playwright");
 const B = require("../js/bases-torneo.js");
-const { bases } = require("./torneos-universitarios/tacho-chess-2.js");
+const { bases, torneoPagina: cfg } = require("./torneos-universitarios/tacho-chess-2.js");
 
 const RAIZ = path.join(__dirname, "..");
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -71,6 +71,16 @@ const filas = [...html.matchAll(/<tr data-inicio="([^"]+)" data-minutos="(\d+)"(
 const esperado = B.horario(bases).map((x) => ["Ronda " + x.ronda, "2026-11-14T" + String(Math.floor(x.min / 60)).padStart(2, "0") + ":" + String(x.min % 60).padStart(2, "0"), String(x.ronda)]);
 ok("el calendario trae la llegada a las 8:30, las 7 rondas con el horario de las bases y la premiación", filas.length === 9 && JSON.stringify(filas[0]) === JSON.stringify(["Llegada y confirmación", "2026-11-14T08:30", ""]) && esperado.length === 7 && JSON.stringify(filas.slice(1, 8)) === JSON.stringify(esperado) && filas[8][0] === "Premiación", JSON.stringify(filas));
 ok("la ronda 1 es a las 9:00 del sábado 14, y es la única marcada como la primera", filas[1][1] === "2026-11-14T09:00" && /<tr data-inicio="2026-11-14T09:00"[^>]*data-primera-ronda/.test(html) && (html.match(/data-primera-ronda/g) || []).length === 1);
+if (cfg.mesasSala) {
+  // Las mesas marcadas sobre la foto: en cada torneo, de la 1 a la última sin
+  // huecos ni repetidas, dentro de la foto, y el fondo de cada torneo con la
+  // letra blanca encima a 4,5:1 por lo menos.
+  const MS = cfg.mesasSala;
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const malas = MS.torneos.filter((t) => { const ns = t.mesas.map((m) => m[0]).sort((a, b) => a - b);
+    return !ns.every((n, i) => n === i + 1) || !t.mesas.every((m) => m[1] >= 0 && m[1] <= MS.foto[0] && m[2] >= 0 && m[2] <= MS.foto[1]) || 1.05 / (lum(t.fondo) + 0.05) < 4.5; });
+  ok("las mesas de cada torneo en la foto van de la 1 a la última, sin huecos ni repetidas, dentro de la foto y con su color medido", !malas.length, malas.map((t) => t.nombre).join(", "));
+}
 ok("el árbitro principal que dio el dueño", /Árbitro principal: FA Jean Carlo Quesada Arauz/.test(visible));
 ok("las horas de las rondas 2 a 7 y de la premiación dicen que son aproximadas", (html.match(/\(aprox\.\)<\/td><\/tr>/g) || []).length === 7);
 ok("la ronda 7 queda a las 12:00 y la premiación a las 12:30", filas[7] && filas[7][0] === "Ronda 7" && filas[7][1] === "2026-11-14T12:00" && filas[8][1] === "2026-11-14T12:30", JSON.stringify(filas.slice(7)));
@@ -224,7 +234,7 @@ async function fichaResultados(nav, publicados, reloj) {
       ok("«La sala de juego» trae la foto del gimnasio, con su texto alternativo", sala.foto);
       ok("con dos torneos que empiezan en la mesa 1 (sin evento en Pareo), cada uno es una zona con sus mesas desde la 1, en el orden de los niveles, y se explica",
         sala.numeros === 2 && /Cada torneo juega en su propia zona del gimnasio, con sus mesas numeradas desde la 1/.test(sala.texto)
-        && /Mesa 1 Zona de Tacho Chess 2 · Primaria Primer grado 2 jugadores Mesa 1 Zona de Tacho Chess 2 · Secundaria Sétimo año 2 jugadores/.test(sala.texto), JSON.stringify(sala));
+        && new RegExp("Mesa 1 Zona " + (cfg.mesasSala ? cfg.mesasSala.torneos.find((t) => t.niveles.includes("Primer grado")).color + " ·" : "de") + " Tacho Chess 2 · Primaria Primer grado 2 jugadores Mesa 1 Zona " + (cfg.mesasSala ? cfg.mesasSala.torneos.find((t) => t.niveles.includes("Sétimo año")).color + " ·" : "de") + " Tacho Chess 2 · Secundaria Sétimo año 2 jugadores").test(sala.texto), JSON.stringify(sala));
       await r.ctx.close();
     }
 
@@ -306,6 +316,29 @@ async function fichaResultados(nav, publicados, reloj) {
       ok("«Busca a tu jugador» lee Pareo Integral (no chess-results) y solo el torneo de la organización con el sello", /Leído en Pareo Integral/.test(ana.estado) && !/chess-results/.test(ana.estado) && ana.tarjetas.length === 1, JSON.stringify(ana));
       ok("su tarjeta: el nivel, el puesto EN SU NIVEL, los puntos y la mesa de la sala (la primera del torneo + su lugar), el color y el rival",
         /Primer grado · Puesto 1 de 3 en Primer grado · 1 punto/.test(ana.tarjetas[0] || "") && /Ronda 2 · Mesa 3 · Juega con negras contra Fer Seis/.test(ana.tarjetas[0]), ana.tarjetas[0]);
+      // La mesa iluminada sobre la foto (js/torneo-sala-foto.js): Ana juega en
+      // la mesa 3 de un torneo de primer y segundo grado. El anillo tiene que
+      // caer donde la configuración dice que está esa mesa en la foto.
+      const MS = cfg.mesasSala;
+      if (MS) {
+        const t1 = MS.torneos.find((t) => t.niveles.includes("Primer grado"));
+        const m3 = t1 && t1.mesas.find((m) => m[0] === 3);
+        const foto = await r.p.evaluate(() => {
+          const caja = document.querySelector("#buscador-resultados .cac-salafoto-cerca"), img = caja && caja.querySelector("img"), an = caja && caja.querySelector(".cac-salafoto-anillo");
+          if (!caja || !img || !an) return null;
+          const c = caja.getBoundingClientRect(), i = img.getBoundingClientRect(), a = an.getBoundingClientRect();
+          return { donde: (document.querySelector("#buscador-resultados .cac-salafoto-donde") || {}).textContent, numero: an.textContent, visible: an.checkVisibility(),
+            src: img.getAttribute("src"), cubre: i.left <= c.left + 1 && i.right >= c.right - 1 && i.top <= c.top + 1 && i.bottom >= c.bottom - 1,
+            // El centro del anillo, en píxeles de la foto, y si cae dentro de la caja.
+            x: (a.left + a.width / 2 - i.left) / i.width, y: (a.top + a.height / 2 - i.top) / i.height,
+            adentro: a.left + a.width / 2 > c.left && a.left + a.width / 2 < c.right && a.top + a.height / 2 > c.top && a.top + a.height / 2 < c.bottom,
+            fondo: getComputedStyle(an).backgroundColor };
+        });
+        ok("la tarjeta trae «Tu mesa en la sala» con la zona y el número, y la foto acercada a SU mesa con el anillo encima, donde la marcó el dueño",
+          !!(m3 && foto && foto.visible && foto.cubre && foto.adentro && foto.numero === "3" && foto.src === "img/tacho-chess-2/sala.jpg"
+            && foto.donde === "📍 Tu mesa en la sala: Mesa 3 de la zona " + t1.color + " (" + t1.nombre + ")"
+            && Math.abs(foto.x - m3[1] / MS.foto[0]) < 0.01 && Math.abs(foto.y - m3[2] / MS.foto[1]) < 0.01), JSON.stringify({ m3, foto }));
+      }
       const eva = await buscar("Eva");
       ok("los puntos son los de las rondas completas (la ronda en juego no suma todavía) y el bye se dice", /Puesto 3 de 4 en Segundo grado · ½ puntos/.test(eva.tarjetas[0] || "") && /Ronda 2: tiene bye/.test(eva.tarjetas[0]), eva.tarjetas[0]);
       await r.p.click('a.cac-ficha[href="#medallero"]');
@@ -324,14 +357,25 @@ async function fichaResultados(nav, publicados, reloj) {
       await r.p.click('a.cac-ficha[href="#pareos"]');
       await r.p.waitForTimeout(400);
       const pa = await r.p.evaluate(() => ({ abierta: document.getElementById("pareos").open, estado: (document.querySelector("#pareos-contenido > p") || {}).textContent || "",
-        mesas: [...document.querySelectorAll("#pareos-contenido .cac-pareo-mesa")].map((li) => li.innerText.replace(/\s+/g, " ").trim()) }));
+        mesas: [...document.querySelectorAll("#pareos-contenido .cac-pareo-mesa")].map((li) => { const b = li.querySelector(".cac-salafoto-pareo"); return li.innerText.replace(b ? b.innerText : "", "").replace(/\s+/g, " ").trim(); }),
+        botones: [...document.querySelectorAll("#pareos-contenido .cac-salafoto-ver")].map((b) => b.textContent) }));
       ok("«Pareos de la ronda» abre solo el pareo: cuántas van terminadas, sin el punto doble", pa.abierta && /^Ronda 2 de 7: 1 de 3 partidas terminadas\. Leído en Pareo Integral: .+ [ap]\. m\.$/.test(pa.estado) && !/\.\.$/.test(pa.estado), pa.estado);
       ok("cada mesa: la de la sala, blancas y negras escritas con su nivel, y el resultado o «Se juega»; el bye dice que descansa",
         pa.mesas.length === 4 && /^Mesa 3 BLANCAS Fer Seis Segundo grado NEGRAS Ana Uno Primer grado Se juega$/i.test(pa.mesas[0]) && /1 - 0$/.test(pa.mesas[1]) && /^Mesa 6 BLANCAS Eva Cinco Segundo grado Descansa: bye de un punto\. Bye$/i.test(pa.mesas[3]), JSON.stringify(pa.mesas));
+      if (cfg.mesasSala) {
+        const t1 = cfg.mesasSala.torneos.find((t) => t.niveles.includes("Primer grado"));
+        const tiene = (n) => t1.mesas.some((m) => m[0] === n);
+        ok("cada partida (no el bye) trae «Ver dónde queda la mesa N» si esa mesa está marcada en la foto",
+          JSON.stringify(pa.botones) === JSON.stringify([3, 4, 5].filter(tiene).map((n) => "Ver dónde queda la mesa " + n)), JSON.stringify(pa.botones));
+        await r.p.click("#pareos-contenido .cac-salafoto-ver");
+        const abierta = await r.p.evaluate(() => { const b = document.querySelector("#pareos-contenido .cac-salafoto-ver"), f = document.querySelector("#pareos-contenido .cac-salafoto-cerca");
+          return { exp: b.getAttribute("aria-expanded"), texto: b.textContent, foto: !!(f && f.checkVisibility() && f.querySelector(".cac-salafoto-anillo").checkVisibility()) }; });
+        ok("tocarlo abre la foto acercada con el anillo, y el botón dice que está abierto", abierta.exp === "true" && abierta.foto && /^Ocultar la foto de la mesa \d+$/.test(abierta.texto), JSON.stringify(abierta));
+      }
       // Se pone al día sola con la ventana abierta: sin cambios en Pareo, solo
       // la pregunta liviana (la hora de actualización, sin los datos); con un
       // resultado nuevo, la mesa cambia sin tocar nada.
-      const mesa1 = () => r.p.evaluate(() => (document.querySelector("#pareos-contenido .cac-pareo-mesa") || {}).innerText.replace(/\s+/g, " ").trim());
+      const mesa1 = () => r.p.evaluate(() => { const li = document.querySelector("#pareos-contenido .cac-pareo-mesa"); const b = li.querySelector(".cac-salafoto-pareo"); return li.innerText.replace(b ? b.innerText : "", "").replace(/\s+/g, " ").trim(); });
       await r.p.evaluate(() => { window.__pedidos.length = 0; });
       await r.p.clock.fastForward(16000);
       await r.p.waitForTimeout(300);
@@ -346,9 +390,21 @@ async function fichaResultados(nav, publicados, reloj) {
       await r.p.keyboard.press("Escape");
       await r.p.click('a.cac-ficha[href="#sala"]');
       await r.p.waitForTimeout(400);
+      if (cfg.mesasSala) {
+        const total = cfg.mesasSala.torneos.reduce((a, t) => a + t.mesas.length, 0);
+        const sala = await r.p.evaluate(() => {
+          const f = document.querySelector("#sala .cac-salafoto-lienzo img.cac-sala-foto"); if (!f) return null;
+          const rf = f.getBoundingClientRect();
+          const puntos = [...document.querySelectorAll("#sala .cac-salafoto-punto")];
+          return { puntos: puntos.length, todos: puntos.every((p) => { const r = p.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2; return x > rf.left && x < rf.right && y > rf.top && y < rf.bottom; }),
+            leyenda: [...document.querySelectorAll("#sala .cac-salafoto-leyenda li")].map((li) => li.innerText.trim()) };
+        });
+        ok("«La sala de juego»: la foto con TODAS las mesas numeradas encima y, escrito, qué color es cada torneo",
+          sala && sala.puntos === total && sala.todos && sala.leyenda.length === cfg.mesasSala.torneos.length && sala.leyenda.every((l) => /^Zona \S+: .+, mesas 1 a \d+$/.test(l)), JSON.stringify(sala));
+      }
       const mesasSala = await r.p.evaluate(() => [...document.querySelectorAll("#sala-mesas .cac-sala-torneo")].map((li) => li.innerText.replace(/\s+/g, " ").trim()));
       ok("«La sala de juego»: las mesas del torneo salen de Pareo (desde su primera mesa, una por cada dos jugadores) con sus niveles",
-        JSON.stringify(mesasSala) === JSON.stringify(["Mesas 3 a 6 Tacho Chess 2 · Primaria Primer grado · Segundo grado 7 jugadores"]), JSON.stringify(mesasSala));
+        JSON.stringify(mesasSala) === JSON.stringify(["Mesas 3 a 6 " + (cfg.mesasSala ? "Zona " + cfg.mesasSala.torneos.find((t) => t.niveles.includes("Primer grado")).color + " · " : "") + "Tacho Chess 2 · Primaria Primer grado · Segundo grado 7 jugadores"]), JSON.stringify(mesasSala));
       ok("sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
       await r.ctx.close();
     }

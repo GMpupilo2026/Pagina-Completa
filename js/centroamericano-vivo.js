@@ -891,8 +891,11 @@
     li.appendChild(el("p", "cac-jugador-ronda", linea));
     // Dónde queda su mesa en la sala (js/centroamericano-plano.js), solo en
     // el clásico: el plano es el de sus torneos.
-    if (x.partida && x.partida.rival && modalidad === "clasico" && window.CentroamericanoPlano) {
-      const enSala = window.CentroamericanoPlano.enTarjeta(x.torneo.texto, x.partida.mesa);
+    // Con la foto de la sala y sus mesas marcadas (js/torneo-sala-foto.js,
+    // Tacho Chess 2), la mesa iluminada sobre la foto.
+    const plano = window.TorneoSalaFoto || window.CentroamericanoPlano;
+    if (x.partida && x.partida.rival && modalidad === "clasico" && plano) {
+      const enSala = plano.enTarjeta(x.torneo.texto, x.partida.mesa, x.torneo);
       if (enSala) li.appendChild(enSala);
     }
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";

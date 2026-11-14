@@ -116,6 +116,8 @@
                 <div id="pi-archivar-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4" hidden></div>
                 <p id="pi-sin-red" class="text-xs text-brand-600 dark:text-brand-300 mt-3" role="status" hidden></p>
                 <p class="text-xs text-brand-600 dark:text-brand-300 mt-3" data-t="privado">Lo que escribes queda guardado solo en este navegador. Para pasarlo a otra computadora o tener una copia, baja el archivo del torneo en «Archivos».</p>
+                <!-- Guardar los torneos en la cuenta (js/pareo/nube.js): lo pinta la nube, solo con sesión. -->
+                <div id="pi-nube" class="mt-3 border-t border-brand-200 dark:border-brand-700 pt-3" hidden></div>
             </section>
 
             <div id="pi-fichas" role="tablist" aria-label="Partes del torneo" data-t-aria="partes" class="pi-pestanas flex flex-wrap gap-2 mb-6 no-imprimir">
@@ -436,6 +438,7 @@
     <script src="js/pareo/qr.js"></script>
     <script src="js/pareo/camaras-adjunto.js"></script>
     <script src="js/pareo/ver.js"></script>
+    <script src="js/pareo/nube.js"></script>
     <script src="js/pareo/pagina.js"></script>
 </body>
 </html>

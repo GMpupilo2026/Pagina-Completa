@@ -137,7 +137,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   // Los resultados, como en el Centroamericano (el buscador, la clasificación
   // y el podio por nivel, el proyector), con los datos de Pareo Integral:
   // js/torneo-pareo-datos.js los lee y los entrega a js/centroamericano-vivo.js.
-  scriptsAntes: ["js/torneo-pareo-datos.js"],
+  scriptsAntes: ["js/torneo-pareo-datos.js", "js/torneo-sala-foto.js"],
   buscador: {
     texto: "Escribe su nombre o su apellido: te decimos su nivel, su puesto en el nivel, sus puntos, su mesa y su rival en la ronda que se juega, y contra quién jugó cada ronda.",
     ejemplo: "Solano",
@@ -287,7 +287,7 @@ ${desempates}
       {
         id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
         comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar, visto desde la gradería. Cada mesa lleva su número en el color de su torneo: es el mismo de los pareos, y en «Busca a tu jugador» tu mesa sale iluminada.</p>
 <img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
 <h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
 <div id="sala-mesas" aria-live="polite">
@@ -358,6 +358,17 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
     fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: NIVELES,
+    // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): las marcó
+    // el dueño una por una el 14/11/2026 en una página aparte sobre la misma
+    // foto; [número, x, y] en los píxeles de img/tacho-chess-2/sala.jpg. Los
+    // colores son los de sus círculos; el fondo, detrás de la letra blanca
+    // (8,72 / 6,70 / 5,76 / 6,11). Ver «La mesa iluminada en la foto».
+    mesasSala: { foto: [1200, 675], torneos: [
+      { nombre: "1er Ciclo", color: "morada", fondo: "#6b21a8", niveles: NIVELES.slice(0, 3), mesas: [[1, 775, 329], [2, 786, 342], [3, 801, 345], [4, 808, 354], [5, 830, 362], [6, 848, 378], [7, 858, 328], [8, 870, 337], [9, 886, 345], [10, 902, 357]] },
+      { nombre: "2do Ciclo", color: "azul", fondo: "#1d4ed8", niveles: NIVELES.slice(3, 6), mesas: [[1, 631, 329], [2, 635, 339], [3, 626, 349], [4, 643, 354], [5, 636, 366], [6, 652, 377], [7, 641, 384], [8, 656, 399], [9, 703, 329], [10, 715, 338], [11, 722, 346], [12, 717, 359]] },
+      { nombre: "Tercer Ciclo", color: "naranja", fondo: "#a84a00", niveles: NIVELES.slice(6, 8), mesas: [[1, 490, 324], [2, 485, 340], [3, 468, 346], [4, 475, 359], [5, 449, 364], [6, 438, 376], [7, 431, 389], [8, 558, 333], [9, 550, 344], [10, 541, 353], [11, 539, 366], [12, 533, 378]] },
+      { nombre: "Diversificada", color: "turquesa", fondo: "#0b6e66", niveles: NIVELES.slice(8, 11), mesas: [[1, 337, 335], [2, 324, 340], [3, 312, 346], [4, 297, 352], [5, 257, 364], [6, 243, 372], [7, 220, 382], [8, 195, 394], [9, 408, 333], [10, 396, 342], [11, 381, 353], [12, 359, 366], [13, 341, 375], [14, 327, 385], [15, 305, 400]] },
+    ] },
     guardado: "tacho",
     nombreCorto: "Tacho Chess 2",
     imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",
