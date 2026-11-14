@@ -1,9 +1,10 @@
 /* ===== Pareo Integral — la página (pareo.html) =====
  *
  * Todo vive en el navegador de quien organiza: la lista de sus torneos y cada
- * torneo en localStorage, y la copia que baja (.json o TRF). Nada se manda a
- * ningún servidor, así que no hay cuenta ni consentimiento que pedir; el día
- * que se publique un torneo en línea, eso cambia (ver «Pareo Integral» en
+ * torneo en localStorage, y la copia que baja (.json o TRF). Lo que sale a un
+ * servidor se activa aparte, con su consentimiento: la publicación en línea
+ * (js/pareo/publicar.js) y guardar los torneos en la cuenta (js/pareo/nube.js,
+ * ver «Pareo Integral: los torneos en la cuenta» en
  * docs/decisiones/juegos-y-torneos.md).
  *
  * El torneo y el TRF: js/pareo/torneo.js. Los desempates: js/pareo/desempates.js.
@@ -46,8 +47,21 @@
 
   // ---------- Lo guardado en el navegador (puede no estar: modo privado) ----------
   function leer(clave) { try { return localStorage.getItem(clave); } catch (e) { return null; } }
-  function escribir(clave, v) { try { localStorage.setItem(clave, v); return true; } catch (e) { return false; } }
-  function quitar(clave) { try { localStorage.removeItem(clave); } catch (e) { /* nada */ } }
+  function escribir(clave, v) {
+    try { localStorage.setItem(clave, v); } catch (e) { return false; }
+    avisarNube(clave, true);
+    return true;
+  }
+  function quitar(clave) { try { localStorage.removeItem(clave); } catch (e) { /* nada */ } avisarNube(clave, false); }
+  // Cada torneo que se escribe o se quita, a la cuenta si se guarda ahí
+  // (js/pareo/nube.js; ver «Pareo Integral: los torneos en la cuenta»). Todo
+  // lo que toca un torneo pasa por escribir() o quitar(): por eso el aviso va
+  // acá y no en cada lugar que guarda.
+  function avisarNube(clave, puesto) {
+    if (!window.PareoNube || !clave.startsWith(PREFIJO)) return;
+    const id = clave.slice(PREFIJO.length);
+    if (puesto) window.PareoNube.cambio(id); else window.PareoNube.borrado(id);
+  }
   function leerJSON(clave, defecto) { try { const v = JSON.parse(leer(clave)); return v == null ? defecto : v; } catch (e) { return defecto; } }
 
   const $ = (id) => document.getElementById(id);
@@ -446,6 +460,71 @@
     pintarFichas();
     pintarPanel();
     pintarEstado();
+    if (window.PareoNube) window.PareoNube.pintar();
+  }
+
+  // ---------- Los torneos en la cuenta (js/pareo/nube.js) ----------
+  // Lo que la nube escribe NO pasa por escribir()/quitar(): lo que llega de la
+  // cuenta no se vuelve a subir.
+  function itemDeLista(id, datos, actualizado) {
+    const ev = datos.evento ? { id: datos.evento.id, nombre: datos.evento.nombre || "" } : null;
+    const item = estado.lista.find((x) => x.id === id);
+    if (item) Object.assign(item, { nombre: datos.nombre || "", actualizado, evento: ev });
+    else estado.lista.push({ id, nombre: datos.nombre || "", actualizado, evento: ev });
+  }
+  function escribirSinNube(clave, v) { try { localStorage.setItem(clave, v); return true; } catch (e) { return false; } }
+  const nubeLocal = {
+    ids: () => estado.lista.map((x) => x.id),
+    texto: (id) => leer(PREFIJO + id),
+    poner(id, datos, info) {
+      if (!escribirSinNube(PREFIJO + id, JSON.stringify(datos))) return;
+      itemDeLista(id, datos, Number(info && info.actualizado) || Date.now());
+      escribirSinNube(CLAVE_LISTA, JSON.stringify(estado.lista));
+    },
+    sacar(id) {
+      try { localStorage.removeItem(PREFIJO + id); } catch (e) { /* nada */ }
+      estado.lista = estado.lista.filter((x) => x.id !== id);
+      escribirSinNube(CLAVE_LISTA, JSON.stringify(estado.lista));
+    },
+    // Lo de esta computadora cuando otra guardó el mismo torneo antes: queda
+    // como un torneo aparte, con otro nombre (y sí se sube).
+    copia(datos) {
+      const id = nuevoId();
+      datos.nombre = (datos.nombre || tx("sinNombre")) + " " + tx("nubeCopiaSufijo");
+      if (!escribir(PREFIJO + id, JSON.stringify(datos))) return null;
+      itemDeLista(id, datos, Date.now());
+      escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+      return id;
+    },
+  };
+  const torneoVacio = (y) => !y || (!y.nombre && !(y.jugadores || []).length && !(y.rondas || []).length);
+  function alTraerDeLaNube(c) {
+    let cambiarAbierto = c.quitados.includes(estado.id);
+    // El torneo vacío que esta computadora creó al abrir sobra cuando llegan
+    // los de la cuenta.
+    if (c.traidos.length && !c.traidos.includes(estado.id) && torneoVacio(estado.t)) {
+      nubeLocal.sacar(estado.id);
+      cambiarAbierto = true;
+    }
+    if (cambiarAbierto) {
+      const otro = listaOrdenada()[0];
+      if (!(otro && abrir(otro.id))) crear();
+    } else if (c.traidos.includes(estado.id)) {
+      // El abierto, con lo que trajo la cuenta, sin cortar lo que está
+      // compartido en vivo (abrir() lo apagaría).
+      const y = leerJSON(PREFIJO + estado.id, null);
+      if (y) {
+        estado.t = T.nuevo(y);
+        estado.ultimoGuardado = JSON.stringify(estado.t);
+        if (estado.ronda != null && estado.ronda >= estado.t.rondas.length) estado.ronda = null;
+        if (estado.enVivo) difundirEnVivo();
+        Avisos.avisar(tx("nubeAbiertoNuevo", { t: estado.t.nombre || tx("sinNombre") }));
+      }
+    }
+    pintarTodo();
+    const traidos = c.traidos.filter((id) => id !== estado.id || cambiarAbierto).length;
+    if (traidos) Avisos.avisar(tx("nubeTraidos", { n: traidos }));
+    if (c.copias.length) Avisos.avisar(tx("nubeCopias", { n: c.copias.length }), { duracion: 20000 });
   }
 
   // La barra de estado de abajo, como la de un programa de computadora: el
@@ -7518,6 +7597,7 @@
     enganchar();
     pintarTodo();
     restaurarBorrador();
+    if (window.PareoNube) window.PareoNube.iniciar({ tx, hora: horaCR, clases: C, local: nubeLocal, alTraer: alTraerDeLaNube });
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
     if (location.hash === "#desde=inscripcion-jde") recogerDeInscripcion();
