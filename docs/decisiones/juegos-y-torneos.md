@@ -2795,6 +2795,42 @@ institución y resolver a mano un Elo Nacional que quedó ambiguo.
   jugador para poner el Elo a mano; la lista se actualiza sola al guardar
   esos cambios o al volver a buscar.
 
+### Un nombre incompleto también encuentra su Elo Nacional
+
+El 14/11/2026 el dueño avisó: «hay jugadores que sí tienen Elo nacional y a
+la hora de buscarlo en Pareo Integral no los encuentro». Probado contra la
+página real y la función desplegada: «Jose Daniel Rodriguez Jimenez» salía
+encontrado, pero **«Jose Daniel Rodriguez» (sin el segundo apellido) y «Jose
+Rodriguez Jimenez» (sin el segundo nombre) salían «no encontrado»**, aunque
+en la lista nacional hubiera una sola persona con esas palabras. Así se
+anota a un alumno casi siempre.
+
+- **El buscador de ajedrezcostarica.com no tenía la culpa**: trae a quien
+  tenga TODAS las palabras escritas, en cualquier orden y sin mirar tildes
+  («Jose Daniel Rodriguez» → 1 jugador, el que era). Lo que lo descartaba era
+  nuestra comparación, que exigía el bolsillo de palabras IGUAL.
+- **La regla nueva vive en `supabase/functions/pareo-elo-nacional/emparejar.ts`**
+  (aparte de `index.ts`, para probarla sin red): un nombre igual sigue siendo
+  «encontrado» y se pone solo; si no hay igual, los nombres que **contienen
+  todas las palabras escritas** (al menos dos, enteras: «Rod» no es
+  «Rodriguez») vuelven como **«parecido»** (uno) o **«ambiguo»** (varios),
+  con hasta cinco candidatos con su club y su Elo. **Nunca se asignan
+  solos**: el alumno puede no estar en la lista y llamarse parecido a otra
+  persona. En la lista de pendientes cada candidato tiene «Usar este Elo»,
+  que le pone el Elo y, si no tenía, el ID FIDE; el nombre queda como se
+  escribió. Con más de cinco, la página pide escribir el nombre completo.
+- **Se busca primero con el nombre completo** y solo si no trae a nadie con
+  los apellidos y el primer apellido (`busquedasPorNombre`). Antes se
+  empezaba por los apellidos, y con «Rodriguez, Jose» la búsqueda
+  «Rodriguez» trae 372 jugadores de los que la página muestra solo los 50 de
+  más Elo: un alumno nunca salía.
+- El lector compartido (`_compartido/ajedrezcostarica.ts`) ahora también lee
+  el `club` de cada fila, para mostrar a quién se refiere un candidato.
+  `elo-fide` no lo mira.
+- Todos los jugadores de la lista nacional tienen código FIDE (revisado en
+  noviembre de 2026 con varias búsquedas), así que descartar las filas sin
+  código no deja a nadie afuera.
+
 **Al tocar la institución, la categoría, los nombres repetidos, la subida de
 listas, el filtro por institución o el Elo Nacional, correr
 `node herramientas/verificar-pareo-institucion.js`** (con el sitio en

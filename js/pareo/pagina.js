@@ -865,13 +865,45 @@
     });
     ul.replaceChildren();
     ul.hidden = !estado.eloPendientes.length;
+    const motivo = { ambiguo: "eloAmbiguo", parecido: "eloParecido" };
     for (const x of estado.eloPendientes) {
-      ul.append(el("li", { class: "flex items-center justify-between gap-2" },
-        el("span", {},
-          el("span", { class: "font-semibold", texto: x.nombre }), " — ",
-          el("span", { class: "text-brand-600 dark:text-brand-300", texto: tx(x.estado === "ambiguo" ? "eloAmbiguo" : "eloNoEncontrado") })),
-        el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: x.nombre }), onclick: () => editarJugador(x.id) }, tx("editar"))));
+      const li = el("li", {},
+        el("div", { class: "flex items-center justify-between gap-2" },
+          el("span", {},
+            el("span", { class: "font-semibold", texto: x.nombre }), " — ",
+            el("span", { class: "text-brand-600 dark:text-brand-300", texto: tx(motivo[x.estado] || "eloNoEncontrado") })),
+          el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: x.nombre }), onclick: () => editarJugador(x.id) }, tx("editar"))));
+      // Los candidatos de la lista nacional (nombres que tienen todas las
+      // palabras escritas): nunca se asignan solos, quien organiza elige.
+      const cands = x.candidatos || [];
+      if (cands.length) {
+        const sub = el("ul", { class: "mt-1 ml-4 space-y-1" });
+        for (const c of cands) {
+          const datos = [c.nombre, c.club, Number(c.nacional) > 0 ? tx("eloCandidatoElo", { e: c.nacional }) : tx("eloCandidatoSinElo")].filter(Boolean).join(" · ");
+          sub.append(el("li", { class: "flex items-center justify-between gap-2" },
+            el("span", { texto: datos }),
+            Number(c.nacional) > 0
+              ? el("button", { type: "button", class: C.mini, "aria-label": tx("eloUsarA", { c: c.nombre, n: x.nombre }), onclick: () => usarCandidatoElo(x.id, c) }, tx("eloUsar"))
+              : null));
+        }
+        if (x.totalCandidatos > cands.length) sub.append(el("li", { class: C.nota, texto: tx("eloMasCandidatos", { n: x.totalCandidatos - cands.length }) }));
+        li.append(sub);
+      }
+      ul.append(li);
     }
+  }
+
+  // Quien organiza confirmó que ese candidato de la lista nacional es su
+  // jugador: le pone el Elo y, si no tenía, el ID FIDE (el TRF lo necesita).
+  // El nombre se queda como lo escribió.
+  function usarCandidatoElo(id, c) {
+    const j = jugador(id);
+    if (!j || !(Number(c.nacional) > 0)) return;
+    j.elo = Number(c.nacional);
+    if (!j.fideId && c.fideId && /^\d{3,11}$/.test(String(c.fideId))) j.fideId = String(c.fideId);
+    guardar();
+    pintarJugadores();
+    Avisos.avisar(tx("eloUsado", { n: j.nombre, c: c.nombre, e: j.elo }));
   }
 
   function pintarJugadores() {
@@ -2875,7 +2907,8 @@
         // lo tenía, queda puesto (el TRF lo necesita para el Elo).
         if (!j.fideId && res.fideId && /^\d{3,11}$/.test(String(res.fideId))) { j.fideId = String(res.fideId); conId++; }
       }
-      else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado" });
+      else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado",
+        candidatos: (res && Array.isArray(res.candidatos)) ? res.candidatos.slice(0, 5) : [], totalCandidatos: (res && Number(res.totalCandidatos)) || 0 });
     });
     if (n) guardar();
     estado.eloPendientes = pendientes;

@@ -11,7 +11,9 @@
 // contaba.
 
 export type FichaFide = { nombre: string | null; estandar: number | null };
-export type FilaNacional = { fideId: string; nombre: string; nacional: number | null; fideEstandar: number | null };
+// `club` lo usa Pareo Integral para mostrar a quién se refiere un candidato;
+// `elo-fide` no lo mira.
+export type FilaNacional = { fideId: string; nombre: string; club: string; nacional: number | null; fideEstandar: number | null };
 
 // Un rating de 0 (o fuera de lo posible) es «no tiene», no un Elo de 0.
 function rating(x: unknown): number | null {
@@ -56,7 +58,8 @@ export function leerListaNacional(html: string): FilaNacional[] {
     const resto = t.slice(m.index, m.index + 2000);
     const r = resto.match(/"ratings":\{"national":(-?\d+|null),"fideStandard":(-?\d+|null)/);
     if (!m[1] || !r) continue;
-    filas.push({ fideId: m[1], nombre: m[2], nacional: rating(r[1]), fideEstandar: rating(r[2]) });
+    const club = resto.match(/"club":"([^"]*)"/);
+    filas.push({ fideId: m[1], nombre: m[2], club: club ? club[1].trim() : "", nacional: rating(r[1]), fideEstandar: rating(r[2]) });
   }
   return filas;
 }
