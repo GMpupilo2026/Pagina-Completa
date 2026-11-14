@@ -72,7 +72,10 @@ const bases = {
   // de la clasificación de Pareo, y las bases tienen que decir lo mismo.
   desempates: ["DE", "BH-C1", "BH", "SB", "WIN"],
   byes: 0,
-  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
+  // Después de la ronda 6 es el almuerzo, y la ronda 7 es a la 1:00 p. m. (lo
+  // dijo el dueño el 13/11/2026).
+  horasFijas: { 7: "13:00" },
+  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento. Después de la ronda 6 es el almuerzo; la ronda 7 empieza a la 1:00 p. m.",
   premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
   otras: [
     TORNEOS_TEXTO,
@@ -89,7 +92,12 @@ const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + Stri
 const horaTexto = (min) => { const h = Math.floor(min / 60); return (h % 12 || 12) + ":" + String(min % 60).padStart(2, "0") + (h < 12 ? " a. m." : " p. m."); };
 const CICLO = HORARIO.length > 1 ? HORARIO[1].min - HORARIO[0].min : 30;
 // [actividad, data-inicio (hora de Costa Rica), minutos, ronda, hora escrita]
-const CALENDARIO = [["Llegada y confirmación", bases.fechaInicio + "T08:30", HORARIO[0].min - 8 * 60 - 30, 0, "8:30 a. m."]].concat(HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")]))
+// El almuerzo va entre la ronda 6 y la 7: desde que termina la 6 (a la media
+// hora, como las demás) hasta la hora fija de la 7, que no es aproximada.
+const ALMUERZO = HORARIO[5].min + CICLO;
+const CALENDARIO = [["Llegada y confirmación", bases.fechaInicio + "T08:30", HORARIO[0].min - 8 * 60 - 30, 0, "8:30 a. m."]]
+  .concat(HORARIO.flatMap((x, i) => [].concat(x.ronda === 7 ? [["Almuerzo", bases.fechaInicio + "T" + hhmm(ALMUERZO), x.min - ALMUERZO, 0, horaTexto(ALMUERZO) + " (aprox.)"]] : [],
+    [["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i && !bases.horasFijas[x.ronda] ? " (aprox.)" : "")]])))
   .concat([["Premiación", bases.fechaInicio + "T" + hhmm(PREMIACION), 60, 0, horaTexto(PREMIACION) + " (aprox.)"]]);
 
 const filas = CALENDARIO.map(([actividad, inicio, minutos, ronda, hora]) =>
@@ -218,7 +226,7 @@ ${nivelesDe(t).map((n) => "            <li>" + n + "</li>").join("\n")}
       {
         id: "calendario", icono: "🗓️", titulo: "Calendario", ancho: "max-w-3xl",
         comentario: "El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de\nCosta Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del\nhorario de las bases (BasesTorneo.horario), el mismo del PDF.",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior. Después de la ronda 6 es el almuerzo, y la ronda 7 empieza a la 1:00 p.m.</p>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
     <table class="w-full text-sm">
         <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>
