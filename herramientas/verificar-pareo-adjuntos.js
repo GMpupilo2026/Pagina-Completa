@@ -206,6 +206,19 @@ async function pruebaBase(browser) {
   await page.evaluate((c) => window.__llega(c, "cola", {}), "pareo-adjunto-" + CODIGO);
   [g] = await P.esperarGuardado(page, (l) => l[0].rondas[0].mesas[1].r === "=");
   bien("con el toque «cola» del canal, lo lee ya");
+  // La Mesa del árbitro: su fila no trae código sino asignacion_id, y su toque
+  // llega por el canal del torneo publicado (lo manda centroamericano-mesa).
+  cola = [{ id: 11, codigo: null, asignacion_id: "PRUEBA-ASIG", nombre: "PRUEBA MESA", desde: 1, hasta: 3, evento: "resultado", ronda: 1, datos: { mesa: 3, r: "0-1" } }];
+  await page.waitForFunction(() => window.__canales && window.__canales.has("pareo-cola-11111111-2222-3333-4444-555555555555"), null, { timeout: 5000 }).catch(() => {});
+  ok(await page.evaluate(() => window.__canales.has("pareo-cola-11111111-2222-3333-4444-555555555555")), "escucha el toque de la Mesa del árbitro en el canal del torneo publicado");
+  const lecturasAntes = pedidos.filter((x) => x.accion === "cola").length;
+  await page.evaluate((c) => window.__llega(c, "cola", {}), "pareo-cola-11111111-2222-3333-4444-555555555555");
+  await page.waitForTimeout(500);
+  ok(pedidos.filter((x) => x.accion === "cola").length > lecturasAntes, "y con el toque lee la cola en el momento, sin esperar su vuelta");
+  [g] = await P.esperarGuardado(page, (l) => l[0].rondas[0].mesas[2].r === "0-1");
+  ok(g.rondas[0].mesas[2].porAdjunto === "PRUEBA MESA", "con el toque de la Mesa del árbitro (canal del torneo publicado), su resultado entra ya, a nombre del árbitro de la Mesa");
+  ok(pedidos.filter((x) => x.accion === "cola" || x.accion === "cola_borrar").every((x) => x.mesa === true),
+    "y cada lectura y borrado de la cola dice que entiende las filas de la Mesa (sin eso, la función no se las da ni las deja borrar)");
   await page.click('[data-ficha="rondas"]');
   await page.waitForSelector(".pi-adjunto-codigo");
   igual("la tarjeta del adjunto muestra su código para escribirlo a mano", await page.textContent(".pi-adjunto-codigo strong"), "PRUE-BA23");

@@ -110,7 +110,7 @@ const FUNCIONES = {
   // arriba de los correos es la de siempre. Ver su cabecera.
   // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
   // los de la Academia (notificar): una sola copia en _compartido.
-  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts"],
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts", "toque-vivo.ts"],
   "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
@@ -126,7 +126,7 @@ const FUNCIONES = {
   "metropolitano-drive": ["drive-puente.ts"],
   // El correo de confirmación de las inscripciones del Metropolitano 2026.
   "metropolitano-correo": ["envio-resend.ts", "marca-correo.ts"],
-  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts", "toque-vivo.ts"],
 };
 
 function armar(nombre) {

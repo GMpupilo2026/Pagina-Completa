@@ -103,6 +103,7 @@ import { pareosPublicos } from "./pareos-publicos.ts";
 import { conRival, fedDe, fedsDe, sinRival } from "./inscritos-fed.ts";
 import { A_PAREO, ARTICULO_PAREO, DE_PAREO, filaCola, leerPareo, type LecturaPareo } from "./fuente-pareo.ts";
 import { limpiarEnvio } from "./pareo-adjuntos.ts";
+import { tocar } from "./toque-vivo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -278,6 +279,8 @@ Deno.serve(async (req) => {
     if (!datos || !torneoInfo?.pareo_id) return false;
     const { error } = await servicio.from("pareo_cola").insert(filaCola(a, torneoInfo.pareo_id, datosTorneo, evento, p.ronda, datos));
     if (error) console.error("centroamericano-mesa: pareo_cola", a.tnr, error.code);
+    // El toque: el Pareo del principal lee la cola en el momento (ver toque-vivo.ts). Si no llega, la lee en su vuelta.
+    else await tocar(SUPABASE_URL, SERVICE_ROLE_KEY, "pareo-cola-" + torneoInfo.pareo_id, "cola");
     return !error;
   };
   const leerPareoFresco = () => leerPareo(servicio, torneoInfo?.pareo_id, a.tnr, torneoInfo?.nombre ?? "");
