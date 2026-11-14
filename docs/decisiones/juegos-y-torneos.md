@@ -4427,6 +4427,30 @@ que alguien cierre por accidente la página»).
 
 Lo comprueba `verificar-pareo-informe.js`.
 
+### Pareo Integral: la categoría al inscribir y los ausentes al deshacer
+
+Dos pedidos del dueño el 14/11/2026, en el Tacho Chess 2:
+
+- **Deshacer una ronda no borra los ausentes.** Había emparejado la ronda 2 con cinco «no viene», se le olvidó
+  agregar a alguien, deshizo el emparejamiento… y perdió a quién había marcado. Lo marcado antes de emparejar
+  (`v.pedidas`: «no viene», byes pedidos) se borra al emparejar porque ya queda en la ronda (`ausencias`); ahora
+  `deshacerRonda` lo devuelve desde la ronda deshecha, así que la ronda vuelve a aparecer con las mismas marcas
+  (también después de recargar). Lo que salió de la acreditación (`sinAcreditar`) no se devuelve como marca: se
+  recalcula con la lista, y quien se marque presente después sale solo de «no viene».
+- **La categoría se elige de una lista.** El campo «Categoría» de «Agregar un jugador» era texto libre. Ahora
+  despliega una lista (`<datalist id="pi-categorias">`, `categoriasParaInscribir` y `pintarCategorias`): en un
+  torneo de los JDE (con el evento de los JDE o «Categoría X» en el nombre), solo las que permite el año de
+  nacimiento según la Normativa (art. 17, la misma `G.categoriasDeNacimiento` de la inscripción de los JDE; en
+  individual no se sube, art. 18). Sin fecha salen las cinco; con una sola posible se pone sola, solo si el campo está vacío (lo escrito a mano no se cambia en silencio); nacido en 2013 o
+  2014 salen B y C, la del torneo primero; una que no le toca, o una fecha que no entra en ninguna, se dice debajo
+  (`#pi-categoria-nota`, que lleva el campo en `aria-describedby`). En cualquier otro torneo la lista son las
+  categorías que ya tienen sus jugadores, como la inscripción pública. Se puede seguir escribiendo una nueva: el
+  aviso de siempre al agregar (`tardioCategoria`) sigue siendo el control.
+
+Lo prueban `verificar-pareo-pagina.js` (sección 4: Diego «no viene» sigue marcado al deshacer la ronda 5 y al
+recargar) y `verificar-pareo-categoria-inscribir.js` (los casos de los JDE y de otro torneo). Rotos a propósito la
+devolución de `v.pedidas` o el filtro por año, saltan.
+
 ### Pareo Integral: quien pierde por incomparecencia queda fuera
 
 Lo pidió el dueño del sitio: «cuando un jugador pierde por incomparecencia,

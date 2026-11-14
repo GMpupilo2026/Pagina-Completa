@@ -924,7 +924,7 @@
     $("pi-form-jugador").hidden = deEquipos;
     $("pi-pegar-caja").hidden = deEquipos;
     $("pi-listas-caja").hidden = deEquipos;
-    if (!deEquipos) pintarListaElo();
+    if (!deEquipos) { pintarListaElo(); pintarCategorias(false); }
     $("pi-caja-elo-nacional").hidden = deEquipos;
     tabla.hidden = deEquipos;
     $("pi-masivo").hidden = true;
@@ -1156,6 +1156,51 @@
       sexo: g("sexo") === "m" || g("sexo") === "w" ? g("sexo") : "",
       nacimiento: /^\d{4}-\d{2}-\d{2}$/.test(g("nacimiento")) ? g("nacimiento") : "",
     };
+  }
+
+  // La categoría al inscribir a mano se elige de una lista (el <datalist> del
+  // campo). En un torneo de los JDE —con el evento de los JDE o con «Categoría
+  // X» en el nombre— salen solo las que le permite su año de nacimiento
+  // (Normativa, art. 17, G.categoriasDeNacimiento: casi siempre una, B o C en
+  // 2013 y 2014; en individual no se sube, art. 18), y sin fecha, las cinco.
+  // En cualquier otro torneo, las que ya tienen sus jugadores. Ver «Pareo
+  // Integral: la categoría al inscribir y los ausentes al deshacer».
+  const esDeLosJDE = (v) => !!(v.evento && v.evento.jde) || !!G.JDE_CATEGORIAS[categoriaDe(v)];
+  function categoriasParaInscribir(v, nacimiento) {
+    if (!esDeLosJDE(v)) {
+      const usadas = [...new Set(v.jugadores.map((j) => String(j.categoria || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+      return { jde: false, lista: usadas };
+    }
+    const anio = (v.evento && v.evento.jde && v.evento.jde.anio) || Number(String(v.fechaInicio || "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    const nace = Number(String(nacimiento || "").slice(0, 4)) || 0;
+    const propias = nace ? G.categoriasDeNacimiento(nace, anio) : Object.keys(G.JDE_CATEGORIAS);
+    // Un torneo de una sola categoría: si le corresponde, va primero.
+    const delTorneo = categoriaDe(v);
+    const lista = delTorneo && propias.includes(delTorneo) ? [delTorneo].concat(propias.filter((c) => c !== delTorneo)) : propias;
+    return { jde: true, anio, nace, lista };
+  }
+  const listaCategorias = (l) => l.join(" " + tx("o") + " ");
+  function pintarCategorias(rellenar) {
+    const f = $("pi-form-jugador");
+    if (!f) return;
+    const v = t();
+    const campo = f.elements.categoria;
+    const op = categoriasParaInscribir(v, f.elements.nacimiento.value);
+    $("pi-categorias").replaceChildren(...op.lista.map((c) => el("option", { value: c })));
+    // Con una sola posible, se pone sola, pero solo en un campo vacío: lo que
+    // el árbitro escribió no se cambia en silencio (si no le toca, la nota lo
+    // dice y al agregar salta el aviso de siempre).
+    if (rellenar && op.jde && op.nace && op.lista.length === 1 && !campo.value.trim()) campo.value = op.lista[0];
+    const nota = $("pi-categoria-nota");
+    let texto = "";
+    if (op.jde && op.nace) {
+      const c = campo.value.trim().toUpperCase();
+      if (!op.lista.length) texto = tx("categoriaNinguna", { a: op.nace, j: op.anio });
+      else if (c && !op.lista.includes(c)) texto = tx("categoriaPuedeNo", { a: op.nace, l: listaCategorias(op.lista), c });
+      else texto = tx("categoriaPuede", { a: op.nace, l: listaCategorias(op.lista) });
+    } else if (op.jde) texto = tx("categoriaElegir");
+    nota.textContent = texto;
+    nota.hidden = !texto;
   }
 
   // Quienes comparten nombre (sin tildes ni importar el orden de apellidos y
@@ -2059,6 +2104,7 @@
     const f = $("pi-form-jugador");
     for (const [k, val] of Object.entries(b.jugador || {})) if (f.elements[k]) f.elements[k].value = val;
     if (b.pegar) { $("pi-pegar").value = b.pegar; $("pi-pegar-caja").open = true; }
+    pintarCategorias(false);
     Avisos.avisar(tx("borradorRecuperado"), { tipo: "info" });
   }
   // Al cerrar o esconder la pestaña: lo que estaba por guardarse, ya.
@@ -6350,7 +6396,15 @@
     const ok = await Avisos.confirmar(tx(conResultados ? "confirmarDeshacerConResultados" : "confirmarDeshacer", { r: r + 1 }),
       { aceptar: tx("deshacerRonda"), peligro: true });
     if (!ok || v.rondas.length !== r + 1) return;
-    v.rondas.pop();
+    const deshecha = v.rondas.pop();
+    // Lo que el árbitro había marcado antes de emparejar esta ronda (byes
+    // pedidos, «no viene») vuelve a quedar marcado: deshacer para agregar a
+    // alguien no le borra a quién ya había anotado como ausente. Lo de la
+    // acreditación no se guarda aquí (se recalcula con la lista), así quien
+    // se marque presente después sale solo de «no viene».
+    const sinAcreditar = new Set(deshecha.sinAcreditar || []);
+    const marcadas = Object.fromEntries(Object.entries(deshecha.ausencias || {}).filter(([id]) => !sinAcreditar.has(id)));
+    v.pedidas = { r, ausencias: marcadas };
     if (r === 0 && v.sistema !== "todos" && !v.numeracionDeArchivo) v.numeracion = null;
     // Sin la ronda 1, el orden de tableros se vuelve a poder cambiar.
     if (r === 0) delete v.ordenTableros;
@@ -7502,6 +7556,9 @@
 
     $("pi-form-torneo").addEventListener("input", alEscribirTorneo);
     $("pi-form-jugador").addEventListener("input", guardarBorrador);
+    // La lista de categorías sigue a la fecha de nacimiento.
+    $("pi-form-jugador").elements.nacimiento.addEventListener("change", () => pintarCategorias(true));
+    $("pi-form-jugador").elements.categoria.addEventListener("input", () => pintarCategorias(false));
     $("pi-pegar").addEventListener("input", guardarBorrador);
     window.addEventListener("pagehide", guardarAlSalir);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardarAlSalir(); });
@@ -7512,6 +7569,7 @@
       if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); f.elements.nombre.focus(); return; }
       agregarJugadores([d]);
       f.reset();
+      pintarCategorias(false);
       guardarBorrador();
       f.elements.nombre.focus();
     });
