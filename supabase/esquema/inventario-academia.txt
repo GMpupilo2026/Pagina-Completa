@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261113152246
+# al-dia-con: 20261114030605
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -192,6 +192,8 @@ tabla  pareo_avisos_enviados  rls=true
 tabla  pareo_avisos_push_enviados  rls=true
 tabla  pareo_cola  rls=true
 tabla  pareo_moderaciones  rls=true
+tabla  pareo_nube_cuentas  rls=true
+tabla  pareo_nube_torneos  rls=true
 tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
 tabla  pareo_publicados  rls=true
@@ -2066,6 +2068,16 @@ columna  pareo_moderaciones.nombre  text
 columna  pareo_moderaciones.objeto_id  uuid
 columna  pareo_moderaciones.que  text
 columna  pareo_moderaciones.quien  uuid
+columna  pareo_nube_cuentas.consentido_en  timestamp with time zone
+columna  pareo_nube_cuentas.persona_id  uuid
+columna  pareo_nube_torneos.actualizado  timestamp with time zone
+columna  pareo_nube_torneos.borrado  boolean
+columna  pareo_nube_torneos.datos  jsonb
+columna  pareo_nube_torneos.dueno  uuid
+columna  pareo_nube_torneos.evento  jsonb
+columna  pareo_nube_torneos.id  text
+columna  pareo_nube_torneos.nombre  text
+columna  pareo_nube_torneos.version  integer
 columna  pareo_organizadores.actualizado  timestamp with time zone
 columna  pareo_organizadores.clave_hash  text
 columna  pareo_organizadores.correo  text
@@ -3425,6 +3437,13 @@ funcion  pareo_listas_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_medallero(p_anio integer)  invoker  anon=true  auth=true
 funcion  pareo_moderar(p_que text, p_id uuid)  definer  anon=false  auth=true
 funcion  pareo_moderar_con_motivo(p_que text, p_id uuid, p_motivo text)  definer  anon=false  auth=true
+funcion  pareo_nube_activar()  invoker  anon=false  auth=true
+funcion  pareo_nube_apagar(p_borrar boolean)  invoker  anon=false  auth=true
+funcion  pareo_nube_borrar(p_id text, p_version integer)  invoker  anon=false  auth=true
+funcion  pareo_nube_estado()  invoker  anon=false  auth=true
+funcion  pareo_nube_guardar(p_id text, p_nombre text, p_evento jsonb, p_datos jsonb, p_version integer)  invoker  anon=false  auth=true
+funcion  pareo_nube_lista()  invoker  anon=false  auth=true
+funcion  pareo_nube_traer(p_ids text[])  invoker  anon=false  auth=true
 funcion  pareo_palabras(p text)  invoker  anon=true  auth=true
 funcion  pareo_parecidos(a text, b text)  invoker  anon=true  auth=true
 funcion  pareo_partidas_del_anio(p_anio integer)  invoker  anon=true  auth=true
@@ -3930,6 +3949,13 @@ politica  pagos  pagos_select  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
 politica  pareo_moderaciones  pareo_moderaciones_admin  SELECT
+politica  pareo_nube_cuentas  pareo_nube_cuentas_activar  INSERT
+politica  pareo_nube_cuentas  pareo_nube_cuentas_apagar  DELETE
+politica  pareo_nube_cuentas  pareo_nube_cuentas_ver  SELECT
+politica  pareo_nube_torneos  pareo_nube_torneos_cambiar  UPDATE
+politica  pareo_nube_torneos  pareo_nube_torneos_crear  INSERT
+politica  pareo_nube_torneos  pareo_nube_torneos_quitar  DELETE
+politica  pareo_nube_torneos  pareo_nube_torneos_ver  SELECT
 politica  pareo_organizadores  pareo_organizadores_lectura  SELECT
 politica  pareo_publicados  pareo_publicados_lectura_publica  SELECT
 politica  pareo_reportes  pareo_reportes_admin  SELECT
@@ -4760,6 +4786,8 @@ indice  pareo_cola  pareo_cola_pkey
 indice  pareo_cola  pareo_cola_publicado_idx
 indice  pareo_moderaciones  pareo_moderaciones_cuando_idx
 indice  pareo_moderaciones  pareo_moderaciones_pkey
+indice  pareo_nube_cuentas  pareo_nube_cuentas_pkey
+indice  pareo_nube_torneos  pareo_nube_torneos_pkey
 indice  pareo_organizadores  pareo_organizadores_correo_idx
 indice  pareo_organizadores  pareo_organizadores_pkey
 indice  pareo_preinscripciones  pareo_preinscripciones_pkey
@@ -5827,6 +5855,13 @@ grant  paquetes_acceso  authenticated  SELECT
 grant  paquetes_acceso  authenticated  TRIGGER
 grant  paquetes_acceso  authenticated  TRUNCATE
 grant  pareo_moderaciones  authenticated  SELECT
+grant  pareo_nube_cuentas  authenticated  DELETE
+grant  pareo_nube_cuentas  authenticated  INSERT
+grant  pareo_nube_cuentas  authenticated  SELECT
+grant  pareo_nube_torneos  authenticated  DELETE
+grant  pareo_nube_torneos  authenticated  INSERT
+grant  pareo_nube_torneos  authenticated  SELECT
+grant  pareo_nube_torneos  authenticated  UPDATE
 grant  pareo_reportes  authenticated  SELECT
 grant  pareo_solicitudes_sello  authenticated  SELECT
 grant  partidas_revision  authenticated  REFERENCES
