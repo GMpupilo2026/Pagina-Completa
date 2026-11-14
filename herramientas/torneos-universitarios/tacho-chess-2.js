@@ -65,6 +65,9 @@ const bases = {
   arbitro: "FA Jean Carlo Quesada Arauz",
   comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
   sistema: "suizo", rondas: 7, rondasPorDia: 7, horaInicio: "09:00", descanso: 5,
+  // El almuerzo, de 12:00 a 1:00 p. m. (lo pidió el dueño el 14/11/2026, el día
+  // del torneo): la ronda 7, que caía a las 12:00, pasa a la 1:00 p. m.
+  pausas: [{ desde: "12:00", hasta: "13:00", nombre: "Almuerzo" }],
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
   // Los de los torneos en Pareo Integral (lo pidió el dueño el 13/11/2026:
@@ -72,7 +75,7 @@ const bases = {
   // de la clasificación de Pareo, y las bases tienen que decir lo mismo.
   desempates: ["DE", "BH-C1", "BH", "SB", "WIN"],
   byes: 0,
-  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
+  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento. De 12:00 a 1:00 p. m. es el almuerzo: la ronda 7 empieza a la 1:00 p. m.",
   premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
   otras: [
     TORNEOS_TEXTO,
@@ -87,9 +90,12 @@ const ULTIMA = HORARIO[HORARIO.length - 1];
 const PREMIACION = Math.ceil((ULTIMA.min + Math.ceil(2 * (bases.ritmoMin + 40 * bases.ritmoInc / 60)) + bases.descanso) / 30) * 30;
 const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
 const horaTexto = (min) => { const h = Math.floor(min / 60); return (h % 12 || 12) + ":" + String(min % 60).padStart(2, "0") + (h < 12 ? " a. m." : " p. m."); };
+const aMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 const CICLO = HORARIO.length > 1 ? HORARIO[1].min - HORARIO[0].min : 30;
 // [actividad, data-inicio (hora de Costa Rica), minutos, ronda, hora escrita]
 const CALENDARIO = [["Llegada y confirmación", bases.fechaInicio + "T08:30", HORARIO[0].min - 8 * 60 - 30, 0, "8:30 a. m."]].concat(HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")]))
+  .concat((bases.pausas || []).map((p) => [p.nombre, bases.fechaInicio + "T" + p.desde, aMin(p.hasta) - aMin(p.desde), 0, horaTexto(aMin(p.desde))]))
+  .sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
   .concat([["Premiación", bases.fechaInicio + "T" + hhmm(PREMIACION), 60, 0, horaTexto(PREMIACION) + " (aprox.)"]]);
 
 const filas = CALENDARIO.map(([actividad, inicio, minutos, ronda, hora]) =>
@@ -218,7 +224,7 @@ ${nivelesDe(t).map((n) => "            <li>" + n + "</li>").join("\n")}
       {
         id: "calendario", icono: "🗓️", titulo: "Calendario", ancho: "max-w-3xl",
         comentario: "El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de\nCosta Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del\nhorario de las bases (BasesTorneo.horario), el mismo del PDF.",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior. De 12:00 a 1:00 p. m. es el almuerzo: la ronda 7 empieza a la 1:00 p. m.</p>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
     <table class="w-full text-sm">
         <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>

@@ -15251,8 +15251,12 @@ chess-results).
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
   PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
   tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
-  hora siguiente) da 9:00, 9:30, 10:00, 10:30, 11:00, 11:30 y 12:00, y la premiación cerca de
-  las 12:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 7 y la premiación dicen «(aprox.)», en la página y
+  hora siguiente) da 9:00, 9:30, 10:00, 10:30, 11:00 y 11:30; antes va la fila de la llegada (8:30), sin `data-ronda`.
+  **De 12:00 a 1:00 p. m. es el almuerzo** (lo pidió el dueño el 14/11/2026,
+  el día del torneo): va en `bases.pausas`, y `BasesTorneo.horario()` corre
+  la ronda que caería adentro al final de la pausa. La ronda 7 queda a la
+  1:00 p. m. y la premiación cerca de la 1:30; el calendario lleva la fila
+  «Almuerzo» (sin `data-ronda`) y las bases lo dicen en la nota del calendario. Las rondas 2 a 7 y la premiación dicen «(aprox.)», en la página y
   en las bases.
 - **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
   azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
