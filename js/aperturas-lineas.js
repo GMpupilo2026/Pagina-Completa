@@ -415,6 +415,15 @@
       clave: "Todo el sistema prepara e4: el alfil de d3 y el caballo de d2 la sostienen.",
     },
     {
+      id: "colle-zukertort",
+      nombre: "Sistema Colle-Zukertort",
+      apertura: "Sistema Colle",
+      tipo: "apertura", color: "w", nivel: 2,
+      jugadas: ["d4", "d5", "Nf3", "Nf6", "e3", "e6", "Bd3", "c5", "b3", "Nc6", "O-O", "Bd6", "Bb2", "O-O", "Nbd2", "Qe7", "Ne5"],
+      idea: "El Colle con b3 en vez de c3: el alfil de c1 sale a b2 y los dos alfiles apuntan al enroque negro.",
+      clave: "El caballo salta a e5, después f4 y la torre sube por f3 hacia h3: todo va contra h7.",
+    },
+    {
       id: "alapin",
       nombre: "Ataque Alapin contra la siciliana",
       apertura: "Defensa siciliana",

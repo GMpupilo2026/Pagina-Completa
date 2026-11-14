@@ -131,7 +131,7 @@ function main() {
   console.log("Del repositorio: " + Object.keys(modelos).length + " de " + aperturas.length + ". Faltan: " + faltan.map((a) => a.linea.id).join(", "));
 
   // KingBase: lo que ya estaba guardado, y lo nuevo de los archivos que se pasen.
-  const guardadas = fs.existsSync(KINGBASE) ? fs.readFileSync(KINGBASE, "utf8").split(/\n\n(?=\[Event )/).map(leerPgn).filter(Boolean) : [];
+  const guardadas = fs.existsSync(KINGBASE) ? fs.readFileSync(KINGBASE, "utf8").split(/\n\n(?=\[Event )/).map((t) => leerPgn(t)).filter(Boolean) : [];
   const kb = guardadas.map((p, i) => ({ ...p, fuente: "kingbase", id: "kb-" + huella(p.sans.join(" ")).slice(0, 8), pos: posiciones(p.sans) }));
   const archivos = process.argv.slice(2);
   for (const archivo of archivos) {
