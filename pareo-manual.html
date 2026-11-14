@@ -144,6 +144,7 @@
                     <li>Para emparejar una ronda hacen falta todos los resultados de la anterior.</li>
                     <li><strong>Corregir un resultado</strong> de una ronda vieja se puede, pero las rondas siguientes no se vuelven a emparejar.</li>
                     <li><strong>Deshacer el emparejamiento</strong> solo se puede en la última ronda. Al volver a emparejarla con los mismos datos sale la misma ronda.</li>
+                    <li><strong>Modificar la ronda sin deshacerla</strong> (debajo de las mesas de la ronda en juego, en un suizo individual): cambia a dos jugadores de lugar —también a uno que no juega por uno que sí, que es como entra quien llegó tarde—, invierte los colores de una mesa, saca a un jugador de la ronda, arma una mesa con quienes no juegan (o le da a uno el bye del pareo) y agrega un jugador nuevo ahí mismo. Las mesas con resultado no se tocan, avisa si la pareja nueva ya jugó entre sí, y cada cambio queda en las incidencias de la ronda y se puede deshacer con «Deshacer el último cambio». El comprobador de FIDE va a marcar esa ronda como distinta a la del Sistema Holandés: es lo esperado.</li>
                     <li>«Imprimir» saca solo la ronda, con los resultados escritos.</li>
                 </ul>
 
@@ -314,6 +315,7 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <li>A round can be paired only when every result of the previous one is in.</li>
                     <li><strong>Correcting a result</strong> in an earlier round is possible, but later rounds are not re-paired.</li>
                     <li><strong>Undo the pairing</strong> is only possible for the last round. Pairing it again with the same data gives the same round.</li>
+                    <li><strong>Change the round without undoing it</strong> (below the boards of the current round, in an individual Swiss): swap two players —including one who is not playing for one who is, which is how a latecomer comes in—, swap the colours of a board, take a player out of the round, make a new board with players who are not playing (or give one of them the pairing-allocated bye) and add a new player right there. Boards with a result are not touched, it warns if the new pair already played each other, and each change goes into the round's incidents and can be reverted with “Undo the last change”. The FIDE checker will flag that round as different from the Dutch System one: that is expected.</li>
                     <li>“Print” prints only the round, with the results written out.</li>
                 </ul>
 
