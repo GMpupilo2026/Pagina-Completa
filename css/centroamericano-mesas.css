@@ -77,6 +77,8 @@ body:has(#control-tiempos:not([hidden])) .cam-fab { right: auto; left: 1rem; }
   height: auto;
   filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
 }
+/* Una mascota de pie (Tacho, de Tacho Chess: 450 × 755) se mide por el alto, para no estirar la franja. */
+.cam-mascota.cam-mascota-alta { width: auto; height: clamp(110px, 20vw, 170px); }
 
 /* (El nombre va a 1.25rem en negrita, texto grande: el dorado da 4,1:1 contra el morado más claro de la franja, y pide 3:1.)
  * La fila de la franja: el título a la izquierda, el logo de Ajedrez Integral en el medio y la mascota a la derecha.

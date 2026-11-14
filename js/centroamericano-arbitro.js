@@ -1672,7 +1672,24 @@
         } finally { boton.disabled = false; }
     }
 
+    // La píldora «XXI Campeonato» y el pizote son del Centroamericano (su enlace es de chess-results). En un torneo de
+    // Pareo Integral la píldora no va, y si el torneo tiene mascota propia (Tacho Chess: Tacho), esa reemplaza al pizote.
+    const PIZOTE = { src: "img/centroamericano-2026/mascota-tablero.png", w: 266, h: 231, alta: false };
+    const MASCOTAS = [{ re: /tacho\s*chess/i, src: "img/tacho-chess-2/mascota.png", w: 450, h: 755, alta: true }];
+    function pintarMarca() {
+        const pareo = esPareo();
+        $("pildora-evento").hidden = pareo;
+        const m = (pareo && MASCOTAS.find((x) => x.re.test(estado.torneo || ""))) || PIZOTE;
+        const img = $("mascota-evento");
+        if (img.getAttribute("src") === m.src) return;
+        img.src = m.src;
+        img.width = m.w;
+        img.height = m.h;
+        img.classList.toggle("cam-mascota-alta", m.alta);
+    }
+
     function pintarCabecera() {
+        pintarMarca();
         const r = rapido();
         $("titulo-torneo").textContent = (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) + (r && estado.categoria ? (r === "blitz" ? " · Blitz" : " · Rápido") : "");
         // Modo rápido: sin control de tiempos (no se anotan en el Rápido ni en el Blitz) y la regla con sus minutos.
