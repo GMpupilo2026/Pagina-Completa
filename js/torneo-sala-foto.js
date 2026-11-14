@@ -118,7 +118,7 @@
 
   // «La sala de juego»: la foto entera con todas las mesas numeradas. En el
   // celular la foto se agranda y se desliza de lado (dentro de su marco),
-  // porque 41 números en 360 píxeles no se leen.
+  // porque 49 números en 360 píxeles no se leen.
   function enSala() {
     const foto = document.querySelector("#sala img.cac-sala-foto");
     if (!foto || foto.closest(".cac-salafoto-marco")) return;

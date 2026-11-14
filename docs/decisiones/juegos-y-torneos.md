@@ -15232,8 +15232,10 @@ mergear): no le gustó, porque no decía en qué mesa sentarse.
   elige el torneo y se toca cada tablero en el orden de su número). No se
   adivina: depende de cómo numeró el gimnasio. Lo marcado se copió a
   `torneoPagina.mesasSala` de la configuración, en los píxeles de
-  `img/tacho-chess-2/sala.jpg` (1200 × 675; la foto marcada era la misma a
-  1600 × 900, así que se multiplicó por 0,75). Cada torneo con su nombre, su
+  `img/tacho-chess-2/sala.jpg` (1200 × 675; se marcó sobre la misma foto a
+  1600 × 900, guardando cada punto como fracción de la foto, así que vale para
+  las dos). Son 49 mesas: 10, 12, 12 y 15, más que una por cada dos jugadores,
+  porque son todos los tableros armados en el gimnasio. Cada torneo con su nombre, su
   color (el de los círculos del dueño: morada de primero a tercero, azul de
   cuarto a sexto, naranja sétimo y octavo, turquesa de noveno a undécimo), el
   fondo de la letra blanca (6,11 a 8,72) y sus niveles.
@@ -15252,7 +15254,7 @@ mergear): no le gustó, porque no decía en qué mesa sentarse.
   - En «La sala de juego», la foto entera con todas las mesas numeradas y,
     escrito debajo, qué color es cada torneo (el color nunca va solo). En el
     celular la foto se agranda y se desliza de lado dentro de su marco, centrada
-    en las mesas al abrir la ventana: 41 números en 360 píxeles no se leen.
+    en las mesas al abrir la ventana: 49 números en 360 píxeles no se leen.
 - Lo revisa `verificar-tacho-chess.js`: las mesas de cada torneo de la 1 a la
   última sin huecos, dentro de la foto y con el color medido; el anillo de la
   tarjeta cae (a 1 % de la foto) donde la configuración dice que está esa mesa;
