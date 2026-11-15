@@ -163,19 +163,48 @@ async function torneoAlAzar(semilla) {
     }
   }
   if (!fideMal) bien(`${fide} valores de los casos del C.07:2026 (artículos 15.2, 16.2 a 16.5, 7.7 y 8.2-8.3)`);
-  let iguales = 0, distintos = 0;
+  // La referencia se guardó cuando REP se llamaba GE. TPN y RTNG son un dato
+  // del propio jugador (número y Elo): no están en la referencia y se
+  // comprueban aparte, abajo.
+  const EN_LA_REFERENCIA = { REP: "GE" };
+  const SIN_REFERENCIA = ["TPN", "TPN-R", "RTNG", "RTNG-R"];
+  let iguales = 0, distintos = 0, comparados = 0;
   for (const c of ref.azar) {
     const t = torneoDe(c);
     for (const { codigo } of D.CATALOGO) {
+      if (SIN_REFERENCIA.includes(codigo)) continue;
+      const esperado = c.esperado[EN_LA_REFERENCIA[codigo] || codigo];
+      if (!esperado) { if (++distintos <= 10) mal(`referencia: ${codigo} no está en pareo-desempates.json`); continue; }
       const v = D.calcular(t, codigo);
       for (const j of c.jugadores) {
-        if (Math.abs(v[j.id] - c.esperado[codigo][j.id]) < 1e-9) iguales++;
-        else if (++distintos <= 10) mal(`referencia: ${codigo} de ${j.id} = ${v[j.id]}, chesspairing ${c.esperado[codigo][j.id]}`);
+        if (Math.abs(v[j.id] - esperado[j.id]) < 1e-9) iguales++;
+        else if (++distintos <= 10) mal(`referencia: ${codigo} de ${j.id} = ${v[j.id]}, chesspairing ${esperado[j.id]}`);
       }
     }
   }
-  if (!distintos) bien(`${iguales} valores de ${D.CATALOGO.length} desempates en ${ref.azar.length} torneos al azar, iguales a chesspairing`);
+  comparados = D.CATALOGO.length - SIN_REFERENCIA.length;
+  if (!distintos) bien(`${iguales} valores de ${comparados} desempates en ${ref.azar.length} torneos al azar, iguales a chesspairing`);
   else mal(`${distintos} valores distintos de chesspairing`);
+
+  // TPN y RTNG (lista MTB26 de FIDE), con su orden y su versión al revés.
+  {
+    const t = T.nuevo({ jugadores: [
+      { id: "a", nombre: "Ana", elo: 1500 }, { id: "b", nombre: "Beto", elo: 1800 },
+      { id: "c", nombre: "Caro", elo: 1650 }, { id: "d", nombre: "Dani", elo: 0 },
+    ], rondas: [] });
+    T.fijarNumeracion(t);
+    const num = T.numeros(t);
+    const orden = (cods) => D.clasificacion(t, cods).map((f) => f.id).join("");
+    const porNumero = ["a", "b", "c", "d"].sort((x, y) => num.get(x) - num.get(y)).join("");
+    const ok = orden(["TPN"]) === porNumero && orden(["TPN-R"]) === porNumero.split("").reverse().join("")
+      && orden(["RTNG"]) === "bcad" && orden(["RTNG-R"]) === "dacb"
+      && D.calcular(t, "RTNG").d === 0 && D.calcular(t, "TPN").b === num.get("b");
+    if (ok) bien("TPN ordena por el número de emparejamiento y RTNG por el Elo, cada uno también al revés (/R), sin Elo cuenta 0");
+    else mal(`TPN/RTNG: TPN ${orden(["TPN"])} (esperado ${porNumero}), TPN-R ${orden(["TPN-R"])}, RTNG ${orden(["RTNG"])} (bcad), RTNG-R ${orden(["RTNG-R"])} (dacb)`);
+    const viejo = T.nuevo({ desempates: ["BH", "GE", "REP", "SB"] });
+    if (viejo.desempates.join() === "BH,REP,SB") bien("un torneo guardado con GE (el nombre de antes de REP) se abre con REP, sin repetirlo");
+    else mal("GE no se cambió por REP al abrir: " + viejo.desempates.join());
+  }
 
   // La clasificación ordena por puntos y después por los desempates EN EL ORDEN pedido.
   {

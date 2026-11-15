@@ -182,7 +182,9 @@
                     <dt>WIN</dt><dd>Rondas ganadas, jugadas o no (incluye el bye del pareo).</dd>
                     <dt>WON</dt><dd>Partidas ganadas en el tablero.</dd>
                     <dt>BPG, BWG</dt><dd>Partidas jugadas con negras, y ganadas con negras.</dd>
-                    <dt>GE</dt><dd>Partidas que eligió jugar: las rondas menos las no jugadas voluntarias.</dd>
+                    <dt>REP</dt><dd>Rondas que eligió jugar: las rondas menos los byes de medio punto, los de cero y las incomparecencias perdidas. Hasta 2025 se llamaba GE; un torneo guardado con GE se cambia solo a REP.</dd>
+                    <dt>TPN, TPN-R</dt><dd>El número de emparejamiento: gana el más bajo (TPN) o, al revés, el más alto (TPN-R, la opción /R de FIDE).</dd>
+                    <dt>RTNG, RTNG-R</dt><dd>El Elo del jugador: gana el más alto (RTNG) o, al revés, el más bajo (RTNG-R). Sin Elo cuenta 0.</dd>
                     <dt>PS, PS-C1</dt><dd>Progresivo: la suma del puntaje acumulado ronda a ronda; con o sin la primera.</dd>
                     <dt>KS</dt><dd>Koya: los puntos contra quienes hicieron al menos la mitad.</dd>
                     <dt>STD</dt><dd>Puntos estándar: 1 por ganar, ½ por empatar, cualquiera sea el sistema de puntos.</dd>
@@ -353,7 +355,9 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <dt>WIN</dt><dd>Rounds won, played or not (the pairing-allocated bye included).</dd>
                     <dt>WON</dt><dd>Games won over the board.</dd>
                     <dt>BPG, BWG</dt><dd>Games played with black, and won with black.</dd>
-                    <dt>GE</dt><dd>Games elected to play: the rounds minus the voluntary unplayed ones.</dd>
+                    <dt>REP</dt><dd>Rounds one elected to play: the rounds minus half-point byes, zero-point byes and forfeit losses. Until 2025 it was called GE; a tournament saved with GE is changed to REP automatically.</dd>
+                    <dt>TPN, TPN-R</dt><dd>The tournament pairing number: the lowest wins (TPN) or, reversed, the highest (TPN-R, FIDE's /R option).</dd>
+                    <dt>RTNG, RTNG-R</dt><dd>The player's rating: the highest wins (RTNG) or, reversed, the lowest (RTNG-R). An unrated player counts as 0.</dd>
                     <dt>PS, PS-C1</dt><dd>Progressive scores: the sum of the running score round by round; with or without the first.</dd>
                     <dt>KS</dt><dd>Koya: points scored against players who scored at least half.</dd>
                     <dt>STD</dt><dd>Standard points: 1 for a win, ½ for a draw, whatever the point system.</dd>

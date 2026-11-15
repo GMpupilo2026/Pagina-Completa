@@ -5189,17 +5189,32 @@
           el("option", { value: "Z", texto: tx(T.fijo(v) ? "libre" : "byeCero") }),
           el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
         s.value = actual;
-        s.addEventListener("change", () => {
-          R.ausencias = R.ausencias || {};
-          if (s.value === "Z") delete R.ausencias[id]; else R.ausencias[id] = s.value;
-          guardar();
-        });
         const papel = el("span", { class: "pi-solo-imprimir", texto: s.selectedOptions[0].textContent });
-        s.addEventListener("change", () => { papel.textContent = s.selectedOptions[0].textContent; });
+        let antes = s.value;
+        s.addEventListener("change", async () => {
+          if (await confirmarByeEntero(s, antes)) {
+            R.ausencias = R.ausencias || {};
+            if (s.value === "Z") delete R.ausencias[id]; else R.ausencias[id] = s.value;
+            antes = s.value;
+            guardar();
+          }
+          papel.textContent = s.selectedOptions[0].textContent;
+        });
         ul.append(el("li", { class: "flex flex-wrap items-center gap-2" }, el("span", { class: "font-semibold", texto: num.get(id) + ". " + nombreDe(id) }), s, papel));
       }
       caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("noJuegan") }), ul);
     }
+  }
+
+  // FIDE desaconseja el bye de punto entero: se puede dar, pero el programa
+  // avisa antes (lista de verificación de los programas de torneo, punto 17).
+  // Si quien arbitra se arrepiente, el select vuelve a lo que tenía y la
+  // función devuelve false. `antes`: el valor que tenía el select.
+  async function confirmarByeEntero(s, antes) {
+    if (s.value !== "F" || antes === "F") return true;
+    const ok = await Avisos.confirmar(tx("byeEnteroAviso"), { titulo: tx("byeEnteroTitulo"), aceptar: tx("byeEnteroSi"), cancelar: tx("byeEnteroNo") });
+    if (!ok) s.value = antes;
+    return ok;
   }
 
   // ---------- Modificar la ronda en juego, sin deshacerla ----------
@@ -6197,7 +6212,8 @@
           noViene.textContent = tx(marcado ? "deshacerNoViene" : "noViene");
           noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
         };
-        s.addEventListener("change", () => {
+        s.addEventListener("change", async () => {
+          if (!(await confirmarByeEntero(s, pedidas[id] || ""))) return;
           if (s.value) { pedidas[id] = s.value; elegidas[id] = s.value; } else { delete pedidas[id]; delete elegidas[id]; }
           actualizarNoViene();
           guardar();

@@ -348,8 +348,13 @@
                 es: "Partidas con negras", en: "Games played with black" },
     "BWG":    { f: (id, tb) => tb.reg.get(id).filter((x) => x.color === "b" && x.puntos === 1 && (x.jugada || (tb.todos && x.cat === GANA_INCOMP))).length,
                 es: "Partidas ganadas con negras", en: "Games won with black" },
-    "GE":     { f: (id, tb) => tb.rondas - tb.reg.get(id).filter((x) => x.vur).length,
-                es: "Partidas que eligió jugar", en: "Games elected to play" },
+    // REP (7.6 del C.07:2026): las rondas menos los byes de medio punto, los
+    // de cero y las incomparecencias perdidas, que son justo las rondas no
+    // jugadas voluntarias (`vur`). Hasta la versión de 2024 se llamaba GE
+    // («games elected»): «GE» queda abajo como alias, solo para leer los
+    // torneos guardados antes (T.nuevo() ya lo cambia por REP al abrirlos).
+    "REP":    { f: (id, tb) => tb.rondas - tb.reg.get(id).filter((x) => x.vur).length,
+                es: "Rondas que eligió jugar", en: "Rounds one elected to play" },
     "PS":     { f: progresivo(false), es: "Progresivo", en: "Progressive scores" },
     "PS-C1":  { f: progresivo(true), es: "Progresivo sin la 1.ª ronda", en: "Progressive scores Cut-1" },
     "KS":     { f: koya, es: "Koya", en: "Koya system" },
@@ -367,7 +372,32 @@
                 es: "Rendimiento perfecto medio de los rivales", en: "Average perfect performance of opponents" },
     "AFB":    { f: promedioDeRivales((r, tb, t) => foreBuchholz(r, tb, t), dosDecimales),
                 es: "Fore Buchholz medio de los rivales", en: "Average of opponents' Fore Buchholz" },
+    // TPN (7.8) y RTNG (10.6), obligatorios desde la lista MTB26 de FIDE.
+    // `menor`: gana el valor más BAJO (el número de emparejamiento 1 va antes
+    // que el 2). El valor se guarda tal cual —el número, el Elo— para que se
+    // lea igual en la tabla; quien ordena al revés es la comparación.
+    // «/R» de FIDE (orden inverso) va como código aparte: TPN-R, RTNG-R.
+    // Sin Elo cuenta 0, como en ARO y TPR (la ayuda pide el de todos).
+    "TPN":    { f: (id, tb, t) => T.numeros(t).get(id) || 0, menor: true,
+                es: "Número de emparejamiento (el menor primero)", en: "Tournament pairing number (lowest first)" },
+    "TPN-R":  { f: (id, tb, t) => T.numeros(t).get(id) || 0,
+                es: "Número de emparejamiento (el mayor primero)", en: "Tournament pairing number, reversed (highest first)" },
+    "RTNG":   { f: (id, tb, t) => eloDe(t, id),
+                es: "Elo del jugador (el mayor primero)", en: "Rating (highest first)" },
+    "RTNG-R": { f: (id, tb, t) => eloDe(t, id), menor: true,
+                es: "Elo del jugador (el menor primero)", en: "Rating, reversed (lowest first)" },
   };
+  // Alias de los torneos guardados antes de 2026: no se ofrece en ninguna lista.
+  const ALIAS = { "GE": "REP" };
+  for (const [viejo, nuevo] of Object.entries(ALIAS)) C[viejo] = Object.assign({ legado: true }, C[nuevo]);
+  // Cambia los códigos viejos por los de hoy, sin repetir ninguno.
+  function codigosAlDia(lista) {
+    const out = [];
+    for (const c of lista || []) { const n = ALIAS[c] || c; if (!out.includes(n)) out.push(n); }
+    return out;
+  }
+  // Cómo se compara un desempate: más es mejor, salvo los marcados `menor`.
+  const diferencia = (c, a, b) => (C[c] && C[c].menor ? a - b : b - a);
 
   // Los grupos de empatados en puntos (lo que usa el encuentro directo, DE):
   // una sola vez, la usan clasificacion(), calcular() y explicar().
@@ -396,7 +426,7 @@
     const num = T.numeros(t);
     const cmp = (a, b) => {
       if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-      for (const c of lista) if (b.valores[c] !== a.valores[c]) return b.valores[c] - a.valores[c];
+      for (const c of lista) if (b.valores[c] !== a.valores[c]) return diferencia(c, a.valores[c], b.valores[c]);
       return 0;
     };
     // En la eliminación directa el puesto no sale de los puntos sino de hasta
@@ -431,7 +461,7 @@
    *       valor, incluido }], total, nota? } para los 22 desempates que son
    *     una suma (o un conteo, o un promedio) ronda por ronda: Buchholz y sus
    *     variantes, Sonneborn-Berger, Fore Buchholz, encuentro directo, Koya,
-   *     progresivo, puntos estándar, los conteos (WIN, WON, BPG, BWG, GE), el
+   *     progresivo, puntos estándar, los conteos (WIN, WON, BPG, BWG, REP), el
    *     Elo medio de los rivales y los cuatro promedios de lo que hicieron
    *     los rivales (AOB, APRO, APPO, AFB: ahí `valor` es el aporte de CADA
    *     rival en su propio Buchholz/rendimiento, no de esa ronda). `incluido:
@@ -638,6 +668,16 @@
     ] };
   }
 
+  function eloDe(t, id) {
+    const j = t.jugadores.find((x) => x.id === id);
+    return (j && Number(j.elo)) || 0;
+  }
+  // Los desempates que son un dato del propio jugador (TPN, RTNG): no hay
+  // rondas que sumar, solo el dato y cómo se ordena.
+  function formulaPropia(valor, que, orden) {
+    return { tipo: "formula", filas: [], total: valor, partes: [{ etiqueta: que, valor }], nota: orden };
+  }
+
   function explicar(t, id, codigo) {
     if (!C[codigo]) return null;
     const tb = registros(t);
@@ -655,7 +695,9 @@
       case "WON": return gridConteo(id, tb, (x) => (x.jugada || (tb.todos && x.cat === GANA_INCOMP)) && x.puntos === 1);
       case "BPG": return gridConteo(id, tb, (x) => x.color === "b" && (x.jugada || (tb.todos && x.cat === GANA_INCOMP)));
       case "BWG": return gridConteo(id, tb, (x) => x.color === "b" && x.puntos === 1 && (x.jugada || (tb.todos && x.cat === GANA_INCOMP)));
-      case "GE": return gridConteo(id, tb, (x) => !x.vur);
+      case "REP": case "GE": return gridConteo(id, tb, (x) => !x.vur);
+      case "TPN": case "TPN-R": return formulaPropia(T.numeros(t).get(id) || 0, "Tu número de emparejamiento (sale del orden inicial: Elo, título y nombre, C.04.2).", codigo === "TPN" ? "Gana el número más bajo." : "Gana el número más alto.");
+      case "RTNG": case "RTNG-R": return formulaPropia(eloDe(t, id), "Tu Elo, el que tienes anotado en el torneo (sin Elo cuenta 0).", codigo === "RTNG" ? "Gana el Elo más alto." : "Gana el Elo más bajo.");
       case "PS": return gridProgresivo(id, tb, false);
       case "PS-C1": return gridProgresivo(id, tb, true);
       case "KS": return gridKoya(id, tb);
@@ -672,8 +714,8 @@
     }
   }
 
-  const CATALOGO = Object.keys(C).map((c) => ({ codigo: c, es: C[c].es, en: C[c].en }));
-  const api = { CATALOGO, clasificacion, calcular, dpDeP, explicar };
+  const CATALOGO = Object.keys(C).filter((c) => !C[c].legado).map((c) => ({ codigo: c, es: C[c].es, en: C[c].en, menor: !!C[c].menor }));
+  const api = { CATALOGO, clasificacion, calcular, dpDeP, explicar, codigosAlDia, diferencia };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoDesempates = api;
 })(typeof self !== "undefined" ? self : this);
