@@ -1,20 +1,3 @@
--- Formación Ajedrez, Sesión 5: entran ocho láminas después de «Logística antes
--- del torneo» (la Boleta Oficial y la acreditación, sus requisitos, los ocho
--- documentos del estudiante, qué pasa si falta, el congresillo técnico, qué se
--- revisa en cada congresillo, qué se puede y qué no, y cómo calcular los
--- materiales), con la Normativa PJDE 2026. Desde el primer receso todo se
--- corre 8 lugares: los ejercicios de la práctica pasan de las láminas 18 a 20
--- a las 26 a 28.
---
--- Las claves van por número de lámina, así que se borran las de la Sesión 5 y
--- se vuelven a sembrar con los números nuevos (el mismo contenido que da
--- node herramientas/formacion-practicas.js --sql; la respuesta del ejercicio 2
--- ahora cuenta mesas dobles). Las respuestas cuelgan de las claves con
--- on delete cascade: borrar una clave con respuestas las borraría. Por eso la
--- migración se niega si hay alguna respuesta de esta práctica.
--- Ver «Las prácticas de Formación Ajedrez en la clase» en
--- docs/decisiones/clase-en-vivo.md.
-
 do $$
 begin
   if exists (select 1 from public.practica_respuestas where deck = 'formacion-ajedrez/clase-05') then

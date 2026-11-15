@@ -4453,6 +4453,14 @@ láminas; la práctica, de las 17-20 a las 25-28, y la migración
 `formacion_sesion5_acreditacion_congresillo` vuelve a sembrar sus claves con
 la misma guarda que la de la Sesión 3. El ejercicio de materiales ahora cuenta
 mesas dobles (40 estudiantes: 20 partidas, 10 mesas dobles).
+Se aplicó el 15/11 con `apply_migration` (versión `20261115173251`), sin
+respuestas guardadas de esa práctica, y se comprobó que las claves quedaron en
+las láminas 26 a 28. Se aplicó sin su comentario de cabecera, así que el
+archivo es solo el SQL aplicado (su md5 es el de la base); el porqué está acá.
+El esquema no cambió (el retrato dio la misma huella), solo su `# al-dia-con:`.
+Al aplicarla, la base ya tenía cuatro migraciones más que el repositorio
+(689 contra 685): la huella del punto de restauración no coincide, y no es
+por esta.
 
 - **Generado en Windows**: las láminas se dibujaron con Segoe UI Emoji (no
   había Noto Color Emoji), así que los íconos de la Sesión 5 tienen otro
