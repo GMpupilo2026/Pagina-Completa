@@ -19099,7 +19099,7 @@
   ]
  },
  "imagenes": {
-  "total": 1244,
+  "total": 1245,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26673,6 +26673,12 @@
     "titulo": "Herramientas",
     "grupo": "Carpetas",
     "archivos": [
+     {
+      "ruta": "img/herramientas/aula-arbitraje.jpg",
+      "titulo": "Aula arbitraje",
+      "tipo": "otro",
+      "kb": 112
+     },
      {
       "ruta": "img/herramientas/notara.jpg",
       "titulo": "Notara",
