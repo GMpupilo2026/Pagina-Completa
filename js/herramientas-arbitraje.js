@@ -461,6 +461,10 @@
             corto: "Aula de Arbitraje",
             href: "aula-arbitraje.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/aula-arbitraje.jpg", ancho: 1200, alto: 675,
+                alt: "Ilustración del Aula de Arbitraje: la portada de la revista Arbitraje de Ajedrez, un tablero con un ejercicio de triple repetición, la ficha del artículo 7.1 de las Leyes y un reloj digital con los tiempos ya ajustados.",
+            },
             resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
             puntos: [
                 "Fichas por tema con lo que dice la norma, las ideas clave y los errores frecuentes; con los 18 números de la revista Arbitraje de Ajedrez actualizados a 2026: más de 80 fichas y 550 preguntas.",
