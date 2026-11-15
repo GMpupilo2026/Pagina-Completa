@@ -46,6 +46,10 @@
             href: "pareo.html",
             manual: "pareo-manual.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/pareo-integral.jpg", ancho: 1200, alto: 675,
+                alt: "Un torneo escolar de ajedrez: en la mesa de organización, una laptop con Pareo Integral muestra el pareo de la ronda 4 y la clasificación con los desempates; al lado, unos niños buscan su mesa en el pareo impreso pegado en una pizarra.",
+            },
             resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Con tu licencia, en tu computadora.",
             puntos: [
                 "El Sistema Holandés vigente (C.04.3, 2026), calculado con bbpPairings, el motor que usan programas avalados por FIDE.",
@@ -442,6 +446,10 @@
             corto: "Mesa del árbitro",
             href: "mesa-arbitro.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/mesa-arbitro.jpg", ancho: 1200, alto: 675,
+                alt: "La mesa del árbitro en un torneo escolar: una tablet con las mesas de la ronda abierta, sus resultados y la bitácora con su hora; al lado, la bitácora impresa con el espacio para la firma, y detrás una árbitra anotando mientras juegan.",
+            },
             resumen: "Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados, mándalos con la clave del torneo y lleva tu bitácora de árbitro, con su hora, en PDF o Word.",
             puntos: [
                 "Entra con las mismas dos claves de «Enter Results Online» de chess-results (el código de la base de datos y el SID) y trae las mesas de la ronda abierta.",
