@@ -820,12 +820,12 @@
       "titulo": "Sesión 5: Resolución de casos en grupos y experiencias regionales",
       "laminas": [
         {
-          "n": 17,
+          "n": 25,
           "titulo": "Práctica · Resolución grupal de casos integradores",
           "preguntas": []
         },
         {
-          "n": 18,
+          "n": 26,
           "titulo": "Ejercicio 1 de 3",
           "preguntas": [
             {
@@ -836,7 +836,7 @@
           ]
         },
         {
-          "n": 19,
+          "n": 27,
           "titulo": "Ejercicio 2 de 3",
           "preguntas": [
             {
@@ -847,7 +847,7 @@
           ]
         },
         {
-          "n": 20,
+          "n": 28,
           "titulo": "Ejercicio 3 de 3",
           "preguntas": [
             {
