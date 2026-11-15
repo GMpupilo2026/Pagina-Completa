@@ -181,7 +181,14 @@ table.aula-cruzada tr.emp .nm { font-weight: 700; }
 .aula-palanca[data-lado="w"] { left: 7%; }
 .aula-palanca[data-lado="b"] { right: 7%; }
 .aula-palanca.arriba { transform: translateY(-.5rem); background: linear-gradient(180deg, #e2c27a, #a8781e); }
-.aula-lcd { background: #c9d4b8; border-radius: .5rem; display: grid; grid-template-columns: 1fr 1fr; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .35); overflow: hidden; }
+.aula-lcd { position: relative; background: #c9d4b8; border-radius: .5rem; display: grid; grid-template-columns: 1fr 1fr; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .35); overflow: hidden; }
+/* La marca de Ajedrez Integral en todo reloj (ver la cabecera de
+   js/aula-arbitraje/reloj.js): en pequeño, en el centro de la pantalla,
+   sobre la línea que separa los dos tiempos. */
+.aula-lcd-marca { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: clamp(1.6rem, 5.5vw, 2.6rem); height: auto; opacity: .7; pointer-events: none; }
+.aula-reloj-marca { display: flex; align-items: center; justify-content: center; gap: .4rem; margin-top: .55rem; color: #e2c27a; font: 700 .8rem/1 Merriweather, "Merriweather respaldo", serif; letter-spacing: .02em; }
+.aula-reloj-marca img { height: 1.15rem; width: auto; }
+.aula-reloj-marca b { color: #f4e3b5; }
 .aula-lado { display: flex; flex-direction: column; align-items: center; padding: .6rem .3rem .5rem; color: #4d5a3f; position: relative; min-width: 0; }
 .aula-lado + .aula-lado { border-left: 1px dashed rgba(0, 0, 0, .25); }
 .aula-lado.activo { color: #141a0f; }
@@ -210,6 +217,39 @@ details.aula-panel summary { cursor: pointer; padding: .6rem .9rem; font-weight:
 .aula-aviso-ajuste { font-size: .8rem; color: rgb(var(--c-brand-600)); min-height: 1em; }
 .dark .aula-aviso-ajuste { color: rgb(var(--c-brand-200)); }
 .aula-registro { list-style: disc; padding: 0 .9rem .9rem 2rem; font-size: .8rem; max-height: 11rem; overflow: auto; }
+
+/* Diagramas de preguntas y casos, y la serie que termina en mate */
+.aula-diagrama { margin: 0; display: flex; flex-direction: column; gap: .4rem; max-width: 17rem; }
+.aula-tablero-mini { width: 100%; max-width: 17rem; }
+.aula-diagrama figcaption { font-size: .85rem; }
+.aula-serie { margin-top: .6rem; display: flex; flex-direction: column; gap: .4rem; }
+.aula-serie .aula-tablero-mini { max-width: 15rem; }
+
+/* La portada de cada número de la revista y su PDF */
+.aula-portada img { width: 100%; max-width: 12rem; height: auto; border-radius: .4rem; box-shadow: 0 2px 8px rgba(16, 42, 67, .25); align-self: center; }
+.aula-lista-avance { list-style: none; padding: 0; margin: 0; font-size: .875rem; display: flex; flex-direction: column; gap: .2rem; }
+.aula-lista-avance li.hecho { color: #14532d; }
+.aula-lista-avance li.falta { color: rgb(var(--c-brand-700)); }
+.dark .aula-lista-avance li.hecho { color: #bbf7d0; }
+.dark .aula-lista-avance li.falta { color: rgb(var(--c-brand-200)); }
+.aula-apagado { opacity: .6; cursor: not-allowed; }
+.aula-apagado:focus-visible { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+
+/* Ejercicios de cálculo (desempates y normas) */
+.aula-caso-ancho { grid-template-columns: minmax(0, 1fr) !important; }
+.aula-paso-calc { border: 1px solid rgb(var(--c-brand-200)); border-radius: .6rem; padding: .6rem .8rem .8rem; display: flex; flex-direction: column; gap: .5rem; }
+.dark .aula-paso-calc { border-color: rgb(var(--c-brand-700)); }
+.aula-paso-calc legend { font-weight: 700; font-size: .9rem; padding: 0 .3rem; }
+.aula-casilla { display: flex !important; flex-direction: row !important; align-items: center; gap: .5rem; font-size: .9rem; font-weight: 500; }
+#aula-vista .aula-casilla input { width: auto; }
+.aula-chequeos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .25rem; font-size: .875rem; }
+.aula-chequeos li.no { font-weight: 600; }
+.aula-detalle { margin-top: .25rem; }
+.aula-detalle summary { cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.aula-detalle summary:focus-visible, .aula-celda:focus-visible { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.aula-celda { background: none; border: 1px dashed rgb(var(--c-brand-300)); border-radius: .3rem; padding: .05rem .4rem; color: inherit; cursor: pointer; font-variant-numeric: tabular-nums; }
+table.aula-torneo td { white-space: nowrap; }
+.aula-tabla-dp { max-height: 18rem; overflow: auto; }
 
 @media (max-width: 860px) {
     .aula-ficha, .aula-caso, .aula-tablero-zona, .aula-reloj-pagina { grid-template-columns: minmax(0, 1fr); }

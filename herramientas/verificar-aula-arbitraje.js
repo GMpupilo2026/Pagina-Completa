@@ -15,6 +15,12 @@
 const path = require("path");
 const C = require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido.js"));
 require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-revistas.js")); // suma los números 2-18 a C
+require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-practica.js")); // y el Taller del árbitro
+const fs = require("fs");
+const MP = require(path.join(__dirname, "lib", "mate-posible.js"));
+const TT = require(path.join(__dirname, "..", "js", "aula-arbitraje", "torneo-texto.js"));
+const AD = require(path.join(__dirname, "..", "js", "aula-arbitraje", "desempates.js"));
+const NT = require(path.join(__dirname, "..", "js", "normas-titulo.js"));
 const A = require(path.join(__dirname, "..", "js", "aula-arbitraje", "ajuste.js"));
 global.Chess = require("chess.js").Chess;
 const R = require(path.join(__dirname, "..", "js", "reclamos-tablas.js"));
@@ -34,7 +40,7 @@ igual("cada pregunta es de una ficha que existe", C.preguntas.filter((p) => !fic
 igual("«correcta» es una de las opciones", C.preguntas.filter((p) => !(p.correcta >= 0 && p.correcta < p.opciones.length)).map((p) => p.texto), []);
 igual("cada caso es de una ficha que existe", C.casos.filter((c) => !fichas.has(c.ficha)).map((c) => c.id), []);
 igual("los ids de las fichas no se repiten", C.fichas.length, new Set(C.fichas.map((f) => f.id)).size);
-igual("las colecciones son los 18 números de la revista, en orden", C.colecciones.map((c) => c.id), Array.from({ length: 18 }, (_, i) => "revista-" + (i + 1)));
+igual("las colecciones son los 18 números de la revista, en orden, y el taller", C.colecciones.map((c) => c.id), Array.from({ length: 18 }, (_, i) => "revista-" + (i + 1)).concat(["taller"]));
 igual("en cada caso con decisión, «correcta» es una de sus opciones", C.casos.filter((c) => c.decision && !(c.decision.correcta >= 0 && c.decision.correcta < c.decision.opciones.length)).map((c) => c.id), []);
 igual("ningún contenido trae HTML activo (script, on…, iframe)", C.fichas.filter((f) => /<script|\son\w+\s*=|javascript:|<iframe/i.test(f.contenido)).map((f) => f.id), []);
 igual("los ids de los casos no se repiten", C.casos.length, new Set(C.casos.map((c) => c.id)).size);
@@ -64,6 +70,67 @@ C.repeticiones.forEach((e) => {
     igual(e.id + ": todas las jugadas son legales", a.posiciones.length - 1, jugadas);
     igual(e.id + ": triple repetición y veces de la foto más repetida", [a.repeticiones.length > 0, Math.max.apply(null, Object.values(fotos))], [e.esperado.triple, e.esperado.fotos]);
 });
+
+console.log("\n=== Diagramas: posiciones legales y resultados probados ===");
+const ES_A_EN = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
+const serieEn = (serie) => String(serie).replace(/\d+\.(\.\.)?/g, " ").split(/\s+/).filter(Boolean).map((x) => x.replace(/^[RDTAC]/, (c) => ES_A_EN[c]));
+const conFen = C.preguntas.filter((p) => p.fen).map((p) => [p.ficha + ": " + p.texto.slice(0, 50), p]).concat(C.casos.filter((c) => c.fen).map((c) => ["caso " + c.id, c]));
+igual("hay diagramas (preguntas y casos)", conFen.length >= 35, true);
+const malos = [];
+conFen.forEach(([n, x]) => {
+    const l = MP.legal(x.fen);
+    if (l) { malos.push(n + ": " + l); return; }
+    if (x.mate) { const r = MP.comprobarSerie(x.fen, serieEn(x.mate.serie), x.mate.bando); if (!r.ok) malos.push(n + ": " + r.motivo); }
+    if (x.sinMate) { const r = MP.sinMate(x.fen, x.sinMate); if (!r.probado) malos.push(n + ": no se pudo probar que no hay mate (" + r.motivo + ")"); }
+});
+igual("cada posición es legal, cada serie termina en mate y cada «sin mate» está probado", malos, []);
+const sinEnganche = C.diagramas.preguntas.filter((d) => C.preguntas.filter((p) => p.ficha === d.ficha && p.texto.indexOf(d.texto) === 0).length !== 1).map((d) => d.texto)
+    .concat(C.diagramas.casos.filter((d) => !C.casos.some((c) => c.id === d.caso)).map((d) => d.caso));
+igual("cada diagrama agregado a una revista encuentra exactamente su pregunta o caso", sinEnganche, []);
+
+console.log("\n=== Casos de repetición, con chess.js ===");
+C.casos.filter((c) => c.secuencia).forEach((c) => {
+    const a = R.analizar('[SetUp "1"]\n[FEN "' + c.secuencia.fen + '"]\n\n' + c.secuencia.jugadas);
+    igual(c.id + ": la secuencia es legal y la triple repetición es la que dice el caso", a.error ? a.error : a.repeticiones.length > 0, c.secuencia.triple);
+});
+
+console.log("\n=== Casos de desempate (motor de Pareo Integral) ===");
+C.casos.filter((c) => c.tipo === "desempate").forEach((c) => {
+    const r = TT.leer(c.torneo.texto, { sistema: c.torneo.sistema, puntos: c.torneo.puntos });
+    if (r.errores.length) { igual(c.id + ": la tabla se lee", r.errores, []); return; }
+    igual(c.id + ": la tabla de vuelta a texto es la misma", TT.escribir(r.t, r.nombres).split("\n").map((l) => l.replace(/\s+/g, " ")), c.torneo.texto.split("\n").map((l) => l.trim().replace(/\s+/g, " ")));
+    const g = AD.grupoEmpatado(r.t);
+    const d = g && AD.desempatar(r.t, g.ids, c.bases);
+    igual(c.id + ": hay empate y las bases lo rompen del todo", !!d && d.orden.every((p) => p.length === 1), true);
+    igual(c.id + ": un suizo no usa Koya, ni un todos contra todos el Buchholz", c.bases.some((b) => (c.torneo.sistema === "todos" && /^(BH|FB|AOB)/.test(b)) || (c.torneo.sistema !== "todos" && b === "KS")), false);
+});
+{
+    const c = C.casos.find((x) => x.id === "des-de-suizo");
+    const r = TT.leer(c.torneo.texto, { sistema: "suizo" });
+    const g = AD.grupoEmpatado(r.t);
+    igual("DE en un suizo (art. 6.3): Gamboa queda solo arriba y los otros dos no se separan", AD.encuentroDirecto(r.t, g.ids).map((p) => p.map((id) => r.nombres[id]).sort().join("=")), ["Gamboa", "Alvarado=Jiménez"]);
+}
+igual("el lector de tablas avisa si dos jugadores no dicen lo mismo", TT.leer("A | 2000 | 2b1\nB | 1900 | 1n½").errores.length > 0, true);
+
+console.log("\n=== Casos de normas (js/normas-titulo.js) ===");
+C.casos.filter((c) => c.tipo === "norma").forEach((c) => {
+    const partidas = c.rivales.map((l, i) => { const [nombre, titulo, fed, elo, res] = l.split("|"); const f = res === "+" || res === "-"; return { ronda: i + 1, puntos: res === "1" || res === "+" ? 1 : res === "½" ? 0.5 : 0, jugada: !f, rival: { nombre, titulo, fed, elo: Number(elo) || 0 } }; });
+    const ev = NT.evaluar(Object.assign({}, c.jugador, { partidas }), { sistema: c.sistema, rondas: c.rivales.length });
+    const real = {};
+    Object.keys(c.esperado).forEach((t) => { const x = ev.titulos.find((y) => y.titulo === t); real[t] = x ? x.norma : "no se evalúa"; });
+    igual(c.id + ": la norma sale como cuenta el caso", real, c.esperado);
+    igual(c.id + ": los títulos que pide decidir se evalúan", c.titulos.every((t) => ev.titulos.some((y) => y.titulo === t)), true);
+});
+
+console.log("\n=== Las revistas: portada y PDF ===");
+const raiz = path.join(__dirname, "..");
+const faltan = [];
+for (let n = 1; n <= 18; n++) {
+    const nn = (n < 10 ? "0" : "") + n;
+    if (!fs.existsSync(path.join(raiz, "descargas", "aula-arbitraje", "revista-" + nn + ".pdf"))) faltan.push("PDF " + nn);
+    if (!fs.existsSync(path.join(raiz, "img", "aula-arbitraje", "portada-" + nn + ".jpg"))) faltan.push("portada " + nn);
+}
+igual("cada número tiene su PDF y su portada (herramientas/aula-portadas.js)", faltan, []);
 
 console.log("\n=== Koya ===");
 // El cuadro de la revista actualizada (10 jugadores, ficticio y verificado).

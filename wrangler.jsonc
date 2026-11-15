@@ -18,6 +18,8 @@
 			// El código de las herramientas con licencia sin nada público
 			// (CODIGO_CON_LICENCIA en worker.js): solo con la licencia.
 			"/js/bases-torneo.js", "/js/bases-torneo-pagina.js", "/js/inscripcion-jde.js",
-			"/js/inscripcion-jde-reglas.js", "/js/normas-titulo.js"]
+			"/js/inscripcion-jde-reglas.js", "/js/normas-titulo.js",
+			// Los PDF de la revista del Aula de Arbitraje (ARCHIVOS_CON_LICENCIA).
+			"/descargas/*"]
 	}
 }

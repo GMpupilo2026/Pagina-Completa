@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 895,
+  "total": 913,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8149,6 +8149,114 @@
    }
   ],
   "sueltos": [
+   {
+    "ruta": "descargas/aula-arbitraje/revista-01.pdf",
+    "titulo": "Revista 01",
+    "tipo": "otro",
+    "kb": 946
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-02.pdf",
+    "titulo": "Revista 02",
+    "tipo": "otro",
+    "kb": 1115
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-03.pdf",
+    "titulo": "Revista 03",
+    "tipo": "otro",
+    "kb": 1006
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-04.pdf",
+    "titulo": "Revista 04",
+    "tipo": "otro",
+    "kb": 915
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-05.pdf",
+    "titulo": "Revista 05",
+    "tipo": "otro",
+    "kb": 992
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-06.pdf",
+    "titulo": "Revista 06",
+    "tipo": "otro",
+    "kb": 960
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-07.pdf",
+    "titulo": "Revista 07",
+    "tipo": "otro",
+    "kb": 1013
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-08.pdf",
+    "titulo": "Revista 08",
+    "tipo": "otro",
+    "kb": 948
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-09.pdf",
+    "titulo": "Revista 09",
+    "tipo": "otro",
+    "kb": 1174
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-10.pdf",
+    "titulo": "Revista 10",
+    "tipo": "otro",
+    "kb": 971
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-11.pdf",
+    "titulo": "Revista 11",
+    "tipo": "otro",
+    "kb": 1170
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-12.pdf",
+    "titulo": "Revista 12",
+    "tipo": "otro",
+    "kb": 1052
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-13.pdf",
+    "titulo": "Revista 13",
+    "tipo": "otro",
+    "kb": 1020
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-14.pdf",
+    "titulo": "Revista 14",
+    "tipo": "otro",
+    "kb": 990
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-15.pdf",
+    "titulo": "Revista 15",
+    "tipo": "otro",
+    "kb": 983
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-16.pdf",
+    "titulo": "Revista 16",
+    "tipo": "otro",
+    "kb": 826
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-17.pdf",
+    "titulo": "Revista 17",
+    "tipo": "otro",
+    "kb": 761
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-18.pdf",
+    "titulo": "Revista 18",
+    "tipo": "otro",
+    "kb": 913
+   },
    {
     "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
     "titulo": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
@@ -19099,7 +19207,7 @@
   ]
  },
  "imagenes": {
-  "total": 1245,
+  "total": 1263,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26277,6 +26385,121 @@
       "titulo": "Logo",
       "tipo": "otro",
       "kb": 15
+     }
+    ]
+   },
+   {
+    "carpeta": "img/aula-arbitraje",
+    "titulo": "Aula arbitraje",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/aula-arbitraje/portada-01.jpg",
+      "titulo": "Portada 01",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-02.jpg",
+      "titulo": "Portada 02",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-03.jpg",
+      "titulo": "Portada 03",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-04.jpg",
+      "titulo": "Portada 04",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-05.jpg",
+      "titulo": "Portada 05",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-06.jpg",
+      "titulo": "Portada 06",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-07.jpg",
+      "titulo": "Portada 07",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-08.jpg",
+      "titulo": "Portada 08",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-09.jpg",
+      "titulo": "Portada 09",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-10.jpg",
+      "titulo": "Portada 10",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-11.jpg",
+      "titulo": "Portada 11",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-12.jpg",
+      "titulo": "Portada 12",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-13.jpg",
+      "titulo": "Portada 13",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-14.jpg",
+      "titulo": "Portada 14",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-15.jpg",
+      "titulo": "Portada 15",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-16.jpg",
+      "titulo": "Portada 16",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-17.jpg",
+      "titulo": "Portada 17",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-18.jpg",
+      "titulo": "Portada 18",
+      "tipo": "otro",
+      "kb": 20
      }
     ]
    },

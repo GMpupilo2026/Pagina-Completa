@@ -505,14 +505,14 @@ async function cargarWorker(real) {
       /var RUTAS = \[[^\]]*"\/js\/"/.test(fs.readFileSync(path.join(raiz, "js", "supabase-client.js"), "utf8")), true);
     // Que no se cuele nada que use el público: un archivo de la lista no lo
     // carga ninguna página fuera de la de su herramienta.
-    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html" };
+    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html", "aula-arbitraje": "aula-arbitraje.html" };
     const ajenas = [];
     const htmls = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
       ["node_modules", ".git", "herramientas", "docs", "supabase"].includes(e.name) ? [] :
       e.isDirectory() ? htmls(path.join(dir, e.name)) : e.name.endsWith(".html") ? [path.join(dir, e.name)] : []);
     for (const f of htmls(raiz)) {
       const t = fs.readFileSync(f, "utf8");
-      for (const r of rutas) if (t.includes('src="' + r.slice(1)) && path.relative(raiz, f) !== paginaDe[lista[r]]) ajenas.push(path.relative(raiz, f) + " → " + r);
+      for (const r of rutas) if (t.includes('src="' + r.slice(1)) && ![].concat(lista[r]).map((h) => paginaDe[h]).includes(path.relative(raiz, f).split(path.sep).join("/"))) ajenas.push(path.relative(raiz, f) + " → " + r);
     }
     igual("ninguna otra página carga ese código (sería una página pública rota)", ajenas, []);
 
@@ -542,6 +542,24 @@ async function cargarWorker(real) {
     igual("la licencia de una herramienta no abre el código de otra (se recuerda por herramienta)", [r4.preguntas.length, r4.aArchivos], [1, false]);
     const r5 = await pedirJs("/js/main.js", t, si);
     igual("el resto de js/ pasa de largo, sin preguntar", [r5.aArchivos, r5.preguntas.length], [true, 0]);
+    // El cálculo de normas va con la licencia de normas O con la del Aula.
+    const t2 = token();
+    let n = 0;
+    const r6 = await pedirJs("/js/normas-titulo.js", t2, () => new Response(n++ === 0 ? "false" : "true", { status: 200 }));
+    igual("normas-titulo.js: sin la licencia de normas pregunta por la del Aula y, con esa, entrega el código",
+      [r6.preguntas.map((x) => JSON.parse(x.cuerpo).p_herramienta), r6.aArchivos], [["normas-titulo", "aula-arbitraje"], true]);
+
+    console.log("\n=== Los PDF del Aula, solo con la licencia ===");
+    igual("la carpeta está en run_worker_first", wr.assets.run_worker_first.includes("/descargas/*"), true);
+    igual("y en NUNCA de sw.js", nunca.some((re) => re.test("/descargas/aula-arbitraje/revista-01.pdf")), true);
+    const d1 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", null, si);
+    igual("sin sesión: 403, sin entregar el archivo ni preguntar", [d1.estado, d1.aArchivos, d1.preguntas.length], [403, false, 0]);
+    const t3 = token();
+    const d2 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", t3, no);
+    igual("con sesión y sin la licencia del Aula: 403, después de preguntar por aula-arbitraje",
+      [d2.estado, d2.aArchivos, d2.preguntas[0] && JSON.parse(d2.preguntas[0].cuerpo).p_herramienta], [403, false, "aula-arbitraje"]);
+    const d3 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", t3, si);
+    igual("con la licencia: el archivo, sin caché compartida", [d3.estado, d3.aArchivos, d3.cache], [200, true, "private, no-cache"]);
   }
 
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");

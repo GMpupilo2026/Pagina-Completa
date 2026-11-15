@@ -7,6 +7,11 @@
    sanciones de 2 o 1 minuto: es lo que se hace en la sala después de una
    irregularidad (Leyes del Ajedrez 2023, arts. 6.10.2 y 7.1).
 
+   Todo reloj del Aula lleva la marca de Ajedrez Integral: la marca de agua
+   en pequeño en el centro de la pantalla, entre los dos tiempos, y la placa
+   con el logo en el cuerpo. Es a propósito (lo pidió el dueño): quien
+   comparte una captura de lo que practica muestra de dónde estudia.
+
    El tiempo del periodo siguiente se suma cuando el jugador completa la
    jugada que cierra el control (como los relojes DGT con contador). Todo el
    texto que pinta es del propio reloj: nada de lo que escribe una persona
@@ -116,7 +121,9 @@
                 '<div class="aula-lcd" role="group" aria-label="Pantalla del reloj">' +
                   '<div class="aula-lado" data-lado="w"><span class="aula-quien">BLANCAS</span><span class="aula-dig" aria-live="off"></span><span class="aula-mov"></span></div>' +
                   '<div class="aula-lado" data-lado="b"><span class="aula-quien">NEGRAS</span><span class="aula-dig" aria-live="off"></span><span class="aula-mov"></span></div>' +
+                  '<img class="aula-lcd-marca" src="/img/marca-agua-ajedrez-integral.png" alt="" width="760" height="564">' +
                 "</div>" +
+                '<div class="aula-reloj-marca"><img src="/img/logo-marca.png" alt="" width="155" height="96"><span>Ajedrez <b>Integral</b></span></div>' +
                 '<div class="aula-botonera">' +
                   '<button type="button" data-accion="iniciar"><span aria-hidden="true">▶ </span>Iniciar</button>' +
                   '<button type="button" data-accion="pausa"><span aria-hidden="true">❚❚ </span>Pausa del árbitro</button>' +
