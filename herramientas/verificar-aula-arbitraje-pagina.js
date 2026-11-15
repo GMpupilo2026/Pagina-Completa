@@ -3,7 +3,15 @@
    Lo que comprueba (con la licencia destapada con CandadoHerramienta.liberar(),
    como cuando la base contesta que sí; el candado lo prueba
    verificar-candado-herramienta.js):
-   - Estudiar: las fichas de la revista N.º 1, y una ficha con su contenido;
+   - Estudiar: el Taller primero, las fichas de la revista N.º 1 con su
+     portada, y una ficha con su contenido;
+   - la portada de cada número: el PDF bloqueado hasta completar todo lo de
+     ese número (fichas, preguntas, casos), y habilitado al completarlo;
+   - los casos del taller: el tablero y la serie que termina en mate, la
+     repetición con su tabla, un desempate (BH-C1) y una norma (piso de Elo);
+   - las calculadoras de desempates, normas y rendimiento, y la práctica
+     generada de desempates y normas;
+   - la marca de Ajedrez Integral en el reloj;
    - Practicar: una pregunta se contesta y dice si estuvo bien, escrito (✓/✗);
      el ejercicio de relojes acepta la solución que él mismo calcula; el de
      posiciones idénticas dibuja el tablero del sitio (64 casillas), anota en
@@ -81,9 +89,32 @@ async function contrastes(p) {
     console.log("\n=== Estudiar ===");
     let { p, errores } = await abrir(ctx, "");
     todos.push(errores);
-    igual("las tres fichas de la revista N.º 1, en la primera colección",
-        await p.$$eval("#aula-vista .aula-coleccion:first-of-type .aula-tarjeta h4", (l) => l.map((h) => h.textContent)), ["Ajuste de relojes después de una irregularidad", "Sistema de desempate Koya", "Posiciones idénticas"]);
-    igual("y debajo, los números 2 al 18", await p.$$eval("#aula-vista .aula-coleccion h3", (l) => [l.length, l[1].textContent.includes("N.º 2"), l[17].textContent.includes("N.º 18")]), [18, true, true]);
+    igual("primero el Taller del árbitro, con sus cuatro fichas",
+        await p.$$eval("#aula-vista .aula-coleccion:first-of-type .aula-tarjeta h4", (l) => l.length), 4);
+    igual("después la revista N.º 1: su portada y sus tres fichas",
+        await p.$$eval("#aula-vista .aula-coleccion:nth-of-type(2) .aula-tarjeta h4", (l) => l.map((h) => h.textContent)), ["La revista N.º 1 en PDF", "Ajuste de relojes después de una irregularidad", "Sistema de desempate Koya", "Posiciones idénticas"]);
+    igual("y debajo, los números 2 al 18", await p.$$eval("#aula-vista .aula-coleccion h3", (l) => [l.length, l[2].textContent.includes("N.º 2"), l[18].textContent.includes("N.º 18")]), [19, true, true]);
+
+    console.log("\n=== La portada de cada revista y su PDF ===");
+    igual("sin completar nada, el PDF del N.º 1 está bloqueado: sin enlace, pero se alcanza con Tab",
+        await p.$eval(".aula-portada[data-revista='1']", (t) => [!!t.querySelector("a[href$='.pdf']"), t.querySelector("[aria-disabled='true']").tabIndex, t.querySelector("img").naturalWidth > 0]), [false, 0, true]);
+    // Completar todo lo del N.º 1 (fichas vistas, preguntas acertadas, casos resueltos) lo habilita.
+    await p.evaluate(() => {
+        const D = window.AULA_CONTENIDO, ids = D.fichas.filter((f) => f.coleccion === "revista-1").map((f) => f.id);
+        const av = { pregV2: true, vistas: {}, preg: {}, casos: {} };
+        const n = {};
+        D.preguntas.forEach((q) => { n[q.ficha] = (n[q.ficha] || 0) + 1; if (ids.includes(q.ficha)) av.preg[q.ficha + "#" + n[q.ficha]] = true; });
+        ids.forEach((id) => { av.vistas[id] = true; });
+        D.casos.filter((c) => ids.includes(c.ficha)).forEach((c) => { av.casos[c.id] = "optima"; });
+        localStorage.setItem("aula_arbitraje_avance_v1", JSON.stringify(av));
+        location.hash = "practicar";
+    });
+    await p.waitForSelector("#aula-preg");
+    await p.evaluate(() => { location.hash = "estudiar"; });
+    await p.waitForSelector(".aula-portada[data-revista='1'] a[href$='.pdf']");
+    igual("con todo completo, el botón baja el PDF del N.º 1; el N.º 2 sigue bloqueado",
+        await p.evaluate(() => [document.querySelector(".aula-portada[data-revista='1'] a").getAttribute("href"), !!document.querySelector(".aula-portada[data-revista='2'] a[href$='.pdf']")]), ["descargas/aula-arbitraje/revista-01.pdf", false]);
+    await p.evaluate(() => localStorage.removeItem("aula_arbitraje_avance_v1"));
     await p.click("a[href='#ficha-relojes']");
     await p.waitForSelector(".aula-hoja");
     igual("la ficha de relojes trae la norma (art. 7.1) y sus ideas clave",
@@ -130,6 +161,54 @@ async function contrastes(p) {
     await p.click("#aula-dict");
     igual("con la solución recomendada: «Dictamen correcto»", await p.$eval("#aula-fbr .aula-fb", (f) => [f.classList.contains("ok"), f.textContent.startsWith("Dictamen correcto")]), [true, true]);
 
+    console.log("\n=== Casos del taller ===");
+    await p.evaluate(() => { location.hash = "caso-bandera-dos-peones"; });
+    await p.waitForSelector(".aula-diagrama .example-sq");
+    igual("el caso de bandera trae el tablero (64 casillas) y la posición escrita", await p.$eval(".aula-diagrama", (f) => [f.querySelectorAll(".example-sq").length, f.querySelector("figcaption").textContent.includes("Negras")]), [64, true]);
+    await p.click(".aula-opciones button[data-i='1']");
+    await p.waitForSelector(".aula-serie .example-sq");
+    igual("al decidir bien, muestra la serie legal que termina en mate", await p.$eval(".aula-serie", (s) => s.textContent.includes(": mate.")), true);
+    await p.evaluate(() => { location.hash = "caso-rep-enroque"; });
+    await p.waitForSelector("[data-secuencia] .example-sq");
+    await p.click(".aula-opciones button[data-i='1']");
+    igual("el caso de repetición corrige y muestra la tabla de posiciones idénticas", await p.$eval("#aula-vista", (v) => [v.querySelector("#aula-fbd .aula-fb").classList.contains("ok"), v.querySelectorAll("[data-secuencia] td.dif").length > 0]), [true, true]);
+    await p.evaluate(() => { location.hash = "caso-des-bh-c1"; });
+    await p.waitForSelector(".aula-paso-calc input");
+    await p.$$eval(".aula-paso-calc input", (i) => { i[0].value = "10½"; i[1].value = "11"; });
+    await p.selectOption("#aula-o0", "j6"); await p.selectOption("#aula-o1", "j1");
+    await p.click("[data-comprobar]");
+    igual("el caso de BH-C1 acepta 10½ y 11 y el orden Fallas › Alvarado", await p.$eval(".aula-fb-zona .aula-fb", (f) => [f.classList.contains("ok"), f.textContent.includes("Fallas › Alvarado")]), [true, true]);
+    await p.evaluate(() => { location.hash = "caso-nor-piso"; });
+    await p.waitForSelector("#aula-nra");
+    await p.fill("#aula-nn", "9"); await p.fill("#aula-np", "7"); await p.fill("#aula-nra", "2452"); await p.fill("#aula-nrp", "2672");
+    await p.check("input[type=checkbox][value=GM]");
+    await p.click("[data-comprobar]");
+    igual("el caso del piso de Elo: Ra 2452, Rp 2672, norma de GM", await p.$eval(".aula-fb-zona .aula-fb", (f) => [f.classList.contains("ok"), f.textContent.includes("Solís sube de 2080 al piso de 2200")]), [true, true]);
+
+    console.log("\n=== Calculadoras ===");
+    await p.evaluate(() => { location.hash = "calculadoras-desempates"; });
+    await p.waitForSelector("#aula-cdc");
+    await p.click("#aula-cdc");
+    igual("desempates: con el ejemplo, Fallas primero por BH-C1", await p.$eval("#aula-cdr", (r) => r.querySelector("table:not(.aula-torneo) tbody tr td:nth-child(2)").textContent), "Fallas");
+    await p.click("#aula-cdr .aula-celda");
+    igual("y al tocar un valor explica de dónde sale", await p.$eval("#aula-cdx", (x) => x.textContent.includes("Total")), true);
+    await p.evaluate(() => { location.hash = "calculadoras-normas"; });
+    await p.waitForSelector("#aula-cnc");
+    await p.click("#aula-cnc");
+    igual("normas: con el ejemplo, hay norma de GM", await p.$eval("#aula-cnr", (r) => r.textContent.includes("Gran Maestro (GM): hay norma")), true);
+    await p.evaluate(() => { location.hash = "calculadoras-rendimiento"; });
+    await p.waitForSelector("#aula-crc");
+    await p.click("#aula-crc");
+    igual("rendimiento: 2379 + 125 = 2504", await p.$eval("#aula-crr", (r) => r.textContent.includes("= 2504")), true);
+    await p.evaluate(() => { location.hash = "practicar-desempates"; });
+    await p.waitForSelector(".aula-paso-calc input");
+    await p.click("[data-comprobar]");
+    igual("la práctica de desempates genera un torneo y corrige", await p.$eval(".aula-fb-zona .aula-fb", (f) => f.textContent.includes("Orden final")), true);
+    await p.evaluate(() => { location.hash = "practicar-normas"; });
+    await p.waitForSelector("#aula-nra");
+    await p.click("[data-comprobar]");
+    igual("la práctica de normas genera rivales y corrige", await p.$eval(".aula-fb-zona .aula-fb", (f) => f.textContent.includes("Rp =")), true);
+
     console.log("\n=== Reloj ===");
     await p.evaluate(() => { location.hash = "reloj"; });
     await p.waitForSelector(".aula-reloj");
@@ -146,6 +225,8 @@ async function contrastes(p) {
     await p.click("#aula-calc");
     await p.click("#aula-env");
     await esperar(150);
+    igual("todo reloj lleva la marca de Ajedrez Integral: la marca de agua en la pantalla y la placa del logo",
+        await p.evaluate(() => [document.querySelector(".aula-lcd-marca").checkVisibility(), document.querySelector(".aula-lcd-marca").naturalWidth > 0, document.querySelector(".aula-reloj-marca").checkVisibility(), document.querySelector(".aula-reloj-marca").textContent]), [true, true, true, "Ajedrez Integral"]);
     igual("la calculadora le manda el caso B de la revista al reloj",
         await p.evaluate(() => [...document.querySelectorAll(".aula-lado")].map((l) => l.querySelector(".aula-dig").textContent + " " + l.querySelector(".aula-mov").textContent)), ["0:52:32 Jug. 43", "1:11:00 Jug. 42"]);
 
@@ -160,7 +241,7 @@ async function contrastes(p) {
     console.log("\n=== En el celular ===");
     const cel = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
     await cel.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
-    for (const h of ["#estudiar", "#practicar-koya", "#practicar-posiciones", "#caso-ilegal-con-incremento", "#reloj"]) {
+    for (const h of ["#estudiar", "#practicar-koya", "#practicar-posiciones", "#practicar-desempates", "#caso-ilegal-con-incremento", "#caso-des-bh-c1", "#caso-nor-piso", "#caso-bandera-un-alfil", "#calculadoras-desempates", "#reloj"]) {
         ({ p, errores } = await abrir(cel, h));
         todos.push(errores);
         igual("a 390 px, " + h + " no se desplaza de lado", await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);

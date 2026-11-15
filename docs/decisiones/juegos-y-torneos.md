@@ -11980,6 +11980,75 @@ Cómo está armado, y por qué:
   `position: absolute` y, si el contenedor no es `relative`, se salen y
   ensanchan la página en el celular (pasó con la tabla del Koya).
 
+### El Taller del árbitro, las calculadoras y el PDF de cada revista
+
+Lo pidió el dueño: más casos de triple repetición; casos de bandera y de
+segunda jugada ilegal donde hay que decidir si gana el rival o son tablas;
+casos de **todos** los sistemas de desempate y de normas de MI y GM, de
+sencillos a complejos, donde el árbitro calcule y decida; herramientas que
+calculen con la fórmula a la vista; diagramas legales; el logo en todos los
+relojes («si alguien estudia o practica con la herramienta y desea compartir,
+que se vea de dónde estudia»); y en cada revista una ficha con su portada y el
+PDF, que se baja **solo después de completar todo lo de ese número**.
+
+- **El Taller** es una colección más (`taller`, que no es un número de la
+  revista), en `js/aula-arbitraje/contenido-practica.js`: cuatro fichas
+  (repetición, bandera y segunda ilegal, desempates C.07:2026 con todas sus
+  fórmulas y el art. 16, normas B.01 con sus fórmulas y la tabla dp), con
+  34 preguntas y 44 casos. Va primero en Estudiar y en Casos.
+- **Ningún resultado de material se da por bueno sin prueba**:
+  `herramientas/lib/mate-posible.js` comprueba que cada `fen` sea legal, repite
+  con chess.js cada serie `mate` (jugadas legales que terminan en mate, que la
+  página muestra para recorrer) y demuestra cada `sinMate` por material (rey
+  solo; rey y pieza menor contra rey solo; solo alfiles de un color) o
+  recorriendo **todas** las posiciones alcanzables (el muro de peones: 768).
+  Buscar una serie a ciegas es lento (8 medias jugadas, más de un minuto), por
+  eso el caso trae la serie y el verificador solo la repite. Los diagramas de
+  preguntas y casos de las revistas se enganchan desde `DIAGRAMAS` por la
+  ficha y el principio del texto, sin tocar `contenido-revistas.js`, y el
+  verificador exige que cada uno encuentre exactamente su pregunta.
+- **Los desempates y las normas no traen la respuesta escrita**: la calcula
+  la página con el motor de Pareo Integral (`js/pareo/desempates.js`, y su
+  `explicar()` para el «de dónde sale») y con `js/normas-titulo.js`. El torneo
+  de cada caso va como una tabla de chess-results en texto
+  (`js/aula-arbitraje/torneo-texto.js`, que también usa la calculadora). Lo
+  que se agregó en `js/aula-arbitraje/desempates.js` es el **procedimiento**:
+  el art. 4.2 (cada desempate solo al subgrupo que sigue empatado) y el
+  encuentro directo del art. 6 **dentro de ese subgrupo**, con el 6.2 (se
+  vuelve a aplicar) y el 6.3 (en un suizo, el que queda solo arriba pase lo
+  que pase). **Ojo:** el DE de Pareo Integral se calcula sobre todo el grupo de
+  empatados en puntos y no hace el 6.2 ni el 6.3; en el Aula manda el de
+  `desempates.js`. Los torneos de los casos salieron de suizos y todos contra
+  todos al azar, elegidos porque enseñan algo (que BH-C1 dé otro orden que BH,
+  que el TPR y el ARO se contradigan por un bye…), y el verificador comprueba
+  que las bases rompen el empate y que cada norma sale como cuenta el relato.
+- **Los ejercicios al azar** de desempates (13 sistemas) y de normas
+  (`generarSuizo`, `generarTodos`) se corrigen con el mismo motor.
+- **Calculadoras** (`#calculadoras`): desempates (la tabla en texto, las bases
+  en orden y, al tocar un valor, de dónde sale), normas (con los chequeos
+  artículo por artículo y lo que el árbitro revisa aparte) y rendimiento
+  (ARO, p, dp, TPR). `js/normas-titulo.js` es código con licencia: el worker lo
+  entrega con la licencia de normas **o** con la del Aula (una lista en
+  `CODIGO_CON_LICENCIA`).
+- **El logo en todos los relojes**: `js/aula-arbitraje/reloj.js` pinta la
+  marca de agua en pequeño en el centro de la pantalla (entre los dos tiempos) y la placa
+  con el logo y «Ajedrez Integral» en el cuerpo. Es a propósito y no se quita.
+- **La portada y el PDF de cada número**: `descargas/aula-arbitraje/revista-NN.pdf`
+  (los mismos PDF de la carpeta de Drive, con la marca de agua) y
+  `img/aula-arbitraje/portada-NN.jpg`, que **sale de la primera página del
+  PDF** (`node herramientas/aula-portadas.js`, con pdf.js): así no se separan.
+  El botón se habilita al estudiar todas las fichas del número, acertar todas
+  sus preguntas y resolver todos sus casos; el avance sigue siendo del aparato
+  (`localStorage`). **El candado de verdad es el worker**: la carpeta va en
+  `ARCHIVOS_CON_LICENCIA` (y en `run_worker_first` y `NUNCA` de sw.js) y solo
+  se entrega con la licencia del Aula; sin ella, 403. Que el botón dependa del
+  avance es un incentivo, no una barrera: quien tiene la licencia y sabe la
+  dirección puede bajar el PDF. Si el dueño quiere que el avance cuente de
+  verdad, va en la base, con su RLS.
+- **Las preguntas se recuerdan por una clave estable** (`ficha#n`, su lugar
+  dentro de la ficha), no por el índice global, que cambiaba al agregar
+  contenido; el avance viejo se pasa una vez a la clave nueva (`pregV2`).
+
 ## Desempates explicados
 
 `desempates.html` recalcula la clasificación de un torneo de chess-results
