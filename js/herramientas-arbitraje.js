@@ -67,6 +67,10 @@
             corto: "Torneos de Costa Rica",
             href: "torneos-pareo.html#tambien",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/torneos-costa-rica.png", ancho: 1200, alto: 675,
+                alt: "Un calendario y una lista de torneos de Costa Rica, cada uno con su fecha, el ritmo de juego, si vale para Elo FIDE y un botón para inscribirse.",
+            },
             gratis: true,
             resumen: "Los torneos que se anuncian en ajedrezcostarica.com y los que ya están cargados en chess-results, juntos en una lista, con la fecha, el ritmo, si valen para Elo y el enlace a su ficha para inscribirse. Gratis y sin cuenta.",
             puntos: [
@@ -100,6 +104,10 @@
             corto: "Selección CODICADER",
             href: "seleccion-codicader.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/seleccion-codicader.png", ancho: 1200, alto: 675,
+                alt: "Los enlaces de chess-results entran a un embudo que pesa la posición, el rendimiento, el ranking nacional y el ranking FIDE, y sale la selección con cuatro estudiantes marcados.",
+            },
             resumen: "Pega los enlaces de chess-results de la Etapa Nacional y la herramienta calcula la selección con el método del ICODER: posición, rendimiento, ranking nacional y ranking FIDE.",
             puntos: [
                 "Lee de chess-results la clasificación, el Elo nacional y FIDE, el año de nacimiento y cada partida de cada estudiante: clásico y blitz, individual y por equipos.",
@@ -118,6 +126,10 @@
             corto: "Resultados JDN",
             href: "jdn-comites.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/jdn-comites.png", ancho: 1200, alto: 675,
+                alt: "Escudos de varios comités de deportes, cada uno con sus medallas de oro, plata y bronce en el ajedrez de los Juegos Deportivos Nacionales, y una línea de tiempo de 2018 a 2026.",
+            },
             resumen: "Todos los torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results, eliminatorias y finales desde 2018, ordenados por comité de deportes.",
             puntos: [
                 "El medallero de las finales, de todas juntas o de una edición, con individual y equipos.",
@@ -134,6 +146,10 @@
             corto: "Resultados universitarios",
             href: "universidades.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/universidades.png", ancho: 1200, alto: 675,
+                alt: "Tres universidades con sus edificios, cada una con su barra de resultados en los torneos universitarios de ajedrez desde 2010, y un birrete.",
+            },
             resumen: "Todos los torneos universitarios de ajedrez de Costa Rica que están en chess-results —los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE— y los JUDUCA centroamericanos, desde 2010, ordenados por universidad.",
             puntos: [
                 "El medallero de todos los torneos o de uno, con individual y equipos, y las medallas de cada universidad torneo por torneo.",
@@ -152,6 +168,10 @@
             corto: "Torneos universitarios",
             href: "torneos-universitarios.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/torneos-universitarios.png", ancho: 1200, alto: 675,
+                alt: "Un catálogo de torneos universitarios: cada tarjeta trae la fecha, quién lo organizó, cuántos jugaron y un pequeño podio.",
+            },
             resumen: "El catálogo de todos los torneos universitarios de ajedrez de Costa Rica que están en chess-results, los que se juegan entre universidades y los que organiza cada una, con su fecha, quién lo organizó, cuántos jugaron y su podio. Va con la licencia de «Resultados universitarios por universidad».",
             puntos: [
                 "Más de 170 torneos: los JUNCOS, CONARE, FEDEU, FECUNDE y JUDUCA, y los de cada universidad (los Blitz del club de la UCR, el interno del TEC, el Desafío Mentes Maestras de CENFOTEC…).",
@@ -168,6 +188,10 @@
             corto: "Mentes Maestras 2026",
             href: "cenfotec-2026.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/cenfotec-2026.png", ancho: 1200, alto: 675,
+                alt: "La página del torneo: el podio, la tabla de la clasificación final, el video de la transmisión y la comparación con la edición 2025.",
+            },
             gratis: true,
             resumen: "El torneo de la Universidad CENFOTEC: el podio, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas, el video de la transmisión y la comparación con la edición 2025.",
             puntos: [],
@@ -180,6 +204,10 @@
             corto: "UTN-CONARE 2026",
             href: "utn-2026.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/utn-2026.png", ancho: 1200, alto: 675,
+                alt: "Dos podios lado a lado, uno de la rama femenina con una dama y otro de la masculina con un rey, con la clasificación de cada rama.",
+            },
             gratis: true,
             resumen: "El II Torneo Universitario de Ajedrez UTN-CONARE, femenino y masculino: el podio de cada rama, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas y la comparación con la primera edición.",
             puntos: [],
@@ -193,6 +221,10 @@
             href: "jdn-comites.html#comparar",
             licencia: "jdn-comites",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/comparador-jdn.png", ancho: 1200, alto: 675,
+                alt: "Tres comités de deportes lado a lado con sus medallas en barras y un «VS» entre ellos, para compararlos final por final.",
+            },
             resumen: "Dos o tres comités de deportes lado a lado en los Juegos Deportivos Nacionales: medallas final por final, la copa, cuántos pasaron de la eliminatoria a la final, el rendimiento contra el Elo y lo que jugaron entre ellos. Viene con la licencia de los resultados JDN por comité.",
             puntos: [
                 "Las medallas de cada final en una gráfica, con su tabla.",
@@ -209,6 +241,10 @@
             corto: "Proyección JDN",
             href: "jdn-proyeccion.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/jdn-proyeccion.png", ancho: 1200, alto: 675,
+                alt: "La lista de inscritos de un comité para la próxima eliminatoria, con su categoría y en qué paso del trámite va cada uno, y una línea de su actividad reciente en torneos.",
+            },
             resumen: "Quién está inscrito en la próxima eliminatoria de los JDN(P) por comité de deportes, con su cédula, su fecha de nacimiento, su categoría y en qué paso del trámite del ICODER va, cruzado con su actividad reciente en los torneos estudiantiles de chess-results.",
             puntos: [
                 "Por comité: cuántos atletas en U-12, U-16 y U-20, cuántos con el trámite registrado, en trámite o no convocados.",
@@ -225,6 +261,10 @@
             corto: "Árbitros de Costa Rica",
             href: "arbitros-cr.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/arbitros-cr.png", ancho: 1200, alto: 675,
+                alt: "La credencial de un árbitro con su lista de torneos de FIDE y de chess-results, y dos sellos que marcan qué torneos valen para la norma de Árbitro FIDE y de Árbitro Internacional.",
+            },
             resumen: "Los torneos de cada árbitro de Costa Rica en FIDE y en chess-results, con su cargo, y cuáles de los de FIDE cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
             puntos: [
                 "Todos los torneos de Costa Rica en FIDE desde 2002, con quién fue principal, adjunto o árbitro, y todos los de la federación en chess-results desde 2007, con el director y el organizador.",
@@ -241,6 +281,10 @@
             corto: "Ajedrez estudiantil",
             href: "ajedrez-estudiantil.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/ajedrez-estudiantil.png", ancho: 1200, alto: 675,
+                alt: "Un gráfico de barras con la participación en los Juegos Deportivos Estudiantiles año por año, separada por etapa, junto a un colegio.",
+            },
             resumen: "La participación en los Juegos Deportivos Estudiantiles año por año, por etapa, región y categoría, con todos los torneos estudiantiles de Costa Rica publicados en chess-results.",
             puntos: [
                 "Las etapas institucional o circuital, regional, interregional y nacional, y la internacional (CODICADER).",
@@ -257,6 +301,10 @@
             corto: "Historial de un jugador",
             href: "historial-jugador.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/historial-jugador.png", ancho: 1200, alto: 675,
+                alt: "Una búsqueda por nombre que encuentra a un estudiante y su recorrido año por año en los juegos estudiantiles: circuital, regional y nacional, con su puesto.",
+            },
             resumen: "Busca a un estudiante por su nombre y mira todos sus torneos de los JDE y los estudiantiles internacionales en chess-results: la etapa a la que llegó cada año, su colegio, su puesto y sus puntos.",
             puntos: [
                 "Su camino por las etapas, año por año: institucional, regional, interregional y nacional.",
@@ -273,6 +321,10 @@
             corto: "Estadísticas por colegio",
             href: "estadisticas-colegios.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/estadisticas-colegios.png", ancho: 1200, alto: 675,
+                alt: "Un colegio con sus medallas regionales y nacionales, individuales y por equipos, y una tabla de cuántos estudiantes llevó cada región.",
+            },
             resumen: "Los colegios y escuelas en los JDE: cuántos estudiantes llevó cada uno, sus podios regionales y nacionales, individuales y por equipos, y cuántos llegaron a la final, también región por región.",
             puntos: [
                 "Filtros por región, categoría y año; la tabla se ordena por cualquier columna.",
@@ -289,6 +341,10 @@
             corto: "Ranking por categoría",
             href: "ranking-estudiantil.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/ranking-estudiantil.png", ancho: 1200, alto: 675,
+                alt: "Un ranking del año por categoría y rama: cada estudiante con su puesto, la etapa a la que llegó (nacional, regional o circuital) y su resultado.",
+            },
             resumen: "El ranking de los JDE de un año, una categoría y una rama: hasta qué etapa llegó cada estudiante y con qué resultado, de los torneos publicados en chess-results.",
             puntos: [
                 "Primero la etapa más alta (llegar a la final pesa más que ganar la regional), después el mejor puesto en esa etapa y los puntos.",
@@ -305,6 +361,10 @@
             corto: "Inscripción JDE",
             href: "inscripcion-jde.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/inscripcion-jde.png", ancho: 1200, alto: 675,
+                alt: "Un formulario de inscripción de un centro educativo: el colegio elegido, cada estudiante con su fecha de nacimiento y la categoría que le corresponde, todo revisado contra la normativa.",
+            },
             resumen: "Prepara la inscripción de tu centro educativo en el torneo de ajedrez de los Juegos Deportivos Estudiantiles: escoges tu colegio del banco, la categoría sale de la fecha de nacimiento y todo se revisa contra la Normativa 2026 mientras llenas.",
             puntos: [
                 "El colegio se busca en el banco de más de mil centros que ya jugaron los JDE, y propone su Dirección Regional (de las 27), su interregional y cuántos clasifican.",
@@ -322,6 +382,10 @@
             nombre: "Desempates explicados",
             href: "desempates.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/desempates.png", ancho: 1200, alto: 675,
+                alt: "Dos jugadores empatados en puntos sobre una balanza; la lista de desempates de las bases decide, paso a paso, quién queda arriba.",
+            },
             resumen: "Pega las bases del torneo (el orden de desempates) y el enlace de chess-results: la herramienta recalcula la clasificación desde las partidas y explica, paso a paso, por qué cada persona queda arriba de la otra.",
             puntos: [
                 "Los 26 desempates del C.07 (versión 2026) en el orden que elijas, calculados con el mismo motor que Pareo Integral.",
@@ -382,6 +446,10 @@
             corto: "Variación de Elo",
             href: "variacion-elo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/variacion-elo.png", ancho: 1200, alto: 675,
+                alt: "Cada participante del torneo con su Elo y cuánto sube o baja, en verde o en rojo, y una línea con la variación partida por partida.",
+            },
             resumen: "Pega el enlace de chess-results y te dice cuánto sube o baja el Elo FIDE y nacional de cada participante, partida por partida, antes de que salga la lista oficial.",
             puntos: [
                 "Con las reglas de FIDE (B.02): solo partidas jugadas entre dos con Elo, el tope de 400 puntos, la tabla de lo esperado y el K de cada uno (40 para los menores de 18, 10 desde 2400).",
@@ -399,6 +467,10 @@
             corto: "Normas de título",
             href: "normas-titulo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/normas-titulo.png", ancho: 1200, alto: 675,
+                alt: "Un certificado con los sellos de las normas de GM e IM, la lista de condiciones del Reglamento de Títulos marcadas y una barra que muestra a quién le faltó medio punto.",
+            },
             resumen: "Pega el enlace de chess-results y te dice quién hizo norma de GM, IM, WGM o WIM en el torneo, y a quién le faltó poco, artículo por artículo del Reglamento de Títulos de FIDE.",
             puntos: [
                 "Con el Reglamento de Títulos de FIDE (B.01, 2024): las partidas, las federaciones, los rivales con título, el piso de Elo de los rivales, el promedio y el rendimiento.",
@@ -416,6 +488,10 @@
             corto: "Reclamos de tablas",
             href: "reclamos-tablas.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/reclamos-tablas.png", ancho: 1200, alto: 675,
+                alt: "Una partida en PGN con la misma posición repetida tres veces, marcada en la lista de jugadas, el contador de 50 jugadas y el resultado de tablas.",
+            },
             resumen: "Pega la partida y te dice si hubo triple repetición o 50 jugadas sin mover un peón ni capturar: en qué jugada, quién podía reclamar las tablas y si un reclamo procedía. Con tu licencia, en tu computadora.",
             puntos: [
                 "La misma posición como la define el art. 9.2.2: las mismas piezas, el mismo turno, los mismos enroques y la captura al paso solo si de verdad se puede hacer.",
@@ -433,6 +509,10 @@
             corto: "Bases del torneo",
             href: "bases-torneo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/bases-torneo.png", ancho: 1200, alto: 675,
+                alt: "Un formulario con los datos del torneo que se convierte en el documento de las bases, listo para bajar en PDF o en Word.",
+            },
             resumen: "Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar. Con tu licencia, en tu computadora.",
             puntos: [
                 "El ritmo con su modalidad (clásico, rápido o relámpago, como dicen las Leyes del Ajedrez) y si vale para el Elo FIDE clásico según el Elo de los jugadores (B.02).",
@@ -496,6 +576,10 @@
             corto: "Acta e informe JDE",
             href: "acta-jde.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/acta-jde.png", ancho: 1200, alto: 675,
+                alt: "El acta oficial de una etapa de los JDE con la tabla de resultados, la firma del árbitro y el sello de los clasificados que pasan a la etapa siguiente.",
+            },
             resumen: "Para una etapa de los JDE dirigida con Swiss-Manager: pega los enlaces de chess-results y baja el informe oficial de participación y resultados, listo para firmar, con los clasificados a la etapa siguiente.",
             puntos: [
                 "El mismo informe oficial de Pareo Integral: la participación por centro educativo, la clasificación oficial de chess-results, el cuadro cruzado, las ausencias, el medallero por centro, las incidencias y las firmas.",
@@ -512,6 +596,10 @@
             corto: "Ficha del jugador",
             href: "admin-jugador.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/ficha-federado.png", ancho: 1200, alto: 675,
+                alt: "La ficha de un jugador federado: su Código FIDE, su Elo nacional y FIDE, la línea de su rendimiento en el tiempo y la lista de sus torneos.",
+            },
             resumen: "Busca a un jugador por su nombre y trae todos sus torneos de chess-results, agrupados por su Código FIDE, con su rendimiento, su tendencia y su Elo nacional y FIDE de la lista de la Federación.",
             puntos: [
                 "Todos sus torneos en chess-results, con los homónimos separados por el Código FIDE.",
