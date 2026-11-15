@@ -11593,6 +11593,83 @@ jugadas) y si un reclamo hecho en una jugada dada procedía.
   relámpago sin planilla completa (apéndices A y B) y según las bases del
   torneo el reclamo puede tratarse distinto.
 
+## Aula de Arbitraje
+
+`aula-arbitraje.html` (lo pidió el dueño: «una herramienta en arbitraje donde
+sea estudiar el reglamento, y ahí iremos incluyendo fichas»; además, que se
+pueda practicar «como si fuera real» y, si hay que modificar relojes, que se
+pueda). Es una herramienta con licencia más, id `aula-arbitraje`, en la
+vitrina, ficha Arbitraje (ver «Herramientas de arbitraje»), cerrada con
+`js/candado-herramienta.js` porque todo pasa en el navegador. Cuatro partes,
+cada una con su dirección para mandar el enlace abierto en ella (`#estudiar`,
+`#ficha-<id>`, `#practicar-<tipo>`, `#casos`, `#caso-<id>`, `#reloj`):
+
+- **Estudiar**: fichas por tema con lo que dice la norma, las ideas clave y
+  los errores frecuentes. La primera tanda es la revista «Arbitraje de
+  Ajedrez» N.º 1 (de Santiago García Ramos) revisada contra la normativa
+  vigente en noviembre de 2026: el ajuste de relojes después de una
+  irregularidad (Leyes 2023: el antiguo 6.13 es el 7.1, que ahora reconoce el
+  derecho a no cambiar los relojes; la sanción del 7.5.5, que la revista no
+  traía; A.3 y A.5.2 para rápidas), el Koya (C.07 vigente desde el 1 de marzo
+  de 2026: KS, art. 9.2, y el modificador de límite del 14.5, que reemplaza
+  al «Koya extendido») y las posiciones idénticas (9.2.3, y las tablas
+  automáticas del 9.6). La revista traía un error en el cálculo con
+  incremento (restaba los incrementos de todas las jugadas hechas, y no solo
+  los de las que quedan): la ficha lo dice como fe de erratas.
+- **Practicar**: preguntas de opción múltiple; ajustes de reloj después de
+  una jugada ilegal y desempates Koya **generados al azar** cada vez (no se
+  acaban); posiciones idénticas recorriendo la partida en el tablero del
+  sitio (`ExampleBoard`) con la tabla de piezas, enroques, captura al paso y
+  turno, también con una partida propia.
+- **Casos de sala**: la situación, la decisión (opción múltiple) y el reloj
+  en el estado en que lo encontró el árbitro, para dejarlo como debe quedar.
+  Al dictaminar compara con varias soluciones, cada una con su valoración:
+  la **recomendada** (el método proporcional) y las **válidas** (la variante
+  de horario; no cambiar los relojes, que el 7.1 permite), cada una con su
+  comentario, más las jugadas completadas y el turno. Así no se castiga un
+  criterio que la norma acepta.
+- **Reloj**: un reloj digital con periodos y control de jugadas, incremento
+  desde la primera jugada, contador por jugador, bandera, pausa del árbitro y
+  velocidad ×10 o ×60 para practicar sin esperar; el panel «Ajuste del
+  árbitro» cambia tiempos, jugadas completadas y turno y suma las sanciones.
+  Al lado, la calculadora del método proporcional, que le manda el resultado
+  al reloj: sirve también en un torneo de verdad.
+
+Cómo está armado, y por qué:
+
+- **Una sola copia de cada cosa.** Las repeticiones las analiza
+  `js/reclamos-tablas.js` (la «misma posición» del 9.2.2 con chess.js y la
+  captura al paso solo si se puede hacer), no un motor propio; las jugadas
+  salen de chess.js en inglés y la página las pasa a algebraica española para
+  mostrarlas. El cálculo del reloj y el Koya están en
+  `js/aula-arbitraje/ajuste.js`, sin pantalla, y los usan la página y el
+  verificador. El Koya de la práctica es el del 9.2 para un todos contra
+  todos **sin rondas sin jugar**; con incomparecencias o byes, el cálculo de
+  verdad es el de `js/pareo/desempates.js` (armar un torneo de Pareo para un
+  ejercicio era mucho más que lo que se practica).
+- **El contenido va en un solo archivo**, `js/aula-arbitraje/contenido.js`:
+  colecciones (cada número de la revista), fichas, preguntas, casos y
+  ejercicios de repeticiones. Agregar una ficha es copiar un bloque. Un caso
+  con reloj lleva sus soluciones escritas a mano y, si se calculan, su
+  `calculo` con los datos del reloj; un ejercicio de repeticiones lleva su
+  `esperado`. **Ninguna posición se inventa**: `verificar-aula-arbitraje.js`
+  (sin navegador) rehace con chess.js cada ejercicio y comprueba lo que dice
+  `esperado`, y rehace con `ajuste.js` la solución recomendada y la de horario
+  de cada caso con `calculo` (al segundo).
+- **El avance se guarda solo en el aparato** (`localStorage`,
+  `aula_arbitraje_avance_v1`): es una comodidad para quien practica, no una
+  nota; no se le muestra a nadie más. Si el dueño quiere que un profesor vea
+  el avance de sus alumnos, eso va en la base, con su RLS.
+- **Los colores salen del tema** (`--c-brand-*`, `--c-accent-*`, `html.dark`)
+  en `css/aula-arbitraje.css`; los de estado llevan siempre el dato escrito
+  (✓, ✗, «bien», «distinto»). `verificar-aula-arbitraje-pagina.js` mide el
+  contraste de cada par en claro y en oscuro, recorre las cuatro partes
+  (pregunta, relojes, repeticiones, un caso bien y mal dictaminado, el reloj
+  en marcha y la calculadora) y revisa que a 390 px no haya desplazamiento de
+  lado. Ojo con los `.sr-only` dentro de una tabla que se desplaza: son
+  `position: absolute` y, si el contenedor no es `relative`, se salen y
+  ensanchan la página en el celular (pasó con la tabla del Koya).
+
 ## Desempates explicados
 
 `desempates.html` recalcula la clasificación de un torneo de chess-results

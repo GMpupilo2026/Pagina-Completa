@@ -452,6 +452,23 @@
             ],
         },
         {
+            id: "aula-arbitraje",
+            tema: "arbitraje",
+            emoji: "🎓",
+            nombre: "Aula de Arbitraje: estudiar el reglamento y practicarlo",
+            corto: "Aula de Arbitraje",
+            href: "aula-arbitraje.html",
+            disponible: true,
+            resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
+            puntos: [
+                "Fichas por tema con lo que dice la norma, las ideas clave y los errores frecuentes; la primera tanda es la revista Arbitraje de Ajedrez N.º 1, actualizada a 2026.",
+                "Ejercicios que nunca se acaban: ajustes de reloj después de una jugada ilegal (con y sin incremento) y desempates Koya, generados al azar y corregidos paso a paso.",
+                "Posiciones idénticas recorriendo la partida en el tablero, con la tabla de turno, enroques y captura al paso; también con una partida propia.",
+                "Casos de sala: la decisión y el reloj como debe quedar, con la solución recomendada, las válidas y por qué.",
+                "Un reloj digital con periodos, incremento, contador de jugadas y sanciones, y la calculadora del método proporcional que le manda el resultado.",
+            ],
+        },
+        {
             id: "acta-jde",
             tema: "jde",
             emoji: "📝",
