@@ -693,6 +693,25 @@ de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.
 
 
+### La jugada del motor en la práctica de la clase va en el aviso de turno
+
+En la práctica contra el motor (`sesion.html`), quien no ve ni quien ve poco
+**no se enteraba de qué había jugado el motor**, y no fallaba nada. La jugada
+se decía en el recuadro de comandos y, medio segundo después —cuando terminaba
+de guardarse en la base—, «Es tu turno.» se escribía en `#practice-card-status`.
+El lector de pantalla cortaba la jugada para decir solo eso, y la voz del
+navegador, con cuatro avisos en fila («pensando», las dos jugadas del tablero,
+la del motor), pasaba el tope de `MAX_EN_FILA`, vaciaba la fila y decía solo
+«Es tu turno.». Con los dobles de Supabase, que guardan al instante, el orden
+salía al revés y todo parecía andar.
+
+Ahora la jugada va **dentro** del aviso de turno —«El motor jugó e5. Es tu
+turno.»— o del resultado, si con ella terminó la partida
+(`practiceJugadaDelMotorDicha` en `js/sesion.js`): un solo aviso, el último, no
+se pisa con nada. El recuadro ya no la repite. `verificar-clase-voz-motor.js`
+lo revisa con el guardado tardando y una voz de mentira que tarda lo que una
+de verdad, en Modo Adaptado y sin él.
+
 ## La visión de la persona la marca administración
 
 Hasta acá todo dependía de que la persona **encontrara el botón**: el 🦯 del

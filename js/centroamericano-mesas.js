@@ -18,7 +18,11 @@
   // Las reglas de las ilegales y los tipos de ilegal e irregularidad son UNA sola copia, en js/mesa-arbitro.js
   // (la Mesa del árbitro general las usa igual): acá se toman de ahí y se siguen exportando con el mismo nombre.
   const MA = enNode ? require("./mesa-arbitro.js") : raiz.MesaArbitro;
-  const { ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo } = MA;
+  const { ARTICULO_ILEGAL, marcasTexto, avisoIlegal, minutosIlegal, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo,
+    SANCIONES_TIEMPO, ARTICULO_SANCION, sancionTexto, leerSancion, leerTiempo, ponerDosPuntos, tiempoEnPalabras, formatoTiempo,
+    RITMO, BONO_ILEGAL, relojApagado } = MA;
+  // El control de tiempos, el reloj que se apaga y la sanción de tiempo viven en js/mesa-arbitro.js desde que la Mesa
+  // del árbitro general corrige el reloj (ver «Mesa del árbitro: el reloj y lo que dice el reglamento»).
   const FIN_DEL_TORNEO = "2026-11-09T23:59:59-06:00"; // última jornada, hora de Costa Rica
 
 
@@ -39,7 +43,7 @@
   // El modo sale de `ritmoRapido` (la base o el nombre); sin ninguna pista, clásico.
   const RITMOS = [
     { id: "clasico", nombre: "Clásico", config: "Mesa completa: «Llegó» y tiempo de espera, ilegal con su tipo (2 min), irregularidades, control de tiempos y fotos de las planillas." },
-    { id: "rapido", nombre: "Rápido", config: "Mesa en un toque: el resultado guarda de una; sin «Llegó», control de tiempos ni fotos. Ilegal sin tipo (2 min)." },
+    { id: "rapido", nombre: "Rápido", config: "Mesa en un toque: el resultado guarda de una; sin «Llegó», control de tiempos ni fotos. Ilegal sin tipo (1 min, apéndice A.3)." },
     { id: "blitz", nombre: "Blitz", config: "Solo resultado e ilegal (1 min; el aviso se va solo con «Deshacer»). Sin «Llegó», irregularidades, control de tiempos ni fotos." },
   ];
   const ritmoDe = (t) => ritmoRapido(t && t.nombre, t && t.ritmo) || "clasico";
@@ -199,28 +203,6 @@
     return [...por.values()].sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
   }
 
-  // La sanción de tiempo de una irregularidad (art. 12.9: quitarle tiempo a quien la cometió o dárselo a su rival).
-  // Va escrita al final del texto de la irregularidad, siempre con esta forma, y se vuelve a leer de ahí para el reloj
-  // que se apaga: una sola copia del formato (sancionTexto escribe, leerSancion lee).
-  const SANCIONES_TIEMPO = [
-    { id: "", texto: "Sin sanción de tiempo" },
-    { id: "rival+60", texto: "+1 minuto a su rival", segundos: 60, a: "rival" },
-    { id: "rival+120", texto: "+2 minutos a su rival", segundos: 120, a: "rival" },
-    { id: "suyo-60", texto: "−1 minuto a quien la cometió", segundos: -60, a: "suyo" },
-    { id: "suyo-120", texto: "−2 minutos a quien la cometió", segundos: -120, a: "suyo" },
-  ];
-  const ARTICULO_SANCION = "12.9";
-  function sancionTexto(id) {
-    const x = SANCIONES_TIEMPO.find((y) => y.id === id && y.segundos);
-    if (!x) return "";
-    return " · Sanción de tiempo: " + (x.segundos > 0 ? "+" : "−") + formatoTiempo(Math.abs(x.segundos)) + (x.a === "rival" ? " a su rival" : " a quien la cometió") + " (art. " + ARTICULO_SANCION + ")";
-  }
-  function leerSancion(texto) {
-    const m = /Sanción de tiempo: ([+−-])(\d+):(\d\d) a (su rival|quien la cometió)/.exec(String(texto || ""));
-    if (!m) return null;
-    const seg = Number(m[2]) * 60 + Number(m[3]);
-    return { segundos: m[1] === "+" ? seg : -seg, a: m[4] === "su rival" ? "rival" : "suyo" };
-  }
 
 
   // «22, 24 a 26, 30»: las mesas juntas en rangos para leerlas de un vistazo.
@@ -295,37 +277,6 @@
       (s.quedan === 1 ? " mesa" : " mesas") + ". Toma la" + (s.mesas.length === 1 ? " mesa " : "s mesas ") + listaMesas(s.mesas) + ".";
   }
 
-  // ---- El control de tiempos: lo que marca cada reloj, en segundos.
-  // «1:23:45» (h:mm:ss), «45:10» (mm:ss) o «85» (segundos) -> segundos; null si no se entiende.
-  function leerTiempo(texto) {
-    const t = String(texto == null ? "" : texto).trim();
-    if (!/^\d{1,3}(:[0-5]?\d){0,2}$/.test(t)) return null;
-    const p = t.split(":").map(Number);
-    if (p.length === 3 && p[1] > 59) return null;
-    const seg = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0];
-    return seg >= 0 && seg <= 36000 ? seg : null;
-  }
-  // Los dos puntos se ponen solos: se escriben solo números (el teclado numérico de una tablet no trae «:») y se leen de
-  // derecha a izquierda, como un reloj: «45» -> «45», «4510» -> «45:10», «12345» -> «1:23:45». Hasta 6 cifras (10:00:00).
-  function ponerDosPuntos(texto) {
-    const d = String(texto == null ? "" : texto).replace(/\D/g, "").slice(0, 6);
-    if (d.length <= 2) return d;
-    if (d.length <= 4) return d.slice(0, -2) + ":" + d.slice(-2);
-    return d.slice(0, -4) + ":" + d.slice(-4, -2) + ":" + d.slice(-2);
-  }
-  // «1 h 23 min 45 s»: lo que se entendió, para que quien lo escribió lo confirme de un vistazo.
-  function tiempoEnPalabras(seg) {
-    seg = Math.max(0, Math.round(Number(seg) || 0));
-    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
-    return [h ? h + " h" : "", m ? m + " min" : "", s || (!h && !m) ? s + " s" : ""].filter(Boolean).join(" ");
-  }
-  // segundos -> «1:23:45» o «45:10»
-  function formatoTiempo(seg) {
-    seg = Math.max(0, Math.round(Number(seg) || 0));
-    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
-    const dos = (n) => (n < 10 ? "0" : "") + n;
-    return h ? h + ":" + dos(m) + ":" + dos(s) : m + ":" + dos(s);
-  }
   // Lo último que se leyó de cada partida (torneo, ronda, mesa): la lectura más reciente.
   function ultimasLecturas(filas) {
     const por = new Map();
@@ -337,127 +288,6 @@
     return [...por.values()].sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa);
   }
 
-  // ---- El reloj que se apagó (art. 6.10 de las Leyes: el árbitro pone los tiempos «según su mejor criterio»).
-  // Esto le da un número defendible, con las cuentas a la vista. Parte del control de tiempos MÁS RECIENTE de esa
-  // partida (los controles caen en cualquier jugada: no hace falta que sea la 20) y de lo que se sabe del ritmo.
-  //   · Lo exacto: mientras la partida corre siempre anda un reloj, así que entre el control y «ahora» los dos juntos
-  //     gastaron justo el tiempo real que pasó, y cada jugada hecha les sumó su incremento.
-  //   · Lo que se propone: cómo se reparte eso. «ritmo»: como cada uno venía gastando hasta el control (lo gastado lo
-  //     dice el mismo control: inicial + incrementos − lo que le quedaba). «iguales»: mitad y mitad.
-  //   · La comprobación con la hora de inicio: lo que debían sumar los relojes en el control según el inicio. Si no
-  //     cuadra, la partida empezó tarde, hubo una pausa o el control se anotó mal: se avisa, no se corrige solo.
-  // Sin ningún control, el total sale del inicio y se reparte por partes iguales (no hay de dónde sacar el ritmo).
-  //   · Las ilegales: la primera de cada jugador le da 2 minutos a su rival (art. 7.5.5). `bonos` son esos minutos,
-  //     cada uno con el color que los RECIBIÓ y su hora. Los de antes del control ya están en lo que marcaban los
-  //     relojes: no se suman otra vez, pero sí se descuentan de lo «gastado» (si no, quien los recibió parecería
-  //     haber pensado 2 minutos menos) y entran en la comprobación con el inicio. Los de después se le suman.
-  //   · Las llegadas tarde (`llegadas`, de llegadasTarde): mientras el jugador no estaba, SU reloj corría (art. 6.7: la partida
-  //     empieza al hacer andar el reloj de las blancas; si llegan tarde las negras, corre el suyo apenas mueven las blancas).
-  //     Ese tiempo no se reparte como el resto: se le cobra entero a quien llegó tarde, y lo demás sí se reparte. Lo que cae
-  //     ANTES del control ya está en lo que marcaban los relojes; solo cuenta lo que cae después del control (o, sin
-  //     control, desde el inicio de la ronda). Con las dos tarde, primero corre el reloj de las blancas hasta que llegan, y
-  //     después el de las negras hasta que llegan ellas.
-  // Todo en segundos y en milisegundos de reloj (Date.getTime()). Devuelve { error } si algo no cuadra.
-  // Lo que corrió en el reloj de cada uno por haber llegado tarde, dentro de los `pasaron` segundos que se están repartiendo (los que van
-  // desde `desdeMs`, el control o el inicio, hasta ahora). Cada llegada es { color, ms, segundos }: la hora en que llegó y cuánto
-  // se había tardado; la espera cubre desde ms − segundos hasta ms, y solo cuenta la parte que cae después de `desdeMs`.
-  function cargaPorTarde(llegadas, desdeMs, pasaron) {
-    const t = { blancas: 0, negras: 0 };
-    for (const l of llegadas || []) {
-      if (l.color !== "blancas" && l.color !== "negras") continue;
-      const seg = Math.max(0, (l.ms - Math.max(l.ms - l.segundos * 1000, desdeMs)) / 1000);
-      t[l.color] = Math.max(t[l.color], seg);
-    }
-    const b = Math.min(pasaron, Math.round(t.blancas));
-    const n = Math.min(pasaron - b, Math.max(0, Math.round(t.negras - t.blancas)));
-    return { blancas: b, negras: n };
-  }
-  const RITMO = { inicial: 90 * 60, incremento: 30 };
-  const BONO_ILEGAL = 120;
-  const RITMO_CONFIABLE = 10;   // medias jugadas antes del control desde las que el ritmo cuenta entero
-  // `visto`: lo que marca AHORA un reloj que todavía se lee ({ blancas, negras }, en segundos; uno solo o los dos). Manda sobre el
-  // reparto: el tiempo total entre los dos es exacto, así que el del otro color es lo que sobra.
-  // `reparto`: «ritmo» (como venían gastando), «iguales» (mitad y mitad) o «turno» (todo lo que pasó lo gastó quien tenía el turno,
-  // solo si nadie ha movido desde el control). «ritmo» pasa solo a «turno» cuando nadie ha movido: es lo que de verdad pasó.
-  function relojApagado({ control, inicio, ahora, jBlancas, jNegras, reparto = "ritmo", ritmo = RITMO, bonos = [], llegadas = [], visto = null }) {
-    const R = ritmo, ent = (n) => Number.isInteger(n) && n >= 0 && n <= 400;
-    if (!ent(jBlancas) || !ent(jNegras)) return { error: "Escribe las jugadas que lleva cada color (de 0 a 400)." };
-    if (jBlancas !== jNegras && jBlancas !== jNegras + 1) return { error: "Las blancas llevan las mismas jugadas que las negras o una más: revisa las jugadas." };
-    const turno = jBlancas === jNegras ? "blancas" : "negras";
-    const quedaba = (t, j) => R.inicial + R.incremento * j - t;   // lo gastado hasta ese momento (sin los bonos)
-    const desdeCtl = control ? new Date(control.ocurrio).getTime() : -Infinity;
-    const suma = (lista, color) => lista.filter((b) => b.color === color).reduce((a, b) => a + (b.segundos == null ? BONO_ILEGAL : b.segundos), 0);
-    const antes = bonos.filter((b) => b.ms <= desdeCtl), despues = bonos.filter((b) => b.ms > desdeCtl);
-    const bonosAntes = { blancas: suma(antes, "blancas"), negras: suma(antes, "negras") };
-    const bonosDespues = { blancas: suma(despues, "blancas"), negras: suma(despues, "negras") };
-    let base, total, pasaron, jugadas;
-    if (control) {
-      const cj = (x) => (x == null ? null : Number(x));
-      const cB = cj(control.j_blancas), cN = cj(control.j_negras);
-      if (cB == null || cN == null) return { error: "El último control de esta mesa no tiene las jugadas de cada color." };
-      if (jBlancas < cB || jNegras < cN) return { error: "En el último control ya iban " + cB + " jugadas de las blancas y " + cN + " de las negras: ahora no pueden ser menos." };
-      const desde = new Date(control.ocurrio).getTime();
-      pasaron = Math.round((ahora - desde) / 1000);
-      if (pasaron < 0) return { error: "La hora de ahora es anterior a la del último control." };
-      jugadas = (jBlancas - cB) + (jNegras - cN);
-      total = control.t_blancas + control.t_negras - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
-      base = { blancas: control.t_blancas, negras: control.t_negras };
-      // Lo que cada uno gastó hasta el control: la proporción para repartir.
-      const gB = Math.max(0, quedaba(control.t_blancas, cB) + bonosAntes.blancas), gN = Math.max(0, quedaba(control.t_negras, cN) + bonosAntes.negras);
-      // Con un control de muy temprano, «cómo venía gastando» todavía no dice nada (dos o tres jugadas al azar): el
-      // ritmo pesa de a poco y entero desde las 10 medias jugadas (5 de cada uno); antes, se acerca a mitad y mitad.
-      // Probado con partidas simuladas: así erra menos que el ritmo solo y que mitad y mitad, con jugadores parejos
-      // y disparejos (ver «El reloj que se apaga» en docs/decisiones/juegos-y-torneos.md).
-      let pB = 0.5, peso = 0;
-      if (reparto === "ritmo" && gB + gN > 0) { peso = Math.min(1, (cB + cN) / RITMO_CONFIABLE); pB = 0.5 + (gB / (gB + gN) - 0.5) * peso; }
-      const tarde = cargaPorTarde(llegadas, desde, pasaron);
-      const resto = pasaron - tarde.blancas - tarde.negras;
-      // Nadie ha movido desde el control: todo lo que pasó lo gastó quien tenía el turno (menos la espera de quien llegó tarde).
-      const sinMoverse = jBlancas === cB && jNegras === cN, turnoCtl = cB === cN ? "blancas" : "negras";
-      if (reparto === "turno" && !sinMoverse) return { error: "Desde el control ya se jugaron jugadas: no se sabe cuánto gastó cada uno. Elige otro reparto o escribe lo que marca un reloj." };
-      const porTurno = sinMoverse && reparto !== "iguales";
-      if (porTurno) { pB = turnoCtl === "blancas" ? 1 : 0; peso = 1; }
-      const usadoB = porTurno ? (turnoCtl === "blancas" ? tarde.blancas + resto : tarde.blancas) : tarde.blancas + Math.round(resto * pB);
-      const usadoN = pasaron - usadoB;
-      const res = {
-        turno, pasaron, jugadas, total, reparto: porTurno ? "turno" : reparto === "ritmo" && gB + gN > 0 ? "ritmo" : "iguales", proporcion: { blancas: pB, negras: 1 - pB }, pesoRitmo: peso,
-        tarde, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
-        blancas: base.blancas - usadoB + R.incremento * (jBlancas - cB) + bonosDespues.blancas,
-        negras: base.negras - usadoN + R.incremento * (jNegras - cN) + bonosDespues.negras,
-      };
-      // La comprobación con el inicio: en el control, los relojes debían sumar esto.
-      if (inicio != null) {
-        const esperado = 2 * R.inicial - Math.round((desde - inicio) / 1000) + R.incremento * (cB + cN) + bonosAntes.blancas + bonosAntes.negras;
-        res.comprobacion = { esperado, anotado: control.t_blancas + control.t_negras, diferencia: control.t_blancas + control.t_negras - esperado };
-      }
-      return conVisto(res, visto, { blancas: base.blancas + R.incremento * (jBlancas - cB) + bonosDespues.blancas, negras: base.negras + R.incremento * (jNegras - cN) + bonosDespues.negras });
-    }
-    if (inicio == null) return { error: "Esta mesa no tiene ningún control de tiempos y no se sabe a qué hora empezó la ronda: no hay de dónde calcular." };
-    pasaron = Math.round((ahora - inicio) / 1000);
-    if (pasaron < 0) return { error: "La hora de ahora es anterior al inicio de la ronda." };
-    jugadas = jBlancas + jNegras;
-    total = 2 * R.inicial - pasaron + R.incremento * jugadas + bonosDespues.blancas + bonosDespues.negras;
-    const tardeS = cargaPorTarde(llegadas, inicio, pasaron);
-    const usadoB = tardeS.blancas + Math.round((pasaron - tardeS.blancas - tardeS.negras) / 2), usadoN = pasaron - usadoB;
-    return conVisto({ turno, pasaron, jugadas, total, reparto: "iguales", proporcion: { blancas: 0.5, negras: 0.5 }, sinControl: true,
-      tarde: tardeS, gastado: { blancas: usadoB, negras: usadoN }, bonos: bonosDespues, bonosAntes, ajustes: despues,
-      blancas: R.inicial - usadoB + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial - usadoN + R.incremento * jNegras + bonosDespues.negras },
-      visto, { blancas: R.inicial + R.incremento * jBlancas + bonosDespues.blancas, negras: R.inicial + R.incremento * jNegras + bonosDespues.negras });
-  }
-  // Lo que el árbitro lee en un reloj que todavía marca manda sobre el reparto: el total entre los dos es exacto, así que si lee uno,
-  // el del otro es lo que sobra; si lee los dos, valen los dos (y se dice cuánto se aleja la suma del total). `tope` es lo que
-  // tendría cada uno sin haber gastado nada desde el control (para sacar cuánto gastó).
-  function conVisto(res, visto, tope) {
-    const ok = (x) => Number.isFinite(x) && x >= 0 ? Math.round(x) : null;
-    const vb = visto ? ok(visto.blancas) : null, vn = visto ? ok(visto.negras) : null;
-    if (vb == null && vn == null) return res;
-    const b = vb != null ? vb : res.total - vn, n = vn != null ? vn : res.total - vb;
-    if (b < 0 || n < 0) return { error: "Lo que marca ese reloj es más de lo que queda entre los dos (" + Math.max(0, res.total) + " s): revisa la lectura o la hora." };
-    const gB = tope.blancas - b, gN = tope.negras - n;
-    return Object.assign(res, { reparto: "lectura", blancas: b, negras: n, gastado: { blancas: gB, negras: gN },
-      visto: { blancas: vb, negras: vn, diferencia: vb != null && vn != null ? vb + vn - res.total : 0 },
-      proporcion: gB + gN > 0 ? { blancas: Math.min(1, Math.max(0, gB / (gB + gN))), negras: Math.min(1, Math.max(0, gN / (gB + gN))) } : res.proporcion });
-  }
   // Los 2 minutos de cada ilegal de una mesa, sacados de la bitácora: solo la PRIMERA (sin anular) de cada jugador
   // da tiempo; con la segunda pierde la partida. Cada bono es del RIVAL de quien la hizo, con la hora en que se anotó.
   // Y las sanciones de tiempo de las irregularidades (leerSancion), cada una con el color al que se le da o se le

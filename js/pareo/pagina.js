@@ -1,9 +1,10 @@
 /* ===== Pareo Integral — la página (pareo.html) =====
  *
  * Todo vive en el navegador de quien organiza: la lista de sus torneos y cada
- * torneo en localStorage, y la copia que baja (.json o TRF). Nada se manda a
- * ningún servidor, así que no hay cuenta ni consentimiento que pedir; el día
- * que se publique un torneo en línea, eso cambia (ver «Pareo Integral» en
+ * torneo en localStorage, y la copia que baja (.json o TRF). Lo que sale a un
+ * servidor se activa aparte, con su consentimiento: la publicación en línea
+ * (js/pareo/publicar.js) y guardar los torneos en la cuenta (js/pareo/nube.js,
+ * ver «Pareo Integral: los torneos en la cuenta» en
  * docs/decisiones/juegos-y-torneos.md).
  *
  * El torneo y el TRF: js/pareo/torneo.js. Los desempates: js/pareo/desempates.js.
@@ -46,8 +47,21 @@
 
   // ---------- Lo guardado en el navegador (puede no estar: modo privado) ----------
   function leer(clave) { try { return localStorage.getItem(clave); } catch (e) { return null; } }
-  function escribir(clave, v) { try { localStorage.setItem(clave, v); return true; } catch (e) { return false; } }
-  function quitar(clave) { try { localStorage.removeItem(clave); } catch (e) { /* nada */ } }
+  function escribir(clave, v) {
+    try { localStorage.setItem(clave, v); } catch (e) { return false; }
+    avisarNube(clave, true);
+    return true;
+  }
+  function quitar(clave) { try { localStorage.removeItem(clave); } catch (e) { /* nada */ } avisarNube(clave, false); }
+  // Cada torneo que se escribe o se quita, a la cuenta si se guarda ahí
+  // (js/pareo/nube.js; ver «Pareo Integral: los torneos en la cuenta»). Todo
+  // lo que toca un torneo pasa por escribir() o quitar(): por eso el aviso va
+  // acá y no en cada lugar que guarda.
+  function avisarNube(clave, puesto) {
+    if (!window.PareoNube || !clave.startsWith(PREFIJO)) return;
+    const id = clave.slice(PREFIJO.length);
+    if (puesto) window.PareoNube.cambio(id); else window.PareoNube.borrado(id);
+  }
   function leerJSON(clave, defecto) { try { const v = JSON.parse(leer(clave)); return v == null ? defecto : v; } catch (e) { return defecto; } }
 
   const $ = (id) => document.getElementById(id);
@@ -446,6 +460,71 @@
     pintarFichas();
     pintarPanel();
     pintarEstado();
+    if (window.PareoNube) window.PareoNube.pintar();
+  }
+
+  // ---------- Los torneos en la cuenta (js/pareo/nube.js) ----------
+  // Lo que la nube escribe NO pasa por escribir()/quitar(): lo que llega de la
+  // cuenta no se vuelve a subir.
+  function itemDeLista(id, datos, actualizado) {
+    const ev = datos.evento ? { id: datos.evento.id, nombre: datos.evento.nombre || "" } : null;
+    const item = estado.lista.find((x) => x.id === id);
+    if (item) Object.assign(item, { nombre: datos.nombre || "", actualizado, evento: ev });
+    else estado.lista.push({ id, nombre: datos.nombre || "", actualizado, evento: ev });
+  }
+  function escribirSinNube(clave, v) { try { localStorage.setItem(clave, v); return true; } catch (e) { return false; } }
+  const nubeLocal = {
+    ids: () => estado.lista.map((x) => x.id),
+    texto: (id) => leer(PREFIJO + id),
+    poner(id, datos, info) {
+      if (!escribirSinNube(PREFIJO + id, JSON.stringify(datos))) return;
+      itemDeLista(id, datos, Number(info && info.actualizado) || Date.now());
+      escribirSinNube(CLAVE_LISTA, JSON.stringify(estado.lista));
+    },
+    sacar(id) {
+      try { localStorage.removeItem(PREFIJO + id); } catch (e) { /* nada */ }
+      estado.lista = estado.lista.filter((x) => x.id !== id);
+      escribirSinNube(CLAVE_LISTA, JSON.stringify(estado.lista));
+    },
+    // Lo de esta computadora cuando otra guardó el mismo torneo antes: queda
+    // como un torneo aparte, con otro nombre (y sí se sube).
+    copia(datos) {
+      const id = nuevoId();
+      datos.nombre = (datos.nombre || tx("sinNombre")) + " " + tx("nubeCopiaSufijo");
+      if (!escribir(PREFIJO + id, JSON.stringify(datos))) return null;
+      itemDeLista(id, datos, Date.now());
+      escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+      return id;
+    },
+  };
+  const torneoVacio = (y) => !y || (!y.nombre && !(y.jugadores || []).length && !(y.rondas || []).length);
+  function alTraerDeLaNube(c) {
+    let cambiarAbierto = c.quitados.includes(estado.id);
+    // El torneo vacío que esta computadora creó al abrir sobra cuando llegan
+    // los de la cuenta.
+    if (c.traidos.length && !c.traidos.includes(estado.id) && torneoVacio(estado.t)) {
+      nubeLocal.sacar(estado.id);
+      cambiarAbierto = true;
+    }
+    if (cambiarAbierto) {
+      const otro = listaOrdenada()[0];
+      if (!(otro && abrir(otro.id))) crear();
+    } else if (c.traidos.includes(estado.id)) {
+      // El abierto, con lo que trajo la cuenta, sin cortar lo que está
+      // compartido en vivo (abrir() lo apagaría).
+      const y = leerJSON(PREFIJO + estado.id, null);
+      if (y) {
+        estado.t = T.nuevo(y);
+        estado.ultimoGuardado = JSON.stringify(estado.t);
+        if (estado.ronda != null && estado.ronda >= estado.t.rondas.length) estado.ronda = null;
+        if (estado.enVivo) difundirEnVivo();
+        Avisos.avisar(tx("nubeAbiertoNuevo", { t: estado.t.nombre || tx("sinNombre") }));
+      }
+    }
+    pintarTodo();
+    const traidos = c.traidos.filter((id) => id !== estado.id || cambiarAbierto).length;
+    if (traidos) Avisos.avisar(tx("nubeTraidos", { n: traidos }));
+    if (c.copias.length) Avisos.avisar(tx("nubeCopias", { n: c.copias.length }), { duracion: 20000 });
   }
 
   // La barra de estado de abajo, como la de un programa de computadora: el
@@ -786,13 +865,45 @@
     });
     ul.replaceChildren();
     ul.hidden = !estado.eloPendientes.length;
+    const motivo = { ambiguo: "eloAmbiguo", parecido: "eloParecido" };
     for (const x of estado.eloPendientes) {
-      ul.append(el("li", { class: "flex items-center justify-between gap-2" },
-        el("span", {},
-          el("span", { class: "font-semibold", texto: x.nombre }), " — ",
-          el("span", { class: "text-brand-600 dark:text-brand-300", texto: tx(x.estado === "ambiguo" ? "eloAmbiguo" : "eloNoEncontrado") })),
-        el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: x.nombre }), onclick: () => editarJugador(x.id) }, tx("editar"))));
+      const li = el("li", {},
+        el("div", { class: "flex items-center justify-between gap-2" },
+          el("span", {},
+            el("span", { class: "font-semibold", texto: x.nombre }), " — ",
+            el("span", { class: "text-brand-600 dark:text-brand-300", texto: tx(motivo[x.estado] || "eloNoEncontrado") })),
+          el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: x.nombre }), onclick: () => editarJugador(x.id) }, tx("editar"))));
+      // Los candidatos de la lista nacional (nombres que tienen todas las
+      // palabras escritas): nunca se asignan solos, quien organiza elige.
+      const cands = x.candidatos || [];
+      if (cands.length) {
+        const sub = el("ul", { class: "mt-1 ml-4 space-y-1" });
+        for (const c of cands) {
+          const datos = [c.nombre, c.club, Number(c.nacional) > 0 ? tx("eloCandidatoElo", { e: c.nacional }) : tx("eloCandidatoSinElo")].filter(Boolean).join(" · ");
+          sub.append(el("li", { class: "flex items-center justify-between gap-2" },
+            el("span", { texto: datos }),
+            Number(c.nacional) > 0
+              ? el("button", { type: "button", class: C.mini, "aria-label": tx("eloUsarA", { c: c.nombre, n: x.nombre }), onclick: () => usarCandidatoElo(x.id, c) }, tx("eloUsar"))
+              : null));
+        }
+        if (x.totalCandidatos > cands.length) sub.append(el("li", { class: C.nota, texto: tx("eloMasCandidatos", { n: x.totalCandidatos - cands.length }) }));
+        li.append(sub);
+      }
+      ul.append(li);
     }
+  }
+
+  // Quien organiza confirmó que ese candidato de la lista nacional es su
+  // jugador: le pone el Elo y, si no tenía, el ID FIDE (el TRF lo necesita).
+  // El nombre se queda como lo escribió.
+  function usarCandidatoElo(id, c) {
+    const j = jugador(id);
+    if (!j || !(Number(c.nacional) > 0)) return;
+    j.elo = Number(c.nacional);
+    if (!j.fideId && c.fideId && /^\d{3,11}$/.test(String(c.fideId))) j.fideId = String(c.fideId);
+    guardar();
+    pintarJugadores();
+    Avisos.avisar(tx("eloUsado", { n: j.nombre, c: c.nombre, e: j.elo }));
   }
 
   function pintarJugadores() {
@@ -813,7 +924,7 @@
     $("pi-form-jugador").hidden = deEquipos;
     $("pi-pegar-caja").hidden = deEquipos;
     $("pi-listas-caja").hidden = deEquipos;
-    if (!deEquipos) pintarListaElo();
+    if (!deEquipos) { pintarListaElo(); pintarCategorias(false); }
     $("pi-caja-elo-nacional").hidden = deEquipos;
     tabla.hidden = deEquipos;
     $("pi-masivo").hidden = true;
@@ -1045,6 +1156,51 @@
       sexo: g("sexo") === "m" || g("sexo") === "w" ? g("sexo") : "",
       nacimiento: /^\d{4}-\d{2}-\d{2}$/.test(g("nacimiento")) ? g("nacimiento") : "",
     };
+  }
+
+  // La categoría al inscribir a mano se elige de una lista (el <datalist> del
+  // campo). En un torneo de los JDE —con el evento de los JDE o con «Categoría
+  // X» en el nombre— salen solo las que le permite su año de nacimiento
+  // (Normativa, art. 17, G.categoriasDeNacimiento: casi siempre una, B o C en
+  // 2013 y 2014; en individual no se sube, art. 18), y sin fecha, las cinco.
+  // En cualquier otro torneo, las que ya tienen sus jugadores. Ver «Pareo
+  // Integral: la categoría al inscribir y los ausentes al deshacer».
+  const esDeLosJDE = (v) => !!(v.evento && v.evento.jde) || !!G.JDE_CATEGORIAS[categoriaDe(v)];
+  function categoriasParaInscribir(v, nacimiento) {
+    if (!esDeLosJDE(v)) {
+      const usadas = [...new Set(v.jugadores.map((j) => String(j.categoria || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+      return { jde: false, lista: usadas };
+    }
+    const anio = (v.evento && v.evento.jde && v.evento.jde.anio) || Number(String(v.fechaInicio || "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    const nace = Number(String(nacimiento || "").slice(0, 4)) || 0;
+    const propias = nace ? G.categoriasDeNacimiento(nace, anio) : Object.keys(G.JDE_CATEGORIAS);
+    // Un torneo de una sola categoría: si le corresponde, va primero.
+    const delTorneo = categoriaDe(v);
+    const lista = delTorneo && propias.includes(delTorneo) ? [delTorneo].concat(propias.filter((c) => c !== delTorneo)) : propias;
+    return { jde: true, anio, nace, lista };
+  }
+  const listaCategorias = (l) => l.join(" " + tx("o") + " ");
+  function pintarCategorias(rellenar) {
+    const f = $("pi-form-jugador");
+    if (!f) return;
+    const v = t();
+    const campo = f.elements.categoria;
+    const op = categoriasParaInscribir(v, f.elements.nacimiento.value);
+    $("pi-categorias").replaceChildren(...op.lista.map((c) => el("option", { value: c })));
+    // Con una sola posible, se pone sola, pero solo en un campo vacío: lo que
+    // el árbitro escribió no se cambia en silencio (si no le toca, la nota lo
+    // dice y al agregar salta el aviso de siempre).
+    if (rellenar && op.jde && op.nace && op.lista.length === 1 && !campo.value.trim()) campo.value = op.lista[0];
+    const nota = $("pi-categoria-nota");
+    let texto = "";
+    if (op.jde && op.nace) {
+      const c = campo.value.trim().toUpperCase();
+      if (!op.lista.length) texto = tx("categoriaNinguna", { a: op.nace, j: op.anio });
+      else if (c && !op.lista.includes(c)) texto = tx("categoriaPuedeNo", { a: op.nace, l: listaCategorias(op.lista), c });
+      else texto = tx("categoriaPuede", { a: op.nace, l: listaCategorias(op.lista) });
+    } else if (op.jde) texto = tx("categoriaElegir");
+    nota.textContent = texto;
+    nota.hidden = !texto;
   }
 
   // Quienes comparten nombre (sin tildes ni importar el orden de apellidos y
@@ -1948,6 +2104,7 @@
     const f = $("pi-form-jugador");
     for (const [k, val] of Object.entries(b.jugador || {})) if (f.elements[k]) f.elements[k].value = val;
     if (b.pegar) { $("pi-pegar").value = b.pegar; $("pi-pegar-caja").open = true; }
+    pintarCategorias(false);
     Avisos.avisar(tx("borradorRecuperado"), { tipo: "info" });
   }
   // Al cerrar o esconder la pestaña: lo que estaba por guardarse, ya.
@@ -2796,7 +2953,8 @@
         // lo tenía, queda puesto (el TRF lo necesita para el Elo).
         if (!j.fideId && res.fideId && /^\d{3,11}$/.test(String(res.fideId))) { j.fideId = String(res.fideId); conId++; }
       }
-      else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado" });
+      else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado",
+        candidatos: (res && Array.isArray(res.candidatos)) ? res.candidatos.slice(0, 5) : [], totalCandidatos: (res && Number(res.totalCandidatos)) || 0 });
     });
     if (n) guardar();
     estado.eloPendientes = pendientes;
@@ -3172,6 +3330,7 @@
     else pintarMesasIndividuales(caja, r);
     pintarReimprimirMesa(caja, r);
     pintarNoJuegan(caja, r);
+    if (ultima && V.sePuedeModificar(v, r)) pintarModificarRonda(caja, r);
     pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
@@ -3271,10 +3430,10 @@
       canal.unsubscribe();
       estado.adjuntos.canales.delete(c);
     }
-    // La cola se lee cada 15 s con adjuntos propios o con árbitros de la Mesa;
-    // si no hay ni lo uno ni lo otro, cada minuto (por si la organización
-    // vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
-    cadaCola(activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
+    // La cola se lee cada 5 s en un evento de la Mesa, cada 15 s con adjuntos
+    // propios y, si no hay ni lo uno ni lo otro, cada minuto (por si la
+    // organización vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
+    cadaCola(estado.adjuntos.mesa ? ESPERA_COLA_MESA : activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
     leerCola();
     return true;
   }
@@ -3294,7 +3453,10 @@
   // (recibirDeAdjunto, recibirNotaDeAdjunto) y la borra de la base. Necesita
   // el torneo publicado: es su clave la que la lee. Ver «Pareo Integral: lo
   // que anotan los adjuntos queda en la base».
-  const ESPERA_COLA = 15000, ESPERA_COLA_LENTA = 60000;
+  // En un evento de la Mesa del árbitro, cada 5 s: lo que guarda un árbitro
+  // en su tablet tiene que llegar pronto a las demás (ver «El resultado del
+  // principal llega solo a las tablets»). Leer la cola no pasa por el freno.
+  const ESPERA_COLA = 15000, ESPERA_COLA_LENTA = 60000, ESPERA_COLA_MESA = 5000;
   function cadaCola(ms) {
     if (!estado.adjuntos || estado.adjuntos.cada === ms) return;
     clearInterval(estado.adjuntos.reloj);
@@ -3319,7 +3481,7 @@
       if (!r.ok || !Array.isArray(r.cola) || !estado.adjuntos || estado.adjuntos.idTorneo !== idT) return;
       estado.adjuntos.vistos = new Map((r.vistos || []).map((x) => [x.codigo, x.visto]));
       estado.adjuntos.mesa = !!r.mesa;
-      cadaCola((v0.adjuntos || []).some((a) => a.activo) || r.mesa ? ESPERA_COLA : ESPERA_COLA_LENTA);
+      cadaCola(r.mesa ? ESPERA_COLA_MESA : (v0.adjuntos || []).some((a) => a.activo) ? ESPERA_COLA : ESPERA_COLA_LENTA);
       let ultimo = 0;
       for (const x of r.cola) {
         if (!estado.adjuntos || estado.adjuntos.idTorneo !== idT) break;
@@ -5040,6 +5202,143 @@
     }
   }
 
+  // ---------- Modificar la ronda en juego, sin deshacerla ----------
+  // Cambiar a dos de lugar (también a uno que no juega por uno que sí),
+  // invertir colores, sacar a alguien, armar una mesa con quienes no juegan y
+  // agregar un jugador nuevo ahí mismo. Lo que se puede y lo que no lo decide
+  // V.modificarRonda (js/pareo/evento.js); cada cambio queda en las
+  // incidencias y en el historial («Deshacer el último cambio»).
+  const ERROR_MODIFICAR = { noSePuede: "modErr_noSePuede", sinRival: "modErr_sinRival", conResultado: "modErr_conResultado", mismo: "modErr_mismo", retirado: "modErr_retirado",
+    ningunoJuega: "modErr_ningunoJuega", noJuega: "modErr_noJuega", yaJuega: "modErr_yaJuega", yaHayBye: "modErr_yaHayBye" };
+  function pintarModificarRonda(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const lado = (l) => tx(l === "b" ? "blancas" : "negras").toLowerCase();
+    // Cada jugador con su lugar en la ronda, para elegirlo.
+    const lugarDe = (id) => {
+      const p = V.dondeJuega(R, id);
+      if (!p) return tx("modSinMesa", { n: nombreDe(id) });
+      if (R.mesas[p.i].n == null) return tx("modEnBye", { n: nombreDe(id) });
+      return tx("modEnMesa", { m: V.mesaFisica(v, p.i), c: lado(p.lado), n: nombreDe(id) });
+    };
+    const enRonda = [];
+    R.mesas.forEach((m) => { enRonda.push(m.b); if (m.n != null) enRonda.push(m.n); });
+    const fuera = V.sinMesa(v, r);
+    const todos = enRonda.concat(fuera);
+    const opciones = (ids) => ids.map((id) => el("option", { value: id, texto: lugarDe(id) }));
+    const libres = R.mesas.map((m, i) => [m, i]).filter(([m]) => m.n != null && !m.r && !m.pgn);
+    const fila = (...hijos) => el("div", { class: "flex flex-wrap items-end gap-2 mt-1" }, ...hijos);
+    const campo = (id, etiqueta, control) => el("div", {}, el("label", { for: id, class: "block text-xs font-semibold mb-0.5", texto: etiqueta }), control);
+    const bloque = (id, titulo, ayuda, ...hijos) => el("section", { id, class: "mt-3", "aria-labelledby": id + "-titulo" },
+      el("h4", { id: id + "-titulo", class: "font-semibold text-sm", texto: titulo }),
+      ayuda ? el("p", { class: C.nota, texto: ayuda }) : null, ...hijos);
+
+    // Hace el cambio, lo anota y vuelve a pintar con el panel abierto.
+    function hacer(op, incidencia, focoId) {
+      const res = V.modificarRonda(v, r, op);
+      if (res.error) {
+        Avisos.avisar(tx(ERROR_MODIFICAR[res.error] || "modErr_noSePuede", { m: res.mesa != null ? V.mesaFisica(v, res.mesa) : "" }), { tipo: "error" });
+        return;
+      }
+      R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), tipo: "decision", texto: incidencia(res) });
+      delete R.pareoVisto;
+      // Quien se inscribió tarde y entra en esta misma ronda: en el acta, su
+      // inscripción vale desde esta ronda y no desde la siguiente.
+      for (const id of [op.a, op.b, op.n]) {
+        const x = id && V.dondeJuega(R, id) && (v.tardios || []).find((y) => y.ronda === r + 2 && y.nombre === nombreDe(id));
+        if (x) x.ronda = r + 1;
+      }
+      guardar();
+      estado.modificarAbierto = true;
+      pintarRondas();
+      const avisos = [tx("modListo", { r: r + 1 })];
+      for (const x of res.repetidas || []) avisos.push(tx("modRepetida", { b: nombreDe(x.b), n: nombreDe(x.n), r: x.ronda }));
+      if (res.sinRival) avisos.push(tx("modSinRivalAviso", { n: nombreDe(res.sinRival) }));
+      Avisos.avisar(avisos.join(" "), { tipo: (res.repetidas || []).length || res.sinRival ? "info" : undefined });
+      const f = $(focoId);
+      if (f) f.focus();
+    }
+
+    const det = el("details", { id: "pi-modificar", class: "no-imprimir mt-5 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!estado.modificarAbierto });
+    det.addEventListener("toggle", () => { estado.modificarAbierto = det.open; });
+    det.append(el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("modTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx("modTexto") }));
+
+    // Cambiar a dos de lugar.
+    const selA = el("select", { id: "pi-mod-a", class: C.campoChico }, opciones(todos));
+    const selB = el("select", { id: "pi-mod-b", class: C.campoChico }, opciones(todos));
+    // El recién agregado (abajo) queda elegido para entrar.
+    const preferido = fuera.includes(estado.modNuevo) ? estado.modNuevo : fuera[0];
+    if (todos.length > 1) selB.value = fuera.length ? preferido : todos[1];
+    det.append(bloque("pi-mod-cambio", tx("modIntercambiarTitulo"), tx("modIntercambiarAyuda"),
+      fila(campo("pi-mod-a", tx("modJugadorA"), selA), campo("pi-mod-b", tx("modJugadorB"), selB),
+        el("button", { type: "button", id: "pi-mod-intercambiar", class: C.mini, onclick: () => {
+          const a = selA.value, b = selB.value;
+          hacer({ tipo: "intercambiar", a, b }, () => tx("modIncCambio", { a: nombreDe(a), b: nombreDe(b) }), "pi-mod-intercambiar");
+        } }, tx("modIntercambiar")))));
+
+    // Invertir los colores.
+    if (libres.length) {
+      const selM = el("select", { id: "pi-mod-mesa", class: C.campoChico },
+        libres.map(([m, i]) => el("option", { value: String(i), texto: tx("modMesaOpcion", { m: V.mesaFisica(v, i), b: nombreDe(m.b), n: nombreDe(m.n) }) })));
+      det.append(bloque("pi-mod-colores", tx("modColoresTitulo"), null,
+        fila(campo("pi-mod-mesa", tx("mesa"), selM),
+          el("button", { type: "button", id: "pi-mod-invertir", class: C.mini, onclick: () => {
+            const m = R.mesas[Number(selM.value)];
+            hacer({ tipo: "colores", mesa: Number(selM.value) }, () => tx("modIncColores", { b: nombreDe(m.n), n: nombreDe(m.b) }), "pi-mod-invertir");
+          } }, tx("modColores")))));
+    }
+
+    // Sacar a alguien de la ronda.
+    if (enRonda.length) {
+      const selS = el("select", { id: "pi-mod-sacar", class: C.campoChico }, opciones(enRonda));
+      det.append(bloque("pi-mod-salir", tx("modSacarTitulo"), tx("modSacarAyuda"),
+        fila(campo("pi-mod-sacar", tx("nombre"), selS),
+          el("button", { type: "button", id: "pi-mod-sacar-boton", class: C.mini, onclick: () => {
+            const id = selS.value;
+            hacer({ tipo: "sacar", id }, (res) => res.sinRival ? tx("modIncSacarRival", { n: nombreDe(id), o: nombreDe(res.sinRival) }) : tx("modIncSacar", { n: nombreDe(id) }), "pi-mod-sacar-boton");
+          } }, tx("modSacar")))));
+    }
+
+    // Armar una mesa con quienes no juegan (o darle a uno el bye del pareo).
+    const hayBye = R.mesas.some((m) => m.n == null);
+    if (fuera.length >= (hayBye ? 2 : 1)) {
+      const selBl = el("select", { id: "pi-mod-blancas", class: C.campoChico }, fuera.map((id) => el("option", { value: id, texto: nombreDe(id) })));
+      const selNe = el("select", { id: "pi-mod-negras", class: C.campoChico }, fuera.map((id) => el("option", { value: id, texto: nombreDe(id) })),
+        hayBye ? null : el("option", { value: "", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) }));
+      selBl.value = preferido;
+      selNe.value = fuera.find((id) => id !== preferido) || "";
+      det.append(bloque("pi-mod-armar", tx("modArmarTitulo"), null,
+        fila(campo("pi-mod-blancas", tx("blancas"), selBl), campo("pi-mod-negras", tx("negras"), selNe),
+          el("button", { type: "button", id: "pi-mod-armar-boton", class: C.mini, onclick: () => {
+            const b = selBl.value, n = selNe.value || null;
+            hacer({ tipo: "mesa", b, n }, () => n ? tx("modIncMesa", { b: nombreDe(b), n: nombreDe(n) }) : tx("modIncBye", { n: nombreDe(b) }), "pi-mod-armar-boton");
+          } }, tx("modArmar")))));
+    } else if (!fuera.length) det.append(el("p", { class: C.nota + " mt-3", texto: tx("modNadieSinMesa") }));
+
+    // Un jugador nuevo, sin salir de la ronda.
+    const fNombre = el("input", { id: "pi-mod-nuevo-nombre", type: "text", maxlength: "33", autocomplete: "off", class: C.campoChico });
+    const fInst = el("input", { id: "pi-mod-nuevo-inst", type: "text", maxlength: "80", autocomplete: "off", class: C.campoChico });
+    const fElo = el("input", { id: "pi-mod-nuevo-elo", type: "number", min: "0", max: "3500", inputmode: "numeric", class: C.campoChico + " w-24" });
+    const form = el("form", { class: "flex flex-wrap items-end gap-2 mt-1" },
+      campo("pi-mod-nuevo-nombre", tx("nombre"), fNombre), campo("pi-mod-nuevo-inst", tx("institucion"), fInst), campo("pi-mod-nuevo-elo", tx("modElo"), fElo),
+      el("button", { type: "submit", id: "pi-mod-nuevo-agregar", class: C.mini }, tx("modNuevoAgregar")));
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const d = datosJugador({ nombre: fNombre.value, institucion: fInst.value, elo: fElo.value });
+      if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); fNombre.focus(); return; }
+      if (!agregarJugadores([d])) return;
+      estado.modNuevo = v.jugadores[v.jugadores.length - 1].id;
+      estado.modificarAbierto = true;
+      pintarRondas();
+      Avisos.avisar(tx("modNuevoListo", { n: d.nombre }));
+      const sig = $("pi-mod-blancas") || $("pi-mod-b");
+      if (sig) sig.focus();
+    });
+    det.append(bloque("pi-mod-nuevo", tx("modNuevoTitulo"), tx("modNuevoAyuda"), form));
+    caja.append(det);
+  }
+
   // ---------- Los encuentros de un torneo por equipos ----------
   // Cada encuentro: los dos equipos con sus puntos de encuentro antes de la
   // ronda, quiénes juegan de cada lado (los cuatro primeros del orden de
@@ -6097,7 +6396,15 @@
     const ok = await Avisos.confirmar(tx(conResultados ? "confirmarDeshacerConResultados" : "confirmarDeshacer", { r: r + 1 }),
       { aceptar: tx("deshacerRonda"), peligro: true });
     if (!ok || v.rondas.length !== r + 1) return;
-    v.rondas.pop();
+    const deshecha = v.rondas.pop();
+    // Lo que el árbitro había marcado antes de emparejar esta ronda (byes
+    // pedidos, «no viene») vuelve a quedar marcado: deshacer para agregar a
+    // alguien no le borra a quién ya había anotado como ausente. Lo de la
+    // acreditación no se guarda aquí (se recalcula con la lista), así quien
+    // se marque presente después sale solo de «no viene».
+    const sinAcreditar = new Set(deshecha.sinAcreditar || []);
+    const marcadas = Object.fromEntries(Object.entries(deshecha.ausencias || {}).filter(([id]) => !sinAcreditar.has(id)));
+    v.pedidas = { r, ausencias: marcadas };
     if (r === 0 && v.sistema !== "todos" && !v.numeracionDeArchivo) v.numeracion = null;
     // Sin la ronda 1, el orden de tableros se vuelve a poder cambiar.
     if (r === 0) delete v.ordenTableros;
@@ -6279,6 +6586,12 @@
   // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
   // y entra a la lista solo si se acepta.
   const ESPERA_PUBLICAR = 30000;
+  // En un evento de la Mesa del árbitro las tablets leen las mesas de lo
+  // publicado: lo que pone el principal tiene que llegarles en segundos
+  // (ver «El resultado del principal llega solo a las tablets»). Sigue siendo
+  // una publicación por espera, no una por cambio: varios resultados
+  // seguidos salen juntos.
+  const ESPERA_PUBLICAR_MESA = 4000;
   const publicando = new Map();
   // Lo que va con el torneo y no vive en él: el código del enlace en vivo de
   // su evento (en este navegador).
@@ -6286,7 +6599,8 @@
   function programarPublicacion() {
     const id = estado.id;
     if (publicando.has(id)) return;
-    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, ESPERA_PUBLICAR));
+    const deLaMesa = !!(estado.adjuntos && estado.adjuntos.idTorneo === id && estado.adjuntos.mesa);
+    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, deLaMesa ? ESPERA_PUBLICAR_MESA : ESPERA_PUBLICAR));
   }
   async function actualizarPublicado(id, boton) {
     const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
@@ -7242,6 +7556,9 @@
 
     $("pi-form-torneo").addEventListener("input", alEscribirTorneo);
     $("pi-form-jugador").addEventListener("input", guardarBorrador);
+    // La lista de categorías sigue a la fecha de nacimiento.
+    $("pi-form-jugador").elements.nacimiento.addEventListener("change", () => pintarCategorias(true));
+    $("pi-form-jugador").elements.categoria.addEventListener("input", () => pintarCategorias(false));
     $("pi-pegar").addEventListener("input", guardarBorrador);
     window.addEventListener("pagehide", guardarAlSalir);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardarAlSalir(); });
@@ -7252,6 +7569,7 @@
       if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); f.elements.nombre.focus(); return; }
       agregarJugadores([d]);
       f.reset();
+      pintarCategorias(false);
       guardarBorrador();
       f.elements.nombre.focus();
     });
@@ -7518,6 +7836,7 @@
     enganchar();
     pintarTodo();
     restaurarBorrador();
+    if (window.PareoNube) window.PareoNube.iniciar({ tx, hora: horaCR, clases: C, local: nubeLocal, alTraer: alTraerDeLaNube });
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
     if (location.hash === "#desde=inscripcion-jde") recogerDeInscripcion();

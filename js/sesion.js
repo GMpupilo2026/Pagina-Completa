@@ -7358,7 +7358,8 @@
             pintarAvisoVentaja();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
-                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                statusEl.textContent = myPracticeGame
+                    ? practiceJugadaDelMotorDicha() + practiceStatusLabel(myPracticeGame.status) : "";
                 resignBtn.classList.add("hidden");
                 retryEngineBtn.classList.add("hidden");
                 retryBtn.classList.toggle("hidden", !myPracticeGame || practiceIntentosQuedan() === 0);
@@ -7374,7 +7375,25 @@
             retryEngineBtn.classList.toggle("hidden", !stuck);
             statusEl.textContent = practiceEngineBusy
                 ? "El motor está pensando…"
-                : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
+                : (myTurn ? practiceJugadaDelMotorDicha() + "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
+        }
+
+        /* «El motor jugó e5. »: la jugada del motor va DENTRO del aviso de turno
+           (o del resultado, si con ella terminó la partida), no en un aviso
+           aparte. Antes se decía en el recuadro y medio segundo después —cuando
+           terminaba de guardarse en la base— «Es tu turno.» llegaba a esta otra
+           región: el lector de pantalla cortaba la jugada para decir solo eso, y
+           la voz del navegador (baja visión), con cuatro avisos en fila, vaciaba
+           la fila y decía solo el último. Ni quien no ve ni quien ve poco se
+           enteraba de qué había jugado el motor. Un solo aviso, el último, no se
+           pisa con nada (lo revisa verificar-clase-voz-motor.js).
+           La jugada es del motor si ahora le toca al alumno; "" si no la hay. */
+        function practiceJugadaDelMotorDicha() {
+            if (!practiceBoard || !myPracticeGame) return "";
+            const hechas = practiceBoard.game.history();
+            if (!hechas.length || practiceBoard.game.turn() !== myPracticeGame.student_color) return "";
+            const ultima = hechas[hechas.length - 1];
+            return "El motor jugó " + (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(ultima) : ultima) + ". ";
         }
 
         async function savePracticeGameRow(patch) {
@@ -7493,11 +7512,9 @@
             if (move) {
                 practiceBoard.render();
                 pintarAyudaAlumno();
-                if (practicaAcc) {
-                    practicaAcc.actualizar();
-                    practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
-                        + (practiceBoard.game.game_over() ? "" : "Te toca."));
-                }
+                // La jugada se anuncia en el aviso de turno (practiceJugadaDelMotorDicha),
+                // cuando termina de guardarse: dicha acá también, ese aviso la pisaba.
+                if (practicaAcc) practicaAcc.actualizar();
                 const newFen = practiceBoard.game.fen();
                 const newMoves = practiceBoard.game.history();
                 const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);

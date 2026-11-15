@@ -314,6 +314,9 @@ function limpiar(v: unknown) {
     // Los códigos de los enlaces en vivo (ya van en sus QR): con ellos, un
     // enlace en vivo que ya nadie transmite lleva al torneo publicado.
     vivo: codigo(v.vivo), codigoEvento: codigo(v.codigoEvento),
+    // El código de las cámaras de Notara (también va en el QR de cada mesa):
+    // la página del torneo lleva con él a «Partidas en vivo».
+    camaras: codigo(v.camaras),
     // El resumen de cada jugador (puesto, puntos, rendimiento), de jugadores que existen.
     resumen: lista(v.resumen, 1000, filaResumen),
   };

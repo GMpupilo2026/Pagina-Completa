@@ -98,6 +98,9 @@
       // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
       // lleva desde ellos al torneo publicado (js/pareo/ver.js).
       vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,
+      // El código de las cámaras de Notara (ya va en el QR de cada mesa): con
+      // él, la página del torneo lleva a «Partidas en vivo» (tablero-vivo.html).
+      camaras: t.camaras && t.camaras.activo && t.camaras.codigo ? t.camaras.codigo : undefined,
       resumen: resumenJugadores(t),
     };
   }

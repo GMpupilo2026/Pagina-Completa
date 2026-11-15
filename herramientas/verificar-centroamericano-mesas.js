@@ -355,7 +355,7 @@ igual("la actividad de los árbitros da su propio tipo a «Levantó» y dice qui
 igual("ilegales e irregularidades: «Otra» va PRIMERO (viene elegida: lo escrito no queda con una frase que no se eligió)", [C.TIPOS_ILEGAL[0].id, C.TIPOS_IRREGULARIDAD[0].id], ["otra", "otra"]);
 igual("«Otra» anota tal cual lo que escribió el árbitro, sin frase de la lista", C.textoTipo(C.TIPOS_IRREGULARIDAD, "otra", "  Habló con su entrenador  "), { texto: "Otra: Habló con su entrenador", articulo: "" });
 igual("ilegales: ocho tipos, con «Otra» que pide explicar", [C.TIPOS_ILEGAL.length, C.TIPOS_ILEGAL[0].id, C.textoTipo(C.TIPOS_ILEGAL, "otra", ""), C.textoTipo(C.TIPOS_ILEGAL, "enroque", "").texto], [8, "otra", null, "Enroque ilegal"]);
-igual("irregularidades: diez tipos; solo llevan artículo los que el reglamento dice sin duda (4.2, 4.3, 8.1, 9.2, 11.3.2)", [C.TIPOS_IRREGULARIDAD.length, C.TIPOS_IRREGULARIDAD.filter((t) => t.articulo).map((t) => t.articulo)], [10, ["4.3", "4.2", "8.1", "9.2", "11.3.2"]]);
+igual("irregularidades: diez tipos; solo llevan artículo los que el reglamento dice sin duda (4.2, 4.3, 8.1, 9.1.2.1 —ofrecer tablas; el 9.2 es la triple repetición—, 11.3.2)", [C.TIPOS_IRREGULARIDAD.length, C.TIPOS_IRREGULARIDAD.filter((t) => t.articulo).map((t) => t.articulo)], [10, ["4.3", "4.2", "8.1", "9.1.2.1", "11.3.2"]]);
 igual("los tipos no se repiten", [new Set(C.TIPOS_ILEGAL.map((t) => t.id)).size, new Set(C.TIPOS_IRREGULARIDAD.map((t) => t.id)).size], [8, 10]);
 igual("las mesas se leen en rangos: «22, 24 a 26, 30»", C.listaMesas([30, 22, 24, 25, 26, 22]), "22, 24 a 26, 30");
 

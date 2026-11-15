@@ -1171,6 +1171,126 @@
     return movidas;
   }
 
+  // ---------- Modificar la ronda ya emparejada ----------
+  // El árbitro cambia la ronda en juego sin deshacerla: cambia a dos
+  // jugadores de lugar (también a uno que no juega por uno que sí, que es
+  // como entra quien llegó tarde), invierte los colores de una mesa, saca a
+  // alguien o arma una mesa con dos que no juegan. Solo la última ronda, solo
+  // en un suizo individual y solo en mesas sin resultado ni partida anotada:
+  // lo que ya se jugó no se toca. Lo que apunta a una mesa por su número
+  // (incidencias, discrepancias, lo de las cámaras, lo confirmado) se corre
+  // cuando una mesa se va. Devuelve { ok, repetidas, sinRival } o { error }.
+  function sePuedeModificar(t, r) {
+    return !!t && !E.esDeEquipos(t) && t.sistema !== "todos" && t.sistema !== "scheveningen" && t.sistema !== "eliminacion" &&
+      r === t.rondas.length - 1 && r >= 0;
+  }
+  function dondeJuega(R, id) {
+    for (let i = 0; i < R.mesas.length; i++) {
+      const m = R.mesas[i];
+      if (m.b === id) return { i, lado: "b" };
+      if (m.n === id) return { i, lado: "n" };
+    }
+    return null;
+  }
+  const mesaTocada = (m) => !!(m && (m.r || m.pgn || m.porAdjunto));
+  // Lo que apunta a la mesa i (de 0) se corre `d` (+1 al meter una antes, −1
+  // al sacarla); lo de la mesa que se va, se borra (salvo las incidencias,
+  // que quedan sin número de mesa: lo que pasó, pasó).
+  function correrMesas(R, i, d) {
+    const correr = (lista, borrar) => (lista || []).filter((x) => !(borrar && d < 0 && x.mesa === i + 1)).map((x) => {
+      if (d < 0 && x.mesa === i + 1) { const y = Object.assign({}, x); delete y.mesa; return y; }
+      return x.mesa > i + (d > 0 ? 0 : 1) ? Object.assign({}, x, { mesa: x.mesa + d }) : x;
+    });
+    if (R.incidencias) R.incidencias = correr(R.incidencias, false);
+    if (R.discrepancias) R.discrepancias = correr(R.discrepancias, true);
+    if (R.deCamaras) R.deCamaras = correr(R.deCamaras, true);
+    if (R.confirmadas) R.confirmadas = R.confirmadas.map((k) => {
+      const [m, res] = String(k).split("|");
+      const n = Number(m);
+      if (d < 0 && n === i) return null;
+      return (n >= i + (d > 0 ? 0 : 1) ? n + d : n) + "|" + res;
+    }).filter(Boolean);
+  }
+  function quitarMesa(R, i) { R.mesas.splice(i, 1); correrMesas(R, i, -1); }
+  function meterMesa(R, m) {
+    // El bye del pareo va siempre al final.
+    const k = m.n === null ? R.mesas.length : (R.mesas.findIndex((x) => x.n === null) + 1 || R.mesas.length + 1) - 1;
+    correrMesas(R, k, +1);
+    R.mesas.splice(k, 0, m);
+    return k;
+  }
+  // ¿Ya jugaron entre sí en una ronda anterior?
+  function yaJugaron(t, r, a, b) {
+    for (let k = 0; k < r; k++) for (const m of t.rondas[k].mesas) if ((m.b === a && m.n === b) || (m.b === b && m.n === a)) return k;
+    return -1;
+  }
+  const activo = (t, r, id) => { const j = (t.jugadores || []).find((x) => x.id === id); return !!j && !(j.retiradoDespuesDe != null && r >= j.retiradoDespuesDe); };
+  function repetidasDe(t, r, mesas) {
+    const out = [];
+    for (const m of mesas) if (m && m.n != null) { const k = yaJugaron(t, r, m.b, m.n); if (k >= 0) out.push({ b: m.b, n: m.n, ronda: k + 1 }); }
+    return out;
+  }
+  function entra(R, id) { if (R.ausencias) delete R.ausencias[id]; }
+  function sale(R, id) { if (R.ausencias) delete R.ausencias[id]; if (R.tarde) delete R.tarde[id]; }
+  function modificarRonda(t, r, op) {
+    if (!sePuedeModificar(t, r)) return { error: "noSePuede" };
+    const R = t.rondas[r];
+    if (op.tipo === "colores") {
+      const m = R.mesas[op.mesa];
+      if (!m || m.n == null) return { error: "sinRival" };
+      if (mesaTocada(m)) return { error: "conResultado", mesa: op.mesa };
+      [m.b, m.n] = [m.n, m.b];
+      return { ok: true, repetidas: [] };
+    }
+    if (op.tipo === "intercambiar") {
+      const { a, b } = op;
+      if (!a || !b || a === b) return { error: "mismo" };
+      if (!activo(t, r, a) || !activo(t, r, b)) return { error: "retirado" };
+      const pa = dondeJuega(R, a), pb = dondeJuega(R, b);
+      if (!pa && !pb) return { error: "ningunoJuega" };
+      for (const p of [pa, pb]) if (p && mesaTocada(R.mesas[p.i])) return { error: "conResultado", mesa: p.i };
+      if (pa && pb && pa.i === pb.i) return modificarRonda(t, r, { tipo: "colores", mesa: pa.i });
+      if (pa) R.mesas[pa.i][pa.lado] = b;
+      if (pb) R.mesas[pb.i][pb.lado] = a;
+      if (!pa) { entra(R, a); sale(R, b); }
+      if (!pb) { entra(R, b); sale(R, a); }
+      return { ok: true, repetidas: repetidasDe(t, r, [pa && R.mesas[pa.i], pb && R.mesas[pb.i]]) };
+    }
+    if (op.tipo === "sacar") {
+      const p = dondeJuega(R, op.id);
+      if (!p) return { error: "noJuega" };
+      const m = R.mesas[p.i];
+      if (mesaTocada(m)) return { error: "conResultado", mesa: p.i };
+      const rival = m.n == null ? null : p.lado === "b" ? m.n : m.b;
+      quitarMesa(R, p.i);
+      sale(R, op.id);
+      if (rival) sale(R, rival);
+      return { ok: true, repetidas: [], sinRival: rival };
+    }
+    if (op.tipo === "mesa") {
+      const { b } = op, n = op.n == null ? null : op.n;
+      if (!b || b === n) return { error: "mismo" };
+      for (const id of [b, n]) {
+        if (id == null) continue;
+        if (!activo(t, r, id)) return { error: "retirado" };
+        if (dondeJuega(R, id)) return { error: "yaJuega" };
+      }
+      if (n === null && R.mesas.some((x) => x.n === null)) return { error: "yaHayBye" };
+      const nueva = { b, n, r: null };
+      entra(R, b);
+      if (n) entra(R, n);
+      const k = meterMesa(R, nueva);
+      return { ok: true, mesa: k, repetidas: repetidasDe(t, r, [nueva]) };
+    }
+    return { error: "noSePuede" };
+  }
+  // Quienes pueden entrar a la ronda: los que siguen en el torneo y no
+  // tienen mesa.
+  function sinMesa(t, r) {
+    const R = t.rondas[r];
+    return (t.jugadores || []).filter((j) => activo(t, r, j.id) && !dondeJuega(R, j.id)).map((j) => j.id);
+  }
+
   // ---------- Los certificados de los árbitros ----------
   // Uno por persona que arbitró algún torneo del evento, con sus cargos.
   function certificadosArbitro(evento, torneos) {
@@ -1238,7 +1358,7 @@
 
   const api = {
     marcasIncidencias, textoMarca,
-    ARTICULOS, articuloTexto, revisarPareo, aplicarMesasFijas, certificadosArbitro, textoCertificadoArbitro, delCentro, centrosDeVista, CARGOS_FIRMA,
+    ARTICULOS, articuloTexto, revisarPareo, aplicarMesasFijas, sePuedeModificar, modificarRonda, sinMesa, dondeJuega,certificadosArbitro, textoCertificadoArbitro, delCentro, centrosDeVista, CARGOS_FIRMA,
     configuracionDe, textoConfiguracion, cambiosDeConfiguracion,
     celdaCruzada, ausenciasDe, TIPO_AUSENCIA, justificadaTexto,
     sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,

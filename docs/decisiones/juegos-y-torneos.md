@@ -2501,6 +2501,48 @@ simplificado para grupos de clase y no se tocó.
   siguientes (la página lo avisa). Deshacer el emparejamiento solo se puede en
   la última ronda, y al volver a emparejarla sale la misma.
 
+### Modificar la ronda en juego sin deshacerla
+
+El dueño lo pidió en noviembre de 2026: «poder modificar rondas en Pareo
+Integral, o agregar a la ronda a jugadores nuevos, agregar o quitar, poder
+cambiar sin borrar la ronda». Antes la única salida era deshacer el
+emparejamiento entero, y con partidas ya empezadas eso no sirve.
+
+- **Debajo de las mesas de la ronda en juego** va «Modificar la ronda sin
+  deshacerla» (`pintarModificarRonda` en `js/pareo/pagina.js`): cambiar a dos
+  de lugar, invertir colores, sacar a alguien, armar una mesa con quienes no
+  juegan (o darle a uno el bye del pareo) y agregar un jugador nuevo ahí
+  mismo, sin ir a la ficha Jugadores. Quien llegó tarde entra **cambiándolo
+  de lugar con el que no vino** o en una mesa nueva; el que sale queda en «No
+  juegan esta ronda» como ausente, y ahí el árbitro le pone el bye que toque.
+- **Lo que se puede lo decide `V.modificarRonda`** (`js/pareo/evento.js`,
+  funciones puras): solo la última ronda (la siguiente sale de ella), solo un
+  suizo individual (en todos contra todos, Scheveningen y eliminación el
+  calendario es fijo; por equipos, la alineación tiene su propio camino), y
+  **nunca una mesa con resultado, partida o lo que anotó un adjunto**: lo que
+  ya se jugó no se toca. Tampoco entra un retirado ni hay dos byes del pareo.
+- **El bye del pareo va siempre al final**: una mesa nueva entra antes que él.
+- **Las mesas se cuentan por su lugar en la lista**, y varias cosas de la
+  ronda apuntan a una mesa por su número (`incidencias`, `discrepancias`,
+  `deCamaras` de 1 en adelante, `confirmadas` de 0). Al irse o entrar una
+  mesa, `correrMesas` las corre con ella; lo de la mesa que se va se borra,
+  salvo la incidencia, que queda sin número de mesa.
+- **El historial cuenta «se modificaron los emparejamientos»** y no mesa por
+  mesa: con las mesas corridas, comparar resultados por posición inventaba
+  cambios. Antes de esto, un cambio solo de parejas no entraba al historial
+  (la comparación de «datos del torneo» deja las rondas afuera), así que
+  «Deshacer el último cambio» no lo habría podido deshacer.
+- Cada cambio queda como **decisión del árbitro** en las incidencias (va al
+  informe oficial), y avisa si la pareja nueva ya jugó entre sí: no lo
+  impide, porque a veces el árbitro no tiene otra.
+- Quien se inscribe tarde con evento queda en el acta desde «la ronda
+  siguiente»; si entra en la que está en juego, se corrige a esa.
+- **El comprobador de FIDE va a marcar esa ronda como distinta** de la del
+  Sistema Holandés: es lo esperado, y el manual lo dice.
+- `verificar-pareo-modificar.js` prueba las reglas sin navegador y la página
+  de punta a punta (agregar a alguien, meterlo, invertir, armar con el bye,
+  una mesa con resultado que no se deja tocar y deshacer).
+
 ### Los desempates: C.07:2026, traducido de chesspairing y comparado con él
 
 - `js/pareo/desempates.js` es la traducción de `chesspairing` (Gert Nutterts,
@@ -2524,16 +2566,94 @@ simplificado para grupos de clase y no se tocó.
 - El Elo de un rival sin Elo cuenta como 0 en ARO, TPR y compañía: la ayuda de
   la página pide el Elo de todos para usarlos.
 
-### Nada sale del navegador
+### Nada sale del navegador (salvo lo que se activa)
 
 El torneo vive en `localStorage` (`pareo_lista_v1`, `pareo_torneo_v1_<id>`) y
-en los archivos que baja quien organiza (`.json` y TRF). No hay cuenta, ni
-base, ni consentimiento que pedir: los datos de los jugadores no salen de la
-computadora (el verificador lo comprueba: ni una petición a otro origen). **El
-día que se publique un torneo en línea** (emparejamientos y resultados con un
-enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
-de quien organiza), la casilla de consentimiento y su mención en
-`privacidad.html`.
+en los archivos que baja quien organiza (`.json` y TRF). Sin activar nada, los
+datos de los jugadores no salen de la computadora (el verificador lo
+comprueba: ni una petición a otro origen, salvo la publicación). Lo que sí
+sale se activa aparte, con su consentimiento y su mención en
+`privacidad.html`: la publicación en «Torneos en Pareo Integral» y, desde
+noviembre de 2026, guardar los torneos en la cuenta (abajo).
+
+### Pareo Integral: los torneos en la cuenta
+
+El dueño lo pidió en noviembre de 2026: «todo lo que haga dentro de mi usuario
+en las herramientas… si yo me meto en otra computadora, se carga toda esa
+información». No era así: el usuario solo abría el candado de la licencia, y
+en otra computadora (u otro navegador) «Mis torneos» salía vacío. Las vías
+que había (el `.json`, «Pasar el evento a otra computadora», el código de la
+organización) son a mano.
+
+**Es opcional y pide consentimiento.** Los torneos traen nombres y fechas de
+nacimiento de menores, y hasta ahora no salían de la computadora. En «Mis
+torneos», `#pi-nube` ofrece «Guardar mis torneos en mi cuenta» (botón con
+`aria-expanded`), explica qué se guarda y pide la casilla con el enlace a
+`privacidad.html`; sin marcarla no se activa. La aceptación queda en
+`pareo_nube_cuentas` (`consentido_en`), una vez por cuenta: en otra
+computadora ya no se vuelve a preguntar.
+
+**La base** (migración `pareo_nube`):
+- `pareo_nube_torneos (dueno, id)`: el mismo id del navegador y el torneo
+  entero en `datos` (el mismo JSON de `localStorage`). Solo la cuenta dueña lo
+  lee y escribe (RLS con `(select auth.uid())`); **tampoco administración**:
+  son datos de terceros que esa persona organiza, como lo que tenía en su
+  computadora. Escribir pide además la fila de consentimiento y la licencia
+  (`tengo_herramienta('pareo')`); leer lo propio, no: si la licencia vence, sus
+  torneos se le siguen pudiendo bajar.
+- Las funciones (`pareo_nube_estado`, `_activar`, `_apagar(p_borrar)`,
+  `_lista`, `_traer(ids)` de a 20, `_guardar`, `_borrar`) son SECURITY
+  INVOKER: decide la RLS. `_lista` devuelve un solo `jsonb` (sin los torneos):
+  PostgREST no lo corta en 1000.
+- **Cada torneo lleva `version`.** Quien guarda dice sobre cuál trabajó; si otra
+  computadora guardó antes, la base contesta `conflicto` en vez de pisarla.
+- **Quitar un torneo deja la marca `borrado`** (sin datos): las demás
+  computadoras lo quitan también y no lo vuelven a subir. «Archivar torneos»
+  es quitar: también se quitan de la cuenta (quedan en el archivo bajado).
+- No va en la bitácora de auditoría (no reparte permisos, accesos ni dinero) y
+  se borra con la cuenta.
+
+**La página** (`js/pareo/nube.js`):
+- Todo lo que toca un torneo pasa por `escribir()`/`quitar()` de `pagina.js`, y
+  ahí se avisa a la nube (`avisarNube`): un solo enganche, no uno por cada
+  lugar que guarda (son más de veinte). Se anota «por subir» y se sube todo
+  junto 3 segundos después. Lo que llega de la cuenta se escribe por otro
+  lado (`nubeLocal`), para no volver a subirlo.
+- Al abrir la página, al volver a la pestaña (como mucho cada 20 s), al
+  recuperar la conexión y con «Revisar ahora» se compara la lista de la cuenta
+  con la del navegador: lo más nuevo de la cuenta se baja, lo de aquí se sube y
+  lo quitado en otra computadora se quita.
+- **Nunca se pierde lo anotado.** Si un torneo se cambió aquí y en otra
+  computadora a la vez, queda la versión de la cuenta y lo de aquí se guarda
+  como otro torneo, «(copia de esta computadora)», que también sube. Si las
+  dos versiones son iguales (dos pestañas que subieron lo mismo), no hay
+  copia: se comparan con las claves en orden, porque `jsonb` las reordena.
+- **El torneo abierto se pone al día sin `abrir()`**: `abrir()` apaga el
+  enlace en vivo, y un torneo que se está compartiendo no puede cortarse
+  porque otra computadora anotó un resultado.
+- **El torneo vacío** que la página crea sola al arrancar no se sube (cada
+  computadora nueva llenaría la cuenta de vacíos), y se quita cuando llegan
+  los de la cuenta.
+- **Cada navegador queda unido a una cuenta** (`pareo_nube_v1`: cuenta,
+  versión conocida de cada torneo, lo que falta subir o quitar, y los
+  excluidos). Una computadora que ya tenía torneos pregunta antes de subirlos
+  («Guardarlos en mi cuenta» / «Dejarlos solo aquí»): puede ser compartida.
+  Si entra otra cuenta, no se le suben los torneos de la primera: lo dice y
+  ofrece pasar el navegador a la suya.
+- Sin internet, lo cambiado queda anotado y sube al volver. Apagarlo deja de
+  subir y pregunta si se borran las copias de la cuenta; las de cada
+  navegador se quedan. Al apagarlo se guarda la versión que se conocía, para
+  que al volver a activarlo lo cambiado mientras tanto suba sin chocar.
+- Sin `window.sb` con `auth` y `rpc` (el doble de Realtime de las demás
+  pruebas) no hace nada.
+
+Lo prueba `verificar-pareo-nube.js` (con un doble de la base en Node que
+comparten varias «computadoras», cada una un contexto con su `localStorage`):
+consentimiento, subir, bajar en otra computadora, conflicto con copia,
+borrado, la computadora que pregunta, otra cuenta y apagar. Rompiendo el
+aviso de `escribir()` a la nube, salta. Lo que hace cumplir la base (solo la
+dueña ve lo suyo; sin consentimiento o sin licencia no acepta torneos) se
+comprobó impersonando roles en SQL.
 
 ### El manual y la línea de comandos
 
@@ -2716,6 +2836,42 @@ institución y resolver a mano un Elo Nacional que quedó ambiguo.
   guarda) con un botón «Editar» que abre el mismo formulario de editar un
   jugador para poner el Elo a mano; la lista se actualiza sola al guardar
   esos cambios o al volver a buscar.
+
+### Un nombre incompleto también encuentra su Elo Nacional
+
+El 14/11/2026 el dueño avisó: «hay jugadores que sí tienen Elo nacional y a
+la hora de buscarlo en Pareo Integral no los encuentro». Probado contra la
+página real y la función desplegada: «Jose Daniel Rodriguez Jimenez» salía
+encontrado, pero **«Jose Daniel Rodriguez» (sin el segundo apellido) y «Jose
+Rodriguez Jimenez» (sin el segundo nombre) salían «no encontrado»**, aunque
+en la lista nacional hubiera una sola persona con esas palabras. Así se
+anota a un alumno casi siempre.
+
+- **El buscador de ajedrezcostarica.com no tenía la culpa**: trae a quien
+  tenga TODAS las palabras escritas, en cualquier orden y sin mirar tildes
+  («Jose Daniel Rodriguez» → 1 jugador, el que era). Lo que lo descartaba era
+  nuestra comparación, que exigía el bolsillo de palabras IGUAL.
+- **La regla nueva vive en `supabase/functions/pareo-elo-nacional/emparejar.ts`**
+  (aparte de `index.ts`, para probarla sin red): un nombre igual sigue siendo
+  «encontrado» y se pone solo; si no hay igual, los nombres que **contienen
+  todas las palabras escritas** (al menos dos, enteras: «Rod» no es
+  «Rodriguez») vuelven como **«parecido»** (uno) o **«ambiguo»** (varios),
+  con hasta cinco candidatos con su club y su Elo. **Nunca se asignan
+  solos**: el alumno puede no estar en la lista y llamarse parecido a otra
+  persona. En la lista de pendientes cada candidato tiene «Usar este Elo»,
+  que le pone el Elo y, si no tenía, el ID FIDE; el nombre queda como se
+  escribió. Con más de cinco, la página pide escribir el nombre completo.
+- **Se busca primero con el nombre completo** y solo si no trae a nadie con
+  los apellidos y el primer apellido (`busquedasPorNombre`). Antes se
+  empezaba por los apellidos, y con «Rodriguez, Jose» la búsqueda
+  «Rodriguez» trae 372 jugadores de los que la página muestra solo los 50 de
+  más Elo: un alumno nunca salía.
+- El lector compartido (`_compartido/ajedrezcostarica.ts`) ahora también lee
+  el `club` de cada fila, para mostrar a quién se refiere un candidato.
+  `elo-fide` no lo mira.
+- Todos los jugadores de la lista nacional tienen código FIDE (revisado en
+  noviembre de 2026 con varias búsquedas), así que descartar las filas sin
+  código no deja a nadie afuera.
 
 **Al tocar la institución, la categoría, los nombres repetidos, la subida de
 listas, el filtro por institución o el Elo Nacional, correr
@@ -4270,6 +4426,30 @@ que alguien cierre por accidente la página»).
   `pi-tv-…` porque las fichas están todas en la página a la vez.
 
 Lo comprueba `verificar-pareo-informe.js`.
+
+### Pareo Integral: la categoría al inscribir y los ausentes al deshacer
+
+Dos pedidos del dueño el 14/11/2026, en el Tacho Chess 2:
+
+- **Deshacer una ronda no borra los ausentes.** Había emparejado la ronda 2 con cinco «no viene», se le olvidó
+  agregar a alguien, deshizo el emparejamiento… y perdió a quién había marcado. Lo marcado antes de emparejar
+  (`v.pedidas`: «no viene», byes pedidos) se borra al emparejar porque ya queda en la ronda (`ausencias`); ahora
+  `deshacerRonda` lo devuelve desde la ronda deshecha, así que la ronda vuelve a aparecer con las mismas marcas
+  (también después de recargar). Lo que salió de la acreditación (`sinAcreditar`) no se devuelve como marca: se
+  recalcula con la lista, y quien se marque presente después sale solo de «no viene».
+- **La categoría se elige de una lista.** El campo «Categoría» de «Agregar un jugador» era texto libre. Ahora
+  despliega una lista (`<datalist id="pi-categorias">`, `categoriasParaInscribir` y `pintarCategorias`): en un
+  torneo de los JDE (con el evento de los JDE o «Categoría X» en el nombre), solo las que permite el año de
+  nacimiento según la Normativa (art. 17, la misma `G.categoriasDeNacimiento` de la inscripción de los JDE; en
+  individual no se sube, art. 18). Sin fecha salen las cinco; con una sola posible se pone sola, solo si el campo está vacío (lo escrito a mano no se cambia en silencio); nacido en 2013 o
+  2014 salen B y C, la del torneo primero; una que no le toca, o una fecha que no entra en ninguna, se dice debajo
+  (`#pi-categoria-nota`, que lleva el campo en `aria-describedby`). En cualquier otro torneo la lista son las
+  categorías que ya tienen sus jugadores, como la inscripción pública. Se puede seguir escribiendo una nueva: el
+  aviso de siempre al agregar (`tardioCategoria`) sigue siendo el control.
+
+Lo prueban `verificar-pareo-pagina.js` (sección 4: Diego «no viene» sigue marcado al deshacer la ronda 5 y al
+recargar) y `verificar-pareo-categoria-inscribir.js` (los casos de los JDE y de otro torneo). Rotos a propósito la
+devolución de `v.pedidas` o el filtro por año, saltan.
 
 ### Pareo Integral: quien pierde por incomparecencia queda fuera
 
@@ -11487,6 +11667,70 @@ no existía en la Mesa general (`mesa-arbitro.html`). Ahora la Mesa general la t
   ventana, la casilla y las fotos dentro del PDF y del Word). Rompiendo a propósito el `upsert`, la carpeta, el campo de archivo, la
   hora enviada por la página, el bucket público, un permiso de insert de más o una política de delete, saltan.
 
+## Mesa del árbitro: el reloj y lo que dice el reglamento
+
+El dueño lo pidió el 14/11/2026: dos herramientas nuevas para los árbitros, el **corrector del reloj** y el **asistente
+de incidencias**, dentro de la Mesa del árbitro general (`mesa-arbitro.html`, sección de chess-results) y no en
+páginas aparte. Cada artículo citado se leyó en el texto vigente de las Leyes del Ajedrez de la FIDE (2023,
+`handbook.fide.com/chapter/E012023`), no de memoria.
+
+- **El ritmo del torneo**, arriba de las mesas («Ritmo del torneo: … · Cambiar el ritmo»): tiempo inicial,
+  incremento y, si hay, el segundo período (en la jugada N se suman M minutos). chess-results no lo da en «Enter
+  Results Online», así que lo escribe el árbitro y queda en `localStorage` de ese aparato, por código de torneo
+  (`mesa_arbitro_ritmo_v1`): es una comodidad, no un dato que deba durar. Sin ritmo escrito vale 90 min + 30 s y
+  la página dice «sin confirmar». Si el aparato no deja guardar, vale mientras la página esté abierta.
+  - **La modalidad sale del ritmo, como en las Leyes**: tiempo + 60 × incremento; 10 minutos o menos es blitz
+    (B.1), más de 10 y menos de 60 es rápidas (A.1), y 60 o más, clásico (`MesaArbitro.modalidad`).
+- **La ilegal en rápidas es de 1 minuto, no de 2.** El apéndice A.3 dice que en rápidas «las penalizaciones de los
+  artículos 7 y 9 serán de un minuto en vez de dos», y el B.3 manda el blitz al A.3. `minutosIlegal()` decía 1
+  solo en el blitz (citando el B.3) y 2 en rápidas; se corrigió para las dos. Lo usan también la Mesa del
+  Centroamericano (su Rápido ya terminó) y su texto de configuración. La Mesa general ya no dice «2 minutos» fijo:
+  sale del ritmo. En rápidas y blitz, el aviso recuerda el A.5.2 (sin un árbitro cada pocas mesas, solo se
+  corrige si el rival todavía no hizo la jugada siguiente). **Lo que no se cubrió**: un blitz jugado con el B.2
+  (un árbitro por partida), donde no rige el A.3 y serían 2 minutos.
+- **«⏱ Reloj» en cada mesa** (`corregirReloj` en la página, `MesaArbitro.corregirReloj` en el módulo). Las Leyes no
+  dan una fórmula: el árbitro pone los tiempos «según su mejor criterio» (6.10.1 con un reloj que falla, 6.10.2
+  con uno mal programado). La página da un número con las cuentas a la vista, y el árbitro lo cambia si su criterio
+  es otro. Cuatro casos:
+  - **No sumó el segundo período**: se suma solo a quien ya completó esa jugada; si nadie la completó, se dice.
+    Avisa corregir también el contador de jugadas.
+  - **El incremento no estaba puesto**: el incremento por cada jugada completada de cada uno.
+  - **Se programó otro ritmo**: la diferencia del tiempo inicial más la del incremento por las jugadas de cada uno.
+    Si con el ritmo correcto el tiempo quedaría en negativo, se dice que lo decide el árbitro (sale 0:00).
+  - **Se apagó o no se puede leer**: lo hace `relojApagado` (el mismo del Centroamericano) desde la hora de inicio
+    de la ronda: el total es exacto (mientras se juega siempre anda un reloj) y se reparte mitad y mitad, o se
+    respeta lo que todavía se lee en un reloj. Las primeras ilegales y las sanciones de tiempo de esa mesa, de la
+    bitácora (`bonosDeMesa`), y el segundo período entran como tiempo sumado.
+  - Lo que se pone se anota como **`incidencia`** de la mesa, con el artículo (6.10.1 o 6.10.2) y el texto «Reloj
+    corregido (…): blancas …, negras …, con N y M jugadas completadas.»; si el árbitro cambió el número, dice
+    también lo que daba el cálculo. **No se tocó la base**: `incidencia` ya existía y no pide color.
+- **La irregularidad orienta antes de anotar.** Al elegir el tipo, un segundo cuadro muestra lo que dicen las Leyes
+  de ESA irregularidad (`REGLAS_IRREGULARIDAD`), si es la primera de ese jugador en la partida o cuántas lleva (con
+  una anterior recuerda el 11.7: negarse una y otra vez a cumplir las Leyes hace perder), y la sanción ya elegida:
+  la que dicen las Leyes (el celular: pierde, 11.3.2.2) o la más suave cuando la dejan al árbitro. La lista de
+  sanciones sigue el 12.9: sin sanción, advertencia, ±1 o ±2 minutos (las del Centroamericano, escritas con
+  `sancionTexto` para que el reloj que se apaga las vuelva a leer), pierde la partida y «Otra» (la de las bases).
+  - **Si pierde**, propone el resultado en el desplegable sin guardarlo, como la segunda ilegal, y lo dice. Si la
+    mesa ya tiene resultado, no lo toca.
+  - **Con una sanción de tiempo**, avisa ajustar el reloj en ese momento.
+  - La planilla en rápidas o blitz dice que no es irregularidad (A.2) y viene «Sin sanción».
+  - **«Ofreció tablas» llevaba el artículo 9.2**, que es la triple repetición; ofrecer tablas es el 9.1.2.1. Se
+    corrigió en `TIPOS_IRREGULARIDAD` (lo comparten las dos Mesas; la clave de Pareo no usaba el 9.2).
+- **«Consultar sin anotar»**, en la bitácora: «Corregir un reloj» (los mismos cálculos, con un solo botón «Listo»)
+  y «Lo que dice el reglamento». Sirve a un árbitro auxiliar que solo quiere confirmar una regla.
+- **Una sola copia.** El control de tiempos (`leerTiempo`, `ponerDosPuntos`, `formatoTiempo`, `tiempoEnPalabras`),
+  el reloj que se apaga (`relojApagado` y sus ayudantes) y la sanción de tiempo (`SANCIONES_TIEMPO`,
+  `sancionTexto`, `leerSancion`) se mudaron de `js/centroamericano-mesas.js` a `js/mesa-arbitro.js`, como antes las
+  ilegales; el Centroamericano los toma de ahí con el mismo nombre. `verificar-mesa-arbitro.js` comprueba que sean
+  las MISMAS funciones (`===`).
+- **Lo que NO hace**: no está en la sección de Pareo Integral (`js/mesa-arbitro-pareo.js`), cuyas incidencias van
+  al árbitro principal con la clave de Pareo; no lee el ritmo de chess-results; y no corrige un reloj sin la hora
+  de inicio cuando se apagó.
+- Lo prueban `verificar-mesa-arbitro.js` (los cuatro casos con sus cuentas, la modalidad, los minutos de la ilegal,
+  `bonosDeMesa`, las reglas y las sanciones escritas) y `verificar-mesa-arbitro-pagina.js` («El ritmo, el reloj y lo
+  que dice el reglamento», con la hora fija). Rompiendo a propósito el minuto de rápidas o la propuesta del
+  resultado al perder, saltan; también `verificar-centroamericano-modo-rapido.js` con el minuto.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
@@ -15150,8 +15394,12 @@ chess-results).
 - **Una sola copia de los datos**: `bases` en la configuración. De ahí salen el
   PDF y el calendario de la página: `BasesTorneo.horario()` (cada ronda, el
   tiempo de los dos más 40 jugadas de incremento, y la siguiente a la media
-  hora siguiente) da 9:00, 9:30, 10:00, 10:30, 11:00, 11:30 y 12:00, y la premiación cerca de
-  las 12:30; antes va la fila de la llegada (8:30), sin `data-ronda`. Las rondas 2 a 7 y la premiación dicen «(aprox.)», en la página y
+  hora siguiente) da 9:00, 9:30, 10:00, 10:30, 11:00 y 11:30; antes va la fila de la llegada (8:30), sin `data-ronda`.
+  **De 12:00 a 1:00 p. m. es el almuerzo** (lo pidió el dueño el 14/11/2026,
+  el día del torneo): va en `bases.pausas`, y `BasesTorneo.horario()` corre
+  la ronda que caería adentro al final de la pausa. La ronda 7 queda a la
+  1:00 p. m. y la premiación cerca de la 1:30; el calendario lleva la fila
+  «Almuerzo» (sin `data-ronda`) y las bases lo dicen en la nota del calendario. Las rondas 2 a 7 y la premiación dicen «(aprox.)», en la página y
   en las bases.
 - **La cara**: el azul y el rojo del afiche, medidos (la mediana de sus píxeles
   azules y rojos: #064CA7, #042A69 y #DC0D19), en `.tacho` / `.u-sala-tacho` de
@@ -15174,6 +15422,52 @@ torneo, sin el sello o con la edición anterior; el torneo encima con uno; la
 ventana con varios; quitando el filtro del sello, saltan cuatro), «Hoy en el torneo» en cuatro
 momentos (con el navegador en Madrid), la píldora roja con letra blanca (salta
 si se le quita), Tacho y el escudo a la vista y el celular sin scroll de costado.
+
+### El certificado y las imágenes del Tacho, sin el Centroamericano
+
+Lo vio el dueño el 14/11/2026, el día del torneo: «los diplomas y algunas partes
+de la información de la página […] sigue saliendo información o con nombres del
+centroamericano». La página sale de la plantilla del Centroamericano, y lo que
+dibujan `js/centroamericano-tablas.js` y `js/centroamericano-vivo.js` en un
+lienzo o en un mensaje tenía textos fijos que la configuración no cambiaba. Se
+encontró abriendo la página con un doble de Pareo (torneo en juego y
+terminado), tocando cada botón y anotando todo lo escrito en los lienzos, lo
+compartido y los colores calculados:
+
+- **El certificado** salía entero del Centroamericano: el morado, las hojas, el
+  pizote del trofeo, «XXI Festival Centroamericano y del Caribe de la Juventud»
+  y «Gimnasio Nacional, La Sabana · del 1 al 8 de noviembre». Ahora
+  `torneoPagina.diploma` (la configuración) le da el evento, la sede y la fecha
+  del Tacho, el azul degradado del afiche, la píldora roja, Tacho arriba, el
+  escudo del liceo arriba a la izquierda y un marco rojo y blanco, sin hojas.
+  `diploma()` acepta para eso `sombra`, `marco` y `escudo` (sin ellos, el del
+  Centroamericano no cambia). Dice «1.er lugar en Primer grado»: se premia por
+  nivel, no por «categoría».
+- **Los textos fijos**: `torneoPagina.textos` reemplaza, en español, los que
+  se colaban (`finTexto` «Así terminó el Centroamericano 2026…», el lugar y el
+  mensaje de «¡Hoy juega!», el calendario de un jugador, «Su puesto en la
+  categoría», «Invictos/Los podios de cada categoría»…). El generador
+  (`herramientas/torneo-universitario.js`) los escribe en `js/tacho-chess.js`;
+  una función va tal cual, así que no puede usar nada del archivo de la
+  configuración. Los dos módulos solo cambian las claves que ya tienen.
+- **Sin Elo, sin columnas de Elo**: un torneo escolar no tiene Elo. «Así terminó
+  mi torneo» mostraba «Elo FIDE: sin Elo FIDE» y un rendimiento en raya: sin Elo
+  en el jugador ni en sus rivales, van sus ganadas y sus tablas · perdidas. La
+  clasificación quita «Elo» y «Rend.» si saldrían en raya en todos (como ya
+  quitaba «FED»), y el proyector, «Rend.».
+- **Tacho entero**: en «Así terminó mi torneo» un dibujo que no es redondo no se
+  dibujaba (la banda quedaba vacía), y en «¡Hoy juega!» se recortaba para llenar
+  el recuadro (le cortaba la cabeza). Ahora entra completo.
+- **Los colores**: el proyector tenía el fondo #1E2453 del Centroamericano, y
+  en modo oscuro los botones de la tarjeta del jugador, el lila #B8BBF2. Van en
+  el azul hondo del afiche y el rojo claro (medidos en `css/universidades.css`).
+- El nombre del `.ics` de un jugador y el enlace del resumen de una delegación
+  ya no dicen `centroamericano-2026` en otra página.
+
+Lo revisa `verificar-tacho-chess.js` («El certificado y las imágenes dicen el
+Tacho»): el texto y los dibujos del certificado, «Así terminó mi torneo» y su
+mensaje, la clasificación sin «Elo» ni «Rend.» y el fondo del proyector. Sin
+`textos` y `diploma` en `js/tacho-chess.js`, saltan.
 
 ### El profe ayuda en Tacho Chess 2
 
@@ -15303,6 +15597,48 @@ de cada torneo», que arma `js/torneo-sala.js`.
   seguida, va sin zonas y en el orden de las mesas. No es un plano dibujado:
   dónde queda cada zona en el gimnasio no lo dijo nadie y no se inventa.
 
+### La mesa iluminada en la foto
+
+Pedido del dueño el 14/11/2026, la víspera del torneo: «que pueda identificar y
+numerar las mesas para que la gente, cuando ocupe saber en cuál va, dependiendo
+del torneo, […] que se le ilumine o se le marque como más notable en cuál es la
+mesa donde tiene que ir a sentarse». Antes se probó dibujar sobre la foto solo
+las cuatro zonas que él marcó con círculos de colores (PR #1289, cerrado sin
+mergear): no le gustó, porque no decía en qué mesa sentarse.
+
+- **Dónde está cada mesa lo marcó el dueño, mesa por mesa**, en una página
+  aparte sobre la misma foto (un artefacto de claude.ai con su propia base: se
+  elige el torneo y se toca cada tablero en el orden de su número). No se
+  adivina: depende de cómo numeró el gimnasio. Lo marcado se copió a
+  `torneoPagina.mesasSala` de la configuración, en los píxeles de
+  `img/tacho-chess-2/sala.jpg` (1200 × 675; se marcó sobre la misma foto a
+  1600 × 900, guardando cada punto como fracción de la foto, así que vale para
+  las dos). Son 49 mesas: 10, 12, 12 y 15, más que una por cada dos jugadores,
+  porque son todos los tableros armados en el gimnasio. Cada torneo con su nombre, su
+  color (el de los círculos del dueño: morada de primero a tercero, azul de
+  cuarto a sexto, naranja sétimo y octavo, turquesa de noveno a undécimo), el
+  fondo de la letra blanca (6,11 a 8,72) y sus niveles.
+- **`js/torneo-sala-foto.js`** (una sola copia, para cualquier torneo con
+  `mesasSala`): un torneo de Pareo cae en el de la configuración con más
+  jugadores de sus niveles, así no depende de cómo se escriba su nombre en
+  Pareo. Hace tres cosas:
+  - En la tarjeta de «Busca a tu jugador» (`js/centroamericano-vivo.js` le
+    pide `enTarjeta` en vez del plano del Centroamericano): «📍 Tu mesa en la
+    sala: Mesa 5 de la zona morada (1er Ciclo)» y la foto **acercada** a su
+    mesa (2,6 veces, sin dejar bordes vacíos) con un anillo que late en el color
+    de su torneo. Con el movimiento reducido, el anillo queda quieto y más
+    grueso.
+  - En «Pareos de la ronda», cada partida trae «Ver dónde queda la mesa N»,
+    que abre la misma foto acercada (y dice si está abierta).
+  - En «La sala de juego», la foto entera con todas las mesas numeradas y,
+    escrito debajo, qué color es cada torneo (el color nunca va solo). En el
+    celular la foto se agranda y se desliza de lado dentro de su marco, centrada
+    en las mesas al abrir la ventana: 49 números en 360 píxeles no se leen.
+- Lo revisa `verificar-tacho-chess.js`: las mesas de cada torneo de la 1 a la
+  última sin huecos, dentro de la foto y con el color medido; el anillo de la
+  tarjeta cae (a 1 % de la foto) donde la configuración dice que está esa mesa;
+  el botón de los pareos; y todas las mesas sobre la foto de la sala.
+
 ### Los pareos de la ronda
 
 Pedido del dueño el 13/11/2026: «que haya una ficha para ver los pareos
@@ -15323,6 +15659,37 @@ dos primeras fichas: «Pareos de la ronda» (`#pareos`) y «Clasificaciones»
 - La línea de arriba termina en la hora («… p. m.»): sin quitar el punto
   doble decía «p. m..»; lo revisa el verificador.
 
+### Los pareos de la ronda se ponen al día solos
+
+Pedido del dueño el 14/11/2026, mirando la ventana «Pareos de la ronda» en el
+celular durante el Tacho Chess 2: «que se actualice en tiempo real». Antes la
+ventana solo volvía a leer al abrirla, y como mucho cada 2 minutos.
+
+- **Mientras la ventana está abierta y la pestaña a la vista**, cada 15 s
+  `js/torneo-pareos.js` pregunta `TorneoPareoDatos.cambio()`: pide de
+  `pareo_publicados` solo `id, actualizado` de los torneos ya leídos (unos
+  bytes) y, si alguna hora cambió, `CentroamericanoVivo.pedir(true)` los lee
+  enteros (el `true` se salta la espera de 2 minutos). Cada 2 minutos la
+  lectura es entera igual, por si se publicó otro torneo. Al volver a la
+  pestaña (el celular desbloqueado) revisa en el acto.
+- **Por qué no Realtime**: Pareo publica 30 s después de anotar el resultado
+  (`ESPERA_PUBLICAR` en `js/pareo/pagina.js`), así que un aviso al instante no
+  gana casi nada; meter `pareo_publicados` a Realtime pedía migración, su
+  política de dos pasos y que Realtime revise la RLS por cada familia
+  conectada (ver «Realtime escucha solo lo que la pantalla muestra» en
+  `sitio-e-infraestructura.md`). La pregunta liviana es una lectura pública
+  diminuta, y solo con la ventana abierta.
+- Sin Pareo (los torneos de chess-results, por la Edge Function) no hay
+  pregunta liviana: solo la lectura entera cada 2 minutos, como antes, para no
+  martillar chess-results.
+- Debajo de las mesas: «Se pone al día sola mientras la tienes abierta:
+  revisado a las …», fuera de la región `aria-live` para que el lector de
+  pantalla no repita todo el pareo cada 15 s. Las mesas se vuelven a pintar
+  (y se anuncian) solo cuando llegan datos nuevos.
+- `verificar-tacho-chess.js` lo prueba con el reloj de Playwright: sin cambios
+  pide solo `id, actualizado`; con un resultado nuevo en el doble, la mesa
+  cambia sin tocar nada.
+
 ### Pareo abierto dentro de la página de un torneo
 
 Pedido del dueño el 13/11/2026, viendo la página pública de Pareo abierta
@@ -15334,6 +15701,53 @@ quedan «Compartir por WhatsApp» y «Copiar el enlace». Lo ponen los enlaces q
 abren Pareo desde la página del torneo (`js/tacho-chess-resultados.js` y el
 `url` de cada torneo en `js/torneo-pareo-datos.js`). La página de Pareo abierta
 sola no cambia. Lo revisa `verificar-pareo-organizador.js`.
+
+### La partida en vivo de Notara en la página del Tacho
+
+Lo pidió el dueño el 13/11/2026, la noche antes del torneo, al preguntar si lo
+que leen las cámaras de Notara se veía en la página del Tacho: no se veía.
+Las partidas entraban a la clasificación de Pareo (el botón de cada mesa, al
+ponerse al día), pero jugada por jugada solo en `tablero-vivo.html`, y la
+página no llevaba ahí. Primero se hizo un botón por torneo con cámaras; el
+dueño lo cambió: «solo vamos a transmitir una única partida […] si no logra
+leer ninguna partida nada más pone próximamente, y si la logra agarrar pues
+nada más pone la que está en ese momento en vivo».
+
+- **Pareo publica el código de las cámaras** (`camaras` en `datosPublicos` de
+  `js/pareo/publicar.js`, solo con las cámaras conectadas con «Recibir de las
+  cámaras»; la función `pareo-publicar` lo deja pasar con `codigo()`, como
+  `vivo`). No es un secreto nuevo: va en el QR de cada mesa, y ver la partida
+  es justo para lo que se comparte. Quien lo tenga puede mandar mensajes
+  falsos al canal, el mismo riesgo aceptado en «La partida en vivo desde la
+  cámara»; Pareo vuelve a jugar lo que llega con chess.js, nunca pisa una
+  partida escrita a mano y el resultado no se anota sin confirmarlo.
+- **«En vivo» siempre está en «El torneo»** (`#hoy-vivo`, lo pone
+  `js/tacho-chess-resultados.js`, que ya encuentra los torneos del Tacho):
+  «En vivo: próximamente» mientras ninguna cámara transmite; apenas una
+  transmite, «En vivo ahora», su mesa, quién juega y «Ver la partida en
+  vivo», que abre `tablero-vivo.html#<código>&t=<id>&m=<mesa>` encima de la
+  página (`data-ventana`), ya en esa mesa. Si transmiten varias, la que habló
+  último. En `.tacho-boton`, el rojo del afiche con letra blanca (5,1 : 1).
+- **Cómo sabe que una cámara transmite**: escucha el canal de las cámaras
+  como `tablero-vivo.html` (`tablero-vivo-<código>`, Broadcast), pide la
+  partida («pedir») al conectarse y cada 20 s, y cada cámara contesta con la
+  suya. Una que no contesta en 50 s ya no está transmitiendo y se vuelve a
+  «Próximamente». Solo cuenta lo de ESE torneo, y de lo que llega solo se
+  usan la mesa y los nombres (texto ajeno, por `textContent`): la página no
+  carga chess.js ni pinta el tablero.
+- **El código se pregunta cada minuto**, liviano (`id, camaras:datos->>camaras`,
+  sin los datos del torneo): el árbitro conecta las cámaras con el torneo
+  empezado. No usa `TorneoPareoDatos.buscar()` para eso: volver a leer con él
+  mueve las horas de `cambio()`, y la ventana de los pareos dejaría de
+  ponerse al día.
+
+Lo revisan `verificar-tacho-chess.js` (con un doble de los canales que hace
+de cámara: «Próximamente», el canal que se escucha al conectar las cámaras
+en Pareo, la partida de otro torneo que no cuenta, la que sí, los nombres
+como texto, el enlace a esa mesa, el «pedir» cada 20 s y la vuelta a
+«Próximamente» cuando la cámara se calla) y `verificar-pareo-publicar.js`
+(el código va solo con las cámaras conectadas, y la función lo guarda).
+Rotos a propósito, saltan.
 
 ### Tacho, con el zapato entero
 
@@ -17532,8 +17946,9 @@ lo que anotan los adjuntos lo **acepte el Pareo del principal** (como hoy con lo
 - **La cara neutra**: las mismas páginas con `html[data-marca="ajedrez-integral"]` (colores de la marca, sin hojas,
   mascota ni píldora; `css/centroamericano.css`). La pone la organización cuando ningún torneo a la vista es de un
   evento con `centroamericano_eventos.marca = 'centroamericano'`, y la tablet con la `marca` que le da `leer`. En
-  esa cara no salen Fair Play, la transmisión ni los horarios del Centroamericano, y el vencimiento por omisión es
-  «Hasta el día…» (el viejo «al terminar el torneo» era el 9/11: un enlace nuevo nacía vencido).
+  esa cara no salen los horarios del Centroamericano, y el vencimiento por omisión es
+  «Hasta el día…» (el viejo «al terminar el torneo» era el 9/11: un enlace nuevo nacía vencido). Fair Play y la
+  transmisión sí salen desde el 14/11 (ver «Fair Play y Transmisión en cualquier evento»).
 - «Todas las mesas» y «¿Dónde juega?» muestran ahora solo las categorías del **evento del enlace** (lo pendiente de
   «Cada evento de la Mesa del árbitro tiene dueño»).
 - **Orden de despliegue**: la migración `…_mesa_arbitro_fuente_pareo.sql` se aplica en producción **antes** de
@@ -17543,13 +17958,53 @@ lo que anotan los adjuntos lo **acepte el Pareo del principal** (como hoy con lo
   anota.
 - **Lo que falta** (fase 2): los árbitros de la Mesa en el Centro del evento de Pareo; un toque del servidor (hoy
   entra en 15 s o menos); leer la cola de todas las categorías del evento sin abrir cada torneo; la anulación
-  completa en Pareo; publicar al emparejar si está vinculado; filtrar por fuente en Fair Play, LiveChess y
-  Transmisión; equipos; las cámaras de Notara en la tablet.
+  completa en Pareo; publicar al emparejar si está vinculado; equipos; las cámaras de Notara en la tablet. (Fair Play
+  y Transmisión con la fuente de cada torneo quedaron el 14/11: ver «Fair Play y Transmisión en cualquier evento».)
 
 Lo prueba `verificar-mesa-pareo-fuente.js` (sin navegador: `fuente-pareo.ts` con node, la mesa física y el índice,
 el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que con Pareo no se llame a
 `guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
 propósito el paso de mesa física a índice o el virtual por el canal, salta.
+
+### Fair Play y Transmisión en cualquier evento
+
+Lo pidió el dueño el 14/11/2026, en pleno Tacho Chess 2: en la Mesa del árbitro de un evento que no es el
+Centroamericano (la cara neutra) no salían las pestañas «Fair Play» ni «Transmisión». Se escondían a propósito desde el
+12/11, porque las dos leían solo chess-results y LiveChess y no separaban los eventos. Ahora salen en las dos caras, y
+cada una lee cada torneo de **su fuente**:
+
+- **Fair Play** (`centroamericano-fair-play`, acción `actualizar`): un torneo de Pareo Integral (`esTnrPareo`) no se
+  le pide a chess-results. Sus partidas salen enteras del torneo publicado con `partidasDePareo` de
+  `_compartido/fuente-pareo.ts`, con la forma de las filas de `centroamericano_fp_partidas`: la mesa **física** (la de
+  los enlaces), el resultado escrito como chess-results (`TEXTO_PAREO`: «1 - 0», «½ - ½»…, que es lo que entienden
+  `resultadoDe` y `centroamericano_fp_candidatas`), el Elo (menor que 100 = sin Elo) y el número inicial, que es el
+  puesto en `numeracion` (Pareo lo fija al emparejar la ronda 1; sin numeración queda en null y Fair Play junta por
+  el nombre). Como en Pareo una ronda se puede deshacer, la mesa que ya no está en lo publicado sale de
+  `centroamericano_fp_partidas`. La lista inicial de chess-results (el ID FIDE, para la tendencia) tampoco se pide:
+  Pareo no guarda el ID FIDE (lo cambia por una huella al publicar), así que esos jugadores quedan sin tendencia, sin
+  inventarla. Las partidas para medir siguen saliendo de LiveChess (si la categoría tiene tableros) o de la foto de
+  las planillas.
+- **La ronda de cada categoría** (`centroamericano_fp_rondas`, migración `…_fair_play_rondas_por_evento.sql`): antes
+  era la más alta de TODAS las categorías (en el Centroamericano iban a la par y así una lectura atrasada no dejaba a
+  una en la ronda anterior); con dos eventos a la vez uno le prestaba su ronda al otro. Ahora el máximo es dentro de
+  cada evento, y un torneo de Pareo lleva **su** ronda (cada categoría de una sala empareja a su ritmo). Una
+  categoría sin ninguna ronda emparejada no sale en la pantalla de Fair Play (la ronda 0 no se sortea).
+- **Transmisión** (`centroamericano-transmision`): entran solo las categorías con tableros, **sin archivar y con algún
+  árbitro con enlace vigente**, como en Fair Play. Antes entraba toda categoría con tableros cargados, y el
+  Centroamericano (que no está archivado y tiene sus tableros) se habría mezclado con el evento de hoy. Los
+  emparejamientos ya salían de la lectura compartida, que con Pareo llena el torneo publicado. La función devuelve
+  el `evento` (el de la mayoría de las categorías) y la pantalla lo pone en el informe en PDF y en el mensaje del QR,
+  que decían «Centroamericano 2026».
+- **El QR del encargado de transmisión nacía vencido**: vencía el 10/11 (el final del Centroamericano), escrito en el
+  código. Ahora dura 10 días desde que se crea, como el de Fair Play.
+- Los textos de Fair Play que nombraban chess-results («Leer chess-results ahora», «chess-results leído a las…») dicen
+  «los emparejamientos», que vale para las dos fuentes.
+
+Las páginas sueltas de los encargados (`centroamericano-fair-play.html`, `centroamericano-transmision.html`) siguen con
+la cara del Centroamericano: lo que cambia es lo que leen, no cómo se ven. Lo prueban `verificar-mesa-pareo-fuente.js`
+(`partidasDePareo` con node y que las funciones no le pregunten a chess-results por un torneo de Pareo) y
+`verificar-centroamericano-mesas-fuente-nombre.js` (las dos pestañas se ven en las dos caras, medido con
+`checkVisibility()`). Roto a propósito el `hidden` de la cara neutra, salta.
 
 ### La portada de "Mis mesas" según el torneo
 
@@ -17590,3 +18045,45 @@ en cualquier evento: con la cara neutra lleva el nombre del evento (si los
 torneos son de uno solo) o solo «Mesa del árbitro».
 
 Lo comprueba `verificar-centroamericano-mesas-fuente-nombre.js`.
+
+### El resultado del principal llega solo a las tablets
+
+Pedido del dueño el 14/11/2026, en el Tacho Chess 2: «si coloco un resultado en Pareo Integral, que se actualice en
+las tablets de los árbitros también». Llegaba, pero tarde: el Pareo del principal publica 30 s después del cambio
+(`ESPERA_PUBLICAR`) y la tablet (`centroamericano-arbitro.html`) vuelve a leer sus mesas cada 45 s (`REFRESCO_MS`),
+así que un resultado podía tardar más de un minuto en verse, y el «⏳ Mandado» de un árbitro de mesa tardaba lo mismo
+en pasar a resultado.
+
+- **Pareo publica a los 4 s en un evento de la Mesa** (`ESPERA_PUBLICAR_MESA` en `js/pareo/pagina.js`): cuando la
+  cola dice que el torneo está en un evento de la Mesa del árbitro (`estado.adjuntos.mesa`, la misma marca que ya
+  apuraba la lectura de la cola). Sigue siendo una publicación por espera, no una por cambio: los resultados seguidos
+  salen juntos, a lo sumo una publicación cada 4 s por torneo, muy por debajo del freno de `pareo_frenar`. Fuera de
+  la Mesa sigue en 30 s.
+- **La tablet pregunta liviano cada 8 s** (`revisarPareo`, `PAREO_MS`; en el modo liviano, cada 16 s): con un torneo
+  de Pareo pide solo `actualizado` de `pareo_publicados` (lectura pública de unos bytes, con el id que sale del `tnr`
+  inventado) y, si la hora cambió, hace la lectura entera de siempre. Es la misma pregunta liviana de «Los pareos de la
+  ronda se ponen al día solos», y por las mismas razones no es Realtime. Con chess-results no se pregunta nada.
+- **No pisa lo que el árbitro está anotando**: con algo a medio elegir (`sinNadaPendiente()`), no lee y vuelve a
+  mirar en la vuelta siguiente.
+- Con las dos cosas, lo que pone el principal se ve en la tablet en unos 12 s o menos (4 s de Pareo, hasta 8 s de la
+  pregunta, más lo que tarde «leer»). El gasto: con 30 tablets, unas 4 lecturas diminutas por segundo a PostgREST,
+  ninguna a la Edge Function; «leer» solo corre cuando hay algo nuevo.
+
+**Y lo que guarda otro árbitro en otra tablet** (lo pidió el dueño enseguida):
+
+- **Con Pareo** ya pasa por el mismo camino: lo de la otra tablet va a `pareo_cola`, el Pareo del principal lo acepta
+  y publica, y las demás tablets lo ven con la pregunta liviana. Para que no espere los 15 s de la cola, en un evento
+  de la Mesa el Pareo del principal la lee **cada 5 s** (`ESPERA_COLA_MESA`; leer la cola va con la clave del torneo y
+  no pasa por `pareo_frenar`). De punta a punta, unos 20 s o menos.
+- **Con chess-results** la otra tablet guarda directo allá y deja la lectura en la copia compartida, pero las demás no
+  se enteraban hasta su lectura de los 45 s. Ahora «avisos» (que ya se pide cada 20 s y solo toca la base) trae
+  `ajeno`: la última línea de resultado o corrección del registro que **otro enlace** anotó en **las mesas de este
+  enlace**. Si cambia, la tablet vuelve a leer sus mesas (`revisarAjeno`), con la misma regla de no pisar lo que se
+  está anotando. Sin pedidos nuevos: una consulta más dentro de «avisos», sobre el índice de la partida. Con Pareo no
+  se arma (lo de otra tablet es solo «mandado» hasta que el principal lo publica).
+
+Lo prueba `verificar-arbitro-pareo-al-dia.js` con el reloj de Playwright: la pregunta es solo `actualizado` con el
+uuid bien armado; sin cambios no lee; con una publicación nueva la mesa cambia sin tocar nada; con el foco en una mesa
+espera; con chess-results no pregunta a `pareo_publicados`, y con otro `ajeno` en «avisos» la mesa cambia antes de los
+45 s; las esperas cortas de Pareo y que la función arme `ajeno` solo con chess-results, sin lo propio y en las mesas
+del enlace. Rotos a propósito el repintado, la espera del foco o `revisarAjeno`, salta.

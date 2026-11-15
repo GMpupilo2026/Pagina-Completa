@@ -1035,7 +1035,16 @@ Deno.serve(async (req) => {
 
     if (cuerpo.action === "avisos") {
       visto();
-      return json({ ok: true, concluyo: a.concluyo_en ?? null, ...(await avisosDe()) });
+      // `ajeno`: la última línea de resultado que OTRO enlace anotó en una de sus mesas. Si cambia, la tablet vuelve a leer sus
+      // mesas: así ve en segundos lo que guardó otro árbitro en otra tablet (con chess-results lo guardar ya dejó en la copia
+      // compartida). Con Pareo no hace falta: lo de otra tablet es solo «mandado» hasta que el principal lo publica, y eso la
+      // tablet lo ve sola (ver «El resultado del principal llega solo a las tablets»).
+      const ajeno = esPareo ? Promise.resolve({ data: null }) : servicio.from("centroamericano_registro").select("id, ocurrio")
+        .eq("tnr", a.tnr).neq("asignacion_id", a.id).in("tipo", ["resultado", "correccion"])
+        .gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta).order("ocurrio", { ascending: false }).limit(1);
+      const [av, { data: ult }] = await Promise.all([avisosDe(), ajeno]);
+      const u = (ult ?? [])[0] as { id: string; ocurrio: string } | undefined;
+      return json({ ok: true, concluyo: a.concluyo_en ?? null, ...av, ajeno: u ? u.ocurrio + "|" + u.id : null });
     }
 
     // «Ya terminé mis labores»: cierra el enlace (y los otros del mismo árbitro). Es idempotente: tocarlo otra vez no cambia la hora.

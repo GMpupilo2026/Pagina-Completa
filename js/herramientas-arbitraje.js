@@ -449,6 +449,8 @@
                 "La clave no se guarda: se usa para entrar y se olvida.",
                 "La bitácora anota cada resultado y cada corrección (con el resultado anterior), las incidencias con su artículo y las notas. Solo se agrega: nada se edita ni se borra.",
                 "La bitácora sale en PDF o en Word, con la marca de agua de Ajedrez Integral y el espacio para tu firma.",
+                "«Reloj» en cada mesa: si el reloj no sumó el segundo período, no tenía el incremento, se programó mal o se apagó, te dice qué tiempos poner, con las cuentas y el artículo de las Leyes (6.10).",
+                "Cada irregularidad te dice antes de anotarla lo que dicen las Leyes de la FIDE y qué sanción corresponde; si pierde la partida, deja el resultado propuesto sin guardarlo.",
             ],
         },
         {

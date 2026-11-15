@@ -82,7 +82,119 @@
     vieja.replaceWith(a);
   }
 
-  buscar().then(pintar).catch(() => { /* sin conexión: la ficha sigue «Pronto» */ });
+  // «En vivo»: UNA partida transmitida por una cámara de Notara (lo pidió el
+  // dueño el 13/11/2026: «solo vamos a transmitir una única partida»).
+  // Siempre está en «El torneo»: dice «Próximamente» mientras ninguna cámara
+  // transmite, y apenas una transmite, esa partida (su mesa y quién juega),
+  // con «Ver la partida», que abre tablero-vivo.html encima de la página.
+  //
+  // - El código de las cámaras lo publica Pareo con el torneo (`datos.camaras`,
+  //   al conectar «Recibir de las cámaras»; el mismo del QR de cada mesa). Se
+  //   pregunta cada minuto, liviano (sin los datos del torneo): el árbitro las
+  //   conecta con el torneo ya empezado.
+  // - Se escucha el canal de las cámaras como tablero-vivo.html
+  //   (`tablero-vivo-<código>`, Broadcast): se pide («pedir») y cada cámara
+  //   contesta con su partida. Se vuelve a pedir cada 20 s; una cámara que no
+  //   contesta en 50 s ya no está transmitiendo.
+  // - Solo se cree lo de ESE torneo, y de lo que llega solo se usan la mesa
+  //   y los nombres (texto ajeno: textContent). Si transmiten varias, la que
+  //   habló último. No carga chess.js: la partida la muestra tablero-vivo.html.
+  const CODIGO = /^[a-hjkmnp-z2-9]{8}$/;
+  const PREGUNTAR = 60000, PEDIR = 20000, VIGENTE = 50000;
+  const canales = new Map();   // código → { canal, torneo }
+  const vivas = new Map();     // «código|mesa» → { codigo, torneo, mesa, blancas, negras, visto }
+  const nombreDe = (x) => (typeof x === "string" ? x.replace(/\s+/g, " ").trim().slice(0, 60) : "");
+
+  async function leerCodigos(torneos) {
+    const { data, error } = await window.sb.from("pareo_publicados").select("id, camaras:datos->>camaras")
+      .in("id", torneos.map((t) => t.id));
+    if (error) throw error;
+    return (data || []).filter((x) => CODIGO.test(x.camaras || "")).map((x) => ({ codigo: x.camaras, torneo: x.id }));
+  }
+
+  function alLlegar(codigo, torneo, p) {
+    if (!p || typeof p.pgn !== "string" || (p.torneo && p.torneo !== torneo)) return;
+    const mesa = Number(p.mesa);
+    if (!Number.isInteger(mesa) || mesa < 1 || mesa > 999) return;
+    vivas.set(codigo + "|" + mesa, { codigo, torneo, mesa, blancas: nombreDe(p.blancas), negras: nombreDe(p.negras), visto: Date.now() });
+    pintarVivo();
+  }
+
+  function escuchar(lista) {
+    const quedan = new Set(lista.map((x) => x.codigo));
+    for (const [c, x] of canales) {
+      if (quedan.has(c)) continue;
+      try { window.sb.removeChannel(x.canal); } catch (e) { /* ya cerrado */ }
+      canales.delete(c);
+    }
+    lista.forEach(({ codigo, torneo }) => {
+      if (canales.has(codigo) || typeof window.sb.channel !== "function") return;
+      const canal = window.sb.channel("tablero-vivo-" + codigo);
+      canal.on("broadcast", { event: "estado" }, (msg) => alLlegar(codigo, torneo, msg && msg.payload));
+      canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
+      canales.set(codigo, { canal, torneo });
+    });
+  }
+
+  function pedir() {
+    for (const x of canales.values()) {
+      try { x.canal.send({ type: "broadcast", event: "pedir", payload: {} }); } catch (e) { /* sin red: se vuelve a pedir */ }
+    }
+  }
+
+  function pintarVivo() {
+    const caja = document.querySelector("#hoy .cac-hoy");
+    if (!caja) return;
+    const ahora = Date.now();
+    for (const [k, v] of vivas) if (ahora - v.visto > VIGENTE || !canales.has(v.codigo)) vivas.delete(k);
+    const v = [...vivas.values()].sort((a, b) => b.visto - a.visto)[0] || null;
+    let zona = $("hoy-vivo");
+    if (!zona) {
+      zona = document.createElement("div");
+      zona.id = "hoy-vivo";
+      zona.className = "mt-4";
+      caja.append(zona);
+    }
+    const quienes = v ? [v.blancas, v.negras].filter(Boolean).join(" – ") : "";
+    const clave = v ? v.codigo + "|" + v.mesa + "|" + quienes : "pronto";
+    if (zona.dataset.clave === clave) return; // igual que antes: no se rearma (ni se pierde el foco)
+    zona.dataset.clave = clave;
+    zona.dataset.estado = v ? "vivo" : "pronto";
+    const titulo = document.createElement("p");
+    titulo.className = "text-sm font-bold";
+    const ico = document.createElement("span");
+    ico.setAttribute("aria-hidden", "true");
+    ico.textContent = "📺 ";
+    titulo.append(ico, v ? "En vivo ahora" : "En vivo: próximamente");
+    if (!v) {
+      const nota = document.createElement("p");
+      nota.className = "text-sm mt-1";
+      nota.textContent = "Cuando la cámara de la mesa empiece a transmitir, la partida aparece aquí.";
+      zona.replaceChildren(titulo, nota);
+      return;
+    }
+    const partida = document.createElement("p");
+    partida.className = "text-sm mt-1";
+    partida.textContent = "Mesa " + v.mesa + (quienes ? ": " + quienes : "");
+    const a = document.createElement("a");
+    a.className = "tacho-boton mt-2";
+    a.href = "tablero-vivo.html#" + v.codigo + "&t=" + encodeURIComponent(v.torneo) + "&m=" + v.mesa;
+    a.dataset.ventana = "En vivo: Mesa " + v.mesa;
+    a.textContent = "Ver la partida en vivo →";
+    zona.replaceChildren(titulo, partida, a);
+  }
+
+  function vigilarVivo(torneos) {
+    pintarVivo();
+    if (!torneos.length || !window.sb) return;
+    const preguntar = () => leerCodigos(torneos).then((lista) => { escuchar(lista); pintarVivo(); }).catch(() => { /* sin conexión: queda lo último */ });
+    preguntar();
+    setInterval(() => { if (!document.hidden) preguntar(); }, PREGUNTAR);
+    setInterval(() => { if (!document.hidden) pedir(); pintarVivo(); }, PEDIR);
+  }
+
+  buscar().then((torneos) => { pintar(torneos); vigilarVivo(torneos); })
+    .catch(() => { pintarVivo(); /* sin conexión: la ficha sigue «Pronto» */ });
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

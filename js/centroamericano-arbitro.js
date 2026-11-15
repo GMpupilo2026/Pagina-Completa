@@ -1797,7 +1797,7 @@
 
     async function consultarAvisos() {
         if (!avisosVivo) return;
-        try { aplicarAvisos(await invocar("avisos", null, { intentos: 1 })); }
+        try { const d = await invocar("avisos", null, { intentos: 1 }); aplicarAvisos(d); revisarAjeno(d); }
         catch (e) { if (e.http === 404 || e.http === 410) avisosVivo = false; /* sin red: se vuelve a intentar */ }
     }
 
@@ -1964,6 +1964,38 @@
             leyendo = false;
             boton.disabled = false;
         }
+    }
+
+    // Con Pareo Integral, el resultado que pone el árbitro principal en su Pareo llega a la tablet en segundos, no en los
+    // 45 s de REFRESCO_MS: cada PAREO_MS se pregunta solo la hora de la última publicación del torneo (`actualizado` de
+    // pareo_publicados, lectura pública de unos bytes) y, si cambió, se vuelve a leer entero. El Pareo del principal
+    // publica a los pocos segundos de cada cambio si el torneo está en un evento de la Mesa (ESPERA_PUBLICAR_MESA en
+    // js/pareo/pagina.js). Ver «El resultado del principal llega solo a las tablets».
+    const PAREO_MS = 8000;
+    const uuidDePareo = (tnr) => { const h = /^p([0-9a-f]{32})$/.exec(String(tnr || "")); return h ? h[1].replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5") : null; };
+    let pareoVisto = null, pareoPreguntando = false;
+    async function revisarPareo() {
+        if (!esPareo() || pareoPreguntando || leyendo || !window.sb || !window.sb.from) return;
+        const id = uuidDePareo(estado.tnr);
+        if (!id) return;
+        pareoPreguntando = true;
+        try {
+            const { data, error } = await window.sb.from("pareo_publicados").select("actualizado").eq("id", id).maybeSingle();
+            if (error || !data || !data.actualizado) return;
+            const visto = id + "|" + data.actualizado;
+            if (pareoVisto === null) { pareoVisto = visto; return; }
+            // Con algo a medio anotar no se lee (pisaría lo elegido): queda para la próxima vuelta.
+            if (pareoVisto !== visto && sinNadaPendiente()) { pareoVisto = visto; leer(true); }
+        } catch (e) { /* sin red: la próxima vuelta */ } finally { pareoPreguntando = false; }
+    }
+
+    // Lo que otro árbitro guardó en otra tablet en una de estas mesas (chess-results): «avisos» trae `ajeno`, la última línea
+    // de resultado de otro enlace; si cambió, se vuelven a leer las mesas. Con algo a medio anotar, en la vuelta siguiente.
+    let ajenoVisto;
+    function revisarAjeno(d) {
+        if (!d || !("ajeno" in d) || !estado) return;
+        if (ajenoVisto === undefined) { ajenoVisto = d.ajeno; return; }
+        if (d.ajeno !== ajenoVisto && sinNadaPendiente() && !leyendo) { ajenoVisto = d.ajeno; leer(true); }
     }
 
     // Lo que sale de la cola cuando vuelve la señal.
@@ -2377,6 +2409,9 @@
         $("ir-mesa").addEventListener("keydown", (e) => { if (e.key === "Enter") irAMesa(); });
         $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
+        // Pareo Integral: la pregunta liviana (en el modo liviano, una vuelta sí y otra no).
+        let vueltaPareo = 0;
+        setInterval(() => { if (document.hidden || !esPareo()) return; if (liviano() && (vueltaPareo++ % 2)) return; revisarPareo(); }, PAREO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
         // Fair Play: cada 20 s; en el modo liviano, cada 40 s (una vuelta sí y otra no).
         let vueltaFp = 0;

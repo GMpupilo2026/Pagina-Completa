@@ -2,7 +2,7 @@
  *
  * Qué cambió entre dos versiones de un torneo, en pocas palabras: los
  * resultados de cada mesa (y de cada tablero en equipos), quién entró o
- * salió, una ronda emparejada o deshecha y los datos del torneo. Lo usa
+ * salió, una ronda emparejada, deshecha o modificada y los datos del torneo. Lo usa
  * js/pareo/pagina.js para la lista «Historial de cambios» y el botón
  * «Deshacer el último cambio»; cada cambio sale como { clave, vars } (las
  * claves de js/pareo/textos.js), así se escribe en el idioma de la página.
@@ -26,7 +26,11 @@
     if (rd.length < ra.length) for (let r = rd.length; r < ra.length; r++) out.push({ clave: "histDeshecha", vars: { r: r + 1 } });
     for (let r = 0; r < Math.min(ra.length, rd.length); r++) {
       const ma = ra[r].mesas, md = rd[r].mesas;
-      md.forEach((m, i) => {
+      // Una ronda modificada a mano (otras parejas, una mesa más o menos): se
+      // dice eso y no mesa por mesa, que con las mesas corridas confundiría.
+      const parejas = (ms) => JSON.stringify(ms.map((m) => [m.b, m.n == null ? null : m.n]));
+      if (parejas(ma) !== parejas(md)) out.push({ clave: "histPareoModificado", vars: { r: r + 1 } });
+      else md.forEach((m, i) => {
         const a = ma[i];
         if (!a) return;
         if ((a.r || null) !== (m.r || null)) out.push({ clave: "histResultado", vars: { r: r + 1, m: i + 1, a: a.r || "—", d: m.r || "—" } });

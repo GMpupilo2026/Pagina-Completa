@@ -65,6 +65,9 @@ const bases = {
   arbitro: "FA Jean Carlo Quesada Arauz",
   comoInscribirse: "Con el formulario en línea de la organización: " + FORMULARIO.replace("https://", "") + " (el código QR del afiche)",
   sistema: "suizo", rondas: 7, rondasPorDia: 7, horaInicio: "09:00", descanso: 5,
+  // El almuerzo, de 12:00 a 1:00 p. m. (lo pidió el dueño el 14/11/2026, el día
+  // del torneo): la ronda 7, que caía a las 12:00, pasa a la 1:00 p. m.
+  pausas: [{ desde: "12:00", hasta: "13:00", nombre: "Almuerzo" }],
   ritmoMin: 10, ritmoInc: 2, tolerancia: 10,
   eloFide: false, eloNacional: false,
   // Los de los torneos en Pareo Integral (lo pidió el dueño el 13/11/2026:
@@ -72,7 +75,7 @@ const bases = {
   // de la clasificación de Pareo, y las bases tienen que decir lo mismo.
   desempates: ["DE", "BH-C1", "BH", "SB", "WIN"],
   byes: 0,
-  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento.",
+  calendarioNota: "Las horas son de Costa Rica. De 8:30 a 9:00 a. m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a. m.; las demás son aproximadas: cada una empieza cuando termina la anterior y el árbitro publica el emparejamiento. De 12:00 a 1:00 p. m. es el almuerzo: la ronda 7 empieza a la 1:00 p. m.",
   premios: "Primero, segundo y tercer lugar de cada uno de los once niveles, de primer grado a undécimo año (33 premios).\nEl lugar de cada nivel sale de la clasificación final de su torneo: aunque jueguen mezclados, cada nivel se premia por separado.",
   otras: [
     TORNEOS_TEXTO,
@@ -87,9 +90,12 @@ const ULTIMA = HORARIO[HORARIO.length - 1];
 const PREMIACION = Math.ceil((ULTIMA.min + Math.ceil(2 * (bases.ritmoMin + 40 * bases.ritmoInc / 60)) + bases.descanso) / 30) * 30;
 const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
 const horaTexto = (min) => { const h = Math.floor(min / 60); return (h % 12 || 12) + ":" + String(min % 60).padStart(2, "0") + (h < 12 ? " a. m." : " p. m."); };
+const aMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 const CICLO = HORARIO.length > 1 ? HORARIO[1].min - HORARIO[0].min : 30;
 // [actividad, data-inicio (hora de Costa Rica), minutos, ronda, hora escrita]
 const CALENDARIO = [["Llegada y confirmación", bases.fechaInicio + "T08:30", HORARIO[0].min - 8 * 60 - 30, 0, "8:30 a. m."]].concat(HORARIO.map((x, i) => ["Ronda " + x.ronda, bases.fechaInicio + "T" + hhmm(x.min), CICLO, x.ronda, x.hora + (i ? " (aprox.)" : "")]))
+  .concat((bases.pausas || []).map((p) => [p.nombre, bases.fechaInicio + "T" + p.desde, aMin(p.hasta) - aMin(p.desde), 0, horaTexto(aMin(p.desde))]))
+  .sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
   .concat([["Premiación", bases.fechaInicio + "T" + hhmm(PREMIACION), 60, 0, horaTexto(PREMIACION) + " (aprox.)"]]);
 
 const filas = CALENDARIO.map(([actividad, inicio, minutos, ronda, hora]) =>
@@ -137,7 +143,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   // Los resultados, como en el Centroamericano (el buscador, la clasificación
   // y el podio por nivel, el proyector), con los datos de Pareo Integral:
   // js/torneo-pareo-datos.js los lee y los entrega a js/centroamericano-vivo.js.
-  scriptsAntes: ["js/torneo-pareo-datos.js"],
+  scriptsAntes: ["js/torneo-pareo-datos.js", "js/torneo-sala-foto.js"],
   buscador: {
     texto: "Escribe su nombre o su apellido: te decimos su nivel, su puesto en el nivel, sus puntos, su mesa y su rival en la ronda que se juega, y contra quién jugó cada ronda.",
     ejemplo: "Solano",
@@ -159,7 +165,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
     // Lo que más se busca el día del torneo, primero (lo pidió el dueño: una
     // ficha solo para los pareos y otra para las clasificaciones).
     { href: "#pareos", color: "rojo", icono: "♟️", titulo: "Pareos de la ronda", texto: "La ronda que se juega en cada torneo, mesa por mesa: blancas, negras y el resultado.", accion: "Ver los pareos" },
-    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto, sus puntos y su rendimiento, como se premia.", accion: "Ver las clasificaciones" },
+    { href: "#clasificacion", color: "morado", icono: "🏆", titulo: "Clasificaciones", texto: "Cada nivel con su puesto y sus puntos, como se premia.", accion: "Ver las clasificaciones" },
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "La inscripción es gratuita: se hace con el formulario de la organización, el del código QR del afiche.", accion: "Inscribirme" },
     { href: BASES_PDF, id: "ficha-bases", externo: true, ventana: "Bases de Tacho Chess 2", color: "morado", icono: "📄", titulo: "Bases del torneo", texto: "Las bases completas: participantes, inscripción, sistema, ritmo, calendario, desempates y premiación.", accion: "Abrir el PDF" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las siete rondas y de la premiación.", accion: "Ver el calendario" },
@@ -179,7 +185,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   dialogos: {
     tituloClasificacion: "Clasificación por nivel",
     podio: "El 1.º, 2.º y 3.º lugar de cada nivel, según la clasificación de su torneo en Pareo Integral. Es provisional hasta la última ronda.",
-    clasificacion: "Cada nivel por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con los puntos y el rendimiento.",
+    clasificacion: "Cada nivel por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con sus puntos.",
     propios: [
       {
         id: "inscribirme", icono: "📝", titulo: "Inscribirme",
@@ -218,7 +224,7 @@ ${nivelesDe(t).map((n) => "            <li>" + n + "</li>").join("\n")}
       {
         id: "calendario", icono: "🗓️", titulo: "Calendario", ancho: "max-w-3xl",
         comentario: "El calendario: de aquí lee js/torneo-hoy.js las horas (data-inicio, hora de\nCosta Rica, y data-minutos, lo que dura) para «Hoy en el torneo». Sale del\nhorario de las bases (BasesTorneo.horario), el mismo del PDF.",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. De 8:30 a 9:00 a.m., llegada y confirmación de los inscritos. La ronda 1 empieza a las 9:00 a.m.; las demás son aproximadas: cada una empieza cuando termina la anterior. De 12:00 a 1:00 p. m. es el almuerzo: la ronda 7 empieza a la 1:00 p. m.</p>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
     <table class="w-full text-sm">
         <caption class="sr-only">Calendario del Torneo Intereducativo Tacho Chess 2</caption>
@@ -287,7 +293,7 @@ ${desempates}
       {
         id: "sala", icono: "🏟️", titulo: "La sala de juego", ancho: "max-w-4xl",
         comentario: "La foto del gimnasio (la pasó el dueño el 13/11/2026) y las mesas de cada torneo,\nque arma js/torneo-sala.js con las de Pareo Integral (no se escriben aquí).",
-        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar. Cada mesa lleva su número: es el mismo de los pareos.</p>
+        cuerpo: `<p class="text-brand-600 dark:text-brand-300 mt-2">El Gimnasio del Centro del Liceo Anastasio Alfaro, listo para jugar, visto desde la gradería. Cada mesa lleva su número en el color de su torneo: es el mismo de los pareos, y en «Busca a tu jugador» tu mesa sale iluminada.</p>
 <img src="img/tacho-chess-2/sala.jpg" width="1200" height="675" loading="lazy" alt="El gimnasio del liceo visto desde la gradería: cinco columnas de mesas con manteles azules y tableros de ajedrez sobre la cancha, y al frente a la derecha una mesa aparte." class="cac-sala-foto">
 <h3 class="font-bold text-brand-800 dark:text-white mt-5">Las mesas de cada torneo</h3>
 <div id="sala-mesas" aria-live="polite">
@@ -358,11 +364,56 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
     fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: NIVELES,
+    // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): las marcó
+    // el dueño una por una el 14/11/2026 en una página aparte sobre la misma
+    // foto; [número, x, y] en los píxeles de img/tacho-chess-2/sala.jpg. Los
+    // colores son los de sus círculos; el fondo, detrás de la letra blanca
+    // (8,72 / 6,70 / 5,76 / 6,11). Ver «La mesa iluminada en la foto».
+    mesasSala: { foto: [1200, 675], torneos: [
+      { nombre: "1er Ciclo", color: "morada", fondo: "#6b21a8", niveles: NIVELES.slice(0, 3), mesas: [[1, 775, 329], [2, 786, 342], [3, 801, 345], [4, 808, 354], [5, 830, 362], [6, 848, 378], [7, 858, 328], [8, 870, 337], [9, 886, 345], [10, 902, 357]] },
+      { nombre: "2do Ciclo", color: "azul", fondo: "#1d4ed8", niveles: NIVELES.slice(3, 6), mesas: [[1, 631, 329], [2, 635, 339], [3, 626, 349], [4, 643, 354], [5, 636, 366], [6, 652, 377], [7, 641, 384], [8, 656, 399], [9, 703, 329], [10, 715, 338], [11, 722, 346], [12, 717, 359]] },
+      { nombre: "Tercer Ciclo", color: "naranja", fondo: "#a84a00", niveles: NIVELES.slice(6, 8), mesas: [[1, 490, 324], [2, 485, 340], [3, 468, 346], [4, 475, 359], [5, 449, 364], [6, 438, 376], [7, 431, 389], [8, 558, 333], [9, 550, 344], [10, 541, 353], [11, 539, 366], [12, 533, 378]] },
+      { nombre: "Diversificada", color: "turquesa", fondo: "#0b6e66", niveles: NIVELES.slice(8, 11), mesas: [[1, 337, 335], [2, 324, 340], [3, 312, 346], [4, 297, 352], [5, 257, 364], [6, 243, 372], [7, 220, 382], [8, 195, 394], [9, 408, 333], [10, 396, 342], [11, 381, 353], [12, 359, 366], [13, 341, 375], [14, 327, 385], [15, 305, 400]] },
+    ] },
     guardado: "tacho",
     nombreCorto: "Tacho Chess 2",
     imgSub: "Torneo Intereducativo · Liceo Anastasio Alfaro",
     compartir: "en el Torneo Intereducativo Tacho Chess 2:",
     imagen: { banda: "#042a69", tinta: "#042a69", acento: "#dc0d19", suave: "#eef3fb", archivo: "tacho-chess-2", franjas: [["#dc0d19", 1046], ["#042a69", 1060]] },
+    // Los textos del Centroamericano que se colaban (lo vio el dueño el
+    // 14/11/2026, el día del torneo: «los diplomas y algunas partes […] sigue
+    // saliendo información o con nombres del centroamericano»). Se premia por
+    // nivel, no por categoría, y no hay Elo. Las funciones van tal cual a
+    // js/tacho-chess.js: no pueden usar nada de este archivo.
+    textos: {
+      finTexto: (n) => "Así terminó el Tacho Chess 2 para " + n + ":",
+      dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar en " + cat,
+      dipParticipa: (cat) => "por su participación en " + cat,
+      hjLugar: "Gimnasio del Centro, Liceo Anastasio Alfaro",
+      hjMensaje: (n, r, m, cuando, dias) => "📣 ¡" + (dias === 0 ? "Hoy juega " : dias === 1 ? "Mañana juega " : "Juega ") + n + "! Ronda " + r + ", mesa " + m + (cuando ? ", " + cuando.charAt(0).toLowerCase() + cuando.slice(1) : "") + ", en el Tacho Chess 2.",
+      imgAntes: "El torneo es el sábado 14 de noviembre",
+      diaTexto: (titulo) => titulo + " en el Tacho Chess 2:",
+      numTitulo: "El torneo en números",
+      numTexto: "El Tacho Chess 2 en números:",
+      imgResumenSub: "Tacho Chess 2 · Liceo Anastasio Alfaro",
+      invictos: "Invictos de cada nivel",
+      podios: "Los podios de cada nivel",
+      puestosTitulo: "Su puesto en su nivel después de cada ronda:",
+      calRonda: (r, nombre) => "Ronda " + r + " · " + nombre + " — Tacho Chess 2",
+      calCategoria: (cat) => "Nivel: " + cat + ".",
+      calLugar: "Gimnasio del Centro, Liceo Anastasio Alfaro, San José, Costa Rica",
+      calNombre: (nombre) => "Rondas de " + nombre + " · Tacho Chess 2",
+    },
+    // El certificado con la cara del afiche: el azul degradado (blanco encima,
+    // 8,08 y 13,63), la píldora roja con letra blanca (5,1), Tacho arriba, el
+    // marco rojo y blanco, el escudo del liceo y sin las hojas del Centroamericano.
+    diploma: {
+      evento: "Torneo Intereducativo Tacho Chess 2",
+      lugar: "Gimnasio del Centro, Liceo Anastasio Alfaro · San José · 14 de noviembre de 2026",
+      fondo: ["#064ca7", "#042a69"], pildora: "#dc0d19", sombra: "rgba(2, 18, 48, 0.5)",
+      dibujo: "img/tacho-chess-2/mascota.png", hojas: null, escudo: "img/tacho-chess-2/logo-liceo.png",
+      marco: [["#dc0d19", 22, 44], ["#ffffff", 6, 74]],
+    },
   },
 };
 

@@ -152,7 +152,9 @@
                 pierde ? el("p", { "data-pierde": "si", class: "text-xs font-semibold text-red-700 dark:text-red-300 mt-1", texto: "Segunda ilegal: decide el resultado" }) : null);
             cuerpo.append(el("tr", { "data-mesa": String(m.mesa), "data-estado": pierde ? "pierde" : (m.valor !== "0" ? "con-resultado" : "libre"), class: "border-t border-brand-100 dark:border-brand-800" },
                 celdaMesa, celdaJugador(m, "blancas"), celdaJugador(m, "negras"), celda(M.textoResultado(m.valor), m.valor === "0" ? "text-brand-500 dark:text-brand-300" : "font-semibold"),
-                el("td", { class: "py-2 align-top" }, el("div", { class: "flex flex-wrap items-center gap-2" }, sel, guardarFila), filaDeFotos(m))));
+                el("td", { class: "py-2 align-top" }, el("div", { class: "flex flex-wrap items-center gap-2" }, sel, guardarFila), filaDeFotos(m),
+                    el("div", { class: "mt-2" }, el("button", { type: "button", "data-accion": "reloj", class: BTN_CHICO, disabled: ocupada === m.mesa, "aria-label": "Corregir el reloj de la mesa " + m.mesa, onclick: () => corregirReloj(m) },
+                        el("span", { "aria-hidden": "true", texto: "⏱ " }), "Reloj")))));
         }
         for (const fila of cuerpo.querySelectorAll("tr[data-mesa]")) {
             const m = pantalla.mesas.find((x) => String(x.mesa) === fila.getAttribute("data-mesa"));
@@ -319,7 +321,7 @@
             });
             if (r === null) return null;
             const t = M.textoTipo(lista, r.tipo, r.nota);
-            if (t) return t;
+            if (t) return Object.assign(t, { tipo: r.tipo });
             previo = { tipo: r.tipo, nota: r.nota || null, falta: true };
         }
     }
@@ -351,15 +353,18 @@
         if (!pantalla) return;
         const nombre = nombreDe(m, color);
         const segunda = marcaDe(m.mesa, color).ilegales >= 1;
+        const minutos = minutosDeIlegal();
+        const rapidas = M.modalidad(ritmoDe()) !== "clasico";
         const t = await elegirTipo("Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")",
-            segunda
+            (segunda
                 ? "Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. " + M.ARTICULO_ILEGAL + ")."
-                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan 2 minutos más a su rival (art. " + M.ARTICULO_ILEGAL + ").",
+                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le " + (minutos === 1 ? "da 1 minuto" : "dan 2 minutos") + " más a su rival (art. " + M.ARTICULO_ILEGAL + (minutos === 1 ? " y apéndice A.3" : "") + ").")
+                + (rapidas ? " En rápidas y blitz sin un árbitro cada pocas mesas (A.5.2), solo se corrige si su rival todavía no hizo la jugada siguiente." : ""),
             M.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda);
         if (!t) return;
         if (!await anotarDeJugador(m, lineaDeJugador(m, color, "ilegal", { texto: t.texto, articulo: M.ARTICULO_ILEGAL }))) return;
         // La cuenta sale de lo que la base tiene ahora (otra pestaña pudo anotar también), no de un contador de la página.
-        const a = M.avisoIlegal(marcaDe(m.mesa, color).ilegales, nombre, color, 2);
+        const a = M.avisoIlegal(marcaDe(m.mesa, color).ilegales, nombre, color, minutos);
         if (a.nivel === "pierde") {
             // Se PROPONE el resultado en el desplegable; no se guarda solo: el árbitro lo revisa (puede ser tablas) y toca «Guardar».
             if (m.valor === "0") { elegido[m.mesa] = a.resultado; pintarMesas(); }
@@ -371,9 +376,195 @@
     async function irregularidad(m, color) {
         if (!pantalla) return;
         const nombre = nombreDe(m, color);
-        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora.", M.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false);
+        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue. Antes de anotarla te digo lo que dicen las Leyes y qué sanción corresponde.", M.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Ver lo que dice el reglamento", false);
         if (!t) return;
-        if (await anotarDeJugador(m, lineaDeJugador(m, color, "irregularidad", { texto: t.texto, articulo: t.articulo || "" }))) avisar("Irregularidad de " + nombre + " anotada en la bitácora.");
+        // El segundo paso: lo que dicen las Leyes de ESA irregularidad, la cuenta de las de este jugador y la sanción, ya elegida
+        // la que dicen las Leyes (o la más suave cuando la dejan al árbitro). Ver «Mesa del árbitro: el reloj y lo que dice el reglamento».
+        const regla = M.reglaIrregularidad(t.tipo, { modalidad: M.modalidad(ritmoDe()), previas: marcaDe(m.mesa, color).irregularidades });
+        let previo = { sancion: regla.sugerida, otra: "" }, sancion = null;
+        for (;;) {
+            const r = await Avisos.formulario({
+                titulo: "Irregularidad de " + nombre + " (mesa " + m.mesa + ")",
+                texto: (previo.falta ? "Escribe cuál fue la sanción: con «Otra» es obligatorio.\n\n" : "") + regla.texto,
+                campos: [
+                    { nombre: "sancion", etiqueta: "Sanción", tipo: "select", valor: previo.sancion, opciones: M.SANCIONES.map((x) => [x.id, x.texto]) },
+                    { nombre: "otra", etiqueta: "Cuál (solo con «Otra»)", tipo: "textarea", max: 300, valor: previo.otra },
+                ],
+                aceptar: "Anotar la irregularidad",
+            });
+            if (r === null) return;
+            sancion = M.textoSancion(t.tipo, r.sancion, r.otra);
+            if (sancion) break;
+            previo = { sancion: r.sancion, otra: r.otra || "", falta: true };
+        }
+        if (!await anotarDeJugador(m, lineaDeJugador(m, color, "irregularidad", { texto: (t.texto + sancion.texto).slice(0, 2000), articulo: regla.articulo }))) return;
+        if (sancion.pierde) {
+            // Igual que la segunda ilegal: se PROPONE el resultado, no se guarda solo.
+            const resultado = color === "blancas" ? "3" : "1";
+            if (m.valor === "0") { elegido[m.mesa] = resultado; pintarMesas(); }
+            await Avisos.alerta(nombre + " pierde la partida y su rival gana." + (m.valor === "0" ? " Dejé propuesto «" + M.textoResultado(resultado) + "» en la mesa " + m.mesa + "; toca «Guardar» si es lo que corresponde." : ""), { titulo: "Irregularidad anotada" });
+            const s = $("m-sel-" + m.mesa); if (s) s.focus();
+        } else if (sancion.tiempo) {
+            const quien = sancion.tiempo.a === "rival" ? "a su rival" : "a " + nombre;
+            avisar("Irregularidad anotada. Ajusta el reloj ahora: " + (sancion.tiempo.segundos > 0 ? "súmale " : "réstale ") + M.formatoTiempo(Math.abs(sancion.tiempo.segundos)) + " " + quien + ".");
+        } else avisar("Irregularidad de " + nombre + " anotada en la bitácora.");
+    }
+
+    // ------------------------------------------------------------- el ritmo del torneo y el reloj
+
+    // El ritmo es de cada torneo y lo escribe el árbitro (chess-results no lo da en «Enter Results Online»). Se recuerda en
+    // este aparato (localStorage, por código de torneo): es una comodidad, no un dato que deba durar; si no está, el de
+    // siempre (90 min + 30 s) y se dice que no está confirmado.
+    const CLAVE_RITMO = "mesa_arbitro_ritmo_v1";
+    let ritmoEnMemoria = null; // si este aparato no deja guardar (ventana privada), el ritmo vale mientras la página esté abierta
+    function ritmosGuardados() {
+        try { const x = JSON.parse(localStorage.getItem(CLAVE_RITMO) || "{}"); return x && typeof x === "object" ? x : {}; } catch (e) { return {}; }
+    }
+    const claveTorneo = () => (pantalla ? String(pantalla.tnr) : (tnrEscrito() || "general"));
+    function ritmoGuardado() { return M.ritmoValido(ritmosGuardados()[claveTorneo()]) || ritmoEnMemoria; }
+    const ritmoDe = () => ritmoGuardado() || M.RITMO_POR_DEFECTO;
+    const minutosDeIlegal = () => M.minutosIlegal(M.modalidad(ritmoDe()));
+    function pintarRitmo() {
+        const r = ritmoGuardado();
+        $("m-ritmo").textContent = "Ritmo del torneo: " + M.textoRitmo(ritmoDe()) + (r ? "" : " (sin confirmar: toca «Cambiar el ritmo» y escribe el de tu torneo)");
+        $("m-regla-ilegal").textContent = minutosDeIlegal() === 1 ? "1 minuto" : "2 minutos";
+    }
+    const enteroDe = (v) => (String(v == null ? "" : v).trim() === "" ? null : /^\d{1,4}$/.test(String(v).trim()) ? Number(String(v).trim()) : NaN);
+    async function cambiarRitmo() {
+        const r = ritmoDe();
+        let previo = { inicial: String(r.inicial / 60), incremento: String(r.incremento), jugada: r.control ? String(r.control.jugada) : "", agrega: r.control ? String(r.control.agrega / 60) : "" }, error = "";
+        for (;;) {
+            const v = await Avisos.formulario({
+                titulo: "Ritmo del torneo",
+                texto: (error ? error + "\n\n" : "") + "Con el ritmo se calcula el reloj y el tiempo que da una jugada ilegal (2 minutos en clásico; 1 en rápidas y blitz, apéndice A.3). Queda recordado en este aparato para este torneo.",
+                campos: [
+                    { nombre: "inicial", etiqueta: "Tiempo inicial (minutos)", inputmode: "numeric", valor: previo.inicial },
+                    { nombre: "incremento", etiqueta: "Incremento por jugada (segundos; 0 si no hay)", inputmode: "numeric", valor: previo.incremento },
+                    { nombre: "jugada", etiqueta: "Segundo período: al completar la jugada… (vacío si no hay)", inputmode: "numeric", valor: previo.jugada },
+                    { nombre: "agrega", etiqueta: "…se suman (minutos)", inputmode: "numeric", valor: previo.agrega },
+                ],
+                aceptar: "Guardar el ritmo",
+            });
+            if (v === null) return;
+            previo = v;
+            const ini = enteroDe(v.inicial), inc = enteroDe(v.incremento) == null ? 0 : enteroDe(v.incremento), jug = enteroDe(v.jugada), agr = enteroDe(v.agrega);
+            const control = jug == null && agr == null ? null : { jugada: jug, agrega: agr == null || Number.isNaN(agr) ? NaN : agr * 60 };
+            const nuevo = M.ritmoValido({ inicial: ini == null ? NaN : ini * 60, incremento: inc, control });
+            if (!nuevo) { error = control && (control.jugada == null || Number.isNaN(control.agrega)) ? "Para el segundo período hacen falta las dos cosas: la jugada y los minutos que se suman." : "Revisa los números: el tiempo inicial va de 1 a 360 minutos y el incremento de 0 a 600 segundos."; continue; }
+            const todos = ritmosGuardados();
+            todos[claveTorneo()] = nuevo;
+            try { localStorage.setItem(CLAVE_RITMO, JSON.stringify(todos)); } catch (e) { avisar("No se pudo recordar el ritmo en este aparato: se usa solo mientras la página esté abierta.", true); ritmoEnMemoria = nuevo; }
+            pintarRitmo();
+            pintarMesas();
+            avisar("Ritmo guardado: " + M.textoRitmo(nuevo) + ".");
+            return;
+        }
+    }
+    // Un tiempo escrito: «1240», «12:40» o «1:05:30» (los dos puntos se ponen solos, como en el Centroamericano).
+    const tiempoDe = (v) => (String(v || "").trim() === "" ? null : M.leerTiempo(M.ponerDosPuntos(v)));
+    // «9:05» → la hora de hoy en Costa Rica, en milisegundos (Costa Rica no cambia de hora: siempre −06:00).
+    function horaDeHoy(v) {
+        const x = /^(\d{1,2}):?(\d{2})$/.exec(String(v || "").trim());
+        if (!x || Number(x[1]) > 23 || Number(x[2]) > 59) return null;
+        return Date.parse(window.HoraCR.hoy() + "T" + x[1].padStart(2, "0") + ":" + x[2] + ":00-06:00");
+    }
+
+    // Corregir el reloj de una mesa (o, sin mesa, solo consultar). Tres pasos: qué pasó, los datos y el resultado, que
+    // el árbitro puede ajustar antes de anotarlo. Lo que se anota es una «incidencia» con el artículo (6.10.1 o 6.10.2).
+    async function corregirReloj(m) {
+        const donde = m ? " · mesa " + m.mesa : "";
+        const c = await Avisos.formulario({
+            titulo: "Corregir el reloj" + donde,
+            texto: "Ritmo: " + M.textoRitmo(ritmoDe()) + (ritmoGuardado() ? "" : " (sin confirmar: cámbialo abajo de «Mesas» si no es el de tu torneo)") + ".\n\nLas Leyes dejan los tiempos al mejor criterio del árbitro (art. 6.10): te doy un número con las cuentas a la vista, y lo puedes cambiar antes de anotarlo.",
+            campos: [{ nombre: "caso", etiqueta: "¿Qué pasó con el reloj?", tipo: "select", valor: "control", opciones: M.CASOS_RELOJ.map((x) => [x.id, x.texto]) }],
+            aceptar: "Seguir",
+        });
+        if (c === null) return;
+        const caso = c.caso;
+        const AYUDA_T = "Como se lee en el reloj: 1240 o 12:40; 1:05:30 si pasa de una hora.";
+        const campos = (v) => {
+            const lista = [];
+            if (caso === "apagado") lista.push({ nombre: "inicio", etiqueta: "Hora en que empezó la ronda (hora de Costa Rica)", inputmode: "numeric", valor: v.inicio, ayuda: "Por ejemplo 9:00 o 14:30." });
+            lista.push({ nombre: "jb", etiqueta: "Jugadas completadas por las blancas", inputmode: "numeric", valor: v.jb },
+                { nombre: "jn", etiqueta: "Jugadas completadas por las negras", inputmode: "numeric", valor: v.jn, ayuda: "Las que ya pulsaron el reloj. Las blancas llevan las mismas que las negras o una más." });
+            if (caso === "apagado") {
+                lista.push({ nombre: "tb", etiqueta: "Si todavía se lee: reloj de las blancas (vacío si no)", inputmode: "numeric", valor: v.tb, ayuda: AYUDA_T },
+                    { nombre: "tn", etiqueta: "Si todavía se lee: reloj de las negras (vacío si no)", inputmode: "numeric", valor: v.tn });
+            } else {
+                lista.push({ nombre: "tb", etiqueta: "Lo que marca ahora el reloj de las blancas", inputmode: "numeric", valor: v.tb, ayuda: AYUDA_T },
+                    { nombre: "tn", etiqueta: "Lo que marca ahora el reloj de las negras", inputmode: "numeric", valor: v.tn });
+            }
+            if (caso === "programado") lista.push({ nombre: "pini", etiqueta: "Tiempo inicial que se programó (minutos)", inputmode: "numeric", valor: v.pini },
+                { nombre: "pinc", etiqueta: "Incremento que se programó (segundos; 0 si no había)", inputmode: "numeric", valor: v.pinc });
+            return lista;
+        };
+        let v = { inicio: "", jb: "", jn: "", tb: "", tn: "", pini: "", pinc: "0" }, error = "", res = null;
+        for (;;) {
+            const r = await Avisos.formulario({ titulo: (M.CASOS_RELOJ.find((x) => x.id === caso) || {}).texto + donde, texto: error || "Escribe lo que ves en la mesa.", campos: campos(v), aceptar: "Calcular" });
+            if (r === null) return;
+            v = Object.assign(v, r);
+            const jB = enteroDe(r.jb), jN = enteroDe(r.jn);
+            const datos = { ritmo: ritmoDe(), jBlancas: jB == null ? NaN : jB, jNegras: jN == null ? NaN : jN };
+            if (caso === "apagado") {
+                const ahora = Date.now(), inicio = horaDeHoy(r.inicio);
+                if (inicio == null) { error = "Escribe la hora de inicio como 9:00 o 14:30."; continue; }
+                if (inicio > ahora) { error = "Esa hora todavía no llega hoy: revisa la hora de inicio."; continue; }
+                const lb = tiempoDe(r.tb), ln = tiempoDe(r.tn);
+                if ((String(r.tb || "").trim() && lb == null) || (String(r.tn || "").trim() && ln == null)) { error = "No entendí lo que marca el reloj. " + AYUDA_T; continue; }
+                const lineasMesa = m && pantalla ? lineas.filter((l) => l.tnr === String(pantalla.tnr)) : [];
+                Object.assign(datos, { inicioMs: inicio, ahoraMs: ahora, bonos: m && pantalla ? M.bonosDeMesa(lineasMesa, pantalla.ronda, m.mesa, minutosDeIlegal()) : [],
+                    visto: lb != null || ln != null ? { blancas: lb == null ? NaN : lb, negras: ln == null ? NaN : ln } : null });
+            } else {
+                Object.assign(datos, { tBlancas: tiempoDe(r.tb), tNegras: tiempoDe(r.tn) });
+                if (datos.tBlancas == null || datos.tNegras == null) { error = "No entendí lo que marca el reloj. " + AYUDA_T; continue; }
+                if (caso === "programado") datos.programado = { inicial: enteroDe(r.pini) == null || Number.isNaN(enteroDe(r.pini)) ? NaN : enteroDe(r.pini) * 60, incremento: enteroDe(r.pinc) == null ? 0 : enteroDe(r.pinc) };
+            }
+            res = M.corregirReloj(caso, datos);
+            if (res.error) { error = res.error; continue; }
+            break;
+        }
+        const anotable = !!(m && pantalla);
+        const texto = ["Pon blancas " + M.formatoTiempo(res.blancas) + " y negras " + M.formatoTiempo(res.negras) + " (art. " + res.articulo + ").", "Cómo se calculó:", ...res.pasos.map((x) => "• " + x)]
+            .concat(res.avisos.length ? ["", ...res.avisos.map((x) => "⚠ " + x)] : []).join("\n");
+        let vista = { tb: M.formatoTiempo(res.blancas), tn: M.formatoTiempo(res.negras) }, problema = "";
+        for (;;) {
+            const f = await Avisos.formulario({
+                titulo: "El reloj" + donde, texto: (problema ? problema + "\n\n" : "") + texto,
+                campos: [{ nombre: "tb", etiqueta: "Blancas (cámbialo si tu criterio es otro)", inputmode: "numeric", valor: vista.tb, ayuda: AYUDA_T },
+                    { nombre: "tn", etiqueta: "Negras", inputmode: "numeric", valor: vista.tn }],
+                aceptar: anotable ? "Anotar en la bitácora" : "Listo", cancelar: anotable ? "Cerrar sin anotar" : false,
+            });
+            if (f === null || !anotable) return;
+            const b = tiempoDe(f.tb), n = tiempoDe(f.tn);
+            vista = f;
+            if (b == null || n == null) { problema = "No entendí uno de los tiempos. " + AYUDA_T; continue; }
+            const ajustado = b !== res.blancas || n !== res.negras;
+            const linea = ajustado
+                ? res.resumen.replace(/: blancas .*?, negras .*?,/, ": blancas " + M.formatoTiempo(b) + ", negras " + M.formatoTiempo(n) + ",") + " Ajustado por el árbitro; el cálculo daba blancas " + M.formatoTiempo(res.blancas) + " y negras " + M.formatoTiempo(res.negras) + "."
+                : res.resumen;
+            ocupada = m.mesa;
+            pintarMesas();
+            try {
+                await escribirBitacora([{ tnr: String(pantalla.tnr), torneo: pantalla.torneo || "", ronda: pantalla.ronda, mesa: m.mesa, tipo: "incidencia", resultado: null, anterior: null, articulo: res.articulo, texto: linea.slice(0, 2000), enviado: false }]);
+                await cargarBitacora(String(pantalla.tnr));
+                avisar("Reloj de la mesa " + m.mesa + " anotado en la bitácora.");
+            } catch (e) {
+                avisar(e.message || String(e), true);
+            } finally {
+                ocupada = null;
+                pintarMesas();
+            }
+            return;
+        }
+    }
+
+    // Consultar el reglamento sin anotar nada: un árbitro auxiliar que solo quiere confirmar una regla.
+    async function consultarIrregularidad() {
+        const r = await Avisos.formulario({ titulo: "Lo que dice el reglamento", texto: "Elige la irregularidad. No se anota nada.", campos: [{ nombre: "tipo", etiqueta: "¿Qué pasó?", tipo: "select", valor: "otra", opciones: M.TIPOS_IRREGULARIDAD.map((t) => [t.id, t.id === "otra" ? "Otra (la escala de sanciones del 12.9)" : t.texto]) }], aceptar: "Ver lo que dice" });
+        if (r === null) return;
+        const regla = M.reglaIrregularidad(r.tipo, { modalidad: M.modalidad(ritmoDe()) });
+        const s = M.SANCIONES.find((x) => x.id === regla.sugerida);
+        await Avisos.alerta(regla.texto + "\n\nLo que se suele aplicar: " + (s ? s.texto : "el árbitro decide") + ".", { titulo: (M.TIPOS_IRREGULARIDAD.find((t) => t.id === r.tipo) || {}).texto || "Irregularidad" });
     }
 
     // Un toque por error no se borra: se anula con otra línea que apunta a la anulada (la base comprueba que sea tuya y de esta partida).
@@ -427,6 +618,7 @@
             $("zona-mesas").classList.toggle("hidden", !d.mesas.length);
             $("m-informe").replaceChildren();
             $("b-ronda").value = d.ronda;
+            pintarRitmo();
             pintarMesas();
             await cargarBitacora(d.tnr);
             // Queda en «Mis torneos» (con el nombre que trae chess-results).
@@ -712,6 +904,10 @@
         $("m-anotar").addEventListener("click", anotar);
         $("m-copiar").addEventListener("click", copiar);
         $("b-agregar").addEventListener("click", agregar);
+        $("m-ritmo-cambiar").addEventListener("click", cambiarRitmo);
+        $("c-reloj").addEventListener("click", () => corregirReloj(null));
+        $("c-reglamento").addEventListener("click", consultarIrregularidad);
+        pintarRitmo();
         $("b-pdf").addEventListener("click", () => bajar("pdf"));
         $("b-docx").addEventListener("click", () => bajar("docx"));
         pintarBitacora();

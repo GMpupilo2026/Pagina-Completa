@@ -126,6 +126,9 @@ const FUNCIONES = {
   "metropolitano-drive": ["drive-puente.ts"],
   // El correo de confirmación de las inscripciones del Metropolitano 2026.
   "metropolitano-correo": ["envio-resend.ts", "marca-correo.ts"],
+  // Fair Play lee los torneos de Pareo Integral desde lo publicado (partidasDePareo); fuente-pareo.ts trae
+  // con él la lectura compartida y sus dos ayudantes.
+  "centroamericano-fair-play": ["fuente-pareo.ts", "lecturas-cache.ts", "chess-results-ingreso.ts", "inscritos-fed.ts"],
   "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts"],
 };
 

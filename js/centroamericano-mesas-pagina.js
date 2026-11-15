@@ -635,13 +635,13 @@
     }
 
     // La cara neutra (Ajedrez Integral) cuando ningún torneo a la vista es del Centroamericano: el CSS cambia los colores y esconde
-    // las hojas y la mascota (html[data-marca]); aquí se esconde lo que es solo de ese evento: Fair Play, la transmisión por
-    // LiveChess y el vencimiento «al terminar el torneo (9 de noviembre)». El vencimiento por omisión pasa a «hasta el día…».
+    // las hojas y la mascota (html[data-marca]); aquí se esconde lo que es solo de ese evento: el vencimiento «al terminar el
+    // torneo (9 de noviembre)». El vencimiento por omisión pasa a «hasta el día…». Fair Play y Transmisión salen en las dos
+    // caras: leen cada torneo de su fuente, chess-results o Pareo Integral (ver «Fair Play y Transmisión en cualquier evento»).
     function ponerCara() {
         const neutra = caraNeutra();
         if (neutra) document.documentElement.setAttribute("data-marca", "ajedrez-integral");
         else document.documentElement.removeAttribute("data-marca");
-        for (const id of ["pest-fairplay", "pest-transmision"]) $(id).hidden = neutra;
         for (const o of document.querySelectorAll("#a-vence option[data-solo-marca]")) { o.hidden = neutra; o.disabled = neutra; }
         const vence = $("a-vence");
         if (!vence.dataset.tocado) { vence.value = neutra ? "fecha" : "torneo"; vence.dispatchEvent(new Event("cara")); }
