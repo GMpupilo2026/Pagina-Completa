@@ -81,8 +81,9 @@ async function contrastes(p) {
     console.log("\n=== Estudiar ===");
     let { p, errores } = await abrir(ctx, "");
     todos.push(errores);
-    igual("las tres fichas de la revista N.º 1",
-        await p.$$eval("#aula-vista .aula-tarjeta h4", (l) => l.map((h) => h.textContent)), ["Ajuste de relojes después de una irregularidad", "Sistema de desempate Koya", "Posiciones idénticas"]);
+    igual("las tres fichas de la revista N.º 1, en la primera colección",
+        await p.$$eval("#aula-vista .aula-coleccion:first-of-type .aula-tarjeta h4", (l) => l.map((h) => h.textContent)), ["Ajuste de relojes después de una irregularidad", "Sistema de desempate Koya", "Posiciones idénticas"]);
+    igual("y debajo, los números 2 al 18", await p.$$eval("#aula-vista .aula-coleccion h3", (l) => [l.length, l[1].textContent.includes("N.º 2"), l[17].textContent.includes("N.º 18")]), [18, true, true]);
     await p.click("a[href='#ficha-relojes']");
     await p.waitForSelector(".aula-hoja");
     igual("la ficha de relojes trae la norma (art. 7.1) y sus ideas clave",

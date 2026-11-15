@@ -11964,6 +11964,7 @@ Cómo está armado, y por qué:
   (sin navegador) rehace con chess.js cada ejercicio y comprueba lo que dice
   `esperado`, y rehace con `ajuste.js` la solución recomendada y la de horario
   de cada caso con `calculo` (al segundo).
+- **Los números 2 al 18 de la revista** (pedido del dueño: «hacer lo mismo que con la 1») van en `js/aula-arbitraje/contenido-revistas.js`, que carga después de `contenido.js` y suma a `AULA_CONTENIDO` sus colecciones, fichas, preguntas y casos (80 fichas, 535 preguntas, 30 casos de decisión, sin reloj). Cada número se revisó contra la normativa vigente en noviembre de 2026, igual que el N.º 1, con sus erratas corregidas y los autores originales respetados; las revistas en PDF (con la marca de agua y el crédito de IA Oscar Angulo Cubero) no viven en el repositorio. Un id repetido entre números se distingue con el sufijo del número (`posicion-muerta-n14`). `verificar-aula-arbitraje.js` revisa además que las colecciones sean las 18 en orden, que ningún id se repita, que la respuesta de cada caso exista y que ningún contenido traiga HTML activo.
 - **El avance se guarda solo en el aparato** (`localStorage`,
   `aula_arbitraje_avance_v1`): es una comodidad para quien practica, no una
   nota; no se le muestra a nadie más. Si el dueño quiere que un profesor vea

@@ -14,6 +14,7 @@
 "use strict";
 const path = require("path");
 const C = require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido.js"));
+require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-revistas.js")); // suma los números 2-18 a C
 const A = require(path.join(__dirname, "..", "js", "aula-arbitraje", "ajuste.js"));
 global.Chess = require("chess.js").Chess;
 const R = require(path.join(__dirname, "..", "js", "reclamos-tablas.js"));
@@ -32,6 +33,10 @@ igual("cada ficha está en una colección que existe", C.fichas.filter((f) => !c
 igual("cada pregunta es de una ficha que existe", C.preguntas.filter((p) => !fichas.has(p.ficha)).map((p) => p.texto), []);
 igual("«correcta» es una de las opciones", C.preguntas.filter((p) => !(p.correcta >= 0 && p.correcta < p.opciones.length)).map((p) => p.texto), []);
 igual("cada caso es de una ficha que existe", C.casos.filter((c) => !fichas.has(c.ficha)).map((c) => c.id), []);
+igual("los ids de las fichas no se repiten", C.fichas.length, new Set(C.fichas.map((f) => f.id)).size);
+igual("las colecciones son los 18 números de la revista, en orden", C.colecciones.map((c) => c.id), Array.from({ length: 18 }, (_, i) => "revista-" + (i + 1)));
+igual("en cada caso con decisión, «correcta» es una de sus opciones", C.casos.filter((c) => c.decision && !(c.decision.correcta >= 0 && c.decision.correcta < c.decision.opciones.length)).map((c) => c.id), []);
+igual("ningún contenido trae HTML activo (script, on…, iframe)", C.fichas.filter((f) => /<script|\son\w+\s*=|javascript:|<iframe/i.test(f.contenido)).map((f) => f.id), []);
 igual("los ids de los casos no se repiten", C.casos.length, new Set(C.casos.map((c) => c.id)).size);
 igual("cada caso con reloj trae al menos una solución óptima con tiempos que se leen",
     C.casos.filter((c) => c.ritmo && !(c.soluciones || []).some((s) => s.valor === "optima" && A.leerTiempo(s.w) != null && A.leerTiempo(s.b) != null)).map((c) => c.id), []);
