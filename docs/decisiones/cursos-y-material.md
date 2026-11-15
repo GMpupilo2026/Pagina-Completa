@@ -2620,10 +2620,12 @@ publica da 404.
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
 generador, y solo se bajan (el navegador no los abre). Hoy hay dos Word (los
-consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
+consentimientos de los JDN 2027) y **un solo Excel guardado**: el simulador
+de logística de la Sesión 5 de Formación Ajedrez, que arma
+`herramientas/formacion-simulador-logistica.py`. Los demás Excel de la
 plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
-el navegador con los datos del momento, así que no son archivos del sitio. La
-ficha lo dice en vez de quedar vacía.
+el navegador con los datos del momento, así que no son archivos del sitio. Sin
+ningún Excel, la ficha lo dice en vez de quedar vacía.
 
 ### La vista previa
 

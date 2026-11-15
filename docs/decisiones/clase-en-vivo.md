@@ -4469,6 +4469,19 @@ por esta.
   del CI, así que se generó con el worktree en LF
   (`git -c core.autocrlf=false reset --hard` después de `git rm -r --cached .`).
   `archivos-catalogo.js` también cuenta kB distintos con CRLF.
+- **El simulador de logística, como material de la sesión**: el Excel del
+  simulacro (mesas dobles, tableros, relojes, sillas y árbitros a partir de
+  los inscritos de cada torneo) va en `extras` de la lección 5, con el botón
+  «🧮 Simulador de logística del torneo (Excel)», detrás del mismo candado que
+  el resto de `cursos/recursos/`. Lo arma
+  `herramientas/formacion-simulador-logistica.py` (openpyxl y Pillow): las
+  cuentas son fórmulas, así que Excel las calcula al abrirlo y openpyxl no
+  guarda ningún resultado. Viene cargado con los 16 torneos de la Regional de
+  Alajuela 2026 (74 mesas dobles y 142 tableros en el turno más cargado,
+  comprobado abriéndolo en Excel). Excel no tiene marca de agua detrás de las
+  celdas: la de Ajedrez Integral (tomada de `herramientas/lib/marca-agua.js`)
+  va como imagen en Instrucciones y en Resumen, a la derecha de lo que se usa,
+  y escrita en el pie de cada hoja al imprimir.
 
 #### El ejercicio del tablero mal colocado
 

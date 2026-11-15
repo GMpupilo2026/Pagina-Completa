@@ -8906,8 +8906,22 @@
   ]
  },
  "excel": {
-  "total": 0,
-  "grupos": []
+  "total": 1,
+  "grupos": [
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez",
+    "titulo": "Formación Ajedrez",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/simulador-logistica-ajedrez-jde.xlsx",
+      "titulo": "Simulador de logística de un torneo JDE (Sesión 5)",
+      "tipo": "otro",
+      "kb": 169
+     }
+    ]
+   }
+  ]
  },
  "presentaciones": {
   "niveles": [
