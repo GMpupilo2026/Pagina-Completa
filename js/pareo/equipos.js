@@ -214,7 +214,7 @@
     }
     const cmp = (a, b) => {
       if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-      for (const c of lista) if (b.valores[c] !== a.valores[c]) return (b.valores[c] || 0) - (a.valores[c] || 0);
+      for (const c of lista) if (b.valores[c] !== a.valores[c]) return D.diferencia(c, a.valores[c] || 0, b.valores[c] || 0);
       return 0;
     };
     const orden = new Map(base.map((f, i) => [f.id, i]));

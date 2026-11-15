@@ -40,7 +40,7 @@
   const TITULOS = ["GM", "IM", "WGM", "FM", "WIM", "CM", "WFM", "WCM"];
 
   function nuevo(datos) {
-    return Object.assign({
+    const t = Object.assign({
       formato: 1,
       nombre: "", ciudad: "", federacion: "", fechaInicio: "", fechaFin: "",
       arbitro: "", arbitroAdjunto: "", ritmo: "",
@@ -50,6 +50,12 @@
       desempates: ["BH-C1", "BH", "SB", "DE", "WIN"],
       jugadores: [], numeracion: null, rondas: [],
     }, datos || {});
+    // Los códigos de desempate de antes de 2026 (GE → REP), al día al abrir.
+    if (Array.isArray(t.desempates)) {
+      const D = typeof module !== "undefined" && module.exports ? require("./desempates.js") : raiz.PareoDesempates;
+      if (D && D.codigosAlDia) t.desempates = D.codigosAlDia(t.desempates);
+    }
+    return t;
   }
 
   function pesoTitulo(t) {

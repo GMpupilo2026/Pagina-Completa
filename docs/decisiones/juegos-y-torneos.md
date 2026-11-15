@@ -2552,8 +2552,24 @@ emparejamiento entero, y con partidas ya empezadas eso no sirve.
   incomparecencia ganada o perdida, bye pedido con partidas después o al
   final), cuentan contra un rival ficticio con el puntaje del jugador **con el
   tope del 16.4**, y el corte del peor (16.5) se lleva primero una ronda no
-  jugada voluntaria. Son 26 desempates (BH y sus cortes, SB, DE, WIN, WON,
-  BPG, BWG, GE, PS, KS, STD, ARO, TPR, PTP, FB, AOB, APRO, APPO, AFB).
+  jugada voluntaria. Son 30 desempates (BH y sus cortes, SB, DE, WIN, WON,
+  BPG, BWG, REP, PS, KS, STD, ARO, TPR, PTP, FB, AOB, APRO, APPO, AFB, TPN y
+  RTNG con su versión al revés).
+- **REP es el GE de antes** (7.6 del C.07:2026, «Rounds one Elected to
+  Play»: las rondas menos los byes de medio punto, los de cero y las
+  incomparecencias perdidas). Es la misma cuenta; FIDE le cambió el nombre.
+  `GE` sigue en `desempates.js` como alias escondido (`legado`, fuera del
+  CATALOGO) y `T.nuevo()` lo cambia por REP al abrir un torneo guardado
+  antes, sin repetirlo si ya estaba REP. La referencia de chesspairing
+  (`pareo-desempates.json`) se guardó con GE: el verificador compara REP
+  contra esos valores.
+- **TPN y RTNG** (7.8 y 10.6) los agregó la lista MTB26 de FIDE. Son un dato
+  del propio jugador: el número de emparejamiento (gana el menor) y el Elo
+  (gana el mayor; sin Elo, 0). La opción «/R» de FIDE (orden inverso) va
+  como código aparte, `TPN-R` y `RTNG-R`. Un desempate donde gana el valor
+  más bajo lleva `menor: true`, y TODA comparación de desempates pasa por
+  `D.diferencia()` (la clasificación y la de equipos): el valor se guarda
+  tal cual para que la tabla muestre el número o el Elo, no un negativo.
 - **Se comparó contra chesspairing (en Go) en 300 torneos al azar: 131 144
   valores, cero diferencias.** Ese cruce se corre fuera del repositorio (Go no
   está en el CI); lo que queda en `herramientas/datos/pareo-desempates.json`
@@ -2660,7 +2676,7 @@ comprobó impersonando roles en SQL.
 - **`pareo-manual.html`**: el manual entero en español y en inglés en la misma
   página (`js/pareo/manual.js` muestra uno; recuerda el idioma de
   `pareo.html`, y `?lang=en` lo abre en inglés: ese es el enlace para FIDE).
-  Explica los 26 desempates; el verificador falla si el catálogo de
+  Explica los 30 desempates; el verificador falla si el catálogo de
   `desempates.js` gana uno que el manual no explica, en cualquiera de los dos
   idiomas.
 - **La línea de comandos** (`js/pareo/cli.js`, para bajar en
@@ -2695,12 +2711,60 @@ comprobó impersonando roles en SQL.
 
 ### Lo que falta para pedir el aval
 
-Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)
-está, con el manual en inglés y la línea de comandos para probarlo en lote.
-Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
-entorno, y que el árbitro del sitio lo pruebe con torneos reales (sus TRF de
-Swiss-Manager se abren en la ficha «Archivos»). Mientras no haya aval, la
-página dice que no lo tiene.
+**El trámite cambió el 1 de marzo de 2026** (se averiguó en noviembre de 2026;
+antes estas notas decían «falta el formulario FE-1», que ya no existe). Los
+programas de emparejamiento ahora se llaman «Tournament Handler Programs»
+(THP) y los aprueba la Comisión Técnica (TEC), no la vieja comisión de
+emparejamientos:
+
+- **Las reglas**: C.02.01 (el trámite: registro del fabricante en los
+  formularios en línea de TEC, declaración propia de cumplimiento, prueba
+  con tres probadores sobre la versión EXACTA, aprobación del Consejo de
+  FIDE) y C.02.03, artículo 7 (lo que tiene que hacer un THP). La lista
+  oficial está en C.02.04.
+- **La tarifa**: el manual de TEC (FIDE TEC Manual, Annexure A – Fees):
+  USD 300 de inicio, una sola vez, más USD 900 por la categoría THP
+  (USD 1200 en total; USD 1500 con la prueba preliminar opcional). Se paga
+  aunque no se apruebe, y si se rechaza no se puede volver a pedir en un año.
+- **«Aceptado» y «avalado» no son lo mismo**: aceptado es pasar la prueba
+  técnica (alcanza para casi todos los torneos con Elo); avalado es además
+  un acuerdo comercial con FIDE, que solo se exige en torneos de nivel 1.
+- **Todos parten de cero**: en C.02.04 los diez programas avalados tienen
+  vencimiento 1 de febrero de 2026. TEC todavía no publicó la lista de
+  verificación definitiva para THP ni anunció el ciclo de aceptación
+  (congreso de septiembre de 2026).
+- **TEC dijo por escrito que bbpPairings solo no alcanza.** Lo que pide
+  C.02.03 además del motor: leer las listas de Elo de FIDE, todos los
+  métodos de aceleración, los desempates de la lista MTB26, el formato
+  TRF26 (y leer los viejos), un comprobador público de emparejamientos Y
+  DE DESEMPATES (PTC, por línea de comandos), el generador al azar (RTG),
+  la interfaz y el manual en inglés, y un entorno controlado para probarlo
+  (para un programa web, una máquina virtual).
+- **Versión numerada** MAYOR.MENOR.PARCHE: un cambio mayor anula la
+  aceptación. Pareo Integral hoy cambia con cada PR.
+
+Hecho en noviembre de 2026: REP, TPN y RTNG (los que faltaban de la lista
+individual de MTB26) y el aviso del bye de punto entero (abajo). El número
+de emparejamiento ya cumplía el C.04.2 (2.3: no se reasigna por una
+corrección después de la ronda 4): Pareo Integral lo fija en la ronda 1 y
+nunca lo reasigna por una corrección; solo intercala a quien se inscribe
+tarde (2.4 y 2.5).
+
+Falta, en orden: los resultados poco comunes (½-0, 0-½, 0-0 sin
+incomparecencia y las partidas que no cuentan para Elo, W/D/L del TRF), el
+TRF26, el comprobador de desempates, los modificadores que faltan de
+MTB26 (ARO/M1 y /M2, la opción /P, KS con límite, AOB/F, los cortes de 2)
+y todos los desempates de equipos, la versión fija y el «modo FIDE», y
+pruebas con decenas de miles de torneos. Mientras no haya aprobación, la
+página dice que no la tiene.
+
+- **El bye de punto entero pide confirmación** (`confirmarByeEntero` en
+  `js/pareo/pagina.js`): FIDE lo desaconseja y la lista de verificación de
+  los programas pide avisar al darlo. En «No juegan esta ronda» y al pedir
+  ausencias antes de emparejar, elegir «Bye de punto entero» abre un aviso
+  («Dar el bye de punto entero» / «Dejar como estaba»); si quien arbitra se
+  arrepiente, el select vuelve a lo que tenía y no se guarda nada. Volver
+  de punto entero a otra cosa no pregunta.
 
 **Al tocar `js/pareo/`, el motor, `pareo.html` o `pareo-manual.html`, correr
 `python3 herramientas/pareo-cli-empaquetar.py` y
@@ -11848,7 +11912,7 @@ arriba): la vitrina la anunciaba como «Próximamente» desde que se armó la
 lista de herramientas de arbitraje, y es la primera de las tres que faltaban
 en construirse.
 
-- **El cálculo de los 26 desempates es el MISMO de Pareo Integral**
+- **El cálculo de los desempates es el MISMO de Pareo Integral**
   (`js/pareo/desempates.js`), no una segunda copia: ya está comprobado
   artículo por artículo contra los ejercicios del C.07:2026 y contra
   `chesspairing` en miles de torneos al azar (ver «Pareo Integral» más
@@ -11865,7 +11929,7 @@ en construirse.
   `node herramientas/verificar-desempates-explicar.js` (sin navegador)
   prueba, en 80 torneos al azar, que el total de cada desglose sea
   exactamente el mismo número que ya daba `calcular()` —27 000 comparaciones,
-  los 26 desempates por cada jugador—, y que ninguna ronda ya jugada
+  todos los desempates por cada jugador—, y que ninguna ronda ya jugada
   desaparezca del desglose sin decir por qué.
 - **Las bases del torneo son el orden de desempates, elegido a mano.** No se
   adivina de chess-results (sus etiquetas vienen en el idioma y la forma que

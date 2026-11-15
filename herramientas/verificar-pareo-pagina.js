@@ -131,6 +131,24 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
   await p.click('#pi-rondas-nav button:has-text("Ronda 2")');
   // Ronda 2: Bruno pide bye de medio punto.
   await p.selectOption('#pi-ronda select[aria-label^="Mena, Bruno"]', "H");
+  // El bye de punto entero pide confirmación (FIDE lo desaconseja): con
+  // «Dejar como estaba» el select vuelve a «Juega»; con el otro botón queda.
+  {
+    const sel = '#pi-ronda select[aria-label^="Brenes, Héctor"]';
+    await p.selectOption(sel, "F");
+    const d = await p.waitForSelector("dialog.avisos-dialogo[open]");
+    const texto = await d.textContent();
+    ok(/FIDE desaconseja el bye de punto entero/.test(texto), "pedir un bye de punto entero avisa que FIDE lo desaconseja", texto.slice(0, 120));
+    await p.click('dialog.avisos-dialogo[open] button:has-text("Dejar como estaba")');
+    await p.waitForFunction((s) => document.querySelector(s).value === "", sel);
+    ok(true, "con «Dejar como estaba» el jugador vuelve a «Juega»");
+    await p.selectOption(sel, "F");
+    await p.click('dialog.avisos-dialogo[open] button:has-text("Dar el bye de punto entero")');
+    await p.waitForFunction(() => !document.querySelector("dialog.avisos-dialogo[open]"));
+    ok((await p.$eval(sel, (e) => e.value)) === "F", "con «Dar el bye de punto entero» el bye queda");
+    await p.selectOption(sel, "");
+    ok(!(await p.$("dialog.avisos-dialogo[open]")), "volver a «Juega» no pregunta nada");
+  }
   await emparejar(2);
   {
     const t = await leerTorneo();
