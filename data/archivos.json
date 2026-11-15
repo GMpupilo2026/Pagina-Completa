@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1285,
+  "total": 1307,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27037,16 +27037,100 @@
     "grupo": "Carpetas",
     "archivos": [
      {
+      "ruta": "img/herramientas/acta-jde.png",
+      "titulo": "Acta jde",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "img/herramientas/ajedrez-estudiantil.png",
+      "titulo": "Ajedrez estudiantil",
+      "tipo": "otro",
+      "kb": 51
+     },
+     {
+      "ruta": "img/herramientas/arbitros-cr.png",
+      "titulo": "Arbitros cr",
+      "tipo": "otro",
+      "kb": 70
+     },
+     {
       "ruta": "img/herramientas/aula-arbitraje.jpg",
       "titulo": "Aula arbitraje",
       "tipo": "otro",
       "kb": 112
      },
      {
+      "ruta": "img/herramientas/bases-torneo.png",
+      "titulo": "Bases torneo",
+      "tipo": "otro",
+      "kb": 64
+     },
+     {
+      "ruta": "img/herramientas/cenfotec-2026.png",
+      "titulo": "Cenfotec 2026",
+      "tipo": "otro",
+      "kb": 50
+     },
+     {
+      "ruta": "img/herramientas/comparador-jdn.png",
+      "titulo": "Comparador jdn",
+      "tipo": "otro",
+      "kb": 60
+     },
+     {
+      "ruta": "img/herramientas/desempates.png",
+      "titulo": "Desempates",
+      "tipo": "otro",
+      "kb": 72
+     },
+     {
+      "ruta": "img/herramientas/estadisticas-colegios.png",
+      "titulo": "Estadisticas colegios",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "img/herramientas/ficha-federado.png",
+      "titulo": "Ficha federado",
+      "tipo": "otro",
+      "kb": 56
+     },
+     {
+      "ruta": "img/herramientas/historial-jugador.png",
+      "titulo": "Historial jugador",
+      "tipo": "otro",
+      "kb": 50
+     },
+     {
+      "ruta": "img/herramientas/inscripcion-jde.png",
+      "titulo": "Inscripcion jde",
+      "tipo": "otro",
+      "kb": 56
+     },
+     {
+      "ruta": "img/herramientas/jdn-comites.png",
+      "titulo": "Jdn comites",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "img/herramientas/jdn-proyeccion.png",
+      "titulo": "Jdn proyeccion",
+      "tipo": "otro",
+      "kb": 48
+     },
+     {
       "ruta": "img/herramientas/mesa-arbitro.jpg",
       "titulo": "Mesa arbitro",
       "tipo": "otro",
       "kb": 117
+     },
+     {
+      "ruta": "img/herramientas/normas-titulo.png",
+      "titulo": "Normas titulo",
+      "tipo": "otro",
+      "kb": 62
      },
      {
       "ruta": "img/herramientas/notara.jpg",
@@ -27065,6 +27149,54 @@
       "titulo": "Pareo integral",
       "tipo": "otro",
       "kb": 119
+     },
+     {
+      "ruta": "img/herramientas/ranking-estudiantil.png",
+      "titulo": "Ranking estudiantil",
+      "tipo": "otro",
+      "kb": 53
+     },
+     {
+      "ruta": "img/herramientas/reclamos-tablas.png",
+      "titulo": "Reclamos tablas",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "img/herramientas/seleccion-codicader.png",
+      "titulo": "Seleccion codicader",
+      "tipo": "otro",
+      "kb": 80
+     },
+     {
+      "ruta": "img/herramientas/torneos-costa-rica.png",
+      "titulo": "Torneos costa rica",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "img/herramientas/torneos-universitarios.png",
+      "titulo": "Torneos universitarios",
+      "tipo": "otro",
+      "kb": 56
+     },
+     {
+      "ruta": "img/herramientas/universidades.png",
+      "titulo": "Universidades",
+      "tipo": "otro",
+      "kb": 49
+     },
+     {
+      "ruta": "img/herramientas/utn-2026.png",
+      "titulo": "Utn 2026",
+      "tipo": "otro",
+      "kb": 43
+     },
+     {
+      "ruta": "img/herramientas/variacion-elo.png",
+      "titulo": "Variacion elo",
+      "tipo": "otro",
+      "kb": 46
      }
     ]
    },
