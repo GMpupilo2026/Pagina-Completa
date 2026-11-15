@@ -55,6 +55,7 @@ const ignorada = (rel) => IGNORADAS.some((i) => rel === i || rel.startsWith(i + 
 /* El nombre de cada libro de material/ (y de los PDF sueltos), por archivo. Uno nuevo sin entrada
    aparece igual, con el nombre sacado del archivo; conviene sumarlo acá. */
 const TITULOS = {
+  "cursos/recursos/formacion-ajedrez/simulador-logistica-ajedrez-jde.xlsx": "Simulador de logística de un torneo JDE (Sesión 5)",
   "material/ponte-a-prueba/ponte-a-prueba.pdf": "Ponte a prueba — examen y guía de entrenamiento",
   "material/mide-tu-fuerza/mide-tu-fuerza.pdf": "Mide tu fuerza — banco de ejercicios tácticos",
   "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf": "Rompe el estancamiento — los errores que frenan tu progreso",
@@ -182,6 +183,7 @@ function tituloDe(ruta) {
    las imágenes. Van en este orden; una nueva sin entrada aparece al final con
    el nombre de la carpeta. */
 const CARPETAS = {
+  "cursos/recursos/formacion-ajedrez": ["Formación Ajedrez", "Carpetas"],
   "documentos/jdn": ["Juegos Deportivos Nacionales 2027", "Carpetas"],
   "material/programas-de-estudio": ["Programas de Estudio de Ajedrez (1.° a 11.°)", "Carpetas"],
   // Los cuentos de Peonita: su versión adaptada en Word.

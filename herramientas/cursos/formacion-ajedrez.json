@@ -1821,6 +1821,13 @@
               "enunciado": "Un familiar le señala a su hija una jugada desde el público. ¿Qué haces?",
               "respuesta": "Nadie puede comentar ni interferir en una partida en curso. Se retira al familiar de la zona de juego y se evalúa si hubo ayuda: si la hubo, se sanciona a la jugadora según el art. 12.9. Se registra la incidencia (art. 11.3.1 y 12.7)."
             }
+          ],
+          "extras": [
+            {
+              "archivo": "simulador-logistica-ajedrez-jde.xlsx",
+              "emoji": "🧮",
+              "texto": "Simulador de logística del torneo (Excel)"
+            }
           ]
         },
         {
