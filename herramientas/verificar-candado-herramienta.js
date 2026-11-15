@@ -48,7 +48,7 @@ const CON_CANDADO = {
     "reclamos-tablas.html": "reclamos-tablas", "bases-torneo.html": "bases-torneo", "inscripcion-jde.html": "inscripcion-jde",
     "ajedrez-estudiantil.html": "ajedrez-estudiantil", "historial-jugador.html": "historial-jugador",
     "estadisticas-colegios.html": "estadisticas-colegios", "ranking-estudiantil.html": "ranking-estudiantil",
-    "arbitros.html": "arbitros",
+    "arbitros.html": "arbitros", "aula-arbitraje.html": "aula-arbitraje",
 };
 const candadoDe = (pagina) => {
     const html = fs.readFileSync(path.join(RAIZ, pagina), "utf8");
