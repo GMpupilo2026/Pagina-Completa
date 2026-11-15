@@ -59,7 +59,7 @@ console.log("\n=== Una sola copia ===");
 ok(require("./lib/marca-agua").MARCA_AGUA === NUEVA && fs.existsSync(path.join(RAIZ, NUEVA)), "herramientas/lib/marca-agua.js da la marca nueva, y existe");
 const conSello = revisar.filter((f) => f.startsWith("herramientas/") && /LOGO_MARCA|class="sello"/.test(fs.readFileSync(path.join(RAIZ, f), "utf8")) && !/verificar-/.test(f));
 // (Los dos del libro de examen la reciben de lib/libro-examen-comun.js.)
-const tomaLaCopia = (f) => /require\("\.\/(lib\/)?(marca-agua|libro-examen-comun)"\)/.test(fs.readFileSync(path.join(RAIZ, f), "utf8"));
+const tomaLaCopia = (f) => /require\("\.\.?\/(lib\/)?(marca-agua|libro-examen-comun)(\.js)?"\)/.test(fs.readFileSync(path.join(RAIZ, f), "utf8"));
 const sinCopia = conSello.filter((f) => !tomaLaCopia(f));
 ok(conSello.length >= 15 && !sinCopia.length, "los generadores con marca de agua la toman de lib/marca-agua.js (" + conSello.length + ")", sinCopia.join(", "));
 ok(fs.readFileSync(path.join(RAIZ, "js/marca-agua.js"), "utf8").includes("marca-agua-ajedrez-integral.png"), "js/marca-agua.js, la de las páginas, es la nueva");
