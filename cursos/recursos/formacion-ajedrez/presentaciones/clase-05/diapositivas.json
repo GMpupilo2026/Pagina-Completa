@@ -63,61 +63,58 @@
    "imagen": "12.webp"
   },
   {
+   "titulo": "La hoja de conformación del equipo",
+   "texto": "Cada equipo entrega en el congresillo su orden de tableros, y ese orden se mantiene toda la etapa (art. 66.2.h). De 3 a 5 estudiantes: hasta 4 titulares y 1 suplente (art. 66.1.g). El orden va del tablero 1 al 4, y el suplente al final, en el quinto lugar. La hoja lleva el centro educativo, la categoría y la rama, y la firma de la jefatura de delegación. Una vez entregada, el orden no se cambia durante la etapa.",
+   "imagen": "13.webp"
+  },
+  {
+   "titulo": "Cómo se alinea cuando entra el suplente",
+   "texto": "La suplencia va por sistema olímpico (art. 66.2.h): el orden de la hoja nunca se altera. Si no juega un titular, los que están debajo de él suben un tablero y el suplente entra en el tablero 4. Descansa D: juegan A, B, C y E. Descansa B: juegan A, C, D y E. Descansa A: juegan B, C, D y E. Si falta B y no hay suplente, juegan A, C y D en los tableros 1, 2 y 3, y el tablero 4 queda vacío. Al inicio de cada ronda tiene que haber al menos 2 estudiantes del equipo frente al tablero (art. 66.2.f).",
+   "imagen": "14.webp"
+  },
+  {
    "titulo": "Congresillo: lo que se puede y lo que no",
    "texto": "El congresillo decide dentro de la Normativa, nunca contra ella. Sí: escoger los desempates y su orden, y las rondas del suizo regional, desde 5 (66.2.a y 66.4). Sí: acordar lo que la Normativa no prevé; lo no previsto se rige por la FCA y después por la FIDE (art. 66). No: un ritmo menor de 10 min + 2 s, menos de tres desempates o inscribir estudiantes nuevos (66.2, 66.4 y 90.l). No: cambiar el orden de tableros durante la etapa ni el acta después (66.2.h y art. 34).",
-   "imagen": "13.webp"
+   "imagen": "15.webp"
   },
   {
    "titulo": "Calcular los materiales",
    "texto": "Con los inscritos de cada torneo se calcula todo el material; el simulador en Excel lo hace solo. Individual: partidas por ronda = inscritos ÷ 2; si son impares, uno queda libre. Equipos: encuentros = equipos ÷ 2, y tableros = encuentros × 4 (art. 66.1.g). Mesas dobles = tableros ÷ 2, hacia arriba; cada encuentro con sus mesas juntas. Cada tablero en juego: un juego de piezas, un reloj y dos sillas, más un 10 % de repuesto. Regional de Alajuela 2026: 16 torneos a la vez piden 74 mesas dobles y 142 tableros y relojes.",
-   "imagen": "14.webp"
-  },
-  {
-   "titulo": "Receso",
-   "texto": "Receso de 10 minutos. Pausa los relojes: seguimos en breve.",
-   "imagen": "15.webp"
-  },
-  {
-   "titulo": "Durante y después de las rondas",
-   "texto": "Durante el torneo, el orden de las tareas se repite ronda a ronda. Publicar el emparejamiento con tiempo y en un lugar visible. Iniciar puntual, recorrer la sala y observar en especial las partidas en apuro de tiempo. Recoger resultados firmados, revisarlos e ingresarlos antes de emparejar la ronda siguiente. Al final: tabla con desempates, acta del torneo, informe de incidencias y premiación.",
    "imagen": "16.webp"
   },
   {
-   "titulo": "Comunicar decisiones",
-   "texto": "En un torneo estudiantil, la decisión arbitral la escuchan estudiantes, familias y docentes. Una decisión correcta mal comunicada genera tanto conflicto como una incorrecta. Habla primero con los dos jugadores, en voz baja y lejos de otras mesas. Explica la regla y el artículo, sin discutir la posición. Las familias y el público no intervienen en las partidas; sus inquietudes se atienden fuera de la sala. Si hay una apelación, informa ante quién y en qué plazo según el reglamento.",
+   "titulo": "Paso 1: los torneos individuales",
+   "texto": "Para cada torneo: el sistema y las rondas salen de cuántos inscritos tiene; las partidas y las mesas, de dividir entre 2. Con más de 8 inscritos, suizo de 7 rondas (lo acordado en el congresillo); con 8 o menos, todos contra todos (art. 66.2.a y b). Partidas por ronda = inscritos ÷ 2; con impares, una persona queda libre. Mesas dobles = partidas ÷ 2, redondeado hacia arriba, cada torneo con sus propias mesas. Los 9 torneos individuales: 159 estudiantes, 78 partidas por ronda y 42 mesas dobles.",
    "imagen": "17.webp"
   },
   {
-   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
-   "texto": "Caso 1: Caso integrador 1: la ronda que empezó tarde. Un suizo escolar a 15 minutos más 5 segundos, 5 rondas. La ronda 3 se publicó con 20 minutos de retraso. Un jugador de blancas llega 5 minutos después de la hora de inicio publicada; el reglamento fija 10 minutos de tolerancia. En su partida, el rival completa una jugada ilegal y, más tarde, suena el celular del jugador que llegó tarde. El reglamento sanciona el celular con la pérdida de la partida.",
-   "imagen": "18.webp",
-   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+   "titulo": "Paso 2: los torneos por equipos",
+   "texto": "En equipos se cuentan equipos, no personas: cada encuentro usa 4 tableros y 2 mesas dobles juntas. Encuentros por ronda = equipos ÷ 2; tableros = encuentros × 4 (art. 66.1.g). Equipos A Mujeres tuvo un solo equipo: no hubo torneo. Los 6 torneos por equipos: 16 encuentros, 64 tableros y 32 mesas dobles.",
+   "imagen": "18.webp"
   },
   {
-   "titulo": "Caso 1 · Decisión",
-   "texto": "Caso 1, decisión: El jugador juega: llegó dentro de la tolerancia, con 5 minutos menos en su reloj. La jugada ilegal del rival (primera, en rápidas) se corrige: se repone la posición y el que llegó tarde recibe un minuto. El celular: pierde la partida según el reglamento. Se registra todo en el acta y se revisa por qué la ronda se publicó tarde.",
+   "titulo": "Paso 3: lo que se lleva a la sede",
+   "texto": "Con los 142 tableros en juego (78 individuales y 64 por equipos) sale el resto de la lista, cada cantidad con su razón. Repuesto: el 10 % de 142 es 14,2, que se redondea a 15. Juegos, tableros y relojes: 142 + 15 = 157, los relojes a 10 min + 2 s. Mesas dobles: 42 + 32 + 2 de control = 76. Sillas: 142 × 2 + 4 de control = 288. Baterías: una por cada 4 relojes, 36. Planillas: 2 por partida en cada ronda suman 1848; con el 10 %, 2033. Hojas de resultados: una por ronda en individual y una por encuentro en equipos, 155; con el 10 %, 171. Árbitros de sala: 142 ÷ 20 = 7,1, o sea 8, más la principal: 9. Sala: 76 mesas × 4 m² = 304 m².",
    "imagen": "19.webp"
   },
   {
-   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
-   "texto": "Caso 2: Caso integrador 2: empate en el primer lugar. En un todos contra todos de 6 jugadores, dos estudiantes empatan en el primer lugar. Las bases anuncian: 1) encuentro directo, 2) Sonneborn-Berger, 3) número de victorias. Empataron su partida entre sí.",
-   "imagen": "20.webp",
-   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+   "titulo": "La sala de un torneo real",
+   "texto": "La sala del Tacho Chess 2, lista para la ronda: así se ve lo que se planifica. Mesas en filas largas, con sillas a los dos lados y pasillos entre filas para que circulen las personas árbitras. Una tela separa al público: nadie de afuera entra a la zona de juego. Una mesa aparte, fuera de las filas, para control, resultados y repuestos.",
+   "imagen": "20.webp"
   },
   {
-   "titulo": "Caso 2 · Decisión",
-   "texto": "Caso 2, decisión: El encuentro directo no los separa. Se calcula el Sonneborn-Berger de cada uno (ver el ejemplo de la sesión 3) y, si siguen empatados, el número de victorias. Para la próxima vez: como el primer lugar da el título, conviene que las bases fijen antes un desempate jugado (dos rápidas y, si hace falta, un armagedón).",
+   "titulo": "Salón virtual de la Regional",
+   "texto": "El plano de la Regional de Alajuela 2026 con los 15 torneos jugando a la vez. Una fila de mesas por torneo: 9 individuales y 6 por equipos. Equipos A Mujeres tuvo un solo equipo, así que no hubo torneo. 74 mesas dobles y 142 tableros en juego; cada encuentro por equipos con sus dos mesas juntas. Al frente, la mesa de control con la persona árbitra principal; al fondo, el público detrás de la tela o cinta. 8 personas árbitras de sala, cada una con unos 16 a 20 tableros vecinos.",
    "imagen": "21.webp"
   },
   {
-   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
-   "texto": "Caso 3: Caso integrador 3: la logística que falló. Al empezar la ronda 1 faltan 4 relojes y 3 tableros tienen piezas incompletas. Hay 30 estudiantes inscritos.",
-   "imagen": "22.webp",
-   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+   "titulo": "Cómo se coloca cada mesa",
+   "texto": "Todas las mesas se arman igual, para que el resultado se lea y se anote sin dudar. Vistas desde el árbitro, de frente al reloj, las blancas quedan a su izquierda y las negras a su derecha. El reloj va a la derecha de las negras, igual en todas las mesas. La casilla de la esquina a la derecha de cada jugador es blanca (Leyes del Ajedrez de la FIDE, art. 2.1). Cada jugador tiene su planilla ordenada y un lapicero listo para usar. El número de mesa queda a la vista, para ubicarla y anotar el resultado: izquierda blancas, derecha negras.",
+   "imagen": "22.webp"
   },
   {
-   "titulo": "Caso 3 · Decisión",
-   "texto": "Caso 3, decisión: Se reorganiza sin perder la puntualidad: se usan los repuestos, se completa con piezas de otros juegos revisando cada tablero, y las mesas sin reloj juegan con un control anunciado por el árbitro o se ubican cerca de la mesa de control con un adjunto. Se registra la incidencia y, para el día presencial, la lista de materiales incluye repuestos.",
+   "titulo": "El árbitro, de frente al reloj",
+   "texto": "Dos fotos de torneos reales: dónde se para la persona árbitra para mirar el reloj. Mal colocado: el árbitro queda del lado del reloj y tiene que estirarse para verlo; el reloj le queda incómodo. Bien colocado: el árbitro queda de frente al reloj, ve los dos tiempos y no estorba a quienes juegan. Por eso el reloj va siempre del mismo lado, a la derecha de las negras: el árbitro sabe dónde pararse en cualquier mesa.",
    "imagen": "23.webp"
   },
   {
@@ -126,52 +123,100 @@
    "imagen": "24.webp"
   },
   {
+   "titulo": "Durante y después de las rondas",
+   "texto": "Durante el torneo, el orden de las tareas se repite ronda a ronda. Publicar el emparejamiento con tiempo y en un lugar visible. Iniciar puntual, recorrer la sala y observar en especial las partidas en apuro de tiempo. Recoger resultados firmados, revisarlos e ingresarlos antes de emparejar la ronda siguiente. Al final: tabla con desempates, acta del torneo, informe de incidencias y premiación.",
+   "imagen": "25.webp"
+  },
+  {
+   "titulo": "Comunicar decisiones",
+   "texto": "En un torneo estudiantil, la decisión arbitral la escuchan estudiantes, familias y docentes. Una decisión correcta mal comunicada genera tanto conflicto como una incorrecta. Habla primero con los dos jugadores, en voz baja y lejos de otras mesas. Explica la regla y el artículo, sin discutir la posición. Las familias y el público no intervienen en las partidas; sus inquietudes se atienden fuera de la sala. Si hay una apelación, informa ante quién y en qué plazo según el reglamento.",
+   "imagen": "26.webp"
+  },
+  {
+   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 1: Caso integrador 1: la ronda que empezó tarde. Un suizo escolar a 15 minutos más 5 segundos, 5 rondas. La ronda 3 se publicó con 20 minutos de retraso. Un jugador de blancas llega 5 minutos después de la hora de inicio publicada; el reglamento fija 10 minutos de tolerancia. En su partida, el rival completa una jugada ilegal y, más tarde, suena el celular del jugador que llegó tarde. El reglamento sanciona el celular con la pérdida de la partida.",
+   "imagen": "27.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 1 · Decisión",
+   "texto": "Caso 1, decisión: El jugador juega: llegó dentro de la tolerancia, con 5 minutos menos en su reloj. La jugada ilegal del rival (primera, en rápidas) se corrige: se repone la posición y el que llegó tarde recibe un minuto. El celular: pierde la partida según el reglamento. Se registra todo en el acta y se revisa por qué la ronda se publicó tarde.",
+   "imagen": "28.webp"
+  },
+  {
+   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 2: Caso integrador 2: empate en el primer lugar. En un todos contra todos de 6 jugadores, dos estudiantes empatan en el primer lugar. Las bases anuncian: 1) encuentro directo, 2) Sonneborn-Berger, 3) número de victorias. Empataron su partida entre sí.",
+   "imagen": "29.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 2 · Decisión",
+   "texto": "Caso 2, decisión: El encuentro directo no los separa. Se calcula el Sonneborn-Berger de cada uno (ver el ejemplo de la sesión 3) y, si siguen empatados, el número de victorias. Para la próxima vez: como el primer lugar da el título, conviene que las bases fijen antes un desempate jugado (dos rápidas y, si hace falta, un armagedón).",
+   "imagen": "30.webp"
+  },
+  {
+   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 3: Caso integrador 3: la logística que falló. Al empezar la ronda 1 faltan 4 relojes y 3 tableros tienen piezas incompletas. Hay 30 estudiantes inscritos.",
+   "imagen": "31.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 3 · Decisión",
+   "texto": "Caso 3, decisión: Se reorganiza sin perder la puntualidad: se usan los repuestos, se completa con piezas de otros juegos revisando cada tablero, y las mesas sin reloj juegan con un control anunciado por el árbitro o se ubican cerca de la mesa de control con un adjunto. Se registra la incidencia y, para el día presencial, la lista de materiales incluye repuestos.",
+   "imagen": "32.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 10 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "33.webp"
+  },
+  {
    "titulo": "Práctica · Resolución grupal de casos integradores",
    "texto": "Práctica: Resolución grupal de casos integradores. En grupos, se analiza un caso integrador que combina reglas de competición, desempates y logística, y se presenta la solución fundamentada.",
-   "imagen": "25.webp"
+   "imagen": "34.webp"
   },
   {
    "titulo": "Ejercicio 1 de 3",
    "texto": "Ejercicio 1: Aplica los cuatro pasos del método al caso «suena un celular» de la sesión 2 y redacta el registro para el acta.",
-   "imagen": "26.webp"
+   "imagen": "35.webp"
   },
   {
    "titulo": "Ejercicio 2 de 3",
    "texto": "Ejercicio 2: Escribe la lista de materiales para un torneo individual de 40 estudiantes en mesas dobles.",
-   "imagen": "27.webp"
+   "imagen": "36.webp"
   },
   {
    "titulo": "Ejercicio 3 de 3",
    "texto": "Ejercicio 3: Un familiar le señala a su hija una jugada desde el público. ¿Qué haces?",
-   "imagen": "28.webp"
+   "imagen": "37.webp"
   },
   {
    "titulo": "Ejercicios: respuestas",
    "texto": "1. Hechos: suena el celular del jugador X en la mesa N, ronda R, a tal hora. Artículo: 11.3.2 y el reglamento del torneo. Decisión: pérdida de la partida (o la sanción menor que prevea el reglamento), comunicada a las dos partes. Registro: «Ronda R, mesa N: suena el celular del jugador X durante la partida; se aplica el art. 11.3.2 y se declara la partida perdida. Firma del árbitro». 2. 20 partidas por ronda: 10 mesas dobles y 40 sillas; 20 tableros y 20 juegos de piezas completos, más 2 de repuesto; 20 relojes configurados, más 2 de repuesto; planillas para cada ronda; actas de resultados; formularios de inscripción; lista de cotejo; numeración de mesas; hojas de emparejamiento y tabla para publicar. 3. Nadie puede comentar ni interferir en una partida en curso. Se retira al familiar de la zona de juego y se evalúa si hubo ayuda: si la hubo, se sanciona a la jugadora según el art. 12.9. Se registra la incidencia (art. 11.3.1 y 12.7).",
-   "imagen": "29.webp",
+   "imagen": "38.webp",
    "notas": "Repasar en plenaria; cada respuesta con su artículo."
   },
   {
    "titulo": "Quiz de la sesión",
    "texto": "1. ¿Cuál de estos elementos NO forma parte de la logística previa a un torneo escolar? 2. Ante una situación arbitral no contemplada explícitamente en el reglamento, ¿qué debe primar? 3. ¿Cuáles son los cuatro pasos para resolver un caso arbitral? 4. ¿Qué se revisa antes de emparejar la ronda siguiente? 5. ¿Dónde se atienden las inquietudes del público durante una ronda? 6. Además del número de rondas, ¿qué más debe anunciarse en las bases de un torneo antes de empezar? 7. ¿Dónde y cómo debe el árbitro comunicar una decisión a los jugadores involucrados?",
-   "imagen": "30.webp",
+   "imagen": "39.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz de la sesión (continuación)",
    "texto": "8. Si un jugador quiere apelar una decisión arbitral, ¿qué debe informarle el árbitro? 9. ¿Qué se arma al cerrar un torneo, después de la última ronda?",
-   "imagen": "31.webp",
+   "imagen": "40.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz: respuestas",
    "texto": "1. El resultado final de las partidas. 2. Aplicar el criterio más cercano del reglamento con imparcialidad, y justificarlo. 3. Hechos, artículo, decisión y registro. 4. Que todos los resultados estén firmados, revisados e ingresados. 5. Fuera de la sala de juego: el público no interviene en las partidas. 6. El sistema de desempates y su orden. 7. Hablando con los dos jugadores, en voz baja y lejos de otras mesas. 8. Ante quién se presenta la apelación y en qué plazo, según el reglamento del torneo. 9. La tabla con los desempates, el acta del torneo, el informe de incidencias y la premiación.",
-   "imagen": "32.webp"
+   "imagen": "41.webp"
   },
   {
    "titulo": "Tarea y cierre",
    "texto": "Tarea para la próxima sesión: Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región. ¿Dudas? Este es el momento. Gracias por tu participación.",
-   "imagen": "33.webp"
+   "imagen": "42.webp"
   }
  ]
 }
