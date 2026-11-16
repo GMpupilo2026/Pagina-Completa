@@ -78,7 +78,7 @@ module.exports = [
   // 10
   { tipo: "dos", k: "En ajedrez: descalificación",
     izq: { t: "También se revisa", items: [
-      ["Categoría por año", "17"],
+      ["Categoría por edad y nivel", "17"],
       ["Por equipos suben hasta 3", "18"],
       ["Una sola modalidad", "66.1.h"],
       ["Equipos de 3 a 5", "66.1.g"] ] },
