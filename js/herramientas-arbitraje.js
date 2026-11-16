@@ -342,7 +342,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/pareo-dgt.jpg", ancho: 1200, alto: 675,
-                alt: "Un torneo con transmisión: en las mesas 1 y 2, tableros electrónicos conectados por cable a una laptop que dice «Ronda 5 — mesas 1 y 2, pareo listo, transmitiendo»; al fondo, una pantalla grande muestra las dos partidas en vivo.",
+                alt: "Dos jugadores frente a frente en la mesa 1 de un torneo, con el tablero electrónico entre los dos; detrás del reloj, una laptop dice «Ronda 5 — mesas 1 y 2, pareo listo, transmitiendo», y al fondo una pantalla grande muestra la partida en vivo.",
             },
             resumen: "Para transmitir un torneo con tableros electrónicos DGT: se sube la ronda a chess-results como siempre y la herramienta arma sola el archivo para importar en DGT LiveChess y crea la ronda en la transmisión de Lichess.",
             puntos: [
@@ -433,6 +433,10 @@
             corto: "Bases del torneo",
             href: "bases-torneo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/bases-torneo.jpg", ancho: 1200, alto: 675,
+                alt: "El escritorio de quien organiza: una laptop con el generador de bases, el formulario del torneo a la izquierda y la vista previa de las bases a la derecha, con los botones para bajarlas en PDF y en Word; al lado, las bases impresas con el calendario de rondas y la línea para la firma, unas piezas y un reloj de ajedrez.",
+            },
             resumen: "Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar. Con tu licencia, en tu computadora.",
             puntos: [
                 "El ritmo con su modalidad (clásico, rápido o relámpago, como dicen las Leyes del Ajedrez) y si vale para el Elo FIDE clásico según el Elo de los jugadores (B.02).",

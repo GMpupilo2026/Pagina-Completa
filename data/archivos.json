@@ -19221,7 +19221,7 @@
   ]
  },
  "imagenes": {
-  "total": 1274,
+  "total": 1275,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26965,6 +26965,12 @@
       "kb": 112
      },
      {
+      "ruta": "img/herramientas/bases-torneo.jpg",
+      "titulo": "Bases torneo",
+      "tipo": "otro",
+      "kb": 110
+     },
+     {
       "ruta": "img/herramientas/mesa-arbitro.jpg",
       "titulo": "Mesa arbitro",
       "tipo": "otro",
@@ -26980,7 +26986,7 @@
       "ruta": "img/herramientas/pareo-dgt.jpg",
       "titulo": "Pareo dgt",
       "tipo": "otro",
-      "kb": 117
+      "kb": 113
      },
      {
       "ruta": "img/herramientas/pareo-integral.jpg",
