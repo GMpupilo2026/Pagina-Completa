@@ -75,4 +75,14 @@ ul, ol { margin: 0 0 8px 18px; padding: 0; } li { margin-bottom: 3px; }
 /* piezas: ver generar.js */
 .grid span.pz { color: #000 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif; }
 
+/* capturas de pantalla y pasos (números especiales: guías de las herramientas) */
+.captura { margin: 10px 0 14px; break-inside: avoid; text-align: center; }
+.captura img { max-width: 100%; max-height: 120mm; border: 1px solid #c9d4e5; border-radius: 6px; box-shadow: 0 2px 8px rgba(19,41,75,.15); }
+.captura.media img { max-width: 70%; }
+.captura figcaption { font-size: 8.8pt; color: var(--muted); margin-top: 5px; }
+.pasos { counter-reset: paso; margin: 8px 0; padding: 0; list-style: none; }
+.pasos > li { counter-increment: paso; position: relative; padding: 2px 0 8px 34px; break-inside: avoid; }
+.pasos > li::before { content: counter(paso); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 700; font-size: 10pt; text-align: center; line-height: 24px; }
+.boton { display: inline-block; border: 1px solid var(--blue); color: var(--blue); border-radius: 4px; padding: 0 6px; font-size: 9pt; font-weight: 600; white-space: nowrap; }
+
 /*! rev bfb5bbb0d2d82f9f */

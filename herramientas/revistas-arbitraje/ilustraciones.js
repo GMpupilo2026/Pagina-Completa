@@ -452,6 +452,36 @@ Object.assign(ILUSTRACIONES, {
             return svg(s + leyenda(266, "Ningún dispositivo electrónico en la zona de juego · art. 11.3"), 440, 280);
         },
     },
+
+    /* N.º 19 · Pareo Integral y la mesa del árbitro: la computadora con los
+       emparejamientos de la ronda y, al lado, el reloj de la mesa. */
+    19: {
+        dibujo() {
+            const filas = [["1", "Ana", "1 – 0", "Luis"], ["2", "Sofía", "½ – ½", "Diego"], ["3", "Marta", "", "Pablo"], ["4", "Elena", "", "Raúl"]];
+            let s = `<rect x="30" y="14" width="280" height="188" rx="10" fill="${NAVY}" stroke="${ORO}" stroke-width="3"/>`;
+            s += `<rect x="42" y="26" width="256" height="164" rx="4" fill="${CLARA}"/>`;
+            s += `<rect x="42" y="26" width="256" height="26" rx="4" fill="${ORO}"/>`;
+            s += `<text x="54" y="44" font-size="12.5" font-weight="700" fill="${NAVY}" ${FUENTE}>Pareo Integral · Ronda 3</text>`;
+            filas.forEach(([m, b, r, n], i) => {
+                const y = 74 + i * 28;
+                s += `<rect x="50" y="${y - 15}" width="240" height="22" rx="3" fill="${i % 2 ? "#d5e1f2" : "#ffffff"}"/>`;
+                s += `<text x="60" y="${y}" font-size="11" font-weight="700" fill="${NAVY}" ${FUENTE}>${m}</text>`;
+                s += `<text x="78" y="${y}" font-size="11.5" fill="${NAVY}" ${FUENTE}>${b}</text>`;
+                s += `<text x="170" y="${y}" font-size="11.5" font-weight="700" fill="${r ? "#1d6b3f" : "#8a97ad"}" text-anchor="middle" ${FUENTE}>${r || "· · ·"}</text>`;
+                s += `<text x="282" y="${y}" font-size="11.5" fill="${NAVY}" text-anchor="end" ${FUENTE}>${n}</text>`;
+            });
+            /* La base de la computadora. */
+            s += `<path d="M14 202 H326 L312 216 H28 Z" fill="${ORO2}"/>`;
+            /* La mesa del árbitro: el reloj y la carpeta de actas. */
+            s += relojDigital(330, 128, 100, "0:58", "1:04");
+            s += `<g transform="translate(346,30)"><rect width="68" height="80" rx="4" fill="${BLANCO}" stroke="${ORO}" stroke-width="2"/>` +
+                `<rect x="22" y="-6" width="24" height="12" rx="3" fill="${ORO}"/>` +
+                [18, 32, 46, 60].map((y) => `<line x1="10" y1="${y}" x2="58" y2="${y}" stroke="#b9c7dd" stroke-width="2"/>`).join("") +
+                `<path d="M12 44 l6 6 l12 -14" fill="none" stroke="#1d6b3f" stroke-width="3"/></g>`;
+            s += `<text x="382" y="208" font-size="11" fill="${CELESTE}" text-anchor="middle" ${FUENTE}>mesa del árbitro</text>`;
+            return svg(s + leyenda(258, "Del emparejamiento al resultado, paso a paso"), 440, 272);
+        },
+    },
 });
 
 module.exports = { ILUSTRACIONES };

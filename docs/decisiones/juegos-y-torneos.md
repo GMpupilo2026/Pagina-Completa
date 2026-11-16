@@ -12069,6 +12069,22 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   tableros sean posiciones de la propia revista, validadas con chess.js (con
   las piezas de `js/chess-piece-svg.js`; con glifos de texto salían diminutas
   y con la fuente de emojis).
+- **El N.º 19 es una edición especial nueva**, no una revista vieja: la guía
+  paso a paso de Pareo Integral y la mesa del árbitro, con capturas de las
+  pantallas (pedido del dueño). Va en la Aula como un número más
+  (`revista-19`, con dos fichas y sus preguntas, y su PDF que se habilita al
+  completarlo). Las capturas las saca `no19/capturas.js`, que juega un torneo
+  entero en `pareo.html` con jugadores inventados (el candado abierto como en
+  los verificadores y `pareo-publicar` con un doble: nada se publica) y abre
+  la mesa con el doble de Supabase de `verificar-mesa-arbitro-pareo.js`. Dos
+  cosas que no se ven y arruinaban la captura: el encabezado fijo del sitio y
+  los avisos se pintan en medio de una captura de página entera (se esconden
+  antes), y `boundingBox()` da coordenadas de la ventana, no de la página (con
+  la página desplazada, el recorte salía corrido). El sitio se sirve desde el
+  disco pero con la dirección `https://ajedrez-integral.com`, para que los
+  enlaces que muestran las pantallas no digan `127.0.0.1`. **Si cambian esas
+  pantallas, se vuelven a sacar las capturas y se genera el N.º 19.** Los
+  verificadores de la Aula ya no dicen «18»: cuentan las carpetas `noNN/`.
 
 ## Desempates explicados
 
