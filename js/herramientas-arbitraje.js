@@ -491,7 +491,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/aula-arbitraje.jpg", ancho: 1200, alto: 675,
-                alt: "Ilustración del Aula de Arbitraje: la portada de la revista Arbitraje de Ajedrez, un tablero con un ejercicio de triple repetición, la ficha del artículo 7.1 de las Leyes y un reloj digital con los tiempos ya ajustados.",
+                alt: "Una árbitra estudia de noche con el Aula de Arbitraje: en la laptop, la ficha del artículo 7.5 (jugada ilegal) y al lado un caso de sala con la respuesta correcta marcada; sobre el escritorio, la revista Arbitraje de Ajedrez, sus apuntes, un reloj digital y un tablero en la posición inicial.",
             },
             resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
             puntos: [
