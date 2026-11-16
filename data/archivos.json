@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 913,
+  "total": 915,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -7886,7 +7886,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 17
+        "kb": 22
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-ejercicios.pdf",
@@ -8153,109 +8153,121 @@
     "ruta": "descargas/aula-arbitraje/revista-01.pdf",
     "titulo": "Revista 01",
     "tipo": "otro",
-    "kb": 946
+    "kb": 973
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-02.pdf",
     "titulo": "Revista 02",
     "tipo": "otro",
-    "kb": 1115
+    "kb": 1157
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-03.pdf",
     "titulo": "Revista 03",
     "tipo": "otro",
-    "kb": 1006
+    "kb": 1039
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-04.pdf",
     "titulo": "Revista 04",
     "tipo": "otro",
-    "kb": 915
+    "kb": 952
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-05.pdf",
     "titulo": "Revista 05",
     "tipo": "otro",
-    "kb": 992
+    "kb": 1049
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-06.pdf",
     "titulo": "Revista 06",
     "tipo": "otro",
-    "kb": 960
+    "kb": 996
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-07.pdf",
     "titulo": "Revista 07",
     "tipo": "otro",
-    "kb": 1013
+    "kb": 1052
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-08.pdf",
     "titulo": "Revista 08",
     "tipo": "otro",
-    "kb": 948
+    "kb": 971
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-09.pdf",
     "titulo": "Revista 09",
     "tipo": "otro",
-    "kb": 1174
+    "kb": 1220
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-10.pdf",
     "titulo": "Revista 10",
     "tipo": "otro",
-    "kb": 971
+    "kb": 1003
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-11.pdf",
     "titulo": "Revista 11",
     "tipo": "otro",
-    "kb": 1170
+    "kb": 1205
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-12.pdf",
     "titulo": "Revista 12",
     "tipo": "otro",
-    "kb": 1052
+    "kb": 1095
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-13.pdf",
     "titulo": "Revista 13",
     "tipo": "otro",
-    "kb": 1020
+    "kb": 1064
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-14.pdf",
     "titulo": "Revista 14",
     "tipo": "otro",
-    "kb": 990
+    "kb": 1017
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-15.pdf",
     "titulo": "Revista 15",
     "tipo": "otro",
-    "kb": 983
+    "kb": 1007
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-16.pdf",
     "titulo": "Revista 16",
     "tipo": "otro",
-    "kb": 826
+    "kb": 837
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-17.pdf",
     "titulo": "Revista 17",
     "tipo": "otro",
-    "kb": 761
+    "kb": 785
    },
    {
     "ruta": "descargas/aula-arbitraje/revista-18.pdf",
     "titulo": "Revista 18",
     "tipo": "otro",
-    "kb": 913
+    "kb": 943
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-19.pdf",
+    "titulo": "Revista 19",
+    "tipo": "otro",
+    "kb": 3148
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-20.pdf",
+    "titulo": "Revista 20",
+    "tipo": "otro",
+    "kb": 5716
    },
    {
     "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
@@ -13817,7 +13829,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 3135
+        "kb": 4495
        }
       ]
      },
@@ -19221,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1275,
+  "total": 1286,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26034,67 +26046,67 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 77
+      "kb": 71
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 76
+      "kb": 60
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 24
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 75
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 85
+      "kb": 82
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 64
+      "kb": 74
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 64
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 59
+      "kb": 226
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 61
+      "kb": 112
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 48
+      "kb": 105
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 59
+      "kb": 146
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/24.webp",
@@ -26106,25 +26118,25 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/25.webp",
       "titulo": "25",
       "tipo": "otro",
-      "kb": 53
+      "kb": 75
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/26.webp",
       "titulo": "26",
       "tipo": "otro",
-      "kb": 45
+      "kb": 85
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/27.webp",
       "titulo": "27",
       "tipo": "otro",
-      "kb": 31
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/28.webp",
       "titulo": "28",
       "tipo": "otro",
-      "kb": 29
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/29.webp",
@@ -26136,23 +26148,77 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/30.webp",
       "titulo": "30",
       "tipo": "otro",
-      "kb": 78
+      "kb": 61
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/31.webp",
       "titulo": "31",
       "tipo": "otro",
-      "kb": 42
+      "kb": 48
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/32.webp",
       "titulo": "32",
       "tipo": "otro",
-      "kb": 83
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/33.webp",
       "titulo": "33",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/34.webp",
+      "titulo": "34",
+      "tipo": "otro",
+      "kb": 53
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/35.webp",
+      "titulo": "35",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/36.webp",
+      "titulo": "36",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/37.webp",
+      "titulo": "37",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/38.webp",
+      "titulo": "38",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/39.webp",
+      "titulo": "39",
+      "tipo": "otro",
+      "kb": 78
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/40.webp",
+      "titulo": "40",
+      "tipo": "otro",
+      "kb": 42
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/41.webp",
+      "titulo": "41",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/42.webp",
+      "titulo": "42",
       "tipo": "otro",
       "kb": 42
      }
@@ -26459,109 +26525,121 @@
       "ruta": "img/aula-arbitraje/portada-01.jpg",
       "titulo": "Portada 01",
       "tipo": "otro",
-      "kb": 20
+      "kb": 24
      },
      {
       "ruta": "img/aula-arbitraje/portada-02.jpg",
       "titulo": "Portada 02",
       "tipo": "otro",
-      "kb": 20
+      "kb": 24
      },
      {
       "ruta": "img/aula-arbitraje/portada-03.jpg",
       "titulo": "Portada 03",
       "tipo": "otro",
-      "kb": 20
+      "kb": 27
      },
      {
       "ruta": "img/aula-arbitraje/portada-04.jpg",
       "titulo": "Portada 04",
       "tipo": "otro",
-      "kb": 19
+      "kb": 25
      },
      {
       "ruta": "img/aula-arbitraje/portada-05.jpg",
       "titulo": "Portada 05",
       "tipo": "otro",
-      "kb": 21
+      "kb": 28
      },
      {
       "ruta": "img/aula-arbitraje/portada-06.jpg",
       "titulo": "Portada 06",
       "tipo": "otro",
-      "kb": 22
+      "kb": 27
      },
      {
       "ruta": "img/aula-arbitraje/portada-07.jpg",
       "titulo": "Portada 07",
       "tipo": "otro",
-      "kb": 21
+      "kb": 28
      },
      {
       "ruta": "img/aula-arbitraje/portada-08.jpg",
       "titulo": "Portada 08",
       "tipo": "otro",
-      "kb": 22
+      "kb": 27
      },
      {
       "ruta": "img/aula-arbitraje/portada-09.jpg",
       "titulo": "Portada 09",
       "tipo": "otro",
-      "kb": 23
+      "kb": 27
      },
      {
       "ruta": "img/aula-arbitraje/portada-10.jpg",
       "titulo": "Portada 10",
       "tipo": "otro",
-      "kb": 21
+      "kb": 27
      },
      {
       "ruta": "img/aula-arbitraje/portada-11.jpg",
       "titulo": "Portada 11",
       "tipo": "otro",
-      "kb": 20
+      "kb": 26
      },
      {
       "ruta": "img/aula-arbitraje/portada-12.jpg",
       "titulo": "Portada 12",
       "tipo": "otro",
-      "kb": 22
+      "kb": 26
      },
      {
       "ruta": "img/aula-arbitraje/portada-13.jpg",
       "titulo": "Portada 13",
       "tipo": "otro",
-      "kb": 21
+      "kb": 26
      },
      {
       "ruta": "img/aula-arbitraje/portada-14.jpg",
       "titulo": "Portada 14",
       "tipo": "otro",
-      "kb": 19
+      "kb": 23
      },
      {
       "ruta": "img/aula-arbitraje/portada-15.jpg",
       "titulo": "Portada 15",
       "tipo": "otro",
-      "kb": 19
+      "kb": 23
      },
      {
       "ruta": "img/aula-arbitraje/portada-16.jpg",
       "titulo": "Portada 16",
       "tipo": "otro",
-      "kb": 18
+      "kb": 22
      },
      {
       "ruta": "img/aula-arbitraje/portada-17.jpg",
       "titulo": "Portada 17",
       "tipo": "otro",
-      "kb": 20
+      "kb": 24
      },
      {
       "ruta": "img/aula-arbitraje/portada-18.jpg",
       "titulo": "Portada 18",
       "tipo": "otro",
-      "kb": 20
+      "kb": 25
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-19.jpg",
+      "titulo": "Portada 19",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-20.jpg",
+      "titulo": "Portada 20",
+      "tipo": "otro",
+      "kb": 30
      }
     ]
    },

@@ -483,7 +483,7 @@
             },
             resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
             puntos: [
-                "Fichas por tema con lo que dice la norma, las ideas clave y los errores frecuentes; con los 18 números de la revista Arbitraje de Ajedrez actualizados a 2026: más de 80 fichas y 550 preguntas.",
+                "Fichas por tema con lo que dice la norma, las ideas clave y los errores frecuentes; con los 18 números de la revista Arbitraje de Ajedrez actualizados a 2026 y dos números especiales: la guía de Pareo Integral y la mesa del árbitro, y el manual completo de la mesa del árbitro del Centroamericano. Más de 80 fichas y 550 preguntas.",
                 "Ejercicios que nunca se acaban: ajustes de reloj después de una jugada ilegal (con y sin incremento), desempates de todos los sistemas, Koya y normas de título, generados al azar y corregidos paso a paso.",
                 "Taller del árbitro: casos de triple repetición, de bandera y segunda jugada ilegal con el tablero y la serie que termina en mate, de desempates y de normas de MI y GM, de sencillos a complejos.",
                 "Calculadoras de desempates (C.07), normas (B.01) y rendimiento, con la fórmula a la vista; y el PDF de cada revista al completarla.",

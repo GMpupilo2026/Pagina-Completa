@@ -130,7 +130,12 @@ mantendrá obtendrá supondrá intervendrá transpondrá traspondrá podrás
 hincapié azerí canadá calviá buxadé
 recibiré
 estrés poincaré
+acerqué arbitré comuniqué diseñé escondí escuché llamé pedí pregunté respondí
+encontraré estaré evaluaré frustraré harás haré oirás seguiré seré superaré tendré trataré tomás
 """.split())
+# La última tanda viene de las revistas de arbitraje (herramientas/revistas-arbitraje/):
+# las anécdotas de los autores originales van en primera persona —«me acerqué»,
+# «le pedí», «seré», «trataré»— y en pretérito o futuro esas palabras no son voseo.
 
 # Las presentaciones (.pptx) y los documentos (.docx) de cursos/recursos/ son
 # lo que el alumno se descarga, y no se revisaban: son un zip, y el detector

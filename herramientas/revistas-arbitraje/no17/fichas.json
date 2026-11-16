@@ -1,0 +1,516 @@
+{
+ "coleccion": {
+  "id": "revista-17",
+  "titulo": "Revista Arbitraje de Ajedrez · N.º 17",
+  "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+ },
+ "fichas": [
+  {
+   "id": "leyes-2014-a-2023",
+   "coleccion": "revista-17",
+   "titulo": "De las Leyes 2014 a las Leyes 2023",
+   "articulos": "Leyes 2023 · arts. 5.1.2, 5.2.3, 6.7.1, 7.5, 9.6.1, 11.3, 12.2.7, 12.9, A.3, A.5.2, Pautas III",
+   "resumen": "Qué cambió en las Leyes del Ajedrez desde la versión de 2014 y qué artículo rige hoy cada tema.",
+   "claves": [
+    "Rigen las Leyes aplicadas desde el 1-ene-2023; hubo versiones en 2014, 2017 y 2018.",
+    "En rápidas y relámpago, la primera jugada ilegal da 1 minuto al rival (A.3) y la segunda pierde (7.5.5); en 2014 perdía a la primera.",
+    "Pulsar el reloj sin mover o mover con dos manos se sanciona como jugada ilegal (7.5.3 y 7.5.4).",
+    "Cualquier dispositivo electrónico no aprobado está prohibido; las bases pueden permitirlo apagado en el bolso (11.3.2.1).",
+    "Tablas automáticas con cinco apariciones de la misma posición, aunque no sean seguidas (9.6.1).",
+    "Si las bases no fijan tiempo de incomparecencia, es cero (6.7.1)."
+   ],
+   "contenido": "<h3>Las versiones</h3><div class=\"aula-tabla\"><table><tr><th>Versión</th><th>Se aplicó</th></tr><tr><td>2014</td><td>1-jul-2014 a 30-jun-2017</td></tr><tr><td>2017</td><td>1-jul-2017 a 31-dic-2017</td></tr><tr><td>2018</td><td>1-ene-2018 a 31-dic-2022</td></tr><tr><td><b>2023</b></td><td><b>desde el 1-ene-2023</b> (vigente en noviembre de 2026)</td></tr></table></div><h3>Lo que más cambió</h3><div class=\"aula-norma\"><b>Arts. A.3, A.5.2 y 7.5.5</b> En rápidas y relámpago, la primera jugada ilegal da 1 minuto al rival y la segunda pierde. Si nadie reclama antes de la siguiente jugada del rival, la jugada ilegal se queda. (En 2014, art. A.4.2, se perdía a la primera.)</div><div class=\"aula-norma\"><b>Arts. 7.5.3 y 7.5.4</b> Pulsar el reloj sin haber movido, o mover con las dos manos y pulsar, cuenta como jugada ilegal.</div><div class=\"aula-norma\"><b>Art. 11.3.2</b> Prohibido cualquier dispositivo electrónico no aprobado por el árbitro. Las bases pueden permitir guardarlo completamente apagado en el bolso (11.3.2.1). Si lo lleva encima, pierde, salvo sanción menor en las bases (11.3.2.2). La inspección puede incluir el cuerpo, en privado y por alguien del mismo género (11.3.3).</div><div class=\"aula-norma\"><b>Art. 5.2.3</b> El acuerdo de tablas exige que los dos jugadores hayan hecho al menos una jugada.</div><div class=\"aula-norma\"><b>Art. 9.6.1</b> Tablas automáticas si la misma posición aparece al menos cinco veces (en 2014 se pedían cinco jugadas alternas consecutivas).</div><div class=\"aula-norma\"><b>Art. 5.1.2</b> Pierde quien abandona, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: entonces es tablas.</div><div class=\"aula-norma\"><b>Arts. 6.7.1, 12.2.7 y 12.9.8</b> Incomparecencia cero si las bases no dicen otra cosa; el árbitro sigue las reglas de juego limpio; entre las sanciones está la exclusión de una o más rondas.</div><div class=\"aula-norma aula-norma-aviso\"><b>Pautas III</b> El final a caída de bandera sin incremento (el viejo Apéndice G) solo se aplica si se anunció antes y nunca en relámpago.</div><p class=\"aula-nota\">El texto oficial está en el FIDE Handbook (E.01), que conserva también las versiones de 2014, 2017 y 2018.</p>"
+  },
+  {
+   "id": "rating-performance",
+   "coleccion": "revista-17",
+   "titulo": "Rating performance",
+   "articulos": "Reglamento de Títulos (2024) · arts. 1.4.7-1.4.9 · Reglamento de Rating (2024) · art. 8.1.1 · C.07 (2026) · arts. 10.1-10.2",
+   "resumen": "Cómo se calcula la performance de un jugador: promedio de rivales más la diferencia de rating de la tabla.",
+   "claves": [
+    "Rp = Ra + dp.",
+    "Ra: promedio de los ratings de los rivales, redondeado al entero (0,5 hacia arriba).",
+    "p: puntos ÷ partidas, al porcentaje entero más cercano (0,5 % hacia arriba).",
+    "dp sale de la tabla; por debajo de 0,50 es negativo (0,36 → −102).",
+    "Con el mismo resultado, rinde más quien enfrentó rivales más fuertes.",
+    "El TPR de los desempates (C.07, art. 10.2) usa solo las partidas jugadas sobre el tablero."
+   ],
+   "contenido": "<h3>La fórmula</h3><p><span class=\"aula-formula\">Rp = Ra + dp</span></p><div class=\"aula-norma\"><b>Reglamento de Títulos, art. 1.4.7</b> Ra es el total de los ratings de los rivales dividido entre el número de rivales, redondeado al entero más cercano (0,5 hacia arriba).</div><div class=\"aula-norma\"><b>Art. 1.4.9</b> dp sale de la tabla de conversión; los porcentajes se redondean al entero más cercano (0,5 % hacia arriba).</div><h3>Algunos valores de la tabla</h3><div class=\"aula-tabla\"><table><tr><th>p</th><th>dp</th><th>p</th><th>dp</th></tr><tr><td>0,79</td><td>230</td><td>0,36</td><td>−102</td></tr><tr><td>0,72</td><td>166</td><td>0,29</td><td>−158</td></tr><tr><td>0,67</td><td>125</td><td>0,21</td><td>−230</td></tr><tr><td>0,64</td><td>102</td><td>0,10</td><td>−366</td></tr><tr><td>0,57</td><td>50</td><td>0,00</td><td>−800</td></tr><tr><td>0,50</td><td>0</td><td>1,00</td><td>800</td></tr></table></div><h3>Ejemplo de la revista</h3><p>Torneo de 8 jugadores a una vuelta. El primero hace 5½/7 y sus rivales suman 18 870.</p><div class=\"aula-tabla\"><table><tr><td>Ra</td><td>18 870 ÷ 7 = 2695,71 → 2696</td></tr><tr><td>p</td><td>5,5 ÷ 7 = 0,7857 → 79 %</td></tr><tr><td>dp</td><td>+230</td></tr><tr><td><b>Rp</b></td><td><b>2926</b></td></tr></table></div><p>Dos jugadores con 2/7: uno de 2699 (rivales 18 871 → Ra 2696) y otra de 2693 (rivales 18 877 → Ra 2697). Con el mismo −158, sus performances son 2538 y 2539.</p><div class=\"aula-norma\"><b>C.07 (2026), art. 10.2 · TPR</b> Como desempate: ARO (art. 10.1) más la diferencia de la tabla según la fracción de puntos de las partidas jugadas sobre el tablero. Si hay jugadores sin rating, los desempates por rating se quitan, salvo que las bases o el árbitro principal publiquen antes cómo tratarlos (art. 10).</div><p class=\"aula-nota\">Error frecuente: truncar en vez de redondear. 0,7857 es 79 %, no 78 %.</p>"
+  },
+  {
+   "id": "performance-norma",
+   "coleccion": "revista-17",
+   "titulo": "La performance para una norma de título",
+   "articulos": "Reglamento de Títulos (2024) · arts. 1.4.6-1.4.8 y anexo",
+   "resumen": "El piso ajustado de rating de los rivales, los mínimos de Ra y de performance y el porcentaje mínimo para una norma.",
+   "claves": [
+    "Piso ajustado: 2200 (GM), 2050 (MI), 2000 (WGM), 1850 (WIM).",
+    "Solo un rival puede subirse al piso: el de menor rating.",
+    "Los rivales sin rating no cubiertos por el piso cuentan como 1400.",
+    "Ra mínimo: 2380 GM, 2230 MI, 2180 WGM, 2030 WIM.",
+    "Performance mínima tras redondear: 2600, 2450, 2400, 2250.",
+    "Se necesita al menos el 35 % de los puntos."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 1.4.6</b> Para las normas, el rating mínimo de los rivales es 2200 (GM), 2050 (MI), 2000 (WGM) y 1850 (WIM). Solo un rival puede subirse a ese piso; si hay varios por debajo, se sube el de menor rating. Los rivales sin rating no cubiertos por lo anterior cuentan como 1400.</div><div class=\"aula-norma\"><b>Art. 1.4.8</b> Rp = Ra + dp. Ra mínimo: 2380 GM, 2230 MI, 2180 WGM, 2030 WIM. Performance mínima: 2599,5 antes de redondear (2600 después) para GM; 2450 MI; 2400 WGM; 2250 WIM. Mínimo 35 % de los puntos.</div><h3>Ejemplo</h3><p>Suizo a 9 rondas, 6½ puntos contra 2412, 2388, 2361, 2335, 2296, 2270, 2248, 2203 y 1960 (requisitos de títulos y federaciones cumplidos).</p><div class=\"aula-tabla\"><table><tr><th></th><th>Sin piso</th><th>Con piso (1960 → 2050)</th></tr><tr><td>Suma</td><td>20 473</td><td>20 563</td></tr><tr><td>Ra</td><td>2275</td><td>2285</td></tr><tr><td>p</td><td>72 % → +166</td><td>72 % → +166</td></tr><tr><td><b>Rp</b></td><td>2441</td><td><b>2451</b></td></tr></table></div><p>Con el piso hay performance de norma de MI (Ra 2285 ≥ 2230 y Rp 2451 ≥ 2450). La tabla del anexo coincide: a 9 rondas, 6½ puntos con Ra de 2284 a 2324.</p><p class=\"aula-nota\">La performance es solo una parte: la norma exige también 9 partidas como regla general (1.4.1), la mezcla de federaciones (1.4.3-1.4.4) y de rivales con título (1.4.5).</p>"
+  },
+  {
+   "id": "jurisprudencia-ajedrez",
+   "coleccion": "revista-17",
+   "titulo": "Jurisprudencia del ajedrez",
+   "articulos": "Leyes 2023 · art. 0.2 (Prólogo)",
+   "resumen": "Por qué el árbitro decide por analogía cuando un caso no está regulado y dónde estudiar cómo se han aplicado las Leyes.",
+   "claves": [
+    "Las Leyes no pueden cubrir todas las situaciones (art. 0.2).",
+    "Si un caso no está regulado con precisión, se decide estudiando situaciones análogas que sí lo están.",
+    "Las Leyes suponen competencia, buen juicio y objetividad absoluta del árbitro.",
+    "Una regla demasiado detallada quitaría al árbitro libertad de criterio.",
+    "Jurisprudencia: la doctrina que se repite en las resoluciones de los órganos con autoridad.",
+    "El FIDE Handbook conserva las Leyes de versiones anteriores para compararlas."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 0.2 (Prólogo)</b> Las Leyes no pueden cubrir todas las situaciones posibles ni todas las cuestiones administrativas. Cuando un caso no está regulado con precisión, debería poder llegarse a una decisión correcta estudiando situaciones análogas reguladas en las Leyes. Se suponen árbitros competentes, de buen juicio y absolutamente objetivos; una regla demasiado detallada podría quitarles libertad de criterio.</div><p><b>Jurisprudencia</b> es la doctrina que establecen los órganos con autoridad para interpretar las normas —en el ajedrez, la FIDE y sus comisiones— y que se repite en varias resoluciones. Para conocer una norma por completo hay que ver cómo se ha aplicado.</p><h3>Dónde estudiarla</h3><ul><li>Las versiones históricas de las Leyes en el FIDE Handbook (antes de 2014, 2014, 2017, 2018 y la vigente de 2023).</li><li>El material de la Comisión de Árbitros de la FIDE (arbiters.fide.com), con interpretaciones y casos.</li></ul><p class=\"aula-nota\">Una decisión por analogía debe poder explicarse: casi todas las decisiones del árbitro se pueden apelar (art. 11.10).</p>"
+  },
+  {
+   "id": "habitos-arbitro",
+   "coleccion": "revista-17",
+   "titulo": "Los hábitos del árbitro",
+   "articulos": "Psicología del deporte (Paula Man Reich)",
+   "resumen": "Cómo identificar y cambiar los hábitos que limitan tu labor arbitral, en cinco pasos.",
+   "claves": [
+    "Un hábito es una conducta que se repite con poca conciencia, positiva o negativa.",
+    "Un hábito negativo se cambia reemplazándolo por otro.",
+    "Lista cinco acciones sencillas que harían la diferencia.",
+    "Haz un plan con fechas y ten un plan B.",
+    "Escribe tus avances y compártelos con personas de confianza.",
+    "Reconoce tus logros parciales."
+   ],
+   "contenido": "<p>Los hábitos van desde cómo hablas con los jugadores o tomas decisiones hasta cómo te ves en tu papel de árbitro. Los positivos se mantienen o se potencian; los negativos, si no se cambian, frenan el crecimiento profesional. La forma de cambiarlos es <b>reemplazarlos por otros</b>, elegidos por ti y no vividos como una obligación externa.</p><h3>Cinco pasos</h3><ol><li><b>Lista</b> cinco acciones sencillas que hoy no haces y que harían la diferencia. Los pretextos son la voz de los viejos hábitos.</li><li><b>Plan</b>: qué cambiar, desde cuándo y hasta cuándo, y con qué pasos.</li><li><b>Plan B</b>: qué otras acciones simples harás si algo no resulta.</li><li><b>Señales de avance</b>: escríbelas y compártelas con personas de confianza.</li><li><b>Premio</b>: reconoce cada logro parcial.</li></ol><p class=\"aula-nota\">Ejemplos para la sala: llegar con tiempo para revisar mesas y relojes, anotar cada incidencia en el momento y explicar las decisiones citando el artículo.</p>"
+  }
+ ],
+ "preguntas": [
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "¿Qué versión de las Leyes del Ajedrez rige en noviembre de 2026?",
+   "opciones": [
+    "La aplicada desde el 1 de enero de 2023",
+    "La de 2014",
+    "La de 2018",
+    "Una nueva aplicada desde el 1 de marzo de 2026"
+   ],
+   "correcta": 0,
+   "explicacion": "Las Leyes aprobadas por la Asamblea General el 7-ago-2022 se aplican desde el 1-ene-2023 y siguen siendo la versión vigente publicada en el FIDE Handbook. Lo de marzo de 2026 es el reglamento de desempates C.07."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Partida rápida con supervisión insuficiente (art. A.5). Un jugador completa su primera jugada ilegal y el árbitro lo ve antes de que el rival juegue. ¿Qué hace?",
+   "opciones": [
+    "Declara perdida la partida, como en 2014",
+    "Restablece la posición y da 2 minutos al rival",
+    "Restablece la posición y da 1 minuto al rival",
+    "No hace nada: solo el rival puede reclamar"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. A.5.2: el árbitro actúa según el art. 7.5.5 si el rival aún no jugó. En rápidas la sanción es de 1 minuto en vez de 2 (art. A.3). La pérdida a la primera era la regla de 2014 (art. A.4.2)."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Un jugador pulsa el reloj sin haber hecho ninguna jugada. Es la primera vez. ¿Cómo se trata en una partida estándar?",
+   "opciones": [
+    "Con una advertencia",
+    "Como pérdida de la partida",
+    "No es infracción si lo corrige enseguida",
+    "Como una jugada ilegal: 2 minutos más para el rival"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 7.5.3: se considera y se sanciona como jugada ilegal; por la primera, 2 minutos al rival (art. 7.5.5)."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Las bases de un abierto permiten llevar el celular guardado en el bolso. ¿Con qué condición, según las Leyes?",
+   "opciones": [
+    "Que esté en silencio",
+    "Que esté completamente apagado y el bolso esté donde se acordó con el árbitro",
+    "Que el jugador lo entregue al terminar",
+    "Ninguna: las Leyes lo prohíben siempre"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 11.3.2.1: el dispositivo debe estar completamente apagado y el bolso, donde se acuerde con el árbitro; ninguno de los dos jugadores puede usar ese bolso sin permiso."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Antes de mover, los dos jugadores firman tablas. ¿Es válido?",
+   "opciones": [
+    "No: el acuerdo exige que los dos hayan hecho al menos una jugada",
+    "Sí, el acuerdo es libre",
+    "Sí, si el árbitro lo autoriza",
+    "Solo en partidas rápidas"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.3: el acuerdo de tablas es válido si ambos jugadores hicieron al menos una jugada (desde las Leyes de 2017)."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "La misma posición aparece por quinta vez, aunque no en jugadas seguidas. ¿Qué pasa?",
+   "opciones": [
+    "Nada: deben ser cinco jugadas alternas consecutivas",
+    "Se pueden reclamar tablas",
+    "Tablas automáticas",
+    "El árbitro advierte a los jugadores"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 9.6.1: basta que la misma posición aparezca al menos cinco veces. La exigencia de jugadas consecutivas era de las Leyes 2014."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Las bases no dicen nada sobre el tiempo de incomparecencia. Un jugador llega 5 minutos tarde. ¿Qué pasa?",
+   "opciones": [
+    "Juega con 5 minutos menos",
+    "Tiene 30 minutos de tolerancia",
+    "Tiene 60 minutos de tolerancia",
+    "Pierde la partida, salvo que el árbitro decida otra cosa"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 6.7.1: si no se especifica, el tiempo de incomparecencia es cero; quien llega después pierde, salvo que el árbitro decida otra cosa."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "Un jugador abandona con rey y caballo contra rey solo del rival. ¿Resultado?",
+   "opciones": [
+    "Gana el rival",
+    "Tablas: el rival no puede dar mate con ninguna serie de jugadas legales",
+    "La partida continúa",
+    "Decide el árbitro según el tiempo"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 5.1.2 (Leyes 2023): pierde quien abandona, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales; con rey solo no puede, así que es tablas."
+  },
+  {
+   "ficha": "leyes-2014-a-2023",
+   "texto": "¿Cuál de estas sanciones NO figura en el art. 12.9?",
+   "opciones": [
+    "Suspensión del rating FIDE por un año",
+    "Exclusión de una o más rondas",
+    "Multa anunciada de antemano",
+    "Expulsión de la competición"
+   ],
+   "correcta": 0,
+   "explicacion": "El art. 12.9 incluye advertencia, cambios de tiempo y de puntos, pérdida de la partida, multa anunciada, exclusión de rondas (12.9.8) y expulsión. Las suspensiones las imponen otros órganos, no el árbitro en la sala."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "Un jugador hace 5½ de 7 y sus rivales suman 18 870. ¿Cuál es su performance?",
+   "opciones": [
+    "2916",
+    "2925",
+    "2926",
+    "2906"
+   ],
+   "correcta": 2,
+   "explicacion": "Ra = 18 870 ÷ 7 = 2695,71 → 2696 (art. 1.4.7). p = 0,7857 → 79 % → dp 230 (art. 1.4.9). Rp = 2926. Con 78 % (truncando) saldría 2916."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "¿Cómo se redondea el promedio de los rivales (Ra)?",
+   "opciones": [
+    "Se trunca",
+    "Al entero más cercano, 0,5 hacia abajo",
+    "A la decena",
+    "Al entero más cercano, 0,5 hacia arriba"
+   ],
+   "correcta": 3,
+   "explicacion": "Reglamento de Títulos, art. 1.4.7: al entero más cercano; la fracción 0,5 se redondea hacia arriba."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "Un jugador hace 2½ de 7. ¿Qué dp le corresponde?",
+   "opciones": [
+    "+102",
+    "−102",
+    "−95",
+    "−110"
+   ],
+   "correcta": 1,
+   "explicacion": "p = 0,3571 → 36 % (art. 1.4.9). En la tabla, 0,64 da 102; por debajo de 0,50 el valor es negativo: 0,36 → −102."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "Un jugador hace exactamente el 50 % de los puntos. ¿Cuál es su performance?",
+   "opciones": [
+    "El promedio de sus rivales",
+    "Su propio rating",
+    "El promedio de sus rivales más 50",
+    "No se puede calcular"
+   ],
+   "correcta": 0,
+   "explicacion": "Con p = 0,50, dp = 0; Rp = Ra + 0 = el promedio de los rivales."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "Dos jugadores del mismo torneo cerrado terminan con 2/7. Uno tiene 2699 y el otro 2693. ¿Quién tiene mayor performance?",
+   "opciones": [
+    "El de 2699",
+    "Tienen la misma",
+    "El de 2693",
+    "Depende de los desempates"
+   ],
+   "correcta": 2,
+   "explicacion": "Sus rivales son todos los demás: al de 2693 le tocan rivales que suman más (18 877 contra 18 871), su Ra es mayor (2697 contra 2696) y, con el mismo dp, su Rp también (2539 contra 2538)."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "En el desempate TPR del reglamento C.07 (2026), ¿qué partidas cuentan para la fracción de puntos?",
+   "opciones": [
+    "Todas, incluidas las ganadas por incomparecencia",
+    "Todas menos los byes",
+    "Solo las de la última mitad del torneo",
+    "Solo las jugadas sobre el tablero"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 10.2: la fracción es puntos en partidas jugadas sobre el tablero entre número de esas partidas; el ARO (art. 10.1) también usa solo rivales enfrentados sobre el tablero."
+  },
+  {
+   "ficha": "rating-performance",
+   "texto": "En un abierto con jugadores sin rating, las bases ponen TPR como desempate sin decir cómo tratarlos. ¿Qué indica el C.07?",
+   "opciones": [
+    "Se les asigna 1000",
+    "Los desempates por rating se quitan de la lista, salvo reglas publicadas antes del inicio",
+    "Se les asigna 1400",
+    "El árbitro decide durante el torneo"
+   ],
+   "correcta": 1,
+   "explicacion": "C.07, art. 10: los desempates por rating se eliminan si hay jugadores sin rating, salvo que las bases o el árbitro principal publiquen antes del inicio reglas para tratarlos."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "¿Cuál es el piso ajustado de rating de los rivales para una norma de MI?",
+   "opciones": [
+    "2050",
+    "2000",
+    "2200",
+    "2230"
+   ],
+   "correcta": 0,
+   "explicacion": "Reglamento de Títulos, art. 1.4.6.b: 2200 para GM, 2050 para MI, 2000 para WGM y 1850 para WIM. 2230 es el Ra mínimo para MI."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "Una jugadora que busca norma de GM tuvo dos rivales por debajo de 2200: uno de 2150 y otro de 2080. ¿Qué se hace?",
+   "opciones": [
+    "Se suben los dos a 2200",
+    "Se sube solo el de 2150",
+    "Se sube solo el de 2080 a 2200",
+    "No se sube ninguno"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 1.4.6.c: solo un rival puede subirse al piso; si hay más de uno por debajo, se sube el de menor rating."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "Para efectos de una norma, ¿con qué rating cuenta un rival sin rating al que no se le aplica el piso?",
+   "opciones": [
+    "1000",
+    "1800",
+    "No cuenta",
+    "1400"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 1.4.6.d: los rivales sin rating no cubiertos por el piso se consideran de 1400."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "A 9 rondas, 6½ puntos con un Ra de 2285 (piso ya aplicado). ¿Hay performance de norma de MI?",
+   "opciones": [
+    "No: Rp 2441",
+    "Sí: Rp 2451",
+    "No: el Ra es menor que 2380",
+    "Sí, pero solo si es round robin"
+   ],
+   "correcta": 1,
+   "explicacion": "p = 72 % → +166; Rp = 2285 + 166 = 2451 ≥ 2450, y Ra 2285 ≥ 2230 (art. 1.4.8). La tabla del anexo da norma de MI con 6½ para Ra de 2284 a 2324."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "¿Qué porcentaje mínimo de puntos exige cualquier norma?",
+   "opciones": [
+    "35 %",
+    "25 %",
+    "50 %",
+    "No hay mínimo"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 1.4.8.b: el puntaje mínimo es 35 % para todas las normas."
+  },
+  {
+   "ficha": "performance-norma",
+   "texto": "Una performance de 2599,6 para norma de GM, ¿alcanza?",
+   "opciones": [
+    "No, debe ser 2600 exacto",
+    "Solo si el Ra es 2400 o más",
+    "Sí: el mínimo antes de redondear es 2599,5",
+    "Depende del número de rondas"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 1.4.8: para GM el mínimo es 2599,5 antes de redondear (2600 después)."
+  },
+  {
+   "ficha": "jurisprudencia-ajedrez",
+   "texto": "Según el Prólogo de las Leyes (art. 0.2), ¿qué hace el árbitro ante un caso no regulado con precisión?",
+   "opciones": [
+    "Consulta a los jugadores",
+    "Suspende la partida hasta consultar a la FIDE",
+    "Aplica el reglamento nacional",
+    "Decide estudiando situaciones análogas que sí están reguladas"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 0.2: debería ser posible llegar a una decisión correcta estudiando situaciones análogas reguladas en las Leyes."
+  },
+  {
+   "ficha": "jurisprudencia-ajedrez",
+   "texto": "¿Por qué las Leyes evitan reglas demasiado detalladas?",
+   "opciones": [
+    "Para que sean más cortas",
+    "Porque podrían quitar al árbitro su libertad de criterio para resolver con justicia y lógica",
+    "Porque cada federación las completa",
+    "Porque los detalles están en las bases"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 0.2: una regla demasiado detallada podría privar al árbitro de su libertad de juicio para encontrar una solución dictada por la justicia, la lógica y los factores especiales."
+  },
+  {
+   "ficha": "jurisprudencia-ajedrez",
+   "texto": "¿Qué es la jurisprudencia aplicada al ajedrez?",
+   "opciones": [
+    "La doctrina que se repite en las resoluciones de los órganos con autoridad sobre cómo aplicar las normas",
+    "El conjunto de reglamentos nacionales",
+    "La opinión de los Grandes Maestros",
+    "El texto en inglés de las Leyes"
+   ],
+   "correcta": 0,
+   "explicacion": "Es la doctrina establecida por los órganos con autoridad (en ajedrez, la FIDE y sus comisiones) que se repite en varias resoluciones."
+  },
+  {
+   "ficha": "jurisprudencia-ajedrez",
+   "texto": "¿Dónde puedes consultar hoy las Leyes de 2014, 2017 y 2018?",
+   "opciones": [
+    "Solo en ediciones impresas antiguas",
+    "No se conservan",
+    "En el FIDE Handbook, junto a las vigentes",
+    "Solo en la federación nacional"
+   ],
+   "correcta": 2,
+   "explicacion": "El FIDE Handbook (sección E.01) publica las Leyes vigentes y las versiones anteriores a 2014, de 2014, 2017 y 2018."
+  },
+  {
+   "ficha": "jurisprudencia-ajedrez",
+   "texto": "¿Qué texto de las Leyes es el auténtico?",
+   "opciones": [
+    "El español",
+    "El francés",
+    "Cualquier traducción oficial",
+    "El inglés"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 0.1: el texto en inglés es la versión auténtica de las Leyes del Ajedrez."
+  },
+  {
+   "ficha": "habitos-arbitro",
+   "texto": "Según el artículo, ¿cómo se cambia un hábito negativo?",
+   "opciones": [
+    "Dejándolo de golpe",
+    "Reemplazándolo por otro distinto",
+    "Ignorándolo",
+    "Pidiendo a otro árbitro que lo corrija"
+   ],
+   "correcta": 1,
+   "explicacion": "La propuesta es reemplazar esa costumbre por una distinta, elegida por ti y no vivida como obligación externa."
+  },
+  {
+   "ficha": "habitos-arbitro",
+   "texto": "Al hacer tu lista de cinco acciones, solo se te ocurren pretextos para no hacerlas. ¿Qué indica eso?",
+   "opciones": [
+    "Que hablan tus viejos hábitos",
+    "Que las acciones no sirven",
+    "Que ya eres un buen árbitro",
+    "Que necesitas más acciones"
+   ],
+   "correcta": 0,
+   "explicacion": "El artículo lo dice así: los pretextos son la voz de los hábitos antiguos, no de tu mejor futuro."
+  },
+  {
+   "ficha": "habitos-arbitro",
+   "texto": "¿Qué ayuda, según el artículo, a mantener la motivación al cambiar un hábito?",
+   "opciones": [
+    "Guardar los avances en secreto",
+    "Cambiar varios hábitos a la vez",
+    "Escribir los avances y compartirlos con personas de confianza",
+    "Esperar a terminar para evaluarse"
+   ],
+   "correcta": 2,
+   "explicacion": "Escribir las señales de avance y comentarlas con personas de confianza ayuda a desarrollar motivación y eficacia."
+  },
+  {
+   "ficha": "habitos-arbitro",
+   "texto": "¿Qué debe incluir el plan de acción?",
+   "opciones": [
+    "Solo el objetivo final",
+    "La opinión del árbitro principal",
+    "Las sanciones por no cumplirlo",
+    "Qué cambiar, fecha de inicio y de término, y los pasos"
+   ],
+   "correcta": 3,
+   "explicacion": "El plan define qué comportamientos cambiar, con fecha de inicio y de término y los pasos a seguir, más un plan B."
+  },
+  {
+   "ficha": "habitos-arbitro",
+   "texto": "¿Para qué sirve el «plan B» en el método del artículo?",
+   "opciones": [
+    "Para abandonar el cambio si se complica",
+    "Para tener otras acciones simples si algo de lo planeado no se logra",
+    "Para delegar el cambio en otra persona",
+    "Para fijar sanciones"
+   ],
+   "correcta": 1,
+   "explicacion": "El artículo pregunta: si algo de lo planeado no se logra, ¿qué otras acciones simples puedes hacer? Ese es el plan B."
+  }
+ ],
+ "casos": [
+  {
+   "id": "rapida-primera-ilegal",
+   "ficha": "leyes-2014-a-2023",
+   "titulo": "Primera jugada ilegal en una rápida",
+   "nivel": "Básico",
+   "ritmo": null,
+   "escena": "Abierto de rápidas, 15 minutos más 10 segundos por jugada; las bases dicen que se aplica el art. A.5 (un árbitro para muchas mesas). Ves que las negras acaban de enrocar con el rey en jaque y pulsaron el reloj. Las blancas todavía no han jugado. Es la primera jugada ilegal de las negras en la partida.",
+   "decision": {
+    "texto": "¿Qué haces?",
+    "opciones": [
+     "Restableces la posición, las negras deben jugar con el rey si tienen una jugada legal (pieza tocada) y das 1 minuto a las blancas",
+     "Declaras perdida la partida de las negras",
+     "Restableces la posición y das 2 minutos a las blancas",
+     "No intervienes: solo pueden reclamar las blancas"
+    ],
+    "correcta": 0,
+    "explicacion": "Art. A.5.2: el árbitro actúa según el art. 7.5.5 si el rival no ha jugado. Se restablece la posición (7.5.1, con los arts. 4.3 y 4.7 para la jugada que reemplaza a la ilegal: el rey fue tocado) y, en rápidas, la sanción es de 1 minuto (art. A.3). En 2014 esto habría sido pérdida (art. A.4.2)."
+   }
+  },
+  {
+   "id": "abandono-sin-mate",
+   "ficha": "leyes-2014-a-2023",
+   "titulo": "Abandona, pero el rival no puede ganar",
+   "nivel": "Básico",
+   "ritmo": null,
+   "escena": "Partida estándar. Las blancas tienen rey y alfil; las negras, rey solo. Las negras llevan mucho tiempo jugando sin rumbo y, cansadas, detienen el reloj y dicen «abandono». Las blancas firman la planilla como ganadoras.",
+   "decision": {
+    "texto": "¿Cuál es el resultado?",
+    "opciones": [
+     "Ganan las blancas por abandono",
+     "Ganan las blancas por tiempo",
+     "Tablas: las blancas no pueden dar mate con ninguna serie de jugadas legales",
+     "Se repite la partida"
+    ],
+    "correcta": 2,
+    "explicacion": "Art. 5.1.2 (Leyes 2023): pierde quien abandona, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales; con rey y alfil contra rey solo no hay mate posible, así que el resultado es tablas. (En 2014 el abandono daba siempre la victoria al rival.)"
+   }
+  }
+ ],
+ "repeticiones": []
+}

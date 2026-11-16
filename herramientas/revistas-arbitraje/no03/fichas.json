@@ -1,0 +1,416 @@
+{
+  "coleccion": {
+    "id": "revista-3",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 3",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "buchholz-rondas-no-jugadas",
+      "coleccion": "revista-3",
+      "titulo": "Partidas no jugadas en el Buchholz",
+      "articulos": "C.07 (2026) · arts. 8.1, 14, 15, 16",
+      "resumen": "Cómo cuentan en el Buchholz las incomparecencias, el descanso del emparejamiento y los byes pedidos: el rival ficticio del art. 16.",
+      "claves": [
+        "Buchholz (art. 8.1): suma de las puntuaciones de los rivales; no se usa en todos contra todos.",
+        "Ronda no jugada propia (16.4): rival ficticio con la puntuación final del propio jugador.",
+        "Tope en incomparecencias (categorías 2 y 4): la puntuación ajustada del rival programado.",
+        "Tope en descanso y byes (categorías 1, 3 y 5): puntos de tablas × número de rondas.",
+        "Para el Buchholz de los rivales (16.3): las categorías 1 a 4 cuentan con el resultado asignado; la 5 (bye pedido al final) cuenta como tablas.",
+        "El «jugador virtual» con fórmula (2012) rigió hasta el 31-ago-2023."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 8.1</b> Buchholz: la suma de las puntuaciones de cada uno de los rivales de un participante. No se usa en todos contra todos.</div><div class=\"aula-norma\"><b>Art. 16.1</b> Bye solicitado: de medio punto o de cero puntos (las rondas después de un retiro cuentan como bye de cero). VUR: bye solicitado o pérdida por incomparecencia.</div><div class=\"aula-norma\"><b>Art. 16.2</b> Categorías: 1) descanso del emparejamiento o bye de punto completo; 2) victoria por incomparecencia; 3) bye solicitado seguido de al menos una ronda que no sea VUR; 4) pérdida por incomparecencia; 5) bye solicitado seguido solo de VUR o en la última ronda.</div><div class=\"aula-norma\"><b>Art. 16.3</b> Para el desempate de los rivales: categorías 1 a 4, con el resultado asignado; categoría 5, como tablas.</div><div class=\"aula-norma\"><b>Art. 16.4</b> Para el desempate propio: cada ronda no jugada es una partida contra un rival ficticio con la puntuación del propio jugador, sin pasar de la puntuación ajustada del rival programado (incomparecencias) ni de tablas × rondas (los demás casos).</div><div class=\"aula-norma\"><b>Art. 16.5</b> Si hay que cortar el valor menos significativo y el jugador tiene VUR, se corta la menor aportación de esas rondas, siempre que no sea menor que el valor menos significativo.</div><h3>Ejemplos</h3><div class=\"aula-tabla\"><table><tr><th>Caso</th><th>Datos</th><th>Aporte</th></tr><tr><td>Pierde por incomparecencia (cat. 4)</td><td>P termina con 5; el rival programado, con 6</td><td>mín(5; 6) = 5</td></tr><tr><td>Gana por incomparecencia (cat. 2)</td><td>P termina con 6½; el rival programado, con 4</td><td>mín(6½; 4) = 4</td></tr><tr><td>Descanso del emparejamiento (cat. 1)</td><td>7 rondas; P termina con 5½</td><td>mín(5½; 3½) = 3½</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>Historia.</b> De 2012 a agosto de 2023 se usó el jugador virtual: Svon = SPR + (1 − SfPR) + 0,5 × (n − R), y las incomparecencias de los rivales contaban como tablas. Ya no rige.</div><p class=\"aula-nota\">Fe de erratas de la edición original: un ejemplo daba 3,5 puntos antes de la ronda 4, algo imposible (máximo 3).</p>"
+    },
+    {
+      "id": "posicion-muerta",
+      "coleccion": "revista-3",
+      "titulo": "Posición muerta",
+      "articulos": "Leyes 2023 · arts. 1.5, 5.2.2, 6.9, A.5.3",
+      "resumen": "Cuándo ninguno de los dos puede dar mate con ninguna serie de jugadas legales, qué hace el árbitro y qué pasa si cae la bandera.",
+      "claves": [
+        "Art. 5.2.2: posición muerta = ninguno de los dos puede dar mate con ninguna serie de jugadas legales.",
+        "La partida termina en ese mismo momento, si la jugada que la produjo fue legal; no hace falta reclamarla.",
+        "Cuenta cualquier serie legal, aunque el rival tenga que colaborar.",
+        "Rey contra rey, rey y caballo contra rey y rey y alfil contra rey son posiciones muertas.",
+        "Rey y caballo contra rey y caballo no es posición muerta: existe un mate legal.",
+        "Art. 6.9: si cae la bandera y el rival no puede dar mate con ninguna serie legal, son tablas."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 5.2.2</b> La partida es tablas cuando se llega a una posición en la que ninguno de los dos jugadores puede dar mate con ninguna serie de jugadas legales. Termina inmediatamente, siempre que la jugada que la produjo fuera legal.</div><div class=\"aula-norma\"><b>Art. 6.9</b> Quien no completa las jugadas en su tiempo pierde, salvo que el rival no pueda darle mate con ninguna serie de jugadas legales: entonces son tablas. (En rápidas sin supervisión adecuada, art. A.5.3).</div><div class=\"aula-norma aula-norma-aviso\"><b>Numeración.</b> En las Leyes de 2009 eran los arts. 5.2.b y 9.6. Hoy el art. 9.6 trata de la quíntuple repetición y las 75 jugadas.</div><h3>Ejemplos típicos</h3><ul><li>Rey contra rey.</li><li>Rey y caballo, o rey y alfil, contra rey.</li><li>Cadenas de peones totalmente bloqueadas en las que ningún rey puede cruzar.</li><li>Alfiles que van por el color de sus propios peones bloqueados, sin posibilidad de capturar ni ser capturados.</li></ul><h3>Lo que no es posición muerta</h3><ul><li>Rey y caballo contra rey y caballo (hay mate legal con el rey encerrado por su propio caballo).</li><li>Peones bloqueados con una torre que puede sacrificarse para abrir la posición.</li></ul><p class=\"aula-nota\">Todas las posiciones de la revista se comprobaron recorriendo todas las posiciones alcanzables con jugadas legales.</p>"
+    },
+    {
+      "id": "padres-en-el-torneo",
+      "coleccion": "revista-3",
+      "titulo": "Padres y acompañantes en el torneo",
+      "articulos": "Leyes 2023 · arts. 11.2.3.3, 11.3.1, 12.2, 12.7, 12.8",
+      "resumen": "Recomendaciones de Paula Man Reich para tratar con padres sobreimplicados y las herramientas que dan las Leyes al árbitro.",
+      "claves": [
+        "Deja claros desde el inicio los deberes y derechos de los padres, iguales para todos.",
+        "Art. 11.2.3.3: quien no es jugador ni árbitro entra al área de juego solo con permiso del árbitro.",
+        "Art. 12.7: los espectadores no pueden intervenir; el árbitro puede expulsarlos del recinto.",
+        "Art. 12.8: sin autorización del árbitro, nadie usa celular en el recinto de juego.",
+        "Las sanciones del art. 12.9 son para los jugadores; si el niño recibió ayuda, se analiza el art. 11.3.1.",
+        "Confianza, seguridad y perspectiva profesional facilitan el trato con los padres."
+      ],
+      "contenido": "<h3>Recomendaciones (Paula Man Reich)</h3><ul><li>Dejar claros los deberes y derechos de los padres y las consecuencias si no se cumplen las reglas.</li><li>Aumentar su participación positiva en la actividad del hijo.</li><li>Informarles con veracidad cuando hay un problema.</li><li>Mantener una comunicación eficaz y una perspectiva profesional.</li></ul><h3>Lo que dicen las Leyes</h3><div class=\"aula-norma\"><b>Art. 11.2.3.3</b> Solo con permiso del árbitro puede entrar al área de juego alguien que no sea jugador ni árbitro.</div><div class=\"aula-norma\"><b>Art. 12.7</b> Quien observe una irregularidad solo puede informar al árbitro. Los espectadores no pueden intervenir; el árbitro puede expulsar a los infractores del recinto de juego.</div><div class=\"aula-norma\"><b>Art. 12.8</b> Salvo autorización del árbitro, nadie puede usar celular ni otro medio de comunicación en el recinto de juego ni en las zonas contiguas que el árbitro designe.</div><div class=\"aula-norma aula-norma-aviso\"><b>Sanciones.</b> Las del art. 12.9 se aplican a los jugadores. Si un padre le dio indicaciones a su hijo durante la partida, el caso del jugador se analiza con el art. 11.3.1 (consejos durante la partida).</div>"
+    },
+    {
+      "id": "swiss-manager-configuracion",
+      "coleccion": "revista-3",
+      "titulo": "Swiss-Manager: qué comprobar",
+      "articulos": "C.04.2 (2026) · art. 2.2 · C.07 (2026) · art. 16 · C.02.04",
+      "resumen": "Lo que hay que revisar en el programa de emparejamientos antes de un torneo: sistema, desempates, byes y orden inicial.",
+      "claves": [
+        "La FIDE recomienda programas avalados por ella para los grandes torneos suizos.",
+        "Comprueba que la versión empareje con el sistema holandés vigente (C.04.3, versión 2026).",
+        "Comprueba que los desempates sigan el C.07 de 2026, en especial el art. 16.",
+        "Orden inicial (C.04.2, art. 2.2): rating, título y orden alfabético.",
+        "Orden de títulos: GM, IM, WGM, FM, WIM, CM, WFM, WCM, sin título.",
+        "Calcula a mano un caso con rondas no jugadas y compáralo con el programa."
+      ],
+      "contenido": "<h3>Antes del torneo</h3><ul><li>Versión avalada por la FIDE (lista del capítulo C.02.04 del Handbook).</li><li>Sistema holandés vigente (C.04.3, 2026).</li><li>Desempates según el C.07 de 2026; rondas no jugadas según el art. 16 (no el jugador virtual de 2012).</li><li>Puntos del descanso y de los byes, como digan las bases.</li></ul><div class=\"aula-norma\"><b>C.04.2, art. 2.2</b> Antes de la primera ronda los participantes se ordenan por fuerza (rating), título (GM, IM, WGM, FM, WIM, CM, WFM, WCM, sin título) y orden alfabético, salvo que se haya anunciado otro criterio.</div><p class=\"aula-nota\">Los precios, versiones y requisitos que traía la edición original eran de 2012 y se eliminaron.</p>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "¿Qué es el Buchholz (BH)?",
+      "opciones": [
+        "La suma de los puntos ganados contra los primeros clasificados",
+        "La suma de las puntuaciones de los rivales de un participante",
+        "La suma de las puntuaciones de los rivales multiplicadas por el resultado",
+        "El promedio del rating de los rivales"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 8.1 del C.07 (2026). Multiplicar la puntuación del rival por el resultado es el Sonneborn-Berger (art. 9.1); el promedio de rating es el ARO (art. 10.1)."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "Suizo a 9 rondas. P pierde por incomparecencia en la ronda 3, termina con 5 puntos y su rival programado termina con 6. ¿Qué aporta esa ronda al Buchholz de P?",
+      "opciones": [
+        "5",
+        "5½",
+        "6",
+        "4½"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 16.4: rival ficticio con la puntuación de P (5), sin pasar de la puntuación ajustada del rival programado (6). mín(5; 6) = 5. El 5½ sale de la fórmula de 2012, que ya no rige."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "Suizo a 7 rondas. P recibe el descanso del emparejamiento y termina con 5½. ¿Qué aporta esa ronda a su Buchholz?",
+      "opciones": [
+        "5½",
+        "0",
+        "1",
+        "3½"
+      ],
+      "correcta": 3,
+      "explicacion": "Categoría 1: el tope es tablas × rondas = ½ × 7 = 3½ (art. 16.4.2). mín(5½; 3½) = 3½."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "P gana por incomparecencia, termina con 6½ y el rival programado termina con 4. ¿Cuánto aporta esa ronda?",
+      "opciones": [
+        "6½",
+        "4½",
+        "4",
+        "5"
+      ],
+      "correcta": 2,
+      "explicacion": "En las incomparecencias (categorías 2 y 4) el tope es la puntuación ajustada del rival programado: mín(6½; 4) = 4 (art. 16.4.1)."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "Un rival tuyo perdió una partida por incomparecencia contra otro jugador. Al calcular tu Buchholz, ¿cómo cuenta esa partida en la puntuación del rival?",
+      "opciones": [
+        "Como tablas",
+        "Con el resultado asignado (derrota)",
+        "No cuenta: se resta del total",
+        "Como victoria"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 16.3.1: las categorías 1 a 4 se evalúan con el resultado asignado. Contarla como tablas era la regla de 2012 (sección 15.3), ya derogada."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "Un jugador pide un bye de cero puntos en la última ronda. Para el Buchholz de sus rivales, ¿cómo cuenta esa ronda?",
+      "opciones": [
+        "Como tablas",
+        "Como derrota",
+        "Como victoria",
+        "Se ignora"
+      ],
+      "correcta": 0,
+      "explicacion": "Es categoría 5 (bye pedido en la última ronda): art. 16.3.2, se evalúa como tablas."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "¿Qué es una VUR?",
+      "opciones": [
+        "Una ronda con descanso asignado por el emparejamiento",
+        "Una ronda aplazada",
+        "Una victoria por incomparecencia",
+        "Una ronda no jugada voluntaria: bye solicitado o pérdida por incomparecencia"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 16.1: VUR (voluntary unplayed round) es un bye solicitado o una pérdida por incomparecencia."
+    },
+    {
+      "ficha": "buchholz-rondas-no-jugadas",
+      "texto": "¿Hasta cuándo rigió el «jugador virtual» con la fórmula Svon = SPR + (1 − SfPR) + 0,5 × (n − R)?",
+      "opciones": [
+        "Hasta 2014",
+        "Sigue vigente",
+        "Hasta el 31 de agosto de 2023",
+        "Hasta el 1 de marzo de 2026"
+      ],
+      "correcta": 2,
+      "explicacion": "El reglamento anterior, con el jugador virtual (sección 15.2), estuvo vigente hasta el 31-ago-2023. Desde 2023 se usa el rival ficticio del art. 16."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "¿Qué artículo de las Leyes 2023 define la posición muerta?",
+      "opciones": [
+        "Art. 9.6",
+        "Art. 5.2.2",
+        "Art. 9.3",
+        "Art. 12.9"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 5.2.2 (y art. 1.5 en las reglas básicas). El art. 9.6 actual trata de la quíntuple repetición y las 75 jugadas."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "Se produce una posición muerta y ningún jugador dice nada. ¿Qué pasa?",
+      "opciones": [
+        "La partida terminó en tablas en ese momento",
+        "Nada hasta que alguien reclame",
+        "El árbitro espera 50 jugadas",
+        "Gana quien tenga más material"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 5.2.2: la posición muerta termina inmediatamente la partida (si la jugada que la produjo fue legal). No hace falta reclamarla."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "Rey y caballo contra rey y caballo. ¿Es posición muerta?",
+      "opciones": [
+        "Sí, siempre",
+        "Depende del tiempo en el reloj",
+        "Solo si los caballos son del mismo color",
+        "No: existe una serie de jugadas legales que termina en mate"
+      ],
+      "correcta": 3,
+      "explicacion": "La definición pide que el mate sea imposible con cualquier serie legal. Con el rey en la esquina, encerrado por su propio caballo, el caballo rival puede dar mate."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "A las blancas se les cae la bandera. Las negras tienen rey y caballo; las blancas, rey y caballo. ¿Resultado?",
+      "opciones": [
+        "Tablas, por material insuficiente",
+        "Tablas, por posición muerta",
+        "Ganan las negras",
+        "Se repite la partida"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 6.9: solo son tablas si las negras no pueden dar mate con ninguna serie de jugadas legales. Con rey y caballo contra rey y caballo sí existe un mate legal, así que ganan las negras."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "A las blancas se les cae la bandera. Las negras solo tienen el rey. ¿Resultado?",
+      "opciones": [
+        "Ganan las negras",
+        "Tablas",
+        "Se suman 2 minutos a las blancas",
+        "Pierden las dos"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 6.9: las negras no pueden dar mate con ninguna serie de jugadas legales, así que son tablas."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "Peones blancos y negros bloqueados; las blancas tienen además una torre que puede ofrecerse a un peón negro. Un jugador dice que es posición muerta. ¿Qué decides?",
+      "opciones": [
+        "La partida sigue: la torre puede sacrificarse y abrir la posición",
+        "Tablas: los peones están bloqueados",
+        "Gana el que tiene la torre",
+        "Se detiene el reloj y se sortea"
+      ],
+      "correcta": 0,
+      "explicacion": "Si el peón captura la torre, la cadena se abre y existe una serie de jugadas legales que termina en mate. No es posición muerta (art. 5.2.2)."
+    },
+    {
+      "ficha": "posicion-muerta",
+      "texto": "¿Por qué en el diagrama de alfiles y peones bloqueados de la revista no hay mate posible?",
+      "opciones": [
+        "Porque los alfiles son de distinto color entre sí",
+        "Porque los reyes están en la columna d",
+        "Porque hay pocos peones",
+        "Porque cada alfil va por el color de sus propios peones: no ataca a los peones rivales ni puede ser capturado por ellos"
+      ],
+      "correcta": 3,
+      "explicacion": "Los peones rivales están en casillas del otro color y capturan en casillas del otro color: el alfil no puede sacrificarse para abrir la posición."
+    },
+    {
+      "ficha": "padres-en-el-torneo",
+      "texto": "Un padre quiere entrar al área de juego para acompañar a su hijo. ¿Qué dicen las Leyes?",
+      "opciones": [
+        "Puede entrar si no habla",
+        "Nunca puede entrar",
+        "Solo puede entrar con permiso del árbitro",
+        "Puede entrar si su hijo es menor de 10 años"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 11.2.3.3: solo con permiso del árbitro puede entrar al área de juego una persona que no sea jugador ni árbitro."
+    },
+    {
+      "ficha": "padres-en-el-torneo",
+      "texto": "Un padre ve que el rival de su hijo hizo una jugada ilegal. ¿Qué puede hacer?",
+      "opciones": [
+        "Decírselo a su hijo",
+        "Informar solo al árbitro",
+        "Detener el reloj",
+        "Reclamar en nombre de su hijo"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 12.7: quien observe una irregularidad solo puede informar al árbitro."
+    },
+    {
+      "ficha": "padres-en-el-torneo",
+      "texto": "Un padre interviene repetidamente en una partida. ¿Qué puede hacer el árbitro?",
+      "opciones": [
+        "Expulsarlo del recinto de juego",
+        "Declarar perdida la partida del hijo de inmediato",
+        "Nada, los espectadores no están sujetos a las Leyes",
+        "Restarle tiempo al hijo automáticamente"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 12.7: los espectadores no pueden intervenir y el árbitro puede expulsar a los infractores del recinto de juego. Las sanciones del art. 12.9 son para los jugadores."
+    },
+    {
+      "ficha": "padres-en-el-torneo",
+      "texto": "Una madre usa el celular en la sala de juego para grabar las partidas, sin autorización. ¿Qué artículo se aplica?",
+      "opciones": [
+        "Art. 11.3.2",
+        "Ninguno: solo afecta a los jugadores",
+        "Art. 6.9",
+        "Art. 12.8"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 12.8: salvo autorización del árbitro, nadie puede usar celular ni otro medio de comunicación en el recinto de juego. El art. 11.3.2 es para los jugadores."
+    },
+    {
+      "ficha": "padres-en-el-torneo",
+      "texto": "Según Paula Man Reich, ¿qué conviene hacer al inicio del torneo con los padres?",
+      "opciones": [
+        "Prohibirles la entrada al local",
+        "Ignorarlos para no generar conflictos",
+        "Dejar claros sus deberes, derechos y las consecuencias, iguales para todos",
+        "Darles la lista de emparejamientos antes que a los jugadores"
+      ],
+      "correcta": 2,
+      "explicacion": "Dejar claros los límites del papel de los padres y del árbitro ayuda al control del torneo y al bienestar del joven deportista."
+    },
+    {
+      "ficha": "swiss-manager-configuracion",
+      "texto": "Dos jugadores tienen el mismo rating: uno es WIM y el otro FM. ¿Quién recibe el número inicial más alto (mejor)?",
+      "opciones": [
+        "La WIM",
+        "El FM",
+        "Se ordena alfabéticamente",
+        "Se sortea"
+      ],
+      "correcta": 1,
+      "explicacion": "C.04.2, art. 2.2.2: GM, IM, WGM, FM, WIM, CM, WFM, WCM. El FM va antes que la WIM. (La edición original ponía WIM antes que FM)."
+    },
+    {
+      "ficha": "swiss-manager-configuracion",
+      "texto": "Dos jugadores sin título y con el mismo rating. ¿Cómo se ordenan?",
+      "opciones": [
+        "Por orden alfabético, salvo que se haya anunciado otro criterio",
+        "Por edad",
+        "Por federación",
+        "Al azar"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.2, art. 2.2.3: orden alfabético, salvo que se haya establecido antes otro criterio."
+    },
+    {
+      "ficha": "swiss-manager-configuracion",
+      "texto": "Tu programa calcula las incomparecencias con el «jugador virtual» de 2012. ¿Qué haces?",
+      "opciones": [
+        "Nada, es la regla vigente",
+        "Cuentas las incomparecencias como tablas",
+        "Quitas el Buchholz de las bases",
+        "Actualizas el programa o configuras los desempates según el art. 16 del C.07 (2026)"
+      ],
+      "correcta": 3,
+      "explicacion": "El jugador virtual rigió hasta el 31-ago-2023. Hoy se aplica el art. 16 del C.07 (2026)."
+    },
+    {
+      "ficha": "swiss-manager-configuracion",
+      "texto": "¿Qué recomienda la FIDE para los grandes torneos suizos?",
+      "opciones": [
+        "Emparejar a mano",
+        "Usar cualquier hoja de cálculo",
+        "Usar programas avalados por la FIDE",
+        "Usar el programa del organizador"
+      ],
+      "correcta": 2,
+      "explicacion": "La FIDE recomienda programas avalados por ella; la lista vigente está en el Handbook (capítulo C.02.04)."
+    },
+    {
+      "ficha": "swiss-manager-configuracion",
+      "texto": "¿Cuál es una buena forma de verificar que el programa desempata bien?",
+      "opciones": [
+        "Confiar en el programa",
+        "Calcular a mano un caso con rondas no jugadas y compararlo",
+        "Preguntar a los jugadores",
+        "Cambiar de desempate si hay dudas"
+      ],
+      "correcta": 1,
+      "explicacion": "Las rondas no jugadas son donde más difieren las versiones; comprobar un caso a mano detecta una configuración errónea."
+    }
+  ],
+  "casos": [
+    {
+      "id": "bandera-caballos",
+      "ficha": "posicion-muerta",
+      "titulo": "Bandera con caballos",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Partida rápida con un árbitro por cada tres mesas. En el tablero: blancas con rey y caballo; negras con rey y caballo. A las blancas se les cae la bandera y las negras te llaman.",
+      "decision": {
+        "texto": "¿Cuál es el resultado?",
+        "opciones": [
+          "Tablas por posición muerta",
+          "Tablas por material insuficiente",
+          "Ganan las negras",
+          "Se suma tiempo a las blancas y sigue la partida"
+        ],
+        "correcta": 2,
+        "explicacion": "Art. 6.9 (y A.4 con supervisión adecuada): solo son tablas si las negras no pueden dar mate con ninguna serie de jugadas legales. Con rey y caballo contra rey y caballo existe un mate legal, así que ganan las negras."
+      }
+    },
+    {
+      "id": "torre-y-cadena",
+      "ficha": "posicion-muerta",
+      "titulo": "Cadena de peones con torre",
+      "nivel": "Avanzado",
+      "ritmo": null,
+      "escena": "Blancas: Re2, Td2 y peones en a3, b4, c3, d4, e3, f4, g3, h4. Negras: Rh6 y peones en a4, b5, c4, d5, e4, f5, g4, h5. Las negras te dicen que es posición muerta y que la partida debe terminar.",
+      "decision": {
+        "texto": "¿Qué decides?",
+        "opciones": [
+          "Tablas: los peones están bloqueados",
+          "Tablas si las blancas no se oponen",
+          "Ganan las blancas por material",
+          "La partida sigue: la torre puede sacrificarse y abrir la posición"
+        ],
+        "correcta": 3,
+        "explicacion": "No es posición muerta (art. 5.2.2): por ejemplo 1.Td1 Rg6 2.Th1 Rf6 3.Th3 gxh3 4.g4 hxg4 5.h5 … y el peón h corona con mate en la jugada 13. Si quieren tablas, pueden acordarlas (art. 5.2.3)."
+      }
+    }
+  ],
+  "repeticiones": []
+}

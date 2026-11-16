@@ -1,0 +1,92 @@
+{
+  "numero": 10,
+  "fecha_original": "febrero de 2013",
+  "temas": [
+    {
+      "titulo": "Aprende a rechazar las ideas irracionales",
+      "desc": "Psicología del deporte · Paula Man Reich"
+    },
+    {
+      "titulo": "Casos arbitrales",
+      "desc": "Carlos Calleros · Leyes 2023, arts. 4.7, 5.1.2, 6.11, 7.4"
+    },
+    {
+      "titulo": "Curso de sistema suizo (segunda parte)",
+      "desc": "Tarjetas y orden inicial · C.04.2 y C.04.3 (2026)"
+    },
+    {
+      "titulo": "Ajedrecistas con discapacidad",
+      "desc": "Pautas FIDE D.04.12 · Leyes 2023 y Apéndice D"
+    },
+    {
+      "titulo": "Mundiales de Rápidas y Relámpago",
+      "desc": "De las reglas de 2013 a las de 2025 · Apéndices A y B"
+    }
+  ],
+  "presentacion": "<div class=\"cols\"><p>Bienvenidos a la décima edición de la revista, que ya suma más de 500 páginas de arbitraje y organización.</p><p>Quiero agradecer a todas las personas que se han ido sumando al proyecto: articulistas, diseñadores, traductores y compiladores, y sobre todo a quienes cada mes nos envían sus propuestas, sugerencias y casos de arbitraje. Estamos muy contentos con la respuesta de los lectores, a un par de meses de cumplir nuestro primer aniversario.</p><p>Sigan enviándonos sus casos; y si desean escribir sobre algún tema, son bienvenidos al equipo de colaboradores.</p><p>En esta edición incluimos dos reglamentos emitidos por la FIDE en febrero. El primero es una guía para el trato de los jugadores con discapacidad, un tema prácticamente desconocido: a este sector de jugadores no se le dan las condiciones que necesita. El segundo es el reglamento de los Campeonatos Mundiales de Ajedrez Relámpago y Rápido, de gran valor para organizadores y árbitros, porque muestra el perfil de un evento de talla mundial.</p><p>Nuestra colaboradora Paula Man (Argentina) nos trae una nueva entrega de psicología deportiva aplicada al arbitraje: «Aprenda a rechazar las ideas irracionales que su mente crea bajo presión». El distinguido Árbitro Internacional Carlos Calleros (Brasil) nos presenta casos arbitrales para medir nuestros conocimientos… No se preocupen: vienen con respuestas.</p><p>Continuamos con el Curso de Sistema Suizo: en esta entrega vemos cómo se llenan las tarjetas de emparejamiento y cómo se ordenan para asignarles un número.</p><p>Espero que este número sea de su total agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><div class=\"box warn\"><p><b>Nota de esta edición.</b> Las reglas del Mundial de 2013 eran las de un evento concreto, ya jugado: no las reproducimos, sino que comparamos aquellas condiciones con las del Mundial más reciente publicado en el Handbook (Doha, 2025) y repasamos lo que sí sirve en cualquier torneo de rápidas y relámpago. Las pautas sobre jugadores con discapacidad siguen vigentes casi sin cambios, y las acompañamos con lo que hoy dicen las Leyes del Ajedrez.</p></div>",
+  "cambios": [
+    [
+      "Caso 1: abandonar sin poder perder",
+      "La partida «no puede abandonarse» y el árbitro da tablas, sin cita reglamentaria.",
+      "Hoy lo dice expresamente el <b>art. 5.1.2</b> (Leyes 2023): si el rival no puede dar mate con ninguna serie de jugadas legales, el abandono da <b>tablas</b>. Se añade el aspecto disciplinario (Código de Ética, arts. 6.22 y 11.8)."
+    ],
+    [
+      "Caso 2: pieza que cae al suelo",
+      "«El alfil original no existe»; el jugador actuó bien.",
+      "Se confirma el fondo y se precisa el procedimiento: pausar el reloj y pedir ayuda al árbitro (<b>art. 6.11.2</b>), reponer las piezas en su propio tiempo (<b>art. 7.4</b>) y no tomar piezas de otro tablero (art. 12.2.4)."
+    ],
+    [
+      "Caso 3: devolver una jugada",
+      "«Autorizar a regresar una movida no existe».",
+      "Se fundamenta: una jugada soltada no se cambia (<b>art. 4.7</b>), el árbitro no puede autorizarlo y el acuerdo previo puede sancionarse (arts. 11.1 y 12.9)."
+    ],
+    [
+      "Orden de títulos para numerar",
+      "GM, IM, WGM, <b>WIM, FM</b>, CM, WFM, WCM, NM, WNM.",
+      "C.04.2 (desde el 1-feb-2026), art. 2.2.2: GM, IM, WGM, <b>FM, WIM</b>, CM, WFM, WCM, sin título. Los títulos nacionales no forman parte de este orden."
+    ],
+    [
+      "Flotación en la ronda 2 del ejemplo",
+      "Victoria por incomparecencia: «No flotó».",
+      "<b>Fe de erratas:</b> en el Sistema Holandés (C.04.3, 2026, art. 1.4.3) quien gana por incomparecencia, sin jugar, recibe una <b>flotación descendente</b>."
+    ],
+    [
+      "Historial de colores",
+      "Guion para la ronda no jugada.",
+      "Se mantiene la idea y se cita la regla: solo cuentan las partidas jugadas (C.04.2, art. 3.4) y dos jugadores que no jugaron su partida pueden volver a emparejarse (art. 3.5)."
+    ],
+    [
+      "Lista de 16 jugadores",
+      "Jugadores reales con ratings inventados (2500 y 2501).",
+      "Se sustituye por una lista ficticia que muestra los tres criterios y el efecto del nuevo orden de títulos."
+    ],
+    [
+      "Discapacidad",
+      "Traducción con un párrafo duplicado (el del médico) y otro omitido (asistente para pulsar el reloj o mover).",
+      "Se corrige y se completa con las Leyes 2023: arts. 4.9, 6.2.6, 8.1.6, 12.2.6 y Apéndice D. Las pautas siguen citando los «arts. 6.7d y 8.1e» de una edición antigua de las Leyes; se indica a qué temas corresponden hoy."
+    ],
+    [
+      "Mundial de Rápidas y Relámpago",
+      "Reglas del Mundial 2013: 15 rondas cada uno, tablas solo por medio del árbitro, cuota de protesta de 500 USD, 200 000 USD por evento.",
+      "Se resume el reglamento del Mundial 2025 (Doha): rápidas a <b>13 rondas</b> 15'+10\"; relámpago con <b>19 rondas</b> de suizo y fase final por eliminación entre 4; sin tiempo de espera; desempates Buchholz -1, Buchholz, AROC 1; depósito de protesta de 300 €; 700 000 € en premios. Se retiraron los anuncios de cursos caducados y los datos de contacto."
+    ]
+  ],
+  "directorio": [
+    [
+      "Director (edición original)",
+      "Santiago García Ramos · Árbitro Internacional"
+    ],
+    [
+      "Revisión (edición original)",
+      "Ignacio Córdoba Navarro · Periodista"
+    ],
+    [
+      "Diseño (edición original)",
+      "Ángel Antonio Espino · Diseñador gráfico"
+    ],
+    [
+      "Colaboradores (edición original)",
+      "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"
+    ]
+  ]
+}

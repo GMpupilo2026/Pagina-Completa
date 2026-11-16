@@ -5511,6 +5511,30 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   tardía en el acta). Las inscripciones se borran con el torneo (`on delete
   cascade`): «Dejar de publicar» se las lleva. La política de privacidad lo
   dice.
+- **El comentario al aceptar o rechazar, y el aviso por correo.** Lo pidió
+  el dueño para la Eliminatoria Cantonal JDN de Pérez Zeledón: antes
+  rechazar solo cambiaba el estado y quien inscribió nunca se enteraba.
+  Ahora «Aceptar», «Rechazar» y «Aceptar las N por revisar» abren un cuadro
+  (`Avisos.formulario`) con un comentario opcional (al rechazar se pide «el
+  motivo»), que dice antes de confirmar a quién le llega el aviso. `marcar`
+  lo guarda en `pareo_preinscripciones.comentario` (migración
+  `20261113232127_pareo_preinscripciones_comentario.sql`) y, si el contacto
+  es un correo (`esCorreo` de `correos.ts`), le manda a quien inscribió
+  `correoDecision` con el estado y el comentario; si la organización tiene
+  su correo confirmado, va de `reply_to`, así la respuesta le llega a ella.
+  Al aceptar, el correo es **la bienvenida al torneo** (lo pidió el dueño):
+  los datos de la inscripción (centro, categoría, sexo, nacimiento, Elo, ID
+  FIDE) y los del torneo publicado —fecha, lugar, ritmo y rondas de la
+  ficha Torneo; hora, contacto y bases del anuncio—, sin filas vacías, con
+  el botón al torneo. `marcar` lee solo esas rutas de `datos`, no el torneo
+  entero. El rechazo repite los datos de la inscripción para que se sepa
+  cuál fue.
+  Con un teléfono no se manda nada y Pareo se lo dice al árbitro (en el
+  cuadro, en un aviso y en la tarjeta). `avisado` guarda la hora del correo
+  que salió: la tarjeta ya marcada muestra el comentario y si se le avisó,
+  sin adivinar. Un correo que no sale no deshace la marca. Volver a
+  «pendiente» borra el comentario. Lo prueba
+  `herramientas/verificar-pareo-inscripcion-comentario.js`.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
@@ -12049,6 +12073,113 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
 - **Las preguntas se recuerdan por una clave estable** (`ficha#n`, su lugar
   dentro de la ficha), no por el índice global, que cambiaba al agregar
   contenido; el avance viejo se pasa una vez a la clave nueva (`pregV2`).
+- **Las revistas se generan desde `herramientas/revistas-arbitraje/`**
+  (`generar.js`, con su `LEEME.md`): las fuentes de cada número (`meta.json`,
+  `cuerpo.html`, `fichas.json`), el estilo, la ilustración de cada portada y el
+  armador de `js/aula-arbitraje/contenido-revistas.js`. Al principio vivían en
+  una carpeta temporal de la sesión que las escribió: un PDF que no se puede
+  volver a generar se termina editando a mano o se pierde. Al pasarlos, se
+  regeneraron los 18 y salieron **idénticos byte a byte** a los publicados
+  (PDF y portadas), y `armar-aula.py` da el mismo `contenido-revistas.js`
+  (salvo el sello): esa es la prueba de que la copia del repositorio es la
+  buena. Las revistas originales de 2012-2014 no se suben: son del autor
+  original y solo fueron la fuente.
+- **Cada portada lleva una ilustración vectorial de su tema**
+  (`ilustraciones.js`): reloj, coronación, posición muerta, Wimbledon, sala de
+  juego, convocatoria, FEN, Suizo, títulos, pieza caída, caída de bandera,
+  relojes vigilados, Ajedrez960, antidopaje, jugada a dos manos, torre
+  invertida, rating performance y juego limpio. Se dibuja en SVG y no con
+  imágenes generadas, para que las 18 compartan estilo y para que los
+  tableros sean posiciones de la propia revista, validadas con chess.js (con
+  las piezas de `js/chess-piece-svg.js`; con glifos de texto salían diminutas
+  y con la fuente de emojis).
+- **El N.º 19 es una edición especial nueva**, no una revista vieja: la guía
+  paso a paso de Pareo Integral y la mesa del árbitro, con capturas de las
+  pantallas (pedido del dueño). Va en la Aula como un número más
+  (`revista-19`, con dos fichas y sus preguntas, y su PDF que se habilita al
+  completarlo). Las capturas las saca `no19/capturas.js`, que juega un torneo
+  entero en `pareo.html` con jugadores inventados (el candado abierto como en
+  los verificadores y `pareo-publicar` con un doble: nada se publica) y abre
+  la mesa con el doble de Supabase de `verificar-mesa-arbitro-pareo.js`. Dos
+  cosas que no se ven y arruinaban la captura: el encabezado fijo del sitio y
+  los avisos se pintan en medio de una captura de página entera (se esconden
+  antes), y `boundingBox()` da coordenadas de la ventana, no de la página (con
+  la página desplazada, el recorte salía corrido). El sitio se sirve desde el
+  disco pero con la dirección `https://ajedrez-integral.com`, para que los
+  enlaces que muestran las pantallas no digan `127.0.0.1`. **Si cambian esas
+  pantallas, se vuelven a sacar las capturas y se genera el N.º 19.** Los
+  verificadores de la Aula ya no dicen «18»: cuentan las carpetas `noNN/`.
+- **El N.º 20 es el manual completo de la mesa del árbitro del Centroamericano**
+  (pedido del dueño: «la versión del centroamericano, que es la más completa»):
+  la página de la organización pestaña por pestaña y la tableta del adjunto,
+  de la entrada a la bitácora, con 25 capturas. Las saca `no20/capturas.js`
+  con los dobles de los verificadores (`lib/doble-centroamericano-*.js`) y,
+  para Fair Play, el doble de `verificar-centroamericano-fair-play.js`, cuyas
+  primeras líneas son solo definiciones y se cargan sin correr sus pruebas (si
+  ese archivo cambia de forma, el script lo dice). **Los nombres de los dobles
+  que parecen de jugadores de verdad (muchos, menores) se cambian por otros
+  inventados antes de la captura**: van en la lista `NOMBRES` del script, y un
+  nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
+  doble en el navegador: la revista la cuenta sin captura.
+
+### Las ayudas de cálculo de los ejercicios
+
+Pedido del dueño: que los árbitros hagan los cálculos de los ejercicios
+dentro de la plataforma, sin salir a buscar una calculadora o una tabla.
+`js/aula-arbitraje/ayudas.js` pone en cada ejercicio de cálculo (relojes,
+Koya, desempates y normas, en Practicar y en los casos de sala) una barra con
+tres botones, justo entre los datos y lo que se calcula:
+
+- **Calculadora**: una cuenta con + − × ÷, paréntesis, coma decimal y ½ ¼ ¾,
+  el promedio de una lista (los Elo se pueden pegar con la coma pegada:
+  «2188,2405») y lo ya calculado para volver a usarlo.
+- **Tablas de FIDE**: la tabla del dp (1.4.9) y los mínimos de cada norma
+  salen de `js/normas-titulo.js`, y los desempates del catálogo de
+  `js/pareo/desempates.js`: la misma copia que hace el cálculo, nunca una
+  segunda escrita a mano.
+  Los desempates por rendimiento (TPR, APRO) traen además su tabla del dp,
+  hecha con `PareoDesempates.dpDeP`, que **no es igual de usar** que la de
+  las normas aunque los valores coincidan: para una norma el porcentaje se
+  redondea al entero antes de buscarlo (1.4.9); para el TPR, si el porcentaje
+  no está en la tabla, el motor interpola entre los dos vecinos. Por eso cada
+  una lleva su nota y sale de su propio código.
+- **¿Cómo se calcula?**: la fórmula y los pasos, sin los números del
+  ejercicio. Abrirla deja el ejercicio como «resuelto con pista» (en la
+  corrección y en el marcador: «Correctos: 7 de 9 (2 con pista)»).
+
+Además, los campos numéricos de esos ejercicios aceptan una cuenta y muestran
+el resultado al lado mientras se escribe («= 2273,6667» en el Ra).
+
+**Dónde van y dónde no.** También traen la calculadora (y las tablas de FIDE)
+las **preguntas**, fija arriba para que el historial siga de una pregunta a
+la otra; la calculadora de los **casos de decisión de texto** (tiempos,
+minutos de espera, puntos), y los tiempos de la **calculadora de ajuste de
+la pestaña Reloj**. No la traen los casos de **bandera, segunda ilegal y
+repetición** ni «Posiciones idénticas»: ahí se decide mirando la posición, y
+no hay nada que sumar. La pestaña «Calculadoras» ya es una calculadora.
+
+**Los relojes cuentan con tiempos.** En los casos y la práctica de relojes,
+la calculadora y los dos tiempos (el panel «Ajuste del árbitro» de
+`js/aula-arbitraje/reloj.js` y los campos de la práctica) aceptan cuentas
+con h:mm:ss o m:ss: «1:12:40 − 0:05:00», «0:30 × 12» (doce incrementos),
+«1:30:00 + 40 × 30 − 0:36:00». Cada tiempo se pasa a segundos y **un número
+suelto también son segundos**; el resultado vuelve a h:mm:ss. Un tiempo solo,
+sin cuenta, lo sigue leyendo `AulaAjuste.leerTiempo` como antes. Por eso la
+calculadora de números no toma los dos puntos como división: los dos puntos
+son de los tiempos.
+
+- **Hacen las cuentas, no las reglas.** Qué partidas se dejan afuera, a quién
+  se sube al piso, el 1400 del rival sin Elo, cómo se redondea o qué rivales
+  cuentan en el Koya lo sigue decidiendo el árbitro: si la plataforma lo
+  hiciera, el ejercicio ya no enseñaría. Por eso la pestaña «Calculadoras»,
+  que hace el cálculo completo, no se mete dentro de los ejercicios.
+- La cuenta se evalúa con un analizador propio (sin `eval`, que la CSP no
+  deja y no hace falta): lo que no es una cuenta completa da null, y nada se
+  ejecuta. Los dos puntos no dividen, para no romper un tiempo «1:30:00».
+- Lo revisan `verificar-aula-arbitraje.js` (el analizador) y
+  `verificar-aula-arbitraje-pagina.js` (la barra en cada ejercicio, los
+  paneles cerrados al empezar, el Ra con una cuenta, la tabla del dp y la
+  pista que marca «con pista»).
 
 ## Desempates explicados
 

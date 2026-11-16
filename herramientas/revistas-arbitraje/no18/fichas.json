@@ -1,0 +1,500 @@
+{
+ "coleccion": {
+  "id": "revista-18",
+  "titulo": "Revista Arbitraje de Ajedrez · N.º 18",
+  "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+ },
+ "fichas": [
+  {
+   "id": "dispositivos-electronicos",
+   "coleccion": "revista-18",
+   "titulo": "Dispositivos electrónicos y revisión de jugadores",
+   "articulos": "Leyes 2023 · arts. 11.2.3, 11.3, 12.2.7, 12.8, 12.9",
+   "resumen": "Qué dicen las Leyes sobre teléfonos y otros dispositivos, cuándo se pierde la partida y cómo se revisa a un jugador.",
+   "claves": [
+    "Prohibido tener en el recinto cualquier dispositivo electrónico no aprobado por el árbitro (11.3.2).",
+    "Las bases pueden permitirlo completamente apagado en el bolso, donde se acuerde con el árbitro (11.3.2.1).",
+    "Si lo lleva encima, pierde; las bases pueden fijar una sanción menor (11.3.2.2).",
+    "La revisión puede incluir ropa, bolsos, objetos o el cuerpo, en privado y por alguien del mismo género (11.3.3).",
+    "Si el jugador se niega a ser revisado, se aplica el art. 12.9.",
+    "Nadie puede usar un teléfono en el recinto sin autorización del árbitro, tampoco el público (12.8)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 11.3.1</b> Durante la partida está prohibido usar notas, fuentes de información o consejos, o analizar en otro tablero.</div><div class=\"aula-norma\"><b>Art. 11.3.2</b> Prohibido tener en el recinto cualquier dispositivo electrónico no aprobado por el árbitro.</div><div class=\"aula-norma\"><b>Art. 11.3.2.1</b> Las bases pueden permitir guardarlo completamente apagado en el bolso del jugador, colocado donde se acuerde con el árbitro. Ninguno de los dos jugadores puede usar ese bolso sin permiso del árbitro.</div><div class=\"aula-norma\"><b>Art. 11.3.2.2</b> Si es evidente que el jugador lleva el dispositivo encima, pierde la partida y el rival gana. Las bases pueden fijar una sanción diferente, menos severa.</div><div class=\"aula-norma\"><b>Art. 11.3.3</b> El árbitro puede pedir revisar ropa, bolsos, otros objetos o el cuerpo, en privado, por él o por alguien autorizado del mismo género que el jugador. Si el jugador no coopera, se aplica el art. 12.9.</div><div class=\"aula-norma\"><b>Arts. 12.2.7 y 12.8</b> El árbitro sigue las reglas de juego limpio. Sin su autorización, nadie puede usar un teléfono o aparato de comunicación en el recinto ni en las zonas contiguas que designe.</div><div class=\"aula-norma aula-norma-aviso\"><b>Recinto y zona de juego (art. 11.2).</b> El recinto incluye la zona de juego, baños, cafetería, zona de fumado y otros lugares que designe el árbitro. Salir del recinto, y para quien tiene el turno salir de la zona de juego, requiere permiso del árbitro (11.2.3).</div><p class=\"aula-nota\">En 2014 (art. 11.3.b) la prohibición se refería al teléfono móvil o medio de comunicación; desde 2017 abarca cualquier dispositivo y existe la opción del bolso.</p>"
+  },
+  {
+   "id": "juego-limpio-fide",
+   "coleccion": "revista-18",
+   "titulo": "El sistema de juego limpio de la FIDE",
+   "articulos": "Fair Play Regulations (desde 18-nov-2024) · arts. 1-6 · Fair Play Protection Measures (2024)",
+   "resumen": "Qué es trampa, los tres niveles de protección, cómo se presenta una queja y qué valor tiene la estadística.",
+   "claves": [
+    "Trampa: usar dispositivos o fuentes de información, o manipular competiciones (sandbagging, arreglos, identidad falsa); el intento cuenta (1.2, 1.8).",
+    "Tres niveles: máxima, aumentada y estándar; la estándar exige al menos una medida técnica.",
+    "Quejas solo por escrito y con formulario; no se aceptan orales ni informales (3.2.3, 3.2.5).",
+    "La queja «juega mejor que su rating» es manifiestamente infundada (3.2.9).",
+    "Estadística como única prueba: z ≥ 5,00 presencial, 4,25 en línea; como apoyo, 2,50 (1.6).",
+    "Las sanciones las decide la Comisión de Ética y Disciplina (EDC)."
+   ],
+   "contenido": "<h3>Qué es trampa</h3><div class=\"aula-norma\"><b>Art. 1.2</b> El uso deliberado de dispositivos electrónicos u otras fuentes de información o consejo durante la partida, o la manipulación de competiciones: arreglo de resultados, <i>sandbagging</i>, fraude de rating, identidad falsa, torneos o partidas ficticios. <b>Art. 1.8</b> El intento cuenta como trampa.</div><h3>Niveles de protección (Protection Measures 2024)</h3><div class=\"aula-tabla\"><table><tr><th>Nivel</th><th>Eventos</th></tr><tr><td>Máxima</td><td>Mundiales de la FIDE, continentales mayores, round robins de 2650+ (2450 femeniles), premios de más de 100 000 €</td></tr><tr><td>Aumentada</td><td>Continentales menores, campeonatos nacionales (no juveniles), torneos de normas, premios de 15 000 €+, round robins de 2500+ (2300 femeniles)</td></tr><tr><td>Estándar</td><td>Nacionales juveniles y todo lo demás con rating</td></tr></table></div><p>En el nivel estándar: una persona a cargo del juego limpio, zonas separadas para jugadores y público, al menos una medida técnica (detector de metales, cámaras, escáner…) y revisiones al azar si se puede.</p><h3>Quejas</h3><div class=\"aula-norma\"><b>Art. 3.2</b> Cualquier persona con número FIDE, por escrito y con el formulario (durante o después del torneo). Nada de quejas orales o informales. Durante el torneo se entrega al oficial principal de juego limpio o, si no hay, al árbitro principal, que advierte de la sanción por queja infundada, investiga y envía todo a la FPL y a la Comisión de Árbitros. Confidencialidad total hasta el final de la investigación.</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 3.2.9</b> Una queja basada solo en que alguien juega más fuerte de lo que dice su rating es manifiestamente infundada. <b>Art. 1.7</b> Un jugador o capitán sí puede comentar en privado una sospecha al árbitro para que vigile.</div><h3>Estadística</h3><div class=\"aula-tabla\"><table><tr><th>Uso</th><th>Umbral z (art. 1.6)</th></tr><tr><td>Única prueba, presencial</td><td>5,00</td></tr><tr><td>Única prueba, en línea</td><td>4,25</td></tr><tr><td>Apoyo de otras pruebas</td><td>2,50</td></tr></table></div><p class=\"aula-nota\">Torneos de nivel estándar: los casos van a la federación nacional, salvo que afecten un título FM/WFM o involucren a alguien con título FM/WFM o superior (art. 2.5). Prescripción: 5 años (1 en línea).</p>"
+  },
+  {
+   "id": "disciplina-arbitros",
+   "coleccion": "revista-18",
+   "titulo": "Régimen disciplinario de los árbitros",
+   "articulos": "B.06.5 · FIDE Arbiter Disciplinary Regulations (desde 1-jul-2026)",
+   "resumen": "Quién juzga la conducta de los árbitros, qué faltas existen, qué sanciones hay y cómo se apela.",
+   "claves": [
+    "Juzga el Subcomité Disciplinario (DSC) de la Comisión de Árbitros; no actúa de oficio (arts. 1-2).",
+    "Las quejas van primero a la ARB, que decide si son admisibles; los casos más graves, a la EDC (2.4).",
+    "Prescripción: 5 años (fraude, corrupción, trampa) o 3 años; queja dentro de 9 meses desde que se conocieron los hechos (2.8).",
+    "Sanciones: advertencia (12 meses), amonestación (24 meses), inhabilitación hasta 18 meses (24 si reincide) (art. 4).",
+    "Apelación al Consejo FIDE en 15 días naturales, con 300 € (art. 6).",
+    "La apelación de un jugador contra una decisión en la sala es otra cosa: art. 11.10 de las Leyes."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Arts. 1 y 2</b> El DSC tiene un presidente, dos miembros y dos suplentes, Árbitros Internacionales de categoría A, B o C de federaciones distintas, al menos tres con formación jurídica y ninguno de la ARB. Juzga a los árbitros con licencia FIDE y a los conferencistas de seminarios. No actúa de oficio: la ARB decide la admisibilidad y envía el caso al DSC, o a la EDC si podría merecer más de 18 meses de inhabilitación (24 si reincide).</div><div class=\"aula-norma\"><b>Art. 2.6</b> Pueden quejarse: el presidente de la FIDE, el Consejo, la Junta Directiva, las comisiones, una federación, el organizador, un conferencista o árbitro del evento, y los jugadores directamente afectados.</div><h3>Faltas (art. 3)</h3><ul><li>3.1 Administrativas: informes falsos.</li><li>3.2 Daño a la reputación: parcialidad, acusaciones injustificadas, discriminación, regalos.</li><li>3.3 Deshonestidad: corrupción, acusar de trampa sin bases, no cooperar, no informar de un soborno, ayuda externa en evaluaciones de seminarios.</li><li>3.4 Mala conducta: cortesía, conducta social, vestimenta.</li><li>3.5 Obligaciones: no presentarse, llegar tarde, ausentarse, dos eventos a la vez, eventos rechazados por la federación.</li><li>3.6 Técnicas: alterar emparejamientos, falsear planillas o informes, firmar normas incorrectas, incumplir las Leyes.</li></ul><div class=\"aula-tabla\"><table><tr><th>Sanción (art. 4)</th><th>Para</th><th>Vigencia</th></tr><tr><td>Advertencia escrita</td><td>Faltas menores</td><td>12 meses</td></tr><tr><td>Amonestación escrita</td><td>Faltas más serias</td><td>24 meses</td></tr><tr><td>Inhabilitación</td><td>Faltas graves</td><td>Hasta 18 meses; hasta 24 si reincide</td></tr></table></div><div class=\"aula-norma\"><b>Art. 6</b> Apelación ante el Consejo FIDE en 15 días naturales, improrrogables, con 300 € que se devuelven si prospera al menos en parte.</div><p class=\"aula-nota\">Antecedente: la propuesta de 2014 publicada en la revista tipificaba 13 faltas, cada una con su sanción, con apelación al Buró Presidencial.</p>"
+  },
+  {
+   "id": "torneo-valido-rating",
+   "coleccion": "revista-18",
+   "titulo": "Torneo válido para rating FIDE",
+   "articulos": "Reglamento de Rating (2024) · arts. 0.2, 1, 3.1, 4.1, 5.1, 6, 7.1, 9 · Resolución del Consejo FIDE (nov-2026) · B.06.1 arts. 6.1-6.2",
+   "resumen": "Registro, ritmo mínimo, horas de juego, árbitros y envío del informe para que un torneo se evalúe para rating.",
+   "claves": [
+    "Registro: 3 días antes; 30 si juega alguien de más de 2700 (o una jugadora de más de 2500) o si hay normas.",
+    "Ritmo (por jugador, 60 jugadas): 120 min si alguien tiene 2400+; 90 si 1800+; 60 si ambos menos de 1800.",
+    "Desde nov-2026: 60′+30″ es estándar; 45′+30″ en Circuito FIDE o sin jugadores de 2400+.",
+    "Máximo 12 horas de juego por día; en torneos de normas, máximo dos rondas por día.",
+    "Árbitros con la cuota de registro al día; si no, el torneo puede no evaluarse.",
+    "Primer rating: 5 partidas contra rivales con rating y resultado de al menos 1400."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 0.2</b> La federación del país registra el torneo y su calendario: al menos 3 días antes; 30 días si participa alguien de más de 2700 o una jugadora de más de 2500. Torneos de normas: 30 días (Títulos 1.1.1).</div><div class=\"aula-norma\"><b>Art. 1.1</b> Tiempo mínimo por jugador, suponiendo 60 jugadas: 120 minutos si al menos uno tiene 2400 o más; 90 si al menos uno tiene 1800 o más; 60 si ambos tienen menos de 1800. <b>Art. 1.2</b> Primer control de al menos 30 jugadas.</div><p><span class=\"aula-formula\">tiempo = base + 60 × incremento</span> &nbsp; 90′+30″ = 120 min; 60′+30″ = 90 min; 45′+30″ = 75 min.</p><div class=\"aula-norma aula-norma-aviso\"><b>Resolución del Consejo FIDE (nov-2026)</b> 60′+30″ es ritmo estándar sin aprobación especial, para rating y títulos. 45′+30″: torneos del Circuito FIDE o sin jugadores de 2400 o más. Para normas: máximo dos rondas por día y solo una norma de estos ritmos por título. Puede ajustarse tras la Asamblea extraordinaria de diciembre de 2026.</div><div class=\"aula-tabla\"><table><tr><th>Ritmo</th><th>Partida (60 jugadas)</th><th>Rondas en 12 h</th></tr><tr><td>90′+30″</td><td>4 h</td><td>3</td></tr><tr><td>60′+30″</td><td>3 h</td><td>4</td></tr><tr><td>45′+30″</td><td>2 h 30</td><td>4</td></tr><tr><td>30′+30″</td><td>2 h</td><td>6</td></tr></table></div><div class=\"aula-norma\"><b>Arts. 3.1, 4.1, 5.1 y 6</b> Máximo 12 horas de juego por día. Si dura más de 30 días, informes mensuales. Partidas no jugadas no se evalúan; las que tienen al menos una jugada de cada uno sí. Los matches con un jugador sin rating no se evalúan.</div><div class=\"aula-norma\"><b>B.06.1, arts. 6.1-6.2</b> Los árbitros deben pagar la cuota de registro (antes «licencia»); si no, el torneo puede no evaluarse y no valen sus normas de árbitro.</div><p class=\"aula-nota\">Las bases deben decir que el torneo será evaluado (9.2) y el informe TRF debe llegar a tiempo para la tercera lista después del final (9.1).</p>"
+  }
+ ],
+ "preguntas": [
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "Las bases no dicen nada sobre teléfonos. Durante la partida, al jugador se le cae del bolsillo un celular apagado. ¿Qué decides?",
+   "opciones": [
+    "Pierde la partida y el rival gana",
+    "Nada, porque estaba apagado",
+    "Advertencia",
+    "Se le restan 10 minutos"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 11.3.2.2: si es evidente que el jugador lleva encima un dispositivo no aprobado, pierde y el rival gana. Estar apagado solo importa si las bases permiten guardarlo en el bolso (11.3.2.1)."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "Las bases permiten el teléfono en el bolso. ¿Qué condiciones fijan las Leyes?",
+   "opciones": [
+    "En silencio y a la vista",
+    "Apagado y en el bolsillo",
+    "Completamente apagado y el bolso donde se acuerde con el árbitro",
+    "Ninguna, si las bases lo permiten"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 11.3.2.1: completamente apagado, el bolso colocado como se acuerde con el árbitro, y ningún jugador puede usarlo sin permiso."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "¿Pueden las bases fijar una sanción menor que la pérdida de la partida por llevar el teléfono encima?",
+   "opciones": [
+    "No, la pérdida es obligatoria",
+    "Solo en partidas rápidas",
+    "Solo con permiso de la FIDE",
+    "Sí, el art. 11.3.2.2 lo permite"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 11.3.2.2: las bases pueden especificar una sanción diferente, menos severa."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "Decides revisar a una jugadora. ¿Cómo debe hacerse?",
+   "opciones": [
+    "En la sala, frente a testigos",
+    "En privado, por ti o por una persona autorizada del mismo género que la jugadora",
+    "Solo con permiso de su federación",
+    "Solo al final del torneo"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 11.3.3: en privado y por una persona del mismo género que el jugador. La revisión puede incluir ropa, bolsos, otros objetos o el cuerpo."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "El jugador se niega a que lo revises. ¿Qué norma aplicas?",
+   "opciones": [
+    "El art. 12.9 (sanciones del árbitro)",
+    "Pierde automáticamente",
+    "Lo dejas pasar",
+    "Llamas a la policía"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 11.3.3: si el jugador no coopera, el árbitro toma medidas según el art. 12.9, que va de la advertencia a la expulsión."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "Un espectador usa el teléfono en la zona de juego. ¿Puede el árbitro actuar?",
+   "opciones": [
+    "No, las Leyes solo rigen a los jugadores",
+    "Solo si el espectador es familiar de un jugador",
+    "Sí: sin su autorización nadie puede usar un teléfono en el recinto (12.8)",
+    "Solo si interfiere en una partida"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 12.8: salvo autorización del árbitro, está prohibido que cualquier persona use un teléfono en el recinto o zonas contiguas designadas. El art. 12.7 permite expulsar a quien interfiera."
+  },
+  {
+   "ficha": "dispositivos-electronicos",
+   "texto": "Con su turno, un jugador quiere ir al baño. ¿Necesita tu permiso?",
+   "opciones": [
+    "No, el baño es parte del recinto",
+    "Solo después de la jugada 40",
+    "Solo en partidas rápidas",
+    "Sí: quien tiene el turno necesita permiso para salir de la zona de juego"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 11.2.3.2: el jugador que tiene el turno necesita permiso del árbitro para salir de la zona de juego (el baño es parte del recinto, pero no de la zona de juego)."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "Un jugador te dice en voz baja: «creo que mi rival hace trampa». ¿Qué haces?",
+   "opciones": [
+    "Abres una investigación formal",
+    "Le explicas que una queja debe presentarse por escrito con el formulario; puedes vigilar con discreción, pero no es una queja formal",
+    "Revisas de inmediato al rival frente a todos",
+    "Ignoras el comentario"
+   ],
+   "correcta": 1,
+   "explicacion": "Fair Play Regulations 3.2.3 y 3.2.5: las quejas son por escrito y con formulario; no se aceptan orales ni informales. El art. 1.7 permite comentar en privado una sospecha para que el árbitro vigile."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "¿Cuál de estas quejas es manifiestamente infundada según el reglamento?",
+   "opciones": [
+    "«Juega mucho mejor de lo que dice su rating», sin nada más",
+    "«Lo vi mirar el teléfono en el baño»",
+    "«Un espectador le hacía señas»",
+    "«Tenía un auricular en el oído»"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.2.9: una queja basada solo en la suposición de que alguien juega más fuerte que su rating se considera manifiestamente infundada."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "Un jugador pierde puntos a propósito para bajar su rating y jugar luego en una categoría más baja. ¿Cómo lo califica el reglamento?",
+   "opciones": [
+    "No es trampa: es su decisión",
+    "Solo es falta de ética",
+    "Es trampa: manipulación de competiciones (sandbagging)",
+    "Solo si gana un premio"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 1.2.b: la manipulación de competiciones, incluido el sandbagging, es trampa. Y el intento cuenta como trampa (art. 1.8)."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "Un torneo cerrado tiene promedio de 2520. ¿Qué nivel de protección le corresponde?",
+   "opciones": [
+    "Máxima",
+    "Estándar",
+    "Ninguno",
+    "Aumentada"
+   ],
+   "correcta": 3,
+   "explicacion": "Protection Measures (2024): round robins de 2500 o más (2300 femeniles) requieren protección aumentada; la máxima empieza en 2650 (2450 femeniles)."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "¿Qué medida mínima exige el nivel estándar de protección?",
+   "opciones": [
+    "Un equipo de juego limpio nombrado por la FIDE",
+    "Al menos una medida técnica de la lista del anexo A",
+    "Escáneres en todas las puertas",
+    "Transmisión en vivo de todas las partidas"
+   ],
+   "correcta": 1,
+   "explicacion": "En el nivel estándar se debe adoptar al menos una medida técnica del anexo A (detectores de metales, cámaras, escáneres, etc.), además de designar a alguien a cargo del juego limpio."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "Si no hay ninguna otra prueba, ¿qué puntaje z exige el reglamento para partidas presenciales?",
+   "opciones": [
+    "5,00",
+    "2,50",
+    "4,25",
+    "4,75"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 1.6.b: 5,00 para ajedrez presencial (4,25 en línea). Con otras pruebas, 2,50 o más puede usarse como apoyo. El 4,75 era la propuesta de 2014."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "En un abierto de nivel estándar hay un caso de trampa entre dos jugadores sin título. ¿Quién lo investiga?",
+   "opciones": [
+    "Siempre la FPL",
+    "El árbitro principal, que decide la sanción final",
+    "La federación nacional",
+    "La Comisión de Árbitros"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 2.5: en torneos de protección estándar los casos van a la federación nacional, salvo que afecten un título FM/WFM o involucren a alguien con título FM/WFM o superior."
+  },
+  {
+   "ficha": "juego-limpio-fide",
+   "texto": "¿Quién impone hoy la sanción por trampa cuando la FPL lleva adelante un caso?",
+   "opciones": [
+    "La propia FPL",
+    "El árbitro principal",
+    "La Asamblea General",
+    "La Comisión de Ética y Disciplina (EDC)"
+   ],
+   "correcta": 3,
+   "explicacion": "Fair Play Regulations 4.11: la FPL decide si envía el caso a la EDC para su juicio; si no lo envía, se archiva."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "¿Qué órgano juzga primero la mayoría de las faltas de conducta de un árbitro?",
+   "opciones": [
+    "La Comisión de Juego Limpio",
+    "El Subcomité Disciplinario (DSC) de la Comisión de Árbitros",
+    "El Consejo FIDE",
+    "La federación del árbitro"
+   ],
+   "correcta": 1,
+   "explicacion": "B.06.5, arts. 1 y 2: el DSC de la ARB, después de que la ARB declara admisible la queja. Los casos más graves pueden ir directo a la EDC."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "¿Puede el DSC abrir un caso por su cuenta?",
+   "opciones": [
+    "No: solo decide casos que le envía la ARB",
+    "Sí, cuando quiera",
+    "Solo si hay prensa",
+    "Sí, con permiso del presidente de la FIDE"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 2.3: el DSC no investiga de oficio; decide un caso solo después de recibirlo de la ARB."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "¿Cuál es la inhabilitación máxima que puede imponer el DSC a un árbitro por una primera falta?",
+   "opciones": [
+    "6 meses",
+    "12 meses",
+    "18 meses",
+    "3 años"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 4.1: hasta 18 meses la primera vez y hasta 24 si reincide. Las faltas que merecerían más se envían a la EDC (art. 2.4)."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "¿Cuánto tiempo vale una advertencia por escrito del DSC?",
+   "opciones": [
+    "6 meses",
+    "24 meses",
+    "Para siempre",
+    "12 meses"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 4.1: la advertencia escrita vale 12 meses; la amonestación, 24 meses."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "Un árbitro quiere apelar la decisión del DSC. ¿Ante quién y en qué plazo?",
+   "opciones": [
+    "Ante la ARB, en 30 días",
+    "Ante el Consejo FIDE, en 15 días naturales",
+    "Ante el Buró Presidencial, en la siguiente reunión",
+    "No se puede apelar"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 6: ante el Consejo FIDE, en 15 días naturales e improrrogables, con una cuota de 300 €. El Buró Presidencial era la instancia de la propuesta de 2014."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "Un organizador se queja de que el árbitro cambió deliberadamente los emparejamientos. ¿En qué grupo de faltas cae?",
+   "opciones": [
+    "Infracciones técnicas",
+    "Administrativas",
+    "Mala conducta general",
+    "No es falta"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.6.1: cambiar deliberadamente los emparejamientos en contra de las normas aplicables es una infracción técnica."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "Un jugador conoció los hechos hace 11 meses y recién ahora presenta la queja contra el árbitro. ¿Qué pasa?",
+   "opciones": [
+    "Se tramita normalmente",
+    "Se tramita si la falta tiene menos de 3 años",
+    "La ARB no la recibe: pasaron más de 9 meses desde que conoció los hechos",
+    "Depende del DSC"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 2.8: la ARB no recibe la queja si el denunciante conocía (o debía conocer) los hechos desde hacía más de nueve meses."
+  },
+  {
+   "ficha": "disciplina-arbitros",
+   "texto": "Un jugador no está de acuerdo con una decisión del árbitro sobre un reclamo de tablas. ¿Qué vía corresponde?",
+   "opciones": [
+    "Una queja al DSC",
+    "Una queja a la FPL",
+    "Ninguna: el árbitro es inapelable",
+    "Apelar según el art. 11.10 de las Leyes, ante el órgano que fijen las bases"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 11.10: salvo que las bases digan otra cosa, el jugador puede apelar cualquier decisión del árbitro. El B.06.5 trata de la conducta del árbitro, no de revisar sus decisiones técnicas en la sala."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un abierto sin jugadores de más de 2700 ni normas posibles. ¿Con cuánta anticipación mínima se registra?",
+   "opciones": [
+    "1 día",
+    "3 días",
+    "7 días",
+    "30 días"
+   ],
+   "correcta": 1,
+   "explicacion": "Reglamento de Rating, art. 0.2.2: tres días antes del inicio. Treinta si hay alguien de más de 2700 o una jugadora de más de 2500 (0.2.1), o si es torneo de normas (Títulos 1.1.1)."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "En una partida juegan una jugadora de 1950 y un jugador de 1720. ¿Qué tiempo mínimo por jugador exige el art. 1.1?",
+   "opciones": [
+    "90 minutos",
+    "60 minutos",
+    "120 minutos",
+    "75 minutos"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 1.1: si al menos uno tiene 1800 o más, cada jugador debe tener al menos 90 minutos (suponiendo 60 jugadas). Además, desde noviembre de 2026, 60′+30″ (90 min) es estándar en cualquier torneo."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "¿Cuántos minutos equivale el ritmo 45′ + 30″ para el cálculo del tiempo mínimo?",
+   "opciones": [
+    "45",
+    "60",
+    "75",
+    "90"
+   ],
+   "correcta": 2,
+   "explicacion": "Se cuenta con 60 jugadas: 45 + 60 × 30 s = 45 + 30 = 75 minutos por jugador."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un abierto con un jugador de 2430 quiere usar 45′ + 30″. No es del Circuito FIDE. ¿Se puede evaluar para rating estándar?",
+   "opciones": [
+    "Sí, la resolución de 2026 lo permite siempre",
+    "Sí, con una ronda por día",
+    "Sí, si es suizo",
+    "No: el 45′+30″ se admite solo en el Circuito FIDE o si nadie tiene 2400 o más"
+   ],
+   "correcta": 3,
+   "explicacion": "Resolución del Consejo FIDE (nov-2026), puntos 2 y 3: 45′+30″ en torneos del Circuito FIDE que cumplan sus requisitos o en torneos sin jugadores de 2400 o más. En cambio, 60′+30″ sí sirve en cualquier torneo."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un torneo solo para rating (sin normas) juega a 60′ + 30″. ¿Cuántas rondas por día puede tener como máximo?",
+   "opciones": [
+    "2",
+    "4",
+    "3",
+    "6"
+   ],
+   "correcta": 1,
+   "explicacion": "Cada partida de 60 jugadas dura 3 horas (90 min por jugador); el límite es de 12 horas de juego por día (art. 3.1): 4 rondas. Las dos rondas por día son el límite para torneos de normas."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Si el primer control de tiempo fija un número de jugadas, ¿cuál es el mínimo?",
+   "opciones": [
+    "30",
+    "20",
+    "40",
+    "60"
+   ],
+   "correcta": 0,
+   "explicacion": "Reglamento de Rating, art. 1.2: al menos 30 jugadas. La edición de 2014 decía 40."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un árbitro del torneo no pagó su cuota de registro FIDE. ¿Qué riesgo hay?",
+   "opciones": [
+    "Ninguno",
+    "Solo una multa al árbitro",
+    "El evento puede no ser evaluado y no se aceptan sus normas de árbitro",
+    "Que el árbitro pierda su título"
+   ],
+   "correcta": 2,
+   "explicacion": "B.06.1 (2026), arts. 6.1 y 6.2: todos los árbitros de un evento con rating deben cumplir el Reglamento Financiero, incluida la cuota de registro; si no, el evento puede no evaluarse y las normas de árbitro no se aceptan."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un jugador sin rating jugó 4 partidas contra rivales con rating este mes. ¿Recibe rating en la próxima lista?",
+   "opciones": [
+    "Sí, si ganó la mitad",
+    "Sí, con cualquier resultado",
+    "No: necesita 9 partidas",
+    "No: necesita al menos 5 partidas contra rivales con rating (pueden sumarse de varios torneos en 26 meses)"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 7.1.4: el primer rating se publica con al menos 5 partidas contra rivales con rating, sumando torneos de períodos consecutivos de hasta 26 meses, y solo si es de 1400 o más."
+  },
+  {
+   "ficha": "torneo-valido-rating",
+   "texto": "Un torneo dura 45 días. ¿Qué exige el Reglamento de Rating?",
+   "opciones": [
+    "Que no pase de 30 días",
+    "Informar los resultados parciales cada mes",
+    "Pagar una extensión cada 30 días",
+    "Nada especial"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 4.1: si el torneo dura más de 30 días, los resultados parciales se informan mensualmente. El límite de 90 días con extensiones pagadas era de la normativa citada en 2014."
+  }
+ ],
+ "casos": [
+  {
+   "id": "telefono-en-bolso",
+   "ficha": "dispositivos-electronicos",
+   "titulo": "El teléfono que vibró en el bolso",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Abierto con rating. Las bases permiten guardar el teléfono completamente apagado en el bolso, que debe quedar bajo la silla. Durante la ronda 5, el bolso de un jugador empieza a vibrar con una llamada. Él no lo ha tocado.",
+   "decision": {
+    "texto": "¿Qué consideras al decidir?",
+    "opciones": [
+     "No cumplió la condición de tenerlo completamente apagado (11.3.2.1); aplicas lo que digan las bases para ese caso o, si no dicen nada, las sanciones del art. 12.9 con tu criterio",
+     "Nada: el teléfono está en el bolso, como permiten las bases",
+     "Pierde automáticamente por llevarlo encima (11.3.2.2)",
+     "Expulsas al jugador del torneo"
+    ],
+    "correcta": 0,
+    "explicacion": "El art. 11.3.2.1 permite el teléfono en el bolso solo si está completamente apagado; un teléfono que vibra no lo está. El art. 11.3.2.2 (pérdida) habla del dispositivo que el jugador lleva encima, y el teléfono estaba en el bolso. Las bases deberían prever la sanción; si no lo hacen, el árbitro decide con el art. 12.9. Por eso conviene que las bases sean claras."
+   }
+  },
+  {
+   "id": "ritmo-45-30",
+   "ficha": "torneo-valido-rating",
+   "titulo": "¿Sirve el 45′ + 30″?",
+   "nivel": "Básico",
+   "ritmo": null,
+   "escena": "Te consultan por un abierto de fin de semana a 45′ + 30″, con dos rondas por día, que se registrará para rating estándar. No es del Circuito FIDE. La lista de inscritos tiene ratings entre 1450 y 2380.",
+   "decision": {
+    "texto": "¿Qué respondes?",
+    "opciones": [
+     "No sirve: el mínimo es 90 minutos porque hay jugadores de 1800 o más",
+     "Sirve solo con una ronda por día",
+     "Sirve: no participa nadie de 2400 o más, así que 45′+30″ se admite (resolución del Consejo FIDE de noviembre de 2026); si alguien de 2400 o más se inscribe, deja de valer",
+     "Sirve solo para el rating de rápidas"
+    ],
+    "correcta": 2,
+    "explicacion": "La resolución del Consejo FIDE (nov-2026), punto 3, admite 45′+30″ cuando ningún participante tiene 2400 o más; con dos rondas por día también puede dar normas, con el límite de una norma de estos ritmos por título. Hay que vigilar las inscripciones: con un jugador de 2400+ se pierde la condición."
+   }
+  }
+ ],
+ "repeticiones": []
+}

@@ -38,6 +38,23 @@
  * corta el envío sin dar ningún error. verificar-errores.js revisa las dos
  * cosas juntas.
  */
+/* www.ajedrez-integral.com → ajedrez-integral.com, desde la página.
+   El worker hace ese 301, pero solo corre donde lo nombra run_worker_first
+   (wrangler.jsonc): las páginas las sirve Cloudflare directo, así que por www
+   la página abría igual, y lo que sí pasa por el worker (cursos/recursos/, el
+   candado de los cursos) respondía con el 301 al otro dominio, que la CSP
+   (connect-src 'self') corta. El 16/11 la presentación de la clase quedó en
+   «No se pudo abrir la presentación» para un profe que entró por www. Va acá
+   porque este es el primer script, síncrono, de todas las páginas: se va
+   antes de que la página haga nada (ver «El dominio: `www` manda al dominio
+   sin `www`»). verificar-www.js lo comprueba. */
+(function () {
+  var l = window.location;
+  if (l.hostname.indexOf("www.") === 0) {
+    l.replace(l.protocol + "//" + l.hostname.slice(4) + (l.port ? ":" + l.port : "") + l.pathname + l.search + l.hash);
+  }
+})();
+
 (function () {
   "use strict";
   if (window.ErroresSitio) return;

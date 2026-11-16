@@ -154,10 +154,11 @@
   const reportar = (id, motivo, detalle) => llamar({ accion: "reportar", id, motivo, detalle: detalle || "" });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
   // La inscripción previa: mandarla (la página pública, sin clave), leerlas
-  // y marcarlas (quien organiza, con la clave de su torneo).
+  // y marcarlas (quien organiza, con la clave de su torneo), con un
+  // comentario que le llega por correo a quien inscribió si dejó un correo.
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
-  const marcar = (p, ids, estado) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado });
+  const marcar = (p, ids, estado, comentario) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" });
   // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
   // confirmarlo y darse de baja con los enlaces que llegan por correo.
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });

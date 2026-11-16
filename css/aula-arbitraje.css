@@ -258,4 +258,24 @@ table.aula-torneo td { white-space: nowrap; }
 @media (max-width: 480px) { .aula-fila2, .aula-fila3 { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .aula-palanca { transition: none; } }
 
+/* Las ayudas de cálculo de cada ejercicio (js/aula-arbitraje/ayudas.js) */
+.aula-ayudas { display: flex; flex-direction: column; gap: .6rem; padding: .75rem; border: 1px dashed rgb(var(--c-brand-200)); border-radius: .75rem; background: rgb(var(--c-brand-50)); }
+.dark .aula-ayudas { background: rgb(var(--c-brand-800)); border-color: rgb(var(--c-brand-600)); }
+.aula-ay-btn[aria-expanded="true"] { background: rgb(var(--c-brand-800)); color: #fff; border-color: rgb(var(--c-brand-800)); }
+.dark .aula-ay-btn[aria-expanded="true"] { background: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); border-color: rgb(var(--c-accent-500)); }
+.aula-ay-panel { background: #fff; border-radius: .6rem; padding: .85rem; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.dark .aula-ay-panel { background: rgb(var(--c-brand-900)); }
+.aula-ay-panel[hidden] { display: none; }
+.aula-ay-calc { display: flex; flex-direction: column; gap: .5rem; }
+.aula-ay-calc label { display: flex; flex-direction: column; gap: .25rem; font-size: .8rem; font-weight: 600; color: rgb(var(--c-brand-700)); }
+.dark .aula-ay-calc label { color: rgb(var(--c-brand-200)); }
+.aula-ay-res { font-weight: 700; font-size: 1.05rem; min-height: 1.4em; color: rgb(var(--c-brand-900)); overflow-wrap: anywhere; }
+.dark .aula-ay-res { color: #fff; }
+.aula-ay-tit { font-weight: 700; font-size: .95rem; margin-top: .25rem; }
+.aula-ay-hist { display: flex; flex-direction: column; gap: .25rem; padding-left: 1.2rem; }
+.aula-ay-reusar { background: none; border: none; padding: 0; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; color: inherit; font: inherit; }
+.aula-ay-dp { max-height: 18rem; overflow-y: auto; }
+.aula-calc-eco { font-size: .8rem; font-weight: 700; color: rgb(var(--c-brand-700)); min-height: 1.1em; }
+.dark .aula-calc-eco { color: rgb(var(--c-accent-400)); }
+
 /*! rev bfb5bbb0d2d82f9f */

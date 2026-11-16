@@ -144,8 +144,8 @@
                 "</div></details>" : "") +
               '<details class="aula-panel" open><summary>Ajuste del árbitro</summary><div class="aula-panel-in">' +
                 '<div class="aula-fila2">' +
-                  '<label for="' + u + '-tw">Tiempo de las blancas<input id="' + u + '-tw" data-campo="tw" inputmode="numeric" placeholder="h:mm:ss" autocomplete="off"></label>' +
-                  '<label for="' + u + '-tb">Tiempo de las negras<input id="' + u + '-tb" data-campo="tb" inputmode="numeric" placeholder="h:mm:ss" autocomplete="off"></label>' +
+                  '<label for="' + u + '-tw">Tiempo de las blancas<input id="' + u + '-tw" data-campo="tw" inputmode="numeric" placeholder="h:mm:ss o una cuenta" autocomplete="off" data-calc="tiempo"></label>' +
+                  '<label for="' + u + '-tb">Tiempo de las negras<input id="' + u + '-tb" data-campo="tb" inputmode="numeric" placeholder="h:mm:ss o una cuenta" autocomplete="off" data-calc="tiempo"></label>' +
                   '<label for="' + u + '-jw">Jugadas completadas de las blancas<input id="' + u + '-jw" data-campo="jw" type="number" min="0"></label>' +
                   '<label for="' + u + '-jb">Jugadas completadas de las negras<input id="' + u + '-jb" data-campo="jb" type="number" min="0"></label>' +
                 "</div>" +
@@ -162,6 +162,10 @@
               '<details class="aula-panel"><summary>Lo que pasó en el reloj</summary><ul class="aula-registro"></ul></details>' +
             "</div>";
         const q = (s) => this.el.querySelector(s);
+        /* Los tiempos del panel de ajuste aceptan una cuenta («1:12:40 − 0:05:00»): js/aula-arbitraje/ayudas.js. */
+        const AY = window.AulaAyudas;
+        if (AY) AY.campos(this.el);
+        const leerT = (txt) => (AY && AY.esCuenta(txt) ? AY.tiempoDeCuenta(txt) : A.leerTiempo(txt));
         this.$lados = { w: q('.aula-lado[data-lado="w"]'), b: q('.aula-lado[data-lado="b"]') };
         this.$palancas = { w: q('.aula-palanca[data-lado="w"]'), b: q('.aula-palanca[data-lado="b"]') };
         this.$registro = q(".aula-registro");
@@ -188,14 +192,15 @@
         q('[data-accion="leer"]').addEventListener("click", () => { this.pausar(); this.leerAlPanel(); });
         this.el.querySelectorAll("[data-suma]").forEach((b) => b.addEventListener("click", () => {
             const lado = b.dataset.suma, inp = q('[data-campo="t' + lado + '"]');
-            let v = A.leerTiempo(inp.value);
+            let v = leerT(inp.value);
             if (v == null) v = this.t[lado];
             const ms = Number(b.dataset.ms);
             inp.value = A.tiempo(v + ms);
+            inp.dispatchEvent(new Event("input"));
             this.$aviso.textContent = "Se sumaron " + (ms / 60000) + ":00 a las " + NOMBRE[lado] + " en el panel. Pulsa «Aplicar el ajuste» para pasarlo al reloj.";
         }));
         q('[data-accion="aplicar"]').addEventListener("click", () => {
-            const tw = A.leerTiempo(q('[data-campo="tw"]').value), tb = A.leerTiempo(q('[data-campo="tb"]').value);
+            const tw = leerT(q('[data-campo="tw"]').value), tb = leerT(q('[data-campo="tb"]').value);
             if (tw == null || tb == null) { this.$aviso.textContent = "Escribe los tiempos como h:mm:ss (por ejemplo 0:52:32)."; return; }
             this.pausar();
             this.fijarEstado({ w: tw, b: tb, jw: Math.max(0, Number(q('[data-campo="jw"]').value) || 0), jb: Math.max(0, Number(q('[data-campo="jb"]').value) || 0), turno: q('[data-campo="turno"]').value });

@@ -28,7 +28,7 @@
    docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
-    const D = window.AULA_CONTENIDO, A = window.AulaAjuste, Reloj = window.AulaReloj;
+    const D = window.AULA_CONTENIDO, A = window.AulaAjuste, Reloj = window.AulaReloj, AY = window.AulaAyudas;
     const $vista = document.getElementById("aula-vista");
     if (!$vista || !D || !A || !Reloj) return;
     const TT = window.AulaTorneoTexto, AD = window.AulaDesempates, PD = window.PareoDesempates;
@@ -42,6 +42,8 @@
     function azar(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
     function barajar(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
     function leerPuntos(t) {
+        /* Una cuenta («(2188 + 2405) / 2», «9½ + 1») la resuelven las ayudas de cálculo. */
+        if (AY && AY.esCuenta(t)) return AY.evaluar(t);
         let s = String(t).trim().replace(/\s/g, "").replace(",", ".");
         const fr = { "½": 0.5, "¼": 0.25, "¾": 0.75 };
         let extra = 0;
@@ -115,8 +117,21 @@
     function avance() { try { return JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (e) { return {}; } }
     function guardar(p) { try { localStorage.setItem(CLAVE, JSON.stringify(p)); } catch (e) { /* sin almacenamiento: se practica igual */ } }
     function anotar(tipo, id, valor) { const p = avance(); p[tipo] = p[tipo] || {}; p[tipo][id] = valor; guardar(p); }
-    function contar(tipo, ok) { const p = avance(); p.gen = p.gen || {}; const g = p.gen[tipo] = p.gen[tipo] || { ok: 0, total: 0 }; g.total++; if (ok) g.ok++; guardar(p); return g; }
-    function marcador(tipo) { const g = (avance().gen || {})[tipo]; return g ? "Correctos: " + g.ok + " de " + g.total : ""; }
+    function contar(tipo, ok, conPista) { const p = avance(); p.gen = p.gen || {}; const g = p.gen[tipo] = p.gen[tipo] || { ok: 0, total: 0 }; g.total++; if (ok) g.ok++; if (ok && conPista) g.pista = (g.pista || 0) + 1; guardar(p); return g; }
+    function marcador(tipo) { const g = (avance().gen || {})[tipo]; return g ? "Correctos: " + g.ok + " de " + g.total + (g.pista ? " (" + g.pista + " con pista)" : "") : ""; }
+    /* Las ayudas de cálculo de un ejercicio (js/aula-arbitraje/ayudas.js): la
+       calculadora, las tablas de FIDE y la pista. Hacen las cuentas, no las reglas. */
+    const PISTA_RELOJ = '<ol class="aula-pasos"><li><b>Consumido</b> = tiempo de los controles alcanzados + jugadas hechas × incremento − lo que marca el reloj.</li><li><b>Consumido ideal</b> = consumido × jugadas que quedan ÷ jugadas hechas.</li><li><b>Reloj</b> = tiempo de los controles que se alcanzan con las jugadas que quedan + jugadas que quedan × incremento − consumido ideal.</li><li>Al rival del que hizo la ilegal, la sanción del art. 7.5.5 (2 minutos en estándar; en rápidas y relámpago, 1 minuto: Apéndices A y B).</li></ol><p class="aula-nota">La calculadora y los campos de tiempo aceptan cuentas con tiempos: «1:30:00 + 40 × 30 − 0:36:00» (un número suelto son segundos).</p><p class="aula-nota">Las jugadas que quedan son las completadas antes de la jugada ilegal (art. 7.5.1, Leyes 2023). Hazlo para cada reloj por separado.</p>';
+    const PISTA_KOYA = '<ol class="aula-pasos"><li>El límite es el 50 % de los puntos posibles: rondas ÷ 2.</li><li>Marca en la tabla a los rivales que llegaron al límite o lo pasaron.</li><li>El KS de cada empatado es la suma de los puntos que hizo contra esos rivales.</li></ol>';
+    const PISTA_NORMA = '<ol class="aula-pasos"><li>Cuentan las partidas jugadas en el tablero; en un suizo se pueden dejar afuera las de después de lograr la norma o las ganadas, mientras queden 9 y la mezcla de rivales (1.4.1e y f).</li><li>El Elo de cada rival: sin Elo, 1400; el más bajo, si está por debajo del piso de la norma, sube al piso, y solo ese (1.4.6).</li><li><b>Ra</b> = suma de los Elo ÷ partidas, redondeado (0,5 hacia arriba) (1.4.7).</li><li><b>%</b> = puntos ÷ partidas × 100, redondeado al entero; busca su <b>dp</b> en la tabla (1.4.9).</li><li><b>Rp</b> = Ra + dp, y compáralo con los mínimos de la norma (1.4.8). Revisa también federaciones y títulos (1.4.3 a 1.4.5).</li></ol>';
+    function pistaDesempate(codigos) {
+        const P = window.PareoDesempates;
+        const de = (c) => { const x = P && P.CATALOGO.find((k) => k.codigo === c); return x ? x.es : AD.nombreDe(c); };
+        return '<ol class="aula-pasos">' + codigos.map((c) => "<li><b>" + esc(c) + "</b>: " + esc(de(c)) + "</li>").join("") + '</ol><p class="aula-nota">Calcula cada desempate solo para los que siguen empatados después del anterior (art. 4.2). Las rondas no jugadas cuentan como dicen los arts. 15 y 16 del C.07.</p>';
+    }
+    /* Un tiempo escrito como h:mm:ss o como una cuenta con tiempos, en milisegundos. */
+    const leerTiempoOCuenta = (txt) => (AY && AY.esCuenta(txt) ? AY.tiempoDeCuenta(txt) : A.leerTiempo(txt));
+    const chipPista = (usada) => (usada ? ' <span class="aula-chip aviso">resuelto con pista</span>' : "");
     /* Cada pregunta tiene una clave que no cambia aunque se agregue
        contenido: su ficha y su lugar dentro de la ficha. La primera versión
        guardaba el índice global; se pasa una vez a la clave nueva. */
@@ -254,6 +269,7 @@
             D.fichas.map((f) => '<option value="' + f.id + '"' + (f.id === filtroPreguntas ? " selected" : "") + ">" + f.titulo + "</option>").join("") +
             '</select></label></div><div id="aula-preg" class="aula-columna"></div></div>';
         const caja = q("#aula-preg", z);
+        if (AY) AY.barra(q(".aula-panel-ej", z), { tablas: ["dp", "normas", { tipo: "desempates" }], antes: "#aula-preg" });
         function arrancar() {
             const orden = barajar(D.preguntas.filter((p) => !filtroPreguntas || p.ficha === filtroPreguntas));
             let pos = 0, buenas = 0;
@@ -326,20 +342,21 @@
                 '<p class="aula-enunciado">Ritmo <b>' + R.nombre + "</b>. La última jugada fue la <b>" + (ultimasNegras ? nb + "…" : nw + ".") + "</b> (" + (ultimasNegras ? "negras" : "blancas") + "). Se comprueba que las <b>" + (quien === "w" ? "blancas" : "negras") + "</b> hicieron una jugada ilegal en la jugada <b>" + k + "</b> (la primera de la partida) y se vuelve a la posición anterior. Aplica el <b>método proporcional</b> y la sanción.</p>" +
                 '<div class="aula-datos"><div class="aula-dato"><span>Reloj de las blancas</span><b>' + A.tiempo(w) + '</b></div><div class="aula-dato"><span>Reloj de las negras</span><b>' + A.tiempo(b) + "</b></div>" +
                 '<div class="aula-dato"><span>Jugadas completadas</span><b>' + nw + " / " + nb + '</b></div><div class="aula-dato"><span>Incremento</span><b>' + (inc ? inc + " s" : "sin incremento") + "</b></div></div>" +
-                '<div class="aula-entradas"><label for="aula-iw">Reloj de las blancas después del ajuste<input id="aula-iw" placeholder="h:mm:ss" inputmode="numeric" autocomplete="off"></label>' +
-                '<label for="aula-ib">Reloj de las negras después del ajuste<input id="aula-ib" placeholder="h:mm:ss" inputmode="numeric" autocomplete="off"></label>' +
+                '<div class="aula-entradas"><label for="aula-iw">Reloj de las blancas después del ajuste<input id="aula-iw" placeholder="h:mm:ss o una cuenta" inputmode="numeric" autocomplete="off" data-calc="tiempo"></label>' +
+                '<label for="aula-ib">Reloj de las negras después del ajuste<input id="aula-ib" placeholder="h:mm:ss o una cuenta" inputmode="numeric" autocomplete="off" data-calc="tiempo"></label>' +
                 '<label for="aula-ijw">Jugadas completadas de las blancas<input id="aula-ijw" type="number" min="0"></label><label for="aula-ijb">Jugadas completadas de las negras<input id="aula-ijb" type="number" min="0"></label></div>' +
                 '<div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" id="aula-comp">Comprobar</button><button type="button" class="aula-btn aula-btn-sec" id="aula-nuevo">Otro ejercicio</button><span class="aula-nota">Se acepta una diferencia de hasta 30 s.</span></div><div id="aula-fb" aria-live="polite"></div>';
             q("#aula-nuevo", z).addEventListener("click", nuevo);
+            const ayuda = AY ? AY.barra(q("#aula-ej", z), { pista: PISTA_RELOJ, antes: ".aula-entradas" }) : { conPista: () => false };
             q("#aula-comp", z).addEventListener("click", () => {
-                const uw = A.leerTiempo(q("#aula-iw", z).value), ub = A.leerTiempo(q("#aula-ib", z).value);
+                const uw = leerTiempoOCuenta(q("#aula-iw", z).value), ub = leerTiempoOCuenta(q("#aula-ib", z).value);
                 const ujw = Number(q("#aula-ijw", z).value), ujb = Number(q("#aula-ijb", z).value);
                 if (uw == null || ub == null) { q("#aula-fb", z).innerHTML = '<div class="aula-fb aviso"><p>Escribe los dos tiempos como h:mm:ss (por ejemplo 0:52:32).</p></div>'; return; }
                 const okT = Math.abs(uw - ew) <= 30000 && Math.abs(ub - eb) <= 30000, okJ = ujw === lw && ujb === lb;
-                contar("relojes", okT && okJ);
+                contar("relojes", okT && okJ, ayuda.conPista());
                 q("#aula-mc", z).textContent = marcador("relojes");
                 const titulo = okT && okJ ? "Correcto." : okT ? "Los tiempos están bien; revisa las jugadas completadas." : okJ ? "Las jugadas están bien, pero los tiempos no coinciden." : "No coincide.";
-                q("#aula-fb", z).innerHTML = '<div class="aula-fb ' + (okT && okJ ? "ok" : okT || okJ ? "aviso" : "mal") + '"><p><b>' + titulo + "</b> La solución: blancas <b>" + A.tiempo(ew) + "</b>, negras <b>" + A.tiempo(eb) + "</b>; jugadas completadas " + lw + " / " + lb + "; juegan las " + (quien === "w" ? "blancas" : "negras") + ".</p>" +
+                q("#aula-fb", z).innerHTML = '<div class="aula-fb ' + (okT && okJ ? "ok" : okT || okJ ? "aviso" : "mal") + '"><p><b>' + titulo + "</b>" + chipPista(ayuda.conPista()) + " La solución: blancas <b>" + A.tiempo(ew) + "</b>, negras <b>" + A.tiempo(eb) + "</b>; jugadas completadas " + lw + " / " + lb + "; juegan las " + (quien === "w" ? "blancas" : "negras") + ".</p>" +
                     '<ol class="aula-pasos">' + pasosAjuste(o, r) + "</ol>" +
                     '<p class="aula-nota">Con la variante de horario (si las bases la prevén): blancas ' + A.minutos(r.w.horario) + ", negras " + A.minutos(r.b.horario) + " (" + A.minutos(r.dif) + " para cada uno).</p></div>";
             });
@@ -376,9 +393,10 @@
             q("#aula-ej", z).innerHTML = "<h3>Calcula el Koya de los empatados</h3>" +
                 '<p class="aula-enunciado">Todos contra todos de ' + n + " jugadores a " + max + " rondas. Empatados con <b>" + A.medio(pts[grupo[0]]) + "</b> puntos: " + grupo.map((i) => "<b>" + nombres[i] + "</b>").join(", ") + ". Calcula el KS de cada uno.</p>" +
                 '<p class="aula-nota">Las columnas siguen el orden de la clasificación. Identificar qué rivales cuentan es parte del ejercicio; al comprobar se marcan en la tabla.</p>' + tabla +
-                '<div class="aula-entradas">' + grupo.map((i, c) => '<label for="aula-k' + c + '">KS de ' + nombres[i] + '<input id="aula-k' + c + '" inputmode="decimal" placeholder="por ejemplo 2½" autocomplete="off"></label>').join("") + "</div>" +
+                '<div class="aula-entradas">' + grupo.map((i, c) => '<label for="aula-k' + c + '">KS de ' + nombres[i] + '<input id="aula-k' + c + '" inputmode="decimal" placeholder="por ejemplo 2½ o 1 + ½ + 1" autocomplete="off" data-calc></label>').join("") + "</div>" +
                 '<div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" id="aula-comp">Comprobar</button><button type="button" class="aula-btn aula-btn-sec" id="aula-nuevo">Otro torneo</button></div><div id="aula-fb" aria-live="polite"></div>';
             q("#aula-nuevo", z).addEventListener("click", nuevo);
+            const ayuda = AY ? AY.barra(q("#aula-ej", z), { pista: PISTA_KOYA, antes: ".aula-entradas" }) : { conPista: () => false };
             q("#aula-comp", z).addEventListener("click", () => {
                 let todo = true;
                 const filas = grupo.map((i, c) => {
@@ -388,12 +406,12 @@
                     for (let j = 0; j < n; j++) if (j !== i && pts[j] >= lim) det.push(A.medio(m[i][j]) + " contra " + nombres[j]);
                     return "<li><b>" + nombres[i] + "</b>: " + det.join(" + ") + " = <b>" + A.medio(real) + "</b> " + (ok ? '<span class="aula-chip ok">bien</span>' : '<span class="aula-chip mal">pusiste: ' + (v === null ? "nada" : A.medio(v)) + "</span>") + "</li>";
                 }).join("");
-                contar("koya", todo);
+                contar("koya", todo, ayuda.conPista());
                 q("#aula-mc", z).textContent = marcador("koya");
                 const ks = (i) => A.koya(m, i);
                 const porKs = grupo.slice().sort((a, b) => ks(b) - ks(a));
                 const siguen = porKs.filter((i) => porKs.some((j) => j !== i && ks(j) === ks(i)));
-                q("#aula-fb", z).innerHTML = '<div class="aula-fb ' + (todo ? "ok" : "mal") + '"><p><b>' + (todo ? "Correcto." : "Revisa los valores marcados.") + "</b> Límite: el 50 % de " + max + " = <b>" + A.medio(lim) + "</b> puntos. Cuentan los rivales con " + A.medio(lim) + " o más (marcados en la tabla).</p><ol class=\"aula-pasos\">" + filas + "</ol>" +
+                q("#aula-fb", z).innerHTML = '<div class="aula-fb ' + (todo ? "ok" : "mal") + '"><p><b>' + (todo ? "Correcto." : "Revisa los valores marcados.") + "</b>" + chipPista(ayuda.conPista()) + " Límite: el 50 % de " + max + " = <b>" + A.medio(lim) + "</b> puntos. Cuentan los rivales con " + A.medio(lim) + " o más (marcados en la tabla).</p><ol class=\"aula-pasos\">" + filas + "</ol>" +
                     "<p>Orden por Koya: " + porKs.map((i) => nombres[i] + " (" + A.medio(ks(i)) + ")").join(" › ") + "." + (siguen.length ? " Siguen empatados " + siguen.map((i) => nombres[i]).join(" y ") + ": se aplica el siguiente desempate de las bases solo a ellos (art. 4.2)." : "") + "</p></div>";
                 const t = q(".aula-cruzada", z);
                 qa("thead th", t).forEach((th, c) => { if (c >= 2 && c < 2 + n && pts[orden[c - 2]] >= lim) { th.classList.add("top"); th.insertAdjacentHTML("beforeend", '<span class="sr-only"> (cuenta)</span>'); } });
@@ -451,10 +469,14 @@
             tablaTorneo(t, nombres, g.ids) +
             '<h3 class="aula-sub">1. Calcula</h3><p class="aula-nota">Calcula cada desempate solo para los que siguen empatados (art. 4.2). Escribe las fracciones como 9½ o 9,25.</p>' +
             r.pasos.map((p, k) => '<fieldset class="aula-paso-calc"><legend>' + p.codigo + " · " + p.nombre + "</legend><div class=\"aula-entradas\">" +
-                p.grupo.map((id) => '<label for="aula-d' + k + "-" + id + '">' + esc(nombres[id]) + '<input id="aula-d' + k + "-" + id + '" inputmode="decimal" autocomplete="off"></label>').join("") + "</div></fieldset>").join("") +
+                p.grupo.map((id) => '<label for="aula-d' + k + "-" + id + '">' + esc(nombres[id]) + '<input id="aula-d' + k + "-" + id + '" inputmode="decimal" autocomplete="off" data-calc></label>').join("") + "</div></fieldset>").join("") +
             '<h3 class="aula-sub">2. Decide el orden</h3><div class="aula-entradas">' +
             plano.map((_, k) => '<label for="aula-o' + k + '">' + (k + 1) + '.º lugar del grupo<select id="aula-o' + k + '"><option value="">Elige…</option>' + g.ids.map((id) => '<option value="' + id + '">' + esc(nombres[id]) + "</option>").join("") + "</select></label>").join("") +
             '</div><div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" data-comprobar>Comprobar</button></div><div class="aula-fb-zona" aria-live="polite"></div>';
+        const ayuda = AY ? AY.barra(cont, {
+            /* Los desempates por rendimiento (TPR, APRO) necesitan además la tabla del dp. */
+            tablas: [{ tipo: "desempates", codigos: bases }].concat(bases.some((c) => /^(TPR|APRO)/.test(c)) ? ["dp-desempate"] : []),
+            pista: pistaDesempate(bases), antes: ".aula-sub" }) : { conPista: () => false };
         q("[data-comprobar]", cont).addEventListener("click", () => {
             let okVal = true;
             const lineas = r.pasos.map((p, k) => {
@@ -474,9 +496,9 @@
             r.orden.forEach((p) => { const tramo = elegido.slice(pos, pos + p.length); if (!p.every((id) => tramo.includes(id))) okOrden = false; pos += p.length; });
             const ok = okVal && okOrden;
             const sinRomper = r.orden.some((p) => p.length > 1);
-            q(".aula-fb-zona", cont).innerHTML = '<div class="aula-fb ' + (ok ? "ok" : okOrden || okVal ? "aviso" : "mal") + '"><p><b>' + (ok ? "Correcto." : okOrden ? "El orden está bien; revisa los valores marcados." : okVal ? "Los valores están bien, pero el orden no." : "Revisa los valores y el orden.") + "</b> Orden final: <b>" + ordenTexto(r.orden, nombres) + "</b>." +
+            q(".aula-fb-zona", cont).innerHTML = '<div class="aula-fb ' + (ok ? "ok" : okOrden || okVal ? "aviso" : "mal") + '"><p><b>' + (ok ? "Correcto." : okOrden ? "El orden está bien; revisa los valores marcados." : okVal ? "Los valores están bien, pero el orden no." : "Revisa los valores y el orden.") + "</b>" + chipPista(ayuda.conPista()) + " Orden final: <b>" + ordenTexto(r.orden, nombres) + "</b>." +
                 (sinRomper ? " Las bases no rompen todo el empate: queda el sorteo (art. 4.2), salvo que las bases digan que se comparte el puesto." : "") + "</p>" + lineas + "</div>";
-            if (alTerminar) alTerminar(ok);
+            if (alTerminar) alTerminar(ok, ayuda.conPista());
         });
     }
 
@@ -496,7 +518,7 @@
             const nombres = {}; t.jugadores.forEach((j) => { nombres[j.id] = j.nombre; });
             const zona = q("#aula-ej", z);
             zona.innerHTML = "<h3>" + AD.nombreDe(cod) + " (" + cod + ")</h3><p class=\"aula-nota\">" + (t.sistema === "todos" ? "Todos contra todos" : "Suizo") + " de " + t.jugadores.length + " jugadores a " + t.rondas.length + " rondas. La fórmula está en la ficha «Los desempates de FIDE».</p><div></div>";
-            ejercicioDesempate(zona.lastElementChild, t, nombres, [cod], (ok) => { contar("desempates", ok); q("#aula-mc", z).textContent = marcador("desempates"); });
+            ejercicioDesempate(zona.lastElementChild, t, nombres, [cod], (ok, conPista) => { contar("desempates", ok, conPista); q("#aula-mc", z).textContent = marcador("desempates"); });
         }
         q("#aula-sis", z).addEventListener("change", nuevo);
         q("#aula-nuevo", z).addEventListener("click", nuevo);
@@ -534,22 +556,25 @@
         const calc = ev.titulos.find((x) => x.titulo === datos.calcula) || ev.titulos.find((x) => x.titulo === titulos[0]);
         cont.innerHTML = tablaRivales(datos.rivales) +
             '<h3 class="aula-sub">1. Calcula para la norma de ' + TITULO_ES[calc.titulo] + '</h3><p class="aula-nota">Con la mezcla de partidas que mejor le sirve al jugador (si en un suizo conviene dejar afuera alguna, déjala).</p>' +
-            '<div class="aula-entradas"><label for="aula-nn">Partidas que cuentan<input id="aula-nn" type="number" min="0"></label><label for="aula-np">Puntos en esas partidas<input id="aula-np" inputmode="decimal" autocomplete="off"></label>' +
-            '<label for="aula-nra">Promedio de los rivales (Ra)<input id="aula-nra" type="number"></label><label for="aula-nrp">Rendimiento (Rp)<input id="aula-nrp" type="number"></label></div>' +
+            '<div class="aula-entradas"><label for="aula-nn">Partidas que cuentan<input id="aula-nn" inputmode="numeric" autocomplete="off" data-calc></label><label for="aula-np">Puntos en esas partidas<input id="aula-np" inputmode="decimal" autocomplete="off" data-calc></label>' +
+            '<label for="aula-nra">Promedio de los rivales (Ra)<input id="aula-nra" inputmode="decimal" autocomplete="off" placeholder="puedes escribir la cuenta" data-calc></label><label for="aula-nrp">Rendimiento (Rp)<input id="aula-nrp" inputmode="decimal" autocomplete="off" placeholder="Ra + dp" data-calc></label></div>' +
             '<h3 class="aula-sub">2. Decide</h3><fieldset class="aula-paso-calc"><legend>Marca las normas que el jugador consigue (puede ser ninguna)</legend>' +
             titulos.map((t) => '<label class="aula-casilla"><input type="checkbox" value="' + t + '"> Norma de ' + TITULO_ES[t] + "</label>").join("") + "</fieldset>" +
             '<div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" data-comprobar>Comprobar</button></div><div class="aula-fb-zona" aria-live="polite"></div>';
+        const ayuda = AY ? AY.barra(cont, { tablas: ["dp", "normas"], pista: PISTA_NORMA, antes: ".aula-sub" }) : { conPista: () => false };
         q("[data-comprobar]", cont).addEventListener("click", () => {
             const m = calc.mejor;
-            const n = Number(q("#aula-nn", cont).value), pts = leerPuntos(q("#aula-np", cont).value), ra = Number(q("#aula-nra", cont).value), rp = Number(q("#aula-nrp", cont).value);
+            /* Ra y Rp se comparan con el número que dio la cuenta, redondeado como pide 1.4.7. */
+            const leer = (id) => { const v = leerPuntos(q(id, cont).value); return v === null ? NaN : v; };
+            const n = leer("#aula-nn"), pts = leerPuntos(q("#aula-np", cont).value), ra = leer("#aula-nra"), rp = leer("#aula-nrp");
             const okCalc = n === m.n && pts !== null && Math.abs(pts - m.puntos) < 1e-9 && Math.abs(ra - m.ra) <= 1 && Math.abs(rp - m.rp) <= 1;
             const marcadas = qa("input[type=checkbox]:checked", cont).map((x) => x.value);
             const okDec = titulos.every((t) => marcadas.includes(t) === ev.titulos.find((x) => x.titulo === t).norma);
             const ok = okCalc && okDec;
-            q(".aula-fb-zona", cont).innerHTML = '<div class="aula-fb ' + (ok ? "ok" : okDec ? "aviso" : "mal") + '"><p><b>' + (ok ? "Correcto." : okDec ? "La decisión es correcta; revisa las cuentas." : "La decisión no es correcta.") + "</b> Para la norma de " + TITULO_ES[calc.titulo] + ": " + m.n + " partidas, " + fraccion(m.puntos) + " puntos, Ra = <b>" + m.ra + "</b>, " + m.pct + " % → dp = " + (m.rp - m.ra) + ", Rp = <b>" + m.rp + "</b>.</p>" +
+            q(".aula-fb-zona", cont).innerHTML = '<div class="aula-fb ' + (ok ? "ok" : okDec ? "aviso" : "mal") + '"><p><b>' + (ok ? "Correcto." : okDec ? "La decisión es correcta; revisa las cuentas." : "La decisión no es correcta.") + "</b>" + chipPista(ayuda.conPista()) + " Para la norma de " + TITULO_ES[calc.titulo] + ": " + m.n + " partidas, " + fraccion(m.puntos) + " puntos, Ra = <b>" + m.ra + "</b>, " + m.pct + " % → dp = " + (m.rp - m.ra) + ", Rp = <b>" + m.rp + "</b>.</p>" +
                 titulos.map((t) => chequeosHTML(ev.titulos.find((x) => x.titulo === t))).join("") +
                 '<p class="aula-nota">Además, el árbitro revisa lo que no sale de los resultados: ' + ev.revisar.map(esc).join(" ") + "</p></div>";
-            if (alTerminar) alTerminar(ok);
+            if (alTerminar) alTerminar(ok, ayuda.conPista());
         });
     }
 
@@ -571,7 +596,7 @@
             });
             const zona = q("#aula-ej", z);
             zona.innerHTML = '<h3>¿Hay norma de ' + TITULO_ES[T] + '?</h3><p class="aula-nota">Un jugador de Costa Rica en un abierto suizo a 9 rondas, todas jugadas en el tablero.</p><div></div>';
-            ejercicioNorma(zona.lastElementChild, { jugador: { fed: "CRC", sexo: "m" }, rivales, sistema: "suizo", titulos: [T], calcula: T }, (ok) => { contar("normas", ok); q("#aula-mc", z).textContent = marcador("normas"); });
+            ejercicioNorma(zona.lastElementChild, { jugador: { fed: "CRC", sexo: "m" }, rivales, sistema: "suizo", titulos: [T], calcula: T }, (ok, conPista) => { contar("normas", ok, conPista); q("#aula-mc", z).textContent = marcador("normas"); });
         }
         q("#aula-tit", z).addEventListener("change", nuevo);
         q("#aula-nuevo", z).addEventListener("click", nuevo);
@@ -710,6 +735,9 @@
             "</section>" + (R ? '<section id="aula-zr" aria-label="El reloj"></section>' : "") + "</div>");
         let secuencia = null;
         if (c.secuencia) secuencia = montarSecuencia(q("[data-secuencia]"), c.secuencia.fen, c.secuencia.jugadas, {});
+        /* Un caso de decisión con números (tiempos, minutos de espera, puntos) trae la calculadora;
+           los de un tablero o una secuencia no: ahí se decide mirando la posición. */
+        if (AY && dec && !R && !c.fen && !c.secuencia) AY.barra(q(".aula-opciones").closest(".aula-paso"), { antes: ".aula-opciones" });
         let decision = null;
         if (dec) {
             qa(".aula-opciones button").forEach((b) => b.addEventListener("click", () => {
@@ -730,6 +758,7 @@
             relojActivo.anotar("Cargada la situación del caso (reloj detenido).");
         }
         montar();
+        if (AY) AY.barra(q("#aula-dict").closest(".aula-paso"), { pista: PISTA_RELOJ, antes: ".aula-fila-ctrl" });
         q("#aula-rein").addEventListener("click", () => { montar(); q("#aula-fbr").replaceChildren(); });
         q("#aula-dict").addEventListener("click", () => {
             const e = relojActivo.estado(), tol = (c.tolerancia || 60) * 1000, ej = c.esperadoJugadas;
@@ -881,7 +910,7 @@
             '<div class="aula-entradas">' +
             '<label for="aula-c1">Periodo 1 (min)<input id="aula-c1" type="number" value="90" min="1"></label><label for="aula-c2">Jugadas del control<input id="aula-c2" type="number" value="40" min="0"></label>' +
             '<label for="aula-c3">Periodo 2 (min)<input id="aula-c3" type="number" value="30" min="0"></label><label for="aula-c4">Incremento (s)<input id="aula-c4" type="number" value="30" min="0"></label>' +
-            '<label for="aula-c5">Reloj de las blancas ahora<input id="aula-c5" value="0:36:00" autocomplete="off"></label><label for="aula-c6">Reloj de las negras ahora<input id="aula-c6" value="1:00:30" autocomplete="off"></label>' +
+            '<label for="aula-c5">Reloj de las blancas ahora<input id="aula-c5" value="0:36:00" autocomplete="off" data-calc="tiempo"></label><label for="aula-c6">Reloj de las negras ahora<input id="aula-c6" value="1:00:30" autocomplete="off" data-calc="tiempo"></label>' +
             '<label for="aula-c7">Jugadas completadas de las blancas<input id="aula-c7" type="number" value="52" min="0"></label><label for="aula-c8">Jugadas completadas de las negras<input id="aula-c8" type="number" value="51" min="0"></label>' +
             '<label for="aula-c9">Cometió la irregularidad<select id="aula-c9"><option value="b">Las negras</option><option value="w">Las blancas</option></select></label><label for="aula-c10">En la jugada número<input id="aula-c10" type="number" value="43" min="1"></label>' +
             '<label for="aula-c11">Sanción para el rival<select id="aula-c11"><option value="2">2 min (estándar)</option><option value="1">1 min (rápida o relámpago)</option><option value="0">Sin sanción</option></select></label>' +
@@ -889,10 +918,11 @@
             '<details class="aula-detalle"><summary>Las fórmulas (Leyes, art. 7.1)</summary><ul class="aula-pasos"><li>Consumido = tiempo de los controles alcanzados + jugadas × incremento − reloj.</li><li>Consumido ideal = consumido × jugadas que quedan ÷ jugadas hechas.</li><li>Reloj = tiempo de los controles que se alcanzan con las jugadas que quedan + jugadas que quedan × incremento − consumido ideal, más la sanción del art. 7.5.5.</li></ul></details>' +
             '<p class="aula-nota">Viene cargado el caso B de la revista (ritmo 90/40 + 30 + 30 s).</p></section></div>');
         relojActivo = new Reloj(q("#aula-zr"), { ritmo: Reloj.RITMOS["clasico-inc"] });
+        if (AY) AY.campos(q(".aula-reloj-pagina"));
         let ultimo = null;
         const num = (id) => Math.max(0, Number(q("#aula-" + id).value) || 0);
         q("#aula-calc").addEventListener("click", () => {
-            const w = A.leerTiempo(q("#aula-c5").value), b = A.leerTiempo(q("#aula-c6").value);
+            const w = leerTiempoOCuenta(q("#aula-c5").value), b = leerTiempoOCuenta(q("#aula-c6").value);
             const quien = q("#aula-c9").value, k = num("c10");
             const { lw, lb } = A.jugadasQueQuedan(quien, k);
             if (w == null || b == null || k < 1 || lw > num("c7") || lb > num("c8")) {

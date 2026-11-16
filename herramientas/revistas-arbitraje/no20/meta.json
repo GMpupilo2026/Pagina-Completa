@@ -1,0 +1,18 @@
+{
+  "numero": 20,
+  "especial": {
+    "edicion": "Edición especial · noviembre 2026",
+    "sello": "Manual completo de la mesa del árbitro"
+  },
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    { "titulo": "La organización: los torneos, los árbitros y el plano", "desc": "centroamericano-mesas.html" },
+    { "titulo": "La ronda en curso, los avisos y el control de tiempos", "desc": "Leyes 2023 · arts. 6.7, 6.10" },
+    { "titulo": "Planillas, registro, respaldo y Fair Play", "desc": "Lo que queda del torneo" },
+    { "titulo": "La tableta del árbitro adjunto", "desc": "Entrar, revisar, anotar y terminar" },
+    { "titulo": "Ilegales, irregularidades y la bitácora", "desc": "Leyes 2023 · art. 7.5.5" },
+    { "titulo": "Un día de campeonato, paso a paso", "desc": "La lista del principal y del adjunto" }
+  ],
+  "presentacion": "<div class=\"cols\"><p>La revista N.º 19 explicó la mesa del árbitro en su versión sencilla: un adjunto, un enlace, sus mesas. Este número va al otro extremo: la versión que se armó para el <b>Campeonato Centroamericano</b>, con varias categorías jugando a la vez, un equipo entero de árbitros adjuntos con su tableta, planillas fotografiadas, control de tiempos, plano de la sala y sorteo de Fair Play.</p><p>Son dos pantallas. La de la <b>organización</b> (centroamericano-mesas.html), en la computadora del árbitro principal, donde se vinculan los torneos, se reparten las mesas y se sigue la ronda entera. Y la del <b>árbitro adjunto</b> (centroamericano-arbitro.html), en una tableta, donde cada uno revisa los relojes y los tableros, anota los resultados, las ilegales y las irregularidades de sus mesas, y recibe los avisos del principal.</p><p>Todo lo que se ve en las capturas es la herramienta tal cual, con un torneo de ejemplo: las jugadoras y los árbitros son inventados. Sirve para cualquier evento con la licencia de la mesa del árbitro, no solo para el Centroamericano.</p><p>Como siempre: la herramienta anota, avisa y propone; el que decide es el árbitro, con las Leyes del Ajedrez en la mano.</p><p style=\"text-align:left\"><b>IA Oscar Angulo Cubero</b><br>Árbitro Internacional · Ajedrez Integral</p></div>",
+  "cambios": []
+}
