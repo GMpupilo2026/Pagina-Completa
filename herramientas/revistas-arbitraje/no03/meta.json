@@ -1,0 +1,28 @@
+{
+  "numero": 3,
+  "fecha_original": "julio de 2012",
+  "temas": [
+    {"titulo": "Trato con padres de ajedrecistas infantiles y juveniles", "desc": "Paula Man Reich · y lo que dicen las Leyes (arts. 11 y 12)"},
+    {"titulo": "Partidas no jugadas en el Buchholz", "desc": "Del «jugador virtual» de 2012 al rival ficticio · C.07 (2026), art. 16"},
+    {"titulo": "Posición muerta", "desc": "Leyes 2023 · arts. 1.5, 5.2.2, 6.9 · ejemplos comprobados"},
+    {"titulo": "Swiss-Manager (parte 1)", "desc": "Qué sigue valiendo y qué hay que comprobar en tu versión"}
+  ],
+  "titulo_presentacion": "Editorial",
+  "presentacion": "<div class=\"cols\"><p>Estimados amigos: les agradezco a todos que nos sigan ya por tres meses. Este proyecto es una realidad y cada vez son más los árbitros y jugadores interesados en la revista.</p><p>Diariamente recibimos mensajes con ideas y sugerencias. El mundo del arbitraje es enorme y está en constante movimiento: cada congreso de la FIDE trae cambios que iremos comentando.</p><p>En esta edición abordamos temas que les serán útiles. Nuestra colaboradora, la psicóloga <b>Paula Man</b>, escribe sobre los <b>padres de familia en las competencias infantiles</b>: situaciones y consideraciones que debemos tener en cuenta durante un torneo.</p><p>Explicamos con detalle cómo se tratan las <b>partidas no jugadas en el desempate Buchholz</b>, y estrenamos una sección de <b>ejercicios para resolver en casa</b>: un torneo ficticio para desempatar a mano, cuya solución aparece en el número 4.</p><p>«<b>Posición muerta</b>»: todos la hemos escuchado nombrar, pero ¿sabemos de verdad qué es? Y, finalmente, una breve introducción a <b>Swiss-Manager</b>, con algunos consejos para manejar este programa.</p><p>Espero que les guste este número y que sigan enviándonos sus sugerencias y los casos que quieran que resolvamos o expliquemos.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div>",
+  "cambios": [
+    ["Partidas no jugadas en el Buchholz", "«Jugador virtual» con la fórmula Svon = SPR + (1 − SfPR) + 0,5 × (n − R), vigente desde el 1-jul-2012.", "Ese método rigió hasta el 31-ago-2023 (sección 15.2 del reglamento anterior). Hoy se aplica el <b>art. 16 del C.07 (2026)</b>: cada ronda no jugada cuenta como una partida contra un <b>rival ficticio</b> con la puntuación final del propio jugador, con topes (art. 16.4), y las rondas no jugadas de los rivales se ajustan según su categoría (art. 16.3). La fórmula de 2012 se conserva como dato histórico."],
+    ["Ejemplo 3 del Buchholz", "«En un torneo a 7 rondas, después de la ronda 4 tiene 3,5 puntos»; la cuenta usaba SPR = 3,5 antes de la ronda 4.", "<b>Fe de erratas:</b> antes de la ronda 4 un jugador puede tener como máximo 3 puntos, así que el dato era imposible. Los ejemplos se rehicieron con la regla vigente."],
+    ["Ejercicio de práctica", "Torneo con diez Grandes Maestros reales y su Elo de 2012 (que además no coincidía con el del número 4).", "Mismos emparejamientos y resultados, con jugadores ficticios y sin Elo (no hace falta para el Buchholz). La solución, en el N.º 4, se calcula con el art. 16 del C.07 (2026)."],
+    ["Posición muerta", "Citaba los arts. 5.2.b y 9.6 de las Leyes de 2009.", "Hoy son los arts. <b>5.2.2</b> (y 1.5); el art. 9.6 actual trata de la quíntuple repetición y las 75 jugadas. Se añaden el art. 6.9 (caída de bandera sin mate posible) y A.5.3. Las seis posiciones se comprobaron una por una."],
+    ["Ejercicio de posición muerta", "Sin solución.", "Solución razonada: <b>no</b> es posición muerta (la torre puede sacrificarse y abrir la posición) y se da una serie legal de 13 jugadas que termina en mate, comprobada jugada por jugada."],
+    ["Padres en el torneo", "Recomendaciones de psicología del deporte.", "Se conservan (autora original), corregidas y condensadas, y se añade qué permiten las Leyes 2023 al árbitro (arts. 11.2, 12.2, 12.7 y 12.8)."],
+    ["Swiss-Manager", "Precios, versiones (completa, ligera, gratuita), límites, «Windows XP o superior» y anuncio de un curso.", "Se quitan los datos comerciales y de versión, que ya no valen. Se conserva lo esencial y se señala qué comprobar en tu versión (art. 16 del C.07, sistema holandés 2026)."],
+    ["Editorial", "Promoción de la revista impresa, un párrafo repetido y «¡Nos leemos en agosto!».", "Se eliminaron las referencias de calendario y comerciales ya caducadas."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Colaboradora (edición original)", "Paula Man Reich · Psicóloga del deporte"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"]
+  ]
+}

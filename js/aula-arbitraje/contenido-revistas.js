@@ -1,4 +1,4 @@
-/* Aula de Arbitraje — las fichas de los números 2 al 18 de la revista
+/* Aula de Arbitraje — las fichas de los números 2 al 19 de la revista
    «Arbitraje de Ajedrez», revisados y actualizados a la normativa FIDE vigente
    (noviembre de 2026) por IA Oscar Angulo Cubero.
 
@@ -96,6 +96,11 @@
    "id": "revista-18",
    "titulo": "Revista Arbitraje de Ajedrez · N.º 18",
    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  {
+   "id": "revista-19",
+   "titulo": "Revista Arbitraje de Ajedrez · N.º 19",
+   "nota": "Edición especial: Pareo Integral y la mesa del árbitro, paso a paso"
   }
  ],
  "fichas": [
@@ -1378,6 +1383,38 @@
     "Primer rating: 5 partidas contra rivales con rating y resultado de al menos 1400."
    ],
    "contenido": "<div class=\"aula-norma\"><b>Art. 0.2</b> La federación del país registra el torneo y su calendario: al menos 3 días antes; 30 días si participa alguien de más de 2700 o una jugadora de más de 2500. Torneos de normas: 30 días (Títulos 1.1.1).</div><div class=\"aula-norma\"><b>Art. 1.1</b> Tiempo mínimo por jugador, suponiendo 60 jugadas: 120 minutos si al menos uno tiene 2400 o más; 90 si al menos uno tiene 1800 o más; 60 si ambos tienen menos de 1800. <b>Art. 1.2</b> Primer control de al menos 30 jugadas.</div><p><span class=\"aula-formula\">tiempo = base + 60 × incremento</span> &nbsp; 90′+30″ = 120 min; 60′+30″ = 90 min; 45′+30″ = 75 min.</p><div class=\"aula-norma aula-norma-aviso\"><b>Resolución del Consejo FIDE (nov-2026)</b> 60′+30″ es ritmo estándar sin aprobación especial, para rating y títulos. 45′+30″: torneos del Circuito FIDE o sin jugadores de 2400 o más. Para normas: máximo dos rondas por día y solo una norma de estos ritmos por título. Puede ajustarse tras la Asamblea extraordinaria de diciembre de 2026.</div><div class=\"aula-tabla\"><table><tr><th>Ritmo</th><th>Partida (60 jugadas)</th><th>Rondas en 12 h</th></tr><tr><td>90′+30″</td><td>4 h</td><td>3</td></tr><tr><td>60′+30″</td><td>3 h</td><td>4</td></tr><tr><td>45′+30″</td><td>2 h 30</td><td>4</td></tr><tr><td>30′+30″</td><td>2 h</td><td>6</td></tr></table></div><div class=\"aula-norma\"><b>Arts. 3.1, 4.1, 5.1 y 6</b> Máximo 12 horas de juego por día. Si dura más de 30 días, informes mensuales. Partidas no jugadas no se evalúan; las que tienen al menos una jugada de cada uno sí. Los matches con un jugador sin rating no se evalúan.</div><div class=\"aula-norma\"><b>B.06.1, arts. 6.1-6.2</b> Los árbitros deben pagar la cuota de registro (antes «licencia»); si no, el torneo puede no evaluarse y no valen sus normas de árbitro.</div><p class=\"aula-nota\">Las bases deben decir que el torneo será evaluado (9.2) y el informe TRF debe llegar a tiempo para la tercera lista después del final (9.1).</p>"
+  },
+  {
+   "id": "pareo-integral-paso-a-paso",
+   "coleccion": "revista-19",
+   "titulo": "Pareo Integral, paso a paso",
+   "articulos": "Sistema Holandés C.04.3 (2026) · C.07 (2026) · Leyes 2023, art. 6.7",
+   "resumen": "Cómo se dirige un torneo con Pareo Integral: los datos, los jugadores, los byes, el emparejamiento, los resultados, la clasificación y el TRF.",
+   "claves": [
+    "El torneo queda guardado en el navegador de la computadora: el respaldo es la copia (.json) de «Archivos y comprobador».",
+    "Al emparejar la ronda 1, el torneo se publica solo, sin la fecha de nacimiento, el sexo ni el ID FIDE.",
+    "El sistema y los puntos no se cambian después de emparejar la ronda 1; el número de rondas sí se puede subir.",
+    "Los números salen del orden inicial de FIDE (Elo, título, nombre) y quedan fijos al emparejar la ronda 1.",
+    "Para emparejar una ronda hacen falta todos los resultados de la anterior; deshacer solo se puede en la última.",
+    "La clasificación cuenta solo las rondas con todos sus resultados."
+   ],
+   "contenido": "<h3>Las siete fichas</h3><p>Torneo, Jugadores, Rondas, Centro del evento, Clasificación, Tabla cruzada y Archivos y comprobador. El trabajo de un torneo va en ese orden.</p><h3>Antes de la ronda 1</h3><div class=\"aula-norma\"><b>Torneo.</b> Nombre, ciudad, fechas, árbitros y ritmo (van al TRF), el sistema (suizo con el Sistema Holandés, todos contra todos, Scheveningen o eliminación directa), las rondas, los puntos y los desempates en orden. Por omisión: BH-C1, BH, SB, DE y WIN.</div><div class=\"aula-norma aula-norma-aviso\">El sistema y los puntos <b>no se pueden cambiar</b> una vez emparejada la ronda 1. El número de rondas se puede subir, nunca por debajo de las ya emparejadas.</div><p><b>Jugadores.</b> Uno por uno, pegando una lista (Nombre; Elo; Título; Federación; ID FIDE) o desde una lista de Elo. El número de cada uno sale del orden inicial de FIDE: Elo, título y nombre.</p><h3>Cada ronda</h3><div class=\"aula-tabla\"><table><tr><th>Antes de emparejar</th><th>Cuenta</th></tr><tr><td>Bye pedido</td><td>½ punto</td></tr><tr><td>Ausente</td><td>0</td></tr><tr><td>Bye de punto entero</td><td>1 (FIDE lo desaconseja)</td></tr></table></div><p>Resultados: 1-0, ½-½, 0-1; +/− y −/+ son incomparecencias (gana quien vino) y −/− es que no vino ninguno. Con el teclado: 1, 0 o =.</p><div class=\"aula-norma\"><b>Deshacer y modificar.</b> «Deshacer el emparejamiento» solo en la última ronda. «Modificar la ronda sin deshacerla» cambia a dos jugadores de lugar, invierte colores o saca a alguien, y deja cada cambio en las incidencias.</div><div class=\"aula-nota\">La página avisa cuando cae el tiempo de espera de quien no llegó, pero declarar la partida perdida es decisión del árbitro (Leyes 2023, art. 6.7).</div>"
+  },
+  {
+   "id": "mesa-del-arbitro-guia",
+   "coleccion": "revista-19",
+   "titulo": "La mesa del árbitro",
+   "articulos": "Leyes 2023 · art. 7.5.5",
+   "resumen": "Cómo anota un árbitro adjunto los resultados, las ilegales y las irregularidades de sus mesas, y cómo le llega todo al principal.",
+   "claves": [
+    "Cada adjunto ve solo sus mesas de la ronda en juego.",
+    "Entra con el enlace o el código de 8 letras que le da el principal; sin licencia, en pareo.html#codigo.",
+    "El resultado queda en el torneo cuando el Pareo Integral del principal lo acepta.",
+    "Con la segunda ilegal del mismo jugador, la mesa avisa, pero decide el árbitro (art. 7.5.5).",
+    "Las notas llevan mesa, tipo, artículo y qué pasó, y le llegan al principal.",
+    "La bitácora guarda cada anotación con la hora de Costa Rica y se baja en PDF o Word."
+   ],
+   "contenido": "<h3>Para qué sirve</h3><p>En un torneo grande, cada árbitro adjunto anota desde su celular o su tablet los resultados de sus mesas, las jugadas ilegales, las irregularidades y las notas. Todo le llega al Pareo Integral del árbitro principal, que lo acepta en el torneo.</p><h3>Paso a paso</h3><div class=\"aula-tabla\"><table><tr><th>Quién</th><th>Qué hace</th></tr><tr><td>Principal</td><td>Crea al adjunto en el Centro del evento (o con «Enlace para un árbitro adjunto») y le pasa el enlace o el código.</td></tr><tr><td>Adjunto</td><td>Pega el enlace o el código y toca «Conectar». Ve solo sus mesas.</td></tr><tr><td>Adjunto</td><td>Toca el resultado de cada mesa; «Ilegal» e «Irregularidad» junto a cada jugador.</td></tr><tr><td>Principal</td><td>Recibe los resultados y revisa «Para confirmar» en el Centro del evento.</td></tr></table></div><div class=\"aula-norma\"><b>Art. 7.5.5</b> La segunda jugada ilegal completada por el mismo jugador hace perder la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales: entonces son tablas.</div><div class=\"aula-norma aula-norma-aviso\">La mesa avisa «Segunda ilegal: decide el resultado», pero el resultado lo decide el árbitro mirando la posición.</div><div class=\"aula-nota\">La bitácora no se borra: cada anotación queda con su hora de Costa Rica, y al final se baja en PDF o Word para el informe.</div>"
   }
  ],
  "preguntas": [
@@ -7800,6 +7837,162 @@
    ],
    "correcta": 1,
    "explicacion": "Art. 4.1: si el torneo dura más de 30 días, los resultados parciales se informan mensualmente. El límite de 90 días con extensiones pagadas era de la normativa citada en 2014."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "Ya emparejaste la ronda 1 de un suizo y te das cuenta de que las bases decían todos contra todos. ¿Qué te deja hacer Pareo Integral?",
+   "opciones": [
+    "Cambiar el sistema en la ficha Torneo y seguir",
+    "Nada: el sistema no se cambia después de la ronda 1; hay que deshacer el emparejamiento de la ronda 1",
+    "Cambiar el sistema solo para las rondas que faltan",
+    "Cambiar los puntos por victoria para compensar"
+   ],
+   "correcta": 1,
+   "explicacion": "El sistema y los puntos se fijan antes de la ronda 1. Como deshacer se puede en la última ronda, con la ronda 1 recién emparejada se deshace, se corrige el sistema y se vuelve a emparejar."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "¿De dónde sale el número de cada jugador en Pareo Integral?",
+   "opciones": [
+    "Del orden en que se inscribieron",
+    "De un sorteo al emparejar la ronda 1",
+    "Del orden inicial de FIDE: Elo, después título y después nombre",
+    "Del orden alfabético"
+   ],
+   "correcta": 2,
+   "explicacion": "Los números salen del orden inicial de FIDE (Elo, título, nombre) y quedan fijos al emparejar la ronda 1. Quien se inscribe tarde se intercala por Elo sin cambiar el orden de los demás."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "Un jugador pidió no jugar la ronda 3 y las bases dan medio punto por eso. ¿Qué marcas antes de emparejar?",
+   "opciones": [
+    "Ausente (0)",
+    "Bye pedido (½)",
+    "Bye de punto entero",
+    "Lo retiras del torneo"
+   ],
+   "correcta": 1,
+   "explicacion": "El bye pedido cuenta medio punto. Ausente cuenta cero, el bye de punto entero (que FIDE desaconseja) uno, y retirarlo lo saca de todas las rondas siguientes."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "En la ronda 4 falta un resultado de la ronda 3. ¿Qué pasa al intentar emparejar la ronda 4?",
+   "opciones": [
+    "Empareja igual y cuenta esa mesa como tablas",
+    "No se puede: hacen falta todos los resultados de la ronda anterior",
+    "Empareja dejando fuera a esos dos jugadores",
+    "Empareja y pide el resultado después"
+   ],
+   "correcta": 1,
+   "explicacion": "Para emparejar una ronda hacen falta todos los resultados de la anterior. La página dice cuántos faltan arriba de las mesas."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "Con la ronda 4 en juego y la ronda 3 completa, ¿qué clasificación muestra Pareo Integral?",
+   "opciones": [
+    "La de la ronda 4 con los resultados que ya hay",
+    "La de la ronda 3: solo cuenta las rondas con todos sus resultados",
+    "Ninguna hasta que termine la ronda 4",
+    "La de la ronda 4 contando las partidas en juego como tablas"
+   ],
+   "correcta": 1,
+   "explicacion": "La clasificación cuenta solo las rondas con todos sus resultados, por eso dice «Clasificación tras la ronda 3»."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "¿Qué datos de un jugador NUNCA salen en la publicación automática del torneo?",
+   "opciones": [
+    "El nombre y la institución",
+    "El Elo y la categoría",
+    "La fecha de nacimiento, el sexo y el ID FIDE",
+    "Los resultados de cada ronda"
+   ],
+   "correcta": 2,
+   "explicacion": "Al emparejar la ronda 1 se publican el nombre, la institución, el Elo, la categoría y los resultados; nunca la fecha de nacimiento, el sexo ni el ID FIDE."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "Un jugador llegó tarde a la ronda 2, que ya está emparejada y sin resultados. ¿Qué herramienta usas para meterlo sin deshacer toda la ronda?",
+   "opciones": [
+    "Deshacer el emparejamiento y volver a emparejar",
+    "Modificar la ronda sin deshacerla",
+    "Bajar el TRF y editarlo a mano",
+    "Abrir un torneo nuevo"
+   ],
+   "correcta": 1,
+   "explicacion": "«Modificar la ronda sin deshacerla» cambia a un jugador que no juega por uno que sí, invierte colores o saca a alguien, y deja cada cambio en las incidencias de la ronda."
+  },
+  {
+   "ficha": "pareo-integral-paso-a-paso",
+   "texto": "Se borraron los datos del navegador de la computadora del torneo. ¿Qué te permite recuperar el torneo?",
+   "opciones": [
+    "Nada: Pareo Integral no guarda copias",
+    "La copia (.json) que bajaste en «Archivos y comprobador», o tus torneos guardados en tu cuenta",
+    "La página pública, que se puede editar",
+    "El TRF de FIDE, que trae los byes pedidos de las rondas futuras"
+   ],
+   "correcta": 1,
+   "explicacion": "El torneo vive en el navegador. El respaldo es la copia (.json), que se abre con «Abrir un torneo», o guardar los torneos en la cuenta. Conviene bajarla al terminar cada ronda."
+  },
+  {
+   "ficha": "mesa-del-arbitro-guia",
+   "texto": "¿Qué mesas ve un árbitro adjunto en la mesa del árbitro?",
+   "opciones": [
+    "Todas las del torneo",
+    "Solo las de su grupo, de la ronda en juego",
+    "Solo las que ya tienen resultado",
+    "Las de todas las rondas"
+   ],
+   "correcta": 1,
+   "explicacion": "El enlace o el código de cada adjunto trae su grupo de mesas: ve solo esas, de la ronda en juego."
+  },
+  {
+   "ficha": "mesa-del-arbitro-guia",
+   "texto": "Un adjunto no tiene la licencia de la mesa del árbitro. ¿Cómo anota sus mesas?",
+   "opciones": [
+    "No puede anotar",
+    "Entra con su código en pareo.html#codigo",
+    "Le presta su cuenta el principal",
+    "Anota en papel y el principal lo pasa"
+   ],
+   "correcta": 1,
+   "explicacion": "Los adjuntos sin licencia entran con el código de 8 letras en pareo.html#codigo; con la licencia, en la mesa del árbitro."
+  },
+  {
+   "ficha": "mesa-del-arbitro-guia",
+   "texto": "El adjunto tocó «1-0» en su mesa 2. ¿Cuándo queda ese resultado en el torneo?",
+   "opciones": [
+    "En cuanto lo toca",
+    "Cuando el Pareo Integral del principal lo acepta",
+    "Al final de la ronda, todos juntos",
+    "Cuando el jugador firma la planilla en el celular"
+   ],
+   "correcta": 1,
+   "explicacion": "El resultado viaja al Pareo Integral del principal, que lo acepta. La mesa dice «Resultado aceptado por el árbitro principal» cuando ya entró."
+  },
+  {
+   "ficha": "mesa-del-arbitro-guia",
+   "texto": "La mesa avisa «Segunda ilegal: decide el resultado». En el tablero, al rival que no cometió las ilegales solo le queda el rey. ¿Qué decide el árbitro?",
+   "opciones": [
+    "Pierde quien hizo las dos ilegales",
+    "Tablas: el rival no puede dar mate por ninguna serie de jugadas legales",
+    "Se sigue jugando con dos minutos más",
+    "Lo decide la mesa del árbitro sola"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 7.5.5: la segunda ilegal hace perder, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales; con solo el rey no puede, así que son tablas. La mesa avisa; decide el árbitro."
+  },
+  {
+   "ficha": "mesa-del-arbitro-guia",
+   "texto": "Un adjunto anotó por error una nota en la bitácora. ¿Qué pasa con ella?",
+   "opciones": [
+    "La borra y desaparece",
+    "Queda: la bitácora no se borra; se corrige con otra anotación",
+    "La borra el principal",
+    "Se borra sola al terminar la ronda"
+   ],
+   "correcta": 1,
+   "explicacion": "La bitácora guarda cada anotación con su hora de Costa Rica y no se borra; una corrección va como una anotación nueva."
   }
  ],
  "casos": [

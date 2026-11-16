@@ -1,0 +1,416 @@
+{
+  "coleccion": {
+    "id": "revista-16",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 16",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "rating-performance-normas",
+      "coleccion": "revista-16",
+      "titulo": "Rating performance y normas de título",
+      "articulos": "Reglamento de Títulos 2024 · arts. 1.4.1, 1.4.6 a 1.4.9",
+      "resumen": "Cómo se calcula el rating performance (Rp = Ra + dp) y qué más exige una norma de GM, IM, WGM o WIM.",
+      "claves": [
+        "Rp = Ra + dp (art. 1.4.8).",
+        "Ra se redondea al entero más cercano; 0,5 sube (art. 1.4.7).",
+        "p = puntos ÷ partidas, llevado a dos decimales para entrar en la tabla dp (art. 1.4.9).",
+        "Mínimos de Rp: GM 2600, IM 2450, WGM 2400, WIM 2250 (antes de redondear: 2599,5; 2449,5; 2399,5; 2249,5).",
+        "Ra mínimo de los rivales: GM 2380, IM 2230, WGM 2180, WIM 2030; puntuación mínima del 35 %.",
+        "Piso de rating (GM 2200, IM 2050, WGM 2000, WIM 1850): solo se sube un rival, el de menor rating; sin rating cuenta 1400. Al menos 9 partidas."
+      ],
+      "contenido": "<h3>La fórmula</h3><p><span class=\"aula-formula\">Rp = Ra + dp</span></p><div class=\"aula-norma\"><b>Art. 1.4.7</b> Ra es la suma de los ratings de los rivales dividida entre el número de rivales, con el piso del 1.4.6. Se redondea al entero más cercano; la fracción 0,5 sube.</div><div class=\"aula-norma\"><b>Art. 1.4.9</b> La tabla convierte el porcentaje p en la diferencia dp. Algunos valores: 0,50 → 0; 0,57 → 50; 0,58 → 57; 0,61 → 80; 0,64 → 102; 0,71 → 158; 0,72 → 166. Por debajo de 0,50, el mismo valor en negativo (0,43 → −50; 0,36 → −102).</div><h3>Ejemplo</h3><p>5 puntos en 7 partidas; rivales que suman 19 509. <span class=\"aula-formula\">Ra = 19 509 ÷ 7 = 2787</span>; <span class=\"aula-formula\">p = 0,7143 → 0,71 → dp = 158</span>; <span class=\"aula-formula\">Rp = 2945</span>.</p><h3>Mínimos para una norma (art. 1.4.8)</h3><div class=\"aula-tabla\"><table><tr><th>Título</th><th>Rp</th><th>Ra mínimo</th><th>Piso</th></tr><tr><td>GM</td><td>2600</td><td>2380</td><td>2200</td></tr><tr><td>IM</td><td>2450</td><td>2230</td><td>2050</td></tr><tr><td>WGM</td><td>2400</td><td>2180</td><td>2000</td></tr><tr><td>WIM</td><td>2250</td><td>2030</td><td>1850</td></tr></table></div><div class=\"aula-norma\"><b>Art. 1.4.6</b> Para la norma, si hay rivales por debajo del piso, solo el de menor rating se sube al piso. Los rivales sin rating no cubiertos por otra regla cuentan como 1400.</div><div class=\"aula-norma aula-norma-aviso\"><b>No basta el Rp.</b> Hace falta además el 35 % de los puntos, al menos 9 partidas (1.4.1, con excepciones en campeonatos por equipos y la Copa del Mundo) y la mezcla de títulos y federaciones de los arts. 1.4.2 a 1.4.5.</div><p class=\"aula-nota\">La edición original publicó 2495 y 2448 donde correspondía 2945 y 2848: revisa siempre la suma final.</p>"
+    },
+    {
+      "id": "tpr-desempate-performance",
+      "coleccion": "revista-16",
+      "titulo": "La performance como desempate (TPR)",
+      "articulos": "C.07 (2026) · arts. 10, 10.1, 10.2 · Reglamento de Rating 2024 · art. 8.2.2",
+      "resumen": "El rating performance usado como desempate y su diferencia con el cálculo del rating inicial.",
+      "claves": [
+        "ARO: promedio de los rivales jugados en el tablero, redondeado; 0,5 sube (art. 10.1).",
+        "TPR = ARO + la diferencia de la tabla del Reglamento de Rating (art. 10.2).",
+        "Las partidas no jugadas no entran en el cálculo.",
+        "Los desempates por rating se retiran si hay jugadores sin rating, salvo reglas publicadas antes del torneo (art. 10).",
+        "El rating inicial no es la performance: suma dos rivales ficticios de 1800 con tablas (art. 8.2.2).",
+        "El C.07 vigente se aplica desde el 1-mar-2026."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>C.07, art. 10.1 (ARO)</b> Promedio de los ratings de los rivales con los que se jugó en el tablero, redondeado al entero más cercano (0,5 hacia arriba).</div><div class=\"aula-norma\"><b>C.07, art. 10.2 (TPR)</b> Se suma al ARO la diferencia de rating que corresponde a la fracción de puntos obtenida en partidas jugadas, según la tabla del Reglamento de Rating.</div><div class=\"aula-norma aula-norma-aviso\"><b>Jugadores sin rating.</b> Los desempates por rating deben quitarse de la lista si hay jugadores sin rating, salvo que las bases o el árbitro principal hayan publicado antes del torneo cómo tratarlos (art. 10).</div><div class=\"aula-norma\"><b>Reglamento de Rating, art. 8.2.2</b> Para el primer rating, Ra es el promedio de los rivales con rating más dos rivales ficticios de 1800, contra los que se considera que hizo tablas.</div><p><span class=\"aula-formula\">TPR = ARO + dp(p)</span></p><p class=\"aula-nota\">En el ejercicio de la revista, dos jugadores con 2½ terminan con 2594 y 2595: el TPR distingue empates que la puntuación no separa.</p>"
+    },
+    {
+      "id": "torre-invertida-coronacion",
+      "coleccion": "revista-16",
+      "titulo": "La torre invertida y las piezas caídas",
+      "articulos": "Leyes 2023 · arts. 4.4.4, 6.11.2, 7.4, 7.5.2 · Manual del Árbitro 2026",
+      "resumen": "Qué vale una torre colocada de cabeza al coronar, qué hacer si falta la dama y cómo tratar una pieza caída.",
+      "claves": [
+        "Una torre invertida en la casilla de promoción es una torre, aunque el jugador diga «dama» (Manual del Árbitro 2026).",
+        "No es jugada ilegal; moverla después en diagonal sí lo es.",
+        "El rival puede ponerla de pie en su turno, pero es mejor pedírselo al árbitro.",
+        "La pieza elegida queda definida cuando toca la casilla de promoción (4.4.4).",
+        "Si falta la pieza, el jugador puede pausar el reloj y pedir ayuda al árbitro (6.11.2).",
+        "Una pieza acostada es una pieza desplazada: se corrige con el art. 7.4, no es jugada ilegal por sí misma."
+      ],
+      "contenido": "<h3>Qué dice hoy la FIDE</h3><div class=\"aula-norma\"><b>Manual del Árbitro 2026 (art. 4.6)</b> Si un jugador coloca una torre invertida en la casilla de promoción y continúa la partida, la pieza se considera una torre aunque la llame dama. Moverla en diagonal es jugada ilegal. El rival puede ponerla de pie en su turno, aunque conviene pedirlo al árbitro; el árbitro que la ve debe corregirlo con la menor molestia posible.</div><div class=\"aula-norma\"><b>Art. 4.4.4</b> Al coronar, la elección queda definida cuando la pieza toca la casilla de promoción.</div><div class=\"aula-norma\"><b>Art. 6.11.2</b> El jugador puede pausar el reloj solo para pedir ayuda al árbitro, por ejemplo cuando corona y la pieza que necesita no está disponible.</div><div class=\"aula-norma\"><b>Art. 7.4 y glosario</b> Una pieza acostada de lado es una pieza desplazada. Quien la desplazó la corrige en su propio tiempo; si hace falta, se pausa el reloj y se llama al árbitro, que puede sancionar.</div><div class=\"aula-norma aula-norma-aviso\"><b>No confundir.</b> Peón en la última fila y reloj pulsado sin cambiarlo: jugada ilegal y el peón pasa a ser dama (7.5.2). Torre invertida: es torre.</div><p class=\"aula-nota\">En 2014 el Manual del Árbitro la consideraba jugada ilegal; Santiago García Ramos opinaba que debía valer como torre. La revista de árbitros de la FIDE de agosto de 2016 y el Manual 2026 le dan la razón.</p>"
+    },
+    {
+      "id": "patrocinio-proyecto-evento",
+      "coleccion": "revista-16",
+      "titulo": "Patrocinio: invitar con un proyecto",
+      "articulos": "Organización de eventos · manual de la Comisión de Eventos FIDE (2013, histórico)",
+      "resumen": "Las ideas prácticas del autor para conseguir patrocinadores y el ejemplo de presupuesto en especie, corregido.",
+      "claves": [
+        "No se pide: se invita al patrocinador a participar.",
+        "La llave para invitar es un proyecto profesional del evento.",
+        "Hay que saber exactamente qué se necesita: a veces conviene más el apoyo en especie.",
+        "Toda superficie cuenta para la marca: planillas, identificadores de mesa, gafetes, web, pancartas.",
+        "Los niveles de patrocinio escalonan beneficios (exclusivo, patrocinador, apoyador).",
+        "El manual de identidad de 2013 es histórico: pide a la FIDE los lineamientos gráficos vigentes."
+      ],
+      "contenido": "<h3>La idea</h3><p>Llegar «pidiendo» aleja a los patrocinadores. Hay que llegar como profesional, con un proyecto que diga qué se necesita, qué se ofrece y en qué niveles.</p><h3>El presupuesto en especie (corregido)</h3><div class=\"aula-tabla\"><table><tr><th>Concepto</th><th>Cantidad</th><th>Por día</th></tr><tr><td>Sillas (200 jugadores + 4 de arbitraje) a 1 USD</td><td>204</td><td>204 USD</td></tr><tr><td>Mesas (25 de juego + 2 de arbitraje) a 10 USD</td><td>27</td><td>270 USD</td></tr><tr><td><b>Total</b></td><td></td><td><b>474 USD</b> (948 en dos días)</td></tr></table></div><p class=\"aula-nota\">La edición original contaba 100 sillas para 200 niños (370 USD por día). Precios de ejemplo de 2013.</p><h3>Qué ofrecer</h3><ul><li>Logotipo en planillas, identificadores de mesa, gafetes, web y pancartas.</li><li>Menciones en comunicados y transmisiones.</li><li>Presencia en ceremonias y espacio de exhibición.</li></ul><div class=\"aula-norma aula-norma-aviso\"><b>Documento histórico.</b> El manual de identidad de la FIDE de 2013 no sirve como guía gráfica actual; los lineamientos vigentes se piden a la FIDE o a la federación.</div>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "Los rivales de un jugador suman 19 588 en 7 partidas. ¿Cuál es el Ra?",
+      "opciones": [
+        "2798",
+        "2799",
+        "2798,29",
+        "2797"
+      ],
+      "correcta": 0,
+      "explicacion": "19 588 ÷ 7 = 2798,29. El art. 1.4.7 redondea al entero más cercano, así que Ra = 2798."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "Un promedio de rivales da exactamente 2462,5. ¿Cómo se redondea?",
+      "opciones": [
+        "2462",
+        "Se deja con decimal",
+        "2463",
+        "Depende del árbitro"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 1.4.7: la fracción 0,5 se redondea hacia arriba: 2463."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "Un jugador hace 6½ de 9 contra rivales con Ra 2440. ¿Cuál es su Rp y le alcanza para un resultado de GM?",
+      "opciones": [
+        "2589: no",
+        "2606: no, el Ra debe ser 2450",
+        "2640: sí",
+        "2606: sí, Rp ≥ 2600 y Ra ≥ 2380"
+      ],
+      "correcta": 3,
+      "explicacion": "p = 6,5 ÷ 9 = 0,7222 → 0,72 → dp = 166; Rp = 2440 + 166 = 2606. Cumple Rp ≥ 2600 y Ra ≥ 2380 (art. 1.4.8). Para ser norma faltaría revisar la mezcla de títulos y federaciones."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "Un jugador hace 5½ de 9 contra rivales con Ra 2380. ¿Qué resultado de título logra?",
+      "opciones": [
+        "De GM",
+        "De IM: Rp 2460",
+        "Ninguno",
+        "De GM, porque el Ra es 2380"
+      ],
+      "correcta": 1,
+      "explicacion": "p = 0,6111 → 0,61 → dp = 80; Rp = 2460. Alcanza el mínimo de IM (2450, con Ra ≥ 2230) pero no el de GM (2600)."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "En un torneo para norma de GM, dos rivales tienen 2150 y 2180. ¿Cómo se tratan en el Ra?",
+      "opciones": [
+        "Los dos se suben a 2200",
+        "Ninguno se modifica",
+        "Solo el de 2150 se sube a 2200; el de 2180 queda igual",
+        "Se eliminan del cálculo"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 1.4.6: no se puede subir al piso más que a un rival; si hay varios por debajo, se sube el de menor rating."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "¿Con qué rating cuenta, para una norma, un rival sin rating al que no se aplica ninguna otra regla?",
+      "opciones": [
+        "1400",
+        "1000",
+        "El piso de la norma",
+        "No cuenta"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 1.4.6: los rivales sin rating no cubiertos por otra regla se consideran con 1400."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "¿Cuál es la puntuación mínima para cualquier norma de título?",
+      "opciones": [
+        "50 %",
+        "40 %",
+        "No hay mínimo",
+        "35 %"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 1.4.8: la puntuación mínima es del 35 % para todas las normas."
+    },
+    {
+      "ficha": "rating-performance-normas",
+      "texto": "Un jugador logra Rp 2620 en un torneo de 7 rondas, todos contra todos, de un club. ¿Es norma de GM?",
+      "opciones": [
+        "Sí",
+        "No: hacen falta al menos 9 partidas",
+        "Sí, si el Ra es mayor de 2380",
+        "Solo si es la última ronda"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 1.4.1: se exigen al menos 9 partidas; las excepciones son para campeonatos por equipos y la Copa del Mundo."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "En el desempate TPR, ¿qué rivales entran en el ARO?",
+      "opciones": [
+        "Solo los rivales con los que jugó en el tablero",
+        "Todos los del calendario",
+        "Todos, y los descansos cuentan como 1400",
+        "Solo los de su grupo de puntos"
+      ],
+      "correcta": 0,
+      "explicacion": "C.07, art. 10.1: el ARO es el promedio de los ratings de los rivales con los que se jugó en el tablero."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "Los rivales jugados por un participante suman 11 902 en 5 partidas. ¿Cuál es su ARO?",
+      "opciones": [
+        "2381",
+        "2380,4",
+        "2380",
+        "2379"
+      ],
+      "correcta": 2,
+      "explicacion": "11 902 ÷ 5 = 2380,4, que se redondea al entero más cercano (art. 10.1): 2380."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "En un abierto hay varios jugadores sin rating y las bases no dicen cómo tratarlos. ¿Puede usarse el TPR como desempate?",
+      "opciones": [
+        "Sí, siempre",
+        "Sí, contando a los sin rating como 1000",
+        "Solo para los primeros lugares",
+        "No: los desempates por rating deben retirarse"
+      ],
+      "correcta": 3,
+      "explicacion": "C.07, art. 10: estos desempates se quitan si hay jugadores sin rating, salvo que las bases o el árbitro principal publiquen antes cómo tratarlos."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "¿Cómo se calcula hoy el primer rating FIDE de un jugador?",
+      "opciones": [
+        "Igual que su rating performance",
+        "Con el promedio de sus rivales más dos rivales ficticios de 1800 contra los que se considera que hizo tablas",
+        "Con el promedio de sus rivales menos 100",
+        "Se le asigna 1400"
+      ],
+      "correcta": 1,
+      "explicacion": "Reglamento de Rating (desde el 1-mar-2024), art. 8.2.2: se añaden dos rivales hipotéticos de 1800 con resultado de tablas. No es lo mismo que la performance."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "¿Desde cuándo se aplica el Reglamento de Play-off y Desempates C.07 vigente?",
+      "opciones": [
+        "1-ene-2023",
+        "1-mar-2024",
+        "1-mar-2026",
+        "1-jul-2026"
+      ],
+      "correcta": 2,
+      "explicacion": "Lo aprobó el Consejo FIDE el 2-feb-2026 y se aplica desde el 1-mar-2026."
+    },
+    {
+      "ficha": "tpr-desempate-performance",
+      "texto": "Dos jugadores terminan con 2½ de 7 en un todos contra todos. ¿Pueden tener distinto TPR?",
+      "opciones": [
+        "Sí, porque sus ARO pueden ser distintos",
+        "No, con los mismos puntos el TPR es igual",
+        "Solo si uno no tiene rating",
+        "Solo en sistema suizo"
+      ],
+      "correcta": 0,
+      "explicacion": "El TPR es ARO + dp. Con los mismos puntos el dp es igual, pero el ARO cambia según los rivales (en un todos contra todos, cada uno no se enfrenta a sí mismo). En la revista: 2594 y 2595."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "Un jugador corona colocando una torre de cabeza y dice «dama». ¿Qué pieza es?",
+      "opciones": [
+        "Dama",
+        "Es jugada ilegal",
+        "La que decida el rival",
+        "Torre"
+      ],
+      "correcta": 3,
+      "explicacion": "Manual del Árbitro 2026: la torre invertida se considera torre aunque el jugador la nombre como dama. Además, la elección queda definida al tocar la casilla de promoción (4.4.4)."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "Más tarde, ese jugador mueve la torre invertida en diagonal y pulsa el reloj. ¿Qué es?",
+      "opciones": [
+        "Una jugada legal de dama",
+        "Una jugada ilegal",
+        "Una irregularidad sin sanción",
+        "Una pieza desplazada"
+      ],
+      "correcta": 1,
+      "explicacion": "La pieza es una torre: moverla en diagonal es jugada ilegal (Manual del Árbitro 2026) y se aplica el art. 7.5."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "El árbitro ve una torre invertida en el tablero. ¿Qué debe hacer?",
+      "opciones": [
+        "Corregir la situación causando la menor molestia posible",
+        "Nada, salvo que haya reclamación",
+        "Cambiarla por una dama",
+        "Sancionar con dos minutos"
+      ],
+      "correcta": 0,
+      "explicacion": "Manual del Árbitro 2026: el árbitro que ve una torre invertida debe corregir la situación con la menor molestia posible. No es una dama ni una jugada ilegal."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "Un jugador corona y no hay una dama disponible. ¿Qué puede hacer?",
+      "opciones": [
+        "Poner una torre de cabeza",
+        "Dejar el peón y decir «dama»",
+        "Pausar el reloj y pedir ayuda al árbitro",
+        "Pedirle la dama al tablero vecino sin parar el reloj"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 6.11.2: puede pausar el reloj para pedir ayuda al árbitro, por ejemplo cuando corona y la pieza no está disponible."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "Al capturar, a un jugador se le cae el caballo, que queda acostado en su casilla, y pulsa el reloj. ¿Cómo se trata?",
+      "opciones": [
+        "Jugada ilegal",
+        "Pierde la partida",
+        "El caballo se retira del tablero",
+        "Pieza desplazada: se corrige según el art. 7.4"
+      ],
+      "correcta": 3,
+      "explicacion": "El glosario de las Leyes pone como ejemplo de pieza desplazada una pieza acostada de lado. El art. 7.4 dice que quien la desplazó la corrige en su tiempo y que el árbitro puede sancionar."
+    },
+    {
+      "ficha": "torre-invertida-coronacion",
+      "texto": "Un jugador lleva el peón a la última fila, pulsa el reloj y deja el peón allí. ¿Qué pasa con el peón?",
+      "opciones": [
+        "Se convierte en torre",
+        "Se sustituye por una dama y la jugada es ilegal",
+        "Sigue siendo peón",
+        "El jugador elige ahora"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 7.5.2: la jugada es ilegal y el peón se sustituye por una dama de su color. Es distinto del caso de la torre invertida."
+    },
+    {
+      "ficha": "patrocinio-proyecto-evento",
+      "texto": "Según el autor, ¿con qué mentalidad hay que acercarse a un posible patrocinador?",
+      "opciones": [
+        "Pedir lo máximo posible",
+        "Pedir solo dinero",
+        "Invitarlo a participar, con un proyecto",
+        "Esperar a que él proponga"
+      ],
+      "correcta": 2,
+      "explicacion": "La idea central del artículo: no pedir, sino invitar, y la llave para invitar es un proyecto profesional del evento."
+    },
+    {
+      "ficha": "patrocinio-proyecto-evento",
+      "texto": "Un torneo escolar de 200 niños en 25 mesas de 8, más 2 mesas de arbitraje y 4 sillas para árbitros. Sillas a 1 USD y mesas a 10 USD por día. ¿Cuánto cuesta un día?",
+      "opciones": [
+        "474 USD",
+        "370 USD",
+        "740 USD",
+        "500 USD"
+      ],
+      "correcta": 0,
+      "explicacion": "204 sillas × 1 = 204 USD y 27 mesas × 10 = 270 USD: 474 USD por día. La edición original contaba solo 100 sillas (370 USD)."
+    },
+    {
+      "ficha": "patrocinio-proyecto-evento",
+      "texto": "¿Cuál de estos soportes propone el autor añadir para los logotipos de patrocinadores?",
+      "opciones": [
+        "Los relojes de ajedrez por dentro",
+        "Los tableros de la final",
+        "Las bases del torneo",
+        "Las planillas de los jugadores"
+      ],
+      "correcta": 3,
+      "explicacion": "Propone planillas, identificadores de mesa y gafetes: el jugador ve la planilla toda la partida."
+    },
+    {
+      "ficha": "patrocinio-proyecto-evento",
+      "texto": "¿Por qué no conviene usar hoy el manual de identidad de la FIDE de 2013 como guía gráfica?",
+      "opciones": [
+        "Porque está prohibido",
+        "Porque es un documento histórico: los lineamientos vigentes se piden a la FIDE o a la federación",
+        "Porque solo vale para Europa",
+        "Porque no tenía logotipo"
+      ],
+      "correcta": 1,
+      "explicacion": "Es un documento de 2013; antes de usar la imagen de la FIDE en un evento hay que pedir los lineamientos vigentes."
+    },
+    {
+      "ficha": "patrocinio-proyecto-evento",
+      "texto": "¿Qué conviene definir antes de salir a buscar patrocinio?",
+      "opciones": [
+        "Qué necesitas, qué ofreces a cambio y en qué niveles",
+        "Solo la fecha",
+        "Solo el monto en dinero",
+        "Nada: se negocia en la reunión"
+      ],
+      "correcta": 0,
+      "explicacion": "El artículo insiste en saber exactamente qué se necesita (en dinero o en especie) y qué se ofrece al patrocinador, organizado en niveles."
+    }
+  ],
+  "casos": [
+    {
+      "id": "torre-invertida-mate",
+      "ficha": "torre-invertida-coronacion",
+      "titulo": "La «dama» que da mate en diagonal",
+      "nivel": "Básico",
+      "ritmo": null,
+      "escena": "Partida estándar. Las blancas coronan colocando una torre de cabeza y dicen «dama». Dos jugadas después, mueven esa pieza en diagonal, anuncian mate y pulsan el reloj. Las negras llaman al árbitro. Es la primera infracción de las blancas.",
+      "decision": {
+        "texto": "¿Qué decides?",
+        "opciones": [
+          "Mate: la pieza era una dama",
+          "Jugada ilegal: la pieza es una torre; se restablece la posición y dos minutos para las negras",
+          "Las blancas pierden de inmediato",
+          "Se cambia la torre por una dama y vale el mate"
+        ],
+        "correcta": 1,
+        "explicacion": "Según el Manual del Árbitro 2026, la torre invertida es una torre aunque se la llame dama; moverla en diagonal es jugada ilegal. Se aplica el art. 7.5: se restablece la posición y, por ser la primera, dos minutos para el rival (7.5.5). El mate no vale porque la jugada no cumple el art. 3 (5.1.1)."
+      }
+    },
+    {
+      "id": "norma-siete-rondas",
+      "ficha": "rating-performance-normas",
+      "titulo": "La norma que no fue",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Al terminar un torneo de 7 rondas, todos contra todos, un jugador te muestra que su performance es 2620 contra rivales de promedio 2450 y te pide el certificado de norma de GM.",
+      "decision": {
+        "texto": "¿Qué le respondes?",
+        "opciones": [
+          "Que sí es norma de GM",
+          "Que sí, pero solo de IM",
+          "Que no: una norma exige al menos 9 partidas",
+          "Que depende del 35 %"
+        ],
+        "correcta": 2,
+        "explicacion": "Art. 1.4.1 del Reglamento de Títulos: la norma exige al menos 9 partidas (las excepciones son campeonatos por equipos y la Copa del Mundo). Aunque el Rp y el Ra alcancen, con 7 partidas no hay norma."
+      }
+    }
+  ],
+  "repeticiones": []
+}

@@ -1,0 +1,507 @@
+{
+  "coleccion": {
+    "id": "revista-2",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 2",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "promocion-coronacion",
+      "coleccion": "revista-2",
+      "titulo": "Promoción o coronación",
+      "articulos": "Leyes 2023 · arts. 3.7.3.3-3.7.3.5, 4.4.4, 4.6, 4.7.3, 6.11.2, 7.5.2, 7.5.4, 7.5.5, A.5.4",
+      "resumen": "Cómo se promociona un peón, qué pieza queda elegida y qué hace el árbitro con la torre invertida, el peón sin cambiar o la pieza que falta.",
+      "claves": [
+        "El peón se cambia por dama, torre, alfil o caballo de su color; la elección no depende de las piezas capturadas (3.7.3.3-3.7.3.4).",
+        "La pieza queda elegida cuando toca la casilla de promoción (4.4.4).",
+        "El peón no tiene que llegar a la casilla de promoción y quitarlo o poner la pieza puede hacerse en cualquier orden (4.6.1-4.6.2).",
+        "Si falta la pieza, el jugador detiene el reloj y se la pide al árbitro (6.11.2).",
+        "Pulsar el reloj con el peón sin cambiar es jugada ilegal: el peón pasa a ser dama y el rival recibe 2 minutos (7.5.2 y 7.5.5).",
+        "Una torre invertida es una torre, aunque se diga «dama» (Manual del Árbitro 2026)."
+      ],
+      "contenido": "\n<h3>Qué dice la norma</h3>\n<div class=\"aula-norma\"><b>Arts. 3.7.3.3 a 3.7.3.5</b> El peón que llega a la fila más alejada se cambia, en la misma jugada, por una dama, torre, alfil o caballo nuevo de su color, en la casilla de llegada. La elección no se limita a las piezas capturadas y el efecto de la nueva pieza es inmediato.</div>\n<div class=\"aula-norma\"><b>Art. 4.4.4</b> La pieza queda elegida cuando toca la casilla de promoción.</div>\n<div class=\"aula-norma\"><b>Art. 4.6</b> El peón no tiene que colocarse en la casilla de llegada (4.6.1); quitar el peón y poner la nueva pieza puede hacerse en cualquier orden (4.6.2); si en la casilla hay una pieza rival, debe capturarse (4.6.3).</div>\n<div class=\"aula-norma\"><b>Art. 4.7.3</b> La promoción está hecha cuando la mano soltó la nueva pieza en la casilla y el peón ya salió del tablero.</div>\n<div class=\"aula-norma\"><b>Art. 6.11.2</b> El jugador puede detener el reloj para pedir ayuda al árbitro, por ejemplo cuando la pieza que necesita no está disponible.</div>\n<div class=\"aula-norma\"><b>Arts. 7.5.2, 7.5.4 y 7.5.5</b> Pulsar el reloj con el peón sin cambiar es jugada ilegal y el peón se cambia por una dama. Mover con las dos manos y pulsar se sanciona igual. Primera jugada ilegal: 2 minutos para el rival; segunda: pierde (salvo que el rival no pueda dar mate: tablas).</div>\n<div class=\"aula-norma aula-norma-aviso\"><b>Rápidas y relámpago.</b> La sanción es de 1 minuto (A.3). Sin supervisión adecuada, si el árbitro ve un peón en la última fila, espera a que se complete la jugada siguiente; si la posición ilegal sigue, declara tablas (A.5.4).</div>\n<h3>Casos de sala</h3>\n<p><b>Torre invertida.</b> Es una torre aunque el jugador diga «dama» (Manual del Árbitro 2026). Si la mueve en diagonal, es jugada ilegal. El árbitro que la vea la pone derecha con la mínima molestia; no hay que reconstruir nada.</p>\n<p><b>Caballo acostado.</b> Es un caballo: se le pide al jugador que lo coloque bien.</p>\n<p><b>Peón sin cambiar, dos peones juntos, peón con un gorro, una moneda.</b> Ninguno es una pieza posible: si el jugador pulsó el reloj así, se aplica el art. 7.5.2 (dama) y la sanción del 7.5.5.</p>\n<p><b>Sacar el peón de séptima y poner la dama en octava.</b> Es válido desde las Leyes de 2014 (4.6.1). La edición original de 2012 lo daba por ilegal.</p>\n<p><b>Exigirle al rival la pieza capturada.</b> El rival no está obligado a darla: la pide el árbitro, que conviene que lleve una pieza de cada tipo y color.</p>\n<div class=\"aula-nota\">Si te falta la pieza: detén el reloj, pídesela al árbitro y, cuando la tengas, sigue pensando. No estás obligado a promocionar a la pieza que pediste.</div>\n"
+    },
+    {
+      "id": "siete-cartas",
+      "coleccion": "revista-2",
+      "titulo": "Juego de arbitraje: las siete cartas",
+      "articulos": "Leyes 2023 · arts. 5.2.3, 6.9, 6.10, 6.11, 8.4, 9.1.2.1, 11.3.2, 12.5, 12.7",
+      "resumen": "Un método para ordenar la evidencia cuando te llaman a una mesa, con dos casos resueltos: unas tablas con un reloj mal puesto y un teléfono que suena.",
+      "claves": [
+        "El árbitro es conciliador, detective y juez, en ese orden.",
+        "La primera carta es siempre la versión de los jugadores; si no coinciden, es palabra contra palabra.",
+        "No se tocan las piezas ni se deja correr el reloj mientras se investiga.",
+        "Las bases del torneo no las cambia el árbitro: si dicen que hay incremento, no se quita (6.10.2 para corregir el reloj).",
+        "Tablas por acuerdo: válidas si ambos hicieron al menos una jugada (5.2.3); rey y caballo sí pueden dar mate con una serie de jugadas legales.",
+        "Aparato electrónico encima: pierde y el rival gana siempre, aunque no tenga material (11.3.2.2), salvo sanción menor prevista en las bases."
+      ],
+      "contenido": "\n<h3>Las siete cartas</h3>\n<div class=\"aula-tabla\"><table>\n<tr><th>Carta</th><th>Qué buscar</th><th>Normas</th></tr>\n<tr><td>1. Versión de los jugadores</td><td>Siempre primero. Solo vale si las dos versiones coinciden.</td><td>4.8, 12.1</td></tr>\n<tr><td>2. Posición</td><td>Que nadie toque las piezas.</td><td>7.5.1, 7.6</td></tr>\n<tr><td>3. Reloj</td><td>Tiempos, banderas, contador; detenerlo.</td><td>6.10.1, 6.10.2, 6.11.1</td></tr>\n<tr><td>4. Planillas</td><td>Para reconstruir y comprobar jugadas ilegales.</td><td>8.1, 8.4, 8.5; A.2 en rápidas</td></tr>\n<tr><td>5. Reglamentos</td><td>Qué dicen las Leyes y las bases.</td><td>Leyes 2023 y bases</td></tr>\n<tr><td>6. Intervención de un extraño</td><td>Solo si alguien ajeno intervino.</td><td>12.7</td></tr>\n<tr><td>7. Conflictos externos</td><td>Temblores, apagones, problemas del local.</td><td>6.11.1, 6.11.3, 12.5</td></tr>\n</table></div>\n<h3>Caso 1: las tablas con un reloj mal puesto</h3>\n<p>Rápidas a 15 min + 5 s. El árbitro pone un reloj de 5 minutos sin incremento a una partida que empezó sin reloj. Las negras reclaman el incremento y el árbitro lo niega; luego ofrecen tablas («con rey y caballo no me puedes dar mate») y las blancas aceptan.</p>\n<div class=\"aula-norma\"><b>Arts. 9.1.2.1 y 5.2.3</b> La oferta no se puede retirar y vale hasta que el rival la acepte o la rechace; el acuerdo termina la partida si ambos hicieron al menos una jugada.</div>\n<p><b>Resultado:</b> tablas por acuerdo. Pero la reclamación de las negras era correcta (6.10.2: se pone la programación de las bases) y rey y caballo sí pueden dar mate con una serie de jugadas legales: si a las negras se les caía la bandera, perdían (6.9).</p>\n<h3>Caso 2: el mensaje de texto</h3>\n<div class=\"aula-norma\"><b>Art. 11.3.2.2</b> Si es evidente que el jugador lleva encima un aparato electrónico no autorizado, pierde y el rival gana. Las bases pueden fijar una sanción menor.</div>\n<p><b>Resultado:</b> pierde el jugador del teléfono y el rival gana (1-0 o 0-1), aunque no tenga material para dar mate. Reducirle el tiempo solo vale si las bases lo prevén.</p>\n<div class=\"aula-nota\">La edición original (2012) daba tablas si el rival no podía ganar. Esa excepción desapareció con las Leyes de 2014.</div>\n"
+    },
+    {
+      "id": "desempate-progresivo",
+      "coleccion": "revista-2",
+      "titulo": "Desempate progresivo (acumulativo)",
+      "articulos": "C.07 (2026) · arts. 4.1, 4.2, 4.3, 7.5, 14.1, 14.2",
+      "resumen": "La suma de las puntuaciones que tiene el jugador al final de cada ronda, y cómo se aplican los cortes PS-C1 y PS-C2.",
+      "claves": [
+        "PS = suma de la puntuación del jugador al final de cada ronda (art. 7.5).",
+        "Es de tipo B: depende solo de los resultados del propio jugador.",
+        "El punto ganado por incomparecencia forma parte de su puntuación.",
+        "PS-C1 quita el acumulado de la primera ronda; PS-C2, los de las dos primeras (art. 14).",
+        "Cada corte es un desempate distinto y debe estar en la lista publicada antes del torneo (art. 4.1).",
+        "Dos jugadores con la misma secuencia de resultados empatan en el PS y en todos sus cortes."
+      ],
+      "contenido": "\n<h3>Qué dice la norma</h3>\n<div class=\"aula-norma\"><b>Art. 7.5 (PS)</b> Después de cada ronda, el participante tiene una puntuación en el torneo; el desempate suma esas puntuaciones.</div>\n<div class=\"aula-norma\"><b>Arts. 14.1 y 14.2</b> Cut-1 quita el valor menos significativo (en el progresivo, la puntuación después de la primera ronda: PS-C1); Cut-2 quita los dos menos significativos.</div>\n<div class=\"aula-norma aula-norma-aviso\"><b>Arts. 4.1 y 4.2</b> Los desempates son una lista ordenada que se publica antes del inicio. Se aplican en orden, solo al subgrupo que siga empatado; agotada la lista, sorteo (salvo que las bases digan que el empate no se rompe).</div>\n<h3>Cómo se calcula</h3>\n<p><span class=\"aula-formula\">acumulado de la ronda = acumulado anterior + punto de la ronda</span></p>\n<p><span class=\"aula-formula\">PS = suma de los acumulados</span></p>\n<div class=\"aula-tabla\"><table>\n<tr><th>Jugador</th><th>Resultados</th><th>Acumulados</th><th>PS</th><th>PS-C1</th><th>PS-C2</th></tr>\n<tr><td>Torres</td><td>½ ½ 1 ½ ½</td><td>½ 1 2 2½ 3</td><td>9</td><td>8½</td><td>7½</td></tr>\n<tr><td>Hernández</td><td>0 1 1 1 0</td><td>0 1 2 3 3</td><td>9</td><td><b>9</b></td><td>8</td></tr>\n<tr><td>Luna</td><td>0 ½ 1 1 ½</td><td>0 ½ 1½ 2½ 3</td><td>7½</td><td>7½</td><td><b>7</b></td></tr>\n<tr><td>Vega</td><td>0 1 ½ ½ 1</td><td>0 1 1½ 2 3</td><td>7½</td><td>7½</td><td>6½</td></tr>\n</table></div>\n<p>Hernández supera a Torres con PS-C1. Luna y Vega siguen empatadas en PS-C1 y las separa el PS-C2.</p>\n<div class=\"aula-nota\">El progresivo premia a quien gana pronto: perder en la primera ronda cuesta más que perder en la última.</div>\n"
+    },
+    {
+      "id": "decisiones-bajo-presion",
+      "coleccion": "revista-2",
+      "titulo": "Decisiones arbitrales bajo presión",
+      "articulos": "Psicología del deporte (Paula Man Reich) · Leyes 2023, arts. 6.11.1 y 6.11.3",
+      "resumen": "Cómo reconocer el estrés del árbitro y qué hacer para decidir con calma.",
+      "claves": [
+        "El estrés acelera el pulso, dificulta concentrarse y hace sentir que todo pasa más rápido.",
+        "Los pensamientos centrados en el resultado o en la opinión ajena aumentan el estrés.",
+        "Ante una decisión importante, no te apresures: respira y tómate unos segundos más.",
+        "Concéntrate en el aquí y el ahora y en lo que sabes.",
+        "El árbitro puede detener el reloj (6.11.1) y decide cuándo se reanuda (6.11.3).",
+        "Mantén pensamientos y actitudes positivas y disfruta tu trabajo."
+      ],
+      "contenido": "\n<h3>Síntomas del estrés</h3>\n<ul><li>El ritmo cardiaco se acelera y cuesta concentrarse en lo importante.</li><li>Todo parece pasar más rápido de lo que pasa.</li><li>Se piensa con menos claridad y cada decisión da miedo.</li><li>Se vuelve uno negativo y autocrítico.</li></ul>\n<h3>Recomendaciones</h3>\n<ul><li>No te apresures: respira, piensa y recién entonces decide.</li><li>Haz lo mejor que puedas con lo que sabes.</li><li>Piensa en el aquí y el ahora, no en el pasado ni en el futuro.</li><li>Cultiva pensamientos y actitudes positivas.</li><li>Disfruta cada experiencia arbitral.</li></ul>\n<div class=\"aula-norma\"><b>Arts. 6.11.1 y 6.11.3</b> Si hay que interrumpir la partida, el árbitro detiene el reloj y decide cuándo se reanuda: tienes el tiempo para escuchar a los dos y decidir con calma.</div>\n"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Un jugador promociona poniendo una torre invertida y dice «dama». ¿Qué pieza es?",
+      "opciones": [
+        "Una dama, porque lo anunció",
+        "Una torre",
+        "Una dama si el rival no protestó",
+        "Ninguna: es jugada ilegal y se repite"
+      ],
+      "correcta": 1,
+      "explicacion": "La pieza queda elegida al tocar la casilla (4.4.4) y una torre invertida es una torre aunque se diga «dama» (Manual del Árbitro FIDE 2026, comentario al art. 4.6)."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "¿Cuándo queda decidida la pieza elegida al promocionar?",
+      "opciones": [
+        "Cuando el jugador la anuncia",
+        "Cuando toca la casilla de promoción",
+        "Cuando pulsa el reloj",
+        "Cuando suelta el peón"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 4.4.4: la elección queda decidida cuando la pieza toca la casilla de promoción."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Un jugador quita su peón de la séptima fila y pone la dama directamente en la octava, sin apoyar el peón en la octava. ¿Es válido?",
+      "opciones": [
+        "No: el peón debe llegar a la última fila",
+        "Sí: el peón no tiene que colocarse en la casilla de llegada",
+        "Solo en rápidas",
+        "Solo si el árbitro lo autoriza antes"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 4.6.1: el peón no tiene que colocarse en la casilla de llegada; y 4.6.2: quitar el peón y poner la pieza puede hacerse en cualquier orden. La edición de 2012 decía lo contrario."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Partida estándar. Un jugador lleva el peón a la octava, pulsa el reloj y deja el peón sin cambiar. ¿Qué hace el árbitro?",
+      "opciones": [
+        "Le deja elegir la pieza sin sanción",
+        "Cambia el peón por una dama y da 2 minutos al rival",
+        "Declara la partida perdida",
+        "Cambia el peón por la pieza que el jugador diga y da 1 minuto al rival"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 7.5.2: es jugada ilegal y el peón se cambia por una dama de su color; art. 7.5.5: primera jugada ilegal, 2 minutos para el rival."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Te falta la dama para promocionar. ¿Qué debes hacer?",
+      "opciones": [
+        "Usar una torre invertida",
+        "Pedirle la dama capturada al rival",
+        "Detener el reloj y pedirle la pieza al árbitro",
+        "Pulsar el reloj y avisar después"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 6.11.2: puedes detener el reloj para pedir la ayuda del árbitro cuando la pieza no está disponible."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Tu rival te pide la dama que le capturaste para promocionar. ¿Estás obligado a dársela?",
+      "opciones": [
+        "Sí, siempre",
+        "No; la pieza la consigue el árbitro",
+        "Sí, si el rival detuvo el reloj",
+        "Solo en partidas rápidas"
+      ],
+      "correcta": 1,
+      "explicacion": "Las Leyes no obligan al rival a entregar sus piezas capturadas. Para eso se detiene el reloj y se le pide la pieza al árbitro (6.11.2)."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Un jugador quita el peón con una mano, pone la dama con la otra y pulsa el reloj. Es su primera irregularidad. ¿Qué pasa?",
+      "opciones": [
+        "Nada, la promoción es correcta",
+        "Se sanciona como jugada ilegal: 2 minutos para el rival",
+        "Pierde la partida",
+        "Advertencia verbal y sigue"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 7.5.4: usar dos manos para una sola jugada (por ejemplo, una promoción) y pulsar el reloj se sanciona como jugada ilegal (7.5.5)."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Rápidas sin supervisión adecuada (A.5). El árbitro ve un peón blanco en la octava fila sin cambiar. ¿Qué hace?",
+      "opciones": [
+        "Lo cambia de inmediato por una dama",
+        "Espera a que se complete la jugada siguiente; si la posición ilegal sigue, declara tablas",
+        "Declara perdida la partida de las blancas",
+        "No hace nada nunca"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. A.5.4: el árbitro espera a que se complete la jugada siguiente; si la posición ilegal sigue en el tablero, declara tablas."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "¿Cuál es la sanción por la primera jugada ilegal en una partida rápida?",
+      "opciones": [
+        "2 minutos al rival",
+        "1 minuto al rival",
+        "30 segundos al rival",
+        "Pérdida de la partida"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. A.3: en rápidas (y relámpago, B.3) la sanción es de 1 minuto en lugar de 2."
+    },
+    {
+      "ficha": "promocion-coronacion",
+      "texto": "Un jugador promociona a dama aunque todavía tiene su dama original en el tablero. ¿Es legal?",
+      "opciones": [
+        "No, solo se puede promocionar a piezas capturadas",
+        "Sí, la elección no se limita a piezas capturadas",
+        "Solo si el rival lo acepta",
+        "Solo a torre o caballo"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 3.7.3.4: la elección del jugador no se limita a las piezas capturadas antes."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "¿Qué carta se abre siempre primero?",
+      "opciones": [
+        "Las planillas",
+        "El reloj",
+        "La versión de los jugadores",
+        "Los reglamentos FIDE"
+      ],
+      "correcta": 2,
+      "explicacion": "El método empieza siempre por escuchar a los dos jugadores; si sus versiones no coinciden, esa evidencia se anula (palabra contra palabra)."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "A un jugador le suena el teléfono, que llevaba en el bolsillo. Su rival solo tiene el rey. Las bases no dicen nada. ¿Resultado?",
+      "opciones": [
+        "Tablas, porque el rival no puede dar mate",
+        "Gana el rival",
+        "Se le quitan 2 minutos al infractor",
+        "Advertencia y sigue la partida"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 11.3.2.2: si es evidente que lleva el aparato encima, pierde y el rival gana. Desde las Leyes de 2014 no hay excepción por falta de material (Manual del Árbitro 2026)."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "¿Cuándo puede un árbitro castigar un teléfono con una sanción menor que la pérdida?",
+      "opciones": [
+        "Siempre, con su mejor criterio",
+        "Cuando las bases del torneo lo prevén",
+        "Cuando el teléfono no sonó",
+        "Cuando el rival lo acepta"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 11.3.2.2: las bases del evento pueden fijar una sanción distinta y menos severa. Sin esa previsión, pierde."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "Rápidas a 15 min + 5 s. El reloj de una partida está puesto sin incremento. ¿Qué dice la norma?",
+      "opciones": [
+        "Se sigue así, porque ya empezó",
+        "El árbitro pone la programación correcta y ajusta los tiempos con su mejor criterio",
+        "La partida se anula",
+        "Pierde quien no lo advirtió"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 6.10.2: si la programación del reloj es incorrecta, se detiene, se pone la programación correcta y se ajustan tiempos y contador."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "Las negras, con rey, caballo y peón, ofrecen tablas porque «con rey y caballo no me puedes dar mate». ¿Es una posición muerta?",
+      "opciones": [
+        "Sí, rey y caballo nunca dan mate",
+        "No: existe una serie de jugadas legales que termina en mate",
+        "Solo si el peón está bloqueado",
+        "Depende del tiempo en el reloj"
+      ],
+      "correcta": 1,
+      "explicacion": "Con rey y caballo hay mates posibles si el rey rival queda encerrado por sus propias piezas. No es posición muerta (5.2.2) y una caída de bandera de las negras daría la victoria a las blancas (6.9)."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "¿Qué requisito agregan las Leyes 2023 al acuerdo de tablas?",
+      "opciones": [
+        "Que lo autorice el árbitro",
+        "Que ambos jugadores hayan hecho al menos una jugada",
+        "Que se haya llegado a la jugada 30",
+        "Que se anote en ambas planillas"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 5.2.3: la partida es tablas por acuerdo siempre que ambos jugadores hayan hecho al menos una jugada. (Las bases pueden limitar más los acuerdos, 9.1.1)."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "Un espectador le señala a un jugador que tiene la bandera a punto de caer. ¿Qué prevén las Leyes?",
+      "opciones": [
+        "Anular la partida",
+        "Que nadie intervenga; el árbitro puede expulsar al infractor del recinto",
+        "Dar la partida por perdida al jugador ayudado",
+        "Repetir la partida"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 12.7: los espectadores no pueden intervenir y el árbitro puede expulsar a los infractores. Las Leyes no prevén anular la partida por esa intervención."
+    },
+    {
+      "ficha": "siete-cartas",
+      "texto": "Hay un apagón y hay que interrumpir las partidas. ¿Quién detiene los relojes?",
+      "opciones": [
+        "Cada jugador",
+        "El árbitro",
+        "El organizador",
+        "Nadie: el tiempo sigue corriendo"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 6.11.1: si hay que interrumpir la partida, el árbitro detiene el reloj; 6.11.3: decide cuándo se reanuda; 12.5: puede dar tiempo adicional por una perturbación externa."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "¿Cómo se calcula el desempate progresivo (PS)?",
+      "opciones": [
+        "Sumando las puntuaciones finales de los rivales",
+        "Sumando la puntuación del jugador al final de cada ronda",
+        "Multiplicando puntos por rondas",
+        "Contando las victorias"
+      ],
+      "correcta": 1,
+      "explicacion": "C.07 (2026), art. 7.5: se suma la puntuación del participante al final de cada ronda."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "Resultados: 1, 0, 1, 1, 1. ¿Cuál es su progresivo?",
+      "opciones": [
+        "4",
+        "10",
+        "11",
+        "12"
+      ],
+      "correcta": 2,
+      "explicacion": "Acumulados 1, 1, 2, 3, 4; suma = 11."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "Con los mismos resultados (1, 0, 1, 1, 1), ¿cuánto vale el PS-C1?",
+      "opciones": [
+        "10",
+        "11",
+        "9",
+        "7"
+      ],
+      "correcta": 0,
+      "explicacion": "PS-C1 excluye la puntuación después de la primera ronda (art. 14.1): 1 + 2 + 3 + 4 = 10."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "Un jugador ganó la ronda 3 por incomparecencia. ¿Cómo cuenta ese punto en su progresivo?",
+      "opciones": [
+        "No cuenta",
+        "Cuenta como medio punto",
+        "Cuenta: forma parte de su puntuación después de esa ronda",
+        "Se reemplaza por el promedio"
+      ],
+      "correcta": 2,
+      "explicacion": "El art. 7.5 suma la puntuación del participante al final de cada ronda, y esa puntuación incluye el punto sin jugar. Las reglas especiales del art. 16 son para el Buchholz y el Sonneborn-Berger."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "Torres (½, ½, 1, ½, ½) y Hernández (0, 1, 1, 1, 0) empatan en 3 puntos y 9 de PS. Con PS-C1, ¿quién queda delante?",
+      "opciones": [
+        "Torres",
+        "Hernández",
+        "Siguen empatados",
+        "Hay que sortear"
+      ],
+      "correcta": 1,
+      "explicacion": "Sin la ronda 1: Torres 1 + 2 + 2½ + 3 = 8½; Hernández 1 + 2 + 3 + 3 = 9."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "¿Qué tipo de desempate es el progresivo según el C.07?",
+      "opciones": [
+        "Tipo A (encuentros entre empatados)",
+        "Tipo B (resultados propios del jugador)",
+        "Tipo C (resultados finales de los rivales)",
+        "Tipo D (ratings de los rivales)"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 4.3: los de tipo B se basan en los resultados o datos del propio participante; el PS figura como tipo B en la tabla del art. 5."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "El árbitro decide, al terminar el torneo, agregar el PS-C2 porque dos jugadores siguen empatados. ¿Es correcto?",
+      "opciones": [
+        "Sí, el árbitro puede agregar cortes cuando hagan falta",
+        "No: la lista de desempates se publica antes del inicio del torneo",
+        "Sí, si los jugadores aceptan",
+        "Solo en torneos sin premios"
+      ],
+      "correcta": 1,
+      "explicacion": "Arts. 4.1 y 4.1.1: la lista ordenada de desempates la fija el organizador y, si hace falta, la completa el árbitro principal, pero se publica antes del inicio del torneo."
+    },
+    {
+      "ficha": "desempate-progresivo",
+      "texto": "Dos jugadores tienen exactamente la misma secuencia de resultados ronda a ronda. ¿Qué pasa con el progresivo y sus cortes?",
+      "opciones": [
+        "Los separa el PS-C1",
+        "Los separa el PS-C2",
+        "Empatan en todos; se pasa al siguiente desempate de la lista",
+        "Gana el de mayor rating"
+      ],
+      "correcta": 2,
+      "explicacion": "Con la misma secuencia, los acumulados son iguales y también todas sus sumas. Se aplica el siguiente desempate de la lista; agotada, sorteo (art. 4.2)."
+    },
+    {
+      "ficha": "decisiones-bajo-presion",
+      "texto": "¿Cuál es un síntoma típico del estrés en un árbitro?",
+      "opciones": [
+        "Todo parece pasar más rápido de lo que pasa",
+        "Más claridad para pensar",
+        "Más paciencia con los jugadores",
+        "Menos ritmo cardiaco"
+      ],
+      "correcta": 0,
+      "explicacion": "Entre los síntomas que describe el artículo: pulso acelerado, dificultad para concentrarse y la sensación de que todo pasa más rápido."
+    },
+    {
+      "ficha": "decisiones-bajo-presion",
+      "texto": "¿Cuál de estos pensamientos reduce el estrés?",
+      "opciones": [
+        "«Si me equivoco, ¿qué dirán mis colegas?»",
+        "«Esta es mi única oportunidad de brillar»",
+        "«Voy a hacer mi mejor trabajo y al final evaluaré su eficacia»",
+        "«Si fallo ahora, no tendré otra oportunidad»"
+      ],
+      "correcta": 2,
+      "explicacion": "Los otros tres son ejemplos de pensamientos que aumentan el estrés según el artículo."
+    },
+    {
+      "ficha": "decisiones-bajo-presion",
+      "texto": "Ante una decisión importante, ¿qué recomienda el artículo?",
+      "opciones": [
+        "Decidir de inmediato para mostrar seguridad",
+        "Tomarse unos segundos más, respirar y pensar",
+        "Preguntarle a los espectadores",
+        "Dejar que los jugadores lo arreglen"
+      ],
+      "correcta": 1,
+      "explicacion": "La primera recomendación es no apresurarse: respirar, pensar cuál es la mejor decisión y recién entonces decidir."
+    },
+    {
+      "ficha": "decisiones-bajo-presion",
+      "texto": "¿Qué artículo de las Leyes te permite detener la partida para pensar con calma?",
+      "opciones": [
+        "Art. 6.11.1: el árbitro detiene el reloj si hay que interrumpir la partida",
+        "Art. 9.1.2.1",
+        "Art. 11.3.2",
+        "Art. 7.6"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 6.11.1: el árbitro detiene el reloj; 6.11.3: decide cuándo se reanuda la partida."
+    },
+    {
+      "ficha": "decisiones-bajo-presion",
+      "texto": "Según el artículo, ¿dónde conviene mantener los pensamientos durante el arbitraje?",
+      "opciones": [
+        "En los errores del pasado",
+        "En el aquí y el ahora",
+        "En la próxima ronda",
+        "En la evaluación final"
+      ],
+      "correcta": 1,
+      "explicacion": "Pensar en el pasado o en el futuro desconcentra y resta eficacia."
+    }
+  ],
+  "casos": [
+    {
+      "id": "torre-invertida-mate",
+      "ficha": "promocion-coronacion",
+      "titulo": "La «dama» que era una torre",
+      "nivel": "Básico",
+      "ritmo": null,
+      "escena": "Partida estándar. Blancas: rey en d6 y peón en g7; negras: rey en e8. Las blancas juegan g7-g8, ponen una torre invertida en g8, dicen «dama» y pulsan el reloj. Las negras, en vez de reclamar, responden 1…Rf7, que solo es legal si la pieza de g8 es una torre. Las blancas te llaman: dicen que era mate.",
+      "decision": {
+        "texto": "¿Qué decides?",
+        "opciones": [
+          "Era mate: ganan las blancas",
+          "La pieza es una torre: 1…Rf7 es legal y la partida sigue; pones la torre derecha",
+          "Jugada ilegal de las blancas: 2 minutos a las negras",
+          "Tablas"
+        ],
+        "correcta": 1,
+        "explicacion": "La elección queda decidida al tocar la casilla (4.4.4) y una torre invertida es una torre aunque se diga «dama» (Manual del Árbitro 2026). Con torre en g8 es jaque, no mate, y Rf7 es legal. El árbitro corrige la pieza con la mínima molestia."
+      }
+    },
+    {
+      "id": "telefono-sin-material",
+      "ficha": "siete-cartas",
+      "titulo": "El teléfono y el rey solo",
+      "nivel": "Básico",
+      "ritmo": null,
+      "escena": "Abierto estándar; las bases no dicen nada sobre teléfonos. A las blancas, que tienen dama y rey, les suena el celular en el bolsillo. Las negras solo tienen el rey y piden la victoria.",
+      "decision": {
+        "texto": "¿Cuál es el resultado?",
+        "opciones": [
+          "Tablas: las negras no pueden dar mate",
+          "Ganan las negras (0-1)",
+          "Se le quitan 5 minutos a las blancas y sigue",
+          "Advertencia y sigue la partida"
+        ],
+        "correcta": 1,
+        "explicacion": "Art. 11.3.2.2: si es evidente que el jugador lleva el aparato encima, pierde y el rival gana, aunque no tenga material para dar mate (Manual del Árbitro 2026). Una sanción menor solo vale si la prevén las bases."
+      }
+    },
+    {
+      "id": "peon-sin-cambiar",
+      "ficha": "promocion-coronacion",
+      "titulo": "El peón que se quedó en la octava",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Partida estándar, sin jugadas ilegales previas. Las blancas llevan su peón a e8, no lo cambian por ninguna pieza y pulsan el reloj. Estás mirando la partida.",
+      "decision": {
+        "texto": "¿Qué haces?",
+        "opciones": [
+          "Esperas a que las negras reclamen",
+          "Intervienes: el peón se cambia por una dama y das 2 minutos a las negras",
+          "Dejas que las blancas elijan la pieza, sin sanción",
+          "Declaras perdida la partida de las blancas"
+        ],
+        "correcta": 1,
+        "explicacion": "Art. 7.5.2: pulsar el reloj sin cambiar el peón es jugada ilegal y el peón se cambia por una dama; art. 7.5.5: 2 minutos para el rival. En estándar el árbitro interviene de inmediato, sin esperar un reclamo (Manual del Árbitro 2026)."
+      }
+    }
+  ],
+  "repeticiones": []
+}

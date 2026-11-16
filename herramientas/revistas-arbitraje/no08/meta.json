@@ -1,0 +1,83 @@
+{
+  "numero": 8,
+  "fecha_original": "enero de 2013",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {
+      "titulo": "El miedo en los árbitros",
+      "desc": "Leyes 2023 · arts. 8.1.1, 11.4, 12.7"
+    },
+    {
+      "titulo": "Curso de Sistema Suizo · 1.ª parte",
+      "desc": "C.04.1 (2026) · la tarjeta de emparejamiento"
+    },
+    {
+      "titulo": "Emparejamiento manual",
+      "desc": "Holandés C.04.3 (2026) · arts. 1.4.3, C12, C14"
+    },
+    {
+      "titulo": "Del Holandés de 2011 al de 2026",
+      "desc": "C.04.3 · aprobado el 28-oct-2025, desde el 1-feb-2026"
+    },
+    {
+      "titulo": "Reglas generales de gestión del suizo",
+      "desc": "C.04.2 (2026) · C.07 (2026) art. 16"
+    },
+    {
+      "titulo": "Premiación en efectivo: sistema Hort",
+      "desc": "Cálculo comprobado"
+    }
+  ],
+  "presentacion": "<style>section.cover + section.page table{break-inside:auto} section.cover + section.page tr{break-inside:avoid}</style><div class=\"cols\"><p>Estimados amigos: antes que nada, les deseo que este 2013 sea un año de grandes éxitos personales y profesionales.</p><p>El 2012 fue para muchos un año de retos y de incertidumbre, con tantas amenazas catastróficas; pero seguimos en pie a pesar de Nostradamus y de los mayas. ¿Qué nos puede detener? Y, como la humanidad, seguimos adelante con nuestro propósito de publicar artículos que ayuden a ajedrecistas, entrenadores, organizadores y jugadores a comprender un poco más las reglamentaciones internacionales.</p><p>Este número está dedicado casi por completo al <b>Sistema Suizo</b>: la reglamentación, el inicio del <b>Curso de Sistema Suizo</b> por entregas y los <b>emparejamientos por computadora</b>. Además, un sistema de reparto de premios en efectivo, el <b>sistema Hort</b>, y un artículo sobre <b>el miedo en el arbitraje</b>.</p><p>Espero que este número sea de su agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional · Conferencista FIDE de arbitraje</p></div>",
+  "cambios": [
+    [
+      "El miedo en los árbitros",
+      "Mandaba reescribir una planilla ilegible «en forma descriptiva»; hablaba de «Percepción Neurolingüística».",
+      "Las Leyes exigen la <b>notación algebraica</b> (art. <b>8.1.1</b> y Apéndice C). Se citan los arts. <b>11.4</b> (quien terminó es espectador) y <b>12.7</b> (el árbitro puede expulsar a quien interfiere). PNL = Programación Neurolingüística."
+    ],
+    [
+      "Distribución de puntuaciones",
+      "Ronda 3: 12,5 % / 25 % / 25 % / 12,5 % (suma 75 %).",
+      "Fe de erratas: <b>12,5 % / 37,5 % / 37,5 % / 12,5 %</b>. Toda la tabla se recalculó (C(n,k)/2ⁿ)."
+    ],
+    [
+      "Emparejamiento manual",
+      "Comparaba tres programas de 2013 y presentaba el 6-10 de Swiss Master en la ronda 2 como error frente al «natural» 6-9.",
+      "Recalculado con el Holandés vigente: el jugador 10 ganó sin jugar en la ronda 1 y eso es una bajada (art. <b>1.4.3</b>); el criterio <b>C14</b> evita que vuelva a bajar. <b>El emparejamiento correcto es 6-10, 2-9, 8-7, 4-3, 5-1</b>, el de Swiss Master (también con la regla B5 de 2011). Las rondas 3-5 del original son incoherentes y no se reproducen. Errata «18-6» → 8-6."
+    ],
+    [
+      "Reglamento del Sistema Holandés",
+      "Texto completo del C.04.1 de Cracovia 2011 (P0, M0, X1, Z1, B1-B6, C1-C14).",
+      "No se reproduce: fue reemplazado. Rige el <b>C.04.3</b> aprobado el 28-oct-2025 y aplicable desde el 1-feb-2026 (criterios absolutos C1-C4, PAB C5, calidad C6-C21). Se explica qué cambió y se remite al Handbook."
+    ],
+    [
+      "Reglas generales de gestión",
+      "C.04.5 de 2013: ausente sin aviso = retirado; Buchholz con jugador virtual (2009); lista de programas de 2013.",
+      "Rigen <b>C.04.1</b> (reglas básicas) y <b>C.04.2</b> (gestión), ambas desde el 1-feb-2026; las partidas no jugadas en el Buchholz, por el <b>C.07</b> (2026), art. 16. Lista de programas avalados: la publicada en 2024."
+    ],
+    [
+      "Premios Hort",
+      "Ejemplo con cinco empatados.",
+      "Cálculo comprobado (27 000 USD repartidos sin diferencia). Se aclara que el C.07 no regula premios: el sistema debe figurar en las bases."
+    ],
+    [
+      "Rápidas y relámpago 2013",
+      "Sin cuota de valoración «al menos hasta el 1-ene-2014».",
+      "Nota histórica; las cuotas vigentes no se reproducen."
+    ]
+  ],
+  "directorio": [
+    [
+      "Director (edición original)",
+      "Santiago García Ramos · Árbitro Internacional"
+    ],
+    [
+      "Revisión (edición original)",
+      "Ignacio Córdoba Navarro · Periodista"
+    ],
+    [
+      "Diseño (edición original)",
+      "Ángel Antonio Espino · Diseñador gráfico"
+    ]
+  ]
+}

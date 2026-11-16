@@ -93,7 +93,7 @@ async function contrastes(p) {
         await p.$$eval("#aula-vista .aula-coleccion:first-of-type .aula-tarjeta h4", (l) => l.length), 4);
     igual("después la revista N.º 1: su portada y sus tres fichas",
         await p.$$eval("#aula-vista .aula-coleccion:nth-of-type(2) .aula-tarjeta h4", (l) => l.map((h) => h.textContent)), ["La revista N.º 1 en PDF", "Ajuste de relojes después de una irregularidad", "Sistema de desempate Koya", "Posiciones idénticas"]);
-    igual("y debajo, los números 2 al 18", await p.$$eval("#aula-vista .aula-coleccion h3", (l) => [l.length, l[2].textContent.includes("N.º 2"), l[18].textContent.includes("N.º 18")]), [19, true, true]);
+    igual("y debajo, los números 2 al 19", await p.$$eval("#aula-vista .aula-coleccion h3", (l) => [l.length, l[2].textContent.includes("N.º 2"), l[19].textContent.includes("N.º 19")]), [20, true, true]);
 
     console.log("\n=== La portada de cada revista y su PDF ===");
     igual("sin completar nada, el PDF del N.º 1 está bloqueado: sin enlace, pero se alcanza con Tab",

@@ -1,0 +1,78 @@
+{
+  "numero": 7,
+  "fecha_original": "los últimos meses de 2012",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {
+      "titulo": "Retos psicológicos profesionales",
+      "desc": "Paula Man Reich · psicología del deporte"
+    },
+    {
+      "titulo": "De la licencia de 2013 al registro de 2026",
+      "desc": "B.06.1 (desde 1-mar-2026) · B.06.3 (desde 1-jul-2026)"
+    },
+    {
+      "titulo": "Notación Forsyth y FEN",
+      "desc": "Leyes 2023 · arts. 8.5.3 y 9.2.3 · 6 ejercicios con solución"
+    },
+    {
+      "titulo": "Arbitraje e internet: un Buchholz en disputa",
+      "desc": "C.07 (2026) · arts. 4.1, 8.1, 16.3, 16.4"
+    },
+    {
+      "titulo": "Guías rápidas de Swiss Manager (3.ª parte)",
+      "desc": "Guías 21-30 · C.04.2 (2026) · arts. 1.5, 2.3, 3.3"
+    }
+  ],
+  "presentacion": "<div class=\"cols\"><p>Estimados amigos: hemos retrasado esta edición por motivos de salud; espero que nos disculpen. Agradecemos a todos los que nos han escrito pidiendo el número 7: nos motiva a seguir buscando temas que ayuden a árbitros, organizadores, jugadores, padres de familia y entrenadores.</p><p>Continuamos con las <b>Guías rápidas de Swiss Manager</b>; la psicóloga deportiva <b>Paula Man</b> nos entrega «Retos psicológicos profesionales»; presentamos la <b>notación Forsyth</b>, un sistema antiguo que sigue ayudando a muchos árbitros; proponemos estudiar casos reales de las redes sociales, y contamos por qué, desde 2013, ningún árbitro puede actuar en torneos FIDE sin estar registrado.</p><p style=\"text-align:left\">Reciban un cordial saludo,<br><b>Santiago García Ramos</b> · Árbitro Internacional</p></div>",
+  "cambios": [
+    [
+      "Licencia de árbitros",
+      "Licencia obligatoria desde el 1-ene-2013, «de por vida», de 20 € a 300 €, con foto en un carné; remitía al Handbook B.05.",
+      "Tarifas de 2012 como dato histórico. Hoy, <b>B.06.1</b> (desde 1-mar-2026): «cuota de registro» (art. 6.1); sin ella, el torneo puede no valorarse y las normas del árbitro no se aceptan (art. 6.2). Inactivo = <b>4 años sin curso de actualización</b> (B.06.3, desde 1-jul-2026). Cuotas vigentes no reproducidas: no se pudieron comprobar."
+    ],
+    [
+      "Categorías",
+      "IA de categorías A-D y AF de categorías C y D.",
+      "B.06.3: IA en A, B, C o D; <b>los AF siempre en D</b>."
+    ],
+    [
+      "Notación Forsyth",
+      "Solo letras españolas, sin turno ni enroque. Erratas: «Te7» y la fila «2A1T1R» (7 casillas).",
+      "Se añade la <b>FEN</b> y su relación con los arts. <b>9.2.3</b> y <b>8.5.3</b>. Fe de erratas: <b>Te8</b> y <b>2A1T1R1</b>. Diagramas comprobados."
+    ],
+    [
+      "Buchholz con partidas no jugadas",
+      "Jugador virtual de 2009 (atribuido al «C.06»): la niña X sumaba 14 y ganaba.",
+      "<b>C.07</b> (desde 1-mar-2026), art. <b>16.4.1</b>: muñeco con la puntuación propia, con tope en la del rival que no se presentó. Recalculado: X <b>11</b>, Y <b>12½</b>; hoy ganaría la niña Y."
+    ],
+    [
+      "Guías de Swiss Manager",
+      "Diez guías con capturas de menús.",
+      "Tabla resumida (menús de 2012, a comprobar en cada versión) y lo que dice el <b>C.04.2</b> (2026): ausencias (art. 3.3), TPN fijo tras la 4.ª ronda (art. 2.3) y prohibición de alterar el emparejamiento correcto (art. 1.5)."
+    ],
+    [
+      "Psicología y editorial",
+      "Mezcla de «usted» y «tú»; errores de puntuación.",
+      "Se conservan con sus autores, corregidos y condensados."
+    ]
+  ],
+  "directorio": [
+    [
+      "Director (edición original)",
+      "Santiago García Ramos · Árbitro Internacional"
+    ],
+    [
+      "Revisión (edición original)",
+      "Ignacio Córdoba Navarro · Periodista"
+    ],
+    [
+      "Diseño (edición original)",
+      "Ángel Antonio Espino · Diseñador gráfico"
+    ],
+    [
+      "Colaboradora (edición original)",
+      "Paula Man Reich · Psicóloga del deporte"
+    ]
+  ]
+}

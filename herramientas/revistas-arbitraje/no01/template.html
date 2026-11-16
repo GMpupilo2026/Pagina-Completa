@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Arbitraje de Ajedrez No. 1</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+:root { --navy:#13294b; --blue:#2f5fa7; --sky:#e8eff9; --ink:#1d2330; --muted:#5b6475; --gold:#c9962b; --red:#b03a2e; --green:#2e7d4f; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.3pt; line-height: 1.5; margin: 0; background:#fff; }
+h1,h2,h3,h4 { font-family: Georgia, "Times New Roman", serif; color: var(--navy); line-height: 1.2; }
+h2.sec { font-size: 26pt; margin: 0 0 4px; }
+.kicker { text-transform: uppercase; letter-spacing: .14em; font-size: 8.5pt; color: var(--blue); font-weight: 700; }
+.byline { color: var(--muted); font-size: 9pt; margin-bottom: 14px; }
+h3 { font-size: 13.5pt; margin: 18px 0 6px; border-bottom: 2px solid var(--sky); padding-bottom: 3px; }
+h4 { font-size: 11pt; margin: 12px 0 4px; }
+p { margin: 0 0 8px; text-align: justify; hyphens: auto; }
+.page { page-break-before: always; }
+.cols { column-count: 2; column-gap: 9mm; }
+.cols h3 { break-after: avoid; }
+.box { background: var(--sky); border-left: 4px solid var(--blue); padding: 9px 12px; margin: 10px 0; break-inside: avoid; border-radius: 0 6px 6px 0; }
+.box.law { border-color: var(--navy); background: #eef1f6; }
+.box.law .tag { font-weight: 700; color: var(--navy); font-size: 9pt; text-transform: uppercase; letter-spacing: .06em; display:block; margin-bottom: 3px; }
+.box.warn { border-color: var(--red); background: #fbeeec; }
+.box.ok { border-color: var(--green); background: #ebf6ef; }
+.box.new { border-color: var(--gold); background: #fbf5e6; }
+.box p:last-child { margin-bottom: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 8px 0 12px; break-inside: avoid; }
+th, td { border: 1px solid #c9d3e3; padding: 4px 6px; text-align: left; vertical-align: top; }
+th { background: var(--navy); color: #fff; font-weight: 600; }
+tr:nth-child(even) td { background: #f6f8fc; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.calc td:first-child { width: 42%; }
+.calc td { font-variant-numeric: tabular-nums; }
+.res { font-weight: 700; color: var(--navy); }
+/* cover */
+.cover { height: 265mm; display: flex; flex-direction: column; background: linear-gradient(160deg, var(--navy) 0%, #1f427a 60%, var(--blue) 100%); color: #fff; padding: 22mm 18mm; position: relative; overflow: hidden; margin: -16mm -15mm 0; height: 297mm; }
+.cover .mast { font-family: Georgia, serif; font-size: 44pt; letter-spacing: .02em; line-height: 1; margin: 0; color:#fff; }
+.cover .mast small { display:block; font-size: 15pt; letter-spacing: .3em; text-transform: uppercase; color: #cfdcf3; margin-bottom: 10px; font-family: "Segoe UI", Arial, sans-serif; }
+.cover .issue { margin-top: 14px; display:flex; gap: 14px; font-size: 10pt; color:#cfdcf3; }
+.cover .issue b { color: var(--gold); }
+.cover .stamp { display:inline-block; margin-top: 18px; border: 2px solid var(--gold); color: var(--gold); padding: 6px 14px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 10pt; border-radius: 4px; }
+.cover .bigpiece { position: absolute; right: -10mm; bottom: 10mm; font-size: 300pt; line-height: 1; color: rgba(255,255,255,.08); }
+.cover .toc { margin-top: auto; }
+.cover .toc div { border-top: 1px solid rgba(255,255,255,.25); padding: 9px 0; display:flex; justify-content: space-between; font-size: 12pt; }
+.cover .toc span.t { font-family: Georgia, serif; font-size: 14pt; }
+.cover .toc span.d { color:#cfdcf3; font-size: 9pt; max-width: 60%; text-align: right; }
+/* boards */
+.boards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; margin: 8px 0; }
+figure.board { margin: 0; break-inside: avoid; }
+.grid { display: grid; grid-template-columns: repeat(8, 1fr); border: 2px solid var(--navy); width: 62mm; aspect-ratio: 1; }
+.grid span { display:flex; align-items:center; justify-content:center; font-size: 19pt; line-height: 1; aspect-ratio: 1; font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif; }
+.grid span.l { background: #f3f6fb; } .grid span.d { background: #8eaad6; }
+.grid span.w { color: #fff; -webkit-text-stroke: 1px #000; text-shadow: 0 0 1px #000; }
+.grid span.b { color: #000; }
+.grid span.pz { color: #000; -webkit-text-stroke: 0; text-shadow: none; }
+.files { display: grid; grid-template-columns: repeat(8, 1fr); width: 62mm; font-size: 7pt; color: var(--muted); text-align: center; font-style: normal; }
+.files i { font-style: normal; }
+figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 2px; }
+.moves { font-family: Georgia, serif; font-size: 10pt; background: #f6f8fc; padding: 6px 10px; border-radius: 4px; margin: 4px 0 10px; }
+/* crosstable */
+table.xt { font-size: 8.5pt; }
+table.xt td, table.xt th { text-align: center; padding: 3px 4px; }
+table.xt .nm { text-align: left; white-space: nowrap; }
+table.xt td.x { background: #3b4a63 !important; }
+table.xt td.top { background: #fff6dc; }
+table.xt td.b { font-weight: 700; }
+.small { font-size: 8.5pt; color: var(--muted); }
+.flow { display:flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.flow div { background: #fff; border: 1.5px solid var(--blue); border-radius: 6px; padding: 6px 10px; font-size: 9.2pt; break-inside: avoid; }
+.flow div b { color: var(--navy); }
+.flow .n { display:inline-block; width: 20px; height: 20px; border-radius: 50%; background: var(--navy); color:#fff; text-align:center; font-size: 9pt; line-height: 20px; margin-right: 6px; }
+.footer-note { font-size: 8pt; color: var(--muted); border-top: 1px solid #d6dce8; margin-top: 14px; padding-top: 6px; }
+ul, ol { margin: 0 0 8px 18px; padding: 0; } li { margin-bottom: 3px; }
+.dir td { border: none; padding: 2px 6px; background: none !important; }
+.sol td:nth-child(5) { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ========== PORTADA ========== -->
+<section class="cover">
+  <div class="kicker" style="color:#cfdcf3">Revista especializada</div>
+  <h1 class="mast"><small>Arbitraje de</small>Ajedrez</h1>
+  <div class="issue"><span>Número <b>1</b></span><span>·</span><span>Edición revisada y actualizada · noviembre 2026</span></div>
+  <div class="issue" style="margin-top:6px"><span>Revisión y actualización: <b>IA Oscar Angulo Cubero</b></span></div>
+  <div><span class="stamp">Actualizada a la normativa FIDE vigente</span></div>
+  <div class="bigpiece">♚</div>
+  <div class="toc">
+    <div><span class="t">Presentación</span><span class="d">Bienvenida y qué cambió en esta edición</span></div>
+    <div><span class="t">Ajuste de relojes después de una irregularidad</span><span class="d">Art. 7.1 y 7.5 · Leyes del Ajedrez 2023</span></div>
+    <div><span class="t">Sistema de desempate Koya</span><span class="d">Reglamento de Desempates FIDE (desde 1-mar-2026)</span></div>
+    <div><span class="t">Posiciones idénticas</span><span class="d">Art. 9.2 y 9.6 · 5 ejercicios con solución</span></div>
+    <div><span class="t">Conferencistas FIDE de arbitraje</span><span class="d">Cómo funciona hoy la acreditación de Lecturers</span></div>
+  </div>
+</section>
+
+<!-- ========== PRESENTACIÓN ========== -->
+<section class="page">
+  <div class="kicker">Presentación</div>
+  <h2 class="sec">Bienvenidos</h2>
+  <div class="cols">
+  <p>Hola a todos, les doy la bienvenida a la primera Revista Especializada de Arbitraje de Ajedrez en español. Es un orgullo ser pioneros en esta área y, más aún, hacerlo en nuestro idioma.</p>
+  <p>Durante muchos años fue prácticamente imposible obtener información sobre las novedades del arbitraje. Algunos conseguimos el <i>FIDE Handbook</i> en copia impresa, pero muchos no hablábamos inglés y todo estaba en ese idioma.</p>
+  <p>Hoy existe una gran cantidad de información en todos los idiomas: recomendaciones, consejos, resolución de casos… Pero sigue faltando material que explique <b>cómo funciona</b> esa información, cómo debe interpretarse y para qué sirve. A eso se dedica esta revista: a la capacitación de árbitros.</p>
+  <p>En este primer número abordamos dos temas en los que, en los seminarios, aparecen grandes “lagunas” entre los asistentes: el <b>ajuste de relojes después de una irregularidad</b> y el <b>reconocimiento de posiciones idénticas</b>. Además, abrimos una sección dedicada a los sistemas de desempate, empezando por el <b>sistema Koya</b>.</p>
+  <p>Agradezco su confianza; siempre estaré pendiente de los correos que me envíen sugiriendo temas, nuevas secciones o cualquier comentario.</p>
+  <p style="text-align:left"><b>Santiago García Ramos</b><br>Árbitro Internacional</p>
+  </div>
+
+  <div class="box new" style="margin-top:14px">
+    <p><b>Sobre esta edición revisada (noviembre 2026), por IA Oscar Angulo Cubero.</b> El número original se publicó cuando estaban vigentes las Leyes del Ajedrez anteriores a 2014 y el reglamento de desempates de aquella época. Esta edición conserva los temas y el enfoque didáctico, pero revisa cada artículo contra la normativa FIDE vigente hoy:</p>
+  </div>
+  <table>
+    <tr><th style="width:24%">Tema</th><th style="width:38%">Edición original</th><th>Edición actualizada</th></tr>
+    <tr><td>Ajuste de relojes</td><td>Citaba el art. 6.13 de las Leyes.</td><td>Hoy es el <b>art. 7.1</b> (Leyes 2023), que además reconoce expresamente el derecho del árbitro a <b>no modificar</b> los relojes. El ajuste de reloj por configuración errónea está en el art. 6.10.2.</td></tr>
+    <tr><td>Jugada ilegal</td><td>No mencionaba la sanción.</td><td>Se añade el <b>art. 7.5.5</b>: 2 minutos extra al rival (1 minuto en rápidas y relámpago, art. A.3) y pérdida a la segunda jugada ilegal. Se añade la regla A.5.2 (en rápidas, la jugada ilegal no reclamada a tiempo se mantiene).</td></tr>
+    <tr><td>Cálculo con incremento</td><td>Al final restaba el incremento de 52 jugadas.</td><td><b>Corregido:</b> tras restablecer la posición, solo cuentan los incrementos de las jugadas que permanecen en la partida (43 y 42). Se trabaja directamente con el tiempo que debe mostrar el reloj.</td></tr>
+    <tr><td>Ritmos de juego</td><td>2 h/40 + 1 h sin incremento.</td><td>Se conserva como ejemplo A y se añade el ritmo habitual actual: <b>90 min/40 + 30 min + 30 s por jugada</b>.</td></tr>
+    <tr><td>Desempate Koya</td><td>Reglamento antiguo; cuadro con nombres reales y resultados que no cuadraban entre sí.</td><td>Reglamento de Desempates FIDE <b>vigente desde el 1-mar-2026</b> (KS, art. 9.2; modificador de límite, art. 14.5). Cuadro nuevo, ficticio y verificado (45 puntos, resultados simétricos).</td></tr>
+    <tr><td>Posiciones idénticas</td><td>Art. 9.2 (redacción antigua); sin soluciones.</td><td>Art. <b>9.2.3</b> (Leyes 2023), quíntuple repetición automática (<b>9.6.1</b>) y <b>soluciones razonadas</b> de los 5 ejercicios.</td></tr>
+    <tr><td>Conferencistas FIDE</td><td>Lista de 42 “Conductores Master” aprobada en 2012.</td><td>La lista de 2012 queda como dato histórico. Se explica el sistema actual de <b>FIDE Lecturers</b> (acreditación por 4 años) y dónde consultar la lista oficial.</td></tr>
+    <tr><td>Periodicidad / promoción</td><td>“Cada 15 días”, “a partir del 15 de junio”.</td><td>Se eliminaron las referencias de calendario ya caducadas.</td></tr>
+  </table>
+  <table class="dir" style="width:auto;margin-top:6px">
+    <tr><td><b>Director (edición original)</b></td><td>Santiago García Ramos · Árbitro Internacional</td></tr>
+    <tr><td><b>Revisión y actualización 2026</b></td><td>IA Oscar Angulo Cubero · Árbitro Internacional · Ajedrez Integral</td></tr>
+    <tr><td><b>Revisión (edición original)</b></td><td>Ignacio Córdoba Navarro · Periodista</td></tr>
+    <tr><td><b>Diseño (edición original)</b></td><td>Ángel Antonio Espino · Diseñador gráfico</td></tr>
+  </table>
+</section>
+
+<!-- ========== AJUSTE DE RELOJES ========== -->
+<section class="page">
+  <div class="kicker">Reglamento en la práctica</div>
+  <h2 class="sec">Ajuste de relojes después de una irregularidad</h2>
+  <div class="byline">Por Santiago García Ramos · Árbitro Internacional — revisión y actualización: IA Oscar Angulo Cubero, conforme a las Leyes del Ajedrez FIDE vigentes desde el 1 de enero de 2023</div>
+  <div class="cols">
+  <h3>¿Qué dicen hoy las Leyes?</h3>
+  <div class="box law"><span class="tag">Art. 7.1 · Leyes del Ajedrez 2023</span>
+  <p>Si se produce una irregularidad y hay que restablecer las piezas a una posición anterior, el árbitro determina con su <b>mejor criterio</b> los tiempos que deben mostrar los relojes, <b>incluido el derecho a no cambiarlos</b>. Si es necesario, ajusta también el contador de jugadas del reloj.</p></div>
+  <div class="box law"><span class="tag">Art. 7.5.1 y 7.5.5</span>
+  <p>Una jugada ilegal queda completada cuando el jugador pulsa su reloj. Se restablece la posición inmediatamente anterior a la irregularidad (o la última identificable). Por la <b>primera</b> jugada ilegal completada, el árbitro concede <b>2 minutos extra al rival</b>; por la <b>segunda</b> del mismo jugador, declara la partida perdida (salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: entonces son tablas).</p></div>
+  <div class="box warn"><p><b>Rápidas y relámpago.</b> La sanción es de <b>1 minuto</b> en lugar de 2 (art. A.3). Además, cuando no hay supervisión adecuada (art. A.5.2), el árbitro solo actúa si el rival aún no ha hecho su siguiente jugada; si nadie reclama a tiempo, <b>la jugada ilegal se mantiene</b> y la partida continúa. Por eso, un caso como el de este artículo (ilegal en la jugada 43 descubierta en la 52) solo es posible en partidas estándar o con las Reglas de Competición (A.4).</p></div>
+
+  <p>Después de saber lo que indica la FIDE, aparece un término que parece sencillo pero no siempre lo es: el “<b>mejor criterio</b>”. Cualquiera dirá que sabe lo que es, pero al pedirle que lo explique encontraremos una gran variedad de respuestas. Como ejercicio, resuelvan el siguiente caso <b>antes</b> de seguir leyendo.</p>
+
+  <div class="box"><p><b>CASO A (ritmo sin incremento).</b> Ritmo: 2 horas para 40 jugadas y 1 hora para terminar, por jugador. Se comprueba que las negras realizaron una jugada ilegal en la jugada 43. Actualmente las blancas acaban de hacer su jugada 52. Tiempos consumidos desde el inicio: blancas 2 h 32 min; negras 1 h 37 min. ¿Qué tiempo asignaría a cada uno, según su mejor criterio, después de restablecer la posición?</p></div>
+
+  <h3>¿Qué es el mejor criterio?</h3>
+  <p>El criterio es el discernimiento que nos permite tomar una decisión. Puede entenderse como decisión propia o como reglas a seguir que ya fueron definidas. El criterio personal debe moverse dentro de lineamientos que cada árbitro ha construido con el estudio y con experiencias exitosas.</p>
+  <div class="box ok"><p><b>Mejor criterio:</b> seguir un método que, por aprendizaje o experiencia, nos haya permitido resolver situaciones con éxito, aplicado de forma <b>igual para ambos jugadores</b> y que podamos <b>explicar</b> si la decisión se apela.</p></div>
+  <p>Algunos árbitros dirán: “yo dejo los relojes igual”; otros: “pongo tiempos iguales a los dos”. Hoy el art. 7.1 reconoce explícitamente que no tocar los relojes es una opción válida, pero cualquiera que sea la decisión debe poder justificarse: la mayoría de las decisiones del árbitro son apelables.</p>
+
+  <h3>Orden de preferencia recomendado</h3>
+  <div class="flow">
+    <div><span class="n">1</span><b>¿Se conocen los tiempos reales del momento de la irregularidad?</b> Tableros electrónicos (los PGN de transmisión registran el reloj de cada jugada), relojes que guardan historial o anotaciones de tiempo en la planilla. Si existen, son la mejor evidencia: se restauran esos tiempos.</div>
+    <div><span class="n">2</span><b>Si no se conocen:</b> método proporcional (abajo). Es objetivo, igual para ambos y fácil de explicar.</div>
+    <div><span class="n">3</span><b>Si la irregularidad es muy antigua o los datos no son fiables:</b> dejar los relojes como están (art. 7.1), ajustando solo el contador de jugadas.</div>
+    <div><span class="n">4</span><b>Siempre:</b> aplicar la sanción del art. 7.5.5 si fue una jugada ilegal, y revisar el contador de jugadas y los controles de tiempo.</div>
+  </div>
+
+  <h3>Método proporcional (sin incremento)</h3>
+  <p><b>Paso 1 – Reunir la evidencia.</b> Trabajen siempre con <b>tiempo consumido</b> y en <b>minutos</b>. Si un jugador tiene 1 hora y su reloj marca 23 minutos restantes, ha consumido 37.</p>
+  <table class="calc">
+    <tr><th>Dato</th><th>Blancas</th><th>Negras</th></tr>
+    <tr><td>Tiempo consumido</td><td>2:32 = 152 min</td><td>1:37 = 97 min</td></tr>
+    <tr><td>Jugadas realizadas</td><td>52</td><td>51</td></tr>
+    <tr><td>Jugadas que permanecen tras restablecer (ilegal de negras en la 43)</td><td>43</td><td>42</td></tr>
+  </table>
+  <p>Si la irregularidad la cometen las negras, las blancas conservan una jugada más; si la cometen las blancas, ambos conservan el mismo número.</p>
+  <p><b>Paso 2 – Tiempo ideal consumido</b> = consumido × jugadas que permanecen ÷ jugadas realizadas. Recomendamos hacer la operación en ese orden (multiplicar antes de dividir) para no arrastrar errores de redondeo.</p>
+  <table class="calc">
+    <tr><th>Operación</th><th>Resultado</th></tr>
+    <tr><td>Blancas: 152 × 43 ÷ 52</td><td>125,69 min ≈ <b>125:42</b></td></tr>
+    <tr><td>Negras: 97 × 42 ÷ 51</td><td>79,88 min ≈ <b>79:53</b></td></tr>
+  </table>
+  <p><b>Paso 3 – Pasar a lo que mostrará el reloj.</b> Ambos jugadores superaron la jugada 40 en la posición restablecida, así que ambos conservan la hora adicional (180 min en total). <i>Si al restablecer la posición se vuelve a antes del control, el tiempo añadido del control debe retirarse.</i></p>
+  <table class="calc">
+    <tr><th>Reloj</th><th>Blancas</th><th>Negras</th></tr>
+    <tr><td>180 − consumido ideal</td><td>54:18</td><td>100:07</td></tr>
+    <tr><td>Sanción art. 7.5.5 (+2 min al rival)</td><td>+2:00</td><td>—</td></tr>
+    <tr><td class="res">Tiempo a fijar</td><td class="res">56:18</td><td class="res">100:07</td></tr>
+  </table>
+
+  <h3>Variante: respetar el horario de la ronda</h3>
+  <p>Con el método proporcional, la suma de los tiempos consumidos (205,6 min) es menor que el tiempo real transcurrido de juego (249 min): la partida “se alarga” 43,4 minutos. Si el horario no lo permite (por ejemplo, con dos rondas el mismo día), el árbitro puede repartir esa diferencia a partes iguales como tiempo consumido: 21:43 para cada uno.</p>
+  <table class="calc">
+    <tr><th>Reloj</th><th>Blancas</th><th>Negras</th></tr>
+    <tr><td>Consumido ideal + 21:43</td><td>147:25</td><td>101:36</td></tr>
+    <tr><td>180 − consumido</td><td>32:35</td><td>78:24</td></tr>
+    <tr><td>+ Sanción art. 7.5.5</td><td>+2:00</td><td>—</td></tr>
+    <tr><td class="res">Tiempo a fijar</td><td class="res">34:35</td><td class="res">78:24</td></tr>
+  </table>
+  <p class="small">Esta variante es una herramienta de organización, no una regla FIDE. Si se va a usar, conviene anunciarlo en las bases o en la reunión técnica.</p>
+
+  <h3>Método proporcional con incremento</h3>
+  <div class="box"><p><b>CASO B (ritmo actual).</b> Ritmo: 90 min para 40 jugadas + 30 min para terminar, con 30 s de incremento por jugada desde la primera. Misma situación: ilegal de negras en la jugada 43, las blancas acaban de hacer su jugada 52. Los relojes marcan: blancas <b>36:00</b>, negras <b>60:30</b>.</p></div>
+  <p><b>Paso 1 – Tiempo de reflexión real.</b> Con incremento, el reloj ha sumado 30 s por cada jugada hecha. Tiempo consumido = tiempo base total + incrementos recibidos − tiempo que marca el reloj.</p>
+  <table class="calc">
+    <tr><th>Operación</th><th>Blancas</th><th>Negras</th></tr>
+    <tr><td>Base (90 + 30)</td><td>120</td><td>120</td></tr>
+    <tr><td>+ Incrementos recibidos</td><td>52 × 0,5 = 26</td><td>51 × 0,5 = 25,5</td></tr>
+    <tr><td>− Reloj actual</td><td>36</td><td>60,5</td></tr>
+    <tr><td class="res">= Consumido real</td><td class="res">110 min</td><td class="res">85 min</td></tr>
+  </table>
+  <p><b>Paso 2 – Consumido ideal.</b> Blancas: 110 × 43 ÷ 52 = 90,96 min. Negras: 85 × 42 ÷ 51 = 70,00 min.</p>
+  <p><b>Paso 3 – Reloj</b> = base + incrementos de las jugadas que <u>permanecen</u> − consumido ideal.</p>
+  <table class="calc">
+    <tr><th>Operación</th><th>Blancas</th><th>Negras</th></tr>
+    <tr><td>Base (90 + 30)</td><td>120</td><td>120</td></tr>
+    <tr><td>+ Incrementos de las jugadas que permanecen</td><td>43 × 0,5 = 21,5</td><td>42 × 0,5 = 21</td></tr>
+    <tr><td>− Consumido ideal</td><td>90,96</td><td>70,00</td></tr>
+    <tr><td>= Reloj</td><td>50:32</td><td>71:00</td></tr>
+    <tr><td>+ Sanción art. 7.5.5</td><td>+2:00</td><td>—</td></tr>
+    <tr><td class="res">Tiempo a fijar</td><td class="res">52:32</td><td class="res">71:00</td></tr>
+  </table>
+  <div class="box warn"><p><b>Fe de erratas de la edición original.</b> En el cálculo con incremento se restaban al final 26 y 25,5 minutos (los incrementos de 52 y 51 jugadas). Pero tras restablecer la posición, la partida solo conserva 43 y 42 jugadas, y solo esos incrementos deben quedar en el reloj. Además, el ritmo de 180 min a finish con 30 s se sustituyó por uno de uso actual.</p></div>
+  <p><b>Variante de horario.</b> Consumido real total 195 min; consumido ideal 160,96 min; diferencia 34,04 min → 17:01 para cada uno. Resultado: blancas 33:31 + 2:00 = <b>35:31</b>; negras <b>53:59</b>.</p>
+
+  <h3>Contador de jugadas</h3>
+  <p>Muchos relojes electrónicos añaden el tiempo del segundo periodo según el contador de jugadas. Tras restablecer la posición, programen el contador para que refleje las jugadas que permanecen (en el ejemplo, 43 de blancas y 42 de negras) y comprueben que el tiempo adicional de la jugada 40 no se sume dos veces ni deje de sumarse.</p>
+  </div>
+
+  <h3>Resumen del procedimiento</h3>
+  <table>
+    <tr><th style="width:50%">Sin incremento</th><th>Con incremento</th></tr>
+    <tr><td>1. Tiempo consumido de cada jugador (en minutos).</td><td>1. Consumido = base total + (jugadas hechas × incremento) − reloj.</td></tr>
+    <tr><td>2. Jugadas hechas y jugadas que permanecen.</td><td>2. Jugadas hechas y jugadas que permanecen.</td></tr>
+    <tr><td>3. Consumido ideal = consumido × permanecen ÷ hechas.</td><td>3. Consumido ideal = consumido × permanecen ÷ hechas.</td></tr>
+    <tr><td>4. (Opcional) repartir la diferencia con el tiempo real de juego.</td><td>4. (Opcional) repartir la diferencia con el tiempo real de juego.</td></tr>
+    <tr><td>5. Reloj = tiempo total de los controles alcanzados − consumido.</td><td>5. Reloj = base de controles alcanzados + (permanecen × incremento) − consumido.</td></tr>
+    <tr><td colspan="2" style="text-align:center"><b>6. Sanción del art. 7.5.5 (2 min; 1 min en rápidas/relámpago) y ajuste del contador de jugadas.</b></td></tr>
+  </table>
+  <p class="small">Como en la edición original, este procedimiento se programa fácilmente en una hoja de cálculo o en el teléfono: basta introducir los datos y el resultado sale automáticamente.</p>
+</section>
+
+<!-- ========== KOYA ========== -->
+<section class="page">
+  <div class="kicker">Sistemas de desempate</div>
+  <h2 class="sec">Sistema de desempate Koya</h2>
+  <div class="byline">Por IA Oscar Angulo Cubero — conforme al Reglamento de Play-off y Desempates FIDE (C.07), aprobado por el Consejo FIDE el 2-feb-2026 y aplicable desde el 1-mar-2026</div>
+  <div class="cols">
+  <div class="box law"><span class="tag">Reglamento de Desempates · art. 9.2 (KS)</span>
+  <p><b>Sistema Koya (para todos contra todos).</b> Es la cantidad de puntos obtenidos contra todos los participantes que hayan logrado <b>al menos el 50 %</b> de la puntuación máxima posible del torneo.</p></div>
+  <p>Es un desempate para torneos <b>round robin</b> (todos contra todos o de liga). La idea es premiar a quien sumó puntos contra los rivales más fuertes del torneo, entendiendo por “fuertes” la mitad superior de la clasificación.</p>
+  <h3>Límite modificable</h3>
+  <div class="box law"><span class="tag">Art. 14.5 · Modificador “Límite”</span>
+  <p>El límite del 50 % puede <b>subirse o bajarse medio punto cada vez</b>: al subirlo cuentan menos rivales; al bajarlo cuentan más.</p></div>
+  <p>Esto sustituye a lo que el reglamento anterior llamaba “Koya extendido” (incluir paso a paso grupos con menos del 50 %) y “Koya reducido” (excluir paso a paso a quienes tienen el 50 % y luego más). Lo importante: el límite modificado, como cualquier desempate, <b>debe estar publicado en las bases antes del inicio</b> y los desempates se aplican en orden, solo al subgrupo que siga empatado (art. 4.2).</p>
+  <div class="box"><p><b>Partidas no jugadas.</b> En torneos con emparejamientos predeterminados (como el round robin), las victorias o derrotas por incomparecencia se tratan como partidas normales (art. 15.2), con las excepciones que el propio artículo señala para los desempates basados en rating y para los de tipo B.</p></div>
+  <h3>Ejemplo</h3>
+  <p>Torneo ficticio de 10 jugadores a 9 rondas. La puntuación máxima posible es 9, así que el 50 % son <b>4½ puntos</b>: solo cuentan los puntos obtenidos contra los jugadores con 4½ o más (columnas sombreadas). Supongamos que las bases establecen: <b>1) KS; 2) KS con límite rebajado ½ punto; 3) KS con límite rebajado 1 punto</b>.</p>
+  </div>
+  {{XT1}}
+  <p class="small">Columnas 1–10 = resultado del jugador de la fila contra el número de la columna. Sombreadas: rivales con 4½ puntos o más. Total repartido: 45 puntos.</p>
+  <div class="cols">
+  <h4>Primer lugar: Herrera y Kovács (5½)</h4>
+  <p>Herrera: {{A1_45}}</p>
+  <p>Kovács: {{A2_45}}</p>
+  <p>Herrera es primero por mejor Koya.</p>
+  <h4>Tercer lugar: Salinas, Mendoza y Okafor (5)</h4>
+  <p>Salinas: {{A3_45}}</p>
+  <p>Mendoza: {{A4_45}}</p>
+  <p>Okafor: {{A5_45}}</p>
+  <p>Salinas es tercera. Mendoza y Okafor siguen empatados, así que pasamos al siguiente desempate (límite rebajado a 4 puntos), aplicado solo a ellos dos. Ahora también cuenta Torres (4 puntos):</p>
+  <p>Mendoza: {{A4_40}}</p>
+  <p>Okafor: {{A5_40}}</p>
+  <p>Mendoza es cuarto y Okafor quinto.</p>
+  <h4>Sexto lugar: Varga y Lindqvist (4½)</h4>
+  <p>Varga: {{A6_45}}</p>
+  <p>Lindqvist: {{A7_45}}</p>
+  <p>Con límite 4 (entra Torres): Varga {{A6_40}}; Lindqvist {{A7_40}}. Siguen empatados.</p>
+  <p>Con límite 3½ (entra también Ibáñez): Varga {{A6_35}}; Lindqvist {{A7_35}}.</p>
+  <p>Lindqvist es sexto y Varga séptimo.</p>
+  <div class="box warn"><p><b>Error frecuente.</b> El límite se fija sobre la <b>puntuación máxima posible</b> (9 en este caso), no sobre la puntuación del ganador ni sobre el número de jugadores. Y un rival con exactamente el 50 % <b>sí</b> cuenta (“al menos”).</p></div>
+  </div>
+  <h3>Clasificación final</h3>
+  {{XT2}}
+  <p class="small">“Nº” es el número inicial del jugador, que corresponde a las columnas 1–10. La última columna muestra el Koya con límite 4½, 4 y 3½.</p>
+</section>
+
+<!-- ========== POSICIONES IDÉNTICAS ========== -->
+<section class="page">
+  <div class="kicker">Reglamento en la práctica</div>
+  <h2 class="sec">Posiciones idénticas</h2>
+  <div class="byline">Por Santiago García Ramos · Árbitro Internacional — revisión y actualización: IA Oscar Angulo Cubero, conforme a los arts. 9.2 y 9.6 de las Leyes del Ajedrez 2023</div>
+  <div class="cols">
+  <p>En los torneos hay ocasiones en que el árbitro comete errores graves, ya sea por desconocer cómo se aplica una regla, por dar por hecho que la conoce o por distracción.</p>
+  <p>En más de diez años impartiendo seminarios en distintos países, una de las primeras preguntas que hago es: <i>¿identificarían tres posiciones idénticas en una partida?</i> Todos contestan con un rotundo sí; entre ellos ha habido Grandes Maestros, Maestros Internacionales, Árbitros Internacionales y jugadores de más de 2300. La sorpresa llega al proponerles cinco ejercicios: la mayoría se equivoca en al menos uno, y alguno en todos.</p>
+  <p>Y eso sin presión. En un torneo, al ser llamado para resolver una reclamación de tablas por repetición, el árbitro tendrá:</p>
+  <ol><li>Jugadores y espectadores alrededor de la partida.</li><li>Temor a equivocarse al reproducir la partida.</li><li>Posibilidad de dar un fallo erróneo.</li></ol>
+  <p>Los puntos 1 y 2 son cuestión de organización y concentración. Para el punto 3 propongo un método que ayuda a no equivocarse.</p>
+
+  <h3>¿Cómo define hoy la FIDE una posición idéntica?</h3>
+  <div class="box law"><span class="tag">Art. 9.2.3 · Leyes 2023</span>
+  <p>Las posiciones se consideran iguales <b>si y solo si</b> le toca jugar al mismo jugador, piezas del mismo tipo y color ocupan las mismas casillas y los movimientos posibles de todas las piezas de ambos jugadores son los mismos. Por tanto, <b>no</b> son iguales si:</p>
+  <p>9.2.3.1 – al inicio de la secuencia se podía capturar un peón al paso;<br>
+  9.2.3.2 – un rey tenía derecho a enrocar con una torre no movida y lo perdió después. El derecho a enrocar se pierde solo cuando se mueve el rey o la torre.</p></div>
+  <div class="box law"><span class="tag">Cómo se reclama · art. 9.2.1 y 9.2.2</span>
+  <p>Reclama el jugador al que le toca mover, cuando la misma posición <b>va a aparecer</b> (escribe su jugada en la planilla y declara al árbitro su intención de hacerla, sin hacerla en el tablero) o <b>acaba de aparecer</b> por al menos tercera vez.</p></div>
+  <div class="box new"><p><b>Novedad respecto a la edición original — art. 9.6.1:</b> si la misma posición aparece <b>al menos cinco veces</b>, la partida es tablas automáticamente, aunque nadie lo reclame. (Art. 9.6.2: también son tablas automáticas tras 75 jugadas de cada bando sin movimiento de peón ni captura, salvo que la última jugada dé mate).</p></div>
+  <h3>No existen las “posiciones fotográficas”</h3>
+  <p>Muchos árbitros y jugadores hablan de “posiciones fotográficas”. Si tomamos una foto de cada posición, podemos ver exactamente la misma imagen aunque se haya perdido el enroque, haya captura al paso posible o le toque jugar al otro bando. La foto no basta.</p>
+  </div>
+
+  <h3>Ejercicios</h3>
+  <p>En cada ejercicio, la posición del diagrama es la que buscaremos que se repita. ¿En cuáles se produce una triple repetición válida? <b>No sigan leyendo hasta resolverlos.</b></p>
+  <div class="boards">
+    <div>{{B1}}<div class="moves"><b>Ej. 1:</b> 1.e4 e5 2.Ac4 Ac5 3.Cf3 Ae7 4.Ae2 Ac5 5.Cg1 Ad6 6.Ac4 Ac5 7.Cf3 Cf6 8.Ad3 Cg8 9.Cg1 Ad6 10.Ab5 Ac5 11.Ac4</div></div>
+    <div>{{B2}}<div class="moves"><b>Ej. 2:</b> 1.e4 e5 2.Cf3 Cf6 3.Ac4 Ac5 4.Ad3 Ae7 5.Ac4 Rf8 6.Ad3 Re8 7.Ac4 Ac5 8.Ae2 Af8 9.Ac4 Ac5</div></div>
+    <div>{{B3}}<div class="moves"><b>Ej. 3:</b> (acaba de jugarse 1…e5) 2.Cc4 Ab5 3.Cd2 Ad7 4.Cc4 Ab5 5.Cd2 Ad7</div></div>
+    <div>{{B4}}<div class="moves"><b>Ej. 4:</b> 1.Aa7 Ag7 2.Ac5 Ah8 3.Aa7 Af6 4.Ac5 Ag7 5.Ad6 Ah6 6.Ac7 Ag5 7.Ab6 Af6 8.Ac5</div></div>
+    <div>{{B5}}<div class="moves"><b>Ej. 5:</b> 1.Th6+ Rg7 2.Th4 Rf7 3.Th7+ Rg6 4.Th4 Rf6 5.Cf4 Rg5 6.Th5+ Rf6 7.Th6+ Rf7 8.Ce2 Tf6 9.Th4 Tf5 10.Th7+ Rf6 11.Th4</div></div>
+    <div class="box" style="align-self:start"><p><b>Tabla de análisis de posiciones idénticas.</b> Para cada aparición de la posición, anoten:</p><ol><li><b>Posición</b> de las piezas.</li><li><b>Movimientos especiales:</b> derecho a enrocar (aunque esté impedido temporalmente) y captura al paso posible.</li><li><b>Turno:</b> a quién le toca jugar.</li></ol><p>Si las tres columnas coinciden al 100 %, las posiciones se repiten; si no, son posiciones <b>similares</b> sin valor para la reclamación.</p></div>
+  </div>
+
+  <h3>Soluciones</h3>
+  <table class="sol">
+    <tr><th>Ej.</th><th>Apariciones de la “foto”</th><th>¿Qué cambia?</th><th>Idénticas</th><th>¿Tablas?</th></tr>
+    <tr><td>1</td><td>Tras 2…Ac5, 6…Ac5 y 11.Ac4</td><td>Tras 11.Ac4 juegan las <b>negras</b>; en las otras dos, las blancas.</td><td>2</td><td>No</td></tr>
+    <tr><td>2</td><td>Tras 3…Ac5, 7…Ac5 y 9…Ac5</td><td>En la primera, las negras aún podían enrocar; con 5…Rf8 y 6…Re8 perdieron ese derecho.</td><td>2</td><td>No</td></tr>
+    <tr><td>3</td><td>Tras 1…e5, 3…Ad7 y 5…Ad7</td><td>Tras 1…e5 las blancas podían capturar al paso (dxe6 a.p.); después ya no.</td><td>2</td><td>No</td></tr>
+    <tr><td>4</td><td>Posición inicial, tras 4.Ac5 y tras 8.Ac5</td><td>En la inicial juegan las <b>blancas</b>; tras 4.Ac5 y 8.Ac5 juegan las negras.</td><td>2</td><td>No</td></tr>
+    <tr><td>5</td><td>Posición inicial, tras 4…Rf6 y tras 11.Th4</td><td>Tras 11.Th4 juegan las <b>negras</b>; en las otras dos, las blancas.</td><td>2</td><td>No</td></tr>
+  </table>
+  <div class="box ok"><p><b>Ninguno de los cinco ejercicios permite reclamar tablas.</b> En todos aparece tres veces la misma “foto”, pero solo dos posiciones son idénticas según el art. 9.2.3. Si respondieron correctamente los cinco antes de leer las soluciones, ¡felicidades! Si no… a seguir estudiando.</p></div>
+  <h4>Ejemplo resuelto con la tabla (Ejercicio 1)</h4>
+  <table>
+    <tr><th>Posición</th><th>Piezas</th><th>Movimientos especiales</th><th>Turno</th></tr>
+    <tr><td>1 (tras 2…Ac5)</td><td>Todo en posición inicial salvo: blancas Pe4 y Ac4; negras Pe5 y Ac5</td><td>Enroque: ambos conservan el derecho (temporalmente impedido). Al paso: no.</td><td>Blancas</td></tr>
+    <tr><td>2 (tras 6…Ac5)</td><td>Igual</td><td>Igual</td><td>Blancas</td></tr>
+    <tr><td>3 (tras 11.Ac4)</td><td>Igual</td><td>Igual</td><td><b>Negras</b></td></tr>
+  </table>
+</section>
+
+<!-- ========== LECTURERS ========== -->
+<section class="page">
+  <div class="kicker">Institucional</div>
+  <h2 class="sec">Conferencistas FIDE de arbitraje</h2>
+  <div class="byline">Por IA Oscar Angulo Cubero — conforme a la normativa de formación de árbitros de la FIDE (Handbook B.06.2)</div>
+  <div class="cols">
+  <p>Los <b>FIDE Lecturers</b> (conferencistas FIDE; en la edición original, “Conductores Master de Arbitraje FIDE”) son las personas que la FIDE autoriza para impartir los <b>Seminarios FIDE de Arbitraje</b>, requisito para obtener el título de Árbitro FIDE.</p>
+  <h3>Cómo funciona hoy</h3>
+  <ul>
+    <li>La <b>Comisión de Árbitros (ARB)</b> de la FIDE mantiene la lista oficial de Lecturers acreditados y la revisa periódicamente según las necesidades de formación.</li>
+    <li>La acreditación es válida por <b>cuatro años</b>; la renovación <b>no es automática</b>.</li>
+    <li>Los candidatos se forman en el <b>Programa de Formación de Lecturers</b> (LTP). Cuando un candidato cumple todos los requisitos, su federación nacional solicita formalmente su inclusión en la lista.</li>
+    <li>La actividad cuenta: la Comisión publica además una lista de <b>Lecturers activos</b> (que han impartido seminarios en los últimos años y siguen arbitrando eventos con rating FIDE).</li>
+  </ul>
+  <div class="box"><p><b>¿Dónde consultar la lista vigente?</b> En el sitio de la Comisión de Árbitros, <b>arbiters.fide.com</b>. La lista publicada más reciente que localizamos para esta edición es la del <b>18 de enero de 2026</b>. Al ser un listado que cambia con frecuencia, recomendamos consultarlo siempre en la fuente antes de organizar un seminario.</p></div>
+  <h3>La lista de 2012 (dato histórico)</h3>
+  <p>La edición original publicó la lista aprobada por el Consejo Presidencial de 2012: 42 conferencistas en todo el mundo, todos Árbitros Internacionales (25 de Europa, 8 de Asia y Oceanía, 7 de América y 2 de África). En América figuraban: A. Bento (Brasil), S. Chuit Pérez (Cuba), S. García (México), M. Hermida (Argentina), C. Jarecki y S. Muradian (Estados Unidos) y J. Vega (El Salvador).</p>
+  <p>El sistema actual, con acreditaciones temporales y un programa de formación, ha ampliado considerablemente el número de Lecturers, por lo que aquella lista ya no refleja la situación actual y no debe usarse como referencia vigente.</p>
+  </div>
+
+  <h3>Fuentes normativas de esta edición</h3>
+  <ul class="small">
+    <li>FIDE Laws of Chess, aprobadas por la Asamblea General el 07/08/2022 y aplicadas desde el 01/01/2023 (arts. 6.10.2, 7.1, 7.5, 9.2, 9.6, Apéndices A y B). A noviembre de 2026 siguen siendo la versión vigente publicada en el FIDE Handbook.</li>
+    <li>FIDE Play-Off and Tie-Break Regulations (C.07), aprobadas por el Consejo FIDE el 02/02/2026 y aplicables desde el 01/03/2026 (arts. 4.2, 9.2, 14.5, 15.2).</li>
+    <li>FIDE Regulations for the Training of Chess Arbiters (B.06.2) y listas de Lecturers de la Comisión de Árbitros (arbiters.fide.com).</li>  </ul>
+  <p class="footer-note">Los textos reglamentarios se presentan resumidos y traducidos libremente al español con fines didácticos; en caso de duda prevalece el texto oficial en inglés del FIDE Handbook. Los jugadores y resultados del ejemplo de desempate son ficticios.</p>
+</section>
+
+</body>
+</html>
+
+<!-- rev bfb5bbb0d2d82f9f -->

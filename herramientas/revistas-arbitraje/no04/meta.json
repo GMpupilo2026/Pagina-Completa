@@ -1,0 +1,28 @@
+{
+  "numero": 4,
+  "fecha_original": "agosto de 2012",
+  "temas": [
+    {"titulo": "Cómo puede el árbitro ayudar a superar el estrés", "desc": "Paula Man Reich · y los límites que ponen las Leyes (arts. 11.3 y 12.2)"},
+    {"titulo": "Buchholz con rondas no jugadas (segunda parte)", "desc": "Solución del ejercicio del N.º 3 · C.07 (2026), arts. 8.1 y 16"},
+    {"titulo": "Sistema de competencia Wimbledon (eliminación directa)", "desc": "Cuadros, siembra y byes · C.04.2 (2026) art. 2.2 · C.07 art. 3"}
+  ],
+  "titulo_presentacion": "Editorial",
+  "presentacion": "<div class=\"cols\"><p>En todos lados se comentaba que 2012 sería un año de cambios. En el ajedrez, esos cambios empezaron en agosto, con las modificaciones que sufrirían la mayoría de los reglamentos técnicos y las Leyes del Ajedrez durante el Congreso de la FIDE en Turquía.</p><p>En este número omitimos algunos artículos precisamente por esos cambios: no queríamos escribir textos que caducarían rápidamente, y preferimos esperar a conocer las nuevas reglas y su aplicación en las competencias.</p><p>En compensación, escribimos un extenso estudio del <b>sistema de competencia Wimbledon</b> (eliminación directa). Respondiendo a los correos que recibimos, ampliamos también la explicación del <b>desempate Buchholz con rondas no jugadas</b>, con la solución del ejercicio del número 3.</p><p>Además, en la sección de la psicóloga deportiva <b>Paula Man</b>, nos explica cómo actuar ante ajedrecistas estresados durante la competencia.</p><p>Espero que este número sea de su agrado y que nos sigan enviando sus propuestas de artículos y casos de arbitraje para analizar.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div>",
+  "cambios": [
+    ["Buchholz: solución del ejercicio", "Calculada con el «jugador virtual» (fórmula Svon = SPR + (1 − SfPR) + 0,5 × (n − R)).", "Recalculada con el <b>art. 16 del C.07 (2026)</b>: rival ficticio con la puntuación final del jugador y tope (art. 16.4); rondas no jugadas de los rivales según el art. 16.3. Se añade el Buchholz Cut-1 con la excepción del art. 16.5."],
+    ["Buchholz: fe de erratas del cálculo de 2012", "Los Buchholz publicados (25, 24½, 24, 28…) sumaban las puntuaciones reales de los rivales.", "<b>Fe de erratas:</b> el reglamento de 2012 (sección 15.3) mandaba contar como tablas las incomparecencias de los rivales. Bien aplicado, el 2.º y el 3.º lugar se invertían (24½ contra 23½). Además, en el historial de un jugador aparecía dos veces la «Ronda 2»."],
+    ["Buchholz: jugadores", "Diez Grandes Maestros reales con Elo de 2012, distinto del publicado en el N.º 3 para dos de ellos.", "Mismo torneo con jugadores ficticios y sin Elo, igual que en el N.º 3 actualizado."],
+    ["Historial en el sistema suizo", "«Las partidas ganadas o perdidas sin rival se eliminan del historial, el color y el rival».", "Hoy: en la secuencia de colores solo cuentan las partidas jugadas (C.04.2, art. 3.4) y dos jugadores que no jugaron entre sí pueden volver a emparejarse (art. 3.5)."],
+    ["Wimbledon: orden inicial", "Orden de títulos para igualdad de rating: GM, IM, WGM, <b>WIM, FM</b>, CM, WFM, WCM.", "<b>Corregido</b> según C.04.2 (2026), art. 2.2.2: GM, IM, WGM, <b>FM, WIM</b>, CM, WFM, WCM, sin título; después, orden alfabético."],
+    ["Wimbledon: desempates de los matches", "Partidas rápidas, blitz o Armagedón, sin referencia reglamentaria.", "Se añade el art. 3 del C.07 (2026): las bases deben fijar formato, números, colores, ritmos y horarios de los play-off. El Armagedón no está regulado en las Leyes ni en el C.07: sus condiciones van en las bases."],
+    ["Wimbledon: ejercicios", "Cuadros de 32 y 23 jugadores «para la Revista 5»; cuadros simulados con resultados inventados de jugadores reales.", "Se publican las soluciones (primera ronda de cada cuadro, calculadas y comprobadas). Se eliminan los resultados simulados atribuidos a jugadores reales; las listas de 2012 quedan como dato histórico."],
+    ["Estrés en la competencia", "Recomendaciones de psicología del deporte.", "Se conservan (autora original), corregidas, y se añaden los límites de las Leyes 2023: no dar consejos (art. 11.3.1), no molestar al rival (12.2.4) y el permiso para dejar el área de juego (11.2.3.2)."],
+    ["Editorial y avisos", "«¡Nos leemos en septiembre!», promoción del Manual del Organizador de la FIDE de agosto de 2012 y del N.º 5.", "Se eliminaron las referencias de calendario y de promoción ya caducadas."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Colaboradora (edición original)", "Paula Man Reich · Psicóloga del deporte"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"]
+  ]
+}

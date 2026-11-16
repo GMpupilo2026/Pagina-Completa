@@ -12049,6 +12049,42 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
 - **Las preguntas se recuerdan por una clave estable** (`ficha#n`, su lugar
   dentro de la ficha), no por el índice global, que cambiaba al agregar
   contenido; el avance viejo se pasa una vez a la clave nueva (`pregV2`).
+- **Las revistas se generan desde `herramientas/revistas-arbitraje/`**
+  (`generar.js`, con su `LEEME.md`): las fuentes de cada número (`meta.json`,
+  `cuerpo.html`, `fichas.json`), el estilo, la ilustración de cada portada y el
+  armador de `js/aula-arbitraje/contenido-revistas.js`. Al principio vivían en
+  una carpeta temporal de la sesión que las escribió: un PDF que no se puede
+  volver a generar se termina editando a mano o se pierde. Al pasarlos, se
+  regeneraron los 18 y salieron **idénticos byte a byte** a los publicados
+  (PDF y portadas), y `armar-aula.py` da el mismo `contenido-revistas.js`
+  (salvo el sello): esa es la prueba de que la copia del repositorio es la
+  buena. Las revistas originales de 2012-2014 no se suben: son del autor
+  original y solo fueron la fuente.
+- **Cada portada lleva una ilustración vectorial de su tema**
+  (`ilustraciones.js`): reloj, coronación, posición muerta, Wimbledon, sala de
+  juego, convocatoria, FEN, Suizo, títulos, pieza caída, caída de bandera,
+  relojes vigilados, Ajedrez960, antidopaje, jugada a dos manos, torre
+  invertida, rating performance y juego limpio. Se dibuja en SVG y no con
+  imágenes generadas, para que las 18 compartan estilo y para que los
+  tableros sean posiciones de la propia revista, validadas con chess.js (con
+  las piezas de `js/chess-piece-svg.js`; con glifos de texto salían diminutas
+  y con la fuente de emojis).
+- **El N.º 19 es una edición especial nueva**, no una revista vieja: la guía
+  paso a paso de Pareo Integral y la mesa del árbitro, con capturas de las
+  pantallas (pedido del dueño). Va en la Aula como un número más
+  (`revista-19`, con dos fichas y sus preguntas, y su PDF que se habilita al
+  completarlo). Las capturas las saca `no19/capturas.js`, que juega un torneo
+  entero en `pareo.html` con jugadores inventados (el candado abierto como en
+  los verificadores y `pareo-publicar` con un doble: nada se publica) y abre
+  la mesa con el doble de Supabase de `verificar-mesa-arbitro-pareo.js`. Dos
+  cosas que no se ven y arruinaban la captura: el encabezado fijo del sitio y
+  los avisos se pintan en medio de una captura de página entera (se esconden
+  antes), y `boundingBox()` da coordenadas de la ventana, no de la página (con
+  la página desplazada, el recorte salía corrido). El sitio se sirve desde el
+  disco pero con la dirección `https://ajedrez-integral.com`, para que los
+  enlaces que muestran las pantallas no digan `127.0.0.1`. **Si cambian esas
+  pantallas, se vuelven a sacar las capturas y se genera el N.º 19.** Los
+  verificadores de la Aula ya no dicen «18»: cuentan las carpetas `noNN/`.
 
 ## Desempates explicados
 
