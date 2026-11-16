@@ -5511,6 +5511,30 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   tardía en el acta). Las inscripciones se borran con el torneo (`on delete
   cascade`): «Dejar de publicar» se las lleva. La política de privacidad lo
   dice.
+- **El comentario al aceptar o rechazar, y el aviso por correo.** Lo pidió
+  el dueño para la Eliminatoria Cantonal JDN de Pérez Zeledón: antes
+  rechazar solo cambiaba el estado y quien inscribió nunca se enteraba.
+  Ahora «Aceptar», «Rechazar» y «Aceptar las N por revisar» abren un cuadro
+  (`Avisos.formulario`) con un comentario opcional (al rechazar se pide «el
+  motivo»), que dice antes de confirmar a quién le llega el aviso. `marcar`
+  lo guarda en `pareo_preinscripciones.comentario` (migración
+  `20261113232127_pareo_preinscripciones_comentario.sql`) y, si el contacto
+  es un correo (`esCorreo` de `correos.ts`), le manda a quien inscribió
+  `correoDecision` con el estado y el comentario; si la organización tiene
+  su correo confirmado, va de `reply_to`, así la respuesta le llega a ella.
+  Al aceptar, el correo es **la bienvenida al torneo** (lo pidió el dueño):
+  los datos de la inscripción (centro, categoría, sexo, nacimiento, Elo, ID
+  FIDE) y los del torneo publicado —fecha, lugar, ritmo y rondas de la
+  ficha Torneo; hora, contacto y bases del anuncio—, sin filas vacías, con
+  el botón al torneo. `marcar` lee solo esas rutas de `datos`, no el torneo
+  entero. El rechazo repite los datos de la inscripción para que se sepa
+  cuál fue.
+  Con un teléfono no se manda nada y Pareo se lo dice al árbitro (en el
+  cuadro, en un aviso y en la tarjeta). `avisado` guarda la hora del correo
+  que salió: la tarjeta ya marcada muestra el comentario y si se le avisó,
+  sin adivinar. Un correo que no sale no deshace la marca. Volver a
+  «pendiente» borra el comentario. Lo prueba
+  `herramientas/verificar-pareo-inscripcion-comentario.js`.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada

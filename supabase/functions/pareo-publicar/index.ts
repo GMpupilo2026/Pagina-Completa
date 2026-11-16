@@ -10,7 +10,7 @@
 //   { accion: "borrar", id, clave }           → { ok }
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
-//   { accion: "marcar", id, clave, ids, estado } → { ok }
+//   { accion: "marcar", id, clave, ids, estado, comentario? } → { ok, avisados, sinCorreo }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
 //   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
 //   { accion: "confirmar_correo", id, token } → { ok }
@@ -87,8 +87,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cabeceraCorreo } from "./marca-correo.ts";
 import {
-  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
-  correoSeguirConfirmar, correoSelloAdmin,
+  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoDecision, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
+  correoSeguirConfirmar, correoSelloAdmin, esCorreo,
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
@@ -125,7 +125,7 @@ const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const cabecera = (titulo: string) => cabeceraCorreo(null, titulo);
 // Nunca lanza ni frena lo que se estaba haciendo: un aviso que no sale no
 // deshace una inscripción ni un reporte.
-async function mandar(para: string[], c: Correo): Promise<boolean> {
+async function mandar(para: string[], c: Correo, responderA?: string | null): Promise<boolean> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const destino = [...new Set(para.map((x) => x.trim()).filter((x) => CORREO.test(x)))];
   if (!apiKey || !destino.length) return false;
@@ -133,7 +133,8 @@ async function mandar(para: string[], c: Correo): Promise<boolean> {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: DE, to: destino, subject: c.asunto, html: c.html }),
+      body: JSON.stringify(Object.assign({ from: DE, to: destino, subject: c.asunto, html: c.html },
+        responderA && CORREO.test(responderA) ? { reply_to: responderA } : {})),
     });
     return res.ok;
   } catch {
@@ -727,12 +728,12 @@ Deno.serve(async (req) => {
     const pid = texto(body.id, 40);
     const clave = texto(body.clave, 100);
     if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
-    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash, nombre, organizador_id").eq("id", pid).maybeSingle();
     if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
     if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
     if (accion === "inscripciones") {
       const { data, error } = await admin.from("pareo_preinscripciones")
-        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, creado")
+        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, comentario, avisado, creado")
         .eq("publicado_id", pid).order("creado").range(0, 999);
       if (error) return json({ ok: false, error: "No se pudieron leer las inscripciones." }, 502);
       return json({ ok: true, inscripciones: data || [] });
@@ -741,9 +742,45 @@ Deno.serve(async (req) => {
     if (!["aceptada", "rechazada", "pendiente"].includes(estado)) return json({ ok: false, error: "Estado inválido." }, 400);
     const cuales = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x)).slice(0, 400) : [];
     if (!cuales.length) return json({ ok: true });
-    const { error } = await admin.from("pareo_preinscripciones").update({ estado }).eq("publicado_id", pid).in("id", cuales);
+    // El comentario de quien organiza (el motivo, si la rechaza) queda con la
+    // inscripción y va en el aviso. Volver a «pendiente» lo borra.
+    const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
+    const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
+      .update({ estado, comentario, avisado: null }).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
-    return json({ ok: true });
+    // El aviso a quien inscribió, si dejó un correo como contacto (con un
+    // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
+    // respuestas le llegan a la organización si tiene su correo confirmado.
+    // Un correo que no sale no deshace la marca: queda sin `avisado`.
+    const avisados: string[] = [], sinCorreo: string[] = [];
+    if (estado !== "pendiente") {
+      const { data: org } = fila.organizador_id
+        ? await admin.from("pareo_organizadores").select("nombre").eq("id", fila.organizador_id).maybeSingle()
+        : { data: null };
+      const responderA = await correoDe(fila.organizador_id);
+      // Los datos del torneo para la bienvenida: la fecha, el lugar y el
+      // ritmo de la ficha Torneo, y la hora, el contacto y las bases del
+      // anuncio (lo que ya es público). Solo las rutas que hacen falta de
+      // `datos`, no el torneo entero.
+      const { data: ev } = await admin.from("pareo_publicados")
+        .select("lugar, fecha, rondas_total, ritmo:datos->>ritmo, fechaFin:datos->>fechaFin, anuncio:datos->anuncio")
+        .eq("id", pid).maybeSingle();
+      const anuncio = (ev?.anuncio && typeof ev.anuncio === "object" ? ev.anuncio : {}) as Record<string, unknown>;
+      const evento = {
+        fecha: ev?.fecha ?? null, fechaFin: (ev?.fechaFin as string) || null, lugar: ev?.lugar || "", ritmo: (ev?.ritmo as string) || "",
+        rondas: ev?.rondas_total || 0, hora: String(anuncio.hora || ""), contacto: String(anuncio.contacto || ""), bases: String(anuncio.texto || ""),
+        url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
+      };
+      for (const x of marcadas ?? []) {
+        if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
+        const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
+          fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
+        if (salio) avisados.push(x.id);
+      }
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+    }
+    return json({ ok: true, avisados, sinCorreo });
   }
 
   // ---------- Los árbitros adjuntos ----------
