@@ -4509,7 +4509,10 @@ por esta.
     cantidad de la lista. Todos los números se comprobaron contra la hoja
     Eventos del simulador abierta en Excel (1848 planillas y 155 hojas de
     resultados en juego). La sesión quedó en 42 láminas y la práctica en las
-    34-37.
+    34-37: la migración `formacion_sesion5_equipo_y_paso_a_paso` (versión
+    `20261116025030`, misma guarda, sin respuestas guardadas) dejó sus claves
+    en las 35-37. La lámina 19 de las fotos no tuvo migración propia: se
+    juntó con esta.
   - `formacion-laminas.js` tiene cuatro tipos nuevos: `foto` (una foto de
     `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
     bytes), `sala` (el plano, que el verificador mide con el tope de una
