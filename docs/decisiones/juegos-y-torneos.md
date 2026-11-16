@@ -12098,6 +12098,65 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
   doble en el navegador: la revista la cuenta sin captura.
 
+### Las ayudas de cálculo de los ejercicios
+
+Pedido del dueño: que los árbitros hagan los cálculos de los ejercicios
+dentro de la plataforma, sin salir a buscar una calculadora o una tabla.
+`js/aula-arbitraje/ayudas.js` pone en cada ejercicio de cálculo (relojes,
+Koya, desempates y normas, en Practicar y en los casos de sala) una barra con
+tres botones, justo entre los datos y lo que se calcula:
+
+- **Calculadora**: una cuenta con + − × ÷, paréntesis, coma decimal y ½ ¼ ¾,
+  el promedio de una lista (los Elo se pueden pegar con la coma pegada:
+  «2188,2405») y lo ya calculado para volver a usarlo.
+- **Tablas de FIDE**: la tabla del dp (1.4.9) y los mínimos de cada norma
+  salen de `js/normas-titulo.js`, y los desempates del catálogo de
+  `js/pareo/desempates.js`: la misma copia que hace el cálculo, nunca una
+  segunda escrita a mano.
+  Los desempates por rendimiento (TPR, APRO) traen además su tabla del dp,
+  hecha con `PareoDesempates.dpDeP`, que **no es igual de usar** que la de
+  las normas aunque los valores coincidan: para una norma el porcentaje se
+  redondea al entero antes de buscarlo (1.4.9); para el TPR, si el porcentaje
+  no está en la tabla, el motor interpola entre los dos vecinos. Por eso cada
+  una lleva su nota y sale de su propio código.
+- **¿Cómo se calcula?**: la fórmula y los pasos, sin los números del
+  ejercicio. Abrirla deja el ejercicio como «resuelto con pista» (en la
+  corrección y en el marcador: «Correctos: 7 de 9 (2 con pista)»).
+
+Además, los campos numéricos de esos ejercicios aceptan una cuenta y muestran
+el resultado al lado mientras se escribe («= 2273,6667» en el Ra).
+
+**Dónde van y dónde no.** También traen la calculadora (y las tablas de FIDE)
+las **preguntas**, fija arriba para que el historial siga de una pregunta a
+la otra; la calculadora de los **casos de decisión de texto** (tiempos,
+minutos de espera, puntos), y los tiempos de la **calculadora de ajuste de
+la pestaña Reloj**. No la traen los casos de **bandera, segunda ilegal y
+repetición** ni «Posiciones idénticas»: ahí se decide mirando la posición, y
+no hay nada que sumar. La pestaña «Calculadoras» ya es una calculadora.
+
+**Los relojes cuentan con tiempos.** En los casos y la práctica de relojes,
+la calculadora y los dos tiempos (el panel «Ajuste del árbitro» de
+`js/aula-arbitraje/reloj.js` y los campos de la práctica) aceptan cuentas
+con h:mm:ss o m:ss: «1:12:40 − 0:05:00», «0:30 × 12» (doce incrementos),
+«1:30:00 + 40 × 30 − 0:36:00». Cada tiempo se pasa a segundos y **un número
+suelto también son segundos**; el resultado vuelve a h:mm:ss. Un tiempo solo,
+sin cuenta, lo sigue leyendo `AulaAjuste.leerTiempo` como antes. Por eso la
+calculadora de números no toma los dos puntos como división: los dos puntos
+son de los tiempos.
+
+- **Hacen las cuentas, no las reglas.** Qué partidas se dejan afuera, a quién
+  se sube al piso, el 1400 del rival sin Elo, cómo se redondea o qué rivales
+  cuentan en el Koya lo sigue decidiendo el árbitro: si la plataforma lo
+  hiciera, el ejercicio ya no enseñaría. Por eso la pestaña «Calculadoras»,
+  que hace el cálculo completo, no se mete dentro de los ejercicios.
+- La cuenta se evalúa con un analizador propio (sin `eval`, que la CSP no
+  deja y no hace falta): lo que no es una cuenta completa da null, y nada se
+  ejecuta. Los dos puntos no dividen, para no romper un tiempo «1:30:00».
+- Lo revisan `verificar-aula-arbitraje.js` (el analizador) y
+  `verificar-aula-arbitraje-pagina.js` (la barra en cada ejercicio, los
+  paneles cerrados al empezar, el Ra con una cuenta, la tabla del dp y la
+  pista que marca «con pista»).
+
 ## Desempates explicados
 
 `desempates.html` recalcula la clasificación de un torneo de chess-results
