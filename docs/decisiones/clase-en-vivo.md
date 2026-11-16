@@ -4498,6 +4498,18 @@ por esta.
   `formacion_sesion5_salon_virtual`, versión `20261116023301`, aplicada el
   15/11 sin respuestas guardadas; con la misma guarda; el esquema no cambió,
   solo el `# al-dia-con:` del retrato).
+  - Más tarde (mismo día) entraron otras cinco: después de «Qué se revisa en
+    cada congresillo», la hoja de conformación del equipo y cómo se alinea
+    cuando entra el suplente (sistema olímpico, art. 66.2.h: el orden no
+    cambia, los de abajo suben y el suplente entra en el tablero 4; con
+    menos jugadores, queda vacío el último tablero); y después de «Calcular
+    los materiales», el paso a paso del Excel: paso 1 los torneos
+    individuales, paso 2 los de equipos (torneo por torneo: sistema, rondas,
+    partidas o encuentros, tableros y mesas) y paso 3 la razón de cada
+    cantidad de la lista. Todos los números se comprobaron contra la hoja
+    Eventos del simulador abierta en Excel (1848 planillas y 155 hojas de
+    resultados en juego). La sesión quedó en 42 láminas y la práctica en las
+    34-37.
   - `formacion-laminas.js` tiene cuatro tipos nuevos: `foto` (una foto de
     `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
     bytes), `sala` (el plano, que el verificador mide con el tope de una

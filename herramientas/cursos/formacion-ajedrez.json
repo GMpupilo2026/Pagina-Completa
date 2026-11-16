@@ -1742,6 +1742,28 @@
               "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66, 81, 85 y 86"
             },
             {
+              "titulo": "La hoja de conformación del equipo",
+              "texto": "Cada equipo entrega en el congresillo su orden de tableros, y ese orden se mantiene toda la etapa (art. 66.2.h).",
+              "puntos": [
+                "De 3 a 5 estudiantes: hasta 4 titulares y 1 suplente (art. 66.1.g).",
+                "El orden va del tablero 1 al 4, y el suplente al final, en el quinto lugar.",
+                "La hoja lleva el centro educativo, la categoría y la rama, y la firma de la jefatura de delegación.",
+                "Una vez entregada, el orden no se cambia durante la etapa."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.1.g y 66.2.h"
+            },
+            {
+              "titulo": "Cómo se alinea cuando entra el suplente",
+              "texto": "La suplencia va por sistema olímpico (art. 66.2.h): el orden de la hoja nunca se altera.",
+              "puntos": [
+                "Si no juega un titular, los que están debajo de él suben un tablero y el suplente entra en el tablero 4.",
+                "Descansa D: juegan A, B, C y E. Descansa B: juegan A, C, D y E. Descansa A: juegan B, C, D y E.",
+                "Si falta B y no hay suplente, juegan A, C y D en los tableros 1, 2 y 3, y el tablero 4 queda vacío.",
+                "Al inicio de cada ronda tiene que haber al menos 2 estudiantes del equipo frente al tablero (art. 66.2.f)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.2.f y 66.2.h"
+            },
+            {
               "titulo": "Congresillo: lo que se puede y lo que no",
               "texto": "El congresillo decide dentro de la Normativa, nunca contra ella.",
               "puntos": [
@@ -1765,6 +1787,39 @@
               "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.1.g; acta del congresillo de la Etapa Regional, DRE Alajuela, 2026"
             },
             {
+              "titulo": "Paso 1: los torneos individuales",
+              "texto": "Para cada torneo: el sistema y las rondas salen de cuántos inscritos tiene; las partidas y las mesas, de dividir entre 2.",
+              "puntos": [
+                "Con más de 8 inscritos, suizo de 7 rondas (lo acordado en el congresillo); con 8 o menos, todos contra todos (art. 66.2.a y b).",
+                "Partidas por ronda = inscritos ÷ 2; con impares, una persona queda libre.",
+                "Mesas dobles = partidas ÷ 2, redondeado hacia arriba, cada torneo con sus propias mesas.",
+                "Los 9 torneos individuales: 159 estudiantes, 78 partidas por ronda y 42 mesas dobles."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
+              "titulo": "Paso 2: los torneos por equipos",
+              "texto": "En equipos se cuentan equipos, no personas: cada encuentro usa 4 tableros y 2 mesas dobles juntas.",
+              "puntos": [
+                "Encuentros por ronda = equipos ÷ 2; tableros = encuentros × 4 (art. 66.1.g).",
+                "Equipos A Mujeres tuvo un solo equipo: no hubo torneo.",
+                "Los 6 torneos por equipos: 16 encuentros, 64 tableros y 32 mesas dobles."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
+              "titulo": "Paso 3: lo que se lleva a la sede",
+              "texto": "Con los 142 tableros en juego (78 individuales y 64 por equipos) sale el resto de la lista, cada cantidad con su razón.",
+              "puntos": [
+                "Repuesto: el 10 % de 142 es 14,2, que se redondea a 15. Juegos, tableros y relojes: 142 + 15 = 157, los relojes a 10 min + 2 s.",
+                "Mesas dobles: 42 + 32 + 2 de control = 76. Sillas: 142 × 2 + 4 de control = 288. Baterías: una por cada 4 relojes, 36.",
+                "Planillas: 2 por partida en cada ronda suman 1848; con el 10 %, 2033.",
+                "Hojas de resultados: una por ronda en individual y una por encuentro en equipos, 155; con el 10 %, 171.",
+                "Árbitros de sala: 142 ÷ 20 = 7,1, o sea 8, más la principal: 9. Sala: 76 mesas × 4 m² = 304 m²."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
               "titulo": "La sala de un torneo real",
               "texto": "La sala del Tacho Chess 2, lista para la ronda: así se ve lo que se planifica.",
               "puntos": [
@@ -1784,18 +1839,6 @@
                 "8 personas árbitras de sala, cada una con unos 16 a 20 tableros vecinos."
               ],
               "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026"
-            },
-            {
-              "titulo": "Lo que se lleva a la sede",
-              "texto": "Con todo en el mismo turno, el simulador da la lista completa.",
-              "puntos": [
-                "76 mesas dobles (74 en juego y 2 para control y registro) y 288 sillas.",
-                "157 juegos, tableros y relojes: 142 en juego y 15 de repuesto; los relojes, configurados a 10 min + 2 s.",
-                "36 baterías, 2033 planillas y 171 hojas de resultados.",
-                "9 personas árbitras: 8 de sala, una por cada 20 tableros, y la principal.",
-                "Una sala de unos 304 m², con 4 m² por mesa doble como supuesto."
-              ],
-              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
             },
             {
               "titulo": "Cómo se coloca cada mesa",
