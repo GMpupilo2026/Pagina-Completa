@@ -225,6 +225,10 @@
             corto: "Árbitros de Costa Rica",
             href: "arbitros-cr.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/arbitros-cr.jpg", ancho: 1200, alto: 675,
+                alt: "El avatar del profe Oscar señala una pantalla con la lista de árbitros de Costa Rica: el título de cada uno (AI, AF, AN), sus torneos con el cargo y sus normas, y al lado el detalle de las normas de uno de ellos.",
+            },
             resumen: "Los torneos de cada árbitro de Costa Rica en FIDE y en chess-results, con su cargo, y cuáles de los de FIDE cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
             puntos: [
                 "Todos los torneos de Costa Rica en FIDE desde 2002, con quién fue principal, adjunto o árbitro, y todos los de la federación en chess-results desde 2007, con el director y el organizador.",

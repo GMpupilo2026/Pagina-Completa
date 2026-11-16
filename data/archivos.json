@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1286,
+  "total": 1287,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27036,6 +27036,12 @@
     "titulo": "Herramientas",
     "grupo": "Carpetas",
     "archivos": [
+     {
+      "ruta": "img/herramientas/arbitros-cr.jpg",
+      "titulo": "Arbitros cr",
+      "tipo": "otro",
+      "kb": 97
+     },
      {
       "ruta": "img/herramientas/aula-arbitraje.jpg",
       "titulo": "Aula arbitraje",
