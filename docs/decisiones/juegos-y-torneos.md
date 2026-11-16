@@ -12114,6 +12114,14 @@ tres botones, justo entre los datos y lo que se calcula:
 Además, los campos numéricos de esos ejercicios aceptan una cuenta y muestran
 el resultado al lado mientras se escribe («= 2273,6667» en el Ra).
 
+**Dónde van y dónde no.** También traen la calculadora (y las tablas de FIDE)
+las **preguntas**, fija arriba para que el historial siga de una pregunta a
+la otra; la calculadora de los **casos de decisión de texto** (tiempos,
+minutos de espera, puntos), y los tiempos de la **calculadora de ajuste de
+la pestaña Reloj**. No la traen los casos de **bandera, segunda ilegal y
+repetición** ni «Posiciones idénticas»: ahí se decide mirando la posición, y
+no hay nada que sumar. La pestaña «Calculadoras» ya es una calculadora.
+
 **Los relojes cuentan con tiempos.** En los casos y la práctica de relojes,
 la calculadora y los dos tiempos (el panel «Ajuste del árbitro» de
 `js/aula-arbitraje/reloj.js` y los campos de la práctica) aceptan cuentas

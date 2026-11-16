@@ -296,6 +296,37 @@ async function contrastes(p) {
     await p.fill(".aula-ay-calc input[id$='-ex']", "1:30:00 + 40 × 30 - 0:36:00");
     await p.keyboard.press("Enter");
     igual("la calculadora de un caso de reloj cuenta con tiempos", await p.textContent(".aula-ay-calc [data-ay=res]"), "1:30:00 + 40 × 30 - 0:36:00 = 1:14:00 (4440 s)");
+    /* Las preguntas: calculadora y tablas de FIDE fijas arriba, con el historial de una pregunta a la otra. */
+    await p.evaluate(() => { location.hash = "practicar-preguntas"; });
+    await p.waitForSelector("#aula-preg .aula-opciones button");
+    const barraPreg = await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.map((x) => x.dataset.panel).join(","));
+    await p.click(".aula-ay-btn[data-panel='calc']");
+    await p.fill(".aula-ay-calc input[id$='-ex']", "4,5 + 3");
+    await p.keyboard.press("Enter");
+    await p.click("#aula-preg .aula-opciones button");
+    await p.click("#aula-sig");
+    igual("las preguntas traen calculadora y tablas de FIDE, y lo calculado sigue en la pregunta siguiente",
+        [barraPreg, await p.$$eval(".aula-ay-hist li", (l) => l.length)], ["calc,tablas", 1]);
+    /* Los casos que no son de cálculo: los de texto traen la calculadora; los de un tablero o una secuencia, no (se decide mirando la posición). */
+    const otros = await p.evaluate(() => window.AULA_CONTENIDO.casos.filter((c) => !c.tipo && !c.ritmo).map((c) => [c.id, !!(c.fen || c.secuencia)]));
+    const malOtros = [];
+    for (const [id, conTablero] of otros) {
+        await p.evaluate(() => { location.hash = "casos"; });
+        await p.waitForFunction(() => !document.querySelector(".aula-caso"));
+        await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
+        await p.waitForSelector(".aula-caso .aula-opciones button");
+        const b = await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.map((x) => x.dataset.panel).join(","));
+        if (conTablero ? b !== "" : b !== "calc") malOtros.push(id + " (" + (b || "nada") + ")");
+    }
+    igual("de los " + otros.length + " casos de decisión, los de texto traen la calculadora y los de tablero o secuencia no", [otros.filter((x) => !x[1]).length >= 20, malOtros], [true, []]);
+    /* La calculadora de ajuste de la pestaña Reloj: los tiempos aceptan una cuenta y se calcula con ella. */
+    await p.evaluate(() => { location.hash = "reloj"; });
+    await p.waitForSelector("#aula-c5");
+    await p.fill("#aula-c5", "0:36:00 + 2:00");
+    const ecoC5 = await p.textContent("#aula-c5-eco");
+    await p.click("#aula-calc");
+    igual("en la pestaña Reloj, «0:36:00 + 2:00» muestra = 0:38:00 y la calculadora de ajuste la usa",
+        [ecoC5, await p.$eval("#aula-rc", (n) => n.textContent.includes("método proporcional"))], ["= 0:38:00", true]);
     for (const [id, campo, paneles] of [["des-buchholz", ".aula-paso-calc input", "calc,tablas,pista"], ["ilegal-sin-incremento", "#aula-dict", "calc,pista"]]) {
         await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
         await p.waitForSelector(campo);

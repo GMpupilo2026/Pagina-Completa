@@ -269,6 +269,7 @@
             D.fichas.map((f) => '<option value="' + f.id + '"' + (f.id === filtroPreguntas ? " selected" : "") + ">" + f.titulo + "</option>").join("") +
             '</select></label></div><div id="aula-preg" class="aula-columna"></div></div>';
         const caja = q("#aula-preg", z);
+        if (AY) AY.barra(q(".aula-panel-ej", z), { tablas: ["dp", "normas", { tipo: "desempates" }], antes: "#aula-preg" });
         function arrancar() {
             const orden = barajar(D.preguntas.filter((p) => !filtroPreguntas || p.ficha === filtroPreguntas));
             let pos = 0, buenas = 0;
@@ -734,6 +735,9 @@
             "</section>" + (R ? '<section id="aula-zr" aria-label="El reloj"></section>' : "") + "</div>");
         let secuencia = null;
         if (c.secuencia) secuencia = montarSecuencia(q("[data-secuencia]"), c.secuencia.fen, c.secuencia.jugadas, {});
+        /* Un caso de decisión con números (tiempos, minutos de espera, puntos) trae la calculadora;
+           los de un tablero o una secuencia no: ahí se decide mirando la posición. */
+        if (AY && dec && !R && !c.fen && !c.secuencia) AY.barra(q(".aula-opciones").closest(".aula-paso"), { antes: ".aula-opciones" });
         let decision = null;
         if (dec) {
             qa(".aula-opciones button").forEach((b) => b.addEventListener("click", () => {
@@ -906,7 +910,7 @@
             '<div class="aula-entradas">' +
             '<label for="aula-c1">Periodo 1 (min)<input id="aula-c1" type="number" value="90" min="1"></label><label for="aula-c2">Jugadas del control<input id="aula-c2" type="number" value="40" min="0"></label>' +
             '<label for="aula-c3">Periodo 2 (min)<input id="aula-c3" type="number" value="30" min="0"></label><label for="aula-c4">Incremento (s)<input id="aula-c4" type="number" value="30" min="0"></label>' +
-            '<label for="aula-c5">Reloj de las blancas ahora<input id="aula-c5" value="0:36:00" autocomplete="off"></label><label for="aula-c6">Reloj de las negras ahora<input id="aula-c6" value="1:00:30" autocomplete="off"></label>' +
+            '<label for="aula-c5">Reloj de las blancas ahora<input id="aula-c5" value="0:36:00" autocomplete="off" data-calc="tiempo"></label><label for="aula-c6">Reloj de las negras ahora<input id="aula-c6" value="1:00:30" autocomplete="off" data-calc="tiempo"></label>' +
             '<label for="aula-c7">Jugadas completadas de las blancas<input id="aula-c7" type="number" value="52" min="0"></label><label for="aula-c8">Jugadas completadas de las negras<input id="aula-c8" type="number" value="51" min="0"></label>' +
             '<label for="aula-c9">Cometió la irregularidad<select id="aula-c9"><option value="b">Las negras</option><option value="w">Las blancas</option></select></label><label for="aula-c10">En la jugada número<input id="aula-c10" type="number" value="43" min="1"></label>' +
             '<label for="aula-c11">Sanción para el rival<select id="aula-c11"><option value="2">2 min (estándar)</option><option value="1">1 min (rápida o relámpago)</option><option value="0">Sin sanción</option></select></label>' +
@@ -914,10 +918,11 @@
             '<details class="aula-detalle"><summary>Las fórmulas (Leyes, art. 7.1)</summary><ul class="aula-pasos"><li>Consumido = tiempo de los controles alcanzados + jugadas × incremento − reloj.</li><li>Consumido ideal = consumido × jugadas que quedan ÷ jugadas hechas.</li><li>Reloj = tiempo de los controles que se alcanzan con las jugadas que quedan + jugadas que quedan × incremento − consumido ideal, más la sanción del art. 7.5.5.</li></ul></details>' +
             '<p class="aula-nota">Viene cargado el caso B de la revista (ritmo 90/40 + 30 + 30 s).</p></section></div>');
         relojActivo = new Reloj(q("#aula-zr"), { ritmo: Reloj.RITMOS["clasico-inc"] });
+        if (AY) AY.campos(q(".aula-reloj-pagina"));
         let ultimo = null;
         const num = (id) => Math.max(0, Number(q("#aula-" + id).value) || 0);
         q("#aula-calc").addEventListener("click", () => {
-            const w = A.leerTiempo(q("#aula-c5").value), b = A.leerTiempo(q("#aula-c6").value);
+            const w = leerTiempoOCuenta(q("#aula-c5").value), b = leerTiempoOCuenta(q("#aula-c6").value);
             const quien = q("#aula-c9").value, k = num("c10");
             const { lw, lb } = A.jugadasQueQuedan(quien, k);
             if (w == null || b == null || k < 1 || lw > num("c7") || lb > num("c8")) {
