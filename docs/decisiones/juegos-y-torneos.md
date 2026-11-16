@@ -8300,6 +8300,23 @@ navegador): que cada enlace lleve a una página que existe, que cada imagen
 exista, mida lo que dice y tenga su `alt`, y que Notara esté con licencia y abra la
 cámara.
 
+**Desde noviembre de 2026 todas las tarjetas llevan imagen** (lo pidió el
+dueño: «que identifiquen bien lo que hace y se entienda sus funciones»). Salvo
+las que tienen foto (Notara, Pareo Integral, Pareo para DGT, la Mesa del
+árbitro y el Aula de Arbitraje, en `.jpg`; una foto manda sobre la
+ilustración), son ilustraciones planas, una por herramienta, que muestran
+lo que entra y lo que sale (el enlace de chess-results → la selección; la
+partida en PGN → la triple repetición y el ½–½), con el color de su tema
+(Arbitraje dorado, JDE verde, JDN azul, Universitarios morado). Las arma
+`herramientas/generar-imagenes-herramientas.js`: un SVG de 1200×675 por
+escena, que Playwright pinta en `img/herramientas/<id>.png` y Pillow pasa a
+256 colores (~60 KB cada una). Los PNG se commitean y el script se corre a
+mano solo para cambiar un dibujo; una herramienta nueva lleva su escena ahí y
+su `imagen` en la lista. Los textos de la imagen son pocos y grandes (la
+tarjeta la muestra a ~1/3) y las filas y los números son de muestra: nadie
+real sale. La posición del tablero de «Reclamos de tablas» es la de verdad
+tras 36. Dd8+ Rh7 de la lista de jugadas que sale al lado.
+
 **La vitrina va en fichas por tema** (lo pidió el dueño: «que queden fichas por
 cada tema»): Arbitraje, JDE, JDN y Universitarios, en `TEMAS` del mismo
 `js/herramientas-arbitraje.js`. Cada herramienta lleva su `tema` y la lista se
