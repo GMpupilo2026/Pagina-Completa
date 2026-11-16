@@ -187,6 +187,24 @@ table.mini th{font-size:18px;padding:2px 8px;border-bottom:3px solid var(--azul)
 table.mini td{padding:2px 8px;border-bottom:1px solid #e3e9f1;background:none;border-radius:0!important;color:var(--tinta)!important;font-weight:400;white-space:nowrap}
 table.mini td:first-child{color:var(--gris)!important;font-weight:400}
 .tras-f{align-self:center;font-size:56px;color:var(--azul);font-weight:700;flex:none}
+/* foto: una foto real a la izquierda (herramientas/datos/fotos/) y filas a la derecha */
+.lado .fotocaja{flex:none;width:55%;padding:0;overflow:hidden;display:flex;flex-direction:column}
+.fotocaja img{width:100%;flex:1;min-height:0;object-fit:cover;display:block}
+.fotocaja .pie{font-size:22px;color:var(--gris);padding:12px 20px;line-height:1.25}
+/* fotos: dos fotos reales lado a lado, cada una con su marca (✓ bien, ✗ mal) escrita */
+.fotos2{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.fotocaja2{margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.fotocaja2 img{width:100%;flex:1;min-height:0;object-fit:cover;display:block}
+.fotocaja2 figcaption{padding:14px 22px 16px;display:flex;flex-direction:column;gap:6px}
+.fotocaja2 .marca{font-size:32px;align-self:flex-start}
+.fotocaja2 .s{font-size:24px;color:var(--gris);line-height:1.2}
+.fotocaja2 .credito{font-size:17px;color:var(--gris)}
+/* mesa: una mesa lista, vista desde arriba, con las reglas al lado */
+.lado .mesacaja{flex:none;width:50%;padding:14px;display:flex}
+.mesacaja svg{width:100%;height:100%}
+/* sala: el plano de un salón visto desde arriba */
+.sala{flex:1;min-height:0;display:flex}
+.sala svg{width:100%;height:100%}
 /* ciclo */
 .ciclo{display:flex;align-items:center;gap:12px;flex:none}
 .paso{flex:1;padding:26px 14px;text-align:center;font-size:34px;font-weight:700;line-height:1.15}
@@ -302,9 +320,126 @@ function cuerpo(d, diapo, usadas) {
       return '<div class="ciclo">' + d.pasos.map((p, k) => (k ? '<span class="flecha" aria-hidden="true">→</span>' : "") +
         '<div class="caja paso' + (k === d.pasos.length - 1 ? " final" : "") + '">' + esc(p) + "</div>").join("") + "</div>" +
         '<div class="filas">' + d.items.map((x) => '<div class="caja fila">' + ic(x.ic) + "<div><b>" + esc(x.t) + '</b><span class="s">' + esc(x.s) + "</span></div></div>").join("") + "</div>";
+    case "foto":
+      // La foto es de una sala real; se mete en la lámina como data: para que no dependa de rutas.
+      return '<div class="lado"><figure class="caja fotocaja"><img alt="" src="data:image/jpeg;base64,' +
+        fs.readFileSync(path.join(__dirname, "datos", "fotos", d.foto)).toString("base64") + '">' +
+        (d.pie ? '<figcaption class="pie">' + esc(d.pie) + "</figcaption>" : "") + "</figure>" +
+        '<div class="filas">' + d.items.map((x) => '<div class="caja fila' + tono(x.tono) + '">' + ic(x.ic) +
+          "<div><b>" + esc(x.t) + "</b>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div></div>").join("") +
+        (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "") + "</div></div>";
+    case "fotos":
+      // Cada foto lleva su crédito: son de otros (la del autor, si la trae, queda en la imagen).
+      return '<div class="fotos2">' + d.items.map((x) => '<figure class="caja fotocaja2"><img alt="" src="data:image/jpeg;base64,' +
+        fs.readFileSync(path.join(__dirname, "datos", "fotos", x.foto)).toString("base64") + '"><figcaption>' +
+        '<span class="marca ' + x.tono + '">' + MARCA[x.tono] + " " + esc(x.t) + "</span>" +
+        (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + (x.credito ? '<span class="credito">' + esc(x.credito) + "</span>" : "") +
+        "</figcaption></figure>").join("") + "</div>" + (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
+    case "mesa":
+      return '<div class="lado"><div class="caja mesacaja">' + mesa(usadas) + '</div><div class="filas">' +
+        d.items.map((x) => '<div class="caja fila' + tono(x.tono) + '">' + ic(x.ic) +
+          "<div><b>" + esc(x.t) + "</b>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div>" + art(x.a) + "</div>").join("") +
+        (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "") + "</div></div>";
+    case "sala":
+      return '<div class="sala">' + plano(d) + "</div>";
     default:
       throw new Error("Tipo de lámina desconocido: " + d.tipo);
   }
+}
+
+// Una mesa lista para jugar, vista desde arriba y desde donde está el árbitro
+// (abajo), de frente al reloj: las blancas a su izquierda, las negras a su
+// derecha y el reloj a la derecha de las negras. Así, al anotar un resultado,
+// izquierda es blancas y derecha es negras en toda la sala. La casilla de la
+// esquina a la derecha de cada jugador es blanca (Leyes FIDE, art. 2.1).
+function mesa(usadas) {
+  const W = 700, H = 640, L = 40, bx = 190, by = 150;
+  const p = [];
+  const t = (x, y, txt, extra) => '<text x="' + x + '" y="' + y + '" ' + (extra || "") + ">" + esc(txt) + "</text>";
+  p.push('<rect x="110" y="80" width="480" height="460" rx="10" fill="#dbe7f5" stroke="#1f5c99" stroke-width="3"/>');
+  // Las sillas y quién se sienta en cada una.
+  p.push('<rect x="38" y="225" width="56" height="150" rx="12" fill="#4a5a6a"/><rect x="606" y="225" width="56" height="150" rx="12" fill="#4a5a6a"/>');
+  p.push(t(60, 405, "Blancas", 'text-anchor="middle" font-size="22" font-weight="700" fill="#17202a"'));
+  p.push(t(640, 405, "Negras", 'text-anchor="middle" font-size="22" font-weight="700" fill="#17202a"'));
+  // El tablero: la columna de la izquierda es la fila 1 (blancas), y arriba va la columna a.
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++)
+    p.push('<rect x="' + (bx + i * L) + '" y="' + (by + j * L) + '" width="' + L + '" height="' + L + '" fill="' + ((i + j) % 2 === 0 ? "#9fc3e6" : "#ffffff") + '"/>');
+  p.push('<rect x="' + bx + '" y="' + by + '" width="' + 8 * L + '" height="' + 8 * L + '" fill="none" stroke="#17202a" stroke-width="2"/>');
+  const fondo = ["R", "N", "B", "Q", "K", "B", "N", "R"];
+  const pieza = (id, i, j) => { usadas.add(id); p.push('<use href="#' + id + '" transform="translate(' + (bx + i * L + 2) + "," + (by + j * L + 2) + ") scale(" + (L - 4) / 45 + ')"/>'); };
+  fondo.forEach((f, j) => { pieza("w" + f, 0, j); pieza("wP", 1, j); pieza("bP", 6, j); pieza("b" + f, 7, j); });
+  // El reloj, en el borde de enfrente: a la derecha de las negras.
+  p.push('<rect x="296" y="92" width="108" height="46" rx="8" fill="#b42318"/><rect x="304" y="100" width="42" height="30" rx="4" fill="#e9f0e4"/><rect x="354" y="100" width="42" height="30" rx="4" fill="#e9f0e4"/>');
+  p.push(t(350, 70, "Reloj", 'text-anchor="middle" font-size="24" font-weight="700" fill="#17202a"'));
+  // La planilla de cada uno a su lado, con el lapicero listo.
+  [[122, 300], [524, 300]].forEach(([x, y]) => {
+    p.push('<rect x="' + x + '" y="' + y + '" width="54" height="150" rx="3" fill="#fff" stroke="#4a5a6a" stroke-width="2"/>');
+    for (let k = 0; k < 7; k++) p.push('<line x1="' + (x + 6) + '" y1="' + (y + 20 + k * 18) + '" x2="' + (x + 48) + '" y2="' + (y + 20 + k * 18) + '" stroke="#9aa7b4" stroke-width="2"/>');
+    p.push('<rect x="' + (x + 20) + '" y="' + (y + 156) + '" width="14" height="40" rx="3" fill="#1f5c99"/>');
+  });
+  // El número de la mesa, a la vista del árbitro.
+  p.push('<rect x="300" y="490" width="100" height="36" rx="6" fill="#17202a"/>');
+  p.push(t(350, 516, "Mesa 7", 'text-anchor="middle" font-size="22" font-weight="700" fill="#fff"'));
+  // El árbitro, de frente al reloj.
+  p.push('<circle cx="350" cy="596" r="22" fill="#fde9c8" stroke="#7a4b00" stroke-width="3"/>');
+  p.push(t(350, 603, "A", 'text-anchor="middle" font-size="20" font-weight="700" fill="#5a3700"'));
+  p.push(t(388, 604, "Árbitro, de frente al reloj", 'font-size="22" fill="#17202a"'));
+  return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Una mesa lista: blancas a la izquierda del árbitro, reloj a la derecha de las negras" font-family="A, sans-serif">' + p.join("") + "</svg>";
+}
+
+// El plano de una sala vista desde arriba (tipo "sala"). Cada fila de mesas es
+// un torneo: `filas` = [{t, mesas, tableros, eq}], en el orden en que se
+// acomodan; `zonas` = cuántas filas vecinas cuida cada árbitro de sala, en
+// orden. Debajo de cada fila van sus tableros y sus mesas dobles, escritos:
+// el color (individual o equipos) nunca va solo.
+function plano(d) {
+  const W = 1460, H = 650, n = d.filas.length;
+  const x0 = 70, ancho = W - 2 * x0, paso = ancho / n;
+  const MESA_W = 40, MESA_H = 38, yMesas = 140, yTela = H - 74;
+  const maxMesas = Math.max(...d.filas.map((f) => f.mesas));
+  // Las filas, sus dos rótulos y la tela caben siempre: la mesa se achica si hace falta.
+  const alto = Math.min(MESA_H, (yTela - 70 - yMesas) / maxMesas);
+  const partes = [];
+  const t = (x, y, txt, extra) => '<text x="' + x + '" y="' + y + '" ' + (extra || "") + ">" + esc(txt) + "</text>";
+  // El salón, la mesa de control al frente y el público detrás de la tela.
+  partes.push('<rect x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="18" fill="#fff" stroke="#1d3a5a" stroke-width="4"/>');
+  partes.push('<rect x="' + (W / 2 - 190) + '" y="22" width="380" height="46" rx="8" fill="#1f5c99"/>');
+  partes.push(t(W / 2, 53, d.control, 'text-anchor="middle" font-size="22" font-weight="700" fill="#fff"'));
+  partes.push('<line x1="20" y1="' + yTela + '" x2="' + (W - 20) + '" y2="' + yTela + '" stroke="#b42318" stroke-width="6" stroke-dasharray="18 10"/>');
+  partes.push('<text x="' + W / 2 + '" y="' + (yTela + 34) + '" text-anchor="middle" font-size="22"><tspan fill="#b42318" font-weight="700">' +
+    esc(d.tela) + '</tspan><tspan fill="#4a5a6a"> · ' + esc(d.publico) + "</tspan></text>");
+  // Las zonas de cada árbitro de sala: un corchete arriba de sus filas.
+  let k = 0;
+  (d.zonas || []).forEach((cuantas, z) => {
+    const xa = x0 + k * paso + 6, xb = x0 + (k + cuantas) * paso - 6;
+    partes.push('<path d="M' + xa + " " + (yMesas - 20) + " V" + (yMesas - 32) + " H" + xb + " V" + (yMesas - 20) + '" fill="none" stroke="#7a4b00" stroke-width="3"/>');
+    partes.push('<circle cx="' + (xa + xb) / 2 + '" cy="' + (yMesas - 52) + '" r="17" fill="#fde9c8" stroke="#7a4b00" stroke-width="3"/>');
+    partes.push(t((xa + xb) / 2, yMesas - 45, "A" + (z + 1), 'text-anchor="middle" font-size="18" font-weight="700" fill="#5a3700"'));
+    k += cuantas;
+  });
+  // Las filas: cada mesa doble con sus dos tableros y una silla a cada lado de cada tablero.
+  d.filas.forEach((f, i) => {
+    const cx = x0 + i * paso + paso / 2, x = cx - MESA_W / 2;
+    const relleno = f.eq ? "#fde9c8" : "#dbe7f5", borde = f.eq ? "#9a5b00" : "#1f5c99";
+    for (let m = 0; m < f.mesas; m++) {
+      const y = yMesas + m * alto;
+      partes.push('<rect x="' + x + '" y="' + y + '" width="' + MESA_W + '" height="' + (alto - 2) + '" fill="' + relleno + '" stroke="' + borde + '" stroke-width="2"/>');
+      const usados = Math.min(2, f.tableros - 2 * m);
+      for (let b = 0; b < 2; b++) {
+        const by = y + 3 + b * (alto - 2) / 2, lado = (alto - 2) / 2 - 6;
+        if (b < usados) {
+          partes.push('<rect x="' + (cx - lado / 2) + '" y="' + by + '" width="' + lado + '" height="' + lado + '" fill="#fff" stroke="#17202a" stroke-width="1.5"/>');
+          partes.push('<rect x="' + (x - 9) + '" y="' + (by + 2) + '" width="7" height="' + (lado - 4) + '" rx="2" fill="#4a5a6a"/>');
+          partes.push('<rect x="' + (x + MESA_W + 2) + '" y="' + (by + 2) + '" width="7" height="' + (lado - 4) + '" rx="2" fill="#4a5a6a"/>');
+        }
+      }
+    }
+    const yPie = yMesas + maxMesas * alto + 26;
+    partes.push(t(cx, yPie, f.t, 'text-anchor="middle" font-size="17" font-weight="700" fill="#17202a"'));
+    partes.push(t(cx, yPie + 23, f.tableros + " · " + f.mesas, 'text-anchor="middle" font-size="18" fill="#17202a"'));
+  });
+  partes.push(t(W / 2, H - 14, d.leyenda, 'text-anchor="middle" font-size="19" fill="#4a5a6a"'));
+  return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(d.k || "Plano de la sala") + '" font-family="A, sans-serif">' + partes.join("") + "</svg>";
 }
 
 function defsPiezas(usadas) {

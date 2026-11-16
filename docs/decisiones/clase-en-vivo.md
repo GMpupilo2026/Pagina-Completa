@@ -4482,6 +4482,51 @@ por esta.
   celdas: la de Ajedrez Integral (tomada de `herramientas/lib/marca-agua.js`)
   va como imagen en Instrucciones y en Resumen, a la derecha de lo que se usa,
   y escrita en el pie de cada hoja al imprimir.
+- **La sala, el salón virtual y la mesa** (pedido del dueño, 15/11/2026):
+  cuatro láminas después de «Calcular los materiales», todas con los números
+  de las estadísticas de inscripción de la Regional de Alajuela 2026 (los
+  mismos del simulador): 15 la foto de la sala del Tacho Chess 2, 16 el plano
+  de la Regional con sus 15 torneos (una fila de mesas por torneo, mesa de
+  control al frente, público detrás de la tela y las zonas de los 8 árbitros
+  de sala), 17 la lista de lo que se lleva y 18 cómo se coloca cada mesa:
+  vistas desde el árbitro de frente al reloj, blancas a su izquierda y negras
+  a su derecha, reloj a la derecha de las negras, para que al anotar un
+  resultado izquierda sea blancas en toda la sala. Después se sumó la 19, con
+  dos fotos de torneos reales: el árbitro mal colocado (el reloj le queda
+  incómodo) y bien colocado (de frente al reloj); cada foto lleva su crédito.
+  Con las 4 primeras la sesión pasó a 37 láminas y la práctica a las 29-32 (migración
+  `formacion_sesion5_salon_virtual`, versión `20261116023301`, aplicada el
+  15/11 sin respuestas guardadas; con la misma guarda; el esquema no cambió,
+  solo el `# al-dia-con:` del retrato).
+  - Más tarde (mismo día) entraron otras cinco: después de «Qué se revisa en
+    cada congresillo», la hoja de conformación del equipo y cómo se alinea
+    cuando entra el suplente (sistema olímpico, art. 66.2.h: el orden no
+    cambia, los de abajo suben y el suplente entra en el tablero 4; con
+    menos jugadores, queda vacío el último tablero); y después de «Calcular
+    los materiales», el paso a paso del Excel: paso 1 los torneos
+    individuales, paso 2 los de equipos (torneo por torneo: sistema, rondas,
+    partidas o encuentros, tableros y mesas) y paso 3 la razón de cada
+    cantidad de la lista. Todos los números se comprobaron contra la hoja
+    Eventos del simulador abierta en Excel (1848 planillas y 155 hojas de
+    resultados en juego). La sesión quedó en 42 láminas y la práctica en las
+    34-37: la migración `formacion_sesion5_equipo_y_paso_a_paso` (versión
+    `20261116025030`, misma guarda, sin respuestas guardadas) dejó sus claves
+    en las 35-37. La lámina 19 de las fotos no tuvo migración propia: se
+    juntó con esta.
+  - `formacion-laminas.js` tiene cuatro tipos nuevos: `foto` (una foto de
+    `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
+    bytes), `sala` (el plano, que el verificador mide con el tope de una
+    tabla, porque sus rótulos son datos), `fotos` (dos fotos lado a lado,
+    cada una con su marca escrita y su crédito) y `mesa` (la mesa vista desde arriba;
+    se comprobó que la esquina a la derecha de cada jugador es clara).
+  - Cambiar el generador cambia la huella de **todas** las presentaciones.
+    Las demás no se volvieron a dibujar: los tipos nuevos no tocan lo que ya
+    había, y dibujarlas en Windows les cambiaba los íconos (Segoe UI Emoji en
+    vez de Noto). Se les escribió la huella nueva sin redibujar.
+    `formacion-practicas.js` sí redibuja `practica-01`: sus imágenes se
+    devolvieron a las de antes con `git checkout`.
+  - La foto de la mesa que mandó el dueño por el chat no quedó en ningún
+    archivo, así que la mesa se dibujó; si llega la foto, va como `foto`.
 
 #### El ejercicio del tablero mal colocado
 
