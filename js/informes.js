@@ -2156,6 +2156,7 @@
 
         async function renderEncargados(studentId, nombreAlumno) {
             encargadoAlumno = { id: studentId, nombre: nombreAlumno };
+            pintarParaTodos();
             document.getElementById("encargados-report").classList.remove("hidden");
             document.getElementById("enc-msg").textContent = "";
             document.getElementById("enc-ver-msg").textContent = "";
@@ -2308,6 +2309,66 @@
         }
         document.getElementById("enc-frecuencia").addEventListener("change", actualizarCajaDia);
         actualizarCajaDia();
+
+        /* «El mismo día y hora para todos»: cambiar la hora del informe alumno
+           por alumno, con veinte alumnos, eran cuarenta selectores. Lo pidió el
+           dueño para la profe Pame. Toca a los encargados de los alumnos que el
+           informe muestra (el filtro de grupo los acota) y a los que quien mira
+           les da clase; quién puede escribir lo decide la RLS de encargados.
+           El día solo se le pone a los que reciben el informe cada semana: con
+           otra frecuencia no significa nada. Ver «El mismo día y hora para
+           todos» en docs/decisiones/informes.md. */
+        function alumnosParaTodos() {
+            if (!teacherData) return [];
+            const s = teacherData.planEscribible;
+            return filteredStudents().filter((a) => !s || s.has(a.id));
+        }
+        function pintarParaTodos() {
+            const caja = document.getElementById("enc-todos");
+            const puede = !profile._persona && (profile.is_admin || profile.role === "profesor");
+            const n = puede ? alumnosParaTodos().length : 0;
+            caja.classList.toggle("hidden", n < 2);
+            document.getElementById("enc-todos-ayuda").textContent =
+                `Se les cambia a todos los encargados de tus ${n} alumnos del informe (el filtro de grupo de arriba los acota). El día solo cuenta para quienes lo reciben cada semana.`;
+        }
+        document.getElementById("enc-todos-dia").innerHTML = diasOptionsHTML(1);
+        document.getElementById("enc-todos-hora").innerHTML = horasOptionsHTML(13);
+        document.getElementById("enc-todos-aplicar").addEventListener("click", async () => {
+            const btn = document.getElementById("enc-todos-aplicar");
+            const msg = document.getElementById("enc-todos-msg");
+            const ids = alumnosParaTodos().map((a) => a.id);
+            if (!ids.length) return;
+            const diaValor = document.getElementById("enc-todos-dia").value;
+            const dia = diaValor === "" ? null : Number(diaValor);
+            const hora = Number(document.getElementById("enc-todos-hora").value);
+            const cuando = (dia == null ? "el día que caiga" : "los " + DIAS_SEMANA[dia]) + " a las " + horaLabel(hora);
+            if (!(await Avisos.confirmar(`A los encargados de tus ${ids.length} alumnos les va a llegar el informe ${cuando}. Los que lo reciben todos los días, cada mes o cada año solo cambian la hora.`,
+                { titulo: "¿Cambiar el día y la hora a todos?", aceptar: "Cambiarlo a todos" }))) return;
+            btn.disabled = true;
+            msg.textContent = "Guardando…"; msg.className = "text-xs w-full text-brand-500 dark:text-brand-300";
+            try {
+                // De cien en cien: los id van en la dirección del pedido.
+                let cambiados = 0;
+                for (let i = 0; i < ids.length; i += 100) {
+                    const tanda = ids.slice(i, i + 100);
+                    const r1 = await sb.from("encargados").update({ hora_envio: hora }).in("student_id", tanda).select("id");
+                    if (r1.error) throw r1.error;
+                    cambiados += (r1.data || []).length;
+                    const r2 = await sb.from("encargados").update({ dia_semana: dia }).in("student_id", tanda).eq("frecuencia", "semanal").select("id");
+                    if (r2.error) throw r2.error;
+                }
+                msg.textContent = cambiados
+                    ? `Listo: ${cambiados === 1 ? "1 encargado" : cambiados + " encargados"} ahora lo reciben ${cuando}.`
+                    : "Ninguno de esos alumnos tiene todavía a alguien apuntado.";
+                msg.className = "text-xs w-full text-green-700 dark:text-green-400";
+                if (encargadoAlumno) renderEncargados(encargadoAlumno.id, encargadoAlumno.nombre);
+            } catch (e) {
+                msg.textContent = "No se pudo cambiar: " + e.message;
+                msg.className = "text-xs w-full text-red-600 dark:text-red-400";
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         document.getElementById("enc-agregar").addEventListener("click", async () => {
             if (!encargadoAlumno) return;
@@ -2668,6 +2729,7 @@
         document.getElementById("student-filter").addEventListener("change", applyTeacherFilters);
         document.getElementById("topic-filter").addEventListener("change", applyTeacherFilters);
         document.getElementById("group-filter").addEventListener("change", applyTeacherFilters);
+        document.getElementById("group-filter").addEventListener("change", () => { if (encargadoAlumno) pintarParaTodos(); });
 
         /* El buscador y el orden del panel de alumnos NO pasan por
            applyTeacherFilters: repintarían los diagnósticos, los conteos de

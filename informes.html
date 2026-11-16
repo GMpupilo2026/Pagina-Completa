@@ -317,6 +317,22 @@
                     <button type="button" id="enc-agregar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
                     <span id="enc-msg" class="text-xs w-full" aria-live="polite"></span>
                 </div>
+                <div id="enc-todos" class="hidden border-t border-brand-100 dark:border-brand-800 pt-4 mt-4">
+                    <h3 class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">El mismo día y hora para todos</h3>
+                    <p id="enc-todos-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mb-2"></p>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <div>
+                            <label for="enc-todos-dia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué día</label>
+                            <select id="enc-todos-dia" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="enc-todos-hora" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">A qué hora</label>
+                            <select id="enc-todos-hora" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <button type="button" id="enc-todos-aplicar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cambiarlo a todos</button>
+                        <span id="enc-todos-msg" class="text-xs w-full" aria-live="polite"></span>
+                    </div>
+                </div>
                 <div class="flex flex-wrap items-center gap-2 border-t border-brand-100 dark:border-brand-800 pt-4 mt-4">
                     <span class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Ver o descargar</span>
                     <select id="enc-ver-frecuencia" aria-label="Periodo del informe" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
