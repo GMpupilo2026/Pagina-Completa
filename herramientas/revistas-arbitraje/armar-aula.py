@@ -1,4 +1,4 @@
-"""Junta los fichas.json de los números 2-18 en js/aula-arbitraje/contenido-revistas.js.
+"""Junta los fichas.json de los números 2 en adelante en js/aula-arbitraje/contenido-revistas.js.
 Uso: python herramientas/revistas-arbitraje/armar-aula.py  (después: node herramientas/sello-estampar.js)"""
 import json, glob, os, re, sys
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +36,7 @@ for f in sorted(glob.glob(os.path.join(AQUI, "no*", "fichas.json")), key=lambda 
 if problemas: print("\n".join(problemas)); sys.exit(1)
 cuerpo = {"colecciones": col, "fichas": fichas, "preguntas": preguntas, "casos": casos, "repeticiones": reps}
 datos = json.dumps(cuerpo, ensure_ascii=False, indent=1)
-js = f"""/* Aula de Arbitraje — las fichas de los números 2 al 18 de la revista
+js = f"""/* Aula de Arbitraje — las fichas de los números 2 al 19 de la revista
    «Arbitraje de Ajedrez», revisados y actualizados a la normativa FIDE vigente
    (noviembre de 2026) por IA Oscar Angulo Cubero.
 

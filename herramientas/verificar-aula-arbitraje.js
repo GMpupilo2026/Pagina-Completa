@@ -14,9 +14,11 @@
 "use strict";
 const path = require("path");
 const C = require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido.js"));
-require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-revistas.js")); // suma los números 2-18 a C
+require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-revistas.js")); // suma los números 2 en adelante a C
 require(path.join(__dirname, "..", "js", "aula-arbitraje", "contenido-practica.js")); // y el Taller del árbitro
 const fs = require("fs");
+// Cuántas revistas hay: una carpeta noNN por número en herramientas/revistas-arbitraje.
+const REVISTAS = fs.readdirSync(path.join(__dirname, "revistas-arbitraje")).filter((d) => /^no\d\d$/.test(d)).length;
 const MP = require(path.join(__dirname, "lib", "mate-posible.js"));
 const TT = require(path.join(__dirname, "..", "js", "aula-arbitraje", "torneo-texto.js"));
 const AD = require(path.join(__dirname, "..", "js", "aula-arbitraje", "desempates.js"));
@@ -40,7 +42,7 @@ igual("cada pregunta es de una ficha que existe", C.preguntas.filter((p) => !fic
 igual("«correcta» es una de las opciones", C.preguntas.filter((p) => !(p.correcta >= 0 && p.correcta < p.opciones.length)).map((p) => p.texto), []);
 igual("cada caso es de una ficha que existe", C.casos.filter((c) => !fichas.has(c.ficha)).map((c) => c.id), []);
 igual("los ids de las fichas no se repiten", C.fichas.length, new Set(C.fichas.map((f) => f.id)).size);
-igual("las colecciones son los 18 números de la revista, en orden, y el taller", C.colecciones.map((c) => c.id), Array.from({ length: 18 }, (_, i) => "revista-" + (i + 1)).concat(["taller"]));
+igual("las colecciones son los " + REVISTAS + " números de la revista, en orden, y el taller", C.colecciones.map((c) => c.id), Array.from({ length: REVISTAS }, (_, i) => "revista-" + (i + 1)).concat(["taller"]));
 igual("en cada caso con decisión, «correcta» es una de sus opciones", C.casos.filter((c) => c.decision && !(c.decision.correcta >= 0 && c.decision.correcta < c.decision.opciones.length)).map((c) => c.id), []);
 igual("ningún contenido trae HTML activo (script, on…, iframe)", C.fichas.filter((f) => /<script|\son\w+\s*=|javascript:|<iframe/i.test(f.contenido)).map((f) => f.id), []);
 igual("los ids de los casos no se repiten", C.casos.length, new Set(C.casos.map((c) => c.id)).size);
@@ -125,7 +127,7 @@ C.casos.filter((c) => c.tipo === "norma").forEach((c) => {
 console.log("\n=== Las revistas: portada y PDF ===");
 const raiz = path.join(__dirname, "..");
 const faltan = [];
-for (let n = 1; n <= 18; n++) {
+for (let n = 1; n <= REVISTAS; n++) {
     const nn = (n < 10 ? "0" : "") + n;
     if (!fs.existsSync(path.join(raiz, "descargas", "aula-arbitraje", "revista-" + nn + ".pdf"))) faltan.push("PDF " + nn);
     if (!fs.existsSync(path.join(raiz, "img", "aula-arbitraje", "portada-" + nn + ".jpg"))) faltan.push("portada " + nn);

@@ -2,7 +2,7 @@
    Uso:  node herramientas/revistas-arbitraje/generar.js 3 8 11
          node herramientas/revistas-arbitraje/generar.js todas
          MUESTRA=1 node herramientas/revistas-arbitraje/generar.js 3   (solo la portada, en PNG)
-   Cada número vive en noNN/ (meta.json + cuerpo.html; el N.º 1, en no01/armar.py
+   Cada número vive en noNN/ (meta.json + cuerpo.html, y capturas/ si las lleva; el N.º 1, en no01/armar.py
    con su template.html). El PDF sale a descargas/aula-arbitraje/revista-NN.pdf;
    después: node herramientas/aula-portadas.js (las portadas de las fichas).
    Necesita playwright y chess.js (npm install) y python con pypdf.
@@ -76,33 +76,44 @@ function armarHtml(n, dir) {
     const carpeta = path.join(AQUI, "no" + String(n).padStart(2, "0"));
     const meta = JSON.parse(fs.readFileSync(path.join(carpeta, "meta.json"), "utf8"));
     const errores = [];
-    const cuerpo = tableros(fs.readFileSync(path.join(carpeta, "cuerpo.html"), "utf8"), errores);
+    let cuerpo = tableros(fs.readFileSync(path.join(carpeta, "cuerpo.html"), "utf8"), errores);
     if (/class="tablero"/.test(cuerpo)) errores.push("Quedó un tablero sin convertir (revisa el formato del div).");
     if (/claude|anthropic|chatgpt|inteligencia artificial/i.test(cuerpo + JSON.stringify(meta))) errores.push("El texto menciona IA o un asistente.");
+    /* Capturas: <img src="capturas/archivo.png"> de noNN/capturas/ se incrustan en el PDF. */
+    cuerpo = cuerpo.replace(/<img src="(capturas\/[^"]+\.(png|jpg))"/g, (m, rel, ext) => {
+        const f = path.join(carpeta, rel);
+        if (!fs.existsSync(f)) { errores.push("Falta la captura " + rel); return m; }
+        return '<img src="data:image/' + (ext === "jpg" ? "jpeg" : "png") + ";base64," + fs.readFileSync(f).toString("base64") + '"';
+    });
     if (errores.length) throw new Error("N.º " + n + ":\n" + errores.join("\n"));
+    /* Un número especial (meta.especial) no es una revista vieja actualizada:
+       es nuevo, de Ajedrez Integral, y no lleva la tabla de cambios. */
+    const esp = meta.especial;
     const portada = `
 <section class="cover">
   <img src="${LOGO}" alt="Ajedrez Integral" style="position:absolute;top:18mm;right:18mm;height:16mm;width:auto">
   <div class="kicker" style="color:#cfdcf3">Revista especializada</div>
   <h1 class="mast"><small>Arbitraje de</small>Ajedrez</h1>
-  <div class="issue"><span>Número <b>${n}</b></span><span>·</span><span>Edición revisada y actualizada · noviembre 2026</span></div>
-  <div class="issue" style="margin-top:6px"><span>Revisión y actualización: <b>${AUTOR}</b></span></div>
-  <div><span class="stamp">Actualizada a la normativa FIDE vigente</span></div>
+  <div class="issue"><span>Número <b>${n}</b></span><span>·</span><span>${esp ? esp.edicion : "Edición revisada y actualizada · noviembre 2026"}</span></div>
+  <div class="issue" style="margin-top:6px"><span>${esp ? "Autor" : "Revisión y actualización"}: <b>${AUTOR}</b></span></div>
+  <div><span class="stamp">${esp ? esp.sello : "Actualizada a la normativa FIDE vigente"}</span></div>
   <div class="bigpiece">♞</div>
   ${ilustracion(n)}
   <div class="toc">${meta.temas.map((t) => `<div><span class="t">${t.titulo}</span><span class="d">${t.desc || ""}</span></div>`).join("")}</div>
 </section>`;
-    const dirFilas = (meta.directorio || [["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"]])
-        .concat([["Revisión y actualización 2026", AUTOR + " · Árbitro Internacional · Ajedrez Integral"]]);
+    const dirFilas = esp ? [["Autor", AUTOR + " · Árbitro Internacional · Ajedrez Integral"]]
+        : (meta.directorio || [["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"]])
+            .concat([["Revisión y actualización 2026", AUTOR + " · Árbitro Internacional · Ajedrez Integral"]]);
+    const cambios = esp ? "" : `
+  <div class="box new" style="margin-top:14px"><p><b>Sobre esta edición revisada (noviembre 2026), por ${AUTOR}.</b> El número ${n} se publicó en ${meta.fecha_original}. Esta edición conserva los temas y el enfoque didáctico, pero revisa cada artículo contra la normativa FIDE vigente hoy:</p></div>
+  <table><tr><th style="width:24%">Tema</th><th style="width:38%">Edición original</th><th>Edición actualizada</th></tr>
+  ${meta.cambios.map((c) => `<tr><td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td></tr>`).join("")}
+  </table>`;
     const presentacion = `
 <section class="page">
   <div class="kicker">Presentación</div>
   <h2 class="sec">${meta.titulo_presentacion || "Sobre esta edición"}</h2>
-  ${meta.presentacion || ""}
-  <div class="box new" style="margin-top:14px"><p><b>Sobre esta edición revisada (noviembre 2026), por ${AUTOR}.</b> El número ${n} se publicó en ${meta.fecha_original}. Esta edición conserva los temas y el enfoque didáctico, pero revisa cada artículo contra la normativa FIDE vigente hoy:</p></div>
-  <table><tr><th style="width:24%">Tema</th><th style="width:38%">Edición original</th><th>Edición actualizada</th></tr>
-  ${meta.cambios.map((c) => `<tr><td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td></tr>`).join("")}
-  </table>
+  ${meta.presentacion || ""}${cambios}
   <table class="dir" style="width:auto;margin-top:6px">${dirFilas.map((d) => `<tr><td><b>${d[0]}</b></td><td>${d[1]}</td></tr>`).join("")}</table>
 </section>`;
     return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Arbitraje de Ajedrez N.º ${n}</title><style>${css}</style></head><body>${portada}${presentacion}${cuerpo}</body></html>`;
@@ -160,8 +171,9 @@ print("N.º " + n + ": " + str(len(w.pages)) + " páginas")
 (async () => {
     const args = process.argv.slice(2);
     if (!args.length) { console.error("Uso: node herramientas/revistas-arbitraje/generar.js <número…|todas>"); process.exit(2); }
-    const numeros = args.includes("todas") ? Array.from({ length: 18 }, (_, i) => i + 1) : args.map((a) => parseInt(String(a).replace(/^no/, ""), 10));
-    if (numeros.some((n) => !(n >= 1 && n <= 18))) { console.error("Números del 1 al 18."); process.exit(2); }
+    const total = fs.readdirSync(AQUI).filter((d) => /^no\d\d$/.test(d)).length;
+    const numeros = args.includes("todas") ? Array.from({ length: total }, (_, i) => i + 1) : args.map((a) => parseInt(String(a).replace(/^no/, ""), 10));
+    if (numeros.some((n) => !(n >= 1 && n <= total))) { console.error("Números del 1 al " + total + "."); process.exit(2); }
     const b = await chromium.launch();
     try {
         for (const n of numeros) await generar(b, n);
