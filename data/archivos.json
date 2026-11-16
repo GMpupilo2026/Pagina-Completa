@@ -19221,7 +19221,7 @@
   ]
  },
  "imagenes": {
-  "total": 1273,
+  "total": 1274,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26975,6 +26975,12 @@
       "titulo": "Notara",
       "tipo": "otro",
       "kb": 155
+     },
+     {
+      "ruta": "img/herramientas/pareo-dgt.jpg",
+      "titulo": "Pareo dgt",
+      "tipo": "otro",
+      "kb": 117
      },
      {
       "ruta": "img/herramientas/pareo-integral.jpg",

@@ -340,6 +340,10 @@
             corto: "Pareo para DGT",
             href: "pareo-dgt.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/pareo-dgt.jpg", ancho: 1200, alto: 675,
+                alt: "Un torneo con transmisión: en las mesas 1 y 2, tableros electrónicos conectados por cable a una laptop que dice «Ronda 5 — mesas 1 y 2, pareo listo, transmitiendo»; al fondo, una pantalla grande muestra las dos partidas en vivo.",
+            },
             resumen: "Para transmitir un torneo con tableros electrónicos DGT: se sube la ronda a chess-results como siempre y la herramienta arma sola el archivo para importar en DGT LiveChess y crea la ronda en la transmisión de Lichess.",
             puntos: [
                 "Vigila chess-results cada 30 segundos: apenas sale una ronda, deja el PGN con el pareo listo para importar en LiveChess, en la carpeta que elijas.",
