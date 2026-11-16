@@ -240,6 +240,23 @@ async function contrastes(p) {
         await p.waitForSelector(campo);
         igual(hash + ": trae sus ayudas", await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.length), cuantos);
     }
+    /* Los casos de sala con cálculo traen las mismas ayudas que la práctica: todos los de normas, uno de desempate y uno de reloj. */
+    const casosNorma = await p.evaluate(() => window.AULA_CONTENIDO.casos.filter((c) => c.tipo === "norma").map((c) => c.id));
+    const sinAyudas = [];
+    for (const id of casosNorma) {
+        await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
+        await p.waitForSelector("#aula-nra");
+        const b = await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.map((x) => x.dataset.panel).join(","));
+        if (b !== "calc,tablas,pista") sinAyudas.push(id + " (" + b + ")");
+    }
+    igual("los " + casosNorma.length + " casos de normas traen calculadora, tablas de FIDE y pista", [casosNorma.length >= 12, sinAyudas], [true, []]);
+    await p.fill("#aula-nra", "(2300 + 2450) / 2");
+    igual("y en un caso de normas el Ra también acepta la cuenta", await p.textContent("#aula-nra-eco"), "= 2375");
+    for (const [id, campo, paneles] of [["des-buchholz", ".aula-paso-calc input", "calc,tablas,pista"], ["ilegal-sin-incremento", "#aula-dict", "calc,pista"]]) {
+        await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
+        await p.waitForSelector(campo);
+        igual("el caso " + id + " trae sus ayudas", await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.map((x) => x.dataset.panel).join(",")), paneles);
+    }
 
     console.log("\n=== Reloj ===");
     await p.evaluate(() => { location.hash = "reloj"; });
