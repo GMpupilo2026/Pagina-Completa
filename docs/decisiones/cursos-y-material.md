@@ -2444,8 +2444,10 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
-- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy la
-  de la Sesión 1 y la de la 2: 14 y 12 preguntas): más simples que el Kahoot,
+- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy de
+  la Sesión 1 a la 5: 14, 12, 12, 12 y 12 preguntas; las de la 3, 4 y 5, de
+  solo texto, se mandaron el 16/11/2026 a los 30 asesores con fecha límite el
+  1 de diciembre): más simples que el Kahoot,
   para mandar a la casa a quien recién empieza con el reglamento, y **ninguna
   repite una pregunta del Kahoot** (`verificar-formacion.js` lo revisa). Se
   llaman «Formación Ajedrez · Tarea inicial de la Sesión N: …», y la ficha las
