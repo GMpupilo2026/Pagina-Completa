@@ -4501,8 +4501,9 @@ por esta.
   - Más tarde (mismo día) entraron otras cinco: después de «Qué se revisa en
     cada congresillo», la hoja de conformación del equipo y cómo se alinea
     cuando entra el suplente (sistema olímpico, art. 66.2.h: el orden no
-    cambia, los de abajo suben y el suplente entra en el tablero 4; con
-    menos jugadores, queda vacío el último tablero); y después de «Calcular
+    cambia, los de abajo suben y el suplente entra en el tablero 4; sin
+    suplente nadie se mueve: si falta B, el tablero 2 queda vacío aunque B
+    no llegue, como lo aclaró el dueño); y después de «Calcular
     los materiales», el paso a paso del Excel: paso 1 los torneos
     individuales, paso 2 los de equipos (torneo por torneo: sistema, rondas,
     partidas o encuentros, tableros y mesas) y paso 3 la razón de cada

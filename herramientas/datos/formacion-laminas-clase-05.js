@@ -116,8 +116,8 @@ module.exports = [
         ["D", "A", "B", "C", "E"],
         ["B", "A", "C", "D", "E"],
         ["A", "B", "C", "D", "E"],
-        ["B, sin suplente", "A", "C", "D", "vacío"] ] },
-    nota: "El orden no cambia: los de abajo suben un tablero y el suplente entra al final.",
+        ["B, sin suplente", "A", "vacío", "C", "D"] ] },
+    nota: "Con suplente, los de abajo suben un tablero y él entra al final. Sin suplente, nadie se mueve.",
     clave: "Al inicio de la ronda, al menos 2 frente al tablero (66.2.f)." },
   // 15
   { tipo: "dos", k: "Dentro de la Normativa, nunca contra ella",
