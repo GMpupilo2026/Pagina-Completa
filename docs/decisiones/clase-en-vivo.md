@@ -4493,7 +4493,9 @@ por esta.
   a su derecha, reloj a la derecha de las negras, para que al anotar un
   resultado izquierda sea blancas en toda la sala. La sesión pasó a 37
   láminas y la práctica a las 29-32 (migración
-  `formacion_sesion5_salon_virtual`, con la misma guarda).
+  `formacion_sesion5_salon_virtual`, versión `20261116023301`, aplicada el
+  15/11 sin respuestas guardadas; con la misma guarda; el esquema no cambió,
+  solo el `# al-dia-con:` del retrato).
   - `formacion-laminas.js` tiene tres tipos nuevos: `foto` (una foto de
     `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
     bytes), `sala` (el plano, que el verificador mide con el tope de una
