@@ -1,0 +1,30 @@
+{
+  "numero": 15,
+  "fecha_original": "octubre de 2013",
+  "temas": [
+    {"titulo": "De las propuestas de 2013 a las Leyes vigentes", "desc": "Leyes del Ajedrez 2023 · arts. 3.7, 4.6, 6.2, 7.5, 9.6, 11.3, 12.9, Apéndices A y B, Pautas III"},
+    {"titulo": "Aprende a modificar tus creencias limitantes", "desc": "Psicología del arbitraje · Paula Man Reich"},
+    {"titulo": "¿Qué pasó aquí? Una coronación con las dos manos", "desc": "Kamsky–Tomashevsky, 2013 · arts. 4.6, 7.5.4 y 7.5.5"}
+  ],
+  "presentacion": "<p>Este número se publicó cuando la FIDE discutía la reforma de las Leyes del Ajedrez que entraría en vigor en 2014. Santiago García Ramos aprovechó el borrador que recibió para comentar, artículo por artículo, los cambios más sobresalientes: el final a caída de bandera convertido en apéndice, la nueva forma de coronar, las tablas automáticas, los teléfonos móviles, las sanciones y los nuevos reglamentos de rápidas y relámpago.</p><p>Completan el número un trabajo de la psicóloga Paula Man Reich sobre las creencias que limitan al árbitro y el análisis de una coronación hecha con las dos manos en la Copa del Mundo de 2013.</p><p>Como aquel borrador cambió antes de aprobarse y las Leyes se han reformado varias veces desde entonces, esta edición compara cada propuesta con la norma vigente y corrige las conclusiones que hoy ya no valen.</p>",
+  "cambios": [
+    ["Artículo central sobre las Leyes", "Comentaba el borrador de reforma de 2013, con el texto de 2009 y el propuesto, y anunciaba su entrada en vigor para julio de 2014.", "Se rehízo: cada propuesta se compara con las <b>Leyes del Ajedrez aplicadas desde el 1-ene-2023</b>, con los números de artículo vigentes. No se reproduce el texto del borrador."],
+    ["Final a caída de bandera", "Antiguo art. 10 / 10.2, que pasaría a un apéndice.", "<b>Pautas III</b>: solo si se anuncian y solo sin incremento (III.2); incremento de 5 s y 2 min al rival (III.4); reclamación de tablas (III.5); sin árbitro (III.6)."],
+    ["Repetición automática", "Tablas al repetirse la posición <b>diez</b> veces consecutivas.", "<b>Corregido:</b> no se aprobó. Hoy son <b>cinco</b> apariciones, no necesariamente consecutivas (art. 9.6.1)."],
+    ["Coronación", "El borrador hablaba de la «intención» de llevar el peón a la última fila; se temía ambigüedad.", "Arts. 3.7.3.3 y 4.6: el peón no tiene que llegar a la casilla y el orden es libre. Nuevos: la pieza queda elegida al tocar la casilla de promoción (4.4.4) y la jugada se completa al soltarla con el peón ya retirado (4.7.3)."],
+    ["Pulsar el reloj tarde", "Duda del autor: ¿puede un jugador detener su reloj sin jugar?", "Se responde con los arts. 6.2.1 y 6.2.2: el jugador sí jugó; solo completa la jugada al pulsar, y su tiempo siguió corriendo. El árbitro no le avisa (12.6)."],
+    ["Teléfonos", "Pérdida por el solo hecho de llevarlo, aunque esté apagado.", "Art. 11.3.2: las bases pueden permitir guardarlo <b>apagado en el bolso</b>; si lo lleva encima, pierde y el rival gana (11.3.2.2), sin la antigua excepción de tablas."],
+    ["Conducta del árbitro", "Se citaba un «12.1» propuesto sobre no desprestigiar el ajedrez.", "Esa frase quedó en el art. 11.1 (jugadores). La conducta de los árbitros se rige por el reglamento disciplinario de árbitros (B.06.5)."],
+    ["Sanciones", "Lista del «12.10» propuesto.", "Art. <b>12.9</b>, que añade la exclusión de una o varias rondas (12.9.8)."],
+    ["Jugada ilegal en rápidas y relámpago", "Pérdida inmediata sin supervisión completa (también en las Leyes de 2014 y 2017).", "Desde 2018 se aplica el 7.5.5; hoy, <b>1 minuto</b> al rival por la primera y pérdida por la segunda (A.3, A.5.2, B.3)."],
+    ["Caso Kamsky–Tomashevsky", "Conclusión: jugada ilegal por no llevar el peón a la última fila (2 min) y advertencia por usar dos manos.", "<b>Conclusión cambiada:</b> no llevar el peón a la casilla ya no es infracción (4.6.1); usar las dos manos y pulsar se sanciona como jugada ilegal (7.5.4): 2 minutos al rival y cuenta como primera ilegal (7.5.5). Se corrige «Tompso» por Tromsø."],
+    ["Psicología", "Texto con errores de ortografía y de escala.", "Se conserva el trabajo de Paula Man Reich, corregido de estilo y en tuteo, con una nota para que el lector aclare qué significa el 1 y el 10 de su escala."],
+    ["Calendario", "«Espérenos pronto», «en octubre se aprobarán…».", "Se eliminaron las referencias de calendario ya caducadas."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}

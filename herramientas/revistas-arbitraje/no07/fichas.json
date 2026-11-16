@@ -1,0 +1,473 @@
+{
+  "coleccion": {
+    "id": "revista-7",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 7",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "registro-arbitros",
+      "coleccion": "revista-7",
+      "titulo": "Registro, categorías y actividad de los árbitros",
+      "articulos": "B.06.1 (desde 1-mar-2026) · arts. 1.3, 5.4.3, 6.1, 6.2 · B.06.3 (desde 1-jul-2026)",
+      "resumen": "Qué debe pagar un árbitro para actuar en torneos FIDE, cómo se clasifica y cuándo queda inactivo.",
+      "claves": [
+        "Todo árbitro de un evento valorado por la FIDE paga la cuota de registro (antes «License fee»): B.06.1, art. 6.1.",
+        "Si no se cumple, el evento puede no valorarse y las normas del árbitro no se aceptan (art. 6.2).",
+        "Los títulos de AF e IA son vitalicios (art. 1.3); para pedir el de AF hay que tener la licencia de Árbitro Nacional al menos un año (art. 5.4.3).",
+        "Los IA se clasifican en A, B, C y D; los AF son siempre categoría D (B.06.3).",
+        "Un árbitro queda inactivo si pasan cuatro años sin aprobar un curso de actualización.",
+        "El inactivo no puede ser árbitro principal de torneos con posibilidad de normas ni ser designado para eventos oficiales FIDE o continentales."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>B.06.1, arts. 6.1 y 6.2</b> Todos los árbitros de cualquier evento valorado por la FIDE cumplen el reglamento financiero, lo que incluye pagar una cuota de registro (antes llamada «License fee»). Si no, el evento puede no ser valorado y las normas de árbitro no se aceptan.</div><div class=\"aula-norma\"><b>B.06.1, arts. 1.3 y 5.4.3</b> Los títulos son vitalicios desde que se otorgan o registran. Para solicitar el título de AF hay que haber tenido la licencia de Árbitro Nacional al menos un año.</div><div class=\"aula-norma\"><b>B.06.3</b> IA en categorías A, B, C o D; AF siempre en D. Para subir: antigüedad, estar activo y actuaciones como principal o adjunto con evaluación positiva en los últimos cinco años.</div><h3>Actividad</h3><p>La fecha de «fin de actividad» es cuatro años después del título de AF o del último curso de actualización (o seminario de certificación de IA) aprobado. Un nuevo título o categoría no cambia esa fecha.</p><div class=\"aula-norma aula-norma-aviso\"><b>Árbitro inactivo.</b> No puede ser árbitro principal de torneos valorados por la FIDE (salvo que no haya posibilidad de normas), no puede ser designado para eventos oficiales FIDE o continentales, y su estado se marca en su perfil. Vuelve a estar activo al aprobar un curso de actualización validado por la Comisión de Árbitros.</div><div class=\"aula-tabla\"><table><tr><th>Categoría</th><th>Resumen</th></tr><tr><td>D</td><td>Todo AF y todo IA, por defecto.</td></tr><tr><td>C</td><td>IA hace 1 año o más, activo, con actuaciones en torneos de categoría C y D.</td></tr><tr><td>B</td><td>IA hace 3 años o más, 2 años en C, actuaciones en torneos de B y C.</td></tr><tr><td>A</td><td>IA hace 5 años o más, 2 años en B, actuaciones en torneos de A y B.</td></tr></table></div><p class=\"aula-nota\">Las tarifas de 2012 (de 20 € a 300 €) son historia. Las cuotas vigentes se consultan con la federación o en los documentos financieros de la FIDE.</p>"
+    },
+    {
+      "id": "notacion-fen",
+      "coleccion": "revista-7",
+      "titulo": "Anotar una posición: Forsyth y FEN",
+      "articulos": "Leyes 2023 · arts. 8.5.3, 9.2.3, 9.3, 9.6.2 · Apéndice C.3",
+      "resumen": "Cómo dejar constancia de una posición en pocos segundos y sin ambigüedad.",
+      "claves": [
+        "Antes de reconstruir una partida, el árbitro anota la posición y los tiempos (art. 8.5.3).",
+        "Forsyth: fila por fila, de la 8.ª a la 1.ª y de la columna a a la h.",
+        "Mayúsculas para las blancas, minúsculas para las negras; las casillas vacías seguidas, con un número.",
+        "Cada fila suma 8 entre letras y números: si no, hay un error.",
+        "En FEN internacional el rey es K y la torre es R; en español, R es el rey y T la torre.",
+        "FEN añade turno, enroques, captura al paso y contadores: justo lo que el art. 9.2.3 compara en una repetición."
+      ],
+      "contenido": "<h3>Para qué sirve</h3><div class=\"aula-norma\"><b>Art. 8.5.3</b> Si hay que reconstruir la partida, el árbitro (o un auxiliar) anota primero la posición real y los tiempos de los relojes, si los hay.</div><h3>El método Forsyth</h3><ol><li>Recorre el tablero fila por fila, desde la octava hasta la primera, y cada fila de la columna a a la h.</li><li>Escribe la inicial de cada pieza: mayúscula si es blanca, minúscula si es negra.</li><li>Escribe un número para las casillas vacías seguidas.</li><li>Separa las filas con una barra.</li></ol><p>Ejemplo: <span class=\"aula-formula\">r3r1k1/p3qp1p/3p1np1/1NpPnbB1/2B5/1P5P/PQ1N1PP1/R5K1</span></p><div class=\"aula-tabla\"><table><tr><th>Pieza</th><th>Español</th><th>FEN</th></tr><tr><td>Rey</td><td>R</td><td>K</td></tr><tr><td>Dama</td><td>D</td><td>Q</td></tr><tr><td>Torre</td><td>T</td><td>R</td></tr><tr><td>Alfil</td><td>A</td><td>B</td></tr><tr><td>Caballo</td><td>C</td><td>N</td></tr><tr><td>Peón</td><td>P</td><td>P</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>Cuidado:</b> la «R» es el rey en español y la torre en inglés. Aclara qué letras usaste. Las Leyes permiten anotar con las iniciales del propio idioma (Apéndice C.3).</div><h3>Lo que añade FEN</h3><p>Después de las piezas: turno (w/b), enroques (KQkq o «-»), casilla de captura al paso (o «-»), medias jugadas desde la última captura o movimiento de peón, y número de jugada.</p><div class=\"aula-norma\"><b>Art. 9.2.3</b> Dos posiciones son iguales si le toca al mismo jugador, las piezas ocupan las mismas casillas y los movimientos posibles son los mismos, incluidos el derecho a enrocar y la captura al paso.</div><p class=\"aula-nota\">El contador de medias jugadas ayuda con las 50 jugadas (art. 9.3) y las 75 (art. 9.6.2).</p>"
+    },
+    {
+      "id": "buchholz-no-jugadas",
+      "coleccion": "revista-7",
+      "titulo": "Buchholz con partidas no jugadas",
+      "articulos": "C.07 (2026) · arts. 4.1.1, 8.1, 16.1-16.6",
+      "resumen": "Cómo cuentan hoy en el Buchholz las incomparecencias, los descansos y los byes pedidos.",
+      "claves": [
+        "Buchholz (art. 8.1): la suma de las puntuaciones de los rivales. No se usa en todos contra todos.",
+        "El jugador virtual de 2009 ya no existe.",
+        "Ronda no jugada propia: se juega contra un «muñeco» con la puntuación del propio jugador (art. 16.4).",
+        "Si fue incomparecencia, el muñeco no puede superar la puntuación ajustada del rival programado (16.4.1).",
+        "En las demás rondas no jugadas, el tope es el valor de unas tablas por el número de rondas (16.4.2).",
+        "Para los rivales, las rondas no jugadas cuentan con los puntos otorgados, salvo los byes pedidos no seguidos de ninguna ronda jugada (o en la última ronda), que cuentan como tablas (16.3)."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 8.1</b> Buchholz: la suma de las puntuaciones de cada uno de los rivales. Estos desempates no se usan en torneos todos contra todos.</div><div class=\"aula-norma\"><b>Art. 16.2</b> Categorías de rondas no jugadas: (1) descansos asignados por el emparejamiento o de punto completo; (2) victorias por incomparecencia; (3) byes pedidos seguidos de al menos una ronda que no sea VUR; (4) derrotas por incomparecencia; (5) byes pedidos seguidos solo de VUR o en la última ronda. VUR = ronda en que el jugador no estaba disponible (bye pedido o derrota por incomparecencia).</div><div class=\"aula-norma\"><b>Art. 16.3</b> Para el desempate de los rivales, las categorías 1 a 4 se cuentan con el resultado de los puntos otorgados; la categoría 5, como tablas.</div><div class=\"aula-norma\"><b>Art. 16.4</b> Para el desempate propio, cada ronda no jugada se valora contra un muñeco cuya puntuación es la del propio jugador, sin superar: la puntuación ajustada del rival programado (incomparecencias, 16.4.1); o el valor de unas tablas por el número de rondas (demás casos, 16.4.2).</div><h3>Ejemplo (caso de la revista)</h3><p>Niña X, 4 puntos, ganó por incomparecencia en la ronda 1 (rival con 0) y en la 3 (rival con 1). Rivales jugados: 4, 3 y 3.</p><p><span class=\"aula-formula\">BH = mín(4; 0) + 4 + mín(4; 1) + 3 + 3 = 11</span></p><p>Niña Y, todo jugado: 0 + 2 + 3 + 3 + 4½ = 12½. Gana la niña Y.</p><div class=\"aula-norma aula-norma-aviso\"><b>Antes del torneo.</b> El árbitro principal completa y publica la lista de desempates antes del inicio (art. 4.1.1). Las bases pueden fijar por adelantado otras reglas para las rondas no jugadas (art. 16.6).</div><p class=\"aula-nota\">Con la regla de 2009 (jugador virtual), la niña X sumaba 14. Esa regla ya no rige.</p>"
+    },
+    {
+      "id": "gestion-suizo-programa",
+      "coleccion": "revista-7",
+      "titulo": "Ausencias, descansos y números de emparejamiento",
+      "articulos": "C.04.1 (2026) · arts. 3-4 · C.04.2 (2026) · arts. 1.5, 2.2, 2.3, 3.2, 3.3, 4.3, 4.4",
+      "resumen": "Lo que el reglamento permite (y lo que no) al excluir, reactivar o dar descanso con el programa.",
+      "claves": [
+        "Quien se retira ya no se empareja (C.04.2, art. 3.2).",
+        "Quien avisa que no jugará una ronda no se empareja en ella y puntúa cero, salvo otra regla en las bases (art. 3.3).",
+        "Con número impar, el descanso lo asigna el sistema: sin rival, sin color y con los puntos de una victoria (C.04.1, art. 3).",
+        "No recibe ese descanso quien ya lo tuvo o ya sumó sin jugar los puntos de una victoria (C.04.1, art. 4).",
+        "Está prohibido alterar el emparejamiento correcto en favor de cualquier participante (C.04.2, art. 1.5).",
+        "El orden inicial es por fuerza, título y orden alfabético; el TPN no se cambia después de emparejar la 4.ª ronda (arts. 2.2 y 2.3)."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>C.04.2, arts. 3.2 y 3.3</b> Los retirados ya no se emparejan. Los que se sabe de antemano que no jugarán una ronda no se emparejan en ella y puntúan cero.</div><div class=\"aula-norma\"><b>C.04.1, arts. 3 y 4</b> Con número impar, uno queda sin emparejar y recibe el descanso asignado: sin rival, sin color y con los puntos de una victoria, salvo que las bases digan otra cosa. No lo recibe quien ya lo tuvo o ya sumó sin jugar los puntos de una victoria.</div><div class=\"aula-norma aula-norma-aviso\"><b>C.04.2, art. 1.5</b> No se puede alterar el emparejamiento correcto en favor de ningún participante. Si se altera para que alguien consiga una norma o un título, puede haber informe a la Comisión de Calificación y medidas disciplinarias.</div><div class=\"aula-norma\"><b>C.04.2, arts. 2.2 y 2.3</b> Orden inicial: fuerza (normalmente el rating), título FIDE y orden alfabético. De ahí sale el TPN, que no se modifica después de emparejar la cuarta ronda.</div><div class=\"aula-norma\"><b>C.04.2, arts. 4.3 y 4.4</b> Un resultado mal anotado y avisado a tiempo se corrige para la clasificación y la ronda siguiente. Un emparejamiento publicado solo se cambia en los casos previstos.</div><h3>En el programa</h3><p>Excluir a un jugador de una ronda equivale a una ausencia conocida (cero puntos, salvo byes pedidos previstos en las bases). Asignar un descanso «a mano» o prohibir un emparejamiento solo vale si lo prevén las bases.</p><p class=\"aula-nota\">Los menús de Swiss Manager cambian con cada versión: compruébalos en la tuya.</p>"
+    },
+    {
+      "id": "creencias-arbitro",
+      "coleccion": "revista-7",
+      "titulo": "Creencias y crecimiento del árbitro",
+      "articulos": "Psicología del deporte · Paula Man Reich",
+      "resumen": "Por qué el árbitro reacciona a lo que cree y no a lo que pasa, y cómo trabajar sus creencias.",
+      "claves": [
+        "Las emociones a veces engañan al propio árbitro.",
+        "Se reacciona según lo que se cree que pasó o pasará, no según lo que pasa.",
+        "Muchas creencias nunca se ponen en duda.",
+        "Primer paso: verificar qué creencias negativas son reales y cuáles crea la mente.",
+        "Cambiar las creencias nacidas de la inseguridad por pensamientos positivos.",
+        "Mejorar las debilidades reales, mentales y técnicas, sin dejar de disfrutar el trabajo."
+      ],
+      "contenido": "<h3>La idea central</h3><p>El árbitro no reacciona conforme a lo que pasa, sino a lo que cree que pasó o le va a suceder. Sus creencias, reales o imaginarias, guían sus pensamientos, su estado de ánimo y su forma de actuar.</p><h3>El gran reto</h3><ol><li><b>Verificar</b> cuáles de tus creencias negativas son reales y cuáles crea tu mente.</li><li><b>Cambiar</b> las creencias negativas nacidas de la inseguridad por pensamientos positivos.</li><li><b>Mejorar</b> tus debilidades reales, mentales y técnicas.</li></ol><p class=\"aula-nota\">Artículo de Paula Man Reich, psicóloga del deporte (edición original).</p>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "registro-arbitros",
+      "texto": "¿En qué categoría está un Árbitro FIDE (AF)?",
+      "opciones": [
+        "No tiene categoría",
+        "Siempre D",
+        "C o D, según su experiencia",
+        "B, si tiene más de cinco años"
+      ],
+      "correcta": 1,
+      "explicacion": "B.06.3: los AF son siempre categoría D; las categorías A, B y C son solo para IA."
+    },
+    {
+      "ficha": "registro-arbitros",
+      "texto": "Un árbitro no ha pagado la cuota de registro de la FIDE y dirige un torneo valorado. ¿Qué puede pasar según el B.06.1?",
+      "opciones": [
+        "El torneo puede no ser valorado y sus normas de árbitro no se aceptan",
+        "Solo recibe una advertencia",
+        "Nada: el título es vitalicio",
+        "Pierde el título automáticamente"
+      ],
+      "correcta": 0,
+      "explicacion": "B.06.1, art. 6.2: si no se cumple el art. 6.1 (cuota de registro), el evento puede no valorarse y las normas del árbitro no se aceptan. El título no se pierde (art. 1.3)."
+    },
+    {
+      "ficha": "registro-arbitros",
+      "texto": "¿Qué requisito previo tiene la solicitud del título de AF?",
+      "opciones": [
+        "Tener la licencia de Árbitro Nacional al menos un año",
+        "Tener 2000 de rating",
+        "Haber sido IA",
+        "Haber arbitrado una olimpiada"
+      ],
+      "correcta": 0,
+      "explicacion": "B.06.1, art. 5.4.3: solo se puede solicitar el título de AF tras tener la licencia de Árbitro Nacional al menos un año."
+    },
+    {
+      "ficha": "registro-arbitros",
+      "texto": "¿Cómo vuelve a estar activo un árbitro inactivo?",
+      "opciones": [
+        "Arbitrando tres torneos",
+        "Aprobando un curso de actualización validado por la Comisión de Árbitros",
+        "Con una carta de su federación",
+        "Pagando una licencia nueva"
+      ],
+      "correcta": 1,
+      "explicacion": "B.06.3: solo tras aprobar un curso de actualización y recibir la validación de la Comisión. Ya no se reactiva pagando, como en 2013."
+    },
+    {
+      "ficha": "registro-arbitros",
+      "texto": "¿Qué puede hacer un árbitro inactivo?",
+      "opciones": [
+        "Nada: pierde el título",
+        "Ser árbitro principal de cualquier torneo FIDE",
+        "Ser designado para un campeonato continental",
+        "Ser árbitro principal de un torneo valorado sin posibilidad de normas"
+      ],
+      "correcta": 3,
+      "explicacion": "B.06.3: el inactivo no puede ser principal de torneos valorados salvo que no haya posibilidad de normas, ni ser designado para eventos oficiales FIDE o continentales."
+    },
+    {
+      "ficha": "registro-arbitros",
+      "texto": "¿Cuándo queda inactivo un árbitro según el B.06.3?",
+      "opciones": [
+        "Si no paga la cuota anual",
+        "Si cumple 70 años",
+        "Si pasan cuatro años sin aprobar un curso de actualización",
+        "Si no arbitra ningún torneo en dos años"
+      ],
+      "correcta": 2,
+      "explicacion": "La actividad depende de los cursos de actualización: cuatro años desde el título de AF o el último curso aprobado."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "¿Qué error tiene la fila «2A1T1R» (en letras españolas)?",
+      "opciones": [
+        "La T debe ser minúscula",
+        "No puede haber un rey en la primera fila",
+        "Ninguno",
+        "Suma 7 casillas: falta una"
+      ],
+      "correcta": 3,
+      "explicacion": "2 + 1 + 1 + 1 + 1 + 1 = 7. Cada fila debe sumar 8; lo correcto era «2A1T1R1»."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "En notación Forsyth, ¿por qué fila se empieza?",
+      "opciones": [
+        "Por la primera, de izquierda a derecha",
+        "Por la fila donde esté el rey blanco",
+        "Por la octava, de la columna a a la h",
+        "Por la columna a, de abajo arriba"
+      ],
+      "correcta": 2,
+      "explicacion": "Se recorre el tablero de la octava fila a la primera, y cada fila de la columna a a la h."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "¿Para qué sirve el quinto campo de una FEN (contador de medias jugadas)?",
+      "opciones": [
+        "Para el control de tiempo",
+        "Para el desempate",
+        "Para saber de quién es el turno",
+        "Para controlar las 50 y las 75 jugadas sin captura ni movimiento de peón"
+      ],
+      "correcta": 3,
+      "explicacion": "Cuenta las medias jugadas desde la última captura o movimiento de peón: útil para los arts. 9.3 y 9.6.2."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "En una FEN internacional, ¿qué significa la letra «R» mayúscula?",
+      "opciones": [
+        "Torre blanca",
+        "Torre negra",
+        "Rey negro",
+        "Rey blanco"
+      ],
+      "correcta": 0,
+      "explicacion": "En FEN se usan las iniciales inglesas: R = rook (torre). El rey es K. Mayúscula = blanca."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "Anotas una posición para resolver una reclamación de triple repetición. ¿Qué datos debes añadir a la ubicación de las piezas?",
+      "opciones": [
+        "Solo los tiempos",
+        "Turno, derechos de enroque y captura al paso",
+        "El rating de los jugadores",
+        "Nada más"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 9.2.3: las posiciones son iguales solo si coinciden el turno y los movimientos posibles, incluidos enroque y captura al paso."
+    },
+    {
+      "ficha": "notacion-fen",
+      "texto": "Según el art. 8.5.3, antes de reconstruir una partida, el árbitro…",
+      "opciones": [
+        "Pide a los jugadores que firmen",
+        "Reinicia el reloj",
+        "Anota la posición real y los tiempos de los relojes",
+        "Detiene la partida y la declara tablas"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 8.5.3: primero se registran la posición real y los tiempos, si los hay."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "Una jugadora con 4 puntos ganó por incomparecencia ante un rival que terminó con 1 punto. ¿Qué valor aporta esa ronda a su Buchholz (C.07, 2026)?",
+      "opciones": [
+        "1",
+        "2",
+        "0",
+        "4"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 16.4.1: el muñeco tiene la puntuación propia (4), pero no puede superar la puntuación ajustada del rival programado (1)."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "¿Se puede usar el Buchholz en un todos contra todos?",
+      "opciones": [
+        "Solo con corte",
+        "No: el art. 8 lo prohíbe en todos contra todos",
+        "Sí, siempre",
+        "Solo si hay incomparecencias"
+      ],
+      "correcta": 1,
+      "explicacion": "Nota del art. 8: estos desempates no deben usarse en torneos todos contra todos."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "¿Quién completa y publica la lista de desempates si las bases están incompletas?",
+      "opciones": [
+        "Los jugadores por votación",
+        "Nadie: se sortea",
+        "El árbitro principal, antes del inicio del torneo",
+        "El organizador después de la última ronda"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 4.1.1: el árbitro principal completa la lista con desempates del art. 5 y la publica antes del inicio."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "Un jugador pidió un bye de medio punto en la última ronda. Para el Buchholz de sus rivales, esa ronda cuenta como…",
+      "opciones": [
+        "No cuenta",
+        "Victoria",
+        "Derrota",
+        "Medio punto, es decir, tablas"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 16.3.2: los byes pedidos en la última ronda o seguidos solo de VUR (categoría 16.2.5) se cuentan como tablas."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "¿Existe hoy el «jugador virtual» que sumaba medio punto por ronda?",
+      "opciones": [
+        "Solo en torneos juveniles",
+        "No: lo reemplazó el muñeco del art. 16.4",
+        "Solo si las bases lo eligen y el C.07 lo recomienda",
+        "Sí, en el C.07"
+      ],
+      "correcta": 1,
+      "explicacion": "La regla de 2009 desapareció. Hoy rige el art. 16.4 del C.07 (aplicable desde el 1-mar-2026); las bases pueden fijar otras reglas por adelantado (art. 16.6)."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "Las bases de un abierto dicen solo «desempate: Buchholz». ¿Qué se aplica?",
+      "opciones": [
+        "Buchholz completo (art. 8.1), con las reglas del art. 16 para no jugadas",
+        "Buchholz con corte del peor",
+        "Mediano",
+        "Lo que decida el árbitro al final"
+      ],
+      "correcta": 0,
+      "explicacion": "Sin modificadores, es el Buchholz del art. 8.1. Los cortes (art. 14) tienen que figurar en la lista publicada antes del inicio (art. 4.1.1)."
+    },
+    {
+      "ficha": "buchholz-no-jugadas",
+      "texto": "Para calcular el Buchholz de sus rivales, ¿cómo cuenta la derrota por incomparecencia de un jugador?",
+      "opciones": [
+        "Como tablas",
+        "Como victoria",
+        "Como derrota",
+        "No cuenta"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 16.3.1: las categorías 16.2.1 a 16.2.4 (incluida la derrota por incomparecencia) se cuentan con el resultado de los puntos otorgados."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "Después de emparejar la ronda 5 se descubre que el rating de un jugador estaba mal y su número inicial debería cambiar. ¿Se cambia el TPN?",
+      "opciones": [
+        "Solo si el jugador lo pide",
+        "Sí, siempre",
+        "No: el TPN no se modifica después de emparejar la cuarta ronda",
+        "Solo en la última ronda"
+      ],
+      "correcta": 2,
+      "explicacion": "C.04.2, art. 2.3: no se permite modificar el TPN por esa razón después de emparejar la cuarta ronda."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "Un jugador ganó en la ronda 2 por incomparecencia del rival. En la ronda 5 hay número impar. ¿Puede recibir el descanso?",
+      "opciones": [
+        "Solo si es el último",
+        "No, porque ya sumó sin jugar los puntos de una victoria",
+        "Sí",
+        "Solo si lo pide"
+      ],
+      "correcta": 1,
+      "explicacion": "C.04.1, art. 4: no recibe el descanso quien ya lo tuvo o ya sumó en una ronda, sin jugar, los puntos de una victoria."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "¿En qué orden se fija el orden inicial de un suizo?",
+      "opciones": [
+        "Fuerza (normalmente el rating), título FIDE y alfabético",
+        "Alfabético, título y rating",
+        "Por federación",
+        "Por sorteo"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.2, art. 2.2."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "Hay 31 jugadores. ¿Quién decide quién recibe el descanso?",
+      "opciones": [
+        "El sistema de emparejamiento",
+        "El organizador",
+        "El árbitro, a su criterio",
+        "El jugador con menor rating siempre"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.1, art. 3: el descanso lo recibe el participante que queda sin emparejar según el sistema. Elegirlo a mano altera el emparejamiento correcto (C.04.2, art. 1.5)."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "Un jugador avisa antes del emparejamiento que no jugará la ronda 5. Si las bases no dicen nada más, ¿qué pasa?",
+      "opciones": [
+        "Queda retirado del torneo",
+        "Se le empareja igual y pierde por incomparecencia",
+        "Recibe medio punto",
+        "No se le empareja y puntúa cero"
+      ],
+      "correcta": 3,
+      "explicacion": "C.04.2, art. 3.3: no se empareja en esa ronda y puntúa cero."
+    },
+    {
+      "ficha": "gestion-suizo-programa",
+      "texto": "Para ayudar a un jugador a lograr una norma, el árbitro cambia un emparejamiento. ¿Qué dice el reglamento?",
+      "opciones": [
+        "Está permitido si el jugador es local",
+        "Solo necesita la firma del organizador",
+        "Está permitido en la última ronda",
+        "Está prohibido y puede haber informe a la Comisión de Calificación"
+      ],
+      "correcta": 3,
+      "explicacion": "C.04.2, art. 1.5: no se puede alterar el emparejamiento correcto en favor de nadie; si se hizo para una norma, puede haber informe y medidas disciplinarias."
+    },
+    {
+      "ficha": "creencias-arbitro",
+      "texto": "¿Qué propone hacer con las debilidades reales?",
+      "opciones": [
+        "Aceptarlas sin cambiar",
+        "Delegar en otros árbitros",
+        "Ocultarlas",
+        "Mejorarlas, tanto las mentales como las técnicas"
+      ],
+      "correcta": 3,
+      "explicacion": "El tercer punto del reto: mejorar las debilidades reales, mentales y técnicas."
+    },
+    {
+      "ficha": "creencias-arbitro",
+      "texto": "¿Cuál es el primer paso del «gran reto» que propone la autora?",
+      "opciones": [
+        "Olvidar el pasado",
+        "Cambiar de federación",
+        "Verificar qué creencias negativas son reales y cuáles crea la mente",
+        "Arbitrar más torneos"
+      ],
+      "correcta": 2,
+      "explicacion": "El reto empieza por verificar las creencias; luego cambiarlas y mejorar las debilidades reales."
+    },
+    {
+      "ficha": "creencias-arbitro",
+      "texto": "Según el artículo, ¿a qué reacciona el árbitro?",
+      "opciones": [
+        "Solo a los hechos",
+        "A lo que cree que pasó o le va a suceder",
+        "A lo que dicen los jugadores",
+        "A lo que indica el reglamento"
+      ],
+      "correcta": 1,
+      "explicacion": "La idea central del artículo: el árbitro reacciona según sus creencias, se apeguen o no a la realidad."
+    },
+    {
+      "ficha": "creencias-arbitro",
+      "texto": "Además de crecer en confianza, ¿qué recomienda no olvidar la autora?",
+      "opciones": [
+        "Evitar los torneos difíciles",
+        "Disfrutar el trabajo y sus oportunidades",
+        "Estudiar idiomas",
+        "Cobrar más"
+      ],
+      "correcta": 1,
+      "explicacion": "Cierre del artículo: progresar en confianza sin olvidar disfrutar el trabajo."
+    },
+    {
+      "ficha": "creencias-arbitro",
+      "texto": "Muchas creencias que guían al árbitro…",
+      "opciones": [
+        "Nunca se ponen en duda",
+        "Las impone el reglamento",
+        "Son siempre verdaderas",
+        "Desaparecen con la experiencia"
+      ],
+      "correcta": 0,
+      "explicacion": "El artículo señala que muchas creencias, verdaderas o falsas, nunca se cuestionan."
+    }
+  ],
+  "casos": [
+    {
+      "id": "buchholz-incomparecencias",
+      "ficha": "buchholz-no-jugadas",
+      "titulo": "Dos victorias por incomparecencia",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Abierto suizo a 5 rondas, desempate: Buchholz (sin modificadores, sin reglas especiales en las bases). Dos jugadoras terminan con 4 puntos. La jugadora X ganó por incomparecencia en las rondas 1 (rival con 0 puntos al final) y 3 (rival con 1); sus rivales jugados tienen 4, 3 y 3. La jugadora Y jugó todas sus partidas; sus rivales tienen 0, 2, 3, 3 y 4½. El padre de Y protesta.",
+      "decision": {
+        "texto": "¿Qué Buchholz corresponde a cada una?",
+        "opciones": [
+          "X 14, Y 12½: gana X",
+          "X 18, Y 12½: gana X",
+          "X 11, Y 12½: gana Y",
+          "X 12½, Y 12½: hay que ir al sorteo"
+        ],
+        "correcta": 2,
+        "explicacion": "C.07, art. 16.4.1: cada incomparecencia propia vale la puntuación de la jugadora (4) con tope en la del rival programado: mín(4; 0) + 4 + mín(4; 1) + 3 + 3 = 11. Y: 12½. El 14 sale de la regla de 2009, que ya no rige."
+      }
+    }
+  ],
+  "repeticiones": []
+}

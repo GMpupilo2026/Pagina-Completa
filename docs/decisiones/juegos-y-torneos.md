@@ -12049,6 +12049,26 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
 - **Las preguntas se recuerdan por una clave estable** (`ficha#n`, su lugar
   dentro de la ficha), no por el índice global, que cambiaba al agregar
   contenido; el avance viejo se pasa una vez a la clave nueva (`pregV2`).
+- **Las revistas se generan desde `herramientas/revistas-arbitraje/`**
+  (`generar.js`, con su `LEEME.md`): las fuentes de cada número (`meta.json`,
+  `cuerpo.html`, `fichas.json`), el estilo, la ilustración de cada portada y el
+  armador de `js/aula-arbitraje/contenido-revistas.js`. Al principio vivían en
+  una carpeta temporal de la sesión que las escribió: un PDF que no se puede
+  volver a generar se termina editando a mano o se pierde. Al pasarlos, se
+  regeneraron los 18 y salieron **idénticos byte a byte** a los publicados
+  (PDF y portadas), y `armar-aula.py` da el mismo `contenido-revistas.js`
+  (salvo el sello): esa es la prueba de que la copia del repositorio es la
+  buena. Las revistas originales de 2012-2014 no se suben: son del autor
+  original y solo fueron la fuente.
+- **Cada portada lleva una ilustración vectorial de su tema**
+  (`ilustraciones.js`): reloj, coronación, posición muerta, Wimbledon, sala de
+  juego, convocatoria, FEN, Suizo, títulos, pieza caída, caída de bandera,
+  relojes vigilados, Ajedrez960, antidopaje, jugada a dos manos, torre
+  invertida, rating performance y juego limpio. Se dibuja en SVG y no con
+  imágenes generadas, para que las 18 compartan estilo y para que los
+  tableros sean posiciones de la propia revista, validadas con chess.js (con
+  las piezas de `js/chess-piece-svg.js`; con glifos de texto salían diminutas
+  y con la fuente de emojis).
 
 ## Desempates explicados
 

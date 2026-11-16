@@ -1,0 +1,592 @@
+{
+  "coleccion": {
+    "id": "revista-15",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 15",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "leyes-borrador-2013-a-2023",
+      "coleccion": "revista-15",
+      "titulo": "Del borrador de 2013 a las Leyes vigentes",
+      "articulos": "Leyes 2023 · arts. 0.2, 6.2, 6.7, 7.1, 7.5, 9.5.3, 9.6, 12.9",
+      "resumen": "Qué propuestas de la reforma de 2014 quedaron, cuáles cambiaron y con qué número de artículo se citan hoy.",
+      "claves": [
+        "Las Leyes vigentes se aprobaron el 7-ago-2022 y se aplican desde el 1-ene-2023; antes hubo versiones de 2014, julio de 2017 y enero de 2018.",
+        "Tablas automáticas: cinco apariciones de la misma posición (9.6.1) o 75 jugadas de cada bando sin peón ni captura (9.6.2). No diez, como decía el borrador.",
+        "La segunda jugada ilegal completada pierde (7.5.5); la primera da dos minutos al rival.",
+        "Si las bases no fijan el tiempo de incomparecencia, es cero (6.7.1).",
+        "Reclamación incorrecta de tablas: dos minutos al rival (9.5.3); uno en rápidas y relámpago (A.3).",
+        "Las sanciones están en el 12.9 e incluyen la exclusión de una o varias rondas."
+      ],
+      "contenido": "<h3>Por qué importa la versión</h3><p>La revista comentaba en 2013 un borrador que luego cambió. Entre 2009 y 2023 casi toda la numeración se movió: el antiguo 6.13 es hoy el 7.1, el 12.3 es el 11.3 y el 13.4 es el 12.9. Antes de citar un artículo, mira de qué año es el texto.</p><h3>Lo que hoy dice la norma</h3><div class=\"aula-norma\"><b>Art. 0.2 (prefacio)</b> Para que una partida sea valorada por la FIDE es condición necesaria que se juegue con las Leyes del Ajedrez FIDE. Se recomienda usarlas también en partidas de competición no valoradas.</div><div class=\"aula-norma\"><b>Art. 6.2.1 y 6.2.2</b> La jugada se completa al pulsar el reloj, o si termina la partida, o si el jugador hace su siguiente jugada sin haber completado la anterior. Al jugador se le debe permitir pulsar tarde, incluso después de que el rival haya movido; ese tiempo es suyo.</div><div class=\"aula-norma\"><b>Art. 6.7</b> Las bases fijan el tiempo de incomparecencia; si no lo fijan, es cero. Quien llega después, pierde, salvo que el árbitro decida otra cosa.</div><div class=\"aula-norma\"><b>Art. 7.1</b> Al restablecer una posición, el árbitro fija los tiempos con su mejor criterio, incluido el derecho a no cambiarlos.</div><div class=\"aula-norma\"><b>Art. 9.6</b> Son tablas automáticas si la misma posición aparece al menos cinco veces (9.6.1) o tras al menos 75 jugadas de cada bando sin mover peón ni capturar, salvo que la última jugada dé mate (9.6.2).</div><div class=\"aula-norma aula-norma-aviso\"><b>Corrección.</b> El borrador hablaba de diez repeticiones consecutivas. La versión de 2014 fijó cinco y desde 2017 ya no se exige que sean consecutivas.</div><h3>Tabla rápida</h3><div class=\"aula-tabla\"><table><tr><th>Tema</th><th>Borrador 2013</th><th>Hoy</th></tr><tr><td>Repetición automática</td><td>10 veces</td><td>5 veces (9.6.1)</td></tr><tr><td>Jugadas ilegales</td><td>Pierde a la segunda</td><td>Igual (7.5.5)</td></tr><tr><td>Reclamación incorrecta</td><td>2 minutos</td><td>2 minutos (9.5.3); 1 en rápidas y relámpago</td></tr><tr><td>Sanciones</td><td>«12.10» propuesto</td><td>12.9, con exclusión de rondas</td></tr></table></div><p class=\"aula-nota\">La conducta del árbitro ya no está en las Leyes: la frase sobre no desprestigiar el ajedrez quedó en el 11.1 para los jugadores, y los árbitros se rigen por su reglamento disciplinario (B.06.5).</p>"
+    },
+    {
+      "id": "pautas-iii-sin-incremento",
+      "coleccion": "revista-15",
+      "titulo": "Final sin incremento (Pautas III)",
+      "articulos": "Leyes 2023 · Pautas III.1 a III.6",
+      "resumen": "Qué hace el árbitro cuando, en una partida sin incremento, un jugador con menos de dos minutos pide ayuda o reclama tablas.",
+      "claves": [
+        "Las Pautas III solo se aplican si se anunciaron antes del evento (III.2.1).",
+        "Solo valen en estándar y rápidas sin incremento, nunca en relámpago (III.2.2).",
+        "Con menos de dos minutos, el jugador con el turno puede pedir un incremento de cinco segundos para ambos: es una oferta de tablas (III.4).",
+        "Si el rival la rechaza y el árbitro acepta, se programa el incremento y el rival recibe dos minutos (III.4).",
+        "Si no hay incremento posible, puede reclamar tablas porque el rival no puede ganar por medios normales o no se esfuerza por ganar (III.5).",
+        "Si el árbitro rechaza la reclamación, da dos minutos al rival (III.5.3)."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>III.1 y III.2</b> El «final a caída de bandera» es la fase en que todas las jugadas restantes deben hacerse en un tiempo finito. Las Pautas solo se usan si se anunciaron antes, y solo en estándar y rápidas sin incremento.</div><div class=\"aula-norma\"><b>III.3</b> Si caen las dos banderas y no se sabe cuál cayó primero: la partida sigue si no es el último periodo; es tablas si es el periodo en que hay que terminar todas las jugadas.</div><div class=\"aula-norma\"><b>III.4</b> Con menos de dos minutos, el jugador con el turno puede pedir cinco segundos de incremento para ambos. Equivale a ofrecer tablas. Si el rival rechaza y el árbitro acepta, se programa el incremento y el rival recibe dos minutos.</div><div class=\"aula-norma\"><b>III.5</b> Si no se aplica III.4, puede reclamar tablas antes de que caiga su bandera: el rival no puede ganar por medios normales o no está haciendo ningún esfuerzo por ganar. El árbitro acepta, aplaza (puede dar dos minutos al rival y decide después) o rechaza (y entonces da dos minutos al rival).</div><div class=\"aula-norma\"><b>III.6</b> Sin árbitro en la sala: el jugador anota la posición final (y, si alega falta de esfuerzo, entrega la planilla al día); el rival lo verifica y la reclamación pasa al árbitro designado.</div><div class=\"aula-norma aula-norma-aviso\"><b>Con incremento no hay Pautas III.</b> La mayoría de los ritmos actuales tienen incremento desde la primera jugada.</div><p class=\"aula-nota\">El antiguo art. 10.2 de las Leyes de 2009 es el antecedente de estas pautas.</p>"
+    },
+    {
+      "id": "coronacion-dos-manos",
+      "coleccion": "revista-15",
+      "titulo": "La coronación y la jugada a dos manos",
+      "articulos": "Leyes 2023 · arts. 3.7.3.3, 4.1, 4.4.4, 4.6, 4.7.3, 7.5.2, 7.5.4, 7.5.5",
+      "resumen": "Cómo se corona hoy, cuándo está hecha la jugada y qué pasa si se usan las dos manos (el caso Kamsky–Tomashevsky).",
+      "claves": [
+        "El peón no tiene que colocarse en la casilla de promoción (4.6.1).",
+        "Retirar el peón y poner la pieza nueva puede hacerse en cualquier orden (4.6.2).",
+        "La pieza queda elegida cuando toca la casilla de promoción (4.4.4).",
+        "La coronación está hecha al soltar la pieza nueva en la casilla, con el peón ya retirado (4.7.3).",
+        "Peón en la última fila y reloj pulsado sin cambiarlo: jugada ilegal y el peón pasa a ser dama (7.5.2).",
+        "Usar las dos manos en una sola jugada y pulsar se sanciona como jugada ilegal (7.5.4): dos minutos al rival y cuenta para la pérdida por segunda ilegal."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 3.7.3.3</b> El jugador que lleva un peón a la fila más alejada debe cambiarlo, en la misma jugada, por una dama, torre, alfil o caballo nuevos de su color en la casilla de llegada. No importa si esa pieza fue capturada antes.</div><div class=\"aula-norma\"><b>Art. 4.6</b> El peón no tiene que llegar a la casilla; retirar el peón y poner la pieza puede hacerse en cualquier orden; si hay una pieza rival en la casilla, se captura.</div><div class=\"aula-norma\"><b>Arts. 4.4.4 y 4.7.3</b> La pieza elegida se define cuando toca la casilla de promoción. La jugada se considera hecha cuando la mano suelta la pieza nueva en la casilla y el peón ya salió del tablero.</div><div class=\"aula-norma\"><b>Art. 7.5.2</b> Si el jugador pulsa el reloj con el peón en la última fila sin cambiarlo, la jugada es ilegal y el peón se sustituye por una dama.</div><div class=\"aula-norma\"><b>Arts. 4.1, 7.5.4 y 7.5.5</b> Cada jugada se hace con una sola mano. Si usa las dos manos en una sola jugada (enroque, captura, coronación) y pulsa el reloj, se sanciona como jugada ilegal: dos minutos al rival la primera vez, pérdida la segunda.</div><h3>El caso de la revista</h3><p>Copa del Mundo 2013, cuartos de final: un jugador retira el peón con una mano y coloca la dama con la otra; el peón nunca toca la casilla de promoción. En 2013 se discutía si era «ilegal por no llegar». Hoy:</p><ol><li>No llegar a la casilla no es infracción (4.6.1).</li><li>Las dos manos, con el reloj pulsado, sí: dos minutos al rival (7.5.4 y 7.5.5).</li><li>Cuenta como primera jugada ilegal.</li><li>Si el árbitro lo ve, interviene sin esperar reclamación.</li></ol><div class=\"aula-norma aula-norma-aviso\"><b>Rápidas y relámpago.</b> Un minuto (A.3). Sin supervisión completa, solo mientras el rival no haya hecho su siguiente jugada (A.5.2).</div><p class=\"aula-nota\">Según el Manual del Árbitro 2026, dos infracciones en una misma jugada (por ejemplo, una coronación ilegal hecha además con dos manos) cuentan como una sola jugada ilegal.</p>"
+    },
+    {
+      "id": "sede-y-dispositivos",
+      "coleccion": "revista-15",
+      "titulo": "Sede de juego y dispositivos electrónicos",
+      "articulos": "Leyes 2023 · arts. 11.2, 11.3, 12.8, 12.9",
+      "resumen": "Quién puede entrar y salir del área de juego, qué pasa con los teléfonos y cuándo se puede inspeccionar a un jugador.",
+      "claves": [
+        "La sede de juego incluye el área de juego, descanso, sanitarios, refrigerio, zona de fumadores y otros lugares que designe el árbitro (11.2.1).",
+        "El jugador con el turno solo sale del área de juego con permiso del árbitro (11.2.3.2).",
+        "Tener en la sede un dispositivo no aprobado por el árbitro está prohibido (11.3.2).",
+        "Las bases pueden permitir guardarlo apagado en el bolso, colocado donde acuerde el árbitro (11.3.2.1).",
+        "Si es evidente que lo lleva encima, pierde y el rival gana; las bases pueden fijar una sanción menor (11.3.2.2).",
+        "La inspección es en privado y la hace una persona del mismo género; negarse se sanciona según el 12.9 (11.3.3)."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 11.2</b> Sede de juego: área de juego, salas de descanso, sanitarios, zona de refrigerio, área para fumadores y otros lugares que designe el árbitro. Área de juego: donde se juegan las partidas. Con permiso del árbitro: salir de la sede, salir del área de juego teniendo el turno, entrar al área sin ser jugador ni árbitro.</div><div class=\"aula-norma\"><b>Art. 11.3.2</b> Durante la partida está prohibido tener en la sede un dispositivo electrónico no aprobado expresamente por el árbitro. Las bases pueden permitir guardarlo completamente apagado en el bolso; ninguno de los dos jugadores puede usar ese bolso sin permiso. Si es evidente que lo lleva encima, pierde y el rival gana, salvo que las bases fijen una sanción menor.</div><div class=\"aula-norma\"><b>Art. 11.3.3</b> El árbitro puede pedir inspeccionar en privado la ropa, los bolsos, otros objetos o el cuerpo; lo hace él o alguien autorizado, del mismo género que el jugador. Si se niega, se aplica el 12.9.</div><div class=\"aula-norma\"><b>Art. 12.8</b> Salvo autorización del árbitro, nadie puede usar un teléfono u otro medio de comunicación en la sede o en zonas contiguas designadas.</div><div class=\"aula-norma aula-norma-aviso\"><b>Diferencia con la regla antigua.</b> Antes, si el teléfono sonaba y el rival no podía ganar, el resultado era tablas. El 11.3.2.2 vigente no trae esa excepción.</div><p class=\"aula-nota\">Fumar, incluidos los cigarrillos electrónicos, solo en la zona designada por el árbitro (11.3.4).</p>"
+    },
+    {
+      "id": "rapidas-relampago-supervision",
+      "coleccion": "revista-15",
+      "titulo": "Rápidas y relámpago: definición y supervisión",
+      "articulos": "Leyes 2023 · Apéndices A y B (A.1-A.6, B.1-B.4)",
+      "resumen": "Qué es rápidas y qué es relámpago, cuándo se aplican las reglas de competición completas y qué pasa con una jugada ilegal.",
+      "claves": [
+        "Rápidas: más de 10 y menos de 60 minutos por jugador, contando 60 veces el incremento (A.1).",
+        "Relámpago: 10 minutos o menos, contando 60 veces el incremento (B.1).",
+        "Las bases eligen para todo el evento si se aplican las reglas completas o el A.5 (A.6, B.4).",
+        "Reglas completas: un árbitro por máximo tres partidas en rápidas, uno por partida en relámpago, con registro de cada partida.",
+        "Jugada ilegal: un minuto al rival la primera vez y pérdida la segunda (A.3 y 7.5.5).",
+        "Sin supervisión completa, la jugada ilegal no reclamada antes de que el rival haga su siguiente jugada se mantiene (A.5.2)."
+      ],
+      "contenido": "<h3>Definiciones</h3><div class=\"aula-tabla\"><table><tr><th>Modalidad</th><th>Tiempo por jugador (base + 60 × incremento)</th></tr><tr><td>Rápidas (A.1)</td><td>Más de 10 y menos de 60 minutos</td></tr><tr><td>Relámpago (B.1)</td><td>10 minutos o menos</td></tr></table></div><p><span class=\"aula-formula\">tiempo para clasificar = base + 60 × incremento</span>. Ejemplo: 3 min + 2 s = 3 + 2 = 5 minutos → relámpago. 10 min + 5 s = 10 + 5 = 15 minutos → rápidas.</p><h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>A.3</b> Las sanciones de los arts. 7 y 9 son de un minuto en lugar de dos.</div><div class=\"aula-norma\"><b>A.4 y B.2</b> Reglas de competición completas si un árbitro supervisa como máximo tres partidas (rápidas) o una (relámpago) y cada partida se registra. El jugador puede pedir ver la planilla hasta cinco veces por partida.</div><div class=\"aula-norma\"><b>A.5</b> Si no: tras 10 jugadas de cada bando no se cambia el reloj (salvo que se afecte el horario) ni se reclama la colocación del tablero; la jugada ilegal se sanciona solo si el árbitro la ve o el rival reclama antes de su siguiente jugada; con los dos reyes en jaque o un peón en la última fila, el árbitro espera la siguiente jugada y, si la posición sigue siendo ilegal, declara tablas; el árbitro también señala la caída de bandera.</div><div class=\"aula-norma aula-norma-aviso\"><b>Ya no se pierde a la primera.</b> Con las Leyes de 2014 y 2017, una sola jugada ilegal sin supervisión completa perdía la partida. Desde 2018 se aplica el 7.5.5, y desde 2023 la sanción es de un minuto en ambas modalidades.</div>"
+    },
+    {
+      "id": "creencias-limitantes-arbitro",
+      "coleccion": "revista-15",
+      "titulo": "Creencias limitantes del árbitro",
+      "articulos": "Psicología del arbitraje · Paula Man Reich",
+      "resumen": "Cómo detectar los pensamientos negativos que condicionan el trabajo del árbitro y un ejercicio de cinco columnas para cambiarlos.",
+      "claves": [
+        "Lo que piensa el árbitro refleja su estado emocional y condiciona su trabajo.",
+        "Un pensamiento pesimista constante se centra en el miedo y en lo que no está bien.",
+        "Tres preguntas: ¿cómo me siento?, ¿qué me pasa por la cabeza?, ¿cómo estaré en diez minutos si sigo así?",
+        "Cinco columnas: situación, emoción, creencia, comportamiento y consecuencias.",
+        "Los pensamientos suelen ser sobre uno mismo, sobre los demás o sobre el futuro profesional.",
+        "Tomar conciencia ya da más control sobre las emociones."
+      ],
+      "contenido": "<h3>La idea</h3><p>Si un árbitro está muy preocupado por hacer un mal trabajo, piensa más en el fracaso que en las posibilidades de éxito; si teme amenazas, sus decisiones quedan condicionadas. Identificar esas creencias es el primer paso para cambiarlas.</p><h3>Tres preguntas</h3><ol><li>¿Cómo me siento en esta situación?</li><li>¿Qué me pasa por la cabeza?</li><li>Si sigo pensando así, ¿en qué estado estaré dentro de diez minutos?</li></ol><h3>Las cinco columnas</h3><div class=\"aula-tabla\"><table><tr><th>Columna</th><th>Qué anotar</th></tr><tr><td>1</td><td>Situaciones que dan miedo o ansiedad</td></tr><tr><td>2</td><td>Emociones y su intensidad (1 a 10)</td></tr><tr><td>3</td><td>Creencias negativas</td></tr><tr><td>4</td><td>Comportamiento y su eficacia (1 a 10)</td></tr><tr><td>5</td><td>Consecuencias y si son deseables (1 a 10)</td></tr></table></div><p class=\"aula-nota\">Anota en la hoja qué significa el 1 y qué el 10 en tu escala: en el original, el 1 era la emoción más intensa.</p>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "¿Desde cuándo se aplican las Leyes del Ajedrez FIDE vigentes en noviembre de 2026?",
+      "opciones": [
+        "1 de enero de 2023",
+        "1 de julio de 2014",
+        "1 de enero de 2018",
+        "1 de marzo de 2026"
+      ],
+      "correcta": 0,
+      "explicacion": "Las aprobó la Asamblea General el 7 de agosto de 2022 y se aplican desde el 1 de enero de 2023. El 1 de marzo de 2026 es la fecha del reglamento de desempates C.07."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "La misma posición aparece por quinta vez (no de forma consecutiva) y nadie reclama. ¿Qué pasa?",
+      "opciones": [
+        "Nada: hacen falta diez repeticiones",
+        "Nada: deben ser cinco consecutivas",
+        "La partida es tablas automáticamente",
+        "Pierde el jugador que repitió"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 9.6.1: basta que la misma posición aparezca al menos cinco veces. Las diez repeticiones del borrador de 2013 nunca se aprobaron y desde 2017 ya no se exige que sean consecutivas."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "Las bases no dicen nada sobre el tiempo de incomparecencia. Un jugador llega dos minutos después del inicio. ¿Qué dice la norma?",
+      "opciones": [
+        "Tiene 15 minutos de tolerancia",
+        "Tiene 30 minutos de tolerancia",
+        "Juega con el tiempo que le quede",
+        "El tiempo es cero: pierde, salvo que el árbitro decida otra cosa"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 6.7.1: si las bases no fijan el tiempo de incomparecencia, es cero, y quien llega después pierde salvo que el árbitro decida otra cosa."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "Un jugador mueve y olvida pulsar el reloj; el rival responde en el tablero. ¿Puede el primero pulsar ahora?",
+      "opciones": [
+        "No: perdió el derecho",
+        "Sí: se le debe permitir pulsar aunque el rival ya haya movido; su tiempo siguió corriendo",
+        "Sí, y el árbitro le devuelve el tiempo perdido",
+        "Solo si el árbitro se lo indica"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 6.2.2: al jugador se le debe permitir pausar su reloj después de mover, incluso después de la siguiente jugada del rival; ese tiempo forma parte del suyo. El árbitro no debe avisarle (12.6)."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "Un jugador reclama tablas por triple repetición en una partida estándar y la reclamación es incorrecta. ¿Qué hace el árbitro?",
+      "opciones": [
+        "Da tres minutos al rival",
+        "Le quita dos minutos al reclamante",
+        "Da dos minutos al rival y la partida sigue",
+        "Advierte al reclamante y nada más"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 9.5.3: se añaden dos minutos al tiempo del rival y la partida continúa. En rápidas y relámpago es un minuto (A.3)."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "¿Cuál de estas sanciones NO está en la lista del art. 12.9?",
+      "opciones": [
+        "Repetir la partida",
+        "Exclusión de una o varias rondas",
+        "Una multa anunciada de antemano",
+        "Aumentar el tiempo del rival"
+      ],
+      "correcta": 0,
+      "explicacion": "El 12.9 enumera advertencia, cambios de tiempo, cambios de puntos, pérdida de la partida, multa anunciada, exclusión de una o varias rondas y expulsión. Repetir la partida no es una sanción del 12.9."
+    },
+    {
+      "ficha": "leyes-borrador-2013-a-2023",
+      "texto": "Un jugador completa su segunda jugada ilegal en una partida estándar. Al rival solo le queda el rey. ¿Resultado?",
+      "opciones": [
+        "Gana el rival",
+        "Dos minutos más al rival",
+        "Se repite la jugada sin sanción",
+        "Tablas, porque el rival no puede dar mate con ninguna serie de jugadas legales"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 7.5.5: la segunda jugada ilegal pierde, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales; con rey solo no puede, así que es tablas."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "En un torneo con ritmo de 90 minutos más 30 segundos por jugada, un jugador con 1:30 reclama tablas porque el rival «no puede ganar por medios normales». ¿Qué hace el árbitro?",
+      "opciones": [
+        "Aplica la pauta III.5",
+        "Rechaza aplicar las Pautas III: solo valen sin incremento",
+        "Programa cinco segundos de incremento",
+        "Declara tablas si la posición es igualada"
+      ],
+      "correcta": 1,
+      "explicacion": "Pautas III.2.2: solo se aplican en partidas estándar y rápidas sin incremento, y solo si se anunciaron antes (III.2.1)."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "Sin incremento y con las Pautas III anunciadas, un jugador con menos de dos minutos pide que se introduzcan cinco segundos para ambos. ¿Qué significa esa petición?",
+      "opciones": [
+        "Es una oferta de tablas",
+        "Es una reclamación de victoria",
+        "Es una solicitud que el árbitro debe aceptar siempre",
+        "Es una falta que se sanciona"
+      ],
+      "correcta": 0,
+      "explicacion": "Pauta III.4: la petición constituye una oferta de tablas. Si el rival la rechaza y el árbitro acepta la petición, se programa el incremento y el rival recibe dos minutos."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "El árbitro rechaza una reclamación de tablas hecha según la pauta III.5. ¿Qué pasa?",
+      "opciones": [
+        "Nada",
+        "El reclamante pierde dos minutos",
+        "El rival recibe dos minutos extra",
+        "La partida se declara perdida para el reclamante"
+      ],
+      "correcta": 2,
+      "explicacion": "Pauta III.5.3: si el árbitro rechaza la reclamación, el rival recibe dos minutos extra."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "¿Se pueden aplicar las Pautas III en un torneo relámpago sin incremento?",
+      "opciones": [
+        "Sí, si se anuncian",
+        "Sí, siempre",
+        "Solo con un árbitro por partida",
+        "No: nunca se aplican en relámpago"
+      ],
+      "correcta": 3,
+      "explicacion": "Pauta III.2.2: se aplican solo a partidas estándar y rápidas sin incremento, no al relámpago."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "En el último periodo de una partida sin incremento caen las dos banderas y no se sabe cuál cayó primero. ¿Resultado?",
+      "opciones": [
+        "Pierden los dos",
+        "Tablas",
+        "Gana el que tenga más material",
+        "La partida continúa"
+      ],
+      "correcta": 1,
+      "explicacion": "Pauta III.3.1.2: si ocurre en el periodo en que hay que completar todas las jugadas, la partida es tablas. En otro periodo, la partida continúa (III.3.1.1)."
+    },
+    {
+      "ficha": "pautas-iii-sin-incremento",
+      "texto": "En un torneo sin árbitro en la sala, un jugador con menos de dos minutos reclama tablas porque el rival no se esfuerza por ganar. ¿Qué debe hacer?",
+      "opciones": [
+        "Parar el reloj y esperar al día siguiente",
+        "Nada: sin árbitro no se puede reclamar",
+        "Anotar la posición final y entregar la planilla al día, que el rival verifica; la reclamación pasa al árbitro designado",
+        "Seguir jugando hasta que caiga la bandera"
+      ],
+      "correcta": 2,
+      "explicacion": "Pauta III.6: en III.6.1.2 el jugador anota la posición final y entrega una planilla al día; el rival verifica ambas y la reclamación se remite al árbitro designado (III.6.2)."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "Un jugador retira de la séptima fila su peón, coloca una dama en la casilla de coronación con la misma mano y pulsa el reloj. ¿Es correcto?",
+      "opciones": [
+        "Sí: el peón no tiene que colocarse en la casilla de llegada",
+        "No: el peón debía tocar la octava fila",
+        "Es jugada ilegal y el rival recibe dos minutos",
+        "Solo es válido en rápidas"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 4.6.1: el peón no tiene que colocarse en la casilla de llegada, y el orden de retirar el peón y poner la pieza es libre (4.6.2)."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "Un jugador corona retirando el peón con la mano izquierda y colocando la dama con la derecha, y pulsa el reloj. Es su primera infracción. ¿Qué hace el árbitro en una partida estándar?",
+      "opciones": [
+        "Solo una advertencia",
+        "Nada, la coronación es válida",
+        "Declara perdida la partida",
+        "Lo sanciona como jugada ilegal: dos minutos al rival"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 7.5.4: usar las dos manos para una sola jugada y pulsar el reloj se sanciona como si fuera una jugada ilegal; por la primera, dos minutos al rival (7.5.5)."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "Un jugador lleva el peón a la última fila, pulsa el reloj y deja el peón allí sin cambiarlo. ¿Qué pasa?",
+      "opciones": [
+        "El peón se queda como peón",
+        "Es jugada ilegal y el peón se sustituye por una dama",
+        "El jugador elige ahora la pieza",
+        "Pierde la partida de inmediato"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 7.5.2: la jugada es ilegal y el peón se sustituye por una dama de su color; además se aplica la sanción del 7.5.5."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "Un jugador corona: toca la dama, pero apoya una torre en la casilla de promoción. ¿Qué pieza quedó elegida?",
+      "opciones": [
+        "La torre: la elección queda definida cuando la pieza toca la casilla de promoción",
+        "La dama, porque la tocó primero",
+        "La que el jugador diga en voz alta",
+        "La que decida el árbitro"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 4.4.4: la elección queda definida cuando la pieza toca la casilla de promoción, no cuando se toma en la mano ni cuando se nombra."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "¿Cuándo se considera hecha una coronación?",
+      "opciones": [
+        "Cuando el peón llega a la última fila",
+        "Cuando el jugador nombra la pieza",
+        "Cuando la mano suelta la pieza nueva en la casilla de promoción y el peón ya salió del tablero",
+        "Cuando el rival mueve"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 4.7.3: la coronación está hecha cuando la mano del jugador suelta la pieza nueva en la casilla de promoción y el peón ya se retiró del tablero."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "En la misma jugada, un jugador hace una coronación ilegal y además usa las dos manos. Ya tenía una jugada ilegal antes. ¿Qué indica el Manual del Árbitro 2026?",
+      "opciones": [
+        "Son dos infracciones nuevas: pierde de todos modos",
+        "No cuenta porque fue en la misma jugada",
+        "Se sanciona solo la coronación",
+        "Cuentan como una sola jugada ilegal, pero es su segunda: pierde"
+      ],
+      "correcta": 3,
+      "explicacion": "El Manual 2026 dice que dos infracciones en una misma jugada cuentan como una sola jugada ilegal. Como ya tenía una, esta es la segunda y pierde (7.5.5), salvo que el rival no pueda dar mate."
+    },
+    {
+      "ficha": "coronacion-dos-manos",
+      "texto": "En una partida rápida sin supervisión completa, un jugador corona con las dos manos y pulsa; el rival no reclama y hace su jugada. ¿Qué pasa después?",
+      "opciones": [
+        "El árbitro sanciona con un minuto",
+        "La jugada se mantiene y ya no hay sanción",
+        "El rival puede reclamar en cualquier momento",
+        "Se anula la coronación"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. A.5.2: el árbitro actúa, o el rival reclama, solo mientras el rival no haya hecho su siguiente jugada; si nadie actúa a tiempo, la jugada se mantiene."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "Las bases permiten guardar los teléfonos en el bolso. Un jugador lo tiene allí, apagado, con el bolso donde indicó el árbitro. ¿Qué pasa?",
+      "opciones": [
+        "Pierde la partida",
+        "Recibe una advertencia",
+        "Nada: está permitido por el 11.3.2.1",
+        "Debe entregar el teléfono al rival"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 11.3.2.1: las bases pueden permitir guardar el dispositivo en el bolso, completamente apagado y colocado donde acuerde el árbitro."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "Durante la partida es evidente que un jugador lleva el teléfono en el bolsillo. Las bases no dicen nada especial. ¿Resultado?",
+      "opciones": [
+        "Pierde y el rival gana",
+        "Advertencia la primera vez",
+        "Tablas si el rival no puede ganar",
+        "Dos minutos al rival"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 11.3.2.2: si es evidente que lleva el dispositivo encima, pierde y el rival gana. Las bases pueden fijar una sanción menor; la excepción de tablas de la regla antigua ya no existe."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "El árbitro quiere revisar la ropa de una jugadora por sospecha de un dispositivo. ¿Cómo debe hacerse?",
+      "opciones": [
+        "En la sala, delante de testigos",
+        "Solo con la autorización de su federación",
+        "No se puede inspeccionar a un jugador",
+        "En privado, por el árbitro o una persona autorizada del mismo género que la jugadora"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 11.3.3: la inspección es en privado y la hace el árbitro o una persona autorizada, del mismo género que el jugador."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "Un jugador se niega a que lo inspeccionen. ¿Qué artículo aplica el árbitro?",
+      "opciones": [
+        "El 7.5.5",
+        "El 12.9 (sanciones)",
+        "El 9.5.3",
+        "Ninguno: tiene derecho a negarse sin consecuencias"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 11.3.3: si el jugador se niega a cooperar, el árbitro toma medidas según el art. 12.9."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "Un jugador que tiene el turno quiere ir al baño, que está fuera del área de juego pero dentro de la sede. ¿Qué necesita?",
+      "opciones": [
+        "Permiso del árbitro",
+        "Nada",
+        "Permiso del rival",
+        "Parar los relojes"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 11.2.3.2: el jugador que tiene el turno solo puede salir del área de juego con permiso del árbitro."
+    },
+    {
+      "ficha": "sede-y-dispositivos",
+      "texto": "Un espectador usa el teléfono en un pasillo contiguo que el árbitro designó como parte de la sede. ¿Está permitido?",
+      "opciones": [
+        "Sí, los espectadores no tienen restricciones",
+        "Sí, si está en silencio",
+        "No, salvo autorización del árbitro (12.8)",
+        "Solo después de la ronda 5"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 12.8: salvo autorización del árbitro, nadie puede usar un teléfono u otro medio de comunicación en la sede o en zonas contiguas designadas por el árbitro."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "Un torneo se juega a 3 minutos más 2 segundos por jugada. ¿Qué modalidad es?",
+      "opciones": [
+        "Rápidas",
+        "Estándar",
+        "Depende de las bases",
+        "Relámpago"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. B.1: 3 + 60 × 2 s = 3 + 2 = 5 minutos, que es 10 minutos o menos: relámpago."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "Un torneo se juega a 10 minutos más 5 segundos por jugada. ¿Qué modalidad es?",
+      "opciones": [
+        "Relámpago, porque la base es 10 minutos",
+        "Rápidas, porque 10 + 60 × 5 s = 15 minutos",
+        "Estándar",
+        "Ninguna de las dos"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. A.1: se suma 60 veces el incremento: 10 + 5 = 15 minutos, más de 10 y menos de 60: rápidas."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "En un torneo rápido, ¿cuándo se aplican las reglas de competición completas?",
+      "opciones": [
+        "Siempre",
+        "Si quedan menos de seis mesas",
+        "Si un árbitro supervisa como máximo tres partidas y cada partida se registra",
+        "Si lo piden los jugadores"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. A.4: un árbitro como máximo por tres partidas y registro de cada una. Las bases eligen el régimen para todo el evento (A.6), así que no cambia al quedar menos mesas."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "Primera jugada ilegal en una partida relámpago, reclamada a tiempo. ¿Sanción?",
+      "opciones": [
+        "Un minuto extra al rival",
+        "Pierde la partida",
+        "Dos minutos extra al rival",
+        "Solo una advertencia"
+      ],
+      "correcta": 0,
+      "explicacion": "Arts. B.3, A.3 y 7.5.5: la sanción de los arts. 7 y 9 es de un minuto; la pérdida llega con la segunda jugada ilegal."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "Partida rápida sin supervisión completa: el árbitro ve los dos reyes en jaque. ¿Qué hace?",
+      "opciones": [
+        "Declara tablas de inmediato",
+        "Da la partida por perdida al último que movió",
+        "No hace nada",
+        "Espera a que se complete la siguiente jugada y, si la posición sigue siendo ilegal, declara tablas"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. A.5.4: espera a que se complete la siguiente jugada; si la posición ilegal sigue en el tablero, declara tablas."
+    },
+    {
+      "ficha": "rapidas-relampago-supervision",
+      "texto": "En la jugada 12 de una partida rápida sin supervisión completa se descubre que el reloj estaba mal programado. ¿Se puede corregir?",
+      "opciones": [
+        "Sí, siempre",
+        "No, salvo que el horario del evento se vea afectado",
+        "Sí, si el rival está de acuerdo",
+        "Solo si lo pide el jugador perjudicado"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. A.5.1.1: una vez completadas 10 jugadas por cada bando, no se cambia la programación del reloj, salvo que el horario del evento se vea perjudicado."
+    },
+    {
+      "ficha": "creencias-limitantes-arbitro",
+      "texto": "Según Paula Man Reich, ¿qué efecto tiene un pensamiento pesimista constante?",
+      "opciones": [
+        "Se centra en el miedo y en lo que no está bien",
+        "Mejora la concentración",
+        "No influye en el trabajo",
+        "Solo afecta a los jugadores"
+      ],
+      "correcta": 0,
+      "explicacion": "El artículo explica que un pensamiento pesimista constante se centra en el miedo y en lo que no está bien, y condiciona las acciones del árbitro."
+    },
+    {
+      "ficha": "creencias-limitantes-arbitro",
+      "texto": "¿Cuál de estas NO es una de las tres preguntas que propone el artículo?",
+      "opciones": [
+        "¿Cómo me siento en esta situación?",
+        "¿Qué me pasa por la cabeza?",
+        "¿Qué artículo de las Leyes aplica?",
+        "¿En qué estado estaré dentro de diez minutos si sigo así?"
+      ],
+      "correcta": 2,
+      "explicacion": "Las tres preguntas son sobre el sentimiento, el pensamiento y su efecto en los próximos diez minutos; la cuarta es una pregunta reglamentaria."
+    },
+    {
+      "ficha": "creencias-limitantes-arbitro",
+      "texto": "En el ejercicio de las cinco columnas, ¿qué va en la tercera?",
+      "opciones": [
+        "Las situaciones que dan miedo",
+        "Las emociones",
+        "Las consecuencias",
+        "Las creencias negativas"
+      ],
+      "correcta": 3,
+      "explicacion": "1: situaciones; 2: emociones e intensidad; 3: creencias negativas; 4: comportamiento y eficacia; 5: consecuencias."
+    },
+    {
+      "ficha": "creencias-limitantes-arbitro",
+      "texto": "¿Sobre qué tres temas suelen ser los pensamientos que aparecen en el ejercicio?",
+      "opciones": [
+        "Sobre el reloj, el tablero y las planillas",
+        "Sobre uno mismo, sobre los demás y sobre el futuro profesional",
+        "Sobre el pasado, el presente y el futuro",
+        "Sobre los jugadores, los padres y los organizadores"
+      ],
+      "correcta": 1,
+      "explicacion": "El artículo distingue pensamientos sobre uno mismo y su rendimiento, sobre los demás del ambiente ajedrecístico y sobre el futuro profesional."
+    },
+    {
+      "ficha": "creencias-limitantes-arbitro",
+      "texto": "¿Cuál es el principal beneficio del ejercicio, según la autora?",
+      "opciones": [
+        "Aprender las Leyes",
+        "Evitar las reclamaciones",
+        "Tomar conciencia de los hábitos de pensamiento y ganar control sobre las emociones",
+        "Arbitrar más torneos"
+      ],
+      "correcta": 2,
+      "explicacion": "La simple observación tiene un gran impacto: al tomar conciencia, el árbitro comprende lo que le sucede y gana control sobre su cabeza y sus emociones."
+    }
+  ],
+  "casos": [
+    {
+      "id": "coronacion-kamsky",
+      "ficha": "coronacion-dos-manos",
+      "titulo": "La coronación de Tromsø",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Partida estándar. Un jugador corona: retira el peón de la penúltima fila con la mano izquierda y coloca la dama en la casilla de promoción con la derecha; el peón nunca toca la última fila. Pulsa el reloj. El rival reclama: «el peón no llegó y además usó las dos manos». Es la primera infracción del jugador.",
+      "decision": {
+        "texto": "¿Qué decides?",
+        "opciones": [
+          "Jugada ilegal por no llegar a la última fila: dos minutos al rival",
+          "No llegar no es infracción; las dos manos se sancionan como jugada ilegal: dos minutos al rival",
+          "Se rechaza todo: la coronación es válida",
+          "Advertencia por las dos manos y nada más"
+        ],
+        "correcta": 1,
+        "explicacion": "Art. 4.6.1: el peón no tiene que llegar a la casilla. Art. 7.5.4: usar las dos manos en una sola jugada y pulsar el reloj se sanciona como jugada ilegal; por la primera, dos minutos al rival (7.5.5), y cuenta para la pérdida por segunda ilegal."
+      }
+    },
+    {
+      "id": "telefono-bolso",
+      "ficha": "sede-y-dispositivos",
+      "titulo": "El teléfono que vibra en el bolso",
+      "nivel": "Básico",
+      "ritmo": null,
+      "escena": "Las bases no dicen nada sobre dispositivos. Durante la partida se escucha vibrar un teléfono en el bolsillo de un jugador. El rival solo tiene rey y caballo.",
+      "decision": {
+        "texto": "¿Cuál es el resultado?",
+        "opciones": [
+          "Tablas, porque el rival no puede ganar",
+          "Advertencia y sigue la partida",
+          "Pierde el jugador del teléfono; el rival gana",
+          "Dos minutos al rival"
+        ],
+        "correcta": 2,
+        "explicacion": "Art. 11.3.2.2: si es evidente que el jugador lleva el dispositivo encima, pierde y el rival gana. La regla antigua daba tablas si el rival no podía ganar; la vigente no trae esa excepción. Las bases podrían haber fijado una sanción menor, pero aquí no dicen nada."
+      }
+    }
+  ],
+  "repeticiones": []
+}

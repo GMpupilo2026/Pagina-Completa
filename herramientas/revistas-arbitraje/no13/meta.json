@@ -1,0 +1,32 @@
+{
+  "numero": 13,
+  "fecha_original": "junio de 2013",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {"titulo": "Mitos deportivos: ¿el árbitro puede equivocarse?", "desc": "Paula Man Reich · psicología del deporte"},
+    {"titulo": "Registro y licencia de jugadores", "desc": "FIDE B.03 (vigente desde 2015) · FIDE flag 2024"},
+    {"titulo": "Ajedrez960", "desc": "Leyes 2023 · Directrices II"},
+    {"titulo": "Curso de sistema suizo (4.ª parte): descansos y subgrupos", "desc": "C.04.1 y C.04.3 (2026)"},
+    {"titulo": "Las Leyes del Ajedrez, de 2013 a hoy", "desc": "Leyes 2023 · aplicadas desde el 1-ene-2023"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Hoy iniciamos el segundo año de la revista y estamos muy complacidos con la respuesta de nuestros lectores; gracias, nuevamente.</p><p>Hace un año, cuando arrancamos este proyecto, hubo personas que no creían en él. Por suerte, cada vez se consolida más, y eso nos hizo recordar al excampeón mundial <b>Bobby Fischer</b>, fuertemente criticado cuando presentó ideas revolucionarias que muchos consideraron imposibles de aplicar en el ajedrez.</p><p>Una de ellas fue <b>sumar tiempo por cada jugada realizada</b>. Nadie creyó que pudiera aplicarse en el ajedrez clásico y hoy es el control de tiempo más utilizado en el mundo. Pero la idea más criticada fue <b>sortear la posición inicial de las piezas</b>. Para sorpresa de muchos, ese sistema está reconocido por la FIDE y se conoce como <b>Ajedrez960</b>.</p><p>Por eso dedicamos este número a Fischer y a las ideas revolucionarias, con un estudio extenso del Ajedrez960. Además, presentamos la cuarta entrega del Curso de Sistema Suizo; nuestra colaboradora, la psicóloga deportiva Paula Man, nos envía el artículo <i>Mitos deportivos: ¿las equivocaciones de los árbitros son parte esperable de su trabajo?</i>, y repasamos cómo se registran hoy los jugadores ante la FIDE.</p><p>Espero que esta edición sea de su agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div>",
+  "cambios": [
+    ["Registro y licencia de jugadores", "Presentaba como «propuesta» las normas que el Buró Ejecutivo debía aprobar en septiembre de 2013, con una licencia de 60 € para jugadores sin federación.", "Se explica el reglamento que finalmente rige, <b>B.03 (aprobado en 2014, vigente desde el 1-jul-2015)</b>: FIN único (art. 1.3), la licencia «FIDE flag» de <b>100 €</b> (arts. 2.6-2.8), la cuota de <b>25 €</b> por dar de baja y volver a registrar (art. 2.4) y el torneo que no se evalúa si hay jugadores sin FIN (art. 1.19). Se añade el documento del Consejo de 2024 sobre casos especiales de bandera FIDE."],
+    ["Ajedrez960: norma de referencia", "Sin cita normativa.", "Se cita la norma vigente: <b>Leyes 2023, Directrices II</b> (II.1-II.2 posición inicial; II.3 enroque, con sus cuatro métodos, aclaración y notas)."],
+    ["Ajedrez960: ejemplo de la tabla", "«Alfiles 12 + número 640»: terminaba con «Caballo en C1».", "<b>Fe de erratas:</b> el último caballo va en <b>h1</b>. La combinación corresponde a la posición <b>SP 652</b> (RBNKRQBN). Se sustituyen las dos tablas, que no se pueden reproducir sin errores de transcripción, por la regla de cálculo de la numeración estándar (comprobada para las 960 posiciones)."],
+    ["Ajedrez960: diagramas", "Diagramas propios de cada método de enroque.", "Diagramas nuevos con posiciones iniciales reales (SP 518, 11, 15 y 255) y la del ejemplo del dado (SP 314), todas comprobadas por programa."],
+    ["Ajedrez960: novedades", "—", "La Asamblea General de la FIDE (Samarcanda, 26-27 de septiembre de 2026) aprobó crear un <b>rating FIDE de Ajedrez960</b>, a implantar a más tardar el 1-jun-2027."],
+    ["Suizo: puntos del descanso", "«1 punto o medio punto, según las bases».", "C.04.1 art. 3 (2026): el descanso asignado por el emparejamiento (PAB) vale <b>lo mismo que una victoria</b>, salvo que el reglamento del torneo diga otra cosa, y <b>igual para todos</b> los PAB."],
+    ["Suizo: quién no puede recibir descanso", "Quien ya ganó sin jugar o ya tuvo descanso.", "C.04.1 art. 4 y criterio [C2] del C.04.3 (art. 2.1.2): quien ya recibió un PAB o ya sumó, en una sola ronda y sin jugar, los puntos de una victoria."],
+    ["Suizo: terminología", "P0, M0, «grupo heterogéneo con al menos la mitad de flotantes».", "Términos del Sistema Holandés C.04.3 (aplicado desde el 1-feb-2026): <b>MaxPairs</b>, <b>M0</b>, <b>M1</b>, MDP, residentes, resto y limbo (arts. 3.1-3.2). Todo grupo con MDP es heterogéneo; ya no existe la regla de «la mitad»."],
+    ["Suizo: ejemplo de subgrupos", "Emparejamientos propuestos «2-4, 2-5 y 6 flotador».", "<b>Fe de erratas:</b> son <b>2-4, 3-5</b> y el 6 flota."],
+    ["Leyes del Ajedrez", "Anuncio de que no habría cambios el 1-jul-2013.", "Repaso de las versiones posteriores (2014, 2018 y 2023) y estado a noviembre de 2026: siguen vigentes las Leyes aplicadas desde el 1-ene-2023; en agosto de 2026 el Consejo FIDE mandó seguir discutiendo un borrador nuevo."],
+    ["Mitos deportivos", "Texto original con errores de ortografía.", "Se conserva el artículo de Paula Man Reich, corregido y condensado; se añade una nota sobre la vía de apelación y el reglamento disciplinario de árbitros vigente."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}
