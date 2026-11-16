@@ -12181,6 +12181,32 @@ son de los tiempos.
   paneles cerrados al empezar, el Ra con una cuenta, la tabla del dp y la
   pista que marca «con pista»).
 
+### Volver a la revista desde una ficha
+
+El aula cambia de vista con el ancla (`#estudiar`, `#ficha-…`, `#caso-…`) sin
+cargar otra página, y la lista de fichas mide casi 20 000 px. El navegador no
+sabía dónde estabas en cada vista: al abrir una ficha de la revista N.º 18, la
+ficha quedaba a media altura, sin el enlace «Fichas» a la vista, y «Atrás»
+pintaba la lista donde hubiera quedado la ficha (en el Taller), lejos de la
+revista. Para quien lo usaba, no había forma de volver.
+
+- `history.scrollRestoration = "manual"` y cada entrada del historial lleva
+  su número en `history.state` (`aulaEntrada`): una entrada que ya lo trae es
+  una vuelta («Atrás» o «Adelante») y repone su lugar; una que llega sin
+  número es nueva y abre arriba.
+- El lugar se guarda **al llegar el `hashchange`**, cuando la pantalla todavía
+  es la de antes (ningún ancla nombra un id), no con el evento `scroll`: en
+  una pestaña oculta ese evento no llega y el lugar se perdía.
+- La ficha lleva «← Volver a la revista N.º X» arriba y al final de la hoja.
+  Si se vino de la lista, es `history.back()` (el lugar exacto); si no (se
+  llegó desde un caso o con el enlace directo), abre la lista en esa revista
+  (`data-coleccion`).
+- Al volver puede quedar corrida unos 16 px: en la ficha, que va arriba, el
+  encabezado está alto, y al bajar se achica y el navegador corre la página.
+  `verificar-aula-arbitraje-pagina.js` lo acepta (hasta 20 px) y comprueba
+  que la ficha abre arriba con su botón, que «Atrás» vuelve a la revista y que
+  el botón la encuentra sin venir de la lista.
+
 ## Desempates explicados
 
 `desempates.html` recalcula la clasificación de un torneo de chess-results

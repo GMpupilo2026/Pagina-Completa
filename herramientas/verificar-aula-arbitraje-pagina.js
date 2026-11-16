@@ -123,6 +123,35 @@ async function contrastes(p) {
         await p.$eval("#aula-vista", (v) => [v.querySelector(".aula-hoja").textContent.includes("Art. 7.1"), v.querySelectorAll(".aula-claves li").length]), [true, 6]);
     igual("y la pestaña Estudiar queda marcada", await p.$eval("[data-aula-tab='estudiar']", (a) => a.getAttribute("aria-current")), "page");
 
+    /* Volver a la revista: la lista mide casi 20 000 px. Antes la ficha abría
+       a media altura (sin el enlace para volver a la vista) y «Atrás» pintaba
+       la lista lejos de la revista de donde se venía. */
+    await p.evaluate(() => { location.hash = "#estudiar"; });
+    await p.waitForSelector("[data-coleccion='revista-" + REVISTAS + "']");
+    const vuelta = await p.evaluate(async (col) => {
+        const w = (ms) => new Promise((r) => setTimeout(r, ms));
+        const sec = () => document.querySelector("[data-coleccion='" + col + "']");
+        const arriba = () => Math.round(sec().getBoundingClientRect().top);
+        window.scrollTo({ top: sec().getBoundingClientRect().top + window.scrollY, behavior: "instant" }); await w(700);   // que el encabezado termine de achicarse
+        const r = { enLista: Math.round(window.scrollY) };
+        sec().querySelector("a[href^='#ficha-']").click(); await w(300);
+        r.fichaArriba = Math.round(window.scrollY);
+        r.boton = document.querySelector(".aula-volver").textContent;
+        history.back(); await w(400);
+        r.atras = Math.round(window.scrollY);   // el encabezado cambia de alto: se compara el desplazamiento
+        sec().querySelector("a[href^='#ficha-']").click(); await w(300);
+        location.hash = "#casos"; await w(200);
+        history.back(); await w(300);           // a la ficha, sin la lista justo antes
+        document.querySelector(".aula-volver").click(); await w(400);
+        r.boton2 = arriba();
+        return r;
+    }, "revista-" + REVISTAS);
+    igual("la ficha de la revista N.º " + REVISTAS + " abre arriba, con «Volver a la revista N.º " + REVISTAS + "»", [vuelta.fichaArriba, vuelta.boton], [0, "← Volver a la revista N.º " + REVISTAS]);
+    // Hasta 20 px: en la ficha (arriba) el encabezado está alto y al bajar se
+    // achica; el navegador corre la página lo que se achicó (16 px).
+    igual("«Atrás» desde la ficha deja la lista en el mismo lugar de la revista (antes: a miles de px)", Math.abs(vuelta.atras - vuelta.enLista) <= 20, true);
+    igual("el botón de volver, aunque no se venga de la lista, abre la lista en esa revista", vuelta.boton2 >= 0 && vuelta.boton2 < 200, true);
+
     console.log("\n=== Practicar ===");
     await p.evaluate(() => { location.hash = "practicar-preguntas"; });
     await p.waitForSelector("#aula-preg .aula-opciones button");
