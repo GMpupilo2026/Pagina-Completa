@@ -1807,7 +1807,17 @@
                 "Cada jugador tiene su planilla ordenada y un lapicero listo para usar.",
                 "El número de mesa queda a la vista, para ubicarla y anotar el resultado: izquierda blancas, derecha negras."
               ],
-              "fuente": "Leyes del Ajedrez de la FIDE, art. 2.1",
+              "fuente": "Leyes del Ajedrez de la FIDE, art. 2.1"
+            },
+            {
+              "titulo": "El árbitro, de frente al reloj",
+              "texto": "Dos fotos de torneos reales: dónde se para la persona árbitra para mirar el reloj.",
+              "puntos": [
+                "Mal colocado: el árbitro queda del lado del reloj y tiene que estirarse para verlo; el reloj le queda incómodo.",
+                "Bien colocado: el árbitro queda de frente al reloj, ve los dos tiempos y no estorba a quienes juegan.",
+                "Por eso el reloj va siempre del mismo lado, a la derecha de las negras: el árbitro sabe dónde pararse en cualquier mesa."
+              ],
+              "fuente": "Fotos: Amruta Mokal; Copa del Mundo FIDE 2021",
               "receso_despues": true
             },
             {

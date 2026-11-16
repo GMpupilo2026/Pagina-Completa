@@ -4491,15 +4491,18 @@ por esta.
   de sala), 17 la lista de lo que se lleva y 18 cómo se coloca cada mesa:
   vistas desde el árbitro de frente al reloj, blancas a su izquierda y negras
   a su derecha, reloj a la derecha de las negras, para que al anotar un
-  resultado izquierda sea blancas en toda la sala. La sesión pasó a 37
-  láminas y la práctica a las 29-32 (migración
+  resultado izquierda sea blancas en toda la sala. Después se sumó la 19, con
+  dos fotos de torneos reales: el árbitro mal colocado (el reloj le queda
+  incómodo) y bien colocado (de frente al reloj); cada foto lleva su crédito.
+  Con las 4 primeras la sesión pasó a 37 láminas y la práctica a las 29-32 (migración
   `formacion_sesion5_salon_virtual`, versión `20261116023301`, aplicada el
   15/11 sin respuestas guardadas; con la misma guarda; el esquema no cambió,
   solo el `# al-dia-con:` del retrato).
-  - `formacion-laminas.js` tiene tres tipos nuevos: `foto` (una foto de
+  - `formacion-laminas.js` tiene cuatro tipos nuevos: `foto` (una foto de
     `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
     bytes), `sala` (el plano, que el verificador mide con el tope de una
-    tabla, porque sus rótulos son datos) y `mesa` (la mesa vista desde arriba;
+    tabla, porque sus rótulos son datos), `fotos` (dos fotos lado a lado,
+    cada una con su marca escrita y su crédito) y `mesa` (la mesa vista desde arriba;
     se comprobó que la esquina a la derecha de cada jugador es clara).
   - Cambiar el generador cambia la huella de **todas** las presentaciones.
     Las demás no se volvieron a dibujar: los tipos nuevos no tocan lo que ya

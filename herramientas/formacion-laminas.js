@@ -191,6 +191,14 @@ table.mini td:first-child{color:var(--gris)!important;font-weight:400}
 .lado .fotocaja{flex:none;width:55%;padding:0;overflow:hidden;display:flex;flex-direction:column}
 .fotocaja img{width:100%;flex:1;min-height:0;object-fit:cover;display:block}
 .fotocaja .pie{font-size:22px;color:var(--gris);padding:12px 20px;line-height:1.25}
+/* fotos: dos fotos reales lado a lado, cada una con su marca (✓ bien, ✗ mal) escrita */
+.fotos2{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.fotocaja2{margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.fotocaja2 img{width:100%;flex:1;min-height:0;object-fit:cover;display:block}
+.fotocaja2 figcaption{padding:14px 22px 16px;display:flex;flex-direction:column;gap:6px}
+.fotocaja2 .marca{font-size:32px;align-self:flex-start}
+.fotocaja2 .s{font-size:24px;color:var(--gris);line-height:1.2}
+.fotocaja2 .credito{font-size:17px;color:var(--gris)}
 /* mesa: una mesa lista, vista desde arriba, con las reglas al lado */
 .lado .mesacaja{flex:none;width:50%;padding:14px;display:flex}
 .mesacaja svg{width:100%;height:100%}
@@ -320,6 +328,13 @@ function cuerpo(d, diapo, usadas) {
         '<div class="filas">' + d.items.map((x) => '<div class="caja fila' + tono(x.tono) + '">' + ic(x.ic) +
           "<div><b>" + esc(x.t) + "</b>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div></div>").join("") +
         (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "") + "</div></div>";
+    case "fotos":
+      // Cada foto lleva su crédito: son de otros (la del autor, si la trae, queda en la imagen).
+      return '<div class="fotos2">' + d.items.map((x) => '<figure class="caja fotocaja2"><img alt="" src="data:image/jpeg;base64,' +
+        fs.readFileSync(path.join(__dirname, "datos", "fotos", x.foto)).toString("base64") + '"><figcaption>' +
+        '<span class="marca ' + x.tono + '">' + MARCA[x.tono] + " " + esc(x.t) + "</span>" +
+        (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + (x.credito ? '<span class="credito">' + esc(x.credito) + "</span>" : "") +
+        "</figcaption></figure>").join("") + "</div>" + (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
     case "mesa":
       return '<div class="lado"><div class="caja mesacaja">' + mesa(usadas) + '</div><div class="filas">' +
         d.items.map((x) => '<div class="caja fila' + tono(x.tono) + '">' + ic(x.ic) +

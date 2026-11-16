@@ -26,8 +26,8 @@ function huella(clase) {
   const leidos = fs.existsSync(datos) ? require(datos).filter((d) => d && (d.cuadro || d.delCurso)) : [];
   if (leidos.length) h.update(JSON.stringify(leidos));
   // Una foto de una sala real (tipo "foto") también es dato: si se cambia, la lámina es de antes.
-  const fotos = fs.existsSync(datos) ? require(datos).filter((d) => d && d.foto) : [];
-  fotos.forEach((d) => h.update(fs.readFileSync(path.join(HERRAMIENTAS, "datos", "fotos", d.foto))));
+  const fotos = fs.existsSync(datos) ? require(datos).flatMap((d) => (d ? [d.foto].concat((d.items || []).map((x) => x && x.foto)) : [])).filter(Boolean) : [];
+  fotos.forEach((f) => h.update(fs.readFileSync(path.join(HERRAMIENTAS, "datos", "fotos", f))));
   h.update(sinSello(path.join(HERRAMIENTAS, "formacion-laminas.js")));
   h.update(fs.readFileSync(path.join(RAIZ, "cursos", "recursos", "formacion-ajedrez", "presentaciones", clase, "diapositivas.json")));
   return h.digest("hex");

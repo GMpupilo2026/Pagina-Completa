@@ -7886,7 +7886,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 19
+        "kb": 20
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-ejercicios.pdf",
@@ -13817,7 +13817,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 3830
+        "kb": 4044
        }
       ]
      },
@@ -19221,7 +19221,7 @@
   ]
  },
  "imagenes": {
-  "total": 1278,
+  "total": 1279,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26070,25 +26070,25 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 24
+      "kb": 146
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 75
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 85
+      "kb": 75
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 64
+      "kb": 85
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/23.webp",
@@ -26100,83 +26100,89 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 59
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/25.webp",
       "titulo": "25",
       "tipo": "otro",
-      "kb": 61
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/26.webp",
       "titulo": "26",
       "tipo": "otro",
-      "kb": 48
+      "kb": 61
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/27.webp",
       "titulo": "27",
       "tipo": "otro",
-      "kb": 59
+      "kb": 48
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/28.webp",
       "titulo": "28",
       "tipo": "otro",
-      "kb": 24
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/29.webp",
       "titulo": "29",
       "tipo": "otro",
-      "kb": 53
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/30.webp",
       "titulo": "30",
       "tipo": "otro",
-      "kb": 45
+      "kb": 53
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/31.webp",
       "titulo": "31",
       "tipo": "otro",
-      "kb": 31
+      "kb": 45
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/32.webp",
       "titulo": "32",
       "tipo": "otro",
-      "kb": 29
+      "kb": 31
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/33.webp",
       "titulo": "33",
       "tipo": "otro",
-      "kb": 59
+      "kb": 29
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/34.webp",
       "titulo": "34",
       "tipo": "otro",
-      "kb": 78
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/35.webp",
       "titulo": "35",
       "tipo": "otro",
-      "kb": 42
+      "kb": 78
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/36.webp",
       "titulo": "36",
       "tipo": "otro",
-      "kb": 83
+      "kb": 42
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/37.webp",
       "titulo": "37",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/38.webp",
+      "titulo": "38",
       "tipo": "otro",
       "kb": 42
      }
