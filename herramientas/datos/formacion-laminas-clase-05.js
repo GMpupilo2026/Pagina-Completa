@@ -178,11 +178,9 @@ module.exports = [
     ["Árbitros", "", "9", "", "142 ÷ 20 → 8, + principal"],
     ["Sala", "", "304 m²", "", "76 mesas × 4 m²"] ] },
   // 20
-  { tipo: "foto", k: "Tacho Chess 2: la sala lista para la ronda", foto: "tacho-chess-2-sala.jpg",
-    items: [
-      { ic: "🪑", t: "Mesas en filas largas", s: "con pasillos entre filas" },
-      { ic: "🚧", t: "Una tela separa al público", s: "nadie de afuera entra" },
-      { ic: "🧾", t: "Una mesa aparte", s: "control, resultados y repuestos" } ],
+  { tipo: "fotos", k: "Dos salas listas para la ronda", items: [
+    { foto: "tacho-chess-2-sala.jpg", tono: "si", t: "Tacho Chess 2", s: "filas largas y una tela que separa al público" },
+    { foto: "sala-icoder-fca.jpg", tono: "si", t: "Torneo de la FCA", s: "un bloque rotulado por categoría y el público en las graderías" } ],
     clave: "El plano siguiente ordena una sala así." },
   // 21
   { tipo: "sala", k: "Regional de Alajuela 2026: 15 torneos a la vez",
