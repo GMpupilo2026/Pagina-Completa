@@ -35,6 +35,19 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
   cuenta, así que queda escrito el de dos pasos, que no depende de esa
   búsqueda.
+- **El 301 del worker no alcanza a las páginas.** Desde que el worker corre
+  solo en las rutas de `run_worker_first` (`wrangler.jsonc`), las páginas las
+  sirve Cloudflare directo, también por `www`: la página abría, y lo que sí
+  pasa por el worker (`cursos/recursos/`, `cursos/protegido/`, `material/`)
+  contestaba con el 301 al dominio sin `www`, que la CSP (`connect-src 'self'`)
+  corta sin más aviso que la consola. El 16/11 la presentación de la Sesión 5
+  quedó en «No se pudo abrir la presentación» para un profe que había entrado
+  por `www`. Ahora la primera línea de `js/errores.js` (el primer script,
+  síncrono, de todas las páginas) manda a la misma dirección sin `www` antes
+  de que la página haga nada; lo revisa `verificar-www.js`. Lo limpio sería una
+  regla de redirección de Cloudflare (Reglas → Redirecciones, `www` → dominio
+  sin `www`, 301, conservando la ruta y los parámetros), que actúa antes de
+  servir nada; con ella, lo de `js/errores.js` queda de respaldo.
 - **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
   necesita ni Cloudflare ni internet: el worker es una función que recibe una
   petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
