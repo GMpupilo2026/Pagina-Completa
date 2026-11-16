@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1287,
+  "total": 1288,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27059,6 +27059,12 @@
       "titulo": "Mesa arbitro",
       "tipo": "otro",
       "kb": 117
+     },
+     {
+      "ruta": "img/herramientas/normas-titulo.jpg",
+      "titulo": "Normas titulo",
+      "tipo": "otro",
+      "kb": 116
      },
      {
       "ruta": "img/herramientas/notara.jpg",

@@ -403,6 +403,10 @@
             corto: "Normas de título",
             href: "normas-titulo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/normas-titulo.jpg", ancho: 1200, alto: 675,
+                alt: "Al final de un torneo, una laptop con Normas de título: a un jugador le sale la norma de GM, a otra la de IM y a una tercera le faltó medio punto, con el promedio de Elo y el rendimiento de cada uno; al lado, la clasificación final impresa con un nombre resaltado y un trofeo, y al fondo dos jugadores se dan la mano.",
+            },
             resumen: "Pega el enlace de chess-results y te dice quién hizo norma de GM, IM, WGM o WIM en el torneo, y a quién le faltó poco, artículo por artículo del Reglamento de Títulos de FIDE.",
             puntos: [
                 "Con el Reglamento de Títulos de FIDE (B.01, 2024): las partidas, las federaciones, los rivales con título, el piso de Elo de los rivales, el promedio y el rendimiento.",
