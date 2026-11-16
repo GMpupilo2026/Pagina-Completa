@@ -394,6 +394,10 @@
             corto: "Variación de Elo",
             href: "variacion-elo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/variacion-elo.jpg", ancho: 1200, alto: 675,
+                alt: "Una jugadora sonríe frente a la laptop al terminar un torneo: Variación de Elo muestra su Elo FIDE de 1650 con K 40 y, ronda por ronda, el Elo del rival, lo esperado, el resultado y cuánto aportó cada partida, con el total de +42,4 que la deja en 1692.",
+            },
             resumen: "Pega el enlace de chess-results y te dice cuánto sube o baja el Elo FIDE y nacional de cada participante, partida por partida, antes de que salga la lista oficial.",
             puntos: [
                 "Con las reglas de FIDE (B.02): solo partidas jugadas entre dos con Elo, el tope de 400 puntos, la tabla de lo esperado y el K de cada uno (40 para los menores de 18, 10 desde 2400).",

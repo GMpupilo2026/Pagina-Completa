@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1291,
+  "total": 1292,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27101,6 +27101,12 @@
       "titulo": "Torneos costa rica",
       "tipo": "otro",
       "kb": 128
+     },
+     {
+      "ruta": "img/herramientas/variacion-elo.jpg",
+      "titulo": "Variacion elo",
+      "tipo": "otro",
+      "kb": 105
      }
     ]
    },
