@@ -174,9 +174,49 @@
             "</div></article>";
     }
 
+    /* ---------- dónde quedaste en cada vista ----------
+       Las vistas cambian con el ancla (#ficha-…) sin cargar otra página, así
+       que el navegador no sabe dónde estabas en cada una: al volver con
+       «Atrás» desde una ficha de la revista N.º 18, la lista (de casi
+       20 000 px) se pintaba donde quedara la ficha, lejos de la revista, y la
+       ficha abría a media altura, sin el enlace para volver a la vista.
+       Ahora cada entrada del historial guarda su lugar: al volver a una se
+       repone, y una vista nueva abre arriba. Una entrada ya visitada trae su
+       número en history.state; una nueva llega sin nada y se le pone. */
+    try { history.scrollRestoration = "manual"; } catch (e) { /* queda el del navegador */ }
+    const lugares = {};
+    let entradas = 0, entradaActual = 0, anclaAnterior = "", volverA = "";
+    function irA(y) { window.scrollTo({ top: y, left: 0, behavior: "instant" }); }
+    function marcarEntrada() {
+        const st = history.state;
+        if (st && st.aulaEntrada) { entradaActual = st.aulaEntrada; entradas = Math.max(entradas, entradaActual); return true; }
+        entradaActual = ++entradas;
+        try { history.replaceState(Object.assign({}, st, { aulaEntrada: entradaActual }), ""); } catch (e) { /* sin historial */ }
+        return false;
+    }
+    function reponerLugar(yaVisitada) {
+        if (volverA) {
+            const s = $vista.querySelector('[data-coleccion="' + volverA + '"]');
+            volverA = "";
+            if (s) return irA(s.getBoundingClientRect().top + window.scrollY - 80);
+        }
+        irA(yaVisitada && lugares[entradaActual] != null ? lugares[entradaActual] : 0);
+    }
+
     /* ---------- direcciones ---------- */
+    let anclaVista = "";
     function ruta() {
         if (relojActivo) { relojActivo.destruir(); relojActivo = null; }
+        // El lugar de la vista que se deja: cuando llega el hashchange, la
+        // pantalla todavía es la de antes (ningún ancla nombra un id).
+        if (entradaActual) lugares[entradaActual] = window.scrollY;
+        anclaAnterior = anclaVista;
+        anclaVista = location.hash || "#estudiar";
+        const yaVisitada = marcarEntrada();
+        pintarRuta();
+        reponerLugar(yaVisitada);
+    }
+    function pintarRuta() {
         const r = (location.hash || "#estudiar").slice(1);
         const parte = r.startsWith("ficha-") ? "estudiar" : r.startsWith("caso-") ? "casos" : r.split("-")[0];
         qa("[data-aula-tab]", document).forEach((a) => {
@@ -206,7 +246,7 @@
         // El taller primero: es lo nuevo y lo más práctico.
         const cols = D.colecciones.filter((c) => c.taller).concat(D.colecciones.filter((c) => !c.taller));
         cols.forEach((c) => {
-            html += '<section class="aula-coleccion" aria-label="' + esc(c.titulo) + '"><div class="aula-coleccion-cab"><h3>' + c.titulo + "</h3><span>" + (c.nota || "") + '</span></div><div class="aula-rejilla">';
+            html += '<section class="aula-coleccion" data-coleccion="' + esc(c.id) + '" aria-label="' + esc(c.titulo) + '"><div class="aula-coleccion-cab"><h3>' + c.titulo + "</h3><span>" + (c.nota || "") + '</span></div><div class="aula-rejilla">';
             if (numeroDe(c)) html += tarjetaPortada(c, p);
             D.fichas.filter((f) => f.coleccion === c.id).forEach((f) => {
                 const np = D.preguntas.filter((x) => x.ficha === f.id).length;
@@ -231,8 +271,12 @@
         const gen = { relojes: ["practicar-relojes", "Ejercicios de ajuste de relojes"], koya: ["practicar-koya", "Ejercicios de Koya"], repeticion: ["practicar-posiciones", "Ejercicios de posiciones idénticas"],
             "taller-repeticion": ["practicar-posiciones", "Ejercicios de posiciones idénticas"], "taller-desempates": ["practicar-desempates", "Ejercicios de desempates al azar"], "taller-normas": ["practicar-normas", "Ejercicios de normas al azar"] }[id];
         const calc = { "taller-desempates": ["calculadoras-desempates", "Calculadora de desempates"], "taller-normas": ["calculadoras-normas", "Calculadora de normas"] }[id];
-        pintar('<p class="aula-eyebrow"><a href="#estudiar">Fichas</a> · ' + (col.titulo || "") + '</p><h2 class="aula-titulo">' + f.titulo + '</h2><p class="aula-intro">' + f.articulos + "</p>" +
-            '<div class="aula-ficha"><article class="aula-hoja">' + f.contenido + "</article><aside class=\"aula-lateral\">" +
+        const n = numeroDe(col);
+        const volver = '<a class="aula-btn aula-btn-sec aula-volver" href="#estudiar" data-volver><span aria-hidden="true">← </span>' +
+            (n ? "Volver a la revista N.º " + n : "Volver a las fichas") + "</a>";
+        pintar('<p class="aula-eyebrow"><a href="#estudiar" data-volver>Fichas</a> · ' + (col.titulo || "") + '</p><h2 class="aula-titulo">' + f.titulo + '</h2><p class="aula-intro">' + f.articulos + "</p>" +
+            '<p class="aula-volver-fila">' + volver + "</p>" +
+            '<div class="aula-ficha"><article class="aula-hoja">' + f.contenido + '<p class="aula-volver-fila">' + volver + "</p></article><aside class=\"aula-lateral\">" +
             '<div class="aula-claves"><h3>Ideas clave</h3><ul>' + f.claves.map((k) => "<li>" + k + "</li>").join("") + "</ul></div>" +
             '<div class="aula-claves"><h3>Ponlo en práctica</h3><div class="aula-columna">' +
             '<a class="aula-btn aula-btn-pri" href="#practicar-preguntas" data-filtro="' + id + '">Preguntas de esta ficha (' + np + ")</a>" +
@@ -242,6 +286,12 @@
             "</div></div></aside></div>");
         const a = q("[data-filtro]");
         if (a) a.addEventListener("click", () => { filtroPreguntas = id; });
+        // Volver a la lista, a la revista de esta ficha. Si de ahí se vino, es
+        // «Atrás» (repone el lugar exacto); si no, se abre en esa revista.
+        qa("[data-volver]").forEach((b) => b.addEventListener("click", (e) => {
+            if (anclaAnterior === "#estudiar") { e.preventDefault(); history.back(); return; }
+            volverA = col.id || "";
+        }));
     }
 
     /* ---------- PRACTICAR ---------- */

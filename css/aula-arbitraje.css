@@ -22,6 +22,7 @@
 .aula-eyebrow { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgb(var(--c-brand-600)); }
 .dark .aula-eyebrow { color: rgb(var(--c-brand-200)); }
 .aula-eyebrow a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.aula-volver-fila { margin: .75rem 0 1rem; }
 .aula-nota { font-size: .8rem; color: rgb(var(--c-brand-600)); }
 .dark .aula-nota { color: rgb(var(--c-brand-200)); }
 
