@@ -1,4 +1,4 @@
-/* Aula de Arbitraje — las fichas de los números 2 al 19 de la revista
+/* Aula de Arbitraje — las fichas de los números 2 al 20 de la revista
    «Arbitraje de Ajedrez», revisados y actualizados a la normativa FIDE vigente
    (noviembre de 2026) por IA Oscar Angulo Cubero.
 
@@ -101,6 +101,11 @@
    "id": "revista-19",
    "titulo": "Revista Arbitraje de Ajedrez · N.º 19",
    "nota": "Edición especial: Pareo Integral y la mesa del árbitro, paso a paso"
+  },
+  {
+   "id": "revista-20",
+   "titulo": "Revista Arbitraje de Ajedrez · N.º 20",
+   "nota": "Edición especial: la mesa del árbitro del Centroamericano, manual completo"
   }
  ],
  "fichas": [
@@ -1415,6 +1420,38 @@
     "La bitácora guarda cada anotación con la hora de Costa Rica y se baja en PDF o Word."
    ],
    "contenido": "<h3>Para qué sirve</h3><p>En un torneo grande, cada árbitro adjunto anota desde su celular o su tablet los resultados de sus mesas, las jugadas ilegales, las irregularidades y las notas. Todo le llega al Pareo Integral del árbitro principal, que lo acepta en el torneo.</p><h3>Paso a paso</h3><div class=\"aula-tabla\"><table><tr><th>Quién</th><th>Qué hace</th></tr><tr><td>Principal</td><td>Crea al adjunto en el Centro del evento (o con «Enlace para un árbitro adjunto») y le pasa el enlace o el código.</td></tr><tr><td>Adjunto</td><td>Pega el enlace o el código y toca «Conectar». Ve solo sus mesas.</td></tr><tr><td>Adjunto</td><td>Toca el resultado de cada mesa; «Ilegal» e «Irregularidad» junto a cada jugador.</td></tr><tr><td>Principal</td><td>Recibe los resultados y revisa «Para confirmar» en el Centro del evento.</td></tr></table></div><div class=\"aula-norma\"><b>Art. 7.5.5</b> La segunda jugada ilegal completada por el mismo jugador hace perder la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales: entonces son tablas.</div><div class=\"aula-norma aula-norma-aviso\">La mesa avisa «Segunda ilegal: decide el resultado», pero el resultado lo decide el árbitro mirando la posición.</div><div class=\"aula-nota\">La bitácora no se borra: cada anotación queda con su hora de Costa Rica, y al final se baja en PDF o Word para el informe.</div>"
+  },
+  {
+   "id": "mesa-centroamericano-organizacion",
+   "coleccion": "revista-20",
+   "titulo": "La mesa del árbitro: la organización",
+   "articulos": "Leyes 2023 · arts. 6.7 y 6.10",
+   "resumen": "La pantalla del árbitro principal: torneos, árbitros y mesas, plano, ronda en curso, avisos, control de tiempos, planillas, registro, respaldo y Fair Play.",
+   "claves": [
+    "Se entra con una cuenta con la licencia de la mesa del árbitro; cada evento solo lo ven su dueño y su equipo.",
+    "chess-results se vincula con una sola clave para todo el grupo, que se guarda cifrada.",
+    "Cada árbitro recibe un QR para un torneo y un rango de mesas; con «¿Es un árbitro que ya tiene mesas…?» queda un solo QR para varias categorías.",
+    "Los pedidos de ayuda no suenan: la pestaña Ronda en curso tiene que estar abierta.",
+    "El control de tiempos guarda las lecturas sin borrarlas; con un reloj apagado, la calculadora propone y el árbitro decide (art. 6.10).",
+    "La herramienta sugiere (un reparto, a quién mandar a ayudar), pero nada cambia hasta que el principal lo aprueba."
+   ],
+   "contenido": "<h3>Las once pestañas</h3><p>Ronda en curso, Avisos, Árbitros y mesas, Control de tiempos, Planillas y Drive, Torneos, Respaldo, Lo que anotan, Fair Play, Transmisión y Plano de la sala. Abajo, la barra de estado y el <b>Modo ensayo</b> para practicar con torneos de prueba.</p><h3>Antes del evento</h3><div class=\"aula-tabla\"><table><tr><th>Pestaña</th><th>Qué se hace</th></tr><tr><td>Torneos</td><td>Vincular Pareo Integral o la clave del grupo de chess-results (código del grupo + SID, cifrada); LiveChess y la transmisión privada.</td></tr><tr><td>Árbitros y mesas</td><td>Un enlace con QR por árbitro (torneo, mesa desde, mesa hasta, vencimiento), o «Repartir las mesas»; QR impresos y códigos de 8 letras.</td></tr><tr><td>Plano de la sala</td><td>El borrador con las filas, el material y el reparto sugerido de los árbitros.</td></tr></table></div><h3>Durante la ronda</h3><p><b>Ronda en curso</b>: cuándo inició cada categoría, cuánto le queda a cada árbitro, quién no ha llegado y los pedidos de ayuda (Atendido, Escribir, Mandar esta sugerencia). <b>Avisos</b>: a todos, a un torneo o a uno, con «Lo leyeron».</p><div class=\"aula-norma\"><b>Art. 6.7</b> El tiempo de espera lo fijan las bases; quien llega después pierde, salvo que el árbitro decida otra cosa. La página avisa cuando se cumple.</div><div class=\"aula-norma\"><b>Art. 6.10</b> Un reloj con un defecto evidente se cambia y el árbitro fija los tiempos con su mejor criterio. Las lecturas del control de tiempos son la base para hacerlo.</div><div class=\"aula-nota\">Fair Play: las alertas comparan la precisión con lo esperable para el Elo y el sorteo de mesas lo hace la base de datos. Una alerta es para mirar, nunca una acusación.</div>"
+  },
+  {
+   "id": "mesa-centroamericano-tableta",
+   "coleccion": "revista-20",
+   "titulo": "La mesa del árbitro: la tableta del adjunto",
+   "articulos": "Leyes 2023 · art. 7.5.5",
+   "resumen": "Cómo trabaja el árbitro adjunto en su tableta: entrar, la revisión previa, el inicio de la ronda, las llegadas, los resultados, las ilegales, los avisos y la bitácora.",
+   "claves": [
+    "Se entra con el QR o con el código de 8 letras en ajedrez-integral.com/m, sin cuenta.",
+    "Hasta aprobar la revisión previa (relojes y tableros) no se guardan resultados; las ilegales sí.",
+    "«Inició la ronda ahora» marca la hora desde la que corre el tiempo de espera.",
+    "Un resultado queda enviado solo cuando chess-results ya lo tiene (o el principal lo acepta en Pareo Integral).",
+    "Primera ilegal: dos minutos más al rival; segunda del mismo jugador: pierde, salvo que el rival no pueda dar mate.",
+    "Nada se borra: «Anular» agrega una línea nueva, y sin internet la tableta guarda todo en una cola."
+   ],
+   "contenido": "<h3>Antes de la ronda</h3><p>Entrar con el QR (o el código en ajedrez-integral.com/m), escribir el nombre si lo pide, y la <b>revisión previa</b>: paso 1, los relojes con el ritmo de las bases; paso 2, los tableros bien orientados y con las 32 piezas.</p><h3>Durante la ronda</h3><div class=\"aula-tabla\"><table><tr><th>Botón</th><th>Qué anota</th></tr><tr><td>Inició la ronda ahora</td><td>La hora de inicio de su categoría.</td></tr><tr><td>Llegó</td><td>Que el jugador está sentado (o «Marcar que llegaron todos»).</td></tr><tr><td>Jugada ilegal</td><td>Qué jugada fue; marca la primera y la segunda.</td></tr><tr><td>Irregularidad</td><td>Tocó una pieza u otra falta.</td></tr><tr><td>Se levantó de la mesa</td><td>Cada vez que el jugador se levanta.</td></tr><tr><td>Guardar</td><td>El resultado de la mesa.</td></tr></table></div><div class=\"aula-norma\"><b>Art. 7.5.5</b> Primera jugada ilegal completada: dos minutos más al rival. Segunda del mismo jugador: pierde la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales (tablas). En rápidas y relámpago, Apéndices A y B.</div><div class=\"aula-norma aula-norma-aviso\">La tableta propone el resultado de la segunda ilegal o de una incomparecencia; lo decide el árbitro.</div><div class=\"aula-nota\">Al terminar: «Terminé mi ronda completa» y la bitácora en PDF. Sin señal, la cola guarda todo y lo manda al volver, sin duplicar.</div>"
   }
  ],
  "preguntas": [
@@ -7993,6 +8030,162 @@
    ],
    "correcta": 1,
    "explicacion": "La bitácora guarda cada anotación con su hora de Costa Rica y no se borra; una corrección va como una anotación nueva."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "¿Qué necesita un árbitro adjunto para anotar sus mesas en la tableta?",
+   "opciones": [
+    "Una cuenta con la licencia de la mesa del árbitro",
+    "Su QR o su código de 8 letras, sin cuenta",
+    "La clave de chess-results",
+    "Que el principal le preste su computadora"
+   ],
+   "correcta": 1,
+   "explicacion": "La cuenta con licencia la necesita la organización. Cada adjunto entra con el QR (o el código en ajedrez-integral.com/m) que se crea en Árbitros y mesas."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "En un campeonato con cuatro categorías en un grupo de chess-results, ¿cuántas claves (SID) hay que poner en Torneos?",
+   "opciones": [
+    "Una por categoría",
+    "Una sola para todo el grupo",
+    "Ninguna: la mesa no usa chess-results",
+    "Una por árbitro"
+   ],
+   "correcta": 1,
+   "explicacion": "Los torneos van ligados en un grupo: basta el código del grupo y una clave, que se guarda cifrada y nadie vuelve a ver."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "Un árbitro va a dirigir las mesas 1 a 10 del Sub-12 y las 1 a 5 del Sub-14. ¿Qué conviene hacer?",
+   "opciones": [
+    "Darle dos tabletas",
+    "Crear dos enlaces sin relación",
+    "Crear el segundo eligiéndolo en «¿Es un árbitro que ya tiene mesas en otro torneo?»: queda un solo QR",
+    "No se puede: un árbitro, un torneo"
+   ],
+   "correcta": 2,
+   "explicacion": "Al elegirlo como árbitro que ya tiene mesas, sus enlaces quedan unidos: un solo QR y la tableta le deja pasar de un torneo al otro."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "Un adjunto pide ayuda desde su tableta. ¿Cómo se entera el principal?",
+   "opciones": [
+    "Le suena una alarma en el celular",
+    "Le llega un correo",
+    "Aparece en «Pedidos de ayuda y avisos de los árbitros» de Ronda en curso, que tiene que tener abierta",
+    "No se entera hasta el final de la ronda"
+   ],
+   "correcta": 2,
+   "explicacion": "Los pedidos no suenan: se ponen al día cada pocos segundos en Ronda en curso. Por eso la ventana de la organización va abierta durante la ronda."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "A media ronda se apaga el reloj de una mesa. ¿Qué ayuda tiene el principal para fijar los tiempos?",
+   "opciones": [
+    "Ninguna: se juega sin reloj",
+    "La calculadora de «Reloj apagado», con la última lectura del control de tiempos; el árbitro decide (art. 6.10)",
+    "La tableta pone los tiempos sola",
+    "Se repite la partida"
+   ],
+   "correcta": 1,
+   "explicacion": "El art. 6.10 pide que el árbitro fije los tiempos con su mejor criterio. La calculadora propone a partir de la última lectura; por eso conviene pedir controles de tiempo."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "Un árbitro terminó sus mesas y la página sugiere mandarlo a ayudar a otra categoría. ¿Qué pasa si el principal no hace nada?",
+   "opciones": [
+    "La página lo reasigna sola",
+    "Nada: la sugerencia solo cambia algo si el principal la manda",
+    "Se le apaga el enlace",
+    "Se le asignan todas las mesas que faltan"
+   ],
+   "correcta": 1,
+   "explicacion": "La herramienta sugiere, no reasigna: el principal decide con «Mandar esta sugerencia»."
+  },
+  {
+   "ficha": "mesa-centroamericano-organizacion",
+   "texto": "Fair Play marca a un jugador «Muy alta» en una partida. ¿Qué significa?",
+   "opciones": [
+    "Que hizo trampa y pierde la partida",
+    "Una alerta para mirar: su precisión sale muy por encima de lo esperable para su Elo; no es una acusación",
+    "Que hay que expulsarlo del torneo",
+    "Que su Elo está mal"
+   ],
+   "correcta": 1,
+   "explicacion": "Las alertas comparan con lo esperable para el Elo en ese torneo. Sirven para mirar mejor y para que sus mesas salgan más en el sorteo, nunca como prueba sola."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "El adjunto quiere guardar el resultado de la mesa 3 y la tableta no lo deja. ¿Qué es lo más probable?",
+   "opciones": [
+    "La mesa no es suya",
+    "No aprobó la revisión previa de relojes y tableros",
+    "No hay internet",
+    "El resultado es tablas"
+   ],
+   "correcta": 1,
+   "explicacion": "Hasta aprobar los dos pasos de la revisión previa no se pueden guardar resultados de la ronda (las ilegales sí se anotan)."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "¿Para qué sirve «Inició la ronda ahora» en la tableta?",
+   "opciones": [
+    "Para arrancar los relojes",
+    "Para marcar la hora de inicio de su categoría, desde la que corre el tiempo de espera",
+    "Para avisarles a los jugadores",
+    "Para emparejar la ronda"
+   ],
+   "correcta": 1,
+   "explicacion": "Desde esa hora cuenta el tiempo de espera de las bases (art. 6.7); la organización lo ve en «Cuándo inició la ronda cada categoría»."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "Un jugador completa su primera jugada ilegal en una partida a 90 minutos. ¿Qué anota la tableta y qué hace el árbitro?",
+   "opciones": [
+    "Pierde la partida",
+    "Primera ilegal: dos minutos más al rival; con otra, pierde",
+    "Una advertencia sin consecuencias",
+    "Se le restan cinco minutos"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 7.5.5: por la primera ilegal completada, dos minutos más al rival. La mesa queda marcada para saber que con otra pierde."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "El adjunto tocó «Se levantó de la mesa» en el jugador equivocado. ¿Cómo lo corrige?",
+   "opciones": [
+    "Borra la línea de la bitácora",
+    "Con «Anular», que agrega una línea nueva y deja el toque sin efecto",
+    "Le pide al principal que lo borre",
+    "No se puede corregir"
+   ],
+   "correcta": 1,
+   "explicacion": "Nada se borra: «Anular» deja constancia de las dos cosas. La bitácora es el acta de lo que pasó en la mesa."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "Se cayó la señal en la sala a media ronda. ¿Qué pasa con lo que anota el adjunto?",
+   "opciones": [
+    "Se pierde",
+    "Queda en una cola en la tableta y se manda cuando vuelve la señal, sin duplicarse",
+    "Hay que anotarlo todo en papel y pasarlo después",
+    "La tableta se bloquea"
+   ],
+   "correcta": 1,
+   "explicacion": "La tableta guarda en una cola lo anotado sin internet y lo manda al volver; los reintentos no duplican. «Copia de seguridad» baja además un archivo con todo."
+  },
+  {
+   "ficha": "mesa-centroamericano-tableta",
+   "texto": "¿Cuándo queda «enviado» un resultado que el adjunto guardó con un torneo de chess-results?",
+   "opciones": [
+    "En cuanto toca Guardar",
+    "Cuando la página vuelve a leer chess-results y ya lo tiene",
+    "Al final del día",
+    "Cuando el jugador firma"
+   ],
+   "correcta": 1,
+   "explicacion": "La mesa dice «Guardado en chess-results» solo cuando chess-results ya lo tiene. Con Pareo Integral, cuando el principal lo acepta."
   }
  ],
  "casos": [

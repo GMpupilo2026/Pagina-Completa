@@ -2,8 +2,9 @@
 
 Los 18 números de la revista (2012-2014, dirigida por Santiago García Ramos),
 revisados y actualizados a la normativa FIDE vigente en noviembre de 2026 por
-IA Oscar Angulo Cubero, y el N.º 19, una edición especial nueva: la guía paso a paso
-de Pareo Integral y la mesa del árbitro. De acá salen dos cosas del sitio:
+IA Oscar Angulo Cubero, y dos ediciones especiales nuevas: el N.º 19, la guía paso a paso de Pareo Integral
+y la mesa del árbitro, y el N.º 20, el manual completo de la mesa del árbitro del
+Centroamericano. De acá salen dos cosas del sitio:
 
 - los PDF de `descargas/aula-arbitraje/revista-NN.pdf` (con candado: solo con
   la licencia de la Aula; ver `ARCHIVOS_CON_LICENCIA` en `worker.js`), y sus
@@ -30,6 +31,7 @@ calculadoras y el PDF de cada revista» de `docs/decisiones/juegos-y-torneos.md`
 | `no01/armar.py` | El N.º 1, hecho antes del generador común: `template.html` + `M.json` (la tabla del Koya). |
 | `no09/armar.js`, `no09/calc.js` | El N.º 9 arma su `cuerpo.html` desde `cuerpo.fuente.html` (tabla de probabilidades); `calc.js` comprueba sus cálculos. |
 | `no19/capturas.js` | Saca las capturas del N.º 19: juega un torneo de prueba en `pareo.html` y abre la mesa del árbitro con un doble de Supabase (como los verificadores). Deja las imágenes en `no19/capturas/`. |
+| `no20/capturas.js` | Saca las capturas del N.º 20 (la mesa del árbitro del Centroamericano): la tableta del adjunto y la página de la organización, con los dobles de Supabase de los verificadores (`lib/doble-centroamericano-*.js` y el de Fair Play de `verificar-centroamericano-fair-play.js`), con los nombres cambiados por otros inventados. |
 | `no10/orden.js` | Comprueba el orden inicial (rating, título, nombre) del ejemplo del N.º 10. |
 | `armar-aula.py` | Junta los `fichas.json` en `js/aula-arbitraje/contenido-revistas.js`. |
 | `revisar.py` | Revisa un número terminado: marca de agua y crédito en cada página, metadatos, estructura de `fichas.json`, tuteo. |

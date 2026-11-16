@@ -482,6 +482,41 @@ Object.assign(ILUSTRACIONES, {
             return svg(s + leyenda(258, "Del emparejamiento al resultado, paso a paso"), 440, 272);
         },
     },
+
+    /* N.º 20 · La mesa del árbitro del Centroamericano: la tableta del adjunto
+       con sus mesas y, al lado, el código QR con el que entra. */
+    20: {
+        dibujo() {
+            let s = `<rect x="40" y="10" width="200" height="236" rx="16" fill="${NAVY}" stroke="${ORO}" stroke-width="3"/>`;
+            s += `<rect x="52" y="24" width="176" height="200" rx="5" fill="${CLARA}"/>`;
+            s += `<circle cx="140" cy="236" r="5" fill="${CELESTE}"/>`;
+            s += `<rect x="52" y="24" width="176" height="24" rx="5" fill="${ORO}"/>`;
+            s += `<text x="62" y="41" font-size="11.5" font-weight="700" fill="${NAVY}" ${FUENTE}>Mis mesas · Ronda 3</text>`;
+            [["1", "1 – 0", true], ["2", "½ – ½", true], ["3", "", false], ["4", "", false], ["5", "0 – 1", true]].forEach(([m, r, listo], i) => {
+                const y = 70 + i * 30;
+                s += `<rect x="60" y="${y - 16}" width="160" height="24" rx="4" fill="${i % 2 ? "#d5e1f2" : "#ffffff"}"/>`;
+                s += `<text x="70" y="${y}" font-size="11" font-weight="700" fill="${NAVY}" ${FUENTE}>Mesa ${m}</text>`;
+                s += listo
+                    ? `<text x="208" y="${y}" font-size="11.5" font-weight="700" fill="#1d6b3f" text-anchor="end" ${FUENTE}>${r}</text>`
+                    : `<rect x="150" y="${y - 12}" width="22" height="16" rx="3" fill="${BLANCO}" stroke="${NAVY}"/><rect x="176" y="${y - 12}" width="22" height="16" rx="3" fill="${BLANCO}" stroke="${NAVY}"/><text x="161" y="${y}" font-size="9" text-anchor="middle" fill="${NAVY}" ${FUENTE}>1-0</text><text x="187" y="${y}" font-size="9" text-anchor="middle" fill="${NAVY}" ${FUENTE}>0-1</text>`;
+            });
+            /* El código QR (un dibujo: no lleva datos). */
+            const qx = 278, qy = 40, c = 9;
+            s += `<rect x="${qx - 10}" y="${qy - 10}" width="${13 * c + 20}" height="${13 * c + 20}" rx="8" fill="${BLANCO}" stroke="${ORO}" stroke-width="3"/>`;
+            const ojo = (x, y) => `<rect x="${x}" y="${y}" width="${3 * c}" height="${3 * c}" fill="${NAVY}"/><rect x="${x + c * 0.6}" y="${y + c * 0.6}" width="${c * 1.8}" height="${c * 1.8}" fill="${BLANCO}"/><rect x="${x + c}" y="${y + c}" width="${c}" height="${c}" fill="${NAVY}"/>`;
+            s += ojo(qx, qy) + ojo(qx + 10 * c, qy) + ojo(qx, qy + 10 * c);
+            const puntos = "0101101011010010110100101011010101101001010110100101101001011010110100101011010100101101";
+            let k = 0;
+            for (let fila = 0; fila < 13; fila++) for (let col = 0; col < 13; col++) {
+                const enOjo = (fila < 4 && (col < 4 || col > 8)) || (fila > 8 && col < 4);
+                if (enOjo) continue;
+                if (puntos[k++ % puntos.length] === "1") s += `<rect x="${qx + col * c}" y="${qy + fila * c}" width="${c}" height="${c}" fill="${NAVY}"/>`;
+            }
+            s += `<text x="${qx + 6.5 * c}" y="${qy + 13 * c + 30}" font-size="11.5" fill="${CELESTE}" text-anchor="middle" ${FUENTE}>el árbitro entra con su QR</text>`;
+            s += relojDigital(286, 196, 100, "0:41", "0:37");
+            return svg(s + leyenda(276, "La sala entera, mesa por mesa, en la tableta del árbitro"), 440, 290);
+        },
+    },
 });
 
 module.exports = { ILUSTRACIONES };
