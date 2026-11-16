@@ -468,7 +468,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/mesa-arbitro.jpg", ancho: 1200, alto: 675,
-                alt: "La mesa del árbitro en un torneo escolar: una tablet con las mesas de la ronda abierta, sus resultados y la bitácora con su hora; al lado, la bitácora impresa con el espacio para la firma, y detrás una árbitra anotando mientras juegan.",
+                alt: "Las manos de un árbitro con su gafete sostienen una tablet con la Mesa del árbitro: las mesas de la ronda 5 con sus resultados y una pendiente, la bitácora con la hora de cada hecho (un resultado, una corrección y una jugada ilegal con el art. 7.5), el espacio para la firma y «Guardado»; al fondo, el salón del torneo.",
             },
             resumen: "Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados, mándalos con la clave del torneo y lleva tu bitácora de árbitro, con su hora, en PDF o Word.",
             puntos: [
