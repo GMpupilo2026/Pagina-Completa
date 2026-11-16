@@ -2358,7 +2358,7 @@
                     if (r2.error) throw r2.error;
                 }
                 msg.textContent = cambiados
-                    ? `Listo: ${cambiados === 1 ? "1 encargado" : cambiados + " encargados"} ahora lo reciben ${cuando}.`
+                    ? `Listo: ${cambiados === 1 ? "1 encargado" : cambiados + " encargados"} ahora lo reciben ${cuando}` + (cuando.endsWith(".") ? "" : ".")
                     : "Ninguno de esos alumnos tiene todavía a alguien apuntado.";
                 msg.className = "text-xs w-full text-green-700 dark:text-green-400";
                 if (encargadoAlumno) renderEncargados(encargadoAlumno.id, encargadoAlumno.nombre);
