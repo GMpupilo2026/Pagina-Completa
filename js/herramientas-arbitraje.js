@@ -491,7 +491,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/aula-arbitraje.jpg", ancho: 1200, alto: 675,
-                alt: "Una árbitra estudia de noche con el Aula de Arbitraje: en la laptop, la ficha del artículo 7.5 (jugada ilegal) y al lado un caso de sala con la respuesta correcta marcada; sobre el escritorio, la revista Arbitraje de Ajedrez, sus apuntes, un reloj digital y un tablero en la posición inicial.",
+                alt: "Una árbitra estudia de noche con el Aula de Arbitraje: en la laptop, la ficha del artículo 7.5 (jugada ilegal) y al lado un caso de sala con la respuesta correcta marcada; sobre el escritorio, la revista Arbitraje de Ajedrez, sus apuntes, un reloj digital y una pila de revistas con una planilla encima.",
             },
             resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
             puntos: [
@@ -512,6 +512,10 @@
             corto: "Acta e informe JDE",
             href: "acta-jde.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/acta-jde.jpg", ancho: 1200, alto: 675,
+                alt: "La mesa del árbitro al final de una etapa de los Juegos Deportivos Estudiantiles: la laptop con el informe arbitral, el medallero por centro educativo y los clasificados a la etapa nacional; al lado, el acta impresa con las firmas del árbitro principal y del adjunto, y tres medallas; al fondo, estudiantes celebrando.",
+            },
             resumen: "Para una etapa de los JDE dirigida con Swiss-Manager: pega los enlaces de chess-results y baja el informe oficial de participación y resultados, listo para firmar, con los clasificados a la etapa siguiente.",
             puntos: [
                 "El mismo informe oficial de Pareo Integral: la participación por centro educativo, la clasificación oficial de chess-results, el cuadro cruzado, las ausencias, el medallero por centro, las incidencias y las firmas.",

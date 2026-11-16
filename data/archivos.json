@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1289,
+  "total": 1290,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27037,6 +27037,12 @@
     "grupo": "Carpetas",
     "archivos": [
      {
+      "ruta": "img/herramientas/acta-jde.jpg",
+      "titulo": "Acta jde",
+      "tipo": "otro",
+      "kb": 119
+     },
+     {
       "ruta": "img/herramientas/arbitros-cr.jpg",
       "titulo": "Arbitros cr",
       "tipo": "otro",
@@ -27046,7 +27052,7 @@
       "ruta": "img/herramientas/aula-arbitraje.jpg",
       "titulo": "Aula arbitraje",
       "tipo": "otro",
-      "kb": 100
+      "kb": 99
      },
      {
       "ruta": "img/herramientas/bases-torneo.jpg",
