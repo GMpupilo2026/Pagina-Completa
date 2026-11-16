@@ -49,6 +49,9 @@ const VIGILADAS = [
   // Las cuentas de árbitro: de qué organizador es cada una (y con eso, qué
   // herramientas le puede dar o quitar).
   "arbitros_cuentas",
+  // Quién entra a cada sala de seminario de arbitraje (la sala de espera y
+  // los admitidos): admitir a alguien le da permiso de ver la sala.
+  "seminario_participantes",
   // De quién es cada evento de la Mesa del árbitro y quién trabaja en él.
   "centroamericano_eventos", "centroamericano_evento_equipo",
   // El sello «Organizador verificado» de Pareo Integral: lo da (o lo quita)
