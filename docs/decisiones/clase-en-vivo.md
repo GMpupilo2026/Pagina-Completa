@@ -4526,6 +4526,10 @@ por esta.
     vez de Noto). Se les escribió la huella nueva sin redibujar.
     `formacion-practicas.js` sí redibuja `practica-01`: sus imágenes se
     devolvieron a las de antes con `git checkout`.
+  - La lámina de la sala real (hoy la 20) pasó de `foto` a `fotos`: la sala
+    del Tacho Chess 2 y la de un torneo de la FCA en un gimnasio del ICODER
+    (un bloque rotulado por categoría y el público en las graderías), sin
+    agregar láminas, para que la práctica no se moviera.
   - La foto de la mesa que mandó el dueño por el chat no quedó en ningún
     archivo, así que la mesa se dibujó; si llega la foto, va como `foto`.
 
