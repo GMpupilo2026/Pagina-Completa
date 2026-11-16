@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261116025030
+# al-dia-con: 20261116171834
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -536,6 +536,7 @@ columna  arbitros_cr_torneos.sistema  text
 columna  arbitros_cr_torneos.titulados  smallint
 columna  arbitros_cr_torneos.titulados_feds  jsonb
 columna  arbitros_cr_torneos.valorado  text
+columna  arbitros_cuentas.a_la_vista  text[]
 columna  arbitros_cuentas.arbitro_id  uuid
 columna  arbitros_cuentas.creada_en  timestamp with time zone
 columna  arbitros_cuentas.organizador_id  uuid
@@ -2953,6 +2954,7 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  arbitro_fichas_a_la_vista_fijar(p_arbitro uuid, p_herramientas text[])  definer  anon=false  auth=true
 funcion  arbitro_herramientas_fijar(p_arbitro uuid, p_herramientas text[])  definer  anon=false  auth=true
 funcion  arbitro_torneo_ajustar(p_tnr text, p_nombre text, p_archivado boolean)  definer  anon=false  auth=true
 funcion  arbitro_torneo_visto(p_tnr text, p_torneo text)  definer  anon=false  auth=true
