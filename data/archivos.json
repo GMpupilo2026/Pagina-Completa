@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1288,
+  "total": 1289,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27053,6 +27053,12 @@
       "titulo": "Bases torneo",
       "tipo": "otro",
       "kb": 110
+     },
+     {
+      "ruta": "img/herramientas/desempates.jpg",
+      "titulo": "Desempates",
+      "tipo": "otro",
+      "kb": 129
      },
      {
       "ruta": "img/herramientas/mesa-arbitro.jpg",

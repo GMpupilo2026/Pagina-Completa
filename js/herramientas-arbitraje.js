@@ -326,6 +326,10 @@
             nombre: "Desempates explicados",
             href: "desempates.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/desempates.jpg", ancho: 1200, alto: 675,
+                alt: "Una árbitra explica a dos jugadores empatados por qué uno queda arriba: en la laptop, «¿Por qué Ana queda arriba de Luis?», con los mismos puntos, tablas entre ellos y el Buchholz corte 1 que los distingue, desglosado ronda por ronda; al lado, la clasificación impresa con los dos empatados marcados.",
+            },
             resumen: "Pega las bases del torneo (el orden de desempates) y el enlace de chess-results: la herramienta recalcula la clasificación desde las partidas y explica, paso a paso, por qué cada persona queda arriba de la otra.",
             puntos: [
                 "Los 26 desempates del C.07 (versión 2026) en el orden que elijas, calculados con el mismo motor que Pareo Integral.",
