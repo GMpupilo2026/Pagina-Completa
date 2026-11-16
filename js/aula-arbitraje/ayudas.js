@@ -8,7 +8,7 @@
 
    Cuatro piezas, que usa js/aula-arbitraje-pagina.js:
    - evaluar(texto): la cuenta que escribe la persona («(2188+2405)/2»,
-     «9½ + 1,25», «2½»), con un analizador propio (sin eval: la CSP no lo
+     «9½ + 1,25», «2½», y con tiempos «1:12:40 − 0:05:00»), con un analizador propio (sin eval: la CSP no lo
      deja y no hace falta). Devuelve el número o null.
    - campos(cont): los campos con data-calc aceptan una cuenta y muestran el
      resultado al lado mientras se escribe.
@@ -86,6 +86,36 @@
         return String(r).replace(".", ",");
     }
 
+    /* ---------- cuentas con tiempos (los relojes) ----------
+       En una cuenta con «h:mm:ss» o «m:ss», cada tiempo se pasa a segundos y
+       un número suelto también son segundos: «1:12:40 − 0:05:00»,
+       «0:30 × 12» (doce incrementos de 30 s), «1:10:00 × 9 ÷ 12». El
+       resultado vuelve a h:mm:ss. Es la misma lectura que AulaAjuste.leerTiempo. */
+    const TIEMPO = /\d+(?::\d{1,2}){1,2}/g;
+    const esTiempo = (texto) => /\d:\d{1,2}/.test(String(texto || ""));
+    function aSegundos(t) {
+        const p = t.split(":").map(Number);
+        return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+    }
+    /* La cuenta con tiempos, en segundos (o null). */
+    function evaluarTiempo(texto) {
+        if (!esTiempo(texto)) return null;
+        return evaluar(String(texto).replace(TIEMPO, (t) => String(aSegundos(t))));
+    }
+    /* Segundos → «h:mm:ss» (redondeado al segundo; con signo si es negativo). */
+    function formatoTiempo(seg) {
+        if (seg == null || !isFinite(seg)) return "";
+        const neg = seg < 0, x = Math.round(Math.abs(seg));
+        const h = Math.floor(x / 3600), m = Math.floor((x % 3600) / 60), ss = x % 60;
+        return (neg ? "−" : "") + h + ":" + String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
+    }
+    /* Lo que escribió la persona en un campo de tiempo, en milisegundos, si es una cuenta (si no, null: lo lee leerTiempo). */
+    function tiempoDeCuenta(texto) {
+        if (!esCuenta(texto)) return null;
+        const v = evaluarTiempo(texto);
+        return v === null || v < 0 ? null : Math.round(v) * 1000;
+    }
+
     const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     let serie = 0;
 
@@ -103,9 +133,11 @@
             const describir = (inp.getAttribute("aria-describedby") || "").split(" ").filter(Boolean);
             describir.push(sal.id);
             inp.setAttribute("aria-describedby", describir.join(" "));
+            const deTiempo = inp.dataset.calc === "tiempo";
             const pintar = () => {
                 const t = inp.value;
                 if (!esCuenta(t)) { sal.textContent = ""; return; }
+                if (deTiempo) { const v = evaluarTiempo(t); sal.textContent = v === null ? "La cuenta no está completa (escribe los tiempos como h:mm:ss)" : "= " + formatoTiempo(v); return; }
                 const v = evaluar(t);
                 sal.textContent = v === null ? "La cuenta no está completa" : "= " + formato(v);
             };
@@ -165,19 +197,22 @@
             '<label for="' + id + '-lista">Promedio de una lista (separa los números con comas o espacios)<input id="' + id + '-lista" autocomplete="off" inputmode="decimal" placeholder="2188, 2405, 2444, 2320"></label>' +
             '<p class="aula-ay-res" aria-live="polite" data-ay="prom"></p>' +
             '<details class="aula-detalle"><summary>Lo que ya calculaste</summary><ol class="aula-ay-hist" data-ay="hist"></ol></details>' +
-            '<p class="aula-nota">Acepta + − × ÷ (también * y /), paréntesis, coma o punto decimal, y ½, ¼, ¾ (por ejemplo 9½).</p></div>';
+            '<p class="aula-nota">Acepta + − × ÷ (también * y /), paréntesis, coma o punto decimal, y ½, ¼, ¾ (por ejemplo 9½). También tiempos: «1:12:40 − 0:05:00» o «0:30 × 12»; en una cuenta con tiempos, un número suelto son segundos.</p></div>';
     }
     function activarCalculadora(caja) {
         const ex = caja.querySelector("input[id$='-ex']"), lista = caja.querySelector("input[id$='-lista']");
         const res = caja.querySelector("[data-ay=res]"), prom = caja.querySelector("[data-ay=prom]"), hist = caja.querySelector("[data-ay=hist]");
         const calcular = () => {
-            const v = evaluar(ex.value);
+            const conTiempo = esTiempo(ex.value);
+            const v = conTiempo ? evaluarTiempo(ex.value) : evaluar(ex.value);
             if (v === null) { res.textContent = ex.value.trim() ? "Revisa la cuenta: hay algo que no se entiende." : ""; return; }
-            res.textContent = ex.value.trim() + " = " + formato(v);
+            const texto = conTiempo ? formatoTiempo(v) + " (" + formato(Math.round(v)) + " s)" : formato(v);
+            res.textContent = ex.value.trim() + " = " + texto;
             const li = document.createElement("li");
             const b = document.createElement("button");
-            b.type = "button"; b.className = "aula-ay-reusar"; b.textContent = ex.value.trim() + " = " + formato(v);
-            b.addEventListener("click", () => { ex.value = formato(v); ex.focus(); });
+            b.type = "button"; b.className = "aula-ay-reusar";
+            b.textContent = ex.value.trim() + " = " + texto;
+            b.addEventListener("click", () => { ex.value = conTiempo ? formatoTiempo(v) : formato(v); ex.focus(); });
             li.appendChild(b); hist.prepend(li);
         };
         caja.querySelector("[data-ay=igual]").addEventListener("click", calcular);
@@ -224,7 +259,7 @@
         return { conPista: () => pistaUsada };
     }
 
-    const api = { evaluar, esCuenta, formato, separarLista, campos, barra, tablaDp, tablaDpDesempate, tablaNormas, tablaDesempates };
+    const api = { evaluar, esCuenta, formato, separarLista, esTiempo, evaluarTiempo, formatoTiempo, tiempoDeCuenta, campos, barra, tablaDp, tablaDpDesempate, tablaNormas, tablaDesempates };
     if (typeof module !== "undefined" && module.exports) module.exports = api;
     raiz.AulaAyudas = api;
 })(typeof window !== "undefined" ? window : globalThis);

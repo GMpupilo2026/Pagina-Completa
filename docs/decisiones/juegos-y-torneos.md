@@ -12114,6 +12114,16 @@ tres botones, justo entre los datos y lo que se calcula:
 Además, los campos numéricos de esos ejercicios aceptan una cuenta y muestran
 el resultado al lado mientras se escribe («= 2273,6667» en el Ra).
 
+**Los relojes cuentan con tiempos.** En los casos y la práctica de relojes,
+la calculadora y los dos tiempos (el panel «Ajuste del árbitro» de
+`js/aula-arbitraje/reloj.js` y los campos de la práctica) aceptan cuentas
+con h:mm:ss o m:ss: «1:12:40 − 0:05:00», «0:30 × 12» (doce incrementos),
+«1:30:00 + 40 × 30 − 0:36:00». Cada tiempo se pasa a segundos y **un número
+suelto también son segundos**; el resultado vuelve a h:mm:ss. Un tiempo solo,
+sin cuenta, lo sigue leyendo `AulaAjuste.leerTiempo` como antes. Por eso la
+calculadora de números no toma los dos puntos como división: los dos puntos
+son de los tiempos.
+
 - **Hacen las cuentas, no las reglas.** Qué partidas se dejan afuera, a quién
   se sube al piso, el 1400 del rival sin Elo, cómo se redondea o qué rivales
   cuentan en el Koya lo sigue decidiendo el árbitro: si la plataforma lo

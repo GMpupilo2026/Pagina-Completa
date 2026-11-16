@@ -121,7 +121,7 @@
     function marcador(tipo) { const g = (avance().gen || {})[tipo]; return g ? "Correctos: " + g.ok + " de " + g.total + (g.pista ? " (" + g.pista + " con pista)" : "") : ""; }
     /* Las ayudas de cálculo de un ejercicio (js/aula-arbitraje/ayudas.js): la
        calculadora, las tablas de FIDE y la pista. Hacen las cuentas, no las reglas. */
-    const PISTA_RELOJ = '<ol class="aula-pasos"><li><b>Consumido</b> = tiempo de los controles alcanzados + jugadas hechas × incremento − lo que marca el reloj.</li><li><b>Consumido ideal</b> = consumido × jugadas que quedan ÷ jugadas hechas.</li><li><b>Reloj</b> = tiempo de los controles que se alcanzan con las jugadas que quedan + jugadas que quedan × incremento − consumido ideal.</li><li>Al rival del que hizo la ilegal, la sanción del art. 7.5.5 (2 minutos en estándar).</li></ol><p class="aula-nota">Las jugadas que quedan son las completadas antes de la jugada ilegal (art. 7.5.1, Leyes 2023). Hazlo para cada reloj por separado.</p>';
+    const PISTA_RELOJ = '<ol class="aula-pasos"><li><b>Consumido</b> = tiempo de los controles alcanzados + jugadas hechas × incremento − lo que marca el reloj.</li><li><b>Consumido ideal</b> = consumido × jugadas que quedan ÷ jugadas hechas.</li><li><b>Reloj</b> = tiempo de los controles que se alcanzan con las jugadas que quedan + jugadas que quedan × incremento − consumido ideal.</li><li>Al rival del que hizo la ilegal, la sanción del art. 7.5.5 (2 minutos en estándar; en rápidas y relámpago, 1 minuto: Apéndices A y B).</li></ol><p class="aula-nota">La calculadora y los campos de tiempo aceptan cuentas con tiempos: «1:30:00 + 40 × 30 − 0:36:00» (un número suelto son segundos).</p><p class="aula-nota">Las jugadas que quedan son las completadas antes de la jugada ilegal (art. 7.5.1, Leyes 2023). Hazlo para cada reloj por separado.</p>';
     const PISTA_KOYA = '<ol class="aula-pasos"><li>El límite es el 50 % de los puntos posibles: rondas ÷ 2.</li><li>Marca en la tabla a los rivales que llegaron al límite o lo pasaron.</li><li>El KS de cada empatado es la suma de los puntos que hizo contra esos rivales.</li></ol>';
     const PISTA_NORMA = '<ol class="aula-pasos"><li>Cuentan las partidas jugadas en el tablero; en un suizo se pueden dejar afuera las de después de lograr la norma o las ganadas, mientras queden 9 y la mezcla de rivales (1.4.1e y f).</li><li>El Elo de cada rival: sin Elo, 1400; el más bajo, si está por debajo del piso de la norma, sube al piso, y solo ese (1.4.6).</li><li><b>Ra</b> = suma de los Elo ÷ partidas, redondeado (0,5 hacia arriba) (1.4.7).</li><li><b>%</b> = puntos ÷ partidas × 100, redondeado al entero; busca su <b>dp</b> en la tabla (1.4.9).</li><li><b>Rp</b> = Ra + dp, y compáralo con los mínimos de la norma (1.4.8). Revisa también federaciones y títulos (1.4.3 a 1.4.5).</li></ol>';
     function pistaDesempate(codigos) {
@@ -129,6 +129,8 @@
         const de = (c) => { const x = P && P.CATALOGO.find((k) => k.codigo === c); return x ? x.es : AD.nombreDe(c); };
         return '<ol class="aula-pasos">' + codigos.map((c) => "<li><b>" + esc(c) + "</b>: " + esc(de(c)) + "</li>").join("") + '</ol><p class="aula-nota">Calcula cada desempate solo para los que siguen empatados después del anterior (art. 4.2). Las rondas no jugadas cuentan como dicen los arts. 15 y 16 del C.07.</p>';
     }
+    /* Un tiempo escrito como h:mm:ss o como una cuenta con tiempos, en milisegundos. */
+    const leerTiempoOCuenta = (txt) => (AY && AY.esCuenta(txt) ? AY.tiempoDeCuenta(txt) : A.leerTiempo(txt));
     const chipPista = (usada) => (usada ? ' <span class="aula-chip aviso">resuelto con pista</span>' : "");
     /* Cada pregunta tiene una clave que no cambia aunque se agregue
        contenido: su ficha y su lugar dentro de la ficha. La primera versión
@@ -339,14 +341,14 @@
                 '<p class="aula-enunciado">Ritmo <b>' + R.nombre + "</b>. La última jugada fue la <b>" + (ultimasNegras ? nb + "…" : nw + ".") + "</b> (" + (ultimasNegras ? "negras" : "blancas") + "). Se comprueba que las <b>" + (quien === "w" ? "blancas" : "negras") + "</b> hicieron una jugada ilegal en la jugada <b>" + k + "</b> (la primera de la partida) y se vuelve a la posición anterior. Aplica el <b>método proporcional</b> y la sanción.</p>" +
                 '<div class="aula-datos"><div class="aula-dato"><span>Reloj de las blancas</span><b>' + A.tiempo(w) + '</b></div><div class="aula-dato"><span>Reloj de las negras</span><b>' + A.tiempo(b) + "</b></div>" +
                 '<div class="aula-dato"><span>Jugadas completadas</span><b>' + nw + " / " + nb + '</b></div><div class="aula-dato"><span>Incremento</span><b>' + (inc ? inc + " s" : "sin incremento") + "</b></div></div>" +
-                '<div class="aula-entradas"><label for="aula-iw">Reloj de las blancas después del ajuste<input id="aula-iw" placeholder="h:mm:ss" inputmode="numeric" autocomplete="off"></label>' +
-                '<label for="aula-ib">Reloj de las negras después del ajuste<input id="aula-ib" placeholder="h:mm:ss" inputmode="numeric" autocomplete="off"></label>' +
+                '<div class="aula-entradas"><label for="aula-iw">Reloj de las blancas después del ajuste<input id="aula-iw" placeholder="h:mm:ss o una cuenta" inputmode="numeric" autocomplete="off" data-calc="tiempo"></label>' +
+                '<label for="aula-ib">Reloj de las negras después del ajuste<input id="aula-ib" placeholder="h:mm:ss o una cuenta" inputmode="numeric" autocomplete="off" data-calc="tiempo"></label>' +
                 '<label for="aula-ijw">Jugadas completadas de las blancas<input id="aula-ijw" type="number" min="0"></label><label for="aula-ijb">Jugadas completadas de las negras<input id="aula-ijb" type="number" min="0"></label></div>' +
                 '<div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" id="aula-comp">Comprobar</button><button type="button" class="aula-btn aula-btn-sec" id="aula-nuevo">Otro ejercicio</button><span class="aula-nota">Se acepta una diferencia de hasta 30 s.</span></div><div id="aula-fb" aria-live="polite"></div>';
             q("#aula-nuevo", z).addEventListener("click", nuevo);
             const ayuda = AY ? AY.barra(q("#aula-ej", z), { pista: PISTA_RELOJ, antes: ".aula-entradas" }) : { conPista: () => false };
             q("#aula-comp", z).addEventListener("click", () => {
-                const uw = A.leerTiempo(q("#aula-iw", z).value), ub = A.leerTiempo(q("#aula-ib", z).value);
+                const uw = leerTiempoOCuenta(q("#aula-iw", z).value), ub = leerTiempoOCuenta(q("#aula-ib", z).value);
                 const ujw = Number(q("#aula-ijw", z).value), ujb = Number(q("#aula-ijb", z).value);
                 if (uw == null || ub == null) { q("#aula-fb", z).innerHTML = '<div class="aula-fb aviso"><p>Escribe los dos tiempos como h:mm:ss (por ejemplo 0:52:32).</p></div>'; return; }
                 const okT = Math.abs(uw - ew) <= 30000 && Math.abs(ub - eb) <= 30000, okJ = ujw === lw && ujb === lb;

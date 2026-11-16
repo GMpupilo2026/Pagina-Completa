@@ -268,6 +268,34 @@ async function contrastes(p) {
     igual("el caso de TPR trae además la tabla del dp del rendimiento (de js/pareo/desempates.js): 70 % → +149",
         await p.evaluate(() => { const t = document.querySelector(".aula-ayudas .aula-ay-dp"); const f = t && [...t.querySelectorAll("tr")].find((r) => r.children[2] && r.children[2].textContent === "70 %"); return [!!t, f && f.children[3].textContent, document.querySelector(".aula-ayudas").textContent.includes("interpola")]; }),
         [true, "+149", true]);
+    /* Los casos de reloj: calculadora y pista, y los tiempos del panel de ajuste aceptan una cuenta con tiempos. */
+    const casosReloj = await p.evaluate(() => window.AULA_CONTENIDO.casos.filter((c) => c.ritmo).map((c) => c.id));
+    const malReloj = [];
+    for (const id of casosReloj) {
+        await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
+        await p.waitForSelector("#aula-dict");
+        const r = await p.evaluate(() => [[...document.querySelectorAll(".aula-ayudas .aula-ay-btn")].map((x) => x.dataset.panel).join(","), document.querySelectorAll('#aula-zr input[data-calc="tiempo"]').length]);
+        if (r[0] !== "calc,pista" || r[1] !== 2) malReloj.push(id + " (" + r.join(" · ") + ")");
+    }
+    igual("los " + casosReloj.length + " casos de reloj traen calculadora y pista, y sus dos tiempos aceptan cuentas", [casosReloj.length >= 6, malReloj], [true, []]);
+    /* Primero a la lista: así el panel que se llena es el del caso nuevo, no el del anterior que todavía no se repintó. */
+    await p.evaluate(() => { location.hash = "casos"; });
+    await p.waitForFunction(() => !document.querySelector("#aula-zr"));
+    await p.evaluate(() => { location.hash = "caso-ilegal-sin-incremento"; });
+    await p.waitForSelector('#aula-zr [data-campo="tw"]');
+    await p.evaluate(() => { document.querySelectorAll("#aula-zr details").forEach((d) => { d.open = true; }); });
+    await p.fill('#aula-zr [data-campo="tw"]', "1:12:40 - 0:05:00");
+    await p.fill('#aula-zr [data-campo="tb"]', "0:58:00 + 2:00");
+    const ecoReloj = await p.$eval('#aula-zr [data-campo="tw"] + .aula-calc-eco', (n) => n.textContent);
+    await p.click('#aula-zr [data-accion="aplicar"]');
+    /* La pantalla del reloj se repinta en el cuadro siguiente: se espera a que muestre el ajuste. */
+    await p.waitForFunction(() => document.querySelector("#aula-zr .aula-dig").textContent === "1:07:40", null, { timeout: 3000 }).catch(() => {});
+    igual("en el panel de ajuste, «1:12:40 − 0:05:00» muestra = 1:07:40 y al aplicar el reloj queda en 1:07:40 y 1:00:00",
+        [ecoReloj, await p.$$eval("#aula-zr .aula-dig", (l) => l.map((x) => x.textContent))], ["= 1:07:40", ["1:07:40", "1:00:00"]]);
+    await p.click(".aula-ay-btn[data-panel='calc']");
+    await p.fill(".aula-ay-calc input[id$='-ex']", "1:30:00 + 40 × 30 - 0:36:00");
+    await p.keyboard.press("Enter");
+    igual("la calculadora de un caso de reloj cuenta con tiempos", await p.textContent(".aula-ay-calc [data-ay=res]"), "1:30:00 + 40 × 30 - 0:36:00 = 1:14:00 (4440 s)");
     for (const [id, campo, paneles] of [["des-buchholz", ".aula-paso-calc input", "calc,tablas,pista"], ["ilegal-sin-incremento", "#aula-dict", "calc,pista"]]) {
         await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
         await p.waitForSelector(campo);

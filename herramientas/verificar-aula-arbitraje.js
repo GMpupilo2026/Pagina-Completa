@@ -156,6 +156,9 @@ igual("lo que no es una cuenta completa da null (sin eval: nada se ejecuta)", ["
 igual("una lista de Elo se separa aunque la coma vaya pegada; 9,25 sigue siendo decimal", [AY.separarLista("2188,2405, 2444 2320;2135"), AY.separarLista("9,25 1,5")], [["2188", "2405", "2444", "2320", "2135"], ["9,25", "1,5"]]);
 igual("el número se escribe con coma decimal", [AY.formato(2273.66667), AY.formato(2.5), AY.formato(2600)], ["2273,6667", "2,5", "2600"]);
 igual("«2188» no es una cuenta; «2188+1» y «(2188)» sí", ["2188", "2188+1", "(2188)"].map((t) => AY.esCuenta(t)), [false, true, true]);
+igual("cuentas con tiempos: h:mm:ss y m:ss a segundos, un número suelto son segundos, y de vuelta a h:mm:ss",
+    ["1:12:40 - 0:05:00", "0:30 × 12", "1:10:00 × 9 ÷ 12", "1:30:00 + 40 × 30 - 0:36:00", "52:32 + 2:00"].map((t) => AY.formatoTiempo(AY.evaluarTiempo(t))), ["1:07:40", "0:06:00", "0:52:30", "1:14:00", "0:54:32"]);
+igual("un campo de tiempo: la cuenta en milisegundos; un tiempo solo (sin cuenta) lo sigue leyendo leerTiempo", [AY.tiempoDeCuenta("0:52:32 + 2:00"), AY.tiempoDeCuenta("0:52:32"), AY.tiempoDeCuenta("0:01:00 - 0:05:00")], [3272000, null, null]);
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
