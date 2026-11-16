@@ -8,7 +8,12 @@
    Qué herramientas tiene lo dice la base, en una sola pregunta:
    `mis_herramientas()` (las licencias de su cuenta que siguen valiendo, ver
    «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md). La
-   página de cada herramienta vuelve a preguntar por la suya: esto solo pinta. */
+   página de cada herramienta vuelve a preguntar por la suya: esto solo pinta.
+
+   Debajo, las fichas «a la vista»: herramientas que su organizador quiere que
+   vea, cerradas, hasta que tenga la licencia (`arbitros_cuentas.a_la_vista`;
+   ver «Las fichas a la vista» en permisos-y-roles.md). Una tarjeta cerrada no
+   lleva `href`, pero se alcanza con Tab y dice que le falta la licencia. */
 (function () {
     "use strict";
     const H = window.HerramientasArbitraje;
@@ -42,6 +47,31 @@
         return li;
     }
 
+    /* La ficha de una herramienta que todavía no abre: lo que hace, y que le
+       falta la licencia, con el enlace a la vitrina donde se pide. */
+    function tarjetaCerrada(h) {
+        const li = el("li", "flex flex-col");
+        const caja = el("div", "flex-1 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 border-2 border-dashed border-brand-300 dark:border-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        caja.tabIndex = 0;
+        caja.setAttribute("aria-disabled", "true");
+        caja.dataset.herramienta = h.id;
+        const titulo = el("h3", "font-serif text-lg font-bold text-brand-800 dark:text-white");
+        const emoji = el("span", null, (h.emoji || "♟️") + " ");
+        emoji.setAttribute("aria-hidden", "true");
+        titulo.append(emoji, document.createTextNode(h.corto || h.nombre));
+        const estado = el("p", "inline-flex items-center gap-1 mt-2 text-xs font-semibold rounded-full px-2 py-0.5 bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100");
+        const candado = el("span", null, "🔒");
+        candado.setAttribute("aria-hidden", "true");
+        estado.append(candado, document.createTextNode(" Sin licencia todavía"));
+        caja.append(titulo, estado, el("p", "text-sm text-brand-600 dark:text-brand-300 mt-2", h.resumen || ""));
+        li.appendChild(caja);
+        const pedir = el("a", "self-start mt-2 ml-1 text-sm font-semibold underline text-accent-700 dark:text-accent-400", "Cómo conseguir la licencia");
+        pedir.href = "herramientas-arbitraje.html#" + (h.tema || "arbitraje");
+        pedir.setAttribute("aria-label", "Cómo conseguir la licencia de " + (h.corto || h.nombre));
+        li.appendChild(pedir);
+        return li;
+    }
+
     /* La cuenta de árbitro no tiene el panel de la Academia (donde está el
        «Cerrar sesión» de todos), así que su salida va acá. */
     async function cerrarSesion() {
@@ -57,9 +87,10 @@
         try {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { location.replace("login.html?next=arbitro.html"); return; }
-            const [mias, perfil] = await Promise.all([
+            const [mias, perfil, cuenta] = await Promise.all([
                 sb.rpc("mis_herramientas"),
                 sb.from("profiles").select("full_name, role").eq("id", session.user.id).maybeSingle(),
+                sb.from("arbitros_cuentas").select("a_la_vista").eq("arbitro_id", session.user.id).maybeSingle(),
             ]);
             if (mias.error) throw mias.error;
             const nombre = perfil.data && perfil.data.full_name ? perfil.data.full_name.split(" ")[0] : "";
@@ -71,6 +102,13 @@
             const ul = $("lista");
             ul.textContent = "";
             lista.forEach((h) => ul.appendChild(tarjeta(h)));
+            // Las fichas a la vista que todavía no abre (si ya la abre, sale arriba).
+            const vista = (cuenta && !cuenta.error && cuenta.data && cuenta.data.a_la_vista) || [];
+            const cerradas = H.conLicenciaPropia().filter((h) => vista.includes(h.id) && !H.abre(mias.data, h));
+            const ulc = $("cerradas");
+            ulc.textContent = "";
+            cerradas.forEach((h) => ulc.appendChild(tarjetaCerrada(h)));
+            $("cerradas-caja").hidden = cerradas.length === 0;
             $("vacio").hidden = lista.length > 0;
             $("cuantas").textContent = lista.length === 1
                 ? "Tienes 1 herramienta."

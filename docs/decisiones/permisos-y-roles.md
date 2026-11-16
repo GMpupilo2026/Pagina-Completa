@@ -2499,6 +2499,41 @@ las funciones `set_*`, **pero solo entre las que quien llama puede dar**:
   `mis_herramientas()` (`HerramientasArbitraje.abre()`). Va sin la burbuja de
   conectados, sin el aviso de partida y sin el aviso del profe.
 
+### Las fichas a la vista
+
+El dueño lo pidió el 16/11/2026 con la cuenta de Brandon: «permitir que vea
+las fichas pero sin poder entrar hasta tener la licencia» de Pareo Integral,
+Pareo para DGT, Notara, Normas de título, Reclamos de tablas, Bases del torneo
+y Mesa del árbitro.
+
+- **No es un permiso.** Ver la ficha no abre nada: abrir lo siguen decidiendo
+  `tengo_herramienta()`, el candado de cada página, las Edge Functions y el
+  worker, que no miran esta lista. La ficha es lo mismo que la vitrina pública
+  le enseña a cualquiera. Por eso el organizador puede poner a la vista
+  **cualquier** herramienta, también una que él no tiene: justo la que el
+  árbitro tendría que conseguir.
+- **Dónde vive:** `arbitros_cuentas.a_la_vista` (migración
+  `20261116171834`), una lista por árbitro, que hereda la política de lectura
+  (el propio árbitro, su organizador, administración), la falta de política de
+  escritura y la bitácora de esa tabla. La escribe
+  `arbitro_fichas_a_la_vista_fijar()`: solo su organizador o administración
+  (con `coalesce`), deja la lista exactamente como llega y la vuelve a leer.
+- **`arbitro.html`** pinta debajo de sus herramientas «Para cuando tengas la
+  licencia»: las fichas a la vista que todavía no abre (si ya la abre, sale
+  arriba y no se repite), con el borde punteado, «Sin licencia todavía» escrito
+  y «Cómo conseguir la licencia», que lleva a la ficha de su tema en la
+  vitrina. Una tarjeta cerrada no lleva `href`, se alcanza con Tab y lleva
+  `aria-disabled`.
+- **`mis-arbitros.html`**: en cada árbitro, el desplegable «Fichas a la vista,
+  sin abrir» con todas las herramientas de la vitrina y su propio botón de
+  guardar.
+- Comprobado impersonando roles en SQL (16/11, dentro de una transacción que
+  se deshizo): administración las fija; el árbitro lee su lista, no abre la
+  herramienta, no puede fijarse la lista ni escribir la tabla directo; otro
+  profesor no la fija ni ve la fila; sin sesión, rechaza.
+  `verificar-arbitros-cuentas.js` prueba las promesas de la migración y las dos
+  pantallas.
+
 **Lo que falta** (el punto 1 de lo conversado con el dueño): que lo de la Mesa
 del árbitro del Centroamericano (`centroamericano_*`) tenga dueño por evento.
 Hoy cualquiera con la licencia `mesa-arbitro` ve todo lo del Centroamericano,
