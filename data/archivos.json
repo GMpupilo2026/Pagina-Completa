@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1290,
+  "total": 1291,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27095,6 +27095,12 @@
       "titulo": "Pareo integral",
       "tipo": "otro",
       "kb": 119
+     },
+     {
+      "ruta": "img/herramientas/torneos-costa-rica.jpg",
+      "titulo": "Torneos costa rica",
+      "tipo": "otro",
+      "kb": 128
      }
     ]
    },

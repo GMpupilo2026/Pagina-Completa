@@ -67,6 +67,10 @@
             corto: "Torneos de Costa Rica",
             href: "torneos-pareo.html#tambien",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/torneos-costa-rica.jpg", ancho: 1200, alto: 675,
+                alt: "Un joven ajedrecista en la banca de un parque mira en su celular los Torneos de Costa Rica: tarjetas con la fecha, el ritmo, si valen para Elo, el costo y los botones para inscribirse y agregarlos a su calendario, con los filtros de ritmo, Elo y provincia.",
+            },
             gratis: true,
             resumen: "Los torneos que se anuncian en ajedrezcostarica.com y los que ya están cargados en chess-results, juntos en una lista, con la fecha, el ritmo, si valen para Elo y el enlace a su ficha para inscribirse. Gratis y sin cuenta.",
             puntos: [
