@@ -16,7 +16,7 @@
      se calcula?» de un ejercicio. La pista avisa (opc.alUsarPista) la primera
      vez que se abre, para que el avance diga «con pista».
    - Las tablas salen del mismo código que hace el cálculo (NormasTitulo.DP y
-     NORMAS, PareoDesempates.CATALOGO): una sola copia.
+     NORMAS, PareoDesempates.CATALOGO y dpDeP): una sola copia.
    Lo revisan verificar-aula-arbitraje.js (evaluar) y
    verificar-aula-arbitraje-pagina.js (la pantalla). Ver «Las ayudas de cálculo
    de los ejercicios» en docs/decisiones/juegos-y-torneos.md. */
@@ -115,17 +115,31 @@
     }
 
     /* ---------- las tablas de FIDE ---------- */
+    /* La tabla del dp, de 0 a 100 %, con el dp que da `dpDe(porcentaje)`. */
+    function tablaDpCon(dpDe, titulo, nota) {
+        let filas = "";
+        const signo = (v) => (v > 0 ? "+" + v : v < 0 ? "−" + Math.abs(v) : "0");
+        for (let p = 0; p <= 50; p++) {
+            const q = 100 - p;
+            filas += "<tr><td>" + p + " %</td><td>" + signo(dpDe(p)) + "</td><td>" + q + " %</td><td>" + signo(dpDe(q)) + "</td></tr>";
+        }
+        return '<h4 class="aula-ay-tit">' + titulo + '</h4><p class="aula-nota">' + nota + "</p>" +
+            '<div class="aula-tabla aula-ay-dp"><table><caption class="sr-only">Porcentaje de puntos y su dp</caption><thead><tr><th scope="col">%</th><th scope="col">dp</th><th scope="col">%</th><th scope="col">dp</th></tr></thead><tbody>' + filas + "</tbody></table></div>";
+    }
+    /* Para las normas: la de js/normas-titulo.js, con el porcentaje redondeado (1.4.9). */
     function tablaDp() {
         const N = raiz.NormasTitulo;
         if (!N) return "";
-        let filas = "";
-        for (let p = 0; p <= 50; p++) {
-            const q = 100 - p;
-            const signo = (v) => (v > 0 ? "+" + v : v < 0 ? "−" + Math.abs(v) : "0");
-            filas += "<tr><td>" + p + " %</td><td>" + signo(N.DP[p]) + "</td><td>" + q + " %</td><td>" + signo(N.DP[q]) + "</td></tr>";
-        }
-        return '<h4 class="aula-ay-tit">Tabla del dp (B.01, 1.4.9)</h4><p class="aula-nota">El porcentaje se redondea al entero (0,5 hacia arriba) antes de buscarlo. Rp = Ra + dp.</p>' +
-            '<div class="aula-tabla aula-ay-dp"><table><caption class="sr-only">Porcentaje de puntos y su dp</caption><thead><tr><th scope="col">%</th><th scope="col">dp</th><th scope="col">%</th><th scope="col">dp</th></tr></thead><tbody>' + filas + "</tbody></table></div>";
+        return tablaDpCon((p) => N.DP[p], "Tabla del dp (B.01, 1.4.9)", "El porcentaje se redondea al entero (0,5 hacia arriba) antes de buscarlo. Rp = Ra + dp.");
+    }
+    /* Para el desempate por rendimiento (TPR, APRO): la del motor de Pareo
+       Integral (js/pareo/desempates.js, tabla 8.1b de B.02), que con un
+       porcentaje que no está en la tabla interpola entre los dos vecinos. */
+    function tablaDpDesempate() {
+        const P = raiz.PareoDesempates;
+        if (!P || !P.dpDeP) return "";
+        return tablaDpCon((p) => P.dpDeP(p / 100), "Tabla del dp para el rendimiento (B.02, tabla 8.1b)",
+            "TPR = Elo medio de los rivales (ARO) + dp, redondeado al entero. Si el porcentaje no está en la tabla (por ejemplo 61,1 %), el dp se interpola entre los dos valores vecinos.");
     }
     function tablaNormas() {
         const N = raiz.NormasTitulo;
@@ -141,7 +155,7 @@
         return '<h4 class="aula-ay-tit">Los desempates (C.07, 2026)</h4><ul class="aula-pasos">' + lista.map((c) => "<li><b>" + esc(c.codigo) + "</b>: " + esc(c.es) + "</li>").join("") + "</ul>" +
             '<p class="aula-nota">Cada desempate se calcula solo para los que siguen empatados (art. 4.2). Las rondas no jugadas cuentan como dicen los arts. 15 y 16.</p>';
     }
-    const TABLAS = { dp: tablaDp, normas: tablaNormas, desempates: tablaDesempates };
+    const TABLAS = { dp: tablaDp, "dp-desempate": tablaDpDesempate, normas: tablaNormas, desempates: tablaDesempates };
 
     /* ---------- la calculadora de bolsillo ---------- */
     function calculadoraHTML(id) {
@@ -210,7 +224,7 @@
         return { conPista: () => pistaUsada };
     }
 
-    const api = { evaluar, esCuenta, formato, separarLista, campos, barra, tablaDp, tablaNormas, tablaDesempates };
+    const api = { evaluar, esCuenta, formato, separarLista, campos, barra, tablaDp, tablaDpDesempate, tablaNormas, tablaDesempates };
     if (typeof module !== "undefined" && module.exports) module.exports = api;
     raiz.AulaAyudas = api;
 })(typeof window !== "undefined" ? window : globalThis);

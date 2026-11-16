@@ -12101,6 +12101,12 @@ tres botones, justo entre los datos y lo que se calcula:
   salen de `js/normas-titulo.js`, y los desempates del catálogo de
   `js/pareo/desempates.js`: la misma copia que hace el cálculo, nunca una
   segunda escrita a mano.
+  Los desempates por rendimiento (TPR, APRO) traen además su tabla del dp,
+  hecha con `PareoDesempates.dpDeP`, que **no es igual de usar** que la de
+  las normas aunque los valores coincidan: para una norma el porcentaje se
+  redondea al entero antes de buscarlo (1.4.9); para el TPR, si el porcentaje
+  no está en la tabla, el motor interpola entre los dos vecinos. Por eso cada
+  una lleva su nota y sale de su propio código.
 - **¿Cómo se calcula?**: la fórmula y los pasos, sin los números del
   ejercicio. Abrirla deja el ejercicio como «resuelto con pista» (en la
   corrección y en el marcador: «Correctos: 7 de 9 (2 con pista)»).

@@ -252,6 +252,22 @@ async function contrastes(p) {
     igual("los " + casosNorma.length + " casos de normas traen calculadora, tablas de FIDE y pista", [casosNorma.length >= 12, sinAyudas], [true, []]);
     await p.fill("#aula-nra", "(2300 + 2450) / 2");
     igual("y en un caso de normas el Ra también acepta la cuenta", await p.textContent("#aula-nra-eco"), "= 2375");
+    /* Todos los casos de desempate: sus ayudas, campos que aceptan cuentas y, en la tabla, los desempates de sus bases. */
+    const casosDes = await p.evaluate(() => window.AULA_CONTENIDO.casos.filter((c) => c.tipo === "desempate").map((c) => [c.id, c.bases]));
+    const malDes = [];
+    for (const [id, bases] of casosDes) {
+        await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
+        await p.waitForSelector(".aula-paso-calc input");
+        const r = await p.evaluate(() => ({ b: [...document.querySelectorAll(".aula-ayudas .aula-ay-btn")].map((x) => x.dataset.panel).join(","),
+            todos: [...document.querySelectorAll(".aula-paso-calc input")].every((x) => x.hasAttribute("data-calc")), tabla: document.querySelector(".aula-ayudas").textContent }));
+        if (r.b !== "calc,tablas,pista" || !r.todos || !bases.every((c) => r.tabla.includes(c))) malDes.push(id);
+    }
+    igual("los " + casosDes.length + " casos de desempate traen sus ayudas, campos con cuentas y sus desempates en la tabla", [casosDes.length >= 14, malDes], [true, []]);
+    await p.evaluate(() => { location.hash = "caso-des-tpr"; });
+    await p.waitForSelector(".aula-paso-calc input");
+    igual("el caso de TPR trae además la tabla del dp del rendimiento (de js/pareo/desempates.js): 70 % → +149",
+        await p.evaluate(() => { const t = document.querySelector(".aula-ayudas .aula-ay-dp"); const f = t && [...t.querySelectorAll("tr")].find((r) => r.children[2] && r.children[2].textContent === "70 %"); return [!!t, f && f.children[3].textContent, document.querySelector(".aula-ayudas").textContent.includes("interpola")]; }),
+        [true, "+149", true]);
     for (const [id, campo, paneles] of [["des-buchholz", ".aula-paso-calc input", "calc,tablas,pista"], ["ilegal-sin-incremento", "#aula-dict", "calc,pista"]]) {
         await p.evaluate((h) => { location.hash = "caso-" + h; }, id);
         await p.waitForSelector(campo);

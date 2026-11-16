@@ -470,7 +470,10 @@
             '<h3 class="aula-sub">2. Decide el orden</h3><div class="aula-entradas">' +
             plano.map((_, k) => '<label for="aula-o' + k + '">' + (k + 1) + '.º lugar del grupo<select id="aula-o' + k + '"><option value="">Elige…</option>' + g.ids.map((id) => '<option value="' + id + '">' + esc(nombres[id]) + "</option>").join("") + "</select></label>").join("") +
             '</div><div class="aula-fila-ctrl"><button type="button" class="aula-btn aula-btn-pri" data-comprobar>Comprobar</button></div><div class="aula-fb-zona" aria-live="polite"></div>';
-        const ayuda = AY ? AY.barra(cont, { tablas: [{ tipo: "desempates", codigos: bases }], pista: pistaDesempate(bases), antes: ".aula-sub" }) : { conPista: () => false };
+        const ayuda = AY ? AY.barra(cont, {
+            /* Los desempates por rendimiento (TPR, APRO) necesitan además la tabla del dp. */
+            tablas: [{ tipo: "desempates", codigos: bases }].concat(bases.some((c) => /^(TPR|APRO)/.test(c)) ? ["dp-desempate"] : []),
+            pista: pistaDesempate(bases), antes: ".aula-sub" }) : { conPista: () => false };
         q("[data-comprobar]", cont).addEventListener("click", () => {
             let okVal = true;
             const lineas = r.pasos.map((p, k) => {
