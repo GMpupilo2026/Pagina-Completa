@@ -120,14 +120,64 @@ module.exports = [
     { ic: "⏱️", t: "Por cada tablero", s: "piezas, reloj y 2 sillas, + 10 % de repuesto" } ],
     clave: "Regional de Alajuela 2026: 74 mesas dobles y 142 tableros y relojes." },
   // 15
-  { tipo: "receso" },
+  { tipo: "foto", k: "Tacho Chess 2: la sala lista para la ronda", foto: "tacho-chess-2-sala.jpg",
+    items: [
+      { ic: "🪑", t: "Mesas en filas largas", s: "con pasillos entre filas" },
+      { ic: "🚧", t: "Una tela separa al público", s: "nadie de afuera entra" },
+      { ic: "🧾", t: "Una mesa aparte", s: "control, resultados y repuestos" } ],
+    clave: "El plano siguiente ordena una sala así." },
   // 16
+  { tipo: "sala", k: "Regional de Alajuela 2026: 15 torneos a la vez",
+    control: "Mesa de control · árbitro principal",
+    tela: "Tela o cinta: aquí termina la zona de juego",
+    publico: "Público",
+    leyenda: "Debajo de cada fila: tableros · mesas dobles. Ab abierto, M mujeres, Eq equipos. A1 a A8: árbitros de sala.",
+    zonas: [2, 2, 2, 2, 4, 1, 1, 1],
+    filas: [
+      { t: "A Ab", mesas: 4, tableros: 7 },
+      { t: "B Ab", mesas: 7, tableros: 13 },
+      { t: "A M", mesas: 2, tableros: 3 },
+      { t: "C Ab", mesas: 8, tableros: 15 },
+      { t: "B M", mesas: 4, tableros: 7 },
+      { t: "C M", mesas: 5, tableros: 9 },
+      { t: "D Ab", mesas: 8, tableros: 16 },
+      { t: "E Ab", mesas: 1, tableros: 2 },
+      { t: "D M", mesas: 3, tableros: 6 },
+      { t: "Eq A Ab", mesas: 2, tableros: 4, eq: true },
+      { t: "Eq B M", mesas: 2, tableros: 4, eq: true },
+      { t: "Eq C M", mesas: 2, tableros: 4, eq: true },
+      { t: "Eq B Ab", mesas: 10, tableros: 20, eq: true },
+      { t: "Eq C Ab", mesas: 8, tableros: 16, eq: true },
+      { t: "Eq D Ab", mesas: 8, tableros: 16, eq: true },
+    ] },
+  // 17
+  { tipo: "tabla", k: "Regional de Alajuela 2026, todo a la vez", cab: ["Material", "Llevar", "Cálculo"], filas: [
+    ["Mesas dobles", "", "76", "", "74 + 2 de control"],
+    ["Sillas", "", "288", "", "2 por tablero + 4"],
+    ["Juegos y tableros", "", "157", "", "142 + 15 de repuesto"],
+    ["Relojes", "", "157", "", "142 + 15, a 10 min + 2 s"],
+    ["Baterías", "", "36", "", "1 por 4 relojes"],
+    ["Planillas", "", "2033", "", "2 por partida y ronda + 10 %"],
+    ["Hojas de resultados", "", "171", "", "por ronda o encuentro + 10 %"],
+    ["Personas árbitras", "", "9", "", "8 de sala + la principal"],
+    ["Sala", "", "304 m²", "", "4 m² por mesa (supuesto)"] ] },
+  // 18
+  { tipo: "mesa", k: "Todas las mesas iguales", items: [
+    { ic: "pieza:wK", t: "Blancas a la izquierda", s: "del árbitro, de frente al reloj" },
+    { ic: "⏱️", t: "Reloj a la derecha", s: "de las negras" },
+    { ic: "pieza:wR", t: "Esquina blanca", s: "a la derecha de cada uno", a: "FIDE 2.1" },
+    { ic: "✍️", t: "Planilla y lapicero", s: "ordenada y listo para usar" },
+    { ic: "🔢", t: "Número de mesa", s: "a la vista del árbitro" } ],
+    clave: "Izquierda blancas, derecha negras: el resultado se anota sin dudar." },
+  // 19
+  { tipo: "receso" },
+  // 20
   { tipo: "ciclo", k: "Ronda a ronda, el mismo orden",
     pasos: ["Publicar el pareo", "Iniciar puntual", "Observar el apuro", "Recoger resultados", "Emparejar la siguiente"],
     items: [
       { ic: "✍️", t: "Resultados firmados y revisados", s: "e ingresados antes de emparejar la ronda siguiente" },
       { ic: "🏆", t: "Al final", s: "tabla con desempates, acta, informe de incidencias y premiación" } ] },
-  // 17
+  // 21
   { tipo: "dos", k: "Te escuchan estudiantes, familias, docentes",
     izq: { t: "Con los jugadores", items: [
       ["Primero con los dos", ""],
@@ -138,64 +188,64 @@ module.exports = [
       ["Se les atiende fuera de la sala", ""],
       ["Apelación: ante quién y en qué plazo", ""] ] },
     clave: "Correcta pero mal comunicada: tanto conflicto como una incorrecta." },
-  // 18
+  // 22
   { tipo: "filas", k: "Caso 1 · La ronda que empezó tarde", items: [
     { ic: "⏰", t: "Llega 5 minutos tarde", s: "tolerancia: 10; la ronda salió 20 minutos tarde" },
     { ic: "pieza:wR", t: "El rival completa una jugada ilegal", s: "suizo escolar a 15 min + 5 s" },
     { ic: "📱", t: "Suena el celular del que llegó tarde", s: "el reglamento lo sanciona con la pérdida" } ] },
-  // 19
+  // 23
   { tipo: "tarjetas", k: "Caso 1 · La ronda que empezó tarde", items: [
     { ic: "⏰", t: "Juega", s: "llegó dentro de la tolerancia, con 5 minutos menos", tono: "si" },
     { ic: "↩️", t: "Ilegal: se corrige", s: "se repone la posición y quien llegó tarde recibe 1 minuto", tono: "ojo" },
     { ic: "📱", t: "Celular: pierde", s: "según el reglamento", tono: "no" } ],
     clave: "Todo al acta, y se revisa por qué la ronda salió tarde." },
-  // 20
+  // 24
   { tipo: "frase", k: "Caso 2 · Empate en el primer lugar", ic: "🏆",
     t: "Dos estudiantes empatan el primer lugar… y su partida también fue tablas.",
     s: "Todos contra todos de 6. Bases: encuentro directo, Sonneborn-Berger y número de victorias." },
-  // 21
+  // 25
   { tipo: "filas", k: "Caso 2 · Empate en el primer lugar", escalera: true, items: [
     { ic: "🤝", t: "Encuentro directo", s: "no los separa" },
     { ic: "🧮", t: "Sonneborn-Berger", s: "como en el ejemplo de la sesión 3" },
     { ic: "🏅", t: "Número de victorias", s: "si siguen empatados" },
     { ic: "⚔️", t: "Para la próxima", s: "si el puesto da el título, desempate jugado en las bases" } ] },
-  // 22
+  // 26
   { tipo: "frase", k: "Caso 3 · La logística que falló", ic: "🧰",
     t: "Faltan 4 relojes y 3 tableros tienen piezas incompletas.",
     s: "Está por empezar la ronda 1, con 30 estudiantes inscritos." },
-  // 23
+  // 27
   { tipo: "tarjetas", k: "Caso 3 · La logística que falló", cols: 4, compacto: true, items: [
     { ic: "🧰", t: "Repuestos", s: "se usan los que hay" },
     { ic: "pieza:wN", t: "Piezas", s: "de otros juegos, revisando cada tablero" },
     { ic: "⏱️", t: "Mesas sin reloj", s: "control anunciado, o junto a la mesa de control" },
     { ic: "📝", t: "Registro", s: "y repuestos en la lista del día presencial" } ],
     clave: "Se reorganiza sin perder la puntualidad." },
-  // 24
+  // 28
   { tipo: "receso" },
-  // 25
+  // 29
   { tipo: "frase", k: "Trabajo en grupos", ic: "👥",
     t: "Analicen un caso integrador y presenten su solución fundamentada.",
     s: "Combina reglas de competición, desempates y logística." },
-  // 26
+  // 30
   { tipo: "ciclo", k: "El método, con un caso ya conocido",
     pasos: ["Hechos", "Artículo", "Decisión", "Registro"],
     items: [
       { ic: "📱", t: "El caso «suena un celular»", s: "el de la sesión 2" },
       { ic: "📝", t: "Redacta el registro", s: "tal como irá en el acta" } ] },
-  // 27
+  // 31
   { tipo: "frase", k: "Logística", ic: "📋",
     t: "Escribe la lista de materiales.",
     s: "Torneo individual de 40 estudiantes, en mesas dobles." },
-  // 28
+  // 32
   { tipo: "frase", k: "Desde el público", ic: "👀",
     t: "Un familiar le señala a su hija una jugada.",
     s: "¿Qué haces?" },
-  // 29
+  // 33
   { tipo: "tarjetas", k: "Ejercicios 1 a 3", cols: 3, compacto: true, numerar: true, items: [
     { ic: "📱", t: "Pierde la partida", s: "o la sanción menor del reglamento; al acta con ronda, mesa y firma", a: "11.3.2" },
     { ic: "🧰", t: "10 mesas dobles", s: "20 tableros, piezas y relojes, + 2 de repuesto; 40 sillas" },
     { ic: "🚷", t: "Se retira al familiar", s: "si hubo ayuda, sanción a la jugadora (12.9)", a: "11.3.1 y 12.7" } ] },
-  // 30
+  // 34
   { tipo: "tarjetas", k: "Responde de forma individual", cols: 4, compacto: true, numerar: true, items: [
     { t: "¿Qué NO es logística previa?" },
     { t: "Sin regla exacta: ¿qué prima?" },
@@ -204,11 +254,11 @@ module.exports = [
     { t: "¿Dónde se atiende al público?" },
     { t: "¿Qué más anuncian las bases?" },
     { t: "¿Dónde y cómo se comunica una decisión?" } ] },
-  // 31
+  // 35
   { tipo: "tarjetas", k: "Responde de forma individual", items: [
     { ic: "8️⃣", t: "Quiere apelar: ¿qué le informas?" },
     { ic: "9️⃣", t: "¿Qué se arma al cerrar el torneo?" } ] },
-  // 32
+  // 36
   { tipo: "filas", cols: 3, numerar: true, items: [
     { t: "El resultado final de las partidas" },
     { t: "Lo más cercano, con imparcialidad" },
@@ -219,7 +269,7 @@ module.exports = [
     { t: "Con los dos, en voz baja y aparte" },
     { t: "Ante quién y en qué plazo" },
     { t: "Tabla, acta, informe y premiación" } ] },
-  // 33
+  // 37
   { tipo: "tarjetas", k: "Antes de la próxima sesión", items: [
     { ic: "📚", t: "Tarea", s: "propuesta logística breve para un torneo de tu región: inscripción, espacios, materiales y personal" },
     { ic: "👋", t: "¿Dudas?", s: "este es el momento. ¡Gracias por participar!" } ] },

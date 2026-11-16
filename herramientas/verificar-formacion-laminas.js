@@ -62,7 +62,7 @@ for (const clase of clases) {
     // En un traslado, la planilla son datos (las jugadas de la partida), como las casillas de un cuadro cruzado.
     const visible = d.tipo === "cruzado" ? textoCruzado(d) : d.tipo === "traslado" ? texto(Object.assign({}, d, { jugadas: [] })) : texto(d);
     const cuenta = palabras((dia.titulo || "") + " " + visible);
-    if (cuenta > (d.tipo === "tabla" || d.tipo === "cruzado" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
+    if (cuenta > (d.tipo === "tabla" || d.tipo === "cruzado" || d.tipo === "sala" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
     const pide = [];
     if (d.tipo === "tablero") pide.push(d.pos);
     if (d.tipo === "tableros" || d.tipo === "traslado") d.items.forEach((x) => pide.push(x.pos));

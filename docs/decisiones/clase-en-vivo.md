@@ -4482,6 +4482,31 @@ por esta.
   celdas: la de Ajedrez Integral (tomada de `herramientas/lib/marca-agua.js`)
   va como imagen en Instrucciones y en Resumen, a la derecha de lo que se usa,
   y escrita en el pie de cada hoja al imprimir.
+- **La sala, el salón virtual y la mesa** (pedido del dueño, 15/11/2026):
+  cuatro láminas después de «Calcular los materiales», todas con los números
+  de las estadísticas de inscripción de la Regional de Alajuela 2026 (los
+  mismos del simulador): 15 la foto de la sala del Tacho Chess 2, 16 el plano
+  de la Regional con sus 15 torneos (una fila de mesas por torneo, mesa de
+  control al frente, público detrás de la tela y las zonas de los 8 árbitros
+  de sala), 17 la lista de lo que se lleva y 18 cómo se coloca cada mesa:
+  vistas desde el árbitro de frente al reloj, blancas a su izquierda y negras
+  a su derecha, reloj a la derecha de las negras, para que al anotar un
+  resultado izquierda sea blancas en toda la sala. La sesión pasó a 37
+  láminas y la práctica a las 29-32 (migración
+  `formacion_sesion5_salon_virtual`, con la misma guarda).
+  - `formacion-laminas.js` tiene tres tipos nuevos: `foto` (una foto de
+    `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
+    bytes), `sala` (el plano, que el verificador mide con el tope de una
+    tabla, porque sus rótulos son datos) y `mesa` (la mesa vista desde arriba;
+    se comprobó que la esquina a la derecha de cada jugador es clara).
+  - Cambiar el generador cambia la huella de **todas** las presentaciones.
+    Las demás no se volvieron a dibujar: los tipos nuevos no tocan lo que ya
+    había, y dibujarlas en Windows les cambiaba los íconos (Segoe UI Emoji en
+    vez de Noto). Se les escribió la huella nueva sin redibujar.
+    `formacion-practicas.js` sí redibuja `practica-01`: sus imágenes se
+    devolvieron a las de antes con `git checkout`.
+  - La foto de la mesa que mandó el dueño por el chat no quedó en ningún
+    archivo, así que la mesa se dibujó; si llega la foto, va como `foto`.
 
 #### El ejercicio del tablero mal colocado
 
