@@ -48,7 +48,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/pareo-integral.jpg", ancho: 1200, alto: 675,
-                alt: "Un torneo escolar de ajedrez: en la mesa de organización, una laptop con Pareo Integral muestra el pareo de la ronda 4 y la clasificación con los desempates; al lado, unos niños buscan su mesa en el pareo impreso pegado en una pizarra.",
+                alt: "Una organizadora sonríe en la mesa de organización de un torneo: en su laptop, Pareo Integral muestra el pareo de la ronda 3 con los resultados y un bye, las pestañas de jugadores, clasificación y TRF, y el botón para emparejar la ronda 4; al fondo, el salón de juego.",
             },
             resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Con tu licencia, en tu computadora.",
             puntos: [
@@ -67,6 +67,10 @@
             corto: "Torneos de Costa Rica",
             href: "torneos-pareo.html#tambien",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/torneos-costa-rica.jpg", ancho: 1200, alto: 675,
+                alt: "Un joven ajedrecista en la banca de un parque mira en su celular los Torneos de Costa Rica: tarjetas con la fecha, el ritmo, si valen para Elo, el costo y los botones para inscribirse y agregarlos a su calendario, con los filtros de ritmo, Elo y provincia.",
+            },
             gratis: true,
             resumen: "Los torneos que se anuncian en ajedrezcostarica.com y los que ya están cargados en chess-results, juntos en una lista, con la fecha, el ritmo, si valen para Elo y el enlace a su ficha para inscribirse. Gratis y sin cuenta.",
             puntos: [
@@ -225,6 +229,10 @@
             corto: "Árbitros de Costa Rica",
             href: "arbitros-cr.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/arbitros-cr.jpg", ancho: 1200, alto: 675,
+                alt: "El avatar del profe Oscar señala una pantalla con la lista de árbitros de Costa Rica: el título de cada uno (AI, AF, AN), sus torneos con el cargo y sus normas, y al lado el detalle de las normas de uno de ellos.",
+            },
             resumen: "Los torneos de cada árbitro de Costa Rica en FIDE y en chess-results, con su cargo, y cuáles de los de FIDE cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
             puntos: [
                 "Todos los torneos de Costa Rica en FIDE desde 2002, con quién fue principal, adjunto o árbitro, y todos los de la federación en chess-results desde 2007, con el director y el organizador.",
@@ -322,6 +330,10 @@
             nombre: "Desempates explicados",
             href: "desempates.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/desempates.jpg", ancho: 1200, alto: 675,
+                alt: "Una árbitra explica a dos jugadores empatados por qué uno queda arriba: en la laptop, «¿Por qué Ana queda arriba de Luis?», con los mismos puntos, tablas entre ellos y el Buchholz corte 1 que los distingue, desglosado ronda por ronda; al lado, la clasificación impresa con los dos empatados marcados.",
+            },
             resumen: "Pega las bases del torneo (el orden de desempates) y el enlace de chess-results: la herramienta recalcula la clasificación desde las partidas y explica, paso a paso, por qué cada persona queda arriba de la otra.",
             puntos: [
                 "Los 26 desempates del C.07 (versión 2026) en el orden que elijas, calculados con el mismo motor que Pareo Integral.",
@@ -342,7 +354,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/pareo-dgt.jpg", ancho: 1200, alto: 675,
-                alt: "Un torneo con transmisión: en las mesas 1 y 2, tableros electrónicos conectados por cable a una laptop que dice «Ronda 5 — mesas 1 y 2, pareo listo, transmitiendo»; al fondo, una pantalla grande muestra las dos partidas en vivo.",
+                alt: "Dos jugadores frente a frente en la mesa 1 de un torneo, con el tablero electrónico entre los dos; detrás del reloj, una laptop dice «Ronda 5 — mesas 1 y 2, pareo listo, transmitiendo», y al fondo una pantalla grande muestra la partida en vivo.",
             },
             resumen: "Para transmitir un torneo con tableros electrónicos DGT: se sube la ronda a chess-results como siempre y la herramienta arma sola el archivo para importar en DGT LiveChess y crea la ronda en la transmisión de Lichess.",
             puntos: [
@@ -382,6 +394,10 @@
             corto: "Variación de Elo",
             href: "variacion-elo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/variacion-elo.jpg", ancho: 1200, alto: 675,
+                alt: "Una jugadora sonríe frente a la laptop al terminar un torneo: Variación de Elo muestra su Elo FIDE de 1650 con K 40 y, ronda por ronda, el Elo del rival, lo esperado, el resultado y cuánto aportó cada partida, con el total de +42,4 que la deja en 1692.",
+            },
             resumen: "Pega el enlace de chess-results y te dice cuánto sube o baja el Elo FIDE y nacional de cada participante, partida por partida, antes de que salga la lista oficial.",
             puntos: [
                 "Con las reglas de FIDE (B.02): solo partidas jugadas entre dos con Elo, el tope de 400 puntos, la tabla de lo esperado y el K de cada uno (40 para los menores de 18, 10 desde 2400).",
@@ -399,6 +415,10 @@
             corto: "Normas de título",
             href: "normas-titulo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/normas-titulo.jpg", ancho: 1200, alto: 675,
+                alt: "Al final de un torneo, una laptop con Normas de título: a un jugador le sale la norma de GM, a otra la de IM y a una tercera le faltó medio punto, con el promedio de Elo y el rendimiento de cada uno; al lado, la clasificación final impresa con un nombre resaltado y un trofeo, y al fondo dos jugadores se dan la mano.",
+            },
             resumen: "Pega el enlace de chess-results y te dice quién hizo norma de GM, IM, WGM o WIM en el torneo, y a quién le faltó poco, artículo por artículo del Reglamento de Títulos de FIDE.",
             puntos: [
                 "Con el Reglamento de Títulos de FIDE (B.01, 2024): las partidas, las federaciones, los rivales con título, el piso de Elo de los rivales, el promedio y el rendimiento.",
@@ -433,6 +453,10 @@
             corto: "Bases del torneo",
             href: "bases-torneo.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/bases-torneo.jpg", ancho: 1200, alto: 675,
+                alt: "El escritorio de quien organiza: una laptop con el generador de bases, el formulario del torneo a la izquierda y la vista previa de las bases a la derecha, con los botones para bajarlas en PDF y en Word; al lado, las bases impresas con el calendario de rondas y la línea para la firma, unas piezas y un reloj de ajedrez.",
+            },
             resumen: "Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar. Con tu licencia, en tu computadora.",
             puntos: [
                 "El ritmo con su modalidad (clásico, rápido o relámpago, como dicen las Leyes del Ajedrez) y si vale para el Elo FIDE clásico según el Elo de los jugadores (B.02).",
@@ -452,7 +476,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/mesa-arbitro.jpg", ancho: 1200, alto: 675,
-                alt: "La mesa del árbitro en un torneo escolar: una tablet con las mesas de la ronda abierta, sus resultados y la bitácora con su hora; al lado, la bitácora impresa con el espacio para la firma, y detrás una árbitra anotando mientras juegan.",
+                alt: "Las manos de un árbitro con su gafete sostienen una tablet con la Mesa del árbitro: las mesas de la ronda 5 con sus resultados y una pendiente, la bitácora con la hora de cada hecho (un resultado, una corrección y una jugada ilegal con el art. 7.5), el espacio para la firma y «Guardado»; al fondo, el salón del torneo.",
             },
             resumen: "Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados, mándalos con la clave del torneo y lleva tu bitácora de árbitro, con su hora, en PDF o Word.",
             puntos: [
@@ -475,7 +499,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/aula-arbitraje.jpg", ancho: 1200, alto: 675,
-                alt: "Ilustración del Aula de Arbitraje: la portada de la revista Arbitraje de Ajedrez, un tablero con un ejercicio de triple repetición, la ficha del artículo 7.1 de las Leyes y un reloj digital con los tiempos ya ajustados.",
+                alt: "Una árbitra estudia de noche con el Aula de Arbitraje: en la laptop, la ficha del artículo 7.5 (jugada ilegal) y al lado un caso de sala con la respuesta correcta marcada; sobre el escritorio, la revista Arbitraje de Ajedrez, sus apuntes, un reloj digital y una pila de revistas con una planilla encima.",
             },
             resumen: "Fichas de estudio del reglamento de FIDE vigente y, al lado, la práctica: preguntas, ejercicios al azar, casos de sala con su decisión y un reloj de ajedrez que se detiene y se ajusta como en el torneo. Con tu licencia, en tu computadora.",
             puntos: [
@@ -496,6 +520,10 @@
             corto: "Acta e informe JDE",
             href: "acta-jde.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/acta-jde.jpg", ancho: 1200, alto: 675,
+                alt: "La mesa del árbitro al final de una etapa de los Juegos Deportivos Estudiantiles: la laptop con el informe arbitral, el medallero por centro educativo y los clasificados a la etapa nacional; al lado, el acta impresa con las firmas del árbitro principal y del adjunto, y tres medallas; al fondo, estudiantes celebrando.",
+            },
             resumen: "Para una etapa de los JDE dirigida con Swiss-Manager: pega los enlaces de chess-results y baja el informe oficial de participación y resultados, listo para firmar, con los clasificados a la etapa siguiente.",
             puntos: [
                 "El mismo informe oficial de Pareo Integral: la participación por centro educativo, la clasificación oficial de chess-results, el cuadro cruzado, las ausencias, el medallero por centro, las incidencias y las firmas.",

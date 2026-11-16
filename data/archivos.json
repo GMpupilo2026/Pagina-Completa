@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1285,
+  "total": 1292,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27037,16 +27037,46 @@
     "grupo": "Carpetas",
     "archivos": [
      {
+      "ruta": "img/herramientas/acta-jde.jpg",
+      "titulo": "Acta jde",
+      "tipo": "otro",
+      "kb": 119
+     },
+     {
+      "ruta": "img/herramientas/arbitros-cr.jpg",
+      "titulo": "Arbitros cr",
+      "tipo": "otro",
+      "kb": 97
+     },
+     {
       "ruta": "img/herramientas/aula-arbitraje.jpg",
       "titulo": "Aula arbitraje",
       "tipo": "otro",
-      "kb": 112
+      "kb": 99
+     },
+     {
+      "ruta": "img/herramientas/bases-torneo.jpg",
+      "titulo": "Bases torneo",
+      "tipo": "otro",
+      "kb": 110
+     },
+     {
+      "ruta": "img/herramientas/desempates.jpg",
+      "titulo": "Desempates",
+      "tipo": "otro",
+      "kb": 129
      },
      {
       "ruta": "img/herramientas/mesa-arbitro.jpg",
       "titulo": "Mesa arbitro",
       "tipo": "otro",
-      "kb": 117
+      "kb": 102
+     },
+     {
+      "ruta": "img/herramientas/normas-titulo.jpg",
+      "titulo": "Normas titulo",
+      "tipo": "otro",
+      "kb": 116
      },
      {
       "ruta": "img/herramientas/notara.jpg",
@@ -27058,13 +27088,25 @@
       "ruta": "img/herramientas/pareo-dgt.jpg",
       "titulo": "Pareo dgt",
       "tipo": "otro",
-      "kb": 117
+      "kb": 113
      },
      {
       "ruta": "img/herramientas/pareo-integral.jpg",
       "titulo": "Pareo integral",
       "tipo": "otro",
-      "kb": 119
+      "kb": 103
+     },
+     {
+      "ruta": "img/herramientas/torneos-costa-rica.jpg",
+      "titulo": "Torneos costa rica",
+      "tipo": "otro",
+      "kb": 128
+     },
+     {
+      "ruta": "img/herramientas/variacion-elo.jpg",
+      "titulo": "Variacion elo",
+      "tipo": "otro",
+      "kb": 105
      }
     ]
    },
