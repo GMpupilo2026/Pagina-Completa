@@ -8302,7 +8302,9 @@ cámara.
 
 **Desde noviembre de 2026 todas las tarjetas llevan imagen** (lo pidió el
 dueño: «que identifiquen bien lo que hace y se entienda sus funciones»). Salvo
-la foto de Notara, son ilustraciones planas, una por herramienta, que muestran
+las que tienen foto (Notara, Pareo Integral, Pareo para DGT, la Mesa del
+árbitro y el Aula de Arbitraje, en `.jpg`; una foto manda sobre la
+ilustración), son ilustraciones planas, una por herramienta, que muestran
 lo que entra y lo que sale (el enlace de chess-results → la selección; la
 partida en PGN → la triple repetición y el ½–½), con el color de su tema
 (Arbitraje dorado, JDE verde, JDN azul, Universitarios morado). Las arma
