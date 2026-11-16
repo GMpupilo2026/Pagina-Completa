@@ -209,6 +209,38 @@ async function contrastes(p) {
     await p.click("[data-comprobar]");
     igual("la práctica de normas genera rivales y corrige", await p.$eval(".aula-fb-zona .aula-fb", (f) => f.textContent.includes("Rp =")), true);
 
+    console.log("\n=== Las ayudas de cálculo de los ejercicios ===");
+    await p.evaluate(() => { location.hash = "practicar-koya"; });
+    await p.waitForSelector("#aula-k0");
+    await p.evaluate(() => { location.hash = "practicar-normas"; });
+    await p.waitForSelector("#aula-nra");
+    igual("el ejercicio de normas trae la calculadora, las tablas de FIDE y la pista, entre los datos y lo que se calcula",
+        await p.evaluate(() => { const b = document.querySelector(".aula-ayudas"); return [[...b.querySelectorAll(".aula-ay-btn")].map((x) => x.textContent.trim()), !!(b.compareDocumentPosition(document.querySelector("#aula-nra")) & Node.DOCUMENT_POSITION_FOLLOWING), !!(document.querySelector("#aula-ej table").compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)]; }),
+        [["🧮 Calculadora", "📋 Tablas de FIDE", "💡 ¿Cómo se calcula?"], true, true]);
+    igual("los paneles empiezan cerrados (se mide si se ven)", await p.$$eval(".aula-ay-panel", (l) => l.map((x) => x.checkVisibility())), [false, false, false]);
+    await p.fill("#aula-nra", "(2188+2405+2444+2320+2135+2290+2354+2156+2171)/9");
+    igual("el campo Ra acepta la cuenta y muestra el resultado al lado", await p.textContent("#aula-nra-eco"), "= 2273,6667");
+    await p.click(".aula-ay-btn[data-panel='calc']");
+    igual("la calculadora se abre, dice que está abierta y pone el foco en la cuenta",
+        await p.evaluate(() => [document.querySelector(".aula-ay-btn[data-panel='calc']").getAttribute("aria-expanded"), document.activeElement.id.endsWith("-ex")]), ["true", true]);
+    await p.fill(".aula-ay-calc input[id$='-ex']", "6,5 / 9 × 100");
+    await p.keyboard.press("Enter");
+    await p.fill(".aula-ay-calc input[id$='-lista']", "2188,2405, 2444");
+    igual("calcula con Enter y saca el promedio de una lista",
+        [await p.textContent(".aula-ay-calc [data-ay=res]"), await p.textContent(".aula-ay-calc [data-ay=prom]")], ["6,5 / 9 × 100 = 72,2222", "3 números · suma 7037 · promedio 2345,6667"]);
+    await p.click(".aula-ay-btn[data-panel='tablas']");
+    igual("las tablas de FIDE: el dp de 72 % es +166 y el de 70 %, +149; el piso, Ra y Rp mínimos de MI son 2050, 2230 y 2450 (de js/normas-titulo.js)",
+        await p.evaluate(() => { const t = document.querySelector(".aula-ay-dp"); const f = [...t.querySelectorAll("tr")].find((r) => r.children[2] && r.children[2].textContent === "72 %"); const g = [...t.querySelectorAll("tr")].find((r) => r.children[2] && r.children[2].textContent === "70 %"); const mi = [...t.closest(".aula-ay-panel").querySelectorAll("tr")].find((r) => r.children[0].textContent.includes("(IM)")); return [t.checkVisibility(), f && f.children[3].textContent, g && g.children[3].textContent, mi && [...mi.children].slice(1).map((c) => c.textContent)]; }),
+        [true, "+166", "+149", ["2050", "2230", "2450"]]);
+    await p.click(".aula-ay-btn[data-panel='pista']");
+    await p.click("[data-comprobar]");
+    igual("abrir la pista deja el ejercicio como resuelto con pista", await p.$eval(".aula-fb-zona", (f) => f.textContent.includes("resuelto con pista")), true);
+    for (const [hash, campo, cuantos] of [["practicar-koya", "#aula-k0", 2], ["practicar-relojes", "#aula-iw", 2], ["practicar-desempates", ".aula-paso-calc input", 3]]) {
+        await p.evaluate((h) => { location.hash = h; }, hash);
+        await p.waitForSelector(campo);
+        igual(hash + ": trae sus ayudas", await p.$$eval(".aula-ayudas .aula-ay-btn", (l) => l.length), cuantos);
+    }
+
     console.log("\n=== Reloj ===");
     await p.evaluate(() => { location.hash = "reloj"; });
     await p.waitForSelector(".aula-reloj");
