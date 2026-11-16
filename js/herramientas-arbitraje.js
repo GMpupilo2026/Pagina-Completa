@@ -48,7 +48,7 @@
             disponible: true,
             imagen: {
                 src: "img/herramientas/pareo-integral.jpg", ancho: 1200, alto: 675,
-                alt: "Un torneo escolar de ajedrez: en la mesa de organización, una laptop con Pareo Integral muestra el pareo de la ronda 4 y la clasificación con los desempates; al lado, unos niños buscan su mesa en el pareo impreso pegado en una pizarra.",
+                alt: "Una organizadora sonríe en la mesa de organización de un torneo: en su laptop, Pareo Integral muestra el pareo de la ronda 3 con los resultados y un bye, las pestañas de jugadores, clasificación y TRF, y el botón para emparejar la ronda 4; al fondo, el salón de juego.",
             },
             resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Con tu licencia, en tu computadora.",
             puntos: [
