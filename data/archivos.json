@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 914,
+  "total": 915,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8262,6 +8262,12 @@
     "titulo": "Revista 19",
     "tipo": "otro",
     "kb": 3148
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-20.pdf",
+    "titulo": "Revista 20",
+    "tipo": "otro",
+    "kb": 5716
    },
    {
     "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
@@ -19227,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1284,
+  "total": 1285,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26628,6 +26634,12 @@
       "titulo": "Portada 19",
       "tipo": "otro",
       "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-20.jpg",
+      "titulo": "Portada 20",
+      "tipo": "otro",
+      "kb": 30
      }
     ]
    },

@@ -12085,6 +12085,18 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   enlaces que muestran las pantallas no digan `127.0.0.1`. **Si cambian esas
   pantallas, se vuelven a sacar las capturas y se genera el N.º 19.** Los
   verificadores de la Aula ya no dicen «18»: cuentan las carpetas `noNN/`.
+- **El N.º 20 es el manual completo de la mesa del árbitro del Centroamericano**
+  (pedido del dueño: «la versión del centroamericano, que es la más completa»):
+  la página de la organización pestaña por pestaña y la tableta del adjunto,
+  de la entrada a la bitácora, con 25 capturas. Las saca `no20/capturas.js`
+  con los dobles de los verificadores (`lib/doble-centroamericano-*.js`) y,
+  para Fair Play, el doble de `verificar-centroamericano-fair-play.js`, cuyas
+  primeras líneas son solo definiciones y se cargan sin correr sus pruebas (si
+  ese archivo cambia de forma, el script lo dice). **Los nombres de los dobles
+  que parecen de jugadores de verdad (muchos, menores) se cambian por otros
+  inventados antes de la captura**: van en la lista `NOMBRES` del script, y un
+  nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
+  doble en el navegador: la revista la cuenta sin captura.
 
 ## Desempates explicados
 
