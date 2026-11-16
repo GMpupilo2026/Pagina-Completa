@@ -6708,7 +6708,9 @@
 
   // La inscripción previa: abrirla o cerrarla (con fecha límite) y leer lo
   // que llegó. Aceptar uno lo agrega a la lista de jugadores como cualquier
-  // otro (agregarJugadores); rechazarlo solo lo marca.
+  // otro (agregarJugadores); rechazarlo solo lo marca. Las dos cosas piden
+  // un comentario (el motivo, si se rechaza) que queda con la inscripción y,
+  // si quien inscribió dejó un correo, le llega en el aviso (pareo-publicar).
   function cajaInscripcion(v) {
     const ins = v.inscripcion || {};
     const abierta = el("input", { type: "checkbox", id: "pi-insc-abierta", class: "mt-1", checked: !!ins.abierta });
@@ -6747,7 +6749,25 @@
   function pintarInscripciones(lista, todas) {
     const v = t();
     const pendientes = todas.filter((x) => x.estado === "pendiente");
-    const marcar = async (cuales, estadoNuevo, boton) => {
+    const esCorreo = (c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c || "").trim());
+    // Antes de marcar: el comentario, y a quién le llega el aviso.
+    const decidir = async (cuales, estadoNuevo, boton) => {
+      const acepta = estadoNuevo === "aceptada";
+      const conCorreo = cuales.filter((x) => esCorreo(x.contacto));
+      const uno = cuales.length === 1 ? cuales[0] : null;
+      const texto = uno
+        ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx("inscAvisoTelefono", { c: uno.contacto }))
+        : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length });
+      const r = await Avisos.formulario({
+        titulo: uno ? tx(acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
+        texto, cancelar: tx("cancelar"), peligro: !acepta,
+        aceptar: tx(conCorreo.length ? (acepta ? "inscAceptarSi" : "inscRechazarSi") : (acepta ? "inscAceptarSinAviso" : "inscRechazarSinAviso")),
+        campos: [Object.assign({ nombre: "comentario", etiqueta: tx(acepta ? "inscComentario" : "inscMotivo"), tipo: "textarea", max: 300 }, acepta ? {} : { ayuda: tx("inscMotivoAyuda") })],
+      });
+      if (!r) { if (boton && boton.isConnected) boton.focus(); return; }
+      marcar(cuales, estadoNuevo, boton, String(r.comentario || "").trim().slice(0, 300));
+    };
+    const marcar = async (cuales, estadoNuevo, boton, comentario) => {
       if (boton) boton.disabled = true;
       if (estadoNuevo === "aceptada") {
         // El sexo y la fecha de nacimiento, si la inscripción los trae (el
@@ -6756,11 +6776,19 @@
         agregarJugadores(cuales.map((x) => Object.assign({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" },
           x.sexo === "M" || x.sexo === "F" ? { sexo: x.sexo } : {}, /^\d{4}-\d{2}-\d{2}$/.test(x.nacimiento || "") ? { nacimiento: x.nacimiento } : {})));
       }
-      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo);
+      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario);
       if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
-      for (const x of cuales) x.estado = estadoNuevo;
+      const avisados = new Set(r.avisados || []);
+      const ahora = new Date().toISOString();
+      for (const x of cuales) { x.estado = estadoNuevo; x.comentario = comentario; x.avisado = avisados.has(x.id) ? ahora : null; }
       pintarInscripciones(lista, todas);
-      Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }));
+      Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }) + (avisados.size ? " " + tx("inscAvisados", { n: avisados.size }) : ""));
+      // Lo que el árbitro tiene que hacer él: avisar a quien dejó un teléfono
+      // y a quien no le salió el correo.
+      const conTelefono = cuales.filter((x) => !esCorreo(x.contacto));
+      const fallaron = cuales.filter((x) => esCorreo(x.contacto) && !avisados.has(x.id));
+      if (conTelefono.length) Avisos.avisar(conTelefono.length === 1 ? tx("inscSinCorreoAviso", { n: conTelefono[0].nombre }) : tx("inscSinCorreoAvisos", { n: conTelefono.map((x) => x.nombre).join(", ") }), { tipo: "info" });
+      if (fallaron.length) Avisos.avisar(tx("inscAvisoFallo", { n: fallaron.map((x) => x.nombre).join(", ") }), { tipo: "error" });
       const b = $("pi-insc-ver"); if (b) b.focus();
     };
     const resumen = el("p", { id: "pi-insc-resumen", class: "text-sm font-semibold mt-3", role: "status",
@@ -6768,17 +6796,21 @@
     const filas = todas.map((x) => {
       const yaEsta = v.jugadores.some((j) => (j.nombre || "").toUpperCase() === (x.nombre || "").toUpperCase());
       const acciones = x.estado === "pendiente"
-        ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => marcar([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
-           el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => marcar([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
+        ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
+           el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
         : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
       return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
         el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
         el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.sexo === "F" ? "Femenino" : x.sexo === "M" ? "Masculino" : "", x.nacimiento ? "Nació " + x.nacimiento.split("-").reverse().join("/") : "", x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),
         el("p", { class: "text-xs mt-1", texto: tx("inscQuien", { r: x.responsable, c: x.contacto }) }),
         x.nota ? el("p", { class: "text-xs mt-1 italic", texto: x.nota }) : null,
-        el("div", { class: "mt-2 flex flex-wrap gap-2" }, acciones));
+        el("div", { class: "mt-2 flex flex-wrap gap-2" }, acciones),
+        // Ya marcada: el comentario que se escribió y si se le avisó.
+        x.estado !== "pendiente" && x.comentario ? el("p", { class: "text-sm mt-2", "data-insc-comentario": x.id, texto: tx(x.estado === "aceptada" ? "inscComentarioDe" : "inscMotivoDe", { c: x.comentario }) }) : null,
+        x.estado !== "pendiente" ? el("p", { class: C.nota + " mt-1", "data-insc-aviso": x.id,
+          texto: x.avisado ? tx("inscAvisado") : tx(esCorreo(x.contacto) ? "inscNoAvisadoFallo" : "inscNoAvisadoTel") }) : null);
     });
-    const todasB = pendientes.length > 1 ? el("button", { type: "button", id: "pi-insc-todas", class: C.boton + " mt-2", onclick: (e) => marcar(pendientes, "aceptada", e.currentTarget) }, tx("inscAceptarTodas", { n: pendientes.length })) : null;
+    const todasB = pendientes.length > 1 ? el("button", { type: "button", id: "pi-insc-todas", class: C.boton + " mt-2", onclick: (e) => decidir(pendientes, "aceptada", e.currentTarget) }, tx("inscAceptarTodas", { n: pendientes.length })) : null;
     lista.replaceChildren(resumen, todasB, el("ul", { class: "mt-2 grid lg:grid-cols-2 gap-2" }, filas));
   }
 
