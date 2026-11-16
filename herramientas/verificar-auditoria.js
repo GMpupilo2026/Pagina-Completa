@@ -56,6 +56,8 @@ const VIGILADAS = [
   "pareo_organizadores",
   // Pedir el sello: aprobar una solicitud le da el sello a la organización.
   "pareo_solicitudes_sello",
+  // La práctica de la sesión presencial del taller: aprobarla le da horas.
+  "taller_practicas",
   // Los enlaces de árbitro adjunto de Pareo Integral: quién puede anotar en
   // qué mesas de un torneo (sin el código, que equivale a una contraseña).
   "pareo_adjuntos",

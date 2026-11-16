@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261116171834
+# al-dia-con: 20261116215206
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -272,6 +272,7 @@ tabla  subgrupos  rls=true
 tabla  supervisor_academia_activa  rls=true
 tabla  supervisor_cuentas  rls=true
 tabla  suscripciones  rls=true
+tabla  taller_practicas  rls=true
 tabla  tanda_resultados  rls=true
 tabla  tarea_items  rls=true
 tabla  tareas  rls=true
@@ -1661,6 +1662,7 @@ columna  habilidad_resultados.id  bigint
 columna  habilidad_resultados.pedido_id  uuid
 columna  habilidad_resultados.profe_id  uuid
 columna  habilidad_resultados.student_id  uuid
+columna  horario_clases.asistencia_cuenta_completa  boolean
 columna  horario_clases.created_at  timestamp with time zone
 columna  horario_clases.desde  date
 columna  horario_clases.dia_semana  integer
@@ -2711,6 +2713,16 @@ columna  suscripciones.nota  text
 columna  suscripciones.pagado_hasta  date
 columna  suscripciones.plan_id  uuid
 columna  suscripciones.student_id  uuid
+columna  taller_practicas.archivos  text[]
+columna  taller_practicas.comentario  text
+columna  taller_practicas.enviada_en  timestamp with time zone
+columna  taller_practicas.estado  text
+columna  taller_practicas.horario_id  uuid
+columna  taller_practicas.id  uuid
+columna  taller_practicas.nota_revision  text
+columna  taller_practicas.persona_id  uuid
+columna  taller_practicas.revisada_en  timestamp with time zone
+columna  taller_practicas.revisada_por  uuid
 columna  tanda_resultados.bien  boolean
 columna  tanda_resultados.class_session_id  uuid
 columna  tanda_resultados.created_at  timestamp with time zone
@@ -2965,6 +2977,7 @@ funcion  arbitros_mis()  definer  anon=false  auth=true
 funcion  arbitros_puedo_dar()  definer  anon=false  auth=true
 funcion  asesores_grabaciones(p_detalle text)  definer  anon=false  auth=true
 funcion  asesores_grabaciones_apartada2(p_detalle text)  definer  anon=false  auth=false
+funcion  asesores_horas(p_detalle text)  definer  anon=false  auth=true
 funcion  asesores_preguntas_video(p_detalle text)  definer  anon=false  auth=true
 funcion  asesores_preguntas_video_apartada2(p_detalle text)  definer  anon=false  auth=false
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
@@ -3315,6 +3328,7 @@ funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_de(p_supervisor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
+funcion  interno.taller_horas_de(p_persona uuid)  definer  anon=false  auth=false
 funcion  interno.tanda_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.training_progress_hora()  definer  anon=false  auth=false
 funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  auth=false
@@ -3603,6 +3617,9 @@ funcion  supervisa_academia(p_academia uuid)  definer  anon=true  auth=true
 funcion  supervisado_por_mi(p_persona uuid)  definer  anon=false  auth=true
 funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  tablero_academias(p_periodo date)  definer  anon=false  auth=true
+funcion  taller_horas(p_persona uuid)  definer  anon=false  auth=true
+funcion  taller_practica_enviar(p_horario uuid, p_archivos text[], p_comentario text)  definer  anon=false  auth=true
+funcion  taller_practica_revisar(p_id uuid, p_aprobar boolean, p_nota text)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
 funcion  tengo_herramienta(p_herramienta text)  definer  anon=false  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
@@ -4140,6 +4157,7 @@ politica  suscripciones  suscripciones_coordinacion_actualiza  UPDATE
 politica  suscripciones  suscripciones_coordinacion_borra  DELETE
 politica  suscripciones  suscripciones_coordinacion_escribe  INSERT
 politica  suscripciones  suscripciones_select  SELECT
+politica  taller_practicas  taller_practicas_ver  SELECT
 politica  tanda_resultados  tanda_resultados_exige_acceso_ins  INSERT  restrictiva
 politica  tanda_resultados  tanda_resultados_inserta_alumno  INSERT
 politica  tanda_resultados  tanda_resultados_lee  SELECT
@@ -4330,6 +4348,7 @@ trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
 trigger  supervisor_cuentas  auditar
 trigger  suscripciones  auditar
+trigger  taller_practicas  auditar
 trigger  tanda_resultados  tanda_resultado_de_la_base
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
@@ -4983,6 +5002,9 @@ indice  suscripciones  suscripciones_creado_por_fk
 indice  suscripciones  suscripciones_pkey
 indice  suscripciones  suscripciones_plan_id_fk
 indice  suscripciones  suscripciones_una_activa_por_plan
+indice  taller_practicas  taller_practicas_horario_id_persona_id_key
+indice  taller_practicas  taller_practicas_persona_idx
+indice  taller_practicas  taller_practicas_pkey
 indice  tanda_resultados  tanda_resultados_alumno
 indice  tanda_resultados  tanda_resultados_clase
 indice  tanda_resultados  tanda_resultados_pkey
@@ -6282,6 +6304,7 @@ grant  suscripciones  authenticated  SELECT
 grant  suscripciones  authenticated  TRIGGER
 grant  suscripciones  authenticated  TRUNCATE
 grant  suscripciones  authenticated  UPDATE
+grant  taller_practicas  authenticated  SELECT
 grant  tanda_resultados  anon  DELETE
 grant  tanda_resultados  anon  INSERT
 grant  tanda_resultados  anon  REFERENCES
