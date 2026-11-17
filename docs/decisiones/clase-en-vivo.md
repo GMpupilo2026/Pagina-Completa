@@ -229,6 +229,9 @@ reemplaza.
   que en Windows cambia el idioma del teclado; Alt+X tampoco, que el tablero
   accesible ya usa. Salir no tiene atajo, a propósito: colgar sin querer cuesta
   más que buscar el botón.
+  **Probados con NVDA el 17/11/2026** en la página de prueba de la fase 0, en
+  modo navegación y en modo foco: los cuatro llegan a la página y no chocan
+  con el lector.
 - **Todo se dice en la región viva de la caja** (`#llamada-estado`): entrar y
   salir (con un sonido corto), la palabra dada o quitada, la conexión mala, la
   reconexión, «Tu profe te sacó de la llamada». «Activar voz» la lee sola.
