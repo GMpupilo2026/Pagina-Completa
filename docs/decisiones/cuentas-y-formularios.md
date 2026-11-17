@@ -323,10 +323,13 @@ Rica:
   el mensaje, quien administra pasa de 30, el techo total frena a todos y
   `anon` no tiene `execute`.
 
-La lectura (el orden de las filas, la notación y la jugada legal más
-parecida) vive en `js/planilla-ocr.js`, una sola copia para el Lector de
-planilla y para «Anota tu partida» de «Tus propios errores» (ver «Mis
-partidas de torneo» en entrenamiento.md): las dos gastan del mismo tope.
+La subida de la foto vive en `js/planilla-ocr.js` (`leerFoto`), una sola
+copia para el Lector de planilla, «Anota tu partida» de «Tus propios errores»
+(ver «Mis partidas de torneo» en entrenamiento.md), el Centroamericano y
+Pareo Integral: todos gastan del mismo tope. El Lector de planilla arma la
+partida con `js/planilla-reconstruir.js` (ver «El Lector de planilla lee por
+columnas» en juegos-y-torneos.md); «Anota tu partida» sigue con el orden por
+filas de `planilla-ocr.js`.
 
 Para cambiar los topes, una migración nueva que vuelva a crear la función con
 otros números. `node herramientas/verificar-lector-planilla.js` (sin red ni
