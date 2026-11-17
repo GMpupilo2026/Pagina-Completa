@@ -4690,6 +4690,103 @@ encimarse, el avance de cada una, el video correcto y lo visto anotado en la
 parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
 `verificar-admin.js` prueba las columnas por parte de la ficha.
 
+### Las horas del taller
+
+El dueño pidió el 16/11/2026 una barra para que cada asesor vea cuánto le
+falta para cumplir las **30 horas** del taller. Sus reglas:
+
+- cuenta **solo el tiempo dentro de las sesiones**;
+- quien faltó a una sesión, o no estuvo todo el rato, **lo repone viendo la
+  grabación**: completa, vale la sesión entera (4 h en las de cuatro);
+- la **presencial de cierre** cuenta cuando la persona sube la práctica que se
+  le pide y administración la aprueba;
+- la **Sesión IV** (11/11), que en parte fue de prácticas fuera de la clase,
+  cuenta entera a quien se conectó (lo había pedido así para el informe).
+
+**La cuenta es de la base, y de nadie más**: `interno.taller_horas_de(persona)`
+(migración `20261116215206_taller_horas_y_practicas`) da una fila por sesión,
+con lo que dura, `min_clase`, `min_grabacion` y `min_contados`. La barra del
+asesor y la columna de la ficha Asesores solo suman `min_contados`: si una
+pantalla contara por su lado, el asesor vería una cifra y administración otra.
+
+- **Las sesiones** son las filas de `horario_clases` de sus clases con
+  `desde` = `hasta` (una por sesión, ver «El panel de taller»). **La meta no
+  está escrita**: es la suma de lo que duran (4 × 4 h + 2 × 3 h + 8 h = 30 h).
+  Si cambia una sesión, cambia la meta.
+- **El tiempo en clase** es `class_presence_log` en la clase en vivo que abrió
+  ese profe desde dos horas antes de la hora de inicio hasta la de fin,
+  recortado a lo que la clase estuvo abierta y con los tramos que se pisan
+  juntados por `minutos_por_tramos()`, la misma de los informes.
+- **La grabación** cuenta en proporción: lo visto (`grabaciones_vistas`, sin
+  lo repetido ni lo adelantado) entre lo que dura, sumando las partes si la
+  sesión quedó en varias, por la duración de la sesión.
+- **Cada sesión cuenta, como mucho, lo que dura**: clase + grabación, con
+  tope. Quien estuvo 3 h y ve una hora de la grabación queda en 4 h; no hay
+  manera de pasar de las 30.
+- **La sesión que vale completa con asistencia** se marca en la base, no en
+  el código: `horario_clases.asistencia_cuenta_completa` (hoy solo la IV). Lo
+  que cuenta es tener la asistencia de esa clase (`class_attendance`), como
+  en el informe.
+- **La presencial** (`modalidad = 'presencial'`) no cuenta clase ni
+  grabación: solo la práctica aprobada.
+
+**La práctica** vive en `taller_practicas` (una por persona y sesión), sin
+política de escritura:
+
+- **La sube el asesor** desde su tarjeta con `taller_practica_enviar()`:
+  hasta 5 archivos (foto, PDF, Word o Excel, los mismos de un formulario,
+  `js/adjuntos.js`) al bucket privado `taller-practicas`, en su carpeta, y un
+  comentario. La función exige que la sesión sea presencial y de SUS clases,
+  y que cada ruta esté en su carpeta. Mandarla otra vez la reemplaza y vuelve
+  a «por revisar»; una aprobada ya no se cambia.
+- **La revisa** quien administra o el profe de esa clase, en la ficha
+  Asesores, con `taller_practica_revisar()`: la aprueba o la devuelve con una
+  nota que el asesor lee en su tarjeta. Aprobarla le da horas, así que la
+  tabla lleva su trigger `auditar` y va en `VIGILADAS`.
+- **El bucket** deja subir solo a la carpeta propia y a quien es de una
+  academia con panel de taller (`mi_panel_taller()`), y bajar a la persona, a
+  administración y a su profe. La carpeta se compara **como texto**: la
+  política se evalúa también con objetos de otros buckets, y convertirla a
+  `uuid` fallaría con una ruta que no lo es.
+
+**Las pantallas:**
+
+- **`clases.html`**, debajo del calendario de clases: «Tus horas del taller»
+  (`js/horas-taller.js`), con lo que lleva y lo que le falta escritos, la
+  barra grande (`role="progressbar"` con su texto) y una fila por sesión con su
+  barra, de dónde salió lo que cuenta y, si le falta, que lo repone con la
+  grabación. La presencial trae «Subir la práctica», un botón que dice si el
+  formulario está abierto. Mientras mira una grabación, las horas se vuelven a
+  contar (a lo sumo cada 20 s), así ve subir la barra.
+- **`admin.html#asesores`**: la columna «Horas» (lo que lleva, de cuánto y el
+  porcentaje), cuántos ya las cumplieron, y «Prácticas de la sesión
+  presencial», primero las que esperan revisión, con sus archivos para bajar
+  y «Aprobar» / «Devolverla». Devolverla pide la nota.
+
+Con los datos del 16/11 (ya pasada la Sesión V), la cuenta dio, por ejemplo,
+17 h 53 min a quien fue a todas y 4 h a quien solo fue a una; quien no había
+ido a la Sesión I pero vio la grabación entera la lleva completa.
+
+Comprobado impersonando roles en SQL, en un bloque revertido: el asesor ve
+sus horas y no las de otro (42501); no inserta ni cambia la tabla a mano
+(42501), no manda archivos de otra carpeta (22023) ni una práctica por una
+sesión en línea (42501), y no se aprueba solo (42501); otro asesor no ve su
+práctica; el profe la ve y la devuelve; administración la aprueba y la
+presencial pasa a contar 480 min; aprobada ya no se reenvía (22023); en
+`asesores_horas()` administración ve a los 30 y el asesor solo a sí mismo;
+`anon` no puede llamar nada; y cada cambio quedó en la bitácora.
+
+**Al tocar esto, correr `node herramientas/verificar-horas-taller.js`**: lee
+la migración (la RLS, sin política de escritura, la bitácora, el bucket
+privado y la carpeta como texto, los permisos con `coalesce`, el tope por
+sesión y la presencial solo con la práctica aprobada) y en el navegador arma
+la tarjeta con filas de ejemplo: lo que lleva y lo que falta escritos, la
+barra con su valor, la sesión que se repone con la grabación, la que vale por
+asistencia, el título del profe como texto, subir la práctica (cerrada,
+abierta, sin archivos, enviada), devuelta con su nota, aprobada, el tope, el
+contraste en claro y en oscuro y el celular. Se rompieron a propósito el
+tope y el `aria-expanded`, y saltaron.
+
 ## `verificar-panel.js` no puede colgar la tanda del CI
 
 Es el verificador más largo de la tanda 2/4 (unos 200 s), y en el CI se quedó

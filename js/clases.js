@@ -1116,11 +1116,12 @@
                 entrada: entradaTaller(),
                 grabaciones,
                 vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
-                alVer: anotarLoVisto,
+                alVer: anotarYRecontar,
                 presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
                 responder: responderPreguntaVideo,
                 respuestas: misRespuestasVideo,
             });
+            pintarHorasTaller(grabaciones);
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
                 const T = CalendarioTaller;
@@ -1152,6 +1153,46 @@
            devuelve el total. Lo que rechaza (22023, 42501) no se vuelve a
            mandar; si no hubo red, se manda con lo que venga después. Ver
            «Cuánto vio cada uno» en docs/decisiones/paneles.md. */
+        /* «Tus horas del taller»: lo que lleva de las horas del taller, contado
+           por la base (taller_horas: clase en vivo + grabación, cada sesión
+           hasta lo que dura; la presencial, con la práctica aprobada), y la
+           práctica que sube de esa sesión. Si la base no contesta, la tarjeta
+           no sale. Ver «Las horas del taller» en docs/decisiones/paneles.md. */
+        let grabacionesTaller = [];
+        async function pintarHorasTaller(grabaciones) {
+            if (grabaciones) grabacionesTaller = grabaciones;
+            const caja = document.getElementById("horas-taller");
+            const [h, p] = await Promise.all([
+                sb.rpc("taller_horas", { p_persona: profile.id }).then((r) => r, () => ({ error: true })),
+                sb.from("taller_practicas").select("horario_id, estado, nota_revision, enviada_en")
+                    .eq("persona_id", profile.id).range(0, 49).then((r) => r, () => ({ error: true })),
+            ]);
+            if (h.error || !Array.isArray(h.data)) { caja.hidden = true; return; }
+            HorasTaller.pintar(caja, h.data, {
+                practicas: !p.error && Array.isArray(p.data) ? p.data : [],
+                grabaciones: grabacionesTaller,
+                enviarPractica: enviarPracticaTaller,
+                alCambiar: () => pintarHorasTaller(),
+            });
+        }
+        async function enviarPracticaTaller(horarioId, selector, comentario, avisar) {
+            const rutas = await selector.subirTodo(sb.storage.from("taller-practicas"), profile.id, avisar);
+            avisar("Guardando…");
+            const { error } = await sb.rpc("taller_practica_enviar", { p_horario: horarioId, p_archivos: rutas, p_comentario: comentario });
+            if (error) throw new Error(error.message || "la base no la recibió");
+        }
+        // Lo que ve de una grabación repone horas: al anotarlo, se vuelve a
+        // contar (a lo sumo una vez cada 20 s, que se anota cada 30).
+        let recontarEn = 0;
+        async function anotarYRecontar(g, tramos) {
+            const total = await anotarLoVisto(g, tramos);
+            if (Date.now() > recontarEn) {
+                recontarEn = Date.now() + 20000;
+                pintarHorasTaller().catch(() => {});
+            }
+            return total;
+        }
+
         async function anotarLoVisto(g, tramos) {
             const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos, p_parte: g.parte || 1 });
             if (error) throw Object.assign(new Error(error.message || "No se pudo anotar"), { descartar: error.code === "22023" || error.code === "42501" });
