@@ -168,6 +168,11 @@ pierde en cada salto— y que los anuncios de las dos se pisen. Ahora la voz va
 la nube). El botón de Meet/Zoom de siempre se queda: es otra puerta, no se
 reemplaza.
 
+- **La caja va DEBAJO del tablero**, después del turno y del tiempo para
+  pensar, no arriba con la franja de la clase: arriba empujaba el tablero y en
+  el celular dejaba de entrar entero sin bajar (`verificar-clase-movil.js`
+  saltó: el tablero ya arrancaba a 228 px, con el tope en 240). Con lector de
+  pantalla se llega por su título, y los atajos sirven desde cualquier lado.
 - **Se probó antes fuera del sitio** (fase 0, una página local con su propio
   servidor): se oyó bien, y ahí se eligieron los atajos y los anuncios.
 - **Solo voz.** El pase deja publicar únicamente el micrófono
