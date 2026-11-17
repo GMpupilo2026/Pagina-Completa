@@ -1104,10 +1104,10 @@
             // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
             // Las sesiones del curso dicen qué presentación va con cada grabación;
             // el worker las da solo a quien tiene acceso (si no, sin presentaciones).
-            const [proximas, grabadas, vistas, curso] = await Promise.all([
+            // mis_grabaciones() ya trae lo que lleva visto (sin los tramos sin clase).
+            const [proximas, grabadas, curso] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
-                sb.from("grabaciones_vistas").select("horario_id, fecha, parte, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
                 fetch("cursos/recursos/formacion-ajedrez/sesiones.json", { credentials: "same-origin" })
                     .then((r) => (r.ok ? r.json() : null)).catch(() => null),
             ]);
@@ -1117,7 +1117,6 @@
                 alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
                 entrada: entradaTaller(),
                 grabaciones,
-                vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
                 alVer: anotarYRecontar,
                 presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
                 responder: responderPreguntaVideo,
