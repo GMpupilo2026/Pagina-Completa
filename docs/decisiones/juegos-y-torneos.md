@@ -5545,6 +5545,37 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   caracteres) y en la página pública cada mesa con partida tiene «Ver
   partida», en el tablero de `js/visor-linea.js` (el de la libreta de
   torneos: se recorre con el teclado, el lector de pantalla y escribiendo).
+- **La partida, de la foto de las planillas** (lo pidió el dueño, 17/11:
+  «transcribir a PGN las partidas por medio de las planillas, para
+  publicarlas»). Debajo de «Partida (PGN)», cada mesa tiene **«📷 Planilla»**:
+  una o dos fotos (las dos planillas en una foto, o una por foto; se leen
+  solo las dos primeras) pasan por **el mismo lector del Centroamericano**
+  (ver «Leer la partida de las planillas»): Google Vision por
+  `ocr-scoresheet` (un uso del tope diario por foto, con el token de la
+  sesión que ya trae el candado de la licencia), `hojasDeLaFoto()` y
+  `reconstruir()` en su hilo. `js/pareo/planilla.js` solo los junta y arma el
+  PGN; no hay un segundo lector.
+  - **Nada se guarda solo.** Lo leído se abre en el cuadro de «Partida
+    (PGN)», con lo que conviene revisar escrito arriba (cuántas medias
+    jugadas, cuántas corregidas y dudosas, desde dónde es ilegible) y las
+    dudosas una por una con lo escrito en la planilla, debajo del campo. Se
+    guarda con «Guardar la partida», pasando por la misma revisión de
+    chess.js. Una mesa que ya tiene partida pregunta antes de gastar la
+    lectura.
+  - **El PGN no lleva las marcas** (* corregida, ? dudosa): se publica, y
+    en la página pública una «{dudosa}» no le dice nada a nadie. Las marcas
+    van en el cuadro. Lo ilegible sí queda en un comentario y se completa a
+    mano.
+  - **El resultado sale de la mesa, no de la planilla** (el que anotó el
+    árbitro; +/− o sin resultado queda «*»), y los nombres, el torneo y la
+    ronda, del torneo. La fecha es la del reloj de la ronda, o la de hoy, en
+    hora de Costa Rica.
+  - Sin sesión o sin internet no se manda nada y lo dice. Pareo se usa sin
+    conexión: la lectura es lo único de la mesa que la necesita.
+  - Por equipos no está todavía (cada tablero guarda `m.partidas[k].pgn`).
+  - Lo prueba `herramientas/verificar-pareo-planilla.js` (un doble de
+    `ocr-scoresheet` con las planillas de verdad de la mesa 11). **Sin
+    probar de verdad**: Google Vision con planillas de un torneo de Pareo.
 - **Estadísticas.** Una pestaña más en cada torneo publicado: cuántas
   ganaron las blancas, las negras y cuántas tablas (solo partidas jugadas;
   en equipos, tablero por tablero), con el porcentaje escrito al lado de

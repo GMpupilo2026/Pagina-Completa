@@ -4845,12 +4845,14 @@
     });
     return cargaChess;
   }
-  async function editarPartida(r, i, boton) {
+  // `deFoto`: el PGN que salió de la foto de las planillas (leerPlanilla), con
+  // lo que conviene revisar. Se abre en el mismo cuadro y se guarda igual.
+  async function editarPartida(r, i, boton, deFoto) {
     const v = t();
     const m = v.rondas[r].mesas[i];
     const mesa = V.mesaFisica(v, i);
-    const datos = await Avisos.formulario({ titulo: tx("pgnTitulo", { m: mesa }), texto: tx("pgnTexto"), aceptar: tx("pgnGuardar"),
-      campos: [{ nombre: "pgn", etiqueta: tx("pgnCampo"), tipo: "textarea", valor: m.pgn || "", max: 12000 }] });
+    const datos = await Avisos.formulario({ titulo: tx("pgnTitulo", { m: mesa }), texto: deFoto ? deFoto.texto : tx("pgnTexto"), aceptar: tx("pgnGuardar"),
+      campos: [{ nombre: "pgn", etiqueta: tx("pgnCampo"), tipo: "textarea", valor: deFoto ? deFoto.pgn : m.pgn || "", max: 12000, ayuda: deFoto ? deFoto.ayuda || undefined : undefined }] });
     if (!datos) return;
     const texto = String(datos.pgn || "").trim();
     if (!texto) {
@@ -4866,6 +4868,70 @@
     pintarRondas();
     Avisos.avisar(tx("pgnGuardada", { j: Math.ceil(lectura.jugadas.length / 2) }));
     const b = document.querySelector('#pi-ronda [data-pgn="' + i + '"]'); if (b) b.focus();
+  }
+
+  // ---------- La partida de la foto de las planillas ----------
+  // «📷 Planilla» en cada mesa: una o dos fotos (las dos planillas juntas o
+  // una por foto) → Google Vision (ocr-scoresheet, con el tope diario del
+  // lector) → la partida legal que mejor explica lo escrito
+  // (js/pareo/planilla.js, el mismo lector del Centroamericano). No guarda
+  // nada: abre «Partida (PGN)» con lo leído y lo que conviene revisar.
+  let leyendoPlanilla = false;
+  function elegirFotos() {
+    return new Promise((listo) => {
+      const input = el("input", { type: "file", accept: "image/*", multiple: true, hidden: true });
+      input.addEventListener("change", () => { const f = [...(input.files || [])]; input.remove(); listo(f); });
+      input.addEventListener("cancel", () => { input.remove(); listo([]); });
+      document.body.append(input);
+      input.click();
+    });
+  }
+  async function leerPlanilla(r, i, boton) {
+    if (leyendoPlanilla) return;
+    const v = t();
+    const m = v.rondas[r].mesas[i];
+    if (m.pgn && !(await Avisos.confirmar(tx("planillaYaHay"), { titulo: tx("planillaTitulo", { m: V.mesaFisica(v, i) }), aceptar: tx("planillaLeerIgual") }))) return;
+    const fotos = await elegirFotos();
+    if (!fotos.length) return;
+    if (fotos.length > window.PareoPlanilla.MAX_FOTOS) Avisos.avisar(tx("planillaDos"));
+    const original = boton.textContent;
+    const decir = (clave, datos) => { boton.textContent = tx(clave, datos); };
+    leyendoPlanilla = true;
+    boton.disabled = true;
+    boton.setAttribute("aria-busy", "true");
+    try {
+      let token = null;
+      try {
+        const s = window.sb && window.sb.auth ? (await window.sb.auth.getSession()).data.session : null;
+        token = s && s.access_token;
+      } catch (e) { token = null; }
+      if (!token || !navigator.onLine) throw new Error(tx("planillaSinSesion"));
+      await cargarChess();
+      const lectura = await window.PareoPlanilla.leer(fotos, { token, decir });
+      // el día de la ronda (cuando se empezó su reloj) o el de hoy, en hora de Costa Rica
+      const R = v.rondas[r];
+      const fecha = (R.inicio ? new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date(R.inicio))
+        : window.HoraCR ? HoraCR.hoy() : "").replace(/-/g, ".") || "????.??.??";
+      const pgn = window.PareoPlanilla.pgn(window.Chess, lectura.resultado, {
+        Event: v.nombre || "?", Site: "?", Date: fecha, Round: String(r + 1),
+        White: nombreDe(m.b), Black: nombreDe(m.n), Result: m.r || "*",
+        Annotator: tx("planillaAnotador", { m: V.mesaFisica(v, i) }),
+      });
+      const res = window.PareoPlanilla.resumen(lectura.resultado, tx);
+      if (lectura.metodo === "filas") res.texto += " " + tx("planillaFilas");
+      boton.textContent = original;
+      await editarPartida(r, i, boton, { pgn, texto: res.texto, ayuda: res.ayuda });
+    } catch (e) {
+      const msj = e && e.message === "vacia" ? tx("planillaVacia")
+        : /failed to fetch|networkerror|load failed/i.test(String(e && e.message)) ? tx("planillaNoContesto")
+        : String((e && e.message) || e);
+      Avisos.avisar(tx("planillaError", { e: msj }), { tipo: "error" });
+    } finally {
+      leyendoPlanilla = false;
+      boton.disabled = false;
+      boton.removeAttribute("aria-busy");
+      if (boton.isConnected && boton.textContent !== original) boton.textContent = original;
+    }
   }
 
   // ---------- El reloj del retraso ----------
@@ -5131,7 +5197,9 @@
           m.ko && m.r === "=" ? desempateDeMesa(v, R, m, i) : null,
           m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
-            onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton"))),
+            onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton")),
+          window.PareoPlanilla ? el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-planilla": String(i), "aria-label": tx("planillaBotonA", { m: V.mesaFisica(v, i) }),
+            onclick: (e) => leerPlanilla(r, i, e.currentTarget) }, tx("planillaBoton")) : null),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
         el("td", { class: "num", texto: num.get(m.n) })));
       if (mb || mn) cuerpo.append(filaDet);
