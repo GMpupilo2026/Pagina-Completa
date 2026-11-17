@@ -420,10 +420,10 @@ async function pruebaGrabaciones(browser) {
   await page.click("[data-grabacion]");
   await page.waitForTimeout(300);
   const cine = await page.evaluate(() => {
-    const d = document.getElementById("grabacion-cine"), v = d && d.querySelector("iframe"), a = d && d.querySelector("#grabacion-cine-youtube");
+    const d = document.getElementById("grabacion-cine"), v = d && d.querySelector("iframe"), a = d && d.querySelector("#grabacion-cine-youtube, a[href*='youtu']");
     return { abierta: !!d && d.open && d.checkVisibility(), modal: !!d && d.matches(":modal"), titulo: d && document.getElementById("grabacion-cine-titulo").textContent,
       nombrada: d && d.getAttribute("aria-labelledby"), src: v && v.src, vtitulo: v && v.title, completa: v && v.allowFullscreen,
-      seVe: !!v && v.checkVisibility() && v.getBoundingClientRect().height > 250, afuera: a && [a.href, a.target, a.rel],
+      seVe: !!v && v.checkVisibility() && v.getBoundingClientRect().height > 250, afuera: !!a,
       foco: document.activeElement && document.activeElement.id };
   });
   igual("al tocarla se abre en grande, como ventana sobre la página", [cine.abierta, cine.modal, cine.nombrada], [true, true, "grabacion-cine-titulo"]);
@@ -432,7 +432,7 @@ async function pruebaGrabaciones(browser) {
     "https://www.youtube-nocookie.com/embed/" + VIDEO + "?rel=0&autoplay=1&enablejsapi=1&origin=" + encodeURIComponent(BASE));
   igual("con título para el lector de pantalla y pantalla completa", [cine.vtitulo, cine.completa], ["Grabación de la <i>Sesión</i> II", true]);
   igual("y se ve de verdad, grande", cine.seVe, true);
-  igual("«Abrir en YouTube» va aparte, en otra pestaña", cine.afuera, ["https://youtu.be/" + VIDEO, "_blank", "noopener noreferrer"]);
+  igual("no hay enlace para verla en YouTube (allá no se mide lo visto)", cine.afuera, false);
   igual("el foco queda en «Cerrar»", cine.foco, "grabacion-cine-cerrar");
   igual("ahora sí se pidió el video", page.__youtube.length, 1);
   await page.click("#grabacion-cine-cerrar");
@@ -459,7 +459,7 @@ async function pruebaGrabaciones(browser) {
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
   await page.click("[data-grabacion]");
   await page.waitForTimeout(200);
-  const cineC = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-youtube")];
+  const cineC = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-cerrar")];
   cierto(`contraste del modo cine ≥ 4,5 (${cineC.join(", ")})`, cineC.every((c) => c >= 4.5));
   await page.keyboard.press("Escape");
 

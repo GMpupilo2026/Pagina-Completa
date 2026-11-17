@@ -426,12 +426,10 @@ window.CalendarioTaller = (function () {
         guia.id = "grabacion-cine-guia";
         guia.hidden = true;
         cuerpo.append(izquierda, guia);
-        const pie = el("p", "px-4 pb-4 pt-3 text-sm sm:px-6");
-        const afuera = el("a", "font-semibold text-white underline", "Abrir en YouTube (para verla en el celular o en pantalla completa)");
-        afuera.id = "grabacion-cine-youtube";
-        afuera.target = "_blank";
-        afuera.rel = "noopener noreferrer";
-        pie.appendChild(afuera);
+        // Sin «Abrir en YouTube»: lo que se mira fuera de la página no se
+        // puede medir, y quien lo veía allá creía que contaba. La pantalla
+        // completa la da el mismo reproductor (allowFullscreen).
+        const pie = el("div", "pb-4");
         d.append(cab, cuerpo, pie);
         document.body.appendChild(d);
         // Cerrar quita el video (con el botón, con Esc o tocando afuera) y
@@ -463,7 +461,7 @@ window.CalendarioTaller = (function () {
        segundos, al pausar, al cerrar y al salir de la página; la base los
        junta con los de antes y devuelve el total. Si el reproductor no
        contesta, no se anota nada y el video se ve igual. Lo que se mira en
-       YouTube aparte («Abrir en YouTube») no se cuenta. */
+       YouTube aparte no se cuenta: por eso no hay enlace para abrirlo allá. */
     const YT = "https://www.youtube-nocookie.com";
     const CADA = 30000, TERMINO = 0, CORRIENDO = 1, PAUSA = 2;
     let medidor = null;
@@ -579,7 +577,6 @@ window.CalendarioTaller = (function () {
         quitarGuia();
         volverA = desde;
         d.querySelector("#grabacion-cine-titulo").textContent = nombreDe(g) + (g.tema ? " · " + g.tema : "");
-        d.querySelector("#grabacion-cine-youtube").href = "https://youtu.be/" + encodeURIComponent(g.youtube_id);
         const video = document.createElement("iframe");
         // `origin` es a quién le contesta el reproductor sus mensajes.
         video.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(g.youtube_id) + "?rel=0&autoplay=1&enablejsapi=1"

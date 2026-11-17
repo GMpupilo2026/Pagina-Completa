@@ -4239,7 +4239,9 @@ galería) la galería, con el tema y la duración:
 - Al tocar una, se abre en grande sobre la página, en un `<dialog>` modal (el
   mismo patrón de la vista previa de archivos): el título con la sesión y su
   tema, el reproductor (que arranca solo: la persona acaba de pedirlo), «✕
-  Cerrar» con el foco y «Abrir en YouTube» aparte, en otra pestaña. **El
+  Cerrar» con el foco. **No hay enlace para abrirla en YouTube** (se quitó
+  el 17/11/2026): lo que se mira allá no se mide, y quien la veía por fuera
+  creía que le contaba. La pantalla completa la da el mismo reproductor. **El
   reproductor no existe hasta ese momento** —YouTube no se carga en el panel
   de quien no pidió nada— y al cerrar (con el botón, con Esc o tocando
   afuera) se quita, para que no siga sonando escondido, y el foco vuelve a la
@@ -4579,7 +4581,17 @@ aparezca su fila en `grabaciones_vistas`.
   `grabacion_vista_anotar()` (`anotarLoVisto` de `js/clases.js`). Si no hubo
   red, lo que no se pudo mandar va en el envío siguiente; lo que la base
   rechazó (22023, 42501) no se vuelve a mandar. Lo que se mira en YouTube
-  aparte («Abrir en YouTube») no se cuenta.
+  aparte no se cuenta, y por eso la página ya no ofrece el enlace (el logo
+  de YouTube dentro del reproductor sí lleva allá: es de YouTube y no se
+  puede quitar desde la página).
+- **«La vi completa y no me sale»**: antes de buscar un error, mirar los
+  tramos (`vistos`) de esa persona contra las notas de la sesión
+  (`avisos` en `formacion-grabaciones.json`). El 17/11/2026 una asesora
+  reportó haber visto la Sesión III y tenía 89 %: sus huecos eran el
+  receso (0:59:30-1:08:37, saltado con el capítulo de las 1:08:37), los
+  primeros 3 minutos de espera y silencios largos donde solo hablaban los
+  participantes (0:36:55-0:38:48 y otros). Es el medidor haciendo lo que
+  debe: lo adelantado no cuenta.
 - **Si el reproductor no contesta, no se anota nada** y el video se ve igual.
   Si YouTube cambiara sus mensajes, se dejaría de medir sin romper nada.
 
