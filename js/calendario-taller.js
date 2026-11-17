@@ -342,9 +342,11 @@ window.CalendarioTaller = (function () {
     /* En la tarjeta: el texto debajo del día y, como en YouTube, una barra al
        pie de la miniatura. La barra es adorno: lo que dice va escrito. Se
        repinta cuando la base devuelve el total nuevo, con la ventana todavía
-       abierta. */
+       abierta. El botón de una parte (en la ficha de una sesión en varias
+       partes) trae su propia manera de repintarse. */
     function ponerVisto(b, g) {
         if (!b) return;
+        if (b.__repintar) return b.__repintar();
         const dicho = textoVisto(g);
         let t = b.querySelector("[data-visto]"), barra = b.querySelector("[data-visto-barra]");
         if (!dicho) { if (t) t.remove(); if (barra) barra.remove(); return; }
@@ -364,6 +366,72 @@ window.CalendarioTaller = (function () {
             b.firstElementChild.appendChild(barra);
         }
         barra.firstElementChild.style.width = Math.min(100, (100 * Number(g.visto_seg)) / total).toFixed(1) + "%";
+    }
+
+    /* Una sesión que quedó en varios videos: UNA ficha por sesión, para que
+       la galería vaya en orden. Arriba, la miniatura de la sesión con lo que
+       duran todas las partes y cuánto lleva visto entre todas; tocarla abre
+       la parte que le toca (la primera que no ha visto completa). Debajo, un
+       botón por parte, con lo que lleva de cada una. */
+    function tarjetaSesion(partes, abrir) {
+        const g0 = partes[0];
+        const caja = el("div", "flex-1 overflow-hidden rounded-2xl bg-brand-50 ring-1 ring-brand-100 dark:bg-brand-950 dark:ring-brand-800");
+        caja.dataset.sesion = g0.horario_id + "|" + g0.fecha;
+        const total = partes.reduce((n, g) => n + (Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0), 0);
+        // Lo de la sesión entera, contado como una grabación: la suma de las partes.
+        const entera = () => ({
+            visto_seg: partes.reduce((n, g) => n + (Number(g.visto_seg) || 0), 0),
+            util_seg: partes.reduce((n, g) => n + aVer(g), 0),
+        });
+        const leToca = () => partes.find((g) => !(aVer(g) && Number(g.visto_seg) >= aVer(g) * 0.95)) || partes[0];
+
+        const b = el("button", "group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400");
+        b.type = "button";
+        b.dataset.grabacionSesion = caja.dataset.sesion;
+        b.setAttribute("aria-haspopup", "dialog");
+        b.appendChild(miniatura(g0.titulo, total ? reloj(total) : "", false, 0));
+        const texto = el("span", "block p-3 pb-2");
+        texto.append(el("span", "sr-only", "Ver la grabación: "),
+            el("span", "block font-semibold text-brand-800 dark:text-white", g0.titulo || "Clase"));   // del profe: textContent
+        if (g0.tema) texto.appendChild(el("span", "block text-sm text-brand-700 dark:text-brand-200", g0.tema));
+        texto.appendChild(el("span", "mt-1 block text-xs text-brand-600 dark:text-brand-300",
+            dia(g0.inicio) + (total ? " · " + duracion(total) : "") + " · en " + partes.length + " partes"));
+        b.appendChild(texto);
+        caja.appendChild(b);
+
+        const ul = el("ul", "space-y-1 px-3 pb-3");
+        ul.setAttribute("aria-label", "Partes de la " + (g0.titulo || "clase"));
+        const botones = partes.map((g) => {
+            const li = el("li");
+            const p = el("button", "flex w-full items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-left text-sm ring-1 ring-brand-100 hover:ring-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 dark:bg-brand-900 dark:ring-brand-800");
+            p.type = "button";
+            p.dataset.grabacion = g.youtube_id;
+            p.dataset.parte = String(g.parte);
+            p.setAttribute("aria-haspopup", "dialog");
+            const izq = el("span", "font-semibold text-brand-800 dark:text-white");
+            const icono = el("span", "text-accent-600 dark:text-accent-400", "▶ ");
+            icono.setAttribute("aria-hidden", "true");
+            const seg = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
+            izq.append(el("span", "sr-only", "Ver la grabación: " + (g0.titulo || "Clase") + ", "), icono, "Parte " + g.parte,
+                el("span", "font-normal text-brand-600 dark:text-brand-300", seg ? " · " + duracion(seg) : ""));
+            const der = el("span", "shrink-0 text-xs font-semibold text-brand-700 dark:text-brand-200");
+            der.dataset.visto = "";
+            p.append(izq, der);
+            // Lo de esta parte y, arriba, lo de la sesión entera.
+            p.__repintar = () => {
+                const visto = Number(g.visto_seg) > 0 ? Number(g.visto_seg) : 0, t = aVer(g);
+                der.textContent = !visto ? "" : t && visto >= t * 0.95 ? "✓ Completa" : (t ? Math.max(1, Math.round((100 * visto) / t)) + " %" : duracion(visto));
+                ponerVisto(b, entera());
+            };
+            p.addEventListener("click", () => abrir(g, p));
+            li.appendChild(p);
+            ul.appendChild(li);
+            return p;
+        });
+        caja.appendChild(ul);
+        botones.forEach((p) => p.__repintar());
+        b.addEventListener("click", () => { const g = leToca(); abrir(g, botones[partes.indexOf(g)]); });
+        return caja;
     }
 
     // La próxima sesión, en gris: todavía no tiene grabación. Apagada: sin
@@ -1171,10 +1239,19 @@ window.CalendarioTaller = (function () {
         rejilla.setAttribute("role", "list");
         rejilla.setAttribute("aria-label", "Grabaciones");
         const item = (...hijos) => { const li = el("div", "flex flex-col gap-2"); li.setAttribute("role", "listitem"); li.append(...hijos); return li; };
+        // Una ficha por sesión: las partes de una misma clase van juntas.
+        const porSesion = new Map();
         lista.forEach((g) => {
-            const deck = presentacionDe(g, presentaciones, ahora || new Date());
-            const tarjeta = tarjetaGrabacion(g, (x, b) => abrirCine(x, b, alVer, deck));
-            rejilla.appendChild(deck ? item(tarjeta, botonPresentacion(g, deck)) : item(tarjeta));
+            const k = g.horario_id + "|" + g.fecha;
+            if (!porSesion.has(k)) porSesion.set(k, []);
+            porSesion.get(k).push(g);
+        });
+        porSesion.forEach((partes) => {
+            partes.sort((a, b) => a.parte - b.parte);
+            const deck = presentacionDe(partes[0], presentaciones, ahora || new Date());
+            const abrirla = (x, b) => abrirCine(x, b, alVer, deck);
+            const tarjeta = partes.length > 1 ? tarjetaSesion(partes, abrirla) : tarjetaGrabacion(partes[0], abrirla);
+            rejilla.appendChild(deck ? item(tarjeta, botonPresentacion(partes[0], deck)) : item(tarjeta));
         });
         if (proxima) rejilla.appendChild(item(tarjetaProxima(proxima)));
         seccion.append(titulo, sub, rejilla);

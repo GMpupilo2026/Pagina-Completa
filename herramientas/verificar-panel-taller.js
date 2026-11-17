@@ -714,8 +714,9 @@ async function pruebaSinClase(browser) {
   await nueva.cerrar();
 }
 
-/* Una sesión que quedó en dos videos: una tarjeta por parte, cada una con su
-   avance, y lo que se ve de la parte 2 se anota en la parte 2. */
+/* Una sesión que quedó en dos videos: UNA ficha para la sesión (la galería
+   va en orden), con lo que lleva entre todas las partes y un botón por parte
+   con su avance; lo que se ve de la parte 2 se anota en la parte 2. */
 async function pruebaPartes(browser) {
   console.log("\n=== Una sesión en dos partes ===");
   const ayer = diaCR(-DIA);
@@ -725,23 +726,31 @@ async function pruebaPartes(browser) {
   const grabadas = [parte(1, "BuN8MirmKB4", 5162), parte(2, "AbCdEfGhIj2", 6000, 3000),
     { horario_id: "h9", fecha: ayer, titulo: "Sesión III", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"), tema: "Otra", duracion_seg: 11520 }];
   const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabadas, anotar: 3010 }), REPRODUCTOR);
-  const tarjetas = await page.$$eval("[data-grabacion]", (bs) => bs.map((b) => {
-    const v = b.querySelector("[data-visto]");
-    return [b.querySelector(".p-3 .font-semibold").textContent, b.dataset.parte || "", v ? v.textContent : ""];
+  igual("una sola ficha para la sesión en dos partes, y la de un solo video aparte", await page.evaluate(() =>
+    [...document.querySelectorAll('[aria-label="Grabaciones"] > [role=listitem]')].map((li) => li.querySelector("[data-sesion]") ? "sesión en partes" : li.querySelector("[data-grabacion]") ? li.querySelector("[data-grabacion]").dataset.grabacion : "la próxima")),
+    ["sesión en partes", VIDEO, "la próxima"]);
+  const ficha = await page.$eval("[data-sesion]", (f) => ({
+    titulo: f.querySelector("[data-grabacion-sesion] .p-3 .font-semibold").textContent,
+    dice: f.querySelector("[data-grabacion-sesion] .p-3 .text-xs").textContent,
+    visto: (f.querySelector("[data-grabacion-sesion] [data-visto]") || {}).textContent || "",
+    chip: [...f.querySelectorAll("[data-grabacion-sesion] [aria-hidden=true]")].map((e) => e.textContent).filter((t) => /^\d+:\d\d/.test(t))[0],
+    parteEnMiniatura: [...f.querySelectorAll("[data-grabacion-sesion] [aria-hidden=true] span")].some((e) => /^Parte \d$/.test(e.textContent)),
+    partes: [...f.querySelectorAll("[data-parte]")].map((b) => [b.dataset.parte, b.querySelector("[data-visto]").textContent]),
   }));
-  igual("una tarjeta por parte, en orden, que dice cuál es; la sesión de un solo video no dice «Parte»", tarjetas,
-    [["Sesión IV · Parte 1", "1", ""], ["Sesión IV · Parte 2", "2", "Viste 50 min (50 %)"], ["Sesión III", "", ""]]);
-  igual("la miniatura lo dice también (de adorno: el texto ya lo dice)",
-    await page.$$eval("[data-grabacion]", (bs) => bs.map((b) => {
-      const s = [...b.querySelectorAll("[aria-hidden=true] span")].find((e) => /^Parte \d$/.test(e.textContent));
-      if (!s) return "";
-      // Debajo del número, no encima: no se tocan.
-      const num = s.previousElementSibling.getBoundingClientRect(), p = s.getBoundingClientRect();
-      return s.textContent + (s.closest("[aria-hidden=true]") && p.top >= num.bottom - 1 ? "" : " (encima del número)");
-    })),
-    ["Parte 1", "Parte 2", ""]);
-  igual("y el lector de pantalla oye la parte",
-    await page.getByRole("button", { name: /^Ver la grabación: Sesión IV · Parte 2 Uso del reloj/ }).count(), 1);
+  igual("la ficha dice la sesión (sin «Parte»), cuánto duran entre todas y en cuántas partes", [ficha.titulo, ficha.chip, / · 3 h 6 min · en 2 partes$/.test(ficha.dice), ficha.parteEnMiniatura],
+    ["Sesión IV", "3:06:02", true, false]);
+  igual("arriba, lo que lleva entre las dos partes (3000 de 11 162 s)", ficha.visto, "Viste 50 min (27 %)");
+  igual("y un botón por parte, en orden, con lo que lleva de cada una", ficha.partes, [["1", ""], ["2", "50 %"]]);
+  const contrastes = async () => [await page.evaluate(contrasteEnPagina, '[data-parte="2"] [data-visto]'), await page.evaluate(contrasteEnPagina, '[data-parte="2"] .font-normal')];
+  const cClaro = await contrastes();
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(600);
+  const cOscuro = await contrastes();
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.waitForTimeout(600);
+  cierto(`contraste del avance y la duración de cada parte ≥ 4,5 en claro y en oscuro (${cClaro}, ${cOscuro})`, [...cClaro, ...cOscuro].every((c) => c >= 4.5));
+  igual("el lector de pantalla oye la sesión, la parte y su avance",
+    await page.getByRole("button", { name: /^Ver la grabación: Sesión IV, Parte 2 · 1 h 40 min\s*50 %$/ }).count(), 1);
   await page.click('[data-grabacion][data-parte="2"]');
   igual("la ventana dice la parte", await page.$eval("#grabacion-cine-titulo", (h) => h.textContent), "Sesión IV · Parte 2 · Uso del reloj");
   igual("y abre SU video", await page.$eval("#grabacion-cine-video iframe", (f) => /\/embed\/AbCdEfGhIj2\?/.test(f.src)), true);
@@ -750,6 +759,14 @@ async function pruebaPartes(browser) {
   await page.waitForTimeout(300);
   const envios = await llamadas(page, "grabacion_vista_anotar");
   igual("lo visto se anota en la parte 2 de esa clase", [...new Set(envios.map((a) => a.p_horario + " " + a.p_fecha + " parte " + a.p_parte))], ["h0 " + ayer + " parte 2"]);
+  igual("con la ventana cerrada, la parte y la sesión dicen lo nuevo", await page.$eval("[data-sesion]", (f) =>
+    [f.querySelector('[data-parte="2"] [data-visto]').textContent, f.querySelector("[data-grabacion-sesion] [data-visto]").textContent]), ["50 %", "Viste 50 min (27 %)"]);
+  igual("el foco vuelve al botón de la parte", await page.evaluate(() => document.activeElement && document.activeElement.dataset.parte), "2");
+  await page.click("[data-grabacion-sesion]");
+  igual("tocar la ficha abre la parte que le toca (la primera que no ha visto completa)",
+    await page.$eval("#grabacion-cine-video iframe", (f) => /\/embed\/BuN8MirmKB4\?/.test(f.src)), true);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
   igual("en el celular no se desborda", await page.setViewportSize({ width: 390, height: 900 }).then(() => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), false);
   if (process.env.CAPTURAS) await page.locator('section[aria-labelledby="grabaciones-taller-titulo"]').screenshot({ path: path.join(process.env.CAPTURAS, "panel-taller-partes.png") });
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));

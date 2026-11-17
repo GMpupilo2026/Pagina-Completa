@@ -4682,11 +4682,18 @@ grabación es de **(horario, fecha, parte)**:
   llamada sin parte no sabría a cuál ir, así que las viejas se apartaron como
   en la vez anterior («_apartada2», sin permiso para nadie): se pueden borrar
   en cualquier migración posterior.
-- **El panel**: una tarjeta por parte, en orden; si la sesión tiene más de
-  una, el título dice «Sesión IV · Parte 2» (también en el modo cine y en el
-  nombre del reproductor) y la miniatura lleva «PARTE 2» debajo del número, de
-  adorno. Lo visto, las respuestas y lo ya contestado se piden y se anotan con
-  la parte de esa tarjeta. Una sesión de un solo video no dice «Parte».
+- **El panel: una ficha por sesión** (desde el 17/11/2026; antes iba una
+  tarjeta por parte, y con la IV y la V en partes la galería quedaba
+  desordenada, como pidió el dueño). La ficha lleva la miniatura de la
+  sesión con lo que duran todas las partes, «en 2 partes» y cuánto lleva
+  visto entre todas (lo visto útil sumado entre lo que hay que ver sumado);
+  debajo, un botón por parte («▶ Parte 2 · 1 h 40 min», con su «50 %» o «✓
+  Completa»). Tocar la miniatura abre la parte que le toca: la primera que no
+  ha visto completa. En el modo cine el título dice «Sesión IV · Parte 2».
+  Lo visto, las respuestas y lo ya contestado se piden y se anotan con la
+  parte de ese botón, y al anotarse se repintan la parte y la sesión. «Ver la
+  presentación» va una vez por sesión. Una sesión de un solo video sigue con
+  su tarjeta de siempre y no dice «Parte».
 - **La ficha Asesores**: una columna por parte («▶ II·1», «▶ II·2», con «parte
   1» en el nombre para el lector de pantalla) y el resumen de arriba las
   cuenta por separado.
@@ -4699,9 +4706,12 @@ grabación es de **(horario, fecha, parte)**:
 
 `verificar-panel-taller.js` revisa la migración (la columna, las tres llaves,
 las seis apartadas, los permisos y que cada función busque SU parte) y abre
-una sesión en dos partes: dos tarjetas que dicen cuál es, la miniatura sin
-encimarse, el avance de cada una, el video correcto y lo visto anotado en la
-parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
+una sesión en dos partes: una sola ficha con lo que duran y llevan entre
+las dos, un botón por parte con su avance (contraste medido en claro y en
+oscuro), el video correcto, lo visto anotado en la parte 2 y repintado, el
+foco que vuelve a la parte y la ficha que abre la parte que le toca. Se
+rompió a propósito (anotar siempre en la parte 1, una tarjeta por parte, la
+ficha abriendo siempre la última) y saltó cada vez.
 `verificar-admin.js` prueba las columnas por parte de la ficha.
 
 ### Lo que no es clase no se le exige a nadie
