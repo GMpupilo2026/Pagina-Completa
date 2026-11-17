@@ -20,13 +20,15 @@
    Abajo van las grabaciones de las sesiones que ya pasaron (mis_grabaciones(),
    que pone el profe o quien administra con grabacion_clase_poner()), cada una
    con su reproductor a pedido y cuánto lleva visto (grabaciones_vistas, que
-   se anota mientras la mira: ver «Cuánto vio cada uno»). Debajo de cada
+   se anota mientras la mira: ver «Cuánto vio cada uno»), sin contar los
+   tramos sin clase, que se pueden saltar (ver «Lo que no es clase no se le
+   exige a nadie»). Debajo de cada
    grabación va la presentación que se vio en esa sesión, para repasarla
    (ver «La presentación junto a la grabación»).
 
    Va aparte de js/clases.js para que se pueda probar sin la base: pintar()
    recibe las filas tal cual las devuelven mis_clases_proximas(),
-   mis_grabaciones() y grabaciones_vistas, y lo que vio lo entrega a `alVer`.
+   y mis_grabaciones(), y lo que vio lo entrega a `alVer`.
    Ver «El panel de taller» en docs/decisiones/paneles.md. */
 window.CalendarioTaller = (function () {
     "use strict";
@@ -160,14 +162,14 @@ window.CalendarioTaller = (function () {
        mis_clases_proximas() (ya ordenadas y sin las que terminaron);
        `alBajar` es lo que hace «Agregar a mi calendario»; `entrada`, si la
        clase está abierta (ver pintarEntrada); `grabaciones`, las filas de
-       mis_grabaciones() (ver pintarGrabaciones); `vistas`, las de
-       grabaciones_vistas de quien mira; `alVer(g, tramos)`, lo que anota lo
+       mis_grabaciones() (ver pintarGrabaciones), que ya traen lo que lleva
+       visto quien mira; `alVer(g, tramos)`, lo que anota lo
        que vio y devuelve el total (ver «Cuánto vio»), y `presentaciones`, las
        sesiones del curso (sesiones.json de Formación Ajedrez), para poner la
        presentación junto a su grabación (ver presentacionDe); `responder(g, n,
        opcion)` corrige una pregunta del video en la base y `respuestas(g)` trae
        las que ya contestó (ver «Las preguntas dentro del video»). */
-    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null, presentaciones = null, responder = null, respuestas = null } = {}) {
+    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, alVer = null, presentaciones = null, responder = null, respuestas = null } = {}) {
         caja.replaceChildren();
         preguntar = { responder, respuestas };
         const lista = (sesiones || []).filter((s) => s && s.inicio && s.fin && new Date(s.fin) > ahora);
@@ -207,7 +209,7 @@ window.CalendarioTaller = (function () {
             boton.addEventListener("click", () => alBajar(boton, estado));
             caja.append(boton, estado);
         }
-        pintarGrabaciones(caja, grabaciones, lista[0], vistas, alVer, presentaciones, ahora);
+        pintarGrabaciones(caja, grabaciones, lista[0], alVer, presentaciones, ahora);
         caja.hidden = false;
         return lista.length;
     }
@@ -322,11 +324,16 @@ window.CalendarioTaller = (function () {
         return b;
     }
 
-    // «Viste 1 h 36 min (50 %)»: lo que lleva visto, sin contar lo repetido.
+    /* Lo que hay que ver: la duración sin los tramos sin clase (recesos,
+       silencios), que no se le exigen a nadie (util_seg, de la base). */
+    const aVer = (g) => (Number(g.util_seg) > 0 ? Number(g.util_seg) : Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0);
+
+    // «Viste 1 h 36 min (50 %)»: lo que lleva visto, sin contar lo repetido
+    // ni lo que no es clase.
     function textoVisto(g) {
         const visto = Number(g.visto_seg) > 0 ? Number(g.visto_seg) : 0;
         if (!visto) return "";
-        const total = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
+        const total = aVer(g);
         if (total && visto >= total * 0.95) return "✓ La viste completa";
         const pct = total ? Math.round((100 * visto) / total) : 0;
         return "Viste " + duracion(visto) + (pct >= 1 ? " (" + pct + " %)" : "");
@@ -347,7 +354,7 @@ window.CalendarioTaller = (function () {
             b.lastElementChild.appendChild(t);
         }
         t.textContent = dicho;
-        const total = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
+        const total = aVer(g);
         if (!total) return;
         if (!barra) {
             barra = el("span", "absolute inset-x-0 bottom-0 block h-1.5 bg-white/30");
@@ -428,8 +435,19 @@ window.CalendarioTaller = (function () {
         cuerpo.append(izquierda, guia);
         // Sin «Abrir en YouTube»: lo que se mira fuera de la página no se
         // puede medir, y quien lo veía allá creía que contaba. La pantalla
-        // completa la da el mismo reproductor (allowFullscreen).
-        const pie = el("div", "pb-4");
+        // completa la da el mismo reproductor (allowFullscreen). Abajo van
+        // «Saltar» (en un tramo sin clase) y lo que le falta ver.
+        const pie = el("div", "px-4 pb-4 pt-3 text-sm sm:px-6");
+        pie.id = "grabacion-cine-pie";
+        const saltar = el("button", "rounded-lg bg-accent-500 px-3 py-1.5 font-semibold text-brand-900 hover:bg-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white");
+        saltar.type = "button";
+        saltar.id = "grabacion-cine-saltar";
+        saltar.hidden = true;
+        saltar.addEventListener("click", () => { if (medidor && saltar.dataset.hasta) irA(medidor, Number(saltar.dataset.hasta)); });
+        const faltan = el("div", "mt-2");
+        faltan.id = "grabacion-cine-faltan";
+        faltan.hidden = true;
+        pie.append(saltar, faltan);
         d.append(cab, cuerpo, pie);
         document.body.appendChild(d);
         // Cerrar quita el video (con el botón, con Esc o tocando afuera) y
@@ -480,6 +498,72 @@ window.CalendarioTaller = (function () {
         return fuera;
     }
 
+    // [[desde, hasta], …] en segundos enteros y en orden; lo demás se descarta.
+    function tramosValidos(x) {
+        return (Array.isArray(x) ? x : [])
+            .filter((t) => Array.isArray(t) && Number.isInteger(t[0]) && Number.isInteger(t[1]) && t[0] >= 0 && t[1] > t[0])
+            .map((t) => [t[0], t[1]]).sort((a, b) => a[0] - b[0]);
+    }
+
+    /* Lo que le falta ver, sin lo que acaba de ver (la base lo vuelve a
+       contar la próxima vez que se abra el panel). Lo que queda de menos de
+       20 segundos no se lista: es el redondeo de las puntas, como en la base. */
+    const MIN_FALTA = 20;
+    function restarTramos(lista, vistos) {
+        let quedan = lista.map((t) => t.slice());
+        vistos.forEach(([x, y]) => {
+            quedan = quedan.flatMap(([a, b]) => (y <= a || x >= b ? [[a, b]] : [[a, Math.max(a, x)], [Math.min(b, y), b]]).filter(([c, e]) => e > c));
+        });
+        return quedan.filter(([a, b]) => b - a >= MIN_FALTA);
+    }
+
+    /* «Te falta ver»: los tramos de clase que todavía no vio, cada uno un
+       botón que lleva el video ahí. Solo cuando ya vio algo (a quien no ha
+       empezado le faltaría el video entero). */
+    function pintarFaltan(g) {
+        const caja = cine && cine.querySelector("#grabacion-cine-faltan");
+        if (!caja) return;
+        caja.replaceChildren();
+        const lista = g.faltan || [];
+        caja.hidden = !(Number(g.visto_seg) > 0);
+        if (caja.hidden) return;
+        if (!lista.length) {
+            caja.appendChild(el("p", "font-semibold text-white", "✓ Ya viste toda la clase de este video."));
+            return;
+        }
+        const resto = lista.reduce((n, [a, b]) => n + b - a, 0);
+        caja.appendChild(el("p", "font-semibold text-white", "Te falta ver " + duracion(resto) + " (los recesos y silencios no cuentan):"));
+        const ul = el("ul", "mt-1 flex flex-wrap gap-2");
+        ul.setAttribute("aria-label", "Lo que te falta ver");
+        const MAX = 8;
+        lista.slice(0, MAX).forEach(([a, b]) => {
+            const li = el("li");
+            const ir = el("button", "rounded-lg bg-white/15 px-2.5 py-1 font-semibold text-white hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", reloj(a) + " a " + reloj(b));
+            ir.type = "button";
+            ir.dataset.ir = String(a);
+            ir.setAttribute("aria-label", "Ir a " + reloj(a) + ": falta de " + reloj(a) + " a " + reloj(b));
+            ir.addEventListener("click", () => { if (medidor) irA(medidor, a); });
+            li.appendChild(ir);
+            ul.appendChild(li);
+        });
+        caja.appendChild(ul);
+        if (lista.length > MAX) caja.appendChild(el("p", "mt-1 text-white", "y " + (lista.length - MAX) + " tramos más después."));
+    }
+
+    /* «⏭ Saltar»: en un tramo sin clase (receso, silencio), un botón que
+       lleva al final del tramo. Lo saltado así no se pierde: no se le exige
+       a nadie. */
+    function revisarSinClase(m, t) {
+        const b = cine && cine.querySelector("#grabacion-cine-saltar");
+        if (!b) return;
+        const tramo = (m.g.sin_clase || []).find(([a, z]) => a <= t && t < z - 3);
+        const hasta = tramo ? String(tramo[1]) : "";
+        if (b.dataset.hasta === hasta && b.hidden === !tramo) return;
+        b.dataset.hasta = hasta;
+        b.hidden = !tramo;
+        if (tramo) b.textContent = "⏭ Saltar lo que no es clase (sigue en " + reloj(tramo[1]) + ")";
+    }
+
     function medir(g, iframe, tarjeta, alVer) {
         parar();
         const m = { g, iframe, tarjeta, alVer, tramos: [], estado: -1, velocidad: 1, previo: null, reloj: 0, oye: false, enviando: false };
@@ -513,6 +597,7 @@ window.CalendarioTaller = (function () {
         if (typeof info.playerState === "number") cambiaEstado(m, info.playerState);
         if (typeof info.currentTime === "number" && Number.isFinite(info.currentTime)) {
             avanzar(m, info.currentTime);
+            revisarSinClase(m, info.currentTime);
             if (guiaActual && guiaActual.medidor === m) {
                 seguirVideo(guiaActual, info.currentTime);
                 if (guiaActual.datos.preguntas.length) revisarPausa(guiaActual, info.currentTime);
@@ -553,7 +638,12 @@ window.CalendarioTaller = (function () {
         m.enviando = true;
         try {
             const total = await m.alVer(m.g, tramos);
-            if (Number.isFinite(total)) { m.g.visto_seg = total; ponerVisto(m.tarjeta, m.g); }
+            if (Number.isFinite(total)) {
+                m.g.visto_seg = total;
+                m.g.faltan = restarTramos(m.g.faltan || [], tramos);
+                ponerVisto(m.tarjeta, m.g);
+                if (medidor === m) pintarFaltan(m.g);
+            }
         } catch (e) {
             // Sin red se vuelven a juntar para la próxima; lo que la base rechazó, no.
             if (!(e && e.descartar)) tramos.forEach(([a, b]) => { m.tramos = sumarTramo(m.tramos, a, b); });
@@ -578,8 +668,12 @@ window.CalendarioTaller = (function () {
         volverA = desde;
         d.querySelector("#grabacion-cine-titulo").textContent = nombreDe(g) + (g.tema ? " · " + g.tema : "");
         const video = document.createElement("iframe");
+        // Si ya vio algo, sigue donde le falta (antes arrancaba siempre del
+        // principio y había que buscar a mano dónde iba).
+        const desdeSeg = Number(g.visto_seg) > 0 && g.faltan && g.faltan.length ? g.faltan[0][0] : 0;
         // `origin` es a quién le contesta el reproductor sus mensajes.
         video.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(g.youtube_id) + "?rel=0&autoplay=1&enablejsapi=1"
+            + (desdeSeg > 0 ? "&start=" + desdeSeg : "")
             + (location.origin && location.origin !== "null" ? "&origin=" + encodeURIComponent(location.origin) : "");
         video.title = "Grabación de la " + nombreDe(g);
         video.className = "h-full w-full";
@@ -587,6 +681,10 @@ window.CalendarioTaller = (function () {
         video.allowFullscreen = true;
         video.referrerPolicy = "strict-origin-when-cross-origin";
         medir(g, video, desde, alVer);
+        const saltar = d.querySelector("#grabacion-cine-saltar");
+        saltar.hidden = true;
+        saltar.dataset.hasta = "";
+        pintarFaltan(g);
         d.querySelector("#grabacion-cine-video").replaceChildren(video);
         if (!d.open) d.showModal();
         d.querySelector("#grabacion-cine-cerrar").focus();
@@ -1045,19 +1143,19 @@ window.CalendarioTaller = (function () {
         }
     }
 
-    function pintarGrabaciones(caja, grabaciones, proxima, vistas, alVer, presentaciones, ahora) {
-        // Lo que ya vio va con su grabación (la fila de grabaciones_vistas de ese día).
-        // Una sesión puede estar en varias partes, cada una su video: la llave
-        // es la clase, el día y la parte (1 si no la trae).
-        const clave = (x) => x.horario_id + "|" + x.fecha + "|" + (Number(x.parte) || 1);
-        const visto = new Map((vistas || []).filter(Boolean).map((v) => [clave(v), Number(v.visto_seg) || 0]));
+    function pintarGrabaciones(caja, grabaciones, proxima, alVer, presentaciones, ahora) {
+        // Lo que ya vio viene en la misma fila (mis_grabaciones() lo cuenta
+        // sin los tramos sin clase). Una sesión puede estar en varias partes,
+        // cada una su video.
         const validas = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")));
         const partesDe = new Map();
         validas.forEach((g) => { const k = g.horario_id + "|" + g.fecha; partesDe.set(k, (partesDe.get(k) || 0) + 1); });
         const lista = validas.map((g) => Object.assign({}, g, {
             parte: Number(g.parte) || 1,
             partes: partesDe.get(g.horario_id + "|" + g.fecha),
-            visto_seg: visto.get(clave(g)) || 0,
+            visto_seg: Number(g.visto_seg) > 0 ? Number(g.visto_seg) : 0,
+            sin_clase: tramosValidos(g.sin_clase),
+            faltan: tramosValidos(g.faltan),
         }));
         if (!lista.length) return 0;
         const seccion = el("section", "mt-6");

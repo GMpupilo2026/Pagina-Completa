@@ -267,10 +267,11 @@ window.__consultas = [];
          parte 1 de la II; Beto, 10 minutos de la parte 2. */
       if (n === "asesores_grabaciones") {
         window.__grabaciones = (window.__grabaciones || []).concat([args]);
-        const v = (persona_id, horario_id, fecha, titulo, duracion_seg, visto_seg, parte) =>
-          ({ persona_id, horario_id, fecha, parte: parte || 1, titulo, inicio: fecha + "T14:00:00Z", duracion_seg, visto_seg, ultima_vez: visto_seg ? fecha + "T20:00:00Z" : null });
+        // La parte 2 de la II tiene 600 s sin clase: hay que ver 2400 (util_seg), y el porcentaje sale de ahí.
+        const v = (persona_id, horario_id, fecha, titulo, duracion_seg, visto_seg, parte, util_seg) =>
+          ({ persona_id, horario_id, fecha, parte: parte || 1, titulo, inicio: fecha + "T14:00:00Z", duracion_seg, util_seg: util_seg || duracion_seg, visto_seg, ultima_vez: visto_seg ? fecha + "T20:00:00Z" : null });
         return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
-          v("u-ase1", "hs2", "2026-10-20", "Sesión II", 3000, 0, 2), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 3000, 600, 2),
+          v("u-ase1", "hs2", "2026-10-20", "Sesión II", 3000, 0, 2, 2400), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 3000, 600, 2, 2400),
           v("u-ase1", "hs2", "2026-10-20", "Sesión II", 14518, 45), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 14518, 0),
           v("u-ase1", "hs1", "2026-10-12", "Sesión I", 11520, 5760), v("u-ase2", "hs1", "2026-10-12", "Sesión I", 11520, 0),
         ], error: null });
@@ -879,12 +880,12 @@ async function pruebaAsesores(browser) {
      ["▶ II·1", "Grabación de la Sesión II, parte 1: cuánto la vio"], ["▶ II·2", "Grabación de la Sesión II, parte 2: cuánto la vio"]]);
   igual("las preguntas dentro del video se piden a la base, por taller", await page.evaluate(() => window.__preguntasVideo),
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
-  igual("cuánto vio cada uno (el porcentaje y el tiempo, y lo que no vio lo dice escrito) y, debajo, cuántas preguntas acertó", await page.evaluate(() =>
+  igual("cuánto vio cada uno (el porcentaje de lo que hay que ver —sin los tramos sin clase— y el tiempo, y lo que no vio lo dice escrito) y, debajo, cuántas preguntas acertó", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(11).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["50 %1 h 36 min✓ 2/10, acertó 2 de 10 preguntas (contestó 3)", "<1 %45 s", "—No la vio"],
-     ["—No la vio❓ 0/10, no contestó ninguna de sus 10 preguntas", "—No la vio", "20 %10 min"]]);
+     ["—No la vio❓ 0/10, no contestó ninguna de sus 10 preguntas", "—No la vio", "25 %10 min"]]);
   igual("y arriba, cuántos empezaron a ver cada una y qué quiere decir lo de las preguntas", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[2].textContent),
-    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó, y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10). Sesión I: 1 de 2 empezó a verla; Sesión II, parte 1: 1 de 2; Sesión II, parte 2: 1 de 2.");
+    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió, lo que adelantó ni los recesos y silencios (no se le exigen a nadie), y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10). Sesión I: 1 de 2 empezó a verla; Sesión II, parte 1: 1 de 2; Sesión II, parte 2: 1 de 2.");
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);

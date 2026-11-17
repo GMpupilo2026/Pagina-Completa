@@ -4590,8 +4590,10 @@ aparezca su fila en `grabaciones_vistas`.
   reportó haber visto la Sesión III y tenía 89 %: sus huecos eran el
   receso (0:59:30-1:08:37, saltado con el capítulo de las 1:08:37), los
   primeros 3 minutos de espera y silencios largos donde solo hablaban los
-  participantes (0:36:55-0:38:48 y otros). Es el medidor haciendo lo que
-  debe: lo adelantado no cuenta.
+  participantes (0:36:55-0:38:48 y otros). Era el medidor haciendo lo que
+  debía (lo adelantado no cuenta), y de ahí salió que lo que no es clase no
+  se le exija a nadie (ver «Lo que no es clase no se le exige a nadie»). Hoy
+  la ventana del video le dice a cada uno lo que le falta.
 - **Si el reproductor no contesta, no se anota nada** y el video se ve igual.
   Si YouTube cambiara sus mensajes, se dejaría de medir sin romper nada.
 
@@ -4702,6 +4704,83 @@ encimarse, el avance de cada una, el video correcto y lo visto anotado en la
 parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
 `verificar-admin.js` prueba las columnas por parte de la ficha.
 
+### Lo que no es clase no se le exige a nadie
+
+El dueño pidió el 17/11/2026 que **los tramos sin sonido o sin contenido de
+la clase no cuenten**, para que quien los salte no salga perjudicado. Venía
+de dos reportes: una asesora vio la Sesión III «completa» y tenía 89 % (se
+había saltado el receso y silencios largos), y un asesor contaba que el
+video le arrancaba siempre del principio y tenía que buscar a mano dónde
+iba.
+
+**La regla** (migración `20261117204234_grabaciones_sin_clase`): cada
+grabación guarda sus tramos sin clase (`grabaciones_clase.sin_clase`, un
+`int4multirange`). Lo visto ÚTIL es lo visto menos esos tramos, y lo que hay
+que ver es la duración menos esos tramos (`interno.segundos_utiles()`). El
+porcentaje, el «✓ La viste completa» (95 %), la ficha Asesores y las horas
+del taller salen de esas dos, **todas de la misma función**: si una pantalla
+contara por su lado, el asesor vería una cifra y administración otra.
+
+- **No se regalan**: lo que se vio de un receso no suma y saltarlo no resta,
+  pero quien no vio nada sigue en 0. Por eso no se suman los tramos sin clase
+  a lo visto: se sacan de los dos lados.
+- **`grabaciones_vistas` no cambia**: guarda lo que corrió de verdad y su
+  `visto_seg` sigue siendo lo visto en bruto. Lo útil se calcula al leer,
+  porque depende de otra tabla y cambia si se corrigen los tramos: no se
+  guarda. El tope de «más video del que da el tiempo» sigue contando lo
+  bruto.
+- **Lo pone quien administra o el profe de esa clase**, con
+  `grabacion_sin_clase_poner(horario, fecha, tramos, parte)`, que deja la
+  lista EXACTAMENTE como llega (vacía = todo es clase).
+- **`mis_grabaciones()` trae ahora lo visto útil de quien pregunta**
+  (`visto_seg`), lo que hay que ver (`util_seg`), los tramos sin clase y lo
+  que le **falta** (lo útil que no vio, en tramos de 20 s o más: lo más corto
+  es el redondeo de las puntas). Por eso el panel ya no le pide aparte
+  `grabaciones_vistas`: una sola consulta, contada en la base.
+- `asesores_grabaciones()` trae `util_seg` aparte y `visto_seg` útil.
+  Las dos funciones cambiaron lo que devuelven, así que se volvieron a crear
+  (sin parámetros nuevos: no hay dos con el mismo nombre que confundir).
+
+**En la ventana del video** (`js/calendario-taller.js`):
+
+- **Sigue donde le falta**: si ya vio algo, el reproductor arranca en el
+  primer tramo que le falta (`start=` en la dirección del reproductor).
+- **«Te falta ver 25 min (los recesos y silencios no cuentan):»** y un botón
+  por tramo («1:40 a 6:40») que lleva el video ahí, como los capítulos. Al
+  anotarse lo visto, la lista se acorta sin volver a abrir. A quien no ha
+  empezado no se le lista (le faltaría todo), y quien ya vio todo lee «✓ Ya
+  viste toda la clase de este video».
+- **«⏭ Saltar lo que no es clase (sigue en 1:08:37)»** aparece mientras el
+  video está en un tramo sin clase, y lo lleva al final del tramo.
+
+**Cómo se marcaron, parejo en todas**: con
+`herramientas/grabaciones-silencios.js`, que busca en el audio los silencios
+de 30 s o más bajo −30 dB (el `silencedetect` de ffmpeg) y junta los pedazos
+a menos de un minuto (un receso sale cortado por cada ruido de un segundo).
+Se corrió en la computadora del dueño: desde el contenedor, YouTube pide
+confirmar que no es un robot. Con −40 dB no salían los silencios en que solo
+hablaban los participantes (tienen el ruido de fondo del micrófono de quien
+expone); con −30 dB los recesos salieron donde las notas de los subtítulos
+dicen. A lo medido se le sumó lo que las notas marcan sin clase aunque tenga
+sonido (el problema técnico y la charla después del receso de la Sesión I).
+La Sesión IV parte 1 y las tres partes de la V no tienen silencios largos:
+la grabación se detuvo en los recesos, y por eso quedaron en partes.
+**Para una grabación nueva**: correr el script con su id, revisar la lista
+y ponerla con `grabacion_sin_clase_poner()`.
+
+Ninguno de los tramos pisa una pregunta dentro del video (si una cayera en
+un receso, «Saltar» la dejaría atrás). Con la regla nueva, la asesora del
+reporte pasó de 89 % a 93,5 % en la Sesión III: el resto son tramos con
+clase que adelantó, y la ventana se los lista.
+
+`verificar-panel-taller.js` lo prueba (el porcentaje de lo que hay que ver,
+el `start=`, la lista con sus botones, que se acorta al anotarse, «Saltar» y
+quien no ha empezado; y en la migración, el permiso de quien los pone y que
+todas cuenten con `segundos_utiles`), y `verificar-admin.js` el porcentaje
+de la ficha. Se rompió a propósito cada una (porcentaje sobre el video
+entero, sin `start=`, sin «Saltar», la lista sin acortarse, la ficha sobre
+la duración) y saltaron todas.
+
 ### Las horas del taller
 
 El dueño pidió el 16/11/2026 una barra para que cada asesor vea cuánto le
@@ -4730,8 +4809,10 @@ pantalla contara por su lado, el asesor vería una cifra y administración otra.
   recortado a lo que la clase estuvo abierta y con los tramos que se pisan
   juntados por `minutos_por_tramos()`, la misma de los informes.
 - **La grabación** cuenta en proporción: lo visto (`grabaciones_vistas`, sin
-  lo repetido ni lo adelantado) entre lo que dura, sumando las partes si la
-  sesión quedó en varias, por la duración de la sesión.
+  lo repetido ni lo adelantado) entre lo que hay que ver, los dos sin los
+  tramos sin clase (ver «Lo que no es clase no se le exige a nadie»),
+  sumando las partes si la sesión quedó en varias, por la duración de la
+  sesión.
 - **Cada sesión cuenta, como mucho, lo que dura**: clase + grabación, con
   tope. Quien estuvo 3 h y ve una hora de la grabación queda en 4 h; no hay
   manera de pasar de las 30.
