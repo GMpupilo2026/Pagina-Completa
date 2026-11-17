@@ -50,7 +50,7 @@ window.VisionCuenta = (function () {
     "bot.html", "cartas.html", "concentracion.html", "confites.html", "crazyhouse.html",
     "cuatro-jugadores.html", "duelo.html", "ilumina-tablero.html", "variante.html",
     "transmision.html", "torneos-en-vivo.html", "lector-planilla.html", "tv.html",
-    "memoria.html", "coordenadas.html", "sonar.html", "batalla-naval.html",
+    "memoria.html", "sonar.html", "batalla-naval.html",
     "fundamentos-del-ajedrez.html",
   ];
 
