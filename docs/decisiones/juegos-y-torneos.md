@@ -9577,8 +9577,8 @@ transmiten**.
   de las dos hojas quedaba en unos 800 px, poco para la letra a mano. Las celdas salen de
   **los números impresos de la planilla** (1 a 60, en tres bloques): cada columna de números da la
   altura de cada renglón y dónde empiezan Blancas y Negras. Ordenar las palabras por filas de toda
-  la foto (lo que hace el Lector de planilla con una hoja de una columna) mezclaba la jugada 1 con la
-  21 y la 41, y las dos hojas entre sí. Los números se encadenan con el que sigue justo debajo, no
+  la foto (lo que hacía el Lector de planilla hasta el 17/11: ver «El Lector de planilla lee por
+  columnas») mezclaba la jugada 1 con la 21 y la 41, y las dos hojas entre sí. Los números se encadenan con el que sigue justo debajo, no
   por «misma x», y la altura de cada palabra se endereza con la inclinación de su columna: con la
   foto girada 6° la columna se partía en dos y las Negras caían en el renglón de al lado. Aguanta
   ±12°, números que el lector no vio, jugadas que llegan en dos palabras y los números del
@@ -9586,7 +9586,7 @@ transmiten**.
 - **Cómo se arma la partida** (`js/planilla-reconstruir.js`, en su propio hilo:
   `js/planilla-reconstruir-worker.js`, porque tarda de 5 a 30 s y la organización no puede
   congelarse con pedidos de ayuda llegando). **No decide jugada por jugada.** El Lector de planilla
-  cambia cada texto por la jugada legal más parecida y sigue; se probó con fotos reales del Drive
+  cambiaba cada texto por la jugada legal más parecida y seguía (hasta el 17/11); se probó con fotos reales del Drive
   (ronda 4): en la mesa 5, «Nd2» era ambiguo (podían ir los dos caballos), eligió el equivocado y
   desde ahí «corrigió» 74 de 106 medias jugadas que estaban bien, sin avisar. Aquí se llevan muchas
   continuaciones a la vez (búsqueda en haz, 150) y gana la que menos se aparta de lo escrito en toda
@@ -9670,6 +9670,53 @@ transmiten**.
   una cuenta). Las planillas que se usaron para probar se transcribieron mirando las fotos; lo
   que Vision lea de la letra a mano puede ser peor, y los costos (1,5, 3, el promedio de 1,5)
   conviene ajustarlos con las primeras fotos de verdad.
+
+### El Lector de planilla lee por columnas
+
+El 17/11 una planilla real de la Federación (las jugadas en tres columnas: 1-20, 21-40 y 41-60) salió
+del Lector de planilla (`lector-planilla.html`) con 111 jugadas, 109 de ellas «adivinadas» y sin
+sentido («1. a3 Cc6 2. d3 Tb8»). La página se veía perfecta. Dos cosas juntas:
+
+- **Leía por filas de toda la foto** (`PlanillaOcr.reconstructMoveTokens`): en una planilla de tres
+  columnas, la jugada 1 queda al lado de la 21 y la 41, así que el orden ya venía mezclado.
+- **Cambiaba cada texto por la jugada legal más parecida** (`forceMatchLegalMove`) y seguía: con el
+  orden mezclado, eso tapa todo con jugadas legales que nadie hizo, sin cortar nunca.
+
+Ahora arma la partida con el mismo lector del Centroamericano y de Pareo Integral (ver «Leer la
+partida de las planillas»): `PlanillaReconstruir.hojasDeLaFoto()` saca las celdas de los números
+impresos y `reconstruir()`, en su hilo (`js/planilla-reconstruir-worker.js`), da la partida legal que
+mejor explica todo lo escrito. No hay un segundo lector: `js/lector-planilla.js` solo lo pinta.
+
+- **Cada jugada dice cómo se leyó**, escrito y no solo en color: sin marca, * corregida, ? dudosa.
+  Al pasar el ratón dice qué estaba escrito; el lector de pantalla lo oye en un texto escondido
+  (el `title` no lo lee). La lista va en español (Cc6); el PGN, en inglés.
+- **Lo que no tiene salida queda «Ilegible desde la jugada N»**, con lo que dice la planilla de ahí
+  en adelante, tal cual, para completarlo a mano. No se inventa nada.
+- **Sin números impresos** (una hoja en blanco), `hojasDeLaFoto()` cae al orden por filas, y la
+  página lo dice: revisa el orden.
+- **El PGN** es el de `aPgn()`: las dudosas con «{dudosa}», el comentario de ilegible y «*»; el
+  resultado solo si termina en mate (no se lee de la casilla de la planilla). La fecha, la de hoy en
+  hora de Costa Rica.
+- **Guardar en Archivos usa lo que dice el cuadro**, no lo leído: antes la posición final y la cuenta
+  salían de la partida leída aunque se hubiera corregido el PGN a mano. Un PGN que chess.js no acepta
+  no se guarda, y lo dice (las piezas del PGN van en inglés).
+- La foto va a 2600 px de lado, como en el Centroamericano: en tres bloques, a 1600 la letra queda
+  chica. Sigue siendo una lectura del tope diario (ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md).
+- **«Anota tu partida»** de «Tus propios errores» (`js/entreno-tipos-mas.js`) usa el mismo lector:
+  marca con «?» las que no se leyeron tal cual y corta donde la planilla ya no se entiende (ver «Mis
+  partidas de torneo» en entrenamiento.md).
+- **El hilo es una sola copia**: `PlanillaReconstruir.enHilo()`. Antes el Centroamericano tenía el
+  suyo; ahora lo usan los tres. Busca `planilla-reconstruir-worker.js` al lado de
+  `planilla-reconstruir.js` (`document.currentScript`), así sirve también desde `entreno/`.
+
+Lo prueba `verificar-lector-planilla-pagina.js`: sin navegador, que una planilla de tres columnas
+leída por filas da más de un tercio de jugadas adivinadas y por números da las celdas tal cual; en la
+página, con un doble de `ocr-scoresheet` (las planillas de verdad de `planillas-reales.js` armadas
+en una foto por `planilla-sintetica.js`, girada y con jugadas partidas), las jugadas de
+`reconstruir()` con sus marcas, ningún «≈», lo ilegible sin inventar, el guardado y el contraste del
+aviso en claro y en oscuro. Se comprobó que salta con la página vieja y quitando las marcas o el
+aviso. **Sin probar de verdad**: Google Vision con la planilla del 17/11.
 
 ### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
 

@@ -3656,20 +3656,23 @@ esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
   120 letras, Elo 0–3500): las jugadas las escribe el navegador y se pueden
   tocar desde la consola, así que quien las lee (Informes) vuelve a filtrar
   lo que no tenga forma de jugada.
-- **O con una foto de la planilla** («📷 Leer la foto»). Usa el mismo lector
-  que `lector-planilla.html`, que pasó de la página a `js/planilla-ocr.js`
-  para que haya una sola copia: la foto va a la Edge Function
-  `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por persona;
-  ver «El lector de planilla tiene tope diario» en cuentas-y-formularios.md),
-  las palabras se ordenan por filas y cada una se lee como jugada o se
-  cambia por la legal más parecida, comparada también en español («Ac9» es
-  `Bc4`, no `Qc4`). **No se guarda sola**: las jugadas caen en el cuadro, en
-  español, y las adivinadas llevan «?» (que `leerJugadas` salta como una
-  anotación), con un aviso de cuáles son, para que el alumno las compare con
-  su planilla antes de «Guardar y revisar». Lo que dice el servidor (el tope
-  del día, la foto muy grande) se dice tal cual y el cuadro no se toca. Lo
-  prueban `verificar-planilla-ocr.js` (sin navegador) y
-  `verificar-tipos-pagina.js` (con un Vision de mentira).
+- **O con una foto de la planilla** («📷 Leer la foto»). La foto va a la Edge
+  Function `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por
+  persona; ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md) y la partida se arma con el mismo lector del Lector
+  de planilla y del Centroamericano (`js/planilla-reconstruir.js`, en su hilo:
+  ver «El Lector de planilla lee por columnas» en juegos-y-torneos.md). Hasta
+  el 17/11 se ordenaba por filas y cada texto se cambiaba por la jugada legal
+  más parecida: con una planilla en columnas (1-20, 21-40, 41-60) eso daba
+  una partida inventada. **No se guarda sola**: las jugadas caen en el cuadro,
+  en español, y las que no se leyeron tal cual (corregidas o dudosas) llevan
+  «?» (que `leerJugadas` salta como una anotación), con un aviso de cuáles
+  son. Si desde algún punto la planilla no se entiende, el cuadro llega hasta
+  ahí y el aviso dice desde qué jugada y lo que está escrito, para completarlo
+  a mano: no se inventan jugadas. Lo que dice el servidor (el tope del día, la
+  foto muy grande) se dice tal cual y el cuadro no se toca. Lo prueba
+  `verificar-tipos-pagina.js` (con un Vision de mentira: una planilla de
+  una columna, una de tres columnas y una manchada).
 - **El nombre del rival no se guarda.** Es de otra persona, que no tiene
   cuenta ni dio su consentimiento, y para revisar la partida no hace falta. El
   formulario lo dice.

@@ -1279,9 +1279,17 @@ window.PreparacionMotor = {
     await page.waitForFunction(() => /Leí|No se pudo|No encontré/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 10000 }).catch(() => {});
     ok("la foto va a ocr-scoresheet con la sesión de quien la sube", pedidos.length === 1 && pedidos[0].auth === "Bearer t" && pedidos[0].foto, JSON.stringify(pedidos));
     const texto = await page.getByLabel("Tus jugadas").inputValue();
-    ok("las jugadas caen en el cuadro, en orden y en español, con «?» en la que adivinó",
-      texto === "1. e4 e5 2. Cf3 Cc6 3. Ac4? Cd4 4. Cxe5 Dg5 5. Cxf7 Dxg2 6. Tf1 Dxe4+", texto);
-    ok("y dice cuál revisar", /^Leí 6 jugadas\. Una no se leía bien y va con «\?», la más parecida que es legal \(la 3 de las blancas\)/.test(await aviso(page)), await aviso(page));
+    /* La partida la arma js/planilla-reconstruir.js (el mismo lector del Lector de planilla y del
+       Centroamericano): las que no se leyeron tal cual (corregidas o dudosas) van con «?». */
+    const R = require(path.join(__dirname, "..", "js", "planilla-reconstruir.js"));
+    const { Chess: ChessN } = require("chess.js");
+    const rr = R.reconstruir(ChessN, R.hojasDeLaFoto(words).hojas);
+    const PO = require(path.join(__dirname, "..", "js", "planilla-ocr.js"));
+    const esperadoTxt = rr.jugadas.map((j, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + PO.sanEnEspanol(j.san) + (j.estado === "leida" ? "" : "?")).join(" ");
+    ok("las jugadas caen en el cuadro, en orden y en español, con «?» en las que no se leyeron tal cual",
+      texto === esperadoTxt && texto.startsWith("1. e4 e5 2. Cf3 Cc6 3. Ac4? Cd4 4. Cxe5 Dg5 5. Cxf7"), texto + "\n      esperaba: " + esperadoTxt);
+    const nRev = rr.jugadas.filter((j) => j.estado !== "leida").length;
+    ok("y dice cuáles revisar, empezando por la 3 de las blancas", new RegExp("^Leí 6 jugadas\\. " + nRev + " no se leían tal cual y van con «\\?» \\(la 3 de las blancas").test(await aviso(page)), await aviso(page));
     ok("el cursor queda en las jugadas para revisarlas", await page.evaluate(() => document.activeElement && document.activeElement.tagName === "TEXTAREA"));
     ok("leer la foto no guarda nada todavía", (await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "partidas_torneo").length)) === 0);
     await (await page.$("#tipo-extra")).screenshot({ path: "/tmp/tipos-torneo-foto.png" }).catch(() => {});
@@ -1295,6 +1303,55 @@ window.PreparacionMotor = {
     await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "partidas_torneo"), null, { timeout: 10000 }).catch(() => {});
     const fila = await page.evaluate(() => (window.__escrituras.find((e) => e.tabla === "partidas_torneo") || {}).fila);
     ok("lo leído se guarda con las jugadas comprobadas", !!fila && fila.jugadas.join(" ") === "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+", JSON.stringify(fila && fila.jugadas));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Mis partidas de torneo: una planilla en columnas y una manchada ===");
+  {
+    /* Antes se leía por filas de toda la foto: en una planilla de la Federación (1-20, 21-40,
+       41-60) la jugada 1 quedaba al lado de la 21 y la 41, y cada texto se cambiaba por la
+       jugada legal más parecida (el 17/11 salieron 109 «adivinadas» en el Lector de planilla).
+       Ahora la arma js/planilla-reconstruir.js. Ver «El Lector de planilla lee por columnas». */
+    const { palabrasDePlanillas } = require("./lib/planilla-sintetica.js");
+    const REALES = require("./lib/planillas-reales.js");
+    const R = require(path.join(__dirname, "..", "js", "planilla-reconstruir.js"));
+    const { Chess: ChessN } = require("chess.js");
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    const BASURA = ["~", "zz", "q#", "Kx", "77", "~~", "w", "p0", "##", "y", "~", "Q?"];
+    const fotos = [palabrasDePlanillas([REALES.mesa5.una], { giro: 3 }), palabrasDePlanillas([REALES.mesa11.blancas.slice(0, 30).concat(BASURA)])];
+    let n = 0;
+    const preparar = async (ctx) => {
+      await ctx.addInitScript(() => { window.__filas = { game_rooms: [], practice_games: [], practice_sessions: [], partidas_torneo: [] }; window.__guardan = ["partidas_torneo"]; window.SUPABASE_URL = "https://proyecto.supabase.co"; });
+      await ctx.route("https://proyecto.supabase.co/functions/v1/ocr-scoresheet", (r) => {
+        if (r.request().method() === "OPTIONS") return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }, body: "ok" });
+        return r.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify({ words: fotos[n++] }) });
+      });
+    };
+    const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #anotar-torneo summary");
+    await page.click("#anotar-torneo summary");
+    const leer = async () => {
+      await page.getByLabel("¿Prefieres tomarle una foto a tu planilla?").setInputFiles({ name: "planilla.png", mimeType: "image/png", buffer: PNG });
+      await page.getByLabel("Tus jugadas").fill("");
+      await page.getByRole("button", { name: "📷 Leer la foto" }).click();
+      await page.waitForFunction(() => /^(Leí|No se pudo|No encontré)/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 90000 });
+      return page.getByLabel("Tus jugadas").inputValue();
+    };
+    const sinMarcas = (t) => t.replace(/\d+\.\s*/g, "").replace(/\?/g, "").split(/\s+/).filter(Boolean);
+    const r1 = R.reconstruir(ChessN, R.hojasDeLaFoto(fotos[0]).hojas);
+    const t1 = await leer();
+    ok("una planilla de tres columnas sale en orden: " + r1.jugadas.length + " medias jugadas, las de reconstruir",
+      JSON.stringify(sinMarcas(t1)) === JSON.stringify(r1.jugadas.map((j) => require(path.join(__dirname, "..", "js", "planilla-ocr.js")).sanEnEspanol(j.san))), t1.slice(0, 200));
+    ok("y empieza como está escrita", t1.startsWith("1. e4 c6 2. d4 d5 3. e5 c5 4. c3 Cc6"), t1.slice(0, 80));
+    const r2 = R.reconstruir(ChessN, R.hojasDeLaFoto(fotos[1]).hojas);
+    const t2 = await leer();
+    ok("una planilla manchada llega solo hasta donde se entiende (" + r2.ilegibleDesde + " medias jugadas): no se inventa nada",
+      r2.ilegibleDesde !== null && sinMarcas(t2).length === r2.ilegibleDesde, t2);
+    const quien = "la " + (Math.floor(r2.ilegibleDesde / 2) + 1) + " de las " + (r2.ilegibleDesde % 2 ? "negras" : "blancas");
+    const av = await aviso(page);
+    ok("y el aviso dice desde dónde no se entiende y lo que dice ahí", av.includes("Desde " + quien + " la planilla no se entiende") && av.includes("zz q#"), av);
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
