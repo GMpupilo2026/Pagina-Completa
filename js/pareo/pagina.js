@@ -6750,39 +6750,53 @@
     const v = t();
     const pendientes = todas.filter((x) => x.estado === "pendiente");
     const esCorreo = (c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c || "").trim());
-    // Antes de marcar: el comentario, y a quién le llega el aviso.
-    const decidir = async (cuales, estadoNuevo, boton) => {
+    // Antes de marcar: el comentario, y a quién le llega el aviso. Con una
+    // sola inscripción que dejó un teléfono, quien organiza puede escribir
+    // el correo y el aviso sale igual. `reaviso`: una ya decidida a la que
+    // no le llegó el aviso (se decidió sin correo, o no salió): se le manda
+    // ahora, sin cambiar la decisión.
+    const decidir = async (cuales, estadoNuevo, boton, reaviso) => {
       const acepta = estadoNuevo === "aceptada";
       const conCorreo = cuales.filter((x) => esCorreo(x.contacto));
       const uno = cuales.length === 1 ? cuales[0] : null;
+      const pideCorreo = !!uno && !conCorreo.length;
       const texto = uno
-        ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx("inscAvisoTelefono", { c: uno.contacto }))
+        ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx(reaviso ? "inscAvisoTelefonoReaviso" : "inscAvisoTelefono", { c: uno.contacto }))
         : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length });
+      const campos = [Object.assign({ nombre: "comentario", etiqueta: tx(acepta ? "inscComentario" : "inscMotivo"), tipo: "textarea", max: 300, valor: reaviso && uno ? uno.comentario || "" : "" }, acepta ? {} : { ayuda: tx("inscMotivoAyuda") })];
+      if (pideCorreo) campos.unshift({ nombre: "correo", etiqueta: tx("inscCorreoAgregar"), inputmode: "email", max: 120, ayuda: tx(reaviso ? "inscCorreoAgregarAyudaReaviso" : "inscCorreoAgregarAyuda") });
       const r = await Avisos.formulario({
-        titulo: uno ? tx(acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
-        texto, cancelar: tx("cancelar"), peligro: !acepta,
-        aceptar: tx(conCorreo.length ? (acepta ? "inscAceptarSi" : "inscRechazarSi") : (acepta ? "inscAceptarSinAviso" : "inscRechazarSinAviso")),
-        campos: [Object.assign({ nombre: "comentario", etiqueta: tx(acepta ? "inscComentario" : "inscMotivo"), tipo: "textarea", max: 300 }, acepta ? {} : { ayuda: tx("inscMotivoAyuda") })],
+        titulo: uno ? tx(reaviso ? "inscAvisarTitulo" : acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
+        texto, cancelar: tx("cancelar"), peligro: !acepta && !reaviso,
+        aceptar: tx(reaviso ? "inscAvisarSi" : conCorreo.length ? (acepta ? "inscAceptarSi" : "inscRechazarSi") : (acepta ? "inscAceptarSinAviso" : "inscRechazarSinAviso")),
+        campos,
       });
       if (!r) { if (boton && boton.isConnected) boton.focus(); return; }
-      marcar(cuales, estadoNuevo, boton, String(r.comentario || "").trim().slice(0, 300));
+      const correo = String(r.correo || "").trim();
+      if (correo && !esCorreo(correo)) { Avisos.avisar(tx("inscCorreoMalo", { c: correo }), { tipo: "error" }); if (boton && boton.isConnected) boton.focus(); return; }
+      if (reaviso && !correo && !conCorreo.length) { Avisos.avisar(tx("inscCorreoFalta"), { tipo: "error" }); if (boton && boton.isConnected) boton.focus(); return; }
+      marcar(cuales, estadoNuevo, boton, String(r.comentario || "").trim().slice(0, 300), { correo, reaviso: !!reaviso });
     };
-    const marcar = async (cuales, estadoNuevo, boton, comentario) => {
+    const marcar = async (cuales, estadoNuevo, boton, comentario, extra) => {
+      const { correo = "", reaviso = false } = extra || {};
       if (boton) boton.disabled = true;
-      if (estadoNuevo === "aceptada") {
+      // Al volver a avisar a una aceptada, ya está en la lista: no se agrega otra vez.
+      if (estadoNuevo === "aceptada" && !reaviso) {
         // El sexo y la fecha de nacimiento, si la inscripción los trae (el
         // formulario de la Eliminatoria Cantonal JDN de Pérez Zeledón): sin
         // ellos no hay clasificación femenina ni revisión del año.
         agregarJugadores(cuales.map((x) => Object.assign({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" },
           x.sexo === "M" || x.sexo === "F" ? { sexo: x.sexo } : {}, /^\d{4}-\d{2}-\d{2}$/.test(x.nacimiento || "") ? { nacimiento: x.nacimiento } : {})));
       }
-      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario);
+      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario, correo);
       if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
       const avisados = new Set(r.avisados || []);
       const ahora = new Date().toISOString();
       for (const x of cuales) { x.estado = estadoNuevo; x.comentario = comentario; x.avisado = avisados.has(x.id) ? ahora : null; }
+      if (correo && cuales.length === 1) { cuales[0].contacto = r.contacto || correo; if (typeof r.nota === "string") cuales[0].nota = r.nota; }
       pintarInscripciones(lista, todas);
-      Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }) + (avisados.size ? " " + tx("inscAvisados", { n: avisados.size }) : ""));
+      if (reaviso) { if (avisados.size) Avisos.avisar(tx("inscAvisados", { n: avisados.size })); }
+      else Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }) + (avisados.size ? " " + tx("inscAvisados", { n: avisados.size }) : ""));
       // Lo que el árbitro tiene que hacer él: avisar a quien dejó un teléfono
       // y a quien no le salió el correo.
       const conTelefono = cuales.filter((x) => !esCorreo(x.contacto));
@@ -6798,7 +6812,9 @@
       const acciones = x.estado === "pendiente"
         ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
            el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
-        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
+        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") }),
+           // Ya decidida y sin aviso: mandarlo ahora (con un teléfono, escribiendo el correo).
+           x.avisado ? null : el("button", { type: "button", class: C.mini, "data-reavisar": x.id, "aria-label": tx("inscAvisarA", { n: x.nombre }), onclick: (e) => decidir([x], x.estado, e.currentTarget, true) }, tx("inscAvisar"))];
       return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
         el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
         el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.sexo === "F" ? "Femenino" : x.sexo === "M" ? "Masculino" : "", x.nacimiento ? "Nació " + x.nacimiento.split("-").reverse().join("/") : "", x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),

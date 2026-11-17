@@ -158,7 +158,7 @@
   // comentario que le llega por correo a quien inscribió si dejó un correo.
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
-  const marcar = (p, ids, estado, comentario) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" });
+  const marcar = (p, ids, estado, comentario, correo) => llamar(Object.assign({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" }, correo ? { correo } : {}));
   // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
   // confirmarlo y darse de baja con los enlaces que llegan por correo.
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });

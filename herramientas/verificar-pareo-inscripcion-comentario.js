@@ -13,6 +13,11 @@
  *     ahí al volver a leer las inscripciones (lo guarda la base);
  *   - la tarjeta dice si se le avisó por correo, si dejó un teléfono o si el
  *     correo no salió, y el árbitro recibe el aviso de avisarle él;
+ *   - una ya decidida a la que no le llegó el aviso tiene «Avisar por
+ *     correo»: lo manda sin cambiar la decisión ni volver a agregar al
+ *     jugador, y si dejó un teléfono, quien organiza escribe el correo (que
+ *     pasa a ser el contacto, con el teléfono en la nota); un correo mal
+ *     escrito no se manda;
  *   - el correo (correos.ts) escapa todo lo que escribió cualquiera, el
  *     asunto no lleva saltos de línea y solo se manda si el contacto es un
  *     correo (index.ts, leído como texto: acá no hay Deno ni red).
@@ -75,7 +80,9 @@ function pruebaCorreoYFuncion() {
 
   const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/pareo-publicar/index.ts"), "utf8");
   const marcar = fn.slice(fn.indexOf('if (accion === "inscripciones" || accion === "marcar")'), fn.indexOf("// ---------- Seguir a un jugador por correo"));
-  ok(/update\(\{ estado, comentario, avisado: null \}\)/.test(marcar), "«marcar» guarda el comentario con el estado");
+  ok(/const cambios: Record<string, unknown> = \{ estado, comentario, avisado: null \}/.test(marcar) && /\.update\(cambios\)/.test(marcar), "«marcar» guarda el comentario con el estado");
+  ok(/if \(!esCorreo\(correoNuevo\)\) return json/.test(marcar) && /cuales\.length !== 1/.test(marcar), "el correo agregado se valida y es de una inscripción a la vez");
+  ok(/cambios\.contacto = correoNuevo/.test(marcar) && /"Teléfono: " \+ antes\.contacto/.test(marcar), "pasa a ser el contacto y el teléfono queda en la nota");
   ok(/texto\(body\.comentario, 300\)/.test(marcar), "y lo acota a 300 caracteres, como la base");
   ok(/if \(!esCorreo\(x\.contacto\)\) \{ sinCorreo\.push/.test(marcar), "con un teléfono no se manda nada");
   ok(/correoDecision\(/.test(marcar) && /responderA\)/.test(marcar), "con un correo se manda el aviso, con la respuesta a la organización");
@@ -102,12 +109,17 @@ async function dobleFuncion(page, filas) {
     if (body.accion === "inscripciones") r = { ok: true, inscripciones: JSON.parse(JSON.stringify(filas)) };
     if (body.accion === "marcar") {
       const avisados = [], sinCorreo = [];
+      if (body.correo && (!esCorreo(body.correo) || body.ids.length !== 1)) {
+        return route.fulfill({ status: 400, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: false, error: "Ese correo no es válido." }) });
+      }
       for (const f of filas.filter((x) => body.ids.includes(x.id))) {
         f.estado = body.estado; f.comentario = body.comentario || ""; f.avisado = null;
+        if (body.correo) { if (!esCorreo(f.contacto)) f.nota = [f.nota, "Teléfono: " + f.contacto].filter(Boolean).join(" · "); f.contacto = body.correo; }
         if (!esCorreo(f.contacto)) sinCorreo.push(f.id);
         else if (f.contacto !== FALLA) { avisados.push(f.id); f.avisado = "2026-11-13T18:00:00Z"; }
       }
       r = { ok: true, avisados, sinCorreo };
+      if (body.correo) { const f = filas.find((x) => x.id === body.ids[0]); r.contacto = f.contacto; r.nota = f.nota; }
     }
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(r) });
   });
@@ -156,6 +168,7 @@ async function pruebaNavegador(browser) {
   const d1 = await textoDe(page, dialogo);
   ok(/Motivo del rechazo/.test(d1), "rechazar pide el motivo");
   ok(/teléfono \(8888-8888\): no se le manda correo/.test(d1), "y avisa que con un teléfono no se le manda correo", d1);
+  ok(/Correo para avisarle \(opcional\)/.test(d1), "pero deja escribir el correo para avisarle", d1);
   await page.fill(dialogo + " textarea", "No aparece como afiliado a la ADAPZ");
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForSelector(`[data-insc-aviso="${ID("1")}"]`, { state: "attached" });
@@ -207,6 +220,41 @@ async function pruebaNavegador(browser) {
   await page.waitForFunction(() => !document.getElementById("pi-insc-lista").hidden);
   igual("al volver a leerlas, el motivo sigue ahí", await textoDe(page, `[data-insc-comentario="${ID("2")}"]`), "Motivo: Falta el ID FIDE");
   igual("y si se le avisó", await textoDe(page, `[data-insc-aviso="${ID("2")}"]`), "Se le avisó por correo.");
+
+  // Avisar después: la rechazada que dejó un teléfono, escribiendo el correo.
+  console.log("\n=== Avisar por correo a una ya decidida ===");
+  ok(!(await page.$(`[data-reavisar="${ID("2")}"]`)), "a quien ya se le avisó no le sale el botón");
+  const nAntes = marcados().length;
+  await tocar(page, `[data-reavisar="${ID("1")}"]`);
+  await page.waitForSelector(dialogo);
+  const d4 = await textoDe(page, dialogo);
+  ok(/Avisarle a PRUEBA TELÉFONO por correo/.test(d4) && /Correo para avisarle/.test(d4), "el botón abre el cuadro para escribir el correo", d4);
+  igual("con el motivo que ya tenía", await page.$eval(dialogo + " textarea", (n) => n.value), "No aparece como afiliado a la ADAPZ");
+  await page.fill(dialogo + ' input[name="correo"]', "no es correo");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction(() => /«no es correo» no es un correo válido/.test(document.body.textContent));
+  igual("un correo mal escrito no se manda", marcados().length, nAntes);
+  await tocar(page, `[data-reavisar="${ID("1")}"]`);
+  await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' input[name="correo"]', "papa@ejemplo.com");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction((id) => /Se le avisó/.test((document.querySelector(`[data-insc-aviso="${id}"]`) || {}).textContent || ""), ID("1"));
+  const m4 = marcados().pop();
+  igual("«marcar» lleva el correo sin cambiar la decisión", [m4.estado, m4.ids, m4.correo, m4.comentario], ["rechazada", [ID("1")], "papa@ejemplo.com", "No aparece como afiliado a la ADAPZ"]);
+  const t1 = await textoDe(page, `[data-insc="${ID("1")}"]`);
+  ok(/papa@ejemplo\.com/.test(t1) && /Teléfono: 8888-8888/.test(t1), "la tarjeta muestra el correo nuevo y guarda el teléfono en la nota", t1);
+  ok(!(await page.$(`[data-reavisar="${ID("1")}"]`)), "y el botón se va");
+
+  // La aceptada a la que no le salió: se le vuelve a mandar, sin agregarla otra vez.
+  await tocar(page, `[data-reavisar="${ID("4")}"]`);
+  await page.waitForSelector(dialogo);
+  ok(!(await page.$(dialogo + ' input[name="correo"]')), "con un correo, no pide otro");
+  igual("y el botón dice que manda el correo", (await textoDe(page, dialogo + " [data-avisos-aceptar]")).trim(), "Mandar el correo");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForSelector(dialogo, { state: "detached" }).catch(() => page.waitForFunction((s) => !document.querySelector(s), dialogo));
+  const m5 = marcados().pop();
+  igual("vuelve a mandar el aviso de la aceptada", [m5.estado, m5.ids, m5.correo], ["aceptada", [ID("4")], undefined]);
+  igual("sin agregar otra vez al jugador", (await P.leerTodos(page))[0].jugadores.map((j) => j.nombre).sort(), ["PRUEBA FALLA", "PRUEBA OTRO"]);
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }

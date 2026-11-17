@@ -5533,8 +5533,20 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   cuadro, en un aviso y en la tarjeta). `avisado` guarda la hora del correo
   que salió: la tarjeta ya marcada muestra el comentario y si se le avisó,
   sin adivinar. Un correo que no sale no deshace la marca. Volver a
-  «pendiente» borra el comentario. Lo prueba
-  `herramientas/verificar-pareo-inscripcion-comentario.js`.
+  «pendiente» borra el comentario.
+  **Avisar después y agregar el correo** (lo pidió el dueño: a un jugador
+  se le rechazó sin que le llegara nada y el panel no tenía cómo
+  mandárselo; y muchas familias dejan un teléfono). Una tarjeta ya decidida
+  sin `avisado` tiene «Avisar por correo»: abre el mismo cuadro con el
+  comentario que ya tenía y llama a `marcar` con el MISMO estado, así que
+  manda el aviso sin cambiar la decisión (y, si era aceptada, sin volver a
+  agregar al jugador a la lista). Cuando la inscripción es una sola y dejó
+  un teléfono, el cuadro pide además el correo (opcional al decidir,
+  necesario al avisar después): `marcar` lo recibe en `correo`, solo con
+  un id y nunca con «pendiente», lo valida con `esCorreo`, lo deja como
+  `contacto` y pasa el teléfono a la `nota` («Teléfono: …») para no
+  perderlo. Sin columna nueva: el resto del flujo ya mira `contacto`.
+  Lo prueba `herramientas/verificar-pareo-inscripcion-comentario.js`.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
