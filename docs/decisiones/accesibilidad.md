@@ -902,6 +902,16 @@ quedó:
   girar); cada paso dice la jugada contada, el comentario del profe y si hay
   pregunta. Las flechas globales del visor no roban las teclas con el foco en
   un tablero, un recuadro o un `[role=application]`.
+  **Avanzar sin escribir** (17/11/2026): los alumnos ciegos tenían que
+  escribir «siguiente» en cada jugada, y los botones ⏮ ◀ ▶ ⏭ quedan ARRIBA
+  del recuadro, a varios Tab. Ahora `CuadroComandos.montar(…, { recorrer })`:
+  con el recuadro VACÍO, Enter o → avanzan, ← retrocede, Inicio y Fin van a
+  las puntas, y en la punta lo dice («Ya estás en…») en vez de callar. Solo
+  vacío: con texto escrito las flechas mueven el cursor, que es lo que espera
+  el lector de pantalla. El recuadro lleva `aria-keyshortcuts` y su ayuda como
+  `aria-describedby`, para que al llegar se oiga cómo se avanza. Lo usan
+  Repasar mis clases y `js/visor-linea.js` (Estudio, cursos, preparación de
+  rivales); `verificar-repasar-clases.js` lo mide.
 - **Los diagramas de los artículos**: el contenedor era `role="img"`, y los
   hijos de una imagen no llegan al lector: las 64 casillas rotuladas no se oían.
   Sin ese rol, con `TableroAccesible` para mirar, y el Modo Adaptado leído de la

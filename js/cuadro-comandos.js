@@ -406,10 +406,37 @@ window.CuadroComandos = (function () {
       }, 80);
     });
 
+    /* `recorrer` = { siguiente, anterior, inicio, final }: un recuadro que
+       recorre una partida (Repasar mis clases, los visores de líneas). Con el
+       recuadro VACÍO, Enter o → avanzan una jugada, ← retrocede, Inicio y Fin
+       van a las puntas. Lo pidieron los alumnos ciegos: escribir «siguiente»
+       en cada jugada de una partida de cuarenta es demasiado, y los botones
+       ⏮ ◀ ▶ ⏭ quedan arriba del recuadro, a varios Tab de distancia. Solo
+       vacío: con texto, las flechas y Inicio/Fin siguen moviendo el cursor
+       dentro de lo escrito, que es lo que el lector de pantalla espera. Cada
+       función recibe `api` para decir si ya no hay a dónde ir. */
+    var recorrer = cfg.recorrer || null;
+    if (recorrer) {
+      input.setAttribute("aria-keyshortcuts", "Enter ArrowRight ArrowLeft Home End");
+      // Que al llegar al recuadro se oiga cómo se avanza, no solo la etiqueta.
+      ayuda.id = id + "-ayuda";
+      input.setAttribute("aria-describedby", ayuda.id);
+      input.addEventListener("keydown", function (ev) {
+        if (input.value !== "" || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+        var f = { ArrowRight: "siguiente", ArrowLeft: "anterior", Home: "inicio", End: "final" }[ev.key];
+        if (!f || typeof recorrer[f] !== "function") return;
+        ev.preventDefault();
+        recorrer[f](api);
+      });
+    }
+
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       var texto = input.value;
-      if (!String(texto).trim()) return;
+      if (!String(texto).trim()) {
+        if (recorrer && typeof recorrer.siguiente === "function") { input.value = ""; recorrer.siguiente(api); }
+        return;
+      }
       if (window.ComandosTablero && (cfg.juego || cfg.tablero)) {
         var r = ComandosTablero.interpretar(texto, { juego: cfg.juego, tablero: cfg.tablero });
         if (r.manejado) {
