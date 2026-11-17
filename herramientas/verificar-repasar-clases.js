@@ -144,6 +144,27 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("«jugada 2» es la jugada 2 de las blancas", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
     await page.fill("#visor-cmd .cc-input", "caballos"); await page.press("#visor-cmd .cc-input", "Enter");
     igual("«caballos» se contesta sobre la posición que se ve", /caballos blancos en bella 1 y felix 3/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    /* Con el recuadro VACÍO se recorre sin escribir: lo pidieron los alumnos
+       ciegos, que tenían que escribir «siguiente» en cada jugada. */
+    const vacio = "#visor-cmd .cc-input";
+    await page.fill(vacio, ""); await page.press(vacio, "Enter");
+    igual("recuadro vacío + Enter avanza una jugada", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "ArrowLeft");
+    igual("recuadro vacío + ← retrocede", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
+    await page.press(vacio, "ArrowRight");
+    igual("recuadro vacío + → avanza", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "Home");
+    igual("recuadro vacío + Inicio va al arranque", await texto(page, "#visor-estado"), "Posición de arranque");
+    await page.press(vacio, "ArrowLeft");
+    igual("en el arranque, ← lo dice en vez de callar", await texto(page, "#visor-cmd .cc-msg"), "Ya estás en la posición de arranque.");
+    await page.fill(vacio, "jugada"); await page.press(vacio, "ArrowLeft");
+    igual("con texto escrito, ← mueve el cursor y no la partida", await texto(page, "#visor-estado"), "Posición de arranque");
+    igual("el recuadro dice cómo se avanza", await page.evaluate(() => {
+      const i = document.querySelector("#visor-cmd .cc-input");
+      const d = document.getElementById(i.getAttribute("aria-describedby") || "");
+      return !!d && /Enter o flecha derecha/.test(d.textContent);
+    }), "true");
+    await page.fill(vacio, "jugada 2"); await page.press(vacio, "Enter");
     await page.focus('#board [data-square="e4"]');
     await page.keyboard.press("ArrowRight");
     igual("con el foco en el tablero, → mueve de casilla y no cambia de jugada",
