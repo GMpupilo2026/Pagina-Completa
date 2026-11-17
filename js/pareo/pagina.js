@@ -4877,6 +4877,18 @@
   // (js/pareo/planilla.js, el mismo lector del Centroamericano). No guarda
   // nada: abre «Partida (PGN)» con lo leído y lo que conviene revisar.
   let leyendoPlanilla = false;
+  // La última lectura de cada mesa («⬇ Lectura»), solo en esta pestaña: trae
+  // lo escrito en la planilla y no tiene por qué quedarse en el aparato.
+  const lecturasPlanilla = new WeakMap(); // torneo → Map("ronda|mesa" → lectura)
+  const lecturasDe = (v) => { if (!lecturasPlanilla.has(v)) lecturasPlanilla.set(v, new Map()); return lecturasPlanilla.get(v); };
+  function bajarLectura(v, r, i) {
+    const x = lecturasDe(v).get(r + "|" + i);
+    if (!x) return;
+    const nombre = window.PareoPDF ? window.PareoPDF.nombreArchivo("lectura " + (v.nombre || "torneo") + " ronda " + (r + 1) + " mesa " + V.mesaFisica(v, i), "lectura").replace(/\.pdf$/, ".json")
+      : "lectura-ronda-" + (r + 1) + "-mesa-" + V.mesaFisica(v, i) + ".json";
+    const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(x, null, 1)], { type: "application/json" })), download: nombre, hidden: true });
+    document.body.append(a); a.click(); a.remove();
+  }
   function elegirFotos() {
     return new Promise((listo) => {
       const input = el("input", { type: "file", accept: "image/*", multiple: true, hidden: true });
@@ -4907,7 +4919,9 @@
       } catch (e) { token = null; }
       if (!token || !navigator.onLine) throw new Error(tx("planillaSinSesion"));
       await cargarChess();
-      const lectura = await window.PareoPlanilla.leer(fotos, { token, decir });
+      const datosMesa = { torneo: v.nombre || "", ronda: r + 1, mesa: V.mesaFisica(v, i), leida: new Date().toISOString() };
+      const lectura = await window.PareoPlanilla.leer(fotos, { token, decir, datos: datosMesa });
+      lecturasDe(v).set(r + "|" + i, lectura.lectura);
       // el día de la ronda (cuando se empezó su reloj) o el de hoy, en hora de Costa Rica
       const R = v.rondas[r];
       const fecha = (R.inicio ? new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date(R.inicio))
@@ -4920,8 +4934,10 @@
       const res = window.PareoPlanilla.resumen(lectura.resultado, tx);
       if (lectura.metodo === "filas") res.texto += " " + tx("planillaFilas");
       boton.textContent = original;
+      pintarRondas(); // aparece «⬇ Lectura» en la mesa, aunque no se guarde la partida
       await editarPartida(r, i, boton, { pgn, texto: res.texto, ayuda: res.ayuda });
     } catch (e) {
+      if (e && e.lectura) { lecturasDe(v).set(r + "|" + i, e.lectura); pintarRondas(); }
       const msj = e && e.message === "vacia" ? tx("planillaVacia")
         : /failed to fetch|networkerror|load failed/i.test(String(e && e.message)) ? tx("planillaNoContesto")
         : String((e && e.message) || e);
@@ -5199,7 +5215,9 @@
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
             onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton")),
           window.PareoPlanilla ? el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-planilla": String(i), "aria-label": tx("planillaBotonA", { m: V.mesaFisica(v, i) }),
-            onclick: (e) => leerPlanilla(r, i, e.currentTarget) }, tx("planillaBoton")) : null),
+            onclick: (e) => leerPlanilla(r, i, e.currentTarget) }, tx("planillaBoton")) : null,
+          lecturasDe(v).has(r + "|" + i) ? el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-lectura": String(i), "aria-label": tx("planillaLecturaA", { m: V.mesaFisica(v, i) }),
+            onclick: () => bajarLectura(v, r, i) }, tx("planillaLectura")) : null),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
         el("td", { class: "num", texto: num.get(m.n) })));
       if (mb || mn) cuerpo.append(filaDet);

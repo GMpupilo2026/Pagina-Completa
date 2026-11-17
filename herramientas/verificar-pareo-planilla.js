@@ -65,7 +65,21 @@ function pruebaSinNavegador() {
 
   const res = PL.resumen(r, tx);
   const n = r.jugadas.length, d = r.jugadas.filter((j) => j.estado === "dudosa").length;
-  ok(res.texto.includes(n + " medias jugadas") && res.texto.includes(d + " dudosas"), "el cuadro dice cuántas se leyeron y cuántas son dudosas", res.texto);
+  ok(res.texto.includes(n + " medias jugadas") && res.texto.includes(d + (d === 1 ? " dudosa" : " dudosas")), "el cuadro dice cuántas se leyeron y cuántas son dudosas", res.texto);
+  // «1 dudosa», no «1 dudosas» (salió así con la primera planilla de verdad, 17/11)
+  const uno = { jugadas: [{ san: "e4", estado: "leida" }, { san: "e5", estado: "corregida" }, { san: "Nf3", estado: "dudosa", escrito: ["Cf3"] }], ilegibleDesde: null };
+  const t1 = PL.resumen(uno, tx).texto;
+  ok(/3 medias jugadas \(1 tal cual, 1 corregida, 1 dudosa\)/.test(t1), "con uno de cada cosa, en singular", t1);
+  const t0 = PL.resumen({ jugadas: [{ san: "e4", estado: "leida" }], ilegibleDesde: null }, tx).texto;
+  ok(/1 media jugada \(1 tal cual, 0 corregidas, 0 dudosas\)/.test(t0), "y «1 media jugada», con el cero en plural", t0);
+
+  console.log("\n=== La lectura para revisar («⬇ Lectura») ===");
+  const pal = palabrasDePlanillas(HOJAS);
+  const lec = PL.lectura([{ palabras: pal, metodo: "numeros", hojas: HOJAS }], r, { torneo: "PRUEBA", ronda: 1, mesa: 3 });
+  igual("trae lo que leyó Vision de cada foto, tal cual (se puede volver a pasar a hojasDeLaFoto)", R.hojasDeLaFoto(lec.fotos[0].palabras).hojas.length, R.hojasDeLaFoto(pal).hojas.length);
+  igual("la partida que salió, con cómo se leyó cada jugada", lec.partida.jugadas.map((j) => j.san), r.jugadas.map((j) => j.san));
+  igual("y de qué torneo, ronda y mesa es", [lec.torneo, lec.ronda, lec.mesa], ["PRUEBA", 1, 3]);
+  igual("sin partida (no salió ninguna jugada), igual trae lo leído", PL.lectura([{ palabras: pal, metodo: "filas", hojas: [] }], null).partida, null);
   ok(/Revísala con la planilla en la mano/.test(res.texto), "y pide revisarla antes de guardarla");
   if (d) ok(res.ayuda.startsWith("Dudosas") && /«/.test(res.ayuda), "las dudosas van una por una, con lo escrito", res.ayuda);
 
@@ -138,6 +152,12 @@ async function pruebaPagina(browser) {
   const esperada = R.reconstruir(Chess, HOJAS).jugadas.map((j) => j.san);
   igual("al guardarla, la mesa queda con la partida de las planillas", PP.leer(g.rondas[0].mesas[0].pgn, Chess).jugadas, esperada);
   ok(/✓/.test(await page.textContent('#pi-ronda [data-pgn="0"]')), "y «Partida (PGN)» dice que ya la tiene");
+  ok(await P.vis(page, '#pi-ronda [data-lectura="0"]'), "la mesa leída tiene «⬇ Lectura»");
+  ok(!(await page.$('#pi-ronda [data-lectura="1"]')), "y la que no se leyó, no");
+  const [bajada] = await Promise.all([page.waitForEvent("download"), page.click('#pi-ronda [data-lectura="0"]')]);
+  const json = JSON.parse(require("fs").readFileSync(await bajada.path(), "utf8"));
+  ok(/\.json$/.test(bajada.suggestedFilename()) && json.fotos.length === 1 && json.fotos[0].palabras.length > 100 && json.partida.jugadas.length === esperada.length && json.mesa === 1 && json.ronda === 1,
+    "baja un .json con lo que leyó Vision, la partida y la mesa", bajada.suggestedFilename() + " " + JSON.stringify(json).slice(0, 200));
 
   console.log("\n=== Una mesa que ya tiene partida pregunta antes ===");
   await page.click('#pi-ronda [data-planilla="1"]');
@@ -162,6 +182,7 @@ async function pruebaPagina(browser) {
   await v.page.waitForFunction(() => /no se encontró ninguna jugada escrita en la foto/.test(document.body.textContent));
   ok(true, "lo dice en palabras, sin abrir el cuadro");
   ok((await v.page.textContent('#pi-ronda [data-planilla="0"]')).includes("Planilla"), "y el botón vuelve a decir «📷 Planilla»");
+  ok(await P.vis(v.page, '#pi-ronda [data-lectura="0"]'), "y deja bajar la lectura igual (la que sale mal es la que hay que ver)");
   await v.ctx.close();
 }
 
