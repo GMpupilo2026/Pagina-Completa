@@ -63,7 +63,9 @@
   function resumen(r, tx) {
     const js = r.jugadas || [];
     const cuenta = (e) => js.filter((j) => j.estado === e).length;
-    const partes = [tx("planillaLeida", { n: js.length, l: cuenta("leida"), c: cuenta("corregida"), d: cuenta("dudosa") })];
+    // «1 dudosa», «2 dudosas»: cada número con su palabra (planillaN_<clave>_1 o _n)
+    const con = (clave, n) => tx("planillaN_" + clave + (n === 1 ? "_1" : "_n"), { n });
+    const partes = [tx("planillaLeida", { n: con("medias", js.length), l: con("leidas", cuenta("leida")), c: con("corregidas", cuenta("corregida")), d: con("dudosas", cuenta("dudosa")) })];
     if (r.ilegibleDesde !== null && r.ilegibleDesde !== undefined) {
       partes.push(tx(r.ilegibleDesde % 2 ? "planillaIlegibleNegras" : "planillaIlegible", { j: Math.floor(r.ilegibleDesde / 2) + 1 }));
     }
@@ -110,29 +112,52 @@
 
   /* fotos: los archivos que eligió quien organiza (una o dos). decir(clave,
      datos): para contar en qué va. Las dos planillas en una foto o en dos
-     fotos dan lo mismo: cada foto aporta las hojas que se le encuentren. */
+     fotos dan lo mismo: cada foto aporta las hojas que se le encuentren.
+     Devuelve también `lectura` (lectura() abajo), y si no sale ninguna jugada
+     el error la lleva en `e.lectura`: la que sale mal es la que hay que ver. */
   async function leer(fotos, o) {
     const decir = o.decir || (() => {});
     if (!raiz.PlanillaOcr) await cargar("js/planilla-ocr.js");
     if (!raiz.PlanillaReconstruir) await cargar("js/planilla-reconstruir.js");
     const lista = [...fotos].slice(0, MAX_FOTOS);
     let hojas = [], metodo = "numeros";
+    const leidas = [];
     for (let k = 0; k < lista.length; k++) {
       decir("planillaLeyendo", { k: k + 1, n: lista.length });
       const { words } = await raiz.PlanillaOcr.leerFoto(lista[k], o.token, { maxLado: 2600 });
       const h = raiz.PlanillaReconstruir.hojasDeLaFoto(words);
       if (h.metodo === "filas") metodo = "filas";
+      leidas.push({ palabras: words || [], metodo: h.metodo, hojas: h.hojas });
       hojas = hojas.concat(h.hojas);
     }
     hojas = hojas.filter((h) => h && h.length).slice(0, 2);
-    if (!hojas.length) throw new Error("vacia");
+    const vacia = () => { const e = new Error("vacia"); e.lectura = lectura(leidas, null, o.datos); return e; };
+    if (!hojas.length) throw vacia();
     decir("planillaArmando", { p: 0 });
     const resultado = await reconstruirEnHilo(hojas, (x) => decir("planillaArmando", { p: Math.round(x * 100) }));
-    if (!resultado.jugadas || !resultado.jugadas.length) throw new Error("vacia");
-    return { resultado, hojas: hojas.length, metodo };
+    if (!resultado.jugadas || !resultado.jugadas.length) throw vacia();
+    return { resultado, hojas: hojas.length, metodo, lectura: lectura(leidas, resultado, o.datos) };
   }
 
-  const api = { leer, pgn, resumen, MAX_FOTOS };
+  /* «⬇ Lectura»: lo que devolvió Google Vision de cada foto (cada palabra con
+     su caja, tal cual: se puede pasar otra vez a hojasDeLaFoto()), las celdas
+     que salieron de cada planilla y la partida que se armó. Es para revisar
+     con datos de verdad por qué una planilla se leyó mal y afinar
+     js/planilla-reconstruir.js. Trae lo escrito en la planilla, también los
+     nombres del encabezado: es para quien organiza, nunca para el repositorio.
+     El mismo formato del «Descargar la lectura» del Centroamericano, con una
+     entrada por foto. `datos`: el torneo, la ronda y la mesa. */
+  function lectura(leidas, r, datos) {
+    return Object.assign({ que: "Lectura de la foto de las planillas («📷 Planilla», Pareo Integral)", version: 1 }, datos || {}, {
+      fotos: leidas.map((f) => ({ metodo: f.metodo, hojas: f.hojas, palabras: f.palabras.map((w) => ({ text: w.text, bbox: w.bbox })) })),
+      partida: r ? {
+        jugadas: r.jugadas.map((j) => ({ san: j.san, estado: j.estado, escrito: j.escrito || [], alternativa: j.alternativa || null })),
+        ilegibleDesde: r.ilegibleDesde, resto: r.resto || [], costo: r.costo,
+      } : null,
+    });
+  }
+
+  const api = { leer, pgn, resumen, lectura, MAX_FOTOS };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPlanilla = api;
 })(typeof self !== "undefined" ? self : this);

@@ -5573,6 +5573,29 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   - Sin sesión o sin internet no se manda nada y lo dice. Pareo se usa sin
     conexión: la lectura es lo único de la mesa que la necesita.
   - Por equipos no está todavía (cada tablero guarda `m.partidas[k].pgn`).
+  - **La primera planilla de verdad** (17/11, ya con la clave de Vision
+    puesta: ver abajo) salió con 13 medias jugadas y cortada en la 7 de las
+    negras. Con la partida que dio el dueño (1. d4 Cf6 2. c4 e6 3. Cf3 d5
+    4. g3 dxc4 5. Ag2 c5 6. 0-0 Cc6 7. Ce5 Ad7 8. Ca3 cxd4), leyó «c6» por
+    Cf6, «a5» por c5 y **se saltó la fila 6 entera** (el enroque), así que lo
+    de después quedó corrido un renglón hasta que no cuadró. Para saber si
+    fue Vision o `hojasDeLaFoto()` hace falta lo leído palabra por palabra:
+    por eso **«⬇ Lectura»** en la mesa, después de leer una foto (también si
+    no salió ninguna jugada: la que sale mal es la que hay que ver). Baja un
+    `.json` con el formato del «Descargar la lectura» del Centroamericano,
+    una entrada por foto (`PareoPlanilla.lectura()`). Trae lo escrito en la
+    planilla y los nombres del encabezado: **nunca va al repositorio**, y
+    solo vive en la pestaña (no se guarda en el aparato).
+  - El resumen dice «1 dudosa», «1 media jugada» (la primera decía
+    «1 dudosas»): cada número con su palabra (`planillaN_<cosa>_1` / `_n`).
+  - **La clave de Google Vision** (17/11): faltaba desde siempre (el
+    contador del tope estaba vacío: la función revisa la clave antes de
+    contar). Se creó en el proyecto de Google Cloud «Ajedrez Integral
+    Vision», restringida a Cloud Vision API y sin restricción de aplicación
+    (la usa el servidor). El primer valor pegado en Supabase daba 403
+    `ACCESS_DENIED` («Permission denied on the service»); volver a copiarla
+    de «Mostrar clave» y pegarla lo arregló. Si vuelve ese 403, lo primero es
+    revisar el valor del secreto.
   - Lo prueba `herramientas/verificar-pareo-planilla.js` (un doble de
     `ocr-scoresheet` con las planillas de verdad de la mesa 11). **Sin
     probar de verdad**: Google Vision con planillas de un torneo de Pareo.
