@@ -100,6 +100,8 @@ function datosDe(p){
 }
 
 function abrir(p){
+  // Otra clase: la práctica contra el motor era de la posición de la anterior.
+  terminarPractica(false);
   const { datos, sinDatos } = datosDe(p);
   const raiz = PgnClase.arbol(datos.jugadas || [], datos.variantes || []);
   const inicio = datos.inicio || PgnClase.INICIAL;
@@ -381,7 +383,7 @@ function montarAccesible(){
         final: (api) => { api.decir(''); alFinal(); },
       },
     });
-    if (comandos) comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+    if (comandos) comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase), «jugar» (jugar desde aquí contra el motor). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
   }
 }
 
@@ -432,6 +434,11 @@ document.getElementById('lista-clases').addEventListener('keydown', (e) => {
 function recorrerEscribiendo(texto, api){
   if (PIDE_LISTA.test(texto)) { api.limpiar(); api.decir(irALaLista()); return; }
   if (!actual) { api.decir('Primero elige una clase de la lista: escribe «clases».'); return; }
+  if (/^\s*(jugar|practicar|jugar contra el motor|jugar desde aqu[ií]( contra el motor)?)\s*$/i.test(texto)) {
+    api.limpiar().decir('');
+    empezarPractica();
+    return;
+  }
   if (/^\s*girar( el tablero)?\s*$/i.test(texto)) {
     api.limpiar();
     document.getElementById('btn-girar').click();
@@ -511,14 +518,214 @@ document.getElementById('btn-girar').addEventListener('click', () => {
 // (js/tablero-accesible.js), y robárselas dejaba el tablero sin poder mirarse
 // —cada flecha cambiaba de jugada en vez de pasar a la casilla de al lado—.
 document.addEventListener('keydown', (e) => {
-  if (!actual || document.getElementById('visor').hidden) return;
+  // Jugando contra el motor la partida de la clase está escondida: moverla a
+  // ciegas cambiaría desde dónde se vuelve sin que nadie lo vea.
+  if (!actual || document.getElementById('visor').hidden || practica.activa) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) return;
-  if (e.target && e.target.closest && e.target.closest('#board, #repaso-board, .cc-caja, [role="application"]')) return;
+  if (e.target && e.target.closest && e.target.closest('#board, #repaso-board, #practica-board, .cc-caja, [role="application"]')) return;
   if (e.key === 'ArrowLeft') { e.preventDefault(); anterior(); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); siguiente(); }
   else if (e.key === 'Home') { e.preventDefault(); alPrincipio(); }
   else if (e.key === 'End') { e.preventDefault(); alFinal(); }
 });
+
+/* ---------------- Jugar contra el motor desde la clase ----------------
+   Desde la posición que se está mirando, el alumno juega con el bando al que
+   le toca y el motor contesta por el otro: es el mismo Stockfish por Elo de la
+   práctica de la clase en vivo (js/practice-engine.js), con plazo y con
+   jugada de respaldo, así el tablero nunca se queda «pensando». Se juega
+   tocando el tablero o escribiendo en su propio recuadro, y cada jugada (la
+   suya y la del motor) se dice CONTADA. No se guarda en la base: es práctica
+   del alumno, no una entrega. Al terminar se vuelve a la partida de la clase
+   en la misma jugada. */
+const practica = { activa: false, juego: null, desde: null, humano: 'w', sel: null, ultima: null,
+  pensando: false, terminada: false, turnoDeJuego: 0, comandos: null, teclado: null };
+
+const RESULTADO = { '1-0': 'ganan las blancas', '0-1': 'ganan las negras', '½-½': 'tablas' };
+function colorDe(c){ return c === 'w' ? 'blancas' : 'negras'; }
+
+function empezarPractica(){
+  if (!actual) return;
+  if (typeof Chess !== 'function' || !window.PracticeEngine) {
+    avisarDelVisor('El motor no está disponible en este navegador.');
+    return;
+  }
+  /* Desde lo que se VE: puede ser la posición aparte de una pregunta del profe
+     («Ver la posición»), que se pinta sin moverse de la jugada de la partida. */
+  const enPartida = nodo ? nodo.fen : actual.raiz.fen;
+  const vista = posicionVista ? posicionVista.fen() : enPartida;
+  const aparte = clavePos(vista) !== clavePos(enPartida);
+  practica.desde = vista;
+  practica.aparte = aparte ? document.getElementById('visor-estado').textContent : null;
+  practica.desdeNombre = aparte ? 'la ' + practica.aparte.replace(/^./, (x) => x.toLowerCase())
+    : nodo ? 'la jugada ' + nombreDe(nodo) : 'la posición de arranque';
+  practica.activa = true;
+  document.getElementById('visor-mirar').hidden = true;
+  document.getElementById('practica').hidden = false;
+  montarPracticaAccesible();
+  PracticeEngine.preload();
+  reiniciarPractica();
+  if (modoCiego() && practica.comandos && practica.comandos.input.checkVisibility()) practica.comandos.enfocar();
+  else document.getElementById('practica-titulo').focus();
+}
+
+function reiniciarPractica(){
+  practica.juego = new Chess(practica.desde);
+  practica.humano = practica.juego.turn();
+  practica.sel = null; practica.ultima = null; practica.pensando = false; practica.terminada = false;
+  practica.turnoDeJuego += 1;   // una respuesta del motor que llegue tarde ya no es de esta partida
+  const intro = 'Juegas con ' + colorDe(practica.humano) + ' desde ' + practica.desdeNombre
+    + '; el motor responde con ' + colorDe(practica.humano === 'w' ? 'b' : 'w') + '. Te toca.';
+  document.getElementById('practica-intro').textContent = intro;
+  decirEnPractica(intro);
+  pintarPractica();
+}
+
+function montarPracticaAccesible(){
+  if (!practica.teclado && window.TableroAccesible) {
+    practica.teclado = TableroAccesible.montar(document.getElementById('practica-board'), {
+      nombre: 'Tablero contra el motor', juego: () => practica.juego, cuadro: () => practica.comandos && practica.comandos.input,
+    });
+  }
+  if (!practica.comandos && window.CuadroComandos) {
+    practica.comandos = CuadroComandos.montar(document.getElementById('practica-cmd'), {
+      etiqueta: 'Escribe tu jugada contra el motor, o una pregunta sobre la posición',
+      juego: () => practica.juego,
+      tablero: () => practica.teclado,
+      // La posición no se dicta en cada jugada: se dice la jugada y la posición se pide.
+      posicionViva: false,
+      onEnviar: (texto, api) => {
+        const t = texto.trim().toLowerCase();
+        if (/^(terminar|salir|volver|volver a la partida|dejar de jugar)$/.test(t)) { api.limpiar(); terminarPractica(true); return; }
+        if (/^(otra vez|de nuevo|empezar otra vez|reiniciar|revancha)$/.test(t)) { api.limpiar(); reiniciarPractica(); return; }
+        if (practica.terminada) { api.decir('La partida terminó. Escribe «otra vez» para jugarla de nuevo, o «terminar» para volver a la partida de la clase.'); return; }
+        if (practica.pensando) { api.decir('El motor está pensando su jugada. Espera un momento.'); return; }
+        const mv = window.ComandosTablero ? ComandosTablero.jugadaEscrita(practica.juego, texto) : null;
+        if (!mv) { api.decir(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto.trim()) : '«' + texto.trim() + '» no es una jugada legal en esta posición.'); try { api.input.select(); } catch (e) {} return; }
+        api.limpiar();
+        jugarEnPractica(mv.from, mv.to, mv.promotion);
+      },
+    });
+    if (practica.comandos) practica.comandos.ayuda('Escribe tu jugada («Cf3», «e4», «caballo a f3»). «otra vez», empezar de nuevo desde la misma posición; «terminar», volver a la partida de la clase. Preguntar: «posición», «caballos», «qué hay en e4».');
+  }
+}
+
+/* Lo que se dice: escrito en el renglón de estado (una región viva) y, con la
+   voz del sitio encendida, en voz alta. Vaciar y repoblar: una región viva no
+   vuelve a hablar si el texto es el mismo (dos «Te toca» seguidos). */
+function decirEnPractica(texto){
+  const e = document.getElementById('practica-estado');
+  e.textContent = '';
+  window.setTimeout(() => { e.textContent = texto; }, 50);
+  if (window.BlindNotation) BlindNotation.speak(texto);
+}
+
+function avisarDelVisor(texto){
+  if (comandos) comandos.decir(texto);
+  anunciar(texto);
+}
+
+function pintarPractica(){
+  const t = document.getElementById('practica-board');
+  const puede = !practica.terminada && !practica.pensando && practica.juego.turn() === practica.humano;
+  EjercicioTablero.dibujar(t, {
+    juego: practica.juego, orientacion: practica.humano,
+    seleccionada: puede && practica.sel ? practica.sel : null,
+    ultima: practica.ultima,
+    alTocar: (sq) => tocarPractica(sq),
+  });
+  if (puede && practica.sel) EjercicioTablero.marcarDestinos(t, practica.juego, practica.sel);
+  if (window.Coordenadas) Coordenadas.aplicar(t);
+  document.getElementById('practica-jugadas').textContent = practica.juego.history().join(' ') || 'ninguna todavía';
+}
+
+function tocarPractica(sq){
+  if (practica.terminada || practica.pensando || practica.juego.turn() !== practica.humano) return;
+  const p = practica.juego.get(sq);
+  if (practica.sel && practica.sel !== sq) {
+    const legal = practica.juego.moves({ square: practica.sel, verbose: true }).some((m) => m.to === sq);
+    if (legal) { const de = practica.sel; EjercicioTablero.jugarCoronando(practica.juego, de, sq, (pieza) => jugarEnPractica(de, sq, pieza)); return; }
+  }
+  practica.sel = p && p.color === practica.humano ? sq : null;
+  pintarPractica();
+}
+
+function resultadoDePractica(){
+  const g = practica.juego;
+  if (g.in_checkmate()) return g.turn() === 'w' ? '0-1' : '1-0';
+  if (g.in_stalemate() || g.insufficient_material() || g.in_threefold_repetition() || g.in_draw()) return '½-½';
+  return null;
+}
+
+function contada(mv){
+  // Sin el punto final: la frase sigue («Jugaste: … . El motor piensa»).
+  return window.VisorLinea ? VisorLinea.jugadaContada(mv).replace(/^./, (x) => x.toLowerCase()).replace(/\.$/, '') : mv.san;
+}
+
+async function jugarEnPractica(desde, hasta, pieza){
+  const mv = practica.juego.move({ from: desde, to: hasta, promotion: pieza || 'q' });
+  if (!mv) return;
+  practica.sel = null;
+  practica.ultima = { from: mv.from, to: mv.to };
+  const tuya = 'Jugaste: ' + contada(mv) + '.';
+  if (terminarSiAcabo(tuya)) return;
+  practica.pensando = true;
+  pintarPractica();
+  decirEnPractica(tuya + ' El motor piensa…');
+  const turno = practica.turnoDeJuego;
+  let uci = null;
+  try { uci = (await PracticeEngine.responder(practica.juego.fen(), document.getElementById('practica-nivel').value)).uci; }
+  catch (e) { uci = null; }
+  if (!uci) uci = PracticeEngine.jugadaDeRespaldo(practica.juego.fen());
+  // Mientras pensaba, el alumno terminó o empezó otra vez: esa respuesta ya no va.
+  if (!practica.activa || turno !== practica.turnoDeJuego) return;
+  practica.pensando = false;
+  if (!uci) { pintarPractica(); decirEnPractica('El motor no respondió. Escribe «otra vez» para empezar de nuevo.'); return; }
+  const rival = practica.juego.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
+  if (!rival) { pintarPractica(); decirEnPractica('El motor no respondió. Escribe «otra vez» para empezar de nuevo.'); return; }
+  practica.ultima = { from: rival.from, to: rival.to };
+  // Las dos jugadas juntas: quien llega al renglón después oye la jugada entera.
+  const suya = tuya + ' El motor jugó: ' + contada(rival) + '.';
+  if (terminarSiAcabo(suya)) return;
+  pintarPractica();
+  decirEnPractica(suya + (practica.juego.in_check() ? ' Estás en jaque.' : '') + ' Te toca.');
+}
+
+function terminarSiAcabo(previo){
+  const r = resultadoDePractica();
+  if (!r) return false;
+  practica.terminada = true;
+  practica.pensando = false;
+  const gano = (r === '1-0' && practica.humano === 'w') || (r === '0-1' && practica.humano === 'b');
+  const mate = practica.juego.in_checkmate() ? 'Jaque mate: ' : '';
+  pintarPractica();
+  decirEnPractica(previo + ' Fin de la partida. ' + mate + RESULTADO[r] + '.'
+    + (gano ? ' ¡Bien jugado!' : r === '½-½' ? '' : ' Escribe «otra vez» para intentarlo de nuevo.'));
+  return true;
+}
+
+function terminarPractica(enfocar){
+  if (!practica.activa) return;
+  practica.activa = false;
+  practica.pensando = false;
+  practica.turnoDeJuego += 1;
+  document.getElementById('practica').hidden = true;
+  document.getElementById('visor-mirar').hidden = false;
+  if (!actual) return;
+  if (practica.aparte) mirarPosicion(practica.desde, practica.aparte);
+  else mirar(nodo);
+  if (!enfocar) return;
+  if (modoCiego() && comandos && comandos.input.checkVisibility()) {
+    comandos.enfocar();
+    avisarDelVisor('De vuelta en la partida de la clase, en ' + practica.desdeNombre + '.');
+  } else {
+    document.getElementById('btn-practicar').focus();
+  }
+}
+
+document.getElementById('btn-practicar').addEventListener('click', empezarPractica);
+document.getElementById('practica-otra-btn').addEventListener('click', reiniciarPractica);
+document.getElementById('practica-terminar-btn').addEventListener('click', () => terminarPractica(true));
 
 /* ---------------- El repaso personal (?repaso=<clase>) ----------------
    Las preguntas de jugada de esa clase que a este alumno no le salieron
