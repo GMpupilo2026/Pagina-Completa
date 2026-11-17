@@ -144,6 +144,7 @@ async function pruebaPagina(browser) {
   ok(pedidos[0] && pedidos[0].cuerpo.image_base64 && pedidos[0].cuerpo.image_base64.length > 20, "y lleva la foto");
   const dialogoTxt = await page.textContent(formulario);
   ok(/Leída de la foto: \d+ medias jugadas/.test(dialogoTxt) && /Revísala con la planilla/.test(dialogoTxt), "se abre «Partida (PGN)» con lo leído y lo que conviene revisar", dialogoTxt.slice(0, 300));
+  ok(/La foto es chica \(1 × 1 píxeles\)/.test(dialogoTxt), "y avisa que la foto es chica, con su tamaño (la primera de verdad llegó de 400 × 620)", dialogoTxt.slice(0, 400));
   const valor = await page.inputValue(formulario + " textarea");
   ok(/\[White "PRUEBA A"\]/.test(valor) && /\[Black "PRUEBA D"\]/.test(valor) && /\[Result "1-0"\]/.test(valor) && /\[Event "PRUEBA PLANILLA"\]/.test(valor), "con el PGN armado: nombres, torneo y el resultado de la mesa", valor.slice(0, 300));
   igual("nada se guardó todavía", (await P.leerTodos(page))[0].rondas[0].mesas[0].pgn, undefined);
@@ -179,7 +180,7 @@ async function pruebaPagina(browser) {
   console.log("\n=== Una foto sin nada escrito ===");
   const v = await abrir(browser, true, []);
   await subirFoto(v.page, '#pi-ronda [data-planilla="0"]');
-  await v.page.waitForFunction(() => /no se encontró ninguna jugada escrita en la foto/.test(document.body.textContent));
+  await v.page.waitForFunction(() => /no se encontró ninguna jugada escrita en la foto. .*La foto es chica/.test(document.body.textContent));
   ok(true, "lo dice en palabras, sin abrir el cuadro");
   ok((await v.page.textContent('#pi-ronda [data-planilla="0"]')).includes("Planilla"), "y el botón vuelve a decir «📷 Planilla»");
   ok(await P.vis(v.page, '#pi-ronda [data-lectura="0"]'), "y deja bajar la lectura igual (la que sale mal es la que hay que ver)");

@@ -32,6 +32,7 @@
   const enEspanol = (san) => String(san).replace(/^[KQRBN]/, (p) => ES[p]).replace(/=([QRBN])/, (m, p) => "=" + ES[p]);
   const MAX_FOTOS = 2;
   const MAX_DUDOSAS = 12;
+  const FOTO_MINIMA = 1600; // px del lado largo: por debajo, se avisa que la foto es chica
 
   // El resultado del PGN sale del que anotó el árbitro en la mesa, nunca de
   // la planilla: lo que no es una partida jugada (+/−, −/−) queda «*».
@@ -122,6 +123,16 @@
     const lista = [...fotos].slice(0, MAX_FOTOS);
     let hojas = [], metodo = "numeros";
     const leidas = [];
+    // La foto chica se lee mal: la primera de verdad (17/11) llegó de unos 400 × 620 px, con la letra de 15 px.
+    // Se mide antes de mandarla, para decirlo.
+    let chica = null;
+    for (let k = 0; k < lista.length; k++) {
+      try {
+        const bm = await createImageBitmap(lista[k]);
+        if (Math.max(bm.width, bm.height) < FOTO_MINIMA && (!chica || bm.width * bm.height < chica.ancho * chica.alto)) chica = { ancho: bm.width, alto: bm.height };
+        if (bm.close) bm.close();
+      } catch (e) { /* no se pudo medir: se lee igual */ }
+    }
     for (let k = 0; k < lista.length; k++) {
       decir("planillaLeyendo", { k: k + 1, n: lista.length });
       const { words } = await raiz.PlanillaOcr.leerFoto(lista[k], o.token, { maxLado: 2600 });
@@ -131,12 +142,12 @@
       hojas = hojas.concat(h.hojas);
     }
     hojas = hojas.filter((h) => h && h.length).slice(0, 2);
-    const vacia = () => { const e = new Error("vacia"); e.lectura = lectura(leidas, null, o.datos); return e; };
+    const vacia = () => { const e = new Error("vacia"); e.lectura = lectura(leidas, null, o.datos); e.chica = chica; return e; };
     if (!hojas.length) throw vacia();
     decir("planillaArmando", { p: 0 });
     const resultado = await reconstruirEnHilo(hojas, (x) => decir("planillaArmando", { p: Math.round(x * 100) }));
     if (!resultado.jugadas || !resultado.jugadas.length) throw vacia();
-    return { resultado, hojas: hojas.length, metodo, lectura: lectura(leidas, resultado, o.datos) };
+    return { resultado, hojas: hojas.length, metodo, chica, lectura: lectura(leidas, resultado, o.datos) };
   }
 
   /* «⬇ Lectura»: lo que devolvió Google Vision de cada foto (cada palabra con
