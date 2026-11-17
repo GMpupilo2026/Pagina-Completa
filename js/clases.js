@@ -4581,7 +4581,13 @@
                 contarUsosDelPanel();
                 if (!profile.is_admin && !profile._persona) cargarLadoAlumno().catch((e) => console.error(e));
             } else {
-                document.getElementById("progreso-alumno").hidden = false;
+                /* En el panel adaptado (cuenta marcada como ciega) no va
+                   «Hoy te toca» ni «Tus números»: la meta del día, la racha,
+                   los repasos y los totales son un montón de texto que el
+                   lector de pantalla lee antes de llegar a lo que se usa, y
+                   quien no ve no los necesita. Ni se piden. Ver «El panel
+                   adaptado no lleva "Hoy te toca"» en accesibilidad.md. */
+                document.getElementById("progreso-alumno").hidden = panelAdaptado;
                 document.getElementById("registro-clases").hidden = true;
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
@@ -4606,10 +4612,9 @@
                 partes.push(
                     cargarPendientes(rachaP, tallerP),
                     cargarSeguirCurso(),
-                    loadEntrenoProgress(),
-                    loadTacticsRecord(),
                     pintarSaludoAlumno(rachaP, tallerP),
                 );
+                if (!panelAdaptado) partes.push(loadEntrenoProgress(), loadTacticsRecord());
                 /* «Hoy te toca» (diez scripts, ~200 KB) y «lo último que
                    hiciste» arrancan a la vez pero el panel NO los espera: se
                    pintan en su lugar cuando llegan. Metidos en la tanda de
@@ -4620,7 +4625,7 @@
                    campana de la cuenta de quien mira (mi_proxima_clase, lo que
                    la RLS le da), así que no se pintan; «Lo que más usas» y los
                    avisos de Competir se piden con su id. */
-                if (!profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                if (!panelAdaptado && !profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
                 if (!profile._persona) cargarProximaClase();
                 if (!panelAdaptado && !profile._persona) pintarFavoritas();
                 if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));

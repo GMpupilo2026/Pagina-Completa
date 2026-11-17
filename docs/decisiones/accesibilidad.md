@@ -799,6 +799,16 @@ plataforma se acomoda sola en todas las páginas de esa persona.
   Sonar, 4×4, Visualización, Tipos y los cursos), primero el de un diálogo
   abierto. La nota del panel adaptado va en su propio párrafo
   (`#panel-adaptado-nota`): el subtítulo lo reescribe después la racha del día.
+- **El panel adaptado no lleva «Hoy te toca»** (17/11/2026, a pedido del
+  dueño). La tarjeta `#progreso-alumno` —la meta del día, la racha, los
+  repasos que vencen, «Entrenar 10 minutos» y «Tus números»— es un montón de
+  texto que el lector de pantalla lee de arriba abajo antes de llegar a lo que
+  se usa, y a quien no ve no le sirve. En el panel adaptado la tarjeta queda
+  escondida y ni se piden sus datos (`cargarHoyTeToca`, `loadEntrenoProgress`,
+  `loadTacticsRecord`): son diez scripts y tres consultas para nada. Lo que
+  vence (la franja de pendientes), «Continúa donde ibas» y «Tus clases» sí
+  siguen. `verificar-vision-cuenta.js` lo mide, y que sin la marca la tarjeta
+  vuelve.
 - **Competir** a quien no ve le ofrece retar solo en Estándar y Niebla (las que
   se juegan escribiendo); un reto que le llega en otra modalidad no trae
   «Aceptar»: dice que no está adaptada. Los retos que llegan están en una
