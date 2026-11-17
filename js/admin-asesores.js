@@ -275,8 +275,9 @@
   }
 
   /* Las grabaciones del taller, en orden, de las filas de asesores_grabaciones()
-     (una por persona y grabación): cada una con su título y su duración, y
-     cuánto vio cada persona. */
+     (una por persona y grabación): cada una con su título y lo que hay que
+     ver (util_seg: la duración sin los tramos sin clase, recesos y
+     silencios), y cuánto vio cada persona, contado igual (visto_seg). */
   function grabacionesDe(filas, preguntas) {
     // Una sesión puede estar en varias partes, cada una su video y su columna:
     // la llave es la clase, el día y la parte (1 si no la trae).
@@ -284,7 +285,7 @@
     const porVideo = new Map();
     (filas || []).forEach((f) => {
       const clave = llave(f);
-      if (!porVideo.has(clave)) porVideo.set(clave, { clave, sesion: f.horario_id + "|" + f.fecha, parte: Number(f.parte) || 1, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
+      if (!porVideo.has(clave)) porVideo.set(clave, { clave, sesion: f.horario_id + "|" + f.fecha, parte: Number(f.parte) || 1, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.util_seg) || Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
       porVideo.get(clave).vio.set(f.persona_id, Number(f.visto_seg) || 0);
     });
     // Las preguntas dentro del video (asesores_preguntas_video): cuántas tiene, contestó y acertó.
@@ -452,7 +453,7 @@
       if (videos.length) {
         const conPreguntas = videos.some((v) => v.preguntas.size);
         cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
-          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó"
+          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió, lo que adelantó ni los recesos y silencios (no se le exigen a nadie)"
           + (conPreguntas ? ", y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10)" : "") + ". "
           + videos.map((v, i) => {
             const n = [...v.vio.values()].filter((x) => x > 0).length;

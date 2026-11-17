@@ -144,6 +144,27 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("«jugada 2» es la jugada 2 de las blancas", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
     await page.fill("#visor-cmd .cc-input", "caballos"); await page.press("#visor-cmd .cc-input", "Enter");
     igual("«caballos» se contesta sobre la posición que se ve", /caballos blancos en bella 1 y felix 3/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    /* Con el recuadro VACÍO se recorre sin escribir: lo pidieron los alumnos
+       ciegos, que tenían que escribir «siguiente» en cada jugada. */
+    const vacio = "#visor-cmd .cc-input";
+    await page.fill(vacio, ""); await page.press(vacio, "Enter");
+    igual("recuadro vacío + Enter avanza una jugada", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "ArrowLeft");
+    igual("recuadro vacío + ← retrocede", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
+    await page.press(vacio, "ArrowRight");
+    igual("recuadro vacío + → avanza", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "Home");
+    igual("recuadro vacío + Inicio va al arranque", await texto(page, "#visor-estado"), "Posición de arranque");
+    await page.press(vacio, "ArrowLeft");
+    igual("en el arranque, ← lo dice en vez de callar", await texto(page, "#visor-cmd .cc-msg"), "Ya estás en la posición de arranque.");
+    await page.fill(vacio, "jugada"); await page.press(vacio, "ArrowLeft");
+    igual("con texto escrito, ← mueve el cursor y no la partida", await texto(page, "#visor-estado"), "Posición de arranque");
+    igual("el recuadro dice cómo se avanza", await page.evaluate(() => {
+      const i = document.querySelector("#visor-cmd .cc-input");
+      const d = document.getElementById(i.getAttribute("aria-describedby") || "");
+      return !!d && /Enter o flecha derecha/.test(d.textContent);
+    }), "true");
+    await page.fill(vacio, "jugada 2"); await page.press(vacio, "Enter");
     await page.focus('#board [data-square="e4"]');
     await page.keyboard.press("ArrowRight");
     igual("con el foco en el tablero, → mueve de casilla y no cambia de jugada",
@@ -156,6 +177,27 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
       await page.evaluate(() => !!document.activeElement && document.activeElement.matches("#visor-cmd .cc-input")), "true");
     igual("y el recuadro dice qué clase se abrió",
       /^La defensa de los dos caballos/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    const cc = "#visor-cmd .cc-input";
+    igual("y dice cómo volver a la lista", /escribe «clases»/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    /* Con el foco en el recuadro, la lista de clases quedaba atrás en la
+       página y quien no ve no sabía cómo volver a ella para elegir otra. */
+    await page.fill(cc, "clases"); await page.press(cc, "Enter");
+    igual("«clases» lleva el foco a la clase abierta en la lista",
+      await page.evaluate(() => document.activeElement && document.activeElement.closest("#lista-clases") && document.activeElement.dataset.id), "p1");
+    igual("y dice cuántas hay y cómo moverse",
+      /^Tus clases: \d+ clases?\. Flecha arriba y flecha abajo/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    const estadoAntes = await texto(page, "#visor-estado");
+    await page.keyboard.press("ArrowDown");
+    const segunda = await page.evaluate(() => [...document.querySelectorAll("#lista-clases button")][1].dataset.id);
+    igual("en la lista, ↓ pasa a la clase siguiente y no cambia de jugada",
+      [await page.evaluate(() => document.activeElement.dataset.id), await texto(page, "#visor-estado")], [segunda, estadoAntes]);
+    await page.keyboard.press("ArrowUp");
+    igual("y ↑ vuelve a la anterior", await page.evaluate(() => document.activeElement.dataset.id), "p1");
+    await page.keyboard.press("Enter");
+    igual("Enter la abre y el foco vuelve al recuadro",
+      await page.evaluate(() => !!document.activeElement && document.activeElement.matches("#visor-cmd .cc-input")), "true");
+    await page.fill(cc, "volver a la lista"); await page.press(cc, "Enter");
+    igual("«volver a la lista» hace lo mismo", await page.evaluate(() => document.activeElement && document.activeElement.dataset.id), "p1");
     await page.evaluate(() => document.documentElement.classList.remove("modo-ciego"));
     await page.click('#lista-clases [data-id="p1"]');
     igual("sin la cuenta ciega, sigue yendo al título", await page.evaluate(() => document.activeElement && document.activeElement.id), "visor-titulo");

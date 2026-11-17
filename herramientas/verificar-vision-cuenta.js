@@ -61,17 +61,23 @@ async function pruebaCiega(browser) {
     ["te-reto.html", "entreno/mates.html", "entreno/estudio.html", "tareas.html", "ciegos.html"].every((h) => enlaces.includes(h)));
   /* La Academia pidió esconderlas: ahí no hay piezas que poner bajo «Piezas»
      (ver «Lo que no se puede hacer sin ver, no se ofrece»). */
-  igual("y no trae Sonar, Batalla naval, Memoria ni Coordenadas",
-    ["sonar.html", "batalla-naval.html", "entreno/memoria.html", "entreno/coordenadas.html"].filter((h) => enlaces.includes(h)), []);
+  igual("y no trae Sonar, Batalla naval ni Memoria",
+    ["sonar.html", "batalla-naval.html", "entreno/memoria.html"].filter((h) => enlaces.includes(h)), []);
+  /* Coordenadas volvió: para quien no ve, el juego es decir el color. */
+  cierto("pero sí Coordenadas", enlaces.includes("entreno/coordenadas.html"));
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
   /* Se lee cuando el panel ya terminó de cargar. La nota va en su propio
      párrafo (#panel-adaptado-nota): el subtítulo lo reescribe la racha. */
-  await page.waitForFunction(() => !/Cargando/.test((document.getElementById("tactics-record-text") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => { const n = document.getElementById("panel-adaptado-nota"); return n && n.checkVisibility(); }, null, { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(800);
   cierto("debajo del saludo dice que es el panel adaptado y cómo oír los atajos",
     /adaptado.*Alt \+ Mayúscula \+ H/.test(await page.evaluate(() => { const n = document.getElementById("panel-adaptado-nota"); return n && n.checkVisibility() ? n.textContent : ""; })));
+  /* «Hoy te toca» y «Tus números» no van en el panel adaptado: mucho texto
+     que el lector lee antes de llegar a lo que se usa. Ni se piden. */
+  igual("sin «Hoy te toca» ni «Tus números» (la tarjeta no se ve y no se pintó)",
+    await page.evaluate(() => [document.getElementById("progreso-alumno").checkVisibility(), !!document.getElementById("hoy-titulo")]), [false, false]);
 
   const accesos = await page.evaluate(() => {
     const nav = document.getElementById("accesos-rapidos");
@@ -168,6 +174,8 @@ async function pruebaSinMarca(browser) {
   igual("la base manda: sin modo-ciego ni accesos rápidos",
     await page.evaluate(() => [document.documentElement.classList.contains("modo-ciego"), !!document.getElementById("accesos-rapidos")]), [false, false]);
   cierto("el panel es el de siempre", (await page.evaluate(GRUPOS)).includes("Entrenamiento básico"));
+  await page.waitForFunction(() => document.getElementById("progreso-alumno").checkVisibility(), null, { timeout: 10000 }).catch(() => {});
+  igual("y con su tarjeta «Hoy te toca»", await page.evaluate(() => document.getElementById("progreso-alumno").checkVisibility()), true);
   igual("y el aparato se olvida de la marca vieja", await page.evaluate(() => localStorage.getItem("ai_vision_v1")), null);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
