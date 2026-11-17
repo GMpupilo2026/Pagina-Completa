@@ -24,6 +24,10 @@
  *     buena y su fuente) salen con el avatar del profe Oscar en el minuto en
  *     que se dice; cada una lleva su fuente, que se comprobó contra las
  *     láminas y el banco ya revisado.
+ *   · Una sesión grabada en varias partes lleva una entrada por parte
+ *     (`"parte": 2`), cada una con los minutos de SU video: la parte 1 se
+ *     escribe en grabacion.json y la 2 en adelante en grabacion-parte-N.json
+ *     (lo que lee js/calendario-taller.js). Las preguntas van por video.
  *   · Falla si algo no cuadra (un capítulo fuera del video, fuera de orden,
  *     una lámina que no existe) en vez de escribir un archivo que se ve bien y
  *     lleva a otro lado.
@@ -51,9 +55,14 @@ function fallar(msg) {
 const entero = (n) => Number.isInteger(n) && n >= 0;
 
 /* Lo que va publicado de una sesión, comprobado. Devuelve el objeto. */
-function armar(s) {
-  const donde = "la grabación de " + s.presentacion;
+const parteDe = (s) => (s.parte == null ? 1 : s.parte);
+const nombreDe = (s) => s.presentacion + (parteDe(s) > 1 ? ", parte " + parteDe(s) : "");
+const archivoDe = (s) => (parteDe(s) === 1 ? "grabacion.json" : "grabacion-parte-" + parteDe(s) + ".json");
+
+function armar(s, desde = 0) {
+  const donde = "la grabación de " + nombreDe(s);
   if (!/^clase-\d\d$/.test(s.presentacion || "")) fallar(`presentación con nombre raro: ${s.presentacion}`);
+  if (!Number.isInteger(parteDe(s)) || parteDe(s) < 1 || parteDe(s) > 9) fallar(`${donde}: la parte tiene que ser un entero de 1 a 9`);
   const dj = path.join(PRESENTACIONES, s.presentacion, "diapositivas.json");
   if (!fs.existsSync(dj)) fallar(`${donde}: no existe ${path.relative(RAIZ, dj)}`);
   const laminas = JSON.parse(fs.readFileSync(dj, "utf8")).diapositivas;
@@ -66,7 +75,9 @@ function armar(s) {
     });
   };
   enOrden(s.capitulos, "capítulo");
-  enOrden(s.laminas, "lámina");
+  // Una parte puede no mostrar ninguna lámina (la parte 2 de la Sesión IV es
+  // toda práctica en la plataforma): sin línea, la página no pinta ese panel.
+  if (!(s.parte && Array.isArray(s.laminas) && !s.laminas.length)) enOrden(s.laminas, "lámina");
   if (s.capitulos[0].t !== 0) fallar(`${donde}: el primer capítulo tiene que empezar en 0`);
   s.capitulos.forEach((c, i) => {
     if (typeof c.titulo !== "string" || !c.titulo.trim() || c.titulo.length > 60) fallar(`${donde}: el capítulo n.º ${i + 1} necesita un título de hasta 60 caracteres`);
@@ -101,7 +112,7 @@ function armar(s) {
     if (typeof a.texto !== "string" || a.texto.length < 20 || a.texto.length > 320) fallar(`${n} necesita un texto de 20 a 320 caracteres`);
     if (typeof a.fuente !== "string" || !a.fuente.trim() || a.fuente.length > 80) fallar(`${n} necesita su fuente (hasta 80 caracteres): ninguna se inventa`);
   });
-  const preguntas = preguntasDe(s, donde, enOrden);
+  const preguntas = preguntasDe(s, donde, enOrden, desde);
   return {
     _comentario: COMENTARIO,
     duracion: s.duracion,
@@ -118,10 +129,14 @@ function armar(s) {
    la correcta se reparte parejo entre A, B, C y D (ordenadas por la huella del
    texto, como formacion-cuestionarios.js), y la correcta NO va en el archivo
    publicado: la sabe la base (grabacion_preguntas), que corrige. `n` es el
-   número de la pregunta en su video (1, 2, 3… en orden de tiempo). */
+   número de la pregunta en su video (1, 2, 3… en orden de tiempo).
+   `desde` es cuántas preguntas tienen las partes anteriores de la misma
+   sesión: el reparto sigue donde quedó la parte anterior, para que en una
+   sesión en partes la correcta no se amontone en A y B (cada parte trae
+   pocas). En una sesión de un solo video es 0 y nada cambia. */
 let banco = null;
 const huella = (t) => crypto.createHash("sha1").update(t).digest("hex");
-function preguntasDe(s, donde, enOrden) {
+function preguntasDe(s, donde, enOrden, desde = 0) {
   const lista = s.preguntas || [];
   if (!lista.length) return [];
   enOrden(lista, "pregunta");
@@ -141,7 +156,7 @@ function preguntasDe(s, donde, enOrden) {
     return { t: q.t, n: i + 1, p };
   });
   const lugar = new Map();
-  desdeBanco.map((x) => x.p.texto).sort((a, b) => (huella(a) < huella(b) ? -1 : 1)).forEach((t, i) => lugar.set(t, i % 4));
+  desdeBanco.map((x) => x.p.texto).sort((a, b) => (huella(a) < huella(b) ? -1 : 1)).forEach((t, i) => lugar.set(t, (i + desde) % 4));
   return desdeBanco.map(({ t, n, p }) => {
     const correcta = lugar.get(p.texto);
     const opciones = p.distractores.slice();
@@ -153,11 +168,17 @@ function preguntasDe(s, donde, enOrden) {
 /* Lo que sabe la base: en qué lugar está la correcta de cada pregunta de cada
    video. Se aplica como migración (supabase/migraciones/) y
    verificar-grabacion-interactiva.js compara que la última diga esto mismo. */
+/* Cuántas preguntas tienen las partes anteriores de la misma sesión. */
+function desdeDe(fuente, s) {
+  return (fuente.sesiones || []).filter((x) => x.presentacion === s.presentacion && parteDe(x) < parteDe(s))
+    .reduce((n, x) => n + (x.preguntas || []).length, 0);
+}
+
 function claves(fuente) {
   const filas = [];
   for (const s of fuente.sesiones || []) {
-    if (!/^[A-Za-z0-9_-]{11}$/.test(s.youtube_id || "")) fallar(`${s.presentacion}: falta el id de YouTube en la fuente`);
-    preguntasDe(s, "la grabación de " + s.presentacion, () => {}).forEach((p) => filas.push({ youtube_id: s.youtube_id, n: p.n, correcta: p.correcta }));
+    if (!/^[A-Za-z0-9_-]{11}$/.test(s.youtube_id || "")) fallar(`${nombreDe(s)}: falta el id de YouTube en la fuente`);
+    preguntasDe(s, "la grabación de " + nombreDe(s), () => {}, desdeDe(fuente, s)).forEach((p) => filas.push({ youtube_id: s.youtube_id, n: p.n, correcta: p.correcta }));
   }
   return filas;
 }
@@ -180,13 +201,17 @@ function main() {
   const comprobar = process.argv.includes("--comprobar");
   const fuente = JSON.parse(fs.readFileSync(FUENTE, "utf8"));
   if (process.argv.includes("--sql")) { process.stdout.write(sql(fuente)); return; }
-  const vistas = new Set();
+  const vistas = new Set(), videos = new Set();
   let viejos = 0;
   for (const s of fuente.sesiones || []) {
-    if (vistas.has(s.presentacion)) fallar(`${s.presentacion} está dos veces en la fuente`);
-    vistas.add(s.presentacion);
-    const destino = path.join(PRESENTACIONES, s.presentacion, "grabacion.json");
-    const nuevo = texto(armar(s));
+    const destino = path.join(PRESENTACIONES, s.presentacion, archivoDe(s));
+    if (vistas.has(destino)) fallar(`${nombreDe(s)} está dos veces en la fuente`);
+    vistas.add(destino);
+    // Las preguntas van por video: el mismo video en dos entradas tendría dos
+    // juegos de preguntas con los mismos números.
+    if (videos.has(s.youtube_id)) fallar(`${nombreDe(s)}: el video ${s.youtube_id} ya está en otra entrada`);
+    videos.add(s.youtube_id);
+    const nuevo = texto(armar(s, desdeDe(fuente, s)));
     const actual = fs.existsSync(destino) ? fs.readFileSync(destino, "utf8") : null;
     if (actual === nuevo) continue;
     if (comprobar) { console.error(`✗ ${path.relative(RAIZ, destino)} no está al día: correr node herramientas/formacion-grabaciones.js`); viejos++; continue; }
@@ -195,15 +220,19 @@ function main() {
   }
   // Un grabacion.json que ya no tiene fuente quedaría pintando capítulos viejos.
   for (const carpeta of fs.readdirSync(PRESENTACIONES)) {
-    if (vistas.has(carpeta)) continue;
-    const sobra = path.join(PRESENTACIONES, carpeta, "grabacion.json");
-    if (fs.existsSync(sobra)) fallar(`${path.relative(RAIZ, sobra)} no tiene fuente: bórralo o agrégalo a la fuente`);
+    const dir = path.join(PRESENTACIONES, carpeta);
+    if (!fs.statSync(dir).isDirectory()) continue;
+    for (const f of fs.readdirSync(dir)) {
+      if (!/^grabacion(-parte-\d+)?\.json$/.test(f)) continue;
+      const sobra = path.join(dir, f);
+      if (!vistas.has(sobra)) fallar(`${path.relative(RAIZ, sobra)} no tiene fuente: bórralo o agrégalo a la fuente`);
+    }
   }
   if (viejos) process.exit(1);
   if (comprobar) console.log("✓ los archivos de las grabaciones están al día");
 }
 
 if (require.main === module) main();
-module.exports = { armar, claves, sql };
+module.exports = { armar, claves, sql, archivoDe };
 
 /*! rev bfb5bbb0d2d82f9f */

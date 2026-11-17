@@ -1215,6 +1215,770 @@
      "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
     }
    ]
+  },
+  {
+   "presentacion": "clase-04",
+   "parte": 1,
+   "youtube_id": "BuN8MirmKB4",
+   "duracion": 5162,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Bienvenida, objetivos y cronograma"
+    },
+    {
+     "t": 195,
+     "titulo": "El uso del reloj durante la partida"
+    },
+    {
+     "t": 303,
+     "titulo": "Sistemas de control: incremento, demora y períodos"
+    },
+    {
+     "t": 459,
+     "titulo": "Configurar el reloj y la caída de bandera"
+    },
+    {
+     "t": 685,
+     "titulo": "Casos: incomparecencia, manejo, bandera y defecto"
+    },
+    {
+     "t": 1000,
+     "titulo": "Simulador de reloj: el incremento en la práctica"
+    },
+    {
+     "t": 1456,
+     "titulo": "Cómo sumar tiempo tras una jugada ilegal"
+    },
+    {
+     "t": 1639,
+     "titulo": "Comentarios de participantes: aprender a jugar"
+    },
+    {
+     "t": 2550,
+     "titulo": "Casos en el simulador: la jugada ilegal según el ritmo"
+    },
+    {
+     "t": 2893,
+     "titulo": "Práctica libre con el simulador de reloj"
+    },
+    {
+     "t": 3130,
+     "titulo": "Tableros electrónicos y transmisiones en vivo"
+    },
+    {
+     "t": 3633,
+     "titulo": "Tipos de relojes y relojes en el celular"
+    },
+    {
+     "t": 3998,
+     "titulo": "Dispositivos electrónicos en la sala de juego"
+    },
+    {
+     "t": 4475,
+     "titulo": "Anotación y cálculo de los horarios de ronda"
+    },
+    {
+     "t": 5108,
+     "titulo": "Receso"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 1
+    },
+    {
+     "t": 111,
+     "lamina": 2
+    },
+    {
+     "t": 170,
+     "lamina": 3
+    },
+    {
+     "t": 195,
+     "lamina": 4
+    },
+    {
+     "t": 303,
+     "lamina": 5
+    },
+    {
+     "t": 459,
+     "lamina": 7
+    },
+    {
+     "t": 544,
+     "lamina": 8
+    },
+    {
+     "t": 685,
+     "lamina": 9
+    },
+    {
+     "t": 700,
+     "lamina": 10
+    },
+    {
+     "t": 830,
+     "lamina": 11
+    },
+    {
+     "t": 873,
+     "lamina": 12
+    },
+    {
+     "t": 880,
+     "lamina": 13
+    },
+    {
+     "t": 905,
+     "lamina": 14
+    },
+    {
+     "t": 916,
+     "lamina": 15
+    },
+    {
+     "t": 930,
+     "lamina": 16
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 272,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 16,
+     "por_que": "Entre 0:04:09 y 0:04:32 se explica que no se puede dejar el dedo sobre el botón del reloj: es casi como hacer trampa."
+    },
+    {
+     "t": 301,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 13,
+     "por_que": "Entre 0:04:32 y 0:05:01 se explica que acomodar las piezas después de presionar el reloj, en el turno del rival, no está permitido y es sancionable."
+    },
+    {
+     "t": 441,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 5,
+     "por_que": "Entre 0:06:35 y 0:07:20 se explica la demora: con 10 + 2 se esperan 2 segundos y después empieza a correr el tiempo."
+    },
+    {
+     "t": 542,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 14,
+     "por_que": "Entre 0:08:13 y 0:09:02 se explica que un reloj mal configurado se reajusta sí o sí: si se le regaló tiempo se le quita y si se le quitó se le agrega."
+    },
+    {
+     "t": 612,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 11,
+     "por_que": "Entre 0:09:15 y 0:10:13 se explica que, si cae la bandera y al rival solo le queda el rey, la partida es tablas."
+    },
+    {
+     "t": 827,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 0,
+     "por_que": "Entre 0:11:25 y 0:13:48 (Caso 1) se explica que a la hora de inicio se pone en marcha el reloj de las blancas aunque el jugador no esté."
+    },
+    {
+     "t": 878,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 2,
+     "por_que": "A las 0:03:52 y otra vez entre 0:14:15 y 0:14:38 (Caso 2) se explica que el reloj se presiona con la misma mano con la que se movió."
+    },
+    {
+     "t": 995,
+     "banco": "tareas",
+     "k": 3,
+     "i": 8,
+     "por_que": "Entre 0:15:16 y 0:16:35 (Caso 4) se explica que, si el reloj se apaga, se cambia y el árbitro fija los tiempos con el control que lleve o con su criterio."
+    },
+    {
+     "t": 1384,
+     "banco": "tareas",
+     "k": 3,
+     "i": 3,
+     "por_que": "Entre 0:18:02 y 0:22:43 se muestra en el simulador un reloj a 90 minutos más 30 segundos: cada jugada le suma 30 segundos."
+    },
+    {
+     "t": 1455,
+     "banco": "sesiones",
+     "k": 3,
+     "i": 4,
+     "por_que": "Entre 0:05:30 y 0:06:30 se explica el incremento (Fischer) y entre 0:21:43 y 0:24:15 se ve en el simulador cómo se suma después de cada jugada."
+    }
+   ],
+   "avisos": [
+    "Quien expone es un hombre, el árbitro Óscar (los participantes le dicen «profe» y «Óscar»; cuenta que lleva más de 10 o 15 años arbitrando). También interviene María José, la coordinadora (0:34:31).",
+    "La sesión se grabó en 2 partes cortadas en el receso: la parte 1 es la teoría y la demostración del reloj; la parte 2 es práctica en la plataforma (lo dice el mismo expositor en la parte 2, a las 0:52:39).",
+    "Láminas: diapositivas.json tiene 29 láminas y se usa esa numeración. Solo se ven de la 1 a la 16 (sin la 6, el receso), entre 0:00:00 y 0:16:20; los casos (9 a 16) se pasan en pocos segundos, así que sus momentos son aproximados. Desde 0:16:26 hasta el final no se ve la presentación (simulador de reloj, transmisiones en Lichess, fotos del Centroamericano, un Excel), así que la línea queda en la 16. No se vieron la 6 ni de la 17 a la 29: no hubo ejercicios, quiz ni tarea leída de la presentación.",
+    "El orden real no sigue el cronograma de la lámina 3: un solo receso, a la 1:25:08, y lo que sigue (parte 2) no es la práctica de la lámina 18 sino aprender a mover las piezas en la plataforma.",
+    "Las 10 preguntas van en la parte 1: la parte 2 no explica nada de lo que pregunta el banco de la Sesión 4 (es práctica de movimiento de piezas, jaque, desafíos y 4 x 4). Para repartirlas habría que ponerlas en la parte 2 sin que esa parte lo haya explicado.",
+    "ERROR EN EL VIDEO (0:14:52-0:15:10, Caso 3): dice que «con solo el hecho de tener una pieza» ya se le puede dar el punto al rival del que se quedó sin tiempo. La conclusión del caso (pierden las blancas) es buena, pero la razón no: rey y caballo contra rey solo son tablas (lámina 14, art. 6.9). Lleva aclaración, y por eso no se usó el Kahoot sesiones[3][12].",
+    "Imprecisión (1:14:30-1:15:05): dice que con más de una hora y 30 segundos «de incremento o de espera» siempre se anota, y que con menos de 60 minutos no es obligatorio. La lámina 5 y el art. 8.4 hablan solo de incremento de al menos 30 s (no de demora), y en clásico sin incremento se anota hasta que quedan menos de 5 minutos. No se le puso aclaración porque no llega a decir algo contrario; por eso no se usaron los Kahoot sesiones[3][8] ni [3][9].",
+    "Caso 2 (0:13:51-0:14:38): dice que presionar el reloj sin haber movido es «una ilegal» (correcto: se trata como jugada ilegal) y cierra el caso como «manejo indebido del reloj», que es lo que dice la lámina 12. Quien mire puede confundir las dos cosas; no se le puso aclaración.",
+    "En la demostración (0:24:16-0:26:18 y 0:46:10-0:47:43) suma 1 minuto por la primera jugada ilegal en rápidas (10 + 2 y 15 + 10) y 2 minutos en clásico (0:43:09): coincide con el banco (sesiones[1], FIDE 7.5.5 y A.3).",
+    "Banco dudoso: tareas[3][0] cita «FIDE 6.5» para el reloj de las blancas al empezar, pero sesiones[3][0] cita 6.6 para lo mismo y sesiones[3][3] cita 6.5 para el lado del reloj; en las Leyes vigentes el inicio es el 6.6. No se usó la tareas[3][0].",
+    "Banco dudoso: sesiones[3][18] (revisar los relojes antes de la ronda) cita «FIDE 6.10», que trata del reloj defectuoso o mal configurado durante la partida; la fuente que calza es la lámina 7. tareas[3][11] (con incremento hace falta un reloj digital) cita «FIDE 6.3», que no lo dice. No se usaron.",
+    "Lámina dudosa: la respuesta 2 del quiz (lámina 27) dice que al caer la bandera se verifica primero «si el rival tiene material suficiente para dar mate»; la lámina 8 y el art. 6.4 dicen que primero se comprueba si el jugador cumplió las jugadas del control. No se usó en nada, pero conviene revisarla.",
+    "En esta grabación sí se oyen las preguntas de los participantes (Ronny, Jessica, Daniel y otros). De 0:27:19 a 0:42:07 son comentarios de participantes sobre lo difícil del curso sin saber jugar ajedrez y la propuesta de un curso para aprender a jugar.",
+    "Hacia 0:10:16 dice que quien gana por incomparecencia «no se contabiliza como un duelo particular»: no se entiende bien a qué se refiere (parece hablar del desempate por encuentro directo)."
+   ],
+   "aclaraciones": [
+    {
+     "t": 912,
+     "avatar": "arbitro",
+     "titulo": "Una pieza sola no siempre alcanza para ganar",
+     "texto": "No basta con tener una pieza. Aquí ganan las negras porque el peón blanco puede tapar a su propio rey y existe una serie de jugadas legales que termina en mate. Contra rey solo, rey y caballo no dan mate: serían tablas.",
+     "fuente": "Lámina 14; Leyes de la FIDE, art. 6.9"
+    }
+   ]
+  },
+  {
+   "presentacion": "clase-04",
+   "parte": 2,
+   "youtube_id": "4TLDzwtoJfY",
+   "duracion": 6282,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Inicio de la parte práctica y tareas pendientes"
+    },
+    {
+     "t": 91,
+     "titulo": "Aprender a jugar: la torre y los primeros retos"
+    },
+    {
+     "t": 694,
+     "titulo": "Práctica guiada: el peón y la captura"
+    },
+    {
+     "t": 1249,
+     "titulo": "Proteger las piezas"
+    },
+    {
+     "t": 1735,
+     "titulo": "Combate: salvar las piezas y capturar"
+    },
+    {
+     "t": 2119,
+     "titulo": "Dar jaque y salir del jaque"
+    },
+    {
+     "t": 2969,
+     "titulo": "Las guías de las grabaciones en la plataforma"
+    },
+    {
+     "t": 3200,
+     "titulo": "Competir y jugar contra el bot"
+    },
+    {
+     "t": 3898,
+     "titulo": "Desafíos: carrera a la coronación"
+    },
+    {
+     "t": 4524,
+     "titulo": "Juego 4 x 4: capturar en cada jugada"
+    },
+    {
+     "t": 5724,
+     "titulo": "Partida entre participantes y más 4 x 4"
+    },
+    {
+     "t": 6141,
+     "titulo": "Cierre: seguir practicando en la plataforma"
+    }
+   ],
+   "laminas": [],
+   "preguntas": [],
+   "avisos": [
+    "En toda la parte 2 no se ve ninguna lámina de la presentación: es práctica en la plataforma (mover las piezas, proteger, combatir, jaque, jugar contra el bot, desafíos de coronación y 4 x 4). Como el generador pide al menos una lámina, la línea queda en la 16, la última que se vio en la parte 1; quizá convenga no mostrar el panel de la lámina en esta parte.",
+    "No lleva preguntas: nada de lo que se hace aquí está en el banco de la Sesión 4 (el reloj). Las 10 van en la parte 1.",
+    "De 0:49:59 a 0:52:39 se muestran en la plataforma las guías de las grabaciones de las sesiones I y III (capítulos, lámina y aclaraciones), y se anuncia que la de la Sesión 4 irá en dos partes.",
+    "A las 0:53:51 se lee en voz alta el nombre completo y el centro educativo de la cuenta con la que se comparte la pantalla (un participante adulto); conviene saberlo antes de publicar.",
+    "Hay tramos largos de práctica individual casi sin explicación (por ejemplo, 1:18:15-1:35:24 con el 4 x 4): los capítulos de esa zona son aproximados.",
+    "De 0:12:04 a 0:49:29 casi todo es la práctica guiada de una participante (Jessica) que comparte su pantalla; se oye bien.",
+    "No se notó nada que contradiga las Leyes o las láminas: son explicaciones básicas de cómo se mueven y capturan las piezas.",
+    "Sin línea de láminas: la parte no muestra la presentación, así que no se pinta el panel de la lámina."
+   ],
+   "aclaraciones": []
+  },
+  {
+   "presentacion": "clase-05",
+   "parte": 1,
+   "youtube_id": "e5Hs4gTP34M",
+   "duracion": 4689,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Horas en la plataforma, avisos del cierre y acceso"
+    },
+    {
+     "t": 623,
+     "titulo": "Objetivos y método para resolver un caso"
+    },
+    {
+     "t": 1023,
+     "titulo": "Preguntas: baterías y relojes que se apagan"
+    },
+    {
+     "t": 1237,
+     "titulo": "Logística antes del torneo: inscritos, sala y materiales"
+    },
+    {
+     "t": 1595,
+     "titulo": "Preguntas: la planilla y el tablero propio"
+    },
+    {
+     "t": 1916,
+     "titulo": "La Boleta Oficial y los requisitos de acreditación"
+    },
+    {
+     "t": 2103,
+     "titulo": "Qué se revisa en la acreditación y qué pasa si falta"
+    },
+    {
+     "t": 2205,
+     "titulo": "Experiencias regionales: inscripciones mal hechas"
+    },
+    {
+     "t": 2545,
+     "titulo": "El congresillo técnico y las etapas circuitales"
+    },
+    {
+     "t": 2905,
+     "titulo": "La hoja del equipo y la alineación con suplente"
+    },
+    {
+     "t": 3148,
+     "titulo": "Congresillo: lo que se puede y lo que no"
+    },
+    {
+     "t": 3230,
+     "titulo": "Cálculo de materiales: Regional de Alajuela 2026"
+    },
+    {
+     "t": 3626,
+     "titulo": "La sala de juego y cómo se coloca cada mesa"
+    },
+    {
+     "t": 4040,
+     "titulo": "Receso"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 623,
+     "lamina": 1
+    },
+    {
+     "t": 685,
+     "lamina": 2
+    },
+    {
+     "t": 790,
+     "lamina": 4
+    },
+    {
+     "t": 1240,
+     "lamina": 5
+    },
+    {
+     "t": 1546,
+     "lamina": 6
+    },
+    {
+     "t": 1920,
+     "lamina": 7
+    },
+    {
+     "t": 1990,
+     "lamina": 8
+    },
+    {
+     "t": 2045,
+     "lamina": 9
+    },
+    {
+     "t": 2105,
+     "lamina": 10
+    },
+    {
+     "t": 2550,
+     "lamina": 11
+    },
+    {
+     "t": 2785,
+     "lamina": 12
+    },
+    {
+     "t": 2910,
+     "lamina": 13
+    },
+    {
+     "t": 2995,
+     "lamina": 14
+    },
+    {
+     "t": 3148,
+     "lamina": 15
+    },
+    {
+     "t": 3230,
+     "lamina": 16
+    },
+    {
+     "t": 3360,
+     "lamina": 17
+    },
+    {
+     "t": 3404,
+     "lamina": 18
+    },
+    {
+     "t": 3440,
+     "lamina": 19
+    },
+    {
+     "t": 3630,
+     "lamina": 20
+    },
+    {
+     "t": 3760,
+     "lamina": 21
+    },
+    {
+     "t": 3877,
+     "lamina": 22
+    },
+    {
+     "t": 3925,
+     "lamina": 23
+    },
+    {
+     "t": 4040,
+     "lamina": 24
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 1236,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 0,
+     "por_que": "Entre 0:12:58 y 0:20:37 se explican los pasos para resolver un caso: los hechos (escuchar a los dos, revisar tablero, planillas y reloj), basarse en las leyes, una decisión clara y proporcionada, y dejarlo en el informe."
+    },
+    {
+     "t": 2100,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 7,
+     "por_que": "Entre 0:31:56 y 0:33:00 se explica que para acreditarse se lleva la Boleta Oficial que genera la Plataforma JDE, revisada por la jefatura y el comité; con un dato mal no se recibe."
+    },
+    {
+     "t": 2778,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 8,
+     "por_que": "Entre 0:45:49 y 0:46:20 se explica que quien no llega al congresillo tiene que aceptar lo que se acordó ahí."
+    },
+    {
+     "t": 3216,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 14,
+     "por_que": "A las 0:47:24 y entre 0:52:04 y 0:53:37 se explica que en el congresillo se fijan los desempates (al menos tres) y el orden en que se aplican, además de las rondas del suizo."
+    },
+    {
+     "t": 3858,
+     "banco": "tareas",
+     "k": 4,
+     "i": 0,
+     "por_que": "A las 0:25:13 se pide la sala con las mesas numeradas, y entre 1:03:03 y 1:04:20 se explica que al llegar se numeran las mesas y se ponen tableros y relojes antes de jugar."
+    }
+   ],
+   "avisos": [
+    "Expone el profe Óscar; al inicio y al final intervienen la coordinadora del curso y personas de la organización del MEP.",
+    "De 0:00 a 0:10:23 no hay exposición: se muestra el informe de horas de la plataforma, se dan avisos del cierre presencial (fechas, hospedaje, el torneo del martes) y se ayuda a varias personas a entrar a la sesión. La presentación arranca hacia las 0:10:23.",
+    "La lámina 3 (cronograma) no se muestra ni se comenta; la línea de láminas salta de la 2 a la 4. Los minutos de cada lámina salen de las frases del video y pueden correrse unos segundos dentro de cada tramo de 30 s de los subtítulos.",
+    "Receso de 1:07:42 a 1:17:55 sin exposición (se anunciaron 10 minutos). La parte termina apenas regresan.",
+    "Dudoso, sin aclaración (0:26:16 y en la parte 2 a las 0:04:31): se dice que solo la Etapa Nacional necesita planillas porque «en las otras no se anota». En rápidas anotar no es obligatorio, pero la lámina 19 cuenta planillas para la Regional (2 por partida en cada ronda) y la lámina 22 pone la planilla en cada mesa. Conviene revisar si la lámina o el video deben decirlo distinto.",
+    "Sin fuente en el repositorio, por eso sin aclaración: a las 0:19:07 se dice que, si el reloj se apaga y no hay control de tiempos, se reparte entre los dos la mitad del tiempo transcurrido; y a las 0:49:29, que un jugador mal alineado pierde el punto. Ninguna de las dos cosas está en las láminas ni en el banco.",
+    "La lámina 20 dice que la segunda foto es un torneo de la FCA en un gimnasio del ICODER; en el video (1:02:01) se presenta como un centroamericano de más de 400 personas.",
+    "A las 0:56:13 se muestra un Excel de la Regional de Alajuela 2026 con cantidades por categoría (sin datos personales, por lo que se oye).",
+    "Varias personas participantes hablan con nombre y región (por ejemplo en 0:37:05 y 0:40:12); el índice no los nombra."
+   ],
+   "aclaraciones": []
+  },
+  {
+   "presentacion": "clase-05",
+   "parte": 2,
+   "youtube_id": "6t0K0EDMHLg",
+   "duracion": 2072,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Regreso del receso"
+    },
+    {
+     "t": 118,
+     "titulo": "Durante y después de las rondas"
+    },
+    {
+     "t": 355,
+     "titulo": "Comunicar decisiones y atender a las familias"
+    },
+    {
+     "t": 584,
+     "titulo": "Caso 1: llegada tarde, jugada ilegal y celular"
+    },
+    {
+     "t": 945,
+     "titulo": "Caso 2: empate en el primer lugar"
+    },
+    {
+     "t": 1020,
+     "titulo": "Caso 3: faltan relojes y piezas en la ronda 1"
+    },
+    {
+     "t": 1150,
+     "titulo": "Preguntas: cómo repartir el tiempo sin reloj"
+    },
+    {
+     "t": 1362,
+     "titulo": "Ejercicio 1: el celular con el método de cuatro pasos"
+    },
+    {
+     "t": 1421,
+     "titulo": "Ejercicio 2: materiales para un torneo de 40"
+    },
+    {
+     "t": 1589,
+     "titulo": "Ejercicio 2: la lista y cuántos árbitros hacen falta"
+    },
+    {
+     "t": 1903,
+     "titulo": "Ejercicio 3: un familiar señala una jugada"
+    },
+    {
+     "t": 2000,
+     "titulo": "Experiencias regionales: estudiantes con autismo"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 24
+    },
+    {
+     "t": 120,
+     "lamina": 25
+    },
+    {
+     "t": 355,
+     "lamina": 26
+    },
+    {
+     "t": 605,
+     "lamina": 27
+    },
+    {
+     "t": 930,
+     "lamina": 28
+    },
+    {
+     "t": 950,
+     "lamina": 29
+    },
+    {
+     "t": 990,
+     "lamina": 30
+    },
+    {
+     "t": 1020,
+     "lamina": 31
+    },
+    {
+     "t": 1327,
+     "lamina": 32
+    },
+    {
+     "t": 1362,
+     "lamina": 34
+    },
+    {
+     "t": 1372,
+     "lamina": 35
+    },
+    {
+     "t": 1425,
+     "lamina": 36
+    },
+    {
+     "t": 1903,
+     "lamina": 37
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 484,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 2,
+     "por_que": "Entre 0:06:03 y 0:08:06 se explica que la decisión se deja clara, que se escucha a los dos jugadores, en voz baja y lejos de otras mesas, y que se les explica la regla."
+    },
+    {
+     "t": 2005,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 3,
+     "por_que": "Entre 0:31:43 y 0:33:25 se explica que se retira de la sala al familiar y se evalúa si la jugadora buscó o recibió ayuda: si la hubo, o es reiterado, pierde la partida."
+    }
+   ],
+   "avisos": [
+    "De 0:00 a 0:01:58 es la reconexión después del receso (se pregunta si se oye).",
+    "Los casos «en grupos» no se trabajaron en salas: el profe escoge personas al azar y las pone a resolver cada caso en plenaria. El Caso 3 lo contesta un voluntario.",
+    "Las láminas 33 (receso) y 38 (respuestas de los ejercicios) no se muestran; «vamos a saltar ese» a las 0:22:38. Los ejercicios se resuelven de palabra.",
+    "Dudoso, sin aclaración: a las 0:27:31 se dice que se trabaja con 25 a 30 estudiantes por árbitro; la lámina 19 cuenta 20 tableros (40 estudiantes) por árbitro de sala y la lámina 21 dice de 16 a 20 tableros. No es una regla, pero las cifras no coinciden.",
+    "Sin fuente en el repositorio: a las 0:05:03 se dice que una planilla con tachones o firmada en el lado equivocado se tiene que pasar en limpio, y a las 0:19:34, que el reloj que llega tarde a una mesa se configura repartiendo entre los dos el tiempo ya pasado.",
+    "No se usó sesiones[4][17] («Torneo de 20 mesas: 20 relojes y 2 o 3 de repuesto»): en este curso las mesas son dobles (lámina 16: mesas = tableros ÷ 2), así que 20 mesas serían 40 tableros y 40 relojes, que es justo un distractor. Conviene decir «20 tableros» en el banco.",
+    "No se usaron sesiones[4][11] (llegar tarde) ni sesiones[4][6] (faltan relojes) porque el video los explica de forma confusa: en el Caso 1 dice «tiene todavía 5 minutos» (ver la aclaración), y en el Caso 3 da como válida también la opción de esperar y atrasar la ronda, que es un distractor de la pregunta.",
+    "La parte termina a media anécdota de una persona participante; sigue al inicio de la parte 3.",
+    "Se quitó la aclaración del minuto 15:32 («tiene todavía 5 minutos»): el video puede referirse a la tolerancia, así que no dice algo que no sea así."
+   ],
+   "aclaraciones": [
+    {
+     "t": 1178,
+     "avatar": "atencion",
+     "titulo": "10 + 2 no son 12 minutos",
+     "texto": "En 10 + 2, el «+ 2» son 2 segundos que se suman en cada jugada, no 2 minutos: cada jugador empieza con 10 minutos, no con 12.",
+     "fuente": "Lámina 12 (mínimo 10 min + 2 s) y lámina 19"
+    },
+    {
+     "t": 1395,
+     "avatar": "arbitro",
+     "titulo": "La decisión se comunica con su artículo",
+     "texto": "El método del curso pide comunicar la decisión a las dos partes con la regla y su artículo; así se puede explicar y defender, y queda en el registro. En el caso del celular, el artículo 11.3.2 de las Leyes de la FIDE.",
+     "fuente": "Láminas 4, 26 y 38"
+    }
+   ]
+  },
+  {
+   "presentacion": "clase-05",
+   "parte": 3,
+   "youtube_id": "yXsurYsu2Fk",
+   "duracion": 3238,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Ejercicio 3: la familia en la gradería (cierre)"
+    },
+    {
+     "t": 100,
+     "titulo": "Quiz de la sesión en vivo"
+    },
+    {
+     "t": 433,
+     "titulo": "Quiz: quién apela y cómo, según la Normativa"
+    },
+    {
+     "t": 665,
+     "titulo": "Quiz: el informe final del torneo"
+    },
+    {
+     "t": 740,
+     "titulo": "Respuestas del quiz"
+    },
+    {
+     "t": 830,
+     "titulo": "Tarea: el archivo de la Regional para el presencial"
+    },
+    {
+     "t": 955,
+     "titulo": "La plataforma: grabaciones, tareas y horas"
+    },
+    {
+     "t": 1572,
+     "titulo": "Avisos: el día presencial y el torneo del martes"
+    },
+    {
+     "t": 1757,
+     "titulo": "Avisos administrativos: convocatoria y viáticos"
+    },
+    {
+     "t": 2194,
+     "titulo": "Tiempo para hacer las tareas y dudas"
+    },
+    {
+     "t": 3095,
+     "titulo": "Cierre de la sesión"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 37
+    },
+    {
+     "t": 100,
+     "lamina": 39
+    },
+    {
+     "t": 440,
+     "lamina": 40
+    },
+    {
+     "t": 745,
+     "lamina": 41
+    },
+    {
+     "t": 835,
+     "lamina": 42
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 160,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 5,
+     "por_que": "La logística previa (inscritos, congresillo, lista inicial, sala y materiales) se explicó entre 0:20:37 y 0:26:16 de la parte 1, y entre 0:02:04 y 0:02:40 de esta parte se dice que la recolección de resultados no es logística previa."
+    },
+    {
+     "t": 372,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 4,
+     "por_que": "Entre 0:05:41 y 0:06:11 se explica que antes de emparejar se revisa que todos los resultados anotados estén bien (y los ausentes); en la parte 2 (0:03:59) se dijo que el resultado lo anotan los dos jugadores en una hoja."
+    },
+    {
+     "t": 828,
+     "banco": "sesiones",
+     "k": 4,
+     "i": 13,
+     "por_que": "Entre 0:10:46 y 0:13:34 se explica que al cerrar el torneo el árbitro hace el informe con resultados, incidencias y apelaciones, y se lee la respuesta: la tabla, el informe y la premiación."
+    }
+   ],
+   "avisos": [
+    "De 0:00 a 0:01:33 termina la anécdota de la parte 2; el profe comenta que en la Etapa Nacional no se puede tener contacto con la familia.",
+    "El quiz en vivo (láminas 39 a 41) se responde de palabra; no se oye bien quién contesta. Entre 0:07:13 y 0:11:00 se discute con personas de la organización quién apela y cómo: dicen que no le toca al asesor ni al árbitro decirlo, sino a la jefatura de delegación según la Normativa.",
+    "No se usaron sesiones[4][10] (apelación: «ante quién y en qué plazo») ni sesiones[4][9] (dónde se atiende al público): el video solo remite a la Normativa y dice «lejos de las partidas», sin decir «fuera de la sala».",
+    "Sin fuente en el repositorio: a las 0:06:42 se dice que en la Etapa Nacional la categoría A no anota.",
+    "Desde 0:15:55 la coordinadora comparte pantalla con el perfil de una persona participante en la plataforma (tareas pendientes, horas). Conviene revisar si se ven datos personales.",
+    "De 0:29:17 a 0:36:34 se habla de convocatorias, viáticos y hospedaje, con comentarios personales entre participantes (0:31:22); no es materia del curso.",
+    "De 0:44:59 a 0:51:35 casi no hay audio (tiempo para hacer tareas). Después del cierre (0:53:07 al final) queda grabada una conversación personal entre dos personas; convendría recortarla.",
+    "La lámina 38 (respuestas de los ejercicios) no se muestra en ninguna de las tres partes."
+   ],
+   "aclaraciones": []
   }
  ]
 }

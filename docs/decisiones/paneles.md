@@ -4691,9 +4691,9 @@ grabación es de **(horario, fecha, parte)**:
 - **El tema va sin «Parte N»**: lo dice la tarjeta. Con «· Parte 1» pegado,
   el tema ya no empieza como el título de la sesión del curso y la tarjeta se
   quedaba sin «Ver la presentación».
-- **Los capítulos y las láminas** (`grabacion.json`) son de UN video por
-  sesión y la página los compara con la duración: una parte no los tiene
-  hasta que se armen los suyos, y el video se ve igual, sin guía.
+- **Los capítulos y las láminas** se arman por parte (ver «La guía de una
+  sesión en partes», abajo): sin el archivo de esa parte, el video se ve
+  igual, sin guía.
 
 `verificar-panel-taller.js` revisa la migración (la columna, las tres llaves,
 las seis apartadas, los permisos y que cada función busque SU parte) y abre
@@ -4701,6 +4701,49 @@ una sesión en dos partes: dos tarjetas que dicen cuál es, la miniatura sin
 encimarse, el avance de cada una, el video correcto y lo visto anotado en la
 parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
 `verificar-admin.js` prueba las columnas por parte de la ficha.
+
+#### La guía de una sesión en partes
+
+El dueño pidió (17/11/2026) que las Sesiones IV (2 partes) y V (3 partes)
+tuvieran lo mismo que la I a la III: capítulos, la lámina de cada momento, las
+aclaraciones del profe y las preguntas que detienen el video.
+
+- **Una entrada de la fuente por parte**, con `"parte": N` y los minutos
+  medidos desde el inicio de ESE video (cada parte es otro video, con su
+  duración). `formacion-grabaciones.js` escribe la parte 1 en
+  `grabacion.json` y la 2 en adelante en `grabacion-parte-N.json`, en la misma
+  carpeta de la presentación; la página pide el de la parte de la tarjeta
+  (`g.parte`) y lo compara con la duración de ese video, como siempre. Una
+  sesión de un solo video no lleva `parte` y nada cambia para ella.
+- **Las preguntas son por video**: `n` vuelve a empezar en 1 en cada parte, y
+  las correctas van en `grabacion_preguntas` con el id de cada parte. Siguen
+  siendo **diez por sesión**, repartidas entre sus partes según lo que
+  explica cada una: la parte 2 de la IV es toda práctica en la plataforma
+  (mover piezas, jugar contra el bot) y no explica nada del banco, así que las
+  diez van en la 1; la V quedó 5, 2 y 3. El generador se planta si el mismo video está en dos
+  entradas (tendría dos juegos de preguntas con los mismos números) o si una
+  parte no es de 1 a 9; un `grabacion-parte-N.json` sin fuente también lo
+  frena, igual que un `grabacion.json`.
+- **Una parte dura menos**: el verificador le pide al menos 3 capítulos (a una
+  sesión entera, 6 y 10 láminas). Una parte puede no mostrar ninguna lámina
+  (`"laminas": []`, solo en una entrada con `parte`): la página no pinta ese
+  panel, en vez de dejar fija la última lámina de la parte anterior durante
+  una hora y tres cuartos de práctica. Y puede no tener aclaraciones si no
+  dice nada que haya que corregir.
+- **Lo que se aclaró** (comprobado contra las láminas): en la IV, que tener
+  una pieza no basta para ganar por tiempo si no hay mate posible (lámina 14,
+  art. 6.9); en la V, que «10 + 2» son 2 segundos por jugada y no 12 minutos
+  (lámina 12) y que la decisión se comunica con su artículo (láminas 4, 26
+  y 38: el video dice que eso no se hace). Una tercera de la V («tiene
+  todavía 5 minutos») se quitó porque el video puede hablar de la
+  tolerancia, y entonces no dice nada mal.
+- Los minutos salieron, como siempre, de los subtítulos automáticos
+  (`yt-dlp --write-auto-subs`), leídos de punta a punta.
+
+`verificar-grabacion-interactiva.js` abre una sesión en dos partes y comprueba
+que la parte 2 pida `grabacion-parte-2.json` (y no el de la 1) y pinte sus
+capítulos y sus preguntas, que la parte 1 siga leyendo `grabacion.json`, y que
+una parte cuyo video no dura lo que dice su archivo se quede sin guía.
 
 ### Las horas del taller
 

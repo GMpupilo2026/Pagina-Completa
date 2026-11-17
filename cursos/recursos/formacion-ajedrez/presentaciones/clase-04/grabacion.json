@@ -1,0 +1,259 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 5162,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Bienvenida, objetivos y cronograma"
+  },
+  {
+   "t": 195,
+   "titulo": "El uso del reloj durante la partida"
+  },
+  {
+   "t": 303,
+   "titulo": "Sistemas de control: incremento, demora y períodos"
+  },
+  {
+   "t": 459,
+   "titulo": "Configurar el reloj y la caída de bandera"
+  },
+  {
+   "t": 685,
+   "titulo": "Casos: incomparecencia, manejo, bandera y defecto"
+  },
+  {
+   "t": 1000,
+   "titulo": "Simulador de reloj: el incremento en la práctica"
+  },
+  {
+   "t": 1456,
+   "titulo": "Cómo sumar tiempo tras una jugada ilegal"
+  },
+  {
+   "t": 1639,
+   "titulo": "Comentarios de participantes: aprender a jugar"
+  },
+  {
+   "t": 2550,
+   "titulo": "Casos en el simulador: la jugada ilegal según el ritmo"
+  },
+  {
+   "t": 2893,
+   "titulo": "Práctica libre con el simulador de reloj"
+  },
+  {
+   "t": 3130,
+   "titulo": "Tableros electrónicos y transmisiones en vivo"
+  },
+  {
+   "t": 3633,
+   "titulo": "Tipos de relojes y relojes en el celular"
+  },
+  {
+   "t": 3998,
+   "titulo": "Dispositivos electrónicos en la sala de juego"
+  },
+  {
+   "t": 4475,
+   "titulo": "Anotación y cálculo de los horarios de ronda"
+  },
+  {
+   "t": 5108,
+   "titulo": "Receso"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 1
+  },
+  {
+   "t": 111,
+   "lamina": 2
+  },
+  {
+   "t": 170,
+   "lamina": 3
+  },
+  {
+   "t": 195,
+   "lamina": 4
+  },
+  {
+   "t": 303,
+   "lamina": 5
+  },
+  {
+   "t": 459,
+   "lamina": 7
+  },
+  {
+   "t": 544,
+   "lamina": 8
+  },
+  {
+   "t": 685,
+   "lamina": 9
+  },
+  {
+   "t": 700,
+   "lamina": 10
+  },
+  {
+   "t": 830,
+   "lamina": 11
+  },
+  {
+   "t": 873,
+   "lamina": 12
+  },
+  {
+   "t": 880,
+   "lamina": 13
+  },
+  {
+   "t": 905,
+   "lamina": 14
+  },
+  {
+   "t": 916,
+   "lamina": 15
+  },
+  {
+   "t": 930,
+   "lamina": 16
+  }
+ ],
+ "aclaraciones": [
+  {
+   "t": 912,
+   "avatar": "arbitro",
+   "titulo": "Una pieza sola no siempre alcanza para ganar",
+   "texto": "No basta con tener una pieza. Aquí ganan las negras porque el peón blanco puede tapar a su propio rey y existe una serie de jugadas legales que termina en mate. Contra rey solo, rey y caballo no dan mate: serían tablas.",
+   "fuente": "Lámina 14; Leyes de la FIDE, art. 6.9"
+  }
+ ],
+ "preguntas": [
+  {
+   "t": 272,
+   "n": 1,
+   "texto": "Una jugadora deja el dedo sobre el botón del reloj mientras piensa el rival. ¿Qué hace la persona árbitra?",
+   "opciones": [
+    "Nada: el reloj es suyo mientras juega",
+    "Interviene: no se permite y puede sancionarse",
+    "Nada, salvo que el rival se queje tres veces seguidas",
+    "Le suma 2 minutos al rival de inmediato"
+   ],
+   "fuente": "FIDE 6.2 y 12.9"
+  },
+  {
+   "t": 301,
+   "n": 2,
+   "texto": "¿Quién puede acomodar sus piezas mientras corre un reloj?",
+   "opciones": [
+    "Cualquiera de los dos, diciendo «compongo»",
+    "Solo la persona árbitra",
+    "Solo el jugador cuyo reloj está en marcha",
+    "Solo quien no tiene el turno"
+   ],
+   "fuente": "FIDE 4.2 y 6.2"
+  },
+  {
+   "t": 441,
+   "n": 3,
+   "texto": "En el modo de demora (delay), ¿cuándo empieza a descontarse el tiempo principal?",
+   "opciones": [
+    "Desde el primer segundo de la jugada, igual que sin demora",
+    "Cuando se agota el tiempo fijo de esa jugada",
+    "Al llegar a la jugada 40",
+    "Nunca: en demora no baja"
+   ],
+   "fuente": "FIDE 6.3"
+  },
+  {
+   "t": 542,
+   "n": 4,
+   "texto": "A mitad de partida se descubre que un reloj estaba mal configurado. ¿Qué hace la persona árbitra?",
+   "opciones": [
+    "Lo corrige y fija los tiempos con su criterio",
+    "Anula la partida y se juega de nuevo con el reloj bien configurado",
+    "Deja el reloj así hasta el final",
+    "Vuelve los dos lados al tiempo inicial"
+   ],
+   "fuente": "FIDE 6.10"
+  },
+  {
+   "t": 612,
+   "n": 5,
+   "texto": "Cae la bandera de un jugador. A su rival solo le queda el rey. ¿Resultado?",
+   "opciones": [
+    "Gana el rival por tiempo",
+    "Tablas",
+    "Sigue con un minuto más",
+    "Se juega de nuevo la partida"
+   ],
+   "fuente": "FIDE 6.9"
+  },
+  {
+   "t": 827,
+   "n": 6,
+   "texto": "Es la hora de inicio y el jugador de blancas no está en la mesa. ¿Qué hace la persona árbitra?",
+   "opciones": [
+    "Espera a que llegue para empezar",
+    "Pone en marcha el reloj de las negras",
+    "Declara perdida la partida de inmediato",
+    "Pone en marcha el reloj de las blancas"
+   ],
+   "fuente": "FIDE 6.6"
+  },
+  {
+   "t": 878,
+   "n": 7,
+   "texto": "¿Con qué mano se presiona el reloj?",
+   "opciones": [
+    "Con cualquiera, si es rápido",
+    "Con la contraria a la que movió",
+    "Con la misma con la que movió",
+    "Siempre con la derecha"
+   ],
+   "fuente": "FIDE 6.2"
+  },
+  {
+   "t": 995,
+   "n": 8,
+   "texto": "Durante la partida, el reloj se daña y deja de funcionar. ¿Qué hace la persona árbitra?",
+   "opciones": [
+    "Declara tablas la partida",
+    "Manda a repetir la partida",
+    "Deja que sigan sin reloj",
+    "Lo cambia y ajusta los tiempos con su criterio"
+   ],
+   "fuente": "FIDE 6.10"
+  },
+  {
+   "t": 1384,
+   "n": 9,
+   "texto": "¿Qué significa un ritmo de «90 min + 30 s»?",
+   "opciones": [
+    "90 minutos de base y 30 s más por jugada",
+    "90 minutos en total para los dos",
+    "90 jugadas en 30 minutos",
+    "30 s por jugada, sin tiempo de base"
+   ],
+   "fuente": "FIDE 6.3"
+  },
+  {
+   "t": 1455,
+   "n": 10,
+   "texto": "¿Qué es el incremento o «tiempo Fischer»?",
+   "opciones": [
+    "Tiempo que se suma después de cada jugada",
+    "Un tiempo fijo que se espera antes de descontar",
+    "Tiempo extra al llegar a la jugada 40",
+    "Tiempo que el árbitro da como compensación"
+   ],
+   "fuente": "FIDE 6.3"
+  }
+ ]
+}

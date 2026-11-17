@@ -57,23 +57,31 @@ function pruebaArchivos() {
   } catch (e) { ok = false; salida = String(e.stderr || e.stdout || e); }
   cierto("los grabacion.json publicados son los que da la fuente", ok, salida.trim());
 
-  const { armar } = require("./formacion-grabaciones.js");
+  const { armar, archivoDe } = require("./formacion-grabaciones.js");
   const fuente = JSON.parse(fs.readFileSync(path.join(__dirname, "datos/formacion-grabaciones.json"), "utf8"));
-  igual("las tres sesiones grabadas tienen capítulos", fuente.sesiones.map((s) => s.presentacion), ["clase-01", "clase-02", "clase-03"]);
+  // Las Sesiones IV y V se grabaron en partes: una entrada (y un archivo) por parte.
+  igual("las cinco sesiones grabadas tienen capítulos, una entrada por parte",
+    fuente.sesiones.map((s) => s.presentacion + "/" + (s.parte || 1)),
+    ["clase-01/1", "clase-02/1", "clase-03/1", "clase-04/1", "clase-04/2", "clase-05/1", "clase-05/2", "clase-05/3"]);
+  igual("cada parte se escribe en su archivo", fuente.sesiones.filter((s) => s.parte).map((s) => s.presentacion + "/" + archivoDe(s)),
+    ["clase-04/grabacion.json", "clase-04/grabacion-parte-2.json", "clase-05/grabacion.json", "clase-05/grabacion-parte-2.json", "clase-05/grabacion-parte-3.json"]);
   for (const s of fuente.sesiones) {
-    const publicado = fs.readFileSync(path.join(PRES, s.presentacion, "grabacion.json"), "utf8");
+    const publicado = fs.readFileSync(path.join(PRES, s.presentacion, archivoDe(s)), "utf8");
     cierto(`${s.presentacion}: el archivo publicado no trae ningún id de YouTube`, !/youtube|youtu\.be/i.test(publicado) && fuente.sesiones.every((x) => !publicado.includes(x.youtube_id)));
     const g = JSON.parse(publicado);
     igual(`${s.presentacion}: lleva solo duración, capítulos, láminas, aclaraciones y preguntas`, Object.keys(g), ["_comentario", "duracion", "capitulos", "laminas", "aclaraciones", "preguntas"]);
     igual(`${s.presentacion}: de cada pregunta, solo el segundo, el número, el texto, las opciones, la posición y la fuente: la correcta no`,
-      [...new Set(g.preguntas.flatMap((q) => Object.keys(q)))].sort(), ["fen", "fuente", "n", "opciones", "t", "texto"].filter((k) => k !== "fen" || g.preguntas.some((q) => q.fen)).sort());
+      [...new Set(g.preguntas.flatMap((q) => Object.keys(q)))].sort(), g.preguntas.length ? ["fen", "fuente", "n", "opciones", "t", "texto"].filter((k) => k !== "fen" || g.preguntas.some((q) => q.fen)).sort() : []);
     const banco = JSON.parse(fs.readFileSync(path.join(__dirname, "cursos/formacion-ajedrez-kahoot.json"), "utf8"));
     cierto(`${s.presentacion}: ${g.preguntas.length} preguntas, cada una igual a la del banco revisado (texto, sus cuatro opciones y su posición)`, g.preguntas.length === s.preguntas.length && g.preguntas.every((q, i) => {
       const r = s.preguntas[i], p = banco[r.banco][r.k].preguntas[r.i];
       return q.texto === p.texto && q.n === i + 1 && q.t === r.t && JSON.stringify([...q.opciones].sort()) === JSON.stringify([p.correcta, ...p.distractores].sort()) && (q.fen || null) === (p.fen || null);
     }));
-    cierto(`${s.presentacion}: cada aclaración del profe trae su fuente y un dibujo que existe`, g.aclaraciones.length > 0 && g.aclaraciones.every((a) => a.fuente && fs.existsSync(path.join(RAIZ, "img/avatar-profe-oscar", a.avatar + ".webp"))));
-    cierto(`${s.presentacion}: entre 6 y 20 capítulos (${g.capitulos.length}) y una lámina cada tanto (${g.laminas.length})`, g.capitulos.length >= 6 && g.capitulos.length <= 20 && g.laminas.length >= 10);
+    // Las tres primeras tienen aclaraciones; una parte puede no decir nada que haya que aclarar.
+    cierto(`${s.presentacion}: cada aclaración del profe trae su fuente y un dibujo que existe`, (s.parte || g.aclaraciones.length > 0) && g.aclaraciones.every((a) => a.fuente && fs.existsSync(path.join(RAIZ, "img/avatar-profe-oscar", a.avatar + ".webp"))));
+    // Una parte dura menos que una sesión entera: le alcanzan menos capítulos, y puede no mostrar láminas.
+    cierto(`${s.presentacion}${s.parte ? " parte " + s.parte : ""}: entre ${s.parte ? 3 : 6} y 20 capítulos (${g.capitulos.length}) y una lámina cada tanto (${g.laminas.length})`,
+      g.capitulos.length >= (s.parte ? 3 : 6) && g.capitulos.length <= 20 && g.laminas.length >= (s.parte ? 0 : 10));
   }
 
   // Lo que sabe la base: la última migración que carga las correctas dice lo mismo que el generador.
@@ -85,8 +93,14 @@ function pruebaArchivos() {
   const enMig = [...ultima.matchAll(/\('([A-Za-z0-9_-]{11})', (\d+), ([0-3])\)/g)].map((m) => m[1] + "/" + m[2] + "/" + m[3]).sort();
   igual("las correctas de la base (la última migración que las carga) son las del generador: si no, la base corrige con otra",
     enMig, filas.map((f) => f.youtube_id + "/" + f.n + "/" + f.correcta).sort());
-  const lugares = [0, 1, 2, 3].map((c) => filas.filter((f) => f.correcta === c).length);
-  cierto("la correcta está repartida entre A, B, C y D (" + lugares.join(", ") + "): no siempre en el mismo lugar", Math.max(...lugares) - Math.min(...lugares) <= 3);
+  // Por sesión: diez preguntas dan 3, 3, 2 y 2, y sumadas las sesiones la
+  // diferencia crece sola. En una sesión en partes el reparto sigue de una
+  // parte a la otra; si empezara de cero en cada una, A y B se llevarían casi todo.
+  for (const pres of [...new Set(fuente.sesiones.map((s) => s.presentacion))]) {
+    const ids = new Set(fuente.sesiones.filter((s) => s.presentacion === pres).map((s) => s.youtube_id));
+    const lugares = [0, 1, 2, 3].map((c) => filas.filter((f) => ids.has(f.youtube_id) && f.correcta === c).length);
+    cierto(pres + ": la correcta está repartida entre A, B, C y D (" + lugares.join(", ") + "): no siempre en el mismo lugar", Math.max(...lugares) - Math.min(...lugares) <= 1);
+  }
 
   // El armador se planta ante lo que no cuadra (se corre en un hijo: sale con
   // exit). El `node -e` solo recibe la sesión de prueba armada aquí mismo, como
@@ -108,6 +122,7 @@ function pruebaArchivos() {
   rompe("una aclaración con un avatar que no existe", (s) => { s.aclaraciones[0].avatar = "no-existe"; });
   rompe("una aclaración sin fuente", (s) => { s.aclaraciones[0].fuente = ""; });
   rompe("una pregunta que no está en el banco", (s) => { s.preguntas[0].i = 999; });
+  rompe("una parte que no es de 1 a 9", (s) => { s.parte = 0; });
   rompe("una pregunta repetida", (s) => { s.preguntas[1] = Object.assign({}, s.preguntas[0], { t: s.preguntas[1].t }); });
 }
 
@@ -184,10 +199,10 @@ function cfg(grabaciones, extra) {
     },
   }, extra || {});
 }
-function grabacion(id, dias, titulo, tema, duracion) {
+function grabacion(id, dias, titulo, tema, duracion, parte) {
   const dia = diaCR(dias * DIA);
-  return { horario_id: id, fecha: dia, titulo, modalidad: "en_linea", youtube_id: "AbCdEfGhIj" + id.slice(-1),
-    inicio: enCR(dia, "08:00"), fin: enCR(dia, "12:00"), tema, duracion_seg: duracion };
+  return Object.assign({ horario_id: id, fecha: dia, titulo, modalidad: "en_linea", youtube_id: "AbCdEfGhIj" + id.slice(-1),
+    inicio: enCR(dia, "08:00"), fin: enCR(dia, "12:00"), tema, duracion_seg: duracion }, parte ? { parte } : {});
 }
 
 /* El reproductor falso: contesta como el de YouTube (enablejsapi=1). Cuando la
@@ -430,6 +445,39 @@ async function pruebaCine(browser) {
   await sin.cerrar();
 }
 
+/* Una sesión grabada en partes: cada parte lee SU archivo (la 1
+   grabacion.json, la 2 grabacion-parte-2.json), con los minutos de su video. */
+async function pruebaPartes(browser) {
+  console.log("\n=== Una sesión en varias partes ===");
+  const leer = (f) => JSON.parse(fs.readFileSync(path.join(PRES, "clase-04", f), "utf8"));
+  const p1 = leer("grabacion.json"), p2 = leer("grabacion-parte-2.json");
+  const tema = "Uso, configuración y control del reloj de ajedrez";
+  // Las dos partes son de la misma clase (horario y fecha), cada una con su video.
+  const parteDe = (n, duracion) => Object.assign(grabacion("q4", -6, "Sesión IV", tema, duracion, n), { youtube_id: "ParteDeIV_" + n });
+  const lista = [parteDe(1, p1.duracion), parteDe(2, p2.duracion)];
+  const pedidos = [];
+  const { page, errores, cerrar } = await abrir(browser, lista, { rutas: (pg) => { pg.on("request", (r) => { if (/grabacion[^/]*\.json/.test(r.url())) pedidos.push(r.url().replace(/^.*\//, "")); }); } });
+  await abrirCine(page, "Sesión IV · Parte 2");
+  igual("la parte 2 pide su archivo, no el de la parte 1", pedidos.slice(), ["grabacion-parte-2.json"]);
+  igual("y pinta los capítulos de la parte 2",
+    await page.$$eval("#grabacion-cine-capitulos button", (bs) => bs.map((b) => Number(b.dataset.capitulo))), p2.capitulos.map((c) => c.t));
+  igual("con sus preguntas", await page.$$eval("#grabacion-cine-preguntas button", (bs) => bs.length), p2.preguntas.length);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  pedidos.length = 0;
+  await abrirCine(page, "Sesión IV · Parte 1");
+  igual("la parte 1 lee grabacion.json", pedidos.slice(), ["grabacion.json"]);
+  igual("y pinta los suyos", await page.$$eval("#grabacion-cine-capitulos button", (bs) => bs.map((b) => Number(b.dataset.capitulo))), p1.capitulos.map((c) => c.t));
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  // Si la parte 2 llega con la duración de la parte 1 (se cruzaron los archivos), no se pinta nada.
+  const cruzada = await abrir(browser, [parteDe(1, p1.duracion), parteDe(2, p1.duracion)]);
+  await abrirCine(cruzada.page, "Sesión IV · Parte 2");
+  igual("una parte cuyo video no dura lo que dice su archivo, sin guía", await cruzada.page.$eval("#grabacion-cine-guia", (g) => g.hidden), true);
+  await cruzada.cerrar();
+}
+
 /* Las preguntas dentro del video, con el doble que corrige como la base (las
    correctas que da el generador para el video de la Sesión I). */
 async function pruebaPreguntas(browser) {
@@ -566,6 +614,7 @@ async function pruebaPreguntas(browser) {
   try {
     await pruebaCine(browser);
     await pruebaPreguntas(browser);
+    await pruebaPartes(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e.stack || e));
     fallos += 1;

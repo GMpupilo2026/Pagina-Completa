@@ -1,0 +1,57 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 6282,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Inicio de la parte práctica y tareas pendientes"
+  },
+  {
+   "t": 91,
+   "titulo": "Aprender a jugar: la torre y los primeros retos"
+  },
+  {
+   "t": 694,
+   "titulo": "Práctica guiada: el peón y la captura"
+  },
+  {
+   "t": 1249,
+   "titulo": "Proteger las piezas"
+  },
+  {
+   "t": 1735,
+   "titulo": "Combate: salvar las piezas y capturar"
+  },
+  {
+   "t": 2119,
+   "titulo": "Dar jaque y salir del jaque"
+  },
+  {
+   "t": 2969,
+   "titulo": "Las guías de las grabaciones en la plataforma"
+  },
+  {
+   "t": 3200,
+   "titulo": "Competir y jugar contra el bot"
+  },
+  {
+   "t": 3898,
+   "titulo": "Desafíos: carrera a la coronación"
+  },
+  {
+   "t": 4524,
+   "titulo": "Juego 4 x 4: capturar en cada jugada"
+  },
+  {
+   "t": 5724,
+   "titulo": "Partida entre participantes y más 4 x 4"
+  },
+  {
+   "t": 6141,
+   "titulo": "Cierre: seguir practicando en la plataforma"
+  }
+ ],
+ "laminas": [],
+ "aclaraciones": [],
+ "preguntas": []
+}

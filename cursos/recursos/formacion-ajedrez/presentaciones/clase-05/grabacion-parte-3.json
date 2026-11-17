@@ -1,0 +1,111 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 3238,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Ejercicio 3: la familia en la gradería (cierre)"
+  },
+  {
+   "t": 100,
+   "titulo": "Quiz de la sesión en vivo"
+  },
+  {
+   "t": 433,
+   "titulo": "Quiz: quién apela y cómo, según la Normativa"
+  },
+  {
+   "t": 665,
+   "titulo": "Quiz: el informe final del torneo"
+  },
+  {
+   "t": 740,
+   "titulo": "Respuestas del quiz"
+  },
+  {
+   "t": 830,
+   "titulo": "Tarea: el archivo de la Regional para el presencial"
+  },
+  {
+   "t": 955,
+   "titulo": "La plataforma: grabaciones, tareas y horas"
+  },
+  {
+   "t": 1572,
+   "titulo": "Avisos: el día presencial y el torneo del martes"
+  },
+  {
+   "t": 1757,
+   "titulo": "Avisos administrativos: convocatoria y viáticos"
+  },
+  {
+   "t": 2194,
+   "titulo": "Tiempo para hacer las tareas y dudas"
+  },
+  {
+   "t": 3095,
+   "titulo": "Cierre de la sesión"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 37
+  },
+  {
+   "t": 100,
+   "lamina": 39
+  },
+  {
+   "t": 440,
+   "lamina": 40
+  },
+  {
+   "t": 745,
+   "lamina": 41
+  },
+  {
+   "t": 835,
+   "lamina": 42
+  }
+ ],
+ "aclaraciones": [],
+ "preguntas": [
+  {
+   "t": 160,
+   "n": 1,
+   "texto": "¿Cuál de estos NO forma parte de la logística previa a un torneo escolar?",
+   "opciones": [
+    "Revisar tableros, piezas y relojes",
+    "Publicar la lista inicial",
+    "Anunciar las rondas y los desempates",
+    "El resultado de las partidas"
+   ],
+   "fuente": "Buenas prácticas de organización"
+  },
+  {
+   "t": 372,
+   "n": 2,
+   "texto": "¿Qué se revisa antes de emparejar la ronda siguiente?",
+   "opciones": [
+    "Que el público haya salido de la sala",
+    "Que todos los resultados estén firmados e ingresados",
+    "Que los jugadores acepten el emparejamiento",
+    "Que todas las partidas de la ronda hayan durado lo mismo"
+   ],
+   "fuente": "FIDE 8.7; C.04.2"
+  },
+  {
+   "t": 828,
+   "n": 3,
+   "texto": "¿Qué se arma al cerrar un torneo, después de la última ronda?",
+   "opciones": [
+    "La tabla con desempates, el acta y el informe",
+    "Solo la lista de ganadores",
+    "El emparejamiento de una ronda extra para los que empataron",
+    "Una lista inicial nueva por resultados"
+   ],
+   "fuente": "Buenas prácticas de organización"
+  }
+ ]
+}

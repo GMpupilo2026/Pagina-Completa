@@ -605,6 +605,9 @@ window.CalendarioTaller = (function () {
        duración de la grabación no es la del archivo (se subió otra), no se
        pone nada, porque los capítulos caerían en cualquier parte. Sin el
        archivo o sin acceso, el video se ve igual que siempre.
+       Una sesión grabada en varias partes tiene un archivo por parte: la 1
+       lee grabacion.json y la 2 en adelante grabacion-parte-N.json, cada uno
+       con los minutos de SU video (ver «La guía de una sesión en partes»).
        Las aclaraciones del profe: en el minuto en que el video dice algo
        que no es así, sale arriba una tarjeta con el avatar del profe Oscar
        (js/avatar-profe-oscar.js), la regla buena y su fuente, y se dice en
@@ -628,12 +631,14 @@ window.CalendarioTaller = (function () {
     }
 
     const entero = (n) => Number.isInteger(n) && n >= 0;
-    async function leerGuia(deck, duracion) {
+    async function leerGuia(deck, duracion, parte) {
         const [curso, clase] = String(deck || "").split("/");
         if (!/^[a-z0-9-]+$/.test(curso || "") || !/^[a-z0-9-]+$/.test(clase || "")) return null;
         const carpeta = "cursos/recursos/" + curso + "/presentaciones/" + clase + "/";
         const pedir = (n) => fetch(carpeta + n, { cache: "no-cache", credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null));
-        const gj = await pedir("grabacion.json");
+        const n = Number(parte) || 1;
+        if (!Number.isInteger(n) || n < 1 || n > 9) return null;
+        const gj = await pedir(n === 1 ? "grabacion.json" : "grabacion-parte-" + n + ".json");
         if (!gj || !(Number(duracion) > 0) || Math.abs(Number(gj.duracion) - Number(duracion)) > 2) return null;
         // Una lámina puede ser de la presentación de otra sesión del curso
         // (`clase`): la Sesión II empezó terminando lo pendiente de la I.
@@ -686,7 +691,7 @@ window.CalendarioTaller = (function () {
 
     async function ponerGuia(g, deck, m) {
         let datos = null;
-        try { datos = await leerGuia(deck, g.duracion_seg); } catch (e) { datos = null; }
+        try { datos = await leerGuia(deck, g.duracion_seg, g.parte); } catch (e) { datos = null; }
         if (!datos || !cine || !cine.open || medidor !== m) return;
         const guia = cine.querySelector("#grabacion-cine-guia");
         const G = { medidor: m, datos, g, lam: -2, cap: -2, ac: -2, antes: null, res: new Map(), vistas: new Set(), abierta: null };
