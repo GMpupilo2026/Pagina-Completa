@@ -181,7 +181,7 @@
 <div id="app" class="hidden pt-10 pb-16">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
     <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Repasar mis clases <span aria-hidden="true">🎞️</span></h1>
-    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones, con las flechas del teclado o escribiendo «siguiente» en el recuadro del Modo Adaptado.</p>
+    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones, con las flechas del teclado o escribiendo «siguiente» en el recuadro del Modo Adaptado. Y desde cualquier posición puedes seguir jugando contra el motor.</p>
     <!-- El repaso personal (repasar-clases.html?repaso=<clase>, js/repaso-clase.js): las preguntas
          de la clase que a este alumno no le salieron, para resolverlas otra vez. -->
     <!-- Lo que vuelve (js/repaso-fallados.js, clave clase_repaso_v1): las preguntas en las que vio la
@@ -219,6 +219,9 @@
         <p id="visor-sin-datos" class="text-xs text-brand-500 dark:text-brand-300 mb-2" hidden>Esta partida se guardó antes de que las clases guardaran sus comentarios y variantes: solo trae las jugadas.</p>
         <!-- Sin role="img": los hijos de una imagen no le llegan al lector de pantalla, y el
              tablero se recorre casilla por casilla (js/tablero-accesible.js). -->
+        <!-- Mirar la partida. Mientras se juega contra el motor (#practica) se esconde entero:
+             dos tableros a la vez son dos paradas «Tablero» y no se sabe en cuál se juega. -->
+        <div id="visor-mirar">
         <div class="board-wrap"><div class="board8" id="board"></div></div>
         <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual"></div>
         <p id="visor-estado" class="round-status"></p>
@@ -235,9 +238,37 @@
           <button type="button" class="bctrl" id="btn-final" aria-label="Al final">⏭</button>
           <button type="button" class="bctrl" id="btn-girar">Girar el tablero</button>
         </div>
+        <div class="round-controls">
+          <button type="button" class="bctrl primary" id="btn-practicar"><span aria-hidden="true">♟ </span>Jugar desde aquí contra el motor</button>
+        </div>
         <!-- El recuadro donde se recorre la partida escribiendo («siguiente», «jugada 5») y se le
              pregunta a la posición («caballos»). Lo destapa el Modo Adaptado (js/cuadro-comandos.js). -->
         <div id="visor-cmd"></div>
+        </div>
+        <!-- Jugar contra el motor desde la posición que se estaba mirando (js/practice-engine.js,
+             el mismo Stockfish por Elo de la práctica de la clase en vivo). No se guarda en la base:
+             es práctica del alumno. Ver «Jugar contra el motor desde la clase» en
+             docs/decisiones/clase-en-vivo.md. -->
+        <section id="practica" aria-labelledby="practica-titulo" hidden class="mt-3">
+          <h3 id="practica-titulo" tabindex="-1" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟ </span>Contra el motor</h3>
+          <p id="practica-intro" class="text-sm text-brand-600 dark:text-brand-300 mt-1"></p>
+          <p class="mt-2 text-sm">
+            <label for="practica-nivel" class="font-semibold text-brand-800 dark:text-white">Fuerza del motor</label>
+            <select id="practica-nivel" class="ml-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">
+              <option value="1500">1500</option>
+              <option value="1800">1800</option>
+              <option value="max">Máxima</option>
+            </select>
+          </p>
+          <div class="board-wrap mt-3"><div class="board8" id="practica-board"></div></div>
+          <p id="practica-estado" class="round-status" role="status"></p>
+          <div class="round-controls">
+            <button type="button" class="bctrl" id="practica-otra-btn">Empezar otra vez desde la misma posición</button>
+            <button type="button" class="bctrl" id="practica-terminar-btn">Terminar y volver a la partida</button>
+          </div>
+          <div id="practica-cmd"></div>
+          <p class="text-sm mt-2"><span class="font-semibold text-brand-800 dark:text-white">Jugadas de esta práctica:</span> <span id="practica-jugadas"></span></p>
+        </section>
         <h3 class="font-semibold text-brand-800 dark:text-white mt-4 mb-1">Jugadas</h3>
         <div id="visor-jugadas" class="text-sm"></div>
         <!-- Las preguntas que hizo el profe en esta clase: pensarlas antes de ver la respuesta. -->
@@ -276,6 +307,8 @@
 <script src="js/repaso-espaciado.js"></script>
 <script src="js/repaso-fallados.js"></script>
 <script src="js/repaso-clase.js"></script>
+<script src="js/shared-engine.js"></script>
+<script src="js/practice-engine.js"></script>
 <script src="js/repasar-clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
