@@ -373,15 +373,8 @@ function montarAccesible(){
       // (#visor-anuncio) y la posición se pide con «posición».
       posicionViva: false,
       onEnviar: recorrerEscribiendo,
-      // Con el recuadro vacío, Enter o → avanzan sin escribir nada (js/cuadro-comandos.js).
-      recorrer: {
-        siguiente: (api) => { if ((nodo || actual.raiz).hijos[0]) { api.decir(''); siguiente(); } else api.decir('Ya estás en la última jugada de esta línea.'); },
-        anterior: (api) => { if (nodo) { api.decir(''); anterior(); } else api.decir('Ya estás en la posición de arranque.'); },
-        inicio: (api) => { api.decir(''); alPrincipio(); },
-        final: (api) => { api.decir(''); alFinal(); },
-      },
     });
-    if (comandos) comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
   }
 }
 
