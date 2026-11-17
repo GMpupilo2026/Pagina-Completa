@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1292,
+  "total": 1293,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27095,6 +27095,12 @@
       "titulo": "Pareo integral",
       "tipo": "otro",
       "kb": 103
+     },
+     {
+      "ruta": "img/herramientas/reclamos-tablas.jpg",
+      "titulo": "Reclamos tablas",
+      "tipo": "otro",
+      "kb": 107
      },
      {
       "ruta": "img/herramientas/torneos-costa-rica.jpg",

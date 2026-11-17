@@ -436,6 +436,10 @@
             corto: "Reclamos de tablas",
             href: "reclamos-tablas.html",
             disponible: true,
+            imagen: {
+                src: "img/herramientas/reclamos-tablas.jpg", ancho: 1200, alto: 675,
+                alt: "Un árbitro revisa en la laptop una partida pegada en PGN: la herramienta marca la triple repetición en las jugadas 52, 54 y 56, De8+ Rh7, y lleva la cuenta de la regla de las 50 jugadas; al lado, las Leyes del Ajedrez de la FIDE, el reloj y la planilla con las mismas jugadas.",
+            },
             resumen: "Pega la partida y te dice si hubo triple repetición o 50 jugadas sin mover un peón ni capturar: en qué jugada, quién podía reclamar las tablas y si un reclamo procedía. Con tu licencia, en tu computadora.",
             puntos: [
                 "La misma posición como la define el art. 9.2.2: las mismas piezas, el mismo turno, los mismos enroques y la captura al paso solo si de verdad se puede hacer.",
