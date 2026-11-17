@@ -912,6 +912,16 @@ quedó:
   girar); cada paso dice la jugada contada, el comentario del profe y si hay
   pregunta. Las flechas globales del visor no roban las teclas con el foco en
   un tablero, un recuadro o un `[role=application]`.
+  **Volver a la lista de clases** (17/11/2026): con la cuenta ciega, abrir una
+  clase deja el foco en el recuadro, y la lista «Tus clases» queda ANTES en la
+  página, detrás de los botones y el tablero: los alumnos ciegos no llegaban a
+  ella para elegir otra clase. Ahora el recuadro entiende «clases» (y «lista»,
+  «otra clase», «volver a la lista»…): lleva el foco a la clase abierta en la
+  lista y dice cuántas hay; ahí flecha arriba y abajo pasan de clase en clase
+  (Inicio y Fin, a las puntas) y Enter abre la elegida, con el foco de vuelta
+  en el recuadro. El aviso al abrir una clase y la ayuda del recuadro lo dicen.
+  No se usa «volver» solo: es una acción conocida de `js/comandos-tablero.js`.
+  `verificar-repasar-clases.js` lo mide.
 - **Los diagramas de los artículos**: el contenedor era `role="img"`, y los
   hijos de una imagen no llegan al lector: las 64 casillas rotuladas no se oían.
   Sin ese rol, con `TableroAccesible` para mirar, y el Modo Adaptado leído de la
