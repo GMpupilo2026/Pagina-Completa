@@ -250,8 +250,12 @@ async function pruebaNavegador(browser) {
   await page.waitForSelector(dialogo);
   ok(!(await page.$(dialogo + ' input[name="correo"]')), "con un correo, no pide otro");
   igual("y el botón dice que manda el correo", (await textoDe(page, dialogo + " [data-avisos-aceptar]")).trim(), "Mandar el correo");
+  const nReaviso = marcados().length;
   await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForSelector(dialogo, { state: "detached" }).catch(() => page.waitForFunction((s) => !document.querySelector(s), dialogo));
+  // El pedido sale después de cerrar el cuadro: se espera a que llegue, y a
+  // que la página termine con la respuesta, antes de mirar.
+  for (let i = 0; i < 100 && marcados().length === nReaviso; i++) await page.waitForTimeout(100);
+  await page.waitForTimeout(500);
   const m5 = marcados().pop();
   igual("vuelve a mandar el aviso de la aceptada", [m5.estado, m5.ids, m5.correo], ["aceptada", [ID("4")], undefined]);
   igual("sin agregar otra vez al jugador", (await P.leerTodos(page))[0].jugadores.map((j) => j.nombre).sort(), ["PRUEBA FALLA", "PRUEBA OTRO"]);
