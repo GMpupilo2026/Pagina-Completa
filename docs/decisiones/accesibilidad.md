@@ -137,7 +137,8 @@ jugada. Hoy en todo Entrenamiento se escribe igual.
 - **Coordenadas es la excepción, a propósito**: su Modo Adaptado cambia el
   ejercicio entero —en vez de «toca e4» pregunta «¿e4 es blanca o negra?»— así
   que ahí no hay tablero que recorrer. Lo que sí se le arregló es lo de siempre:
-  sus 64 casillas decían «Casilla», todas igual.
+  sus 64 casillas decían «Casilla», todas igual. (Ver también «Coordenadas
+  volvió a las cuentas ciegas».)
 - **Visualización también**: su tablero se queda quieto en la posición de salida
   porque el ejercicio consiste en NO mirarlo moverse. Ahí las preguntas se
   contestan contra la posición **de salida** —la que el tablero enseña—, nunca
@@ -1224,7 +1225,8 @@ ciegas en vez de dejarlos a medias:
 
 - **Memoria**, la **Fotografía** de Habilidades y la apertura **sin tablero**
   (nivel 3 de «¿Qué apertura es?»): la posición es justamente la respuesta.
-- **Coordenadas**: no hay piezas.
+- ~~**Coordenadas**: no hay piezas.~~ Volvió (ver «Coordenadas volvió a las
+  cuentas ciegas», abajo).
 - **El Sonar** y **la Batalla naval**: lo escondido es el juego. Estaban hechos
   para jugar sin ver, pero igual se esconden: lo pidió la Academia.
 - **El curso de Fundamentos**, que sigue en notación inglesa (ya estaba
@@ -1248,6 +1250,43 @@ Lo mide `verificar-piezas-ciego.js` (las páginas escondidas avisan, Habilidades
 sin la Fotografía ni el nivel 3, la guía sin esas secciones). Probado que
 falla: sin `escondido()` saltan tres comprobaciones, y sin Memoria en la lista
 o sin la regla de `data-oculto-ciego`, una cada una.
+
+### Coordenadas volvió a las cuentas ciegas
+
+Se había escondido con las demás porque «no hay piezas», pero eso no era un
+hueco: **para quien no ve, el juego ES decir de qué color es la casilla**
+(lo confirmó el dueño). No hay posición que poner bajo «Piezas» porque el
+ejercicio no la tiene, y no le falta nada. Salió de `NO_ADAPTADAS`, va primera
+en «Entrenar» de `PANEL_ADAPTADO` (con su descripción en `DESC_ADAPTADO`) y su
+sección de `ciegos.html` ya no lleva `data-oculto-ciego`.
+
+Lo que le faltaba para estar entera, y se le puso:
+
+- **El modo elegido no se oía.** Los botones de Clásico, 10 s y 3 s (y los de
+  orientación) marcaban el elegido solo con la clase `active`, un color: con
+  lector de pantalla sonaban los tres iguales. Ahora llevan `aria-pressed`
+  (`marcarOpcion()`).
+- **La orientación, en Modo Adaptado, se esconde**: de qué lado se mire el
+  tablero no cambia el color de ninguna casilla, así que eran tres botones que
+  no hacían nada.
+- **«empezar» se pedía y no se entendía**: fuera de la ronda, «repetir»
+  contestaba «escribe «empezar»» y el recuadro decía «No entendí». Ahora
+  arranca la ronda; durante la ronda no la reinicia (una palabra no puede tirar
+  los puntos), dice que ya está en curso y repite la casilla.
+- **«ayuda» y «puntos»**: «ayuda» dice todo lo que se puede escribir y
+  «puntos» (o «cómo voy») los aciertos, los errores y el tiempo. El «No
+  entendí» manda a «ayuda» en vez de recitar la lista entera.
+
+**Sigue con su propio recuadro y no con `js/cuadro-comandos.js`, a
+propósito**: ese recuadro está hecho para tableros con piezas (dice «escribe tu
+jugada», pone «Piezas», contesta preguntas sobre la posición) y acá no hay
+posición ni tablero a la vista. El tablero tampoco se deja en Modo Adaptado:
+con la casilla iluminada a la vista, el color se lee en vez de pensarse.
+
+Lo miden `verificar-entreno-escribiendo.js` (`aria-pressed`, la orientación
+escondida, «ayuda», «puntos» y «empezar» a media ronda),
+`verificar-piezas-ciego.js` (la página ya no avisa que no está adaptada y la
+guía la muestra) y `verificar-vision-cuenta.js` (está en el panel adaptado).
 
 ## Juega contra Oscar, como Entrenamiento
 

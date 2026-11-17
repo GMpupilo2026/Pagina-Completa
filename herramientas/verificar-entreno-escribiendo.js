@@ -431,8 +431,25 @@ async function precisionSinListo(browser) {
 async function volverYMemoria(browser) {
   console.log("\n=== Coordenadas, Memoria y Mates: «volver»; Memoria dice qué faltó ===");
   let { page, ctx, errores } = await abrirAdaptado(browser, "/entreno/coordenadas.html");
+  /* Cuál modo está elegido lo dice aria-pressed, no solo el color. */
+  await page.click('#mode-switch .option-btn[data-value="mode10"]');
+  igual("Coordenadas: el modo elegido se dice con aria-pressed",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#mode-switch .option-btn")).map((b) => b.dataset.value + ":" + b.getAttribute("aria-pressed"))),
+    ["classic:false", "mode10:true", "mode3:false"]);
+  await page.click('#mode-switch .option-btn[data-value="classic"]');
+  cierto("Coordenadas: en Modo Adaptado no pregunta de qué lado se mira (no cambia ningún color)",
+    await page.evaluate(() => !document.getElementById("orientation-group").checkVisibility()));
   await page.click("#start-btn");
   await page.waitForSelector("#blind-input", { state: "visible" });
+  await escribirEn(page, "#blind-input", "ayuda", 200);
+  const ay = await texto(page, "#blind-announcer");
+  cierto("Coordenadas: «ayuda» dice lo que se puede escribir", /«blanca».*«repetir».*«tiempo».*«puntos».*«volver»/.test(ay), ay);
+  await escribirEn(page, "#blind-input", "puntos", 200);
+  const pu = await texto(page, "#blind-announcer");
+  cierto("Coordenadas: «puntos» dice cómo vas", /^Llevas 0 aciertos y 0 errores\. Quedan \d+ segundos\.$/.test(pu), pu);
+  await escribirEn(page, "#blind-input", "empezar", 200);
+  const em = await texto(page, "#blind-announcer");
+  cierto("Coordenadas: «empezar» a media ronda no la reinicia, dice la casilla", /^La ronda ya está en curso\. La casilla es /.test(em), em);
   await escribirEn(page, "#blind-input", "volver", 200);
   const c = await texto(page, "#blind-announcer");
   cierto("Coordenadas: «volver» dice adónde va (no «No entendí»)", /^Volviendo a /.test(c), c);

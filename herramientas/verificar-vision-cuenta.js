@@ -61,8 +61,10 @@ async function pruebaCiega(browser) {
     ["te-reto.html", "entreno/mates.html", "entreno/estudio.html", "tareas.html", "ciegos.html"].every((h) => enlaces.includes(h)));
   /* La Academia pidió esconderlas: ahí no hay piezas que poner bajo «Piezas»
      (ver «Lo que no se puede hacer sin ver, no se ofrece»). */
-  igual("y no trae Sonar, Batalla naval, Memoria ni Coordenadas",
-    ["sonar.html", "batalla-naval.html", "entreno/memoria.html", "entreno/coordenadas.html"].filter((h) => enlaces.includes(h)), []);
+  igual("y no trae Sonar, Batalla naval ni Memoria",
+    ["sonar.html", "batalla-naval.html", "entreno/memoria.html"].filter((h) => enlaces.includes(h)), []);
+  /* Coordenadas volvió: para quien no ve, el juego es decir el color. */
+  cierto("pero sí Coordenadas", enlaces.includes("entreno/coordenadas.html"));
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
