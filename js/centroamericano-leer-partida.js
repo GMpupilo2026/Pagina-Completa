@@ -149,22 +149,6 @@
         };
     }
 
-    let hilo = null, pedido = 0;
-    function reconstruirEnHilo(hojas, alProgresar) {
-        if (!hilo) hilo = new Worker("js/planilla-reconstruir-worker.js");
-        const id = ++pedido;
-        return new Promise((resolve, reject) => {
-            const oir = (e) => {
-                if (e.data.id !== id) return;
-                if (e.data.progreso !== undefined) { alProgresar(e.data.progreso); return; }
-                hilo.removeEventListener("message", oir);
-                if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
-            };
-            hilo.addEventListener("message", oir);
-            hilo.postMessage({ id, hojas });
-        });
-    }
-
     async function deLaFoto(p, decir) {
         decir("Bajando la foto…");
         const { data, error } = await window.sb.storage.from("centroamericano-planillas").createSignedUrl(p.ruta, 120);
@@ -188,7 +172,7 @@
         const { hojas, metodo } = window.PlanillaReconstruir.hojasDeLaFoto(words);
         if (!hojas.length) throw new Error("No se encontró nada escrito en la foto.");
         decir("Armando la partida… 0 %");
-        const resultado = await reconstruirEnHilo(hojas, (x) => decir("Armando la partida… " + Math.round(x * 100) + " %"));
+        const resultado = await window.PlanillaReconstruir.enHilo(hojas, (x) => decir("Armando la partida… " + Math.round(x * 100) + " %"));
         // `palabras`: lo que devolvió Google Vision tal cual (texto y caja de cada palabra), para «Descargar la lectura»
         // compactas ([texto, x0, y0, x1, y1]): se guardan en el navegador con la lectura, y así caben cien fotos
         const palabras = (words || []).map((w) => [w.text, w.bbox.x0, w.bbox.y0, w.bbox.x1, w.bbox.y1]);
