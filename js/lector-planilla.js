@@ -35,24 +35,6 @@
         // «la jugada 12 de las negras», con la media jugada contada desde 0
         const deQuien = (ply) => "jugada " + (Math.floor(ply / 2) + 1) + (ply % 2 ? " de las negras" : " de las blancas");
 
-        /* La partida, en su propio hilo: reconstruir prueba miles de continuaciones y tarda varios
-           segundos; en el hilo de la página, la barra de progreso y la página se congelarían. */
-        let hilo = null, pedido = 0;
-        function reconstruirEnHilo(hojas, alProgresar) {
-            if (!hilo) hilo = new Worker("js/planilla-reconstruir-worker.js");
-            const id = ++pedido;
-            return new Promise((resolve, reject) => {
-                const oir = (e) => {
-                    if (e.data.id !== id) return;
-                    if (e.data.progreso !== undefined) { alProgresar(e.data.progreso); return; }
-                    hilo.removeEventListener("message", oir);
-                    if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
-                };
-                hilo.addEventListener("message", oir);
-                hilo.postMessage({ id, hojas });
-            });
-        }
-
         /* ============================================================
            La partida leída
            ============================================================ */
@@ -202,7 +184,7 @@
                     return;
                 }
                 progreso(40, "Armando la partida… 0 %");
-                const r = await reconstruirEnHilo(hojas, (x) => progreso(40 + Math.round(x * 60), "Armando la partida… " + Math.round(x * 100) + " %"));
+                const r = await PlanillaReconstruir.enHilo(hojas, (x) => progreso(40 + Math.round(x * 60), "Armando la partida… " + Math.round(x * 100) + " %"));
                 progressWrap.classList.add("hidden");
                 document.getElementById("process-section").classList.remove("hidden");
                 mostrarPartida(r, metodo);

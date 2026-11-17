@@ -9649,9 +9649,12 @@ mejor explica todo lo escrito. No hay un segundo lector: `js/lector-planilla.js`
 - La foto va a 2600 px de lado, como en el Centroamericano: en tres bloques, a 1600 la letra queda
   chica. Sigue siendo una lectura del tope diario (ver «El lector de planilla tiene tope diario» en
   cuentas-y-formularios.md).
-- **«Anota tu partida»** de «Tus propios errores» (`js/entreno-tipos-mas.js`) sigue con el orden por
-  filas y la jugada más parecida (`PlanillaOcr.leerTokens`): no se tocó en este cambio, y tiene el
-  mismo problema con una planilla en columnas.
+- **«Anota tu partida»** de «Tus propios errores» (`js/entreno-tipos-mas.js`) usa el mismo lector:
+  marca con «?» las que no se leyeron tal cual y corta donde la planilla ya no se entiende (ver «Mis
+  partidas de torneo» en entrenamiento.md).
+- **El hilo es una sola copia**: `PlanillaReconstruir.enHilo()`. Antes el Centroamericano tenía el
+  suyo; ahora lo usan los tres. Busca `planilla-reconstruir-worker.js` al lado de
+  `planilla-reconstruir.js` (`document.currentScript`), así sirve también desde `entreno/`.
 
 Lo prueba `verificar-lector-planilla-pagina.js`: sin navegador, que una planilla de tres columnas
 leída por filas da más de un tercio de jugadas adivinadas y por números da las celdas tal cual; en la

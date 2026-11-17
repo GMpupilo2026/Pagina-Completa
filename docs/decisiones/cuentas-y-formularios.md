@@ -326,10 +326,9 @@ Rica:
 La subida de la foto vive en `js/planilla-ocr.js` (`leerFoto`), una sola
 copia para el Lector de planilla, «Anota tu partida» de «Tus propios errores»
 (ver «Mis partidas de torneo» en entrenamiento.md), el Centroamericano y
-Pareo Integral: todos gastan del mismo tope. El Lector de planilla arma la
-partida con `js/planilla-reconstruir.js` (ver «El Lector de planilla lee por
-columnas» en juegos-y-torneos.md); «Anota tu partida» sigue con el orden por
-filas de `planilla-ocr.js`.
+Pareo Integral: todos gastan del mismo tope. El Lector de planilla y «Anota tu
+partida» arman la partida con `js/planilla-reconstruir.js` (ver «El Lector de
+planilla lee por columnas» en juegos-y-torneos.md).
 
 Para cambiar los topes, una migración nueva que vuelva a crear la función con
 otros números. `node herramientas/verificar-lector-planilla.js` (sin red ni
