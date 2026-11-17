@@ -865,6 +865,39 @@ Estudio):
   navegador y comprueba que los tres inserts de `sesion.js` lleven `datos` y
   que el guardado del cierre vaya antes del `ended_at`.
 
+#### Jugar contra el motor desde la clase
+
+Las posiciones de la clase solo se miraban: no había cómo seguir jugándolas
+contra el motor, que en la clase en vivo solo existe cuando el profe lanza
+una práctica. Ahora (17/11/2026) «♟ Jugar desde aquí contra el motor», debajo
+de los botones del visor (o «jugar» en su recuadro), arranca una partida
+desde **lo que se ve**: la jugada de la partida o la posición aparte de una
+pregunta del profe («Ver la posición», que se pinta sin moverse de la
+jugada).
+
+- **El mismo motor que la práctica de la clase**: `PracticeEngine.responder`
+  (`js/practice-engine.js` sobre `js/shared-engine.js`), Stockfish por Elo
+  (1500, 1800 o máxima) con plazo y jugada de respaldo, así el tablero nunca
+  se queda «pensando». El alumno juega con el bando al que le toca.
+- **Un tablero a la vez**: mientras se juega, el de la partida y sus botones
+  se esconden (`#visor-mirar`). Dos tableros visibles eran dos paradas
+  «Tablero» y quien no ve no sabía en cuál jugaba. Las flechas globales del
+  visor no mueven la partida escondida.
+- **Sin ver**: su propio recuadro (jugadas escritas, «otra vez», «terminar»,
+  las preguntas de siempre) y su `TableroAccesible`; cada jugada, la del
+  alumno y la del motor, se dice CONTADA en el renglón de estado (región viva)
+  y con la voz del sitio. Con la cuenta ciega el foco va al recuadro.
+- **Se vuelve a donde se estaba**: «Terminar y volver a la partida» deja el
+  visor en la misma jugada (o en la misma posición de la pregunta). Una
+  respuesta del motor que llega después de terminar o de empezar otra vez se
+  descarta (`turnoDeJuego`). Abrir otra clase termina la práctica.
+- **No se guarda en la base**: es práctica del alumno, no una entrega; el profe
+  no la ve. Si algún día se quiere que la vea, irá a `practice_games` como la
+  de la clase en vivo, con su política.
+- `verificar-repasar-clases.js` la prueba con un motor de mentira (tocando,
+  escribiendo, jugada imposible, «otra vez», «terminar», «jugar» desde el
+  recuadro, la posición aparte y el mate que termina sin que el motor juegue).
+
 ### El alumno elegido al azar para responder
 
 «🎲 Elegir a un alumno al azar», en «Alumnos conectados»: sale uno de los

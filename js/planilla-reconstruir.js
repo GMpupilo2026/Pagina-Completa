@@ -21,6 +21,9 @@
      no se sigue buscando.
    - aPgn(Chess, resultado, cabecera): el PGN de lo que se pudo salvar; si se
      cortó, la partida termina en «*» y un comentario dice desde dónde.
+   - enHilo(hojas, alProgresar): reconstruir() en su propio hilo
+     (js/planilla-reconstruir-worker.js), solo en una página. Una sola copia
+     para el Centroamericano, el Lector de planilla y «Anota tu partida».
 
    Pura (sin navegador): la prueba herramientas/verificar-planilla-reconstruir.js. */
 (function (raiz) {
@@ -410,7 +413,30 @@
     return columnas;
   }
 
-  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto };
+  // --------------------------------------------------------------- el hilo
+  /* reconstruir() prueba miles de continuaciones y tarda varios segundos: en el
+     hilo de la página, la página se congelaría. El hilo se busca al lado de este
+     archivo (document.currentScript, leído al cargar), así sirve igual desde
+     una página de la raíz que desde entreno/. */
+  const urlHilo = raiz.document && raiz.document.currentScript && raiz.document.currentScript.src
+    ? new URL("planilla-reconstruir-worker.js", raiz.document.currentScript.src).href : null;
+  let hilo = null, pedido = 0;
+  function enHilo(hojas, alProgresar) {
+    if (!hilo) hilo = new raiz.Worker(urlHilo || "js/planilla-reconstruir-worker.js");
+    const id = ++pedido;
+    return new Promise((resolve, reject) => {
+      const oir = (e) => {
+        if (e.data.id !== id) return;
+        if (e.data.progreso !== undefined) { if (alProgresar) alProgresar(e.data.progreso); return; }
+        hilo.removeEventListener("message", oir);
+        if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
+      };
+      hilo.addEventListener("message", oir);
+      hilo.postMessage({ id, hojas });
+    });
+  }
+
+  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto, enHilo };
   if (typeof module !== "undefined" && module.exports) module.exports = PlanillaReconstruir;
   else raiz.PlanillaReconstruir = PlanillaReconstruir;
 })(typeof window !== "undefined" ? window : globalThis);
