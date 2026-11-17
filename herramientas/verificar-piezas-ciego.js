@@ -110,7 +110,7 @@ function leer() {
   }
 
   console.log("\n=== Lo que no tiene piezas que poner bajo «Piezas» no se ofrece ===");
-  for (const ruta of ["/entreno/memoria.html", "/entreno/coordenadas.html", "/sonar.html", "/batalla-naval.html", "/cursos/academia/fundamentos-del-ajedrez.html"]) {
+  for (const ruta of ["/entreno/memoria.html", "/sonar.html", "/batalla-naval.html", "/cursos/academia/fundamentos-del-ajedrez.html"]) {
     const { page, ctx } = await abrir(browser, ruta, true);
     const aviso = await page.evaluate(() => { const c = document.getElementById("vc-no-adaptada"); return !!c && c.checkVisibility(); });
     cierto(ruta + " dice que no está adaptada y ofrece volver al panel", aviso);
@@ -131,8 +131,16 @@ function leer() {
   }
   {
     const { page, ctx } = await abrir(browser, "/ciegos.html", true);
-    const vis = await page.evaluate(() => ["h-coordenadas", "h-sonar", "h-batalla"].map((id) => { const h = document.getElementById(id); return h ? h.checkVisibility() : "no está"; }));
-    cierto("la guía no muestra Coordenadas, el Sonar ni la Batalla naval", vis.every((v) => v === false), JSON.stringify(vis));
+    const vis = await page.evaluate(() => ["h-sonar", "h-batalla"].map((id) => { const h = document.getElementById(id); return h ? h.checkVisibility() : "no está"; }));
+    cierto("la guía no muestra el Sonar ni la Batalla naval", vis.every((v) => v === false), JSON.stringify(vis));
+    /* Coordenadas volvió: para quien no ve, el juego es decir el color. */
+    cierto("pero sí Coordenadas", await page.evaluate(() => { const h = document.getElementById("h-coordenadas"); return !!h && h.checkVisibility(); }));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await abrir(browser, "/entreno/coordenadas.html", true);
+    const aviso = await page.evaluate(() => { const c = document.getElementById("vc-no-adaptada"); return !!c && c.checkVisibility(); });
+    cierto("/entreno/coordenadas.html ya no dice que no está adaptada", !aviso);
     await ctx.close();
   }
 

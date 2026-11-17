@@ -490,14 +490,15 @@
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "audios-clases.html", "articulos.html"] },
-            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
+            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/coordenadas.html", "entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
             { title: "Jugar", id: "jugar", hrefs: ["te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
-        /* El Sonar, la Batalla naval, Memoria y Coordenadas ya no van: la Academia
-           pidió esconderlas a las cuentas ciegas (están en NO_ADAPTADAS de
+        /* El Sonar, la Batalla naval y Memoria ya no van: la Academia pidió
+           esconderlas a las cuentas ciegas (están en NO_ADAPTADAS de
            js/vision-cuenta.js; ver «Lo que no se puede hacer sin ver, no se
-           ofrece» en docs/decisiones/accesibilidad.md). */
+           ofrece» en docs/decisiones/accesibilidad.md). Coordenadas volvió:
+           para quien no ve, el juego ES decir de qué color es la casilla. */
         const TILES_SOLO_ADAPTADO = [
             /* ¡Te reto! está adaptado (la jugada se escribe, el reloj se pide con
                «tiempo») y en el panel de siempre se llega desde Juegos; acá va
@@ -511,6 +512,7 @@
             "juegos.html": "Ajedrez estándar y Niebla de guerra contra otro alumno, escribiendo la jugada: las demás modalidades todavía no están adaptadas",
             "competir.html": "Retos a quien esté en línea y los torneos; la partida se juega escribiendo la jugada",
             "tablero.html": "Juega contra Oscar, nuestro motor, escribiendo la jugada y oyendo la suya",
+            "entreno/coordenadas.html": "Se dice una casilla y escribes si es blanca o negra, contra el reloj",
             "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica, mates, conceptos y finales, con la posición dicha y la línea que se recorre escribiendo",
         };
         function armarPanelAdaptado() {
@@ -4580,7 +4582,13 @@
                 contarUsosDelPanel();
                 if (!profile.is_admin && !profile._persona) cargarLadoAlumno().catch((e) => console.error(e));
             } else {
-                document.getElementById("progreso-alumno").hidden = false;
+                /* En el panel adaptado (cuenta marcada como ciega) no va
+                   «Hoy te toca» ni «Tus números»: la meta del día, la racha,
+                   los repasos y los totales son un montón de texto que el
+                   lector de pantalla lee antes de llegar a lo que se usa, y
+                   quien no ve no los necesita. Ni se piden. Ver «El panel
+                   adaptado no lleva "Hoy te toca"» en accesibilidad.md. */
+                document.getElementById("progreso-alumno").hidden = panelAdaptado;
                 document.getElementById("registro-clases").hidden = true;
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
@@ -4605,10 +4613,9 @@
                 partes.push(
                     cargarPendientes(rachaP, tallerP),
                     cargarSeguirCurso(),
-                    loadEntrenoProgress(),
-                    loadTacticsRecord(),
                     pintarSaludoAlumno(rachaP, tallerP),
                 );
+                if (!panelAdaptado) partes.push(loadEntrenoProgress(), loadTacticsRecord());
                 /* «Hoy te toca» (diez scripts, ~200 KB) y «lo último que
                    hiciste» arrancan a la vez pero el panel NO los espera: se
                    pintan en su lugar cuando llegan. Metidos en la tanda de
@@ -4619,7 +4626,7 @@
                    campana de la cuenta de quien mira (mi_proxima_clase, lo que
                    la RLS le da), así que no se pintan; «Lo que más usas» y los
                    avisos de Competir se piden con su id. */
-                if (!profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                if (!panelAdaptado && !profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
                 if (!profile._persona) cargarProximaClase();
                 if (!panelAdaptado && !profile._persona) pintarFavoritas();
                 if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));
