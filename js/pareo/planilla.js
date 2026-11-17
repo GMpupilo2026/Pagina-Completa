@@ -95,21 +95,6 @@
     return cargas[src];
   }
 
-  let hilo = null, pedido = 0;
-  function reconstruirEnHilo(hojas, alProgresar) {
-    if (!hilo) hilo = new Worker("js/planilla-reconstruir-worker.js");
-    const id = ++pedido;
-    return new Promise((resolve, reject) => {
-      const oir = (e) => {
-        if (e.data.id !== id) return;
-        if (e.data.progreso !== undefined) { alProgresar(e.data.progreso); return; }
-        hilo.removeEventListener("message", oir);
-        if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
-      };
-      hilo.addEventListener("message", oir);
-      hilo.postMessage({ id, hojas });
-    });
-  }
 
   /* fotos: los archivos que eligió quien organiza (una o dos). decir(clave,
      datos): para contar en qué va. Las dos planillas en una foto o en dos
@@ -145,7 +130,8 @@
     const vacia = () => { const e = new Error("vacia"); e.lectura = lectura(leidas, null, o.datos); e.chica = chica; return e; };
     if (!hojas.length) throw vacia();
     decir("planillaArmando", { p: 0 });
-    const resultado = await reconstruirEnHilo(hojas, (x) => decir("planillaArmando", { p: Math.round(x * 100) }));
+    // el hilo es el de PlanillaReconstruir.enHilo(): una sola copia para todas las páginas que leen planillas
+    const resultado = await raiz.PlanillaReconstruir.enHilo(hojas, (x) => decir("planillaArmando", { p: Math.round(x * 100) }));
     if (!resultado.jugadas || !resultado.jugadas.length) throw vacia();
     return { resultado, hojas: hojas.length, metodo, chica, lectura: lectura(leidas, resultado, o.datos) };
   }
