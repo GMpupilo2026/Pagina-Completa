@@ -25,6 +25,12 @@
 # (centroamericano-2026.html, js/livechess-transmision.js): el navegador de quien
 # mira le pide las partidas de los tableros DGT directo a LiveChess, sin atraso.
 # Solo se le piden partidas; no se le manda ningún dato de quien mira.
+#
+# *.livekit.cloud está en connect-src por la llamada de voz de la clase en vivo
+# (sesion.html, js/clase-llamada.js): la señal va por wss:// al proyecto de
+# LiveKit, que además pregunta por https:// a qué región conectar y puede
+# mandar a otro nombre de *.livekit.cloud. El audio en sí (WebRTC) no pasa por
+# la CSP. Ver «La llamada de voz de la clase» en docs/decisiones/clase-en-vivo.md.
 
 # El proyecto de la Academia está en img-src por los logos de las academias
 # (bucket público academia-marca): se ven en el encabezado y en los
@@ -49,13 +55,25 @@
 # adelanta» en docs/decisiones/sitio-e-infraestructura.md).
 /*
   Speculation-Rules: "/anticipar.json"
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-5loDewmE4LA64seJEWe9o2H3f07zYJ5a5nghkR1MWzI=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; media-src 'self' blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://1.pool.livechesscloud.com https://api.chess.com https://cloudflareinsights.com; frame-src 'self' https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv https://forms.gle https://docs.google.com https://chess-results.com https://*.chess-results.com; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-5loDewmE4LA64seJEWe9o2H3f07zYJ5a5nghkR1MWzI=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; media-src 'self' blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3 https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/ https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://1.pool.livechesscloud.com https://api.chess.com https://cloudflareinsights.com https://*.livekit.cloud wss://*.livekit.cloud; frame-src 'self' https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv https://forms.gle https://docs.google.com https://chess-results.com https://*.chess-results.com; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
+
+# La clase en vivo (sesion.html) es la ÚNICA página que puede usar el
+# micrófono: la llamada de voz de la clase (js/clase-llamada.js). Igual que la
+# cámara de abajo: se quita la regla de /* y se pone otra con microphone=(self),
+# en las dos rutas.
+/sesion
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(), microphone=(self), payment=(), usb=(), interest-cohort=()
+
+/sesion.html
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(), microphone=(self), payment=(), usb=(), interest-cohort=()
 
 # La cámara que lee el tablero (camara-tablero.html), la página que junta
 # varias en cuadritos (camaras.html: si la de afuera no tiene la cámara,

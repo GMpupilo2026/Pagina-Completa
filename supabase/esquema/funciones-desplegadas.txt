@@ -15,6 +15,7 @@ chess-results-proxy            true         trae de chess-results.com la ficha d
 cobros-recordatorios           false        la tanda diaria de avisos de morosidad (pg_cron)
 consulta-arbitraje             false        el Espacio de consultas de Herramientas de arbitraje (IA, sin cuenta; freno y presupuesto propios)
 correos-alumno                 true         corrige los tres correos de una familia
+clase-llamada                  true         la llamada de voz de la clase en vivo (LiveKit): el pase y quién puede hablar, con llamada_de_la_clase() y el token de quien llama; secretos LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET
 create-student                 true         invita a un alumno desde la clase en vivo
 enviar-resultado-arbitraje     true         manda el detalle de un examen de arbitraje
 informe-examen                 true         manda a la casa el informe de un examen

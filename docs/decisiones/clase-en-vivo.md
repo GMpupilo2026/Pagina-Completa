@@ -157,6 +157,97 @@ update sobre la sala ajena cambia **0 filas**; otro profesor que no es su
 profesor recibe **0 filas**; y `javascript:`, `http://` y un enlace con espacios
 los rechaza el CHECK.
 
+### La llamada de voz de la clase
+
+La pidió el dueño el 17/11/2026: «un Meet propio adaptado a ciegos». Para un
+alumno ciego lo difícil de Meet no es Meet: es tener la llamada en una pestaña y
+el tablero en otra, saltar entre las dos con el lector de pantalla —el foco se
+pierde en cada salto— y que los anuncios de las dos se pisen. Ahora la voz va
+**en la misma página que el tablero**, en la caja «🎧 Llamada de la clase»
+(`#llamada`, `js/clase-llamada.js`), por **LiveKit** (el servidor de audio, en
+la nube). El botón de Meet/Zoom de siempre se queda: es otra puerta, no se
+reemplaza.
+
+- **Se probó antes fuera del sitio** (fase 0, una página local con su propio
+  servidor): se oyó bien, y ahí se eligieron los atajos y los anuncios.
+- **Solo voz.** El pase deja publicar únicamente el micrófono
+  (`canPublishSources`): ni cámara ni compartir pantalla, que a un alumno ciego
+  no le sirven y en una clase de menores son un riesgo de más.
+- **La palabra es el turno de la clase, no otra cola.** Puede hablar el profe y
+  quien tiene `game_state.elegido`: el «🗣️ Darle la palabra» de la mano
+  levantada, o el sorteo (ver «La participación oral»). La mano es la misma de
+  la clase (la presencia). Una segunda cola de manos para la llamada se
+  desincronizaría sin que nada fallara —la mano levantada en una y la palabra
+  dada en la otra—, y el turno ya queda anotado en `clase_elegidos`. Por eso
+  **no hay tabla nueva ni trigger de auditoría**: lo que reparte el permiso de
+  hablar ya está protegido (`protect_game_state_teacher_columns`: solo un
+  profesor cambia `elegido`, y la RLS solo en SU tablero) y anotado.
+- **Quien lo hace cumplir es el servidor de LiveKit, no la página.** La Edge
+  Function `clase-llamada` firma el pase con `canPublish` según el turno, y con
+  «sincronizar» le cambia el permiso a cada uno en la sala (y saca de la sala a
+  quien el profe sacó de la clase, `clase_sacados`). `js/sesion.js` llama a
+  `llamada.sincronizar()` después de `darTurno()` y de `terminarElegido()`, y
+  `js/clase-sacar.js` después de sacar a alguien: aunque el profe no esté en la
+  llamada, porque un alumno puede estar esperando la palabra.
+  - El permiso lo decide `public.llamada_de_la_clase(p_profesor)` (migración
+    `llamada_de_la_clase`), llamada **con el token de quien pide**, nunca con
+    la clave de servicio: pasa por la RLS y por `antes_de_cada_pedido()`, así
+    que la verificación en dos pasos a medias corta antes. Contesta null si no
+    hay clase abierta, si quien pide no es el profesor (`role = 'profesor'`:
+    quien administra no da clase) ni alumno suyo, o si lo sacaron.
+  - **La sala ES la clase abierta** (`clase-<id de class_sessions>`): sin clase
+    no hay llamada, y el pase de la clase de ayer no entra a la de hoy.
+  - Comprobado impersonando roles en SQL (en una transacción que se deshizo):
+    sin clase, null; el profe, `profe` con su sala; la alumna con el turno, con
+    la palabra; el otro alumno, sin ella; el alumno de otro profe, null; el
+    sacado, null (y el profe lo ve en `sacados`); `anon`, sin permiso de
+    ejecutarla.
+  - Comprobado contra el servidor de LiveKit de verdad: el pase firmado a mano
+    entra sin poder hablar; «sincronizar» le da la palabra, no repite un cambio
+    que ya está, se la quita al terminar el turno y saca de la sala al sacado.
+- **LiveKit CONTESTA en snake_case** (`can_publish`) aunque acepte `canPublish`
+  al pedir. Leyendo solo uno, cada «sincronizar» volvía a cambiar a todos. Y la
+  fuente del micrófono se escribe `microphone` en el pase y `MICROPHONE` en
+  Twirp (el nombre del enum de protobuf).
+- **Sin librería de LiveKit en la función**: el pase es un JWT HS256 y las
+  tres llamadas (la lista, cambiar un permiso, sacar) son POST de Twirp, hechos
+  con Web Crypto y `fetch`. En la página sí: `js/vendor/livekit-client.js`
+  (2.23.0, en `herramientas/lib/librerias-vendor.js`), **pedida recién al tocar
+  «Entrar a la llamada»**: pesa 600 kB y la mayoría de las clases no la usa.
+- **El micrófono no se enciende solo** al recibir la palabra: se dice («Tu
+  profe te dio la palabra: enciende el micrófono con Alt M») con un sonido, y lo
+  enciende quien la recibió. Abrirle el micrófono a un menor sin que lo decida
+  él no lo hace la página. Al terminar el turno el servidor lo apaga, y se dice.
+- **Atajos con Alt solo y la tecla física** (`e.code`): Alt+M micrófono, Alt+Y
+  la mano (alumno), Alt+Q quién está, Alt+W quién habla. Ctrl+Alt no, porque en
+  el teclado español es AltGr (Ctrl+Alt+Q escribe «@»); Alt+Mayúsculas tampoco,
+  que en Windows cambia el idioma del teclado; Alt+X tampoco, que el tablero
+  accesible ya usa. Salir no tiene atajo, a propósito: colgar sin querer cuesta
+  más que buscar el botón.
+- **Todo se dice en la región viva de la caja** (`#llamada-estado`): entrar y
+  salir (con un sonido corto), la palabra dada o quitada, la conexión mala, la
+  reconexión, «Tu profe te sacó de la llamada». «Activar voz» la lee sola.
+- **Mientras la voz de la página dice una jugada** (`speechSynthesis`: «Activar
+  voz», el recuadro adaptado), la llamada baja al 30 %, para que la voz del
+  profe no la tape. Con lector de pantalla eso no se puede medir desde la
+  página: ahí van los audífonos, y lo dirá la prueba con NVDA.
+- **El micrófono solo se permite en `/sesion`** (`Permissions-Policy` en
+  `_headers`, con el mismo truco de la cámara), y `*.livekit.cloud` va en
+  `connect-src`. LiveKit está en la lista de proveedores de `privacidad.html`:
+  la voz no se graba.
+- **Quién no la tiene**: quien observa (mira, no habla), la vista previa, el
+  proyector y el control remoto (otra ventana de la misma clase). Los invitados
+  sin cuenta tampoco, por ahora: no tienen `auth.uid()` para el permiso.
+- **Secretos de la función** (Supabase › Edge Functions › Secrets):
+  `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Sin ellos contesta
+  503 y la caja dice «La llamada de la clase todavía no está disponible».
+
+**Al tocar la llamada, correr `node herramientas/verificar-todo.js
+clase-llamada`.** Comprueba los enganches de `sesion.js` y `clase-sacar.js`, las
+cabeceras, la migración y la función, y en el navegador la caja con dobles de
+LiveKit y de la función: los anuncios, el micrófono bloqueado sin la palabra, la
+palabra dada y quitada, los atajos y el aviso de cuando no está configurada.
+
 ### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
 
 `sesion.html` es la pantalla más cargada del sitio: catorce controles del

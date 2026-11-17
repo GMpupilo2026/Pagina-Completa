@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261116215206
+# al-dia-con: 20261117202858
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -3392,6 +3392,7 @@ funcion  licencias_admin()  definer  anon=false  auth=true
 funcion  licencias_cambiar(p_id uuid, p_accion text, p_vence timestamp with time zone)  definer  anon=false  auth=true
 funcion  licencias_generar(p_herramienta text, p_cantidad integer, p_dias integer, p_nota text, p_persona uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
+funcion  llamada_de_la_clase(p_profesor uuid)  definer  anon=false  auth=true
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
 funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text, p_donde text, p_con_sonido boolean)  definer  anon=false  auth=true
 funcion  mandar_broma_v1(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=false

@@ -77,6 +77,8 @@ async function sacarDeLaClase(studentId, nombre) {
     onlineStudents.delete(studentId);
     renderStudentsList();
     pintarSacados();
+    // De la llamada de voz también (la sala la acomoda el servidor con clase_sacados).
+    if (llamada) llamada.sincronizar();
     setStatus("🚪 Sacaste a " + nombre + " de la clase.");
 }
 

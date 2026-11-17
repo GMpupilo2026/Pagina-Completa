@@ -40,6 +40,8 @@
 
         // El recuadro del Modo Adaptado de cada tablero (js/clase-adaptada.js).
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
+        // La llamada de voz de la clase (js/clase-llamada.js): null si no se montó.
+        let llamada = null;
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
            pintaban en silencio, y para quien no ve el tablero son la mitad de la
@@ -1570,6 +1572,7 @@
             }
             const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
+            if (llamada) llamada.salir();   // sin clase no hay llamada
             await limpiarLoDeLaClase();
             cargarSacados();
             const paraAusentes = document.getElementById("clase-para-ausentes").checked;
@@ -1871,6 +1874,7 @@
                             // La pudo cerrar desde el panel, o desde otra pestaña:
                             // la franja de acá tiene que decir la verdad igual.
                             currentOpenSessionId = null;
+                            if (llamada) llamada.salir();
                             cargarSacados();
                             pintarEstadoDeClase();
                         }
@@ -4293,6 +4297,8 @@
             if (errTurno) { console.error(errTurno); turnoActualId = null; }
             else { turnoActualId = data && data.id; sumarTurno(id, null); }
             pintarTurnos();
+            // En la llamada, puede hablar quien tiene el turno (lo pone el servidor).
+            if (llamada) llamada.sincronizar();
             return true;
         }
 
@@ -4353,6 +4359,7 @@
             turnoActualId = null;
             document.getElementById("elegido-caja").hidden = true;
             pintarTurnos();
+            if (llamada) llamada.sincronizar();   // se terminó el turno: se le apaga el micrófono
             if (resultado) setStatus("Anotado: " + quien + " respondió " + (resultado === "bien" ? "bien" : "casi") + ".");
         }
 
@@ -7942,6 +7949,17 @@
             if (meSacaron) return;
             subscribeClassSessions();
             conectarControlesDeClase();
+            /* La llamada de voz, en la misma página que el tablero: el profe que da
+               la clase y sus alumnos. Ni quien observa (mira, no habla), ni la vista
+               previa, ni el proyector o el control remoto (otra ventana de la misma
+               clase). La mano es la de la clase. */
+            if (window.ClaseLlamada && !esObservador && !vistaPrevia && !modoProyector && !modoControl
+                && (!isTeacher || profile.role === "profesor")) {
+                llamada = ClaseLlamada.montar({
+                    sb, profesorId: boardOwnerId, esProfe: isTeacher,
+                    alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
+                });
+            }
             await loadVariantTree();
             subscribeVariants();
             /* Quien observa ve el tablero, las variantes y quién está
