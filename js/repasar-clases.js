@@ -142,7 +142,7 @@ function abrir(p){
      el título decía al recibir el foco lo dice el recuadro. */
   if (modoCiego() && comandos && comandos.input.checkVisibility()) {
     comandos.enfocar().decir(`${document.getElementById('visor-titulo').textContent}, ${document.getElementById('visor-fecha').textContent}. `
-      + 'Estás en la posición de arranque: escribe «siguiente», o «jugada 5» para ir a la jugada 5 de las blancas.');
+      + 'Estás en la posición de arranque: escribe «siguiente», o «jugada 5» para ir a la jugada 5 de las blancas. Para elegir otra clase, escribe «clases».');
   } else {
     document.getElementById('visor-titulo').focus();
   }
@@ -373,8 +373,15 @@ function montarAccesible(){
       // (#visor-anuncio) y la posición se pide con «posición».
       posicionViva: false,
       onEnviar: recorrerEscribiendo,
+      // Con el recuadro vacío, Enter o → avanzan sin escribir nada (js/cuadro-comandos.js).
+      recorrer: {
+        siguiente: (api) => { if ((nodo || actual.raiz).hijos[0]) { api.decir(''); siguiente(); } else api.decir('Ya estás en la última jugada de esta línea.'); },
+        anterior: (api) => { if (nodo) { api.decir(''); anterior(); } else api.decir('Ya estás en la posición de arranque.'); },
+        inicio: (api) => { api.decir(''); alPrincipio(); },
+        final: (api) => { api.decir(''); alFinal(); },
+      },
     });
-    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar». Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+    if (comandos) comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
   }
 }
 
@@ -394,8 +401,37 @@ function lineaActual(){
    de rivales (VisorLinea.pasoPedido): quien está en el recuadro no tiene que
    salir de él y tabular hasta ▶ en cada jugada. Las preguntas («caballos»)
    ya las contestó js/comandos-tablero.js antes de llegar acá. */
+/* Volver a la lista de clases desde el recuadro. Con la cuenta ciega el foco
+   queda en el recuadro al abrir una clase, y la lista está ANTES en la página:
+   quien no ve no tenía cómo saber que estaba ahí ni cómo llegar sin tabular
+   hacia atrás por los botones y el tablero. «clases» lleva el foco a la clase
+   abierta en la lista y dice cuántas hay y cómo moverse. */
+const PIDE_LISTA = /^\s*(clases|mis clases|lista|la lista|lista de clases|otra clase|elegir( otra)? clase|cambiar( de)? clase|volver a (la lista|las clases))\s*$/i;
+function irALaLista(){
+  const botones = [...document.querySelectorAll('#lista-clases button')];
+  if (!botones.length) return 'Todavía no hay clases en la lista.';
+  const abierta = botones.find((b) => b.getAttribute('aria-current') === 'true') || botones[0];
+  abierta.focus();
+  return 'Tus clases: ' + botones.length + (botones.length === 1 ? ' clase' : ' clases')
+    + '. Flecha arriba y flecha abajo pasan de una a otra; Enter abre la que elijas.';
+}
+/* Dentro de la lista, flecha arriba y abajo pasan de clase en clase (y Inicio
+   y Fin, a las puntas): con doscientas clases, Tab de una en una no alcanza. */
+document.getElementById('lista-clases').addEventListener('keydown', (e) => {
+  const b = e.target && e.target.closest && e.target.closest('#lista-clases button');
+  if (!b) return;
+  const botones = [...document.querySelectorAll('#lista-clases button')];
+  const i = botones.indexOf(b);
+  const destino = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: botones.length - 1 }[e.key];
+  if (destino === undefined) return;
+  e.preventDefault();
+  e.stopPropagation();   // que no lo tome el recorrido de la partida
+  if (botones[destino]) botones[destino].focus();
+});
+
 function recorrerEscribiendo(texto, api){
-  if (!actual) { api.decir('Primero elige una clase de la lista.'); return; }
+  if (PIDE_LISTA.test(texto)) { api.limpiar(); api.decir(irALaLista()); return; }
+  if (!actual) { api.decir('Primero elige una clase de la lista: escribe «clases».'); return; }
   if (/^\s*girar( el tablero)?\s*$/i.test(texto)) {
     api.limpiar();
     document.getElementById('btn-girar').click();

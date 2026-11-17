@@ -799,6 +799,16 @@ plataforma se acomoda sola en todas las páginas de esa persona.
   Sonar, 4×4, Visualización, Tipos y los cursos), primero el de un diálogo
   abierto. La nota del panel adaptado va en su propio párrafo
   (`#panel-adaptado-nota`): el subtítulo lo reescribe después la racha del día.
+- **El panel adaptado no lleva «Hoy te toca»** (17/11/2026, a pedido del
+  dueño). La tarjeta `#progreso-alumno` —la meta del día, la racha, los
+  repasos que vencen, «Entrenar 10 minutos» y «Tus números»— es un montón de
+  texto que el lector de pantalla lee de arriba abajo antes de llegar a lo que
+  se usa, y a quien no ve no le sirve. En el panel adaptado la tarjeta queda
+  escondida y ni se piden sus datos (`cargarHoyTeToca`, `loadEntrenoProgress`,
+  `loadTacticsRecord`): son diez scripts y tres consultas para nada. Lo que
+  vence (la franja de pendientes), «Continúa donde ibas» y «Tus clases» sí
+  siguen. `verificar-vision-cuenta.js` lo mide, y que sin la marca la tarjeta
+  vuelve.
 - **Competir** a quien no ve le ofrece retar solo en Estándar y Niebla (las que
   se juegan escribiendo); un reto que le llega en otra modalidad no trae
   «Aceptar»: dice que no está adaptada. Los retos que llegan están en una
@@ -902,6 +912,16 @@ quedó:
   girar); cada paso dice la jugada contada, el comentario del profe y si hay
   pregunta. Las flechas globales del visor no roban las teclas con el foco en
   un tablero, un recuadro o un `[role=application]`.
+  **Volver a la lista de clases** (17/11/2026): con la cuenta ciega, abrir una
+  clase deja el foco en el recuadro, y la lista «Tus clases» queda ANTES en la
+  página, detrás de los botones y el tablero: los alumnos ciegos no llegaban a
+  ella para elegir otra clase. Ahora el recuadro entiende «clases» (y «lista»,
+  «otra clase», «volver a la lista»…): lleva el foco a la clase abierta en la
+  lista y dice cuántas hay; ahí flecha arriba y abajo pasan de clase en clase
+  (Inicio y Fin, a las puntas) y Enter abre la elegida, con el foco de vuelta
+  en el recuadro. El aviso al abrir una clase y la ayuda del recuadro lo dicen.
+  No se usa «volver» solo: es una acción conocida de `js/comandos-tablero.js`.
+  `verificar-repasar-clases.js` lo mide.
   **Avanzar sin escribir** (17/11/2026): los alumnos ciegos tenían que
   escribir «siguiente» en cada jugada, y los botones ⏮ ◀ ▶ ⏭ quedan ARRIBA
   del recuadro, a varios Tab. Ahora `CuadroComandos.montar(…, { recorrer })`:
