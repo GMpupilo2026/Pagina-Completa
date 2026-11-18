@@ -221,7 +221,6 @@ window.__consultas = [];
         window.__satisfaccion = args;
         return constructor(n, args.p_solo_se_van ? [{ id: "e-1", seguir: "no" }] : []).conCabeza(op);
       }
-      if (n === "cobros_morosos") return constructor(n, []).conCabeza(op);
       if (n === "soy_coordinador") {
         return Promise.resolve({ data: !!(USUARIO.is_admin || USUARIO.es_coordinador), error: null });
       }
@@ -440,7 +439,7 @@ async function pruebaUnaSolaPuerta(browser) {
   const hrefs = vistas.map((v) => v.split(" ")[1]);
   igual("y ninguna sale dos veces", new Set(hrefs).size === hrefs.length, true);
   igual("las páginas de siempre siguen ahí",
-    ["cobros.html", "accesos.html", "informes.html", "solicitudes.html", "academias.html", "supervision.html", "novedades.html"].every((h) => hrefs.includes(h)), true);
+    ["mensualidades.html", "accesos.html", "informes.html", "solicitudes.html", "academias.html", "supervision.html", "novedades.html"].every((h) => hrefs.includes(h)), true);
   igual("todas llevan a un archivo que existe",
     hrefs.filter((h) => !fs.existsSync(path.join(RAIZ, h.split("?")[0]))), []);
   igual("el panel de la Academia arma su lista con la MISMA (una sola copia)",
@@ -593,14 +592,15 @@ async function pruebaUrgente(browser) {
   ]);
   igual("lo que está en cero se dice «al día», no desaparece",
     await page.evaluate(() => Array.from(document.querySelectorAll("#urgentes-al-dia li")).filter((li) => li.checkVisibility()).map((li) => li.textContent)),
-    ["✓ Cada supervisor tiene gente a cargo", "✓ Pagos al día"]);
+    ["✓ Ningún pago por confirmar", "✓ Cada supervisor tiene gente a cargo", "✓ Pagos al día"]);
   igual("el resumen lo cuenta", (await page.textContent("#urgentes-resumen")).replace(/ Revisado.*/, ""), "5 cosas urgentes y 3 para vigilar.");
   igual("y el menú lleva el número de lo urgente",
     await page.evaluate(() => { const b = document.getElementById("nav-urgentes"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "5");
 
   // Se cuenta en la base, no bajándose la lista.
-  const consultas = await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cobros_morosos", "respuestas_satisfaccion"].includes(c.tabla)).map((c) => c.tabla + (c.head ? ":head" : ":LISTA")));
-  igual("solicitudes, cobros y satisfacción se cuentan con head", consultas.sort(), ["cobros_morosos:head", "respuestas_satisfaccion:head", "solicitudes_academia:head"]);
+  // Los cobros (cuentas vencidas o apagadas y comprobantes por confirmar) son los de mensualidades.html.
+  const consultas = await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cuentas_cobro_vista", "pagos_reportados", "respuestas_satisfaccion"].includes(c.tabla)).map((c) => c.tabla + (c.head ? ":head" : ":LISTA")));
+  igual("solicitudes, cobros y satisfacción se cuentan con head", consultas.sort(), ["cuentas_cobro_vista:head", "pagos_reportados:head", "respuestas_satisfaccion:head", "solicitudes_academia:head"]);
   igual("«este mes» arranca el primero del mes", /-01$/.test((await page.evaluate(() => window.__satisfaccion)).p_desde), true);
 
   // Cada pendiente lleva a donde se resuelve.
