@@ -66,6 +66,53 @@
                         </div>
                     </div>
                 </div>
+                <!-- El diploma de un rango (curso 'rango:…'): otro papel, con marco
+                     dorado, medallón y la pieza del rango. Los colores de cada rango
+                     van en .rango-<id> (css/styles.css). Ver «El diploma de rango» en
+                     docs/decisiones/puntos-y-premios.md. -->
+                <div id="diploma" class="diploma-hoja" hidden>
+                    <div class="diploma-bisel">
+                        <div class="diploma-marco">
+                            <div class="diploma-lienzo">
+                                <span class="diploma-esquina diploma-esquina-ai" aria-hidden="true"></span>
+                                <span class="diploma-esquina diploma-esquina-ad" aria-hidden="true"></span>
+                                <span class="diploma-esquina diploma-esquina-bi" aria-hidden="true"></span>
+                                <span class="diploma-esquina diploma-esquina-bd" aria-hidden="true"></span>
+                                <header class="diploma-cabeza">
+                                    <div class="diploma-marca">
+                                        <img src="img/logo-marca.png" alt="" width="155" height="96">
+                                        <span>Ajedrez <span class="diploma-dorado">Integral</span></span>
+                                    </div>
+                                    <p class="diploma-kicker">Diploma de rango</p>
+                                </header>
+                                <div class="diploma-cuerpo">
+                                    <p class="diploma-frase">Se certifica que</p>
+                                    <p id="diploma-alumno" class="diploma-nombre"></p>
+                                    <p class="diploma-frase">aprobó el examen del</p>
+                                    <div class="diploma-vitrina">
+                                        <div class="diploma-medallon"><span id="diploma-pieza" class="diploma-pieza" aria-hidden="true"></span></div>
+                                        <div class="diploma-info">
+                                            <span class="diploma-etiqueta">Nivel alcanzado</span>
+                                            <p id="diploma-rango" class="diploma-rango"></p>
+                                            <span id="diploma-nivel" class="diploma-cinta"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <footer class="diploma-pie">
+                                    <dl class="diploma-datos">
+                                        <div><dt>Fecha: </dt><dd id="diploma-fecha"></dd></div>
+                                        <div id="diploma-academia-fila" hidden><dt>Academia: </dt><dd id="diploma-academia"></dd></div>
+                                    </dl>
+                                    <div class="diploma-sello" aria-hidden="true"><span>Ajedrez<br>Integral<br>CR</span></div>
+                                    <div class="diploma-comprobar">
+                                        <div id="diploma-qr" class="diploma-qr"></div>
+                                        <p>Para comprobarlo: <strong id="diploma-codigo"></strong></p>
+                                    </div>
+                                </footer>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <p id="cert-anulado" class="certificado-anulado" hidden aria-hidden="true">ANULADO</p>
             </article>
         </div>
@@ -76,6 +123,7 @@
     <script src="js/main.js"></script>
     <script src="js/vendor/qrcode.js"></script>
     <script src="js/qr-svg.js"></script>
+    <script src="js/rangos.js"></script>
     <script src="js/certificado.js"></script>
 </body>
 </html>

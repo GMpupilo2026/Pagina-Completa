@@ -884,6 +884,51 @@ exactamente las jugadas que dice la tabla (si el rey defendiera peor, llegaría
 antes), y en la base el 90 %, los mates obligatorios, un pendiente por alumno,
 la resta solo en el avance y los permisos de las funciones de mate.
 
+## El diploma de rango
+
+El diploma de un rango sale en la misma página que el certificado de un curso,
+`certificado.html?c=<código>`, con el mismo código y el mismo QR para
+comprobarlo. Pero es otro papel: encabezado «Diploma de rango», marco azul con
+un bisel dorado, la pieza del rango en un medallón con volumen, un sello, y
+**sin profesor**, porque el examen lo arma la base sola. El diseño lo propuso
+Gemini a pedido del dueño y se adaptó al sitio.
+
+- **Qué se cambió del diseño de Gemini**:
+  - las fuentes de Google se cambiaron por las del sitio (Merriweather, Cinzel
+    e Inter), porque la CSP solo deja `font-src 'self'`;
+  - la marca de agua es la imagen de siempre, `img/marca-agua-ajedrez-integral.png`,
+    en lugar de un texto dibujado;
+  - el logo es el de la marca, el caballo sobre el azul;
+  - la cinta «Certificación Oficial» dice ahora «Nivel 2 de 6»;
+  - los estilos pasaron a `css/styles.css`, todo bajo `.es-diploma`.
+- **Los colores de cada rango** son variables CSS: bronce, plata, esmeralda,
+  azul, dorado y rojo con fuego para el Dragón. Las reglas por rango van como
+  `.es-diploma.rango-<id>`, con dos clases. Con una sola clase, la regla
+  general `.certificado.es-diploma` tiene más peso y todos los diplomas salían
+  plateados, sin dar ningún error.
+- **La pieza va rellena** (♞ y no ♘): el metal se pinta adentro de la letra, y
+  la pieza blanca de Unicode es solo un contorno. La pieza sale de
+  `js/rangos.js`, que sigue siendo una sola copia. El Dragón es un emoji y
+  conserva su color.
+- **Las medidas van en `cqw`**, el ancho del papel, así que el diploma se ve
+  igual en la pantalla y en la hoja. En un celular angosto se apila hacia
+  abajo.
+- **Se imprime en carta apaisada, en una sola hoja** (`@page diploma-rango`).
+  Primero se llamó `@page diploma`, pero ese nombre ya era de los diplomas de
+  Pareo Integral, que tienen 1,5 cm de margen. Dos `@page` con el mismo nombre
+  se pisan sin avisar, y el diploma salía en dos hojas. Ahora
+  `verificar-certificados.js` revisa que ningún `@page` con nombre esté
+  repetido.
+- `verificar-certificados.js` comprueba que, con un `curso` de rango:
+  - se ve el diploma y no el certificado de curso;
+  - dice lo que guardó la base y no trae profesor;
+  - la pieza sale rellena;
+  - cada rango pinta sus propios colores;
+  - se imprime en su propia página.
+
+  Se rompió a propósito (el nombre de página repetido y los colores sin la
+  doble clase) y saltó.
+
 ## Los premios de cada academia
 
 Además del catálogo de todo el sitio, **cada academia pone sus premios** —una
