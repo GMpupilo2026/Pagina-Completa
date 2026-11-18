@@ -497,8 +497,15 @@
     }
     const ES_SOLUCION = /^(solucion|la solucion|ver la solucion|ver solucion|respuesta|la respuesta|ver la respuesta|decir la solucion)$/;
 
+    /* De un diagrama al siguiente sin salir del recuadro («diagrama
+       siguiente»): lo resuelve js/curso-adaptado.js, que conoce los visores
+       de la lección. */
+    const OTRO = " Para pasar al próximo diagrama de la lección, escribe «diagrama siguiente».";
+    const hayOtros = () => !!(window.CursoAdaptado && window.CursoAdaptado.otroVisor);
     function alEscribir(texto, api) {
       const t = sinTildes(texto);
+      if (hayOtros() && window.CursoAdaptado.otroVisor(el, texto, api,
+        state.mode === "practicar" ? "Estás practicando contra el motor: escribe «terminar» y después «diagrama siguiente»." : "")) return;
       if (state.mode === "practicar") {
         if (/^(terminar|salir|parar)( la practica)?$/.test(t)) { stopPractice(); api.limpiar().decir("Terminaste la práctica."); return; }
         if (thinking) { api.decir("El motor está pensando: espera su jugada."); return; }
@@ -551,7 +558,7 @@
           : "No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 5», «solución», «practicar» para jugar contra el motor, o una pregunta como «caballos».");
         return;
       }
-      if (!hasSol) { malDicho(api, "Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor."); return; }
+      if (!hasSol) { malDicho(api, "Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor." + (hayOtros() ? OTRO : "")); return; }
       /* Con la solución tapada, recorrer la línea NO la destapa sin avisar: se
          dice que está tapada y cómo oírla. */
       if (!state.showSol) {
@@ -559,9 +566,22 @@
         return;
       }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
-      if (n > moves.length) { api.decir("Ya estás en la última jugada de la línea."); return; }
+      if (n > moves.length) {
+        api.decir("Ya estás en la última jugada de la línea." + (!hayOtros() ? "" : esPregunta ? " «siguiente» pasa a la siguiente pregunta." : OTRO));
+        return;
+      }
       api.limpiar().decir("");
       irA(n);
+    }
+    /* Con el recuadro VACÍO, Intro o → avanzan una jugada, ← retrocede, Inicio
+       y Fin van a las puntas (js/cuadro-comandos.js, `recorrer`). Ya valía en
+       «Repasar mis clases» y en el tablero de Estudio; en los cursos había que
+       escribir «siguiente» en cada jugada, y quien venía de allá apretaba
+       Intro y no pasaba nada. Va por las mismas palabras que se escriben, así
+       dice lo mismo: que la solución está tapada, que ya es la última… */
+    function pasoVacio(palabra, api) {
+      if (state.mode === "practicar") { api.decir("Estás practicando contra el motor: escribe tu jugada, o «terminar»."); return; }
+      alEscribir(palabra, api);
     }
 
     montarCuadro(cmdHost, {
@@ -572,11 +592,17 @@
       // La posición no se dicta en cada jugada: se dice la jugada.
       posicionViva: false,
       onEnviar: alEscribir,
+      recorrer: {
+        siguiente: (api) => pasoVacio("adelante", api),
+        anterior: (api) => pasoVacio("atras", api),
+        inicio: (api) => pasoVacio("inicio", api),
+        final: (api) => pasoVacio("final", api),
+      },
     }, (api) => {
       cuadro = api;
       api.ayuda(esPregunta
-        ? "Contestar: la jugada («Cc4») o el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas», «ganan negras»). «solución» dice la respuesta; «siguiente» pasa a la siguiente pregunta; «pregunta» la repite. Con la solución a la vista: «adelante», «atrás», «jugada 5». Jugar contra el motor: «practicar». Preguntar: «posición», «caballos», «qué hay en e4»."
-        : "Recorrer: «siguiente», «anterior», «jugada 5». La explicación: «solución». Jugar contra el motor: «practicar», y luego la jugada («Cf3», «e4»). Preguntar: «posición», «caballos», «qué hay en e4».");
+        ? "Contestar: la jugada («Cc4») o el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas», «ganan negras»). «solución» dice la respuesta; «siguiente» pasa a la siguiente pregunta; «pregunta» la repite. Con la solución a la vista y el recuadro vacío: Intro o flecha derecha, la jugada siguiente; flecha izquierda, la anterior. Jugar contra el motor: «practicar». Preguntar: «posición», «caballos», «qué hay en e4»."
+        : "Con el recuadro vacío: Intro o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5», «diagrama siguiente». La explicación: «solución». Jugar contra el motor: «practicar», y luego la jugada («Cf3», «e4»). Preguntar: «posición», «caballos», «qué hay en e4».");
       mostrarCuadro();
     });
     mostrarCuadro();

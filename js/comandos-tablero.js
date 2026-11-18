@@ -110,6 +110,13 @@ window.ComandosTablero = (function () {
         "de la partida); turno (a quién le toca); ayuda (esta lista).",
     },
     {
+      titulo: "Poner la posición en tu tablero",
+      texto: "dictar (la posición pieza por pieza: con el recuadro vacío, Intro dice la siguiente, flecha " +
+        "arriba la repite, flecha izquierda vuelve a la anterior y Escape termina); \"dictar solo\" (las dice " +
+        "sola, con una pausa entre cada una, para tener las manos en el tablero; \"dictar solo 8\" deja ocho " +
+        "segundos); \"voz más lenta\", \"voz más rápida\" y \"voz normal\" (la velocidad de la voz del navegador).",
+    },
+    {
       titulo: "Moverse por el tablero con el teclado",
       texto: "El tablero es una sola parada de tabulador: se entra con Tab y dentro se anda con las " +
         "flechas. Intro o espacio elige la casilla. Inicio y Fin van al principio y al final de la fila; " +
@@ -631,8 +638,49 @@ window.ComandosTablero = (function () {
       return { manejado: true, tipo: "ayuda", respuesta: ayudaTexto(), html: ayudaHTML() };
     }
 
+    /* La velocidad de la voz del navegador, sin salir del recuadro: «voz más
+       lenta», «más despacio», «voz más rápida», «voz normal». Va antes de
+       mirar si hay tablero: vale en cualquier recuadro. `ctx.sinEfecto` es
+       para quien solo pregunta si esto es un comando del recuadro
+       (js/vision-cuenta.js): contesta que sí y no cambia nada. */
+    var vel = t.match(/^(?:(?:voz|habla|hablar|lee|leer)\s+)?mas\s+(lenta|lento|despacio|rapida|rapido|deprisa)$/);
+    var velNormal = /^(voz normal|velocidad normal|voz a velocidad normal)$/.test(t);
+    if (vel || velNormal) {
+      if (!window.BlindNotation || !BlindNotation.setSpeechRate) return { manejado: true, tipo: "voz", respuesta: "En esta página no se puede cambiar la velocidad de la voz." };
+      if (ctx.sinEfecto) return { manejado: true, tipo: "voz", respuesta: "" };
+      var antes = BlindNotation.getSpeechRate();
+      var lenta = vel && /^(lenta|lento|despacio)$/.test(vel[1]);
+      var nueva = BlindNotation.setSpeechRate(velNormal ? 1 : antes + (lenta ? -0.15 : 0.15));
+      var tope = !velNormal && nueva === antes;
+      return {
+        manejado: true, tipo: "voz",
+        respuesta: (velNormal ? "Voz a velocidad normal."
+          : tope ? "La voz ya está en la velocidad más " + (lenta ? "lenta" : "rápida") + "."
+          : "Voz más " + (lenta ? "lenta" : "rápida") + ": " + Math.round(nueva * 100) + " por ciento.") +
+          " Vale para la voz del navegador; la de un lector de pantalla se cambia en el lector.",
+      };
+    }
+
     // Todo lo que sigue necesita saber qué hay en el tablero.
     if (!juego || !juego.get) return { manejado: false };
+
+    /* «dictar»: la posición pieza por pieza, para ponerla en un tablero de
+       verdad. Acá solo se arman los pasos; quien los va diciendo, uno por cada
+       Intro, es el recuadro (js/cuadro-comandos.js). `respuesta` los trae
+       todos seguidos, cada pieza en su frase, para un recuadro que no sepa
+       dictar: sigue siendo más lento de oír que la posición de corrido.
+       «dictar solo» los dice sin tocar nada, con una pausa entre pieza y
+       pieza («dictar solo 8»: de ocho segundos). */
+    var dic = t.match(/^(?:dictar|dictado|dictame|dictamela|dictar la posicion|dictado de la posicion|pieza por pieza|posicion despacio|posicion lenta|posicion pieza por pieza)(?:\s+(solo|sola|automatico|automatica)(?:\s+(\d{1,2}))?)?$/);
+    if (dic && window.BlindNotation && BlindNotation.pasosDeDictado) {
+      var d = BlindNotation.pasosDeDictado(juego);
+      var cierre = d.fin + soloLoQueVes(juego);
+      return {
+        manejado: true, tipo: "dictado", pasos: d.pasos, fin: cierre, total: d.total,
+        auto: !!dic[1], segundos: dic[2] ? parseInt(dic[2], 10) : null,
+        respuesta: d.pasos.concat([cierre]).join(" "),
+      };
+    }
 
     /* Las palabras van enteras y nunca una letra suelta, por lo mismo que la
        tabla de arriba: "t" y "z" serían letras de opción, y "m" y "x" pueden ser

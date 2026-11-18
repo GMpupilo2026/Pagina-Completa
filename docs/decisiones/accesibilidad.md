@@ -571,6 +571,69 @@ es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
 contrarreloj se miran **por la posición del tablero y no por el renglón de
 resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
 
+### El dictado: la posición pieza por pieza, y la voz más lenta
+
+La queja de los alumnos ciegos: **la posición se lee muy rápido, y si hay que
+ponerla en el tablero no da tiempo**. Muchos estudian con un tablero de verdad
+al lado, y «posición» la dice de corrido («Blancas: rey en eva 1; torres en
+anna 1 y hector 1…»): mientras se busca la torre ya van por los peones, y
+volver a pedirla la empieza de nuevo. No falla nada: se oye, y no alcanza.
+
+**«dictar»** (o «dictado», «pieza por pieza»), en cualquier recuadro común
+(`js/cuadro-comandos.js`), la dice de a UNA pieza: «Blancas, pieza 2 de 5:
+torre en anna 1.». Manda quien escucha. Con el recuadro vacío:
+
+    Intro o →   la pieza siguiente        ↑   la repite
+    ←           la anterior               Escape   termina
+
+- **Cada paso dice el color y cuántas faltan**, así se puede parar en
+  cualquiera y saber dónde se quedó; el último cierra con la cuenta y quién
+  juega («Fin del dictado: 5 piezas blancas y 3 negras. Juegan blancas.»), que
+  es la forma de comprobar que no faltó ninguna.
+- **«dictar solo»** las dice sola, con una pausa entre una y otra (5 segundos;
+  «dictar solo 8» deja ocho y se guarda en `oscarDictadoPausa_v1`), para quien
+  tiene las dos manos en el tablero. La pausa empieza cuando la voz termina de
+  decir la pieza; con lector de pantalla no se puede saber cuándo terminó, y se
+  le da lo que mide la frase. Lleva un plazo por si la voz no avisa nunca (sin
+  voces instaladas no avisa): el dictado no se queda esperando. Cualquier tecla
+  del dictado la detiene y se sigue a mano.
+- **Mientras se dicta, Intro es del dictado y no de `recorrer`**: no avanza la
+  partida a mitad de armar la posición. Y nadie queda encerrado: se termina
+  solo si la posición cambia o si se escribe otra cosa (una jugada,
+  «diagrama siguiente»), que sigue su camino. «siguiente», «repetir», «atrás»
+  y «salir» escritos también valen; **nunca una letra sola**: «a» es la opción
+  A de una pregunta.
+- **La capa de la cuenta ciega se aparta** (`js/vision-cuenta.js` mira
+  `data-dictando` en el recuadro): sin eso, «siguiente» apretaba el botón
+  «Siguiente ejercicio» de la página en vez de decir la pieza.
+- Los pasos los arma `BlindNotation.pasosDeDictado()`, con el mismo agrupado y
+  las mismas palabras que las otras lecturas; `ComandosTablero.interpretar()`
+  los devuelve (`tipo: "dictado"`) **sin guardar nada**: quien los recorre es
+  el recuadro. Un recuadro propio que no sepa dictar recibe en `respuesta` las
+  piezas seguidas, cada una en su frase.
+- **El recuadro lo dice**: debajo de la ayuda va «Para poner la posición en tu
+  tablero, escribe «dictar»…» (`.cc-dictar-pista`). Un comando que no se conoce
+  no se usa. Va debajo y no entre la posición y el recuadro, que siguen
+  pegados.
+
+**La velocidad de la voz del navegador** iba siempre a la de fábrica. Ahora se
+guarda en este navegador (`oscarSpeechRate_v1`, de 0,5 a 1,5;
+`BlindNotation.setSpeechRate()`), `speak()` la pone en cada frase y se cambia
+de dos formas: en Configuración («Velocidad de la voz», junto a la voz) o sin
+salir del ejercicio, escribiendo «voz más lenta», «voz más rápida» o «voz
+normal». La respuesta aclara que vale para la voz del navegador: la de un
+lector de pantalla se cambia en el lector. `interpretar()` acepta
+`sinEfecto: true` para quien solo pregunta si lo escrito es un comando del
+recuadro (la capa de la cuenta ciega): sin eso, cada «voz más lenta» bajaba
+dos escalones.
+
+`verificar-cuadro-comandos.js` («El dictado, pieza por pieza») lo recorre en
+Ejercicios por tema: que dicte TODAS las piezas del tablero dibujado, cada una
+en su casilla y una sola vez; que Intro no juegue ni cambie el ejercicio; ↑, ←
+y Escape; que «dictar solo» avance sin tocar nada y una tecla lo detenga; y que
+la voz salga a la velocidad pedida (se mira el `rate` de lo que se manda a
+decir). Probado que falla: sin los peones en `pasosDeDictado()` saltan dos.
+
 ## «Activar voz» en todo el sitio
 
 Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
