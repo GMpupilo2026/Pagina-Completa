@@ -34,7 +34,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { posicionHtml } = require("./lib/posicion-accesible.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -328,15 +328,18 @@ function partidaA(g) {
   const datos = [g.evento, g.apertura].filter(Boolean).join(". ");
   if (datos) h += `<p>${esc(datos)}.</p>`;
   if (g.fragmento || diags.has(0)) h += posicionA(g.start_fen, "Posición inicial.");
+  /* Cada jugada en su renglón, con su comentario al lado: una partida de
+     cuarenta jugadas en párrafos se oye de un tirón, y no se puede volver a
+     UNA jugada mientras se mueve la pieza. Un diagrama corta la lista y la
+     siguiente sigue donde iba. */
   let tramo = [];
-  const cerrar = () => { if (tramo.length) { h += `<p>${tramo.join(" ")}</p>`; tramo = []; } };
+  const cerrar = () => { if (tramo.length) { h += `<ul class="jugadas">${tramo.join("")}</ul>`; tramo = []; } };
   g.moves.forEach((m, i) => {
-    tramo.push(`<strong>${m.color === "w" ? `${m.n}.` : `${m.n}, negras:`} ${esc(N.sanHablada(m.san))}</strong>`);
-    if (m.comentario) { tramo.push(esc(oido(m.comentario))); cerrar(); }
+    tramo.push(`<li><strong>${m.n}. ${m.color === "w" ? "Blancas" : "Negras"}: ${esc(N.sanHablada(m.san))}.</strong>${m.comentario ? " " + esc(oido(m.comentario)) : ""}</li>`);
     if (diags.has(i + 1)) { cerrar(); h += posicionA(m.fen, `Diagrama después de ${m.n}${m.color === "b" ? ", negras" : ""}: ${N.sanHablada(m.san)}.`); }
   });
-  if (g.resultado) tramo.push(`Resultado: ${esc({ "1-0": "ganan las blancas", "0-1": "ganan las negras", "½-½": "tablas" }[g.resultado] || g.resultado)}.`);
   cerrar();
+  if (g.resultado) h += `<p>Resultado: ${esc({ "1-0": "ganan las blancas", "0-1": "ganan las negras", "½-½": "tablas" }[g.resultado] || g.resultado)}.</p>`;
   return h;
 }
 
@@ -393,7 +396,7 @@ jugadas van dichas, cada diagrama va contado pieza por pieza y con su FEN, y no 
 <h2>Índice</h2>
 <ol>${ds.map((d) => `<li value="${d.leccion.n}"><a href="#leccion-${d.leccion.n}">${esc(oido(d.leccion.titulo))}</a></li>`).join("")}</ol>
 ${lecciones}
-${ejs.length ? `<section><h2>Soluciones</h2>${ejs.map((x) => `<h3>Solución ${x.num}: ${esc(x.titulo)}</h3><p>${esc(x.solucion.map((m) => N.sanHablada(m.san)).join(", "))}.</p><p>${esc(oido(x.explicacion))}</p>`).join("")}</section>` : ""}
+${ejs.length ? `<section><h2>Soluciones</h2>${ejs.map((x) => `<h3>Solución ${x.num}: ${esc(x.titulo)}</h3>${jugadasHtml(x.solucion.map((m) => ({ n: m.n, bando: m.color === "w" ? "Blancas" : "Negras", texto: N.sanHablada(m.san) })), { rotulo: "La solución" })}<p>${esc(oido(x.explicacion))}</p>`).join("")}</section>` : ""}
 <footer>
   <p>${esc(AUTOR)}, «Las Mil y una Lecciones de Ajedrez» (EDAMI, 2011). Edición por temas de ${esc(EDICION)} para la
   Academia Ajedrez Integral, ${ANIO}.</p>

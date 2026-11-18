@@ -352,29 +352,7 @@ function volverA(curso, etiqueta) {
    documento el que deja de ir rápido. */
 const { piezasHtml: piezasComun } = require("./lib/posicion-accesible.js");
 function piezasHtml(fen) { return piezasComun(fen, { encabezado: "h4" }); }
-/* La línea ya dicha («1. anna 4, rey felix 7, 2. anna 5») partida en jugadas:
-   [{ n, bando, texto }]. Si algo no tiene la forma esperada devuelve null y
-   la línea se queda en su párrafo: mejor corrida que mal partida. */
-function jugadasDeLinea(dicha) {
-  const trozos = String(dicha).split(/,\s+(?=(?:\d+\s?(?:\.|…)\s)?[^\s])/);
-  const out = [];
-  let n = null, tocaNegras = false;
-  for (const crudo of trozos) {
-    const t = crudo.trim();
-    const m = t.match(/^(\d+)\s?(\.|…)\s+(.+)$/);
-    if (m) {
-      n = Number(m[1]);
-      const negras = m[2] === "…";
-      out.push({ n, bando: negras ? "Negras" : "Blancas", texto: m[3] });
-      tocaNegras = !negras;
-    } else {
-      if (n === null || !tocaNegras || /^\d/.test(t) || !t) return null;
-      out.push({ n, bando: "Negras", texto: t.replace(/^…\s*/, "") });
-      tocaNegras = false;
-    }
-  }
-  return out.length ? out : null;
-}
+const { jugadasDeLinea } = require("./lib/posicion-accesible.js");
 function lineaHtml(dicha) {
   const js = jugadasDeLinea(dicha);
   if (js && js.length === 1) return `<p>La jugada: ${js[0].n}, ${js[0].bando.toLowerCase()}: ${escapar(js[0].texto.replace(/[.,]$/, ""))}.</p>`;

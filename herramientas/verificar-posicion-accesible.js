@@ -15,6 +15,11 @@
    2. En cada bloque de posición con su FEN, hay un renglón por cada pieza de
       la FEN, ni una más ni una menos, y las casillas van dichas («gustav 1»).
 
+   3. Lo mismo con las líneas de jugadas: una «Solución» o «La línea» de dos
+      jugadas o más no va en un párrafo, va con cada jugada en su renglón
+      («32. Negras: torre eva 1.»). Y las partidas comentadas de los tomos,
+      igual: ningún párrafo que empiece por una jugada numerada.
+
    Uso:  node herramientas/verificar-posicion-accesible.js                    */
 const fs = require("fs");
 const path = require("path");
@@ -31,7 +36,7 @@ function accesibles(dir, out) {
 }
 
 const RENGLON = /<li>(?:Rey|Dama|Torre|Alfil|Caballo|Peón) en (?:anna|bella|cesar|david|eva|felix|gustav|hector) [1-8]\.<\/li>/g;
-let fallos = 0, archivos = 0, posiciones = 0;
+let fallos = 0, archivos = 0, posiciones = 0, lineas = 0;
 function mal(donde, que) { fallos += 1; if (fallos <= 25) console.log("  ✗ " + donde + ": " + que); }
 
 for (const archivo of accesibles(RAIZ, [])) {
@@ -42,6 +47,10 @@ for (const archivo of accesibles(RAIZ, [])) {
     mal(donde, "trae una posición en un párrafo corrido («Piezas blancas: rey en…»): va una pieza por renglón (lib/posicion-accesible.js)");
     continue;
   }
+  const corrida = html.match(/<p><strong>(?:Solución|La línea|La solución|Las jugadas[^<]*)\.<\/strong> \d+\s?(?:\.|…) [^<]*?, \d+\. [^<]{0,60}/);
+  if (corrida) { mal(donde, "una línea de varias jugadas sigue en un párrafo: " + corrida[0].replace(/<[^>]+>/g, "").slice(0, 90) + "…"); continue; }
+  if (/<p><strong>\d+(?:\.|, negras:) [a-záéíóúñ]/.test(html)) { mal(donde, "una partida comentada sigue en párrafos: cada jugada va en su renglón"); continue; }
+  lineas += (html.match(/: \d+ jugadas<\/(?:strong|h4)>/g) || []).length + (html.match(/<ul class="jugadas">/g) || []).length;
   const bloques = html.split('<div class="posicion">').slice(1);
   for (const resto of bloques) {
     const bloque = resto.split("</div>")[0];
@@ -57,7 +66,8 @@ for (const archivo of accesibles(RAIZ, [])) {
 }
 
 if (archivos < 400) { console.log(`  ✗ solo se encontraron ${archivos} versiones accesibles: ¿cambió dónde viven?`); fallos += 1; }
-console.log(`${archivos} versiones accesibles · ${posiciones} posiciones con su FEN, cada una con un renglón por pieza`);
+console.log(`${archivos} versiones accesibles · ${posiciones} posiciones con su FEN, cada una con un renglón por pieza · ${lineas} líneas y partidas con cada jugada en su renglón`);
+if (lineas < 3000) { console.log("  ✗ muy pocas líneas partidas en renglones (" + lineas + "): ¿dejó de partirlas algún generador?"); fallos += 1; }
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nEn lo accesible, la posición va de a una pieza por renglón.");
 process.exit(fallos ? 1 : 0);
 

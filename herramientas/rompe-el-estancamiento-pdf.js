@@ -39,7 +39,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { posicionHtml } = require("./lib/posicion-accesible.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -445,14 +445,15 @@ function accesible() {
       ${it ? `<h4>Ejemplo de la lección ${l.n}</h4>
       <p>${esc(oido(l.pregunta || ""))}</p>
       ${posicion(it)}
-      <p><strong>Solución.</strong> ${esc(oido(it.linea))}. ${esc(it.explica)} ${esc(oido(l.enlace || ""))}</p>
+      ${lineaHtml(oido(it.linea), { rotulo: "Solución" })}
+      <p>${esc(it.explica)} ${esc(oido(l.enlace || ""))}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p>` : ""}
       <p><strong>Para practicar.</strong> ${esc(oido(l.practica))}</p>
     </section>`;
   };
   const ejercicioA = (it, pista) => `<article><h4>Ejercicio ${it.num}</h4>${pista ? `<p>Pista: ${esc(it.pista)}</p>` : ""}${posicion(it)}</article>`;
   const solucionA = (it) => `<article><h4>Solución del ejercicio ${it.num}</h4>
-      <p>${esc(oido(it.linea))}</p>
+      ${lineaHtml(oido(it.linea))}
       <p>${it.explica ? esc(it.explica) + " " : ""}${esc(it.pista)}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p></article>`;
 

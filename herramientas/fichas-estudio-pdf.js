@@ -506,7 +506,7 @@ with open(destino, "wb") as f:
    la lista de enlaces del lector (Insert + F7) hacen ese trabajo. */
 const N = require("./lib/notacion.js");
 const { describir } = require("./lib/describir-fen.js");
-const { posicionHtml } = require("./lib/posicion-accesible.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 
 /* La línea de la ficha, numerada y dicha: «1. peón eva 4, peón eva 5, 2. …».
    Sale de chess.js y no del texto, para que la jugada sea la que se jugó. */
@@ -655,10 +655,10 @@ function fichaAccesible(F, cat, n, total) {
   let posicion;
   if (F.fen) {
     posicion = posicionHtml(F.fen, { rotulo: "La posición de partida.", fen: false }) +
-      (jugadas.length ? `<p><strong>Las jugadas.</strong> ${esc(lineaDicha(F.fen, jugadas))}.</p>
+      (jugadas.length ? `${lineaHtml(lineaDicha(F.fen, jugadas), { rotulo: "Las jugadas" })}
         ${posicionHtml(fenFinal(F), { rotulo: "Cómo queda al final.", fen: false })}` : "");
   } else {
-    posicion = `<p><strong>Las jugadas, desde el principio.</strong> ${esc(lineaDicha(null, jugadas))}.</p>
+    posicion = `${lineaHtml(lineaDicha(null, jugadas), { rotulo: "Las jugadas, desde el principio" })}
       ${posicionHtml(fenFinal(F), { rotulo: "La posición al final de la línea.", fen: false })}`;
   }
   return `

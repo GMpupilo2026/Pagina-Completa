@@ -66,6 +66,60 @@ ${vacio ? "" : piezasHtml(fen, o)}
 </div>`;
 }
 
-module.exports = { piezasHtml, posicionHtml };
+/* ------------------------------------------------ la línea, jugada por jugada
+   Lo mismo con las jugadas: «Solución. 32… torre eva 1, 33. dama captura eva
+   1, dama captura eva 1» en un párrafo se oye de un tirón, y no se puede
+   volver a UNA jugada mientras se mueve la pieza en el tablero. Cada jugada va
+   en su renglón («32. Negras: torre eva 1.»), con cuántas son en el rótulo.
+
+   jugadasDeLinea() parte una línea YA DICHA («1. anna 4, rey felix 7, 2. anna
+   5»; «32… torre eva 1, 33. …») en [{ n, bando, texto }]. Si algo no tiene la
+   forma esperada devuelve null y la línea se queda en su párrafo: mejor
+   corrida que mal partida. */
+function jugadasDeLinea(dicha) {
+  const trozos = String(dicha).trim().replace(/\.$/, "").split(/,\s+/);
+  const out = [];
+  let n = null, tocaNegras = false;
+  for (const crudo of trozos) {
+    const t = crudo.trim();
+    const m = t.match(/^(\d+)\s?(\.|…)\s+(.+)$/);
+    if (m) {
+      n = Number(m[1]);
+      const negras = m[2] === "…";
+      out.push({ n, bando: negras ? "Negras" : "Blancas", texto: m[3] });
+      tocaNegras = !negras;
+    } else {
+      if (n === null || !tocaNegras || /^\d/.test(t) || !t) return null;
+      out.push({ n, bando: "Negras", texto: t.replace(/^…\s*/, "") });
+      tocaNegras = false;
+    }
+  }
+  // Una «jugada» larga es prosa que se coló en la línea: no se parte.
+  if (out.some((j) => j.texto.split(" ").length > 9)) return null;
+  return out.length ? out : null;
+}
+/* Las jugadas ya separadas, en su lista. `rotulo`: «Solución», «La línea»,
+   «Las jugadas». `encabezado`: como en piezasHtml(). Las jugadas llegan dichas
+   y sin escapar. */
+function jugadasHtml(js, o) {
+  o = o || {};
+  const rotulo = o.rotulo || "La línea";
+  const fin = (t) => esc(String(t).replace(/[.,]$/, ""));
+  if (js.length === 1) return `<p><strong>${esc(rotulo)}.</strong> ${js[0].n}, ${js[0].bando.toLowerCase()}: ${fin(js[0].texto)}.</p>`;
+  const cabeza = `${esc(rotulo)}: ${js.length} jugadas`;
+  return `${o.encabezado ? `<${o.encabezado}>${cabeza}</${o.encabezado}>` : `<p class="linea-de"><strong>${cabeza}</strong></p>`}
+  <ul>
+${js.map((j) => `    <li>${j.n}. ${j.bando}: ${fin(j.texto)}.</li>`).join("\n")}
+  </ul>`;
+}
+// Una línea dicha, partida; si no se puede partir, en su párrafo de siempre.
+function lineaHtml(dicha, o) {
+  o = o || {};
+  const js = jugadasDeLinea(dicha);
+  if (!js) return `<p><strong>${esc(o.rotulo || "La línea")}.</strong> ${esc(String(dicha).replace(/\.$/, ""))}.</p>`;
+  return jugadasHtml(js, o);
+}
+
+module.exports = { piezasHtml, posicionHtml, jugadasDeLinea, jugadasHtml, lineaHtml };
 
 /*! rev bfb5bbb0d2d82f9f */

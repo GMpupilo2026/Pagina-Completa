@@ -39,7 +39,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { posicionHtml } = require("./lib/posicion-accesible.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -453,7 +453,7 @@ function accesible() {
       </article>`;
     }).join("");
     const soluciones = t.items.map((it) => `<article><h3>Solución de la posición ${it.n}</h3>
-        <p>${esc(oido(it.linea))}</p>
+        ${lineaHtml(oido(it.linea))}
         <p>${esc(it.explica)}</p>
         <p class="comprobado">${esc(oido(it.comprobado))}</p>
       </article>`).join("");

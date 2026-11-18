@@ -38,7 +38,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { posicionHtml } = require("./lib/posicion-accesible.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -389,7 +389,8 @@ function accesible() {
       ${EJEMPLOS.filter((e) => e.leccion === l.n).map((e) => `<h4>Partida modelo: ${esc(cabecera(PARTIDA[e.partida]))}</h4>
       <p>${esc(oido(e.pregunta))}</p>
       ${posicion(e.fen)}
-      <p><strong>Solución.</strong> ${esc(oido(e.linea))}. ${esc(oido(e.comentario))}</p>
+      ${lineaHtml(oido(e.linea), { rotulo: "Solución" })}
+      <p>${esc(oido(e.comentario))}</p>
       <p class="comprobado">${esc(oido(e.comprobado))}</p>`).join("")}
       <p><strong>Para practicar.</strong> ${esc(oido(l.practica))}</p>
     </section>`;
@@ -397,7 +398,7 @@ function accesible() {
       <p>${esc(e.blancas)} contra ${esc(e.negras)}, ${esc(e.lugar)}, ${e.anio}. ${esc(oido(e.pregunta))}</p>
       ${posicion(e.fen)}<p>Pista: ${esc(oido(e.pista))}</p></article>`;
   const solucionA = (e) => `<article><h4>Solución del ejercicio ${e.n}</h4>
-      <p>${esc(oido(e.linea))}.</p>
+      ${lineaHtml(oido(e.linea))}
       <p>${esc(oido(e.explica))}</p>
       ${e.siguio ? `<p>En la partida se jugó ${esc(oido(e.siguio))}.</p>` : ""}
       <p class="comprobado">${esc(oido(e.comprobado))}</p></article>`;
