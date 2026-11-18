@@ -574,8 +574,15 @@
     }
     $("pi-sistema-fijo").hidden = v.rondas.length === 0;
     $("pi-campo-rondas").hidden = T.fijo(v);
-    $("pi-campo-baku").hidden = T.fijo(v);
+    $("pi-campo-baku").hidden = T.fijo(v) || v.sistema === "keizer";
     $("pi-campo-doble").hidden = !T.fijo(v) || v.sistema === "eliminacion";
+    // La doble eliminación y el tercer puesto son de la eliminación directa;
+    // con doble eliminación el tercero sale solo de la llave de perdedores.
+    f.elements.dobleEliminacion.checked = !!v.dobleEliminacion;
+    f.elements.tercerPuesto.checked = !!v.tercerPuesto;
+    $("pi-campo-doble-elim").hidden = v.sistema !== "eliminacion";
+    $("pi-campo-tercer").hidden = v.sistema !== "eliminacion" || !!v.dobleEliminacion;
+    f.elements.dobleEliminacion.disabled = f.elements.tercerPuesto.disabled = v.rondas.length > 0;
     f.elements.dobleVuelta.disabled = v.rondas.length > 0;
     f.elements.colorInicial.disabled = v.rondas.length > 0;
     f.elements.baku.disabled = v.rondas.length > 0;
@@ -785,7 +792,16 @@
     if (!n) return;
     if (n === "nombre" && v.jde) { e.target.value = v.nombre || ""; return; }
     if (configFija(v) && (n === "ritmo" || n === "sistema" || n.startsWith("p_"))) { pintarTorneo(); return; }
-    if (n === "sistema") { if (v.rondas.length === 0) v.sistema = e.target.value; }
+    if (n === "sistema") {
+      if (v.rondas.length === 0) {
+        v.sistema = e.target.value;
+        // En un Keizer la lista se ordena por sus puntos: van primero, con lo
+        // que vale cada uno. Al salir del Keizer, se van.
+        const sin = (v.desempates || []).filter((c) => c !== "KZ" && c !== "KV");
+        v.desempates = v.sistema === "keizer" ? "KZ,KV".split(",").concat(sin) : sin;
+      }
+    }
+    else if (n === "dobleEliminacion" || n === "tercerPuesto") { if (v.rondas.length === 0) v[n] = e.target.checked; }
     else if (n === "baku" || n === "dobleVuelta") v[n] = e.target.checked;
     else if (n === "rondasTotales") {
       const r = Math.round(Number(e.target.value));
@@ -802,7 +818,7 @@
     else v[n] = e.target.value;
     guardar();
     if (n === "nombre") pintarLista();
-    if (n === "sistema") pintarTorneo();
+    if (n === "sistema" || n === "dobleEliminacion") pintarTorneo();
   }
 
   function pintarDesempates() {
@@ -5211,6 +5227,7 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
+          m.ko && (m.llave || m.tercer) ? el("span", { class: "block text-xs " + C.nota, "data-llave": m.tercer ? "T" : m.llave + m.fase, texto: rotuloLlave(m) }) : null,
           m.ko && m.r === "=" ? desempateDeMesa(v, R, m, i) : null,
           m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
@@ -5230,7 +5247,19 @@
   // El nombre de la ronda en una eliminación directa: «Final», «Cuartos de final»…
   const RONDA_ELIM = { final: "elimRonda_final", semifinal: "elimRonda_semifinal", cuartos: "elimRonda_cuartos", octavos: "elimRonda_octavos", ronda: "elimRonda_ronda" };
   function nombreRondaElim(v, r) {
-    return tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 });
+    if (v.dobleEliminacion) return T.fasesDeRonda(v, r).map(nombreFaseDoble).join(" · ");
+    return tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 }) + (v.tercerPuesto && T.nombreRondaEliminacion(v, r) === "final" ? " · " + tx("tercerNombre") : "");
+  }
+  // Una fase de la doble eliminación: «G2» es la ronda 2 de la llave de
+  // ganadores, «P1» la 1 de perdedores, «F1» la final y «F2» la revancha.
+  function nombreFaseDoble(f) {
+    return f === "F1" ? tx("dobleFinal") : f === "F2" ? tx("dobleRevancha") : tx(f[0] === "G" ? "dobleGanadores" : "doblePerdedores", { n: f.slice(1) });
+  }
+  // De qué llave es una mesa, escrito: va al lado del resultado.
+  function rotuloLlave(m) {
+    if (m.tercer) return tx("tercerNombre");
+    if (!m.llave) return "";
+    return nombreFaseDoble(m.llave + m.fase);
   }
 
   // En la eliminación directa, unas tablas se desempatan en la mesa: quién
@@ -5257,6 +5286,15 @@
       m.pasa ? el("span", { class: "pi-solo-imprimir", texto: tx("elimPasoDesempate", { n: nombreDe(m.pasa), f: m.desempate || formatos[0] }) }) : null);
   }
 
+  // Cómo se llama cada forma de no jugar una ronda. En el Keizer dice además
+  // qué parte de su propio valor suma (T.REGLAS_KEIZER).
+  function rotuloAusencia(v, c) {
+    const base = c === "H" ? tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) : c === "F" ? tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) : tx(T.fijo(v) ? "libre" : "byeCero");
+    if (v.sistema !== "keizer") return base;
+    const K = T.REGLAS_KEIZER;
+    return tx(c === "H" ? "keizerAviso" : c === "F" ? "keizerClub" : "keizerFalta", { p: Math.round((c === "H" ? K.medio : c === "F" ? K.club : K.falta) * 5) });
+  }
+
   // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
   function pintarNoJuegan(caja, r) {
     const v = t();
@@ -5272,9 +5310,9 @@
       for (const id of fuera) {
         const actual = (R.ausencias || {})[id] || "Z";
         const s = el("select", { class: C.campoChico, "aria-label": tx("ausenciaDe", { n: nombreDe(id) }) },
-          el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
-          el("option", { value: "Z", texto: tx(T.fijo(v) ? "libre" : "byeCero") }),
-          el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
+          el("option", { value: "H", texto: rotuloAusencia(v, "H") }),
+          el("option", { value: "Z", texto: rotuloAusencia(v, "Z") }),
+          el("option", { value: "F", texto: rotuloAusencia(v, "F") }));
         s.value = actual;
         const papel = el("span", { class: "pi-solo-imprimir", texto: s.selectedOptions[0].textContent });
         let antes = s.value;
@@ -6259,8 +6297,12 @@
     if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
     const elegidas = v.pedidas.ausencias;
     const pedidas = Object.assign({}, elegidas);
+    // El Keizer se explica y sigue como el suizo: abajo va la lista para
+    // marcar quién no viene, que en un Keizer es lo de todas las noches.
+    if (v.sistema === "keizer") caja.append(el("p", { class: C.nota + " mb-3", texto: tx("keizerAyuda") }));
     if (v.sistema === "eliminacion") {
-      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("elimAyuda") }));
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx(v.dobleEliminacion ? "elimDobleAyuda" : "elimAyuda") }));
+      if (v.tercerPuesto && !v.dobleEliminacion) caja.append(el("p", { class: C.nota + " mb-3", texto: tx("tercerAyuda") }));
     } else if (v.sistema === "scheveningen") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("schevAyuda") }));
       if (r === 0) caja.append(equiposSchevVista(v));
@@ -6275,7 +6317,7 @@
             el("button", { type: "button", id: "pi-sortear-proyector", class: C.botonSec, onclick: () => abrirSorteo("numeros") }, tx("sorteoProyector"))));
       }
     } else {
-      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("byesAyuda") }));
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx(v.sistema === "keizer" ? "byesAyudaKeizer" : "byesAyuda") }));
       // El color del n.º 1 en la ronda 1, sorteado a la vista de todos.
       if (r === 0) caja.append(el("div", { class: "flex flex-wrap items-center gap-2 mb-3" },
         el("span", { class: "text-sm", texto: tx("sorteoColorActual", { c: (v.colorInicial === "b" ? tx("negras") : tx("blancas")).toLowerCase() }) }),
@@ -6290,9 +6332,9 @@
         }
         const s = el("select", { class: C.campoChico, "aria-label": tx("juegaRonda", { n: j.nombre, r: r + 1 }) },
           el("option", { value: "", texto: tx("juega") }),
-          el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
-          el("option", { value: "Z", texto: tx("byeCero") }),
-          el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
+          el("option", { value: "H", texto: rotuloAusencia(v, "H") }),
+          el("option", { value: "Z", texto: rotuloAusencia(v, "Z") }),
+          el("option", { value: "F", texto: rotuloAusencia(v, "F") }));
         const noViene = el("button", { type: "button", class: C.mini });
         const actualizarNoViene = () => {
           const marcado = s.value === "Z";
@@ -6468,6 +6510,12 @@
         const fb = fuera(m.b), fn = fuera(m.n);
         if (fb || fn) m.r = fb && fn ? "--" : fb ? "-+" : "+-";
       }
+    } else if (v.sistema === "keizer") {
+      // El Keizer no pasa por el motor del Holandés: se empareja de arriba
+      // abajo por sus puntos (T.emparejarKeizer).
+      if (E.esDeEquipos(v)) throw new Error(tx("keizerSoloIndividual"));
+      if (T.participantes(v, r, pedidas).length < 2) throw new Error(tx("pocosJugadores"));
+      ronda = { mesas: T.emparejarKeizer(v, r, pedidas), ausencias: Object.assign({}, pedidas) };
     } else {
       const juegan = T.participantes(v, r, pedidas);
       if (juegan.length < 2) throw new Error(tx("pocosJugadores"));
@@ -6582,20 +6630,30 @@
     caja.hidden = !(v.sistema === "eliminacion" && v.rondas.length);
     if (caja.hidden) return;
     const llego = T.alcanceEliminacion(v);
-    const total = T.rondasDelTorneo(v);
-    const final = v.rondas.length === total ? v.rondas[total - 1].mesas[0] : null;
-    const campeon = final ? T.pasaDe(final) : undefined;
-    const enCarrera = v.jugadores.filter((j) => llego.get(j.id) === v.rondas.length && v.rondas[v.rondas.length - 1].mesas.some((m) => m.b === j.id || m.n === j.id)).length;
+    const campeon = T.campeonEliminacion(v);
+    const enCarrera = v.dobleEliminacion ? v.jugadores.filter((j) => llego.get(j.id) === T.EN_CARRERA).length
+      : v.jugadores.filter((j) => llego.get(j.id) === v.rondas.length && v.rondas[v.rondas.length - 1].mesas.some((m) => !m.tercer && (m.b === j.id || m.n === j.id))).length;
     caja.append(el("h3", { class: "font-semibold", texto: tx("elimCuadro") }),
       el("p", { class: "text-sm mb-2", texto: campeon ? tx("elimCampeon", { n: nombreDe(campeon) }) : tx("elimEnJuego", { n: enCarrera }) }));
+    // Una mesa del cuadro, escrita: quiénes, el resultado y qué pasó después.
+    // En la final y en el tercer puesto nadie «pasa»: gana.
+    const linea = (m) => {
+      if (m.n === null) return el("li", { texto: tx("elimLibre", { n: nombreDe(m.b) }) });
+      const g = T.pasaDe(m);
+      const gana = m.tercer || m.llave === "F";
+      const que = g === undefined ? "" : g === null ? tx("elimSinPasar")
+        : m.r === "=" ? tx(gana ? "elimGanoDesempate" : "elimPasoDesempate", { n: nombreDe(g), f: m.desempate || "" }) : tx(gana ? "elimGanoPor" : "elimPasoPor", { n: nombreDe(g) });
+      return el("li", {}, nombreDe(m.b) + " – " + nombreDe(m.n) + (m.r ? " · " + tx("corto_" + m.r) : ""), que ? el("strong", { texto: " · " + que }) : null);
+    };
+    const bloque = (titulo, mesas) => { if (mesas.length) caja.append(el("h4", { class: "font-semibold text-sm mt-3", texto: titulo }), el("ul", { class: "text-sm space-y-1" }, mesas.map(linea))); };
     v.rondas.forEach((R, r) => {
-      caja.append(el("h4", { class: "font-semibold text-sm mt-3", texto: nombreRondaElim(v, r) }),
-        el("ul", { class: "text-sm space-y-1" }, R.mesas.map((m) => {
-          if (m.n === null) return el("li", { texto: tx("elimLibre", { n: nombreDe(m.b) }) });
-          const g = T.pasaDe(m);
-          const que = g === undefined ? "" : g === null ? tx("elimSinPasar") : m.r === "=" ? tx("elimPasoDesempate", { n: nombreDe(g), f: m.desempate || "" }) : tx("elimPasoPor", { n: nombreDe(g) });
-          return el("li", {}, nombreDe(m.b) + " – " + nombreDe(m.n) + (m.r ? " · " + tx("corto_" + m.r) : ""), que ? el("strong", { texto: " · " + que }) : null);
-        })));
+      if (v.dobleEliminacion) {
+        // Cada ronda puede traer mesas de las dos llaves: van por separado.
+        for (const f of T.fasesDeRonda(v, r)) bloque(tx("rondaN", { r: r + 1 }) + " · " + nombreFaseDoble(f), R.mesas.filter((m) => m.llave + m.fase === f));
+        return;
+      }
+      bloque(tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 }), R.mesas.filter((m) => !m.tercer));
+      bloque(tx("tercerNombre"), R.mesas.filter((m) => m.tercer));
     });
   }
 
