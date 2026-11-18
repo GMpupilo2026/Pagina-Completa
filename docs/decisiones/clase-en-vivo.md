@@ -5933,6 +5933,41 @@ doble: el botón del profe y no de la alumna, el código, las jugadas que
 entran también con lo nuevo, otra partida que no toca nada, la espera
 mientras se repasa y «Desconectar»). Roto a propósito, salta.
 
+## 100 maestros dijeron
+
+`maestros-dijeron.html` (18/11/2026), un juego por equipos para proyectar en
+la clase, al lado del tablero de preguntas (se llega desde Cuestionarios). Sale
+una posición de una apertura conocida y los equipos adivinan qué jugaron ahí
+los maestros; cada jugada vale lo que pesa («52 de cada 100»). Con tres fallos
+el turno pasa al otro equipo. La idea de un concurso de encuestas salió de
+Chessgora («100 Ajedrecistas Dijeron»).
+
+- **Los datos son de verdad**: las partidas de maestros del explorador de
+  Lichess, por la Edge Function `explorador-maestros` (la del explorador de la
+  clase, que guarda lo que contesta). Un «100 ajedrecistas dijeron» con
+  respuestas puestas a mano sería una encuesta inventada presentada como real;
+  por eso el nombre dice «maestros» y la pantalla dice la fuente.
+- **Ninguna posición se inventa**: cada una sale de jugar con chess.js una
+  línea de la lista (`APERTURAS` de `js/maestros-dijeron.js`); una línea que
+  no se puede jugar se descarta. Una posición con menos de tres respuestas
+  (de al menos 1 de cada 100, sin redondear) se salta.
+- **Lo que dice el equipo** se entiende en español y en inglés: Cf3 = Nf3,
+  Ab5 = Bb5, 0-0 = O-O, sin importar la x ni el jaque. La R mayúscula es el
+  Rey, como se escribe acá; por eso la jugada de chess.js (en inglés) se limpia
+  pero NO se traduce: traducida, la torre «Rd1» pasaba a rey. Se muestra en
+  español.
+- No escribe nada en la base: los equipos no son cuentas y los puntos son del
+  juego. Solo quien da clase o administra lo arma (como el tablero de
+  preguntas). El tablero se dibuja con `ChessPieceSVG` y dice la posición en
+  texto («Posición después de 1.e4 e5 2.Cf3. Juegan negras.»); los nombres de
+  los equipos van por `textContent`.
+
+Lo prueba `verificar-maestros-dijeron.js`: las cuentas en Node (las 15
+aperturas con chess.js, el peso, la notación, el turno y los fallos, el podio)
+y la página con su marcado y un doble de la función (solo para quien da clase,
+el tablero, destapar y sumar, tres fallos, sin token). Con la jugada de chess.js
+traducida, salta.
+
 ## El explorador de aperturas en la clase
 
 `js/clase-explorador.js`, el panel «📚 Aperturas de maestros» junto al motor
