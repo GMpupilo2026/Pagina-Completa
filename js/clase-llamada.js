@@ -86,6 +86,7 @@
         const estado = $("llamada-estado");
         const entrar = $("llamada-entrar");
         const mic = $("llamada-mic");
+        const modos = $("llamada-modos");
         const quien = $("llamada-quien");
         const habla = $("llamada-habla");
         const salirBtn = $("llamada-salir");
@@ -98,6 +99,13 @@
         let LK = null;
         // ¿El profe abrió la llamada en esta clase? Lo dice sesion.js con estado().
         let abierta = false;
+        // Quién puede hablar, además del profe: "turno", "libre" (todos) o "bloqueada" (nadie).
+        let modo = "turno";
+        const MODOS = {
+            turno: { boton: "Con turno", alProfe: "Habla quien tiene el turno.", alAlumno: "Tu profe volvió al turno: habla quien tiene la palabra." },
+            libre: { boton: "Todos", alProfe: "Micrófono libre: todos pueden hablar.", alAlumno: "Tu profe abrió el micrófono para todos: puedes hablar. Enciende el tuyo con Alt M." },
+            bloqueada: { boton: "Nadie", alProfe: "Micrófonos bloqueados: solo hablas tú.", alAlumno: "Tu profe bloqueó los micrófonos: por ahora solo habla el profe." },
+        };
         let cerrandoPorElProfe = false;   // el alumno sale porque el profe la terminó
 
         function anunciar(texto) {
@@ -169,6 +177,16 @@
             // El profe no «sale»: la termina, y se cierra para todos.
             salirBtn.textContent = esProfe ? "Terminar la llamada" : "Salir de la llamada";
             entrar.textContent = esProfe && !abierta ? "🎧 Abrir la llamada a la clase" : "🎧 Entrar a la llamada";
+            // Quién puede hablar: solo el profe, dentro de la llamada.
+            modos.hidden = !(esProfe && dentro);
+            modos.querySelectorAll("[data-modo]").forEach((b) => {
+                const elegido = b.dataset.modo === modo;
+                b.setAttribute("aria-pressed", String(elegido));
+                b.textContent = (elegido ? "✓ " : "") + MODOS[b.dataset.modo].boton;
+                // El color acompaña al «✓», nunca va solo.
+                for (const c of ["bg-accent-500", "hover:bg-accent-600", "text-brand-900"]) b.classList.toggle(c, elegido);
+                for (const c of ["bg-white", "hover:bg-brand-200", "dark:bg-brand-800", "dark:hover:bg-brand-700", "text-brand-800", "dark:text-white"]) b.classList.toggle(c, !elegido);
+            });
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
             mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
@@ -256,7 +274,9 @@
         async function alternarMic() {
             if (!enLlamada()) { anunciar("Primero entra a la llamada."); return; }
             if (!micEncendido() && !puedoHablar()) {
-                anunciar(esProfe ? "Todavía no puedes encender el micrófono." : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
+                anunciar(esProfe ? "Todavía no puedes encender el micrófono."
+                    : modo === "bloqueada" ? "Tu profe bloqueó los micrófonos: por ahora solo habla el profe."
+                    : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
                 return;
             }
             try {
@@ -300,18 +320,36 @@
                 if (error) { anunciar(error); return; }
             }
             abierta = false;
+            modo = "turno";
             await sincronizar();
             await salir();
             anunciar("Terminaste la llamada para toda la clase.");
             pintar();
         }
 
+        /* El profe elige quién puede hablar. Lo guarda en game_state (lo ven
+           todos) y le pide al servidor que le dé o le quite la palabra a cada uno:
+           el permiso lo pone LiveKit, no la página. */
+        async function elegirModo(nuevo) {
+            if (!esProfe || !enLlamada() || !op.modo || !MODOS[nuevo] || nuevo === modo) return;
+            const error = await op.modo(nuevo);
+            if (error) { anunciar(error); return; }
+            modo = nuevo;
+            pintar();
+            await sincronizar();
+            anunciar(MODOS[modo].alProfe);
+        }
+
         /* Lo que dice game_state: si el profe abrió la llamada en esta clase
            (sesion.js lo llama como `llamada.estado(…)`). */
-        function ponerEstado(abiertaAhora) {
+        function ponerEstado(abiertaAhora, modoAhora) {
             const antes = abierta;
+            const modoAntes = modo;
             abierta = Boolean(abiertaAhora);
+            modo = abierta && MODOS[modoAhora] ? modoAhora : "turno";
             if (esProfe) { pintar(); return; }
+            // Cambió quién puede hablar con la llamada ya abierta: se le dice al alumno.
+            if (abierta && antes && modo !== modoAntes) { anunciar(MODOS[modo].alAlumno); pintarGente(); }
             if (abierta && !antes) {
                 caja.hidden = false;
                 pintar();
@@ -348,8 +386,11 @@
                     if (p !== room.localParticipant || esProfe) return;
                     const ahora = Boolean(p.permissions && p.permissions.canPublish);
                     if (ahora === Boolean(antes && antes.canPublish)) return;
-                    if (ahora) { sonido(SON.palabra); anunciar("Tu profe te dio la palabra: enciende el micrófono con Alt M."); }
-                    else anunciar("Se terminó tu turno: tu micrófono se apagó.");
+                    // Con «Todos» o «Nadie» ya se dijo el cambio de modo; acá solo el turno.
+                    if (ahora) {
+                        sonido(SON.palabra);
+                        if (modo !== "libre") anunciar("Tu profe te dio la palabra: enciende el micrófono con Alt M.");
+                    } else if (modo === "turno") anunciar("Se terminó tu turno: tu micrófono se apagó.");
                     pintar();
                 })
                 .on(E.LocalTrackPublished, pintar)
@@ -392,6 +433,7 @@
 
         entrar.addEventListener("click", alEntrar);
         mic.addEventListener("click", alternarMic);
+        modos.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => elegirModo(b.dataset.modo)));
         quien.addEventListener("click", quienEsta);
         habla.addEventListener("click", quienHabla);
         salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));

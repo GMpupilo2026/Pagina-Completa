@@ -46,6 +46,7 @@
            está abierta si es la clase abierta de ahora. Al alumno la caja le sale
            solo entonces, y la base tampoco le da pase sin eso. */
         let llamadaSesion = null;
+        let llamadaModo = "turno";   // game_state.llamada_modo: quién puede hablar (turno, libre, bloqueada)
         const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
@@ -599,7 +600,8 @@
             const primeraVez = !antes && !editando;
             const vistaAntes = JSON.stringify(board.currentView());
             llamadaSesion = row.llamada_sesion || null;
-            if (llamada) llamada.estado(llamadaAbierta());
+            llamadaModo = row.llamada_modo || "turno";
+            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo);
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -7970,9 +7972,18 @@
                     abrir: async (abrirla) => {
                         if (abrirla && !currentOpenSessionId) return "Abre la clase primero: la llamada es de la clase.";
                         const valor = abrirla ? currentOpenSessionId : null;
-                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor }).eq("id", myGameStateId);
+                        // Una llamada nueva (o terminada) vuelve al turno: nunca arranca con todos hablando ni bloqueada.
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno" }).eq("id", myGameStateId);
                         if (error) { console.error(error); return "No se pudo: " + error.message; }
                         llamadaSesion = valor;
+                        llamadaModo = "turno";
+                        return "";
+                    },
+                    // Quién puede hablar: con turno, todos o nadie (solo el profe).
+                    modo: async (modo) => {
+                        const { error } = await sb.from("game_state").update({ llamada_modo: modo }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaModo = modo;
                         return "";
                     },
                     // Lo que se le dice al alumno cuando la caja se esconde (su región viva se va con ella).
@@ -7981,7 +7992,7 @@
                         if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
                     },
                 });
-                llamada.estado(llamadaAbierta());
+                llamada.estado(llamadaAbierta(), llamadaModo);
             }
             await loadVariantTree();
             subscribeVariants();

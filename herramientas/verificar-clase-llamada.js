@@ -48,9 +48,10 @@ console.log("=== Los enganches de la clase ===");
     "…pero no para quien observa, la vista previa, el proyector ni el control remoto");
   si(/profile\.role === "profesor"/.test(montaje), "…y del lado del profe, solo quien da clase (no quien administra)");
   si(/alternarMano:[^\n]*setHandRaised\(!handRaised\)/.test(montaje), "la mano de la llamada es la mano de la clase (setHandRaised)");
-  si(/update\(\{ llamada_sesion: valor \}\)/.test(montaje) && /abrirla \? currentOpenSessionId : null/.test(montaje), "el profe abre la llamada en ESTA clase (llamada_sesion = la clase abierta) y la termina con null");
+  si(/update\(\{ llamada_sesion: valor, llamada_modo: "turno" \}\)/.test(montaje) && /abrirla \? currentOpenSessionId : null/.test(montaje), "el profe abre la llamada en ESTA clase (llamada_sesion = la clase abierta) y la termina con null; las dos veces vuelve al turno");
+  si(/update\(\{ llamada_modo: modo \}\)/.test(montaje), "quién puede hablar lo guarda el profe en game_state.llamada_modo");
   const aplicar = (sesion.match(/function applyGameStateRow\(row\) \{[\s\S]*?\n        }\n/) || [""])[0];
-  si(/llamadaSesion = row\.llamada_sesion/.test(aplicar) && /llamada\.estado\(llamadaAbierta\(\)\)/.test(aplicar), "cada cambio de game_state le dice a la caja si la llamada está abierta (al alumno le aparece y desaparece solo)");
+  si(/llamadaSesion = row\.llamada_sesion/.test(aplicar) && /llamada\.estado\(llamadaAbierta\(\), llamadaModo\)/.test(aplicar) && /llamadaModo = row\.llamada_modo/.test(aplicar), "cada cambio de game_state le dice a la caja si la llamada está abierta (al alumno le aparece y desaparece solo)");
   si(/llamadaSesion === currentOpenSessionId/.test(sesion), "…y abierta es SOLO en la clase de ahora (la de ayer no cuenta)");
   const sacar = (leer("js/clase-sacar.js").match(/async function sacarDeLaClase\([\s\S]*?\n}\n/) || [""])[0];
   si(/llamada\.sincronizar\(\)/.test(sacar), "sacar a alguien de la clase lo saca también de la llamada");
@@ -71,12 +72,14 @@ console.log("\n=== La base y la función ===");
   si(/clase_sacados/.test(sql) && /devuelto_at is null/.test(sql), "quien el profe sacó no entra");
   si(/role = 'profesor'/.test(sql), "el profe tiene que ser profesor (quien administra no da clase)");
   si(/if v_rol = 'alumno' and not v_abierta then\s+return null;/.test(sql), "el alumno no recibe pase si el profe no abrió la llamada en esta clase");
-  si(/new\.llamada_sesion := old\.llamada_sesion;/.test(sql), "solo el profe abre o termina la llamada (protect_game_state_teacher_columns)");
+  si(/new\.llamada_sesion := old\.llamada_sesion;/.test(sql) && /new\.llamada_modo := old\.llamada_modo;/.test(sql), "solo el profe abre o termina la llamada y elige quién habla (protect_game_state_teacher_columns)");
+  si(/v_modo := case when v_abierta then coalesce\(v_modo, 'turno'\) else 'turno' end;/.test(sql), "quién puede hablar solo vale con la llamada abierta en esta clase");
   const fn = leer("supabase/functions/clase-llamada/index.ts");
   si(!/SERVICE_ROLE/.test(fn), "la función no usa la clave de servicio");
   si(/global: \{ headers: \{ Authorization: autorizacion \} \}/.test(fn) && /rpc\("llamada_de_la_clase"/.test(fn), "…pregunta a la base con el token de quien llama");
   si(/canPublishSources: \[fuente\]/.test(fn) && /permisos\(hablar, "microphone"\)/.test(fn) && /permisos\(hablar, "MICROPHONE"\)/.test(fn), "solo voz: el pase y el cambio de permiso dejan publicar únicamente el micrófono");
-  si(/ll\.rol === "profe" \|\| ll\.elegido === ll\.yo/.test(fn), "en el pase, habla el profe o quien tiene el turno");
+  si(/ll\.rol === "profe" \|\| puedeHablar\(ll, ll\.yo\)/.test(fn) && /const hablar = puedeHablar\(ll, p\.identity\)/.test(fn), "el pase y «sincronizar» deciden quién habla con la misma regla");
+  si(/if \(ll\.modo === "libre"\) return true;/.test(fn) && /if \(ll\.modo === "bloqueada"\) return false;/.test(fn) && /return identidad === ll\.elegido;/.test(fn), "…con turno habla quien lo tiene, con «Todos» cualquiera y con «Nadie» ningún alumno");
   si(/if \(ll\.rol !== "profe"\)/.test(fn), "solo el profe sincroniza");
   si(/can_publish \?\? p\.permission\?\.canPublish/.test(fn), "lee el permiso como lo contesta LiveKit (snake_case)");
   si(/sacados\.has\(p\.identity\) \|\| !ll\.abierta/.test(fn), "con la llamada terminada, «sincronizar» saca a todos menos al profe");
@@ -186,11 +189,13 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true }) {
     window.__manos = [];
     window.__abrir = [];
     window.__fuera = [];
+    window.__modos = [];
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
       sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
-      abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v); return ""; },
+      abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v, "turno"); return ""; },
+      modo: async (m) => { window.__modos.push(m); return ""; },
       anunciarFuera: (t) => window.__fuera.push(t),
     });
     window.__llamada.estado(abierta);
@@ -268,7 +273,22 @@ async function pruebas(browser) {
   si(/Tu profe te sacó de la llamada/.test(a), "si el servidor lo saca, se lo dice");
   si(await visible(r.page, "#llamada-entrar") && await r.page.evaluate(() => document.activeElement.id) === "llamada-entrar", "…y vuelve a «Entrar», con el foco ahí");
   si(!(await visible(r.page, "#llamada-gente")), "…y la lista se esconde");
+  si(!(await visible(r.page, "#llamada-modos")), "al alumno no se le muestra «Quién puede hablar»");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // El alumno se entera de quién puede hablar.
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  await r.page.evaluate(() => window.__llamada.estado(true, "bloqueada"));
+  si(/Tu profe bloqueó los micrófonos/.test(await anuncio(r.page)), "cuando el profe bloquea, el alumno lo oye");
+  await r.page.keyboard.press("Alt+KeyM");
+  si(/bloqueó los micrófonos/.test(await anuncio(r.page)), "…y Alt+M le recuerda por qué no puede hablar");
+  await r.page.evaluate(() => window.__llamada.estado(true, "libre"));
+  si(/Tu profe abrió el micrófono para todos/.test(await anuncio(r.page)), "cuando abre el micrófono para todos, también");
+  await r.page.evaluate(() => window.__llamada.estado(true, "turno"));
+  si(/Tu profe volvió al turno/.test(await anuncio(r.page)), "…y cuando vuelve al turno");
   await r.ctx.close();
 
   // El alumno que ya tenía el turno al entrar.
@@ -293,9 +313,19 @@ async function pruebas(browser) {
   si(JSON.stringify(await r.page.evaluate(() => window.__manos)) === "[]", "Alt+Y no hace nada al profe");
   await r.page.evaluate(() => window.__llamada.sincronizar());
   si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 2, "sincronizar() del profe le pide a la función que acomode la sala");
+  si(await visible(r.page, "#llamada-modos"), "dentro de la llamada, el profe ve «Quién puede hablar»");
+  si(await r.page.textContent('[data-modo="turno"]') === "✓ Con turno" && await r.page.getAttribute('[data-modo="turno"]', "aria-pressed") === "true", "…empieza «Con turno», marcado con aria-pressed y escrito («✓»)");
+  await r.page.click('[data-modo="bloqueada"]');
+  await r.page.waitForTimeout(200);
+  si(JSON.stringify(await r.page.evaluate(() => window.__modos)) === '["bloqueada"]' && await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 3,
+    "«Nadie» lo guarda y le pide al servidor que les quite la palabra");
+  si(/Micrófonos bloqueados: solo hablas tú/.test(await anuncio(r.page)) && await r.page.getAttribute('[data-modo="bloqueada"]', "aria-pressed") === "true", "…y lo dice");
+  await r.page.click('[data-modo="libre"]');
+  await r.page.waitForTimeout(200);
+  si(/Micrófono libre: todos pueden hablar/.test(await anuncio(r.page)) && await r.page.textContent('[data-modo="libre"]') === "✓ Todos", "«Todos» también");
   await r.page.click("#llamada-salir");
   await r.page.waitForTimeout(200);
-  si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true,false]" && await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 3,
+  si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true,false]" && await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 5,
     "«Terminar la llamada» la cierra para todos (llamada_sesion en null) y le pide al servidor que saque a los demás");
   si(/Terminaste la llamada para toda la clase/.test(await anuncio(r.page)) && await r.page.evaluate(() => window.__sala.state) === "disconnected", "…sale de la sala y lo dice");
   await r.ctx.close();

@@ -193,6 +193,33 @@ reemplaza.
   - Comprobado impersonando roles en SQL: con la llamada cerrada el alumno
     recibe null; el profe la abre y la ve abierta; abierta, el alumno entra; el
     alumno no la puede cerrar.
+- **Quién puede hablar lo elige el profe: «Con turno», «Todos» o «Nadie».**
+  Lo pidió el dueño en dos mensajes seguidos: «¿se puede que hablen varios a
+  la vez?» y «que el profesor pueda bloquear que los estudiantes puedan
+  hablar, para tener mayor control». Son tres estados de lo mismo, así que van
+  en UNA columna, `game_state.llamada_modo` (`turno`, `libre`, `bloqueada`, con
+  su CHECK), y no en dos interruptores que podrían contradecirse (libre y
+  bloqueado a la vez). Se probó primero un `llamada_libre` booleano
+  (migración `llamada_microfono_libre`) y se reemplazó minutos después, antes
+  de que lo usara ninguna página (`llamada_quien_puede_hablar`).
+  - **Con turno** (siempre al abrir la llamada): habla quien tiene el turno.
+    **Todos**: cualquiera de los que están. **Nadie**: ningún alumno, aunque
+    tenga el turno; solo el profe. Lo hace cumplir el servidor con la misma
+    regla en el pase y en «sincronizar» (`puedeHablar()` de la función).
+  - Solo vale con la llamada abierta en esta clase, solo lo pone el profe
+    (`protect_game_state_teacher_columns`), y abrir o terminar la llamada lo
+    vuelve a «turno»: una llamada nunca arranca con todos hablando ni
+    bloqueada.
+  - Al alumno se le dice cada cambio («Tu profe bloqueó los micrófonos: por
+    ahora solo habla el profe», «…abrió el micrófono para todos…», «…volvió
+    al turno…»), y con «Nadie» Alt+M le recuerda por qué no puede. El
+    micrófono no se enciende solo con «Todos»: lo enciende cada uno.
+  - En la caja del profe son tres botones parejos debajo del micrófono; el
+    elegido lleva `aria-pressed`, el «✓» escrito y el color de acento (el
+    color acompaña, nunca va solo).
+  - Comprobado impersonando roles en SQL: con la llamada cerrada el modo
+    vuelve a «turno»; abierta, el alumno ve el modo que eligió el profe; un
+    modo inventado lo rechaza el CHECK.
 - **La caja va DEBAJO del tablero**, después del turno y del tiempo para
   pensar, no arriba con la franja de la clase: arriba empujaba el tablero y en
   el celular dejaba de entrar entero sin bajar (`verificar-clase-movil.js`

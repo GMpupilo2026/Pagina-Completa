@@ -14,7 +14,9 @@
 //                     (game_state.llamada_sesion no es esta clase) salen todos
 //                     menos él: «si el profesor la cierra, que a todos también».
 //                     El alumno, además, no recibe pase si la llamada no está
-//                     abierta (lo decide llamada_de_la_clase()). La página la llama cada
+//                     abierta (lo decide llamada_de_la_clase()). Quién puede
+//                     hablar lo elige el profe (game_state.llamada_modo): con
+//                     turno, todos («libre») o nadie («bloqueada»). La página la llama cada
 //                     vez que da o termina un turno y cuando saca a alguien.
 //
 // QUIÉN DECIDE ES LA BASE: public.llamada_de_la_clase(p_profesor), llamada con
@@ -78,6 +80,15 @@ async function firmar(claims: Record<string, unknown>): Promise<string> {
   return datos + "." + b64url(firma);
 }
 
+// Quién puede hablar, además del profe (game_state.llamada_modo, que elige él):
+// con «turno», quien tiene el turno de la clase; con «libre», todos; con
+// «bloqueada», ningún alumno, aunque tenga el turno.
+function puedeHablar(ll: Llamada, identidad: string): boolean {
+  if (ll.modo === "libre") return true;
+  if (ll.modo === "bloqueada") return false;
+  return identidad === ll.elegido;
+}
+
 // Los permisos de LiveKit se reemplazan ENTEROS: hay que mandarlos todos.
 // La fuente se escribe distinto en cada lado: en el pase (JWT) en minúscula,
 // «microphone»; en Twirp es el nombre del enum de protobuf, «MICROPHONE».
@@ -104,7 +115,7 @@ async function servidor(metodo: string, sala: string, cuerpo: Record<string, unk
 
 // ------------------------------------------------------------- la función
 
-type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean };
+type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean; modo: "turno" | "libre" | "bloqueada" };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -137,7 +148,7 @@ Deno.serve(async (req) => {
   if (!ll) return json({ error: "No hay una clase abierta a la que puedas entrar." }, 403);
 
   if (accion === "pase") {
-    const hablar = ll.rol === "profe" || ll.elegido === ll.yo;
+    const hablar = ll.rol === "profe" || puedeHablar(ll, ll.yo);
     const token = await firmar({
       sub: ll.yo,
       name: ll.nombre,
@@ -165,7 +176,7 @@ Deno.serve(async (req) => {
       if (r.ok) fuera++;
       continue;
     }
-    const hablar = p.identity === ll.elegido;
+    const hablar = puedeHablar(ll, p.identity);
     if (Boolean(p.permission?.can_publish ?? p.permission?.canPublish) === hablar) continue;
     const r = await servidor("UpdateParticipant", ll.sala, { identity: p.identity, permission: permisos(hablar, "MICROPHONE") });
     if (r.ok) cambiados++;
