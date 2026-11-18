@@ -334,26 +334,12 @@
         ir(js.length);
     }
 
-    /* «Descargar la lectura»: lo que leyó Google Vision de la foto (cada palabra con su caja) y lo que salió de eso
-       (las celdas de cada planilla y la partida), para revisar con datos de verdad por qué una partida se leyó mal y
-       afinar js/planilla-reconstruir.js. Trae lo que está escrito en la planilla, también los nombres del
-       encabezado: es para quien organiza y para revisar, nunca para el repositorio. */
+    /* «Descargar la lectura»: lo arma PlanillaReconstruir.lectura() (una sola copia con el Lector de planilla).
+       Trae lo que está escrito en la planilla, también los nombres del encabezado: es para quien organiza y para
+       revisar, nunca para el repositorio. */
     function lecturaParaRevisar(p, datos, ctx) {
-        const r = datos.resultado;
-        return {
-            que: "Lectura de la foto de las planillas («Generar PGN», Centroamericano 2026)",
-            version: 1,
-            torneo: ctx.nombreTorneo(p.tnr), tnr: p.tnr, ronda: p.ronda, mesa: p.mesa,
-            subida: p.subida, leida: datos.leida,
-            metodo: datos.metodo,
-            hojas: datos.hojas,
-            partida: {
-                jugadas: r.jugadas.map((j) => ({ san: j.san, estado: j.estado, escrito: j.escrito || [], alternativa: j.alternativa || null })),
-                ilegibleDesde: r.ilegibleDesde, resto: r.resto || [], costo: r.costo,
-            },
-            // como las devuelve ocr-scoresheet: se pueden pasar tal cual a PlanillaReconstruir.hojasDeLaFoto()
-            palabras: datos.palabras.map((w) => ({ text: w[0], bbox: { x0: w[1], y0: w[2], x1: w[3], y1: w[4] } })),
-        };
+        return window.PlanillaReconstruir.lectura("Lectura de la foto de las planillas («Generar PGN», Centroamericano 2026)",
+            { torneo: ctx.nombreTorneo(p.tnr), tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, subida: p.subida }, datos);
     }
 
     async function generar(p, caja, ctx, opciones) {
