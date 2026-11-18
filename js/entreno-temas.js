@@ -88,7 +88,7 @@ function markSolved(id){
   localStorage.setItem('entreno_temas_solved', JSON.stringify(s));
 }
 function isSolved(id){ return !!getSolved()[id]; }
-function idsOf(theme){ return theme === REPASO ? repasoIds : theme === RETO ? reto.ids : (DATA.themes[theme] || []); }
+function idsOf(theme){ return theme === REPASO ? repasoIds : theme === RETO ? reto.ids : theme === DEL_DIA ? (delDia.id ? [delDia.id] : []) : (DATA.themes[theme] || []); }
 
 /* ---------------- Repasar fallados ----------------
    Lo que se resolvió con error o con pista entra a una cola de repaso
@@ -202,6 +202,96 @@ function terminarReto(){
     (reto.rival ? `Cuando ${reto.rival} termine, en «Retos de ejercicios» ves quién ganó.` : 'En «Retos de ejercicios» ves quién ganó.');
   updateProgressBar();
 }
+/* ---------------- El puzzle del día ----------------
+   temas.html?del-dia=1: UN ejercicio, el mismo para todos durante el día de
+   Costa Rica, sacado de los temas de Lichess de este mismo banco (ya
+   verificado: ninguna posición se inventa). Se resuelve como cualquier otro
+   y se anota bajo su tema de origen, así que suma Puntos Ajedrez, cuenta para
+   las tareas de ese tema y, si costó, entra a «Repasar fallados». No hay nada
+   nuevo en la base. La idea salió de Chessgora. Ver «El puzzle del día» en
+   docs/decisiones/entrenamiento.md.
+
+   La elección: los ejercicios con rating entre DEL_DIA_MIN y DEL_DIA_MAX, de
+   los temas en orden alfabético y sin repetir id, y el día (AAAA-MM-DD en
+   Costa Rica) pasado por un hash. Es la misma cuenta en todas las
+   computadoras; si el banco cambia, puede cambiar el de ese día. */
+const DEL_DIA = '__del_dia';
+const DEL_DIA_MIN = 1100, DEL_DIA_MAX = 1700;
+const CLAVE_DEL_DIA = 'entreno_del_dia_v1';
+const delDia = { id: null, tema: null, fecha: '' };
+function enDelDia(){ return currentTheme === DEL_DIA; }
+function fechaCR(fecha){
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Costa_Rica', year: 'numeric', month: '2-digit', day: '2-digit' }).format(fecha || new Date());
+}
+function hashTexto(t){
+  let h = 2166136261;
+  for(let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+/* Solo de los temas de un motivo concreto (los de GRUPOS_DE_MOTIVO: clavada,
+   desviación, mate del pasillo…), para poder decir de dónde viene y para que
+   cuente para ese tema. «Mezcla equilibrada», las fases o el largo no dicen
+   nada del ejercicio. Los de táctica de la casa no traen rating. */
+function candidatosDelDia(datos){
+  const vistos = new Set(), lista = [];
+  const temas = (datos.groups || []).filter((g) => GRUPOS_DE_MOTIVO.includes(g.id))
+    .flatMap((g) => g.themes.map((t) => t.key)).sort();
+  temas.forEach((tema) => {
+    if(TEMAS_DE_TACTICA.has(tema)) return;
+    (datos.themes[tema] || []).forEach((id) => {
+      const p = datos.puzzles[id];
+      if(vistos.has(id) || !p || typeof p.rating !== 'number' || p.rating < DEL_DIA_MIN || p.rating > DEL_DIA_MAX) return;
+      vistos.add(id);
+      lista.push({ id, tema });
+    });
+  });
+  return lista;
+}
+function elegirDelDia(datos, fecha){
+  const lista = candidatosDelDia(datos);
+  return lista.length ? lista[hashTexto('del-dia:' + fecha) % lista.length] : null;
+}
+function abrirDelDia(){
+  delDia.fecha = fechaCR();
+  const e = elegirDelDia(DATA, delDia.fecha);
+  if(!e){ showThemes(false); return; }
+  delDia.id = e.id; delDia.tema = e.tema;
+  currentTheme = DEL_DIA;
+  currentIndex = 0;
+  const dia = new Intl.DateTimeFormat('es-CR', { timeZone: 'America/Costa_Rica', day: 'numeric', month: 'long' }).format(new Date());
+  document.getElementById('play-title').textContent = 'Puzzle del día · ' + dia;
+  const info = THEME_INFO[e.tema];
+  document.getElementById('play-desc').textContent = 'El mismo ejercicio para todos hoy. Mañana sale otro.' + (info ? ' Viene del tema «' + info.name + '».' : '');
+  document.getElementById('skip-btn').style.display = 'none';
+  document.getElementById('nivel-desde-caja').style.display = 'none';
+  document.getElementById('themes-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  loadPuzzle();
+  window.scrollTo({ top: 0 });
+  if(document.documentElement.classList.contains('adaptive-mode') && comandos) comandos.enfocar();
+  else { const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus(); }
+}
+/* La caja de la lista de temas: si ya lo resolvió hoy (en este aparato), lo dice. */
+function pintarDelDia(){
+  let hecho = null;
+  try{ hecho = JSON.parse(localStorage.getItem(CLAVE_DEL_DIA) || 'null'); }catch(e){}
+  const hoy = hecho && hecho.fecha === fechaCR();
+  document.getElementById('del-dia-texto').textContent = hoy
+    ? 'Ya resolviste el de hoy. Mañana sale otro.'
+    : 'Uno nuevo cada día, el mismo para todos.';
+  document.getElementById('del-dia-btn').textContent = hoy ? 'Verlo otra vez' : 'Resolverlo';
+}
+function terminarDelDia(limpio){
+  try{ localStorage.setItem(CLAVE_DEL_DIA, JSON.stringify({ fecha: delDia.fecha, id: delDia.id, limpio: !!limpio })); }catch(e){}
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = '¡Puzzle del día resuelto!';
+  document.getElementById('celebration-replay-btn').style.display = 'none';
+  document.getElementById('celebration-stats').textContent = limpio
+    ? 'Sin errores ni pistas. Mañana hay otro.'
+    : 'Lo sacaste, con alguna ayuda: vuelve a «Repasar fallados» en unos días. Mañana hay otro.';
+  updateProgressBar();
+}
 function solvedCountFor(theme){
   const s = getSolved();
   return idsOf(theme).filter((id) => s[id]).length;
@@ -304,7 +394,7 @@ function pintarSelectorDesde(){
   }
   sel.value = String(nivelDesde);
   // Un tema sin rating (los de táctica de la casa) no tiene nada que elegir.
-  caja.style.display = currentTheme && !enRepaso() && temaConRating(currentTheme) ? '' : 'none';
+  caja.style.display = currentTheme && !enRepaso() && !enDelDia() && temaConRating(currentTheme) ? '' : 'none';
   const pista = document.getElementById('nivel-desde-pista');
   pista.textContent = nivelDeLaCuenta
     ? `Con tu nivel (≈${nivelDeLaCuenta}), te conviene empezar desde ${escalonDe(nivelDeLaCuenta - 300) || 'el más fácil'}.`
@@ -320,7 +410,7 @@ const DESDE_FIJADO = parseInt(new URLSearchParams(location.search).get('desde') 
 const ajusteDificultad = window.DificultadAdaptable ? DificultadAdaptable.crear() : null;
 let buscarDesdeElPrincipio = false;
 function ajustarDificultad(limpio){
-  if(!ajusteDificultad || DESDE_FIJADO || enRepaso() || !temaConRating(currentTheme)) return;
+  if(!ajusteDificultad || DESDE_FIJADO || enRepaso() || enDelDia() || !temaConRating(currentTheme)) return;
   const cambio = ajusteDificultad.registrar(limpio);
   if(!cambio) return;
   const nuevo = DificultadAdaptable.escalon(DESDE_OPCIONES, nivelDesde, cambio);
@@ -437,10 +527,12 @@ function updateOverall(){
    tenía desaparece con el reproductor y el foco caía al <body>; con la cuenta
    ciega, además, al llegar a la página (ahí se empieza buscando). */
 function showThemes(enfocar){
+  document.getElementById('skip-btn').style.display = '';   // el puzzle del día lo esconde
   document.getElementById('play-view').style.display = 'none';
   document.getElementById('themes-view').style.display = 'block';
   buildThemes();
   pintarRepaso();
+  pintarDelDia();
   try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
   window.scrollTo({ top: 0 });
   if(enfocar) document.getElementById('search').focus();
@@ -491,6 +583,12 @@ function updateProgressBar(){
     const total = reto.ids.length;
     document.getElementById('progress-fill').style.width = (total ? Math.round(100 * reto.contestadas.size / total) : 0) + '%';
     document.getElementById('progress-label').textContent = `Reto · ejercicio ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
+  if(enDelDia()){
+    const hecho = document.getElementById('celebration').style.display === 'block';
+    document.getElementById('progress-fill').style.width = hecho ? '100%' : '0%';
+    document.getElementById('progress-label').textContent = hecho ? 'Puzzle del día · resuelto' : 'Puzzle del día · 1 ejercicio';
     return;
   }
   if(enRepaso()){
@@ -782,8 +880,11 @@ function finishPuzzle(){
     (limpio && !suma ? ' Ya lo habías resuelto: no suma a la racha.' : ''), 'ok');
   // La cola de repaso: lo que costó entra, lo que se repasa se vuelve a
   // programar. Lo resuelto limpio a la primera no entra nunca.
+  /* El puzzle del día se anota bajo su tema de origen: así cuenta para las
+     tareas de ese tema y para Informes, igual que si se hubiera resuelto ahí. */
+  const temaDeOrigen = enDelDia() ? delDia.tema : currentTheme;
   if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle,
-    { tema: enRepaso() ? (RepasoFallados.leer(CLAVE_REPASO)[id] || {}).tema : currentTheme });
+    { tema: enRepaso() ? (RepasoFallados.leer(CLAVE_REPASO)[id] || {}).tema : temaDeOrigen });
   if(!alreadySolved && !enRepaso()){
     markSolved(id);
     /* Informes tiene una columna de Táctica aparte de la de Ejercicios por tema.
@@ -792,12 +893,24 @@ function finishPuzzle(){
        no da ningún error: el profesor ve un número que ya no sube y no sabe por
        qué. Así que cada ejercicio se apunta bajo la actividad que le
        corresponde, que es lo mismo que se apuntaba antes de mudarlos. */
-    const actividad = TEMAS_DE_TACTICA.has(currentTheme) ? 'tactica' : 'temas';
+    const actividad = TEMAS_DE_TACTICA.has(temaDeOrigen) ? 'tactica' : 'temas';
     // `limpio` (sin error ni pista) va en el detalle: sin eso, lo único que
     // quedaba era "resuelto", y uno sacado con "Ver solución" contaba igual
     // que uno limpio. Con esto se puede medir la precisión por tema.
-    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null,
+    // La forma `log(actividad, { puzzle_id: … })` la revisa verificar-premio-temas.js:
+    // es el id que espera premio_item() para dar el premio de tema terminado.
+    EntrenoProgress.log(actividad, { puzzle_id: id, theme: temaDeOrigen, rating: puzzle.rating ?? null,
+      ...(enDelDia() ? { del_dia: delDia.fecha } : {}),
       ...EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle) });
+  }
+  if(enDelDia()){
+    finEjercicio = EjercicioTablero.fin({
+      caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
+      siguiente: () => { finEjercicio = null; terminarDelDia(limpio); },
+      textoSiguiente: 'Terminar el puzzle del día →',   // no hay otro ejercicio después
+      origen: 'Ejercicios por tema · ' + document.getElementById('play-title').textContent,
+    });
+    return;
   }
   updateProgressBar();
   updateOverall();
@@ -898,6 +1011,7 @@ document.getElementById('skip-btn').addEventListener('click', () => {
   loadPuzzle();
 });
 document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
+document.getElementById('del-dia-btn').addEventListener('click', abrirDelDia);
 document.getElementById('nivel-desde').addEventListener('change', (e) => {
   nivelDesde = parseInt(e.target.value, 10) || 0;
   // Lo eligió a mano: la cuenta del ajuste empieza de nuevo en ese escalón.
@@ -948,6 +1062,8 @@ function initApp(){
   // ?reto=<id>: el reto de un compañero (la lista de retos lleva acá).
   const retoPedido = new URLSearchParams(location.search).get('reto');
   if(retoPedido && /^[0-9a-f-]{36}$/i.test(retoPedido)){ abrirReto(retoPedido); return; }
+  // ?del-dia=1: el puzzle del día (la tarjeta del hub lleva acá).
+  if(new URLSearchParams(location.search).has('del-dia')){ abrirDelDia(); return; }
   if(wanted) openTheme(wanted); else showThemes(document.documentElement.classList.contains('modo-ciego'));
 }
 

@@ -320,8 +320,14 @@ function cssDeTemas() {
     return "\n" + css + "\n";
 }
 
+/* En Windows, node_modules/.bin/tailwindcss es un script de sh que
+   execFileSync no puede ejecutar: el que corre es tailwindcss.cmd, y un .cmd
+   solo se ejecuta con shell (Node lo exige desde la CVE-2024-27980). Sin esto,
+   `npm run css` reventaba con ENOENT en la computadora del dueño. */
+const EN_WINDOWS = process.platform === "win32";
 function binario() {
     const candidatos = [
+        ...(EN_WINDOWS ? [path.join(RAIZ, "node_modules/.bin/tailwindcss.cmd")] : []),
         path.join(RAIZ, "node_modules/.bin/tailwindcss"),
         ...(process.env.NODE_PATH || "").split(":").filter(Boolean)
             .map((p) => path.join(p, ".bin/tailwindcss")),
@@ -387,7 +393,7 @@ function compilar(nombre, paleta, archivos, extra) {
     }, null, 1) + ";\n");
     const salida = path.join(CSS, nombre + ".css");
     execFileSync(binario(), ["-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),
-                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"] });
+                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"], shell: EN_WINDOWS });
     fs.unlinkSync(cfg);
     if (extra) fs.appendFileSync(salida, extra);
     const kb = (fs.statSync(salida).size / 1024).toFixed(1);

@@ -20,6 +20,8 @@
         { title: "Administración", tiles: [
             { emoji: "👑", label: "Administración", desc: "Lo urgente, las cuentas, supervisores, profesores, coordinadores y equipos", href: "admin.html" },
             { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html", zona: "organizacion" },
+            { emoji: "🌱", label: "Interesados", desc: "Quién preguntó por clases, en qué va cada uno y a quién toca llamar hoy", href: "prospectos.html", zona: "personas" },
+            { emoji: "🎁", label: "Premios de las academias", desc: "Lo que cada academia ofrece por Puntos Ajedrez y lo que hay por entregar", href: "premios-academia.html", zona: "organizacion" },
             { emoji: "🏅", label: "Ficha JDN 2027", desc: "La inscripción a los Juegos Deportivos Nacionales: la ficha lista para firmar y su carpeta en el Drive", href: "jdn.html", zona: "personas" },
         ] },
         { title: "Supervisión y coordinación", tiles: [
