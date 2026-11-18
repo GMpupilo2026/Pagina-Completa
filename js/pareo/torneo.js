@@ -10,7 +10,8 @@
  *
  *   { formato: 1, nombre, ciudad, federacion, fechaInicio, fechaFin, arbitro,
  *     arbitroAdjunto, ritmo,
- *     sistema: "suizo" | "todos" | "scheveningen" | "eliminacion",
+ *     sistema: "suizo" | "todos" | "scheveningen" | "eliminacion" | "keizer",
+ *     dobleEliminacion, tercerPuesto (en la eliminación directa),
  *     dobleVuelta (en todos contra todos y en Scheveningen),
  *     rondasTotales, colorInicial: "w" | "b", baku (aceleración Baku),
  *     puntos: { victoria, tablas, derrota, bye },     bye = el que asigna el pareo
@@ -364,7 +365,127 @@
   function rondasEliminacion(t) {
     let r = 0;
     for (let k = tamCuadro(t.jugadores.length); k > 1; k /= 2) r++;
-    return r;
+    if (!t.dobleEliminacion) return r;
+    const plan = planDoble(r);
+    return plan.length + (hayRevancha(t, plan.length) ? 1 : 0);
+  }
+
+  // ---------- Doble eliminación: nadie queda fuera con una sola derrota ----------
+  // Dos llaves: la de ganadores («G», el cuadro de siempre) y la de
+  // perdedores («P»), a la que baja quien pierde en la de ganadores. Quien
+  // pierde en la de perdedores queda fuera. La final («F») la juegan el
+  // campeón de cada llave; si la gana el que viene de perdedores, los dos
+  // llevan una derrota y se juega la revancha, que decide.
+  //
+  // Cada mesa lleva su llave, su fase (la ronda DENTRO de la llave) y su
+  // lugar: { llave: "G" | "P" | "F", fase, slot }. Qué fases se juegan en
+  // cada ronda del torneo lo dice planDoble(k), con k = log2 del cuadro:
+  //   ronda 1: G1 · ronda 2: G2 y P1 · ronda 3: P2 · ronda 4: G3 y P3 ·
+  //   ronda 5: P4 · … · la última: F1 (y F2 si hace falta la revancha).
+  // En la llave de perdedores, las fases impares cruzan a los que ya estaban
+  // en ella y las pares les traen a los que acaban de perder en ganadores.
+  function planDoble(k) {
+    const plan = [[["G", 1]]];
+    if (k >= 2) {
+      plan.push([["G", 2], ["P", 1]], [["P", 2]]);
+      for (let j = 3; j <= k; j++) plan.push([["G", j], ["P", 2 * j - 3]], [["P", 2 * j - 2]]);
+    }
+    plan.push([["F", 1]]);
+    return plan;
+  }
+  const claveDoble = (llave, fase, slot) => llave + fase + ":" + slot;
+  // Quién pierde una mesa: su id; null si nadie baja (un bye, o «--»);
+  // undefined si todavía no se sabe.
+  function perdedorDe(m) {
+    if (m.n === null) return null;
+    const g = pasaDe(m);
+    return g === undefined ? undefined : g === null ? null : g === m.b ? m.n : m.b;
+  }
+  // Lo jugado hasta ahora, por lugar del cuadro: quién ganó y quién perdió.
+  // Una mesa que no existe (no había nadie para jugarla) no está en el mapa.
+  function estadoDoble(t, hasta) {
+    const e = new Map();
+    const R = hasta == null ? t.rondas.length : Math.min(hasta, t.rondas.length);
+    for (let r = 0; r < R; r++) for (const m of t.rondas[r].mesas) {
+      if (m.llave) e.set(claveDoble(m.llave, m.fase, m.slot), { gan: pasaDe(m), per: perdedorDe(m) });
+    }
+    return e;
+  }
+  // ¿Ganó la primera final el que venía de la llave de perdedores?
+  function hayRevancha(t, rondasBase) {
+    const R = t.rondas[rondasBase - 1];
+    const f = R && R.mesas.find((m) => m.llave === "F" && m.fase === 1);
+    if (!f || f.n === null) return false;
+    const g = pasaDe(f);
+    return !!g && g === f.deP;
+  }
+  function rondaDoble(t, ronda) {
+    const orden = ordenInicial(t);
+    const semilla = new Map(orden.map((id, i) => [id, i + 1]));
+    const tam = tamCuadro(orden.length);
+    let k = 0;
+    for (let x = tam; x > 1; x /= 2) k++;
+    const plan = planDoble(k);
+    const alterna = (i) => (i % 2 === 0) === (t.colorInicial !== "b");
+    const previa = t.rondas[ronda - 1];
+    if (ronda > 0 && !previa) throw new Error("falta la ronda anterior");
+    if (previa && !rondaCompleta(previa)) { const x = new Error("pendiente"); x.detalle = { error: "pendiente" }; throw x; }
+    const e = estadoDoble(t, ronda);
+    const de = (llave, fase, slot, cual) => { const x = e.get(claveDoble(llave, fase, slot)); return x ? x[cual] || null : null; };
+    const blancas = new Map();
+    for (let r = 0; r < ronda; r++) for (const m of t.rondas[r].mesas) if (m.n !== null) blancas.set(m.b, (blancas.get(m.b) || 0) + 1);
+    const mesas = [];
+    const pon = (A, B, extra, i) => {
+      if (!A && !B) return;
+      if (!A || !B) { mesas.push(Object.assign({ b: A || B, n: null, r: null, ko: true }, extra)); return; }
+      const [alto, bajo] = semilla.get(A) < semilla.get(B) ? [A, B] : [B, A];
+      const ba = blancas.get(alto) || 0, bb = blancas.get(bajo) || 0;
+      const altoBlancas = ba !== bb ? ba < bb : alterna(i + ronda);
+      mesas.push(Object.assign(altoBlancas ? { b: alto, n: bajo } : { b: bajo, n: alto }, { r: null, ko: true }, extra));
+    };
+    // La revancha: los mismos dos de la primera final, con los colores cambiados.
+    if (ronda === plan.length) {
+      const f = previa.mesas.find((m) => m.llave === "F" && m.fase === 1);
+      if (!f || !hayRevancha(t, plan.length)) throw new Error("el torneo ya terminó");
+      mesas.push({ b: f.n, n: f.b, r: null, ko: true, llave: "F", fase: 2, slot: 0, deP: f.deP });
+      return { mesas, ausencias: {} };
+    }
+    if (ronda > plan.length) throw new Error("el torneo ya terminó");
+    for (const [llave, fase] of plan[ronda]) {
+      if (llave === "G" && fase === 1) {
+        const s = semillasCuadro(tam);
+        for (let i = 0; i < tam / 2; i++) pon(orden[s[2 * i] - 1], orden[s[2 * i + 1] - 1], { llave, fase, slot: i }, i);
+      } else if (llave === "G") {
+        const n = tam / Math.pow(2, fase);
+        for (let i = 0; i < n; i++) pon(de("G", fase - 1, 2 * i, "gan"), de("G", fase - 1, 2 * i + 1, "gan"), { llave, fase, slot: i }, i);
+      } else if (llave === "P" && fase === 1) {
+        for (let i = 0; i < tam / 4; i++) pon(de("G", 1, 2 * i, "per"), de("G", 1, 2 * i + 1, "per"), { llave, fase, slot: i }, i);
+      } else if (llave === "P" && fase % 2 === 0) {
+        // Llegan los que acaban de perder en ganadores. En las fases 2, 6,
+        // 10… entran en el orden contrario, para que no se repita enseguida
+        // la partida de la ronda anterior.
+        const i0 = fase / 2, n = tam / Math.pow(2, i0 + 1);
+        for (let i = 0; i < n; i++) pon(de("P", fase - 1, i, "gan"), de("G", i0 + 1, i0 % 2 === 1 ? n - 1 - i : i, "per"), { llave, fase, slot: i }, i);
+      } else if (llave === "P") {
+        const n = tam / Math.pow(2, (fase + 1) / 2 + 1);
+        for (let i = 0; i < n; i++) pon(de("P", fase - 1, 2 * i, "gan"), de("P", fase - 1, 2 * i + 1, "gan"), { llave, fase, slot: i }, i);
+      } else {
+        const deG = de("G", k, 0, "gan");
+        const deP = k === 1 ? de("G", 1, 0, "per") : de("P", 2 * k - 2, 0, "gan");
+        pon(deG, deP, { llave: "F", fase: 1, slot: 0, deP: deP || undefined }, 0);
+      }
+    }
+    return { mesas, ausencias: {} };
+  }
+  // El nombre de una fase de la doble eliminación: la llave y su número, o
+  // «final» y «revancha».
+  function fasesDeRonda(t, ronda) {
+    const R = t.rondas[ronda];
+    if (R) return [...new Set(R.mesas.filter((m) => m.llave).map((m) => m.llave + m.fase))];
+    let k = 0;
+    for (let x = tamCuadro(t.jugadores.length); x > 1; x /= 2) k++;
+    const plan = planDoble(k);
+    return ronda < plan.length ? plan[ronda].map(([l, f]) => l + f) : ["F2"];
   }
   // Quién pasa de una mesa: su id; null si no pasa nadie («--»); undefined
   // si todavía no se sabe (sin resultado, o tablas sin el desempate).
@@ -379,6 +500,7 @@
     }
   }
   function rondaEliminacion(t, ronda) {
+    if (t.dobleEliminacion) return rondaDoble(t, ronda);
     const orden = ordenInicial(t);
     const semilla = new Map(orden.map((id, i) => [id, i + 1]));
     const tam = tamCuadro(orden.length);
@@ -397,10 +519,12 @@
     const previa = t.rondas[ronda - 1];
     if (!previa) throw new Error("falta la ronda anterior");
     const ganador = new Map();
+    const perdedor = new Map();
     for (const m of previa.mesas) {
       const g = pasaDe(m);
       if (g === undefined) { const x = new Error("pendiente"); x.detalle = { error: "pendiente" }; throw x; }
       ganador.set(m.slot, g);
+      perdedor.set(m.slot, perdedorDe(m));
     }
     // Cuántas blancas lleva cada uno: el que menos tiene, juega con blancas.
     const blancas = new Map();
@@ -415,23 +539,244 @@
       const altoBlancas = ba !== bb ? ba < bb : alterna(k + ronda);
       mesas.push(altoBlancas ? { b: alto, n: bajo, r: null, slot: k, ko: true } : { b: bajo, n: alto, r: null, slot: k, ko: true });
     }
+    // El partido por el tercer puesto: los dos que perdieron la semifinal, en
+    // la misma ronda que la final. Si alguno pasó la semifinal sin jugar (o no
+    // se presentó nadie), no hay partido.
+    if (t.tercerPuesto && lugares === 1) {
+      const A = perdedor.get(0), B = perdedor.get(1);
+      if (A && B) {
+        const [alto, bajo] = semilla.get(A) < semilla.get(B) ? [A, B] : [B, A];
+        const ba = blancas.get(alto) || 0, bb = blancas.get(bajo) || 0;
+        const altoBlancas = ba !== bb ? ba < bb : alterna(ronda + 1);
+        mesas.push(Object.assign(altoBlancas ? { b: alto, n: bajo } : { b: bajo, n: alto }, { r: null, slot: 1, ko: true, tercer: true }));
+      }
+    }
     return { mesas, ausencias: {} };
   }
   // Hasta qué ronda llegó cada uno: cuántas pasó. El campeón pasó todas.
+  // Con partido por el tercer puesto, ganarlo vale medio escalón: el 3.º y el
+  // 4.º dejan de compartir puesto.
+  // En la doble eliminación el número es otra cosa, pero se lee igual (más
+  // es mejor, e iguales comparten puesto): la ronda en que quedó fuera; quien
+  // sigue en carrera va por encima de todos los que ya salieron, y el campeón
+  // por encima de todos.
+  const EN_CARRERA = 1000, CAMPEON = 2000;
   function alcanceEliminacion(t, hasta) {
     const out = new Map(t.jugadores.map((j) => [j.id, 0]));
-    const R = hasta == null ? t.rondas.length : hasta;
+    const R = hasta == null ? t.rondas.length : Math.min(hasta, t.rondas.length);
+    if (t.dobleEliminacion) {
+      const derrotas = new Map(), fuera = new Map();
+      const pierde = (id, r) => { derrotas.set(id, (derrotas.get(id) || 0) + 1); if (derrotas.get(id) >= 2 && !fuera.has(id)) fuera.set(id, r + 1); };
+      for (let r = 0; r < R; r++) for (const m of t.rondas[r].mesas) {
+        if (m.n === null) continue;
+        const g = pasaDe(m);
+        if (g === undefined) continue;
+        // Si no se presentó ninguno, los dos quedan fuera ahí mismo.
+        if (g === null) { for (const id of [m.b, m.n]) if (!fuera.has(id)) fuera.set(id, r + 1); continue; }
+        pierde(g === m.b ? m.n : m.b, r);
+      }
+      const total = rondasEliminacion(t);
+      const ultima = R === total && R > 0 ? t.rondas[R - 1] : null;
+      const final = ultima && rondaCompleta(ultima) ? ultima.mesas.find((m) => m.llave === "F") : null;
+      const campeon = final ? pasaDe(final) : undefined;
+      for (const j of t.jugadores) {
+        out.set(j.id, j.id === campeon ? CAMPEON : fuera.has(j.id) ? fuera.get(j.id) : R ? EN_CARRERA : 0);
+      }
+      return out;
+    }
     for (let r = 0; r < R; r++) for (const m of t.rondas[r].mesas) {
       const g = pasaDe(m);
-      if (g) out.set(g, (out.get(g) || 0) + 1);
+      if (g) out.set(g, (out.get(g) || 0) + (m.tercer ? 0.5 : 1));
     }
     return out;
+  }
+  // El campeón, cuando el torneo ya terminó (si no, undefined).
+  function campeonEliminacion(t) {
+    const total = rondasEliminacion(t);
+    if (t.rondas.length !== total || !total) return undefined;
+    const U = t.rondas[total - 1];
+    const final = U.mesas.find((m) => (t.dobleEliminacion ? m.llave === "F" : !m.tercer && m.slot === 0));
+    return final && rondaCompleta(U) ? pasaDe(final) || undefined : undefined;
   }
   // El nombre de una ronda del cuadro: final, semifinal, cuartos…
   function nombreRondaEliminacion(t, ronda) {
     const quedan = rondasEliminacion(t) - ronda;
     return ["final", "semifinal", "cuartos", "octavos"][quedan - 1] || "ronda";
   }
+
+  // ---------- El Sistema Keizer ----------
+  //
+  // Es el sistema de los torneos de club de toda la temporada, donde no todos
+  // vienen todas las noches: juega quien vino, y nadie queda fuera por faltar.
+  //
+  // - Cada jugador VALE según su puesto: el primero vale tantos puntos como
+  //   jugadores hay, el segundo uno menos… y el último vale 1.
+  // - Ganarle a alguien da su valor; unas tablas, la mitad; perder, nada. Y
+  //   cada uno suma, una sola vez, su propio valor.
+  // - Quien queda libre por ser impares suma la mitad de SU valor, igual que
+  //   quien pide medio punto; quien falta, el 35 % (hasta 5 faltas: de la sexta
+  //   en adelante, nada); quien falta por jugar para el club, el 70 %.
+  // - Después de cada ronda se vuelve a ordenar a todos, cada uno pasa a valer
+  //   lo de su nuevo puesto y TODAS las rondas se cuentan otra vez con los
+  //   valores nuevos. Se repite hasta que el orden deja de cambiar.
+  // - Se empareja de arriba abajo: el 1 con el 2, el 3 con el 4… sin repetir un
+  //   rival de las últimas tres rondas (si no hay otra forma, se afloja).
+  //
+  // Los valores por omisión son los de la librería chesspairing (la misma con
+  // la que se comparan los desempates del C.07), con una diferencia a
+  // propósito: el libre va al último que menos veces quedó libre, no siempre
+  // al último, para que a nadie le toque dos veces antes que a todos una.
+  //
+  // Todo se cuenta en vigésimos de punto (1, ½, 0,35 y 0,7 son enteros en
+  // vigésimos): así dos totales iguales son iguales, sin decimales que bailen.
+
+  const VEINTE = 20; // un punto, en vigésimos
+  const REGLAS_KEIZER = {
+    victoria: 20, tablas: 10, derrota: 0,   // del valor del RIVAL
+    libre: 10, medio: 10,                   // del valor PROPIO
+    falta: 7, club: 14,
+    topeFaltas: 5,
+    sinRepetir: 3,                          // rondas sin volver a jugar con el mismo
+    vueltas: 30,                            // tope del ir y venir del orden
+  };
+
+  // Lo que le pasó a `id` en la ronda r, en la moneda del Keizer:
+  //   { de: "rival" | "propio" | null, id (el rival), parte (vigésimos) }
+  function hechoKeizer(t, r, id, faltas) {
+    const s = situacion(t, r, id);
+    if (s.tipo === "partida") return { de: "rival", id: s.rival, parte: s.codigo === "1" ? REGLAS_KEIZER.victoria : s.codigo === "=" ? REGLAS_KEIZER.tablas : REGLAS_KEIZER.derrota };
+    if (s.tipo === "incomparecencia") return { de: "rival", id: s.rival, parte: s.codigo === "+" ? REGLAS_KEIZER.victoria : 0 };
+    if (s.tipo === "bye") return { de: "propio", parte: REGLAS_KEIZER.libre };
+    if (s.tipo !== "ausente") return { de: null, parte: 0 };
+    if (s.codigo === "H") return { de: "propio", parte: REGLAS_KEIZER.medio };
+    if (s.codigo === "F") return { de: "propio", parte: REGLAS_KEIZER.club };
+    // Quien ya se retiró no suma por faltar: no es una falta, ya no está.
+    const j = t.jugadores.find((x) => x.id === id);
+    if (j && j.retiradoDespuesDe != null && r >= j.retiradoDespuesDe) return { de: null, parte: 0 };
+    faltas.n++;
+    return { de: "propio", parte: faltas.n <= REGLAS_KEIZER.topeFaltas ? REGLAS_KEIZER.falta : 0 };
+  }
+
+  // La puntuación Keizer tras `hasta` rondas (todas, si no se dice):
+  //   { orden: [id…] del primero al último, valor: Map id → valor,
+  //     total: Map id → puntos Keizer, veinte: Map id → lo mismo en vigésimos }
+  function puntuarKeizer(t, hasta) {
+    const R = hasta == null ? t.rondas.length : Math.min(hasta, t.rondas.length);
+    const inicial = ordenInicial(t);
+    const lugar = new Map(inicial.map((id, i) => [id, i]));
+    const n = inicial.length;
+    // Lo que pasó no cambia de una vuelta a otra: solo cuánto vale cada uno.
+    const hechos = new Map();
+    for (const id of inicial) {
+      const faltas = { n: 0 }, lista = [];
+      for (let r = 0; r < R; r++) lista.push(hechoKeizer(t, r, id, faltas));
+      hechos.set(id, lista);
+    }
+    const clasico = new Map(inicial.map((id) => [id, puntosHasta(t, id, R)]));
+    // Cada vuelta: con el orden que hay, cuánto vale cada uno; con eso, los
+    // totales; con los totales, el orden nuevo. Termina cuando el orden ya no
+    // cambia. A veces dos jugadores se quedan cambiando de lugar sin fin (el
+    // de arriba vale más, y eso baja al otro): ahí se corta en la primera
+    // vuelta que repite un orden ya visto. En los dos casos la lista que sale
+    // va ordenada por los totales que muestra, y `valor` es lo que cada uno
+    // valió para contarlos.
+    let orden = inicial.slice(), valor, veinte;
+    const vistos = new Set([orden.join(",")]);
+    for (let v = 0; v < REGLAS_KEIZER.vueltas; v++) {
+      valor = new Map(orden.map((id, i) => [id, n - i]));
+      veinte = new Map();
+      for (const id of inicial) {
+        let s = valor.get(id) * VEINTE;
+        for (const h of hechos.get(id)) {
+          if (h.de === "rival") s += (valor.get(h.id) || 0) * h.parte;
+          else if (h.de === "propio") s += valor.get(id) * h.parte;
+        }
+        veinte.set(id, s);
+      }
+      const antes = orden.join(",");
+      orden = inicial.slice().sort((x, y) => veinte.get(y) - veinte.get(x) || clasico.get(y) - clasico.get(x) || lugar.get(x) - lugar.get(y));
+      const firma = orden.join(",");
+      if (firma === antes || vistos.has(firma)) break;
+      vistos.add(firma);
+    }
+    const total = new Map([...veinte].map(([id, x]) => [id, x / VEINTE]));
+    return { orden, valor, total, veinte };
+  }
+
+  // Los colores y los rivales que lleva cada uno hasta la ronda r.
+  function historiaKeizer(t, r) {
+    const h = new Map(t.jugadores.map((j) => [j.id, { colores: [], ultima: new Map(), libres: 0 }]));
+    for (let k = 0; k < Math.min(r, t.rondas.length); k++) for (const m of t.rondas[k].mesas) {
+      if (m.n === null) { if (h.has(m.b)) h.get(m.b).libres++; continue; }
+      if (!h.has(m.b) || !h.has(m.n)) continue;
+      h.get(m.b).ultima.set(m.n, k);
+      h.get(m.n).ultima.set(m.b, k);
+      // Una partida que no se jugó no cuenta como color llevado.
+      if (m.r === "+-" || m.r === "-+" || m.r === "--") continue;
+      h.get(m.b).colores.push("w");
+      h.get(m.n).colores.push("b");
+    }
+    return h;
+  }
+
+  // Con qué color juega el de arriba (`a`) contra el de abajo (`b`).
+  function colorDeArriba(h, a, b, mesa, colorInicial) {
+    const ca = h.get(a).colores, cb = h.get(b).colores;
+    const saldo = (c) => c.filter((x) => x === "w").length - c.filter((x) => x === "b").length;
+    const sa = saldo(ca), sb = saldo(cb);
+    if (sa !== sb) return sa < sb ? "w" : "b";
+    // Mismo saldo: mirando hacia atrás, la primera ronda en que llevaron
+    // colores distintos; cada uno cambia el suyo.
+    for (let i = 1; i <= Math.min(ca.length, cb.length); i++) {
+      const xa = ca[ca.length - i], xb = cb[cb.length - i];
+      if (xa !== xb) return xa === "w" ? "b" : "w";
+    }
+    const inicial = colorInicial === "b" ? "b" : "w";
+    return mesa % 2 === 0 ? inicial : inicial === "w" ? "b" : "w";
+  }
+
+  // Parejas de arriba abajo sin repetir un rival de las últimas `sinRepetir`
+  // rondas. Devuelve null si no hay forma (o si buscarla se hace eterno).
+  function parejasKeizer(lista, h, r, sinRepetir) {
+    let pasos = 0;
+    const puede = (a, b) => {
+      const k = h.get(a).ultima.get(b);
+      return k === undefined || r - k > sinRepetir;
+    };
+    const buscar = (resto) => {
+      if (!resto.length) return [];
+      if (++pasos > 50000) return null;
+      const a = resto[0];
+      for (let i = 1; i < resto.length; i++) {
+        if (!puede(a, resto[i])) continue;
+        const sigue = buscar(resto.slice(1, i).concat(resto.slice(i + 1)));
+        if (sigue) return [[a, resto[i]]].concat(sigue);
+      }
+      return null;
+    };
+    return buscar(lista);
+  }
+
+  // Las mesas de la ronda `r` (0 es la primera), para quienes juegan:
+  // todos menos los retirados y los que avisaron que no vienen (`ausencias`).
+  function emparejarKeizer(t, r, ausencias) {
+    const juegan = new Set(participantes(t, r, ausencias));
+    const lista = puntuarKeizer(t, r).orden.filter((id) => juegan.has(id));
+    const h = historiaKeizer(t, r);
+    let libre = null;
+    if (lista.length % 2 === 1) {
+      // El último de los que menos veces quedaron libres.
+      const menos = Math.min(...lista.map((id) => h.get(id).libres));
+      for (let i = lista.length - 1; i >= 0; i--) if (h.get(lista[i]).libres === menos) { libre = lista.splice(i, 1)[0]; break; }
+    }
+    let pares = null;
+    for (let s = REGLAS_KEIZER.sinRepetir; s >= 0 && !pares; s--) pares = parejasKeizer(lista, h, r, s);
+    if (!pares) { pares = []; for (let i = 0; i + 1 < lista.length; i += 2) pares.push([lista[i], lista[i + 1]]); }
+    const mesas = pares.map(([a, b], i) => (colorDeArriba(h, a, b, i, t.colorInicial) === "w" ? { b: a, n: b, r: null } : { b: b, n: a, r: null }));
+    if (libre) mesas.push({ b: libre, n: null, r: null });
+    return mesas;
+  }
+
 
   // Los sistemas con el calendario fijo de antemano (no se empareja ronda a
   // ronda con el motor): todos contra todos, Scheveningen y la eliminación
@@ -484,7 +829,8 @@
     cab("072", t.jugadores.filter((j) => Number(j.elo) > 0).length);
     cab("082", 0);
     cab("092", t.sistema === "todos" ? "Individual: Round-Robin" : t.sistema === "scheveningen" ? "Individual: Scheveningen"
-      : t.sistema === "eliminacion" ? "Individual: Knockout" : "Individual: Swiss-System");
+      : t.sistema === "eliminacion" ? (t.dobleEliminacion ? "Individual: Double Knockout" : "Individual: Knockout")
+      : t.sistema === "keizer" ? "Individual: Keizer" : "Individual: Swiss-System");
     cab("102", t.arbitro);
     cab("112", t.arbitroAdjunto);
     cab("122", t.ritmo);
@@ -492,7 +838,7 @@
     L.push("152 " + (t.colorInicial === "b" ? "B" : "W"));
     const lp = lineaPuntos(t);
     if (lp) L.push(lp);
-    if (!fijo(t)) L.push("192 " + (t.baku ? "FIDE_DUTCH_2026_BAKU" : "FIDE_DUTCH_2026"));
+    if (!fijo(t) && t.sistema !== "keizer") L.push("192 " + (t.baku ? "FIDE_DUTCH_2026_BAKU" : "FIDE_DUTCH_2026"));
 
     for (const id of orden) {
       const j = t.jugadores.find((x) => x.id === id);
@@ -561,7 +907,8 @@
       else if (c === "052") t.fechaFin = v.replace(/\//g, "-").slice(0, 10);
       else if (c === "092" && /round.?robin/i.test(v)) t.sistema = "todos";
       else if (c === "092" && /scheveningen/i.test(v)) t.sistema = "scheveningen";
-      else if (c === "092" && /knock.?out/i.test(v)) t.sistema = "eliminacion";
+      else if (c === "092" && /knock.?out/i.test(v)) { t.sistema = "eliminacion"; if (/double/i.test(v)) t.dobleEliminacion = true; }
+      else if (c === "092" && /keizer/i.test(v)) t.sistema = "keizer";
       else if (c === "102") t.arbitro = v;
       else if (c === "112") t.arbitroAdjunto = v;
       else if (c === "122") t.ritmo = v;
@@ -664,7 +1011,9 @@
     PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, sortearColor, numeros, situacion, puntos, puntosHasta,
     rondaCompleta, participantes, retirosPorIncomparecencia, berger, rondaTodos, rondasTodos, aTrf,
     COLORES_SCHEVENINGEN, MAX_SCHEVENINGEN, equiposScheveningen, rondaScheveningen, rondasScheveningen, marcadorScheveningen,
-    semillasCuadro, rondasEliminacion, rondaEliminacion, pasaDe, alcanceEliminacion, nombreRondaEliminacion,
+    semillasCuadro, rondasEliminacion, rondaEliminacion, pasaDe, perdedorDe, alcanceEliminacion, nombreRondaEliminacion,
+    planDoble, fasesDeRonda, campeonEliminacion, EN_CARRERA, CAMPEON,
+    REGLAS_KEIZER, puntuarKeizer, emparejarKeizer,
     fijo, rondasFijas, rondaFija, rondasDelTorneo, leerPareo, deTrf,
     // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
     formatoTrf: { izq, der, decimal, fechaTrf },

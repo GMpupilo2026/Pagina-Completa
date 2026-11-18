@@ -182,9 +182,9 @@
     const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
     return m ? Number(m[3]) + " de " + meses[Number(m[2]) - 1] + " de " + m[1] : "";
   };
-  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "eliminación directa" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? (t.dobleEliminacion ? "doble eliminación" : "eliminación directa") : t.sistema === "keizer" ? "Keizer de " + (Number(t.rondasTotales) || 0) + " rondas" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
   // Para las tablas, más corto: en una columna angosta lo largo se corta.
-  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "eliminación directa" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? (t.dobleEliminacion ? "doble eliminación" : "eliminación directa") : t.sistema === "keizer" ? "Keizer, " + (Number(t.rondasTotales) || 0) + " rondas" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
   const nombreTorneo = (t) => t.grupo || t.nombre;
   const linea = (s) => "______________________________   " + s;
 
@@ -197,7 +197,7 @@
   }
   function textoConfiguracion(c) {
     const p = c.puntos || {};
-    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : c.sistema === "scheveningen" ? "Scheveningen" : c.sistema === "eliminacion" ? "eliminación directa" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
+    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : c.sistema === "scheveningen" ? "Scheveningen" : c.sistema === "eliminacion" ? (c.dobleEliminacion ? "doble eliminación" : "eliminación directa") : c.sistema === "keizer" ? "Keizer de " + (Number(c.rondasTotales) || 0) + " rondas" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
       "puntos " + [p.victoria, p.tablas, p.derrota].map(puntosTexto).join(" · ") + ", bye " + puntosTexto(p.bye || 0),
       "desempates " + ((c.desempates || []).join(", ") || "ninguno")].join("; ");
   }
@@ -1181,7 +1181,7 @@
   // (incidencias, discrepancias, lo de las cámaras, lo confirmado) se corre
   // cuando una mesa se va. Devuelve { ok, repetidas, sinRival } o { error }.
   function sePuedeModificar(t, r) {
-    return !!t && !E.esDeEquipos(t) && t.sistema !== "todos" && t.sistema !== "scheveningen" && t.sistema !== "eliminacion" &&
+    return !!t && !E.esDeEquipos(t) && t.sistema !== "todos" && t.sistema !== "scheveningen" && t.sistema !== "eliminacion" && t.sistema !== "keizer" &&
       r === t.rondas.length - 1 && r >= 0;
   }
   function dondeJuega(R, id) {
