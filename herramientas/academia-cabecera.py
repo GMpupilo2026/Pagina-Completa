@@ -61,7 +61,7 @@ PAGINAS = [
     "informes.html", "inscripciones.html", "sala-admin.html", "juegos.html", "competir.html",
     "lector-planilla.html", "logros.html", "puntos-tienda.html", "cuaderno.html", "calendario.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
-    "planes.html", "proyecto.html", "cuestionarios.html", "tablero-preguntas.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
+    "planes.html", "proyecto.html", "cuestionarios.html", "tablero-preguntas.html", "maestros-dijeron.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html", "temporada.html",
     "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html", "audios-clases.html", "camaras.html",
@@ -219,7 +219,7 @@ AYUDA_GUIA = {
     # Las del día a día del profe que la guía ya cuenta (ver «El «?» de la
     # guía, para el equipo docente»).
     "alumno-nuevo.html": "empezar",
-    "cuestionarios.html": "clase-en-vivo", "tablero-preguntas.html": "clase-en-vivo",
+    "cuestionarios.html": "clase-en-vivo", "tablero-preguntas.html": "clase-en-vivo", "maestros-dijeron.html": "clase-en-vivo",
     "proyecto.html": "planes",
     "cuaderno.html": "informes", "libreta-torneos.html": "informes",
     "calendario.html": "tareas",
@@ -685,6 +685,7 @@ NOMBRE_Y_PADRE = {
     "proyecto.html": ("Proyecto", "clases.html"),
     "cuestionarios.html": ("Cuestionarios", "clases.html"),
     "tablero-preguntas.html": ("Tablero de preguntas", "cuestionarios.html"),
+    "maestros-dijeron.html": ("100 maestros dijeron", "cuestionarios.html"),
     "racha-tactica.html": ("Racha táctica", "clases.html"),
     "reportes.html": ("Reportes de actividades", "clases.html"),
     "sesion.html": ("Sesión en vivo", "clases.html"),
