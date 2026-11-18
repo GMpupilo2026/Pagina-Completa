@@ -1514,24 +1514,86 @@
          * clase»— y por eso tampoco hace falta acordarse de quién estaba
          * conectado al cerrar. */
 
-        async function abrirClaseSiHaceFalta() {
-            if (!isTeacher || currentOpenSessionId || abriendoClase) return;
-            abriendoClase = true;
-            const { data, error } = await sb.from("class_sessions")
-                .insert({ created_by: profile.id }).select().maybeSingle();
-            abriendoClase = false;
-            if (error) {
-                // 23505 es el índice único: alguien más (la otra pestaña, el otro
-                // disparador) ya la abrió. No es un fallo — es justo lo que el
-                // índice tiene que hacer. Se busca la que quedó.
-                if (error.code === "23505") { await checkOpenClassSession(); return; }
-                setStatus("No se pudo abrir la clase: " + error.message
-                    + " — la asistencia de tus alumnos no se está registrando.");
-                return;
-            }
-            if (data) { currentOpenSessionId = data.id; currentOpenSessionStartedAt = data.started_at || null; }
+        /* ---- ¿Quién entra? La lista de la clase ----
+         * A la clase entran solo los alumnos que el profe asignó
+         * (`clase_asignados`; lo hace cumplir la RLS, no esta pantalla). Abrir
+         * la clase ya no es un INSERT suelto: las dos puertas —el botón y
+         * mandar una posición— muestran el selector (js/clase-asignados.js), y
+         * la clase se abre con su lista en UNA llamada, abrir_clase_en_vivo().
+         * Nadie entra hasta que el profe confirma a quiénes. Ver «A la clase
+         * entran solo los asignados». */
+        let elegirAsignados = null;
+        let asignadosDeLaClase = new Set();
+        // Si canceló el selector, mandar otra posición no se lo vuelve a poner
+        // encima en cada jugada: queda el botón «Abrir la clase».
+        let selectorDescartado = false;
+
+        function montarElegirAsignados() {
+            if (elegirAsignados || !window.ClaseAsignados) return elegirAsignados;
+            elegirAsignados = ClaseAsignados.montar({
+                sb, caja: document.getElementById("clase-asignar"), profesorId: profile.id,
+                alConfirmar: (ids, modo) => (modo === "abrir" ? abrirClaseCon(ids) : cambiarAsignados(ids)),
+                alCerrar: () => { if (!currentOpenSessionId) selectorDescartado = true; modoListaAbierta = null; pintarEstadoDeClase(); },
+            });
+            return elegirAsignados;
+        }
+
+        async function abrirClaseSiHaceFalta(desdeElBoton) {
+            if (!isTeacher || currentOpenSessionId || abriendoClase || modoProyector || modoControl) return;
+            if (desdeElBoton !== true && selectorDescartado) return;
+            const sel = montarElegirAsignados();
+            if (!sel || sel.abierto()) return;
+            modoListaAbierta = "abrir";
+            await sel.abrir("abrir");
             pintarEstadoDeClase();
         }
+
+        // Devuelve el error para que el selector lo diga, o null si se abrió.
+        async function abrirClaseCon(ids) {
+            if (abriendoClase) return "La clase ya se está abriendo.";
+            abriendoClase = true;
+            const titulo = (new URLSearchParams(location.search).get("titulo") || "").slice(0, 200) || null;
+            const { data, error } = await sb.rpc("abrir_clase_en_vivo", { p_alumnos: ids, p_titulo: titulo });
+            abriendoClase = false;
+            if (error) {
+                return "No se pudo abrir la clase: " + error.message
+                    + " — mientras tanto tus alumnos no pueden entrar y no se registra nada.";
+            }
+            /* Si ya había una abierta (la otra pestaña, a la vez), la función
+               devuelve ESA, con su lista: el índice de una abierta por profe
+               no deja abrir dos. Por eso la lista se vuelve a leer de la base. */
+            const { data: fila } = await sb.from("class_sessions").select("id, started_at").eq("id", data).maybeSingle();
+            currentOpenSessionId = data;
+            currentOpenSessionStartedAt = (fila && fila.started_at) || new Date().toISOString();
+            selectorDescartado = false;
+            modoListaAbierta = null;
+            cargarSacados();
+            await cargarAsignados();
+            pintarEstadoDeClase();
+            return null;
+        }
+
+        async function cambiarAsignados(ids) {
+            if (!currentOpenSessionId) return "La clase ya no está abierta.";
+            const { error } = await sb.rpc("cambiar_asignados_de_la_clase", { p_clase: currentOpenSessionId, p_alumnos: ids });
+            if (error) return "No se pudo guardar la lista: " + error.message;
+            asignadosDeLaClase = new Set(ids);
+            modoListaAbierta = null;
+            pintarEstadoDeClase();
+            setStatus("✅ Lista guardada: " + (ids.length === 1 ? "entra 1 alumno." : "entran " + ids.length + " alumnos."));
+            return null;
+        }
+
+        async function cargarAsignados() {
+            if (!isTeacher || !currentOpenSessionId) { asignadosDeLaClase = new Set(); return; }
+            const { data, error } = await sb.from("clase_asignados").select("student_id").eq("class_session_id", currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            asignadosDeLaClase = new Set((data || []).map((f) => f.student_id));
+            pintarEstadoDeClase();
+        }
+
+        // En qué modo está abierto el selector ("abrir" | "cambiar"), o null.
+        let modoListaAbierta = null;
 
         async function cerrarClaseDesdeAqui() {
             if (!isTeacher || !currentOpenSessionId) return;
@@ -1779,7 +1841,14 @@
             const abrir = document.getElementById("clase-abrir-btn");
             const cerrar = document.getElementById("clase-cerrar-btn");
             const campos = document.getElementById("clase-cerrar-campos");
+            const quienes = document.getElementById("clase-asignados-btn");
             caja.classList.remove("hidden");
+            // La lista abierta para CAMBIARLA no sobrevive a que la clase se cierre.
+            if (!currentOpenSessionId && modoListaAbierta === "cambiar" && elegirAsignados) {
+                elegirAsignados.cerrar();
+                modoListaAbierta = null;
+            }
+            quienes.setAttribute("aria-expanded", String(modoListaAbierta === "cambiar"));
 
             if (currentOpenSessionId && claseDeOtroDia()) {
                 /* Quedó abierta de otro día: el índice de una abierta por profe no
@@ -1794,13 +1863,17 @@
                     + ": lo de hoy se está sumando a esa. Ciérrala y abre una nueva.";
                 abrir.classList.add("hidden");
                 cerrar.classList.remove("hidden");
+                quienes.classList.remove("hidden");
                 document.getElementById("clase-despues").hidden = true;
             } else if (currentOpenSessionId) {
                 caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
                 texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
-                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
+                const n = asignadosDeLaClase.size;
+                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos."
+                    + (n ? " Pueden entrar " + (n === 1 ? "1 alumno" : n + " alumnos") + " de tu lista." : "");
                 abrir.classList.add("hidden");
                 cerrar.classList.remove("hidden");
+                quienes.classList.remove("hidden");
                 // Una clase nueva: el enlace a la tarea era de la anterior.
                 document.getElementById("clase-despues").hidden = true;
             } else {
@@ -1812,10 +1885,13 @@
                    tiempo. Un "todavía no hay clase abierta" a secas no le dice a
                    un entrenador nuevo que la clase que está por dar no la va a
                    ver nadie. */
-                texto.textContent = "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
-                    + " y no se está registrando nada. Se abre con este botón o en cuanto mandes"
-                    + " una posición al tablero.";
-                abrir.classList.remove("hidden");
+                const eligiendo = modoListaAbierta === "abrir";
+                texto.textContent = eligiendo
+                    ? "⚪ La clase todavía no está abierta: marca quién entra y ábrela. Solo los de la lista pueden entrar."
+                    : "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
+                    + " y no se está registrando nada. Al abrirla eliges quién entra.";
+                abrir.classList.toggle("hidden", eligiendo);
+                quienes.classList.add("hidden");
                 cerrar.classList.add("hidden");
                 campos.classList.add("hidden");
                 cerrar.textContent = "Cerrar la clase";
@@ -1846,7 +1922,7 @@
             mostrarSalidaPasada();
             // Si lo sacaron de esta clase, recargar no lo vuelve a meter.
             if (openSession && await meSacaronDe(openSession.id)) { await quedarFueraDeLaClase(); return; }
-            if (isTeacher) cargarSacados();
+            if (isTeacher) { cargarSacados(); cargarAsignados(); }
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -1856,17 +1932,29 @@
 
         function conectarControlesDeClase() {
             if (!isTeacher) return;
-            document.getElementById("clase-abrir-btn").addEventListener("click", abrirClaseSiHaceFalta);
+            document.getElementById("clase-abrir-btn").addEventListener("click", () => abrirClaseSiHaceFalta(true));
             document.getElementById("clase-cerrar-btn").addEventListener("click", cerrarClaseDesdeAqui);
+            document.getElementById("clase-asignados-btn").addEventListener("click", async () => {
+                const sel = montarElegirAsignados();
+                if (!sel || !currentOpenSessionId) return;
+                if (modoListaAbierta === "cambiar") { sel.cerrar(); modoListaAbierta = null; pintarEstadoDeClase(); return; }
+                modoListaAbierta = "cambiar";
+                pintarEstadoDeClase();
+                await sel.abrir("cambiar", new Set(asignadosDeLaClase));
+            });
         }
 
         function subscribeClassSessions() {
             sb.channel("class_sessions-sesion:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
+                        /* Una clase NUEVA de su profe no es necesariamente para
+                           el alumno: cada una tiene su lista. Se recarga y el
+                           arranque decide (mis_clases() dice si le toca). */
+                        if (!isTeacher && !esObservador && !vistaPrevia) { window.location.reload(); return; }
                         currentOpenSessionId = payload.new.id;
                         currentOpenSessionStartedAt = payload.new.started_at || null;
-                        if (isTeacher) cargarSacados();
+                        if (isTeacher) { cargarSacados(); cargarAsignados(); }
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
                         pintarEstadoDeClase();
@@ -7731,8 +7819,16 @@
             // hace falta: si no, el alumno se queda esperando a quien hoy no va a
             // abrir mientras su otra clase ya empezó, y eso no se adivina.
             const otra = clasesDelAlumno.find((c) => c.clase_abierta && c.profesor_id !== boardOwnerId);
+            /* Abierta, pero no está en la lista de ESTA clase (es la de otro
+               grupo): se le dice eso y no «todavía no ha abierto», que lo
+               dejaría esperando a una clase que no es la suya. */
+            const sinMi = !!(mia && mia.abierta_sin_mi);
             document.getElementById("sin-clase-texto").textContent = otra
-                ? nombre + " todavía no ha abierto la clase, pero " + otra.profesor + " sí tiene una en curso ahora mismo."
+                ? nombre + (sinMi ? " tiene una clase en curso, pero no estás en su lista; " : " todavía no ha abierto la clase, pero ")
+                    + otra.profesor + " sí tiene una en curso ahora mismo para ti."
+                : sinMi
+                ? nombre + " tiene una clase en curso ahora, pero no estás en la lista de esta clase."
+                    + " Si te toca estar, pídele que te agregue: vas a entrar directo en cuanto lo haga."
                 : nombre + " todavía no ha abierto la clase. Cuando la abra vas a entrar directo al tablero.";
             // El selector es el mismo de arriba y solo aparece con dos o más
             // profesores; acá es además la forma de pasarse a la clase que sí
@@ -7748,21 +7844,28 @@
            recargara — sin que nada fallara. */
         function esperarLaClase() {
             const ids = [...new Set(clasesDelAlumno.map((c) => c.profesor_id).filter(Boolean))];
+            /* Que se abra una clase de su profe ya no quiere decir que sea para
+               él: cada clase tiene su lista. Se vuelve a preguntar (mis_clases()
+               dice si le toca) y solo se entra si está en ella. Recargar y no
+               montar acá es la misma decisión que cambiar de clase — todo
+               cuelga de boardOwnerId y montarlo a mano dejaría la mitad sin
+               suscribir. */
+            const repreguntar = async () => {
+                const { clases } = await ClaseElegida.resolver();
+                if (clases && clases.length) clasesDelAlumno = clases;
+                const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+                if (mia && mia.clase_abierta) { window.location.reload(); return; }
+                mostrarSinClase();
+            };
             ids.forEach((id) => {
                 sb.channel("clase-abre:" + id)
-                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, async (payload) => {
-                        const abrio = payload.new && !payload.new.ended_at;
-                        // La suya y abierta: se entra. Recargar y no montar acá
-                        // es la misma decisión que cambiar de clase — todo
-                        // cuelga de boardOwnerId y montarlo a mano dejaría la
-                        // mitad sin suscribir.
-                        if (abrio && id === boardOwnerId) { window.location.reload(); return; }
-                        const { clases } = await ClaseElegida.resolver();
-                        if (clases && clases.length) clasesDelAlumno = clases;
-                        mostrarSinClase();
-                    })
+                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, repreguntar)
                     .subscribe();
             });
+            // Y si el profe lo agrega a la lista con la clase en curso.
+            sb.channel("clase-asignado:" + profile.id)
+                .on("postgres_changes", { event: "INSERT", schema: "public", table: "clase_asignados", filter: "student_id=eq." + profile.id }, repreguntar)
+                .subscribe();
         }
 
         // ---------- Arranque ----------
@@ -7956,6 +8059,8 @@
             if (meSacaron) return;
             subscribeClassSessions();
             conectarControlesDeClase();
+            // Desde el panel («Iniciar clase»): llega con el selector ya abierto.
+            if (isTeacher && !currentOpenSessionId && new URLSearchParams(location.search).get("abrir") === "1") abrirClaseSiHaceFalta(true);
             /* La llamada de voz, en la misma página que el tablero: el profe que da
                la clase y sus alumnos. Ni quien observa (mira, no habla), ni la vista
                previa, ni el proyector o el control remoto (otra ventana de la misma

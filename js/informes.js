@@ -246,7 +246,7 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos, tiposFlojos] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos, tiposFlojos, tocaban] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
@@ -258,7 +258,15 @@
                 window.TemaFlojo ? TemaFlojo.cargar(sb, "").catch(() => ({})) : Promise.resolve({}),
                 // Y la del tipo más flojo, igual.
                 window.TipoFlojo ? TipoFlojo.cargar(sb).catch(() => ({})) : Promise.resolve({}),
+                // Cuántas clases le TOCABAN a cada uno (clases_que_le_tocaban): las
+                // de su lista, las que entró y las de antes de que hubiera listas.
+                // Sin esto, el «de N» era el total de clases cerradas y las de los
+                // otros grupos le contaban como faltas. Si falla, se usa el total.
+                traerTodo(() => sb.rpc("clases_que_le_tocaban")).catch(() => []),
             ]);
+            const tocabanPorAlumno = {};
+            (tocaban || []).forEach((t) => { tocabanPorAlumno[t.student_id] = t.clases || 0; });
+            if ((tocaban || []).length) alumnos.forEach((a) => { a.clases_que_tocaban = tocabanPorAlumno[a.id] || 0; });
             const justificadasPorAlumno = {};
             justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
             alumnos.forEach((a) => { a.clases_justificadas = justificadasPorAlumno[a.id] || 0; });
@@ -281,16 +289,19 @@
         // leerían como un dato; un «—» dice que falta.
         function tarjetaAsistencia(a, cerradas) {
             if (cerradas === null) return statCard("🏫", "—", "Asistencia (no se pudo cargar)");
-            return statCard("🏫", a.fue + "/" + (cerradas || 0), "Asistencia (" + a.tasa + "%)" + justificadasTexto(a.just));
+            return statCard("🏫", a.fue + "/" + a.de, "Asistencia (" + a.tasa + "%)" + justificadasTexto(a.just));
         }
 
+        /* El «de N» es el de ESE alumno (clases_que_tocaban) cuando la base lo
+           dio: solo las clases que le tocaban, no las de los otros grupos. */
         function asistenciaDe(fila, cerradas) {
             const fue = (fila && fila.clases_asistidas) || 0;
             const just = (fila && fila.clases_justificadas) || 0;
-            const base = Math.max(0, (cerradas || 0) - just);
+            const de = (fila && typeof fila.clases_que_tocaban === "number") ? Math.max(fila.clases_que_tocaban, fue) : (cerradas || 0);
+            const base = Math.max(0, de - just);
             return {
-                fue, just,
-                texto: fue + "/" + (cerradas || 0) + justificadasTexto(just),
+                fue, just, de,
+                texto: fue + "/" + de + justificadasTexto(just),
                 tasa: base ? Math.round((fue / base) * 100) : 0,
             };
         }
@@ -2547,7 +2558,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.asistencia.fue}/${teacherData.closedSessions} clases${justificadasTexto(r.asistencia.just)} · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.asistencia.fue}/${r.asistencia.de} clases${justificadasTexto(r.asistencia.just)} · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
                         body.appendChild(row);
                     });
             } else {
