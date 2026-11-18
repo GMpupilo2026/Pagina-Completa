@@ -80,7 +80,11 @@
       const hoy = hoyCR();
       return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
     },
-    morosos: (sb) => sb.rpc("cobros_morosos", {}, CABEZA),
+    // Las cuentas de cobro (mensualidades.html) vencidas o apagadas: el estado
+    // lo da la base (cuentas_cobro_vista), igual que en esa página.
+    morosos: (sb) => sb.from("cuentas_cobro_vista").select("id", CABEZA).in("estado", ["vencido", "apagado"]),
+    // Los pagos que reportó un alumno con su comprobante y nadie confirmó.
+    pagosPorConfirmar: (sb) => sb.from("pagos_reportados").select("id", CABEZA).eq("estado", "pendiente"),
     // Quien coordina registra el pago; el recibo lo revisa y lo entrega quien
     // supervisa. Lo que todavía nadie entregó (ni por correo ni en mano).
     recibosSinEntregar: (sb) => sb.from("recibos").select("id", CABEZA).eq("estado", "emitido").is("entrega", null),
@@ -131,6 +135,10 @@
       titulo: (n) => pl(n, "informe mensual de un profesor sin leer", "informes mensuales de tus profesores sin leer"),
       porque: "Te lo mandaron y esperan que lo leas y lo comentes.",
       accion: "Leer", href: "supervision.html", alDia: "Informes mensuales leídos" },
+    { clave: "pagosPorConfirmar", nivel: "urgente", emoji: "💵",
+      titulo: (n) => pl(n, "pago reportado por confirmar", "pagos reportados por confirmar"),
+      porque: "Un alumno mandó la foto de su SINPE. Si entró, confírmalo: se activa y sale el recibo.",
+      accion: "Confirmar", href: "mensualidades.html#reportes", alDia: "Ningún pago por confirmar" },
     { clave: "recibosSinEntregar", nivel: "urgente", emoji: "🧾",
       titulo: (n) => pl(n, "recibo de pago por revisar y entregar", "recibos de pago por revisar y entregar"),
       porque: "Se registró el pago y la familia espera su recibo. Revísalo y mándalo por correo o márcalo como entregado en mano.",
@@ -157,9 +165,9 @@
       porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
       accion: "Ver quiénes", href: "satisfaccion.html", alDia: "Nadie dijo este mes que se va" },
     { clave: "morosos", nivel: "vigilar", emoji: "💳",
-      titulo: (n) => pl(n, "saldo vencido", "saldos vencidos"),
-      porque: "Mensualidades sin pagar pasada la fecha (uno por alumno y moneda).",
-      accion: "Ver cobros", href: "cobros.html", alDia: "Pagos al día" },
+      titulo: (n) => pl(n, "cuenta vencida o apagada", "cuentas vencidas o apagadas"),
+      porque: "Mensualidades sin pagar pasada la fecha. Desde Cobros se les recuerda por WhatsApp.",
+      accion: "Ver cobros", href: "mensualidades.html", alDia: "Pagos al día" },
     { clave: "inactivos", nivel: "vigilar", emoji: "💤",
       titulo: (n) => pl(n, "alumno lleva 4 días o más sin entrenar", "alumnos llevan 4 días o más sin entrenar"),
       porque: "Cuántos son de cada supervisor está en su ficha, en Supervisores.",
