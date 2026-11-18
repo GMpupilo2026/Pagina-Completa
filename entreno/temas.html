@@ -225,6 +225,15 @@
         <p id="repaso-texto" class="repaso-texto"></p>
         <button type="button" class="bctrl primary" id="repaso-btn">Repasar ahora</button>
       </section>
+      <!-- El puzzle del día (abrirDelDia en js/entreno-temas.js): uno de estos
+           temas, el mismo para todos cada día de Costa Rica. -->
+      <section class="overall repaso" id="del-dia-caja" aria-labelledby="del-dia-titulo">
+        <div class="overall-head">
+          <h2 id="del-dia-titulo"><span aria-hidden="true">🌟</span> Puzzle del día</h2>
+        </div>
+        <p id="del-dia-texto" class="repaso-texto">Uno nuevo cada día, el mismo para todos.</p>
+        <button type="button" class="bctrl primary" id="del-dia-btn">Resolverlo</button>
+      </section>
       <div class="toolbar">
         <label class="sr-only" for="search">Buscar tema</label>
         <input id="search" class="search" type="search" placeholder="Buscar tema (clavada, mate, final…)" autocomplete="off">
