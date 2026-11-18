@@ -31,6 +31,11 @@
 
             <!-- ============ Vista profesor: asignar + lo enviado ============ -->
             <section id="vista-profesor" class="hidden">
+                <div id="sin-tarea" class="hidden bg-accent-50 dark:bg-brand-900 border-l-4 border-accent-500 rounded-2xl shadow-md p-5 mb-8" role="region" aria-labelledby="sin-tarea-titulo">
+                    <h2 id="sin-tarea-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"></h2>
+                    <p id="sin-tarea-texto" class="text-sm text-brand-600 dark:text-brand-200 mb-3"></p>
+                    <button type="button" id="sin-tarea-marcar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcarlos para mandarles una tarea</button>
+                </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
                     <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Asignar una tarea</h2>
                     <form id="form-tarea" class="grid gap-4">

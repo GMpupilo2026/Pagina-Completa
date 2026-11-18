@@ -320,18 +320,20 @@ function cssDeTemas() {
     return "\n" + css + "\n";
 }
 
-/* El compilador se corre con el mismo Node, desde su lib/cli.js, y no desde
-   node_modules/.bin/tailwindcss: en Windows ese archivo es un guion de shell que
-   execFileSync no puede ejecutar (ENOENT), y `npm run css` no corría en la
-   computadora del dueño. lib/cli.js es lo que apunta el "bin" del paquete. */
+/* En Windows, node_modules/.bin/tailwindcss es un script de sh que
+   execFileSync no puede ejecutar: el que corre es tailwindcss.cmd, y un .cmd
+   solo se ejecuta con shell (Node lo exige desde la CVE-2024-27980). Sin esto,
+   `npm run css` reventaba con ENOENT en la computadora del dueño. */
+const EN_WINDOWS = process.platform === "win32";
 function binario() {
     const candidatos = [
-        path.join(RAIZ, "node_modules/tailwindcss/lib/cli.js"),
-        ...(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-            .map((p) => path.join(p, "tailwindcss/lib/cli.js")),
+        ...(EN_WINDOWS ? [path.join(RAIZ, "node_modules/.bin/tailwindcss.cmd")] : []),
+        path.join(RAIZ, "node_modules/.bin/tailwindcss"),
+        ...(process.env.NODE_PATH || "").split(":").filter(Boolean)
+            .map((p) => path.join(p, ".bin/tailwindcss")),
     ];
     for (const c of candidatos) if (fs.existsSync(c)) return c;
-    console.error("No encuentro tailwindcss. Corre: npm install tailwindcss@3");
+    console.error("No encuentro tailwindcss. Corré: npm install tailwindcss@3");
     process.exit(1);
 }
 
@@ -390,8 +392,8 @@ function compilar(nombre, paleta, archivos, extra) {
                  } } },
     }, null, 1) + ";\n");
     const salida = path.join(CSS, nombre + ".css");
-    execFileSync(process.execPath, [binario(), "-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),
-                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"] });
+    execFileSync(binario(), ["-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),
+                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"], shell: EN_WINDOWS });
     fs.unlinkSync(cfg);
     if (extra) fs.appendFileSync(salida, extra);
     const kb = (fs.statSync(salida).size / 1024).toFixed(1);
