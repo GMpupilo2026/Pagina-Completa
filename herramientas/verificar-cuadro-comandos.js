@@ -1060,6 +1060,36 @@ async function prueba4x4(browser) {
       await page.evaluate(() => /piezas? en el tablero/.test(document.getElementById("board-announcer").textContent)), "false");
   }
 
+  // --- y escrita COMO SE DICE: «de anna 1 a bella 2». La entiende el intérprete
+  // de todo el sitio (js/comandos-tablero.js); antes era «No entendí».
+  const dicha = await page.evaluate(() => {
+    const celdas = () => [...document.querySelectorAll("#board4 [data-square]")];
+    const conPieza = celdas().filter((c) => c.textContent.trim()).map((c) => c.dataset.square);
+    for (const sq of conPieza) {
+      celdas().find((c) => c.dataset.square === sq).click();
+      const destino = celdas().find((x) => x.classList.contains("target-capture"));
+      celdas().find((c) => c.dataset.square === sq).click();
+      if (destino) return { de: sq, a: destino.dataset.square };
+    }
+    return null;
+  });
+  if (!dicha) bien("(no quedó otra captura para probarla escrita con palabras)");
+  else {
+    const COL = { a: "anna", b: "bella", c: "cesar", d: "david" };
+    const frase = "de " + COL[dicha.de[0]] + " " + dicha.de[1] + " a " + COL[dicha.a[0]] + " " + dicha.a[1];
+    const cuantas = (t) => Number((t.match(/(\d+) piezas? en el tablero/) || [])[1] || 0);
+    const antes = cuantas(await enPantalla(page, "#position-readout"));
+    await page.fill("#cmd-input", frase);
+    await page.press("#cmd-input", "Enter");
+    await page.waitForTimeout(400);
+    igual(`escrita con palabras («${frase}») también la hace`,
+      cuantas(await enPantalla(page, "#position-readout")) === antes - 1, "true");
+  }
+  await page.fill("#cmd-input", "hola a1");
+  await page.press("#cmd-input", "Enter");
+  await page.waitForTimeout(200);
+  igual("y lo que no es una captura sigue sin entenderse", /^No entendí «hola a1»/.test(await enPantalla(page, "#cmd-status")), "true");
+
   // --- la voz: UNA frase, con todo dentro
   // No deja rastro en el DOM, así que se engancha en BlindNotation.speak(), que es
   // la puerta por donde el sitio habla. Hace falta porque speak() CANCELA lo

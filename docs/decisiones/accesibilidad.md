@@ -107,8 +107,18 @@ las jugadas legales. `js/chess-move-parser.js` (Juegos, Niebla) y la copia de
 - Sin nombrar la pieza, una casilla sola es de peón («e4»); con «toma», de
   cualquiera, si es una sola. Una coronación sin decir a qué, dama.
 
+- **Tipos y Visualización** interpretan con `ChessMoveParser.tryParseMove()`,
+  así que lo reciben por ahí. **Los 4×4** tienen su recuadro y su tablero
+  propios (4×4, sin bandos, toda jugada es una captura): después de lo que ya
+  entendían («a1 b2», «Ta3»), le pasan lo escrito al mismo intérprete con
+  `juegoParaPalabras()`, que le dice qué hay en cada casilla y qué capturas se
+  pueden hacer — «torre toma dama», «de anna 1 a bella 2». La página carga
+  ahora `js/comandos-tablero.js`.
+
 `verificar-entreno-accesible.js` prueba las treinta y tantas formas contra la
-jugada esperada, las que NO deben dar jugada y las dos frases de ambigüedad.
+jugada esperada, las que NO deben dar jugada, las dos frases de ambigüedad y
+que `ChessMoveParser` caiga en él; `verificar-cuadro-comandos.js`, una captura
+de los 4×4 escrita con palabras.
 
 ### Al tablero ahora se le puede PREGUNTAR
 

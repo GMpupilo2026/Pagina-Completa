@@ -497,6 +497,19 @@ async function pruebaLetrasNoSonPiezas(browser) {
   CT.jugadaEscrita(new Chess(), "caballo a5");
   igual("lo que no se puede hacer sigue siendo «no es legal»", /no es una jugada legal/.test(CT.noSePudoJugar("caballo a5")), true);
 
+  /* Tipos, Visualización, Juegos y Niebla interpretan con
+     js/chess-move-parser.js, que HACE la jugada: cuando no entiende, cae en
+     este mismo intérprete. */
+  {
+    const wp = { ComandosTablero: CT };
+    new Function("window", fs.readFileSync(path.join(RAIZ, "js", "chess-move-parser.js"), "utf8") + "\nwindow.P = window.ChessMoveParser;")(wp);
+    const gp = new Chess();
+    const hecha = wp.P.tryParseMove(gp, "caballo a felix 3");
+    igual("el intérprete de Tipos, Visualización y Juegos también la entiende con palabras, y la hace",
+      hecha && hecha.san + " " + gp.fen().split(" ")[0], "Nf3 rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R");
+    igual("y tampoco inventa", wp.P.tryParseMove(new Chess(), "hola e4"), null);
+  }
+
   const td1 = CT.jugadaEscrita(torres, "Td1");
   igual('y la inicial española de torre nunca es ambigua', td1 && td1.piece + td1.from + td1.to, "ra1d1");
 }
