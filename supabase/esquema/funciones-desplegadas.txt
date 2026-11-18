@@ -18,6 +18,7 @@ correos-alumno                 true         corrige los tres correos de una fami
 clase-grabaciones-limpiar      false        borra las grabaciones de la llamada de la clase de mas de 90 dias, archivo y fila (pg_cron limpiar-grabaciones, secreto de la boveda)
 clase-llamada                  true         la llamada de voz de la clase en vivo (LiveKit): el pase y quién puede hablar, con llamada_de_la_clase() y el token de quien llama; secretos LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET
 create-student                 true         invita a un alumno desde la clase en vivo
+entrenador-ia                  true         el botón «¿Por qué?» al fallar un ejercicio (Claude; solo a quien se lo enciende quien administra)
 enviar-resultado-arbitraje     true         manda el detalle de un examen de arbitraje
 informe-examen                 true         manda a la casa el informe de un examen
 jdn-drive                      false        la ficha de los JDN 2027 al Drive, por el Apps Script puente: administracion (sesion, aal2, is_admin) y la familia sin cuenta (freno jdn_frenar); url y secreto en la boveda
