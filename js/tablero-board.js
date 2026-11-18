@@ -1099,6 +1099,13 @@
       } catch (e) {}
       if (result) return result;
     }
+    // Escrita con palabras («caballo a f3», «peón toma d5»): js/comandos-tablero.js.
+    if (window.ComandosTablero && window.ComandosTablero.jugadaEscrita) {
+      const mv = window.ComandosTablero.jugadaEscrita(game, raw);
+      if (mv) {
+        try { return game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined }); } catch (e) {}
+      }
+    }
     return null;
   }
 

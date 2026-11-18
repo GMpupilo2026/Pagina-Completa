@@ -616,14 +616,14 @@ async function main() {
     await pagina.waitForSelector("#programadas-lista > div", { timeout: 10000 });
     const tarjeta = await pagina.evaluate(() => ({
       visible: document.getElementById("programadas").checkVisibility(),
-      texto: document.getElementById("programadas-lista").textContent.replace(/s+/g, " "),
+      texto: document.getElementById("programadas-lista").textContent.replace(/\s+/g, " "),
     }));
     ok(tarjeta.visible && /Combinaciones/.test(tarjeta.texto) && /al juntar 3000 puntos/.test(tarjeta.texto) && /7 días/.test(tarjeta.texto),
       `la regla sembrada debería verse en «Tareas que llegan solas»: ${JSON.stringify(tarjeta)}`);
     await pagina.click("#programadas-lista button[aria-controls]");
     await pagina.waitForFunction(() => /le faltan/.test(document.getElementById("programadas-lista").textContent), null, { timeout: 5000 }).catch(() => {});
-    const avance = await pagina.evaluate(() => document.getElementById("programadas-lista").textContent.replace(/s+/g, " "));
-    ok(/1200 de 3000 puntos (le faltan 1800)/.test(avance) && /Ya le llegó/.test(avance),
+    const avance = await pagina.evaluate(() => document.getElementById("programadas-lista").textContent.replace(/\s+/g, " "));
+    ok(/1200 de 3000 puntos \(le faltan 1800\)/.test(avance) && /Ya le llegó/.test(avance),
       `«Quién va cerca» debería decir cuánto le falta a Ana y que a Beto ya le llegó: ${JSON.stringify(avance)}`);
 
     await pagina.check('input[name="cuando"][value="puntos"]');
