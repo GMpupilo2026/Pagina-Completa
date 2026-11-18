@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,32 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 8. david 5</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 9. caballo david 2</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 10… felix 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>P. San Segundo – V. Topálov · Madrid 1996 · 0-1</p>
-<p>En esta India de Rey Clásica, las blancas cierran el centro con 8. david 5 y ambos bandos quedan con una cadena de peones fija: d5-e4 blanca contra d6-e5 negra. Como el centro está bloqueado, la partida se convierte en una carrera de ataques en flancos opuestos, la blanca en el ala de dama y la negra en el ala de rey, donde Topálov disfruta de ventaja de espacio. Un pequeño error blanco en la jugada 9 y una respuesta poco ambiciosa en la 11 dejan a las negras con una posición cómoda para desplegar su plan de ...f5-f4 y ...g5-g4 o ...h5-h4. Topálov abre la columna h con el golpe temático 26… felix captura gustav 3!, cambia su alfil 'malo' por el bueno de las blancas y penetra decisivamente hasta rematar con un curioso zugzwang en pleno medio juego.</p>
-<p>Una cadena de peones aparece cuando parejas de peones propios y rivales quedan inmovilizados unos frente a otros en diagonal: por ejemplo, peones blancos en c3, d4, e5 contra peones negros en b6, c5, d6, donde cada peón bloquea a su opuesto y no puede capturarlo porque los peones sólo comen en diagonal. Cuando esto ocurre en el centro del tablero se habla de centro bloqueado, algo típico de aperturas como la España, la Francesa, la Caro-Kann o la India de Rey. Reconocer una cadena de peones es sencillo: basta mirar si los peones centrales de ambos bandos están enfrentados y fijos, sin poder avanzar ni ser capturados de inmediato. La consecuencia práctica más importante es que, salvo sacrificio, el centro no se va a abrir, así que la partida se traslada a los flancos. La estructura de peones señala en qué ala debe atacar cada bando: normalmente aquel cuya cadena apunta, en diagonal, hacia un flanco concreto, y aquel que dispone de más espacio en un sector determinado. Un principio clásico dice que conviene 'atacar la base de la cadena', es decir, el peón menos avanzado de la cadena rival, pero esta regla tiene muchas excepciones: a veces esa base es inalcanzable y hay que conformarse con otro objetivo más accesible.</p>
+<p>En esta India de Rey Clásica, las blancas cierran el centro con 8. david 5 y ambos bandos quedan con una cadena de peones fija: david 5-eva 4 blanca contra david 6-eva 5 negra. Como el centro está bloqueado, la partida se convierte en una carrera de ataques en flancos opuestos, la blanca en el ala de dama y la negra en el ala de rey, donde Topálov disfruta de ventaja de espacio. Un pequeño error blanco en la jugada 9 y una respuesta poco ambiciosa en la 11 dejan a las negras con una posición cómoda para desplegar su plan de ...felix 5-felix 4 y ...gustav 5-gustav 4 o ...hector 5-hector 4. Topálov abre la columna h con el golpe temático 26… felix captura gustav 3!, cambia su alfil 'malo' por el bueno de las blancas y penetra decisivamente hasta rematar con un curioso zugzwang en pleno medio juego.</p>
+<p>Una cadena de peones aparece cuando parejas de peones propios y rivales quedan inmovilizados unos frente a otros en diagonal: por ejemplo, peones blancos en cesar 3, david 4, eva 5 contra peones negros en bella 6, cesar 5, david 6, donde cada peón bloquea a su opuesto y no puede capturarlo porque los peones sólo comen en diagonal. Cuando esto ocurre en el centro del tablero se habla de centro bloqueado, algo típico de aperturas como la España, la Francesa, la Caro-Kann o la India de Rey. Reconocer una cadena de peones es sencillo: basta mirar si los peones centrales de ambos bandos están enfrentados y fijos, sin poder avanzar ni ser capturados de inmediato. La consecuencia práctica más importante es que, salvo sacrificio, el centro no se va a abrir, así que la partida se traslada a los flancos. La estructura de peones señala en qué ala debe atacar cada bando: normalmente aquel cuya cadena apunta, en diagonal, hacia un flanco concreto, y aquel que dispone de más espacio en un sector determinado. Un principio clásico dice que conviene 'atacar la base de la cadena', es decir, el peón menos avanzado de la cadena rival, pero esta regla tiene muchas excepciones: a veces esa base es inalcanzable y hay que conformarse con otro objetivo más accesible.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
   <li>En un centro bloqueado por una cadena de peones, hay que identificar de inmediato en qué flanco tiene cada bando ventaja de espacio, porque ahí es donde debe concentrarse el ataque.</li>
@@ -70,60 +96,168 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>La captura al paso</dt>
   <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
   <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
-  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en eva 5, el negro juega david 7-david 5. El blanco puede jugar eva captura david 6 y su peón termina en david 6, como si el negro solo hubiera avanzado una. El peón de david 5 se retira del tablero.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 8. david 5</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 8. david 5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en e2, e3; caballos en c3, f3; peones en a2, b2, c4, d5, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, g7; caballos en b8, f6; peones en a7, b7, c6, d6, e5, f7, g6, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>8. david 5 cierra el centro de forma definitiva: los peones d5-e4 blancos y d6-e5 negros (que aparecerá tras la respuesta) quedarán fijos prácticamente hasta el final de la partida, dando paso a una lucha típica de cadenas de peones en flancos opuestos.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbq1rk1/pp3pbp/2pp1np1/3Pp3/2P1P3/2N1BN2/PP2BPPP/R2QK2R b KQ - 0 8</p>
+  <p>8. david 5 cierra el centro de forma definitiva: los peones david 5-eva 4 blancos y david 6-eva 5 negros (que aparecerá tras la respuesta) quedarán fijos prácticamente hasta el final de la partida, dando paso a una lucha típica de cadenas de peones en flancos opuestos.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rnbq1rk1/pp3pbp/2pp1np1/3Pp3/2P1P3/2N1BN2/PP2BPPP/R2QK2R b KQ - 0 8</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 9. caballo david 2</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 9. caballo david 2</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en e2, e3; caballos en c3, d2; peones en a2, b2, c4, d5, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, g7; caballos en a6, f6; peones en a7, b7, c6, d6, e5, f7, g6, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Caballo en anna 6.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>9. caballo david 2?! es una imprecisión: el caballo abandona f3, la casilla desde donde vigilaba mejor la casilla e4, sin ganar nada concreto a cambio. Las blancas pierden la oportunidad de complicar algo más el plan negro de ...f5.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bq1rk1/pp3pbp/n1pp1np1/3Pp3/2P1P3/2N1B3/PP1NBPPP/R2QK2R b KQ - 2 9</p>
+  <p>9. caballo david 2?! es una imprecisión: el caballo abandona felix 3, la casilla desde donde vigilaba mejor la casilla eva 4, sin ganar nada concreto a cambio. Las blancas pierden la oportunidad de complicar algo más el plan negro de ...felix 5.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bq1rk1/pp3pbp/n1pp1np1/3Pp3/2P1P3/2N1B3/PP1NBPPP/R2QK2R b KQ - 2 9</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 10… felix 5</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 10… felix 5</h3>
   
-  <p>Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfiles en e2, e3; caballos en c3, d2; peones en a2, b2, c4, d5, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, g7; caballos en a6, e8; peones en a7, b7, c6, d6, e5, f5, g6, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Caballo en anna 6.</li>
+    <li>Caballo en eva 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>10… felix 5 es el primer paso del plan negro en el flanco de rey, ganando espacio y amenazando ...f4 para cerrar por completo esa zona y quedarse con manos libres para atacar con peones.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqnrk1/pp4bp/n1pp2p1/3Ppp2/2P1P3/2N1B3/PP1NBPPP/R2Q1RK1 w - - 0 11</p>
+  <p>10… felix 5 es el primer paso del plan negro en el flanco de rey, ganando espacio y amenazando ...felix 4 para cerrar por completo esa zona y quedarse con manos libres para atacar con peones.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqnrk1/pp4bp/n1pp2p1/3Ppp2/2P1P3/2N1B3/PP1NBPPP/R2Q1RK1 w - - 0 11</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Arma la posición del ejemplo y juégala en las dos direcciones. Repítela hasta que la veas sin pensar.</li>
   <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -160,7 +294,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

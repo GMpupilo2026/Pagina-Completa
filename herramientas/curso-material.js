@@ -76,7 +76,9 @@ const AREA_DEL_CURSO = {
    «Cf3» es lo que hay que aprender a escribir, no una jugada que decir. */
 const N = require("./lib/notacion.js");
 const es = (t, origen) => N.textoEspanol(t, origen || "auto");
-const oido = (t, origen) => (N.ensenaNotacion(t) ? t : N.textoHablado(t, origen || "auto"));
+// Y las casillas sueltas de la prosa, dichas igual que las de las jugadas
+// («el rey negro en gustav 8»): ver casillasHabladas en lib/notacion.js.
+const oido = (t, origen) => (N.ensenaNotacion(t) ? t : N.casillasHabladas(N.textoHablado(t, origen || "auto")));
 // Lo que queda escrito a propósito lleva la marca que respeta
 // verificar-notacion-espanola.js: sin ella, ese verificador lo toma por olvido.
 const ESCRITA = ' data-notacion="escrita"';
@@ -169,7 +171,7 @@ function posicionesDe(leccion, todas, prestadas) {
 
 // ------------------------------------------------ describir una FEN en palabras
 // Vive en lib/ porque el libro del diagnóstico describe sus posiciones igual.
-const { describir } = require("./lib/describir-fen.js");
+const { describir, piezasUnaPorUna } = require("./lib/describir-fen.js");
 
 // --------------------------------------------------------- las fuentes
 function fuentesDe(curso, conceptos, hayPosiciones) {
@@ -223,7 +225,7 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
     ${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3><ul>${cuerpo.ideas.map((i) => `<li>${escapar(es(i))}</li>`).join("")}</ul>` : ""}
   </section>`);
 
-  secciones.push(`<section><h2>2. Conceptos clave</h2>
+  secciones.push(`<section>${h2("Conceptos clave")}
     ${conceptos.map((c) => `<div class="concepto">
       <h3>${escapar(c.nombre)}</h3>
       <p>${escapar(es(c.definicion))}</p>
@@ -337,6 +339,30 @@ function volverA(curso, etiqueta) {
     : `<p class="volver">\n  ${enlaces}\n</p>`;
 }
 
+/* ------------------------------------- la posición y la línea, de a un paso
+   La queja de los alumnos ciegos con estos materiales era la misma que con
+   los visores: la posición «se lee muy rápido» para ponerla en el tablero, y
+   la línea no se puede avanzar. Las dos iban en un párrafo corrido, y un
+   párrafo el lector de pantalla lo dice de un tirón: no hay forma de pararse
+   en una pieza ni de volver a UNA jugada.
+
+   Ahora cada pieza y cada jugada va en su propio elemento de lista. Con las
+   flechas (o la tecla I del lector) se avanza de a una, al ritmo de quien
+   escucha, y se puede volver atrás. No hace falta ningún programa: es el
+   documento el que deja de ir rápido. */
+const { piezasHtml: piezasComun } = require("./lib/posicion-accesible.js");
+function piezasHtml(fen) { return piezasComun(fen, { encabezado: "h4" }); }
+const { jugadasDeLinea } = require("./lib/posicion-accesible.js");
+function lineaHtml(dicha) {
+  const js = jugadasDeLinea(dicha);
+  if (js && js.length === 1) return `<p>La jugada: ${js[0].n}, ${js[0].bando.toLowerCase()}: ${escapar(js[0].texto.replace(/[.,]$/, ""))}.</p>`;
+  if (!js) return `<p>La línea, jugada por jugada: ${escapar(dicha)}</p>`;
+  return `<h4>La línea: ${js.length} jugadas</h4>
+  <ul>
+${js.map((j) => `    <li>${j.n}. ${j.bando}: ${escapar(j.texto.replace(/[.,]$/, ""))}.</li>`).join("\n")}
+  </ul>`;
+}
+
 // ------------------------------------------------------- la versión accesible
 function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   const cuerpo = textoDe(leccion, partida);
@@ -351,6 +377,10 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   const leccionDeNotacion = /notaci[oó]n/i.test(leccion.titulo);
   const oidoLeccion = leccionDeNotacion ? (t) => t : oido;
   const marcaLeccion = leccionDeNotacion ? ESCRITA : "";
+  // Las secciones, con su número: de acá salen los encabezados y el índice.
+  const secciones = ["De qué trata esta lección", "Conceptos clave"]
+    .concat(posics.length ? ["Ejemplos del curso"] : [], ["Ejercicios", "Preguntas con su respuesta", "Fuentes"]);
+  const h2 = (nombre) => { const i = secciones.indexOf(nombre) + 1; return `<h2 id="s${i}">${i}. ${nombre}</h2>`; };
 
   return `<!doctype html>
 <html lang="es">
@@ -370,6 +400,12 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -388,7 +424,7 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -401,9 +437,22 @@ ${volverA(curso, "Volver a la plataforma")}
   <p>Material de estudio en formato accesible. Autor: ${escapar(AUTOR)}, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+${posics.length ? `  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>` : ""}
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+${secciones.map((nombre, i) => `    <li><a href="#s${i + 1}">${nombre}</a>${nombre === "Ejemplos del curso" ? `
+      <ul>
+${posics.map((p, k) => `        <li><a href="#posicion-${k + 1}">Posición ${k + 1}${p.titulo ? ": " + escapar(oido(p.titulo, p.tituloOrigen)) : ""}</a></li>`).join("\n")}
+      </ul>
+    ` : ""}</li>`).join("\n")}
+  </ol>
+</nav>
+
+${h2("De qué trata esta lección")}
 ${cuerpo.ficha ? `<p>${escapar(oido(cuerpo.ficha))}</p>` : ""}
 ${cuerpo.parrafos.map((t) => `<p${marcaLeccion}>${escapar(oidoLeccion(t))}</p>`).join("\n") || "<p>Esta lección se trabaja en clase y con la presentación.</p>"}
 ${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3>\n<ul>\n${cuerpo.ideas.map((i) => `  <li>${escapar(oido(i))}</li>`).join("\n")}\n</ul>` : ""}
@@ -419,29 +468,28 @@ ${conceptos.map((c) => {
   <dd${m}><strong>Para verlo:</strong> ${escapar(o(c.ejemplo))}</dd>`; }).join("\n")}
 </dl>
 
-${posics.length ? `<h2>3. Ejemplos del curso</h2>
+${posics.length ? `${h2("Ejemplos del curso")}
 ${posics.map((p, i) => {
   const d = describir(p.fen);
   return `<div class="posicion">
-  <h3>Posición ${i + 1}${p.titulo ? ": " + escapar(oido(p.titulo, p.tituloOrigen)) : ""}</h3>
+  <h3 id="posicion-${i + 1}">Posición ${i + 1}${posics.length > 1 ? " de " + posics.length : ""}${p.titulo ? ": " + escapar(oido(p.titulo, p.tituloOrigen)) : ""}</h3>
   ${p.prestada && p.deCurso ? `<p>Esta posición viene del curso ${escapar(p.deCurso)} de la Academia.</p>` : ""}
-  <p>Piezas blancas: ${escapar(d.blancas) || "ninguna"}.</p>
-  <p>Piezas negras: ${escapar(d.negras) || "ninguna"}.</p>
+${piezasHtml(p.fen)}
   <p>${escapar(d.turno)}</p>
   ${p.pregunta ? `<p>Pregunta: ${escapar(oido(p.pregunta))}</p>` : ""}
-  ${p.linea ? `<p>La línea, jugada por jugada: ${escapar(oido(p.linea, p.lineaOrigen))}</p>` : ""}
+  ${p.linea ? lineaHtml(oido(p.linea, p.lineaOrigen)) : ""}
   ${p.resultado ? `<p>Resultado: ${escapar(oido(p.resultado))}</p>` : ""}
   ${p.comentario ? `<p>${escapar(oido(p.comentario))}</p>` : ""}
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: ${escapar(p.fen)}</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: ${escapar(p.fen)}</p>
 </div>`;
 }).join("\n")}` : ""}
 
-<h2>${posics.length ? 4 : 3}. Ejercicios</h2>
+${h2("Ejercicios")}
 <ol>
 ${ejercicios.map((e) => `  <li${marcaLeccion}>${escapar(oidoLeccion(e))}</li>`).join("\n")}
 </ol>
 
-<h2>${posics.length ? 5 : 4}. Preguntas con su respuesta</h2>
+${h2("Preguntas con su respuesta")}
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
 ${preguntas.map((q) => `  <li${q.notacion ? ESCRITA : ""}>
@@ -450,7 +498,7 @@ ${preguntas.map((q) => `  <li${q.notacion ? ESCRITA : ""}>
   </li>`).join("\n")}
 </ol>
 
-<h2>${posics.length ? 6 : 5}. Fuentes</h2>
+${h2("Fuentes")}
 <ul>
 ${fuentes.map((f) => `  <li>${escapar(f)}</li>`).join("\n")}
 </ul>

@@ -43,6 +43,30 @@ function describir(fen) {
   return { blancas: lado(blancas), negras: lado(negras), turno };
 }
 
-module.exports = { describir, NOMBRE_PIEZA, PLURAL_PIEZA };
+/* La misma posición, UNA PIEZA POR RENGLÓN: { blancas: [{ pieza, casilla }], negras: […] }.
+   Es para la versión accesible, donde cada pieza va en su propio elemento de
+   lista: el lector de pantalla avanza de a una, al ritmo de quien la va
+   poniendo en su tablero. En un renglón corrido («rey en h1; peones en a2,
+   b2, c3…») no da tiempo, y no se puede volver a UNA pieza. Mismo orden que
+   describir(). */
+function piezasUnaPorUna(fen) {
+  const filas = fen.split(" ")[0].split("/");
+  const lados = { blancas: [], negras: [] };
+  ORDEN.forEach((tipo) => {
+    const de = { blancas: [], negras: [] };
+    filas.forEach((fila, r) => {
+      let c = 0;
+      for (const ch of fila) {
+        if (/\d/.test(ch)) { c += +ch; continue; }
+        if (ch.toLowerCase() === tipo) de[ch === ch.toUpperCase() ? "blancas" : "negras"].push("abcdefgh"[c] + (8 - r));
+        c += 1;
+      }
+    });
+    ["blancas", "negras"].forEach((lado) => de[lado].sort().forEach((casilla) => lados[lado].push({ pieza: NOMBRE_PIEZA[tipo], casilla })));
+  });
+  return lados;
+}
+
+module.exports = { describir, piezasUnaPorUna, NOMBRE_PIEZA, PLURAL_PIEZA };
 
 /*! rev bfb5bbb0d2d82f9f */
