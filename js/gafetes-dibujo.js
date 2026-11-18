@@ -54,6 +54,7 @@
   }
 
   // null si algún dato de la plantilla falta (la línea no sale).
+  const esPlantilla = (t) => /\{[^{}]+\}/.test(String(t || ""));
   function llenar(plantilla, fila, extra) {
     let falta = false;
     const t = String(plantilla || "").replace(/\{([^{}]+)\}/g, (_, dentro) => {
@@ -112,6 +113,10 @@
         claveColor,
         color: colorDe(d, claveColor),
         iconos: d.iconos.map((ic) => !!(ic.columna && marcado(valor(fila, ic.columna)))),
+        // El QR de esta persona, si la dirección lleva una columna («{QR}»):
+        // la Eliminatoria JDN de PZ lleva a cada jugador a su ficha en Pareo.
+        // Sin el dato, ese gafete sale sin QR (nunca con el de otro).
+        ...(esPlantilla(d.dorso.qr) ? { qr: llenar(d.dorso.qr, fila) || "" } : {}),
       };
     });
   }
@@ -366,7 +371,8 @@
       texto: await fuente("texto"),
       imagenes,
       iconos,
-      qr: diseno.dorso.qr ? matrizQr(diseno.dorso.qr) : null,
+      // Una dirección con columnas ({QR}) es de cada persona: va en `g.qr`.
+      qr: diseno.dorso.qr && !esPlantilla(diseno.dorso.qr) ? matrizQr(diseno.dorso.qr) : null,
       marca: diseno.dorso.qr && diseno.dorso.qrMarca ? await marcaBlanca() : null,
       async bandera(iso) {
         if (!iso) return null;
@@ -558,6 +564,17 @@
             : { x: xc + columnas[i] / 2, y, alinear: "centro", color: NEGRO_TEXTO, max: columnas[i] - 1.5 * M.s });
           xc += columnas[i];
         });
+      });
+    }
+    // Para qué es el QR (opcional, `dorso.qrTexto`, hasta dos renglones
+    // separados por «|»), arriba de él y pegado a su derecha: «Escanéalo: tu
+    // mesa…» en la PZ.
+    if (qr && diseno.dorso.qrTexto) {
+      const lineas = String(diseno.dorso.qrTexto).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 2);
+      const tam = 7.6 * M.s, paso = tam * PT * 1.4, der = M.qr.x + M.qr.w, max = der - T.x;
+      lineas.forEach((l, i) => {
+        const ancho = Math.min(anchoDe(recursos.texto, l, tam, 0), max);
+        escribir(recursos.texto, l, tam, { x: der - ancho, y: M.qr.y - 2.6 * M.sy - (lineas.length - 1 - i) * paso, color, max });
       });
     }
     if (g.codigo) {

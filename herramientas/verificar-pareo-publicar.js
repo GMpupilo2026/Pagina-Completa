@@ -240,7 +240,13 @@ async function pruebaPagina(browser) {
   await page.selectOption("#tp-jugador", { label: "PRUEBA A 12" });
   await page.waitForSelector("#tp-tabla-jugador");
   const filasJ = await page.$$eval("#tp-tabla-jugador tbody tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent).join("|")));
-  igual("ronda, rival, su Elo, el color y lo que sacó", filasJ, ["1|PRUEBA D 12|1500|Blancas|1", "2|PRUEBA B 12|1700|Negras|jugando"]);
+  igual("ronda, mesa, rival, su Elo, el color y lo que sacó", filasJ, ["1|1|PRUEBA D 12|1500|Blancas|1", "2|1|PRUEBA B 12|1700|Negras|jugando"]);
+  // «Ahora»: lo que ve quien llega por el QR de su gafete (la Eliminatoria
+  // JDN de PZ), arriba y en grande: la ronda que se juega, su mesa, su rival
+  // y su puesto con sus puntos.
+  igual("«Ahora»: la ronda, la mesa, el rival y el puesto", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
+    ["Ronda 2 · se está jugando", "Mesa 1", "Con negras contra PRUEBA B 12 (1700)", "Puesto 1 de 6 · 1 punto tras la ronda 1"]);
+  ok(await page.$eval("#tp-ahora-mesa", (x) => x.checkVisibility() && parseFloat(getComputedStyle(x).fontSize) >= 40), "el número de la mesa se ve, en grande");
   await page.waitForFunction(() => /Aparece en 1 torneo más/.test((document.getElementById("tp-otros-estado") || {}).textContent || ""));
   ok(/PRUEBA SUB-14/.test(await page.textContent("#tp-otros-lista")), "trae el otro torneo publicado donde jugó");
   ok(pedidos.some((x) => x.datos && x.datos.startsWith("cs.")), "lo busca por su nombre en los datos");

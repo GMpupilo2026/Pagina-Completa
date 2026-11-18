@@ -5065,6 +5065,13 @@ dirección del Centroamericano: 17 de 53 por lado), bien debajo del 30 % que
 aguanta. Módulos
 redondeados y unidos y marco negro, como el del Centroamericano.
 
+**La dirección del QR puede llevar una columna** (`{QR}`): entonces cada
+gafete lleva su propio QR (y su propio fondo de dorso), y sin el dato sale sin
+QR. Y arriba del QR puede ir una línea que diga para qué es
+(`dorso.qrTexto`). Los usa «Partir de la Eliminatoria JDN PZ 2026», que trae
+los jugadores de Pareo Integral sin Excel: ver «Los gafetes de la
+Eliminatoria Cantonal JDN de Pérez Zeledón» en `juegos-y-torneos.md`.
+
 **El mismo dibujo hace el gafete de la inscripción del Metropolitano 2026**
 (`js/metropolitano-gafete.js`), que lleva además la foto de la persona: si la
 fila trae `g.foto`, va en un marco de pasaporte donde iba la ilustración, y su

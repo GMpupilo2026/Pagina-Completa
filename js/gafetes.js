@@ -72,6 +72,77 @@
     return d;
   }
 
+  /* El de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026 (Pérez Zeledón,
+     22/11/2026): el del Centroamericano con los logos de la ADAPZ y del
+     CCDR, la profe Karina (la directora del torneo, con su gafete) donde iba
+     el pizote, un color por categoría y el horario de las bases. El QR es
+     de cada jugador ({QR}): lleva a su ficha en el torneo publicado en Pareo
+     Integral (su mesa de cada ronda, sus puntos y su puesto, al día). Los
+     datos salen de «Traer los jugadores de Pareo» (traerJdnPz). */
+  async function disenoJdnPz() {
+    const d = disenoNuevo();
+    d.nombreDiseno = "Eliminatoria JDN PZ 2026";
+    d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
+    d.titulo.color = "#1b2a4a";
+    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
+    d.detalles = ["{Club}", "Elo {Elo}", "Juega el torneo {Torneo}"];
+    d.bandera = { plantilla: "", texto: true };
+    d.franja = { plantilla: "{Categoría}" };
+    // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
+    // categoría va también escrita en la franja: el color nunca va solo.
+    d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
+    d.dorso.vertical = "{Categoría}";
+    d.dorso.qr = "{QR}";
+    d.dorso.qrTexto = "Escanéalo: tu mesa en cada ronda, | tus puntos y tu puesto";
+    d.dorso.encabezados = ["Actividad", "Fecha", "Hora"];
+    // El calendario de las bases (el mismo de #calendario en jdn-pz-2026.html).
+    d.dorso.horario = [
+      ["Ronda 1", "22/11/2026", "8:00 a.m."], ["Ronda 2", "22/11/2026", "10:00 a.m."], ["Almuerzo", "22/11/2026", "12:00 p.m."],
+      ["Ronda 3", "22/11/2026", "1:00 p.m."], ["Ronda 4", "22/11/2026", "3:00 p.m."], ["Ronda 5", "22/11/2026", "5:00 p.m."],
+      ["Clausura", "22/11/2026", "7:30 p.m."],
+    ];
+    d.codigo.plantilla = "{Edad} {n}";
+    d.salida.separarPor = "Torneo";
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"]]) {
+      try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
+    }
+    return d;
+  }
+
+  /* Los jugadores de la eliminatoria, directo de Pareo Integral: los dos
+     torneos que encuentra js/jdn-pz-inscripcion.js (la organización con el
+     sello), tal como están publicados. Salen solo los que el árbitro ya
+     aceptó; quien se retiró, no. Es lo publicado (de lectura pública), así
+     que no viaja nada que no esté ya a la vista: el ID FIDE no se publica
+     nunca, por eso el gafete lleva el Elo. Cada fila trae su QR: la ficha
+     del jugador en su torneo (torneos-pareo#t=<torneo>&j=<jugador>), que
+     no cambia en todo el torneo aunque el árbitro corrija el nombre. */
+  const SITIO = "https://ajedrez-integral.com/";
+  async function filasJdnPz() {
+    if (!window.JdnPzInscripcion) throw new Error("no cargó el buscador de los torneos");
+    const t = await window.JdnPzInscripcion.buscarTorneos();
+    const ids = ["U12", "U20"].map((k) => t[k] && t[k].id).filter(Boolean);
+    if (!ids.length) throw new Error("todavía no hay torneos de la eliminatoria publicados en Pareo Integral");
+    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, datos").in("id", ids);
+    if (error) throw error;
+    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "QR"]];
+    const orden = (x) => ["U12", "U20"].indexOf(Object.keys(t).find((k) => t[k] && t[k].id === x.id));
+    for (const x of (data || []).sort((a, b) => orden(a) - orden(b))) {
+      const torneo = Object.keys(t).find((k) => t[k] && t[k].id === x.id);
+      const jugadores = ((x.datos && x.datos.jugadores) || []).filter((j) => j && j.nombre && j.retiradoDespuesDe == null);
+      jugadores.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      for (const j of jugadores) {
+        const [apellidos, nombre] = j.nombre.includes(",") ? j.nombre.split(",").map((p) => p.trim()) : [j.nombre.trim(), ""];
+        const cat = String(j.categoria || "").trim();
+        const edad = (cat.match(/\bU\s?\d{2}\b/i) || [torneo])[0].replace(/\s/g, "").toUpperCase();
+        filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "",
+          SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id)]);
+      }
+    }
+    if (filas.length < 2) throw new Error("los torneos todavía no tienen jugadores aceptados");
+    return filas;
+  }
+
   // Lo que falte en un diseño viejo o recortado, con lo de uno nuevo.
   function completar(d) {
     const base = disenoNuevo();
@@ -177,20 +248,38 @@
     try {
       const r = await window.ReporteExcel.leer(archivo);
       if (!r.filas.length) throw new Error("La hoja está vacía.");
-      tablaCruda = r;
-      // La fila de títulos: la primera con al menos dos celdas escritas.
-      const primera = r.filas.findIndex((f) => f.filter((c) => String(c == null ? "" : c).trim()).length >= 2);
-      $("g-fila-titulos").value = String(primera >= 0 ? primera + 1 : 1);
-      armarDatos();
-      filaVista = 0;
-      pintarDatos();
-      detectarColores();
-      llenarFormulario();
-      await refrescar();
-      Avisos.avisar(`Se leyeron ${datos.filas.length} filas de «${archivo.name}».`);
+      await cargarTabla(r, `«${archivo.name}»`);
     } catch (e) {
       Avisos.avisar("No se pudo leer el Excel: " + (e.message || e), { tipo: "error" });
     }
+  }
+
+  async function traerJdnPz() {
+    const boton = $("g-pareo-pz");
+    boton.disabled = true;
+    try {
+      const filas = await filasJdnPz();
+      await cargarTabla({ hoja: "Eliminatoria JDN PZ (Pareo Integral)", filas }, "los torneos de Pareo Integral");
+    } catch (e) {
+      Avisos.avisar("No se pudieron traer los jugadores: " + (e.message || e) + ".", { tipo: "error" });
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  // Una tabla (del Excel o de Pareo) pasa a ser la lista de los gafetes.
+  async function cargarTabla(r, origen) {
+    tablaCruda = r;
+    // La fila de títulos: la primera con al menos dos celdas escritas.
+    const primera = r.filas.findIndex((f) => f.filter((c) => String(c == null ? "" : c).trim()).length >= 2);
+    $("g-fila-titulos").value = String(primera >= 0 ? primera + 1 : 1);
+    armarDatos();
+    filaVista = 0;
+    pintarDatos();
+    detectarColores();
+    llenarFormulario();
+    await refrescar();
+    Avisos.avisar(`Se leyeron ${datos.filas.length} filas de ${origen}.`);
   }
 
   function pintarDatos() {
@@ -636,6 +725,11 @@
       if (!(await Avisos.confirmar("Se reemplaza el diseño actual por el de los gafetes del Centroamericano 2026.", { titulo: "¿Partir del Centroamericano 2026?", aceptar: "Usar ese diseño" }))) return;
       diseno = await disenoCentroamericano(); recursos = null; if (datos) detectarColores(); llenarFormulario(); await guardarLocal(diseno); refrescar();
     });
+    $("g-ejemplo-pz").addEventListener("click", async () => {
+      if (!(await Avisos.confirmar("Se reemplaza el diseño actual por el de los gafetes de la Eliminatoria JDN de Pérez Zeledón 2026.", { titulo: "¿Partir de la Eliminatoria JDN PZ 2026?", aceptar: "Usar ese diseño" }))) return;
+      diseno = await disenoJdnPz(); recursos = null; if (datos) detectarColores(); llenarFormulario(); await guardarLocal(diseno); refrescar();
+    });
+    $("g-pareo-pz").addEventListener("click", traerJdnPz);
     $("g-crear").addEventListener("click", crear);
     let tAncho = null;
     window.addEventListener("resize", () => { clearTimeout(tAncho); tAncho = setTimeout(refrescar, 200); });

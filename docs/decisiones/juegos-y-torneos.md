@@ -15846,6 +15846,64 @@ consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
 el navegador y el celular. Rompiendo a propósito el filtro del sello,
 saltan tres comprobaciones; el de la federación de FIDE, dos.
 
+### Los gafetes de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+Pedido del dueño el 18/11/2026: «para el torneo de ADAPZ, les daremos
+gafetes a todos los participantes, siguiendo la misma idea del
+centroamericano, además el QR que funcione para poder escanearlo y poder ver
+la ficha de cada jugador, para que sepa en qué mesa le toca ronda a ronda, ver
+sus pts y su puesto actual».
+
+- **Salen de `gafetes.html`, el mismo de los del Centroamericano** (ver
+  «Creación de gafetes» en `paneles.md`): mismo dibujo, mismo PDF de la
+  imprenta (10 × 14 cm, fondo a 450 dpi, letras en curvas). Lo nuevo:
+  - «Partir de la Eliminatoria JDN PZ 2026» (`disenoJdnPz` en
+    `js/gafetes.js`): los logos de la ADAPZ y del CCDR, la profe Karina con
+    su gafete (`img/avatar-profe-karina/bienvenidos.webp`) donde iba el
+    pizote, el horario de las bases (el de `#calendario`), un color por edad
+    con su contraste medido contra la letra blanca (U12 `#1d64b0` 6,0:1, U16
+    `#0e7490` 5,4:1, U20 `#1b2a4a` 14,2:1; la categoría va también escrita en
+    la franja y de lado en el dorso), el código «U12 01» y un PDF por torneo.
+  - «Traer los jugadores de la Eliminatoria JDN PZ (Pareo Integral)», en lugar
+    del Excel (`filasJdnPz`): los dos torneos los encuentra
+    `JdnPzInscripcion.buscarTorneos()` (`js/jdn-pz-inscripcion.js`, el mismo
+    buscador del formulario, con el filtro del sello: una «ADAPZ» sin sello
+    no cuenta) y se lee lo publicado en `pareo_publicados`, que es de lectura
+    pública. Salen los que el árbitro ya aceptó, sin los retirados, por
+    torneo y por nombre, con «Apellidos, Nombre» partido en dos. **El ID FIDE
+    no se publica nunca** (va como huella, `ident`), así que el gafete lleva
+    el club y el Elo. Hay que volver a traerlos después del cierre de las
+    inscripciones (viernes 20) para que estén todos; lo dice la página.
+- **El QR es de cada jugador y no cambia nunca**: lleva a
+  `torneos-pareo#t=<torneo>&j=<jugador>`, su ficha en el torneo publicado.
+  Por el id del jugador y no por el nombre: si el árbitro corrige cómo está
+  escrito, el QR impreso sigue sirviendo (y si el id ya no está, la página
+  prueba con `&n=<nombre>`). Lo que cambia ronda a ronda lo lee la página al
+  abrirse y cada minuto. Para eso el dibujo aprendió que **la dirección del
+  QR puede llevar una columna** (`{QR}`, `esPlantilla` en
+  `js/gafetes-dibujo.js`): cada gafete lleva el suyo en `g.qr` y su propio
+  fondo de dorso; sin el dato, ese gafete sale sin QR, nunca con el de otro.
+  Y una línea opcional arriba del QR (`dorso.qrTexto`, dos renglones con
+  «|»): «Escanéalo: tu mesa en cada ronda, tus puntos y tu puesto».
+- **La ficha del jugador en `torneos-pareo.html` trae arriba «Ahora»**
+  (`cajaAhora` en `js/torneos-pareo-pagina.js`, para todo torneo individual
+  publicado, no solo este): la ronda más nueva con **la mesa en grande**, el
+  color y el rival con su Elo (o «Libre», o lo que sacó), y el puesto «de N»
+  con sus puntos tras la última ronda completa. Antes del pareo dice que la
+  mesa sale ahí en cuanto el árbitro publique la ronda 1. La tabla de sus
+  rondas suma la columna «Mesa». La mesa es la de la sala (`V.mesaFisica`),
+  la misma de la plantilla, los rótulos y las planillas.
+
+`herramientas/verificar-gafetes-jdn-pz.js` lo revisa con un doble de la base
+que filtra de verdad: el diseño, quiénes salen (sin la «ADAPZ» sin sello ni
+el retirado), la U16 en el torneo U20 con su color (medido en el píxel), los
+detalles sin «Elo» colgando, el QR de dos dorsos leído con jsQR, sin torneos
+lo dice, y el .zip con un PDF por torneo. «Ahora» y la columna de la mesa, en
+el celular, en `verificar-pareo-seguir.js` (con el enlace tal cual lo trae el
+QR) y en `verificar-pareo-publicar.js`. Rompiendo a propósito el QR por fila
+y el filtro de los retirados saltan doce comprobaciones; la mesa de la sala,
+dos.
+
 ### La del Tacho Chess 2
 
 `tacho-chess-2.html` es la página del Torneo Intereducativo Tacho Chess 2 del
