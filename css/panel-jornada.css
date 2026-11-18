@@ -65,3 +65,5 @@ body.jornada-buscando .jornada-nav button[aria-current="page"] { background: tra
 @media (prefers-reduced-motion: no-preference) {
     .jornada-nav button { transition: background-color .15s ease; }
 }
+
+/*! rev bfb5bbb0d2d82f9f */
