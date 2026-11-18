@@ -194,6 +194,30 @@ errores (`material_slug` `plan-rival`, en el catálogo de
 `js/material-plataforma.js` con `noSeElige`: no se ofrece en Tareas, porque
 cada plan es de un alumno). Ver «Entrenar el plan: etapa 7».
 
+### Nadie se queda sin tarea
+
+Arriba de «Asignar una tarea», el profe ve cuántos de sus alumnos **no tienen
+ninguna tarea abierta**, con sus nombres, y un botón «Marcarlos para
+mandarles una tarea» que los deja marcados en la lista (`avisarSinTarea()` en
+`js/tareas.js`). Es la idea de Chessgora «0 alumnos sin rutina»: con veinte
+alumnos nadie se acuerda de a quién le falta, y el que se queda sin nada que
+hacer deja de entrenar sin que se note.
+
+- **«Abierta» es que todavía no vence**, programada o no, y de CUALQUIER
+  profe: la RLS de `tareas` ya le deja leer al profe las de sus alumnos que
+  mandó un colega, y a quien administra, todas. Se lee `alumno_id` de
+  `tareas` con `vence_at > ahora`, de mil en mil.
+- **No se usa `tareas_con_avance()`**: para quien administra recorre todas las
+  tareas del sitio (8-9 s, ver arriba) y podría caerse por statement timeout.
+  El precio es que una tarea terminada antes de su fecha cuenta como abierta;
+  el texto dice exactamente lo que mide («Todas las que tenían ya vencieron, o
+  nunca les mandaron una»).
+- Con un error no se muestra nada (un aviso a medias diría que alumnos con
+  tarea no tienen ninguna), y no frena la carga: se pide sin `await`.
+- `verificar-tareas.js` (prueba «1 ter») siembra una tarea abierta para Ana y
+  una vencida para Beto: el aviso tiene que verse, nombrar solo a Beto y dejarlo
+  marcado; con las dos abiertas no aparece.
+
 ### El diagnóstico de nivel se pide como tarea, y solo cuenta el nuevo
 
 El profe le pide el diagnóstico a un alumno con un renglón «Diagnóstico de
