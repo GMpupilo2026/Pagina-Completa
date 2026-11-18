@@ -86,6 +86,30 @@
                     <ul id="cal-dia-lista" class="space-y-3 list-none p-0 text-sm"></ul>
                 </section>
 
+                <!-- Días sin clase (quien da clase y quien administra): los feriados y los días
+                     que no hay clase. Esas clases dejan de verse en el calendario, en «Tu
+                     próxima clase» y en el .ics. Ver «Días sin clase y feriados» en
+                     docs/decisiones/paneles.md. -->
+                <section id="cal-sin-clase" hidden aria-labelledby="cal-sin-clase-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 id="cal-sin-clase-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🚫 </span>Días sin clase</h2>
+                    <p id="cal-sin-clase-intro" class="text-sm text-brand-500 dark:text-brand-300 mt-1 mb-3">Un feriado o un día que no vas a dar clase. Tus alumnos lo ven en su calendario, y esas clases dejan de salir en «Tu próxima clase» y en el calendario del celular.</p>
+                    <form id="cal-sin-clase-form" class="flex flex-wrap items-end gap-3" novalidate>
+                        <div>
+                            <label for="cal-sin-clase-fecha" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Día</label>
+                            <input id="cal-sin-clase-fecha" type="date" required class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="flex-1 min-w-[12rem]">
+                            <label for="cal-sin-clase-motivo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Motivo</label>
+                            <input id="cal-sin-clase-motivo" type="text" required maxlength="120" placeholder="Feriado, vacaciones, torneo…" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-sm text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <label id="cal-sin-clase-todos-caja" hidden class="inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 pb-2"><input id="cal-sin-clase-todos" type="checkbox" class="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Feriado para todas las academias</label>
+                        <button type="submit" id="cal-sin-clase-poner" class="rounded-xl px-4 py-2 text-sm font-semibold bg-accent-500 text-brand-900 hover:bg-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 disabled:opacity-50">Marcar sin clase</button>
+                    </form>
+                    <p id="cal-sin-clase-estado" role="status" aria-live="polite" class="mt-2 text-xs text-brand-500 dark:text-brand-300 empty:hidden"></p>
+                    <h3 class="mt-4 mb-2 text-sm font-semibold text-brand-700 dark:text-brand-200">Los que vienen</h3>
+                    <ul id="cal-sin-clase-lista" class="space-y-2 list-none p-0 text-sm"></ul>
+                </section>
+
                 <section aria-labelledby="cal-bajar-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 id="cal-bajar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📲 </span>En el calendario de tu celular</h2>
                     <p id="cal-bajar-texto" class="text-sm text-brand-500 dark:text-brand-300 mt-1">Baja un archivo con tus clases y lo que vence para abrirlo en Google Calendar, Outlook o el calendario del celular. Te avisa 30 minutos antes de cada clase y un día antes de cada entrega.</p>

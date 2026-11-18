@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 47. rey bella 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Krámnik juega contra uno de los programas más fuertes de su época como contra un ser humano: posiciones sencillas, pocas complicaciones y una ventaja pequeña que no se escapa. Le quita casillas a las piezas negras, ataca lo que no se puede defender bien y lleva la partida a un final donde su rey es más activo.</p>
 <p>Recórrela jugada a jugada en el tablero (Gambito de dama rehusado; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Contra un rival que calcula muy bien, conviene que la posición no dependa del cálculo. Una jugada de peón que le quita casillas a las piezas rivales también es una ventaja. Atacar dos veces lo que está defendido dos veces mantiene al rival atado.</p>
@@ -64,32 +88,50 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>La captura al paso</dt>
   <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
   <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
-  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en eva 5, el negro juega david 7-david 5. El blanco puede jugar eva captura david 6 y su peón termina en david 6, como si el negro solo hubiera avanzado una. El peón de david 5 se retira del tablero.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 47. rey bella 5</h3>
+  <h3 id="posicion-1">Posición 1: Después de 47. rey bella 5</h3>
   
-  <p>Piezas blancas: rey en b5; torre en d5; peones en a4, b2, e4, f3, h5.</p>
-  <p>Piezas negras: rey en c7; torre en a8; peones en a5, b4, e5, f6, h6.</p>
+  <h4>Piezas blancas: 7</h4>
+  <ul>
+    <li>Rey en bella 5.</li>
+    <li>Torre en david 5.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
+  <h4>Piezas negras: 7</h4>
+  <ul>
+    <li>Rey en cesar 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>El rey blanco va por los peones.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r7/2k5/5p1p/pK1Rp2P/Pp2P3/5P2/1P6/8 b - - 8 47</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r7/2k5/5p1p/pK1Rp2P/Pp2P3/5P2/1P6/8 b - - 8 47</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -99,7 +141,7 @@
   <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -152,7 +194,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

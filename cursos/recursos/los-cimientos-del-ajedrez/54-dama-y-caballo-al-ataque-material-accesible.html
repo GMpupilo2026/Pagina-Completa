@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,13 +57,32 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las negras; el rival acaba de jugar eva 4.</a></li>
+        <li><a href="#posicion-2">Posición 2: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las blancas; el rival acaba de jugar … caballo felix 8.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>La dama y el caballo se complementan como ninguna otra pareja: la dama cubre líneas largas y el caballo controla justo las casillas que la dama no puede alcanzar con un solo movimiento. Por eso, frente a un rey enrocado, un caballo instalado cerca de él y la dama llegando a su lado suelen bastar para dar mate aunque el resto de las piezas esté lejos. Es una dupla que no necesita casi nada de ayuda.</p>
-<p>Fíjate en las casillas de apoyo del caballo cerca del enroque rival: f5, g5, e5 o h5 para las blancas, y sus simétricas para las negras. Un caballo en f5 o en g5 que ataca h7, g7 o f7 es una señal fuerte. Si además la dama puede llegar a h7, g7 o h6 con apoyo del caballo, el mate está cerca. Los peones del enroque movidos, sobre todo g6 o h6, dejan casillas que el caballo aprovecha muy bien.</p>
-<p>Los patrones que más se repiten son la dama dando mate en g7 o en h7 protegida por el caballo, y el caballo dando jaque para sacar al rey de su refugio mientras la dama espera. Practícalos hasta reconocerlos de un vistazo. El error típico del defensor es cambiar la pieza equivocada; el del atacante, mover la dama antes de que el caballo esté en su sitio. Primero se coloca el caballo; la dama llega después, y rápido.</p>
+<p>Fíjate en las casillas de apoyo del caballo cerca del enroque rival: felix 5, gustav 5, eva 5 o hector 5 para las blancas, y sus simétricas para las negras. Un caballo en felix 5 o en gustav 5 que ataca hector 7, gustav 7 o felix 7 es una señal fuerte. Si además la dama puede llegar a hector 7, gustav 7 o hector 6 con apoyo del caballo, el mate está cerca. Los peones del enroque movidos, sobre todo gustav 6 o hector 6, dejan casillas que el caballo aprovecha muy bien.</p>
+<p>Los patrones que más se repiten son la dama dando mate en gustav 7 o en hector 7 protegida por el caballo, y el caballo dando jaque para sacar al rey de su refugio mientras la dama espera. Practícalos hasta reconocerlos de un vistazo. El error típico del defensor es cambiar la pieza equivocada; el del atacante, mover la dama antes de que el caballo esté en su sitio. Primero se coloca el caballo; la dama llega después, y rápido.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -65,44 +90,113 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El enroque</dt>
   <dd>La única jugada que mueve dos piezas: el rey va dos casillas hacia la torre y la torre salta al otro lado. Pone al rey a salvo y saca la torre al centro de un solo golpe.</dd>
-  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en e1 o e8 y la partida se acaba en cinco jugadas.</dd>
+  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en eva 1 o eva 8 y la partida se acaba en cinco jugadas.</dd>
   <dd><strong>Para verlo:</strong> En la mayoría de las aperturas abiertas, el plan de las primeras diez jugadas es: peón al centro, caballos, alfil, enroque. Si a la jugada ocho no estás enrocado, algo salió mal.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las negras; el rival acaba de jugar e4.</h3>
+  <h3 id="posicion-1">Posición 1 de 2: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las negras; el rival acaba de jugar eva 4.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en b5; torres en b1, e1; alfiles en d2, g2; peones en a2, d3, e4, f2, g3.</p>
-  <p>Piezas negras: rey en f8; dama en e5; torres en a8, h2; alfil en f6; caballo en g4; peones en b6, b7, c5, d4, f7, g7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en bella 5.</li>
+    <li>Torre en bella 1.</li>
+    <li>Torre en eva 1.</li>
+    <li>Alfil en david 2.</li>
+    <li>Alfil en gustav 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en david 3.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+  </ul>
+  <h4>Piezas negras: 12</h4>
+  <ul>
+    <li>Rey en felix 8.</li>
+    <li>Dama en eva 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 2.</li>
+    <li>Alfil en felix 6.</li>
+    <li>Caballo en gustav 4.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 5.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 25… dama hector 5, 26. rey felix 1, torre captura gustav 2, 27. rey captura gustav 2, dama hector 2 jaque, 28. rey felix 3, caballo eva 5 jaque</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>25. Negras: dama hector 5.</li>
+    <li>26. Blancas: rey felix 1.</li>
+    <li>26. Negras: torre captura gustav 2.</li>
+    <li>27. Blancas: rey captura gustav 2.</li>
+    <li>27. Negras: dama hector 2 jaque.</li>
+    <li>28. Blancas: rey felix 3.</li>
+    <li>28. Negras: caballo eva 5 jaque.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>Vaganian–Yusupov. 25… dama hector 5, 26. rey felix 1, torre captura gustav 2, 27. rey captura gustav 2, dama hector 2 jaque, 28. rey felix 3, caballo eva 5 jaque. Ataque típico de dama y caballo con la torre delante de la dama en la columna h. El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate. (Partida Vaganian–Yusupov. Stockfish 16 a profundidad 18: dama hector 5 es la mejor (+7,2).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4k2/1p3pp1/1p3b2/1Qp1q3/3pP1n1/3P2P1/P2B1PBr/1R2R1K1 b - e3 0 25</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4k2/1p3pp1/1p3b2/1Qp1q3/3pP1n1/3P2P1/P2B1PBr/1R2R1K1 b - e3 0 25</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las blancas; el rival acaba de jugar … caballo felix 8.</h3>
+  <h3 id="posicion-2">Posición 2 de 2: ¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las blancas; el rival acaba de jugar … caballo felix 8.</h3>
   
-  <p>Piezas blancas: rey en h2; dama en f3; alfil en c2; caballo en b3; peones en c3, d5, e4, f2, g3, h5.</p>
-  <p>Piezas negras: rey en g7; dama en e7; alfil en a8; caballo en f8; peones en b5, d6, e5, f6, f7, h7.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en hector 2.</li>
+    <li>Dama en felix 3.</li>
+    <li>Alfil en cesar 2.</li>
+    <li>Caballo en bella 3.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
+  <h4>Piezas negras: 10</h4>
+  <ul>
+    <li>Rey en gustav 7.</li>
+    <li>Dama en eva 7.</li>
+    <li>Alfil en anna 8.</li>
+    <li>Caballo en felix 8.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 32. alfil david 3, dama david 7, 33. dama eva 2, felix 5, 34. alfil captura bella 5, dama cesar 8, 35. cesar 4</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>32. Blancas: alfil david 3.</li>
+    <li>32. Negras: dama david 7.</li>
+    <li>33. Blancas: dama eva 2.</li>
+    <li>33. Negras: felix 5.</li>
+    <li>34. Blancas: alfil captura bella 5.</li>
+    <li>34. Negras: dama cesar 8.</li>
+    <li>35. Blancas: cesar 4.</li>
+  </ul>
   <p>Resultado: Tablas</p>
-  <p>Keres–Gligoric, Zúrich 1959. 32. alfil david 3, dama david 7, 33. dama eva 2, felix 5, 34. alfil captura bella 5, dama cesar 8, 35. cesar 4. Eliminar al defensor de g5 para que el caballo se sume al ataque de la dama. El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate. (Partida Keres–Gligoric, Zúrich 1959. Stockfish 16 a profundidad 18: alfil david 3 vale lo mismo que la mejor (+2,5 contra +3,0).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: b4n2/4qpkp/3p1p2/1p1Pp2P/4P3/1NP2QP1/2B2P1K/8 w - - 1 32</p>
+  <p>Keres–Gligoric, Zúrich 1959. 32. alfil david 3, dama david 7, 33. dama eva 2, felix 5, 34. alfil captura bella 5, dama cesar 8, 35. cesar 4. Eliminar al defensor de gustav 5 para que el caballo se sume al ataque de la dama. El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate. (Partida Keres–Gligoric, Zúrich 1959. Stockfish 16 a profundidad 18: alfil david 3 vale lo mismo que la mejor (+2,5 contra +3,0).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: b4n2/4qpkp/3p1p2/1p1Pp2P/4P3/1NP2QP1/2B2P1K/8 w - - 1 32</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -112,7 +206,7 @@
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -165,7 +259,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -5932,3 +5932,79 @@ Lo prueba `verificar-clase-camara.js` (en `sesion.html` de verdad con el
 doble: el botón del profe y no de la alumna, el código, las jugadas que
 entran también con lo nuevo, otra partida que no toca nada, la espera
 mientras se repasa y «Desconectar»). Roto a propósito, salta.
+
+## 100 maestros dijeron
+
+`maestros-dijeron.html` (18/11/2026), un juego por equipos para proyectar en
+la clase, al lado del tablero de preguntas (se llega desde Cuestionarios). Sale
+una posición de una apertura conocida y los equipos adivinan qué jugaron ahí
+los maestros; cada jugada vale lo que pesa («52 de cada 100»). Con tres fallos
+el turno pasa al otro equipo. La idea de un concurso de encuestas salió de
+Chessgora («100 Ajedrecistas Dijeron»).
+
+- **Los datos son de verdad**: las partidas de maestros del explorador de
+  Lichess, por la Edge Function `explorador-maestros` (la del explorador de la
+  clase, que guarda lo que contesta). Un «100 ajedrecistas dijeron» con
+  respuestas puestas a mano sería una encuesta inventada presentada como real;
+  por eso el nombre dice «maestros» y la pantalla dice la fuente.
+- **Ninguna posición se inventa**: cada una sale de jugar con chess.js una
+  línea de la lista (`APERTURAS` de `js/maestros-dijeron.js`); una línea que
+  no se puede jugar se descarta. Una posición con menos de tres respuestas
+  (de al menos 1 de cada 100, sin redondear) se salta.
+- **Lo que dice el equipo** se entiende en español y en inglés: Cf3 = Nf3,
+  Ab5 = Bb5, 0-0 = O-O, sin importar la x ni el jaque. La R mayúscula es el
+  Rey, como se escribe acá; por eso la jugada de chess.js (en inglés) se limpia
+  pero NO se traduce: traducida, la torre «Rd1» pasaba a rey. Se muestra en
+  español.
+- No escribe nada en la base: los equipos no son cuentas y los puntos son del
+  juego. Solo quien da clase o administra lo arma (como el tablero de
+  preguntas). El tablero se dibuja con `ChessPieceSVG` y dice la posición en
+  texto («Posición después de 1.e4 e5 2.Cf3. Juegan negras.»); los nombres de
+  los equipos van por `textContent`.
+
+Lo prueba `verificar-maestros-dijeron.js`: las cuentas en Node (las 15
+aperturas con chess.js, el peso, la notación, el turno y los fallos, el podio)
+y la página con su marcado y un doble de la función (solo para quien da clase,
+el tablero, destapar y sumar, tres fallos, sin token). Con la jugada de chess.js
+traducida, salta.
+
+## El explorador de aperturas en la clase
+
+`js/clase-explorador.js`, el panel «📚 Aperturas de maestros» junto al motor
+(18/11/2026). Muestra qué jugaron los maestros en la posición del tablero de la
+clase: la apertura con su código ECO, cuántas partidas pasaron por ahí y, por
+cada jugada (las ocho más jugadas), qué parte de las veces se juega y cuánto
+ganan blancas, tablas y negras. La idea salió de Chessgora, que lo tiene al
+lado del tablero del maestro.
+
+- **Solo lo ve el profesor**, como el motor. No se monta en el proyector ni en
+  el control remoto, y a los alumnos no les llega nada.
+- **Arranca apagado.** Cada posición nueva es un pedido a la Edge Function
+  `explorador-maestros` (la misma de «Dónde deja la teoría», en
+  `docs/decisiones/paneles.md`), que le pregunta a Lichess con el token del
+  servidor y guarda la respuesta 180 días. La mayoría de las clases no son de
+  aperturas: encendido siempre, gastaría pedidos en finales y táctica.
+- **Se entera de la posición dentro de `updateEngineEval()`** de `sesion.js`,
+  antes de mirar si el motor está encendido. Es el único lugar por donde pasa
+  cada cambio del tablero del profe; un segundo aviso aparte se olvidaría en el
+  próximo camino nuevo.
+- **Una posición por vez, con 450 ms de espera**: el profe que recorre una
+  línea rápido no pide cada jugada, solo donde se para. Lo ya preguntado en la
+  clase se guarda en la página y no se vuelve a pedir.
+- **Las cifras van escritas** («ganan blancas 45 % · tablas 30 % · ganan negras
+  25 %»); la barrita de colores es `aria-hidden` y no lleva ningún dato que no
+  esté en el texto.
+- **El permiso de la función se amplió**: antes solo contestaba a quien tenía
+  la preparación de rivales activada (`puedo_preparar_rivales()`); ahora
+  también a todo profesor y a quien administra. Las dos preguntas van con la
+  sesión de quien llama (pasan por `antes_de_cada_pedido()` y la RLS de
+  `profiles`), nunca con la clave de servicio. Sigue sin ser un proxy abierto:
+  solo `/masters` y solo FEN válidos.
+- Sin `LICHESS_TOKEN` en el servidor, el panel lo dice con el mismo texto que
+  la preparación de rivales.
+
+Lo prueba `verificar-clase-explorador.js`: las cuentas en Node; el panel con el
+marcado de `sesion.html` y un pedido falso (apagado no pide, encendido pide una
+vez, mover rápido pide solo la última, lo visto no se repide, fuera de teoría
+lo dice, el 403 dice que no está activo); y el cableado (`updateEngineEval`, el
+bloque del profe, el permiso de la función). Con la espera en 0, salta.

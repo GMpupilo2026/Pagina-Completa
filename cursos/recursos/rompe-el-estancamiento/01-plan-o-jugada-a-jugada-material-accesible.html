@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: No hay ningún jaque que gane: la jugada buena es tranquila, y sale de saber qué se quiere. Juegan las negras; el rival acaba de jugar torre gustav 5.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Jugar jugada a jugada es mirar la posición, buscar una jugada que parezca razonable y hacerla, sin preguntarse hacia dónde va la partida. Funciona mientras hay amenazas concretas: un jaque, una pieza atacada, un cambio obligado. Pero en cuanto la posición se tranquiliza, quien no tiene un plan empieza a mover piezas de un lado a otro, y cada jugada «razonable» deja la posición un poco peor que la anterior.</p>
 <p>Un plan es una idea que une varias jugadas: llevar un caballo a una casilla fuerte, preparar una ruptura de peón, doblar torres en una columna abierta, atacar una debilidad. No hace falta que sea brillante; hace falta que exista. Un plan mediocre bien ejecutado le gana casi siempre a una colección de buenas jugadas sueltas, porque cada jugada del plan suma a la anterior.</p>
@@ -69,28 +93,47 @@
   <dt>Casillas débiles y puestos avanzados</dt>
   <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
   <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en david 5 defendido por un peón en eva 4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
   <dt>La iniciativa</dt>
   <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
   <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
   <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: No hay ningún jaque que gane: la jugada buena es tranquila, y sale de saber qué se quiere. Juegan las negras; el rival acaba de jugar torre gustav 5.</h3>
+  <h3 id="posicion-1">Posición 1: No hay ningún jaque que gane: la jugada buena es tranquila, y sale de saber qué se quiere. Juegan las negras; el rival acaba de jugar torre gustav 5.</h3>
   
-  <p>Piezas blancas: rey en g3; torre en g5; peones en f3, h4.</p>
-  <p>Piezas negras: rey en b3; torre en b4; peones en a5, h5.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en gustav 3.</li>
+    <li>Torre en gustav 5.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
+  <h4>Piezas negras: 4</h4>
+  <ul>
+    <li>Rey en bella 3.</li>
+    <li>Torre en bella 4.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 46… anna 4, 47. torre captura hector 5, anna 3, 48. torre eva 5, anna 2</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>46. Negras: anna 4.</li>
+    <li>47. Blancas: torre captura hector 5.</li>
+    <li>47. Negras: anna 3.</li>
+    <li>48. Blancas: torre eva 5.</li>
+    <li>48. Negras: anna 2.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
-  <p>46… anna 4, 47. torre captura hector 5, anna 3, 48. torre eva 5, anna 2. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en que la jugada no captura nada: sirve porque está al servicio de una idea, no porque ataque algo en ese momento. (Ejercicio 0jVsL de la base abierta de Lichess (CC0), rating 1263. Stockfish 16 a profundidad 18: a4 es la mejor (+3,4) y la segunda queda en 0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/p5Rp/1r5P/1k3PK1/8/8 b - - 2 46</p>
+  <p>46… anna 4, 47. torre captura hector 5, anna 3, 48. torre eva 5, anna 2. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en que la jugada no captura nada: sirve porque está al servicio de una idea, no porque ataque algo en ese momento. (Ejercicio 0jVsL de la base abierta de Lichess (CC0), rating 1263. Stockfish 16 a profundidad 18: anna 4 es la mejor (+3,4) y la segunda queda en 0,0.)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/p5Rp/1r5P/1k3PK1/8/8 b - - 2 46</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
   <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
@@ -100,7 +143,7 @@
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +196,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

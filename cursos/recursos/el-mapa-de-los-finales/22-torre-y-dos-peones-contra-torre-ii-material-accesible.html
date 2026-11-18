@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,14 +57,34 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Gligoric - Smyslov, Moscú 1947</a></li>
+        <li><a href="#posicion-2">Posición 2: Diagrama de análisis: la situación crítica</a></li>
+        <li><a href="#posicion-3">Posición 3: Diagrama de análisis: el peón llega a sexta</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Aplicar el sistema defensivo Gligoric-Smyslov, defender contra peones ligados bloqueados, la torre atascada en séptima y Vancura contra dos peones.</p>
 <p>Idea guía: El defensor se salva bloqueando y atacando el peón atrasado; el bando fuerte necesita a su rey activo para romper el bloqueo.</p>
 <p>Finales 73 a 76 · 9 posiciones</p>
-<p>Con los peones más atrás y el rey no empujado a octava, el defensor tiene buenas posibilidades. La partida Gligoric - Smyslov es un compendio de ideas defensivas: torre en la quinta fila o en el ángulo, rey en f7/g7, y delante del peón cuando llega a sexta.</p>
+<p>Con los peones más atrás y el rey no empujado a octava, el defensor tiene buenas posibilidades. La partida Gligoric - Smyslov es un compendio de ideas defensivas: torre en la quinta fila o en el ángulo, rey en felix 7/gustav 7, y delante del peón cuando llega a sexta.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -70,52 +96,131 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La captura al paso</dt>
   <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
   <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
-  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en eva 5, el negro juega david 7-david 5. El blanco puede jugar eva captura david 6 y su peón termina en david 6, como si el negro solo hubiera avanzado una. El peón de david 5 se retira del tablero.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Gligoric - Smyslov, Moscú 1947</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Gligoric - Smyslov, Moscú 1947</h3>
   
-  <p>Piezas blancas: rey en g4; torre en a6; peones en f4, h5.</p>
-  <p>Piezas negras: rey en g7; torre en b5.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en gustav 4.</li>
+    <li>Torre en anna 6.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en gustav 7.</li>
+    <li>Torre en bella 5.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. torre gustav 6 jaque, rey felix 7, 2. torre gustav 5, torre bella 1, 3. torre cesar 5, rey felix 6, 4. torre cesar 6 jaque, rey gustav 7, 5. rey gustav 5, torre gustav 1 jaque, 6. rey felix 5, torre anna 1, 7. torre cesar 7 jaque, rey hector 6, 8. torre eva 7, torre bella 1</p>
+  <h4>La línea: 16 jugadas</h4>
+  <ul>
+    <li>1. Blancas: torre gustav 6 jaque.</li>
+    <li>1. Negras: rey felix 7.</li>
+    <li>2. Blancas: torre gustav 5.</li>
+    <li>2. Negras: torre bella 1.</li>
+    <li>3. Blancas: torre cesar 5.</li>
+    <li>3. Negras: rey felix 6.</li>
+    <li>4. Blancas: torre cesar 6 jaque.</li>
+    <li>4. Negras: rey gustav 7.</li>
+    <li>5. Blancas: rey gustav 5.</li>
+    <li>5. Negras: torre gustav 1 jaque.</li>
+    <li>6. Blancas: rey felix 5.</li>
+    <li>6. Negras: torre anna 1.</li>
+    <li>7. Blancas: torre cesar 7 jaque.</li>
+    <li>7. Negras: rey hector 6.</li>
+    <li>8. Blancas: torre eva 7.</li>
+    <li>8. Negras: torre bella 1.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>1… rey felix 7! (columna f mejor que h). 2. felix 5, torre bella 1! y en cuanto los peones llegan a quinta la torre se prepara para jaquear por detrás. 4… rey gustav 7! evita que la oposición lo mande a octava.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/6k1/R7/1r5P/5PK1/8/8/8 w - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/6k1/R7/1r5P/5PK1/8/8/8 w - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Diagrama de análisis: la situación crítica</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Diagrama de análisis: la situación crítica</h3>
   
-  <p>Piezas blancas: rey en g4; torre en g5; peones en f4, h5.</p>
-  <p>Piezas negras: rey en f7; torre en b1.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en gustav 4.</li>
+    <li>Torre en gustav 5.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en felix 7.</li>
+    <li>Torre en bella 1.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. torre cesar 5, rey felix 6, 2. torre cesar 6 jaque, rey gustav 7, 3. rey gustav 5, torre gustav 1 jaque, 4. rey felix 5, torre anna 1, 5. torre cesar 7 jaque, rey hector 6</p>
+  <h4>La línea: 10 jugadas</h4>
+  <ul>
+    <li>1. Blancas: torre cesar 5.</li>
+    <li>1. Negras: rey felix 6.</li>
+    <li>2. Blancas: torre cesar 6 jaque.</li>
+    <li>2. Negras: rey gustav 7.</li>
+    <li>3. Blancas: rey gustav 5.</li>
+    <li>3. Negras: torre gustav 1 jaque.</li>
+    <li>4. Blancas: rey felix 5.</li>
+    <li>4. Negras: torre anna 1.</li>
+    <li>5. Blancas: torre cesar 7 jaque.</li>
+    <li>5. Negras: rey hector 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>La lucha por no verse desplazado a la octava fila es la clave. Nunca ir a la primera fila con el rey.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/5k2/8/6RP/5PK1/8/8/1r6 w - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/5k2/8/6RP/5PK1/8/8/1r6 w - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Diagrama de análisis: el peón llega a sexta</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Diagrama de análisis: el peón llega a sexta</h3>
   
-  <p>Piezas blancas: rey en f5; torre en e6; peones en f4, h6.</p>
-  <p>Piezas negras: rey en g7; torre en a1.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en felix 5.</li>
+    <li>Torre en eva 6.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en gustav 7.</li>
+    <li>Torre en anna 1.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… rey hector 7, 2. torre david 6, torre anna 2, 3. rey gustav 5, torre gustav 2 jaque, 4. rey felix 6, rey captura hector 6, 5. rey eva 7 jaque, rey hector 7, 6. felix 5, torre eva 2 jaque, 7. torre eva 6, torre anna 2, 8. felix 6, torre anna 8, 9. rey felix 7, rey hector 6</p>
+  <h4>La línea: 17 jugadas</h4>
+  <ul>
+    <li>1. Negras: rey hector 7.</li>
+    <li>2. Blancas: torre david 6.</li>
+    <li>2. Negras: torre anna 2.</li>
+    <li>3. Blancas: rey gustav 5.</li>
+    <li>3. Negras: torre gustav 2 jaque.</li>
+    <li>4. Blancas: rey felix 6.</li>
+    <li>4. Negras: rey captura hector 6.</li>
+    <li>5. Blancas: rey eva 7 jaque.</li>
+    <li>5. Negras: rey hector 7.</li>
+    <li>6. Blancas: felix 5.</li>
+    <li>6. Negras: torre eva 2 jaque.</li>
+    <li>7. Blancas: torre eva 6.</li>
+    <li>7. Negras: torre anna 2.</li>
+    <li>8. Blancas: felix 6.</li>
+    <li>8. Negras: torre anna 8.</li>
+    <li>9. Blancas: rey felix 7.</li>
+    <li>9. Negras: rey hector 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>Tras 17. hector 6 jaque, 17… rey hector 7! se coloca delante del peón. Al final se llega a un final de torre y peón con lado largo y torre en la octava: tablas.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/6k1/4R2P/5K2/5P2/8/8/r7 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/6k1/4R2P/5K2/5P2/8/8/r7 b - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
   <li>Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón.</li>
@@ -125,7 +230,7 @@
   <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -178,7 +283,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

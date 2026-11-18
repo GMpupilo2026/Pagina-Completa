@@ -37,6 +37,7 @@ const path = require("path");
 const os = require("os");
 const { Chess } = require("chess.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 const {
@@ -251,14 +252,11 @@ function claves(vs) {
 
 /* ---------- la versión accesible ---------- */
 function accesible(vs) {
-  const oido = (t) => N.textoHablado(t, "espanol");
+  const oido = (t) => N.casillasHabladas(N.textoHablado(t, "espanol"));
   const cuerpo = vs.map((v) => `<section><h2>Prueba ${v.prueba}, versión ${esc(v.version)}</h2>
     ${v.posiciones.map((p) => {
-      const d = describir(p.it.fen);
       return `<article><h3>Posición ${p.n} · dificultad ${p.it.peso} de 5</h3>
-        <p class="posicion"><strong>La posición.</strong> ${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-        Las negras acaban de jugar ${esc(oido("…" + p.it.ultima))}.
-        <span class="fen">FEN: ${esc(p.it.fen)}</span></p>
+        ${posicionHtml(p.it.fen, { despues: `Las negras acaban de jugar ${esc(oido("…" + p.it.ultima))}.` })}
         <p><strong>Pregunta 1.</strong> Con la mejor jugada, ¿cuánto ganan las blancas?</p>
         <ol type="a">${p.evaluacion.opciones.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>
         <p><strong>Pregunta 2.</strong> ¿Cuál es la mejor jugada?</p>

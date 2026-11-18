@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: El material está parejo: ¿qué ventaja que no se cuenta tiene uno de los dos bandos? Juegan las blancas; el rival acaba de jugar … rey eva 5.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Tener más material no gana solo; hay que simplificar hacia un final conocido, evitar complicaciones innecesarias y no acelerar el ritmo por ansiedad. La mayoría de las ventajas que se &quot;escapan&quot; en partidas de club se pierden por apresurar el final, no por falta de técnica.</p>
 
@@ -67,28 +91,50 @@
   <dt>La mayoría de peones</dt>
   <dd>Tener más peones que el rival en un flanco. De una mayoría sana sale un peón pasado, y de un peón pasado sale una partida ganada.</dd>
   <dd><strong>El error de siempre:</strong> Avanzar primero el peón que no tiene rival enfrente. Se avanza primero el peón candidato —el que no tiene un peón rival directamente delante—, apoyado por los otros.</dd>
-  <dd><strong>Para verlo:</strong> Peones blancos en a2, b2 y c2 contra peones negros en a7 y b7: el candidato es el de c. Se juega c4-c5 y detrás vienen los otros dos.</dd>
+  <dd><strong>Para verlo:</strong> Peones blancos en anna 2, bella 2 y cesar 2 contra peones negros en anna 7 y bella 7: el candidato es el de c. Se juega cesar 4-cesar 5 y detrás vienen los otros dos.</dd>
   <dt>Los mates básicos</dt>
   <dd>Dar mate con rey y dama, rey y torre, y dos alfiles contra rey solo. Son técnica pura: se aprenden una vez y se usan toda la vida.</dd>
   <dd><strong>El error de siempre:</strong> Perseguir al rey en vez de encerrarlo. El método siempre es el mismo: achicar la caja con la pieza y acercar el rey propio, sin dar jaques que no achiquen.</dd>
   <dd><strong>Para verlo:</strong> Con torre y rey, se corta al rey rival con la torre y se avanza el rey propio hasta la oposición; entonces la torre da el jaque que empuja una fila. Se repite hasta el borde.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: El material está parejo: ¿qué ventaja que no se cuenta tiene uno de los dos bandos? Juegan las blancas; el rival acaba de jugar … rey eva 5.</h3>
+  <h3 id="posicion-1">Posición 1: El material está parejo: ¿qué ventaja que no se cuenta tiene uno de los dos bandos? Juegan las blancas; el rival acaba de jugar … rey eva 5.</h3>
   <p>Esta posición viene del curso Los cimientos del ajedrez de la Academia.</p>
-  <p>Piezas blancas: rey en g5; peones en a4, b2, h4.</p>
-  <p>Piezas negras: rey en e5; peones en a5, c4, d6, g6.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en gustav 5.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
+  <h4>Piezas negras: 5</h4>
+  <ul>
+    <li>Rey en eva 5.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 51. rey captura gustav 6, rey eva 4, 52. hector 5, david 5, 53. hector 6, david 4, 54. hector 7</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>51. Blancas: rey captura gustav 6.</li>
+    <li>51. Negras: rey eva 4.</li>
+    <li>52. Blancas: hector 5.</li>
+    <li>52. Negras: david 5.</li>
+    <li>53. Blancas: hector 6.</li>
+    <li>53. Negras: david 4.</li>
+    <li>54. Blancas: hector 7.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>51. rey captura gustav 6, rey eva 4, 52. hector 5, david 5, 53. hector 6, david 4, 54. hector 7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada aprovecha una ventaja que no aparece en el conteo de material, y la vuelve concreta. (Ejercicio 1iRVV de la base abierta de Lichess (CC0), rating 960. Stockfish 16 a profundidad 18: rey captura gustav 6 es la mejor (+3,9) y la segunda queda en -5,2.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/3p2p1/p3k1K1/P1p4P/8/1P6/8 w - - 2 51</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/3p2p1/p3k1K1/P1p4P/8/1P6/8 w - - 2 51</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>en tu próxima partida con ventaja de material, dedica al menos un minuto extra a cada jugada del final antes de decidir.</li>
   <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
@@ -99,7 +145,7 @@
   <li>Pídele a alguien que ponga el rey donde quiera y dale mate con torre sin pensar más de cinco segundos por jugada.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -152,7 +198,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Finales Prácticos» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Con poco tiempo, lo que hay que ver es el golpe sencillo: una pieza rival sostiene todo. Juegan las negras; el rival acaba de jugar dama david 7.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Muchos jugadores pierden posiciones buenas en los últimos minutos. Lo atribuyen al reloj, pero el problema suele estar mucho antes: veinte minutos en la jugada 12 buscando la jugada perfecta en una posición donde había tres buenas, o una apertura que no se conocía y se jugó con mucho tiempo. El apuro de tiempo es la factura de decisiones anteriores.</p>
 <p>La primera corrección es repartir el tiempo: más para las posiciones críticas (cuando hay que elegir un plan, antes de un cambio importante, cuando el rival tiene amenazas) y menos para las jugadas naturales. Si dos jugadas te parecen igual de buenas después de pensar un rato, probablemente lo sean: elige una y sigue.</p>
@@ -76,21 +100,49 @@
   <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Con poco tiempo, lo que hay que ver es el golpe sencillo: una pieza rival sostiene todo. Juegan las negras; el rival acaba de jugar dama david 7.</h3>
+  <h3 id="posicion-1">Posición 1: Con poco tiempo, lo que hay que ver es el golpe sencillo: una pieza rival sostiene todo. Juegan las negras; el rival acaba de jugar dama david 7.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en d7; torres en c7, f2; caballo en e2; peones en a4, c2, f4, g2, h3.</p>
-  <p>Piezas negras: rey en h7; dama en a5; torre en g6; alfil en g7; caballo en h5; peones en a6, c6, f5, h6.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en david 7.</li>
+    <li>Torre en cesar 7.</li>
+    <li>Torre en felix 2.</li>
+    <li>Caballo en eva 2.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en hector 7.</li>
+    <li>Dama en anna 5.</li>
+    <li>Torre en gustav 6.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Caballo en hector 5.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 37… dama eva 1 jaque, 38. torre felix 1, dama captura eva 2</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>37. Negras: dama eva 1 jaque.</li>
+    <li>38. Blancas: torre felix 1.</li>
+    <li>38. Negras: dama captura eva 2.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>37… dama eva 1 jaque, 38. torre felix 1, dama captura eva 2. Es una desviación: se aleja al defensor de lo que defendía. Es el tipo de golpe que hay que ver rápido cuando el reloj aprieta: una pieza rival tiene demasiado trabajo, y se la desvía. (Ejercicio 33vTh de la base abierta de Lichess (CC0), rating 1397. Stockfish 16 a profundidad 18: dama eva 1 jaque es la mejor (+5,2) y la segunda queda en +0,4.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/2RQ2bk/p1p3rp/q4p1n/P4P2/7P/2P1NRP1/6K1 b - - 3 37</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/2RQ2bk/p1p3rp/q4p1n/P4P2/7P/2P1NRP1/6K1 b - - 3 37</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
@@ -100,12 +152,12 @@
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +205,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -2205,6 +2205,11 @@
                 return;
             }
 
+            // La página de la familia: cuáles encargados tienen su enlace
+            // encendido (el enlace en sí se pide al abrir su cajita).
+            const { data: enlaces } = await sb.rpc("familia_enlaces_de", { p_alumno: studentId });
+            const conEnlace = new Map((enlaces || []).map((x) => [x.encargado_id, x]));
+
             data.forEach((e) => {
                 const fila = document.createElement("div");
                 fila.className = "flex flex-wrap items-center gap-2 border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
@@ -2324,7 +2329,75 @@
                 partes.push(activo, ahora, quitar);
                 fila.append(...partes);
                 caja.appendChild(fila);
+                caja.appendChild(cajaFamilia(e, conEnlace.get(e.id), studentId, nombreAlumno));
             });
+        }
+
+        /* La página de la familia de UN encargado (familia.html#t=…): lo
+           que le llega por correo, en una página que abre sin cuenta. Está
+           apagada hasta que quien le da clase la enciende aquí; el enlace se
+           copia para mandárselo, se cambia (el anterior deja de servir) o se
+           apaga. Quién puede lo decide la base (familia_enlace*). Ver «La
+           página de la familia» en docs/decisiones/informes.md. */
+        function cajaFamilia(e, enlace, studentId, nombreAlumno) {
+            const quien = e.nombre || e.email;
+            const BOTON = "text-xs font-semibold border border-brand-200 dark:border-brand-700 rounded-lg px-2.5 py-1 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const det = document.createElement("details");
+            det.className = "enc-familia text-xs border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2 mb-1";
+            const sum = document.createElement("summary");
+            sum.className = "cursor-pointer text-brand-600 dark:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+            sum.textContent = "Página de la familia de " + quien + ": " + (enlace
+                ? "encendida" + (enlace.visto_at ? " (la abrió el " + HoraCR.fecha(enlace.visto_at, { day: "numeric", month: "short" }) + ")" : " (todavía no la abre)")
+                : "apagada");
+            const cuerpo = document.createElement("div");
+            cuerpo.className = "mt-2 space-y-2";
+            const nota = document.createElement("p");
+            nota.className = "text-brand-600 dark:text-brand-300";
+            nota.textContent = "Con este enlace, y sin cuenta, " + quien + " ve la próxima clase, la práctica, las tareas, la asistencia y los pagos de " + nombreAlumno + ", y puede avisar una ausencia. Quien tenga el enlace ve lo mismo: mándaselo solo a esa persona.";
+            const campo = document.createElement("input");
+            campo.type = "text"; campo.readOnly = true; campo.hidden = true;
+            campo.setAttribute("aria-label", "Enlace de la página de la familia de " + quien);
+            campo.className = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const botones = document.createElement("div");
+            botones.className = "flex flex-wrap gap-2";
+            const boton = (texto, alHacer) => {
+                const b = document.createElement("button");
+                b.type = "button"; b.className = BOTON; b.textContent = texto;
+                b.addEventListener("click", alHacer);
+                return b;
+            };
+            const pedir = async (renovar) => {
+                const { data, error } = await sb.rpc("familia_enlace", { p_encargado: e.id, p_renovar: !!renovar });
+                if (error || !data || !data.token) { Avisos.avisar("No se pudo preparar el enlace: " + ((error && error.message) || "sin respuesta"), { tipo: "error" }); return null; }
+                campo.value = location.origin + "/familia.html#t=" + data.token;
+                campo.hidden = false;
+                return campo.value;
+            };
+            const copiar = boton(enlace ? "Copiar el enlace" : "Encender y copiar el enlace", async () => {
+                const url = await pedir(false);
+                if (!url) return;
+                try { await navigator.clipboard.writeText(url); Avisos.avisar("Enlace copiado. Mándaselo a " + quien + "."); }
+                catch (x) { campo.focus(); campo.select(); Avisos.avisar("El enlace está en el recuadro: cópialo de ahí.", { tipo: "info" }); }
+                if (!enlace) renderEncargados(studentId, nombreAlumno);
+            });
+            botones.append(copiar);
+            if (enlace) {
+                botones.append(
+                    boton("Cambiar el enlace", async () => {
+                        if (!(await Avisos.confirmar("El enlace que " + quien + " tiene ahora deja de servir, y hay que mandarle el nuevo.", { titulo: "¿Cambiar el enlace?", aceptar: "Cambiar el enlace" }))) return;
+                        if (await pedir(true)) Avisos.avisar("Enlace cambiado. El anterior ya no abre nada.");
+                    }),
+                    boton("Apagar la página", async () => {
+                        if (!(await Avisos.confirmar(quien + " deja de poder abrir la página. Los informes por correo siguen llegando igual.", { titulo: "¿Apagar la página de la familia?", aceptar: "Apagar la página", peligro: true }))) return;
+                        const { error } = await sb.rpc("familia_enlace_apagar", { p_encargado: e.id });
+                        if (error) { Avisos.avisar("No se pudo apagar: " + error.message, { tipo: "error" }); return; }
+                        Avisos.avisar("Página apagada: el enlace ya no abre nada.");
+                        renderEncargados(studentId, nombreAlumno);
+                    }));
+            }
+            cuerpo.append(nota, campo, botones);
+            det.append(sum, cuerpo);
+            return det;
         }
 
         // La hora y el día del formulario de "agregar" se arman una sola vez; el

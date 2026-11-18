@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar anna 5.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Un peón pasado es el que no tiene peones rivales delante ni en las columnas de al lado: ningún peón lo puede frenar, y solo las piezas rivales pueden impedir que corone. Mientras hay muchas piezas en el tablero es una ventaja pequeña; a medida que se cambian, se vuelve la ventaja más grande que hay.</p>
 <p>Por eso el bando con el peón pasado quiere cambiar piezas, y el otro quiere mantenerlas: cada cambio deja menos defensores para frenarlo. Un peón pasado también ata a una pieza rival a vigilarlo, y esa pieza deja de hacer otra cosa. Aunque no avance, el peón pasado ya está trabajando.</p>
@@ -65,7 +89,7 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
@@ -73,34 +97,51 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar a5.</h3>
+  <h3 id="posicion-1">Posición 1: Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar anna 5.</h3>
   
-  <p>Piezas blancas: rey en b5; caballo en d5; peones en a5, h4.</p>
-  <p>Piezas negras: rey en a2; alfil en g4; peones en b3, g6.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en bella 5.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
+  <h4>Piezas negras: 4</h4>
+  <ul>
+    <li>Rey en anna 2.</li>
+    <li>Alfil en gustav 4.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 57… bella 2, 58. caballo cesar 3 jaque, rey bella 3</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>57. Negras: bella 2.</li>
+    <li>58. Blancas: caballo cesar 3 jaque.</li>
+    <li>58. Negras: rey bella 3.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
-  <p>57… bella 2, 58. caballo cesar 3 jaque, rey bella 3. Es una jugada defensiva precisa: la única que sostiene la posición. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0r1nZ de la base abierta de Lichess (CC0), rating 1488. Stockfish 16 a profundidad 18: b2 es la mejor (+4,8) y la segunda queda en +1,3.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/6p1/PK1N4/6bP/1p6/k7/8 b - - 0 57</p>
+  <p>57… bella 2, 58. caballo cesar 3 jaque, rey bella 3. Es una jugada defensiva precisa: la única que sostiene la posición. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0r1nZ de la base abierta de Lichess (CC0), rating 1488. Stockfish 16 a profundidad 18: bella 2 es la mejor (+4,8) y la segunda queda en +1,3.)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/6p1/PK1N4/6bP/1p6/k7/8 b - - 0 57</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
   <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -121,7 +162,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +194,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
