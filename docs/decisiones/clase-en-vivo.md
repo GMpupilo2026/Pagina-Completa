@@ -232,6 +232,16 @@ reemplaza.
   **Probados con NVDA el 17/11/2026** en la página de prueba de la fase 0, en
   modo navegación y en modo foco: los cuatro llegan a la página y no chocan
   con el lector.
+- **Quiénes están se ve en una lista, siempre en el mismo orden**: tú, el
+  profe y los demás por nombre (`localeCompare` en español, sin distinguir
+  mayúsculas), con «profe», «con la palabra» y «hablando» escritos al lado. En
+  el orden en que fueron entrando, cada reconexión movía a alguien de lugar.
+  «Quién está» (Alt+Q) lo dice en ese mismo orden. La lista NO es región viva:
+  lo que cambia ya se anuncia, y repetir la lista entera a cada rato tapaba la
+  clase. Los botones van con el micrófono a todo lo ancho, «Quién está» y
+  «Quién habla» parejos debajo, y «Salir de la llamada» aparte: de a cuatro o
+  de a dos, en el celular «Micrófono apagado» se partía en dos renglones y las
+  filas quedaban disparejas. En el celular miden 44 px de alto.
 - **Todo se dice en la región viva de la caja** (`#llamada-estado`): entrar y
   salir (con un sonido corto), la palabra dada o quitada, la conexión mala, la
   reconexión, «Tu profe te sacó de la llamada». «Activar voz» la lee sola.

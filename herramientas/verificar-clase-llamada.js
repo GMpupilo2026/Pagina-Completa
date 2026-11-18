@@ -108,7 +108,7 @@ const LIVEKIT_FALSO = `
 (function () {
   const RoomEvent = {};
   ["ParticipantConnected","ParticipantDisconnected","TrackSubscribed","TrackUnsubscribed","ParticipantPermissionsChanged",
-   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected"].forEach((k) => { RoomEvent[k] = k; });
+   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected","ActiveSpeakersChanged"].forEach((k) => { RoomEvent[k] = k; });
   class Room {
     constructor() {
       this.state = "disconnected";
@@ -119,6 +119,7 @@ const LIVEKIT_FALSO = `
       this.localParticipant = {
         permissions: { canPublish: false },
         isMicrophoneEnabled: false,
+        isSpeaking: false,
         async setMicrophoneEnabled(v) {
           if (v && !this.permissions.canPublish) throw new Error("sin permiso");
           this.isMicrophoneEnabled = v;
@@ -133,7 +134,11 @@ const LIVEKIT_FALSO = `
       window.__conecto = { url, token };
       this.state = "connected";
       this.localParticipant.permissions.canPublish = token === "pase-con-palabra";
-      this.remoteParticipants.set("profe", { name: "Karina Rojas", attributes: { rol: "profe" }, permissions: { canPublish: true }, audioTrackPublications: new Map() });
+      // Entran desordenados: la lista tiene que salir igual (tú, el profe, los demás por nombre).
+      const p = (name, rol, habla) => ({ name, attributes: { rol }, permissions: { canPublish: habla }, isSpeaking: false, audioTrackPublications: new Map() });
+      this.remoteParticipants.set("zoe", p("Zoe Álvarez", "alumno", false));
+      this.remoteParticipants.set("profe", p("Karina Rojas", "profe", true));
+      this.remoteParticipants.set("ana", p("ana Mora", "alumno", true));
     }
     async startAudio() {}
     async disconnect() { this.state = "disconnected"; this.emit("Disconnected", 1); }
@@ -172,7 +177,7 @@ async function abrir(browser, { esProfe = false, respuesta }) {
     window.__manos = [];
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
-      sb: window.__sb, profesorId: "u-profe", esProfe,
+      sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
     });
   }, esProfe);
@@ -192,7 +197,17 @@ async function pruebas(browser) {
   si(await visible(r.page, "#llamada-entrar") && !(await visible(r.page, "#llamada-mic")), "antes de entrar: «Entrar a la llamada», sin el botón del micrófono");
   await r.page.click("#llamada-entrar");
   let a = await anuncio(r.page);
-  si(/Entraste a la llamada; hay 1 persona más/.test(a) && /levanta la mano con Alt Y/.test(a), "al entrar dice cuántos hay y cómo pedir la palabra: «" + a + "»");
+  si(/Entraste a la llamada; hay 3 personas más/.test(a) && /levanta la mano con Alt Y/.test(a), "al entrar dice cuántos hay y cómo pedir la palabra: «" + a + "»");
+  si(await visible(r.page, "#llamada-lista"), "ya dentro se ve la lista de quiénes están");
+  si(await r.page.textContent("#llamada-gente-titulo") === "En la llamada (4)", "…con cuántos son, contándote");
+  const nombres = await r.page.$$eval("#llamada-lista li", (lis) => lis.map((li) => li.children[0].textContent));
+  si(JSON.stringify(nombres) === JSON.stringify(["Luis Pérez", "Karina Rojas", "ana Mora", "Zoe Álvarez"]),
+    "…en orden: tú, el profe y los demás por nombre, sin importar mayúsculas ni el orden en que entraron (" + nombres.join(", ") + ")");
+  const detalles = await r.page.$$eval("#llamada-lista li", (lis) => lis.map((li) => li.children[1].textContent));
+  si(detalles[0] === "tú" && detalles[1] === "profe" && detalles[2] === "con la palabra" && detalles[3] === "", "…diciendo escrito quién es el profe y quién tiene la palabra (" + detalles.join(" | ") + ")");
+  si(await r.page.getAttribute("#llamada-gente", "aria-live") === null, "…y la lista no es región viva (lo que cambia ya se anuncia aparte)");
+  await r.page.evaluate(() => { const z = window.__sala.remoteParticipants.get("zoe"); z.isSpeaking = true; window.__sala.activeSpeakers = [z]; window.__sala.emit("ActiveSpeakersChanged", [z]); });
+  si(/hablando/.test(await r.page.textContent("#llamada-lista li:nth-child(4)")), "quien habla lo dice la lista, sin anunciarlo");
   const pedido = await r.page.evaluate(() => window.__pedidos[0]);
   si(pedido && pedido.nombre === "clase-llamada" && pedido.body.accion === "pase" && pedido.body.profesor === "u-profe", "pide el pase a clase-llamada con el profesor de la clase");
   si(await visible(r.page, "#llamada-mic") && !(await visible(r.page, "#llamada-entrar")), "ya dentro: el micrófono a la vista y «Entrar» no");
@@ -217,13 +232,14 @@ async function pruebas(browser) {
   si(/Se terminó tu turno: tu micrófono se apagó/.test(a) && await r.page.getAttribute("#llamada-mic", "aria-pressed") === "false", "al terminar el turno se apaga y se dice");
   await r.page.keyboard.press("Alt+KeyQ");
   a = await anuncio(r.page);
-  si(/Karina Rojas, el profe/.test(a), "Alt+Q dice quién está: «" + a + "»");
+  si(/^En la llamada hay 4 contigo: Karina Rojas, el profe; ana Mora, con la palabra; Zoe Álvarez\.$/.test(a), "Alt+Q dice quién está, en el mismo orden que la lista: «" + a + "»");
   await r.page.keyboard.press("Alt+KeyW");
-  si(/Nadie está hablando/.test(await anuncio(r.page)), "Alt+W dice quién habla");
+  si(/Está hablando Zoe Álvarez/.test(await anuncio(r.page)), "Alt+W dice quién habla");
   await r.page.evaluate(() => window.__sala.emit("Disconnected", 4));
   a = await anuncio(r.page);
   si(/Tu profe te sacó de la llamada/.test(a), "si el servidor lo saca, se lo dice");
   si(await visible(r.page, "#llamada-entrar") && await r.page.evaluate(() => document.activeElement.id) === "llamada-entrar", "…y vuelve a «Entrar», con el foco ahí");
+  si(!(await visible(r.page, "#llamada-gente")), "…y la lista se esconde");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 

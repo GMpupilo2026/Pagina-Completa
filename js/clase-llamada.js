@@ -90,6 +90,9 @@
         const habla = $("llamada-habla");
         const salirBtn = $("llamada-salir");
         const audios = $("llamada-audios");
+        const gente = $("llamada-gente");
+        const genteTitulo = $("llamada-gente-titulo");
+        const lista = $("llamada-lista");
         let sala = null;
         let entrando = false;
         let LK = null;
@@ -106,7 +109,54 @@
         const nombreDe = (p) => p.name || "Alguien";
         const esElProfe = (p) => p.attributes && p.attributes.rol === "profe";
 
+        /* Siempre el mismo orden: tú, el profe, y los demás por nombre. Con la
+           lista en el orden en que fueron entrando, cada vez que alguien se
+           reconecta cambia de lugar y no se encuentra a nadie. */
+        const tienePalabra = (p) => Boolean(p.permissions && p.permissions.canPublish);
+        function enOrden() {
+            if (!sala) return [];
+            const otros = [...sala.remoteParticipants.values()].sort((a, b) =>
+                (esElProfe(b) - esElProfe(a)) || nombreDe(a).localeCompare(nombreDe(b), "es", { sensitivity: "base" }));
+            return [{ p: sala.localParticipant, yo: true }, ...otros.map((p) => ({ p, yo: false }))];
+        }
+        function detalle(p, yo) {
+            const d = [];
+            if (yo) d.push("tú");
+            if (esElProfe(p) || (yo && esProfe)) d.push("profe");
+            else if (tienePalabra(p)) d.push("con la palabra");
+            if (p.isSpeaking) d.push("hablando");
+            return d;
+        }
+
+        function pintarGente() {
+            const filas = enLlamada() ? enOrden() : [];
+            gente.hidden = !filas.length;
+            lista.textContent = "";
+            if (!filas.length) return;
+            genteTitulo.textContent = "En la llamada (" + filas.length + ")";
+            for (const { p, yo } of filas) {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2 px-3 py-1.5";
+                const n = document.createElement("span");
+                n.className = "font-semibold text-brand-800 dark:text-white break-words";
+                n.textContent = yo ? (op.miNombre || "Tú") : nombreDe(p);   // lo escribió una persona
+                const d = document.createElement("span");
+                d.className = "shrink-0 text-xs text-brand-600 dark:text-brand-300";
+                const partes = detalle(p, yo);
+                if (p.isSpeaking) {
+                    const icono = document.createElement("span");
+                    icono.setAttribute("aria-hidden", "true");
+                    icono.textContent = "🔊 ";
+                    d.appendChild(icono);
+                }
+                d.appendChild(document.createTextNode(partes.join(" · ")));
+                li.append(n, d);
+                lista.appendChild(li);
+            }
+        }
+
         function pintar() {
+            pintarGente();
             const dentro = enLlamada();
             entrar.hidden = dentro;
             mic.hidden = !dentro;
@@ -210,10 +260,10 @@
 
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
-            const otros = [...sala.remoteParticipants.values()];
+            const otros = enOrden().filter((f) => !f.yo).map((f) => f.p);
             if (!otros.length) { anunciar("Estás solo en la llamada."); return; }
-            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : p.permissions && p.permissions.canPublish ? ", con la palabra" : ""));
-            anunciar("En la llamada, además de ti: " + partes.join("; ") + ".");
+            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : ""));
+            anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
         }
 
         function quienHabla() {
@@ -238,11 +288,14 @@
         function escuchar(room) {
             const E = LK.RoomEvent;
             room
-                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); })
-                .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); })
+                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); })
+                .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); pintarGente(); })
+                // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
+                .on(E.ActiveSpeakersChanged, pintarGente)
                 .on(E.TrackSubscribed, (track) => { if (track.kind === "audio") audios.appendChild(track.attach()); })
                 .on(E.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); })
                 .on(E.ParticipantPermissionsChanged, (antes, p) => {
+                    pintarGente();   // «con la palabra» en la lista, también de los demás
                     if (p !== room.localParticipant || esProfe) return;
                     const ahora = Boolean(p.permissions && p.permissions.canPublish);
                     if (ahora === Boolean(antes && antes.canPublish)) return;

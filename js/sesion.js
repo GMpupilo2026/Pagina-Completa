@@ -7956,7 +7956,7 @@
             if (window.ClaseLlamada && !esObservador && !vistaPrevia && !modoProyector && !modoControl
                 && (!isTeacher || profile.role === "profesor")) {
                 llamada = ClaseLlamada.montar({
-                    sb, profesorId: boardOwnerId, esProfe: isTeacher,
+                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "",
                     alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
                 });
             }
