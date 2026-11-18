@@ -342,8 +342,8 @@ async function pruebaProfesora(browser) {
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Guía del profesor", "Logros"]);
-  igual("y sin coordinar, cobros.html no le aparece por ningún lado",
-    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
+  igual("y sin coordinar, los cobros no le aparecen por ningún lado",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "mensualidades.html" || t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -589,7 +589,7 @@ async function pruebaUrgenteProfesora(browser) {
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => c.eq)),
     [{ profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }]);
   igual("sin coordinar, no se le cuentan solicitudes ni cobros",
-    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+    await r.page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cuentas_cobro_vista", "pagos_reportados"].includes(c.tabla)).length), 0);
   await r.page.click("#campana");
   igual("y se vuelve a cerrar", await r.page.evaluate(() => document.getElementById("campana-panel").checkVisibility()), false);
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
@@ -749,7 +749,7 @@ async function pruebaAdmin(browser) {
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
      "subgrupos.html", "partidas.html", "juegos.html", "competir.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
   igual("y sí lo de supervisar y administrar",
-    ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "cobros.html", "solicitudes.html"]
+    ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "mensualidades.html", "solicitudes.html"]
       .filter((x) => !enlaces.includes(x)), []);
   igual("cada destino una sola vez", enlaces.length, new Set(enlaces).size);
   const visible = (id) => page.evaluate((i) => document.getElementById(i).checkVisibility(), id);
@@ -829,12 +829,12 @@ async function pruebaBuscador(browser) {
         && document.getElementById("tile-grid").checkVisibility();
     }), "true");
   igual("«pagos» encuentra Cobros aunque la tarjeta no diga «pagos» en el nombre",
-    await page.evaluate(VISIBLES), ["Cobros de la Academia"]);
+    await page.evaluate(VISIBLES), ["Cobros"]);
   igual("los grupos sin nada que mostrar no se ven",
     await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section"))
       .filter((s) => s.checkVisibility()).map((s) => s.querySelector("h2").textContent)), ["Cobros y accesos"]);
   igual("el resultado se anuncia", await page.textContent("#buscar-panel-estado"),
-    "1 acceso con «pagos». Enter abre «Cobros de la Academia».");
+    "1 acceso con «pagos». Enter abre «Cobros».");
   igual("y el anuncio va en role=status", await page.getAttribute("#buscar-panel-estado", "role"), "status");
 
   await buscar(page, "CONTRASENA");
@@ -866,9 +866,9 @@ async function pruebaBuscador(browser) {
   igual("y la barra no se escribe en el campo", await page.inputValue("#buscar-panel-campo"), "");
 
   await buscar(page, "pagos");
-  await Promise.all([page.waitForURL(/cobros\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
+  await Promise.all([page.waitForURL(/mensualidades\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
   bien("Enter abre el primero: " + page.url().replace(BASE, ""));
-  igual("sin errores en la página", errores.filter((e) => !/cobros/.test(e)), []);
+  igual("sin errores en la página", errores.filter((e) => !/cobros|mensualidades/.test(e)), []);
   await ctx.close();
 
   // La alumna no tiene Cobros: buscarlo no lo inventa.
@@ -972,13 +972,13 @@ async function pruebaCoordinadorRecortado(browser) {
     { misFunciones: ["formularios", "altas", "cuentas", "acceso", "roles", "equipos", "subgrupos"] });
   const enlaces = grupo(await page.evaluate(LEER_GRILLA), "Coordinación").tiles.map((t) => t.enlace);
   igual("no se le pintan ni Cobros ni Solicitudes, y sí Formularios y Coordinación",
-    ["cobros.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
+    ["mensualidades.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
     [false, false, true, true]);
   /* Lo urgente solo cuenta lo que tiene tarjeta: sin Solicitudes ni Cobros,
      ni se le preguntan a la base (le diría «al día» de algo que no ve). */
   await page.waitForTimeout(300);
   igual("y «Lo urgente» no le cuenta solicitudes ni cobros",
-    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+    await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cuentas_cobro_vista", "pagos_reportados"].includes(c.tabla)).length), 0);
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }

@@ -50,6 +50,7 @@ const FUNCIONES = {
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts", "hora-cr.ts"],
   "mejorar-informe": [],
+  "entrenador-ia": [],
   // La llamada de voz de la clase en vivo (LiveKit). Ver su cabecera.
   "clase-llamada": [],
   // Borra las grabaciones de más de 90 días (verify_jwt en false: la llama pg_cron con el secreto).
