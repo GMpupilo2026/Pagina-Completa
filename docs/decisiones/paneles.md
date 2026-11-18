@@ -4013,6 +4013,56 @@ agenda de cuatro semanas) con dos cosas encima: **lo que conviene saber** y
   (`verificar-proyectos.js` pide que el proyecto vaya primero); «Tu
   calendario» del panel lleva un enlace a la página.
 
+## Días sin clase y feriados
+
+Hasta el 18/11/2026 un feriado solo existía como aviso («Mañana no hay
+clase»): el calendario, «Tu próxima clase» y el `.ics` seguían mostrando la
+clase de ese día como si fuera a pasar. La idea de anotarlos salió de
+Chessgora («eventos y días sin clase» en su calendario). Migración
+`20261118060648_dias_sin_clase.sql`.
+
+- **Una tabla, `dias_sin_clase`**: una fila es un día, o del profe que la pone
+  (`profesor_id` = él) o un **feriado para todos** (`profesor_id` nulo), que
+  solo pone quien administra. El mismo día no se repite para el mismo profe ni
+  hay dos feriados el mismo día: lo garantiza el índice único
+  `dias_sin_clase_un_dia`, no un `if` (la página dice «Ese día ya estaba
+  marcado sin clase» con el 23505). No se edita: se quita y se vuelve a poner.
+- **Quién la ve (RLS)**: quien la puso, sus alumnos (`interno.profesores_de`),
+  quien administra y, los feriados, todo el mundo con cuenta. Un día sin clase
+  es una fecha y un motivo, no dice nada de nadie: el alumno de otra academia
+  no ve los días de un profe que no es el suyo. Escribe la propia persona con
+  políticas simples (no reparte permisos ni dinero: no va en la bitácora).
+- **Las clases que vienen los saltan en la base**: `mis_clases_proximas` y
+  `mi_proxima_clase` (esta mira ahora 14 días y no 7, para que una semana sin
+  clase no deje «Tu próxima clase» vacío). Así el calendario del alumno, «Tu
+  próxima clase» y su `.ics` dicen lo mismo sin una segunda regla.
+- **A propósito NO se tocó `ocurrencias_horario`**: la usan las horas de los
+  talleres, las de los asesores y las grabaciones. Un día marcado sin clase no
+  puede cambiar en silencio lo que se le paga a alguien ni esconder una
+  grabación ya subida. Tampoco cambia `clases_programadas` del informe mensual.
+- **En `calendario.html`**: cada día sin clase es un renglón «🚫 Sin clase:
+  motivo» o «🚫 Feriado: motivo» que dice quién lo marcó, sin enlace. Al profe,
+  `CalendarioInteligente.quitarClasesSinClase` le saca del horario las clases
+  de sus días y de los feriados (las de otros profes no, aunque quien
+  administra lea todos los días), y su `.ics` va igual. El plan y los avisos
+  reciben solo clases y entregas: tratan todo lo que no es clase como algo que
+  vence.
+- **La sección «🚫 Días sin clase»** (quien da clase y quien administra): día
+  (desde hoy), motivo (hasta 120 letras, lo ven los alumnos) y, quien
+  administra, «Feriado para todas las academias». Lista los que vienen; se
+  quita lo propio (y los feriados, quien administra) con `Avisos.confirmar`.
+  Después de marcar o quitar, el calendario se vuelve a leer y la clase de ese
+  día desaparece o vuelve.
+
+Lo prueban `verificar-calendario-inteligente.js` (las dos funciones puras: los
+días de otra profe no quitan nada, el día es el de Costa Rica) y
+`verificar-calendario-pagina.js` (con un doble que filtra como la RLS: la
+alumna ve el porqué y su `.ics` salta la clase; el profe marca, ve desaparecer
+la clase, choca con el índice único y quita con confirmación; quien administra
+pone un feriado para todos). La RLS y las funciones se probaron impersonando
+roles en SQL (alumno, su profe y un alumno de otro profe). Con el filtro roto,
+salta.
+
 **Al tocarlo, correr** `node herramientas/verificar-calendario-inteligente.js`
 (la cuenta: días de Costa Rica, el mes de lunes a domingo, el plan, los avisos,
 el horario y las entregas agrupadas) y
