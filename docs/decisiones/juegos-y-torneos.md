@@ -15919,7 +15919,9 @@ sus pts y su puesto actual».
   puntos oscuros en la franja del recorte es el pelo (`topeDeLaPersona`).
   Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
   abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
-  con la cabeza arriba y la cara del mismo tamaño.
+  con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
+  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  por el chat) no se recorta de más: entra entera a lo alto.
 - **Con foto, la foto va en el medio y el nombre debajo** (`fotoCentro`,
   pedido del dueño), con los detalles centrados debajo del nombre; sin foto,
   el gafete queda como el del Centroamericano.

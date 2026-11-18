@@ -408,7 +408,12 @@
       const r = diseno.fotoRecorte;
       let sx = 0, sy = 0, sw = W, sh = H;
       if (r && r.alto > 0) {
-        sh = Math.min(H, H * r.alto); sw = Math.min(W, sh * 33 / 42.4);
+        // Una foto que ya viene de cabeza y hombros (más ancha que 0,72, como
+        // las que llegan sueltas por chat) no se recorta de más: entra entera
+        // a lo alto, y solo se le quita lo que sobra de los lados.
+        const yaEsRetrato = W / H >= 0.72;
+        sh = yaEsRetrato ? Math.min(H, W * 42.4 / 33) : Math.min(H, H * r.alto);
+        sw = Math.min(W, sh * 33 / 42.4);
         sx = (W - sw) / 2;
         // Con `cabeza`, el recorte empieza un poco arriba de donde empieza la
         // persona (el fondo del fotógrafo es blanco): un niño bajito sale
