@@ -400,6 +400,65 @@ profe: lo pidió así).
   foco con la tecla apretada (el keyup nunca llega) se calla sola. El clic
   que llega al soltar no conmuta nada. La preferencia se recuerda en el
   aparato (`localStorage`).
+- **Los temas de la grabación, solos** (pedido del 18/11: «que las marcas se
+  hagan automáticas cuando detecte cambios de tema»). El profe no marca nada:
+  cada segundo, además de la posición, la grabadora pregunta de qué va la
+  clase (`op.tema()` = `temaDeLaClase()` en `sesion.js`) y, si cambió, la
+  marca lleva `tema`, el nombre del capítulo. Gana lo más puntual: una
+  diapositiva («Diapositiva 3: La oposición»), la práctica, la tanda, el
+  calentamiento o el tiempo para pensar tapan al tablero mientras duran; sin
+  nada de eso, el tema es la posición de la que partió la partida (una
+  posición nueva es un capítulo; una jugada, no). Volver a algo que ya se vio
+  dice «De vuelta a: …», y la primera marca de cada parte lleva siempre su
+  tema, para que cada parte diga dónde empieza. Van en las mismas
+  `clase_grabaciones.marcas` (`{s, fen, tema}`, sin migración). En «Repasar
+  mis clases», «Temas de esta parte»: un botón por tema con su minuto, que
+  lleva el audio ahí y lo hace sonar; el que está sonando se marca con «▶» y
+  `aria-current`, no solo con el color. Las grabaciones de antes no tienen
+  temas y no muestran nada.
+- **El alumno sabe su lugar en la fila de manos.** Sale de la misma presencia
+  y con el MISMO orden que el profe ve en su lista (primero las manos, por
+  `hand_at`): «lugar 2» es el segundo que ve el profe. Se dice al levantarla y
+  cada vez que avanza («Avanzaste: vas en el lugar 2…», «Tu mano es la
+  primera de la fila: sigues tú»), en `#clase-voz` y sin mover el foco, y va
+  escrito en el botón («✋ Bajar la mano (lugar 2 de 3)»). Vale con o sin
+  llamada: la mano es la de la clase. Por eso Alt+Y en la llamada ya solo dice
+  «Levantaste la mano»: el lugar llega enseguida, con la presencia.
+- **Los minutos hablados**: cuánto habló cada alumno. Los mide la página del profe mientras
+  él está en la llamada: cada segundo, a cada alumno que LiveKit marca
+  «hablando» se le suma ese segundo. El profe los ve en la lista y en Alt+Q
+  («habló 3 minutos», desde el primer minuto), y cada minuto (y al salir) se
+  mandan a la base: `sumar_segundos_hablados(clase, {persona: segundos})`,
+  migración `llamada_minutos_hablados`, tabla `llamada_participacion`. **Es una
+  tabla aparte y no una columna de `class_attendance`**: esa fila la escribe
+  el mismo alumno al entrar, así que podría ponerse los minutos que quisiera;
+  `llamada_participacion` no tiene ninguna política de escritura. La función
+  la deja solo al profe que abrió la clase (abierta o cerrada hace menos de 30
+  minutos: la última tanda llega al terminar), suma solo a quienes tienen
+  asistencia en esa clase y como mucho 900 segundos por persona en cada
+  pedido. Lo que no se pudo mandar vuelve a la cola de la tanda siguiente. Al
+  recargar la página, el profe vuelve a ver lo que ya llevaban. En «Repasar
+  mis clases», «Quién habló en la llamada»: al alumno, solo lo suyo
+  («Hablaste 4 minutos»: la RLS no le da lo de los demás); al profe y a
+  administración, todos, del que más habló al que menos, y quiénes estuvieron
+  en la clase y no hablaron. Lo que el profe no oyó (no estaba en la llamada)
+  no se cuenta.
+- **Dos volúmenes aparte**, cada uno con su barra y su valor escrito («50 %»),
+  recordados en el aparato (`localStorage`): el de la llamada (las voces de
+  los demás, `setVolume` de cada pista) y el de la voz de la página que dice
+  las jugadas (`u.volume` en el envoltorio de `speechSynthesis.speak`). El de
+  la voz vale solo mientras se está en la llamada, que es donde está su
+  barra. Mientras esa voz habla, la llamada baja al 30 % DE SU volumen (antes
+  bajaba a un 30 % fijo y volvía al 100 %, pisando lo que la persona eligió).
+- **Vuelve sola a la llamada si se cae.** LiveKit ya aguanta los cortes
+  cortos («Reconectando…»). Si igual se cae del todo (un «Disconnected» que
+  nadie pidió), la página vuelve a entrar en 2, 4, 8, 16 y 30 segundos, y si
+  el aparato dice que no hay red, espera al evento `online`. No vuelve si la
+  persona salió, si el profe la sacó o terminó la llamada, ni si entró con la
+  misma cuenta en otra pestaña (`DUPLICATE_IDENTITY`: se pelearían). Al
+  volver no mueve el foco (puede estar en el tablero); el profe, si estaba
+  grabando, sigue en una parte nueva. El «Disconnected» de un intento fallido
+  llega con la sala vieja y no corta los reintentos (`room !== sala`).
 - **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
   CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
   borra primero el archivo y después la fila (la base no puede borrar archivos
@@ -411,13 +470,19 @@ profe: lo pidió así).
   tiene no; el compañero no ve el permiso de otro; el profe recibe la lista de
   los que tienen permiso; una parte sin archivo subido se rechaza; la
   grabación la ven el profe y la alumna que asistió, no el que faltó ni el de
-  otro profe.
+  otro profe. Y los minutos hablados (18/11): el profe de la clase suma, con
+  el tope por pedido, y a quien no tiene asistencia no se le suma nada; el
+  alumno lee solo lo suyo y no inserta, no actualiza ni llama a la función;
+  otro profe y `anon`, rechazados.
 
 **Al tocar la llamada, correr `node herramientas/verificar-todo.js
 clase-llamada`.** Comprueba los enganches de `sesion.js` y `clase-sacar.js`, las
 cabeceras, la migración y la función, y en el navegador la caja con dobles de
 LiveKit y de la función: los anuncios, el micrófono bloqueado sin la palabra, la
-palabra dada y quitada, los atajos y el aviso de cuando no está configurada.
+palabra dada y quitada, los atajos y el aviso de cuando no está configurada;
+y desde el 18/11, los temas de la grabación (y sus capítulos en «Repasar mis
+clases»), el lugar en la fila de manos, los minutos hablados, los dos
+volúmenes y la vuelta sola a la llamada (con y sin red).
 
 ### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
 

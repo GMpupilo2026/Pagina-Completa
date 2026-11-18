@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118061543
+# al-dia-con: 20261118171527
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -175,6 +175,7 @@ tabla  jdn_resultados  rls=true
 tabla  jdn_tableros  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
+tabla  llamada_participacion  rls=true
 tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
 tabla  metropolitano_codigos  rls=true
@@ -1875,6 +1876,10 @@ columna  licencias_herramientas.otorgada_por  uuid
 columna  licencias_herramientas.persona_id  uuid
 columna  licencias_herramientas.revocada  boolean
 columna  licencias_herramientas.vence  timestamp with time zone
+columna  llamada_participacion.actualizado  timestamp with time zone
+columna  llamada_participacion.class_session_id  uuid
+columna  llamada_participacion.persona_id  uuid
+columna  llamada_participacion.segundos  integer
 columna  material_compartido.academia_id  uuid
 columna  material_compartido.creado_en  timestamp with time zone
 columna  material_compartido.id  uuid
@@ -3771,6 +3776,7 @@ funcion  soy_profesor_de_todos(p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  soy_supervisor()  definer  anon=false  auth=true
 funcion  subgrupos_a_la_vista()  invoker  anon=false  auth=true
 funcion  subgrupos_de(p_profesor uuid)  invoker  anon=false  auth=true
+funcion  sumar_segundos_hablados(p_clase uuid, p_segundos jsonb)  definer  anon=false  auth=true
 funcion  supervisa_academia(p_academia uuid)  definer  anon=true  auth=true
 funcion  supervisado_por_mi(p_persona uuid)  definer  anon=false  auth=true
 funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
@@ -4110,6 +4116,7 @@ politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  jdn_tableros  jdn_tableros_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
+politica  llamada_participacion  llamada_participacion_select  SELECT
 politica  material_compartido  material_compartido_select  SELECT
 politica  mensajes_casa  mensajes_casa_delete  DELETE
 politica  mensajes_casa  mensajes_casa_insert  INSERT
@@ -4948,6 +4955,8 @@ indice  licencias_herramientas  licencias_herramientas_creada_por_idx
 indice  licencias_herramientas  licencias_herramientas_otorgada_por_idx
 indice  licencias_herramientas  licencias_herramientas_persona_idx
 indice  licencias_herramientas  licencias_herramientas_pkey
+indice  llamada_participacion  llamada_participacion_persona_idx
+indice  llamada_participacion  llamada_participacion_pkey
 indice  material_compartido  material_compartido_academia_idx
 indice  material_compartido  material_compartido_academia_unica
 indice  material_compartido  material_compartido_otorgado_idx
@@ -6065,6 +6074,20 @@ grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
 grant  licencias_herramientas  authenticated  SELECT
+grant  llamada_participacion  anon  DELETE
+grant  llamada_participacion  anon  INSERT
+grant  llamada_participacion  anon  REFERENCES
+grant  llamada_participacion  anon  SELECT
+grant  llamada_participacion  anon  TRIGGER
+grant  llamada_participacion  anon  TRUNCATE
+grant  llamada_participacion  anon  UPDATE
+grant  llamada_participacion  authenticated  DELETE
+grant  llamada_participacion  authenticated  INSERT
+grant  llamada_participacion  authenticated  REFERENCES
+grant  llamada_participacion  authenticated  SELECT
+grant  llamada_participacion  authenticated  TRIGGER
+grant  llamada_participacion  authenticated  TRUNCATE
+grant  llamada_participacion  authenticated  UPDATE
 grant  material_compartido  authenticated  SELECT
 grant  mensajes_casa  authenticated  DELETE
 grant  mensajes_casa  authenticated  INSERT
