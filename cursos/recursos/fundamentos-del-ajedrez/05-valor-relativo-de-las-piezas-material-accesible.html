@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,21 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Para decidir si un cambio de piezas conviene, se usa una escala aproximada: peón = 1, caballo = 3, alfil = 3, torre = 5, dama = 9. El rey no tiene valor numérico porque no se puede capturar ni cambiar.</p>
 <p>Esta escala es una guía, no una ley absoluta: en posiciones concretas, un caballo bien situado puede valer más que una torre mal ubicada. Aun así, es la referencia que usarás en el 90% de tus decisiones de cambio de piezas como principiante.</p>
@@ -68,16 +86,16 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
 </dl>
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>antes de cada cambio de piezas en tus próximas partidas, suma el valor de lo que entregas y lo que recibes.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
@@ -88,7 +106,7 @@
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -141,7 +159,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Fundamentos del Ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

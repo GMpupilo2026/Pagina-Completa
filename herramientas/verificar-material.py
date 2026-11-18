@@ -195,6 +195,22 @@ for slug in CURSOS:
             con_ejemplo += 1
             if "Piezas blancas:" not in acc:
                 mal(donde, "el PDF trae diagrama y la versión accesible no lo describe en palabras")
+            # Y de a una pieza por renglón: en un párrafo corrido el lector de
+            # pantalla la dice de un tirón y no da tiempo de ponerla en el
+            # tablero. Se cuentan los renglones contra las piezas de cada FEN.
+            for bloque in re.findall(r'<div class="posicion">(.*?)</div>', acc, re.S):
+                fen = re.search(r"notación FEN[^:]*: (\S+)", bloque)
+                piezas = sum(1 for ch in fen.group(1) if ch.isalpha()) if fen else -1
+                antes_linea = bloque.split("<h4>La línea", 1)[0]
+                renglones = len(re.findall(r"<li>(?:Rey|Dama|Torre|Alfil|Caballo|Peón) en (?:anna|bella|cesar|david|eva|felix|gustav|hector) [1-8]\.</li>", antes_linea))
+                if piezas != renglones:
+                    mal(donde, f"una posición tiene {piezas} piezas y la versión accesible lista {renglones}, una por renglón")
+                    break
+                if "La línea, jugada por jugada:" in bloque and re.search(r"jugada por jugada: \d+\. .*, \d+\. ", bloque):
+                    mal(donde, "la línea de una posición sigue en un párrafo corrido: cada jugada va en su renglón")
+                    break
+            if 'aria-labelledby="indice-titulo"' not in acc or 'href="#posicion-1"' not in acc:
+                mal(donde, "la versión accesible no trae el índice con sus posiciones")
 
 print(f"{total_lecciones} lecciones · {total_lecciones * 2} archivos · {total_paginas} páginas de PDF")
 print(f"{con_ejemplo} lecciones con posiciones de ejemplo · {peso / 1048576:.1f} MB en total")

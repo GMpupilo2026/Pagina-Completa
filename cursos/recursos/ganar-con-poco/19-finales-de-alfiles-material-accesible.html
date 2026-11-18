@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Final de alfiles: mira de qué color es cada alfil y en qué casillas están los peones. Juegan las blancas; el rival acaba de jugar … alfil captura gustav 4.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>En los finales de alfiles del mismo color, las ventajas pequeñas son muy claras: el alfil bueno contra el malo, el rey que entra por las casillas que el alfil rival no cuida, los peones fijos en el color equivocado. Son finales de paciencia, donde el bando mejor va acercando el rey y el otro solo puede esperar.</p>
 <p>Con alfiles de distinto color todo cambia: cada alfil controla casillas que el otro nunca puede disputar, y el bando que defiende puede bloquear los peones en el color de su alfil y quedarse quieto. Por eso son el final de tablas por excelencia, incluso con dos peones de menos. Para ganarlos hacen falta peones pasados lejos uno de otro.</p>
@@ -65,42 +89,61 @@
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Final de alfiles: mira de qué color es cada alfil y en qué casillas están los peones. Juegan las blancas; el rival acaba de jugar … alfil captura gustav 4.</h3>
+  <h3 id="posicion-1">Posición 1: Final de alfiles: mira de qué color es cada alfil y en qué casillas están los peones. Juegan las blancas; el rival acaba de jugar … alfil captura gustav 4.</h3>
   
-  <p>Piezas blancas: rey en d4; alfil en h4; peones en a3, f5, f6.</p>
-  <p>Piezas negras: rey en d7; alfil en g4; peones en a4, f7, g6.</p>
+  <h4>Piezas blancas: 5</h4>
+  <ul>
+    <li>Rey en david 4.</li>
+    <li>Alfil en hector 4.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en felix 6.</li>
+  </ul>
+  <h4>Piezas negras: 5</h4>
+  <ul>
+    <li>Rey en david 7.</li>
+    <li>Alfil en gustav 4.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 49. felix captura gustav 6, felix captura gustav 6, 50. felix 7</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>49. Blancas: felix captura gustav 6.</li>
+    <li>49. Negras: felix captura gustav 6.</li>
+    <li>50. Blancas: felix 7.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>49. felix captura gustav 6, felix captura gustav 6, 50. felix 7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Con solo alfiles en el tablero, cada tiempo y cada casilla cuentan: la jugada buena es la única que conserva la ventaja. (Ejercicio 1dAvV de la base abierta de Lichess (CC0), rating 1298. Stockfish 16 a profundidad 18: felix captura gustav 6 es la mejor (+5,9) y la segunda queda en -0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/3k1p2/5Pp1/5P2/p2K2bB/P7/8/8 w - - 0 49</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/3k1p2/5Pp1/5P2/p2K2bB/P7/8/8 w - - 0 49</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.</li>
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +196,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

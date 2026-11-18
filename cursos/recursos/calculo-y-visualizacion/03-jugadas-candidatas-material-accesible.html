@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,21 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Antes de calcular en profundidad, identifica entre 2 y 4 jugadas candidatas razonables (no más). Calcular superficialmente 6 opciones distintas suele ser peor que calcular a fondo las 2 o 3 más prometedoras.</p>
 
@@ -63,16 +81,16 @@
   <dt>El jaque descubierto</dt>
   <dd>Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.</dd>
   <dd><strong>El error de siempre:</strong> Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.</dd>
-  <dd><strong>Para verlo:</strong> Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca en eva 1, alfil blanco en eva 5, rey negro en eva 8. El alfil se lleva un peón en bella 8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
   <dt>Desviación y atracción</dt>
   <dd>Desviar es obligar a una pieza a soltar lo que defiende. Atraer es obligarla a ir a una casilla mala. Sobrecarga es cuando una pieza defiende dos cosas y no puede con las dos.</dd>
   <dd><strong>El error de siempre:</strong> Mirar solo qué está colgando y no quién lo defiende. La pregunta que abre estas tácticas no es '¿qué puedo comer?', sino '¿quién defiende esto, y qué pasa si lo obligo a irse?'.</dd>
-  <dd><strong>Para verlo:</strong> Un alfil defiende a la vez la torre de f8 y el peón de d5. Se cambia por la torre: el alfil recaptura obligado, y el peón de d5 cae de regalo.</dd>
+  <dd><strong>Para verlo:</strong> Un alfil defiende a la vez la torre de felix 8 y el peón de david 5. Se cambia por la torre: el alfil recaptura obligado, y el peón de david 5 cae de regalo.</dd>
 </dl>
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>en tu próxima partida, antes de mover, di en voz alta tus jugadas candidatas antes de decidir cuál calcular primero.</li>
   <li>Busca el mate de la coz en un libro o en internet y juégalo tres veces: es un descubierto y un doble jaque trabajando juntos.</li>
@@ -81,7 +99,7 @@
   <li>Toma una posición tuya cualquiera y haz la lista de defensores de cada bando. Busca las sobrecargas.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -118,7 +136,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cálculo y Visualización» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

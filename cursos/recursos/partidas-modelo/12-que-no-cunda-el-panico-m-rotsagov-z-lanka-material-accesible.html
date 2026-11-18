@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,11 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 8… anna 6</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 11. torre hector gustav 1</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 13. gustav 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>M. Rõtšagov – Z. Lanka · Campeonato de Europa de Selecciones Nacionales, Debrecen 1992 · 0-1</p>
-<p>En este Ataque Velimirovic, las blancas montan el asalto típico contra el enroque corto negro con g4-g5, dama hector 5 y el traslado de la torre a la columna h. Lanka defiende con precisión ejemplar: evita tocar los peones de su enroque hasta que es estrictamente necesario y dedica cada tiempo sobrante a su propio contrajuego en el ala de dama con ...b5-b4 y ...a5-a4. Cuando las blancas se apartan de la vía más exigente con 21. dama felix 6?! y 22. alfil gustav 5?, el ataque pierde fuelle, y el golpe 26… bella 3! abre las líneas decisivas para que el contraataque negro, coronado por la ruptura central 35… david 5!, decida la partida.</p>
+<p>En este Ataque Velimirovic, las blancas montan el asalto típico contra el enroque corto negro con gustav 4-gustav 5, dama hector 5 y el traslado de la torre a la columna h. Lanka defiende con precisión ejemplar: evita tocar los peones de su enroque hasta que es estrictamente necesario y dedica cada tiempo sobrante a su propio contrajuego en el ala de dama con ...bella 5-bella 4 y ...anna 5-anna 4. Cuando las blancas se apartan de la vía más exigente con 21. dama felix 6?! y 22. alfil gustav 5?, el ataque pierde fuelle, y el golpe 26… bella 3! abre las líneas decisivas para que el contraataque negro, coronado por la ruptura central 35… david 5!, decida la partida.</p>
 <p>Defenderse con éxito de un ataque directo contra el propio rey depende, en buena medida, de la actitud psicológica del defensor. Ver cómo el rival acumula piezas cerca del propio enroque genera una presión real, y la tentación de crear debilidades por miedo, o de lanzarse a un contraataque desesperado y mal calculado, suele ser el primer paso hacia el desastre. La clave está en tres principios prácticos: primero, mantener la calma y valorar objetivamente cada amenaza, atendiendo solo las que son realmente serias; segundo, evitar mover los peones que protegen al rey salvo que sea estrictamente necesario, porque cada avance reduce las propias opciones defensivas y facilita al atacante encontrar el objetivo exacto; y tercero, invertir todo tiempo sobrante en el propio contrajuego, porque una defensa puramente pasiva rara vez sobrevive frente a un ataque bien llevado. Además conviene recordar que el bando atacante también está bajo presión: sabe que si no logra el golpe decisivo pronto, el tiempo invertido en el ataque puede volverse en su contra. Reconocer el momento en que el rival se ha comprometido en exceso, y aprovecharlo sin vacilar, suele ser la diferencia entre sobrevivir y ganar.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
@@ -69,52 +95,154 @@
   <dt>Casillas débiles y puestos avanzados</dt>
   <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
   <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en david 5 defendido por un peón en eva 4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 8… anna 6</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 8… anna 6</h3>
   
-  <p>Piezas blancas: rey en e1; dama en e2; torres en a1, h1; alfiles en c4, e3; caballos en c3, d4; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, e7; caballos en c6, f6; peones en a6, b7, d6, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 4.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>8… anna 6 es una jugada preparatoria importante: impide el salto del caballo a b5 y deja lista la casilla c7 para la dama, que tendrá que abandonar la columna d en cuanto las blancas enroquen largo.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/1p2bppp/p1nppn2/8/2BNP3/2N1B3/PPP1QPPP/R3K2R w KQkq - 0 9</p>
+  <p>8… anna 6 es una jugada preparatoria importante: impide el salto del caballo a bella 5 y deja lista la casilla cesar 7 para la dama, que tendrá que abandonar la columna d en cuanto las blancas enroquen largo.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/1p2bppp/p1nppn2/8/2BNP3/2N1B3/PPP1QPPP/R3K2R w KQkq - 0 9</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 11. torre hector gustav 1</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 11. torre hector gustav 1</h3>
   
-  <p>Piezas blancas: rey en c1; dama en e2; torres en d1, g1; alfiles en b3, e3; caballos en c3, d4; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en c7; torres en a8, f8; alfiles en c8, e7; caballos en c6, f6; peones en a6, b7, d6, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en cesar 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en david 1.</li>
+    <li>Torre en gustav 1.</li>
+    <li>Alfil en bella 3.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en cesar 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>11. torre hector gustav 1 revela el plan blanco: preparar el avance g4-g5 para desalojar al caballo defensor de f6 y, más adelante, montar amenazas de mate por la columna h con la dama y la torre.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b2rk1/1pq1bppp/p1nppn2/8/3NP3/1BN1B3/PPP1QPPP/2KR2R1 b - - 5 11</p>
+  <p>11. torre hector gustav 1 revela el plan blanco: preparar el avance gustav 4-gustav 5 para desalojar al caballo defensor de felix 6 y, más adelante, montar amenazas de mate por la columna h con la dama y la torre.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1b2rk1/1pq1bppp/p1nppn2/8/3NP3/1BN1B3/PPP1QPPP/2KR2R1 b - - 5 11</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 13. gustav 5</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 13. gustav 5</h3>
   
-  <p>Piezas blancas: rey en c1; dama en e2; torres en d1, g1; alfiles en b3, e3; caballos en c3, d4; peones en a2, b2, c2, e4, f2, g5, h2.</p>
-  <p>Piezas negras: rey en g8; dama en c7; torres en a8, f8; alfiles en c8, e7; caballos en c5, c6; peones en a6, b7, d6, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en cesar 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en david 1.</li>
+    <li>Torre en gustav 1.</li>
+    <li>Alfil en bella 3.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 5.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en cesar 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en cesar 5.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>13. gustav 5 pone en marcha el ataque: el peón avanza para expulsar al caballo negro, el primer paso de un plan que necesitará todavía varias jugadas más para completarse.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b2rk1/1pq1bppp/p1npp3/2n3P1/3NP3/1BN1B3/PPP1QP1P/2KR2R1 b - - 0 13</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1b2rk1/1pq1bppp/p1npp3/2n3P1/3NP3/1BN1B3/PPP1QP1P/2KR2R1 b - - 0 13</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>En tres partidas tuyas, marca en la jugada 15 todas las casillas débiles de los dos bandos.</li>
   <li>Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo.</li>
@@ -122,7 +250,7 @@
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -159,7 +287,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

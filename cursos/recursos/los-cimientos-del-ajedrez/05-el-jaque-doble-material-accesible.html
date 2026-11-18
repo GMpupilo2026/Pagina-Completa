@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,28 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las blancas; el rival acaba de jugar … alfil captura felix 3.</a></li>
+        <li><a href="#posicion-2">Posición 2: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las negras; el rival acaba de jugar caballo captura cesar 7.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Un jaque doble ocurre cuando dos piezas dan jaque al mismo tiempo. Casi siempre nace de un ataque a la descubierta: una pieza se mueve, da jaque ella misma y además destapa el jaque de la pieza que tenía detrás. Contra un jaque simple hay tres defensas: mover el rey, capturar la pieza que da jaque o interponer algo. Contra un jaque doble solo sirve la primera, porque no se pueden capturar ni tapar dos piezas en una sola jugada.</p>
 <p>La señal que hay que buscar es una pieza tuya de largo alcance, como una torre, un alfil o la dama, que apunta al rey rival con una pieza propia en medio. Esa pieza del medio es un cañón cargado. Pregúntate a qué casilla puede ir para dar jaque también ella. Si el rey rival además tiene pocas casillas, el jaque doble muchas veces termina en mate, porque el rey no tiene adónde ir y no hay otra defensa.</p>
@@ -65,44 +90,106 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El tenedor (ataque doble)</dt>
   <dd>Una sola pieza ataca dos cosas a la vez. El rival solo puede salvar una. La hace cualquier pieza, pero el caballo es el especialista porque ataca casillas de los dos colores.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el tenedor y no preparar la casilla. Casi ningún tenedor aparece solo: se llega a él con un jaque, un cambio o una desviación que deja las dos piezas rivales en casillas del mismo color.</dd>
-  <dd><strong>Para verlo:</strong> Caballo en e5 con el rey negro en g8 y la torre en c6: no hay tenedor. Pero si un jaque obliga al rey a ir a f8, el caballo salta a d7 y se lleva la torre.</dd>
+  <dd><strong>Para verlo:</strong> Caballo en eva 5 con el rey negro en gustav 8 y la torre en cesar 6: no hay tenedor. Pero si un jaque obliga al rey a ir a felix 8, el caballo salta a david 7 y se lleva la torre.</dd>
   <dt>El jaque descubierto</dt>
   <dd>Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.</dd>
   <dd><strong>El error de siempre:</strong> Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.</dd>
-  <dd><strong>Para verlo:</strong> Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca en eva 1, alfil blanco en eva 5, rey negro en eva 8. El alfil se lleva un peón en bella 8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las blancas; el rival acaba de jugar … alfil captura felix 3.</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las blancas; el rival acaba de jugar … alfil captura felix 3.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en e2; torres en a1, h1; alfiles en c1, f1; caballo en e4; peones en a2, b2, c2, d2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en f3, f8; caballos en b8, g8; peones en a7, b7, c7, f4, f7, g7, h7.</p>
+  <h4>Piezas blancas: 13</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en eva 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en david 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en felix 3.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en gustav 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 7. caballo felix 6 jaque mate</p>
+  <p>La jugada: 7, blancas: caballo felix 6 jaque mate.</p>
   <p>Resultado: Ganan blancas</p>
   <p>Meek–Aficionado, EE. UU. 1855. 7. caballo felix 6 jaque mate. Mate por jaque doble con caballo y dama en la columna e. Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez. (Partida Meek–Aficionado, EE. UU. 1855. Stockfish 16 a profundidad 18: caballo felix 6 jaque mate es la mejor (mate en 1).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rn1qkbnr/ppp2ppp/8/8/4Np2/5b2/PPPPQ1PP/R1B1KB1R w KQkq - 0 7</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rn1qkbnr/ppp2ppp/8/8/4Np2/5b2/PPPPQ1PP/R1B1KB1R w KQkq - 0 7</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las negras; el rival acaba de jugar caballo captura cesar 7.</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las negras; el rival acaba de jugar caballo captura cesar 7.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballo en c7; peones en a2, b2, c2, d4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en e8; torres en a8, h8; alfiles en c8, e7; caballos en d7, f6; peones en a7, b7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en cesar 7.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 12</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en eva 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en david 7.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 10… alfil bella 4 jaque mate</p>
+  <p>La jugada: 10, negras: alfil bella 4 jaque mate.</p>
   <p>Resultado: Ganan negras</p>
   <p>Lohmann–Teschner, Cto. Alemania Federal, Bad Pyrmont 1950. 10… alfil bella 4 jaque mate. Jaque doble de alfil y dama que da mate tras un descuido. Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez. (Partida Lohmann–Teschner, Cto. Alemania Federal, Bad Pyrmont 1950. Stockfish 16 a profundidad 18: alfil bella 4 jaque mate es la mejor (mate en 1).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b1q1kr/ppNnb1pp/5n2/8/3P4/8/PPP2PPP/R1BQKB1R b KQ - 0 10</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1b1q1kr/ppNnb1pp/5n2/8/3P4/8/PPP2PPP/R1BQKB1R b KQ - 0 10</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -112,7 +199,7 @@
   <li>En diez ejercicios de descubierto, anota primero a dónde va la pieza que se mueve y solo después mira la solución.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -165,7 +252,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

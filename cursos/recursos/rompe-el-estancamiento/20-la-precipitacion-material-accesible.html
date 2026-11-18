@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Los jaques y las capturas saltan a la vista, pero la jugada que gana es tranquila. Juegan las blancas; el rival acaba de jugar … alfil captura david 3.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>La precipitación tiene una forma muy reconocible: se ve una jugada que parece ganar, el corazón se acelera, y la mano la hace antes de que la cabeza termine de revisarla. A veces sale bien. Muchas veces había una jugada todavía mejor al lado, o la jugada «ganadora» tenía una respuesta que no se miró.</p>
 <p>Los jugadores fuertes tienen un hábito sencillo: cuando ven una buena jugada, se sientan sobre las manos y buscan otra. Si la primera era la mejor, se pierde un minuto. Si no lo era, se gana una partida. También revisan la jugada elegida una última vez antes de hacerla, con una sola pregunta: «¿qué me contesta el rival?».</p>
@@ -69,28 +93,59 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El reloj y la conducta en torneo</dt>
   <dd>En torneo se juega con reloj y con planilla. El tiempo es parte de la partida: perderlo es perder, igual que un mate.</dd>
   <dd><strong>El error de siempre:</strong> Gastar media hora en la apertura. El reparto sano es poco tiempo en lo conocido, mucho en el momento crítico y una reserva para el final, que es donde se pierden más partidas por apuro.</dd>
   <dd><strong>Para verlo:</strong> Con 90 minutos más 30 segundos por jugada, el incremento es una red: si se juega rápido cuando la posición es simple, el incremento va devolviendo tiempo para los momentos difíciles.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Los jaques y las capturas saltan a la vista, pero la jugada que gana es tranquila. Juegan las blancas; el rival acaba de jugar … alfil captura david 3.</h3>
+  <h3 id="posicion-1">Posición 1: Los jaques y las capturas saltan a la vista, pero la jugada que gana es tranquila. Juegan las blancas; el rival acaba de jugar … alfil captura david 3.</h3>
   
-  <p>Piezas blancas: rey en c1; dama en h6; torre en d1; peones en a2, b2, c4, f2, g2, g3.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfil en d3; caballo en b8; peones en a7, b6, c7, d4, d6, f7, g6.</p>
+  <h4>Piezas blancas: 9</h4>
+  <ul>
+    <li>Rey en cesar 1.</li>
+    <li>Dama en hector 6.</li>
+    <li>Torre en david 1.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en gustav 3.</li>
+  </ul>
+  <h4>Piezas negras: 13</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en david 3.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 18. torre hector 1, dama gustav 5 jaque, 19. dama captura gustav 5</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>18. Blancas: torre hector 1.</li>
+    <li>18. Negras: dama gustav 5 jaque.</li>
+    <li>19. Blancas: dama captura gustav 5.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>18. torre hector 1, dama gustav 5 jaque, 19. dama captura gustav 5. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Es lo que la prisa no deja ver: la jugada fuerte no da jaque ni captura, y solo aparece si uno se detiene a buscar algo más que lo obvio. (Ejercicio 0dTpN de la base abierta de Lichess (CC0), rating 1509. Stockfish 16 a profundidad 18: torre hector 1 es la mejor (+3,8) y la segunda queda en -8,2.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rn1q1rk1/p1p2p2/1p1p2pQ/8/2Pp4/3b2P1/PP3PP1/2KR4 w - - 0 18</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rn1q1rk1/p1p2p2/1p1p2pQ/8/2Pp4/3b2P1/PP3PP1/2KR4 w - - 0 18</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
@@ -100,12 +155,12 @@
   <li>Lee el artículo de las Leyes del Ajedrez sobre el reloj (art. 6) completo. Son dos páginas y evitan discusiones.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +208,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

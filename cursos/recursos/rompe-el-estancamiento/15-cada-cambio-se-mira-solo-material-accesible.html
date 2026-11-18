@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Aquí lo que decide es que al rival le toque mover: cualquier jugada suya lo empeora. Juegan las negras; el rival acaba de jugar alfil cesar 4.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Cuando se empieza a cambiar, cuesta parar. Se cambia una pieza, sale bien, y se sigue cambiando por inercia, como si el primer cambio hubiera decidido que la simplificación era el camino. Pero cada cambio deja una posición nueva, y en esa posición nueva el siguiente cambio puede ser exactamente el error.</p>
 <p>El caso típico es el paso a un final de peones. Con piezas en el tablero, ir con un peón de más es una buena ventaja. Al cambiar la última pieza, todo depende de una sola cosa: si el rey llega a tiempo, si hay oposición, si el peón pasado está lejos. Un cambio de más puede convertir un final ganado en tablas, o en derrota. Lo mismo pasa al revés: el cambio que nadie quería hacer es a veces el único que gana.</p>
@@ -65,32 +89,57 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La oposición</dt>
   <dd>Dos reyes enfrentados con una casilla de por medio, en la misma columna, fila o diagonal. Tiene la oposición quien NO está obligado a mover: el otro tiene que ceder el paso.</dd>
   <dd><strong>El error de siempre:</strong> Correr con el peón antes que con el rey. En los finales de rey y peón manda el rey: el peón avanza cuando el rey ya conquistó las casillas de delante.</dd>
-  <dd><strong>Para verlo:</strong> Rey blanco en e5, rey negro en e7, peón blanco en e4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en eva 5, rey negro en eva 7, peón blanco en eva 4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Aquí lo que decide es que al rival le toque mover: cualquier jugada suya lo empeora. Juegan las negras; el rival acaba de jugar alfil cesar 4.</h3>
+  <h3 id="posicion-1">Posición 1: Aquí lo que decide es que al rival le toque mover: cualquier jugada suya lo empeora. Juegan las negras; el rival acaba de jugar alfil cesar 4.</h3>
   
-  <p>Piezas blancas: rey en c3; alfil en c4; peones en a5, b6, f4, g3, h4.</p>
-  <p>Piezas negras: rey en d6; alfil en d5; peones en b7, c5, f5, g6, h5.</p>
+  <h4>Piezas blancas: 7</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Alfil en cesar 4.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
+  <h4>Piezas negras: 7</h4>
+  <ul>
+    <li>Rey en david 6.</li>
+    <li>Alfil en david 5.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 5.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 46… alfil captura cesar 4, 47. rey captura cesar 4, rey cesar 6, 48. anna 6, bella captura anna 6</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>46. Negras: alfil captura cesar 4.</li>
+    <li>47. Blancas: rey captura cesar 4.</li>
+    <li>47. Negras: rey cesar 6.</li>
+    <li>48. Blancas: anna 6.</li>
+    <li>48. Negras: bella captura anna 6.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>46… alfil captura cesar 4, 47. rey captura cesar 4, rey cesar 6, 48. anna 6, bella captura anna 6. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. En posiciones así de simplificadas, una sola jugada cambia la evaluación; por eso cada cambio previo había que contarlo aparte. (Ejercicio 2vlyU de la base abierta de Lichess (CC0), rating 1580. Stockfish 16 a profundidad 18: alfil captura cesar 4 es la mejor (+4,7) y la segunda queda en -4,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/1p6/1P1k2p1/P1pb1p1p/2B2P1P/2K3P1/8/8 b - - 1 46</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/1p6/1P1k2p1/P1pb1p1p/2B2P1P/2K3P1/8/8 b - - 1 46</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -100,7 +149,7 @@
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +202,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

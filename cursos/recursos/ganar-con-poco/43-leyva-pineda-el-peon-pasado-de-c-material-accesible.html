@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 46. cesar 6</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>La partida del propio Héctor Leyva, autor del libro de donde salen estas partidas. Las blancas tienen más espacio en el flanco de dama y un peón pasado en la columna c; su alfil acompaña el avance y la torre entra a la séptima. Cuando el peón llega, la ventaja es decisiva.</p>
 <p>Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Un peón pasado apoyado por una torre en la séptima fila es muy difícil de frenar. Un alfil que ataca a la pieza que frena el peón le abre el camino. En la técnica, cada jugada prepara la siguiente.</p>
@@ -64,7 +88,7 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>Columnas abiertas y torres</dt>
   <dd>Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.</dd>
   <dd><strong>El error de siempre:</strong> Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.</dd>
@@ -72,24 +96,47 @@
   <dt>La torre detrás del peón pasado</dt>
   <dd>Regla de Tarrasch: las torres van detrás de los peones pasados, del propio y del rival. Detrás del propio lo empujan y su radio de acción crece al avanzar; detrás del rival lo frenan sin quedarse encerradas.</dd>
   <dd><strong>El error de siempre:</strong> Poner la torre delante del peón propio. Ahí lo tapa: el peón no puede avanzar sin que la torre se mueva, y la torre queda de portero en vez de jugar.</dd>
-  <dd><strong>Para verlo:</strong> Torre en a1 con peón propio en a4: a medida que el peón avanza, la torre sigue controlando toda la columna. Torre en a8 con el mismo peón: cada avance obliga a mover la torre.</dd>
+  <dd><strong>Para verlo:</strong> Torre en anna 1 con peón propio en anna 4: a medida que el peón avanza, la torre sigue controlando toda la columna. Torre en anna 8 con el mismo peón: cada avance obliga a mover la torre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 46. cesar 6</h3>
+  <h3 id="posicion-1">Posición 1: Después de 46. cesar 6</h3>
   
-  <p>Piezas blancas: rey en e1; torre en b7; alfil en a4; peones en a5, c6, d4, e3, f2, g3, h2.</p>
-  <p>Piezas negras: rey en h5; torre en d8; alfil en g4; caballo en b8; peones en a6, e4, f4, g5, h3.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Torre en bella 7.</li>
+    <li>Alfil en anna 4.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en hector 5.</li>
+    <li>Torre en david 8.</li>
+    <li>Alfil en gustav 4.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 5.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>El peón pasado avanza.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 1n1r4/1R6/p1P5/P5pk/B2Pppb1/4P1Pp/5P1P/4K3 b - - 0 46</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 1n1r4/1R6/p1P5/P5pk/B2Pppb1/4P1Pp/5P1P/4K3 b - - 0 46</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
@@ -99,7 +146,7 @@
   <li>Practica cortar al rey a una, dos y tres columnas y anota desde cuál empieza a ganarse.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -152,7 +199,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

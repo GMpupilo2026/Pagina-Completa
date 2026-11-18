@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Peones en cuarta: montar la defensa a tiempo</a></li>
+        <li><a href="#posicion-2">Posición 2: Final de peones: aquí una sola jugada decide, y no siempre es la más rápida. Juegan las negras; el rival acaba de jugar rey eva 6.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>1. eva 4, eva 6, 2. david 4, david 5 genera una cadena de peones blanca en e5-d4 tras 3. eva 5 (variante de avance). Negras ataca la base de esa cadena con ...c5, mientras blancas ataca el flanco de rey aprovechando el espacio ganado.</p>
-<p>El alfil de casillas claras de negras suele quedar encerrado detrás de su propia cadena de peones: aprender a activarlo (con ...b6 y … alfil anna 6, o cambiándolo a tiempo) es la clave estratégica de toda la apertura.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>1. eva 4, eva 6, 2. david 4, david 5 genera una cadena de peones blanca en eva 5-david 4 tras 3. eva 5 (variante de avance). Negras ataca la base de esa cadena con ...cesar 5, mientras blancas ataca el flanco de rey aprovechando el espacio ganado.</p>
+<p>El alfil de casillas claras de negras suele quedar encerrado detrás de su propia cadena de peones: aprender a activarlo (con ...bella 6 y … alfil anna 6, o cambiándolo a tiempo) es la clave estratégica de toda la apertura.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -64,55 +89,101 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Peones en cuarta: montar la defensa a tiempo</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Peones en cuarta: montar la defensa a tiempo</h3>
   <p>Esta posición viene del curso El mapa de los finales de la Academia.</p>
-  <p>Piezas blancas: rey en e3; alfil en e1; peones en d4, e4.</p>
-  <p>Piezas negras: rey en d6; alfil en f1.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en eva 3.</li>
+    <li>Alfil en eva 1.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 4.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en david 6.</li>
+    <li>Alfil en felix 1.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… alfil cesar 4, 2. alfil gustav 3 jaque, rey cesar 6, 3. rey felix 4, alfil felix 7, 4. rey eva 5, rey david 7, 5. david 5, alfil gustav 6, 6. rey david 4, alfil hector 7, 7. eva 5, alfil gustav 8</p>
+  <h4>La línea: 13 jugadas</h4>
+  <ul>
+    <li>1. Negras: alfil cesar 4.</li>
+    <li>2. Blancas: alfil gustav 3 jaque.</li>
+    <li>2. Negras: rey cesar 6.</li>
+    <li>3. Blancas: rey felix 4.</li>
+    <li>3. Negras: alfil felix 7.</li>
+    <li>4. Blancas: rey eva 5.</li>
+    <li>4. Negras: rey david 7.</li>
+    <li>5. Blancas: david 5.</li>
+    <li>5. Negras: alfil gustav 6.</li>
+    <li>6. Blancas: rey david 4.</li>
+    <li>6. Negras: alfil hector 7.</li>
+    <li>7. Blancas: eva 5.</li>
+    <li>7. Negras: alfil gustav 8.</li>
+  </ul>
   <p>Resultado: Tablas</p>
-  <p>1… alfil cesar 4! es única: prepara el alfil para f7/g8 cuando los peones lleguen a quinta. 1… alfil bella 5?, 2. alfil gustav 3 jaque! y el rey tapa a su alfil. 2… rey cesar 6! impide d5 hasta que el alfil esté en f7.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/3k4/8/3PP3/4K3/8/4Bb2 b - - 0 1</p>
+  <p>1… alfil cesar 4! es única: prepara el alfil para felix 7/gustav 8 cuando los peones lleguen a quinta. 1… alfil bella 5?, 2. alfil gustav 3 jaque! y el rey tapa a su alfil. 2… rey cesar 6! impide david 5 hasta que el alfil esté en felix 7.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/3k4/8/3PP3/4K3/8/4Bb2 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Final de peones: aquí una sola jugada decide, y no siempre es la más rápida. Juegan las negras; el rival acaba de jugar rey eva 6.</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Final de peones: aquí una sola jugada decide, y no siempre es la más rápida. Juegan las negras; el rival acaba de jugar rey eva 6.</h3>
   <p>Esta posición viene del curso Rompe el estancamiento de la Academia.</p>
-  <p>Piezas blancas: rey en e6; peones en a4, c5, f3, h2.</p>
-  <p>Piezas negras: rey en e8; peones en a7, e5, f6, g5.</p>
+  <h4>Piezas blancas: 5</h4>
+  <ul>
+    <li>Rey en eva 6.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en cesar 5.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 5</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 5.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 46… gustav 4, 47. felix captura gustav 4, eva 4, 48. rey captura felix 6, eva 3</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>46. Negras: gustav 4.</li>
+    <li>47. Blancas: felix captura gustav 4.</li>
+    <li>47. Negras: eva 4.</li>
+    <li>48. Blancas: rey captura felix 6.</li>
+    <li>48. Negras: eva 3.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
-  <p>46… gustav 4, 47. felix captura gustav 4, eva 4, 48. rey captura felix 6, eva 3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. En los finales de peones cada tiempo cuenta: la jugada buena es la que cuenta bien, no la que se apura. (Ejercicio 10hcN de la base abierta de Lichess (CC0), rating 1578. Stockfish 16 a profundidad 18: g4 es la mejor (+3,2) y la segunda queda en -6,2.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 4k3/p7/4Kp2/2P1p1p1/P7/5P2/7P/8 b - - 6 46</p>
+  <p>46… gustav 4, 47. felix captura gustav 4, eva 4, 48. rey captura felix 6, eva 3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. En los finales de peones cada tiempo cuenta: la jugada buena es la que cuenta bien, no la que se apura. (Ejercicio 10hcN de la base abierta de Lichess (CC0), rating 1578. Stockfish 16 a profundidad 18: gustav 4 es la mejor (+3,2) y la segunda queda en -6,2.)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 4k3/p7/4Kp2/2P1p1p1/P7/5P2/7P/8 b - - 6 46</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>identifica en 2 partidas de la base de datos cómo cada bando activó (o no) su alfil de casillas claras.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
   <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -149,7 +220,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -165,7 +236,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Aperturas y Defensas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
