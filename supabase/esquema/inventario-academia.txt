@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118060648
+# al-dia-con: 20261118061543
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -224,6 +224,8 @@ tabla  practice_intentos  rls=true
 tabla  practice_sessions  rls=true
 tabla  preferencias_avisos  rls=true
 tabla  preguntas_clave  rls=true
+tabla  premios_academia  rls=true
+tabla  premios_academia_canjes  rls=true
 tabla  premios_canjeados  rls=true
 tabla  premios_catalogo  rls=true
 tabla  preparacion_rivales_profesores  rls=true
@@ -2347,6 +2349,28 @@ columna  preferencias_avisos.updated_at  timestamp with time zone
 columna  preferencias_avisos.user_id  uuid
 columna  preguntas_clave.correcta  integer
 columna  preguntas_clave.question_id  uuid
+columna  premios_academia.academia_id  uuid
+columna  premios_academia.activo  boolean
+columna  premios_academia.costo_puntos  integer
+columna  premios_academia.creado_por  uuid
+columna  premios_academia.created_at  timestamp with time zone
+columna  premios_academia.descripcion  text
+columna  premios_academia.emoji  text
+columna  premios_academia.existencias  integer
+columna  premios_academia.id  uuid
+columna  premios_academia.limite_por_alumno  integer
+columna  premios_academia.nombre  text
+columna  premios_academia.updated_at  timestamp with time zone
+columna  premios_academia_canjes.academia_id  uuid
+columna  premios_academia_canjes.alumno_id  uuid
+columna  premios_academia_canjes.costo_pagado  integer
+columna  premios_academia_canjes.created_at  timestamp with time zone
+columna  premios_academia_canjes.estado  text
+columna  premios_academia_canjes.id  uuid
+columna  premios_academia_canjes.nombre  text
+columna  premios_academia_canjes.premio_id  uuid
+columna  premios_academia_canjes.resuelto_at  timestamp with time zone
+columna  premios_academia_canjes.resuelto_por  uuid
 columna  premios_canjeados.activo  boolean
 columna  premios_canjeados.costo_pagado  integer
 columna  premios_canjeados.created_at  timestamp with time zone
@@ -3099,8 +3123,10 @@ funcion  bromas_en_esta_clase(p_encender boolean)  definer  anon=false  auth=tru
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_asignados_de_la_clase(p_clase uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
+funcion  canje_academia_resolver(p_canje uuid, p_estado text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
+funcion  canjear_premio_academia(p_premio uuid)  definer  anon=false  auth=true
 funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
 funcion  centroamericano_actividad(p_tnr text, p_desde timestamp with time zone, p_limite integer)  definer  anon=false  auth=true
 funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
@@ -3603,6 +3629,7 @@ funcion  practica_intentos_al_crear()  invoker  anon=false  auth=false
 funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
 funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  preguntas_que_le_costaron(p_alumno uuid, p_dias integer)  invoker  anon=false  auth=true
+funcion  premio_academia_guardar(p_id uuid, p_academia uuid, p_nombre text, p_descripcion text, p_emoji text, p_costo integer, p_existencias integer, p_limite_por_alumno integer, p_activo boolean)  definer  anon=false  auth=true
 funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true
 funcion  profesores_que_estudian_conmigo()  invoker  anon=false  auth=true
@@ -3637,6 +3664,7 @@ funcion  puntos_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  puntos_de_tandas(p_clase uuid)  invoker  anon=false  auth=true
 funcion  puntos_de_tandas_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  puntos_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
+funcion  puntos_ganados_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
 funcion  quiniela_cerrada(p_empezada boolean, p_resultado text, p_cierra_en timestamp with time zone)  invoker  anon=true  auth=true
@@ -4179,6 +4207,8 @@ politica  preferencias_avisos  preferencias_avisos_agrega  INSERT
 politica  preferencias_avisos  preferencias_avisos_cambia  UPDATE
 politica  preferencias_avisos  preferencias_avisos_lee  SELECT
 politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
+politica  premios_academia  premios_academia_ver  SELECT
+politica  premios_academia_canjes  premios_academia_canjes_ver  SELECT
 politica  premios_canjeados  premios_canjeados_ver  SELECT
 politica  premios_catalogo  premios_catalogo_delete  DELETE
 politica  premios_catalogo  premios_catalogo_insert  INSERT
@@ -4485,6 +4515,7 @@ trigger  practice_games  practica_guardar_intento
 trigger  practice_games  practica_intentos_al_crear
 trigger  practice_games  practica_ventaja_maxima
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
+trigger  premios_academia_canjes  auditar
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
 trigger  preparacion_sesiones  sello
@@ -5053,6 +5084,11 @@ indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
 indice  preferencias_avisos  preferencias_avisos_pkey
 indice  preguntas_clave  preguntas_clave_pkey
+indice  premios_academia  premios_academia_academia
+indice  premios_academia  premios_academia_pkey
+indice  premios_academia_canjes  premios_academia_canjes_academia
+indice  premios_academia_canjes  premios_academia_canjes_alumno
+indice  premios_academia_canjes  premios_academia_canjes_pkey
 indice  premios_canjeados  premios_canjeados_alumno
 indice  premios_canjeados  premios_canjeados_pkey
 indice  premios_canjeados  premios_canjeados_regalo_de
@@ -6225,6 +6261,8 @@ grant  preguntas_clave  authenticated  SELECT
 grant  preguntas_clave  authenticated  TRIGGER
 grant  preguntas_clave  authenticated  TRUNCATE
 grant  preguntas_clave  authenticated  UPDATE
+grant  premios_academia  authenticated  SELECT
+grant  premios_academia_canjes  authenticated  SELECT
 grant  premios_canjeados  authenticated  SELECT
 grant  premios_catalogo  authenticated  DELETE
 grant  premios_catalogo  authenticated  INSERT
