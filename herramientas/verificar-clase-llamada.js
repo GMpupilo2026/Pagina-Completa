@@ -121,6 +121,8 @@ console.log("\n=== Las cabeceras y la privacidad ===");
     "privacidad.html dice que se graba, quién escucha, que se borra a los 90 días y que sin permiso no se habla");
   si(!/Grabación de la clase en vivo[^\n]*(Supabase|informe)/i.test(priv), "…sin nombrar el servicio de almacenamiento ni los informes (lo pidió el dueño)");
   si(/<strong>LiveKit no graba ni guarda la voz<\/strong>/.test(priv), "…y la línea de LiveKit ya no promete que la voz no se graba");
+  si(/<strong>Minutos hablados en la llamada:<\/strong>/.test(priv) && /Solo se guarda el tiempo, nunca lo que se dijo/.test(priv) && /junto con la asistencia/.test(priv),
+    "privacidad.html dice que se anotan los minutos hablados (solo el tiempo), quién los ve y que se guardan con la asistencia (lo aprobó el dueño)");
 
   console.log("\n=== La grabación: el permiso y escucharla ===");
   const conf = leer("js/configuracion.js");

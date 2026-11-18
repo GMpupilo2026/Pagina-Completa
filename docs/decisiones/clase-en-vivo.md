@@ -442,7 +442,11 @@ profe: lo pidió así).
   («Hablaste 4 minutos»: la RLS no le da lo de los demás); al profe y a
   administración, todos, del que más habló al que menos, y quiénes estuvieron
   en la clase y no hablaron. Lo que el profe no oyó (no estaba en la llamada)
-  no se cuenta.
+  no se cuenta. **Se guardan con la asistencia y no se borran a los 90 días**
+  (lo decidió el dueño el 18/11), y privacidad.html lo dice («Minutos hablados
+  en la llamada», aprobado por él). La versión de la privacidad NO cambió: es
+  una fecha (`interno.version_legal_valida`) y ya era la del mismo día, y
+  ninguna familia había dado el permiso de grabación con ella todavía.
 - **Dos volúmenes aparte**, cada uno con su barra y su valor escrito («50 %»),
   recordados en el aparato (`localStorage`): el de la llamada (las voces de
   los demás, `setVolume` de cada pista) y el de la voz de la página que dice
