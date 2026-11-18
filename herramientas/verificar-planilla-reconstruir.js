@@ -123,6 +123,22 @@ const foto = R.hojasDeLaFoto(palabrasDePlanillas([PR.mesa11.blancas, PR.mesa11.n
 const deFoto = R.reconstruir(Chess, foto.hojas);
 ok("la foto girada de la mesa 11 da la partida entera", deFoto.ilegibleDesde === null && fenFinal(deFoto) === FIN_MESA11);
 
+console.log("\n=== Una lectura de verdad de Google Vision (Pareo, 17/11) ===");
+// Vision juntó celdas en una palabra: el número impreso con la jugada, las Blancas con las Negras, la jugada con el
+// número del bloque de al lado. Metidas enteras, la planilla se corría un renglón y la partida se cortaba en 13 medias.
+const LR = require("./lib/lectura-real-pareo.js");
+const real = R.hojasDeLaFoto(LR.palabras);
+const celdas = real.hojas[0] || [];
+ok("«60-06» (el 6 impreso, 0-0 y lo de las Negras) queda en la fila 6: 0-0 en las Blancas", celdas[10] === "0-0" && celdas[11] === "6", celdas.slice(10, 12).join(" | "));
+ok("«CeSCxes» se parte en las dos jugadas de la fila 12", celdas[22] === "CeS" && celdas[23] === "Cxes", celdas.slice(22, 24).join(" | "));
+ok("«1d4» pierde el 1 impreso; «24» (era c4) no pierde el 2", celdas[0] === "d4" && celdas[2] === "24", celdas.slice(0, 3).join(" | "));
+const deReal = R.reconstruir(Chess, real.hojas);
+const sanes = deReal.jugadas.map((j) => j.san);
+// 1… Cf6 y 6… Cc6 no se pueden saber de esta foto: Vision leyó «C6» y «6» (se le perdió una letra) y es una sola planilla
+const saben = LR.partida.map((s, i) => (i === 1 || i === 11 ? null : s));
+ok("las 8 primeras jugadas salen como la partida de verdad (menos las dos que Vision no leyó)", saben.every((s, i) => s === null || sanes[i] === s), sanes.slice(0, 16).join(" "));
+ok("y sigue más allá de la jugada 8 (antes se cortaba en la 7 de las negras)", sanes.length >= 20, String(sanes.length));
+
 console.log(`\n${pruebas - fallos}/${pruebas} comprobaciones bien.`);
 if (fallos) { console.log(`✗ ${fallos} fallaron.`); process.exit(1); }
 console.log("✓ Todo bien.");
