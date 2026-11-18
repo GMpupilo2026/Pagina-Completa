@@ -88,7 +88,8 @@ function pruebaSinNavegador() {
   const borra = fn.indexOf("delete j.fideId"), pone = fn.indexOf("await ponerIdentidad(t.jugadores)"), guarda = fn.indexOf('from("pareo_publicados").insert(');
   ok(borra > 0 && pone > 0 && pone < guarda && pone < fn.indexOf('from("pareo_publicados").update(cambio)'), "la función borra el ID FIDE (deja su huella) antes de guardar el torneo");
   ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
-  ok(/sistema: \["todos", "scheveningen", "eliminacion"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen y la eliminación directa (sin eso, la lista los muestra como suizo)");
+  ok(/sistema: \["todos", "scheveningen", "eliminacion", "keizer"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen, la eliminación directa y el Keizer (sin eso, la lista los muestra como suizo)");
+  ok(/m\.llave = v\.llave/.test(fn) && /m\.tercer = true/.test(fn) && /dobleEliminacion: v\.sistema === "eliminacion"/.test(fn), "y la doble eliminación y el tercer puesto: la llave de cada mesa y las dos casillas del torneo (sin eso, la clasificación pública no sabe quién quedó fuera)");
   ok(/if \(v\.ko === true\)[\s\S]{0,200}m\.pasa = v\.pasa/.test(fn) && /v\.pasa === v\.b \|\| v\.pasa === v\.n/.test(fn),
     "y en la eliminación directa, quién pasó de cada mesa (y solo si es uno de los dos)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
