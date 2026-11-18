@@ -168,6 +168,31 @@ pierde en cada salto— y que los anuncios de las dos se pisen. Ahora la voz va
 la nube). El botón de Meet/Zoom de siempre se queda: es otra puerta, no se
 reemplaza.
 
+- **La llamada la abre el profe, y al terminarla se cierra para todos.** Lo
+  pidió el dueño con la llamada ya en uso: «que a los estudiantes les salga
+  solo si el profesor la activa» y «si el profesor la cierra, que a todos
+  también». Al alumno la caja no le sale hasta que el profe toca «🎧 Abrir la
+  llamada a la clase» (que además lo hace entrar); el profe no tiene «Salir»
+  sino **«Terminar la llamada»**, que la cierra para todos: a cada alumno la
+  caja se le esconde, sale de la sala y se le dice («Tu profe terminó la
+  llamada de la clase»), en la región viva de la clase (`#clase-voz`), porque
+  la de la caja se va con ella.
+  - Se guarda en `game_state.llamada_sesion` (migración
+    `llamada_la_abre_el_profe`): la clase en la que el profe la abrió. **Está
+    abierta si es la clase abierta de ahora** (`llamadaAbierta()` en
+    `sesion.js`): una clase nueva arranca con la llamada cerrada sin limpiar
+    nada, también si la clase se cerró sola. Viaja con `game_state` por
+    Realtime, así que al alumno la caja le aparece y desaparece al instante.
+  - Solo la escribe el profe: `protect_game_state_teacher_columns()` se la
+    devuelve a cualquier otro. Y no es solo la pantalla: sin la llamada abierta
+    `llamada_de_la_clase()` no le da pase al alumno, y con la llamada terminada
+    «sincronizar» saca de la sala a todos menos al profe.
+  - Si al profe se le cierra la pestaña o se le cae la conexión, la llamada
+    **sigue abierta**: solo la cierra «Terminar la llamada» (o cerrar la
+    clase). Un corte no deja a la clase sin voz.
+  - Comprobado impersonando roles en SQL: con la llamada cerrada el alumno
+    recibe null; el profe la abre y la ve abierta; abierta, el alumno entra; el
+    alumno no la puede cerrar.
 - **La caja va DEBAJO del tablero**, después del turno y del tiempo para
   pensar, no arriba con la franja de la clase: arriba empujaba el tablero y en
   el celular dejaba de entrar entero sin bajar (`verificar-clase-movil.js`

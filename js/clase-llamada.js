@@ -96,6 +96,9 @@
         let sala = null;
         let entrando = false;
         let LK = null;
+        // ¿El profe abrió la llamada en esta clase? Lo dice sesion.js con estado().
+        let abierta = false;
+        let cerrandoPorElProfe = false;   // el alumno sale porque el profe la terminó
 
         function anunciar(texto) {
             // Vaciar y volver a escribir: el lector repite aunque sea el mismo texto.
@@ -163,6 +166,9 @@
             quien.hidden = !dentro;
             habla.hidden = !dentro;
             salirBtn.hidden = !dentro;
+            // El profe no «sale»: la termina, y se cierra para todos.
+            salirBtn.textContent = esProfe ? "Terminar la llamada" : "Salir de la llamada";
+            entrar.textContent = esProfe && !abierta ? "🎧 Abrir la llamada a la clase" : "🎧 Entrar a la llamada";
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
             mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
@@ -205,6 +211,13 @@
             entrar.disabled = true;
             entrar.textContent = "Entrando…";
             try {
+                /* El profe la abre al entrar: desde ahí a sus alumnos les aparece la
+                   caja. La base no le da pase a un alumno sin eso. */
+                if (esProfe && !abierta && op.abrir) {
+                    const error = await op.abrir(true);
+                    if (error) throw new Error(error);
+                    abierta = true;
+                }
                 const [lk, pase] = await Promise.all([cargarLibreria(), pedir("pase")]);
                 LK = lk;
                 sala = new LK.Room({
@@ -236,7 +249,7 @@
             } finally {
                 entrando = false;
                 entrar.disabled = false;
-                entrar.textContent = "🎧 Entrar a la llamada";
+                pintar();
             }
         }
 
@@ -277,6 +290,42 @@
             if (sala) { try { await sala.disconnect(); } catch (e) { console.error(e); } }
         }
 
+        /* El profe termina la llamada: se cierra para todos. La base deja de dar
+           pases, «sincronizar» saca de la sala a los que estaban, y a cada alumno
+           la caja se le esconde por game_state (estado(false)) aunque el servidor
+           tarde. */
+        async function terminar() {
+            if (op.abrir) {
+                const error = await op.abrir(false);
+                if (error) { anunciar(error); return; }
+            }
+            abierta = false;
+            await sincronizar();
+            await salir();
+            anunciar("Terminaste la llamada para toda la clase.");
+            pintar();
+        }
+
+        /* Lo que dice game_state: si el profe abrió la llamada en esta clase
+           (sesion.js lo llama como `llamada.estado(…)`). */
+        function ponerEstado(abiertaAhora) {
+            const antes = abierta;
+            abierta = Boolean(abiertaAhora);
+            if (esProfe) { pintar(); return; }
+            if (abierta && !antes) {
+                caja.hidden = false;
+                pintar();
+                sonido(SON.entra);
+                anunciar("Tu profe abrió la llamada de la clase: entra con «Entrar a la llamada».");
+            } else if (!abierta && (antes || !caja.hidden)) {
+                const estabaDentro = Boolean(sala);
+                cerrandoPorElProfe = true;
+                salir();
+                caja.hidden = true;
+                if (antes && op.anunciarFuera) op.anunciarFuera("Tu profe terminó la llamada de la clase." + (estabaDentro ? " Saliste de la llamada." : ""));
+            }
+        }
+
         /* El profe: que la sala quede igual que la clase (quién tiene el turno,
            a quién sacó). Aunque él no esté en la llamada: un alumno puede estar
            y esperar la palabra. Sin la llamada configurada no dice nada. */
@@ -314,6 +363,7 @@
                     sonido(SON.sale);
                     audios.textContent = "";
                     sala = null;
+                    if (cerrandoPorElProfe) { cerrandoPorElProfe = false; pintar(); return; }
                     anunciar(LK && motivo === LK.DisconnectReason.PARTICIPANT_REMOVED ? "Tu profe te sacó de la llamada." : "Saliste de la llamada.");
                     pintar();
                     entrar.focus();
@@ -344,15 +394,16 @@
         mic.addEventListener("click", alternarMic);
         quien.addEventListener("click", quienEsta);
         habla.addEventListener("click", quienHabla);
-        salirBtn.addEventListener("click", salir);
+        salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));
         // Cerrar la pestaña también cuelga (si no, LiveKit tarda en notar que se fue).
         window.addEventListener("pagehide", () => { if (sala) sala.disconnect(); });
 
         const atajoMano = $("llamada-atajo-mano");
         if (atajoMano) atajoMano.hidden = esProfe;
-        caja.hidden = false;
+        // Al alumno la caja le sale cuando el profe abre la llamada (estado(true)).
+        caja.hidden = !esProfe;
         pintar();
-        return { sincronizar, salir, anunciar };
+        return { sincronizar, salir, anunciar, estado: ponerEstado };
     }
 
     window.ClaseLlamada = { montar };

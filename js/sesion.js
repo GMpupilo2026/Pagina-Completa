@@ -42,6 +42,11 @@
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
         // La llamada de voz de la clase (js/clase-llamada.js): null si no se montó.
         let llamada = null;
+        /* La clase en la que el profe abrió la llamada (game_state.llamada_sesion):
+           está abierta si es la clase abierta de ahora. Al alumno la caja le sale
+           solo entonces, y la base tampoco le da pase sin eso. */
+        let llamadaSesion = null;
+        const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
            pintaban en silencio, y para quien no ve el tablero son la mitad de la
@@ -593,6 +598,8 @@
             // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
             const primeraVez = !antes && !editando;
             const vistaAntes = JSON.stringify(board.currentView());
+            llamadaSesion = row.llamada_sesion || null;
+            if (llamada) llamada.estado(llamadaAbierta());
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -7958,7 +7965,23 @@
                 llamada = ClaseLlamada.montar({
                     sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "",
                     alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
+                    /* El profe abre la llamada (en ESTA clase) o la termina para todos.
+                       Solo él puede escribirla: protect_game_state_teacher_columns. */
+                    abrir: async (abrirla) => {
+                        if (abrirla && !currentOpenSessionId) return "Abre la clase primero: la llamada es de la clase.";
+                        const valor = abrirla ? currentOpenSessionId : null;
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaSesion = valor;
+                        return "";
+                    },
+                    // Lo que se le dice al alumno cuando la caja se esconde (su región viva se va con ella).
+                    anunciarFuera: (texto) => {
+                        const r = document.getElementById("clase-voz");
+                        if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
+                    },
                 });
+                llamada.estado(llamadaAbierta());
             }
             await loadVariantTree();
             subscribeVariants();
