@@ -3326,7 +3326,11 @@ club de toda la temporada: juega quien vino y nadie queda fuera por faltar.
   `KZ` (puntos) y `KV` (valor), que al elegir Keizer van primeros en
   `t.desempates`: así salen solos en la pantalla, el PDF, WhatsApp y la página
   pública, que pintan las columnas de esa lista. No son desempates de FIDE:
-  `verificar-pareo.js` no los compara con chesspairing.
+  van marcados `propio` y quedan fuera de `D.CATALOGO` (lo que explican
+  `desempates.html`, el manual y el Aula de Arbitraje, que piden un
+  `explicar()` por código); salen en `D.CATALOGO_KEIZER`, y `E.catalogo(t)`
+  los suma solo en un Keizer. En el catálogo general rompían
+  `verificar-desempates-explicar.js`.
 - Va **dentro de `torneo.js`**, no en un archivo aparte: diez páginas y el
   worker cargan `torneo.js` y `desempates.js`, y un archivo nuevo habría que
   sumarlo en todas; la que faltara pintaría la clasificación en cero, callada.

@@ -388,10 +388,13 @@
                 es: "Elo del jugador (el menor primero)", en: "Rating, reversed (lowest first)" },
   };
   // El Sistema Keizer: sus puntos (los que ordenan la lista) y lo que vale
-  // cada jugador para quien le gane. Solo significan algo en un Keizer.
+  // cada jugador para quien le gane. Solo significan algo en un Keizer, y no
+  // son desempates de FIDE: van marcados `propio` y quedan fuera de CATALOGO
+  // (que es lo que explican desempates.html, el manual y el Aula de Arbitraje);
+  // salen en CATALOGO_KEIZER, para ponerles nombre en un torneo Keizer.
   const keizerDe = (tb, t) => tb.keizer || (tb.keizer = t.sistema === "keizer" ? T.puntuarKeizer(t) : { total: new Map(), valor: new Map() });
-  C.KZ = { f: (id, tb, t) => keizerDe(tb, t).total.get(id) || 0, es: "Puntos Keizer", en: "Keizer points" };
-  C.KV = { f: (id, tb, t) => keizerDe(tb, t).valor.get(id) || 0, es: "Valor Keizer (lo que suma quien le gane)", en: "Keizer value (what beating this player is worth)" };
+  C.KZ = { propio: true, f: (id, tb, t) => keizerDe(tb, t).total.get(id) || 0, es: "Puntos Keizer", en: "Keizer points" };
+  C.KV = { propio: true, f: (id, tb, t) => keizerDe(tb, t).valor.get(id) || 0, es: "Valor Keizer (lo que suma quien le gane)", en: "Keizer value (what beating this player is worth)" };
   // Alias de los torneos guardados antes de 2026: no se ofrece en ninguna lista.
   const ALIAS = { "GE": "REP" };
   for (const [viejo, nuevo] of Object.entries(ALIAS)) C[viejo] = Object.assign({ legado: true }, C[nuevo]);
@@ -728,8 +731,9 @@
     }
   }
 
-  const CATALOGO = Object.keys(C).filter((c) => !C[c].legado).map((c) => ({ codigo: c, es: C[c].es, en: C[c].en, menor: !!C[c].menor }));
-  const api = { CATALOGO, clasificacion, calcular, dpDeP, explicar, codigosAlDia, diferencia };
+  const CATALOGO = Object.keys(C).filter((c) => !C[c].legado && !C[c].propio).map((c) => ({ codigo: c, es: C[c].es, en: C[c].en, menor: !!C[c].menor }));
+  const CATALOGO_KEIZER = Object.keys(C).filter((c) => C[c].propio).map((c) => ({ codigo: c, es: C[c].es, en: C[c].en, menor: false }));
+  const api = { CATALOGO, CATALOGO_KEIZER, clasificacion, calcular, dpDeP, explicar, codigosAlDia, diferencia };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoDesempates = api;
 })(typeof self !== "undefined" ? self : this);

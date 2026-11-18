@@ -147,6 +147,9 @@ function logicaKeizer() {
   const pk = T.puntuarKeizer(c);
   ok(filas.map((f) => f.id).join() === pk.orden.join() && filas.every((f) => f.valores.KZ === pk.total.get(f.id) && f.valores.KV === pk.valor.get(f.id)),
     "la clasificación sigue el orden del Keizer y trae sus puntos (KZ) y lo que vale cada uno (KV)");
+  ok(!D.CATALOGO.some((x) => x.codigo === "KZ" || x.codigo === "KV") && D.CATALOGO_KEIZER.map((x) => x.codigo).join() === "KZ,KV"
+    && require("../js/pareo/equipos.js").catalogo(c).some((x) => x.codigo === "KZ") && !require("../js/pareo/equipos.js").catalogo(Object.assign({}, c, { sistema: "suizo" })).some((x) => x.codigo === "KZ"),
+    "KZ y KV no están en el catálogo de desempates de FIDE: solo se ofrecen y se nombran en un Keizer");
   const sinKz = D.clasificacion(Object.assign({}, c, { desempates: ["BH"] }));
   ok(sinKz.map((f) => f.id).join() === pk.orden.join(), "aunque se quite KZ de la lista de desempates, en un Keizer mandan los puntos Keizer");
   const suizo = D.clasificacion(Object.assign({}, c, { sistema: "suizo", desempates: ["BH"] }));
