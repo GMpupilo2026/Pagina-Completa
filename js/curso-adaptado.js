@@ -183,7 +183,9 @@
     p.textContent = "Modo adaptado: de cada lección se ofrece el material en formato accesible "
       + "(el mismo contenido en HTML, con las posiciones contadas en palabras). El cuadernillo en PDF "
       + "y la presentación quedan fuera porque son diagramas. En los tableros, la posición va escrita "
-      + "encima del cuadro donde se escribe la jugada.";
+      + "encima del cuadro donde se escribe la jugada. En ese cuadro, vacío, Intro avanza una jugada; "
+      + "«diagrama siguiente» pasa al próximo diagrama de la lección y «dictar» dice la posición pieza "
+      + "por pieza, para ponerla en tu tablero.";
     body.insertBefore(p, body.firstChild);
   }
 
@@ -201,6 +203,7 @@
         // destapa en Modo Adaptado (ver css/styles.css).
         desc.classList.remove("sr-only");
         desc.classList.add("curso-posicion");
+        ponerTitulo(visor);
         var cmd = visor.querySelector(par[2]);
         // Justo ENCIMA del cuadro donde se escribe la jugada: leer la posición y
         // contestarla son el mismo gesto. Sin cuadro (un diagrama de solo
@@ -209,6 +212,100 @@
       });
     });
   }
+
+  /* El rótulo de cada visor («Final 1 · diagrama 2», «Jálifman – Svéshnikov»)
+     pasa a ser un encabezado: una lección trae hasta veinticuatro diagramas, y
+     sin él la tecla H del lector de pantalla saltaba de lección en lección por
+     encima de todos. Va con `role` y no cambiando la etiqueta: a quien ve la
+     página no le cambia nada. El nivel es uno más que el encabezado que lo
+     precede en la lección (el de la lección o el de su sección). */
+  function ponerTitulo(visor) {
+    var rot = visor.querySelector(".f100-num, .cp-players");
+    if (!rot || rot.getAttribute("role") === "heading") return;
+    var nivel = 4;
+    var leccion = leccionDe(visor);
+    Array.prototype.forEach.call(leccion.querySelectorAll("h3, h4, h5"), function (h) {
+      // Los de la lección, no los de otro visor (la ayuda del recuadro y
+      // «Blancas»/«Negras» traen los suyos).
+      if (h.closest(".f100-viewer, .cp-viewer, .cc-caja")) return;
+      if (h.compareDocumentPosition(visor) & Node.DOCUMENT_POSITION_FOLLOWING) nivel = Number(h.tagName[1]);
+    });
+    rot.setAttribute("role", "heading");
+    rot.setAttribute("aria-level", String(Math.min(6, nivel + 1)));
+  }
+
+  /* ---------- 3 bis. De un diagrama al siguiente, sin salir del recuadro ----------
+     Al terminar la línea de un diagrama no había cómo seguir: «siguiente»
+     contestaba «Ya estás en la última jugada» y para llegar al otro diagrama
+     había que salir del recuadro y buscarlo con el lector entre los botones
+     del visor. «diagrama siguiente» / «diagrama anterior» (o «ejercicio»,
+     «partida») llevan el foco al recuadro del otro visor de la MISMA lección y
+     dicen cuál es. Está acá, una vez, para los visores de los dos módulos
+     (js/finales-100.js y js/curso-partidas.js). */
+  function sinTildes(t) {
+    return String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[.!¡¿?,]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  var COSA = "(?:diagrama|ejercicio|partida|tablero|posicion)";
+  var PIDE_OTRO = new RegExp("^(?:" + COSA + " (siguiente|anterior|proximo|proxima)|(siguiente|anterior|otro|otra|proximo|proxima) " + COSA + ")$");
+  // La lección: el <details> de más afuera que contiene al visor (o el cuerpo del curso).
+  function leccionDe(el) {
+    var d = null, p = el.parentElement;
+    while (p) {
+      if (p.tagName === "DETAILS" && !p.classList.contains("f100-sol")) d = p;
+      if (p.id === "course-content-body") break;
+      p = p.parentElement;
+    }
+    return d || document.getElementById("course-content-body") || document.body;
+  }
+  function seVe(el) {
+    return typeof el.checkVisibility === "function" ? el.checkVisibility() : !!(el.offsetWidth || el.offsetHeight);
+  }
+  // Cómo se llama un visor: lo que la lección escribe justo encima («La carrera
+  // del rey contra el peón»), y si no, su propio rótulo.
+  function nombreDeVisor(v) {
+    var caja = v.closest(".cp-zona") || v;
+    var antes = caja.previousElementSibling;
+    var arriba = antes && antes.tagName === "P" ? antes.textContent.replace(/\s+/g, " ").trim() : "";
+    var rot = v.querySelector(".f100-num, .cp-players");
+    var propio = rot ? rot.textContent.replace(/\s+/g, " ").trim() : "";
+    var res = v.querySelector(".f100-res, .cp-res");
+    var estado = res ? res.textContent.replace(/\s+/g, " ").trim() : "";
+    var nombre = arriba && arriba.length <= 160 ? arriba : propio;
+    if (arriba && arriba.length <= 160 && propio && /diagrama|pregunta|fortaleza/i.test(propio)) nombre = propio + ": " + arriba;
+    return [nombre, estado].filter(Boolean).join(". ").replace(/\.+$/, "") + ".";
+  }
+  function pideOtroVisor(texto) { return PIDE_OTRO.test(sinTildes(texto)); }
+  /* Devuelve true si lo escrito pedía otro visor (y ya lo atendió). `ocupado`
+     es lo que se contesta si ahora no se puede salir (a mitad de una práctica). */
+  function otroVisor(el, texto, api, ocupado) {
+    var t = sinTildes(texto);
+    if (!PIDE_OTRO.test(t)) return false;
+    if (ocupado) { api.decir(ocupado); return true; }
+    var paso = /anterior/.test(t) ? -1 : 1;
+    var todos = Array.prototype.filter.call(leccionDe(el).querySelectorAll(".f100-viewer, .cp-viewer"), function (v) {
+      return v.querySelector(".cc-input") && seVe(v);
+    });
+    var i = todos.indexOf(el), dest = todos[i + paso];
+    if (i < 0 || !dest) {
+      api.decir(todos.length <= 1 ? "En esta lección no hay otro diagrama."
+        : paso > 0
+        ? "Este es el último diagrama de la lección. Para seguir con la próxima, marca esta lección como estudiada."
+        : "Este es el primer diagrama de la lección.");
+      return true;
+    }
+    api.limpiar().decir("");
+    var texto2 = "Diagrama " + (i + paso + 1) + " de " + todos.length + ": " + nombreDeVisor(dest) +
+      " Escribe «dictar» para oír la posición pieza por pieza.";
+    var campo = dest.querySelector(".cc-input"), aviso = dest.querySelector(".cc-msg") || dest.querySelector("[role=status]");
+    try { dest.scrollIntoView({ block: "center" }); } catch (e) {}
+    try { campo.focus(); } catch (e) {}
+    if (aviso) { aviso.textContent = ""; setTimeout(function () { aviso.textContent = texto2; }, 60); }
+    if (window.BlindNotation && window.BlindNotation.speak) window.BlindNotation.speak(texto2);
+    return true;
+  }
+  window.CursoAdaptado.otroVisor = otroVisor;
+  window.CursoAdaptado.pideOtroVisor = pideOtroVisor;
 
   /* ---------- 4. El tablero de casillas, en Modo Adaptado ---------- */
 

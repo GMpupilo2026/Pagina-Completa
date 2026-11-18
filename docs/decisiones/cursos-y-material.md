@@ -263,6 +263,38 @@ pregunta mientras el tablero ya muestra la jugada. Fuera del Modo Adaptado sigue
 el SVG de siempre, y al cambiar el modo en caliente se repinta. `sesion.html` no
 carga `curso-adaptado.js`: ahí los visores siguen con el SVG.
 
+**6. Los diagramas avanzan sin escribir, y de uno se pasa al siguiente.** La
+queja de los alumnos ciegos era «los diagramas no avanzan», y eran tres cosas,
+ninguna con un error en pantalla:
+
+- **Con el recuadro vacío, Intro no hacía nada.** En «Repasar mis clases» y en
+  el tablero de Estudio, Intro o → avanzan una jugada (`recorrer` de
+  `js/cuadro-comandos.js`); en los cursos había que escribir «siguiente» en
+  cada jugada, y quien venía de allá apretaba Intro y el recuadro se quedaba
+  callado. Ahora los tres visores (diagrama, partida y ejercicio) llevan su
+  `recorrer`: Intro o →, la siguiente; ←, la anterior; Inicio y Fin, las
+  puntas. Va por las mismas palabras que se escriben (`pasoVacio`), así dice
+  lo mismo: que la solución está tapada, que ya es la última. Al adivinar las
+  jugadas clave, Intro es «seguir» cuando toca.
+- **Al terminar la línea no había cómo seguir.** «siguiente» contestaba «Ya
+  estás en la última jugada» y para llegar al otro diagrama había que salir del
+  recuadro y buscarlo con el lector. **«diagrama siguiente» / «diagrama
+  anterior»** (también «ejercicio», «partida») llevan el foco al recuadro del
+  otro visor de la MISMA lección y dicen cuál es: «Diagrama 2 de 14: Final 1 ·
+  diagrama 2: El cuadrado dibujado. Ganan blancas.». El nombre sale de lo que
+  la lección escribe justo encima del visor. Y el aviso de la última jugada
+  dice cómo seguir. Está una vez, en `CursoAdaptado.otroVisor()`, para los dos
+  módulos; a mitad de una práctica contesta que primero se termine.
+- **La tecla H saltaba por encima de los diagramas.** Una lección trae hasta
+  veinticuatro, y el único encabezado era el de la lección. El rótulo de cada
+  visor («Final 1 · diagrama 2», «Jálifman – Svéshnikov») lleva ahora
+  `role="heading"`, un nivel por debajo del encabezado de la lección que lo
+  precede (sin contar los de otro visor: la ayuda del recuadro trae sus `h3`).
+  Con `role` y no cambiando la etiqueta: a quien ve la página no le cambia nada.
+
+Para poner la posición en un tablero de verdad está «dictar» (ver «El dictado:
+la posición pieza por pieza, y la voz más lenta»).
+
 **Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
 no el JavaScript: así encender y apagar el modo surte efecto al instante, sin
 volver a recorrer el contenido del curso.
@@ -290,7 +322,10 @@ que la posición escrita esté pegada al cuadro de comandos y **se vea de verdad
 en Modo Adaptado (se mide el `position` que calcula el navegador, no la clase), y
 que no quede ningún plural inventado ni en los generadores ni en los archivos ya
 generados, que ningún fragmento de curso vuelva a traer un enlace de video y que
-ninguna página de curso de la Academia vuelva a repetir el temario.
+ninguna página de curso de la Academia vuelva a repetir el temario. Y «Avanzar
+con Intro y pasar de un diagrama al siguiente»: Intro, las flechas, Inicio y
+Fin en un diagrama y en una partida, «diagrama siguiente» y «anterior» (se mira
+dónde quedó el foco y qué dice el aviso) y que cada diagrama sea un encabezado.
 
 ### Los cursos ya no ofrecen video, y dentro de la plataforma no repiten el temario
 
