@@ -7991,17 +7991,28 @@
                         return "";
                     },
                     claseActual: () => currentOpenSessionId,
+                    // La posición que está viendo la clase (la jugada que el profe muestra, o la última).
+                    posicion: () => { try { return (board.viewGame || board.game).fen(); } catch (e) { return null; } },
+                    /* Cuáles de estos alumnos tienen el permiso de su familia para grabar
+                       su voz (permisos_grabar_voz; la RLS le deja ver el de SUS alumnos).
+                       null si no se pudo saber: entonces no se marca a nadie. */
+                    permisosDeVoz: async (ids) => {
+                        if (!ids.length) return new Set();
+                        const { data, error } = await sb.from("permisos_grabar_voz").select("persona_id").in("persona_id", ids);
+                        if (error) { console.error(error); return null; }
+                        return new Set((data || []).map((f) => f.persona_id));
+                    },
                     /* Una parte de la grabación: al almacenamiento privado y su fila
                        (guardar_parte_grabacion comprueba que la clase sea suya). La
                        clase viaja con la parte: la última se sube al cerrar, cuando
                        currentOpenSessionId ya está vacío. */
-                    subirParte: async (blob, segundos, tipo, clase) => {
+                    subirParte: async (blob, segundos, tipo, clase, marcas) => {
                         if (!clase) return "Sin clase para la grabación.";
                         const ext = /mp4/.test(tipo) ? "m4a" : /ogg/.test(tipo) ? "ogg" : "webm";
                         const ruta = profile.id + "/" + clase + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
                         const { error: errSubir } = await sb.storage.from("clase-grabaciones").upload(ruta, blob, { contentType: tipo });
                         if (errSubir) { console.error(errSubir); return "No se pudo guardar una parte de la grabación."; }
-                        const { error: errFila } = await sb.rpc("guardar_parte_grabacion", { p_clase: clase, p_ruta: ruta, p_segundos: Math.round(segundos), p_bytes: blob.size });
+                        const { error: errFila } = await sb.rpc("guardar_parte_grabacion", { p_clase: clase, p_ruta: ruta, p_segundos: Math.round(segundos), p_bytes: blob.size, p_marcas: marcas && marcas.length ? marcas : null });
                         if (errFila) { console.error(errFila); return "No se pudo guardar una parte de la grabación."; }
                         return "";
                     },

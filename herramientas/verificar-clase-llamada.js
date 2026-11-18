@@ -121,6 +121,11 @@ console.log("\n=== Las cabeceras y la privacidad ===");
   const rep = leer("js/repasar-clases.js");
   si(/from\('clase_grabaciones'\)/.test(rep) && /createSignedUrls\(/.test(rep) && /cargarGrabacion\(p\.class_session_id\)/.test(rep), "«Repasar mis clases» trae la grabación de la clase que se abre (firmada por una hora)");
   si(/catch \(e\) \{ console\.warn\('La grabación de la clase no se pudo cargar/.test(rep), "…y si falla, el visor sigue igual");
+  si(/select\('ruta, parte, segundos, marcas'\)/.test(rep) && /addEventListener\('timeupdate', seguir\)/.test(rep) && /addEventListener\('seeked', seguir\)/.test(rep),
+    "al escucharla, el tablero sigue a la grabación (también al saltar a otro minuto)");
+  const seguir = (rep.match(/function seguirGrabacion\(marcas, t\)\{[\s\S]*?\n\}/) || [""])[0];
+  si(/visor-grabacion-decir'\)\.checked/.test(seguir) && /if \(decir\) \{ mirar\(n\); return; \}/.test(seguir), "…y dice las jugadas solo si se marcó «Decir las jugadas mientras escucho»");
+  si(/p_marcas: marcas && marcas\.length \? marcas : null/.test(leer("js/sesion.js")), "las marcas viajan con la parte a guardar_parte_grabacion()");
   const limp = leer("supabase/functions/clase-grabaciones-limpiar/index.ts");
   si(/rpc\("secreto_grabaciones_limpiar"\)/.test(limp) && /\.remove\(rutas\)/.test(limp) && limp.indexOf(".remove(rutas)") < limp.indexOf(".delete()"),
     "el borrado de los 90 días exige el secreto y borra primero el archivo y después la fila");
@@ -173,10 +178,10 @@ const LIVEKIT_FALSO = `
       this.state = "connected";
       this.localParticipant.permissions.canPublish = token === "pase-con-palabra";
       // Entran desordenados: la lista tiene que salir igual (tú, el profe, los demás por nombre).
-      const p = (name, rol, habla) => ({ name, attributes: { rol }, permissions: { canPublish: habla }, isSpeaking: false, audioTrackPublications: new Map() });
-      this.remoteParticipants.set("zoe", p("Zoe Álvarez", "alumno", false));
-      this.remoteParticipants.set("profe", p("Karina Rojas", "profe", true));
-      this.remoteParticipants.set("ana", p("ana Mora", "alumno", true));
+      const p = (name, rol, habla, identity) => ({ name, identity, attributes: { rol }, permissions: { canPublish: habla }, isSpeaking: false, audioTrackPublications: new Map() });
+      this.remoteParticipants.set("zoe", p("Zoe Álvarez", "alumno", false, "u-zoe"));
+      this.remoteParticipants.set("profe", p("Karina Rojas", "profe", true, "u-karina"));
+      this.remoteParticipants.set("ana", p("ana Mora", "alumno", true, "u-ana2"));
     }
     async startAudio() {}
     async disconnect() { this.state = "disconnected"; this.emit("Disconnected", 1); }
@@ -218,6 +223,7 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
     window.__modos = [];
     window.__grabar = [];
     window.__partes = [];
+    window.__fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
       sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
@@ -227,7 +233,11 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
       modo: async (m) => { window.__modos.push(m); return ""; },
       grabar: async (v) => { window.__grabar.push(v); return ""; },
       claseActual: () => "clase-1",
-      subirParte: async (blob, segundos, tipo, clase) => { window.__partes.push({ bytes: blob.size, tipo, clase }); return ""; },
+      // Ana tiene el permiso de su familia; Zoe no.
+      permisosDeVoz: async (ids) => { window.__permisosPedidos = ids; return new Set(["u-ana2"]); },
+      subirParte: async (blob, segundos, tipo, clase, marcas) => { window.__partes.push({ bytes: blob.size, tipo, clase, marcas }); return ""; },
+      // La posición que ve la clase: la prueba la cambia mientras se graba.
+      posicion: () => window.__fen,
       anunciarFuera: (t) => window.__fuera.push(t),
     });
     window.__llamada.estado(abierta, "turno", abierta && grabando);
@@ -316,6 +326,7 @@ async function pruebas(browser) {
   a = await anuncio(r.page);
   si(/Esta clase se está grabando\. Mientras se graba no puedes encender el micrófono: tu familia todavía no dio permiso/.test(a), "al entrar sin permiso se le dice que se graba y por qué no puede hablar");
   si(!(await visible(r.page, "#llamada-grabar")), "al alumno no se le muestra «Pausar la grabación»");
+  si(!/sin permiso de grabación/.test(await r.page.textContent("#llamada-lista")), "…ni quién tiene o no el permiso de grabación (eso es solo para el profe)");
   await r.page.evaluate(() => window.__sala.__permiso(false));
   await r.page.keyboard.press("Alt+KeyM");
   si(/tu familia todavía no dio permiso/.test(await anuncio(r.page)), "Alt+M se lo recuerda");
@@ -353,11 +364,21 @@ async function pruebas(browser) {
   const acciones = await r.page.evaluate(() => window.__pedidos.map((p) => p.body.accion));
   si(JSON.stringify(acciones) === JSON.stringify(["pase", "sincronizar"]), "el profe al entrar pide su pase y acomoda la sala (" + acciones.join(", ") + ")");
   si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true]", "…abriendo antes la llamada a la clase");
+  await r.page.waitForTimeout(600);
+  const filaZoe = await r.page.$$eval("#llamada-lista li", (lis) => (lis.find((li) => /Zoe/.test(li.textContent)) || {}).textContent || "");
+  const filaAna = await r.page.$$eval("#llamada-lista li", (lis) => (lis.find((li) => /ana Mora/.test(li.textContent)) || {}).textContent || "");
+  si(/sin permiso de grabación: no puede hablar/.test(filaZoe) && !/sin permiso/.test(filaAna), "el profe ve quién no tiene permiso de grabación, y que mientras se graba no puede hablar («" + filaZoe + "»)");
+  si(JSON.stringify((await r.page.evaluate(() => window.__permisosPedidos)).sort()) === JSON.stringify(["u-ana2", "u-zoe"]), "…preguntando por los alumnos de la llamada, no por el profe");
   si(await visible(r.page, "#llamada-grabando") && await r.page.textContent("#llamada-grabar") === "⏸ Pausar la grabación", "al abrirla se graba sola: «Se está grabando la clase» a la vista y «Pausar la grabación»");
-  await r.page.waitForTimeout(700);
+  await r.page.waitForTimeout(300);
+  await r.page.evaluate(() => { window.__fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"; });
+  await r.page.waitForTimeout(1300);
   await r.page.click("#llamada-grabar");
   await r.page.waitForTimeout(600);
   const partes = await r.page.evaluate(() => window.__partes);
+  const marcas = (partes[0] && partes[0].marcas) || [];
+  si(marcas.length === 2 && marcas[0].s === 0 && marcas[0].fen === "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" && marcas[1].fen === "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1" && marcas[1].s > 0.5 && marcas[1].s < 2.5,
+    "la parte se sube con las posiciones del tablero y el segundo de cada una (" + JSON.stringify(marcas.map((m) => m.s)) + ")");
   si(JSON.stringify(await r.page.evaluate(() => window.__grabar)) === "[false]" && partes.length === 1 && partes[0].bytes > 0 && partes[0].clase === "clase-1" && /^audio\//.test(partes[0].tipo),
     "pausar guarda la parte grabada (" + JSON.stringify(partes) + ") y lo anota para todos");
   si(!(await visible(r.page, "#llamada-grabando")) && await r.page.textContent("#llamada-grabar") === "⏺ Volver a grabar" && /Pausaste la grabación/.test(await anuncio(r.page)), "…el aviso se quita, el botón dice «Volver a grabar» y se dice");

@@ -220,6 +220,12 @@
              el profe, los que asistieron y administración, y se borra a los 90 días). -->
         <section id="visor-grabacion" aria-labelledby="visor-grabacion-titulo" hidden class="mb-3 rounded-xl px-4 py-3 bg-white dark:bg-brand-900 shadow-sm">
           <h3 id="visor-grabacion-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>La grabación de la clase</h3>
+          <!-- Si la grabación trae las posiciones (marcas), el tablero de abajo la sigue. -->
+          <p id="visor-grabacion-sigue" hidden class="text-xs text-brand-600 dark:text-brand-300 mt-1">El tablero de abajo va a la posición de cada momento de la grabación.</p>
+          <label id="visor-grabacion-decir-caja" hidden class="flex items-start gap-2 text-xs text-brand-700 dark:text-brand-200 mt-1">
+            <input id="visor-grabacion-decir" type="checkbox" class="mt-0.5 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+            <span>Decir las jugadas mientras escucho (con lector de pantalla, se oyen encima de la voz del profe)</span>
+          </label>
           <ol id="visor-grabacion-partes" class="list-none p-0 m-0 mt-2 space-y-2"></ol>
           <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Se borra sola a los 90 días de la clase.</p>
         </section>
