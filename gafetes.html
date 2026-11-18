@@ -49,6 +49,13 @@
                         <p id="g-datos-resumen" class="text-sm text-brand-600 dark:text-brand-300 mt-3" aria-live="polite">Todavía no hay un Excel.</p>
                         <div id="g-columnas" class="flex flex-wrap gap-2 mt-2"></div>
                         <div class="overflow-x-auto mt-3 rounded-lg border border-brand-100 dark:border-brand-800"><table id="g-datos-tabla" class="text-xs text-brand-700 dark:text-brand-200"></table></div>
+                        <div class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                            <h3 class="text-sm font-semibold text-brand-800 dark:text-white">Las fotos (opcional)</h3>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Una por persona, en un marco de pasaporte donde va la ilustración. Súbelas todas juntas: se emparejan por el nombre del archivo, y las que no quedan claras se eligen en la lista. Tampoco salen de tu computadora ni se guardan.</p>
+                            <label class="inline-flex items-center gap-1 rounded-lg border border-brand-200 dark:border-brand-700 px-3 py-1.5 text-sm font-semibold text-brand-700 dark:text-brand-100 hover:border-accent-500 focus:outline-none focus-within:ring-2 focus-visible:ring-accent-500 disabled:opacity-40 cursor-pointer mt-2"><span aria-hidden="true">🖼️</span> Subir las fotos<input id="g-fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="sr-only"></label>
+                            <p id="g-fotos-estado" class="text-sm text-brand-600 dark:text-brand-300 mt-2" aria-live="polite">Sin fotos: el frente lleva la ilustración del diseño.</p>
+                            <ul id="g-fotos-lista" class="mt-2 max-h-80 overflow-y-auto"></ul>
+                        </div>
                     </section>
 
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" aria-labelledby="g-paso-diseno">
@@ -137,6 +144,11 @@
 <div class="min-w-[9rem] flex-1"><p class="text-sm font-semibold">Patrocinador</p><p class="text-xs text-brand-500 dark:text-brand-300">Al lado del horario · <span class="g-imagen-nombre">ninguna</span></p></div>
 <label class="inline-flex items-center gap-1 rounded-lg border border-brand-200 dark:border-brand-700 px-3 py-1.5 text-sm font-semibold text-brand-700 dark:text-brand-100 hover:border-accent-500 focus:outline-none focus-within:ring-2 focus-visible:ring-accent-500 disabled:opacity-40 cursor-pointer"><span aria-hidden="true">⬆️</span> Subir<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" aria-label="Subir patrocinador"></label>
 <button type="button" class="g-quitar hidden text-xs underline text-brand-500 dark:text-brand-300 hover:text-accent-600" aria-label="Quitar patrocinador">Quitar</button>
+</div>
+                                <div data-imagen="ilustracionDorso" class="flex flex-wrap items-center gap-2 py-1">
+<div class="min-w-[9rem] flex-1"><p class="text-sm font-semibold">Ilustración del dorso</p><p class="text-xs text-brand-500 dark:text-brand-300">Abajo, junto al QR (alguien que lo muestra) · <span class="g-imagen-nombre">ninguna</span></p></div>
+<label class="inline-flex items-center gap-1 rounded-lg border border-brand-200 dark:border-brand-700 px-3 py-1.5 text-sm font-semibold text-brand-700 dark:text-brand-100 hover:border-accent-500 focus:outline-none focus-within:ring-2 focus-visible:ring-accent-500 disabled:opacity-40 cursor-pointer"><span aria-hidden="true">⬆️</span> Subir<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" aria-label="Subir la ilustración del dorso"></label>
+<button type="button" class="g-quitar hidden text-xs underline text-brand-500 dark:text-brand-300 hover:text-accent-600" aria-label="Quitar la ilustración del dorso">Quitar</button>
 </div>
                                 <div data-imagen="fondoDorso" class="flex flex-wrap items-center gap-2 py-1">
 <div class="min-w-[9rem] flex-1"><p class="text-sm font-semibold">Fondo del dorso</p><p class="text-xs text-brand-500 dark:text-brand-300">Cubre todo el dorso, detrás de lo demás · <span class="g-imagen-nombre">ninguna</span></p></div>

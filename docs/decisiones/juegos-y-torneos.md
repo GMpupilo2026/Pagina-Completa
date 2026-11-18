@@ -15858,9 +15858,12 @@ sus pts y su puesto actual».
   «Creación de gafetes» en `paneles.md`): mismo dibujo, mismo PDF de la
   imprenta (10 × 14 cm, fondo a 450 dpi, letras en curvas). Lo nuevo:
   - «Partir de la Eliminatoria JDN PZ 2026» (`disenoJdnPz` en
-    `js/gafetes.js`): los logos de la ADAPZ y del CCDR, la profe Karina con
-    su gafete (`img/avatar-profe-karina/bienvenidos.webp`) donde iba el
-    pizote, el horario de las bases (el de `#calendario`), un color por edad
+    `js/gafetes.js`): **5,5 × 8,5 cm** (la medida que pidió el dueño, no la
+    de 10 × 14), los logos de la ADAPZ y del CCDR, la profe Karina con su
+    gafete (`img/avatar-profe-karina/bienvenidos.webp`) donde iba el pizote
+    (solo en quien no tiene foto) y, en el dorso, la profe Karina «presentando»
+    con la mano hacia el QR (`ilustracionDorso`, abajo y pegada al QR; el
+    texto del QR no pasa entonces del ancho del QR), el horario de las bases (el de `#calendario`), un color por edad
     con su contraste medido contra la letra blanca (U12 `#1d64b0` 6,0:1, U16
     `#0e7490` 5,4:1, U20 `#1b2a4a` 14,2:1; la categoría va también escrita en
     la franja y de lado en el dorso), el código «U12 01» y un PDF por torneo.
@@ -15894,11 +15897,40 @@ sus pts y su puesto actual».
   rondas suma la columna «Mesa». La mesa es la de la sala (`V.mesaFisica`),
   la misma de la plantilla, los rótulos y las planillas.
 
+- **La foto de cada jugador** (pedido del dueño, con la carpeta del
+  fotógrafo en Drive): «Subir las fotos» las toma todas juntas y las
+  empareja solas por el nombre del archivo (`emparejar` en `js/gafetes.js`).
+  El fotógrafo las nombró «21 SUSSY.jpg»: un número y el primer nombre, y
+  dos de cada una (la de «MEDIOS DIGITALES» lleva su marca y no entra si está
+  la otra). Cuenta que todas las palabras del archivo estén en el nombre del
+  jugador (una letra sola es una inicial: «SAMUEL M»); de las que le sirven
+  gana la más precisa («SOFIA BADILLA» antes que «SOFIA») y, si empatan, la
+  que empieza por su primer nombre («Yariela Sofía»: YARIELA, no SOFIA); un
+  archivo que le serviría a dos no es de ninguno. Con las 46 fotos y los 32
+  aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
+  dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
+  Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
+  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  computadora ni se guardan**, como el Excel: se achican en el navegador y se
+  pierden al cerrar la página.
+- **El recorte**: son de medio cuerpo frente al tablero, así que se
+  recortan a pasaporte (`fotoRecorte`) desde **donde empieza la persona**:
+  el fondo del fotógrafo es blanco, y la primera fila con más de un 4 % de
+  puntos oscuros en la franja del recorte es el pelo (`topeDeLaPersona`).
+  Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
+  abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
+  con la cabeza arriba y la cara del mismo tamaño.
+- **Con foto, la foto va en el medio y el nombre debajo** (`fotoCentro`,
+  pedido del dueño), con los detalles centrados debajo del nombre; sin foto,
+  el gafete queda como el del Centroamericano.
+
 `herramientas/verificar-gafetes-jdn-pz.js` lo revisa con un doble de la base
 que filtra de verdad: el diseño, quiénes salen (sin la «ADAPZ» sin sello ni
 el retirado), la U16 en el torneo U20 con su color (medido en el píxel), los
 detalles sin «Elo» colgando, el QR de dos dorsos leído con jsQR, sin torneos
-lo dice, y el .zip con un PDF por torneo. «Ahora» y la columna de la mesa, en
+lo dice, el emparejamiento de las fotos (la más precisa, «MEDIOS DIGITALES»
+fuera, la que falta a mano), la foto en el medio recortada desde la cabeza
+(medida en el píxel) y el .zip con un PDF por torneo. «Ahora» y la columna de la mesa, en
 el celular, en `verificar-pareo-seguir.js` (con el enlace tal cual lo trae el
 QR) y en `verificar-pareo-publicar.js`. Rompiendo a propósito el QR por fila
 y el filtro de los retirados saltan doce comprobaciones; la mesa de la sala,

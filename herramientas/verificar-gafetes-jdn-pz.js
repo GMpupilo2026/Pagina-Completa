@@ -5,8 +5,12 @@
  * doble de Supabase que FILTRA de verdad.
  *
  * Lo que se mira:
- *  - el diseño: los logos de la ADAPZ y del CCDR, la profe Karina, el
- *    horario de las bases y el QR de cada persona ({QR});
+ *  - el diseño: 5,5 × 8,5 cm, los logos de la ADAPZ y del CCDR, la profe
+ *    Karina (al frente sin foto y mostrando el QR atrás), el horario de las
+ *    bases y el QR de cada persona ({QR});
+ *  - las fotos: se emparejan solas por el nombre del archivo (la más
+ *    precisa gana, la de «MEDIOS DIGITALES» no entra si está la otra), la
+ *    que falta se elige a mano, y va en el marco recortada desde la cabeza;
  *  - los jugadores salen solo de los dos torneos de la organización con el
  *    sello (una «ADAPZ» sin sello no cuenta), sin los retirados, por torneo y
  *    por nombre, con «Apellidos, Nombre» partido en dos;
@@ -30,6 +34,7 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
 
 let fallos = 0;
+const ok = (c, m) => igual(m, !!c, true);
 function igual(nombre, hallado, esperado) {
   const a = typeof hallado === "object" ? JSON.stringify(hallado) : String(hallado);
   const b = typeof esperado === "object" ? JSON.stringify(esperado) : String(esperado);
@@ -134,12 +139,13 @@ async function aceptar(page, boton) {
   await page.waitForFunction(() => window.Gafetes._estado().diseno.nombreDiseno === "Eliminatoria JDN PZ 2026");
   const d = await page.evaluate(() => {
     const x = window.Gafetes._estado().diseno;
-    return { imgs: ["logoIzq", "logoDer", "ilustracion"].map((k) => x.imagenes[k] && x.imagenes[k].nombre), filas: x.dorso.horario.length, qr: x.dorso.qr, texto: x.dorso.qrTexto, campo: document.getElementById("g-qr").value };
+    return { imgs: ["logoIzq", "logoDer", "ilustracion", "ilustracionDorso"].map((k) => x.imagenes[k] && x.imagenes[k].nombre), filas: x.dorso.horario.length, qr: x.dorso.qr, texto: x.dorso.qrTexto, campo: document.getElementById("g-qr").value, tam: [x.tamano.ancho, x.tamano.alto] };
   });
-  igual("los logos de la ADAPZ y del CCDR, y la profe Karina", d.imgs, ["logo.jpg", "ccdr-pz.jpg", "bienvenidos.webp"]);
+  igual("los logos de la ADAPZ y del CCDR, la profe Karina al frente (sin foto) y mostrando el QR atrás", d.imgs, ["logo.jpg", "ccdr-pz.jpg", "bienvenidos.webp", "presentando.webp"]);
+  igual("5,5 × 8,5 cm", d.tam, [55, 85]);
   igual("el horario de las bases: cinco rondas, el almuerzo y la clausura", d.filas, 7);
   igual("el QR es de cada persona", [d.qr, d.campo], ["{QR}", "{QR}"]);
-  igual("y dice para qué es", d.texto, "Escanéalo: tu mesa en cada ronda, | tus puntos y tu puesto");
+  igual("y dice para qué es", d.texto, "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto");
 
   console.log("\nLos jugadores, de Pareo Integral");
   await page.click("#g-pareo-pz");
@@ -203,12 +209,53 @@ async function aceptar(page, boton) {
     "https://ajedrez-integral.com/torneos-pareo#t=" + U12 + "&j=j-aa", "https://ajedrez-integral.com/torneos-pareo#t=" + U20 + "&j=j-u20"]);
   igual("cada uno tiene su propio fondo de dorso", leidos[0].clave !== leidos[1].clave, true);
 
+  console.log("\nLas fotos");
+  // Fotos de mentira como las del fotógrafo: fondo blanco y la persona (un
+  // bloque rojo) que empieza bajito, a 5/9 del alto, como un niño.
+  const foto = async () => Buffer.from((await page.evaluate(() => {
+    const c = document.createElement("canvas"); c.width = 300; c.height = 450;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 300, 450); x.fillStyle = "#b91c1c"; x.fillRect(60, 250, 180, 200);
+    return c.toDataURL("image/jpeg", 0.95);
+  })).split(",")[1], "base64");
+  const jpg = await foto();
+  const archivo = (name) => ({ name, mimeType: "image/jpeg", buffer: jpg });
+  await page.setInputFiles("#g-fotos", [archivo("1 SOFIA.jpg"), archivo("1 SOFIA MEDIOS DIGITALES.jpg"), archivo("2 MATEO.jpg"), archivo("3 ANA.jpg"), archivo("4 ANA LUCIA.jpg")]);
+  await page.waitForFunction(() => /con foto/.test(document.getElementById("g-fotos-estado").textContent));
+  igual("la de «MEDIOS DIGITALES» no entra si está la otra", await page.evaluate(() => window.Gafetes._estado().fotos.map((f) => f.nombre)), ["1 SOFIA.jpg", "2 MATEO.jpg", "3 ANA.jpg", "4 ANA LUCIA.jpg"]);
+  const emparejadas = () => page.$$eval("#g-fotos-lista li", (l) => l.map((x) => x.querySelector("label").textContent + " → " + (x.dataset.foto || "sin foto")));
+  igual("se emparejan solas por el nombre; la más precisa gana; sin foto, ninguna", await emparejadas(),
+    ["Arias Mora, Sofía → 1 SOFIA.jpg", "ZÚÑIGA ROJAS, MATEO → 2 MATEO.jpg", "Mora Céspedes, Ana Lucía → 4 ANA LUCIA.jpg", "Vargas Solís, Daniel → sin foto"]);
+  ok(/3 de 4 con foto/.test(await page.textContent("#g-fotos-estado")) && /3 ANA\.jpg/.test(await page.textContent("#g-fotos-estado")), "dice cuántas tienen foto y cuál sobró");
+  await page.selectOption("#g-fotos-lista li:nth-child(4) select", { label: "3 ANA.jpg" });
+  igual("la que falta se elige a mano", (await emparejadas())[3], "Vargas Solís, Daniel → 3 ANA.jpg");
+  await page.waitForTimeout(900);
+  // El gafete 3 (Ana Lucía) en la vista previa: en el centro del marco, la
+  // persona (el recorte empieza en su cabeza, no arriba en el fondo blanco).
+  const enElMarco = await page.evaluate(() => {
+    const c = document.getElementById("g-lienzo-frente");
+    const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.42), 1, 1).data;
+    return px[0] > 150 && px[1] < 90 && px[2] < 90;
+  });
+  igual("la foto va en el medio, recortada desde la cabeza", enElMarco, true);
+  const claves = await page.evaluate(async () => {
+    const { diseno, datos, fotos, fotoDe } = window.Gafetes._estado();
+    const D = window.GafetesDibujo;
+    const r = await D.preparar(diseno);
+    const todos = D.gafetes(diseno, datos.filas);
+    return Promise.all(todos.map(async (g) => {
+      const i = fotoDe.get(g.fila.QR);
+      if (i >= 0) { g.foto = fotos[i].lienzo; g.fotoClave = "foto-" + i; }
+      return (await D.cara(diseno, r, g, "frente")).clave;
+    }));
+  });
+  igual("cada frente con foto tiene su propio fondo", new Set(claves).size, 4);
+
   console.log("\nEl PDF");
   await page.click("#g-aprobar");
   const [zip] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
   const z = fs.readFileSync(await zip.path()).toString("latin1");
   const dentro = [...z.matchAll(/PK\x01\x02[\s\S]{42}([^\x00]*?\.pdf)/g)].map((m) => Buffer.from(m[1], "latin1").toString("utf8")).sort();
-  igual("un .zip con un PDF por torneo", [zip.suggestedFilename(), dentro], ["Gafetes 10x14 - Eliminatoria JDN PZ 2026.zip", ["Gafetes 10x14 - U12.pdf", "Gafetes 10x14 - U20.pdf"]]);
+  igual("un .zip con un PDF por torneo", [zip.suggestedFilename(), dentro], ["Gafetes 5,5x8,5 - Eliminatoria JDN PZ 2026.zip", ["Gafetes 5,5x8,5 - U12.pdf", "Gafetes 5,5x8,5 - U20.pdf"]]);
   igual("ocho páginas en total (frente y dorso de cuatro)", (z.match(/\/Type \/Page\b/g) || []).length, 8);
 
   igual("sin errores en la consola", errores, []);

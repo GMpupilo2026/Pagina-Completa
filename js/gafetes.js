@@ -43,6 +43,8 @@
       codigo: { plantilla: "", sinCodigoSi: "" },
       fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
       salida: { separarPor: "" },
+      fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
+      fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
     };
   }
 
@@ -74,14 +76,18 @@
 
   /* El de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026 (Pérez Zeledón,
      22/11/2026): el del Centroamericano con los logos de la ADAPZ y del
-     CCDR, la profe Karina (la directora del torneo, con su gafete) donde iba
-     el pizote, un color por categoría y el horario de las bases. El QR es
-     de cada jugador ({QR}): lleva a su ficha en el torneo publicado en Pareo
-     Integral (su mesa de cada ronda, sus puntos y su puesto, al día). Los
-     datos salen de «Traer los jugadores de Pareo» (traerJdnPz). */
+     CCDR, 5,5 × 8,5 cm, la foto de cada jugador (del fotógrafo, recortada
+     a pasaporte; sin foto, la profe Karina con su gafete), un color por
+     categoría y el horario de las bases. En el dorso, la profe Karina
+     muestra el QR, que es de cada jugador ({QR}): lleva a su ficha en el
+     torneo publicado en Pareo Integral (su mesa de cada ronda, sus puntos y
+     su puesto, al día). Los datos salen de «Traer los jugadores de Pareo»
+     (traerJdnPz) y las fotos de «Subir las fotos» (subirFotos). */
   async function disenoJdnPz() {
     const d = disenoNuevo();
     d.nombreDiseno = "Eliminatoria JDN PZ 2026";
+    // 5,5 × 8,5 cm: la medida que pidió el dueño para estos (no la de 10 × 14).
+    d.tamano = { ancho: 55, alto: 85 };
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
     d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
@@ -93,7 +99,12 @@
     d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Categoría}";
     d.dorso.qr = "{QR}";
-    d.dorso.qrTexto = "Escanéalo: tu mesa en cada ronda, | tus puntos y tu puesto";
+    d.dorso.qrTexto = "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto";
+    // Las fotos del fotógrafo son de medio cuerpo, frente al tablero: se
+    // recortan a tamaño pasaporte desde la cabeza (el pelo, la cara y la camisa).
+    d.fotoRecorte = { arriba: 0.12, alto: 0.5, cabeza: true };
+    // Con foto: la foto en el medio y el nombre debajo (lo pidió el dueño).
+    d.fotoCentro = true;
     d.dorso.encabezados = ["Actividad", "Fecha", "Hora"];
     // El calendario de las bases (el mismo de #calendario en jdn-pz-2026.html).
     d.dorso.horario = [
@@ -103,7 +114,7 @@
     ];
     d.codigo.plantilla = "{Edad} {n}";
     d.salida.separarPor = "Torneo";
-    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"]]) {
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
     return d;
@@ -274,6 +285,8 @@
     const primera = r.filas.findIndex((f) => f.filter((c) => String(c == null ? "" : c).trim()).length >= 2);
     $("g-fila-titulos").value = String(primera >= 0 ? primera + 1 : 1);
     armarDatos();
+    emparejar();
+    pintarFotos();
     filaVista = 0;
     pintarDatos();
     detectarColores();
@@ -337,6 +350,169 @@
     });
   }
 
+  /* ===================== Las fotos ===================== */
+  /* Una foto por persona, en el marco de pasaporte del frente (`g.foto`).
+     Se suben todas juntas y se emparejan solas por el nombre del archivo:
+     el fotógrafo de la PZ las nombró «21 SUSSY.jpg» (un número y el primer
+     nombre), así que cuenta que TODAS las palabras del archivo estén en el
+     nombre del jugador (una sola letra, «SAMUEL M», es una inicial). Solo se
+     empareja lo que no deja duda: un archivo que le sirve a uno solo, y de
+     los que le sirven, el más preciso («SOFIA BADILLA» antes que «SOFIA»).
+     Lo dudoso (tres «SAMUEL») queda sin foto y se elige a mano en la lista.
+     Como los datos, las fotos NO salen de la computadora ni se guardan: se
+     achican en el navegador y se pierden al cerrar la página. */
+  let fotos = [];                 // [{ nombre, lienzo }]
+  const fotoDe = new Map();       // clave de la fila → índice en `fotos` (-1: sin foto)
+  const claveFila = (f) => String(D().valor(f, "QR") || [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(", "));
+  const palabras = (t) => plano(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
+  function plano(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  // Lo que dice el archivo, sin el número, la extensión ni «v2».
+  const palabrasDeArchivo = (n) => palabras(n.replace(/\.[a-z0-9]+$/i, "")).filter((w) => !/^\d+$/.test(w) && !/^v\d$/.test(w));
+  function leSirve(archivo, f) {
+    const de = palabrasDeArchivo(archivo);
+    const suyas = palabras([D().valor(f, "Nombre"), D().valor(f, "Apellidos")].join(" "));
+    return de.length > 0 && de.every((w) => (w.length === 1 ? suyas.some((x) => x[0] === w) : suyas.includes(w)));
+  }
+  function emparejar() {
+    if (!datos) return;
+    const elegidos = new Map();
+    datos.filas.forEach((f) => {
+      const k = claveFila(f);
+      if (fotoDe.has(k)) return;                 // lo que se eligió a mano se respeta
+      const sirven = fotos.map((x, i) => i).filter((i) => leSirve(fotos[i].nombre, f));
+      if (!sirven.length) return;
+      const largo = (i) => palabrasDeArchivo(fotos[i].nombre).length;
+      const mejor = Math.max(...sirven.map(largo));
+      let top = sirven.filter((i) => largo(i) === mejor);
+      // Empate: la que empieza por su primer nombre («Yariela Sofía»: YARIELA, no SOFIA).
+      if (top.length > 1) {
+        const primero = palabras(D().valor(f, "Nombre"))[0];
+        const conPrimero = top.filter((i) => palabrasDeArchivo(fotos[i].nombre)[0] === primero);
+        if (conPrimero.length === 1) top = conPrimero;
+      }
+      if (top.length === 1) elegidos.set(k, top[0]);
+    });
+    // Un archivo que quedó para dos personas no es de ninguna.
+    const usos = new Map();
+    for (const i of elegidos.values()) usos.set(i, (usos.get(i) || 0) + 1);
+    for (const [k, i] of elegidos) if (usos.get(i) === 1) fotoDe.set(k, i);
+  }
+
+  // Achica la foto (las del fotógrafo miden 4480 × 6720) y, si el diseño lo
+  // pide, la recorta a pasaporte: 3,3 × 4,24, desde `arriba` y del `alto` dado.
+  async function prepararFoto(archivo) {
+    const url = URL.createObjectURL(archivo);
+    try {
+      const im = await D().cargarImagen(url);
+      const W = im.naturalWidth, H = im.naturalHeight;
+      const r = diseno.fotoRecorte;
+      let sx = 0, sy = 0, sw = W, sh = H;
+      if (r && r.alto > 0) {
+        sh = Math.min(H, H * r.alto); sw = Math.min(W, sh * 33 / 42.4);
+        sx = (W - sw) / 2;
+        // Con `cabeza`, el recorte empieza un poco arriba de donde empieza la
+        // persona (el fondo del fotógrafo es blanco): un niño bajito sale
+        // con la cara del mismo tamaño que uno alto. Sin encontrarla, `arriba`.
+        const tope = r.cabeza ? topeDeLaPersona(im, sx, sw) : null;
+        const desde = tope != null ? Math.max(0, tope - H * 0.035) : H * (r.arriba || 0);
+        sy = Math.max(0, Math.min(H - sh, desde));
+      }
+      const k = Math.min(1, 1100 / sh);
+      const c = document.createElement("canvas");
+      c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+      c.getContext("2d").drawImage(im, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      return c;
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  // La primera fila (de arriba abajo) donde, en la franja del recorte, más
+  // del 4 % de los puntos no es fondo claro: ahí empieza el pelo. En la foto
+  // achicada a 200 px de ancho; null si no la encuentra.
+  function topeDeLaPersona(im, sx, sw) {
+    const W = im.naturalWidth, H = im.naturalHeight, k = 200 / W;
+    const c = document.createElement("canvas");
+    c.width = 200; c.height = Math.round(H * k);
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(im, 0, 0, c.width, c.height);
+    const x0 = Math.round(sx * k), ancho = Math.max(1, Math.round(sw * k));
+    const px = ctx.getImageData(x0, 0, ancho, c.height).data;
+    for (let y = 0; y < c.height * 0.8; y++) {
+      let oscuros = 0;
+      for (let x = 0; x < ancho; x++) {
+        const i = (y * ancho + x) * 4;
+        if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 200) oscuros++;
+      }
+      if (oscuros > ancho * 0.04) return y / k;
+    }
+    return null;
+  }
+
+  async function subirFotos(lista) {
+    let archivos = [...lista].filter((f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
+    // El fotógrafo manda dos de cada una: la de «MEDIOS DIGITALES» lleva su
+    // marca; si está la otra (el mismo número), se usa la otra.
+    const numero = (n) => (n.match(/^\s*(\d+)/) || [])[1];
+    const limpias = new Set(archivos.filter((f) => !/medios digitales/i.test(f.name)).map((f) => numero(f.name)).filter(Boolean));
+    archivos = archivos.filter((f) => !(/medios digitales/i.test(f.name) && limpias.has(numero(f.name))));
+    if (!archivos.length) { Avisos.avisar("No llegó ninguna foto (sirven JPG, PNG o WEBP).", { tipo: "error" }); return; }
+    const estado = $("g-fotos-estado");
+    const nuevas = [];
+    for (const [i, f] of archivos.entries()) {
+      estado.textContent = `Preparando la foto ${i + 1} de ${archivos.length}…`;
+      try { nuevas.push({ nombre: f.name, lienzo: await prepararFoto(f) }); } catch (e) { /* una foto dañada no frena las demás */ }
+    }
+    fotos = nuevas.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { numeric: true }));
+    fotoDe.clear();
+    emparejar();
+    pintarFotos();
+    await refrescar();
+  }
+
+  function pintarFotos() {
+    const caja = $("g-fotos-lista"), estado = $("g-fotos-estado");
+    caja.textContent = "";
+    if (!fotos.length) { estado.textContent = "Sin fotos: el frente lleva la ilustración del diseño."; return; }
+    if (!datos) { estado.textContent = `${fotos.length} fotos listas. Trae o sube la lista de personas para emparejarlas.`; return; }
+    const usadas = new Set();
+    let con = 0;
+    datos.filas.forEach((f) => {
+      const k = claveFila(f);
+      const i = fotoDe.has(k) ? fotoDe.get(k) : -1;
+      if (i >= 0) { con++; usadas.add(i); }
+      const quien = [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].filter(Boolean).join(", ") || "sin nombre";
+      const li = document.createElement("li");
+      li.className = "flex flex-wrap items-center gap-2 py-1 border-t border-brand-100 dark:border-brand-800";
+      li.dataset.foto = i >= 0 ? fotos[i].nombre : "";
+      const id = "g-foto-" + Math.random().toString(36).slice(2);
+      const label = document.createElement("label");
+      label.htmlFor = id; label.className = "text-sm min-w-[12rem] flex-1"; label.textContent = quien;
+      const sel = document.createElement("select");
+      sel.id = id;
+      sel.className = "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
+      const o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = "— sin foto —"; sel.append(o0);
+      fotos.forEach((x, j) => { const o = document.createElement("option"); o.value = String(j); o.textContent = x.nombre; sel.append(o); });
+      sel.value = String(i);
+      sel.addEventListener("change", () => { fotoDe.set(k, Number(sel.value)); pintarFotos(); refrescar(); });
+      const marca = document.createElement("span");
+      marca.className = "text-xs font-semibold " + (i >= 0 ? "text-green-800 dark:text-green-300" : "text-red-700 dark:text-red-300");
+      marca.textContent = i >= 0 ? "✓ con foto" : "✗ sin foto";
+      li.append(label, sel, marca);
+      caja.append(li);
+    });
+    const sobran = fotos.filter((x, j) => !usadas.has(j)).map((x) => x.nombre);
+    estado.textContent = `${con} de ${datos.filas.length} con foto.` + (con < datos.filas.length ? " Elige a mano las que faltan (las que el nombre no deja claras)." : "")
+      + (sobran.length ? ` Fotos sin usar (${sobran.length}): ${sobran.slice(0, 12).join(", ")}${sobran.length > 12 ? "…" : ""}.` : "");
+  }
+
+  // Los gafetes con la foto de cada uno (y su propio fondo, que no se comparte).
+  function conFotos(todos) {
+    todos.forEach((g, n) => {
+      const i = fotos.length ? fotoDe.get(claveFila(g.fila)) : undefined;
+      if (i != null && i >= 0 && fotos[i]) { g.foto = fotos[i].lienzo; g.fotoClave = "foto-" + i; }
+    });
+    return todos;
+  }
+
   /* ===================== El formulario del diseño ===================== */
   function leerRuta(ruta) { return ruta.split(".").reduce((o, k) => (o == null ? o : o[k]), diseno); }
   function ponerRuta(ruta, v) {
@@ -355,7 +531,7 @@
     pintarListasDeColumnas();
     $("g-horario").value = diseno.dorso.horario.map((f) => f.join(" | ")).join("\n");
     $("g-encabezados").value = diseno.dorso.encabezados.join(" | ");
-    ["logoIzq", "logoDer", "ilustracion", "fondoFrente", "fondoDorso", "patrocinador", "icono0", "icono1"].forEach(pintarImagen);
+    ["logoIzq", "logoDer", "ilustracion", "ilustracionDorso", "fondoFrente", "fondoDorso", "patrocinador", "icono0", "icono1"].forEach(pintarImagen);
     pintarFuentes();
     pintarColores();
     pintarAprobado();
@@ -498,7 +674,7 @@
       if (turno !== pintando) return;
       const filas = datos ? datos.filas : [filaDeEjemplo()];
       filaVista = Math.max(0, Math.min(filaVista, filas.length - 1));
-      const todos = D().gafetes(diseno, filas);
+      const todos = conFotos(D().gafetes(diseno, filas));
       const g = todos[filaVista];
       const frente = await D().cara(diseno, r, g, "frente");
       const dorso = await D().cara(diseno, r, g, "dorso");
@@ -544,7 +720,7 @@
     $("g-resultado").classList.add("hidden");
     try {
       const r = await asegurarRecursos();
-      const todos = D().gafetes(diseno, datos.filas);
+      const todos = conFotos(D().gafetes(diseno, datos.filas));
       const grupos = new Map();
       todos.forEach((g) => {
         const k = diseno.salida.separarPor ? (D().valor(g.fila, diseno.salida.separarPor) || "Sin dato") : "";
@@ -730,6 +906,7 @@
       diseno = await disenoJdnPz(); recursos = null; if (datos) detectarColores(); llenarFormulario(); await guardarLocal(diseno); refrescar();
     });
     $("g-pareo-pz").addEventListener("click", traerJdnPz);
+    $("g-fotos").addEventListener("change", (e) => { const l = [...e.target.files]; e.target.value = ""; if (l.length) subirFotos(l); });
     $("g-crear").addEventListener("click", crear);
     let tAncho = null;
     window.addEventListener("resize", () => { clearTimeout(tAncho); tAncho = setTimeout(refrescar, 200); });
@@ -750,7 +927,7 @@
     await refrescar();
   }
 
-  window.Gafetes = { _estado: () => ({ diseno, datos }) };
+  window.Gafetes = { _estado: () => ({ diseno, datos, fotos, fotoDe }) };
   iniciar();
 })();
 
