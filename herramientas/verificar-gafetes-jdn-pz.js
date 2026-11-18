@@ -270,7 +270,55 @@ async function aceptar(page, boton) {
   });
   igual("cada frente con foto tiene su propio fondo", new Set(claves).size, 4);
 
-  console.log("\nEl PDF");
+  console.log("\nLa hoja carta para imprimir en casa (frente y dorso)");
+  igual("el diseño de la PZ sale en hoja carta", await page.inputValue("#g-formato"), "carta");
+  await page.click("#g-aprobar");
+  const [hoja] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
+  const hp = fs.readFileSync(await hoja.path()).toString("latin1");
+  igual("un solo PDF", hoja.suggestedFilename(), "Gafetes carta - Eliminatoria JDN PZ 2026.pdf");
+  const objs = new Map([...hp.matchAll(/(\d+) 0 obj\n([\s\S]*?)\nendobj\n/g)].map((m) => [Number(m[1]), m[2]]));
+  const pags = [...objs.values()].filter((o) => /\/Type \/Page\b/.test(o));
+  igual("cuatro gafetes: una hoja, dos páginas (frentes y dorsos)", pags.length, 2);
+  igual("la página mide carta (21,59 × 27,94 cm)", [...new Set(pags.map((p) => (p.match(/\/MediaBox \[([^\]]+)\]/) || [])[1]))], ["0 0 612 792"]);
+  const contenido = (p) => {
+    const o = objs.get(Number(p.match(/\/Contents (\d+) 0 R/)[1]));
+    const i = o.indexOf("stream\n"), largo = Number(o.match(/\/Length (\d+)/)[1]);
+    return require("zlib").inflateSync(Buffer.from(o.slice(i + 7, i + 7 + largo), "latin1")).toString("latin1");
+  };
+  // Dónde pone cada cara: x e y (abajo a la izquierda, en mm) de cada «cm … Do».
+  const ubicar = (c) => [...c.matchAll(/q ([\d.]+) 0 0 ([\d.]+) ([\d.-]+) ([\d.-]+) cm \/F\d+ Do Q/g)].map((m) => [m[1], m[2], m[3], m[4]].map((v) => Number(v) * 25.4 / 72));
+  const [cf, cd] = pags.map(contenido);
+  const fr = ubicar(cf), ds = ubicar(cd);
+  igual("cada cara mide 5,5 × 8,5 cm", [...new Set([...fr, ...ds].map((u) => u[0].toFixed(1) + "×" + u[1].toFixed(1)))], ["55.0×85.0"]);
+  // Volteando por el borde largo, el dorso de cada uno cae en el espejo de su
+  // frente (misma fila, columna al revés): x del frente + x del dorso = ancho
+  // de la hoja − ancho del gafete, y la misma altura.
+  igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(f[3] - ds[k][3]) < 0.05), true);
+  // Tres columnas centradas: (215,9 − 3 × 55) / 2 = 25,45 mm de margen a cada lado.
+  igual("los primeros tres, en la primera fila de izquierda a derecha", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (25.45 + 55 * k)) < 0.05), true);
+  igual("las marcas de corte, solo en la página de los frentes", [/ RG 0\.25 w/.test(cf), / RG 0\.25 w/.test(cd)], [true, false]);
+  const lineas = [...cf.matchAll(/([\d.]+) ([\d.]+) m ([\d.]+) ([\d.]+) l S/g)].map((m) => m.slice(1).map((v) => Number(v) * 25.4 / 72));
+  const enGafete = (x, y) => fr.some((f) => x > f[2] + 0.1 && x < f[2] + 54.9 && y > f[3] + 0.1 && y < f[3] + 84.9);
+  igual("ninguna marca pisa un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.25, 0.5, 0.75, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
+  // El corrimiento del dorso, por si la impresora no calza exacto.
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.fill("#g-dorso-x", "1.5");
+  await page.click("#g-aprobar");
+  const [hoja2] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
+  const hp2 = fs.readFileSync(await hoja2.path()).toString("latin1");
+  const objs2 = new Map([...hp2.matchAll(/(\d+) 0 obj\n([\s\S]*?)\nendobj\n/g)].map((m) => [Number(m[1]), m[2]]));
+  const pags2 = [...objs2.values()].filter((o) => /\/Type \/Page\b/.test(o));
+  const cont2 = (p) => { const o = objs2.get(Number(p.match(/\/Contents (\d+) 0 R/)[1])); const i = o.indexOf("stream\n"), largo = Number(o.match(/\/Length (\d+)/)[1]); return require("zlib").inflateSync(Buffer.from(o.slice(i + 7, i + 7 + largo), "latin1")).toString("latin1"); };
+  const ds2 = ubicar(cont2(pags2[1])), fr2 = ubicar(cont2(pags2[0]));
+  igual("«a la derecha 1,5 mm» corre solo los dorsos", [Math.round((ds2[0][2] - ds[0][2]) * 10) / 10, Math.round((fr2[0][2] - fr[0][2]) * 10) / 10], [1.5, 0]);
+
+  console.log("\nEl PDF para la imprenta");
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.fill("#g-dorso-x", "0");
+  await page.selectOption("#g-formato", "imprenta");
+  await page.selectOption("#g-separar", "Torneo");
   await page.click("#g-aprobar");
   const [zip] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
   const z = fs.readFileSync(await zip.path()).toString("latin1");

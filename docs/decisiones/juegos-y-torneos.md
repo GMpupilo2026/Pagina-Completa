@@ -15922,6 +15922,21 @@ sus pts y su puesto actual».
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
   hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
+- **Hoja carta para imprimir en casa** (pedido del dueño: los imprime en
+  una Brother T530, hojas carta, por ambos lados, «listos solo para
+  cortar»). En «Cómo salen» (`salida.formato`: «imprenta», un gafete por
+  página, o «carta»; el diseño de la PZ viene en «carta»). Caben **9 por
+  hoja** (3 × 3, derechos; acostados, 8): con 5 mm de margen para lo que una
+  impresora de casa no imprime, pegados entre sí (cada corte sirve para dos)
+  y centrados, con 25,45 mm de margen a los lados y 12,2 mm arriba y abajo.
+  Cada hoja son dos páginas: los frentes, con marcas de corte en el margen
+  (nunca encima de un gafete), y los dorsos **en espejo por columnas**, que
+  al voltear por el borde largo caen cada uno detrás de su frente
+  (`hojaCarta` en `js/gafetes.js`; `agregarHoja` en `js/gafetes-pdf.js`).
+  Si la impresora no calza exacto, «córrelo» (`salida.dorsoX`/`dorsoY`, en
+  mm) mueve solo los dorsos. El verificador mira en el PDF que cada dorso
+  esté en el espejo de su frente, que las marcas vayan solo en los frentes y
+  sin pisar un gafete, y que el corrimiento mueva solo los dorsos.
 - **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
   cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
   73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma

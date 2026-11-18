@@ -42,7 +42,7 @@
       },
       codigo: { plantilla: "", sinCodigoSi: "" },
       fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
-      salida: { separarPor: "" },
+      salida: { separarPor: "", formato: "imprenta", dorsoX: 0, dorsoY: 0 },
       fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
       fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
       logosSinMargen: false, // los logos sin el blanco de alrededor (del mismo alto)
@@ -119,7 +119,8 @@
       ["Clausura", "22/11/2026", "7:30 p.m."],
     ];
     d.codigo.plantilla = "{Edad} {n}";
-    d.salida.separarPor = "Torneo";
+    // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
+    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
     for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
@@ -719,6 +720,32 @@
 
   const nombreSeguro = (t) => String(t).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 80) || "sin grupo";
 
+  /* La hoja carta para imprimir en casa (pedido del dueño para la Brother
+     T530): cuántos gafetes caben derechos con 5 mm de margen (lo que una
+     impresora de casa no alcanza a imprimir), pegados entre sí (cada corte
+     sirve para dos) y centrados. Los dorsos van en ESPEJO por columnas: al
+     imprimir por ambos lados volteando por el borde largo, la columna de la
+     izquierda del frente queda a la derecha del dorso. `dorsoX`/`dorsoY`
+     corren los dorsos (mm) por si la impresora no calza exacto. Las marcas
+     de corte van en los márgenes del frente, nunca encima de un gafete. */
+  const CARTA = { w: 215.9, h: 279.4 }, MARGEN_CASA = 5;
+  function hojaCarta(d) {
+    const w = d.tamano.ancho, h = d.tamano.alto;
+    const cols = Math.floor((CARTA.w - 2 * MARGEN_CASA) / w), filas = Math.floor((CARTA.h - 2 * MARGEN_CASA) / h);
+    if (cols < 1 || filas < 1) return null;
+    const x0 = (CARTA.w - cols * w) / 2, y0 = (CARTA.h - filas * h) / 2;
+    const x1 = x0 + cols * w, y1 = y0 + filas * h;
+    const dx = Number(d.salida.dorsoX) || 0, dy = Number(d.salida.dorsoY) || 0;
+    const marcas = [];
+    for (let c = 0; c <= cols; c++) { const x = x0 + c * w; marcas.push([x, 3, x, y0 - 2], [x, y1 + 2, x, CARTA.h - 3]); }
+    for (let f = 0; f <= filas; f++) { const y = y0 + f * h; marcas.push([3, y, x0 - 2, y], [x1 + 2, y, CARTA.w - 3, y]); }
+    return {
+      hoja: CARTA, cols, filas, porHoja: cols * filas, marcas,
+      frente: (k) => ({ x: x0 + (k % cols) * w, y: y0 + Math.floor(k / cols) * h, w, h }),
+      dorso: (k) => ({ x: x0 + (cols - 1 - (k % cols)) * w + dx, y: y0 + Math.floor(k / cols) * h + dy, w, h }),
+    };
+  }
+
   async function crear() {
     if (!datos || !datos.filas.length) { Avisos.avisar("Primero sube el Excel con la gente.", { tipo: "error" }); return; }
     if (!diseno.aprobado) { Avisos.avisar("Primero aprueba el diseño: los PDF salen del diseño aprobado.", { tipo: "error" }); return; }
@@ -745,8 +772,41 @@
       let hechas = 0;
       const total = todos.length * 2;
       barra.max = total;
+      const carta = diseno.salida.formato === "carta";
+      const H = carta ? hojaCarta(diseno) : null;
+      if (carta && !H) throw new Error("ese tamaño de gafete no cabe en una hoja carta");
+      let hojas = 0;
+      const caraLista = async (g, lado) => {
+        const c = await D().cara(diseno, r, g, lado);
+        c.avisos.forEach((a) => avisos.add(a));
+        if (!fondos.has(c.clave)) fondos.set(c.clave, await fondoJpeg(diseno, c));
+        hechas++;
+        barra.value = hechas;
+        texto.textContent = `Gafete ${Math.ceil(hechas / 2)} de ${todos.length}…`;
+        if (hechas % 4 === 0) await new Promise((ok) => setTimeout(ok));
+        return { clave: c.clave, ...fondos.get(c.clave), textos: c.textos };
+      };
       for (const [grupo, lista] of grupos) {
-        const titulo = `Gafetes ${medida} - ${grupo || diseno.nombreDiseno}`;
+        const titulo = `Gafetes ${carta ? "carta" : medida} - ${grupo || diseno.nombreDiseno}`;
+        if (carta) {
+          // De a una hoja: la página de los frentes y, detrás, la de los
+          // dorsos en espejo (cada dorso cae detrás de su frente al voltear
+          // por el borde largo).
+          const pdf = window.GafetesPdf.nuevo(H.hoja.w, H.hoja.h, titulo);
+          for (let i = 0; i < lista.length; i += H.porHoja) {
+            const grupoHoja = lista.slice(i, i + H.porHoja);
+            const frentes = [], dorsos = [];
+            for (const [k, g] of grupoHoja.entries()) {
+              frentes.push({ ...(await caraLista(g, "frente")), ...H.frente(k) });
+              dorsos.push({ ...(await caraLista(g, "dorso")), ...H.dorso(k) });
+            }
+            await pdf.agregarHoja(frentes, H.marcas);
+            await pdf.agregarHoja(dorsos, []);
+            hojas++;
+          }
+          archivos.push({ nombre: nombreSeguro(titulo) + ".pdf", bytes: pdf.cerrar() });
+          continue;
+        }
         const pdf = window.GafetesPdf.nuevo(diseno.tamano.ancho, diseno.tamano.alto, titulo);
         for (const g of lista) {
           for (const lado of ["frente", "dorso"]) {
@@ -764,15 +824,19 @@
       }
       let blob, nombre;
       if (archivos.length === 1) { blob = new Blob([archivos[0].bytes], { type: "application/pdf" }); nombre = archivos[0].nombre; }
-      else { blob = new Blob([window.TablaExcel.zip(archivos)], { type: "application/zip" }); nombre = nombreSeguro(`Gafetes ${medida} - ${diseno.nombreDiseno}`) + ".zip"; }
+      else { blob = new Blob([window.TablaExcel.zip(archivos)], { type: "application/zip" }); nombre = nombreSeguro(`Gafetes ${carta ? "carta" : medida} - ${diseno.nombreDiseno}`) + ".zip"; }
       const enlace = $("g-bajar");
       if (enlace.href) URL.revokeObjectURL(enlace.href);
       enlace.href = URL.createObjectURL(blob);
       enlace.download = nombre;
       enlace.textContent = `📥 Bajar ${nombre}`;
-      $("g-resultado-texto").textContent = `${todos.length} gafetes (${total} páginas de ${String(diseno.tamano.ancho / 10).replace(".", ",")} × ${String(diseno.tamano.alto / 10).replace(".", ",")} cm)` +
-        (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
-        `. Cada página es una imagen de fondo a ${DPI} dpi y el texto en curvas, sin marcas de corte.`;
+      $("g-resultado-texto").textContent = carta
+        ? `${todos.length} gafetes en ${hojas} ${hojas === 1 ? "hoja carta" : "hojas carta"} (${H.porHoja} por hoja), frente y dorso` +
+          (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
+          ". Imprímelo al 100 % (tamaño real, sin «Ajustar a la página») y por ambos lados, volteando por el borde largo. Corta por las marcas."
+        : `${todos.length} gafetes (${total} páginas de ${String(diseno.tamano.ancho / 10).replace(".", ",")} × ${String(diseno.tamano.alto / 10).replace(".", ",")} cm)` +
+          (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
+          `. Cada página es una imagen de fondo a ${DPI} dpi y el texto en curvas, sin marcas de corte.`;
       const lista = $("g-resultado-avisos");
       lista.textContent = "";
       [...avisos].slice(0, 30).forEach((a) => { const li = document.createElement("li"); li.textContent = a; lista.append(li); });
