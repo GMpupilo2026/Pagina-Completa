@@ -4414,7 +4414,7 @@
                     { emoji: "🧭", label: "Coordinación", desc: "Tus profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
                     { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse desde unirse.html: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
-                    { emoji: "💳", label: "Cobros", desc: "Quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html" }
+                    { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html" }
                 );
                 /* Lo que el supervisor de su academia le apagó no se ofrece: la
                    base lo rechazaría igual, pero el fallo lo descubriría quien

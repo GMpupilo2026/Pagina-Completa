@@ -42,7 +42,7 @@
             { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html", zona: "personas" },
         ] },
         { title: "Cobros y accesos", tiles: [
-            { emoji: "💳", label: "Cobros", desc: "Quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html", zona: "cobros" },
+            { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html", zona: "cobros" },
             { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html", zona: "cobros" },
             { emoji: "🔑", label: "Licencias de herramientas", desc: "Genera y controla las licencias de las herramientas", href: "licencias.html", zona: "cobros" },
             { emoji: "🧑‍⚖️", label: "Mis árbitros", desc: "Crea las cuentas de tus árbitros y elige qué herramientas puede usar cada uno", href: "mis-arbitros.html", zona: "cobros" },

@@ -1678,7 +1678,7 @@ async function pruebaBuscador(browser) {
   await page.fill("#buscador-campo", "mensualidades");
   igual("busca también en lo que hace cada página",
     await page.evaluate(() => { const li = document.querySelector("#buscador-lista [role=option]"); return [li.dataset.tipo, li.querySelector("span span").textContent]; }),
-    ["pagina", "Cobros de la Academia"]);
+    ["pagina", "Cobros"]);
   await page.keyboard.press("ArrowDown");
   igual("las flechas mueven la elección y el campo lo anuncia",
     await page.evaluate(() => document.getElementById("buscador-campo").getAttribute("aria-activedescendant")), "buscador-op-0");
