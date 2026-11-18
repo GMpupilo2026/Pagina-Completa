@@ -173,3 +173,5 @@ function pruebaNingunInsertSuelto() {
     console.log(n ? "\n" + n + " fallo(s)." : "\nTodo bien: a cada clase entran solo los que el profe asignó.");
     process.exit(n ? 1 : 0);
 })();
+
+/*! rev bfb5bbb0d2d82f9f */

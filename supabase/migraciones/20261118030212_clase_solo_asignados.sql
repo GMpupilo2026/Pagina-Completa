@@ -24,6 +24,9 @@ create table public.clase_asignados (
 create index clase_asignados_student_id on public.clase_asignados (student_id);
 
 alter table public.clase_asignados enable row level security;
+-- Se lee con sesión; se escribe solo por las dos funciones de abajo.
+revoke all on public.clase_asignados from public, anon, authenticated;
+grant select on public.clase_asignados to authenticated;
 
 -- La ve el propio alumno (la suya), quien da la clase y quien administra. Sin
 -- políticas de escritura: la escriben abrir_clase_en_vivo() y
@@ -77,6 +80,10 @@ grant execute on function interno.asignado_a(uuid) to authenticated;
 -- La clase abierta de ese profe me toca: está abierta y estoy en su lista.
 -- Reemplaza a clase_abierta_de() en todo lo que le abre la clase a un ALUMNO
 -- (clase_abierta_de() sigue para los invitados, que entran con su enlace).
+-- Una clase SIN lista (solo_asignados = false) es de antes y le toca a todos
+-- los alumnos del profe, la misma regla que usan las ausencias. Desde la
+-- migración siguiente ya no se puede abrir una así; mientras tanto, la página
+-- vieja que todavía esté abierta en alguna computadora sigue funcionando.
 create or replace function interno.me_toca_la_clase_de(p_profesor uuid)
 returns boolean
 language sql stable security definer
@@ -90,6 +97,9 @@ as $$
      where c.created_by = p_profesor
        and c.ended_at is null
        and a.student_id = (select auth.uid())
+  ) or exists (
+    select 1 from public.class_sessions c
+     where c.created_by = p_profesor and c.ended_at is null and not c.solo_asignados
   );
 $$;
 revoke execute on function interno.me_toca_la_clase_de(uuid) from public, anon;
@@ -153,17 +163,10 @@ create policy class_presence_log_solo_asignados on public.class_presence_log
     or interno.asignado_a(session_id)
   );
 
--- Una clase en vivo ya no se abre con un INSERT suelto: sin lista no habría a
--- quién dejar entrar. Desde la consola solo se puede crear la ficha
--- presencial; la en vivo pasa por abrir_clase_en_vivo().
-drop policy class_sessions_insert on public.class_sessions;
-create policy class_sessions_insert on public.class_sessions
-  for insert
-  with check (
-    created_by = (select auth.uid())
-    and modalidad = 'presencial'
-    and (select (mp.is_admin or mp.role = 'profesor') from public.my_profile() mp(role, is_admin, teacher_id))
-  );
+-- Que una clase en vivo ya no se abra con un INSERT suelto lo cierra la
+-- migración siguiente (clase_solo_asignados_sin_insert), DESPUÉS de que la
+-- página nueva esté publicada: cerrarlo acá dejaría a quien tiene la página
+-- vieja abierta sin poder abrir su clase hasta recargar.
 
 -- 4. Abrir la clase con su lista, en UNA llamada ----------------------------
 -- Partido en dos (la clase y después la lista), entre una cosa y la otra la
@@ -435,3 +438,106 @@ as $$
                       where ca.session_id = c.id and ca.student_id = j.student_id)
    group by j.student_id, p.full_name, p.grupo;
 $$;
+
+-- 7. La llamada de voz de la clase, también solo para los de la lista -------
+-- Igual a la que está en la base, con una sola diferencia: el alumno además
+-- tiene que estar en la lista (interno.me_toca_la_clase_de). Sin eso, el de
+-- otro grupo no ve el tablero pero sí podría entrar a la llamada.
+create or replace function public.llamada_de_la_clase(p_profesor uuid)
+ returns jsonb
+ language plpgsql
+ stable security definer
+ set search_path to 'public'
+as $function$
+declare
+  yo uuid := (select auth.uid());
+  v_sesion uuid;
+  v_rol text;
+  v_elegido uuid;
+  v_texto text;
+  v_nombre text;
+  v_sacados jsonb;
+  v_abierta boolean;
+  v_modo text;
+  v_grabando boolean;
+  v_permiso boolean;
+  v_con_permiso jsonb;
+begin
+  if yo is null or p_profesor is null then
+    return null;
+  end if;
+
+  select c.id into v_sesion
+    from public.class_sessions c
+   where c.created_by = p_profesor and c.ended_at is null
+   order by c.started_at desc
+   limit 1;
+  if v_sesion is null then
+    return null;
+  end if;
+
+  if yo = p_profesor then
+    if not exists (select 1 from public.profiles p where p.id = yo and p.role = 'profesor') then
+      return null;
+    end if;
+    v_rol := 'profe';
+  elsif coalesce(public.es_mi_profesor(p_profesor) and interno.me_toca_la_clase_de(p_profesor), false) then
+    if exists (select 1 from public.clase_sacados s
+                where s.class_session_id = v_sesion and s.student_id = yo and s.devuelto_at is null) then
+      return null;
+    end if;
+    v_rol := 'alumno';
+  else
+    return null;
+  end if;
+
+  -- El turno de la clase. Un id que no sea un uuid no le da la palabra a nadie
+  -- (y no revienta el cast).
+  select g.elegido->>'id', g.llamada_sesion is not distinct from v_sesion, g.llamada_modo, g.llamada_grabando
+    into v_texto, v_abierta, v_modo, v_grabando
+    from public.game_state g where g.owner_id = p_profesor;
+  v_abierta := coalesce(v_abierta, false);
+  -- Se graba solo con la llamada abierta en esta clase.
+  v_grabando := v_abierta and coalesce(v_grabando, false);
+  -- Quién puede hablar solo vale con la llamada abierta en esta clase; si no,
+  -- el de siempre: el turno.
+  v_modo := case when v_abierta then coalesce(v_modo, 'turno') else 'turno' end;
+  -- El alumno entra solo si el profe abrió la llamada en ESTA clase.
+  if v_rol = 'alumno' and not v_abierta then
+    return null;
+  end if;
+  if v_texto ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    v_elegido := v_texto::uuid;
+  end if;
+
+  select coalesce(nullif(trim(p.full_name), ''), 'Sin nombre') into v_nombre
+    from public.profiles p where p.id = yo;
+
+  if v_rol = 'profe' then
+    select coalesce(jsonb_agg(s.student_id), '[]'::jsonb) into v_sacados
+      from public.clase_sacados s
+     where s.class_session_id = v_sesion and s.devuelto_at is null;
+    -- Sus alumnos cuya familia dio permiso para grabar su voz: con la clase
+    -- grabándose, «sincronizar» no le da la palabra a nadie fuera de esta lista.
+    select coalesce(jsonb_agg(v.persona_id), '[]'::jsonb) into v_con_permiso
+      from public.permisos_grabar_voz v
+     where v.persona_id in (select interno.alumnos_de(yo));
+  else
+    v_permiso := exists (select 1 from public.permisos_grabar_voz v where v.persona_id = yo);
+  end if;
+
+  return jsonb_build_object(
+    'yo', yo,
+    'rol', v_rol,
+    'sala', 'clase-' || v_sesion,
+    'nombre', coalesce(v_nombre, 'Sin nombre'),
+    'elegido', v_elegido,
+    'sacados', v_sacados,
+    'abierta', v_abierta,
+    'modo', v_modo,
+    'grabando', v_grabando,
+    'permiso_voz', v_permiso,
+    'con_permiso_voz', v_con_permiso
+  );
+end;
+$function$;
