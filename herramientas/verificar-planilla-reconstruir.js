@@ -134,9 +134,10 @@ ok("«CeSCxes» se parte en las dos jugadas de la fila 12", celdas[22] === "CeS"
 ok("«1d4» pierde el 1 impreso; «24» (era c4) no pierde el 2", celdas[0] === "d4" && celdas[2] === "24", celdas.slice(0, 3).join(" | "));
 const deReal = R.reconstruir(Chess, real.hojas);
 const sanes = deReal.jugadas.map((j) => j.san);
-// 1… Cf6 y 6… Cc6 no se pueden saber de esta foto: Vision leyó «C6» y «6» (se le perdió una letra) y es una sola planilla
-const saben = LR.partida.map((s, i) => (i === 1 || i === 11 ? null : s));
-ok("las 8 primeras jugadas salen como la partida de verdad (menos las dos que Vision no leyó)", saben.every((s, i) => s === null || sanes[i] === s), sanes.slice(0, 16).join(" "));
+// 6… Cc6 no se puede saber de esta foto: Vision leyó solo «6» y es una sola planilla
+const saben = LR.partida.map((s, i) => (i === 11 ? null : s));
+ok("las 8 primeras jugadas salen como la partida de verdad (menos 6… Cc6, de la que Vision leyó solo «6»)", saben.every((s, i) => s === null || sanes[i] === s), sanes.slice(0, 16).join(" "));
+ok("«C6» con la C mayúscula es un caballo (1… Cf6), no el peón c6: en español la C mayúscula es el caballo", sanes[1] === "Nf6", sanes[1]);
 ok("y sigue más allá de la jugada 8 (antes se cortaba en la 7 de las negras)", sanes.length >= 20, String(sanes.length));
 
 console.log(`\n${pruebas - fallos}/${pruebas} comprobaciones bien.`);
