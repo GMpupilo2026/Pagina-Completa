@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118010437
+# al-dia-con: 20261118030212
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -90,6 +90,7 @@ tabla  centroamericano_tx_enlaces  rls=true
 tabla  centroamericano_tx_historial  rls=true
 tabla  centroamericano_tx_tableros  rls=true
 tabla  certificados  rls=true
+tabla  clase_asignados  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
 tabla  clase_espectadores  rls=true
@@ -1143,6 +1144,9 @@ columna  certificados.lecciones  integer
 columna  certificados.profesor_id  uuid
 columna  certificados.profesor_nombre  text
 columna  certificados.student_id  uuid
+columna  clase_asignados.class_session_id  uuid
+columna  clase_asignados.created_at  timestamp with time zone
+columna  clase_asignados.student_id  uuid
 columna  clase_elegidos.class_session_id  uuid
 columna  clase_elegidos.created_at  timestamp with time zone
 columna  clase_elegidos.id  uuid
@@ -1204,6 +1208,7 @@ columna  class_sessions.id  uuid
 columna  class_sessions.modalidad  text
 columna  class_sessions.notes  text
 columna  class_sessions.para_ausentes  boolean
+columna  class_sessions.solo_asignados  boolean
 columna  class_sessions.started_at  timestamp with time zone
 columna  class_sessions.summary  jsonb
 columna  class_sessions.title  text
@@ -2990,6 +2995,7 @@ columna  vision_personas.persona_id  uuid
 columna  vision_personas.vision  text
 vista  cobros_vista
 vista  recibos_vista
+funcion  abrir_clase_en_vivo(p_alumnos uuid[], p_titulo text)  definer  anon=false  auth=true
 funcion  academia_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  academia_crear_desde_grupo(p_nombre text, p_supervisor uuid, p_personas uuid[])  definer  anon=false  auth=true
 funcion  academia_guardar(p_id uuid, p_nombre text, p_supervisor uuid, p_whatsapp text, p_correo text)  definer  anon=false  auth=true
@@ -3034,7 +3040,6 @@ funcion  asesores_preguntas_video_apartada2(p_detalle text)  definer  anon=false
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
-funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
 funcion  avisar_diagnostico_supervisor()  definer  anon=false  auth=false
 funcion  avisar_examen_asignado()  definer  anon=false  auth=false
@@ -3052,6 +3057,7 @@ funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=fals
 funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
 funcion  bromas_en_esta_clase(p_encender boolean)  definer  anon=false  auth=true
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
+funcion  cambiar_asignados_de_la_clase(p_clase uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
@@ -3113,6 +3119,7 @@ funcion  clase_invitado_info(p_token text)  definer  anon=true  auth=true
 funcion  clase_invitado_modo(p_token text, p_secreto text, p_adaptado boolean)  definer  anon=true  auth=true
 funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
+funcion  clases_que_le_tocaban()  invoker  anon=false  auth=true
 funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  cobro_siguiente(p_suscripcion uuid, p_periodos integer)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
@@ -3259,6 +3266,7 @@ funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
 funcion  interno.arbitro_puede_anular_en(p_anula uuid, p_tnr text, p_pareo text, p_ronda integer, p_mesa integer, p_color text)  definer  anon=false  auth=true
 funcion  interno.arbitros_cr_normas_revision_consentimiento()  definer  anon=false  auth=false
+funcion  interno.asignado_a(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
 funcion  interno.ausencia_del_rival(p_room_id uuid, p_yo uuid)  invoker  anon=false  auth=false
@@ -3321,6 +3329,7 @@ funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=fa
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
+funcion  interno.me_toca_la_clase_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
 funcion  interno.metropolitano_avisos_hay()  definer  anon=false  auth=false
 funcion  interno.metropolitano_correo_avisa()  definer  anon=false  auth=false
@@ -3843,6 +3852,8 @@ politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_cambiar  UPDATE
 politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_crear  INSERT
 politica  centroamericano_tx_enlaces  centroamericano_tx_enlaces_ver  SELECT
 politica  certificados  certificados_lee  SELECT
+politica  clase_asignados  clase_asignados_select  SELECT
+politica  clase_asignados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
 politica  clase_elegidos  clase_elegidos_update  UPDATE
@@ -3860,6 +3871,7 @@ politica  class_attendance  class_attendance_exige_acceso_upd  UPDATE  restricti
 politica  class_attendance  class_attendance_insert  INSERT
 politica  class_attendance  class_attendance_no_sacado  INSERT  restrictiva
 politica  class_attendance  class_attendance_select  SELECT
+politica  class_attendance  class_attendance_solo_asignados  INSERT  restrictiva
 politica  class_attendance  class_attendance_update_profesor  UPDATE
 politica  class_attendance  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_chat_messages  class_chat_messages_delete  DELETE
@@ -3872,6 +3884,7 @@ politica  class_presence_log  class_presence_log_exige_acceso_upd  UPDATE  restr
 politica  class_presence_log  class_presence_log_insert  INSERT
 politica  class_presence_log  class_presence_log_no_sacado  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_select  SELECT
+politica  class_presence_log  class_presence_log_solo_asignados  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_update_own  UPDATE
 politica  class_sessions  class_sessions_delete  DELETE
 politica  class_sessions  class_sessions_insert  INSERT
@@ -4344,7 +4357,6 @@ trigger  centroamericano_torneos  auditar
 trigger  centroamericano_tx_enlaces  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
-trigger  class_sessions  class_sessions_avisa_push
 trigger  class_sessions  otorgar_puntos_de_clase
 trigger  cobros  auditar
 trigger  cobros  cobros_corrige_supervision
@@ -4628,6 +4640,8 @@ indice  certificados  certificados_codigo_key
 indice  certificados  certificados_pkey
 indice  certificados  certificados_profesor_idx
 indice  certificados  certificados_uno_vigente
+indice  clase_asignados  clase_asignados_pkey
+indice  clase_asignados  clase_asignados_student_id
 indice  clase_elegidos  clase_elegidos_alumno_idx
 indice  clase_elegidos  clase_elegidos_clase_idx
 indice  clase_elegidos  clase_elegidos_pkey
@@ -5181,6 +5195,7 @@ extension  pgcrypto  1.3
 extension  supabase_vault  0.3.1
 extension  uuid-ossp  1.1
 realtime  archivos_pgn
+realtime  clase_asignados
 realtime  clase_espectadores
 realtime  class_chat_messages
 realtime  class_sessions
@@ -5442,6 +5457,7 @@ grant  centroamericano_salidas  authenticated  SELECT
 grant  centroamericano_tiempos  authenticated  SELECT
 grant  centroamericano_tx_enlaces  authenticated  SELECT
 grant  certificados  authenticated  SELECT
+grant  clase_asignados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT
 grant  clase_elegidos  authenticated  REFERENCES

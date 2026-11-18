@@ -79,8 +79,14 @@
                 <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
                 <div class="flex items-center gap-2 flex-wrap">
                     <button type="button" id="clase-abrir-btn" class="hidden bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir la clase</button>
+                    <!-- Quién entra a la clase en curso (clase_asignados, js/clase-asignados.js). -->
+                    <button type="button" id="clase-asignados-btn" aria-expanded="false" aria-controls="clase-asignar" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">👥 </span>Quién entra</button>
                     <button type="button" id="clase-cerrar-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la clase</button>
                 </div>
+                <!-- ¿Quién entra? Se pide al abrir la clase y se cambia con la clase en
+                     curso: solo entran los de la lista (ver «A la clase entran solo los
+                     asignados»). -->
+                <div id="clase-asignar" hidden class="w-full"></div>
                 <!-- Ponerle nombre y dejar la nota se hace acá mismo al cerrar:
                      mandarlo al panel a escribirlas es mandarlo a otra página
                      justo cuando acaba de terminar y se va. -->
@@ -1901,6 +1907,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
+    <script src="js/clase-asignados.js"></script>
     <!-- Partes de la clase en vivo con vida propia: van ANTES que sesion.js (ver «sesion.js en partes»). -->
     <script src="js/clase-votacion.js"></script>
     <script src="js/clase-mapa.js"></script>

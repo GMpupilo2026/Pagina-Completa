@@ -5609,6 +5609,16 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
     una sola planilla: con las dos en la foto, una corrige a la otra). Esa
     lectura quedó como prueba en `herramientas/lib/lectura-real-pareo.js`,
     **solo la zona de jugadas, sin el encabezado con los nombres**.
+  - **Una pieza en MAYÚSCULA no es un peón casi gratis.** Ya con las
+    palabras partidas, la misma lectura seguía leyendo «C6» como el peón c6
+    (la diferencia de mayúscula costaba 0,15), así que el caballo de f6
+    nunca salía y la partida se cortaba en la 12 (Cxe5). Ahora, una letra
+    de pieza escrita en mayúscula (C, A, T, D, R, N, B, Q, K) leída como la
+    minúscula de una columna cuesta 0,7; al revés (la pieza en minúscula,
+    «cf3», como anotan los niños) sigue costando 0,15. Sale 1… Cf6; las 41
+    planillas del Centroamericano siguen igual. Lo que todavía no sale es
+    6… Cc6: de esa jugada Vision leyó solo «6», y con una sola planilla no
+    hay de dónde sacarlo.
   - **La foto llegó de unos 400 × 620 px** (la letra de 15 px). Se mide
     antes de mandarla (`createImageBitmap`) y, si el lado largo tiene menos
     de 1600 px, el cuadro lo dice con el tamaño y pide la foto original de
@@ -9731,6 +9741,15 @@ mejor explica todo lo escrito. No hay un segundo lector: `js/lector-planilla.js`
 - **«Anota tu partida»** de «Tus propios errores» (`js/entreno-tipos-mas.js`) usa el mismo lector:
   marca con «?» las que no se leyeron tal cual y corta donde la planilla ya no se entiende (ver «Mis
   partidas de torneo» en entrenamiento.md).
+- **«Descargar la lectura»**, como en el Centroamericano: un `.json` con lo que devolvió Google Vision
+  tal cual (cada palabra con su caja: se puede pasar de nuevo a `hojasDeLaFoto()`), las celdas y la
+  partida que salió, con el estado y lo escrito de cada jugada. Lo pidió el dueño al probar la foto
+  real del 17/11 (ronda 9, dos columnas, 407×641 px): salieron 13 medias jugadas, con «c6» por
+  «Cf6» y «a5» por «c5» (las dos marcadas «*») y sin 6. 0-0 Cc6, y no había forma de saber qué había
+  leído Google en esas celdas. Lo arma `PlanillaReconstruir.lectura()`, una sola copia con el
+  Centroamericano. Trae lo escrito en la planilla, también los nombres: el botón lo dice, y el
+  archivo es para revisar, **nunca para el repositorio**. Se baja en la computadora de quien lee la
+  planilla; no se manda a ningún lado.
 - **El hilo es una sola copia**: `PlanillaReconstruir.enHilo()`. Antes el Centroamericano tenía el
   suyo; ahora lo usan los tres. Busca `planilla-reconstruir-worker.js` al lado de
   `planilla-reconstruir.js` (`document.currentScript`), así sirve también desde `entreno/`.
