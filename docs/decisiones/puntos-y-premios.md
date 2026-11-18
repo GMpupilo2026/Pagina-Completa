@@ -794,23 +794,95 @@ perdida para quien ganó, no se roba nada, aunque la partida haya sido reñida.
 Tampoco se aplicó con retroactividad a partidas ya jugadas antes de esta
 migración: solo las que terminan después de que el trigger existe.
 
-## Los rangos
+## Los rangos se ganan con un examen
 
-Cada alumno tiene un **rango** que sube con sus Puntos Ajedrez **ganados**:
-Peón, Caballo (1000), Alfil (3000), Torre (7000), Dama (15 000) y Rey
-(30 000). Sale arriba en la tienda de puntos, con la pieza, el número escrito y
-la barra hasta el siguiente. La idea es de Chessgora («sube de rango al asistir
-y entrenar»).
+Cada alumno tiene un **rango**: Peón, Caballo (1000), Alfil (3000), Torre
+(7000), Dama o Rey (15 000) y Dragón (30 000). Juntar los puntos ya no basta:
+al llegar al umbral del siguiente, la base le arma **sola** el examen de ese
+rango, y solo si lo aprueba sube y recibe su diploma. La idea de los rangos es
+de Chessgora («sube de rango al asistir y entrenar»); el examen es del dueño.
 
-- **Ganados, no el saldo** (`interno.puntos_ganados`: clase, entrenamiento,
-  tarea, examen, racha, reto semanal y tema terminado). Con el saldo, canjear
-  un premio te bajaría de rango; regalos, bromas, robos, devoluciones y ajustes
-  a mano no son trabajo del alumno. Es la misma cuenta de las tareas que llegan
-  solas.
-- **Los nombres y los umbrales viven en una sola copia, `js/rangos.js`**; la
-  base solo da los puntos ganados, con permiso: `public.puntos_ganados_de()`
-  (uno mismo, un alumno propio, o administración). El rango se deriva, no se
-  guarda.
+- **El rango se guarda** (`public.rangos_alumno`), a diferencia de lo demás
+  que se deriva: ya no sale de una cuenta sino de un examen aprobado, que es
+  un acta. Al crear la tabla se sembró a cada alumno con el rango que le daban
+  sus puntos de entonces: nadie bajó ni tuvo que rendir lo que ya tenía.
+- **Los puntos que cuentan son los ganados** (`interno.puntos_ganados`: clase,
+  entrenamiento, tarea, examen, racha, reto semanal y tema terminado), no el
+  saldo: con el saldo, canjear un premio te bajaría el avance. Regalos,
+  bromas, robos y ajustes a mano no son trabajo del alumno.
+- **Reprobar resta 500 del avance, no del saldo**:
+  `interno.puntos_para_rango()` = ganados − 500 × exámenes de rango
+  reprobados. Así, para volver a intentarlo hay que juntar otra vez 500 puntos
+  de trabajo. No se escribe en `puntos_ajustes`: un cobro de 500 dejaría el
+  saldo en negativo a quien ya canjeó, y movería las tareas que llegan solas
+  por puntos, que no tienen nada que ver.
+- **Se aprueba con el 90 %**, en todos los rangos (lo pidió así el dueño).
+- **Dama y Rey son un solo rango**, y el alumno elige con cuál nombre quedarse
+  (`public.elegir_titulo_rango`, en la tienda; se puede cambiar). El más alto
+  es Dragón.
+- **Quién dispara el examen**: el trigger `rango_al_ganar` en `puntos_ajustes`
+  (cada vez que gana puntos) y `mi_rango()` al abrir la tienda (por si los
+  ganó antes de que existiera el examen). Los dos llaman a
+  `interno.revisar_examen_rango()`, que no hace nada si ya tiene uno
+  pendiente: lo garantiza el índice único parcial
+  `rango_examenes_uno_pendiente`, no un `if`. El trigger va envuelto en un
+  bloque de excepción: un examen que no se pudo armar nunca le quita a nadie
+  los puntos que acaba de ganar.
+- **Las preguntas salen de Entrenamiento**, no se inventan: 10 tácticas de
+  `interno.rango_examen_banco`, de la franja de dificultad del rango
+  (Caballo 900-1199, Alfil 1200-1499, Torre 1500-1799, Dama o Rey 1800-2099,
+  Dragón 2100-2700; sin el tema «mezcla»). El banco lo genera
+  `herramientas/rangos-examen-banco.js` (→ `herramientas/rangos/banco.sql`),
+  40 por rango y en forma compacta (sin enunciado ni explicación);
+  `interno.pregunta_de_rango()` rearma la pregunta completa, y el verificador
+  comprueba que sale idéntica a la de `ExamenBanco.preguntaDeTactica()`. Con
+  el banco vacío no se arma ningún examen.
+- **Al entregar**, el trigger `rango_al_entregar` en `examenes` llama a
+  `interno.resolver_examen_rango()`: aprobado sube el rango y emite el
+  certificado (`curso = 'rango:<rango>'`, que `certificado.html` lee como
+  «aprobó el examen del rango…»); reprobado queda anotado y empieza a restar.
+- **La pantalla solo pinta** lo que devuelve `public.mi_rango()`
+  (`js/rangos.js`): rango y nombre elegido, avance, el examen pendiente con su
+  enlace, el selector Dama/Rey y el diploma. Los umbrales están en dos copias,
+  `js/rangos.js` e `interno.umbral_rango()`, y el verificador las compara.
+
+## Los mates del examen de Caballo
+
+El examen de Caballo lleva, además de las 10 tácticas, **dos mates
+obligatorios**: dama y rey contra rey, y dos torres contra rey, con **2 minutos
+cada uno** (se suman al tiempo del examen: 20 + 3 por mate). Sin los dos mates
+dados no se aprueba, aunque el porcentaje llegue al 90 %.
+
+- **Se juegan contra el servidor**, no en el navegador: si la partida la
+  arbitrara la página, bastaría con avisar «di mate» desde la consola. La Edge
+  Function `examen-mate` recibe cada jugada, la valida con chess.js 0.10.3,
+  contesta con el rey negro y decide si hubo mate o tablas (ahogado, material
+  insuficiente, triple repetición, 50 jugadas). El estado y el reloj viven en
+  `public.examen_mate_partidas`; `mate_estado()` y `mate_registrar()` son solo
+  para la clave de servicio, y la base rechaza la jugada que llega tarde o que
+  no sigue a la posición anterior. `responder_examen()` no acepta una pregunta
+  de mate (`motivo 'se_juega'`).
+- **El rey defiende de verdad.** Con la dama, con la distancia EXACTA al mate
+  (`FinalesDTM`, la tabla se calcula en 0,3 s): elige la jugada que deja el
+  mate más lejos, y comerse la dama o ahogarse es lo mejor que le puede pasar.
+  Con las dos torres, con la heurística de «Con lo justo»
+  (`TiposReglas.defensaRey`), porque esa tabla tarda 19 s y no cabe en una
+  función. Las dos fuentes son las del sitio: `herramientas/defensa-mate-armar.js`
+  las pega en `supabase/functions/_compartido/defensa-mate.js` (un archivo
+  armado y no leído del sitio porque las funciones solo se vuelven a desplegar
+  cuando cambia algo en `supabase/functions/`).
+- **Las posiciones** son las de «Con lo justo» (niveles de dos torres y de
+  dama), legales, con blancas al mover y sin jaque.
+- **El banco se carga después de desplegar `examen-mate`**: con el banco
+  cargado y la función sin desplegar, un alumno recibiría mates que no se
+  pueden jugar y reprobaría por eso.
+
+`herramientas/verificar-rangos-examen.js` (sin navegador) comprueba umbrales
+JS = SQL, el banco idéntico al generador y legal, las posiciones de mate, la
+defensa armada al día, 12 partidas completas de dama donde el mate llega en
+exactamente las jugadas que dice la tabla (si el rey defendiera peor, llegaría
+antes), y en la base el 90 %, los mates obligatorios, un pendiente por alumno,
+la resta solo en el avance y los permisos de las funciones de mate.
 
 ## Los premios de cada academia
 

@@ -52,3 +52,5 @@ if (require.main === module) {
 } else {
     module.exports = { armar, DESTINO, FUENTES };
 }
+
+/*! rev bfb5bbb0d2d82f9f */

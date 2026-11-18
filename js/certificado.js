@@ -51,6 +51,8 @@ window.Certificado = (function () {
 
   function pintar(c, codigo) {
     $("cert-alumno").textContent = c.alumno_nombre;
+    // Un diploma de rango (curso 'rango:…') no es de un curso: aprobó el examen del rango.
+    if (String(c.curso || "").startsWith("rango:")) $("cert-que").textContent = "aprobó el examen del";
     $("cert-curso").textContent = c.curso_titulo;
     $("cert-lecciones").textContent = c.lecciones ? `${c.lecciones} ${c.lecciones === 1 ? "lección" : "lecciones"}` : "";
     $("cert-fecha").textContent = fecha(c.emitido_at);
