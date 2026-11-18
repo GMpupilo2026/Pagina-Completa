@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,32 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 5… anna 6</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 8… bella 5</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 9… dama cesar 7</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>A. Shírov – D. Reinderman · Wijk aan Zee 1999 · 1-0</p>
-<p>Shírov reconoce que las condiciones están dadas para el clásico sacrificio presente griego (alfil captura hector 7 jaque) tras el error posicional 16… bella 3?, que aparta al alfil negro de casillas oscuras de la defensa del enroque. Pero el ataque no es sencillo: en vez de la caza de rey habitual, Shírov combina el sacrificio con una ruptura central (28. felix 5! y 29. eva 6!) que abre nuevas líneas y trae al ataque piezas que aún no participaban, como la torre c2 y el alfil de casillas oscuras. El remate 32. alfil hector 6 y la posterior cacería del rey negro por el tablero culminan una de las ejecuciones más creativas del sacrificio clásico.</p>
-<p>A lo largo de siglos de práctica ajedrecística se han identificado patrones de sacrificio que se repiten una y otra vez: el llamado presente griego (entregar el alfil en h7 o h2 para exponer al rey enrocado), el doble sacrificio de alfil en b7 y g7, o formaciones típicas de mate como la de Anastasia o la de Boden. Conocer estos patrones es indispensable para cualquier jugador que aspire a atacar con éxito, porque permiten reconocer de un vistazo cuándo una posición ofrece posibilidades tácticas concretas. Sin embargo, reconocer el patrón es sólo el primer paso: en la práctica, los rivales rara vez cooperan de forma tan clara como en los ejemplos de manual, así que casi siempre hace falta verificar con cálculo concreto si el sacrificio funciona en esa posición particular, y a veces incluso combinarlo con ideas adicionales, como rupturas de peones o maniobras de piezas inactivas, para que termine de ser decisivo. Aplicar estas ideas en la práctica requiere, además de memorizar los patrones, desarrollar la capacidad de calcular variantes complejas con confianza y estar dispuesto a asumir el riesgo cuando el juicio posicional lo respalda, aunque no se pueda comprobar cada línea hasta el final.</p>
+<p>Shírov reconoce que las condiciones están dadas para el clásico sacrificio presente griego (alfil captura hector 7 jaque) tras el error posicional 16… bella 3?, que aparta al alfil negro de casillas oscuras de la defensa del enroque. Pero el ataque no es sencillo: en vez de la caza de rey habitual, Shírov combina el sacrificio con una ruptura central (28. felix 5! y 29. eva 6!) que abre nuevas líneas y trae al ataque piezas que aún no participaban, como la torre cesar 2 y el alfil de casillas oscuras. El remate 32. alfil hector 6 y la posterior cacería del rey negro por el tablero culminan una de las ejecuciones más creativas del sacrificio clásico.</p>
+<p>A lo largo de siglos de práctica ajedrecística se han identificado patrones de sacrificio que se repiten una y otra vez: el llamado presente griego (entregar el alfil en hector 7 o hector 2 para exponer al rey enrocado), el doble sacrificio de alfil en bella 7 y gustav 7, o formaciones típicas de mate como la de Anastasia o la de Boden. Conocer estos patrones es indispensable para cualquier jugador que aspire a atacar con éxito, porque permiten reconocer de un vistazo cuándo una posición ofrece posibilidades tácticas concretas. Sin embargo, reconocer el patrón es sólo el primer paso: en la práctica, los rivales rara vez cooperan de forma tan clara como en los ejemplos de manual, así que casi siempre hace falta verificar con cálculo concreto si el sacrificio funciona en esa posición particular, y a veces incluso combinarlo con ideas adicionales, como rupturas de peones o maniobras de piezas inactivas, para que termine de ser decisivo. Aplicar estas ideas en la práctica requiere, además de memorizar los patrones, desarrollar la capacidad de calcular variantes complejas con confianza y estar dispuesto a asumir el riesgo cuando el juicio posicional lo respalda, aunque no se pueda comprobar cada línea hasta el final.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
   <li>Las ideas típicas de sacrificio, como el presente griego, son un punto de partida útil, pero cada posición concreta exige cálculo propio antes de confiar ciegamente en el patrón.</li>
@@ -69,54 +95,152 @@
   <dt>El sacrificio</dt>
   <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
   <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
-  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a gustav 5 y la dama a hector 5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 5… anna 6</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 5… anna 6</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballos en c3, d4; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en c6, g8; peones en a6, b7, d7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en david 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en gustav 8.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>5… anna 6 introduce la Variante Taimanov: las negras retrasan ...d6 para dejar abierta la opción de desarrollar el alfil de casillas oscuras por c5 o b4, o incluso capturar y saltar con el caballo directamente sobre d4.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqkbnr/1p1p1ppp/p1n1p3/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6</p>
+  <p>5… anna 6 introduce la Variante Taimanov: las negras retrasan ...david 6 para dejar abierta la opción de desarrollar el alfil de casillas oscuras por cesar 5 o bella 4, o incluso capturar y saltar con el caballo directamente sobre david 4.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqkbnr/1p1p1ppp/p1n1p3/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 8… bella 5</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 8… bella 5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d4; torres en a1, h1; alfiles en c1, e2; caballo en c3; peones en a2, b2, c2, e4, f4, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballo en e7; peones en a6, b5, d7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 4.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en eva 7.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>Con el peón todavía en b5 y sin ...d6 jugado, las negras avanzan en el flanco de dama; el precio de este plan flexible es que ninguna pieza negra queda naturalmente colocada para defender el flanco de rey.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/3pnppp/p3p3/1p6/3QPP2/2N5/PPP1B1PP/R1B1K2R w KQkq - 0 9</p>
+  <p>Con el peón todavía en bella 5 y sin ...david 6 jugado, las negras avanzan en el flanco de dama; el precio de este plan flexible es que ninguna pieza negra queda naturalmente colocada para defender el flanco de rey.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/3pnppp/p3p3/1p6/3QPP2/2N5/PPP1B1PP/R1B1K2R w KQkq - 0 9</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 9… dama cesar 7</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 9… dama cesar 7</h3>
   
-  <p>Piezas blancas: rey en g1; dama en d4; torres en a1, f1; alfiles en c1, e2; caballo en c3; peones en a2, b2, c2, e4, f4, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en c7; torres en a8, h8; alfiles en c8, f8; caballo en e7; peones en a6, b5, d7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en david 4.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en cesar 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en eva 7.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>La dama se desarrolla apoyando el eventual avance ...b4 y controlando la diagonal a7-g1; las negras siguen sin comprometer su alfil de casillas oscuras, que podría ir todavía a c5, b4 o f6.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b1kb1r/2qpnppp/p3p3/1p6/3QPP2/2N5/PPP1B1PP/R1B2RK1 w kq - 2 10</p>
+  <p>La dama se desarrolla apoyando el eventual avance ...bella 4 y controlando la diagonal anna 7-gustav 1; las negras siguen sin comprometer su alfil de casillas oscuras, que podría ir todavía a cesar 5, bella 4 o felix 6.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1b1kb1r/2qpnppp/p3p3/1p6/3QPP2/2N5/PPP1B1PP/R1B2RK1 w kq - 2 10</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Toma cinco partidas de ataque famosas y en cada una cuenta cuántas piezas atacaban antes del sacrificio.</li>
   <li>En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -137,7 +261,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

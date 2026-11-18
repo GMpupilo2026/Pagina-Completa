@@ -104,7 +104,7 @@ CURSO.bloques.forEach((b) => b.lecciones.forEach((l) => {
 /* ---------- la versión accesible ---------- */
 const acc = fs.readFileSync(path.join(RAIZ, "material", "rompe-el-estancamiento", "rompe-el-estancamiento-accesible.html"), "utf8");
 ok(!/<img\b/i.test(acc), "la versión accesible trae imágenes");
-ok((acc.match(/<p class="posicion">/g) || []).length === ITEMS.length, "la versión accesible no cuenta todas las posiciones");
+ok((acc.match(/<div class="posicion">/g) || []).length === ITEMS.length, "la versión accesible no cuenta todas las posiciones");
 const visible = acc.replace(/<style[\s\S]*?<\/style>/g, "").replace(/<span class="fen">[^<]*<\/span>/g, "").replace(/<[^>]+>/g, " ");
 const escrita = visible.match(/\b(?:\d+\.{1,3}|…)?[RDTAC][a-h]?[1-8]?x?[a-h][1-8][+#]?(?=[\s,.;)])/g);
 ok(!escrita, "la versión accesible trae jugadas escritas: " + (escrita || []).slice(0, 5).join(", "));

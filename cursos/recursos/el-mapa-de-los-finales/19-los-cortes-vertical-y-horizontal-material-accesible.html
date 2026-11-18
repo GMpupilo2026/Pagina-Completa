@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,29 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Rey cortado en una columna</a></li>
+        <li><a href="#posicion-2">Posición 2: Diagrama de análisis: el rey en anna 6</a></li>
+        <li><a href="#posicion-3">Posición 3: El método combinado</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Aplicar los cortes del rey por columnas y por filas, el método combinado de Grigoriev y distinguir el corte horizontal perfecto, imperfecto y aparente.</p>
 <p>Idea guía: Cada columna o fila de corte vale un tiempo: contar columnas contra la fila del peón resuelve la mayoría de los casos.</p>
@@ -66,7 +92,7 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El rey activo en el final</dt>
   <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
   <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
@@ -74,48 +100,135 @@
   <dt>La mayoría de peones</dt>
   <dd>Tener más peones que el rival en un flanco. De una mayoría sana sale un peón pasado, y de un peón pasado sale una partida ganada.</dd>
   <dd><strong>El error de siempre:</strong> Avanzar primero el peón que no tiene rival enfrente. Se avanza primero el peón candidato —el que no tiene un peón rival directamente delante—, apoyado por los otros.</dd>
-  <dd><strong>Para verlo:</strong> Peones blancos en a2, b2 y c2 contra peones negros en a7 y b7: el candidato es el de c. Se juega c4-c5 y detrás vienen los otros dos.</dd>
+  <dd><strong>Para verlo:</strong> Peones blancos en anna 2, bella 2 y cesar 2 contra peones negros en anna 7 y bella 7: el candidato es el de c. Se juega cesar 4-cesar 5 y detrás vienen los otros dos.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Rey cortado en una columna</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Rey cortado en una columna</h3>
   
-  <p>Piezas blancas: rey en c3; torre en d1; peón en c4.</p>
-  <p>Piezas negras: rey en e6; torre en h8.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Torre en david 1.</li>
+    <li>Peón en cesar 4.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en eva 6.</li>
+    <li>Torre en hector 8.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… torre cesar 8, 2. rey bella 4, torre bella 8 jaque, 3. rey cesar 5, torre cesar 8 jaque, 4. rey bella 5, torre bella 8 jaque, 5. rey anna 6, torre cesar 8, 6. torre david 4, rey eva 5, 7. torre david 5 jaque, rey eva 6, 8. rey bella 5, torre bella 8 jaque, 9. rey anna 4, torre cesar 8, 10. rey bella 4, torre bella 8 jaque, 11. torre bella 5, torre hector 8</p>
+  <h4>La línea: 21 jugadas</h4>
+  <ul>
+    <li>1. Negras: torre cesar 8.</li>
+    <li>2. Blancas: rey bella 4.</li>
+    <li>2. Negras: torre bella 8 jaque.</li>
+    <li>3. Blancas: rey cesar 5.</li>
+    <li>3. Negras: torre cesar 8 jaque.</li>
+    <li>4. Blancas: rey bella 5.</li>
+    <li>4. Negras: torre bella 8 jaque.</li>
+    <li>5. Blancas: rey anna 6.</li>
+    <li>5. Negras: torre cesar 8.</li>
+    <li>6. Blancas: torre david 4.</li>
+    <li>6. Negras: rey eva 5.</li>
+    <li>7. Blancas: torre david 5 jaque.</li>
+    <li>7. Negras: rey eva 6.</li>
+    <li>8. Blancas: rey bella 5.</li>
+    <li>8. Negras: torre bella 8 jaque.</li>
+    <li>9. Blancas: rey anna 4.</li>
+    <li>9. Negras: torre cesar 8.</li>
+    <li>10. Blancas: rey bella 4.</li>
+    <li>10. Negras: torre bella 8 jaque.</li>
+    <li>11. Blancas: torre bella 5.</li>
+    <li>11. Negras: torre hector 8.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>1… torre cesar 8! frena el peón. Tras los jaques frontales, 5… torre cesar 8! (no más jaques) y 6… rey eva 5! la torre blanca no puede defender el peón y mantener el corte a la vez.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 7r/8/4k3/8/2P5/2K5/8/3R4 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 7r/8/4k3/8/2P5/2K5/8/3R4 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Diagrama de análisis: el rey en a6</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Diagrama de análisis: el rey en anna 6</h3>
   
-  <p>Piezas blancas: rey en a6; torre en d4; peón en c4.</p>
-  <p>Piezas negras: rey en e7; torre en c8.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en anna 6.</li>
+    <li>Torre en david 4.</li>
+    <li>Peón en cesar 4.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en eva 7.</li>
+    <li>Torre en cesar 8.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… rey eva 6, 2. rey bella 7, torre cesar 5, 3. rey bella 6, torre eva 5, 4. cesar 5</p>
+  <h4>La línea: 6 jugadas</h4>
+  <ul>
+    <li>1. Negras: rey eva 6.</li>
+    <li>2. Blancas: rey bella 7.</li>
+    <li>2. Negras: torre cesar 5.</li>
+    <li>3. Blancas: rey bella 6.</li>
+    <li>3. Negras: torre eva 5.</li>
+    <li>4. Blancas: cesar 5.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>Tras 1… rey eva 7?, 2. rey bella 4! el rey blanco llegó a a6 (dos filas y dos columnas más allá del peón) y con 6. torre david 4 el rey negro tarda un tiempo más en molestar. Con el peón en quinta y sin lado largo, se pierde.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r5/4k3/K7/8/2PR4/8/8/8 b - - 0 1</p>
+  <p>Tras 1… rey eva 7?, 2. rey bella 4! el rey blanco llegó a anna 6 (dos filas y dos columnas más allá del peón) y con 6. torre david 4 el rey negro tarda un tiempo más en molestar. Con el peón en quinta y sin lado largo, se pierde.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2r5/4k3/K7/8/2PR4/8/8/8 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: El método combinado</h3>
+  <h3 id="posicion-3">Posición 3 de 3: El método combinado</h3>
   
-  <p>Piezas blancas: rey en c3; torre en e1; peón en c4.</p>
-  <p>Piezas negras: rey en f6; torre en c8.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Torre en eva 1.</li>
+    <li>Peón en cesar 4.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en felix 6.</li>
+    <li>Torre en cesar 8.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. rey bella 4, torre bella 8 jaque, 2. rey anna 5, torre cesar 8, 3. rey bella 5, torre bella 8 jaque, 4. rey anna 6, torre cesar 8, 5. torre cesar 1, rey eva 7, 6. rey bella 7, torre cesar 5, 7. rey bella 6, torre hector 5, 8. cesar 5, rey david 8, 9. torre david 1 jaque, rey cesar 8, 10. torre gustav 1, torre hector 8, 11. cesar 6, torre felix 8, 12. torre anna 1, rey bella 8, 13. cesar 7 jaque, rey cesar 8, 14. torre anna 8 jaque</p>
+  <h4>La línea: 27 jugadas</h4>
+  <ul>
+    <li>1. Blancas: rey bella 4.</li>
+    <li>1. Negras: torre bella 8 jaque.</li>
+    <li>2. Blancas: rey anna 5.</li>
+    <li>2. Negras: torre cesar 8.</li>
+    <li>3. Blancas: rey bella 5.</li>
+    <li>3. Negras: torre bella 8 jaque.</li>
+    <li>4. Blancas: rey anna 6.</li>
+    <li>4. Negras: torre cesar 8.</li>
+    <li>5. Blancas: torre cesar 1.</li>
+    <li>5. Negras: rey eva 7.</li>
+    <li>6. Blancas: rey bella 7.</li>
+    <li>6. Negras: torre cesar 5.</li>
+    <li>7. Blancas: rey bella 6.</li>
+    <li>7. Negras: torre hector 5.</li>
+    <li>8. Blancas: cesar 5.</li>
+    <li>8. Negras: rey david 8.</li>
+    <li>9. Blancas: torre david 1 jaque.</li>
+    <li>9. Negras: rey cesar 8.</li>
+    <li>10. Blancas: torre gustav 1.</li>
+    <li>10. Negras: torre hector 8.</li>
+    <li>11. Blancas: cesar 6.</li>
+    <li>11. Negras: torre felix 8.</li>
+    <li>12. Blancas: torre anna 1.</li>
+    <li>12. Negras: rey bella 8.</li>
+    <li>13. Blancas: cesar 7 jaque.</li>
+    <li>13. Negras: rey cesar 8.</li>
+    <li>14. Blancas: torre anna 8 jaque.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>4. rey anna 6! es la casilla ideal; 5. torre cesar 1! apoya el peón por detrás. Al rey negro le falta un tiempo para ayudar a su torre.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r5/8/5k2/8/2P5/2K5/8/4R3 w - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2r5/8/5k2/8/2P5/2K5/8/4R3 w - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -125,7 +238,7 @@
   <li>Revisa tus partidas y busca una donde tuvieras mayoría en un flanco y no la usaras.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -178,7 +291,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Solo quedan reyes y peones: el rey es la pieza que decide. Cuenta tiempos antes de mover. Juegan las negras; el rival acaba de jugar rey hector 4.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Durante el medio juego el rey se protege, porque cualquier ataque lo puede alcanzar. Pero cuando las damas se cambian y quedan pocas piezas, el peligro desaparece y el rey se transforma: vale más o menos lo mismo que una pieza menor, y es la única que puede ir al frente a pelear con los peones rivales sin miedo a que la cambien.</p>
-<p>Por eso, en la transición al final, una de las ventajas pequeñas más importantes es tener el rey más cerca del centro. Un rey en e3 contra uno en g8 es casi un peón de diferencia: llega antes a apoyar un peón pasado, a frenar el rival o a comerse los peones que quedaron atrás.</p>
+<p>Por eso, en la transición al final, una de las ventajas pequeñas más importantes es tener el rey más cerca del centro. Un rey en eva 3 contra uno en gustav 8 es casi un peón de diferencia: llega antes a apoyar un peón pasado, a frenar el rival o a comerse los peones que quedaron atrás.</p>
 <p>La costumbre que hay que crear es simple: apenas se cambian las damas, pregúntate dónde quiere estar tu rey y empieza a caminar. Muchos finales parejos se pierden porque uno de los dos movió peones mientras el otro activaba su rey.</p>
 
 
@@ -65,32 +89,54 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Solo quedan reyes y peones: el rey es la pieza que decide. Cuenta tiempos antes de mover. Juegan las negras; el rival acaba de jugar rey hector 4.</h3>
+  <h3 id="posicion-1">Posición 1: Solo quedan reyes y peones: el rey es la pieza que decide. Cuenta tiempos antes de mover. Juegan las negras; el rival acaba de jugar rey hector 4.</h3>
   
-  <p>Piezas blancas: rey en h4; peones en a5, b4, f4, g2, h2.</p>
-  <p>Piezas negras: rey en c3; peones en a6, c6, f5, g6.</p>
+  <h4>Piezas blancas: 6</h4>
+  <ul>
+    <li>Rey en hector 4.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 5</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 49… rey captura bella 4, 50. rey gustav 5, cesar 5, 51. gustav 4, cesar 4</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>49. Negras: rey captura bella 4.</li>
+    <li>50. Blancas: rey gustav 5.</li>
+    <li>50. Negras: cesar 5.</li>
+    <li>51. Blancas: gustav 4.</li>
+    <li>51. Negras: cesar 4.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>49… rey captura bella 4, 50. rey gustav 5, cesar 5, 51. gustav 4, cesar 4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Sin ninguna pieza en el tablero, el rey es la pieza más fuerte, y un solo tiempo decide quién gana. (Ejercicio 38yIr de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: rey captura bella 4 es la mejor (+4,0) y la segunda queda en -3,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p1p3p1/P4p2/1P3P1K/2k5/6PP/8 b - - 1 49</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p1p3p1/P4p2/1P3P1K/2k5/6PP/8 b - - 1 49</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
@@ -100,7 +146,7 @@
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +199,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

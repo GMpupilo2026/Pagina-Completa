@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay un peón tuyo muy cerca del rey rival: ¿qué casilla sostiene y quién puede usarla? Juegan las blancas; el rival acaba de jugar … rey hector 8.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>La cuña es un peón tuyo que llegó muy adelante, en f6, g6 o h6 si juegas con blancas (f3, g3 o h3 con negras), justo frente al rey enrocado del rival. Desde ahí controla casillas clave del enroque, por ejemplo g7, y le sirve de apoyo a tu dama o a tu torre para dar mate en esa casilla. El rey rival queda encerrado y sus piezas no pueden defender bien porque el peón corta sus caminos. Muchas partidas se deciden porque una sola cuña vale más que una pieza.</p>
-<p>La reconoces cuando tienes un peón en la sexta fila (o la tercera, con negras) junto al rey enrocado, el rival no puede capturarlo sin abrirse todavía más y tu dama tiene camino para llegar a la casilla que el peón protege. Si el peón está en f6 y el rey rival en g8, la casilla g7 es el punto débil: una dama que llega a h6 o a g5 suele amenazar mate. Un caballo o una torre que se suman al ataque terminan el trabajo.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>La cuña es un peón tuyo que llegó muy adelante, en felix 6, gustav 6 o hector 6 si juegas con blancas (felix 3, gustav 3 o hector 3 con negras), justo frente al rey enrocado del rival. Desde ahí controla casillas clave del enroque, por ejemplo gustav 7, y le sirve de apoyo a tu dama o a tu torre para dar mate en esa casilla. El rey rival queda encerrado y sus piezas no pueden defender bien porque el peón corta sus caminos. Muchas partidas se deciden porque una sola cuña vale más que una pieza.</p>
+<p>La reconoces cuando tienes un peón en la sexta fila (o la tercera, con negras) junto al rey enrocado, el rival no puede capturarlo sin abrirse todavía más y tu dama tiene camino para llegar a la casilla que el peón protege. Si el peón está en felix 6 y el rey rival en gustav 8, la casilla gustav 7 es el punto débil: una dama que llega a hector 6 o a gustav 5 suele amenazar mate. Un caballo o una torre que se suman al ataque terminan el trabajo.</p>
 <p>Una vez instalada, la cuña vale más quieta que avanzando. El error típico es empujarla para «coronar» o para dar un jaque, y así se pierde el control de las casillas que encerraban al rey. Lo correcto es mantenerla bien defendida y traer piezas hasta que el mate sea inevitable. Si te toca defender, la regla es la contraria: elimina la cuña aunque cueste material, porque mientras ese peón siga ahí, cada pieza rival que llega es una amenaza de mate.</p>
 
 
@@ -65,32 +89,73 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>La iniciativa</dt>
   <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
   <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
   <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay un peón tuyo muy cerca del rey rival: ¿qué casilla sostiene y quién puede usarla? Juegan las blancas; el rival acaba de jugar … rey hector 8.</h3>
+  <h3 id="posicion-1">Posición 1: Hay un peón tuyo muy cerca del rey rival: ¿qué casilla sostiene y quién puede usarla? Juegan las blancas; el rival acaba de jugar … rey hector 8.</h3>
   
-  <p>Piezas blancas: rey en h1; dama en g3; torres en a1, f1; alfiles en e2, e3; caballo en c3; peones en a3, b2, c2, e4, f5, g2, h2.</p>
-  <p>Piezas negras: rey en h8; dama en c7; torres en a8, f8; alfiles en c6, e7; caballo en f6; peones en a6, b7, d6, e5, f7, g6, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en hector 1.</li>
+    <li>Dama en gustav 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en hector 8.</li>
+    <li>Dama en cesar 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 6.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 17. alfil gustav 5, caballo captura eva 4, 18. caballo captura eva 4, alfil captura eva 4, 19. felix 6, alfil david 8, 20. alfil david 3</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>17. Blancas: alfil gustav 5.</li>
+    <li>17. Negras: caballo captura eva 4.</li>
+    <li>18. Blancas: caballo captura eva 4.</li>
+    <li>18. Negras: alfil captura eva 4.</li>
+    <li>19. Blancas: felix 6.</li>
+    <li>19. Negras: alfil david 8.</li>
+    <li>20. Blancas: alfil david 3.</li>
+  </ul>
   <p>Resultado: Tablas</p>
-  <p>Jussupow–Sveshnikov, Ashjabad 1978. 17. alfil gustav 5, caballo captura eva 4, 18. caballo captura eva 4, alfil captura eva 4, 19. felix 6, alfil david 8, 20. alfil david 3. Sacrificar un peón para clavar una cuña en f6 y atacar al rey. Mira cómo el peón avanzado sostiene la casilla del mate y le quita al rey las salidas que le quedaban. (Partida Jussupow–Sveshnikov, Ashjabad 1978. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+1,2).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4r1k/1pq1bp1p/p1bp1np1/4pP2/4P3/P1N1B1Q1/1PP1B1PP/R4R1K w - - 2 17</p>
+  <p>Jussupow–Sveshnikov, Ashjabad 1978. 17. alfil gustav 5, caballo captura eva 4, 18. caballo captura eva 4, alfil captura eva 4, 19. felix 6, alfil david 8, 20. alfil david 3. Sacrificar un peón para clavar una cuña en felix 6 y atacar al rey. Mira cómo el peón avanzado sostiene la casilla del mate y le quita al rey las salidas que le quedaban. (Partida Jussupow–Sveshnikov, Ashjabad 1978. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+1,2).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4r1k/1pq1bp1p/p1bp1np1/4pP2/4P3/P1N1B1Q1/1PP1B1PP/R4R1K w - - 2 17</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -100,7 +165,7 @@
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +218,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

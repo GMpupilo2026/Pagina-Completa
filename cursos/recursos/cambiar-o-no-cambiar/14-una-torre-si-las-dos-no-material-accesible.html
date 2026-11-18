@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,13 +57,32 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Eugene Znosko Borovsky – Alexander Alekhine, París 1933. Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?</a></li>
+        <li><a href="#posicion-2">Posición 2: Garry Kasparov – Viswanathan Anand, Linares 2003. Juegan las blancas, con más espacio. Las negras van a cambiar torres en david 1. ¿Cómo recapturas?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>En una posición pareja con torres en una columna abierta, lo natural es cambiarlas. Pero si cambias las dos parejas, muchas veces te quedas sin forma de crear amenazas. Cambiar una sola, y llevar la que queda a otra columna o a otro flanco, mantiene la partida viva.</p>
 <p>También importa con qué se recaptura. Recapturar con el rey en vez de con la otra torre activa al rey y deja libre la torre para buscar otra vía de entrada.</p>
-<p>Alexander Alekhine, contra Znosko Borovsky, cambió una pareja de torres en la columna d, tapó esa columna con su rey en e6 y usó la torre que le quedaba en el flanco de rey. Kasparov, contra Anand, recapturó con el rey en d1 y llevó su torre a la columna a para atacar el peón de b6.</p>
+<p>Alexander Alekhine, contra Znosko Borovsky, cambió una pareja de torres en la columna d, tapó esa columna con su rey en eva 6 y usó la torre que le quedaba en el flanco de rey. Kasparov, contra Anand, recapturó con el rey en david 1 y llevó su torre a la columna a para atacar el peón de bella 6.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -76,33 +101,113 @@
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Eugene Znosko Borovsky – Alexander Alekhine, París 1933. Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Eugene Znosko Borovsky – Alexander Alekhine, París 1933. Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?</h3>
   
-  <p>Piezas blancas: rey en g1; torres en a1, d1; alfil en h6; peones en a2, b2, c3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; torres en a8, f8; alfil en e7; peones en a6, b7, c7, e5, f7, h7.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en david 1.</li>
+    <li>Alfil en hector 6.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 10</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 16… torre felix david 8, 17. rey felix 1, felix 5, 18. torre captura david 8 jaque, torre captura david 8, 19. gustav 3, rey felix 7, 20. alfil eva 3, hector 5, 21. rey eva 2, rey eva 6, 22. torre david 1, torre gustav 8, 23. felix 3</p>
+  <h4>La línea: 14 jugadas</h4>
+  <ul>
+    <li>16. Negras: torre felix david 8.</li>
+    <li>17. Blancas: rey felix 1.</li>
+    <li>17. Negras: felix 5.</li>
+    <li>18. Blancas: torre captura david 8 jaque.</li>
+    <li>18. Negras: torre captura david 8.</li>
+    <li>19. Blancas: gustav 3.</li>
+    <li>19. Negras: rey felix 7.</li>
+    <li>20. Blancas: alfil eva 3.</li>
+    <li>20. Negras: hector 5.</li>
+    <li>21. Blancas: rey eva 2.</li>
+    <li>21. Negras: rey eva 6.</li>
+    <li>22. Blancas: torre david 1.</li>
+    <li>22. Negras: torre gustav 8.</li>
+    <li>23. Blancas: felix 3.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>16… torre felix david 8 ofrece cambiar solo una pareja: tras 18. torre captura david 8 jaque, torre captura david 8 las negras llevan el rey a e6, tapan la columna d y su torre se va a g8 para abrir el flanco de rey. Con una torre en el tablero, la posición pareja siguió teniendo juego. (Stockfish 17 a profundidad 22: torre felix david 8 es la que elige el motor (+0,1).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R2K1 b - - 0 16</p>
+  <p>16… torre felix david 8 ofrece cambiar solo una pareja: tras 18. torre captura david 8 jaque, torre captura david 8 las negras llevan el rey a eva 6, tapan la columna d y su torre se va a gustav 8 para abrir el flanco de rey. Con una torre en el tablero, la posición pareja siguió teniendo juego. (Stockfish 17 a profundidad 22: torre felix david 8 es la que elige el motor (+0,1).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R2K1 b - - 0 16</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Garry Kasparov – Viswanathan Anand, Linares 2003. Juegan las blancas, con más espacio. Las negras van a cambiar torres en d1. ¿Cómo recapturas?</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Garry Kasparov – Viswanathan Anand, Linares 2003. Juegan las blancas, con más espacio. Las negras van a cambiar torres en david 1. ¿Cómo recapturas?</h3>
   
-  <p>Piezas blancas: rey en b1; torres en d1, e1; alfil en c3; peones en a4, b2, c4, e5, f3, g4, h5.</p>
-  <p>Piezas negras: rey en g8; torres en c8, d8; alfil en c7; peones en a5, b7, c5, e6, f7, g7, h6.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en bella 1.</li>
+    <li>Torre en david 1.</li>
+    <li>Torre en eva 1.</li>
+    <li>Alfil en cesar 3.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Torre en david 8.</li>
+    <li>Alfil en cesar 7.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 28. rey cesar 2, torre captura david 1, 29. rey captura david 1, torre david 8 jaque, 30. rey eva 2, torre david 7, 31. felix 4, alfil david 8, 32. felix 5, alfil gustav 5, 33. felix 6, bella 6</p>
+  <h4>La línea: 12 jugadas</h4>
+  <ul>
+    <li>28. Blancas: rey cesar 2.</li>
+    <li>28. Negras: torre captura david 1.</li>
+    <li>29. Blancas: rey captura david 1.</li>
+    <li>29. Negras: torre david 8 jaque.</li>
+    <li>30. Blancas: rey eva 2.</li>
+    <li>30. Negras: torre david 7.</li>
+    <li>31. Blancas: felix 4.</li>
+    <li>31. Negras: alfil david 8.</li>
+    <li>32. Blancas: felix 5.</li>
+    <li>32. Negras: alfil gustav 5.</li>
+    <li>33. Blancas: felix 6.</li>
+    <li>33. Negras: bella 6.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>28. rey cesar 2, torre captura david 1, 29. rey captura david 1: recapturar con el rey lo acerca al centro y al flanco de rey, donde habrá rupturas, y deja la otra torre libre. Con 31. felix 4, 32. felix 5 y 34. torre anna 1 las blancas ganan espacio y la torre va a buscar el peón débil de b6. (Stockfish 17 a profundidad 22: rey cesar 2 es la que elige el motor (+0,2).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2rr2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/1K1RR3 w - - 0 28</p>
+  <p>28. rey cesar 2, torre captura david 1, 29. rey captura david 1: recapturar con el rey lo acerca al centro y al flanco de rey, donde habrá rupturas, y deja la otra torre libre. Con 31. felix 4, 32. felix 5 y 34. torre anna 1 las blancas ganan espacio y la torre va a buscar el peón débil de bella 6. (Stockfish 17 a profundidad 22: rey cesar 2 es la que elige el motor (+0,2).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2rr2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/1K1RR3 w - - 0 28</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
   <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
@@ -112,7 +217,7 @@
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -165,7 +270,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
