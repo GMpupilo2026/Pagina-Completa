@@ -99,9 +99,60 @@ function datosDe(p){
   return { datos: { inicio: h.FEN || null, jugadas: g.history(), variantes: [], comentarios: {} }, sinDatos: true };
 }
 
+/* ---------------- La grabación de la clase ----------------
+   Si la llamada de la clase se grabó, sus partes (una cada 5 minutos) en
+   orden, cada una con su reproductor. La RLS de clase_grabaciones decide quién
+   las ve; las direcciones firmadas valen una hora. */
+let grabacionPedida = 0;
+async function cargarGrabacion(claseId){
+  const caja = document.getElementById('visor-grabacion');
+  const lista = document.getElementById('visor-grabacion-partes');
+  const pedido = ++grabacionPedida;
+  caja.hidden = true;
+  lista.textContent = '';
+  if (!claseId) return;
+  // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
+  let data, firmas;
+  try {
+    const r = await sb.from('clase_grabaciones').select('ruta, parte, segundos')
+      .eq('class_session_id', claseId).order('parte', { ascending: true }).range(0, 199);
+    if (pedido !== grabacionPedida || r.error || !r.data || !r.data.length) return;
+    data = r.data;
+    const f = await sb.storage.from('clase-grabaciones').createSignedUrls(data.map((g) => g.ruta), 3600);
+    firmas = f.data;
+  } catch (e) { console.warn('La grabación de la clase no se pudo cargar:', e); return; }
+  if (pedido !== grabacionPedida) return;
+  const url = new Map((firmas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]));
+  data.forEach((g, i) => {
+    if (!url.has(g.ruta)) return;
+    const li = document.createElement('li');
+    const id = 'grabacion-parte-' + i;
+    const etiqueta = document.createElement('label');
+    etiqueta.htmlFor = id;
+    etiqueta.className = 'block text-xs font-semibold text-brand-600 dark:text-brand-300';
+    const min = Math.max(1, Math.round((g.segundos || 0) / 60));
+    etiqueta.textContent = (data.length > 1 ? `Parte ${i + 1} de ${data.length}` : 'La clase entera') + ` · ${min} ${min === 1 ? 'minuto' : 'minutos'}`;
+    const audio = document.createElement('audio');
+    audio.id = id;
+    audio.controls = true;
+    audio.preload = 'none';
+    audio.className = 'w-full mt-1';
+    audio.src = url.get(g.ruta);
+    // Al terminar una parte sigue la siguiente.
+    audio.addEventListener('ended', () => {
+      const sig = document.getElementById('grabacion-parte-' + (i + 1));
+      if (sig) sig.play().catch(() => {});
+    });
+    li.append(etiqueta, audio);
+    lista.appendChild(li);
+  });
+  caja.hidden = !lista.children.length;
+}
+
 function abrir(p){
   // Otra clase: la práctica contra el motor era de la posición de la anterior.
   terminarPractica(false);
+  cargarGrabacion(p.class_session_id).catch(() => {});
   const { datos, sinDatos } = datosDe(p);
   const raiz = PgnClase.arbol(datos.jugadas || [], datos.variantes || []);
   const inicio = datos.inicio || PgnClase.INICIAL;
