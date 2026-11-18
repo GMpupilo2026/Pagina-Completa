@@ -40,6 +40,7 @@
            ============================================================ */
         let game = null;        // la partida armada (chess.js)
         let resultado = null;   // lo que devolvió reconstruir()
+        let lectura = null;     // { leida, metodo, hojas, resultado, palabras }: para «Descargar la lectura»
         let processBoard = null;
 
         function updateProcessStatus(text) {
@@ -187,6 +188,7 @@
                 const r = await PlanillaReconstruir.enHilo(hojas, (x) => progreso(40 + Math.round(x * 60), "Armando la partida… " + Math.round(x * 100) + " %"));
                 progressWrap.classList.add("hidden");
                 document.getElementById("process-section").classList.remove("hidden");
+                lectura = { leida: new Date().toISOString(), metodo, hojas, resultado: r, palabras: words || [] };
                 mostrarPartida(r, metodo);
                 readBtn.disabled = false;
             } catch (err) {
@@ -213,6 +215,23 @@
 
         document.getElementById("download-pgn-btn").addEventListener("click", () => {
             downloadText("planilla-" + hoyCR() + ".pgn", document.getElementById("pgn-output").value);
+        });
+
+        /* «Descargar la lectura»: lo que leyó Google Vision de la foto (cada palabra con su caja), las celdas y
+           la partida que salió, para ver por qué una jugada se leyó mal (el 17/11 no se pudo saber qué había
+           leído en la celda de «Cf6»). Lo arma PlanillaReconstruir.lectura(), la misma del Centroamericano. */
+        document.getElementById("download-lectura-btn").addEventListener("click", () => {
+            if (!lectura) return;
+            const json = JSON.stringify(PlanillaReconstruir.lectura("Lectura de la foto de una planilla (Lector de planilla)", {}, lectura), null, 1);
+            const blob = new Blob([json], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "lectura-planilla-" + hoyCR() + ".json";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         });
 
         document.getElementById("save-shared-btn").addEventListener("click", async () => {
@@ -243,6 +262,7 @@
 
         document.getElementById("restart-btn").addEventListener("click", () => {
             selectedFile = null;
+            lectura = null;
             document.getElementById("sheet-input-camera").value = "";
             document.getElementById("sheet-input-file").value = "";
             document.getElementById("read-btn").disabled = true;

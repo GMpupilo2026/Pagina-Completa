@@ -9731,6 +9731,15 @@ mejor explica todo lo escrito. No hay un segundo lector: `js/lector-planilla.js`
 - **«Anota tu partida»** de «Tus propios errores» (`js/entreno-tipos-mas.js`) usa el mismo lector:
   marca con «?» las que no se leyeron tal cual y corta donde la planilla ya no se entiende (ver «Mis
   partidas de torneo» en entrenamiento.md).
+- **«Descargar la lectura»**, como en el Centroamericano: un `.json` con lo que devolvió Google Vision
+  tal cual (cada palabra con su caja: se puede pasar de nuevo a `hojasDeLaFoto()`), las celdas y la
+  partida que salió, con el estado y lo escrito de cada jugada. Lo pidió el dueño al probar la foto
+  real del 17/11 (ronda 9, dos columnas, 407×641 px): salieron 13 medias jugadas, con «c6» por
+  «Cf6» y «a5» por «c5» (las dos marcadas «*») y sin 6. 0-0 Cc6, y no había forma de saber qué había
+  leído Google en esas celdas. Lo arma `PlanillaReconstruir.lectura()`, una sola copia con el
+  Centroamericano. Trae lo escrito en la planilla, también los nombres: el botón lo dice, y el
+  archivo es para revisar, **nunca para el repositorio**. Se baja en la computadora de quien lee la
+  planilla; no se manda a ningún lado.
 - **El hilo es una sola copia**: `PlanillaReconstruir.enHilo()`. Antes el Centroamericano tenía el
   suyo; ahora lo usan los tres. Busca `planilla-reconstruir-worker.js` al lado de
   `planilla-reconstruir.js` (`document.currentScript`), así sirve también desde `entreno/`.

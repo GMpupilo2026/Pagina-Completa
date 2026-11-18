@@ -21,6 +21,9 @@
      no se sigue buscando.
    - aPgn(Chess, resultado, cabecera): el PGN de lo que se pudo salvar; si se
      cortó, la partida termina en «*» y un comentario dice desde dónde.
+   - lectura(que, extra, datos): lo que baja «Descargar la lectura» (el
+     Centroamericano y el Lector de planilla): las palabras de Vision tal cual,
+     las celdas y la partida que salió, para revisar por qué se leyó mal.
    - enHilo(hojas, alProgresar): reconstruir() en su propio hilo
      (js/planilla-reconstruir-worker.js), solo en una página. Una sola copia
      para el Centroamericano, el Lector de planilla y «Anota tu partida».
@@ -477,6 +480,29 @@
     return columnas;
   }
 
+  // --------------------------------------------------------------- la lectura para revisar
+  /* Lo que leyó Google Vision de la foto (cada palabra con su caja) y lo que salió de eso (las
+     celdas de cada planilla y la partida), para revisar con datos de verdad por qué una partida se
+     leyó mal y afinar este archivo. Trae lo que está escrito en la planilla, también los nombres del
+     encabezado: es para quien lee la planilla y para revisar, nunca para el repositorio.
+     datos: { leida, metodo, hojas, resultado, palabras } (las palabras como las devuelve
+     ocr-scoresheet, o compactas: [texto, x0, y0, x1, y1]). extra: lo propio de quien la baja
+     (el torneo, la ronda, la mesa…). */
+  function lectura(que, extra, datos) {
+    const r = datos.resultado;
+    return Object.assign({ que, version: 1 }, extra || {}, {
+      leida: datos.leida,
+      metodo: datos.metodo,
+      hojas: datos.hojas,
+      partida: {
+        jugadas: r.jugadas.map((j) => ({ san: j.san, estado: j.estado, escrito: j.escrito || [], alternativa: j.alternativa || null })),
+        ilegibleDesde: r.ilegibleDesde, resto: r.resto || [], costo: r.costo,
+      },
+      // como las devuelve ocr-scoresheet: se pueden pasar tal cual a hojasDeLaFoto()
+      palabras: (datos.palabras || []).map((w) => (Array.isArray(w) ? { text: w[0], bbox: { x0: w[1], y0: w[2], x1: w[3], y1: w[4] } } : { text: w.text, bbox: w.bbox })),
+    });
+  }
+
   // --------------------------------------------------------------- el hilo
   /* reconstruir() prueba miles de continuaciones y tarda varios segundos: en el
      hilo de la página, la página se congelaría. El hilo se busca al lado de este
@@ -500,7 +526,7 @@
     });
   }
 
-  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto, enHilo };
+  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto, lectura, enHilo };
   if (typeof module !== "undefined" && module.exports) module.exports = PlanillaReconstruir;
   else raiz.PlanillaReconstruir = PlanillaReconstruir;
 })(typeof window !== "undefined" ? window : globalThis);
