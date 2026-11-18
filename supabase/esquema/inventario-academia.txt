@@ -234,6 +234,7 @@ tabla  presentaciones_profe  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
+tabla  prospectos  rls=true
 tabla  proyecto_grupos  rls=true
 tabla  proyecto_sesiones  rls=true
 tabla  proyecto_tareas  rls=true
@@ -2424,6 +2425,19 @@ columna  profiles.is_admin  boolean
 columna  profiles.role  text
 columna  profiles.teacher_id  uuid
 columna  profiles.ultima_vista_actualizaciones  timestamp with time zone
+columna  prospectos.academia_id  uuid
+columna  prospectos.contacto  text
+columna  prospectos.creado_por  uuid
+columna  prospectos.created_at  timestamp with time zone
+columna  prospectos.edad  integer
+columna  prospectos.estado  text
+columna  prospectos.id  uuid
+columna  prospectos.nombre  text
+columna  prospectos.notas  text
+columna  prospectos.origen  text
+columna  prospectos.para_quien  text
+columna  prospectos.proximo_contacto  date
+columna  prospectos.updated_at  timestamp with time zone
 columna  proyecto_grupos.asignado_at  timestamp with time zone
 columna  proyecto_grupos.asignado_por  uuid
 columna  proyecto_grupos.created_at  timestamp with time zone
@@ -3402,6 +3416,7 @@ funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
+funcion  interno.prospectos_sellar()  definer  anon=false  auth=false
 funcion  interno.puedo_poner_audios(p_academia uuid)  definer  anon=false  auth=true
 funcion  interno.puedo_sacar_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=true
@@ -4191,6 +4206,10 @@ politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
 politica  profiles  profiles_update_own  UPDATE
+politica  prospectos  prospectos_agregar  INSERT
+politica  prospectos  prospectos_borrar  DELETE
+politica  prospectos  prospectos_cambiar  UPDATE
+politica  prospectos  prospectos_ver  SELECT
 politica  proyecto_grupos  proyecto_grupos_ver  SELECT
 politica  proyecto_sesiones  proyecto_sesiones_ver  SELECT
 politica  proyecto_tareas  proyecto_tareas_ver  SELECT
@@ -4477,6 +4496,7 @@ trigger  profiles  auditar_alta_baja
 trigger  profiles  auditar_cambio
 trigger  profiles  profiles_foto_por_funcion
 trigger  profiles  protect_profiles_identity_columns_trigger
+trigger  prospectos  prospectos_sellar
 trigger  proyecto_grupos  auditar
 trigger  pruebas_gratis  auditar
 trigger  puntos_ajustes  auditar
@@ -5056,6 +5076,9 @@ indice  profiles  profiles_grupo_idx
 indice  profiles  profiles_pkey
 indice  profiles  profiles_single_admin_idx
 indice  profiles  profiles_teacher_id_idx
+indice  prospectos  prospectos_academia
+indice  prospectos  prospectos_pkey
+indice  prospectos  prospectos_proximo
 indice  proyecto_grupos  proyecto_grupos_asignado_por_idx
 indice  proyecto_grupos  proyecto_grupos_pkey
 indice  proyecto_grupos  proyecto_grupos_profesor_idx
@@ -5287,6 +5310,7 @@ cron  limpiar-grabaciones  40 7 * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  metropolitano-correo  */10 * * * *
 cron  metropolitano-drive  */10 * * * *
+cron  prospectos-purga-descartados  20 9 * * *
 cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *
 cron  sala-avisos  * * 1-8 11 *
@@ -6265,6 +6289,10 @@ grant  profiles  authenticated  SELECT
 grant  profiles  authenticated  TRIGGER
 grant  profiles  authenticated  TRUNCATE
 grant  profiles  authenticated  UPDATE
+grant  prospectos  authenticated  DELETE
+grant  prospectos  authenticated  INSERT
+grant  prospectos  authenticated  SELECT
+grant  prospectos  authenticated  UPDATE
 grant  proyecto_grupos  authenticated  SELECT
 grant  proyecto_sesiones  authenticated  SELECT
 grant  proyecto_tareas  authenticated  SELECT

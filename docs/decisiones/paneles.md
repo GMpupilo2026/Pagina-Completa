@@ -3755,6 +3755,57 @@ asignada al profe Oscar (su cuenta de profesor, no la de administración).
   sitio. Las fechas (sábados del 14 de noviembre al 5 de diciembre) son una
   propuesta: la guía lo dice.
 
+## Interesados: el seguimiento de quien preguntó por clases
+
+`prospectos.html` (tarjeta «🌱 Interesados» en el panel de quien administra y en
+el del supervisor): quien preguntó por clases —por WhatsApp, en un colegio, por
+recomendación, desde «Unirse», en un torneo— y en qué va cada uno, hasta que se
+inscribe o se descarta. La idea es la de los «prospectos» de Chessgora; el dueño
+decidió el 17/11/2026 que acá sea **solo seguimiento interno**: no hay
+directorio ni formulario público nuevo (las academias son de una sola empresa,
+y la entrada pública ya es `unirse.html`). Migración
+`20261118055652_prospectos`.
+
+- **Una fila por interesado** en `public.prospectos`: nombre, contacto, para
+  quién y su edad, de dónde vino, el paso (nuevo, contactado, clase de prueba,
+  inscrito, descartado), notas y **la fecha del próximo contacto**, que es lo
+  que la vuelve seguimiento: arriba sale «Hoy toca contactar a N personas»
+  (`proximo_contacto <= HoraCR.hoy()`). Pasar a inscrito o descartado borra la
+  fecha: ya no hay a quién llamar.
+- **Quién ve a quién lo decide la RLS**: quien administra, todos; el supervisor,
+  los de las academias que supervisa (con el conjunto armado una vez,
+  `academia_id in (select … where supervisor_id = (select auth.uid()))`). Uno
+  sin academia lo ve solo administración. Un supervisor con varias academias
+  ve los de todas, con el nombre de la academia en cada tarjeta: son personas
+  sin cuenta, no entran en la «academia activa» de la supervisión.
+- **Sin funciones**: se lee y escribe la tabla directo, porque no reparte
+  permisos ni dinero. Lo que el navegador no puede mandar lo sella un trigger
+  (`interno.prospectos_sellar`): quién lo creó, cuándo, y la hora del último
+  cambio.
+- **Son datos de personas sin cuenta**: van en la política de privacidad («Si
+  preguntas por clases», versión del 18/11/2026), y los descartados se borran
+  solos a los 12 meses de su último cambio (pg_cron
+  `prospectos-purga-descartados`, 3:20 de Costa Rica). Coincide con lo que la
+  política ya prometía para las solicitudes que no terminan en inscripción.
+- En la página: el embudo (cuántos hay en cada paso, y filtrar), la caja de
+  «hoy toca», agregar, y cada tarjeta con su paso, la fecha y las notas. El
+  contacto lleva a WhatsApp si es un celular (8 dígitos o con 506) y a un
+  correo si tiene @. Todo lo escrito por una persona va por `textContent`.
+
+Comprobado impersonando roles en SQL (revertido): el supervisor de ADAPZ agrega
+a su academia, y aunque mande otro `creado_por` y otra fecha, queda él y la de
+hoy; no puede agregar a otra academia ni sin academia, ni mudar uno a otra;
+quien administra ve los tres de prueba y el supervisor solo el suyo; el borrado
+de los ajenos no toca nada; el otro supervisor ve solo el de su academia y no
+cambia el ajeno; un profesor no ve ninguno ni puede agregar; `anon` no tiene
+permiso.
+
+**Al tocarlo, `node herramientas/verificar-todo.js prospectos`** (sin
+navegador): la RLS por conjunto y con `auth.uid()` envuelto, el sellado, la
+purga, la página en la cabecera con su guardia, sus migas y la hora de Costa
+Rica, las dos tarjetas y la política. Está probado que salta con una política
+que pregunta `auth.uid()` suelto.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
