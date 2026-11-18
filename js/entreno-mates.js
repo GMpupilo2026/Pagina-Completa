@@ -367,6 +367,7 @@ function setStatus(text, cls){
 function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function loadPuzzle(){
+  if(window.EntrenadorIA) EntrenadorIA.limpiar();
   const puzzle = currentPuzzle();
   if(finEjercicio){ finEjercicio.cerrar(); finEjercicio = null; }
   document.getElementById('play-area').style.display = 'block';
@@ -467,8 +468,12 @@ function playMove(from, to, promotion){
     // Modo Adaptado, en palabras («caballo felix 3»), como todo lo que se oye.
     const dicha = blindMode && window.BlindNotation ? window.BlindNotation.sanSpoken(moveResult.san) : EjercicioTablero.jugadaEs(moveResult.san);
     setStatus(ComandosTablero.incorrecta(dicha, 'No lleva al mate en la cantidad de jugadas pedida.' + (refuta ? ' ' + refuta : '')), 'bad');
+    // El entrenador de IA, para quien lo tiene encendido (js/entrenador-ia.js):
+    // la posición de antes de la jugada y la jugada que hizo.
+    if(window.EntrenadorIA) EntrenadorIA.fallo({ fen: game.fen(), uci: from + to + (moveResult.promotion || '') });
     return;
   }
+  if(window.EntrenadorIA) EntrenadorIA.limpiar();
 
   solutionStep++;
   pistas.reiniciar();   // la marca de la pista ya no apunta a nada
