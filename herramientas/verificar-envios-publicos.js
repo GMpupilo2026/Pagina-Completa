@@ -20,7 +20,7 @@ const fs = require("fs");
 const path = require("path");
 
 const DIR = path.join(__dirname, "..", "supabase", "migraciones");
-const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia", "responder_encuesta_curso", "clase_invitado_entrar"];
+const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia", "responder_encuesta_curso", "clase_invitado_entrar", "familia_avisar_ausencia"];
 let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
 const bien = (m) => console.log("  ✓ " + m);
@@ -35,11 +35,17 @@ for (const f of archivos) {
   const sql = fs.readFileSync(path.join(DIR, f), "utf8");
   const m = sql.match(/create\s+(or\s+replace\s+)?function\s+interno\.frenar_envio_publico\s*\([\s\S]*?\$function\$([\s\S]*?)\$function\$/i);
   if (m) tiposDelFreno = [...m[2].matchAll(/when\s+'([a-z_]+)'\s+then/gi)].map((x) => x[1]);
+  // Una migración que le SUMA un tipo reescribiendo la función que ya está
+  // (pg_get_functiondef + replace, dentro de un `do`): el tipo va entre
+  // comillas dobladas, porque está dentro de un texto.
+  else if (tiposDelFreno && /pg_get_functiondef\('interno\.frenar_envio_publico/.test(sql)) {
+    for (const x of sql.matchAll(/when\s+''([a-z_]+)''\s+then/gi)) if (!tiposDelFreno.includes(x[1])) tiposDelFreno.push(x[1]);
+  }
 }
 
 console.log("=== Freno de los envíos sin cuenta ===");
 for (const fn of FUNCIONES) {
-  const inicio = new RegExp("create\\s+or\\s+replace\\s+function\\s+public\\." + fn + "\\s*\\(", "i");
+  const inicio = new RegExp("create\\s+(?:or\\s+replace\\s+)?function\\s+public\\." + fn + "\\s*\\(", "i");
   let ultima = null;
   let cuerpo = null;
   for (const f of archivos) {
