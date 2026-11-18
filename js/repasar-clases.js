@@ -108,13 +108,14 @@ async function cargarGrabacion(claseId){
   const caja = document.getElementById('visor-grabacion');
   const lista = document.getElementById('visor-grabacion-partes');
   const pedido = ++grabacionPedida;
+  fenSeguida = null;
   caja.hidden = true;
   lista.textContent = '';
   if (!claseId) return;
   // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
   let data, firmas;
   try {
-    const r = await sb.from('clase_grabaciones').select('ruta, parte, segundos')
+    const r = await sb.from('clase_grabaciones').select('id, ruta, parte, segundos, marcas, texto, profesor_id')
       .eq('class_session_id', claseId).order('parte', { ascending: true }).range(0, 199);
     if (pedido !== grabacionPedida || r.error || !r.data || !r.data.length) return;
     data = r.data;
@@ -138,15 +139,112 @@ async function cargarGrabacion(claseId){
     audio.preload = 'none';
     audio.className = 'w-full mt-1';
     audio.src = url.get(g.ruta);
+    // El tablero sigue a la grabación, si la parte trae las posiciones.
+    const marcas = Array.isArray(g.marcas) ? g.marcas.filter((m) => m && typeof m.fen === 'string') : [];
+    if (marcas.length) {
+      const seguir = () => seguirGrabacion(marcas, audio.currentTime);
+      audio.addEventListener('timeupdate', seguir);
+      audio.addEventListener('seeked', seguir);
+      audio.addEventListener('play', seguir);
+    }
     // Al terminar una parte sigue la siguiente.
     audio.addEventListener('ended', () => {
       const sig = document.getElementById('grabacion-parte-' + (i + 1));
       if (sig) sig.play().catch(() => {});
     });
-    li.append(etiqueta, audio);
+    li.append(etiqueta, audio, cajaDeTexto(g, url.get(g.ruta), i));
     lista.appendChild(li);
   });
   caja.hidden = !lista.children.length;
+  const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
+  document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
+  document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
+}
+
+/* Lo que se dijo en una parte, en texto. Si ya está guardado, se muestra
+   plegado. Si no, «Pasar a texto» lo saca Whisper EN ESTA computadora
+   (js/reporte-transcribir.js, el mismo de Reportes: el audio no sale de acá).
+   Lo guarda solo el profe de la clase (guardar_texto_grabacion); al alumno le
+   queda en su pantalla. */
+function textoPlegado(texto, i){
+  const det = document.createElement('details');
+  det.className = 'mt-1';
+  const sum = document.createElement('summary');
+  sum.className = 'cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+  sum.textContent = 'Lo que se dijo en esta parte, en texto';
+  const p = document.createElement('p');
+  p.id = 'grabacion-texto-' + i;
+  p.className = 'mt-1 text-sm text-brand-800 dark:text-brand-100 whitespace-pre-wrap max-h-64 overflow-y-auto';
+  p.tabIndex = 0;
+  p.textContent = texto;   // lo sacó un modelo de una voz: va por textContent
+  det.append(sum, p);
+  return det;
+}
+function cajaDeTexto(g, urlAudio, i){
+  const caja = document.createElement('div');
+  if (g.texto) { caja.appendChild(textoPlegado(g.texto, i)); return caja; }
+  if (!window.ReporteTranscribir || !ReporteTranscribir.hayCómo()) return caja;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bctrl mt-1';
+  btn.textContent = '📝 Pasar a texto';
+  const estado = document.createElement('p');
+  estado.className = 'text-xs text-brand-600 dark:text-brand-300 mt-1';
+  estado.setAttribute('role', 'status');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      const resp = await fetch(urlAudio);
+      if (!resp.ok) throw new Error('No se pudo bajar la grabación.');
+      const texto = (await ReporteTranscribir.transcribir(await resp.blob(), (a) => { estado.textContent = a.detalle || ''; }) || '').trim();
+      if (!texto) { estado.textContent = 'No se entendió nada en esta parte.'; btn.disabled = false; return; }
+      btn.remove();
+      caja.insertBefore(textoPlegado(texto, i), estado);
+      if (g.profesor_id === yoId) {
+        const { error } = await sb.rpc('guardar_texto_grabacion', { p_id: g.id, p_texto: texto });
+        estado.textContent = error ? 'Se pasó a texto, pero no se pudo guardar: ' + error.message
+          : 'Listo: el texto quedó guardado y tus alumnos ya lo pueden leer.';
+      } else {
+        estado.textContent = 'Listo: el texto queda solo en tu pantalla.';
+      }
+    } catch (e) {
+      estado.textContent = 'No se pudo pasar a texto: ' + (e.message || e);
+      btn.disabled = false;
+    }
+  });
+  caja.append(btn, estado);
+  return caja;
+}
+
+/* La posición de ese momento de la grabación: la última marca que ya pasó.
+   Si es una posición de la partida de la clase, se mira ESE nodo (y se marca
+   en la lista de jugadas); si no (el profe armó otra cosa), se pinta igual.
+   Se dice solo si se marcó «Decir las jugadas mientras escucho»: con lector de
+   pantalla se oiría encima de la voz del profe. */
+let fenSeguida = null;
+function seguirGrabacion(marcas, t){
+  if (!actual) return;
+  let m = null;
+  for (const x of marcas) { if ((x.s || 0) <= t + 0.05) m = x; else break; }
+  if (!m || m.fen === fenSeguida) return;
+  fenSeguida = m.fen;
+  const n = actual.nodos.find((x) => x.valida && clavePos(x.fen) === clavePos(m.fen))
+    || (clavePos(actual.raiz.fen) === clavePos(m.fen) ? null : undefined);
+  const decir = document.getElementById('visor-grabacion-decir').checked;
+  if (n !== undefined) {
+    if (decir) { mirar(n); return; }
+    // Callado: lo mismo que mirar(), sin anunciar.
+    nodo = n;
+    pintarTablero(n ? n.fen : actual.raiz.fen, n ? n.ultima : null);
+    actual.nodos.forEach((x) => { if (x.boton) { x.boton.classList.toggle('actual', x === n); x.boton.setAttribute('aria-current', x === n ? 'true' : 'false'); } });
+    document.getElementById('visor-estado').textContent = n ? `Jugada ${nombreDe(n)}${n.enVariante ? ' (variante)' : ''}` : 'Posición de arranque';
+    pintarAvisoDePregunta(n ? n.fen : actual.raiz.fen);
+    return;
+  }
+  const texto = 'Posición de ese momento de la clase';
+  if (decir) { mirarPosicion(m.fen, texto); return; }
+  pintarTablero(m.fen, null);
+  document.getElementById('visor-estado').textContent = texto;
 }
 
 function abrir(p){

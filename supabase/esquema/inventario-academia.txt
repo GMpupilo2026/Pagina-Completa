@@ -1180,10 +1180,12 @@ columna  clase_grabaciones.bytes  bigint
 columna  clase_grabaciones.class_session_id  uuid
 columna  clase_grabaciones.creado_en  timestamp with time zone
 columna  clase_grabaciones.id  uuid
+columna  clase_grabaciones.marcas  jsonb
 columna  clase_grabaciones.parte  integer
 columna  clase_grabaciones.profesor_id  uuid
 columna  clase_grabaciones.ruta  text
 columna  clase_grabaciones.segundos  integer
+columna  clase_grabaciones.texto  text
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
@@ -3291,7 +3293,8 @@ funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zo
 funcion  guardar_fide_id(p_persona uuid, p_fide_id text)  definer  anon=false  auth=true
 funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, p_dificultades text, p_proximo text, p_enviar boolean)  definer  anon=false  auth=true
 funcion  guardar_mi_foto(p_ruta text, p_version_privacidad text)  definer  anon=false  auth=true
-funcion  guardar_parte_grabacion(p_clase uuid, p_ruta text, p_segundos integer, p_bytes bigint)  definer  anon=false  auth=true
+funcion  guardar_parte_grabacion(p_clase uuid, p_ruta text, p_segundos integer, p_bytes bigint, p_marcas jsonb)  definer  anon=false  auth=true
+funcion  guardar_texto_grabacion(p_id uuid, p_texto text)  definer  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean)  invoker  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean, p_bloquea_cambio boolean)  invoker  anon=false  auth=true
