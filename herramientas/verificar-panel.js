@@ -1078,9 +1078,9 @@ async function pruebaBuscador(browser) {
   igual("y la barra no se escribe en el campo", await page.inputValue("#buscar-panel-campo"), "");
 
   await buscar(page, "pagos");
-  await Promise.all([page.waitForURL(/cobros\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
+  await Promise.all([page.waitForURL(/mensualidades\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
   bien("Enter abre el primero: " + page.url().replace(BASE, ""));
-  igual("sin errores en la página", errores.filter((e) => !/cobros/.test(e)), []);
+  igual("sin errores en la página", errores.filter((e) => !/cobros|mensualidades/.test(e)), []);
   await ctx.close();
 
   // La alumna no tiene Cobros: buscarlo no lo inventa.
