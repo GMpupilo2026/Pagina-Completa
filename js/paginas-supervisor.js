@@ -57,7 +57,7 @@
             { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: "informes.html?tema=diagnostico-publico", zona: "estudiantes" },
         ] },
         { title: "Cobros y formularios", tiles: [
-            { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html", zona: "cobros" },
+            { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html", zona: "cobros" },
             /* Los cupos que compró su academia: los reparte ella entre sus
                miembros. Sin un paquete de su academia, la página se lo dice. */
             { emoji: "🎟️", label: "Cupos de tu academia", desc: "Reparte entre los alumnos de tu academia los cupos de acceso que compró", href: "accesos.html", zona: "cobros" },

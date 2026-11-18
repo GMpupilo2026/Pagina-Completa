@@ -289,6 +289,7 @@
                   porque: "Nadie revisa sus clases ni sus informes.",
                   accion: "Ver quiénes son", ir: "profesores", alDia: "Todos los profesores están a cargo de alguien" },
                 // Urgente: va con los urgentes, antes de lo que es para vigilar.
+                deLaBase("pagosPorConfirmar"),
                 deLaBase("recibosSinEntregar"),
                 { clave: "sup-vacios", nivel: "vigilar", emoji: "🧭", n: supVacios,
                   titulo: (n) => pl(n, "supervisor sin nadie a cargo", "supervisores sin nadie a cargo"),
@@ -449,7 +450,7 @@
             if (revisando) return revisando;
             revisando = (async () => {
                 pintarUrgentes();
-                const [conteos] = await Promise.all([Pendientes.contarEnLaBase(sb, ["solicitudes", "justificaciones", "recibosSinEntregar", "seVan", "morosos", "inactivos"]), cargarCobertura()]);
+                const [conteos] = await Promise.all([Pendientes.contarEnLaBase(sb, ["solicitudes", "justificaciones", "pagosPorConfirmar", "recibosSinEntregar", "seVan", "morosos", "inactivos"]), cargarCobertura()]);
                 conteosRemotos = conteos;
             })();
             try { await revisando; } finally { revisando = null; }
