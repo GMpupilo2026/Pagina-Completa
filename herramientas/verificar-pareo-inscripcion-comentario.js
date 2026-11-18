@@ -75,17 +75,21 @@ function pruebaCorreoYFuncion() {
 
   const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/pareo-publicar/index.ts"), "utf8");
   const marcar = fn.slice(fn.indexOf('if (accion === "inscripciones" || accion === "marcar")'), fn.indexOf("// ---------- Seguir a un jugador por correo"));
-  ok(/update\(\{ estado, comentario, avisado: null \}\)/.test(marcar), "«marcar» guarda el comentario con el estado");
+  ok(/update\(\{ estado, comentario \}\)/.test(marcar), "«marcar» guarda el comentario con el estado");
+  ok(/if \(x\.aviso_estado === estado\) continue;/.test(marcar), "«marcar» no reenvía el correo de una decisión ya avisada");
   ok(/texto\(body\.comentario, 300\)/.test(marcar), "y lo acota a 300 caracteres, como la base");
   ok(/if \(!esCorreo\(x\.contacto\)\) \{ sinCorreo\.push/.test(marcar), "con un teléfono no se manda nada");
   ok(/correoDecision\(/.test(marcar) && /responderA\)/.test(marcar), "con un correo se manda el aviso, con la respuesta a la organización");
   ok(/anuncio:datos->anuncio/.test(marcar) && /, evento\), responderA\)/.test(marcar), "la bienvenida lleva los datos del torneo publicado");
-  ok(/update\(\{ avisado: new Date\(\)\.toISOString\(\) \}\)\.in\("id", avisados\)/.test(marcar), "y anota cuándo salió");
+  ok(/update\(\{ avisado: new Date\(\)\.toISOString\(\), aviso_estado: estado \}\)\.in\("id", avisados\)/.test(marcar), "y anota cuándo salió y qué decisión se avisó");
   ok(/comentario, avisado, creado/.test(marcar), "«inscripciones» devuelve el comentario y si se avisó");
   ok(/reply_to: responderA/.test(fn), "mandar() sabe poner a quién se responde");
   const migraciones = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /pareo_preinscripciones_comentario/.test(f));
   const sql = migraciones.length ? fs.readFileSync(path.join(RAIZ, "supabase/migraciones", migraciones[0]), "utf8") : "";
   ok(/add column comentario text not null default '' check \(char_length\(comentario\) <= 300\)/.test(sql) && /add column avisado timestamptz/.test(sql), "la migración agrega las dos columnas", migraciones.join(","));
+  const migAviso = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /pareo_preinscripciones_aviso_estado/.test(f));
+  const sqlAviso = migAviso.length ? fs.readFileSync(path.join(RAIZ, "supabase/migraciones", migAviso[0]), "utf8") : "";
+  ok(/add column if not exists aviso_estado text/.test(sqlAviso), "una migración agrega aviso_estado (para no reenviar la misma decisión)", migAviso.join(","));
 }
 
 // El doble de la Edge Function: guarda lo que «marcar» cambia, como la base,
@@ -103,9 +107,11 @@ async function dobleFuncion(page, filas) {
     if (body.accion === "marcar") {
       const avisados = [], sinCorreo = [];
       for (const f of filas.filter((x) => body.ids.includes(x.id))) {
-        f.estado = body.estado; f.comentario = body.comentario || ""; f.avisado = null;
+        f.estado = body.estado; f.comentario = body.comentario || "";
+        if (body.estado === "pendiente") continue;        // pendiente no avisa
+        if (f.aviso_estado === body.estado) continue;     // ya se avisó esta decisión: no reenvía
         if (!esCorreo(f.contacto)) sinCorreo.push(f.id);
-        else if (f.contacto !== FALLA) { avisados.push(f.id); f.avisado = "2026-11-13T18:00:00Z"; }
+        else if (f.contacto !== FALLA) { avisados.push(f.id); f.avisado = "2026-11-13T18:00:00Z"; f.aviso_estado = body.estado; }
       }
       r = { ok: true, avisados, sinCorreo };
     }

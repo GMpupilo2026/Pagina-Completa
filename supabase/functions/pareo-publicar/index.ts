@@ -746,8 +746,8 @@ Deno.serve(async (req) => {
     // inscripción y va en el aviso. Volver a «pendiente» lo borra.
     const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
     const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
-      .update({ estado, comentario, avisado: null }).eq("publicado_id", pid).in("id", cuales)
-      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id");
+      .update({ estado, comentario }).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id, aviso_estado");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     // El aviso a quien inscribió, si dejó un correo como contacto (con un
     // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
@@ -773,12 +773,16 @@ Deno.serve(async (req) => {
         url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
       };
       for (const x of marcadas ?? []) {
+        // Ya se avisó ESTA decisión: no reenviar. Así marcar en bucle (o el
+        // ciclo aceptada→pendiente→aceptada) no manda el mismo correo otra vez.
+        // Ver «aviso_estado» en la migración pareo_preinscripciones_aviso_estado.
+        if (x.aviso_estado === estado) continue;
         if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
         const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
           fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
         if (salio) avisados.push(x.id);
       }
-      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString(), aviso_estado: estado }).in("id", avisados);
     }
     return json({ ok: true, avisados, sinCorreo });
   }
