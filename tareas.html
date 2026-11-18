@@ -50,16 +50,38 @@
                                 <label for="t-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
                                 <input id="t-titulo" type="text" maxlength="200" required placeholder="Ej. Tarea de la semana" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             </div>
-                            <div>
+                            <div id="campo-desde">
                                 <label for="t-desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Disponible desde <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
                                 <input id="t-desde" type="datetime-local" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">En blanco, aparece de una vez. Con fecha, el alumno no la ve hasta ese momento.</p>
                             </div>
-                            <div>
+                            <div id="campo-vence">
                                 <label for="t-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
                                 <input id="t-vence" type="datetime-local" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             </div>
                         </div>
+
+                        <!-- Cuándo le llega: ya (o en la fecha de «Disponible desde»), o cuando
+                             junte cierta cantidad de Puntos Ajedrez GANADOS (tareas_por_puntos;
+                             ver «Tareas que llegan solas» en seguimiento-del-alumno.md). -->
+                        <fieldset class="border border-brand-200 dark:border-brand-700 rounded-lg p-3">
+                            <legend class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide px-1">Cuándo le llega</legend>
+                            <div class="grid gap-1.5 text-sm text-brand-700 dark:text-brand-200">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cuando" value="fecha" checked class="text-accent-500 focus:ring-accent-400"> En la fecha de arriba, o ya si la dejas en blanco</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cuando" value="puntos" class="text-accent-500 focus:ring-accent-400"> Sola, cuando junte cierta cantidad de Puntos Ajedrez</label>
+                            </div>
+                            <div id="cuando-puntos" class="hidden mt-3 grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label for="t-umbral" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Puntos que tiene que juntar</label>
+                                    <input id="t-umbral" type="number" min="1" max="1000000" step="1" placeholder="Ej. 3000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                </div>
+                                <div>
+                                    <label for="t-dias" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Días para hacerla</label>
+                                    <input id="t-dias" type="number" min="1" max="90" step="1" value="7" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                </div>
+                                <p class="sm:col-span-2 text-xs text-brand-450 dark:text-brand-350">Cuentan los puntos que gana asistiendo y entrenando, no el saldo: canjear un premio no se la quita. A quien ya los tenga le llega hoy mismo, y a cada uno, una sola vez. La fecha límite empieza a correr el día que le llega.</p>
+                            </div>
+                        </fieldset>
 
                         <!-- Los renglones: cada uno es una meta con su cantidad.
                              "Resolver 10 ejercicios de ataque doble", "Hacer 10
@@ -84,6 +106,12 @@
                     </form>
                 </div>
 
+                <!-- Las tareas que llegan solas (tareas_por_puntos): la regla, quién va cerca,
+                     pausar y borrar. Lo que ya les llegó sale abajo, en «Tareas enviadas». -->
+                <section id="programadas" class="hidden mb-8" aria-labelledby="programadas-titulo">
+                    <h2 id="programadas-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Tareas que llegan solas</h2>
+                    <div id="programadas-lista" class="grid gap-3"></div>
+                </section>
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Tareas enviadas</h2>
                 <div id="enviadas-lista" class="grid gap-3"></div>
                 <p id="enviadas-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">Todavía no le has mandado ninguna tarea a nadie. Arma la primera arriba, en «Asignar una tarea».</p>
