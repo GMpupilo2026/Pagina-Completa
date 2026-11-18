@@ -271,6 +271,16 @@ function abrirDelDia(){
   if(document.documentElement.classList.contains('adaptive-mode') && comandos) comandos.enfocar();
   else { const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus(); }
 }
+/* La caja de la lista de temas: si ya lo resolvió hoy (en este aparato), lo dice. */
+function pintarDelDia(){
+  let hecho = null;
+  try{ hecho = JSON.parse(localStorage.getItem(CLAVE_DEL_DIA) || 'null'); }catch(e){}
+  const hoy = hecho && hecho.fecha === fechaCR();
+  document.getElementById('del-dia-texto').textContent = hoy
+    ? 'Ya resolviste el de hoy. Mañana sale otro.'
+    : 'Uno nuevo cada día, el mismo para todos.';
+  document.getElementById('del-dia-btn').textContent = hoy ? 'Verlo otra vez' : 'Resolverlo';
+}
 function terminarDelDia(limpio){
   try{ localStorage.setItem(CLAVE_DEL_DIA, JSON.stringify({ fecha: delDia.fecha, id: delDia.id, limpio: !!limpio })); }catch(e){}
   document.getElementById('play-area').style.display = 'none';
@@ -522,6 +532,7 @@ function showThemes(enfocar){
   document.getElementById('themes-view').style.display = 'block';
   buildThemes();
   pintarRepaso();
+  pintarDelDia();
   try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
   window.scrollTo({ top: 0 });
   if(enfocar) document.getElementById('search').focus();
@@ -886,9 +897,11 @@ function finishPuzzle(){
     // `limpio` (sin error ni pista) va en el detalle: sin eso, lo único que
     // quedaba era "resuelto", y uno sacado con "Ver solución" contaba igual
     // que uno limpio. Con esto se puede medir la precisión por tema.
-    EntrenoProgress.log(actividad, Object.assign({ puzzle_id: id, theme: temaDeOrigen, rating: puzzle.rating ?? null },
-      enDelDia() ? { del_dia: delDia.fecha } : {},
-      EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle)));
+    // La forma `log(actividad, { puzzle_id: … })` la revisa verificar-premio-temas.js:
+    // es el id que espera premio_item() para dar el premio de tema terminado.
+    EntrenoProgress.log(actividad, { puzzle_id: id, theme: temaDeOrigen, rating: puzzle.rating ?? null,
+      ...(enDelDia() ? { del_dia: delDia.fecha } : {}),
+      ...EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle) });
   }
   if(enDelDia()){
     finEjercicio = EjercicioTablero.fin({
@@ -998,6 +1011,7 @@ document.getElementById('skip-btn').addEventListener('click', () => {
   loadPuzzle();
 });
 document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
+document.getElementById('del-dia-btn').addEventListener('click', abrirDelDia);
 document.getElementById('nivel-desde').addEventListener('change', (e) => {
   nivelDesde = parseInt(e.target.value, 10) || 0;
   // Lo eligió a mano: la cuenta del ajuste empieza de nuevo en ese escalón.

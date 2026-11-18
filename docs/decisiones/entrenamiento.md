@@ -348,9 +348,9 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
 
 ## El puzzle del día
 
-`entreno/temas.html?del-dia=1`, con su tarjeta «🌟 Puzzle del día» en el hub
-(grupo Practicar): **un ejercicio, el mismo para todos durante el día de Costa
-Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, como
+`entreno/temas.html?del-dia=1`, con su caja «🌟 Puzzle del día» en la lista de
+Ejercicios por tema, debajo de «Repasar fallados»: **un ejercicio, el mismo para
+todos durante el día de Costa Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, como
 «Repasar fallados» y el reto (`abrirDelDia()` en `js/entreno-temas.js`).
 
 - **Sale del banco de siempre** (`temas.json`), así que ninguna posición se
@@ -373,13 +373,21 @@ Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, com
   `EjercicioTablero.fin` ahora acepta `textoSiguiente`) y «Mañana hay otro»;
   queda anotado en `entreno_del_dia_v1` de ese aparato.
 - **No va en «Hoy te toca»**: ahí siempre habría un renglón más, taparía la
-  sugerencia del panel y rompería el orden que esa lista ya tiene. Va como
-  tarjeta del hub.
+  sugerencia del panel y rompería el orden que esa lista ya tiene. **Tampoco es
+  una tarjeta del hub**: cada tarjeta del hub es una herramienta de
+  `MaterialPlataforma.HERRAMIENTAS` (lo exigen `verificar-entreno.js` y
+  `verificar-clase-entrenamientos.js`), y la primera versión, con tarjeta, los
+  rompió. La caja dice «Ya resolviste el de hoy» cuando corresponde.
+- **La anotación sigue siendo `log(actividad, { puzzle_id: … })`**, con el
+  `del_dia` adentro: `verificar-premio-temas.js` busca esa forma, la que lee
+  `premio_item()` para el premio de tema terminado (con `Object.assign`, la
+  primera versión lo rompió).
 
 **Al tocarlo, `node herramientas/verificar-todo.js puzzle-del-dia`** (sin
 navegador): misma fecha, mismo ejercicio; treinta días, casi siempre distintos;
 del banco, en la banda y de un tema de motivo que lo contiene; el día de Costa
-Rica; anotado con el tema de origen; la tarjeta del hub. Está probado que salta
+Rica; anotado con el tema de origen y en la forma que lee `premio_item()`; la
+caja en Ejercicios por tema y ninguna tarjeta en el hub. Está probado que salta
 con la zona horaria cambiada a UTC.
 
 ## Entender el error y ver la línea (Temas y Mates)

@@ -11,7 +11,8 @@
    - El día es el de Costa Rica: a las 23:30 de allá (05:30 UTC del día
      siguiente) sigue siendo el mismo día.
    - Al resolverlo se anota con el tema de origen (no con «__del_dia»), lleva
-     la fecha en el detalle, y el hub de Entrenamiento tiene su tarjeta.
+     la fecha en el detalle, y Ejercicios por tema tiene su caja (el hub no:
+     cada tarjeta del hub es una herramienta del catálogo).
 
      node herramientas/verificar-puzzle-del-dia.js */
 
@@ -66,8 +67,12 @@ ok(/const temaDeOrigen = enDelDia\(\) \? delDia\.tema : currentTheme;/.test(fuen
 ok(/theme: temaDeOrigen/.test(fuente) && /del_dia: delDia\.fecha/.test(fuente), "el ejercicio se tiene que anotar con el tema de origen y la fecha del día");
 ok(/TEMAS_DE_TACTICA\.has\(temaDeOrigen\)/.test(fuente), "la actividad (tactica o temas) tiene que salir del tema de origen");
 ok(/has\('del-dia'\)\)\{ abrirDelDia\(\); return; \}/.test(fuente), "temas.html?del-dia=1 tiene que abrir el puzzle del día");
-const hub = fs.readFileSync(path.join(RAIZ, "entreno/index.html"), "utf8");
-ok(/<a href="temas\.html\?del-dia=1"[^>]*>Puzzle del día<\/a>/.test(hub), "el hub de Entrenamiento tiene que tener la tarjeta «Puzzle del día»");
+const temas = fs.readFileSync(path.join(RAIZ, "entreno/temas.html"), "utf8");
+ok(/id="del-dia-caja"/.test(temas) && /id="del-dia-btn"/.test(temas), "Ejercicios por tema tiene que tener la caja «Puzzle del día» con su botón");
+ok(/getElementById\('del-dia-btn'\)\.addEventListener\('click', abrirDelDia\)/.test(fuente), "el botón de la caja tiene que abrir el puzzle del día");
+ok(!/del-dia/.test(fs.readFileSync(path.join(RAIZ, "entreno/index.html"), "utf8")), "el hub no lleva tarjeta propia: cada tarjeta del hub es una herramienta del catálogo");
+// La forma que revisa verificar-premio-temas.js: el id que espera premio_item().
+ok(/log\(actividad, \{ puzzle_id:/.test(fuente), "la anotación tiene que seguir siendo log(actividad, { puzzle_id: … })");
 
 if (fallos.length) {
   console.error("✗ puzzle del día:\n  - " + fallos.join("\n  - "));
