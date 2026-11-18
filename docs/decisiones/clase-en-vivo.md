@@ -362,6 +362,44 @@ profe: lo pidió así).
   tiene su fila). Se escucha en **«Repasar mis clases»**, debajo del título de
   la clase: una parte detrás de otra, cada una con su reproductor y su
   etiqueta («Parte 1 de 3 · 5 minutos»). Si falla, el visor sigue igual.
+- **El profe ve quién no tiene permiso de grabación** (la «5»): en la lista
+  de la llamada, solo a él, «sin permiso de grabación» (y mientras se graba,
+  «no puede hablar»). Lo pregunta a `permisos_grabar_voz` por los alumnos que
+  están (la RLS le deja ver el de sus alumnos), al entrar y cada vez que entra
+  alguien. Así sabe por qué un alumno no puede hablar y puede pausar la
+  grabación para darle la palabra. Al alumno no se le muestra.
+- **La grabación sigue al tablero** (la «2»). La clase NO guarda la hora de
+  cada jugada (`game_state` solo lleva las jugadas en orden y `updated_at`),
+  así que la anota quien graba: cada segundo la página del profe mira la
+  posición que ve la clase (`op.posicion()`: la jugada que el profe muestra,
+  o la última) y, si cambió, anota `{s, fen}` en la parte, que viaja con ella
+  (`clase_grabaciones.marcas`, migración `grabacion_marcas_del_tablero`; la
+  de 4 argumentos de `guardar_parte_grabacion` se borró: con las dos, un
+  pedido con cuatro nombres no sabría a cuál llamar). En «Repasar mis clases»,
+  al escuchar (y al saltar a otro minuto) el tablero va a la última marca que
+  pasó: si es una posición de la partida de la clase se mira ese nodo y se
+  marca en la lista; si no, se pinta igual. **Las jugadas se dicen solo si se
+  marca «Decir las jugadas mientras escucho»**: con lector de pantalla se
+  oirían encima de la voz del profe. Las grabaciones de antes no tienen marcas
+  y se escuchan igual.
+- **La grabación pasada a texto** (la «3»): «📝 Pasar a texto» en cada parte
+  lo saca Whisper EN EL NAVEGADOR de quien la escucha (`js/reporte-transcribir.js`,
+  el mismo de Reportes: el audio no sale de esa computadora). **Lo guarda solo
+  el profe de la clase o administración** (`guardar_texto_grabacion`,
+  `clase_grabaciones.texto`, migración `grabacion_texto`); a un alumno le
+  queda en su pantalla: si pudiera guardarlo, podría poner un texto falso que
+  leerían los demás. Se muestra plegado («Lo que se dijo en esta parte, en
+  texto») y se borra con la grabación.
+- **«Mantener para hablar»** (la «4»): con la casilla, el micrófono suena
+  solo mientras se aprieta el botón del micrófono (dedo, ratón, o
+  Espacio/Enter con el foco en él) o **Alt+P** desde cualquier parte (no la
+  usan los menús de Chrome, Edge ni Firefox, ni el tablero); al soltar se
+  apaga. Para alguien que no ve la pantalla es más fácil que recordar si dejó
+  el micrófono encendido, y no se cuela ruido. Un toque corto al empezar y
+  otro al soltar, sin que el lector hable cada vez; si la ventana pierde el
+  foco con la tecla apretada (el keyup nunca llega) se calla sola. El clic
+  que llega al soltar no conmuta nada. La preferencia se recuerda en el
+  aparato (`localStorage`).
 - **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
   CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
   borra primero el archivo y después la fila (la base no puede borrar archivos

@@ -596,6 +596,11 @@
                             <button id="llamada-habla" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
                             <button id="llamada-salir" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
                         </div>
+                        <!-- «Mantener para hablar»: el micrófono suena solo mientras se aprieta (botón o Alt+P). -->
+                        <label id="llamada-ptt-caja" hidden class="mt-2 flex items-start gap-2 text-sm text-brand-800 dark:text-brand-100">
+                            <input id="llamada-ptt" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Mantener para hablar: el micrófono suena solo mientras mantienes apretado el botón del micrófono o <kbd>Alt</kbd>+<kbd>P</kbd>, y al soltar se apaga.</span>
+                        </label>
                         <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
                         <!-- Quiénes están, un renglón por persona y siempre en el mismo orden (tú, el
                              profe, los demás por nombre). No es región viva: lo que cambia se anuncia

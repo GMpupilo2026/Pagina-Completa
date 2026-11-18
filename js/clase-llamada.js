@@ -88,6 +88,8 @@
         const mic = $("llamada-mic");
         const modos = $("llamada-modos");
         const grabarBtn = $("llamada-grabar");
+        const pttCaja = $("llamada-ptt-caja");
+        const ptt = $("llamada-ptt");
         const grabandoAviso = $("llamada-grabando");
         const quien = $("llamada-quien");
         const habla = $("llamada-habla");
@@ -201,9 +203,12 @@
                 for (const c of ["bg-accent-500", "hover:bg-accent-600", "text-brand-900"]) b.classList.toggle(c, elegido);
                 for (const c of ["bg-white", "hover:bg-brand-200", "dark:bg-brand-800", "dark:hover:bg-brand-700", "text-brand-800", "dark:text-white"]) b.classList.toggle(c, !elegido);
             });
+            pttCaja.hidden = !dentro;
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
-            mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
+            mic.textContent = ptt.checked
+                ? (encendido ? "🎙️ Hablando… (suelta para callar)" : "🎙️ Mantén apretado para hablar")
+                : (encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado");
         }
 
         /* La voz de la página («Activar voz», el recuadro adaptado) dice las
@@ -290,6 +295,7 @@
 
         async function alternarMic() {
             if (!enLlamada()) { anunciar("Primero entra a la llamada."); return; }
+            if (ptt.checked) { anunciar("Con «Mantener para hablar», mantén apretado el botón del micrófono o Alt P mientras hablas."); return; }
             if (!micEncendido() && !puedoHablar()) {
                 anunciar(esProfe ? "Todavía no puedes encender el micrófono."
                     : grabando && !permisoVoz ? SIN_PERMISO
@@ -308,6 +314,65 @@
             }
             pintar();
         }
+
+        /* ---------- Mantener para hablar ----------
+           El micrófono suena solo mientras se aprieta: el botón (dedo, ratón, o
+           Espacio/Enter con el foco en él) o Alt+P desde cualquier parte. Para
+           alguien que no ve la pantalla es más fácil que recordar si lo dejó
+           encendido, y no se cuela ruido en la clase. Un toque corto al empezar y
+           otro al soltar dicen que está sonando, sin que el lector hable cada
+           vez. La preferencia se recuerda en este aparato. */
+        const CLAVE_PTT = "llamadaMantenerParaHablar_v1";
+        try { ptt.checked = localStorage.getItem(CLAVE_PTT) === "1"; } catch (e) { /* sin almacenamiento */ }
+        let apretado = false;
+        async function empezarAHablar() {
+            if (!ptt.checked || apretado || !enLlamada()) return;
+            if (!puedoHablar()) {
+                anunciar(esProfe ? "Todavía no puedes encender el micrófono."
+                    : grabando && !permisoVoz ? SIN_PERMISO
+                    : modo === "bloqueada" ? "Tu profe bloqueó los micrófonos: por ahora solo habla el profe."
+                    : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
+                return;
+            }
+            apretado = true;
+            sonido([880]);
+            try { await sala.localParticipant.setMicrophoneEnabled(true); } catch (e) { console.error(e); apretado = false; anunciar("No se pudo usar el micrófono."); }
+            if (!apretado) await callarse();   // soltó antes de que el micrófono terminara de encender
+            pintar();
+        }
+        async function callarse() {
+            if (!apretado && !micEncendido()) return;
+            apretado = false;
+            sonido([660]);
+            try { if (sala) await sala.localParticipant.setMicrophoneEnabled(false); } catch (e) { console.error(e); }
+            pintar();
+        }
+        ptt.addEventListener("change", async () => {
+            try { localStorage.setItem(CLAVE_PTT, ptt.checked ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+            if (ptt.checked && micEncendido()) await sala.localParticipant.setMicrophoneEnabled(false);
+            pintar();
+            anunciar(ptt.checked ? "Mantener para hablar: mantén apretado Alt P o el botón del micrófono mientras hablas." : "El micrófono vuelve a encenderse y apagarse con un toque.");
+        });
+        // El botón del micrófono, apretado y soltado.
+        mic.addEventListener("pointerdown", (e) => { if (ptt.checked) { e.preventDefault(); empezarAHablar(); } });
+        for (const ev of ["pointerup", "pointerleave", "pointercancel"]) mic.addEventListener(ev, () => { if (ptt.checked) callarse(); });
+        mic.addEventListener("keydown", (e) => {
+            if (!ptt.checked || (e.key !== " " && e.key !== "Enter")) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        mic.addEventListener("keyup", (e) => { if (ptt.checked && (e.key === " " || e.key === "Enter")) { e.preventDefault(); callarse(); } });
+        // Alt+P desde cualquier parte de la página.
+        document.addEventListener("keydown", (e) => {
+            if (!ptt.checked || e.code !== "KeyP" || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        document.addEventListener("keyup", (e) => {
+            if (apretado && (e.code === "KeyP" || e.key === "Alt")) { e.preventDefault(); callarse(); }
+        });
+        // Si la ventana pierde el foco con la tecla apretada, nunca llega el keyup: se calla.
+        window.addEventListener("blur", () => { if (apretado) callarse(); });
 
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
@@ -607,7 +672,8 @@
         });
 
         entrar.addEventListener("click", alEntrar);
-        mic.addEventListener("click", alternarMic);
+        // Con «Mantener para hablar» el clic (que llega al soltar) no conmuta nada.
+        mic.addEventListener("click", () => { if (!ptt.checked) alternarMic(); });
         grabarBtn.addEventListener("click", alternarGrabar);
         modos.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => elegirModo(b.dataset.modo)));
         quien.addEventListener("click", quienEsta);

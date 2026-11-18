@@ -115,7 +115,7 @@ async function cargarGrabacion(claseId){
   // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
   let data, firmas;
   try {
-    const r = await sb.from('clase_grabaciones').select('ruta, parte, segundos, marcas')
+    const r = await sb.from('clase_grabaciones').select('id, ruta, parte, segundos, marcas, texto, profesor_id')
       .eq('class_session_id', claseId).order('parte', { ascending: true }).range(0, 199);
     if (pedido !== grabacionPedida || r.error || !r.data || !r.data.length) return;
     data = r.data;
@@ -152,13 +152,68 @@ async function cargarGrabacion(claseId){
       const sig = document.getElementById('grabacion-parte-' + (i + 1));
       if (sig) sig.play().catch(() => {});
     });
-    li.append(etiqueta, audio);
+    li.append(etiqueta, audio, cajaDeTexto(g, url.get(g.ruta), i));
     lista.appendChild(li);
   });
   caja.hidden = !lista.children.length;
   const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
   document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
   document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
+}
+
+/* Lo que se dijo en una parte, en texto. Si ya está guardado, se muestra
+   plegado. Si no, «Pasar a texto» lo saca Whisper EN ESTA computadora
+   (js/reporte-transcribir.js, el mismo de Reportes: el audio no sale de acá).
+   Lo guarda solo el profe de la clase (guardar_texto_grabacion); al alumno le
+   queda en su pantalla. */
+function textoPlegado(texto, i){
+  const det = document.createElement('details');
+  det.className = 'mt-1';
+  const sum = document.createElement('summary');
+  sum.className = 'cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+  sum.textContent = 'Lo que se dijo en esta parte, en texto';
+  const p = document.createElement('p');
+  p.id = 'grabacion-texto-' + i;
+  p.className = 'mt-1 text-sm text-brand-800 dark:text-brand-100 whitespace-pre-wrap max-h-64 overflow-y-auto';
+  p.tabIndex = 0;
+  p.textContent = texto;   // lo sacó un modelo de una voz: va por textContent
+  det.append(sum, p);
+  return det;
+}
+function cajaDeTexto(g, urlAudio, i){
+  const caja = document.createElement('div');
+  if (g.texto) { caja.appendChild(textoPlegado(g.texto, i)); return caja; }
+  if (!window.ReporteTranscribir || !ReporteTranscribir.hayCómo()) return caja;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bctrl mt-1';
+  btn.textContent = '📝 Pasar a texto';
+  const estado = document.createElement('p');
+  estado.className = 'text-xs text-brand-600 dark:text-brand-300 mt-1';
+  estado.setAttribute('role', 'status');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      const resp = await fetch(urlAudio);
+      if (!resp.ok) throw new Error('No se pudo bajar la grabación.');
+      const texto = (await ReporteTranscribir.transcribir(await resp.blob(), (a) => { estado.textContent = a.detalle || ''; }) || '').trim();
+      if (!texto) { estado.textContent = 'No se entendió nada en esta parte.'; btn.disabled = false; return; }
+      btn.remove();
+      caja.insertBefore(textoPlegado(texto, i), estado);
+      if (g.profesor_id === yoId) {
+        const { error } = await sb.rpc('guardar_texto_grabacion', { p_id: g.id, p_texto: texto });
+        estado.textContent = error ? 'Se pasó a texto, pero no se pudo guardar: ' + error.message
+          : 'Listo: el texto quedó guardado y tus alumnos ya lo pueden leer.';
+      } else {
+        estado.textContent = 'Listo: el texto queda solo en tu pantalla.';
+      }
+    } catch (e) {
+      estado.textContent = 'No se pudo pasar a texto: ' + (e.message || e);
+      btn.disabled = false;
+    }
+  });
+  caja.append(btn, estado);
+  return caja;
 }
 
 /* La posición de ese momento de la grabación: la última marca que ya pasó.
