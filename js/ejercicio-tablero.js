@@ -319,7 +319,7 @@
     const botones = document.createElement("div");
     botones.className = "round-controls";
     const sig = document.createElement("button");
-    sig.type = "button"; sig.className = "bctrl primary"; sig.textContent = "Siguiente ejercicio →";
+    sig.type = "button"; sig.className = "bctrl primary"; sig.textContent = o.textoSiguiente || "Siguiente ejercicio →";
     const ver = document.createElement("button");
     ver.type = "button"; ver.className = "bctrl"; ver.textContent = "Ver la línea";
     ver.setAttribute("aria-expanded", "false");
