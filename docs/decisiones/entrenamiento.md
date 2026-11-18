@@ -346,6 +346,42 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## El puzzle del día
+
+`entreno/temas.html?del-dia=1`, con su tarjeta «🌟 Puzzle del día» en el hub
+(grupo Practicar): **un ejercicio, el mismo para todos durante el día de Costa
+Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, como
+«Repasar fallados» y el reto (`abrirDelDia()` en `js/entreno-temas.js`).
+
+- **Sale del banco de siempre** (`temas.json`), así que ninguna posición se
+  inventa, y **se anota bajo su tema de origen** (`temaDeOrigen`): suma Puntos
+  Ajedrez como cualquier ejercicio (una vez: si ya lo había resuelto en su
+  tema, no vuelve a sumar), cuenta para las tareas de ese tema, y si costó
+  entra a «Repasar fallados». **No hay nada nuevo en la base**; el detalle lleva
+  además `del_dia: "AAAA-MM-DD"`, por si un día se quiere contar quién lo hizo.
+- **La elección es una cuenta, no una tabla**: los ejercicios con rating entre
+  1100 y 1700 de los temas de un motivo concreto (`GRUPOS_DE_MOTIVO`:
+  clavada, desviación, mate del pasillo…), sin repetir id, y la fecha de Costa
+  Rica pasada por un hash. Todas las computadoras sacan el mismo. No de
+  «Mezcla equilibrada», las fases o el largo: no dicen de dónde viene ni a qué
+  tema sumarlo (la primera versión decía «Viene del tema «Mezcla
+  equilibrada»»). Si el banco cambia, puede cambiar el de ese día.
+- **El día es el de Costa Rica**, con `Intl` y su `timeZone`: a las 23:30 de
+  allá (05:30 UTC del día siguiente) sigue siendo el mismo.
+- Sin «Saltar» ni selector de dificultad, y no mueve la dificultad que se
+  ajusta sola. Al terminar, «Terminar el puzzle del día →» (el cierre de
+  `EjercicioTablero.fin` ahora acepta `textoSiguiente`) y «Mañana hay otro»;
+  queda anotado en `entreno_del_dia_v1` de ese aparato.
+- **No va en «Hoy te toca»**: ahí siempre habría un renglón más, taparía la
+  sugerencia del panel y rompería el orden que esa lista ya tiene. Va como
+  tarjeta del hub.
+
+**Al tocarlo, `node herramientas/verificar-todo.js puzzle-del-dia`** (sin
+navegador): misma fecha, mismo ejercicio; treinta días, casi siempre distintos;
+del banco, en la banda y de un tema de motivo que lo contiene; el día de Costa
+Rica; anotado con el tema de origen; la tarjeta del hub. Está probado que salta
+con la zona horaria cambiada a UTC.
+
 ## Entender el error y ver la línea (Temas y Mates)
 
 `verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente
