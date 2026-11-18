@@ -39,7 +39,11 @@
   PARECIDAS.forEach((p) => { CASI.add(p[0] + p[1]); CASI.add(p[1] + p[0]); });
   // La misma letra en mayúscula o minúscula casi no cuesta: hay planillas enteras con las piezas en minúscula
   // («bxe5» por el alfil, «rf1» por la torre; Centroamericano 2026). Si las dos lecturas son legales, gana la exacta.
-  const sustitucion = (a, b) => (a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? 0.15 : CASI.has(a + b) ? 0.4 : 1);
+  // Al revés no: una pieza escrita en MAYÚSCULA («C6») leída como el peón de esa columna (c6) cuesta casi
+  // una letra entera. En español la C mayúscula es el caballo; con 0,15 la primera planilla de verdad de
+  // Pareo (17/11) leía 1… Cf6 como c6, nunca sacaba ese caballo y se cortaba en la jugada 12 (Cxe5).
+  const PIEZA_MAYUSCULA = new Set("CATDRNBQK");
+  const sustitucion = (a, b) => (a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? (PIEZA_MAYUSCULA.has(a) && b === b.toLowerCase() ? 0.7 : 0.15) : CASI.has(a + b) ? 0.4 : 1);
 
   function distancia(a, b) {
     const m = a.length, n = b.length;

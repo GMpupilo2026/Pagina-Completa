@@ -5609,6 +5609,16 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
     una sola planilla: con las dos en la foto, una corrige a la otra). Esa
     lectura quedó como prueba en `herramientas/lib/lectura-real-pareo.js`,
     **solo la zona de jugadas, sin el encabezado con los nombres**.
+  - **Una pieza en MAYÚSCULA no es un peón casi gratis.** Ya con las
+    palabras partidas, la misma lectura seguía leyendo «C6» como el peón c6
+    (la diferencia de mayúscula costaba 0,15), así que el caballo de f6
+    nunca salía y la partida se cortaba en la 12 (Cxe5). Ahora, una letra
+    de pieza escrita en mayúscula (C, A, T, D, R, N, B, Q, K) leída como la
+    minúscula de una columna cuesta 0,7; al revés (la pieza en minúscula,
+    «cf3», como anotan los niños) sigue costando 0,15. Sale 1… Cf6; las 41
+    planillas del Centroamericano siguen igual. Lo que todavía no sale es
+    6… Cc6: de esa jugada Vision leyó solo «6», y con una sola planilla no
+    hay de dónde sacarlo.
   - **La foto llegó de unos 400 × 620 px** (la letra de 15 px). Se mide
     antes de mandarla (`createImageBitmap`) y, si el lado largo tiene menos
     de 1600 px, el cuadro lo dice con el tamaño y pide la foto original de
