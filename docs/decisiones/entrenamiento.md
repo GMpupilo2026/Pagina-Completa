@@ -346,6 +346,49 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## El rating táctico
+
+Un número propio de cada alumno que **sube al resolver limpio y baja cuando
+cuesta** (18/11/2026). La idea salió del «Coliseo de táctica» de Chessgora.
+Se ve en Ejercicios por tema (en la portada, con su detalle, y en la barra del
+ejercicio, corto) y en el informe de cada alumno («Rating táctico: 1871 (+12
+hoy) · 1540 ejercicios · su mejor: 2001»).
+
+- **No se guarda: se calcula** (`public.rating_tactico(p_alumno)`, migración
+  `20261118131646_rating_tactico.sql`) desde lo que Ejercicios por tema ya
+  anota en `training_progress`: la actividad `temas`, con el rating del
+  ejercicio y si salió limpio. Lo que se deriva no se guarda: así no hay un
+  número que se desfase de su historia ni una tabla más que proteger.
+- **La cuenta es Elo, ejercicio por ejercicio y en orden**: arranca en 1200,
+  K = 40 los primeros 20 ejercicios (para que llegue rápido a su nivel), 24
+  hasta los 60 y 16 después; se queda entre 400 y 3000. Limpio cuenta como
+  ganar; con error o con pista, como perder. Las filas viejas sin `limpio` no
+  cuentan (no se sabe cómo salieron). Solo se anota la PRIMERA vez que se
+  resuelve un ejercicio (el repaso no anota): el rating no se infla
+  repitiendo el mismo.
+- **SECURITY INVOKER**: la RLS de `training_progress` decide quién ve el de
+  quién (el alumno, el suyo; su profe y quien administra, el de sus alumnos).
+  Otra alumna recibe 1200 y 0 ejercicios; anon no la puede llamar. Probado
+  impersonando roles en SQL.
+- Con los datos de noviembre de 2026, los alumnos que más resuelven quedan
+  entre 1000 y 2100, en orden con cuánto resuelven limpio y qué tan difícil.
+  **No es el Elo** y la pantalla lo dice: no se compara con el del diagnóstico
+  ni con el de la federación.
+- **Se refresca solo**: `EntrenoProgress.log` dispara el evento
+  `entreno:anotado` cuando la base ACEPTÓ la fila, y `js/rating-tactico.js`
+  lo vuelve a pedir si fue de `temas`. Así `entreno-temas.js` no se tocó y la
+  página no tiene que acordarse de llamar a nada.
+- Los primeros 20 ejercicios dice que se está acomodando; sin ejercicios no
+  inventa un «1200»: dice cuándo aparece. Una baja se escribe con el signo
+  menos de verdad («−8»), y sin cambio no dice «+0».
+
+Lo prueba `verificar-rating-tactico.js`: las frases en Node; la página con el
+marcado de `entreno/temas.html` (se pide al cargar, se vuelve a pedir con un
+ejercicio anotado, no con uno rechazado ni con otra actividad); y el
+cableado (el orden de los scripts, el informe con el id del alumno, la
+función INVOKER y sin anon). Con el evento disparado también en el rechazo,
+salta.
+
 ## Entender el error y ver la línea (Temas y Mates)
 
 `verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente

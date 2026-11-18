@@ -44,6 +44,10 @@ window.EntrenoProgress = (function () {
         return { ok: false, motivo: "error", error };
       }
       avisarTemaTerminado();
+      /* Quien quiera saber que algo quedó anotado (el rating táctico, que se
+         vuelve a pedir: js/rating-tactico.js) escucha este evento. Solo se
+         dispara si la base lo aceptó. */
+      try { document.dispatchEvent(new CustomEvent("entreno:anotado", { detail: { activity } })); } catch (e) { /* sin DOM */ }
       return { ok: true };
     } catch (e) {
       console.error("No se pudo registrar el avance de Entrenamiento:", e);
