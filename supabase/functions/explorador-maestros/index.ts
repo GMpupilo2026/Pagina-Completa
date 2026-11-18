@@ -13,7 +13,8 @@
 //
 // NO ES UN PROXY ABIERTO: solo pide /masters, solo con una posición que pasa
 // la forma de un FEN, y solo para quien puede preparar rivales
-// (puedo_preparar_rivales(), con la sesión de quien llama).
+// (puedo_preparar_rivales(), con la sesión de quien llama) o es profesor o
+// administra (el explorador de la clase en vivo, js/clase-explorador.js).
 //
 // CACHÉ: cada posición se guarda en explorador_maestros_cache (solo la ve el
 // service role) y vale por FRESCO_DIAS. La base de maestros crece despacio
@@ -74,8 +75,22 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
     global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
   });
+  // Pueden quienes preparan rivales y, desde que el explorador está en la clase en
+  // vivo (js/clase-explorador.js), todo profesor y quien administra: es la misma
+  // consulta, sobre la misma caché. Las dos preguntas van con la sesión de quien
+  // llama, así que pasan por antes_de_cada_pedido() (los dos pasos) y la RLS de
+  // profiles: no se mira nada con la clave de servicio.
   const { data: puede, error: ePuede } = await usuario.rpc("puedo_preparar_rivales");
-  if (ePuede || puede !== true) return json({ error: "La preparación de rivales no está activa para tu cuenta." }, 403);
+  let permitido = !ePuede && puede === true;
+  if (!permitido) {
+    const { data: quien } = await usuario.auth.getUser();
+    const uid = quien?.user?.id;
+    if (uid) {
+      const { data: perfil } = await usuario.from("profiles").select("role, is_admin").eq("id", uid).maybeSingle();
+      permitido = !!perfil && (perfil.role === "profesor" || perfil.is_admin === true);
+    }
+  }
+  if (!permitido) return json({ error: "El explorador de maestros es para profesores." }, 403);
 
   let pedidas: unknown[] = [];
   try { pedidas = (await req.json()).fens; } catch { /* sin cuerpo */ }
