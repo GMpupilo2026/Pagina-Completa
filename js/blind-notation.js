@@ -215,6 +215,44 @@ window.BlindNotation = (function () {
     return out.join(' ') + (game.turn() === 'w' ? ' Juegan blancas' : ' Juegan negras') + jaque + '.';
   }
 
+  /* La posición para DICTARLA: una pieza por paso, para quien la va poniendo
+     en su tablero de verdad. De corrido («Blancas: rey en eva 1; torres en
+     anna 1 y hector 1…») no da tiempo: mientras se busca la torre ya van por
+     los peones. Cada paso dice de qué color es y cuántas faltan («Blancas,
+     pieza 2 de 5: torre en anna 1.»), así se puede parar en cualquiera y
+     saber dónde se quedó. El último paso cierra con la cuenta y quién juega,
+     que es la forma de comprobar que no faltó ninguna.
+     Sale del mismo agrupado que las otras lecturas (groupPieces): mismo orden
+     y mismas palabras. Quien lo recorre es el recuadro de comandos
+     (js/cuadro-comandos.js, «dictar»). */
+  function pasosDeDictado(game, opts) {
+    opts = opts || {};
+    const byColor = groupPieces(game);
+    const pasos = [];
+    const cuenta = { w: 0, b: 0 };
+    [['w', 'Blancas'], ['b', 'Negras']].forEach(function (par) {
+      const piezas = [];
+      PIECE_ORDER.forEach(function (type) {
+        (byColor[par[0]][type] || []).slice().sort().forEach(function (sq) {
+          piezas.push(PIECE_LABEL[type] + ' en ' + squareSpoken(sq));
+        });
+      });
+      cuenta[par[0]] = piezas.length;
+      piezas.forEach(function (texto, i) {
+        pasos.push(par[1] + ', pieza ' + (i + 1) + ' de ' + piezas.length + ': ' + texto + '.');
+      });
+    });
+    const cuantas = function (n, color) {
+      return n === 0 ? 'ninguna pieza ' + color : n === 1 ? 'una pieza ' + color : n + ' piezas ' + color + 's';
+    };
+    let fin = 'Fin del dictado: ' + cuantas(cuenta.w, 'blanca') + ' y ' + cuantas(cuenta.b, 'negra') + '.';
+    if (opts.includeTurn !== false && typeof game.turn === 'function') {
+      const jaque = typeof game.in_check === 'function' && game.in_check() ? ', en jaque' : '';
+      fin += (game.turn() === 'w' ? ' Juegan blancas' : ' Juegan negras') + jaque + '.';
+    }
+    return { pasos: pasos, fin: fin, total: cuenta.w + cuenta.b, blancas: cuenta.w, negras: cuenta.b };
+  }
+
   // ===== Modo Speech: leer los anuncios en voz alta con el propio navegador =====
   // Todo lo de arriba ya queda escrito en regiones aria-live — un lector de pantalla
   // real (NVDA, JAWS, VoiceOver, TalkBack) lo lee solo. Pero no todo el mundo tiene
@@ -256,6 +294,32 @@ window.BlindNotation = (function () {
       if (voiceURI) localStorage.setItem(SPEECH_VOICE_KEY, voiceURI);
       else localStorage.removeItem(SPEECH_VOICE_KEY);
     } catch (e) {}
+  }
+
+  // ===== La velocidad de la voz =====
+  /* La voz del navegador iba siempre a su velocidad de fábrica, y para seguir
+     una posición con las manos en el tablero es demasiado rápida. Se guarda
+     como la voz elegida: en ESTE navegador. 1 es la de fábrica; se ofrece de
+     0,5 (la mitad) a 1,5. Vale solo para esta voz: la de un lector de pantalla
+     se cambia en el propio lector. */
+  const SPEECH_RATE_KEY = 'oscarSpeechRate_v1';
+  const RATE_MIN = 0.5, RATE_MAX = 1.5;
+
+  function getSpeechRate() {
+    let v = NaN;
+    try { v = parseFloat(localStorage.getItem(SPEECH_RATE_KEY)); } catch (e) {}
+    if (!isFinite(v)) return 1;
+    return Math.max(RATE_MIN, Math.min(RATE_MAX, v));
+  }
+
+  function setSpeechRate(rate) {
+    const v = Math.max(RATE_MIN, Math.min(RATE_MAX, Math.round(parseFloat(rate) * 100) / 100));
+    if (!isFinite(v)) return getSpeechRate();
+    try {
+      if (v === 1) localStorage.removeItem(SPEECH_RATE_KEY);
+      else localStorage.setItem(SPEECH_RATE_KEY, String(v));
+    } catch (e) {}
+    return v;
   }
 
   // La lista de voces instaladas se carga de forma asíncrona en la mayoría de los
@@ -312,6 +376,7 @@ window.BlindNotation = (function () {
       } else {
         utterance.lang = 'es-ES';
       }
+      utterance.rate = getSpeechRate();
       window.speechSynthesis.speak(utterance);
       return true;
     } catch (e) { return false; }
@@ -379,10 +444,11 @@ window.BlindNotation = (function () {
 
   return {
     fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, positionSentence, pieceLabel,
-    pintarPiezas, escribirPosicion, cuentaCiega,
+    pintarPiezas, escribirPosicion, cuentaCiega, pasosDeDictado,
     FILE_NAMES, PIECE_LABEL, PIECE_PLURAL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
     getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,
+    getSpeechRate, setSpeechRate, SPEECH_RATE_MIN: RATE_MIN, SPEECH_RATE_MAX: RATE_MAX,
   };
 })();
 
