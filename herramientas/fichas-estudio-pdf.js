@@ -506,6 +506,7 @@ with open(destino, "wb") as f:
    la lista de enlaces del lector (Insert + F7) hacen ese trabajo. */
 const N = require("./lib/notacion.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 
 /* La línea de la ficha, numerada y dicha: «1. peón eva 4, peón eva 5, 2. …».
    Sale de chess.js y no del texto, para que la jugada sea la que se jugó. */
@@ -526,10 +527,6 @@ function lineaDicha(fenInicio, jugadas) {
   return partes.join(", ");
 }
 
-function posicionContada(fen) {
-  const d = describir(fen);
-  return `${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.`;
-}
 
 // Para el índice alfabético: «El tenedor» se busca por «tenedor».
 const ARTICULO = /^(el|la|los|las)\s+/i;
@@ -657,12 +654,12 @@ function fichaAccesible(F, cat, n, total) {
   const jugadas = jugadasDe(F);
   let posicion;
   if (F.fen) {
-    posicion = `<p class="posicion"><strong>La posición de partida.</strong> ${posicionContada(F.fen)}</p>` +
+    posicion = posicionHtml(F.fen, { rotulo: "La posición de partida.", fen: false }) +
       (jugadas.length ? `<p><strong>Las jugadas.</strong> ${esc(lineaDicha(F.fen, jugadas))}.</p>
-        <p class="posicion"><strong>Cómo queda al final.</strong> ${posicionContada(fenFinal(F))}</p>` : "");
+        ${posicionHtml(fenFinal(F), { rotulo: "Cómo queda al final.", fen: false })}` : "");
   } else {
     posicion = `<p><strong>Las jugadas, desde el principio.</strong> ${esc(lineaDicha(null, jugadas))}.</p>
-      <p class="posicion"><strong>La posición al final de la línea.</strong> ${posicionContada(fenFinal(F))}</p>`;
+      ${posicionHtml(fenFinal(F), { rotulo: "La posición al final de la línea.", fen: false })}`;
   }
   return `
     <section class="ficha" id="ficha-${F.id}" aria-labelledby="titulo-${F.id}"${escrita ? ' data-notacion="escrita"' : ""}>

@@ -411,6 +411,22 @@ dos regiones iguales y no se sabe cuál es cuál. Va en los dos extremos porque 
 documento es largo: quien termina de leerlo no tendría que subir de nuevo para
 salir.
 
+**Lo mismo en todas las demás versiones accesibles** (los libros de
+`material/`, el libro del diagnóstico, las fichas de estudio, los cuentos de
+Peonita y los doce tomos de «Una clase al día»): la posición iba en un párrafo
+(`<p class="posicion">… Piezas blancas: rey en g1; torres en a1, f1…`). Ahora
+es un bloque con una pieza por renglón, escrito por **una sola función**,
+`posicionHtml()` de `herramientas/lib/posicion-accesible.js`, que usan los doce
+generadores (y `piezasHtml()`, la de las lecciones). Ahí el rótulo «Piezas
+blancas: 14» va en negrita y no como encabezado: cada libro ya tiene su árbol
+de encabezados. Las casillas sueltas de la prosa también van dichas. Los PDF,
+los Word y los EPUB no se tocaron.
+
+`verificar-posicion-accesible.js` recorre **todos** los «-accesible» del sitio
+(434 archivos, más de 8000 posiciones): ninguno trae la posición corrida y, en
+cada bloque con su FEN, hay un renglón por cada pieza. Un generador nuevo que
+vuelva a escribirla en un párrafo salta ahí.
+
 ### De dónde sale el contenido (y por qué importa)
 
 Nada de esto se inventa, y esa es la regla:

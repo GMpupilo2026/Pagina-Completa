@@ -350,18 +350,8 @@ function volverA(curso, etiqueta) {
    flechas (o la tecla I del lector) se avanza de a una, al ritmo de quien
    escucha, y se puede volver atrás. No hace falta ningún programa: es el
    documento el que deja de ir rápido. */
-function mayuscula(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
-function piezasHtml(fen) {
-  const lados = piezasUnaPorUna(fen);
-  return [["blancas", "Piezas blancas"], ["negras", "Piezas negras"]].map(([lado, nombre]) => {
-    const ps = lados[lado];
-    // El número va en el encabezado: se sabe cuántas hay que poner antes de empezar.
-    return `  <h4>${nombre}: ${ps.length}</h4>
-  ${ps.length
-    ? `<ul>\n${ps.map((x) => `    <li>${mayuscula(x.pieza)} en ${N.casillaHablada(x.casilla)}.</li>`).join("\n")}\n  </ul>`
-    : "<p>Ninguna.</p>"}`;
-  }).join("\n");
-}
+const { piezasHtml: piezasComun } = require("./lib/posicion-accesible.js");
+function piezasHtml(fen) { return piezasComun(fen, { encabezado: "h4" }); }
 /* La línea ya dicha («1. anna 4, rey felix 7, 2. anna 5») partida en jugadas:
    [{ n, bando, texto }]. Si algo no tiene la forma esperada devuelve null y
    la línea se queda en su párrafo: mejor corrida que mal partida. */

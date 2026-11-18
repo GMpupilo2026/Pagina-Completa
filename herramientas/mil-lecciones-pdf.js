@@ -34,6 +34,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -318,9 +319,7 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    y las jugadas van dichas («alfil captura eva 5»), que es como se entienden
    con lector de pantalla. */
 function posicionA(fen, rotulo) {
-  const d = describir(fen);
-  return `<p class="posicion"><strong>${esc(rotulo)}</strong> ${esc(d.turno)} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-    <span class="fen">FEN: ${esc(fen)}</span></p>`;
+  return posicionHtml(fen, { rotulo });
 }
 
 function partidaA(g) {

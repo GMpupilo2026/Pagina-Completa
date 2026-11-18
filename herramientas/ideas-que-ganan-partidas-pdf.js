@@ -40,6 +40,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -402,12 +403,11 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    dichas («alfil captura felix 6»), que es como se entienden con lector de
    pantalla. */
 function accesible() {
-  const oido = (t) => N.textoHablado(t, "espanol");
+  const oido = (t) => N.casillasHabladas(N.textoHablado(t, "espanol"));
   const posicion = (it) => {
-    const d = describir(it.fen);
-    return `<p class="posicion"><strong>La posición.</strong> ${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-      Las ${RIVAL[it.juegan]} acaban de jugar ${esc(oido((it.juegan === "w" ? "…" : "") + it.ultima))}.
-      <span class="fen">FEN: ${esc(it.fen)}</span></p>`;
+    return posicionHtml(it.fen, {
+      despues: `Las ${RIVAL[it.juegan]} acaban de jugar ${esc(oido((it.juegan === "w" ? "…" : "") + it.ultima))}.`,
+    });
   };
   const leccionA = (l) => {
     const it = EJEMPLO[l.n];
