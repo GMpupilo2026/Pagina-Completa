@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay una casilla en el campo rival que ningún peón puede atacar: ¿qué pieza tuya la aprovecha mejor? Juegan las blancas; el rival acaba de jugar … alfil gustav 3.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Un puesto avanzado es una casilla en el campo rival, normalmente en la quinta o la sexta fila (cuarta o tercera, con negras), que ningún peón rival puede atacar y que un peón tuyo protege. Una pieza instalada ahí no se puede echar con un peón y solo se puede cambiar por otra pieza. El caballo es el gran ocupante de los puestos avanzados, porque de cerca ataca muchas casillas y desde el centro llega a todos lados, mientras que en su casa hace poco.</p>
 <p>Para encontrarlo, mira las casillas de tu lado de ataque y pregúntate si algún peón rival podría atacarlas algún día. Si en las columnas vecinas el rival ya no tiene peones, o los que tiene ya pasaron de largo, la casilla es un puesto. Que tu peón la proteja la vuelve todavía mejor. Muchas veces el puesto aparece justo después de que el rival avanza un peón para echar a otra pieza: ese peón ya no puede volver a cuidar la casilla de atrás.</p>
@@ -65,32 +89,56 @@
   <dt>Casillas débiles y puestos avanzados</dt>
   <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
   <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en david 5 defendido por un peón en eva 4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
   <dt>El enroque</dt>
   <dd>La única jugada que mueve dos piezas: el rey va dos casillas hacia la torre y la torre salta al otro lado. Pone al rey a salvo y saca la torre al centro de un solo golpe.</dd>
-  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en e1 o e8 y la partida se acaba en cinco jugadas.</dd>
+  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en eva 1 o eva 8 y la partida se acaba en cinco jugadas.</dd>
   <dd><strong>Para verlo:</strong> En la mayoría de las aperturas abiertas, el plan de las primeras diez jugadas es: peón al centro, caballos, alfil, enroque. Si a la jugada ocho no estás enrocado, algo salió mal.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay una casilla en el campo rival que ningún peón puede atacar: ¿qué pieza tuya la aprovecha mejor? Juegan las blancas; el rival acaba de jugar … alfil gustav 3.</h3>
+  <h3 id="posicion-1">Posición 1: Hay una casilla en el campo rival que ningún peón puede atacar: ¿qué pieza tuya la aprovecha mejor? Juegan las blancas; el rival acaba de jugar … alfil gustav 3.</h3>
   
-  <p>Piezas blancas: rey en h1; dama en f7; torre en c7; caballo en f4; peones en a2, e5, g2, h3.</p>
-  <p>Piezas negras: rey en h8; dama en h6; torres en g8, h7; alfil en g3; peones en a6, g7.</p>
+  <h4>Piezas blancas: 8</h4>
+  <ul>
+    <li>Rey en hector 1.</li>
+    <li>Dama en felix 7.</li>
+    <li>Torre en cesar 7.</li>
+    <li>Caballo en felix 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 7</h4>
+  <ul>
+    <li>Rey en hector 8.</li>
+    <li>Dama en hector 6.</li>
+    <li>Torre en gustav 8.</li>
+    <li>Torre en hector 7.</li>
+    <li>Alfil en gustav 3.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en gustav 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 39. caballo gustav 6 jaque, dama captura gustav 6, 40. dama captura gustav 6</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>39. Blancas: caballo gustav 6 jaque.</li>
+    <li>39. Negras: dama captura gustav 6.</li>
+    <li>40. Blancas: dama captura gustav 6.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>39. caballo gustav 6 jaque, dama captura gustav 6, 40. dama captura gustav 6. Fíjate en que la pieza instalada no puede ser echada por ningún peón: desde ahí controla el juego y el rival tiene que gastar una pieza para cambiarla. (Ejercicio 04lJt de la base abierta de Lichess (CC0), rating 1029. Stockfish 16 a profundidad 18: caballo gustav 6 jaque es la mejor (+4,0) y la segunda queda en -5,2.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 6rk/2R2Qpr/p6q/4P3/5N2/6bP/P5P1/7K w - - 2 39</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 6rk/2R2Qpr/p6q/4P3/5N2/6bP/P5P1/7K w - - 2 39</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>En tres partidas tuyas, marca en la jugada 15 todas las casillas débiles de los dos bandos.</li>
   <li>Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo.</li>
@@ -100,7 +148,7 @@
   <li>Juega tres partidas obligándote a enrocar antes de la jugada 8. Verás cuántas decisiones se ordenan solas.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +201,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

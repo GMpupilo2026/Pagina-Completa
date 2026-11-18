@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,11 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 20. caballo david 3</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 30. dama captura anna 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>Una Catalana tranquila, con el material igualado durante casi toda la partida. Ulf Andersson no busca ningún golpe: cambia lo que le conviene, deja a su caballo en la casilla d3, desde donde cuida y ataca a la vez, y gana un peón del flanco de dama que queda pasado. Después viene la parte más instructiva: un final largo de torre y caballo en el que las blancas mejoran de a poco, repiten jugadas para ganar tiempo en el reloj y empujan el peón pasado cuando el rival ya no puede hacer nada.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>Una Catalana tranquila, con el material igualado durante casi toda la partida. Ulf Andersson no busca ningún golpe: cambia lo que le conviene, deja a su caballo en la casilla david 3, desde donde cuida y ataca a la vez, y gana un peón del flanco de dama que queda pasado. Después viene la parte más instructiva: un final largo de torre y caballo en el que las blancas mejoran de a poco, repiten jugadas para ganar tiempo en el reloj y empujan el peón pasado cuando el rival ya no puede hacer nada.</p>
 <p>Recórrela jugada a jugada en el tablero (Apertura Catalana; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Con el material igual, la diferencia la hace qué piezas trabajan y cuáles solo defienden. Un peón pasado en el flanco de dama, lejos de los reyes, vale cada vez más a medida que se cambian piezas. En un final ganado no hay apuro: se puede repetir jugadas para ordenar las ideas antes del paso decisivo.</p>
 
 
@@ -64,7 +89,7 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
@@ -72,36 +97,85 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 20. caballo david 3</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Después de 20. caballo david 3</h3>
   
-  <p>Piezas blancas: rey en g2; dama en f3; torres en a1, f1; caballo en d3; peones en a2, b2, e2, f2, g3, h2.</p>
-  <p>Piezas negras: rey en g8; dama en e5; torres en a8, c8; caballo en d5; peones en a6, b5, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Dama en felix 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Caballo en david 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en eva 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>El caballo encuentra su casilla: d3.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1r3k1/5ppp/p3p3/1p1nq3/8/3N1QP1/PP2PPKP/R4R2 b - - 1 20</p>
+  <p>El caballo encuentra su casilla: david 3.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1r3k1/5ppp/p3p3/1p1nq3/8/3N1QP1/PP2PPKP/R4R2 b - - 1 20</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 30. dama captura anna 5</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Después de 30. dama captura anna 5</h3>
   
-  <p>Piezas blancas: rey en g1; dama en a5; torre en d1; caballo en d3; peones en a4, b2, e2, f2, g3, h2.</p>
-  <p>Piezas negras: rey en g8; dama en b7; torre en c8; caballo en d5; peones en b4, e6, f7, g7, h6.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en anna 5.</li>
+    <li>Torre en david 1.</li>
+    <li>Caballo en david 3.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en bella 7.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>Las blancas ganan un peón y queda un peón pasado en la columna a.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r3k1/1q3pp1/4p2p/Q2n4/Pp6/3N2P1/1P2PP1P/3R2K1 b - - 0 30</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2r3k1/1q3pp1/4p2p/Q2n4/Pp6/3N2P1/1P2PP1P/3R2K1 b - - 0 30</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
@@ -111,7 +185,7 @@
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -132,7 +206,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -164,7 +238,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

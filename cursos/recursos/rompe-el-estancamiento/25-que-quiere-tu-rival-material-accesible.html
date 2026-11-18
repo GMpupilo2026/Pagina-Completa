@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Antes de buscar tu jugada, mira qué amenaza el rival: la respuesta te dice cuál hay que hacer. Juegan las blancas; el rival acaba de jugar … rey hector 4.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>La mayoría de los jugadores de club pasan casi todo su tiempo pensando en sus propias ideas. Buscan su plan, su ataque, su golpe, y miran la posición del rival solo cuando hay una amenaza evidente. Así se pierden las partidas en las que el rival tenía un plan tranquilo que nadie le discutió.</p>
 <p>La pregunta profiláctica es simple: «si ahora fuera el turno del rival, ¿qué jugaría?». Contestarla obliga a ponerse del otro lado del tablero y ver la posición con sus ojos. A veces la respuesta es una amenaza directa; otras veces, una maniobra que en cuatro jugadas le daría una posición excelente. Saberlo cambia qué jugada eliges.</p>
@@ -71,26 +95,50 @@
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Antes de buscar tu jugada, mira qué amenaza el rival: la respuesta te dice cuál hay que hacer. Juegan las blancas; el rival acaba de jugar … rey hector 4.</h3>
+  <h3 id="posicion-1">Posición 1: Antes de buscar tu jugada, mira qué amenaza el rival: la respuesta te dice cuál hay que hacer. Juegan las blancas; el rival acaba de jugar … rey hector 4.</h3>
   
-  <p>Piezas blancas: rey en g2; torre en c5; peones en c3, f4, h3.</p>
-  <p>Piezas negras: rey en h4; torre en a3; peones en a6, b5, f5, f6, f7, g6.</p>
+  <h4>Piezas blancas: 5</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en cesar 5.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 8</h4>
+  <ul>
+    <li>Rey en hector 4.</li>
+    <li>Torre en anna 3.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 38. torre cesar 8, torre anna 2 jaque, 39. rey felix 3, torre felix 2 jaque, 40. rey captura felix 2</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>38. Blancas: torre cesar 8.</li>
+    <li>38. Negras: torre anna 2 jaque.</li>
+    <li>39. Blancas: rey felix 3.</li>
+    <li>39. Negras: torre felix 2 jaque.</li>
+    <li>40. Blancas: rey captura felix 2.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>38. torre cesar 8, torre anna 2 jaque, 39. rey felix 3, torre felix 2 jaque, 40. rey captura felix 2. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Solo quien miró primero lo que quería el rival encuentra esta jugada: es la que para su idea y conserva la ventaja. (Ejercicio 0IqIt de la base abierta de Lichess (CC0), rating 1306. Stockfish 16 a profundidad 18: torre cesar 8 es la mejor (+5,2) y la segunda queda en -4,7.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/5p2/p4pp1/1pR2p2/5P1k/r1P4P/6K1/8 w - - 1 38</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/5p2/p4pp1/1pR2p2/5P1k/r1P4P/6K1/8 w - - 1 38</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
@@ -100,7 +148,7 @@
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -121,7 +169,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -141,7 +189,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -153,7 +201,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
