@@ -118,6 +118,8 @@ window.__llamadas = [];
       class_sessions: [{ id: "c-1", title: "Finales de torre", started_at: "2026-09-28T21:00:00Z" }],
       // La marca de la cuenta (js/vision-cuenta.js): ciega si la prueba lo pide.
       vision_personas: window.__VISION_PERSONAS || [],
+      // Las tareas que llegan solas del profe (tareas_por_puntos), si la prueba las siembra.
+      tareas_por_puntos: window.__REGLAS || [],
       // Las cuentas temporales de un taller (tareas.html?temporales=): Ana la
       // tiene abierta; la de Beto en ese taller ya se cerró, y la abierta que
       // tiene es de otro.
@@ -200,6 +202,12 @@ window.__llamadas = [];
       }
       if (nombre === "crear_tarea") {
         return Promise.resolve({ data: (args.p_alumnos || []).length, error: null });
+      }
+      if (nombre === "crear_tarea_por_puntos") {
+        return Promise.resolve({ data: { id: "r-nueva", entregadas: 1 }, error: null });
+      }
+      if (nombre === "tareas_por_puntos_avance") {
+        return Promise.resolve({ data: window.__AVANCE || [], error: null });
       }
       return Promise.resolve({ data: null, error: null });
     },
@@ -585,6 +593,61 @@ async function main() {
     ok(!(await p2.evaluate(() => document.getElementById("sin-tarea").checkVisibility())),
       "con todos los alumnos con una tarea abierta, el aviso no debería verse");
     await p2.close();
+  }
+
+  // ---------- 1 quater) tareas que llegan solas al juntar puntos ----------
+  // «Cuándo le llega: sola, cuando junte N puntos»: esconde las fechas (y les
+  // quita el required, o el navegador no dejaría mandar), llama a
+  // crear_tarea_por_puntos con el umbral, los días y los renglones, y no a
+  // crear_tarea. La regla sembrada sale en «Tareas que llegan solas» y «Quién
+  // va cerca» dice, ESCRITO, cuánto le falta a cada uno y a quién ya le llegó.
+  {
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript(() => {
+      window.__REGLAS = [{ id: "r-1", profesor_id: "u-profe", titulo: "Combinaciones", umbral: 3000, dias: 7, activa: true,
+        alumnos: ["u-ana", "u-beto"], created_at: "2026-11-17T12:00:00Z" }];
+      window.__AVANCE = [
+        { alumno_id: "u-ana", alumno_nombre: "Ana Rojas", ganados: 1200, entregada_at: null, tarea_id: null },
+        { alumno_id: "u-beto", alumno_nombre: "Beto Solano", ganados: 3400, entregada_at: "2026-11-17T18:00:00Z", tarea_id: "t-9" },
+      ];
+    });
+    await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [], PROFE.id));
+    await pagina.goto(`${BASE}/tareas.html`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#programadas-lista > div", { timeout: 10000 });
+    const tarjeta = await pagina.evaluate(() => ({
+      visible: document.getElementById("programadas").checkVisibility(),
+      texto: document.getElementById("programadas-lista").textContent.replace(/\s+/g, " "),
+    }));
+    ok(tarjeta.visible && /Combinaciones/.test(tarjeta.texto) && /al juntar 3000 puntos/.test(tarjeta.texto) && /7 días/.test(tarjeta.texto),
+      `la regla sembrada debería verse en «Tareas que llegan solas»: ${JSON.stringify(tarjeta)}`);
+    await pagina.click("#programadas-lista button[aria-controls]");
+    await pagina.waitForFunction(() => /le faltan/.test(document.getElementById("programadas-lista").textContent), null, { timeout: 5000 }).catch(() => {});
+    const avance = await pagina.evaluate(() => document.getElementById("programadas-lista").textContent.replace(/\s+/g, " "));
+    ok(/1200 de 3000 puntos \(le faltan 1800\)/.test(avance) && /Ya le llegó/.test(avance),
+      `«Quién va cerca» debería decir cuánto le falta a Ana y que a Beto ya le llegó: ${JSON.stringify(avance)}`);
+
+    await pagina.check('input[name="cuando"][value="puntos"]');
+    const campos = await pagina.evaluate(() => ({
+      vence: document.getElementById("campo-vence").checkVisibility(),
+      requerido: document.getElementById("t-vence").required,
+      puntos: document.getElementById("cuando-puntos").checkVisibility(),
+      boton: document.getElementById("enviar-btn").textContent.trim(),
+    }));
+    ok(!campos.vence && !campos.requerido && campos.puntos && campos.boton === "Programar la tarea",
+      `con «cuando junte puntos», la fecha límite se esconde y deja de ser obligatoria: ${JSON.stringify(campos)}`);
+    await pagina.fill("#t-umbral", "3000");
+    await pagina.fill("#t-dias", "5");
+    await pagina.check('.alumno-check[value="u-ana"]');
+    await pagina.click("#enviar-btn");
+    await pagina.waitForFunction(() => /Programada/.test(document.getElementById("form-status").textContent), null, { timeout: 5000 }).catch(() => {});
+    const llamadas = await pagina.evaluate(() => window.__llamadas.filter((l) => l.rpc === "crear_tarea_por_puntos" || l.rpc === "crear_tarea"));
+    const a = (llamadas[0] || {}).args || {};
+    ok(llamadas.length === 1 && llamadas[0].rpc === "crear_tarea_por_puntos" && a.p_umbral === 3000 && a.p_dias === 5
+       && JSON.stringify(a.p_alumnos) === '["u-ana"]' && Array.isArray(a.p_items) && a.p_items.length >= 1,
+      `debería programarse con crear_tarea_por_puntos (3000 puntos, 5 días, solo Ana): ${JSON.stringify(llamadas)}`);
+    const estado = await pagina.textContent("#form-status");
+    ok(/al juntar 3000 puntos/.test(estado) && /Ya los tenía/.test(estado), `el aviso debería decir el umbral y que ya le llegó: ${JSON.stringify(estado)}`);
+    await pagina.close();
   }
 
   // ---------- 2) el alumno ve su avance y marca solo lo que le toca ----------
