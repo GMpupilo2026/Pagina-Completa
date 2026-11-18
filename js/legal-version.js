@@ -8,7 +8,7 @@
    comprueba que digan lo mismo. Ver «El consentimiento queda guardado» en
    docs/decisiones/legal.md. */
 window.LegalVersion = Object.freeze({
-  PRIVACIDAD: "2026-11-17",
+  PRIVACIDAD: "2026-11-18",
   TERMINOS: "2026-11-06",
 });
 

@@ -52,6 +52,8 @@ const FUNCIONES = {
   "mejorar-informe": [],
   // La llamada de voz de la clase en vivo (LiveKit). Ver su cabecera.
   "clase-llamada": [],
+  // Borra las grabaciones de más de 90 días (verify_jwt en false: la llama pg_cron con el secreto).
+  "clase-grabaciones-limpiar": [],
   // La ficha de los JDN 2027 al Drive (un Apps Script hace de puente). Ver su cabecera.
   "jdn-drive": ["hora-cr.ts"],
   // Pública (verify_jwt en false): ver su cabecera.
