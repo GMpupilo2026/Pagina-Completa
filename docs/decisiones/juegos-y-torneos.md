@@ -5715,6 +5715,29 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
     `ACCESS_DENIED` («Permission denied on the service»); volver a copiarla
     de «Mostrar clave» y pegarla lo arregló. Si vuelve ese 403, lo primero es
     revisar el valor del secreto.
+  - **La segunda foto de verdad** (18/11, Centroamericano, las dos
+    planillas en una foto nítida de 2600 px): daba 22 de 29 medias jugadas
+    bien y se cortaba en la 15. La letra se leía bien a ojo; lo que falló
+    fue lo que Vision hizo con ella, y el lector no lo arreglaba:
+    - **La f a mano, con su raya, salía «+»** («+4» por f4, «D+3» por Df3),
+      y `normalizar()` borraba el «+» como si fuera un jaque. «4» empataba
+      con el «E4» de la otra hoja, salía 1.e4 y el «e3» que dicen las dos
+      planillas en la jugada 3 se volvía c3. Ahora un «+» delante de un
+      número es una f (un jaque nunca va antes de un número).
+    - **El número final de las Blancas pegado a las Negras**: «De2» y «0-0»
+      llegaron como «De» | «20-0», y salía De1. Al armar las celdas, si las
+      Negras empiezan con un número y devolverlo a las Blancas deja las dos
+      más parecidas a una jugada (`forma()`), se devuelve.
+    - **Letras que esta letra confunde siempre**: el 4 como «u» o «y»
+      («au», «gy», «dxcu»), el 7 como «z» («Adz») o «t» («Pet» por Dc7). Sin
+      el 7/t, tres celdas mal leídas seguidas en la jugada 12 y 13 hacían
+      más barato meter dos jugadas que no existen (e4, e6) que leerlas.
+    - Con eso salen 47 de 55 (exactas las primeras 27). Quedan 14… Tde8
+      por Tfe8 (con «fe8» y «Te8» las dos torres cuestan igual), 18.De1 por
+      Df3 y tres del final. Un haz más ancho (400, 1000) no lo arreglaba y
+      tardaba de 20 a 60 s. La lectura queda, sin el encabezado, en
+      `herramientas/lib/lectura-real-pareo-2.js`, con la partida entera
+      sacada a ojo de las planillas.
   - Lo prueba `herramientas/verificar-pareo-planilla.js` (un doble de
     `ocr-scoresheet` con las planillas de verdad de la mesa 11). **Sin
     probar de verdad**: Google Vision con planillas de un torneo de Pareo.
