@@ -218,6 +218,59 @@ hacer deja de entrenar sin que se note.
   una vencida para Beto: el aviso tiene que verse, nombrar solo a Beto y dejarlo
   marcado; con las dos abiertas no aparece.
 
+### Tareas que llegan solas
+
+En «Asignar una tarea», **«Cuándo le llega: sola, cuando junte cierta cantidad
+de Puntos Ajedrez»** («Llegaste a 3000 puntos: te toca Combinaciones»; la idea
+salió de Chessgora). No se manda una tarea: se guarda la REGLA en
+`tareas_por_puntos` (`crear_tarea_por_puntos()`), y la base le arma a cada
+alumno **la tarea de siempre**, en `tareas` y `tarea_items`, el día que llega
+al umbral. Así se llena sola, sale en su lista y en «Tareas enviadas», y manda
+su aviso push con `avisar_tarea_asignada`. Migración
+`20261118054205_tareas_por_puntos`.
+
+- **Cuentan los puntos GANADOS, no el saldo** (`interno.puntos_ganados()`:
+  clase, entrenamiento, tarea, examen, racha, reto semanal y tema terminado).
+  Con el saldo, canjear un premio le quitaría la tarea que ya se ganó o se la
+  daría dos veces; regalos, bromas, robos y ajustes a mano no son trabajo del
+  alumno. La misma función servirá para los rangos.
+- **Una vez por alumno, y lo garantiza la llave primaria** de
+  `tareas_por_puntos_entregas` (regla, alumno), no un `if`. Borrar la tarea que
+  le llegó no se la vuelve a mandar.
+- **Quien ya tiene los puntos la recibe al crear la regla** (y al reanudarla,
+  quien llegó mientras estaba en pausa). La regla dice «quien llegue a N»; si
+  dijera «quien cruce N desde hoy», al que ya pasó nunca le llegaría. La
+  pantalla lo dice antes de guardar.
+- **El disparo es un trigger AFTER INSERT en `puntos_ajustes`**, solo para filas
+  positivas de esos orígenes. Lo primero que mira es si el alumno está en
+  alguna regla activa (índice GIN sobre `alumnos`): sin ninguna, ni suma. Va
+  dentro de un bloque de excepción: una falla al armar la tarea **no puede
+  tumbar los puntos** del ejercicio que la disparó.
+- **La fecha límite son «días desde que le llega»** (1 a 90), no una fecha: no
+  se sabe cuándo va a llegar. Por eso, con esta opción, «Disponible desde» y
+  «Vence» se esconden y «Vence» deja de ser obligatorio (si no, el navegador no
+  dejaría mandar el formulario).
+- **El permiso se mira dos veces**: al crear (los alumnos tienen que ser del
+  profe, por `interno.alumnos_de()`; quien administra, cualquiera, igual que
+  `tareas_insert`) y al entregar (si el alumno ya no es de ese profe, no le
+  llega: la regla no es una puerta trasera). Las tablas no tienen política de
+  escritura salvo borrar la regla propia; crear y pausar pasan por funciones.
+- «Tareas que llegan solas», encima de «Tareas enviadas»: cada regla con su
+  umbral, sus días y cuántos alumnos; **«Quién va cerca»**
+  (`tareas_por_puntos_avance()`) dice escrito cuántos puntos lleva cada uno y
+  cuánto le falta, o «✔ Ya le llegó el …»; «Pausar»/«Reanudar» y «Eliminar»
+  (lo que ya les llegó se queda).
+
+Comprobado impersonando roles en SQL, dentro de una transacción que se
+revierte: con dos alumnos (20 989 y 19 827 puntos ganados) y umbral 20 000, al
+crear le llega solo al primero; el segundo gana 200 entrenando y el trigger le
+arma la tarea (del profe, con su renglón, vence en 7 días); 50 puntos más no
+la repiten; otro profe no puede programársela («Solo puedes programarles
+tareas a tus alumnos»), no ve la regla, no la pausa ni la borra; el alumno no
+ve reglas ni entregas, no puede crear y el insert directo da «permission
+denied»; `anon` no puede llamar a la función. `verificar-tareas.js` (prueba «1
+quater») revisa la pantalla con el doble.
+
 ### El diagnóstico de nivel se pide como tarea, y solo cuenta el nuevo
 
 El profe le pide el diagnóstico a un alumno con un renglón «Diagnóstico de
