@@ -127,7 +127,9 @@ window.__llamadas = [];
         { persona_id: "u-beto", detalle: "Otro taller", vence: new Date(Date.now() + 864e5).toISOString() },
       ],
     };
-    let filas = (nombre === "profiles" ? PERFILES : CLASES[nombre] || []).slice();
+    // «tareas» sale de las mismas tareas sembradas: el aviso de alumnos sin
+    // tarea las lee directo de la tabla (alumno_id y vence_at).
+    let filas = (nombre === "profiles" ? PERFILES : nombre === "tareas" ? TAREAS : CLASES[nombre] || []).slice();
     let unica = false;
     const anotado = { tabla: nombre, eq: {}, order: null, update: null, delete: false };
     window.__llamadas.push(anotado);
@@ -547,6 +549,42 @@ async function main() {
     ok(!/\b1\/1\b/.test((beto.texto || "").replace(/Completada 1\/1/, "")),
       "el renglón del diagnóstico no debería leerse como «1/1»");
     await pagina.close();
+  }
+
+  // ---------- 1 ter) nadie se queda sin tarea ----------
+  // Ana tiene una tarea que todavía no vence; la de Beto ya venció. El aviso
+  // tiene que nombrar a Beto (y solo a él), verse de verdad, y su botón dejarlo
+  // marcado en la lista. Con las dos abiertas, el aviso no aparece.
+  {
+    const abierta = Object.assign({}, diagnosticoPedido("ts-ana", "u-ana", "Ana Rojas", false));
+    const vencida = Object.assign({}, diagnosticoPedido("ts-beto", "u-beto", "Beto Solano", false),
+      { vence_at: new Date(AHORA - 86400000).toISOString(), situacion: "vencida" });
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [abierta, vencida], PROFE.id));
+    await pagina.goto(`${BASE}/tareas.html`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#enviadas-lista > div", { timeout: 10000 });
+    await pagina.waitForFunction(() => document.getElementById("sin-tarea").checkVisibility(), null, { timeout: 5000 }).catch(() => {});
+    const aviso = await pagina.evaluate(() => {
+      const c = document.getElementById("sin-tarea");
+      return { visible: c.checkVisibility(), texto: c.textContent.replace(/\s+/g, " ").trim() };
+    });
+    ok(aviso.visible, "con un alumno sin ninguna tarea abierta, el aviso «no tiene ninguna tarea abierta» debería verse");
+    ok(/1 alumno no tiene ninguna tarea abierta/.test(aviso.texto) && /Beto Solano/.test(aviso.texto) && !/Ana Rojas/.test(aviso.texto),
+      `el aviso debería nombrar solo a Beto (su tarea venció): ${JSON.stringify(aviso.texto)}`);
+    await pagina.click("#sin-tarea-marcar");
+    const marcados = await pagina.$$eval(".alumno-check:checked", (els) => els.map((e) => e.value));
+    ok(JSON.stringify(marcados) === JSON.stringify(["u-beto"]),
+      `«Marcarlos» debería dejar marcado solo a Beto, marcó ${JSON.stringify(marcados)}`);
+    await pagina.close();
+
+    const p2 = await navegador.newPage();
+    await p2.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], TAREAS_DIAGNOSTICO, PROFE.id));
+    await p2.goto(`${BASE}/tareas.html`, { waitUntil: "networkidle" });
+    await p2.waitForSelector("#enviadas-lista > div", { timeout: 10000 });
+    await p2.waitForTimeout(300);
+    ok(!(await p2.evaluate(() => document.getElementById("sin-tarea").checkVisibility())),
+      "con todos los alumnos con una tarea abierta, el aviso no debería verse");
+    await p2.close();
   }
 
   // ---------- 2) el alumno ve su avance y marca solo lo que le toca ----------
