@@ -3109,4 +3109,20 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 body:has(dialog[open]) .profe-ayuda-boton, body:has(dialog[open]) .profe-ayuda-panel { display: none; }
 @media print { .profe-ayuda-boton, .profe-ayuda-panel { display: none; } }
 
+/* Interruptor de encendido (mensualidades.html, «Automático»): un botón con
+   role="switch". Lo que dice si está encendido es aria-checked, no una clase,
+   y el estado también va escrito al lado («Encendido»/«Apagado») porque el
+   color nunca va solo. */
+.interruptor { position: relative; width: 3.25rem; height: 2rem; border-radius: 9999px; border: 2px solid rgb(var(--c-brand-400, 130 154 177)); background: rgb(var(--c-brand-100, 217 226 236)); transition: background-color .15s; }
+.interruptor::before { content: ""; position: absolute; top: 2px; left: 2px; width: 1.5rem; height: 1.5rem; border-radius: 9999px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .3); transition: transform .15s; }
+.interruptor[aria-checked="true"] { background: #15803d; border-color: #15803d; }
+.interruptor[aria-checked="true"]::before { transform: translateX(1.25rem); }
+.interruptor { margin-bottom: 1rem; }
+.interruptor::after { content: "Apagado"; position: absolute; left: 50%; top: calc(100% + 2px); transform: translateX(-50%); font-size: .75rem; font-weight: 600; white-space: nowrap; color: rgb(var(--c-brand-700, 72 101 129)); }
+.interruptor[aria-checked="true"]::after { content: "Encendido"; color: #166534; }
+html.dark .interruptor::after { color: rgb(var(--c-brand-200, 188 204 220)); }
+html.dark .interruptor[aria-checked="true"]::after { color: #86efac; }
+.interruptor:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 240 180 41)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .interruptor, .interruptor::before { transition: none; } }
+
 /*! rev bfb5bbb0d2d82f9f */
