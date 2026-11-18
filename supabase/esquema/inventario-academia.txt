@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118171527
+# al-dia-con: 20261118175852
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -140,6 +140,7 @@ tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
 tabla  explorador_maestros_cache  rls=true
+tabla  familia_enlaces  rls=true
 tabla  fondos_region  rls=true
 tabla  formulario_compartidos  rls=true
 tabla  formulario_respuestas  rls=true
@@ -1552,6 +1553,11 @@ columna  examenes.vence_at  timestamp with time zone
 columna  explorador_maestros_cache.datos  jsonb
 columna  explorador_maestros_cache.fen  text
 columna  explorador_maestros_cache.leido_en  timestamp with time zone
+columna  familia_enlaces.creado  timestamp with time zone
+columna  familia_enlaces.creado_por  uuid
+columna  familia_enlaces.encargado_id  uuid
+columna  familia_enlaces.token  text
+columna  familia_enlaces.visto_at  timestamp with time zone
 columna  fondos_region.fijado_en  timestamp with time zone
 columna  fondos_region.fijado_por  uuid
 columna  fondos_region.fondo  text
@@ -3273,6 +3279,11 @@ funcion  examen_para_alumno(p_examen uuid)  definer  anon=false  auth=true
 funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  invoker  anon=true  auth=true
 funcion  exigir_acceso_vigente()  definer  anon=false  auth=false
 funcion  faltas_justificadas(p_desde date, p_hasta date)  invoker  anon=false  auth=true
+funcion  familia_avisar_ausencia(p_token text, p_fecha date, p_motivo text, p_detalle text, p_privacidad text)  definer  anon=true  auth=true
+funcion  familia_enlace(p_encargado uuid, p_renovar boolean)  definer  anon=false  auth=true
+funcion  familia_enlace_apagar(p_encargado uuid)  definer  anon=false  auth=true
+funcion  familia_enlaces_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  familia_pagina(p_token text)  definer  anon=true  auth=true
 funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
 funcion  fijar_fen_inicial()  invoker  anon=false  auth=false
 funcion  fondos_region_fijar(p_personas uuid[], p_fondo text)  definer  anon=false  auth=true
@@ -3378,6 +3389,7 @@ funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
+funcion  interno.familia_alumno_si_puedo(p_encargado uuid)  definer  anon=false  auth=false
 funcion  interno.fin_de_puntos_dobles(p_alumno uuid, p_horas integer)  definer  anon=false  auth=false
 funcion  interno.fp_clave(p text)  invoker  anon=false  auth=false
 funcion  interno.fp_puede()  definer  anon=false  auth=false
@@ -4471,6 +4483,7 @@ trigger  examenes  avisar_examen_asignado
 trigger  examenes  avisar_examen_reabierto
 trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  examenes  otorgar_puntos_de_examen
+trigger  familia_enlaces  auditar
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
 trigger  game_rooms  disparar_fin_de_partida
@@ -4864,6 +4877,8 @@ indice  examenes  examenes_alumno_idx
 indice  examenes  examenes_pkey
 indice  examenes  examenes_profesor_idx
 indice  explorador_maestros_cache  explorador_maestros_cache_pkey
+indice  familia_enlaces  familia_enlaces_pkey
+indice  familia_enlaces  familia_enlaces_token_key
 indice  fondos_region  fondos_region_fijado_por_idx
 indice  fondos_region  fondos_region_pkey
 indice  formulario_compartidos  formulario_compartidos_coordinador_idx

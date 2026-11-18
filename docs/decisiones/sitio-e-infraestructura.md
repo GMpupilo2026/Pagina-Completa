@@ -346,6 +346,11 @@ CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
 parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
 el navegador cachea.
 
+- **`npm run css` también corre en Windows** (18/11/2026): en Windows
+  `css-construir.js` usa `node_modules/.bin/tailwindcss.cmd` con shell (el
+  `tailwindcss` de al lado es un guion de sh que `execFileSync` no puede
+  ejecutar y salía `ENOENT`).
+
 - **La paleta ya no se compila dentro de cada clase: son variables CSS.**
   Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
   `herramientas/css-construir.js`, y hoy vive en `js/temas-plataforma.js` —

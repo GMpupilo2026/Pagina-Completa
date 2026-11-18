@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,17 +57,37 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 7. alfil gustav 5</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 9. alfil captura felix 6</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 10. caballo david 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>M. Stean – G. Sax · Las Palmas 1978 · 1-0</p>
-<p>En esta Variante Sveshnikov, las negras aceptan de entrada peones doblados en la columna f a cambio de abrir la diagonal larga para su alfil de casillas negras, una apuesta estructural típica de esta línea. Sin embargo, el error 17… alfil captura david 5? entrega precisamente el alfil bueno negro, dejando a las negras con un único alfil, el de g7, que quedará encerrado detrás de sus propios peones e5 y f4 durante el resto de la partida. Stean aprovecha esta circunstancia con precisión, penetrando con sus piezas (20. torre cesar 6, 23. caballo captura david 6) hasta ganar el débil peón d6 y consolidar una ventaja decisiva, mientras el alfil malo negro nunca llega a participar en la lucha.</p>
-<p>Se llama alfil malo a aquel cuyos propios peones están fijados, de forma más o menos permanente, en casillas del mismo color que ese alfil: cada uno de esos peones le resta al alfil una casilla potencial, reduce su movilidad y lo convierte, en el peor de los casos, en poco más que un peón adicional encerrado en su propia posición. Conviene distinguir esta idea de otra muy extendida pero engañosa: que un alfil fianchettado (desarrollado por g7 o b7, por ejemplo) es automáticamente un buen alfil por controlar en teoría una diagonal larga. Si, como sucede en esta partida, los propios peones centrales terminan colocados sobre esa misma diagonal o cerca de ella, el alfil fianchettado puede quedar tan encerrado como cualquier otro alfil malo, sin diagonales libres por donde actuar. Por el contrario, un alfil bueno se mueve con libertad porque sus propios peones están mayormente en casillas del color contrario, dejándole el campo despejado. La lección práctica más importante es que, antes de decidirse a cambiar una pieza, conviene preguntarse que pieza va a quedar después del cambio: entregar el alfil bueno propio para quedarse solo con el malo suele ser un error estratégico grave, incluso cuando la jugada concreta parece razonable a corto plazo.</p>
+<p>En esta Variante Sveshnikov, las negras aceptan de entrada peones doblados en la columna f a cambio de abrir la diagonal larga para su alfil de casillas negras, una apuesta estructural típica de esta línea. Sin embargo, el error 17… alfil captura david 5? entrega precisamente el alfil bueno negro, dejando a las negras con un único alfil, el de gustav 7, que quedará encerrado detrás de sus propios peones eva 5 y felix 4 durante el resto de la partida. Stean aprovecha esta circunstancia con precisión, penetrando con sus piezas (20. torre cesar 6, 23. caballo captura david 6) hasta ganar el débil peón david 6 y consolidar una ventaja decisiva, mientras el alfil malo negro nunca llega a participar en la lucha.</p>
+<p>Se llama alfil malo a aquel cuyos propios peones están fijados, de forma más o menos permanente, en casillas del mismo color que ese alfil: cada uno de esos peones le resta al alfil una casilla potencial, reduce su movilidad y lo convierte, en el peor de los casos, en poco más que un peón adicional encerrado en su propia posición. Conviene distinguir esta idea de otra muy extendida pero engañosa: que un alfil fianchettado (desarrollado por gustav 7 o bella 7, por ejemplo) es automáticamente un buen alfil por controlar en teoría una diagonal larga. Si, como sucede en esta partida, los propios peones centrales terminan colocados sobre esa misma diagonal o cerca de ella, el alfil fianchettado puede quedar tan encerrado como cualquier otro alfil malo, sin diagonales libres por donde actuar. Por el contrario, un alfil bueno se mueve con libertad porque sus propios peones están mayormente en casillas del color contrario, dejándole el campo despejado. La lección práctica más importante es que, antes de decidirse a cambiar una pieza, conviene preguntarse que pieza va a quedar después del cambio: entregar el alfil bueno propio para quedarse solo con el malo suele ser un error estratégico grave, incluso cuando la jugada concreta parece razonable a corto plazo.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
   <li>Antes de cambiar una pieza, hay que preguntarse que pieza quedará después del cambio, y no sólo cuál se está entregando: cambiar el alfil bueno por error deja al alfil malo como única pieza de ese tipo.</li>
   <li>Un alfil fianchettado no es automáticamente un 'buen alfil': si la propia cadena de peones bloquea su diagonal, puede quedar tan pasivo como cualquier otro alfil malo.</li>
-  <li>Ocupar con firmeza una casilla débil central, como d5 en la Sveshnikov, suele compensar con creces la posible pareja de alfiles rival.</li>
+  <li>Ocupar con firmeza una casilla débil central, como david 5 en la Sveshnikov, suele compensar con creces la posible pareja de alfiles rival.</li>
 </ul>
 
 <h2>2. Conceptos clave</h2>
@@ -69,54 +95,153 @@
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 7. alfil gustav 5</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 7. alfil gustav 5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en f1, g5; caballos en b5, c3; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en c6, f6; peones en a7, b7, d6, e5, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Alfil en gustav 5.</li>
+    <li>Caballo en bella 5.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>7. alfil gustav 5 sigue la práctica habitual de la Variante Sveshnikov: el alfil se prepara para cambiarse por el caballo de f6, reforzando el control blanco sobre d5 y provocando una decisión estructural importante en el bando negro.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/pp3ppp/2np1n2/1N2p1B1/4P3/2N5/PPP2PPP/R2QKB1R b KQkq - 1 7</p>
+  <p>7. alfil gustav 5 sigue la práctica habitual de la Variante Sveshnikov: el alfil se prepara para cambiarse por el caballo de felix 6, reforzando el control blanco sobre david 5 y provocando una decisión estructural importante en el bando negro.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/pp3ppp/2np1n2/1N2p1B1/4P3/2N5/PPP2PPP/R2QKB1R b KQkq - 1 7</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 9. alfil captura felix 6</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 9. alfil captura felix 6</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en f1, f6; caballos en a3, c3; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballo en c6; peones en a6, b5, d6, e5, f7, g7, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Alfil en felix 6.</li>
+    <li>Caballo en anna 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>9. alfil captura felix 6 concreta el cambio: las negras deben decidir cómo recapturar. Aquí, en vez de la recaptura habitual con el caballo, Sax recupera con el peón, aceptando peones doblados en la columna f a cambio de abrir la diagonal larga.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/5ppp/p1np1B2/1p2p3/4P3/N1N5/PPP2PPP/R2QKB1R b KQkq - 0 9</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/5ppp/p1np1B2/1p2p3/4P3/N1N5/PPP2PPP/R2QKB1R b KQkq - 0 9</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 10. caballo david 5</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 10. caballo david 5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfil en f1; caballos en a3, d5; peones en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballo en c6; peones en a6, b5, d6, e5, f6, f7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en anna 3.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>10. caballo david 5 ocupa de inmediato la casilla débil creada por la propia estructura de peones negra, el tema recurrente de la Sveshnikov: un caballo firmemente asentado en d5 compensa con creces la pareja de alfiles potencial negra.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/5p1p/p1np1p2/1p1Np3/4P3/N7/PPP2PPP/R2QKB1R b KQkq - 1 10</p>
+  <p>10. caballo david 5 ocupa de inmediato la casilla débil creada por la propia estructura de peones negra, el tema recurrente de la Sveshnikov: un caballo firmemente asentado en david 5 compensa con creces la pareja de alfiles potencial negra.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqkb1r/5p1p/p1np1p2/1p1Np3/4P3/N7/PPP2PPP/R2QKB1R b KQkq - 1 10</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.</li>
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -137,7 +262,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

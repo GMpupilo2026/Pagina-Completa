@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,29 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Ejercicio 7. Alexei Shirov – Vassily Ivanchuk, Linares 1994. Juegan las blancas. Las negras acaban de llevar la dama a felix 6 para ofrecer el cambio. ¿Lo aceptas o lo rechazas?</a></li>
+        <li><a href="#posicion-2">Posición 2: Ejercicio 8. Mikhail Botvinnik – David Bronstein, Match por el Campeonato del Mundo, Moscú 1951. Juegan las negras. Pueden tomar el caballo de cesar 1 y después el peón de bella 3. ¿Les conviene?</a></li>
+        <li><a href="#posicion-3">Posición 3: Ejercicio 9. Oscar Panno – Carlos Guimard, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Conviene retirar el caballo de cesar 5 o cambiarlo?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Sigue con el mismo método: primero las piezas que quedan, después a quién le conviene, después la jugada. Fíjate en que varios de estos ejercicios no tienen una sola jugada que gana: piden elegir entre dos planes razonables, y lo que cuenta es la razón.</p>
 
@@ -61,56 +87,207 @@
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Ejercicio 7. Alexei Shirov – Vassily Ivanchuk, Linares 1994. Juegan las blancas. Las negras acaban de llevar la dama a f6 para ofrecer el cambio. ¿Lo aceptas o lo rechazas?</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Ejercicio 7. Alexei Shirov – Vassily Ivanchuk, Linares 1994. Juegan las blancas. Las negras acaban de llevar la dama a felix 6 para ofrecer el cambio. ¿Lo aceptas o lo rechazas?</h3>
   
-  <p>Piezas blancas: rey en e1; dama en f3; torres en a1, h1; alfiles en c1, c2; caballo en e2; peones en a2, b2, c3, e4, f2, g4, h3.</p>
-  <p>Piezas negras: rey en g8; dama en f6; torres en a8, f8; alfiles en a5, d7; caballo en e8; peones en a7, b7, c7, e5, f7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en felix 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en cesar 2.</li>
+    <li>Caballo en eva 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en felix 6.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en anna 5.</li>
+    <li>Alfil en david 7.</li>
+    <li>Caballo en eva 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 13. dama captura felix 6, caballo captura felix 6, 14. alfil gustav 5, alfil eva 6, 15. alfil captura felix 6, gustav captura felix 6, 16. caballo gustav 3, torre felix david 8, 17. caballo hector 5, torre david 6, 18. caballo captura felix 6 jaque, rey hector 8, 19. felix 4, torre anna david 8</p>
+  <h4>La línea: 14 jugadas</h4>
+  <ul>
+    <li>13. Blancas: dama captura felix 6.</li>
+    <li>13. Negras: caballo captura felix 6.</li>
+    <li>14. Blancas: alfil gustav 5.</li>
+    <li>14. Negras: alfil eva 6.</li>
+    <li>15. Blancas: alfil captura felix 6.</li>
+    <li>15. Negras: gustav captura felix 6.</li>
+    <li>16. Blancas: caballo gustav 3.</li>
+    <li>16. Negras: torre felix david 8.</li>
+    <li>17. Blancas: caballo hector 5.</li>
+    <li>17. Negras: torre david 6.</li>
+    <li>18. Blancas: caballo captura felix 6 jaque.</li>
+    <li>18. Negras: rey hector 8.</li>
+    <li>19. Blancas: felix 4.</li>
+    <li>19. Negras: torre anna david 8.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>13. dama captura felix 6 lo acepta, y con 14. alfil gustav 5 ofrece otro cambio en f6. Cuando el alfil toma el caballo, las negras quedan con peones doblados en la columna f; el caballo blanco va a h5 a atacarlos. Aceptar un cambio que el rival ofrece está bien cuando el que queda mejor eres tú. (Stockfish 17 a profundidad 22: dama captura felix 6 es la que elige el motor (+0,5).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r3nrk1/pppb1ppp/5q2/b3p3/4P1P1/2P2Q1P/PPB1NP2/R1B1K2R w KQ - 0 13</p>
+  <p>13. dama captura felix 6 lo acepta, y con 14. alfil gustav 5 ofrece otro cambio en felix 6. Cuando el alfil toma el caballo, las negras quedan con peones doblados en la columna f; el caballo blanco va a hector 5 a atacarlos. Aceptar un cambio que el rival ofrece está bien cuando el que queda mejor eres tú. (Stockfish 17 a profundidad 22: dama captura felix 6 es la que elige el motor (+0,5).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r3nrk1/pppb1ppp/5q2/b3p3/4P1P1/2P2Q1P/PPB1NP2/R1B1K2R w KQ - 0 13</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Ejercicio 8. Mikhail Botvinnik – David Bronstein, Match por el Campeonato del Mundo, Moscú 1951. Juegan las negras. Pueden tomar el caballo de c1 y después el peón de b3. ¿Les conviene?</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Ejercicio 8. Mikhail Botvinnik – David Bronstein, Match por el Campeonato del Mundo, Moscú 1951. Juegan las negras. Pueden tomar el caballo de cesar 1 y después el peón de bella 3. ¿Les conviene?</h3>
   
-  <p>Piezas blancas: rey en d1; alfiles en f1, g3; caballo en c1; peones en a4, b3, d4, e3, f3, g4, h2.</p>
-  <p>Piezas negras: rey en g8; alfil en a3; caballos en a5, a6; peones en b6, b7, d5, e6, f6, g6, h7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en david 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Alfil en gustav 3.</li>
+    <li>Caballo en cesar 1.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Alfil en anna 3.</li>
+    <li>Caballo en anna 5.</li>
+    <li>Caballo en anna 6.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 34… alfil captura cesar 1, 35. rey captura cesar 1, caballo captura bella 3 jaque, 36. rey cesar 2, caballo anna 5, 37. rey cesar 3, rey felix 7, 38. eva 4, felix 5, 39. gustav captura felix 5, gustav captura felix 5, 40. alfil david 3, rey gustav 6, 41. alfil david 6, caballo cesar 6, 42. alfil bella 1, rey felix 6, 43. alfil gustav 3, felix captura eva 4, 44. felix captura eva 4, hector 6, 45. alfil felix 4, hector 5, 46. eva captura david 5, eva captura david 5, 47. hector 4</p>
+  <h4>La línea: 26 jugadas</h4>
+  <ul>
+    <li>34. Negras: alfil captura cesar 1.</li>
+    <li>35. Blancas: rey captura cesar 1.</li>
+    <li>35. Negras: caballo captura bella 3 jaque.</li>
+    <li>36. Blancas: rey cesar 2.</li>
+    <li>36. Negras: caballo anna 5.</li>
+    <li>37. Blancas: rey cesar 3.</li>
+    <li>37. Negras: rey felix 7.</li>
+    <li>38. Blancas: eva 4.</li>
+    <li>38. Negras: felix 5.</li>
+    <li>39. Blancas: gustav captura felix 5.</li>
+    <li>39. Negras: gustav captura felix 5.</li>
+    <li>40. Blancas: alfil david 3.</li>
+    <li>40. Negras: rey gustav 6.</li>
+    <li>41. Blancas: alfil david 6.</li>
+    <li>41. Negras: caballo cesar 6.</li>
+    <li>42. Blancas: alfil bella 1.</li>
+    <li>42. Negras: rey felix 6.</li>
+    <li>43. Blancas: alfil gustav 3.</li>
+    <li>43. Negras: felix captura eva 4.</li>
+    <li>44. Blancas: felix captura eva 4.</li>
+    <li>44. Negras: hector 6.</li>
+    <li>45. Blancas: alfil felix 4.</li>
+    <li>45. Negras: hector 5.</li>
+    <li>46. Blancas: eva captura david 5.</li>
+    <li>46. Negras: eva captura david 5.</li>
+    <li>47. Blancas: hector 4.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
   <p>34… alfil captura cesar 1 y 35… caballo captura bella 3 jaque ganan un peón, pero entregan el alfil negro y dejan a las blancas con los dos alfiles. Cuando el centro se abrió con 38. eva 4, los alfiles dominaron el tablero y los caballos negros se quedaron sin casillas. El motor de hoy da la posición igualada tanto después de 34… alfil captura cesar 1 como de 34… rey felix 7: la captura no pierde, pero obliga a defender con mucha precisión un final contra la pareja de alfiles, y en la partida las negras no lo lograron. (Stockfish 17 a profundidad 22: alfil captura cesar 1 es la que elige el motor (0,0); rey felix 7 da +0,1.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 6k1/1p5p/np2ppp1/n2p4/P2P2P1/bP2PPB1/7P/2NK1B2 b - - 0 34</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 6k1/1p5p/np2ppp1/n2p4/P2P2P1/bP2PPB1/7P/2NK1B2 b - - 0 34</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Ejercicio 9. Oscar Panno – Carlos Guimard, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Conviene retirar el caballo de c5 o cambiarlo?</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Ejercicio 9. Oscar Panno – Carlos Guimard, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Conviene retirar el caballo de cesar 5 o cambiarlo?</h3>
   
-  <p>Piezas blancas: rey en g1; torres en c1, f1; alfil en g2; caballo en c5; peones en b3, d4, e3, e5, g3, h2.</p>
-  <p>Piezas negras: rey en g8; torres en c8, f8; alfil en e6; caballo en c6; peones en a7, b6, d5, f7, g7, h6.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Torre en cesar 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en gustav 2.</li>
+    <li>Caballo en cesar 5.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en eva 6.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 20. caballo captura eva 6, felix captura eva 6, 21. alfil hector 3, torre captura felix 1 jaque, 22. rey captura felix 1, rey felix 7, 23. eva 4, torre cesar 7, 24. rey felix 2, david captura eva 4, 25. rey eva 3, anna 5, 26. alfil felix 1, rey felix 8, 27. rey captura eva 4, torre felix 7, 28. torre captura cesar 6, torre captura felix 1, 29. torre captura eva 6, bella 5, 30. torre bella 6</p>
+  <h4>La línea: 21 jugadas</h4>
+  <ul>
+    <li>20. Blancas: caballo captura eva 6.</li>
+    <li>20. Negras: felix captura eva 6.</li>
+    <li>21. Blancas: alfil hector 3.</li>
+    <li>21. Negras: torre captura felix 1 jaque.</li>
+    <li>22. Blancas: rey captura felix 1.</li>
+    <li>22. Negras: rey felix 7.</li>
+    <li>23. Blancas: eva 4.</li>
+    <li>23. Negras: torre cesar 7.</li>
+    <li>24. Blancas: rey felix 2.</li>
+    <li>24. Negras: david captura eva 4.</li>
+    <li>25. Blancas: rey eva 3.</li>
+    <li>25. Negras: anna 5.</li>
+    <li>26. Blancas: alfil felix 1.</li>
+    <li>26. Negras: rey felix 8.</li>
+    <li>27. Blancas: rey captura eva 4.</li>
+    <li>27. Negras: torre felix 7.</li>
+    <li>28. Blancas: torre captura cesar 6.</li>
+    <li>28. Negras: torre captura felix 1.</li>
+    <li>29. Blancas: torre captura eva 6.</li>
+    <li>29. Negras: bella 5.</li>
+    <li>30. Blancas: torre bella 6.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>20. caballo captura eva 6 cambia el caballo fuerte por el alfil «malo»: después de … felix captura eva 6 el peón de e6 queda débil y la diagonal del alfil de g2 se abre. Con 21. alfil hector 3 y 23. eva 4 las blancas rompen y el centro negro se derrumba. A veces el cambio bueno es el que entrega tu mejor pieza, si la debilidad que deja vale más. (Stockfish 17 a profundidad 22: caballo captura eva 6 es la que elige el motor (+2,5).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r2rk1/p4pp1/1pn1b2p/2NpP3/3P4/1P2P1P1/6BP/2R2RK1 w - - 0 20</p>
+  <p>20. caballo captura eva 6 cambia el caballo fuerte por el alfil «malo»: después de … felix captura eva 6 el peón de eva 6 queda débil y la diagonal del alfil de gustav 2 se abre. Con 21. alfil hector 3 y 23. eva 4 las blancas rompen y el centro negro se derrumba. A veces el cambio bueno es el que entrega tu mejor pieza, si la debilidad que deja vale más. (Stockfish 17 a profundidad 22: caballo captura eva 6 es la que elige el motor (+2,5).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2r2rk1/p4pp1/1pn1b2p/2NpP3/3P4/1P2P1P1/6BP/2R2RK1 w - - 0 20</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -119,7 +296,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -131,7 +308,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

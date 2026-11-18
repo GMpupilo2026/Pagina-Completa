@@ -34,6 +34,7 @@ const fs = require("fs");
 const path = require("path");
 const RAIZ = path.join(__dirname, "..");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 
 global.window = {};
 // El plan va PRIMERO: de ahí saca el banco la lista de áreas de la prueba.
@@ -470,10 +471,7 @@ function accesible() {
           const oido = oidoDe(item);
           let pos = "";
           if (item.fen) {
-            const d = describir(item.fen);
-            pos = `<p class="posicion"><strong>La posición.</strong> ${d.turno}
-              Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-              <span class="fen">FEN: ${esc(item.fen)}</span></p>`;
+            pos = posicionHtml(item.fen);
           }
           let cuerpo;
           if (item.opciones) {

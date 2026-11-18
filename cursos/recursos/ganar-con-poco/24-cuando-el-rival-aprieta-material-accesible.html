@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: El rival aprieta. Juega primero por él: ¿qué amenaza? Solo una jugada lo para. Juegan las blancas; el rival acaba de jugar … dama captura david 4 jaque.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Las ventajas pequeñas no son solo del que ataca. Cuando el rival tiene la iniciativa, la defensa precisa también es una forma de juntar ventajas: cada ataque que no funciona le deja al atacante algún peón adelantado, alguna pieza lejos, algún tiempo gastado. Si aguantas, esas pequeñas concesiones quedan del lado de la cuenta del rival.</p>
 <p>Defender bien es encontrar la única jugada que sostiene la posición, sin pánico y sin regalar más de lo necesario. A veces es devolver material para cortar el ataque; a veces es una jugada tranquila que cubre la casilla clave. Lo que casi nunca funciona es la defensa pasiva que solo espera.</p>
@@ -76,21 +100,52 @@
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: El rival aprieta. Juega primero por él: ¿qué amenaza? Solo una jugada lo para. Juegan las blancas; el rival acaba de jugar … dama captura david 4 jaque.</h3>
+  <h3 id="posicion-1">Posición 1: El rival aprieta. Juega primero por él: ¿qué amenaza? Solo una jugada lo para. Juegan las blancas; el rival acaba de jugar … dama captura david 4 jaque.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en f7; torres en e1, h5; alfil en f4; peones en a3, c2, f3, g2, h3.</p>
-  <p>Piezas negras: rey en c8; dama en d4; torres en a8, e8; alfil en b7; caballo en d7; peones en a7, b6, c7, e6.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en felix 7.</li>
+    <li>Torre en eva 1.</li>
+    <li>Torre en hector 5.</li>
+    <li>Alfil en felix 4.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 10</h4>
+  <ul>
+    <li>Rey en cesar 8.</li>
+    <li>Dama en david 4.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en eva 8.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Caballo en david 7.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en eva 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 28. alfil eva 3, torre felix 8, 29. dama captura felix 8 jaque, caballo captura felix 8, 30. alfil captura david 4</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>28. Blancas: alfil eva 3.</li>
+    <li>28. Negras: torre felix 8.</li>
+    <li>29. Blancas: dama captura felix 8 jaque.</li>
+    <li>29. Negras: caballo captura felix 8.</li>
+    <li>30. Blancas: alfil captura david 4.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>28. alfil eva 3, torre felix 8, 29. dama captura felix 8 jaque, caballo captura felix 8, 30. alfil captura david 4. Es una jugada defensiva precisa: la única que sostiene la posición. Es una defensa precisa: no se aguanta con cualquier jugada, sino con la única que cubre lo que el rival amenaza. (Ejercicio 0blu0 de la base abierta de Lichess (CC0), rating 1452. Stockfish 16 a profundidad 18: alfil eva 3 es la mejor (+5,8) y la segunda queda en -2,7.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1k1r3/pbpn1Q2/1p2p3/7R/3q1B2/P4P1P/2P3P1/4R1K1 w - - 0 28</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1k1r3/pbpn1Q2/1p2p3/7R/3q1B2/P4P1P/2P3P1/4R1K1 w - - 0 28</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
@@ -100,7 +155,7 @@
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -121,7 +176,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +208,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,21 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Usar el sacrificio de calidad para tomar la iniciativa, abrir al rey o dominar un complejo de casillas.</p>
 <p>Idea guía: Cuando las torres del rival no tienen columnas, la calidad de más no sirve para nada.</p>
@@ -62,7 +80,7 @@
 <p>El plan típico de quien entrega la calidad consiste en identificar primero qué complejo de casillas quedará bajo su control tras el sacrificio (muchas veces gracias a un peón que fija la estructura rival en el color contrario), y después usar ese dominio para mantener las piezas rivales completamente paralizadas mientras mejora su posición sin ninguna prisa. El bando que recibe la calidad, por su parte, necesita abrir columnas o cambiar el carácter de la posición cuanto antes: sin esa apertura, la torre de más puede pasar toda la partida sin encontrar una sola jugada útil.</p>
 <p>Un elemento adicional de esta familia de sacrificios es que muchas veces se combinan con un peón entregado además de la calidad, lo que a primera vista parece exagerado pero, si el complejo de casillas ganado es realmente decisivo, la evaluación puede seguir siendo completamente favorable, incluso objetivamente ganadora para quien sacrifica.</p>
 <p>El error más común de quien recibe la calidad es confiarse en el material extra sin buscar con urgencia la apertura de líneas: mientras las propias torres sigan encerradas, cada jugada que pasa es una jugada más a favor del rival. El error más común de quien sacrifica es no identificar con precisión qué complejo de casillas va a controlar, entregando material sin una compensación concreta y verificable.</p>
-<p>Bachmann Schiavo–Shirov es el ejemplo más completo de la lección: un sacrificio de peón y calidad para dominar el complejo de casillas oscuras funciona igual de bien con muchas piezas en el tablero que en un final sin damas, siempre que las torres rivales sigan fijadas en su lugar. Fedoseev–Carlsen muestra el sacrificio usado para ganar casillas críticas y paralizar por completo a una pieza rival, en este caso la propia dama del rival, neutralizada durante el resto de la partida. Hansen–González Vidal ilustra el tercer motivo: destruir la coordinación de las piezas rivales, seguido de una ruptura temática (e5-e6) que termina de sellar la ventaja obtenida con el sacrificio inicial.</p>
+<p>Bachmann Schiavo–Shirov es el ejemplo más completo de la lección: un sacrificio de peón y calidad para dominar el complejo de casillas oscuras funciona igual de bien con muchas piezas en el tablero que en un final sin damas, siempre que las torres rivales sigan fijadas en su lugar. Fedoseev–Carlsen muestra el sacrificio usado para ganar casillas críticas y paralizar por completo a una pieza rival, en este caso la propia dama del rival, neutralizada durante el resto de la partida. Hansen–González Vidal ilustra el tercer motivo: destruir la coordinación de las piezas rivales, seguido de una ruptura temática (eva 5-eva 6) que termina de sellar la ventaja obtenida con el sacrificio inicial.</p>
 <p>Reglas para recordar</p>
 
 
@@ -73,7 +91,7 @@
   <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
   <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
   <dt>El valor de las piezas</dt>
@@ -84,7 +102,7 @@
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
@@ -94,7 +112,7 @@
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -119,7 +137,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -147,7 +165,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
