@@ -90,9 +90,15 @@
         const habla = $("llamada-habla");
         const salirBtn = $("llamada-salir");
         const audios = $("llamada-audios");
+        const gente = $("llamada-gente");
+        const genteTitulo = $("llamada-gente-titulo");
+        const lista = $("llamada-lista");
         let sala = null;
         let entrando = false;
         let LK = null;
+        // ¿El profe abrió la llamada en esta clase? Lo dice sesion.js con estado().
+        let abierta = false;
+        let cerrandoPorElProfe = false;   // el alumno sale porque el profe la terminó
 
         function anunciar(texto) {
             // Vaciar y volver a escribir: el lector repite aunque sea el mismo texto.
@@ -106,13 +112,63 @@
         const nombreDe = (p) => p.name || "Alguien";
         const esElProfe = (p) => p.attributes && p.attributes.rol === "profe";
 
+        /* Siempre el mismo orden: tú, el profe, y los demás por nombre. Con la
+           lista en el orden en que fueron entrando, cada vez que alguien se
+           reconecta cambia de lugar y no se encuentra a nadie. */
+        const tienePalabra = (p) => Boolean(p.permissions && p.permissions.canPublish);
+        function enOrden() {
+            if (!sala) return [];
+            const otros = [...sala.remoteParticipants.values()].sort((a, b) =>
+                (esElProfe(b) - esElProfe(a)) || nombreDe(a).localeCompare(nombreDe(b), "es", { sensitivity: "base" }));
+            return [{ p: sala.localParticipant, yo: true }, ...otros.map((p) => ({ p, yo: false }))];
+        }
+        function detalle(p, yo) {
+            const d = [];
+            if (yo) d.push("tú");
+            if (esElProfe(p) || (yo && esProfe)) d.push("profe");
+            else if (tienePalabra(p)) d.push("con la palabra");
+            if (p.isSpeaking) d.push("hablando");
+            return d;
+        }
+
+        function pintarGente() {
+            const filas = enLlamada() ? enOrden() : [];
+            gente.hidden = !filas.length;
+            lista.textContent = "";
+            if (!filas.length) return;
+            genteTitulo.textContent = "En la llamada (" + filas.length + ")";
+            for (const { p, yo } of filas) {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2 px-3 py-1.5";
+                const n = document.createElement("span");
+                n.className = "font-semibold text-brand-800 dark:text-white break-words";
+                n.textContent = yo ? (op.miNombre || "Tú") : nombreDe(p);   // lo escribió una persona
+                const d = document.createElement("span");
+                d.className = "shrink-0 text-xs text-brand-600 dark:text-brand-300";
+                const partes = detalle(p, yo);
+                if (p.isSpeaking) {
+                    const icono = document.createElement("span");
+                    icono.setAttribute("aria-hidden", "true");
+                    icono.textContent = "🔊 ";
+                    d.appendChild(icono);
+                }
+                d.appendChild(document.createTextNode(partes.join(" · ")));
+                li.append(n, d);
+                lista.appendChild(li);
+            }
+        }
+
         function pintar() {
+            pintarGente();
             const dentro = enLlamada();
             entrar.hidden = dentro;
             mic.hidden = !dentro;
             quien.hidden = !dentro;
             habla.hidden = !dentro;
             salirBtn.hidden = !dentro;
+            // El profe no «sale»: la termina, y se cierra para todos.
+            salirBtn.textContent = esProfe ? "Terminar la llamada" : "Salir de la llamada";
+            entrar.textContent = esProfe && !abierta ? "🎧 Abrir la llamada a la clase" : "🎧 Entrar a la llamada";
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
             mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
@@ -155,6 +211,13 @@
             entrar.disabled = true;
             entrar.textContent = "Entrando…";
             try {
+                /* El profe la abre al entrar: desde ahí a sus alumnos les aparece la
+                   caja. La base no le da pase a un alumno sin eso. */
+                if (esProfe && !abierta && op.abrir) {
+                    const error = await op.abrir(true);
+                    if (error) throw new Error(error);
+                    abierta = true;
+                }
                 const [lk, pase] = await Promise.all([cargarLibreria(), pedir("pase")]);
                 LK = lk;
                 sala = new LK.Room({
@@ -186,7 +249,7 @@
             } finally {
                 entrando = false;
                 entrar.disabled = false;
-                entrar.textContent = "🎧 Entrar a la llamada";
+                pintar();
             }
         }
 
@@ -210,10 +273,10 @@
 
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
-            const otros = [...sala.remoteParticipants.values()];
+            const otros = enOrden().filter((f) => !f.yo).map((f) => f.p);
             if (!otros.length) { anunciar("Estás solo en la llamada."); return; }
-            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : p.permissions && p.permissions.canPublish ? ", con la palabra" : ""));
-            anunciar("En la llamada, además de ti: " + partes.join("; ") + ".");
+            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : ""));
+            anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
         }
 
         function quienHabla() {
@@ -227,6 +290,42 @@
             if (sala) { try { await sala.disconnect(); } catch (e) { console.error(e); } }
         }
 
+        /* El profe termina la llamada: se cierra para todos. La base deja de dar
+           pases, «sincronizar» saca de la sala a los que estaban, y a cada alumno
+           la caja se le esconde por game_state (estado(false)) aunque el servidor
+           tarde. */
+        async function terminar() {
+            if (op.abrir) {
+                const error = await op.abrir(false);
+                if (error) { anunciar(error); return; }
+            }
+            abierta = false;
+            await sincronizar();
+            await salir();
+            anunciar("Terminaste la llamada para toda la clase.");
+            pintar();
+        }
+
+        /* Lo que dice game_state: si el profe abrió la llamada en esta clase
+           (sesion.js lo llama como `llamada.estado(…)`). */
+        function ponerEstado(abiertaAhora) {
+            const antes = abierta;
+            abierta = Boolean(abiertaAhora);
+            if (esProfe) { pintar(); return; }
+            if (abierta && !antes) {
+                caja.hidden = false;
+                pintar();
+                sonido(SON.entra);
+                anunciar("Tu profe abrió la llamada de la clase: entra con «Entrar a la llamada».");
+            } else if (!abierta && (antes || !caja.hidden)) {
+                const estabaDentro = Boolean(sala);
+                cerrandoPorElProfe = true;
+                salir();
+                caja.hidden = true;
+                if (antes && op.anunciarFuera) op.anunciarFuera("Tu profe terminó la llamada de la clase." + (estabaDentro ? " Saliste de la llamada." : ""));
+            }
+        }
+
         /* El profe: que la sala quede igual que la clase (quién tiene el turno,
            a quién sacó). Aunque él no esté en la llamada: un alumno puede estar
            y esperar la palabra. Sin la llamada configurada no dice nada. */
@@ -238,11 +337,14 @@
         function escuchar(room) {
             const E = LK.RoomEvent;
             room
-                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); })
-                .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); })
+                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); })
+                .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); pintarGente(); })
+                // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
+                .on(E.ActiveSpeakersChanged, pintarGente)
                 .on(E.TrackSubscribed, (track) => { if (track.kind === "audio") audios.appendChild(track.attach()); })
                 .on(E.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); })
                 .on(E.ParticipantPermissionsChanged, (antes, p) => {
+                    pintarGente();   // «con la palabra» en la lista, también de los demás
                     if (p !== room.localParticipant || esProfe) return;
                     const ahora = Boolean(p.permissions && p.permissions.canPublish);
                     if (ahora === Boolean(antes && antes.canPublish)) return;
@@ -261,6 +363,7 @@
                     sonido(SON.sale);
                     audios.textContent = "";
                     sala = null;
+                    if (cerrandoPorElProfe) { cerrandoPorElProfe = false; pintar(); return; }
                     anunciar(LK && motivo === LK.DisconnectReason.PARTICIPANT_REMOVED ? "Tu profe te sacó de la llamada." : "Saliste de la llamada.");
                     pintar();
                     entrar.focus();
@@ -291,15 +394,16 @@
         mic.addEventListener("click", alternarMic);
         quien.addEventListener("click", quienEsta);
         habla.addEventListener("click", quienHabla);
-        salirBtn.addEventListener("click", salir);
+        salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));
         // Cerrar la pestaña también cuelga (si no, LiveKit tarda en notar que se fue).
         window.addEventListener("pagehide", () => { if (sala) sala.disconnect(); });
 
         const atajoMano = $("llamada-atajo-mano");
         if (atajoMano) atajoMano.hidden = esProfe;
-        caja.hidden = false;
+        // Al alumno la caja le sale cuando el profe abre la llamada (estado(true)).
+        caja.hidden = !esProfe;
         pintar();
-        return { sincronizar, salir, anunciar };
+        return { sincronizar, salir, anunciar, estado: ponerEstado };
     }
 
     window.ClaseLlamada = { montar };

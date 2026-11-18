@@ -10,7 +10,11 @@
 //                     hablar; el alumno, solo si TIENE EL TURNO de la clase.
 //   - "sincronizar" → (solo el profe) deja la sala igual que la clase: puede
 //                     hablar quien tiene el turno y nadie más, y quien el profe
-//                     sacó de la clase sale de la sala. La página la llama cada
+//                     sacó de la clase sale de la sala. Con la llamada TERMINADA
+//                     (game_state.llamada_sesion no es esta clase) salen todos
+//                     menos él: «si el profesor la cierra, que a todos también».
+//                     El alumno, además, no recibe pase si la llamada no está
+//                     abierta (lo decide llamada_de_la_clase()). La página la llama cada
 //                     vez que da o termina un turno y cuando saca a alguien.
 //
 // QUIÉN DECIDE ES LA BASE: public.llamada_de_la_clase(p_profesor), llamada con
@@ -100,7 +104,7 @@ async function servidor(metodo: string, sala: string, cuerpo: Record<string, unk
 
 // ------------------------------------------------------------- la función
 
-type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null };
+type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -156,7 +160,7 @@ Deno.serve(async (req) => {
   type Permiso = { can_publish?: boolean; canPublish?: boolean };
   for (const p of (lista.datos.participants || []) as Array<{ identity: string; permission?: Permiso }>) {
     if (p.identity === ll.yo) continue;
-    if (sacados.has(p.identity)) {
+    if (sacados.has(p.identity) || !ll.abierta) {
       const r = await servidor("RemoveParticipant", ll.sala, { identity: p.identity });
       if (r.ok) fuera++;
       continue;

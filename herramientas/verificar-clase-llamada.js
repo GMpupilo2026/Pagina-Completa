@@ -48,6 +48,10 @@ console.log("=== Los enganches de la clase ===");
     "…pero no para quien observa, la vista previa, el proyector ni el control remoto");
   si(/profile\.role === "profesor"/.test(montaje), "…y del lado del profe, solo quien da clase (no quien administra)");
   si(/alternarMano:[^\n]*setHandRaised\(!handRaised\)/.test(montaje), "la mano de la llamada es la mano de la clase (setHandRaised)");
+  si(/update\(\{ llamada_sesion: valor \}\)/.test(montaje) && /abrirla \? currentOpenSessionId : null/.test(montaje), "el profe abre la llamada en ESTA clase (llamada_sesion = la clase abierta) y la termina con null");
+  const aplicar = (sesion.match(/function applyGameStateRow\(row\) \{[\s\S]*?\n        }\n/) || [""])[0];
+  si(/llamadaSesion = row\.llamada_sesion/.test(aplicar) && /llamada\.estado\(llamadaAbierta\(\)\)/.test(aplicar), "cada cambio de game_state le dice a la caja si la llamada está abierta (al alumno le aparece y desaparece solo)");
+  si(/llamadaSesion === currentOpenSessionId/.test(sesion), "…y abierta es SOLO en la clase de ahora (la de ayer no cuenta)");
   const sacar = (leer("js/clase-sacar.js").match(/async function sacarDeLaClase\([\s\S]*?\n}\n/) || [""])[0];
   si(/llamada\.sincronizar\(\)/.test(sacar), "sacar a alguien de la clase lo saca también de la llamada");
   const html = leer("sesion.html");
@@ -57,13 +61,17 @@ console.log("=== Los enganches de la clase ===");
 
 console.log("\n=== La base y la función ===");
 {
-  const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).find((f) => /_llamada_de_la_clase\.sql$/.test(f));
+  // La ÚLTIMA migración que define la función es la que vale en la base.
+  const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).sort().filter((f) =>
+    /create or replace function public\.llamada_de_la_clase/.test(leer("supabase/migraciones/" + f))).pop();
   const sql = mig ? leer("supabase/migraciones/" + mig) : "";
   si(Boolean(mig), "la migración llamada_de_la_clase está guardada");
   si(/revoke execute on function public\.llamada_de_la_clase\(uuid\) from public, anon/.test(sql), "llamada_de_la_clase() se le quita a public y anon (es una API)");
   si(/grant execute on function public\.llamada_de_la_clase\(uuid\) to authenticated/.test(sql), "…y se deja a authenticated");
   si(/clase_sacados/.test(sql) && /devuelto_at is null/.test(sql), "quien el profe sacó no entra");
   si(/role = 'profesor'/.test(sql), "el profe tiene que ser profesor (quien administra no da clase)");
+  si(/if v_rol = 'alumno' and not v_abierta then\s+return null;/.test(sql), "el alumno no recibe pase si el profe no abrió la llamada en esta clase");
+  si(/new\.llamada_sesion := old\.llamada_sesion;/.test(sql), "solo el profe abre o termina la llamada (protect_game_state_teacher_columns)");
   const fn = leer("supabase/functions/clase-llamada/index.ts");
   si(!/SERVICE_ROLE/.test(fn), "la función no usa la clave de servicio");
   si(/global: \{ headers: \{ Authorization: autorizacion \} \}/.test(fn) && /rpc\("llamada_de_la_clase"/.test(fn), "…pregunta a la base con el token de quien llama");
@@ -71,6 +79,7 @@ console.log("\n=== La base y la función ===");
   si(/ll\.rol === "profe" \|\| ll\.elegido === ll\.yo/.test(fn), "en el pase, habla el profe o quien tiene el turno");
   si(/if \(ll\.rol !== "profe"\)/.test(fn), "solo el profe sincroniza");
   si(/can_publish \?\? p\.permission\?\.canPublish/.test(fn), "lee el permiso como lo contesta LiveKit (snake_case)");
+  si(/sacados\.has\(p\.identity\) \|\| !ll\.abierta/.test(fn), "con la llamada terminada, «sincronizar» saca a todos menos al profe");
   si(/^clase-llamada\s+true\s/m.test(leer("supabase/esquema/funciones-desplegadas.txt")), "está en funciones-desplegadas.txt con verify_jwt en true");
   si(/"clase-llamada": \[\]/.test(leer("herramientas/funciones-armar.js")), "está en la lista de funciones-armar.js (se despliega sola)");
 }
@@ -108,7 +117,7 @@ const LIVEKIT_FALSO = `
 (function () {
   const RoomEvent = {};
   ["ParticipantConnected","ParticipantDisconnected","TrackSubscribed","TrackUnsubscribed","ParticipantPermissionsChanged",
-   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected"].forEach((k) => { RoomEvent[k] = k; });
+   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected","ActiveSpeakersChanged"].forEach((k) => { RoomEvent[k] = k; });
   class Room {
     constructor() {
       this.state = "disconnected";
@@ -119,6 +128,7 @@ const LIVEKIT_FALSO = `
       this.localParticipant = {
         permissions: { canPublish: false },
         isMicrophoneEnabled: false,
+        isSpeaking: false,
         async setMicrophoneEnabled(v) {
           if (v && !this.permissions.canPublish) throw new Error("sin permiso");
           this.isMicrophoneEnabled = v;
@@ -133,7 +143,11 @@ const LIVEKIT_FALSO = `
       window.__conecto = { url, token };
       this.state = "connected";
       this.localParticipant.permissions.canPublish = token === "pase-con-palabra";
-      this.remoteParticipants.set("profe", { name: "Karina Rojas", attributes: { rol: "profe" }, permissions: { canPublish: true }, audioTrackPublications: new Map() });
+      // Entran desordenados: la lista tiene que salir igual (tú, el profe, los demás por nombre).
+      const p = (name, rol, habla) => ({ name, attributes: { rol }, permissions: { canPublish: habla }, isSpeaking: false, audioTrackPublications: new Map() });
+      this.remoteParticipants.set("zoe", p("Zoe Álvarez", "alumno", false));
+      this.remoteParticipants.set("profe", p("Karina Rojas", "profe", true));
+      this.remoteParticipants.set("ana", p("ana Mora", "alumno", true));
     }
     async startAudio() {}
     async disconnect() { this.state = "disconnected"; this.emit("Disconnected", 1); }
@@ -159,7 +173,7 @@ window.__sb = { functions: { async invoke(nombre, op) {
 } } };`;
 }
 
-async function abrir(browser, { esProfe = false, respuesta }) {
+async function abrir(browser, { esProfe = false, respuesta, abierta = true }) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   const page = await ctx.newPage();
   const errores = [];
@@ -168,14 +182,19 @@ async function abrir(browser, { esProfe = false, respuesta }) {
   await page.addScriptTag({ content: LIVEKIT_FALSO });
   await page.addScriptTag({ content: sbFalso(respuesta) });
   await page.addScriptTag({ path: path.join(RAIZ, "js/clase-llamada.js") });
-  await page.evaluate((esProfe) => {
+  await page.evaluate(({ esProfe, abierta }) => {
     window.__manos = [];
+    window.__abrir = [];
+    window.__fuera = [];
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
-      sb: window.__sb, profesorId: "u-profe", esProfe,
+      sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
+      abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v); return ""; },
+      anunciarFuera: (t) => window.__fuera.push(t),
     });
-  }, esProfe);
+    window.__llamada.estado(abierta);
+  }, { esProfe, abierta });
   return { ctx, page, errores };
 }
 
@@ -186,13 +205,37 @@ const PASE = (token) => ({ status: 200, cuerpo: { url: "wss://x.livekit.cloud", 
 async function pruebas(browser) {
   console.log("\n=== La caja, en un navegador ===");
 
+  // Sin la llamada abierta, al alumno no le sale nada; le aparece cuando el profe la abre.
+  let r = await abrir(browser, { respuesta: PASE("pase-sin-palabra"), abierta: false });
+  si(!(await visible(r.page, "#llamada")), "sin la llamada abierta, al alumno no le sale la caja");
+  await r.page.evaluate(() => window.__llamada.estado(true));
+  si(await visible(r.page, "#llamada") && /Tu profe abrió la llamada de la clase/.test(await anuncio(r.page)), "cuando el profe la abre, le aparece y se lo dice");
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  await r.page.evaluate(() => window.__llamada.estado(false));
+  await r.page.waitForTimeout(150);
+  si(!(await visible(r.page, "#llamada")), "cuando el profe la termina, la caja se le esconde");
+  si(await r.page.evaluate(() => window.__sala.state) === "disconnected", "…y sale de la sala aunque el servidor tarde");
+  si(/Tu profe terminó la llamada de la clase\. Saliste de la llamada\./.test((await r.page.evaluate(() => window.__fuera)).join(" ")), "…y se lo dice fuera de la caja (su región viva se fue con ella)");
+  await r.ctx.close();
+
   // El alumno sin la palabra.
-  let r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
   si(await visible(r.page, "#llamada"), "la caja se ve al montarla");
   si(await visible(r.page, "#llamada-entrar") && !(await visible(r.page, "#llamada-mic")), "antes de entrar: «Entrar a la llamada», sin el botón del micrófono");
   await r.page.click("#llamada-entrar");
   let a = await anuncio(r.page);
-  si(/Entraste a la llamada; hay 1 persona más/.test(a) && /levanta la mano con Alt Y/.test(a), "al entrar dice cuántos hay y cómo pedir la palabra: «" + a + "»");
+  si(/Entraste a la llamada; hay 3 personas más/.test(a) && /levanta la mano con Alt Y/.test(a), "al entrar dice cuántos hay y cómo pedir la palabra: «" + a + "»");
+  si(await visible(r.page, "#llamada-lista"), "ya dentro se ve la lista de quiénes están");
+  si(await r.page.textContent("#llamada-gente-titulo") === "En la llamada (4)", "…con cuántos son, contándote");
+  const nombres = await r.page.$$eval("#llamada-lista li", (lis) => lis.map((li) => li.children[0].textContent));
+  si(JSON.stringify(nombres) === JSON.stringify(["Luis Pérez", "Karina Rojas", "ana Mora", "Zoe Álvarez"]),
+    "…en orden: tú, el profe y los demás por nombre, sin importar mayúsculas ni el orden en que entraron (" + nombres.join(", ") + ")");
+  const detalles = await r.page.$$eval("#llamada-lista li", (lis) => lis.map((li) => li.children[1].textContent));
+  si(detalles[0] === "tú" && detalles[1] === "profe" && detalles[2] === "con la palabra" && detalles[3] === "", "…diciendo escrito quién es el profe y quién tiene la palabra (" + detalles.join(" | ") + ")");
+  si(await r.page.getAttribute("#llamada-gente", "aria-live") === null, "…y la lista no es región viva (lo que cambia ya se anuncia aparte)");
+  await r.page.evaluate(() => { const z = window.__sala.remoteParticipants.get("zoe"); z.isSpeaking = true; window.__sala.activeSpeakers = [z]; window.__sala.emit("ActiveSpeakersChanged", [z]); });
+  si(/hablando/.test(await r.page.textContent("#llamada-lista li:nth-child(4)")), "quien habla lo dice la lista, sin anunciarlo");
   const pedido = await r.page.evaluate(() => window.__pedidos[0]);
   si(pedido && pedido.nombre === "clase-llamada" && pedido.body.accion === "pase" && pedido.body.profesor === "u-profe", "pide el pase a clase-llamada con el profesor de la clase");
   si(await visible(r.page, "#llamada-mic") && !(await visible(r.page, "#llamada-entrar")), "ya dentro: el micrófono a la vista y «Entrar» no");
@@ -217,13 +260,14 @@ async function pruebas(browser) {
   si(/Se terminó tu turno: tu micrófono se apagó/.test(a) && await r.page.getAttribute("#llamada-mic", "aria-pressed") === "false", "al terminar el turno se apaga y se dice");
   await r.page.keyboard.press("Alt+KeyQ");
   a = await anuncio(r.page);
-  si(/Karina Rojas, el profe/.test(a), "Alt+Q dice quién está: «" + a + "»");
+  si(/^En la llamada hay 4 contigo: Karina Rojas, el profe; ana Mora, con la palabra; Zoe Álvarez\.$/.test(a), "Alt+Q dice quién está, en el mismo orden que la lista: «" + a + "»");
   await r.page.keyboard.press("Alt+KeyW");
-  si(/Nadie está hablando/.test(await anuncio(r.page)), "Alt+W dice quién habla");
+  si(/Está hablando Zoe Álvarez/.test(await anuncio(r.page)), "Alt+W dice quién habla");
   await r.page.evaluate(() => window.__sala.emit("Disconnected", 4));
   a = await anuncio(r.page);
   si(/Tu profe te sacó de la llamada/.test(a), "si el servidor lo saca, se lo dice");
   si(await visible(r.page, "#llamada-entrar") && await r.page.evaluate(() => document.activeElement.id) === "llamada-entrar", "…y vuelve a «Entrar», con el foco ahí");
+  si(!(await visible(r.page, "#llamada-gente")), "…y la lista se esconde");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 
@@ -235,17 +279,25 @@ async function pruebas(browser) {
   await r.ctx.close();
 
   // El profe: entra, y al entrar acomoda la sala.
-  r = await abrir(browser, { esProfe: true, respuesta: { status: 200, cuerpo: { url: "wss://x", token: "pase-con-palabra", sala: "clase-1", rol: "profe", yo: "u-profe", puede_hablar: true } } });
+  r = await abrir(browser, { esProfe: true, abierta: false, respuesta: { status: 200, cuerpo: { url: "wss://x", token: "pase-con-palabra", sala: "clase-1", rol: "profe", yo: "u-profe", puede_hablar: true } } });
+  si(await visible(r.page, "#llamada") && /Abrir la llamada a la clase/.test(await r.page.textContent("#llamada-entrar")), "al profe la caja le sale siempre, con «Abrir la llamada a la clase»");
   si(!(await visible(r.page, "#llamada-atajo-mano")), "al profe no se le muestra el atajo de la mano");
   await r.page.click("#llamada-entrar");
   await r.page.waitForTimeout(200);
   const acciones = await r.page.evaluate(() => window.__pedidos.map((p) => p.body.accion));
   si(JSON.stringify(acciones) === JSON.stringify(["pase", "sincronizar"]), "el profe al entrar pide su pase y acomoda la sala (" + acciones.join(", ") + ")");
+  si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true]", "…abriendo antes la llamada a la clase");
+  si(await r.page.textContent("#llamada-salir") === "Terminar la llamada", "el profe no «sale»: «Terminar la llamada»");
   await r.page.keyboard.press("Alt+KeyY");
   await r.page.waitForTimeout(100);
   si(JSON.stringify(await r.page.evaluate(() => window.__manos)) === "[]", "Alt+Y no hace nada al profe");
   await r.page.evaluate(() => window.__llamada.sincronizar());
   si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 2, "sincronizar() del profe le pide a la función que acomode la sala");
+  await r.page.click("#llamada-salir");
+  await r.page.waitForTimeout(200);
+  si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true,false]" && await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "sincronizar").length) === 3,
+    "«Terminar la llamada» la cierra para todos (llamada_sesion en null) y le pide al servidor que saque a los demás");
+  si(/Terminaste la llamada para toda la clase/.test(await anuncio(r.page)) && await r.page.evaluate(() => window.__sala.state) === "disconnected", "…sale de la sala y lo dice");
   await r.ctx.close();
 
   // Sin la llamada configurada.
