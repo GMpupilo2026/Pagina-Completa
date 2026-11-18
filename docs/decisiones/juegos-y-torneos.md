@@ -3284,6 +3284,90 @@ Al tocar esto, `node herramientas/verificar-pareo-eliminacion.js`, y el
 desempate en vivo también en `verificar-pareo-jde-arbitraje.js`. Rompiendo a
 propósito las semillas del cuadro o las tablas del Armagedón, salta.
 
+### El Sistema Keizer, la doble eliminación y el tercer puesto
+
+Salieron de comparar Pareo Integral con los otros programas de torneos (18/11/2026):
+eran los tres formatos que tenía otro (Sharly Chess) y Pareo Integral no. El
+dueño eligió construirlos.
+
+**El Sistema Keizer** (`sistema: "keizer"`, en `js/pareo/torneo.js`:
+`puntuarKeizer`, `emparejarKeizer`, `REGLAS_KEIZER`). Es el de los torneos de
+club de toda la temporada: juega quien vino y nadie queda fuera por faltar.
+
+- **Cada jugador vale según su puesto**: el primero, tantos puntos como
+  jugadores hay; el último, 1. Ganar suma el valor del rival, unas tablas la
+  mitad, y cada uno suma una vez su propio valor. Quedar libre o avisar suma la
+  mitad del valor PROPIO; faltar, el 35 % (hasta 5 faltas); jugar por el club
+  en otro lado, el 70 %. Son los valores por omisión de la librería
+  chesspairing, la misma con la que se comparan los desempates del C.07.
+- **Todas las rondas se vuelven a contar** con los valores del orden nuevo, y
+  se repite hasta que el orden deja de cambiar. A veces no deja: dos jugadores
+  se quedan cambiando de lugar sin fin (el de arriba vale más, y eso baja al
+  otro). Se corta en la primera vuelta que repite un orden ya visto, **y la
+  lista sale ordenada por los totales que muestra**. La primera versión
+  recalculaba los totales después de cortar y la lista salía desordenada
+  respecto a sus propios puntos, sin ningún error: 21 arriba de 21,5.
+- **Se cuenta en vigésimos de punto** (1, ½, 0,35 y 0,7 son enteros en
+  vigésimos): dos totales iguales son iguales, sin decimales que bailen.
+- **No pasa por bbpPairings**: se empareja de arriba abajo (1-2, 3-4…) sin
+  repetir un rival de las últimas tres rondas, buscando con vuelta atrás; si no
+  hay forma (cuatro jugadores, nueve rondas) se afloja a dos, una y cero. El
+  libre va al último **de los que menos veces quedaron libres**: es la única
+  diferencia a propósito con chesspairing, que por omisión se lo da siempre al
+  último.
+- **No es de calendario fijo** (`T.fijo` da false): lleva «Número de rondas» y
+  la lista para marcar quién no viene, que en un Keizer es lo de todas las
+  noches. Las tres formas de no venir son las mismas letras de siempre (H, Z,
+  F) con otro rótulo: «Avisó», «Faltó» y «Juega por el club». Quien no está en
+  una mesa ni en `ausencias` y no se retiró cuenta como falta, también quien
+  se inscribió tarde: no hay cómo saber en qué ronda entró.
+- **En la clasificación mandan los puntos Keizer**, estén o no en la lista de
+  desempates (`D.clasificacion`). Se ven porque son dos códigos del catálogo,
+  `KZ` (puntos) y `KV` (valor), que al elegir Keizer van primeros en
+  `t.desempates`: así salen solos en la pantalla, el PDF, WhatsApp y la página
+  pública, que pintan las columnas de esa lista. No son desempates de FIDE:
+  van marcados `propio` y quedan fuera de `D.CATALOGO` (lo que explican
+  `desempates.html`, el manual y el Aula de Arbitraje, que piden un
+  `explicar()` por código); salen en `D.CATALOGO_KEIZER`, y `E.catalogo(t)`
+  los suma solo en un Keizer. En el catálogo general rompían
+  `verificar-desempates-explicar.js`.
+- Va **dentro de `torneo.js`**, no en un archivo aparte: diez páginas y el
+  worker cargan `torneo.js` y `desempates.js`, y un archivo nuevo habría que
+  sumarlo en todas; la que faltara pintaría la clasificación en cero, callada.
+- El TRF dice `092 Individual: Keizer`, sin la línea 192 del Holandés.
+
+**La doble eliminación** (`sistema: "eliminacion"` con `dobleEliminacion`).
+Nadie queda fuera con una sola derrota.
+
+- Cada mesa lleva `llave` («G» ganadores, «P» perdedores, «F» final), `fase`
+  (la ronda DENTRO de la llave) y `slot`. Qué fases trae cada ronda del torneo
+  lo dice `T.planDoble(k)`: G1 · G2 y P1 · P2 · G3 y P3 · P4 · … · F1. En
+  perdedores, las fases impares cruzan a los que ya estaban y las pares les
+  traen a los que acaban de perder en ganadores (en las fases 2, 6, 10… en el
+  orden contrario, para no repetir enseguida la partida anterior).
+- **La revancha**: si la final la gana el que viene de perdedores (`deP`), los
+  dos llevan una derrota y `T.rondasDelTorneo` crece en una: los mismos dos, con
+  los colores cambiados. Por eso el número de rondas no es fijo de antemano.
+- **El puesto sale de la ronda en que cada uno quedó fuera**
+  (`T.alcanceEliminacion`): más tarde es mejor, y los que salieron en la misma
+  comparten puesto. Con eso el 3.º y el 4.º quedan cada uno solo, y el 5.º se
+  comparte entre dos.
+- Quien pierde por incomparecencia baja a perdedores como cualquiera; si no se
+  presenta ninguno («--») quedan fuera los dos.
+
+**El partido por el tercer puesto** (`tercerPuesto`, solo en la eliminación
+simple): en la ronda de la final juegan también los dos que perdieron la
+semifinal (`tercer: true`), y ganarlo vale medio escalón en el alcance: el 3.º
+y el 4.º dejan de compartir puesto. Con doble eliminación no se ofrece.
+
+**Al publicar** van `dobleEliminacion`, `tercerPuesto` y, en cada mesa,
+`llave`, `fase`, `deP` y `tercer`; `pareo-publicar` los guarda y deja pasar
+«keizer» (antes, todo sistema desconocido quedaba como «suizo»).
+
+Al tocar esto, `node herramientas/verificar-todo.js pareo-keizer`. Rompiendo a
+propósito la revancha (`hayRevancha` siempre false) o las vueltas del Keizer
+(una sola), salta.
+
 ### Torneos por equipos: el orden de tableros y el pareo de encuentros
 
 Lo pidió el dueño del sitio: la mitad de la inscripción de los JDE (193 de

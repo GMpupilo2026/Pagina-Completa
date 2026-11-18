@@ -70,6 +70,7 @@ async function init() {
         await desdeLasCuentasTemporales();
         await desdeElInforme();
         await cargarEnviadas();
+        avisarSinTarea();   // sin await: es un aviso, no frena la página
     } else {
         document.getElementById("vista-alumno").classList.remove("hidden");
         await cargarMisTareas();
@@ -252,6 +253,63 @@ async function desdeElInforme() {
     const n = parseInt(params.get("cantidad"), 10);
     if (n > 0 && selMeta.value === "cantidad") div.querySelector(".r-cantidad").value = String(n);
     await refrescarRenglon(div);
+}
+
+/* ---------- Nadie se queda sin tarea ----------
+
+   Arriba de «Asignar una tarea», cuántos de sus alumnos no tienen ninguna
+   tarea abierta, con sus nombres y un botón que los deja marcados en la
+   lista. Es la idea de Chessgora «0 alumnos sin rutina»: el profe con veinte
+   alumnos no se acuerda de a quién le falta, y el que se queda sin nada que
+   hacer deja de entrenar sin que nadie lo note.
+
+   «Abierta» quiere decir que todavía no vence (programada o no), de
+   CUALQUIER profe: la RLS de `tareas` ya le deja leer al profe las de sus
+   alumnos que mandó un colega, y a quien administra, todas. No se usa
+   tareas_con_avance(): para quien administra recorre todas las tareas del
+   sitio (8-9 s) y podría caerse por statement timeout. Por eso una tarea
+   terminada antes de su fecha todavía cuenta como abierta: el texto lo dice
+   así, sin prometer más de lo que mide.
+
+   Se pide de mil en mil (traerTodo): PostgREST corta a ~1000 filas sin
+   avisar, y con más tareas abiertas que eso la lista diría que alumnos con
+   tarea no tienen ninguna. Con un error no se muestra nada: un aviso a
+   medias sería peor que ninguno. */
+async function avisarSinTarea() {
+    const caja = document.getElementById("sin-tarea");
+    if (!caja || !alumnosDisponibles.length) return;
+    const ahora = new Date().toISOString();
+    const { data, error } = await traerTodo(() => sb.from("tareas").select("alumno_id")
+        .gt("vence_at", ahora).order("id"));
+    if (error) return;
+    const conTarea = new Set((data || []).map((t) => t.alumno_id));
+    const sin = alumnosDisponibles.filter((a) => a.id !== session.user.id && !conTarea.has(a.id));
+    caja.classList.toggle("hidden", !sin.length);
+    if (!sin.length) return;
+    const total = alumnosDisponibles.filter((a) => a.id !== session.user.id).length;
+    document.getElementById("sin-tarea-titulo").textContent = sin.length === 1
+        ? "1 alumno no tiene ninguna tarea abierta"
+        : `${sin.length} de ${profile && profile.is_admin ? "los" : "tus"} ${total} alumnos no tienen ninguna tarea abierta`;
+    const nombres = sin.map((a) => a.full_name || a.email || "—");
+    const muestra = nombres.slice(0, 12).join(", ") + (nombres.length > 12 ? ` y ${nombres.length - 12} más` : "");
+    document.getElementById("sin-tarea-texto").textContent =
+        `${muestra}. Todas las que tenían ya vencieron, o nunca les mandaron una.`;
+    const boton = document.getElementById("sin-tarea-marcar");
+    boton.onclick = () => {
+        let primera = null;
+        sin.forEach((a) => {
+            const check = document.querySelector('.alumno-check[value="' + CSS.escape(a.id) + '"]');
+            if (!check) return;
+            check.checked = true;
+            if (!primera) primera = check;
+        });
+        if (primera) {
+            primera.closest("label").scrollIntoView({ block: "nearest" });
+            primera.focus();
+        }
+        document.getElementById("form-status").textContent =
+            `${sin.length === 1 ? "Quedó marcado" : `Quedaron marcados los ${sin.length}`} en la lista de alumnos. Arma la tarea y mándala.`;
+    };
 }
 
 // ---------- Vista profesor: los renglones ----------
