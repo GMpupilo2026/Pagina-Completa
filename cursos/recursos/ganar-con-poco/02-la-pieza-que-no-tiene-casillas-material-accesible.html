@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan. Juegan las blancas; el rival acaba de jugar … alfil cesar 7.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Toda pieza vale lo que hace. Un alfil encerrado detrás de sus peones vale menos que un caballo bien puesto; una torre que no tiene columna vale menos que un alfil activo. Las tablas de valores (3, 3, 5, 9) son un promedio: en cada posición concreta, una pieza puede valer bastante más o bastante menos.</p>
 <p>Cuando una pieza rival se queda con pocas casillas, hay dos formas de aprovecharlo. La primera es quitarle las que le quedan y ganarla, que es lo que pasa en los ejemplos más llamativos. La segunda, más frecuente, es dejarla donde está: mientras esa pieza no juegue, tú juegas con una pieza de más en el resto del tablero, y esa ventaja se nota en cada plan.</p>
@@ -65,9 +89,9 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
   <dt>El valor de las piezas</dt>
@@ -76,31 +100,68 @@
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan. Juegan las blancas; el rival acaba de jugar … alfil cesar 7.</h3>
+  <h3 id="posicion-1">Posición 1: Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan. Juegan las blancas; el rival acaba de jugar … alfil cesar 7.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en e2; torres en a1, f1; alfiles en c1, f3; caballo en e4; peones en a2, b2, c2, d3, f2, g2, h3.</p>
-  <p>Piezas negras: rey en e8; dama en h4; torres en a8, h8; alfiles en c7, f5; caballo en d7; peones en a7, b7, c6, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 3.</li>
+    <li>Caballo en eva 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en david 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en hector 4.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 7.</li>
+    <li>Alfil en felix 5.</li>
+    <li>Caballo en david 7.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 15. alfil gustav 5, alfil captura eva 4, 16. alfil captura hector 4</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>15. Blancas: alfil gustav 5.</li>
+    <li>15. Negras: alfil captura eva 4.</li>
+    <li>16. Blancas: alfil captura hector 4.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>15. alfil gustav 5, alfil captura eva 4, 16. alfil captura hector 4. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza no se pierde por una combinación: se pierde porque ya estaba mal puesta, y la jugada buena solo lo aprovecha. (Ejercicio 2mRC9 de la base abierta de Lichess (CC0), rating 1448. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+5,5) y la segunda queda en +0,4.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r3k2r/ppbn1ppp/2p1p3/5b2/4N2q/3P1B1P/PPP1QPP1/R1B2RK1 w kq - 2 15</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r3k2r/ppbn1ppp/2p1p3/5b2/4N2q/3P1B1P/PPP1QPP1/R1B2RK1 w kq - 2 15</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -125,7 +186,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -153,7 +214,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -411,6 +411,35 @@ dos regiones iguales y no se sabe cuál es cuál. Va en los dos extremos porque 
 documento es largo: quien termina de leerlo no tendría que subir de nuevo para
 salir.
 
+**Lo mismo en todas las demás versiones accesibles** (los libros de
+`material/`, el libro del diagnóstico, las fichas de estudio, los cuentos de
+Peonita y los doce tomos de «Una clase al día»): la posición iba en un párrafo
+(`<p class="posicion">… Piezas blancas: rey en g1; torres en a1, f1…`). Ahora
+es un bloque con una pieza por renglón, escrito por **una sola función**,
+`posicionHtml()` de `herramientas/lib/posicion-accesible.js`, que usan los doce
+generadores (y `piezasHtml()`, la de las lecciones). Ahí el rótulo «Piezas
+blancas: 14» va en negrita y no como encabezado: cada libro ya tiene su árbol
+de encabezados. Las casillas sueltas de la prosa también van dichas. Los PDF,
+los Word y los EPUB no se tocaron.
+
+**Y las líneas de jugadas de los libros, igual.** «Solución. 32… torre eva 1,
+33. dama captura eva 1, …» iba en un párrafo; ahora cada jugada es un renglón
+(«32. Negras: torre eva 1.») bajo «Solución: 5 jugadas». Lo escribe
+`lineaHtml()` del mismo módulo, que parte la línea ya dicha
+(`jugadasDeLinea()`, la que también usan las lecciones). Una línea de UNA
+jugada se queda en su renglón de texto («Solución. 10, negras: alfil bella 4
+jaque mate.»), y lo que no tiene forma de línea no se parte: mejor corrida que
+mal partida. En los tomos de «Una clase al día», las **partidas comentadas**
+van con una jugada por renglón y su comentario al lado (`<ul class="jugadas">`),
+y las soluciones de los ejercicios también.
+
+`verificar-posicion-accesible.js` recorre **todos** los «-accesible» del sitio
+(434 archivos, más de 8000 posiciones y casi 9000 líneas): ninguno trae la
+posición corrida; en cada bloque con su FEN hay un renglón por cada pieza; y
+ninguna línea de varias jugadas ni partida comentada sigue en un párrafo. Un
+generador nuevo que vuelva a escribirlas corridas salta ahí. Probado que falla
+con una pieza de menos y con la línea de un libro devuelta a su párrafo.
+
 ### De dónde sale el contenido (y por qué importa)
 
 Nada de esto se inventa, y esa es la regla:

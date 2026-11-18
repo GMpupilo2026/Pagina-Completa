@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,11 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 2… caballo felix 6</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 3… eva 6</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 5… Enroque corto</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>T. Markowski – A. Onishchuk · Memorial Rubinstein, Polanica Zdroj 1999 · 0-1</p>
-<p>En una Apertura Catalana, Onishchuk ofrece un peón con 7… caballo cesar 6! para eliminar al caballo dominante en e5 y activar rápidamente sus piezas, en vez de buscar una estructura simétrica más pasiva. Tras aceptar el peón, Markowski se ve sometido a una presión constante contra el flanco de rey debilitado por la ausencia de su alfil de casillas blancas. Jugadas precisas como 14… torre bella 8!, 19… dama bella 7! y el golpe 20… alfil gustav 4! multiplican las amenazas, hasta que 26… torre captura cesar 3 culmina la conversión de la ventaja posicional en una victoria contundente.</p>
+<p>En una Apertura Catalana, Onishchuk ofrece un peón con 7… caballo cesar 6! para eliminar al caballo dominante en eva 5 y activar rápidamente sus piezas, en vez de buscar una estructura simétrica más pasiva. Tras aceptar el peón, Markowski se ve sometido a una presión constante contra el flanco de rey debilitado por la ausencia de su alfil de casillas blancas. Jugadas precisas como 14… torre bella 8!, 19… dama bella 7! y el golpe 20… alfil gustav 4! multiplican las amenazas, hasta que 26… torre captura cesar 3 culmina la conversión de la ventaja posicional en una victoria contundente.</p>
 <p>El juego de gambito consiste en entregar material, normalmente uno o dos peones, a cambio de alguna forma de compensación. En el ajedrez del siglo XIX esa compensación solía ser un ataque directo e inmediato contra el rey rival; en el ajedrez moderno, en cambio, es habitual que la compensación sea puramente posicional: ventaja de desarrollo, mayor actividad de piezas, o presión persistente sobre las debilidades del rival, sin que exista necesariamente una combinación ganadora inmediata a la vista. Reconocer si un gambito es correcto exige evaluar factores como cuántos tiempos de desarrollo se ganan a cambio del material, si el rey rival queda expuesto o simplemente incómodo, y si las debilidades creadas en la posición contraria son permanentes o pueden repararse con el tiempo. Para aplicar el juego de gambito en la práctica conviene jugar con rapidez y precisión una vez ofrecido el material -no basta con tener compensación en abstracto, hay que convertirla en amenazas concretas antes de que el rival consolide su posición- y estar dispuesto a entorpecer el desarrollo rival en vez de perseguir la recuperación inmediata del material.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
@@ -69,52 +95,160 @@
   <dt>El sacrificio</dt>
   <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
   <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
-  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a gustav 5 y la dama a hector 5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
   <dt>Cómo elegir y estudiar una apertura</dt>
   <dd>Un repertorio es el conjunto de aperturas que uno juega siempre. Se elige por el tipo de posición que a uno le gusta jugar, no por lo que está de moda.</dd>
   <dd><strong>El error de siempre:</strong> Memorizar líneas largas sin entender las ideas. Diez jugadas memorizadas se caen con la primera desviación; una idea entendida —dónde van las piezas, cuál es el plan— aguanta cualquier cosa.</dd>
   <dd><strong>Para verlo:</strong> De cada línea conviene saber tres cosas: qué quiere hacer cada bando, cuál es la ruptura típica y qué final sale si se cambia todo. Con eso se juega mejor que con veinte jugadas de memoria.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 2… caballo felix 6</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 2… caballo felix 6</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballos en b1, f3; peones en a2, b2, c2, d2, e2, f2, g3, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en b8, f6; peones en a7, b7, c7, d5, e7, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en bella 1.</li>
+    <li>Caballo en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en david 2.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 7.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>El caballo se desarrolla apoyando d5. Todavía es un desarrollo simétrico y tranquilo, típico de las aperturas de fianchetto: ambos bandos buscan casillas naturales sin comprometerse.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbqkb1r/ppp1pppp/5n2/3p4/8/5NP1/PPPPPP1P/RNBQKB1R w KQkq - 1 3</p>
+  <p>El caballo se desarrolla apoyando david 5. Todavía es un desarrollo simétrico y tranquilo, típico de las aperturas de fianchetto: ambos bandos buscan casillas naturales sin comprometerse.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rnbqkb1r/ppp1pppp/5n2/3p4/8/5NP1/PPPPPP1P/RNBQKB1R w KQkq - 1 3</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 3… eva 6</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 3… eva 6</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, g2; caballos en b1, f3; peones en a2, b2, c2, d2, e2, f2, g3, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en b8, f6; peones en a7, b7, c7, d5, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en gustav 2.</li>
+    <li>Caballo en bella 1.</li>
+    <li>Caballo en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en david 2.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>Las negras refuerzan su peón central antes de decidir si aceptar o no el gambito de las blancas más adelante. La apertura Catalana gira precisamente en torno a esta tensión: mantener d5 o capturar en c4.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbqkb1r/ppp2ppp/4pn2/3p4/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 4</p>
+  <p>Las negras refuerzan su peón central antes de decidir si aceptar o no el gambito de las blancas más adelante. La apertura Catalana gira precisamente en torno a esta tensión: mantener david 5 o capturar en cesar 4.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rnbqkb1r/ppp2ppp/4pn2/3p4/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 4</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 5… Enroque corto</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 5… Enroque corto</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, g2; caballos en b1, f3; peones en a2, b2, c4, d4, e2, f2, g3, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, e7; caballos en b8, f6; peones en a7, b7, c7, d5, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en gustav 2.</li>
+    <li>Caballo en bella 1.</li>
+    <li>Caballo en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>Enrocar antes de decidir sobre el peón c4 es la jugada más flexible: conserva todas las opciones -tomar o no en c4- sin comprometerse prematuramente.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 1 6</p>
+  <p>Enrocar antes de decidir sobre el peón cesar 4 es la jugada más flexible: conserva todas las opciones -tomar o no en cesar 4- sin comprometerse prematuramente.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 1 6</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Toma cinco partidas de ataque famosas y en cada una cuenta cuántas piezas atacaban antes del sacrificio.</li>
   <li>En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas.</li>
@@ -122,7 +256,7 @@
   <li>Toma la línea principal de tu apertura y escribe, sin mirar, qué quiere hacer cada bando. Después compáralo con una fuente.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -159,7 +293,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

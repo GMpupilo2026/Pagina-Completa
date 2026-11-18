@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Ya está todo cambiado: lo que queda es un final de peones, y en él se ve si el cambio convenía. Juegan las blancas; el rival acaba de jugar … rey captura bella 5.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Hay jugadores que cambian piezas cada vez que pueden, para que la posición se calme. Otros nunca cambian, porque «hay que mantener la tensión». Las dos actitudes tienen el mismo defecto: tratan los cambios como si fueran iguales, cuando cada cambio altera la posición de una forma distinta.</p>
 <p>Después de un cambio puede cambiar quién controla una columna, quién tiene la pareja de alfiles, qué pieza queda en una buena casilla y cuál en una mala, si un rey queda expuesto o protegido, si el final que queda es ganable o no. Antes de cambiar, la pregunta no es «¿pierdo material?» sino «¿qué queda después, y a quién le conviene?».</p>
@@ -69,28 +93,46 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Ya está todo cambiado: lo que queda es un final de peones, y en él se ve si el cambio convenía. Juegan las blancas; el rival acaba de jugar … rey captura bella 5.</h3>
+  <h3 id="posicion-1">Posición 1: Ya está todo cambiado: lo que queda es un final de peones, y en él se ve si el cambio convenía. Juegan las blancas; el rival acaba de jugar … rey captura bella 5.</h3>
   
-  <p>Piezas blancas: rey en e4; peones en e3, g4, h3.</p>
-  <p>Piezas negras: rey en b5; peones en b6, e7, f7, g6.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en eva 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 5</h4>
+  <ul>
+    <li>Rey en bella 5.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en eva 7.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 43. hector 4, rey cesar 4, 44. hector 5</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>43. Blancas: hector 4.</li>
+    <li>43. Negras: rey cesar 4.</li>
+    <li>44. Blancas: hector 5.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>43. hector 4, rey cesar 4, 44. hector 5. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Un final de peones es el resultado último de cambiar todo: aquí se cobra (o se paga) cada decisión de cambiar que se tomó antes. (Ejercicio 0KYr1 de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: h4 es la mejor (+3,8) y la segunda queda en -2,3.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/4pp2/1p4p1/1k6/4K1P1/4P2P/8/8 w - - 0 43</p>
+  <p>43. hector 4, rey cesar 4, 44. hector 5. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Un final de peones es el resultado último de cambiar todo: aquí se cobra (o se paga) cada decisión de cambiar que se tomó antes. (Ejercicio 0KYr1 de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: hector 4 es la mejor (+3,8) y la segunda queda en -2,3.)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/4pp2/1p4p1/1k6/4K1P1/4P2P/8/8 w - - 0 43</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
@@ -100,7 +142,7 @@
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +195,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

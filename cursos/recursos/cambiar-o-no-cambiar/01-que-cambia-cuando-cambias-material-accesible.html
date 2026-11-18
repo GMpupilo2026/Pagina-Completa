@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,13 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Akiba Rubinstein – Georg Salwe, Lodz 1908. Juegan las blancas. Los peones negros de cesar 6 y david 5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Las primeras reglas que se aprenden miden las piezas en puntos: el caballo vale tres, la torre cinco. Con esa cuenta, un caballo por un alfil es un cambio «igual» y no hay nada que pensar. Pero una pieza no vale por su nombre, sino por lo que hace en esa posición: el alfil que defiende todas tus casillas negras vale mucho más que tres puntos, y el que está encerrado detrás de sus peones vale bastante menos.</p>
 <p>Por eso, antes de cambiar, la pregunta no es «¿es parejo?», sino «¿qué cambia en la posición?». Qué casillas quedan sin defensor, qué peones quedan débiles o fijos, qué piezas quedan en el tablero y si esas piezas tienen buen futuro. Un cambio parejo en puntos puede dejar una posición muy desigual.</p>
-<p>La primera partida modelo es de Akiba Rubinstein, uno de los grandes maestros de la técnica. Primero cambia un caballo para dejar al rival con un peón retrasado, y después cambia los alfiles de casillas negras para que las casillas c5 y d4 queden sin nadie que las cuide. Ninguno de los dos cambios gana material: los dos ganan casillas.</p>
+<p>La primera partida modelo es de Akiba Rubinstein, uno de los grandes maestros de la técnica. Primero cambia un caballo para dejar al rival con un peón retrasado, y después cambia los alfiles de casillas negras para que las casillas cesar 5 y david 4 queden sin nadie que las cuide. Ninguno de los dos cambios gana material: los dos ganan casillas.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -65,42 +89,88 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Akiba Rubinstein – Georg Salwe, Lodz 1908. Juegan las blancas. Los peones negros de c6 y d5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?</h3>
+  <h3 id="posicion-1">Posición 1: Akiba Rubinstein – Georg Salwe, Lodz 1908. Juegan las blancas. Los peones negros de cesar 6 y david 5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?</h3>
   
-  <p>Piezas blancas: rey en g1; dama en d1; torres en c1, f1; alfiles en e3, g2; caballo en a4; peones en a2, b2, e2, f3, g3, h2.</p>
-  <p>Piezas negras: rey en g8; dama en b5; torres en a8, f8; alfiles en e6, e7; caballo en f6; peones en a7, c6, d5, f7, g7, h7.</p>
+  <h4>Piezas blancas: 13</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en cesar 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Alfil en gustav 2.</li>
+    <li>Caballo en anna 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en eva 2.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 13</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en bella 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en eva 6.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 15. alfil cesar 5, torre felix eva 8, 16. torre felix 2, caballo david 7, 17. alfil captura eva 7, torre captura eva 7, 18. dama david 4, torre eva eva 8, 19. alfil felix 1, torre eva cesar 8, 20. eva 3, dama bella 7, 21. caballo cesar 5, caballo captura cesar 5</p>
+  <h4>La línea: 14 jugadas</h4>
+  <ul>
+    <li>15. Blancas: alfil cesar 5.</li>
+    <li>15. Negras: torre felix eva 8.</li>
+    <li>16. Blancas: torre felix 2.</li>
+    <li>16. Negras: caballo david 7.</li>
+    <li>17. Blancas: alfil captura eva 7.</li>
+    <li>17. Negras: torre captura eva 7.</li>
+    <li>18. Blancas: dama david 4.</li>
+    <li>18. Negras: torre eva eva 8.</li>
+    <li>19. Blancas: alfil felix 1.</li>
+    <li>19. Negras: torre eva cesar 8.</li>
+    <li>20. Blancas: eva 3.</li>
+    <li>20. Negras: dama bella 7.</li>
+    <li>21. Blancas: caballo cesar 5.</li>
+    <li>21. Negras: caballo captura cesar 5.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>15. alfil cesar 5 ofrece cambiar el alfil de casillas negras de las negras, el único que podía cuidar c5 y d4. Después del cambio, las blancas se reagrupan sin prisa (16. torre felix 2, 18. dama david 4, 21. caballo cesar 5) y ocupan esas casillas con sus piezas. El cambio no gana material: gana casillas. (Stockfish 17 a profundidad 22: alfil cesar 5 está entre las mejores (0,0; el motor prefiere apenas caballo cesar 5, +0,2).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/p3bppp/2p1bn2/1q1p4/N7/4BPP1/PP2P1BP/2RQ1RK1 w - - 1 15</p>
+  <p>15. alfil cesar 5 ofrece cambiar el alfil de casillas negras de las negras, el único que podía cuidar cesar 5 y david 4. Después del cambio, las blancas se reagrupan sin prisa (16. torre felix 2, 18. dama david 4, 21. caballo cesar 5) y ocupan esas casillas con sus piezas. El cambio no gana material: gana casillas. (Stockfish 17 a profundidad 22: alfil cesar 5 está entre las mejores (0,0; el motor prefiere apenas caballo cesar 5, +0,2).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/p3bppp/2p1bn2/1q1p4/N7/4BPP1/PP2P1BP/2RQ1RK1 w - - 1 15</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
   <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +223,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,14 +57,34 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: La zona segura gustav 7-hector 7</a></li>
+        <li><a href="#posicion-2">Posición 2: La defensa de Vancura</a></li>
+        <li><a href="#posicion-3">Posición 3: Vancura y 2: la zona de tablas</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Manejar el peón de torre en séptima con la torre delante, la defensa de Vancura con el peón en sexta y los casos con el rey delante o apoyando.</p>
 <p>Idea guía: Contra el peón de torre la torre defensora ataca de lado: la posición de Vancura es la que hay que memorizar.</p>
 <p>Finales 65 a 68 · 7 posiciones</p>
-<p>Con la torre fuerte delante de su peón en séptima, el defensor tiene dos estrategias: ir con el rey a capturar el peón si hay tiempo, o correr en dirección contraria a g7/h7 y esperar. Cuando el rey blanco defiende el peón, empiezan los jaques por detrás.</p>
+<p>Con la torre fuerte delante de su peón en séptima, el defensor tiene dos estrategias: ir con el rey a capturar el peón si hay tiempo, o correr en dirección contraria a gustav 7/hector 7 y esperar. Cuando el rey blanco defiende el peón, empiezan los jaques por detrás.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -66,7 +92,7 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El rey activo en el final</dt>
   <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
   <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
@@ -74,48 +100,134 @@
   <dt>El zugzwang</dt>
   <dd>Estar obligado a mover y que cualquier jugada empeore la posición. En ajedrez no se puede pasar: el turno es una obligación, y en los finales eso decide partidas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar jugadas activas cuando lo que gana es esperar. En posiciones de zugzwang, la mejor jugada suele ser la que no cambia nada y devuelve el turno.</dd>
-  <dd><strong>Para verlo:</strong> Rey blanco en e6, rey negro en e8, peón blanco en e7: le toca al negro y tiene que soltar la casilla de coronación. La misma posición con el blanco a mover son tablas por ahogado.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en eva 6, rey negro en eva 8, peón blanco en eva 7: le toca al negro y tiene que soltar la casilla de coronación. La misma posición con el blanco a mover son tablas por ahogado.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: La zona segura g7-h7</h3>
+  <h3 id="posicion-1">Posición 1 de 3: La zona segura gustav 7-hector 7</h3>
   
-  <p>Piezas blancas: rey en g2; torre en a8; peón en a7.</p>
-  <p>Piezas negras: rey en f7; torre en a1.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en anna 8.</li>
+    <li>Peón en anna 7.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en felix 7.</li>
+    <li>Torre en anna 1.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… rey gustav 7, 2. rey felix 3, rey hector 7, 3. rey eva 4, rey gustav 7, 4. rey david 5, rey hector 7, 5. rey cesar 6, rey gustav 7, 6. rey bella 6, torre bella 1 jaque, 7. rey anna 6, torre anna 1 jaque, 8. rey bella 5, rey hector 7</p>
+  <h4>La línea: 15 jugadas</h4>
+  <ul>
+    <li>1. Negras: rey gustav 7.</li>
+    <li>2. Blancas: rey felix 3.</li>
+    <li>2. Negras: rey hector 7.</li>
+    <li>3. Blancas: rey eva 4.</li>
+    <li>3. Negras: rey gustav 7.</li>
+    <li>4. Blancas: rey david 5.</li>
+    <li>4. Negras: rey hector 7.</li>
+    <li>5. Blancas: rey cesar 6.</li>
+    <li>5. Negras: rey gustav 7.</li>
+    <li>6. Blancas: rey bella 6.</li>
+    <li>6. Negras: torre bella 1 jaque.</li>
+    <li>7. Blancas: rey anna 6.</li>
+    <li>7. Negras: torre anna 1 jaque.</li>
+    <li>8. Blancas: rey bella 5.</li>
+    <li>8. Negras: rey hector 7.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>1… rey gustav 7! (1… torre anna 3??, 2. torre hector 8; 1… rey eva 6??, 2. torre eva 8 jaque). La torre blanca no puede moverse y el rey no encuentra refugio contra los jaques.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: R7/P4k2/8/8/8/8/6K1/r7 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: R7/P4k2/8/8/8/8/6K1/r7 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: La defensa de Vancura</h3>
+  <h3 id="posicion-2">Posición 2 de 3: La defensa de Vancura</h3>
   
-  <p>Piezas blancas: rey en g2; torre en a8; peón en a6.</p>
-  <p>Piezas negras: rey en f7; torre en a1.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en anna 8.</li>
+    <li>Peón en anna 6.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en felix 7.</li>
+    <li>Torre en anna 1.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… rey gustav 7, 2. rey felix 3, torre felix 1 jaque, 3. rey eva 4, torre felix 6, 4. rey david 5, torre bella 6, 5. rey cesar 5, torre felix 6, 6. rey bella 5, torre felix 5 jaque, 7. rey bella 6, torre felix 6 jaque, 8. rey anna 7, torre felix 7 jaque, 9. rey bella 6, torre felix 6 jaque, 10. rey cesar 5, torre felix 5 jaque, 11. rey david 4, torre felix 6</p>
+  <h4>La línea: 21 jugadas</h4>
+  <ul>
+    <li>1. Negras: rey gustav 7.</li>
+    <li>2. Blancas: rey felix 3.</li>
+    <li>2. Negras: torre felix 1 jaque.</li>
+    <li>3. Blancas: rey eva 4.</li>
+    <li>3. Negras: torre felix 6.</li>
+    <li>4. Blancas: rey david 5.</li>
+    <li>4. Negras: torre bella 6.</li>
+    <li>5. Blancas: rey cesar 5.</li>
+    <li>5. Negras: torre felix 6.</li>
+    <li>6. Blancas: rey bella 5.</li>
+    <li>6. Negras: torre felix 5 jaque.</li>
+    <li>7. Blancas: rey bella 6.</li>
+    <li>7. Negras: torre felix 6 jaque.</li>
+    <li>8. Blancas: rey anna 7.</li>
+    <li>8. Negras: torre felix 7 jaque.</li>
+    <li>9. Blancas: rey bella 6.</li>
+    <li>9. Negras: torre felix 6 jaque.</li>
+    <li>10. Blancas: rey cesar 5.</li>
+    <li>10. Negras: torre felix 5 jaque.</li>
+    <li>11. Blancas: rey david 4.</li>
+    <li>11. Negras: torre felix 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>1… rey eva 7?, 2. anna 7! atraparía al rey. 3… torre felix 6!! es la clave: mientras el peón esté en sexta, el rey blanco no tiene escudo contra los jaques laterales.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: R7/5k2/P7/8/8/8/6K1/r7 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: R7/5k2/P7/8/8/8/6K1/r7 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Vancura y 2: la zona de tablas</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Vancura y 2: la zona de tablas</h3>
   
-  <p>Piezas blancas: rey en f3; torre en a8; peón en a6.</p>
-  <p>Piezas negras: rey en g7; torre en a1.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en felix 3.</li>
+    <li>Torre en anna 8.</li>
+    <li>Peón en anna 6.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en gustav 7.</li>
+    <li>Torre en anna 1.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… torre anna 5, 2. rey eva 4, torre bella 5, 3. torre anna 7 jaque, rey gustav 6, 4. torre bella 7, torre anna 5, 5. anna 7, rey felix 6, 6. torre hector 7, rey gustav 6, 7. torre cesar 7, rey felix 6, 8. rey david 4, rey eva 6, 9. rey cesar 4, rey david 6</p>
+  <h4>La línea: 17 jugadas</h4>
+  <ul>
+    <li>1. Negras: torre anna 5.</li>
+    <li>2. Blancas: rey eva 4.</li>
+    <li>2. Negras: torre bella 5.</li>
+    <li>3. Blancas: torre anna 7 jaque.</li>
+    <li>3. Negras: rey gustav 6.</li>
+    <li>4. Blancas: torre bella 7.</li>
+    <li>4. Negras: torre anna 5.</li>
+    <li>5. Blancas: anna 7.</li>
+    <li>5. Negras: rey felix 6.</li>
+    <li>6. Blancas: torre hector 7.</li>
+    <li>6. Negras: rey gustav 6.</li>
+    <li>7. Blancas: torre cesar 7.</li>
+    <li>7. Negras: rey felix 6.</li>
+    <li>8. Blancas: rey david 4.</li>
+    <li>8. Negras: rey eva 6.</li>
+    <li>9. Blancas: rey cesar 4.</li>
+    <li>9. Negras: rey david 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>Sin jaque disponible, la torre se traslada por la cuarta fila restringiendo al rey. 3… rey gustav 6! única (3… rey felix 6?, 4. rey david 4, torre bella 6, 5. torre hector 7). Contra 6. torre hector 7, 6… rey gustav 6!! evita la trampa torre hector 6 jaque y torre hector 8.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: R7/6k1/P7/8/8/5K2/8/r7 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: R7/6k1/P7/8/8/5K2/8/r7 b - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -125,7 +237,7 @@
   <li>En tus finales, antes de mover, pregúntate si te conviene que sea el rival quien mueva. Si es así, busca la jugada de espera.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -178,7 +290,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
