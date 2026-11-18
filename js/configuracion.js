@@ -1112,6 +1112,19 @@
             document.getElementById("speech-voice-select").addEventListener("change", (e) => {
                 window.BlindNotation.setSpeechVoiceURI(e.target.value);
             });
+            /* La velocidad (js/blind-notation.js, setSpeechRate). En el recuadro se
+               cambia de a pasos («voz más lenta»), así que lo guardado puede no ser
+               ninguna de las opciones: se marca la más cercana. */
+            const rateSelect = document.getElementById("speech-rate-select");
+            if (rateSelect && window.BlindNotation.getSpeechRate) {
+                const guardada = window.BlindNotation.getSpeechRate();
+                let cerca = null;
+                Array.from(rateSelect.options).forEach((o) => {
+                    if (!cerca || Math.abs(parseFloat(o.value) - guardada) < Math.abs(parseFloat(cerca.value) - guardada)) cerca = o;
+                });
+                if (cerca) rateSelect.value = cerca.value;
+                rateSelect.addEventListener("change", (e) => { window.BlindNotation.setSpeechRate(e.target.value); });
+            }
             document.getElementById("speech-voice-test-btn").addEventListener("click", () => {
                 // Habla directo con la Web Speech API, sin pasar por BlindNotation.speak():
                 // esa función solo habla si Modo Speech ya está activado, y "probar" debe
@@ -1121,6 +1134,7 @@
                 const uri = document.getElementById("speech-voice-select").value;
                 const voice = uri ? window.BlindNotation.getAvailableVoices().find((v) => v.voiceURI === uri) : null;
                 if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else { utterance.lang = "es-ES"; }
+                if (rateSelect) utterance.rate = parseFloat(rateSelect.value) || 1;
                 window.speechSynthesis.speak(utterance);
             });
         }

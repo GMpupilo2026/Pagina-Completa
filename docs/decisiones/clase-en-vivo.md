@@ -2436,6 +2436,52 @@ con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
 nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
 jugarlo, saltan.
 
+#### El tablero de preguntas
+
+`tablero-preguntas.html` (`js/tablero-preguntas.js`), enlazado desde
+Cuestionarios: un juego de categorías **para proyectar**. Cada columna es un
+cuestionario (de los del profe o de los listos) y cada casilla una de sus
+preguntas, de 100 a 500 puntos (3, 4 o 5 filas). Juegan de 2 a 6 equipos: eligen
+una casilla, contestan en voz alta y el profe muestra la respuesta y da los
+puntos («Acertó …», «Nadie acertó»; con «Restar los puntos al equipo que
+falla», también «Falló …»). Termina en el podio. La idea salió de Chessgora,
+que lo tiene en sus juegos de clase.
+
+- **No se llama como el programa de la tele**: el nombre es marca de otros. El
+  formato de categorías por valores es genérico; el nombre y las preguntas son
+  nuestros.
+- **No escribe nada en la base.** Los equipos no son cuentas y los puntos son
+  del juego, no Puntos Ajedrez: los alumnos no tocan nada, contesta el salón.
+  Solo lee `cuestionarios`, con la misma RLS de Cuestionarios (los alumnos no
+  ven ninguno, porque traen las respuestas); por eso es solo de quien da clase
+  o administra.
+- **Las preguntas con posición se quedan afuera**: se proyecta sin tablero de
+  ajedrez, y una pregunta sobre una posición que no se ve no se contesta.
+  Tampoco entran las que no tienen correcta, ni las de menos de dos opciones.
+  Un cuestionario aparece en la lista si tiene al menos 3 jugables, y `armar()`
+  dice cuál no alcanza para las filas elegidas.
+- Las preguntas de cada columna salen **al azar** del cuestionario, sin
+  repetirse; la de 100 no es «la más fácil» (los cuestionarios no traen
+  dificultad por pregunta), es la primera que sale.
+- **Deshacer el último punto**: un toque equivocado en plena clase se corrige,
+  y si ese punto había cerrado una casilla, la casilla vuelve al tablero.
+- **El juego a medias se guarda en esa computadora** (`localStorage`, con
+  try/catch): recargar en plena clase no lo borra («Seguir el juego que quedó
+  a medias»). Es una comodidad, no un dato.
+- Accesible: las casillas son botones con nombre («Aperturas, 300 puntos»); la
+  que ya salió dice «Ya salió», con `aria-disabled` (sigue alcanzándose con
+  Tab); al abrir una pregunta el foco va al texto, y al volver, a la casilla.
+  La correcta va escrita («✓ (la correcta)»), no solo en verde. Contrastes
+  medidos contra el fondo real: casilla libre 7,85; la que ya salió 6,6 (6,8
+  en oscuro); la correcta 8,7.
+
+**Al tocarlo, `node herramientas/verificar-todo.js tablero-preguntas`** (sin
+navegador): qué preguntas entran, los límites de `armar()`, que cada casilla sea
+una pregunta del cuestionario con su misma correcta y sin repetir, el podio con
+empates, que la página esté en la cabecera con sus migas y que nada escrito por
+una persona pase por `innerHTML`. Está probado que salta dejando entrar las
+preguntas con posición.
+
 ### Las prácticas de Formación Ajedrez en la clase
 
 En «Preguntar», debajo del cuestionario, «📝 Prácticas de Formación Ajedrez»
@@ -3194,6 +3240,8 @@ en vivo está cerrada para el alumno. Con eso «hay clase» pasa a significar al
   justamente lo que aquella variable existía para atajar. Quedan las **dos
   puertas deliberadas del profesor**: mandar una posición
   (`aplicarPosicionEnClase()`) y el botón «Abrir la clase».
+  Las dos, desde que cada clase tiene su lista, primero preguntan quién entra
+  (ver «A la clase entran solo los asignados»).
   - Eso **no deja clases sin registrar, al revés**: antes el registro dependía
     de que entrara alguien; ahora sin abrirla no hay clase que dar, así que
     queda garantizado por construcción.
@@ -3257,6 +3305,93 @@ presencia otras 3, y quitando el candado de la tarjeta 3 en la otra.
   `upsert()`: desde que hay clase abierta la alumna marca su asistencia sola, y
   sin ese método la página muere con un TypeError que la prueba cuenta como
   fallo suyo — era el doble el que estaba incompleto.
+
+### A la clase entran solo los asignados
+
+Con la clase abierta entraba **cualquier** alumno del profe. El de CENFO se
+metía por error a la clase del grupo de SJ y quedaba con asistencia en una
+clase que no era la suya; y en el informe, el «fue a 3 de N» usaba el total de
+clases cerradas, así que **las clases de los otros grupos le contaban a todos
+como faltas**. Nada de eso daba un error.
+
+Ahora cada clase en vivo tiene su lista, `public.clase_asignados` (clase,
+alumno), y solo entran los de la lista.
+
+- **Lo hace cumplir la base.** `interno.me_toca_la_clase_de(profe)` («su clase
+  está abierta y estoy en su lista») reemplazó a `clase_abierta_de()` en
+  `game_state_select`, `variant_nodes_select` y `profesor_videollamada_select`:
+  fuera de la lista, el tablero, las variantes y la sala de la videollamada dan
+  0 filas. `clase_abierta_de()` sigue solo para los invitados, que entran con su
+  enlace. Y dos restrictivas, `class_attendance_solo_asignados` y
+  `class_presence_log_solo_asignados`, no dejan que un alumno se anote asistencia
+  ni tiempo en una clase con lista en la que no está (la ficha presencial, donde
+  el profe anota a otros, no se toca).
+- **La lista se pide al abrir, siempre.** Una clase en vivo ya no se abre con un
+  INSERT suelto: `class_sessions_insert` solo deja crear la ficha presencial, y
+  la en vivo se abre con `abrir_clase_en_vivo(p_alumnos, p_titulo)`, que crea la
+  clase **y** su lista en una llamada (partido en dos, entre una cosa y la otra
+  la clase existiría vacía) y rechaza una lista vacía o con alguien que no es
+  alumno de quien la abre. Las dos puertas de `sesion.html` —«Abrir la clase» y
+  mandar una posición— muestran «¿Quién entra a esta clase?» y nadie entra hasta
+  que el profe confirma. «Iniciar clase» del panel lleva a
+  `sesion.html?abrir=1` con el selector abierto (y el título escrito).
+  - Si cancela el selector, mandar otra posición **no se lo vuelve a poner
+    encima** en cada jugada: queda el botón.
+  - Si ya había una abierta (la otra pestaña), la función devuelve ESA sin
+    cambiarle la lista.
+- **La lista viene marcada**, porque pasar lista de doce es desmarcar a los dos
+  que no son: con los del grupo o subgrupo de la clase de su **horario** que toca
+  ahora (desde media hora antes) y, si no hay, con los de su **última clase**. Lo
+  dice escrito («Vienen marcados los de tu horario de ahora: grupo SJ»), para que
+  no se confirme sin mirar. Hay un botón por grupo («Grupo SJ (8)»), el selector
+  de subgrupos, «Todos» y «Ninguno»; cada uno marca a esos y desmarca al resto,
+  como en Tareas. El selector es `js/clase-asignados.js`, una sola copia.
+- **La lista se cambia con la clase en curso**: «👥 Quién entra» (con su
+  `aria-expanded`) abre la misma lista y guarda con
+  `cambiar_asignados_de_la_clase()`, que la deja **exactamente como llega** (la
+  regla de `set_teachers`). Al que agregan le llega el aviso y su pantalla de
+  espera entra sola (escucha `clase_asignados` filtrado por su id, por eso la
+  tabla va en Realtime con su `verificacion_en_dos_pasos`); al que quitan ya no
+  le llega el tablero. La franja dice cuántos pueden entrar.
+- **El aviso al celular va solo a los de la lista.** Lo mandaba el trigger
+  `class_sessions_avisa_push` a todos los alumnos del profe, y además corre
+  antes de que exista la lista; se borró y el aviso lo manda
+  `abrir_clase_en_vivo()`.
+- **Al alumno que no está en la lista se le dice eso**, no «todavía no ha
+  abierto la clase», que lo dejaría esperando a una clase que no es la suya:
+  «Karina Rojas tiene una clase en curso ahora, pero no estás en la lista de
+  esta clase. Si te toca estar, pídele que te agregue». Para eso `mis_clases()`
+  cambió: `clase_abierta` quiere decir **abierta para mí** (así el panel no le
+  destapa la tarjeta ni la videollamada) y lleva al final `abierta_sin_mi`. Hubo
+  que borrarla y volverla a crear, y devolverle el `execute` a `authenticated`.
+  Dentro de la clase, que se abra una NUEVA de su profe recarga la página: el
+  arranque decide si le toca.
+- **Las ausencias cuentan solo las clases que le tocaban.**
+  `clases_que_le_tocaban()` (SECURITY INVOKER) da, por alumno, las clases
+  cerradas de su lista, las que entró y —en las que no tienen lista— las de sus
+  profesores. `informes.js` usa ese número para el «de N» (si la función falla,
+  vuelve al total) y `faltas_justificadas()` ya no cuenta como falta justificada
+  una clase con lista en la que no estaba.
+  - **`class_sessions.solo_asignados` no es un dato derivado**: dice qué regla
+    tiene la clase. Las que se abren desde ahora van en `true`; las de antes y
+    las presenciales en `false`, y se siguen contando como siempre (a todos los
+    alumnos del profe). Mirar «si tiene filas en la lista» no servía: un alumno
+    no ve la lista de los demás y le parecería que ninguna clase la tiene.
+  - Las clases que estaban abiertas al aplicar la migración quedaron asignadas
+    a todos los alumnos de su profe: nadie se quedó afuera a mitad de clase.
+  - La ficha presencial **no tiene lista** todavía: cuenta para todos los
+    alumnos del profe, como antes.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-asignados
+clase-registrada panel informes`.** `verificar-clase-asignados.js` comprueba la
+lista propuesta (horario y última clase), los botones de grupo, cambiar la lista
+en curso (manda la lista entera), que la alumna fuera de la lista no monte la
+sesión ni marque asistencia y se le diga por qué, que la de la lista sí entre, y
+que ninguna página abra una clase con `from("class_sessions").insert`. Está
+probado que falla de verdad: dejando entrar a la alumna con `abierta_sin_mi`,
+saltan 4 comprobaciones. El doble de `verificar-clase-registrada.js` sabe
+`abrir_clase_en_vivo`, `cambiar_asignados_de_la_clase` y calcula `clase_abierta`
+de `mis_clases()` con la lista, como la base.
 
 ### La clase en vivo, vista por quien supervisa
 

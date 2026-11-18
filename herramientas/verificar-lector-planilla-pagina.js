@@ -21,7 +21,9 @@
  *     sin ningún «≈»; el PGN las trae; una planilla con basura al final queda
  *     «ilegible desde la jugada N», con lo escrito, sin inventar jugadas; guardar
  *     usa lo que dice el cuadro (y no guarda un PGN roto); una foto sin nada
- *     escrito lo dice; y el aviso de ilegible se lee en claro y en oscuro (AA).
+ *     escrito lo dice; «Descargar la lectura» baja las palabras de Vision tal
+ *     cual, las celdas y la partida; y el aviso de ilegible se lee en claro y en
+ *     oscuro (AA).
  *     Deja las capturas lector-planilla-claro.png y -oscuro.png en la carpeta
  *     temporal del sistema, para mirar la pantalla.
  *
@@ -148,6 +150,20 @@ async function pruebaPagina(browser) {
   igual("y trae las mismas jugadas", g.history(), e.r.jugadas.map((j) => j.san));
   ok(/\[Date "\d{4}\.\d{2}\.\d{2}"\]/.test(pgn), "con la fecha de hoy");
   if (cuenta("dudosa")) ok((pgn.match(/\{dudosa\}/g) || []).length === cuenta("dudosa"), "y las dudosas marcadas en el PGN");
+
+  console.log("\n=== «Descargar la lectura» ===");
+  {
+    const [descarga] = await Promise.all([page.waitForEvent("download"), page.click("#download-lectura-btn")]);
+    igual("baja un .json con la fecha de hoy", /^lectura-planilla-\d{4}-\d{2}-\d{2}\.json$/.test(descarga.suggestedFilename()), true);
+    const j = JSON.parse(require("fs").readFileSync(await descarga.path(), "utf8"));
+    igual("con las palabras de Vision tal cual (se pueden volver a leer)", j.palabras, palabras.map((w) => ({ text: w.text, bbox: w.bbox })));
+    igual("las celdas que salieron de la foto y cómo se leyeron", [j.metodo, j.hojas], [e.metodo, e.hojas]);
+    igual("y la partida, con el estado y lo escrito de cada jugada", j.partida.jugadas.map((x) => [x.san, x.estado]), e.r.jugadas.map((x) => [x.san, x.estado]));
+    const otra = R.reconstruir(Chess, R.hojasDeLaFoto(j.palabras).hojas);
+    igual("pasar sus palabras otra vez por el lector da la misma partida", otra.jugadas.map((x) => x.san), e.r.jugadas.map((x) => x.san));
+    ok(await page.$eval("#download-lectura-btn", (b) => /no lo compartas/.test(document.getElementById(b.getAttribute("aria-describedby")).textContent)),
+      "el botón dice (también al lector de pantalla) que trae lo escrito en la planilla y no se comparte");
+  }
 
   console.log("\n=== Guardar en Archivos usa lo que dice el cuadro ===");
   await page.click("#save-shared-btn");

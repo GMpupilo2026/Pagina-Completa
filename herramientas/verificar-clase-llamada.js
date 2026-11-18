@@ -69,13 +69,20 @@ console.log("\n=== La base y la función ===");
   const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).sort().filter((f) =>
     /create or replace function public\.llamada_de_la_clase/.test(leer("supabase/migraciones/" + f))).pop();
   const sql = mig ? leer("supabase/migraciones/" + mig) : "";
+  /* Los permisos y el trigger no tienen por qué repetirse en la última: un
+     `create or replace` conserva el execute de la función, y el trigger vive
+     aparte. Se buscan en TODAS las migraciones que tocan la llamada
+     (clase_solo_asignados redefine la función solo para pedir la lista). */
+  const todas = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).sort()
+    .map((f) => leer("supabase/migraciones/" + f))
+    .filter((t) => /llamada_de_la_clase|llamada_sesion/.test(t)).join(" ");
   si(Boolean(mig), "la migración llamada_de_la_clase está guardada");
-  si(/revoke execute on function public\.llamada_de_la_clase\(uuid\) from public, anon/.test(sql), "llamada_de_la_clase() se le quita a public y anon (es una API)");
-  si(/grant execute on function public\.llamada_de_la_clase\(uuid\) to authenticated/.test(sql), "…y se deja a authenticated");
+  si(/revoke execute on function public\.llamada_de_la_clase\(uuid\) from public, anon/.test(todas), "llamada_de_la_clase() se le quita a public y anon (es una API)");
+  si(/grant execute on function public\.llamada_de_la_clase\(uuid\) to authenticated/.test(todas), "…y se deja a authenticated");
   si(/clase_sacados/.test(sql) && /devuelto_at is null/.test(sql), "quien el profe sacó no entra");
   si(/role = 'profesor'/.test(sql), "el profe tiene que ser profesor (quien administra no da clase)");
   si(/if v_rol = 'alumno' and not v_abierta then\s+return null;/.test(sql), "el alumno no recibe pase si el profe no abrió la llamada en esta clase");
-  si(/new\.llamada_sesion := old\.llamada_sesion;/.test(sql) && /new\.llamada_modo := old\.llamada_modo;/.test(sql), "solo el profe abre o termina la llamada y elige quién habla (protect_game_state_teacher_columns)");
+  si(/new\.llamada_sesion := old\.llamada_sesion;/.test(todas) && /new\.llamada_modo := old\.llamada_modo;/.test(todas), "solo el profe abre o termina la llamada y elige quién habla (protect_game_state_teacher_columns)");
   si(/v_modo := case when v_abierta then coalesce\(v_modo, 'turno'\) else 'turno' end;/.test(sql), "quién puede hablar solo vale con la llamada abierta en esta clase");
   const fn = leer("supabase/functions/clase-llamada/index.ts");
   si(!/SERVICE_ROLE/.test(fn), "la función no usa la clave de servicio");

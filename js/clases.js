@@ -1847,7 +1847,7 @@
                 /* La clase ya no se abre sola cuando llega un alumno: la abre
                    el profe (ver «La sesión en vivo se abre cuando el profesor
                    la abre»). Este texto decía lo contrario. */
-                ? "Hasta que la abras, tus alumnos no pueden entrar. Ábrela aquí con «Iniciar clase», o dentro de la Sesión en vivo con «Abrir la clase» o al mandar una posición."
+                ? "Hasta que la abras, tus alumnos no pueden entrar. Con «Iniciar clase» eliges quién entra y la abres: solo los de la lista pueden entrar."
                 : "";
 
             /* La tarjeta entera solo aparece cuando tiene algo que decir: hay
@@ -3991,16 +3991,14 @@
         document.getElementById("sessions-more").addEventListener("click", () => cargarSesiones({ mas: true }));
 
 
-        document.getElementById("start-session-btn").addEventListener("click", async () => {
-            const btn = document.getElementById("start-session-btn");
-            const title = document.getElementById("new-session-title").value.trim();
-            btn.disabled = true;
-            const { error } = await sb.from("class_sessions").insert({ title: title || null, created_by: profile.id });
-            btn.disabled = false;
-            if (error) { Avisos.avisar("No se pudo iniciar la clase: " + error.message, { tipo: "error" }); return; }
-            document.getElementById("new-session-title").value = "";
-            await refreshSessionStatus();
-            await cargarSesiones();
+        /* Una clase en vivo se abre CON SU LISTA (solo entran los asignados,
+           ver «A la clase entran solo los asignados»), y el selector de quién
+           entra vive en la Sesión en vivo: el botón lleva allá con el selector
+           ya abierto y el título que se haya escrito. La base ya no deja abrir
+           una en vivo con un INSERT suelto. */
+        document.getElementById("start-session-btn").addEventListener("click", () => {
+            const title = document.getElementById("new-session-title").value.trim().slice(0, 200);
+            location.href = "sesion.html?abrir=1" + (title ? "&titulo=" + encodeURIComponent(title) : "");
         });
 
         document.getElementById("close-session-btn").addEventListener("click", async () => {
