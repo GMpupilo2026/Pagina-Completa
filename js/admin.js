@@ -660,6 +660,12 @@
            quién no ve. La marca quien administra y la plataforma se acomoda
            sola en la cuenta de esa persona (js/vision-cuenta.js). */
         let visionPorPersona = new Map();
+        /* A quién le encendió quien administra el entrenador de IA
+           (public.entrenador_ia_personas): el botón «¿Por qué?» al fallar un
+           ejercicio. Apagado para todos hasta que se enciende acá, en la ficha
+           de cada persona. Ver «El entrenador de IA» en
+           docs/decisiones/entrenamiento.md. */
+        let conEntrenadorIA = new Set();
         /* Quién coordina a quién. Se lee directo por PostgREST, como los
            equipos: la tabla tiene política de SELECT y escribirla es cosa de
            set_profesores_del_coordinador(), que exige is_admin. Va declarada
@@ -1020,6 +1026,36 @@
                     : `Listo: ${n} ya no tiene marcada ninguna ayuda de visión.`);
             });
             datos.appendChild(campoFicha("Visión", visionSelect));
+
+            /* El entrenador de IA de esta persona: un interruptor que solo
+               cambia quien administra (activar_entrenador_ia() lo exige) y
+               que se pinta con lo que devuelve la base, no con lo que se
+               apretó. Cada explicación cuesta dinero: por eso es de a una
+               persona y no de a un grupo. */
+            const iaBoton = document.createElement("button");
+            iaBoton.type = "button";
+            iaBoton.setAttribute("role", "switch");
+            iaBoton.dataset.entrenadorIa = u.id;
+            iaBoton.className = "text-sm font-semibold border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const pintarIA = (activa) => {
+                iaBoton.setAttribute("aria-checked", activa ? "true" : "false");
+                iaBoton.setAttribute("aria-label", "Entrenador de IA de " + nombre);
+                iaBoton.textContent = activa ? "Encendido: toca para apagarlo" : "Apagado: toca para encenderlo";
+            };
+            pintarIA(conEntrenadorIA.has(u.id));
+            iaBoton.addEventListener("click", async () => {
+                const quiere = iaBoton.getAttribute("aria-checked") !== "true";
+                iaBoton.disabled = true;
+                const { data, error } = await sb.rpc("activar_entrenador_ia", { p_persona: u.id, p_activa: quiere });
+                iaBoton.disabled = false;
+                if (error) { Avisos.avisar("No se pudo cambiar el entrenador de IA: " + error.message, { tipo: "error" }); return; }
+                if (data === true) conEntrenadorIA.add(u.id); else conEntrenadorIA.delete(u.id);
+                pintarIA(data === true);
+                Avisos.avisar(data === true
+                    ? `Listo: ${nombreDe(u)} ya ve el botón «¿Por qué?» al fallar un ejercicio de táctica o de mates.`
+                    : `Listo: ${nombreDe(u)} ya no tiene el entrenador de IA.`);
+            });
+            datos.appendChild(campoFicha("Entrenador de IA", iaBoton, "Al fallar un ejercicio puede pedir una explicación: el motor decide qué era mejor y la IA lo cuenta en palabras. Hasta 15 al día. Gasta del presupuesto de IA de su academia (o del general)."));
             cuerpo.appendChild(datos);
 
             /* ---- Rol y a cargo ---- */
@@ -2490,6 +2526,10 @@
                 const vs = await traerTodo(() => sb.from("vision_personas").select("persona_id, vision"));
                 visionPorPersona = new Map((vs || []).map((v) => [v.persona_id, v.vision]));
             } catch (e) { visionPorPersona = new Map(); }
+            try {
+                const es = await traerTodo(() => sb.from("entrenador_ia_personas").select("persona_id"));
+                conEntrenadorIA = new Set((es || []).map((x) => x.persona_id));
+            } catch (e) { conEntrenadorIA = new Set(); }
             profesoresPorAlumno = new Map();
             (parejas || []).forEach((r) => {
                 if (!profesoresPorAlumno.has(r.student_id)) profesoresPorAlumno.set(r.student_id, []);

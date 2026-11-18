@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118175852
+# al-dia-con: 20261118204456
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -128,6 +128,7 @@ tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
 tabla  enlaces_diagnostico  rls=true
+tabla  entrenador_ia_personas  rls=true
 tabla  entreno_pedidos  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
@@ -1460,6 +1461,9 @@ columna  encuestas_profesor.updated_at  timestamp with time zone
 columna  enlaces_diagnostico.codigo  text
 columna  enlaces_diagnostico.created_at  timestamp with time zone
 columna  enlaces_diagnostico.supervisor_id  uuid
+columna  entrenador_ia_personas.activado_por  uuid
+columna  entrenador_ia_personas.created_at  timestamp with time zone
+columna  entrenador_ia_personas.persona_id  uuid
 columna  entreno_pedidos.class_session_id  uuid
 columna  entreno_pedidos.created_at  timestamp with time zone
 columna  entreno_pedidos.ejercicios  jsonb
@@ -3073,6 +3077,7 @@ funcion  acceso_set_exigido(p_exigido boolean)  definer  anon=false  auth=true
 funcion  acceso_vigente()  definer  anon=false  auth=true
 funcion  accesorios_de(p_ids uuid[])  invoker  anon=false  auth=true
 funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=false  auth=true
+funcion  activar_entrenador_ia(p_persona uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  activar_preparacion_rivales(p_profesor uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  activar_tarea_por_puntos(p_regla uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  actividad_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
@@ -3317,6 +3322,7 @@ funcion  ia_explicar_quedan()  definer  anon=false  auth=true
 funcion  ia_guardar_alumnos(p_academia uuid, p_alumnos boolean)  definer  anon=false  auth=true
 funcion  ia_guardar_config(p_academia uuid, p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  ia_inicio_de_mes()  invoker  anon=false  auth=true
+funcion  ia_para_entrenador(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_explicar(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_usuario(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_resumen_mes(p_dia date)  definer  anon=false  auth=true
@@ -3792,6 +3798,7 @@ funcion  taller_practica_enviar(p_horario uuid, p_archivos text[], p_comentario 
 funcion  taller_practica_revisar(p_id uuid, p_aprobar boolean, p_nota text)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
 funcion  tareas_por_puntos_avance(p_regla uuid)  definer  anon=false  auth=true
+funcion  tengo_entrenador_ia()  definer  anon=false  auth=true
 funcion  tengo_herramienta(p_herramienta text)  definer  anon=false  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  torneos_externos_lista()  invoker  anon=true  auth=true
@@ -4031,6 +4038,7 @@ politica  encargados  encargados_update  UPDATE
 politica  encuesta_curso_respuestas  encuesta_curso_respuestas_ver  SELECT
 politica  encuestas_curso  encuestas_curso_admin  ALL
 politica  encuestas_profesor  encuestas_profesor_ver  SELECT
+politica  entrenador_ia_personas  entrenador_ia_personas_ver  SELECT
 politica  entreno_pedidos  entreno_pedidos_inserta_profe  INSERT
 politica  entreno_pedidos  entreno_pedidos_lee  SELECT
 politica  entreno_pedidos  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4460,6 +4468,7 @@ trigger  cuentas_temporales  auditar
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
+trigger  entrenador_ia_personas  auditar
 trigger  entreno_pedidos  entreno_pedido_de_la_base
 trigger  equipo_alumnos  auditar
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
@@ -4841,6 +4850,7 @@ indice  encuestas_profesor  encuestas_profesor_profesor
 indice  encuestas_profesor  encuestas_profesor_una_por_mes
 indice  enlaces_diagnostico  enlaces_diagnostico_codigo_key
 indice  enlaces_diagnostico  enlaces_diagnostico_pkey
+indice  entrenador_ia_personas  entrenador_ia_personas_pkey
 indice  entreno_pedidos  entreno_pedidos_clase
 indice  entreno_pedidos  entreno_pedidos_pkey
 indice  entreno_pedidos  entreno_pedidos_profe
@@ -5836,6 +5846,7 @@ grant  encuestas_curso  authenticated  INSERT
 grant  encuestas_curso  authenticated  SELECT
 grant  encuestas_curso  authenticated  UPDATE
 grant  encuestas_profesor  authenticated  SELECT
+grant  entrenador_ia_personas  authenticated  SELECT
 grant  entreno_pedidos  anon  DELETE
 grant  entreno_pedidos  anon  INSERT
 grant  entreno_pedidos  anon  REFERENCES
