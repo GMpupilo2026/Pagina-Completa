@@ -52,13 +52,13 @@ console.log("=== Los enganches de la clase ===");
     "…pero no para quien observa, la vista previa, el proyector ni el control remoto");
   si(/profile\.role === "profesor"/.test(montaje), "…y del lado del profe, solo quien da clase (no quien administra)");
   si(/alternarMano:[^\n]*setHandRaised\(!handRaised\)/.test(montaje), "la mano de la llamada es la mano de la clase (setHandRaised)");
-  si(/update\(\{ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean\(abrirla\) \}\)/.test(montaje) && /abrirla \? currentOpenSessionId : null/.test(montaje), "el profe abre la llamada en ESTA clase (llamada_sesion = la clase abierta) y la termina con null; las dos veces vuelve al turno, y al abrirla se graba sola");
+  si(/update\(\{ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean\(abrirla\), llamada_grupos: null \}\)/.test(montaje) && /abrirla \? currentOpenSessionId : null/.test(montaje), "el profe abre la llamada en ESTA clase (llamada_sesion = la clase abierta) y la termina con null; las dos veces vuelve al turno, y al abrirla se graba sola");
   si(/update\(\{ llamada_grabando: Boolean\(encender\) \}\)/.test(montaje), "pausar o volver a grabar lo guarda el profe en game_state.llamada_grabando");
   si(/storage\.from\("clase-grabaciones"\)\.upload\(ruta, blob/.test(montaje) && /rpc\("guardar_parte_grabacion"/.test(montaje), "cada parte se sube al almacenamiento privado y se anota con guardar_parte_grabacion()");
   si(/const ruta = profile\.id \+ "\/" \+ clase \+ "\/"/.test(montaje), "…en la carpeta del profe y de ESA clase (la que traía la parte, no la abierta de ahora)");
   si(/update\(\{ llamada_modo: modo \}\)/.test(montaje), "quién puede hablar lo guarda el profe en game_state.llamada_modo");
   const aplicar = (sesion.match(/function applyGameStateRow\(row\) \{[\s\S]*?\n        }\n/) || [""])[0];
-  si(/llamadaSesion = row\.llamada_sesion/.test(aplicar) && /llamada\.estado\(llamadaAbierta\(\), llamadaModo, llamadaGrabando\)/.test(aplicar) && /llamadaModo = row\.llamada_modo/.test(aplicar) && /llamadaGrabando = Boolean\(row\.llamada_grabando\)/.test(aplicar), "cada cambio de game_state le dice a la caja si la llamada está abierta (al alumno le aparece y desaparece solo)");
+  si(/llamadaSesion = row\.llamada_sesion/.test(aplicar) && /llamada\.estado\(llamadaAbierta\(\), llamadaModo, llamadaGrabando, llamadaGrupos\)/.test(aplicar) && /llamadaModo = row\.llamada_modo/.test(aplicar) && /llamadaGrabando = Boolean\(row\.llamada_grabando\)/.test(aplicar), "cada cambio de game_state le dice a la caja si la llamada está abierta (al alumno le aparece y desaparece solo)");
   si(/llamadaSesion === currentOpenSessionId/.test(sesion), "…y abierta es SOLO en la clase de ahora (la de ayer no cuenta)");
   const sacar = (leer("js/clase-sacar.js").match(/async function sacarDeLaClase\([\s\S]*?\n}\n/) || [""])[0];
   si(/llamada\.sincronizar\(\)/.test(sacar), "sacar a alguien de la clase lo saca también de la llamada");
@@ -92,9 +92,9 @@ console.log("\n=== La base y la función ===");
   si(!/SERVICE_ROLE/.test(fn), "la función no usa la clave de servicio");
   si(/global: \{ headers: \{ Authorization: autorizacion \} \}/.test(fn) && /rpc\("llamada_de_la_clase"/.test(fn), "…pregunta a la base con el token de quien llama");
   si(/canPublishSources: \[fuente\]/.test(fn) && /permisos\(hablar, "microphone"\)/.test(fn) && /permisos\(hablar, "MICROPHONE"\)/.test(fn), "solo voz: el pase y el cambio de permiso dejan publicar únicamente el micrófono");
-  si(/ll\.rol === "profe" \|\| puedeHablar\(ll, ll\.yo, ll\.permiso_voz === true\)/.test(fn) && /const hablar = puedeHablar\(ll, p\.identity, conPermiso\.has\(p\.identity\)\)/.test(fn), "el pase y «sincronizar» deciden quién habla con la misma regla");
+  si(/ll\.rol === "profe" \|\| puedeHablar\(ll, ll\.yo, ll\.permiso_voz === true, enGrupo\)/.test(fn) && /const hablar = puedeHablar\(ll, p\.identity, conPermiso\.has\(p\.identity\), grupo > 0\)/.test(fn), "el pase y «sincronizar» deciden quién habla con la misma regla");
   si(/if \(ll\.grabando && !conPermiso\) return false;/.test(fn), "mientras se graba, el alumno sin permiso de su familia no habla nunca (lo diga el turno o «Todos»)");
-  si(/if \(ll\.modo === "libre"\) return true;/.test(fn) && /if \(ll\.modo === "bloqueada"\) return false;/.test(fn) && /return identidad === ll\.elegido;/.test(fn), "…con turno habla quien lo tiene, con «Todos» cualquiera y con «Nadie» ningún alumno");
+  si(/if \(enGrupo \|\| ll\.modo === "libre"\) return true;/.test(fn) && /if \(ll\.modo === "bloqueada"\) return false;/.test(fn) && /return identidad === ll\.elegido;/.test(fn), "…con turno habla quien lo tiene, con «Todos» cualquiera y con «Nadie» ningún alumno");
   si(/if \(ll\.rol !== "profe"\)/.test(fn), "solo el profe sincroniza");
   si(/can_publish \?\? p\.permission\?\.canPublish/.test(fn), "lee el permiso como lo contesta LiveKit (snake_case)");
   si(/sacados\.has\(p\.identity\) \|\| !ll\.abierta/.test(fn), "con la llamada terminada, «sincronizar» saca a todos menos al profe");
@@ -185,6 +185,53 @@ console.log("\n=== Lo del 18/11: temas, fila de manos y minutos ===");
   si(/cargarHablado\(p\.class_session_id\)/.test(rep) && /const soyAlumno = nombre\.has\(yoId\)/.test(rep), "«Repasar mis clases» dice quién habló (al alumno, solo lo suyo)");
 }
 
+console.log("\n=== Lo del 18/11 (2): micrófono, señal, grupos y resumen ===");
+{
+  const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).find((f) => /llamada_grupos/.test(f));
+  const sql = mig ? leer("supabase/migraciones/" + mig) : "";
+  si(/new\.llamada_grupos := old\.llamada_grupos;/.test(sql), "solo el profe arma los grupos (protect_game_state_teacher_columns): un alumno no se cambia de sala");
+  si(/check \(llamada_grupos is null or jsonb_typeof\(llamada_grupos\) = 'object'\)/.test(sql), "…los grupos son un objeto o nada");
+  si(/\^\(\[1-9\]\|1\[0-9\]\|20\)\$/.test(sql) && /'sala', v_sala \|\| case when v_grupo is not null then '-g' \|\| v_grupo else '' end/.test(sql),
+    "…la base le da a cada alumno la sala de SU grupo (y un número raro no es un grupo)");
+  si(/v_grupos := case when v_abierta and jsonb_typeof\(v_grupos\) = 'object' then v_grupos end;/.test(sql), "…y sin la llamada abierta en esta clase no hay grupos");
+  const fn = leer("supabase/functions/clase-llamada/index.ts");
+  si(/const sala = ll\.rol === "profe" \? salaDe\(ll, grupoPedido\) : ll\.sala;/.test(fn), "el alumno no elige su sala (la da la base); el profe sí elige a qué grupo entra");
+  si(/grupoDe\(ll, p\.identity\) !== grupo/.test(fn) && /\.\.\.viejos/.test(fn), "«sincronizar» saca de cada sala a quien no es de ella, también de las de grupos que ya terminaron");
+  const iRol = fn.indexOf('if (ll.rol !== "profe")');
+  si(iRol > 0 && fn.indexOf('if (accion === "silenciar")') > iRol && /MutePublishedTrack/.test(fn), "apagar el micrófono de alguien: solo el profe, y lo hace el servidor (MutePublishedTrack)");
+  const ll = leer("js/clase-llamada.js");
+  const armar = (ll.match(/function mezclar\(lista\) \{[\s\S]*?\n        }\n/) || [""])[0] + (ll.match(/function armarGrupos\(alumnos, tam\) \{[\s\S]*?\n        }\n/) || [""])[0];
+  let armarGrupos = null;
+  try { armarGrupos = new Function(armar + "; return armarGrupos;")(); } catch (e) { armarGrupos = null; }
+  if (armarGrupos) {
+    const tamanos = (n, tam) => {
+      const g = armarGrupos(Array.from({ length: n }, (_, k) => "a" + k), tam);
+      const c = {};
+      Object.values(g).forEach((x) => { c[x] = (c[x] || 0) + 1; });
+      return Object.values(c).sort((a, b) => a - b).join(",");
+    };
+    si(tamanos(4, 2) === "2,2" && tamanos(5, 2) === "2,3" && tamanos(7, 3) === "3,4" && tamanos(6, 3) === "3,3" && tamanos(2, 4) === "2",
+      "los grupos salen parejos y nadie queda solo: 4→2,2 · 5→2,3 · 7 de a 3→3,4 (" + [tamanos(4, 2), tamanos(5, 2), tamanos(7, 3)].join(" · ") + ")");
+  } else mal("no encontré armarGrupos() en clase-llamada.js");
+  si(/voiceIsolation: true/.test(ll) && /noiseSuppression: true/.test(ll), "el navegador quita el ruido de la casa: supresión de ruido y aislar la voz");
+  si(/switchActiveDevice\("audioinput"/.test(ll) && /CLAVE_MIC/.test(ll), "se elige el micrófono (se recuerda) y se cambia dentro de la llamada");
+  si(/webAudioMix: espacial \? \{ audioContext: ctxVoces \} : false/.test(ll) && /createStereoPanner/.test(ll), "las voces en su lugar van por WebAudio solo si se pidieron");
+  const sesion = leer("js/sesion.js");
+  si(/llamada_grabando: Boolean\(abrirla\), llamada_grupos: null/.test(sesion), "abrir o terminar la llamada la deja sin grupos");
+  si(/llamada\.estado\(llamadaAbierta\(\), llamadaModo, llamadaGrabando, llamadaGrupos\)/.test(sesion), "…y los grupos le llegan a la llamada con el estado de la clase");
+  const rep = leer("js/repasar-clases.js");
+  const resumen = rep.slice(rep.indexOf("const PALABRAS_VACIAS"), rep.indexOf("function pintarResumen"));
+  let frases = null;
+  try { frases = new Function(resumen + "; return frasesPrincipales;")(); } catch (e) { frases = null; }
+  if (frases) {
+    const r = frases("Hoy vamos a ver la oposición en los finales de peones. La oposición es cuando los reyes se miran con una casilla en medio. Bueno, ahora juguemos un rato. La oposición en los finales de peones decide quién gana el final. ¿Alguien tiene una pregunta sobre la oposición en los finales?", 2);
+    si(JSON.stringify(r) === JSON.stringify(["Hoy vamos a ver la oposición en los finales de peones.", "La oposición en los finales de peones decide quién gana el final."]),
+      "el resumen elige las frases principales tal como se dijeron, en su orden (" + JSON.stringify(r) + ")");
+    si(JSON.stringify(frases("", 5)) === "[]", "…y sin texto no inventa nada");
+  } else mal("no encontré frasesPrincipales() en repasar-clases.js");
+  si(/pintarResumen\(data\.filter/.test(rep) && /pintarResumen\(\[\]\)/.test(rep), "el resumen se arma con la grabación y se borra al cambiar de clase");
+}
+
 /* ------------------------------------------------------------------ 4 */
 
 // La caja, tal cual está en sesion.html.
@@ -202,7 +249,8 @@ const LIVEKIT_FALSO = `
 (function () {
   const RoomEvent = {};
   ["ParticipantConnected","ParticipantDisconnected","TrackSubscribed","TrackUnsubscribed","ParticipantPermissionsChanged",
-   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected","ActiveSpeakersChanged"].forEach((k) => { RoomEvent[k] = k; });
+   "LocalTrackPublished","LocalTrackUnpublished","ConnectionQualityChanged","Reconnecting","Reconnected","Disconnected","ActiveSpeakersChanged",
+   "TrackMuted","TrackUnmuted"].forEach((k) => { RoomEvent[k] = k; });
   class Room {
     constructor() {
       this.state = "disconnected";
@@ -236,6 +284,7 @@ const LIVEKIT_FALSO = `
       this.remoteParticipants.set("ana", p("ana Mora", "alumno", true, "u-ana2"));
     }
     async startAudio() {}
+    async switchActiveDevice(tipo, id) { window.__dispositivo = { tipo, id }; }
     async disconnect() { this.state = "disconnected"; this.emit("Disconnected", 1); }
     // Lo que hace el servidor al cambiarle el permiso a alguien.
     __permiso(v) {
@@ -256,7 +305,8 @@ window.__sb = { functions: { async invoke(nombre, op) {
   window.__pedidos.push({ nombre, body: op.body });
   const r = ${JSON.stringify(respuesta)};
   if (r.status !== 200) return { data: null, error: { context: { json: async () => r.cuerpo } } };
-  return { data: r.cuerpo, error: null };
+  // Lo que la prueba quiere que conteste cada acción además (el grupo del pase, «silenciar»).
+  return { data: Object.assign({}, r.cuerpo, (window.__extra || {})[op.body.accion] || {}), error: null };
 } } };`;
 }
 
@@ -281,7 +331,10 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
     window.__hablado = [];
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
-      sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
+      sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez", yo: "u-ana",
+      nombreDe: (id) => ({ "u-beto": "Beto Solís", "u-cata": "Cata Mora" })[id] || "",
+      alumnosDeLaClase: () => ["u-a", "u-b", "u-c", "u-d", "u-e"],
+      grupos: async (v) => { (window.__grupos = window.__grupos || []).push(v); window.__llamada.estado(true, "turno", false, v); return ""; },
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
       // Como sesion.js: abrir la llamada la deja grabando; terminarla, no.
       abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v, "turno", v); return ""; },
@@ -605,6 +658,90 @@ async function pruebas(browser) {
   await r.page.waitForTimeout(2600);
   si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length) === 3 && /Saliste de la llamada/.test(await r.page.textContent("#llamada-estado")),
     "quien sale por su cuenta no vuelve solo");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // El micrófono, la señal, quién habló último, el profe que apaga tu micrófono y los grupos (alumno).
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  si(await visible(r.page, "#llamada-probar") && await visible(r.page, "#llamada-microfono"), "antes de entrar: elegir el micrófono y «Probar el micrófono»");
+  await r.page.click("#llamada-espacial");
+  si(/Al entrar, cada voz va a sonar en su lugar/.test(await anuncio(r.page)), "«Cada voz en su lugar» dice que vale al entrar");
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  si(!(await visible(r.page, "#llamada-probar")) && await visible(r.page, "#llamada-microfono"), "dentro de la llamada la prueba se esconde (la llamada ya dice si se oye) y el micrófono se sigue eligiendo");
+  // Las voces en su lugar: el profe al centro, los alumnos a los lados (por nombre).
+  const pan = await r.page.evaluate(() => {
+    window.__pan = {};
+    for (const [id, p] of window.__sala.remoteParticipants) {
+      p.audioTrackPublications.set("a", { track: { setVolume() {}, setWebAudioPlugins: (n) => { window.__pan[id] = n[0]; } } });
+    }
+    window.__sala.emit("TrackSubscribed", { kind: "audio", attach: () => document.createElement("audio") });
+    const v = (id) => (window.__pan[id] ? Math.round(window.__pan[id].pan.value * 10) / 10 : null);
+    return { profe: v("profe"), ana: v("ana"), zoe: v("zoe") };
+  });
+  si(pan.profe === 0 && pan.ana === -0.8 && pan.zoe === 0.8, "cada voz en su lugar: el profe al centro, Ana a la izquierda y Zoe a la derecha (" + JSON.stringify(pan) + ")");
+  // La señal débil: se dice una vez, con su tono, y también cuando mejora.
+  await r.page.evaluate(() => window.__sala.emit("ConnectionQualityChanged", "poor", window.__sala.localParticipant));
+  si(/Tu conexión está débil/.test(await anuncio(r.page)), "si tu conexión se pone débil, se dice");
+  await r.page.evaluate(() => window.__sala.emit("ConnectionQualityChanged", "good", window.__sala.localParticipant));
+  si(/Tu conexión mejoró/.test(await anuncio(r.page)), "…y cuando mejora, también");
+  await r.page.evaluate(() => window.__sala.emit("ConnectionQualityChanged", "poor", window.__sala.localParticipant));
+  si(/Tu conexión mejoró/.test(await anuncio(r.page)), "…pero no se repite a cada rato (una vez por minuto como mucho)");
+  si(/señal débil/.test(await r.page.textContent("#llamada-lista")), "…y en la lista dice «señal débil» junto a ti");
+  // Quién habló último.
+  await r.page.evaluate(() => { const z = window.__sala.remoteParticipants.get("zoe"); z.isSpeaking = true; window.__sala.activeSpeakers = [z]; window.__sala.emit("ActiveSpeakersChanged", [z]);
+    z.isSpeaking = false; window.__sala.activeSpeakers = []; window.__sala.emit("ActiveSpeakersChanged", []); });
+  await r.page.click("#llamada-habla");
+  a = await anuncio(r.page);
+  si(/Nadie está hablando ahora\. Lo último lo dijo Zoe Álvarez, hace \d+ segundos?/.test(a), "si nadie habla, «Quién habla» dice quién habló último: «" + a + "»");
+  // El profe te apagó el micrófono (no fuiste tú).
+  await r.page.evaluate(() => window.__sala.emit("TrackMuted", { kind: "audio" }, window.__sala.localParticipant));
+  si(/Tu profe apagó tu micrófono/.test(await anuncio(r.page)), "si el profe te apaga el micrófono, se dice");
+  // Los grupos: el profe arma grupos y la página se muda sola a la sala del suyo.
+  const pases = () => r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length);
+  const antesPases = await pases();
+  await r.page.evaluate(() => { window.__extra = { pase: { grupo: 2 } }; window.__llamada.estado(true, "turno", false, { "u-ana": 2, "u-beto": 2, "u-cata": 1 }); });
+  await r.page.waitForTimeout(400);
+  a = await anuncio(r.page);
+  si(await pases() === antesPases + 1 && /Estás en el grupo 2 con Beto Solís\. En el grupo pueden hablar todos/.test(a) && await r.page.evaluate(() => window.__sala.state) === "connected",
+    "cuando el profe arma grupos, el alumno pasa solo a la sala de su grupo y se le dice con quién está: «" + a + "»");
+  si(!/Saliste de la llamada/.test(a), "…sin decir «saliste» al mudarse");
+  await r.page.evaluate(() => { window.__extra = { pase: { grupo: 0 } }; window.__llamada.estado(true, "turno", false, null); });
+  await r.page.waitForTimeout(400);
+  a = await anuncio(r.page);
+  si(await pases() === antesPases + 2 && /Volviste a la sala grande/.test(a), "…y al terminar los grupos vuelve a la sala grande: «" + a + "»");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // Los grupos y apagar un micrófono, del lado del profe.
+  r = await abrir(browser, { esProfe: true, respuesta: PASE("pase-con-palabra"), abierta: false });
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  si(await visible(r.page, "#llamada-grupos") && await r.page.textContent("#llamada-grupos-armar") === "Armar grupos", "el profe, dentro de la llamada, ve «Grupos»");
+  await r.page.click("#llamada-grupos-armar");
+  await r.page.waitForTimeout(200);
+  const armados = (await r.page.evaluate(() => window.__grupos))[0] || {};
+  si(Object.keys(armados).length === 5 && Object.values(armados).every((n) => n === 1 || n === 2), "«Armar grupos» reparte en parejas a los alumnos de la clase (5 → un grupo de 2 y uno de 3)");
+  si(/Armaste 2 grupos/.test(await anuncio(r.page)), "…y lo dice");
+  const botones = await r.page.$$eval("#llamada-grupos-lista button", (bs) => bs.map((b) => ({ t: b.textContent, p: b.getAttribute("aria-pressed") })));
+  si(botones.length === 3 && botones[0].t === "✓ Sala grande (estás aquí)" && botones[0].p === "true" && /^Grupo 1: /.test(botones[1].t),
+    "un botón por sala; la suya dice «✓ … (estás aquí)» y lleva aria-pressed (" + botones.map((b) => b.t).join(" | ") + ")");
+  await r.page.click("#llamada-grupos-lista button:nth-child(2)");
+  await r.page.waitForTimeout(400);
+  const ultimoPase = await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").pop().body);
+  si(ultimoPase.grupo === 1 && /Entraste al grupo 1/.test(await anuncio(r.page)), "el profe entra a un grupo: pide el pase de ese grupo y lo dice");
+  // Apagar el micrófono de quien mete ruido.
+  await r.page.evaluate(() => { window.__extra = { silenciar: { silenciado: true } }; const z = window.__sala.remoteParticipants.get("zoe"); z.isMicrophoneEnabled = true; window.__sala.emit("TrackUnmuted", {}, z); });
+  const apagar = await r.page.$('#llamada-lista button[aria-label="Apagar el micrófono de Zoe Álvarez"]');
+  si(Boolean(apagar), "junto a quien tiene el micrófono encendido, el profe tiene «Apagar su micrófono» (y dice de quién)");
+  if (apagar) await apagar.click();
+  await r.page.waitForTimeout(200);
+  const sil = await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "silenciar").pop());
+  si(sil && sil.body.persona === "u-zoe" && /Apagaste el micrófono de Zoe Álvarez/.test(await anuncio(r.page)), "…se lo pide al servidor y lo dice");
+  await r.page.click("#llamada-grupos-terminar");
+  await r.page.waitForTimeout(400);
+  const fin = await r.page.evaluate(() => ({ g: window.__grupos[window.__grupos.length - 1], pase: window.__pedidos.filter((p) => p.body.accion === "pase").pop().body }));
+  si(fin.g === null && fin.pase.grupo === 0, "«Terminar los grupos» los borra y el profe vuelve a la sala grande");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 

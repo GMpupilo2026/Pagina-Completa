@@ -48,6 +48,7 @@
         let llamadaSesion = null;
         let llamadaModo = "turno";   // game_state.llamada_modo: quién puede hablar (turno, libre, bloqueada)
         let llamadaGrabando = false; // game_state.llamada_grabando: el profe graba la llamada en su navegador
+        let llamadaGrupos = null;    // game_state.llamada_grupos: {alumno: n.º de grupo} o null
         const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
@@ -636,7 +637,8 @@
             llamadaSesion = row.llamada_sesion || null;
             llamadaModo = row.llamada_modo || "turno";
             llamadaGrabando = Boolean(row.llamada_grabando);
-            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
+            llamadaGrupos = row.llamada_grupos || null;
+            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando, llamadaGrupos);
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -8139,7 +8141,16 @@
             if (window.ClaseLlamada && !esObservador && !vistaPrevia && !modoProyector && !modoControl
                 && (!isTeacher || profile.role === "profesor")) {
                 llamada = ClaseLlamada.montar({
-                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "",
+                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "", yo: profile.id,
+                    nombreDe: (id) => (onlineStudents.has(id) ? nombreDeConectado(id) : ""),
+                    // Los grupos se arman con los alumnos que están en la clase (los sacados no están en la lista).
+                    alumnosDeLaClase: () => [...onlineStudents.keys()],
+                    grupos: async (valor) => {
+                        const { error } = await sb.from("game_state").update({ llamada_grupos: valor }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaGrupos = valor;
+                        return "";
+                    },
                     alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
                     /* El profe abre la llamada (en ESTA clase) o la termina para todos.
                        Solo él puede escribirla: protect_game_state_teacher_columns. */
@@ -8148,10 +8159,12 @@
                         const valor = abrirla ? currentOpenSessionId : null;
                         // Una llamada nueva (o terminada) vuelve al turno: nunca arranca con todos hablando ni bloqueada.
                         // Y se graba sola al abrirla (el profe la puede pausar); terminada, ya no.
-                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla) }).eq("id", myGameStateId);
+                        // Y sin grupos: una llamada nueva arranca con toda la clase junta.
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla), llamada_grupos: null }).eq("id", myGameStateId);
                         if (error) { console.error(error); return "No se pudo: " + error.message; }
                         llamadaSesion = valor;
                         llamadaModo = "turno";
+                        llamadaGrupos = null;
                         llamadaGrabando = Boolean(abrirla);
                         return "";
                     },
@@ -8216,7 +8229,7 @@
                         if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
                     },
                 });
-                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
+                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando, llamadaGrupos);
             }
             await loadVariantTree();
             subscribeVariants();

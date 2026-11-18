@@ -111,6 +111,7 @@ async function cargarGrabacion(claseId){
   fenSeguida = null;
   caja.hidden = true;
   lista.textContent = '';
+  pintarResumen([]);
   if (!claseId) return;
   // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
   let data, firmas;
@@ -159,9 +160,81 @@ async function cargarGrabacion(claseId){
     lista.appendChild(li);
   });
   caja.hidden = !lista.children.length;
+  pintarResumen(data.filter((g) => url.has(g.ruta)));
   const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
   document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
   document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
+}
+
+/* ---------------- El resumen de la clase ----------------
+   Arriba de las partes, para saber de qué fue la clase sin escucharla
+   entera: cuánto duró, los temas en orden (cada uno lleva a su parte y su
+   minuto) y, si las partes ya se pasaron a texto, las frases principales.
+   Las frases las elige ESTA página, sin mandar el texto a ningún lado: las
+   que más repiten las palabras que más se dijeron en la clase (sin contar
+   «el», «que», «de»…), en el orden en que se dijeron. No inventa nada: cada
+   frase es tal cual la sacó el paso a texto. */
+const PALABRAS_VACIAS = new Set(('a al algo algún alguna ante antes así aun aunque bien cada como con contra cual cuando de del desde donde dos e el ella ellas ellos en entonces entre era eres es esa ese eso esta este esto estoy está están fue ha hace hacer hay la las le les lo los más me mi mis muy nada ni no nos o otra otro para pero poco por porque pues que qué se sea si sí sin sobre solo son su sus también te tengo tiene todo todos tu tú un una uno unos usted va vamos voy y ya yo eh este ah ok okay bueno entonces o sea ahí acá aquí allá').split(' '));
+function frasesPrincipales(texto, cuantas){
+  const frases = String(texto || '').replace(/\s+/g, ' ').split(/(?<=[.!?…])\s+/)
+    .map((f) => f.trim()).filter((f) => { const n = f.split(' ').length; return n >= 6 && n <= 40; });
+  if (!frases.length) return [];
+  const palabras = (f) => (f.toLowerCase().match(/[a-záéíóúüñ]+/g) || []).filter((p) => p.length > 2 && !PALABRAS_VACIAS.has(p));
+  const veces = new Map();
+  for (const f of frases) for (const p of new Set(palabras(f))) veces.set(p, (veces.get(p) || 0) + 1);
+  const puntaje = (f) => { const ps = palabras(f); return ps.length ? ps.reduce((s, p) => s + (veces.get(p) || 0), 0) / Math.sqrt(ps.length) : 0; };
+  const vistas = new Set();
+  return frases.map((f, k) => ({ f, k, s: puntaje(f) }))
+    .sort((a, b) => b.s - a.s || a.k - b.k)
+    .filter((x) => { const clave = x.f.toLowerCase(); if (vistas.has(clave)) return false; vistas.add(clave); return true; })
+    .slice(0, cuantas)
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.f);
+}
+function pintarResumen(partes){
+  const caja = document.getElementById('visor-resumen');
+  if (!caja) return;
+  const dur = document.getElementById('visor-resumen-duracion');
+  const ol = document.getElementById('visor-resumen-temas');
+  const frasesCaja = document.getElementById('visor-resumen-frases');
+  const frasesLista = document.getElementById('visor-resumen-frases-lista');
+  ol.textContent = '';
+  frasesLista.textContent = '';
+  caja.hidden = !partes.length;
+  if (!partes.length) return;
+  const total = partes.reduce((s, g) => s + (g.segundos || 0), 0);
+  const min = Math.max(1, Math.round(total / 60));
+  dur.textContent = 'La clase grabada dura ' + min + (min === 1 ? ' minuto' : ' minutos') + (partes.length > 1 ? ', en ' + partes.length + ' partes.' : '.');
+  // Los temas, sin los «De vuelta a» (no son temas nuevos) ni los repetidos seguidos.
+  let anterior = null;
+  partes.forEach((g, i) => {
+    const marcas = Array.isArray(g.marcas) ? g.marcas : [];
+    for (const m of marcas) {
+      if (!m || typeof m.tema !== 'string' || !m.tema.trim() || !isFinite(m.s) || /^De vuelta a: /.test(m.tema) || m.tema === anterior) continue;
+      anterior = m.tema;
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+      b.textContent = m.tema + ' (' + (partes.length > 1 ? 'parte ' + (i + 1) + ', ' : '') + minutoYSegundo(m.s) + ')';   // título: textContent
+      b.addEventListener('click', () => {
+        const audio = document.getElementById('grabacion-parte-' + i);
+        if (!audio) return;
+        audio.currentTime = Math.max(0, m.s);
+        audio.play().catch(() => {});
+      });
+      li.appendChild(b);
+      ol.appendChild(li);
+    }
+  });
+  document.getElementById('visor-resumen-temas-caja').hidden = !ol.children.length;
+  const frases = frasesPrincipales(partes.map((g) => g.texto || '').join(' '), 5);
+  for (const f of frases) {
+    const li = document.createElement('li');
+    li.textContent = f;   // lo sacó un modelo de una voz: textContent
+    frasesLista.appendChild(li);
+  }
+  frasesCaja.hidden = !frases.length;
 }
 
 /* Cuánto habló cada alumno en la llamada de la clase (lo midió la página del

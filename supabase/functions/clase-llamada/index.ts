@@ -30,6 +30,11 @@
 // las de los grupos y saca de cada una a quien no es de ella: la página del
 // alumno ya se mudó sola al ver el cambio, y la que no, vuelve a entrar.
 //
+// "silenciar" (solo el profe, con { persona }): le apaga el micrófono a un
+// alumno que mete ruido (MutePublishedTrack). Lo busca en la sala grande y en
+// las de los grupos. El alumno lo puede volver a encender si tiene la palabra:
+// apagar no quita el permiso de hablar (eso es el turno).
+//
 // QUIÉN DECIDE ES LA BASE: public.llamada_de_la_clase(p_profesor), llamada con
 // el TOKEN DE QUIEN PIDE (clave anónima + su Authorization), nunca con la clave
 // de servicio. Así pasa por la RLS y por antes_de_cada_pedido(): con la
@@ -151,19 +156,21 @@ Deno.serve(async (req) => {
   const autorizacion = req.headers.get("Authorization") ?? "";
   if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Inicia sesión para entrar a la llamada." }, 401);
 
-  let accion = "", profesor = "", grupoPedido = 0;
+  let accion = "", profesor = "", grupoPedido = 0, persona = "";
   let viejos: number[] = [];
   try {
     const cuerpo = await req.json();
     accion = String(cuerpo.accion || "");
     profesor = String(cuerpo.profesor || "");
+    persona = String(cuerpo.persona || "");
     const g = Number(cuerpo.grupo || 0);
     grupoPedido = Number.isInteger(g) && g >= 0 && g <= 20 ? g : -1;
     // Los grupos que hubo (los manda el profe): sus salas también se vacían al
     // terminar los grupos o la llamada, aunque la base ya no los tenga.
     viejos = (Array.isArray(cuerpo.viejos) ? cuerpo.viejos : []).map(Number).filter((n: number) => Number.isInteger(n) && n >= 1 && n <= 20).slice(0, 20);
   } catch { /* abajo se rechaza */ }
-  if (!UUID.test(profesor) || !["pase", "sincronizar"].includes(accion) || grupoPedido < 0) {
+  if (!UUID.test(profesor) || !["pase", "sincronizar", "silenciar"].includes(accion) || grupoPedido < 0
+      || (accion === "silenciar" && !UUID.test(persona))) {
     return json({ error: "Pedido incompleto." }, 400);
   }
 
@@ -192,8 +199,29 @@ Deno.serve(async (req) => {
       grupo: ll.rol === "profe" ? grupoPedido : (ll.grupo || 0) });
   }
 
-  // "sincronizar": solo el profe de la clase.
+  // "sincronizar" y "silenciar": solo el profe de la clase.
   if (ll.rol !== "profe") return json({ error: "Solo quien da la clase reparte la palabra." }, 403);
+
+  if (accion === "silenciar") {
+    const salas = [0, ...new Set([...Object.keys(ll.grupos || {}).map((id) => grupoDe(ll, id)).filter(Boolean), ...viejos])];
+    type Pista = { sid?: string; type?: string | number; muted?: boolean };
+    for (const grupo of salas) {
+      const sala = salaDe(ll, grupo);
+      const lista = await servidor("ListParticipants", sala, {});
+      if (!lista.ok) continue;
+      const p = ((lista.datos.participants || []) as Array<{ identity: string; tracks?: Pista[] }>).find((x) => x.identity === persona);
+      if (!p) continue;
+      // El tipo llega como nombre del enum («AUDIO») o como número (0).
+      const pistas = (p.tracks || []).filter((t) => (t.type === "AUDIO" || t.type === 0) && t.sid && !t.muted);
+      let silenciado = false;
+      for (const t of pistas) {
+        const r = await servidor("MutePublishedTrack", sala, { identity: persona, track_sid: t.sid, muted: true });
+        if (r.ok) silenciado = true;
+      }
+      return json({ listo: true, silenciado });
+    }
+    return json({ listo: true, silenciado: false });
+  }
   const sacados = new Set(ll.sacados || []);
   const conPermiso = new Set(ll.con_permiso_voz || []);
   let cambiados = 0, fuera = 0;
