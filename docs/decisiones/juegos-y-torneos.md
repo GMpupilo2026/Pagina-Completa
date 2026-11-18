@@ -15922,6 +15922,13 @@ sus pts y su puesto actual».
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
   hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
+- **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
+  cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
+  73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma
+  caja el de la ADAPZ salía un 12 % más alto. Con `logosSinMargen`
+  (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
+  cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
+  cada uno en el píxel.
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado

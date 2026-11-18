@@ -143,6 +143,25 @@ async function aceptar(page, boton) {
   });
   igual("los logos de la ADAPZ y del CCDR, la profe Karina al frente (sin foto) y mostrando el QR atrás", d.imgs, ["logo.jpg", "ccdr-pz.jpg", "bienvenidos.webp", "presentando.webp"]);
   igual("5,5 × 8,5 cm", d.tam, [55, 85]);
+  // Los dos logos del mismo alto, medido en el píxel de la vista previa: lo
+  // dibujado (no el archivo, que trae márgenes distintos) en cada esquina.
+  await page.waitForTimeout(700);
+  const altos = await page.evaluate(() => {
+    const c = document.getElementById("g-lienzo-frente");
+    const ctx = c.getContext("2d");
+    const alto = (x0f, x1f) => {
+      const x0 = Math.round(c.width * x0f), w = Math.round(c.width * (x1f - x0f)), h = Math.round(c.height * 20 / 140);
+      const px = ctx.getImageData(x0, 0, w, h).data;
+      let y0 = h, y1 = -1;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 230) { if (y < y0) y0 = y; y1 = y; }
+      }
+      return y1 - y0 + 1;
+    };
+    return [alto(0.03, 0.37), alto(0.63, 0.97)];
+  });
+  igual("el logo de la ADAPZ y el del CCDR, del mismo alto (±3 %)", Math.abs(altos[0] - altos[1]) <= 0.03 * Math.max(...altos), true);
   igual("el horario de las bases: cinco rondas, el almuerzo y la clausura", d.filas, 7);
   igual("el QR es de cada persona", [d.qr, d.campo], ["{QR}", "{QR}"]);
   igual("y dice para qué es", d.texto, "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto");

@@ -45,6 +45,7 @@
       salida: { separarPor: "" },
       fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
       fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
+      logosSinMargen: false, // los logos sin el blanco de alrededor (del mismo alto)
     };
   }
 
@@ -88,6 +89,8 @@
     d.nombreDiseno = "Eliminatoria JDN PZ 2026";
     // 5,5 × 8,5 cm: la medida que pidió el dueño para estos (no la de 10 × 14).
     d.tamano = { ancho: 55, alto: 85 };
+    // Los logos de la ADAPZ y del CCDR, del mismo alto (traen márgenes distintos).
+    d.logosSinMargen = true;
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
     d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };

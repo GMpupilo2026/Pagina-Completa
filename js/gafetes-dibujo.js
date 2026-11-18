@@ -228,6 +228,29 @@
   /* ===================== Imágenes ===================== */
 
   // Cabe entera en la caja; `alinear` es "izq", "der" o "centro"; abajo si `abajo`.
+  // La imagen sin el margen claro o transparente de alrededor (un lienzo del
+  // tamaño de lo dibujado). Si no encuentra nada que recortar, la deja igual.
+  function sinMargen(img) {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    const px = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const tinta = px[i + 3] > 20 && 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 230;
+      if (tinta) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return img;
+    const r = document.createElement("canvas");
+    r.width = x1 - x0 + 1; r.height = y1 - y0 + 1;
+    r.getContext("2d").drawImage(c, x0, y0, r.width, r.height, 0, 0, r.width, r.height);
+    return r;
+  }
+
   function contener(ctx, img, c, alinear, abajo) {
     const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
     if (!w0 || !h0) return;
@@ -371,6 +394,12 @@
         try { imagenes[id] = await cargarImagen(im.datos); } catch (e) { /* una imagen dañada no frena el resto */ }
       }
     }
+    // Con `logosSinMargen`, los dos logos pierden el blanco (o lo
+    // transparente) que traen alrededor: así el dibujo de cada uno llena su
+    // caja y salen del mismo alto aunque los archivos traigan márgenes
+    // distintos (en la PZ, el de la ADAPZ ocupaba el 73 % del alto de su
+    // archivo y el del CCDR el 65 %).
+    if (diseno.logosSinMargen) for (const id of ["logoIzq", "logoDer"]) if (imagenes[id]) imagenes[id] = sinMargen(imagenes[id]);
     const iconos = [];
     for (const ic of diseno.iconos) {
       const propia = ic.imagen && imagenes[ic.imagen];
