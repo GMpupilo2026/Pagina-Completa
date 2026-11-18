@@ -88,6 +88,8 @@
         const mic = $("llamada-mic");
         const modos = $("llamada-modos");
         const grabarBtn = $("llamada-grabar");
+        const pttCaja = $("llamada-ptt-caja");
+        const ptt = $("llamada-ptt");
         const grabandoAviso = $("llamada-grabando");
         const quien = $("llamada-quien");
         const habla = $("llamada-habla");
@@ -103,6 +105,7 @@
         let abierta = false;
         let grabando = false;       // game_state.llamada_grabando (lo pone el profe)
         let permisoVoz = true;      // alumno: si su familia dio permiso para grabar su voz
+        let sinPermiso = new Set(); // profe: los de la llamada sin permiso de grabación
         // Quién puede hablar, además del profe: "turno", "libre" (todos) o "bloqueada" (nadie).
         let modo = "turno";
         const SIN_PERMISO = "Mientras se graba no puedes encender el micrófono: tu familia todavía no dio permiso para grabar tu voz. Se da en Configuración.";
@@ -140,6 +143,9 @@
             if (yo) d.push("tú");
             if (esElProfe(p) || (yo && esProfe)) d.push("profe");
             else if (tienePalabra(p)) d.push("con la palabra");
+            // Solo al profe: quién no tiene el permiso de su familia, y que mientras
+            // se graba no puede hablar (así sabe por qué, y puede pausar la grabación).
+            if (esProfe && !yo && sinPermiso.has(p.identity)) d.push(grabando ? "sin permiso de grabación: no puede hablar" : "sin permiso de grabación");
             if (p.isSpeaking) d.push("hablando");
             return d;
         }
@@ -197,9 +203,12 @@
                 for (const c of ["bg-accent-500", "hover:bg-accent-600", "text-brand-900"]) b.classList.toggle(c, elegido);
                 for (const c of ["bg-white", "hover:bg-brand-200", "dark:bg-brand-800", "dark:hover:bg-brand-700", "text-brand-800", "dark:text-white"]) b.classList.toggle(c, !elegido);
             });
+            pttCaja.hidden = !dentro;
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
-            mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
+            mic.textContent = ptt.checked
+                ? (encendido ? "🎙️ Hablando… (suelta para callar)" : "🎙️ Mantén apretado para hablar")
+                : (encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado");
         }
 
         /* La voz de la página («Activar voz», el recuadro adaptado) dice las
@@ -268,7 +277,7 @@
                         : pase.puede_hablar ? "Tienes la palabra: enciende el micrófono con Alt M."
                         : "Para hablar, levanta la mano con Alt Y."));
                 if (!esProfe && grabando) anunciar("Esta clase se está grabando." + (permisoVoz ? "" : " " + SIN_PERMISO));
-                if (esProfe) { sincronizar(); if (grabando) empezarAGrabar(); }
+                if (esProfe) { sincronizar(); refrescarPermisos(); if (grabando) empezarAGrabar(); }
                 pintar();
                 mic.focus();
             } catch (e) {
@@ -286,6 +295,7 @@
 
         async function alternarMic() {
             if (!enLlamada()) { anunciar("Primero entra a la llamada."); return; }
+            if (ptt.checked) { anunciar("Con «Mantener para hablar», mantén apretado el botón del micrófono o Alt P mientras hablas."); return; }
             if (!micEncendido() && !puedoHablar()) {
                 anunciar(esProfe ? "Todavía no puedes encender el micrófono."
                     : grabando && !permisoVoz ? SIN_PERMISO
@@ -305,11 +315,71 @@
             pintar();
         }
 
+        /* ---------- Mantener para hablar ----------
+           El micrófono suena solo mientras se aprieta: el botón (dedo, ratón, o
+           Espacio/Enter con el foco en él) o Alt+P desde cualquier parte. Para
+           alguien que no ve la pantalla es más fácil que recordar si lo dejó
+           encendido, y no se cuela ruido en la clase. Un toque corto al empezar y
+           otro al soltar dicen que está sonando, sin que el lector hable cada
+           vez. La preferencia se recuerda en este aparato. */
+        const CLAVE_PTT = "llamadaMantenerParaHablar_v1";
+        try { ptt.checked = localStorage.getItem(CLAVE_PTT) === "1"; } catch (e) { /* sin almacenamiento */ }
+        let apretado = false;
+        async function empezarAHablar() {
+            if (!ptt.checked || apretado || !enLlamada()) return;
+            if (!puedoHablar()) {
+                anunciar(esProfe ? "Todavía no puedes encender el micrófono."
+                    : grabando && !permisoVoz ? SIN_PERMISO
+                    : modo === "bloqueada" ? "Tu profe bloqueó los micrófonos: por ahora solo habla el profe."
+                    : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
+                return;
+            }
+            apretado = true;
+            sonido([880]);
+            try { await sala.localParticipant.setMicrophoneEnabled(true); } catch (e) { console.error(e); apretado = false; anunciar("No se pudo usar el micrófono."); }
+            if (!apretado) await callarse();   // soltó antes de que el micrófono terminara de encender
+            pintar();
+        }
+        async function callarse() {
+            if (!apretado && !micEncendido()) return;
+            apretado = false;
+            sonido([660]);
+            try { if (sala) await sala.localParticipant.setMicrophoneEnabled(false); } catch (e) { console.error(e); }
+            pintar();
+        }
+        ptt.addEventListener("change", async () => {
+            try { localStorage.setItem(CLAVE_PTT, ptt.checked ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+            if (ptt.checked && micEncendido()) await sala.localParticipant.setMicrophoneEnabled(false);
+            pintar();
+            anunciar(ptt.checked ? "Mantener para hablar: mantén apretado Alt P o el botón del micrófono mientras hablas." : "El micrófono vuelve a encenderse y apagarse con un toque.");
+        });
+        // El botón del micrófono, apretado y soltado.
+        mic.addEventListener("pointerdown", (e) => { if (ptt.checked) { e.preventDefault(); empezarAHablar(); } });
+        for (const ev of ["pointerup", "pointerleave", "pointercancel"]) mic.addEventListener(ev, () => { if (ptt.checked) callarse(); });
+        mic.addEventListener("keydown", (e) => {
+            if (!ptt.checked || (e.key !== " " && e.key !== "Enter")) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        mic.addEventListener("keyup", (e) => { if (ptt.checked && (e.key === " " || e.key === "Enter")) { e.preventDefault(); callarse(); } });
+        // Alt+P desde cualquier parte de la página.
+        document.addEventListener("keydown", (e) => {
+            if (!ptt.checked || e.code !== "KeyP" || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        document.addEventListener("keyup", (e) => {
+            if (apretado && (e.code === "KeyP" || e.key === "Alt")) { e.preventDefault(); callarse(); }
+        });
+        // Si la ventana pierde el foco con la tecla apretada, nunca llega el keyup: se calla.
+        window.addEventListener("blur", () => { if (apretado) callarse(); });
+
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
             const otros = enOrden().filter((f) => !f.yo).map((f) => f.p);
             if (!otros.length) { anunciar("Estás solo en la llamada."); return; }
-            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : ""));
+            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : "")
+                + (esProfe && sinPermiso.has(p.identity) ? ", sin permiso de grabación" : ""));
             anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
         }
 
@@ -382,20 +452,34 @@
                 grab.fuentes.set(pista, fuente);
             }
         }
+        /* La posición del tablero en cada momento de la parte: la clase no guarda
+           la hora de cada jugada, así que la anota quien graba. Cada segundo se
+           mira la posición que ve la clase y, si cambió, se anota {s, fen}. En
+           «Repasar mis clases» el tablero sigue la grabación con esto. */
+        const MARCAS_MAX = 3600;
+        function anotarPosicion(parte) {
+            if (!op.posicion || !parte || parte.marcas.length >= MARCAS_MAX) return;
+            const fen = op.posicion();
+            if (!fen || fen === parte.ultimaFen) return;
+            parte.ultimaFen = fen;
+            parte.marcas.push({ s: Math.round((Date.now() - parte.desde) / 100) / 10, fen });
+        }
         function nuevaParte() {
             const rec = new MediaRecorder(grab.destino.stream, { mimeType: grab.tipo, audioBitsPerSecond: 32000 });
             const trozos = [];
-            const desde = Date.now();
+            const parte = { desde: Date.now(), marcas: [], ultimaFen: null };
             const clase = grab.clase;
+            anotarPosicion(parte);
             rec.ondataavailable = (e) => { if (e.data && e.data.size) trozos.push(e.data); };
             rec.onstop = async () => {
                 if (!trozos.length) return;
                 const blob = new Blob(trozos, { type: grab ? grab.tipo.split(";")[0] : trozos[0].type });
-                const error = await op.subirParte(blob, (Date.now() - desde) / 1000, blob.type, clase);
+                const error = await op.subirParte(blob, (Date.now() - parte.desde) / 1000, blob.type, clase, parte.marcas);
                 if (error) anunciar(error);
             };
             rec.start();
             grab.rec = rec;
+            grab.parte = parte;
         }
         function empezarAGrabar() {
             if (!esProfe || grab || !enLlamada() || !op.subirParte) return;
@@ -429,11 +513,14 @@
                 nuevaParte();        // la siguiente arranca ya: no se pierde ni un segundo entre partes
                 vieja.stop();
             }, PARTE_MS);
+            grab.mirador = setInterval(() => { if (grab) anotarPosicion(grab.parte); }, 1000);
         }
         async function dejarDeGrabar() {
             if (!grab) return;
             const g = grab;
             clearInterval(g.timer);
+            clearInterval(g.mirador);
+            anotarPosicion(g.parte);   // lo último que se vio, antes de cerrar la parte
             if (g.rec && g.rec.state !== "inactive") {
                 await new Promise((listo) => { g.rec.addEventListener("stop", () => setTimeout(listo, 0), { once: true }); g.rec.stop(); });
             }
@@ -453,6 +540,23 @@
             pintar();
             await sincronizar();   // con la grabación, el alumno sin permiso no habla; sin ella, sí
             anunciar(grabando ? "Grabando la clase." : "Pausaste la grabación de la clase.");
+        }
+
+        /* El profe: quiénes de la llamada no tienen el permiso de grabación. Se
+           pregunta al entrar y cada vez que entra alguien (juntando los que
+           entran seguidos en un solo pedido). */
+        let permisosPendiente = null;
+        function refrescarPermisos() {
+            if (!esProfe || !op.permisosDeVoz) return;
+            clearTimeout(permisosPendiente);
+            permisosPendiente = setTimeout(async () => {
+                if (!sala) return;
+                const ids = [...sala.remoteParticipants.values()].filter((p) => !esElProfe(p)).map((p) => p.identity);
+                const con = await op.permisosDeVoz(ids);
+                if (!con || !sala) return;
+                sinPermiso = new Set(ids.filter((id) => !con.has(id)));
+                pintarGente();
+            }, 400);
         }
 
         /* El profe elige quién puede hablar. Lo guarda en game_state (lo ven
@@ -510,7 +614,7 @@
         function escuchar(room) {
             const E = LK.RoomEvent;
             room
-                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); })
+                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); refrescarPermisos(); })
                 .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); pintarGente(); })
                 // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
                 .on(E.ActiveSpeakersChanged, pintarGente)
@@ -568,7 +672,8 @@
         });
 
         entrar.addEventListener("click", alEntrar);
-        mic.addEventListener("click", alternarMic);
+        // Con «Mantener para hablar» el clic (que llega al soltar) no conmuta nada.
+        mic.addEventListener("click", () => { if (!ptt.checked) alternarMic(); });
         grabarBtn.addEventListener("click", alternarGrabar);
         modos.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => elegirModo(b.dataset.modo)));
         quien.addEventListener("click", quienEsta);
