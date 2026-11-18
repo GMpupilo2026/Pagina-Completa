@@ -124,6 +124,7 @@
                 <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
             </div>
 
+
             <div class="proyector-contenido grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div class="proyector-columna">
                     <!-- Editor visual del tablero (solo profesor): se abre con "✏️ Editar" de la
@@ -561,6 +562,27 @@
                             <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
                         </div>
                     </div>
+
+                    <!-- La llamada de voz de la clase (js/clase-llamada.js): en la misma página que
+                         el tablero, para no saltar entre pestañas con el lector de pantalla. La
+                         palabra es el turno de la clase («Darle la palabra»). Ver «La llamada de voz
+                         de la clase» en docs/decisiones/clase-en-vivo.md.
+                         Va DEBAJO del tablero, no arriba: en el celular el tablero tiene que entrar
+                         entero sin bajar (verificar-clase-movil.js), y los atajos sirven desde
+                         cualquier lado. Después del turno y del tiempo para pensar, que van pegados. -->
+                    <section id="llamada" hidden aria-labelledby="llamada-titulo" class="max-w-[560px] mx-auto mt-3 rounded-xl px-5 py-3 bg-brand-100 dark:bg-brand-900">
+                        <h2 id="llamada-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>Llamada de la clase</h2>
+                        <div class="mt-2 flex items-center gap-2 flex-wrap">
+                            <button id="llamada-entrar" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Entrar a la llamada</button>
+                            <button id="llamada-mic" type="button" hidden aria-pressed="false" class="bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔇 Micrófono apagado</button>
+                            <button id="llamada-quien" type="button" hidden class="bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién está</button>
+                            <button id="llamada-habla" type="button" hidden class="bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
+                            <button id="llamada-salir" type="button" hidden class="bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
+                        </div>
+                        <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
+                        <p class="mt-1 text-xs text-brand-600 dark:text-brand-300">Atajos: <kbd>Alt</kbd>+<kbd>M</kbd> micrófono, <span id="llamada-atajo-mano"><kbd>Alt</kbd>+<kbd>Y</kbd> levantar la mano, </span><kbd>Alt</kbd>+<kbd>Q</kbd> quién está, <kbd>Alt</kbd>+<kbd>W</kbd> quién habla. Usa audífonos para que no haya eco.</p>
+                        <div id="llamada-audios" hidden></div>
+                    </section>
                     <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
 
                     <!-- Cómo abrir el control remoto: la dirección, para escribirla o copiarla en el celular. -->
@@ -1873,6 +1895,7 @@
     <script src="js/clase-qr.js"></script>
     <script src="js/clase-invitados.js"></script>
     <script src="js/clase-sacar.js"></script>
+    <script src="js/clase-llamada.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/clase-buscar.js"></script>
     <script src="js/clase-presentacion.js"></script>

@@ -50,6 +50,8 @@ const FUNCIONES = {
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts", "hora-cr.ts"],
   "mejorar-informe": [],
+  // La llamada de voz de la clase en vivo (LiveKit). Ver su cabecera.
+  "clase-llamada": [],
   // La ficha de los JDN 2027 al Drive (un Apps Script hace de puente). Ver su cabecera.
   "jdn-drive": ["hora-cr.ts"],
   // Pública (verify_jwt en false): ver su cabecera.

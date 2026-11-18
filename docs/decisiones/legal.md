@@ -27,7 +27,8 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
 - **Proveedores**: la privacidad nombra a cada servicio que recibe datos
   (Supabase, Cloudflare, Resend, Google —tipografías, Vision del Lector de
   planilla, notificaciones, y Drive para la ficha de los JDN con su foto y su
-  cédula—, Anthropic para mejorar informes, Meet o Zoom, la
+  cédula—, Anthropic para mejorar informes, Meet o Zoom, LiveKit para la llamada de
+  voz de la clase en vivo —la voz no se graba—, la
   consulta de cédula de Hacienda, y Lichess y Chess.com para bajar las partidas
   públicas de un rival —o las del propio alumno en «Tus propios errores», y si
   lo dejó guardado el hub les pregunta como mucho cada 6 horas si hay nuevas—,
