@@ -216,6 +216,13 @@
       <section id="visor" aria-labelledby="visor-titulo" hidden>
         <h2 id="visor-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
         <p id="visor-fecha" class="text-xs text-brand-500 dark:text-brand-300 mb-2"></p>
+        <!-- La grabación de la llamada de la clase, si se grabó (clase_grabaciones; la ven
+             el profe, los que asistieron y administración, y se borra a los 90 días). -->
+        <section id="visor-grabacion" aria-labelledby="visor-grabacion-titulo" hidden class="mb-3 rounded-xl px-4 py-3 bg-white dark:bg-brand-900 shadow-sm">
+          <h3 id="visor-grabacion-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>La grabación de la clase</h3>
+          <ol id="visor-grabacion-partes" class="list-none p-0 m-0 mt-2 space-y-2"></ol>
+          <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Se borra sola a los 90 días de la clase.</p>
+        </section>
         <p id="visor-sin-datos" class="text-xs text-brand-500 dark:text-brand-300 mb-2" hidden>Esta partida se guardó antes de que las clases guardaran sus comentarios y variantes: solo trae las jugadas.</p>
         <!-- Sin role="img": los hijos de una imagen no le llegan al lector de pantalla, y el
              tablero se recorre casilla por casilla (js/tablero-accesible.js). -->

@@ -57,6 +57,19 @@
                         </div>
                     </div>
                 </fieldset>
+                <!-- El permiso para grabar la voz del alumno en la llamada de la clase
+                     (permisos_grabar_voz, con la versión de la privacidad). Sin él, mientras se
+                     graba la clase no puede encender el micrófono. Solo alumnos, y no en «Ver como».
+                     Ver «La grabación de la llamada» en docs/decisiones/clase-en-vivo.md. -->
+                <fieldset id="voz-permiso" hidden class="mb-5">
+                    <legend class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-2">La grabación de tu voz en las clases</legend>
+                    <label class="flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200">
+                        <input id="voz-acepto" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span>Permito que se grabe mi voz en la llamada de las clases en vivo, para que la clase se pueda volver a escuchar, según la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold">Política de privacidad</a>. Si eres menor de edad, lo marca tu familia.</span>
+                    </label>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sin este permiso puedes escuchar la clase, pero mientras se graba no puedes encender el micrófono. Lo puedes quitar cuando quieras.</p>
+                    <p id="voz-msg" class="text-xs mt-1" role="status" aria-live="polite"></p>
+                </fieldset>
                 <label for="full-name-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nombre para mostrar</label>
                 <div class="flex gap-2 mb-4">
                     <input id="full-name-input" type="text" class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">

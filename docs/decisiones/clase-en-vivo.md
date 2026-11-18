@@ -312,6 +312,69 @@ reemplaza.
   `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Sin ellos contesta
   503 y la caja dice «La llamada de la clase todavía no está disponible».
 
+#### La grabación de la llamada
+
+La pidió el dueño el 17/11/2026: «guardar de forma automática el audio de la
+clase cuando se hace una llamada», para que los alumnos repasen. Antes de
+programarla **aprobó tres cosas que cambian lo que el sitio promete**: el
+permiso de cada familia, 90 días con quién escucha, y el texto de privacidad
+(sin nombrar el servicio de almacenamiento ni decir para qué más la usa el
+profe: lo pidió así).
+
+- **Se graba en el navegador del profe, no en el servidor.** LiveKit cobra la
+  grabación por minuto; la página del profe ya recibe todas las voces, así que
+  las junta en un `AudioContext` y las graba con `MediaRecorder` (Opus, 32
+  kbps: una hora pesa unos 15 MB). Costo extra: solo el almacenamiento.
+  - **Por partes de 5 minutos** (`PARTE_MS`): cada parte es un archivo entero
+    que se escucha solo, la siguiente arranca antes de cerrar la anterior (no
+    se pierde ni un segundo entre partes), y si al profe se le cierra la
+    pestaña se pierde como mucho la última. Se suben al bucket privado
+    `clase-grabaciones` (`<profe>/<clase>/…`) y se anotan con
+    `guardar_parte_grabacion()`, que exige que la clase sea suya (abierta, o
+    cerrada hace menos de 30 minutos: la última se sube al terminar) y que el
+    archivo ya esté subido. La clase viaja CON la parte: al cerrar la clase
+    `currentOpenSessionId` ya está vacío cuando se sube la última.
+  - **Una falla al grabar nunca tumba la llamada**: se dice, se apaga la
+    grabación (y el aviso para todos) y la clase sigue con voz. Pasó en la
+    prueba: la grabadora tiraba un error y sacaba al profe de la llamada.
+- **Empieza sola al abrir la llamada** (`game_state.llamada_grabando`, que
+  abrir pone en true y terminar en false) y el profe la puede pausar («⏸
+  Pausar la grabación» / «⏺ Volver a grabar»). **Nunca se graba sin el aviso
+  puesto**: primero se guarda `llamada_grabando` (lo ven todos por Realtime:
+  «🔴 Se está grabando la clase», escrito), después arranca la grabadora; al
+  pausar, al revés. Al alumno se le dice al entrar y en cada cambio.
+  - Si al profe se le cierra la pestaña, el aviso queda puesto aunque ya no
+    se grabe: es el error del lado seguro (avisar de más, nunca de menos).
+    Al volver a entrar, la grabación sigue sola.
+- **El permiso de cada familia** (`permisos_grabar_voz`, con la versión de la
+  privacidad y la hora del servidor; lo escriben solo `dar_permiso_grabar_voz()`
+  y `quitar_permiso_grabar_voz()`, cada uno sobre su cuenta; lleva la bitácora
+  de auditoría y está en `VIGILADAS`). Se da en **Configuración**, «La
+  grabación de tu voz en las clases» (solo alumnos, no en «Ver como»).
+  **Mientras se graba, un alumno sin permiso no puede hablar**, lo diga el
+  turno o «Todos»: lo hace cumplir el servidor (`puedeHablar()` de
+  `clase-llamada` con `permiso_voz` / `con_permiso_voz` de
+  `llamada_de_la_clase()`), así que nunca queda grabada la voz de alguien sin
+  permiso. Se le dice por qué y dónde se da.
+- **La escuchan el profe de la clase, los alumnos que asistieron
+  (`class_attendance`) y administración**, con el acceso vigente
+  (`clase_grabaciones_select` arma el conjunto una vez; el bucket lee lo que
+  tiene su fila). Se escucha en **«Repasar mis clases»**, debajo del título de
+  la clase: una parte detrás de otra, cada una con su reproductor y su
+  etiqueta («Parte 1 de 3 · 5 minutos»). Si falla, el visor sigue igual.
+- **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
+  CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
+  borra primero el archivo y después la fila (la base no puede borrar archivos
+  desde SQL; borrar solo la fila dejaría el audio huérfano).
+- **La privacidad cambió de versión (2026-11-18)** para que la grabación no
+  comparta versión con el texto de la mañana, que decía «la voz no se graba».
+- Comprobado impersonando roles en SQL: el permiso con versión inválida se
+  rechaza; con la clase grabándose, la alumna con permiso habla y el que no lo
+  tiene no; el compañero no ve el permiso de otro; el profe recibe la lista de
+  los que tienen permiso; una parte sin archivo subido se rechaza; la
+  grabación la ven el profe y la alumna que asistió, no el que faltó ni el de
+  otro profe.
+
 **Al tocar la llamada, correr `node herramientas/verificar-todo.js
 clase-llamada`.** Comprueba los enganches de `sesion.js` y `clase-sacar.js`, las
 cabeceras, la migración y la función, y en el navegador la caja con dobles de

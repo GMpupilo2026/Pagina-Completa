@@ -29,6 +29,7 @@ const hay = (linea) => inventario.includes(linea);
 const VIGILADAS = [
   "profile_teachers", "equipos", "equipo_alumnos", "equipo_entrenadores",
   "coordinador_profesores", "coordinador_funciones_quitadas", "supervisor_cuentas",
+  "permisos_grabar_voz",
   "academias", "academia_miembros", "academia_ia", "arbitraje_consulta_config", "preparacion_rivales_profesores",
   // A qué profesor se le asigna un grupo de un proyecto (y con eso, sus planes).
   "proyecto_grupos",

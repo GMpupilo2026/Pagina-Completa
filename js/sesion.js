@@ -47,6 +47,7 @@
            solo entonces, y la base tampoco le da pase sin eso. */
         let llamadaSesion = null;
         let llamadaModo = "turno";   // game_state.llamada_modo: quién puede hablar (turno, libre, bloqueada)
+        let llamadaGrabando = false; // game_state.llamada_grabando: el profe graba la llamada en su navegador
         const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
@@ -601,7 +602,8 @@
             const vistaAntes = JSON.stringify(board.currentView());
             llamadaSesion = row.llamada_sesion || null;
             llamadaModo = row.llamada_modo || "turno";
-            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo);
+            llamadaGrabando = Boolean(row.llamada_grabando);
+            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -7973,10 +7975,34 @@
                         if (abrirla && !currentOpenSessionId) return "Abre la clase primero: la llamada es de la clase.";
                         const valor = abrirla ? currentOpenSessionId : null;
                         // Una llamada nueva (o terminada) vuelve al turno: nunca arranca con todos hablando ni bloqueada.
-                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno" }).eq("id", myGameStateId);
+                        // Y se graba sola al abrirla (el profe la puede pausar); terminada, ya no.
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla) }).eq("id", myGameStateId);
                         if (error) { console.error(error); return "No se pudo: " + error.message; }
                         llamadaSesion = valor;
                         llamadaModo = "turno";
+                        llamadaGrabando = Boolean(abrirla);
+                        return "";
+                    },
+                    // Grabar o pausar: lo ven todos («Se está grabando la clase»).
+                    grabar: async (encender) => {
+                        const { error } = await sb.from("game_state").update({ llamada_grabando: Boolean(encender) }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaGrabando = Boolean(encender);
+                        return "";
+                    },
+                    claseActual: () => currentOpenSessionId,
+                    /* Una parte de la grabación: al almacenamiento privado y su fila
+                       (guardar_parte_grabacion comprueba que la clase sea suya). La
+                       clase viaja con la parte: la última se sube al cerrar, cuando
+                       currentOpenSessionId ya está vacío. */
+                    subirParte: async (blob, segundos, tipo, clase) => {
+                        if (!clase) return "Sin clase para la grabación.";
+                        const ext = /mp4/.test(tipo) ? "m4a" : /ogg/.test(tipo) ? "ogg" : "webm";
+                        const ruta = profile.id + "/" + clase + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                        const { error: errSubir } = await sb.storage.from("clase-grabaciones").upload(ruta, blob, { contentType: tipo });
+                        if (errSubir) { console.error(errSubir); return "No se pudo guardar una parte de la grabación."; }
+                        const { error: errFila } = await sb.rpc("guardar_parte_grabacion", { p_clase: clase, p_ruta: ruta, p_segundos: Math.round(segundos), p_bytes: blob.size });
+                        if (errFila) { console.error(errFila); return "No se pudo guardar una parte de la grabación."; }
                         return "";
                     },
                     // Quién puede hablar: con turno, todos o nadie (solo el profe).
@@ -7992,7 +8018,7 @@
                         if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
                     },
                 });
-                llamada.estado(llamadaAbierta(), llamadaModo);
+                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
             }
             await loadVariantTree();
             subscribeVariants();

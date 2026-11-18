@@ -16,7 +16,9 @@
 //                     El alumno, además, no recibe pase si la llamada no está
 //                     abierta (lo decide llamada_de_la_clase()). Quién puede
 //                     hablar lo elige el profe (game_state.llamada_modo): con
-//                     turno, todos («libre») o nadie («bloqueada»). La página la llama cada
+//                     turno, todos («libre») o nadie («bloqueada»). Y mientras
+//                     se graba, el alumno sin permiso de su familia para grabar
+//                     su voz no habla nunca. La página la llama cada
 //                     vez que da o termina un turno y cuando saca a alguien.
 //
 // QUIÉN DECIDE ES LA BASE: public.llamada_de_la_clase(p_profesor), llamada con
@@ -83,7 +85,11 @@ async function firmar(claims: Record<string, unknown>): Promise<string> {
 // Quién puede hablar, además del profe (game_state.llamada_modo, que elige él):
 // con «turno», quien tiene el turno de la clase; con «libre», todos; con
 // «bloqueada», ningún alumno, aunque tenga el turno.
-function puedeHablar(ll: Llamada, identidad: string): boolean {
+// Y mientras se graba (game_state.llamada_grabando), solo quien tiene el permiso
+// de su familia para grabar su voz (permisos_grabar_voz): nunca queda grabada
+// la voz de alguien sin permiso, lo diga el turno o el micrófono libre.
+function puedeHablar(ll: Llamada, identidad: string, conPermiso: boolean): boolean {
+  if (ll.grabando && !conPermiso) return false;
   if (ll.modo === "libre") return true;
   if (ll.modo === "bloqueada") return false;
   return identidad === ll.elegido;
@@ -115,7 +121,8 @@ async function servidor(metodo: string, sala: string, cuerpo: Record<string, unk
 
 // ------------------------------------------------------------- la función
 
-type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean; modo: "turno" | "libre" | "bloqueada" };
+type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean; modo: "turno" | "libre" | "bloqueada";
+  grabando: boolean; permiso_voz: boolean | null; con_permiso_voz: string[] | null };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -148,14 +155,14 @@ Deno.serve(async (req) => {
   if (!ll) return json({ error: "No hay una clase abierta a la que puedas entrar." }, 403);
 
   if (accion === "pase") {
-    const hablar = ll.rol === "profe" || puedeHablar(ll, ll.yo);
+    const hablar = ll.rol === "profe" || puedeHablar(ll, ll.yo, ll.permiso_voz === true);
     const token = await firmar({
       sub: ll.yo,
       name: ll.nombre,
       attributes: { rol: ll.rol },
       video: { room: ll.sala, roomJoin: true, ...permisos(hablar, "microphone") },
     });
-    return json({ url: LK_URL, token, sala: ll.sala, rol: ll.rol, yo: ll.yo, puede_hablar: hablar });
+    return json({ url: LK_URL, token, sala: ll.sala, rol: ll.rol, yo: ll.yo, puede_hablar: hablar, permiso_voz: ll.permiso_voz });
   }
 
   // "sincronizar": solo el profe de la clase.
@@ -164,6 +171,7 @@ Deno.serve(async (req) => {
   // Una sala vacía todavía no existe en LiveKit: no hay nada que acomodar.
   if (!lista.ok) return json({ listo: true, cambiados: 0, sacados: 0 });
   const sacados = new Set(ll.sacados || []);
+  const conPermiso = new Set(ll.con_permiso_voz || []);
   let cambiados = 0, fuera = 0;
   // LiveKit CONTESTA con los nombres de protobuf (`can_publish`) aunque acepte
   // `canPublish` al pedir: leyendo solo uno, cada pasada volvía a «cambiar» a
@@ -176,7 +184,7 @@ Deno.serve(async (req) => {
       if (r.ok) fuera++;
       continue;
     }
-    const hablar = puedeHablar(ll, p.identity);
+    const hablar = puedeHablar(ll, p.identity, conPermiso.has(p.identity));
     if (Boolean(p.permission?.can_publish ?? p.permission?.canPublish) === hablar) continue;
     const r = await servidor("UpdateParticipant", ll.sala, { identity: p.identity, permission: permisos(hablar, "MICROPHONE") });
     if (r.ok) cambiados++;
