@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118030212
+# al-dia-con: 20261118142929
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -184,6 +184,8 @@ tabla  metropolitano_menu  rls=true
 tabla  metropolitano_menu_cocinas  rls=true
 tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
+tabla  niveles_academia  rls=true
+tabla  niveles_alumno  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
@@ -2013,6 +2015,18 @@ columna  misiones_secretas.created_at  timestamp with time zone
 columna  misiones_secretas.jugador_id  uuid
 columna  misiones_secretas.mision  text
 columna  misiones_secretas.sala_id  uuid
+columna  niveles_academia.academia_id  uuid
+columna  niveles_academia.created_at  timestamp with time zone
+columna  niveles_academia.descripcion  text
+columna  niveles_academia.id  uuid
+columna  niveles_academia.nombre  text
+columna  niveles_academia.orden  integer
+columna  niveles_alumno.alumno_id  uuid
+columna  niveles_alumno.created_at  timestamp with time zone
+columna  niveles_alumno.id  uuid
+columna  niveles_alumno.nivel_id  uuid
+columna  niveles_alumno.nivel_nombre  text
+columna  niveles_alumno.puesto_por  uuid
 columna  notas_alumno.alumno_id  uuid
 columna  notas_alumno.class_session_id  uuid
 columna  notas_alumno.compartida  boolean
@@ -3244,6 +3258,7 @@ funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
+funcion  interno.academias_de_niveles()  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
@@ -3534,6 +3549,7 @@ funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
+funcion  poner_nivel_alumno(p_alumno uuid, p_nivel uuid)  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
 funcion  practica_intentos_al_crear()  invoker  anon=false  auth=false
 funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
@@ -3668,6 +3684,7 @@ funcion  seminario_revelar(p_sala uuid, p_correcta integer)  definer  anon=false
 funcion  seminario_salas_para_mi()  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
+funcion  set_niveles_academia(p_academia uuid, p_niveles jsonb)  definer  anon=false  auth=true
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
 funcion  set_student_elo(p_student uuid, p_elo integer, p_tipo text)  definer  anon=false  auth=true
 funcion  sincronizar_profesor_principal()  definer  anon=false  auth=false
@@ -4032,6 +4049,8 @@ politica  metropolitano_menu_cocinas  metropolitano_menu_cocinas_ver  SELECT
 politica  metropolitano_parqueo  metropolitano_parqueo_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
+politica  niveles_academia  niveles_academia_select  SELECT
+politica  niveles_alumno  niveles_alumno_select  SELECT
 politica  notas_alumno  notas_alumno_delete  DELETE
 politica  notas_alumno  notas_alumno_insert  INSERT
 politica  notas_alumno  notas_alumno_select  SELECT
@@ -4867,6 +4886,11 @@ indice  metropolitano_menu_cocinas  metropolitano_menu_cocinas_pkey
 indice  metropolitano_parqueo  metropolitano_parqueo_pkey
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
+indice  niveles_academia  niveles_academia_nombre
+indice  niveles_academia  niveles_academia_orden
+indice  niveles_academia  niveles_academia_pkey
+indice  niveles_alumno  niveles_alumno_alumno
+indice  niveles_alumno  niveles_alumno_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
 indice  notas_alumno  notas_alumno_class_session_id_fk
 indice  notas_alumno  notas_alumno_pkey
@@ -5955,6 +5979,12 @@ grant  misiones_secretas  authenticated  SELECT
 grant  misiones_secretas  authenticated  TRIGGER
 grant  misiones_secretas  authenticated  TRUNCATE
 grant  misiones_secretas  authenticated  UPDATE
+grant  niveles_academia  authenticated  REFERENCES
+grant  niveles_academia  authenticated  SELECT
+grant  niveles_academia  authenticated  TRIGGER
+grant  niveles_alumno  authenticated  REFERENCES
+grant  niveles_alumno  authenticated  SELECT
+grant  niveles_alumno  authenticated  TRIGGER
 grant  notas_alumno  authenticated  DELETE
 grant  notas_alumno  authenticated  INSERT
 grant  notas_alumno  authenticated  REFERENCES
