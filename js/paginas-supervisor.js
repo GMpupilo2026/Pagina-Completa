@@ -33,6 +33,7 @@
                hacer cada coordinador. */
             { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html", zona: "personas" },
             { emoji: "🌱", label: "Interesados", desc: "Quién preguntó por clases en tu academia y a quién toca llamar hoy", href: "prospectos.html", zona: "personas" },
+            { emoji: "🎁", label: "Premios de tu academia", desc: "Lo que tus alumnos canjean con sus puntos y lo que tienes por entregar", href: "premios-academia.html", zona: "personas" },
         ] },
         /* Supervisar es, sobre todo, supervisar a los profesores: va antes
            que el detalle de los estudiantes. */
