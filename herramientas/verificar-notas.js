@@ -63,6 +63,8 @@ window.__consultas = [];
     const b = {
       select() { return b; }, order() { return b; }, in() { return b; }, or() { return b; },
       eq(col, val) { condiciones.push([col, val]); return b; },
+      // Tareas lo usa para el aviso de alumnos sin tarea (vence_at > ahora).
+      gt(col, val) { condiciones.push([col, val, ">"]); return b; },
       limit(n) { limite = n; return b; },
       range(a, z) { desde = a; hasta = z; return b; },
       maybeSingle() { unica = true; return b; },
@@ -97,7 +99,7 @@ window.__consultas = [];
         }
         if (pendiente) return Promise.resolve({ data: pendiente, error: null }).then(res, rej);
         if (Array.isArray(d)) {
-          condiciones.forEach(([col, val]) => { d = d.filter((f) => f[col] === val); });
+          condiciones.forEach(([col, val, op]) => { d = d.filter((f) => op === ">" ? String(f[col]) > String(val) : f[col] === val); });
           if (desde !== null) d = d.slice(desde, hasta + 1);
           if (limite !== null) d = d.slice(0, limite);
           if (unica) d = d.length ? d[0] : null;
