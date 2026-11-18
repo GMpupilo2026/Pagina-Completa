@@ -167,7 +167,9 @@ async function torneoAlAzar(semilla) {
   // del propio jugador (número y Elo): no están en la referencia y se
   // comprueban aparte, abajo.
   const EN_LA_REFERENCIA = { REP: "GE" };
-  const SIN_REFERENCIA = ["TPN", "TPN-R", "RTNG", "RTNG-R"];
+  // KZ y KV son del Sistema Keizer, no desempates de FIDE: se comprueban en
+  // verificar-pareo-keizer.js.
+  const SIN_REFERENCIA = ["TPN", "TPN-R", "RTNG", "RTNG-R", "KZ", "KV"];
   let iguales = 0, distintos = 0, comparados = 0;
   for (const c of ref.azar) {
     const t = torneoDe(c);

@@ -387,6 +387,11 @@
     "RTNG-R": { f: (id, tb, t) => eloDe(t, id), menor: true,
                 es: "Elo del jugador (el menor primero)", en: "Rating, reversed (lowest first)" },
   };
+  // El Sistema Keizer: sus puntos (los que ordenan la lista) y lo que vale
+  // cada jugador para quien le gane. Solo significan algo en un Keizer.
+  const keizerDe = (tb, t) => tb.keizer || (tb.keizer = t.sistema === "keizer" ? T.puntuarKeizer(t) : { total: new Map(), valor: new Map() });
+  C.KZ = { f: (id, tb, t) => keizerDe(tb, t).total.get(id) || 0, es: "Puntos Keizer", en: "Keizer points" };
+  C.KV = { f: (id, tb, t) => keizerDe(tb, t).valor.get(id) || 0, es: "Valor Keizer (lo que suma quien le gane)", en: "Keizer value (what beating this player is worth)" };
   // Alias de los torneos guardados antes de 2026: no se ofrece en ninguna lista.
   const ALIAS = { "GE": "REP" };
   for (const [viejo, nuevo] of Object.entries(ALIAS)) C[viejo] = Object.assign({ legado: true }, C[nuevo]);
@@ -436,6 +441,15 @@
       const llego = T.alcanceEliminacion(t);
       filas.sort((a, b) => llego.get(b.id) - llego.get(a.id) || num.get(a.id) - num.get(b.id));
       filas.forEach((f, i) => { f.puesto = i > 0 && llego.get(filas[i - 1].id) === llego.get(f.id) ? filas[i - 1].puesto : i + 1; });
+      return filas;
+    }
+    // En el Sistema Keizer mandan los puntos Keizer, estén o no en la lista de
+    // desempates; después, los puntos de siempre y lo que diga la lista.
+    if (t.sistema === "keizer") {
+      const kz = keizerDe(tb, t).total;
+      const cmpK = (a, b) => (kz.get(b.id) || 0) - (kz.get(a.id) || 0) || cmp(a, b);
+      filas.sort((a, b) => cmpK(a, b) || num.get(a.id) - num.get(b.id));
+      filas.forEach((f, i) => { f.puesto = i > 0 && cmpK(filas[i - 1], f) === 0 ? filas[i - 1].puesto : i + 1; });
       return filas;
     }
     filas.sort((a, b) => cmp(a, b) || num.get(a.id) - num.get(b.id));

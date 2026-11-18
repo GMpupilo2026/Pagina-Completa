@@ -268,6 +268,14 @@ function mesa(v: unknown) {
     m.ko = true;
     m.slot = Math.round(numero(v.slot, 0, 999));
     if (v.pasa != null && (v.pasa === v.b || v.pasa === v.n)) { m.pasa = v.pasa; m.desempate = texto(v.desempate, 30); }
+    // La doble eliminación: la llave (ganadores, perdedores o final), su fase
+    // y quién llegó a la final desde perdedores (uno de los dos de la mesa).
+    if (v.llave === "G" || v.llave === "P" || v.llave === "F") {
+      m.llave = v.llave;
+      m.fase = Math.round(numero(v.fase, 1, 99));
+      if (v.deP != null && (v.deP === v.b || v.deP === v.n)) m.deP = v.deP;
+    }
+    if (v.tercer === true) m.tercer = true;
   }
   const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
@@ -297,7 +305,8 @@ function limpiar(v: unknown) {
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
     // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
-    sistema: ["todos", "scheveningen", "eliminacion"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    sistema: ["todos", "scheveningen", "eliminacion", "keizer"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    dobleEliminacion: v.sistema === "eliminacion" && v.dobleEliminacion === true, tercerPuesto: v.sistema === "eliminacion" && v.dobleEliminacion !== true && v.tercerPuesto === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
