@@ -184,10 +184,16 @@ function dobleOrganizacion(licencia) {
           if (accion === "select" && tabla === "centroamericano_torneos" && window.__torneosFallan) return Promise.resolve({ data: null, error: { message: "statement timeout" } }).then(ok, ko);
           if (accion === "insert") {
             const lista = Array.isArray(valores) ? valores : [valores];
+            /* Una sola hora para todas las filas, como el «default now()» de
+             * Postgres (la hora de la transacción). Con un new Date() por fila,
+             * si el ciclo cruzaba un milisegundo los avisos «a todos» quedaban
+             * con dos horas, la página los agrupaba como dos envíos y la tabla
+             * de enviados no llegaba nunca a 2 filas (CI, 17/11/2026). */
+            const ahora = new Date().toISOString();
             for (const v of lista) {
               const base = tabla === "centroamericano_avisos"
-                ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
-                : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
+                ? { id: "av-" + (++n + 20), creado: ahora, estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
+                : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: ahora, ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
           else if (accion === "update") { filtrar(tabla, f, fin, fgt).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
