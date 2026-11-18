@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: La posición parece tranquila, pero una entrega de material la vuelve táctica de golpe. Juegan las negras; el rival acaba de jugar torre felix 1.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>No se piensa igual en una posición cerrada y maniobrera que en una abierta, llena de piezas activas y reyes expuestos. En la primera se buscan planes y se puede jugar con calma; en la segunda cada jugada se calcula, porque un descuido se castiga enseguida. El problema es que la partida pasa de una a otra, a veces en una sola jugada.</p>
 <p>Una ruptura, un sacrificio o un cambio en el centro pueden convertir una posición posicional en una táctica. El jugador que no lo nota sigue jugando «de memoria», con jugadas de maniobra, cuando ya hacía falta calcular. Y al revés: después de una tormenta táctica, la posición se calma y quien sigue buscando golpes que ya no existen pierde el tiempo y empeora su posición.</p>
@@ -63,7 +87,7 @@
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
   <dt>El valor de las piezas</dt>
@@ -73,24 +97,57 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: La posición parece tranquila, pero una entrega de material la vuelve táctica de golpe. Juegan las negras; el rival acaba de jugar torre felix 1.</h3>
+  <h3 id="posicion-1">Posición 1: La posición parece tranquila, pero una entrega de material la vuelve táctica de golpe. Juegan las negras; el rival acaba de jugar torre felix 1.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en c2; torre en f1; alfil en d3; caballo en e2; peones en a3, b2, d4, e5, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en f8; torre en a8; alfil en b7; caballo en d5; peones en a5, b6, d7, e6, g5, g7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en cesar 2.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en david 3.</li>
+    <li>Caballo en eva 2.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en felix 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en gustav 5.</li>
+    <li>Peón en gustav 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 20… dama captura felix 1 jaque, 21. rey captura felix 1, caballo eva 3 jaque, 22. rey gustav 1, caballo captura cesar 2</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>20. Negras: dama captura felix 1 jaque.</li>
+    <li>21. Blancas: rey captura felix 1.</li>
+    <li>21. Negras: caballo eva 3 jaque.</li>
+    <li>22. Blancas: rey gustav 1.</li>
+    <li>22. Negras: caballo captura cesar 2.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>20… dama captura felix 1 jaque, 21. rey captura felix 1, caballo eva 3 jaque, 22. rey gustav 1, caballo captura cesar 2. Es un tenedor: una pieza ataca dos objetivos a la vez. Con una sola jugada la posición pasa de tranquila a táctica: quien no nota ese cambio sigue jugando como antes y pierde. (Ejercicio 0yaFE de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: dama captura felix 1 jaque es la mejor (+4,2) y la segunda queda en -2,4.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4qk1/1b1p2p1/1p2p3/p2nP1p1/3P4/P2B4/1PQ1N1PP/5RK1 b - - 1 20</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4qk1/1b1p2p1/1p2p3/p2nP1p1/3P4/P2B4/1PQ1N1PP/5RK1 b - - 1 20</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
@@ -100,7 +157,7 @@
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -109,7 +166,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -153,7 +210,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo? Juegan las blancas; el rival acaba de jugar …hector 5.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Una columna es semiabierta para ti cuando no tienes peones en ella pero el rival sí tiene uno. Tus torres y tu dama pueden usarla para atacar ese peón de frente, y el rival tiene que defenderlo con piezas. Cada estructura de peones crea sus columnas semiabiertas, y suelen ser distintas para cada bando: tú atacas por una y el rival por otra. Saber cuál es la tuya y usarla antes que el rival use la suya es la mitad del plan del medio juego.</p>
 <p>Para encontrarla, mira las columnas una por una y busca las que tienen un solo peón, del rival. Ese peón es el objetivo, sobre todo si no puede avanzar o si al avanzar deja una debilidad. La señal de que la presión funciona es que el rival tiene que usar cada vez más piezas para defenderlo y ya no le quedan para atacar. Si además el peón es retrasado o aislado, la columna semiabierta es todavía más fuerte.</p>
@@ -69,38 +93,69 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo? Juegan las blancas; el rival acaba de jugar …h5.</h3>
+  <h3 id="posicion-1">Posición 1: Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo? Juegan las blancas; el rival acaba de jugar …hector 5.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en f2; torres en c1, e1; caballo en d4; peones en a4, b5, f3, g2.</p>
-  <p>Piezas negras: rey en g8; dama en g6; torres en c8, f6; alfil en d7; peones en b6, b7, d5, f7, g7, h5.</p>
+  <h4>Piezas blancas: 9</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en felix 2.</li>
+    <li>Torre en cesar 1.</li>
+    <li>Torre en eva 1.</li>
+    <li>Caballo en david 4.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en felix 3.</li>
+    <li>Peón en gustav 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en gustav 6.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Torre en felix 6.</li>
+    <li>Alfil en david 7.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 34. torre captura cesar 8 jaque, alfil captura cesar 8, 35. torre eva 8 jaque, rey hector 7, 36. torre captura cesar 8</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>34. Blancas: torre captura cesar 8 jaque.</li>
+    <li>34. Negras: alfil captura cesar 8.</li>
+    <li>35. Blancas: torre eva 8 jaque.</li>
+    <li>35. Negras: rey hector 7.</li>
+    <li>36. Blancas: torre captura cesar 8.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>34. torre captura cesar 8 jaque, alfil captura cesar 8, 35. torre eva 8 jaque, rey hector 7, 36. torre captura cesar 8. Es un tenedor: una pieza ataca dos objetivos a la vez. Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes. (Ejercicio 1thjO de la base abierta de Lichess (CC0), rating 1147. Stockfish 16 a profundidad 18: torre captura cesar 8 jaque es la mejor (+3,1) y la segunda queda en -0,9.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r3k1/1p1b1pp1/1p3rq1/1P1p3p/P2N4/5P2/5QP1/2R1R1K1 w - h6 0 34</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2r3k1/1p1b1pp1/1p3rq1/1P1p3p/P2N4/5P2/5QP1/2R1R1K1 w - h6 0 34</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
   <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +208,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

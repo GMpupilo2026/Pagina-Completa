@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Dos piezas del rival están en la misma línea: busca cómo aprovecharlo. Juegan las negras; el rival acaba de jugar alfil eva 3.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>En una clavada, una pieza de largo alcance ataca a una pieza rival que tiene detrás otra más valiosa. Si la de delante se mueve, la de atrás queda atacada. Cuando lo que hay detrás es el rey, la clavada es absoluta: la pieza clavada no puede moverse por reglamento. Cuando es la dama o una torre, la clavada es relativa: la pieza se puede mover, pero cuesta caro. Solo el alfil, la torre y la dama pueden clavar.</p>
 <p>Las clavadas nacen cuando dos piezas rivales quedan en la misma línea. Mira las columnas, filas y diagonales que unen al rey o la dama del rival con otra de sus piezas: si tu alfil, torre o dama puede ponerse en esa línea, hay una clavada. Las más comunes aparecen en la apertura, con un alfil que clava un caballo contra la dama o contra el rey, y en el medio juego, con una torre en una columna abierta frente al rey.</p>
@@ -65,7 +89,7 @@
   <dt>La clavada</dt>
   <dd>Una pieza queda clavada cuando no puede moverse porque detrás de ella hay algo más valioso. Si detrás está el rey, la clavada es absoluta y la pieza legalmente no se puede mover; si detrás hay una dama o una torre, es relativa y moverse solo cuesta material.</dd>
   <dd><strong>El error de siempre:</strong> Creer que una pieza clavada defiende. No defiende nada: si la pieza que defiende está clavada contra su rey, no puede capturar. Ese es el motor de media táctica de club.</dd>
-  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de c6 contra el rey solo mientras no haya nada en el medio. La respuesta a6 gana tiempo justamente para deshacerla.</dd>
+  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de cesar 6 contra el rey solo mientras no haya nada en el medio. La respuesta anna 6 gana tiempo justamente para deshacerla.</dd>
   <dt>Columnas abiertas y torres</dt>
   <dd>Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.</dd>
   <dd><strong>El error de siempre:</strong> Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.</dd>
@@ -76,21 +100,54 @@
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Dos piezas del rival están en la misma línea: busca cómo aprovecharlo. Juegan las negras; el rival acaba de jugar alfil eva 3.</h3>
+  <h3 id="posicion-1">Posición 1: Dos piezas del rival están en la misma línea: busca cómo aprovecharlo. Juegan las negras; el rival acaba de jugar alfil eva 3.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en c3; torres en a1, h1; alfiles en e3, f1; caballo en a8; peones en a2, b2, f2, g2, h2.</p>
-  <p>Piezas negras: rey en d8; dama en e4; torre en h8; alfiles en c8, f8; caballo en f6; peones en a7, b7, d7, f7, g7, h6.</p>
+  <h4>Piezas blancas: 12</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en cesar 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en anna 8.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 12</h4>
+  <ul>
+    <li>Rey en david 8.</li>
+    <li>Dama en eva 4.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 13… alfil bella 4, 14. Enroque largo, alfil captura cesar 3</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>13. Negras: alfil bella 4.</li>
+    <li>14. Blancas: Enroque largo.</li>
+    <li>14. Negras: alfil captura cesar 3.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
   <p>13… alfil bella 4, 14. Enroque largo, alfil captura cesar 3. Todo gira en torno a una clavada: la pieza clavada no puede defender. Fíjate en que la pieza clavada no puede apartarse sin dejar algo más valioso a merced del ataque. (Ejercicio 0YWYB de la base abierta de Lichess (CC0), rating 1105. Stockfish 16 a profundidad 18: alfil bella 4 es la mejor (+4,3) y la segunda queda en -2,8.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: N1bk1b1r/pp1p1pp1/5n1p/8/4q3/2Q1B3/PP3PPP/R3KB1R b KQ - 1 13</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: N1bk1b1r/pp1p1pp1/5n1p/8/4q3/2Q1B3/PP3PPP/R3KB1R b KQ - 1 13</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>En tus tres últimas partidas, busca todas las clavadas que hubo, tuyas y del rival, y anota si se aprovecharon.</li>
   <li>Arma una posición donde un peón esté defendido solo por una pieza clavada, y encuentra la captura que gana.</li>
@@ -100,7 +157,7 @@
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +210,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

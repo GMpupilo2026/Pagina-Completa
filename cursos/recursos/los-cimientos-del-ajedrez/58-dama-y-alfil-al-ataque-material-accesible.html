@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: ¿Hacia qué casilla junto al rey apuntan juntos la dama y el alfil? Juegan las blancas; el rival acaba de jugar … rey eva 7.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>Cuando la dama y el alfil se colocan uno detrás del otro en la misma diagonal forman una batería: la pieza de delante ataca una casilla y la de atrás la defiende. Contra el enroque, una batería apuntando a h7 o a g7, o a h2 y g2 desde el lado negro, amenaza un mate inmediato que obliga al rival a responder. Es uno de los ataques más comunes en las partidas de club, y también uno de los que más se pasan por alto al defender.</p>
-<p>Fíjate en las diagonales b1-h7 y a1-h8, y en sus simétricas del lado negro. Si tu alfil ya apunta a h7 y tu dama puede llegar a la misma diagonal, la amenaza está a una jugada. Las señales de debilidad del rival son la falta de un caballo en f6 o en f3, que es el gran defensor de h7 o h2, y un peón de g que avanzó y dejó la diagonal larga sin tapar.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>Cuando la dama y el alfil se colocan uno detrás del otro en la misma diagonal forman una batería: la pieza de delante ataca una casilla y la de atrás la defiende. Contra el enroque, una batería apuntando a hector 7 o a gustav 7, o a hector 2 y gustav 2 desde el lado negro, amenaza un mate inmediato que obliga al rival a responder. Es uno de los ataques más comunes en las partidas de club, y también uno de los que más se pasan por alto al defender.</p>
+<p>Fíjate en las diagonales bella 1-hector 7 y anna 1-hector 8, y en sus simétricas del lado negro. Si tu alfil ya apunta a hector 7 y tu dama puede llegar a la misma diagonal, la amenaza está a una jugada. Las señales de debilidad del rival son la falta de un caballo en felix 6 o en felix 3, que es el gran defensor de hector 7 o hector 2, y un peón de g que avanzó y dejó la diagonal larga sin tapar.</p>
 <p>La batería suele necesitar que antes se elimine o se desvíe al defensor, a veces con un cambio o un sacrificio. El orden importa: si la dama va delante, la amenaza es inmediata pero la dama queda expuesta; si va el alfil delante, la batería es más sólida. El error típico del defensor es avanzar un peón para tapar la diagonal sin ver que deja otra casilla débil. Cuando te defiendas, cubre la casilla atacada con una pieza.</p>
 
 
@@ -69,28 +93,53 @@
   <dt>El sacrificio</dt>
   <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
   <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
-  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a gustav 5 y la dama a hector 5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
   <dt>Casillas débiles y puestos avanzados</dt>
   <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
   <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en david 5 defendido por un peón en eva 4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: ¿Hacia qué casilla junto al rey apuntan juntos la dama y el alfil? Juegan las blancas; el rival acaba de jugar … rey eva 7.</h3>
+  <h3 id="posicion-1">Posición 1: ¿Hacia qué casilla junto al rey apuntan juntos la dama y el alfil? Juegan las blancas; el rival acaba de jugar … rey eva 7.</h3>
   
-  <p>Piezas blancas: rey en h1; dama en h8; alfil en e4; peones en a2, b3, g2, h3.</p>
-  <p>Piezas negras: rey en e7; dama en d6; torre en d8; peones en a7, b7, d2, e6, f6, g5.</p>
+  <h4>Piezas blancas: 7</h4>
+  <ul>
+    <li>Rey en hector 1.</li>
+    <li>Dama en hector 8.</li>
+    <li>Alfil en eva 4.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en eva 7.</li>
+    <li>Dama en david 6.</li>
+    <li>Torre en david 8.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 2.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 5.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 37. dama gustav 7 jaque, rey eva 8, 38. alfil gustav 6 jaque mate</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>37. Blancas: dama gustav 7 jaque.</li>
+    <li>37. Negras: rey eva 8.</li>
+    <li>38. Blancas: alfil gustav 6 jaque mate.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>37. dama gustav 7 jaque, rey eva 8, 38. alfil gustav 6 jaque mate. Es mate en dos: la primera jugada no deja defensa. La dama y el alfil en la misma diagonal suman su fuerza sobre una casilla: el ataque sale de esa batería. (Ejercicio 20x1E de la base abierta de Lichess (CC0), rating 1305. Stockfish 16 a profundidad 18: dama gustav 7 jaque es la mejor (mate en 2) y la segunda queda en 0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3r3Q/pp2k3/3qpp2/6p1/4B3/1P5P/P2p2P1/7K w - - 4 37</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3r3Q/pp2k3/3qpp2/6p1/4B3/1P5P/P2p2P1/7K w - - 4 37</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
@@ -100,7 +149,7 @@
   <li>Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +202,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
