@@ -35,6 +35,10 @@ const VIGILADAS = [
   "proyecto_grupos",
   "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis", "cuentas_temporales",
   "planes_cobro", "suscripciones", "cobros", "pagos", "recibos",
+  // Cobros, versión 2 (mensualidades.html): quién paga en qué cuenta decide
+  // si entra, apagarla le corta el acceso, los ajustes encienden el apagado
+  // automático y confirmar un pago reportado lo activa.
+  "cuentas_cobro", "cuenta_cobro_alumnos", "cobros_ajustes", "pagos_reportados",
   // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
   "vision_personas",
   // Un reconocimiento de la academia: quién dio (o anuló) cada certificado.

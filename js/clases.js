@@ -428,7 +428,7 @@
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
             { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
-            { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
+            { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "mensualidades.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
             { title: "Herramientas", hrefs: ["pareo.html", "herramientas-arbitraje.html"] },
@@ -634,14 +634,14 @@
         }
         function clavesUrgenteDocente() {
             const tiene = tieneTarjeta;
-            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "estiloSeguimiento", "morosos"].filter((c) =>
+            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "estiloSeguimiento", "pagosPorConfirmar", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
                 : c === "estiloSeguimiento" ? tiene("informes.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
                 : c === "examenesCongelados" || c === "examenesEntregados" ? tiene("examenes.html")
                 : c === "partidasTorneo" ? tiene("libreta-torneos.html")
                 : c === "solicitudes" ? tiene("solicitudes.html")
-                : tiene("cobros.html"));
+                : tiene("mensualidades.html"));
         }
 
         function renderTileCard(t, destacado, compacto, grande) {
@@ -1285,7 +1285,7 @@
             /* Quien puede buscar gente lo ve escrito en el campo. «Cobros»
                solo a quien tiene la tarjeta: a un profesor que no coordina
                se le sugería buscar algo que no puede ver. */
-            if (buscaPersonas()) campoBusqueda.placeholder = tieneTarjeta("cobros.html")
+            if (buscaPersonas()) campoBusqueda.placeholder = tieneTarjeta("mensualidades.html")
                 ? "Cobros, tareas, el nombre de un alumno…"
                 : "Tareas, informes, el nombre de un alumno…";
             const grid = document.getElementById("tile-grid");
@@ -1543,7 +1543,7 @@
             "satisfaccion.html": "encuesta satisfaccion opinion calificar profesores alumnos contentos se van",
             "encuesta-profesor.html": "encuesta opinion calificar profesor",
             "encuestas-curso.html": "encuesta anonima curso ciegos accesible desercion expectativas",
-            "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
+            "mensualidades.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
             "reportes.html": "word pdf actividades periodo",
             "accesos.html": "cupos paquetes acceso",
         };
@@ -1675,7 +1675,7 @@
             if (!escrito) { estadoBusqueda.textContent = ""; return; }
             anuncioBusqueda = setTimeout(() => {
                 if (!accesosEncontrados && !personasEncontradas) {
-                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: ${tieneTarjeta("cobros.html") ? "cobros" : "informes"}, tareas, contraseña…`;
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: ${tieneTarjeta("mensualidades.html") ? "cobros" : "informes"}, tareas, contraseña…`;
                     return;
                 }
                 const partes = [];
@@ -4414,7 +4414,7 @@
                     { emoji: "🧭", label: "Coordinación", desc: "Tus profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
                     { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse desde unirse.html: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
-                    { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
+                    { emoji: "💳", label: "Cobros", desc: "Quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html" }
                 );
                 /* Lo que el supervisor de su academia le apagó no se ofrece: la
                    base lo rechazaría igual, pero el fallo lo descubriría quien
