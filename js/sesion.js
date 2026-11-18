@@ -3389,6 +3389,9 @@
         }
 
         async function updateEngineEval() {
+            // El explorador de aperturas se entera de cada posición en el mismo lugar que
+            // el motor (js/clase-explorador.js): no hay un segundo aviso que se pueda olvidar.
+            if (window.ClaseExplorador && !modoProyector && !modoControl) ClaseExplorador.posicion(board.fen());
             if (!engineEnabled || modoProyector || modoControl || typeof ClasesEngine === "undefined") return;
             const myRequestId = ++engineRequestId;
             const fen = board.fen();
@@ -8012,6 +8015,10 @@
                 acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
+                if (window.ClaseExplorador && !modoProyector && !modoControl) {
+                    ClaseExplorador.montar();
+                    ClaseExplorador.posicion(board.fen());
+                }
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
                 if (!modoProyector && !modoControl) {

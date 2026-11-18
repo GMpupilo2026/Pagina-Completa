@@ -5758,3 +5758,44 @@ Lo prueba `verificar-clase-camara.js` (en `sesion.html` de verdad con el
 doble: el botón del profe y no de la alumna, el código, las jugadas que
 entran también con lo nuevo, otra partida que no toca nada, la espera
 mientras se repasa y «Desconectar»). Roto a propósito, salta.
+
+## El explorador de aperturas en la clase
+
+`js/clase-explorador.js`, el panel «📚 Aperturas de maestros» junto al motor
+(18/11/2026). Muestra qué jugaron los maestros en la posición del tablero de la
+clase: la apertura con su código ECO, cuántas partidas pasaron por ahí y, por
+cada jugada (las ocho más jugadas), qué parte de las veces se juega y cuánto
+ganan blancas, tablas y negras. La idea salió de Chessgora, que lo tiene al
+lado del tablero del maestro.
+
+- **Solo lo ve el profesor**, como el motor. No se monta en el proyector ni en
+  el control remoto, y a los alumnos no les llega nada.
+- **Arranca apagado.** Cada posición nueva es un pedido a la Edge Function
+  `explorador-maestros` (la misma de «Dónde deja la teoría», en
+  `docs/decisiones/paneles.md`), que le pregunta a Lichess con el token del
+  servidor y guarda la respuesta 180 días. La mayoría de las clases no son de
+  aperturas: encendido siempre, gastaría pedidos en finales y táctica.
+- **Se entera de la posición dentro de `updateEngineEval()`** de `sesion.js`,
+  antes de mirar si el motor está encendido. Es el único lugar por donde pasa
+  cada cambio del tablero del profe; un segundo aviso aparte se olvidaría en el
+  próximo camino nuevo.
+- **Una posición por vez, con 450 ms de espera**: el profe que recorre una
+  línea rápido no pide cada jugada, solo donde se para. Lo ya preguntado en la
+  clase se guarda en la página y no se vuelve a pedir.
+- **Las cifras van escritas** («ganan blancas 45 % · tablas 30 % · ganan negras
+  25 %»); la barrita de colores es `aria-hidden` y no lleva ningún dato que no
+  esté en el texto.
+- **El permiso de la función se amplió**: antes solo contestaba a quien tenía
+  la preparación de rivales activada (`puedo_preparar_rivales()`); ahora
+  también a todo profesor y a quien administra. Las dos preguntas van con la
+  sesión de quien llama (pasan por `antes_de_cada_pedido()` y la RLS de
+  `profiles`), nunca con la clave de servicio. Sigue sin ser un proxy abierto:
+  solo `/masters` y solo FEN válidos.
+- Sin `LICHESS_TOKEN` en el servidor, el panel lo dice con el mismo texto que
+  la preparación de rivales.
+
+Lo prueba `verificar-clase-explorador.js`: las cuentas en Node; el panel con el
+marcado de `sesion.html` y un pedido falso (apagado no pide, encendido pide una
+vez, mover rápido pide solo la última, lo visto no se repide, fuera de teoría
+lo dice, el 403 dice que no está activo); y el cableado (`updateEngineEval`, el
+bloque del profe, el permiso de la función). Con la espera en 0, salta.
