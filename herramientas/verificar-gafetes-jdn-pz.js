@@ -164,8 +164,9 @@ async function aceptar(page, boton) {
     return window.GafetesDibujo.gafetes(diseno, datos.filas).map((x) => ({ n: x.nombre, d: x.detalles, f: x.franja, c: x.codigo, color: x.color, qr: x.qr }));
   });
   igual("el nombre en MAYÚSCULAS pasa a Nombre Propio", g[1].n, ["Zúñiga Rojas", "Mateo"]);
-  igual("los detalles: club, Elo y torneo; sin Elo no queda «Elo» colgando", [g[0].d, g[2].d], [["Escuela Pedregoso", "Juega el torneo U12"], ["ADAPZ", "Elo 1431", "Juega el torneo U20"]]);
-  igual("la franja dice la categoría", g.map((x) => x.f), ["U12 FEMENINO", "U12 ABSOLUTO", "U16 FEMENINO", "U20 ABSOLUTO"]);
+  igual("los detalles: categoría, Elo y torneo; sin Elo no queda «Elo» colgando", [g[0].d, g[2].d], [["U12 Femenino", "Juega el torneo U12"], ["U16 Femenino", "Elo 1431", "Juega el torneo U20"]]);
+  igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
+  igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
   igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#0e7490", "#1b2a4a"]);
   igual("el código cuenta por edad", g.map((x) => x.c), ["U12 01", "U12 02", "U16 01", "U20 01"]);
 

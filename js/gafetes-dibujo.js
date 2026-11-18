@@ -212,6 +212,9 @@
       dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
       vertical: caja(3, 16, 16, 106),
       tabla: caja(22, 16, 48, 104),
+      // Con `dorso.horarioCentro`: el horario centrado en lo que queda libre
+      // entre el texto de lado y el borde derecho (Eliminatoria JDN de PZ).
+      tablaCentro: caja(33, 16, 48, 104),
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
@@ -514,7 +517,7 @@
     // a cada jugador a su ronda y su mesa).
     const qr = g.qr ? matrizQr(g.qr) : recursos.qr;
     const filas = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim()));
-    const T = M.tabla;
+    const T = diseno.dorso.horarioCentro ? M.tablaCentro : M.tabla;
     const enc = diseno.dorso.encabezados;
     const altoEnc = 6 * M.sy;
     const altoFila = filas.length ? Math.min(5.6 * M.sy, (T.h - altoEnc) / filas.length) : 0;

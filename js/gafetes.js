@@ -91,13 +91,15 @@
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
     d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
-    d.detalles = ["{Club}", "Elo {Elo}", "Juega el torneo {Torneo}"];
+    // El club va en la franja (lo pidió el dueño): la categoría, arriba de los detalles.
+    d.detalles = ["{Categoría}", "Elo {Elo}", "Juega el torneo {Torneo}"];
     d.bandera = { plantilla: "", texto: true };
-    d.franja = { plantilla: "{Categoría}" };
+    d.franja = { plantilla: "{Club}" };
     // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
     // categoría va también escrita en la franja: el color nunca va solo.
     d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Categoría}";
+    d.dorso.horarioCentro = true;
     d.dorso.qr = "{QR}";
     d.dorso.qrTexto = "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto";
     // Las fotos del fotógrafo son de medio cuerpo, frente al tablero: se
