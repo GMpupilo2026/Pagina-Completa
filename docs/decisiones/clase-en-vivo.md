@@ -2308,6 +2308,52 @@ con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
 nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
 jugarlo, saltan.
 
+#### El tablero de preguntas
+
+`tablero-preguntas.html` (`js/tablero-preguntas.js`), enlazado desde
+Cuestionarios: un juego de categorías **para proyectar**. Cada columna es un
+cuestionario (de los del profe o de los listos) y cada casilla una de sus
+preguntas, de 100 a 500 puntos (3, 4 o 5 filas). Juegan de 2 a 6 equipos: eligen
+una casilla, contestan en voz alta y el profe muestra la respuesta y da los
+puntos («Acertó …», «Nadie acertó»; con «Restar los puntos al equipo que
+falla», también «Falló …»). Termina en el podio. La idea salió de Chessgora,
+que lo tiene en sus juegos de clase.
+
+- **No se llama como el programa de la tele**: el nombre es marca de otros. El
+  formato de categorías por valores es genérico; el nombre y las preguntas son
+  nuestros.
+- **No escribe nada en la base.** Los equipos no son cuentas y los puntos son
+  del juego, no Puntos Ajedrez: los alumnos no tocan nada, contesta el salón.
+  Solo lee `cuestionarios`, con la misma RLS de Cuestionarios (los alumnos no
+  ven ninguno, porque traen las respuestas); por eso es solo de quien da clase
+  o administra.
+- **Las preguntas con posición se quedan afuera**: se proyecta sin tablero de
+  ajedrez, y una pregunta sobre una posición que no se ve no se contesta.
+  Tampoco entran las que no tienen correcta, ni las de menos de dos opciones.
+  Un cuestionario aparece en la lista si tiene al menos 3 jugables, y `armar()`
+  dice cuál no alcanza para las filas elegidas.
+- Las preguntas de cada columna salen **al azar** del cuestionario, sin
+  repetirse; la de 100 no es «la más fácil» (los cuestionarios no traen
+  dificultad por pregunta), es la primera que sale.
+- **Deshacer el último punto**: un toque equivocado en plena clase se corrige,
+  y si ese punto había cerrado una casilla, la casilla vuelve al tablero.
+- **El juego a medias se guarda en esa computadora** (`localStorage`, con
+  try/catch): recargar en plena clase no lo borra («Seguir el juego que quedó
+  a medias»). Es una comodidad, no un dato.
+- Accesible: las casillas son botones con nombre («Aperturas, 300 puntos»); la
+  que ya salió dice «Ya salió», con `aria-disabled` (sigue alcanzándose con
+  Tab); al abrir una pregunta el foco va al texto, y al volver, a la casilla.
+  La correcta va escrita («✓ (la correcta)»), no solo en verde. Contrastes
+  medidos contra el fondo real: casilla libre 7,85; la que ya salió 6,6 (6,8
+  en oscuro); la correcta 8,7.
+
+**Al tocarlo, `node herramientas/verificar-todo.js tablero-preguntas`** (sin
+navegador): qué preguntas entran, los límites de `armar()`, que cada casilla sea
+una pregunta del cuestionario con su misma correcta y sin repetir, el podio con
+empates, que la página esté en la cabecera con sus migas y que nada escrito por
+una persona pase por `innerHTML`. Está probado que salta dejando entrar las
+preguntas con posición.
+
 ### Las prácticas de Formación Ajedrez en la clase
 
 En «Preguntar», debajo del cuestionario, «📝 Prácticas de Formación Ajedrez»
