@@ -15922,9 +15922,10 @@ sus pts y su puesto actual».
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
   hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
-- **La franja del frente dice el club** («ADAPZ»; pedido del dueño) y la
-  categoría pasa a la primera línea de los detalles (sigue también de lado en
-  el dorso, y el color de la franja sigue siendo el de la edad). En el dorso,
+- **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
+  debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
+  salieron del frente (también lo pidió el dueño). La categoría sigue de lado
+  en el dorso y en el color de la franja. En el dorso,
   el horario va centrado en lo que queda libre (`dorso.horarioCentro`).
 - **Con foto, la foto va en el medio y el nombre debajo** (`fotoCentro`,
   pedido del dueño), con los detalles centrados debajo del nombre; sin foto,
