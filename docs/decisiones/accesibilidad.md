@@ -70,6 +70,46 @@ final.
   tiene otra forma de saber dónde está, y los tableros pintan las casillas con su
   propio color de fondo.
 
+### La jugada se entiende escrita como se dice
+
+Pedido del dueño: que el recuadro reconozca **de distintas formas** lo que
+escriben. Quien no ve el tablero casi nunca escribe «Cf3»: escribe la jugada
+como la piensa o como la acaba de oír. Todo esto contestaba «no es una jugada
+legal», y no era cierto — la jugada era legal, lo que no se entendía era la
+forma:
+
+    caballo f3 · caballo a felix 3 · caballo de g1 a f3 · de g1 a f3 · g1-f3
+    cf3 · juego cf3 · peón e4 · eva 4 · e 4 · muevo el peón a e4
+    peón toma d4 · e por d4 · caballo captura peón · dama toma dama
+    e8 corona torre · peón e8 dama · eva 8 y pide caballo
+    enroque corto · me enroco largo · torre a d1 · torre h d1
+
+Está en `ComandosTablero.jugadaEscrita()`, que es el intérprete de casi todos
+los recuadros; primero prueba la notación de siempre y, si no hay jugada, lo
+escrito con palabras (`enPalabras`): se arma con lo que **se reconoce** —la
+pieza, las casillas, una columna de pista, la coronación— y con eso se filtran
+las jugadas legales. `js/chess-move-parser.js` (Juegos, Niebla) y la copia de
+`js/tablero-board.js` caen en él cuando no entienden.
+
+- **Una palabra que no se conoce anula todo**: «hola e4» no es e4. Aflojar el
+  intérprete no puede terminar en una jugada que nadie escribió.
+- **Si cabe en más de una jugada, no elige: dice cuáles.** «torre d1» con dos
+  torres contesta «hay 2 torres que pueden ir a david 1, desde anna 1 y
+  hector 1. Di de cuál, por ejemplo «a1 d1»»; «enroque» con los dos posibles,
+  «escribe «enroque corto» o «enroque largo»». Antes era «no es una jugada
+  legal». Lo dice `noSePudoJugar()`, que ya llaman todos los recuadros: la
+  última ambigüedad queda anotada en el módulo, y así ninguno tuvo que cambiar.
+- **La «a» suelta casi siempre es la preposición** («caballo a f3»): solo
+  cuenta como columna si sin ella no alcanza («torre a d1» con dos torres).
+- **La inicial en minúscula** («cf3», «txa1») se lee primero como peón —«bxc3»
+  es una captura de peón de lo más normal— y solo si así no hay jugada, como
+  pieza. Y «rb1» sigue sin ser la torre: R es el rey.
+- Sin nombrar la pieza, una casilla sola es de peón («e4»); con «toma», de
+  cualquiera, si es una sola. Una coronación sin decir a qué, dama.
+
+`verificar-entreno-accesible.js` prueba las treinta y tantas formas contra la
+jugada esperada, las que NO deben dar jugada y las dos frases de ambigüedad.
+
 ### Al tablero ahora se le puede PREGUNTAR
 
 El recuadro de los ejercicios solo aceptaba jugadas, y eso alcanza para

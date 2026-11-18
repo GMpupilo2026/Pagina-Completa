@@ -458,6 +458,45 @@ async function pruebaLetrasNoSonPiezas(browser) {
   igual('"Rb1" donde solo llega la torre no es ninguna jugada (la torre es T)', rb1 && rb1.piece + rb1.from + rb1.to, null);
   const re2 = CT.jugadaEscrita(torres, "Re2");
   igual('"Re2" donde la torre NO puede llegar es el REY (español)', re2 && re2.piece + re2.from + re2.to, "ke1e2");
+  /* La jugada escrita COMO SE DICE. Quien no ve el tablero casi nunca escribe
+     «Cf3»: escribe «caballo f3», «caballo a felix 3», «peón toma d4»… Todo eso
+     contestaba «no es una jugada legal», y la jugada era legal. Y lo que no
+     puede pasar al aflojar el intérprete: que invente una jugada («hola e4»),
+     que elija por su cuenta entre dos, o que «Rb1» vuelva a ser la torre. */
+  const INICIAL = null;
+  const CAMBIO = "r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3";
+  const ENROQUES = "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1";
+  const DOS_TORRES = "4k3/8/8/8/8/8/4K3/R6R w - - 0 1";
+  const CORONA = "8/4P3/8/8/8/8/k7/4K3 w - - 0 1";
+  const DAMAS = "4k3/8/8/3q4/8/8/8/3QK3 w - - 0 1";
+  const dichas = [
+    [INICIAL, "caballo f3", "g1f3"], [INICIAL, "Caballo a felix 3", "g1f3"], [INICIAL, "caballo de g1 a f3", "g1f3"],
+    [INICIAL, "de g1 a f3", "g1f3"], [INICIAL, "g1-f3", "g1f3"], [INICIAL, "cf3", "g1f3"], [INICIAL, "juego cf3", "g1f3"],
+    [INICIAL, "peón e4", "e2e4"], [INICIAL, "peon a eva 4", "e2e4"], [INICIAL, "eva 4", "e2e4"], [INICIAL, "e 4", "e2e4"],
+    [INICIAL, "muevo el peón a e4", "e2e4"], [INICIAL, "a4", "a2a4"], [INICIAL, "peon a a4", "a2a4"],
+    [INICIAL, "hola e4", null], [INICIAL, "caballo", null], [INICIAL, "bxc3", null],
+    [CAMBIO, "peón toma d4", "e5d4"], [CAMBIO, "e por d4", "e5d4"], [CAMBIO, "caballo toma d4", "c6d4"],
+    [CAMBIO, "caballo captura peón", "c6d4"], [CAMBIO, "toma d4", null],
+    [ENROQUES, "enroque corto", "e1g1"], [ENROQUES, "me enroco largo", "e1c1"], [ENROQUES, "enroque", null],
+    [ENROQUES, "torre a a8", "a1a8"], [ENROQUES, "rb1", null], [ENROQUES, "tb1", "a1b1"],
+    [DOS_TORRES, "torre d1", null], [DOS_TORRES, "torre a d1", "a1d1"], [DOS_TORRES, "torre h d1", "h1d1"],
+    [CORONA, "e8 corona torre", "e7e8r"], [CORONA, "peón e8 dama", "e7e8q"], [CORONA, "e8", "e7e8q"],
+    [CORONA, "eva 8 y pide caballo", "e7e8n"], [CORONA, "rey a d2", "e1d2"],
+    [DAMAS, "dama toma dama", "d1d5"], [DAMAS, "dama por d5 jaque", "d1d5"],
+  ];
+  const malDichas = dichas.filter(([fen, t, esp]) => {
+    const m = CT.jugadaEscrita(fen ? new Chess(fen) : new Chess(), t);
+    return (m ? m.from + m.to + (m.promotion || "") : null) !== esp;
+  });
+  if (malDichas.length) mal("estas jugadas escritas con palabras no dieron lo esperado: " + malDichas.map((c) => "«" + c[1] + "»").join(", "));
+  else bien("la jugada se entiende escrita como se dice (" + dichas.length + " formas), sin inventar ninguna");
+  CT.jugadaEscrita(new Chess(DOS_TORRES), "torre d1");
+  igual("si cabe en dos jugadas no elige: dice cuáles", /^«torre d1» puede ser más de una jugada: hay 2 torres/.test(CT.noSePudoJugar("torre d1")), true);
+  CT.jugadaEscrita(new Chess(ENROQUES), "enroque");
+  igual("y «enroque» con los dos posibles pregunta cuál", CT.noSePudoJugar("enroque"), "Puedes enrocar corto o largo: escribe «enroque corto» o «enroque largo».");
+  CT.jugadaEscrita(new Chess(), "caballo a5");
+  igual("lo que no se puede hacer sigue siendo «no es legal»", /no es una jugada legal/.test(CT.noSePudoJugar("caballo a5")), true);
+
   const td1 = CT.jugadaEscrita(torres, "Td1");
   igual('y la inicial española de torre nunca es ambigua', td1 && td1.piece + td1.from + td1.to, "ra1d1");
 }
