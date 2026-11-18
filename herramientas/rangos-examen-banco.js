@@ -121,16 +121,36 @@ function principal() {
     return filas;
 }
 
+/* Los mates básicos del examen de Caballo (decisión del dueño, 18/11/2026):
+   dama y rey contra rey, y dos torres contra rey, en menos de 2 minutos cada
+   uno. Las posiciones son las de «Con lo justo» (entreno/data/tipos.json,
+   niveles 1 y 2), ya verificadas por herramientas/tipos-generar.js. La base
+   elige una de cada final al armar el examen. */
+const MATES = { caballo: [{ nivel: 1, fin: "rr" }, { nivel: 2, fin: "q" }] };
+function mates() {
+    const tipos = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/tipos.json"), "utf8"))["con-lo-justo"] || [];
+    const filas = [];
+    for (const [rango, lista] of Object.entries(MATES)) {
+        for (const m of lista) {
+            const pos = tipos.filter((t) => t.nivel === m.nivel && t.piezas === m.fin);
+            if (pos.length < 5) throw new Error(`«Con lo justo» nivel ${m.nivel} trae muy pocas posiciones`);
+            pos.forEach((t) => filas.push({ rango, item_id: "mate-" + t.id, compacta: { t: "mate", fin: m.fin, f: t.fen } }));
+        }
+    }
+    return filas;
+}
+
 if (require.main === module) {
     const filas = principal();
     const esc = (s) => String(s).replace(/'/g, "''");
-    const lineas = filas.map((f) => `  ('${f.rango}', '${esc(f.item_id)}', '${esc(JSON.stringify(compacta(f.item, f.ej)))}'::jsonb)`);
+    const lineas = filas.map((f) => `  ('${f.rango}', '${esc(f.item_id)}', '${esc(JSON.stringify(compacta(f.item, f.ej)))}'::jsonb)`)
+        .concat(mates().map((f) => `  ('${f.rango}', '${esc(f.item_id)}', '${esc(JSON.stringify(f.compacta))}'::jsonb)`));
     process.stdout.write(
         "-- Generado por herramientas/rangos-examen-banco.js: no se edita a mano.\n" +
         "delete from interno.rango_examen_banco;\n" +
         "insert into interno.rango_examen_banco (rango, item_id, item) values\n" + lineas.join(",\n") + ";\n");
 } else {
-    module.exports = { principal, compacta, rearmar, FRANJAS, POR_RANGO };
+    module.exports = { principal, compacta, rearmar, mates, MATES, FRANJAS, POR_RANGO };
 }
 
 /*! rev bfb5bbb0d2d82f9f */
