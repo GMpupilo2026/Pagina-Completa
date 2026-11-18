@@ -83,6 +83,7 @@
       if (!adapz.includes(t.organizador_id) && !ES_JDN_PZ(n)) continue;
       for (const k of Object.keys(TORNEOS)) if (!torneos[k] && TORNEOS[k].test(n)) torneos[k] = t;
     }
+    return { ...torneos };
   }
 
   // La ficha «Pronto» (sin enlace) pasa a ser el enlace a SU torneo, que
@@ -268,7 +269,9 @@
   else iniciar();
 
   // Para las pruebas: la categoría por la fecha y si un torneo recibe inscripciones.
-  window.JdnPzInscripcion = { categoriaDe, abierta, coincide, ORGANIZACION, TORNEOS };
+  // buscarTorneos() lo usan también los gafetes (js/gafetes.js): los mismos
+  // dos torneos, con el mismo filtro del sello, sin una segunda copia.
+  window.JdnPzInscripcion = { categoriaDe, abierta, coincide, buscarTorneos, ORGANIZACION, TORNEOS };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
