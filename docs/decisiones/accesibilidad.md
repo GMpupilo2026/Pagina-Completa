@@ -70,6 +70,56 @@ final.
   tiene otra forma de saber dónde está, y los tableros pintan las casillas con su
   propio color de fondo.
 
+### La jugada se entiende escrita como se dice
+
+Pedido del dueño: que el recuadro reconozca **de distintas formas** lo que
+escriben. Quien no ve el tablero casi nunca escribe «Cf3»: escribe la jugada
+como la piensa o como la acaba de oír. Todo esto contestaba «no es una jugada
+legal», y no era cierto — la jugada era legal, lo que no se entendía era la
+forma:
+
+    caballo f3 · caballo a felix 3 · caballo de g1 a f3 · de g1 a f3 · g1-f3
+    cf3 · juego cf3 · peón e4 · eva 4 · e 4 · muevo el peón a e4
+    peón toma d4 · e por d4 · caballo captura peón · dama toma dama
+    e8 corona torre · peón e8 dama · eva 8 y pide caballo
+    enroque corto · me enroco largo · torre a d1 · torre h d1
+
+Está en `ComandosTablero.jugadaEscrita()`, que es el intérprete de casi todos
+los recuadros; primero prueba la notación de siempre y, si no hay jugada, lo
+escrito con palabras (`enPalabras`): se arma con lo que **se reconoce** —la
+pieza, las casillas, una columna de pista, la coronación— y con eso se filtran
+las jugadas legales. `js/chess-move-parser.js` (Juegos, Niebla) y la copia de
+`js/tablero-board.js` caen en él cuando no entienden.
+
+- **Una palabra que no se conoce anula todo**: «hola e4» no es e4. Aflojar el
+  intérprete no puede terminar en una jugada que nadie escribió.
+- **Si cabe en más de una jugada, no elige: dice cuáles.** «torre d1» con dos
+  torres contesta «hay 2 torres que pueden ir a david 1, desde anna 1 y
+  hector 1. Di de cuál, por ejemplo «a1 d1»»; «enroque» con los dos posibles,
+  «escribe «enroque corto» o «enroque largo»». Antes era «no es una jugada
+  legal». Lo dice `noSePudoJugar()`, que ya llaman todos los recuadros: la
+  última ambigüedad queda anotada en el módulo, y así ninguno tuvo que cambiar.
+- **La «a» suelta casi siempre es la preposición** («caballo a f3»): solo
+  cuenta como columna si sin ella no alcanza («torre a d1» con dos torres).
+- **La inicial en minúscula** («cf3», «txa1») se lee primero como peón —«bxc3»
+  es una captura de peón de lo más normal— y solo si así no hay jugada, como
+  pieza. Y «rb1» sigue sin ser la torre: R es el rey.
+- Sin nombrar la pieza, una casilla sola es de peón («e4»); con «toma», de
+  cualquiera, si es una sola. Una coronación sin decir a qué, dama.
+
+- **Tipos y Visualización** interpretan con `ChessMoveParser.tryParseMove()`,
+  así que lo reciben por ahí. **Los 4×4** tienen su recuadro y su tablero
+  propios (4×4, sin bandos, toda jugada es una captura): después de lo que ya
+  entendían («a1 b2», «Ta3»), le pasan lo escrito al mismo intérprete con
+  `juegoParaPalabras()`, que le dice qué hay en cada casilla y qué capturas se
+  pueden hacer — «torre toma dama», «de anna 1 a bella 2». La página carga
+  ahora `js/comandos-tablero.js`.
+
+`verificar-entreno-accesible.js` prueba las treinta y tantas formas contra la
+jugada esperada, las que NO deben dar jugada, las dos frases de ambigüedad y
+que `ChessMoveParser` caiga en él; `verificar-cuadro-comandos.js`, una captura
+de los 4×4 escrita con palabras.
+
 ### Al tablero ahora se le puede PREGUNTAR
 
 El recuadro de los ejercicios solo aceptaba jugadas, y eso alcanza para
@@ -570,6 +620,69 @@ contexto, así que volvía el `js/supabase-client.js` de verdad y la página mor
 es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
 contrarreloj se miran **por la posición del tablero y no por el renglón de
 resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
+
+### El dictado: la posición pieza por pieza, y la voz más lenta
+
+La queja de los alumnos ciegos: **la posición se lee muy rápido, y si hay que
+ponerla en el tablero no da tiempo**. Muchos estudian con un tablero de verdad
+al lado, y «posición» la dice de corrido («Blancas: rey en eva 1; torres en
+anna 1 y hector 1…»): mientras se busca la torre ya van por los peones, y
+volver a pedirla la empieza de nuevo. No falla nada: se oye, y no alcanza.
+
+**«dictar»** (o «dictado», «pieza por pieza»), en cualquier recuadro común
+(`js/cuadro-comandos.js`), la dice de a UNA pieza: «Blancas, pieza 2 de 5:
+torre en anna 1.». Manda quien escucha. Con el recuadro vacío:
+
+    Intro o →   la pieza siguiente        ↑   la repite
+    ←           la anterior               Escape   termina
+
+- **Cada paso dice el color y cuántas faltan**, así se puede parar en
+  cualquiera y saber dónde se quedó; el último cierra con la cuenta y quién
+  juega («Fin del dictado: 5 piezas blancas y 3 negras. Juegan blancas.»), que
+  es la forma de comprobar que no faltó ninguna.
+- **«dictar solo»** las dice sola, con una pausa entre una y otra (5 segundos;
+  «dictar solo 8» deja ocho y se guarda en `oscarDictadoPausa_v1`), para quien
+  tiene las dos manos en el tablero. La pausa empieza cuando la voz termina de
+  decir la pieza; con lector de pantalla no se puede saber cuándo terminó, y se
+  le da lo que mide la frase. Lleva un plazo por si la voz no avisa nunca (sin
+  voces instaladas no avisa): el dictado no se queda esperando. Cualquier tecla
+  del dictado la detiene y se sigue a mano.
+- **Mientras se dicta, Intro es del dictado y no de `recorrer`**: no avanza la
+  partida a mitad de armar la posición. Y nadie queda encerrado: se termina
+  solo si la posición cambia o si se escribe otra cosa (una jugada,
+  «diagrama siguiente»), que sigue su camino. «siguiente», «repetir», «atrás»
+  y «salir» escritos también valen; **nunca una letra sola**: «a» es la opción
+  A de una pregunta.
+- **La capa de la cuenta ciega se aparta** (`js/vision-cuenta.js` mira
+  `data-dictando` en el recuadro): sin eso, «siguiente» apretaba el botón
+  «Siguiente ejercicio» de la página en vez de decir la pieza.
+- Los pasos los arma `BlindNotation.pasosDeDictado()`, con el mismo agrupado y
+  las mismas palabras que las otras lecturas; `ComandosTablero.interpretar()`
+  los devuelve (`tipo: "dictado"`) **sin guardar nada**: quien los recorre es
+  el recuadro. Un recuadro propio que no sepa dictar recibe en `respuesta` las
+  piezas seguidas, cada una en su frase.
+- **El recuadro lo dice**: debajo de la ayuda va «Para poner la posición en tu
+  tablero, escribe «dictar»…» (`.cc-dictar-pista`). Un comando que no se conoce
+  no se usa. Va debajo y no entre la posición y el recuadro, que siguen
+  pegados.
+
+**La velocidad de la voz del navegador** iba siempre a la de fábrica. Ahora se
+guarda en este navegador (`oscarSpeechRate_v1`, de 0,5 a 1,5;
+`BlindNotation.setSpeechRate()`), `speak()` la pone en cada frase y se cambia
+de dos formas: en Configuración («Velocidad de la voz», junto a la voz) o sin
+salir del ejercicio, escribiendo «voz más lenta», «voz más rápida» o «voz
+normal». La respuesta aclara que vale para la voz del navegador: la de un
+lector de pantalla se cambia en el lector. `interpretar()` acepta
+`sinEfecto: true` para quien solo pregunta si lo escrito es un comando del
+recuadro (la capa de la cuenta ciega): sin eso, cada «voz más lenta» bajaba
+dos escalones.
+
+`verificar-cuadro-comandos.js` («El dictado, pieza por pieza») lo recorre en
+Ejercicios por tema: que dicte TODAS las piezas del tablero dibujado, cada una
+en su casilla y una sola vez; que Intro no juegue ni cambie el ejercicio; ↑, ←
+y Escape; que «dictar solo» avance sin tocar nada y una tecla lo detenga; y que
+la voz salga a la velocidad pedida (se mira el `rate` de lo que se manda a
+decir). Probado que falla: sin los peones en `pasosDeDictado()` saltan dos.
 
 ## «Activar voz» en todo el sitio
 

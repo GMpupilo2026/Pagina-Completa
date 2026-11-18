@@ -78,6 +78,12 @@ console.log("El cableado:");
   const monta = sesion.indexOf("ClaseExplorador.montar()");
   const profe = sesion.lastIndexOf("if (isTeacher) {", monta);
   ok(monta > 0 && profe > 0 && monta - profe < 1500, "se monta dentro del bloque del profesor");
+  // Al montar, el tablero todavía puede ser null: un board.fen() ahí tumbó la clase
+  // entera en el CI (la app no se mostraba) sin ningún error a la vista.
+  ok(!/board/.test(sesion.slice(monta - 200, monta + 120).split("ClaseExplorador.montar()")[1] || "x")
+     && !/ClaseExplorador\.montar\(\);\s*ClaseExplorador\.posicion/.test(sesion),
+    "al montarlo no se toca el tablero (puede no existir todavía)");
+  ok(/ClaseExplorador && board && /.test(cuerpo), "updateEngineEval solo le avisa si ya hay tablero");
   const html = fs.readFileSync(path.join(RAIZ, "sesion.html"), "utf8");
   ok(html.indexOf('src="js/clase-explorador.js"') > 0 && html.indexOf('src="js/clase-explorador.js"') < html.indexOf('src="js/sesion.js"'),
     "sesion.html carga clase-explorador.js antes que sesion.js");
