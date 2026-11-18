@@ -607,7 +607,7 @@
                 anunciar(r && r.silenciado ? "Apagaste el micrófono de " + nombreDe(p) + "." : nombreDe(p) + " ya tenía el micrófono apagado.");
             } catch (e) { anunciar(e.message || "No se pudo apagar ese micrófono."); }
         }
-        let yoApague = 0;   // cuándo apagué yo mi micrófono (para no confundirlo con el profe)
+        let yoApague = 0;   // cuándo lo apagó uno mismo (para no confundirlo con el profe)
 
         async function pedir(accion, extra) {
             const body = Object.assign({ accion, profesor: profesorId }, extra || {});

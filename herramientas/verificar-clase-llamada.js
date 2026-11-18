@@ -694,6 +694,16 @@ async function pruebas(browser) {
   await r.page.click("#llamada-habla");
   a = await anuncio(r.page);
   si(/Nadie está hablando ahora\. Lo último lo dijo Zoe Álvarez, hace \d+ segundos?/.test(a), "si nadie habla, «Quién habla» dice quién habló último: «" + a + "»");
+  // Apagarlo uno mismo no es «tu profe lo apagó» (LiveKit avisa los dos igual).
+  await r.page.evaluate(() => window.__sala.__permiso(true));
+  await anuncio(r.page);
+  await r.page.keyboard.press("Alt+KeyM");
+  await anuncio(r.page);
+  await r.page.keyboard.press("Alt+KeyM");
+  await r.page.evaluate(() => window.__sala.emit("TrackMuted", { kind: "audio" }, window.__sala.localParticipant));
+  a = await anuncio(r.page);
+  si(/Micrófono apagado/.test(a) && !/Tu profe apagó/.test(a), "apagar tu propio micrófono no se confunde con que te lo apagó el profe: «" + a + "»");
+  await r.page.waitForTimeout(2100);
   // El profe te apagó el micrófono (no fuiste tú).
   await r.page.evaluate(() => window.__sala.emit("TrackMuted", { kind: "audio" }, window.__sala.localParticipant));
   si(/Tu profe apagó tu micrófono/.test(await anuncio(r.page)), "si el profe te apaga el micrófono, se dice");

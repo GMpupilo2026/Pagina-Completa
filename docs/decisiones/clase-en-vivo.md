@@ -463,6 +463,63 @@ profe: lo pidió así).
   volver no mueve el foco (puede estar en el tablero); el profe, si estaba
   grabando, sigue en una parte nueva. El «Disconnected» de un intento fallido
   llega con la sala vieja y no corta los reintentos (`room !== sala`).
+- **El micrófono, la señal y las voces** (pedido del 18/11, «hacerlas
+  todas»). Antes de entrar se elige el micrófono (se recuerda en el aparato;
+  dentro de la llamada se cambia con `switchActiveDevice`) y «Probar el
+  micrófono» graba 3 segundos, dice si se oyó bien, bajo o nada, y los hace
+  sonar: sin ver la pantalla cuesta darse cuenta de que el navegador tomó el
+  micrófono equivocado. La prueba no sale del aparato. Dentro de la llamada se
+  esconde (dos capturas del mismo micrófono hacen eco). El ruido de la casa lo
+  quita el navegador: supresión de ruido, cancelación de eco y aislar la voz
+  (`voiceIsolation`, donde el navegador lo sepa hacer). El filtro Krisp de
+  LiveKit no se usó: es de pago. Lo que sí: **el profe apaga el micrófono de
+  quien mete ruido** («Apagar su micrófono» junto a su nombre, solo si lo tiene
+  encendido). Lo hace el servidor (`MutePublishedTrack` en «silenciar» de
+  `clase-llamada`, solo el profe), y al alumno se le dice con su tono. No le
+  quita la palabra (eso es el turno): si la tiene, lo vuelve a encender. Para no
+  confundir el apagado del profe con el propio, la página anota cuándo lo
+  apagó uno mismo (`yoApague`).
+  **La señal:** a uno mismo se le dice cuando se pone débil (una vez por minuto
+  como mucho, con tono grave) y cuando mejora; el profe ve «señal débil» en la
+  lista y en Alt+Q.
+  **Los tonos:** recibir la palabra ya sonaba; ahora perderla tiene el suyo
+  (baja, distinto del de «alguien salió»), y en el celular vibra.
+  **Quién habló último:** si nadie habla, Alt+W dice quién habló último y hace
+  cuánto.
+  **Cada voz en su lugar** (casilla, con audífonos): el profe al centro y los
+  alumnos repartidos de izquierda a derecha, por nombre, para que cada uno
+  suene siempre en el mismo lugar. Va por WebAudio (`webAudioMix` de LiveKit y
+  un `StereoPannerNode` por voz), que se pide al entrar. Por eso cambiar la
+  casilla dentro de la llamada vuelve a entrar sola (se muda, como con los
+  grupos). Sin la casilla, la llamada no pasa por WebAudio, como antes, que es
+  lo más probado en Safari.
+- **Grupos en la llamada.** El profe parte la clase en grupos de voz («De a
+  2/3/4» y «Armar grupos», sorteados entre los alumnos que están en la clase;
+  si sobra uno, se suma al último grupo y nadie queda hablando solo). Cada
+  grupo habla en su propia sala de LiveKit (`clase-<sesión>-g<n>`), y dentro
+  de un grupo hablan todos, con la misma regla de la grabación. Quién va en qué
+  grupo lo guarda `game_state.llamada_grupos` (migración `llamada_grupos`), y
+  solo el profe la escribe (`protect_game_state_teacher_columns`). **La sala
+  del alumno la decide la base** (`llamada_de_la_clase` le da la de su grupo, y
+  la Edge Function firma el pase con esa): la página solo se muda cuando ve el
+  cambio, sin decir «saliste». El profe pasa de un grupo a otro con un botón
+  por sala, y la suya dice «✓ … (estás aquí)» con `aria-pressed`. Si está
+  grabando, graba el grupo donde está, en una parte nueva. Los minutos
+  hablados cuentan solo lo que él oyó. «Terminar los grupos» devuelve a todos
+  a la sala grande. «Sincronizar» recorre la sala grande y las de los grupos
+  (también las de grupos que ya terminaron: la página del profe se las manda en
+  `viejos`) y saca de cada una a quien no es de ella. Abrir o terminar la
+  llamada borra los grupos. El tablero sigue siendo uno solo para toda la
+  clase: los grupos son de voz (para comentar en pareja la posición que muestra
+  el profe).
+- **El resumen de la clase** (en «Repasar mis clases», arriba de la
+  grabación): cuánto dura, los temas en orden (cada uno lleva a su parte y
+  minuto; sin los «De vuelta a») y, si las partes ya se pasaron a texto, las
+  cinco frases principales. Las elige la página, sin mandar el texto a ningún
+  lado y sin un modelo que escriba: son las frases que más repiten las
+  palabras más dichas en la clase, sin contar las vacías («el», «que», «de»…),
+  tal como se dijeron y en su orden. Así no inventa nada: lo peor que puede
+  pasar es que elija una frase poco útil, nunca una que nadie dijo.
 - **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
   CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
   borra primero el archivo y después la fila (la base no puede borrar archivos
