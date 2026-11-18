@@ -431,6 +431,12 @@ async function abrirAcademia(id) {
         ? "Su supervisor, su gente y qué puede hacer cada coordinador."
         : "Tu academia: sus datos de contacto, quién está y qué puede hacer cada coordinador.";
     pintarDatos();
+    // Los niveles: los arma quien supervisa esta academia o administra (la base lo exige igual).
+    if (window.Niveles && (esAdmin || abierta.supervisor_id === (session && session.user && session.user.id))) {
+        Niveles.montarEditor({ caja: document.getElementById("caja-niveles"), academiaId: abierta.id });
+    } else {
+        document.getElementById("caja-niveles").hidden = true;
+    }
     await cargarPersonas();
     pintarPersonas();
     document.getElementById("titulo").focus({ preventScroll: false });

@@ -949,6 +949,24 @@
             const foto = document.getElementById("informe-persona-foto");
             if (window.FotoPerfil) FotoPerfil.poner(foto, persona.id, nombre);
             else foto.dataset.inicial = nombre.trim().charAt(0).toUpperCase();
+            pintarNivel(persona.id);
+        }
+
+        /* Su nivel en la academia: lo ve todo el que llega a su informe (la RLS
+           decide); se lo cambia quien da clase o administra, nunca mirando como
+           otra persona (lo pondría a su nombre), ni el propio alumno. Ver «Los
+           niveles de la academia» en docs/decisiones/paneles.md. */
+        let nivelPedido = null;
+        function pintarNivel(alumnoId) {
+            const caja = document.getElementById("informe-persona-nivel");
+            if (!caja || !window.Niveles) return;
+            nivelPedido = alumnoId;
+            const esOtro = alumnoId !== (profile && profile.id);
+            Niveles.montarFicha({
+                caja, alumnoId,
+                puedeCambiar: esOtro && (profile.role === "profesor" || profile.is_admin) && !profile._persona,
+                vigente: () => nivelPedido === alumnoId,
+            }).catch(() => { caja.hidden = true; });
         }
 
         /* «Con este alumno»: lo que un profe hace con UN alumno vivía en cinco
