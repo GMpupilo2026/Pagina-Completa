@@ -5588,6 +5588,31 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
     solo vive en la pestaña (no se guarda en el aparato).
   - El resumen dice «1 dudosa», «1 media jugada» (la primera decía
     «1 dudosas»): cada número con su palabra (`planillaN_<cosa>_1` / `_n`).
+  - **Lo que mostró la lectura** (el mismo 17/11): no fue la letra, fue
+    que **Vision junta en una sola palabra lo de varias celdas**: el número
+    impreso con la jugada («1d4», «60-06» = el 6, 0-0 y lo de las negras),
+    las Blancas con las Negras («CeSCxes» = Ce5 y Cxe5, «AxesTfd») y la
+    jugada con el número del bloque de al lado («Axde45», «ACS48»). Metida
+    entera en una celda, la planilla se corría un renglón. Ahora
+    `hojasDeLaFoto()` (`partirPalabra()`, en `js/planilla-reconstruir.js`,
+    así que vale también para el Centroamericano) le quita el número del
+    renglón o del renglón del bloque siguiente que trae pegado (solo si lo
+    que queda tiene dos letras o más y se parece igual o más a una jugada:
+    «24» en el renglón 2 era «c4», no el 2 con un 4) y, si cruza de las
+    Blancas a las Negras, la parte donde las dos mitades parezcan jugadas
+    (`forma()`: 2 una jugada completa, 1 un comienzo). La x se reparte por
+    letras pero decide la forma, porque la letra a mano no tiene ancho fijo.
+    La coronación solo cuenta en la fila 1 o la 8: si no, «CeSC» pasaba por
+    «e5=C» y se partía mal. Con esa misma lectura la partida pasó de 13 a
+    23 medias jugadas, y las 8 primeras coinciden con la de verdad salvo
+    1… Cf6 y 6… Cc6, donde Vision leyó «C6» y «6» (le faltó una letra y era
+    una sola planilla: con las dos en la foto, una corrige a la otra). Esa
+    lectura quedó como prueba en `herramientas/lib/lectura-real-pareo.js`,
+    **solo la zona de jugadas, sin el encabezado con los nombres**.
+  - **La foto llegó de unos 400 × 620 px** (la letra de 15 px). Se mide
+    antes de mandarla (`createImageBitmap`) y, si el lado largo tiene menos
+    de 1600 px, el cuadro lo dice con el tamaño y pide la foto original de
+    la cámara (no reenviada por WhatsApp ni una captura).
   - **La clave de Google Vision** (17/11): faltaba desde siempre (el
     contador del tope estaba vacío: la función revisa la clave antes de
     contar). Se creó en el proyecto de Google Cloud «Ajedrez Integral

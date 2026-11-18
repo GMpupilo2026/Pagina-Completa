@@ -4933,12 +4933,13 @@
       });
       const res = window.PareoPlanilla.resumen(lectura.resultado, tx);
       if (lectura.metodo === "filas") res.texto += " " + tx("planillaFilas");
+      if (lectura.chica) res.texto += " " + tx("planillaChica", { a: lectura.chica.ancho, b: lectura.chica.alto });
       boton.textContent = original;
       pintarRondas(); // aparece «⬇ Lectura» en la mesa, aunque no se guarde la partida
       await editarPartida(r, i, boton, { pgn, texto: res.texto, ayuda: res.ayuda });
     } catch (e) {
       if (e && e.lectura) { lecturasDe(v).set(r + "|" + i, e.lectura); pintarRondas(); }
-      const msj = e && e.message === "vacia" ? tx("planillaVacia")
+      const msj = e && e.message === "vacia" ? tx("planillaVacia") + (e.chica ? " " + tx("planillaChica", { a: e.chica.ancho, b: e.chica.alto }) : "")
         : /failed to fetch|networkerror|load failed/i.test(String(e && e.message)) ? tx("planillaNoContesto")
         : String((e && e.message) || e);
       Avisos.avisar(tx("planillaError", { e: msj }), { tipo: "error" });

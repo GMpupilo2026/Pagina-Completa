@@ -378,6 +378,7 @@
     planillaN_corregidas_n: ["{n} corregidas", "{n} corrected"],
     planillaN_dudosas_1: ["1 dudosa", "1 doubtful"],
     planillaN_dudosas_n: ["{n} dudosas", "{n} doubtful"],
+    planillaChica: ["La foto es chica ({a} × {b} píxeles) y así la letra se lee mal: usa la foto original de la cámara (no una reenviada por WhatsApp ni una captura de pantalla), con la planilla llenando la foto.", "The photo is small ({a} × {b} pixels), so the handwriting reads badly: use the original camera photo (not one forwarded by WhatsApp or a screenshot), with the scoresheet filling the frame."],
     planillaLectura: ["⬇ Lectura", "⬇ Reading"],
     planillaLecturaA: ["Descargar lo que leyó Google Vision de la foto de la mesa {m}, para revisar por qué se leyó así", "Download what Google Vision read from the photo of board {m}, to check why it was read that way"],
     planillaIlegible: ["Desde la jugada {j} de las blancas la planilla es ilegible: complétala a mano.", "From White's move {j} the scoresheet is unreadable: complete it by hand."],
