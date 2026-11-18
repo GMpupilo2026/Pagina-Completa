@@ -1526,6 +1526,7 @@
             "supervision.html": "profesores informe mensual actividad",
             "academias.html": "academia supervisor",
             "prospectos.html": "prospectos interesados clientes familias llamar seguimiento",
+            "premios-academia.html": "premios recompensas canjes entregar academia puntos",
             "tablero-academias.html": "cifras numeros del mes",
             "planes.html": "planificar preparar clase posiciones",
             "cuestionarios.html": "kahoot preguntas opciones quiz concurso juego de preguntas trivia",

@@ -794,6 +794,72 @@ perdida para quien ganó, no se roba nada, aunque la partida haya sido reñida.
 Tampoco se aplicó con retroactividad a partidas ya jugadas antes de esta
 migración: solo las que terminan después de que el trigger existe.
 
+## Los rangos
+
+Cada alumno tiene un **rango** que sube con sus Puntos Ajedrez **ganados**:
+Peón, Caballo (1000), Alfil (3000), Torre (7000), Dama (15 000) y Rey
+(30 000). Sale arriba en la tienda de puntos, con la pieza, el número escrito y
+la barra hasta el siguiente. La idea es de Chessgora («sube de rango al asistir
+y entrenar»).
+
+- **Ganados, no el saldo** (`interno.puntos_ganados`: clase, entrenamiento,
+  tarea, examen, racha, reto semanal y tema terminado). Con el saldo, canjear
+  un premio te bajaría de rango; regalos, bromas, robos, devoluciones y ajustes
+  a mano no son trabajo del alumno. Es la misma cuenta de las tareas que llegan
+  solas.
+- **Los nombres y los umbrales viven en una sola copia, `js/rangos.js`**; la
+  base solo da los puntos ganados, con permiso: `public.puntos_ganados_de()`
+  (uno mismo, un alumno propio, o administración). El rango se deriva, no se
+  guarda.
+
+## Los premios de cada academia
+
+Además del catálogo de todo el sitio, **cada academia pone sus premios** —una
+clase extra, una camiseta, elegir la apertura de la clase— en
+`premios-academia.html` (tarjeta «🎁» en el panel del supervisor y en el de
+administración). Sus alumnos los ven en la tienda de puntos («🏫 Premios de tu
+academia»), los canjean con sus puntos y el supervisor se los entrega en persona
+y lo marca; si no se lo puede dar, lo cancela y **se le devuelven los puntos**.
+Migración `20261118061543_premios_academia`.
+
+- **Sin políticas de escritura**: arma los premios `premio_academia_guardar()`
+  (supervisor de esa academia o administración), canjea
+  `canjear_premio_academia()` y resuelve `canje_academia_resolver()`. Los
+  permisos van con `coalesce`.
+- **Canjear usa el MISMO candado que `canjear_premio()`**
+  (`pg_advisory_xact_lock` de `'puntos:<alumno>'`): dos canjes a la vez, uno en
+  cada tienda, no dejan el saldo en negativo. Las existencias van con
+  `FOR UPDATE`: dos alumnos no se llevan la última camiseta.
+- **Solo canjea un miembro de la academia** (`academia_miembros`): las
+  academias son privadas. La tienda pide solo los premios de las academias del
+  alumno; quien administra o supervisa ve otros por la RLS, pero no son suyos
+  para canjear.
+- **El canje guarda una foto** (nombre y costo pagado) y **los premios no se
+  borran, se apagan**: un canje viejo seguiría apuntando a un premio borrado.
+- **Cancelar devuelve los puntos** como `ajuste_manual` con referencia
+  `devolucion:canje_academia:<id>` (no se paga dos veces y no cuenta como
+  ganado) y repone la existencia. Un canje ya resuelto no se resuelve otra vez.
+- Los canjes reparten puntos, como `premios_canjeados`: llevan el trigger
+  `auditar` (alta y cambio) y van en `VIGILADAS`.
+- Al canjear en la tienda, la tienda vuelve a leer el saldo
+  (`montarTienda(...).recargar`): si no, seguiría ofreciendo lo que ya no
+  alcanza.
+
+Comprobado impersonando roles en SQL (revertido): la supervisora de ADAPZ arma
+dos premios y no puede en otra academia; un alumno de ADAPZ con 4336 puntos
+canjea «Clase extra» (1000): le quedan 3336, sus ganados no cambian y la
+existencia pasa de 1 a 0; otra vez, «Se acabaron»; la camiseta de 999 999, «Te
+faltan…»; no puede marcarse el premio como entregado ni ver los ganados de otro;
+un alumno de otra academia no ve los premios ni el canje y no puede canjear; el
+supervisor de otra academia no lo resuelve ni lo ve; la de ADAPZ lo cancela, el
+saldo vuelve a 4336, los ganados siguen igual, la existencia vuelve a 1, quedan
+dos filas en la bitácora, y resolverlo otra vez se rechaza; los insert y update
+directos dan «permission denied», y `anon` no puede canjear.
+
+**Al tocarlo, `node herramientas/verificar-todo.js premios-academia`** (sin
+navegador). Está probado que salta con los rangos desordenados y si la tienda
+no recarga el saldo al canjear.
+
 ## Los verificadores
 
 `herramientas/verificar-puntos.js` (con Playwright y un doble de Supabase,

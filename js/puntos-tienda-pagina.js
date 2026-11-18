@@ -16,7 +16,14 @@ async function unlock() {
         document.getElementById("sin-sesion-aviso").classList.remove("hidden");
         return;
     }
-    Puntos.montarTienda(document.getElementById("tienda-puntos"), { sb, alumnoId: yo });
+    const tienda = Puntos.montarTienda(document.getElementById("tienda-puntos"), { sb, alumnoId: yo });
+    pintarRango(yo);
+    /* Los premios de la academia: al canjear uno, la tienda vuelve a leer el
+       saldo (si no, seguiría ofreciendo lo que ya no alcanza). */
+    if (window.PremiosAcademia) {
+        PremiosAcademia.montarAlumno(document.getElementById("premios-academia"),
+            { sb, alumnoId: yo, alCanjear: () => tienda && tienda.recargar && tienda.recargar() });
+    }
     const filas = await Puntos.historial(sb, yo, 30);
     const ul = document.getElementById("historial-puntos");
     if (!filas.length) {
@@ -27,6 +34,16 @@ async function unlock() {
     } else {
         Puntos.pintarHistorial(ul, filas);
     }
+}
+
+/* El rango sale de los puntos GANADOS (public.puntos_ganados_de), no del
+   saldo: canjear un premio no baja de rango. Ver js/rangos.js. */
+async function pintarRango(yo) {
+    const caja = document.getElementById("rango-caja");
+    if (!caja || !window.Rangos) return;
+    const { data, error } = await sb.rpc("puntos_ganados_de", { p_alumno: yo });
+    if (error || data == null) { caja.closest("section").hidden = true; return; }
+    Rangos.pintar(caja, data);
 }
 
 // Igual que Logros: exige sesión iniciada en el sitio, porque el saldo y el
