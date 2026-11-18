@@ -578,15 +578,35 @@
                          cualquier lado. Después del turno y del tiempo para pensar, que van pegados. -->
                     <section id="llamada" hidden aria-labelledby="llamada-titulo" class="max-w-[560px] mx-auto mt-3 rounded-xl px-5 py-3 bg-brand-100 dark:bg-brand-900">
                         <h2 id="llamada-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>Llamada de la clase</h2>
+                        <!-- Mientras se graba lo ven todos, escrito y no solo con el punto rojo
+                             (game_state.llamada_grabando; ver «La grabación de la llamada»). -->
+                        <p id="llamada-grabando" hidden class="mt-1 text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🔴 </span>Se está grabando la clase</p>
                         <!-- El micrófono, que es lo principal, a todo lo ancho; debajo «Quién está» y «Quién habla»
                              parejos, y «Salir» aparte. Así ningún texto se parte en el celular. -->
                         <div class="mt-2 grid grid-cols-2 gap-2">
                             <button id="llamada-entrar" type="button" class="col-span-2 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Entrar a la llamada</button>
                             <button id="llamada-mic" type="button" hidden aria-pressed="false" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔇 Micrófono apagado</button>
+                            <!-- Solo el profe: quién puede hablar (game_state.llamada_modo). El elegido
+                                 lleva aria-pressed y además su texto lo dice («✓»), no solo el color. -->
+                            <div id="llamada-modos" hidden role="group" aria-labelledby="llamada-modos-titulo" class="col-span-2">
+                                <p id="llamada-modos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Quién puede hablar</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-modo="turno" aria-pressed="true" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Con turno</button>
+                                    <button type="button" data-modo="libre" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Todos</button>
+                                    <button type="button" data-modo="bloqueada" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Nadie</button>
+                                </div>
+                            </div>
+                            <!-- Solo el profe: pausar la grabación o volver a grabar. -->
+                            <button id="llamada-grabar" type="button" hidden aria-pressed="true" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⏸ Pausar la grabación</button>
                             <button id="llamada-quien" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién está</button>
                             <button id="llamada-habla" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
                             <button id="llamada-salir" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
                         </div>
+                        <!-- «Mantener para hablar»: el micrófono suena solo mientras se aprieta (botón o Alt+P). -->
+                        <label id="llamada-ptt-caja" hidden class="mt-2 flex items-start gap-2 text-sm text-brand-800 dark:text-brand-100">
+                            <input id="llamada-ptt" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Mantener para hablar: el micrófono suena solo mientras mantienes apretado el botón del micrófono o <kbd>Alt</kbd>+<kbd>P</kbd>, y al soltar se apaga.</span>
+                        </label>
                         <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
                         <!-- Quiénes están, un renglón por persona y siempre en el mismo orden (tú, el
                              profe, los demás por nombre). No es región viva: lo que cambia se anuncia

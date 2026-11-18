@@ -86,6 +86,11 @@
         const estado = $("llamada-estado");
         const entrar = $("llamada-entrar");
         const mic = $("llamada-mic");
+        const modos = $("llamada-modos");
+        const grabarBtn = $("llamada-grabar");
+        const pttCaja = $("llamada-ptt-caja");
+        const ptt = $("llamada-ptt");
+        const grabandoAviso = $("llamada-grabando");
         const quien = $("llamada-quien");
         const habla = $("llamada-habla");
         const salirBtn = $("llamada-salir");
@@ -98,6 +103,17 @@
         let LK = null;
         // ¿El profe abrió la llamada en esta clase? Lo dice sesion.js con estado().
         let abierta = false;
+        let grabando = false;       // game_state.llamada_grabando (lo pone el profe)
+        let permisoVoz = true;      // alumno: si su familia dio permiso para grabar su voz
+        let sinPermiso = new Set(); // profe: los de la llamada sin permiso de grabación
+        // Quién puede hablar, además del profe: "turno", "libre" (todos) o "bloqueada" (nadie).
+        let modo = "turno";
+        const SIN_PERMISO = "Mientras se graba no puedes encender el micrófono: tu familia todavía no dio permiso para grabar tu voz. Se da en Configuración.";
+        const MODOS = {
+            turno: { boton: "Con turno", alProfe: "Habla quien tiene el turno.", alAlumno: "Tu profe volvió al turno: habla quien tiene la palabra." },
+            libre: { boton: "Todos", alProfe: "Micrófono libre: todos pueden hablar.", alAlumno: "Tu profe abrió el micrófono para todos: puedes hablar. Enciende el tuyo con Alt M." },
+            bloqueada: { boton: "Nadie", alProfe: "Micrófonos bloqueados: solo hablas tú.", alAlumno: "Tu profe bloqueó los micrófonos: por ahora solo habla el profe." },
+        };
         let cerrandoPorElProfe = false;   // el alumno sale porque el profe la terminó
 
         function anunciar(texto) {
@@ -127,6 +143,9 @@
             if (yo) d.push("tú");
             if (esElProfe(p) || (yo && esProfe)) d.push("profe");
             else if (tienePalabra(p)) d.push("con la palabra");
+            // Solo al profe: quién no tiene el permiso de su familia, y que mientras
+            // se graba no puede hablar (así sabe por qué, y puede pausar la grabación).
+            if (esProfe && !yo && sinPermiso.has(p.identity)) d.push(grabando ? "sin permiso de grabación: no puede hablar" : "sin permiso de grabación");
             if (p.isSpeaking) d.push("hablando");
             return d;
         }
@@ -169,9 +188,27 @@
             // El profe no «sale»: la termina, y se cierra para todos.
             salirBtn.textContent = esProfe ? "Terminar la llamada" : "Salir de la llamada";
             entrar.textContent = esProfe && !abierta ? "🎧 Abrir la llamada a la clase" : "🎧 Entrar a la llamada";
+            // «Se está grabando la clase»: lo ven todos los de la llamada.
+            grabandoAviso.hidden = !(abierta && grabando && (dentro || !esProfe));
+            grabarBtn.hidden = !(esProfe && dentro);
+            grabarBtn.setAttribute("aria-pressed", String(grabando));
+            grabarBtn.textContent = grabando ? "⏸ Pausar la grabación" : "⏺ Volver a grabar";
+            // Quién puede hablar: solo el profe, dentro de la llamada.
+            modos.hidden = !(esProfe && dentro);
+            modos.querySelectorAll("[data-modo]").forEach((b) => {
+                const elegido = b.dataset.modo === modo;
+                b.setAttribute("aria-pressed", String(elegido));
+                b.textContent = (elegido ? "✓ " : "") + MODOS[b.dataset.modo].boton;
+                // El color acompaña al «✓», nunca va solo.
+                for (const c of ["bg-accent-500", "hover:bg-accent-600", "text-brand-900"]) b.classList.toggle(c, elegido);
+                for (const c of ["bg-white", "hover:bg-brand-200", "dark:bg-brand-800", "dark:hover:bg-brand-700", "text-brand-800", "dark:text-white"]) b.classList.toggle(c, !elegido);
+            });
+            pttCaja.hidden = !dentro;
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
-            mic.textContent = encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado";
+            mic.textContent = ptt.checked
+                ? (encendido ? "🎙️ Hablando… (suelta para callar)" : "🎙️ Mantén apretado para hablar")
+                : (encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado");
         }
 
         /* La voz de la página («Activar voz», el recuadro adaptado) dice las
@@ -217,9 +254,11 @@
                     const error = await op.abrir(true);
                     if (error) throw new Error(error);
                     abierta = true;
+                    grabando = true;   // abrir la llamada la deja grabando (sesion.js, llamada_grabando)
                 }
                 const [lk, pase] = await Promise.all([cargarLibreria(), pedir("pase")]);
                 LK = lk;
+                permisoVoz = esProfe || pase.permiso_voz !== false;
                 sala = new LK.Room({
                     adaptiveStream: true,
                     dynacast: true,
@@ -237,7 +276,8 @@
                     + (esProfe ? "Enciende el micrófono con Alt M."
                         : pase.puede_hablar ? "Tienes la palabra: enciende el micrófono con Alt M."
                         : "Para hablar, levanta la mano con Alt Y."));
-                if (esProfe) sincronizar();
+                if (!esProfe && grabando) anunciar("Esta clase se está grabando." + (permisoVoz ? "" : " " + SIN_PERMISO));
+                if (esProfe) { sincronizar(); refrescarPermisos(); if (grabando) empezarAGrabar(); }
                 pintar();
                 mic.focus();
             } catch (e) {
@@ -255,8 +295,12 @@
 
         async function alternarMic() {
             if (!enLlamada()) { anunciar("Primero entra a la llamada."); return; }
+            if (ptt.checked) { anunciar("Con «Mantener para hablar», mantén apretado el botón del micrófono o Alt P mientras hablas."); return; }
             if (!micEncendido() && !puedoHablar()) {
-                anunciar(esProfe ? "Todavía no puedes encender el micrófono." : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
+                anunciar(esProfe ? "Todavía no puedes encender el micrófono."
+                    : grabando && !permisoVoz ? SIN_PERMISO
+                    : modo === "bloqueada" ? "Tu profe bloqueó los micrófonos: por ahora solo habla el profe."
+                    : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
                 return;
             }
             try {
@@ -271,11 +315,71 @@
             pintar();
         }
 
+        /* ---------- Mantener para hablar ----------
+           El micrófono suena solo mientras se aprieta: el botón (dedo, ratón, o
+           Espacio/Enter con el foco en él) o Alt+P desde cualquier parte. Para
+           alguien que no ve la pantalla es más fácil que recordar si lo dejó
+           encendido, y no se cuela ruido en la clase. Un toque corto al empezar y
+           otro al soltar dicen que está sonando, sin que el lector hable cada
+           vez. La preferencia se recuerda en este aparato. */
+        const CLAVE_PTT = "llamadaMantenerParaHablar_v1";
+        try { ptt.checked = localStorage.getItem(CLAVE_PTT) === "1"; } catch (e) { /* sin almacenamiento */ }
+        let apretado = false;
+        async function empezarAHablar() {
+            if (!ptt.checked || apretado || !enLlamada()) return;
+            if (!puedoHablar()) {
+                anunciar(esProfe ? "Todavía no puedes encender el micrófono."
+                    : grabando && !permisoVoz ? SIN_PERMISO
+                    : modo === "bloqueada" ? "Tu profe bloqueó los micrófonos: por ahora solo habla el profe."
+                    : "Todavía no tienes la palabra. Levanta la mano con Alt Y.");
+                return;
+            }
+            apretado = true;
+            sonido([880]);
+            try { await sala.localParticipant.setMicrophoneEnabled(true); } catch (e) { console.error(e); apretado = false; anunciar("No se pudo usar el micrófono."); }
+            if (!apretado) await callarse();   // soltó antes de que el micrófono terminara de encender
+            pintar();
+        }
+        async function callarse() {
+            if (!apretado && !micEncendido()) return;
+            apretado = false;
+            sonido([660]);
+            try { if (sala) await sala.localParticipant.setMicrophoneEnabled(false); } catch (e) { console.error(e); }
+            pintar();
+        }
+        ptt.addEventListener("change", async () => {
+            try { localStorage.setItem(CLAVE_PTT, ptt.checked ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+            if (ptt.checked && micEncendido()) await sala.localParticipant.setMicrophoneEnabled(false);
+            pintar();
+            anunciar(ptt.checked ? "Mantener para hablar: mantén apretado Alt P o el botón del micrófono mientras hablas." : "El micrófono vuelve a encenderse y apagarse con un toque.");
+        });
+        // El botón del micrófono, apretado y soltado.
+        mic.addEventListener("pointerdown", (e) => { if (ptt.checked) { e.preventDefault(); empezarAHablar(); } });
+        for (const ev of ["pointerup", "pointerleave", "pointercancel"]) mic.addEventListener(ev, () => { if (ptt.checked) callarse(); });
+        mic.addEventListener("keydown", (e) => {
+            if (!ptt.checked || (e.key !== " " && e.key !== "Enter")) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        mic.addEventListener("keyup", (e) => { if (ptt.checked && (e.key === " " || e.key === "Enter")) { e.preventDefault(); callarse(); } });
+        // Alt+P desde cualquier parte de la página.
+        document.addEventListener("keydown", (e) => {
+            if (!ptt.checked || e.code !== "KeyP" || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            e.preventDefault();
+            if (!e.repeat) empezarAHablar();
+        });
+        document.addEventListener("keyup", (e) => {
+            if (apretado && (e.code === "KeyP" || e.key === "Alt")) { e.preventDefault(); callarse(); }
+        });
+        // Si la ventana pierde el foco con la tecla apretada, nunca llega el keyup: se calla.
+        window.addEventListener("blur", () => { if (apretado) callarse(); });
+
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
             const otros = enOrden().filter((f) => !f.yo).map((f) => f.p);
             if (!otros.length) { anunciar("Estás solo en la llamada."); return; }
-            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : ""));
+            const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : "")
+                + (esProfe && sinPermiso.has(p.identity) ? ", sin permiso de grabación" : ""));
             anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
         }
 
@@ -300,18 +404,191 @@
                 if (error) { anunciar(error); return; }
             }
             abierta = false;
+            modo = "turno";
+            grabando = false;
+            await dejarDeGrabar();
             await sincronizar();
             await salir();
             anunciar("Terminaste la llamada para toda la clase.");
             pintar();
         }
 
+        /* ---------- La grabación, en el navegador del profe ----------
+           Junta en un AudioContext las voces que ya le llegan (las de la sala y
+           su micrófono) y las graba con MediaRecorder. Cada PARTE_MS cierra la
+           parte y empieza otra: cada una es un archivo entero que se puede
+           escuchar solo, y si se le cierra la pestaña se pierde como mucho la
+           última. No se graba nunca sin que antes quede puesto «Se está
+           grabando» (game_state.llamada_grabando), que ven todos. */
+        const PARTE_MS = 5 * 60 * 1000;
+        let grab = null;   // { ctx, destino, fuentes: Map, rec, desde, timer, clase, tipo }
+        const tipoDeGrabacion = () => {
+            if (!window.MediaRecorder) return "";
+            for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"]) {
+                if (MediaRecorder.isTypeSupported(t)) return t;
+            }
+            return "";
+        };
+        function pistasDeAudio() {
+            const pistas = [];
+            if (!sala) return pistas;
+            for (const pub of sala.localParticipant.audioTrackPublications.values()) if (pub.track) pistas.push(pub.track.mediaStreamTrack);
+            for (const p of sala.remoteParticipants.values()) {
+                for (const pub of p.audioTrackPublications.values()) if (pub.track) pistas.push(pub.track.mediaStreamTrack);
+            }
+            return pistas.filter(Boolean);
+        }
+        // Que la grabación tenga a todos los que suenan ahora (entran, salen, encienden el micrófono).
+        function acomodarFuentes() {
+            if (!grab) return;
+            const ahora = new Set(pistasDeAudio());
+            for (const [pista, fuente] of grab.fuentes) {
+                if (!ahora.has(pista)) { try { fuente.disconnect(); } catch (e) { /* ya estaba */ } grab.fuentes.delete(pista); }
+            }
+            for (const pista of ahora) {
+                if (grab.fuentes.has(pista)) continue;
+                const fuente = grab.ctx.createMediaStreamSource(new MediaStream([pista]));
+                fuente.connect(grab.destino);
+                grab.fuentes.set(pista, fuente);
+            }
+        }
+        /* La posición del tablero en cada momento de la parte: la clase no guarda
+           la hora de cada jugada, así que la anota quien graba. Cada segundo se
+           mira la posición que ve la clase y, si cambió, se anota {s, fen}. En
+           «Repasar mis clases» el tablero sigue la grabación con esto. */
+        const MARCAS_MAX = 3600;
+        function anotarPosicion(parte) {
+            if (!op.posicion || !parte || parte.marcas.length >= MARCAS_MAX) return;
+            const fen = op.posicion();
+            if (!fen || fen === parte.ultimaFen) return;
+            parte.ultimaFen = fen;
+            parte.marcas.push({ s: Math.round((Date.now() - parte.desde) / 100) / 10, fen });
+        }
+        function nuevaParte() {
+            const rec = new MediaRecorder(grab.destino.stream, { mimeType: grab.tipo, audioBitsPerSecond: 32000 });
+            const trozos = [];
+            const parte = { desde: Date.now(), marcas: [], ultimaFen: null };
+            const clase = grab.clase;
+            anotarPosicion(parte);
+            rec.ondataavailable = (e) => { if (e.data && e.data.size) trozos.push(e.data); };
+            rec.onstop = async () => {
+                if (!trozos.length) return;
+                const blob = new Blob(trozos, { type: grab ? grab.tipo.split(";")[0] : trozos[0].type });
+                const error = await op.subirParte(blob, (Date.now() - parte.desde) / 1000, blob.type, clase, parte.marcas);
+                if (error) anunciar(error);
+            };
+            rec.start();
+            grab.rec = rec;
+            grab.parte = parte;
+        }
+        function empezarAGrabar() {
+            if (!esProfe || grab || !enLlamada() || !op.subirParte) return;
+            const tipo = tipoDeGrabacion();
+            const clase = op.claseActual ? op.claseActual() : null;
+            if (!tipo || !clase) {
+                anunciar(tipo ? "No se puede grabar: abre la clase primero." : "Este navegador no puede grabar la clase.");
+                if (op.grabar) op.grabar(false).then(() => { grabando = false; pintar(); sincronizar(); });
+                return;
+            }
+            /* Una falla al grabar nunca tumba la llamada: se dice, se apaga la
+               grabación (y el aviso para todos) y la clase sigue con voz. */
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                grab = { ctx: new Ctx(), fuentes: new Map(), rec: null, timer: null, clase, tipo };
+                grab.destino = grab.ctx.createMediaStreamDestination();
+                acomodarFuentes();
+                nuevaParte();
+            } catch (e) {
+                console.error(e);
+                const g = grab;
+                grab = null;
+                if (g && g.ctx) g.ctx.close().catch(() => {});
+                anunciar("No se pudo grabar la clase en este navegador.");
+                if (op.grabar) op.grabar(false).then(() => { grabando = false; pintar(); sincronizar(); });
+                return;
+            }
+            grab.timer = setInterval(() => {
+                if (!grab) return;
+                const vieja = grab.rec;
+                nuevaParte();        // la siguiente arranca ya: no se pierde ni un segundo entre partes
+                vieja.stop();
+            }, PARTE_MS);
+            grab.mirador = setInterval(() => { if (grab) anotarPosicion(grab.parte); }, 1000);
+        }
+        async function dejarDeGrabar() {
+            if (!grab) return;
+            const g = grab;
+            clearInterval(g.timer);
+            clearInterval(g.mirador);
+            anotarPosicion(g.parte);   // lo último que se vio, antes de cerrar la parte
+            if (g.rec && g.rec.state !== "inactive") {
+                await new Promise((listo) => { g.rec.addEventListener("stop", () => setTimeout(listo, 0), { once: true }); g.rec.stop(); });
+            }
+            grab = null;
+            for (const fuente of g.fuentes.values()) { try { fuente.disconnect(); } catch (e) { /* ya estaba */ } }
+            try { await g.ctx.close(); } catch (e) { /* ya estaba cerrado */ }
+        }
+        // Pausar o volver a grabar. Primero el aviso para todos, después la grabadora.
+        async function alternarGrabar() {
+            if (!esProfe || !enLlamada() || !op.grabar) return;
+            const encender = !grabando;
+            if (!encender) await dejarDeGrabar();
+            const error = await op.grabar(encender);
+            if (error) { anunciar(error); return; }
+            grabando = encender;
+            if (encender) empezarAGrabar();
+            pintar();
+            await sincronizar();   // con la grabación, el alumno sin permiso no habla; sin ella, sí
+            anunciar(grabando ? "Grabando la clase." : "Pausaste la grabación de la clase.");
+        }
+
+        /* El profe: quiénes de la llamada no tienen el permiso de grabación. Se
+           pregunta al entrar y cada vez que entra alguien (juntando los que
+           entran seguidos en un solo pedido). */
+        let permisosPendiente = null;
+        function refrescarPermisos() {
+            if (!esProfe || !op.permisosDeVoz) return;
+            clearTimeout(permisosPendiente);
+            permisosPendiente = setTimeout(async () => {
+                if (!sala) return;
+                const ids = [...sala.remoteParticipants.values()].filter((p) => !esElProfe(p)).map((p) => p.identity);
+                const con = await op.permisosDeVoz(ids);
+                if (!con || !sala) return;
+                sinPermiso = new Set(ids.filter((id) => !con.has(id)));
+                pintarGente();
+            }, 400);
+        }
+
+        /* El profe elige quién puede hablar. Lo guarda en game_state (lo ven
+           todos) y le pide al servidor que le dé o le quite la palabra a cada uno:
+           el permiso lo pone LiveKit, no la página. */
+        async function elegirModo(nuevo) {
+            if (!esProfe || !enLlamada() || !op.modo || !MODOS[nuevo] || nuevo === modo) return;
+            const error = await op.modo(nuevo);
+            if (error) { anunciar(error); return; }
+            modo = nuevo;
+            pintar();
+            await sincronizar();
+            anunciar(MODOS[modo].alProfe);
+        }
+
         /* Lo que dice game_state: si el profe abrió la llamada en esta clase
            (sesion.js lo llama como `llamada.estado(…)`). */
-        function ponerEstado(abiertaAhora) {
+        function ponerEstado(abiertaAhora, modoAhora, grabandoAhora) {
             const antes = abierta;
+            const modoAntes = modo;
+            const grabandoAntes = grabando;
             abierta = Boolean(abiertaAhora);
+            modo = abierta && MODOS[modoAhora] ? modoAhora : "turno";
+            grabando = abierta && Boolean(grabandoAhora);
             if (esProfe) { pintar(); return; }
+            // Empezó o se pausó la grabación: se le dice al alumno (y por qué no habla, si no tiene permiso).
+            if (abierta && antes && grabando !== grabandoAntes) {
+                anunciar(grabando ? "Esta clase se está grabando." + (enLlamada() && !permisoVoz ? " " + SIN_PERMISO : "") : "Se pausó la grabación de la clase.");
+                pintar();
+            }
+            // Cambió quién puede hablar con la llamada ya abierta: se le dice al alumno.
+            if (abierta && antes && modo !== modoAntes) { anunciar(MODOS[modo].alAlumno); pintarGente(); }
             if (abierta && !antes) {
                 caja.hidden = false;
                 pintar();
@@ -337,29 +614,33 @@
         function escuchar(room) {
             const E = LK.RoomEvent;
             room
-                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); })
+                .on(E.ParticipantConnected, (p) => { sonido(SON.entra); anunciar("Entró a la llamada " + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + "."); pintarGente(); refrescarPermisos(); })
                 .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); pintarGente(); })
                 // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
                 .on(E.ActiveSpeakersChanged, pintarGente)
-                .on(E.TrackSubscribed, (track) => { if (track.kind === "audio") audios.appendChild(track.attach()); })
-                .on(E.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); })
+                .on(E.TrackSubscribed, (track) => { if (track.kind === "audio") audios.appendChild(track.attach()); acomodarFuentes(); })
+                .on(E.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); acomodarFuentes(); })
                 .on(E.ParticipantPermissionsChanged, (antes, p) => {
                     pintarGente();   // «con la palabra» en la lista, también de los demás
                     if (p !== room.localParticipant || esProfe) return;
                     const ahora = Boolean(p.permissions && p.permissions.canPublish);
                     if (ahora === Boolean(antes && antes.canPublish)) return;
-                    if (ahora) { sonido(SON.palabra); anunciar("Tu profe te dio la palabra: enciende el micrófono con Alt M."); }
-                    else anunciar("Se terminó tu turno: tu micrófono se apagó.");
+                    // Con «Todos» o «Nadie» ya se dijo el cambio de modo; acá solo el turno.
+                    if (ahora) {
+                        sonido(SON.palabra);
+                        if (modo !== "libre") anunciar("Tu profe te dio la palabra: enciende el micrófono con Alt M.");
+                    } else if (modo === "turno") anunciar("Se terminó tu turno: tu micrófono se apagó.");
                     pintar();
                 })
-                .on(E.LocalTrackPublished, pintar)
-                .on(E.LocalTrackUnpublished, pintar)
+                .on(E.LocalTrackPublished, () => { acomodarFuentes(); pintar(); })
+                .on(E.LocalTrackUnpublished, () => { acomodarFuentes(); pintar(); })
                 .on(E.ConnectionQualityChanged, (calidad, p) => {
                     if (p === room.localParticipant && calidad === LK.ConnectionQuality.Poor) anunciar("Tu conexión está mala: puede que se corte la voz.");
                 })
                 .on(E.Reconnecting, () => anunciar("Se cortó la llamada. Reconectando…"))
                 .on(E.Reconnected, () => anunciar("Volviste a la llamada."))
                 .on(E.Disconnected, (motivo) => {
+                    dejarDeGrabar();   // la última parte se sube igual
                     sonido(SON.sale);
                     audios.textContent = "";
                     sala = null;
@@ -391,7 +672,10 @@
         });
 
         entrar.addEventListener("click", alEntrar);
-        mic.addEventListener("click", alternarMic);
+        // Con «Mantener para hablar» el clic (que llega al soltar) no conmuta nada.
+        mic.addEventListener("click", () => { if (!ptt.checked) alternarMic(); });
+        grabarBtn.addEventListener("click", alternarGrabar);
+        modos.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => elegirModo(b.dataset.modo)));
         quien.addEventListener("click", quienEsta);
         habla.addEventListener("click", quienHabla);
         salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));
