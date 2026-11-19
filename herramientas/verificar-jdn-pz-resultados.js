@@ -89,7 +89,8 @@ const U12 = {
 const U20 = {
   id: "22222222-2222-4222-8222-222222222222", nombre: "Eliminatoria Cantonal JDN CCDRPZ – U20-U16", organizador_id: "org-ai",
   creado: "2026-11-12T04:32:06Z", actualizado: "2026-11-12T04:32:06Z",
-  datos: { rondasTotales: 5, jugadores: [jug("e", "Sequeira Solís, Shane Stevens", "U20 Absoluto", 1694), jug("f", "Beitia Retana, Samuel Josué", "U16 Absoluto", 0)], rondas: [] },
+  datos: { rondasTotales: 5, jugadores: [jug("e", "Sequeira Solís, Shane Stevens", "U20 Absoluto", 1694), // Inventado: nadie de la eliminatoria se llama así, y no tiene foto.
+    jug("f", "Mora Vargas, Tomás", "U16 Absoluto", 0)], rondas: [] },
 };
 // De la misma organización, pero no es de la eliminatoria: no entra.
 const OTRO = { id: "33333333-3333-4333-8333-333333333333", nombre: "Tacho Chess U12", organizador_id: "org-ai", creado: "2026-11-13T19:00:00Z",
@@ -176,15 +177,15 @@ const texto = (p, sel) => p.evaluate((s) => [...document.querySelectorAll(s)].ma
       nombres: [...document.querySelectorAll("#inscritos .jdn-inscrito-nombre")].map((n) => n.textContent),
       listos: document.querySelectorAll("#inscritos .jdn-inscrito-listo").length,
       giordano: (() => { const b = [...document.querySelectorAll("#inscritos .jdn-inscrito")].find((x) => /Giordano/.test(x.textContent)); const i = b && b.querySelector("img"); return i ? i.getAttribute("src") : null; })(),
-      samuel: (() => { const b = [...document.querySelectorAll("#inscritos .jdn-inscrito")].find((x) => /Samuel Quesada/.test(x.textContent)); return b ? [!!b.querySelector("img"), b.querySelector(".jdn-inscrito-sin-foto").textContent] : null; })() }));
+      samuel: (() => { const b = [...document.querySelectorAll("#inscritos .jdn-inscrito")].find((x) => /Tomás Mora/.test(x.textContent)); return b ? [!!b.querySelector("img"), b.querySelector(".jdn-inscrito-sin-foto").textContent] : null; })() }));
     ok("cuántos aprobados y listos, por torneo (el torneo que no es de la eliminatoria no cuenta)",
       ins.resumen === "6 jugadores aprobados y listos para jugar: 4 en el torneo U12 y 2 en el U20 (con la U16)." && !ins.nombres.some((n) => /Pepe/.test(n)), ins.resumen);
     ok("el filtro por categoría, con sus cuentas, empieza en «Todos»",
       JSON.stringify(ins.filtros) === JSON.stringify(["Todos (6)=true", "U12 Absoluto (2)=false", "U12 Femenino (2)=false", "U16 Absoluto (1)=false", "U20 Absoluto (1)=false"]), JSON.stringify(ins.filtros));
     ok("por nombre, con el nombre primero y las mayúsculas arregladas, y todos «Aprobado · listo para jugar»",
-      JSON.stringify(ins.nombres) === JSON.stringify(["Giordano Ulcigrai Ramírez", "Lía Jiménez Azofeifa", "Samuel Josué Beitia Retana", "Samuel Quesada Aguero", "Shane Stevens Sequeira Solís", "Yariela Sofia Zuñiga Arias"]) && ins.listos === 6, JSON.stringify(ins.nombres));
-    ok("quien tiene foto la lleva; quien no, sus iniciales", ins.giordano === "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giordano.jpg" && JSON.stringify(ins.samuel) === JSON.stringify([false, "SQ"]), JSON.stringify([ins.giordano, ins.samuel]));
-    ok("no se pide la foto de quien no la tiene (sin 404)", x.fotos.includes("lista.json") && !x.fotos.includes("quesada-aguero-samuel.jpg") && !x.fotos.includes("beitia-retana-samuel-josue.jpg"), JSON.stringify(x.fotos));
+      JSON.stringify(ins.nombres) === JSON.stringify(["Giordano Ulcigrai Ramírez", "Lía Jiménez Azofeifa", "Samuel Quesada Aguero", "Shane Stevens Sequeira Solís", "Tomás Mora Vargas", "Yariela Sofia Zuñiga Arias"]) && ins.listos === 6, JSON.stringify(ins.nombres));
+    ok("quien tiene foto la lleva; quien no, sus iniciales", ins.giordano === "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giordano.jpg" && JSON.stringify(ins.samuel) === JSON.stringify([false, "TM"]), JSON.stringify([ins.giordano, ins.samuel]));
+    ok("no se pide la foto de quien no la tiene (sin 404)", x.fotos.includes("lista.json") && !x.fotos.includes("mora-vargas-tomas.jpg"), JSON.stringify(x.fotos));
     await x.p.click('#inscritos-contenido .cac-modalidad-boton[data-grupo="U12 Femenino"]');
     ok("el filtro deja solo esa categoría", JSON.stringify(await texto(x.p, "#inscritos .jdn-inscrito-nombre")) === JSON.stringify(["Lía Jiménez Azofeifa", "Yariela Sofia Zuñiga Arias"]));
     await x.p.click('#inscritos-contenido .cac-modalidad-boton[data-grupo=""]');

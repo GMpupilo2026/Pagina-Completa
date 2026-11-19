@@ -16085,7 +16085,12 @@ Google Drive).
   «SOFIA» y «SOFIA BADILLA») y Elizabeth Badilla quedaron con sus
   iniciales hasta que alguien diga cuál foto es de quién. Ponerle a un niño
   la cara de otro en una página pública es peor que no ponerle ninguna.
-  Para agregar una: su línea en `MAPA` y correr el script.
+  El 19/11/2026 el dueño les puso el apellido a esos archivos en Drive (y
+  subió la de Aaron Barrantes, que no estaba): hoy están los 34. Para
+  agregar una: su línea en `MAPA`, correr el script y poner al día el grupo
+  de las fotos en `data/archivos.json` (`herramientas/archivos-catalogo.js`;
+  en Windows cambia los kb de los archivos de texto por los saltos de línea,
+  así que de lo que arma se toma solo ese grupo).
 
 ### La del Tacho Chess 2
 

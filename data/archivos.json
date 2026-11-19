@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1319,
+  "total": 1327,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27146,6 +27146,24 @@
       "kb": 20
      },
      {
+      "ruta": "img/jdn-pz-2026/jugadores/badilla-mena-elizabeth.jpg",
+      "titulo": "Badilla mena elizabeth",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/barrantes-granados-aaron.jpg",
+      "titulo": "Barrantes granados aaron",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/beitia-retana-samuel-josue.jpg",
+      "titulo": "Beitia retana samuel josue",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
       "ruta": "img/jdn-pz-2026/jugadores/castro-monge-abel-francisco.jpg",
       "titulo": "Castro monge abel francisco",
       "tipo": "otro",
@@ -27168,6 +27186,18 @@
       "titulo": "Chryssopulos fajardo alejandro",
       "tipo": "otro",
       "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordero-sanchez-santiago.jpg",
+      "titulo": "Cordero sanchez santiago",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordova-elizondo-sofia.jpg",
+      "titulo": "Cordova elizondo sofia",
+      "tipo": "otro",
+      "kb": 18
      },
      {
       "ruta": "img/jdn-pz-2026/jugadores/flores-badilla-joselyn-ariana.jpg",
@@ -27200,10 +27230,28 @@
       "kb": 13
      },
      {
+      "ruta": "img/jdn-pz-2026/jugadores/piedra-villarevia-aaron.jpg",
+      "titulo": "Piedra villarevia aaron",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/quesada-aguero-samuel.jpg",
+      "titulo": "Quesada aguero samuel",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
       "ruta": "img/jdn-pz-2026/jugadores/rodriguez-quesada-keithy.jpg",
       "titulo": "Rodriguez quesada keithy",
       "tipo": "otro",
       "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-cespedes-santiago.jpg",
+      "titulo": "Segura cespedes santiago",
+      "tipo": "otro",
+      "kb": 19
      },
      {
       "ruta": "img/jdn-pz-2026/jugadores/segura-monge-allan-jafeth.jpg",
