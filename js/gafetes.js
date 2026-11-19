@@ -198,7 +198,8 @@
       const [rol, apellidos, nombre, titulo, avatar] = linea.split("|").map((c) => (c || "").trim());
       if (!rol || !(apellidos || nombre)) continue;
       const grupo = /organiz/i.test(rol) ? "Organización" : "Arbitraje";
-      const lado = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Árbitro";
+      // De lado, sin la Á de «Árbitro» (escrita de lado, la tilde queda suelta).
+      const lado = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Principal";
       const pose = /^karina$/i.test(avatar) ? "ilustracionDorso" : (avatar || "");
       filas.push([apellidos, nombre, titulo, "", "", "", "", "", SITIO + "jdn-pz-2026", grupo, rol, lado,
         "Escanéalo: | la página | del torneo", pose]);
@@ -436,7 +437,9 @@
      achican en el navegador y se pierden al cerrar la página. */
   let fotos = [];                 // [{ nombre, lienzo }]
   const fotoDe = new Map();       // clave de la fila → índice en `fotos` (-1: sin foto)
-  const claveFila = (f) => String(D().valor(f, "QR") || [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(", "));
+  // El QR y el nombre: el personal comparte el QR (la página del torneo), y
+  // con el QR solo, los tres árbitros quedaban con la misma foto.
+  const claveFila = (f) => [D().valor(f, "QR"), D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(" | ");
   const palabras = (t) => plano(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
   function plano(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
   // Lo que dice el archivo, sin el número, la extensión, «v2» ni «MEDIOS DIGITALES».

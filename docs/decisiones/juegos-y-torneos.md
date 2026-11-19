@@ -16077,7 +16077,11 @@ sus pts y su puesto actual».
   Karina la organizadora, y el profe Oscar (árbitro, presentando y te toca)
   los árbitros principales Jean Quesada Arauz (AF) y Oscar Angulo Cubero (IA)
   y el asistente Sebastián Mora Chavarría. Con una foto que no tiene fondo
-  blanco no se busca la cabeza (lo oscuro de una sala no es el pelo).
+  blanco no se busca la cabeza (lo oscuro de una sala no es el pelo). Cada foto
+  se guarda por el QR **y el nombre** (`claveFila`): el personal comparte el
+  QR, y con el QR solo los tres árbitros quedaban con la misma foto. De lado
+  dice PRINCIPAL o ASISTENTE, no «ÁRBITRO»: escrita de lado, la tilde de la Á
+  quedaba suelta como un apóstrofo.
 - **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
   «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
   pertenece y luego el ID FIDE («Juega el torneo U…» se quitó: no le gustó); la U16 pasa del turquesa al

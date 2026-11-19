@@ -294,7 +294,7 @@ async function aceptar(page, boton) {
     const r = await D.preparar(diseno);
     const todos = D.gafetes(diseno, datos.filas);
     return Promise.all(todos.map(async (g) => {
-      const i = fotoDe.get(g.fila.QR);
+      const i = fotoDe.get([g.fila.QR, g.fila.Apellidos, g.fila.Nombre].join(" | "));
       if (i >= 0) { g.foto = fotos[i].lienzo; g.fotoClave = "foto-" + i; }
       return (await D.cara(diseno, r, g, "frente")).clave;
     }));
@@ -388,9 +388,17 @@ async function aceptar(page, boton) {
     return { n: x.nombre, d: x.detalles, f: x.franja, v: x.vertical, c: x.codigo, color: x.color, qr: x.qr, t: x.qrTexto, pose: x.ilustracionDorso };
   });
   igual("se suma al final, con su rol en la franja, su título debajo y el gris del arbitraje",
-    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "ÁRBITRO", "ARBITRAJE", "#1f2937"]);
+    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "PRINCIPAL", "ARBITRAJE", "#1f2937"]);
   igual("su QR lleva a la página del torneo y lo dice; en el dorso, el profe Oscar árbitro",
     [st.qr, st.t, st.pose], ["https://ajedrez-integral.com/jdn-pz-2026", "Escanéalo: | la página | del torneo", "oscar-arbitro"]);
+  // Dos del personal comparten el QR (la página del torneo): cada uno con SU foto.
+  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro\nÁrbitro asistente | Mora Chavarría | Sebastián |  | oscar-te-toca");
+  await page.click("#g-pareo-pz");
+  await page.waitForFunction(() => window.Gafetes._estado().datos && window.Gafetes._estado().datos.filas.length === 6);
+  await page.setInputFiles("#g-fotos", [archivo("Jean Quesada.jpg"), archivo("Sebastian Mora.jpg")]);
+  await page.waitForFunction(() => /con foto/.test(document.getElementById("g-fotos-estado").textContent));
+  igual("dos del personal con el mismo QR, cada uno con su foto", (await emparejadas()).slice(-2),
+    ["Quesada Arauz, Jean → Jean Quesada.jpg", "Mora Chavarría, Sebastián → Sebastian Mora.jpg"]);
 
   igual("sin errores en la consola", errores, []);
   await ctx.close();
