@@ -21,6 +21,10 @@
     sala: "jdn-pz-2026",
     guardado: "jdnpz",
     soloPodio: true,
+    // Los datos, de Pareo Integral (js/torneo-pareo-datos.js), no de chess-results.
+    fuente: "pareo", fuenteNombre: "Pareo Integral",
+    pareo: { nombre: "JDN CCDRPZ", desde: "2026-11-01" },
+    ordenGrupos: ["U12 Absoluto", "U12 Femenino", "U16 Absoluto", "U16 Femenino", "U20 Absoluto", "U20 Femenino"],
     // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.
     hoy: { termino: "La eliminatoria terminó", gracias: "¡Gracias por jugar!", final: "La clasificación final de cada categoría está en «Resultados U12» y «Resultados U20»." },
     url: "ajedrez-integral.com/jdn-pz-2026.html",
