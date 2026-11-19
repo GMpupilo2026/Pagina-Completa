@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118175852
+# al-dia-con: 20261118204456
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -43,6 +43,7 @@ tabla  audios_clase_vueltas  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
 tabla  avisos_cobro  rls=true
+tabla  avisos_cuenta  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
 tabla  avisos_profesor  rls=true
@@ -102,6 +103,7 @@ tabla  class_chat_messages  rls=true
 tabla  class_presence_log  rls=true
 tabla  class_sessions  rls=true
 tabla  cobros  rls=true
+tabla  cobros_ajustes  rls=true
 tabla  cobros_contacto  rls=true
 tabla  cobros_recordatorios_programados  rls=true
 tabla  compras_tienda  rls=true
@@ -110,6 +112,8 @@ tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
 tabla  cuaderno  rls=true
+tabla  cuenta_cobro_alumnos  rls=true
+tabla  cuentas_cobro  rls=true
 tabla  cuentas_temporales  rls=true
 tabla  cuestionario_intentos  rls=true
 tabla  cuestionarios  rls=true
@@ -129,6 +133,7 @@ tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
 tabla  enlaces_diagnostico  rls=true
+tabla  entrenador_ia_personas  rls=true
 tabla  entreno_pedidos  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
@@ -138,6 +143,7 @@ tabla  estilo_pruebas  rls=true
 tabla  estilo_seguimiento  rls=true
 tabla  estudios  rls=true
 tabla  examen_items  rls=true
+tabla  examen_mate_partidas  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
 tabla  explorador_maestros_cache  rls=true
@@ -167,6 +173,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.premio_tema_items  rls=true
 tabla  interno.premio_temas  rls=true
+tabla  interno.rango_examen_banco  rls=false
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_correcciones  rls=true
@@ -177,6 +184,7 @@ tabla  jdn_resultados  rls=true
 tabla  jdn_tableros  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
+tabla  llamada_participacion  rls=true
 tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
 tabla  metropolitano_codigos  rls=true
@@ -189,6 +197,7 @@ tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
+tabla  pagos_reportados  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
 tabla  pareo_adjuntos  rls=true
@@ -254,6 +263,8 @@ tabla  questions  rls=true
 tabla  quiniela_participantes  rls=true
 tabla  quiniela_partidas  rls=true
 tabla  quiniela_pronosticos  rls=true
+tabla  rango_examenes  rls=true
+tabla  rangos_alumno  rls=true
 tabla  recibo_contadores  rls=true
 tabla  recibos  rls=true
 tabla  recordatorios_informe  rls=true
@@ -643,6 +654,12 @@ columna  avisos_cobro.correo  text
 columna  avisos_cobro.enviado_at  timestamp with time zone
 columna  avisos_cobro.id  uuid
 columna  avisos_cobro.tipo  text
+columna  avisos_cuenta.activo_hasta  date
+columna  avisos_cuenta.correo  text
+columna  avisos_cuenta.cuenta_id  uuid
+columna  avisos_cuenta.enviado_at  timestamp with time zone
+columna  avisos_cuenta.id  bigint
+columna  avisos_cuenta.tipo  text
 columna  avisos_ficha_faltante.enviado_at  timestamp with time zone
 columna  avisos_ficha_faltante.fecha  date
 columna  avisos_ficha_faltante.horario_id  uuid
@@ -1226,6 +1243,7 @@ columna  cobros.concepto  text
 columna  cobros.consecutivo  text
 columna  cobros.creado_por  uuid
 columna  cobros.created_at  timestamp with time zone
+columna  cobros.cuenta_id  uuid
 columna  cobros.estado  text
 columna  cobros.hacienda_clave  text
 columna  cobros.hacienda_consecutivo  text
@@ -1238,6 +1256,15 @@ columna  cobros.periodo_inicio  date
 columna  cobros.student_id  uuid
 columna  cobros.suscripcion_id  uuid
 columna  cobros.vence  date
+columna  cobros_ajustes.apagado_auto  boolean
+columna  cobros_ajustes.avisos_auto  boolean
+columna  cobros_ajustes.cambiado_at  timestamp with time zone
+columna  cobros_ajustes.cambiado_por  uuid
+columna  cobros_ajustes.dias_aviso_antes  smallint
+columna  cobros_ajustes.dias_gracia  smallint
+columna  cobros_ajustes.id  boolean
+columna  cobros_ajustes.sinpe_nombre  text
+columna  cobros_ajustes.sinpe_numero  text
 columna  cobros_contacto.actualizado_at  timestamp with time zone
 columna  cobros_contacto.actualizado_por  uuid
 columna  cobros_contacto.email  text
@@ -1299,6 +1326,18 @@ columna  cuaderno.nota  text
 columna  cuaderno.origen  text
 columna  cuaderno.titulo  text
 columna  cuaderno.updated_at  timestamp with time zone
+columna  cuenta_cobro_alumnos.agregado_at  timestamp with time zone
+columna  cuenta_cobro_alumnos.alumno_id  uuid
+columna  cuenta_cobro_alumnos.cuenta_id  uuid
+columna  cuentas_cobro.activo_hasta_base  date
+columna  cuentas_cobro.apagada  boolean
+columna  cuentas_cobro.creado_por  uuid
+columna  cuentas_cobro.created_at  timestamp with time zone
+columna  cuentas_cobro.id  uuid
+columna  cuentas_cobro.moneda  text
+columna  cuentas_cobro.monto  numeric(12,2)
+columna  cuentas_cobro.nombre  text
+columna  cuentas_cobro.nota  text
 columna  cuentas_temporales.detalle  text
 columna  cuentas_temporales.fijada_en  timestamp with time zone
 columna  cuentas_temporales.fijada_por  uuid
@@ -1467,6 +1506,9 @@ columna  encuestas_profesor.updated_at  timestamp with time zone
 columna  enlaces_diagnostico.codigo  text
 columna  enlaces_diagnostico.created_at  timestamp with time zone
 columna  enlaces_diagnostico.supervisor_id  uuid
+columna  entrenador_ia_personas.activado_por  uuid
+columna  entrenador_ia_personas.created_at  timestamp with time zone
+columna  entrenador_ia_personas.persona_id  uuid
 columna  entreno_pedidos.class_session_id  uuid
 columna  entreno_pedidos.created_at  timestamp with time zone
 columna  entreno_pedidos.ejercicios  jsonb
@@ -1524,6 +1566,15 @@ columna  examen_items.orden  integer
 columna  examen_items.peso  integer
 columna  examen_items.tipo  text
 columna  examen_items.visible  jsonb
+columna  examen_mate_partidas.alumno_id  uuid
+columna  examen_mate_partidas.empezo_at  timestamp with time zone
+columna  examen_mate_partidas.examen_id  uuid
+columna  examen_mate_partidas.fen  text
+columna  examen_mate_partidas.item_id  uuid
+columna  examen_mate_partidas.jugadas  jsonb
+columna  examen_mate_partidas.posiciones  jsonb
+columna  examen_mate_partidas.resultado  text
+columna  examen_mate_partidas.terminado_at  timestamp with time zone
 columna  examen_respuestas.correcta  boolean
 columna  examen_respuestas.created_at  timestamp with time zone
 columna  examen_respuestas.examen_id  uuid
@@ -1782,6 +1833,9 @@ columna  interno.premio_temas.grupo  text
 columna  interno.premio_temas.nombre  text
 columna  interno.premio_temas.tema  text
 columna  interno.premio_temas.total  integer
+columna  interno.rango_examen_banco.item  jsonb
+columna  interno.rango_examen_banco.item_id  text
+columna  interno.rango_examen_banco.rango  text
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -1888,6 +1942,10 @@ columna  licencias_herramientas.otorgada_por  uuid
 columna  licencias_herramientas.persona_id  uuid
 columna  licencias_herramientas.revocada  boolean
 columna  licencias_herramientas.vence  timestamp with time zone
+columna  llamada_participacion.actualizado  timestamp with time zone
+columna  llamada_participacion.class_session_id  uuid
+columna  llamada_participacion.persona_id  uuid
+columna  llamada_participacion.segundos  integer
 columna  material_compartido.academia_id  uuid
 columna  material_compartido.creado_en  timestamp with time zone
 columna  material_compartido.id  uuid
@@ -2065,6 +2123,20 @@ columna  pagos.nota  text
 columna  pagos.recibo_id  uuid
 columna  pagos.referencia  text
 columna  pagos.registrado_por  uuid
+columna  pagos_reportados.alumno_id  uuid
+columna  pagos_reportados.comprobante  text
+columna  pagos_reportados.created_at  timestamp with time zone
+columna  pagos_reportados.cuenta_id  uuid
+columna  pagos_reportados.estado  text
+columna  pagos_reportados.fecha  date
+columna  pagos_reportados.id  uuid
+columna  pagos_reportados.monto  numeric(12,2)
+columna  pagos_reportados.motivo  text
+columna  pagos_reportados.nota  text
+columna  pagos_reportados.recibo_id  uuid
+columna  pagos_reportados.referencia  text
+columna  pagos_reportados.revisado_at  timestamp with time zone
+columna  pagos_reportados.revisado_por  uuid
 columna  paquete_alumnos.agregado_at  timestamp with time zone
 columna  paquete_alumnos.alumno_id  uuid
 columna  paquete_alumnos.paquete_id  uuid
@@ -2598,6 +2670,18 @@ columna  quiniela_pronosticos.participante_id  uuid
 columna  quiniela_pronosticos.partida_id  text
 columna  quiniela_pronosticos.pronostico  text
 columna  quiniela_pronosticos.sala_id  uuid
+columna  rango_examenes.alumno_id  uuid
+columna  rango_examenes.certificado_id  uuid
+columna  rango_examenes.created_at  timestamp with time zone
+columna  rango_examenes.examen_id  uuid
+columna  rango_examenes.porcentaje  numeric(5,2)
+columna  rango_examenes.rango  text
+columna  rango_examenes.resuelto_at  timestamp with time zone
+columna  rango_examenes.resultado  text
+columna  rangos_alumno.alumno_id  uuid
+columna  rangos_alumno.desde  timestamp with time zone
+columna  rangos_alumno.rango  text
+columna  rangos_alumno.titulo  text
 columna  recibo_contadores.anio  integer
 columna  recibo_contadores.prefijo  text
 columna  recibo_contadores.ultimo  integer
@@ -3063,6 +3147,7 @@ columna  vision_personas.actualizado_por  uuid
 columna  vision_personas.persona_id  uuid
 columna  vision_personas.vision  text
 vista  cobros_vista
+vista  cuentas_cobro_vista
 vista  recibos_vista
 funcion  abrir_clase_en_vivo(p_alumnos uuid[], p_titulo text)  definer  anon=false  auth=true
 funcion  academia_borrar(p_id uuid)  definer  anon=false  auth=true
@@ -3080,6 +3165,7 @@ funcion  acceso_set_exigido(p_exigido boolean)  definer  anon=false  auth=true
 funcion  acceso_vigente()  definer  anon=false  auth=true
 funcion  accesorios_de(p_ids uuid[])  invoker  anon=false  auth=true
 funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=false  auth=true
+funcion  activar_entrenador_ia(p_persona uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  activar_preparacion_rivales(p_profesor uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  activar_tarea_por_puntos(p_regla uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  actividad_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
@@ -3194,6 +3280,7 @@ funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  a
 funcion  clases_que_le_tocaban()  invoker  anon=false  auth=true
 funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  cobro_siguiente(p_suscripcion uuid, p_periodos integer)  definer  anon=false  auth=true
+funcion  cobros_ajustes_guardar(p_avisos_auto boolean, p_apagado_auto boolean, p_dias_gracia integer, p_dias_aviso_antes integer, p_sinpe_numero text, p_sinpe_nombre text)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_quien_debe(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
@@ -3217,8 +3304,14 @@ funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_m
 funcion  crear_relevo(p_blancas uuid[], p_negras uuid[])  definer  anon=false  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  crear_tarea_por_puntos(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_dias integer, p_items jsonb, p_umbral integer)  definer  anon=false  auth=true
+funcion  cuenta_cobro_apagar(p_id uuid, p_apagar boolean)  definer  anon=false  auth=true
+funcion  cuenta_cobro_borrar(p_id uuid)  definer  anon=false  auth=true
+funcion  cuenta_cobro_guardar(p_id uuid, p_nombre text, p_monto numeric, p_moneda text, p_activo_hasta date, p_nota text, p_alumnos uuid[])  definer  anon=false  auth=true
+funcion  cuenta_cobro_pagar(p_cuenta uuid, p_desde date, p_hasta date, p_monto numeric, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_reporte uuid)  definer  anon=false  auth=true
 funcion  cuenta_invitado_activar(p_alumno uuid, p_nombre text, p_ip text, p_privacidad text, p_terminos text)  definer  anon=false  auth=false
 funcion  cuenta_invitado_frenar(p_ip text)  definer  anon=false  auth=false
+funcion  cuentas_cobro_resumen()  invoker  anon=false  auth=true
+funcion  cuentas_para_avisar()  definer  anon=false  auth=false
 funcion  cuentas_temporales_fijar(p_personas uuid[], p_vence timestamp with time zone, p_detalle text)  definer  anon=false  auth=true
 funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
 funcion  dar_permiso_grabar_voz(p_version_privacidad text)  definer  anon=false  auth=true
@@ -3235,6 +3328,7 @@ funcion  diagnostico_sesion_estado(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnostico_terminar(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
 funcion  disparar_avisos_arbitros()  definer  anon=false  auth=false
+funcion  disparar_avisos_cuentas()  definer  anon=false  auth=false
 funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
@@ -3246,6 +3340,7 @@ funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb
 funcion  ejercicios_para_revisar(p_audio uuid)  definer  anon=false  auth=true
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
+funcion  elegir_titulo_rango(p_titulo text)  definer  anon=false  auth=true
 funcion  eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean)  definer  anon=false  auth=true
 funcion  elo_de_alumno(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  emitir_certificado(p_alumno uuid, p_curso text)  definer  anon=false  auth=true
@@ -3324,6 +3419,7 @@ funcion  ia_explicar_quedan()  definer  anon=false  auth=true
 funcion  ia_guardar_alumnos(p_academia uuid, p_alumnos boolean)  definer  anon=false  auth=true
 funcion  ia_guardar_config(p_academia uuid, p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  ia_inicio_de_mes()  invoker  anon=false  auth=true
+funcion  ia_para_entrenador(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_explicar(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_para_usuario(p_usuario uuid)  definer  anon=false  auth=false
 funcion  ia_resumen_mes(p_dia date)  definer  anon=false  auth=true
@@ -3375,6 +3471,7 @@ funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=fal
 funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.cuaderno_al_cambiar()  invoker  anon=false  auth=false
 funcion  interno.cuaderno_tope()  definer  anon=false  auth=false
+funcion  interno.cuenta_cobro_estado(p_cuenta uuid)  definer  anon=false  auth=true
 funcion  interno.cuentas_invitado_abiertas(p_hoy date)  invoker  anon=false  auth=false
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
 funcion  interno.dias_entrenados(p_alumno uuid, p_lunes date)  definer  anon=false  auth=false
@@ -3407,6 +3504,7 @@ funcion  interno.items_del_tema_conjunto(p_grupo text, p_tema text)  definer  an
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
+funcion  interno.mate_finalizar(p_item uuid, p_resultado text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
@@ -3431,17 +3529,20 @@ funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.nombre_rango(p_rango text, p_titulo text)  invoker  anon=false  auth=false
 funcion  interno.norma_jugada(p_jugada text)  invoker  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_clase()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_entrenamiento()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_examen()  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
+funcion  interno.periodo_texto(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.practica_ventaja_maxima()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
+funcion  interno.pregunta_de_rango(p_item jsonb)  invoker  anon=false  auth=false
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.premiar_tema_terminado()  definer  anon=false  auth=false
 funcion  interno.premio_grupo(p_activity text)  invoker  anon=true  auth=true
@@ -3461,12 +3562,18 @@ funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=tr
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.puntos_ganados(p_alumno uuid)  definer  anon=false  auth=false
+funcion  interno.puntos_para_rango(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
+funcion  interno.rango_al_entregar()  definer  anon=false  auth=false
+funcion  interno.rango_al_ganar()  definer  anon=false  auth=false
+funcion  interno.rango_siguiente(p_rango text)  invoker  anon=false  auth=false
 funcion  interno.relevo_a_quien_le_toca(p_relevo uuid, p_fen text, p_jugadas integer)  definer  anon=false  auth=false
 funcion  interno.repertorio_coherente()  definer  anon=false  auth=false
+funcion  interno.resolver_examen_rango(p_examen uuid)  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
+funcion  interno.revisar_examen_rango(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.rondas_de_mis_alumnos()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.segundos_para_reclamar()  invoker  anon=false  auth=false
@@ -3488,7 +3595,9 @@ funcion  interno.training_progress_hora()  definer  anon=false  auth=false
 funcion  interno.tramos_jsonb(p_tramos int4multirange)  invoker  anon=false  auth=false
 funcion  interno.tramos_largos(p_tramos int4multirange, p_min integer)  invoker  anon=false  auth=false
 funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  auth=false
+funcion  interno.umbral_rango(p_rango text)  invoker  anon=false  auth=false
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
+funcion  interno.veo_cuenta_cobro(p_cuenta uuid)  definer  anon=false  auth=true
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  interno.vuelta_que_toca(p_persona uuid, p_audio uuid, p_n integer)  definer  anon=false  auth=true
@@ -3522,6 +3631,8 @@ funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=fal
 funcion  marcar_partida_revisada(p_room_id uuid)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
+funcion  mate_estado(p_item uuid, p_alumno uuid)  definer  anon=false  auth=false
+funcion  mate_registrar(p_item uuid, p_alumno uuid, p_fen_antes text, p_fen_despues text, p_jugada jsonb, p_posicion text, p_resultado text)  definer  anon=false  auth=false
 funcion  material_compartir(p_producto text, p_persona uuid, p_academia uuid, p_todos boolean, p_compartir boolean)  definer  anon=false  auth=true
 funcion  mediciones_de_partidas(p_dias integer)  definer  anon=false  auth=true
 funcion  mensajes_casa_de(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
@@ -3563,6 +3674,8 @@ funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
 funcion  mi_panel_taller()  definer  anon=false  auth=true
 funcion  mi_proxima_clase()  definer  anon=false  auth=true
+funcion  mi_rango(p_alumno uuid)  definer  anon=false  auth=true
+funcion  mi_reporte_de_pago()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
 funcion  mis_academias_audios()  definer  anon=false  auth=true
@@ -3591,6 +3704,8 @@ funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
 funcion  ocurrencias_horario(p_profesor uuid, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  otorgar_insignia(p_alumno uuid, p_tipo text, p_motivo text)  definer  anon=false  auth=true
 funcion  pago_adelantado(p_suscripcion uuid, p_periodos integer, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
+funcion  pago_reportar(p_monto numeric, p_fecha date, p_referencia text, p_comprobante text, p_nota text)  definer  anon=false  auth=true
+funcion  pago_reporte_rechazar(p_id uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  panel_profesor()  invoker  anon=false  auth=true
 funcion  panel_profesor_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  panel_supervisor_de(p_supervisor uuid)  definer  anon=false  auth=true
@@ -3691,6 +3806,7 @@ funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  rating_tactico(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
+funcion  recibo_por_whatsapp(p_recibo uuid)  definer  anon=false  auth=true
 funcion  recibos_resumen(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  reclamar_por_abandono(p_room_id uuid, p_tablas boolean)  definer  anon=false  auth=true
 funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
@@ -3791,6 +3907,7 @@ funcion  soy_profesor_de_todos(p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  soy_supervisor()  definer  anon=false  auth=true
 funcion  subgrupos_a_la_vista()  invoker  anon=false  auth=true
 funcion  subgrupos_de(p_profesor uuid)  invoker  anon=false  auth=true
+funcion  sumar_segundos_hablados(p_clase uuid, p_segundos jsonb)  definer  anon=false  auth=true
 funcion  supervisa_academia(p_academia uuid)  definer  anon=true  auth=true
 funcion  supervisado_por_mi(p_persona uuid)  definer  anon=false  auth=true
 funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
@@ -3800,6 +3917,7 @@ funcion  taller_practica_enviar(p_horario uuid, p_archivos text[], p_comentario 
 funcion  taller_practica_revisar(p_id uuid, p_aprobar boolean, p_nota text)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
 funcion  tareas_por_puntos_avance(p_regla uuid)  definer  anon=false  auth=true
+funcion  tengo_entrenador_ia()  definer  anon=false  auth=true
 funcion  tengo_herramienta(p_herramienta text)  definer  anon=false  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  torneos_externos_lista()  invoker  anon=true  auth=true
@@ -3899,6 +4017,7 @@ politica  audios_clase_vueltas  audios_clase_vueltas_select  SELECT
 politica  auditoria  auditoria_select_admin  SELECT
 politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  avisos_cuenta  avisos_cuenta_lee  SELECT
 politica  avisos_profesor  avisos_profesor_select  SELECT
 politica  bromas  bromas_ver  SELECT
 politica  bromas_apagadas  bromas_apagadas_ver  SELECT
@@ -3983,6 +4102,7 @@ politica  cobros  cobros_coordinacion_actualiza  UPDATE
 politica  cobros  cobros_coordinacion_borra  DELETE
 politica  cobros  cobros_coordinacion_escribe  INSERT
 politica  cobros  cobros_select  SELECT
+politica  cobros_ajustes  cobros_ajustes_lee  SELECT
 politica  cobros_contacto  cobros_contacto_coordinacion_actualiza  UPDATE
 politica  cobros_contacto  cobros_contacto_coordinacion_borra  DELETE
 politica  cobros_contacto  cobros_contacto_coordinacion_escribe  INSERT
@@ -4003,6 +4123,8 @@ politica  cuaderno  cuaderno_exige_acceso_upd  UPDATE  restrictiva
 politica  cuaderno  cuaderno_insert_propio  INSERT
 politica  cuaderno  cuaderno_select  SELECT
 politica  cuaderno  cuaderno_update_propio  UPDATE
+politica  cuenta_cobro_alumnos  cuenta_cobro_alumnos_lee  SELECT
+politica  cuentas_cobro  cuentas_cobro_lee  SELECT
 politica  cuentas_temporales  cuentas_temporales_ver  SELECT
 politica  cuestionario_intentos  cuestionario_intentos_select  SELECT
 politica  cuestionarios  cuestionarios_delete  DELETE
@@ -4042,6 +4164,7 @@ politica  encargados  encargados_update  UPDATE
 politica  encuesta_curso_respuestas  encuesta_curso_respuestas_ver  SELECT
 politica  encuestas_curso  encuestas_curso_admin  ALL
 politica  encuestas_profesor  encuestas_profesor_ver  SELECT
+politica  entrenador_ia_personas  entrenador_ia_personas_ver  SELECT
 politica  entreno_pedidos  entreno_pedidos_inserta_profe  INSERT
 politica  entreno_pedidos  entreno_pedidos_lee  SELECT
 politica  entreno_pedidos  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4069,6 +4192,7 @@ politica  estudios  estudios_update_propio  UPDATE
 politica  examen_items  examen_items_delete  DELETE
 politica  examen_items  examen_items_insert  INSERT
 politica  examen_items  examen_items_select  SELECT
+politica  examen_mate_partidas  examen_mate_partidas_ver  SELECT
 politica  examen_respuestas  examen_respuestas_select  SELECT
 politica  examenes  examenes_delete  DELETE
 politica  examenes  examenes_insert  INSERT
@@ -4133,6 +4257,7 @@ politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  jdn_tableros  jdn_tableros_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
+politica  llamada_participacion  llamada_participacion_select  SELECT
 politica  material_compartido  material_compartido_select  SELECT
 politica  mensajes_casa  mensajes_casa_delete  DELETE
 politica  mensajes_casa  mensajes_casa_insert  INSERT
@@ -4155,6 +4280,7 @@ politica  pagos  pagos_coordinacion_actualiza  UPDATE
 politica  pagos  pagos_coordinacion_borra  DELETE
 politica  pagos  pagos_coordinacion_escribe  INSERT
 politica  pagos  pagos_select  SELECT
+politica  pagos_reportados  pagos_reportados_lee  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
 politica  pareo_moderaciones  pareo_moderaciones_admin  SELECT
@@ -4291,6 +4417,8 @@ politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
+politica  rango_examenes  rango_examenes_ver  SELECT
+politica  rangos_alumno  rangos_alumno_ver  SELECT
 politica  realtime.messages  sala_juego_avisar  INSERT
 politica  realtime.messages  sala_juego_escuchar  SELECT
 politica  realtime.messages  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4460,6 +4588,7 @@ trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  otorgar_puntos_de_clase
 trigger  cobros  auditar
 trigger  cobros  cobros_corrige_supervision
+trigger  cobros_ajustes  auditar
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  compras_tienda  auditar
 trigger  coordinador_funciones_quitadas  auditar
@@ -4467,10 +4596,13 @@ trigger  coordinador_profesores  auditar
 trigger  course_unlocks  auditar
 trigger  cuaderno  cuaderno_al_cambiar
 trigger  cuaderno  cuaderno_tope
+trigger  cuenta_cobro_alumnos  auditar
+trigger  cuentas_cobro  auditar
 trigger  cuentas_temporales  auditar
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
+trigger  entrenador_ia_personas  auditar
 trigger  entreno_pedidos  entreno_pedido_de_la_base
 trigger  equipo_alumnos  auditar
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
@@ -4487,6 +4619,7 @@ trigger  examenes  avisar_examen_asignado
 trigger  examenes  avisar_examen_reabierto
 trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  examenes  otorgar_puntos_de_examen
+trigger  examenes  rango_al_entregar
 trigger  familia_enlaces  auditar
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
@@ -4513,6 +4646,7 @@ trigger  metropolitano_parqueo  auditar
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
+trigger  pagos_reportados  auditar
 trigger  paquete_alumnos  auditar
 trigger  paquetes_acceso  auditar
 trigger  pareo_adjuntos  auditar
@@ -4545,6 +4679,7 @@ trigger  prospectos  prospectos_sellar
 trigger  proyecto_grupos  auditar
 trigger  pruebas_gratis  auditar
 trigger  puntos_ajustes  auditar
+trigger  puntos_ajustes  rango_al_ganar
 trigger  puntos_ajustes  tareas_por_puntos_al_ganar
 trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
@@ -4654,6 +4789,8 @@ indice  aviso_destinatarios  aviso_destinatarios_alumno
 indice  aviso_destinatarios  aviso_destinatarios_pkey
 indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
+indice  avisos_cuenta  avisos_cuenta_cuenta_id_tipo_activo_hasta_correo_key
+indice  avisos_cuenta  avisos_cuenta_pkey
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
 indice  avisos_profesor  avisos_profesor_pkey
@@ -4780,11 +4917,13 @@ indice  class_sessions  class_sessions_pkey
 indice  class_sessions  class_sessions_una_abierta_por_profesor
 indice  cobros  cobros_consecutivo_key
 indice  cobros  cobros_creado_por_fk
+indice  cobros  cobros_cuenta_id
 indice  cobros  cobros_pkey
 indice  cobros  cobros_por_alumno
 indice  cobros  cobros_por_vencimiento
 indice  cobros  cobros_sin_periodos_cruzados
 indice  cobros  cobros_un_periodo_por_suscripcion
+indice  cobros_ajustes  cobros_ajustes_pkey
 indice  cobros_contacto  cobros_contacto_actualizado_por_fk
 indice  cobros_contacto  cobros_contacto_pkey
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_creado_por_fk
@@ -4806,6 +4945,9 @@ indice  course_unlocks  course_unlocks_student_id_curso_key
 indice  cuaderno  cuaderno_alumno_fecha
 indice  cuaderno  cuaderno_alumno_fen
 indice  cuaderno  cuaderno_pkey
+indice  cuenta_cobro_alumnos  cuenta_cobro_alumnos_pkey
+indice  cuenta_cobro_alumnos  cuenta_cobro_alumnos_un_alumno
+indice  cuentas_cobro  cuentas_cobro_pkey
 indice  cuentas_temporales  cuentas_temporales_fijada_por_idx
 indice  cuentas_temporales  cuentas_temporales_pkey
 indice  cuestionario_intentos  cuestionario_intentos_alumno_id_fk
@@ -4855,6 +4997,7 @@ indice  encuestas_profesor  encuestas_profesor_profesor
 indice  encuestas_profesor  encuestas_profesor_una_por_mes
 indice  enlaces_diagnostico  enlaces_diagnostico_codigo_key
 indice  enlaces_diagnostico  enlaces_diagnostico_pkey
+indice  entrenador_ia_personas  entrenador_ia_personas_pkey
 indice  entreno_pedidos  entreno_pedidos_clase
 indice  entreno_pedidos  entreno_pedidos_pkey
 indice  entreno_pedidos  entreno_pedidos_profe
@@ -4877,6 +5020,7 @@ indice  estudios  estudios_pkey
 indice  examen_items  examen_items_examen_id_orden_key
 indice  examen_items  examen_items_examen_idx
 indice  examen_items  examen_items_pkey
+indice  examen_mate_partidas  examen_mate_partidas_pkey
 indice  examen_respuestas  examen_respuestas_examen_idx
 indice  examen_respuestas  examen_respuestas_item_id_key
 indice  examen_respuestas  examen_respuestas_pkey
@@ -4953,6 +5097,7 @@ indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.premio_tema_items  premio_tema_items_item
 indice  interno.premio_tema_items  premio_tema_items_pkey
 indice  interno.premio_temas  premio_temas_pkey
+indice  interno.rango_examen_banco  rango_examen_banco_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
@@ -4977,6 +5122,8 @@ indice  licencias_herramientas  licencias_herramientas_creada_por_idx
 indice  licencias_herramientas  licencias_herramientas_otorgada_por_idx
 indice  licencias_herramientas  licencias_herramientas_persona_idx
 indice  licencias_herramientas  licencias_herramientas_pkey
+indice  llamada_participacion  llamada_participacion_persona_idx
+indice  llamada_participacion  llamada_participacion_pkey
 indice  material_compartido  material_compartido_academia_idx
 indice  material_compartido  material_compartido_academia_unica
 indice  material_compartido  material_compartido_otorgado_idx
@@ -5014,6 +5161,9 @@ indice  pagos  pagos_pkey
 indice  pagos  pagos_por_cobro
 indice  pagos  pagos_recibo_id_fk
 indice  pagos  pagos_registrado_por_fk
+indice  pagos_reportados  pagos_reportados_alumno
+indice  pagos_reportados  pagos_reportados_pkey
+indice  pagos_reportados  pagos_reportados_uno_pendiente
 indice  paquete_alumnos  paquete_alumnos_alumno_idx
 indice  paquete_alumnos  paquete_alumnos_pkey
 indice  paquetes_acceso  paquetes_acceso_academia_idx
@@ -5168,6 +5318,10 @@ indice  quiniela_participantes  quiniela_participantes_un_correo_por_sala
 indice  quiniela_partidas  quiniela_partidas_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_sala
+indice  rango_examenes  rango_examenes_alumno
+indice  rango_examenes  rango_examenes_pkey
+indice  rango_examenes  rango_examenes_uno_pendiente
+indice  rangos_alumno  rangos_alumno_pkey
 indice  recibo_contadores  recibo_contadores_pkey
 indice  recibos  recibos_academia_id_fk
 indice  recibos  recibos_emitido_por_fk
@@ -5353,6 +5507,7 @@ cron  centroamericano-copia-drive  */10 * * * *
 cron  centroamericano-copia-hora  0 * * * *
 cron  cerrar-clases-inactivas  */10 * * * *
 cron  cerrar-seminarios-inactivos  */15 * * * *
+cron  cobros-cuentas-avisos  30 13 * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
 cron  cobros-recordatorios-programados  */5 * * * *
@@ -5686,6 +5841,10 @@ grant  cobros  authenticated  SELECT
 grant  cobros  authenticated  TRIGGER
 grant  cobros  authenticated  TRUNCATE
 grant  cobros  authenticated  UPDATE
+grant  cobros_ajustes  authenticated  REFERENCES
+grant  cobros_ajustes  authenticated  SELECT
+grant  cobros_ajustes  authenticated  TRIGGER
+grant  cobros_ajustes  authenticated  TRUNCATE
 grant  cobros_contacto  authenticated  DELETE
 grant  cobros_contacto  authenticated  INSERT
 grant  cobros_contacto  authenticated  REFERENCES
@@ -5742,6 +5901,21 @@ grant  cuaderno  authenticated  SELECT
 grant  cuaderno  authenticated  TRIGGER
 grant  cuaderno  authenticated  TRUNCATE
 grant  cuaderno  authenticated  UPDATE
+grant  cuenta_cobro_alumnos  authenticated  REFERENCES
+grant  cuenta_cobro_alumnos  authenticated  SELECT
+grant  cuenta_cobro_alumnos  authenticated  TRIGGER
+grant  cuenta_cobro_alumnos  authenticated  TRUNCATE
+grant  cuentas_cobro  authenticated  REFERENCES
+grant  cuentas_cobro  authenticated  SELECT
+grant  cuentas_cobro  authenticated  TRIGGER
+grant  cuentas_cobro  authenticated  TRUNCATE
+grant  cuentas_cobro_vista  authenticated  DELETE
+grant  cuentas_cobro_vista  authenticated  INSERT
+grant  cuentas_cobro_vista  authenticated  REFERENCES
+grant  cuentas_cobro_vista  authenticated  SELECT
+grant  cuentas_cobro_vista  authenticated  TRIGGER
+grant  cuentas_cobro_vista  authenticated  TRUNCATE
+grant  cuentas_cobro_vista  authenticated  UPDATE
 grant  cuentas_temporales  authenticated  SELECT
 grant  cuestionario_intentos  authenticated  SELECT
 grant  cuestionarios  authenticated  DELETE
@@ -5857,6 +6031,7 @@ grant  encuestas_curso  authenticated  INSERT
 grant  encuestas_curso  authenticated  SELECT
 grant  encuestas_curso  authenticated  UPDATE
 grant  encuestas_profesor  authenticated  SELECT
+grant  entrenador_ia_personas  authenticated  SELECT
 grant  entreno_pedidos  anon  DELETE
 grant  entreno_pedidos  anon  INSERT
 grant  entreno_pedidos  anon  REFERENCES
@@ -5944,6 +6119,7 @@ grant  examen_items  authenticated  SELECT
 grant  examen_items  authenticated  TRIGGER
 grant  examen_items  authenticated  TRUNCATE
 grant  examen_items  authenticated  UPDATE
+grant  examen_mate_partidas  authenticated  SELECT
 grant  examen_respuestas  anon  DELETE
 grant  examen_respuestas  anon  INSERT
 grant  examen_respuestas  anon  REFERENCES
@@ -6101,6 +6277,20 @@ grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
 grant  licencias_herramientas  authenticated  SELECT
+grant  llamada_participacion  anon  DELETE
+grant  llamada_participacion  anon  INSERT
+grant  llamada_participacion  anon  REFERENCES
+grant  llamada_participacion  anon  SELECT
+grant  llamada_participacion  anon  TRIGGER
+grant  llamada_participacion  anon  TRUNCATE
+grant  llamada_participacion  anon  UPDATE
+grant  llamada_participacion  authenticated  DELETE
+grant  llamada_participacion  authenticated  INSERT
+grant  llamada_participacion  authenticated  REFERENCES
+grant  llamada_participacion  authenticated  SELECT
+grant  llamada_participacion  authenticated  TRIGGER
+grant  llamada_participacion  authenticated  TRUNCATE
+grant  llamada_participacion  authenticated  UPDATE
 grant  material_compartido  authenticated  SELECT
 grant  mensajes_casa  authenticated  DELETE
 grant  mensajes_casa  authenticated  INSERT
@@ -6143,6 +6333,10 @@ grant  pagos  authenticated  SELECT
 grant  pagos  authenticated  TRIGGER
 grant  pagos  authenticated  TRUNCATE
 grant  pagos  authenticated  UPDATE
+grant  pagos_reportados  authenticated  REFERENCES
+grant  pagos_reportados  authenticated  SELECT
+grant  pagos_reportados  authenticated  TRIGGER
+grant  pagos_reportados  authenticated  TRUNCATE
 grant  paquete_alumnos  authenticated  REFERENCES
 grant  paquete_alumnos  authenticated  SELECT
 grant  paquete_alumnos  authenticated  TRIGGER
@@ -6447,6 +6641,8 @@ grant  questions  authenticated  UPDATE
 grant  quiniela_participantes  authenticated  SELECT
 grant  quiniela_partidas  authenticated  SELECT
 grant  quiniela_pronosticos  authenticated  SELECT
+grant  rango_examenes  authenticated  SELECT
+grant  rangos_alumno  authenticated  SELECT
 grant  recibos  authenticated  REFERENCES
 grant  recibos  authenticated  SELECT
 grant  recibos  authenticated  TRIGGER

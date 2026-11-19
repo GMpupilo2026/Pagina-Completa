@@ -15,6 +15,9 @@
 //   "recibo_ver"        { recibo_id }   -> el HTML del recibo de un pago, para
 //                                          verlo, imprimirlo o guardarlo en PDF
 //   "recibo_enviar"     { recibo_id, correos? } -> lo manda a la familia
+//   "tanda_cuentas"     {}              -> los avisos de las cuentas de cobro
+//                                          (mensualidades.html), solo si quien
+//                                          administra los encendió
 //
 // EL RECIBO LO MANDA QUIEN SUPERVISA, no quien coordina: quien coordina
 // registra el pago, y el supervisor de la academia (o administración) lo
@@ -43,6 +46,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { avisoHtml, asuntoDe, DE_FABRICA, type Tipo, type Textos } from "./aviso-html.ts";
 import { reciboHtml, asuntoRecibo } from "./recibo-html.ts";
+import { cuentaAvisoHtml, asuntoCuenta, type TipoCuenta } from "./cuenta-aviso-html.ts";
 import type { Marca } from "./marca-correo.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
@@ -299,6 +303,51 @@ Deno.serve(async (req) => {
         // Se apunta DESPUÉS de que Resend lo aceptó: si falla, mañana se
         // reintenta en vez de darlo por mandado.
         await admin.from("avisos_cobro").insert({ cobro_id: g.disparador.id, tipo: g.tipo, correo: d.email });
+        mandados += 1;
+      }
+    }
+    return json({ ok: true, mandados, saltados, fallos });
+  }
+
+  // ------------------------------------------- los avisos de las cuentas
+  // Cobros, versión 2 (mensualidades.html). Qué aviso le toca hoy a cada
+  // cuenta lo decide la base (cuentas_para_avisar(), que no devuelve nada si
+  // quien administra no encendió los avisos). Un correo por destinatario y
+  // por aviso: el índice único de avisos_cuenta lo garantiza, y se apunta
+  // DESPUÉS de que Resend lo acepta.
+  if (accion === "tanda_cuentas") {
+    const { data: esperado } = await admin.rpc("secreto_tanda_cobros");
+    if (!esperado || !jwt || jwt !== esperado) {
+      return json({ error: "Esta acción solo la dispara el programador de tareas" }, 401);
+    }
+    const { data: filas, error: errC } = await admin.rpc("cuentas_para_avisar");
+    if (errC) return json({ error: errC.message }, 500);
+    const { data: aj } = await admin.from("cobros_ajustes").select("sinpe_numero, sinpe_nombre").maybeSingle();
+    let mandados = 0, saltados = 0, hechos = 0;
+    const fallos: string[] = [];
+    for (const f of (filas ?? []) as { cuenta_id: string; tipo: TipoCuenta; activo_hasta: string; apaga_el: string | null;
+                                        nombre: string; monto: number; moneda: string; alumnos: string[] }[]) {
+      if (!f.tipo || !f.alumnos?.length) { saltados += 1; continue; }
+      if (hechos >= MAX_POR_TANDA) break;
+      // A quién: lo mismo que los avisos de siempre, por cada alumno de la cuenta, sin repetir correos.
+      const destinos = new Map<string, string>();
+      for (const a of f.alumnos) for (const d of await destinatariosDe(a)) if (!destinos.has(d.email)) destinos.set(d.email, d.nombre);
+      const remite = await remitenteDe(admin, f.alumnos[0], DE);
+      for (const [email, nombreDest] of destinos) {
+        if (hechos >= MAX_POR_TANDA) break;
+        const { data: yaFue } = await admin.from("avisos_cuenta").select("id")
+          .eq("cuenta_id", f.cuenta_id).eq("tipo", f.tipo).eq("activo_hasta", f.activo_hasta).eq("correo", email).maybeSingle();
+        if (yaFue) { saltados += 1; continue; }
+        const html = cuentaAvisoHtml({
+          tipo: f.tipo, nombre: f.nombre, destinatario: nombreDest, monto: f.monto, moneda: f.moneda,
+          hasta: f.activo_hasta, apagaEl: f.apaga_el, sinpe: (aj?.sinpe_numero as string) ?? null,
+          sinpeNombre: (aj?.sinpe_nombre as string) ?? null, sitio: SITE_URL, contacto: contacto?.texto ?? null,
+          cabecera: (t) => cabeceraCorreo(remite.marca, t),
+        });
+        const r = await mandar(email, asuntoCuenta(f.tipo, f.nombre, firmaDe(remite.marca)), html, remite);
+        hechos += 1;
+        if (!r.ok) { fallos.push(`${email}: ${r.error}`); continue; }
+        await admin.from("avisos_cuenta").insert({ cuenta_id: f.cuenta_id, tipo: f.tipo, activo_hasta: f.activo_hasta, correo: email });
         mandados += 1;
       }
     }

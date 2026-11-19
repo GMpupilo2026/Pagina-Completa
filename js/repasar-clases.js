@@ -147,18 +147,122 @@ async function cargarGrabacion(claseId){
       audio.addEventListener('seeked', seguir);
       audio.addEventListener('play', seguir);
     }
+    const temas = temasDeLaParte(g.marcas, audio, i);
     // Al terminar una parte sigue la siguiente.
     audio.addEventListener('ended', () => {
       const sig = document.getElementById('grabacion-parte-' + (i + 1));
       if (sig) sig.play().catch(() => {});
     });
-    li.append(etiqueta, audio, cajaDeTexto(g, url.get(g.ruta), i));
+    li.append(etiqueta, audio);
+    if (temas) li.appendChild(temas);
+    li.appendChild(cajaDeTexto(g, url.get(g.ruta), i));
     lista.appendChild(li);
   });
   caja.hidden = !lista.children.length;
   const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
   document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
   document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
+}
+
+/* Cuánto habló cada alumno en la llamada de la clase (lo midió la página del
+   profe: llamada_participacion). Al alumno, solo lo suyo (la RLS no le da lo
+   de los demás); al profe y a administración, todos, del que más habló al que
+   menos, y quiénes estuvieron en la clase y no hablaron. Sin llamada no se ve. */
+let habladoPedido = 0;
+function textoDeSegundos(s){
+  const m = Math.floor((s || 0) / 60);
+  return m < 1 ? 'menos de un minuto' : m + (m === 1 ? ' minuto' : ' minutos');
+}
+async function cargarHablado(claseId){
+  const caja = document.getElementById('visor-hablado');
+  const lista = document.getElementById('visor-hablado-lista');
+  const callados = document.getElementById('visor-hablado-callados');
+  const pedido = ++habladoPedido;
+  caja.hidden = true;
+  lista.textContent = '';
+  callados.hidden = true;
+  if (!claseId) return;
+  const [h, a] = await Promise.all([
+    sb.from('llamada_participacion').select('persona_id, segundos').eq('class_session_id', claseId).order('segundos', { ascending: false }).range(0, 199),
+    sb.from('class_attendance').select('student_id, profiles(full_name)').eq('session_id', claseId).range(0, 199),
+  ]);
+  if (pedido !== habladoPedido || h.error || !h.data || !h.data.length) return;
+  const asistentes = a.error ? [] : (a.data || []);
+  const nombre = new Map(asistentes.map((x) => [x.student_id, (x.profiles && x.profiles.full_name) || 'Alguien']));
+  const soyAlumno = nombre.has(yoId);
+  const filas = soyAlumno ? h.data.filter((f) => f.persona_id === yoId) : h.data;
+  if (!filas.length) return;
+  for (const f of filas) {
+    const li = document.createElement('li');
+    li.textContent = soyAlumno ? 'Hablaste ' + textoDeSegundos(f.segundos) + '.'
+      : (nombre.get(f.persona_id) || 'Alguien') + ': ' + textoDeSegundos(f.segundos);   // nombres: textContent
+    lista.appendChild(li);
+  }
+  if (!soyAlumno) {
+    const hablaron = new Set(h.data.map((f) => f.persona_id));
+    const nada = asistentes.filter((x) => !hablaron.has(x.student_id)).map((x) => nombre.get(x.student_id));
+    callados.hidden = !nada.length;
+    callados.textContent = nada.length ? 'No hablaron: ' + nada.join(', ') + '.' : '';
+  }
+  caja.hidden = false;
+}
+
+/* Los temas de una parte, como capítulos: los anotó sola la página del profe
+   al grabar, cada vez que la clase cambió de diapositiva, de práctica, de
+   calentamiento, de tiempo para pensar o de posición (marcas con `tema`).
+   Cada uno es un botón que lleva el audio a ese minuto y lo hace sonar; el
+   que está sonando se marca (aria-current y «▶», no solo el color). Las
+   grabaciones de antes no tienen temas y no muestran nada. */
+function minutoYSegundo(s){
+  const t = Math.max(0, Math.floor(s || 0));
+  return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+}
+function temasDeLaParte(marcas, audio, i){
+  const temas = Array.isArray(marcas)
+    ? marcas.filter((m) => m && typeof m.tema === 'string' && m.tema.trim() && isFinite(m.s)) : [];
+  if (!temas.length) return null;
+  const det = document.createElement('details');
+  det.className = 'mt-1';
+  det.open = temas.length <= 6;
+  const sum = document.createElement('summary');
+  sum.className = 'cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+  sum.textContent = `Temas de esta parte (${temas.length})`;
+  const ol = document.createElement('ol');
+  ol.className = 'mt-1 space-y-1';
+  ol.id = 'grabacion-temas-' + i;
+  const botones = temas.map((m) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+    const quien = document.createElement('span');
+    quien.className = 'grabacion-tema-marca';
+    quien.setAttribute('aria-hidden', 'true');
+    const texto = document.createElement('span');
+    texto.textContent = minutoYSegundo(m.s) + ' · ' + m.tema;   // lo escribió el profe (un título): textContent
+    b.append(quien, texto);
+    b.addEventListener('click', () => {
+      audio.currentTime = Math.max(0, m.s);
+      audio.play().catch(() => {});
+    });
+    li.appendChild(b);
+    ol.appendChild(li);
+    return { m, b, quien };
+  });
+  const marcar = () => {
+    let actualTema = null;
+    for (const x of botones) { if (x.m.s <= audio.currentTime + 0.05) actualTema = x; else break; }
+    for (const x of botones) {
+      const es = x === actualTema && audio.currentTime > 0;
+      x.b.setAttribute('aria-current', es ? 'true' : 'false');
+      x.quien.textContent = es ? '▶ ' : '';
+      x.b.classList.toggle('font-semibold', es);
+    }
+  };
+  audio.addEventListener('timeupdate', marcar);
+  audio.addEventListener('seeked', marcar);
+  det.append(sum, ol);
+  return det;
 }
 
 /* Lo que se dijo en una parte, en texto. Si ya está guardado, se muestra
@@ -251,6 +355,7 @@ function abrir(p){
   // Otra clase: la práctica contra el motor era de la posición de la anterior.
   terminarPractica(false);
   cargarGrabacion(p.class_session_id).catch(() => {});
+  cargarHablado(p.class_session_id).catch(() => {});
   const { datos, sinDatos } = datosDe(p);
   const raiz = PgnClase.arbol(datos.jugadas || [], datos.variantes || []);
   const inicio = datos.inicio || PgnClase.INICIAL;

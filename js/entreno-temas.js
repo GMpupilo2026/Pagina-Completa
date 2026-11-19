@@ -700,6 +700,7 @@ function jugadaDicha(san){
 function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function loadPuzzle(){
+  if(window.EntrenadorIA) EntrenadorIA.limpiar();
   const puzzle = currentPuzzle();
   if(finEjercicio){ finEjercicio.cerrar(); finEjercicio = null; }
   document.getElementById('play-area').style.display = 'block';
@@ -803,8 +804,12 @@ function playMove(from, to, promotion){
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
     // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
     setStatus(ComandosTablero.incorrecta(jugadaDicha(moveResult.san), refuta || ''), 'bad');
+    // El entrenador de IA, para quien lo tiene encendido (js/entrenador-ia.js):
+    // la posición de antes de la jugada y la jugada que hizo.
+    if(window.EntrenadorIA) EntrenadorIA.fallo({ fen: game.fen(), uci: from + to + (moveResult.promotion || '') });
     return;
   }
+  if(window.EntrenadorIA) EntrenadorIA.limpiar();
   lastMove = { from, to };
   pistas.reiniciar();   // la marca de la pista ya no apunta a nada
   drawBoard();

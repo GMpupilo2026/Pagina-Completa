@@ -107,6 +107,19 @@ const sembrar = (t) => (page) => page.addInitScript((x) => {
     igual("las cámaras mesa por mesa, con el estado escrito", await page.$$eval("[data-centro-camara]", (l) => l.map((x) => [x.dataset.centroCamara, x.dataset.estado, x.textContent])),
       [["1", "termino", "Mesa 1Terminó"], ["2", "sinSenal", "Mesa 2Sin señal"], ["3", "transmite", "Mesa 3Transmite"], ["4", "sinSenal", "Mesa 4Sin señal"]]);
 
+    // Tocar una mesa muestra su QR: un teléfono para esa mesa.
+    igual("cada mesa es un botón que dice si su QR está abierto", await page.$$eval("[data-centro-camara] button", (l) => l.map((x) => x.getAttribute("aria-expanded"))), ["false", "false", "false", "false"]);
+    await page.click('[data-centro-camara="2"] button');
+    await page.waitForSelector('#pi-centro-qr [data-centro-qr="2"] svg', { timeout: 8000 }).catch(() => {});
+    igual("tocar la mesa 2 muestra su QR, que abre Notara en esa mesa de este torneo", [await page.getAttribute("#pi-centro-qr [data-centro-qr]", "data-enlace").then((x) => x.replace(/^.*\//, "")), await page.$eval('[data-centro-camara="2"] button', (x) => x.getAttribute("aria-expanded")), await page.$eval("#pi-centro-qr", (x) => x.checkVisibility())],
+      ["camara-tablero.html#t=" + PUB + "&c=camprue2&m=2&r=0", "true", true]);
+    ok(/Mesa 2: un teléfono para esta mesa/.test(await page.textContent("#pi-centro-qr")) && await page.$eval("#pi-centro-qr svg", (x) => /mesa 2/.test(x.getAttribute("aria-label"))), "dice de qué mesa es, escrito y en el QR");
+    igual("y el foco sigue en esa mesa", await page.evaluate(() => document.activeElement.closest("[data-centro-camara]")?.dataset.centroCamara), "2");
+    await page.click('[data-centro-camara="2"] button');
+    await page.waitForFunction(() => !document.getElementById("pi-centro-qr").checkVisibility(), null, { timeout: 5000 }).catch(() => {});
+    igual("tocarla otra vez lo cierra", [await page.$eval("#pi-centro-qr", (x) => x.checkVisibility()), await page.$eval('[data-centro-camara="2"] button', (x) => x.getAttribute("aria-expanded"))], [false, "false"]);
+    ok(await P.vis(page, "#pi-centro-camaras-qr"), "y desde aquí también se imprimen los QR de todas las mesas");
+
     await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "pareo-adjunto-prueba23" && x.evento === "estado"), null, { timeout: 8000 }).catch(() => {});
     igual("al adjunto le manda el código de las cámaras y el torneo publicado", await page.evaluate(() => { const x = window.__enviados.filter((y) => y.canal === "pareo-adjunto-prueba23" && y.evento === "estado").pop(); return x && [x.payload.camaras, x.payload.torneo]; }), ["camprue2", PUB]);
 

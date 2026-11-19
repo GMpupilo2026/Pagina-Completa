@@ -4928,3 +4928,59 @@ editar a mano una medida y la calibración sin el paso de gradiente.
 las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+## El entrenador de IA
+
+Salió de comparar la Academia con otras plataformas (18/11/2026): varias
+tienen un «entrenador» que explica por qué una jugada pierde. El dueño pidió
+construirlo con una condición: **«yo decido a quién se le activa»**.
+
+- **Dónde aparece**: un botón «¿Por qué?» debajo del aviso de «Respuesta
+  incorrecta», en Táctica por tema (`entreno/temas.html`) y en Mates
+  (`entreno/mates.html`). No es un chat: una pregunta, una respuesta. En el
+  reto contra un compañero no aparece.
+- **Quién lo tiene**: nadie, hasta que quien administra lo enciende persona
+  por persona en la ficha de `admin.html` («Entrenador de IA», un
+  `role="switch"` que se pinta con lo que devuelve la base). Tabla
+  `entrenador_ia_personas`, sin política de escritura y con auditoría;
+  `activar_entrenador_ia()` exige `soy_admin()`. Ni un profesor ni quien
+  coordina lo pueden encender: cada explicación cuesta dinero. El navegador
+  pregunta `tengo_entrenador_ia()` (quien administra lo ve siempre, para
+  probarlo). No es la casilla `academia_ia.alumnos` de «Explícame esta
+  posición», que abre a toda una academia.
+- **Quien decide qué era mejor es Stockfish, no la IA.** `js/entrenador-ia.js`
+  analiza en el navegador (el motor compartido, profundidad 14) la mejor línea
+  desde la posición y cómo sigue el motor después de la jugada del alumno. La
+  Edge Function `entrenador-ia` vuelve a jugar todo con chess.js y le pasa al
+  modelo solo eso, con la lista de piezas escrita.
+- **Una jugada que el motor ve casi igual de buena no se «explica»**: el
+  ejercicio guarda UNA solución, y si la del alumno vale menos de 0,6 peones
+  de diferencia la función contesta, sin llamar al modelo y sin gastar, que su
+  jugada también sirve. Pedirle a la IA que explique por qué está mal una
+  jugada buena es pedirle que invente.
+- **Ninguna jugada inventada llega al alumno**: si la explicación nombra una
+  jugada de pieza, una captura o un enroque que no está en las líneas, se
+  descarta entera (422) y se anota por qué. Es el molde de «Explícame esta
+  posición», que corre en Supabase desde el 9/11 y cuyo código nunca entró al
+  repositorio; el entrenador es una función aparte y no la toca.
+- **Lo que viaja al modelo**: la posición y las jugadas. Nada de la persona
+  (ni nombre, ni edad, ni grupo, ni de qué ejercicio viene). `profiles` no
+  guarda la edad, así que el tono «para un niño o un joven» va fijo en las
+  instrucciones.
+- **El gasto**: el mismo `academia_ia` e `ia_uso` de «Mejorar informe», con
+  `que = 'entrenador'`, y un tope por persona y por día en hora de Costa Rica:
+  15 (50 para quien da clase). Todo lo contesta `ia_para_entrenador()`, que es
+  solo de la service role. Lo peor que puede costar la llamada se calcula
+  antes, como en «Mejorar informe».
+- **Los colores del botón son los del texto de la página** (hereda): no se
+  eligió ninguno, y por eso no hay contraste nuevo que medir.
+- **Hace falta la clave**: sin el secreto `ANTHROPIC_API_KEY` en las Edge
+  Functions de Supabase la función contesta «todavía no está configurado». Al
+  18/11/2026 ese secreto nunca se había puesto en el proyecto (`ia_uso`
+  vacío), y solo una academia tenía presupuesto de IA; para quien no tiene
+  academia hace falta la fila general en Academias.
+
+Al tocar esto, `node herramientas/verificar-todo.js entrenador-ia`. Rompiendo
+a propósito el permiso (`tengo_entrenador_ia` siempre true en el doble) o la
+conversión del puntaje a «desde las blancas», salta.
+

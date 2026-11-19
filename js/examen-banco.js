@@ -261,6 +261,17 @@ window.ExamenBanco = (function () {
     };
   }
 
+  /* Un ejercicio dado (por id y tema) como pregunta: la misma deTactica().
+     La usa herramientas/rangos-examen-banco.js, que arma el banco de los
+     exámenes de rango; así la conversión sigue siendo una sola. Devuelve null
+     si el ejercicio no está entre los de examen (subpromoción, sin rating…). */
+  function preguntaDeTactica(id, temaKey) {
+    if (!tactica) throw new Error("Los ejercicios de táctica todavía no están cargados.");
+    const t = tactica.temas.find((x) => x.key === temaKey);
+    if (!t || !t.ids.includes(id)) return null;
+    return deTactica({ id, peso: pesoDeRating(tactica.ejercicios[id].rating), tema: t });
+  }
+
   /* ---------- Pasar una pregunta del banco al examen ---------- */
 
   /* Las preguntas del diagnóstico que ya se sortearon (por item_id) con su
@@ -561,7 +572,7 @@ window.ExamenBanco = (function () {
   }
 
   return { AREAS_DEL_CURSO, armar, completar, disponibles, cursosConPreguntas, minutosRecomendados,
-           cargarTactica, tacticaCargada, temasDeTactica, nombreDeTema,
+           cargarTactica, tacticaCargada, temasDeTactica, nombreDeTema, preguntaDeTactica,
            _barajar: barajar, _azar: azar };
 })();
 

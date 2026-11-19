@@ -9361,6 +9361,61 @@ Lo prueban `verificar-pareo-adjuntos.js` (la forma equivocada sin preguntar
 a la base, el que no existe, el bueno escrito como venga con el rango de la
 base, `#codigo=…` solo) y `verificar-candado-herramienta.js` (la casilla se ve
 sin sesión y sin el editor; quitada la entrada `#codigo`, salta).
+
+### Un teléfono para cada mesa, desde Pareo Integral
+
+Pedido del dueño el 18/11/2026: que desde Pareo Integral o la Mesa del árbitro
+se le pueda decir a Notara «transmite ESTA mesa» sin dar vueltas; que, así
+como se asignan árbitros a las mesas, se asignen teléfonos, y que con leer un
+código el celular quede en esa transmisión.
+
+El QR por mesa ya existía (ver «La cámara sin cuenta con el QR de la mesa»),
+pero solo lo armaba Notara: había que entrar a `camara-tablero.html` con
+cuenta de administración, elegir el torneo publicado, imprimir la hoja, y
+después volver a Pareo Integral a **copiar a mano** el código de 8 letras en
+«Recibir de las cámaras». Ahora sale todo del lado del árbitro:
+
+- **El código ya viene puesto.** «Recibir de las cámaras» (y «Poner cámaras en
+  las mesas», en el Centro del evento) abre el formulario con el código del
+  torneo o, si no tenía, **uno nuevo** (`PartidaEnVivo.nuevoCodigo`): se toca
+  «Recibir» y listo. Quien ya tiene cámaras andando con otro código, lo
+  escribe encima. Ahí mismo se elige el **retraso de la transmisión pública**
+  (0, 5, 10, 15 o 30 min; `camaras.retraso`, que no se guarda si es 0).
+- **«Imprimir el QR de cada mesa»** (en la caja de las cámaras de la ronda y
+  en el Centro): un rótulo por mesa de la sala (`V.mesaFisica`, las que
+  necesita el torneo), con la hoja de los rótulos de mesa. **Sirve para todo
+  el torneo**: la mesa es la de la sala y la cámara sigue la última ronda.
+- **Tocar una mesa en el Centro del evento muestra su QR en la pantalla**
+  (`verQrDeMesa`): para el celular que llega tarde o el que hubo que cambiar,
+  sin imprimir nada. Cada mesa es un botón con su `aria-expanded`; el QR
+  abierto va en el modelo que compara el Centro (`qr`), así el repintado de
+  cada 4 s no lo cierra.
+- **El adjunto también**: en su celular (`pareo.html`) y en la Mesa del
+  árbitro, una mesa de la que no llega nada ofrece **«Poner un teléfono en
+  esta mesa»**, que muestra el mismo QR y el enlace para abrir la cámara en
+  ese aparato. Una sola copia, en `PareoCamarasAdjunto.pintar`
+  (`ponerTelefono`); el retraso le llega con el estado (`camRetraso`).
+- **Una sola copia del enlace**: `PartidaEnVivo.enlaceCamara({ torneo, codigo,
+  mesa, tablero, retraso })`, que usan la hoja de QR de Notara, Pareo Integral
+  y el adjunto. Es el de siempre
+  (`camara-tablero.html#t=…&c=…&m=…&r=…`), todo después del `#`.
+- **No abre nada que no estuviera abierto**: el QR lleva lo mismo que el de
+  Notara (el id del torneo publicado, que es público, y el código del canal).
+  Quien lo lee puede transmitir esa mesa; el resultado sigue sin anotarse
+  solo.
+- **En equipos, no**: cada tablero de un encuentro lleva su cámara (`&b=`), y
+  esa hoja la sigue armando Notara.
+- **El retraso va en el QR**: si se cambia después de imprimir, hay que
+  volver a imprimirlos (lo dice el formulario).
+
+Lo prueban `verificar-pareo-camaras.js` (el código ya puesto, un QR por mesa
+con el torneo, el código y su mesa, el mismo enlace que arma la cámara, el
+retraso en el QR), `verificar-pareo-centro.js` (tocar la mesa muestra su QR,
+dice si está abierto, el foco se queda y se cierra),
+`verificar-pareo-adjuntos.js` y `verificar-mesa-arbitro-pareo.js` («Poner un
+teléfono en esta mesa», y que una mesa que ya transmite no lo ofrezca) y
+`verificar-camara-tablero.js` (la hoja de Notara sigue dando el mismo enlace).
+
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
@@ -15845,6 +15900,110 @@ U20 la U16, con «Apellidos, Nombre», el sexo, la fecha y el
 consentimiento), un torneo cerrado en Pareo, el cierre de las bases, nada en
 el navegador y el celular. Rompiendo a propósito el filtro del sello,
 saltan tres comprobaciones; el de la federación de FIDE, dos.
+
+### Los gafetes de la Eliminatoria Cantonal JDN de Pérez Zeledón
+
+Pedido del dueño el 18/11/2026: «para el torneo de ADAPZ, les daremos
+gafetes a todos los participantes, siguiendo la misma idea del
+centroamericano, además el QR que funcione para poder escanearlo y poder ver
+la ficha de cada jugador, para que sepa en qué mesa le toca ronda a ronda, ver
+sus pts y su puesto actual».
+
+- **Salen de `gafetes.html`, el mismo de los del Centroamericano** (ver
+  «Creación de gafetes» en `paneles.md`): mismo dibujo, mismo PDF de la
+  imprenta (10 × 14 cm, fondo a 450 dpi, letras en curvas). Lo nuevo:
+  - «Partir de la Eliminatoria JDN PZ 2026» (`disenoJdnPz` en
+    `js/gafetes.js`): **5,5 × 8,5 cm** (la medida que pidió el dueño, no la
+    de 10 × 14), los logos de la ADAPZ y del CCDR, la profe Karina con su
+    gafete (`img/avatar-profe-karina/bienvenidos.webp`) donde iba el pizote
+    (solo en quien no tiene foto) y, en el dorso, la profe Karina «presentando»
+    con la mano hacia el QR (`ilustracionDorso`, abajo y pegada al QR; el
+    texto del QR no pasa entonces del ancho del QR), el horario de las bases (el de `#calendario`), un color por edad
+    con su contraste medido contra la letra blanca (U12 `#1d64b0` 6,0:1, U16
+    `#0e7490` 5,4:1, U20 `#1b2a4a` 14,2:1; la categoría va también escrita en
+    la franja y de lado en el dorso), el código «U12 01» y un PDF por torneo.
+  - «Traer los jugadores de la Eliminatoria JDN PZ (Pareo Integral)», en lugar
+    del Excel (`filasJdnPz`): los dos torneos los encuentra
+    `JdnPzInscripcion.buscarTorneos()` (`js/jdn-pz-inscripcion.js`, el mismo
+    buscador del formulario, con el filtro del sello: una «ADAPZ» sin sello
+    no cuenta) y se lee lo publicado en `pareo_publicados`, que es de lectura
+    pública. Salen los que el árbitro ya aceptó, sin los retirados, por
+    torneo y por nombre, con «Apellidos, Nombre» partido en dos. **El ID FIDE
+    no se publica nunca** (va como huella, `ident`), así que el gafete lleva
+    el club y el Elo. Hay que volver a traerlos después del cierre de las
+    inscripciones (viernes 20) para que estén todos; lo dice la página.
+- **El QR es de cada jugador y no cambia nunca**: lleva a
+  `torneos-pareo#t=<torneo>&j=<jugador>`, su ficha en el torneo publicado.
+  Por el id del jugador y no por el nombre: si el árbitro corrige cómo está
+  escrito, el QR impreso sigue sirviendo (y si el id ya no está, la página
+  prueba con `&n=<nombre>`). Lo que cambia ronda a ronda lo lee la página al
+  abrirse y cada minuto. Para eso el dibujo aprendió que **la dirección del
+  QR puede llevar una columna** (`{QR}`, `esPlantilla` en
+  `js/gafetes-dibujo.js`): cada gafete lleva el suyo en `g.qr` y su propio
+  fondo de dorso; sin el dato, ese gafete sale sin QR, nunca con el de otro.
+  Y una línea opcional arriba del QR (`dorso.qrTexto`, dos renglones con
+  «|»): «Escanéalo: tu mesa en cada ronda, tus puntos y tu puesto».
+- **La ficha del jugador en `torneos-pareo.html` trae arriba «Ahora»**
+  (`cajaAhora` en `js/torneos-pareo-pagina.js`, para todo torneo individual
+  publicado, no solo este): la ronda más nueva con **la mesa en grande**, el
+  color y el rival con su Elo (o «Libre», o lo que sacó), y el puesto «de N»
+  con sus puntos tras la última ronda completa. Antes del pareo dice que la
+  mesa sale ahí en cuanto el árbitro publique la ronda 1. La tabla de sus
+  rondas suma la columna «Mesa». La mesa es la de la sala (`V.mesaFisica`),
+  la misma de la plantilla, los rótulos y las planillas.
+
+- **La foto de cada jugador** (pedido del dueño, con la carpeta del
+  fotógrafo en Drive): «Subir las fotos» las toma todas juntas y las
+  empareja solas por el nombre del archivo (`emparejar` en `js/gafetes.js`).
+  El fotógrafo las nombró «21 SUSSY.jpg»: un número y el primer nombre, y
+  dos de cada una (la de «MEDIOS DIGITALES» lleva su marca y no entra si está
+  la otra). Cuenta que todas las palabras del archivo estén en el nombre del
+  jugador (una letra sola es una inicial: «SAMUEL M»); de las que le sirven
+  gana la más precisa («SOFIA BADILLA» antes que «SOFIA») y, si empatan, la
+  que empieza por su primer nombre («Yariela Sofía»: YARIELA, no SOFIA); un
+  archivo que le serviría a dos no es de ninguno. Con las 46 fotos y los 32
+  aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
+  dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
+  Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
+  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  computadora ni se guardan**, como el Excel: se achican en el navegador y se
+  pierden al cerrar la página.
+- **El recorte**: son de medio cuerpo frente al tablero, así que se
+  recortan a pasaporte (`fotoRecorte`) desde **donde empieza la persona**:
+  el fondo del fotógrafo es blanco, y la primera fila con más de un 4 % de
+  puntos oscuros en la franja del recorte es el pelo (`topeDeLaPersona`).
+  Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
+  abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
+  con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
+  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  por el chat) no se recorta de más: entra entera a lo alto.
+- **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
+  cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
+  73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma
+  caja el de la ADAPZ salía un 12 % más alto. Con `logosSinMargen`
+  (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
+  cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
+  cada uno en el píxel.
+- **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
+  debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
+  salieron del frente (también lo pidió el dueño). La categoría sigue de lado
+  en el dorso y en el color de la franja. En el dorso,
+  el horario va centrado en lo que queda libre (`dorso.horarioCentro`).
+- **Con foto, la foto va en el medio y el nombre debajo** (`fotoCentro`,
+  pedido del dueño), con los detalles centrados debajo del nombre; sin foto,
+  el gafete queda como el del Centroamericano.
+
+`herramientas/verificar-gafetes-jdn-pz.js` lo revisa con un doble de la base
+que filtra de verdad: el diseño, quiénes salen (sin la «ADAPZ» sin sello ni
+el retirado), la U16 en el torneo U20 con su color (medido en el píxel), los
+detalles sin «Elo» colgando, el QR de dos dorsos leído con jsQR, sin torneos
+lo dice, el emparejamiento de las fotos (la más precisa, «MEDIOS DIGITALES»
+fuera, la que falta a mano), la foto en el medio recortada desde la cabeza
+(medida en el píxel) y el .zip con un PDF por torneo. «Ahora» y la columna de la mesa, en
+el celular, en `verificar-pareo-seguir.js` (con el enlace tal cual lo trae el
+QR) y en `verificar-pareo-publicar.js`. Rompiendo a propósito el QR por fila
+y el filtro de los retirados saltan doce comprobaciones; la mesa de la sala,
+dos.
 
 ### La del Tacho Chess 2
 

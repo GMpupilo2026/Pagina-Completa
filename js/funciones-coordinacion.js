@@ -29,6 +29,7 @@
   const POR_PAGINA = {
     "formularios.html": "formularios",
     "solicitudes.html": "solicitudes",
+    "mensualidades.html": "cobros",
     "cobros.html": "cobros",
   };
 
