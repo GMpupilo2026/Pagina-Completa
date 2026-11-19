@@ -192,13 +192,21 @@ async function aceptar(page, boton) {
     return window.GafetesDibujo.gafetes(diseno, datos.filas).map((x) => ({ n: x.nombre, d: x.detalles, f: x.franja, c: x.codigo, color: x.color, qr: x.qr }));
   });
   igual("el nombre en MAYÚSCULAS pasa a Nombre Propio", g[1].n, ["Zúñiga Rojas", "Mateo"]);
-  igual("debajo del nombre, el ID FIDE de la inscripción (sin él, la línea no sale) y el torneo; ni categoría ni Elo", [g[0].d, g[2].d, g[3].d],
-    [["ID FIDE: 6512345", "Juega el torneo U12"], ["Juega el torneo U20"], ["ID FIDE: 6599999", "Juega el torneo U20"]]);
+  igual("debajo del nombre, la categoría, el ID FIDE de la inscripción (sin él, la línea no sale) y el torneo; sin Elo", [g[0].d, g[2].d, g[3].d],
+    [["U12 Femenino", "ID FIDE: 6512345", "Juega el torneo U12"], ["U16 Femenino", "Juega el torneo U20"], ["U20 Absoluto", "ID FIDE: 6599999", "Juega el torneo U20"]]);
   igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
-  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#0e7490", "#1b2a4a"]);
-  igual("el código cuenta por edad", g.map((x) => x.c), ["U12 01", "U12 02", "U16 01", "U20 01"]);
+  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#1873b4", "#1b2a4a"]);
+  igual("abajo del dorso, la categoría sola (sin número)", g.map((x) => x.c), ["U12", "U12", "U16", "U20"]);
+  // El nombre en negro (para el árbitro), aunque la franja vaya del color de la edad.
+  const colores = await page.evaluate(async () => {
+    const { diseno, datos } = window.Gafetes._estado();
+    const D = window.GafetesDibujo, r = await D.preparar(diseno);
+    const g = D.gafetes(diseno, datos.filas)[2];
+    return (await D.cara(diseno, r, g, "frente")).textos.map((t) => t.color);
+  });
+  igual("el nombre va en negro", colores.includes("#000000"), true);
 
   // La franja del frente, medida en el píxel (no la clase): la de la U16.
   await page.click("#g-siguiente"); await page.click("#g-siguiente");
@@ -208,7 +216,7 @@ async function aceptar(page, boton) {
     const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.83), 1, 1).data;
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
-  igual("la franja de la U16 se pinta de su color", franja, "#0e7490");
+  igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 

@@ -527,8 +527,11 @@
         // Las dos líneas del nombre van del mismo tamaño: el de la que menos cabe.
         let tam = MN.tam;
         for (const l of nombre) { const a = anchoDe(recursos.titulo, l, tam, 0); if (a > MN.max) tam = tam * MN.max / a; }
-        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color, max: MN.max });
-        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color, max: MN.max }));
+        // `nombre.color` fija el color del nombre (en la PZ, negro); sin él,
+        // el del rol o la edad.
+        const colorNombre = /^#[0-9a-f]{6}$/i.test(diseno.nombre.color || "") ? diseno.nombre.color : color;
+        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color: colorNombre, max: MN.max });
+        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color: colorNombre, max: MN.max }));
       }
       const MD = centro ? M.detallesCentro : M.detalles;
       g.detalles.slice(0, 3).forEach((d, i) => escribir(recursos.texto, d, MD.tam, centro

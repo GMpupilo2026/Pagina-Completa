@@ -96,16 +96,20 @@
     d.logosSinMargen = true;
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
-    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
-    // El club va en la franja; la categoría y el Elo no van en el frente, y
-    // en lugar del Elo va el ID FIDE (lo pidió el dueño); sin ID, esa línea
-    // no sale. La categoría sigue de lado en el dorso.
-    d.detalles = ["ID FIDE: {FIDE ID}", "Juega el torneo {Torneo}", ""];
+    // El nombre en negro, no del color de la edad: se lee mejor de lejos y
+    // es lo que busca el árbitro (lo pidió el dueño).
+    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true, color: "#000000" };
+    // El club va en la franja; debajo del nombre, la categoría a la que
+    // pertenece, el ID FIDE (en lugar del Elo; sin ID, esa línea no sale) y
+    // el torneo que juega (todo lo pidió el dueño).
+    d.detalles = ["{Categoría}", "ID FIDE: {FIDE ID}", "Juega el torneo {Torneo}"];
     d.bandera = { plantilla: "", texto: true };
     d.franja = { plantilla: "{Club}" };
-    // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
-    // categoría va también escrita en la franja: el color nunca va solo.
-    d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
+    // Contraste con la letra blanca: U12 6,0:1, U16 5,1:1 (el celeste oscuro
+    // que pidió el dueño en lugar del turquesa; el celeste de la bandera del
+    // cantón no aguanta letra blanca) y U20 14,2:1. La categoría va también
+    // escrita: el color nunca va solo.
+    d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Categoría}";
     d.dorso.horarioCentro = true;
     // En el dorso, la profe Karina en una pose distinta en cada gafete, por
@@ -125,7 +129,8 @@
       ["Ronda 3", "22/11/2026", "1:00 p.m."], ["Ronda 4", "22/11/2026", "3:00 p.m."], ["Ronda 5", "22/11/2026", "5:00 p.m."],
       ["Clausura", "22/11/2026", "7:30 p.m."],
     ];
-    d.codigo.plantilla = "{Edad} {n}";
+    // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
+    d.codigo.plantilla = "{Edad}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
     d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
     for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"])]) {

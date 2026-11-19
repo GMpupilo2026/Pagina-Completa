@@ -16067,6 +16067,12 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
+  «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
+  pertenece, luego el ID FIDE y el torneo; la U16 pasa del turquesa al
+  **celeste oscuro** `#1873b4` (5,1 : 1 con letra blanca; el celeste de la
+  bandera del cantón, azul rey, celeste y blanco, no aguanta letra blanca), y
+  abajo del dorso va **la categoría sola**, sin el número (`{Edad}`).
 - **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
   cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
   5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de
