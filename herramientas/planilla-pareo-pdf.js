@@ -21,7 +21,7 @@
  *   - la marca de agua, tenue y en el encabezado, lejos de las casillas.
  *
  * Arriba, el nombre del torneo en grande (en lugar de «Planilla de
- * anotación»: así se gana espacio), ronda, mesa, fecha y los dos jugadores;
+ * anotación»: así se gana espacio), categoría, ronda, mesa, fecha y los dos jugadores;
  * abajo, el resultado y las firmas con su espacio. De consejos, solo qué hacer
  * si uno se equivoca. Una planilla por hoja carta.
  *
@@ -95,7 +95,7 @@ function html(opciones) {
   <img class="marca" src="${marca}" alt="">
   <div class="cabeza">
     ${titulo}
-    <div class="fila">${campo("Ronda:", 1)}${campo("Mesa:", 1)}${campo("Fecha:", 1.6)}</div>
+    <div class="fila">${campo("Categoría:", 1.5)}${campo("Ronda:", 1)}${campo("Mesa:", 1)}${campo("Fecha:", 1.4)}</div>
     <div class="fila">${campo("Blancas:", 1)}${campo("Negras:", 1)}</div>
   </div>
   <p class="aviso">Si te equivocas, tacha con una raya y escribe la jugada buena al lado, dentro de la misma casilla.</p>
