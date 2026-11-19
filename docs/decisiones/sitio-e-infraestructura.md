@@ -2446,6 +2446,14 @@ de noviembre), así que se quedan en las de GitHub.
   solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
   deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
   del QR antes de que terminara de armarse; ahora la espera.
+- **Las cuatro tandas de GitHub se reparten por lo que tarda cada verificador**
+  (`DURACION` de `verificar-todo.js`, desde el 18/11/2026): el más lento
+  primero, cada uno a la tanda más liviana. Antes iban de a uno por turno y a
+  la 4 le tocaron cámara y simultáneas juntas: 43 minutos contra 19 de la 1, y
+  se cortaba en el límite de 45 con todo en verde (el PR quedaba «cancelado»,
+  sin ningún verificador en rojo, y cada reintento eran otros 45 minutos
+  pagados). Repartidas, quedan en unos 28 minutos cada una. Un verificador
+  nuevo que tarde más de un minuto va a esa tabla; los demás cuentan 10 s.
 - **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
   primera corrida ahí destapó un error real que en UTC no se veía: el día de
   cierre de los formularios se leía en UTC y al volver a abrirlo decía el día
