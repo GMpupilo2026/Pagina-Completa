@@ -23,19 +23,7 @@ const leer = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
 const fallos = [];
 const ok = (cond, msg) => { if (!cond) fallos.push(msg); };
 
-// 1) Los rangos.
-const R = require(path.join(RAIZ, "js/rangos.js"));
-ok(R.RANGOS.length >= 4 && R.RANGOS[0].desde === 0, "el primer rango empieza en 0 y hay al menos cuatro");
-ok(R.RANGOS.every((r, i) => i === 0 || r.desde > R.RANGOS[i - 1].desde), "los rangos tienen que ir de menos a más puntos");
-R.RANGOS.forEach((r, i) => {
-    ok(R.de(r.desde).actual.id === r.id, `con ${r.desde} puntos el rango es ${r.nombre}`);
-    if (i > 0) ok(R.de(r.desde - 1).actual.id === R.RANGOS[i - 1].id, `con ${r.desde - 1} puntos todavía es ${R.RANGOS[i - 1].nombre}`);
-});
-const ultimo = R.RANGOS[R.RANGOS.length - 1];
-ok(R.de(ultimo.desde + 5000).siguiente === null && R.de(ultimo.desde + 5000).faltan === 0, "el último rango no tiene siguiente ni nada que falte");
-const medio = R.de(R.RANGOS[1].desde + 10);
-ok(medio.faltan === R.RANGOS[2].desde - R.RANGOS[1].desde - 10, `lo que falta para el siguiente se cuenta bien: ${medio.faltan}`);
-ok(R.de(-50).actual.id === R.RANGOS[0].id && R.de(null).actual.id === R.RANGOS[0].id, "sin puntos (o negativos) es el primer rango");
+// 1) Los rangos se ganan con un examen: los prueba verificar-rangos-examen.js.
 
 // 2) La migración.
 const migr = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /_premios_academia\.sql$/.test(f));
@@ -65,7 +53,7 @@ const tienda = leer("puntos-tienda.html");
 ok(/src="js\/rangos\.js"/.test(tienda) && /src="js\/premios-academia\.js"/.test(tienda) && /id="premios-academia"/.test(tienda) && /id="rango-caja"/.test(tienda),
     "la tienda de puntos tiene que cargar rangos y premios de la academia, con sus cajas");
 const tiendaJs = leer("js/puntos-tienda-pagina.js");
-ok(/sb\.rpc\("puntos_ganados_de"/.test(tiendaJs) && !/Rangos\.pintar\([^)]*saldo/.test(tiendaJs), "el rango sale de los puntos GANADOS, no del saldo");
+ok(/sb\.rpc\("mi_rango"/.test(tiendaJs), "el rango de la tienda sale de mi_rango() (lo guarda la base), no del saldo");
 ok(/alCanjear: \(\) => tienda && tienda\.recargar/.test(tiendaJs), "al canjear un premio de la academia, la tienda vuelve a leer el saldo");
 const alumno = leer("js/premios-academia.js");
 ok(/from\("academia_miembros"\)[\s\S]{0,80}\.eq\("persona_id", alumnoId\)/.test(alumno) && /\.in\("academia_id", suyas\)/.test(alumno),
