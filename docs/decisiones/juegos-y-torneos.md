@@ -5619,6 +5619,17 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   sin adivinar. Un correo que no sale no deshace la marca. Volver a
   «pendiente» borra el comentario. Lo prueba
   `herramientas/verificar-pareo-inscripcion-comentario.js`.
+- **Una decisión ya tomada se puede cambiar.** Lo pidió el dueño (18/11): a
+  un jugador lo rechazaron por un atraso en la mensualidad y, ya al día,
+  no había cómo aceptarlo. La tarjeta marcada trae «Cambiar a aceptada» o
+  «Cambiar a rechazada», que abre el mismo cuadro de siempre (comentario y
+  aviso por correo con el estado nuevo); `marcar` ya aceptaba cualquier
+  paso, así que la función no cambió. De rechazada a aceptada entra a la
+  lista con `agregarJugadores`. De aceptada a rechazada **sale de la lista
+  solo si todavía no hay rondas** (el último con ese nombre): con rondas
+  jugadas sigue ahí, el cuadro lo dice y el árbitro lo retira en
+  «Jugadores», para no tocar emparejamientos ya hechos. Lo prueba el mismo
+  verificador.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
