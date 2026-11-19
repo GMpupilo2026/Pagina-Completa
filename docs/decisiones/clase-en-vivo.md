@@ -560,6 +560,40 @@ profe: lo pidió así).
   empezó `segundos` antes, y con eso se sabe dónde cae cada marca. Una marca de
   cuando no se grababa lo dice. La hora va en hora de Costa Rica. Está en
   privacidad.html («Marcas de la clase»).
+- **Decir quién empieza a hablar** (casilla opcional, se recuerda). Cuando
+  la voz pasa a otra persona, se dice su nombre («Habla Zoe Álvarez»; el profe,
+  «…, el profe»). Para no hablar encima a cada rato, la persona tiene que
+  seguir hablando 700 ms, y a quien ya se nombró no se lo vuelve a nombrar
+  hasta que pasen 15 s sin que hable. A uno mismo no se lo nombra.
+- **Siguiente mano y el tiempo de cada turno** (el profe, en «Turnos»).
+  «Siguiente mano» (Alt+N) le da la palabra a la primera mano de la fila, en
+  el orden que ve el profe (`hand_at`), sin la de quien ya la tenía. Sin manos
+  levantadas, solo se termina el turno. «Tiempo para cada turno» (sin límite,
+  30 s, 1, 2 o 3 min, recordado en el aparato) va con el turno:
+  `game_state.elegido.hasta`, que solo escribe el profe. Así el alumno sabe
+  cuánto le queda sin ninguna otra señal. A los 10 s del final suena un aviso
+  al profe y al alumno del turno (a los demás no). Al terminar, la página del
+  PROFE pasa la palabra a la siguiente mano o termina el turno: si la tiene
+  cerrada, el turno no se termina solo, y está bien así. El cálculo es
+  `planDelTurno` (pura, la prueba el verificador). Un turno nuevo deshace el
+  reloj del anterior, y al recargar se vuelve a armar desde `hasta`.
+- **Sala de espera**: el alumno que está en la sala grande sin el profe lo
+  sabe («Tu profe todavía no está en la llamada: te aviso cuando entre», y
+  si el profe sale, «… te aviso cuando vuelva»). Que entre ya se anunciaba. En
+  un grupo no se dice: ahí lo normal es estar sin el profe.
+- **La batería**: donde el navegador lo deja saber (`navigator.getBattery`:
+  Chrome y Edge; Safari y Firefox no), si el aparato no está cargando, se avisa
+  una vez al 15 % y otra al 5 %, para que lo conecte antes de que se corte la
+  llamada.
+- **La participación del mes** (informes.html, «Participación en la
+  llamada»; js/participacion-llamada.js, una sola copia para la vista del
+  profe y la del alumno). Para los últimos tres meses: cuántos minutos habló,
+  en cuántas clases habló y en cuántas estuvo, y clase por clase. Una clase
+  sin minutos puede haber sido una en la que no habló o una sin llamada (eso
+  no se guarda). Por eso no se dice «no habló en 2 clases»: el profe sabe
+  cuáles tuvieron llamada. Junta `llamada_participacion` y `class_attendance`
+  (de a mil, con `range`), por mes en hora de Costa Rica, y la RLS decide qué
+  ve cada uno. Sin minutos hablados, el bloque no se destapa.
 - **Saltar entre la llamada y el tablero** (Alt+T): desde la llamada, a la
   casilla del tablero que tenía el foco; desde cualquier otra parte, a la
   llamada (el micrófono, o «Entrar»). Sin recorrer la página con el lector.
