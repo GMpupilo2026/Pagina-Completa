@@ -620,6 +620,7 @@
                                 <p id="llamada-turnos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Turnos</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <button id="llamada-siguiente" type="button" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✋ Siguiente mano</button>
+                                    <button id="llamada-ronda" type="button" aria-pressed="false" class="sm:col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔄 Ronda (todos, por turno)</button>
                                     <label class="flex flex-col gap-1 text-sm text-brand-800 dark:text-brand-100">
                                         <span>Tiempo para cada turno</span>
                                         <select id="llamada-turno-tiempo" class="w-full min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -632,6 +633,10 @@
                                     </label>
                                 </div>
                             </div>
+                            <!-- Solo el profe, mientras le habla en privado a un alumno. Ver «Hablarle en privado a un alumno». -->
+                            <button id="llamada-privado-fin" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔊 Volver a hablarle a todos</button>
+                            <!-- Decir una jugada por voz (Alt+J): Whisper en el aparato, y al cuadro de comandos. -->
+                            <button id="llamada-dictar" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🗣️ Decir una jugada (Alt+J)</button>
                             <!-- Marcar este momento (Alt+K): la marca lleva la grabación ahí en «Repasar mis clases». -->
                             <button id="llamada-marcar" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">📌 Marcar este momento</button>
                             <!-- Solo el profe: los grupos de voz (game_state.llamada_grupos; ver «Grupos en la llamada»).
@@ -656,6 +661,8 @@
                             <button id="llamada-grabar" type="button" hidden aria-pressed="true" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⏸ Pausar la grabación</button>
                             <button id="llamada-quien" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién está</button>
                             <button id="llamada-habla" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
+                            <!-- La guía de atajos (Alt+H), de a un grupo por vez. -->
+                            <button id="llamada-guia" type="button" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⌨️ Atajos (Alt+H)</button>
                             <button id="llamada-salir" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
                         </div>
                         <!-- «Mantener para hablar»: el micrófono suena solo mientras se aprieta (botón o Alt+P). -->
@@ -684,6 +691,23 @@
                                 </select>
                             </label>
                             <button id="llamada-probar" type="button" class="self-end w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎙️ Probar el micrófono</button>
+                            <label class="flex flex-col gap-1">
+                                <span>Tonos de los avisos</span>
+                                <select id="llamada-tonos" class="w-full min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="1">Normales</option>
+                                    <option value="0.5">Más bajos</option>
+                                    <option value="2">Más altos</option>
+                                    <option value="0">Apagados</option>
+                                </select>
+                            </label>
+                            <label class="self-end flex items-start gap-2">
+                                <input id="llamada-vibrar" type="checkbox" checked class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Que el celular vibre con los avisos</span>
+                            </label>
+                            <label hidden class="sm:col-span-2 flex items-start gap-2">
+                                <input id="llamada-concentracion" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Modo concentración: no avisar quién entra, quién sale ni quién habla (la palabra, las preguntas y tu profe sí).</span>
+                            </label>
                             <label hidden class="sm:col-span-2 flex items-start gap-2">
                                 <input id="llamada-solo-profe" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                                 <span>Solo oír al profe: tus compañeros quedan en silencio en tu aparato (nadie más se entera).</span>
@@ -705,9 +729,20 @@
                             <h3 id="llamada-gente-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300"></h3>
                             <ul id="llamada-lista" aria-labelledby="llamada-gente-titulo" class="mt-1 divide-y divide-brand-100 dark:divide-brand-700 rounded-lg bg-white dark:bg-brand-950 text-sm"></ul>
                         </div>
-                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Atajos: <kbd>Alt</kbd>+<kbd>M</kbd> micrófono, <span id="llamada-atajo-mano"><kbd>Alt</kbd>+<kbd>Y</kbd> levantar la mano, </span><kbd>Alt</kbd>+<kbd>Q</kbd> quién está, <kbd>Alt</kbd>+<kbd>W</kbd> quién habla (o quién habló último), <kbd>Alt</kbd>+<kbd>K</kbd> marcar este momento, <kbd>Alt</kbd>+<kbd>T</kbd> saltar entre la llamada y el tablero<span id="llamada-atajo-siguiente" hidden>, <kbd>Alt</kbd>+<kbd>N</kbd> siguiente mano</span><span id="llamada-atajo-reacciones">, <kbd>Alt</kbd>+<kbd>1</kbd> a <kbd>4</kbd> no entendí, más lento, sí y no</span>. Usa audífonos para que no haya eco.</p>
+                        <!-- Solo el profe: quién tiene la clase abierta y no entró a la llamada, con «Avisarle».
+                             Ver «Quién no entró a la llamada y quién se cayó». -->
+                        <div id="llamada-faltan" hidden class="mt-2">
+                            <h3 id="llamada-faltan-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300">En la clase pero no en la llamada</h3>
+                            <ul id="llamada-faltan-lista" aria-labelledby="llamada-faltan-titulo" class="mt-1 divide-y divide-brand-100 dark:divide-brand-700 rounded-lg bg-white dark:bg-brand-950 text-sm"></ul>
+                        </div>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Atajos: <kbd>Alt</kbd>+<kbd>M</kbd> micrófono, <span id="llamada-atajo-mano"><kbd>Alt</kbd>+<kbd>Y</kbd> levantar la mano, </span><kbd>Alt</kbd>+<kbd>Q</kbd> quién está, <kbd>Alt</kbd>+<kbd>W</kbd> quién habla (o quién habló último), <kbd>Alt</kbd>+<kbd>K</kbd> marcar este momento, <kbd>Alt</kbd>+<kbd>J</kbd> decir una jugada, <kbd>Alt</kbd>+<kbd>T</kbd> saltar entre la llamada y el tablero, <kbd>Alt</kbd>+<kbd>H</kbd> esta lista, de a poco<span id="llamada-atajo-siguiente" hidden>, <kbd>Alt</kbd>+<kbd>N</kbd> siguiente mano</span><span id="llamada-atajo-reacciones">, <kbd>Alt</kbd>+<kbd>1</kbd> a <kbd>4</kbd> no entendí, más lento, sí y no</span>. Usa audífonos para que no haya eco.</p>
                         <div id="llamada-audios" hidden></div>
                     </section>
+                    <!-- Solo el alumno, mientras no hay llamada: practicar los atajos sin nadie más
+                         y sin conectarse a nada. Ver «La sala de práctica». -->
+                    <div id="llamada-practicar-caja" hidden class="max-w-[560px] mx-auto mt-3">
+                        <button id="llamada-practicar" type="button" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Practicar la llamada (sin nadie más)</button>
+                    </div>
                     <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
 
                     <!-- Cómo abrir el control remoto: la dirección, para escribirla o copiarla en el celular. -->
@@ -2040,6 +2075,7 @@
     <script src="js/clase-qr.js"></script>
     <script src="js/clase-invitados.js"></script>
     <script src="js/clase-sacar.js"></script>
+    <script src="js/reporte-transcribir.js"></script>
     <script src="js/clase-llamada.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/clase-buscar.js"></script>

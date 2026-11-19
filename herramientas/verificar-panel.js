@@ -191,7 +191,7 @@ async function pruebaAlumna(browser) {
     ["cursos/academia/index.html", "repasar-clases.html", "audios-clases.html"]);
   igual("Entrenamiento básico",
     grupo(grupos, "Entrenamiento básico").tiles.map((t) => t.enlace),
-    ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
+    ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/oido.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
   igual("Entrenamiento intermedio",
     grupo(grupos, "Entrenamiento intermedio").tiles.map((t) => t.enlace),
     ["entreno/temas.html", "entreno/aperturas.html", "entreno/estilo.html", "entreno/mis-estudios.html", "entreno/sin-internet.html"]);

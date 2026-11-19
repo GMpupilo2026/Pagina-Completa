@@ -3136,6 +3136,10 @@
         let respuestaPresencia = null;   // alumno: { p: hora de la pregunta, v: "si" | "no" }
         let preguntaPresencia = null;    // profe: { at } mientras la pregunta está abierta
         let preguntaDelProfe = null;     // alumno: la pregunta abierta que anuncia su profe
+        let llamarA = null;              // profe: { id, at } a quién le avisa que lo espera en la llamada
+        let privadoPresencia = null;     // profe: { id, at } a quién le habla en privado
+        let privadoVisto = undefined;    // alumno: la última conversación privada ya avisada
+        let llamadoVisto = null;         // alumno: la hora del último aviso de su profe ya dicho
         const reaccionesVistas = new Map();   // profe: alumno → hora de la última reacción ya avisada
         const respuestasVistas = new Map();   // profe: alumno → la respuesta ya contada
         function revisarReaccionesYPregunta(state) {
@@ -3146,8 +3150,25 @@
                 const antes = preguntaDelProfe;
                 preguntaDelProfe = p;
                 if ((p && p.at) !== (antes && antes.at)) llamada.pregunta(Boolean(p));
+                // Su profe le habla en privado a él, a otro, o volvió a hablarle a todos.
+                const pv = delProfe && delProfe.privado && delProfe.privado.id ? delProfe.privado : null;
+                const clavePv = pv ? pv.id + "|" + pv.at : null;
+                if (clavePv !== privadoVisto) {
+                    const antes = privadoVisto;
+                    privadoVisto = clavePv;
+                    if (antes !== undefined || pv) llamada.privado(pv ? (pv.id === profile.id ? "yo" : "otro") : null);
+                }
+                // Su profe lo espera en la llamada («Avisarle»).
+                const l = delProfe && delProfe.llamar_a;
+                if (l && l.id === profile.id && l.at && l.at !== llamadoVisto) {
+                    const primera = llamadoVisto === null;
+                    llamadoVisto = l.at;
+                    if (!primera || Date.now() - new Date(l.at).getTime() < 60000) llamada.teLlaman();
+                }
                 return;
             }
+            // El profe: quién de la clase no entró a la llamada cambia con la presencia.
+            llamada.refrescar();
             const reciente = (at) => at && Date.now() - new Date(at).getTime() < 60000;
             for (const [id, info] of onlineStudents) {
                 const r = info.reaccion;
@@ -3289,6 +3310,8 @@
                 reaccion: reaccionPresencia || undefined,
                 respuesta: respuestaPresencia || undefined,
                 pregunta_si_no: preguntaPresencia || undefined,
+                llamar_a: llamarA || undefined,
+                privado: privadoPresencia || undefined,
                 calentamiento: calentamientoResuelto,
                 // Lo que lleva del calentamiento de 20 ejercicios (js/clase-tanda.js).
                 tanda: tandaPresencia || undefined,
@@ -4563,7 +4586,43 @@
            sin buscarla en la lista. Darle la palabra a otro ya termina el turno
            de antes. Sin manos levantadas, solo se termina el turno. Devuelve a
            quién se la dio (o null). */
+        /* La ronda de la llamada: la palabra pasa por todos los alumnos conectados, por nombre,
+           uno tras otro (con el tiempo de cada turno, si hay). Mientras dura,
+           «Siguiente mano» y el fin del tiempo pasan al siguiente de la ronda,
+           no a las manos levantadas; quien se desconectó se salta. El turno
+           queda registrado como elegido por el profe ('profe'). */
+        let rondaDeVoz = null;            // { ids, i }
+        let rondaDeVozTermino = false;    // la última «siguiente» cerró la ronda
+        async function empezarRondaDeVoz() {
+            if (!currentOpenSessionId) return { error: "Abre la clase primero: cada turno queda en su registro." };
+            const ids = [...onlineStudents.keys()].sort((a, b) => nombreDeConectado(a).localeCompare(nombreDeConectado(b), "es", { sensitivity: "base" }));
+            if (!ids.length) return { error: "No hay alumnos conectados para la ronda." };
+            if (turnosDeLaClase !== currentOpenSessionId) await cargarTurnos();
+            rondaDeVoz = { ids, i: 0 };
+            await darTurno(ids[0], "profe");
+            return { nombre: nombreDeConectado(ids[0]), total: ids.length };
+        }
+        async function terminarRondaDeVoz() {
+            if (!rondaDeVoz) return;
+            rondaDeVoz = null;
+            if (elegidoActual) await terminarElegido(null);
+        }
+
         async function siguienteMano() {
+            rondaDeVozTermino = false;
+            if (rondaDeVoz) {
+                rondaDeVoz.i++;
+                while (rondaDeVoz.i < rondaDeVoz.ids.length && !onlineStudents.has(rondaDeVoz.ids[rondaDeVoz.i])) rondaDeVoz.i++;
+                if (rondaDeVoz.i >= rondaDeVoz.ids.length) {
+                    rondaDeVoz = null;
+                    rondaDeVozTermino = true;
+                    if (elegidoActual) await terminarElegido(null);
+                    return null;
+                }
+                const id = rondaDeVoz.ids[rondaDeVoz.i];
+                await darTurno(id, "profe");
+                return nombreDeConectado(id);
+            }
             const llegada = (info) => (info.hand_at ? new Date(info.hand_at).getTime() : Infinity);
             const fila = [...onlineStudents].filter(([id, info]) => info && info.hand_raised && (!elegidoActual || id !== elegidoActual.id))
                 .sort((a, b) => llegada(a[1]) - llegada(b[1]));
@@ -4618,7 +4677,7 @@
             if (!elegidoActual || elegidoActual.at !== e.at) return;   // ya lo terminó o le dio la palabra a otro
             const quien = nombreDeConectado(e.id);
             const siguiente = await siguienteMano();
-            avisarAlProfe("Se acabó el tiempo de " + quien + (siguiente ? ": la palabra pasa a " + siguiente + "." : "."));
+            avisarAlProfe("Se acabó el tiempo de " + quien + (siguiente ? ": la palabra pasa a " + siguiente + "." : rondaDeVozTermino ? ". Terminó la ronda: hablaron todos." : "."));
         }
         function avisarAlProfe(texto) {
             if (llamada) llamada.anunciar(texto);
@@ -8291,9 +8350,32 @@
                         if (error) { console.error(error); return error.code === "23514" ? error.message : "No se pudo marcar este momento."; }
                         return "";
                     },
+                    // «Avisarle» a un alumno que está en la clase y no en la llamada.
+                    llamarALaLlamada: async (id) => {
+                        llamarA = { id, at: new Date().toISOString() };
+                        await anunciarPresencia();
+                    },
                     siguienteMano: async () => {
                         if (!currentOpenSessionId) return { error: "Abre la clase primero: cada turno queda en su registro." };
-                        return { nombre: await siguienteMano() };
+                        const nombre = await siguienteMano();
+                        return { nombre, finRonda: rondaDeVozTermino, enRonda: Boolean(rondaDeVoz), lugar: rondaDeVoz ? rondaDeVoz.i + 1 : 0, total: rondaDeVoz ? rondaDeVoz.ids.length : 0 };
+                    },
+                    // La ronda: empezarla (devuelve a quién le tocó y cuántos son) o terminarla.
+                    ronda: async (empezar) => (empezar ? empezarRondaDeVoz() : (await terminarRondaDeVoz(), {})),
+                    // Hablarle en privado a un alumno (null: volver a hablarle a todos). Va por la presencia.
+                    privado: async (id) => {
+                        privadoPresencia = id ? { id, at: new Date().toISOString() } : null;
+                        await anunciarPresencia();
+                    },
+                    /* Una jugada (o lo que sea) dicha por voz: entra al cuadro de comandos
+                       de la clase como si se hubiera escrito. Sin cuadro (sin Modo
+                       Adaptado), se dice cómo encenderlo. */
+                    jugarTexto: (texto) => {
+                        const input = document.querySelector("#clase-cmd form input");
+                        if (!input || !input.form) return "Para jugar por voz, enciende el Modo Adaptado: ahí está el cuadro donde se escriben las jugadas.";
+                        input.value = texto;
+                        input.form.requestSubmit();
+                        return "";
                     },
                     // El tiempo de cada turno, en milisegundos (0: sin límite). Vale para los turnos que se den desde ahora.
                     tiempoDeTurno: (ms) => { tiempoDeTurnoMs = Math.max(0, Number(ms) || 0); },
