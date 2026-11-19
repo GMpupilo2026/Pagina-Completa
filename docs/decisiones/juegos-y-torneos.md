@@ -16046,7 +16046,11 @@ sus pts y su puesto actual».
   contestaba, así que sale del que se puso al inscribirse, con
   `public.pareo_fide_de_aceptados` (solo administración, solo aceptadas, el
   nombre y el ID; un «0» no cuenta), emparejado por el nombre sin tildes;
-  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID.
+  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID. La función es la
+  migración `20261119050629_pareo_fide_de_aceptados.sql`, aplicada con
+  permiso del dueño y comprobada impersonando: anon no la puede ejecutar,
+  una cuenta que no administra recibe el rechazo y quien administra recibe
+  los ID (10 en el torneo U20; el «0» no cuenta).
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado
