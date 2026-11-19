@@ -9,14 +9,16 @@ nombre del jugador en Pareo Integral. Un nombre que se repite (dos Aaron, dos
 Santiago, varios Samuel, dos Sofía) NO se adivina por la cara: se deja sin
 foto hasta que alguien diga cuál es cuál, y la página pone sus iniciales.
 Ponerle a un niño la cara de otro en una página pública es peor que no
-ponerle ninguna.
+ponerle ninguna. (Los de la primera vuelta los aclaró el dueño el 19/11/2026,
+poniéndoles el apellido en Drive: hoy están los 34.)
 
 Se usa la versión «MEDIOS DIGITALES» (la liviana; la marca del fotógrafo va
 abajo a la derecha y queda fuera del recorte). Cada foto se recorta cuadrada
 en la cabeza y los hombros (todas están tomadas igual: la persona al centro y
 el tablero abajo) y se guarda a 360 × 360 en
 img/jdn-pz-2026/jugadores/<nombre-de-pareo-sin-tildes>.jpg, que es lo que
-busca la página (con la lista de las que hay en lista.json). Para agregar una foto: sumar su línea al mapa y correr
+busca la página (con la lista de las que hay en lista.json). Para agregar
+una foto: sumar su línea al mapa y correr
 
     py -3 herramientas/jdn-pz-fotos.py
 
@@ -65,6 +67,16 @@ MAPA = [
     ("1kIOOPUu7AYv66qkZGlaVcDHBaBQqKML6", "Villegas Badilla, Evanz", "9 EVANZ"),
     ("1Vx_bzlX69PCh2ef6BoYgal9fJ6HeQiyD", "Vindas Méndez, Brianna Isabella", "7 BRIANNA"),
     ("18UjGB6xVG6NzJIf38YOrcd15k7Qenu9E", "Zeledón Rojas, Ismael", "44 ISMAEL"),
+    # Los nombres repetidos: el dueño les puso el apellido en Drive el 19/11/2026
+    # (y subió la de Aaron Barrantes, que no estaba).
+    ("1sIOL2s4tDgyK519Bg0vxBnDmSOfMacc8", "Piedra Villarevia, Aaron", "8 AARON Piedra"),
+    ("1kcHjN--VpywBKvqLnCoabLiKPqDSu2ek", "Barrantes Granados, Aaron", "Aaron Barrantes Granados"),
+    ("1jSrMEST1HIstN0T6uwR-0Gh9o4QKdbUB", "Quesada Aguero, Samuel", "10 SAMUEL Quesada Aguero"),
+    ("1kJirTmN9qER9llqAhAFF3gu0EcUnOHll", "Beitia Retana, Samuel Josué", "24 Samuel Beitia Retana"),
+    ("13tDUm7L0vfFBqupeAmEBuPEIzvzZgBn2", "Segura Céspedes, Santiago", "18 SANTIago Segura"),
+    ("1p6cSCAYhWrFcU7DWy8NPRob17DpNrZC7", "Cordero Sánchez, Santiago", "25 Santiago Cordero"),
+    ("1n1AzOY3oTryDPOZIrAOKC8-6RcsmxGH8", "Cordova elizondo, Sofia", "20 SOFIA Cordova Elizondo"),
+    ("1sDaNzVoDTlfbZC9ZD1ASL2q17cikPSIw", "Badilla Mena, Elizabeth", "23 Elizabeth SOFIA BADILLA Mena"),
 ]
 
 
