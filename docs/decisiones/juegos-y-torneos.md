@@ -15910,7 +15910,15 @@ sus pts y su puesto actual».
   aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
   dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
   Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
-  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  cuántos tienen foto y qué fotos sobraron. Después la organización les puso apellidos,
+  casi siempre a la versión de «MEDIOS DIGITALES» («10 SAMUEL Quesada Aguero
+  MEDIOS DIGITALES.jpg» junto a «10 SAMUEL.jpg»), y a una le sobró un nombre
+  («23 Elizabeth SOFIA BADILLA Mena»). Por eso de cada número se usa la foto
+  limpia pero se busca con el nombre más completo de las dos (`busca`), y una
+  foto le sirve a un jugador si todas sus palabras están en su nombre o si
+  coinciden al menos dos (`puntaje`); un archivo que quedó para dos es del que
+  mejor calza. Con la carpeta así, el 19/11 se emparejaron solas 31 de 32: la
+  que falta es «12 MATEW» (Matthew), que se elige a mano. **Las fotos no salen de la
   computadora ni se guardan**, como el Excel: se achican en el navegador y se
   pierden al cerrar la página.
 - **El recorte**: son de medio cuerpo frente al tablero, así que se

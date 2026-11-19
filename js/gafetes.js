@@ -373,36 +373,44 @@
   const claveFila = (f) => String(D().valor(f, "QR") || [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(", "));
   const palabras = (t) => plano(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
   function plano(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
-  // Lo que dice el archivo, sin el número, la extensión ni «v2».
-  const palabrasDeArchivo = (n) => palabras(n.replace(/\.[a-z0-9]+$/i, "")).filter((w) => !/^\d+$/.test(w) && !/^v\d$/.test(w));
-  function leSirve(archivo, f) {
+  // Lo que dice el archivo, sin el número, la extensión, «v2» ni «MEDIOS DIGITALES».
+  const palabrasDeArchivo = (n) => palabras(n.replace(/\.[a-z0-9]+$/i, "")).filter((w) => !/^\d+$/.test(w) && !/^v\d$/.test(w) && w !== "medios" && w !== "digitales");
+  // Cuánto le sirve un archivo a un jugador: cuántas palabras del archivo
+  // están en su nombre, si están TODAS o coinciden al menos dos (nombre y
+  // apellido: «23 Elizabeth SOFIA BADILLA Mena» es de Elizabeth Badilla Mena
+  // aunque traiga un nombre de más). Si no, 0.
+  function puntaje(archivo, f) {
     const de = palabrasDeArchivo(archivo);
     const suyas = palabras([D().valor(f, "Nombre"), D().valor(f, "Apellidos")].join(" "));
-    return de.length > 0 && de.every((w) => (w.length === 1 ? suyas.some((x) => x[0] === w) : suyas.includes(w)));
+    const n = de.filter((w) => (w.length === 1 ? suyas.some((x) => x[0] === w) : suyas.includes(w))).length;
+    return n > 0 && (n === de.length || n >= 2) ? n : 0;
   }
+  const busca = (i) => fotos[i].busca || fotos[i].nombre;
   function emparejar() {
     if (!datos) return;
-    const elegidos = new Map();
+    const elegidos = new Map();                  // clave de la fila → { i, p }
     datos.filas.forEach((f) => {
       const k = claveFila(f);
       if (fotoDe.has(k)) return;                 // lo que se eligió a mano se respeta
-      const sirven = fotos.map((x, i) => i).filter((i) => leSirve(fotos[i].nombre, f));
+      const sirven = fotos.map((x, i) => [i, puntaje(busca(i), f)]).filter(([, p]) => p > 0);
       if (!sirven.length) return;
-      const largo = (i) => palabrasDeArchivo(fotos[i].nombre).length;
-      const mejor = Math.max(...sirven.map(largo));
-      let top = sirven.filter((i) => largo(i) === mejor);
+      const mejor = Math.max(...sirven.map(([, p]) => p));
+      let top = sirven.filter(([, p]) => p === mejor).map(([i]) => i);
       // Empate: la que empieza por su primer nombre («Yariela Sofía»: YARIELA, no SOFIA).
       if (top.length > 1) {
         const primero = palabras(D().valor(f, "Nombre"))[0];
-        const conPrimero = top.filter((i) => palabrasDeArchivo(fotos[i].nombre)[0] === primero);
+        const conPrimero = top.filter((i) => palabrasDeArchivo(busca(i))[0] === primero);
         if (conPrimero.length === 1) top = conPrimero;
       }
-      if (top.length === 1) elegidos.set(k, top[0]);
+      if (top.length === 1) elegidos.set(k, { i: top[0], p: mejor });
     });
-    // Un archivo que quedó para dos personas no es de ninguna.
-    const usos = new Map();
-    for (const i of elegidos.values()) usos.set(i, (usos.get(i) || 0) + 1);
-    for (const [k, i] of elegidos) if (usos.get(i) === 1) fotoDe.set(k, i);
+    // Un archivo que quedó para dos personas es de la que mejor calza; si
+    // empatan, de ninguna.
+    for (const [k, e] of elegidos) {
+      const rivales = [...elegidos.values()].filter((x) => x.i === e.i);
+      const max = Math.max(...rivales.map((x) => x.p));
+      if (e.p === max && rivales.filter((x) => x.p === max).length === 1) fotoDe.set(k, e.i);
+    }
   }
 
   // Achica la foto (las del fotógrafo miden 4480 × 6720) y, si el diseño lo
@@ -461,17 +469,27 @@
 
   async function subirFotos(lista) {
     let archivos = [...lista].filter((f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
-    // El fotógrafo manda dos de cada una: la de «MEDIOS DIGITALES» lleva su
-    // marca; si está la otra (el mismo número), se usa la otra.
+    // El fotógrafo manda dos de cada una: la de «(MEDIOS) DIGITALES» lleva su
+    // marca; si está la otra (el mismo número), se usa la otra. Pero el
+    // nombre con que se busca es el más completo de las dos: en la carpeta
+    // de la PZ los apellidos se los pusieron a la de «MEDIOS DIGITALES»
+    // («10 SAMUEL Quesada Aguero MEDIOS DIGITALES.jpg» y «10 SAMUEL.jpg»).
     const numero = (n) => (n.match(/^\s*(\d+)/) || [])[1];
-    const limpias = new Set(archivos.filter((f) => !/medios digitales/i.test(f.name)).map((f) => numero(f.name)).filter(Boolean));
-    archivos = archivos.filter((f) => !(/medios digitales/i.test(f.name) && limpias.has(numero(f.name))));
+    const marcada = (n) => /digitales/i.test(n);
+    const porNumero = new Map();
+    for (const f of archivos) { const k = numero(f.name); if (k) { if (!porNumero.has(k)) porNumero.set(k, []); porNumero.get(k).push(f); } }
+    const nombreDeBusqueda = new Map();
+    for (const lista2 of porNumero.values()) {
+      const mas = lista2.slice().sort((a, b) => palabrasDeArchivo(b.name).length - palabrasDeArchivo(a.name).length)[0];
+      for (const f of lista2) nombreDeBusqueda.set(f, mas.name);
+    }
+    archivos = archivos.filter((f) => !(marcada(f.name) && (porNumero.get(numero(f.name)) || []).some((g) => !marcada(g.name))));
     if (!archivos.length) { Avisos.avisar("No llegó ninguna foto (sirven JPG, PNG o WEBP).", { tipo: "error" }); return; }
     const estado = $("g-fotos-estado");
     const nuevas = [];
     for (const [i, f] of archivos.entries()) {
       estado.textContent = `Preparando la foto ${i + 1} de ${archivos.length}…`;
-      try { nuevas.push({ nombre: f.name, lienzo: await prepararFoto(f) }); } catch (e) { /* una foto dañada no frena las demás */ }
+      try { nuevas.push({ nombre: f.name, busca: nombreDeBusqueda.get(f) || f.name, lienzo: await prepararFoto(f) }); } catch (e) { /* una foto dañada no frena las demás */ }
     }
     fotos = nuevas.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { numeric: true }));
     fotoDe.clear();
@@ -502,7 +520,7 @@
       sel.id = id;
       sel.className = "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
       const o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = "— sin foto —"; sel.append(o0);
-      fotos.forEach((x, j) => { const o = document.createElement("option"); o.value = String(j); o.textContent = x.nombre; sel.append(o); });
+      fotos.forEach((x, j) => { const o = document.createElement("option"); o.value = String(j); o.textContent = x.nombre + (x.busca && x.busca !== x.nombre ? " (" + x.busca + ")" : ""); sel.append(o); });
       sel.value = String(i);
       sel.addEventListener("change", () => { fotoDe.set(k, Number(sel.value)); pintarFotos(); refrescar(); });
       const marca = document.createElement("span");

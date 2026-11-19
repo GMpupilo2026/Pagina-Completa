@@ -269,6 +269,13 @@ async function aceptar(page, boton) {
     }));
   });
   igual("cada frente con foto tiene su propio fondo", new Set(claves).size, 4);
+  // Como quedó la carpeta de la PZ: el apellido solo en la versión con la
+  // marca del fotógrafo (se usa la foto limpia, buscada con el nombre
+  // completo), y un archivo con un nombre de más (dos palabras alcanzan).
+  await page.setInputFiles("#g-fotos", [archivo("7 DANIEL.jpg"), archivo("7 DANIEL Vargas MEDIOS DIGITALES.jpg"), archivo("8 Ana PEREZ Mora Cespedes.jpg")]);
+  await page.waitForFunction(() => /2 de 4 con foto/.test(document.getElementById("g-fotos-estado").textContent));
+  igual("el apellido de la versión con marca sirve para buscar la limpia; dos palabras alcanzan", await emparejadas(),
+    ["Arias Mora, Sofía → sin foto", "ZÚÑIGA ROJAS, MATEO → sin foto", "Mora Céspedes, Ana Lucía → 8 Ana PEREZ Mora Cespedes.jpg", "Vargas Solís, Daniel → 7 DANIEL.jpg"]);
 
   console.log("\nLa hoja carta para imprimir en casa (frente y dorso)");
   igual("el diseño de la PZ sale en hoja carta", await page.inputValue("#g-formato"), "carta");
