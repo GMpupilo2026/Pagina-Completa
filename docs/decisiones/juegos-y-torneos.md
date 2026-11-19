@@ -16070,9 +16070,10 @@ sus pts y su puesto actual».
 - **El personal del torneo** (pedido del dueño): en el diseño, un renglón
   por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
   edita en la página), que se suma al final al traer los jugadores. El rol va
-  en la franja, el título debajo del nombre, el color es morado para la
-  organización y gris carbón para el arbitraje, y abajo del dorso dice
-  ORGANIZACIÓN o ARBITRAJE. Su QR lleva a la página del torneo, y lo dice
+  en la franja, el título debajo del nombre, todo el personal va en **negro**
+  (organización, arbitraje y asistente; lo pidió el dueño, 21 : 1), y abajo
+  del dorso dice ORGANIZACIÓN, ARBITRAJE o ASISTENTE. Sebastián va como
+  «Asistente» a secas, sin «árbitro». Su QR lleva a la página del torneo, y lo dice
   (`{Texto QR}`, un texto por fila); en el dorso va su avatar (`dorso.poseColumna`):
   Karina la organizadora, y el profe Oscar (árbitro, presentando y te toca)
   los árbitros principales Jean Quesada Arauz (AF) y Oscar Angulo Cubero (IA)

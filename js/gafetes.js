@@ -96,7 +96,7 @@
     "Organizadora | Rojas | Itzel Karina |  | karina",
     "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro",
     "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-presentando",
-    "Árbitro asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
+    "Asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
   ].join("\n");
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
@@ -122,10 +122,10 @@
     // que pidió el dueño en lugar del turquesa; el celeste de la bandera del
     // cantón no aguanta letra blanca) y U20 14,2:1. La categoría va también
     // escrita: el color nunca va solo.
-    // El personal: organización en morado (#6b21a8, 8,7:1) y arbitraje en
-    // gris carbón (#1f2937, 14,7:1), como en el Centroamericano.
-    d.colores = { columna: "Grupo", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a", organizacion: "#6b21a8", arbitraje: "#1f2937" },
-      etiquetas: { u12: "U12", u16: "U16", u20: "U20", organizacion: "Organización", arbitraje: "Arbitraje" }, omision: "#1b2a4a" };
+    // El personal (organización, arbitraje y asistente), en negro (21:1):
+    // lo pidió el dueño.
+    d.colores = { columna: "Grupo", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a", organizacion: "#000000", arbitraje: "#000000", asistente: "#000000" },
+      etiquetas: { u12: "U12", u16: "U16", u20: "U20", organizacion: "Organización", arbitraje: "Arbitraje", asistente: "Asistente" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Lado}";
     d.dorso.horarioCentro = true;
     // En el dorso, la profe Karina en una pose distinta en cada gafete, por
@@ -197,7 +197,7 @@
     for (const linea of String(diseno.personal || "").split(/\r?\n/)) {
       const [rol, apellidos, nombre, titulo, avatar] = linea.split("|").map((c) => (c || "").trim());
       if (!rol || !(apellidos || nombre)) continue;
-      const grupo = /organiz/i.test(rol) ? "Organización" : "Arbitraje";
+      const grupo = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Arbitraje";
       // De lado, sin la Á de «Árbitro» (escrita de lado, la tilde queda suelta).
       const lado = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Principal";
       const pose = /^karina$/i.test(avatar) ? "ilustracionDorso" : (avatar || "");

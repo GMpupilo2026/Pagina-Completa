@@ -176,7 +176,7 @@ async function aceptar(page, boton) {
   igual("y dice para qué es, de cada fila", d.texto, "{Texto QR}");
   const personal = await page.inputValue("#g-personal");
   igual("el personal del torneo viene en el diseño: la organizadora, dos árbitros principales y el asistente",
-    personal.split(/\r?\n/).map((l) => l.split("|")[0].trim()), ["Organizadora", "Árbitro principal", "Árbitro principal", "Árbitro asistente"]);
+    personal.split(/\r?\n/).map((l) => l.split("|")[0].trim()), ["Organizadora", "Árbitro principal", "Árbitro principal", "Asistente"]);
   // Las pruebas de los jugadores, sin el personal; el personal se prueba al final.
   await page.fill("#g-personal", "");
 
@@ -387,12 +387,12 @@ async function aceptar(page, boton) {
     const x = window.GafetesDibujo.gafetes(diseno, datos.filas).pop();
     return { n: x.nombre, d: x.detalles, f: x.franja, v: x.vertical, c: x.codigo, color: x.color, qr: x.qr, t: x.qrTexto, pose: x.ilustracionDorso };
   });
-  igual("se suma al final, con su rol en la franja, su título debajo y el gris del arbitraje",
-    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "PRINCIPAL", "ARBITRAJE", "#1f2937"]);
+  igual("se suma al final, con su rol en la franja, su título debajo y en negro",
+    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "PRINCIPAL", "ARBITRAJE", "#000000"]);
   igual("su QR lleva a la página del torneo y lo dice; en el dorso, el profe Oscar árbitro",
     [st.qr, st.t, st.pose], ["https://ajedrez-integral.com/jdn-pz-2026", "Escanéalo: | la página | del torneo", "oscar-arbitro"]);
   // Dos del personal comparten el QR (la página del torneo): cada uno con SU foto.
-  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro\nÁrbitro asistente | Mora Chavarría | Sebastián |  | oscar-te-toca");
+  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro\nAsistente | Mora Chavarría | Sebastián |  | oscar-te-toca");
   await page.click("#g-pareo-pz");
   await page.waitForFunction(() => window.Gafetes._estado().datos && window.Gafetes._estado().datos.filas.length === 6);
   await page.setInputFiles("#g-fotos", [archivo("Jean Quesada.jpg"), archivo("Sebastian Mora.jpg")]);
