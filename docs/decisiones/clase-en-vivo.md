@@ -594,6 +594,70 @@ profe: lo pidió así).
   cuáles tuvieron llamada. Junta `llamada_participacion` y `class_attendance`
   (de a mil, con `range`), por mes en hora de Costa Rica, y la RLS decide qué
   ve cada uno. Sin minutos hablados, el bloque no se destapa.
+- **Los tonos, a gusto de cada uno** (19/11): normales, más bajos, más altos o
+  apagados, y la vibración del celular aparte. Se recuerdan en el aparato. Lo
+  escrito y lo que dice el lector no cambian: los tonos son un extra, y un
+  niño al que le molestan los puede apagar sin perder ningún aviso.
+- **La guía de atajos (Alt+H** o «Atajos»). Son muchos atajos para
+  recordarlos. Alt+H los dice de a un grupo, según quién eres (alumno o profe),
+  y cada vez que se vuelve a apretar sigue con el siguiente. Pasados 20 s sin
+  apretarla, vuelve a empezar. Al alumno no le dice los atajos del profe, ni al
+  revés.
+- **La primera vez**: la primera vez que alguien entra a una llamada en ese
+  aparato (`llamadaPrimeraVez_v1`), se le dice lo más importante (Alt+M, y
+  Alt+Y o Alt+N) y que Alt+H dice el resto. No vuelve a salir sola, ni al
+  volver a entrar después de un corte. Se pidió como «recorrido», pero sale
+  como un aviso corto: varios avisos seguidos se pisarían con lo que dice el
+  lector al entrar.
+- **La sala de práctica** («Practicar la llamada», para el alumno mientras
+  no hay llamada). No hay profe ni nadie más, y no se conecta a nada: los
+  atajos y los botones hacen lo mismo que en la llamada (los tonos, lo que se
+  dice), pero nada sale del aparato. Ni la mano de la clase, ni las
+  reacciones, ni un pedido a la Edge Function. Sirve para aprenderse los
+  atajos con calma antes de la primera clase. «Probar el micrófono» sí
+  funciona de verdad. Si el profe abre la llamada mientras tanto, se le
+  avisa, y entra al terminar la práctica.
+- **Quién no entró a la llamada y quién se cayó** (el profe). Los alumnos que
+  tienen la clase abierta (la presencia) y no están en la sala del profe salen
+  aparte, en «En la clase pero no en la llamada», y en Alt+Q. Solo sin grupos:
+  con grupos, cada uno está en la sala de su grupo y no es que falte.
+  «Avisarle» le suena un tono en su página y le dice que su profe lo espera
+  (`llamar_a` en la presencia del profe). Y si un alumno sale de la llamada y
+  pasa un minuto sin volver, se le dice al profe, para que no lo siga
+  esperando. No con grupos ni al mudarse de sala, porque ahí salir es lo
+  normal.
+- **La ronda** («Ronda», el profe): la palabra pasa por todos los alumnos
+  conectados, por nombre, uno tras otro, con el tiempo de cada turno si hay.
+  Mientras dura, «Siguiente mano» (Alt+N) y el fin del tiempo pasan al
+  siguiente de la ronda, no a las manos levantadas. Quien se desconectó se
+  salta, y al terminar se dice «Terminó la ronda: hablaron todos». El turno
+  queda en `clase_elegidos` con origen `profe` (lo eligió él), un valor que ya
+  existía: no hizo falta migración.
+- **Hablarle en privado a un alumno** («En privado», junto a cada alumno en la
+  lista del profe). Usa los permisos de suscripción de LiveKit
+  (`setTrackSubscriptionPermissions`), que **los hace cumplir el servidor**:
+  solo ese alumno recibe la voz del profe, y la página del alumno hace lo mismo
+  con la suya (solo la recibe el profe). Por la presencia (`privado`) se le
+  dice a él «Tu profe te habla solo a ti», y a los demás «Tu profe está
+  ayudando a un compañero». **Lo privado no se graba**: mientras dura, la
+  grabación del profe queda en silencio (`acomodarFuentes` no conecta ninguna
+  pista). Termina con «Volver a hablarle a todos», si el alumno sale, o si el
+  profe se cae o se muda de sala.
+- **Decir una jugada por voz** (Alt+J o «Decir una jugada»). Graba 3 segundos
+  y los pasa a texto con Whisper EN EL APARATO, el mismo de «Pasar a texto»
+  (js/reporte-transcribir.js, ahora también en sesion.html): el audio no sale
+  de ahí. `jugadaDicha` (pura) junta las columnas dichas como se pronuncian y
+  los números en palabras («caballo efe tres» → «caballo f3»), y eso entra al
+  cuadro de comandos de la clase como si se hubiera escrito. Es el cuadro el
+  que decide si es una jugada y si le toca: no hay otra puerta para mover. Sin
+  el Modo Adaptado no hay cuadro, y se dice cómo encenderlo. La primera vez se
+  baja el reconocedor (unos 80 MB, desde el mismo CDN que ya permite la CSP) y
+  queda guardado. (Se había dicho que usaría «el dictado del cuadro de
+  comandos»: ese dictado lee la posición en voz alta, no reconoce la voz.)
+- **Modo concentración** (casilla del alumno, se recuerda): mientras el profe
+  explica, se callan los avisos menores, como quién entra o sale (menos el
+  profe) y quién empieza a hablar. Quedan la palabra, las preguntas y todo lo
+  del profe.
 - **Saltar entre la llamada y el tablero** (Alt+T): desde la llamada, a la
   casilla del tablero que tenía el foco; desde cualquier otra parte, a la
   llamada (el micrófono, o «Entrar»). Sin recorrer la página con el lector.

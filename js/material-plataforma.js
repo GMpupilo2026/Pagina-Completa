@@ -159,6 +159,10 @@ window.MaterialPlataforma = (function () {
     { slug: "memoria", label: "Memoria", href: "entreno/memoria.html",
       actividades: ["memoria"], metas: ["cantidad", "minutos"], unidad: "posiciones" },
 
+    /* De oído: cada pregunta contestada cuenta (se sortea). */
+    { slug: "oido", label: "De oído", href: "entreno/oido.html",
+      actividades: ["oido"], metas: ["cantidad", "minutos"], unidad: "preguntas" },
+
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
       actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas",
       hrefRecorte: (c) => `concentracion.html?nivel=${encodeURIComponent(c)}`,

@@ -48,8 +48,20 @@
     }
 
     // Sonidos cortos: se reconocen sin esperar a que el lector termine de hablar.
+    // Cada uno los pone más bajos, más altos o apagados (volTonos), y la vibración aparte.
     let audioCtx = null;
+    const CLAVE_TONOS = "llamadaTonos_v1";
+    let volTonos = 1, conVibracion = true;
+    try {
+        const t = JSON.parse(localStorage.getItem(CLAVE_TONOS) || "null");
+        if (t && isFinite(t.vol)) volTonos = Math.min(2, Math.max(0, t.vol));
+        if (t && typeof t.vibrar === "boolean") conVibracion = t.vibrar;
+    } catch (e) { /* sin almacenamiento */ }
+    function guardarTonos() {
+        try { localStorage.setItem(CLAVE_TONOS, JSON.stringify({ vol: volTonos, vibrar: conVibracion })); } catch (e) { /* sin almacenamiento */ }
+    }
     function sonido(notas) {
+        if (!volTonos) return;
         try {
             audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
             let t = audioCtx.currentTime;
@@ -58,7 +70,7 @@
                 const gan = audioCtx.createGain();
                 osc.frequency.value = f;
                 gan.gain.setValueAtTime(0.0001, t);
-                gan.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+                gan.gain.exponentialRampToValueAtTime(0.12 * volTonos, t + 0.02);
                 gan.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
                 osc.connect(gan).connect(audioCtx.destination);
                 osc.start(t);
@@ -74,7 +86,25 @@
         debil: [262, 262], apagado: [440, 440], reaccion: [1175, 880], pregunta: [659, 880, 659],
         callado: [523, 523, 523], eco: [392, 330], aviso: [880, 880] };
     // En el celular, además, vibra (si el aparato puede): se nota sin audífonos.
-    function vibrar(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sin vibración */ } }
+    function vibrar(ms) { if (!conVibracion) return; try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sin vibración */ } }
+
+    /* Lo que Whisper entendió («Caballo efe tres.», «peón e cuatro») a lo que
+       entiende el cuadro de comandos («caballo f3», «peón e4»): las letras de
+       las columnas dichas como se pronuncian y los números en palabras se
+       juntan en la casilla. Pura: la prueba el verificador. */
+    const LETRAS = { a: "a", be: "b", b: "b", ve: "b", ce: "c", c: "c", se: "c", de: "d", d: "d", e: "e", efe: "f", f: "f", ge: "g", g: "g", je: "g", hache: "h", h: "h", ache: "h" };
+    const NUMEROS = { uno: "1", dos: "2", tres: "3", cuatro: "4", cinco: "5", seis: "6", siete: "7", ocho: "8" };
+    function jugadaDicha(texto) {
+        let t = String(texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[.,;:!?¡¿"«»()]/g, " ").replace(/\s+/g, " ").trim();
+        if (!t) return "";
+        const letras = Object.keys(LETRAS).sort((a, b) => b.length - a.length).join("|");
+        const numeros = Object.keys(NUMEROS).join("|");
+        t = t.replace(new RegExp("\\b(" + letras + ")\\s*(" + numeros + "|[1-8])\\b", "g"),
+            (m, l, n) => LETRAS[l] + (NUMEROS[n] || n));
+        // «peon» y «alfil» van con tilde en el cuadro, pero los entiende sin ella.
+        return t.replace(/\bpeon\b/g, "peón");
+    }
 
     // El error de una Edge Function trae su cuerpo en `context` (un Response).
     async function mensajeDe(error, porDefecto) {
@@ -124,6 +154,17 @@
         const siguienteBtn = $("llamada-siguiente");
         const tiempoSel = $("llamada-turno-tiempo");
         const turnosCaja = $("llamada-turnos");
+        const tonosSel = $("llamada-tonos");
+        const vibrarIn = $("llamada-vibrar");
+        const guiaBtn = $("llamada-guia");
+        const practicarCaja = $("llamada-practicar-caja");
+        const practicarBtn = $("llamada-practicar");
+        const faltanCaja = $("llamada-faltan");
+        const faltanLista = $("llamada-faltan-lista");
+        const concentracionIn = $("llamada-concentracion");
+        const rondaBtn = $("llamada-ronda");
+        const privadoFinBtn = $("llamada-privado-fin");
+        const dictarBtn = $("llamada-dictar");
         let sala = null;
         let entrando = false;
         let LK = null;
@@ -175,6 +216,7 @@
             if (esProfe && !yo && !esElProfe(p)) { const m = textoDeMinutos(p.identity); if (m) d.push(m); }
             if ((esProfe || yo) && senalDebil(p)) d.push("señal débil");
             if (esProfe && !yo) { const r = reaccionReciente(p.identity); if (r) d.push(REACCIONES[r.tipo].enLista); }
+            if (esProfe && !yo && privadoCon === p.identity) d.push("le hablas en privado");
             if (p.isSpeaking) d.push("hablando");
             return d;
         }
@@ -183,7 +225,7 @@
             const filas = enLlamada() ? enOrden() : [];
             gente.hidden = !filas.length;
             lista.textContent = "";
-            if (!filas.length) return;
+            if (!filas.length) { pintarFaltan(); return; }
             genteTitulo.textContent = "En la llamada (" + filas.length + ")";
             for (const { p, yo } of filas) {
                 const li = document.createElement("li");
@@ -205,6 +247,15 @@
                 /* El profe apaga el micrófono de quien mete ruido (la tele, el
                    ventilador). Lo hace el servidor; el alumno lo puede volver a
                    encender si tiene la palabra, como en cualquier llamada. */
+                if (esProfe && !yo && !esElProfe(p) && privadoCon !== p.identity) {
+                    const bp = document.createElement("button");
+                    bp.type = "button";
+                    bp.className = "shrink-0 ml-2 bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-1 min-h-[44px] sm:min-h-0 rounded text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    bp.textContent = "En privado";
+                    bp.setAttribute("aria-label", "Hablarle en privado a " + nombreDe(p));
+                    bp.addEventListener("click", () => hablarEnPrivado(p));
+                    li.appendChild(bp);
+                }
                 if (esProfe && !yo && !esElProfe(p) && p.isMicrophoneEnabled) {
                     const b = document.createElement("button");
                     b.type = "button";
@@ -216,9 +267,12 @@
                 }
                 lista.appendChild(li);
             }
+            pintarFaltan();
         }
 
         function pintar() {
+            if (practicando) { pintarPractica(); return; }
+            if (practicarCaja) practicarCaja.hidden = esProfe || !caja.hidden;
             pintarGente();
             const dentro = enLlamada();
             entrar.hidden = dentro;
@@ -255,6 +309,9 @@
             if (marcarBtn) marcarBtn.hidden = !dentro;
             // Los turnos (siguiente mano y su tiempo): el profe, dentro o fuera de la llamada.
             if (turnosCaja) turnosCaja.hidden = !esProfe;
+            if (privadoFinBtn) privadoFinBtn.hidden = !(esProfe && dentro && privadoCon);
+            if (concentracionIn) concentracionIn.closest("label").hidden = !(dentro && !esProfe);
+            if (dictarBtn) dictarBtn.hidden = !dentro;
             // Con la pregunta del profe abierta, «Sí» y «No» lo dicen: contestan.
             if (reaccionesCaja) reaccionesCaja.querySelectorAll('[data-reaccion="si"], [data-reaccion="no"]').forEach((b) => {
                 const si = b.dataset.reaccion === "si";
@@ -856,6 +913,7 @@
             clearTimeout(porNombrar);
             porNombrar = setTimeout(() => {
                 if (!sala || !quien.isSpeaking || quien.identity === nombrado) return;
+                if (callarMenor(quien)) return;
                 nombrado = quien.identity;
                 anunciar("Habla " + nombreDe(quien) + (esElProfe(quien) ? ", el profe" : "") + ".");
             }, 700);
@@ -869,7 +927,8 @@
             if (!esProfe || !op.siguienteMano) return;
             const r = await op.siguienteMano();
             if (r && r.error) { anunciar(r.error); return; }
-            anunciar(r && r.nombre ? "Le diste la palabra a " + r.nombre + "." : "No hay manos levantadas.");
+            if (r && r.finRonda) { enRonda = false; pintarRonda(); anunciar("Terminó la ronda: hablaron todos."); return; }
+            anunciar(r && r.nombre ? "Le diste la palabra a " + r.nombre + (r.enRonda ? " (" + r.lugar + " de " + r.total + " en la ronda)." : ".") : "No hay manos levantadas.");
         }
         const CLAVE_TIEMPO_TURNO = "llamadaTiempoDeTurno_v1";
         if (tiempoSel) {
@@ -920,6 +979,340 @@
                 b.addEventListener("chargingchange", () => { if (b.charging) avisoBateria = 100; });
             }).catch(() => { /* sin batería que mirar */ });
         }
+
+        /* ---------- Los tonos, a gusto de cada uno ----------
+           Normales, más bajos, más altos o apagados, y la vibración del celular
+           aparte. Se recuerdan en el aparato. Lo escrito y lo que dice el lector
+           no cambian: los tonos son un extra. */
+        if (tonosSel) {
+            tonosSel.value = String(volTonos);
+            if (![...tonosSel.options].some((o) => o.value === tonosSel.value)) tonosSel.value = "1";
+            tonosSel.addEventListener("change", () => {
+                volTonos = Number(tonosSel.value);
+                guardarTonos();
+                sonido([880]);   // así se oye cómo quedó
+                anunciar(volTonos ? "Tonos " + tonosSel.options[tonosSel.selectedIndex].textContent.toLowerCase() + "." : "Tonos apagados: los avisos siguen escritos y los dice el lector.");
+            });
+        }
+        if (vibrarIn) {
+            vibrarIn.checked = conVibracion;
+            vibrarIn.addEventListener("change", () => {
+                conVibracion = vibrarIn.checked;
+                guardarTonos();
+                if (conVibracion) vibrar(120);
+                anunciar(conVibracion ? "El celular va a vibrar con los avisos." : "El celular ya no vibra con los avisos.");
+            });
+        }
+
+        /* ---------- La guía de atajos (Alt+H) ----------
+           Hay muchos atajos: Alt+H los dice de a un grupo, según quién eres, y
+           cada vez que se vuelve a apretar sigue con el siguiente. Pasados 20
+           segundos sin apretarla, vuelve a empezar. */
+        const GUIA = esProfe ? [
+            "Atajos de la llamada, 1 de 4. Alt M enciende o apaga el micrófono. Alt P, con «Mantener para hablar», suena mientras lo mantienes apretado.",
+            "2 de 4. Alt N le da la palabra a la siguiente mano. Alt Q dice quién está en la llamada y quién de la clase no entró. Alt W dice quién habla, o quién habló último.",
+            "3 de 4. Alt K marca este momento de la clase. Alt T salta entre la llamada y el tablero.",
+            "4 de 4. Alt H repite esta guía. Vuelve a apretarla para empezar de nuevo.",
+        ] : [
+            "Atajos de la llamada, 1 de 4. Alt M enciende o apaga el micrófono. Alt P, con «Mantener para hablar», suena mientras lo mantienes apretado. Alt Y levanta o baja la mano.",
+            "2 de 4. Para decirle algo a tu profe sin interrumpir: Alt 1 no entendí, Alt 2 más lento, Alt 3 sí, Alt 4 no. Con una pregunta de tu profe, Alt 3 y Alt 4 la contestan.",
+            "3 de 4. Alt Q dice quién está en la llamada. Alt W dice quién habla, o quién habló último. Alt K marca este momento para repasarlo. Alt T salta entre la llamada y el tablero.",
+            "4 de 4. Alt H repite esta guía. Vuelve a apretarla para empezar de nuevo.",
+        ];
+        let pasoGuia = 0, ultimaGuia = 0;
+        function guia() {
+            if (caja.hidden) return;
+            if (Date.now() - ultimaGuia > 20000) pasoGuia = 0;
+            ultimaGuia = Date.now();
+            anunciar(GUIA[pasoGuia] + (pasoGuia < GUIA.length - 1 ? " Alt H para seguir." : ""));
+            pasoGuia = (pasoGuia + 1) % GUIA.length;
+        }
+        if (guiaBtn) guiaBtn.addEventListener("click", guia);
+
+        /* ---------- La primera vez ----------
+           La primera vez que alguien entra a una llamada en este aparato, se le
+           dice lo más importante y cómo oír el resto (Alt+H). Después no vuelve a
+           salir solo: «Atajos (Alt+H)» lo repite cuando quiera. */
+        const CLAVE_PRIMERA = "llamadaPrimeraVez_v1";
+        function esPrimeraVez() {
+            try { return localStorage.getItem(CLAVE_PRIMERA) !== "1"; } catch (e) { return false; }
+        }
+        function yaNoEsPrimeraVez() {
+            try { localStorage.setItem(CLAVE_PRIMERA, "1"); } catch (e) { /* sin almacenamiento */ }
+        }
+        function explicarPrimeraVez() {
+            anunciar("Es tu primera vez en la llamada. Lo más importante: Alt M enciende el micrófono"
+                + (esProfe ? ", y Alt N le da la palabra a la siguiente mano." : ", y Alt Y levanta la mano para pedir la palabra.")
+                + " Para oír todos los atajos, aprieta Alt H.");
+            yaNoEsPrimeraVez();
+        }
+
+        /* ---------- La sala de práctica ----------
+           «Practicar la llamada»: sin profe, sin nadie más y sin conectarse a
+           nada. Los atajos y los botones hacen lo mismo que en la llamada (los
+           tonos, lo que se dice), pero nada sale de este aparato: ni la mano, ni
+           las reacciones, ni el micrófono. Sirve para aprendérselos con calma
+           antes de la primera clase. «Probar el micrófono» sí funciona de verdad. */
+        let practicando = false;
+        let micPractica = false, manoPractica = false;
+        function empezarPractica() {
+            if (enLlamada() || practicando) return;
+            practicando = true;
+            micPractica = false;
+            manoPractica = false;
+            pasoGuia = 0;
+            caja.hidden = false;
+            pintar();
+            sonido(SON.entra);
+            anunciar("Estás en la sala de práctica: aquí no te oye nadie y nada sale de tu aparato. Prueba los atajos: Alt M el micrófono, Alt Y la mano, Alt 1 a Alt 4 para decirle algo a tu profe. Alt H dice todos.");
+            mic.focus();
+        }
+        function terminarPractica() {
+            if (!practicando) return;
+            practicando = false;
+            sonido(SON.sale);
+            caja.hidden = !esProfe && !abierta;
+            pintar();
+            anunciar("Terminaste la práctica.");
+            if (!caja.hidden) entrar.focus(); else if (practicarBtn) practicarBtn.focus();
+        }
+        // Lo que hace cada atajo en la práctica (lo mismo que en la llamada, sin red).
+        const PRACTICA = {
+            KeyM: () => { micPractica = !micPractica; sonido([micPractica ? 880 : 660]); anunciar(micPractica ? "Micrófono encendido (de práctica: no te oye nadie)." : "Micrófono apagado."); pintar(); },
+            KeyY: () => { manoPractica = !manoPractica; anunciar(manoPractica ? "Levantaste la mano. En la clase, tu profe te ve en la fila y te dice tu lugar." : "Bajaste la mano."); },
+            KeyQ: () => anunciar("Estás practicando solo: en la clase, aquí oirías quién está."),
+            KeyW: () => anunciar("Nadie está hablando: en la clase, aquí oirías quién habla."),
+            KeyK: () => { sonido([988, 1175]); anunciar("Marcaste este momento (de práctica). En la clase, lo encuentras en «Repasar mis clases»."); },
+            KeyT: saltar,
+            KeyH: guia,
+            KeyN: () => anunciar(esProfe ? "En la clase, Alt N le da la palabra a la siguiente mano." : "Alt N es del profe."),
+            Digit1: () => { sonido([880]); anunciar("En la clase, tu profe oiría: no entendí."); },
+            Digit2: () => { sonido([880]); anunciar("En la clase, tu profe oiría: más lento."); },
+            Digit3: () => { sonido([880]); anunciar("En la clase, tu profe oiría: sí."); },
+            Digit4: () => { sonido([880]); anunciar("En la clase, tu profe oiría: no."); },
+        };
+        if (practicarBtn) {
+            practicarBtn.addEventListener("click", empezarPractica);
+            practicarCaja.hidden = esProfe;   // al profe no le hace falta: la abre él
+        }
+
+        /* ---------- Quién está en la clase pero no en la llamada (el profe) ----------
+           Los alumnos que tienen la clase abierta (la presencia, sesion.js) y no
+           están en la sala del profe. Solo sin grupos: con grupos, cada uno está
+           en la sala de su grupo y no es que falte. «Avisarle» le suena un tono en
+           su página y se le dice que su profe lo espera (por la presencia). */
+        function faltanEnLaLlamada() {
+            if (!esProfe || !enLlamada() || !op.alumnosDeLaClase || numerosDeGrupo().length) return [];
+            const dentro = new Set([...sala.remoteParticipants.values()].map((p) => p.identity));
+            return op.alumnosDeLaClase().filter((id) => !dentro.has(id))
+                .map((id) => ({ id, nombre: (op.nombreDe && op.nombreDe(id)) || "Un alumno" }))
+                .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+        }
+        function pintarFaltan() {
+            if (!faltanCaja) return;
+            const faltan = faltanEnLaLlamada();
+            faltanCaja.hidden = !faltan.length;
+            faltanLista.textContent = "";
+            for (const f of faltan) {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2 px-3 py-1.5";
+                const n = document.createElement("span");
+                n.className = "font-semibold text-brand-800 dark:text-white break-words";
+                n.textContent = f.nombre;   // lo escribió una persona
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "shrink-0 bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-1 min-h-[44px] sm:min-h-0 rounded text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.textContent = "Avisarle";
+                b.setAttribute("aria-label", "Avisarle a " + f.nombre + " que lo esperas en la llamada");
+                b.addEventListener("click", async () => {
+                    if (!op.llamarALaLlamada) return;
+                    await op.llamarALaLlamada(f.id);
+                    anunciar("Le avisaste a " + f.nombre + " que lo esperas en la llamada.");
+                });
+                li.append(n, b);
+                faltanLista.appendChild(li);
+            }
+        }
+        // Alumno: su profe lo llama a la llamada.
+        function teLlaman() {
+            if (esProfe || enLlamada() || caja.hidden) return;
+            sonido(SON.pregunta);
+            vibrar([100, 80, 100]);
+            if (op.anunciarFuera) op.anunciarFuera("Tu profe te espera en la llamada: entra con «Entrar a la llamada».");
+            anunciar("Tu profe te espera en la llamada: entra con «Entrar a la llamada».");
+        }
+
+        /* ---------- Quién se cayó y no volvió (el profe) ----------
+           Si un alumno sale de la llamada y pasa un minuto sin volver, se le dice
+           al profe (para no seguir esperándolo). No con grupos ni al mudarse de
+           sala: ahí salir es lo normal. */
+        const seFueron = new Map();   // identidad → timer
+        function quizasNoVolvio(p) {
+            if (!esProfe || esElProfe(p) || numerosDeGrupo().length || mudandose) return;
+            clearTimeout(seFueron.get(p.identity));
+            const nombre = nombreDe(p);
+            seFueron.set(p.identity, setTimeout(() => {
+                seFueron.delete(p.identity);
+                if (!enLlamada() || numerosDeGrupo().length) return;
+                if ([...sala.remoteParticipants.values()].some((x) => x.identity === p.identity)) return;
+                sonido(SON.debil);
+                anunciar(nombre + " salió de la llamada hace un minuto y no volvió.");
+            }, 60000));
+        }
+        function yaVolvio(p) {
+            clearTimeout(seFueron.get(p.identity));
+            seFueron.delete(p.identity);
+        }
+        // La caja durante la práctica: el micrófono (de práctica), la guía y terminar.
+        function pintarPractica() {
+            for (const el of [entrar, quien, habla, modos, grabarBtn, grabandoAviso, pttCaja, volumenes, gente, reaccionesCaja, preguntaCaja, gruposCaja, turnosCaja, marcarBtn, faltanCaja]) if (el) el.hidden = true;
+            if (practicarCaja) practicarCaja.hidden = true;
+            mic.hidden = false;
+            mic.setAttribute("aria-pressed", String(micPractica));
+            mic.textContent = micPractica ? "🎙️ Micrófono encendido (práctica)" : "🔇 Micrófono apagado (práctica)";
+            salirBtn.hidden = false;
+            salirBtn.textContent = "Terminar la práctica";
+        }
+
+
+        /* ---------- Modo concentración (el alumno) ----------
+           Mientras el profe explica, se callan los avisos menores: quién entra o
+           sale (menos el profe), quién empieza a hablar. Queda lo importante: la
+           palabra, las preguntas, el profe. Se recuerda en el aparato. */
+        const CLAVE_CONCENTRACION = "llamadaConcentracion_v1";
+        let concentracion = false;
+        try { concentracion = localStorage.getItem(CLAVE_CONCENTRACION) === "1"; } catch (e) { /* sin almacenamiento */ }
+        if (concentracionIn) {
+            concentracionIn.checked = concentracion;
+            concentracionIn.addEventListener("change", () => {
+                concentracion = concentracionIn.checked;
+                try { localStorage.setItem(CLAVE_CONCENTRACION, concentracion ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+                anunciar(concentracion ? "Modo concentración: no se avisa quién entra, quién sale ni quién habla. La palabra, las preguntas y tu profe sí."
+                    : "Vuelven todos los avisos de la llamada.");
+            });
+        }
+        // Un aviso menor: con el modo concentración (y sin ser del profe), no se dice.
+        const callarMenor = (p) => !esProfe && concentracion && !(p && esElProfe(p));
+
+        /* ---------- La ronda (el profe) ----------
+           La palabra pasa por todos los alumnos conectados, por nombre, uno tras
+           otro. La cuenta sesion.js (usa el tiempo de cada turno, si hay); acá
+           el botón y lo que se dice. Alt+N pasa al siguiente de la ronda. */
+        let enRonda = false;
+        async function alternarRonda() {
+            if (!esProfe || !op.ronda) return;
+            const empezar = !enRonda;
+            const r = await op.ronda(empezar);
+            if (r && r.error) { anunciar(r.error); return; }
+            enRonda = empezar;
+            pintarRonda();
+            anunciar(empezar ? "Empezó la ronda: habla " + r.nombre + " (1 de " + r.total + "). Con Alt N pasa al siguiente." : "Terminaste la ronda.");
+        }
+        function pintarRonda() {
+            if (!rondaBtn) return;
+            rondaBtn.setAttribute("aria-pressed", String(enRonda));
+            rondaBtn.textContent = enRonda ? "⏹ Terminar la ronda" : "🔄 Ronda (todos, por turno)";
+        }
+        if (rondaBtn) rondaBtn.addEventListener("click", alternarRonda);
+
+        /* ---------- Hablarle en privado a un alumno ----------
+           El profe le habla solo a uno (para ayudarlo con su partida, por
+           ejemplo): con los permisos de suscripción de LiveKit, que los hace
+           cumplir el SERVIDOR, solo ese alumno recibe la voz del profe, y la
+           página del alumno hace lo mismo con la suya (solo la recibe el profe).
+           A los demás se les dice que el profe está ayudando a un compañero. Lo
+           que se dice en privado no se graba: mientras dura, la grabación queda
+           en silencio. Termina con «Volver a hablarle a todos» o al salir. */
+        let privadoCon = null;   // profe: identidad del alumno
+        async function hablarEnPrivado(p) {
+            if (!esProfe || !enLlamada() || !op.privado) return;
+            try {
+                await sala.localParticipant.setTrackSubscriptionPermissions(false, [{ participantIdentity: p.identity, allowAll: true }]);
+            } catch (e) { console.error(e); anunciar("No se pudo hablar en privado."); return; }
+            privadoCon = p.identity;
+            acomodarFuentes();
+            await op.privado(p.identity);
+            pintar();
+            anunciar("Le hablas solo a " + nombreDe(p) + ": los demás no te oyen y no se graba. Para volver, «Volver a hablarle a todos».");
+        }
+        async function volverATodos(callado) {
+            if (!esProfe || !privadoCon) return;
+            privadoCon = null;
+            try { if (sala) await sala.localParticipant.setTrackSubscriptionPermissions(true, []); } catch (e) { console.error(e); }
+            acomodarFuentes();
+            if (op.privado) await op.privado(null);
+            pintar();
+            if (!callado) anunciar("Volviste a hablarle a todos.");
+        }
+        // Alumno: su profe le habla en privado a él ("yo"), a otro ("otro") o volvió a todos (null).
+        let privadoMio = null;
+        async function ponerPrivado(estado) {
+            if (esProfe) return;
+            const antes = privadoMio;
+            privadoMio = estado;
+            if (enLlamada()) {
+                try {
+                    await sala.localParticipant.setTrackSubscriptionPermissions(estado !== "yo", estado === "yo" ? [{ participantIdentity: profesorId, allowAll: true }] : []);
+                } catch (e) { console.error(e); }
+            }
+            if (caja.hidden || !enLlamada()) return;
+            if (estado === "yo") { sonido(SON.pregunta); anunciar("Tu profe te habla solo a ti: los demás no los oyen."); }
+            else if (estado === "otro") anunciar("Tu profe está ayudando a un compañero en privado: vuelve enseguida.");
+            else if (antes) anunciar("Tu profe volvió a hablarle a todos.");
+        }
+        if (privadoFinBtn) privadoFinBtn.addEventListener("click", () => volverATodos(false));
+
+        /* ---------- Decir una jugada por voz (Alt+J) ----------
+           Graba 3 segundos, los pasa a texto CON WHISPER EN ESTE APARATO (el
+           mismo de «Pasar a texto»: el audio no sale de acá) y lo que entendió
+           entra al cuadro de comandos de la clase como si se hubiera escrito
+           («caballo f3»): el cuadro decide si es una jugada y si le toca. La
+           primera vez se baja el reconocedor (unos 80 MB) y queda guardado. Si
+           se está en la llamada con el micrófono encendido, la clase también lo
+           oye: es como decirlo en voz alta. */
+        let dictando = false;
+        async function dictarJugada() {
+            if (dictando || caja.hidden || practicando) return;
+            if (!window.ReporteTranscribir || !ReporteTranscribir.hayCómo() || !navigator.mediaDevices || !op.jugarTexto) {
+                anunciar("Este navegador no puede reconocer la voz. Escribe la jugada en el cuadro de comandos.");
+                return;
+            }
+            dictando = true;
+            let flujo = null;
+            try {
+                flujo = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: micElegido ? { exact: micElegido } : undefined, echoCancellation: true, noiseSuppression: true } });
+                const tipo = tipoDeGrabacion();
+                if (!tipo) throw new Error("sin grabadora");
+                const rec = new MediaRecorder(flujo, { mimeType: tipo });
+                const trozos = [];
+                rec.ondataavailable = (e) => { if (e.data && e.data.size) trozos.push(e.data); };
+                anunciar("Di tu jugada después del tono, por ejemplo «caballo efe tres».");
+                await new Promise((r) => setTimeout(r, 2200));
+                sonido([880]);
+                rec.start();
+                await new Promise((r) => setTimeout(r, 3000));
+                await new Promise((r) => { rec.onstop = r; rec.stop(); });
+                sonido([660]);
+                flujo.getTracks().forEach((t) => t.stop());
+                flujo = null;
+                let ultimoAviso = 0;
+                const texto = await ReporteTranscribir.transcribir(new Blob(trozos, { type: trozos[0] ? trozos[0].type : tipo }), (a) => {
+                    if (a.etapa === "modelo" && Date.now() - ultimoAviso > 8000) { ultimoAviso = Date.now(); anunciar("Bajando el reconocedor de voz por primera vez: " + Math.round(a.porcentaje || 0) + " %. Queda guardado."); }
+                });
+                const jugada = jugadaDicha(texto);
+                if (!jugada) { anunciar("No entendí ninguna jugada. Prueba otra vez con Alt J, o escríbela."); return; }
+                anunciar("Entendí: " + jugada + ".");
+                const error = op.jugarTexto(jugada);
+                if (error) anunciar(error);
+            } catch (e) {
+                console.error(e);
+                anunciar(e && e.name === "NotAllowedError" ? "El navegador no deja usar el micrófono. Permítelo en el candado de la barra de direcciones." : "No se pudo reconocer la jugada. Escríbela en el cuadro de comandos.");
+            } finally {
+                if (flujo) flujo.getTracks().forEach((t) => t.stop());
+                dictando = false;
+            }
+        }
+        if (dictarBtn) dictarBtn.addEventListener("click", dictarJugada);
         async function pedir(accion, extra) {
             const body = Object.assign({ accion, profesor: profesorId }, extra || {});
             if (esProfe) { body.grupo = grupoDelProfe; body.viejos = [...gruposVistos]; }
@@ -988,6 +1381,7 @@
                 if (!esProfe && grabando) anunciar("Esta clase se está grabando." + (permisoVoz ? "" : " " + SIN_PERMISO));
                 // Sin el profe en la sala grande, se dice (después del aviso de entrada).
                 if (!esProfe) setTimeout(() => avisarSinProfe(true), 2500);
+                if (reconectando !== true && esPrimeraVez()) setTimeout(explicarPrimeraVez, 4500);
                 avisoBateria = 100;
                 setTimeout(revisarBateria, 4000);
                 if (esProfe) { sincronizar(); refrescarPermisos(); empezarAContar(); if (grabando) empezarAGrabar(); }
@@ -1162,7 +1556,9 @@
                 + (esProfe && sinPermiso.has(p.identity) ? ", sin permiso de grabación" : "")
                 + (esProfe && !esElProfe(p) && textoDeMinutos(p.identity) ? ", " + textoDeMinutos(p.identity) : "")
                 + (esProfe && senalDebil(p) ? ", con la señal débil" : ""));
-            anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
+            const faltan = faltanEnLaLlamada().map((f) => f.nombre);
+            anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + "."
+                + (faltan.length ? " En la clase pero no en la llamada: " + decirLista(faltan) + "." : ""));
         }
 
         function quienHabla() {
@@ -1277,7 +1673,8 @@
         // Que la grabación tenga a todos los que suenan ahora (entran, salen, encienden el micrófono).
         function acomodarFuentes() {
             if (!grab) return;
-            const ahora = new Set(pistasDeAudio());
+            // Mientras el profe habla en privado, la grabación queda en silencio: eso no se graba.
+            const ahora = new Set(privadoCon ? [] : pistasDeAudio());
             for (const [pista, fuente] of grab.fuentes) {
                 if (!ahora.has(pista)) { try { fuente.disconnect(); } catch (e) { /* ya estaba */ } grab.fuentes.delete(pista); }
             }
@@ -1455,7 +1852,7 @@
                 pintar();
                 sonido(SON.entra);
                 anunciar("Tu profe abrió la llamada de la clase: entra con «Entrar a la llamada».");
-            } else if (!abierta && (antes || !caja.hidden)) {
+            } else if (!abierta && !practicando && (antes || !caja.hidden)) {
                 const estabaDentro = Boolean(sala);
                 noVolver();
                 cerrandoPorElProfe = true;
@@ -1477,14 +1874,21 @@
             const E = LK.RoomEvent;
             room
                 .on(E.ParticipantConnected, (p) => {
-                    sonido(SON.entra);
-                    anunciar((grupoActual ? "Entró al grupo " : "Entró a la llamada ") + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + ".");
+                    if (!callarMenor(p)) {
+                        sonido(SON.entra);
+                        anunciar((grupoActual ? "Entró al grupo " : "Entró a la llamada ") + nombreDe(p) + (esElProfe(p) ? ", el profe" : "") + ".");
+                    }
+                    yaVolvio(p);
                     pintarGente(); refrescarPermisos(); acomodarVoces();
                 })
                 .on(E.ParticipantDisconnected, (p) => {
-                    sonido(SON.sale);
-                    anunciar((grupoActual ? "Salió del grupo " : "Salió de la llamada ") + nombreDe(p) + ".");
+                    if (!callarMenor(p)) {
+                        sonido(SON.sale);
+                        anunciar((grupoActual ? "Salió del grupo " : "Salió de la llamada ") + nombreDe(p) + ".");
+                    }
+                    if (privadoCon === p.identity) volverATodos(false);
                     if (esElProfe(p)) setTimeout(() => avisarSinProfe(false), 1500);
+                    quizasNoVolvio(p);
                     paneos.delete(p.identity);
                     calidad.delete(p.identity);
                     pintarGente(); acomodarVoces();
@@ -1538,6 +1942,7 @@
                     paneos.clear();
                     calidad.clear();
                     dejarDeEscucharMiMicrofono();
+                    if (privadoCon) { privadoCon = null; if (op.privado) op.privado(null); }
                     if (cerrandoPorElProfe) { cerrandoPorElProfe = false; mudandose = false; noVolver(); sonido(SON.sale); pintar(); return; }
                     /* Se muda de sala (otro grupo, la sala grande, las voces en su
                        lugar): entra enseguida a la que toca, sin decir «saliste».
@@ -1579,6 +1984,8 @@
             KeyW: quienHabla,
             KeyK: marcarMomento,
             KeyN: siguienteMano,
+            KeyH: guia,
+            KeyJ: dictarJugada,
             KeyT: saltar,
             // Las reacciones del alumno (Sí y No contestan la pregunta del profe, si hay una).
             Digit1: () => reaccionar("no_entendi"),
@@ -1588,7 +1995,8 @@
         };
         document.addEventListener("keydown", (e) => {
             if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-            const accion = ATAJOS[e.code];
+            // En la sala de práctica, los mismos atajos sin red.
+            const accion = practicando ? PRACTICA[e.code] : ATAJOS[e.code];
             if (!accion) return;
             e.preventDefault();
             accion();
@@ -1596,12 +2004,12 @@
 
         entrar.addEventListener("click", alEntrar);
         // Con «Mantener para hablar» el clic (que llega al soltar) no conmuta nada.
-        mic.addEventListener("click", () => { if (!ptt.checked) alternarMic(); });
+        mic.addEventListener("click", () => { if (practicando) { PRACTICA.KeyM(); return; } if (!ptt.checked) alternarMic(); });
         grabarBtn.addEventListener("click", alternarGrabar);
         modos.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => elegirModo(b.dataset.modo)));
         quien.addEventListener("click", quienEsta);
         habla.addEventListener("click", quienHabla);
-        salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));
+        salirBtn.addEventListener("click", () => (practicando ? terminarPractica() : esProfe ? terminar() : salir()));
         // Cerrar la pestaña también cuelga (si no, LiveKit tarda en notar que se fue).
         window.addEventListener("pagehide", () => { noVolver(); if (sala) sala.disconnect(); });
 
@@ -1616,10 +2024,11 @@
         pintar();
         // Un tono suelto (sesion.js: el aviso de los 10 segundos del turno).
         const tono = (nombre) => { if (SON[nombre]) { sonido(SON[nombre]); vibrar(120); } };
-        return { sincronizar, salir, anunciar, estado: ponerEstado, reaccion: recibirReaccion, respuestas: ponerRespuestas, pregunta: ponerPregunta, tono };
+        return { sincronizar, salir, anunciar, estado: ponerEstado, reaccion: recibirReaccion, respuestas: ponerRespuestas, pregunta: ponerPregunta, tono,
+            teLlaman, refrescar: pintarFaltan, privado: ponerPrivado };
     }
 
-    window.ClaseLlamada = { montar };
+    window.ClaseLlamada = { montar, jugadaDicha };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
