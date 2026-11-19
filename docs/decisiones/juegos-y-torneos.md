@@ -16210,7 +16210,7 @@ Google Drive).
   iniciales hasta que alguien diga cuál foto es de quién. Ponerle a un niño
   la cara de otro en una página pública es peor que no ponerle ninguna.
   El 19/11/2026 el dueño les puso el apellido a esos archivos en Drive (y
-  subió la de Aaron Barrantes, que no estaba): hoy están los 34. Para
+  subió la de Aaron Barrantes, que no estaba): están todos. Para
   agregar una: su línea en `MAPA`, correr el script y poner al día el grupo
   de las fotos en `data/archivos.json` (`herramientas/archivos-catalogo.js`;
   en Windows cambia los kb de los archivos de texto por los saltos de línea,
