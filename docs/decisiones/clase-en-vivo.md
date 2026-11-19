@@ -520,6 +520,49 @@ profe: lo pidió así).
   palabras más dichas en la clase, sin contar las vacías («el», «que», «de»…),
   tal como se dijeron y en su orden. Así no inventa nada: lo peor que puede
   pasar es que elija una frase poco útil, nunca una que nadie dijo.
+- **Reacciones y preguntas de sí o no** (pedido del 19/11, «agrega
+  todas»). El alumno le dice algo al profe sin interrumpir ni esperar el
+  turno: «No entendí», «Más lento», «Sí» y «No» (botones, o Alt+1 a Alt+4).
+  Al profe le suena un tono corto, se le dice quién y qué, y la lista lo
+  muestra un minuto. El profe puede abrir una pregunta de sí o no: cada alumno
+  contesta con Sí o No (los botones dicen «(contestar)»), y el profe ve el
+  conteo y quién falta («1 sí, 0 no; falta Zoe»). No es región viva: se le
+  anuncia cuando contestaron todos y al cerrarla. Las respuestas no se dicen
+  de a una, porque taparían la clase. **Va por la presencia de la clase**
+  (`reaccion`, `respuesta` y `pregunta_si_no` en `metaDePresencia`), como la
+  mano. No se guarda en ningún lado, y respeta el tope de anuncios de la
+  presencia (`anunciarPresencia`). La encuesta que ya existía es otra cosa: es
+  el mapa de jugadas, no sirve para un sí o no. Al recargar la página, el
+  profe no vuelve a oír las reacciones de hace más de un minuto.
+- **Solo oír al profe** (casilla del alumno): los compañeros quedan en
+  silencio en ese aparato (`setVolume(0)`), nadie más se entera. Se recuerda.
+- **«Estás hablando con el micrófono apagado»**, como Meet. Desde la primera
+  vez que se enciende el micrófono en la llamada, la página escucha una COPIA
+  de la pista (`mediaStreamTrack.clone()`: la de LiveKit se apaga al callarse,
+  la copia no) y mide el volumen, sin grabar ni mandar nada. Un segundo y
+  medio de voz con el micrófono apagado se avisa (una vez cada 30 s como
+  mucho), diciendo qué hacer: Alt+M, mantener Alt+P o levantar la mano. Antes
+  de encenderlo por primera vez no avisa: abrir el micrófono solo para eso
+  sería abrirlo sin que la persona lo pidiera. La copia se suelta al salir.
+  **El eco**, con la misma copia: si con el micrófono encendido LiveKit marca a
+  la persona «hablando» en más del 60 % del tiempo en que habla otro (en
+  ventanas de 20 s), es que su micrófono capta la llamada. Se le sugiere usar
+  audífonos, una vez por llamada. Es una sospecha y así se dice («Parece
+  que…»): la cancelación de eco del navegador casi siempre basta, y esto es
+  para cuando no.
+- **Marcar este momento** (Alt+K o el botón, en la llamada). Queda anotada la
+  hora en `clase_marcas` (migración `clase_marcas`). La hora la pone la base
+  (`marcar_momento_de_clase`), nunca la página, y solo puede marcar quien está
+  en una clase abierta (su asistencia, o el profe que la abrió), con un tope de
+  200 por persona y clase. Cada uno ve y borra solo las suyas. En «Repasar mis
+  clases», «Tus marcas» lleva la grabación a ese momento, 5 segundos antes para
+  oír la frase entera. Cada parte se guardó al terminarla (`creado_en`) y
+  empezó `segundos` antes, y con eso se sabe dónde cae cada marca. Una marca de
+  cuando no se grababa lo dice. La hora va en hora de Costa Rica. Está en
+  privacidad.html («Marcas de la clase»).
+- **Saltar entre la llamada y el tablero** (Alt+T): desde la llamada, a la
+  casilla del tablero que tenía el foco; desde cualquier otra parte, a la
+  llamada (el micrófono, o «Entrar»). Sin recorrer la página con el lector.
 - **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
   CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
   borra primero el archivo y después la fila (la base no puede borrar archivos

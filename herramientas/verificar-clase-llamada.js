@@ -123,6 +123,7 @@ console.log("\n=== Las cabeceras y la privacidad ===");
   si(/<strong>LiveKit no graba ni guarda la voz<\/strong>/.test(priv), "…y la línea de LiveKit ya no promete que la voz no se graba");
   si(/<strong>Minutos hablados en la llamada:<\/strong>/.test(priv) && /Solo se guarda el tiempo, nunca lo que se dijo/.test(priv) && /junto con la asistencia/.test(priv),
     "privacidad.html dice que se anotan los minutos hablados (solo el tiempo), quién los ve y que se guardan con la asistencia (lo aprobó el dueño)");
+  si(/<strong>Marcas de la clase:<\/strong>/.test(priv) && /La ve solo quien la hizo/.test(priv), "…y las marcas de la clase: solo la hora, y las ve solo quien las hizo");
 
   console.log("\n=== La grabación: el permiso y escucharla ===");
   const conf = leer("js/configuracion.js");
