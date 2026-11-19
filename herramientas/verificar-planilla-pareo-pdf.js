@@ -81,7 +81,7 @@ const enEspanol = (s) => s.replace(/^[KQRBN]/, (p) => ES[p]).replace(/=([QRBN])/
       const c = medida.c[fila + (negras ? "n" : "b")];
       if (!c) return;
       const texto = enEspanol(san);
-      const largo = Math.min(c.x1 - c.x0 - 4, texto.length * 7.5); // ~7,5 px por letra a mano
+      const largo = Math.min(c.x1 - c.x0 - 4, texto.length * 13); // ~13 px (3,4 mm) por letra a mano
       let x0 = (c.x0 + c.x1) / 2 - largo / 2;
       if (donde === "borde") x0 = negras ? c.x0 + 2 : c.x1 - 2 - largo;
       out.push(w(texto, { x0, x1: x0 + largo, y0: c.y0 + (c.y1 - c.y0) * 0.2, y1: c.y1 - (c.y1 - c.y0) * 0.2 }));
