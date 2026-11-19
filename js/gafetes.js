@@ -84,6 +84,9 @@
      torneo publicado en Pareo Integral (su mesa de cada ronda, sus puntos y
      su puesto, al día). Los datos salen de «Traer los jugadores de Pareo»
      (traerJdnPz) y las fotos de «Subir las fotos» (subirFotos). */
+  // Presentando (muestra el QR) primero; las demás, de cuerpo entero y sin
+  // nada ancho al lado (el tablero grande, la mesa, el confeti, la mochila).
+  const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
     const d = disenoNuevo();
     d.nombreDiseno = "Eliminatoria JDN PZ 2026";
@@ -94,9 +97,10 @@
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
     d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
-    // El club va en la franja; la categoría y el Elo no van en el frente (lo
-    // pidió el dueño): la categoría sigue de lado en el dorso.
-    d.detalles = ["Juega el torneo {Torneo}", "", ""];
+    // El club va en la franja; la categoría y el Elo no van en el frente, y
+    // en lugar del Elo va el ID FIDE (lo pidió el dueño); sin ID, esa línea
+    // no sale. La categoría sigue de lado en el dorso.
+    d.detalles = ["ID FIDE: {FIDE ID}", "Juega el torneo {Torneo}", ""];
     d.bandera = { plantilla: "", texto: true };
     d.franja = { plantilla: "{Club}" };
     // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
@@ -104,11 +108,14 @@
     d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Categoría}";
     d.dorso.horarioCentro = true;
+    // En el dorso, la profe Karina en una pose distinta en cada gafete, por
+    // turno (lo pidió el dueño): las de cuerpo entero que caben junto al QR.
+    d.dorso.ilustraciones = ["ilustracionDorso", ...POSES_KARINA.slice(1).map((n, i) => "karina" + (i + 2))];
     d.dorso.qr = "{QR}";
     d.dorso.qrTexto = "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto";
     // Las fotos del fotógrafo son de medio cuerpo, frente al tablero: se
     // recortan a tamaño pasaporte desde la cabeza (el pelo, la cara y la camisa).
-    d.fotoRecorte = { arriba: 0.12, alto: 0.5, cabeza: true };
+    d.fotoRecorte = { arriba: 0.12, alto: 0.44, cabeza: true };
     // Con foto: la foto en el medio y el nombre debajo (lo pidió el dueño).
     d.fotoCentro = true;
     d.dorso.encabezados = ["Actividad", "Fecha", "Hora"];
@@ -121,7 +128,7 @@
     d.codigo.plantilla = "{Edad} {n}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
     d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
-    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"]]) {
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"])]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
     return d;
@@ -143,7 +150,7 @@
     if (!ids.length) throw new Error("todavía no hay torneos de la eliminatoria publicados en Pareo Integral");
     const { data, error } = await sb.from("pareo_publicados").select("id, nombre, datos").in("id", ids);
     if (error) throw error;
-    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "QR"]];
+    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "FIDE ID", "QR"]];
     const orden = (x) => ["U12", "U20"].indexOf(Object.keys(t).find((k) => t[k] && t[k].id === x.id));
     for (const x of (data || []).sort((a, b) => orden(a) - orden(b))) {
       const torneo = Object.keys(t).find((k) => t[k] && t[k].id === x.id);
@@ -153,12 +160,34 @@
         const [apellidos, nombre] = j.nombre.includes(",") ? j.nombre.split(",").map((p) => p.trim()) : [j.nombre.trim(), ""];
         const cat = String(j.categoria || "").trim();
         const edad = (cat.match(/\bU\s?\d{2}\b/i) || [torneo])[0].replace(/\s/g, "").toUpperCase();
-        filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "",
+        filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "", "",
           SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id)]);
       }
     }
     if (filas.length < 2) throw new Error("los torneos todavía no tienen jugadores aceptados");
+    await ponerFide(filas, ids);
     return filas;
+  }
+
+  /* El ID FIDE de cada jugador (lo pidió el dueño para el frente). Pareo no
+     lo publica nunca (va como huella) y la lista de FIDE dejó de contestar;
+     el que hay es el que se puso al INSCRIBIRSE. Lo da la función
+     public.pareo_fide_de_aceptados (solo a quien administra, solo de las
+     inscripciones aceptadas: el nombre y el ID). Se empareja por el nombre,
+     sin tildes ni mayúsculas; quien entró sin inscribirse, o sin ID, sale sin
+     esa línea. Si la función no contesta, los gafetes salen igual y se avisa. */
+  async function ponerFide(filas, ids) {
+    const col = filas[0].indexOf("FIDE ID");
+    const plano2 = (t) => plano(t).replace(/[^a-z0-9ñ]+/g, " ").trim();
+    const ids2 = new Map();
+    let falla = false;
+    for (const id of ids) {
+      const { data, error } = await sb.rpc("pareo_fide_de_aceptados", { p_publicado: id });
+      if (error) { falla = true; continue; }
+      for (const x of data || []) if (x && x.nombre && /^[1-9][0-9]*$/.test(String(x.fide_id || ""))) ids2.set(plano2(x.nombre), String(x.fide_id));
+    }
+    for (let n = 1; n < filas.length; n++) filas[n][col] = ids2.get(plano2(filas[n][0] + ", " + filas[n][1])) || "";
+    if (falla) Avisos.avisar("No se pudieron leer los ID FIDE de las inscripciones: los gafetes salen sin esa línea.", { tipo: "info" });
   }
 
   // Lo que falte en un diseño viejo o recortado, con lo de uno nuevo.
@@ -433,9 +462,12 @@
         // Con `cabeza`, el recorte empieza un poco arriba de donde empieza la
         // persona (el fondo del fotógrafo es blanco): un niño bajito sale
         // con la cara del mismo tamaño que uno alto. Sin encontrarla, `arriba`.
-        const tope = r.cabeza ? topeDeLaPersona(im, sx, sw) : null;
-        const desde = tope != null ? Math.max(0, tope - H * 0.035) : H * (r.arriba || 0);
+        const cab = r.cabeza ? cabezaDeLaPersona(im, sx, sw) : null;
+        const desde = cab ? Math.max(0, cab.tope - H * 0.045) : H * (r.arriba || 0);
         sy = Math.max(0, Math.min(H - sh, desde));
+        // Y a lo ancho, la cabeza en el centro del marco (no todos posaron en
+        // el centro de la foto).
+        if (cab && cab.centro != null) sx = Math.max(0, Math.min(W - sw, cab.centro - sw / 2));
       }
       const k = Math.min(1, 1100 / sh);
       const c = document.createElement("canvas");
@@ -446,9 +478,11 @@
   }
 
   // La primera fila (de arriba abajo) donde, en la franja del recorte, más
-  // del 4 % de los puntos no es fondo claro: ahí empieza el pelo. En la foto
+  // del 4 % de los puntos no es fondo claro: ahí empieza el pelo (`tope`). Y
+  // `centro`: el medio, a lo ancho, de lo oscuro en la franja de la cabeza
+  // (del tope a un 12 % del alto más abajo), en toda la foto. En la foto
   // achicada a 200 px de ancho; null si no la encuentra.
-  function topeDeLaPersona(im, sx, sw) {
+  function cabezaDeLaPersona(im, sx, sw) {
     const W = im.naturalWidth, H = im.naturalHeight, k = 200 / W;
     const c = document.createElement("canvas");
     c.width = 200; c.height = Math.round(H * k);
@@ -462,7 +496,14 @@
         const i = (y * ancho + x) * 4;
         if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 200) oscuros++;
       }
-      if (oscuros > ancho * 0.04) return y / k;
+      if (oscuros > ancho * 0.04) {
+        const todo = ctx.getImageData(0, y, c.width, Math.min(c.height - y, Math.round(c.height * 0.12))).data;
+        const xs = [];
+        for (let i = 0; i < todo.length; i += 4) if (0.299 * todo[i] + 0.587 * todo[i + 1] + 0.114 * todo[i + 2] < 200) xs.push((i / 4) % c.width);
+        xs.sort((a, b) => a - b);
+        const centro = xs.length > 20 ? (xs[Math.floor(xs.length * 0.05)] + xs[Math.floor(xs.length * 0.95)]) / 2 / k : null;
+        return { tope: y / k, centro };
+      }
     }
     return null;
   }

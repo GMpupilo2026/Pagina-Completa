@@ -16031,6 +16031,22 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
+  cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
+  5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de
+  más abajo; ahora usa el lado chico de la escala, pegado a la misma esquina.
+  (2) **Las fotos centradas**: a lo ancho, la cabeza va al medio del marco
+  (`cabezaDeLaPersona`: el medio de lo oscuro en la franja de la cabeza, en
+  toda la foto), y el recorte es más cerca (el 44 % del alto, desde un poco
+  arriba del pelo), con menos tablero. (3) **La profe Karina cambia de pose en
+  cada dorso**, por turno (`dorso.ilustraciones`): presentando, te toca, con
+  el reloj, con el caballo, pulgar arriba, tú puedes, con el trofeo y
+  saludando (de cuerpo entero y sin nada ancho al lado). (4) **El ID FIDE en
+  el frente**, en lugar del Elo: Pareo no lo publica y la lista de FIDE no
+  contestaba, así que sale del que se puso al inscribirse, con
+  `public.pareo_fide_de_aceptados` (solo administración, solo aceptadas, el
+  nombre y el ID; un «0» no cuenta), emparejado por el nombre sin tildes;
+  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID.
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado
