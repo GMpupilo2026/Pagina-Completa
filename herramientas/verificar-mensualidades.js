@@ -61,6 +61,10 @@ function pruebaArchivos() {
   cierto("ninguna alerta del navegador", !/\b(alert|confirm|prompt)\s*\(/.test(js.replace(/Avisos\.(confirmar|pedir|alerta)\(/g, "")));
   const av = fs.readFileSync(path.join(RAIZ, "js/acceso-vigente.js"), "utf8");
   cierto("el control de acceso conoce «cobro»", /a\.motivo === "cobro"/.test(av));
+  // Pedido del dueño el 18/11/2026: a los alumnos no les sale la franja de
+  // «vence pronto / venció» mientras la base no diga avisar_en_panel.
+  cierto("la franja de cobro del panel solo sale con avisar_en_panel",
+    /enPanel\(\) && a\.avisar_en_panel === true\) avisoCobroVigente/.test(av));
   const html = fs.readFileSync(path.join(RAIZ, "mensualidades.html"), "utf8");
   cierto("la página no lleva código escrito adentro", !/<script>(?![^<]*localStorage)/.test(html.replace(/<!-- (oscuro|tema): inicio -->[\s\S]*?<!-- \1: fin -->/g, "")));
   for (const f of ["js/paginas-admin.js", "js/paginas-supervisor.js"]) {
