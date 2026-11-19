@@ -5180,3 +5180,64 @@ de Costa Rica), el editor con el marcado de `academias.html` y un doble (orden,
 foco, lista entera con sus ids, texto y no HTML, otra academia sin listeners
 viejos) y la ficha (nivel y desde cuándo, cambiarlo, historial, el alumno sin
 poder cambiarlo). Con los botones sin limpiar, salta.
+
+## El panel jornada: el del alumno, con pestañas (en prueba)
+
+Desde el 18/11/2026, **solo para las cuentas anotadas** en `vistas_en_prueba`
+(hoy una: Oscarov, alumno del grupo SJ). Es la forma del panel del alumno de
+Chessgora llevada a `clases.html`: lo de hoy primero y el resto repartido en
+pestañas, en vez de una sola página con seis grupos de tarjetas que en el
+celular mide varias pantallas aunque se plieguen. Antes se probó como
+maqueta (una simulación con un alumno inventado), y el dueño pidió verla en
+el sitio, con una sola cuenta.
+
+- **No es otro panel.** `js/panel-jornada.js` toma el panel de siempre, ya
+  pintado por `clases.js` con los datos reales, y lo reparte en cinco
+  pestañas: **Inicio** (la clase en vivo, «Lo que te toca hacer», seguir el
+  curso, «Hoy te toca», las favoritas y lo que más usas, «Clase en vivo» y
+  «Lo que te pone tu profesor»), **Clases** («Tus clases», el calendario del
+  taller y «Estudiar»), **Entrenar** (Aprender, los tres escalones y las
+  habilidades), **Jugar** («Jugar y competir» y las herramientas) y
+  **Perfil** (los Puntos Ajedrez, los puntos del mes y «Tu cuenta»). Ninguna
+  consulta nueva, ningún dato copiado: lo que cambie en el panel le llega
+  solo.
+- **Cómo reparte.** Cada sección de primer nivel (por id) y cada grupo de
+  tarjetas (por su título, como los busca `clases.js`) lleva
+  `data-jornada="<pestaña>"`; lo que no es de la pestaña abierta lleva
+  `jornada-fuera` (display: none). Los grupos se vuelven a marcar cada vez
+  que `renderTiles()` repinta la grilla (un MutationObserver sobre
+  `#tile-grid`). **Lo que no está en el mapa no se marca y se ve en todas las
+  pestañas**: una sección nueva del panel nunca queda escondida por olvido.
+- **Los puntos se mudan a Perfil.** `#puntos-ajedrez` y `#puntos-mes` vivían
+  dentro del `<details>` «Tus clases»; se mueven (el mismo nodo, con su id) a
+  `#jornada-perfil`. «Tus clases» se abre solo: en esta forma es lo que hay
+  en la pestaña Clases.
+- **En el celular y la tableta (hasta 1023 px)** las pestañas van en una
+  barra fija abajo, con el margen de la muesca del teléfono; la burbuja de
+  «en línea» sube por encima. **En la computadora**, en un menú a la
+  izquierda que se queda fijo al bajar.
+- **Mientras se busca se ve todo**, como en el panel de siempre: un
+  resultado en otra pestaña no se vería. `clases.html#entrenar` y compañía
+  abren la pestaña donde vive lo pedido. La pestaña abierta se recuerda en
+  la sesión del navegador (`sessionStorage`): al volver de un ejercicio se
+  vuelve a la misma; al abrir el sitio otro día, a Inicio.
+- **Lector de pantalla.** La barra es un `<nav>` con botones, y la pestaña
+  abierta lleva `aria-current="page"` además de su fondo. Al cambiar de
+  pestaña el foco va a un título escondido con el nombre de la pestaña.
+- **Dónde no se aplica**: a quien no es alumno (el panel docente tiene otros
+  grupos), al panel adaptado (alumno ciego: ese ya es corto y pensado para el
+  lector, y las pestañas le agregarían pasos) y en «Ver como» (quien
+  administra mira con su sesión, que no está anotada).
+- **La marca la pone la base, no la pantalla.** `vistas_en_prueba`
+  (migraciones `20261118214820` y `20261118231559`): sin política de
+  escritura y, desde afuera, solo `SELECT` para `authenticated` (Supabase
+  daba todos los permisos por omisión, TRUNCATE incluido, que no pasa por la
+  RLS). Cada quien lee solo sus filas. No reparte permisos ni datos —quien la
+  tiene ve sus mismos datos, acomodados de otra forma—, así que no lleva
+  auditoría. Para sumar a alguien:
+  `insert into public.vistas_en_prueba (profile_id, vista) values ('<id>', 'panel_jornada');`
+  y para sacarlo, borrar su fila.
+- Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
+  con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
+  puntos en Perfil y la barra abajo en el celular y a la izquierda en la
+  computadora.

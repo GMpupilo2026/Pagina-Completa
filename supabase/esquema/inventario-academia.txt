@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118204456
+# al-dia-con: 20261118231559
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -322,6 +322,7 @@ tabla  uni_resultados  rls=true
 tabla  uni_torneos  rls=true
 tabla  variant_nodes  rls=true
 tabla  vision_personas  rls=true
+tabla  vistas_en_prueba  rls=true
 columna  Ejercicios Lichess.DailyDate  text
 columna  Ejercicios Lichess.FEN  text
 columna  Ejercicios Lichess.GameUrl  text
@@ -3160,6 +3161,9 @@ columna  vision_personas.actualizado  timestamp with time zone
 columna  vision_personas.actualizado_por  uuid
 columna  vision_personas.persona_id  uuid
 columna  vision_personas.vision  text
+columna  vistas_en_prueba.created_at  timestamp with time zone
+columna  vistas_en_prueba.profile_id  uuid
+columna  vistas_en_prueba.vista  text
 vista  cobros_vista
 vista  cuentas_cobro_vista
 vista  recibos_vista
@@ -4578,6 +4582,7 @@ politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
 politica  variant_nodes  verificacion_en_dos_pasos  ALL  restrictiva
 politica  vision_personas  vision_personas_select  SELECT
+politica  vistas_en_prueba  vistas_en_prueba_propias  SELECT
 trigger  academia_ia  auditar
 trigger  academia_miembros  auditar
 trigger  academias  auditar
@@ -5485,6 +5490,7 @@ indice  variant_nodes  variant_nodes_parent_id_fk
 indice  variant_nodes  variant_nodes_pkey
 indice  variant_nodes  variant_nodes_teacher_id_fk
 indice  vision_personas  vision_personas_pkey
+indice  vistas_en_prueba  vistas_en_prueba_pkey
 extension  btree_gist  1.7
 extension  pg_cron  1.6.4
 extension  pg_net  0.20.4
@@ -7030,3 +7036,4 @@ grant  variant_nodes  authenticated  UPDATE
 grant  vision_personas  authenticated  REFERENCES
 grant  vision_personas  authenticated  SELECT
 grant  vision_personas  authenticated  TRIGGER
+grant  vistas_en_prueba  authenticated  SELECT
