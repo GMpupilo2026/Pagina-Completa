@@ -173,7 +173,12 @@ async function aceptar(page, boton) {
   igual("el logo de la ADAPZ y el del CCDR, del mismo alto (±3 %)", Math.abs(altos[0] - altos[1]) <= 0.03 * Math.max(...altos), true);
   igual("el horario de las bases: cinco rondas, el almuerzo y la clausura", d.filas, 7);
   igual("el QR es de cada persona", [d.qr, d.campo], ["{QR}", "{QR}"]);
-  igual("y dice para qué es", d.texto, "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto");
+  igual("y dice para qué es, de cada fila", d.texto, "{Texto QR}");
+  const personal = await page.inputValue("#g-personal");
+  igual("el personal del torneo viene en el diseño: la organizadora, dos árbitros principales y el asistente",
+    personal.split(/\r?\n/).map((l) => l.split("|")[0].trim()), ["Organizadora", "Árbitro principal", "Árbitro principal", "Árbitro asistente"]);
+  // Las pruebas de los jugadores, sin el personal; el personal se prueba al final.
+  await page.fill("#g-personal", "");
 
   console.log("\nLos jugadores, de Pareo Integral");
   await page.click("#g-pareo-pz");
@@ -372,6 +377,20 @@ async function aceptar(page, boton) {
   const dentro = [...z.matchAll(/PK\x01\x02[\s\S]{42}([^\x00]*?\.pdf)/g)].map((m) => Buffer.from(m[1], "latin1").toString("utf8")).sort();
   igual("un .zip con un PDF por torneo", [zip.suggestedFilename(), dentro], ["Gafetes 5,5x8,5 - Eliminatoria JDN PZ 2026.zip", ["Gafetes 5,5x8,5 - U12.pdf", "Gafetes 5,5x8,5 - U20.pdf"]]);
   igual("ocho páginas en total (frente y dorso de cuatro)", (z.match(/\/Type \/Page\b/g) || []).length, 8);
+
+  console.log("\nEl personal del torneo");
+  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro");
+  await page.click("#g-pareo-pz");
+  await page.waitForFunction(() => window.Gafetes._estado().datos && window.Gafetes._estado().datos.filas.length === 5);
+  const st = await page.evaluate(() => {
+    const { diseno, datos } = window.Gafetes._estado();
+    const x = window.GafetesDibujo.gafetes(diseno, datos.filas).pop();
+    return { n: x.nombre, d: x.detalles, f: x.franja, v: x.vertical, c: x.codigo, color: x.color, qr: x.qr, t: x.qrTexto, pose: x.ilustracionDorso };
+  });
+  igual("se suma al final, con su rol en la franja, su título debajo y el gris del arbitraje",
+    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "ÁRBITRO", "ARBITRAJE", "#1f2937"]);
+  igual("su QR lleva a la página del torneo y lo dice; en el dorso, el profe Oscar árbitro",
+    [st.qr, st.t, st.pose], ["https://ajedrez-integral.com/jdn-pz-2026", "Escanéalo: | la página | del torneo", "oscar-arbitro"]);
 
   igual("sin errores en la consola", errores, []);
   await ctx.close();

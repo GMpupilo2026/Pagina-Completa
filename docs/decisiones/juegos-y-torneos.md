@@ -16067,6 +16067,17 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **El personal del torneo** (pedido del dueño): en el diseño, un renglón
+  por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
+  edita en la página), que se suma al final al traer los jugadores. El rol va
+  en la franja, el título debajo del nombre, el color es morado para la
+  organización y gris carbón para el arbitraje, y abajo del dorso dice
+  ORGANIZACIÓN o ARBITRAJE. Su QR lleva a la página del torneo, y lo dice
+  (`{Texto QR}`, un texto por fila); en el dorso va su avatar (`dorso.poseColumna`):
+  Karina la organizadora, y el profe Oscar (árbitro, presentando y te toca)
+  los árbitros principales Jean Quesada Arauz (AF) y Oscar Angulo Cubero (IA)
+  y el asistente Sebastián Mora Chavarría. Con una foto que no tiene fondo
+  blanco no se busca la cabeza (lo oscuro de una sala no es el pelo).
 - **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
   «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
   pertenece y luego el ID FIDE («Juega el torneo U…» se quitó: no le gustó); la U16 pasa del turquesa al

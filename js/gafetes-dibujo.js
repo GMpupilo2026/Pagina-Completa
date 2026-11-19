@@ -120,7 +120,10 @@
         ...(esPlantilla(d.dorso.qr) ? { qr: llenar(d.dorso.qr, fila) || "" } : {}),
         // Con `dorso.ilustraciones` (varias imágenes del diseño), el dorso de
         // cada gafete lleva una, por turno: la profe Karina en distintas poses.
-        ilustracionDorso: poses.length ? poses[n % poses.length] : null,
+        // ...salvo que la fila traiga la suya (`dorso.poseColumna`: el personal).
+        ilustracionDorso: (d.dorso.poseColumna && valor(fila, d.dorso.poseColumna)) || (poses.length ? poses[n % poses.length] : null),
+        // El texto de arriba del QR, si es una plantilla, es de cada fila.
+        ...(esPlantilla(d.dorso.qrTexto) ? { qrTexto: llenar(d.dorso.qrTexto, fila) || "" } : {}),
       };
     });
   }
@@ -625,8 +628,9 @@
     // separados por «|»), arriba de él y pegado a su derecha: «Escanéalo: tu
     // mesa…» en la PZ. Con la ilustración del dorso al lado, no pasa del
     // ancho del QR (si no, se le montaría encima).
-    if (qr && diseno.dorso.qrTexto) {
-      const lineas = String(diseno.dorso.qrTexto).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
+    const textoQr = g.qrTexto != null ? g.qrTexto : diseno.dorso.qrTexto;
+    if (qr && textoQr) {
+      const lineas = String(textoQr).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
       const der = M.qr.x + M.qr.w, max = ilDorso ? M.qr.w + 6 * M.sx : der - T.x;
       const tam = 7.6 * M.s, paso = tam * PT * 1.4;
       lineas.forEach((l, i) => {
