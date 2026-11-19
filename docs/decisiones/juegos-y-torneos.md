@@ -16067,6 +16067,28 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **El personal del torneo** (pedido del dueño): en el diseño, un renglón
+  por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
+  edita en la página), que se suma al final al traer los jugadores. El rol va
+  en la franja, el título debajo del nombre, todo el personal va en **negro**
+  (organización, arbitraje y asistente; lo pidió el dueño, 21 : 1), y abajo
+  del dorso dice ORGANIZACIÓN, ARBITRAJE o ASISTENTE. Sebastián va como
+  «Asistente» a secas, sin «árbitro». Su QR lleva a la página del torneo, y lo dice
+  (`{Texto QR}`, un texto por fila); en el dorso va su avatar (`dorso.poseColumna`):
+  Karina (la organizadora) y Oscar Angulo Cubero (IA), cada uno con su avatar
+  de árbitro (lo pidió el dueño); Jean Quesada Arauz (AF), el profe Oscar
+  presentando, y el asistente Sebastián Mora Chavarría, el profe Oscar «te toca». Con una foto que no tiene fondo
+  blanco no se busca la cabeza (lo oscuro de una sala no es el pelo). Cada foto
+  se guarda por el QR **y el nombre** (`claveFila`): el personal comparte el
+  QR, y con el QR solo los tres árbitros quedaban con la misma foto. De lado
+  dice PRINCIPAL o ASISTENTE, no «ÁRBITRO»: escrita de lado, la tilde de la Á
+  quedaba suelta como un apóstrofo.
+- **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
+  «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
+  pertenece y luego el ID FIDE («Juega el torneo U…» se quitó: no le gustó); la U16 pasa del turquesa al
+  **celeste oscuro** `#1873b4` (5,1 : 1 con letra blanca; el celeste de la
+  bandera del cantón, azul rey, celeste y blanco, no aguanta letra blanca), y
+  abajo del dorso va **la categoría sola**, sin el número (`{Edad}`).
 - **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
   cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
   5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de

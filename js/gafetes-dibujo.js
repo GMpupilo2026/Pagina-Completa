@@ -120,7 +120,10 @@
         ...(esPlantilla(d.dorso.qr) ? { qr: llenar(d.dorso.qr, fila) || "" } : {}),
         // Con `dorso.ilustraciones` (varias imágenes del diseño), el dorso de
         // cada gafete lleva una, por turno: la profe Karina en distintas poses.
-        ilustracionDorso: poses.length ? poses[n % poses.length] : null,
+        // ...salvo que la fila traiga la suya (`dorso.poseColumna`: el personal).
+        ilustracionDorso: (d.dorso.poseColumna && valor(fila, d.dorso.poseColumna)) || (poses.length ? poses[n % poses.length] : null),
+        // El texto de arriba del QR, si es una plantilla, es de cada fila.
+        ...(esPlantilla(d.dorso.qrTexto) ? { qrTexto: llenar(d.dorso.qrTexto, fila) || "" } : {}),
       };
     });
   }
@@ -527,8 +530,11 @@
         // Las dos líneas del nombre van del mismo tamaño: el de la que menos cabe.
         let tam = MN.tam;
         for (const l of nombre) { const a = anchoDe(recursos.titulo, l, tam, 0); if (a > MN.max) tam = tam * MN.max / a; }
-        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color, max: MN.max });
-        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color, max: MN.max }));
+        // `nombre.color` fija el color del nombre (en la PZ, negro); sin él,
+        // el del rol o la edad.
+        const colorNombre = /^#[0-9a-f]{6}$/i.test(diseno.nombre.color || "") ? diseno.nombre.color : color;
+        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color: colorNombre, max: MN.max });
+        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color: colorNombre, max: MN.max }));
       }
       const MD = centro ? M.detallesCentro : M.detalles;
       g.detalles.slice(0, 3).forEach((d, i) => escribir(recursos.texto, d, MD.tam, centro
@@ -622,8 +628,9 @@
     // separados por «|»), arriba de él y pegado a su derecha: «Escanéalo: tu
     // mesa…» en la PZ. Con la ilustración del dorso al lado, no pasa del
     // ancho del QR (si no, se le montaría encima).
-    if (qr && diseno.dorso.qrTexto) {
-      const lineas = String(diseno.dorso.qrTexto).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
+    const textoQr = g.qrTexto != null ? g.qrTexto : diseno.dorso.qrTexto;
+    if (qr && textoQr) {
+      const lineas = String(textoQr).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
       const der = M.qr.x + M.qr.w, max = ilDorso ? M.qr.w + 6 * M.sx : der - T.x;
       const tam = 7.6 * M.s, paso = tam * PT * 1.4;
       lineas.forEach((l, i) => {
