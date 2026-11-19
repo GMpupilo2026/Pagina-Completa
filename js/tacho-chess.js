@@ -23,6 +23,8 @@
     fuente: "pareo", fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: ["Primer grado", "Segundo grado", "Tercer grado", "Cuarto grado", "Quinto grado", "Sexto grado", "Sétimo año", "Octavo año", "Noveno año", "Décimo año", "Undécimo año"],
+    // La clase del botón «Ver la partida en vivo» (js/torneo-en-vivo.js).
+    botonVivo: "tacho-boton",
     // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): [número, x, y] en los píxeles de la foto.
     mesasSala: {
       foto: [1200, 675],

@@ -16126,6 +16126,39 @@ Google Drive).
   en Windows cambia los kb de los archivos de texto por los saltos de línea,
   así que de lo que arma se toma solo ese grupo).
 
+### Lo del Tacho, también en la Eliminatoria JDN de PZ
+
+El dueño preguntó el 18/11/2026, cuatro días antes del torneo: «el torneo de
+pareo integral de JDN CCDRPZ ya tiene las actualizaciones que se hicieron al
+tacho?». Se compararon las dos páginas en `main`: los resultados, los pareos
+que se ponen al día solos y los inscritos ya estaban; faltaban tres cosas, y
+se pasaron:
+
+- **Los textos y el certificado propios.** `torneoPagina.textos` y
+  `torneoPagina.diploma` (ver «El certificado y las imágenes del Tacho, sin el
+  Centroamericano»): sin ellos, el certificado salía con el morado, el pizote,
+  «XXI Festival Centroamericano…» y el Gimnasio Nacional, y la tarjeta de un
+  jugador antes de la ronda 1 decía «El torneo empieza el 2 de noviembre». El
+  certificado de PZ lleva el azul marino de ADAPZ, la píldora en `#1D64B0`
+  (blanco encima 6,00), el marco celeste y blanco de sus franjas, el logo de
+  ADAPZ arriba a la izquierda y el del CCDR arriba a la derecha
+  (`escudoDerecha`, nuevo en `diploma()`; sin él no cambia nada). Al podio no
+  se le dice oro, plata o bronce: la eliminatoria clasifica a los Juegos
+  Nacionales.
+- **«En vivo» con la cámara de Notara** (ver «La partida en vivo de Notara en
+  la página del Tacho»). El código salió de `js/tacho-chess-resultados.js` a
+  `js/torneo-en-vivo.js`, una sola copia para las dos páginas; toma los
+  torneos de lo que ya leyó `js/centroamericano-vivo.js` (`tnr`, el id de
+  Pareo), sin pedir nada aparte, y el botón lleva la clase de cada página
+  (`botonVivo`: `.tacho-boton` o `.pz-boton`, el azul de ADAPZ).
+- **No se pasó «La sala de juego» con la mesa iluminada** (ver «La mesa
+  iluminada en la foto»): pide una foto de la sala del Hotel del Sur y que el
+  dueño marque dónde queda cada mesa; no se adivina.
+
+Lo revisan `verificar-tacho-chess.js` (el «En vivo» del Tacho, ya desde el
+módulo compartido) y `verificar-jdn-pz-resultados.js` (el «En vivo» y el
+certificado de PZ).
+
 ### La del Tacho Chess 2
 
 `tacho-chess-2.html` es la página del Torneo Intereducativo Tacho Chess 2 del
@@ -16524,7 +16557,8 @@ nada más pone la que está en ese momento en vivo».
   cámara»; Pareo vuelve a jugar lo que llega con chess.js, nunca pisa una
   partida escrita a mano y el resultado no se anota sin confirmarlo.
 - **«En vivo» siempre está en «El torneo»** (`#hoy-vivo`, lo pone
-  `js/tacho-chess-resultados.js`, que ya encuentra los torneos del Tacho):
+  `js/torneo-en-vivo.js`, desde el 18/11/2026 la misma copia de la
+  Eliminatoria JDN de PZ; antes vivía en `js/tacho-chess-resultados.js`):
   «En vivo: próximamente» mientras ninguna cámara transmite; apenas una
   transmite, «En vivo ahora», su mesa, quién juega y «Ver la partida en
   vivo», que abre `tablero-vivo.html#<código>&t=<id>&m=<mesa>` encima de la

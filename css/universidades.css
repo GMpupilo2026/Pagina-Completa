@@ -71,6 +71,13 @@
   --u-fuerte: #1d64b0;
   --u-claro: #9fd0f3;
 }
+/* «Ver la partida en vivo» (js/torneo-en-vivo.js): blanco sobre #1D64B0
+ * 6,00 y sobre #1F3A7A 10,80 al pasar; el foco, #1F3A7A (9,89 sobre #EEF6FD). */
+.pz-boton { display: inline-block; background: #1d64b0; color: #fff; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 0.5rem; }
+.pz-boton:hover { background: #1f3a7a; }
+.pz-boton:focus { outline: none; }
+.pz-boton:focus-visible { outline: 3px solid #1f3a7a; outline-offset: 2px; }
+.dark .pz-boton:focus-visible { outline-color: #9fd0f3; }
 
 /* El Torneo Intereducativo Tacho Chess 2 (tacho-chess-2.html): el azul y el
  * rojo de su afiche, medidos de la imagen (la mediana de sus píxeles azules y

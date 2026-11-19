@@ -1639,7 +1639,7 @@
     const D = Object.assign({
       evento: tx.dipEvento, lugar: tx.dipLugar, fondo: ["#40478f", "#5a5fa3"], pildora: "#ce1328",
       dibujo: "img/centroamericano-2026/mascota-trofeo.png", hojas: "img/centroamericano-2026/hojas.png",
-      sombra: "rgba(30, 36, 83, 0.45)", marco: null, escudo: null,
+      sombra: "rgba(30, 36, 83, 0.45)", marco: null, escudo: null, escudoDerecha: null,
     }, CONFIG.diploma || {});
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
@@ -1670,6 +1670,12 @@
     if (escudo) {
       ctx.save(); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(250, 250, 128, 0, Math.PI * 2); ctx.fill(); ctx.clip();
       ctx.drawImage(escudo, 130, 130, 240, 240); ctx.restore();
+    }
+    // Un segundo escudo, arriba a la derecha (en Pérez Zeledón, el del CCDR).
+    const escudo2 = D.escudoDerecha ? await cargarImagen(D.escudoDerecha) : null;
+    if (escudo2) {
+      ctx.save(); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(W - 250, 250, 128, 0, Math.PI * 2); ctx.fill(); ctx.clip();
+      ctx.drawImage(escudo2, W - 370, 130, 240, 240); ctx.restore();
     }
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
     // Letra blanca con la sombra de las bases (#1E2453 al 45 %, corrida hacia abajo).
